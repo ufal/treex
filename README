@@ -1,0 +1,36 @@
+How to create Tree language model
+
+In the raw input file (counts_raw.tsv.gz aka joint_table.tsv.gz) each line represents one t-level edge.
+Tab separated columns are: Ld Lg Fd Pd Pg.
+Where: L = lemma, F = formeme, P = POS(part of speech tag), d = dependent node of a edge, g = governing node.
+For smoothing the main model (Ld,Fd | Lg), there are used 5 auxiliary models: (Ld), (Pd|Fd), (Fd|Pg), (Fd|Lg), (Ld|Fd).
+For memory and speed efficiency lemma+pos are represented as integer IDs instead of strings.
+
+Targets of Makefile:
+
+counts_unfiltered.tsv.gz
+  Sum up the same lines from the raw input.
+  Columns will be in order: Count Lg Pg Ld Pd Fd.
+  Both Lg and Ld will be lowercased (since case of t-lemmas is actually unstable).
+
+counts_filtered.tsv.gz
+  Drop edges with count=1 and edges with lemma=~/^[0-9]+$/ (numbers) or pos=~/[ZJ]/ (punctuation, conjunction).
+
+lemma_id.pls.gz
+  File suitable for LanguageModel::Lemma
+
+models:
+  Creates 6 model_*.pls.gz files.
+  Log-probabilities stored in gzipped perl storable. Instead of lemmas+pos, only their ids are saved.
+  For conditional probabilities of A given B, the * part of the filename is in form A_B.
+  + Ld      $a_ref->[$$Ld]
+  + Pd_Fd   $h_ref->{$Fd}{$Pd}
+  + Fd_Pg   $h_ref->{$Pg}{$Fd}
+  + Fd_Lg   $a_ref->[$$Lg]{$Fd}
+  + Ld_Fd   $h_ref->{$Fd}{$$Ld}
+  + LdFd_Lg $a_ref->[$$Lg]{$$Ld}{$Fd}
+
+copy_to_share
+
+----------
+Author: Martin Popel
