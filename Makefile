@@ -12,8 +12,7 @@ MEMORY := 85%
 
 SHARE_DIR := ${TMT_ROOT}/share/data/models/language/cs/
 
-#MODEL_NAMES := Ld Pd_Fd Fd_Pg Fd_Lg Ld_Fd LdFd_Lg
-COPY_TO_SHARE := lemma_id.pls.gz model_*.pls.gz
+COPY_TO_SHARE := lemma_id.pls.gz c_*.pls.gz
 
 # Nasty Makefile hack
 # What is the right way to write perl oneliners in makefiles?
@@ -54,7 +53,7 @@ copy_to_share: $(COPY_TO_SHARE)
 	cp -t $(SHARE_DIR) $(COPY_TO_SHARE)
 
 clean:
-	rm -f counts_*filtered.tsv.gz lemma_id.pls.gz model_*.pls.gz
+	rm -f counts_*filtered.tsv.gz lemma_id.pls.gz c_*.pls.gz
 
 # Copyright 2009 Martin Popel
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
