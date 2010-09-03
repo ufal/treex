@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+# -*- cperl -*-
+
+use strict;
+use warnings;
+use Moose;
+use Treex::Core::Document;
+use Treex::Core::Factory;
+use Pod::Usage;
+
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+
+my ( $opt_save, $opt_help, $opt_man, $opt_blocks, $opt_eval_code, $opt_for_each_document, $opt_for_each_bundle, $opt_for_each_tree, $opt_for_each_node);
+my $opt_documents = [];
+
+GetOptions(
+    'save|s' => \$opt_save,
+    'help|?' => \$opt_help,
+    'man' => \$opt_man,
+#    'D' => \$opt_for_each_document,
+    'B' => \$opt_for_each_bundle,
+    'T=s' => \$opt_for_each_tree,
+    'N' => \$opt_for_each_node,
+    'eval|e=s' => \$opt_eval_code,
+    'block|b=s' => \$opt_blocks,
+) or pod2usage(2);
+
+pod2usage(1) if $opt_help;
+pod2usage(2) if $opt_man;
+
+$opt_for_each_bundle = $opt_for_each_bundle || $opt_for_each_tree;
+$opt_for_each_document = $opt_for_each_document || $opt_for_each_bundle;
+
+my @treex_files = @ARGV;
+
+if ($opt_eval_code) {
+    if ($opt_for_each_node) {
+        $opt_eval_code = 'foreach my $node ($tree->get_descendants) {'."\n".
+            "$opt_eval_code\n".
+                "}\n";
+    }
+
+    if ($opt_for_each_tree) {
+        $opt_eval_code = "my \$tree = \$bundle->get_tree(qw($opt_for_each_tree));\n$opt_eval_code";
+    }
+
+    if ($opt_for_each_bundle) {
+        $opt_eval_code = "foreach my \$bundle (\$document->get_bundles) {\n".
+            $opt_eval_code
+                ."}\n";
+    }
+
+    print "Code to be evaluated:\n$opt_eval_code\n";
+    sub eval_subroutine {};
+    eval "sub eval_subroutine = sub { $opt_eval_code }; ";
+}
+
+foreach my $file (@treex_files) {
+    print "Loading $file\n";
+    my $document = Treex::Core::Factory->createDocumentFromFile($file);
+    eval_subroutine;
+    if ($opt_save) {
+        print "Saving $file\n";
+        $document->save;
+    }
+}
+
+
+__END__
+
+=pod
+
+=head1 T - a command line interface for Treex
+
+ahoj nazdar
+
+=head1 SYNOPSIS
+
+takhle se to pouziva
+
+=head2 Options
+   --help     - brief help message
+   --man      - full documentation
+   --save|s   - save treex documents after processing
+
+=cut
