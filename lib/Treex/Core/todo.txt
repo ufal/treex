@@ -1,0 +1,6 @@
+- diconnect zmenit na cut
+- vyresit set_attr
+- konstruktory
+- pridat create_tree
+- check pattern for tree name na jedno misto
+- v faktory funkcich je 'new' pleonasmus
