@@ -2,13 +2,37 @@
 
 use strict;
 use warnings;
+use Test::More tests => 2;
 
 use Treex::Core::Document;
 use Treex::Core::Factory;
 
-my $filename = 'to_load.treex';
+{
+    my $filename = "tmp_empty.treex";
+    my $doc = Treex::Core::Document->new;
+    $doc->save($filename);
+    my $doc_from_file = Treex::Core::Factory->createDocumentFromFile($filename);
+    ok(defined $doc_from_file,'save and load empty treex file');
+}
 
-my $doc = Treex::Core::Document->new;
+{
+    my $filename = "tmp_just_text.treex";
+    my $doc = Treex::Core::Document->new;
+    my $attr_name = 'Sen text';
+    my $attr_value = 'John loves Mary. Mary loves Detroit.';
+    $doc->set_attr($attr_name, $attr_value);
+    $doc->save($filename);
+    my $doc_from_file = Treex::Core::Factory->createDocumentFromFile($filename);
+    ok($doc_from_file->get_attr($attr_name) eq $attr_value, 'a document attribute properly stored with the document');
+}
+
+
+
+
+
+exit;
+my $doc;
+my $filename;
 
 my $b1 = $doc->create_bundle;
 $b1->set_attr('english_source_sentence','John loves Mary.');
