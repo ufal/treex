@@ -11,7 +11,8 @@ use Pod::Usage;
 use Getopt::Long;
 Getopt::Long::Configure ("bundling");
 
-my ( $opt_save, $opt_help, $opt_man, $opt_blocks, $opt_eval_code, $opt_for_each_document, $opt_for_each_bundle, $opt_for_each_tree, $opt_for_each_node);
+my ( $opt_save, $opt_help, $opt_man, $opt_blocks, $opt_eval_code, $opt_for_each_document,
+     $opt_for_each_bundle, $opt_for_each_tree, $opt_for_each_node );
 my $opt_documents = [];
 
 GetOptions(
@@ -36,30 +37,32 @@ my @treex_files = @ARGV;
 
 if ($opt_eval_code) {
     if ($opt_for_each_node) {
-        $opt_eval_code = 'foreach my $node ($tree->get_descendants) {'."\n".
-            "$opt_eval_code\n".
+        $opt_eval_code = 'foreach my $node ($root,$root->get_descendants) {'."\n".
+            indent_code($opt_eval_code)."\n".
                 "}\n";
     }
 
     if ($opt_for_each_tree) {
-        $opt_eval_code = "my \$tree = \$bundle->get_tree(qw($opt_for_each_tree));\n$opt_eval_code";
+        $opt_eval_code = "my \$root = \$bundle->get_tree(qw($opt_for_each_tree));\n$opt_eval_code";
     }
 
     if ($opt_for_each_bundle) {
         $opt_eval_code = "foreach my \$bundle (\$document->get_bundles) {\n".
-            $opt_eval_code
+            indent_code($opt_eval_code)."\n"
                 ."}\n";
     }
 
     print "Code to be evaluated:\n$opt_eval_code\n";
-    sub eval_subroutine {};
-    eval "sub eval_subroutine = sub { $opt_eval_code }; ";
+
+#    eval "sub eval_code = sub { print 123456.'\n'; $opt_eval_code }; ";
+#    print "return value after eval: $value\n  $!";
 }
 
 foreach my $file (@treex_files) {
     print "Loading $file\n";
     my $document = Treex::Core::Factory->createDocumentFromFile($file);
-    eval_subroutine;
+#    eval_code();
+    eval $opt_eval_code;
     if ($opt_save) {
         print "Saving $file\n";
         $document->save;
@@ -67,11 +70,17 @@ foreach my $file (@treex_files) {
 }
 
 
+sub indent_code {
+    my $code = shift;
+    return join "\n", map {"  $_"} split( /\n/, $code );
+}
+
+
 __END__
 
 =pod
 
-=head1 T - a command line interface for Treex
+=head1 treex - command line interface for Treex tools
 
 ahoj nazdar
 
@@ -80,8 +89,28 @@ ahoj nazdar
 takhle se to pouziva
 
 =head2 Options
+
    --help     - brief help message
+
    --man      - full documentation
+
    --save|s   - save treex documents after processing
+
+   --eval|e   - Perl code to be evaluated
+
+   -B         - run the code for each bundle, predefined variable $bundle
+
+   -T <treename>  - run the code for each tree of the given type;
+              predefines variable $root; -T implies -B
+
+   -N         - run the code for each node in the specified trees
+               (-N requires -T to be used);
+              predefines variable $node
+
+   --block  - name of a block module or of a scenario module, or a sequence of them (quoted by "", separated by spaces);
+                cannot be combined with -B,-T,-N
+
+   --scen   - .scen file;
+                cannot be combined with -B,-T,-N
 
 =cut
