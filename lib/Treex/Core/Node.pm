@@ -92,10 +92,6 @@ sub get_pml_type_name {
     return undef;
 }
 
-sub create_new_child { # 'create_new' sounds pleonastic, 'new' should be removed
-    create_child(@_);
-}
-
 sub create_child {
     my $self     = shift;
     my $new_node = ( ref $self )->new(@_);
@@ -878,3 +874,400 @@ sub get_right_siblings {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::Node
+
+=head1 DESCRIPTION
+
+This class represents a TectoMT node.
+TectoMT trees (contained in bundles) are formed by nodes and edges.
+Attributes can be attached only to nodes. Edge's attributes must
+be stored as the lower node's attributes.
+Tree's attributes must be stored as attributes of the root node.
+
+=head1 METHODS
+
+=head2 Construction
+
+=over 4
+
+=item  my $new_node = $existing_node->create_child( { 'attributes' => {'lemma'=>'house','tag'=>'NN' });
+
+Creates a new node as a child of an existing node. Some of its attribute
+can be filled. Direct calls of node constructors (->new) should be avoided.
+
+
+=back
+
+
+
+=head2 Access to the containers
+
+=over 4
+
+=item my $bundle = $node->get_bundle();
+
+Returns the L<TectoMT::Bundle|TectoMT::Bundle> object in which the node's tree is contained.
+
+=item my $document = $node->get_document();
+
+Returns the L<TectoMT::Document|TectoMT::Document> object in which the node's tree is contained.
+
+=back
+
+
+=head2 Access to attributes
+
+=over 4
+
+=item my $value = $node->get_attr($name);
+
+Returns the value of the node attribute of the given name.
+
+=item my $node->set_attr($name,$value);
+
+Sets the given attribute of the node with the given value.
+If the attribute name is 'id', then the document's indexing table
+is updated. If value of the type List is to be filled,
+then $value must be a reference to the array of values.
+
+=item my $node2 = $node1->get_deref_attr($name);
+
+If value of the given attribute is reference (or list of references),
+it returns the appropriate node (or a reference to the list of nodes).
+
+=item my $node1->set_deref_attr($name, $node2);
+
+Sets the given attribute with ID (list of IDs) of the given node (list of nodes).
+
+=item my $node->add_to_listattr($name, $value);
+
+If the given attribute is list, the given value is appended to it.
+
+=item my $node->get_attrs(qw(name_of_attr1 name_of_attr2 ...));
+
+Get more attributes at once.
+If the last argument is C<{undefs=E<gt>$value}>, all undefs are substituted
+by a C<$value> (typically the value is an empty string).
+
+=back
+
+
+
+
+=head2 Access to tree topology
+
+=over 4
+
+=item my $parent_node = $node->get_parent();
+
+Returns the parent node, or undef if there is none (if $node itself is the root)
+
+=item $node->set_parent($parent_node);
+
+Makes $node a child of $parent_node.
+
+=item $node->disconnect();
+
+Disconnecting a node (or a subtree rooted by the given node)
+from its parent. Underlying fs-node representation is disconnected too.
+Node identifier is removed from the document indexing table.
+The disconnected node cannot be further used.
+
+=item my $root_node = $node->get_root();
+
+Returns the root of the node's tree.
+
+=item my $root_node = $node->is_root();
+
+Returns true if the node has no parent.
+
+=back
+
+Next three methods (for access to children / descendants / siblings)
+have an optional argument C<$arg_ref> for specifying switches.
+By adding some switches, you can modify the behavior of these methods.
+See L<"Switches"> for examples.
+
+=over
+
+=item my @child_nodes = $node->get_children($arg_ref);
+
+Returns an array of child nodes.
+
+=item my @descendant_nodes = $node->get_descendants($arg_ref);
+
+Returns an array of descendant nodes ('transitive children').
+
+=item my @sibling_nodes = $node->get_siblings($arg_ref);
+
+Returns an array of nodes sharing the parent with the current node.
+
+=back
+
+=head3 Switches
+
+Actually there are 6 switches:
+
+=over
+
+=item * ordered
+
+=item * preceding_only, following_only
+
+=item * first_only, last_only
+
+=item * add_self
+
+=back
+
+=head4 Examples of usage
+
+Names of variables in the examples suppose a language with left-to-right script.
+
+ my @ordered_descendants       = $node->get_descendants({ordered=>1});
+ my @self_and_left_children    = $node->get_children({preceding_only=>1, add_self=>1});
+ my @ordered_self_and_children = $node->get_children({ordered=>1, add_self=>1});
+ my $leftmost_child            = $node->get_children({first_only=>1});
+ my @ordered_siblings          = $node->get_siblings({ordered=>1});
+ my $left_neighbor             = $node->get_siblings({preceding_only=>1, last_only=>1});
+ my $right_neighbor            = $node->get_siblings({following_only=>1, first_only=>1});
+ my $leftmost_sibling_or_self  = $node->get_siblings({add_self=>1, first_only=>1});
+
+=head4 Restrictions
+
+=over
+
+=item *
+
+B<first_only> and B<last_only> switches makes the method return just one item - a scalar,
+even if combined with the B<add_self> switch.
+
+=item *
+
+Specifying B<(first|last|preceding|following)_only> implies B<ordered>,
+so explicit addition of B<ordered> gives a warning.
+
+=item *
+
+Specifying both B<preceding_only> and B<following_only> gives an error
+(same for combining B<first_only> and B<last_only>).
+
+=back
+
+=head4 Shortcuts
+
+There are shortcuts for comfort of those who use B<left-to-right> scripts:
+
+=over
+
+=item my $left_neighbor_node = $node->get_left_neighbor();
+
+Returns the rightmost node from the set of left siblings (the nearest left sibling).
+Actually, this is shortcut for C<$node-E<gt>get_siblings({preceding_only=E<gt>1, last_only=E<gt>1})>.
+
+=item my $right_neighbor_node = $node->get_right_neighbor();
+
+Returns the leftmost node from the set of right siblings (the nearest right sibling).
+Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1, first_only=E<gt>1})>.
+
+=back
+
+=head2 Access to nodes ordering
+
+=over 4
+
+=item my $attrname = $node->get_ordering_attribute();
+
+Returns the name of the ordering attribute ('ord' by default).
+This method is supposed to be redefined in derived classes
+(to return e.g. 'deepord' for tectogrammatical layer nodes).
+All methods following in this section make use of this method.
+
+=item my $ord = $node->get_ordering_value();
+
+Returns the ordering value of the given node.
+(In this class, i.e. the value of 'ord' attribute.)
+
+=item $rootnode->normalize_node_ordering();
+
+The values of the ordering attribute of all nodes in the tree
+(possibly containing negative or fractional numbers) are normalized.
+The node ordering is preserved, but only integer values are used now
+(starting from 0 for the root, with increment 1).
+This method can be called only on tree roots (nodes without parent),
+otherwise fatal error is invoked.
+BEWARE: This method is only needed when there are some fractional values
+of the ordering atttribute in a tree. If possible, use methods from the next
+section (L<Reordering nodes|"Reordering nodes">) instead of do-it-yourself
+reordering that involves fractional ords.
+
+=item my $boolean = $node->precedes($another_node);
+
+Does this node precedes C<$another_node>?
+
+=item my $following_node = $node->get_next_node();
+
+Return the closest following node (according to the ordering attribute)
+or C<undef> if C<$node> is the last one in the tree.
+
+=item my $preceding_node = $node->get_prev_node();
+
+Return the closest preceding node (according to the ordering attribute)
+or C<undef> if C<$node> is the first one in the tree.
+
+=back
+
+
+
+=head2 Reordering nodes
+
+Next four methods for changing the order of nodes
+(typically the word order defined by the attribute C<ord>)
+have an optional argument C<$arg_ref> for specifying switches.
+Actually there is only one switch - B<without_children>
+which is by default set to 0.
+It means that the default behavior is to shift the node
+with all its descendants.
+Only if you want to leave the position of the descendants unchanged
+and shift just the node, use e.g.
+
+ $node->shift_after_node($reference_node, {without_children=>1});
+
+Shifting involves only changing the ordering attribute of nodes.
+There is no rehanging (changing parents). The node which is
+going to be shifted must be already added to the tree
+and the reference node must be in the same tree.
+
+For languages with left-to-right script: B<after> means "to the right of"
+and B<before> means "to the left of".
+
+=over
+
+=item $node->shift_after_node($reference_node);
+
+Shifts (changes the ord of) the node just behind the reference node.
+
+=item $node->shift_after_subtree($reference_node);
+
+Shifts (changes the ord of) the node behind the subtree of the reference node.
+
+=item $node->shift_before_node($reference_node);
+
+Shifts (changes the ord of) the node just in front of the reference node.
+
+=item $node->shift_before_subtree($reference_node);
+
+Shifts (changes the ord of) the node in front of the subtree of the reference node.
+
+=back
+
+
+
+
+
+=head2 Other methods
+
+=over 4
+
+=item $node->generate_new_id();
+
+Generate new (=so far unindexed) identifier (to be used when creating new nodes).
+The new identifier is derived from the identifier of the root ($node->root), by adding
+suffix x1 (or x2, if ...x1 has already been indexed, etc.) to the root's id.
+
+=item my $position = $node->get_fposition();
+
+Return the node address, i.e. file name and node's position within the file, similarly
+to TrEd's FPosition() (but the value is only returned, not printed).
+
+=item my $levels = $node->get_depth();
+
+Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
+
+=back
+
+
+=head2 DEPRECATED METHODS
+
+Instead of C<$node-E<gt>geta_xy()>, use C<$node-E<gt>get_attr('xy')>
+(the shortcut notation did not come into the use of TectoMT programmers).
+
+Instead of methods with I<ordered>, I<left>, I<right> in names,
+use appropriate L<switches|"Switches"> (for access to children / descendants / siblings)
+or L<shifting methods|"Reordering nodes"> (for shifting / reordering).
+
+
+=over
+
+=item my $value = $node->geta_ATTRNAME();
+
+Generic set of faster-to-write attribute-getter methods, such as $node->geta_functor()
+equivalent to $node->get_attr('functor'), or $node->geta_gram__number() equivalent to
+$node->get_attr('gram/number'). In the case of structured attributes, '/' in the attribute name
+is to be substituted with '__' (double underscore).
+
+=item  $node->seta_ATTRNAME($name,$value);
+
+Generic set of faster-to-write attribute-setter methods, such as $node->seta_functor('ACT')
+equivalent to $node->set_attr('functor','ACT'), or $node->seta_gram__number('pl') equivalent to
+$node->get_attr('gram/number','pl'). In the case of structured attributes, '/' in the attribute name
+is to be substituted with '__' (double underscore).
+
+=item my @child_nodes = $node->get_ordered_children();
+
+Returns array of descendants sorted using the get_ordering_value method.
+
+=item my @left_child_nodes = $node->get_left_children();
+
+Returns array of sorted descendants with the ordering value
+smaller than that of the given node.
+
+=item my @right_child_nodes = $node->get_right_children();
+
+Returns array of sorted descendants with the ordering value
+bigger than that of the given node.
+
+=item my $leftmost_child_node = $node->get_leftmost_child();
+
+Returns the child node with the smallest ordering value.
+
+=item my $rightmost_child_node = $node->get_rightmost_child();
+
+Returns the child node with the biggest ordering value.
+
+=item my @sibling_nodes = $node->get_ordered_siblings();
+
+Returns an array of sibling nodes (nodes sharing their parent with
+the current node), ordered according to get_ordering_value.
+
+=item my @left_sibling_nodes = $node->get_left_siblings();
+
+Returns an array (ordered according to get_ordering_value) of sibling nodes with
+ordering values smaller than that of the current node.
+
+=item my @right_sibling_nodes = $node->get_right_siblings();
+
+Returns an array (ordered according to get_ordering_value) of sibling nodes with
+ordering values bigger than that of the current node.
+
+=item $node->shift_left();
+
+Node and its subtree is moved among its siblings. Projective tree is assumed.
+
+=item $node->shift_right();
+
+Node and its subtree is moved among its siblings. Projective tree is assumed.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright 2006-2009 Zdenek Zabokrtsky, Martin Popel.
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README

@@ -1,5 +1,7 @@
 package Treex::Core::Scenario;
 
+our $VERSION = '0.1';
+
 use Moose;
 use MooseX::FollowPBP;
 

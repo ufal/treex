@@ -254,3 +254,143 @@ sub get_messages {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::Bundle
+
+
+=head1 DESCRIPTION
+
+A bundle in TectoMT corresponds to one sentence in its various forms/representations
+(esp. its representations on various levels of language description, but also
+possibly including its counterpart sentence from a parallel corpus, or its
+automatically created translation, and their linguistic representations,
+be they created by analysis / transfer / synthesis). Attributes can be
+attached to a bundle as a whole.
+
+
+=head1 METHODS
+
+=head2 Construction
+
+=over 4
+
+=item  my $new_bundle = $doc->create_bundle;
+
+Adds a new empty tree bundle to the end of the document.
+Bundle constructor should be never called directly!
+
+=back
+
+
+
+=head2 Access to attributes
+
+=over 4
+
+=item my $value = $bundle->get_attr($name);
+
+Returns the value of the bundle attribute of the given name.
+
+
+=item $bundle->set_attr($name,$value);
+
+Sets the given attribute of the bundle with the given value.
+
+=back
+
+
+
+=head2 Access to the subsumed trees
+
+=over 4
+
+=item my $root_node = $bundle->get_tree($tree_name);
+
+Returns the TectoMT::Node object which is the root of
+the tree named $tree_name. Fatal error is caused if
+no tree of the given name is present in the bundle.
+
+
+=item $bundle->create_tree($tree_name);
+
+Creates a new tree of the type $tree_name in the bundle.
+
+
+=item $bungle->contains_tree($tree_name);
+
+Returns true if a tree of the given name is present
+in the budnle.
+
+=item $bundle->get_tree_names();
+
+Returns alphabetically sorted array of names of trees
+contained in the bundle.
+
+=item $bundle->get_all_trees();
+
+Returns the root nodes of all trees in the bundle.
+
+=back
+
+
+=head2 Access to generic attributes and trees
+
+Besides trees and bundle attributes with names statically predefined in the TectoMT
+pml schema (such as 'SCzechT' or 'czech_source_sentence'), one can
+use generic attributes and trees, which are parametrizable by
+language (using ISO 639 codes) and direction (S for source, T for target).
+Tree names then look e.g. like 'SarA' (source-side arabic analytical tree).
+Attribute names look like 'Sar sentence' (source-side arabic sentence).
+
+
+=over 4
+
+=item my $value = $bundle->get_generic_attr($name);
+
+=item $bundle->set_generic_attr($name,$value);
+
+=item my $root_node = $bundle->get_generic_tree($tree_name);
+
+=item $bundle->set_generic_tree($tree_name,$root_node);
+
+=back
+
+
+=head2 Access to the bundle message board
+
+Short unstructured pieces of information can be stored with bundles,
+e.g. because of special needs of inter-block communication. For example,
+a message can be left in a bundle that the contained sentece cannot
+be parsed by an ordinary parsing block and should be parsed later by
+a fallback-parser block.
+
+=over 4
+
+=item $bundle->leave_message($message_text);
+
+=item $bundle->get_messages();
+
+=back
+
+
+=head2 Access to the containers
+
+=over 4
+
+=item $document = $bundle->get_document();
+
+Returns the TectoMT::Document object in which the bundle is contained.
+
+=back
+
+
+
+=head1 COPYRIGHT
+
+Copyright 2006 Zdenek Zabokrtsky.
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
