@@ -119,3 +119,61 @@ sub set_r_attr {
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Core::TectoMTStyleAccessors
+
+
+=head1 VERSION
+
+0.0.2
+
+=head1 SYNOPSIS
+
+ use Treex::Core::Scenario;
+ ??? ??? ??? ???
+
+
+
+=head1 DESCRIPTION
+
+Factory for creating document objects (to avoid calling constructors).
+
+Moose role providing Treex::Core::Node,Bundle,Document
+with TectoMT-style accessors to object attributes.
+
+=head1 METHODS
+
+TectoMT-style accessors provided by this role:
+(their description from the old TectoMT modules should be copied here) !!!!
+
+=over 4
+
+=item get_attr
+
+=item set_attr
+
+=item get_deref_attr
+
+=item set_deref_attr
+
+=item get_r_attr
+
+=item set_r_attr
+
+
+=back
+
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT
+
+Copyright 2010 Zdenek Zabokrtsky
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+

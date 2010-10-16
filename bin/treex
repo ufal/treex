@@ -4,8 +4,7 @@
 use strict;
 use warnings;
 use Moose;
-use Treex::Core::Document;
-use Treex::Core::Factory;
+use Treex::Core;
 use Pod::Usage;
 
 use Getopt::Long;

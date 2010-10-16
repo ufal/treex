@@ -760,23 +760,6 @@ sub non_projective_shift_to_leftmost_of {
     return;
 }
 
-# umozni misto $node->get_attr('functor') psat jen $node->geta_functor; #  opsano z Conway str. 396
-sub AUTOMETHOD {
-    my ( $self, $obj_id, @other_args ) = @_;
-    my $subroutine_name = $_; # predavani nazvu volane procedury - specialita AUTOMETHOD
-
-    my ( $mode, $name ) = $subroutine_name =~ m/\A ([gs]eta)_(.*) \z/xms
-        or return;
-
-    _deprecated('$node->get_attr()');
-    $name =~ s/__/\//g;
-
-    if ( $mode eq 'geta' ) {
-        return sub { return $self->get_attr( $name, @other_args ); }
-    } else {                    # mode eq seta
-        return sub { return $self->set_attr( $name, @other_args ); }
-    }
-}
 
 sub get_self_and_descendants {
     my ($self) = @_;
@@ -988,6 +971,10 @@ Returns the root of the node's tree.
 
 Returns true if the node has no parent.
 
+=item $node1->is_descendant_of($node2);
+
+Tests whether $node1 is among transitive descendants of $node2;
+
 =back
 
 Next three methods (for access to children / descendants / siblings)
@@ -1095,6 +1082,11 @@ All methods following in this section make use of this method.
 Returns the ordering value of the given node.
 (In this class, i.e. the value of 'ord' attribute.)
 
+=item $node->set_ordering_value($ord);
+
+Setting the ordering value of the given node.
+Should not be used directly, shifting methods should be used instead.
+
 =item $rootnode->normalize_node_ordering();
 
 The values of the ordering attribute of all nodes in the tree
@@ -1169,6 +1161,28 @@ Shifts (changes the ord of) the node in front of the subtree of the reference no
 =back
 
 
+=head2 Metods for processing clauses, !!!!
+
+=over 4
+
+=item get_clause_descendants
+
+=item get_clause_head
+
+=item get_clause_nodes
+
+=item get_clause_root
+
+=back
+
+
+=head2 PML-related methods
+
+=over 4
+
+=item my $type = $node->get_pml_type_name;
+
+=back
 
 
 
@@ -1190,6 +1204,11 @@ to TrEd's FPosition() (but the value is only returned, not printed).
 =item my $levels = $node->get_depth();
 
 Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
+
+=item $node->is_coap_root();
+
+Empty predecessor of a-tree and t-tree methods for recognizing
+roots of coordination and apposition constructions.
 
 =back
 
@@ -1264,6 +1283,18 @@ Node and its subtree is moved among its siblings. Projective tree is assumed.
 =item $node->shift_right();
 
 Node and its subtree is moved among its siblings. Projective tree is assumed.
+
+=item get_self_and_descendants
+
+=item get_first_child
+
+=item get_ordered_descendants
+
+=item get_ordered_self_and_descendants
+
+=item non_projective_shift_to_leftmost_of
+
+=item shift_to_leftmost
 
 =back
 

@@ -360,7 +360,7 @@ __END__
 
 =head1 NAME
 
-TectoMT::Block
+Treex::Core::Scenario
 
 
 =head1 VERSION
@@ -369,7 +369,7 @@ TectoMT::Block
 
 =head1 SYNOPSIS
 
- use TectoMT::Bundle;
+ use Treex::Core::Scenario;
  ??? ??? ??? ???
 
 
@@ -377,7 +377,7 @@ TectoMT::Block
 =head1 DESCRIPTION
 
 
-?? ?? ?? ?? ?? ???? ?? ???? ?? ???? ?? ??
+?? ?? ?? ?? ?? ???? ?? ???? ?? ???? ?? ?? needs to be updated
 
 
 =head1 METHODS
@@ -386,7 +386,11 @@ TectoMT::Block
 
 =over 4
 
-=item my $scenario = TectoMT::Scenario->new({'blocks'=> [ qw(Blocks::Tokenize  Blocks::Lemmatize) ]);
+=item BUILD
+
+The real constructor that should not be called directly.
+
+=item my $scenario = Treex::Core::Scenario->new({'blocks'=> [ qw(Blocks::Tokenize  Blocks::Lemmatize) ]);
 
 Constructor argument is a reference to a hash containing options. Option 'blocks' specifies
 the reference to the array of names of blocks which are to be executed (in the specified order)
@@ -409,13 +413,32 @@ Applies the sequence of blocks on the specified Treex::Core::Document objects.
 Opens the PML files (corresponding instances of Treex::Core::Documents), applies the
 translation blocks on them, and saves the files back (under the same names).
 
+=item $scenario->apply_on_tmt_files_without_save(@file_names);
+
 =item $scenario->apply_on_fsfile_objects(@fsfiles);
 
 It applies the blocks on the given list of instances of class FSFile
 (e.g. $grp->{FSFile} in btred/ntred)
 
+=item $scenario->apply_on_stream($stream);
+
+It applies the blocks on a stream of treex documents.
+
 =back
 
+=head2 Rather internal methods for loading scenarios
+
+=over 4
+
+=item construct_block
+
+=item construct_scenario_string
+
+=item load_scenario_file
+
+=item parse_scenario_string
+
+=back
 
 
 =head1 SEE ALSO

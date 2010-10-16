@@ -97,3 +97,59 @@ sub createTypedNode {
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Core::Factory
+
+
+=head1 VERSION
+
+0.0.2
+
+=head1 SYNOPSIS
+
+ use Treex::Core::Scenario;
+ ??? ??? ??? ???
+
+
+
+=head1 DESCRIPTION
+
+Factory for creating document objects (to avoid calling constructors).
+
+
+=head1 METHODS
+
+=head2 Constructor
+
+=over 4
+
+=item my $doc = Treex::Core::Factory->createDocument;
+
+Creates an empty Treex document.
+
+=item my $doc = Treex::Core::Factory->createDocumentFromFile($filename);
+
+Constructor argument is a reference to a hash containing options. Option 'blocks' specifies
+the reference to the array of names of blocks which are to be executed (in the specified order)
+when the scenario is applied on a Treex::Core::Document object.
+
+=item my $doc = Treex::Core::Factory->createTypedNode;
+
+internal
+
+=back
+
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT
+
+Copyright 2010 Zdenek Zabokrtsky
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+
