@@ -23,7 +23,7 @@ sub share_dir {
 sub pml_schema_dir {
 
     if (devel_version()) {
-        return lib_core_dir."/share/pml_schema/";
+        return lib_core_dir()."/share/pml_schema/";
     }
     else {
         return File::ShareDir::dist_dir('Treex-Core')."/?????"; # tady nekde kolem to po instalaci bude
@@ -31,7 +31,7 @@ sub pml_schema_dir {
 }
 
 sub lib_core_dir {
-    return caller_dir;
+    return caller_dir();
 }
 
 sub caller_dir {

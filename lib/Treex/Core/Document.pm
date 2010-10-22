@@ -5,6 +5,7 @@ our $VERSION = '0.1';
 use Moose;
 use MooseX::FollowPBP;
 use Treex::Core::TectoMTStyleAccessors;
+use Treex::Core::Config;
 
 with 'Treex::Core::TectoMTStyleAccessors';
 
@@ -62,7 +63,7 @@ Treex::PML::UseBackends('PMLBackend');
 Treex::PML::AddResourcePath(
     $ENV{"TRED_DIR"},
     $ENV{"TRED_DIR"} . "/resources/",
-    $ENV{"TMT_ROOT"} . "/pml_schemas/"
+    Treex::Core::Config::pml_schema_dir(),
 );
 
 my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
