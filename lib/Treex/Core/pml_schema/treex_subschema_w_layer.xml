@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>W-layer</description>
+
+
+  <!-- support for embeding XML into w-layer, adapted from PDT2.0 and arranged -->
+
+  <type name="w-doc.type">
+    <container>
+      <sequence content_pattern="para+">
+        <element name="para" type="w-para.type"/>
+      </sequence>
+    </container>
+  </type>
+
+  <type name="w-para.type">
+    <sequence>
+      <element name="othermarkup" type="w-othermarkup.type"/>
+      <element name="w" type="w-node.type"/>
+    </sequence>
+  </type>
+
+  <type name="w-othermarkup.type">
+    <container>
+      <attribute name="origin"><cdata format="any"/></attribute>
+      <cdata format="any"/>
+    </container>
+  </type>
+
+  <type name="w-node.type">
+    <structure name="w-node">
+      <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="token" required="1"><cdata format="any"/></member>
+      <member name="no_space_after" type="bool.type"/>
+    </structure>
+  </type>
+
+<!-- radeji do common -->
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+
+</pml_schema>

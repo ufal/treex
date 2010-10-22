@@ -1,0 +1,902 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>T-layer schema</description>
+  <!-- Treex PML schema  -->
+
+  <import type="bbn_tag.type" schema="treex_subschema_bbn.xml"/>
+  <import type="align-links.type" schema="treex_subschema_a_layer.xml"/>
+
+
+  <type name="t-root.type">
+    <structure role="#NODE" name="t-root">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="language" as_attribute="1" ><cdata format="any"/></member>
+      <member name="direction" as_attribute="1"><cdata format="any"/></member>
+
+      <member name="atree.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="nodetype">
+        <constant>root</constant>
+      </member>
+      <member name="cze_sentence">
+	    <cdata format="any"/>
+      </member>
+      <member name="deepord" required="0"> <!-- zakomentovane role="#ORDER" -->
+        <cdata format="nonNegativeInteger"/>
+      </member>
+      <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations
+           PML implementation allows for only one attr with #ORDER role
+      -->
+      <member name="ord" role="#ORDER" required="0">
+	    <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="t-node.type"/>
+      </member>
+	  <member name="anot_error" type="t-anot_error.type" />
+      <member name="pcedt_coref" type="t-pcedt_coref-root.type" />
+      <member name="subtree_scores"  type="subtree_scores.type"/>
+    </structure>
+  </type>
+
+  <type name="t-node.type">
+    <structure role="#NODE" name="t-node">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="a" type="t-a.type"/>
+      <member name="compl.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+      <member name="coref_text.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+      <member name="coref_gram.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+	  <member name="coref_special" type="coref_special.type"/>
+	  <member name="pcedt" type="t-pcedt.type"/>
+      <member name="val_frame.rf">
+        <alt>
+          <cdata format="PMLREF"/>
+        </alt>
+      </member>
+	  <member name="nombank_data"><cdata format="any" /></member>
+      <member name="pcedt_coref" type="t-pcedt_coref.type"/>
+      
+      <member name="nodetype"  type="t-nodetype.type"/>
+      <member name="is_generated" type="bool.type"/>
+      <member name="t_lemma" >
+        <cdata format="any"/>
+      </member>
+      <member name="functor" >
+        <alt type="func.type"/>
+      </member>
+      <member name="subfunctor" type="t-subfunctor.type"/>
+      <member name="is_member" type="bool.type"/>
+      <member name="is_name_of_person" type="bool.type"/>
+	  <member name="bbn_tag" type="bbn_tag.type"/>
+	  <member name="anot_error" type="t-anot_error.type" />
+      <member name="quot">
+        <list ordered="0">
+          <structure>
+            <member name="type"  type="t-type.type"/>
+            <member name="set_id" >
+              <cdata format="any"/>
+            </member>
+          </structure>
+        </list>
+      </member>
+      <member name="is_dsp_root" type="bool.type"/>
+      <member name="sentmod" type="t-sentmod.type"/>
+      <member name="gram" type="t-gram.type"/>
+      <member name="named_entity" type="t-named_entity.type"/>
+      <member name="tfa" type="t-tfa.type"/>
+      <member name="is_parenthesis" type="bool.type"/>
+      <member name="is_state" type="bool.type"/>
+      <member name="is_name" type="bool.type"/>
+
+      <member name="is_passive" type="bool.type"/>
+      <member name="voice"><cdata format="any"/></member> <!-- pro anglictinu active/passive, pro cestinu jich bude vic! -->
+      <member name="is_infin" type="bool.type"/>
+      <member name="is_reflexive" type="bool.type"/>
+      <member name="is_optimizable" type="bool.type"/>
+      <member name="is_clause_head" type="bool.type"/>
+      <member name="is_relclause_head" type="bool.type"/>
+      <member name="deepord"  > <!-- zakomentovana  role="#ORDER" -->
+        <cdata format="nonNegativeInteger"/>
+      </member>
+      <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations
+           PML implementation allows for only one attr with #ORDER role
+      -->
+      <member name="ord" role="#ORDER" required="0">
+	    <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="t-node.type"/>
+      </member>
+      <member name="formeme" >
+        <cdata format="any"/>
+      </member>
+
+       <member name="translation_model"   type="translation_model.type"/>
+       <member name="mlayer_pos"><cdata format="any"/></member>
+        <!-- popel 13.12.2008
+             Values could be something like: clone, rule, czeng_dict, czeng_dict+language_model, perceptron, ...
+             It is analogic to translation_model/t_lemma_variants/origin.
+        -->
+        <member name="t_lemma_origin"><cdata format="any"/></member>
+       <member name="formeme_origin"><cdata format="any"/></member>
+
+      <member name="align">
+        <structure>
+           <member name="links">
+             <list ordered="0" type="align-links.type"/>
+           </member>
+           <member name="giza_links">
+             <list ordered="0" type="align-links.type"/>
+           </member>
+           <member name="manual_links">
+             <list ordered="0" type="align-links.type"/>
+           </member>
+           <member name="rules">
+             <list ordered="0">
+               <cdata format="any"/>
+             </list>
+           </member>
+           <member name="is_aligned_edge" type="bool.type"/>
+           <member name="t_lemma_variants">
+             <list ordered="0">
+              <cdata format="any"/>
+             </list>
+           </member>
+        </structure>
+      </member>
+
+      <member name="source">
+        <structure>
+           <member name="head.rf">
+             <cdata format="PMLREF"/>
+           </member>
+        </structure>
+      </member>
+
+      <member name="clause_number"><cdata format="any"/></member>
+
+      <!-- cz_generate debugging information = safe to delete (ptacek 3.8.08)
+      <member name="formeme_processed"><cdata format="any"/></member>
+      <member name="numericTrlemmaConverted"><cdata format="any"/></member>
+      <member name="has_right_delimiter"><cdata format="any"/></member>
+      <member name="derivation_processed"><cdata format="any"/></member>
+      <member name="diathesis"><cdata format="any"/></member>
+      <member name="vallexFrame.str"><cdata format="any"/></member>
+      <member name="xml_formemes.str"><cdata format="any"/></member>
+      <member name="isSubordinate"><cdata format="any"/></member>
+      <member name="reorderCprLeftTo"><cdata format="any"/></member>
+      <member name="reorderLeftLeftmostParent"><cdata format="any"/></member>
+      <member name="reorderRightLeftmostParent"><cdata format="any"/></member>
+      <member name="reorderRhem"><cdata format="any"/></member>
+      <member name="delayed_reorder">
+      	<structure>
+      		<member name="is_genitive_reorder"><cdata format="any"/></member>
+      	</structure>
+      </member>-->
+
+      <!-- merging NE recognition results into t-tree for pmltq querying-->
+      <member name="ne">
+		<structure>
+			<member name="type"><cdata format="any"/></member>
+		</structure>
+      </member>
+      
+      <!-- wordnet stuff (ptacek 16.2.2010)-->
+      <member name="wn">
+       		<structure>
+       			<member name="synset_id"><cdata format="any"/></member>
+       			<member name="hyperchain"><cdata format="any"/></member>
+       		</structure>
+      </member>
+      
+      <!-- knowledgebase stuff (ptacek 16.2.2010)-->
+      <member name="kb">
+       		<structure>
+       			<member name="id"><cdata format="any"/></member>
+       			<member name="type"><cdata format="any"/></member>
+       		</structure>
+       </member>
+       
+       <!-- TimeML stuff (ptacek 22.2.2010)-->
+      <member name="timeml">
+       		<structure>
+       			<member name="timex3">
+       				<structure>
+       					<member name="tid"><cdata format="any"/></member>
+       					<member name="type" type="timex3-type.type" />
+       					<member name="value"><cdata format="any"/></member>
+       					<member name="mod" type="timex3-mod.type" />
+       					<member name="freq"><cdata format="any"/></member>
+       					<member name="quant"><cdata format="any"/></member>
+       				</structure>
+       			</member>
+       			<member name="event">
+       				<structure>
+       					<member name="eid"><cdata format="any"/></member>
+       					<member name="class" type="timeml-event-class.type" />
+       				</structure>
+       			</member>
+       			<member name="signal">
+       				<structure>
+       					<member name="sid"><cdata format="any"/></member>
+       				</structure>
+       			</member>
+       		</structure>
+       </member>
+
+      <!-- dott to tmt (ptacek 3.8.08)-->
+	  <member name="dott">
+	  	<structure>
+	  		<member name="pos.str"><cdata format="any"/></member>
+	  		<member name="tag"><cdata format="any"/></member>
+	  	</structure>
+	  </member>
+
+      <!-- When doing temporary changes of a tree structure, original parent
+           is saved before changing so it can be later restored. (popel 19.2.2009) -->
+	  <member name="original_parent.rf"><cdata format="PMLREF"/></member>
+	  
+	  <!-- t_lemma == 'dva' => numeric_t_lemma == '2' (ptacek 1.6.2010)-->
+	  <member name="numeric_t_lemma" >
+    	<cdata format="any"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="t-anot_error.type">
+    <list ordered="0">
+	  <cdata format="any"/>
+	</list>
+  </type>
+
+  <type name="t-annot_comment.type">
+      <structure>
+          <member name="type" required="1">
+            <cdata format="any"/>
+          </member>
+          <member name="text">
+            <cdata format="any"/>
+          </member>
+      </structure>
+  </type>
+
+  <type name="t-pcedt_coref.type">
+      <structure>
+          <member name="annot_comment">
+              <list ordered="0" type="t-annot_comment.type"/>
+          </member>
+          <member name="highlite" type="bool.type"/>
+          <member name="functor_change">
+              <list ordered="1">
+                  <cdata format="any"/>
+              </list>
+          </member>
+          <member name="is_unchecked" type="bool.type"/>          
+      </structure>
+  </type>
+
+  <type name="t-pcedt_coref-root.type">
+      <structure>
+          <member name="annot_comment">
+              <list ordered="0" type="t-annot_comment.type"/>
+          </member>
+      </structure>          
+  </type>
+    
+
+  <type name="t-tfa.type">
+    <choice>
+      <value>t</value>
+      <value>f</value>
+      <value>c</value>
+    </choice>
+  </type>
+
+  <type name="t-gram.type">
+    <structure>
+      <member name="sempos"  type="t-sempos.type"/>
+      <member name="gender" type="t-gender.type"/>
+      <member name="number" type="t-number.type"/>
+      <member name="degcmp" type="t-degcmp.type"/>
+      <member name="verbmod" type="t-verbmod.type"/>
+      <member name="deontmod" type="t-deontmod.type"/>
+      <member name="tense" type="t-tense.type"/>
+      <member name="aspect" type="t-aspect.type"/>
+      <member name="resultative" type="t-resultative.type"/>
+      <member name="dispmod" type="t-dispmod.type"/>
+      <member name="iterativeness" type="t-iterativeness.type"/>
+      <member name="indeftype" type="t-indeftype.type"/>
+      <member name="person" type="t-person.type"/>
+      <member name="numertype" type="t-numertype.type"/>
+      <member name="politeness" type="t-politeness.type"/>
+      <member name="negation" type="t-negation.type"/>
+      <member name="definiteness" type="t-definiteness.type"/>
+    </structure>
+  </type>
+
+  <type name="t-pcedt.type">
+	<structure>
+		<member name="cz_verb" required="0">
+			<cdata format="any"/>
+		</member>
+		<member name="translation_type" required="0">
+			<cdata format="any"/>
+		</member>
+		<member name="pattern" required="0">
+			<cdata format="nonNegativeInteger"/>
+		</member>
+		<member name="pattern_mode" required="0" type="pcedt-pattern_mode.type"/>
+		<member name="alt_pattern" required="0">
+			<list ordered="0" type="pcedt-alt_pattern.type"/>
+		</member>
+	</structure>
+  </type>
+
+  <type name="pcedt-pattern_mode.type">
+    <choice>
+		<value>f</value>
+		<value>a</value>
+		<value>u</value>
+		<value>x</value>
+    </choice>
+  </type>
+
+  <type name="pcedt-alt_pattern.type">
+	  <structure>
+		  <member name="pattern" required="0">
+			  <cdata format="nonNegativeInteger"/>
+		  </member>
+		  <member name="pattern_mode" required="0" type="pcedt-pattern_mode.type"/>
+	  </structure>
+  </type>
+
+  <type name="t-named_entity.type">
+    <structure>
+      <member name="number"><cdata format="any"/></member>
+      <member name="type"  type="t-ne-type.type"/>
+    </structure>
+  </type>
+
+  <type name="t-ne-type.type">
+    <choice>
+      <value>person</value>
+      <value>organization</value>
+      <value>location</value>
+    </choice>
+  </type>
+
+  <type name="t-negation.type">
+    <choice>
+      <value>neg0</value>
+      <value>neg1</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-politeness.type">
+    <choice>
+      <value>polite</value>
+      <value>basic</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-numertype.type">
+    <choice>
+      <value>basic</value>
+      <value>set</value>
+      <value>kind</value>
+      <value>ord</value>
+      <value>frac</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-person.type">
+    <choice>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-indeftype.type">
+    <choice>
+      <value>relat</value>
+      <value>indef1</value>
+      <value>indef2</value>
+      <value>indef3</value>
+      <value>indef4</value>
+      <value>indef5</value>
+      <value>indef6</value>
+      <value>inter</value>
+      <value>negat</value>
+      <value>total1</value>
+      <value>total2</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-iterativeness.type">
+    <choice>
+      <value>it1</value>
+      <value>it0</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-dispmod.type">
+    <choice>
+      <value>disp1</value>
+      <value>disp0</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </type>
+
+  <type name="t-resultative.type">
+    <choice>
+      <value>res1</value>
+      <value>res0</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-definiteness.type">
+    <choice>
+      <value>def1</value>
+      <value>def0</value>
+      <value>definite</value> <!-- three values added because of Arabic -->
+      <value>indefinite</value>
+      <value>reduced</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-aspect.type">
+    <choice>
+      <value>proc</value>
+      <value>cpl</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-tense.type">
+    <choice>
+      <value>sim</value>
+      <value>ant</value>
+      <value>post</value>
+      <value>nr</value>
+      <value>nil</value>
+
+	  <!-- ptacek 25.9.08; for en_generate, till 'official' set of t-attributes is established -->
+      <value>Infinitive</value>
+      <value>Present</value>
+      <value>PresentPerfect</value>
+      <value>PresentContinuous</value>
+      <value>PresentPerfectContinuous</value>
+      <value>Past</value>
+      <value>PastContinuous</value>
+      <value>PastPerfect</value>
+      <value>PastPerfectContinuous</value>
+    </choice>
+  </type>
+
+  <type name="t-deontmod.type">
+    <choice>
+      <value>deb</value>
+      <value>hrt</value>
+      <value>vol</value>
+      <value>poss</value>
+      <value>perm</value>
+      <value>fac</value>
+      <value>decl</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-verbmod.type">
+    <choice>
+      <value>ind</value>
+      <value>imp</value>
+      <value>cdn</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </type>
+
+  <type name="t-degcmp.type">
+    <choice>
+      <value>pos</value>
+      <value>comp</value>
+      <value>acomp</value>
+      <value>sup</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-number.type">
+    <choice>
+      <value>sg</value>
+      <value>du</value>
+      <value>pl</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-gender.type">
+    <choice>
+      <value>anim</value>
+      <value>inan</value>
+      <value>fem</value>
+      <value>neut</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-sempos.type">
+    <choice>
+      <value>n.denot</value>
+      <value>n.denot.neg</value>
+      <value>n.pron.def.demon</value>
+      <value>n.pron.def.pers</value>
+      <value>n.pron.indef</value>
+      <value>n.quant.def</value>
+      <value>adj.denot</value>
+      <value>adj.pron.def.demon</value>
+      <value>adj.pron.indef</value>
+      <value>adj.quant.def</value>
+      <value>adj.quant.indef</value>
+      <value>adj.quant.grad</value>
+      <value>adv.denot.grad.nneg</value>
+      <value>adv.denot.ngrad.nneg</value>
+      <value>adv.denot.grad.neg</value>
+      <value>adv.denot.ngrad.neg</value>
+      <value>adv.pron.def</value>
+      <value>adv.pron.indef</value>
+      <value>v</value>
+      <value>???</value>
+      <!--popel 17.4.2009 ??? is a special value for not recognized categories instead of undef
+          Maybe we should unify naming conventions:
+          nr is standard PDT style but clashes with code like if ($sempos =~ /^n/)
+          NR was used for afun
+          ??? is TectoMT "standard" -->
+    </choice>
+  </type>
+
+  <type name="t-sentmod.type">
+    <choice>
+      <value>enunc</value>
+      <value>excl</value>
+      <value>desid</value>
+      <value>imper</value>
+      <value>inter</value>
+    </choice>
+  </type>
+
+  <type name="t-type.type">
+    <choice>
+      <value>citation</value>
+      <value>dsp</value>
+      <value>meta</value>
+      <value>other</value>
+      <value>title</value>
+    </choice>
+  </type>
+
+  <type name="t-subfunctor.type">
+    <choice>
+      <value>above</value>
+      <value>abstr</value>
+      <value>across</value>
+      <value>after</value>
+      <value>agst</value>
+      <value>along</value>
+      <value>approx</value>
+      <value>around</value>
+      <value>basic</value>
+      <value>before</value>
+      <value>begin</value>
+      <value>behind</value>
+      <value>below</value>
+      <value>betw</value>
+      <value>circ</value>
+      <value>elsew</value>
+      <value>end</value>
+      <value>ext</value>
+      <value>flow</value>
+      <value>front</value>
+      <value>incl</value>
+      <value>in</value>
+      <value>less</value>
+      <value>mid</value>
+      <value>more</value>
+      <value>near</value>
+      <value>opp</value>
+      <value>target</value>
+      <value>than</value>
+      <value>to</value>
+      <value>wout</value>
+      <value>wrt</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-nodetype.type">
+    <choice>
+      <value>atom</value>
+      <value>coap</value>
+      <value>complex</value>
+      <value>dphr</value>
+      <value>fphr</value>
+      <value>list</value>
+      <value>qcomplex</value>
+    </choice>
+  </type>
+
+  <type name="t-a.type">
+    <structure>
+      <member name="lex.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="aux.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+    </structure>
+  </type>
+
+  <type name="coref_special.type">
+    <choice>
+      <value>segm</value>
+      <value>exoph</value>
+    </choice>
+  </type>
+
+  <type name="func.type">
+    <choice>
+      <value>ACT</value>
+      <value>AUTH</value>
+      <value>PAT</value>
+      <value>ADDR</value>
+      <value>EFF</value>
+      <value>ORIG</value>
+      <value>ACMP</value>
+      <value>ADVS</value>
+      <value>AIM</value>
+      <value>APP</value>
+      <value>APPS</value>
+      <value>ATT</value>
+      <value>BEN</value>
+      <value>CAUS</value>
+      <value>CNCS</value>
+      <value>CM</value>
+      <value>COMPL</value>
+      <value>CONJ</value>
+      <value>COND</value>
+      <value>CONFR</value>
+      <value>CONTRA</value>
+      <value>CONTRD</value>
+      <value>CPHR</value>
+      <value>CPR</value>
+      <value>CRIT</value>
+      <value>CSQ</value>
+      <value>DENOM</value>
+      <value>DIFF</value>
+      <value>DIR1</value>
+      <value>DIR2</value>
+      <value>DIR3</value>
+      <value>DISJ</value>
+      <value>DPHR</value>
+      <value>EXT</value>
+      <value>FPHR</value>
+      <value>GRAD</value>
+      <value>HER</value>
+      <value>ID</value>
+      <value>INTF</value>
+      <value>INTT</value>
+      <value>LOC</value>
+      <value>MANN</value>
+      <value>MAT</value>
+      <value>MEANS</value>
+      <value>MOD</value>
+      <value>NE</value>
+      <value>OPER</value>
+      <value>PAR</value>
+      <value>PARTL</value>
+      <value>PREC</value>
+      <value>PRED</value>
+      <value>REAS</value>
+      <value>REG</value>
+      <value>RESL</value>
+      <value>RESTR</value>
+      <value>RHEM</value>
+      <value>RSTR</value>
+      <value>SM</value>
+      <value>SUBS</value>
+      <value>TFHL</value>
+      <value>TFRWH</value>
+      <value>THL</value>
+      <value>THO</value>
+      <value>TOWH</value>
+      <value>TPAR</value>
+      <value>TSIN</value>
+      <value>TTILL</value>
+      <value>TWHEN</value>
+      <value>VOCAT</value>
+
+      <value>DESCR</value>
+      <value>???</value>
+
+    </choice>
+  </type>
+  
+   <type name="timex3-type.type">
+    <choice>
+      <value>DATE</value>
+      <value>TIME</value>
+	  <value>DURATION</value>
+	  <value>SET</value>
+	</choice>
+   </type>
+   <type name="timex3-mod.type">
+    <choice>
+      <value>BEFORE</value>
+      <value>AFTER</value>
+      <value>ON_OR_BEFORE</value>
+      <value>ON_OR_AFTER</value>
+      <value>LESS_THAN</value>
+      <value>MORE_THAN</value>
+      <value>EQUAL_OR_LESS</value>
+      <value>EQUAL_OR_MORE</value>
+      <value>START</value>
+      <value>MID</value>
+      <value>END</value>
+      <value>APPROX</value>
+	</choice>
+   </type>
+   <type name="timeml-event-class.type">
+    <choice>
+      <value>OCCURRENCE</value>
+      <value>PERCEPTION</value>
+      <value>REPORTING</value>
+      <value>ASPECTUAL</value>
+      <value>STATE</value>
+      <value>I_STATE</value>
+      <value>I_ACTION</value>
+      <value>MODAL</value>
+    </choice>
+   </type>
+   
+
+
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+
+<!-- ######################################3 -->
+
+   <type name="sentence-type.type">
+    <choice>
+      <value>information</value>
+      <value>question</value>
+      <value>instruction</value>
+      <value>confirmation</value>
+
+      <value>disbelief</value>
+      <value>surprise</value>
+      <value>repetition</value>
+      <value>other</value>
+      <value>???</value>
+    </choice>
+  </type>
+
+
+   <type name="translation_model.type">
+      <structure>
+
+         <member name="t_lemma_variants">
+           <list ordered="0">
+             <structure>
+               <member name="t_lemma"> <cdata format="any"/> </member>
+               <member name="logprob"> <cdata format="any"/> </member> <!-- Changed from prop_Lt_given_Ls, popel 13.12.2008 -->
+               <member name="backward_logprob"> <cdata format="any"/> </member> <!-- if logprob is (cs|en) then backward means (en|cs). -->
+               <member name="origin"> <cdata format="any"/> </member>  <!-- Changed from source, because we use term source in source/head.rf -->
+               <member name="pos"> <cdata format="any"/> </member>
+             </structure>
+           </list>
+         </member>
+
+         <member name="formeme_variants">
+           <list ordered="0">
+             <structure>
+               <member name="formeme"> <cdata format="any"/> </member>
+               <member name="logprob"> <cdata format="any"/> </member> <!-- Changed from prop_Ft_given_Fs, popel 13.12.2008 -->
+               <member name="backward_logprob"> <cdata format="any"/> </member>
+             </structure>
+           </list>
+         </member>
+      </structure>
+
+   </type>
+
+   <type name="language_model.type">
+      <structure>
+         <member name="gfd" type="logcount_table.type" />
+         <member name="gf" type="logcount_table.type" />
+         <member name="fd" type="logcount_table.type" />
+         <member name="d" type="logcount_table.type" />
+      </structure>
+   </type>
+
+   <type name="logcount_table.type">
+      <list ordered="0">
+        <structure>
+           <member name="key"> <cdata format="any"/> </member>
+           <member name="logcount" > <cdata format="any"/> </member>
+        </structure>
+      </list>
+   </type>
+
+
+   <type name="transition_scores.type">
+      <list ordered="0">
+        <structure>
+           <member name="hint"> <cdata format="any"/> </member>
+           <member name="score"> <cdata format="any"/> </member>
+           <member name="my_lexeme_index"> <cdata format="any"/>  </member>
+           <member name="my_formeme_index"> <cdata format="any"/> </member>
+           <member name="eparent_lexeme_index"> <cdata format="any"/> </member>
+        </structure>
+      </list>
+   </type>
+
+   <type name="subtree_scores.type">
+      <list ordered="0">
+        <structure>
+           <member name="hint"> <cdata format="any"/> </member>
+           <member name="score"> <cdata format="any"/> </member>
+           <member name="my_lexeme_index"> <cdata format="any"/>  </member>
+           <member name="transitions_to_echildren">
+             <list ordered="0">
+               <structure>
+                 <member name="echild_id"> <cdata format="any"/>   </member>
+                 <member name="echild_lexeme_index"> <cdata format="any"/> </member>
+                 <member name="echild_formeme_index"> <cdata format="any"/> </member>
+               </structure>
+             </list>
+           </member>
+        </structure>
+      </list>
+   </type>
+
+</pml_schema>

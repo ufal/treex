@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>Data for Treex (formerly TectoMT)</description>
+  <!-- Treex PML schema  -->
+
+
+  <!-- Importing schema submodules -->
+
+  <import type="langcode.type" schema="treex_subschema_langcodes.xml"/>
+  <import type="p-nonterminal.type" schema="treex_subschema_p_layer.xml"/>
+  <import type="a-root.type" schema="treex_subschema_a_layer.xml"/>
+  <import type="t-root.type" schema="treex_subschema_t_layer.xml"/>
+  <import type="n-root.type" schema="treex_subschema_n_layer.xml"/>
+  <import type="w-doc.type" schema="treex_subschema_w_layer.xml"/>
+
+
+  <!-- Each document contains "meta-attributes" common for the whole
+ document (such as the source text to be translated) and a list of
+ tree bundles related to the individual sentences. -->
+
+
+  <root name="tmt_document">
+    <structure>
+      <member name="meta" required="0" type="meta.type"/>
+      <member name="bundles" role="#TREES" required="0">
+        <list ordered="1" type="bundle.type"/>
+      </member>
+    </structure>
+  </root>
+
+
+  <!-- Metainfo (info about the whole document) -->
+  <type name="meta.type">
+    <structure>
+
+       <member name="description"><cdata format="any"/></member>
+
+       <member name="zones">
+         <sequence>
+           <element name="zone" type="language_parametrized_doc_zone.type"/>
+         </sequence>
+       </member>
+       
+    </structure>
+  </type>
+
+
+  <type name="language_parametrized_doc_zone.type" >
+    <structure>
+      <member name="language" required="1" as_attribute="1" type="langcode.type"/>
+      <member name="purpose" required="1" as_attribute="1"><cdata format="any"/></member>
+      <member name="text"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+
+
+  <type name="bundle.type" >
+    <structure role="#NODE" name="bundle-root">
+      <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="source_sentence"><cdata format="any"/></member>
+      <!--
+        Sentence transliterated to another script. Typically the target script is Latin
+        and transliteration means romanization.
+      -->
+      <member name="source_translit"><cdata format="any"/></member>
+      <member name="target_sentence"><cdata format="any"/></member>
+      <member name="target_translit"><cdata format="any"/></member>
+      <member name="english_source_sentence"><cdata format="any"/></member>
+      <member name="english_target_sentence"><cdata format="any"/></member>
+      <member name="english_baseline_sentence"><cdata format="any"/></member>
+      <member name="czech_source_sentence"><cdata  format="any"/></member>
+      <member name="czech_target_sentence"><cdata format="any"/></member>
+      <member name="czech_baseline_sentence"><cdata format="any"/></member>
+      <member name="trees">
+        <structure>
+          <member name="SEnglishP" type="p-nonterminal.type"    />
+          <member name="SCzechN" type="n-root.type"  />
+          <member name="SEnglishN" type="n-root.type"  />
+        </structure>
+      </member>
+
+      <member name="zones">
+        <sequence>
+          <element name="zone" type="zone.type"/>
+        </sequence>
+      </member>
+
+      <member name="message_board">
+        <list ordered="1">
+           <cdata format="any"/>
+        </list>
+      </member>
+      
+      <!-- ptacek: -->
+      <member name="dialog">
+       		<structure>
+       			<member name="from"><cdata format="any"/></member>
+       			<member name="to"><cdata format="any"/></member>
+       			<member name="body_asr_confidence"><cdata format="any"/></member>
+       			<member name="body_gesture"><cdata format="any"/></member>
+       			<member name="body_emotion"><cdata format="any"/></member>
+       			<member name="dialog_act"><cdata format="any"/></member>
+       			<member name="sentence_type"><cdata format="any"/></member>
+       			<member name="utterance_datetime"><cdata format="any"/></member>
+       			<member name="local_timezone"><cdata format="any"/></member>
+       		</structure>
+       </member>
+
+    </structure>
+  </type>
+
+
+  <!-- generic (language- and purpose-parametrized) subbundle,
+  containing trees and attributes -->
+
+  <type name="zone.type" >
+    <structure>
+      <member name="language" required="1" as_attribute="1" type="langcode.type"/>
+      <member name="purpose" required="1" as_attribute="1"><cdata format="any"/></member>
+      <member name="sentence"><cdata format="any"/></member>
+
+      <member name="trees">
+        <structure>
+          <member name="a_tree" type="a-root.type"/> <!-- pozor,      bude potreba zmenit a-root.type!!! -->
+          <member name="t_tree" type="t-root.type"/>
+        </structure>
+      </member>
+    </structure>
+  </type>
+
+</pml_schema>

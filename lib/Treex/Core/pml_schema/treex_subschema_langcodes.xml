@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>Data for TMT (Tecto Machine Translation)</description>
+  <!-- Treex sub-schema containing ISO 639 language codes -->
+
+
+  <!-- Lang fields contain ISO 639 language code -->
+  <!-- If a language uses multiple writing systems, they can be distinguished by ISO 15924 script code.
+       If one script is current official while the others are historical, only the historical scripts are to be marked.
+       Example:
+          ku-latn = Kurdish in Latin script
+          ku-arab = Kurdish in Arabic script
+          ku-cyrl = Kurdish in Cyrillic script
+          az      = Azeri (in Latin script, which is current official and thus default)
+          az-cyrl = Azeri in Cyrillic script (used during the Soviet era) -->
+  <!-- This is not an exhausting list. New codes can be added as needed.
+       Go to http://en.wikipedia.org/wiki/ISO_639 for codes of other languages.
+       Go to http://cs.wikipedia.org/wiki/Seznam_p%C3%ADsem for codes of other writing systems.
+       -->
+  <type name="langcode.type">
+    <choice>
+      <value></value> <!-- unknown language -->
+      <value>cs</value> <!-- Czech -->
+      <value>en</value> <!-- English -->
+      <!-- other major languages -->
+      <value>de</value> <!-- German -->
+      <value>fr</value> <!-- French -->
+      <value>es</value> <!-- Spanish -->
+      <value>it</value> <!-- Italian -->
+      <value>ru</value> <!-- Russian -->
+      <value>ar</value> <!-- Arabic -->
+      <value>zh</value> <!-- Chinese -->
+      <!-- other Slavic languages -->
+      <value>sk</value> <!-- Slovak -->
+      <value>pl</value> <!-- Polish -->
+      <value>dsb</value> <!-- Lower Sorbian -->
+      <value>hsb</value> <!-- Upper Sorbian -->
+      <value>be</value> <!-- Belarusian -->
+      <value>uk</value> <!-- Ukrainian -->
+      <value>sl</value> <!-- Slovene -->
+      <value>hr</value> <!-- Croatian -->
+      <value>sr</value> <!-- Serbian -->
+      <value>mk</value> <!-- Macedonian -->
+      <value>bg</value> <!-- Bulgarian -->
+      <value>cu</value> <!-- Old Church Slavonic -->
+      <!-- other Germanic languages -->
+      <value>nl</value> <!-- Dutch -->
+      <value>af</value> <!-- Afrikaans -->
+      <value>fy</value> <!-- Frisian -->
+      <value>lb</value> <!-- Luxemburgish -->
+      <value>yi</value> <!-- Yiddish -->
+      <value>da</value> <!-- Danish -->
+      <value>sv</value> <!-- Swedish -->
+      <value>no</value> <!-- Norwegian -->
+      <value>nn</value> <!-- Nynorsk (New Norwegian) -->
+      <value>fo</value> <!-- Faroese -->
+      <value>is</value> <!-- Icelandic -->
+      <!-- other Romance and Italic languages -->
+      <value>la</value> <!-- Latin -->
+      <value>pt</value> <!-- Portuguese -->
+      <value>gl</value> <!-- Galician -->
+      <value>ca</value> <!-- Catalan -->
+      <value>oc</value> <!-- Occitan -->
+      <value>rm</value> <!-- Rhaeto-Romance -->
+      <value>co</value> <!-- Corsican -->
+      <value>sc</value> <!-- Sardinian -->
+      <value>ro</value> <!-- Romanian -->
+      <value>mo</value> <!-- Moldovan (deprecated: use Romanian) -->
+      <!-- Celtic languages -->
+      <value>ga</value> <!-- Irish -->
+      <value>gd</value> <!-- Scottish -->
+      <value>cy</value> <!-- Welsh -->
+      <value>br</value> <!-- Breton -->
+      <!-- Baltic languages -->
+      <value>lt</value> <!-- Lithuanian -->
+      <value>lv</value> <!-- Latvian -->
+      <!-- other Indo-European languages in Europe and Caucasus -->
+      <value>sq</value> <!-- Albanian -->
+      <value>el</value> <!-- Greek -->
+      <value>hy</value> <!-- Armenian -->
+      <!-- Iranian languages -->
+      <value>fa</value> <!-- Persian -->
+      <value>ku-latn</value> <!-- Kurdish in Latin script -->
+      <value>ku-arab</value> <!-- Kurdish in Arabic script -->
+      <value>ku-cyrl</value> <!-- Kurdish in Cyrillic script -->
+      <value>os</value> <!-- Ossetic -->
+      <value>tg</value> <!-- Tajiki (in Cyrillic script) -->
+      <value>ps</value> <!-- Pashto -->
+      <!-- Indo-Aryan languages -->
+      <value>ks</value> <!-- Kashmiri (in Arabic script) -->
+      <value>sd</value> <!-- Sindhi -->
+      <value>pa</value> <!-- Punjabi -->
+      <value>ur</value> <!-- Urdu -->
+      <value>hi</value> <!-- Hindi -->
+      <value>gu</value> <!-- Gujarati -->
+      <value>mr</value> <!-- Marathi -->
+      <value>ne</value> <!-- Nepali -->
+      <value>or</value> <!-- Oriya -->
+      <value>bn</value> <!-- Bengali -->
+      <value>as</value> <!-- Assamese -->
+      <value>rmy</value> <!-- Romany -->
+      <!-- other Semitic languages -->
+      <value>mt</value> <!-- Maltese -->
+      <value>he</value> <!-- Hebrew -->
+      <value>am</value> <!-- Amharic -->
+      <!-- Finno-Ugric languages -->
+      <value>hu</value> <!-- Hungarian -->
+      <value>fi</value> <!-- Finnish -->
+      <value>et</value> <!-- Estonian -->
+      <!-- other European and Caucasian languages -->
+      <value>eu</value> <!-- Basque -->
+      <value>ka</value> <!-- Georgian -->
+      <value>ab</value> <!-- Abkhaz -->
+      <value>ce</value> <!-- Chechen -->
+      <!-- Turkic languages -->
+      <value>tr</value> <!-- Turkish -->
+      <value>az</value> <!-- Azeri -->
+      <value>cv</value> <!-- Chuvash -->
+      <value>ba</value> <!-- Bashkir -->
+      <value>tt</value> <!-- Tatar -->
+      <value>tk</value> <!-- Turkmen -->
+      <value>uz</value> <!-- Uzbek -->
+      <value>kaa</value> <!-- Karakalpak -->
+      <value>kk</value> <!-- Kazakh -->
+      <value>ky</value> <!-- Kyrgyz -->
+      <value>ug</value> <!-- Uyghur -->
+      <value>sah</value> <!-- Yakut -->
+      <!-- other Altay languages -->
+      <value>xal</value> <!-- Kalmyk -->
+      <value>bxr</value> <!-- Buryat -->
+      <value>mn</value> <!-- Mongol -->
+      <value>ko</value> <!-- Korean -->
+      <value>ja</value> <!-- Japanese -->
+      <!-- Dravidian languages -->
+      <value>te</value> <!-- Telugu -->
+      <value>kn</value> <!-- Kannada -->
+      <value>ml</value> <!-- Malayalam -->
+      <value>ta</value> <!-- Tamil -->
+      <!-- Sino-Tibetan languages -->
+      <value>zh</value> <!-- Mandarin Chinese -->
+      <value>hak</value> <!-- Hakka -->
+      <value>nan</value> <!-- Taiwanese -->
+      <value>yue</value> <!-- Cantonese -->
+      <value>lo</value> <!-- Lao -->
+      <value>th</value> <!-- Thai -->
+      <value>my</value> <!-- Burmese -->
+      <value>bo</value> <!-- Tibetan -->
+      <!-- Austro-Asian languages -->
+      <value>vi</value> <!-- Vietnamese -->
+      <value>km</value> <!-- Khmer -->
+      <!-- other languages -->
+      <value>sw</value> <!-- Swahili -->
+      <value>eo</value> <!-- Esperanto -->
+    </choice>
+  </type>
+
+</pml_schema>

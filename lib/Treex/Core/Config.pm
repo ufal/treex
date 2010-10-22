@@ -22,20 +22,27 @@ sub share_dir {
 
 sub pml_schema_dir {
 
-    if (devel_version) {
-
+    if (devel_version()) {
         return lib_core_dir."/share/pml_schema/";
     }
     else {
-        return File::ShareDir::dist_dir('Treex-Core'); # tady nekde kolem to po instalaci bude
+        return File::ShareDir::dist_dir('Treex-Core')."/?????"; # tady nekde kolem to po instalaci bude
     }
 }
 
 sub lib_core_dir {
-
-
-
+    return caller_dir;
 }
+
+sub caller_dir {
+    my %call_info;
+    @call_info{
+        qw(pack file line sub has_args wantarray evaltext is_require)
+    } = caller(0);
+    $call_info{file} =~ s/[^\/]+$//;
+    return $call_info{file};
+}
+
 
 
 
@@ -73,6 +80,10 @@ info about the running Treex instance
 =item pml_schema_dir
 
    directory with PML schema files
+
+=item caller_dir
+
+   directory containing the source code file that called this function
 
 
 =item devel_version
