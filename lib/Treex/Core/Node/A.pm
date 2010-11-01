@@ -14,9 +14,6 @@ use Moose;
 use MooseX::FollowPBP;
 extends 'Treex::Core::Node';
 
-# No need to override - Treex::Core::Node::ordering_attribute() also returns 'ord'
-# sub ordering_attribute {'ord'}
-
 sub get_pml_type_name {
     my ($self) = @_;
     return $self->is_root() ? 'a-root.type' : 'a-node.type';
@@ -287,49 +284,6 @@ sub get_coap_members {
     return @members;
 }
 
-
-#----------- Effective children and parents -------------
-#----------- Old implememntation
-
-sub get_eff_children {
-    my ( $self, $arg_ref ) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ > 2;
-    my @nodes = map { $Treex::Core::Node::fsnode2tmt_node{$_} }
-        PML_A2::GetEChildren( $self );
-    return @nodes if !$arg_ref;
-    return $self->_process_switches( $arg_ref, @nodes );
-}
-
-sub get_eff_parents {
-    my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
-
-    my $node = $self;
-
-    # getting the highest node representing the given node
-    if ( $node->is_coap_member ) {
-        while ( $node && $node->is_coap_member && $node->get_parent->is_coap_root ) {
-            $node = $node->get_parent;
-        }
-    }
-    $node && $node->get_parent or goto FALLBACK_get_eff_parents;
-
-    # getting the parent
-    $node = $node->get_parent;
-    my @eff = $node->is_coap_root ? $node->get_transitive_coap_members : ($node);
-    return @eff if @eff > 0;
-
-    FALLBACK_get_eff_parents:
-    if ( $self->get_parent ) {
-        Report::warn "The node " . $self->get_attr('id') . " has no effective parent, using the topological one";
-        return $self->get_parent;
-    }
-    else {
-        Report::warn "The node " . $self->get_attr('id') . " has no effective nor topological parent, using the root";
-        return $self->get_root;
-    }
-}
-
 sub is_coap_member {
     my ($self) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 1;
@@ -395,8 +349,7 @@ sub get_nonterminal_pnodes {
     my ($self) = @_;
     my $document = $self->get_document();
     if ( $self->get_attr('p/nonterminals.rf') ) {
-        return grep {$_} map { $document->get_node_by_id($_) } @{ $self->get_attr('p/nonterminals.rf') }
-;
+        return grep {$_} map { $document->get_node_by_id($_) } @{ $self->get_attr('p/nonterminals.rf') };
     }
     else {
         return ();
@@ -409,7 +362,7 @@ sub get_pnodes {
 }
 
 
-# moved from Node/TCzechA.pm
+# -- other --
 
 sub reset_morphcat {
     my ($self) = @_;
@@ -427,66 +380,6 @@ sub reset_morphcat {
 
 
 
-# --------- funkce pro efektivni potomky a rodice by Jan Stepanek - prevzato z PML_A.inc a upraveno -------------
-
-package PML_A2;
-
-no warnings;
-
-sub _FilterEChildren {    # node dive suff from
-    my ( $node, $dive, $suff, $from ) = @_;
-    my @sons;
-    $node = $node->firstson;
-    while ($node) {
-
-        #    return @sons if $suff && @sons; # comment this line to get all members
-        unless ( $node == $from ) {    # on the way up do not go back down again
-            if (!$suff
-                && $node->{afun} =~ /Coord|Apos/
-                && !$node->{is_member}
-                or $suff && $node->{afun} =~ /Coord|Apos/ && $node->{is_member}
-                )
-            {
-                push @sons, _FilterEChildren( $node, $dive, 1, 0 )
-            }
-            elsif ( &$dive($node) and $node->firstson ) {
-                push @sons, _FilterEChildren( $node, $dive, $suff, 0 );
-            }
-            elsif (
-                ( $suff && $node->{is_member} )
-                || ( !$suff && !$node->{is_member} )
-                )
-            {    # this we are looking for
-                push @sons, $node;
-            }
-        }    # unless node == from
-        $node = $node->rbrother;
-    }
-    @sons;
-}    # _FilterEChildren
-
-sub GetEChildren {    # node dive
-    my ( $node, $dive ) = @_;
-    my @sons;
-    my $from;
-    $dive = sub {0}
-        unless defined($dive);
-    push @sons, _FilterEChildren( $node, $dive, 0, 0 );
-    if ( $node->{is_member} ) {
-        my @oldsons = @sons;
-        while ( $node->parent and ( $node->{afun} !~ /Coord|Apos|AuxS/ or $node->{is_member} ) ) {
-            $from = $node;
-            $node = $node->parent;
-            push @sons, _FilterEChildren( $node, $dive, 0, $from );
-        }
-        if ( not $node->parent ) {
-            print STDERR "Warning: PML_A2::GetEChildren Missing Coord/Apos: $node->{id}\n";
-            @sons = @oldsons;
-        }
-    }
-    return @sons;
-}    # GetEChildren
-
 1;
 
 __END__
@@ -503,12 +396,54 @@ Analytical node
 
 =over 4
 
+
+
+is_coap_root
+get_echildren
+get_eparents
+get_coap_members
+is_coap_member
+get_transitive_coap_members
+get_direct_coap_members
+get_transitive_coap_root
+
+
+=head2 Links from a-trees to phrase-structure trees
+
+=item $node->get_terminal_pnode
+
+   Returns a terminal node from the phrase-structure tree
+   that corresponds to the a-node.
+
+=item $node->get_nonterminal_pnodes
+
+   Returns an array of non-terminal nodes from the phrase-structure tree
+   that correspond to the a-node.
+
+=item $node->get_pnodes
+
+   Returns the corresponding terminal node and all non-terminal nodes.
+
+=head2 Other
+
+=item reset_morphcat
+
+=item get_pml_type_name
+
+     Root and non-root nodes have different PML type in the pml schema
+     (a-root.type, a-node.type)
+
+=item get_mnode
+
+   Obsolete, should be removed after merging m- and a-layer.
+
 =item get_n_node()
-If this a-node is a part of a named entity,
-this method returns the corresponding n-node (L<Treex::Core::Node::N>).
-If this node is a part of more than one named entities,
-only the most nested one is returned.
-For example: "Bank of China"
+
+ If this a-node is a part of a named entity,
+ this method returns the corresponding n-node (L<Treex::Core::Node::N>).
+ If this node is a part of more than one named entities,
+ only the most nested one is returned.
+ For example: "Bank of China"
  $n_node_for_china = $a_node_china->get_n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
