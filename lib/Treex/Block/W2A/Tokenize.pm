@@ -5,12 +5,12 @@ our $VERSION = '0.1';
 use Moose;
 use MooseX::FollowPBP;
 
-has language => (is => 'r');
+extends 'Treex::Core::Block';
+
+# has language => (is => 'r');
 
 use Report;
 use utf8;
-
-use base qw(Treex::Core::Block);
 
 sub tokenize_sentence {
 
@@ -51,6 +51,9 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $language = $self->{language};
 
+    #temporary !!!
+    $language = 'en' if !$language;
+
     # create a-tree
     my $a_root = $bundle->create_tree("S${language}A");
 
@@ -74,12 +77,10 @@ sub process_bundle {
         my $new_a_node = $a_root->create_child;
         $new_a_node->set_attr( 'm/form', $token );
         $new_a_node->set_attr( 'm/no_space_after', $no_space_after );
+        $new_a_node->set_attr( 'ord', $i + 1 );
     }
-
-    return;
+    return 1;
 }
-
-1;
 
 __END__
 

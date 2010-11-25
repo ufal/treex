@@ -212,7 +212,7 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
         $block_filename =~ s/::/\//g;
         $block_filename .= '.pm';
 
-        if ( not -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {
+        if (( not -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) && ( not -e $ENV{TMT_ROOT}."/treex/lib/$block_filename")) {
             Report::fatal("Block $block_name (file $block_filename) does not exist!");
         }
 

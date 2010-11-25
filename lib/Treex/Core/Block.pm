@@ -20,7 +20,7 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
         $self->process_bundle($bundle);
     }
-    return;
+    return 1;
 }
 
 sub process_bundle {
