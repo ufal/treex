@@ -14,7 +14,7 @@ use utf8;
 
 sub tokenize_sentence {
 
-    my $sentence = shift;
+    my ($self, $sentence) = @_;
 
     # first off, add a space to the beginning and end of each line, to reduce necessary number of regexps.
     $sentence =~ s/$/ /;
@@ -61,7 +61,7 @@ sub process_bundle {
     my $sentence = $bundle->get_attr("S${language} sentence");
     $sentence =~ s/^\s+//;
     Report::fatal("No sentence to tokenize!") if !defined $sentence;
-    my @tokens = split ( /\s/, tokenize_sentence($sentence) );
+    my @tokens = split ( /\s/, $self->tokenize_sentence($sentence) );
 
     foreach my $i ( ( 0 .. $#tokens ) ) {
         my $token = $tokens[$i];

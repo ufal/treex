@@ -5,15 +5,16 @@ our $VERSION = '0.1';
 use Moose;
 use MooseX::FollowPBP;
 
-extends Treex::Block::W2A::Tokenize;
+extends 'Treex::Block::W2A::Tokenize';
 
 use Report;
 use utf8;
 
-override "tokenize_sentence" => sub {
+sub tokenize_sentence {
 
-    my $sentence = shift;
-    $sentence = super($sentence);
+    my ($self, $sentence) = @_;
+
+    $sentence = $self->SUPER::tokenize_sentence($sentence);
     $sentence =~ s/^(.*)$/ $1 /;
 
     # it's, I'm, we'd, we're, you'll, I've, Peter's
@@ -42,8 +43,6 @@ override "tokenize_sentence" => sub {
 
     return $sentence;
 }
-
-1;
 
 __END__
 
