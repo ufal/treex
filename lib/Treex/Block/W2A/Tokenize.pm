@@ -7,7 +7,7 @@ use MooseX::FollowPBP;
 
 extends 'Treex::Core::Block';
 
-# has language => (is => 'r');
+has 'language' => (isa => 'Str', is => 'ro', required => 1);
 
 use Report;
 use utf8;
@@ -49,16 +49,12 @@ sub tokenize_sentence {
 sub process_bundle {
 
     my ( $self, $bundle ) = @_;
-    my $language = $self->{language};
-
-    #temporary !!!
-    $language = 'en' if !$language;
 
     # create a-tree
-    my $a_root = $bundle->create_tree("S${language}A");
+    my $a_root = $bundle->create_tree('S'.$self->{language}.'A');
 
     # get the source sentence and tokenize
-    my $sentence = $bundle->get_attr("S${language} sentence");
+    my $sentence = $bundle->get_attr('S'.$self->{language}.' sentence');
     $sentence =~ s/^\s+//;
     Report::fatal("No sentence to tokenize!") if !defined $sentence;
     my @tokens = split ( /\s/, $self->tokenize_sentence($sentence) );
@@ -81,6 +77,8 @@ sub process_bundle {
     }
     return 1;
 }
+
+1;
 
 __END__
 

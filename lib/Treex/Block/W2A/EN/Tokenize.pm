@@ -7,6 +7,8 @@ use MooseX::FollowPBP;
 
 extends 'Treex::Block::W2A::Tokenize';
 
+has language => (isa => 'Str', is => 'ro', default => 'en');
+
 use Report;
 use utf8;
 
@@ -43,6 +45,8 @@ sub tokenize_sentence {
 
     return $sentence;
 }
+
+1;
 
 __END__
 

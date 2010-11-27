@@ -5,25 +5,29 @@ our $VERSION = '0.1';
 use Moose;
 extends 'Treex::Core::Block';
 
-#has language => (is => 'r');
-
-#use Treex::Core::Document;
+has language               => (isa => 'Str', is => 'ro', required => 1);
+has sentences_per_document => (isa => 'Int', is => 'ro', default => 50); 
 
 sub process_stream {
     my ( $self, $stream ) = @_;
 
-    my $language = $self->{language};
-
-    # temporary !!!
-    $language = 'en' if !$language;
-
     return 0 if eof(STDIN);
 
-    my $line = readline(STDIN);
-
     my $document = Treex::Core::Document->new;
-    my $bundle = $document->create_bundle();
-    $bundle->set_attr("S${language} sentence", $line);
+
+    my $counter = 0;
+    while ($counter < $self->{sentences_per_document}) {
+        $counter++;
+        last if eof(STDIN);
+        
+        my $line = readline(STDIN);
+        my $bundle = $document->create_bundle();
+        $bundle->set_attr('S'.$self->{language}.' sentence', $line);
+    }
+
     $stream->set_current_document($document);
     return 1;
 }
+
+1;
+
