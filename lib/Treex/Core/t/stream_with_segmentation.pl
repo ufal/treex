@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use Treex::Core::Stream;
 use Treex::Core::Scenario;
