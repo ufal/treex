@@ -5,14 +5,13 @@ our $VERSION = '0.1';
 use Moose;
 use MooseX::FollowPBP;
 
-has parameter => (is => 'rw');
+use LWP::Simple;
 
 sub process_stream {
     my ( $self, $stream ) = @_;
     $self->process_document($stream->get_current_document);
     # unimplemented
 }
-
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -32,6 +31,39 @@ sub get_block_name {
     my ($self) = @_;
     return ref($self);
 }
+
+sub require_file_from_share {
+
+    my ( $self, $rel_path_to_file ) = @_;
+
+    my $file = Treex::Core::Config::share_dir() . $rel_path_to_file;
+
+    if ( not -e $file ) {
+        Report::info("Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . ".");
+
+        my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
+        Report::info("Trying to download $url");
+
+        # first ensure that the directory exists
+        my $directory = $file;
+        $directory =~ s/[^\/]*$//;
+        File::Path::mkpath($directory);
+
+        # download the file using LWP::Simple
+        my $response_code = getstore( $url, $file );
+        if ( $response_code == 200 ) {
+            Report::info("Successfully downloaded to $file");
+        }
+        elsif ( $response_code == 404 ) {
+            Report::fatal("The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . ".");
+        }
+        else {
+            Report::fatal("Error when trying to download $url and to store it as $file ($response_code).");
+        }
+    }
+    return $file;
+}
+
 
 sub get_required_share_files {
     return ();

@@ -17,15 +17,9 @@ use Treex::Tools::Tagger::TreeTagger;
 sub BUILD {
     my ($self) = @_;
 
-    # check whether there is a default model for given language
+    # if the model is not specified, check whether there is a default model for given language
     if (!$self->{model}) {
-        my $possible_model = "$ENV{TMT_ROOT}/share/data/models/tree_tagger/".$self->{language}.".par";
-        if (-e $possible_model) {
-            $self->{model} = $possible_model;
-        }
-        else {
-            Report::fatal("Model filename has not been specified and the default model $possible_model has not been found.");
-        }
+        $self->{model} = $self->require_file_from_share("data/models/tree_tagger/".$self->{language}.".par");
     }
 
     $self->{tagger} = Treex::Tools::Tagger::TreeTagger->new({'model' => $self->{model}});

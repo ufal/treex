@@ -253,7 +253,7 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
         while (1) {
             print "Staring loop\n";
             foreach my $block ( @{ $self->get_block_sequence } ) {
-                print "Running block $block\n";
+                print "Running block " . ref($block) . "\n";
                 $block->process_stream($stream) or last STREAMLOOP;
             }
         }
