@@ -34,7 +34,7 @@ sub BUILD {
     # all paths/dirs have to be formatted according to platform
     my $model_name = File::Java->path_arg($self->{model});
 
-    my $command = $javabin
+    my $command = 'java'#$javabin
         . " -Xmx" . $self->{memory}
         . " -cp $cp mstparser.DependencyParser test"
         . " order:" . $self->{order}
@@ -55,10 +55,10 @@ sub BUILD {
     return;
 }
 
-# ----------------- the main parsing method -----------------------
 
-sub parse_sentence($$) {
-    my ( $self, $forms_rf, $tags_rf, $attempts ) = @_;
+sub parse_sentence {
+
+    my ( $self, $forms_rf, $tags_rf ) = @_;
 
     if ( ref($forms_rf) ne "ARRAY" or ref($tags_rf) ne "ARRAY" ) {
         Report::fatal('Both arguments must be array references.');
@@ -76,23 +76,22 @@ sub parse_sentence($$) {
     }
 
     if ( @{$tags_rf} == 1 ) {
-
         # single-word sentences are not passed to parser at all
         return ( [0], ['Pred'] );
     }
 
-    $attempts = 3 if !defined $attempts;
+    my $attempts = 3;
     my $first_attempt = 1;
     my $ok = 0;
     my ( @parents, @afuns );
     RETRY: while (!$ok && $attempts) {
-      Report::warn "Parser::English: $attempts attempts remaining" if !$first_attempt;
+      Report::warn "Treex::Tools::Parser::MST: $attempts attempts remaining" if !$first_attempt;
       $attempts--;
       $first_attempt = 0;
 
       if (!defined $self->{writer}) {
-        Report::warn "Parser::English: Reinitializing";
-        my $newself = Parser::MST::English::new();
+        Report::warn "Treex::Tools::Parser::MST: Reinitializing";
+        my $newself = Treex::Tools::Parser::MST->new({model => $self->{model}, memory => $self->{memory}, order => $self->{order}, decodetype => $self->{decodetype}});
         foreach my $attr (qw(reader writer pid)) {
           $self->{$attr} = $newself->{$attr};
         }
