@@ -61,6 +61,8 @@ sub is_coap_root {    # analogy of PML_T::IsCoord
 # I left the old implementation (get_eff_*) intact
 # and choose new names get_e(children|parents).
 
+=over 4
+
 =item $node->get_echildren($arg_ref?)
 
 Returns a list of effective children of the C<$node>. It means that 
@@ -72,6 +74,8 @@ TODO describe here that: with argument C<dive> you can define nodes to be skippe
 
 Optionally you can specify with C<$arg_ref> the same options
 as in L<Treex::Core::Node::get_children()>.
+
+=back
 
 =cut
 
@@ -410,6 +414,8 @@ get_transitive_coap_root
 
 =head2 Links from a-trees to phrase-structure trees
 
+=over 4
+
 =item $node->get_terminal_pnode
 
    Returns a terminal node from the phrase-structure tree
@@ -423,6 +429,8 @@ get_transitive_coap_root
 =item $node->get_pnodes
 
    Returns the corresponding terminal node and all non-terminal nodes.
+
+=back
 
 =head2 Other
 

@@ -87,7 +87,7 @@ sub disconnect {
 
 
 sub get_pml_type_name {
-    return undef;
+    return;
 }
 
 sub create_child {

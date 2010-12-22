@@ -54,7 +54,7 @@ sub _get_zone {
             }
         }
     }
-    return undef;
+    return;
 }
 
 sub _create_zone {
@@ -210,7 +210,7 @@ sub get_attr {
             return $fs_zone->{$attr_name};
         }
         else {
-            return undef;
+            return;
         }
     }
 

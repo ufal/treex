@@ -26,7 +26,7 @@ sub get_lex_anode {
     my $lex_rf = $self->get_attr('a/lex.rf');
     my $document = $self->get_document();
     return $document->get_node_by_id( $lex_rf) if $lex_rf;
-    return undef;
+    return;
 }
 
 sub set_lex_anode {
@@ -199,11 +199,11 @@ sub get_source_tnode {
             return $source_node;
         }
         else {
-            return undef;
+            return;
         }
     }
     else {
-        return undef;
+        return;
     }
 }
 
