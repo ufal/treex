@@ -1,7 +1,5 @@
 package Treex::Core::TectoMTStyleAccessors;
 
-our $VERSION = '0.1';
-
 use Moose::Role;
 use Report;
 
@@ -126,10 +124,6 @@ __END__
 
 Treex::Core::TectoMTStyleAccessors
 
-
-=head1 VERSION
-
-0.0.2
 
 =head1 SYNOPSIS
 

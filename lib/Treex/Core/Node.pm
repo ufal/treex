@@ -1,7 +1,5 @@
 package Treex::Core::Node;
 
-our $VERSION = '0.1';
-
 use Moose;
 use MooseX::NonMoose;
 use MooseX::FollowPBP;

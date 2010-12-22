@@ -1,7 +1,5 @@
 package Treex::Core;
 
-our $VERSION = '0.1';
-
 use strict;
 use warnings;
 use Moose;

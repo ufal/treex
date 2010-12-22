@@ -211,10 +211,6 @@ __END__
 
 Treex::Core::Scenario
 
-=head1 VERSION
-
-0.0.3
-
 =head1 SYNOPSIS
 
  use Treex::Core::Scenario;

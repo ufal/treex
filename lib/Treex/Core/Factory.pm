@@ -1,7 +1,5 @@
 package Treex::Core::Factory;
 
-our $VERSION = '0.1';
-
 use strict;
 use warnings;
 
@@ -104,10 +102,6 @@ __END__
 
 Treex::Core::Factory
 
-
-=head1 VERSION
-
-0.0.2
 
 =head1 SYNOPSIS
 

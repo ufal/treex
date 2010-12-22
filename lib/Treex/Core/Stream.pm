@@ -1,7 +1,5 @@
 package Treex::Core::Stream;
 
-our $VERSION = '0.1';
-
 use Moose;
 use MooseX::FollowPBP;
 

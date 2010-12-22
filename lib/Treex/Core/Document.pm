@@ -1,7 +1,5 @@
 package Treex::Core::Document;
 
-our $VERSION = '0.1';
-
 use Moose;
 use MooseX::FollowPBP;
 use Treex::Core::TectoMTStyleAccessors;
