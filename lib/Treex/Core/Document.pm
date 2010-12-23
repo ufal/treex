@@ -64,7 +64,12 @@ Treex::PML::AddResourcePath(
     Treex::Core::Config::pml_schema_dir(),
 );
 
-my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
+#my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
+my $_treex_schema_file = Treex::Core::Config::pml_schema_dir."/". 'treex_schema.xml';
+if (not -f $_treex_schema_file) {
+  Report::fatal "Can't find PML schema $_treex_schema_file"; 
+}
+
 my $_treex_schema = Treex::PML::Schema->new( { filename => $_treex_schema_file } );
 
 sub _create_empty_pml_doc {

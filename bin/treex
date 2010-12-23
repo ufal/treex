@@ -79,9 +79,9 @@ __END__
 
 =pod
 
-=head1 treex - command line interface for Treex tools
+=head1 NAME treex 
 
-ahoj nazdar
+command line interface for Treex tools
 
 =head1 SYNOPSIS
 

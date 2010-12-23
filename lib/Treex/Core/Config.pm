@@ -24,7 +24,7 @@ sub pml_schema_dir {
         return lib_core_dir()."/share/pml_schema/";
     }
     else {
-        return File::ShareDir::dist_dir('Treex-Core')."/?????"; # tady nekde kolem to po instalaci bude
+        return File::ShareDir::dist_dir('Treex-Core')."/pml_schema/";
     }
 }
 
