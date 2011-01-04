@@ -7,6 +7,7 @@ use Treex::Core::Document;
 use Treex::Core::Factory;
 use Treex::Core::Node;
 use Treex::Core::Bundle;
+use Treex::Core::Runner;
 
 
 1;
