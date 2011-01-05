@@ -40,7 +40,7 @@ sub BUILD {
         . " -cp $cp mstparser.DependencyParser test"
         . " order:" . $self->{order}
         . " decode-type:" . $self->{decodetype}
-        . " server-mode:true model-name:$model_name 2>/dev/null";
+        . " server-mode:true print-scores:true model-name:$model_name 2>/dev/null";
 
 
     $SIG{PIPE} = 'IGNORE';  # don't die if parser gets killed
@@ -82,6 +82,7 @@ sub parse_sentence {
 
     my @parents;
     my @afuns;
+    my @scores;
 
     if (!$self->{robust}) {
 
@@ -89,10 +90,6 @@ sub parse_sentence {
         my $reader = $self->{reader};
         Report::fatal("Treex::Tools::Parser::MST: unexpected status") if (!defined $reader || !defined $writer);
   
-        # We deliberately approximate e.g. curly quotes with plain ones, the final
-        # encoding of the pipes is not relevant, see the constructor (new) above.
-#        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
-#        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
         print $writer join( "\t", @$forms_rf ) . "\n";
         print $writer join( "\t", @$tags_rf ) . "\n";
         
@@ -106,14 +103,27 @@ sub parse_sentence {
         Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if (!defined $_);
         chomp;
         @afuns = split /\t/;
+        @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
         $_ = <$reader>; # parents
         Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if (!defined $_);
         chomp;
         @parents = split /\t/;
-        @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
-        $_ = <$reader>; #Blank line after a valid parse
-        
-        return ( \@parents, \@afuns );
+        $_ = <$reader>; # blank line after a valid parse
+        $_ = <$reader>; # scoreMatrix
+        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if (!defined $_);
+        chomp;
+        @scores = split /\s/;
+
+        # back to the matrix of scores
+        shift @scores;
+        my @matrix;
+        foreach my $i (0 .. $#parents) {
+            foreach my $j ( 0 .. $#parents) {
+                $matrix[$i][$j] = shift @scores;
+            }
+        }
+
+        return ( \@parents, \@afuns, \@matrix );
     }
 
     # OBO'S ROBUST VARIANT
