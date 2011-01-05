@@ -11,6 +11,7 @@ has model      => (isa => 'Str', is => 'rw', required => 1);
 has memory     => (isa => 'Str', is => 'rw', default => '1800m');
 has order      => (isa => 'Int', is => 'rw', default => 2);
 has decodetype => (isa => 'Str', is => 'rw', default => 'non-proj');
+has robust     => (isa => 'Bool', is => 'r', default => 0);
 
 my @all_javas;  # PIDs of java processes
 
@@ -55,7 +56,6 @@ sub BUILD {
     return;
 }
 
-
 sub parse_sentence {
 
     my ( $self, $forms_rf, $tags_rf ) = @_;
@@ -80,6 +80,43 @@ sub parse_sentence {
         return ( [0], ['Pred'] );
     }
 
+    my @parents;
+    my @afuns;
+
+    if (!$self->{robust}) {
+
+        my $writer = $self->{writer};
+        my $reader = $self->{reader};
+        Report::fatal("Treex::Tools::Parser::MST: unexpected status") if (!defined $reader || !defined $writer);
+  
+        # We deliberately approximate e.g. curly quotes with plain ones, the final
+        # encoding of the pipes is not relevant, see the constructor (new) above.
+#        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
+#        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
+        print $writer join( "\t", @$forms_rf ) . "\n";
+        print $writer join( "\t", @$tags_rf ) . "\n";
+        
+        $_ = <$reader>;
+        Report::fatal("Treex::Tools::Parser::MST returned nothing") if (!defined $_);
+        chomp;
+        Report::fatal("Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence '" . join(" ", @$forms_rf) . "'") if ($_ !~ /^OK/);
+        $_ = <$reader>; # forms
+        $_ = <$reader>; # lemmas
+        $_ = <$reader>; # afuns
+        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if (!defined $_);
+        chomp;
+        @afuns = split /\t/;
+        $_ = <$reader>; # parents
+        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if (!defined $_);
+        chomp;
+        @parents = split /\t/;
+        @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
+        $_ = <$reader>; #Blank line after a valid parse
+        
+        return ( \@parents, \@afuns );
+    }
+
+    # OBO'S ROBUST VARIANT
     my $attempts = 3;
     my $first_attempt = 1;
     my $ok = 0;
@@ -164,7 +201,6 @@ END {
         close( $java->{writer} );
         close( $java->{reader} );
         ProcessUtils::safewaitpid( $java->{pid} );
-      #  _message("Java parser PID $java->{pid} exited.");
     }
 }
 
