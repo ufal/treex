@@ -6,6 +6,7 @@ use MooseX::FollowPBP;
 use ProcessUtils;
 use File::Java;
 use DowngradeUTF8forISO2;
+use Report;
 
 has model      => (isa => 'Str', is => 'rw', required => 1);
 has memory     => (isa => 'Str', is => 'rw', default => '1800m');
@@ -80,14 +81,11 @@ sub parse_sentence {
         return ( [0], ['Pred'] );
     }
 
-    my @parents;
-    my @afuns;
-    my @scores;
+    my (@parents, @afuns, @scores, $writer, $reader);
 
     if (!$self->{robust}) {
-
-        my $writer = $self->{writer};
-        my $reader = $self->{reader};
+        $writer = $self->{writer};
+        $reader = $self->{reader};
         Report::fatal("Treex::Tools::Parser::MST: unexpected status") if (!defined $reader || !defined $writer);
   
         print $writer join( "\t", @$forms_rf ) . "\n";
@@ -130,7 +128,6 @@ sub parse_sentence {
     my $attempts = 3;
     my $first_attempt = 1;
     my $ok = 0;
-    my ( @parents, @afuns );
     RETRY: while (!$ok && $attempts) {
       Report::warn "Treex::Tools::Parser::MST: $attempts attempts remaining" if !$first_attempt;
       $attempts--;
@@ -144,8 +141,8 @@ sub parse_sentence {
         }
       }
 
-      my $writer = $self->{writer};
-      my $reader = $self->{reader};
+      $writer = $self->{writer};
+      $reader = $self->{reader};
   
       # We deliberately approximate e.g. curly quotes with plain ones, the final
       # encoding of the pipes is not relevant, see the constructor (new) above.
