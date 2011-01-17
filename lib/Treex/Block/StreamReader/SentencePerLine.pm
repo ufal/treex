@@ -10,22 +10,14 @@ has sentences_per_document => (isa => 'Int', is => 'ro', default => 50);
 
 sub process_stream {
     my ( $self, $stream ) = @_;
-
     return 0 if eof(STDIN);
-
     my $document = Treex::Core::Document->new;
-
-    my $counter = 0;
-    while ($counter < $self->{sentences_per_document}) {
-        $counter++;
-        last if eof(STDIN);
-        
-        my $line = readline(STDIN);
-        my $bundle = $document->create_bundle();
-        $bundle->set_attr('S'.$self->{language}.' sentence', $line);
+    my $text = '';
+    for my $line (1 .. $self->lines_per_document){
+         last if eof(STDIN);
+         $text .= <STDIN>;
     }
-
-    $stream->set_current_document($document);
+    $document->set_attr('S'.$self->{language}.' text', $text);
     return 1;
 }
 

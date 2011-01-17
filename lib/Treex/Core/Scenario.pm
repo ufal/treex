@@ -1,9 +1,11 @@
 package Treex::Core::Scenario;
 use Moose;
-use MooseX::FollowPBP;
+use MooseX::SemiAffordanceAccessor;
 
-has block_sequence => ( is => 'rw' );
-has loaded_modules => ( is => 'rw' );
+has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub {[]});
+
+has document_reader => ( is => 'rw', does => 'Treex::Core::DocumentReader',
+            documentation => 'DocumentReader starts every scenario and reads a stream of documents.' );
 
 use Report;
 use File::Basename;
@@ -19,8 +21,7 @@ sub BUILD {
     Report::info("Initializing an instance of TectoMT::Scenario ...");
 
     #<<< no perltidy
-    my $scen_str = defined $arg_ref->{blocks}    ? join ' ', @{ $arg_ref->{blocks} }
-                 : defined $arg_ref->{from_file} ? load_scenario_file($arg_ref->{from_file})
+    my $scen_str = defined $arg_ref->{from_file} ? load_scenario_file($arg_ref->{from_file})
                  :                                 $arg_ref->{from_string};
     #>>>
     Report::fatal 'No blocks specified for a scenario!' if !defined $scen_str;
@@ -49,7 +50,14 @@ sub BUILD {
         }
         Report::info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
         my $new_block = _load_block($block_item);
-        push @{ $self->{block_sequence} }, $new_block;
+        
+        if ($new_block->does('Treex::Core::DocumentReader')){
+            Report::fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
+                if $self->document_reader();
+            $self->set_document_reader($new_block);
+        } else {
+            push @{ $self->loaded_blocks }, $new_block;
+        }
     }
 
     Report::info('');
@@ -139,12 +147,12 @@ sub parse_scenario_string {
             my $block_filename = $token;
             $block_filename =~ s/::/\//g;
             $block_filename .= '.pm';
-            if ( -e $ENV{TMT_ROOT} . "/treex/lib/Treex/Block/$block_filename" ) {  # new Treex block
+            if ( -e $ENV{TMT_ROOT} . "/treex/lib/Treex/Block/$block_filename" ) {  # new Treex blocks
                 $token = "Treex::Block::$token";
             } elsif ( -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {       # old TectoMT blocks
             } else {
-             # TODO allow user-made blocks not-starting with Treex::Block?
-             Report::fatal("Block $token (file $block_filename) does not exist!");
+                # TODO allow user-made blocks not-starting with Treex::Block?
+                Report::fatal("Block $token (file $block_filename) does not exist!");
             }
             push @block_items, { 'block_name' => $token, 'block_parameters' => [] };
         }
@@ -179,7 +187,7 @@ sub _load_block {
     my $string_to_eval = '$new_block = ' . $block_name . "->new({$constructor_parameters});";
     eval $string_to_eval;
     if ($@) {
-        Report::fatal "TectoMT::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n" . $!;
+        Report::fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n" . $!;
     }
 
     Report::memory if $TMT_DEBUG_MEMORY;
@@ -187,20 +195,25 @@ sub _load_block {
     return $new_block;
 }
 
-sub apply_on_stream {
-    my ( $self, $stream ) = @_;
-    my $block_total  = @{ $self->get_block_sequence };
-
-    STREAMLOOP:
-    while (1) {
+sub run {
+    my ( $self ) = @_;
+    my $reader = $self->document_reader or Report::fatal('No DocumentReader supplied');
+    my $number_of_blocks  = @{ $self->loaded_blocks };
+    my $document_number = 0;
+    
+    while (my $document = $reader->next_document()) {
+        $document_number++;
+        Report::info "Document $document_number loaded";
         my $block_number = 0;
-        foreach my $block ( @{ $self->get_block_sequence } ) {
+        foreach my $block ( @{$self->loaded_blocks} ) {
             $block_number++;
-            Report::info "Applying block $block_number/$block_total " . ref($block);
+            Report::info "Applying block $block_number/$number_of_blocks " . ref($block);
                 #TODO . ( defined $filename ? " on '$filename'" : '' );
-            $block->process_stream($stream) or last STREAMLOOP;
+            $block->process_document($document);
         }
     }
+    Report::info "Processed $document_number documents";
+    return;
 }
 
 1;

@@ -14,4 +14,4 @@ $b1->set_attr('Sen sentence','John loves Mary.');
 my $b2 = $doc->create_bundle;
 $b2->set_attr('Sen sentence','Mary loves John');
 
-$doc->save('with_bundles.tmt');
+$doc->save('with_bundles.treex');
