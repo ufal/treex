@@ -22,25 +22,7 @@ use Report;
 
 my @layers = qw(t a n);
 
-# --------- ACCESS TO TREES ------------
-
-sub get_all_trees {
-    my ($self) = @_;
-
-    return () unless $self->{zones};
-
-    my @trees;
-    foreach my $zone ($self->{zones}->elements) {
-        my $structure = $zone->value;
-        foreach my $layer (@layers) {
-            if (exists $structure->{trees}->{"${layer}_tree"}) {
-                push @trees, $structure->{trees}->{"${layer}_tree"};
-            }
-        }
-    }
-    return @trees;
-
-}
+# --------- ACCESS TO ZONES ------------
 
 
 
@@ -90,6 +72,27 @@ sub _get_or_create_zone {
     return $fs_subbundle;
 }
 
+
+
+# --------- ACCESS TO TREES ------------
+
+sub get_all_trees {
+    my ($self) = @_;
+
+    return () unless $self->{zones};
+
+    my @trees;
+    foreach my $zone ($self->{zones}->elements) {
+        my $structure = $zone->value;
+        foreach my $layer (@layers) {
+            if (exists $structure->{trees}->{"${layer}_tree"}) {
+                push @trees, $structure->{trees}->{"${layer}_tree"};
+            }
+        }
+    }
+    return @trees;
+
+}
 
 
 sub create_tree {
