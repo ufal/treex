@@ -10,7 +10,7 @@ sub process_document {
     my ( $self, $document ) = @_;
     if (!$document->get_bundles()){
         Report::fatal "There are no bundles in the document and block ". ref($self) .
-        " doesn't override the method process_bundle";
+        " doesn't override the method process_document";
     }
     foreach my $bundle ( $document->get_bundles() ) {
         $self->process_bundle($bundle);
@@ -20,17 +20,36 @@ sub process_document {
 
 sub process_bundle {
     my ($self, $bundle) = @_;
-    Report::fatal "Parameter language was not set and block ". ref($self) .
-     " doesn't override the method process_bundle";
-    return process_zone($bundle->get_zone($self->language, $self->selector));
+    Report::fatal "Parameter language was not set and block ". ref($self)
+        . " doesn't override the method process_bundle";
+    my $zone = $bundle->get_zone($self->language, $self->selector);
+    Report::fatal("Zone (lang=".$self->language.", selector=". $self->selector
+        . ") was not found in a bundle and block ". ref($self)
+        . " doesn't override the method process_bundle")
+        if !$zone;
+    return process_zone($zone);
 }
 
 sub process_zone {
-    Report::fatal "process_zone() is not (and could not be) implemented"
-        . " in the abstract class Treex::Core::Block !"; 
+    my ($self, $zone) = @_;
+    Report::fatal("process_zone not overriden and all process_?tree return false") if not
+        ($self->process_atree($zone->atree)
+        or $self->process_ttree($zone->ttree)
+        or $self->process_ntree($zone->ntree)
+        or $self->process_ptree($zone->ptree)); 
 }
 
+sub process_atree {
+    my ($self, $tree) = @_;
+    foreach my $node ($tree->get_descendants()){
+        $self->process_anode($node);
+    }
+}
 
+sub process_anode {
+    Report::fatal "process_anode() is not (and could not be) implemented"
+        . " in the abstract class Treex::Core::Block !";   
+}
 
 
 sub get_block_name {
