@@ -322,8 +322,8 @@ sub set_attr {
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->get_or_create_zone($language,$selector);
-        return $fs_zone->set_attr('$attr_name', $attr_value);
+        my $zone = $self->get_or_create_zone($language,$selector);
+        return $zone->set_attr($attr_name, $attr_value);
     }
 
     else {
