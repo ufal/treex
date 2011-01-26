@@ -37,3 +37,4 @@ ok ($doc2->get_zone('en')->get_attr('text') eq $sample_text, 'document zone attr
 my $doc3 = Treex::Core::Document->new();
 $doc3->set_attr('Sen text', 'hello');
 ok ($doc3->get_attr('Sen text') eq 'hello', 'shortcut for accessing DocZones attributes');
+

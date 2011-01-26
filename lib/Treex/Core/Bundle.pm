@@ -1,19 +1,17 @@
 package Treex::Core::Bundle;
 
 use Moose;
-use Treex::Moose;
 use MooseX::NonMoose;
+use MooseX::FollowPBP;
 
 extends 'Treex::PML::Node';
 
 has document => (is => 'ro',
                  writer => '_set_document',
-                 reader => 'document',
+                 reader => 'get_document',
              );
 
 has id => (is => 'rw' );
-
-#has zones => (is => 'ro',  );
 
 use Treex::Core::Node;
 use Treex::Core::Node::A;
@@ -51,6 +49,8 @@ sub create_zone {
             }
         )
       );
+
+    $new_zone->_set_bundle($self);
 
 #    $new_subbundle->set_type_by_name( $self->get_document->metaData('schema'), 'zone' );
 
@@ -105,34 +105,9 @@ sub create_tree {
     $tree_name =~ s/M$/A/;
 
     if ( $tree_name =~ /([A-Z])([a-z]{2})([A-Z])$/ ) {
-
         my ( $selector, $language, $layer ) = ( $1, $2, $3 );
-
-        my $class = "Treex::Core::Node::$layer";
-
-        my $tree_root = eval "$class->new()" or Report::fatal $!; #layer subclasses not available yet
-
-        $tree_root->_set_bundle($self);
-
-        my $fs_zone = $self->get_or_create_zone( $language, $selector );
-        my $new_tree_name = lc($layer) . "_tree";
-        $fs_zone->{trees}->{$new_tree_name} = $tree_root;
-
-        my $new_id = "$tree_name-".$self->get_id."-root";
-#        $tree_root->set_attr( 'id', $new_id );
-#        $self->get_document->index_node_by_id($new_id, $tree_root);
-
-        $tree_root->set_id($new_id);
-
-        # pml-typing
-        $tree_root->set_type_by_name( $self->get_document->metaData('schema'), lc($layer).'-root.type' );
-
-        # vyresit usporadavaci atribut!
-        my $ordering_attribute = $tree_root->get_ordering_member_name;
-        if (defined $ordering_attribute) {
-            $tree_root->set_attr( $ordering_attribute, 0 );
-        }
-
+        my $zone = $self->get_or_create_zone( $language, $selector );
+        my $tree_root = $zone->create_tree($layer);
         return $tree_root;
     }
 
@@ -157,22 +132,12 @@ sub get_tree {
     else {
         my ( $selector, $language, $layer ) = ( $1, $2, $3 );
 
-        my $fs_bundle_root = $self;
-        my $fs_zone = get_zone( $fs_bundle_root, $language, $selector );
-
-        my $tree;
-
-        if ( defined $fs_zone ) {
-            my $new_tree_name = lc($layer) . "_tree";
-            $tree = $fs_zone->{trees}->{$new_tree_name};
+        my $zone = $self->get_zone( $language, $selector );
+        if (not defined $zone) {
+            Report::fatal "Unavailable zone $selector$language\n";
         }
 
-        if ( not defined $tree ) {
-            Report::fatal "No generic tree named $tree_name available in the bundle, bundle id=" . $self->get_attr('id');
-        }
-
-        return $tree;
-
+        return $zone->get_tree($layer);
     }
 }
 
@@ -190,8 +155,8 @@ sub set_attr {
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->get_or_create_zone($language,$selector);
-        return $fs_zone->{$attr_name} = $attr_value;
+        my $zone = $self->get_or_create_zone($language,$selector);
+        return $zone->{$attr_name} = $attr_value;
     }
 
     else {
@@ -209,9 +174,9 @@ sub get_attr {
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->get_zone($language,$selector);
-        if (defined $fs_zone) {
-            return $fs_zone->{$attr_name};
+        my $zone = $self->get_zone($language,$selector);
+        if (defined $zone) {
+            return $zone->{$attr_name};
         }
         else {
             return;
