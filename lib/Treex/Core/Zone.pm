@@ -22,6 +22,4 @@ sub get_attr {
     return $self->value->{$attr_name};
 }
 
-
-
 1;
