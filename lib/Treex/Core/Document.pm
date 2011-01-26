@@ -283,6 +283,7 @@ sub get_zone {
         $selector = $1;
     }
 
+    my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
         foreach my $element ( $meta->{zones}->elements ) {
             my ( $name, $value ) = @$element;
