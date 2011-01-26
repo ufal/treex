@@ -2,11 +2,10 @@ package Treex::Block::Read::PlainText;
 use Moose;
 with 'Treex::Core::DocumentReader';
 
-#use Moose::Util::TypeConstraints;
-#enum 'LangCode' => ( 'cs', 'en');
 use Treex::Core;
 
 has language => ( isa => 'LangCode', is => 'ro', required => 1 );
+has selector => ( isa => 'Str', is => 'ro', default => 'S');
 has lines_per_document => ( isa => 'Int', is => 'ro', default => 50 );
 
 sub next_document {
@@ -18,7 +17,8 @@ sub next_document {
         last if eof(STDIN);
         $text .= <STDIN>;
     }
-    $document->set_attr( 'S' . $self->{language} . ' text', $text );
+    
+    $document->set_attr( $self->selector . $self->language . ' text', $text );
     return $document;
 }
 
