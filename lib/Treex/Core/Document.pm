@@ -4,6 +4,7 @@ use Moose;
 use MooseX::FollowPBP;
 use Treex::Core::TectoMTStyleAccessors;
 use Treex::Core::Config;
+use Treex::Core::DocZone;
 
 with 'Treex::Core::TectoMTStyleAccessors';
 
@@ -244,58 +245,8 @@ sub create_bundle {
 }
 
 
-# ----------------- ACCESS TO ATTRIBUTES -------------------
 
-sub _get_zone {
-    my ($self, $language, $selector) = @_;
-    my $meta = $self->metaData('pml_root')->{meta};
-    if ( defined $meta->{zones} ) {
-        foreach my $element ( $meta->{zones}->elements ) {
-            my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and $value->{selector} eq $selector ) {
-                return $value;
-            }
-        }
-    }
-    return;
-}
-
-
-sub _create_zone {
-    my ($self, $language, $selector) = @_;
-
-    my $new_zone = Treex::PML::Seq::Element->new('zone', Treex::PML::Struct->new({
-        'language'=>$language,
-        'selector'=>$selector}) );
-
-
-    my $meta = $self->metaData('pml_root')->{meta};
-    if ( defined $meta->{zones} ) {
-        $meta->{zones}->unshift_element_obj($new_zone);
-    }
-    else {
-        $meta->{zones} = Treex::PML::Seq->new( [$new_zone ] );
-    }
-
-    return $new_zone->value;
-}
-
-
-sub _get_or_create_zone {
-    my ($self, $language, $selector) = @_;
-    my $fs_zone = $self->_get_zone($language, $selector);
-    if (not defined $fs_zone) {
-        $fs_zone = $self->_create_zone($language,$selector);
-    }
-    return $fs_zone;
-}
-
-
-# ---------------------------------------------------------------------------
-# new (visible) access to document zones
-
-
-use Treex::Core::DocZone;
+# -------------- ACCESS TO ZONES ---------------------------------------
 
 sub create_zone {
     my ($self, $language, $selector) = @_;
@@ -305,14 +256,12 @@ sub create_zone {
         $selector = $1;
     }
 
-
     my $new_zone = Treex::Core::DocZone->new('zone', Treex::PML::Struct->new(
         {
             'language' => $language,
             'selector' => $selector
         }
     ));
-
 
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
@@ -322,7 +271,6 @@ sub create_zone {
         $meta->{zones} = Treex::PML::Seq->new( [$new_zone ] );
     }
 
-#    return $new_zone->value;
     return $new_zone;
 }
 
@@ -330,36 +278,33 @@ sub create_zone {
 sub get_zone {
     my ($self, $language, $selector) = @_;
 
-    if ($language =~ /(.+)(..)/) {
+    if ($language =~ /(.+)(..)/) { # temporarily expecting just two-letter language codes !!!
         $language = $2;
         $selector = $1;
     }
 
-#    print "XXX Going through zones\n";
-    use Data::Dumper;
-    my $meta = $self->metaData('pml_root')->{meta};
-#    print "------------------------- META BEGIN ----------------------\n";
-#    print Dumper($meta);
-#    print "------------------------- META END ----------------------\n";
-#    print " zones $meta->{zones}\n";
     if ( defined $meta->{zones} ) {
-#            print "  TTT zones defined\n";
-            foreach my $element ( $meta->{zones}->elements ) {
-#                print "  QQQ zone element\n";
-                my ( $name, $value ) = @$element;
-                if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
-                    return $element;
-                }
+        foreach my $element ( $meta->{zones}->elements ) {
+            my ( $name, $value ) = @$element;
+            if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
+                return $element;
             }
+        }
     }
     return;
 }
 
+sub get_or_create_zone {
+    my ($self, $language, $selector) = @_;
+    my $fs_zone = $self->get_zone($language, $selector);
+    if (not defined $fs_zone) {
+        $fs_zone = $self->create_zone($language,$selector);
+    }
+    return $fs_zone;
+}
 
 
-
-
-# ---------------------------------------------------------------------------
+# ----------------- ACCESS TO ATTRIBUTES -------------------
 
 
 sub set_attr {
@@ -373,7 +318,7 @@ sub set_attr {
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_or_create_zone($language,$selector);
+        my $fs_zone = $self->get_or_create_zone($language,$selector);
         return $fs_zone->{$attr_name} = $attr_value;
     }
 
@@ -392,7 +337,7 @@ sub get_attr {
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_zone($language,$selector);
+        my $fs_zone = $self->get_zone($language,$selector);
         if (defined $fs_zone) {
             return $fs_zone->{$attr_name};
         }
