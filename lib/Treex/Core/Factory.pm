@@ -1,4 +1,8 @@
 package Treex::Core::Factory;
+# Until we solve the error:
+# Deep recursion on anonymous subroutine at /mnt/h/repl/perl_repo/share/perl/5.8.8/Treex/PML/Factory.pm line 65.
+0;
+__END__
 
 use strict;
 use warnings;

@@ -1,4 +1,5 @@
 package Treex::Moose;
+use Treex::Core;
 use Moose;
 use Moose::Exporter;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;

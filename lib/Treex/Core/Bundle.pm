@@ -1,17 +1,19 @@
 package Treex::Core::Bundle;
 
 use Moose;
+use Treex::Moose;
 use MooseX::NonMoose;
-use MooseX::FollowPBP;
 
 extends 'Treex::PML::Node';
 
 has document => (is => 'ro',
                  writer => '_set_document',
-                 reader => 'get_document',
+                 reader => 'document',
              );
 
 has id => (is => 'rw' );
+
+#has zones => (is => 'ro',  );
 
 use Treex::Core::Node;
 use Treex::Core::Node::A;

@@ -212,7 +212,8 @@ sub run {
             $block->process_document($document);
         }
     }
-    Report::info "Processed $document_number documents";
+    Report::info "Processed $document_number document"
+        . ($document_number>1 ? 's' : '');
     return;
 }
 

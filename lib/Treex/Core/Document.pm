@@ -20,6 +20,7 @@ has _pmldoc => (
     is=>'rw',
     init_arg => 'pml_doc',
     handles => {
+        set_filename => 'changeFilename',
         map {$_=>$_}
             qw( load clone save writeFile writeTo filename URL
                 changeFilename changeURL fileFormat changeFileFormat
@@ -320,7 +321,7 @@ sub set_attr {
                                            $attr_name, $attr_value );
     }
 
-    elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
+    elsif ($attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
         my $zone = $self->get_or_create_zone($language,$selector);
         return $zone->set_attr($attr_name, $attr_value);
@@ -339,7 +340,7 @@ sub get_attr {
         return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, $attr_name );
     }
 
-    elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
+    elsif ($attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/) {
         my ($selector, $language, $attr_name) = ($1,$2,$3);
         my $fs_zone = $self->get_zone($language,$selector);
         if (defined $fs_zone) {

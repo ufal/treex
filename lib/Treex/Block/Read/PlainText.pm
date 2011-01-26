@@ -5,7 +5,7 @@ with 'Treex::Core::DocumentReader';
 use Treex::Core;
 
 has language => ( isa => 'LangCode', is => 'ro', required => 1 );
-has selector => ( isa => 'Str', is => 'ro', default => 'S');
+has selector => ( isa => 'Selector', is => 'ro', default => '');
 has lines_per_document => ( isa => 'Int', is => 'ro', default => 50 );
 
 sub next_document {
@@ -17,7 +17,6 @@ sub next_document {
         last if eof(STDIN);
         $text .= <STDIN>;
     }
-    
     $document->set_attr( $self->selector . $self->language . ' text', $text );
     return $document;
 }

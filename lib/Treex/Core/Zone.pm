@@ -3,8 +3,8 @@ package Treex::Core::Zone;
 # antecedent of DocZone and BundleZone
 
 use Moose;
+use Treex::Moose;
 use MooseX::NonMoose;
-use MooseX::FollowPBP;
 
 extends 'Treex::PML::Seq::Element';
 

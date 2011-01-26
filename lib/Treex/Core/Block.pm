@@ -1,19 +1,17 @@
 package Treex::Core::Block;
-
 use Moose;
-use MooseX::FollowPBP;
-
+use Treex::Moose;
 use LWP::Simple;
 
-sub process_stream {
-    my ( $self, $stream ) = @_;
-    $self->process_document($stream->get_current_document);
-    # unimplemented
-}
+has selector => ( is => 'ro', isa => 'Selector', default => '',);
+has language => ( is => 'ro', isa => 'LangCode');
 
 sub process_document {
     my ( $self, $document ) = @_;
-
+    if (!$document->get_bundles()){
+        Report::fatal "There are no bundles in the document and block ". ref($self) .
+        " doesn't override the method process_bundle";
+    }
     foreach my $bundle ( $document->get_bundles() ) {
         $self->process_bundle($bundle);
     }
@@ -21,9 +19,19 @@ sub process_document {
 }
 
 sub process_bundle {
-#    Report::fatal "process_bundle() is not (and could not be) implemented"
-#        . " in the abstract class TectoMT::Block !";
+    my ($self, $bundle) = @_;
+    Report::fatal "Parameter language was not set and block ". ref($self) .
+     " doesn't override the method process_bundle";
+    return process_zone($bundle->get_zone($self->language, $self->selector));
 }
+
+sub process_zone {
+    Report::fatal "process_zone() is not (and could not be) implemented"
+        . " in the abstract class Treex::Core::Block !"; 
+}
+
+
+
 
 sub get_block_name {
     my ($self) = @_;

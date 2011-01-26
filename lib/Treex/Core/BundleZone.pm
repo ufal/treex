@@ -1,7 +1,7 @@
 package Treex::Core::BundleZone;
 
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Moose;
 
 extends 'Treex::Core::Zone';
 

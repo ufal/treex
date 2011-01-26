@@ -1,13 +1,19 @@
 package Treex::Core;
 use Moose;
 use Treex::Core::Document;
-use Treex::Core::Factory;
+#use Treex::Core::Factory;
 use Treex::Core::Node;
 use Treex::Core::Bundle;
-#use Treex::Core::Runner;
 
 use Moose::Util::TypeConstraints;
 
+subtype 'Selector'
+    => as 'Str'
+    => where { $_ eq '' or /^[ST]/ } # This restriction will be perhaps deleted.
+    => message {'Selector must start with S (source) or T (target).'}
+;
+
+# ISO 639-1 language code with some extensions from ISO 639-2
 enum 'LangCode' => (   
     # major languages
     'en', # English
@@ -140,6 +146,7 @@ enum 'LangCode' => (
     # other languages
     'sw', # Swahili
     'eo', # Esperanto
+    'und', # ISO 639-2 code for undetermined/unknown language
 );
 
 

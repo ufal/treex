@@ -21,10 +21,8 @@
        -->
   <type name="langcode.type">
     <choice>
-      <value></value> <!-- unknown language -->
-      <value>cs</value> <!-- Czech -->
+      <!-- major languages -->
       <value>en</value> <!-- English -->
-      <!-- other major languages -->
       <value>de</value> <!-- German -->
       <value>fr</value> <!-- French -->
       <value>es</value> <!-- Spanish -->
@@ -33,6 +31,7 @@
       <value>ar</value> <!-- Arabic -->
       <value>zh</value> <!-- Chinese -->
       <!-- other Slavic languages -->
+      <value>cs</value> <!-- Czech -->
       <value>sk</value> <!-- Slovak -->
       <value>pl</value> <!-- Polish -->
       <value>dsb</value> <!-- Lower Sorbian -->
@@ -153,6 +152,7 @@
       <!-- other languages -->
       <value>sw</value> <!-- Swahili -->
       <value>eo</value> <!-- Esperanto -->
+      <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>
 
