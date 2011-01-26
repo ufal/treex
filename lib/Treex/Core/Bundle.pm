@@ -45,11 +45,11 @@ sub get_all_trees {
 
 
 sub _get_zone {
-    my ( $fs_bundle_root, $language, $purpose ) = @_;
+    my ( $fs_bundle_root, $language, $selector ) = @_;
     if ( defined $fs_bundle_root->{zones} ) {
         foreach my $element ( $fs_bundle_root->{zones}->elements ) {
             my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and $value->{purpose} eq $purpose ) {
+            if ( $value->{language} eq $language and $value->{selector} eq $selector ) {
                 return $value;
             }
         }
@@ -58,13 +58,13 @@ sub _get_zone {
 }
 
 sub _create_zone {
-    my ( $self, $fs_bundle_root, $language, $purpose ) = @_;
+    my ( $self, $fs_bundle_root, $language, $selector ) = @_;
     my $new_subbundle = Treex::PML::Seq::Element->new(
         'zone',
         Treex::PML::Struct->new(
             {
                 'language'  => $language,
-                'purpose' => $purpose
+                'selector' => $selector
             }
         )
       );
@@ -81,11 +81,11 @@ sub _create_zone {
 }
 
 sub _get_or_create_zone {
-    my ( $self, $language, $purpose ) = @_;
+    my ( $self, $language, $selector ) = @_;
     my $fs_bundle_root = $self;
-    my $fs_subbundle = _get_zone( $fs_bundle_root, $language, $purpose );
+    my $fs_subbundle = _get_zone( $fs_bundle_root, $language, $selector );
     if ( not defined $fs_subbundle ) {
-        $fs_subbundle = $self->_create_zone( $fs_bundle_root, $language, $purpose );
+        $fs_subbundle = $self->_create_zone( $fs_bundle_root, $language, $selector );
     }
     return $fs_subbundle;
 }
@@ -102,7 +102,7 @@ sub create_tree {
 
     if ( $tree_name =~ /([A-Z])([a-z]{2})([A-Z])$/ ) {
 
-        my ( $purpose, $language, $layer ) = ( $1, $2, $3 );
+        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
 
         my $class = "Treex::Core::Node::$layer";
 
@@ -110,7 +110,7 @@ sub create_tree {
 
         $tree_root->_set_bundle($self);
 
-        my $fs_zone = $self->_get_or_create_zone( $language, $purpose );
+        my $fs_zone = $self->_get_or_create_zone( $language, $selector );
         my $new_tree_name = lc($layer) . "_tree";
         $fs_zone->{trees}->{$new_tree_name} = $tree_root;
 
@@ -151,10 +151,10 @@ sub get_tree {
     }
 
     else {
-        my ( $purpose, $language, $layer ) = ( $1, $2, $3 );
+        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
 
         my $fs_bundle_root = $self;
-        my $fs_zone = _get_zone( $fs_bundle_root, $language, $purpose );
+        my $fs_zone = _get_zone( $fs_bundle_root, $language, $selector );
 
         my $tree;
 
@@ -185,8 +185,8 @@ sub set_attr {
     }
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($purpose, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_or_create_zone($language,$purpose);
+        my ($selector, $language, $attr_name) = ($1,$2,$3);
+        my $fs_zone = $self->_get_or_create_zone($language,$selector);
         return $fs_zone->{$attr_name} = $attr_value;
     }
 
@@ -204,8 +204,8 @@ sub get_attr {
     }
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($purpose, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_zone($language,$purpose);
+        my ($selector, $language, $attr_name) = ($1,$2,$3);
+        my $fs_zone = $self->_get_zone($language,$selector);
         if (defined $fs_zone) {
             return $fs_zone->{$attr_name};
         }

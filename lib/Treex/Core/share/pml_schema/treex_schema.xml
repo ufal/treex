@@ -50,7 +50,7 @@
   <type name="language_parametrized_doc_zone.type" >
     <structure>
       <member name="language" required="1" as_attribute="1" type="langcode.type"/>
-      <member name="purpose" required="1" as_attribute="1"><cdata format="any"/></member>
+      <member name="selector" as_attribute="1"><cdata format="any"/></member>
       <member name="text"><cdata format="any"/></member>
     </structure>
   </type>

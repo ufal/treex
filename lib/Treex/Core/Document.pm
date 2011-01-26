@@ -26,6 +26,8 @@ has _pmldoc => (
                 changeUserData metaData changeMetaData listMetaData
                 appData changeAppData listAppData
 
+                documentRootData
+
                 FS changeFS
 
                 hint changeHint pattern_count pattern patterns
@@ -39,6 +41,60 @@ has _pmldoc => (
         },
     default => sub { _create_empty_pml_doc() },
 );
+
+#sub get_pml {
+#    my $self = shift;
+#    return $self->_pml
+#}
+
+use Treex::PML::Factory;
+my $factory = Treex::PML::Factory->new();
+
+sub BUILD {
+    my ($self, $params_rf) = @_;
+
+    # constructing treex document from an existing file
+    if (defined $params_rf and $params_rf->{filename}) {
+
+        my $pmldoc = $factory->createDocumentFromFile($params_rf->{filename});
+        $self->_set_pmldoc($pmldoc);
+        $self->_set_index({});
+
+
+        # ensuring Treex::Core types
+        my $meta = $self->metaData('pml_root')->{meta};
+        if ( defined $meta->{zones} ) {
+            foreach my $element ( $meta->{zones}->elements ) {
+                my ( $name, $value ) = @$element;
+                bless $element, 'Treex::Core::DocZone';
+            }
+        }
+
+
+# node typing (moved from the factory)
+
+#     foreach my $bundle ($doc->get_bundles) {
+
+#         bless $bundle, 'Treex::Core::Bundle';
+
+#         foreach my $tree ($bundle->get_all_trees) {
+#             $tree->type->get_structure_name =~ /(\S)-(root|node)/
+#                 or Report::fatal "Unexpected member in zone structure: ".$tree->type;
+#             my $layer = uc($1);
+#             foreach my $node ($tree, $tree->descendants) { # must call Treex::PML::Node API
+#                 bless $node, "Treex::Core::Node::$layer";
+#                 $doc->index_node_by_id($node->get_id,$node);
+#             }
+#         }
+#         $bundle->_set_document($doc);
+#     }
+
+    }
+
+    return $self;
+
+}
+
 
 has _index => (
     is => 'rw',
@@ -191,12 +247,12 @@ sub create_bundle {
 # ----------------- ACCESS TO ATTRIBUTES -------------------
 
 sub _get_zone {
-    my ($self, $language, $purpose) = @_;
+    my ($self, $language, $selector) = @_;
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
         foreach my $element ( $meta->{zones}->elements ) {
             my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and $value->{purpose} eq $purpose ) {
+            if ( $value->{language} eq $language and $value->{selector} eq $selector ) {
                 return $value;
             }
         }
@@ -206,11 +262,11 @@ sub _get_zone {
 
 
 sub _create_zone {
-    my ($self, $language, $purpose) = @_;
+    my ($self, $language, $selector) = @_;
 
     my $new_zone = Treex::PML::Seq::Element->new('zone', Treex::PML::Struct->new({
         'language'=>$language,
-        'purpose'=>$purpose}) );
+        'selector'=>$selector}) );
 
 
     my $meta = $self->metaData('pml_root')->{meta};
@@ -226,14 +282,84 @@ sub _create_zone {
 
 
 sub _get_or_create_zone {
-    my ($self, $language, $purpose) = @_;
-    my $fs_zone = $self->_get_zone($language, $purpose);
+    my ($self, $language, $selector) = @_;
+    my $fs_zone = $self->_get_zone($language, $selector);
     if (not defined $fs_zone) {
-        $fs_zone = $self->_create_zone($language,$purpose);
+        $fs_zone = $self->_create_zone($language,$selector);
     }
     return $fs_zone;
 }
 
+
+# ---------------------------------------------------------------------------
+# new (visible) access to document zones
+
+
+use Treex::Core::DocZone;
+
+sub create_zone {
+    my ($self, $language, $selector) = @_;
+
+    if ($language =~ /(.+)(..)/) {
+        $language = $2;
+        $selector = $1;
+    }
+
+
+    my $new_zone = Treex::Core::DocZone->new('zone', Treex::PML::Struct->new(
+        {
+            'language' => $language,
+            'selector' => $selector
+        }
+    ));
+
+
+    my $meta = $self->metaData('pml_root')->{meta};
+    if ( defined $meta->{zones} ) {
+        $meta->{zones}->unshift_element_obj($new_zone);
+    }
+    else {
+        $meta->{zones} = Treex::PML::Seq->new( [$new_zone ] );
+    }
+
+#    return $new_zone->value;
+    return $new_zone;
+}
+
+
+sub get_zone {
+    my ($self, $language, $selector) = @_;
+
+    if ($language =~ /(.+)(..)/) {
+        $language = $2;
+        $selector = $1;
+    }
+
+#    print "XXX Going through zones\n";
+    use Data::Dumper;
+    my $meta = $self->metaData('pml_root')->{meta};
+#    print "------------------------- META BEGIN ----------------------\n";
+#    print Dumper($meta);
+#    print "------------------------- META END ----------------------\n";
+#    print " zones $meta->{zones}\n";
+    if ( defined $meta->{zones} ) {
+#            print "  TTT zones defined\n";
+            foreach my $element ( $meta->{zones}->elements ) {
+#                print "  QQQ zone element\n";
+                my ( $name, $value ) = @$element;
+                if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
+                    return $element;
+                }
+            }
+    }
+    return;
+}
+
+
+
+
+
+# ---------------------------------------------------------------------------
 
 
 sub set_attr {
@@ -246,8 +372,8 @@ sub set_attr {
     }
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($purpose, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_or_create_zone($language,$purpose);
+        my ($selector, $language, $attr_name) = ($1,$2,$3);
+        my $fs_zone = $self->_get_or_create_zone($language,$selector);
         return $fs_zone->{$attr_name} = $attr_value;
     }
 
@@ -265,8 +391,8 @@ sub get_attr {
     }
 
     elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($purpose, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->_get_zone($language,$purpose);
+        my ($selector, $language, $attr_name) = ($1,$2,$3);
+        my $fs_zone = $self->_get_zone($language,$selector);
         if (defined $fs_zone) {
             return $fs_zone->{$attr_name};
         }
