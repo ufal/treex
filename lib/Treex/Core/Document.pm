@@ -62,21 +62,24 @@ sub BUILD {
         $self->_set_index({});
 
 
-        # ensuring Treex::Core types
+        # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
         if ( defined $meta->{zones} ) {
             foreach my $element ( $meta->{zones}->elements ) {
-                my ( $name, $value ) = @$element;
                 bless $element, 'Treex::Core::DocZone';
             }
         }
 
+        foreach my $bundle ($self->get_bundles) {
+            bless $bundle, 'Treex::Core::Bundle';
 
-# node typing (moved from the factory)
+            if ( defined $bundle->{zones} ) {
+                foreach my $element ( $bundle->{zones}->elements ) {
+                    bless $element, 'Treex::Core::BundleZone';
+                }
+            }
 
-#     foreach my $bundle ($doc->get_bundles) {
 
-#         bless $bundle, 'Treex::Core::Bundle';
 
 #         foreach my $tree ($bundle->get_all_trees) {
 #             $tree->type->get_structure_name =~ /(\S)-(root|node)/
@@ -87,8 +90,8 @@ sub BUILD {
 #                 $doc->index_node_by_id($node->get_id,$node);
 #             }
 #         }
-#         $bundle->_set_document($doc);
-#     }
+         $bundle->_set_document($self);
+     }
 
     }
 

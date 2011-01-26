@@ -30,6 +30,5 @@ ok ($same_zone->get_attr('text') eq $sample_text, 'document zone attribute corre
 # checking file-storing persistency of zones and their attributes
 my $filename = 'test.treex';
 $doc->save($filename);
-$doc->get_zone('en');
 my $doc2 = Treex::Core::Document->new( { 'filename' => $filename } );
-ok ($doc2->get_zone('en')->get_attr('text') eq $sample_text, 'document zone attribute correctly store in a file');
+ok ($doc2->get_zone('en')->get_attr('text') eq $sample_text, 'document zone attribute correctly stored in a file');

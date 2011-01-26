@@ -1,4 +1,4 @@
-package Treex::Core::DocZone;
+package Treex::Core::BundleZone;
 
 use Moose;
 use MooseX::FollowPBP;

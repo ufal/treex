@@ -119,7 +119,7 @@
   <type name="zone.type" >
     <structure>
       <member name="language" required="1" as_attribute="1" type="langcode.type"/>
-      <member name="purpose" required="1" as_attribute="1"><cdata format="any"/></member>
+      <member name="selector" as_attribute="1"><cdata format="any"/></member>
       <member name="sentence"><cdata format="any"/></member>
 
       <member name="trees">
