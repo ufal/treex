@@ -6,11 +6,14 @@
 #include <contrib/pml/PML.mak>
 
 package Treex_mode;
-
 #binding-context Treex_mode
 
+use Treex::Core;
+
 BEGIN { import TredMacro; }
+
 use strict;
+our $grp;
 
 sub detect {
   return (((PML::SchemaName()||'') eq 'treex_document') ? 1 : 0);
@@ -34,6 +37,22 @@ sub switch_context_hook {
   SetCurrentStylesheet('Treex_stylesheet');
   Redraw() if GUI();
 }
+
+sub current_treex_doc {
+    return $grp->{_current_treex_doc};
+}
+
+
+sub file_opened_hook {
+    my $pmldoc = $grp->{FSFile};
+    my $treex_doc = Treex::Core::Document->new({pmldoc => $pmldoc});
+    $grp->{_current_treex_doc} = $treex_doc;
+}
+
+sub file_reloaded_hook {
+	file_opened_hook();
+}
+
 
 
 1;

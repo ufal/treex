@@ -89,27 +89,24 @@ sub BUILD {
             bless $bundle, 'Treex::Core::Bundle';
 
             if ( defined $bundle->{zones} ) {
-                foreach my $element ( $bundle->{zones}->elements ) {
-                    bless $element, 'Treex::Core::BundleZone';
+                foreach my $zone ( $bundle->{zones}->elements ) {
+                    bless $zone, 'Treex::Core::BundleZone';
+
+                    foreach my $tree ($zone->get_all_trees) {
+                        $tree->type->get_structure_name =~ /(\S)-(root|node)/
+                            or Report::fatal "Unexpected member in zone structure: ".$tree->type;
+                        my $layer = uc($1);
+                        foreach my $node ($tree, $tree->descendants) { # must still call Treex::PML::Node's API
+                            bless $node, "Treex::Core::Node::$layer";
+                            $self->index_node_by_id($node->get_id,$node);
+                        }
+                    }
                 }
             }
 
-
-
-#         foreach my $tree ($bundle->get_all_trees) {
-#             $tree->type->get_structure_name =~ /(\S)-(root|node)/
-#                 or Report::fatal "Unexpected member in zone structure: ".$tree->type;
-#             my $layer = uc($1);
-#             foreach my $node ($tree, $tree->descendants) { # must call Treex::PML::Node API
-#                 bless $node, "Treex::Core::Node::$layer";
-#                 $doc->index_node_by_id($node->get_id,$node);
-#             }
-#         }
-         $bundle->_set_document($self);
-     }
-
+            $bundle->_set_document($self);
+        }
     }
-
     return $self;
 
 }

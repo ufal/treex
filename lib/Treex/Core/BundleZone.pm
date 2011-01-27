@@ -70,6 +70,13 @@ sub get_tree {
     return $tree;
 }
 
+sub get_all_trees {
+   my ($self) = @_;
+
+   return grep {defined}
+       map {$self->value->{trees}->{$_."_tree"};} qw(a t n p);
+
+}
 
 
 1;
