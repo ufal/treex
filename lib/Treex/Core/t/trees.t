@@ -17,10 +17,12 @@ my $filename = 'test.treex';
 
     # accessing created zones
     my $ttree = $zone->create_tree('t');
+    $ttree->create_child;
     ok($ttree,'creating a tree by $zone->create_tree');
     $doc->save($filename);
 
     my $ttree2 = $zone->get_tree('t');
+
     ok($ttree eq $ttree2,
        'tree stored in bundle zone is revealed correctly by $zone->get_tree');
 }

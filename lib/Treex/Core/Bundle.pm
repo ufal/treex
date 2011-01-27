@@ -74,6 +74,11 @@ sub get_or_create_zone {
 }
 
 
+sub get_all_zones {
+    my ($self) = @_;
+    return $self->{zones}->elements;
+}
+
 
 # --------- ACCESS TO TREES ------------
 

@@ -42,7 +42,6 @@ sub current_treex_doc {
     return $grp->{_current_treex_doc};
 }
 
-
 sub file_opened_hook {
     my $pmldoc = $grp->{FSFile};
     my $treex_doc = Treex::Core::Document->new({pmldoc => $pmldoc});
@@ -53,6 +52,19 @@ sub file_reloaded_hook {
 	file_opened_hook();
 }
 
+sub get_nodelist_hook {
+    my ( $fsfile, $treeNo, $currentNode, $hidden ) = @_;
+    my $bundle = $fsfile->tree($treeNo);
+
+
+    my @nodes = map { $_->get_descendants({add_self=>1})}
+        map { $_->get_all_trees }
+            $bundle->get_all_zones;
+
+    $currentNode = $nodes[0] unless first { $_ == $currentNode } @nodes;
+    return [ \@nodes, $currentNode ];
+
+}
 
 
 1;
