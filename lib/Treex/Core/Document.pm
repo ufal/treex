@@ -55,13 +55,27 @@ my $factory = Treex::PML::Factory->new();
 sub BUILD {
     my ($self, $params_rf) = @_;
 
-    # constructing treex document from an existing file
-    if (defined $params_rf and $params_rf->{filename}) {
+    my $pmldoc;
 
-        my $pmldoc = $factory->createDocumentFromFile($params_rf->{filename});
+    if (defined $params_rf) {
+
+        # creating Treex::Core::Document from an already existing Treex::PML::Document instance
+        if ($params_rf->{pmldoc}) {
+            $pmldoc = $params_rf->{pmldoc};
+        }
+
+        # loading Treex::Core::Document from a file
+        elsif ($params_rf->{filename}) {
+            $pmldoc = $factory->createDocumentFromFile($params_rf->{filename});
+        }
+
+    }
+
+    # constructing treex document from an existing file
+    if ($pmldoc) {
+
         $self->_set_pmldoc($pmldoc);
         $self->_set_index({});
-
 
         # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
