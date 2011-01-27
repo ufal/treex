@@ -21,10 +21,11 @@ sub share_dir {
 sub pml_schema_dir {
 
     if (devel_version()) {
-        return lib_core_dir()."/share/pml_schema/";
+        return lib_core_dir()."/share/tred_extension/treex/resources/";
     }
     else {
-        return File::ShareDir::dist_dir('Treex-Core')."/pml_schema/";
+        return File::ShareDir::dist_dir('Treex-Core')
+            ."/tred_extension/treex/resources/";
     }
 }
 

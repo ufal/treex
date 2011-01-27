@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tred_extension xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
+
+  <head>
+    <schema href="tred_extension_schema.xml"/>
+  </head>
+
+  <pkgname>treex</pkgname>
+
+  <title>Support for .treex files</title>
+
+  <version>0.1</version>
+
+  <copyright year="2010">Zdeněk Žabokrtský</copyright>
+
+  <description>This extension allows to use TrEd for browsing
+  Treex::Core::Document instances.</description>
+
+  <require>  </require>
+
+</tred_extension>
+
