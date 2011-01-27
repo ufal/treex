@@ -1,0 +1,11 @@
+context:  Treex_context
+#hint:       <? TectoMT_TredMacros::get_hint($this) ?>
+rootstyle:  <? TectoMT_TredMacros::get_root_style() ?>
+style: <? TectoMT_TredMacros::get_node_style($this) ?>
+node: <? TectoMT_TredMacros::display_line($this, 1) ?>
+node: <? TectoMT_TredMacros::display_line($this, 2) ?>
+node: <? TectoMT_TredMacros::display_line($this, 3) ?>
+
+
+
+

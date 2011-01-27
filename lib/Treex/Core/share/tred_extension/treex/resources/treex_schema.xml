@@ -21,7 +21,7 @@
  tree bundles related to the individual sentences. -->
 
 
-  <root name="tmt_document">
+  <root name="treex_document">
     <structure>
       <member name="meta" required="0" type="meta.type"/>
       <member name="bundles" role="#TREES" required="0">

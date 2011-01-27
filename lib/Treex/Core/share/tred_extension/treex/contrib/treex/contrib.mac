@@ -1,0 +1,41 @@
+# -*- cperl -*-
+
+#ifndef treex
+#define treex
+
+#include <contrib/pml/PML.mak>
+
+package Treex_mode;
+
+#binding-context Treex_mode
+
+BEGIN { import TredMacro; }
+use strict;
+
+sub detect {
+  return (((PML::SchemaName()||'') eq 'treex_document') ? 1 : 0);
+}
+
+push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
+  my ($hook)=@_;
+  my $resuming = ($hook eq 'file_resumed_hook');
+  my $current = CurrentContext();
+  if (detect()) {
+    SetCurrentStylesheet('Treex_stylesheet') if $resuming;
+    return 'Treex_mode';
+  }
+  return;
+};
+
+sub allow_switch_context_hook {
+  return 'stop' unless detect();
+}
+sub switch_context_hook {
+  SetCurrentStylesheet('Treex_stylesheet');
+  Redraw() if GUI();
+}
+
+
+1;
+
+#endif treex
