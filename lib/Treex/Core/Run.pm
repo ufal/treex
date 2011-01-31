@@ -23,7 +23,6 @@ sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
 
-use TectoMT::Scenario;
 use Treex::Core::Scenario;
 
 sub execute {
