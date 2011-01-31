@@ -15,6 +15,9 @@ BEGIN { import TredMacro; }
 use strict;
 our $grp;
 
+use Treex::Core::TredView;
+my $tredview = Treex::Core::TredView->new({grp=>$grp});
+
 sub detect {
   return (((PML::SchemaName()||'') eq 'treex_document') ? 1 : 0);
 }
@@ -30,6 +33,7 @@ push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
   return;
 };
 
+
 sub allow_switch_context_hook {
   return 'stop' unless detect();
 }
@@ -39,31 +43,19 @@ sub switch_context_hook {
 }
 
 sub current_treex_doc {
-    return $grp->{_current_treex_doc};
+  return $grp->{_current_treex_doc};
 }
 
 sub file_opened_hook {
-    my $pmldoc = $grp->{FSFile};
-    my $treex_doc = Treex::Core::Document->new({pmldoc => $pmldoc});
-    $grp->{_current_treex_doc} = $treex_doc;
+  $tredview->file_opened_hook(@_);
 }
 
 sub file_reloaded_hook {
-	file_opened_hook();
+  file_opened_hook();
 }
 
 sub get_nodelist_hook {
-    my ( $fsfile, $treeNo, $currentNode, $hidden ) = @_;
-    my $bundle = $fsfile->tree($treeNo);
-
-
-    my @nodes = map { $_->get_descendants({add_self=>1})}
-        map { $_->get_all_trees }
-            $bundle->get_all_zones;
-
-    $currentNode = $nodes[0] unless first { $_ == $currentNode } @nodes;
-    return [ \@nodes, $currentNode ];
-
+    return $tredview->get_nodelist_hook(@_);
 }
 
 
