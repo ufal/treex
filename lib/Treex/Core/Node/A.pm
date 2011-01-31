@@ -398,19 +398,20 @@ Analytical node
 
 =head1 METHODS
 
+!!! missing description of
+
 =over 4
 
+=item is_coap_root
+=item get_echildren
+=item get_eparents
+=item get_coap_members
+=item is_coap_member
+=item get_transitive_coap_members
+=item get_direct_coap_members
+=item get_transitive_coap_root
 
-
-is_coap_root
-get_echildren
-get_eparents
-get_coap_members
-is_coap_member
-get_transitive_coap_members
-get_direct_coap_members
-get_transitive_coap_root
-
+=back
 
 =head2 Links from a-trees to phrase-structure trees
 

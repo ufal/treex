@@ -18,6 +18,11 @@ sub share_dir {
     # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
 }
 
+sub tred_dir {
+    return $ENV{TRED_DIR};
+}
+
+
 sub pml_schema_dir {
 
     if (devel_version()) {
@@ -29,11 +34,15 @@ sub pml_schema_dir {
     }
 }
 
-sub lib_core_dir {
-    return caller_dir();
+sub tred_extension_dir {
+    return pml_schema_dir()."/../../";
 }
 
-sub caller_dir {
+sub lib_core_dir {
+    return _caller_dir();
+}
+
+sub _caller_dir {
     my %call_info;
     @call_info{
         qw(pack file line sub has_args wantarray evaltext is_require)
