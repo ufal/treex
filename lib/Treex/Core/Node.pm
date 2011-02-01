@@ -101,7 +101,7 @@ sub create_child {
 
     my $type = $new_node->get_pml_type_name();
     return $new_node if !defined $type;
-    my $fs_file = $self->get_bundle->get_document()->_get_pmldoc;
+    my $fs_file = $self->get_bundle->get_document()->_pmldoc;
     $self->set_type_by_name( $fs_file->metaData('schema'), $type );
     return $new_node;
 }
@@ -184,7 +184,7 @@ sub set_parent {
         Treex::PML::Cut($fsself);
     }
 
-    my $fsfile     = $self->get_document()->_get_pmldoc;
+    my $fsfile     = $self->get_document()->_pmldoc;
     my @fschildren = $fsparent->children();
     if (@fschildren) {
         Treex::PML::PasteAfter( $fsself, $fschildren[-1] );
@@ -528,14 +528,14 @@ sub get_fposition {
     return "$filename##$bundle_number.$id";
 }
 
-sub generate_new_id {
+sub generate_new_id { #TODO move to Core::Document?
     my ($self) = @_;
 
     Report::fatal('Incorrect number of arguments') if @_ != 1;
 
     my $doc = $self->get_document;
 
-    my $latest_node_number = $doc->_get_latest_node_number;
+    my $latest_node_number = $doc->_latest_node_number;
 
     my $new_id;
     $self->get_root->get_id =~ /(.+)root/;

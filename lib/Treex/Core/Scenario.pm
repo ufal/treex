@@ -1,15 +1,31 @@
 package Treex::Core::Scenario;
 use Moose;
-use MooseX::SemiAffordanceAccessor;
+use Treex::Moose;
 
 has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub {[]});
 
 has document_reader => ( is => 'rw', does => 'Treex::Core::DocumentReader',
             documentation => 'DocumentReader starts every scenario and reads a stream of documents.' );
 
+has _global_params => (
+    is        => 'ro',
+    isa       => 'HashRef[Str]',
+    traits    => ['Hash'],
+    default   => sub { {} },
+    handles   => {
+          get_global_param  => 'get',
+          set_global_param  => 'set',
+          #get_global_param_names => 'keys',
+          #set_verbose       => [ set => 'verbose' ],
+          #get_verbose       => [ get => 'verbose' ],
+          #set_language      => [ set => 'language' ],
+          #get_language      => [ get => 'language' ],
+          #... ?
+      },
+);
+
 use Report;
 use File::Basename;
-use Treex::Core::Document;
 
 my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMORY} );
 
@@ -49,13 +65,21 @@ sub BUILD {
             $params = join ' ', @{ $block_item->{block_parameters} };
         }
         Report::info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
-        my $new_block = _load_block($block_item);
+        my $new_block = $self->_load_block($block_item);
         
         if ($new_block->does('Treex::Core::DocumentReader')){
             Report::fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->document_reader();
             $self->set_document_reader($new_block);
         } else {
+            $new_block->_set_scenario($self);
+            #foreach my $param_name ($new_block->meta->get_attribute_list){
+            #    if (!$block_item->{block_parameters}{$param_name} jejda block_params jsou pole
+            #        && $self->get_global_param($param_name)){
+            #            eval '$new_block->set_'.$param_name.
+            #                '($self->get_global_param($param_name));';
+            #        }
+            #}
             push @{ $self->loaded_blocks }, $new_block;
         }
     }
@@ -173,18 +197,30 @@ sub construct_scenario_string {
 }
 
 sub _load_block {
-    my ($block_item) = @_;
+    my ($self, $block_item) = @_;
     my $block_name = $block_item->{block_name};
+    my $new_block;
+
+    # Initialize with global (scenario) parameters
+    my %params = (%{$self->_global_params}, scenario=>$self);
+    
+    # which can be overriden by (local) block parameters. 
+    foreach (@{$block_item->{block_parameters}}){
+        my ( $name, $value ) = split /=/;
+        $params{$name} = $value;
+    }
 
     # constructing the block instance (possibly parametrized)
-    my $constructor_parameters = join ",",
-        map {
-        my ( $name, $value ) = split /=/;
-        "q($name)=>q($value)"
-        } @{ $block_item->{block_parameters} };
+    #my $constructor_parameters = join ",",
+    #    map {
+    #    my ( $name, $value ) = split /=/;
+    #    "q($name)=>q($value)"
+    #    } @{ $block_item->{block_parameters} };
 
-    my $new_block;
-    my $string_to_eval = '$new_block = ' . $block_name . "->new({$constructor_parameters});";
+
+    #my $string_to_eval = '$new_block = ' . $block_name . "->new({$constructor_parameters});";
+    #use Data::Dumper; print Dumper(\%params);
+    my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);';
     eval $string_to_eval;
     if ($@) {
         Report::fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n" . $!;

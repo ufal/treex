@@ -1,8 +1,7 @@
 package Treex::Core::Document;
 
 use Moose;
-use MooseX::FollowPBP;
-use Treex::Core::TectoMTStyleAccessors;
+use Treex::Moose;
 use Treex::Core::Config;
 use Treex::Core::DocZone;
 
@@ -11,14 +10,13 @@ with 'Treex::Core::TectoMTStyleAccessors';
 use Treex::PML;
 use Scalar::Util qw( weaken );
 
-use Treex::Core::Bundle;
-
 use Report; # taky nahradit necim novym
 
 has _pmldoc => (
     isa=>'Treex::PML::Document',
     is=>'rw',
     init_arg => 'pml_doc',
+    writer => '_set_pmldoc',
     handles => {
         set_filename => 'changeFilename',
         map {$_=>$_}
@@ -41,13 +39,18 @@ has _pmldoc => (
                 destroy_tree swap_trees move_tree_to test_tree_type
                 determine_node_type )
         },
-    default => sub { _create_empty_pml_doc() },
+    builder => '_create_empty_pml_doc',
 );
 
-#sub get_pml {
-#    my $self = shift;
-#    return $self->_pml
-#}
+has _index => (
+    is => 'rw',
+    default => sub {return {} },
+);
+
+has _latest_node_number => ( # for generating document-unique IDs
+    is => 'rw',
+    default => 0,
+);
 
 use Treex::PML::Factory;
 my $factory = Treex::PML::Factory->new();
@@ -73,9 +76,7 @@ sub BUILD {
 
     # constructing treex document from an existing file
     if ($pmldoc) {
-
         $self->_set_pmldoc($pmldoc);
-        $self->_set_index({});
 
         # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
@@ -110,18 +111,6 @@ sub BUILD {
     return $self;
 
 }
-
-
-has _index => (
-    is => 'rw',
-    default => sub {return {} },
-);
-
-has _latest_node_number => ( # for generating document-unique IDs
-    is => 'rw',
-    default => 0,
-);
-
 
 sub _pml_attribute_hash {
     my $self = shift;
@@ -164,19 +153,12 @@ sub _create_empty_pml_doc {
     return $fsfile;
 }
 
-
-#sub get_tied_fsfile { # !!! before all usages are removed  # check this!
-#    my $self = shift;
-#    return $self->_get_pmldoc;
-#}
-
-
 # --- INDEXING
 
 sub index_node_by_id() {
     my ( $self, $id, $node ) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 3;
-    my $index = $self->_get_index;
+    my $index = $self->_index;
     if ( defined $node ) {
         $index->{$id} = $node;
         weaken $index->{$id};
@@ -189,16 +171,14 @@ sub index_node_by_id() {
 sub id_is_indexed {
     my ( $self, $id ) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 2;
-    my $index = $self->_get_index;
-    return ( defined $index->{$id} );
+    return ( defined $self->_index->{$id} );
 }
 
 sub get_node_by_id() {
     my ( $self, $id ) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 2;
-    my $index = $self->_get_index;
-    if ( defined $index->{$id} ) {
-        return $index->{$id};
+    if ( defined $self->_index->{$id} ) {
+        return $self->_index->{$id};
     } elsif ( $id =~ /^[ST](Czech|English)/ ) {
         # PROZATIMNI RESENI
         # nejsou linky mezi M a A vrstvou, je nutne mezi nimi skakat pomoci teto funkce
@@ -223,8 +203,7 @@ sub get_node_by_id() {
 sub get_all_node_ids() {
     my ($self) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 1;
-    my $index = $self->_get_index;
-    return ( keys %{$index} );
+    return ( keys %{$self->_index} );
 }
 
 
@@ -241,7 +220,7 @@ sub create_bundle {
     my ($self) = @_;
     Report::fatal("Incorrect number of arguments") if @_ != 1;
 
-    my $fsfile = $self->_get_pmldoc();
+    my $fsfile = $self->_pmldoc();
 
     # Minimal position is 0, maximal position is number of bundles minus 1.
     # Next free position is equal to the current number of bundles.

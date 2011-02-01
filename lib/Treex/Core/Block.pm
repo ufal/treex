@@ -4,7 +4,9 @@ use Treex::Moose;
 use LWP::Simple;
 
 has selector => ( is => 'ro', isa => 'Selector', default => '',);
-has language => ( is => 'ro', isa => 'LangCode');
+has language => ( is => 'ro', isa => 'LangCode',);
+has scenario => ( is => 'ro', isa => 'Treex::Core::Scenario',
+                  writer => '_set_scenario', weak_ref => 1,);
 
 sub process_document {
     my ( $self, $document ) = @_;
