@@ -9,7 +9,6 @@ sub process_document {
     my $number = int(rand(100)); #TODO
     my $filename = $self->file_stem . '-' . $number . '.treex';
     $document->save($filename);
-    #print "Saving to $filename\n";
     return 1;
 }
 

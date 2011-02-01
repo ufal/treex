@@ -1,22 +1,15 @@
 package Treex::Block::Read::PlainText;
 use Moose;
+use Treex::Moose;
+extends 'Treex::Block::Read::BasePlainReader';
 with 'Treex::Core::DocumentReader';
-
-use Treex::Core;
-
-has language => ( isa => 'LangCode', is => 'ro', required => 1 );
-has selector => ( isa => 'Selector', is => 'ro', default => '');
-has lines_per_document => ( isa => 'Int', is => 'ro', default => 50 );
 
 sub next_document {
     my ($self) = @_;
-    return if eof(STDIN);
-    my $document = Treex::Core::Document->new;
-    my $text     = '';
-    for my $line ( 1 .. $self->lines_per_document ) {
-        last if eof(STDIN);
-        $text .= <STDIN>;
-    }
+    my $text = $self->next_document_text();
+    return if !defined $text;
+    
+    my $document = Treex::Core::Document->new();
     $document->set_attr( $self->selector . $self->language . ' text', $text );
     return $document;
 }
