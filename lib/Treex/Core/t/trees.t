@@ -14,6 +14,7 @@ my $filename = 'test.treex';
     my $doc = Treex::Core::Document->new;
     my $bundle = $doc->create_bundle;
     my $zone = $bundle->create_zone('en');
+    $zone->set_attr('sentence', 'This is a test sentence');
 
     # accessing created zones
     my $ttree = $zone->create_tree('t');

@@ -22,4 +22,8 @@ sub get_attr {
     return $self->value->{$attr_name};
 }
 
+sub get_label {
+    my ($self) = @_;
+    return $self->get_attr('selector') . $self->get_attr('language');
+}
 1;

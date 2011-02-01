@@ -1,8 +1,5 @@
 # -*- cperl -*-
 
-#ifndef treex
-#define treex
-
 #include <contrib/pml/PML.mak>
 
 package Treex_mode;
@@ -18,16 +15,13 @@ our $grp;
 use Treex::Core::TredView;
 my $tredview = Treex::Core::TredView->new({grp=>$grp});
 
-sub detect {
+sub is_treex_doc {
   return (((PML::SchemaName()||'') eq 'treex_document') ? 1 : 0);
 }
 
 push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
-  my ($hook)=@_;
-  my $resuming = ($hook eq 'file_resumed_hook');
-  my $current = CurrentContext();
-  if (detect()) {
-    SetCurrentStylesheet('Treex_stylesheet') if $resuming;
+  if (is_treex_doc()) {
+    SetCurrentStylesheet('Treex_stylesheet');
     return 'Treex_mode';
   }
   return;
@@ -35,15 +29,12 @@ push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
 
 
 sub allow_switch_context_hook {
-  return 'stop' unless detect();
-}
-sub switch_context_hook {
-  SetCurrentStylesheet('Treex_stylesheet');
-  Redraw() if GUI();
+  return 'stop' unless is_treex_doc();
 }
 
-sub current_treex_doc {
-  return $grp->{_current_treex_doc};
+sub switch_context_hook {
+  SetCurrentStylesheet('Treex_stylesheet');
+#  Redraw() if GUI();
 }
 
 sub file_opened_hook {
@@ -58,7 +49,11 @@ sub get_nodelist_hook {
     return $tredview->get_nodelist_hook(@_);
 }
 
+sub get_value_line_hook {
+    return $tredview->get_value_line_hook(@_);
+}
+
 
 1;
 
-#endif treex
+

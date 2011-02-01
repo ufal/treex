@@ -15,6 +15,7 @@ extends 'Treex::Core::Zone';
 # the underlying (non-moose) class is a blessed array reference;
 # (maybe it'll be better to shift everywhere $zone ----> $zone->value)
 
+
 sub _set_bundle {
     my ($self, $bundle) = @_;
     $self->set_attr('_bundle',$bundle);
@@ -77,6 +78,8 @@ sub get_all_trees {
        map {$self->value->{trees}->{$_."_tree"};} qw(a t n p);
 
 }
+
+
 
 
 1;
