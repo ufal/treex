@@ -3,7 +3,7 @@ package Treex::Core::Node::A;
 use 5.008;
 use strict;
 use warnings;
-use Report;
+use Treex::Core::Log;
 use List::MoreUtils qw( any all );
 
 use Treex::Core::Document;
@@ -13,6 +13,8 @@ use Treex::Core::Node;
 use Moose;
 use MooseX::FollowPBP;
 extends 'Treex::Core::Node';
+
+has [qw(form lemma tag)] => ( is => 'rw' );
 
 sub get_pml_type_name {
     my ($self) = @_;
@@ -39,7 +41,7 @@ sub get_n_node {
 # the node is a root of a coordination/apposition construction
 sub is_coap_root {    # analogy of PML_T::IsCoord
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return defined $self->get_attr('afun') && $self->get_attr('afun') =~ /^(Coord|Apos)$/;
 }
 
@@ -81,7 +83,7 @@ as in L<Treex::Core::Node::get_children()>.
 
 sub get_echildren {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     my $dive = ( delete $arg_ref->{dive} ) || sub {0};
     if ( $dive eq 'AuxCP' ) { $dive = \&_is_auxCP; }
     $self->_can_apply_eff($dive) or return $self->get_children();
@@ -103,7 +105,7 @@ sub get_echildren {
 
 sub get_eparents {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     my $dive = ( delete $arg_ref->{dive} ) || sub {0};
     if ( $dive eq 'AuxCP' ) { $dive = \&_is_auxCP; }
     $self->_can_apply_eff($dive) or return $self->get_parent();
@@ -112,7 +114,7 @@ sub get_eparents {
     # Otherwise, there is no chance getting effective parents.
     if ( !$self->get_parent() ) {
         my $id = $self->get_attr('id');
-        Report::warn("The node $id has no effective nor topological parent, using the root");
+        log_warn("The node $id has no effective nor topological parent, using the root");
         return $self->get_root();
     }
 
@@ -178,14 +180,14 @@ sub _can_apply_eff {
     return 1 if !$error;
     my $method_name = ( caller 1 )[3];
     my $id          = $self->get_attr('id');
-    Report::warn("$method_name called on $error ($id). Fallback to topological one.");
+    log_warn("$method_name called on $error ($id). Fallback to topological one.");
     return 0;
 }
 
 sub _fallback_parent {
     my ($self) = @_;
     my $id = $self->get_attr('id');
-    Report::warn("The node $id has no effective parent, using the topological one.");
+    log_warn("The node $id has no effective parent, using the topological one.");
     return $self->get_parent();
 }
 
@@ -265,7 +267,7 @@ Typically this is used for prepositions and subord. conjunctions.
 
 sub get_coap_members {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     return $self if !$self->is_coap_root();
     my $direct_only = $arg_ref->{direct_only};
     my $dive = $arg_ref->{dive} || sub {0};
@@ -290,7 +292,7 @@ sub get_coap_members {
 
 sub is_coap_member {
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
     return (
         $self->get_attr('is_member')
             || ( ( $self->get_attr('afun') || "" ) =~ /^Aux[CP]$/ && grep { $_->is_coap_member } $self->get_children )
@@ -300,7 +302,7 @@ sub is_coap_member {
 
 sub get_transitive_coap_members {    # analogy of PML_T::ExpandCoord
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
     if ( $self->is_coap_root ) {
         return (
             map { $_->is_coap_root ? $_->get_transitive_coap_members : ($_) }
@@ -309,27 +311,27 @@ sub get_transitive_coap_members {    # analogy of PML_T::ExpandCoord
     }
     else {
 
-        #Report::warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
+        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
         return ($self);
     }
 }
 
 sub get_direct_coap_members {
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
     if ( $self->is_coap_root ) {
         return ( grep { $_->is_coap_member } $self->get_children );
     }
     else {
 
-        #Report::warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
+        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
         return ($self);
     }
 }
 
 sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
     while ( $self->is_coap_member ) {
         $self = $self->get_parent;
     }
@@ -345,7 +347,7 @@ sub get_terminal_pnode {
         return $document->get_node_by_id( $self->get_attr('p/terminal.rf') );
     }
     else {
-        Report::fatal('SEnglishA node pointing to no SEnglishP node');
+        log_fatal('SEnglishA node pointing to no SEnglishP node');
     }
 }
 

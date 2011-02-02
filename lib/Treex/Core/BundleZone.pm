@@ -3,7 +3,7 @@ package Treex::Core::BundleZone;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
-use Report;
+use Treex::Core::Log;
 
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;
@@ -35,7 +35,7 @@ sub create_tree {
     my ($self,$layer) = @_;
 
     my $class = "Treex::Core::Node::".uc($layer);
-    my $tree_root = eval "$class->new()" or Report::fatal $!; #layer subclasses not available yet
+    my $tree_root = eval "$class->new()" or log_fatal $!; #layer subclasses not available yet
 
     my $bundle = $self->get_bundle;
     $tree_root->_set_bundle($bundle);
@@ -66,7 +66,7 @@ sub get_tree {
     my $tree = $self->value->{trees}->{$tree_name};
 
     if ( not defined $tree ) {
-        Report::fatal "No $tree_name available in the bundle, bundle id=" . $self->get_attr('id');
+        log_fatal("No $tree_name available in the bundle, bundle id=" . $self->get_attr('id'));
     }
     return $tree;
 }

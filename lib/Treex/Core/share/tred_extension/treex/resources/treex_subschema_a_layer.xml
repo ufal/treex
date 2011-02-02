@@ -76,7 +76,7 @@
   </type>
 
 
- <!--  English a-layer representation -->
+ <!--  a-layer representation (merged with m-layer) -->
 
 
   <type name="a-root.type">
@@ -85,10 +85,10 @@
       <member name="language" as_attribute="1" ><cdata format="any"/></member>
       <member name="direction" as_attribute="1"><cdata format="any"/></member>
 
-      <member name="ptree.rf"> <!-- pridano na navrh Jirky -->
+      <member name="ptree.rf">
          <cdata format="PMLREF"/>
       </member>
-      <member name="xxx.rf"><cdata format="PMLREF"/></member> 
+
       <member name="s.rf"><cdata format="PMLREF"/></member>
       <member name="afun"><constant>AuxS</constant></member>
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
@@ -105,41 +105,54 @@
   <type name="a-node.type">
     <structure role="#NODE" name="a-node">
       <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
-  <!--In future, there will be no self-standing m-trees - all attributes of the m-layer will be saved in 'm' structure of a-nodes.
-      This will save disk space, memory, and time. However, until this big change is completed we need a reference to the corresponding m-node.-->
-  <!--      <member name="m.rf" role="#KNIT" type="m-node.type"/> -->
-      <member name="m.rf"><cdata format="PMLREF"/></member>
-      <member name="m" type="m-node.type"/>
-      <member name="afun" type="afun.type" />
-      <member name="is_member" type="bool.type"/>
-      <member name="functions">
-        <list type="p-function.type" ordered="1"/>
-      </member>
-      <member type="bool.type" name="is_parenthesis_root"/>
-      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+
+      <!-- former m-layer attributes (reduced) -->
+      <member name="form"><cdata format="any"/></member>
+      <member name="translit"><cdata format="any"/></member>
+      <member name="lemma"><cdata format="any"/></member>
+      <member name="tag"><cdata format="any"/></member>
+      <member name="no_space_after" type="bool.type"/>
       <member name="children" role="#CHILDNODES">
         <list type="a-node.type" ordered="1"/>
       </member>
-      <member name="p" type="a-p.type"/>  <!-- pridano na navrh Jirky      -->
+
+      <!-- former a-layer attributes -->
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="afun" type="afun.type" />
+      <member name="is_member" type="bool.type"/>
+      <member type="bool.type" name="is_parenthesis_root"/> <!-- ??? -->
+      <member name="conll_deprel"><cdata format="any"/></member>
+
+      <!-- attributes for conversion to t-tree -->
       <member type="bool.type" name="is_aux_to_child"/>
       <member type="bool.type" name="is_aux_to_parent"/>
       <member type="bool.type" name="parent_is_aux"/>
       <member type="bool.type" name="edge_to_collapse"/>
       <member type="bool.type" name="is_auxiliary"/>
-      <member name="conll_deprel"><cdata format="any"/></member>
+
+      <!-- clause segmentation -->
+      <member name="clause_number"><cdata format="any"/></member>
       <member type="bool.type" name="is_clause_head"/> <!-- We mean finite clause head, but that's the same as with is_clause_head on t-layer!!! -->
 
-      <!-- zkopirovano z TCzechA (kvuli generickym bundlum) -->
-          <member name="morphcat" type="czech_morphcat.type"/>
-          <member name="clause_number"><cdata format="any"/></member>
-          <member name="is_indeclinable" type="bool.type"/>
-          <member name="delayed_reorder">
+
+      <!-- links to p-layer -->
+      <member name="functions"> <!-- redundant, the same info could be provided by API - ??? -->
+        <list type="p-function.type" ordered="1"/>
+      </member>
+      <member name="p" type="a-p.type"/>
+ 
+
+      <member name="morphcat" type="czech_morphcat.type"/>
+         
+      <member name="is_indeclinable" type="bool.type"/>
+      <member name="delayed_reorder">
         	<structure>
         		<member name="non_projective_shift_to_leftmost_of"><cdata format="any"/></member>
         	</structure>
-          </member>
+      </member>
 
-      <member  name="coref" type="a_coreference.type"/> <!-- analyticka koreference pro Jirku Mirovskeho -->
+      <!-- surface coreference -->
+      <member  name="coref" type="a_coreference.type"/>
 
 
     </structure>
@@ -158,7 +171,7 @@
   </type>
 
 
-  <type name="a-p.type"> <!-- pridano na navrh Jirky -->
+  <type name="a-p.type">
     <structure>
        <member name="terminal.rf">
          <cdata format="PMLREF"/>

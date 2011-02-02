@@ -1,6 +1,7 @@
 package Treex::Core::Scenario;
 use Moose;
 use Treex::Moose;
+use Treex::Core::Log;
 
 has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub {[]});
 
@@ -24,7 +25,7 @@ has _global_params => (
       },
 );
 
-use Report;
+use Treex::Core::Log;
 use File::Basename;
 
 my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMORY} );
@@ -32,29 +33,29 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
 
-    Report::memory if $TMT_DEBUG_MEMORY;
+    log_memory if $TMT_DEBUG_MEMORY;
 
-    Report::info("Initializing an instance of TectoMT::Scenario ...");
+    log_info("Initializing an instance of TectoMT::Scenario ...");
 
     #<<< no perltidy
     my $scen_str = defined $arg_ref->{from_file} ? load_scenario_file($arg_ref->{from_file})
                  :                                 $arg_ref->{from_string};
     #>>>
-    Report::fatal 'No blocks specified for a scenario!' if !defined $scen_str;
+    log_fatal 'No blocks specified for a scenario!' if !defined $scen_str;
 
     my @block_items = parse_scenario_string( $scen_str, $arg_ref->{from_file} );
     my $blocks = @block_items;
-    Report::fatal('Empty block sequence cannot be used for initializing scenario!') if $blocks == 0;
+    log_fatal('Empty block sequence cannot be used for initializing scenario!') if $blocks == 0;
 
-    Report::memory if $TMT_DEBUG_MEMORY;
+    log_memory if $TMT_DEBUG_MEMORY;
 
-    Report::info( "$blocks block" . ( $blocks > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
+    log_info( "$blocks block" . ( $blocks > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
 
     # loading (using modules and constructing instances) of the blocks in the sequence
     foreach my $block_item (@block_items) {
         my $block_name = $block_item->{block_name};
         eval "use $block_name;";
-        Report::fatal "Can't use block $block_name !\n$@\n" if $@;
+        log_fatal "Can't use block $block_name !\n$@\n" if $@;
     }
 
     my $i = 0;
@@ -64,11 +65,11 @@ sub BUILD {
         if ( $block_item->{block_parameters} ) {
             $params = join ' ', @{ $block_item->{block_parameters} };
         }
-        Report::info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
+        log_info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
         my $new_block = $self->_load_block($block_item);
         
         if ($new_block->does('Treex::Core::DocumentReader')){
-            Report::fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
+            log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->document_reader();
             $self->set_document_reader($new_block);
         } else {
@@ -84,17 +85,17 @@ sub BUILD {
         }
     }
 
-    Report::info('');
-    Report::info('   ALL BLOCKS SUCCESSFULLY LOADED.');
-    Report::info('');
+    log_info('');
+    log_info('   ALL BLOCKS SUCCESSFULLY LOADED.');
+    log_info('');
     return;
 }
 
 sub load_scenario_file {
     my ($scenario_filename) = @_;
-    Report::info "Loading scenario description $scenario_filename";
+    log_info "Loading scenario description $scenario_filename";
     open my $SCEN, '<:utf8', $scenario_filename or
-        Report::fatal "Can't open scenario file $scenario_filename";
+        log_fatal "Can't open scenario file $scenario_filename";
     my $scenario_string = join ' ', <$SCEN>;
     close $SCEN;
     return $scenario_string;
@@ -161,7 +162,7 @@ sub parse_scenario_string {
             $token =~ s/%27/'/g;
 
             if ( not @block_items ) {
-                Report::fatal "Specification of block arguments before the first block name: $token\n";
+                log_fatal "Specification of block arguments before the first block name: $token\n";
             }
             push @{ $block_items[-1]->{block_parameters} }, $token;
         }
@@ -176,7 +177,7 @@ sub parse_scenario_string {
             } elsif ( -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {       # old TectoMT blocks
             } else {
                 # TODO allow user-made blocks not-starting with Treex::Block?
-                Report::fatal("Block $token (file $block_filename) does not exist!");
+                log_fatal("Block $token (file $block_filename) does not exist!");
             }
             push @block_items, { 'block_name' => $token, 'block_parameters' => [] };
         }
@@ -223,32 +224,32 @@ sub _load_block {
     my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);';
     eval $string_to_eval;
     if ($@) {
-        Report::fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n" . $!;
+        log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n" . $!;
     }
 
-    Report::memory if $TMT_DEBUG_MEMORY;
+    log_memory if $TMT_DEBUG_MEMORY;
 
     return $new_block;
 }
 
 sub run {
     my ( $self ) = @_;
-    my $reader = $self->document_reader or Report::fatal('No DocumentReader supplied');
+    my $reader = $self->document_reader or log_fatal('No DocumentReader supplied');
     my $number_of_blocks  = @{ $self->loaded_blocks };
     my $document_number = 0;
     
     while (my $document = $reader->next_document()) {
         $document_number++;
-        Report::info "Document $document_number loaded";
+        log_info "Document $document_number loaded";
         my $block_number = 0;
         foreach my $block ( @{$self->loaded_blocks} ) {
             $block_number++;
-            Report::info "Applying block $block_number/$number_of_blocks " . ref($block);
+            log_info "Applying block $block_number/$number_of_blocks " . ref($block);
                 #TODO . ( defined $filename ? " on '$filename'" : '' );
             $block->process_document($document);
         }
     }
-    Report::info "Processed $document_number document"
+    log_info "Processed $document_number document"
         . ($document_number>1 ? 's' : '');
     return;
 }

@@ -4,13 +4,12 @@ use Moose;
 use Treex::Moose;
 use Treex::Core::Config;
 use Treex::Core::DocZone;
+use Treex::Core::Log;
 
 with 'Treex::Core::TectoMTStyleAccessors';
 
 use Treex::PML;
 use Scalar::Util qw( weaken );
-
-use Report; # taky nahradit necim novym
 
 has _pmldoc => (
     isa=>'Treex::PML::Document',
@@ -95,7 +94,7 @@ sub BUILD {
 
                     foreach my $tree ($zone->get_all_trees) {
                         $tree->type->get_structure_name =~ /(\S)-(root|node)/
-                            or Report::fatal "Unexpected member in zone structure: ".$tree->type;
+                            or log_fatal "Unexpected member in zone structure: ".$tree->type;
                         my $layer = uc($1);
                         foreach my $node ($tree, $tree->descendants) { # must still call Treex::PML::Node's API
                             bless $node, "Treex::Core::Node::$layer";
@@ -120,15 +119,15 @@ sub _pml_attribute_hash {
 
 Treex::PML::UseBackends('PMLBackend');
 Treex::PML::AddResourcePath(
-    $ENV{"TRED_DIR"},
-    $ENV{"TRED_DIR"} . "/resources/",
+#    $ENV{"TRED_DIR"},
+#    $ENV{"TRED_DIR"} . "/resources/",
     Treex::Core::Config::pml_schema_dir(),
 );
 
 #my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
 my $_treex_schema_file = Treex::Core::Config::pml_schema_dir."/". 'treex_schema.xml';
 if (not -f $_treex_schema_file) {
-  Report::fatal "Can't find PML schema $_treex_schema_file"; 
+  log_fatal "Can't find PML schema $_treex_schema_file"; 
 }
 
 my $_treex_schema = Treex::PML::Schema->new( { filename => $_treex_schema_file } );
@@ -157,7 +156,7 @@ sub _create_empty_pml_doc {
 
 sub index_node_by_id() {
     my ( $self, $id, $node ) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 3;
+    log_fatal("Incorrect number of arguments") if @_ != 3;
     my $index = $self->_index;
     if ( defined $node ) {
         $index->{$id} = $node;
@@ -170,13 +169,13 @@ sub index_node_by_id() {
 
 sub id_is_indexed {
     my ( $self, $id ) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 2;
+    log_fatal("Incorrect number of arguments") if @_ != 2;
     return ( defined $self->_index->{$id} );
 }
 
 sub get_node_by_id() {
     my ( $self, $id ) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 2;
+    log_fatal("Incorrect number of arguments") if @_ != 2;
     if ( defined $self->_index->{$id} ) {
         return $self->_index->{$id};
     } elsif ( $id =~ /^[ST](Czech|English)/ ) {
@@ -187,7 +186,7 @@ sub get_node_by_id() {
         $id =~ s/^([ST])English/$1en/;
         return $self->get_node_by_id($id);
     } else {
-        Report::fatal "ID not indexed: id=\"$id\"";
+        log_fatal "ID not indexed: id=\"$id\"";
         # This is something very fatal. TectoMT assumes every node ID to
         # be valid and pointing to a node *in the given document*.
         # (It is fine to have a node with no a/lex.rf
@@ -202,7 +201,7 @@ sub get_node_by_id() {
 
 sub get_all_node_ids() {
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
     return ( keys %{$self->_index} );
 }
 
@@ -218,7 +217,7 @@ sub get_bundles {
 sub create_bundle {
 
     my ($self) = @_;
-    Report::fatal("Incorrect number of arguments") if @_ != 1;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
 
     my $fsfile = $self->_pmldoc();
 
@@ -304,7 +303,7 @@ sub get_or_create_zone {
 
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
-    Report::fatal "set_attr: incorrect number of arguments" if @_ != 3;
+    log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
 
     if ($attr_name =~ /^(\S+)$/) {
         return Treex::PML::Node::set_attr( $self->metaData('pml_root')->{meta},
@@ -318,13 +317,13 @@ sub set_attr {
     }
 
     else {
-        Report::fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
+        log_fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
     }
 }
 
 sub get_attr {
     my ( $self, $attr_name ) = @_;
-    Report::fatal "set_attr: incorrect number of arguments" if @_ != 2;
+    log_fatal "set_attr: incorrect number of arguments" if @_ != 2;
 
     if ($attr_name =~ /^(\S+)$/) {
         return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, $attr_name );
@@ -342,7 +341,7 @@ sub get_attr {
     }
 
     else {
-        Report::fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
+        log_fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
     }
 }
 

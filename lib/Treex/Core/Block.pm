@@ -11,7 +11,7 @@ has scenario => ( is => 'ro', isa => 'Treex::Core::Scenario',
 sub process_document {
     my ( $self, $document ) = @_;
     if (!$document->get_bundles()){
-        Report::fatal "There are no bundles in the document and block ". ref($self) .
+        log_fatal "There are no bundles in the document and block ". ref($self) .
         " doesn't override the method process_document";
     }
     foreach my $bundle ( $document->get_bundles() ) {
@@ -22,10 +22,10 @@ sub process_document {
 
 sub process_bundle {
     my ($self, $bundle) = @_;
-    Report::fatal "Parameter language was not set and block ". ref($self)
+    log_fatal "Parameter language was not set and block ". ref($self)
         . " doesn't override the method process_bundle";
     my $zone = $bundle->get_zone($self->language, $self->selector);
-    Report::fatal("Zone (lang=".$self->language.", selector=". $self->selector
+    log_fatal("Zone (lang=".$self->language.", selector=". $self->selector
         . ") was not found in a bundle and block ". ref($self)
         . " doesn't override the method process_bundle")
         if !$zone;
@@ -34,7 +34,7 @@ sub process_bundle {
 
 sub process_zone {
     my ($self, $zone) = @_;
-    Report::fatal("process_zone not overriden and all process_?tree return false") if not
+    log_fatal("process_zone not overriden and all process_?tree return false") if not
         ($self->process_atree($zone->atree)
         or $self->process_ttree($zone->ttree)
         or $self->process_ntree($zone->ntree)
@@ -49,7 +49,7 @@ sub process_atree {
 }
 
 sub process_anode {
-    Report::fatal "process_anode() is not (and could not be) implemented"
+    log_fatal "process_anode() is not (and could not be) implemented"
         . " in the abstract class Treex::Core::Block !";   
 }
 
@@ -66,10 +66,10 @@ sub require_file_from_share {
     my $file = Treex::Core::Config::share_dir() . $rel_path_to_file;
 
     if ( not -e $file ) {
-        Report::info("Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . ".");
+        log_info("Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . ".");
 
         my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
-        Report::info("Trying to download $url");
+        log_info("Trying to download $url");
 
         # first ensure that the directory exists
         my $directory = $file;
@@ -79,13 +79,13 @@ sub require_file_from_share {
         # download the file using LWP::Simple
         my $response_code = getstore( $url, $file );
         if ( $response_code == 200 ) {
-            Report::info("Successfully downloaded to $file");
+            log_info("Successfully downloaded to $file");
         }
         elsif ( $response_code == 404 ) {
-            Report::fatal("The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . ".");
+            log_fatal("The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . ".");
         }
         else {
-            Report::fatal("Error when trying to download $url and to store it as $file ($response_code).");
+            log_fatal("Error when trying to download $url and to store it as $file ($response_code).");
         }
     }
     return $file;

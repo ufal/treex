@@ -60,27 +60,6 @@
   <type name="bundle.type" >
     <structure role="#NODE" name="bundle-root">
       <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
-      <member name="source_sentence"><cdata format="any"/></member>
-      <!--
-        Sentence transliterated to another script. Typically the target script is Latin
-        and transliteration means romanization.
-      -->
-      <member name="source_translit"><cdata format="any"/></member>
-      <member name="target_sentence"><cdata format="any"/></member>
-      <member name="target_translit"><cdata format="any"/></member>
-      <member name="english_source_sentence"><cdata format="any"/></member>
-      <member name="english_target_sentence"><cdata format="any"/></member>
-      <member name="english_baseline_sentence"><cdata format="any"/></member>
-      <member name="czech_source_sentence"><cdata  format="any"/></member>
-      <member name="czech_target_sentence"><cdata format="any"/></member>
-      <member name="czech_baseline_sentence"><cdata format="any"/></member>
-      <member name="trees">
-        <structure>
-          <member name="SEnglishP" type="p-nonterminal.type"    />
-          <member name="SCzechN" type="n-root.type"  />
-          <member name="SEnglishN" type="n-root.type"  />
-        </structure>
-      </member>
 
       <member name="zones">
         <sequence>
@@ -126,6 +105,7 @@
         <structure>
           <member name="a_tree" type="a-root.type"/> <!-- pozor,      bude potreba zmenit a-root.type!!! -->
           <member name="t_tree" type="t-root.type"/>
+          <member name="p_tree" type="p-nonterminal.type"/>
         </structure>
       </member>
     </structure>

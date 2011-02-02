@@ -3,7 +3,7 @@ package Treex::Core::Node;
 use Moose;
 use MooseX::NonMoose;
 use MooseX::FollowPBP;
-use Report;
+use Treex::Core::Log;
 
 use Scalar::Util qw( weaken );
 use List::MoreUtils qw(any);
@@ -64,7 +64,7 @@ sub disconnect {
     }
 
     if ( $self->is_root ) {
-        Report::fatal "Tree root cannot be disconnected from its parent";
+        log_fatal "Tree root cannot be disconnected from its parent";
     } else {
 
         # removing the nodes to be disconnected from the document's indexing table
@@ -109,9 +109,9 @@ sub create_child {
 
 sub add_to_listattr {
     my ( $self, $attr_name, $attr_value ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 3;
+    log_fatal('Incorrect number of arguments') if @_ != 3;
     my $list = $self->attr($attr_name);
-    Report::fatal("Attribute $attr_name is not a list!")
+    log_fatal("Attribute $attr_name is not a list!")
           if !defined $list || ref($list) ne 'Treex::PML::List';
     my @new_list = @{$list};
     if ( ref($attr_value) eq 'ARRAY' ) {
@@ -125,7 +125,7 @@ sub add_to_listattr {
 # Get more attributes at once
 sub get_attrs {
     my ( $self, @attr_names ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ < 2;
+    log_fatal('Incorrect number of arguments') if @_ < 2;
     my @attr_values;
     if ( ref $attr_names[-1] ) {
         my $arg_ref          = pop @attr_names;
@@ -148,7 +148,7 @@ sub get_attrs {
 sub get_document {
     my ($self) = @_;
     my $bundle = $self->get_bundle();
-    Report::fatal('Cannot call get_document on a node which is in no bundle') if not defined $bundle;
+    log_fatal('Cannot call get_document on a node which is in no bundle') if not defined $bundle;
     return $self->get_bundle->get_document();
 }
 
@@ -169,12 +169,12 @@ sub get_parent {
 
 sub set_parent {
     my ( $self, $parent ) = @_;
-#    UNIVERSAL::isa( $parent, 'TectoMT::Node' ) or Report::fatal("Node's parent must be a TectoMT::Node (it is $parent)");
+#    UNIVERSAL::isa( $parent, 'TectoMT::Node' ) or log_fatal("Node's parent must be a TectoMT::Node (it is $parent)");
 
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
         my $id   = $self->get_attr('id');
         my $p_id = $parent->get_attr('id');
-        Report::fatal("Attempt to set parent of $id to the node $p_id, which would lead to a cycle.");
+        log_fatal("Attempt to set parent of $id to the node $p_id, which would lead to a cycle.");
     }
 
     $self->_set_bundle( $parent->get_bundle() );
@@ -201,19 +201,19 @@ sub _check_switches  {
     my ( $self, $arg_ref ) = @_;
 
     # Check switches for not allowed combinations
-    Report::fatal('Specified both preceding_only and following_only.')
+    log_fatal('Specified both preceding_only and following_only.')
           if $arg_ref->{preceding_only} && $arg_ref->{following_only};
-    Report::fatal('Specified both first_only and last_only.')
+    log_fatal('Specified both first_only and last_only.')
           if $arg_ref->{first_only} && $arg_ref->{last_only};
 
     # Check for explicit "ordered" when not needed (possible typo)
-    Report::warn('Specifying (first|last|preceding|following)_only implies ordered.')
+    log_warn('Specifying (first|last|preceding|following)_only implies ordered.')
           if $arg_ref->{ordered}
               && any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following);
 
     # Check for unknown switches
     my $unknown = first { $_ !~ $_SWITCHES_REGEX } keys %{$arg_ref};
-    Report::warn("Unknown switch $unknown") if defined $unknown;
+    log_warn("Unknown switch $unknown") if defined $unknown;
 
     return;
 }
@@ -255,7 +255,7 @@ sub _process_switches  {
 
 sub get_children {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     my @children = $self->children();
     return @children if !$arg_ref;
     return $self->_process_switches( $arg_ref, @children );
@@ -263,7 +263,7 @@ sub get_children {
 
 sub get_descendants {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     my @descendants;
     if ( $arg_ref && $arg_ref->{except} ) {
         my $except_node = delete $arg_ref->{except};
@@ -280,7 +280,7 @@ sub get_descendants {
 
 sub get_siblings {
     my ( $self, $arg_ref ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ > 2;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
     my $parent = $self->get_parent();
     return if !$parent;
     my @siblings = grep { $_ ne $self } $parent->get_children();
@@ -293,7 +293,7 @@ sub get_right_neighbor { return $_[0]->get_siblings( { following_only => 1, firs
 
 sub is_descendant_of {
     my ( $self, $another_node ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 2;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
     my $parent = $self->get_parent();
     while ($parent) {
         return 1 if $parent == $another_node;
@@ -307,20 +307,20 @@ sub is_descendant_of {
 
 sub get_ordering_value {
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return $self->get_attr( $self->ordering_attribute() );
 }
 
 sub set_ordering_value {
     my ( $self, $val ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 2;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
     $self->set_attr( $self->ordering_attribute(), $val );
     return;
 }
 
 sub precedes {
     my ( $self, $another_node ) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 2;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
     return $self->get_ordering_value() < $another_node->get_ordering_value();
 }
 
@@ -330,9 +330,9 @@ sub precedes {
 # this could be reimplemented a bit more effectively.
 sub get_next_node {
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ord = $self->get_ordering_value();
-    Report::fatal('Undefined ordering value') if !defined $my_ord;
+    log_fatal('Undefined ordering value') if !defined $my_ord;
 
     # Find closest higher ord
     my ( $next_node, $next_ord ) = ( undef, undef );
@@ -347,9 +347,9 @@ sub get_next_node {
 
 sub get_prev_node {
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ord = $self->get_ordering_value();
-    Report::fatal('Undefined ordering value') if !defined $my_ord;
+    log_fatal('Undefined ordering value') if !defined $my_ord;
 
     # Find closest lower ord
     my ( $prev_node, $prev_ord ) = ( undef, undef );
@@ -368,8 +368,8 @@ sub get_prev_node {
 # If you allways use $node->shift_* methods, you won't need any normalization.
 sub normalize_node_ordering {
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments')                             if @_ != 1;
-    Report::fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
+    log_fatal('Incorrect number of arguments')                             if @_ != 1;
+    log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
     my $new_ord = 0;
     foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
         $node->set_attr( $self->ordering_attribute, $new_ord );
@@ -382,22 +382,22 @@ sub _check_shifting_method_args  {
     my ( $self, $reference_node, $arg_ref ) = @_;
     my @c     = caller 1;
     my $stack = "$c[3] called from $c[1], line $c[2]";
-    Report::fatal( 'Incorrect number of arguments for ' . $stack ) if @_ < 2 || @_ > 3;
-    Report::fatal( 'Undefined reference node for ' . $stack ) if !$reference_node;
-    Report::fatal( 'Reference node must be from the same tree. In ' . $stack )
+    log_fatal( 'Incorrect number of arguments for ' . $stack ) if @_ < 2 || @_ > 3;
+    log_fatal( 'Undefined reference node for ' . $stack ) if !$reference_node;
+    log_fatal( 'Reference node must be from the same tree. In ' . $stack )
           if $reference_node->get_root() != $self->get_root();
 
-    Report::fatal '$reference_node is a descendant of $self.'
+    log_fatal '$reference_node is a descendant of $self.'
           . ' Maybe you have forgotten {without_children=>1}. ' . "\n" . $stack
               if !$arg_ref->{without_children} && $reference_node->is_descendant_of($self);
 
     return if !defined $arg_ref;
 
-    Report::fatal(
+    log_fatal(
         'Second argument for shifting methods can be only options hash reference. In ' . $stack
     ) if ref $arg_ref ne 'HASH';
     my $unknown = first { $_ ne 'without_children' } keys %{$arg_ref};
-    Report::warn("Unknown switch '$unknown' for $stack") if defined $unknown;
+    log_warn("Unknown switch '$unknown' for $stack") if defined $unknown;
     return;
 }
 
@@ -502,7 +502,7 @@ sub _shift_to_node  {
 
 sub get_depth {
     my ($self) = @_;
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $depth = 0;
     while ( $self = $self->get_parent() ) {
         $depth++;
@@ -531,7 +531,7 @@ sub get_fposition {
 sub generate_new_id { #TODO move to Core::Document?
     my ($self) = @_;
 
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
 
     my $doc = $self->get_document;
 
@@ -554,7 +554,7 @@ sub generate_new_id { #TODO move to Core::Document?
 }
 
 sub is_coap_root {
-    Report::fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
+    log_fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
 }
 
 #**************************************
@@ -566,7 +566,7 @@ sub is_coap_root {
 sub get_clause_root {
     my ($self) = @_;
     my $my_number = $self->get_attr('clause_number');
-    Report::warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
+    log_warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
           if !defined $my_number;
     return $self if !$my_number;
 
@@ -619,10 +619,10 @@ sub _deprecated  {
     if ($instead) {
         $message .= " Use '$instead' instead.";
     }
-    Report::warn($message);
+    log_warn($message);
 
     # and once again to print the stack
-    Report::debug($message);
+    log_debug($message);
     return;
 }
 
@@ -635,7 +635,7 @@ sub shift_left {
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent();
-    Report::fatal('Cannot shift node without a parent') if !$parent;
+    log_fatal('Cannot shift node without a parent') if !$parent;
     my $my_ord        = $self->get_ordering_value();
     my $left_neighbor = $self->get_left_neighbor();
     my @my_treelet    = $self->get_treelet_nodes();
@@ -647,7 +647,7 @@ sub shift_left {
         ) {
         @left_treelet = ($parent);
     } else {
-        Report::fatal('Cannot shift left without a left neighbor') if !$left_neighbor;
+        log_fatal('Cannot shift left without a left neighbor') if !$left_neighbor;
         @left_treelet = ( $left_neighbor, $left_neighbor->get_descendants );
 
         # TODO: looks like useless sort?
@@ -675,7 +675,7 @@ sub shift_right {
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent;
-    Report::fatal('Cannot shift node without a parent') if !$parent;
+    log_fatal('Cannot shift node without a parent') if !$parent;
     my $my_ord         = $self->get_ordering_value;
     my $right_neighbor = $self->get_right_neighbor();
     my @my_treelet     = $self->get_treelet_nodes();
@@ -687,7 +687,7 @@ sub shift_right {
         ) {
         @right_treelet = ($parent);
     } else {
-        Report::fatal('Cannot shift left without a left neighbor') if !$right_neighbor;
+        log_fatal('Cannot shift left without a left neighbor') if !$right_neighbor;
         @right_treelet = ( $right_neighbor, $right_neighbor->get_descendants );
         @right_treelet = sort { $a->get_ordering_value <=> $b->get_ordering_value } @right_treelet;
     }
@@ -711,7 +711,7 @@ sub shift_to_leftmost {
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent;
-    Report::fatal('Cannot shift node without a parent') if !$parent;
+    log_fatal('Cannot shift node without a parent') if !$parent;
     my @my_treelet                 = $self->get_treelet_nodes();
     my @my_ordered_treelet         = sort { $a->get_ordering_value <=> $b->get_ordering_value } @my_treelet;
     my $my_leftmost_descendant_ord = $my_ordered_treelet[0]->get_ordering_value();
@@ -762,21 +762,21 @@ sub non_projective_shift_to_leftmost_of {
 sub get_self_and_descendants {
     my ($self) = @_;
     _deprecated('$node->get_descendants({add_self=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return ( $self, $self->get_descendants() );
 }
 
 sub get_ordered_children {
     my ($self) = @_;
     _deprecated('$node->get_children({ordered=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_children );
 }
 
 sub get_first_child {
     my ($self) = @_;
     _deprecated('$node->get_children({first_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my ($son) = $self->get_ordered_children;
     return $son;
 }
@@ -784,21 +784,21 @@ sub get_first_child {
 sub get_ordered_descendants {
     my ($self) = @_;
     _deprecated('$node->get_descendants({ordered=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_descendants );
 }
 
 sub get_ordered_self_and_descendants {
     my ($self) = @_;
     _deprecated('$node->get_descendants({ordered=>1, add_self=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } ( $self, $self->get_descendants ) );
 }
 
 sub get_left_children {
     my ($self) = @_;
     _deprecated('$node->get_children({preceding_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ordering_value = $self->get_ordering_value;
     return ( grep { $_->get_ordering_value < $my_ordering_value } $self->get_ordered_children );
 }
@@ -806,7 +806,7 @@ sub get_left_children {
 sub get_right_children {
     my ($self) = @_;
     _deprecated('$node->get_children({following_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ordering_value = $self->get_ordering_value;
     return ( grep { $_->get_ordering_value > $my_ordering_value } $self->get_ordered_children );
 }
@@ -814,7 +814,7 @@ sub get_right_children {
 sub get_leftmost_child {
     my ($self) = @_;
     _deprecated('$node->get_children({first_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my @children = $self->get_ordered_children;
     return $children[0];
 }
@@ -822,7 +822,7 @@ sub get_leftmost_child {
 sub get_rightmost_child {
     my ($self) = @_;
     _deprecated('$node->get_children({last_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my @children = $self->get_ordered_children;
     return $children[-1];
 }
@@ -830,14 +830,14 @@ sub get_rightmost_child {
 sub get_ordered_siblings {
     my ($self) = @_;
     _deprecated('$node->get_siblings({ordered=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_siblings );
 }
 
 sub get_left_siblings {
     my ($self) = @_;
     _deprecated('$node->get_siblings({preceding_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ordering_value = $self->get_ordering_value;
     return ( grep { $_->get_ordering_value < $my_ordering_value } $self->get_ordered_siblings )
 }
@@ -845,7 +845,7 @@ sub get_left_siblings {
 sub get_right_siblings {
     my ($self) = @_;
     _deprecated('$node->get_siblings({following_only=>1})');
-    Report::fatal('Incorrect number of arguments') if @_ != 1;
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $my_ordering_value = $self->get_ordering_value;
     return ( grep { $_->get_ordering_value > $my_ordering_value } $self->get_ordered_siblings )
 }

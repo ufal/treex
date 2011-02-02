@@ -3,7 +3,7 @@ package Treex::Core::Node::N;
 use 5.008;
 use strict;
 use warnings;
-use Report;
+use Treex::Core::Log;
 use List::MoreUtils qw( any all );
 
 use Treex::Core::Document;

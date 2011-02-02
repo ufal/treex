@@ -19,7 +19,7 @@ use Treex::Core::Node::T;
 use Treex::Core::Node::N;
 use Treex::Core::BundleZone;
 
-use Report;
+use Treex::Core::Log;
 
 my @layers = qw(t a n);
 
@@ -103,7 +103,7 @@ sub get_all_trees {
 
 sub create_tree {
     my ( $self, $tree_name ) = @_;
-    Report::fatal "set_tree: incorrect number of arguments" if @_ != 2;
+    log_fatal "set_tree: incorrect number of arguments" if @_ != 2;
 
     $tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
@@ -117,21 +117,21 @@ sub create_tree {
     }
 
     else {
-        Report::fatal "Tree name $tree_name not matching expected pattern";
+        log_fatal "Tree name $tree_name not matching expected pattern";
     }
 }
 
 
 sub get_tree {
     my ( $self, $tree_name ) = @_;
-    Report::fatal "get_tree: incorrect number of arguments" if @_ != 2;
+    log_fatal "get_tree: incorrect number of arguments" if @_ != 2;
 
     $tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
     $tree_name =~ s/M$/A/;
 
     if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
-        Report::fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
+        log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
     }
 
     else {
@@ -139,7 +139,7 @@ sub get_tree {
 
         my $zone = $self->get_zone( $language, $selector );
         if (not defined $zone) {
-            Report::fatal "Unavailable zone $selector$language\n";
+            log_fatal "Unavailable zone $selector$language\n";
         }
 
         return $zone->get_tree($layer);
@@ -152,7 +152,7 @@ sub get_tree {
 
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
-    Report::fatal "set_attr: incorrect number of arguments" if @_ != 3;
+    log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
 
     if ($attr_name =~ /^(\S+)$/) {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
@@ -165,13 +165,13 @@ sub set_attr {
     }
 
     else {
-        Report::fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
+        log_fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
     }
 }
 
 sub get_attr {
     my ( $self, $attr_name ) = @_;
-    Report::fatal "set_attr: incorrect number of arguments" if @_ != 2;
+    log_fatal "set_attr: incorrect number of arguments" if @_ != 2;
 
     if ($attr_name =~ /^(\S+)$/) {
         return Treex::PML::Node::attr( $self, $attr_name );
@@ -189,7 +189,7 @@ sub get_attr {
     }
 
     else {
-        Report::fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
+        log_fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
     }
 }
 
@@ -201,7 +201,7 @@ sub get_attr {
 sub leave_message {
     my ( $self, $message_text ) = @_;
     if ( not defined $message_text or $message_text eq "" ) {
-        Report::fatal "Undefined or empty message";
+        log_fatal "Undefined or empty message";
     }
     if ( $self->get_attr('message_board') ) {
         push @{ $self->get_attr('message_board') }, $message_text;
@@ -212,7 +212,7 @@ sub leave_message {
 
 sub get_messages {
     my ($self) = @_;
-    Report::fatal "get_messages: incorrect number of arguments" if @_ != 1;
+    log_fatal "get_messages: incorrect number of arguments" if @_ != 1;
     if ( $self->get_attr('message_board') ) {
         return @{ $self->get_attr('message_board') };
     } else {

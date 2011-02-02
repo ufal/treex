@@ -47,7 +47,7 @@ sub createDocumentFromFile {
 
         foreach my $tree ($bundle->get_all_trees) {
             $tree->type->get_structure_name =~ /(\S)-(root|node)/
-                or Report::fatal "Unexpected member in zone structure: ".$tree->type;
+                or log_fatal "Unexpected member in zone structure: ".$tree->type;
             my $layer = uc($1);
             foreach my $node ($tree, $tree->descendants) { # must call Treex::PML::Node API
                 bless $node, "Treex::Core::Node::$layer";
