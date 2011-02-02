@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core::Document;
 
-use Test::More tests=>3;
+use Test::More tests=>4;
 
 my $filename = 'test.treex';
 
@@ -18,7 +18,12 @@ my $filename = 'test.treex';
 
     # accessing created zones
     my $ttree = $zone->create_tree('t');
-    $ttree->create_child;
+
+    cmp_ok($zone,'eq',$ttree->get_zone,'tree root knows which zone it is embeded in');
+
+
+    my $tchild = $ttree->create_child;
+
     ok($ttree,'creating a tree by $zone->create_tree');
     $doc->save($filename);
 

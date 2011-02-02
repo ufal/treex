@@ -59,6 +59,11 @@ sub precompute_visualization {
     my ($self) = @_;
     foreach my $bundle ($self->treex_doc->get_bundles) {
 	$self->precompute_bundle_root($bundle);
+	foreach my $zone ($bundle->get_all_zones) {
+	    if ($zone->has_tree('t')) {
+		$self->precompute_ttree($zone->get_tree('t'));
+	    }
+	}
     }
 }
 
@@ -73,6 +78,10 @@ sub precompute_bundle_root {
 
 sub precompute_ttree {
     my ($self, $root) = @_;
+
+    $self->set_line($root,1,"layer=t");
+    $self->set_line($root,2,"zone=".$root->get_zone->get_label);
+    print "SSSS: precomputiong ttree\n";
 
 }
 

@@ -38,7 +38,7 @@ sub create_tree {
     my $tree_root = eval "$class->new()" or log_fatal $!; #layer subclasses not available yet
 
     my $bundle = $self->get_bundle;
-    $tree_root->_set_bundle($bundle);
+    $tree_root->_set_zone($self);
 
     my $new_tree_name = lc($layer) . "_tree";
     $self->value->{trees}->{$new_tree_name} = $tree_root;
@@ -69,6 +69,12 @@ sub get_tree {
         log_fatal("No $tree_name available in the bundle, bundle id=" . $self->get_attr('id'));
     }
     return $tree;
+}
+
+sub has_tree {
+    my ($self, $layer) = @_;
+    my $tree_name = lc($layer) . "_tree";
+    return defined $self->value->{trees}->{$tree_name};
 }
 
 sub get_all_trees {

@@ -91,6 +91,7 @@ sub BUILD {
             if ( defined $bundle->{zones} ) {
                 foreach my $zone ( $bundle->{zones}->elements ) {
                     bless $zone, 'Treex::Core::BundleZone';
+		    $zone->_set_bundle($bundle);
 
                     foreach my $tree ($zone->get_all_trees) {
                         $tree->type->get_structure_name =~ /(\S)-(root|node)/
@@ -100,6 +101,7 @@ sub BUILD {
                             bless $node, "Treex::Core::Node::$layer";
                             $self->index_node_by_id($node->get_id,$node);
                         }
+			$tree->_set_zone($zone);
                     }
                 }
             }

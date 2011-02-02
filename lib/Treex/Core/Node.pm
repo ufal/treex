@@ -21,16 +21,17 @@ extends 'Treex::PML::Node';
 
 with 'Treex::Core::TectoMTStyleAccessors';
 
-has bundle => (
-    is => 'ro',
-    reader => 'get_bundle',
-    writer => '_set_bundle',
+has _zone => (
+    is => 'rw',
+    writer => '_set_zone',
+    reader => '_get_zone',
 );
 
 has id => (
     is => 'rw',
     trigger => \&_index_my_id,
 );
+
 
 sub _index_my_id {
     my $self = shift;
@@ -40,6 +41,26 @@ sub _index_my_id {
 sub _pml_attribute_hash {
     my $self = shift;
     return $self;
+}
+
+sub get_bundle {
+    my ($self) = @_;
+    return $self->get_zone->get_bundle;
+}
+
+sub get_zone { # reference to embeding zone is stored only with tree root, not with nodes
+    my ($self) = @_;
+    my $zone;
+    if ($self->is_root) {
+	$zone = $self->_get_zone;
+    }
+    else {
+	$zone = $self->get_root->_get_zone;
+    }
+
+    log_fatal "a node can't reveal its zone" unless $zone;
+    return $zone;
+
 }
 
 
@@ -177,14 +198,13 @@ sub set_parent {
         log_fatal("Attempt to set parent of $id to the node $p_id, which would lead to a cycle.");
     }
 
-    $self->_set_bundle( $parent->get_bundle() );
     my $fsself   = $self;
     my $fsparent = $parent;
     if ( $fsself->parent() ) {
         Treex::PML::Cut($fsself);
     }
 
-    my $fsfile     = $self->get_document()->_pmldoc;
+    my $fsfile     = $parent->get_document()->_pmldoc;
     my @fschildren = $fsparent->children();
     if (@fschildren) {
         Treex::PML::PasteAfter( $fsself, $fschildren[-1] );

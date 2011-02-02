@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core::Document;
 
-use Test::More tests=>4;
+use Test::More tests=>5;
 
 my $doc = Treex::Core::Document->new;
 
@@ -18,6 +18,8 @@ my $zone1 = $bundle->create_zone('en');
 $bundle->create_zone('variant1en');
 $bundle->create_zone('variant2en');
 ok($zone1, 'several zones created in a bundle');
+
+ok($zone1->get_bundle, 'bundle knows its embeding zone');
 
 # accessing created zones
 my $zone2 = $bundle->get_zone('en');
