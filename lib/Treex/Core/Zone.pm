@@ -10,7 +10,7 @@ extends 'Treex::PML::Struct';
 
 has language => (is => 'rw', isa=>'LangCode', required=>1);
 
-has selector => (is => 'rw', default=>'');
+has selector => (is => 'rw', isa=>'Selector', default=>'');
 
 sub set_attr {
     my ($self, $attr_name, $attr_value) = @_;

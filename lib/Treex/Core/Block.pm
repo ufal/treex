@@ -8,6 +8,10 @@ has language => ( is => 'ro', isa => 'LangCode',);
 has scenario => ( is => 'ro', isa => 'Treex::Core::Scenario',
                   writer => '_set_scenario', weak_ref => 1,);
 
+# TODO
+# has robust => ( is=> 'ro', isa=>'Bool', default=>0,
+#                 documentation=>'no fatal errors in robust mode');
+
 sub process_document {
     my ( $self, $document ) = @_;
     if (!$document->get_bundles()){

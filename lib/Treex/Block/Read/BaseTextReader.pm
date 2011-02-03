@@ -1,4 +1,4 @@
-package Treex::Block::Read::BasePlainReader;
+package Treex::Block::Read::BaseTextReader;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseReader';

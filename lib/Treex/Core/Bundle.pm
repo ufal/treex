@@ -1,8 +1,8 @@
 package Treex::Core::Bundle;
 
 use Moose;
+use Treex::Moose;
 use MooseX::NonMoose;
-use MooseX::FollowPBP;
 
 extends 'Treex::PML::Node';
 

@@ -1,7 +1,7 @@
-package Treex::Block::Read::PlainText;
+package Treex::Block::Read::Text;
 use Moose;
 use Treex::Moose;
-extends 'Treex::Block::Read::BasePlainReader';
+extends 'Treex::Block::Read::BaseTextReader';
 with 'Treex::Core::DocumentReader';
 
 sub next_document {

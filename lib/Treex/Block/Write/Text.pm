@@ -1,4 +1,4 @@
-package Treex::Block::Write::PlainText;
+package Treex::Block::Write::Text;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
