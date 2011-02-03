@@ -31,7 +31,7 @@ sub get_zone {
         foreach my $element ( $self->{zones}->elements ) {
             my ( $name, $value ) = @$element;
             if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
-                return $element;
+                return $value;
             }
         }
     }
@@ -41,24 +41,23 @@ sub get_zone {
 sub create_zone {
     my ( $self,  $language, $selector ) = @_;
     my $new_zone = Treex::Core::BundleZone->new(
-        'zone',
-        Treex::PML::Struct->new(
-            {
-                'language'  => $language,
-                'selector' => $selector
-            }
-        )
-      );
+        {
+            'language'  => $language,
+            'selector' => $selector
+        }
+    );
+
+    my $new_element = Treex::PML::Seq::Element->new('zone', $new_zone);
 
     $new_zone->_set_bundle($self);
 
 #    $new_subbundle->set_type_by_name( $self->get_document->metaData('schema'), 'zone' );
 
     if ( defined $self->{zones} ) {
-        $self->{zones}->unshift_element_obj($new_zone);
+        $self->{zones}->unshift_element_obj($new_element);
     }
     else {
-        $self->{zones} = Treex::PML::Seq->new( [$new_zone] );
+        $self->{zones} = Treex::PML::Seq->new( [$new_element] );
     }
 
     return $new_zone;
@@ -76,7 +75,7 @@ sub get_or_create_zone {
 
 sub get_all_zones {
     my ($self) = @_;
-    return $self->{zones}->elements;
+    return map {$_->value()} $self->{zones}->elements;
 }
 
 

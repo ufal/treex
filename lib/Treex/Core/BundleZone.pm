@@ -11,10 +11,6 @@ use Treex::Core::Node::N;
 
 extends 'Treex::Core::Zone';
 
-# using additional attributes is not straighforward, since
-# the underlying (non-moose) class is a blessed array reference;
-# (maybe it'll be better to shift everywhere $zone ----> $zone->value)
-
 
 sub _set_bundle {
     my ($self, $bundle) = @_;
@@ -41,7 +37,7 @@ sub create_tree {
     $tree_root->_set_zone($self);
 
     my $new_tree_name = lc($layer) . "_tree";
-    $self->value->{trees}->{$new_tree_name} = $tree_root;
+    $self->{trees}->{$new_tree_name} = $tree_root;
 
     my $new_id = "$new_tree_name-".$bundle->get_id."-root";
     $tree_root->set_id($new_id);
@@ -63,7 +59,7 @@ sub get_tree {
     my ($self, $layer) = @_;
 
     my $tree_name = lc($layer) . "_tree";
-    my $tree = $self->value->{trees}->{$tree_name};
+    my $tree = $self->{trees}->{$tree_name};
 
     if ( not defined $tree ) {
         log_fatal("No $tree_name available in the bundle, bundle id=" . $self->get_attr('id'));
@@ -74,14 +70,14 @@ sub get_tree {
 sub has_tree {
     my ($self, $layer) = @_;
     my $tree_name = lc($layer) . "_tree";
-    return defined $self->value->{trees}->{$tree_name};
+    return defined $self->{trees}->{$tree_name};
 }
 
 sub get_all_trees {
    my ($self) = @_;
 
    return grep {defined}
-       map {$self->value->{trees}->{$_."_tree"};} qw(a t n p);
+       map {$self->{trees}->{$_."_tree"};} qw(a t n p);
 
 }
 

@@ -80,7 +80,7 @@ sub BUILD {
         # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
         if ( defined $meta->{zones} ) {
-            foreach my $element ( $meta->{zones}->elements ) {
+            foreach my $element ( map {$_->value()} $meta->{zones}->elements ) {
                 bless $element, 'Treex::Core::DocZone';
             }
         }
@@ -89,7 +89,7 @@ sub BUILD {
             bless $bundle, 'Treex::Core::Bundle';
 
             if ( defined $bundle->{zones} ) {
-                foreach my $zone ( $bundle->{zones}->elements ) {
+                foreach my $zone ( map {$_->value()} $bundle->{zones}->elements ) {
                     bless $zone, 'Treex::Core::BundleZone';
 		    $zone->_set_bundle($bundle);
 
@@ -251,19 +251,24 @@ sub create_zone {
         $selector = $1;
     }
 
-    my $new_zone = Treex::Core::DocZone->new('zone', Treex::PML::Struct->new(
+
+    my $new_zone = Treex::Core::DocZone->new(
         {
             'language' => $language,
             'selector' => $selector
         }
-    ));
+    );
+
+
+    my $new_element = Treex::PML::Seq::Element->new('zone', $new_zone);
+
 
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
-        $meta->{zones}->unshift_element_obj($new_zone);
+        $meta->{zones}->unshift_element_obj($new_element);
     }
     else {
-        $meta->{zones} = Treex::PML::Seq->new( [$new_zone ] );
+        $meta->{zones} = Treex::PML::Seq->new( [$new_element ] );
     }
 
     return $new_zone;
@@ -283,7 +288,7 @@ sub get_zone {
         foreach my $element ( $meta->{zones}->elements ) {
             my ( $name, $value ) = @$element;
             if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
-                return $element;
+                return $value;
             }
         }
     }

@@ -6,7 +6,8 @@ use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
 
-extends 'Treex::PML::Seq::Element';
+#extends 'Treex::PML::Seq::Element';
+extends 'Treex::PML::Struct';
 
 has language => (is => 'rw');
 
@@ -14,16 +15,16 @@ has selector => (is => 'rw');
 
 sub set_attr {
     my ($self, $attr_name, $attr_value) = @_;
-    return $self->value->{$attr_name} = $attr_value;
+    return $self->{$attr_name} = $attr_value;
 }
 
 sub get_attr {
     my ($self, $attr_name) = @_;
-    return $self->value->{$attr_name};
+    return $self->{$attr_name};
 }
 
 sub get_label {
     my ($self) = @_;
-    return $self->get_attr('selector') . $self->get_attr('language');
+    return $self->get_selector . $self->get_language;
 }
 1;
