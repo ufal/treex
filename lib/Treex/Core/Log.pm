@@ -254,7 +254,8 @@ sub _reformat_long_number {
 
 # ---------- EXPORTED FUNCTIONS ------------
 
-# this solution might be only tentative (Log::Log4perl might be preferred in the future),
+# this solution might be only tentative
+# (Log::Log4perl or MooseX::Log::Log4perl might be preferred in the future),
 # that's why the following declarations are kept apart from the old code.
 
 

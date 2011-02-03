@@ -1,7 +1,7 @@
 package Treex::Core;
 use Moose;
+#use Treex::Core::Log; I am too lazy to copy the exporting code here
 use Treex::Core::Document;
-#use Treex::Core::Factory;
 use Treex::Core::Node;
 use Treex::Core::Bundle;
 
