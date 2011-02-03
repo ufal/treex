@@ -85,7 +85,14 @@ sub get_all_trees {
 
 }
 
+sub sentence {
+    my $self->shift;
+    return $self->get_attr('sentence');
+}
 
-
+sub set_sentence {
+    my ($self, $text) = @_;
+    return $self->set_attr('sentence', $text);
+}
 
 1;

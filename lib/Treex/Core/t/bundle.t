@@ -32,7 +32,7 @@ isa_ok($bundle, 'Treex::Core::Bundle');
 isa_ok($bundle->get_document(), 'Treex::Core::Document');
 
 #Tree testing
-my @layers = qw(W M P A T);
+my @layers = qw(M P A T);
 foreach (@layers) {
 	$bundle->create_tree("SCzech$_");
 	ok($bundle->contains_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
