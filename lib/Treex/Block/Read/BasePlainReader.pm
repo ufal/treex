@@ -6,6 +6,7 @@ extends 'Treex::Block::Read::BaseReader';
 # By default read from STDIN
 has '+from' => (default => '-');
 
+has language => ( isa => 'LangCode', is => 'ro', required => 1 );
 has lines_per_document => ( isa => 'Int', is => 'ro', default => 50 );
 has merge_files => ( isa => 'Bool', is => 'ro', default => 0 );
 

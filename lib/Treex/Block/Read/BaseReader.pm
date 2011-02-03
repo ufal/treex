@@ -2,7 +2,6 @@ package Treex::Block::Read::BaseReader;
 use Moose;
 use Treex::Moose;
 
-has language => ( isa => 'LangCode', is => 'ro', required => 1 );
 has selector => ( isa => 'Selector', is => 'ro', default => '');
 
 has filenames => ( 
