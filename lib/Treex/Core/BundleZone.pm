@@ -3,7 +3,7 @@ package Treex::Core::BundleZone;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
-use Treex::Core::Log;
+#use Treex::Core::Log;
 
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;

@@ -4,7 +4,6 @@ use Moose;
 use Treex::Moose;
 use Treex::Core::Config;
 use Treex::Core::DocZone;
-use Treex::Core::Log;
 
 with 'Treex::Core::TectoMTStyleAccessors';
 

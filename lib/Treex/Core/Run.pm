@@ -1,5 +1,6 @@
 package Treex::Core::Run;
 use Treex::Moose;
+use Treex::Core;
 use MooseX::SemiAffordanceAccessor;
 with 'MooseX::Getopt';
 
