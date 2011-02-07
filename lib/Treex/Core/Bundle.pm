@@ -43,7 +43,7 @@ sub create_zone {
     my $new_zone = Treex::Core::BundleZone->new(
         {
             'language'  => $language,
-            'selector' => $selector
+            'selector' => ($selector || '')
         }
     );
 

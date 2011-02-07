@@ -15,8 +15,8 @@ my $bundle = $doc->create_bundle;
 
 # creating zones in the bundle
 my $zone1 = $bundle->create_zone('en');
-$bundle->create_zone('variant1en');
-$bundle->create_zone('variant2en');
+$bundle->create_zone('en', 'Svariant1');
+$bundle->create_zone('en', 'Svariant2');
 ok($zone1, 'several zones created in a bundle');
 
 ok($zone1->get_bundle, 'bundle knows its embeding zone');
