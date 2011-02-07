@@ -43,7 +43,7 @@ sub BUILD {
         . " decode-type:" . $self->{decodetype}
         . " server-mode:true print-scores:true model-name:$model_name 2>/dev/null";
 
-
+	
     $SIG{PIPE} = 'IGNORE';  # don't die if parser gets killed
     my ( $reader, $writer, $pid )
         = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
@@ -90,7 +90,7 @@ sub parse_sentence {
   
         print $writer join( "\t", @$forms_rf ) . "\n";
         print $writer join( "\t", @$tags_rf ) . "\n";
-        
+         
         $_ = <$reader>;
         Report::fatal("Treex::Tools::Parser::MST returned nothing") if (!defined $_);
         chomp;
