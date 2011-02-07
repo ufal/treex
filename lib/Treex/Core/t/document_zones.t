@@ -13,14 +13,9 @@ my $sample_text = 'Testing text sentence 1. Testing test sentence 2.';
 
 # creating zones
 my $zone1 = $doc->create_zone('Sen'); 
-TODO: {
-	local $TODO =  'Selector can be any string, not just S or T';
-	eval{	$doc->create_zone('variant1en')};
-	ok (!$@);
-	eval{	$doc->create_zone('variant2en')};
-	ok (!$@);
-}
-ok($zone1, 'document zones created');
+isa_ok ($zone1, 'Treex::Core::DocZone','Created zone w/ std selector - S');
+isa_ok (eval{$doc->create_zone('en')},'Treex::Core::DocZone','Created zone w/ no selector');
+isa_ok (eval{$doc->create_zone('variant2en')},'Treex::Core::DocZone', 'Created zone w/ arbitrary selector - variant2');
 
 # accessing created zones
 my $zone2 = $doc->get_zone('Sen');

@@ -1,29 +1,16 @@
 #!/usr/bin/env perl
-#===============================================================================
-#
-#         FILE:  node.t
-#
-#  DESCRIPTION:  
-#
-#        FILES:  ---
-#         BUGS:  ---
-#        NOTES:  ---
-#       AUTHOR:  Tomas Kraut (), tomas.kraut@matfyz.cz
-#      COMPANY:  
-#      VERSION:  1.0
-#      CREATED:  02/01/11 14:02:38
-#     REVISION:  ---
-#===============================================================================
 
 use strict;
 use warnings;
 
-use Test::More;# tests => 1;                      # last test to print
+use Test::More;
 
 BEGIN { use_ok('Treex::Core::Node') }
 use Treex::Core::Document;
 my $bundle = Treex::Core::Document->new->create_bundle;
 $bundle->create_tree('SCzechA');
+
+	cmp_ok($bundle->get_zone('cs','S')->get_a_tree(), '==', $bundle->get_tree('SCzechA'),'Tree can be obtained via zone or directly and result is same');
 
 my $root = $bundle->get_tree('SCzechA');
 isa_ok($root, 'Treex::Core::Node');
@@ -96,13 +83,18 @@ is (scalar $root->get_descendants(), 8, '$root now has 8 descendants');
 is (scalar $node->get_siblings(), 3, '$node has 3 siblings');
 is (scalar $node->get_children(), 1, '$node has 1 child');
 
+ok (!defined $c3->get_parent(), 'Disconnected node has no parent');
+is (scalar $c3->get_children(),1,'And it has still 1 child');
+is (scalar $c3->get_siblings(),0, 'but no siblings');
+ok ($c3->is_root(), q(so it's root));
 
 TODO: {
-	todo_skip q(Looks like ordering doesn't work), 1 if !Treex::Core::Node->meta->has_method('get_ordering_attribute');
-	ok($root->get_ordering_attribute());
+	todo_skip q(Looks like getting ordering attribute doesn't work), 1 unless Treex::Core::Node->meta->has_method('ordering_attribute');
+	ok($root->ordering_attribute());
 }
 
-
+my $root_order = eval { $root->get_ordering_value()};
+ok(defined $root_order, 'Tree has ordering');
 
 
 

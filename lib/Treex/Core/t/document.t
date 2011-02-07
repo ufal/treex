@@ -1,28 +1,15 @@
 #!/usr/bin/env perl
-#===============================================================================
-#
-#         FILE:  document.t
-#
-#  DESCRIPTION:  
-#
-#        FILES:  ---
-#         BUGS:  ---
-#        NOTES:  ---
-#       AUTHOR:  Tomas Kraut (), tomas.kraut@matfyz.cz
-#      COMPANY:  
-#      VERSION:  1.0
-#      CREATED:  01/27/11 10:49:47
-#     REVISION:  ---
-#===============================================================================
 
 use strict;
 use warnings;
 
-use Test::More;# tests=>2;                      # last test to print
+use Test::More;
 
 
 BEGIN{ use_ok('Treex::Core::Document')};
-
+my $attr = 'sentence';
+my $sentence = q(I'm testing sentence);
+my $fname = 'doc.test';
 my $doc = Treex::Core::Document->new;
 
 isa_ok ($doc, 'Treex::Core::Document'); 
@@ -33,11 +20,14 @@ my $new_bundle = $doc->create_bundle();
 
 is(scalar $doc->get_bundles(),1,'Now I have one bundle');
 
-my ($name, $value) = ('a','b');
+$doc->set_attr($attr, $sentence);
 
-$doc->set_attr($name,$value);
+is($sentence,$doc->get_attr($attr),'Document contains its attribute');
 
-is($value,$doc->get_attr($name));
+$doc->save($fname);
 
+my $loaded_doc = Treex::Core::Document->new( { 'filename' => $fname } );
+
+cmp_ok($loaded_doc->get_attr($attr), 'eq', $doc->get_attr($attr), q(There's equal content in saved&loaded attr));
 
 done_testing();
