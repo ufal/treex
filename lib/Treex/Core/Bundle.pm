@@ -23,6 +23,8 @@ use Treex::Core::Log;
 
 my @layers = qw(t a n);
 
+
+
 # --------- ACCESS TO ZONES ------------
 
 sub get_zone {
@@ -192,7 +194,7 @@ sub set_attr {
 
 sub get_attr {
     my ( $self, $attr_name ) = @_;
-    log_fatal "set_attr: incorrect number of arguments" if @_ != 2;
+    log_fatal "get_attr: incorrect number of arguments" if @_ != 2;
 
     if ($attr_name =~ /^(\S+)$/) {
         return Treex::PML::Node::attr( $self, $attr_name );
