@@ -145,6 +145,28 @@ sub get_tree {
     }
 }
 
+sub has_tree {
+	my ( $self, $tree_name ) = @_;
+	log_fatal "has_tree: incorrect number of arguments" if @_ != 2;
+
+	$tree_name =~ s/Czech/cs/;
+    $tree_name =~ s/English/en/;
+    $tree_name =~ s/M$/A/;
+
+	if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
+        log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
+    }
+
+    else {
+        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
+
+        my $zone = $self->get_zone( $language, $selector );
+
+        return defined $zone && defined $zone->get_tree($layer);
+    }
+
+
+}
 
 # --------- ACCESS TO ATTRIBUTES ------------
 

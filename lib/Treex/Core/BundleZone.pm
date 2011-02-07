@@ -67,6 +67,26 @@ sub get_tree {
     return $tree;
 }
 
+sub get_a_tree {
+	my ($self) = @_;
+	return $self->get_tree('a');
+}
+
+sub get_t_tree {
+	my ($self) = @_;
+	return $self->get_tree('t');
+}
+
+sub get_n_tree {
+	my ($self) = @_;
+	return $self->get_tree('n');
+}
+
+sub get_p_tree {
+	my ($self) = @_;
+	return $self->get_tree('p');
+}
+
 sub has_tree {
     my ($self, $layer) = @_;
     my $tree_name = lc($layer) . "_tree";

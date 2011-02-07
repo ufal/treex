@@ -1,4 +1,4 @@
-#
+#!/usr/bin/env perl
 #===============================================================================
 #
 #         FILE:  bundle.t
@@ -32,27 +32,37 @@ isa_ok($bundle, 'Treex::Core::Bundle');
 isa_ok($bundle->get_document(), 'Treex::Core::Document');
 
 #Tree testing
-my @layers = qw(M P A T);
+my @layers = qw(M A T);
 foreach (@layers) {
 	$bundle->create_tree("SCzech$_");
-	ok($bundle->contains_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
+	ok($bundle->has_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
 }
-ok(!$bundle->contains_tree('TCzechW'),"Bundle doesn't contains tree, that wasn't added");
+ok(!$bundle->has_tree('TCzechT'),"Bundle doesn't contains tree, that wasn't added");
 
-foreach ($bundle->get_tree_names()) {
-	ok($bundle->contains_tree($_),"Bundle contains tree $_");
-	isa_ok($bundle->get_tree($_),'Treex::Core::Node')
+TODO: {
+	todo_skip 'Not defined P tree', 1;
+	$bundle->create_tree("SCzechP");
+	ok($bundle->has_tree("SCzechP"),"Bundle contains recently added tree SCzechP");
+
 }
-
-cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method");
-
-
+TODO: {
+	todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
+#	foreach ($bundle->get_tree_names()) {
+#		ok($bundle->has_tree($_),"Bundle contains tree $_");
+#		isa_ok($bundle->get_tree($_),'Treex::Core::Node');
+#	}
+	ok(0);
+	TODO: {
+		todo_skip 'Get all trees'. 1 unless Treex::Core::Node->meta->has_method('get_all_trees');
+		cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method");
+	}
+}
 #Attr testing
 
 $bundle->set_attr('Attr','Value');
 
-cmp_ok($bundle->get_attr('Attr'),'eq','Value');
-isa_ok($bundle->get_attr('Bttr'),'NULL');
+cmp_ok($bundle->get_attr('Attr'),'eq','Value', 'Attr test');
+ok(!defined $bundle->get_attr('Bttr'), 'Not defined attr');
 
 #TODO
 
