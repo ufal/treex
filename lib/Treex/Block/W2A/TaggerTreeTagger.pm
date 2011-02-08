@@ -1,16 +1,11 @@
 package Treex::Block::W2A::TaggerTreeTagger;
-
-our $VERSION = '0.1';
-
 use Moose;
-use MooseX::FollowPBP;
-
-use Report;
-
+use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has 'language' => (isa => 'Str', is => 'ro', required => 1);
-has 'model'    => (isa => 'Str', is => 'rw');
+has '+language' => (required=>1);
+has model       => (isa => 'Str', is => 'rw');
+has _tagger     => (is => 'rw'); 
 
 use Treex::Tools::Tagger::TreeTagger;
 
@@ -18,25 +13,25 @@ sub BUILD {
     my ($self) = @_;
 
     # if the model is not specified, check whether there is a default model for given language
-    if (!$self->{model}) {
-        $self->{model} = $self->require_file_from_share("data/models/tree_tagger/".$self->{language}.".par");
+    if (!$self->model) {
+        $self->set_model($self->require_file_from_share("data/models/tree_tagger/".$self->language.".par"));
     }
 
-    $self->{tagger} = Treex::Tools::Tagger::TreeTagger->new({'model' => $self->{model}});
+    $self->_set_tagger(Treex::Tools::Tagger::TreeTagger->new({model => $self->{model}}));
     return;
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-    my $a_root = $bundle->get_tree('S'.$self->{language}.'A');
-    my @forms = map { $_->get_attr('m/form') } $a_root->get_descendants();
-    my ($tags, $lemmas) = @{ $self->{tagger}->analyze(\@forms) };
+    my $a_root = $zone->get_a_tree();
+    my @forms = map { $_->form } $a_root->get_descendants();
+    my ($tags, $lemmas) = @{ $self->_tagger->analyze(\@forms) };
 
     # fill tags and lemmas
     foreach my $a_node ( $a_root->get_descendants() ) {
-        $a_node->set_attr( 'm/tag',   shift @$tags );
-        $a_node->set_attr( 'm/lemma', shift @$lemmas );
+        $a_node->set_tag(shift @$tags);
+        $a_node->set_lemma(shift @$lemmas);
     }
 
     return 1;
@@ -57,5 +52,5 @@ __END__
 
 =cut
 
-# Copyright 2010 David Marecek
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+# Copyright 2010-2011 David Marecek, Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
