@@ -94,6 +94,8 @@ foreach my $layer (qw(A T N)) {
 	is (scalar $c3->get_siblings(),0, 'but no siblings');
 	ok ($c3->is_root(), q(so it's root));
 
+
+
 	#Node ordering
 	TODO: {
 		todo_skip q(Looks like getting ordering attribute doesn't work), 1 unless Treex::Core::Node->meta->has_method('ordering_attribute');
@@ -102,7 +104,6 @@ foreach my $layer (qw(A T N)) {
 
 	my $root_order = eval { $root->get_ordering_value()};
 	ok(defined $root_order, 'Tree has ordering');
-
 
 
 	#Reordering nodes

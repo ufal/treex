@@ -31,15 +31,15 @@ foreach (0..2) {
 	my $sel = $selectors[$_];
 	SKIP: {
 		skip "Zone (en/$sel) not created",4 unless defined $zones[$_];
-		cmp_ok($zone->get_bundle, 'eq', $bundle, 'zone knows its embeding bundle');
+		is($zone->get_bundle, $bundle, 'zone knows its embeding bundle');
 
 		# accessing created zones
-		cmp_ok ($bundle->get_zone('en',$sel), 'eq', $zone, 'created zone found by get_zone');
+		is($bundle->get_zone('en',$sel), $zone, 'created zone found by get_zone');
 
 		# accessing zone attributes
 		$zone->set_attr('sentence',$sample_sentence);
 		my $same_zone = $bundle->get_zone('en',$sel);
-		cmp_ok ($same_zone->get_attr('sentence'), 'eq', $sample_sentence,
+		is($same_zone->get_attr('sentence'), $sample_sentence,
 			'bundle zone attribute correctly stored in memory');
 
 		# checking file-storing persistency of bundle zones and their attributes
@@ -47,7 +47,7 @@ foreach (0..2) {
 		$doc->save($filename);
 		my $doc2 = Treex::Core::Document->new( { 'filename' => $filename } );
 		my ($bundle2) = $doc2->get_bundles;
-		cmp_ok ($bundle2->get_zone('en',$sel)->get_attr('sentence'), 'eq', $sample_sentence,
+		is($bundle2->get_zone('en',$sel)->get_attr('sentence'), $sample_sentence,
 			'bundle zone attribute correctly stored in a file');
 	}
 }

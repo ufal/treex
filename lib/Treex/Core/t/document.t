@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More tests=>6;
+
 
 
 BEGIN{ use_ok('Treex::Core::Document')};
@@ -28,6 +29,6 @@ $doc->save($fname);
 
 my $loaded_doc = Treex::Core::Document->new( { 'filename' => $fname } );
 
-cmp_ok($loaded_doc->get_attr($attr), 'eq', $doc->get_attr($attr), q(There's equal content in saved&loaded attr));
+is($loaded_doc->get_attr($attr), $doc->get_attr($attr), q(There's equal content in saved&loaded attr));
 
 done_testing();
