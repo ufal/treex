@@ -1,7 +1,6 @@
 package Treex::Core::Scenario;
 use Moose;
 use Treex::Moose;
-use Treex::Core::Log;
 
 has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub {[]});
 
@@ -220,7 +219,7 @@ sub _load_block {
 
 
     #my $string_to_eval = '$new_block = ' . $block_name . "->new({$constructor_parameters});";
-    #use Data::Dumper; print Dumper(\%params);
+    #print Dumper(\%params);
     my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);';
     eval $string_to_eval;
     if ($@) {

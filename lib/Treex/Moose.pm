@@ -7,6 +7,7 @@ use List::MoreUtils;
 use List::Util;
 use Scalar::Util;
 use Readonly;
+use Data::Dumper;
 
 Moose::Exporter->setup_import_methods(
     also            => 'Moose',
@@ -24,6 +25,7 @@ Moose::Exporter->setup_import_methods(
         \&List::Util::first,
         \&Readonly::Readonly,
         \&Scalar::Util::weaken,
+        \&Data::Dumper::Dumper,
     ] 
 );
 

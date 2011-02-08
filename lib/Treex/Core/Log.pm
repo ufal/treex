@@ -67,7 +67,7 @@ sub fatal {
         print STDERR "\n";
         $unfinished_line = 0;
     }
-    my $line = "TMT-FATAL:\t$message\n\nPERL ERROR MESSAGE: $!\n $@\nPERL STACK:";
+    my $line = "TMT-FATAL:\t$message\n\n". ($!||$@ ? "PERL ERROR MESSAGE: $!\n $@\n" : '') . "PERL STACK:";
     _ntred_message($line);
     confess $line;
 }
