@@ -49,7 +49,7 @@ __END__
 =item Treex::Block::W2A::TokenizeOnWhitespace
 
 Each sentence is split into a sequence of tokens.
-Flat a-tree is build and attributes C<no_space_after> are filled.
+Flat a-tree is built and attributes C<no_space_after> are filled.
 This class tokenizes only on whitespaces,
 but it can be used as an ancestor for more apropriate tokenization
 by overriding the method C<tokenize_sentence>.

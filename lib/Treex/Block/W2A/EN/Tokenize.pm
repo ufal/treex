@@ -1,22 +1,16 @@
 package Treex::Block::W2A::EN::Tokenize;
-
-our $VERSION = '0.1';
-
+use utf8;
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Moose;;
 
 extends 'Treex::Block::W2A::Tokenize';
 
-has language => (isa => 'Str', is => 'ro', default => 'en');
+has '+language' => (default => 'en',);
 
-use Report;
-use utf8;
-
-sub tokenize_sentence {
-
+override 'tokenize_sentence' => sub {
     my ($self, $sentence) = @_;
-
-    $sentence = $self->SUPER::tokenize_sentence($sentence);
+    $sentence = super();
+    
     $sentence =~ s/^(.*)$/ $1 /;
 
     # it's, I'm, we'd, we're, you'll, I've, Peter's
@@ -44,7 +38,7 @@ sub tokenize_sentence {
     $sentence =~ s/\s*$//g;
 
     return $sentence;
-}
+};
 
 1;
 
@@ -54,12 +48,14 @@ __END__
 
 =item Treex::Block::W2A::EN::Tokenize
 
-Each sentence is split into a sequence of tokens using a series of regepxs.
-Analytical tree is build and attributes C<no_space_after> are filled.
+Each sentence is split into a sequence of tokens using a series of regexs.
+Flat a-tree is built and attributes C<no_space_after> are filled.
+This class uses English specific regex rules for tokenization
+of contractions like I<He's, we'll, they've, don't> etc.
 
 =back
 
 =cut
 
-# Copyright 2010 David Marecek
+# Copyright 2011 David Marecek, Martin Popel
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -11,6 +11,9 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/$/ /;
     $sentence =~ s/^/ /;
     
+    # detect web sites and email addresses and protect them from tokenization
+    $sentence = $self->mark_urls($sentence);
+    
     # the following characters (double-characters) are separated everywhere
     $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚)/ $1 /g;
 
@@ -29,6 +32,9 @@ override 'tokenize_sentence' => sub {
     # three dots belong together
     $sentence =~ s/\.\s*\.\s*\./.../g;
 
+    # get back web sites and e-mails
+    $sentence = $self->restore_urls($sentence);
+
     # clean out extra spaces
     $sentence =~ s/\s+/ /g;
     $sentence =~ s/^ *//g;
@@ -36,6 +42,29 @@ override 'tokenize_sentence' => sub {
 
     return $sentence;
 };
+
+has _urls => (is=>'rw');
+
+sub mark_urls {
+    my ($self, $sentence) = @_;
+    my @urls;
+    while ( $sentence =~ s/(\W)((http:\/\/)?([\w\-]+\.)+(com|cz|de|es|eu|fr|hu|it|sk))(\W)/$1 XXXURLXXX $6/ ) {
+        push @urls, $2;
+    }
+    $self->_set_urls(\@urls);
+    return $sentence;
+}
+
+sub restore_urls {
+    my ($self, $sentence) = @_;
+    my @urls = @{$self->_urls};
+    while (@urls) {
+        my $url = shift @urls;
+        $sentence =~ s/XXXURLXXX/$url/;
+    }
+    return $sentence;
+}
+
 
 1;
 
@@ -45,8 +74,12 @@ __END__
 
 =item Treex::Block::W2A::Tokenize
 
-Each sentence is split into a sequence of tokens using a series of regepxs.
-Analytical tree is build and attributes C<no_space_after> are filled.
+Each sentence is split into a sequence of tokens using a series of regexs.
+Flat a-tree is built and attributes C<no_space_after> are filled.
+This class uses language-independent regex rules for tokenization,
+but it can be used as an ancestor for language-specific tokenization
+by overriding the method C<tokenize_sentence>
+or by using C<around> (see L<Moose::Manual::MethodModifiers>).
 
 =back
 
