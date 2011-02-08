@@ -28,7 +28,7 @@ subtype 'Selector'
 ;
 
 # ISO 639-1 language code with some extensions from ISO 639-2
-enum 'LangCode' => (   
+my @LANG_CODES = (  
     # major languages
     'en', # English
     'de', # German
@@ -163,6 +163,9 @@ enum 'LangCode' => (
     'und', # ISO 639-2 code for undetermined/unknown language
 );
 
+enum 'LangCode' => @LANG_CODES;
+my %IS_LANG_CODE = map {$_=>1} @LANG_CODES;
+sub is_lang_code { return $IS_LANG_CODE{$_[0]}; }
 
 
 1;

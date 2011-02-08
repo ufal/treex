@@ -9,8 +9,6 @@ use Treex::Core::Bundle;
 with 'Treex::Core::TectoMTStyleAccessors';
 
 use Treex::PML;
-use Treex::Core::Bundle;
-
 use Scalar::Util qw( weaken );
 
 has _pmldoc => (
