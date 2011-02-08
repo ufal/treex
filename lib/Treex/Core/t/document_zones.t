@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core::Document;
 
-use Test::More tests=>7;
+use Test::More tests=>8;
 
 my $doc = Treex::Core::Document->new;
 
@@ -15,12 +15,12 @@ my $sample_text = 'Testing text sentence 1. Testing test sentence 2.';
 my $zone1 = $doc->create_zone('Sen'); 
 isa_ok ($zone1, 'Treex::Core::DocZone','Created zone w/ std selector - S');
 isa_ok (eval{$doc->create_zone('en')},'Treex::Core::DocZone','Created zone w/ no selector');
-isa_ok (eval{$doc->create_zone('variant2en')},'Treex::Core::DocZone', 'Created zone w/ arbitrary selector - variant2');
+isa_ok (eval{$doc->create_zone('Svariant2en')},'Treex::Core::DocZone', 'Created zone w/ arbitrary selector - variant2');
 
 # accessing created zones
 my $zone2 = $doc->get_zone('Sen');
 cmp_ok ($doc->get_zone('Sen'), 'eq', $zone1, 'created zone found by get_zone');
-
+cmp_ok ($doc->get_zone('Sen'), 'eq' ,$doc->get_zone('en','S'), 'zone can be accessed by single attr or by langueage/selector pair');
 
 # accessing zone attributes
 $zone1->set_attr('text',$sample_text);

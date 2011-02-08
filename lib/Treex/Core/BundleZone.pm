@@ -27,6 +27,26 @@ sub get_document {
     return $self->get_bundle->get_document;
 }
 
+sub create_a_tree {
+	my ($self) = @_;
+	return $self->create_tree('a');
+}
+
+sub create_t_tree {
+	my ($self) = @_;
+	return $self->create_tree('t');
+}
+
+sub create_n_tree {
+	my ($self) = @_;
+	return $self->create_tree('n');
+}
+
+#sub create_p_tree {
+#	my ($self) = @_;
+#	return $self->create_tree('p');
+#}
+
 sub create_tree {
     my ($self,$layer) = @_;
 
