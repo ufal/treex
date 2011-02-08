@@ -3,7 +3,10 @@ use Moose;
 use Moose::Exporter;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
 use Treex::Core::Log;
-#use List::MoreUtils qw(first_index);
+use List::MoreUtils;
+use List::Util;
+use Scalar::Util;
+use Readonly;
 
 Moose::Exporter->setup_import_methods(
     also            => 'Moose',
@@ -15,7 +18,12 @@ Moose::Exporter->setup_import_methods(
         \&Treex::Core::Log::log_memory,
         \&Treex::Core::Log::log_set_error_level,
         \&Treex::Core::Log::log_info,
-        #\&List::MoreUtils::first_index,
+        \&List::MoreUtils::first_index,
+        \&List::MoreUtils::all,
+        \&List::MoreUtils::any,
+        \&List::Util::first,
+        \&Readonly::Readonly,
+        \&Scalar::Util::weaken,
     ] 
 );
 

@@ -1,39 +1,19 @@
 package Treex::Core::Node::A;
-
-use 5.008;
-use strict;
-use warnings;
-use Treex::Core::Log;
-use List::MoreUtils qw( any all );
-
-use Treex::Core::Document;
-use Treex::Core::Bundle;
-use Treex::Core::Node;
-
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Moose;
 extends 'Treex::Core::Node';
+
+#use Treex::Core::Document;
+#use Treex::Core::Bundle;
+#use Treex::Core::Node;
+
+has 'n_node' => ( is => 'ro', writer=>'_set_n_node',);
 
 has [qw(form lemma tag)] => ( is => 'rw' );
 
 sub get_pml_type_name {
     my ($self) = @_;
     return $self->is_root() ? 'a-root.type' : 'a-node.type';
-}
-
-
-# these two methods won't work until merging m- and a-layer is finished
-sub get_mnode {
-    my ($self) = @_;
-    return $self;
-    my $m_rf = $self->get_attr('m.rf') or return;
-    return $self->get_document()->get_node_by_id( $m_rf);
-}
-
-sub get_n_node {
-	my ($self) = @_;
-	my $m_node = $self->get_mnode() or return;
-	return $m_node->get_n_node();
 }
 
 #----------- Effective children and parents -------------

@@ -1,17 +1,6 @@
 package Treex::Core::Node::T;
-
-use 5.008;
-use strict;
-use warnings;
-use Carp;
-use Treex::Core::Log;
-
-use Treex::Core::Document;
-use Treex::Core::Bundle;
-use Treex::Core::Node;
-
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Moose;
 extends 'Treex::Core::Node';
 
 sub ordering_attribute {'deepord'}

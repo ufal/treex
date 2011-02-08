@@ -1,19 +1,7 @@
 package Treex::Core::Node::N;
-
-use 5.008;
-use strict;
-use warnings;
-use Treex::Core::Log;
-use List::MoreUtils qw( any all );
-
-use Treex::Core::Document;
-use Treex::Core::Bundle;
-use Treex::Core::Node;
-
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Moose;
 extends 'Treex::Core::Node';
-
 
 sub get_pml_type_name {
 	my ($self) = @_;

@@ -1,25 +1,17 @@
 package Treex::Core::Node;
-
 use Moose;
 use MooseX::NonMoose;
-use MooseX::FollowPBP;
-use Treex::Core::Log;
-
-use Scalar::Util qw( weaken );
-use List::MoreUtils qw(any);
-use List::Util qw(first);
-use Readonly;
-
-Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
-my $CHECK_FOR_CYCLES = 1;
-
+use Treex::Moose;
 use Cwd;
 use Treex::PML;
-
 
 extends 'Treex::PML::Node';
 
 with 'Treex::Core::TectoMTStyleAccessors';
+
+Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
+my $CHECK_FOR_CYCLES = 1;
+
 
 has _zone => (
     is => 'rw',
@@ -35,7 +27,7 @@ has id => (
 
 sub _index_my_id {
     my $self = shift;
-    $self->get_document->index_node_by_id($self->get_id,$self);
+    $self->get_document->index_node_by_id($self->id, $self);
 }
 
 sub _pml_attribute_hash {
@@ -569,7 +561,7 @@ sub generate_new_id { #TODO move to Core::Document?
     my $latest_node_number = $doc->_latest_node_number;
 
     my $new_id;
-    $self->get_root->get_id =~ /(.+)root/;
+    $self->get_root->id =~ /(.+)root/;
     my $id_base = $1 || "";
 
     while (1) {
