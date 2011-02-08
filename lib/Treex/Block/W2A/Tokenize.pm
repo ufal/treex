@@ -2,9 +2,9 @@ package Treex::Block::W2A::Tokenize;
 use utf8;
 use Moose;
 use Treex::Moose;;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::W2A::TokenizeOnWhitespace';
 
-sub tokenize_sentence {
+override 'tokenize_sentence' => sub {
     my ($self, $sentence) = @_;
 
     # first off, add a space to the beginning and end of each line, to reduce necessary number of regexps.
@@ -35,39 +35,7 @@ sub tokenize_sentence {
     $sentence =~ s/ *$//g;
 
     return $sentence;
-}
-
-sub process_zone {
-    my ( $self, $zone ) = @_;
-
-    # create a-tree
-    my $a_root = $zone->create_tree('A');
-
-    # get the source sentence and tokenize
-    my $sentence = $zone->sentence;
-    $sentence =~ s/^\s+//;
-    log_fatal("No sentence to tokenize!") if !defined $sentence;
-    my @tokens = split ( /\s/, $self->tokenize_sentence($sentence) );
-
-    foreach my $i ( ( 0 .. $#tokens ) ) {
-        my $token = $tokens[$i];
-        
-        # delete the token from the begining of the sentence
-        $sentence =~ s/^\Q$token\E//;
-        # if there are no spaces left, the parameter no_space_after will be set to 1
-        my $no_space_after = $sentence =~ /^\s/ ? 0 : 1;
-        # delete this spaces
-        $sentence =~ s/^\s+//;
-
-        # create new a-node
-        my $new_a_node = $a_root->create_child(
-            form => $token,
-            no_space_after => $no_space_after,
-            ord => $i + 1,
-        );
-    }
-    return 1;
-}
+};
 
 1;
 
