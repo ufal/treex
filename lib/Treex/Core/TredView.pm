@@ -3,6 +3,7 @@ package Treex::Core::TredView;
 # planned to be used from contrib.mac of tred's extensions
 
 use Moose;
+use Treex::Core::Log;
 
 has 'grp' => (is => 'rw');
 has 'treex_doc' => (is=>'rw');
@@ -55,41 +56,127 @@ sub get_value_line_hook {
 
 # --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
 
+my @layers = qw(a t p n);
+
 sub precompute_visualization {
     my ($self) = @_;
     foreach my $bundle ($self->treex_doc->get_bundles) {
-	$self->precompute_bundle_root($bundle);
+
+	$bundle->{_precomputed_root_style} = $self->bundle_root_style($bundle);
+	$bundle->{_precomputed_labels} = $self->bundle_root_labels($bundle);
+
 	foreach my $zone ($bundle->get_all_zones) {
-	    if ($zone->has_tree('t')) {
-		$self->precompute_ttree($zone->get_tree('t'));
+
+	    foreach my $layer (@layers)  {
+		if ($zone->has_tree($layer)) {
+		    my $root = $zone->get_tree($layer);
+		    $root->{_precomputed_labels} = $self->tree_root_labels($root);
+		    $root->{_precomputed_node_style} = $self->node_style($root,$layer);
+
+		    foreach my $node ($root->get_descendants) {
+			$node->{_precomputed_node_style} = $self->node_style($node,$layer);
+			$node->{_precomputed_labels} = $self->nonroot_node_labels($node,$layer);
+		    }
+
+		}
 	    }
 	}
     }
 }
 
 
-sub precompute_bundle_root {
+# ---- info displayed below nodes (should return a reference to a three-element array) ---
+
+sub bundle_root_labels {
     my ($self, $bundle) = @_;
-    $self->set_line($bundle, 1, 'BUNDLE');
-    $self->set_line($bundle, 2, 'is='.$bundle->get_id);
-    print "WWW: precompute bundle\n";
+    return [
+	'bundle',
+	'id='.$bundle->get_id(),
+	''
+	];
 }
 
-
-sub precompute_ttree {
+sub tree_root_labels {
     my ($self, $root) = @_;
+    return [
+	$root->get_layer."-tree",
+	"zone=".$root->get_zone->get_label,
+	''
+	];
+}
 
-    $self->set_line($root,1,"layer=t");
-    $self->set_line($root,2,"zone=".$root->get_zone->get_label);
-    print "SSSS: precomputiong ttree\n";
-
+sub nonroot_node_labels { # silly code just to avoid the need for eval
+    my $layer = pop @_;
+    if ($layer eq 't') {return nonroot_tnode_labels(@_)}
+    elsif ($layer eq 'a') {return nonroot_anode_labels(@_)}
+    elsif ($layer eq 'n') {return nonroot_nnode_labels(@_)}
+    elsif ($layer eq 'p') {return nonroot_pnode_labels(@_)}
+    else {log_fatal "Undefined or unknown layer: $layer"}
 }
 
 
-sub set_line {
-    my ($self, $object, $line, $value) = @_;
-    $object->{"_precomputed_line".$line} = $value;
+sub nonroot_anode_labels {
+    my ($self, $node) = @_;
+    return (
+	$node->{form},
+	$node->{lemma},
+	$node->{tag},
+	);
 }
+
+sub nonroot_tnode_labels {
+    my ($self, $node) = @_;
+    return (
+	$node->{t_lemma},
+	$node->{functor},
+	$node->{formeme},
+	);
+}
+
+sub nonroot_nnode_labels {
+    return ('','','');
+}
+sub nonroot_pnode_labels {
+    return ('','','');
+}
+# --- node styling: color, size, shape... of nodes and edges
+
+sub bundle_root_style {
+    return "#{nodeXSkip:15} #{nodeYSkip:2} #{lineSpacing:0.7} #{BaseXPos:0} #{BaseYPos:10} #{BalanceTree:1} #{skipHiddenLevels:0}";
+}
+
+sub common_node_style {
+    return '';
+}
+
+sub node_style { # silly code just to avoid the need for eval
+    my $layer = pop @_;
+    if ($layer eq 't') {return tnode_style(@_)}
+    elsif ($layer eq 'a') {return anode_style(@_)}
+    elsif ($layer eq 'n') {return nnode_style(@_)}
+    elsif ($layer eq 'p') {return pnode_style(@_)}
+    else {log_fatal "Undefined or unknown layer: $layer"}
+}
+
+sub anode_style {
+    my ($self, $node) = @_;
+    return "#{Oval-fill:green}";
+}
+
+sub tnode_style {
+    my ($self, $node) = @_;
+    print "PPPPPPPP\n";
+    return "#{Oval-fill:blue}";
+}
+
+sub nnode_labels {
+    return '';
+}
+
+sub pnode_labels {
+    return '';
+}
+
 
 
 # ---- END OF PRECOMPUTING VISUALIZATION ------

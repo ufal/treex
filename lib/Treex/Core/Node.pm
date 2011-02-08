@@ -111,6 +111,17 @@ sub get_pml_type_name {
     return;
 }
 
+sub get_layer {
+    my ($self) = @_;
+    if (ref($self) =~ /Node::(\w)$/) {
+	return lc($1);
+    }
+    else {
+	log_fatal "Cannot recognize node's layer: $self";
+    }
+}
+
+
 sub create_child {
     my $self     = shift;
     my $new_node = ( ref $self )->new(@_);

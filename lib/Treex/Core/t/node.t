@@ -26,6 +26,8 @@ isa_ok($node, 'Treex::Core::Node');
 isa_ok($node->get_bundle(), 'Treex::Core::Bundle');
 isa_ok($node->get_document(), 'Treex::Core::Document');
 
+cmp_ok($node->get_layer,'eq','a','get_layer returns node type');
+
 #Attributes
 my $name = 'Name';
 my $value = 'VALUE';
