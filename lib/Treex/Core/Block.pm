@@ -27,13 +27,13 @@ sub process_document {
 sub process_bundle {
     my ($self, $bundle) = @_;
     log_fatal "Parameter language was not set and block ". ref($self)
-        . " doesn't override the method process_bundle";
+        . " doesn't override the method process_bundle" if !$self->language;
     my $zone = $bundle->get_zone($self->language, $self->selector);
     log_fatal("Zone (lang=".$self->language.", selector=". $self->selector
         . ") was not found in a bundle and block ". ref($self)
         . " doesn't override the method process_bundle")
         if !$zone;
-    return process_zone($zone);
+    return $self->process_zone($zone);
 }
 
 sub process_zone {
@@ -57,6 +57,41 @@ sub process_anode {
         . " in the abstract class Treex::Core::Block !";   
 }
 
+sub process_ttree {
+    my ($self, $tree) = @_;
+    foreach my $node ($tree->get_descendants()){
+        $self->process_tnode($node);
+    }
+}
+
+sub process_tnode {
+    log_fatal "process_tnode() is not (and could not be) implemented"
+        . " in the abstract class Treex::Core::Block !";   
+}
+
+sub process_ntree {
+    my ($self, $tree) = @_;
+    foreach my $node ($tree->get_descendants()){
+        $self->process_nnode($node);
+    }
+}
+
+sub process_nnode {
+    log_fatal "process_nnode() is not (and could not be) implemented"
+        . " in the abstract class Treex::Core::Block !";   
+}
+
+sub process_ptree {
+    my ($self, $tree) = @_;
+    foreach my $node ($tree->get_descendants()){
+        $self->process_pnode($node);
+    }
+}
+
+sub process_pnode {
+    log_fatal "process_pnode() is not (and could not be) implemented"
+        . " in the abstract class Treex::Core::Block !";   
+}
 
 sub get_block_name {
     my ($self) = @_;
@@ -210,8 +245,8 @@ but not for installed tools or libraries.
  sub get_required_share_files {
      my $self = shift;
      return (
-         'data/models/mytool/'.$self->get_parameter('LANGUAGE').'/features.gz',
-         'data/models/mytool/'.$self->get_parameter('LANGUAGE').'/weights.tsv',
+         'data/models/mytool/'.$self->language.'/features.gz',
+         'data/models/mytool/'.$self->language.'/weights.tsv',
      );
  }
 
@@ -228,9 +263,10 @@ L<TectoMT::Scenario|TectoMT::Scenario>,
 =head1 AUTHOR
 
 Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT
 
-Copyright 2006 Zdenek Zabokrtsky
+Copyright 2006-2011 Zdenek Zabokrtsky, Martin Popel
 This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
 

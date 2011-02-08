@@ -48,7 +48,7 @@ sub create_n_tree {
 #}
 
 sub create_tree {
-    my ($self,$layer) = @_;
+    my ($self, $layer) = @_;
 
     my $class = "Treex::Core::Node::".uc($layer);
     my $tree_root = eval "$class->new()" or log_fatal $!; #layer subclasses not available yet
@@ -122,7 +122,7 @@ sub get_all_trees {
 }
 
 sub sentence {
-    my $self->shift;
+    my ($self) = @_;
     return $self->get_attr('sentence');
 }
 

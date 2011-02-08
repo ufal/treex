@@ -1,19 +1,10 @@
 package Treex::Block::W2A::Tokenize;
-
-our $VERSION = '0.1';
-
+use utf8;
 use Moose;
-use MooseX::FollowPBP;
-
+use Treex::Moose;;
 extends 'Treex::Core::Block';
 
-has 'language' => (isa => 'Str', is => 'ro', required => 1);
-
-use Report;
-use utf8;
-
 sub tokenize_sentence {
-
     my ($self, $sentence) = @_;
 
     # first off, add a space to the beginning and end of each line, to reduce necessary number of regexps.
@@ -46,17 +37,16 @@ sub tokenize_sentence {
     return $sentence;
 }
 
-sub process_bundle {
-
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
     # create a-tree
-    my $a_root = $bundle->create_tree('S'.$self->{language}.'A');
+    my $a_root = $zone->create_tree('A');
 
     # get the source sentence and tokenize
-    my $sentence = $bundle->get_attr('S'.$self->{language}.' sentence');
+    my $sentence = $zone->sentence;
     $sentence =~ s/^\s+//;
-    Report::fatal("No sentence to tokenize!") if !defined $sentence;
+    log_fatal("No sentence to tokenize!") if !defined $sentence;
     my @tokens = split ( /\s/, $self->tokenize_sentence($sentence) );
 
     foreach my $i ( ( 0 .. $#tokens ) ) {
@@ -71,8 +61,8 @@ sub process_bundle {
 
         # create new a-node
         my $new_a_node = $a_root->create_child;
-        $new_a_node->set_attr( 'm/form', $token );
-        $new_a_node->set_attr( 'm/no_space_after', $no_space_after );
+        $new_a_node->set_attr( 'form', $token );
+        $new_a_node->set_attr( 'no_space_after', $no_space_after );
         $new_a_node->set_attr( 'ord', $i + 1 );
     }
     return 1;
@@ -93,5 +83,5 @@ Analytical tree is build and attributes C<no_space_after> are filled.
 
 =cut
 
-# Copyright 2010 David Marecek
+# Copyright 2010-2011 David Marecek, Martin Popel
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
