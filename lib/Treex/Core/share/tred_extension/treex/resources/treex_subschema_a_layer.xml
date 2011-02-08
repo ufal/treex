@@ -41,9 +41,6 @@
       <member name="conll_deprel"><cdata format="any"/></member>
 
       <!-- attributes for conversion to t-tree -->
-      <member name="is_aux_to_child" type="bool.type"/>
-      <member name="is_aux_to_parent" type="bool.type"/>
-      <member name="parent_is_aux" type="bool.type"/>
       <member name="edge_to_collapse" type="bool.type"/>
       <member name="is_auxiliary" type="bool.type"/>
 

@@ -60,10 +60,11 @@ sub process_zone {
         $sentence =~ s/^\s+//;
 
         # create new a-node
-        my $new_a_node = $a_root->create_child;
-        $new_a_node->set_attr( 'form', $token );
-        $new_a_node->set_attr( 'no_space_after', $no_space_after );
-        $new_a_node->set_attr( 'ord', $i + 1 );
+        my $new_a_node = $a_root->create_child(
+            form => $token,
+            no_space_after => $no_space_after,
+            ord => $i + 1,
+        );
     }
     return 1;
 }
