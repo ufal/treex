@@ -21,15 +21,14 @@ sub BUILD {
     return;
 }
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
+sub process_atree {
+    my ( $self, $atree ) = @_;
 
-    my $a_root = $zone->get_a_tree();
-    my @forms = map { $_->form } $a_root->get_descendants();
+    my @forms = map { $_->form } $atree->get_descendants();
     my ($tags, $lemmas) = @{ $self->_tagger->analyze(\@forms) };
 
     # fill tags and lemmas
-    foreach my $a_node ( $a_root->get_descendants() ) {
+    foreach my $a_node ( $atree->get_descendants() ) {
         $a_node->set_tag(shift @$tags);
         $a_node->set_lemma(shift @$lemmas);
     }
