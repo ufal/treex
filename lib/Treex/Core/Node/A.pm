@@ -3,10 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 
-#use Treex::Core::Document;
-#use Treex::Core::Bundle;
-#use Treex::Core::Node;
-
 has 'n_node' => ( is => 'ro', writer=>'_set_n_node',);
 
 # Original w-layer and m-layer attributes

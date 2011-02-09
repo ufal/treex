@@ -3,7 +3,6 @@ package Treex::Core::BundleZone;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
-#use Treex::Core::Log;
 
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;
@@ -42,10 +41,10 @@ sub create_n_tree {
 	return $self->create_tree('n');
 }
 
-#sub create_p_tree {
-#	my ($self) = @_;
-#	return $self->create_tree('p');
-#}
+sub create_p_tree {
+	my ($self) = @_;
+	return $self->create_tree('p');
+}
 
 sub create_tree {
     my ($self, $layer) = @_;

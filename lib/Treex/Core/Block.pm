@@ -39,7 +39,7 @@ sub process_bundle {
 sub process_zone {
     my ($self, $zone) = @_;
 
-    log_fatal("process_zone not overriden and all process_?tree return false") if not
+    log_fatal("one of the methods /process_(zone|[atnp](tree|node))/ must be overriden") if not
         ( ( $zone->has_tree('a') && $self->process_atree($zone->get_a_tree) )
         or ( $zone->has_tree('t') && $self->process_ttree($zone->get_t_tree) )
         or ( $zone->has_tree('n') && $self->process_ntree($zone->get_n_tree) )
@@ -48,54 +48,38 @@ sub process_zone {
 
 sub process_atree {
     my ($self, $tree) = @_;
+    return if !$self->meta->has_method('process_anode');
     foreach my $node ($tree->get_descendants()){
         $self->process_anode($node);
     }
     return 1;
 }
 
-sub process_anode {
-    log_fatal "process_anode() is not (and could not be) implemented"
-        . " in the abstract class Treex::Core::Block !";   
-}
-
 sub process_ttree {
     my ($self, $tree) = @_;
+    return if !$self->meta->has_method('process_tnode');    
     foreach my $node ($tree->get_descendants()){
         $self->process_tnode($node);
     }
     return 1;
 }
 
-sub process_tnode {
-    log_fatal "process_tnode() is not (and could not be) implemented"
-        . " in the abstract class Treex::Core::Block !";   
-}
-
 sub process_ntree {
     my ($self, $tree) = @_;
+    return if !$self->meta->has_method('process_nnode');
     foreach my $node ($tree->get_descendants()){
         $self->process_nnode($node);
     }
     return 1;
 }
 
-sub process_nnode {
-    log_fatal "process_nnode() is not (and could not be) implemented"
-        . " in the abstract class Treex::Core::Block !";   
-}
-
 sub process_ptree {
     my ($self, $tree) = @_;
+    return if !$self->meta->has_method('process_pnode');
     foreach my $node ($tree->get_descendants()){
         $self->process_pnode($node);
     }
     return 1;
-}
-
-sub process_pnode {
-    log_fatal "process_pnode() is not (and could not be) implemented"
-        . " in the abstract class Treex::Core::Block !";   
 }
 
 sub get_block_name {

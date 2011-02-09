@@ -3,6 +3,7 @@ use Moose;
 use Moose::Exporter;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
 use Treex::Core::Log;
+use Treex::Core::Config;
 use List::MoreUtils;
 use List::Util;
 use Scalar::Util;
