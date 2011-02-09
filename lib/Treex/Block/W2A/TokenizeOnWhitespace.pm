@@ -12,7 +12,7 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     # create a-tree
-    my $a_root = $zone->create_a_tree();
+    my $a_root = $zone->create_atree();
 
     # get the source sentence and tokenize
     my $sentence = $zone->sentence;
