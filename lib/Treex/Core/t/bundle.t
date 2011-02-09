@@ -20,9 +20,11 @@ isa_ok($bundle->get_document(), 'Treex::Core::Document');
 my @layers = qw(N A T P);
 foreach (@layers) {
 	eval{$bundle->create_tree("SCzech$_")};
-	ok($bundle->has_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
+	my $success = !$@;
+	ok($success, "SCzech$_ tree successfully created");
 	SKIP: {
-		skip "There is no tree SCzech$_", 1 unless $bundle->has_tree("SCzech$_");
+		skip "There is no tree SCzech$_", 2 unless $success;
+		ok($bundle->has_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
 		isa_ok($bundle->get_tree("SCzech$_"),"Treex::Core::Node::$_");
 	}
 }
@@ -49,7 +51,6 @@ ok(!defined $bundle->get_attr('Bttr'), 'Not defined attr');
 
 
 #message board testing
-#Chova se divne, kdyz nejsou zadne zpravy
 
 my $message = 'My message';
 my $message2 = reverse $message;

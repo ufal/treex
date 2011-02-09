@@ -16,6 +16,7 @@ foreach my $layer (qw(A T N)) {
 	cmp_ok($bundle->get_zone('cs','S')->get_tree($layer), '==', $bundle->get_tree("SCzech$layer"),'Tree can be obtained via zone or directly and result is same');
 
 	my $root = $zone->get_tree($layer);
+	my $ordered = defined $root->ordering_attribute();
 	isa_ok($root, 'Treex::Core::Node');
 	isa_ok($root, "Treex::Core::Node::$layer");
 	my $attributes = {
@@ -30,7 +31,9 @@ foreach my $layer (qw(A T N)) {
 	isa_ok($node->get_bundle(), 'Treex::Core::Bundle');
 	isa_ok($node->get_document(), 'Treex::Core::Document');
 	isa_ok($node->get_zone(), 'Treex::Core::BundleZone');
-	cmp_ok(uc($node->get_layer), 'eq', $layer, 'get_layer returns node type');
+	is(uc($node->get_layer), $layer, 'get_layer returns node type');
+
+	$node->shift_after_node($root) if $ordered;
 
 	#Attributes
 	my $name = 'Name';
@@ -67,16 +70,29 @@ foreach my $layer (qw(A T N)) {
 	my $c2 = $root->create_child();
 	my $c3 = $root->create_child();
 	my $c4 = $root->create_child();
+	if ($ordered) {
+		$c1->shift_before_node($root);
+		$c2->shift_after_node($node);
+		$c3->shift_before_node($node);
+		$c4->shift_after_node($root);
+	}
 	foreach ($root->get_children()) {
 		if ($_ != $node) {
-			$_->create_child();
+			my $tmp = $_->create_child();
+			$tmp->shift_after_node($_) if $ordered;
 		}
 	}
 	my $cc1 = $node->create_child();
 	my $cc2 = $node->create_child();
+	if ($ordered) {
+		$cc1->shift_before_node($node);
+		$cc2->shift_after_node($node);
+	}
+
 
 	is (scalar $root->get_children(), 5, '$root now has 5 children');
 	is (scalar $root->get_descendants(), 11, '$root now has 11 descendants');
+	cmp_ok(eval{scalar $root->get_descendants({add_self=>1})}, '==', 12, '12 including itself');
 	is (scalar $node->get_siblings(), 4, '$node has 4 siblings');
 	is (scalar $node->get_children(), 2, '$node has 2 children');
 
@@ -97,14 +113,22 @@ foreach my $layer (qw(A T N)) {
 
 
 	#Node ordering
-	TODO: {
-		todo_skip q(Looks like getting ordering attribute doesn't work), 1 unless Treex::Core::Node->meta->has_method('ordering_attribute');
-		ok($root->ordering_attribute());
+	SKIP: {
+		#skip 'Tree has no ordering',scalar $root->get_descendants({add_self=>1}) unless $ordered;
+		skip 'Tree has no ordering', 22+2+2*scalar $root->get_descendants() unless $ordered;
+		my %ords;
+		foreach($root->get_descendants({
+			ordered=>1,
+			add_self=>1,
+		})) {
+			ok(defined $_->get_ordering_value(),'Node '.$_->get_id().' has ordering value');
+			cmp_ok (++$ords{$_->get_ordering_value()}, '==' ,1 ,q(and it's unique));
+
+		}
+		ok($root->precedes($node),'Preceding predicate works');
+		$root->set_attr($root->ordering_attribute(),$node->get_ordering_value()+1);
+		ok($root->precedes($node),'Preceding predicate still works, so it is immune to direct changes');
 	}
-
-	my $root_order = eval { $root->get_ordering_value()};
-	ok(defined $root_order, 'Tree has ordering');
-
 
 	#Reordering nodes
 	#processing clauses
