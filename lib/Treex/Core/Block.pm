@@ -40,10 +40,10 @@ sub process_zone {
     my ($self, $zone) = @_;
 
     log_fatal("one of the methods /process_(zone|[atnp](tree|node))/ must be overriden") if not
-        ( ( $zone->has_tree('a') && $self->process_atree($zone->get_a_tree) )
-        or ( $zone->has_tree('t') && $self->process_ttree($zone->get_t_tree) )
-        or ( $zone->has_tree('n') && $self->process_ntree($zone->get_n_tree) )
-        or ( $zone->has_tree('p') && $self->process_ptree($zone->get_p_tree) ) ); 
+        ( ( $zone->has_tree('a') && $self->process_atree($zone->get_atree) )
+        or ( $zone->has_tree('t') && $self->process_ttree($zone->get_ttree) )
+        or ( $zone->has_tree('n') && $self->process_ntree($zone->get_ntree) )
+        or ( $zone->has_tree('p') && $self->process_ptree($zone->get_ptree) ) ); 
 }
 
 sub process_atree {

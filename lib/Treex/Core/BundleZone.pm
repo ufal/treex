@@ -26,22 +26,22 @@ sub get_document {
     return $self->get_bundle->get_document;
 }
 
-sub create_a_tree {
+sub create_atree {
 	my ($self) = @_;
 	return $self->create_tree('a');
 }
 
-sub create_t_tree {
+sub create_ttree {
 	my ($self) = @_;
 	return $self->create_tree('t');
 }
 
-sub create_n_tree {
+sub create_ntree {
 	my ($self) = @_;
 	return $self->create_tree('n');
 }
 
-sub create_p_tree {
+sub create_ptree {
 	my ($self) = @_;
 	return $self->create_tree('p');
 }
@@ -86,22 +86,22 @@ sub get_tree {
     return $tree;
 }
 
-sub get_a_tree {
+sub get_atree {
 	my ($self) = @_;
 	return $self->get_tree('a');
 }
 
-sub get_t_tree {
+sub get_ttree {
 	my ($self) = @_;
 	return $self->get_tree('t');
 }
 
-sub get_n_tree {
+sub get_ntree {
 	my ($self) = @_;
 	return $self->get_tree('n');
 }
 
-sub get_p_tree {
+sub get_ptree {
 	my ($self) = @_;
 	return $self->get_tree('p');
 }
