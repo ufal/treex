@@ -38,11 +38,12 @@ sub process_bundle {
 
 sub process_zone {
     my ($self, $zone) = @_;
+
     log_fatal("process_zone not overriden and all process_?tree return false") if not
-        ($self->process_atree($zone->atree)
-        or $self->process_ttree($zone->ttree)
-        or $self->process_ntree($zone->ntree)
-        or $self->process_ptree($zone->ptree)); 
+        ( ( $zone->has_tree('a') && $self->process_atree($zone->get_a_tree) )
+        or ( $zone->has_tree('t') && $self->process_ttree($zone->get_t_tree) )
+        or ( $zone->has_tree('n') && $self->process_ntree($zone->get_n_tree) )
+        or ( $zone->has_tree('p') && $self->process_ptree($zone->get_p_tree) ) ); 
 }
 
 sub process_atree {
@@ -50,6 +51,7 @@ sub process_atree {
     foreach my $node ($tree->get_descendants()){
         $self->process_anode($node);
     }
+    return 1;
 }
 
 sub process_anode {
@@ -62,6 +64,7 @@ sub process_ttree {
     foreach my $node ($tree->get_descendants()){
         $self->process_tnode($node);
     }
+    return 1;
 }
 
 sub process_tnode {
@@ -74,6 +77,7 @@ sub process_ntree {
     foreach my $node ($tree->get_descendants()){
         $self->process_nnode($node);
     }
+    return 1;
 }
 
 sub process_nnode {
@@ -86,6 +90,7 @@ sub process_ptree {
     foreach my $node ($tree->get_descendants()){
         $self->process_pnode($node);
     }
+    return 1;
 }
 
 sub process_pnode {
