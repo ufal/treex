@@ -15,7 +15,7 @@ override 'tokenize_sentence' => sub {
     $sentence = $self->mark_urls($sentence);
     
     # the following characters (double-characters) are separated everywhere
-    $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚)/ $1 /g;
+    $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚|\*|\^)/ $1 /g;
 
     # short hyphen is separated if it is followed or preceeded by non-alphanuneric character and is not a part of --
     $sentence =~ s/([^\-\w])\-([^\-])/$1 - $2/g;
