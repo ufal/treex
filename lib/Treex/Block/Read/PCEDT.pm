@@ -1,7 +1,7 @@
 package Treex::Block::Read::PEDT;
 use Moose;
 use Treex::Moose;
-extends 'Treex::Block::Read::BaseTextReader';
+extends 'Treex::Block::Read::BaseReader';
 with 'Treex::Core::DocumentReader';
 
 use Treex::PML::Factory;
@@ -12,7 +12,7 @@ my @languages = qw(cs en);
 sub next_document {
     my ($self) = @_;
 
-    my $base_filename = $self->next_filename;
+    my $base_filename = $self->next_filename or return;
     $base_filename =~ /(en|cs)\.[atp]\.gz/;
 
     my $document = Treex::Core::Document->new();
