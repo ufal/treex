@@ -33,5 +33,5 @@ derived from attributes C<form> and C<tag> using C<EnglishMorpho::Lemmatizer>.
 
 =cut
 
-# Copyright 2011 David Marecek
+# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

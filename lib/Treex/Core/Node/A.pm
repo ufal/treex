@@ -13,6 +13,8 @@ has [qw(ord afun is_member is_parenthesis_root conll_deprel
         edge_to_collapse is_auxiliary clause_number is_clause_head)
     ] => ( is => 'rw' );
 
+sub ordering_attribute {'ord'}
+
 sub get_pml_type_name {
     my ($self) = @_;
     return $self->is_root() ? 'a-root.type' : 'a-node.type';
