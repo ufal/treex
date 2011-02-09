@@ -29,7 +29,7 @@ has file_number => (
 
 sub _build_filenames {
     my $self = shift;
-    confess "Parameter 'from' must be defined!" if !defined $self->from;
+    log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
     $self->set_filenames([split /[ ,]+/, $self->from]);
 }
 

@@ -72,14 +72,6 @@ sub BUILD {
                 if $self->document_reader();
             $self->set_document_reader($new_block);
         } else {
-            $new_block->_set_scenario($self);
-            #foreach my $param_name ($new_block->meta->get_attribute_list){
-            #    if (!$block_item->{block_parameters}{$param_name} jejda block_params jsou pole
-            #        && $self->get_global_param($param_name)){
-            #            eval '$new_block->set_'.$param_name.
-            #                '($self->get_global_param($param_name));';
-            #        }
-            #}
             push @{ $self->loaded_blocks }, $new_block;
         }
     }
@@ -210,16 +202,6 @@ sub _load_block {
         $params{$name} = $value;
     }
 
-    # constructing the block instance (possibly parametrized)
-    #my $constructor_parameters = join ",",
-    #    map {
-    #    my ( $name, $value ) = split /=/;
-    #    "q($name)=>q($value)"
-    #    } @{ $block_item->{block_parameters} };
-
-
-    #my $string_to_eval = '$new_block = ' . $block_name . "->new({$constructor_parameters});";
-    #print Dumper(\%params);
     my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);';
     eval $string_to_eval;
     if ($@) {
