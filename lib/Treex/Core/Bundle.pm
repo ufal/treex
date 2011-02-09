@@ -164,7 +164,7 @@ sub has_tree {
 
         my $zone = $self->get_zone( $language, $selector );
 
-        return defined $zone && defined $zone->get_tree($layer);
+        return defined $zone && $zone->has_tree($layer);
     }
 
 

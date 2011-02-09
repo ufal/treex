@@ -17,20 +17,17 @@ isa_ok($bundle, 'Treex::Core::Bundle');
 isa_ok($bundle->get_document(), 'Treex::Core::Document');
 
 #Tree testing
-my @layers = qw(N A T);
+my @layers = qw(N A T P);
 foreach (@layers) {
-	$bundle->create_tree("SCzech$_");
+	eval{$bundle->create_tree("SCzech$_")};
 	ok($bundle->has_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
-	isa_ok($bundle->get_tree("SCzech$_"),"Treex::Core::Node::$_");
+	SKIP: {
+		skip "There is no tree SCzech$_", 1 unless $bundle->has_tree("SCzech$_");
+		isa_ok($bundle->get_tree("SCzech$_"),"Treex::Core::Node::$_");
+	}
 }
 ok(!$bundle->has_tree('TCzechT'),"Bundle doesn't contains tree, that wasn't added");
 
-TODO: {
-	todo_skip 'Not defined P tree', 1;
-	$bundle->create_tree("SCzechP");
-	ok($bundle->has_tree("SCzechP"),"Bundle contains recently added tree SCzechP");
-
-}
 TODO: {
 	todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
 #	foreach ($bundle->get_tree_names()) {
@@ -53,21 +50,30 @@ ok(!defined $bundle->get_attr('Bttr'), 'Not defined attr');
 
 #message board testing
 #Chova se divne, kdyz nejsou zadne zpravy
+
 my $message = 'My message';
-ok(defined $bundle->get_messages(), 'Message board is defined');
-cmp_ok(scalar $bundle->get_messages(), '==', 0, 'Initially there is empty message board');
-foreach ($bundle->get_messages()) {
-	note("Message: $_");
-}
-$bundle->leave_message($message);
-is_deeply($bundle->get_messages(),($message),'There is 1 new message');
-$bundle->set_attr('message_board', 'Error');
+my $message2 = reverse $message;
+my (@list, @res);
+
+@res = $bundle->get_messages();
+is_deeply(\@res, \@list, 'Returns array with no messages');
+
+$bundle->leave_message($message); 
+push (@list, $message);
+@res = $bundle->get_messages();
+is_deeply(\@res, \@list, 'Returns array w/ 1 message');
+
+$bundle->leave_message($message2); 
+push (@list, $message2);
+@res = $bundle->get_messages();
+is_deeply(\@res, \@list, 'Returns array w/ 2 messages');
+
+$bundle->set_attr('message_board', 'Evil error making string');
 ok(eval{$bundle->get_messages()},q(Setting 'message_board' attribute won't break message board));
 
+fail('Need some method for deleting messages');
 
-
-#TODO
-
-note('TODO generic attr testing');
+#generic tree access
+is_deeply($bundle->get_tree('ScsT'),$bundle->get_tree('SCzechT'),'Generic & named trees are the same');
 
 done_testing();
