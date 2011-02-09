@@ -1,24 +1,9 @@
 #!/usr/bin/env perl
-#===============================================================================
-#
-#         FILE:  bundle.t
-#
-#  DESCRIPTION:  
-#
-#        FILES:  ---
-#         BUGS:  ---
-#        NOTES:  ---
-#       AUTHOR:  Tomas Kraut (), tomas.kraut@matfyz.cz
-#      COMPANY:  
-#      VERSION:  1.0
-#      CREATED:  02/01/11 12:55:11
-#     REVISION:  ---
-#===============================================================================
 
 use strict;
 use warnings;
 
-use Test::More;# tests => 1;                      # last test to print
+use Test::More;
 
 BEGIN { use_ok('Treex::Core::Bundle') }
 use Treex::Core::Document;
@@ -32,10 +17,11 @@ isa_ok($bundle, 'Treex::Core::Bundle');
 isa_ok($bundle->get_document(), 'Treex::Core::Document');
 
 #Tree testing
-my @layers = qw(M A T);
+my @layers = qw(N A T);
 foreach (@layers) {
 	$bundle->create_tree("SCzech$_");
 	ok($bundle->has_tree("SCzech$_"),"Bundle contains recently added tree SCzech$_");
+	isa_ok($bundle->get_tree("SCzech$_"),"Treex::Core::Node::$_");
 }
 ok(!$bundle->has_tree('TCzechT'),"Bundle doesn't contains tree, that wasn't added");
 
@@ -64,10 +50,24 @@ $bundle->set_attr('Attr','Value');
 cmp_ok($bundle->get_attr('Attr'),'eq','Value', 'Attr test');
 ok(!defined $bundle->get_attr('Bttr'), 'Not defined attr');
 
+
+#message board testing
+#Chova se divne, kdyz nejsou zadne zpravy
+my $message = 'My message';
+ok(defined $bundle->get_messages(), 'Message board is defined');
+cmp_ok(scalar $bundle->get_messages(), '==', 0, 'Initially there is empty message board');
+foreach ($bundle->get_messages()) {
+	note("Message: $_");
+}
+$bundle->leave_message($message);
+is_deeply($bundle->get_messages(),($message),'There is 1 new message');
+$bundle->set_attr('message_board', 'Error');
+ok(eval{$bundle->get_messages()},q(Setting 'message_board' attribute won't break message board));
+
+
+
 #TODO
 
 note('TODO generic attr testing');
-note('TODO message board testing');
-
 
 done_testing();
