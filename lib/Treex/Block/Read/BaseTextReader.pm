@@ -2,15 +2,24 @@ package Treex::Block::Read::BaseTextReader;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseReader';
+use File::Slurp;
 
 # By default read from STDIN
-has '+from' => (default => '-');
+has '+from' => ( default => '-' );
 
 has language => ( isa => 'LangCode', is => 'ro', required => 1 );
-has lines_per_document => ( isa => 'Int', is => 'ro', default => 50 );
-has merge_files => ( isa => 'Bool', is => 'ro', default => 0 );
+has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );
+has merge_files   => ( isa => 'Bool', is => 'ro', default => 0 );
 
-has _current_fh => (is=> 'rw');
+has _current_fh => ( is => 'rw' );
+
+sub BUILD {
+    my ($self) = @_;
+    if ( $self->lines_per_doc ) {
+        $self->set_is_one_doc_per_file(0);
+    }
+    return;
+}
 
 sub next_filehandle {
     my ($self) = @_;
@@ -23,17 +32,22 @@ sub next_filehandle {
 sub next_document_text {
     my ($self) = @_;
     my $FH = $self->_current_fh;
-    if (!$FH) {
+    if ( !$FH ) {
         $FH = $self->next_filehandle() or return;
         $self->_set_current_fh($FH);
     }
-    
+
+    if ( $self->is_one_doc_per_file ) {
+        $self->_set_current_fh(undef);
+        return read_file($FH);
+    }
+
     my $text = '';
     LINE:
-    for my $line ( 1 .. $self->lines_per_document ) {
-        while (eof($FH)){
+    for my $line ( 1 .. $self->lines_per_doc ) {
+        while ( eof($FH) ) {
             $FH = $self->next_filehandle();
-            if (!$FH){
+            if ( !$FH ) {
                 return if $text eq '';
                 return $text;
             }
@@ -42,7 +56,7 @@ sub next_document_text {
         }
         $text .= <$FH>;
     }
-    return $text;    
+    return $text;
 }
 
 1;

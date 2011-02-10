@@ -217,16 +217,19 @@ sub run {
     my ( $self ) = @_;
     my $reader = $self->document_reader or log_fatal('No DocumentReader supplied');
     my $number_of_blocks  = @{ $self->loaded_blocks };
+    my $number_of_documents = $reader->number_of_documents();
     my $document_number = 0;
 
+    
     while (my $document = $reader->next_document()) {
         $document_number++;
-        log_info "Document $document_number loaded";
+        my $doc_name = $document->full_filename;
+        my $doc_from = $document->loaded_from;
+        log_info "Document $document_number/$number_of_documents $doc_name loaded from $doc_from";
         my $block_number = 0;
         foreach my $block ( @{$self->loaded_blocks} ) {
             $block_number++;
             log_info "Applying block $block_number/$number_of_blocks " . ref($block);
-                #TODO . ( defined $filename ? " on '$filename'" : '' );
             $block->process_document($document);
         }
     }

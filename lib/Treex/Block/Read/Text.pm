@@ -9,7 +9,7 @@ sub next_document {
     my $text = $self->next_document_text();
     return if !defined $text;
     
-    my $document = Treex::Core::Document->new();
+    my $document = $self->new_document();
     $document->set_attr( $self->selector . $self->language . ' text', $text );
     return $document;
 }

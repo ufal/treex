@@ -19,7 +19,7 @@ sub next_document {
             if $n != @{$sentences{$lang}};
     }
     
-    my $doc = Treex::Core::Document->new();
+    my $doc = $self->new_document();
     for my $i (0 .. $n-1){
         my $bundle = $doc->create_bundle();
         for my $lang (keys %sentences) {

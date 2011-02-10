@@ -34,7 +34,7 @@ $Carp::MaxEvalLen = 100;
 my $unfinished_line;
 
 # By default report only messages with INFO or higher level
-my $current_error_level_value = $ERROR_LEVEL_VALUE{'DEBUG'};
+my $current_error_level_value = $ERROR_LEVEL_VALUE{'INFO'};
 
 # allows to surpress messages with lower than given importance
 sub set_error_level($) {

@@ -2,6 +2,7 @@ package Treex::Core::DocumentReader;
 use Moose::Role;
 
 requires 'next_document';
+requires 'number_of_documents';
 
 1;
 

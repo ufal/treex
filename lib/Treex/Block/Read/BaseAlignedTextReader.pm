@@ -3,10 +3,16 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseAlignedReader';
 
-has lines_per_document => ( isa => 'Int', is => 'ro', default => 0 );
+has lines_per_doc => ( isa => 'Int', is => 'ro', default => 0 );
 has merge_files => ( isa => 'Bool', is => 'ro', default => 0 );
 
-has _current_fhs => (is=> 'rw');
+sub BUILD {
+    my ($self) = @_;
+    if ( $self->lines_per_doc ) {
+        $self->set_is_one_doc_per_file(0);
+    }
+    return;
+}
 
 sub next_filehandles {
     my ($self) = @_;
@@ -16,27 +22,22 @@ sub next_filehandles {
         if ($filename eq '-') { $FH = *STDIN;}
         else {open $FH, '<:utf8', $filename or die "Can't open $filename: $!";}
         $mapping{$lang} = $FH;
-    }   
+    }
     return \%mapping;
 }
 
 sub next_document_texts {
     my ($self) = @_;
-    my $FHs = $self->_current_fhs;
-    if (!$FHs) {
-        $FHs = $self->next_filehandles() or return;
-        $self->_set_current_fhs($FHs);
-    }
+    my $FHs = $self->next_filehandles() or return;
     
     my %texts;
-    if ($self->lines_per_document){ # TODO: option lines_per_document not implemented
+    if ($self->lines_per_doc){ # TODO: option lines_per_document not implemented
         log_fatal "option lines_per_document not implemented for aligned readers yet";
     }
     
     while (my ($lang, $FH) = each %{$FHs}){
         $texts{$lang} = join '', <$FH>;
     }
-    $self->_set_current_fhs($self->next_filehandles());
     return \%texts;
 }
 

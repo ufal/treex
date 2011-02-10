@@ -9,11 +9,8 @@ sub next_document {
     my $text = $self->next_document_text();
     return if !defined $text;
     
-    my $document = Treex::Core::Document->new();
-    
-    # Perhaps it is not needed to duplicate the source text in bundles.
-    #$document->set_attr( $self->selector . $self->language . ' text', $text );
-    
+    my $document = $self->new_document();
+        
     foreach my $sentence (split /\n/, $text) {
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language, $self->selector);

@@ -7,7 +7,7 @@ with 'Treex::Core::DocumentReader';
 sub next_document {
     my ($self) = @_;
     my $filename = $self->next_filename() or return;
-    return Treex::Core::Document->new({filename=> $filename});
+    return $self->new_document($filename);
 }
 
 1;

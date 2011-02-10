@@ -11,7 +11,8 @@ with 'Treex::Core::TectoMTStyleAccessors';
 use Treex::PML;
 use Scalar::Util qw( weaken );
 
-has path        => (is=>'rw', isa=>'Str', default=> './');
+has loaded_from => (is=>'rw', isa=>'Str', default=>'');
+has path        => (is=>'rw', isa=>'Str');
 has file_stem   => (is=>'rw', isa=>'Str', default=> 'noname');
 has file_number => (is=>'rw', isa=>'Str', builder=> 'build_file_number');
 my $highest_file_number = 1;
@@ -23,7 +24,7 @@ sub build_file_number {
 # Full filename without the extension
 sub full_filename {
     my $self = shift;
-    return $self->path . $self->file_stem . $self->file_number;
+    return ($self->path ? $self->path : '') . $self->file_stem . $self->file_number;
 }
 
 has _pmldoc => (
