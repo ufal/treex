@@ -3,6 +3,7 @@ package Treex::Core::Log;
 use utf8;
 use strict;
 use warnings;
+use English '-no_match_vars';
 
 use Carp;
 
@@ -33,7 +34,7 @@ $Carp::MaxEvalLen = 100;
 my $unfinished_line;
 
 # By default report only messages with INFO or higher level
-my $current_error_level_value = $ERROR_LEVEL_VALUE{'INFO'};
+my $current_error_level_value = $ERROR_LEVEL_VALUE{'DEBUG'};
 
 # allows to surpress messages with lower than given importance
 sub set_error_level($) {
@@ -67,7 +68,10 @@ sub fatal {
         print STDERR "\n";
         $unfinished_line = 0;
     }
-    my $line = "TMT-FATAL:\t$message\n\n". ($!||$@ ? "PERL ERROR MESSAGE: $!\n $@\n" : '') . "PERL STACK:";
+    my $line = "TMT-FATAL:\t$message\n\n";
+    $line .= "PERL ERROR MESSAGE: $OS_ERROR\n" if $OS_ERROR;
+    $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
+    $line .= "PERL STACK:";
     _ntred_message($line);
     confess $line;
 }
