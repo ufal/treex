@@ -5,13 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     foreach my $tnode ( grep { $_->formeme eq "v:fin" } $t_root->get_eff_children ) {
         my $anode = $tnode->get_lex_anode;
@@ -37,6 +32,8 @@ sub process_bundle {
         $perspron->set_attr( 'gram/person', '2' );
 
     }
+
+    return 1;
 }
 
 1;

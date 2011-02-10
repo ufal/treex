@@ -5,13 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     my @semnouns = grep { ( $_->get_attr('gram/sempos') || "" ) =~ /^n/ } $t_root->get_descendants( { ordered => 1 } );
 
@@ -46,7 +41,7 @@ sub process_bundle {
             #	    print "NO";
         }
 
-        #	print "\n";
+        return 1;
 
     }
 }

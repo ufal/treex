@@ -5,13 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_document {
-    my ( $self, $document ) = @_;
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
         TNODE: foreach my $node ( $t_root->get_descendants ) {
             my $old_tlemma = $node->t_lemma;
             my $new_tlemma;
@@ -46,7 +41,7 @@ sub process_document {
                 $node->set_t_lemma($new_tlemma);
             }
         }
-    }
+    return 1;
 }
 
 1;

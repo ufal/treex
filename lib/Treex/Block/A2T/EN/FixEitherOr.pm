@@ -5,12 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttreee {
+    my ( $self, $t_root ) = @_;
 
     foreach my $or (
         grep { $_->t_lemma =~ /^n?or$/ }
@@ -26,7 +22,7 @@ sub process_bundle {
         }
 
         # tlemmas such as 'either_or' are created
-        $or->set_attr( 't_lemma', $either->t_lemma . "_" . $or->t_lemma );
+        $or->set_t_lemma( $either->t_lemma . "_" . $or->t_lemma );
         $or->add_aux_anodes( $either->get_anodes );
         $or->set_functor('DISJ');
         $or->set_nodetype('coap');
@@ -35,7 +31,7 @@ sub process_bundle {
         #        print $or->t_lemma."\t". $or->get_fposition."\n";
     }
 
-    return;
+    return 1;
 }
 
 1;

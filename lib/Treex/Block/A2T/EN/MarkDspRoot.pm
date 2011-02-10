@@ -5,18 +5,15 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
 # vytazeno z BNC: [tag="V.*"] [word=":"] [word="\""]
 # a rucne lehce profiltrovano:
 my $verba_dicendi_regexp =
     'say|add|declare|comment|state|write|reply|ask|follow|read|conclude|continue|note|shout|warn|think|explain|observe|begin|assert|remark|suggest|answer|respond|argue|do|find|tell|include|announce|maintain|bellow|enquire|like|chant|remember|hear|laugh|whisper|recommend|yell|insist|stress|cry|record|proclaim|murmur|give|propose|shrugreport|mutter|entitle|claim|try|proceed|advise|go_on';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
-    my $a_root = $bundle->get_tree('SEnglishA');
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    my $t_root = $zone->get_ttree;
+    my $a_root = $zone->get_atree;
 
     my @quote_anodes = grep { $_->form =~ /^(``|''|\")$/ } $a_root->get_descendants;
 
@@ -53,7 +50,7 @@ sub process_bundle {
             }
         }
     }
-    return;
+    return 1;
 }
 
 1;

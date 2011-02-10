@@ -5,13 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     foreach my $attr (
         grep {
@@ -44,6 +39,7 @@ sub process_bundle {
         }
 
     }
+    return 1;
 }
 
 1;

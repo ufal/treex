@@ -5,20 +5,12 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
 # zatim nejake rozbite, znackuje to i infinitivy
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        $t_node->set_attr( 'is_clause_head', is_clause_head($t_node) );
-    }
-
-    return;
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
+    $t_node->set_is_clause_head( is_clause_head($tnode) );
+    return 1;
 }
 
 sub is_clause_head {

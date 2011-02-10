@@ -5,18 +5,13 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
-use List::MoreUtils qw( any all );
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $node ( $bundle->get_tree('SEnglishT')->get_descendants() ) {
-        my $functor = get_coap_functor($node) or next;
-        $node->set_functor($functor);
+    my $functor = get_coap_functor($tnode) or next;
+        $tnode->set_functor($functor);
     }
-    return;
+    return 1;
 }
 
 sub get_coap_functor {

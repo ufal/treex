@@ -5,16 +5,9 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
 
-
-
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
-
-        foreach my $t_node ( $t_root->get_descendants ) {
             my @aux_a_nodes = $t_node->get_aux_anodes();
             if (grep { $_->form =~ /(\(|-LRB-)/ }
                 @aux_a_nodes
@@ -23,8 +16,7 @@ sub process_document {
             {
                 $t_node->set_attr( 'is_parenthesis', 1 );
             }
-        }
-    }
+    return 1;
 }
 
 1;

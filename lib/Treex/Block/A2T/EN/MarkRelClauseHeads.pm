@@ -5,25 +5,18 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-use List::MoreUtils qw( any all );
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        if ( is_relclause_head($t_node) ) {
-            $t_node->set_attr( 'is_relclause_head', 1 );
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
+        if ( is_relclause_head($tnode) ) {
+            $tnode->set_is_relclause_head( 1 );
         }
-    }
-    return;
+   
+    return 1;
 }
 
 sub is_relclause_head {
     my ($t_node) = @_;
-    return 0 if !$t_node->get_attr('is_clause_head');
+    return 0 if !$t_node->is_clause_head;
 
     # Usually wh-pronouns are children of the verb, but sometimes...
     # "licenses, the validity(parent=expire) of which(tparent=validity) will expire"

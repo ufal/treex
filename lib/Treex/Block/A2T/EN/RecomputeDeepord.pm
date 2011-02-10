@@ -5,20 +5,15 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
+sub process_ttree {
+    my ( $self, $t_aux_root ) = @_;
 
-
-
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_aux_root = $bundle->get_tree('SEnglishT');
         my $ord;
         foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_aux_root->get_descendants ) {
             $ord++;
             $t_node->set_ord($ord);
         }
-    }
+    return 1;
 }
 
 1;

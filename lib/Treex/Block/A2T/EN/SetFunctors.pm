@@ -5,11 +5,6 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-#use warnings; # ???
-
-
 my %tag2functor = (
     "CC"    => "CONJ",    # coordinating conjunction
     "CD"    => "RSTR",    # cardinal number
@@ -100,7 +95,7 @@ foreach (
 }
 
 sub assign_functors($$) {
-    my ( $t_root, $document ) = @_;
+    my ( $t_root ) = @_;
 
     NODE: foreach my $node ( grep { not defined $_->functor } $t_root->get_descendants ) {
 
@@ -179,12 +174,10 @@ sub assign_functors($$) {
     }
 }
 
-sub process_document {
-    my ( $self, $document ) = @_;
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
-        assign_functors( $t_root, $document );
-    }
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
+    assign_functors( $t_root );
+    return 1;
 }
 
 1;

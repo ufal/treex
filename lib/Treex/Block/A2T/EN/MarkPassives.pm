@@ -5,35 +5,26 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
 
-
-
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
-
-        foreach my $t_node ( $t_root->get_descendants ) {
             my $lex_a_node = $t_node->get_lex_anode();
             next if !defined $lex_a_node;    # gracefully handle e.g. generated nodes
             my @aux_a_nodes = $t_node->get_aux_anodes();
 
-            if ($lex_a_node->tag
-                =~ /VB[ND]/
+            if ($lex_a_node->tag =~ /VB[ND]/
                 and (
                     ( grep { $_->lemma eq "be" } @aux_a_nodes )
-                    or not $t_node->get_attr('is_clause_head')    # 'informed citizens' is marked too
+                    or not $t_node->is_clause_head    # 'informed citizens' is marked too
                 )
                 )
             {                                                     # ??? to je otazka, jestli obe
-                $t_node->set_attr( 'is_passive', 1 );
+                $t_node->set_is_passive( 1 );
             }
             else {
-                $t_node->set_attr( 'is_passive', undef );
+                $t_node->set_is_passive( undef );
             }
-        }
-    }
+    return 1;
 }
 
 1;

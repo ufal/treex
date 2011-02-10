@@ -5,9 +5,6 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
 # verbs with object control type, copied from page 286
 # in Pollard & Sag's Head-driven phrase structure grammar
 
@@ -21,10 +18,8 @@ sub _object_control {
 |dare|defy|beg|prevent|forbid|allow|permit|enable|cause|force|consider)$/sxm;
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_atree {
+    my ( $self, $t_root ) = @_;
 
     foreach my $infin_verb (
         grep { ( $_->formeme || "" ) =~ /inf/ }
@@ -73,6 +68,8 @@ sub process_bundle {
         }
 
     }
+
+    return 1;
 }
 
 1;

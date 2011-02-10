@@ -5,15 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-use Readonly;
-use List::MoreUtils qw( any all );
-use List::Util qw( first);
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    foreach my $node ( $bundle->get_tree('SEnglishA')->get_descendants() ) {
+sub process_anode {
+    my ( $self, $node ) = @_;
         my $parent = $node->get_parent();
 
         # No node (except AuxK = terminal punctuation: ".?!")
@@ -36,8 +29,8 @@ sub process_bundle {
             $node->set_edge_to_collapse(1) );
             $parent->set_is_auxiliary(1) );
         }
-    }
-    return;
+    
+    return 1;
 }
 
 sub is_aux_to_parent {

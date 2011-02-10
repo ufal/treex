@@ -5,14 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root = $bundle->get_tree('SEnglishA');
-
-    foreach my $a_node ( $a_root->get_descendants() ) {
+sub process_anode {
+    my ( $self, $a_node ) = @_;
 
         # Skip nodes that are already marked to be collapsed to parent.
         # Without this check we could rarely create a t-node with no lex a-node.
@@ -25,8 +19,7 @@ sub process_bundle {
             $a_node->set_is_auxiliary(1) );
             $a_node->set_edge_to_collapse(1) );
         }
-    }
-    return;
+    return 1;
 }
 
 1;

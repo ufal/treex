@@ -5,17 +5,14 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my @all_nodes = $bundle->get_tree('SEnglishT')->get_descendants();
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
+    my @all_nodes = $t_root->get_descendants();
 
     # (1) every member must be in coap
     foreach my $node ( grep { $_->is_coap_member() } @all_nodes ) {
         if ( !$node->get_parent()->is_coap_root() ) {
-            $node->set_attr( 'is_member', undef );
+            $node->set_is_member( undef );
         }
     }
 
@@ -35,7 +32,7 @@ sub process_bundle {
         }
     }
 
-    return;
+    return 1;
 }
 
 1;

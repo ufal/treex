@@ -5,14 +5,11 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
+    
     TNODE:
-    foreach my $t_node ( $bundle->get_tree('SEnglishT')->get_descendants() ) {
+    foreach my $t_node ( $t_root->get_descendants() ) {
         my $a_node = $t_node->get_lex_anode();
 
         # Process coreferring words with tags:
@@ -30,7 +27,7 @@ sub process_bundle {
             $t_node->set_deref_attr( 'coref_gram.rf', [$t_antec] );
         }
     }
-    return;
+    return 1;
 }
 
 1;

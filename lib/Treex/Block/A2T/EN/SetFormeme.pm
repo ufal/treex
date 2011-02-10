@@ -5,17 +5,13 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
 use Readonly;
-use Report;
-use List::MoreUtils qw( any all );
-
 
 Readonly my $DEBUG => 0;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root           = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
+
     my @root_descendants = $t_root->get_descendants();
 
     # 1. Fill formemes (but use just n:obj instead of n:obj1 and n:obj2)
@@ -29,7 +25,7 @@ sub process_bundle {
         next if $t_node->formeme !~ /^v:/;
         distinguish_objects($t_node);
     }
-    return;
+    return 1;
 }
 
 Readonly my %SUB_FOR_SEMPOS => (
