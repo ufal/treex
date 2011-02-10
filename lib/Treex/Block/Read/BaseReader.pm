@@ -19,6 +19,12 @@ has from => (
     documentation => 'space or comma separated list of filenames to be loaded',
 );
 
+has file_stem => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'how to name the loaded documents',
+);
+
 has file_number => (
     isa           => 'Int',
     is            => 'ro',
@@ -65,7 +71,11 @@ sub new_document {
         $args{path} = $volume . $dirs;
     }
 
-    if ( $self->is_one_doc_per_file ) {
+    if ( $self->file_stem ) {
+        $args{file_stem} = $self->file_stem;
+    }
+
+    if ( $self->is_one_doc_per_file && !$self->file_stem ) {
         $args{file_number} = '';
     }
     else {
