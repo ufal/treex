@@ -8,13 +8,13 @@ use File::ShareDir;
 
 
 sub devel_version {
-    return (-d ".svn");
+    return $ENV{TMT_ROOT};
     # to je otazka, jak to co nejelegantneji poznat, ze jde o work.copy. a ne nainstalovanou distribuci
 }
 
 
 sub share_dir {
-    return $ENV{TMT_ROOT}."treex/lib/Treex/Core/share/"; # temporary
+    return $ENV{TMT_ROOT}."/share/"; # temporary
     # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
 }
 
@@ -24,14 +24,14 @@ sub tred_dir {
 
 
 sub pml_schema_dir {
-    return share_dir() . 'tred_extension/treex/resources/';
-#    if (devel_version()) {
-#        return lib_core_dir()."/share/tred_extension/treex/resources/";
-#    }
-#    else {
-#        return File::ShareDir::dist_dir('Treex-Core')
-#            ."/tred_extension/treex/resources/";
-#    }
+
+    if (devel_version()) {
+        return lib_core_dir()."/share/tred_extension/treex/resources/";
+    }
+    else {
+        return File::ShareDir::dist_dir('Treex-Core')
+            ."/tred_extension/treex/resources/";
+    }
 }
 
 sub tred_extension_dir {
