@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 
-sub ordering_attribute {'deepord'}
+sub ordering_attribute {'ord'}
 
 sub get_pml_type_name {
     my ($self) = @_;

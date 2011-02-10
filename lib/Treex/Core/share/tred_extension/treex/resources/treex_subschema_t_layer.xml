@@ -23,10 +23,7 @@
       <member name="nodetype">
         <constant>root</constant>
       </member>
-      <member name="cze_sentence">
-	    <cdata format="any"/>
-      </member>
-      <member name="deepord" required="0"> <!-- zakomentovane role="#ORDER" -->
+      <member name="ord" required="0"> <!-- zakomentovane role="#ORDER" -->
         <cdata format="nonNegativeInteger"/>
       </member>
       <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations
@@ -114,7 +111,7 @@
       <member name="is_optimizable" type="bool.type"/>
       <member name="is_clause_head" type="bool.type"/>
       <member name="is_relclause_head" type="bool.type"/>
-      <member name="deepord"  > <!-- zakomentovana  role="#ORDER" -->
+      <member name="ord"  > <!-- zakomentovana  role="#ORDER" -->
         <cdata format="nonNegativeInteger"/>
       </member>
       <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations

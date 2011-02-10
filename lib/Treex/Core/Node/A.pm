@@ -368,6 +368,11 @@ sub reset_morphcat {
     }
 }
 
+sub get_sentence_string {
+    my ($self) = @_;
+    return join '', map {$_->form . ($_->no_space_after ? '' : ' ')}  $self->get_descendants({ordered=>1});
+}
+
 
 
 1;

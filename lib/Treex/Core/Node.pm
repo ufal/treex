@@ -17,6 +17,7 @@ has _zone => (
     is => 'rw',
     writer => '_set_zone',
     reader => '_get_zone',
+    weak_ref => 1,
 );
 
 has id => (

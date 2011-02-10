@@ -16,11 +16,9 @@ sub get_nodelist_hook {
 
     return unless $self->pml_doc(); # get_nodelist_hook is invoked also before file_opened_hook
 
-    print "XXX get_nodelist_hook\n";
-
     my $bundle = $fsfile->tree($treeNo);
 
-    my @nodes = map { $_->get_descendants({add_self=>1})}
+    my @nodes = map { $_->get_descendants({add_self=>1, ordered=>1})}
         map { $_->get_all_trees }
             $bundle->get_all_zones;
 
@@ -36,12 +34,9 @@ sub file_opened_hook {
     my ($self) = @_;
     my $pmldoc = $self->grp()->{FSFile};
 
-    print "QQQ file_opened_hook\n";
-
     $self->pml_doc($pmldoc);
     my $treex_doc =  Treex::Core::Document->new({pmldoc => $pmldoc});
     $self->treex_doc($treex_doc);
-    print "Treex doc: $treex_doc\n";
     $self->precompute_visualization();
 }
 
@@ -117,20 +112,20 @@ sub nonroot_node_labels { # silly code just to avoid the need for eval
 
 sub nonroot_anode_labels {
     my ($self, $node) = @_;
-    return (
+    return [
 	$node->{form},
 	$node->{lemma},
 	$node->{tag},
-	);
+	];
 }
 
 sub nonroot_tnode_labels {
     my ($self, $node) = @_;
-    return (
+    return [
 	$node->{t_lemma},
 	$node->{functor},
 	$node->{formeme},
-	);
+	];
 }
 
 sub nonroot_nnode_labels {
@@ -165,7 +160,6 @@ sub anode_style {
 
 sub tnode_style {
     my ($self, $node) = @_;
-    print "PPPPPPPP\n";
     return "#{Oval-fill:blue}";
 }
 

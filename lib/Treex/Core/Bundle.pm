@@ -9,6 +9,7 @@ extends 'Treex::PML::Node';
 has document => (is => 'ro',
                  writer => '_set_document',
                  reader => 'get_document',
+                 weak_ref => 1,
              );
 
 has id => (is => 'rw' );
