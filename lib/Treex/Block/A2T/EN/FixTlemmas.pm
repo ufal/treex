@@ -11,7 +11,7 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
         TNODE: foreach my $node ( $t_root->get_descendants ) {
-            my $old_tlemma = $node->get_attr('t_lemma');
+            my $old_tlemma = $node->t_lemma;
             my $new_tlemma;
             my $lex_a_node = $node->get_lex_anode;
             next TNODE if !defined $lex_a_node;
@@ -21,19 +21,19 @@ sub process_document {
             if ( $old_tlemma =~ /^(not|n\'t)$/ ) {
                 $new_tlemma = "#Neg";
             }
-            elsif ( $lex_a_node->get_attr('m/tag') =~ /^PRP/ ) {
+            elsif ( $lex_a_node->tag =~ /^PRP/ ) {
                 $new_tlemma = "#PersPron";
             }
             elsif (
                 $node->get_attr('a/aux.rf') and    # e.g. "sell out" -> t_lemma sell_out
-                @particles = grep { $_->get_attr('m/tag') eq "RP" } @aux_a_nodes
+                @particles = grep { $_->tag eq "RP" } @aux_a_nodes
                   )
             {
-                $new_tlemma = $old_tlemma . "_" . ( join "_", map { $_->get_attr('m/lemma') } @particles );
+                $new_tlemma = $old_tlemma . "_" . ( join "_", map { $_->lemma } @particles );
             }
             else {
-                my $full_expression = join "_", map { $_->get_attr('m/lemma') }
-                    sort { $a->get_attr('ord') <=> $b->get_attr('ord') } grep { $_->get_attr('m/tag') !~ /^(,|-|;)/ } ( $lex_a_node, @aux_a_nodes );
+                my $full_expression = join "_", map { $_->lemma }
+                    sort { $a->get_attr('ord') <=> $b->get_attr('ord') } grep { $_->tag !~ /^(,|-|;)/ } ( $lex_a_node, @aux_a_nodes );
 
                 if ( $full_expression =~ /^(as_well_as|as_well)$/ ) {
                     $new_tlemma = $1;
@@ -41,7 +41,7 @@ sub process_document {
             }
 
             if ($new_tlemma) {
-                $node->set_attr( 't_lemma', $new_tlemma );
+                $node->set_t_lemma($new_tlemma);
             }
         }
     }

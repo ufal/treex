@@ -22,7 +22,7 @@ sub process_document {
 
             my $lex_node = $t_node->get_lex_anode or next TNODE;
 
-            my $lex_tag = $lex_node->get_attr('m/tag');
+            my $lex_tag = $lex_node->tag;
             my $sempos;
 
             if ( $lex_tag =~ /^NN/ ) {

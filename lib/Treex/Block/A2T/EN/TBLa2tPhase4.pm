@@ -39,7 +39,7 @@ sub feature_string
     }
 
     # initial values of classes
-    my $lemma = defined $t_node->get_attr('t_lemma') ? $t_node->get_attr('t_lemma') : adjust_lemma($a_node);
+    my $lemma = defined $t_node->t_lemma ? $t_node->t_lemma : adjust_lemma($a_node);
     $outstr .= sprintf "%s %s ",
         aid($t_node) ? "---"  : $lemma,
         aid($t_node) ? $lemma : "---";

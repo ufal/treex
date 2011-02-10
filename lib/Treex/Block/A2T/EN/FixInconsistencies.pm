@@ -107,11 +107,11 @@ sub fix
 	my ($sent_root) = @_;
 
 	for my $root ($sent_root->get_descendants) {		
-		my $lin = join " ", map { $_->get_attr('m/lemma') } uniq sort { $a->get_ordering_value <=> $b->get_ordering_value } ($root->get_lex_anode, map { $_->get_anodes } $root->get_descendants);
+		my $lin = join " ", map { $_->lemma } uniq sort { $a->get_ordering_value <=> $b->get_ordering_value } ($root->get_lex_anode, map { $_->get_anodes } $root->get_descendants);
 		if (exists $lin_lemma2func{ $lin }) {
 			print "--- \"$lin\" (", $root->get_attr('id'), ")\n";
 			for my $node ($root->get_descendants({add_self=>1})) {
-				my $lemma = $node->get_lex_anode? $node->get_lex_anode->get_attr('m/lemma') : '___';
+				my $lemma = $node->get_lex_anode? $node->get_lex_anode->lemma : '___';
 				my $corr_func = $lin_lemma2func{ $lin }{ $lemma };
 				if ($corr_func && $node->get_attr('functor') ne $corr_func) {
 					print "  # $lemma: ", $node->get_attr('functor'), " -> $corr_func\n";

@@ -31,7 +31,7 @@ sub is_relclause_head {
 sub is_wh_pronoun {
     my ($t_node) = @_;
     my $a_node = $t_node->get_lex_anode() or return 0;
-    return $a_node->get_attr('m/tag') =~ /W/;
+    return $a_node->tag =~ /W/;
 }
 
 1;

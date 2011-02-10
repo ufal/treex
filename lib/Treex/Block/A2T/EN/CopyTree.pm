@@ -87,7 +87,7 @@ sub process_document {
 
         next if !defined $a_root; # gracefully handle bad sentences
 
-        #    print "\n\nYY: a_root form".$a_root->get_attr('m/form')."\n";
+        #    print "\n\nYY: a_root form".$a_root->form."\n";
 
         my $t_root = $bundle->create_tree( 'SEnglishT' );
 
@@ -119,9 +119,9 @@ sub process_document {
             }
 
             # specialni fix kvuli 'have to'
-            if ( $t_node->get_lex_anode->get_attr('m/lemma') eq "to" ) {
+            if ( $t_node->get_lex_anode->lemma eq "to" ) {
                 my ($last_verb_anode) = sort { $b->get_attr('ord') <=> $a->get_attr('ord') }
-                    grep { $_->get_attr('m/tag') =~ /^V/ } $t_node->get_aux_anodes;
+                    grep { $_->tag =~ /^V/ } $t_node->get_aux_anodes;
                 if ($last_verb_anode) {
                     $t_node->set_attr(
                         'a/aux.rf',
@@ -135,10 +135,10 @@ sub process_document {
 
             my $a_lex_node = $t_node->get_lex_anode();
 
-            my $mlemma = $a_lex_node->get_attr('m/lemma');
+            my $mlemma = $a_lex_node->lemma;
 
             #      $mlemma =~ s /[\-\_\`](.+)$//;
-            $t_node->set_attr( 't_lemma', $mlemma );
+            $t_node->set_t_lemma($mlemma);
 
             my $id = $a_lex_node->get_attr('id');
             $id =~ s/EnglishA/EnglishT/;

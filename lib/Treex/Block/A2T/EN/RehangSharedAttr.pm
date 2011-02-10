@@ -12,14 +12,14 @@ sub process_bundle {
 
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    foreach my $attr (grep {$_->get_attr('formeme') =~ /attr|poss/
-                                and not $_->get_attr('is_member')
-                                    and $_->get_attr('t_lemma') ne 'both'
+    foreach my $attr (grep {$_->formeme =~ /attr|poss/
+                                and not $_->is_member
+                                    and $_->t_lemma ne 'both'
                             }
                           reverse map {$_->get_descendants({ordered=>1})}
                               reverse $t_root->get_children({ordered=>1})) {
 
-        my @coord_members = grep {$_->get_attr('is_member') and $_ ne $attr->get_parent}
+        my @coord_members = grep {$_->is_member and $_ ne $attr->get_parent}
                                  $attr->get_eff_parents;
 
         my ($nearest_member) = sort {$a->get_ordering_value<=>$b->get_ordering_value}

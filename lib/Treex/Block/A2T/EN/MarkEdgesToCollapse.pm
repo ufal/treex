@@ -18,7 +18,7 @@ sub process_bundle {
         # No node (except AuxK = terminal punctuation: ".?!")
         # can collapse to a technical root.
         if ( $parent->is_root() ) {
-            if ( $node->get_attr('afun') eq 'AuxK' ) {
+            if ( $node->afun eq 'AuxK' ) {
                 $node->set_attr( 'edge_to_collapse', 1 );
                 $node->set_attr( 'is_auxiliary',     1 );
             }
@@ -41,7 +41,7 @@ sub process_bundle {
 
 sub is_aux_to_parent {
     my ($node) = @_;
-    my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(m/tag m/lemma afun));
+    my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(tag lemma afun));
 
     # 1a) some afuns indicate that the node is aux to parent
     # AuxA = articles "a, an, the" (not an orginal PDT afun)
@@ -74,7 +74,7 @@ sub is_aux_to_parent {
         # I.e. this node has just one child (Aux[CP]) and no grandchildren
         return 0 if @children > 1;
         my $child = $children[0];
-        return 1 if $child->get_attr('afun') =~ /Aux[CP]/ && !$child->get_children();
+        return 1 if $child->afun =~ /Aux[CP]/ && !$child->get_children();
     }
 
     # 1d) "More" and "most"
@@ -85,14 +85,14 @@ sub is_aux_to_parent {
     if ( $lemma =~ /^(more|most)$/ ) {
         my ($eparent) = $node->get_eff_parents();
         return 0 if $eparent->is_root();
-        my $ep_tag = $eparent->get_attr('m/tag');
+        my $ep_tag = $eparent->tag;
         return 1 && $ep_tag =~ /^(JJ|RB)/;
     }
 
     # In PDT-style, modal verbs should govern their main verbs,
     # but if something goes wrong ...
-    my $p_tag = $node->get_parent()->get_attr('m/tag');
-    return 1 if $p_tag =~ /^V/ && is_modal($lemma) && !any { $_->get_attr('m/tag') =~ /^V/ } @children;
+    my $p_tag = $node->get_parent()->tag;
+    return 1 if $p_tag =~ /^V/ && is_modal($lemma) && !any { $_->tag =~ /^V/ } @children;
 
     return 0;
 }
@@ -100,17 +100,17 @@ sub is_aux_to_parent {
 sub is_parent_aux_to_me {
     my ($node) = @_;
     my $parent = $node->get_parent();
-    my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(m/tag m/lemma afun));
-    my ( $p_tag, $p_form, $p_lemma, $p_afun ) = $parent->get_attrs(qw(m/tag m/form m/lemma afun));
+    my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(tag lemma afun));
+    my ( $p_tag, $p_form, $p_lemma, $p_afun ) = $parent->get_attrs(qw(tag form lemma afun));
 
     # Coordinations are tricky, we must inspect members instead of $node.
     # "He can sleep(parent=and) and(afun=Coord, parent=can) eat(parent=and)."
     # TODO: Why we get worse results by uncommenting following lines?
     #if ($afun eq 'Coord') {
-    #    my $first_member = first {$_->get_attr('is_member')} $node->get_children();
+    #    my $first_member = first {$_->is_member} $node->get_children();
     #    if ($first_member){
     #        $node = $first_member;
-    #        ($tag, $afun ) = $node->get_attrs(qw(m/tag afun));
+    #        ($tag, $afun ) = $node->get_attrs(qw(tag afun));
     #    }
     #}
 
@@ -121,7 +121,7 @@ sub is_parent_aux_to_me {
         # The grep is needed for multiword preps and conjs: "because of",
         # "As(afun=AuxC) long(afun=AuxC, parent=As) as(afun=AuxC, parent=As)
         #  he sleeps(tag=VBZ, parent=As)"
-        my @siblings = grep { $_->get_attr('afun') !~ /Aux[CP]/ } $node->get_siblings( { ordered => 1 } );
+        my @siblings = grep { $_->afun !~ /Aux[CP]/ } $node->get_siblings( { ordered => 1 } );
 
         # I am the only non-aux child of my parent, that's nice
         return 1 if !@siblings;
@@ -149,7 +149,7 @@ sub is_parent_aux_to_me {
 
         # Let @siblings be all my sibling-rivals now and $rival the first one
         if ( $parent->precedes($node) ) { @siblings = @siblings_after_prep; }
-        my $rival = first { $_->get_attr('m/tag') =~ /^($wanted_regex)/ } @siblings;
+        my $rival = first { $_->tag =~ /^($wanted_regex)/ } @siblings;
 
         # My tag looks good. And what about my rival?
         if ( $tag =~ /^($wanted_regex)/ ) {
@@ -166,9 +166,9 @@ sub is_parent_aux_to_me {
     #return 1 if $tag =~ /^V/ && $parent->precedes($node) && is_modal($p_lemma);
     if ( is_modal($p_lemma) ) {
         return 0 if $node->precedes($parent) || ( $tag !~ /^V/ && $afun ne 'Coord' );
-        my $rival = first { $_->get_attr('m/tag') =~ /^V/ && $parent->precedes($_) } $node->get_siblings( { ordered => 1 } );
+        my $rival = first { $_->tag =~ /^V/ && $parent->precedes($_) } $node->get_siblings( { ordered => 1 } );
         if ( $afun eq 'Coord' ) {
-            $node = first { $_->get_attr('m/tag') =~ /^V/ } $node->get_children( { ordered => 1 } );
+            $node = first { $_->tag =~ /^V/ } $node->get_children( { ordered => 1 } );
             return 0 if !$node;
         }
         return 1 if !$rival;
@@ -181,7 +181,7 @@ sub is_parent_aux_to_me {
     # The node "to" is also auxiliary, but that's job of 2a.
     if (($p_lemma =~ /^(have|ought|want)/ || $p_form eq "going") && $tag eq 'VB'){
         my $first_child = $node->get_children( { first_only => 1 } );
-        return 1 if $first_child && $first_child->get_attr('m/lemma') eq 'to';
+        return 1 if $first_child && $first_child->lemma eq 'to';
     }
 
     # 2d) be able to VB

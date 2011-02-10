@@ -8,9 +8,9 @@ use base qw(TectoMT::Block);
 
 sub aux_to_parent {
     my ($a_node) = shift;
-    my $tag      = $a_node->get_attr('m/tag');
-    my $afun     = $a_node->get_attr('afun');
-    my $lemma    = $a_node->get_attr('m/lemma');
+    my $tag      = $a_node->tag;
+    my $afun     = $a_node->afun;
+    my $lemma    = $a_node->lemma;
     my $document = $a_node->get_document();
     my @nonterminals = ( $a_node->get_attr('p/nonterminals.rf') ) ? ( grep {$_} map { $document->get_node_by_id($_) } @{ $a_node->get_attr('p/nonterminals.rf') } ) : ();
     no warnings qw(uninitialized);
@@ -27,9 +27,9 @@ sub aux_to_parent {
             (
             $tag =~ /^(V|MD)/
             and (
-                $a_node->get_parent->get_attr('m/tag') =~ /^V/
+                $a_node->get_parent->tag =~ /^V/
                 or
-                $a_node->get_parent->get_attr('m/tag') eq "CC" and not $a_node->get_attr('is_member')
+                $a_node->get_parent->tag eq "CC" and not $a_node->is_member
             )    # !!! koordinace zatim nahackovana
             and $a_node->get_attr('ord') < $a_node->get_parent->get_attr('ord')
             and
@@ -37,36 +37,36 @@ sub aux_to_parent {
             and ( not grep { $_->get_attr('ord') < $a_node->get_attr('ord') } $a_node->get_children )    # tohle by melo pomoct, kdyz neni k dispozici SEnglishP
             ) or
 
-            ( $lemma =~ /^(more|most)/ and $a_node->get_parent->get_attr('m/tag') =~ /^JJ|RB/ )          # nahradit efektivnim rodicem!
+            ( $lemma =~ /^(more|most)/ and $a_node->get_parent->tag =~ /^JJ|RB/ )          # nahradit efektivnim rodicem!
             or
             ( grep { $_->get_attr('phrase') eq "PRT" } @nonterminals )                                   # particles (look_up)
-                                                                                                         #	  or ($tag eq "IN" and $a_node->get_parent->get_attr('m/tag') eq "IN")  # kvuli because_of # nyni reseno jinak - pomoci AuxC
-                                                                                                         #	  or ($lemma eq "as" and $a_node->get_parent->get_attr('m/form') eq "well") # kvuli as_well_as
-            or ( $a_node->get_attr('afun') eq 'AuxC' and $a_node->get_parent->get_attr('afun') =~ /AuxC|Coord/ )
-            or ( $a_node->get_attr('conll_deprel') eq 'VMOD' and $tag eq 'IN' and $a_node->get_parent->get_attr('m/tag') =~ /^V/ )    # Since, until apod.
+                                                                                                         #	  or ($tag eq "IN" and $a_node->get_parent->tag eq "IN")  # kvuli because_of # nyni reseno jinak - pomoci AuxC
+                                                                                                         #	  or ($lemma eq "as" and $a_node->get_parent->form eq "well") # kvuli as_well_as
+            or ( $a_node->afun eq 'AuxC' and $a_node->get_parent->afun =~ /AuxC|Coord/ )
+            or ( $a_node->conll_deprel eq 'VMOD' and $tag eq 'IN' and $a_node->get_parent->tag =~ /^V/ )    # Since, until apod.
     );
 }
 
 sub aux_to_child {
     my ($a_node) = shift;
-    my $tag = $a_node->get_attr('m/tag');
+    my $tag = $a_node->tag;
 
     #  my $relative_that; # pro pripad, ze bylo vztazne zajmeno 'that' chybne tagovane jako spojka
-    #  if ($a_node->get_attr('m/form') eq "that") {
+    #  if ($a_node->form eq "that") {
     #    my $document = $a_node->get_document;
     #    my @nonterminals = ($a_node->get_attr('p/nonterminals.rf'))?(grep {$_} map {$document->get_node_by_id($_)} @{$a_node->get_attr('p/nonterminals.rf')}):();
     #    $relative_that = grep {$_->get_attr('phrase') =~ /^WH/} @nonterminals;
     #  }
-    my @to_children = grep { $_->get_attr('m/form') eq "to" } $a_node->get_children;
+    my @to_children = grep { $_->form eq "to" } $a_node->get_children;
     return (
         $tag eq "TO"
             or
             ( $tag eq "IN" ) or
-            ( $a_node->get_attr('m/form') eq "ago" ) or
-            ( ( $a_node->get_attr('afun') || "" ) eq "AuxC" ) or
-            ( lc( $a_node->get_attr('m/form') ) eq "according" and @to_children )
+            ( $a_node->form eq "ago" ) or
+            ( ( $a_node->afun || "" ) eq "AuxC" ) or
+            ( lc( $a_node->form ) eq "according" and @to_children )
 
-            #                    or                ($a_node->get_attr('m/lemma') eq "have" and @to_children and grep {$_->get_attr('m/tag') eq "VB"} $to_children[0]->get_children) #oznacit "HAVE to infinitiv" jako aux_to_child
+            #                    or                ($a_node->lemma eq "have" and @to_children and grep {$_->tag eq "VB"} $to_children[0]->get_children) #oznacit "HAVE to infinitiv" jako aux_to_child
     );
 }
 
@@ -75,8 +75,8 @@ sub parent_is_aux {
     my $a_parent = $a_node->get_parent();
     return 0 if !$a_parent || $a_parent->is_root();
 
-    my $parent_lemma = $a_parent->get_attr('m/lemma');
-    my $tag          = $a_node->get_attr('m/tag');
+    my $parent_lemma = $a_parent->lemma;
+    my $tag          = $a_node->tag;
     my $after_parent = $a_parent->precedes($a_node);
 
     return 1 if $parent_lemma eq 'be' && $tag eq 'VBN' && $after_parent;

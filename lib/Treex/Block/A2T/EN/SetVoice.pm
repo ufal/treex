@@ -11,7 +11,7 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
         foreach my $t_node ( grep { $_->get_attr('nodetype') eq "complex" } $t_root->get_descendants ) {
-            my $formeme = $t_node->get_attr('formeme') || "";
+            my $formeme = $t_node->formeme || "";
             if ( $formeme =~ /^v:/ ) {
                 if ( $t_node->get_attr('is_passive') ) {
                     $t_node->set_attr( 'voice', 'passive' );

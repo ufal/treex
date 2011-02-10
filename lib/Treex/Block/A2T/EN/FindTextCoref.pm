@@ -13,7 +13,7 @@ sub process_bundle {
 
     my @semnouns = grep {($_->get_attr('gram/sempos')||"") =~ /^n/} $t_root->get_descendants( { ordered => 1} );
 
-    foreach my $perspron ( grep {$_->get_attr('t_lemma') eq "#PersPron" and $_->get_attr('formeme') =~ /poss/} $t_root->get_descendants ) {
+    foreach my $perspron ( grep {$_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/} $t_root->get_descendants ) {
 
 	my %attrib = map {($_ => $perspron->get_attr("gram/$_"))} qw(gender number person);
 
@@ -31,10 +31,10 @@ sub process_bundle {
 	}
 
 #	print "Sentence:\t".$bundle->get_attr('english_source_sentence')."\t";
-#	print "Anaphor:\t".$perspron->get_lex_anode->get_attr('m/form')."\t";
+#	print "Anaphor:\t".$perspron->get_lex_anode->form."\t";
 	
 	if (my $antec = $candidates[0]) {
-#	    print "YES: ".$antec->get_attr('t_lemma')."\n";
+#	    print "YES: ".$antec->t_lemma."\n";
 	    $perspron->set_deref_attr( 'coref_text.rf', [ $antec ] );
 
 	}

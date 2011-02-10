@@ -22,11 +22,11 @@ sub process_bundle {
 sub is_clause_head {
     my ($t_node) = @_;
     my $lex_a_node = $t_node->get_lex_anode() or return 0;
-    return 0 if $lex_a_node->get_attr('m/tag') !~ /^V/;
+    return 0 if $lex_a_node->tag !~ /^V/;
 
     my @anodes = $t_node->get_anodes( { ordered => 1 } );
-    my @tags  = map { $_->get_attr('m/tag') } @anodes;
-    my @forms = map { lc $_->get_attr('m/form') } @anodes;
+    my @tags  = map { $_->tag } @anodes;
+    my @forms = map { lc $_->form } @anodes;
 
     # Rule 1: verb forms containing 3rd person singular are certainly finite
     return 1 if grep {/^(VBZ|MD)$/} @tags;
@@ -43,7 +43,7 @@ sub is_clause_head {
 
     # Rule 4: verb forms for which a subject candidate can be found, are likely to be finite
     if ( grep {/^(VB|VBD|VBN|VBP)$/} @tags ) {
-        my @leftchildren = map {$_->get_eff_children( { preceding_only => 1 } )} grep {$_->get_attr('m/tag')=~/^V/} @anodes;        
+        my @leftchildren = map {$_->get_eff_children( { preceding_only => 1 } )} grep {$_->tag=~/^V/} @anodes;        
         for my $child (@leftchildren) {
             return 1 if is_possible_subject($child);
         }
@@ -55,8 +55,8 @@ sub is_clause_head {
 
 sub is_possible_subject {
     my ($a_node) = @_;
-    return 0 if $a_node->get_attr('m/tag') =~ /^(RB[SR]?|IN|\(|\)|:|\$|MD|POS|PRP\$|RP|SYM|TO|WH\$|WRB)$/;
-    return 0 if $a_node->get_attr('m/form') =~ /^(be|have|[,;()'`:-])$/;
+    return 0 if $a_node->tag =~ /^(RB[SR]?|IN|\(|\)|:|\$|MD|POS|PRP\$|RP|SYM|TO|WH\$|WRB)$/;
+    return 0 if $a_node->form =~ /^(be|have|[,;()'`:-])$/;
     return 1;
 }
 

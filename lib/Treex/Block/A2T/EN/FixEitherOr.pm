@@ -10,10 +10,10 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    foreach my $or (grep {$_->get_attr('t_lemma')=~/^n?or$/}
+    foreach my $or (grep {$_->t_lemma=~/^n?or$/}
                         $t_root->get_descendants) {
 
-        my ($either) = grep {$_->get_attr('t_lemma') =~ /^n?either$/} $or->get_descendants
+        my ($either) = grep {$_->t_lemma =~ /^n?either$/} $or->get_descendants
                 or next;
 
         foreach my $child ($either->get_children) { #there should be none, but who knows...
@@ -21,13 +21,13 @@ sub process_bundle {
         }
 
         # tlemmas such as 'either_or' are created
-        $or->set_attr('t_lemma', $either->get_attr('t_lemma')."_".$or->get_attr('t_lemma'));
+        $or->set_attr('t_lemma', $either->t_lemma."_".$or->t_lemma);
         $or->add_aux_anodes($either->get_anodes);
         $or->set_attr('functor','DISJ');
         $or->set_attr('nodetype', 'coap');
         $either->disconnect;
 
-#        print $or->get_attr('t_lemma')."\t". $or->get_fposition."\n";
+#        print $or->t_lemma."\t". $or->get_fposition."\n";
     }
 
     return;

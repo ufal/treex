@@ -12,13 +12,13 @@ sub process_bundle {
 
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    foreach my $tnode (grep {$_->get_attr('formeme') eq "v:fin"} $t_root->get_eff_children) {
+    foreach my $tnode (grep {$_->formeme eq "v:fin"} $t_root->get_eff_children) {
         my $anode = $tnode->get_lex_anode;
 
         next if ($tnode->get_attr('sentmod')||'') eq 'inter';
-        next if not $anode or $anode->get_attr('m/tag') ne "VB";
-        next if grep {$_->get_attr('m/tag') eq "MD"} $tnode->get_aux_anodes;
-        next if grep {$_->get_attr('formeme') eq "n:subj"} $tnode->get_eff_children;
+        next if not $anode or $anode->tag ne "VB";
+        next if grep {$_->tag eq "MD"} $tnode->get_aux_anodes;
+        next if grep {$_->formeme eq "n:subj"} $tnode->get_eff_children;
 
         $tnode->set_attr('gram/verbmod','imp');
         $tnode->set_attr('sentmod','imper');

@@ -14,9 +14,9 @@ sub process_document {
 
         foreach my $a_node ( $a_root->get_descendants ) {
             my ($eff_parent) = $a_node->get_eff_parents;
-            if ($a_node->get_attr('m/lemma')
+            if ($a_node->lemma
                 =~ /^(not|n\'t)$/
-                and $eff_parent->get_attr('m/tag') =~ /(^V)|(^MD$)/
+                and $eff_parent->tag =~ /(^V)|(^MD$)/
                 )
             {
                 $a_node->set_attr( 'is_aux_to_parent', 1 );

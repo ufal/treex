@@ -102,7 +102,7 @@ sub process_document
 
 =item SCzechA_to_SCzechT::TBLa2t_phaseFx
 
-Assumes Czech t-trees with correct structure, C<m/lemma>, C<m/tag>, and C<is_member> (i.e. does not use information from p-layer). Fills C<functors>.
+Assumes Czech t-trees with correct structure, C<lemma>, C<tag>, and C<is_member> (i.e. does not use information from p-layer). Fills C<functors>.
 
 =back
 

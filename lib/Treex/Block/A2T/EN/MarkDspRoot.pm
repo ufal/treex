@@ -16,13 +16,13 @@ sub process_bundle {
     my $t_root = $bundle->get_tree('SEnglishT');
     my $a_root = $bundle->get_tree('SEnglishA');
 
-    my @quote_anodes = grep { $_->get_attr('m/form') =~ /^(``|''|\")$/ } $a_root->get_descendants;
+    my @quote_anodes = grep { $_->form =~ /^(``|''|\")$/ } $a_root->get_descendants;
 
     if (@quote_anodes) {
 
         #      print STDERR "Quot nalezeny...\n";
         foreach my $dicendi_tnode (
-            grep { $_->get_attr('t_lemma') =~ /^($verba_dicendi_regexp)$/ }
+            grep { $_->t_lemma =~ /^($verba_dicendi_regexp)$/ }
             $t_root->get_descendants
             )
         {
@@ -30,7 +30,7 @@ sub process_bundle {
             if ($dicendi_anode) {
 
                 #	  print STDERR "  Dicendi nalezeny...\n";
-                #	  print STDERR join " ", map {$_->get_attr('m/form')} $a_root->get_descendants({ordered=>1});
+                #	  print STDERR join " ", map {$_->form} $a_root->get_descendants({ordered=>1});
                 #	  print STDERR "\n";
                 foreach my $tchild ( $dicendi_tnode->get_children ) {
                     my $achild = $tchild->get_lex_anode;
@@ -43,7 +43,7 @@ sub process_bundle {
                         #	      print STDERR "  interval: $left_ord - $right_ord\n";
                         if ( grep { my $ord = $_->get_attr('ord'); $left_ord < $ord and $ord < $right_ord } @quote_anodes ) {
 
-                            #print STDERR "Nalezena prima rec, root:".$tchild->get_attr('t_lemma')."\n";;
+                            #print STDERR "Nalezena prima rec, root:".$tchild->t_lemma."\n";;
                             $tchild->set_attr( 'is_dsp_root', 1 );
                         }
                     }

@@ -15,14 +15,14 @@ sub BUILD {
 
 sub can_be_aux_to_coord {
     my ( $self, $a_node ) = @_;
-    my $form = $a_node->get_attr('m/form');
+    my $form = $a_node->form;
     return 1 if $form =~ /^[,;.()]$/;
 
-    if (($a_node->get_parent->get_attr('m/form')||'') eq 'as') {
+    if (($a_node->get_parent->form||'') eq 'as') {
         my $left_neighbor = $a_node->get_left_neighbor;
         my $right_neighbor = $a_node->get_right_neighbor;
-        if ( ($form =~ /^well$/ and $right_neighbor and $right_neighbor->get_attr('m/form') eq 'as') or
-           ($form eq 'as' and $left_neighbor and $left_neighbor->get_attr('m/form') =~ /^well$/ ) ) {
+        if ( ($form =~ /^well$/ and $right_neighbor and $right_neighbor->form eq 'as') or
+           ($form eq 'as' and $left_neighbor and $left_neighbor->form =~ /^well$/ ) ) {
            return 1;
         }
     }

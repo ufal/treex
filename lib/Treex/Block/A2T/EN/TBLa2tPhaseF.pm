@@ -108,7 +108,7 @@ sub process_document
 
 =item SEnglishA_to_SEnglishT::TBLa2t_phaseF
 
-Assumes English t-trees with correct structure, C<m/lemma>, C<m/tag>, C<is_member> and filled C<afun>. Fills C<functors>.
+Assumes English t-trees with correct structure, C<lemma>, C<tag>, C<is_member> and filled C<afun>. Fills C<functors>.
 
 =back
 

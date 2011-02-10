@@ -23,7 +23,7 @@ sub feature_string
     # features of the node in question
     my $a_node = get_anode($t_node);
     my $mr     = morph_real($t_node);
-    $outstr .= sprintf "%s/%s %s %s ", $t_node->get_attr('t_lemma'), substr( $mr, -1 ), substr( $mr, -1 ), $mr;    # lemma/POS, tag, mr
+    $outstr .= sprintf "%s/%s %s %s ", $t_node->t_lemma, substr( $mr, -1 ), substr( $mr, -1 ), $mr;    # lemma/POS, tag, mr
 
     # features of its parent
     my $t_par = ( $t_node->get_eff_parents )[0];
@@ -36,7 +36,7 @@ sub feature_string
     # features of its children
     my @ch = grep { $_->get_attr('a/lex.rf') } $t_node->get_children({ordered=>1});
     for ( 0 .. 5 ) {
-        $outstr .= defined $ch[$_] ? $ch[$_]->get_attr('t_lemma') . " " . morph_real( $ch[$_] ) . " " : "--- -- ";
+        $outstr .= defined $ch[$_] ? $ch[$_]->t_lemma . " " . morph_real( $ch[$_] ) . " " : "--- -- ";
     }
 
     # features to be changed

@@ -17,7 +17,7 @@ sub process_document {
         foreach my $t_node ( $t_root->get_descendants ) {
 
             my $functor = $t_node->get_attr('functor');
-            my $t_lemma = $t_node->get_attr('t_lemma');
+            my $t_lemma = $t_node->t_lemma;
             my $nodetype;
 
             if ( $functor =~ /^(?:APPS|CONJ|DISJ|ADVS|CSQ|GRAD|REAS|CONFR|CONTRA|OPER)$/ ) {

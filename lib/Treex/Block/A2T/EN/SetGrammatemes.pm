@@ -98,8 +98,8 @@ sub assign_grammatemes_to_tnode {
     my ($tnode)   = @_;
     my $lex_anode = $tnode->get_lex_anode();
     return if !$lex_anode;
-    my $tag  = $lex_anode->get_attr('m/tag');
-    my $form = lc $lex_anode->get_attr('m/form');
+    my $tag  = $lex_anode->tag;
+    my $form = lc $lex_anode->form;
 
     # Choose an appropriate sub according to the tag
     my $sub_ref = $SUB_FOR_TAG{$tag};
@@ -134,7 +134,7 @@ sub _noun {
 sub _has_numeral_child_needed_for_plural {
     my ($tnode) = @_;
     return any {
-        ( Lexicon::English::number_for( $_->get_attr('t_lemma') ) || 0 ) > 1;
+        ( Lexicon::English::number_for( $_->t_lemma ) || 0 ) > 1;
     }
     $tnode->get_children();
 }
@@ -142,7 +142,7 @@ sub _has_numeral_child_needed_for_plural {
 # Adjectives
 sub _adj {
     my ( $tnode, $tag, $form ) = @_;
-    my %is_aux_form = map { ( lc( $_->get_attr('m/form') ) => 1 ) } $tnode->get_aux_anodes();
+    my %is_aux_form = map { ( lc( $_->form ) => 1 ) } $tnode->get_aux_anodes();
 
     $tnode->set_attr( 'gram/sempos',   'adj.denot' );
     $tnode->set_attr( 'gram/negation', 'neg0' );
@@ -158,7 +158,7 @@ sub _adj {
 # Adverbs
 sub _adv {
     my ( $tnode, $tag, $form ) = @_;
-    my %is_aux_form = map { ( lc( $_->get_attr('m/form') ) => 1 ) } $tnode->get_aux_anodes();
+    my %is_aux_form = map { ( lc( $_->form ) => 1 ) } $tnode->get_aux_anodes();
 
     $tnode->set_attr( 'gram/sempos',   'adv.denot.grad.neg' );
     $tnode->set_attr( 'gram/negation', 'neg0' );
@@ -239,10 +239,10 @@ sub _number {
 sub _verb {
     my ( $tnode, $tag, $form ) = @_;
     my @aux_anodes   = $tnode->get_aux_anodes();
-    my %is_aux_form  = map { ( lc( $_->get_attr('m/form') ) => 1 ) } @aux_anodes;
-    my %is_aux_lemma = map { ( $_->get_attr('m/lemma') => 1 ) } @aux_anodes;
+    my %is_aux_form  = map { ( lc( $_->form ) => 1 ) } @aux_anodes;
+    my %is_aux_lemma = map { ( $_->lemma => 1 ) } @aux_anodes;
 
-    my ($deontmod) = map { $DEONTMOD_FOR_LEMMA{ $_->get_attr('m/lemma') } } @aux_anodes;
+    my ($deontmod) = map { $DEONTMOD_FOR_LEMMA{ $_->lemma } } @aux_anodes;
     my $negated = any { $is_aux_form{$_} } qw(not n't cannot);
 
     $tnode->set_attr( 'gram/sempos',        'v' );
@@ -257,8 +257,8 @@ sub _verb {
     # ...and then correct "have to"...
     if ( all { $is_aux_lemma{$_} } qw(have to) ) {
         ## but filter our e.g. "It appears to have grown."
-        my $a_have = first { $_->get_attr('m/lemma') eq 'have' } @aux_anodes;
-        my $a_to   = first { $_->get_attr('m/lemma') eq 'to' } @aux_anodes;
+        my $a_have = first { $_->lemma eq 'have' } @aux_anodes;
+        my $a_to   = first { $_->lemma eq 'to' } @aux_anodes;
         if ( $a_have->get_ordering_value() + 1 == $a_to->get_ordering_value() ) {
             $tnode->set_attr( 'gram/deontmod', 'deb' );
         }
@@ -302,11 +302,11 @@ sub _guess_verb_tense {
     my ($tnode) = @_;
 
     my @anodes = sort { $a->get_ordering_value <=> $b->get_ordering_value }
-      grep {$_->get_attr('m/tag')=~/^(V|MD)/}
+      grep {$_->tag=~/^(V|MD)/}
         $tnode->get_anodes;
 
-    my @forms = map {lc($_->get_attr('m/form'))} @anodes;
-    my @tags = map {$_->get_attr('m/tag')} @anodes;
+    my @forms = map {lc($_->form)} @anodes;
+    my @tags = map {$_->tag} @anodes;
 
     return 'post' if any { /^(will|shall|wo)$/ } @forms;
 
@@ -333,8 +333,8 @@ sub _is_negated {
     my $sempos = $tnode->get_attr('gram/sempos');
     return 0 if !defined $sempos or $sempos !~ /^(n|adj|adv)\.denot/;
 
-    my $t_lemma = lc( $tnode->get_attr('t_lemma') ) || '';
-    my $m_form = lc( $tnode->get_lex_anode()->get_attr('m/form') );
+    my $t_lemma = lc( $tnode->t_lemma ) || '';
+    my $m_form = lc( $tnode->get_lex_anode()->form );
     if ( $m_form =~ /^(un|in|im|non|dis|il|ir)-?(..)/ ) {
         my $expected_prefix = $2;
         if ( $t_lemma =~ /^\Q$expected_prefix\E/ ) {
@@ -354,12 +354,12 @@ sub _get_sentmod {
 
     # Questions must have a questionmark as the last token.
     my $last_token = $a_root->get_descendants( { last_only => 1 } );
-    return 'inter' if $last_token && $last_token->get_attr('m/form') eq '?';
+    return 'inter' if $last_token && $last_token->form eq '?';
 
     # In imperative sentences, the head of the main clause
     # is infinitive verb (VB) with no left children.
     my $a_head = $a_root->get_children( { first_only => 1 } ) or return;
-    my $head_tag = $a_head->get_attr('m/tag');
+    my $head_tag = $a_head->tag;
     return 'imper' if $head_tag eq 'VB' && !$a_head->get_children( { preceding_only => 1 } );
 
     # Otherwise suppose it's normal indicative mood

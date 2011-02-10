@@ -28,14 +28,14 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_aux_root = $bundle->get_tree('SEnglishT');
         foreach my $t_node ( $t_aux_root->get_descendants ) {
-            my $t_lemma = $t_node->get_attr('t_lemma');
-            my $formeme = $t_node->get_attr('formeme');
+            my $t_lemma = $t_node->t_lemma;
+            my $formeme = $t_node->formeme;
             if ( defined $formeme and $formeme eq "adv" and $t_lemma =~ /ly$/ ) {
                 foreach my $substitution ( [ 'lly', 'll' ], [ 'ily', 'y' ], [ 'ly', '' ], [ 'ly', 'le' ], ) {
                     my ( $adv_ending, $adj_ending ) = @$substitution;
                     my $new_t_lemma = $t_lemma;
                     if ( $new_t_lemma =~ s/${adv_ending}$/${adj_ending}/ and correct($new_t_lemma) ) {
-                        $t_node->set_attr( 't_lemma', $new_t_lemma );
+                        $t_node->set_t_lemma($new_t_lemma);
 
                         #	    print "XXXXXXXXXXXXXXX old: $t_lemma    new: $new_t_lemma\n";
                     }

@@ -19,16 +19,16 @@ sub process_bundle {
 
 sub get_coap_functor {
     my ($t_node)      = @_;
-    my $lemma = $t_node->get_attr('t_lemma');
+    my $lemma = $t_node->t_lemma;
     return 'DISJ' if $lemma eq 'or';
     return 'ADVS' if $lemma eq 'but';
-    return 'ADVS' if $lemma eq 'yet' && grep { $_->get_attr('is_member') } $t_node->get_children();
+    return 'ADVS' if $lemma eq 'yet' && grep { $_->is_member } $t_node->get_children();
     
     #return 'CONJ' if any { $_ eq $lemma } qw(and as_well_as);
     # There can be also other CONJ lemmas (& plus),
     # so it is better to check the tag for CC (after solving DISJ...).
     my $a_node = $t_node->get_lex_anode() or return;
-    return 'CONJ' if $a_node->get_attr('m/tag') eq 'CC';
+    return 'CONJ' if $a_node->tag eq 'CC';
     return;
 }
 

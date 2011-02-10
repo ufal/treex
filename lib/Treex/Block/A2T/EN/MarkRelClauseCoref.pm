@@ -16,7 +16,7 @@ sub process_bundle {
         # Process coreferring words with tags:
         # WP  (who, what, whom), WP$ (whose), WRB (how, where, why)
         # WDT (which, what ... before noun - as a determiner)
-        next TNODE if !$a_node || $a_node->get_attr('m/tag') !~ /^W/;
+        next TNODE if !$a_node || $a_node->tag !~ /^W/;
         my $t_relclause_head = $t_node->get_clause_head();
 
         # Antecedent is the parent of relative clause head.
@@ -24,7 +24,7 @@ sub process_bundle {
         my $t_antec = $t_relclause_head->get_parent();
         next TNODE if !$t_antec || $t_antec->is_root();
         my $a_antec = $t_antec->get_lex_anode();
-        if ( $a_antec->get_attr('m/tag') =~ /^(NN|PR|DT)/ ) {
+        if ( $a_antec->tag =~ /^(NN|PR|DT)/ ) {
             $t_node->set_deref_attr( 'coref_gram.rf', [$t_antec] );
         }
     }

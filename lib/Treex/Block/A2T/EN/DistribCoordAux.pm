@@ -21,7 +21,7 @@ sub process_document {
 
         foreach my $t_member_node (
             grep {
-                $_->get_attr('is_member')
+                $_->is_member
                     and $_->get_parent->get_attr('a/aux.rf')
             }
             $t_aux_root->get_descendants
@@ -30,8 +30,8 @@ sub process_document {
             my $t_parent = $t_member_node->get_parent;
 
             # u 'as_well_as' se ta 'as' ke clenum koordinace nerozmistuji
-            if ( $t_parent->get_attr('t_lemma') eq "as_well_as" ) {
-                foreach my $as ( grep { $_->get_attr('m/lemma') eq "as" }
+            if ( $t_parent->t_lemma eq "as_well_as" ) {
+                foreach my $as ( grep { $_->lemma eq "as" }
                                    $t_parent->get_aux_anodes ) {
                     $aux_not_to_move{ $as->get_attr('id') } = 1;
                 }

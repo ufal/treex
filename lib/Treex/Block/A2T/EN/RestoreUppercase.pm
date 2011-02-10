@@ -28,7 +28,7 @@ sub process_document {
             my $first_one = $s_root->a->get_leftmost_descendant;
             next unless $first_one;
 
-            #Report::info("First one is: " . $first_one->get_attr('m/form'));
+            #Report::info("First one is: " . $first_one->form);
             $is_first_in_sentence{$first_one} = 1;
         }
 
@@ -36,14 +36,14 @@ sub process_document {
 
             my $anode = $tnode->a;
             next if $is_first_in_sentence{$anode} and not $tnode->get_attr('is_name');
-            my $a_lemma = $anode->get_attr('m/form');
+            my $a_lemma = $anode->form;
             next unless defined $a_lemma;
 
-            #Report::info("processing " . $tnode->get_attr('t_lemma'));
+            #Report::info("processing " . $tnode->t_lemma);
             # some uppercase at a-level but no other change between t- and a-levels
-            if ( $a_lemma ne lc($a_lemma) && lc($a_lemma) eq $tnode->get_attr('t_lemma') ) {
+            if ( $a_lemma ne lc($a_lemma) && lc($a_lemma) eq $tnode->t_lemma ) {
 
-                $tnode->set_attr( 't_lemma', $a_lemma );
+                $tnode->set_t_lemma($a_lemma);
             }
 
         }

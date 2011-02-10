@@ -110,14 +110,14 @@ sub assign_functors($$) {
         }
 
         my $a_parent    = $lex_a_node->get_parent;
-        my $afun        = $lex_a_node->get_attr('afun');
-        my $mlemma      = lc $lex_a_node->get_attr('m/lemma');                                      #Monday -> monday
+        my $afun        = $lex_a_node->afun;
+        my $mlemma      = lc $lex_a_node->lemma;                                      #Monday -> monday
         my @aux_a_nodes = $node->get_aux_anodes();
-        my ($first_aux_mlemma) = map { $_->get_attr('m/lemma') } grep { $_->get_attr('m/tag') eq "IN" } @aux_a_nodes;
+        my ($first_aux_mlemma) = map { $_->lemma } grep { $_->tag eq "IN" } @aux_a_nodes;
 
         my $functor;
 
-        if ($node->get_parent() == $t_root                                                          # and $lex_a_node->get_attr('m/tag') ne "CC"  # uz by to v tuhle chvili melo CONJ
+        if ($node->get_parent() == $t_root                                                          # and $lex_a_node->tag ne "CC"  # uz by to v tuhle chvili melo CONJ
             )
         {
             $functor = 'PRED'
@@ -131,17 +131,17 @@ sub assign_functors($$) {
         elsif ( defined $temporal_noun{$mlemma} and $first_aux_mlemma eq "to" ) {
             $functor = "TTILL";
         }
-        elsif ( $functor = $mlemma2functor{ $node->get_attr('t_lemma') } ) {
+        elsif ( $functor = $mlemma2functor{ $node->t_lemma } ) {
         }
-        elsif ( $functor = $tag2functor{ $lex_a_node->get_attr('m/tag') } ) {
+        elsif ( $functor = $tag2functor{ $lex_a_node->tag } ) {
         }
         elsif ( defined $afun and $functor = $afun2functor{$afun} ) {
         }
-        elsif ( ($functor) = grep {$_} map { $aux2functor{ $_->get_attr('m/lemma') } } @aux_a_nodes ) {
+        elsif ( ($functor) = grep {$_} map { $aux2functor{ $_->lemma } } @aux_a_nodes ) {
         }
         elsif (
-                $lex_a_node->get_attr('m/tag') =~ /^(N.+|WP|PRP|WDT)$/
-            and $a_parent->get_attr('m/tag')
+                $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
+            and $a_parent->tag
             =~ /^V/
             and $lex_a_node->get_attr('ord') < $a_parent->get_attr('ord')
             )
@@ -154,17 +154,17 @@ sub assign_functors($$) {
             }
         }
         elsif (
-            $a_parent->get_attr('m/tag')
+            $a_parent->tag
             =~ /^V/
             and $lex_a_node->get_attr('ord') > $a_parent->get_attr('ord')
             )
         {
             $functor = "PAT";
         }
-        elsif ( $a_parent->get_attr('m/tag') =~ /^N/ ) {
+        elsif ( $a_parent->tag =~ /^N/ ) {
             $functor = 'RSTR';
         }
-        elsif ( $lex_a_node->get_attr('m/tag') =~ /^V/ ) {
+        elsif ( $lex_a_node->tag =~ /^V/ ) {
             $functor = 'PAT';
         }
         else {
@@ -172,7 +172,7 @@ sub assign_functors($$) {
         }
         $node->set_attr( 'functor', $functor );
 
-        #    print $node->get_attr('t_lemma')."\t$functor ($first_aux_mlemma) [temporal $mlemma =>$temporal_noun{$mlemma}]\n\n";
+        #    print $node->t_lemma."\t$functor ($first_aux_mlemma) [temporal $mlemma =>$temporal_noun{$mlemma}]\n\n";
     }
 }
 

@@ -26,7 +26,7 @@ sub process_bundle {
     # skip empty sentence
     return if !@a_nodes;
 
-    my @words = map {$_->get_attr('m/form')} @a_nodes;
+    my @words = map {$_->form} @a_nodes;
 
     # BEWARE: $ner crashes on words like "." or "/", i.e. just punct  !!!
     my $test = join( '', @words );
@@ -45,7 +45,7 @@ sub process_bundle {
 
         if ( $type eq 'na' ) {
             $type = 'o';
-            my $form = $a_node->get_attr('m/form');
+            my $form = $a_node->form;
             Report::warn "N/A named entity type for '$form'" if $DEBUG;
         }
 

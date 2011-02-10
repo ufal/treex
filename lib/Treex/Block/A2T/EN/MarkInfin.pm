@@ -18,15 +18,15 @@ sub process_document {
             my $lex_a_node = $t_node->get_lex_anode();
             next TNODE if !defined $lex_a_node;
 
-            if ( $lex_a_node->get_attr('m/tag') eq "VB" ) {
+            if ( $lex_a_node->tag eq "VB" ) {
                 my @aux_a_nodes = $t_node->get_aux_anodes;
-                if (grep { $_->get_attr('m/tag') eq "TO" }
+                if (grep { $_->tag eq "TO" }
                     @aux_a_nodes
-                    and not grep { $_->get_attr('m/tag') =~ /^V/ } @aux_a_nodes
+                    and not grep { $_->tag =~ /^V/ } @aux_a_nodes
                     )
                 {
 
-                    #	if (@aux_a_nodes == 1 and $aux_a_nodes[0]->get_attr('m/tag') eq "TO") {
+                    #	if (@aux_a_nodes == 1 and $aux_a_nodes[0]->tag eq "TO") {
                     $t_node->set_attr( 'is_infin', 1 );
                 }
             }

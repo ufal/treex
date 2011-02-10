@@ -20,12 +20,12 @@ sub process_bundle {
     # 1. Fill formemes (but use just n:obj instead of n:obj1 and n:obj2)
     foreach my $t_node (@root_descendants) {
         my $formeme = detect_formeme($t_node);
-        $t_node->set_attr( 'formeme', $formeme );
+        $t_node->set_formeme($formeme);
     }
 
     # 2. Distinguishing two object types (first and second) below bitransitively used verbs
     foreach my $t_node (@root_descendants) {
-        next if $t_node->get_attr('formeme') !~ /^v:/;
+        next if $t_node->formeme !~ /^v:/;
         distinguish_objects($t_node);
     }
     return;
@@ -48,7 +48,7 @@ sub detect_formeme {
     
     # Punctuation in most cases should not remain on t-layer, but anyway
     # it makes no sense detecting formemes. (These are not unrecognized ???.) 
-    return 'x' if $t_node->get_attr('t_lemma') =~ /^([.;:-]|''|``)$/;
+    return 'x' if $t_node->t_lemma =~ /^([.;:-]|''|``)$/;
 
     # If no lex_anode is found, the formeme is unrecognized
     my $a_node = $t_node->get_lex_anode() or return '???';
@@ -67,7 +67,7 @@ sub detect_formeme {
 # semantic nouns
 sub _noun {
     my ( $t_node, $a_node ) = @_;
-    return 'n:poss' if $a_node->get_attr('m/tag') eq 'PRP$';
+    return 'n:poss' if $a_node->tag eq 'PRP$';
 
     #TODO: my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     # When  aux_anodes are not ordered, we have formemes like
@@ -91,8 +91,8 @@ sub _noun {
 
     # treba v pedt v konstrukcich s #Equal rodic nema a-uzel
     return 'n:???' if !$parent_a_node;
-    my $parent_tag = $parent_a_node->get_attr('m/tag') || '';
-    my $afun = $a_node->get_attr('afun');
+    my $parent_tag = $parent_a_node->tag || '';
+    my $afun = $a_node->afun;
 
     if ( $parent_tag =~ /^V/ ) {
         # Let's have e.g.: "This year(afun=Adv), there were many errors in MT."
@@ -107,7 +107,7 @@ sub _noun {
         return 'n:subj' if $a_node->precedes($parent_a_node);
         return 'n:obj';
     }
-    return 'n:poss' if grep { $_->get_attr('m/tag') eq 'POS' } @aux_a_nodes;
+    return 'n:poss' if grep { $_->tag eq 'POS' } @aux_a_nodes;
     return 'n:attr' if below_noun($t_node) || below_adj($t_node);
     my ( $lemma, $id ) = $t_node->get_attrs( 't_lemma', 'id' );
     Report::warn("Formeme n: $lemma $id") if $DEBUG;
@@ -133,16 +133,16 @@ sub _verb {
 
     #TODO: my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     my @aux_a_nodes = $t_node->get_aux_anodes();
-    my $tag         = $a_node->get_attr('m/tag');
+    my $tag         = $a_node->tag;
 
     if ( $t_node->get_attr('is_infin') ) {
         ## TODO: !!! vyresit jeste 'in order to'
-        return 'v:to+inf' if any { $_->get_attr('m/lemma') eq 'to' } @aux_a_nodes;
+        return 'v:to+inf' if any { $_->lemma eq 'to' } @aux_a_nodes;
         return 'v:inf';
     }
 
     my $subconj = get_subconj_string(@aux_a_nodes);
-    my $has_non_VBG_verb_aux = any { $_->get_attr('m/tag') =~ /^VB[^G]?$/ } @aux_a_nodes;
+    my $has_non_VBG_verb_aux = any { $_->tag =~ /^VB[^G]?$/ } @aux_a_nodes;
 
     if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
         return "v:$subconj+ger" if $subconj;
@@ -161,8 +161,8 @@ sub _verb {
         return 'v:fin';
     }
 
-    if ( any { $_->get_attr('m/form') =~ /^[Hh]aving$/ } @aux_a_nodes and
-         any { $_->get_attr('m/tag') eq 'TO' } @aux_a_nodes ) {                              # having to + infinitive 
+    if ( any { $_->form =~ /^[Hh]aving$/ } @aux_a_nodes and
+         any { $_->tag eq 'TO' } @aux_a_nodes ) {                              # having to + infinitive 
         return "v:$subconj+ger" if $subconj;
         return 'v:ger';
     }
@@ -175,25 +175,25 @@ sub _verb {
 
 sub get_aux_string {
     my @preps_and_conjs = grep { is_prep_or_conj($_) } @_;
-    return join '_', map { $_->get_attr('m/lemma') } @preps_and_conjs;
+    return join '_', map { $_->lemma } @preps_and_conjs;
 }
 
 sub is_prep_or_conj {
     my ($a_node) = @_;
-    return 1 if $a_node->get_attr('afun') =~ /Aux[CP]/;
+    return 1 if $a_node->afun =~ /Aux[CP]/;
 
-    # If afun is not reliable, try also m/tag
-    return 1 if $a_node->get_attr('m/tag') =~ /^(IN|TO)$/;
+    # If afun is not reliable, try also tag
+    return 1 if $a_node->tag =~ /^(IN|TO)$/;
 
     # Postposition "ago" is now covered by afun AuxP
-    # return 1 if $a_node->get_attr('m/form') eq 'ago';
+    # return 1 if $a_node->form eq 'ago';
     return 0;
 }
 
 sub get_subconj_string {
     my @aux_a_nodes = @_;
-    return join '_', map { $_->get_attr('m/lemma') }
-        grep { $_->get_attr('m/tag') eq 'IN' || $_->get_attr('afun') eq 'AuxC' }
+    return join '_', map { $_->lemma }
+        grep { $_->tag eq 'IN' || $_->afun eq 'AuxC' }
         @aux_a_nodes;
 }
 
@@ -217,7 +217,7 @@ sub below_verb {
 
 sub distinguish_objects {
     my ($t_node) = @_;
-    my @objects = grep { $_->get_attr('formeme') =~ /^n:obj/ }
+    my @objects = grep { $_->formeme =~ /^n:obj/ }
         $t_node->get_eff_children( { ordered => 1 } );
 
     return if !( @objects > 1 );
@@ -226,7 +226,7 @@ sub distinguish_objects {
     while (@objects) {
         push @firsts, shift @objects;
         last if @objects == 0
-                || !$firsts[0]->get_attr('is_member')
+                || !$firsts[0]->is_member
                 || $firsts[0]->get_parent() != $objects[0]->get_parent();
 
     }
