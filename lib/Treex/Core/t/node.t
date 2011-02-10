@@ -7,7 +7,8 @@ use Test::More;
 
 BEGIN { use_ok('Treex::Core::Node') }
 use Treex::Core::Document;
-my $bundle = Treex::Core::Document->new->create_bundle;
+my $document = Treex::Core::Document->new;
+my $bundle = $document->create_bundle;
 my $zone = $bundle->create_zone( 'cs', 'S' );
 
 foreach my $layer (qw(A T N)) {
