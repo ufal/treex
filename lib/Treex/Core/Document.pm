@@ -11,10 +11,10 @@ with 'Treex::Core::TectoMTStyleAccessors';
 use Treex::PML;
 use Scalar::Util qw( weaken );
 
-has loaded_from => (is=>'rw', isa=>'Str', default=>'');
-has path        => (is=>'rw', isa=>'Str');
-has file_stem   => (is=>'rw', isa=>'Str', default=> 'noname');
-has file_number => (is=>'rw', isa=>'Str', builder=> 'build_file_number');
+has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
+has path        => ( is => 'rw', isa => 'Str' );
+has file_stem   => ( is => 'rw', isa => 'Str', default => 'noname' );
+has file_number => ( is => 'rw', isa => 'Str', builder => 'build_file_number' );
 my $highest_file_number = 1;
 
 sub build_file_number {
@@ -24,46 +24,46 @@ sub build_file_number {
 # Full filename without the extension
 sub full_filename {
     my $self = shift;
-    return ($self->path ? $self->path : '') . $self->file_stem . $self->file_number;
+    return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
 }
 
 has _pmldoc => (
-    isa=>'Treex::PML::Document',
-    is=>'rw',
+    isa      => 'Treex::PML::Document',
+    is       => 'rw',
     init_arg => 'pml_doc',
-    writer => '_set_pmldoc',
-    handles => {
+    writer   => '_set_pmldoc',
+    handles  => {
         set_filename => 'changeFilename',
-        map {$_=>$_}
+        map { $_ => $_ }
             qw( load clone save writeFile writeTo filename URL
-                changeFilename changeURL fileFormat changeFileFormat
-                backend changeBackend encoding changeEncoding userData
-                changeUserData metaData changeMetaData listMetaData
-                appData changeAppData listAppData
+            changeFilename changeURL fileFormat changeFileFormat
+            backend changeBackend encoding changeEncoding userData
+            changeUserData metaData changeMetaData listMetaData
+            appData changeAppData listAppData
 
-                documentRootData
+            documentRootData
 
-                FS changeFS
+            FS changeFS
 
-                hint changeHint pattern_count pattern patterns
-                changePatterns tail changeTail
+            hint changeHint pattern_count pattern patterns
+            changePatterns tail changeTail
 
-                trees changeTrees treeList tree lastTreeNo notSaved
-                currentTreeNo currentNode nodes value_line value_line_list
-                insert_tree set_tree append_tree new_tree delete_tree
-                destroy_tree swap_trees move_tree_to test_tree_type
-                determine_node_type )
-        },
+            trees changeTrees treeList tree lastTreeNo notSaved
+            currentTreeNo currentNode nodes value_line value_line_list
+            insert_tree set_tree append_tree new_tree delete_tree
+            destroy_tree swap_trees move_tree_to test_tree_type
+            determine_node_type )
+    },
     builder => '_create_empty_pml_doc',
 );
 
 has _index => (
     is => 'rw',
-    default => sub {return {} },
+    default => sub { return {} },
 );
 
-has _latest_node_number => ( # for generating document-unique IDs
-    is => 'rw',
+has _latest_node_number => (    # for generating document-unique IDs
+    is      => 'rw',
     default => 0,
 );
 
@@ -71,20 +71,20 @@ use Treex::PML::Factory;
 my $factory = Treex::PML::Factory->new();
 
 sub BUILD {
-    my ($self, $params_rf) = @_;
+    my ( $self, $params_rf ) = @_;
 
     my $pmldoc;
 
-    if (defined $params_rf) {
+    if ( defined $params_rf ) {
 
         # creating Treex::Core::Document from an already existing Treex::PML::Document instance
-        if ($params_rf->{pmldoc}) {
+        if ( $params_rf->{pmldoc} ) {
             $pmldoc = $params_rf->{pmldoc};
         }
 
         # loading Treex::Core::Document from a file
-        elsif ($params_rf->{filename}) {
-            $pmldoc = $factory->createDocumentFromFile($params_rf->{filename});
+        elsif ( $params_rf->{filename} ) {
+            $pmldoc = $factory->createDocumentFromFile( $params_rf->{filename} );
         }
 
     }
@@ -96,28 +96,28 @@ sub BUILD {
         # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
         if ( defined $meta->{zones} ) {
-            foreach my $element ( map {$_->value()} $meta->{zones}->elements ) {
+            foreach my $element ( map { $_->value() } $meta->{zones}->elements ) {
                 bless $element, 'Treex::Core::DocZone';
             }
         }
 
-        foreach my $bundle ($self->get_bundles) {
+        foreach my $bundle ( $self->get_bundles ) {
             bless $bundle, 'Treex::Core::Bundle';
 
             if ( defined $bundle->{zones} ) {
-                foreach my $zone ( map {$_->value()} $bundle->{zones}->elements ) {
+                foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
                     bless $zone, 'Treex::Core::BundleZone';
-		    $zone->_set_bundle($bundle);
+                    $zone->_set_bundle($bundle);
 
-                    foreach my $tree ($zone->get_all_trees) {
+                    foreach my $tree ( $zone->get_all_trees ) {
                         $tree->type->get_structure_name =~ /(\S)-(root|node)/
-                            or log_fatal "Unexpected member in zone structure: ".$tree->type;
+                            or log_fatal "Unexpected member in zone structure: " . $tree->type;
                         my $layer = uc($1);
-                        foreach my $node ($tree, $tree->descendants) { # must still call Treex::PML::Node's API
+                        foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
                             bless $node, "Treex::Core::Node::$layer";
-                            $self->index_node_by_id($node->get_id,$node);
+                            $self->index_node_by_id( $node->get_id, $node );
                         }
-			$tree->_set_zone($zone);
+                        $tree->_set_zone($zone);
                     }
                 }
             }
@@ -134,38 +134,38 @@ sub _pml_attribute_hash {
     return $self->metaData('pml_root')->{meta};
 }
 
-
 Treex::PML::UseBackends('PMLBackend');
 Treex::PML::AddResourcePath(
-#    $ENV{"TRED_DIR"},
-#    $ENV{"TRED_DIR"} . "/resources/",
+
+    #    $ENV{"TRED_DIR"},
+    #    $ENV{"TRED_DIR"} . "/resources/",
     Treex::Core::Config::pml_schema_dir(),
 );
 
 #my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
-my $_treex_schema_file = Treex::Core::Config::pml_schema_dir."/". 'treex_schema.xml';
-if (not -f $_treex_schema_file) {
-  log_fatal "Can't find PML schema $_treex_schema_file"; 
+my $_treex_schema_file = Treex::Core::Config::pml_schema_dir . "/" . 'treex_schema.xml';
+if ( not -f $_treex_schema_file ) {
+    log_fatal "Can't find PML schema $_treex_schema_file";
 }
 
 my $_treex_schema = Treex::PML::Schema->new( { filename => $_treex_schema_file } );
 
 sub _create_empty_pml_doc {
     my $fsfile = Treex::PML::Document->create
-    (
-        name => "x",                                                           #$filename,  ???
+        (
+        name => "x",                         #$filename,  ???
         FS   => Treex::PML::FSFormat->new(
             {
-                'deepord' => ' N'                                              # ???
+                'deepord' => ' N'            # ???
             }
         ),
         trees    => [],
         backend  => 'PMLBackend',
         encoding => "utf-8",
-    );
+        );
 
     $fsfile->changeMetaData( 'schema-url', 'treex_schema.xml' );
-    $fsfile->changeMetaData( 'schema', $_treex_schema );
+    $fsfile->changeMetaData( 'schema',     $_treex_schema );
     $fsfile->changeMetaData( 'pml_root', { meta => {}, bundles => undef, } );
     return $fsfile;
 }
@@ -196,15 +196,19 @@ sub get_node_by_id() {
     log_fatal("Incorrect number of arguments") if @_ != 2;
     if ( defined $self->_index->{$id} ) {
         return $self->_index->{$id};
-    } elsif ( $id =~ /^[ST](Czech|English)/ ) {
+    }
+    elsif ( $id =~ /^[ST](Czech|English)/ ) {
+
         # PROZATIMNI RESENI
         # nejsou linky mezi M a A vrstvou, je nutne mezi nimi skakat pomoci teto funkce
         # toto osetruje pripady typu 'SenM' a 'SEnglishA'
         $id =~ s/^([ST])Czech/$1cs/;
         $id =~ s/^([ST])English/$1en/;
         return $self->get_node_by_id($id);
-    } else {
+    }
+    else {
         log_fatal "ID not indexed: id=\"$id\"";
+
         # This is something very fatal. TectoMT assumes every node ID to
         # be valid and pointing to a node *in the given document*.
         # (It is fine to have a node with no a/lex.rf
@@ -220,9 +224,8 @@ sub get_node_by_id() {
 sub get_all_node_ids() {
     my ($self) = @_;
     log_fatal("Incorrect number of arguments") if @_ != 1;
-    return ( keys %{$self->_index} );
+    return ( keys %{ $self->_index } );
 }
-
 
 # ----------------- ACCESS TO BUNDLES ----------------------
 
@@ -230,7 +233,6 @@ sub get_bundles {
     my $self = shift;
     return $self->trees;
 }
-
 
 sub create_bundle {
 
@@ -241,32 +243,29 @@ sub create_bundle {
 
     # Minimal position is 0, maximal position is number of bundles minus 1.
     # Next free position is equal to the current number of bundles.
-    my $position   = scalar( $self->get_bundles() );
+    my $position = scalar( $self->get_bundles() );
 
     my $new_bundle = $fsfile->new_tree($position);
     $new_bundle->set_type_by_name( $fsfile->metaData('schema'), 'bundle.type' );
 
-    bless $new_bundle,"Treex::Core::Bundle"; # is this correct/sufficient with Moose ????
+    bless $new_bundle, "Treex::Core::Bundle";    # is this correct/sufficient with Moose ????
     $new_bundle->_set_document($self);
-    $new_bundle->set_id("s".($position+1));
+    $new_bundle->set_id( "s" . ( $position + 1 ) );
 
-#    $new_bundle->_set_position($position); #???
+    #    $new_bundle->_set_position($position); #???
 
     return $new_bundle;
 }
 
-
-
 # -------------- ACCESS TO ZONES ---------------------------------------
 
 sub create_zone {
-    my ($self, $language, $selector) = @_;
+    my ( $self, $language, $selector ) = @_;
 
-    if ($language =~ /(.+)(..)/) {
+    if ( $language =~ /(.+)(..)/ ) {
         $language = $2;
         $selector = $1;
     }
-
 
     my $new_zone = Treex::Core::DocZone->new(
         {
@@ -275,26 +274,23 @@ sub create_zone {
         }
     );
 
-
-    my $new_element = Treex::PML::Seq::Element->new('zone', $new_zone);
-
+    my $new_element = Treex::PML::Seq::Element->new( 'zone', $new_zone );
 
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
         $meta->{zones}->unshift_element_obj($new_element);
     }
     else {
-        $meta->{zones} = Treex::PML::Seq->new( [$new_element ] );
+        $meta->{zones} = Treex::PML::Seq->new( [$new_element] );
     }
 
     return $new_zone;
 }
 
-
 sub get_zone {
-    my ($self, $language, $selector) = @_;
+    my ( $self, $language, $selector ) = @_;
 
-    if ($language =~ /(.+)(..)/) { # temporarily expecting just two-letter language codes !!!
+    if ( $language =~ /(.+)(..)/ ) {    # temporarily expecting just two-letter language codes !!!
         $language = $2;
         $selector = $1;
     }
@@ -303,7 +299,7 @@ sub get_zone {
     if ( defined $meta->{zones} ) {
         foreach my $element ( $meta->{zones}->elements ) {
             my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
+            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
                 return $value;
             }
         }
@@ -312,31 +308,31 @@ sub get_zone {
 }
 
 sub get_or_create_zone {
-    my ($self, $language, $selector) = @_;
-    my $fs_zone = $self->get_zone($language, $selector);
-    if (not defined $fs_zone) {
-        $fs_zone = $self->create_zone($language,$selector);
+    my ( $self, $language, $selector ) = @_;
+    my $fs_zone = $self->get_zone( $language, $selector );
+    if ( not defined $fs_zone ) {
+        $fs_zone = $self->create_zone( $language, $selector );
     }
     return $fs_zone;
 }
 
-
 # ----------------- ACCESS TO ATTRIBUTES -------------------
-
 
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
 
-    if ($attr_name =~ /^(\S+)$/) {
-        return Treex::PML::Node::set_attr( $self->metaData('pml_root')->{meta},
-                                           $attr_name, $attr_value );
+    if ( $attr_name =~ /^(\S+)$/ ) {
+        return Treex::PML::Node::set_attr(
+            $self->metaData('pml_root')->{meta},
+            $attr_name, $attr_value
+        );
     }
 
-    elsif ($attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/) {
-        my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $zone = $self->get_or_create_zone($language,$selector);
-        return $zone->set_attr($attr_name, $attr_value);
+    elsif ( $attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/ ) {
+        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
+        my $zone = $self->get_or_create_zone( $language, $selector );
+        return $zone->set_attr( $attr_name, $attr_value );
     }
 
     else {
@@ -348,14 +344,14 @@ sub get_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal "set_attr: incorrect number of arguments" if @_ != 2;
 
-    if ($attr_name =~ /^(\S+)$/) {
+    if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, $attr_name );
     }
 
-    elsif ($attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/) {
-        my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $fs_zone = $self->get_zone($language,$selector);
-        if (defined $fs_zone) {
+    elsif ( $attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/ ) {
+        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
+        my $fs_zone = $self->get_zone( $language, $selector );
+        if ( defined $fs_zone ) {
             return $fs_zone->get_attr($attr_name);
         }
         else {
@@ -368,12 +364,7 @@ sub get_attr {
     }
 }
 
-
-
-
-
 __PACKAGE__->meta->make_immutable;
-
 
 1;
 

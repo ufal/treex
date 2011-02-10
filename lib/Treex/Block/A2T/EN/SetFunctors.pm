@@ -99,25 +99,25 @@ foreach (
 sub assign_functors($$) {
     my ( $t_root, $document ) = @_;
 
-  NODE: foreach my $node ( grep { not defined $_->get_attr('functor') } $t_root->get_descendants ) {
+    NODE: foreach my $node ( grep { not defined $_->get_attr('functor') } $t_root->get_descendants ) {
 
-#        my $lex_a_node  = $document->get_node_by_id( $node->get_attr('a/lex.rf') );
+        #        my $lex_a_node  = $document->get_node_by_id( $node->get_attr('a/lex.rf') );
         my $lex_a_node = $node->get_lex_anode;
 
-        if (not defined $lex_a_node) {
-            $node->set_attr('functor','???');
+        if ( not defined $lex_a_node ) {
+            $node->set_attr( 'functor', '???' );
             next NODE;
         }
 
         my $a_parent    = $lex_a_node->get_parent;
         my $afun        = $lex_a_node->afun;
-        my $mlemma      = lc $lex_a_node->lemma;                                      #Monday -> monday
+        my $mlemma      = lc $lex_a_node->lemma;     #Monday -> monday
         my @aux_a_nodes = $node->get_aux_anodes();
         my ($first_aux_mlemma) = map { $_->lemma } grep { $_->tag eq "IN" } @aux_a_nodes;
 
         my $functor;
 
-        if ($node->get_parent() == $t_root                                                          # and $lex_a_node->tag ne "CC"  # uz by to v tuhle chvili melo CONJ
+        if ($node->get_parent() == $t_root           # and $lex_a_node->tag ne "CC"  # uz by to v tuhle chvili melo CONJ
             )
         {
             $functor = 'PRED'
@@ -140,7 +140,7 @@ sub assign_functors($$) {
         elsif ( ($functor) = grep {$_} map { $aux2functor{ $_->lemma } } @aux_a_nodes ) {
         }
         elsif (
-                $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
+            $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
             and $a_parent->tag
             =~ /^V/
             and $lex_a_node->get_attr('ord') < $a_parent->get_attr('ord')

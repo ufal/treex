@@ -3,8 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
-has _tagger     => (is => 'rw'); 
+has '+language' => ( default => 'en' );
+has _tagger     => ( is      => 'rw' );
 
 use Morce::English;
 use DowngradeUTF8forISO2;
@@ -12,16 +12,16 @@ use DowngradeUTF8forISO2;
 sub BUILD {
     my ($self) = @_;
 
-    $self->_set_tagger(Morce::English->new());
-    
+    $self->_set_tagger( Morce::English->new() );
+
     return;
 }
 
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2($_->form) } $atree->get_descendants();
-  
+    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } $atree->get_descendants();
+
     # get tags
     my ($tags_rf) = $self->_tagger->tag_sentence( \@forms );
     if ( @$tags_rf != @forms ) {
@@ -29,15 +29,14 @@ sub process_atree {
     }
 
     # fill tags
-    foreach my $a_node ($atree->get_descendants) {
-        $a_node->set_tag(shift @$tags_rf);
+    foreach my $a_node ( $atree->get_descendants ) {
+        $a_node->set_tag( shift @$tags_rf );
     }
 
     return 1;
 }
 
 1;
-
 
 __END__
 

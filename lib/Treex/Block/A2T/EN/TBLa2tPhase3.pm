@@ -30,17 +30,17 @@ sub feature_string
     $t_par or $t_par = $t_node->get_parent;
     my $a_par = get_anode($t_par);
     $mr = morph_real($t_par);
-    $outstr .= sprintf "%s/%s ",                                                                                   # lemma/POS
+    $outstr .= sprintf "%s/%s ",                                                                       # lemma/POS
         attr( $t_par, 't_lemma' ), substr( $mr, -1 );
 
     # features of its children
-    my @ch = grep { $_->get_attr('a/lex.rf') } $t_node->get_children({ordered=>1});
+    my @ch = grep { $_->get_attr('a/lex.rf') } $t_node->get_children( { ordered => 1 } );
     for ( 0 .. 5 ) {
         $outstr .= defined $ch[$_] ? $ch[$_]->t_lemma . " " . morph_real( $ch[$_] ) . " " : "--- -- ";
     }
 
     # features to be changed
-    $outstr .= "--- " . $t_node->get_attr('functor') . " ";                                                        # valency frame and current functor
+    $outstr .= "--- " . $t_node->get_attr('functor') . " ";                                            # valency frame and current functor
     return $outstr;
 }
 
@@ -93,7 +93,7 @@ sub process_document
     }
     close $ftbl;
 
-		unlink $fname_in, $fname_out;
+    unlink $fname_in, $fname_out;
 }
 
 1;

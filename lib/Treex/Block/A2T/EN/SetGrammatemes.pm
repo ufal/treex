@@ -95,7 +95,7 @@ sub process_bundle {
 }
 
 sub assign_grammatemes_to_tnode {
-    my ($tnode)   = @_;
+    my ($tnode) = @_;
     my $lex_anode = $tnode->get_lex_anode();
     return if !$lex_anode;
     my $tag  = $lex_anode->tag;
@@ -291,7 +291,7 @@ sub _verb {
     $tnode->set_attr( 'gram/verbmod', $is_conditional ? 'cdn' : 'ind' );
 
     # ... but gram/tense is more intricate
-#    my $tense = _guess_verb_tense( $tnode, $tag, \%is_aux_form, \%is_aux_lemma );
+    #    my $tense = _guess_verb_tense( $tnode, $tag, \%is_aux_form, \%is_aux_lemma );
     my $tense = _guess_verb_tense($tnode);
     $tnode->set_attr( 'gram/tense', $tense );
 
@@ -302,23 +302,21 @@ sub _guess_verb_tense {
     my ($tnode) = @_;
 
     my @anodes = sort { $a->get_ordering_value <=> $b->get_ordering_value }
-      grep {$_->tag=~/^(V|MD)/}
+        grep { $_->tag =~ /^(V|MD)/ }
         $tnode->get_anodes;
 
-    my @forms = map {lc($_->form)} @anodes;
-    my @tags = map {$_->tag} @anodes;
+    my @forms = map { lc( $_->form ) } @anodes;
+    my @tags  = map { $_->tag } @anodes;
 
-    return 'post' if any { /^(will|shall|wo)$/ } @forms;
+    return 'post' if any {/^(will|shall|wo)$/} @forms;
 
-    return 'post' if any { $_ eq "going" } @forms[0..$#forms-1]; # 'to be going to ...'
+    return 'post' if any { $_ eq "going" } @forms[ 0 .. $#forms - 1 ];    # 'to be going to ...'
 
-    return 'ant' if $tags[0] =~ /VB[DN]/ # VBN allowed only because of frequent tagging errors VBD->VBN
-	or (any {$_=~ /^(have|has|'ve|having)$/} @forms[0..$#forms-1] and any {$_ =~ /VB[ND]/} @tags);
+    return 'ant' if $tags[0] =~ /VB[DN]/                                  # VBN allowed only because of frequent tagging errors VBD->VBN
+            or ( any { $_ =~ /^(have|has|'ve|having)$/ } @forms[ 0 .. $#forms - 1 ] and any { $_ =~ /VB[ND]/ } @tags );
 
     return 'sim';
 }
-
-
 
 #------ Other subs --------
 
@@ -338,6 +336,7 @@ sub _is_negated {
     if ( $m_form =~ /^(un|in|im|non|dis|il|ir)-?(..)/ ) {
         my $expected_prefix = $2;
         if ( $t_lemma =~ /^\Q$expected_prefix\E/ ) {
+
             # escaping \Q necessary for word 'Disk\/Trend' which gets
             # lemmatized to k\/Tred
 

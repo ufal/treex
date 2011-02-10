@@ -6,13 +6,14 @@ use MooseX::NonMoose;
 
 extends 'Treex::PML::Node';
 
-has document => (is => 'ro',
-                 writer => '_set_document',
-                 reader => 'get_document',
-                 weak_ref => 1,
-             );
+has document => (
+    is       => 'ro',
+    writer   => '_set_document',
+    reader   => 'get_document',
+    weak_ref => 1,
+);
 
-has id => (is => 'rw' );
+has id => ( is => 'rw' );
 
 use Treex::Core::Node;
 use Treex::Core::Node::A;
@@ -24,8 +25,6 @@ use Treex::Core::Log;
 
 my @layers = qw(t a n);
 
-
-
 # --------- ACCESS TO ZONES ------------
 
 sub get_zone {
@@ -33,7 +32,7 @@ sub get_zone {
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
             my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and ($value->{selector}||'') eq ($selector||'') ) {
+            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
                 return $value;
             }
         }
@@ -42,19 +41,19 @@ sub get_zone {
 }
 
 sub create_zone {
-    my ( $self,  $language, $selector ) = @_;
+    my ( $self, $language, $selector ) = @_;
     my $new_zone = Treex::Core::BundleZone->new(
         {
-            'language'  => $language,
-            'selector' => ($selector || '')
+            'language' => $language,
+            'selector' => ( $selector || '' )
         }
     );
 
-    my $new_element = Treex::PML::Seq::Element->new('zone', $new_zone);
+    my $new_element = Treex::PML::Seq::Element->new( 'zone', $new_zone );
 
     $new_zone->_set_bundle($self);
 
-#    $new_subbundle->set_type_by_name( $self->get_document->metaData('schema'), 'zone' );
+    #    $new_subbundle->set_type_by_name( $self->get_document->metaData('schema'), 'zone' );
 
     if ( defined $self->{zones} ) {
         $self->{zones}->unshift_element_obj($new_element);
@@ -75,12 +74,10 @@ sub get_or_create_zone {
     return $zone;
 }
 
-
 sub get_all_zones {
     my ($self) = @_;
-    return map {$_->value()} $self->{zones}->elements;
+    return map { $_->value() } $self->{zones}->elements;
 }
-
 
 # --------- ACCESS TO TREES ------------
 
@@ -90,10 +87,10 @@ sub get_all_trees {
     return () unless $self->{zones};
 
     my @trees;
-    foreach my $zone ($self->{zones}->elements) {
+    foreach my $zone ( $self->{zones}->elements ) {
         my $structure = $zone->value;
         foreach my $layer (@layers) {
-            if (exists $structure->{trees}->{"${layer}_tree"}) {
+            if ( exists $structure->{trees}->{"${layer}_tree"} ) {
                 push @trees, $structure->{trees}->{"${layer}_tree"};
             }
         }
@@ -101,7 +98,6 @@ sub get_all_trees {
     return @trees;
 
 }
-
 
 sub create_tree {
     my ( $self, $tree_name ) = @_;
@@ -123,7 +119,6 @@ sub create_tree {
     }
 }
 
-
 sub get_tree {
     my ( $self, $tree_name ) = @_;
     log_fatal "get_tree: incorrect number of arguments" if @_ != 2;
@@ -140,7 +135,7 @@ sub get_tree {
         my ( $selector, $language, $layer ) = ( $1, $2, $3 );
 
         my $zone = $self->get_zone( $language, $selector );
-        if (not defined $zone) {
+        if ( not defined $zone ) {
             log_fatal "Unavailable zone $selector$language\n";
         }
 
@@ -149,14 +144,14 @@ sub get_tree {
 }
 
 sub has_tree {
-	my ( $self, $tree_name ) = @_;
-	log_fatal "has_tree: incorrect number of arguments" if @_ != 2;
+    my ( $self, $tree_name ) = @_;
+    log_fatal "has_tree: incorrect number of arguments" if @_ != 2;
 
-	$tree_name =~ s/Czech/cs/;
+    $tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
     $tree_name =~ s/M$/A/;
 
-	if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
+    if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
         log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
     }
 
@@ -168,23 +163,21 @@ sub has_tree {
         return defined $zone && $zone->has_tree($layer);
     }
 
-
 }
 
 # --------- ACCESS TO ATTRIBUTES ------------
-
 
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
 
-    if ($attr_name =~ /^(\S+)$/) {
+    if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
     }
 
-    elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $zone = $self->get_or_create_zone($language,$selector);
+    elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
+        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
+        my $zone = $self->get_or_create_zone( $language, $selector );
         return $zone->{$attr_name} = $attr_value;
     }
 
@@ -197,14 +190,14 @@ sub get_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal "get_attr: incorrect number of arguments" if @_ != 2;
 
-    if ($attr_name =~ /^(\S+)$/) {
+    if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::attr( $self, $attr_name );
     }
 
-    elsif ($attr_name =~ /^([ST])([a-z]{2}) (\S+)$/) {
-        my ($selector, $language, $attr_name) = ($1,$2,$3);
-        my $zone = $self->get_zone($language,$selector);
-        if (defined $zone) {
+    elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
+        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
+        my $zone = $self->get_zone( $language, $selector );
+        if ( defined $zone ) {
             return $zone->{$attr_name};
         }
         else {
@@ -217,9 +210,6 @@ sub get_attr {
     }
 }
 
-
-
-
 # ------ ACCESS MESSAGE BOARD ----------
 
 sub leave_message {
@@ -229,7 +219,8 @@ sub leave_message {
     }
     if ( $self->get_attr('message_board') ) {
         push @{ $self->get_attr('message_board') }, $message_text;
-    } else {
+    }
+    else {
         $self->set_attr( 'message_board', Treex::PML::List->new($message_text) );
     }
 }
@@ -239,13 +230,11 @@ sub get_messages {
     log_fatal "get_messages: incorrect number of arguments" if @_ != 1;
     if ( $self->get_attr('message_board') ) {
         return @{ $self->get_attr('message_board') };
-    } else {
+    }
+    else {
         return ();
     }
 }
-
-
-
 
 __PACKAGE__->meta->make_immutable;
 

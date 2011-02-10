@@ -6,37 +6,35 @@ use warnings;
 use File::HomeDir;
 use File::ShareDir;
 
-
 sub devel_version {
     return $ENV{TMT_ROOT};
+
     # return -d lib_core_dir()."/share/";
     # to je otazka, jak to co nejelegantneji poznat, ze jde o work.copy. a ne nainstalovanou distribuci
 }
 
-
 sub share_dir {
-    return $ENV{TMT_ROOT}."/share/"; # temporary
-    # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
+    return $ENV{TMT_ROOT} . "/share/";    # temporary
+                                          # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
 }
 
 sub tred_dir {
     return $ENV{TRED_DIR};
 }
 
-
 sub pml_schema_dir {
 
-    if (devel_version()) {
-        return lib_core_dir()."/share/tred_extension/treex/resources/";
+    if ( devel_version() ) {
+        return lib_core_dir() . "/share/tred_extension/treex/resources/";
     }
     else {
         return File::ShareDir::dist_dir('Treex-Core')
-            ."/tred_extension/treex/resources/";
+            . "/tred_extension/treex/resources/";
     }
 }
 
 sub tred_extension_dir {
-    return pml_schema_dir()."/../../";
+    return pml_schema_dir() . "/../../";
 }
 
 sub lib_core_dir {
@@ -47,16 +45,12 @@ sub _caller_dir {
     my %call_info;
     @call_info{
         qw(pack file line sub has_args wantarray evaltext is_require)
-    } = caller(0);
+        } = caller(0);
     $call_info{file} =~ s/[^\/]+$//;
     return $call_info{file};
 }
 
-
-
-
 1;
-
 
 __END__
 

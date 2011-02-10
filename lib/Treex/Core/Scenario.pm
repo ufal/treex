@@ -2,26 +2,30 @@ package Treex::Core::Scenario;
 use Moose;
 use Treex::Moose;
 
-has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub {[]});
+has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub { [] } );
 
-has document_reader => ( is => 'rw', does => 'Treex::Core::DocumentReader',
-            documentation => 'DocumentReader starts every scenario and reads a stream of documents.' );
+has document_reader => (
+    is            => 'rw',
+    does          => 'Treex::Core::DocumentReader',
+    documentation => 'DocumentReader starts every scenario and reads a stream of documents.'
+);
 
 has _global_params => (
-    is        => 'ro',
-    isa       => 'HashRef[Str]',
-    traits    => ['Hash'],
-    default   => sub { {} },
-    handles   => {
-          get_global_param  => 'get',
-          set_global_param  => 'set',
-          #get_global_param_names => 'keys',
-          #set_verbose       => [ set => 'verbose' ],
-          #get_verbose       => [ get => 'verbose' ],
-          #set_language      => [ set => 'language' ],
-          #get_language      => [ get => 'language' ],
-          #... ?
-      },
+    is      => 'ro',
+    isa     => 'HashRef[Str]',
+    traits  => ['Hash'],
+    default => sub { {} },
+    handles => {
+        get_global_param => 'get',
+        set_global_param => 'set',
+
+        #get_global_param_names => 'keys',
+        #set_verbose       => [ set => 'verbose' ],
+        #get_verbose       => [ get => 'verbose' ],
+        #set_language      => [ set => 'language' ],
+        #get_language      => [ get => 'language' ],
+        #... ?
+    },
 );
 
 use Treex::Core::Log;
@@ -67,11 +71,12 @@ sub BUILD {
         log_info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
         my $new_block = $self->_load_block($block_item);
 
-        if ($new_block->does('Treex::Core::DocumentReader')){
+        if ( $new_block->does('Treex::Core::DocumentReader') ) {
             log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->document_reader();
             $self->set_document_reader($new_block);
-        } else {
+        }
+        else {
             push @{ $self->loaded_blocks }, $new_block;
         }
     }
@@ -123,7 +128,7 @@ sub parse_scenario_string {
     foreach my $token (@tokens) {
 
         # include of another scenario file
-        if ( $token =~ /\.scen/) {
+        if ( $token =~ /\.scen/ ) {
             my $scenario_filename = $token;
             $scenario_filename =~ s/\$\{?TMT_ROOT\}?/$ENV{TMT_ROOT}/;
 
@@ -163,10 +168,13 @@ sub parse_scenario_string {
             my $block_filename = $token;
             $block_filename =~ s/::/\//g;
             $block_filename .= '.pm';
-            if ( -e $ENV{TMT_ROOT} . "/treex/lib/Treex/Block/$block_filename" ) {  # new Treex blocks
+            if ( -e $ENV{TMT_ROOT} . "/treex/lib/Treex/Block/$block_filename" ) {    # new Treex blocks
                 $token = "Treex::Block::$token";
-            } elsif ( -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {       # old TectoMT blocks
-            } else {
+            }
+            elsif ( -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {           # old TectoMT blocks
+            }
+            else {
+
                 # TODO allow user-made blocks not-starting with Treex::Block?
                 log_fatal("Block $token (file $block_filename) does not exist!");
             }
@@ -189,15 +197,15 @@ sub construct_scenario_string {
 }
 
 sub _load_block {
-    my ($self, $block_item) = @_;
+    my ( $self, $block_item ) = @_;
     my $block_name = $block_item->{block_name};
     my $new_block;
 
     # Initialize with global (scenario) parameters
-    my %params = (%{$self->_global_params}, scenario=>$self);
+    my %params = ( %{ $self->_global_params }, scenario => $self );
 
     # which can be overriden by (local) block parameters.
-    foreach (@{$block_item->{block_parameters}}){
+    foreach ( @{ $block_item->{block_parameters} } ) {
         my ( $name, $value ) = split /=/;
         $params{$name} = $value;
     }
@@ -214,27 +222,26 @@ sub _load_block {
 }
 
 sub run {
-    my ( $self ) = @_;
-    my $reader = $self->document_reader or log_fatal('No DocumentReader supplied');
-    my $number_of_blocks  = @{ $self->loaded_blocks };
+    my ($self) = @_;
+    my $reader              = $self->document_reader or log_fatal('No DocumentReader supplied');
+    my $number_of_blocks    = @{ $self->loaded_blocks };
     my $number_of_documents = $reader->number_of_documents();
-    my $document_number = 0;
+    my $document_number     = 0;
 
-    
-    while (my $document = $reader->next_document()) {
+    while ( my $document = $reader->next_document() ) {
         $document_number++;
         my $doc_name = $document->full_filename;
         my $doc_from = $document->loaded_from;
         log_info "Document $document_number/$number_of_documents $doc_name loaded from $doc_from";
         my $block_number = 0;
-        foreach my $block ( @{$self->loaded_blocks} ) {
+        foreach my $block ( @{ $self->loaded_blocks } ) {
             $block_number++;
             log_info "Applying block $block_number/$number_of_blocks " . ref($block);
             $block->process_document($document);
         }
     }
     log_info "Processed $document_number document"
-        . ($document_number>1 ? 's' : '');
+        . ( $document_number > 1 ? 's' : '' );
     return 1;
 }
 

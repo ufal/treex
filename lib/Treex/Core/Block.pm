@@ -3,10 +3,14 @@ use Moose;
 use Treex::Moose;
 use LWP::Simple;
 
-has selector => ( is => 'ro', isa => 'Selector', default => '',);
-has language => ( is => 'ro', isa => 'LangCode',);
-has scenario => ( is => 'ro', isa => 'Treex::Core::Scenario',
-                  writer => '_set_scenario', weak_ref => 1,);
+has selector => ( is => 'ro', isa => 'Selector', default => '', );
+has language => ( is => 'ro', isa => 'LangCode', );
+has scenario => (
+    is       => 'ro',
+    isa      => 'Treex::Core::Scenario',
+    writer   => '_set_scenario',
+    weak_ref => 1,
+);
 
 # TODO
 # has robust => ( is=> 'ro', isa=>'Bool', default=>0,
@@ -14,9 +18,9 @@ has scenario => ( is => 'ro', isa => 'Treex::Core::Scenario',
 
 sub process_document {
     my ( $self, $document ) = @_;
-    if (!$document->get_bundles()){
-        log_fatal "There are no bundles in the document and block ". ref($self) .
-        " doesn't override the method process_document";
+    if ( !$document->get_bundles() ) {
+        log_fatal "There are no bundles in the document and block " . ref($self) .
+            " doesn't override the method process_document";
     }
     foreach my $bundle ( $document->get_bundles() ) {
         $self->process_bundle($bundle);
@@ -25,58 +29,64 @@ sub process_document {
 }
 
 sub process_bundle {
-    my ($self, $bundle) = @_;
-    log_fatal "Parameter language was not set and block ". ref($self)
+    my ( $self, $bundle ) = @_;
+    log_fatal "Parameter language was not set and block " . ref($self)
         . " doesn't override the method process_bundle" if !$self->language;
-    my $zone = $bundle->get_zone($self->language, $self->selector);
-    log_fatal("Zone (lang=".$self->language.", selector=". $self->selector
-        . ") was not found in a bundle and block ". ref($self)
-        . " doesn't override the method process_bundle")
+    my $zone = $bundle->get_zone( $self->language, $self->selector );
+    log_fatal(
+        "Zone (lang="
+            . $self->language
+            . ", selector="
+            . $self->selector
+            . ") was not found in a bundle and block " . ref($self)
+            . " doesn't override the method process_bundle"
+        )
         if !$zone;
     return $self->process_zone($zone);
 }
 
 sub process_zone {
-    my ($self, $zone) = @_;
+    my ( $self, $zone ) = @_;
 
     log_fatal("one of the methods /process_(zone|[atnp](tree|node))/ must be overriden") if not
-        ( ( $zone->has_tree('a') && $self->process_atree($zone->get_atree) )
-        or ( $zone->has_tree('t') && $self->process_ttree($zone->get_ttree) )
-        or ( $zone->has_tree('n') && $self->process_ntree($zone->get_ntree) )
-        or ( $zone->has_tree('p') && $self->process_ptree($zone->get_ptree) ) ); 
+            (   ( $zone->has_tree('a')    && $self->process_atree( $zone->get_atree ) )
+                or ( $zone->has_tree('t') && $self->process_ttree( $zone->get_ttree ) )
+                or ( $zone->has_tree('n') && $self->process_ntree( $zone->get_ntree ) )
+                or ( $zone->has_tree('p') && $self->process_ptree( $zone->get_ptree ) )
+            );
 }
 
 sub process_atree {
-    my ($self, $tree) = @_;
+    my ( $self, $tree ) = @_;
     return if !$self->meta->has_method('process_anode');
-    foreach my $node ($tree->get_descendants()){
+    foreach my $node ( $tree->get_descendants() ) {
         $self->process_anode($node);
     }
     return 1;
 }
 
 sub process_ttree {
-    my ($self, $tree) = @_;
-    return if !$self->meta->has_method('process_tnode');    
-    foreach my $node ($tree->get_descendants()){
+    my ( $self, $tree ) = @_;
+    return if !$self->meta->has_method('process_tnode');
+    foreach my $node ( $tree->get_descendants() ) {
         $self->process_tnode($node);
     }
     return 1;
 }
 
 sub process_ntree {
-    my ($self, $tree) = @_;
+    my ( $self, $tree ) = @_;
     return if !$self->meta->has_method('process_nnode');
-    foreach my $node ($tree->get_descendants()){
+    foreach my $node ( $tree->get_descendants() ) {
         $self->process_nnode($node);
     }
     return 1;
 }
 
 sub process_ptree {
-    my ($self, $tree) = @_;
+    my ( $self, $tree ) = @_;
     return if !$self->meta->has_method('process_pnode');
-    foreach my $node ($tree->get_descendants()){
+    foreach my $node ( $tree->get_descendants() ) {
         $self->process_pnode($node);
     }
     return 1;
@@ -94,7 +104,7 @@ sub require_file_from_share {
     my $file = Treex::Core::Config::share_dir() . $rel_path_to_file;
 
     if ( not -e $file ) {
-        log_info("Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . ".");
+        log_info( "Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . "." );
 
         my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
         log_info("Trying to download $url");
@@ -110,7 +120,7 @@ sub require_file_from_share {
             log_info("Successfully downloaded to $file");
         }
         elsif ( $response_code == 404 ) {
-            log_fatal("The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . ".");
+            log_fatal( "The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . "." );
         }
         else {
             log_fatal("Error when trying to download $url and to store it as $file ($response_code).");
@@ -119,14 +129,11 @@ sub require_file_from_share {
     return $file;
 }
 
-
 sub get_required_share_files {
     return ();
 }
 
 1;
-
-
 
 __END__
 

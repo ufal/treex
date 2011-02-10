@@ -12,23 +12,21 @@ with 'Treex::Core::TectoMTStyleAccessors';
 Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
 my $CHECK_FOR_CYCLES = 1;
 
-
 has _zone => (
-    is => 'rw',
-    writer => '_set_zone',
-    reader => '_get_zone',
+    is       => 'rw',
+    writer   => '_set_zone',
+    reader   => '_get_zone',
     weak_ref => 1,
 );
 
 has id => (
-    is => 'rw',
+    is      => 'rw',
     trigger => \&_index_my_id,
 );
 
-
 sub _index_my_id {
     my $self = shift;
-    $self->get_document->index_node_by_id($self->id, $self);
+    $self->get_document->index_node_by_id( $self->id, $self );
 }
 
 sub _pml_attribute_hash {
@@ -41,21 +39,20 @@ sub get_bundle {
     return $self->get_zone->get_bundle;
 }
 
-sub get_zone { # reference to embeding zone is stored only with tree root, not with nodes
+sub get_zone {    # reference to embeding zone is stored only with tree root, not with nodes
     my ($self) = @_;
     my $zone;
-    if ($self->is_root) {
-	$zone = $self->_get_zone;
+    if ( $self->is_root ) {
+        $zone = $self->_get_zone;
     }
     else {
-	$zone = $self->get_root->_get_zone;
+        $zone = $self->get_root->_get_zone;
     }
 
     log_fatal "a node can't reveal its zone" unless $zone;
     return $zone;
 
 }
-
 
 sub disconnect {
     my ( $self, $arg_ref ) = @_;
@@ -79,7 +76,8 @@ sub disconnect {
 
     if ( $self->is_root ) {
         log_fatal "Tree root cannot be disconnected from its parent";
-    } else {
+    }
+    else {
 
         # removing the nodes to be disconnected from the document's indexing table
         foreach my $node ( $self, $self->get_descendants ) {
@@ -99,21 +97,19 @@ sub disconnect {
     return;
 }
 
-
 sub get_pml_type_name {
     return;
 }
 
 sub get_layer {
     my ($self) = @_;
-    if (ref($self) =~ /Node::(\w)$/) {
-	return lc($1);
+    if ( ref($self) =~ /Node::(\w)$/ ) {
+        return lc($1);
     }
     else {
-	log_fatal "Cannot recognize node's layer: $self";
+        log_fatal "Cannot recognize node's layer: $self";
     }
 }
-
 
 sub create_child {
     my $self     = shift;
@@ -121,8 +117,9 @@ sub create_child {
     $new_node->set_parent($self);
 
     my $new_id = $self->generate_new_id();
-    $new_node->set_id(  $new_id );
-#    $self->get_document->index_node_by_id($new_id, $new_node);
+    $new_node->set_id($new_id);
+
+    #    $self->get_document->index_node_by_id($new_id, $new_node);
 
     my $type = $new_node->get_pml_type_name();
     return $new_node if !defined $type;
@@ -137,11 +134,12 @@ sub add_to_listattr {
     log_fatal('Incorrect number of arguments') if @_ != 3;
     my $list = $self->attr($attr_name);
     log_fatal("Attribute $attr_name is not a list!")
-          if !defined $list || ref($list) ne 'Treex::PML::List';
+        if !defined $list || ref($list) ne 'Treex::PML::List';
     my @new_list = @{$list};
     if ( ref($attr_value) eq 'ARRAY' ) {
         push @new_list, @{$attr_value};
-    } else {
+    }
+    else {
         push @new_list, $attr_value;
     }
     return $self->set_attr( $attr_name, Treex::PML::List->new(@new_list) );
@@ -158,7 +156,8 @@ sub get_attrs {
         @attr_values = map {
             defined $self->get_attr($_) ? $self->get_attr($_) : $change_undefs_to
         } @attr_names;
-    } else {
+    }
+    else {
         @attr_values = map { $self->get_attr($_) } @attr_names;
     }
 
@@ -194,7 +193,8 @@ sub get_parent {
 
 sub set_parent {
     my ( $self, $parent ) = @_;
-#    UNIVERSAL::isa( $parent, 'TectoMT::Node' ) or log_fatal("Node's parent must be a TectoMT::Node (it is $parent)");
+
+    #    UNIVERSAL::isa( $parent, 'TectoMT::Node' ) or log_fatal("Node's parent must be a TectoMT::Node (it is $parent)");
 
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
         my $id   = $self->get_attr('id');
@@ -212,7 +212,8 @@ sub set_parent {
     my @fschildren = $fsparent->children();
     if (@fschildren) {
         Treex::PML::PasteAfter( $fsself, $fschildren[-1] );
-    } else {
+    }
+    else {
         Treex::PML::Paste( $fsself, $fsparent, $fsfile->FS() );
     }
 
@@ -221,19 +222,19 @@ sub set_parent {
     return;
 }
 
-sub _check_switches  {
+sub _check_switches {
     my ( $self, $arg_ref ) = @_;
 
     # Check switches for not allowed combinations
     log_fatal('Specified both preceding_only and following_only.')
-          if $arg_ref->{preceding_only} && $arg_ref->{following_only};
+        if $arg_ref->{preceding_only} && $arg_ref->{following_only};
     log_fatal('Specified both first_only and last_only.')
-          if $arg_ref->{first_only} && $arg_ref->{last_only};
+        if $arg_ref->{first_only} && $arg_ref->{last_only};
 
     # Check for explicit "ordered" when not needed (possible typo)
     log_warn('Specifying (first|last|preceding|following)_only implies ordered.')
-          if $arg_ref->{ordered}
-              && any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following);
+        if $arg_ref->{ordered}
+            && any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following);
 
     # Check for unknown switches
     my $unknown = first { $_ !~ $_SWITCHES_REGEX } keys %{$arg_ref};
@@ -245,7 +246,7 @@ sub _check_switches  {
 # Shared processing of switches: ordered, (preceding|following|first|last)_only
 # for subs get_children, get_descendants and get_siblings.
 # This is quite an uneffective implementation in case of e.g. first_only
-sub _process_switches  {
+sub _process_switches {
     my ( $self, $arg_ref, @nodes ) = @_;
 
     # Check for unknown switches and not allowed combinations
@@ -258,8 +259,9 @@ sub _process_switches  {
 
     # Sort nodes if needed
     if (( $arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following) )
-            && @nodes && $nodes[0]->ordering_attribute()
-        ) {
+        && @nodes && $nodes[0]->ordering_attribute()
+        )
+    {
         @nodes = sort { $a->get_ordering_value() <=> $b->get_ordering_value() } @nodes;
     }
 
@@ -267,7 +269,8 @@ sub _process_switches  {
     my $my_ord = $self->get_ordering_value();
     if ( $arg_ref->{preceding_only} ) {
         @nodes = grep { $_->get_ordering_value() <= $my_ord } @nodes;
-    } elsif ( $arg_ref->{following_only} ) {
+    }
+    elsif ( $arg_ref->{following_only} ) {
         @nodes = grep { $_->get_ordering_value() >= $my_ord } @nodes;
     }
 
@@ -295,7 +298,8 @@ sub get_descendants {
         @descendants = map {
             $_->get_descendants( { except => $except_node, add_self => 1 } )
         } $self->get_children();
-    } else {
+    }
+    else {
         @descendants = $self->descendants();
     }
     return @descendants if !$arg_ref;
@@ -402,18 +406,18 @@ sub normalize_node_ordering {
     return;
 }
 
-sub _check_shifting_method_args  {
+sub _check_shifting_method_args {
     my ( $self, $reference_node, $arg_ref ) = @_;
     my @c     = caller 1;
     my $stack = "$c[3] called from $c[1], line $c[2]";
     log_fatal( 'Incorrect number of arguments for ' . $stack ) if @_ < 2 || @_ > 3;
     log_fatal( 'Undefined reference node for ' . $stack ) if !$reference_node;
     log_fatal( 'Reference node must be from the same tree. In ' . $stack )
-          if $reference_node->get_root() != $self->get_root();
+        if $reference_node->get_root() != $self->get_root();
 
     log_fatal '$reference_node is a descendant of $self.'
-          . ' Maybe you have forgotten {without_children=>1}. ' . "\n" . $stack
-              if !$arg_ref->{without_children} && $reference_node->is_descendant_of($self);
+        . ' Maybe you have forgotten {without_children=>1}. ' . "\n" . $stack
+        if !$arg_ref->{without_children} && $reference_node->is_descendant_of($self);
 
     return if !defined $arg_ref;
 
@@ -461,7 +465,7 @@ sub shift_before_subtree {
 
 # This method does the real work for all shift_* methods.
 # However, due to unfriendly name and arguments it's not public.
-sub _shift_to_node  {
+sub _shift_to_node {
     my ( $self, $reference_node, $after, $without_children ) = @_;
     my @all_nodes = $self->get_root()->get_descendants();
 
@@ -480,7 +484,8 @@ sub _shift_to_node  {
     my @nodes_to_move;
     if ($without_children) {
         @nodes_to_move = ($self);
-    } else {
+    }
+    else {
         @nodes_to_move = $self->get_descendants( { ordered => 1, add_self => 1 } );
     }
 
@@ -542,7 +547,7 @@ sub get_fposition {
     my $fs_root = $self->get_bundle;
 
     my $bundle_number = 1;
-  TREES:
+    TREES:
     foreach my $t ( $fsfile->trees() ) {
         last TREES if $t == $fs_root;
         $bundle_number++;
@@ -552,7 +557,7 @@ sub get_fposition {
     return "$filename##$bundle_number.$id";
 }
 
-sub generate_new_id { #TODO move to Core::Document?
+sub generate_new_id {    #TODO move to Core::Document?
     my ($self) = @_;
 
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -591,7 +596,7 @@ sub get_clause_root {
     my ($self) = @_;
     my $my_number = $self->get_attr('clause_number');
     log_warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
-          if !defined $my_number;
+        if !defined $my_number;
     return $self if !$my_number;
 
     my $highest = $self;
@@ -636,7 +641,7 @@ sub get_clause_descendants {
 #************************************
 #---- TO BE REMOVED ------
 
-sub _deprecated  {
+sub _deprecated {
     my $instead     = shift;
     my $method_name = ( caller 1 )[3];
     my $message     = "Method '$method_name' is deprecated and will be removed.";
@@ -667,10 +672,12 @@ sub shift_left {
 
     # parent can stand in the way
     if (( !defined $left_neighbor || $left_neighbor->get_ordering_value() < $parent->get_ordering_value() )
-            && $parent->get_ordering_value() < $my_ord
-        ) {
+        && $parent->get_ordering_value() < $my_ord
+        )
+    {
         @left_treelet = ($parent);
-    } else {
+    }
+    else {
         log_fatal('Cannot shift left without a left neighbor') if !$left_neighbor;
         @left_treelet = ( $left_neighbor, $left_neighbor->get_descendants );
 
@@ -707,10 +714,12 @@ sub shift_right {
 
     # parent can stand in the way
     if (( !defined $right_neighbor || $parent->get_ordering_value() < $right_neighbor->get_ordering_value() )
-            && $my_ord < $parent->get_ordering_value()
-        ) {
+        && $my_ord < $parent->get_ordering_value()
+        )
+    {
         @right_treelet = ($parent);
-    } else {
+    }
+    else {
         log_fatal('Cannot shift left without a left neighbor') if !$right_neighbor;
         @right_treelet = ( $right_neighbor, $right_neighbor->get_descendants );
         @right_treelet = sort { $a->get_ordering_value <=> $b->get_ordering_value } @right_treelet;
@@ -781,7 +790,6 @@ sub non_projective_shift_to_leftmost_of {
     }
     return;
 }
-
 
 sub get_self_and_descendants {
     my ($self) = @_;
@@ -874,12 +882,9 @@ sub get_right_siblings {
     return ( grep { $_->get_ordering_value > $my_ordering_value } $self->get_ordered_siblings )
 }
 
-
-
 __PACKAGE__->meta->make_immutable;
 
 1;
-
 
 __END__
 

@@ -113,7 +113,7 @@ sub process_document
         }
     }
 
-		unlink $fname_in, $fname_lex, $fname_out;
+    unlink $fname_in, $fname_lex, $fname_out;
 }
 
 1;

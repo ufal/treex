@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Readonly;
 
@@ -38,7 +38,7 @@ my $NOUN_REGEX = qr/^(NN|PRP|WP|CD$|WDT$|\$)/;
 sub process_subtree {
     my ($node) = @_;
     foreach my $subject ( find_subjects_of($node) ) {
-        $subject->set_afun( 'Sb' );
+        $subject->set_afun('Sb');
     }
 
     foreach my $child ( $node->get_echildren() ) {
@@ -66,7 +66,7 @@ sub find_subjects_of {
     my @echildren = $node->get_echildren( { ordered => 1 } );
     my @left_echildren = grep { $_->precedes($node) } @echildren;
     foreach my $auxV ( grep { is_aux_verb( $_, $tag ) } @left_echildren ) {
-        $auxV->set_afun( 'AuxV' );
+        $auxV->set_afun('AuxV');
     }
 
     # If there are some subjects already recognized, we are finished.
@@ -223,11 +223,12 @@ sub get_afun {
 
     # Nouns under verbs (but subjects are already solved)
     if ( $i_am_noun && $ep_tag =~ /^(V|MD)/ ) {
+
         # Adverbials are usually expressed by prepositional phrases
         # with a few exceptions - namely temporal modifiers expressed by nouns.
         # This is just a heuristics - we guess wrong cases like
         # "Do you remember that year?", but there's no English Vallex to help.
-        return 'Adv' if $lemma =~ /^(year|month|week|spring|summer|autumn|winter)$/; #&& $node->get_siblings();
+        return 'Adv' if $lemma =~ /^(year|month|week|spring|summer|autumn|winter)$/;    #&& $node->get_siblings();
         return 'Obj' if !$precedes_ep || $tag =~ /^W/;
         return 'NR';
     }

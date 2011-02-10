@@ -3,17 +3,18 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Readonly;
 
 Readonly my $TAGS_FILE => 'data/models/morpho_analysis/en/forms_with_more_tags.tsv';
 
-sub get_required_share_files {return $TAGS_FILE;}
+sub get_required_share_files { return $TAGS_FILE; }
 
 # $CAN_BE{$tag}{$form} == 1 means that $form can have tag $tag
 # Only forms with more possible tags are stored in this hash.
 my %CAN_BE;
+
 sub BUILD {
     open my $IN, '<:utf8', "$ENV{TMT_ROOT}/share/$TAGS_FILE";
     while (<$IN>) {

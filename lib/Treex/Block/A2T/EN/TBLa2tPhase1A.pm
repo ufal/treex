@@ -80,7 +80,7 @@ sub process_document
     }
     close $ftbl;
 
-		unlink $fname_in, $fname_lex, $fname_out;
+    unlink $fname_in, $fname_lex, $fname_out;
 }
 
 1;

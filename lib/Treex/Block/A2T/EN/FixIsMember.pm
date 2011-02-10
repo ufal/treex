@@ -12,8 +12,8 @@ sub process_bundle {
 
     # (1) every member must be in coap
     foreach my $node ( grep { $_->is_coap_member() } @all_nodes ) {
-        if (!$node->get_parent()->is_coap_root()){
-            $node->set_attr( 'is_member', undef );  
+        if ( !$node->get_parent()->is_coap_root() ) {
+            $node->set_attr( 'is_member', undef );
         }
     }
 

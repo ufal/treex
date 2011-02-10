@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Readonly;
 
@@ -15,14 +15,14 @@ sub process_atree {
 
     # 1) Fill Coord (coordinating conjunctions).
     foreach my $node (@all_nodes) {
-        if ( is_coord($node) ) { $node->set_afun( 'Coord' ); }
+        if ( is_coord($node) ) { $node->set_afun('Coord'); }
     }
 
     # Now we can use effective children (without diving), since Coord is filled.
     # 2) Fill AuxC (subord. conjunctions) and AuxP (prepositions).
     foreach my $node ( grep { !$_->afun } @all_nodes ) {
         my $auxCP_afun = get_AuxCP_afun($node) or next;
-        $node->set_afun( $auxCP_afun );
+        $node->set_afun($auxCP_afun);
 
         # "No Aux[CP] node can have is_memeber -> delegate it to the child"
         # - This is PDT style of is_member with its pros and cons,

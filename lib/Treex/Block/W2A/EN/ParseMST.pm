@@ -3,10 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
-has 'model' => (is => 'rw', isa => 'Str', default => 'conll_mcd_order2_0.01.model');
-has 'reparse' => (is => 'rw', isa => 'Bool', default => 0);
-has '_parser' => (is => 'rw');
+has '+language' => ( default => 'en' );
+has 'model'   => ( is => 'rw', isa => 'Str',  default => 'conll_mcd_order2_0.01.model' );
+has 'reparse' => ( is => 'rw', isa => 'Bool', default => 0 );
+has '_parser' => ( is => 'rw' );
 
 # TODO (MP): refactor parentheses chunks
 # Segmentation to chunks with parentheses (and possibly also direct speeches)
@@ -14,7 +14,7 @@ has '_parser' => (is => 'rw');
 # Chunk segmentation should be saved in some attributes (schema update needed).
 # The goal of segmenting a sentence into chunks is to guarantee that each chunk
 # will be parsed into its own subtree.
- 
+
 use DowngradeUTF8forISO2;
 use Treex::Tools::Parser::MST;
 
@@ -29,7 +29,7 @@ sub BUILD {
     );
 
     my $DEFAULT_MODEL_MEMORY = '2600m';
-    my $model_dir = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
+    my $model_dir            = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
 
     #my $model_name = $ENV{TMT_PARAM_MCD_EN_MODEL};
     #if ( !defined $model_name ) {
@@ -37,15 +37,20 @@ sub BUILD {
     #    Report::info("Variable TMT_PARAM_MCD_EN_MODEL not set, using $model_name");
     #}
 
-    my $model_memory = $model_memory_consumption{$self->model} || $DEFAULT_MODEL_MEMORY;
+    my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;
 
     my $model_path = $model_dir . "/" . $self->model;
 
-    if (!$self->_parser) {
-        $self->_set_parser(Treex::Tools::Parser::MST->new({model => $model_path,
-                                                           memory => $model_memory,
-                                                           order => 1,
-                                                           decodetype => 'proj'}));
+    if ( !$self->_parser ) {
+        $self->_set_parser(
+            Treex::Tools::Parser::MST->new(
+                {   model      => $model_path,
+                    memory     => $model_memory,
+                    order      => 1,
+                    decodetype => 'proj'
+                }
+                )
+        );
     }
 
 }
@@ -59,7 +64,7 @@ sub process_atree {
     return 1 if $self->reparse && !$a_root->get_attr('reparse');
 
     # Delete old topology (so no cycles will be introduced during the parsing)
-    foreach my $a_node (@a_nodes){
+    foreach my $a_node (@a_nodes) {
         $a_node->set_parent($a_root);
     }
 
@@ -99,7 +104,6 @@ sub process_atree {
     return 1;
 }
 
-
 sub find_parenthesis_chunks {
     my ( $a_root, @a_nodes ) = @_;
     my ( @chunks, @chunk_nodes, @base_nodes );
@@ -114,9 +118,10 @@ sub find_parenthesis_chunks {
             push @chunk_nodes, $a_node;
         }
         elsif ( $form eq ')' ) {
+
             # abort if single parenthesis or empty pair "( )"
             return { nodes => \@a_nodes, parent => $a_root }
-              if !$in_paren || 1 == scalar @chunk_nodes;
+                if !$in_paren || 1 == scalar @chunk_nodes;
             push @chunk_nodes, $a_node;
             push @chunks, { nodes => [@chunk_nodes], parent => $parent };
             @chunk_nodes = ();
@@ -143,10 +148,10 @@ sub find_parenthesis_chunks {
 }
 
 sub parse_chunk {
-    my ($self, @a_nodes) = @_;
+    my ( $self, @a_nodes ) = @_;
 
     # We deliberately approximate e.g. curly quotes with plain ones
-    my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2($_->form) } @a_nodes;
+    my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
     my @tags  = map { $_->tag } @a_nodes;
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
@@ -154,11 +159,11 @@ sub parse_chunk {
     my @roots = ();
     foreach my $a_node (@a_nodes) {
         my $deprel = shift @$deprel_rf;
-        $a_node->set_conll_deprel( $deprel );
+        $a_node->set_conll_deprel($deprel);
 
         if ($matrix_rf) {
-             my $scores = shift @$matrix_rf;
-             $a_node->set_attr('mst_scores', join(" ", @$scores)) if $scores;
+            my $scores = shift @$matrix_rf;
+            $a_node->set_attr( 'mst_scores', join( " ", @$scores ) ) if $scores;
         }
 
         my $parent_index = shift @$parents_rf;

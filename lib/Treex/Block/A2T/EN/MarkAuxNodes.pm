@@ -37,7 +37,7 @@ sub aux_to_parent {
             and ( not grep { $_->get_attr('ord') < $a_node->get_attr('ord') } $a_node->get_children )    # tohle by melo pomoct, kdyz neni k dispozici SEnglishP
             ) or
 
-            ( $lemma =~ /^(more|most)/ and $a_node->get_parent->tag =~ /^JJ|RB/ )          # nahradit efektivnim rodicem!
+            ( $lemma =~ /^(more|most)/ and $a_node->get_parent->tag =~ /^JJ|RB/ )                        # nahradit efektivnim rodicem!
             or
             ( grep { $_->get_attr('phrase') eq "PRT" } @nonterminals )                                   # particles (look_up)
                                                                                                          #	  or ($tag eq "IN" and $a_node->get_parent->tag eq "IN")  # kvuli because_of # nyni reseno jinak - pomoci AuxC
@@ -61,7 +61,7 @@ sub aux_to_child {
     return (
         $tag eq "TO"
             or
-            ( $tag eq "IN" ) or
+            ( $tag          eq "IN" )  or
             ( $a_node->form eq "ago" ) or
             ( ( $a_node->afun || "" ) eq "AuxC" ) or
             ( lc( $a_node->form ) eq "according" and @to_children )

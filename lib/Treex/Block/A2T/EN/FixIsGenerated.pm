@@ -12,25 +12,25 @@ use TBLa2t::Common;
 
 sub repair_is_generated
 {
-	my ($t_root) = @_;
-	my %a2t = ();
+    my ($t_root) = @_;
+    my %a2t = ();
 
-	for my $t_node ( $t_root->get_descendants ) {
-		push @{$a2t{ $t_node->get_attr('a/lex.rf') }}, $t_node if $t_node->get_attr('a/lex.rf') && !$t_node->get_attr('is_generated');
-	}
-	for my $a_id (keys %a2t) {
-		my $list = \@{$a2t{$a_id}};
-		@$list > 1 or next;
-		info "Non-generated nodes with a-id $a_id: ", join(', ', map { $_->get_attr('id') } @$list), " -- ";
-		map { $_->set_attr('is_generated', 1) } @$list;
-		my $non_generated = $list->[0];
-		for my $t_node (grep { $_->get_attr('id') =~ /s[0-9]+-t[0-9]+$/ } @$list) {
-			$non_generated = $t_node;
-			last;
-		}
-		$non_generated->set_attr('is_generated', undef);
-		info $non_generated->get_attr('id'), " left non-generated, the others set generated\n";
-	}
+    for my $t_node ( $t_root->get_descendants ) {
+        push @{ $a2t{ $t_node->get_attr('a/lex.rf') } }, $t_node if $t_node->get_attr('a/lex.rf') && !$t_node->get_attr('is_generated');
+    }
+    for my $a_id ( keys %a2t ) {
+        my $list = \@{ $a2t{$a_id} };
+        @$list > 1 or next;
+        info "Non-generated nodes with a-id $a_id: ", join( ', ', map { $_->get_attr('id') } @$list ), " -- ";
+        map { $_->set_attr( 'is_generated', 1 ) } @$list;
+        my $non_generated = $list->[0];
+        for my $t_node ( grep { $_->get_attr('id') =~ /s[0-9]+-t[0-9]+$/ } @$list ) {
+            $non_generated = $t_node;
+            last;
+        }
+        $non_generated->set_attr( 'is_generated', undef );
+        info $non_generated->get_attr('id'), " left non-generated, the others set generated\n";
+    }
 }
 
 #======================================================================

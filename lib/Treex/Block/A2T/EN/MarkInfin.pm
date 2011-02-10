@@ -12,7 +12,7 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
 
-        TNODE: foreach my $t_node ($t_root->get_descendants)
+        TNODE: foreach my $t_node ( $t_root->get_descendants )
         {
 
             my $lex_a_node = $t_node->get_lex_anode();

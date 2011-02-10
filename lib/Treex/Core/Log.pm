@@ -12,7 +12,8 @@ use Readonly;
 
 $Carp::CarpLevel = 1;
 
-binmode STDERR,":utf8";
+binmode STDERR, ":utf8";
+
 # Autoflush after every Perl statement should enforce that INFO and FATALs are ordered correctly.
 {
     my $oldfh = select(STDERR);
@@ -69,15 +70,14 @@ sub fatal {
         $unfinished_line = 0;
     }
     my $line = "TMT-FATAL:\t$message\n\n";
-    $line .= "PERL ERROR MESSAGE: $OS_ERROR\n" if $OS_ERROR;
+    $line .= "PERL ERROR MESSAGE: $OS_ERROR\n"        if $OS_ERROR;
     $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
     $line .= "PERL STACK:";
     _ntred_message($line);
     confess $line;
 }
 
-
-sub short_fatal { # !!! neodladene
+sub short_fatal {    # !!! neodladene
     my $message = shift;
     if ($unfinished_line) {
         print STDERR "\n";
@@ -87,9 +87,8 @@ sub short_fatal { # !!! neodladene
     _ntred_message($line);
     print STDERR $line;
     exit;
-    
-}
 
+}
 
 sub warn {
     my $message = shift;
@@ -198,37 +197,38 @@ sub progress {    # progress se pres ntred neposila, protoze by se stejne neflus
 # use Proc::ProcessTable;
 # my $last_memory_usage = 0;
 #
- sub memory {
-#
-#     my $process_table = new Proc::ProcessTable;
-#     my $current_process;
-#
-#    PROCESS: foreach my $process ( @{ $process_table->table } ) {
-#        if ( $process->pid eq $$ ) {
-#            $current_process = $process;
-#            last PROCESS;
-#        }
-#    }
-#
-#    my $current_memory_usage = $current_process->size;
-#    my $increase             = $current_memory_usage - $last_memory_usage;
-#    $last_memory_usage = $current_memory_usage;
-#
-#    my $message = "current consumption = " . _reformat_long_number($current_memory_usage)
-#        . " B\tincrease from previous = " . _reformat_long_number($increase) . " B";
-#
-#    $message = "current consumption = " . _format_bytes($current_memory_usage)
-#        . " \tincrease from previous = " . _format_bytes($increase);
-#
-#    my $line = "";
-#    if ($unfinished_line) {
-#        $line            = "\n";
-#        $unfinished_line = 0;
-#    }
-#    $line .= "TMT-MEMORY:\t$message\n";
-#    _ntred_message($line);
-#    print STDERR $line;
-#
+sub memory {
+
+    #
+    #     my $process_table = new Proc::ProcessTable;
+    #     my $current_process;
+    #
+    #    PROCESS: foreach my $process ( @{ $process_table->table } ) {
+    #        if ( $process->pid eq $$ ) {
+    #            $current_process = $process;
+    #            last PROCESS;
+    #        }
+    #    }
+    #
+    #    my $current_memory_usage = $current_process->size;
+    #    my $increase             = $current_memory_usage - $last_memory_usage;
+    #    $last_memory_usage = $current_memory_usage;
+    #
+    #    my $message = "current consumption = " . _reformat_long_number($current_memory_usage)
+    #        . " B\tincrease from previous = " . _reformat_long_number($increase) . " B";
+    #
+    #    $message = "current consumption = " . _format_bytes($current_memory_usage)
+    #        . " \tincrease from previous = " . _format_bytes($increase);
+    #
+    #    my $line = "";
+    #    if ($unfinished_line) {
+    #        $line            = "\n";
+    #        $unfinished_line = 0;
+    #    }
+    #    $line .= "TMT-MEMORY:\t$message\n";
+    #    _ntred_message($line);
+    #    print STDERR $line;
+    #
     return;
 }
 
@@ -255,26 +255,23 @@ sub _reformat_long_number {
     return $number;
 }
 
-
 # ---------- EXPORTED FUNCTIONS ------------
 
 # this solution might be only tentative
 # (Log::Log4perl or MooseX::Log::Log4perl might be preferred in the future),
 # that's why the following declarations are kept apart from the old code.
 
-
 use Exporter;
 use base 'Exporter';
 
 our @EXPORT = qw(log_fatal log_warn log_info log_memory log_set_error_level log_debug);
 
-sub log_fatal { fatal(@_) ; }
-sub log_warn { Treex::Core::Log::warn @_ ; }
-sub log_info { info @_ ; }
-sub log_memory { memory @_ ; }
+sub log_fatal           { fatal(@_); }
+sub log_warn            { Treex::Core::Log::warn @_; }
+sub log_info            { info @_; }
+sub log_memory          { memory @_; }
 sub log_set_error_level { set_error_level @_; }
-sub log_debug { debug @_ ;}
-
+sub log_debug           { debug @_; }
 
 1;
 

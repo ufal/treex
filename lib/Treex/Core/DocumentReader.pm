@@ -6,8 +6,6 @@ requires 'number_of_documents';
 
 1;
 
-
-
 __END__
 
 =head1 NAME

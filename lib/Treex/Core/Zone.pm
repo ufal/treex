@@ -8,17 +8,17 @@ use MooseX::NonMoose;
 
 extends 'Treex::PML::Struct';
 
-has language => (is => 'rw', isa=>'LangCode', required=>1);
+has language => ( is => 'rw', isa => 'LangCode', required => 1 );
 
-has selector => (is => 'rw', isa=>'Selector', default=>'');
+has selector => ( is => 'rw', isa => 'Selector', default => '' );
 
 sub set_attr {
-    my ($self, $attr_name, $attr_value) = @_;
+    my ( $self, $attr_name, $attr_value ) = @_;
     return $self->{$attr_name} = $attr_value;
 }
 
 sub get_attr {
-    my ($self, $attr_name) = @_;
+    my ( $self, $attr_name ) = @_;
     return $self->{$attr_name};
 }
 

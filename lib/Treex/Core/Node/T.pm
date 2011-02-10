@@ -11,33 +11,31 @@ sub get_pml_type_name {
 }
 
 sub get_lex_anode {
-    my ($self) = @_;
-    my $lex_rf = $self->get_attr('a/lex.rf');
+    my ($self)   = @_;
+    my $lex_rf   = $self->get_attr('a/lex.rf');
     my $document = $self->get_document();
-    return $document->get_node_by_id( $lex_rf) if $lex_rf;
+    return $document->get_node_by_id($lex_rf) if $lex_rf;
     return;
 }
 
 sub set_lex_anode {
-    my ($self, $lex_anode) = @_;
+    my ( $self, $lex_anode ) = @_;
     my $new_id = defined $lex_anode ? $lex_anode->get_attr('id') : undef;
-    $self->set_attr('a/lex.rf', $new_id);
+    $self->set_attr( 'a/lex.rf', $new_id );
     return;
 }
-
 
 sub get_aligned_nodes {
     my ($self) = @_;
     my $links_rf = $self->get_attr('align/links');
     if ($links_rf) {
         my $document = $self->get_document;
-        return map {$document->get_node_by_id($_->{'counterpart.rf'})} @$links_rf;
+        return map { $document->get_node_by_id( $_->{'counterpart.rf'} ) } @$links_rf;
     }
     else {
         return ();
     }
 }
-
 
 # Named entity node corresponding to this
 sub get_n_node {
@@ -201,8 +199,6 @@ sub set_source_tnode {
     my ( $self, $source_node ) = @_;
     $self->set_attr( 'source/head.rf', $source_node->get_attr('id') );
 }
-
-
 
 # --------- funkce pro efektivni potomky a rodice by Jan Stepanek - prevzato z PML_T.inc a upraveno -------------
 

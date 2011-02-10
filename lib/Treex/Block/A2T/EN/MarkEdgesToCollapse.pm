@@ -33,7 +33,7 @@ sub process_bundle {
         # Should collapse to parent because the $parent is auxiliary?
         elsif ( is_parent_aux_to_me($node) ) {
             $node->set_attr( 'edge_to_collapse', 1 );
-            $parent->set_attr( 'is_auxiliary', 1 );
+            $parent->set_attr( 'is_auxiliary',   1 );
         }
     }
     return;
@@ -179,7 +179,7 @@ sub is_parent_aux_to_me {
     # 'want' added by ZZ (not stricly modal in the sense of English grammar, but modal in FGD)
     # "You have to(tag=TO, parent=go) go(parent=have)."
     # The node "to" is also auxiliary, but that's job of 2a.
-    if (($p_lemma =~ /^(have|ought|want)/ || $p_form eq "going") && $tag eq 'VB'){
+    if ( ( $p_lemma =~ /^(have|ought|want)/ || $p_form eq "going" ) && $tag eq 'VB' ) {
         my $first_child = $node->get_children( { first_only => 1 } );
         return 1 if $first_child && $first_child->lemma eq 'to';
     }

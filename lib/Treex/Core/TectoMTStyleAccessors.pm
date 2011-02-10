@@ -3,7 +3,7 @@ package Treex::Core::TectoMTStyleAccessors;
 use Moose::Role;
 use Treex::Core::Log;
 
-requires '_pml_attribute_hash'; # return $self for Node and Bundle, but not for Document (delegation)
+requires '_pml_attribute_hash';    # return $self for Node and Bundle, but not for Document (delegation)
 
 sub get_attr {
     my ( $self, $attr_name ) = @_;
@@ -11,7 +11,7 @@ sub get_attr {
     my $attr_hash = $self->_pml_attribute_hash();
     log_fatal('get_attr() called on an disconnected node!') if !defined $attr_hash;
 
-    if (ref($attr_hash) eq "HASH") { # meta-data seems to be an unblessed hash, docasne!!!!
+    if ( ref($attr_hash) eq "HASH" ) {    # meta-data seems to be an unblessed hash, docasne!!!!
         return $attr_hash->{$attr_name};
     }
     else {
@@ -27,17 +27,18 @@ sub set_attr {
             log_fatal 'Setting undefined or empty ID is not allowed';
         }
         $self->get_document->index_node_by_id( $attr_value, $self );
-    } elsif ( ref($attr_value) eq 'ARRAY' ) {
+    }
+    elsif ( ref($attr_value) eq 'ARRAY' ) {
         $attr_value = Treex::PML::List->new( @{$attr_value} );
     }
     my $attr_hash = $self->_pml_attribute_hash()
         or log_fatal("set_attr($attr_name, $attr_value) called on disconnected node!");
 
-    if (ref($attr_hash) eq "HASH") { # meta-data seems to be an unblessed hash, docasne!!!!
+    if ( ref($attr_hash) eq "HASH" ) {    # meta-data seems to be an unblessed hash, docasne!!!!
         return $attr_hash->{$attr_name} = $attr_value;
     }
-    else { # fs-nodes
-        return Treex::PML::Node::set_attr($self,$attr_name,$attr_value); # better to find superclass, but speed?
+    else {                                # fs-nodes
+        return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );    # better to find superclass, but speed?
     }
 }
 
@@ -59,7 +60,8 @@ sub set_deref_attr {
     if ( ref($attr_value) eq 'ARRAY' ) {
         my @list = map { $_->get_attr('id') } @{$attr_value};
         $attr_value = Treex::PML::List->new(@list);
-    } else {
+    }
+    else {
         $attr_value = $attr_value->get_attr('id');
     }
 
@@ -82,12 +84,12 @@ sub get_r_attr {
     my $document = $self->get_document();
     if (wantarray) {
         log_fatal("Attribute '$attr_name' is not a list, but get_r_attr() called in a list context.")
-              if ref($attr_value) ne 'Treex::PML::List';
+            if ref($attr_value) ne 'Treex::PML::List';
         return map { $document->get_node_by_id($_) } @{$attr_value};
     }
 
     log_fatal("Attribute $attr_name is a list, but get_r_attr() not called in a list context.")
-          if ref($attr_value) eq 'Treex::PML::List';
+        if ref($attr_value) eq 'Treex::PML::List';
     return $document->get_node_by_id($attr_value);
 }
 
@@ -107,14 +109,11 @@ sub set_r_attr {
         return $fs->set_attr( $attr_name, Treex::PML::List->new(@list) );
     }
     log_fatal("Attribute '$attr_name' is not a list, but set_r_attr() called with @attr_values values.")
-          if @attr_values > 1;
+        if @attr_values > 1;
 
     # TODO: overriden Node::N::set_attr is bypassed by this call
     return $fs->set_attr( $attr_name, $attr_values[0]->get_attr('id') );
 }
-
-
-
 
 1;
 

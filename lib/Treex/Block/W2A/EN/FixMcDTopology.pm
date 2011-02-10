@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Lexicon::English;
 
@@ -30,7 +30,7 @@ sub fix_subtree {
         switch_with_parent($a_node);
     }
     $is_processed{$a_node} = 1;
-    
+
     foreach my $child ( $a_node->get_children() ) {
         next if $is_processed{$child};
         fix_subtree($child);
@@ -104,8 +104,8 @@ sub switch_with_parent {
         my $parent  = $a_node->get_parent();
         my $grandpa = $parent->get_parent();
         if ( $parent->is_member == 1 ) {
-            $parent->set_is_member( 0 );
-            $a_node->set_is_member( 1 );
+            $parent->set_is_member(0);
+            $a_node->set_is_member(1);
         }
         $a_node->set_parent($grandpa);
         my @be_children = $parent->get_children();

@@ -13,18 +13,18 @@ sub process_document {
         my $t_root = $bundle->get_tree('SEnglishT');
 
         foreach my $t_node ( $t_root->get_descendants ) {
-            my $lex_a_node  = $t_node->get_lex_anode();
-            next if ! defined $lex_a_node; # gracefully handle e.g. generated nodes
+            my $lex_a_node = $t_node->get_lex_anode();
+            next if !defined $lex_a_node;    # gracefully handle e.g. generated nodes
             my @aux_a_nodes = $t_node->get_aux_anodes();
 
             if ($lex_a_node->tag
                 =~ /VB[ND]/
-                    and (
-                        (grep { $_->lemma eq "be" } @aux_a_nodes)
-                            or not $t_node->get_attr('is_clause_head') # 'informed citizens' is marked too
-                    )
+                and (
+                    ( grep { $_->lemma eq "be" } @aux_a_nodes )
+                    or not $t_node->get_attr('is_clause_head')    # 'informed citizens' is marked too
                 )
-            {    # ??? to je otazka, jestli obe
+                )
+            {                                                     # ??? to je otazka, jestli obe
                 $t_node->set_attr( 'is_passive', 1 );
             }
             else {

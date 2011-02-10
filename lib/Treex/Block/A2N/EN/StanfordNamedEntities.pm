@@ -3,8 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
-has '_ner' => (is => 'rw');
+has '+language' => ( default => 'en' );
+has '_ner'      => ( is      => 'rw' );
 
 # DOES NOT WORK YET !!!
 
@@ -15,84 +15,84 @@ use Readonly;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_ner(NER::Stanford::English->new());
+    $self->_set_ner( NER::Stanford::English->new() );
     return;
 }
 
 Readonly my %type_for => {
-	ORGANIZATION => 'i_',
-	PERSON       => 'p_',
-	LOCATION     => 'g_',
-	O            => '0',
-	NA           => '0',
+    ORGANIZATION => 'i_',
+    PERSON       => 'p_',
+    LOCATION     => 'g_',
+    O            => '0',
+    NA           => '0',
 };
 
 #TODO: check if there is not already a SEnglishN tree.
 
 sub process_zone {
-	my ( $self, $zone ) = @_;
-	my $aroot  = $zone->get_atree();
-	my @anodes = $aroot->get_children();
+    my ( $self, $zone ) = @_;
+    my $aroot  = $zone->get_atree();
+    my @anodes = $aroot->get_children();
 
-	# skip empty sentence
-	return if !@anodes;
+    # skip empty sentence
+    return if !@anodes;
 
-	my @words = map { $_->form } @anodes;
-	my @a_ids = map { $_->get_attr('id') } @anodes;
+    my @words = map { $_->form } @anodes;
+    my @a_ids = map { $_->get_attr('id') } @anodes;
 
-	# BEWARE: $ner crashes on words like "." or "/", i.e. just punct  !!!
-	my $test = join( '', @words );
-	return if $test =~ /^[[:punct:]]*$/;
+    # BEWARE: $ner crashes on words like "." or "/", i.e. just punct  !!!
+    my $test = join( '', @words );
+    return if $test =~ /^[[:punct:]]*$/;
 
-	# Create new SEnglishN tree (just root)
-	my $n_root = $zone->create_ntree();
-	
-	# Run Standford NER
-	my $types_rf = $self->_ner->tag_forms( \@words );
+    # Create new SEnglishN tree (just root)
+    my $n_root = $zone->create_ntree();
 
-	# Add all found named entities to the SEnglishN tree
-	my $last_type    = '0';
-	my @actual_ids   = ();
-	my @actual_words = ();
-	foreach my $i ( 0 .. $#words ) {
-		my $id   = $a_ids[$i];
-		my $type = $types_rf->[$i];
-		if ( $type eq 'NA' ) {
-			my $form = $words[$i];
-			log_warn "N/A named entity type for $id '$form'";
-		}
+    # Run Standford NER
+    my $types_rf = $self->_ner->tag_forms( \@words );
 
-		# convert from Standford to Prague NE typology
-		$type = $type_for{$type};
+    # Add all found named entities to the SEnglishN tree
+    my $last_type    = '0';
+    my @actual_ids   = ();
+    my @actual_words = ();
+    foreach my $i ( 0 .. $#words ) {
+        my $id   = $a_ids[$i];
+        my $type = $types_rf->[$i];
+        if ( $type eq 'NA' ) {
+            my $form = $words[$i];
+            log_warn "N/A named entity type for $id '$form'";
+        }
 
-		# Subsequent words with the same type are treated as one named entity.
-		if ( @actual_ids && $last_type ne $type ) {
-			$n_root->create_child(
-				{   attributes => {
-						'm.rf'          => \@actual_ids,
-						ne_type         => $last_type,
-						normalized_name => join( ' ', @actual_words ),
-						}
-				}
-			);
-			@actual_ids   = ();
-			@actual_words = ();
-		}
-		push @actual_ids,   $id        if $type;
-		push @actual_words, $words[$i] if $type;
-		$last_type = $type;
-	}
-	if (@actual_ids) {
-		$n_root->create_child(
-			{   attributes => {
-					'm.rf'          => \@actual_ids,
-					ne_type         => $last_type,
-					normalized_name => join( ' ', @actual_words ),
-					}
-			}
-		);
-	}
-	return 1;
+        # convert from Standford to Prague NE typology
+        $type = $type_for{$type};
+
+        # Subsequent words with the same type are treated as one named entity.
+        if ( @actual_ids && $last_type ne $type ) {
+            $n_root->create_child(
+                {   attributes => {
+                        'm.rf'          => \@actual_ids,
+                        ne_type         => $last_type,
+                        normalized_name => join( ' ', @actual_words ),
+                        }
+                }
+            );
+            @actual_ids   = ();
+            @actual_words = ();
+        }
+        push @actual_ids,   $id        if $type;
+        push @actual_words, $words[$i] if $type;
+        $last_type = $type;
+    }
+    if (@actual_ids) {
+        $n_root->create_child(
+            {   attributes => {
+                    'm.rf'          => \@actual_ids,
+                    ne_type         => $last_type,
+                    normalized_name => join( ' ', @actual_words ),
+                    }
+            }
+        );
+    }
+    return 1;
 }
 
 1;

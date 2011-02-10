@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Lexicon::English;
 
@@ -24,6 +24,7 @@ sub process_atree {
         if ( @all_nodes == 1 ) {
             my $message = $last_node->get_fposition() . "\t Strange one-token sentence.";
             Report::warn($message);
+
             #$bundle->leave_message($message);
             return;
         }
@@ -95,8 +96,8 @@ sub fix_node {
     #   rather than a preposition.''
     if ( $lemma =~ /^(about|around|nearly)$/ && $node->precedes($parent) ) {
         switch_with_first_child($node);
-        $node->set_afun( 'Atr' );
-        $node->set_tag( 'RB' );
+        $node->set_afun('Atr');
+        $node->set_tag('RB');
     }
 
     # "when" used as subord. conjunction should govern the relative clause
@@ -127,7 +128,7 @@ sub fix_node {
         && $grandpa->get_ordering_value() == $ord - 1
         )
     {
-        $node->set_afun( 'AuxP' );
+        $node->set_afun('AuxP');
         $node->set_parent($grandpa);
         $parent->set_parent($node);
     }
@@ -266,13 +267,13 @@ sub fix_node {
         }
     }
 
-    # Move dependents from firstname node to surname node 
+    # Move dependents from firstname node to surname node
     my $parent_n_node = $parent->get_n_node();
-    my $n_node = $node->get_n_node();
+    my $n_node        = $node->get_n_node();
     if ( $n_node && $parent_n_node && $n_node eq $parent_n_node && $n_node->get_attr('ne_type') =~ /^p/ ) {
 
         foreach my $child ( $node->get_children ) {
-            $child->set_parent( $parent );
+            $child->set_parent($parent);
         }
     }
 

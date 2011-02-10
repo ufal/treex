@@ -1,4 +1,5 @@
 package SEnglishA_to_SEnglishT::Assign_sempos;
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Obsolete, now covered by SEnglishA_to_SEnglishT::Assign_grammatemes.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -17,8 +18,13 @@ sub process_document {
         my $t_root = $bundle->get_tree('SEnglishT');
         $t_root->set_attr( 'nodetype', 'root' );
 
-        TNODE: foreach my $t_node ( grep { $_->get_attr('nodetype') eq "complex"
-                                               and $_->get_attr('a/lex.rf') } $t_root->get_descendants ) {
+        TNODE: foreach my $t_node (
+            grep {
+                $_->get_attr('nodetype') eq "complex"
+                    and $_->get_attr('a/lex.rf')
+            } $t_root->get_descendants
+            )
+        {
 
             my $lex_node = $t_node->get_lex_anode or next TNODE;
 

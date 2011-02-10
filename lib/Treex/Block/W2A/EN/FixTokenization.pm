@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 my %MERGE_FOR = (
     'a . m .' => 'a. m.',
@@ -22,7 +22,7 @@ my %MERGE_FOR = (
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    
+
     my @nodes      = $atree->get_children();
     my @forms      = map { $_->form } @nodes;
     my $max_length = 3;

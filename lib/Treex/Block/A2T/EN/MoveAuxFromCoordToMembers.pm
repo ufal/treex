@@ -10,7 +10,7 @@ use base qw(SxxA_to_SxxT::Move_aux_from_coord_to_members);
 
 sub BUILD {
     my ($self) = @_;
-    $self->set_parameter('LANGUAGE', 'English');
+    $self->set_parameter( 'LANGUAGE', 'English' );
 }
 
 sub can_be_aux_to_coord {
@@ -18,19 +18,21 @@ sub can_be_aux_to_coord {
     my $form = $a_node->form;
     return 1 if $form =~ /^[,;.()]$/;
 
-    if (($a_node->get_parent->form||'') eq 'as') {
-        my $left_neighbor = $a_node->get_left_neighbor;
+    if ( ( $a_node->get_parent->form || '' ) eq 'as' ) {
+        my $left_neighbor  = $a_node->get_left_neighbor;
         my $right_neighbor = $a_node->get_right_neighbor;
-        if ( ($form =~ /^well$/ and $right_neighbor and $right_neighbor->form eq 'as') or
-           ($form eq 'as' and $left_neighbor and $left_neighbor->form =~ /^well$/ ) ) {
-           return 1;
+        if (( $form =~ /^well$/ and $right_neighbor and $right_neighbor->form eq 'as' )
+            or
+            ( $form eq 'as' and $left_neighbor and $left_neighbor->form =~ /^well$/ )
+            )
+        {
+            return 1;
         }
     }
     return 0;
 }
 
 1;
-
 
 =over
 

@@ -4,6 +4,6 @@ use Moose;
 
 extends 'Treex::Core::Zone';
 
-has text => (is => 'rw');
+has text => ( is => 'rw' );
 
 1;

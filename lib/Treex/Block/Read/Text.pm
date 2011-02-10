@@ -8,7 +8,7 @@ sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
     return if !defined $text;
-    
+
     my $document = $self->new_document();
     $document->set_attr( $self->selector . $self->language . ' text', $text );
     return $document;

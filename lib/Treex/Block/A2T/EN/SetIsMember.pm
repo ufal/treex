@@ -6,12 +6,12 @@ use warnings;
 use List::Util qw(first);
 
 # There is a generic block that copies is_member from a-layer to t-layer.
-# This is just a wrapper/inherited class for backward compatibility with old scenarios. 
+# This is just a wrapper/inherited class for backward compatibility with old scenarios.
 use base qw(SxxA_to_SxxT::Fill_is_member);
 
 sub BUILD {
     my ($self) = @_;
-    $self->set_parameter('LANGUAGE', 'English');
+    $self->set_parameter( 'LANGUAGE', 'English' );
 }
 
 1;

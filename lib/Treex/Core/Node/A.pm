@@ -3,15 +3,16 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 
-has 'n_node' => ( is => 'ro', writer=>'_set_n_node',);
+has 'n_node' => ( is => 'ro', writer => '_set_n_node', );
 
 # Original w-layer and m-layer attributes
 has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
-has [qw(ord afun is_member is_parenthesis_root conll_deprel 
+has [
+    qw(ord afun is_member is_parenthesis_root conll_deprel
         edge_to_collapse is_auxiliary clause_number is_clause_head)
-    ] => ( is => 'rw' );
+] => ( is => 'rw' );
 
 sub ordering_attribute {'ord'}
 
@@ -122,7 +123,7 @@ sub get_eparents {
     # Otherwise, there can be more than one effective parent.
     # All effective parents (of $self) are shared modifiers
     # of the coordination rooted in $node.
-    my @eff = $node->get_coap_members({dive=>$dive});
+    my @eff = $node->get_coap_members( { dive => $dive } );
     return @eff if @eff;
     return $self->_fallback_parent();
 }
@@ -186,7 +187,7 @@ sub _get_my_own_echildren {
             push @queue, $node->get_children();
         }
         elsif ( $node->is_coap_root() ) {
-            push @members, $node->get_coap_members({dive=>$dive});
+            push @members, $node->get_coap_members( { dive => $dive } );
 
             #push @queue, grep { $_->get_attr('is_member') } $node->get_children();
         }
@@ -211,10 +212,10 @@ sub _get_shared_echildren {
     #  In the first iteration, $self is one of children of $coap_root.
     #  (In case of "diving", it's not $self, but its governing Aux[CP].)
     #  However, it has is_member==1, so it won't get into @shared_echildren.
-    #  Similarly for other iterations. 
+    #  Similarly for other iterations.
     while ($coap_root) {
         push @shared_echildren,
-            map  { $_->get_coap_members({dive=>$dive}) }
+            map { $_->get_coap_members( { dive => $dive } ) }
             grep { !$_->get_attr('is_member') }
             $coap_root->get_children();
         $coap_root = $coap_root->_get_direct_coap_root($dive);
@@ -252,7 +253,7 @@ Typically this is used for prepositions and subord. conjunctions.
 sub get_coap_members {
     my ( $self, $arg_ref ) = @_;
     log_fatal('Incorrect number of arguments') if @_ > 2;
-    return $self if !$self->is_coap_root();
+    return $self                               if !$self->is_coap_root();
     my $direct_only = $arg_ref->{direct_only};
     my $dive = $arg_ref->{dive} || sub {0};
     if ( $dive eq 'AuxCP' ) { $dive = \&_is_auxCP; }
@@ -351,7 +352,6 @@ sub get_pnodes {
     return ( $self->get_terminal_pnode, $self->get_nonterminal_pnodes );
 }
 
-
 # -- other --
 
 sub reset_morphcat {
@@ -362,7 +362,7 @@ sub reset_morphcat {
         )
     {
         my $old_value = $self->get_attr("morphcat/$category");
-        if (!defined $old_value){
+        if ( !defined $old_value ) {
             $self->set_attr( "morphcat/$category", '.' );
         }
     }
@@ -370,10 +370,8 @@ sub reset_morphcat {
 
 sub get_sentence_string {
     my ($self) = @_;
-    return join '', map {$_->form . ($_->no_space_after ? '' : ' ')}  $self->get_descendants({ordered=>1});
+    return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
 }
-
-
 
 1;
 

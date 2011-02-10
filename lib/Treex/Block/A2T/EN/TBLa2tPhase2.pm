@@ -24,7 +24,7 @@ sub clone_tnode
 
 sub new_tnode
 {
-    my ($parent) = @_;                           # the parent of the new node
+    my ($parent) = @_;                   # the parent of the new node
     my $new_n = $parent->create_child;
     init_new_tnode( $new_n, $parent, 1 );
     return $new_n;
@@ -35,7 +35,7 @@ sub new_tnode
 sub process_document
 {
     my ( $self, $document ) = @_;
-    my $ftbl;                                    # the fnTBL file
+    my $ftbl;                            # the fnTBL file
 
     # getting the filenames
     my ( $fname_in, $fname_lex, $fname_out ) = fntbl_fnames( $document->get_tied_fsfile->filename, 2 );
@@ -57,7 +57,7 @@ sub process_document
     }
     close $ftbl;
 
-		unlink $fname_in, $fname_out;
+    unlink $fname_in, $fname_out;
 }
 
 1;

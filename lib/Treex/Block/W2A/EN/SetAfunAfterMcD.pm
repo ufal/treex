@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Readonly;
 
@@ -14,8 +14,8 @@ sub process_anode {
     next if defined $anode->afun;
 
     # Fill afun
-    $a_node->set_afun ( get_afun($a_node) );
-    
+    $a_node->set_afun( get_afun($a_node) );
+
     return 1;
 }
 
@@ -64,13 +64,13 @@ sub get_afun {
             && $a_node->precedes($parent);
     return 'AuxK' if $form eq '.';    # !!! zatim vcetne tecek za zkratkami
     return 'AuxX' if $form eq ',';
-    
+
     my $eparent_tag = $eparent->tag || '_root';
     if ( $tag =~ /^(NN|PRP|CD$|WP$|WDT$)/ && $eparent_tag =~ /^V/ ) {
         return 'Sb' if $a_node->precedes($eparent);
         return 'Obj';
     }
-    
+
     # 4. Special value for not recognized afun
     return 'NR';
 }

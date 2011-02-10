@@ -79,7 +79,7 @@ sub process_document
     close $ftbl;
 
     # running fnTBL
-    system("$FNTBL/exec/most_likely_tag.prl -l $MODEL/Fx/T-func.lex -t 'RSTR','RSTR' $fname_in > $fname_lex") == 0                                  or Report::fatal "Command failed";
+    system("$FNTBL/exec/most_likely_tag.prl -l $MODEL/Fx/T-func.lex -t 'RSTR','RSTR' $fname_in > $fname_lex") == 0 or Report::fatal "Command failed";
 
     #TODO this should be done better
     my $redirect = Report::get_error_level() == 1 ? '' : '2>/dev/null';
@@ -93,7 +93,7 @@ sub process_document
     }
     close $ftbl;
 
-		unlink $fname_in, $fname_lex, $fname_out;
+    unlink $fname_in, $fname_lex, $fname_out;
 }
 
 1;

@@ -26,7 +26,7 @@ sub process_bundle {
     # skip empty sentence
     return if !@a_nodes;
 
-    my @words = map {$_->form} @a_nodes;
+    my @words = map { $_->form } @a_nodes;
 
     # BEWARE: $ner crashes on words like "." or "/", i.e. just punct  !!!
     my $test = join( '', @words );
@@ -64,14 +64,14 @@ sub process_bundle {
 
     for my $t_node (@t_nodes) {
         my $a_lex = $t_node->get_lex_anode() or next;
-        
-            my $head = $groups{$a_lex};
-            if ( defined $head ) {    # NE found
-                my $number = $head->get_attr('ord');
-                $t_node->set_attr( 'named_entity/number', $number );
-                $t_node->set_attr( 'named_entity/type',   $labels{$head} );
-            }
-        
+
+        my $head = $groups{$a_lex};
+        if ( defined $head ) {    # NE found
+            my $number = $head->get_attr('ord');
+            $t_node->set_attr( 'named_entity/number', $number );
+            $t_node->set_attr( 'named_entity/type',   $labels{$head} );
+        }
+
     }
     return;
 }

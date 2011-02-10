@@ -3,16 +3,16 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 sub process_anode {
     my ( $self, $anode ) = @_;
 
     my $form = $anode->form;
 
-    if ($form eq '"') {
+    if ( $form eq '"' ) {
         my $previous_anode = $anode->get_prev_node();
-        $form = '``' if ( !$previous_anode || $previous_anode->form =~ /^[\(\[{<]$/ || !$previous_anode->no_space_after);
+        $form = '``' if ( !$previous_anode || $previous_anode->form =~ /^[\(\[{<]$/ || !$previous_anode->no_space_after );
     }
 
     $form =~ s/’/'/g;
@@ -23,13 +23,12 @@ sub process_anode {
     $form =~ s/»/''/g;
     $form =~ s/—/--/g;
 
-    $anode->set_form( $form );
+    $anode->set_form($form);
 
     return 1;
 }
 
 1;
-
 
 __END__
 

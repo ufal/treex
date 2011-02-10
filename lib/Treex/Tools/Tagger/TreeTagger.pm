@@ -3,8 +3,8 @@ use Moose;
 use Treex::Moose;
 use ProcessUtils;
 
-has model => (isa => 'Str', is => 'rw', required => 1);
-has [qw( _reader _writer _pid )] => (is=>'rw');
+has model => ( isa => 'Str', is => 'rw', required => 1 );
+has [qw( _reader _writer _pid )] => ( is => 'rw' );
 
 sub BUILD {
     my ($self) = @_;
@@ -13,8 +13,8 @@ sub BUILD {
     my $bindir = "$ENV{TMT_ROOT}/share/installed_tools/tree_tagger/bin";
     die "Missing $bindir\n" if !-d $bindir;
 
-    my $command = "$bindir/tree-tagger -token -lemma -no-unknown ".$self->model;
-    
+    my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model;
+
     # start TreeTagger and load the model
     my ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command, ":encoding(utf-8)" );
     $self->_set_reader($reader);
@@ -39,7 +39,7 @@ sub analyze {
     my $cnt = 0;
 
     # input tokens
-    foreach my $tok ( @$toks ) {
+    foreach my $tok (@$toks) {
         print $ttwr $tok . "\n";
         $cnt++;
     }
@@ -47,11 +47,11 @@ sub analyze {
     # input sentence separator
     print $ttwr ".\n.\n.\n";
 
-    my @tags = ();
+    my @tags   = ();
     my @lemmas = ();
 
     # skip sentence separator
-    for (my $i = 0; $i < 3; $i++) {
+    for ( my $i = 0; $i < 3; $i++ ) {
         my $got = <$ttrd>;
     }
 
@@ -61,11 +61,11 @@ sub analyze {
         chomp $got;
         my @items = split( /\t/, $got );
         $cnt--;
-        push @tags, $items[1];
+        push @tags,   $items[1];
         push @lemmas, $items[2];
     }
 
-    my @output = (\@tags, \@lemmas);
+    my @output = ( \@tags, \@lemmas );
     return \@output;
 }
 

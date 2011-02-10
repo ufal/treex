@@ -11,38 +11,40 @@ sub process_bundle {
 
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    my @semnouns = grep {($_->get_attr('gram/sempos')||"") =~ /^n/} $t_root->get_descendants( { ordered => 1} );
+    my @semnouns = grep { ( $_->get_attr('gram/sempos') || "" ) =~ /^n/ } $t_root->get_descendants( { ordered => 1 } );
 
-    foreach my $perspron ( grep {$_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/} $t_root->get_descendants ) {
+    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/ } $t_root->get_descendants ) {
 
-	my %attrib = map {($_ => $perspron->get_attr("gram/$_"))} qw(gender number person);
+        my %attrib = map { ( $_ => $perspron->get_attr("gram/$_") ) } qw(gender number person);
 
-	my @candidates = reverse grep {$_->precedes($perspron) } @semnouns;
+        my @candidates = reverse grep { $_->precedes($perspron) } @semnouns;
 
-	# pruning by required agreement in number
-	@candidates = grep {($_->get_attr('gram/number')||"") eq $attrib{number}} @candidates; 
+        # pruning by required agreement in number
+        @candidates = grep { ( $_->get_attr('gram/number') || "" ) eq $attrib{number} } @candidates;
 
-	# pruning by required agreement in person
-	if ($attrib{person} =~ /[12]/) {
-	    @candidates = grep { ($_->get_attr('gram/person')||"") eq $attrib{person} } @candidates;
-	}
-	else {
-	    @candidates = grep { ($_->get_attr('gram/person')||"") !~ /[12]/ } @candidates;
-	}
+        # pruning by required agreement in person
+        if ( $attrib{person} =~ /[12]/ ) {
+            @candidates = grep { ( $_->get_attr('gram/person') || "" ) eq $attrib{person} } @candidates;
+        }
+        else {
+            @candidates = grep { ( $_->get_attr('gram/person') || "" ) !~ /[12]/ } @candidates;
+        }
 
-#	print "Sentence:\t".$bundle->get_attr('english_source_sentence')."\t";
-#	print "Anaphor:\t".$perspron->get_lex_anode->form."\t";
-	
-	if (my $antec = $candidates[0]) {
-#	    print "YES: ".$antec->t_lemma."\n";
-	    $perspron->set_deref_attr( 'coref_text.rf', [ $antec ] );
+        #	print "Sentence:\t".$bundle->get_attr('english_source_sentence')."\t";
+        #	print "Anaphor:\t".$perspron->get_lex_anode->form."\t";
 
-	}
-	else {
-#	    print "NO";
-	}
-#	print "\n";
+        if ( my $antec = $candidates[0] ) {
 
+            #	    print "YES: ".$antec->t_lemma."\n";
+            $perspron->set_deref_attr( 'coref_text.rf', [$antec] );
+
+        }
+        else {
+
+            #	    print "NO";
+        }
+
+        #	print "\n";
 
     }
 }

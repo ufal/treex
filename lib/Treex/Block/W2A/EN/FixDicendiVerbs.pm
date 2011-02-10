@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use Lexicon::English;
 
@@ -15,38 +15,38 @@ sub process_atree {
     # "I know," said Jim.
     # "I know", said Jim.
     # or "I know" said Jim.
-    my @a_nodes = grep {$_->lemma ne ','} $a_root->get_descendants( { ordered => 1 } );
+    my @a_nodes = grep { $_->lemma ne ',' } $a_root->get_descendants( { ordered => 1 } );
 
     # Iterate through indices of all dicendi verbs
-    DICENDI:    
+    DICENDI:
     foreach my $i_dicendi (
         grep { Lexicon::English::is_dicendi_verb( $a_nodes[$_]->lemma ) } ( 2 .. $#a_nodes )
         )
     {
         my $dicendi = $a_nodes[$i_dicendi];
-        
+
         # Skip dicendi verbs that are not preceded by a quote
         # TODO: This is too restrictive ("I know," Jim said.)
-        next DICENDI if $a_nodes[$i_dicendi-1]->lemma !~ /["'»]/;
+        next DICENDI if $a_nodes[ $i_dicendi - 1 ]->lemma !~ /["'»]/;
 
         # Find the root of direct speech, i.e. the highest node between the quotes
-        my $dsp_root = $a_nodes[$i_dicendi-2];        
-        foreach my $node (@a_nodes[0..$i_dicendi-3]){
-            if ($node->lemma =~ /['`]/){
-                $dsp_root = $a_nodes[$i_dicendi-2];
+        my $dsp_root = $a_nodes[ $i_dicendi - 2 ];
+        foreach my $node ( @a_nodes[ 0 .. $i_dicendi - 3 ] ) {
+            if ( $node->lemma =~ /['`]/ ) {
+                $dsp_root = $a_nodes[ $i_dicendi - 2 ];
             }
-            elsif ($node->get_depth() < $dsp_root->get_depth()){
+            elsif ( $node->get_depth() < $dsp_root->get_depth() ) {
                 $dsp_root = $node;
             }
         }
-        
+
         # Skip cases that are parsed correctly,
         # i.e. $dsp_root depends on the dicendi verb
         next DICENDI if $dsp_root->is_descendant_of($dicendi);
 
         # Rehang wrongly parsed cases
-        $dicendi->set_parent($dsp_root->get_parent());
-        $dsp_root->set_parent($dicendi);        
+        $dicendi->set_parent( $dsp_root->get_parent() );
+        $dsp_root->set_parent($dicendi);
     }
     return 1;
 }

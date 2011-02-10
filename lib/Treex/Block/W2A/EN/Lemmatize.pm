@@ -3,20 +3,19 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 use EnglishMorpho::Lemmatizer;
 
 sub process_anode {
-    my ( $self, $anode ) = @_; 
+    my ( $self, $anode ) = @_;
     my ( $lemma, $neg ) = EnglishMorpho::Lemmatizer::lemmatize( $anode->form, $anode->tag );
-    $anode->set_lemma( $lemma );
-    
+    $anode->set_lemma($lemma);
+
     return 1;
 }
 
 1;
-
 
 __END__
 

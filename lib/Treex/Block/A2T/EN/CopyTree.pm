@@ -85,11 +85,11 @@ sub process_document {
             $a_root = $a_children[0];
         }
 
-        next if !defined $a_root; # gracefully handle bad sentences
+        next if !defined $a_root;                                     # gracefully handle bad sentences
 
         #    print "\n\nYY: a_root form".$a_root->form."\n";
 
-        my $t_root = $bundle->create_tree( 'SEnglishT' );
+        my $t_root = $bundle->create_tree('SEnglishT');
 
         my $root_id = $a_aux_root->get_attr('id');
 

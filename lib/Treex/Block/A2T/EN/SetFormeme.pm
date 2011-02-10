@@ -45,9 +45,9 @@ sub detect_formeme {
     # have special formeme value instead of undef,
     # so tedious undef checking (||'') is no more needed.
     return 'x' if $t_node->get_attr('nodetype') ne 'complex';
-    
+
     # Punctuation in most cases should not remain on t-layer, but anyway
-    # it makes no sense detecting formemes. (These are not unrecognized ???.) 
+    # it makes no sense detecting formemes. (These are not unrecognized ???.)
     return 'x' if $t_node->t_lemma =~ /^([.;:-]|''|``)$/;
 
     # If no lex_anode is found, the formeme is unrecognized
@@ -95,6 +95,7 @@ sub _noun {
     my $afun = $a_node->afun;
 
     if ( $parent_tag =~ /^V/ ) {
+
         # Let's have e.g.: "This year(afun=Adv), there were many errors in MT."
         # "year" is a semantic noun, but not subject nor object.
         # What formeme should it have? Martin Popel proposes n:adv.
@@ -146,13 +147,13 @@ sub _verb {
 
     if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
         return "v:$subconj+ger" if $subconj;
-        return 'v:attr' if below_noun($t_node);
+        return 'v:attr'         if below_noun($t_node);
         return 'v:ger';
     }
 
     if ( $t_node->get_attr('is_clause_head') ) {
-        return "v:$subconj+fin" if $subconj;                                                 # podradici veta spojkova
-        return 'v:rc' if $t_node->get_attr('is_relclause_head');                             # podradici veta vztazna
+        return "v:$subconj+fin" if $subconj;                                  # podradici veta spojkova
+        return 'v:rc'           if $t_node->get_attr('is_relclause_head');    # podradici veta vztazna
         return 'v:fin';
     }
 
@@ -161,12 +162,16 @@ sub _verb {
         return 'v:fin';
     }
 
-    if ( any { $_->form =~ /^[Hh]aving$/ } @aux_a_nodes and
-         any { $_->tag eq 'TO' } @aux_a_nodes ) {                              # having to + infinitive 
+    if (any { $_->form =~ /^[Hh]aving$/ }
+        @aux_a_nodes
+        and
+        any { $_->tag eq 'TO' } @aux_a_nodes
+        )
+    {    # having to + infinitive
         return "v:$subconj+ger" if $subconj;
         return 'v:ger';
     }
-    
+
     return "v:$subconj+???" if $subconj;
 
     # TODO:tady jeste muze byt vztazna !!!
@@ -200,7 +205,7 @@ sub get_subconj_string {
 sub below_noun {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eff_parents() or return 0;
-    return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^n/;#/^[n|adj]/;
+    return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^n/;    #/^[n|adj]/;
 }
 
 sub below_adj {

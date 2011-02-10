@@ -6,7 +6,6 @@ use warnings;
 
 use base qw(TectoMT::Block);
 
-
 # verbs with object control type, copied from page 286
 # in Pollard & Sag's Head-driven phrase structure grammar
 
@@ -20,47 +19,54 @@ sub _object_control {
 |dare|defy|beg|prevent|forbid|allow|permit|enable|cause|force|consider)$/sxm;
 }
 
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    foreach my $infin_verb (grep {($_->formeme||"")=~/inf/}
-                                $t_root->get_descendants) {
+    foreach my $infin_verb (
+        grep { ( $_->formeme || "" ) =~ /inf/ }
+        $t_root->get_descendants
+        )
+    {
         my $cor = $infin_verb->create_child;
         $cor->shift_before_node($infin_verb);
-        $cor->set_attr( 't_lemma', '#Cor' );
-        $cor->set_attr( 'functor', 'ACT' );
-        $cor->set_attr( 'formeme', 'n:elided' );
+        $cor->set_attr( 't_lemma',  '#Cor' );
+        $cor->set_attr( 'functor',  'ACT' );
+        $cor->set_attr( 'formeme',  'n:elided' );
         $cor->set_attr( 'nodetype', 'qcomplex' );
 
-        if (not $infin_verb->get_parent->is_root and  my ($grandpa) = $infin_verb->get_eff_parents) {
-#            print $grandpa->t_lemma."  xxx\n";
+        if ( not $infin_verb->get_parent->is_root and my ($grandpa) = $infin_verb->get_eff_parents ) {
+
+            #            print $grandpa->t_lemma."  xxx\n";
             my $antec;
             my $type_of_control;
 
-            if (_object_control(($grandpa->t_lemma||'_root'))) {
+            if ( _object_control( ( $grandpa->t_lemma || '_root' ) ) ) {
                 $type_of_control = "OBJ";
-                ($antec) = grep {$_->formeme eq "n:obj"} $grandpa->get_eff_children;
+                ($antec) = grep { $_->formeme eq "n:obj" } $grandpa->get_eff_children;
             }
             else {
-                ($antec) = grep {$_->formeme eq "n:subj"} $grandpa->get_eff_children;
+                ($antec) = grep { $_->formeme eq "n:subj" } $grandpa->get_eff_children;
                 $type_of_control = "SUBJ";
             }
 
-#            print "sentence:\t".$bundle->get_attr('english_source_sentence')."\n";
-#            print "grandpa:\t".$grandpa->t_lemma."\n";
-#            print "infin:\t".$infin_verb->t_lemma."\n";
+            #            print "sentence:\t".$bundle->get_attr('english_source_sentence')."\n";
+            #            print "grandpa:\t".$grandpa->t_lemma."\n";
+            #            print "infin:\t".$infin_verb->t_lemma."\n";
             if ($antec) {
-#                print "antec:\t".$antec->t_lemma."\n";
-                $cor->set_deref_attr( 'coref_gram.rf', [ $antec ] );
-#                print $cor->get_fposition."\n";
+
+                #                print "antec:\t".$antec->t_lemma."\n";
+                $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
+
+                #                print $cor->get_fposition."\n";
             }
             else {
-#                print "antec:\tNOT FOUND\n";
+
+                #                print "antec:\tNOT FOUND\n";
             }
-#            print "\n";
+
+            #            print "\n";
 
         }
 

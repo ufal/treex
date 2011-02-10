@@ -3,8 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests=>1;                      
+use Test::More tests => 1;
 
-BEGIN{ use_ok('Treex::Core::Scenario'); }
-
+BEGIN { use_ok('Treex::Core::Scenario'); }
 

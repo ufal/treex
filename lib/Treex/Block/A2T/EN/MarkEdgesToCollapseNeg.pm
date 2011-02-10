@@ -12,11 +12,12 @@ sub process_bundle {
     my $a_root = $bundle->get_tree('SEnglishA');
 
     foreach my $a_node ( $a_root->get_descendants() ) {
+
         # Skip nodes that are already marked to be collapsed to parent.
-        # Without this check we could rarely create a t-node with no lex a-node.   
-        next if $a_node->edge_to_collapse;        
+        # Without this check we could rarely create a t-node with no lex a-node.
+        next if $a_node->edge_to_collapse;
         my ($eparent) = $a_node->get_eff_parents() or next;
-        
+
         my $p_tag = $eparent->tag || '_root';
         my $parent_is_verb = $p_tag =~ /^(V|MD)/;
         if ( $a_node->lemma eq 'not' && $parent_is_verb ) {

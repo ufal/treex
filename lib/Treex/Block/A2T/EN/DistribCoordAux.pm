@@ -31,8 +31,11 @@ sub process_document {
 
             # u 'as_well_as' se ta 'as' ke clenum koordinace nerozmistuji
             if ( $t_parent->t_lemma eq "as_well_as" ) {
-                foreach my $as ( grep { $_->lemma eq "as" }
-                                   $t_parent->get_aux_anodes ) {
+                foreach my $as (
+                    grep { $_->lemma eq "as" }
+                    $t_parent->get_aux_anodes
+                    )
+                {
                     $aux_not_to_move{ $as->get_attr('id') } = 1;
                 }
             }

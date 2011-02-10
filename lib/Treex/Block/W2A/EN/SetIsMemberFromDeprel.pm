@@ -3,11 +3,11 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    $anode->set_is_member($anode->conll_deprel eq 'COORD' ? 1 : 0 );
+    $anode->set_is_member( $anode->conll_deprel eq 'COORD' ? 1 : 0 );
     return 1;
 }
 

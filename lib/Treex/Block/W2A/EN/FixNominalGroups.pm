@@ -3,13 +3,14 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 my $MODEL = 'generated_data/extracted_from_BNC/left_neighbours_of_nouns.tsv';
 
 sub get_required_share_files { return $MODEL; }
 
 my %pair_count;
+
 sub BUILD {
     my $filename = $ENV{TMT_ROOT} . 'share/' . $MODEL;
     open my $F, '<:utf8', $filename or Report::fatal "Can't open $filename: $!";
@@ -36,7 +37,7 @@ sub process_atree {
             and $C->tag =~ /^N/
             and $B->get_parent eq $C
             and (
-                $A->get_parent eq $B
+                $A->get_parent    eq $B
                 or $A->get_parent eq $C
             )
             )

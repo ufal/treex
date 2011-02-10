@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => (default => 'en');
+has '+language' => ( default => 'en' );
 
 # viceslovne spojky nejcetnejsi v BNC (rucne profiltrovano, neco pridano):
 my $MULTI_CONJ = qr/^(as well as|so that|as if|even if|even though|as though|rather than|as soon as|as long as|even when|in case of|in case|except that|given that|provided that|such that|as far as|in order to)$/;
@@ -69,11 +69,11 @@ sub process_atree {
                 if (@members) {
                     $afun = 'Coord';
                     foreach my $member (@members) {
-                        $member->set_is_member( 1 );
+                        $member->set_is_member(1);
                     }
                 }
             }
-            $first->set_afun( $afun );
+            $first->set_afun($afun);
 
             # aby se ty viceslovne predlozky nahodou neprekryly
             $starts_at += $length;

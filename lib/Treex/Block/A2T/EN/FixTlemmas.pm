@@ -27,7 +27,7 @@ sub process_document {
             elsif (
                 $node->get_attr('a/aux.rf') and    # e.g. "sell out" -> t_lemma sell_out
                 @particles = grep { $_->tag eq "RP" } @aux_a_nodes
-                  )
+                )
             {
                 $new_tlemma = $old_tlemma . "_" . ( join "_", map { $_->lemma } @particles );
             }

@@ -6,34 +6,40 @@ use warnings;
 
 use base qw(TectoMT::Block);
 
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     my $t_root = $bundle->get_tree('SEnglishT');
 
-    foreach my $attr (grep {$_->formeme =~ /attr|poss/
-                                and not $_->is_member
-                                    and $_->t_lemma ne 'both'
-                            }
-                          reverse map {$_->get_descendants({ordered=>1})}
-                              reverse $t_root->get_children({ordered=>1})) {
+    foreach my $attr (
+        grep {
+            $_->formeme =~ /attr|poss/
+                and not $_->is_member
+                and $_->t_lemma ne 'both'
+        }
+        reverse map { $_->get_descendants( { ordered => 1 } ) }
+        reverse $t_root->get_children( { ordered => 1 } )
+        )
+    {
 
-        my @coord_members = grep {$_->is_member and $_ ne $attr->get_parent}
-                                 $attr->get_eff_parents;
+        my @coord_members = grep { $_->is_member and $_ ne $attr->get_parent }
+            $attr->get_eff_parents;
 
-        my ($nearest_member) = sort {$a->get_ordering_value<=>$b->get_ordering_value}
-            grep {$_->precedes($_->get_parent)}
-                grep {$attr->precedes($_)} @coord_members;
+        my ($nearest_member) = sort { $a->get_ordering_value <=> $b->get_ordering_value }
+            grep { $_->precedes( $_->get_parent ) }
+            grep { $attr->precedes($_) } @coord_members;
 
         # and there are no intermediate nodes
-        if ($nearest_member and
-                not grep {$_->precedes($nearest_member) and $attr->precedes($_)}
-                    $nearest_member->get_parent->get_children) {
-#            print $attr->get_fposition."\n";
+        if ($nearest_member
+            and
+            not grep { $_->precedes($nearest_member) and $attr->precedes($_) }
+            $nearest_member->get_parent->get_children
+            )
+        {
+
+            #            print $attr->get_fposition."\n";
             $attr->set_parent($nearest_member);
         }
-
 
     }
 }
