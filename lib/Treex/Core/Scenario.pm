@@ -66,7 +66,7 @@ sub BUILD {
         }
         log_info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
         my $new_block = $self->_load_block($block_item);
-        
+
         if ($new_block->does('Treex::Core::DocumentReader')){
             log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->document_reader();
@@ -195,8 +195,8 @@ sub _load_block {
 
     # Initialize with global (scenario) parameters
     my %params = (%{$self->_global_params}, scenario=>$self);
-    
-    # which can be overriden by (local) block parameters. 
+
+    # which can be overriden by (local) block parameters.
     foreach (@{$block_item->{block_parameters}}){
         my ( $name, $value ) = split /=/;
         $params{$name} = $value;
@@ -218,7 +218,7 @@ sub run {
     my $reader = $self->document_reader or log_fatal('No DocumentReader supplied');
     my $number_of_blocks  = @{ $self->loaded_blocks };
     my $document_number = 0;
-    
+
     while (my $document = $reader->next_document()) {
         $document_number++;
         log_info "Document $document_number loaded";
@@ -232,7 +232,7 @@ sub run {
     }
     log_info "Processed $document_number document"
         . ($document_number>1 ? 's' : '');
-    return;
+    return 1;
 }
 
 1;

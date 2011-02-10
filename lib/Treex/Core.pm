@@ -2,6 +2,7 @@ package Treex::Core;
 use Treex::Core::Document;
 use Treex::Core::Node;
 use Treex::Core::Bundle;
+use Treex::Core::Scenario;
 
 1;
 

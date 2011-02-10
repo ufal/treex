@@ -1,4 +1,4 @@
-package Treex::Block::Read::PEDT;
+package Treex::Block::Read::PCEDT;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseReader';
@@ -9,19 +9,26 @@ my $pmldoc_factory = Treex::PML::Factory->new();
 
 my @languages = qw(cs en);
 
+has schema_dir => (
+    isa => 'Str',
+    is => 'ro',
+    documentation => 'directory with pml-schemata for PCEDT data',
+    required => 1,
+    trigger => sub { my ($self,$dir)=@_; Treex::PML::AddResourcePath($dir); }
+);
+
 sub next_document {
     my ($self) = @_;
 
     my $base_filename = $self->next_filename or return;
-    $base_filename =~ /(en|cs)\.[atp]\.gz/;
+    $base_filename =~ s/(en|cs)\.[atp]\.gz//;
 
     my $document = Treex::Core::Document->new();
-    
     my %pmldoc;
 
     foreach my $language (@languages) {
 	my $filename = "${base_filename}$language.t.gz";
-	log_info "Loading $filename\n";
+	log_info "Loading $filename";
   	$pmldoc{$language}{t} =  $pmldoc_factory->createDocumentFromFile($filename);
     }
 
@@ -36,7 +43,6 @@ sub next_document {
     }
 
 
-    
     return $document;
 }
 

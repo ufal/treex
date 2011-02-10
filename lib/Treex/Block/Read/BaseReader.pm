@@ -4,7 +4,7 @@ use Treex::Moose;
 
 has selector => ( isa => 'Selector', is => 'ro', default => '');
 
-has filenames => ( 
+has filenames => (
     isa => 'ArrayRef[Str]',
     is => 'rw',
     lazy_build => 1,
@@ -12,13 +12,13 @@ has filenames => (
                      . ' automatically initialized from the attribute "from"',
 );
 
-has from => ( 
+has from => (
     isa => 'Str',
     is => 'ro',
     documentation => 'space or comma separated list of filenames to be loaded',
 );
 
-has file_number => ( 
+has file_number => (
     isa => 'Int',
     is => 'ro',
     writer => '_set_file_number',
