@@ -125,8 +125,6 @@ sub BUILD {
             $bundle->_set_document($self);
         }
     }
-    return $self;
-
 }
 
 sub _pml_attribute_hash {

@@ -10,7 +10,8 @@ use Treex::Core::Document;
 
 #Construction testing
 
-my $bundle = Treex::Core::Document->new->create_bundle();
+my $document = Treex::Core::Document->new;
+my $bundle = $document->create_bundle();
 
 isa_ok( $bundle, 'Treex::Core::Bundle' );
 
