@@ -52,6 +52,11 @@ sub BUILD {
     $self->{writer} = $writer;
     $self->{pid}    = $pid;
 
+    # The following test must be done because of the lazy loading of the model
+    my @test_forms = qw(This is a test sentence .);
+    my @test_tags =  qw(X X X X X X);
+    $self->parse_sentence( \@test_forms, \@test_tags );
+
     push @all_javas, $self;
 
     return;

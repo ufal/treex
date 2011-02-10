@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'en' );
 has 'model'   => ( is => 'rw', isa => 'Str',  default => 'conll_mcd_order2_0.01.model' );
 has 'reparse' => ( is => 'rw', isa => 'Bool', default => 0 );
-has '_parser' => ( is => 'rw' );
+#has '_parser' => ( is => 'rw' );
 
 # TODO (MP): refactor parentheses chunks
 # Segmentation to chunks with parentheses (and possibly also direct speeches)
@@ -17,6 +17,9 @@ has '_parser' => ( is => 'rw' );
 
 use DowngradeUTF8forISO2;
 use Treex::Tools::Parser::MST;
+
+my $parser;
+#TODO: loading each model only once should be handled in different way
 
 sub BUILD {
     my ($self) = @_;
@@ -41,16 +44,13 @@ sub BUILD {
 
     my $model_path = $model_dir . "/" . $self->model;
 
-    if ( !$self->_parser ) {
-        $self->_set_parser(
-            Treex::Tools::Parser::MST->new(
+    if ( !$parser ) {
+        $parser = Treex::Tools::Parser::MST->new(
                 {   model      => $model_path,
                     memory     => $model_memory,
                     order      => 1,
                     decodetype => 'proj'
-                }
-                )
-        );
+                } );
     }
 
 }
@@ -154,7 +154,7 @@ sub parse_chunk {
     my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
     my @tags  = map { $_->tag } @a_nodes;
 
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
+    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@tags );
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
