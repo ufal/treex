@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase0;
+package Treex::Block::A2T::EN::TBLa2tPhase0;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use warnings;
-use strict;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -25,7 +27,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phase0
+=item Treex::Block::A2T::EN::TBLa2tPhase0
 
 Assumes English t-trees created with t-preprocessing by ZZ. Fills C<afun>s (with incorrect but useful values based on C<tag>, C<phrase>, and C<functions>) and repairs C<is_member>.
 

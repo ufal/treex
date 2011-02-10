@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fill_gender_of_person;
+package Treex::Block::A2T::EN::SetGenderOfPerson;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -34,7 +36,7 @@ sub gender_of_tnode_person {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fill_gender_of_person
+=item Treex::Block::A2T::EN::SetGenderOfPerson
 
 The C<gram/gender> attribute is filled according to the named entity tree.
 NE nodes with female names have C<ne_type> = C<PF>, male ones have C<PM>.

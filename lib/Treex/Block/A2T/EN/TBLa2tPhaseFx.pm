@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phaseFx;
+package Treex::Block::A2T::EN::TBLa2tPhaseFx;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -100,7 +102,7 @@ sub process_document
 
 =over
 
-=item SCzechA_to_SCzechT::TBLa2t_phaseFx
+=item Treex::Block::A2T::EN::TBLa2tPhaseFx
 
 Assumes Czech t-trees with correct structure, C<lemma>, C<tag>, and C<is_member> (i.e. does not use information from p-layer). Fills C<functors>.
 

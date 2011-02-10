@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Restore_uppercase;
+package Treex::Block::A2T::EN::RestoreUppercase;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use Extensions::Node;
 use Extensions::Node::A;
@@ -22,7 +24,7 @@ sub process_document {
 
         # collection of unusable (first in sentence) nodes
         my %is_first_in_sentence = ();
-        my @s_roots = grep { $_->get_attr('sentmod') || $_->is_functor('PRED') } @bag;
+        my @s_roots = grep { $_->sentmod || $_->is_functor('PRED') } @bag;
         foreach my $s_root (@s_roots) {
 
             my $first_one = $s_root->a->get_leftmost_descendant;
@@ -56,7 +58,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Restore_uppercase
+=item Treex::Block::A2T::EN::RestoreUppercase
 
 PEDT tectogramatical data are all in lowercase. This block restores the casing from
 the analytical layer where we are sure it is appropriate

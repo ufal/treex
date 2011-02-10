@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fix_inconsistencies;
+package Treex::Block::A2T::EN::FixInconsistencies;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %lin_lemma2func;    # {linear notation}{lemma} -> functor
 
@@ -120,9 +122,9 @@ sub fix
             for my $node ( $root->get_descendants( { add_self => 1 } ) ) {
                 my $lemma = $node->get_lex_anode ? $node->get_lex_anode->lemma : '___';
                 my $corr_func = $lin_lemma2func{$lin}{$lemma};
-                if ( $corr_func && $node->get_attr('functor') ne $corr_func ) {
-                    print "  # $lemma: ", $node->get_attr('functor'), " -> $corr_func\n";
-                    $node->set_attr( 'functor', $corr_func );
+                if ( $corr_func && $node->functor ne $corr_func ) {
+                    print "  # $lemma: ", $node->functor, " -> $corr_func\n";
+                    $node->set_functor($corr_func);
                 }
             }
         }
@@ -144,7 +146,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fix_inconsistencies
+=item Treex::Block::A2T::EN::FixInconsistencies
 
 Fixes inconsistent English tectogramatical annotation using a file with manually resolved inconsistencies.
 

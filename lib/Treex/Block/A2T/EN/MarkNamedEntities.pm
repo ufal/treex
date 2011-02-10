@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_named_entities;
+package Treex::Block::A2T::EN::MarkNamedEntities;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use NER::Stanford::English;
 
@@ -67,7 +69,7 @@ sub process_bundle {
 
         my $head = $groups{$a_lex};
         if ( defined $head ) {    # NE found
-            my $number = $head->get_attr('ord');
+            my $number = $head->ord;
             $t_node->set_attr( 'named_entity/number', $number );
             $t_node->set_attr( 'named_entity/type',   $labels{$head} );
         }
@@ -80,7 +82,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_named_entities
+=item Treex::Block::A2T::EN::MarkNamedEntities
 
 This block assigns the 'named_entity' attribute of t-nodes.
 The named entities are highlighted in TMTTred according to the 

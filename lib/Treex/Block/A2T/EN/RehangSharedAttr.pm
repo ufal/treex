@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Rehang_shared_attr;
+package Treex::Block::A2T::EN::RehangSharedAttr;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -48,7 +50,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Rehang_shared_attr
+=item Treex::Block::A2T::EN::RehangSharedAttr
 
 Rehanging shared attr/poss modifiers below the nearest following
 coordination member (usually there is a mess in the

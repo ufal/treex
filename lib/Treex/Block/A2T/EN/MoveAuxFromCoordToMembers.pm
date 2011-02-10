@@ -1,9 +1,11 @@
-package SEnglishA_to_SEnglishT::Move_aux_from_coord_to_members;
+package Treex::Block::A2T::EN::MoveAuxFromCoordToMembers;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
+
+
 use Report;
 
 use base qw(SxxA_to_SxxT::Move_aux_from_coord_to_members);
@@ -36,7 +38,7 @@ sub can_be_aux_to_coord {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Move_aux_from_coord_to_members
+=item Treex::Block::A2T::EN::MoveAuxFromCoordToMembers
 
 Coordination t-nodes should normaly have no aux a-nodes (C<a/aux.rf>) or only commas.
 However when building t-layer e.g. from the phrase "in Prague and London"

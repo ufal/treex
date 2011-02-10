@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Adverb_to_adjective;
+package Treex::Block::A2T::EN::AdverbToAdjective;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use Lingua::Ispell;
 
@@ -49,7 +51,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Adverb_to_adjective
+=item Treex::Block::A2T::EN::AdverbToAdjective
 
 Morphological deadjectival adverbs are to be represented by the adjectival t-lemmas
 at the t-layer (newly->new). This block tries to perform the corresponding substitution of endings, and if ispell

@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Find_text_coref;
+package Treex::Block::A2T::EN::FindTextCoref;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -53,7 +55,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Find_text_coref
+=item Treex::Block::A2T::EN::FindTextCoref
 
 Very simple heuristics for finding textual coreference links.
 

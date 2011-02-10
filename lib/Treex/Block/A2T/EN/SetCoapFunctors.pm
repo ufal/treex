@@ -1,18 +1,20 @@
-package SEnglishA_to_SEnglishT::Assign_coap_functors;
+package Treex::Block::A2T::EN::SetCoapFunctors;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
+
+
 use List::MoreUtils qw( any all );
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     foreach my $node ( $bundle->get_tree('SEnglishT')->get_descendants() ) {
         my $functor = get_coap_functor($node) or next;
-        $node->set_attr( 'functor', $functor );
+        $node->set_functor($functor);
     }
     return;
 }
@@ -36,7 +38,7 @@ sub get_coap_functor {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Assign_coap_functors
+=item Treex::Block::A2T::EN::SetCoapFunctors
 
 Functors (attribute C<functor>) in SEnglishT trees
 have to be assigned in (at least) two phases. This block

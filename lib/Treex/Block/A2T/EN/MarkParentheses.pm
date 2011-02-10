@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_parentheses;
+package Treex::Block::A2T::EN::MarkParentheses;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -29,7 +31,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_parentheses
+=item Treex::Block::A2T::EN::MarkParentheses
 
 Fills C<is_parenthesis> attribute.of parenthetized t-nodes
 (nodes having both left and right parentheses in aux a-nodes).

@@ -1,11 +1,14 @@
-package SEnglishA_to_SEnglishT::Assign_functors;
+package Treex::Block::A2T::EN::SetFunctors;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
+has '+language' => ( default => 'en' );
+
+
 
 #use warnings; # ???
 
-use base qw(TectoMT::Block);
 
 my %tag2functor = (
     "CC"    => "CONJ",    # coordinating conjunction
@@ -99,13 +102,13 @@ foreach (
 sub assign_functors($$) {
     my ( $t_root, $document ) = @_;
 
-    NODE: foreach my $node ( grep { not defined $_->get_attr('functor') } $t_root->get_descendants ) {
+    NODE: foreach my $node ( grep { not defined $_->functor } $t_root->get_descendants ) {
 
         #        my $lex_a_node  = $document->get_node_by_id( $node->get_attr('a/lex.rf') );
         my $lex_a_node = $node->get_lex_anode;
 
         if ( not defined $lex_a_node ) {
-            $node->set_attr( 'functor', '???' );
+            $node->set_functor('???');
             next NODE;
         }
 
@@ -143,7 +146,7 @@ sub assign_functors($$) {
             $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
             and $a_parent->tag
             =~ /^V/
-            and $lex_a_node->get_attr('ord') < $a_parent->get_attr('ord')
+            and $lex_a_node->ord < $a_parent->ord
             )
         {
             if ( $node->get_parent->get_attr('is_passive') ) {
@@ -156,7 +159,7 @@ sub assign_functors($$) {
         elsif (
             $a_parent->tag
             =~ /^V/
-            and $lex_a_node->get_attr('ord') > $a_parent->get_attr('ord')
+            and $lex_a_node->ord > $a_parent->ord
             )
         {
             $functor = "PAT";
@@ -170,7 +173,7 @@ sub assign_functors($$) {
         else {
             $functor = '???';
         }
-        $node->set_attr( 'functor', $functor );
+        $node->set_functor($functor);
 
         #    print $node->t_lemma."\t$functor ($first_aux_mlemma) [temporal $mlemma =>$temporal_noun{$mlemma}]\n\n";
     }
@@ -188,7 +191,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Assign_functors
+=item Treex::Block::A2T::EN::SetFunctors
 
 This blocks assings functors to SEnglishT node. The procedure is based
 on a few heuristic rules and conversion tables from functional words and POS tags to functors.

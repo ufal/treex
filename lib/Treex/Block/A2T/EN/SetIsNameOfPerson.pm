@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fill_is_name_of_person;
+package Treex::Block::A2T::EN::SetIsNameOfPerson;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -20,7 +22,7 @@ sub process_bundle {
     # Mark all the nodes except Mr., Mrs., and Ms.
     foreach my $tnode (@personal_tnodes) {
         if ( $tnode->t_lemma !~ /^(M(r|s|rs)|Judge)\.?$/ ) {
-            $tnode->set_attr( 'is_name_of_person', 1 );
+            $tnode->set_is_name_of_person(1) );
         }
     }
     return;
@@ -30,7 +32,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fill_is_name_of_person
+=item Treex::Block::A2T::EN::SetIsNameOfPerson
 
 Attribute C<is_name_of_person> is filled according to named enities stored in n-tree.
 

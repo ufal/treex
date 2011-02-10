@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase2;
+package Treex::Block::A2T::EN::TBLa2tPhase2;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use warnings;
-use strict;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -64,7 +66,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phase2
+=item Treex::Block::A2T::EN::TBLa2tPhase2
 
 Assumes English t-trees created with phase 1 (or 1_a). Performs complex tree-to-tree transformations of t-trees including adding and deleting inner nodes. It sets C<functor>s of added nodes.
 

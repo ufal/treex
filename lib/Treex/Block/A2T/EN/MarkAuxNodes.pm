@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_auxiliary_nodes;
+package Treex::Block::A2T::EN::MarkAuxNodes;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub aux_to_parent {
     my ($a_node) = shift;
@@ -31,10 +33,10 @@ sub aux_to_parent {
                 or
                 $a_node->get_parent->tag eq "CC" and not $a_node->is_member
             )    # !!! koordinace zatim nahackovana
-            and $a_node->get_attr('ord') < $a_node->get_parent->get_attr('ord')
+            and $a_node->ord < $a_node->get_parent->ord
             and
             ( not grep { $_->get_attr('phrase') =~ /^S/ } @nonterminals )
-            and ( not grep { $_->get_attr('ord') < $a_node->get_attr('ord') } $a_node->get_children )    # tohle by melo pomoct, kdyz neni k dispozici SEnglishP
+            and ( not grep { $_->ord < $a_node->ord } $a_node->get_children )    # tohle by melo pomoct, kdyz neni k dispozici SEnglishP
             ) or
 
             ( $lemma =~ /^(more|most)/ and $a_node->get_parent->tag =~ /^JJ|RB/ )                        # nahradit efektivnim rodicem!
@@ -115,7 +117,7 @@ __END__
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_auxiliary_nodes;
+=item Treex::Block::A2T::EN::MarkAuxNodes
 
 In SEnglishA trees it mark nodes which are auxiliary
 by filling node attributes aux_to_parent (for nodes which are to be merged

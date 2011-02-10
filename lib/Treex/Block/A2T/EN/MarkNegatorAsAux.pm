@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_negator_as_aux;
+package Treex::Block::A2T::EN::MarkNegatorAsAux;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -29,7 +31,7 @@ sub process_document {
 
 =over
 
-=item SEnglish_to_SEnglish::Mark_negator_as_aux
+=item Treex::Block::A2T::EN::MarkNegatorAsAux
 
 
 'not' is marked as aux_to_parent (which is used in the translation scenarios,

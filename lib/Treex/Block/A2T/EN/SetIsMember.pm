@@ -1,8 +1,11 @@
-package SEnglishA_to_SEnglishT::Fill_is_member;
+package Treex::Block::A2T::EN::SetIsMember;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
+
+
 use List::Util qw(first);
 
 # There is a generic block that copies is_member from a-layer to t-layer.
@@ -18,7 +21,7 @@ sub BUILD {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fill_is_member
+=item Treex::Block::A2T::EN::SetIsMember
 
 Coordination members in SEnglishT trees are marked by value 1 in the C<is_member> attribute.
 Their detection is based on the same attribute in SEnglishA trees.

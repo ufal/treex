@@ -1,11 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_edges_to_collapse_neg;
+package Treex::Block::A2T::EN::MarkEdgesToCollapseNeg;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -21,8 +22,8 @@ sub process_bundle {
         my $p_tag = $eparent->tag || '_root';
         my $parent_is_verb = $p_tag =~ /^(V|MD)/;
         if ( $a_node->lemma eq 'not' && $parent_is_verb ) {
-            $a_node->set_attr( 'is_auxiliary',     1 );
-            $a_node->set_attr( 'edge_to_collapse', 1 );
+            $a_node->set_is_auxiliary(1) );
+            $a_node->set_edge_to_collapse(1) );
         }
     }
     return;
@@ -32,7 +33,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglish_to_SEnglish::Mark_edges_to_collapse_neg
+=item Treex::Block::A2T::EN::MarkEdgesToCollapseNeg
 
 When building the t-layer for purposes of TectoMT transfer,
 some additional rules are applied compared to preparing data for annotators.

@@ -1,11 +1,13 @@
-package SEnglishA_to_SEnglishT::Mark_relclause_heads;
+package Treex::Block::A2T::EN::MarkRelClauseHeads;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
+
+
 use List::MoreUtils qw( any all );
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -38,7 +40,7 @@ sub is_wh_pronoun {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_relclause_heads
+=item Treex::Block::A2T::EN::MarkRelClauseHeads
 
 Finds relative clauses and mark their heads using the C<is_relclause_head> attribute.
 

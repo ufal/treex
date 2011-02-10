@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase1;
+package Treex::Block::A2T::EN::TBLa2tPhase1;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -37,7 +39,7 @@ sub feature_string
     return feature_node_string($t_node) . " " . ( $t_node->get_eff_children > 1 ? 2 : $t_node->get_eff_children ) . " "
         . feature_node_string($t_par) . " "
         . $syn_lemmas . " "
-        . $t_node->get_attr('functor');
+        . $t_node->functor;
 }
 
 #======================================================================
@@ -85,7 +87,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phase1
+=item Treex::Block::A2T::EN::TBLa2tPhase1
 
 Assumes English t-trees created with phase 0. Deletes nodes that correspond to synsemantic tokens and fills C<functor>s.
 

@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Assign_grammatemes;
+package Treex::Block::A2T::EN::SetGrammatemes;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use Lexicon::English;
 use List::MoreUtils qw( any all );
@@ -78,7 +80,7 @@ sub process_bundle {
 
     # Fill grammatemes of complex nodes
     foreach my $t_node ( $t_root->get_descendants() ) {
-        next if $t_node->get_attr('nodetype') ne 'complex';
+        next if $t_node->nodetype ne 'complex';
 
         # Sempos of all complex nodes should be defined,
         # so initialize it with a default value.
@@ -369,7 +371,7 @@ sub _get_sentmod {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Assign_grammatemes
+=item Treex::Block::A2T::EN::SetGrammatemes
 
 Grammatemes of SEnglishT complex nodes are filled by this block, using
 POS tags, info about auxiliary words, list of pronouns etc. Besides

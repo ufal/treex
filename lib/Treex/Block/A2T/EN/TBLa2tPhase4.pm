@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase4;
+package Treex::Block::A2T::EN::TBLa2tPhase4;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -26,7 +28,7 @@ sub feature_string
     my $a_node = $t_node->get_lex_anode;
 
     $outstr .= sprintf "%s %s %s %s %s ",
-        $t_node->get_attr('functor'),
+        $t_node->functor,
         aid($t_node) ? 1 : 0,
         tag($a_node),                               # tag of the node
         tag( get_anode($t_par) ),                   # tag of the parent
@@ -72,7 +74,7 @@ sub merg
         defined( $line = <$ftbl> ) or Report::fatal "Unexpected end of file";
         $line =~ s/(.*)\| ([0-9]+ )*$/$1/;                                                                       # strip rule' numbers
         $line =~ /^(\S+) (\S+) (\S+ ){6}(\S+) (\S+)/ or Report::fatal "Bad line in the input file: \"$line\"";
-        $1 eq $t_node->get_attr('functor') or Report::fatal "The input files do not match ($1 vs. " . $t_node->get_attr('functor') . ")";
+        $1 eq $t_node->functor or Report::fatal "The input files do not match ($1 vs. " . $t_node->functor . ")";
 
         $t_node->set_attr( 't_lemma', $2 ? $5 : $4 );
     }
@@ -120,7 +122,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phase4
+=item Treex::Block::A2T::EN::TBLa2tPhase4
 
 Assumes English t-trees created with phase 3. Corrects or fills C<t_lemma>.
 

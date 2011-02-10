@@ -1,20 +1,22 @@
-package SEnglishA_to_SEnglishT::Recompute_deepord;
+package Treex::Block::A2T::EN::RecomputeDeepord;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
 
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_aux_root = $bundle->get_tree('SEnglishT');
-        my $deepord;
-        foreach my $t_node ( sort { $a->get_attr('deepord') <=> $b->get_attr('deepord') } $t_aux_root->get_descendants ) {
-            $deepord++;
-            $t_node->set_attr( 'deepord', $deepord );
+        my $ord;
+        foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_aux_root->get_descendants ) {
+            $ord++;
+            $t_node->set_ord($ord);
         }
     }
 }
@@ -23,9 +25,9 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Recompute_deepord
+=item Treex::Block::A2T::EN::RecomputeDeepord
 
-When finishing the topological changes of SEnglishT trees, the C<deepord>
+When finishing the topological changes of SEnglishT trees, the C<ord>
 attribute is to be recomputed so that it does not contain any holes
 or fractional numbers.
 

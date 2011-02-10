@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_relclause_coref;
+package Treex::Block::A2T::EN::MarkRelClauseCoref;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -37,7 +39,7 @@ __END__
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_relclause_coref
+=item Treex::Block::A2T::EN::MarkRelClauseCoref
 
 Coreference link between a relative pronoun (or other relative pronominal word)
 and its antecedent (in the sense of grammatical coreference) is detected in SEnglishT trees

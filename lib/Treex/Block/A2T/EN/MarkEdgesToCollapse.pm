@@ -1,14 +1,15 @@
-package SEnglishA_to_SEnglishT::Mark_edges_to_collapse;
+package Treex::Block::A2T::EN::MarkEdgesToCollapse;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
+
+
 use Readonly;
 use List::MoreUtils qw( any all );
 use List::Util qw( first);
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -19,21 +20,21 @@ sub process_bundle {
         # can collapse to a technical root.
         if ( $parent->is_root() ) {
             if ( $node->afun eq 'AuxK' ) {
-                $node->set_attr( 'edge_to_collapse', 1 );
-                $node->set_attr( 'is_auxiliary',     1 );
+                $node->set_edge_to_collapse(1) );
+                $node->set_is_auxiliary(1) );
             }
         }
 
         # Should collapse to parent because the $node is auxiliary?
         elsif ( is_aux_to_parent($node) ) {
-            $node->set_attr( 'edge_to_collapse', 1 );
-            $node->set_attr( 'is_auxiliary',     1 );
+            $node->set_edge_to_collapse(1) );
+            $node->set_is_auxiliary(1) );
         }
 
         # Should collapse to parent because the $parent is auxiliary?
         elsif ( is_parent_aux_to_me($node) ) {
-            $node->set_attr( 'edge_to_collapse', 1 );
-            $parent->set_attr( 'is_auxiliary',   1 );
+            $node->set_edge_to_collapse(1) );
+            $parent->set_is_auxiliary(1) );
         }
     }
     return;
@@ -200,7 +201,7 @@ sub is_modal {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_edges_to_collapse
+=item Treex::Block::A2T::EN::MarkEdgesToCollapse
 
 Before applying this block, afun values Aux[ACKPVX] and Coord must be filled.
 

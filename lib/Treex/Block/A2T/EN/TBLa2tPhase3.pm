@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase3;
+package Treex::Block::A2T::EN::TBLa2tPhase3;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -40,7 +42,7 @@ sub feature_string
     }
 
     # features to be changed
-    $outstr .= "--- " . $t_node->get_attr('functor') . " ";                                            # valency frame and current functor
+    $outstr .= "--- " . $t_node->functor . " ";                                            # valency frame and current functor
     return $outstr;
 }
 
@@ -51,8 +53,8 @@ sub create_tnode
     my ( $parent, $func ) = @_;
     my $new_n = $parent->create_child;
     init_new_tnode( $new_n, $parent, 0 );
-    $new_n->set_attr( 'functor', $func );
-    $new_n->set_attr( 't_lemma', '#Gen' );
+    $new_n->set_functor($func);
+    $new_n->set_t_lemma('#Gen');
     return $new_n;
 }
 
@@ -100,7 +102,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phase3
+=item Treex::Block::A2T::EN::TBLa2tPhase3
 
 Assumes English t-trees created with phase 2. Fills C<val_frame.rf>s, corrects C<functor>s and adds leaf nodes, i.e. those corresponding to valency members not expressed at the a-layer.
 

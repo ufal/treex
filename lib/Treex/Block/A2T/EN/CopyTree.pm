@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Build_ttree;
+package Treex::Block::A2T::EN::CopyTree;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub aux_to_parent($) {
     my ($a_node) = shift;
@@ -96,7 +98,7 @@ sub process_document {
         #    print "aroot id: ".($a_root->get_attr('id'))."\n";
         $root_id =~ s/EnglishA/EnglishT/ or Report::fatal("root id $root_id does not match the expected regexp!");
         $t_root->set_attr( 'id',       $root_id );
-        $t_root->set_attr( 'deepord',  0 );
+        $t_root->set_ord(0) );
         $t_root->set_attr( 'atree.rf', $a_aux_root->get_attr('id') );
 
         asubtree_2_tsubtree( $a_root, $t_root, [] );
@@ -115,12 +117,12 @@ sub process_document {
                 );
                 $t_node->set_attr( 'a/lex.rf', $aux_should_be_lex->get_attr('id') );
 
-                #	$t_node->set_attr('t_lemma','modal!!!');
+                #	$t_node->set_t_lemma('modal!!!');
             }
 
             # specialni fix kvuli 'have to'
             if ( $t_node->get_lex_anode->lemma eq "to" ) {
-                my ($last_verb_anode) = sort { $b->get_attr('ord') <=> $a->get_attr('ord') }
+                my ($last_verb_anode) = sort { $b->ord <=> $a->ord }
                     grep { $_->tag =~ /^V/ } $t_node->get_aux_anodes;
                 if ($last_verb_anode) {
                     $t_node->set_attr(
@@ -144,7 +146,7 @@ sub process_document {
             $id =~ s/EnglishA/EnglishT/;
             $t_node->set_attr( 'id', $id );
 
-            $t_node->set_attr( 'deepord', $a_lex_node->get_attr('ord') );
+            $t_node->set_attr( 'ord', $a_lex_node->ord );
 
         }
 
@@ -156,12 +158,12 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Build_ttree
+=item Treex::Block::A2T::EN::CopyTree
 
 For each bundle, a skeleton of the tectogrammatical tree is created (and stored as EnglishT tree)
 by recursive collapse of the English tree (merging functional words with the autosemantic ones etc.).
 In each new SEnglishT node, references to the source SEnglishA nodes are stored in the C<a/lex.rf> and C<a/aux.rf>
-attributes. Also attributes C<id>, C<t_lemma>, and C<deepord> are (preliminarly) filled.
+attributes. Also attributes C<id>, C<t_lemma>, and C<ord> are (preliminarly) filled.
 
 =back
 

@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Set_sentence_string;
+package Treex::Block::A2T::EN::SetSentenceString;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -14,7 +16,7 @@ sub process_document {
         my $a_root = $bundle->get_tree('SEnglishA');
 
         my @bag = grep { $_->tag ne '-NONE-' } $a_root->get_descendants;
-        @bag = sort { $a->get_attr('ord') <=> $b->get_attr('ord') } @bag;
+        @bag = sort { $a->ord <=> $b->ord } @bag;
         @bag = map { $_->form . (' ') } @bag;
 
         my $sentence = join( '', @bag );
@@ -32,7 +34,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Set_sentence_string
+=item Treex::Block::A2T::EN::SetSentenceString
 
 C<english_source_sentence> attribute of each bundle is set to a sentence string derived
 from form attribute.

@@ -1,14 +1,15 @@
-package SEnglishA_to_SEnglishT::Detect_formeme;
+package Treex::Block::A2T::EN::SetFormeme;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+has '+language' => ( default => 'en' );
+
+
 use Readonly;
 use Report;
 use List::MoreUtils qw( any all );
 
-use base qw(TectoMT::Block);
 
 Readonly my $DEBUG => 0;
 
@@ -44,7 +45,7 @@ sub detect_formeme {
     # Non-complex type nodes (coordinations, rhematizers etc.)
     # have special formeme value instead of undef,
     # so tedious undef checking (||'') is no more needed.
-    return 'x' if $t_node->get_attr('nodetype') ne 'complex';
+    return 'x' if $t_node->nodetype ne 'complex';
 
     # Punctuation in most cases should not remain on t-layer, but anyway
     # it makes no sense detecting formemes. (These are not unrecognized ???.)
@@ -239,10 +240,10 @@ sub distinguish_objects {
     # If both the sets of first- and second-position objects are non-empty
     if ( @firsts and @objects ) {
         foreach my $first (@firsts) {
-            $first->set_attr( 'formeme', 'n:obj1' );
+            $first->set_formeme('n:obj1');
         }
         foreach my $second (@objects) {
-            $second->set_attr( 'formeme', 'n:obj2' );
+            $second->set_formeme('n:obj2');
         }
     }
     return;
@@ -254,7 +255,7 @@ __END__
 
 =over
 
-=item SEnglishA_to_SEnglishT::Detect_formeme
+=item Treex::Block::A2T::EN::SetFormeme
 
 The attribute C<formeme> of SEnglishT nodes is filled with
 a value which describes the morphosyntactic form of the given

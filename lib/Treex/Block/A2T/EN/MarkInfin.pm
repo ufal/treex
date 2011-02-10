@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_infin;
+package Treex::Block::A2T::EN::MarkInfin;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -38,7 +40,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_infin
+=item Treex::Block::A2T::EN::MarkInfin
 
 EnglishT nodes corresponding to non-finite verbal expression are marked
 by value 1 in the C<is_infin> attribute.

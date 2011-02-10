@@ -1,14 +1,16 @@
-package SEnglishA_to_SEnglishT::Assign_sempos;
+package Treex::Block::A2T::EN::SetSempos;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
+
+has '+language' => ( default => 'en' );
+
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Obsolete, now covered by SEnglishA_to_SEnglishT::Assign_grammatemes.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
 
 sub process_document {
 
@@ -16,11 +18,11 @@ sub process_document {
 
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
-        $t_root->set_attr( 'nodetype', 'root' );
+        $t_root->set_nodetype('root');
 
         TNODE: foreach my $t_node (
             grep {
-                $_->get_attr('nodetype') eq "complex"
+                $_->nodetype eq "complex"
                     and $_->get_attr('a/lex.rf')
             } $t_root->get_descendants
             )
@@ -56,7 +58,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Assign_sempos
+=item Treex::Block::A2T::EN::SetSempos
 
 Heuristic rules for assigning some of the most frequent
 semantic part of speech (attribute C<sempos>) in SEnglishT nodes.

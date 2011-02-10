@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phase1_a;
+package Treex::Block::A2T::EN::TBLa2tPhase1A;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -37,7 +39,7 @@ sub feature_string
     return feature_node_string($t_node) . " "
         . feature_node_string($t_par) . " "
         . feature_node_string($t_gpar) . " "
-        . $t_node->get_attr('functor');
+        . $t_node->functor;
 
     #! spravny ftor by mel byt prepsan slovnikem -- nemelo by to posledni tedy zmizet?
 }
@@ -87,7 +89,7 @@ sub process_document
 
 =over
 
-=item SCzechA_to_SCzechT::TBLa2t_phase1
+=item Treex::Block::A2T::EN::TBLa2tPhase1A
 
 Assumes English t-trees with no t-preprocessing. Deletes nodes that correspond to synsemantic tokens and fills C<functor>s.
 

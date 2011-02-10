@@ -1,15 +1,17 @@
-package SEnglishA_to_SEnglishT::Distrib_coord_aux;
+package Treex::Block::A2T::EN::DistribCoordAux;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
+
+has '+language' => ( default => 'en' );
+
 
 ############################################################################
 # This block distributes also parentheses and needs functors to be filled. #
 # See SxxA_to_SxxT::Move_aux_from_coord_to_members for an alternative.     #
 ############################################################################
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -54,8 +56,8 @@ sub process_document {
 
         foreach my $t_coord_node (
             grep {
-                defined $_->get_attr('functor')
-                    and $_->get_attr('functor') =~ /^(CONJ|DISJ|ADVS)$/
+                defined $_->functor
+                    and $_->functor =~ /^(CONJ|DISJ|ADVS)$/
             } $t_aux_root->get_descendants
             )
         {
@@ -74,7 +76,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Distrib_coord_aux
+=item Treex::Block::A2T::EN::DistribCoordAux
 
 In each SEnglishT tree, reference to auxiliary SEnglishA nodes shared by coordination members
 (e.g. in the expression 'for girls and boys') are moved from the coordination head to the coordination

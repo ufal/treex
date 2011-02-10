@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fix_either_or;
+package Treex::Block::A2T::EN::FixEitherOr;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -26,8 +28,8 @@ sub process_bundle {
         # tlemmas such as 'either_or' are created
         $or->set_attr( 't_lemma', $either->t_lemma . "_" . $or->t_lemma );
         $or->add_aux_anodes( $either->get_anodes );
-        $or->set_attr( 'functor',  'DISJ' );
-        $or->set_attr( 'nodetype', 'coap' );
+        $or->set_functor('DISJ');
+        $or->set_nodetype('coap');
         $either->disconnect;
 
         #        print $or->t_lemma."\t". $or->get_fposition."\n";
@@ -40,7 +42,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fix_either_or
+=item Treex::Block::A2T::EN::FixEitherOr
 
 Creates a single t-node from 'either' and 'or' pair (as well as from neither/or
 and neither/nor).

@@ -3,6 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 
+# t-layer attributes
+has [ qw(ord t_lemma functor formeme is_member nodetype is_generated
+      subfunctor is_name_of_person is_dsp_root sentmod tfa)
+    ] => ( is => 'rw' );
+             
+
 sub ordering_attribute {'ord'}
 
 sub get_pml_type_name {

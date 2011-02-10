@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_clause_heads;
+package Treex::Block::A2T::EN::MarkClauseHeads;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 # zatim nejake rozbite, znackuje to i infinitivy
 
@@ -64,7 +66,7 @@ sub is_possible_subject {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_clause_heads
+=item Treex::Block::A2T::EN::MarkClauseHeads
 
 SEnglishT nodes representing the heads of finite verb clauses are marked
 by the value 1 in the C<is_clause_head> attribute.

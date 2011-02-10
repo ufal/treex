@@ -1,16 +1,18 @@
-package SEnglishA_to_SEnglishT::Detect_voice;
+package Treex::Block::A2T::EN::SetVoice;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
-        foreach my $t_node ( grep { $_->get_attr('nodetype') eq "complex" } $t_root->get_descendants ) {
+        foreach my $t_node ( grep { $_->nodetype eq "complex" } $t_root->get_descendants ) {
             my $formeme = $t_node->formeme || "";
             if ( $formeme =~ /^v:/ ) {
                 if ( $t_node->get_attr('is_passive') ) {
@@ -28,7 +30,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Detect_voice
+=item Treex::Block::A2T::EN::SetVoice
 
 The attribute C<voice> is filled so that it distinguishes
 distinguishes English active and passive voice (in verb t-nodes only).

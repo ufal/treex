@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Add_cor_act;
+package Treex::Block::A2T::EN::AddCorAct;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 # verbs with object control type, copied from page 286
 # in Pollard & Sag's Head-driven phrase structure grammar
@@ -31,10 +33,10 @@ sub process_bundle {
     {
         my $cor = $infin_verb->create_child;
         $cor->shift_before_node($infin_verb);
-        $cor->set_attr( 't_lemma',  '#Cor' );
-        $cor->set_attr( 'functor',  'ACT' );
-        $cor->set_attr( 'formeme',  'n:elided' );
-        $cor->set_attr( 'nodetype', 'qcomplex' );
+        $cor->set_t_lemma('#Cor');
+        $cor->set_functor('ACT');
+        $cor->set_formeme('n:elided');
+        $cor->set_nodetype('qcomplex');
 
         if ( not $infin_verb->get_parent->is_root and my ($grandpa) = $infin_verb->get_eff_parents ) {
 
@@ -77,7 +79,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Add_cor_act
+=item Treex::Block::A2T::EN::AddCorAct
 
 New SEnglishT nodes with t_lemma #Cor corresponding to unexpressed actors of infinitive
 verbs are created. Grammatical coreference links are established to heuristically found

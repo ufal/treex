@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Assign_nodetype;
+package Treex::Block::A2T::EN::SetNodetype;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
 
@@ -12,11 +14,11 @@ sub process_document {
 
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SEnglishT');
-        $t_root->set_attr( 'nodetype', 'root' );
+        $t_root->set_nodetype('root');
 
         foreach my $t_node ( $t_root->get_descendants ) {
 
-            my $functor = $t_node->get_attr('functor');
+            my $functor = $t_node->functor;
             my $t_lemma = $t_node->t_lemma;
             my $nodetype;
 
@@ -39,7 +41,7 @@ sub process_document {
                 $nodetype = 'complex';
             }
 
-            $t_node->set_attr( 'nodetype', $nodetype );
+            $t_node->set_nodetype($nodetype);
 
         }
 
@@ -50,7 +52,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Assign_nodetype
+=item Treex::Block::A2T::EN::SetNodetype
 
 Value of the C<nodetype> attribute is filled (accordingly to the value of C<functor> and C<t_lemma>)
     in each SEnglishT node.

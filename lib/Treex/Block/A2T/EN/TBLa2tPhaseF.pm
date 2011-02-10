@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::TBLa2t_phaseF;
+package Treex::Block::A2T::EN::TBLa2tPhaseF;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_en;
@@ -106,7 +108,7 @@ sub process_document
 
 =over
 
-=item SEnglishA_to_SEnglishT::TBLa2t_phaseF
+=item Treex::Block::A2T::EN::TBLa2tPhaseF
 
 Assumes English t-trees with correct structure, C<lemma>, C<tag>, C<is_member> and filled C<afun>. Fills C<functors>.
 

@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Mark_dsp_root;
+package Treex::Block::A2T::EN::MarkDspRoot;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 # vytazeno z BNC: [tag="V.*"] [word=":"] [word="\""]
 # a rucne lehce profiltrovano:
@@ -38,13 +40,13 @@ sub process_bundle {
 
                         #	      print STDERR "  achild nalezeny...\n";
                         my ( $left_ord, $right_ord ) = sort { $a <=> $b }
-                            map { $_->get_attr('ord') } ( $dicendi_anode, $achild );
+                            map { $_->ord } ( $dicendi_anode, $achild );
 
                         #	      print STDERR "  interval: $left_ord - $right_ord\n";
-                        if ( grep { my $ord = $_->get_attr('ord'); $left_ord < $ord and $ord < $right_ord } @quote_anodes ) {
+                        if ( grep { my $ord = $_->ord; $left_ord < $ord and $ord < $right_ord } @quote_anodes ) {
 
                             #print STDERR "Nalezena prima rec, root:".$tchild->t_lemma."\n";;
-                            $tchild->set_attr( 'is_dsp_root', 1 );
+                            $tchild->set_is_dsp_root(1) );
                         }
                     }
                 }
@@ -58,7 +60,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Mark_dsp_root
+=item Treex::Block::A2T::EN::MarkDspRoot
 
 Finds direct speeches and mark their root t-nodes by setting
 the C<is_dsp_root> attribute to 1.

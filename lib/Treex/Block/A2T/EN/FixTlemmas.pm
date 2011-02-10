@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fix_tlemmas;
+package Treex::Block::A2T::EN::FixTlemmas;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -33,7 +35,7 @@ sub process_document {
             }
             else {
                 my $full_expression = join "_", map { $_->lemma }
-                    sort { $a->get_attr('ord') <=> $b->get_attr('ord') } grep { $_->tag !~ /^(,|-|;)/ } ( $lex_a_node, @aux_a_nodes );
+                    sort { $a->ord <=> $b->ord } grep { $_->tag !~ /^(,|-|;)/ } ( $lex_a_node, @aux_a_nodes );
 
                 if ( $full_expression =~ /^(as_well_as|as_well)$/ ) {
                     $new_tlemma = $1;
@@ -51,7 +53,7 @@ sub process_document {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fix_tlemmas
+=item Treex::Block::A2T::EN::FixTlemmas
 
 The attribute C<t_lemma> is corrected in specific cases: personal pronouns are represented
 by #PersPron, particle is joined with the base verb in the case of phrasal verbs, etc.

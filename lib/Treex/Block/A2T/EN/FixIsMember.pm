@@ -1,10 +1,12 @@
-package SEnglishA_to_SEnglishT::Fix_is_member;
+package Treex::Block::A2T::EN::FixIsMember;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'en' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -23,12 +25,12 @@ sub process_bundle {
 
             # !!! vetsinou jde opravdu o bezdetne PRECy
             if ( $node->get_children <= 1 ) {
-                $node->set_attr( 'functor', 'PREC' );
+                $node->set_functor('PREC');
 
                 # !!! pokud ma ovsem alespon 2 deti, predpokladame, ze to opravdu je koordinace
             }
             else {
-                map { $_->set_attr( 'is_member', 1 ) } $node->get_children;
+                map { $_->set_is_member(1) ) } $node->get_children;
             }
         }
     }
@@ -40,7 +42,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishA_to_SEnglishT::Fix_is_member
+=item Treex::Block::A2T::EN::FixIsMember
 
 The attribute C<is_member> (or, in some cases, C<functor>) is fixed:
 (1) is_member can be set only below coap nodes, (2) below each
