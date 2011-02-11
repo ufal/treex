@@ -16,8 +16,8 @@ sub process_anode {
         my $p_tag = $eparent->tag || '_root';
         my $parent_is_verb = $p_tag =~ /^(V|MD)/;
         if ( $a_node->lemma eq 'not' && $parent_is_verb ) {
-            $a_node->set_is_auxiliary(1) );
-            $a_node->set_edge_to_collapse(1) );
+            $a_node->set_is_auxiliary( 1 );
+            $a_node->set_edge_to_collapse( 1 );
         }
     return 1;
 }

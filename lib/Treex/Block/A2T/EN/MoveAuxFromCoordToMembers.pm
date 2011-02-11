@@ -1,7 +1,7 @@
 package Treex::Block::A2T::EN::MoveAuxFromCoordToMembers;
 use Moose;
 use Treex::Moose;
-extends 'Treex::Core::Block::A2T::MoveAuxFromCoordToMembers';
+extends 'Treex::Block::A2T::MoveAuxFromCoordToMembers';
 
 has '+language' => ( default => 'en' );
 
@@ -22,7 +22,7 @@ override 'can_be_aux_to_coord' => sub {
         }
     }
     return 0;
-}
+};
 
 1;
 

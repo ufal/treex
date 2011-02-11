@@ -10,7 +10,7 @@ sub process_tnode {
 
     my $functor = get_coap_functor($tnode) or next;
         $tnode->set_functor($functor);
-    }
+    
     return 1;
 }
 
