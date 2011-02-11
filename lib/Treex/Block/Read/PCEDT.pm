@@ -89,7 +89,7 @@ sub next_document {
     log_fatal "different number of trees in Czech and English t-files"
         if $pmldoc{en}{t}->trees != $pmldoc{cs}{t}->trees;
 
-    my $document = Treex::Core::Document->new();
+    my $document = $self->new_document(); # pre-fills base name, path
 
     foreach my $tree_number ( 0 .. ( $pmldoc{en}{t}->trees - 1 ) ) {
 
