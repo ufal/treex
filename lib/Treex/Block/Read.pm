@@ -5,9 +5,14 @@ with 'Treex::Core::DocumentReader';
 use English '-no_match_vars';
 
 my %READER_FOR = (
-    treex   => 'Treex',
-    txt     => 'Text',
-    #conll  => 'Conll',
+    treex => 'Treex',
+    txt   => 'Text',
+
+    # TODO:
+    # conll  => 'Conll',
+    # plsgz  => 'Plsgz',
+    # treex.gz
+    # tmt
 );
 
 has from => (
@@ -17,24 +22,23 @@ has from => (
     documentation => 'space or comma separated list of filenames to be loaded',
 );
 
-has _reader => (is=>'rw');
+has _reader => ( is => 'rw' );
 
 sub BUILD {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my @files = split /[ ,]+/, $self->from;
-    my ($ext, @extensions) = map {/[^.]+\.(.+)?/} @files;
+    my ( $ext, @extensions ) = map {/[^.]+\.(.+)?/} @files;
     log_fatal 'Files (' . $self->from . ') must have extensions' if !$ext;
-    log_fatal 'All files (' . $self->from .') must have the same extension' if any {$_ ne $ext} @extensions;
+    log_fatal 'All files (' . $self->from . ') must have the same extension' if any { $_ ne $ext } @extensions;
 
     my $r = $READER_FOR{$ext};
     log_fatal "There is no DocumentReader implemented for extension '$ext'" if !$r;
-    require "Treex::Block::Read::$r";
     my $reader;
-    eval '$reader = Treex::Block::Read::' . $READER_FOR{$ext} . '->new($args);';
-    log_fatal "Error in loading a reader $EVAL_ERROR" if $EVAL_ERROR; 
+    eval "require Treex::Block::Read::$r; "
+        . "\$reader = Treex::Block::Read::$r->new(\$args);";
+    log_fatal "Error in loading a reader $EVAL_ERROR" if $EVAL_ERROR;
     $self->_set_reader($reader);
 }
-
 
 sub next_document {
     my ($self) = @_;
