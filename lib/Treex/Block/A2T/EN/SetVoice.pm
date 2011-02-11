@@ -5,25 +5,20 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_document {
-    my ( $self, $document ) = @_;
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
         foreach my $t_node ( grep { $_->nodetype eq "complex" } $t_root->get_descendants ) {
             my $formeme = $t_node->formeme || "";
             if ( $formeme =~ /^v:/ ) {
-                if ( $t_node->get_attr('is_passive') ) {
-                    $t_node->set_attr( 'voice', 'passive' );
+                if ( $t_node->is_passive ) {
+                    $t_node->set_voice( 'passive' );
                 }
                 else {
-                    $t_node->set_attr( 'voice', 'active' );
+                    $t_node->set_voice( 'active' );
                 }
             }
         }
-    }
+    return 1;
 }
 
 1;

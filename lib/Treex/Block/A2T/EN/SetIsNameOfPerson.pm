@@ -5,12 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
     my @tnodes = $t_root->get_descendants;
 
     # Get all t-nodes recognized by named entity recognizer as personal names
@@ -25,7 +21,7 @@ sub process_bundle {
             $tnode->set_is_name_of_person(1) );
         }
     }
-    return;
+    return 1;
 }
 
 1;

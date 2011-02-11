@@ -5,12 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
 use Lexicon::English;
-use List::MoreUtils qw( any all );
-use List::Util qw(first);
 use Readonly;
 
 Readonly my $DEBUG => 0;
@@ -74,9 +69,8 @@ sub _get_tecto_info {
 }
 
 #------ Main loop --------
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SEnglishT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     # Fill grammatemes of complex nodes
     foreach my $t_node ( $t_root->get_descendants() ) {
@@ -93,7 +87,7 @@ sub process_bundle {
     my $t_sent_root = $t_root->get_children( { first_only => 1 } ) or return;
     $t_sent_root->set_attr( 'sentmod', _get_sentmod($bundle) );
 
-    return;
+    return 1;
 }
 
 sub assign_grammatemes_to_tnode {

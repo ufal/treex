@@ -5,18 +5,13 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    foreach my $t_node ( $bundle->get_tree('SEnglishT')->get_descendants() ) {
-        next if $t_node->get_attr('gram/gender');
-        if ( my $gender = gender_of_tnode_person($t_node) ) {
-            $t_node->set_attr( 'gram/gender', $gender );
-        }
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
+    return 1 if $t_node->get_attr('gram/gender');
+    if ( my $gender = gender_of_tnode_person($t_node) ) {
+        $t_node->set_attr( 'gram/gender', $gender );
     }
-    return;
+    return 1;
 }
 
 sub gender_of_tnode_person {

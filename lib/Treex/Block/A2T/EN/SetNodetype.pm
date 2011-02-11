@@ -5,18 +5,9 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
+sub process_tnode {
 
-
-
-sub process_document {
-
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SEnglishT');
-        $t_root->set_nodetype('root');
-
-        foreach my $t_node ( $t_root->get_descendants ) {
+    my ( $self, $t_node ) = @_;
 
             my $functor = $t_node->functor;
             my $t_lemma = $t_node->t_lemma;
@@ -43,9 +34,7 @@ sub process_document {
 
             $t_node->set_nodetype($nodetype);
 
-        }
-
-    }
+    return 1;
 }
 
 1;
