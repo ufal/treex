@@ -35,12 +35,57 @@ has 'filelist' => (
     documentation => 'TODO load a list of treex files from a file',
 );
 
-has 'filenames' => ( traits => ['NoGetopt'], is => 'rw', isa => 'ArrayRef[Str]',         documentation => 'treex file names', );
-has 'scenario'  => ( traits => ['NoGetopt'], is => 'rw', isa => 'Treex::Core::Scenario', documentation => 'scenario object', );
+has 'filenames' => (
+    traits => ['NoGetopt'],
+    is => 'rw',
+    isa => 'ArrayRef[Str]',
+    documentation => 'treex file names',
+);
+
+has 'scenario'  => (
+    traits => ['NoGetopt'],
+    is => 'rw', isa => 'Treex::Core::Scenario',
+    documentation => 'scenario object',
+);
+
+
+has 'parallel' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 'p',
+    is            => 'ro',
+    isa => 'Boolean',
+#    default => 0,
+    documentation => 'parallelize the task on SGE cluster (using qsub)',
+);
+
+
+has 'jobs' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 'j',
+    is            => 'ro',
+    isa => 'Integer',
+#    default => 10,
+    documentation => 'number of jobs for parallelization, default 10',
+);
+
+has 'qsub' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 'j',
+    is            => 'ro',
+    isa => 'String',
+    documentation => 'additional parameters passed to qsub',
+);
+
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
+
+sub BUILD {
+    # more complicated tests on consistency of options will be place here
+
+}
+
 
 sub execute {
     my ($self) = @_;
