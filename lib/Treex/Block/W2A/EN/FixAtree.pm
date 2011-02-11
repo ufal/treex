@@ -268,8 +268,8 @@ sub fix_node {
     }
 
     # Move dependents from firstname node to surname node
-    my $parent_n_node = $parent->get_n_node();
-    my $n_node        = $node->get_n_node();
+    my $parent_n_node = $parent->n_node;
+    my $n_node        = $node->n_node;
     if ( $n_node && $parent_n_node && $n_node eq $parent_n_node && $n_node->get_attr('ne_type') =~ /^p/ ) {
 
         foreach my $child ( $node->get_children ) {

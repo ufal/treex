@@ -145,7 +145,8 @@ sub is_aux_verb {
 
 sub is_aux_or_modal_verb {
     my ($node) = @_;
-    return 1 if $node->afun eq 'AuxV';
+    my $afun = $node->afun || '';
+    return 1 if $afun eq 'AuxV';
     return $node->tag eq 'MD';
 }
 
@@ -184,7 +185,7 @@ sub get_afun {
 
     # Determiners (except the already solved articles)
     my ($eparent) = $node->get_eparents();
-    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'm/tag', 'm/lemma' );
+    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma' );
     my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
     my $precedes_ep = $node->precedes($eparent);
     if ( $tag eq 'DT' ) {
