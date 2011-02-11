@@ -5,23 +5,17 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
-# TODO: storing parameters (block instance variables) as global (class variable) is undue.
-# The block can not be used more times (with different parameters) in one scenario.
-# But calling get_parameter every time or using Conway's %language_of : ATTR (:get<language>);
-# is counter-intuitive and noisy. Waiting for Perl to become OOP language...
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    my $a_node = $t_node->get_lex_anode() or next;
-    next if $a_node->afun !~ /^(Coord|Apos)$/;
+    my $a_node = $t_node->get_lex_anode() or return;
+    return if $a_node->afun !~ /^(Coord|Apos)$/;
     $self->check_coordination($t_node);
-    return 1;
 }
 
 sub check_coordination {
     my ( $self, $t_coord ) = @_;
 
-    # TODO: can we use get_eff_children() now?
+    # TODO: can we use get_echildren() now?
     # Afuns are surely not filled, but is_member should suffice.
     my @t_children = $t_coord->get_children( { ordered => 1 }) or return;
     my @aux_anodes = $t_coord->get_aux_anodes();
@@ -54,7 +48,7 @@ sub check_coordination {
             push @aux_to_members, $aux;
         }
     }
-  
+
     # put prepositions as aux to children which are members of the coordination
     foreach my $member ( grep { $_->is_member } @t_children ) {
         $member->add_aux_anodes(@aux_to_members);
@@ -81,14 +75,14 @@ sub can_be_aux_to_coord {
 
 Coordination t-nodes should normaly have no aux a-nodes (C<a/aux.rf>) or only commas.
 However when building t-layer e.g. from the phrase "in Prague and London"
-using the C<SxxA_to_SxxT::Build_ttree> block,
+using the C<A2T::BuildTtree> block,
 the a-node I<in> is marked as aux with the coordination (t-node I<and>).
 This block removes the reference to I<in> from the coordination head
 and adds two such references to the members of the coordination
 (i.e. t-nodes I<Prague> and I<London>).
 
 For all t-nodes, the attribute C<is_member> must be correctly filled
-before applying this block (see L<SxxA_to_SxxT::Fill_is_member>).
+before applying this block (see L<A2T::SetIsMember>).
 
 PARAMETERS: LANGUAGE
 
