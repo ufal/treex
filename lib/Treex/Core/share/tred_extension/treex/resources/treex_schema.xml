@@ -105,6 +105,7 @@
         <structure>
           <member name="a_tree" type="a-root.type"/> <!-- pozor,      bude potreba zmenit a-root.type!!! -->
           <member name="t_tree" type="t-root.type"/>
+          <member name="n_tree" type="n-root.type"/>
           <member name="p_tree" type="p-nonterminal.type"/>
         </structure>
       </member>

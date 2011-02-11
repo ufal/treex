@@ -67,14 +67,12 @@ sub process_zone {
 
         # Subsequent words with the same type are treated as one named entity.
         if ( @actual_ids && $last_type ne $type ) {
-            $n_root->create_child(
-                {   attributes => {
-                        'm.rf'          => \@actual_ids,
-                        ne_type         => $last_type,
-                        normalized_name => join( ' ', @actual_words ),
-                        }
-                }
+            my $new_nnode = $n_root->create_child(
+               ne_type         => $last_type,
+               normalized_name => join( ' ', @actual_words ),
+             
             );
+            $new_nnode->set_attr('a.rf', \@actual_ids);
             @actual_ids   = ();
             @actual_words = ();
         }
@@ -83,14 +81,11 @@ sub process_zone {
         $last_type = $type;
     }
     if (@actual_ids) {
-        $n_root->create_child(
-            {   attributes => {
-                    'm.rf'          => \@actual_ids,
-                    ne_type         => $last_type,
-                    normalized_name => join( ' ', @actual_words ),
-                    }
-            }
+        my $new_nnode = $n_root->create_child(
+           ne_type         => $last_type,
+           normalized_name => join( ' ', @actual_words ),
         );
+        $new_nnode->set_attr('a.rf', \@actual_ids);
     }
     return 1;
 }

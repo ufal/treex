@@ -1,14 +1,11 @@
-package SEnglishM_to_SEnglishN::Distinguish_personal_names;
+package Treex::Block::A2N::EN::DistinguishPersonalNames;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use strict;
-use warnings;
-use Readonly;
+has '+language' => ( default => 'en' );
+
 use Lexicon::EN::First_names;
-use List::MoreUtils qw(any);
-use List::Util qw(first);
-
-use base qw(TectoMT::Block);
 
 # Czech morphology used as an additional resource for gender detections
 use Lexicon::Generation::CS;
@@ -28,9 +25,10 @@ my %GENDER_OF_ROLE = (
     lady   => 'f',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $n_root = $bundle->get_tree('SEnglishN') or return;
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    
+    my $n_root = $zone->get_ntree or return;
     my @n_p = grep { $_->get_attr('ne_type') eq 'p_' } $n_root->get_descendants();
     foreach my $n_node (@n_p) {
         process_personal_nnode($n_node);
@@ -40,14 +38,14 @@ sub process_bundle {
 
 sub process_personal_nnode {
     my ($n_node) = @_;
-    my @m_nodes = $n_node->get_mnodes();
-    my @lemmas = map { $_->get_attr('lemma') } @m_nodes;
+    my @a_nodes = $n_node->get_anodes();
+    my @lemmas = map { $_->lemma } @a_nodes;
     my $gender;
 
     # Roles (like sir, queen,...) are not part or the named entity
     # so let's look at previous m-node
-    if ( my $prev_mnode = get_prev_mnode( $m_nodes[0] ) ) {
-        my $prev_lemma = $prev_mnode->get_attr('lemma');
+    if ( my $prev_anode = $a_nodes[0]->get_prev_node() ) {
+        my $prev_lemma = $prev_anode->lemma;
         $gender = $GENDER_OF_ROLE{$prev_lemma};
     }
     my @genders = map { guess_gender($_) } @lemmas;
@@ -58,8 +56,8 @@ sub process_personal_nnode {
     $n_node->set_attr( 'ne_type', !$gender ? 'P' : $gender eq 'f' ? 'PF' : 'PM' );
 
     my $was_first_name = 0;
-    for my $i ( 0 .. $#m_nodes ) {
-        my $m_node = $m_nodes[$i];
+    for my $i ( 0 .. $#a_nodes ) {
+        my $a_node = $a_nodes[$i];
         my $type   = 'p_';
         if ( $GENDER_OF_ROLE{ $lemmas[$i] } ) {
             $type = 'pd';
@@ -73,17 +71,14 @@ sub process_personal_nnode {
                 $type = 'pm';
             }
         }
-        elsif ( $i == $#m_nodes ) {
+        elsif ( $i == $#a_nodes ) {
             $type = 'ps';
         }
-        $n_node->create_child(
-            {   attributes => {
-                    normalized_name => $lemmas[$i],
-                    'm.rf'          => [ $m_node->get_attr('id') ],
-                    ne_type         => $type,
-                    }
-            }
+        my $new_nnode = $n_node->create_child(
+             normalized_name => $lemmas[$i],
+             ne_type         => $type,
         );
+        $new_nnode->set_attr( 'a.rf', [ $a_node->get_attr('id') ] );
     }
 
     return;
@@ -98,12 +93,12 @@ sub guess_gender {
 }
 
 # HACK: m-layer has no ord attribute, so $tmt_node->get_prev_node does not work.
-sub get_prev_mnode {
-    my $tmt_mnode = shift;
-    my $fs_mnode  = $tmt_mnode->get_tied_fsnode();
-    my $fs_prev   = $fs_mnode->lbrother() or return;
-    return TectoMT::Node->_fsnode2tmt_node($fs_prev);
-}
+#sub get_prev_mnode {
+#    my $tmt_mnode = shift;
+#    my $fs_mnode  = $tmt_mnode->get_tied_fsnode();
+#    my $fs_prev   = $fs_mnode->lbrother() or return;
+#    return TectoMT::Node->_fsnode2tmt_node($fs_prev);
+#}
 
 
 sub firstname_gender_from_czech_morpho {
@@ -119,7 +114,7 @@ sub firstname_gender_from_czech_morpho {
 
 =over
 
-=item SEnglishM_to_SEnglishN::Distinguish_personal_names
+=item Treex::Block::A2N::EN::DistinguishPersonalNames
 
 Named entities (stored in C<SEnglishN> trees) with type
 C<p_> = I<personal name with unspecified subtype>

@@ -3,6 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 
+has [qw(ne_type normalized_name)] => ( is => 'rw' );
+
 sub get_pml_type_name {
     my ($self) = @_;
     return $self->is_root() ? 'n-root.type' : 'n-node.type';
@@ -13,23 +15,23 @@ sub get_pml_type_name {
 #  the order is implied by the ordering of siblings.)
 sub ordering_attribute { return; }
 
-sub get_mnodes {
+sub get_anodes {
     my ($self) = @_;
-    my $ids_ref = $self->get_attr('m.rf') or return;
+    my $ids_ref = $self->get_attr('a.rf') or return;
     my $doc = $self->get_document();
     return map { $doc->get_node_by_id($_) } @{$ids_ref};
 }
 
-sub set_mnodes {
+sub set_anodes {
     my $self = shift;
-    return $self->set_attr( 'm.rf', [ map { $_->get_attr('id') } @_ ] );
+    return $self->set_attr( 'a.rf', [ map { $_->get_attr('id') } @_ ] );
 }
 
 #@overrides Treex::Core::Node::set_parent
 sub set_parent {
     my ( $self, $parent ) = @_;
     $self->SUPER::set_parent($parent);
-    foreach my $m_node ( $self->get_mnodes() ) {
+    foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node($self);
     }
     return;
@@ -42,8 +44,8 @@ sub set_attr {
     # When setting m.rf, we want also to update cached links from m-nodes to n-nodes.
     # However, set_attr('m.rf',$m_rf) is also used during BUILD before the node
     # is assigned to any bundle (nor document) and we cannot find the m-node.
-    if ( $attr_name eq 'm.rf' && $self->get_bundle() ) {
-        foreach my $m_node ( $self->get_mnodes() ) {
+    if ( $attr_name eq 'a.rf' && $self->get_bundle() ) {
+        foreach my $m_node ( $self->get_anodes() ) {
             $m_node->_set_n_node(undef);
         }
         my $doc = $self->get_document();
@@ -58,7 +60,7 @@ sub set_attr {
 #@overrides Treex::Core::Node::disconnect
 sub disconnect {
     my ( $self, $arg_ref ) = @_;
-    foreach my $m_node ( $self->get_mnodes() ) {
+    foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node(undef);
     }
     return $self->SUPER::disconnect($arg_ref);

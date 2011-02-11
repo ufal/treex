@@ -5,7 +5,7 @@
   <description>N-layer (named-entity layer)</description>
 
   <type name="n-root.type">
-    <structure role="#NODE" name="a-root">
+    <structure role="#NODE" name="n-root">
       <member name="id" role="#ID" as_attribute="1"
       required="1"><cdata format="ID"/></member>
       <member name="children" role="#CHILDNODES">
@@ -15,12 +15,12 @@
   </type>
 
   <type name="n-node.type">
-    <structure role="#NODE" name="a-node">
+    <structure role="#NODE" name="n-node">
       <member name="id" role="#ID" as_attribute="1"
       required="1"><cdata format="ID"/></member>
       <member name="ne_type" ><cdata format="any"/></member>
       <member name="normalized_name"><cdata format="any"/></member>
-      <member name="m.rf">
+      <member name="a.rf">
         <list ordered="0">
           <cdata format="PMLREF"/>
         </list>
