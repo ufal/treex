@@ -27,7 +27,7 @@ sub process_ttree {
                 # !!! pokud ma ovsem alespon 2 deti, predpokladame, ze to opravdu je koordinace
             }
             else {
-                map { $_->set_is_member(1) ) } $node->get_children;
+                map { $_->set_is_member( 1 ) } $node->get_children;
             }
         }
     }

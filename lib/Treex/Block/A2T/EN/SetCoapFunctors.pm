@@ -8,8 +8,8 @@ has '+language' => ( default => 'en' );
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    my $functor = get_coap_functor($tnode) or next;
-        $tnode->set_functor($functor);
+    my $functor = get_coap_functor($tnode) or return 1;
+    $tnode->set_functor($functor);
     
     return 1;
 }

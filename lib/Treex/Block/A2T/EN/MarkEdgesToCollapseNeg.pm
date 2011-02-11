@@ -10,8 +10,8 @@ sub process_anode {
 
         # Skip nodes that are already marked to be collapsed to parent.
         # Without this check we could rarely create a t-node with no lex a-node.
-        next if $a_node->edge_to_collapse;
-        my ($eparent) = $a_node->get_eff_parents() or next;
+        return 1 if $a_node->edge_to_collapse;
+        my ($eparent) = $a_node->get_eparents() or next;
 
         my $p_tag = $eparent->tag || '_root';
         my $parent_is_verb = $p_tag =~ /^(V|MD)/;

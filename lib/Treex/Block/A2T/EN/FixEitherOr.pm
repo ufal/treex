@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 
-sub process_ttreee {
+sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $or (

@@ -69,8 +69,10 @@ sub _get_tecto_info {
 }
 
 #------ Main loop --------
-sub process_ttree {
-    my ( $self, $t_root ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
+
+    my $t_root = $zone->get_ttree;
 
     # Fill grammatemes of complex nodes
     foreach my $t_node ( $t_root->get_descendants() ) {
@@ -85,7 +87,7 @@ sub process_ttree {
 
     # Fill sentence modality
     my $t_sent_root = $t_root->get_children( { first_only => 1 } ) or return;
-    $t_sent_root->set_attr( 'sentmod', _get_sentmod($bundle) );
+    $t_sent_root->set_attr( 'sentmod', _get_sentmod($zone) );
 
     return 1;
 }
@@ -344,8 +346,8 @@ sub _is_negated {
 }
 
 sub _get_sentmod {
-    my ($bundle) = @_;
-    my $a_root = $bundle->get_tree('SEnglishA');
+    my ($zone) = @_;
+    my $a_root = $zone->get_atree;
 
     # Questions must have a questionmark as the last token.
     my $last_token = $a_root->get_descendants( { last_only => 1 } );

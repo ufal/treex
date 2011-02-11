@@ -94,7 +94,7 @@ foreach (
     $temporal_noun{$_} = 1;
 }
 
-sub assign_functors($$) {
+sub assign_functors {
     my ( $t_root ) = @_;
 
     NODE: foreach my $node ( grep { not defined $_->functor } $t_root->get_descendants ) {

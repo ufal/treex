@@ -18,7 +18,7 @@ sub process_ttree {
     # Mark all the nodes except Mr., Mrs., and Ms.
     foreach my $tnode (@personal_tnodes) {
         if ( $tnode->t_lemma !~ /^(M(r|s|rs)|Judge)\.?$/ ) {
-            $tnode->set_is_name_of_person(1) );
+            $tnode->set_is_name_of_person(1);
         }
     }
     return 1;

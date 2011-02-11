@@ -43,7 +43,7 @@ sub process_zone {
                         if ( grep { my $ord = $_->ord; $left_ord < $ord and $ord < $right_ord } @quote_anodes ) {
 
                             #print STDERR "Nalezena prima rec, root:".$tchild->t_lemma."\n";;
-                            $tchild->set_is_dsp_root(1) );
+                            $tchild->set_is_dsp_root( 1 );
                         }
                     }
                 }

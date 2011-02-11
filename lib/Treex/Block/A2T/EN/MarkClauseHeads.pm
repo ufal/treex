@@ -9,7 +9,7 @@ has '+language' => ( default => 'en' );
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    $t_node->set_is_clause_head( is_clause_head($tnode) );
+    $tnode->set_is_clause_head( is_clause_head($tnode) );
     return 1;
 }
 
@@ -37,7 +37,7 @@ sub is_clause_head {
 
     # Rule 4: verb forms for which a subject candidate can be found, are likely to be finite
     if ( grep {/^(VB|VBD|VBN|VBP)$/} @tags ) {
-        my @leftchildren = map { $_->get_eff_children( { preceding_only => 1 } ) } grep { $_->tag =~ /^V/ } @anodes;
+        my @leftchildren = map { $_->get_echildren( { preceding_only => 1 } ) } grep { $_->tag =~ /^V/ } @anodes;
         for my $child (@leftchildren) {
             return 1 if is_possible_subject($child);
         }
