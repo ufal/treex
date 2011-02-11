@@ -1,22 +1,11 @@
 package Treex::Block::A2T::EN::MoveAuxFromCoordToMembers;
 use Moose;
 use Treex::Moose;
-extends 'Treex::Core::Block';
+extends 'Treex::Core::Block::A2T::MoveAuxFromCoordToMembers';
 
 has '+language' => ( default => 'en' );
 
-print STDERR "NOT YET EDITED!!!";
-
-use Report;
-
-use base qw(SxxA_to_SxxT::Move_aux_from_coord_to_members);
-
-sub BUILD {
-    my ($self) = @_;
-    $self->set_parameter( 'LANGUAGE', 'English' );
-}
-
-sub can_be_aux_to_coord {
+override 'can_be_aux_to_coord' => sub {
     my ( $self, $a_node ) = @_;
     my $form = $a_node->form;
     return 1 if $form =~ /^[,;.()]$/;

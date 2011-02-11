@@ -1,30 +1,17 @@
-package SxxA_to_SxxT::Build_ttree;
+package Treex::Block::A2T::BuildTtree;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
-use Report;
+has '+language' => ( required => 1 );
 
-use base qw(TectoMT::Block);
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-sub BUILD {
-    my ($self) = @_;
-    if (not defined $self->get_parameter('LANGUAGE')) {
-        Report::fatal('Parameter LANGUAGE must be specified!');
-    }
-    return;
-}
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $LANGUAGE = $self->get_parameter('LANGUAGE');
-
-    my $a_root = $bundle->get_generic_tree("S${LANGUAGE}A");
+    my $a_root = $zone->get_atree;
 
     # build t-root
-    my $t_root = $bundle->create_tree( "S${LANGUAGE}T" );
+    my $t_root = $zone->create_ttree;
     $t_root->set_ordering_value(0);
     $t_root->set_deref_attr( 'atree.rf', $a_root );
 
@@ -32,13 +19,13 @@ sub process_bundle {
     build_subtree( $a_root, $t_root );
 
     # recompute deepord
-    my $deepord;
-    foreach my $t_node ( sort { $a->get_attr('deepord') <=> $b->get_attr('deepord') } $t_root->get_descendants ) {
-        $deepord++;
-        $t_node->set_attr( 'deepord', $deepord );
+    my $ord;
+    foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_root->get_descendants ) {
+        $ord++;
+        $t_node->set_ord($ord);
     }
 
-    return;
+    return 1;
 }
 
 
@@ -50,10 +37,10 @@ sub build_subtree {
         my $t_node = $parent_tnode;
 
         # Create new t-node only if the edge is not to be collapsed
-        if ( !$a_node->get_attr('edge_to_collapse') ) {
+        if ( !$a_node->edge_to_collapse ) {
 
             # Do nothing if it is an auxiliary node without children
-            next if $a_node->get_attr('is_auxiliary') && !$a_node->get_children;
+            next if $a_node->is_auxiliary && !$a_node->get_children;
 
             $t_node = $parent_tnode->create_child;
         }
@@ -69,7 +56,7 @@ sub add_anode_to_tnode {
     my ( $a_node, $t_node ) = @_;
 
     # 1. For aux a-nodes, we only add them to a/aux.rf
-    if ( $a_node->get_attr('is_auxiliary') ) {
+    if ( $a_node->is_auxiliary ) {
         $t_node->add_aux_anodes($a_node);
         return;
     }
@@ -97,9 +84,9 @@ sub add_anode_to_tnode {
     # 2b) Set attribute a/lex.rf
     $t_node->set_lex_anode($a_node);
 
-    # 2c) copy attributes: ord -> deepord, m/lemma -> t_lemma
+    # 2c) copy attributes: ord -> ord, lemma -> t_lemma
     $t_node->set_ordering_value( $a_node->get_ordering_value() );
-    $t_node->set_attr( 't_lemma', $a_node->get_attr('m/lemma') );
+    $t_node->set_t_lemma( $a_node->lemma );
     return;
 }
 
@@ -108,15 +95,15 @@ sub add_anode_to_tnode {
 
 =over
 
-=item SxxA_to_SxxT::Build_ttree
+=item Treex::Block::A2T::BuildTtree
 
 A skeleton of the tectogrammatical tree is created from the analytical tree. 
 Nodes with C<edge_to_collapse=1> are recursively "joined" with their parents.
 Normally, there is among the joined a-nodes just one, that has not C<is_auxiliary=1>.
 This one is called the lexical a-node and stored in C<a/lex.rf>,
 while the other (auxiliary) nodes are stored in C<a/aux.rf>.
-The ordering value (C<deepord>) of the newly created t-node is copied
-from the lexical a-node (C<ord>). Also the C<t_lemma> is copied from C<m/lemma>.
+The ordering value (C<ord>) of the newly created t-node is copied
+from the lexical a-node (C<ord>). Also the C<t_lemma> is copied from C<lemma>.
 
 The question is what to do when there are more non-auxiliary (i.e. lexical)
 a-nodes to be collapsed into one t-node.
