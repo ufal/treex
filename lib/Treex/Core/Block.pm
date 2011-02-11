@@ -45,51 +45,39 @@ sub process_bundle {
     return $self->process_zone($zone);
 }
 
+sub _try_process_layer {
+    my ( $self, $zone, $layer ) = @_;
+    return 0 if !$zone->has_tree($layer);
+    my $tree = $zone->get_tree($layer);
+    my $meta = $self->meta;
+
+    if ( my $m = $meta->find_method_by_name("process_${layer}tree") ) {
+        ##$self->process_atree($tree);
+        $m->execute( $self, $tree );
+        return 1;
+    }
+
+    if ( my $m = $meta->find_method_by_name("process_${layer}node") ) {
+        foreach my $node ( $tree->get_descendants() ) {
+            ##$self->process_anode($node);
+            $m->execute( $self, $node );
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
 sub process_zone {
     my ( $self, $zone ) = @_;
+    my $overriden;
 
-    log_fatal("one of the methods /process_(zone|[atnp](tree|node))/ must be overriden") if not
-            (   ( $zone->has_tree('a')    && $self->process_atree( $zone->get_atree ) )
-                or ( $zone->has_tree('t') && $self->process_ttree( $zone->get_ttree ) )
-                or ( $zone->has_tree('n') && $self->process_ntree( $zone->get_ntree ) )
-                or ( $zone->has_tree('p') && $self->process_ptree( $zone->get_ptree ) )
-            );
-}
-
-sub process_atree {
-    my ( $self, $tree ) = @_;
-    return if !$self->meta->has_method('process_anode');
-    foreach my $node ( $tree->get_descendants() ) {
-        $self->process_anode($node);
+    for my $layer (qw(a t n p)) {
+        $overriden ||= $self->_try_process_layer( $zone, $layer );
     }
-    return 1;
-}
-
-sub process_ttree {
-    my ( $self, $tree ) = @_;
-    return if !$self->meta->has_method('process_tnode');
-    foreach my $node ( $tree->get_descendants() ) {
-        $self->process_tnode($node);
-    }
-    return 1;
-}
-
-sub process_ntree {
-    my ( $self, $tree ) = @_;
-    return if !$self->meta->has_method('process_nnode');
-    foreach my $node ( $tree->get_descendants() ) {
-        $self->process_nnode($node);
-    }
-    return 1;
-}
-
-sub process_ptree {
-    my ( $self, $tree ) = @_;
-    return if !$self->meta->has_method('process_pnode');
-    foreach my $node ( $tree->get_descendants() ) {
-        $self->process_pnode($node);
-    }
-    return 1;
+    log_fatal "One of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
+        . "must be overriden and the corresponding [atnp] trees must be present in bundles."
+        if !$overriden;
 }
 
 sub get_block_name {
