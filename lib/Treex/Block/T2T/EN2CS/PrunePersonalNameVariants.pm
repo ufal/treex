@@ -5,7 +5,6 @@ extends 'Treex::Core::Block';
 
 
 
-use List::Util qw(first);
 
 
 sub process_bundle {

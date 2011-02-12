@@ -4,7 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use Readonly;
 use Report;
 
 use Lexicon::CS::Aspect;

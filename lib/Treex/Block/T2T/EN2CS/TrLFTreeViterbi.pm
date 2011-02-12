@@ -4,7 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use Readonly;
 
 use Report;
 use TreeViterbi;
@@ -151,7 +150,6 @@ sub is_compatible {
 package MyTreeViterbiState;
 use base 'TreeViterbiState';
 
-use Readonly;
 use LanguageModel::Lemma;
 
 # Parameters

@@ -5,7 +5,6 @@ extends 'Treex::Core::Block';
 
 
 use Report;
-use List::Util qw(first);
 
 use LanguageModel::MorphoLM;
 my $morphoLM;

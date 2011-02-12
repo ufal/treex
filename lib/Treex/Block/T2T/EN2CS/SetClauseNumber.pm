@@ -4,7 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use List::MoreUtils qw( any all );
 
 
 my $max_number;    # Maximal clause_number assigned so far

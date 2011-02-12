@@ -4,7 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use List::MoreUtils qw( any all );
 use Lexicon::Czech;
 use EnglishMorpho::Lemmatizer;
 use Tagger::TnT;

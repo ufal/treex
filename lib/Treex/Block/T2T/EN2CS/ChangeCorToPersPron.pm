@@ -4,8 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use List::MoreUtils qw( any all );
-use List::Util qw( first );
 
 
 sub process_bundle {

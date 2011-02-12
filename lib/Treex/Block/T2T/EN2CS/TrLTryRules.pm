@@ -4,8 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use Readonly;
-use List::MoreUtils qw( any all );
 
 
 #TODO These hacks should be removed from here and added to the translation dictionary
