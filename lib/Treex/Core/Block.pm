@@ -1,7 +1,7 @@
 package Treex::Core::Block;
 use Moose;
 use Treex::Moose;
-use LWP::Simple;
+use Treex::Core::Resource;
 
 has selector => ( is => 'ro', isa => 'Selector', default => '', );
 has language => ( is => 'ro', isa => 'LangCode', );
@@ -15,6 +15,20 @@ has scenario => (
 # TODO
 # has robust => ( is=> 'ro', isa=>'Bool', default=>0,
 #                 documentation=>'no fatal errors in robust mode');
+
+sub BUILD {
+    my ( $self ) = @_;
+
+    foreach my $rel_path_to_file ( $self->get_required_share_files ) {
+        Treex::Core::Resource::require_file_from_share( $rel_path_to_file, 'the block ' . $self->get_block_name );
+    }
+
+    return;
+}
+
+sub get_required_share_files {
+    return ();
+}
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -83,42 +97,6 @@ sub process_zone {
 sub get_block_name {
     my ($self) = @_;
     return ref($self);
-}
-
-sub require_file_from_share {
-
-    my ( $self, $rel_path_to_file ) = @_;
-
-    my $file = Treex::Core::Config::share_dir() . $rel_path_to_file;
-
-    if ( not -e $file ) {
-        log_info( "Shared file '$rel_path_to_file' is missing by the block " . $self->get_block_name() . "." );
-
-        my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
-        log_info("Trying to download $url");
-
-        # first ensure that the directory exists
-        my $directory = $file;
-        $directory =~ s/[^\/]*$//;
-        File::Path::mkpath($directory);
-
-        # download the file using LWP::Simple
-        my $response_code = getstore( $url, $file );
-        if ( $response_code == 200 ) {
-            log_info("Successfully downloaded to $file");
-        }
-        elsif ( $response_code == 404 ) {
-            log_fatal( "The file $url doesn't exsist. Can't run the block " . $self->get_block_name() . "." );
-        }
-        else {
-            log_fatal("Error when trying to download $url and to store it as $file ($response_code).");
-        }
-    }
-    return $file;
-}
-
-sub get_required_share_files {
-    return ();
 }
 
 1;
