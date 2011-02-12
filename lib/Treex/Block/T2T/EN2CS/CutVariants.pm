@@ -3,10 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-use Report;
-
-
 sub BUILD {
     my ($class, $id, $arg_ref) = @_;
     my $max_lemmas   = $arg_ref->{MAX_LEMMA_VARIANTS};

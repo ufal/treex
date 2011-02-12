@@ -3,12 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
     my @all_nodes = $t_root->get_descendants( { ordered => 1 } );
 
     # When looking for antecedent we need all nouns (as candidates) in reversed order
