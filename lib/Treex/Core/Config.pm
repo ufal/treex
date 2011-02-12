@@ -19,7 +19,7 @@ sub share_dir {
 }
 
 sub tred_dir {
-    return $ENV{TRED_DIR};
+    return share_dir() . 'tred/';
 }
 
 sub pml_schema_dir {
