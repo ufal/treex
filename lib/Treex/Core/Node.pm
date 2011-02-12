@@ -259,7 +259,7 @@ sub _process_switches {
 
     # Sort nodes if needed
     if (( $arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following) )
-        && @nodes && $nodes[0]->ordering_attribute()
+        && @nodes && defined $nodes[0]->get_ordering_value
         )
     {
         @nodes = sort { $a->get_ordering_value() <=> $b->get_ordering_value() } @nodes;
@@ -336,13 +336,13 @@ sub is_descendant_of {
 sub get_ordering_value {
     my ($self) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 1;
-    return $self->get_attr( $self->ordering_attribute() );
+    return $self->ord;
 }
 
 sub set_ordering_value {
     my ( $self, $val ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
-    $self->set_attr( $self->ordering_attribute(), $val );
+    $self->set_ord($val);
     return;
 }
 
@@ -400,7 +400,7 @@ sub normalize_node_ordering {
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
     my $new_ord = 0;
     foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
-        $node->set_attr( $self->ordering_attribute, $new_ord );
+        $node->set_ordering_value($new_ord);
         $new_ord++
     }
     return;

@@ -13,7 +13,10 @@ sub get_pml_type_name {
 # Nodes on the n-layer have no ordering attribute.
 # (It is not needed, trees are projective,
 #  the order is implied by the ordering of siblings.)
-sub ordering_attribute { return; }
+override 'get_ordering_value' => sub {
+    my ($self) = @_;
+    return undef;
+};
 
 sub get_anodes {
     my ($self) = @_;

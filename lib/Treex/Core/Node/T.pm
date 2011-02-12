@@ -9,8 +9,6 @@ has [ qw(ord t_lemma functor formeme is_member nodetype is_generated
     ] => ( is => 'rw' );
              
 
-sub ordering_attribute {'ord'}
-
 sub get_pml_type_name {
     my ($self) = @_;
     return $self->is_root() ? 't-root.type' : 't-node.type';

@@ -125,7 +125,12 @@ sub nonroot_tnode_labels {
 }
 
 sub nonroot_nnode_labels {
-    return ( '', '', '' );
+    my ( $self, $node ) = @_;
+    return [
+        $node->{ne_type},
+        $node->{normalized_name},
+        $node->{ne_type},
+    ];
 }
 
 sub nonroot_pnode_labels {
@@ -161,12 +166,14 @@ sub tnode_style {
     return "#{Oval-fill:blue}";
 }
 
-sub nnode_labels {
-    return '';
+sub nnode_style {
+    my ( $self, $node ) = @_;
+    return "#{Oval-fill:yellow}";
 }
 
-sub pnode_labels {
-    return '';
+sub pnode_style {
+    my ( $self, $node ) = @_;
+    return "#{Oval-fill:magenta}";
 }
 
 # ---- END OF PRECOMPUTING VISUALIZATION ------
