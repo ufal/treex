@@ -117,8 +117,8 @@ sub parse_scenario_string {
     $scenario_string =~ s/='([^']*)'/'='._escape($1)/eg;
     $scenario_string =~ s/(=`[^`]*`)/_escape($1)/eg;
 
-    $scenario_string =~ s/#.+?\n//g;
-    $scenario_string =~ s/#.+$//;      #comment on last line
+    $scenario_string =~ s/#.*\n//g;    # delete comments ended by a newline
+    $scenario_string =~ s/#.+$//;      # and a comment on the last line
     $scenario_string =~ s/\s+/ /g;
     $scenario_string =~ s/^ //g;
     $scenario_string =~ s/ $//g;
