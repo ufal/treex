@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 use Lexicon::CS::Aspect;
 
-my %TECTO_ASPECT_OF => ( 'P' => 'cpl', 'I' => 'proc', 'B' => 'proc' );    # obouvidova pokladam za nedokonava
+my %TECTO_ASPECT_OF = ( 'P' => 'cpl', 'I' => 'proc', 'B' => 'proc' );    # obouvidova pokladam za nedokonava
 
 sub get_verb_aspect {
     my $lemma = shift;
