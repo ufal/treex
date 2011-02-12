@@ -1,34 +1,28 @@
-package SEnglishT_to_TCzechT::Add_relpron_below_rc;
+package Treex::Block::T2T::EN2CS::AddRelpronBelowRc;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
-use base qw(TectoMT::Block);
-
-use List::MoreUtils qw( any );
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     RELCLAUSE:
-    foreach my $rc_head ( grep { $_->get_attr('formeme') =~ /rc/ } $t_root->get_descendants ) {
+    foreach my $rc_head ( grep { $_->formeme =~ /rc/ } $t_root->get_descendants ) {
 
         # Skip verbs with subject (i.e. child in nominative)
-#        next RELCLAUSE if any { $_->get_attr('formeme') =~ /1/ } $rc_head->get_eff_children();
+#        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_eff_children();
 
         # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
         # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
         # Skipping clauses which were relative also on the source side
         my $src_tnode = $rc_head->get_source_tnode();
         next RELCLAUSE if !$src_tnode;
-        next RELCLAUSE if $src_tnode->get_attr('formeme') =~ /rc/;
+        next RELCLAUSE if $src_tnode->formeme =~ /rc/;
 
         # Grammatical antecedent is typically the nominal parent of the clause
         my ($gram_antec) = $rc_head->get_eff_parents;
         next RELCLAUSE if !$gram_antec;
-        next RELCLAUSE if $gram_antec->get_attr('formeme') !~ /^n/;
+        next RELCLAUSE if $gram_antec->formeme !~ /^n/;
 
         # Create new t-node
         my $relpron = $rc_head->create_child(
@@ -54,7 +48,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Add_relpron_below_rc
+=item Treex::Block::T2T::EN2CS::AddRelpronBelowRc
 
 Generating new t-nodes corresponding to relative pronoun 'ktery' below roots
 of relative clauses, whose source-side counterparts were not relative

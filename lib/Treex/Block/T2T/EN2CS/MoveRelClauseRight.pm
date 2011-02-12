@@ -1,21 +1,21 @@
-package SEnglishT_to_TCzechT::Move_relclause_to_postposit;
+package Treex::Block::T2T::EN2CS::MoveRelClauseRight;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $troot = $bundle->get_tree('TCzechT');
 
-    foreach my $rc_head ( grep {$_->get_attr('formeme') =~ /rc/} $troot->get_descendants() ) {
+    foreach my $rc_head ( grep {$_->formeme =~ /rc/} $troot->get_descendants() ) {
 
         my $parent = $rc_head->get_parent;
 
         if ($rc_head->precedes($parent)
-                and $parent->get_attr('formeme') =~ /^n/) {
+                and $parent->formeme =~ /^n/) {
 
             $rc_head->shift_after_subtree($parent);
         }
@@ -27,7 +27,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Move_relclause_to_postposit
+=item Treex::Block::T2T::EN2CS::MoveRelClauseRight
 
 Relative clauses placed before their governing nouns (created e.g.
 from ing-forms) are moved behing the nouns.

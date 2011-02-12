@@ -1,10 +1,10 @@
-package SEnglishT_to_TCzechT::Translate_L_female_surnames;
+package Treex::Block::T2T::EN2CS::TrLFemaleSurnames;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -16,10 +16,10 @@ sub process_bundle {
         my $n_node   = $en_tnode->get_n_node()       or next;
         my $n_type   = $n_node->get_attr('ne_type');
         next if $n_type ne 'ps';
-        my $cs_lemma = $cs_tnode->get_attr('t_lemma');
+        my $cs_lemma = $cs_tnode->t_lemma;
         next if $cs_lemma =~ /[áí]$/;
         $cs_lemma =~ s/([cs])ka$/$1ká/ or $cs_lemma =~ s/[oa]?$/ová/;
-        $cs_tnode->set_attr( 't_lemma',        $cs_lemma );
+        $cs_tnode->set_t_lemma($cs_lemma);
         $cs_tnode->set_attr( 't_lemma_origin', 'Translate_L_female_surnames' );
     }
     return;
@@ -33,7 +33,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_L_female_surnames
+=item Treex::Block::T2T::EN2CS::TrLFemaleSurnames
 
 Female surnames in Czech usually end with suffix I<ová> (Thather->Thatherová).
 T-lemma of nodes with feminine gender which are linked

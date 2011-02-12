@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Rehang_to_eff_parents;
+package Treex::Block::T2T::EN2CS::RehangToEffParents;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -33,7 +32,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Rehang_to_eff_parents
+=item Treex::Block::T2T::EN2CS::RehangToEffParents
 
 Rehangs each node to its first effective parent.
 If this effective parent is different from the topological parent,

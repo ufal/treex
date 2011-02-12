@@ -1,10 +1,10 @@
-package SEnglishT_to_TCzechT::Delete_superfluous_tnodes;
+package Treex::Block::T2T::EN2CS::DeleteSuperfluousTnodes;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 my $DEBUG = 0;
 
@@ -41,8 +41,8 @@ sub process_bundle {
                             map {$_->get_descendants}
                                 $bundle->get_tree('TCzechT')->get_children) {
 
-        my $child_tlemma = $tnode->get_attr('t_lemma');
-        my $parent_tlemma = $tnode->get_parent->get_attr('t_lemma');
+        my $child_tlemma = $tnode->t_lemma;
+        my $parent_tlemma = $tnode->get_parent->t_lemma;
         if ($child_to_delete{$child_tlemma}{$parent_tlemma}) {
             warn "_DELETED_\t$child_tlemma\t".$bundle->get_attr('english_source_sentence').
                 "\t".$bundle->get_attr('czech_source_sentence')."\t".
@@ -57,7 +57,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Delete_superfluous_tnodes
+=item Treex::Block::T2T::EN2CS::DeleteSuperfluousTnodes
 
 Deleting t-nodes that should have no counterparts on the Czech side,
 such as 'place' in 'take place' or 'down' in 'sit down', and can be

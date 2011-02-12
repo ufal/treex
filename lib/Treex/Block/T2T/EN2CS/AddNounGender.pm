@@ -1,11 +1,7 @@
-package SEnglishT_to_TCzechT::Add_noun_gender;
-
-use utf8;
-use 5.008;
-use strict;
-use warnings;
-
-use base qw(TectoMT::Block);
+package Treex::Block::T2T::EN2CS::AddNounGender;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
 use CzechMorpho;
 my $analyzer = CzechMorpho::Analyzer->new();
@@ -28,9 +24,8 @@ my %GENDER_FOR = (sto=>'N', tisíc=>'I', milion=>'I', milión=>'I', miliarda=>'F
                   york=>'I',
  );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     # For all t-nodes with no gender ...
     # (named entities have gender already filled)
@@ -45,14 +40,14 @@ sub process_bundle {
 
 sub get_noun_gender {
     my ($t_node) = @_;
-    my $t_lemma = $t_node->get_attr('t_lemma');
+    my $t_lemma = $t_node->t_lemma;
 
     # Some numerals (sempos = n.quant.def) should have gender 
     my $gender = $GENDER_FOR{$t_lemma};
     return $gender if $gender;
     
     # Now we are interested only in denotative nouns (but sempos is not reliable yet)
-    return undef if ($t_node->get_attr('formeme') || '') !~ /^n/;
+    return undef if ($t_node->formeme || '') !~ /^n/;
 
     # Some nouns have different gender in plural
     my $number = $t_node->get_attr('gram/number');
@@ -78,7 +73,7 @@ sub get_noun_gender {
 
 =over
 
-=item SEnglishT_to_TCzechT::Add_noun_gender
+=item Treex::Block::T2T::EN2CS::AddNounGender
 
 Semantic denotative nouns in TCzechT are genderless after cloning
 (i.e., without the value of attribute C<gram/gender>), because there is no

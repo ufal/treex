@@ -1,26 +1,21 @@
-package SEnglishT_to_TCzechT::Add_PersPron_below_vfin;
+package Treex::Block::T2T::EN2CS::AddPersPronBelowVfin;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use List::MoreUtils qw( any all );
-use List::Util qw( first );
 
-use base qw(TectoMT::Block);
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
     my @all_nodes = $t_root->get_descendants( { ordered => 1 } );
 
     # When looking for antecedent we need all nouns (as candidates) in reversed order
     my @nouns = reverse grep { ( $_->get_attr('gram/sempos') || '' ) =~ /^n/ } @all_nodes;
 
     VFIN:
-    foreach my $vfin_tnode ( grep { $_->get_attr('formeme') =~ /fin|rc/ } @all_nodes ) {
+    foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
 
         # Skip verbs with subject (i.e. child in nominative)
-        next VFIN if any { $_->get_attr('formeme') =~ /1/ } $vfin_tnode->get_eff_children();
+        next VFIN if any { $_->formeme =~ /1/ } $vfin_tnode->get_eff_children();
 
         # Find antecedent by heuristics: nearest noun left to the $vfin_tnode
         my $antec = first { $_->precedes($vfin_tnode) } @nouns;
@@ -53,7 +48,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Add_PersPron_below_vfin
+=item Treex::Block::T2T::EN2CS::AddPersPronBelowVfin
 
 New #PersPron node is added below all finite verbs
 which have none (they might have been created from an infinitive),

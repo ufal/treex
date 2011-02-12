@@ -1,10 +1,10 @@
-package SEnglishT_to_TCzechT::Find_gram_coref_for_refl_pron;
+package Treex::Block::T2T::EN2CS::FindGramCorefForReflPron;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 sub process_document {
 
@@ -15,7 +15,7 @@ sub process_document {
 
         foreach my $perspron (
             grep {
-                $_->get_attr('t_lemma') eq "#PersPron" and $_->get_attr('formeme') !~ /1/
+                $_->t_lemma eq "#PersPron" and $_->formeme !~ /1/
             } $t_root->get_descendants
             )
         {
@@ -25,7 +25,7 @@ sub process_document {
             my $clause_head;
             my $parent = $perspron->get_parent;
             climb: while ( not( $parent->is_root ) ) {    # climbing up to the nearest clause head
-                if ( $parent->get_attr('is_clause_head') ) {
+                if ( $parent->is_clause_head ) {
                     $clause_head = $parent;
                     last climb;
                 }
@@ -35,7 +35,7 @@ sub process_document {
             if ($clause_head) {
 
                 #	print STDERR "  Success2\n";
-                my ($subject) = grep { ( $_->get_attr('formeme') || "" ) =~ /1/ } $clause_head->get_children;    # !!! s efektivnimi to bude tezsi
+                my ($subject) = grep { ( $_->formeme || "" ) =~ /1/ } $clause_head->get_children;    # !!! s efektivnimi to bude tezsi
                 if ($subject) {
 
                     #	  print STDERR "    Success3\n";
@@ -74,7 +74,7 @@ sub process_document {
 
 =over
 
-=item SEnglishT_to_TCzechT::Find_gram_coref_for_refl_pron
+=item Treex::Block::T2T::EN2CS::FindGramCorefForReflPron
 
 Make co-reference links from personal pronouns to their antecedents,
 if the latter ones are in subject position. This is neccessary because

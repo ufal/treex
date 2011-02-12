@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Translate_F_rerank;
+package Treex::Block::T2T::EN2CS::TrFRerank;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 use Report;
 
@@ -47,9 +46,9 @@ sub process_bundle {
 sub process_tnode {
     my ( $cs_tnode, $max_variants, $discount ) = @_;
     my $en_tnode        = $cs_tnode->get_source_tnode();
-    my $en_formeme      = $en_tnode->get_attr('formeme');
+    my $en_formeme      = $en_tnode->formeme;
     my ($en_parent)     = $en_tnode->get_eff_parents();
-    my $en_parent_lemma = $en_parent->get_attr('t_lemma') || '_ROOT';
+    my $en_parent_lemma = $en_parent->t_lemma || '_ROOT';
 
     # Gather all formeme variants
     my $variants_ref = $cs_tnode->get_attr('translation_model/formeme_variants');
@@ -90,7 +89,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_F_rerank
+=item Treex::Block::T2T::EN2CS::TrFRerank
 
 Takes formeme translations (from C<translation_model/formeme_variants> attribute)
 and reranks them with "valency" model.

@@ -1,15 +1,14 @@
-package SEnglishT_to_TCzechT::Translate_L_filter_aspect;
+package Treex::Block::T2T::EN2CS::TrLFilterAspect;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 use Report;
 
 use Lexicon::CS::Aspect;
 
-use base qw(TectoMT::Block);
 
 Readonly my %IS_PHASE_VERB => (
     'začít' => 1, 'začínat' => 1, 'přestat' => 1, 'přestávat' => 1,
@@ -41,8 +40,8 @@ sub filter_variants {
     $node->set_attr('translation_model/t_lemma_variants', \@filtred);
     
     my $first_lemma = $filtred[0]->{t_lemma};
-    if ($node->get_attr('t_lemma') ne $first_lemma) {
-        $node->set_attr('t_lemma', $first_lemma);
+    if ($node->t_lemma ne $first_lemma) {
+        $node->set_t_lemma($first_lemma);
         $node->set_attr('mlayer_pos', $filtred[0]->{pos});
     }
     
@@ -61,18 +60,18 @@ sub is_aspect_ok {
         ( $node->get_attr('gram/tense') || '' ) eq 'sim'
         and ( $node->get_attr('gram/deontmod') || '' ) eq 'decl'
         and ( $node->get_attr('gram/verbmod') || '' ) ne 'cdn'
-        and ( $node->get_attr('is_passive')   || '' ) ne '1'
-        and ( $node->get_attr('functor')      || '' ) ne 'COND'
+        and ( $node->is_passive   || '' ) ne '1'
+        and ( $node->functor      || '' ) ne 'COND'
         );
 
     # 2. "dokud dělal", not "dokud udělal"
     my $en_node = $node->get_source_tnode();
-    return 0 if $en_node && $en_node->get_attr('formeme') eq 'v:as_long_as+fin';
+    return 0 if $en_node && $en_node->formeme eq 'v:as_long_as+fin';
 
     # 3. "začal dělat", not "začal udělat"
     my $parent = $node->get_parent() or return 1;
     return 1 if $parent->is_root();
-    my $parent_lemma = $parent->get_attr('t_lemma');
+    my $parent_lemma = $parent->t_lemma;
     return 0 if $IS_PHASE_VERB{$parent_lemma};
 
     
@@ -86,7 +85,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_L_filter_aspect
+=item Treex::Block::T2T::EN2CS::TrLFilterAspect
 
 Applies some rules to filter out verb t-lemmas with uncompatible aspect.  
 Such translation variants are removed from

@@ -1,13 +1,12 @@
-package SEnglishT_to_TCzechT::Translate_L_try_rules;
+package Treex::Block::T2T::EN2CS::TrLTryRules;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 use List::MoreUtils qw( any all );
 
-use base qw(TectoMT::Block);
 
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
@@ -38,7 +37,7 @@ sub process_bundle {
         my $lemma_and_pos = get_lemma_and_pos( $en_tnode, $cs_tnode );
         if ( defined $lemma_and_pos ) {
             my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
-            $cs_tnode->set_attr( 't_lemma',        $cs_tlemma );
+            $cs_tnode->set_t_lemma($cs_tlemma);
             $cs_tnode->set_attr( 't_lemma_origin', 'rule-Translate_L_try_rules' );
             $cs_tnode->set_attr( 'mlayer_pos',     $m_pos )
         }
@@ -55,7 +54,7 @@ sub get_lemma_and_pos {
         && $en_formeme !~ /poss/    #"its" is excluded
         && $cs_tnode->get_attr('gram/number') eq 'sg'
         && $cs_tnode->get_attr('gram/gender') eq 'neut'
-        && $en_tnode->get_lex_anode()->get_attr('m/lemma') ne 'itself'
+        && $en_tnode->get_lex_anode()->lemma ne 'itself'
         )
     {
         $cs_tnode->set_attr( 'gram/person', undef );
@@ -83,7 +82,7 @@ sub get_lemma_and_pos {
     }
 
 
-    return 'buď' if $en_tlemma eq 'either' && $en_tnode->get_attr('nodetype') eq 'coap';
+    return 'buď' if $en_tlemma eq 'either' && $en_tnode->nodetype eq 'coap';
 
     if ( $en_tlemma eq 'late' && $en_tnode->get_attr('gram/degcmp') eq 'sup' ) {
         $cs_tnode->set_attr( 'gram/degcmp', 'pos' );
@@ -92,7 +91,7 @@ sub get_lemma_and_pos {
 
     # "As follows from ..." -> "Jak vyplývá z ..."
     if ( $en_tlemma eq 'follow' ) {
-        return 'vyplývat|V' if any { $_->get_attr('formeme') =~ /from/ } $en_tnode->get_children( { following_only => 1 } );
+        return 'vyplývat|V' if any { $_->formeme =~ /from/ } $en_tnode->get_children( { following_only => 1 } );
     }
 
     # If no rules match, get_lemma_and_pos has not succeeded.
@@ -105,7 +104,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_L_try_rules
+=item Treex::Block::T2T::EN2CS::TrLTryRules
 
 Try to apply some hand written rules for t-lemma translation.
 If succeeded, t-lemma is filled and atributte C<t_lemma_origin> is set to I<rule>.

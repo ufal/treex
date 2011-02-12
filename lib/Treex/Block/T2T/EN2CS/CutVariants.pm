@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Cut_variants;
+package Treex::Block::T2T::EN2CS::CutVariants;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Report;
 
-use base qw(TectoMT::Block);
 
 sub BUILD {
     my ($class, $id, $arg_ref) = @_;
@@ -75,7 +74,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Cut_variants
+=item Treex::Block::T2T::EN2CS::CutVariants
 
 Utility block that deletes some translation variants of t-lemmas and formemes.
 By parameters (MAX_[LEMMA|FORMEME]_VARIANTS and [LEMMA|FORMEME]_PROB_SUM) you can set

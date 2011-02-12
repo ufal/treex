@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Translate_L_add_variants;
+package Treex::Block::T2T::EN2CS::TrLAddVariants;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 use ProbUtils::Normalize;
 
@@ -94,7 +93,7 @@ sub process_bundle {
         # Skip nodes that were already translated by rules
         next if $cs_tnode->get_attr('t_lemma_origin') ne 'clone';
 
-        #        next if $cs_tnode->get_attr('t_lemma') =~ /^\p{IsUpper}/;
+        #        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
         if ( my $en_tnode = $cs_tnode->get_source_tnode() ) {
 
@@ -106,7 +105,7 @@ sub process_bundle {
                     keys %{$features_hash_rf}
             ];
 
-            my $en_tlemma = $en_tnode->get_attr('t_lemma');
+            my $en_tlemma = $en_tnode->t_lemma;
             my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
 
             # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
@@ -124,7 +123,7 @@ sub process_bundle {
             if ($en_tlemma =~ /^[\p{isUpper}\d]+$/
                 and $en_tlemma !~ /^(UN|VAT)$/
                 and $en_tnode->get_lex_anode
-                and $en_tnode->get_lex_anode->get_attr('m/tag') =~ /^NNP/
+                and $en_tnode->get_lex_anode->tag =~ /^NNP/
                 )
             {
                 unshift @translations, { 'label' => "$en_tlemma#N", 'source' => 'NNPs', 'prob' => 0.5 };
@@ -137,7 +136,7 @@ sub process_bundle {
             if (@translations) {
 
                 if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
-                    $cs_tnode->set_attr( 't_lemma',    $1 );
+                    $cs_tnode->set_t_lemma($1);
                     $cs_tnode->set_attr( 'mlayer_pos', $2 );
                 }
                 else {
@@ -167,10 +166,10 @@ sub process_bundle {
                 );
 
                 #                print "\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
-                #                print $en_tnode->get_attr('t_lemma')."\n";
-                #                print "Original choice: ".$cs_tnode->get_attr('t_lemma')."\n";
+                #                print $en_tnode->t_lemma."\n";
+                #                print "Original choice: ".$cs_tnode->t_lemma."\n";
                 #                my ($first_tlemma) = split /\#/,$translations[0]->{label};
-                #                if ($cs_tnode->get_attr('t_lemma') ne $first_tlemma) {
+                #                if ($cs_tnode->t_lemma ne $first_tlemma) {
                 #                    print "XXX Different\n";
                 #                }
                 #                else {
@@ -193,7 +192,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_L_add_variants
+=item Treex::Block::T2T::EN2CS::TrLAddVariants
 
 Adding t_lemma translation variants using the maxent
 translation dictionary.

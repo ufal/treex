@@ -1,12 +1,12 @@
-package SEnglishT_to_TCzechT::Change_Cor_to_PersPron;
+package Treex::Block::T2T::EN2CS::ChangeCorToPersPron;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+
 use List::MoreUtils qw( any all );
 use List::Util qw( first );
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -17,9 +17,9 @@ sub process_bundle {
     my @nouns = reverse grep { ( $_->get_attr('gram/sempos') || '' ) =~ /^n/ } @all_nodes;
 
     VFIN:
-    foreach my $vfin_tnode ( grep { $_->get_attr('formeme') =~ /fin|rc/ } @all_nodes ) {
+    foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
 
-        if (my ($perspron) = grep {$_->get_attr('t_lemma') eq "#Cor"} $vfin_tnode->get_children) {
+        if (my ($perspron) = grep {$_->t_lemma eq "#Cor"} $vfin_tnode->get_children) {
 
             my $antec;
             if (defined $perspron->get_attr('coref_gram.rf')) {
@@ -30,7 +30,7 @@ sub process_bundle {
 
             # Skip verbs with subject (i.e. child in nominative)
 #            next VFIN
-#                if any { $_ ne $perspron and $_->get_attr('formeme') =~ /1/ } $vfin_tnode->get_eff_children();
+#                if any { $_ ne $perspron and $_->formeme =~ /1/ } $vfin_tnode->get_eff_children();
 
             # chained gram.coref. in the case of relative clauses
             if ($antec and $antec->get_attr('coref_gram.rf')) {
@@ -46,9 +46,9 @@ sub process_bundle {
             # Fill the attributes appropriate for #PersPron nodes
             if ($antec) {
 #                print "Success6\n";
-                $perspron->set_attr('t_lemma','#PersPron');
-                $perspron->set_attr('nodetype','complex');
-                $perspron->set_attr('formeme','n:1');
+                $perspron->set_t_lemma('#PersPron');
+                $perspron->set_nodetype('complex');
+                $perspron->set_formeme('n:1');
                 $perspron->set_attr('gram/sempos','n.pron.def.pers');
                 $perspron->set_attr('gram/person',$antec->get_attr('gram/person') || 3);
 
@@ -56,7 +56,7 @@ sub process_bundle {
                     $perspron->set_attr( $attr_name, $antec->get_attr($attr_name) );
                 }
 
-                if ($antec->get_attr('is_member')) {
+                if ($antec->is_member) {
                     $perspron->set_attr( 'gram/number', 'pl' );
                 }
 
@@ -64,8 +64,8 @@ sub process_bundle {
                 $perspron->set_attr( 'coref_gram.rf', undef );
 
 #                print "sentence:\t".$bundle->get_attr('english_source_sentence')."\n";
-#                print "verb:\t".$vfin_tnode->get_attr('t_lemma')."\n";
-#                print "antec:\t".$antec->get_attr('t_lemma')."\n";
+#                print "verb:\t".$vfin_tnode->t_lemma."\n";
+#                print "antec:\t".$antec->t_lemma."\n";
 
             }
         }
@@ -77,7 +77,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Change_Cor_to_PersPron
+=item Treex::Block::T2T::EN2CS::ChangeCorToPersPron
 
 If an English infinitive is translated by a Czech finite clause,
 then #Cor node should be changed to #PersPron node. Gender and number

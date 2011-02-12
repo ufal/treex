@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Override_pp_with_phrase_translation;
+package Treex::Block::T2T::EN2CS::OverridePpWithPhraseTr;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Report;
 
-use base qw(TectoMT::Block);
 
 my $input_file = 'resource_data/translation_dictionaries/manually_selected_prob_Wt_given_Ws.tsv';
 
@@ -48,7 +47,7 @@ sub process_subtree {
 sub process_node {
     my ($cs_tnode) = @_;
     my $en_tnode = $cs_tnode->get_source_tnode() or return;
-    return if $en_tnode->get_attr('formeme') !~ /\+X/;
+    return if $en_tnode->formeme !~ /\+X/;
     return if $en_tnode->get_descendants() >= 2;
     return if $cs_tnode->get_descendants() >= 2;
 
@@ -56,8 +55,8 @@ sub process_node {
     my $cs_phrase = $enphrase2csphrase{ lc($en_phrase) };
     return if !defined $cs_phrase;
 
-    $cs_tnode->set_attr( 't_lemma',        $cs_phrase );
-    $cs_tnode->set_attr( 'formeme',        'phrase:' );
+    $cs_tnode->set_t_lemma($cs_phrase);
+    $cs_tnode->set_formeme('phrase:');
     $cs_tnode->set_attr( 't_lemma_origin', 'rule-Override_pp_with_phrase_translation' );
     $cs_tnode->set_attr( 'formeme_origin', 'rule-Override_pp_with_phrase_translation' );
     foreach my $descendant ( $cs_tnode->get_descendants() ) {
@@ -65,7 +64,7 @@ sub process_node {
     }
 
     # Don't try to inflect this node in the synthesis
-    $cs_tnode->set_attr( 'nodetype', 'atom' );    #TODO: more elegant hack
+    $cs_tnode->set_nodetype('atom');    #TODO: more elegant hack
 
     Report::debug( 'Success: ' . $cs_tnode->get_attr('id') . " : $cs_phrase", 1 );
     return 1;
@@ -76,14 +75,14 @@ sub ttree2phrase {
     my @anodes =
         sort { $a->get_ordering_value() <=> $b->get_ordering_value() }
         map { $_->get_anodes } $tnode->get_descendants( { add_self => 1 } );
-    return ( join ' ', grep {/[a-z]/i} map { $_->get_attr('m/form') } @anodes );
+    return ( join ' ', grep {/[a-z]/i} map { $_->form } @anodes );
 }
 
 1;
 
 =over
 
-=item SEnglishT_to_TCzechT::Override_pp_with_phrase_translation
+=item Treex::Block::T2T::EN2CS::OverridePpWithPhraseTr
 In selected prepositional groups, the translation is overriden
 with what comes from (a manually cleaned) translation dictionary
 of prepositional phrases ('at all'=>'vubec' etc.)

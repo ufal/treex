@@ -1,11 +1,10 @@
-package SEnglishT_to_TCzechT::Fix_grammatemes_after_transfer;
+package Treex::Block::T2T::EN2CS::FixGrammatemesAfterTransfer;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use utf8;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 use Lexicon::Czech;
 
@@ -79,10 +78,10 @@ sub process_bundle {
 
     foreach my $cs_t_node ( $t_root->get_descendants ) {
         my $en_t_node  = $cs_t_node->get_source_tnode() or next;
-        my $cs_formeme = $cs_t_node->get_attr('formeme');
-        my $en_formeme = $en_t_node->get_attr('formeme');
-        my $en_tlemma  = $en_t_node->get_attr('t_lemma');
-        my $cs_tlemma  = $cs_t_node->get_attr('t_lemma');
+        my $cs_formeme = $cs_t_node->formeme;
+        my $en_formeme = $en_t_node->formeme;
+        my $en_tlemma  = $en_t_node->t_lemma;
+        my $cs_tlemma  = $cs_t_node->t_lemma;
 
         # Some English clause heads may become non-heads and vice versa
         $cs_t_node->set_attr( 'is_clause_head', $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
@@ -119,14 +118,14 @@ sub process_bundle {
             and $en_formeme =~ /^(n:attr|[^n])/
             and not $cs_t_node->get_parent->is_root
             and ( $cs_t_node->get_attr('gram/number') || '' ) eq 'sg'
-            and $cs_t_node->get_parent->get_attr('formeme') =~ /^n/
+            and $cs_t_node->get_parent->formeme =~ /^n/
             )
         {
 
-            #	    print "before ".$cs_t_node->get_parent->get_attr('t_lemma')."\t".$cs_t_node->get_attr('t_lemma')."\tbefore: ".
+            #	    print "before ".$cs_t_node->get_parent->t_lemma."\t".$cs_t_node->t_lemma."\tbefore: ".
             #		$cs_t_node->get_attr('gram/number')."\t";
             my $predicted_number =
-                more_frequent_number_for_genitive_noun_below_gov_noun( $cs_t_node->get_parent->get_attr('t_lemma'), $cs_tlemma );
+                more_frequent_number_for_genitive_noun_below_gov_noun( $cs_t_node->get_parent->t_lemma, $cs_tlemma );
 
             if (( $cs_t_node->get_parent->get_attr('gram/number') || '' ) eq 'pl'
                 and $en_tlemma !~ /\p{IsUpper}/
@@ -136,7 +135,7 @@ sub process_bundle {
             {
                 $predicted_number = "pl";
 
-                #		print "QQQ\t".$cs_t_node->get_parent->get_attr('t_lemma')."\t".$cs_t_node->get_attr('t_lemma')."\n";
+                #		print "QQQ\t".$cs_t_node->get_parent->t_lemma."\t".$cs_t_node->t_lemma."\n";
             }
 
             $cs_t_node->set_attr( 'gram/number', $predicted_number || 'sg' );
@@ -151,7 +150,7 @@ sub process_bundle {
             if ( $prob_sg_given_lemma{$cs_tlemma} > 0.98 ) {
 
                 # However, don't force singular for nodes modified by numeral > 1
-                if ( !grep { ( Lexicon::Czech::number_for( $_->get_attr('t_lemma') ) || 0 ) > 1 } $cs_t_node->get_children() ) {
+                if ( !grep { ( Lexicon::Czech::number_for( $_->t_lemma ) || 0 ) > 1 } $cs_t_node->get_children() ) {
                     $cs_t_node->set_attr( 'gram/number', 'sg' );
                 }
             }
@@ -237,8 +236,8 @@ sub process_bundle {
             CHILDREN: foreach my $en_child ( $en_t_node->get_descendants() ) {
                 my $alex = $en_child->get_lex_anode;
                 if (defined $alex
-                    and $alex->get_attr('m/tag') eq 'CD'
-                    and $alex->get_attr('m/lemma') !~ /^(one|[01](\.\d+)?)$/
+                    and $alex->tag eq 'CD'
+                    and $alex->lemma !~ /^(one|[01](\.\d+)?)$/
                     )
                 {
                     $cs_t_node->set_attr( 'gram/number', 'pl' );
@@ -317,7 +316,7 @@ sub process_bundle {
             )
         {
             $cs_t_node->set_attr( 'gram/negation', 'neg0' );
-            $cs_t_node->set_attr( 't_lemma',       'naneštěstí' );
+            $cs_t_node->set_t_lemma('naneštěstí');
         }
 
         # deleting grammatemes that became superfluous due to change of sempos
@@ -334,7 +333,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Fix_grammatemes_after_transfer
+=item Treex::Block::T2T::EN2CS::FixGrammatemesAfterTransfer
 
 This block changes some grammatemes and other attributes
 which became inappropriate after the lexeme/formeme transfer

@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Add_verb_aspect;
+package Treex::Block::T2T::EN2CS::AddVerbAspect;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 use Lexicon::CS::Aspect;
 
@@ -25,7 +24,7 @@ sub process_document {
         my $t_root = $bundle->get_tree('TCzechT');
 
         foreach my $t_node ( grep { ( $_->get_attr('gram/sempos') || "" ) =~ /^v/ } $t_root->get_descendants ) {
-            $t_node->set_attr( 'gram/aspect', get_verb_aspect( $t_node->get_attr('t_lemma') ) );
+            $t_node->set_attr( 'gram/aspect', get_verb_aspect( $t_node->t_lemma ) );
         }
     }
 }
@@ -34,7 +33,7 @@ sub process_document {
 
 =over
 
-=item SEnglishT_to_TCzechT::Add_verb_aspect
+=item Treex::Block::T2T::EN2CS::AddVerbAspect
 
 Fill the grammateme of aspect according to the verb t_lemma which comes
 from the lexical transfer.

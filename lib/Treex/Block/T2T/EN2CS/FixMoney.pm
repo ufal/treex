@@ -1,11 +1,10 @@
-package SEnglishT_to_TCzechT::Fix_money;
+package Treex::Block::T2T::EN2CS::FixMoney;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 my %CURRENCY = (
     '$'   => 'dolar',
@@ -19,7 +18,7 @@ sub process_bundle {
 
     foreach my $t_node ( $t_root->get_descendants() ) {
 
-        if ( $CURRENCY{ $t_node->get_attr('t_lemma') } ) {
+        if ( $CURRENCY{ $t_node->t_lemma } ) {
 
             # rehang the currency node 
             my $value_tnode = $t_node->get_children( { following_only => 1, first_only => 1 } );
@@ -29,20 +28,20 @@ sub process_bundle {
                 }
                 $value_tnode->set_parent($t_node->get_parent);
                 $t_node->set_parent($value_tnode);
-                $value_tnode->set_attr('formeme', $t_node->get_attr('formeme'));
+                $value_tnode->set_attr('formeme', $t_node->formeme);
             }
             
             # change t_lemma and formeme of the currency node
-            $t_node->set_attr('t_lemma', $CURRENCY{ $t_node->get_attr('t_lemma') } );
+            $t_node->set_attr('t_lemma', $CURRENCY{ $t_node->t_lemma } );
             $t_node->set_attr('t_lemma_origin', 'rule-Fix_money');
-            $t_node->set_attr('formeme', 'n:2');
+            $t_node->set_formeme('n:2');
             $t_node->set_attr('formeme_origin', 'rule-Fix_money');
             $t_node->set_attr('gram/number', 'pl');
 
             # shift the currency after nodes expressing value (numbers, million, billion, m)
             my $next_node = $t_node->get_next_node;
             my $last_value_node;
-            while ($next_node && $next_node->get_attr('t_lemma') =~ /^([\d,\.\ ]+|mili[oó]n|miliarda|m)$/) {
+            while ($next_node && $next_node->t_lemma =~ /^([\d,\.\ ]+|mili[oó]n|miliarda|m)$/) {
                 $last_value_node = $next_node;
                 $next_node = $next_node->get_next_node;
             }
@@ -58,7 +57,7 @@ sub process_bundle {
 
 =encoding utf8
 
-=item SEnglishT_to_TCzechT::Money
+=item Treex::Block::T2T::EN2CS::FixMoney
 
 =back
 

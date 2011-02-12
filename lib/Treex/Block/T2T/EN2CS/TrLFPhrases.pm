@@ -1,13 +1,12 @@
-package SEnglishT_to_TCzechT::Translate_LF_phrases;
+package Treex::Block::T2T::EN2CS::TrLFPhrases;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+
 use Readonly;
 use ProbUtils::Normalize;
 
-use base qw(TectoMT::Block);
 
 # TODO: it is taking the place of... #make use of
 Readonly my $CHILD_PARENT_TO_ONE_NODE => {
@@ -32,13 +31,13 @@ sub process_bundle {
     # Hack for "That is," -> "Jinými slovy"
     if ( $bundle->get_attr('english_source_sentence') =~ /^That is,/ ) {
         my ( $that, $is ) = @cs_tnodes;
-        if ( $that->get_attr('t_lemma') eq 'that' && $is->get_attr('t_lemma') eq 'be' ) {
+        if ( $that->t_lemma eq 'that' && $is->t_lemma eq 'be' ) {
             $that->disconnect();
             shift @cs_tnodes;
             $is->set_attr( 'mlayer_pos',     'X' );
-            $is->set_attr( 't_lemma',        'Jinými slovy' );
+            $is->set_t_lemma('Jinými slovy');
             $is->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
-            $is->set_attr( 'formeme',        'phrase' );
+            $is->set_formeme('phrase');
             $is->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
         }
     }
@@ -64,10 +63,10 @@ sub process_tnode {
         # "this year's X" -> "letošní X"
         if ( $p_formeme eq 'n:poss' ) {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
-            $cs_parent->set_attr( 't_lemma',        $l );
+            $cs_parent->set_t_lemma($l);
             $cs_parent->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
             $cs_parent->set_attr( 'mlayer_pos',     'A' );
-            $cs_parent->set_attr( 'formeme',        'adj:attr' );
+            $cs_parent->set_formeme('adj:attr');
             $cs_parent->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
             foreach my $child ( $cs_tnode->get_children() ) {
                 $child->set_parent($cs_parent);
@@ -81,8 +80,8 @@ sub process_tnode {
             my $l = $lemma eq 'this' ? 'letos' : 'vloni';
             my $f = $p_formeme =~ /adv/ ? 'adv:' : 'n:než+X';
             $cs_parent->set_attr( 'mlayer_pos',     'D' );
-            $cs_parent->set_attr( 't_lemma',        $l );
-            $cs_parent->set_attr( 'formeme',        $f );
+            $cs_parent->set_t_lemma($l);
+            $cs_parent->set_formeme($f);
             $cs_parent->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
             $cs_parent->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
             foreach my $child ( $cs_tnode->get_children() ) {
@@ -96,7 +95,7 @@ sub process_tnode {
         # But don't solve here: "in last years" -> "v posledních letech"
         if ( $en_parent->get_attr('gram/number') eq 'sg' ) {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
-            $cs_tnode->set_attr( 't_lemma',        $l );
+            $cs_tnode->set_t_lemma($l);
             $cs_tnode->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
             $cs_tnode->set_attr( 'mlayer_pos',     'A' );
             return;
@@ -109,22 +108,22 @@ sub process_tnode {
     if ( $lemma =~ /^(example|instance)$/ ) {
         my $en_anode = $en_tnode->get_lex_anode() or return;
         my $a_for    = $en_anode->get_prev_node() or return;
-        if ( $a_for->get_attr('m/lemma') eq 'for' ) {
+        if ( $a_for->lemma eq 'for' ) {
             $cs_tnode->set_attr( 'mlayer_pos',     'D' );
-            $cs_tnode->set_attr( 't_lemma',        'například' );
+            $cs_tnode->set_t_lemma('například');
             $cs_tnode->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
-            $cs_tnode->set_attr( 'formeme',        'x' );
+            $cs_tnode->set_formeme('x');
             $cs_tnode->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
             return;
         }
     }
 
     # "be worth" -> "mit cenu"
-    if ( $lemma eq 'worth' && $en_parent->get_attr('t_lemma') eq 'be' ) {
-        $cs_parent->set_attr( 't_lemma', 'mít' );
+    if ( $lemma eq 'worth' && $en_parent->t_lemma eq 'be' ) {
+        $cs_parent->set_t_lemma('mít');
         $cs_parent->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
         $cs_parent->set_attr( 'mlayer_pos', 'V' );
-        $cs_tnode->set_attr( 'formeme', 'n:4' );
+        $cs_tnode->set_formeme('n:4');
         $cs_tnode->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
 
     }
@@ -149,11 +148,11 @@ sub process_tnode {
         );
         my ( $cs_lemma, $m_pos ) = split /#/, $variants[0];
         $cs_parent->set_attr( 'mlayer_pos',     $m_pos );
-        $cs_parent->set_attr( 't_lemma',        $cs_lemma );
+        $cs_parent->set_t_lemma($cs_lemma);
         $cs_parent->set_attr( 't_lemma_origin', 'rule-Translate_LF_phrases' );
 
         if ($m_pos eq "D") {  # for the first time -> * pro poprve
-            $cs_parent->set_attr( 'formeme',        'adv' );
+            $cs_parent->set_formeme('adv');
             $cs_parent->set_attr( 'formeme_origin', 'rule-Translate_LF_phrases' );
         }
 
@@ -172,7 +171,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_LF_phrases
+=item Treex::Block::T2T::EN2CS::TrLFPhrases
 
 Try to apply some hand written rules for phrases translation.
 This block serves as an experimental (and temporary, I hope) place,

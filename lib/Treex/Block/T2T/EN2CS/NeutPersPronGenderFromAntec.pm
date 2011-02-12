@@ -1,10 +1,10 @@
-package SEnglishT_to_TCzechT::Neut_PersPron_gender_from_antec;
+package Treex::Block::T2T::EN2CS::NeutPersPronGenderFromAntec;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 sub process_document {
 
@@ -15,7 +15,7 @@ sub process_document {
 
         foreach my $neut_perspron (
             grep {
-		$_->get_attr('t_lemma') eq "#PersPron"
+		$_->t_lemma eq "#PersPron"
 		    and ($_->get_attr('gram/gender')||"") eq 'neut'
                     and defined $_->get_attr('coref_text.rf')
             } $t_root->get_descendants
@@ -27,7 +27,7 @@ sub process_document {
 
 	    my $gender_antec = $t_antec->get_attr('gram/gender');
 	    if (defined $gender_antec and $gender_antec ne 'neut') {
-#		print "QQQ\t".$t_antec->get_attr('t_lemma')."\t".$bundle->get_attr('english_source_sentence')."\n";
+#		print "QQQ\t".$t_antec->t_lemma."\t".$bundle->get_attr('english_source_sentence')."\n";
 		$neut_perspron->set_attr('gram/gender',$gender_antec);
 	    }
 
@@ -39,7 +39,7 @@ sub process_document {
 
 =over
 
-=item SEnglishT_to_TCzechT::Neut_PersPron_gender_from_antec
+=item Treex::Block::T2T::EN2CS::NeutPersPronGenderFromAntec
 
 PersPron originating in English it/its gets in Czech its
 gender from its antecedent ('... criticised the party because of its...').

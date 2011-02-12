@@ -1,9 +1,9 @@
-package SEnglishT_to_TCzechT::Remove_unpassivizable_variants;
+package Treex::Block::T2T::EN2CS::RemoveUnpassivizableVariants;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Report;
 use List::Util qw(first);
 
@@ -14,7 +14,6 @@ sub BUILD {
     $morphoLM = LanguageModel::MorphoLM->new() if !$morphoLM;
 }
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -24,7 +23,7 @@ sub process_bundle {
 
         next if ($cs_tnode->get_attr('t_lemma_origin')||"") !~ /^dict-first/;
 
-        if ($cs_tnode->get_attr('is_passive')) {
+        if ($cs_tnode->is_passive) {
 
             my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants');
 
@@ -33,7 +32,7 @@ sub process_bundle {
                     @{$variants_ref};
 
             if (@compatible and @compatible < @{$variants_ref}) {
-                my $old_tlemma = $cs_tnode->get_attr('t_lemma');
+                my $old_tlemma = $cs_tnode->t_lemma;
                 my $new_tlemma = $compatible[0]->{t_lemma};
                 if ($old_tlemma ne $new_tlemma) {
 #                    print "old_tlemma=$old_tlemma\tnew_tlemma=$new_tlemma\ten_sentence: ".$bundle->get_attr('english_source_sentence')."\t".$bundle->get_attr('czech_target_sentence')."\t".$cs_tnode->get_fposition()."\n";
@@ -60,7 +59,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Remove_unpassivizable_variants
+=item Treex::Block::T2T::EN2CS::RemoveUnpassivizableVariants
 
 If a finite verb t-node should be in passive voice, all verb variants that
 cannot be passivized are removed (prior to variant selection).

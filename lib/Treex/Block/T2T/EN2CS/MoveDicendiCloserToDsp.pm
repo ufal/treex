@@ -1,29 +1,28 @@
-package SEnglishT_to_TCzechT::Move_dicendi_closer_to_dsp;
+package Treex::Block::T2T::EN2CS::MoveDicendiCloserToDsp;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+
 use Report;
 use Lexicon::Czech;
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $t_root = $bundle->get_tree('TCzechT');
 
     foreach my $t_node ( $t_root->get_descendants() ) {
-        next if ! Lexicon::Czech::is_dicendi_verb($t_node->get_attr('t_lemma'));
+        next if ! Lexicon::Czech::is_dicendi_verb($t_node->t_lemma);
         my @children = $t_node->get_children( { ordered => 1 } );
 
-        my ($speech_root) = reverse grep { $_->get_attr('formeme') eq 'v:fin' } @children;
+        my ($speech_root) = reverse grep { $_->formeme eq 'v:fin' } @children;
         next if !$speech_root || $t_node->precedes($speech_root);
 
         # 1. Direct speech (with quotes)
         # Shift dicendi verb just after the closing quote node.
         # Quotes are usually hanged on the dicendi verb, not on the $speech_root.
-        my ($quot) = reverse grep { $_->get_attr('t_lemma') =~ /[“"]/ } @children;
+        my ($quot) = reverse grep { $_->t_lemma =~ /[“"]/ } @children;
         if ( $quot && $quot->precedes($t_node) ) {
             $t_node->shift_after_node( $quot, { without_children => 1 } );
         }
@@ -41,7 +40,7 @@ sub process_bundle {
 
 =over
 
-=item SEnglishT_to_TCzechT::Move_dicendi_closer_to_dsp
+=item Treex::Block::T2T::EN2CS::MoveDicendiCloserToDsp
 
 Move I<verba dicendi> following a speech (both direct and indirect)
 just after the last token of the speech clause.

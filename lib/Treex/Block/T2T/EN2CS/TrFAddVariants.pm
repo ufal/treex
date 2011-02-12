@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Translate_F_add_variants;
+package Treex::Block::T2T::EN2CS::TrFAddVariants;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 use ProbUtils::Normalize;
 
@@ -58,7 +57,7 @@ sub process_bundle {
         # Skip nodes that were already translated by rules
         next NODE if $cs_tnode->get_attr('formeme_origin') !~ /clone|dict/;
 
-#        next if $cs_tnode->get_attr('t_lemma') =~ /^\p{IsUpper}/;
+#        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
         if ( my $en_tnode = $cs_tnode->get_source_tnode() ) {
 
@@ -71,7 +70,7 @@ sub process_bundle {
                     keys %{$features_hash_rf}
             ];
 
-            my $en_formeme = $en_tnode->get_attr('formeme');
+            my $en_formeme = $en_tnode->formeme;
 
             my @translations =
                 grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
@@ -107,8 +106,8 @@ sub process_bundle {
                 $cs_tnode->set_attr( 'formeme_origin', @translations == 1 ? 'dict-only' : 'dict-first' );
 
                 #                print "\n\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
-                #                print "node: ".$en_tnode->get_attr('t_lemma')."\n";
-                #                print "chosen formeme: ".$cs_tnode->get_attr('formeme')."\n";
+                #                print "node: ".$en_tnode->t_lemma."\n";
+                #                print "chosen formeme: ".$cs_tnode->formeme."\n";
                 #                print "Original variants:\n";
                 #                print_variants($cs_tnode);
 
@@ -144,8 +143,8 @@ sub print_variants {
 
 sub can_be_translated_as {
     my ( $en_tnode, $en_formeme, $cs_formeme ) = @_;
-    my $en_lemma = $en_tnode->get_attr('t_lemma');
-    my $en_p_lemma = $en_tnode->get_parent()->get_attr('t_lemma') || '_root';
+    my $en_lemma = $en_tnode->t_lemma;
+    my $en_p_lemma = $en_tnode->get_parent()->t_lemma || '_root';
     return 0 if !$allow_fake_formemes && $cs_formeme =~ /\?\?\?/;
     return 0 if $en_formeme eq 'n:with+X' && $cs_formeme =~ /^n:(1|u.2)$/;
     return 0 if $en_formeme eq 'n:obj' && $cs_formeme eq 'n:1' && $en_p_lemma ne 'be';
@@ -160,7 +159,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_F_add_variants
+=item Treex::Block::T2T::EN2CS::TrFAddVariants
 
 Adding formeme translation variants using the maxent
 translation dictionary.

@@ -1,26 +1,26 @@
-package SEnglishT_to_TCzechT::Prune_personal_name_variants;
+package Treex::Block::T2T::EN2CS::PrunePersonalNameVariants;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use strict;
-use warnings;
+
 
 use List::Util qw(first);
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $cs_troot = $bundle->get_tree('TCzechT');
 
     NODE:
-    foreach my $cs_tnode ( grep { $_->get_attr('is_name_of_person') } $cs_troot->get_descendants() ) {
+    foreach my $cs_tnode ( grep { $_->is_name_of_person } $cs_troot->get_descendants() ) {
 
         # skipping nodes translated by rules
         next if ( $cs_tnode->get_attr('t_lemma_origin') || '' ) !~ /^dict-first/;
 
         my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants') or next NODE;
         my $en_tnode     = $cs_tnode->get_source_tnode()                             or next NODE;
-        my $en_tlemma    = $en_tnode->get_attr('t_lemma');
+        my $en_tlemma    = $en_tnode->t_lemma;
 
         # Skip one-letter names (initials)
         next NODE if length($en_tlemma) < 2;
@@ -43,7 +43,7 @@ sub process_bundle {
             
             # If the first variant is different, save it also to t_lemma etc.
             my $new_tlemma = $compatible[0]->{t_lemma};
-            my $old_tlemma = $cs_tnode->get_attr('t_lemma');
+            my $old_tlemma = $cs_tnode->t_lemma;
             if ( $old_tlemma ne $new_tlemma ) {
                 $cs_tnode->set_attr( 't_lemma',        $compatible[0]->{t_lemma} );
                 $cs_tnode->set_attr( 'mlayer_pos',     $compatible[0]->{pos} );
@@ -61,7 +61,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Prune_personal_name_variant
+=item Treex::Block::T2T::EN2CS::PrunePersonalNameVariants
 
 Special rule for pruning suspicious translations of personal names.
 Translations of personal names that don't start with the same letter

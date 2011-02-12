@@ -1,12 +1,11 @@
-package SEnglishT_to_TCzechT::Translate_LF_joint_static;
+package Treex::Block::T2T::EN2CS::TrLFJointStatic;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
-use base qw(TectoMT::Block);
 
 use TranslationModel::Static::Model;
 
@@ -39,9 +38,9 @@ sub process_bundle {
         if ( my $en_tnode = $cs_tnode->get_source_tnode() ) {
 
             # only prepositional groups
-            next NODE if $en_tnode->get_attr('formeme') !~ /n:.+\+/;
+            next NODE if $en_tnode->formeme !~ /n:.+\+/;
 
-            my $input_label = $en_tnode->get_attr('t_lemma')."|".$en_tnode->get_attr('formeme');
+            my $input_label = $en_tnode->t_lemma."|".$en_tnode->formeme;
             next NODE if $input_label =~ /\?/;
 
             if (my ($translation) = $model->get_translations( $input_label )) {
@@ -50,19 +49,19 @@ sub process_bundle {
 
                 my ($lemma, $pos) = split /#/, $output_label;
 
-               my $old_lemma =  $cs_tnode->get_attr('t_lemma');
-                my $old_formeme =  $cs_tnode->get_attr('formeme');
+               my $old_lemma =  $cs_tnode->t_lemma;
+                my $old_formeme =  $cs_tnode->formeme;
 
                 if ($pos !~ /[XC]/
                         and $formeme !~ /\?/
-                            and ($lemma ne $cs_tnode->get_attr('t_lemma')
-                                 or $formeme ne $cs_tnode->get_attr('formeme'))) {
+                            and ($lemma ne $cs_tnode->t_lemma
+                                 or $formeme ne $cs_tnode->formeme)) {
 
-                    $cs_tnode->set_attr('t_lemma', $lemma);
+                    $cs_tnode->set_t_lemma($lemma);
                     $cs_tnode->set_attr('mlayer_pos', $pos);
                     $cs_tnode->set_attr('t_lemma_origin', 'joint-static');
 
-                    $cs_tnode->set_attr('formeme', $formeme);
+                    $cs_tnode->set_formeme($formeme);
                     $cs_tnode->set_attr('formeme_origin', 'joint-static' );
 
 #                    print "QQQQ  $input_label ---> $formeme $lemma # $pos      instead of $old_formeme $old_lemma\n";
@@ -81,7 +80,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_LF_joint_static
+=item Treex::Block::T2T::EN2CS::TrLFJointStatic
 
 Joint unigram static translation of lemmas and formemes (first only).
 Used only for prepositional groups (which are less dependent on the context).

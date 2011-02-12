@@ -1,14 +1,13 @@
-package SEnglishT_to_TCzechT::Translate_F_try_rules;
+package Treex::Block::T2T::EN2CS::TrFTryRules;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 use Lexicon::English;
 use Lexicon::Czech;
 
-use base qw(TectoMT::Block);
 
 #TODO These hacks should be removed from here and added to formeme translation models
 # Explanation:
@@ -63,7 +62,7 @@ sub process_bundle {
 
         my $cs_formeme = formeme_for_tnode( $en_tnode, $cs_tnode );
         if ( defined $cs_formeme ) {
-            $cs_tnode->set_attr( 'formeme',        $cs_formeme );
+            $cs_tnode->set_formeme($cs_formeme);
             $cs_tnode->set_attr( 'formeme_origin', 'rule-Translate_F_try_rules' );
         }
     }
@@ -83,15 +82,15 @@ sub formeme_for_tnode {
                 or ( $en_tnode->get_attr('gram/number') || "" ) eq "pl"
             );
 
-#    return 'n:attr' if $en_tnode->get_parent->get_attr('is_name_of_person') && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
+#    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
 
     if (my $n_node = $en_tnode->get_n_node) {
         return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
     }
     
-    return 'n:attr' if $en_tnode->get_parent->get_attr('is_name_of_person') && $en_formeme eq 'n:attr';
+    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && $en_formeme eq 'n:attr';
 
-    return 'n:attr' if ($en_tnode->get_attr('is_name_of_person') || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
+    return 'n:attr' if ($en_tnode->is_name_of_person || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
     return 'n:attr' if $en_tlemma =~ /^(which|whose|that|this|these)$/ && $en_formeme eq 'n:attr';
     return 'adv:' if $en_tlemma eq 'addition' && $en_formeme eq 'n:in+X';
 
@@ -100,7 +99,7 @@ sub formeme_for_tnode {
     #if ( $en_formeme eq 'v:fin' ) {
     #    my $en_parent = $en_tnode->get_parent();
     #    return 'v:fin' if $en_parent->is_root();
-    #    my $p_lemma = $en_parent->get_attr('t_lemma');
+    #    my $p_lemma = $en_parent->t_lemma;
     #    return 'v:že+fin' if Lexicon::English::is_dicendi_verb($p_lemma);
     #    return 'v:fin';
     #}
@@ -133,7 +132,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Translate_F_try_rules
+=item Treex::Block::T2T::EN2CS::TrFTryRules
 
 Try to apply some hand written rules for formeme translation.
 If succeeded, formeme is filled and atributte C<formeme_origin> is set to I<rule>.

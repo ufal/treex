@@ -1,9 +1,9 @@
-package SEnglishT_to_TCzechT::Translate_LF_compounds;
+package Treex::Block::T2T::EN2CS::TrLFCompounds;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+
 use List::MoreUtils qw( any all );
 use Lexicon::Czech;
 use EnglishMorpho::Lemmatizer;
@@ -11,7 +11,6 @@ use Tagger::TnT;
 
 my $tagger = Tagger::TnT->new;
 
-use base qw(TectoMT::Block);
 
 use TranslationModel::Static::Model;
 use TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
@@ -38,7 +37,7 @@ sub process_bundle {
 
     # For all nodes with untranslated (i.e. "cloned" from source tnode) lemmas...
     foreach my $t_node ( grep { $_->get_attr('t_lemma_origin') eq 'clone' } $t_root->get_descendants() ) {
-        my $en_tlemma = $t_node->get_attr('t_lemma');
+        my $en_tlemma = $t_node->t_lemma;
 
         # If the lemma looks like a compound, try to translate it as two or more t-nodes.
         if ( $en_tlemma =~ /[a-z]\-[a-z]/ and $en_tlemma !~ /[A-Z]/ ) {
@@ -52,7 +51,7 @@ sub process_bundle {
 sub translate_compound {
     my ($t_node) = @_;
 
-    my @forms = split( /\-/, $t_node->get_attr('t_lemma') );
+    my @forms = split( /\-/, $t_node->t_lemma );
     my @tags = @{ $tagger->analyze( \@forms ) };
 
     SUBWORD:
@@ -146,7 +145,7 @@ sub translate_compound {
 
 =encoding utf8
 
-=item SEnglishT_to_TCzechT::Translate_LF_compounds
+=item Treex::Block::T2T::EN2CS::TrLFCompounds
 
 Tries to translated compounds like I<ex-commander> to two or more t-nodes.
 This block should go after other blocks that add t-lemma translation variants

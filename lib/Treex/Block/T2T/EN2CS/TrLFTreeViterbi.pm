@@ -1,8 +1,9 @@
-package SEnglishT_to_TCzechT::Translate_LF_tree_Viterbi;
+package Treex::Block::T2T::EN2CS::TrLFTreeViterbi;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use strict;
-use warnings;
-use utf8;
+
 use Readonly;
 
 use Report;
@@ -11,7 +12,6 @@ use TreeViterbi;
 use Lexicon::Czech;
 use LanguageModel::TreeLM;
 
-use base qw(TectoMT::Block);
 
 sub BUILD {
     MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new() );
@@ -44,20 +44,20 @@ sub process_bundle {
         my $old_pos   = $node->get_attr('mlayer_pos') || '';
         my $new_pos   = $state->get_pos() || '';
 
-        if ($new_lemma ne $node->get_attr('t_lemma')
+        if ($new_lemma ne $node->t_lemma
             or
             ( $old_pos ne $new_pos and $new_lemma !~ /^(tisíc|ráno|večer)$/ )
             )
         {                                                       # ??? tisic.C->tisic.N makes harm!!!
-            $node->set_attr( 't_lemma',        $new_lemma );
+            $node->set_t_lemma($new_lemma);
             $node->set_attr( 'mlayer_pos',     $state->get_pos );
             $node->set_attr( 't_lemma_origin', 'viterbi|' . $state->get_lemma_origin );
         }
 
         # Change the formeme
         my $new_formeme = $state->get_formeme();
-        if ( $new_formeme ne $node->get_attr('formeme') ) {
-            $node->set_attr( 'formeme',        $new_formeme );
+        if ( $new_formeme ne $node->formeme ) {
+            $node->set_formeme($new_formeme);
             $node->set_attr( 'formeme_origin', 'viterbi' );
         }
     }
@@ -84,8 +84,8 @@ sub get_states_of {
     #    }
 
     # Sometimes there are no variants but only the attribute (if translated by rules)
-    if ( !defined $ls_ref ) { $ls_ref = [ { t_lemma => $node->get_attr('t_lemma'), pos => $node->get_attr('mlayer_pos'), logprob => 0, backward_logprob => 0 } ]; }
-    if ( !defined $fs_ref ) { $fs_ref = [ { formeme => $node->get_attr('formeme'), logprob => 0, backward_logprob => 0 } ]; }
+    if ( !defined $ls_ref ) { $ls_ref = [ { t_lemma => $node->t_lemma, pos => $node->get_attr('mlayer_pos'), logprob => 0, backward_logprob => 0 } ]; }
+    if ( !defined $fs_ref ) { $fs_ref = [ { formeme => $node->formeme, logprob => 0, backward_logprob => 0 } ]; }
 
     # States are the Cartesian product of lemmas and formemes
     # However, for efficiency output only the compatible lemmas&formemes.
@@ -136,7 +136,7 @@ sub is_compatible {
     # genitives are allowed only below a very limited set of verbs in Czech
     if ( $f_v->{formeme} eq "n:2" and ( $node->get_parent->get_attr('mlayer_pos') || "" ) eq "V" ) {
 
-        #        print "Avoiding genitive below ".$node->get_parent->get_attr('t_lemma')."\n";
+        #        print "Avoiding genitive below ".$node->get_parent->t_lemma."\n";
         return 0;
     }
 
@@ -216,7 +216,7 @@ __END__
 
 =over
 
-=item TSEnglishT_to_TCzechT::Translate_LF_tree_Viterbi
+=item Treex::Block::T2T::EN2CS::TrLFTreeViterbi
 
 Apply Tree-Viterbi algorithm to find optimal choices of formemes and lemmas.
 

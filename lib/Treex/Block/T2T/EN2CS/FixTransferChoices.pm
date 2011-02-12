@@ -1,11 +1,10 @@
-package SEnglishT_to_TCzechT::Fix_transfer_choices;
+package Treex::Block::T2T::EN2CS::FixTransferChoices;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
 
-use base qw(TectoMT::Block);
+
 
 use Lexicon::Czech;
 
@@ -16,13 +15,13 @@ sub process_bundle {
         my $lemma_and_pos = fix_lemma($cs_tnode);
         if ($lemma_and_pos) {
             my ($new_lemma, $new_pos) = split /#/, $lemma_and_pos;
-            $cs_tnode->set_attr( 't_lemma',        $new_lemma );
+            $cs_tnode->set_t_lemma($new_lemma);
             $cs_tnode->set_attr( 'mlayer_pos',     $new_pos );
             $cs_tnode->set_attr( 't_lemma_origin', 'rule-Fix_transfer_choices' );
         }
         my $new_formeme = fix_formeme($cs_tnode);
         if ($new_formeme) {
-            $cs_tnode->set_attr( 'formeme',        $new_formeme );
+            $cs_tnode->set_formeme($new_formeme);
             $cs_tnode->set_attr( 'formeme_origin', 'rule-Fix_transfer_choices' );
         }
     }
@@ -31,18 +30,18 @@ sub process_bundle {
 
 sub fix_lemma {
     my ($cs_tnode)  = @_;
-    my $cs_tlemma   = $cs_tnode->get_attr('t_lemma');
+    my $cs_tlemma   = $cs_tnode->t_lemma;
     my ($cs_parent) = $cs_tnode->get_eff_parents();
 
-    return 'který#P' if $cs_tlemma eq 'tento' && $cs_parent->get_attr('is_relclause_head');
+    return 'který#P' if $cs_tlemma eq 'tento' && $cs_parent->is_relclause_head;
 
     my $en_tnode = $cs_tnode->get_source_tnode() or return;
-    my $en_tlemma = $en_tnode->get_attr('t_lemma');
+    my $en_tlemma = $en_tnode->t_lemma;
 
     # oprava reflexiv (!!! lepe opravit uz ve slovniku)
     return "${cs_tlemma}_se#V" if $en_tlemma =~ /become|learn|happen/ && $cs_tlemma =~ /t$/;
 
-    if ( $cs_tlemma =~ /(.+)_s[ie]$/ and $cs_tnode->get_attr('is_passive') ) {
+    if ( $cs_tlemma =~ /(.+)_s[ie]$/ and $cs_tnode->is_passive ) {
         return "$1#V";
     }
 
@@ -54,16 +53,16 @@ sub fix_lemma {
 
 sub fix_formeme {
     my ($cs_tnode)  = @_;
-    my $cs_tlemma   = $cs_tnode->get_attr('t_lemma');
-    my $cs_formeme  = $cs_tnode->get_attr('formeme');
+    my $cs_tlemma   = $cs_tnode->t_lemma;
+    my $cs_formeme  = $cs_tnode->formeme;
     my ($cs_parent) = $cs_tnode->get_eff_parents();
-    my $cs_parent_tlemma  = $cs_parent->get_attr('t_lemma')   || '#root';
-    my $cs_parent_formeme = $cs_parent->get_attr('formeme')   || '#root';
+    my $cs_parent_tlemma  = $cs_parent->t_lemma   || '#root';
+    my $cs_parent_formeme = $cs_parent->formeme   || '#root';
     my $cs_pos            = $cs_tnode->get_attr('mlayer_pos') || '';
     my $cs_tree_parent    = $cs_tnode->get_parent();
 
     my $en_tnode    = $cs_tnode->get_source_tnode() or return;
-    my $en_formeme  = $en_tnode->get_attr('formeme');
+    my $en_formeme  = $en_tnode->formeme;
     my ($en_parent) = $en_tnode->get_eff_parents();
 
     if (( $cs_formeme eq 'n:2' or $cs_formeme eq 'n:poss' )
@@ -92,7 +91,7 @@ sub fix_formeme {
             and $en_formeme eq 'n:poss'
             and $cs_tnode->precedes( $cs_tnode->get_parent );
 
-    return 'n:7' if $en_formeme =~ /n:by/ && $en_parent->get_attr('is_passive');
+    return 'n:7' if $en_formeme =~ /n:by/ && $en_parent->is_passive;
 
     # 'love of him' --> 'jeho laska'
     return 'n:poss' if $cs_tlemma eq '#PersPron'
@@ -108,7 +107,7 @@ sub fix_formeme {
             && $cs_parent_formeme =~ /(fin|rc)/;
 
     if ( $cs_formeme eq 'adj:attr' && $cs_pos eq 'N' ) {
-        return 'n:attr' if $cs_tnode->get_attr('is_name_of_person');
+        return 'n:attr' if $cs_tnode->is_name_of_person;
         return 'n:2';
     }
 
@@ -121,7 +120,7 @@ sub fix_formeme {
             && $en_formeme =~ /n:of/
             && !$cs_tree_parent->is_root()
             && (( $cs_tree_parent->get_attr('mlayer_pos') || '' ) eq 'P'
-                || $cs_tree_parent->get_attr('t_lemma') eq 'jeden'
+                || $cs_tree_parent->t_lemma eq 'jeden'
             );
 
     return 'v:aby+fin' if $cs_formeme eq 'v:inf'
@@ -138,9 +137,9 @@ sub fix_formeme {
 
     # only->jediny: rhematizer in English, but adjectival attribute in Czech
     if ( $cs_tlemma eq 'jediný' and $cs_formeme eq 'x' ) {
-        $cs_tnode->set_attr( 'nodetype',    'complex' );
+        $cs_tnode->set_nodetype('complex');
         $cs_tnode->set_attr( 'gram/sempos', 'adj.denot' );
-        $cs_tnode->set_attr( 'functor',     'RSTR' );
+        $cs_tnode->set_functor('RSTR');
         return 'adj:attr';
     }
 
@@ -185,7 +184,7 @@ __END__
 
 =over
 
-=item SEnglishT_to_TCzechT::Fix_transfer_choices
+=item Treex::Block::T2T::EN2CS::FixTransferChoices
 
 Manual rules for fixing the formeme and lemma choices,
 which are otherwise systematically wrong and are reasonably
