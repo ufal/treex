@@ -1,0 +1,148 @@
+package SEnglishT_to_TCzechT::Translate_F_try_rules;
+
+use 5.008;
+use strict;
+use warnings;
+use utf8;
+use Readonly;
+use Lexicon::English;
+use Lexicon::Czech;
+
+use base qw(TectoMT::Block);
+
+#TODO These hacks should be removed from here and added to formeme translation models
+# Explanation:
+# Hand-written tables like this one are evil - this is not the way how final TectoMT should work.
+# The only purpose of this table is to help develop and debug better machine-learnt translation
+# of formemes. When new block for formeme translation will be ready, it must have better results
+# when applied without these quick-fixs.
+Readonly my %QUICKFIX_TRANSLATION_OF => (
+    ## These formemes are not covered by the current formeme dictionary
+    'x'                 => 'x',
+    'n:adv'             => 'n:4',
+    'n:unlike+X'        => 'n:na_rozdíl_od+2',
+    'n:of_up_to+X'      => 'n:dosahující_až+2',
+    'n:in_case_of+X'    => 'n:v_případě+2',
+    'n:more_than+X'     => 'n:více_než+1',
+    'n:less_than+X'     => 'n:méně_než+1',
+    'n:a+X'             => 'n:za+4',
+    'n:as_regards+X'    => 'n:pokud_jde_o+4',
+    'n:as_for+X'        => 'n:pokud_jde_o+4',
+    'v:as_long_as+fin'  => 'v:dokud+fin',
+    'v:even_though+fin' => 'v:přestože+fin',
+    'v:even_if+fin'     => 'v:i_když+fin',
+    'v:as_though+fin'   => 'v:jakoby+fin',
+    'n:worth+X'         => 'n:za+4',
+
+    ## These formemes are sometimes translated strangely by the current dict.
+    #    'n:subj'        => 'n:1',
+    'v:because+fin' => 'v:protože+fin',
+    'v:rc'          => 'v:rc',
+    'v:while+fin'   => 'v:zatímco+fin',
+    'v:as+fin'      => 'v:jak+fin',
+    'n:up_to+X'     => 'n:až+4',
+    'adj:up_to+X'   => 'adj:až_do+4',
+
+    #    'n:poss'        => 'n:2',
+    'n:of_over+X' => 'n:převyšující+2',
+    'n:of_ago+X'  => 'n:před+7',
+);
+
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
+
+    my $cs_troot = $bundle->get_tree('TCzechT');
+
+    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+
+        # Skip nodes that were already translated by other rules
+        next if $cs_tnode->get_attr('formeme_origin') ne 'clone';
+
+        my $en_tnode = $cs_tnode->get_source_tnode();
+        next if !$en_tnode;
+
+        my $cs_formeme = formeme_for_tnode( $en_tnode, $cs_tnode );
+        if ( defined $cs_formeme ) {
+            $cs_tnode->set_attr( 'formeme',        $cs_formeme );
+            $cs_tnode->set_attr( 'formeme_origin', 'rule-Translate_F_try_rules' );
+        }
+    }
+    return;
+}
+
+sub formeme_for_tnode {
+    my ( $en_tnode,  $cs_tnode )   = @_;
+    my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
+    return 'n:v+4' if $en_tlemma =~ /^(sun|mon|tues|wednes|thurs|fri|satur)day$/i && $en_formeme eq 'n:on+X';
+    return 'n:v+6' if $en_tlemma eq 'abroad' && $en_formeme eq 'adv:';
+
+    return 'n:2' if $en_formeme eq 'n:poss'
+            and $en_tlemma ne '#PersPron'
+            and (
+                $en_tnode->get_children
+                or ( $en_tnode->get_attr('gram/number') || "" ) eq "pl"
+            );
+
+#    return 'n:attr' if $en_tnode->get_parent->get_attr('is_name_of_person') && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
+
+    if (my $n_node = $en_tnode->get_n_node) {
+        return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
+    }
+    
+    return 'n:attr' if $en_tnode->get_parent->get_attr('is_name_of_person') && $en_formeme eq 'n:attr';
+
+    return 'n:attr' if ($en_tnode->get_attr('is_name_of_person') || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
+    return 'n:attr' if $en_tlemma =~ /^(which|whose|that|this|these)$/ && $en_formeme eq 'n:attr';
+    return 'adv:' if $en_tlemma eq 'addition' && $en_formeme eq 'n:in+X';
+
+    return 'n:1' if $en_formeme eq 'n:subj' and $en_tlemma !~ /^(today|yesterday|now|first|second|then|however|moreover|nowadays)$/;    # potential wrongly marked subjects
+
+    #if ( $en_formeme eq 'v:fin' ) {
+    #    my $en_parent = $en_tnode->get_parent();
+    #    return 'v:fin' if $en_parent->is_root();
+    #    my $p_lemma = $en_parent->get_attr('t_lemma');
+    #    return 'v:že+fin' if Lexicon::English::is_dicendi_verb($p_lemma);
+    #    return 'v:fin';
+    #}
+
+    if ( $en_formeme eq 'v:so_that+fin' ) {
+        my $cs_parent = $cs_tnode->get_parent();
+        my $tak       = $cs_parent->create_child(
+            {   attributes => {
+                    t_lemma        => 'tak',
+                    formeme        => 'adv:',
+                    mlayer_pos     => 'D',
+                    t_lemma_origin => 'rule-Translate_F_try_rules',
+                    formeme_origin => 'rule-Translate_F_try_rules',
+                    'gram/sempos'  => 'adv.pron.def',
+                    'nodetype'     => 'complex',
+                    'functor'      => '???',
+                    }
+            }
+        );
+        $tak->shift_before_subtree($cs_tnode);
+        return 'v:aby+fin';
+    }
+
+    return $QUICKFIX_TRANSLATION_OF{$en_formeme};
+}
+
+1;
+
+__END__
+
+=over
+
+=item SEnglishT_to_TCzechT::Translate_F_try_rules
+
+Try to apply some hand written rules for formeme translation.
+If succeeded, formeme is filled and atributte C<formeme_origin> is set to I<rule>.
+
+Actually there are only few quickfix hacks in this block.
+
+=back
+
+=cut
+
+# Copyright 2008 Martin Popel
+# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

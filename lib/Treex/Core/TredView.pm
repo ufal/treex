@@ -127,7 +127,6 @@ sub nonroot_tnode_labels {
 sub nonroot_nnode_labels {
     my ( $self, $node ) = @_;
     return [
-        $node->{ne_type},
         $node->{normalized_name},
         $node->{ne_type},
     ];

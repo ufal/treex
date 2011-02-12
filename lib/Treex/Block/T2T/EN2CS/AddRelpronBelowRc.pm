@@ -1,0 +1,69 @@
+package SEnglishT_to_TCzechT::Add_relpron_below_rc;
+
+use 5.008;
+use strict;
+use warnings;
+use utf8;
+use base qw(TectoMT::Block);
+
+use List::MoreUtils qw( any );
+
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
+    my $t_root = $bundle->get_tree('TCzechT');
+
+    RELCLAUSE:
+    foreach my $rc_head ( grep { $_->get_attr('formeme') =~ /rc/ } $t_root->get_descendants ) {
+
+        # Skip verbs with subject (i.e. child in nominative)
+#        next RELCLAUSE if any { $_->get_attr('formeme') =~ /1/ } $rc_head->get_eff_children();
+
+        # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
+        # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
+        # Skipping clauses which were relative also on the source side
+        my $src_tnode = $rc_head->get_source_tnode();
+        next RELCLAUSE if !$src_tnode;
+        next RELCLAUSE if $src_tnode->get_attr('formeme') =~ /rc/;
+
+        # Grammatical antecedent is typically the nominal parent of the clause
+        my ($gram_antec) = $rc_head->get_eff_parents;
+        next RELCLAUSE if !$gram_antec;
+        next RELCLAUSE if $gram_antec->get_attr('formeme') !~ /^n/;
+
+        # Create new t-node
+        my $relpron = $rc_head->create_child(
+            {   attributes => {
+                nodetype      => 'complex',
+                functor       => '???',
+                formeme       => 'n:1',
+                t_lemma       => 'který',
+                t_lemma_origin => 'Add_relpron_below_rc',
+                'gram/sempos' => 'n.pron.indef',
+                'gram/indeftype' => 'relat',
+                'coref_gram.rf' => [ $gram_antec->get_attr('id') ],
+            }
+            }
+        );
+
+        $relpron->shift_before_subtree($rc_head);
+    }
+    return;
+}
+
+1;
+
+=over
+
+=item SEnglishT_to_TCzechT::Add_relpron_below_rc
+
+Generating new t-nodes corresponding to relative pronoun 'ktery' below roots
+of relative clauses, whose source-side counterparts were not relative
+clauses (e.g. when translatin an English gerund to a Czech relative
+clause ). Grammatical coreference is filled too.
+
+=back
+
+=cut
+
+# Copyright 2009 Zdenek Zabokrtsky
+# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
