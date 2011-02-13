@@ -69,7 +69,7 @@ sub fatal {
         print STDERR "\n";
         $unfinished_line = 0;
     }
-    my $line = "TMT-FATAL:\t$message\n\n";
+    my $line = "TREEX-FATAL:\t$message\n\n";
     $line .= "PERL ERROR MESSAGE: $OS_ERROR\n"        if $OS_ERROR;
     $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
     $line .= "PERL STACK:";
@@ -83,7 +83,7 @@ sub short_fatal {    # !!! neodladene
         print STDERR "\n";
         $unfinished_line = 0;
     }
-    my $line = "TMT-FATAL(short):\t$message\n";
+    my $line = "TREEX-FATAL(short):\t$message\n";
     _ntred_message($line);
     print STDERR $line;
     exit;
@@ -98,7 +98,7 @@ sub warn {
         $line            = "\n";
         $unfinished_line = 0;
     }
-    $line .= "TMT-WARN:\t$message\n";
+    $line .= "TREEX-WARN:\t$message\n";
     _ntred_message($line);
     print STDERR $line;
     return;
@@ -112,7 +112,7 @@ sub debug {
         $line            = "\n";
         $unfinished_line = 0;
     }
-    $line .= "TMT-DEBUG:\t$message\n";
+    $line .= "TREEX-DEBUG:\t$message\n";
     _ntred_message($line);
     if ($no_print_stack) {
         print STDERR $line;
@@ -131,7 +131,7 @@ sub data {
         $line            = "\n";
         $unfinished_line = 0;
     }
-    $line .= "TMT-DATA:\t$message\n";
+    $line .= "TREEX-DATA:\t$message\n";
     _ntred_message($line);
     print STDERR $line;
     return;
@@ -145,7 +145,7 @@ sub info {
         $line            = "\n";
         $unfinished_line = 0;
     }
-    $line .= "TMT-INFO:\t$message\n";
+    $line .= "TREEX-INFO:\t$message\n";
     _ntred_message($line);
     print STDERR $line;
     return;
@@ -159,7 +159,7 @@ sub info_unfinished {
         $line            = "\n";
         $unfinished_line = 0;
     }
-    $line .= "TMT-INFO:\t$message";
+    $line .= "TREEX-INFO:\t$message";
     _ntred_message($line);
     print STDERR $line;
     STDERR->flush;
@@ -172,7 +172,7 @@ sub info_finish {
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     my $line = "";
     if ( not $unfinished_line ) {
-        $line = "\nTMT-INFO:\t";
+        $line = "\nTREEX-INFO:\t";
     }
     $unfinished_line = 0;
     $line .= "$message\n";
@@ -184,7 +184,7 @@ sub info_finish {
 sub progress {    # progress se pres ntred neposila, protoze by se stejne neflushoval
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     if ( not $unfinished_line ) {
-        print STDERR "TMT-PROGRESS:\t";
+        print STDERR "TREEX-PROGRESS:\t";
     }
     print STDERR "*";
     STDERR->flush;
@@ -225,7 +225,7 @@ sub memory {
     #        $line            = "\n";
     #        $unfinished_line = 0;
     #    }
-    #    $line .= "TMT-MEMORY:\t$message\n";
+    #    $line .= "TREEX-MEMORY:\t$message\n";
     #    _ntred_message($line);
     #    print STDERR $line;
     #
@@ -277,4 +277,4 @@ sub log_debug           { debug @_; }
 
 # Copyright 2007 Zdenek Zabokrtsky
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+# This file is distributed under the GNU General Public License v2. See $TREEX_ROOT/README
