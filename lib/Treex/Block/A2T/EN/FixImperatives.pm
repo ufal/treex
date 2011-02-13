@@ -8,13 +8,13 @@ has '+language' => ( default => 'en' );
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
-    foreach my $tnode ( grep { $_->formeme eq "v:fin" } $t_root->get_eff_children ) {
+    foreach my $tnode ( grep { $_->formeme eq "v:fin" } $t_root->get_echildren ) {
         my $anode = $tnode->get_lex_anode;
 
         next if ( $tnode->sentmod || '' ) eq 'inter';
         next if not $anode or $anode->tag ne "VB";
         next if grep { $_->tag     eq "MD" } $tnode->get_aux_anodes;
-        next if grep { $_->formeme eq "n:subj" } $tnode->get_eff_children;
+        next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
 
         $tnode->set_attr( 'gram/verbmod', 'imp' );
         $tnode->set_sentmod('imper');

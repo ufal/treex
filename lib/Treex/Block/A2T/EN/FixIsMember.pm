@@ -10,7 +10,7 @@ sub process_ttree {
     my @all_nodes = $t_root->get_descendants();
 
     # (1) every member must be in coap
-    foreach my $node ( grep { $_->is_coap_member() } @all_nodes ) {
+    foreach my $node ( grep { $_->is_member } @all_nodes ) {
         if ( !$node->get_parent()->is_coap_root() ) {
             $node->set_is_member( undef );
         }
@@ -18,7 +18,7 @@ sub process_ttree {
 
     # (2) there should be at least two members in every co/ap
     foreach my $node ( grep { $_->is_coap_root() } @all_nodes ) {
-        unless ( grep { $_->is_coap_member } $node->get_children ) {
+        unless ( grep { $_->is_member } $node->get_children ) {
 
             # !!! vetsinou jde opravdu o bezdetne PRECy
             if ( $node->get_children <= 1 ) {

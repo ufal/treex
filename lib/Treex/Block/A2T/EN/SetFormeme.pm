@@ -80,10 +80,10 @@ sub _noun {
 
     # specialni zpracovani pro potomka rootu,
     # protoze pro root nefunguje get_lex_anode, ktery je jinak lepsi
-    my ($parent_t_node) = $t_node->get_eff_parents();
+    my ($parent_t_node) = $t_node->get_eparents();
     my $parent_a_node =
         $parent_t_node->is_root()
-        ? ( $a_node->get_eff_parents )[0]
+        ? ( $a_node->get_eparents )[0]
         : $parent_t_node->get_lex_anode();
 
     # treba v pedt v konstrukcich s #Equal rodic nema a-uzel
@@ -201,26 +201,26 @@ sub get_subconj_string {
 
 sub below_noun {
     my $tnode = shift;
-    my ($eff_parent) = $tnode->get_eff_parents() or return 0;
+    my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^n/;    #/^[n|adj]/;
 }
 
 sub below_adj {
     my $tnode = shift;
-    my ($eff_parent) = $tnode->get_eff_parents() or return 0;
+    my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^adj/;
 }
 
 sub below_verb {
     my $tnode = shift;
-    my ($eff_parent) = $tnode->get_eff_parents() or return 0;
+    my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^v/;
 }
 
 sub distinguish_objects {
     my ($t_node) = @_;
     my @objects = grep { $_->formeme =~ /^n:obj/ }
-        $t_node->get_eff_children( { ordered => 1 } );
+        $t_node->get_echildren( { ordered => 1 } );
 
     return if !( @objects > 1 );
 

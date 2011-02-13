@@ -3,6 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
+#TODO implement "to"
 has to => ( isa => 'Str', is => 'ro', default => '-' );
 has '+language' => ( required => 1 );
 

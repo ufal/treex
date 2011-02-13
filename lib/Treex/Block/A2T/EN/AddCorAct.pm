@@ -18,7 +18,7 @@ sub _object_control {
 |dare|defy|beg|prevent|forbid|allow|permit|enable|cause|force|consider)$/sxm;
 }
 
-sub process_atree {
+sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $infin_verb (
@@ -33,7 +33,7 @@ sub process_atree {
         $cor->set_formeme('n:elided');
         $cor->set_nodetype('qcomplex');
 
-        if ( not $infin_verb->get_parent->is_root and my ($grandpa) = $infin_verb->get_eff_parents ) {
+        if ( not $infin_verb->get_parent->is_root and my ($grandpa) = $infin_verb->get_eparents ) {
 
             #            print $grandpa->t_lemma."  xxx\n";
             my $antec;
@@ -41,10 +41,10 @@ sub process_atree {
 
             if ( _object_control( ( $grandpa->t_lemma || '_root' ) ) ) {
                 $type_of_control = "OBJ";
-                ($antec) = grep { $_->formeme eq "n:obj" } $grandpa->get_eff_children;
+                ($antec) = grep { $_->formeme eq "n:obj" } $grandpa->get_echildren;
             }
             else {
-                ($antec) = grep { $_->formeme eq "n:subj" } $grandpa->get_eff_children;
+                ($antec) = grep { $_->formeme eq "n:subj" } $grandpa->get_echildren;
                 $type_of_control = "SUBJ";
             }
 

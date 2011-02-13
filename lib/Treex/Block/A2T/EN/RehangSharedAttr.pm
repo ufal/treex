@@ -19,10 +19,9 @@ sub process_ttree {
         )
     {
 
-        my @coord_members = grep { $_->is_member and $_ ne $attr->get_parent }
-            $attr->get_eff_parents;
+        my @coord_members = grep { $_->is_member && $_ != $attr->get_parent } $attr->get_eparents;
 
-        my ($nearest_member) = sort { $a->get_ordering_value <=> $b->get_ordering_value }
+        my ($nearest_member) = sort { $a->ord <=> $b->ord }
             grep { $_->precedes( $_->get_parent ) }
             grep { $attr->precedes($_) } @coord_members;
 
