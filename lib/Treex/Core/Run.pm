@@ -131,7 +131,7 @@ sub execute {
     # non-parallelized execution, or one of distributed processes
     else {
 	if ($self->parallel) {
-	    log_info "Parallelized execution. This process is one out of ".$self->jobs." server processes.";
+	    log_info "Parallelized execution. This process is one out of ".$self->jobs." server processes, modulo==".$self->modulo;
 	}
 	else {
 	    log_info "Local (single-process) execution.";

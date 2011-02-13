@@ -22,7 +22,13 @@ has from => (
     documentation => 'space or comma separated list of filenames to be loaded',
 );
 
-has _reader => ( is => 'rw' );
+has _reader => (
+    is => 'rw',
+    handles => {
+	'set_modulo' => 'set_modulo',
+	'set_jobs' => 'set_jobs',
+    }
+ );
 
 sub BUILD {
     my ( $self, $args ) = @_;
