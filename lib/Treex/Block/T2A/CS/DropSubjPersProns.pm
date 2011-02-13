@@ -1,13 +1,12 @@
-package TCzechT_to_TCzechA::Drop_subj_pers_prons;
+package Treex::Block::T2A::CS::DropSubjPersProns;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
-use List::MoreUtils qw( any all );
-use List::Util qw(first);
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -23,15 +22,15 @@ sub process_node {
     my ($t_node) = @_;
 
     # We want to drop only subjects that are not coordinated ("he or she")
-    return if $t_node->get_attr('formeme') !~ /:1$/;
-    return if $t_node->get_attr('is_member');
+    return if $t_node->formeme !~ /:1$/;
+    return if $t_node->is_member;
 
     # As a special case we want to drop word "to" (lemma=ten)
     # when it is a subject of some verb other than "být|znamenat".
     my $parent = $t_node->get_parent();
     return if $parent->is_root();
-    my $p_lemma = $parent->get_attr('t_lemma');
-    my $lemma   = $t_node->get_attr('t_lemma');
+    my $p_lemma = $parent->t_lemma;
+    my $lemma   = $t_node->t_lemma;
     if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ ) {
         drop($t_node);
     }
@@ -42,10 +41,10 @@ sub process_node {
     # In some copula constructions there is needed word "to" instead of perspron
     # "He was a man who..." = "Byl to muž, který..."
     if ( $p_lemma eq 'být' ) {
-        my $real_subj = first { $_->get_attr('formeme') =~ /:1$/ } $parent->get_children( { following_only => 1 } );
-        if ($real_subj && any{$_->get_attr('formeme') eq 'v:rc'} $real_subj->get_children()) {
+        my $real_subj = first { $_->formeme =~ /:1$/ } $parent->get_children( { following_only => 1 } );
+        if ($real_subj && any{$_->formeme eq 'v:rc'} $real_subj->get_children()) {
             my $a_node = $t_node->get_lex_anode();
-            $a_node->set_attr( 'm/lemma',      'ten' );
+            $a_node->set_lemma('ten');
             $a_node->set_attr( 'morphcat/gender', 'N' );
             $a_node->set_attr( 'morphcat/subpos', 'D' );
             $a_node->set_attr( 'morphcat/person', '-' );
@@ -84,7 +83,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Drop_subj_pers_prons
+=item Treex::Block::T2A::CS::DropSubjPersProns
 
 Applying pro-drop - deletion of personal pronouns (and "to") in subject positions.
 In some copula constructions the personal pronoun subject is replaced with the word "to".

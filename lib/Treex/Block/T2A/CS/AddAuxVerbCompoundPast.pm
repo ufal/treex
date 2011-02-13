@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_auxverb_compound_past;
+package Treex::Block::T2A::CS::AddAuxVerbCompoundPast;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %auxpast_numberperson2form = (
     'S1' => 'jsem',
@@ -32,7 +33,7 @@ sub process_tnode {
 
     # Conditionals don't have an extra auxverb for past tense "bych *jsem prišel"
     my $verbmod = $tnode->get_attr('gram/verbmod') || '';
-    my $formeme = $tnode->get_attr('formeme') || '';
+    my $formeme = $tnode->formeme || '';
     return if $verbmod eq 'cdn' or $formeme =~ /(aby|kdyby)/;
 
     # Generate a form of the new auxverb
@@ -44,8 +45,8 @@ sub process_tnode {
 
     my $new_node = $anode->create_child(
         {   attributes => {
-                'm/lemma'      => 'být',
-                'm/form'       => $form,
+                'lemma'      => 'být',
+                'form'       => $form,
                 'afun'         => 'AuxV',
                 'morphcat/pos' => '!',
             }
@@ -62,7 +63,7 @@ sub process_tnode {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_auxverb_compound_past
+=item Treex::Block::T2A::CS::AddAuxVerbCompoundPast
 
 Add auxiliaries such as I<jsem/jste...> in past-tense complex
 verb forms (I<viděli jsme, přišli jste>).

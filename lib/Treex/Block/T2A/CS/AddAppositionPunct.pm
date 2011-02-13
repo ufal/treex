@@ -1,24 +1,25 @@
-package TCzechT_to_TCzechA::Add_apposition_punct;
+package Treex::Block::T2A::CS::AddAppositionPunct;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use utf8;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
+
+
 
 use Lexicon::Czech;
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $troot = $bundle->get_tree('TCzechT');
 
     foreach my $tnode ($troot->get_descendants) {
-        if ($tnode->get_attr('formeme') eq 'n:attr'
+        if ($tnode->formeme eq 'n:attr'
 	    and $tnode->get_parent->precedes($tnode)
-	    and $tnode->get_parent->get_attr('formeme')=~/^n/
+	    and $tnode->get_parent->formeme=~/^n/
 	    and $tnode->get_attr('gram/sempos') eq "n.denot" # not numerals etc.
-	    and Lexicon::Czech::is_personal_role($tnode->get_attr('t_lemma'))
+	    and Lexicon::Czech::is_personal_role($tnode->t_lemma)
 	    ) {
 
             my $anode = $tnode->get_lex_anode;
@@ -52,8 +53,8 @@ sub add_comma_node {
     my ($parent) = @_;
     return $parent->create_child(
         {   attributes => {
-                'm/form'       => ',',
-                'm/lemma'      => ',',
+                'form'       => ',',
+                'lemma'      => ',',
                 'afun'         => 'AuxX',
                 'morphcat/pos' => 'Z',
                 'clause_number'=> 0,
@@ -66,7 +67,7 @@ sub add_comma_node {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_apposition_punct
+=item Treex::Block::T2A::CS::AddAppositionPunct
 
 Add commas in apposition constructions such as
 'John, my best friend, ...'

@@ -1,20 +1,20 @@
-package TCzechT_to_TCzechA::Add_subord_clause_punct;
+package Treex::Block::T2A::CS::AddSubordClausePunct;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
-use List::MoreUtils qw( any );
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $aroot          = $bundle->get_tree('TCzechA');
     my @anodes         = $aroot->get_descendants( { ordered => 1 } );
     my @clause_numbers = map { $_->get_attr('clause_number') } @anodes;
-    ##my @afuns          = map { $_->get_attr('afun') || '' } @anodes;
-    my @lemmas = map { lc $_->get_attr('m/lemma') || '' } @anodes;
+    ##my @afuns          = map { $_->afun || '' } @anodes;
+    my @lemmas = map { lc $_->lemma || '' } @anodes;
     push @lemmas, 'dummy';
 
     foreach my $i ( 0 .. $#anodes - 1 ) {
@@ -43,7 +43,7 @@ sub process_bundle {
         next if $lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.';
 
         # e) left token is a closing quote preceeded by a comma (inserted in the last iteration)
-        next if $lemmas[$i] eq '“' && $i && $anodes[$i]->get_prev_node->get_attr('m/lemma') eq ',';
+        next if $lemmas[$i] eq '“' && $i && $anodes[$i]->get_prev_node->lemma eq ',';
 
         # Comma's parent should be the highest of left/right clause roots
         my $left_clause_root  = $anodes[$i]->get_clause_root();
@@ -54,8 +54,8 @@ sub process_bundle {
 
         my $comma = $the_higher_clause_root->create_child(
             {   attributes => {
-                    'm/form'        => ',',
-                    'm/lemma'       => ',',
+                    'form'        => ',',
+                    'lemma'       => ',',
                     'afun'          => 'AuxX',
                     'morphcat/pos'  => 'Z',
                     'clause_number' => 0,
@@ -92,8 +92,8 @@ sub process_bundle {
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';
     @anodes = $aroot->get_descendants( { ordered => 1 } );
     foreach my $i (0..$#anodes-2) {
-        if ($anodes[$i+1]->get_attr('m/lemma') eq 'poté'
-                and $anodes[$i]->get_attr('m/lemma') eq ',') {
+        if ($anodes[$i+1]->lemma eq 'poté'
+                and $anodes[$i]->lemma eq ',') {
 #            print $anodes[$i]->get_fposition."\n";
             $anodes[$i]->shift_after_node($anodes[$i+1], {without_children=>1});
         }
@@ -108,7 +108,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Add_subord_clause_punct
+=item Treex::Block::T2A::CS::AddSubordClausePunct
 
 Add a-nodes corresponding to commas on clause boundaries
 (boundaries of relative clauses as well as

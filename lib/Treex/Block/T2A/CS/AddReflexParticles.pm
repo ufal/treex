@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Add_reflex_particles;
+package Treex::Block::T2A::CS::AddReflexParticles;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -18,10 +20,10 @@ sub process_bundle {
 sub process_tnode {
     my ($t_node) = @_;
     my $reflexive;
-    if ( $t_node->get_attr('t_lemma') =~ /_(s[ie])$/ ) {
+    if ( $t_node->t_lemma =~ /_(s[ie])$/ ) {
         $reflexive = $1;
     }
-    elsif ( ( $t_node->get_attr('voice') || '' ) eq 'reflexive_diathesis' ) {
+    elsif ( ( $t_node->voice || '' ) eq 'reflexive_diathesis' ) {
         $reflexive = 'se';
     }
     else {
@@ -31,9 +33,9 @@ sub process_tnode {
     my $a_node    = $t_node->get_lex_anode();
     my $refl_node = $a_node->create_child();
     $refl_node->reset_morphcat();
-    $refl_node->set_attr( 'm/form',          $reflexive );
-    $refl_node->set_attr( 'm/lemma',         $reflexive );
-    $refl_node->set_attr( 'afun',            'AuxT' );
+    $refl_node->set_form($reflexive);
+    $refl_node->set_lemma($reflexive);
+    $refl_node->set_afun('AuxT');
     $refl_node->set_attr( 'morphcat/pos',    'P' );
     $refl_node->set_attr( 'morphcat/subpos', '7' );
     $refl_node->set_attr( 'morphcat/number', 'X' );
@@ -51,7 +53,7 @@ sub process_tnode {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_reflex_particles
+=item Treex::Block::T2A::CS::AddReflexParticles
 
 For reflexive tantum verbs (_si or _se in their tlemma),
 create new a-nodes corresponding to reflexive particles/pronouns.

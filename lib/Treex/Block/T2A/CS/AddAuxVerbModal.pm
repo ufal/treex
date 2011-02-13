@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_auxverb_modal;
+package Treex::Block::T2A::CS::AddAuxVerbModal;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %deontmod2modalverb = (
     'poss' => 'moci',
@@ -41,16 +42,16 @@ sub process_tnode {
     
     # Set its attributes
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'm/lemma',         $anode->get_attr('m/lemma') );
-    $new_node->set_attr( 'm/form',          $anode->get_attr('m/form') );
+    $new_node->set_attr( 'lemma',         $anode->lemma );
+    $new_node->set_attr( 'form',          $anode->form );
     $new_node->set_attr( 'morphcat/pos',    'V' );
     $new_node->set_attr( 'morphcat/subpos', 'f' );
 
     # negace bude orisek, zatim zustava u vyznamoveho
     $new_node->set_attr( 'morphcat/negation', 'A' );
 
-    $anode->set_attr( 'm/lemma', $modalverb );
-    $anode->set_attr( 'm/form',  undef );
+    $anode->set_lemma($modalverb);
+    $anode->set_attr( 'form',  undef );
 
     $tnode->add_aux_anodes( $new_node );
     return;
@@ -60,7 +61,7 @@ sub process_tnode {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_auxverb_modal
+=item Treex::Block::T2A::CS::AddAuxVerbModal
 
 Add a new a-node which represents a model verb accordingly
 to the value of the C<deontmod> attribute.

@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Delete_superfluous_prepos;
+package Treex::Block::T2A::CS::DeleteSuperfluousPrepos;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %DISTANCE_LIMIT = (
     'v'    => 5,
@@ -18,34 +20,34 @@ sub process_bundle {
     my $a_root = $bundle->get_tree('TCzechA');
 
     COORD:
-    foreach my $coord_anode ( grep { ( $_->get_attr('afun') || '' ) eq 'Coord' } $a_root->get_descendants() ) {
+    foreach my $coord_anode ( grep { ( $_->afun || '' ) eq 'Coord' } $a_root->get_descendants() ) {
 
         # !!! potreba testovat is is_member, ten je ale zatim v datech blbe
-        my @auxp_anodes = grep { ( $_->get_attr('afun') || '' ) eq 'AuxP' } $coord_anode->get_children();
+        my @auxp_anodes = grep { ( $_->afun || '' ) eq 'AuxP' } $coord_anode->get_children();
 
         next COORD if !@auxp_anodes;
 
         my $first_auxp_anode = shift @auxp_anodes;
-        my $prev_ord         = $first_auxp_anode->get_attr('ord');
+        my $prev_ord         = $first_auxp_anode->ord;
 
-        my $limit = $DISTANCE_LIMIT{ $first_auxp_anode->get_attr('m/lemma') };
+        my $limit = $DISTANCE_LIMIT{ $first_auxp_anode->lemma };
         $limit = $BASE_DISTANCE_LIMIT if !defined $limit;
 
         foreach my $anode (@auxp_anodes) {
-            my $ord = $anode->get_attr('ord');
+            my $ord = $anode->ord;
             next COORD if $prev_ord + $limit < $ord
-                    || $anode->get_attr('m/lemma') ne $first_auxp_anode->get_attr('m/lemma');
+                    || $anode->lemma ne $first_auxp_anode->lemma;
             $prev_ord = $ord;
         }
 
         foreach my $anode (@auxp_anodes) {
             foreach my $child ( $anode->get_children ) {
-                if ( ( $child->get_attr('afun') || '' ) eq 'AuxP' ) {
+                if ( ( $child->afun || '' ) eq 'AuxP' ) {
                     $child->disconnect();
                 }
                 else {
                     $child->set_parent( $anode->get_parent );
-                    $child->set_attr( 'is_member', $anode->get_attr('is_member') );
+                    $child->set_attr( 'is_member', $anode->is_member );
                 }
             }
             $anode->disconnect();
@@ -58,7 +60,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechT_to_TCzechA::Delete_superfluous_prepos
+=item Treex::Block::T2A::CS::DeleteSuperfluousPrepos
 
 In constructions such as 'for X and Y', the second
 preposition created on the target side ('pro X a pro Y')

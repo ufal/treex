@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Init_morphcat;
+package Treex::Block::T2A::CS::InitMorphcat;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use Readonly;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 Readonly my %M_GENDER_FOR => (
     anim => 'M',
@@ -44,7 +45,7 @@ sub process_tnode {
 
     # Skip coordinations, apositions, rhematizers etc.
     # convention: POS="!" means that the word will not be further inflected
-    if ( $t_node->get_attr('nodetype') =~ /coap|atom/ ) {
+    if ( $t_node->nodetype =~ /coap|atom/ ) {
         $a_node->set_attr( 'morphcat/pos', '!' );
         return;
     }
@@ -53,7 +54,7 @@ sub process_tnode {
     # M-layer part of speech should be already known since it is saved in the dictionary
     $a_node->set_attr( 'morphcat/pos', $t_node->get_attr('mlayer_pos') || '.' );
 
-    if (($t_node->get_attr('formeme')||'') =~ /^v/) {
+    if (($t_node->formeme||'') =~ /^v/) {
 	$a_node->set_attr('morphcat/pos','V'); # !!! hack to surpress some inconsistencies during transfer 
     }
 
@@ -75,7 +76,7 @@ sub process_tnode {
     # Personal pronouns must be handled specially:
     # There is a complex subpos system for pronouns,
     # also possnumber and possender should be handled.
-    if ( $t_node->get_attr('t_lemma') eq '#PersPron' ) {
+    if ( $t_node->t_lemma eq '#PersPron' ) {
         $a_node->set_attr( 'morphcat/pos', 'P' );
         my $subpos = get_subpos_of_perspron( $a_node, $t_node, $person );
         $a_node->set_attr( 'morphcat/subpos', $subpos );
@@ -83,7 +84,7 @@ sub process_tnode {
 
 
     my $sempos = $t_node->get_attr('gram/sempos') || '';
-    my $formeme = $t_node->get_attr('formeme');
+    my $formeme = $t_node->formeme;
 
     # Subpos of possessive nouns/adjectives  # moved to a dedicated block
 #    if ( $sempos =~ /^n.denot/ && $formeme =~ /poss/ ) {
@@ -103,7 +104,7 @@ sub process_tnode {
     # == Negation ==
     # urcovani negace (jen u subst,adj. a adv.) z gramatemu  (u sloves se resi zvlast)
     # TODO pozor na nenegovatelna prislovce, asi spojit s degcmp!!!
-    if ( $sempos =~ /^[nav]/ and $t_node->get_attr('t_lemma') ne '#PersPron' and $sempos !~ /pron|quant/ ) {
+    if ( $sempos =~ /^[nav]/ and $t_node->t_lemma ne '#PersPron' and $sempos !~ /pron|quant/ ) {
         if ( ( $t_node->get_attr('gram/negation') || '' ) eq 'neg1' ) {
             $a_node->set_attr( 'morphcat/negation', 'N' );
         }
@@ -114,7 +115,7 @@ sub process_tnode {
 
     # == Verbal voice ==
     if ( $sempos =~ /^v/ ) {
-        my $voice = $t_node->get_attr('voice') || '';
+        my $voice = $t_node->voice || '';
         if ( $voice eq 'active' ) {
             $a_node->set_attr( 'morphcat/voice', 'A' );
         }
@@ -129,7 +130,7 @@ sub process_tnode {
 # Also possnumber and possgender is filled if needed.
 sub get_subpos_of_perspron {
     my ( $a_node, $t_node, $person ) = @_;
-    my $formeme = $t_node->get_attr('formeme');
+    my $formeme = $t_node->formeme;
 
     if ( $formeme =~ /(poss|attr)/ ) {
 
@@ -139,7 +140,7 @@ sub get_subpos_of_perspron {
         # TODO: check whether it is really a coreference from possesive to the subject
         #       (we don't mark any other type yet, so it is ok).
         my ($noun) = $t_node->get_eff_parents();
-        if ( $t_node->get_attr('coref_gram.rf') && $noun && $noun->get_attr('formeme') !~ /1/ ) {
+        if ( $t_node->get_attr('coref_gram.rf') && $noun && $noun->formeme !~ /1/ ) {
             ## reflexive lemma "svůj" doesn't have person in the tag
             $a_node->set_attr( 'morphcat/person', '.' );
             return '8';
@@ -183,7 +184,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Init_morphcat
+=item Treex::Block::T2A::CS::InitMorphcat
 
 Fill TCzechA morphological categories (members of structure morphcat) with
 values simply derived from values of grammatemes, formeme, sempos etc.

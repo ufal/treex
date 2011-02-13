@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_auxverb_compound_future;
+package Treex::Block::T2A::CS::AddAuxVerbCompoundFuture;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -33,7 +34,7 @@ sub process_tnode {
     # with the exception of few imperfective verbs which form futurum without
     # using auxiliary verbs (they use prefix "po" instead).
     my $anode = $tnode->get_lex_anode();
-    my $lemma = $anode->get_attr('m/lemma');
+    my $lemma = $anode->lemma;
     return if $lemma =~ /^(být|jít|jet|nést|běžet|letět|téci|vézt|hrnout|lézt)$/;
 
     my $number = $anode->get_attr('morphcat/number') || 'S';
@@ -42,15 +43,15 @@ sub process_tnode {
     my $new_node = $anode->create_child();
     $new_node->shift_after_node($anode);
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'm/lemma',      $anode->get_attr('m/lemma') );
-    $new_node->set_attr( 'm/form',       $anode->get_attr('m/form') );
+    $new_node->set_attr( 'lemma',      $anode->lemma );
+    $new_node->set_attr( 'form',       $anode->form );
     $new_node->set_attr( 'morphcat/pos', 'V' );
     $anode->set_attr( 'morphcat/subpos', 'B' );
     
     # negace v kazdem pripade zustava jen u funkcniho
     $new_node->set_attr( 'morphcat/negation', 'A' );
 
-    $anode->set_attr( 'm/lemma',        'být' );
+    $anode->set_lemma('být');
     $anode->set_attr( 'morphcat/tense', 'F' );
 
     $new_node->set_attr( 'morphcat/subpos', 'f' ); # 'bude videt'
@@ -81,7 +82,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Add_auxverb_compound_future
+=item Treex::Block::T2A::CS::AddAuxVerbCompoundFuture
 
 Add auxiliaries such as jsem/jste... in past-tense complex
 verb forms (viděli jsme, přišli jste).

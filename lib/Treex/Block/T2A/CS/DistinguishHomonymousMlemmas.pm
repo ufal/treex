@@ -1,26 +1,27 @@
-package TCzechT_to_TCzechA::Distinguish_homonymous_mlemmas;
+package Treex::Block::T2A::CS::DistinguishHomonymousMlemmas;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use strict;
-use warnings;
-use List::MoreUtils qw( any all );
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use utf8;
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     foreach my $tnode ( $bundle->get_tree('TCzechT')->get_descendants ) {
 
-        if ($tnode->get_attr('t_lemma') =~ /^stát(_se)?$/
+        if ($tnode->t_lemma =~ /^stát(_se)?$/
                 and $tnode->get_attr('mlayer_pos') eq "V") {
 
             my $anode = $tnode->get_lex_anode;
             my $src_tnode = $tnode->get_source_tnode;
 
             my $index;
-            my $source_tlemma =  $src_tnode->get_attr('t_lemma');
+            my $source_tlemma =  $src_tnode->t_lemma;
 
             if ($source_tlemma =~ /^(happen|become|get|grow|be)$/) {
                 $index = 2;
@@ -32,7 +33,7 @@ sub process_bundle {
                 $index = 4;
             }
 
-            $anode->set_attr('m/lemma', $anode->get_attr('m/lemma')."-$index");
+            $anode->set_attr('lemma', $anode->lemma."-$index");
 
         }
     }
@@ -43,7 +44,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechT_to_TCzechA::Distinguish_homonymous_mlemmas
+=item Treex::Block::T2A::CS::DistinguishHomonymousMlemmas
 
 Adding numerical suffices to morphological lemmas, in order
 to distinguish homonyms with different infleciton (such as stát-1).

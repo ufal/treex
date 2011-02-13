@@ -1,19 +1,20 @@
-package TCzechA_to_TCzechW::Concatenate_tokens;
+package Treex::Block::A2W::CS::ConcatenateTokens;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use utf8;
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $a_root = $bundle->get_tree('TCzechA');
     my $sentence = join " ",
         grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
-        map { $_->get_attr('m/form') || '' }
+        map { $_->form || '' }
         $a_root->get_descendants( { ordered => 1 } );
 
     $sentence =~ s/ +/ /g;
@@ -54,7 +55,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechA_to_TCzechW::Concatenate_tokens
+=item Treex::Block::A2W::CS::ConcatenateTokens
 
 Creates the target sentence string simply by concatenation of word forms from TCzechA nodes
 (the only remaining non-triviality is spacing around punctuation marks).

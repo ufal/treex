@@ -1,22 +1,23 @@
-package TCzechT_to_TCzechA::Resolve_verbs;
+package Treex::Block::T2A::CS::ResolveVerbs;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        my $formeme = $t_node->get_attr('formeme');
+        my $formeme = $t_node->formeme;
         my $pos = $t_node->get_attr('mlayer_pos') || '';
 
         # Skip everything except verbs
         next if $formeme !~ /^v/ && $pos ne 'V';
 
-        my $sentmod = $t_node->get_attr('sentmod') || '';
+        my $sentmod = $t_node->sentmod || '';
         my $a_node = $t_node->get_lex_anode();
 
         if ( $formeme =~ /inf/ ) { resolve_infinitive( $t_node, $a_node ); }
@@ -51,8 +52,8 @@ sub resolve_imperative {
     $a_node->set_attr( 'morphcat/person', '2' );    #1 is also possible but rare and Generate_wordforms would prefere it
 
     #Without this hack Generate_wordforms would come up with 'budiž'
-    if ( $a_node->get_attr('m/lemma') eq 'být' ) {
-        $a_node->set_attr( 'm/form',       'buďte' );
+    if ( $a_node->lemma eq 'být' ) {
+        $a_node->set_form('buďte');
         $a_node->set_attr( 'morphcat/pos', '!' );
     }
     return;
@@ -62,9 +63,9 @@ sub get_subpos_tense_of_finite {
     my ( $t_node, $a_node ) = @_;
     my $tense   = $t_node->get_attr('gram/tense')   || '';
     my $verbmod = $t_node->get_attr('gram/verbmod') || '';
-    my $voice   = $t_node->get_attr('voice')        || '';
+    my $voice   = $t_node->voice        || '';
     my $aspect  = $t_node->get_attr('gram/aspect')  || '';
-    my $formeme = $t_node->get_attr('formeme');
+    my $formeme = $t_node->formeme;
 
     return ( 'p', undef ) if $tense eq 'ant' || $verbmod eq 'cdn' || $formeme =~ /aby|kdyby/;
 
@@ -81,7 +82,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Resolve_verbs
+=item Treex::Block::T2A::CS::ResolveVerbs
 
 Finishing the verbal tags and possible adding new nodes in the case
 of complex verb forms or reflexive particles. (!!! pozor, vetsina z veci,

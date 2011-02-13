@@ -1,10 +1,10 @@
-package TxxT_to_TxxA::Clone_atree;
+package Treex::Block::T2A::CopyTtree;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -22,7 +22,7 @@ sub process_bundle {
         my $anode = $anodes[$i];
         my $tnode = $tnodes[$i];
 
-        my $lemma = $tnode->get_attr('t_lemma') || '';
+        my $lemma = $tnode->t_lemma || '';
 
         if ( $lemma eq '#Cor' ) {
             # Hopefully, there are no children, but..
@@ -37,20 +37,20 @@ sub process_bundle {
             $tnode->set_attr('a/lex.rf',$anode->get_attr('id'));
 
             $lemma =~ s/_s[ie]$//g;
-            $anode->set_attr( 'm/lemma', $lemma );
-            $anode->set_attr( 'ord',     $anode->get_attr('deepord') );
+            $anode->set_lemma($lemma);
+            $anode->set_attr( 'ord',     $anode->ord );
 
             # set some afuns so _eff_ routines can work
             if ( $tnode->is_coap_root() ) {
-                $anode->set_attr( 'afun', $tnode->get_attr('functor') eq 'APPS' ? 'Apos' : 'Coord' );
+                $anode->set_attr( 'afun', $tnode->functor eq 'APPS' ? 'Apos' : 'Coord' );
             }
-            if ( defined $tnode->get_attr('sentmod') ) {
-                ##$node->set_attr('afun', 'AuxS');
+            if ( defined $tnode->sentmod ) {
+                ##$node->set_afun('AuxS');
             }
 
             #TODO: $bundle->copy_tree( 'TCzechT', 'TCzechA' ) deletes is_member !!!
-            if ( $tnode->get_attr('is_member') ) {
-                $anode->set_attr( 'is_member', 1 );
+            if ( $tnode->is_member ) {
+                $anode->set_is_member(1) );
             }
 
             # TODO: vymazat tektogramaticke atributy !!!
@@ -63,7 +63,7 @@ sub process_bundle {
 
 =over
 
-=item TxxT_to_TxxA::Clone_atree
+=item Treex::Block::T2A::CopyTtree
 
 Within each bundle, a copy of TCzechT tree is created and stored as TCzechA tree.
 

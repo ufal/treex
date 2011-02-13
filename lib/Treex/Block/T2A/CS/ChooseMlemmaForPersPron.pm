@@ -1,12 +1,12 @@
-package TCzechT_to_TCzechA::Choose_mlemma_for_PersPron;
+package Treex::Block::T2A::CS::ChooseMlemmaForPersPron;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-use utf8;
-use Readonly;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %subpos_person_2_mlemma =
     (
@@ -44,8 +44,8 @@ sub process_bundle {
         my $person = $a_node->get_attr('morphcat/person') || '.';
         my $pronoun_mlemma = $M_LEMMA_FOR{ $subpos . $person };
         next if !$pronoun_mlemma;
-        $a_node->set_attr( 'm/lemma', $pronoun_mlemma );
-        $a_node->set_attr( 'm/form',  $pronoun_mlemma );
+        $a_node->set_lemma($pronoun_mlemma);
+        $a_node->set_form($pronoun_mlemma);
     }
     return;
 }
@@ -55,14 +55,14 @@ sub process_bundle {
 __END__
 
 # mapa ziskana btredim skriptem z a-roviny pdt2.0 takto:
-# ntred -TNe 'my $tag=$this->attr("m/tag"); my $l=$this->attr("m/lemma");if ($l!~/,[th]/ and $tag=~/^P(.).....([1-3])/) {$shorttag=$1.$2;$l=~s/[_-].+//;print "   qw($shorttag) => qw($l),\n"}' | sort | uniq
+# ntred -TNe 'my $tag=$this->attr("tag"); my $l=$this->attr("lemma");if ($l!~/,[th]/ and $tag=~/^P(.).....([1-3])/) {$shorttag=$1.$2;$l=~s/[_-].+//;print "   qw($shorttag) => qw($l),\n"}' | sort | uniq
 # +rucni doplneni
 
 =over
 
-=item TCzechT_to_TCzechA::Choose_mlemma_for_PersPron
+=item Treex::Block::T2A::CS::ChooseMlemmaForPersPron
 
-Attribute C<m/lemma> of a-nodes corresponding to #PersPron is
+Attribute C<lemma> of a-nodes corresponding to #PersPron is
 set accordingly to subpos and person of the pronoun.
 
 =back

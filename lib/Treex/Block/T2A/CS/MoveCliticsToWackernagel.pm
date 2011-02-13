@@ -1,13 +1,13 @@
-package TCzechT_to_TCzechA::Move_clitics_to_wackernagel;
+package Treex::Block::T2A::CS::MoveCliticsToWackernagel;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
+
+
 use Report;
-use List::Util qw(first);
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -49,10 +49,10 @@ sub process_clause {
     @clitics = grep {_verb_group_root($_) eq $clause_root} @clitics; 
 #    foreach my $clitic (@clitics) {
 #	if (_verb_group_root($clitic) ne $clause_root) {
-#	    print "QQQ Not moving '".$clitic->get_attr('m/form')
-#		."' from below '".$clitic->get_parent->get_attr('m/form')
-#		." (real clause root '".$clause_root->get_attr('m/form')
-#		." but returned'". _verb_group_root($clitic)->get_attr('m/form')."')\t"
+#	    print "QQQ Not moving '".$clitic->form
+#		."' from below '".$clitic->get_parent->form
+#		." (real clause root '".$clause_root->form
+#		." but returned'". _verb_group_root($clitic)->form."')\t"
 #		.$clitic->get_bundle->get_attr('czech_target_sentence')."\n";
 #	}
 #    }
@@ -61,7 +61,7 @@ sub process_clause {
     # 3a) Clause root is the leftmost node = $first (typical for subordinating conjunctions)
     my $first;
     if ( $clause_root == $nodes[0]
-             and not first {($_->get_attr('afun')||"") eq "AuxC"} $clause_root->get_children) { # but not a multiword one
+             and not first {($_->afun||"") eq "AuxC"} $clause_root->get_children) { # but not a multiword one
         $first = $clause_root;
     }
     else {             # 3b) otherwise $first is one of the clause root's children
@@ -86,13 +86,13 @@ sub _verb_group_root {
     my $clitic = shift;
     my $verb_root = $clitic;
     while ((($verb_root->get_parent->get_attr('morphcat/pos')||'') eq "V"
-	    or ($verb_root->get_parent->get_attr('m/lemma') =~ /^(vědomý|jistý)$/)) # two exceptions found in PDT2.0 t-trees
+	    or ($verb_root->get_parent->lemma =~ /^(vědomý|jistý)$/)) # two exceptions found in PDT2.0 t-trees
 	   and $verb_root->get_attr('clause_number') eq $verb_root->get_parent->get_attr('clause_number')
 	) {
 	$verb_root = $verb_root->get_parent;
     }
 
-    if (($verb_root->get_parent->get_attr('afun')||'') eq "AuxC") {
+    if (($verb_root->get_parent->afun||'') eq "AuxC") {
 	$verb_root = $verb_root->get_parent;
     }
 
@@ -104,7 +104,7 @@ sub _verb_group_root {
 sub _is_clitic {
     my $anode = shift;
     my ( $subpos, $case, $afun, $form ) =
-        $anode->get_attrs( qw(morphcat/subpos morphcat/case afun m/form), { undefs => '' } );
+        $anode->get_attrs( qw(morphcat/subpos morphcat/case afun form), { undefs => '' } );
     $form = lc $form;
 
     # 7 = reflexive pronouns = se, si, ses, sis
@@ -116,7 +116,7 @@ sub _is_clitic {
     # in dative     = mně tobě jemu jí nám vám jim
     # in accusative = mě  tě   ho   ji nás vás je
     my $under_verb = ( $anode->get_parent->get_attr('morphcat/pos') || '' ) eq 'V';
-    return 1 if $subpos eq 'P' && $case =~ /[34]/ && !$anode->get_attr('is_member') && $under_verb;
+    return 1 if $subpos eq 'P' && $case =~ /[34]/ && !$anode->is_member && $under_verb;
 
     # forms of the auxiliary verb "být" (for compound past tense):
     return 1 if $afun eq 'AuxV' && $form =~ /^(jste|jsme|jsem|jsi)$/;
@@ -128,7 +128,7 @@ sub _is_clitic {
         
         # copula constructions with "to" ("Je to pravda.")
         # I am not sure whether this is a clitic, but in most cases it looks better.      
-        return 1 if $case eq '1' && $anode->get_parent->get_attr('m/lemma') eq 'být';   
+        return 1 if $case eq '1' && $anode->get_parent->lemma eq 'být';   
     }
     
     # Word "tam" is not a real clitic, but it is very often context-bound.
@@ -141,7 +141,7 @@ sub _is_clitic {
 # rules from http://cs.wikipedia.org/wiki/%C4%8Cesk%C3%BD_slovosled
 sub _order {
     my ($anode) = shift;
-    my $form = lc( $anode->get_attr('m/form') );
+    my $form = lc( $anode->form );
     return 1 if $form =~ /^(jsem|jsi|jsme|jste|by|bych|bys|bychom|byste)$/;
     return 2 if $form =~ /^(se|si)$/;
     return 3 if $form =~ /^(mi|ti|mu|jí|nám|vám|jim)$/;
@@ -165,23 +165,23 @@ sub _ignore {
     return 1 if $anode->get_attr('clause_number') != $clause_number;
 
     # functor = 'PREC'
-    return 1 if $anode->get_attr('m/lemma') =~ /^(a|ale)$/ && $anode->get_children == 0;
+    return 1 if $anode->lemma =~ /^(a|ale)$/ && $anode->get_children == 0;
 
     # multiword subordinating conjunctions such as 'i kdyz'
-    return 1 if ($anode->get_attr('afun')||"") eq "AuxC"
-        and ($anode->get_next_node->get_attr('afun')||"") eq "AuxC";
+    return 1 if ($anode->afun||"") eq "AuxC"
+        and ($anode->get_next_node->afun||"") eq "AuxC";
 
     return 0;
 }
 
 sub _is_pronoun_je {
     my ($anode) = @_;
-    return $anode->get_attr('m/form') eq 'je' && $anode->get_attr('morphcat/subpos') eq 'P';
+    return $anode->form eq 'je' && $anode->get_attr('morphcat/subpos') eq 'P';
 }
 
 sub _is_verb_je {
     my ($anode) = @_;
-    return $anode->get_attr('m/form') eq 'je' && $anode->get_attr('m/lemma') eq 'být';
+    return $anode->form eq 'je' && $anode->lemma eq 'být';
 }
 
 sub _move_je {
@@ -194,7 +194,7 @@ sub _move_je {
 
 =over
 
-=item TCzechT_to_TCzechA::Move_clitics_to_wackernagel
+=item Treex::Block::T2A::CS::MoveCliticsToWackernagel
 
 In each clause, a-nodes which represent clitics are moved
 to the so called second position in the clause

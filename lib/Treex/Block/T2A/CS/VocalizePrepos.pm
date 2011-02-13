@@ -1,12 +1,13 @@
-package TCzechT_to_TCzechA::Vocalize_prepositions;
+package Treex::Block::T2A::CS::VocalizePrepos;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use utf8;
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -17,8 +18,8 @@ sub process_bundle {
     # we consider bigrams
     foreach my $i ( 0 .. $#anodes - 1 ) {
         if ( $anodes[$i]->get_attr('morphcat/pos') =~ /^R/ ) {
-            my $vocalized = vocalize( $anodes[$i]->get_attr('m/lemma'), $anodes[ $i + 1 ]->get_attr('m/form') );
-            $anodes[$i]->set_attr( 'm/form', $vocalized );
+            my $vocalized = vocalize( $anodes[$i]->lemma, $anodes[ $i + 1 ]->form );
+            $anodes[$i]->set_form($vocalized);
         }
     }
     return;
@@ -46,10 +47,10 @@ sub vocalize {
 
 =over
 
-=item TCzechT_to_TCzechA::Vocalize_prepositions
+=item Treex::Block::T2A::CS::VocalizePrepos
 
 Vocalizes prepositions k,s,v,and z where neccessary.
-Only the attribute C<m/form> is changed.
+Only the attribute C<form> is changed.
 
 =back
 

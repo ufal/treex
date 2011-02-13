@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Add_prepositions;
+package Treex::Block::T2A::CS::AddPrepos;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -18,7 +20,7 @@ sub process_bundle {
 
 sub process_node {
     my ($tnode) = @_;
-    my $formeme = $tnode->get_attr('formeme');
+    my $formeme = $tnode->formeme;
 
     return if !defined $formeme || $formeme !~ /^(n|adj):(.+)[+]/;
     my ( $sempos, $prep_forms_string ) = ( $1, $2 );
@@ -48,7 +50,7 @@ sub process_node {
 
     # $anode is now under $last_prep, so attribute is_member
     # moves also to the upper node. (We are in TectoMT, not PDT.)
-    $last_prep->set_attr( 'is_member', $anode->get_attr('is_member') );
+    $last_prep->set_attr( 'is_member', $anode->is_member );
     $anode->set_attr( 'is_member', undef );
 
     # Add all prepositions to a/aux.rf of the tnode
@@ -58,7 +60,7 @@ sub process_node {
     my $leftmost_tchild = $tnode->get_children({preceding_only=>1,first_only=>1});
     if ($formeme =~ /^n/
 	and defined $leftmost_tchild
-	and $leftmost_tchild->get_attr('formeme') =~ /^adv/
+	and $leftmost_tchild->formeme =~ /^adv/
 	and $leftmost_tchild->get_lex_anode) {
 	$leftmost_tchild->get_lex_anode->shift_before_node($prep_nodes[0]);
     }
@@ -70,8 +72,8 @@ sub _new_prep_node {
     my ( $parent, $form ) = @_;
     my $prep_node = $parent->create_child(
         {   attributes => {
-                'm/lemma'      => $form,
-                'm/form'       => $form,
+                'lemma'      => $form,
+                'form'       => $form,
                 'afun'         => 'AuxP',
                 'morphcat/pos' => 'R',
                 }
@@ -85,7 +87,7 @@ sub _new_prep_node {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_prepositions
+=item Treex::Block::T2A::CS::AddPrepos
 
 Add preposition a-nodes (accordingly to the corresponding t-node's formeme).
 

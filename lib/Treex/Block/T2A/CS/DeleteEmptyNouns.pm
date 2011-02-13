@@ -1,13 +1,12 @@
-package TCzechT_to_TCzechA::Delete_empty_nouns;
+package Treex::Block::T2A::CS::DeleteEmptyNouns;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
-use List::MoreUtils qw( any all );
-use List::Util qw(first);
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -18,12 +17,12 @@ sub process_bundle {
         my @children = $cs_tnode->get_children;
 
         if (@children == 1
-                and $children[0]->get_attr('formeme') eq 'adj:attr'
+                and $children[0]->formeme eq 'adj:attr'
                     and $children[0]->precedes($cs_tnode)) {
 
             my $en_tnode = $cs_tnode->get_source_tnode;
 
-            if ($en_tnode->get_attr('t_lemma') eq 'one'
+            if ($en_tnode->t_lemma eq 'one'
                     and my $a_node = $cs_tnode->get_lex_anode) {
 
                 foreach my $a_child ($a_node->get_children) {
@@ -44,7 +43,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Delete_empty_nouns
+=item Treex::Block::T2A::CS::DeleteEmptyNouns
 
 Delete 'empty nouns' emerging during en->cs transfer
 from 'one' in constructions such as 'damaged one'.

@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_coord_punct;
+package Treex::Block::T2A::CS::AddCoordPunct;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use utf8;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -15,8 +16,8 @@ sub process_bundle {
     my ( $my_lemma, $last_lemma ) = ( '', '' );
     foreach my $anode (@anodes) {
         $last_lemma = $my_lemma;
-        $my_lemma   = $anode->get_attr('m/lemma');
-        next if ( $anode->get_attr('afun') || '' ) ne 'Coord';
+        $my_lemma   = $anode->lemma;
+        next if ( $anode->afun || '' ) ne 'Coord';
         my @children = $anode->get_children( { ordered => 1 } ) or next;
 
         # 1. Comma in front of the coordination node
@@ -35,7 +36,7 @@ sub process_bundle {
         # after the $anode (A, B and C, D), it's more probably wrong parsing
         # where C should depend on D.
         my ( undef, @members_before_coord ) =
-            grep { $_->get_attr('is_member') && $_->precedes($anode) } @children;
+            grep { $_->is_member && $_->precedes($anode) } @children;
 
         foreach my $conjunct (@members_before_coord) {
             my $punct = add_comma_node($anode);
@@ -50,8 +51,8 @@ sub add_comma_node {
     my ($parent) = @_;
     return $parent->create_child(
         {   attributes => {
-                'm/form'       => ',',
-                'm/lemma'      => ',',
+                'form'       => ',',
+                'lemma'      => ',',
                 'afun'         => 'AuxX',
                 'morphcat/pos' => 'Z',
                 'clause_number'=> 0,
@@ -64,7 +65,7 @@ sub add_comma_node {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_coord_punct
+=item Treex::Block::T2A::CS::AddCoordPunct
 
 Add a-nodes corresponding to commas in front of 'ale'
 and also commas in multiple coordinations (A, B, C a D).

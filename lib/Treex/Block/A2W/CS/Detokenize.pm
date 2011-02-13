@@ -1,19 +1,20 @@
-package TCzechA_to_TCzechW::Detokenize;
+package Treex::Block::A2W::CS::Detokenize;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use utf8;
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $a_root = $bundle->get_tree('TCzechA');
     my $sentence = "";
     foreach my $a_node ($a_root->get_descendants({ordered=>1})) {
-        $sentence .= $a_node->get_attr('m/form');
+        $sentence .= $a_node->form;
         $sentence .= " " if !$a_node->get_attr('m/no_space_after');
     }
     $bundle->set_attr('czech_target_sentence', $sentence);
@@ -23,7 +24,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechA_to_TCzechW::Detokenize
+=item Treex::Block::A2W::CS::Detokenize
 
 This block detokenizes Czech target analytical tree using the 'no_space_after' attributes and writes down the target sentence.
 

@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_auxverb_compound_passive;
+package Treex::Block::T2A::CS::AddAuxVerbCompoundPassive;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -18,7 +19,7 @@ sub process_bundle {
 
 sub process_tnode {
     my ($t_node) = @_;
-    return if ( $t_node->get_attr('voice') || '' ) ne 'passive';
+    return if ( $t_node->voice || '' ) ne 'passive';
     my $a_node = $t_node->get_lex_anode();
 
     # $a_node is now the passive autosemantic verb,
@@ -30,8 +31,8 @@ sub process_tnode {
     $new_node->shift_after_node($a_node);
 
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'm/lemma',           $a_node->get_attr('m/lemma') );
-    $new_node->set_attr( 'm/form',            $a_node->get_attr('m/form') );
+    $new_node->set_attr( 'lemma',           $a_node->lemma );
+    $new_node->set_attr( 'form',            $a_node->form );
     $new_node->set_attr( 'morphcat/gender',   $a_node->get_attr('morphcat/gender') );
     $new_node->set_attr( 'morphcat/number',   $a_node->get_attr('morphcat/number') );
     $new_node->set_attr( 'morphcat/pos',      'V' );
@@ -40,9 +41,9 @@ sub process_tnode {
     $new_node->set_attr( 'morphcat/voice',    'P' );
 
     # $a_node is now auxiliary "být" and governs the autosemantic verb
-    $a_node->set_attr( 'm/lemma',        'být' );
+    $a_node->set_lemma('být');
     $a_node->set_attr( 'morphcat/voice', 'A' );
-    $a_node->set_attr( 'afun',           'AuxV' );
+    $a_node->set_afun('AuxV');
 
     # Add a link (aux.rf) from the t-layer node to $new_node.
     $t_node->add_aux_anodes($new_node);
@@ -63,7 +64,7 @@ sub process_tnode {
 # Next code was an attemt to have correct a/lex.rf.
 sub process_tnode_AbandonedAlternative {
     my ($t_node) = @_;
-    return if ( $t_node->get_attr('voice') || '' ) ne 'passive';
+    return if ( $t_node->voice || '' ) ne 'passive';
     my $a_node = $t_node->get_lex_anode();
 
     # Create new node $byt_node for auxiliary verb "být".
@@ -82,7 +83,7 @@ sub process_tnode_AbandonedAlternative {
     # Place $byt_node just in front of $a_node and fill all values needed.
     $byt_node->shift_before_node( $a_node, { without_children => 1 } );
     $byt_node->reset_morphcat();
-    $byt_node->set_attr( 'm/lemma',        'být' );
+    $byt_node->set_lemma('být');
     $byt_node->set_attr( 'morphcat/voice', 'A' );
     $byt_node->set_attr( 'morphcat/pos',   'V' );
     foreach my $cat (qw(negation gender number tense)) {
@@ -106,7 +107,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Add_auxverb_compound_passive
+=item Treex::Block::T2A::CS::AddAuxVerbCompoundPassive
 
 Add auxiliary 'být' (to be) a-node in the case of
 compound passive verb forms.

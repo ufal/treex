@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Add_subconjs;
+package Treex::Block::T2A::CS::AddSubconjs;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 my %NUMBERPERSON2ABY = ( # 'endings' for aby/kdyby
     'S1' => 'ch',
@@ -24,7 +26,7 @@ sub process_bundle {
 
 sub process_tnode {
     my ($t_node) = @_;
-    my $formeme = $t_node->get_attr('formeme');
+    my $formeme = $t_node->formeme;
     return if $formeme !~ /^v:(.+)\+/;
 
 
@@ -39,8 +41,8 @@ sub process_tnode {
 
         my $subconj_node = $a_node->get_parent()->create_child(
             {   attributes => {
-                'm/form'       => $subconj_form,
-                'm/lemma'      => $subconj_form,
+                'form'       => $subconj_form,
+                'lemma'      => $subconj_form,
                 'afun'         => 'AuxC',
                 'morphcat/pos' => 'J',
             }
@@ -51,7 +53,7 @@ sub process_tnode {
         if ($subconj_form =~ /^(aby|kdyby)$/) {
             my $key = ($t_node->get_attr('morphcat/number')||"").($t_node->get_attr('morphcat/person')||"");
             if ($NUMBERPERSON2ABY{$key}) {
-                $subconj_node->set_attr('m/form',$subconj_form.$NUMBERPERSON2ABY{$key});
+                $subconj_node->set_attr('form',$subconj_form.$NUMBERPERSON2ABY{$key});
             }
         }
 
@@ -76,7 +78,7 @@ sub process_tnode {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_subconjs
+=item Treex::Block::T2A::CS::AddSubconjs
 
 Add a-nodes corresponding to subordinating conjunctions
 (accordingly to the corresponding t-node's formeme).

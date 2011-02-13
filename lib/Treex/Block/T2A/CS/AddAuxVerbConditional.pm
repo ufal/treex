@@ -1,13 +1,13 @@
-package TCzechT_to_TCzechA::Add_auxverb_conditional;
+package Treex::Block::T2A::CS::AddAuxVerbConditional;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use utf8;
+
+
 
 my %condit_numberperson2form = (
     'S1' => 'bych',
@@ -32,12 +32,12 @@ sub process_tnode {
     # 'conditional conjunctions' "aby", "kdyby" in the formeme.
     my $verbmod = $t_node->get_attr('gram/verbmod') || '';
     return if $verbmod ne 'cdn';
-    return if $t_node->get_attr('formeme') =~ /(aby|kdyby)/;
+    return if $t_node->formeme =~ /(aby|kdyby)/;
 
     my $a_node   = $t_node->get_lex_anode();
     my $new_node = $a_node->create_child(
         {   attributes => {
-                'm/lemma'         => 'být',
+                'lemma'         => 'být',
                 'afun'            => 'AuxV',
                 'morphcat/pos'    => 'V',
                 'morphcat/subpos' =>, 'c',
@@ -48,7 +48,7 @@ sub process_tnode {
     my $person = $a_node->get_attr('morphcat/person')           || '';
     my $number = $a_node->get_attr('morphcat/number')           || '';
     my $form   = $condit_numberperson2form{ $number . $person } || 'by';
-    $new_node->set_attr( 'm/form', $form );
+    $new_node->set_form($form);
     $t_node->add_aux_anodes($new_node);
     $new_node->shift_before_node($a_node);
 
@@ -61,7 +61,7 @@ sub process_tnode {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_auxverb_conditional
+=item Treex::Block::T2A::CS::AddAuxVerbConditional
 
 Add auxiliaries such as by/bys/bychom... expressing conditional verbmod.
 

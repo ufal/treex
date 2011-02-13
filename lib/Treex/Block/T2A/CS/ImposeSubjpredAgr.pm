@@ -1,19 +1,19 @@
-package TCzechT_to_TCzechA::Impose_subjpred_agr;
+package Treex::Block::T2A::CS::ImposeSubjpredAgr;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use List::Util qw(first);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        if ( $t_node->get_attr('formeme') =~ /^v.+(fin|rc)/ ) {
+        if ( $t_node->formeme =~ /^v.+(fin|rc)/ ) {
             process_finite_verb($t_node);
         }
     }
@@ -27,7 +27,7 @@ sub process_finite_verb {
 
     if (not $a_subj) {
         # 'He managed to...' --> 'Podarilo se mu...'
-        if ($t_vfin->get_attr('t_lemma') =~ /^((po)?(dařit)|líbit)/) {
+        if ($t_vfin->t_lemma =~ /^((po)?(dařit)|líbit)/) {
             $a_vfin->set_attr( 'morphcat/gender', 'N' );
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );
@@ -35,7 +35,7 @@ sub process_finite_verb {
         return;
     }
 
-    my $subj_lemma = $a_subj->get_attr('m/lemma');
+    my $subj_lemma = $a_subj->lemma;
 
     # 1. numeral subjects
     # 10 deti prislo ...., 1,1 litru benzinu bylo
@@ -73,7 +73,7 @@ sub process_finite_verb {
 
     # koordinovany subjekt -> sloveso v pluralu
     # "Plurál nebo singulár je/jsou ošidná mluvnická kategorie."
-    if ( $a_subj->get_attr('is_member') && $a_subj->get_parent()->get_attr('m/lemma') ne 'nebo') {
+    if ( $a_subj->is_member && $a_subj->get_parent()->lemma ne 'nebo') {
         $a_vfin->set_attr( 'morphcat/number', 'P' );
     }
 
@@ -83,7 +83,7 @@ sub process_finite_verb {
 sub find_a_subject_of {
     my ($a_vfin) = @_;
     my @children = $a_vfin->get_echildren;
-    my @subjects = grep { ($_->get_attr('afun')||'') eq 'Sb' } @children;
+    my @subjects = grep { ($_->afun||'') eq 'Sb' } @children;
     if (@subjects) {
 	return $subjects[0];
     };
@@ -108,7 +108,7 @@ sub is_neutrum_lemma {
 
 =over
 
-=item TCzechT_to_TCzechA::Impose_subjpred_agr
+=item Treex::Block::T2A::CS::ImposeSubjpredAgr
 
 Copy the values of morphological categories gender, number and person
 according to the subject-predicate agreement, i.e.,

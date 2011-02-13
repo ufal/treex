@@ -1,12 +1,13 @@
-package TCzechT_to_TCzechA::Reverse_number_noun_dependency;
+package Treex::Block::T2A::CS::ReverseNumberNounDependency;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
+
+
 use Lexicon::Czech;
 
-use base qw(TectoMT::Block);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -31,13 +32,13 @@ sub process_t_node {
     my ($t_node) = @_;
 
     # We want to process only some specific numeric lemmas that precede their parents
-    my $t_lemma = $t_node->get_attr('t_lemma');
+    my $t_lemma = $t_node->t_lemma;
     my $t_noun  = $t_node->get_parent();
     return if $t_noun->precedes($t_node) || !should_be_governing($t_lemma);
 
     # The switch takes place only if
     # the case of the governing noun is nominative or accusative.
-    my $noun_formeme = $t_noun->get_attr('formeme');
+    my $noun_formeme = $t_noun->formeme;
     my ( $noun_prep, $noun_case ) = $noun_formeme =~ /^n:(?:(.*)\+)?([14])$/;
     return if !$noun_case;
 
@@ -48,16 +49,16 @@ sub process_t_node {
     $a_noun->set_parent($a_node);
 
     # is_member attribute must stay with the governing node
-    if ( $a_noun->get_attr('is_member') ) {
-        $a_noun->set_attr( 'is_member', 0 );
-        $a_node->set_attr( 'is_member', 1 );
+    if ( $a_noun->is_member ) {
+        $a_noun->set_is_member(0) );
+        $a_node->set_is_member(1) );
     }
 
     # In some cases there can be prepositions in the formeme of $t_node
     # "more than four hundred guests" -> "four hundred(formeme=n:more_than+X) guests"
     # These prepositions must be saved and subsequently merged with the prepositions
     # of the noun "the rest went on more than four hundred guests(formeme=n:on+X)"
-    my $number_formeme = $t_node->get_attr('formeme');
+    my $number_formeme = $t_node->formeme;
     $number_formeme =~ /:(?:(.*)\+)?/;
     my $number_prep = $1;
 
@@ -71,8 +72,8 @@ sub process_t_node {
     # Change formemes:
     # The number ($t_node) gets the formeme of the noun (with merged preps)
     # The noun gets formeme with genitive case.
-    $t_node->set_attr( 'formeme', "n:$preps$noun_case" );
-    $t_noun->set_attr( 'formeme', 'n:2' );
+    $t_node->set_formeme("n:$preps$noun_case");
+    $t_noun->set_formeme('n:2');
     
     # For info/debuging purposes let's update formeme_origin too
     my $noun_f_origin = $t_noun->get_attr('formeme_origin');
@@ -109,7 +110,7 @@ sub is_bigger_than_four_or_fraction {
 
 =over
 
-=item TCzechT_to_TCzechA::Reverse_number_noun_dependency
+=item Treex::Block::T2A::CS::ReverseNumberNounDependency
 
 Reverse the dependency orientation between numeric expressions and counted nouns
 in the case that the former is bigger than four and the latter

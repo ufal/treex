@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_parentheses;
+package Treex::Block::T2A::CS::AddParentheses;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -22,7 +23,7 @@ sub process_tnode {
     my $parenthetized_aroot = $t_node->get_lex_anode();
     return if !$parenthetized_aroot;
     my $clause_number = 0;
-    if ( !$t_node->get_attr('is_clause_head') ) {
+    if ( !$t_node->is_clause_head ) {
         $clause_number = $t_node->get_attr('clause_number');
     }
 
@@ -39,8 +40,8 @@ sub add_parenthesis_node {
     my ( $parent, $lemma, $clause_number ) = @_;
     return $parent->create_child(
         {   attributes => {
-                'm/lemma'       => $lemma,
-                'm/form'        => $lemma,
+                'lemma'       => $lemma,
+                'form'        => $lemma,
                 'afun'          => 'AuxX',
                 'morphcat/pos'  => 'Z',
                 'clause_number' => $clause_number,
@@ -53,7 +54,7 @@ sub add_parenthesis_node {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_parentheses
+=item Treex::Block::T2A::CS::AddParentheses
 
 Add a pair of parenthesis a-nodes, accordingly
 to t-node's C<is_parenthesis> attribute.

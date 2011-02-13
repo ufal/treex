@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Mark_subject;
+package Treex::Block::T2A::CS::MarkSubject;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -17,18 +18,18 @@ sub process_bundle {
     # avoiding nominatives in prepositional groups (such as 'n:jako+1')
     # avoiding temporal modifiers (today, this time.TWHEN)
     foreach my $tnode (@tnodes) {
-	if (($tnode->get_attr('formeme') =~ /\+1/ or $tnode->get_attr('functor') =~ /^T/)
+	if (($tnode->formeme =~ /\+1/ or $tnode->functor =~ /^T/)
          and my $anode = $tnode->get_lex_anode()) {
 	    $to_avoid{$anode} = 1;
 	}
     }
 
-    foreach my $t_vfin ( grep  {$_->get_attr('formeme') =~ /^v.+(fin|rc)/} @tnodes ) {
+    foreach my $t_vfin ( grep  {$_->formeme =~ /^v.+(fin|rc)/} @tnodes ) {
 
 	my $a_vfin = $t_vfin->get_lex_anode;
 	if (my $a_subj = _find_subject($a_vfin, \%to_avoid)) {
-	    $a_subj->set_attr('afun','Sb');
-#	    print $a_subj->get_attr('id')."\t".$a_subj->get_attr('m/lemma')."\n";
+	    $a_subj->set_afun('Sb');
+#	    print $a_subj->get_attr('id')."\t".$a_subj->lemma."\n";
 	}
     }
 }
@@ -52,8 +53,8 @@ sub _find_subject {
     # However in Czech, "mechanismus" is the subject because of the verb agreement.
     # Let's try heuristics: Czech subject is the first nominative
     # other than lemma "tento".
-    if ( $a_vfin->get_attr('m/lemma') eq 'být' ) {
-	my ($copula_subj) = grep { $_->get_attr('m/lemma') !~ /^(tento|ten)$/ } @nominatives;
+    if ( $a_vfin->lemma eq 'být' ) {
+	my ($copula_subj) = grep { $_->lemma !~ /^(tento|ten)$/ } @nominatives;
 	return $copula_subj if $copula_subj;
     }
     return $nominatives[0];
@@ -64,7 +65,7 @@ sub _find_subject {
 
 =over
 
-=item TCzechT_to_TCzechA::Mark_subject
+=item Treex::Block::T2A::CS::MarkSubject
 
 Subjects of finite clauses are distinguished by
 filling the afun attribute. Prepositional nominatives are avoided.

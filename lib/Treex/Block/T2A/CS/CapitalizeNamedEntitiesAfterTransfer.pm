@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Capitalize_named_entities_after_transfer;
+package Treex::Block::T2A::CS::CapitalizeNamedEntitiesAfterTransfer;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 # One-word named entities should have their t-lemma capitalized,
 # so also the form should be already capitalized.
@@ -47,11 +48,11 @@ sub process_bundle {
     my $a_root = $bundle->get_tree('TCzechA');
     A_NODE:
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $form, $pos, $lemma ) = $a_node->get_attrs(qw(m/form morphcat/pos m/lemma));
+        my ( $form, $pos, $lemma ) = $a_node->get_attrs(qw(form morphcat/pos lemma));
 
         #HACK: rus je druh švába
         if ( $lemma eq 'rus' ) {
-            $a_node->set_attr( 'm/form', ucfirst $form );
+            $a_node->set_attr( 'form', ucfirst $form );
             next A_NODE;
         }
 
@@ -71,7 +72,7 @@ sub process_bundle {
         if ( $n_node->get_attr('normalized_name') =~ /$MAC_RE\p{IsUpper}/ ) {
             $form =~ s/^($MAC_RE)(.)/$1.uc $2/e;
         }
-        $a_node->set_attr( 'm/form', $form );
+        $a_node->set_form($form);
 
         # For all NE (except persons) capitalize only the first word
         if ( $n_node->get_attr('ne_type') =~ /^[^pP]/ ) {
@@ -87,7 +88,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Capitalize_named_entities_after_transfer
+=item Treex::Block::T2A::CS::CapitalizeNamedEntitiesAfterTransfer
 
 Capitalize first word in named entities of type C<organization> and C<location>,
 and all words with type C<person>.

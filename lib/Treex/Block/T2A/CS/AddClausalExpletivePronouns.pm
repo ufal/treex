@@ -1,11 +1,12 @@
-package TCzechT_to_TCzechA::Add_clausal_expletive_pronouns;
+package Treex::Block::T2A::CS::AddClausalExpletivePronouns;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
-use utf8;
+
+
 
 my %verb2expletive;
 
@@ -13,15 +14,15 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $a_root = $bundle->get_tree('TCzechA');
 
-    foreach my $subconj_ze ( grep {($_->get_attr('m/form')||'') eq 'že'} $a_root->get_descendants() ) {
+    foreach my $subconj_ze ( grep {($_->form||'') eq 'že'} $a_root->get_descendants() ) {
         my $parent = $subconj_ze->get_parent;
-        my $expletive = $verb2expletive{$parent->get_attr('m/lemma')};
+        my $expletive = $verb2expletive{$parent->lemma};
         if ($expletive and $parent->precedes($subconj_ze)) {
 
             foreach my $form (split /_/,$expletive) {
                 my $new_node = $parent->create_child({attributes=>{
-                    'm/lemma' => $form,
-                    'm/form'  => $form,
+                    'lemma' => $form,
+                    'form'  => $form,
                     'morphcat/pos' => '!',
                     'clause_number' => 0,
                 }});
@@ -73,7 +74,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechT_to_TCzechA::Add_clausal_expletive_pronouns
+=item Treex::Block::T2A::CS::AddClausalExpletivePronouns
 
 Adding expletive pronouns in front of ze-clauses,
 if required by valency of the verb on which the clause

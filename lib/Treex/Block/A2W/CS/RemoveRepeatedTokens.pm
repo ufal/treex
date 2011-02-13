@@ -1,10 +1,12 @@
-package TCzechA_to_TCzechW::Remove_repeated_tokens;
+package Treex::Block::A2W::CS::RemoveRepeatedTokens;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use strict;
-use warnings;
-use utf8;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -40,7 +42,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechA_to_TCzechW::Remove_repeated_tokens
+=item Treex::Block::A2W::CS::RemoveRepeatedTokens
 
 Remove one of two identical neighbouring tokens,
 e.g. 'se se' because of haplology ('Snazil se se tomu vyhnout')

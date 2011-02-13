@@ -1,15 +1,13 @@
-package TCzechT_to_TCzechA::Generate_wordforms;
+package Treex::Block::T2A::CS::GenerateWordforms;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use utf8;
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
 
-use Readonly;
-use List::Util qw(first);
-use List::MoreUtils qw( any all );
+
+
 use Lexicon::Czech;
 use File::Spec;
 
@@ -48,10 +46,10 @@ sub process_bundle {
 
     foreach my $a_node ( $a_root->get_descendants() ) {
         if ( _should_generate($a_node) ) {
-            $a_node->set_attr( 'm/form', _generate_word_form($a_node) );
+            $a_node->set_attr( 'form', _generate_word_form($a_node) );
         }
-        elsif ( !defined $a_node->get_attr('m/form') ) {
-            $a_node->set_attr( 'm/form', $a_node->get_attr('m/lemma') );
+        elsif ( !defined $a_node->form ) {
+            $a_node->set_attr( 'form', $a_node->lemma );
         }
     }
 
@@ -64,13 +62,13 @@ sub _should_generate {
         defined $a_node->get_attr('morphcat/pos')
             and $a_node->get_attr('morphcat/pos') !~ /[ZJR!]/    # neohybat neohebne a ty, co uz ohnute jsou (znak !)
             and $a_node->get_attr('morphcat/subpos') ne 'c'      # tvary kondicionalnich AuxV uz jsou urcene
-            and $a_node->get_attr('m/lemma') =~ /^(\w|#Neg)/     # mimo #PersPron a cislicove cislovky
+            and $a_node->lemma =~ /^(\w|#Neg)/     # mimo #PersPron a cislicove cislovky
     );
 }
 
 sub _generate_word_form {
     my $a_node = shift;
-    my $lemma  = $a_node->get_attr('m/lemma');
+    my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
     return $lemma if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
@@ -79,7 +77,7 @@ sub _generate_word_form {
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
     return 'sta' if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
-                my $number = Lexicon::Czech::number_for( $_->get_attr('m/lemma') );
+                my $number = Lexicon::Czech::number_for( $_->lemma );
                 defined $number && $number > 2;
         }
         $a_node->get_children();
@@ -204,7 +202,7 @@ sub _form_after_tag_relaxing {
 sub _get_tag_regex {
     my $a_node = shift;
     my %morphcat;
-    my ( $lemma, $id ) = $a_node->get_attrs( 'm/lemma', 'id' );
+    my ( $lemma, $id ) = $a_node->get_attrs( 'lemma', 'id' );
 
     # underspecified values will be allowed by regular expressions
     foreach my $category (@CATEGORIES) {
@@ -268,10 +266,10 @@ sub _get_tag_regex {
     $morphcat{grade}    =~ s/(\d)/\[\-${1}\]/;    # a nektera nejsou stupnovatelna
 
     # Hack for verb/adjective mess, e.g.
-    # SEnglishA m/form=organized     m/tag=VBN
+    # SEnglishA form=organized     tag=VBN
     # SEnglishT t_lemma=organize     sempos=v formeme=v:attr   is_passive=undef
     # TCzechT   t_lemma=organizovaný sempos=v formeme=adj:attr is_passive=undef
-    # TCzechA   m/lemma=organizovaný morphcat/voice=A
+    # TCzechA   lemma=organizovaný morphcat/voice=A
     # Should there be sempos=adj ?
     $morphcat{voice} =~ s/A/\[A-\]/;
 
@@ -287,7 +285,7 @@ __END__
 
 =over
 
-=item TCzechT_to_TCzechA::Generate_wordforms
+=item Treex::Block::T2A::CS::GenerateWordforms
 
 This module generates wordforms according to the given lemma and constraints
 on morphological categories in each TCzechA node.
@@ -297,7 +295,7 @@ with the (underspecified) tag then the most frequent form is choosen.
 Forms and their frequencies are taken from C<LanguageModel::MorphoLM>.
 C<CzechMorpho> interface to Jan Hajic's morphology is now used only as a fallback
 when there are no compatible forms in C<LanguageModel::MorphoLM>.
-The resulting values are stored in TCzechA nodes' attribute m/form.
+The resulting values are stored in TCzechA nodes' attribute form.
 
 =back
 

@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Impose_rel_pron_agr;
+package Treex::Block::T2A::CS::ImposeRelPronAgr;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
 
@@ -30,7 +32,7 @@ sub process_document {
 
             my $a_antec = $t_antec->get_lex_anode;
 
-            if ( $t_relpron->get_attr('formeme') =~ /poss|attr/ ) {    # possessive relative pronouns
+            if ( $t_relpron->formeme =~ /poss|attr/ ) {    # possessive relative pronouns
                 $a_relpron->set_attr( 'morphcat/possgender', $a_antec->get_attr('morphcat/gender') );
                 $a_relpron->set_attr( 'morphcat/possnumber', $a_antec->get_attr('morphcat/number') );
             }
@@ -46,7 +48,7 @@ sub process_document {
 
 =over
 
-=item TCzechT_to_TCzechA::Impose_rel_pron_agr
+=item Treex::Block::T2A::CS::ImposeRelPronAgr
 
 Copy the values of gender and number of relative pronouns
 from their antecedents (in the sense of grammatical coreference).

@@ -1,10 +1,12 @@
-package TCzechA_to_TCzechW::Ascii_quotes;
+package Treex::Block::A2W::CS::AsciiQuotes;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use strict;
-use warnings;
-use utf8;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -18,7 +20,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechA_to_TCzechW::Ascii_quotes
+=item Treex::Block::A2W::CS::AsciiQuotes
 
 Correct Czech quotation marks („ and “) are changed to incorrect ASCII (").
 This hack is usefull for BLEU comparisons

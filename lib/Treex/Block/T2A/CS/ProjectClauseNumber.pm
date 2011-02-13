@@ -1,9 +1,12 @@
-package TCzechT_to_TCzechA::Project_clause_number;
+package Treex::Block::T2A::CS::ProjectClauseNumber;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -23,7 +26,7 @@ sub process_bundle {
 
 =over
 
-=item TCzechT_to_TCzechA::Project_clause_number
+=item Treex::Block::T2A::CS::ProjectClauseNumber
 
 Number coindexing of finite verb clauses is projected from t-tree to a-tree.
 

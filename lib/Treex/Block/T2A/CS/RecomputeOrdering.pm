@@ -1,10 +1,12 @@
-package TCzechT_to_TCzechA::Recompute_ordering;
+package Treex::Block::T2A::CS::RecomputeOrdering;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has '+language' => ( default => 'cs' );
 
-use base qw(TectoMT::Block);
+
+
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -14,7 +16,7 @@ sub process_document {
         my $ord;
         foreach my $t_node ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $t_aux_root->get_descendants ) {
             $ord++;
-            $t_node->set_attr( 'ord', $ord );
+            $t_node->set_ord($ord);
         }
     }
 }
@@ -23,7 +25,7 @@ sub process_document {
 
 =over
 
-=item  TCzechT_to_TCzechA::Recompute_ordering
+=item Treex::Block::T2A::CS::RecomputeOrdering
 
 The C<ord> attribute is to be recomputed so that it does not contain any holes
 or fractional numbers.
