@@ -42,6 +42,18 @@ has is_one_doc_per_file => (
 
 has _file_numbers => ( is => 'rw', default => sub { {} } );
 
+
+# attrs for distributed processing
+has jobs => (
+	     is => 'rw',
+#	     isa => 'Int',
+	    );
+has modulo => (
+	       is => 'rw',
+#	       isa => 'Int',
+	      );
+
+
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
@@ -56,8 +68,24 @@ sub current_filename {
 
 sub next_filename {
     my ($self) = @_;
-    $self->_set_file_number( $self->file_number + 1 );
-    return $self->current_filename();
+
+    # local sequential processing
+    if (not defined $self->modulo) {
+	$self->_set_file_number( $self->file_number + 1 );
+	return $self->current_filename();
+    }
+
+    # one of jobs in parallelized processing
+    else {
+	my $filename;
+	while (1) {
+	    $self->_set_file_number( $self->file_number + 1 );
+	    my $filename = $self->current_filename();	    
+	    if ($self->file_number % $self->jobs == $self->modulo) {
+		return $filename;
+	    }
+	}
+    }
 }
 
 sub new_document {

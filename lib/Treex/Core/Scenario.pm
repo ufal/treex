@@ -28,6 +28,17 @@ has _global_params => (
     },
 );
 
+# attrs for parallelized processing (forwarder from a runner to its reader block)
+has jobs => (
+	     is => 'rw',
+#	     isa => 'Int',
+	    );
+has modulo => (
+	       is => 'rw',
+#	       isa => 'Int',
+	      );
+
+
 use Treex::Core::Log;
 use File::Basename;
 

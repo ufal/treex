@@ -60,10 +60,10 @@ has 'scenario'  => (
 has 'parallel' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'p',
-    is            => 'ro',
+    is            => 'rw',
     isa => 'Bool',
     default => 0,
-    documentation => 'parallelize the task on SGE cluster (using qsub)',
+    documentation => 'Parallelize the task on SGE cluster (using qsub).',
 );
 
 
@@ -73,14 +73,21 @@ has 'jobs' => (
     is            => 'ro',
     isa => 'Int',
     default =>  10 ,
-    documentation => 'number of jobs for parallelization, default 10',
+    documentation => 'Number of jobs for parallelization, default 10. Requires -p.',
+);
+
+has 'modulo' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa => 'Int',
+    documentation => 'Not to be used manually. If number of jobs is set to J and modulo set to M, only I-th files fulfilling I mod J == M are processed.',
 );
 
 has 'qsub' => (
     traits        => ['Getopt'],
     is            => 'ro',
     isa => 'String',
-    documentation => 'additional parameters passed to qsub',
+    documentation => 'Additional parameters passed to qsub. Requires -p.',
 );
 
 
@@ -105,10 +112,38 @@ sub BUILD {
 	log_fatal "At most one way to specify input files can be used. You combined ".(join " and ",@file_sources).".";
 
     }
+
+    # 'require' can't be changed to 'imply', since the number of jobs has a default value
+    if (($self->qsub or $self->modulo) and not $self->parallel) {
+	log_fatal "Options --qsub and --modulo require --parallel";
+    }
 }
 
 
 sub execute {
+    my ($self) = @_;
+
+    if ($self->parallel and not defined $self->modulo) {
+	log_info "Parallelized execution. This process is the head coordinating ".$self->jobs." server processes.";
+	$self->_execute_on_cluster();
+    }
+
+    # non-parallelized execution, or one of distributed processes
+    else {
+	if ($self->parallel) {
+	    log_info "Parallelized execution. This process is one out of ".$self->jobs." server processes.";
+	}
+	else {
+	    log_info "Local (single-process) execution.";
+	}
+	$self->_execute_locally();
+    }
+
+}
+
+
+
+sub _execute_locally {
     my ($self) = @_;
     my $scen_str = join ' ', @{ $self->extra_argv };
 
@@ -129,12 +164,12 @@ sub execute {
     }
 
     if ( $self->filenames ) {
-	log_info "Block Read added at the beginning of the scenario.";
+	log_info "Block Read added to the beginning of the scenario.";
         $scen_str = 'Read from=' . join( ',', @{ $self->filenames } ) . " $scen_str";
     }
 
     if ( $self->save ) {
-	log_info "Block Write::Treex added at the end of the scenario."; 
+	log_info "Block Write::Treex added to the end of the scenario."; 
         $scen_str .= ' Write::Treex';
     }
 
@@ -142,10 +177,18 @@ sub execute {
         $scen_str = 'SetGlobal language=' . $self->lang . " $scen_str";
     }
 
-    print "QQQ new scen str: $scen_str\n";
+    my $scenario = Treex::Core::Scenario->new( { from_string => $scen_str,
+						 jobs => $self->jobs,
+						 modulo => $self->modulo, } );
 
-    $self->set_scenario( Treex::Core::Scenario->new( { from_string => $scen_str } ) );
+
+    $self->set_scenario( $scenario );
     $self->scenario->run();
+}
+
+sub _execute_on_cluster {
+    my ($self) = @_;
+
 }
 
 1;
