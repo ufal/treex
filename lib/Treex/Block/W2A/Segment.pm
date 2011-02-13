@@ -30,8 +30,8 @@ has use_lines => (
 #   * period-ending items that never indicate sentence breaks
 #   * titles before names of persons etc.
 #
-# We cannot write
-# sub get_unbreakers { qr{\p{Upper}} }
+# Note, that we cannot write
+# sub get_unbreakers { return qr{...}; }
 # because we want the regex to be compiled just once, not on every method call.
 my $UNBREAKERS = qr{\p{Upper}};
 
@@ -53,8 +53,8 @@ override 'segment_text' => sub {
     my ( $self, $text ) = @_;
 
     # Pre-processing
-    $text =~ s/\b($UNBREAKERS)\./$1<<<DOT>>>/g;
-    ## TODO $text =~ s/\b($self->unbreakers)\./$1<<<DOT>>>/g;
+    my $unbreakers = $self->unbreakers;
+    $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
        
     # two newlines usually separate paragraphs
     if ($self->use_paragraphs){
@@ -69,11 +69,12 @@ override 'segment_text' => sub {
     $text =~ s/\s+/ /gsm;
 
     # This is the main regex
+    my ($openings, $closings) = ($self->openings, $self->closings);
     $text =~ s{
         ([.?!])            # $1 = end-sentence punctuation
-        (["”»)]?)          # $2 = optional closing quote/bracket # TODO $self->closings
+        ([$closings]?)          # $2 = optional closing quote/bracket
         \s                 #      space
-        (["“«(]?\p{Upper}) # $3 = uppercase letter (optionally preceded by opening quote) # TODO $self->openings
+        ([$openings]?\p{Upper}) # $3 = uppercase letter (optionally preceded by opening quote)
     }{$1$2\n$3}gsxm;
 
     # Post-processing
@@ -100,6 +101,8 @@ but it can be used as an ancestor for language-specific segmentation
 by overriding the method C<segment_text>
 (using C<around> see L<Moose::Manual::MethodModifiers>)
 or just by overriding methods C<unbrekers>, C<openings> and C<closings>.
+
+See L<Treex::Block::W2A::EN::Segment>
 
 =back
 
