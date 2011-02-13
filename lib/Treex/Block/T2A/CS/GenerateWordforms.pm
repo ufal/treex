@@ -1,0 +1,308 @@
+package TCzechT_to_TCzechA::Generate_wordforms;
+
+use utf8;
+use 5.008;
+use strict;
+use warnings;
+
+use base qw(TectoMT::Block);
+
+use Readonly;
+use List::Util qw(first);
+use List::MoreUtils qw( any all );
+use Lexicon::Czech;
+use File::Spec;
+
+use Report;
+
+#Report::set_error_level('DEBUG');
+
+# supporting auto-download of required data-files
+sub get_required_share_files {
+    my ($self) = @_;
+    return ( File::Spec->catfile( 'data', 'models', 'language', 'cs', 'syn.pls.gz' ) );
+}
+
+#use Smart::Comments;
+
+use Lexicon::Generation::CS;
+use LanguageModel::MorphoLM;
+
+my ($morphoLM, $generator);
+
+sub BUILD{
+    $morphoLM = LanguageModel::MorphoLM->new();
+    $generator = Lexicon::Generation::CS->new();
+}
+
+Readonly my $DEBUG => 0;
+
+# TODO (MP): $DEBUG => 1; a zjistit proc je tolik slov nepokrytych slovnikem: vetsinou jsou spatne zadany tagy
+
+Readonly my @CATEGORIES => qw(pos subpos gender number case possgender possnumber
+    person tense grade negation voice reserve1 reserve2);
+
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
+    my $a_root = $bundle->get_tree('TCzechA');
+
+    foreach my $a_node ( $a_root->get_descendants() ) {
+        if ( _should_generate($a_node) ) {
+            $a_node->set_attr( 'm/form', _generate_word_form($a_node) );
+        }
+        elsif ( !defined $a_node->get_attr('m/form') ) {
+            $a_node->set_attr( 'm/form', $a_node->get_attr('m/lemma') );
+        }
+    }
+
+    return;
+}
+
+sub _should_generate {
+    my $a_node = shift;
+    return (
+        defined $a_node->get_attr('morphcat/pos')
+            and $a_node->get_attr('morphcat/pos') !~ /[ZJR!]/    # neohybat neohebne a ty, co uz ohnute jsou (znak !)
+            and $a_node->get_attr('morphcat/subpos') ne 'c'      # tvary kondicionalnich AuxV uz jsou urcene
+            and $a_node->get_attr('m/lemma') =~ /^(\w|#Neg)/     # mimo #PersPron a cislicove cislovky
+    );
+}
+
+sub _generate_word_form {
+    my $a_node = shift;
+    my $lemma  = $a_node->get_attr('m/lemma');
+
+    # digits, abbreviations etc. are not attempted to be inflected
+    return $lemma if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
+    return 'ne' if $lemma eq '#Neg';
+
+    # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
+    return 'sta' if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
+            && any {
+                my $number = Lexicon::Czech::number_for( $_->get_attr('m/lemma') );
+                defined $number && $number > 2;
+        }
+        $a_node->get_children();
+
+    my ( $tag_regex, $partial_regexps_ref ) = _get_tag_regex($a_node);
+
+    # resolving spurious nouns-adjectives like 'nadřízený' - try lemma 'nadřízená'
+    if ($a_node->get_attr('morphcat/pos')       eq 'N'
+        && $a_node->get_attr('morphcat/gender') eq 'F'
+        && $lemma =~ /ý$/
+        )
+    {
+        $lemma =~ s/ý$/á/;
+    }
+
+    my $form = $morphoLM->best_form_of_lemma( $lemma, $tag_regex );
+    return $form if $form;
+
+    # try suffix only
+    if ( $lemma =~ /^(\P{IsAlpha}+)(\p{IsAlpha}+)$/ ) {
+        my $prefix       = $1;
+        my $lemma_suffix = $2;
+        my $form_suffix  = $morphoLM->best_form_of_lemma( $lemma_suffix, $tag_regex );
+        return $prefix . $form_suffix if $form_suffix;
+    }
+
+    # If there are no compatible forms in LM, try Hajic's morphology generator
+    my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag_regex" } );
+    if ( $DEBUG && $form_info ) {
+        Report::warn(
+            "MORF: $lemma\t$tag_regex\t" . $form_info->get_form()
+                . "\ttmttred " . $a_node->get_fposition() . "&"
+        );
+    }
+    return $form_info->get_form() if $form_info;
+
+    # (HACK) try capitalized lemma
+    my $capitalized_lemma = ucfirst $lemma;
+    $form = $morphoLM->best_form_of_lemma( $capitalized_lemma, $tag_regex );
+    return $form if $form;
+
+    ($form_info) = $generator->forms_of_lemma( $capitalized_lemma, { tag_regex => "^$tag_regex" } );
+    return $form_info->get_form() if $form_info;
+
+    $form = _form_after_tag_relaxing( $lemma, $tag_regex, $partial_regexps_ref, $a_node );
+    return $form if $form;
+
+    # If there are no compatible forms from morphology analysis, return the lemma at least
+    if ($DEBUG) {
+        Report::warn(
+            "LEMM: $lemma\t$tag_regex\t$lemma\t"
+                . "\ttmttred " . $a_node->get_fposition() . "&\n"
+        );
+    }
+
+    $lemma =~ s/(..t)-\d$/$1/; # removing suffices distinguishing homonymous lemmas (stat-2)
+    return $lemma;
+}
+
+# relax regexp requirements: avoid pieces that cannot be satisfied for the given lemma anyway
+
+sub _form_after_tag_relaxing {
+    my ( $lemma, $tag_regex, $partial_regexps_ref, $a_node ) = @_;
+
+    #    print "Trying relaxing\t tag = $tag_regex \t lemma = $lemma\n";
+    #    print "Sentence: ".$a_node->get_bundle->get_attr('czech_target_sentence')."\n";
+
+    my @all_possible_tags = grep {/./} map { $_->get_tag() } $generator->forms_of_lemma($lemma);
+
+    #    print "Possible tags: ".join(" ",@all_possible_tags)."\n";
+
+    if (@all_possible_tags) {
+
+        my %allowed_value;
+        foreach my $tag (@all_possible_tags) {
+            if ( $tag =~ /$tag_regex/ ) {
+
+                #print "QQQ: but $tag matches !\n";
+            }
+            my @values = split //, $tag;
+            foreach my $category (@CATEGORIES) {
+                $allowed_value{$category}{ ( shift @values ) || "" } = 1;    #!!! divny, to by nemelo byt potreba
+            }
+        }
+
+        my @relaxed_cats;
+
+        CAT:
+        foreach my $category (@CATEGORIES) {
+            my $partial_regexp = $partial_regexps_ref->{$category};
+            foreach my $value ( keys %{ $allowed_value{$category} } ) {
+                if ( $value =~ $partial_regexp ) {
+                    next CAT;
+                }
+            }
+            $partial_regexps_ref->{$category} = ".";
+            push @relaxed_cats, $category;
+        }
+
+        if (@relaxed_cats) {
+            my $old_regex = $tag_regex;
+            $tag_regex = ( join q{}, map { $partial_regexps_ref->{$_} } @CATEGORIES ) . "[-1]";
+            my $form = $morphoLM->best_form_of_lemma( $lemma, $tag_regex );
+            if ($form) {
+                if ($DEBUG) {
+                    print "lemma=$lemma\t"
+                        . "relaxed=" . join( "+", @relaxed_cats ) . "\t"
+                        . "old_mask=$old_regex\t"
+                        . "new_mask=$tag_regex\t"
+                        . "new_form=$form\t"
+                        . "en_sent=" . $a_node->get_bundle->get_attr('english_source_sentence') . "\t"
+                        . "cs_sent=" . $a_node->get_bundle->get_attr('czech_target_sentence') . "\n";
+                }
+                return $form;
+            }
+        }
+    }
+
+    return;
+}
+
+sub _get_tag_regex {
+    my $a_node = shift;
+    my %morphcat;
+    my ( $lemma, $id ) = $a_node->get_attrs( 'm/lemma', 'id' );
+
+    # underspecified values will be allowed by regular expressions
+    foreach my $category (@CATEGORIES) {
+        $morphcat{$category} = $a_node->get_attr("morphcat/$category");
+        if ( !defined $morphcat{$category} ) {
+            Report::warn("Morphcat '$category' undef with lemma=$lemma id=$id");    #if $DEBUG;
+            $morphcat{$category} = '.';
+        }
+    }
+
+    # jinak je ta podspecifikace moc divoka a povoli 'byla' misto 'byly'
+    if ($morphcat{subpos} =~ /[sp]/
+        and $morphcat{gender} eq 'F'
+        and $morphcat{number} eq 'P'
+        )
+    {
+        $morphcat{gender} = 'T';
+    }
+    else {
+        if ( $morphcat{gender} eq 'N' ) {
+            if ( $morphcat{number} eq 'P' ) {
+                $morphcat{gender} =~ s/N/\[NHQXZ\-\]/;    # Q navic, jen pro neutrum *pluralu*, jinak podspecifikace dovoli nesmysly
+            }
+            else {
+                $morphcat{gender} =~ s/N/\[NHXZ\-\]/;
+            }
+        }
+        elsif ( $morphcat{gender} eq 'F' ) {
+            if ( $morphcat{number} eq 'S' ) {
+                $morphcat{gender} =~ s/F/\[FHQTX\-\]/;    # Q navic jen pro femininum *singularu*, pomlcka navic kvuli "odsuzuje"
+            }
+            else {
+                $morphcat{gender} =~ s/F/\[FHTX\-\]/;     # pomlcka navic kvuli "odsuzuje"
+            }
+        }
+        $morphcat{gender} =~ s/I/\[ITXYZ\-\]/;
+        $morphcat{gender} =~ s/M/\[MXYZ\-\]/;
+
+        $morphcat{number} =~ s/P/\[DPWX\-\]/;             # D - dual?
+        $morphcat{number} =~ s/S/\[SWX\-\]/;
+    }
+
+    $morphcat{subpos} =~ s/A/\[AU\]/;
+
+    $morphcat{case} =~ s/(\d)/\[${1}X\]/;
+
+    $morphcat{possgender} =~ s/F/\[FX\]/;
+    $morphcat{possgender} =~ s/M/\[MXZ\]/;
+    $morphcat{possgender} =~ s/I/\[IXZ\]/;
+    $morphcat{possgender} =~ s/N/\[NXZ\]/;
+
+    $morphcat{possnumber} =~ s/([PS])/\[${1}X\]/;
+
+    $morphcat{person} =~ s/(\d)/\[${1}X\]/;
+
+    $morphcat{tense} =~ s/F/\[FX\]/;
+    $morphcat{tense} =~ s/P/\[PHX\]/;
+    $morphcat{tense} =~ s/R/\[RHX\]/;
+
+    $morphcat{negation} =~ s/A/\[\-A\]/;          # nektera prislovce nejsou negovatelna
+    $morphcat{grade}    =~ s/(\d)/\[\-${1}\]/;    # a nektera nejsou stupnovatelna
+
+    # Hack for verb/adjective mess, e.g.
+    # SEnglishA m/form=organized     m/tag=VBN
+    # SEnglishT t_lemma=organize     sempos=v formeme=v:attr   is_passive=undef
+    # TCzechT   t_lemma=organizovaný sempos=v formeme=adj:attr is_passive=undef
+    # TCzechA   m/lemma=organizovaný morphcat/voice=A
+    # Should there be sempos=adj ?
+    $morphcat{voice} =~ s/A/\[A-\]/;
+
+    my $tag_regex = join q{}, map { $morphcat{$_} } @CATEGORIES;
+
+    # na konci nema byt cislo (nespisov. nebo arch).
+    return ( $tag_regex . '[-1]', \%morphcat );
+}
+
+1;
+
+__END__
+
+=over
+
+=item TCzechT_to_TCzechA::Generate_wordforms
+
+This module generates wordforms according to the given lemma and constraints
+on morphological categories in each TCzechA node.
+Quite usually there is an underspecified tag, for example we do not know the gender
+of a verb. If there are more czech forms of the given lemma which are compatible
+with the (underspecified) tag then the most frequent form is choosen.
+Forms and their frequencies are taken from C<LanguageModel::MorphoLM>.
+C<CzechMorpho> interface to Jan Hajic's morphology is now used only as a fallback
+when there are no compatible forms in C<LanguageModel::MorphoLM>.
+The resulting values are stored in TCzechA nodes' attribute m/form.
+
+=back
+
+=cut
+
+# Copyright 2008-2010 Zdenek Zabokrtsky, Martin Popel
+
+# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

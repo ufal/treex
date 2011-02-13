@@ -1,18 +1,12 @@
-package SxxT_to_TyyT::Clone_ttree;
+package Treex::Block::T2T::CopyTtree;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-
-use base qw(TectoMT::Block);
-
-sub BUILD {
-    my ($self) = @_;
-    if (not $self->get_parameter('SOURCE_LANGUAGE')
-            or not $self->get_parameter('TARGET_LANGUAGE')) {
-        Report::fatal "Parameter LANGUAGE must be specified!";
-    }
-}
+has '+language' => ( required => 1 );
+has '+separator' => ( required => 1 );
+has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
+has 'source_separator' => ( is => 'rw', isa => 'Str', default => '' );
 
 sub process_bundle {
 
@@ -59,7 +53,7 @@ sub process_bundle {
 
 =over
 
-=item SxxT_to_TyyT::Clone_ttree
+=item Treex::Block::T2T::CopyTtree
 
 Within each bundle, a copy of the source-language t-tree is created and stored as target-language t-tree.
 All the node attributes (except identifier and co-reference attributes, which have to be `translated')

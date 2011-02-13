@@ -1,0 +1,98 @@
+package TCzechT_to_TCzechA::Drop_subj_pers_prons;
+
+use utf8;
+use 5.008;
+use strict;
+use warnings;
+use List::MoreUtils qw( any all );
+use List::Util qw(first);
+
+use base qw(TectoMT::Block);
+
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
+    my $t_root = $bundle->get_tree('TCzechT');
+
+    foreach my $t_node ( $t_root->get_descendants() ) {
+        process_node($t_node);
+    }
+    return;
+}
+
+sub process_node {
+    my ($t_node) = @_;
+
+    # We want to drop only subjects that are not coordinated ("he or she")
+    return if $t_node->get_attr('formeme') !~ /:1$/;
+    return if $t_node->get_attr('is_member');
+
+    # As a special case we want to drop word "to" (lemma=ten)
+    # when it is a subject of some verb other than "být|znamenat".
+    my $parent = $t_node->get_parent();
+    return if $parent->is_root();
+    my $p_lemma = $parent->get_attr('t_lemma');
+    my $lemma   = $t_node->get_attr('t_lemma');
+    if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ ) {
+        drop($t_node);
+    }
+
+    # Now we are interested only in personal pronouns
+    return if $lemma ne '#PersPron';
+
+    # In some copula constructions there is needed word "to" instead of perspron
+    # "He was a man who..." = "Byl to muž, který..."
+    if ( $p_lemma eq 'být' ) {
+        my $real_subj = first { $_->get_attr('formeme') =~ /:1$/ } $parent->get_children( { following_only => 1 } );
+        if ($real_subj && any{$_->get_attr('formeme') eq 'v:rc'} $real_subj->get_children()) {
+            my $a_node = $t_node->get_lex_anode();
+            $a_node->set_attr( 'm/lemma',      'ten' );
+            $a_node->set_attr( 'morphcat/gender', 'N' );
+            $a_node->set_attr( 'morphcat/subpos', 'D' );
+            $a_node->set_attr( 'morphcat/person', '-' );
+            $a_node->shift_after_node( $a_node->get_parent() );
+            return;
+        }
+    }
+
+    # Oherwise drop the perspron
+    drop($t_node);
+    return;
+}
+
+sub drop {
+    my ($t_node) = @_;
+    my $a_node = $t_node->get_lex_anode();
+    if (not defined $a_node) {
+        Report::warn "Node to be pro-dropped should have non-empty a/lex.rf";
+        return;
+    }
+
+    $t_node->set_attr( 'a/lex.rf', undef );
+
+    # rehang PersPron's children (theoretically there should be none, but ...)
+    foreach my $a_child ( $a_node->get_children() ) {
+        $a_child->set_parent( $a_node->get_parent() );
+    }
+
+    # delete the a-node
+    $a_node->disconnect();
+}
+
+1;
+
+__END__
+
+=over
+
+=item TCzechT_to_TCzechA::Drop_subj_pers_prons
+
+Applying pro-drop - deletion of personal pronouns (and "to") in subject positions.
+In some copula constructions the personal pronoun subject is replaced with the word "to".
+
+=back
+
+=cut
+
+# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+
+# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
