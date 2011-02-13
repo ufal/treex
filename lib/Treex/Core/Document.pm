@@ -96,8 +96,10 @@ sub BUILD {
         # ensuring Treex::Core types (partially copied from the factory)
         my $meta = $self->metaData('pml_root')->{meta};
         if ( defined $meta->{zones} ) {
-            foreach my $element ( map { $_->value() } $meta->{zones}->elements ) {
-                bless $element, 'Treex::Core::DocZone';
+            foreach my $doczone ( map { $_->value() } $meta->{zones}->elements ) {
+
+                # $doczone hashref will be reused as the blessed instance variable
+                Treex::Core::DocZone->new($doczone);
             }
         }
 
@@ -106,7 +108,9 @@ sub BUILD {
 
             if ( defined $bundle->{zones} ) {
                 foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
-                    bless $zone, 'Treex::Core::BundleZone';
+
+                    # $zone hashref will be reused as the blessed instance variable
+                    Treex::Core::BundleZone->new($zone);
                     $zone->_set_bundle($bundle);
 
                     foreach my $tree ( $zone->get_all_trees ) {
