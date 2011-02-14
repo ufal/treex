@@ -57,7 +57,7 @@ sub create_tree {
     my $new_tree_name = lc($layer) . "_tree";
     $self->{trees}->{$new_tree_name} = $tree_root;
 
-    my $new_id = "$new_tree_name-" . $bundle->get_id . "-root";
+    my $new_id = "$new_tree_name-" . $self->get_label . "-" . $bundle->get_id . "-root";
     $tree_root->set_id($new_id);
 
     # pml-typing

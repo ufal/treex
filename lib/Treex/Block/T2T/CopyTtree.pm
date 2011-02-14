@@ -4,48 +4,67 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
-has '+separator' => ( required => 1 );
-has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
-has 'source_separator' => ( is => 'rw', isa => 'Str', default => '' );
+has 'source_language' => ( is => 'rw', isa => 'Str', lazy_build => 1 );
+has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );#lazy_build => 1 );
+
+# TODO: copy attributes in a cleverer way
+my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
+                       is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive
+                       voice sentmod tfa gram/sempos gram/gender gram/number gram/degcmp
+                       gram/verbmod gram/deontmod gram/tense gram/aspect gram/resultative
+                       gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype
+                       gram/politeness gram/negation gram/definiteness);
+
+sub build_source_selector {
+    my ($self) = @_;
+    return $self->selector;
+}
+
+
+sub build_source_language {
+    my ($self) = @_;
+    return $self->language;
+}
+
+
+sub BUILD {
+    my ($self) = @_;
+    if ($self->language eq $self->source_language && $self->selector eq $self->source_selector) {
+        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+    }
+}
+
 
 sub process_bundle {
-
     my ( $self, $bundle ) = @_;
 
-    my $source_tree_name = 'S'.$self->get_parameter('SOURCE_LANGUAGE').'T';
-    my $target_tree_name = 'T'.$self->get_parameter('TARGET_LANGUAGE').'T';
+    my $source_zone = $bundle->get_zone($self->source_language, $self->source_selector);
+    my $source_root = $source_zone->get_ttree;
 
-    my $target_root = $bundle->copy_tree($source_tree_name, $target_tree_name);
-
+    my $target_zone = $bundle->get_or_create_zone($self->language, $self->selector);
+    my $target_root = $target_zone->create_ttree();
     $target_root->set_attr('atree.rf', undef);
 
-    foreach my $node ( $target_root, $target_root->get_descendants ) {
+    copy_subtree( $source_root, $target_root);
+}
 
-        my $new_id = $node->get_attr('id');
-        my $old_id = $new_id;
-        $old_id =~ s/$target_tree_name/$source_tree_name/
-            or Report::fatal "Cannot find the source-side ID for $new_id";
 
-        $node->set_attr( 'source/head.rf', $old_id );
+sub copy_subtree {
+    my ( $source_root, $target_root ) = @_;
 
-        # "translating" target ids of coreference links:
+    foreach my $source_node ($source_root->get_children({ordered => 1})) {
+        my $target_node = $target_root->create_child();
 
-        foreach my $list_name ('coref_gram.rf','coref_text.rf') {
-            my $coref_list = $node->get_attr($list_name);
-            if ($coref_list) {
-                $node->set_attr( $list_name,
-                                 [ map { s/^$source_tree_name/$target_tree_name/; $_ } @$coref_list ] ) ;
-            }
+        # copying attributes
+        # TODO: this must be done in another way 
+        foreach my $attr (@ATTRS_TO_COPY) {
+            $target_node->set_attr($attr, $source_node->get_attr($attr));
         }
+        $target_node->set_deref_attr( 'source/head.rf', $source_node );
+        $target_node->set_attr( 't_lemma_origin', 'clone' );
+        $TARGET_node->set_attr( 'formeme_origin', 'clone' );
 
-        # 'clone' is a default value of origin
-        $node->set_attr( 't_lemma_origin', 'clone' );
-        $node->set_attr( 'formeme_origin', 'clone' );
-
-        # removing links to a-layer
-        $node->set_attr('a/lex.rf',undef);
-        $node->set_attr('a/aux.rf',undef);
-
+        copy_subtree($source_node, $target_node);
     }
 }
 
@@ -55,14 +74,12 @@ sub process_bundle {
 
 =item Treex::Block::T2T::CopyTtree
 
-Within each bundle, a copy of the source-language t-tree is created and stored as target-language t-tree.
-All the node attributes (except identifier and co-reference attributes, which have to be `translated')
-are copied without any change.
+This block copies tectogrammatical tree into another zone. Reference attributes are not copied within the nodes.
 
 =back
 
 =cut
 
-# Copyright 2010 Zdenek Zabokrtsky
+# Copyright 2011 David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

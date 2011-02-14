@@ -238,7 +238,7 @@ sub get_aligned_nodes {
 sub get_n_node {
     my ($self) = @_;
     my $lex_anode = $self->get_lex_anode() or return;
-    return $lex_anode->get_n_node();
+    return $lex_anode->n_node();
 }
 
 sub get_aux_anodes {
