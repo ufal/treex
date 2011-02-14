@@ -5,17 +5,14 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'en' );
 has '_ner'      => ( is      => 'rw' );
-
-# DOES NOT WORK YET !!!
-
-# TODO has 'model' => (is => 'rw', isa = > 'Str', default => 'ner-eng-ie.crf-3-all2008.ser.gz');
+has 'model' => (is => 'rw', isa => 'Str', default => 'ner-eng-ie.crf-3-all2008.ser.gz');
 
 use NER::Stanford::English;
 use Readonly;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_ner( NER::Stanford::English->new() );
+    $self->_set_ner( NER::Stanford::English->new($self->model) );
     return;
 }
 
