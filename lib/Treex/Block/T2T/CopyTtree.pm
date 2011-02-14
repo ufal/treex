@@ -62,7 +62,7 @@ sub copy_subtree {
         }
         $target_node->set_deref_attr( 'source/head.rf', $source_node );
         $target_node->set_attr( 't_lemma_origin', 'clone' );
-        $TARGET_node->set_attr( 'formeme_origin', 'clone' );
+        $target_node->set_attr( 'formeme_origin', 'clone' );
 
         copy_subtree($source_node, $target_node);
     }

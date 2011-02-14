@@ -34,8 +34,8 @@ sub set_anodes {
 sub set_parent {
     my ( $self, $parent ) = @_;
     $self->SUPER::set_parent($parent);
-    foreach my $m_node ( $self->get_anodes() ) {
-        $m_node->_set_n_node($self);
+    foreach my $a_node ( $self->get_anodes() ) {
+        $a_node->_set_n_node($self);
     }
     return;
 }
