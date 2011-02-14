@@ -5,13 +5,10 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my @tnodes = $bundle->get_tree('TCzechT')->get_descendants();
+    my @tnodes = $t_root->get_descendants();
 
     my %to_avoid;
 

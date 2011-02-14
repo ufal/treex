@@ -5,16 +5,10 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $tnode ( $bundle->get_tree('TCzechT')->get_descendants ) {
-
-        if ($tnode->t_lemma =~ /^stát(_se)?$/
+            if ($tnode->t_lemma =~ /^stát(_se)?$/
                 and $tnode->get_attr('mlayer_pos') eq "V") {
 
             my $anode = $tnode->get_lex_anode;
@@ -35,7 +29,6 @@ sub process_bundle {
 
             $anode->set_attr('lemma', $anode->lemma."-$index");
 
-        }
     }
     return;
 }

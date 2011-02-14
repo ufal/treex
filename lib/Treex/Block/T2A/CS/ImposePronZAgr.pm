@@ -5,18 +5,14 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
 # Ideálně by tyto případy (každý z mužů, každá z žen) měly být anotovány
 # jako bridging anaphora už ve zdrojovém jazyce.
 # Zatím je budu rozpoznávat zde.
 
 my $pron_regex = qr/^(jeden|každý|žádný|oba|všechen|(ně|lec)který|(jak|kter)ýkoliv?|libovolný)$/;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
     foreach my $t_pron ( grep { $_->t_lemma =~ $pron_regex } $t_root->get_descendants() ) {
         my $t_zkoho = first { $_->formeme eq 'n:z+2' } $t_pron->get_children();
         if ($t_zkoho) {

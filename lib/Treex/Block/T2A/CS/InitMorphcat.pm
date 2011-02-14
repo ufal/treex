@@ -5,39 +5,27 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-Readonly my %M_GENDER_FOR => (
+my %M_GENDER_FOR = (
     anim => 'M',
     inan => 'I',
     fem  => 'F',
     neut => 'N',
 );
 
-Readonly my %M_NUMBER_FOR => (
+my %M_NUMBER_FOR = (
     pl => 'P',
     sg => 'S',
 );
 
-Readonly my %M_DEGREE_FOR => (
+my %M_DEGREE_FOR = (
     'pos'  => '1',
     'comp' => '2',
     'sup'  => '3',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        process_tnode($t_node);
-    }
-    return;
-}
 
 sub process_tnode {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
     my $a_node = $t_node->get_lex_anode() or return;
 
     # Initialize all categories to '.' so it can be used in regexes

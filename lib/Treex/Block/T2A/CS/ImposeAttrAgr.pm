@@ -5,13 +5,9 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
+    
     foreach my $t_attr ( grep { $_->formeme =~ /attr|poss/ } $t_root->get_descendants() ) {
         my $a_attr   = $t_attr->get_lex_anode or next; # weird, this should not happen
         my ($t_noun) = $t_attr->get_eff_parents;

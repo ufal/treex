@@ -9,9 +9,8 @@ has '+language' => ( default => 'cs' );
 use Lexicon::Czech;
 
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     # Start on the second level so every node to process has non-root parent
     foreach my $t_node ( $t_root->get_children() ) {
@@ -50,8 +49,8 @@ sub process_t_node {
 
     # is_member attribute must stay with the governing node
     if ( $a_noun->is_member ) {
-        $a_noun->set_is_member(0) );
-        $a_node->set_is_member(1) );
+        $a_noun->set_is_member(0);
+        $a_node->set_is_member(1);
     }
 
     # In some cases there can be prepositions in the formeme of $t_node

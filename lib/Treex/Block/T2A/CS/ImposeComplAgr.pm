@@ -5,12 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
     foreach my $t_compl ( grep { $_->formeme =~ /adj:compl/ } $t_root->get_descendants ) {
         my ($t_clause_head) = $t_compl->get_eff_parents;

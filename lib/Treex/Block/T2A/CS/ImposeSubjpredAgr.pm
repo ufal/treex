@@ -5,14 +5,10 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
+    foreach my $t_node ( $t_root->get_descendants() ) {
         if ( $t_node->formeme =~ /^v.+(fin|rc)/ ) {
             process_finite_verb($t_node);
         }

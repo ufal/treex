@@ -3,60 +3,42 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
+sub process_zone {
+    my ( $self, $zone ) = @_;
+
+    my $t_root = $zone->get_ttree();
+    my $a_root = $zone->create_atree();
+    $t_root->set_deref_attr('atree.rf', $t_root);
+
+    copy_subtree($t_root, $a_root);
+
+}
 
 
+sub copy_subtree {
+    my ( $t_root, $a_root ) = @_;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $document = $bundle->get_document();
-
-    my $source_tree_name = 'T'.$self->get_parameter('LANGUAGE').'T';
-    my $target_tree_name = 'T'.$self->get_parameter('LANGUAGE').'A';
-    $bundle->copy_tree( $source_tree_name, $target_tree_name );
-
-    my @tnodes = $bundle->get_tree($source_tree_name)->get_descendants({add_self=>1});
-    my @anodes = $bundle->get_tree($target_tree_name)->get_descendants({add_self=>1});
-
-
-    foreach my $i (0..$#anodes) {
-        my $anode = $anodes[$i];
-        my $tnode = $tnodes[$i];
-
-        my $lemma = $tnode->t_lemma || '';
-
-        if ( $lemma eq '#Cor' ) {
-            # Hopefully, there are no children, but..
-            foreach my $child ( $anode->get_children() ) {
-                $child->set_parent( $anode->get_parent() );
-            }
-            $anode->disconnect();
-        }
-
-        else {
-
-            $tnode->set_attr('a/lex.rf',$anode->get_attr('id'));
-
+    foreach my $t_node ($t_root->get_children({ordered => 1})) {
+        my $lemma = $t_node->t_lemma || '';
+        if ($t_node->t_lemma ne '#Cor') {
+            my $a_node = $a_root->create_child();
+            $t_node->set_deref_attr('lex.rf', $a_node);
             $lemma =~ s/_s[ie]$//g;
-            $anode->set_lemma($lemma);
-            $anode->set_attr( 'ord',     $anode->ord );
-
-            # set some afuns so _eff_ routines can work
-            if ( $tnode->is_coap_root() ) {
-                $anode->set_attr( 'afun', $tnode->functor eq 'APPS' ? 'Apos' : 'Coord' );
+            $a_node->set_lemma($lemma);
+            $a_node->set_ord($t_node->ord);
+            if ( $t_node->is_coap_root() ) {
+                $a_node->set_attr( 'afun', $t_node->functor eq 'APPS' ? 'Apos' : 'Coord' );
             }
-            if ( defined $tnode->sentmod ) {
-                ##$node->set_afun('AuxS');
+            if ( $t_node->is_member ) {
+                $a_node->set_is_member(1);
             }
-
-            #TODO: $bundle->copy_tree( 'TCzechT', 'TCzechA' ) deletes is_member !!!
-            if ( $tnode->is_member ) {
-                $anode->set_is_member(1) );
-            }
-
-            # TODO: vymazat tektogramaticke atributy !!!
+            copy_subtree($t_node, $a_node);
+        }
+        else {
+            log_warn("#Cor node is not a leave.") if $t_node->get_children();
+            copy_subtree($t_node, $a_root);
         }
     }
-    return;
 }
 
 1;
@@ -65,11 +47,11 @@ sub process_bundle {
 
 =item Treex::Block::T2A::CopyTtree
 
-Within each bundle, a copy of TCzechT tree is created and stored as TCzechA tree.
+This block clones t-tree as an a-tree and fills attributes lemma and ord.
 
 =back
 
 =cut
 
-# Copyright 2008-2010 Zdenek Zabokrtsky, Martin Popel
+# Copyright 2011 David Marecek
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -6,14 +6,8 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-sub process_document {
-
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
         foreach my $t_relpron (
             grep {
@@ -26,9 +20,7 @@ sub process_document {
         {
 
             my $a_relpron = $t_relpron->get_lex_anode;
-            my $antec_id  = @{ $t_relpron->get_attr('coref_gram.rf') }[0];
-
-            my $t_antec = $document->get_node_by_id($antec_id);
+            my $t_antec  = @{ $t_relpron->get_deref_attr('coref_gram.rf') }[0];
 
             my $a_antec = $t_antec->get_lex_anode;
 
@@ -41,7 +33,7 @@ sub process_document {
                 $a_relpron->set_attr( 'morphcat/number', $a_antec->get_attr('morphcat/number') );
             }
         }
-    }
+    
 }
 
 1;

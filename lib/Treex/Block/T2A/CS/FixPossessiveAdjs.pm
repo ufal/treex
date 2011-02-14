@@ -5,16 +5,11 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
 use Lexicon::Czech;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
 
-    foreach my $t_node ( $t_root->get_descendants() ) {
         if (($t_node->formeme||"") eq 'n:poss'
                 and ($t_node->get_attr('mlayer_pos')||"") ne 'P'
                     and ($t_node->t_lemma||"") ne '#PersPron'
@@ -36,7 +31,7 @@ sub process_bundle {
 
 #            print "$noun_lemma ==> $adj_lemma\n";
         }
-    }
+    
     return;
 }
 

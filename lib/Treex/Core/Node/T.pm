@@ -317,7 +317,7 @@ sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
 sub get_source_tnode {
     my ($self) = @_;
     my $source_node_id = $self->get_attr('source/head.rf');
-    if ( defined $source_node_id and $source_node_id ne "" ) {    # divny!!! kde se tam kurna bere ta mezera?
+    if ( defined $source_node_id ) {
         my $source_node = $self->get_document->get_node_by_id($source_node_id);
         if ( defined $source_node ) {
             return $source_node;
