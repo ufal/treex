@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 has 'source_language' => ( is => 'rw', isa => 'Str', lazy_build => 1 );
-has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );#lazy_build => 1 );
+has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
@@ -35,36 +35,61 @@ sub BUILD {
 }
 
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_document {
+    my ( $self, $document ) = @_;
 
-    my $source_zone = $bundle->get_zone($self->source_language, $self->source_selector);
-    my $source_root = $source_zone->get_ttree;
+    # the forward links (from source to target nodes) must be kept so that coreference links are copied properly
+    my %src2tgt;
 
-    my $target_zone = $bundle->get_or_create_zone($self->language, $self->selector);
-    my $target_root = $target_zone->create_ttree();
-    $target_root->set_attr('atree.rf', undef);
+    foreach my $bundle ( $document->get_bundles() ) {
+        my $source_zone = $bundle->get_zone($self->source_language, $self->source_selector);
+        my $source_root = $source_zone->get_ttree;
 
-    copy_subtree( $source_root, $target_root);
+        my $target_zone = $bundle->get_or_create_zone($self->language, $self->selector);
+        my $target_root = $target_zone->create_ttree();
+        $target_root->set_attr('atree.rf', undef);
+
+        copy_subtree( $source_root, $target_root, \%src2tgt);
+    }
+
+    # copying coreference links
+    foreach my $bundle ( $document->get_bundles() ) {
+        my $target_zone = $bundle->get_zone($self->language, $self->selector);
+        my $target_root = $target_zone->get_ttree();
+        foreach my $t_node ($target_root->get_descendants) {
+            my $src_tnode = $t_node->get_source_tnode;
+            my $coref_gram = $src_tnode->get_deref_attr('coref_gram.rf');
+            my $coref_text = $src_tnode->get_deref_attr('coref_text.rf');
+            if (defined $coref_gram) {
+                my @nodelist = map {$src2tgt{$_}} @$coref_gram;
+                $t_node->set_deref_attr( 'coref_gram.rf', \@nodelist );
+            }
+            if (defined $coref_text) {
+                my @nodelist = map {$src2tgt{$_}} @$coref_text;
+                $t_node->set_deref_attr( 'coref_text.rf', \@nodelist );
+            }
+        }
+    }
 }
 
 
 sub copy_subtree {
-    my ( $source_root, $target_root ) = @_;
+    my ( $source_root, $target_root, $src2tgt ) = @_;
 
     foreach my $source_node ($source_root->get_children({ordered => 1})) {
         my $target_node = $target_root->create_child();
 
+        $$src2tgt{$source_node} = $target_node;
         # copying attributes
         # TODO: this must be done in another way 
         foreach my $attr (@ATTRS_TO_COPY) {
             $target_node->set_attr($attr, $source_node->get_attr($attr));
         }
-        $target_node->set_deref_attr( 'source/head.rf', $source_node );
+        $target_node->set_source_tnode($source_node);
         $target_node->set_attr( 't_lemma_origin', 'clone' );
         $target_node->set_attr( 'formeme_origin', 'clone' );
 
-        copy_subtree($source_node, $target_node);
+        copy_subtree($source_node, $target_node, $src2tgt);
     }
 }
 
@@ -74,7 +99,8 @@ sub copy_subtree {
 
 =item Treex::Block::T2T::CopyTtree
 
-This block copies tectogrammatical tree into another zone. Reference attributes are not copied within the nodes.
+This block copies tectogrammatical tree into another zone.
+Attributes 'a/lex.rf' and 'a/aux.rf' are not copied within the nodes.
 
 =back
 
