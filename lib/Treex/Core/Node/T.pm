@@ -5,8 +5,10 @@ extends 'Treex::Core::Node';
 
 # t-layer attributes
 has [
-    qw(ord t_lemma functor formeme is_member nodetype is_generated
-        subfunctor is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive voice sentmod tfa)
+    qw( ord t_lemma functor formeme is_member nodetype is_generated
+        subfunctor is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive voice sentmod tfa
+        t_lemma_origin formeme_origin
+        )
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
@@ -180,7 +182,6 @@ sub _get_shared_echildren {
     return @shared_echildren;
 }
 
-
 sub get_coap_members {
     my ( $self, $arg_ref ) = @_;
     log_fatal('Incorrect number of arguments') if @_ > 2;
@@ -205,6 +206,7 @@ sub get_coap_members {
     }
     return @members;
 }
+
 #----------- a-layer nodes -------------
 
 sub get_lex_anode {
@@ -313,28 +315,26 @@ sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
     return $self;
 }
 
-# moved from Node::TCzechT
-sub get_source_tnode {
+sub src_tnode {
     my ($self) = @_;
-    my $source_node_id = $self->get_attr('source/head.rf');
-    if ( defined $source_node_id ) {
-        my $source_node = $self->get_document->get_node_by_id($source_node_id);
-        if ( defined $source_node ) {
-            return $source_node;
-        }
-        else {
-            return;
-        }
-    }
-    else {
-        return;
-    }
+    my $source_node_id = $self->get_attr('src_tnode.rf') or return;
+    return $self->get_document->get_node_by_id($source_node_id);
 }
 
-# moved from Node::TCzechT
-sub set_source_tnode {
+sub set_src_tnode {
     my ( $self, $source_node ) = @_;
-    $self->set_attr( 'source/head.rf', $source_node->get_attr('id') );
+    $self->set_attr( 'src_tnode.rf', $source_node->id );
+}
+
+# Deprecated
+sub get_source_tnode {
+    my $self = shift;
+    return $self->src_tnode;
+}
+
+sub set_source_tnode {
+    my $self = shift;
+    return $self->set_src_tnode(@_);
 }
 
 1;

@@ -50,6 +50,7 @@ sub process_document {
         $target_root->set_attr('atree.rf', undef);
 
         copy_subtree( $source_root, $target_root, \%src2tgt);
+        $target_root->set_src_tnode($source_root);
     }
 
     # copying coreference links
@@ -57,7 +58,7 @@ sub process_document {
         my $target_zone = $bundle->get_zone($self->language, $self->selector);
         my $target_root = $target_zone->get_ttree();
         foreach my $t_node ($target_root->get_descendants) {
-            my $src_tnode = $t_node->get_source_tnode;
+            my $src_tnode = $t_node->src_tnode;
             my $coref_gram = $src_tnode->get_deref_attr('coref_gram.rf');
             my $coref_text = $src_tnode->get_deref_attr('coref_text.rf');
             if (defined $coref_gram) {
@@ -85,7 +86,7 @@ sub copy_subtree {
         foreach my $attr (@ATTRS_TO_COPY) {
             $target_node->set_attr($attr, $source_node->get_attr($attr));
         }
-        $target_node->set_source_tnode($source_node);
+        $target_node->set_src_tnode($source_node);
         $target_node->set_attr( 't_lemma_origin', 'clone' );
         $target_node->set_attr( 'formeme_origin', 'clone' );
 

@@ -38,6 +38,7 @@
 	  <member name="anot_error" type="t-anot_error.type" />
       <member name="pcedt_coref" type="t-pcedt_coref-root.type" />
       <member name="subtree_scores"  type="subtree_scores.type"/>
+      <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
     </structure>
   </type>
 
@@ -161,13 +162,14 @@
         </structure>
       </member>
 
-      <member name="source">
+      <!--<member name="source">
         <structure>
            <member name="head.rf">
              <cdata format="PMLREF"/>
            </member>
         </structure>
-      </member>
+      </member>-->
+      <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
 
       <member name="clause_number"><cdata format="any"/></member>
 
