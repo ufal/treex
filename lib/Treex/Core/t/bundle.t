@@ -31,19 +31,18 @@ foreach (@layers) {
 }
 ok( !$bundle->has_tree('TCzechT'), "Bundle doesn't contains tree, that wasn't added" );
 
-TODO: {
-    todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
+#TODO: {
+#    todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
 
     #	foreach ($bundle->get_tree_names()) {
     #		ok($bundle->has_tree($_),"Bundle contains tree $_");
     #		isa_ok($bundle->get_tree($_),'Treex::Core::Node');
     #	}
-    ok(0);
-    TODO: {
-        todo_skip 'Get all trees' . 1 unless Treex::Core::Node->meta->has_method('get_all_trees');
-        cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method" );
-    }
-}
+    #TODO: {
+    #   todo_skip 'Get all trees' . 1 unless Treex::Core::Node->meta->has_method('get_all_trees');
+    #  cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method" );
+#    }
+#}
 
 #Attr testing
 
