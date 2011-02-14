@@ -5,9 +5,6 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
 my %NUMBERPERSON2ABY = ( # 'endings' for aby/kdyby
     'S1' => 'ch',
     'S2' => 's',
@@ -15,17 +12,9 @@ my %NUMBERPERSON2ABY = ( # 'endings' for aby/kdyby
     'P2' => 'ste',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($t_node);
-    }
-    return;
-}
 
 sub process_tnode {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
     my $formeme = $t_node->formeme;
     return if $formeme !~ /^v:(.+)\+/;
 

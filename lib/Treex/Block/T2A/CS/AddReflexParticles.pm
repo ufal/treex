@@ -6,19 +6,8 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($t_node);
-    }
-    return;
-}
-
 sub process_tnode {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
     my $reflexive;
     if ( $t_node->t_lemma =~ /_(s[ie])$/ ) {
         $reflexive = $1;

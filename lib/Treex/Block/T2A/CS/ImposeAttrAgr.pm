@@ -10,7 +10,7 @@ sub process_ttree {
     
     foreach my $t_attr ( grep { $_->formeme =~ /attr|poss/ } $t_root->get_descendants() ) {
         my $a_attr   = $t_attr->get_lex_anode or next; # weird, this should not happen
-        my ($t_noun) = $t_attr->get_eff_parents;
+        my ($t_noun) = $t_attr->get_eparents;
         my $a_noun   = $t_noun->get_lex_anode;
         next if !$a_noun || $a_noun->is_root();    #TODO: || $a_noun->get_attr('gram/sempos') !~ /^n/; ???
 
@@ -27,7 +27,7 @@ sub process_ttree {
         }
 
         # overriding case agreement in constructions like 'nic noveho','neco zajimaveho'
-        my ($a_parent) = $a_attr->get_eff_parents;
+        my ($a_parent) = $a_attr->get_eparents;
         if ($a_parent->lemma
             =~ /^(nic|něco)/
             and $t_attr->formeme =~ /^adj/

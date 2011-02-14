@@ -6,13 +6,9 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
+sub process_atree {
+    my ( $self, $a_root ) = @_;
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $a_root = $bundle->get_tree('TCzechA');
     my @anodes = $a_root->get_descendants({ordered=>1});
 
     # we consider bigrams

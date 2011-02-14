@@ -6,13 +6,10 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
 my %verb2expletive;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root = $bundle->get_tree('TCzechA');
+sub process_atree {
+    my ( $self, $a_root ) = @_;
 
     foreach my $subconj_ze ( grep {($_->form||'') eq 'že'} $a_root->get_descendants() ) {
         my $parent = $subconj_ze->get_parent;

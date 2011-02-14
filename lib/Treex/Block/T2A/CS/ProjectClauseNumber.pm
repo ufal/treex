@@ -5,18 +5,12 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants ) {
-        my $clause_number = $t_node->get_attr('clause_number');
-        if ( defined $clause_number ) {
-            foreach my $a_node ( $t_node->get_anodes ) {
-                $a_node->set_attr( 'clause_number', $clause_number );
-            }
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
+    my $clause_number = $t_node->get_attr('clause_number');
+    if ( defined $clause_number ) {
+        foreach my $a_node ( $t_node->get_anodes ) {
+            $a_node->set_attr( 'clause_number', $clause_number );
         }
     }
     return;

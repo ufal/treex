@@ -22,7 +22,7 @@ sub copy_subtree {
         my $lemma = $t_node->t_lemma || '';
         if ($t_node->t_lemma ne '#Cor') {
             my $a_node = $a_root->create_child();
-            $t_node->set_deref_attr('lex.rf', $a_node);
+            $t_node->set_deref_attr('a/lex.rf', $a_node);
             $lemma =~ s/_s[ie]$//g;
             $a_node->set_lemma($lemma);
             $a_node->set_ord($t_node->ord);

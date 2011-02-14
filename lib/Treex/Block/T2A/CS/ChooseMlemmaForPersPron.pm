@@ -5,9 +5,6 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
 my %subpos_person_2_mlemma =
     (
     qw(H1) => qw(já),
@@ -25,7 +22,7 @@ my %subpos_person_2_mlemma =
 # (Subpos . person) -> m-lemma mapping
 # When person is not known, let's guess 3.
 #<<< no perltidy
-Readonly my %M_LEMMA_FOR => (
+my %M_LEMMA_FOR = (
     H1 => 'já',  H2 => 'ty',   H3 => 'on',   'H.' => 'on',   #short forms (mě,mi,ti,...)
     P1 => 'já',  P2 => 'ty',   P3 => 'on',   'P.' => 'on',   #normal forms
     S1 => 'můj', S2 => 'tvůj', S3 => 'jeho', 'S.' => 'jeho', #possessive
@@ -36,17 +33,16 @@ Readonly my %M_LEMMA_FOR => (
 );
 #>>>
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_anode {
+    my ( $self, $a_node ) = @_;
 
-    foreach my $a_node ( $bundle->get_tree('TCzechA')->get_descendants() ) {
-        my $subpos = $a_node->get_attr('morphcat/subpos') || '.';
-        my $person = $a_node->get_attr('morphcat/person') || '.';
-        my $pronoun_mlemma = $M_LEMMA_FOR{ $subpos . $person };
-        next if !$pronoun_mlemma;
-        $a_node->set_lemma($pronoun_mlemma);
-        $a_node->set_form($pronoun_mlemma);
-    }
+    my $subpos = $a_node->get_attr('morphcat/subpos') || '.';
+    my $person = $a_node->get_attr('morphcat/person') || '.';
+    my $pronoun_mlemma = $M_LEMMA_FOR{ $subpos . $person };
+    return if !$pronoun_mlemma;
+    $a_node->set_lemma($pronoun_mlemma);
+    $a_node->set_form($pronoun_mlemma);
+    
     return;
 }
 

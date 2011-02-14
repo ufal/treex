@@ -6,13 +6,8 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-use Report;
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $aroot = $bundle->get_tree('TCzechA');
-
+sub process_atree {
+    my ( $self, $aroot ) = @_;
     # Divide nodes into clauses
     my @clauses;
     foreach my $anode ( $aroot->get_descendants( { ordered => 1 } ) ) {

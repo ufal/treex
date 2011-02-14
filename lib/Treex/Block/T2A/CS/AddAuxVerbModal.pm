@@ -6,8 +6,6 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
 my %deontmod2modalverb = (
     'poss' => 'moci',
     'vol'  => 'chtít',
@@ -18,17 +16,9 @@ my %deontmod2modalverb = (
     ##'perm' => 'smět', # 'smet' vadi u might
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $tnode ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($tnode);
-    }
-    return;
-}
 
 sub process_tnode {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
 
     # Skip nodes with deontic modality undef or 'decl'
     my $deontmod = $tnode->get_attr('gram/deontmod') || '';

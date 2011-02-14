@@ -6,15 +6,12 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
 use Lexicon::Czech;
 
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $troot = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
-    foreach my $tnode ($troot->get_descendants) {
         if ($tnode->formeme eq 'n:attr'
 	    and $tnode->get_parent->precedes($tnode)
 	    and $tnode->get_parent->formeme=~/^n/
@@ -42,10 +39,7 @@ sub process_bundle {
                     }
                 }
             }
-
         }
-    }
-
     return;
 }
 

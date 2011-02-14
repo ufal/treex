@@ -6,8 +6,6 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
 use Lexicon::Czech;
 use File::Spec;
 
@@ -33,26 +31,21 @@ sub BUILD{
     $generator = Lexicon::Generation::CS->new();
 }
 
-Readonly my $DEBUG => 0;
+my $DEBUG = 0;
 
 # TODO (MP): $DEBUG => 1; a zjistit proc je tolik slov nepokrytych slovnikem: vetsinou jsou spatne zadany tagy
 
-Readonly my @CATEGORIES => qw(pos subpos gender number case possgender possnumber
+my @CATEGORIES = qw(pos subpos gender number case possgender possnumber
     person tense grade negation voice reserve1 reserve2);
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root = $bundle->get_tree('TCzechA');
-
-    foreach my $a_node ( $a_root->get_descendants() ) {
-        if ( _should_generate($a_node) ) {
-            $a_node->set_attr( 'form', _generate_word_form($a_node) );
-        }
-        elsif ( !defined $a_node->form ) {
-            $a_node->set_attr( 'form', $a_node->lemma );
-        }
+sub process_anode {
+    my ( $self, $a_node ) = @_;
+    if ( _should_generate($a_node) ) {
+        $a_node->set_form( _generate_word_form($a_node) );
     }
-
+    elsif ( !defined $a_node->form ) {
+        $a_node->set_form( $a_node->lemma );
+    }
     return;
 }
 

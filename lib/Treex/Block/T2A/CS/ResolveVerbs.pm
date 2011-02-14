@@ -5,12 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
         my $formeme = $t_node->formeme;
         my $pos = $t_node->get_attr('mlayer_pos') || '';
 
@@ -32,7 +28,6 @@ sub process_bundle {
             $a_node->set_attr( 'morphcat/subpos', $subpos );
             $a_node->set_attr( 'morphcat/tense', $tense ) if $tense;
         }
-    }
     return;
 }
 

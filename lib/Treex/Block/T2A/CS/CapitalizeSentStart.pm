@@ -6,13 +6,11 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    my $a_root = $bundle->get_tree('TCzechA');
-    my $t_root = $bundle->get_tree('TCzechT');
+    my $a_root = $zone->get_atree();
+    my $t_root = $zone->get_ttree();
 
     my @dsp_aroots = grep { defined $_ } map { $_->get_lex_anode() }
         grep { $_->is_dsp_root } $t_root->get_descendants();

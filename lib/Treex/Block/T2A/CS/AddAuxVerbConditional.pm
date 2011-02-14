@@ -6,9 +6,6 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-
 my %condit_numberperson2form = (
     'S1' => 'bych',
     'S2' => 'bys',
@@ -16,17 +13,9 @@ my %condit_numberperson2form = (
     'P2' => 'byste',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($t_node);
-    }
-    return;
-}
 
 sub process_tnode {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
 
     # We want to process only conditionals that don't have
     # 'conditional conjunctions' "aby", "kdyby" in the formeme.

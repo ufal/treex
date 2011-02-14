@@ -6,32 +6,19 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
+    my @children = $cs_tnode->get_children;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
-    foreach my $cs_tnode ( $t_root->get_descendants() ) {
-
-        my @children = $cs_tnode->get_children;
-
-        if (@children == 1
-                and $children[0]->formeme eq 'adj:attr'
-                    and $children[0]->precedes($cs_tnode)) {
-
-            my $en_tnode = $cs_tnode->get_source_tnode;
-
-            if ($en_tnode->t_lemma eq 'one'
-                    and my $a_node = $cs_tnode->get_lex_anode) {
-
-                foreach my $a_child ($a_node->get_children) {
-                    $a_child->set_parent($a_node->get_parent);
-                }
-
-                $a_node->disconnect;
-#                print $bundle->get_attr('english_source_sentence')."\n";
+    if (@children == 1 and $children[0]->formeme eq 'adj:attr' and $children[0]->precedes($cs_tnode)) {
+        my $en_tnode = $cs_tnode->get_source_tnode;
+        if ($en_tnode->t_lemma eq 'one' and my $a_node = $cs_tnode->get_lex_anode) {
+            foreach my $a_child ($a_node->get_children) {
+                $a_child->set_parent($a_node->get_parent);
             }
+
+            $a_node->disconnect;
         }
     }
     return;

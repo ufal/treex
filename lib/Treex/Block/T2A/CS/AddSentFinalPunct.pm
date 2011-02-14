@@ -6,16 +6,14 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $troot = $bundle->get_tree('TCzechT');
-    my $aroot = $bundle->get_tree('TCzechA');
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    my $troot = $zone->get_ttree();
+    my $aroot = $zone->get_atree();
 
     my ($first_troot) = $troot->get_children();
     if ( !$first_troot ) {
-        Report::warn('No nodes in t-tree.');
+        log_warn('No nodes in t-tree.');
         return;
     }
 
@@ -28,8 +26,8 @@ sub process_bundle {
     #!!! dirty traversing of the pyramid at the lowest level
     # in order to distinguish full sentences from titles
     return if $punct_mark eq "."
-        and defined $bundle->get_attr('english_source_sentence')
-            and $bundle->get_attr('english_source_sentence') !~ /\./;
+        and defined $zone->get_attr('sentence')
+            and $zone->get_attr('sentence') !~ /\./;
 
     my $punct = $aroot->create_child(
         {   attributes => {

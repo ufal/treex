@@ -6,8 +6,6 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
 # One-word named entities should have their t-lemma capitalized,
 # so also the form should be already capitalized.
 # The problem is in the translation dictionary where we have now, for example:
@@ -23,13 +21,13 @@ has '+language' => ( default => 'cs' );
 
 my $MAC_RE = qr/Ma?c|D[ei]/;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
     my %to_process;    # mapping: entity   -> number of t-nodes of this entity
     my %ent_map;       # mapping: anode_id -> entity
 
     # STEP 1: gather named entities
-    my $t_root = $bundle->get_tree('TCzechT');
+    my $t_root = $zone->get_ttree();
     foreach my $t_node ( $t_root->get_descendants() ) {
         my $src_t_node = $t_node->get_source_tnode() or next;
         my $src_n_node = $src_t_node->get_n_node()   or next;
@@ -45,7 +43,7 @@ sub process_bundle {
     }
 
     # STEP 2: Capitalize first lexical a-nodes in named entities
-    my $a_root = $bundle->get_tree('TCzechA');
+    my $a_root = $zone->get_atree();
     A_NODE:
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         my ( $form, $pos, $lemma ) = $a_node->get_attrs(qw(form morphcat/pos lemma));

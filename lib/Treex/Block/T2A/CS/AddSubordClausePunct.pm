@@ -6,11 +6,9 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $aroot          = $bundle->get_tree('TCzechA');
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    my $aroot          = $zone->get_atree();
     my @anodes         = $aroot->get_descendants( { ordered => 1 } );
     my @clause_numbers = map { $_->get_attr('clause_number') } @anodes;
     ##my @afuns          = map { $_->afun || '' } @anodes;

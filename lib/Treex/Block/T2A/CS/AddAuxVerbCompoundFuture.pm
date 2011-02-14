@@ -6,19 +6,8 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $t_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($t_node);
-    }
-    return;
-}
-
 sub process_tnode {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
     
     # Process only verbs with future tense (post) and imperfective aspect (proc)
     my $tense  = $tnode->get_attr('gram/tense')  || '';

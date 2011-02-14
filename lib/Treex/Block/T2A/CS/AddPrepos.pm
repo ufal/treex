@@ -5,21 +5,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        process_node($t_node);
-    }
-    return;
-}
-
-sub process_node {
-    my ($tnode) = @_;
+sub process_tnode {
+    my ($self, $tnode) = @_;
     my $formeme = $tnode->formeme;
 
     return if !defined $formeme || $formeme !~ /^(n|adj):(.+)[+]/;

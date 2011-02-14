@@ -6,8 +6,6 @@ extends 'Treex::Core::Block';
 has '+language' => ( default => 'cs' );
 
 
-
-
 my %DISTANCE_LIMIT = (
     'v'    => 5,
     'mezi' => 50,
@@ -15,9 +13,8 @@ my %DISTANCE_LIMIT = (
 );
 my $BASE_DISTANCE_LIMIT = 8;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root = $bundle->get_tree('TCzechA');
+sub process_atree {
+    my ( $self, $a_root ) = @_;
 
     COORD:
     foreach my $coord_anode ( grep { ( $_->afun || '' ) eq 'Coord' } $a_root->get_descendants() ) {

@@ -127,7 +127,7 @@ sub get_subpos_of_perspron {
         # execept for nominative ("Mají štěstí jako *sví rodiče." hidden clause?).
         # TODO: check whether it is really a coreference from possesive to the subject
         #       (we don't mark any other type yet, so it is ok).
-        my ($noun) = $t_node->get_eff_parents();
+        my ($noun) = $t_node->get_eparents();
         if ( $t_node->get_attr('coref_gram.rf') && $noun && $noun->formeme !~ /1/ ) {
             ## reflexive lemma "svůj" doesn't have person in the tag
             $a_node->set_attr( 'morphcat/person', '.' );

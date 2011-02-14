@@ -5,9 +5,6 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( default => 'cs' );
 
-
-
-
 my %auxpast_numberperson2form = (
     'S1' => 'jsem',
     'S2' => 'jsi',
@@ -17,17 +14,9 @@ my %auxpast_numberperson2form = (
     '.1' => 'jsem',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-
-    foreach my $tnode ( $bundle->get_tree('TCzechT')->get_descendants() ) {
-        process_tnode($tnode);
-    }
-    return;
-}
 
 sub process_tnode {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
     my $tense = $tnode->get_attr('gram/tense') || '';
     return if $tense ne 'ant';
 
