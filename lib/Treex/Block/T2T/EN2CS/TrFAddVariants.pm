@@ -101,8 +101,8 @@ sub process_bundle {
 
             if (@translations) {
 
-                $cs_tnode->set_attr( 'formeme', $translations[0]->{label} );
-                $cs_tnode->set_attr( 'formeme_origin', @translations == 1 ? 'dict-only' : 'dict-first' );
+                $cs_tnode->set_formeme($translations[0]->{label} );
+                $cs_tnode->set_formeme_origin(@translations == 1 ? 'dict-only' : 'dict-first' );
 
                 #                print "\n\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
                 #                print "node: ".$en_tnode->t_lemma."\n";

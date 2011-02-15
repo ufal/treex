@@ -44,9 +44,9 @@ sub process_bundle {
             my $new_tlemma = $compatible[0]->{t_lemma};
             my $old_tlemma = $cs_tnode->t_lemma;
             if ( $old_tlemma ne $new_tlemma ) {
-                $cs_tnode->set_attr( 't_lemma',        $compatible[0]->{t_lemma} );
+                $cs_tnode->set_t_lemma($compatible[0]->{t_lemma} );
                 $cs_tnode->set_attr( 'mlayer_pos',     $compatible[0]->{pos} );
-                $cs_tnode->set_attr( 't_lemma_origin', 'Prune_personal_name_variants+' . $compatible[0]->{origin} );
+                $cs_tnode->set_t_lemma_origin('Prune_personal_name_variants+' . $compatible[0]->{origin} );
             }
             
         }

@@ -59,7 +59,7 @@ sub process_tnode {
         @{$variants_ref};
 
     # Save the best variant to the formeme attribute
-    $cs_tnode->set_attr( 'formeme', $sorted[0]{'formeme'} );
+    $cs_tnode->set_formeme($sorted[0]{'formeme'} );
 
     # Throw away least probable variants on behalf of speed/memory efficiency
     if ( $max_variants && @sorted > $max_variants ) { splice @sorted, $max_variants; }

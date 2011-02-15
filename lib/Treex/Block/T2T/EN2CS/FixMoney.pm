@@ -23,11 +23,11 @@ sub process_tnode {
             }
             $value_tnode->set_parent($t_node->get_parent);
             $t_node->set_parent($value_tnode);
-            $value_tnode->set_attr('formeme', $t_node->formeme);
+            $value_tnode->set_formeme($t_node->formeme);
         }
             
         # change t_lemma and formeme of the currency node
-        $t_node->set_attr('t_lemma', $CURRENCY{ $t_node->t_lemma } );
+        $t_node->set_t_lemma($CURRENCY{ $t_node->t_lemma } );
         $t_node->set_t_lemma_origin('rule-Fix_money');
         $t_node->set_formeme('n:2');
         $t_node->set_formeme_origin('rule-Fix_money');

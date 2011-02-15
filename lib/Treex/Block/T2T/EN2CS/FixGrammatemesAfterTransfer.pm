@@ -321,8 +321,8 @@ sub process_bundle {
 
         # deleting grammatemes that became superfluous due to change of sempos
         if ( $cs_formeme !~ /^v/ ) {
-            $cs_t_node->set_attr( 'voice',      undef );
-            $cs_t_node->set_attr( 'is_passive', undef );
+            $cs_t_node->set_voice(undef);
+            $cs_t_node->set_is_passive(undef);
         }
 
     }

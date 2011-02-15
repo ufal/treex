@@ -50,7 +50,7 @@ sub process_bundle {
         {                                                       # ??? tisic.C->tisic.N makes harm!!!
             $node->set_t_lemma($new_lemma);
             $node->set_attr( 'mlayer_pos',     $state->get_pos );
-            $node->set_attr( 't_lemma_origin', 'viterbi|' . $state->get_lemma_origin );
+            $node->set_t_lemma_origin('viterbi|' . $state->get_lemma_origin );
         }
 
         # Change the formeme

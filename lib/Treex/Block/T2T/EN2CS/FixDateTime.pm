@@ -135,7 +135,7 @@ sub process_month {
     # 4   -> 4  -> 4. (period added)
     my $t_lemma = $t_node->t_lemma;
     if ( $t_lemma !~ /\.$/ ) {
-        $t_node->set_attr( 't_lemma',        $t_lemma . '.' );
+        $t_node->set_t_lemma($t_lemma . '.' );
         $t_node->set_t_lemma_origin('rule-Fix_date_time');
     }
 

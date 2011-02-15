@@ -130,7 +130,7 @@ sub translate_compound {
         # If translating the last sub-word of the compound,
         # save the translation into the original t_node.:
         else {
-            $t_node->set_attr( 't_lemma', $t_lemma_variants[0]->{t_lemma} );
+            $t_node->set_t_lemma($t_lemma_variants[0]->{t_lemma} );
             $t_node->set_t_lemma_origin('dict-first-Translate_LF_compounds');
             $t_node->set_attr( 'translation_model/t_lemma_variants', [ @t_lemma_variants ] );
         }
