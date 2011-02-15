@@ -5,12 +5,10 @@ extends 'Treex::Core::Block';
 
 #TODO implement "to"
 has to => ( isa => 'Str', is => 'ro', default => '-' );
-has '+language' => ( required => 1 );
 
-sub process_document {
-    my ( $self, $document ) = @_;
-    print $document->get_attr( $self->selector . $self->language . ' text' );
-    return 1;
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    print $zone->text;
 }
 
 1;

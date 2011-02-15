@@ -4,7 +4,7 @@ use Treex::Moose;
 use Treex::Core::Resource;
 
 has selector => ( is => 'ro', isa => 'Selector', default => '', );
-has language => ( is => 'ro', isa => 'LangCode', builder => 'build_language' );
+has language => ( is => 'ro', isa => 'LangCode|Undef', builder => 'build_language' );
 has scenario => (
     is       => 'ro',
     isa      => 'Treex::Core::Scenario',
