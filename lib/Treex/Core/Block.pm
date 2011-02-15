@@ -4,7 +4,7 @@ use Treex::Moose;
 use Treex::Core::Resource;
 
 has selector => ( is => 'ro', isa => 'Selector', default => '', );
-has language => ( is => 'ro', isa => 'LangCode', );
+has language => ( is => 'ro', isa => 'LangCode', builder => 'build_language' );
 has scenario => (
     is       => 'ro',
     isa      => 'Treex::Core::Scenario',
@@ -12,12 +12,29 @@ has scenario => (
     weak_ref => 1,
 );
 
+# If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
+# or target-language (e.g. T2T::CS2EN::FixNEgation contains "en"),
+# it is returned as a default value of the attribute $self->language
+# so it is not necessary to write the line
+#   has '+language' => ( default => 'en' );
+# in all *::EN::* blocks and all *::??2EN::* blocks.
+sub build_language {
+    my $self = shift;
+    my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
+    if ( $lang && Treex::Moose::is_lang_code( lc $lang ) ) {
+        return lc $lang;
+    }
+    else {
+        return undef;
+    }
+}
+
 # TODO
 # has robust => ( is=> 'ro', isa=>'Bool', default=>0,
 #                 documentation=>'no fatal errors in robust mode');
 
 sub BUILD {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     foreach my $rel_path_to_file ( $self->get_required_share_files ) {
         Treex::Core::Resource::require_file_from_share( $rel_path_to_file, 'the block ' . $self->get_block_name );
@@ -90,7 +107,9 @@ sub process_zone {
         $overriden ||= $self->_try_process_layer( $zone, $layer );
     }
     log_fatal "One of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
-        . "must be overriden and the corresponding [atnp] trees must be present in bundles."
+        . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"
+        . "The zone '" . $zone->get_label() . "' contains trees ( "
+        . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
         if !$overriden;
 }
 
