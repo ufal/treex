@@ -5,18 +5,7 @@ extends 'Treex::Core::Block';
 
 my $DEBUG = 0;
 
-#use Report;
-#my $filename = $ENV{TMT_ROOT}."/share/data/models/translation/en2cs/tnodes_to_delete.tsv";
-#open F,"<:utf8",$filename or Report::fatal $!;
-#my %child_to_delete;
-#while (<F>) {
-#    chomp;
-#    next if /when/; # this is due to errors in recognizing preposition and adverb in CzEng
-#    my ($child_tlemma, $parent_tlemma, $precision) = split /\t/;
-#    $child_to_delete{$child_tlemma}{$parent_tlemma} = 1;
-#}
-
-my %child_to_delete;    #= map {my($child,$parent) = split/_/;($child }
+my %child_to_delete;
 
 foreach my $pair (
     qw(all_right ahead_go place_take down_sit
@@ -32,27 +21,21 @@ foreach my $pair (
     $child_to_delete{$child_tlemma}{$parent_tlemma} = 1;
 }
 
-sub process_bundle {
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
-    my ( $self, $bundle ) = @_;
+    # Process only t-nodes with no children whose parent is not the root node
+    return if $tnode->get_parent()->is_root();
+    return if $tnode->get_children();
 
-    foreach my $tnode (
-        grep { not $_->get_children }
-        map  { $_->get_descendants }
-        $bundle->get_tree('TCzechT')->get_children
-        )
-    {
-
-        my $child_tlemma  = $tnode->t_lemma;
-        my $parent_tlemma = $tnode->get_parent->t_lemma;
-        if ( $child_to_delete{$child_tlemma}{$parent_tlemma} ) {
-            warn "_DELETED_\t$child_tlemma\t" . $bundle->get_attr('english_source_sentence') .
-                "\t" . $bundle->get_attr('czech_source_sentence') . "\t" .
-                $bundle->get_attr('czech_target_sentence') . "\t"
-                . $tnode->get_parent->get_fposition . "\n" if $DEBUG;
-            $tnode->disconnect;
-        }
+    my $my_lemma  = $tnode->t_lemma;
+    if ( $child_to_delete{$my_lemma}{$tnode->get_parent->t_lemma} ) {
+        log_info"_DELETED_\t$my_lemma\t"
+            . $tnode->src_tnode->get_zone()->sentence . "\t"
+            . $tnode->get_parent()->id . "\n" if $DEBUG;
+        $tnode->disconnect;
     }
+
 }
 
 1;

@@ -19,112 +19,103 @@ sub get_required_share_files {
     return ( $MODEL_MAXENT, $MODEL_STATIC );
 }
 
-my ( $model, $max_variants );
+has max_variants => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 0,
+    documentation => 'How many variants to store for each node. 0 means all.',
+);
+
+has allow_fake_formemes => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Allow formemes like "???".',
+);
+
+has _model => ( is => 'rw' );
 
 sub BUILD {
+    my $self         = shift;
     my $maxent_model = TranslationModel::MaxEnt::Model->new();
     $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
 
     my $static_model = TranslationModel::Static::Model->new();
     $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
 
-    $model = TranslationModel::Combined::Interpolated->new(
-        {   models => [
-                { model => $maxent_model, weight => 0.5 },
-                { model => $static_model, weight => 1 },
-            ]
-        }
+    $self->_set_model(
+        TranslationModel::Combined::Interpolated->new(
+            {   models => [
+                    { model => $maxent_model, weight => 0.5 },
+                    { model => $static_model, weight => 1 },
+                    ]
+            }
+            )
     );
-
-    #    $model = TranslationModel::Combined::Backoff->new( { models => [ $maxent_model, $static_model ] } );
-
-    #    $model = $static_model;
-
     return;
 }
 
-my $allow_fake_formemes;
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+    # Skip nodes that were already translated by rules
+    return if $cs_tnode->formeme_origin !~ /clone|dict/;
+    ## return if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
-    $max_variants = $self->get_parameter('MAX_VARIANTS') || 0;
+    my $en_tnode = $cs_tnode->src_tnode;
+        return if !$en_tnode;
 
-    NODE:
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 
-        # Skip nodes that were already translated by rules
-        next NODE if $cs_tnode->formeme_origin !~ /clone|dict/;
+    my $features_array_rf = [
+        map           {"$_=$features_hash_rf->{$_}"}
+            sort grep { defined $features_hash_rf->{$_} }
+            keys %{$features_hash_rf}
+    ];
 
-        #        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
+    my $en_formeme = $en_tnode->formeme;
 
-        if ( my $en_tnode = $cs_tnode->src_tnode ) {
+    my @translations =
+        grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
+        $self->_model->get_translations( $en_formeme, $features_array_rf );
 
-            my $features_hash_rf =
-                TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
-
-            my $features_array_rf = [
-                map           {"$_=$features_hash_rf->{$_}"}
-                    sort grep { defined $features_hash_rf->{$_} }
-                    keys %{$features_hash_rf}
-            ];
-
-            my $en_formeme = $en_tnode->formeme;
-
-            my @translations =
-                grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-                $model->get_translations( $en_formeme, $features_array_rf );
-
-            # If the formeme is not translated and contains some function word,
-            # try to translate it with only one (or no) function word.
-            if ( !@translations && $en_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
-                my $sempos = $1;
-                my @fwords = split( /\_/, $2 );
-                my $rest   = $3;
-                foreach my $fword (@fwords) {
-                    push @translations,
-                        grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-                        $model->get_translations( "$sempos:$fword+$rest", $features_array_rf );
-                }
-                if ( !@translations ) {
-                    push @translations,
-                        grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-                        $model->get_translations( "$sempos:$rest", $features_array_rf );
-                }
-            }
-
-            if ( $max_variants && @translations > $max_variants ) {
-                splice @translations, $max_variants;
-            }
-
-            if (@translations) {
-
-                $cs_tnode->set_formeme( $translations[0]->{label} );
-                $cs_tnode->set_formeme_origin( @translations == 1 ? 'dict-only' : 'dict-first' );
-
-                #                print "\n\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
-                #                print "node: ".$en_tnode->t_lemma."\n";
-                #                print "chosen formeme: ".$cs_tnode->formeme."\n";
-                #                print "Original variants:\n";
-                #                print_variants($cs_tnode);
-
-                $cs_tnode->set_attr(
-                    'translation_model/formeme_variants',
-                    [   map {
-                            {   'formeme' => $_->{label},
-                                'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
-                            }
-                            }
-                            @translations
-                    ]
-                );
-
-                #                print "Maxent variants:\n";
-                #                print_variants($cs_tnode);
-
-            }
+    # If the formeme is not translated and contains some function word,
+    # try to translate it with only one (or no) function word.
+    if ( !@translations && $en_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
+        my $sempos = $1;
+        my @fwords = split( /\_/, $2 );
+        my $rest   = $3;
+        foreach my $fword (@fwords) {
+            push @translations,
+                grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
+                $self->_model->get_translations( "$sempos:$fword+$rest", $features_array_rf );
         }
+        if ( !@translations ) {
+            push @translations,
+                grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
+                $self->_model->get_translations( "$sempos:$rest", $features_array_rf );
+        }
+    }
+
+    if ( $self->max_variants && @translations > $self->max_variants ) {
+        splice @translations, $self->max_variants;
+    }
+
+    if (@translations) {
+
+        $cs_tnode->set_formeme( $translations[0]->{label} );
+        $cs_tnode->set_formeme_origin( @translations == 1 ? 'dict-only' : 'dict-first' );
+
+        $cs_tnode->set_attr(
+            'translation_model/formeme_variants',
+            [   map {
+                    {   'formeme' => $_->{label},
+                        'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                    }
+                    }
+                    @translations
+            ]
+        );
     }
     return;
 }
@@ -140,10 +131,10 @@ sub print_variants {
 }
 
 sub can_be_translated_as {
-    my ( $en_tnode, $en_formeme, $cs_formeme ) = @_;
+    my ($self, $en_tnode, $en_formeme, $cs_formeme ) = @_;
     my $en_lemma = $en_tnode->t_lemma;
     my $en_p_lemma = $en_tnode->get_parent()->t_lemma || '_root';
-    return 0 if !$allow_fake_formemes && $cs_formeme =~ /\?\?\?/;
+    return 0 if !$self->allow_fake_formemes && $cs_formeme =~ /\?\?\?/;
     return 0 if $en_formeme eq 'n:with+X' && $cs_formeme =~ /^n:(1|u.2)$/;
     return 0 if $en_formeme eq 'n:obj' && $cs_formeme eq 'n:1' && $en_p_lemma ne 'be';
     return 0 if $en_formeme eq 'n:obj' && $cs_formeme eq 'n:2' && $en_lemma =~ /^wh/;

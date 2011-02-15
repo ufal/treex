@@ -1,4 +1,5 @@
 package Treex::Block::T2T::EN2CS::TrFTryRules;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
@@ -44,24 +45,19 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     'n:of_ago+X'  => 'n:před+7',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
-    my $cs_troot = $bundle->get_tree('TCzechT');
+    # Skip nodes that were already translated by other rules
+    return if $cs_tnode->formeme_origin ne 'clone';
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    my $en_tnode = $cs_tnode->src_tnode;
+    return if !$en_tnode;
 
-        # Skip nodes that were already translated by other rules
-        next if $cs_tnode->formeme_origin ne 'clone';
-
-        my $en_tnode = $cs_tnode->src_tnode;
-        next if !$en_tnode;
-
-        my $cs_formeme = formeme_for_tnode( $en_tnode, $cs_tnode );
-        if ( defined $cs_formeme ) {
-            $cs_tnode->set_formeme($cs_formeme);
-            $cs_tnode->set_formeme_origin('rule-Translate_F_try_rules');
-        }
+    my $cs_formeme = formeme_for_tnode( $en_tnode, $cs_tnode );
+    if ( defined $cs_formeme ) {
+        $cs_tnode->set_formeme($cs_formeme);
+        $cs_tnode->set_formeme_origin('rule-Translate_F_try_rules');
     }
     return;
 }
