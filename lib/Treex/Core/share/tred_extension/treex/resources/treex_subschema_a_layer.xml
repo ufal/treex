@@ -23,21 +23,22 @@
 
   <type name="a-node.type">
     <structure role="#NODE" name="a-node">
+      <member name="children" role="#CHILDNODES"><list type="a-node.type" ordered="1"/></member>
+
+      <!--**************  COVERED BY TREEX API METHODS ************-->
       <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
 
       <!-- former m-layer attributes (reduced) -->
       <member name="form"><cdata format="any"/></member>
-      <member name="translit"><cdata format="any"/></member>
       <member name="lemma"><cdata format="any"/></member>
       <member name="tag"><cdata format="any"/></member>
       <member name="no_space_after" type="bool.type"/>
-      <member name="children" role="#CHILDNODES"><list type="a-node.type" ordered="1"/></member>
+      <member name="translit"><cdata format="any"/></member>
 
       <!-- former a-layer attributes -->
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
       <member name="afun" type="afun.type" />
       <member name="is_member" type="bool.type"/>
-      <member name="is_parenthesis_root" type="bool.type" /> <!-- ??? -->
       <member name="conll_deprel"><cdata format="any"/></member>
 
       <!-- attributes for conversion to t-tree -->
@@ -48,11 +49,14 @@
       <member name="clause_number"><cdata format="any"/></member>
       <member name="is_clause_head" type="bool.type"/> <!-- We mean finite clause head, but that's the same as with is_clause_head on t-layer!!! --> 
 
+      <!--**************  NOT YET COVERED BY TREEX API METHODS ************-->
       <member name="morphcat" type="czech_morphcat.type"/> <!-- This should be in Treex API, i.e. not redundant with tag -->
 
       <!-- surface coreference -->
       <member name="coref" type="a_coreference.type"/>
 
+      <!-- ??? -->
+      <member name="is_parenthesis_root" type="bool.type" />
     </structure>
   </type>
 

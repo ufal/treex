@@ -23,9 +23,6 @@
       <member name="nodetype">
         <constant>root</constant>
       </member>
-      <member name="ord" required="0"> <!-- zakomentovane role="#ORDER" -->
-        <cdata format="nonNegativeInteger"/>
-      </member>
       <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations
            PML implementation allows for only one attr with #ORDER role
       -->
@@ -35,7 +32,7 @@
       <member name="children" role="#CHILDNODES">
         <list ordered="1" type="t-node.type"/>
       </member>
-	  <member name="anot_error" type="t-anot_error.type" />
+      <member name="anot_error" type="t-anot_error.type" />
       <member name="pcedt_coref" type="t-pcedt_coref-root.type" />
       <member name="subtree_scores"  type="subtree_scores.type"/>
       <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
@@ -44,48 +41,62 @@
 
   <type name="t-node.type">
     <structure role="#NODE" name="t-node">
-      <member as_attribute="1" name="id" role="#ID" required="1">
-        <cdata format="ID"/>
-      </member>
-      <member name="a" type="t-a.type"/>
-      <member name="compl.rf">
-        <list ordered="0">
-          <cdata format="PMLREF"/>
-        </list>
-      </member>
-      <member name="coref_text.rf">
-        <list ordered="0">
-          <cdata format="PMLREF"/>
-        </list>
-      </member>
-      <member name="coref_gram.rf">
-        <list ordered="0">
-          <cdata format="PMLREF"/>
-        </list>
-      </member>
-	  <member name="coref_special" type="coref_special.type"/>
-	  <member name="pcedt" type="t-pcedt.type"/>
-      <member name="val_frame.rf">
-        <alt>
-          <cdata format="PMLREF"/>
-        </alt>
-      </member>
-	  <member name="nombank_data"><cdata format="any" /></member>
-      <member name="pcedt_coref" type="t-pcedt_coref.type"/>
-      
+       <member name="children" role="#CHILDNODES"><list ordered="1" type="t-node.type"/></member>
+
+       <!--**************  COVERED BY TREEX API METHODS ************-->
+       <!--**************  Unstructured attributes ************-->
+      <member name="id" as_attribute="1" role="#ID" required="1"><cdata format="ID"/></member>
       <member name="nodetype"  type="t-nodetype.type"/>
-      <member name="is_generated" type="bool.type"/>
-      <member name="t_lemma" >
-        <cdata format="any"/>
-      </member>
-      <member name="functor" >
-        <alt type="func.type"/>
-      </member>
+      <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member> <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations; PML implementation allows for only one attr with #ORDER role -->
+
+      <member name="t_lemma"><cdata format="any"/></member>
+      <member name="functor"><alt type="func.type"/></member>
       <member name="subfunctor" type="t-subfunctor.type"/>
       <member name="is_member" type="bool.type"/>
-      <member name="is_name_of_person" type="bool.type"/>
-	  <member name="bbn_tag" type="bbn_tag.type"/>
-	  <member name="anot_error" type="t-anot_error.type" />
+      <member name="formeme"><cdata format="any"/></member>
+      <member name="tfa" type="t-tfa.type"/>
+      <member name="is_dsp_root" type="bool.type"/>
+      <member name="sentmod" type="t-sentmod.type"/>
+      <member name="is_parenthesis" type="bool.type"/>
+      <member name="is_passive" type="bool.type"/>
+      <member name="is_clause_head" type="bool.type"/>
+      <member name="is_relclause_head" type="bool.type"/>
+      <member name="clause_number"><cdata format="any"/></member>
+      <member name="is_name_of_person" type="bool.type"/> <!-- this is redundant with API for accessing n-nodes, but it was in PDT 2.0 -->
+      <member name="voice"><cdata format="any"/></member> <!-- pro anglictinu active/passive, pro cestinu jich bude vic! -->
+      <member name="t_lemma_origin"><cdata format="any"/></member> <!-- Values could be something like: clone, rule, dict,...  It is analogic to translation_model/t_lemma_variants/origin. popel 13.12.2008 -->
+      <member name="formeme_origin"><cdata format="any"/></member> <!--dtto-->
+
+      <!--  References -->
+      <member name="a" type="t-a.type"/> <!--name of getter/setter methods may be changed soon-->
+      <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
+      
+      <!--**************  NOT YET COVERED BY TREEX API METHODS ************-->
+      <member name="nombank_data"><cdata format="any" /></member>
+      <member name="is_generated" type="bool.type"/>
+      <member name="bbn_tag" type="bbn_tag.type"/>
+      <member name="anot_error" type="t-anot_error.type" />
+      <member name="mlayer_pos"><cdata format="any"/></member>
+      <member name="is_state" type="bool.type"/>
+      <member name="is_name" type="bool.type"/>
+      <member name="is_infin" type="bool.type"/>
+      <member name="is_reflexive" type="bool.type"/>
+      <member name="is_optimizable" type="bool.type"/>
+
+      <!--  References -->
+      <member name="compl.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="coref_text.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="coref_gram.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="coref_special" type="coref_special.type"/>
+      <member name="pcedt" type="t-pcedt.type"/>
+      <member name="val_frame.rf"><alt><cdata format="PMLREF"/></alt></member>
+      <member name="original_parent.rf"><cdata format="PMLREF"/></member><!-- When doing temporary changes of a tree structure, original parent  is saved before changing so it can be later restored. (popel 19.2.2009) -->
+
+      <!-- Structured attributes -->
+      <member name="gram" type="t-gram.type"/>
+      
+      <member name="translation_model" type="translation_model.type"/>
+      <member name="pcedt_coref" type="t-pcedt_coref.type"/>
       <member name="quot">
         <list ordered="0">
           <structure>
@@ -96,46 +107,6 @@
           </structure>
         </list>
       </member>
-      <member name="is_dsp_root" type="bool.type"/>
-      <member name="sentmod" type="t-sentmod.type"/>
-      <member name="gram" type="t-gram.type"/>
-      <member name="named_entity" type="t-named_entity.type"/>
-      <member name="tfa" type="t-tfa.type"/>
-      <member name="is_parenthesis" type="bool.type"/>
-      <member name="is_state" type="bool.type"/>
-      <member name="is_name" type="bool.type"/>
-
-      <member name="is_passive" type="bool.type"/>
-      <member name="voice"><cdata format="any"/></member> <!-- pro anglictinu active/passive, pro cestinu jich bude vic! -->
-      <member name="is_infin" type="bool.type"/>
-      <member name="is_reflexive" type="bool.type"/>
-      <member name="is_optimizable" type="bool.type"/>
-      <member name="is_clause_head" type="bool.type"/>
-      <member name="is_relclause_head" type="bool.type"/>
-      <member name="ord"  > <!-- zakomentovana  role="#ORDER" -->
-        <cdata format="nonNegativeInteger"/>
-      </member>
-      <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations
-           PML implementation allows for only one attr with #ORDER role
-      -->
-      <member name="ord" role="#ORDER" required="0">
-	    <cdata format="nonNegativeInteger"/>
-      </member>
-      <member name="children" role="#CHILDNODES">
-        <list ordered="1" type="t-node.type"/>
-      </member>
-      <member name="formeme" >
-        <cdata format="any"/>
-      </member>
-
-       <member name="translation_model"   type="translation_model.type"/>
-       <member name="mlayer_pos"><cdata format="any"/></member>
-        <!-- popel 13.12.2008
-             Values could be something like: clone, rule, czeng_dict, czeng_dict+language_model, perceptron, ...
-             It is analogic to translation_model/t_lemma_variants/origin.
-        -->
-        <member name="t_lemma_origin"><cdata format="any"/></member>
-       <member name="formeme_origin"><cdata format="any"/></member>
 
       <member name="align">
         <structure>
@@ -162,43 +133,34 @@
         </structure>
       </member>
 
-      <!--<member name="source">
-        <structure>
-           <member name="head.rf">
-             <cdata format="PMLREF"/>
-           </member>
-        </structure>
-      </member>-->
-      <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
 
-      <member name="clause_number"><cdata format="any"/></member>
-
-      <!-- cz_generate debugging information = safe to delete (ptacek 3.8.08)
-      <member name="formeme_processed"><cdata format="any"/></member>
-      <member name="numericTrlemmaConverted"><cdata format="any"/></member>
-      <member name="has_right_delimiter"><cdata format="any"/></member>
-      <member name="derivation_processed"><cdata format="any"/></member>
-      <member name="diathesis"><cdata format="any"/></member>
-      <member name="vallexFrame.str"><cdata format="any"/></member>
-      <member name="xml_formemes.str"><cdata format="any"/></member>
-      <member name="isSubordinate"><cdata format="any"/></member>
-      <member name="reorderCprLeftTo"><cdata format="any"/></member>
-      <member name="reorderLeftLeftmostParent"><cdata format="any"/></member>
-      <member name="reorderRightLeftmostParent"><cdata format="any"/></member>
-      <member name="reorderRhem"><cdata format="any"/></member>
-      <member name="delayed_reorder">
-      	<structure>
-      		<member name="is_genitive_reorder"><cdata format="any"/></member>
-      	</structure>
-      </member>-->
-
-      <!-- merging NE recognition results into t-tree for pmltq querying-->
-      <member name="ne">
-		<structure>
-			<member name="type"><cdata format="any"/></member>
-		</structure>
+      <!-- TimeML stuff (ptacek 22.2.2010)-->
+      <member name="timeml">
+	      <structure>
+		      <member name="timex3">
+			      <structure>
+				      <member name="tid"><cdata format="any"/></member>
+				      <member name="type" type="timex3-type.type" />
+				      <member name="value"><cdata format="any"/></member>
+				      <member name="mod" type="timex3-mod.type" />
+				      <member name="freq"><cdata format="any"/></member>
+				      <member name="quant"><cdata format="any"/></member>
+			      </structure>
+		      </member>
+		      <member name="event">
+			      <structure>
+				      <member name="eid"><cdata format="any"/></member>
+				      <member name="class" type="timeml-event-class.type" />
+			      </structure>
+		      </member>
+		      <member name="signal">
+			      <structure>
+				      <member name="sid"><cdata format="any"/></member>
+			      </structure>
+		      </member>
+	      </structure>
       </member>
-      
+
       <!-- wordnet stuff (ptacek 16.2.2010)-->
       <member name="wn">
        		<structure>
@@ -215,32 +177,6 @@
        		</structure>
        </member>
        
-       <!-- TimeML stuff (ptacek 22.2.2010)-->
-      <member name="timeml">
-       		<structure>
-       			<member name="timex3">
-       				<structure>
-       					<member name="tid"><cdata format="any"/></member>
-       					<member name="type" type="timex3-type.type" />
-       					<member name="value"><cdata format="any"/></member>
-       					<member name="mod" type="timex3-mod.type" />
-       					<member name="freq"><cdata format="any"/></member>
-       					<member name="quant"><cdata format="any"/></member>
-       				</structure>
-       			</member>
-       			<member name="event">
-       				<structure>
-       					<member name="eid"><cdata format="any"/></member>
-       					<member name="class" type="timeml-event-class.type" />
-       				</structure>
-       			</member>
-       			<member name="signal">
-       				<structure>
-       					<member name="sid"><cdata format="any"/></member>
-       				</structure>
-       			</member>
-       		</structure>
-       </member>
 
       <!-- dott to tmt (ptacek 3.8.08)-->
 	  <member name="dott">
@@ -249,18 +185,21 @@
 	  		<member name="tag"><cdata format="any"/></member>
 	  	</structure>
 	  </member>
+	<!-- ********* DEPRECATED / QUESTIONABLE ATTRIBUTES  ********* -->
+	
+	<!-- Named entities should be stored in n-trees - see treex_subschema_n_layer.xml
+	     <member name="named_entity" type="t-named_entity.type"/>
 
-      <!-- When doing temporary changes of a tree structure, original parent
-           is saved before changing so it can be later restored. (popel 19.2.2009) -->
-	  <member name="original_parent.rf"><cdata format="PMLREF"/></member>
-	  
-	  <!-- t_lemma == 'dva' => numeric_t_lemma == '2' (ptacek 1.6.2010)-->
-	  <member name="numeric_t_lemma" >
-    	<cdata format="any"/>
-      </member>
+	     merging NE recognition results into t-tree for pmltq querying
+	     <member name="ne"><structure><member name="type"><cdata format="any"/></member></structure></member>-->
+
+        <!-- There is (or should be for other languages) API in Treex for converting numerals to numbers and vice-versa -->
+        <!-- t_lemma == 'dva' => numeric_t_lemma == '2' (ptacek 1.6.2010)-->
+        <!-- <member name="numeric_t_lemma"><cdata format="any"/></member>-->
     </structure>
   </type>
 
+<!-- *************** Types of t-layer attributes *******************  -->
   <type name="t-anot_error.type">
     <list ordered="0">
 	  <cdata format="any"/>
