@@ -15,7 +15,7 @@ sub process_ttree {
         # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
         # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
         # Skipping clauses which were relative also on the source side
-        my $src_tnode = $rc_head->get_source_tnode();
+        my $src_tnode = $rc_head->src_tnode;
         next RELCLAUSE if !$src_tnode;
         next RELCLAUSE if $src_tnode->formeme =~ /rc/;
 
@@ -34,7 +34,7 @@ sub process_ttree {
                 t_lemma_origin => 'Add_relpron_below_rc',
                 'gram/sempos' => 'n.pron.indef',
                 'gram/indeftype' => 'relat',
-                'coref_gram.rf' => [ $gram_antec->get_attr('id') ],
+                'coref_gram.rf' => [ $gram_antec->id ],
             }
             }
         );

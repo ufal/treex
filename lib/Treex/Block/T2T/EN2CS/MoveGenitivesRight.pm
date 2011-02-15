@@ -17,7 +17,7 @@ sub process_tnode {
     return if ($cs_tnode->get_attr('mlayer_pos') || '') eq 'C';
 
     # don't reorder when source formeme was not n:poss or n:attr
-    my $en_tnode = $cs_tnode->get_source_tnode() or next;
+    my $en_tnode = $cs_tnode->src_tnode or next;
     return if $en_tnode->formeme !~ /n:(poss|attr)/;
 
     # don't reorder when the dependent is already in the postposition

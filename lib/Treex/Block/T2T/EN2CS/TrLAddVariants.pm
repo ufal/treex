@@ -90,11 +90,11 @@ sub process_bundle {
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
 
         # Skip nodes that were already translated by rules
-        next if $cs_tnode->get_attr('t_lemma_origin') ne 'clone';
+        next if $cs_tnode->t_lemma_origin ne 'clone';
 
         #        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
-        if ( my $en_tnode = $cs_tnode->get_source_tnode() ) {
+        if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
             my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 

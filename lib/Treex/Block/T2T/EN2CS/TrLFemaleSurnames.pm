@@ -12,7 +12,7 @@ sub process_bundle {
 
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
         next if ($cs_tnode->get_attr('gram/gender')||'') ne 'fem';
-        my $en_tnode = $cs_tnode->get_source_tnode() or next;
+        my $en_tnode = $cs_tnode->src_tnode or next;
         my $n_node   = $en_tnode->get_n_node()       or next;
         my $n_type   = $n_node->get_attr('ne_type');
         next if $n_type ne 'ps';
@@ -20,7 +20,7 @@ sub process_bundle {
         next if $cs_lemma =~ /[áí]$/;
         $cs_lemma =~ s/([cs])ka$/$1ká/ or $cs_lemma =~ s/[oa]?$/ová/;
         $cs_tnode->set_t_lemma($cs_lemma);
-        $cs_tnode->set_attr( 't_lemma_origin', 'Translate_L_female_surnames' );
+        $cs_tnode->set_t_lemma_origin('Translate_L_female_surnames');
     }
     return;
 }

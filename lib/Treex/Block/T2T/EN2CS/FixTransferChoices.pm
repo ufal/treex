@@ -17,12 +17,12 @@ sub process_bundle {
             my ($new_lemma, $new_pos) = split /#/, $lemma_and_pos;
             $cs_tnode->set_t_lemma($new_lemma);
             $cs_tnode->set_attr( 'mlayer_pos',     $new_pos );
-            $cs_tnode->set_attr( 't_lemma_origin', 'rule-Fix_transfer_choices' );
+            $cs_tnode->set_t_lemma_origin('rule-Fix_transfer_choices');
         }
         my $new_formeme = fix_formeme($cs_tnode);
         if ($new_formeme) {
             $cs_tnode->set_formeme($new_formeme);
-            $cs_tnode->set_attr( 'formeme_origin', 'rule-Fix_transfer_choices' );
+            $cs_tnode->set_formeme_origin('rule-Fix_transfer_choices');
         }
     }
     return;
@@ -35,7 +35,7 @@ sub fix_lemma {
 
     return 'který#P' if $cs_tlemma eq 'tento' && $cs_parent->is_relclause_head;
 
-    my $en_tnode = $cs_tnode->get_source_tnode() or return;
+    my $en_tnode = $cs_tnode->src_tnode or return;
     my $en_tlemma = $en_tnode->t_lemma;
 
     # oprava reflexiv (!!! lepe opravit uz ve slovniku)
@@ -61,7 +61,7 @@ sub fix_formeme {
     my $cs_pos            = $cs_tnode->get_attr('mlayer_pos') || '';
     my $cs_tree_parent    = $cs_tnode->get_parent();
 
-    my $en_tnode    = $cs_tnode->get_source_tnode() or return;
+    my $en_tnode    = $cs_tnode->src_tnode or return;
     my $en_formeme  = $en_tnode->formeme;
     my ($en_parent) = $en_tnode->get_eff_parents();
 

@@ -37,7 +37,7 @@ sub recursive_numbering {
         my $nearest_number = $first_clause_number;
         foreach my $child (@children) {
             if ( $child->is_member ) {
-                $nearest_number = $child->get_attr('clause_number');
+                $nearest_number = $child->clause_number;
             }
             else {
                 recursive_numbering( $child, $nearest_number );
@@ -54,7 +54,7 @@ sub recursive_numbering {
     }
 
     # 2) Assign clause_number to this t-node
-    $t_node->set_attr( 'clause_number', $my_number );
+    $t_node->set_clause_number($my_number);
 
     return;
 }

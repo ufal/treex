@@ -54,15 +54,15 @@ sub process_bundle {
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
 
         # Skip nodes that were already translated by other rules
-        next if $cs_tnode->get_attr('formeme_origin') ne 'clone';
+        next if $cs_tnode->formeme_origin ne 'clone';
 
-        my $en_tnode = $cs_tnode->get_source_tnode();
+        my $en_tnode = $cs_tnode->src_tnode;
         next if !$en_tnode;
 
         my $cs_formeme = formeme_for_tnode( $en_tnode, $cs_tnode );
         if ( defined $cs_formeme ) {
             $cs_tnode->set_formeme($cs_formeme);
-            $cs_tnode->set_attr( 'formeme_origin', 'rule-Translate_F_try_rules' );
+            $cs_tnode->set_formeme_origin('rule-Translate_F_try_rules');
         }
     }
     return;

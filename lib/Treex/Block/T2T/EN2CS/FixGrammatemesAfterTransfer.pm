@@ -77,7 +77,7 @@ sub process_bundle {
     my $t_root = $bundle->get_tree('TCzechT');
 
     foreach my $cs_t_node ( $t_root->get_descendants ) {
-        my $en_t_node  = $cs_t_node->get_source_tnode() or next;
+        my $en_t_node  = $cs_t_node->src_tnode or next;
         my $cs_formeme = $cs_t_node->formeme;
         my $en_formeme = $en_t_node->formeme;
         my $en_tlemma  = $en_t_node->t_lemma;

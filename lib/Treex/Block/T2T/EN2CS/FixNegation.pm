@@ -19,7 +19,7 @@ sub process_bundle {
         }
 
         # until
-        my $en_tnode = $clause_head->get_source_tnode();
+        my $en_tnode = $clause_head->src_tnode;
         if ( defined $en_tnode and $en_tnode->formeme =~ /(until|unless)/ ) {
             $clause_head->set_attr( 'gram/negation', 'neg1' );
         }
@@ -37,7 +37,7 @@ sub process_bundle {
 sub _is_ani_neither_nor {
     my $tnode = shift;
     if ($tnode->t_lemma eq "ani") {
-        my $en_tnode = $tnode->get_source_tnode;
+        my $en_tnode = $tnode->src_tnode;
         if ($en_tnode and $en_tnode->t_lemma =~ /(neither|nor)/) {
             return 1;
         }

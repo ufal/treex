@@ -35,7 +35,7 @@ sub process_bundle {
     my $t_root = $bundle->get_tree('TCzechT');
 
     # For all nodes with untranslated (i.e. "cloned" from source tnode) lemmas...
-    foreach my $t_node ( grep { $_->get_attr('t_lemma_origin') eq 'clone' } $t_root->get_descendants() ) {
+    foreach my $t_node ( grep { $_->t_lemma_origin eq 'clone' } $t_root->get_descendants() ) {
         my $en_tlemma = $t_node->t_lemma;
 
         # If the lemma looks like a compound, try to translate it as two or more t-nodes.
@@ -123,15 +123,15 @@ sub translate_compound {
                 }
             );
             $new_node->shift_before_node( $t_node, { without_children => 1 } );
-            my $en_t_node = $t_node->get_source_tnode();
-            $new_node->set_source_tnode($en_t_node);
+            my $en_t_node = $t_node->src_tnode;
+            $new_node->set_src_tnode($en_t_node);
         }
 
         # If translating the last sub-word of the compound,
         # save the translation into the original t_node.:
         else {
             $t_node->set_attr( 't_lemma', $t_lemma_variants[0]->{t_lemma} );
-            $t_node->set_attr( 't_lemma_origin', 'dict-first-Translate_LF_compounds' );
+            $t_node->set_t_lemma_origin('dict-first-Translate_LF_compounds');
             $t_node->set_attr( 'translation_model/t_lemma_variants', [ @t_lemma_variants ] );
         }
     }

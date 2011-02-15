@@ -49,8 +49,8 @@ sub process_tnode {
                 {
 
                     #	    print STDERR "Antecedent nalezen: \n";
-                    #	    print STDERR $perspron->get_attr('id')."\n";
-                    $perspron->set_attr( 'coref_gram.rf', [ $subject->get_attr('id') ] );
+                    #	    print STDERR $perspron->id."\n";
+                    $perspron->set_attr( 'coref_gram.rf', [ $subject->id ] );
                 }
             }
         }

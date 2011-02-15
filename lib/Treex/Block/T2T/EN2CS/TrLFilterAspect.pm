@@ -21,7 +21,7 @@ sub process_bundle {
 
         # We want to check only verbs with more translation variants
         next if ( $cs_tnode->get_attr('gram/sempos') || '' ) ne 'v';
-        next if $cs_tnode->get_attr('t_lemma_origin') !~ /^dict-first/;
+        next if $cs_tnode->t_lemma_origin !~ /^dict-first/;
         filter_variants($cs_tnode);
     }
     return;
@@ -64,7 +64,7 @@ sub is_aspect_ok {
         );
 
     # 2. "dokud dělal", not "dokud udělal"
-    my $en_node = $node->get_source_tnode();
+    my $en_node = $node->src_tnode;
     return 0 if $en_node && $en_node->formeme eq 'v:as_long_as+fin';
 
     # 3. "začal dělat", not "začal udělat"

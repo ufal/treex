@@ -15,10 +15,10 @@ sub process_bundle {
     foreach my $cs_tnode ( grep { $_->is_name_of_person } $cs_troot->get_descendants() ) {
 
         # skipping nodes translated by rules
-        next if ( $cs_tnode->get_attr('t_lemma_origin') || '' ) !~ /^dict-first/;
+        next if ( $cs_tnode->t_lemma_origin || '' ) !~ /^dict-first/;
 
         my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants') or next NODE;
-        my $en_tnode     = $cs_tnode->get_source_tnode()                             or next NODE;
+        my $en_tnode     = $cs_tnode->src_tnode                             or next NODE;
         my $en_tlemma    = $en_tnode->t_lemma;
 
         # Skip one-letter names (initials)

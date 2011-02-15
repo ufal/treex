@@ -11,7 +11,7 @@ sub process_ttree {
 	if (($tnode->formeme||"") =~ /(adj:attr|poss)/
 	    and $tnode->get_parent->precedes($tnode) and not $tnode->get_children
 	    and not $tnode->is_member
-	    and not $tnode->get_attr('is_parenthesis')
+	    and not $tnode->is_parenthesis
 	    and (($tnode->get_attr('mlayer_pos')||"") eq 'A' or ($tnode->t_lemma eq '#PersPron'))
 	    and ($tnode->get_parent->get_attr('mlayer_pos')||"") eq 'N'
 	    ) {

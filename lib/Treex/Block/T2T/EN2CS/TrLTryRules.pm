@@ -29,14 +29,14 @@ sub process_bundle {
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
 
         # Skip nodes that were already translated by other rules
-        next if $cs_tnode->get_attr('t_lemma_origin') !~ /^clone/;
+        next if $cs_tnode->t_lemma_origin !~ /^clone/;
 
-        my $en_tnode = $cs_tnode->get_source_tnode() or next;
+        my $en_tnode = $cs_tnode->src_tnode or next;
         my $lemma_and_pos = get_lemma_and_pos( $en_tnode, $cs_tnode );
         if ( defined $lemma_and_pos ) {
             my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
             $cs_tnode->set_t_lemma($cs_tlemma);
-            $cs_tnode->set_attr( 't_lemma_origin', 'rule-Translate_L_try_rules' );
+            $cs_tnode->set_t_lemma_origin('rule-Translate_L_try_rules');
             $cs_tnode->set_attr( 'mlayer_pos',     $m_pos )
         }
     }

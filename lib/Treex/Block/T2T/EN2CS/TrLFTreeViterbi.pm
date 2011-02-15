@@ -57,7 +57,7 @@ sub process_bundle {
         my $new_formeme = $state->get_formeme();
         if ( $new_formeme ne $node->formeme ) {
             $node->set_formeme($new_formeme);
-            $node->set_attr( 'formeme_origin', 'viterbi' );
+            $node->set_formeme_origin('viterbi');
         }
     }
     return;

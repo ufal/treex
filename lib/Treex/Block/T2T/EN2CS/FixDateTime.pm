@@ -22,7 +22,7 @@ sub process_bundle {
 
 sub process_year {
     my ($t_node) = @_;
-    my $en_t_node = $t_node->get_source_tnode() or return;
+    my $en_t_node = $t_node->src_tnode or return;
     my $year      = $t_node->t_lemma;
     my $new_node  = $t_node->get_parent()->create_child(
         {   attributes => {
@@ -34,7 +34,7 @@ sub process_year {
                 'gram/number'    => 'sg',
                 'gram/gender'    => 'inan',
                 'mlayer_pos'     => 'N',
-                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->get_attr('formeme_origin') . ')',
+                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
                 }
         }
     );
@@ -42,7 +42,7 @@ sub process_year {
     # The new node's source/head.rf should point to the English year-node.
     # (It is useful e.g. when checking source node's formeme.)
 
-    $new_node->set_source_tnode($en_t_node);
+    $new_node->set_src_tnode($en_t_node);
 
     # "in 1980's" -> "v 80. letech"
     # "in 1980s"  -> "v 80. letech"
@@ -52,7 +52,7 @@ sub process_year {
     {
         $year =~ /(..)s?$/;
         $t_node->set_t_lemma("$1.");
-        $t_node->set_attr( 't_lemma_origin', 'rule-Fix_date_time' );
+        $t_node->set_t_lemma_origin('rule-Fix_date_time');
         $new_node->shift_after_node( $t_node, { without_children => 1 } );
         $new_node->set_attr( 'gram/number', 'pl' );
         $new_node->set_attr( 'gram/gender', 'neut' );    # to distinguish "v rocích" and "v letech"
@@ -65,7 +65,7 @@ sub process_year {
     }
 
     $t_node->set_formeme('x');
-    $t_node->set_attr( 'formeme_origin', 'rule-Fix_date_time' );
+    $t_node->set_formeme_origin('rule-Fix_date_time');
     $t_node->set_parent($new_node);
     foreach my $child ( $t_node->get_children() ) {
         $child->set_parent($new_node);
@@ -75,7 +75,7 @@ sub process_year {
 
 sub process_range_of_years {
     my ($t_node) = @_;
-    my $en_t_node = $t_node->get_source_tnode();
+    my $en_t_node = $t_node->src_tnode;
     my ( $first, $second ) = split( /-/, $t_node->t_lemma );
 
     # new node 'rok'
@@ -89,17 +89,17 @@ sub process_range_of_years {
                 'gram/gender'    => 'neut',                                                              # 'v letech...', not 'v rocich...'
                 'mlayer_pos'     => 'N',
                 'formeme'        => $t_node->formeme,
-                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->get_attr('formeme_origin') . ')',
+                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
                 }
         }
     );
     $rok_node->shift_before_node( $t_node, { without_children => 1 } );
-    $rok_node->set_source_tnode($en_t_node);
+    $rok_node->set_src_tnode($en_t_node);
 
     # first year node
     $t_node->set_t_lemma($first);
     $t_node->set_formeme('x');
-    $t_node->set_attr( 'formeme_origin', 'rule-Fix_date_time' );
+    $t_node->set_formeme_origin('rule-Fix_date_time');
     $t_node->set_parent($rok_node);
     foreach my $child ( $t_node->get_children() ) {
         $child->set_parent($rok_node);
@@ -118,7 +118,7 @@ sub process_range_of_years {
         }
     );
     $second_node->shift_after_node( $t_node, { without_children => 1 } );
-    $second_node->set_source_tnode($en_t_node);
+    $second_node->set_src_tnode($en_t_node);
 
     return;
 
@@ -136,7 +136,7 @@ sub process_month {
     my $t_lemma = $t_node->t_lemma;
     if ( $t_lemma !~ /\.$/ ) {
         $t_node->set_attr( 't_lemma',        $t_lemma . '.' );
-        $t_node->set_attr( 't_lemma_origin', 'rule-Fix_date_time' );
+        $t_node->set_t_lemma_origin('rule-Fix_date_time');
     }
 
     # Change word order
@@ -146,7 +146,7 @@ sub process_month {
     # "on January 9" -> "9. ledna"
     if ( $p_formeme =~ /^n:(na|v)/ ) {
         $parent->set_formeme('n:2');
-        $parent->set_attr( 'formeme_origin', 'rule-Fix_date_time' );
+        $parent->set_formeme_origin('rule-Fix_date_time');
     }
     return;
 }

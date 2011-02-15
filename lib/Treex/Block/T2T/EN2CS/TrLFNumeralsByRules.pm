@@ -13,17 +13,17 @@ sub process_bundle {
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
         my $sempos = $cs_tnode->get_attr('gram/sempos') or next;
         next if $sempos ne 'n.quant.def';
-        my $en_tnode = $cs_tnode->get_source_tnode() or next;
+        my $en_tnode = $cs_tnode->src_tnode or next;
         next if $en_tnode->formeme ne 'n:attr';
         $cs_tnode->set_formeme('n:attr');
-        $cs_tnode->set_attr( 'formeme_origin', 'rule-numeral' );
-        $cs_tnode->set_attr( 't_lemma_origin', 'rule-numeral' );
+        $cs_tnode->set_formeme_origin('rule-numeral');
+        $cs_tnode->set_t_lemma_origin('rule-numeral');
 
         # delete variants
         $cs_tnode->set_attr( 'translation_model/t_lemma_variants', undef );
         $cs_tnode->set_attr( 'translation_model/formeme_variants', undef );
 
-        #my $en_tnode = $cs_tnode->get_source_tnode() or next;
+        #my $en_tnode = $cs_tnode->src_tnode or next;
         #my $cs_lemma = $cs_tnode->t_lemma;
         #my $en_lemma = $en_tnode->t_lemma;
         #print "$en_lemma\t$cs_lemma\n";

@@ -17,13 +17,13 @@ sub process_bundle {
     NODE:
     foreach my $cs_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
         next NODE if !$cs_node->is_passive;
-        my $en_node = $cs_node->get_source_tnode() or next NODE;
+        my $en_node = $cs_node->src_tnode or next NODE;
         my $en_lemma = $en_node->t_lemma;
         next NODE if !$IS_RAISING_VERB{$en_lemma};
         my @cs_children = $cs_node->get_children( { ordered => 1 } );
         next NODE if @cs_children != 2;
         my ( $cs_noun, $cs_verb ) = @cs_children;
-        my ( $en_noun, $en_verb ) = map { $_->get_source_tnode() } @cs_children;
+        my ( $en_noun, $en_verb ) = map { $_->src_tnode } @cs_children;
         next NODE if !$en_noun || !$en_verb;
         next NODE if $en_noun->formeme ne 'n:subj';
         next NODE if $en_verb->formeme ne 'v:to+inf';
@@ -47,14 +47,14 @@ sub process_bundle {
 
         $cs_verb->set_attr( 'gram/tense',     'post' );
         $cs_verb->set_formeme('v:že+fin');
-        $cs_verb->set_attr( 'formeme_origin', 'rule-Transform_passive_constructions' );
+        $cs_verb->set_formeme_origin('rule-Transform_passive_constructions');
         my $cor_node = first { $_->t_lemma eq '#Cor' } $cs_verb->get_children();
         $to_be_deleted{$cor_node} = $cor_node if $cor_node;
 
         $cs_noun->shift_before_subtree($cs_verb);
         $cs_noun->set_parent($cs_verb);
         $cs_noun->set_formeme('n:1');
-        $cs_noun->set_attr( 'formeme_origin', 'rule-Transform_passive_constructions' );
+        $cs_noun->set_formeme_origin('rule-Transform_passive_constructions');
     }
 
     foreach my $node ( values %to_be_deleted ) {

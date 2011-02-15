@@ -35,7 +35,7 @@ sub process_bundle {
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
 
         # We want to process only nodes with more than one formeme variant
-        next if $cs_tnode->get_attr('formeme_origin') ne 'dict-first';
+        next if $cs_tnode->formeme_origin ne 'dict-first';
 
         process_tnode( $cs_tnode, $max_variants, $discount );
     }
@@ -44,7 +44,7 @@ sub process_bundle {
 
 sub process_tnode {
     my ( $cs_tnode, $max_variants, $discount ) = @_;
-    my $en_tnode        = $cs_tnode->get_source_tnode();
+    my $en_tnode        = $cs_tnode->src_tnode;
     my $en_formeme      = $en_tnode->formeme;
     my ($en_parent)     = $en_tnode->get_eff_parents();
     my $en_parent_lemma = $en_parent->t_lemma || '_ROOT';

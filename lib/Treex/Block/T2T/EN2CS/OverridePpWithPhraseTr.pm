@@ -41,7 +41,7 @@ sub process_subtree {
 
 sub process_node {
     my ($cs_tnode) = @_;
-    my $en_tnode = $cs_tnode->get_source_tnode() or return;
+    my $en_tnode = $cs_tnode->src_tnode or return;
     return if $en_tnode->formeme !~ /\+X/;
     return if $en_tnode->get_descendants() >= 2;
     return if $cs_tnode->get_descendants() >= 2;
@@ -52,8 +52,8 @@ sub process_node {
 
     $cs_tnode->set_t_lemma($cs_phrase);
     $cs_tnode->set_formeme('phrase:');
-    $cs_tnode->set_attr( 't_lemma_origin', 'rule-Override_pp_with_phrase_translation' );
-    $cs_tnode->set_attr( 'formeme_origin', 'rule-Override_pp_with_phrase_translation' );
+    $cs_tnode->set_t_lemma_origin('rule-Override_pp_with_phrase_translation');
+    $cs_tnode->set_formeme_origin('rule-Override_pp_with_phrase_translation');
     foreach my $descendant ( $cs_tnode->get_descendants() ) {
         $descendant->disconnect();
     }
@@ -61,7 +61,7 @@ sub process_node {
     # Don't try to inflect this node in the synthesis
     $cs_tnode->set_nodetype('atom');    #TODO: more elegant hack
 
-    Report::debug( 'Success: ' . $cs_tnode->get_attr('id') . " : $cs_phrase", 1 );
+    Report::debug( 'Success: ' . $cs_tnode->id . " : $cs_phrase", 1 );
     return 1;
 }
 

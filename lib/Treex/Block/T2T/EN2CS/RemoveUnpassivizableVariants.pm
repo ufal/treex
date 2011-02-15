@@ -20,7 +20,7 @@ sub process_bundle {
 
     foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
 
-        next if ($cs_tnode->get_attr('t_lemma_origin')||"") !~ /^dict-first/;
+        next if ($cs_tnode->t_lemma_origin||"") !~ /^dict-first/;
 
         if ($cs_tnode->is_passive) {
 
