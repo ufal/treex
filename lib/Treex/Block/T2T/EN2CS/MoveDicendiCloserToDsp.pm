@@ -8,30 +8,26 @@ use Report;
 use Lexicon::Czech;
 
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
+    return if ! Lexicon::Czech::is_dicendi_verb($t_node->t_lemma);
+    my @children = $t_node->get_children( { ordered => 1 } );
 
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        next if ! Lexicon::Czech::is_dicendi_verb($t_node->t_lemma);
-        my @children = $t_node->get_children( { ordered => 1 } );
+    my ($speech_root) = reverse grep { $_->formeme eq 'v:fin' } @children;
+    return if !$speech_root || $t_node->precedes($speech_root);
 
-        my ($speech_root) = reverse grep { $_->formeme eq 'v:fin' } @children;
-        next if !$speech_root || $t_node->precedes($speech_root);
+    # 1. Direct speech (with quotes)
+    # Shift dicendi verb just after the closing quote node.
+    # Quotes are usually hanged on the dicendi verb, not on the $speech_root.
+    my ($quot) = reverse grep { $_->t_lemma =~ /[“"]/ } @children;
+    if ( $quot && $quot->precedes($t_node) ) {
+        $t_node->shift_after_node( $quot, { without_children => 1 } );
+    }
 
-        # 1. Direct speech (with quotes)
-        # Shift dicendi verb just after the closing quote node.
-        # Quotes are usually hanged on the dicendi verb, not on the $speech_root.
-        my ($quot) = reverse grep { $_->t_lemma =~ /[“"]/ } @children;
-        if ( $quot && $quot->precedes($t_node) ) {
-            $t_node->shift_after_node( $quot, { without_children => 1 } );
-        }
-
-        # 2. Indirect speech (no quotes)
-        # Shift dicendi verb just after the speech subtree.
-        else {
-            $t_node->shift_after_subtree( $speech_root, { without_children => 1 } );
-        }
+    # 2. Indirect speech (no quotes)
+    # Shift dicendi verb just after the speech subtree.
+    else {
+        $t_node->shift_after_subtree( $speech_root, { without_children => 1 } );
     }
     return;
 }
@@ -49,6 +45,6 @@ just after the last token of the speech clause.
 
 =cut
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+# Copyright 2008-2011 Zdenek Zabokrtsky, Martin Popel, David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

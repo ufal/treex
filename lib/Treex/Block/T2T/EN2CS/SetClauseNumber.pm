@@ -4,14 +4,12 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-
-
 my $max_number;    # Maximal clause_number assigned so far
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
     $max_number = 0;
-    foreach my $subroot ( $bundle->get_tree('TCzechT')->get_children( { ordered => 1 } ) ) {
+    foreach my $subroot ( $zone->get_ttree->get_children( { ordered => 1 } ) ) {
         recursive_numbering( $subroot, ++$max_number );
     }
     return;

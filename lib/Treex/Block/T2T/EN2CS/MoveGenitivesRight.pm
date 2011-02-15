@@ -4,34 +4,28 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
+    # reorder just genitives or prepositional groups
+    return if $cs_tnode->formeme !~ /^n:([237]|.*\+\d)/;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+    # don't reorder personal pronouns
+    return if $cs_tnode->t_lemma eq '#PersPron';
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    # don't reorder numerals (e.g. dvou žen)
+    return if ($cs_tnode->get_attr('mlayer_pos') || '') eq 'C';
 
-        # reorder just genitives or prepositional groups
-        next if $cs_tnode->formeme !~ /^n:([237]|.*\+\d)/;
+    # don't reorder when source formeme was not n:poss or n:attr
+    my $en_tnode = $cs_tnode->get_source_tnode() or next;
+    return if $en_tnode->formeme !~ /n:(poss|attr)/;
 
-        # don't reorder personal pronouns
-        next if $cs_tnode->t_lemma eq '#PersPron';
+    # don't reorder when the dependent is already in the postposition
+    my ($cs_tparent) = $cs_tnode->get_parent();
+    return if $cs_tparent->get_ordering_value() < $cs_tnode->get_ordering_value();
 
-        # don't reorder numerals (e.g. dvou žen)
-        next if ($cs_tnode->get_attr('mlayer_pos') || '') eq 'C';
-
-        # don't reorder when source formeme was not n:poss or n:attr
-        my $en_tnode = $cs_tnode->get_source_tnode() or next;
-        next if $en_tnode->formeme !~ /n:(poss|attr)/;
-
-        # don't reorder when the dependent is already in the postposition
-        my ($cs_tparent) = $cs_tnode->get_parent();
-        next if $cs_tparent->get_ordering_value() < $cs_tnode->get_ordering_value();
-
-        # now we can do the reordering
-        $cs_tnode->shift_after_node($cs_tparent);
-    }
+    # now we can do the reordering
+    $cs_tnode->shift_after_node($cs_tparent);
     return;
 }
 

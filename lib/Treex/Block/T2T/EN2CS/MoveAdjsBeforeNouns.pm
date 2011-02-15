@@ -4,13 +4,9 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-
-
-sub process_bundle {
-
-    my ( $self, $bundle ) = @_;
-
-    foreach my $tnode ($bundle->get_tree('TCzechT')->get_descendants) {
+sub process_ttree {
+    my ( $self, $troot ) = @_;
+    foreach my $tnode ($troot->get_descendants) {
 
 	if (($tnode->formeme||"") =~ /(adj:attr|poss)/
 	    and $tnode->get_parent->precedes($tnode) and not $tnode->get_children
@@ -30,7 +26,7 @@ sub process_bundle {
                                       # and also any verb clauses
                                       or ($_->formeme||"") =~ /^v/
 			      )
-		} $bundle->get_tree('TCzechT')->get_descendants) {
+		} $troot->get_descendants) {
 
 #		print $tnode->t_lemma."\t(".$leftmost->t_lemma.")\t".$tnode->get_parent->t_lemma."\t"
 #		    .$bundle->get_attr('czech_target_sentence')."\n";

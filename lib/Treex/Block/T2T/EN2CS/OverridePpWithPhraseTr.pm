@@ -4,9 +4,6 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-use Report;
-
-
 my $input_file = 'resource_data/translation_dictionaries/manually_selected_prob_Wt_given_Ws.tsv';
 
 sub get_required_share_files {return $input_file;}
@@ -22,10 +19,8 @@ sub BUILD{
     close($I);
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
     # Process all nodes by recursion
     foreach my $child ( $t_root->get_children() ) {
         process_subtree($child);

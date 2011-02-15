@@ -7,27 +7,27 @@ has '+language' => ( default => 'cs' );
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-        my $formeme = $t_node->formeme;
-        my $pos = $t_node->get_attr('mlayer_pos') || '';
+    my $formeme = $t_node->formeme;
+    my $pos = $t_node->get_attr('mlayer_pos') || '';
 
-        # Skip everything except verbs
-        next if $formeme !~ /^v/ && $pos ne 'V';
+    # Skip everything except verbs
+    return if $formeme !~ /^v/ && $pos ne 'V';
 
-        my $sentmod = $t_node->sentmod || '';
-        my $a_node = $t_node->get_lex_anode();
+    my $sentmod = $t_node->sentmod || '';
+    my $a_node = $t_node->get_lex_anode();
 
-        if ( $formeme =~ /inf/ ) { resolve_infinitive( $t_node, $a_node ); }
-        elsif ( $sentmod eq 'imper' ) { resolve_imperative( $t_node, $a_node ); }
-        else {
-            ## Skip nodes with already filled values
-            my ( $old_subpos, $old_tense ) = $a_node->get_attrs(qw(morphcat/subpos morphcat/tense));
-            next if $old_subpos && $old_subpos ne '.' && $old_tense && $old_tense ne '.';
+    if ( $formeme =~ /inf/ ) { resolve_infinitive( $t_node, $a_node ); }
+    elsif ( $sentmod eq 'imper' ) { resolve_imperative( $t_node, $a_node ); }
+    else {
+        ## Skip nodes with already filled values
+        my ( $old_subpos, $old_tense ) = $a_node->get_attrs(qw(morphcat/subpos morphcat/tense));
+        return if $old_subpos && $old_subpos ne '.' && $old_tense && $old_tense ne '.';
 
-            # Fill subPOS and tense
-            my ( $subpos, $tense ) = get_subpos_tense_of_finite( $t_node, $a_node );
-            $a_node->set_attr( 'morphcat/subpos', $subpos );
-            $a_node->set_attr( 'morphcat/tense', $tense ) if $tense;
-        }
+        # Fill subPOS and tense
+        my ( $subpos, $tense ) = get_subpos_tense_of_finite( $t_node, $a_node );
+        $a_node->set_attr( 'morphcat/subpos', $subpos );
+        $a_node->set_attr( 'morphcat/tense', $tense ) if $tense;
+    }
     return;
 }
 

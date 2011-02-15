@@ -4,18 +4,13 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
-
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_aux_root = $bundle->get_tree('TCzechT');
-        my $ord;
-        foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_aux_root->get_descendants ) {
-            $ord++;
-            $t_node->set_ord($ord);
-        }
+    my $ord;
+    foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_root->get_descendants ) {
+        $ord++;
+        $t_node->set_ord($ord);
     }
 }
 

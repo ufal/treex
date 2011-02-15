@@ -4,24 +4,15 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
-
-    foreach my $cs_tnode ( $cs_troot->get_descendants ) {
-
-        my $formeme = $cs_tnode->formeme;
-        my $parent = $cs_tnode->get_parent;
-
-        if ( $cs_tnode->t_lemma eq '#PersPron'
-          && $parent ne $cs_troot  
-          && $parent->formeme =~ /^v:/
-          && $cs_tnode->formeme !~ /^n:1/
-          && $cs_tnode->ord > $parent->ord ) {
-            $cs_tnode->shift_after_node($parent);
-        }
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
+    my $parent = $tnode->get_parent;
+    if ( $tnode->t_lemma eq '#PersPron'
+      && !$parent->is_root  
+      && $parent->formeme =~ /^v:/
+      && $tnode->formeme !~ /^n:1/
+      && $tnode->ord > $parent->ord ) {
+        $tnode->shift_after_node($parent);
     }
     return;
 }

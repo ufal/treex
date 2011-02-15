@@ -3,23 +3,13 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-sub process_bundle {
-
-    my ( $self, $bundle ) = @_;
-
-    foreach my $tnode ($bundle->get_tree('TCzechT')->get_descendants) {
-
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 	if (($tnode->t_lemma||'') eq 'dost'
-                and ($tnode->get_parent->get_attr('mlayer_pos')||'') eq 'A'
-                    and $tnode->get_parent->precedes($tnode)) {
-
-            $tnode->shift_before_node($tnode->get_parent);
-
+      and ($tnode->get_parent->get_attr('mlayer_pos')||'') eq 'A'
+      and $tnode->get_parent->precedes($tnode)) {
+        $tnode->shift_before_node($tnode->get_parent);
 	}
-    }
 }
 
 1;

@@ -4,16 +4,10 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-
-
-binmode STDERR,":utf8";
-
-sub process_bundle {
-
-    my ( $self, $bundle ) = @_;
-
-    my $t_root = $bundle->get_tree('TCzechT');
+    my $t_root = $zone->get_ttree();
 
     foreach my $perspron (
 	grep {
@@ -24,8 +18,8 @@ sub process_bundle {
 	my $antec_ids_rf = $perspron->get_attr('coref_text.rf');
 
 	# !!! ruseni koreferencnich linku vedoucich na smazane uzly by chtelo zajistit nejak lip!
-	if ($antec_ids_rf and $bundle->get_document->id_is_indexed($antec_ids_rf->[0])) {
-	    my $antec = $bundle->get_document->get_node_by_id($antec_ids_rf->[0]);
+	if ($antec_ids_rf and $zone->get_document->id_is_indexed($antec_ids_rf->[0])) {
+	    my $antec = $zone->get_document->get_node_by_id($antec_ids_rf->[0]);
 	    my $clause_head = _nearest_clause_head($perspron);
 
 	    if ( $antec->formeme =~ /n:1/
