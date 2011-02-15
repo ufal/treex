@@ -1,12 +1,6 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+
 use Treex::Core::Run;
-use List::MoreUtils qw(first_index);
-my $idx   = first_index {$_ eq '--'} @ARGV;
-my %args;
-$args{command} = join " ",@ARGV;
-$args{argv} = \@ARGV;
-$args{filenames} = [splice @ARGV, $idx+1] if $idx != -1;
-my $app = Treex::Core::Run->new_with_options(\%args);
-$app->execute();
+treex (\@ARGV);

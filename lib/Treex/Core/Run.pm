@@ -18,7 +18,7 @@ has 'quiet' => (
     cmd_aliases => 'q',
     is          => 'rw', isa => 'Bool', default => 0,
     trigger => sub { Treex::Core::Log::set_error_level('FATAL'); },
-    documentation => q{TODO don't print any TMT-INFO messages},
+    documentation => q{Warning, info and debug messages are surpressed. Only fatal errors are reported.},
 );
 
 has 'lang' => (
@@ -92,11 +92,13 @@ has 'qsub' => (
 
 has 'command' => (
     is            => 'rw',
+    traits        => ['NoGetopt'],
     documentation => 'Command by which treex was executed (if executed from command line)',
 );
 
 has 'argv' => (
     is            => 'rw',
+    traits        => ['NoGetopt'],
     documentation => 'reference to @ARGV (if executed from command line)'
 );
 
@@ -231,7 +233,40 @@ sub _execute_on_cluster {
             # qsub
         }
     }
+}
 
+
+
+use List::MoreUtils qw(first_index);
+use Exporter;
+use base 'Exporter';
+our @EXPORT = qw(treex);
+
+
+# not a method !
+sub treex {
+    my $arguments = shift; # ref to array of arguments, or a string containing all arguments as on the command line
+
+    if (ref($arguments) eq "ARRAY") {
+
+	@ARGV = @$arguments;
+	my $idx   = first_index {$_ eq '--'} @ARGV;
+	my %args;
+	$args{command} = join " ",@ARGV;
+	$args{argv} = \@ARGV;
+	$args{filenames} = [splice @ARGV, $idx+1] if $idx != -1;
+	my $app = Treex::Core::Run->new_with_options(\%args);
+	$app->execute();
+
+    }
+
+    elsif (defined $arguments) {
+	treex( [ grep {$_} split(/\s/,$arguments) ] );
+    }
+
+    else {
+	log_fatal "Unspecified arguments for running treex.";
+    }
 }
 
 1;
