@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
@@ -18,12 +16,13 @@ sub process_ttree {
 
 sub process_finite_verb {
     my ($t_vfin) = @_;
-    my $a_vfin = $t_vfin->get_lex_anode();
-    my $a_subj = find_a_subject_of($a_vfin);
+    my $a_vfin   = $t_vfin->get_lex_anode();
+    my $a_subj   = find_a_subject_of($a_vfin);
 
-    if (not $a_subj) {
+    if ( not $a_subj ) {
+
         # 'He managed to...' --> 'Podarilo se mu...'
-        if ($t_vfin->t_lemma =~ /^((po)?(dařit)|líbit)/) {
+        if ( $t_vfin->t_lemma =~ /^((po)?(dařit)|líbit)/ ) {
             $a_vfin->set_attr( 'morphcat/gender', 'N' );
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );
@@ -43,15 +42,15 @@ sub process_finite_verb {
         return;
     }
 
-    if ($subj_lemma =~ /^(nikdo|kdo|někdo|kdokoli)$/) {
+    if ( $subj_lemma =~ /^(nikdo|kdo|někdo|kdokoli)$/ ) {
         $a_vfin->set_attr( 'morphcat/gender', 'M' );
 
         # sg is default, but pl might have come from rel.clause agreement, 'those who came'
-        if ($a_subj->get_attr('morphcat/number') eq 'P') {
+        if ( $a_subj->get_attr('morphcat/number') eq 'P' ) {
             $a_vfin->set_attr( 'morphcat/number', 'P' );
         }
         else {
-            $a_vfin->set_attr( 'morphcat/number','S');
+            $a_vfin->set_attr( 'morphcat/number', 'S' );
         }
 
         $a_vfin->set_attr( 'morphcat/person', '3' );
@@ -69,7 +68,7 @@ sub process_finite_verb {
 
     # koordinovany subjekt -> sloveso v pluralu
     # "Plurál nebo singulár je/jsou ošidná mluvnická kategorie."
-    if ( $a_subj->is_member && $a_subj->get_parent()->lemma ne 'nebo') {
+    if ( $a_subj->is_member && $a_subj->get_parent()->lemma ne 'nebo' ) {
         $a_vfin->set_attr( 'morphcat/number', 'P' );
     }
 
@@ -79,10 +78,10 @@ sub process_finite_verb {
 sub find_a_subject_of {
     my ($a_vfin) = @_;
     my @children = $a_vfin->get_echildren;
-    my @subjects = grep { ($_->afun||'') eq 'Sb' } @children;
+    my @subjects = grep { ( $_->afun || '' ) eq 'Sb' } @children;
     if (@subjects) {
-	return $subjects[0];
-    };
+        return $subjects[0];
+    }
     return;
 }
 
@@ -91,13 +90,15 @@ my $generator = CzechMorpho::Generator->new();
 
 sub is_neutrum_lemma {
     my ($subj_lemma) = @_;
-    return (( $subj_lemma =~ /^\d+$/ && $subj_lemma > 4 )
-	    || $subj_lemma =~ /^\d+,\d+$/
-	    || $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)/
+    return (
+        ( $subj_lemma =~ /^\d+$/ && $subj_lemma > 4 )
+            || $subj_lemma =~ /^\d+,\d+$/
+            || $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)/
 
-                # 'osm z deseti stacilo','malo stacilo'
-                ||  first { $_->{tag} =~ /^C[na]/ }
-                    $generator->generate_all($subj_lemma));
+            # 'osm z deseti stacilo','malo stacilo'
+            || first { $_->{tag} =~ /^C[na]/ }
+        $generator->generate_all($subj_lemma)
+    );
 }
 
 1;

@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_zone {
     my ( $self, $zone ) = @_;
 
@@ -29,7 +26,7 @@ sub process_zone {
 
         # in direct speech, capitalization is allowed only after the opening quote
         my $prev_node = $first_word->get_prev_node;
-        next if $prev_node and ($prev_node->get_attr('morphcat/pos')||'') ne "Z";
+        next if $prev_node and ( $prev_node->get_attr('morphcat/pos') || '' ) ne "Z";
 
         $first_word->set_attr( 'form', ucfirst( $first_word->form ) );
 

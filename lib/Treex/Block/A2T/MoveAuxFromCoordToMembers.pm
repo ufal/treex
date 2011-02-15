@@ -17,22 +17,22 @@ sub check_coordination {
 
     # TODO: can we use get_echildren() now?
     # Afuns are surely not filled, but is_member should suffice.
-    my @t_children = $t_coord->get_children( { ordered => 1 }) or return;
+    my @t_children = $t_coord->get_children( { ordered => 1 } ) or return;
     my @aux_anodes = $t_coord->get_aux_anodes();
     my ( @aux_to_coord, @aux_to_members );
 
     # get surface position of the first and last child
-    my ($first_child_ord, $last_child_ord);
+    my ( $first_child_ord, $last_child_ord );
     my @coord_members = grep { $_->is_member } @t_children;
-    while (@coord_members and not $coord_members[0]->get_lex_anode ) {
+    while ( @coord_members and not $coord_members[0]->get_lex_anode ) {
         shift @coord_members;
     }
-    while (@coord_members and not $coord_members[$#coord_members]->get_lex_anode ) {
+    while ( @coord_members and not $coord_members[$#coord_members]->get_lex_anode ) {
         pop @coord_members;
     }
-    if ( @coord_members ) {
+    if (@coord_members) {
         $first_child_ord = $coord_members[0]->get_lex_anode->ord;
-        $last_child_ord = $coord_members[$#coord_members]->get_lex_anode->ord;
+        $last_child_ord  = $coord_members[$#coord_members]->get_lex_anode->ord;
     }
 
     # Distinguish two types of aux a-nodes:
@@ -40,7 +40,7 @@ sub check_coordination {
     # @aux_to_members - will be "moved" to members' a/aux.rf (mostly prepositions)
     foreach my $aux (@aux_anodes) {
         my $aux_ord = $aux->ord;
-        my $is_between_members = ( @coord_members && $aux_ord > $first_child_ord && $aux_ord < $last_child_ord) ? 1 : 0;
+        my $is_between_members = ( @coord_members && $aux_ord > $first_child_ord && $aux_ord < $last_child_ord ) ? 1 : 0;
         if ( $self->can_be_aux_to_coord($aux) or $is_between_members ) {
             push @aux_to_coord, $aux;
         }

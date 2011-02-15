@@ -3,26 +3,23 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    my $root = $bundle->get_tree('TCzechT');
+    my $root  = $bundle->get_tree('TCzechT');
     my @nodes = $root->get_descendants();
-    
+
     # Array of first effective parents of every node
-    my @eff_parents = map {my ($ep) = $_->get_eff_parents(); $ep} @nodes;
-    
-    foreach my $i (0 .. $#nodes){
-        my $node = $nodes[$i];
-        my $ep = $eff_parents[$i];
+    my @eff_parents = map { my ($ep) = $_->get_eff_parents(); $ep } @nodes;
+
+    foreach my $i ( 0 .. $#nodes ) {
+        my $node   = $nodes[$i];
+        my $ep     = $eff_parents[$i];
         my $parent = $node->get_parent();
         next if $parent eq $ep;
-        $node->set_deref_attr('original_parent.rf', $parent);
+        $node->set_deref_attr( 'original_parent.rf', $parent );
         $node->set_parent($ep);
     }
-    
+
     return;
 }
 

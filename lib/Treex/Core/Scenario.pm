@@ -30,14 +30,15 @@ has _global_params => (
 
 # attrs for parallelized processing (forwarder from a runner to its reader block)
 has jobs => (
-	     is => 'rw',
-#	     isa => 'Int',
-	    );
-has modulo => (
-	       is => 'rw',
-#	       isa => 'Int',
-	      );
+    is => 'rw',
 
+    #	     isa => 'Int',
+);
+has modulo => (
+    is => 'rw',
+
+    #	       isa => 'Int',
+);
 
 use Treex::Core::Log;
 use File::Basename;
@@ -94,12 +95,11 @@ sub BUILD {
 
     # if running in parallelized mode
     # there should be a check that the reader handles BaseReader (because of next_file)
-    if (defined $self->modulo) {
-	$self->document_reader->set_modulo($self->modulo);
-	$self->document_reader->set_jobs($self->jobs);
-	log_info "Jobs and modulo forwarder to the reader.";
+    if ( defined $self->modulo ) {
+        $self->document_reader->set_modulo( $self->modulo );
+        $self->document_reader->set_jobs( $self->jobs );
+        log_info "Jobs and modulo forwarder to the reader.";
     }
-
 
     log_info('');
     log_info('   ALL BLOCKS SUCCESSFULLY LOADED.');

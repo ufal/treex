@@ -3,9 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 use Lexicon::Czech;
-
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -46,7 +44,8 @@ sub process_year {
 
     # "in 1980's" -> "v 80. letech"
     # "in 1980s"  -> "v 80. letech"
-    if ($year =~ /0s$/ ||
+    if ($year =~ /0s$/
+        ||
         ( $year =~ /0$/ && any { $_->form eq "\'s" } $en_t_node->get_aux_anodes() )
         )
     {
@@ -86,7 +85,7 @@ sub process_range_of_years {
                 'functor'        => '???',
                 'gram/sempos'    => 'n.denot',
                 'gram/number'    => 'pl',
-                'gram/gender'    => 'neut',                                                              # 'v letech...', not 'v rocich...'
+                'gram/gender'    => 'neut',                                                  # 'v letech...', not 'v rocich...'
                 'mlayer_pos'     => 'N',
                 'formeme'        => $t_node->formeme,
                 'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
@@ -135,7 +134,7 @@ sub process_month {
     # 4   -> 4  -> 4. (period added)
     my $t_lemma = $t_node->t_lemma;
     if ( $t_lemma !~ /\.$/ ) {
-        $t_node->set_t_lemma($t_lemma . '.' );
+        $t_node->set_t_lemma( $t_lemma . '.' );
         $t_node->set_t_lemma_origin('rule-Fix_date_time');
     }
 

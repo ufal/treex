@@ -28,7 +28,6 @@ sub process_zone {
     return 1;
 }
 
-
 sub build_subtree {
     my ( $parent_anode, $parent_tnode ) = @_;
 
@@ -50,7 +49,6 @@ sub build_subtree {
     }
     return;
 }
-
 
 sub add_anode_to_tnode {
     my ( $a_node, $t_node ) = @_;
@@ -89,7 +87,6 @@ sub add_anode_to_tnode {
     $t_node->set_t_lemma( $a_node->lemma );
     return;
 }
-
 
 1;
 

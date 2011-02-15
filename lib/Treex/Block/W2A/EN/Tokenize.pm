@@ -5,8 +5,6 @@ use Treex::Moose;
 
 extends 'Treex::Block::W2A::Tokenize';
 
-
-
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
     $sentence = super();

@@ -23,8 +23,10 @@ sub require_file_from_share {
             log_info("Successfully downloaded to $file");
         }
         else {
-            log_fatal("Error when trying to download "
-                . "$url and to store it as $file ($response_code)\n");
+            log_fatal(
+                "Error when trying to download "
+                    . "$url and to store it as $file ($response_code)\n"
+            );
         }
     }
     return;

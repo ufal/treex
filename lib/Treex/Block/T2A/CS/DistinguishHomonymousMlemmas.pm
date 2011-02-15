@@ -3,31 +3,31 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-            if ($tnode->t_lemma =~ /^stát(_se)?$/
-                and $tnode->get_attr('mlayer_pos') eq "V") {
+    if ($tnode->t_lemma =~ /^stát(_se)?$/
+        and $tnode->get_attr('mlayer_pos') eq "V"
+        )
+    {
 
-            my $anode = $tnode->get_lex_anode;
-            my $src_tnode = $tnode->src_tnode;
+        my $anode     = $tnode->get_lex_anode;
+        my $src_tnode = $tnode->src_tnode;
 
-            my $index;
-            my $source_tlemma =  $src_tnode->t_lemma;
+        my $index;
+        my $source_tlemma = $src_tnode->t_lemma;
 
-            if ($source_tlemma =~ /^(happen|become|get|grow|be)$/) {
-                $index = 2;
-            }
-            elsif ($source_tlemma =~ /^(stand|move|stop|go|insist)$/) {
-                $index = 3;
-            }
-            else  { # nejcastejsi: cost
-                $index = 4;
-            }
+        if ( $source_tlemma =~ /^(happen|become|get|grow|be)$/ ) {
+            $index = 2;
+        }
+        elsif ( $source_tlemma =~ /^(stand|move|stop|go|insist)$/ ) {
+            $index = 3;
+        }
+        else {    # nejcastejsi: cost
+            $index = 4;
+        }
 
-            $anode->set_lemma($anode->lemma."-$index");
+        $anode->set_lemma( $anode->lemma . "-$index" );
 
     }
     return;

@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my %auxpast_numberperson2form = (
     'S1' => 'jsem',
     'S2' => 'jsi',
@@ -14,9 +12,8 @@ my %auxpast_numberperson2form = (
     '.1' => 'jsem',
 );
 
-
 sub process_tnode {
-    my ($self, $tnode) = @_;
+    my ( $self, $tnode ) = @_;
     my $tense = $tnode->get_attr('gram/tense') || '';
     return if $tense ne 'ant';
 
@@ -34,11 +31,11 @@ sub process_tnode {
 
     my $new_node = $anode->create_child(
         {   attributes => {
-                'lemma'      => 'být',
-                'form'       => $form,
+                'lemma'        => 'být',
+                'form'         => $form,
                 'afun'         => 'AuxV',
                 'morphcat/pos' => '!',
-            }
+                }
         }
     );
     $new_node->shift_before_node($anode);

@@ -3,10 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $cs_troot = $bundle->get_tree('TCzechT');
@@ -18,7 +14,7 @@ sub process_bundle {
         next if ( $cs_tnode->t_lemma_origin || '' ) !~ /^dict-first/;
 
         my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants') or next NODE;
-        my $en_tnode     = $cs_tnode->src_tnode                             or next NODE;
+        my $en_tnode     = $cs_tnode->src_tnode                                      or next NODE;
         my $en_tlemma    = $en_tnode->t_lemma;
 
         # Skip one-letter names (initials)
@@ -34,21 +30,21 @@ sub process_bundle {
 
             # If there were no compatible variants, add the unchanged original.
             if ( !@compatible ) {
-                @compatible = ( { t_lemma => $en_tlemma, pos => 'N', origin => 'unchanged', logprob=>0 } );
+                @compatible = ( { t_lemma => $en_tlemma, pos => 'N', origin => 'unchanged', logprob => 0 } );
             }
-            
+
             # Save the pruned list
             $cs_tnode->set_attr( 'translation_model/t_lemma_variants', \@compatible );
-            
+
             # If the first variant is different, save it also to t_lemma etc.
             my $new_tlemma = $compatible[0]->{t_lemma};
             my $old_tlemma = $cs_tnode->t_lemma;
             if ( $old_tlemma ne $new_tlemma ) {
-                $cs_tnode->set_t_lemma($compatible[0]->{t_lemma} );
-                $cs_tnode->set_attr( 'mlayer_pos',     $compatible[0]->{pos} );
-                $cs_tnode->set_t_lemma_origin('Prune_personal_name_variants+' . $compatible[0]->{origin} );
+                $cs_tnode->set_t_lemma( $compatible[0]->{t_lemma} );
+                $cs_tnode->set_attr( 'mlayer_pos', $compatible[0]->{pos} );
+                $cs_tnode->set_t_lemma_origin( 'Prune_personal_name_variants+' . $compatible[0]->{origin} );
             }
-            
+
         }
     }
     return;

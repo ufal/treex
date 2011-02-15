@@ -11,7 +11,7 @@ use Treex::Core::Document;
 #Construction testing
 
 my $document = Treex::Core::Document->new;
-my $bundle = $document->create_bundle();
+my $bundle   = $document->create_bundle();
 
 isa_ok( $bundle, 'Treex::Core::Bundle' );
 
@@ -34,13 +34,13 @@ ok( !$bundle->has_tree('TCzechT'), "Bundle doesn't contains tree, that wasn't ad
 #TODO: {
 #    todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
 
-    #	foreach ($bundle->get_tree_names()) {
-    #		ok($bundle->has_tree($_),"Bundle contains tree $_");
-    #		isa_ok($bundle->get_tree($_),'Treex::Core::Node');
-    #	}
-    #TODO: {
-    #   todo_skip 'Get all trees' . 1 unless Treex::Core::Node->meta->has_method('get_all_trees');
-    #  cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method" );
+#	foreach ($bundle->get_tree_names()) {
+#		ok($bundle->has_tree($_),"Bundle contains tree $_");
+#		isa_ok($bundle->get_tree($_),'Treex::Core::Node');
+#	}
+#TODO: {
+#   todo_skip 'Get all trees' . 1 unless Treex::Core::Node->meta->has_method('get_all_trees');
+#  cmp_ok( scalar $bundle->get_tree_names(), '==', scalar $bundle->get_all_trees(), "I got same # of trees via each method" );
 #    }
 #}
 

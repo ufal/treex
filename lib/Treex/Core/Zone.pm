@@ -15,7 +15,7 @@ has selector => ( is => 'rw', isa => 'Selector', default => '' );
 # Based on source code of Moose::Object::BUILDARGS,
 # but we don't want to copy args (return { %{$_[0]} };).
 # The motivation for this is that we want
-# to enable "Moose-aware reblessing" of Treex::PML::Struct 
+# to enable "Moose-aware reblessing" of Treex::PML::Struct
 # foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
 #     Treex::Core::BundleZone->new($zone);
 #     ...
@@ -30,7 +30,8 @@ sub BUILDARGS {
     elsif ( @_ % 2 ) {
         Carp::carp(
             "The new() method for $class expects a hash reference or a key/value list."
-                . " You passed an odd number of arguments" );
+                . " You passed an odd number of arguments"
+        );
         return { @_, undef };
     }
     else {
@@ -39,12 +40,12 @@ sub BUILDARGS {
 }
 
 sub FOREIGNBUILDARGS {
-    my $class = shift;
+    my $class   = shift;
     my $arg_ref = $class->BUILDARGS(@_);
-    
+
     # We want to reuse the $arg_ref hashref as the blessed instance variable, i.e.
     # $reuse = 1; Treex::PML::Struct->new( $arg_ref, $reuse )
-    return ($arg_ref, 1);
+    return ( $arg_ref, 1 );
 }
 
 sub set_attr {

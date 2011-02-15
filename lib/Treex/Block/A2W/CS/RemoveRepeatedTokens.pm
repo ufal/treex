@@ -3,38 +3,35 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my $original_sentence = $bundle->get_attr( 'czech_target_sentence' );
+    my $original_sentence = $bundle->get_attr('czech_target_sentence');
     my @tokens = split /\b/, $original_sentence;
 
     my $reduced_sentence;
     my $prev_nonemtpy;
 
-    foreach my $i (0..$#tokens) {
+    foreach my $i ( 0 .. $#tokens ) {
 
         if ($i == 0
-                or $tokens[$i] =~ /^\s+$/
-                    or lc($tokens[$i]) ne $prev_nonemtpy) {
+            or $tokens[$i] =~ /^\s+$/
+            or lc( $tokens[$i] ) ne $prev_nonemtpy
+            )
+        {
             $reduced_sentence .= $tokens[$i];
         }
 
-        if ($tokens[$i] !~ /^\s+$/) {
-            $prev_nonemtpy = lc($tokens[$i]);
+        if ( $tokens[$i] !~ /^\s+$/ ) {
+            $prev_nonemtpy = lc( $tokens[$i] );
         }
     }
 
-    $reduced_sentence =~ s/\s+/ /g;  # this should be rewritten, so that space is correctly preserved in all cases!!!
+    $reduced_sentence =~ s/\s+/ /g;         # this should be rewritten, so that space is correctly preserved in all cases!!!
     $reduced_sentence =~ s/ ([.,])$/$1/g;
 
-    if ($original_sentence ne $reduced_sentence) {
-        $bundle->set_attr('czech_target_sentence', $reduced_sentence);
+    if ( $original_sentence ne $reduced_sentence ) {
+        $bundle->set_attr( 'czech_target_sentence', $reduced_sentence );
     }
 }
 

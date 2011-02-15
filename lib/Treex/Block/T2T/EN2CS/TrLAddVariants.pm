@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use ProbUtils::Normalize;
 
 use TranslationModel::MaxEnt::Model;

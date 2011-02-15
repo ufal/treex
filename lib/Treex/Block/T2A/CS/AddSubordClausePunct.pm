@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_zone {
     my ( $self, $zone ) = @_;
     my $aroot          = $zone->get_atree();
@@ -32,7 +29,7 @@ sub process_zone {
         # b) left or right token is a conjunction
         #    (Commas in front of conjunctions are solved in Add_coord_punct.)
         #next if any { $_ eq 'Coord' } @afuns[$i, $i + 1]; #!!! tohle by bylo lepsi reseni, ale na afuny zatim neni spoleh
-        next if any { $_ =~ /^(a|ale|nebo|buď)$/ } @lemmas[ $i, $i + 1 ]; # deleted "i" because of "i kdyz"
+        next if any { $_ =~ /^(a|ale|nebo|buď)$/ } @lemmas[ $i, $i + 1 ];    # deleted "i" because of "i kdyz"
 
         # c) left token is an opening quote
         next if $lemmas[$i] eq '„';
@@ -52,8 +49,8 @@ sub process_zone {
 
         my $comma = $the_higher_clause_root->create_child(
             {   attributes => {
-                    'form'        => ',',
-                    'lemma'       => ',',
+                    'form'          => ',',
+                    'lemma'         => ',',
                     'afun'          => 'AuxX',
                     'morphcat/pos'  => 'Z',
                     'clause_number' => 0,
@@ -86,14 +83,16 @@ sub process_zone {
         #}
     }
 
-
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';
     @anodes = $aroot->get_descendants( { ordered => 1 } );
-    foreach my $i (0..$#anodes-2) {
-        if ($anodes[$i+1]->lemma eq 'poté'
-                and $anodes[$i]->lemma eq ',') {
-#            print $anodes[$i]->get_fposition."\n";
-            $anodes[$i]->shift_after_node($anodes[$i+1], {without_children=>1});
+    foreach my $i ( 0 .. $#anodes - 2 ) {
+        if ($anodes[ $i + 1 ]->lemma eq 'poté'
+            and $anodes[$i]->lemma   eq ','
+            )
+        {
+
+            #            print $anodes[$i]->get_fposition."\n";
+            $anodes[$i]->shift_after_node( $anodes[ $i + 1 ], { without_children => 1 } );
         }
     }
 

@@ -3,13 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_atree {
     my ( $self, $a_root ) = @_;
     my $ord;
-    foreach my $a_node ( $a_root->get_descendants({ordered => 1}) ) {
+    foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         $ord++;
         $a_node->set_ord($ord);
     }

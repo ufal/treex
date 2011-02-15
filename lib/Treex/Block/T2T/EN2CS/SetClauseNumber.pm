@@ -3,7 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 my $max_number;    # Maximal clause_number assigned so far
 
 sub process_zone {

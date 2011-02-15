@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
@@ -24,7 +22,7 @@ sub process_ttree {
 
         $perspron->set_t_lemma('#PersPron');
         $perspron->set_functor('ACT');
-        $perspron->set_formeme('n:subj');            # !!! elided?
+        $perspron->set_formeme('n:subj');    # !!! elided?
         $perspron->set_nodetype('complex');
         $perspron->set_attr( 'gram/sempos', 'n.pron.def.pers' );
         $perspron->set_attr( 'gram/number', 'pl' );                # default: vykani

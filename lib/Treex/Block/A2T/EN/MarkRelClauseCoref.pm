@@ -3,11 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
-    
+
     TNODE:
     foreach my $t_node ( $t_root->get_descendants() ) {
         my $a_node = $t_node->get_lex_anode();

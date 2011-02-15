@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $cs_troot = $bundle->get_tree('TCzechT');

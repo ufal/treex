@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 # One-word named entities should have their t-lemma capitalized,
 # so also the form should be already capitalized.
 # The problem is in the translation dictionary where we have now, for example:
@@ -29,8 +26,8 @@ sub process_zone {
     # STEP 1: gather named entities
     my $t_root = $zone->get_ttree();
     foreach my $t_node ( $t_root->get_descendants() ) {
-        my $src_t_node = $t_node->src_tnode or next;
-        my $src_n_node = $src_t_node->get_n_node()   or next;
+        my $src_t_node = $t_node->src_tnode        or next;
+        my $src_n_node = $src_t_node->get_n_node() or next;
         my $e_type = $src_n_node->get_attr('ne_type');
         if ( defined $e_type && $e_type =~ /^[ipg]/ ) {
             while ( !$src_n_node->get_parent()->is_root() ) {
@@ -50,7 +47,7 @@ sub process_zone {
 
         #HACK: rus je druh švába
         if ( $lemma eq 'rus' ) {
-            $a_node->set_form(ucfirst $form );
+            $a_node->set_form( ucfirst $form );
             next A_NODE;
         }
 

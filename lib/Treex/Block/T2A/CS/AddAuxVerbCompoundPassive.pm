@@ -3,11 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
     return if ( $t_node->voice || '' ) ne 'passive';
     my $a_node = $t_node->get_lex_anode();
 
@@ -20,8 +17,8 @@ sub process_tnode {
     $new_node->shift_after_node($a_node);
 
     $new_node->reset_morphcat();
-    $new_node->set_lemma($a_node->lemma );
-    $new_node->set_form($a_node->form );
+    $new_node->set_lemma( $a_node->lemma );
+    $new_node->set_form( $a_node->form );
     $new_node->set_attr( 'morphcat/gender',   $a_node->get_attr('morphcat/gender') );
     $new_node->set_attr( 'morphcat/number',   $a_node->get_attr('morphcat/number') );
     $new_node->set_attr( 'morphcat/pos',      'V' );

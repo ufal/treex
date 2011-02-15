@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use ProbUtils::Normalize;
 
 use TranslationModel::MaxEnt::Model;
@@ -31,13 +28,17 @@ sub BUILD {
     my $static_model = TranslationModel::Static::Model->new();
     $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
 
-    $model = TranslationModel::Combined::Interpolated->new( { models => [ { model => $maxent_model, weight => 0.5 },
-                                                                          { model => $static_model, weight => 1 },
-                                                                        ] } );
+    $model = TranslationModel::Combined::Interpolated->new(
+        {   models => [
+                { model => $maxent_model, weight => 0.5 },
+                { model => $static_model, weight => 1 },
+            ]
+        }
+    );
 
-#    $model = TranslationModel::Combined::Backoff->new( { models => [ $maxent_model, $static_model ] } );
+    #    $model = TranslationModel::Combined::Backoff->new( { models => [ $maxent_model, $static_model ] } );
 
-#    $model = $static_model;
+    #    $model = $static_model;
 
     return;
 }
@@ -56,7 +57,7 @@ sub process_bundle {
         # Skip nodes that were already translated by rules
         next NODE if $cs_tnode->formeme_origin !~ /clone|dict/;
 
-#        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
+        #        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
         if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
@@ -75,19 +76,18 @@ sub process_bundle {
                 grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
                 $model->get_translations( $en_formeme, $features_array_rf );
 
-
             # If the formeme is not translated and contains some function word,
             # try to translate it with only one (or no) function word.
-            if (!@translations && $en_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
+            if ( !@translations && $en_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
                 my $sempos = $1;
-                my @fwords = split ( /\_/, $2 );
-                my $rest = $3;
-                foreach my $fword ( @fwords ) {
+                my @fwords = split( /\_/, $2 );
+                my $rest   = $3;
+                foreach my $fword (@fwords) {
                     push @translations,
                         grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
                         $model->get_translations( "$sempos:$fword+$rest", $features_array_rf );
                 }
-                if (!@translations) {
+                if ( !@translations ) {
                     push @translations,
                         grep { can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
                         $model->get_translations( "$sempos:$rest", $features_array_rf );
@@ -98,11 +98,10 @@ sub process_bundle {
                 splice @translations, $max_variants;
             }
 
-
             if (@translations) {
 
-                $cs_tnode->set_formeme($translations[0]->{label} );
-                $cs_tnode->set_formeme_origin(@translations == 1 ? 'dict-only' : 'dict-first' );
+                $cs_tnode->set_formeme( $translations[0]->{label} );
+                $cs_tnode->set_formeme_origin( @translations == 1 ? 'dict-only' : 'dict-first' );
 
                 #                print "\n\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
                 #                print "node: ".$en_tnode->t_lemma."\n";

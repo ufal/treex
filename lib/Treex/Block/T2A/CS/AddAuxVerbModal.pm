@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 my %deontmod2modalverb = (
     'poss' => 'moci',
     'vol'  => 'chtít',
@@ -16,9 +13,8 @@ my %deontmod2modalverb = (
     ##'perm' => 'smět', # 'smet' vadi u might
 );
 
-
 sub process_tnode {
-    my ($self, $tnode) = @_;
+    my ( $self, $tnode ) = @_;
 
     # Skip nodes with deontic modality undef or 'decl'
     my $deontmod = $tnode->get_attr('gram/deontmod') || '';
@@ -26,14 +22,14 @@ sub process_tnode {
     return if !$modalverb;
 
     # Create new a-node
-    my $anode = $tnode->get_lex_anode();
+    my $anode    = $tnode->get_lex_anode();
     my $new_node = $anode->create_child();
     $new_node->shift_after_node($anode);
-    
+
     # Set its attributes
     $new_node->reset_morphcat();
-    $new_node->set_lemma($anode->lemma );
-    $new_node->set_form($anode->form );
+    $new_node->set_lemma( $anode->lemma );
+    $new_node->set_form( $anode->form );
     $new_node->set_attr( 'morphcat/pos',    'V' );
     $new_node->set_attr( 'morphcat/subpos', 'f' );
 
@@ -41,9 +37,9 @@ sub process_tnode {
     $new_node->set_attr( 'morphcat/negation', 'A' );
 
     $anode->set_lemma($modalverb);
-    $anode->set_form(undef );
+    $anode->set_form(undef);
 
-    $tnode->add_aux_anodes( $new_node );
+    $tnode->add_aux_anodes($new_node);
     return;
 }
 

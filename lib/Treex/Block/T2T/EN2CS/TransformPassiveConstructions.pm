@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 # TODO: edit this list
 my %IS_RAISING_VERB = map { $_ => 1 } qw(
     expect suppose believe allow require think assume permit estimate
@@ -31,21 +28,21 @@ sub process_bundle {
         $cs_node->set_is_passive(0) );
         $cs_node->set_voice('reflexive_diathesis');
         my $perspron = $cs_node->create_child(
-            {   attributes => {
-                    t_lemma        => '#PersPron',
-                    t_lemma_origin => 'rule-Transform_passive_constructions',
-                    formeme        => 'n:1',                                    #TODO is this needed?
-                    formeme_origin => 'rule-Transform_passive_constructions',
-                    'gram/gender'  => 'neut',
-                    'gram/numer'   => 'sg',
-                    'functor'      => 'ACT',
-                    'nodetype'     => 'complex',
-                    }
-            }
+                {   attributes => {
+                        t_lemma        => '#PersPron',
+                        t_lemma_origin => 'rule-Transform_passive_constructions',
+                        formeme        => 'n:1',                                    #TODO is this needed?
+                        formeme_origin => 'rule-Transform_passive_constructions',
+                        'gram/gender'  => 'neut',
+                        'gram/numer'   => 'sg',
+                        'functor'      => 'ACT',
+                        'nodetype'     => 'complex',
+                        }
+                }
         );
         $perspron->shift_before_node($cs_node);
 
-        $cs_verb->set_attr( 'gram/tense',     'post' );
+        $cs_verb->set_attr( 'gram/tense', 'post' );
         $cs_verb->set_formeme('v:že+fin');
         $cs_verb->set_formeme_origin('rule-Transform_passive_constructions');
         my $cor_node = first { $_->t_lemma eq '#Cor' } $cs_verb->get_children();
@@ -58,7 +55,7 @@ sub process_bundle {
     }
 
     foreach my $node ( values %to_be_deleted ) {
-        $node->disconnect();
+            $node->disconnect();
     }
 
     return;

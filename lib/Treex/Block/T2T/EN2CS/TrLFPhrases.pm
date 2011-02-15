@@ -93,7 +93,7 @@ sub process_tnode {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
             $cs_tnode->set_t_lemma($l);
             $cs_tnode->set_t_lemma_origin('rule-Translate_LF_phrases');
-            $cs_tnode->set_attr( 'mlayer_pos',     'A' );
+            $cs_tnode->set_attr( 'mlayer_pos', 'A' );
             return;
         }
         return;
@@ -118,7 +118,7 @@ sub process_tnode {
     if ( $lemma eq 'worth' && $en_parent->t_lemma eq 'be' ) {
         $cs_parent->set_t_lemma('mít');
         $cs_parent->set_t_lemma_origin('rule-Translate_LF_phrases');
-        $cs_parent->set_attr( 'mlayer_pos',     'V' );
+        $cs_parent->set_attr( 'mlayer_pos', 'V' );
         $cs_tnode->set_formeme('n:4');
         $cs_tnode->set_formeme_origin('rule-Translate_LF_phrases');
 

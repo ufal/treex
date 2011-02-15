@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_zone {
     my ( $self, $zone ) = @_;
     my $aroot = $zone->get_atree();
@@ -49,12 +46,12 @@ sub add_comma_node {
     my ($parent) = @_;
     return $parent->create_child(
         {   attributes => {
-                'form'       => ',',
-                'lemma'      => ',',
-                'afun'         => 'AuxX',
-                'morphcat/pos' => 'Z',
-                'clause_number'=> 0,
-            }
+                'form'          => ',',
+                'lemma'         => ',',
+                'afun'          => 'AuxX',
+                'morphcat/pos'  => 'Z',
+                'clause_number' => 0,
+                }
         }
     );
 }

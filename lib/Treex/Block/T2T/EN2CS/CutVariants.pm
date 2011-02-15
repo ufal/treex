@@ -4,18 +4,18 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 sub BUILD {
-    my ($class, $id, $arg_ref) = @_;
+    my ( $class, $id, $arg_ref ) = @_;
     my $max_lemmas   = $arg_ref->{MAX_LEMMA_VARIANTS};
     my $max_formemes = $arg_ref->{MAX_FORMEME_VARIANTS};
     my $l_sum        = $arg_ref->{LEMMA_PROB_SUM};
     my $f_sum        = $arg_ref->{FORMEME_PROB_SUM};
     Report::fatal(
         'Applying Cut_variants block without specifying parameters does not make sense. '
-        . 'Add at least one of: MAX_LEMMA_VARIANTS, MAX_FORMEME_VARIANTS, LEMMA_PROB_SUM, FORMEME_PROB_SUM.'
+            . 'Add at least one of: MAX_LEMMA_VARIANTS, MAX_FORMEME_VARIANTS, LEMMA_PROB_SUM, FORMEME_PROB_SUM.'
         )
         if !defined $max_lemmas && !defined $max_formemes && !defined $l_sum && !defined $f_sum;
-    Report::fatal("LEMMA_PROB_SUM=$l_sum is not in <0,1>") if defined $l_sum && ($l_sum < 0 or $l_sum > 1);
-    Report::fatal("FORMEME_PROB_SUM=$f_sum is not in <0,1>") if defined $f_sum && ($f_sum < 0 or $f_sum > 1);
+    Report::fatal("LEMMA_PROB_SUM=$l_sum is not in <0,1>")   if defined $l_sum && ( $l_sum < 0 or $l_sum > 1 );
+    Report::fatal("FORMEME_PROB_SUM=$f_sum is not in <0,1>") if defined $f_sum && ( $f_sum < 0 or $f_sum > 1 );
     return;
 }
 
@@ -24,40 +24,40 @@ sub process_bundle {
     my $cs_troot     = $bundle->get_tree('TCzechT');
     my $max_lemmas   = $self->get_parameter('MAX_LEMMA_VARIANTS');
     my $max_formemes = $self->get_parameter('MAX_FORMEME_VARIANTS');
-    my $l_sum    = $self->get_parameter('LEMMA_PROB_SUM');
-    my $f_sum    = $self->get_parameter('FORMEME_PROB_SUM');
+    my $l_sum        = $self->get_parameter('LEMMA_PROB_SUM');
+    my $f_sum        = $self->get_parameter('FORMEME_PROB_SUM');
 
     foreach my $node ( $cs_troot->get_descendants() ) {
 
         # t_lemma_variants
         my $lemmas = $max_lemmas;
         my $ls_ref = $node->get_attr('translation_model/t_lemma_variants');
-        if ($l_sum && $ls_ref) {
-            my ($sum, $variants) = (0, 0);
-            while ($sum < $l_sum && $variants < @{$ls_ref}){
-                $sum += 2 ** $ls_ref->[$variants++]{'logprob'};
+        if ( $l_sum && $ls_ref ) {
+            my ( $sum, $variants ) = ( 0, 0 );
+            while ( $sum < $l_sum && $variants < @{$ls_ref} ) {
+                $sum += 2**$ls_ref->[ $variants++ ]{'logprob'};
             }
-            if (!defined $lemmas or $variants < $lemmas){
+            if ( !defined $lemmas or $variants < $lemmas ) {
                 $lemmas = $variants;
             }
         }
-        if ($lemmas && $ls_ref && @{$ls_ref} > $lemmas ) {
+        if ( $lemmas && $ls_ref && @{$ls_ref} > $lemmas ) {
             splice @{$ls_ref}, $lemmas;
         }
 
         # same for formeme_variants
         my $formemes = $max_formemes;
-        my $fs_ref = $node->get_attr('translation_model/formeme_variants');
-        if ($f_sum && $fs_ref) {
-            my ($sum, $variants) = (0, 0);
-            while ($sum < $f_sum && $variants < @{$fs_ref}){
-                $sum += 2 ** $fs_ref->[$variants++]{'logprob'};
+        my $fs_ref   = $node->get_attr('translation_model/formeme_variants');
+        if ( $f_sum && $fs_ref ) {
+            my ( $sum, $variants ) = ( 0, 0 );
+            while ( $sum < $f_sum && $variants < @{$fs_ref} ) {
+                $sum += 2**$fs_ref->[ $variants++ ]{'logprob'};
             }
-            if (!defined $formemes or $variants < $formemes){
+            if ( !defined $formemes or $variants < $formemes ) {
                 $formemes = $variants;
             }
         }
-        if ($formemes && $fs_ref && @{$fs_ref} > $formemes ) {
+        if ( $formemes && $fs_ref && @{$fs_ref} > $formemes ) {
             splice @{$fs_ref}, $formemes;
         }
     }

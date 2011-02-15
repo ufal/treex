@@ -3,14 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    my $sentence = $bundle->get_attr( 'czech_target_sentence' );
+    my $sentence = $bundle->get_attr('czech_target_sentence');
     $sentence =~ tr/„“/""/;
     $bundle->set_attr( 'czech_target_sentence', $sentence );
     return;

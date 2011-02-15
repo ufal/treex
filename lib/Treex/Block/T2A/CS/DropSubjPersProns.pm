@@ -3,10 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
 
     # We want to drop only subjects that are not coordinated ("he or she")
     return if $t_node->formeme !~ /:1$/;
@@ -29,7 +27,7 @@ sub process_tnode {
     # "He was a man who..." = "Byl to muž, který..."
     if ( $p_lemma eq 'být' ) {
         my $real_subj = first { $_->formeme =~ /:1$/ } $parent->get_children( { following_only => 1 } );
-        if ($real_subj && any{$_->formeme eq 'v:rc'} $real_subj->get_children()) {
+        if ( $real_subj && any { $_->formeme eq 'v:rc' } $real_subj->get_children() ) {
             my $a_node = $t_node->get_lex_anode();
             $a_node->set_lemma('ten');
             $a_node->set_attr( 'morphcat/gender', 'N' );
@@ -48,7 +46,7 @@ sub process_tnode {
 sub drop {
     my ($t_node) = @_;
     my $a_node = $t_node->get_lex_anode();
-    if (not defined $a_node) {
+    if ( not defined $a_node ) {
         Report::warn "Node to be pro-dropped should have non-empty a/lex.rf";
         return;
     }

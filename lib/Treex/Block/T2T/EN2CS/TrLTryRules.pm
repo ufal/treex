@@ -3,24 +3,21 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
-    q{as_well_as}  => 'i|J',
-    q{as_well}     => 'také|D',
-    q{``}          => '„|Z',
-    q{''}          => '“|Z',
-    q{a. m.}       => 'hodin ráno|X',
-    q{p. m.}       => 'hodin odpoledne|X',
-    q{e. g.}       => 'například|D',
-    q{U. S.}       => 'USA|N',
-    q{Mrs.}        => 'paní|N',
-    q{Mr.}         => 'pan|N',
-    q{Ms.}         => 'slečna|N',
-    q{Obama}       => 'Obama|N',
- );
+    q{as_well_as} => 'i|J',
+    q{as_well}    => 'také|D',
+    q{``}         => '„|Z',
+    q{''}         => '“|Z',
+    q{a. m.}      => 'hodin ráno|X',
+    q{p. m.}      => 'hodin odpoledne|X',
+    q{e. g.}      => 'například|D',
+    q{U. S.}      => 'USA|N',
+    q{Mrs.}       => 'paní|N',
+    q{Mr.}        => 'pan|N',
+    q{Ms.}        => 'slečna|N',
+    q{Obama}      => 'Obama|N',
+);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -37,7 +34,7 @@ sub process_bundle {
             my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
             $cs_tnode->set_t_lemma($cs_tlemma);
             $cs_tnode->set_t_lemma_origin('rule-Translate_L_try_rules');
-            $cs_tnode->set_attr( 'mlayer_pos',     $m_pos )
+            $cs_tnode->set_attr( 'mlayer_pos', $m_pos )
         }
     }
     return;
@@ -70,15 +67,14 @@ sub get_lemma_and_pos {
     # either ... or -> buď' ... nebo
     # but skip nodetype=complex ("in the EU or the USA either" -> "v EU ani v USA")
 
-    if ($en_tlemma =~ /^(n?either_n?or)$/) {
-        if ($en_tlemma =~ /n/) {
+    if ( $en_tlemma =~ /^(n?either_n?or)$/ ) {
+        if ( $en_tlemma =~ /n/ ) {
             return 'ani';
         }
         else {
             return 'nebo';
         }
     }
-
 
     return 'buď' if $en_tlemma eq 'either' && $en_tnode->nodetype eq 'coap';
 

@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my %subpos_person_2_mlemma =
     (
     qw(H1) => qw(já),
@@ -42,7 +40,7 @@ sub process_anode {
     return if !$pronoun_mlemma;
     $a_node->set_lemma($pronoun_mlemma);
     $a_node->set_form($pronoun_mlemma);
-    
+
     return;
 }
 

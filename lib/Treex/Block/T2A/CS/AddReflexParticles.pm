@@ -3,11 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
     my $reflexive;
     if ( $t_node->t_lemma =~ /_(s[ie])$/ ) {
         $reflexive = $1;

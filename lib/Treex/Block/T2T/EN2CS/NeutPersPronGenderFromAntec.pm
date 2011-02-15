@@ -3,16 +3,15 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( ($tnode->get_attr('gram/gender') || "") eq 'neut' && defined $tnode->get_attr('coref_text.rf') ) {
-        my $t_antec  = @{ $tnode->get_deref_attr('coref_text.rf') }[0];
+    if ( ( $tnode->get_attr('gram/gender') || "" ) eq 'neut' && defined $tnode->get_attr('coref_text.rf') ) {
+        my $t_antec      = @{ $tnode->get_deref_attr('coref_text.rf') }[0];
         my $gender_antec = $t_antec->get_attr('gram/gender');
-	    if (defined $gender_antec and $gender_antec ne 'neut') {
-		    $tnode->set_attr('gram/gender', $gender_antec);
-	    }
+        if ( defined $gender_antec and $gender_antec ne 'neut' ) {
+            $tnode->set_attr( 'gram/gender', $gender_antec );
+        }
     }
     return;
 }

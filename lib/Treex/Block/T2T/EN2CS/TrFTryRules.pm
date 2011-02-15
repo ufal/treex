@@ -3,10 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 use Lexicon::English;
 use Lexicon::Czech;
-
 
 #TODO These hacks should be removed from here and added to formeme translation models
 # Explanation:
@@ -81,15 +79,15 @@ sub formeme_for_tnode {
                 or ( $en_tnode->get_attr('gram/number') || "" ) eq "pl"
             );
 
-#    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
+    #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
 
-    if (my $n_node = $en_tnode->get_n_node) {
+    if ( my $n_node = $en_tnode->get_n_node ) {
         return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
     }
-    
+
     return 'n:attr' if $en_tnode->get_parent->is_name_of_person && $en_formeme eq 'n:attr';
 
-    return 'n:attr' if ($en_tnode->is_name_of_person || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
+    return 'n:attr' if ( $en_tnode->is_name_of_person || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
     return 'n:attr' if $en_tlemma =~ /^(which|whose|that|this|these)$/ && $en_formeme eq 'n:attr';
     return 'adv:' if $en_tlemma eq 'addition' && $en_formeme eq 'n:in+X';
 

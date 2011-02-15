@@ -3,21 +3,19 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
-        foreach my $t_node ( grep { $_->nodetype eq "complex" } $t_root->get_descendants ) {
-            my $formeme = $t_node->formeme || "";
-            if ( $formeme =~ /^v:/ ) {
-                if ( $t_node->is_passive ) {
-                    $t_node->set_voice( 'passive' );
-                }
-                else {
-                    $t_node->set_voice( 'active' );
-                }
+    foreach my $t_node ( grep { $_->nodetype eq "complex" } $t_root->get_descendants ) {
+        my $formeme = $t_node->formeme || "";
+        if ( $formeme =~ /^v:/ ) {
+            if ( $t_node->is_passive ) {
+                $t_node->set_voice('passive');
+            }
+            else {
+                $t_node->set_voice('active');
             }
         }
+    }
     return 1;
 }
 

@@ -3,10 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
     return if !$t_node->is_parenthesis;
     my $parenthetized_aroot = $t_node->get_lex_anode();
     return if !$parenthetized_aroot;
@@ -28,8 +26,8 @@ sub add_parenthesis_node {
     my ( $parent, $lemma, $clause_number ) = @_;
     return $parent->create_child(
         {   attributes => {
-                'lemma'       => $lemma,
-                'form'        => $lemma,
+                'lemma'         => $lemma,
+                'form'          => $lemma,
                 'afun'          => 'AuxX',
                 'morphcat/pos'  => 'Z',
                 'clause_number' => $clause_number,

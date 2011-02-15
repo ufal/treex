@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 Readonly my $TAGS_FILE => 'data/models/morpho_analysis/en/forms_with_more_tags.tsv';
 
 sub get_required_share_files { return $TAGS_FILE; }

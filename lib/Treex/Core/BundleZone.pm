@@ -109,24 +109,25 @@ sub has_tree {
     my $tree_name = lc($layer) . "_tree";
     return defined $self->{trees}->{$tree_name};
 }
+
 sub has_atree {
-	my ($self) = @_;
-	return $self->has_tree('a');
+    my ($self) = @_;
+    return $self->has_tree('a');
 }
 
 sub has_ttree {
-	my ($self) = @_;
-	return $self->has_tree('t');
+    my ($self) = @_;
+    return $self->has_tree('t');
 }
 
 sub has_ntree {
-	my ($self) = @_;
-	return $self->has_tree('n');
+    my ($self) = @_;
+    return $self->has_tree('n');
 }
 
 sub has_ptree {
-	my ($self) = @_;
-	return $self->has_tree('p');
+    my ($self) = @_;
+    return $self->has_tree('p');
 }
 
 sub get_all_trees {

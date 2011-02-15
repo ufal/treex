@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     return 1 if $t_node->get_attr('gram/gender');

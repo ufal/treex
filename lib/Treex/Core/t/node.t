@@ -8,16 +8,16 @@ use Test::More;
 BEGIN { use_ok('Treex::Core::Node') }
 use Treex::Core::Document;
 my $document = Treex::Core::Document->new;
-my $bundle = $document->create_bundle;
-my $zone = $bundle->create_zone( 'cs', 'S' );
+my $bundle   = $document->create_bundle;
+my $zone     = $bundle->create_zone( 'cs', 'S' );
 
 foreach my $layer (qw(A T N)) {
     $zone->create_tree($layer);
 
     cmp_ok( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), '==', $bundle->get_tree("SCzech$layer"), 'Tree can be obtained via zone or directly and result is same' );
 
-    my $root    = $zone->get_tree($layer);
-    my $ordered = defined eval {$root->ordering_attribute()};
+    my $root = $zone->get_tree($layer);
+    my $ordered = defined eval { $root->ordering_attribute() };
     isa_ok( $root, 'Treex::Core::Node' );
     isa_ok( $root, "Treex::Core::Node::$layer" );
     my $attributes = {
@@ -54,16 +54,16 @@ foreach my $layer (qw(A T N)) {
     ok( $root->is_root(),               '$root is root' );
     ok( $node->is_descendant_of($root), '$node is descendant of $root' );
 
-    cmp_ok( scalar $root->get_children(),     '==',1, '$root has 1 child' );
-    cmp_ok( scalar $root->get_descendants(),  '==',1, '$root has 1 descendant' );
-    cmp_ok( scalar $node->get_children(),     '==',0, '$node has no children' );
-    cmp_ok( scalar $node->get_descendants(),  '==',0, '$node has no descendant' );
+    cmp_ok( scalar $root->get_children(),    '==', 1, '$root has 1 child' );
+    cmp_ok( scalar $root->get_descendants(), '==', 1, '$root has 1 descendant' );
+    cmp_ok( scalar $node->get_children(),    '==', 0, '$node has no children' );
+    cmp_ok( scalar $node->get_descendants(), '==', 0, '$node has no descendant' );
     my @children = $root->get_children();
     is( $children[0], $node, q($node is first $root's child) );
     my @descendants = $root->get_descendants();
     is( $descendants[0], $node, q($node is first $root's descendant) );
-    cmp_ok( scalar $root->get_siblings(),  '==',0, '$root has no siblings' ) || note('Assuming empty array, not undef');
-    cmp_ok( scalar $node->get_siblings(),  '==',0, '$node has no siblings' );
+    cmp_ok( scalar $root->get_siblings(), '==', 0, '$root has no siblings' ) || note('Assuming empty array, not undef');
+    cmp_ok( scalar $node->get_siblings(), '==', 0, '$node has no siblings' );
 
     my $c1 = $root->create_child();
     my $c2 = $root->create_child();
@@ -88,23 +88,23 @@ foreach my $layer (qw(A T N)) {
         $cc2->shift_after_node($node);
     }
 
-    cmp_ok( scalar $root->get_children(),     '==',5,  '$root now has 5 children' );
-    cmp_ok( scalar $root->get_descendants(),  '==',11, '$root now has 11 descendants' );
+    cmp_ok( scalar $root->get_children(),    '==', 5,  '$root now has 5 children' );
+    cmp_ok( scalar $root->get_descendants(), '==', 11, '$root now has 11 descendants' );
     cmp_ok( eval { scalar $root->get_descendants( { add_self => 1 } ) }, '==', 12, '12 including itself' );
-    cmp_ok( scalar $node->get_siblings(),  '==',4, '$node has 4 siblings' );
-    cmp_ok( scalar $node->get_children(),  '==',2, '$node has 2 children' );
+    cmp_ok( scalar $node->get_siblings(), '==', 4, '$node has 4 siblings' );
+    cmp_ok( scalar $node->get_children(), '==', 2, '$node has 2 children' );
 
     $c3->disconnect();
     $cc2->disconnect();
 
-    cmp_ok( scalar $root->get_children(),     '==',4, '$root now has 4 children' );
-    cmp_ok( scalar $root->get_descendants(),  '==',8, '$root now has 8 descendants' );
-    cmp_ok( scalar $node->get_siblings(),     '==',3, '$node has 3 siblings' );
-    cmp_ok( scalar $node->get_children(),     '==',1, '$node has 1 child' );
+    cmp_ok( scalar $root->get_children(),    '==', 4, '$root now has 4 children' );
+    cmp_ok( scalar $root->get_descendants(), '==', 8, '$root now has 8 descendants' );
+    cmp_ok( scalar $node->get_siblings(),    '==', 3, '$node has 3 siblings' );
+    cmp_ok( scalar $node->get_children(),    '==', 1, '$node has 1 child' );
 
     ok( !defined $c3->get_parent(), 'Disconnected node has no parent' );
-    cmp_ok( scalar $c3->get_children(),  '==',1, 'And it has still 1 child' );
-    cmp_ok( scalar $c3->get_siblings(),  '==',0, 'but no siblings' );
+    cmp_ok( scalar $c3->get_children(), '==', 1, 'And it has still 1 child' );
+    cmp_ok( scalar $c3->get_siblings(), '==', 0, 'but no siblings' );
     ok( $c3->is_root(), q(so it's root) );
 
     #Node ordering
@@ -135,9 +135,9 @@ foreach my $layer (qw(A T N)) {
     #processing clauses
     #PML-related
     #other
-    cmp_ok( $cc1->get_depth(),   '==',2, '$cc1 is in depth 2' );
-    cmp_ok( $c2->get_depth(),    '==',1, '$c2 is in depth 1' );
-    cmp_ok( $root->get_depth(),  '==',0, '$root is in depth 0' );
+    cmp_ok( $cc1->get_depth(),  '==', 2, '$cc1 is in depth 2' );
+    cmp_ok( $c2->get_depth(),   '==', 1, '$c2 is in depth 1' );
+    cmp_ok( $root->get_depth(), '==', 0, '$root is in depth 0' );
 
     #deprecated
 }

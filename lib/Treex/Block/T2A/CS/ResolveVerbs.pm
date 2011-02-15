@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     my $formeme = $t_node->formeme;
@@ -58,7 +56,7 @@ sub get_subpos_tense_of_finite {
     my ( $t_node, $a_node ) = @_;
     my $tense   = $t_node->get_attr('gram/tense')   || '';
     my $verbmod = $t_node->get_attr('gram/verbmod') || '';
-    my $voice   = $t_node->voice        || '';
+    my $voice   = $t_node->voice                    || '';
     my $aspect  = $t_node->get_attr('gram/aspect')  || '';
     my $formeme = $t_node->formeme;
 

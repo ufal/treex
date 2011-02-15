@@ -23,12 +23,12 @@ has from => (
 );
 
 has _reader => (
-    is => 'rw',
+    is      => 'rw',
     handles => {
-	'set_modulo' => 'set_modulo',
-	'set_jobs' => 'set_jobs',
-    }
- );
+        'set_modulo' => 'set_modulo',
+        'set_jobs'   => 'set_jobs',
+        }
+);
 
 sub BUILD {
     my ( $self, $args ) = @_;

@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
@@ -24,22 +22,22 @@ sub process_ttree {
                 $_ ne $t_compl and $_->formeme =~ /1/
             } $t_clause_head->get_eff_children( { ordered => 1 } );
             if ($t_subj) {
-                my $a_compl = $t_compl->get_lex_anode;
-                my $a_subj  = $t_subj->get_lex_anode;
-                my $a_finverb  = $t_clause_head->get_lex_anode;
+                my $a_compl   = $t_compl->get_lex_anode;
+                my $a_subj    = $t_subj->get_lex_anode;
+                my $a_finverb = $t_clause_head->get_lex_anode;
 
                 # The category can be already set by previous blocks.
                 # E.g. Impose_pron_z_agr sets gender for "jedna" in
                 # "Byla to jedna z vdov." So, don't overwrite it.
                 foreach my $category (qw(case)) {
-                    if ($a_compl->get_attr("morphcat/$category") eq '.'){
-                       $a_compl->set_attr("morphcat/$category", $a_subj->get_attr("morphcat/$category"));
+                    if ( $a_compl->get_attr("morphcat/$category") eq '.' ) {
+                        $a_compl->set_attr( "morphcat/$category", $a_subj->get_attr("morphcat/$category") );
                     }
                 }
 
                 foreach my $category (qw(number gender)) {
-                    if ($a_compl->get_attr("morphcat/$category") eq '.'){
-                       $a_compl->set_attr("morphcat/$category", $a_finverb->get_attr("morphcat/$category"));
+                    if ( $a_compl->get_attr("morphcat/$category") eq '.' ) {
+                        $a_compl->set_attr( "morphcat/$category", $a_finverb->get_attr("morphcat/$category") );
                     }
                 }
             }

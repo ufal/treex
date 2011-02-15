@@ -8,35 +8,34 @@ sub process_zone {
 
     my $t_root = $zone->get_ttree();
     my $a_root = $zone->create_atree();
-    $t_root->set_deref_attr('atree.rf', $t_root);
+    $t_root->set_deref_attr( 'atree.rf', $t_root );
 
-    copy_subtree($t_root, $a_root);
+    copy_subtree( $t_root, $a_root );
 
 }
-
 
 sub copy_subtree {
     my ( $t_root, $a_root ) = @_;
 
-    foreach my $t_node ($t_root->get_children({ordered => 1})) {
+    foreach my $t_node ( $t_root->get_children( { ordered => 1 } ) ) {
         my $lemma = $t_node->t_lemma || '';
-        if ($t_node->t_lemma ne '#Cor') {
+        if ( $t_node->t_lemma ne '#Cor' ) {
             my $a_node = $a_root->create_child();
-            $t_node->set_deref_attr('a/lex.rf', $a_node);
+            $t_node->set_deref_attr( 'a/lex.rf', $a_node );
             $lemma =~ s/_s[ie]$//g;
             $a_node->set_lemma($lemma);
-            $a_node->set_ord($t_node->ord);
+            $a_node->set_ord( $t_node->ord );
             if ( $t_node->is_coap_root() ) {
                 $a_node->set_attr( 'afun', $t_node->functor eq 'APPS' ? 'Apos' : 'Coord' );
             }
             if ( $t_node->is_member ) {
                 $a_node->set_is_member(1);
             }
-            copy_subtree($t_node, $a_node);
+            copy_subtree( $t_node, $a_node );
         }
         else {
             log_warn("#Cor node is not a leave.") if $t_node->get_children();
-            copy_subtree($t_node, $a_root);
+            copy_subtree( $t_node, $a_root );
         }
     }
 }

@@ -3,12 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    foreach my $node ($bundle->get_tree('TCzechT')->get_descendants()){
+    foreach my $node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
         my $orig_parent = $node->get_deref_attr('original_parent.rf') or next;
         $node->set_parent($orig_parent);
     }

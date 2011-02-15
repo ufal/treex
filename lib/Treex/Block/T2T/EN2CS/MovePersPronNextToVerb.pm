@@ -3,15 +3,16 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     my $parent = $tnode->get_parent;
-    if ( $tnode->t_lemma eq '#PersPron'
-      && !$parent->is_root  
-      && $parent->formeme =~ /^v:/
-      && $tnode->formeme !~ /^n:1/
-      && $tnode->ord > $parent->ord ) {
+    if ($tnode->t_lemma eq '#PersPron'
+        && !$parent->is_root
+        && $parent->formeme =~ /^v:/
+        && $tnode->formeme !~ /^n:1/
+        && $tnode->ord > $parent->ord
+        )
+    {
         $tnode->shift_after_node($parent);
     }
     return;

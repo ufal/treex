@@ -3,10 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
-    my ($self, $tnode) = @_;
+    my ( $self, $tnode ) = @_;
     my $formeme = $tnode->formeme;
 
     return if !defined $formeme || $formeme !~ /^(n|adj):(.+)[+]/;
@@ -37,19 +35,21 @@ sub process_tnode {
 
     # $anode is now under $last_prep, so attribute is_member
     # moves also to the upper node. (We are in TectoMT, not PDT.)
-    $last_prep->set_is_member($anode->is_member );
-    $anode->set_is_member(undef );
+    $last_prep->set_is_member( $anode->is_member );
+    $anode->set_is_member(undef);
 
     # Add all prepositions to a/aux.rf of the tnode
-    $tnode->add_aux_anodes( @prep_nodes );
+    $tnode->add_aux_anodes(@prep_nodes);
 
     # moving leading adverbs in front of the prepositional group ('v zejmena USA' --> 'zejmena v USA')
-    my $leftmost_tchild = $tnode->get_children({preceding_only=>1,first_only=>1});
+    my $leftmost_tchild = $tnode->get_children( { preceding_only => 1, first_only => 1 } );
     if ($formeme =~ /^n/
-	and defined $leftmost_tchild
-	and $leftmost_tchild->formeme =~ /^adv/
-	and $leftmost_tchild->get_lex_anode) {
-	$leftmost_tchild->get_lex_anode->shift_before_node($prep_nodes[0]);
+        and defined $leftmost_tchild
+        and $leftmost_tchild->formeme =~ /^adv/
+        and $leftmost_tchild->get_lex_anode
+        )
+    {
+        $leftmost_tchild->get_lex_anode->shift_before_node( $prep_nodes[0] );
     }
 
     return;
@@ -59,14 +59,14 @@ sub _new_prep_node {
     my ( $parent, $form ) = @_;
     my $prep_node = $parent->create_child(
         {   attributes => {
-                'lemma'      => $form,
-                'form'       => $form,
+                'lemma'        => $form,
+                'form'         => $form,
                 'afun'         => 'AuxP',
                 'morphcat/pos' => 'R',
                 }
         }
     );
-    $prep_node->shift_before_subtree($parent);    
+    $prep_node->shift_before_subtree($parent);
     return $prep_node;
 }
 

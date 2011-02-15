@@ -10,7 +10,7 @@ sub process_ttree {
     foreach my $rc_head ( grep { $_->formeme =~ /rc/ } $t_root->get_descendants ) {
 
         # Skip verbs with subject (i.e. child in nominative)
-#        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_eff_children();
+        #        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_eff_children();
 
         # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
         # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
@@ -27,15 +27,15 @@ sub process_ttree {
         # Create new t-node
         my $relpron = $rc_head->create_child(
             {   attributes => {
-                nodetype      => 'complex',
-                functor       => '???',
-                formeme       => 'n:1',
-                t_lemma       => 'který',
-                t_lemma_origin => 'Add_relpron_below_rc',
-                'gram/sempos' => 'n.pron.indef',
-                'gram/indeftype' => 'relat',
-                'coref_gram.rf' => [ $gram_antec->id ],
-            }
+                    nodetype         => 'complex',
+                    functor          => '???',
+                    formeme          => 'n:1',
+                    t_lemma          => 'který',
+                    t_lemma_origin   => 'Add_relpron_below_rc',
+                    'gram/sempos'    => 'n.pron.indef',
+                    'gram/indeftype' => 'relat',
+                    'coref_gram.rf'  => [ $gram_antec->id ],
+                    }
             }
         );
 

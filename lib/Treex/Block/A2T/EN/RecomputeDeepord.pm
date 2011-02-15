@@ -3,16 +3,14 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_aux_root ) = @_;
 
-        my $ord;
-        foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_aux_root->get_descendants ) {
-            $ord++;
-            $t_node->set_ord($ord);
-        }
+    my $ord;
+    foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_aux_root->get_descendants ) {
+        $ord++;
+        $t_node->set_ord($ord);
+    }
     return 1;
 }
 

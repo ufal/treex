@@ -3,20 +3,17 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_tnode {
-    my ($self, $tnode) = @_;
-    
+    my ( $self, $tnode ) = @_;
+
     # Process only verbs with future tense (post) and imperfective aspect (proc)
-    my $tense  = $tnode->get_attr('gram/tense')  || '';
+    my $tense = $tnode->get_attr('gram/tense') || '';
     return if $tense ne 'post';
-    
+
     # Process only verbs with imperfective aspect (proc)
     # (but all modal verbs are imperfective, eventhough the main verb is not:
     #  "Bude moci získat.")
-    my $aspect = $tnode->get_attr('gram/aspect') || '';
+    my $aspect   = $tnode->get_attr('gram/aspect')   || '';
     my $deontmod = $tnode->get_attr('gram/deontmod') || '';
     return if $deontmod eq 'decl' && $aspect ne 'proc';
 
@@ -32,19 +29,19 @@ sub process_tnode {
     my $new_node = $anode->create_child();
     $new_node->shift_after_node($anode);
     $new_node->reset_morphcat();
-    $new_node->set_lemma($anode->lemma );
-    $new_node->set_form($anode->form );
+    $new_node->set_lemma( $anode->lemma );
+    $new_node->set_form( $anode->form );
     $new_node->set_attr( 'morphcat/pos', 'V' );
     $anode->set_attr( 'morphcat/subpos', 'B' );
-    
+
     # negace v kazdem pripade zustava jen u funkcniho
     $new_node->set_attr( 'morphcat/negation', 'A' );
 
     $anode->set_lemma('být');
     $anode->set_attr( 'morphcat/tense', 'F' );
 
-    $new_node->set_attr( 'morphcat/subpos', 'f' ); # 'bude videt'
-    
+    $new_node->set_attr( 'morphcat/subpos', 'f' );    # 'bude videt'
+
     # Passives are already solved in the block Add_auxverb_compound_passive
     # In the choosen implementation $t_node->get_lex_anode() goes to auxiliary
     # verb "být" which has active voice, so next code is now useless.
@@ -59,7 +56,7 @@ sub process_tnode {
 
     $anode->set_attr( 'morphcat/gender', '-' );
     $tnode->add_aux_anodes($new_node);
-    
+
     return;
 }
 

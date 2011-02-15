@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 my %DISTANCE_LIMIT = (
     'v'    => 5,
     'mezi' => 50,
@@ -44,7 +41,7 @@ sub process_atree {
                 }
                 else {
                     $child->set_parent( $anode->get_parent );
-                    $child->set_is_member($anode->is_member );
+                    $child->set_is_member( $anode->is_member );
                 }
             }
             $anode->disconnect();

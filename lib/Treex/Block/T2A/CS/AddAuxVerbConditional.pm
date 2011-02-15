@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 my %condit_numberperson2form = (
     'S1' => 'bych',
     'S2' => 'bys',
@@ -13,9 +10,8 @@ my %condit_numberperson2form = (
     'P2' => 'byste',
 );
 
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
 
     # We want to process only conditionals that don't have
     # 'conditional conjunctions' "aby", "kdyby" in the formeme.
@@ -26,7 +22,7 @@ sub process_tnode {
     my $a_node   = $t_node->get_lex_anode();
     my $new_node = $a_node->create_child(
         {   attributes => {
-                'lemma'         => 'být',
+                'lemma'           => 'být',
                 'afun'            => 'AuxV',
                 'morphcat/pos'    => 'V',
                 'morphcat/subpos' =>, 'c',

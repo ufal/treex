@@ -3,24 +3,20 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-my %NUMBERPERSON2ABY = ( # 'endings' for aby/kdyby
+my %NUMBERPERSON2ABY = (    # 'endings' for aby/kdyby
     'S1' => 'ch',
     'S2' => 's',
     'P1' => 'chom',
     'P2' => 'ste',
 );
 
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
     my $formeme = $t_node->formeme;
     return if $formeme !~ /^v:(.+)\+/;
 
-
     # multiword conjunctions or conjunctions with expletives (pote co) are possible
-    my @subconj_forms = split /_/,$1;
+    my @subconj_forms = split /_/, $1;
 
     my $a_node = $t_node->get_lex_anode();
 
@@ -30,23 +26,23 @@ sub process_tnode {
 
         my $subconj_node = $a_node->get_parent()->create_child(
             {   attributes => {
-                'form'       => $subconj_form,
-                'lemma'      => $subconj_form,
-                'afun'         => 'AuxC',
-                'morphcat/pos' => 'J',
-            }
+                    'form'         => $subconj_form,
+                    'lemma'        => $subconj_form,
+                    'afun'         => 'AuxC',
+                    'morphcat/pos' => 'J',
+                    }
             }
         );
 
         # the only 'flective' subordinating conjunctions are 'aby' and 'kdyby'
-        if ($subconj_form =~ /^(aby|kdyby)$/) {
-            my $key = ($t_node->get_attr('morphcat/number')||"").($t_node->get_attr('morphcat/person')||"");
-            if ($NUMBERPERSON2ABY{$key}) {
-                $subconj_node->set_form($subconj_form.$NUMBERPERSON2ABY{$key});
+        if ( $subconj_form =~ /^(aby|kdyby)$/ ) {
+            my $key = ( $t_node->get_attr('morphcat/number') || "" ) . ( $t_node->get_attr('morphcat/person') || "" );
+            if ( $NUMBERPERSON2ABY{$key} ) {
+                $subconj_node->set_form( $subconj_form . $NUMBERPERSON2ABY{$key} );
             }
         }
 
-        if (not $first_subconj_node) {
+        if ( not $first_subconj_node ) {
             $subconj_node->shift_before_subtree($a_node);
             $a_node->set_parent($subconj_node);
             $first_subconj_node = $subconj_node;

@@ -112,14 +112,15 @@ sub get_layer {
 }
 
 sub create_child {
-    my $self     = shift;
+    my $self = shift;
+
     # TODO:
     #my $new_node = ( ref $self )->new(@_);
     # Previous line is very strange and causes errors which are hard to debug.
     # Magically, it works on UFAL machines, but nowhere else - I don't know why.
     # Substituting the hash by hashref is a workaround,
     # but the black magic is still there.
-    my $new_node = ( ref $self )->new({@_});
+    my $new_node = ( ref $self )->new( {@_} );
     $new_node->set_parent($self);
 
     my $new_id = $self->generate_new_id();

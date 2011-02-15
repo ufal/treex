@@ -3,13 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
-    my @anodes = $a_root->get_descendants({ordered=>1});
+    my @anodes = $a_root->get_descendants( { ordered => 1 } );
 
     # we consider bigrams
     foreach my $i ( 0 .. $#anodes - 1 ) {
@@ -20,7 +17,6 @@ sub process_atree {
     }
     return;
 }
-
 
 sub vocalize {
     my $preposition = shift;

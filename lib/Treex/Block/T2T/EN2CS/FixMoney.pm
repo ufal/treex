@@ -3,11 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 my %CURRENCY = (
     '$'   => 'dolar',
     'HUF' => 'forint',
-    '£'   => 'libra',
+    '£'  => 'libra',
 );
 
 sub process_tnode {
@@ -15,30 +14,30 @@ sub process_tnode {
 
     if ( $CURRENCY{ $t_node->t_lemma } ) {
 
-        # rehang the currency node 
+        # rehang the currency node
         my $value_tnode = $t_node->get_children( { following_only => 1, first_only => 1 } );
-        if ( $value_tnode ) {
-            foreach my $child ($t_node->get_children) {
+        if ($value_tnode) {
+            foreach my $child ( $t_node->get_children ) {
                 $child->set_parent($value_tnode) if $child ne $value_tnode;
             }
-            $value_tnode->set_parent($t_node->get_parent);
+            $value_tnode->set_parent( $t_node->get_parent );
             $t_node->set_parent($value_tnode);
-            $value_tnode->set_formeme($t_node->formeme);
+            $value_tnode->set_formeme( $t_node->formeme );
         }
-            
+
         # change t_lemma and formeme of the currency node
-        $t_node->set_t_lemma($CURRENCY{ $t_node->t_lemma } );
+        $t_node->set_t_lemma( $CURRENCY{ $t_node->t_lemma } );
         $t_node->set_t_lemma_origin('rule-Fix_money');
         $t_node->set_formeme('n:2');
         $t_node->set_formeme_origin('rule-Fix_money');
-        $t_node->set_attr('gram/number', 'pl');
- 
+        $t_node->set_attr( 'gram/number', 'pl' );
+
         # shift the currency after nodes expressing value (numbers, million, billion, m)
         my $next_node = $t_node->get_next_node;
         my $last_value_node;
-        while ($next_node && $next_node->t_lemma =~ /^([\d,\.\ ]+|mili[oó]n|miliarda|m)$/) {
+        while ( $next_node && $next_node->t_lemma =~ /^([\d,\.\ ]+|mili[oó]n|miliarda|m)$/ ) {
             $last_value_node = $next_node;
-            $next_node = $next_node->get_next_node;
+            $next_node       = $next_node->get_next_node;
         }
         $t_node->shift_after_node($last_value_node) if defined $last_value_node;
     }

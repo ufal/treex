@@ -3,8 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-has _tagger     => ( is      => 'rw' );
+has _tagger => ( is => 'rw' );
 
 use Morce::English;
 use DowngradeUTF8forISO2;

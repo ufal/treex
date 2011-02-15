@@ -3,7 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
 
@@ -14,7 +13,7 @@ sub process_tnode {
     return if $cs_tnode->t_lemma eq '#PersPron';
 
     # don't reorder numerals (e.g. dvou žen)
-    return if ($cs_tnode->get_attr('mlayer_pos') || '') eq 'C';
+    return if ( $cs_tnode->get_attr('mlayer_pos') || '' ) eq 'C';
 
     # don't reorder when source formeme was not n:poss or n:attr
     my $en_tnode = $cs_tnode->src_tnode or next;

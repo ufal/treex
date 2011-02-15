@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my %tag2functor = (
     "CC"    => "CONJ",    # coordinating conjunction
     "CD"    => "RSTR",    # cardinal number
@@ -95,7 +93,7 @@ foreach (
 }
 
 sub assign_functors {
-    my ( $t_root ) = @_;
+    my ($t_root) = @_;
 
     NODE: foreach my $node ( grep { not defined $_->functor } $t_root->get_descendants ) {
 
@@ -176,7 +174,7 @@ sub assign_functors {
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
-    assign_functors( $t_root );
+    assign_functors($t_root);
     return 1;
 }
 

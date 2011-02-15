@@ -9,31 +9,28 @@ has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
-                       is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive
-                       voice sentmod tfa gram/sempos gram/gender gram/number gram/degcmp
-                       gram/verbmod gram/deontmod gram/tense gram/aspect gram/resultative
-                       gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype
-                       gram/politeness gram/negation gram/definiteness);
+    is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive
+    voice sentmod tfa gram/sempos gram/gender gram/number gram/degcmp
+    gram/verbmod gram/deontmod gram/tense gram/aspect gram/resultative
+    gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype
+    gram/politeness gram/negation gram/definiteness);
 
 sub build_source_selector {
     my ($self) = @_;
     return $self->selector;
 }
 
-
 sub build_source_language {
     my ($self) = @_;
     return $self->language;
 }
 
-
 sub BUILD {
     my ($self) = @_;
-    if ($self->language eq $self->source_language && $self->selector eq $self->source_selector) {
+    if ( $self->language eq $self->source_language && $self->selector eq $self->source_selector ) {
         log_fatal("Can't create zone with the same 'language' and 'selector'.");
     }
 }
-
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -42,55 +39,55 @@ sub process_document {
     my %src2tgt;
 
     foreach my $bundle ( $document->get_bundles() ) {
-        my $source_zone = $bundle->get_zone($self->source_language, $self->source_selector);
+        my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
         my $source_root = $source_zone->get_ttree;
 
-        my $target_zone = $bundle->get_or_create_zone($self->language, $self->selector);
+        my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
         my $target_root = $target_zone->create_ttree();
-        $target_root->set_attr('atree.rf', undef);
+        $target_root->set_attr( 'atree.rf', undef );
 
-        copy_subtree( $source_root, $target_root, \%src2tgt);
+        copy_subtree( $source_root, $target_root, \%src2tgt );
         $target_root->set_src_tnode($source_root);
     }
 
     # copying coreference links
     foreach my $bundle ( $document->get_bundles() ) {
-        my $target_zone = $bundle->get_zone($self->language, $self->selector);
+        my $target_zone = $bundle->get_zone( $self->language, $self->selector );
         my $target_root = $target_zone->get_ttree();
-        foreach my $t_node ($target_root->get_descendants) {
-            my $src_tnode = $t_node->src_tnode;
+        foreach my $t_node ( $target_root->get_descendants ) {
+            my $src_tnode  = $t_node->src_tnode;
             my $coref_gram = $src_tnode->get_deref_attr('coref_gram.rf');
             my $coref_text = $src_tnode->get_deref_attr('coref_text.rf');
-            if (defined $coref_gram) {
-                my @nodelist = map {$src2tgt{$_}} @$coref_gram;
+            if ( defined $coref_gram ) {
+                my @nodelist = map { $src2tgt{$_} } @$coref_gram;
                 $t_node->set_deref_attr( 'coref_gram.rf', \@nodelist );
             }
-            if (defined $coref_text) {
-                my @nodelist = map {$src2tgt{$_}} @$coref_text;
+            if ( defined $coref_text ) {
+                my @nodelist = map { $src2tgt{$_} } @$coref_text;
                 $t_node->set_deref_attr( 'coref_text.rf', \@nodelist );
             }
         }
     }
 }
 
-
 sub copy_subtree {
     my ( $source_root, $target_root, $src2tgt ) = @_;
 
-    foreach my $source_node ($source_root->get_children({ordered => 1})) {
+    foreach my $source_node ( $source_root->get_children( { ordered => 1 } ) ) {
         my $target_node = $target_root->create_child();
 
         $$src2tgt{$source_node} = $target_node;
+
         # copying attributes
-        # TODO: this must be done in another way 
+        # TODO: this must be done in another way
         foreach my $attr (@ATTRS_TO_COPY) {
-            $target_node->set_attr($attr, $source_node->get_attr($attr));
+            $target_node->set_attr( $attr, $source_node->get_attr($attr) );
         }
         $target_node->set_src_tnode($source_node);
         $target_node->set_attr( 't_lemma_origin', 'clone' );
         $target_node->set_attr( 'formeme_origin', 'clone' );
 
-        copy_subtree($source_node, $target_node, $src2tgt);
+        copy_subtree( $source_node, $target_node, $src2tgt );
     }
 }
 

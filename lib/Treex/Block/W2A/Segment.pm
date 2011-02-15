@@ -23,7 +23,6 @@ has use_lines => (
         . ' and nothing else, use rather W2A::SegmentOnNewlines.)',
 );
 
-
 # Tokens that usually do not end a sentence even if they are followed by a period and a capital letter:
 # * single uppercase letters serve usually as first name initials
 # * in langauge-specific descendants consider adding
@@ -55,21 +54,21 @@ override 'segment_text' => sub {
     # Pre-processing
     my $unbreakers = $self->unbreakers;
     $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
-       
+
     # two newlines usually separate paragraphs
-    if ($self->use_paragraphs){
+    if ( $self->use_paragraphs ) {
         $text =~ s/([^.!?])\n\n+/$1<<<SEP>>>/gsm;
     }
 
-    if ($self->use_lines){
+    if ( $self->use_lines ) {
         $text =~ s/\n/<<<SEP>>>/gsm;
     }
-    
+
     # Normalize whitespaces
     $text =~ s/\s+/ /gsm;
 
     # This is the main regex
-    my ($openings, $closings) = ($self->openings, $self->closings);
+    my ( $openings, $closings ) = ( $self->openings, $self->closings );
     $text =~ s{
         ([.?!])            # $1 = end-sentence punctuation
         ([$closings]?)          # $2 = optional closing quote/bracket

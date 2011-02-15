@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
     my @all_nodes = $t_root->get_descendants();
@@ -12,7 +10,7 @@ sub process_ttree {
     # (1) every member must be in coap
     foreach my $node ( grep { $_->is_member } @all_nodes ) {
         if ( !$node->get_parent()->is_coap_root() ) {
-            $node->set_is_member( undef );
+            $node->set_is_member(undef);
         }
     }
 
@@ -27,7 +25,7 @@ sub process_ttree {
                 # !!! pokud ma ovsem alespon 2 deti, predpokladame, ze to opravdu je koordinace
             }
             else {
-                map { $_->set_is_member( 1 ) } $node->get_children;
+                map { $_->set_is_member(1) } $node->get_children;
             }
         }
     }

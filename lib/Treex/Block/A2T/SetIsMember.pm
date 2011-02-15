@@ -12,8 +12,8 @@ has '+language' => ( required => 1 );
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    if ( is_some_anode_member($t_node)) {
-        $t_node->set_is_member( 1 );
+    if ( is_some_anode_member($t_node) ) {
+        $t_node->set_is_member(1);
     }
     return 1;
 }

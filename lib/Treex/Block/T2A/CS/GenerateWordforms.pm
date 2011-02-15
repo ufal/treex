@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use Lexicon::Czech;
 use File::Spec;
 
@@ -24,10 +21,10 @@ sub get_required_share_files {
 use Lexicon::Generation::CS;
 use LanguageModel::MorphoLM;
 
-my ($morphoLM, $generator);
+my ( $morphoLM, $generator );
 
-sub BUILD{
-    $morphoLM = LanguageModel::MorphoLM->new();
+sub BUILD {
+    $morphoLM  = LanguageModel::MorphoLM->new();
     $generator = Lexicon::Generation::CS->new();
 }
 
@@ -55,7 +52,7 @@ sub _should_generate {
         defined $a_node->get_attr('morphcat/pos')
             and $a_node->get_attr('morphcat/pos') !~ /[ZJR!]/    # neohybat neohebne a ty, co uz ohnute jsou (znak !)
             and $a_node->get_attr('morphcat/subpos') ne 'c'      # tvary kondicionalnich AuxV uz jsou urcene
-            and $a_node->lemma =~ /^(\w|#Neg)/     # mimo #PersPron a cislicove cislovky
+            and $a_node->lemma =~ /^(\w|#Neg)/                   # mimo #PersPron a cislicove cislovky
     );
 }
 
@@ -126,7 +123,7 @@ sub _generate_word_form {
         );
     }
 
-    $lemma =~ s/(..t)-\d$/$1/; # removing suffices distinguishing homonymous lemmas (stat-2)
+    $lemma =~ s/(..t)-\d$/$1/;    # removing suffices distinguishing homonymous lemmas (stat-2)
     return $lemma;
 }
 

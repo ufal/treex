@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_anode {
     my ( $self, $a_node ) = @_;
 
@@ -18,7 +16,7 @@ sub process_anode {
 
     my $p_tag = $eparent->tag || '_root';
     my $parent_is_verb = $p_tag =~ /^(V|MD)/;
-    if ( $parent_is_verb ) {
+    if ($parent_is_verb) {
         $a_node->set_is_auxiliary(1);
         $a_node->set_edge_to_collapse(1);
     }

@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Block::A2T::MoveAuxFromCoordToMembers';
 
-
-
 override 'can_be_aux_to_coord' => sub {
     my ( $self, $a_node ) = @_;
     my $form = $a_node->form;

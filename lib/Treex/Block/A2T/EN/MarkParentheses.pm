@@ -3,19 +3,17 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-            my @aux_a_nodes = $t_node->get_aux_anodes();
-            if (grep { $_->form =~ /(\(|-LRB-)/ }
-                @aux_a_nodes
-                and grep { $_->form =~ /(\)|-RRB-)/ } @aux_a_nodes
-                )
-            {
-                $t_node->set_is_parenthesis(1 );
-            }
+    my @aux_a_nodes = $t_node->get_aux_anodes();
+    if (grep { $_->form =~ /(\(|-LRB-)/ }
+        @aux_a_nodes
+        and grep { $_->form =~ /(\)|-RRB-)/ } @aux_a_nodes
+        )
+    {
+        $t_node->set_is_parenthesis(1);
+    }
     return 1;
 }
 

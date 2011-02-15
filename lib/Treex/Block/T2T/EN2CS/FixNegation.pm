@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $t_root = $bundle->get_tree('TCzechT');
@@ -25,9 +22,13 @@ sub process_bundle {
         }
 
         # "Ani neprisel, ani nezavolal.", "Nepotkal Pepu ani Frantu."
-        if (grep {_is_ani_neither_nor($_)} $clause_head->get_children
-                or ($clause_head->is_member
-                        and _is_ani_neither_nor($clause_head->get_parent))) {
+        if (grep { _is_ani_neither_nor($_) }
+            $clause_head->get_children
+            or ($clause_head->is_member
+                and _is_ani_neither_nor( $clause_head->get_parent )
+            )
+            )
+        {
             $clause_head->set_attr( 'gram/negation', 'neg1' );
         }
     }
@@ -36,9 +37,9 @@ sub process_bundle {
 
 sub _is_ani_neither_nor {
     my $tnode = shift;
-    if ($tnode->t_lemma eq "ani") {
+    if ( $tnode->t_lemma eq "ani" ) {
         my $en_tnode = $tnode->src_tnode;
-        if ($en_tnode and $en_tnode->t_lemma =~ /(neither|nor)/) {
+        if ( $en_tnode and $en_tnode->t_lemma =~ /(neither|nor)/ ) {
             return 1;
         }
     }

@@ -3,11 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ($tnode->t_lemma eq "#PersPron" and $tnode->formeme !~ /1/) {
+    if ( $tnode->t_lemma eq "#PersPron" and $tnode->formeme !~ /1/ ) {
 
         my $perspron = $tnode;
 

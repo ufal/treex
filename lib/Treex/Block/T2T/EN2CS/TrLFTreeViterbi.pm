@@ -3,19 +3,15 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 use Report;
 use TreeViterbi;
 
 use Lexicon::Czech;
 use LanguageModel::TreeLM;
 
-
 sub BUILD {
     MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new() );
 }
-
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -47,10 +43,10 @@ sub process_bundle {
             or
             ( $old_pos ne $new_pos and $new_lemma !~ /^(tisíc|ráno|večer)$/ )
             )
-        {                                                       # ??? tisic.C->tisic.N makes harm!!!
+        {    # ??? tisic.C->tisic.N makes harm!!!
             $node->set_t_lemma($new_lemma);
-            $node->set_attr( 'mlayer_pos',     $state->get_pos );
-            $node->set_t_lemma_origin('viterbi|' . $state->get_lemma_origin );
+            $node->set_attr( 'mlayer_pos', $state->get_pos );
+            $node->set_t_lemma_origin( 'viterbi|' . $state->get_lemma_origin );
         }
 
         # Change the formeme

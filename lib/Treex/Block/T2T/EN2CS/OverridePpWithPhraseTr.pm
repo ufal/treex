@@ -3,13 +3,13 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 my $input_file = 'resource_data/translation_dictionaries/manually_selected_prob_Wt_given_Ws.tsv';
 
-sub get_required_share_files {return $input_file;}
+sub get_required_share_files { return $input_file; }
 
 my %enphrase2csphrase;
-sub BUILD{
+
+sub BUILD {
     open my $I, "<:encoding(utf-8)", "$ENV{TMT_ROOT}/share/$input_file" or Report::fatal "Can't open '$input_file' : $!";
     while (<$I>) {
         chomp;
@@ -21,6 +21,7 @@ sub BUILD{
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
+
     # Process all nodes by recursion
     foreach my $child ( $t_root->get_children() ) {
         process_subtree($child);

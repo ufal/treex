@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_zone {
     my ( $self, $zone ) = @_;
     my $troot = $zone->get_ttree();
@@ -26,13 +23,13 @@ sub process_zone {
     #!!! dirty traversing of the pyramid at the lowest level
     # in order to distinguish full sentences from titles
     return if $punct_mark eq "."
-        and defined $zone->get_attr('sentence')
+            and defined $zone->get_attr('sentence')
             and $zone->get_attr('sentence') !~ /\./;
 
     my $punct = $aroot->create_child(
         {   attributes => {
-                'form'        => $punct_mark,
-                'lemma'       => $punct_mark,
+                'form'          => $punct_mark,
+                'lemma'         => $punct_mark,
                 'afun'          => 'AuxK',
                 'morphcat/pos'  => 'Z',
                 'clause_number' => 0,

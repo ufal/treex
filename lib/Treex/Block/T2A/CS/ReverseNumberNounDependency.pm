@@ -3,11 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use Lexicon::Czech;
-
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
@@ -73,11 +69,11 @@ sub process_t_node {
     # The noun gets formeme with genitive case.
     $t_node->set_formeme("n:$preps$noun_case");
     $t_noun->set_formeme('n:2');
-    
+
     # For info/debuging purposes let's update formeme_origin too
     my $noun_f_origin = $t_noun->formeme_origin;
     $t_node->set_attr( 'formeme_origin', "rule-number_from_parent($noun_f_origin:$noun_formeme)" );
-    $t_noun->set_formeme_origin('rule-number_genitive' );
+    $t_noun->set_formeme_origin('rule-number_genitive');
 
     # Numbers with decimal point/comma require singular noun in Czech
     # "2,5 miliardy" (not "2,5 miliard")

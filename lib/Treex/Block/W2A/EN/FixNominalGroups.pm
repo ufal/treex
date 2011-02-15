@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my $MODEL = 'generated_data/extracted_from_BNC/left_neighbours_of_nouns.tsv';
 
 sub get_required_share_files { return $MODEL; }

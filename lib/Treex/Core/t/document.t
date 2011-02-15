@@ -6,7 +6,7 @@ use warnings;
 use Test::More tests => 6;
 
 BEGIN { use_ok('Treex::Core::Document') }
-my $attr     = 'description'; # the only document's unzoned attribute
+my $attr     = 'description';                # the only document's unzoned attribute
 my $sentence = q(I'm testing sentence);
 my $fname    = 'doc.test';
 my $doc      = Treex::Core::Document->new;

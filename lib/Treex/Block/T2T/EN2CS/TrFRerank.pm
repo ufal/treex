@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use Report;
 
 Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_Lsg.pls.gz';
@@ -16,7 +13,7 @@ Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_
 use TranslationDict::Universal;
 my $val_dict;
 
-sub get_required_share_files {return $MODEL_FILE;}
+sub get_required_share_files { return $MODEL_FILE; }
 
 sub BUILD {
     $val_dict = TranslationDict::Universal->new( { file => "$ENV{TMT_ROOT}/share/$MODEL_FILE" } );
@@ -59,7 +56,7 @@ sub process_tnode {
         @{$variants_ref};
 
     # Save the best variant to the formeme attribute
-    $cs_tnode->set_formeme($sorted[0]{'formeme'} );
+    $cs_tnode->set_formeme( $sorted[0]{'formeme'} );
 
     # Throw away least probable variants on behalf of speed/memory efficiency
     if ( $max_variants && @sorted > $max_variants ) { splice @sorted, $max_variants; }

@@ -3,38 +3,37 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 use Lexicon::Czech;
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-        if (($t_node->formeme||"") eq 'n:poss'
-                and ($t_node->get_attr('mlayer_pos')||"") ne 'P'
-                    and ($t_node->t_lemma||"") ne '#PersPron'
-                ) {
+    if (( $t_node->formeme || "" ) eq 'n:poss'
+        and ( $t_node->get_attr('mlayer_pos') || "" ) ne 'P'
+        and ( $t_node->t_lemma                || "" ) ne '#PersPron'
+        )
+    {
 
-            my $a_node = $t_node->get_lex_anode();# or return;
-            my $noun_lemma = $a_node->lemma;
-#            print "noun: $noun_lemma\n";
+        my $a_node     = $t_node->get_lex_anode();    # or return;
+        my $noun_lemma = $a_node->lemma;
 
-            my $adj_lemma = Lexicon::Czech::get_poss_adj($noun_lemma);
-            $a_node->set_lemma($adj_lemma);
-            $a_node->set_attr('morphcat/subpos','.');
-            $a_node->set_attr('morphcat/pos','A');
+        #            print "noun: $noun_lemma\n";
 
-            # with adjectives, the following categories should come from agreement
-            foreach my $cat (qw(gender number)) {
-                $a_node->set_attr("morphcat/$cat",'.');
-            }
+        my $adj_lemma = Lexicon::Czech::get_poss_adj($noun_lemma);
+        $a_node->set_lemma($adj_lemma);
+        $a_node->set_attr( 'morphcat/subpos', '.' );
+        $a_node->set_attr( 'morphcat/pos',    'A' );
 
-#            print "$noun_lemma ==> $adj_lemma\n";
+        # with adjectives, the following categories should come from agreement
+        foreach my $cat (qw(gender number)) {
+            $a_node->set_attr( "morphcat/$cat", '.' );
         }
-    
+
+        #            print "$noun_lemma ==> $adj_lemma\n";
+    }
+
     return;
 }
-
 
 1;
 

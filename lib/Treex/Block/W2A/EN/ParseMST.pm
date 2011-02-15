@@ -3,9 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 has 'model'   => ( is => 'rw', isa => 'Str',  default => 'conll_mcd_order2_0.01.model' );
 has 'reparse' => ( is => 'rw', isa => 'Bool', default => 0 );
+
 #has '_parser' => ( is => 'rw' );
 
 # TODO (MP): refactor parentheses chunks
@@ -19,6 +19,7 @@ use DowngradeUTF8forISO2;
 use Treex::Tools::Parser::MST;
 
 my $parser;
+
 #TODO: loading each model only once should be handled in different way
 
 sub BUILD {
@@ -46,11 +47,12 @@ sub BUILD {
 
     if ( !$parser ) {
         $parser = Treex::Tools::Parser::MST->new(
-                {   model      => $model_path,
-                    memory     => $model_memory,
-                    order      => 1,
-                    decodetype => 'proj'
-                } );
+            {   model      => $model_path,
+                memory     => $model_memory,
+                order      => 1,
+                decodetype => 'proj'
+            }
+        );
     }
 
 }
@@ -96,7 +98,7 @@ sub process_atree {
         # (Parser would mostly guess this right, but not always.)
         if ( $chunk_parent != $a_root ) {
             foreach my $bracket ( $lrb, $rrb ) {
-                $bracket->set_conll_deprel('P' );
+                $bracket->set_conll_deprel('P');
                 $bracket->set_parent($first_chunk_root);
             }
         }

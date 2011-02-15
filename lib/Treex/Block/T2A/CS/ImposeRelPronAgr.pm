@@ -3,37 +3,34 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
-        foreach my $t_relpron (
-            grep {
-                my $i = $_->get_attr('gram/indeftype');
-                defined $i
-                    and $i eq 'relat'
-                    and defined $_->get_attr('coref_gram.rf')
-            } $t_root->get_descendants
-            )
-        {
+    foreach my $t_relpron (
+        grep {
+            my $i = $_->get_attr('gram/indeftype');
+            defined $i
+                and $i eq 'relat'
+                and defined $_->get_attr('coref_gram.rf')
+        } $t_root->get_descendants
+        )
+    {
 
-            my $a_relpron = $t_relpron->get_lex_anode;
-            my $t_antec  = @{ $t_relpron->get_deref_attr('coref_gram.rf') }[0];
+        my $a_relpron = $t_relpron->get_lex_anode;
+        my $t_antec   = @{ $t_relpron->get_deref_attr('coref_gram.rf') }[0];
 
-            my $a_antec = $t_antec->get_lex_anode;
+        my $a_antec = $t_antec->get_lex_anode;
 
-            if ( $t_relpron->formeme =~ /poss|attr/ ) {    # possessive relative pronouns
-                $a_relpron->set_attr( 'morphcat/possgender', $a_antec->get_attr('morphcat/gender') );
-                $a_relpron->set_attr( 'morphcat/possnumber', $a_antec->get_attr('morphcat/number') );
-            }
-            else {
-                $a_relpron->set_attr( 'morphcat/gender', $a_antec->get_attr('morphcat/gender') );
-                $a_relpron->set_attr( 'morphcat/number', $a_antec->get_attr('morphcat/number') );
-            }
+        if ( $t_relpron->formeme =~ /poss|attr/ ) {    # possessive relative pronouns
+            $a_relpron->set_attr( 'morphcat/possgender', $a_antec->get_attr('morphcat/gender') );
+            $a_relpron->set_attr( 'morphcat/possnumber', $a_antec->get_attr('morphcat/number') );
         }
-    
+        else {
+            $a_relpron->set_attr( 'morphcat/gender', $a_antec->get_attr('morphcat/gender') );
+            $a_relpron->set_attr( 'morphcat/number', $a_antec->get_attr('morphcat/number') );
+        }
+    }
+
 }
 
 1;

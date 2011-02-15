@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use Lexicon::Czech;
 
 my $F1_FN = 'data/models/grammateme_transfer/en2cs/more_frequent_number_below_gov_noun.tsv';

@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my %MERGE_FOR = (
     'a . m .' => 'a. m.',
     'p . m .' => 'p. m.',

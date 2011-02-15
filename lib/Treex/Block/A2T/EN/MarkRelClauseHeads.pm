@@ -3,14 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-        if ( is_relclause_head($tnode) ) {
-            $tnode->set_is_relclause_head( 1 );
-        }
-   
+    if ( is_relclause_head($tnode) ) {
+        $tnode->set_is_relclause_head(1);
+    }
+
     return 1;
 }
 

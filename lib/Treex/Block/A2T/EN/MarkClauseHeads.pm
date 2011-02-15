@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 # zatim nejake rozbite, znackuje to i infinitivy
 
 sub process_tnode {

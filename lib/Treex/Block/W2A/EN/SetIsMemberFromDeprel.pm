@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_anode {
     my ( $self, $anode ) = @_;
     $anode->set_is_member( $anode->conll_deprel eq 'COORD' ? 1 : 0 );

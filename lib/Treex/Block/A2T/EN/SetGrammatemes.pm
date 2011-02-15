@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 use Lexicon::English;
 
 Readonly my $DEBUG => 0;

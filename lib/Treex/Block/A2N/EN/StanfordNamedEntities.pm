@@ -3,15 +3,14 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-has '_ner'      => ( is      => 'rw' );
-has 'model' => (is => 'rw', isa => 'Str', default => 'ner-eng-ie.crf-3-all2008.ser.gz');
+has '_ner' => ( is => 'rw' );
+has 'model' => ( is => 'rw', isa => 'Str', default => 'ner-eng-ie.crf-3-all2008.ser.gz' );
 
 use NER::Stanford::English;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_ner( NER::Stanford::English->new($self->model) );
+    $self->_set_ner( NER::Stanford::English->new( $self->model ) );
     return;
 }
 
@@ -64,11 +63,11 @@ sub process_zone {
         # Subsequent words with the same type are treated as one named entity.
         if ( @actual_ids && $last_type ne $type ) {
             my $new_nnode = $n_root->create_child(
-               ne_type         => $last_type,
-               normalized_name => join( ' ', @actual_words ),
-             
+                ne_type => $last_type,
+                normalized_name => join( ' ', @actual_words ),
+
             );
-            $new_nnode->set_attr('a.rf', \@actual_ids);
+            $new_nnode->set_attr( 'a.rf', \@actual_ids );
             @actual_ids   = ();
             @actual_words = ();
         }
@@ -78,10 +77,10 @@ sub process_zone {
     }
     if (@actual_ids) {
         my $new_nnode = $n_root->create_child(
-           ne_type         => $last_type,
-           normalized_name => join( ' ', @actual_words ),
+            ne_type => $last_type,
+            normalized_name => join( ' ', @actual_words ),
         );
-        $new_nnode->set_attr('a.rf', \@actual_ids);
+        $new_nnode->set_attr( 'a.rf', \@actual_ids );
     }
     return 1;
 }

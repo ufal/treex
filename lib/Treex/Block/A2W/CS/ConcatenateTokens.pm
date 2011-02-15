@@ -3,15 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-
-
-
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    my $a_root = $bundle->get_tree('TCzechA');
+    my $a_root   = $bundle->get_tree('TCzechA');
     my $sentence = join " ",
         grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
         map { $_->form || '' }
@@ -25,7 +19,7 @@ sub process_bundle {
 
     $sentence =~ s/([\-\"„;:,]),/$1/g;          # !!! tohle by chtelo udelat poradne a umazavat uz a-uzly
     $sentence =~ s/ ?([\.,]) ?([“"])/$1$2/g;    # mazani mezer kolem interpunkce
-    $sentence =~ s/ se by / by se /g;           # !!! na prerovnani klitik bude potreba samostatny blok
+    $sentence =~ s/ se by / by se /g;             # !!! na prerovnani klitik bude potreba samostatny blok
     $sentence =~ s/ by že / že by /g;           # !!! na prerovnani klitik bude potreba samostatny blok
 
     $sentence =~ s/ -- / - /g;
@@ -41,11 +35,11 @@ sub process_bundle {
 
     # (The whole sentence is in parenthesis).
     # (The whole sentence is in parenthesis.)
-    if ($sentence =~ /^\(/){
+    if ( $sentence =~ /^\(/ ) {
         $sentence =~ s/\)\./.)/;
     }
 
-    $sentence =~ s/&#241;/ň/g; # "ñ" is encoded as &#241; in translation dict
+    $sentence =~ s/&#241;/ň/g;    # "ñ" is encoded as &#241; in translation dict
 
     $bundle->set_attr( 'czech_target_sentence', $sentence );
     return;

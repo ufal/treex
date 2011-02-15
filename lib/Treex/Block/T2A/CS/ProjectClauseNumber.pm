@@ -3,14 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     my $clause_number = $t_node->clause_number;
     if ( defined $clause_number ) {
         foreach my $a_node ( $t_node->get_anodes ) {
-            $a_node->set_clause_number($clause_number );
+            $a_node->set_clause_number($clause_number);
         }
     }
     return;

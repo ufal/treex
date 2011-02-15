@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 my %M_GENDER_FOR = (
     anim => 'M',
     inan => 'I',
@@ -23,9 +21,8 @@ my %M_DEGREE_FOR = (
     'sup'  => '3',
 );
 
-
 sub process_tnode {
-    my ($self, $t_node) = @_;
+    my ( $self, $t_node ) = @_;
     my $a_node = $t_node->get_lex_anode() or return;
 
     # Initialize all categories to '.' so it can be used in regexes
@@ -42,8 +39,8 @@ sub process_tnode {
     # M-layer part of speech should be already known since it is saved in the dictionary
     $a_node->set_attr( 'morphcat/pos', $t_node->get_attr('mlayer_pos') || '.' );
 
-    if (($t_node->formeme||'') =~ /^v/) {
-	$a_node->set_attr('morphcat/pos','V'); # !!! hack to surpress some inconsistencies during transfer 
+    if ( ( $t_node->formeme || '' ) =~ /^v/ ) {
+        $a_node->set_attr( 'morphcat/pos', 'V' );    # !!! hack to surpress some inconsistencies during transfer
     }
 
     # == Person ==
@@ -70,14 +67,13 @@ sub process_tnode {
         $a_node->set_attr( 'morphcat/subpos', $subpos );
     }
 
-
     my $sempos = $t_node->get_attr('gram/sempos') || '';
     my $formeme = $t_node->formeme;
 
     # Subpos of possessive nouns/adjectives  # moved to a dedicated block
-#    if ( $sempos =~ /^n.denot/ && $formeme =~ /poss/ ) {
-#        $a_node->set_attr( 'morphcat/subpos', 'U' );
-#    }
+    #    if ( $sempos =~ /^n.denot/ && $formeme =~ /poss/ ) {
+    #        $a_node->set_attr( 'morphcat/subpos', 'U' );
+    #    }
 
     # == Case ==
     if ( $formeme =~ /(\d)/ && $a_node->get_attr('morphcat/case') eq '.' ) {
@@ -160,7 +156,7 @@ sub get_subpos_of_perspron {
 
     # short pronoun forms ("ho")
     return 'H' if $formeme =~ /[34]/ and $t_node->get_attr('gram/number') eq 'sg'
-        and $t_node->get_attr('gram/gender') ne 'fem';
+            and $t_node->get_attr('gram/gender') ne 'fem';
 
     # other personal pronouns (on, jich, ...)
     return 'P';

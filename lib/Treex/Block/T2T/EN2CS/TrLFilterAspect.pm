@@ -3,11 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 use Report;
 
 use Lexicon::CS::Aspect;
-
 
 Readonly my %IS_PHASE_VERB => (
     'začít' => 1, 'začínat' => 1, 'přestat' => 1, 'přestávat' => 1,
@@ -32,18 +30,18 @@ sub filter_variants {
     my $variants_ref = $node->get_attr('translation_model/t_lemma_variants');
 
     my @filtred = grep { is_aspect_ok( $_->{t_lemma}, $node ) } @{$variants_ref};
-    
-    # If no or all variants were filtred, don't change anything 
+
+    # If no or all variants were filtred, don't change anything
     return if @filtred == 0 || @filtred == @{$variants_ref};
-    
-    $node->set_attr('translation_model/t_lemma_variants', \@filtred);
-    
+
+    $node->set_attr( 'translation_model/t_lemma_variants', \@filtred );
+
     my $first_lemma = $filtred[0]->{t_lemma};
-    if ($node->t_lemma ne $first_lemma) {
+    if ( $node->t_lemma ne $first_lemma ) {
         $node->set_t_lemma($first_lemma);
-        $node->set_attr('mlayer_pos', $filtred[0]->{pos});
+        $node->set_attr( 'mlayer_pos', $filtred[0]->{pos} );
     }
-    
+
     return;
 }
 
@@ -56,11 +54,11 @@ sub is_aspect_ok {
     # 1. "thay say" -> "říkají", not "řeknou"
     return 0
         if (
-        ( $node->get_attr('gram/tense') || '' ) eq 'sim'
+        ( $node->get_attr('gram/tense')        || '' ) eq 'sim'
         and ( $node->get_attr('gram/deontmod') || '' ) eq 'decl'
         and ( $node->get_attr('gram/verbmod') || '' ) ne 'cdn'
-        and ( $node->is_passive   || '' ) ne '1'
-        and ( $node->functor      || '' ) ne 'COND'
+        and ( $node->is_passive               || '' ) ne '1'
+        and ( $node->functor                  || '' ) ne 'COND'
         );
 
     # 2. "dokud dělal", not "dokud udělal"
@@ -73,7 +71,6 @@ sub is_aspect_ok {
     my $parent_lemma = $parent->t_lemma;
     return 0 if $IS_PHASE_VERB{$parent_lemma};
 
-    
     # Otherwise: OK
     return 1;
 }

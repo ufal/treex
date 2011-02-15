@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
@@ -43,7 +41,7 @@ sub process_ttree {
 
     }
     return 1;
-   
+
 }
 
 1;

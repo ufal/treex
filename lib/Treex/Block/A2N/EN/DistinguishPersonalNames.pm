@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 use Lexicon::EN::First_names;
 
 # Czech morphology used as an additional resource for gender detections
@@ -27,7 +25,7 @@ my %GENDER_OF_ROLE = (
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    
+
     my $n_root = $zone->get_ntree or return;
     my @n_p = grep { $_->get_attr('ne_type') eq 'p_' } $n_root->get_descendants();
     foreach my $n_node (@n_p) {
@@ -75,8 +73,8 @@ sub process_personal_nnode {
             $type = 'ps';
         }
         my $new_nnode = $n_node->create_child(
-             normalized_name => $lemmas[$i],
-             ne_type         => $type,
+            normalized_name => $lemmas[$i],
+            ne_type         => $type,
         );
         $new_nnode->set_attr( 'a.rf', [ $a_node->id ] );
     }
@@ -88,7 +86,7 @@ sub process_personal_nnode {
 # so let's check also for GENDER_OF_ROLE.
 sub guess_gender {
     my ($lemma) = @_;
-    return $GENDER_OF_ROLE{$lemma} || Lexicon::EN::First_names::gender_of($lemma)
+    return $GENDER_OF_ROLE{$lemma}                    || Lexicon::EN::First_names::gender_of($lemma)
         || firstname_gender_from_czech_morpho($lemma) || '?';
 }
 
@@ -100,15 +98,13 @@ sub guess_gender {
 #    return TectoMT::Node->_fsnode2tmt_node($fs_prev);
 #}
 
-
 sub firstname_gender_from_czech_morpho {
     my ($lemma) = shift;
-    my ($gender) =  map {$_->get_tag =~ /^..(.)/;lc($1)}
-        grep {$_->get_lemma =~ /;[Y]/}
-            $generator->forms_of_lemma( $lemma, { tag_regex => 'N..S1.+'} );
+    my ($gender) = map { $_->get_tag =~ /^..(.)/; lc($1) }
+        grep { $_->get_lemma =~ /;[Y]/ }
+        $generator->forms_of_lemma( $lemma, { tag_regex => 'N..S1.+' } );
     return $gender;
 }
-
 
 1;
 

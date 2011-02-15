@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
 use EnglishMorpho::Lemmatizer;
 
 sub process_anode {

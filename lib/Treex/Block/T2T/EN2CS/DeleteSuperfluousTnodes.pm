@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 my $DEBUG = 0;
 
 #use Report;
@@ -19,17 +16,19 @@ my $DEBUG = 0;
 #    $child_to_delete{$child_tlemma}{$parent_tlemma} = 1;
 #}
 
-my %child_to_delete; #= map {my($child,$parent) = split/_/;($child }
+my %child_to_delete;    #= map {my($child,$parent) = split/_/;($child }
 
 foreach my $pair (
     qw(all_right ahead_go place_take down_sit
-       much_very well_as little_bit air_conditioning
-       real_estate ice_cream away_throw prime_minister
-       floppy_disk raw_material away_turn down_lay any_one
-       away_pass very_much round_turn around_turn
-       machine_gun fairy_tale down_lie good_sense honey_bee how_much
-       how_many both_and)) {
-    my ($child_tlemma, $parent_tlemma) = split /_/,$pair;
+    much_very well_as little_bit air_conditioning
+    real_estate ice_cream away_throw prime_minister
+    floppy_disk raw_material away_turn down_lay any_one
+    away_pass very_much round_turn around_turn
+    machine_gun fairy_tale down_lie good_sense honey_bee how_much
+    how_many both_and)
+    )
+{
+    my ( $child_tlemma, $parent_tlemma ) = split /_/, $pair;
     $child_to_delete{$child_tlemma}{$parent_tlemma} = 1;
 }
 
@@ -37,17 +36,20 @@ sub process_bundle {
 
     my ( $self, $bundle ) = @_;
 
-    foreach my $tnode ( grep {not $_->get_children}
-                            map {$_->get_descendants}
-                                $bundle->get_tree('TCzechT')->get_children) {
+    foreach my $tnode (
+        grep { not $_->get_children }
+        map  { $_->get_descendants }
+        $bundle->get_tree('TCzechT')->get_children
+        )
+    {
 
-        my $child_tlemma = $tnode->t_lemma;
+        my $child_tlemma  = $tnode->t_lemma;
         my $parent_tlemma = $tnode->get_parent->t_lemma;
-        if ($child_to_delete{$child_tlemma}{$parent_tlemma}) {
-            warn "_DELETED_\t$child_tlemma\t".$bundle->get_attr('english_source_sentence').
-                "\t".$bundle->get_attr('czech_source_sentence')."\t".
-                    $bundle->get_attr('czech_target_sentence')."\t"
-                        .$tnode->get_parent->get_fposition."\n" if $DEBUG;
+        if ( $child_to_delete{$child_tlemma}{$parent_tlemma} ) {
+            warn "_DELETED_\t$child_tlemma\t" . $bundle->get_attr('english_source_sentence') .
+                "\t" . $bundle->get_attr('czech_source_sentence') . "\t" .
+                $bundle->get_attr('czech_target_sentence') . "\t"
+                . $tnode->get_parent->get_fposition . "\n" if $DEBUG;
             $tnode->disconnect;
         }
     }

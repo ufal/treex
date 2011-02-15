@@ -3,13 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     my @echildren = $tnode->get_echildren();
 
     # "He managed to..." -> "Podařilo se mu..."
-    if ($tnode->t_lemma =~ /^((po)?dařit|líbit)/
+    if ($tnode->t_lemma    =~ /^((po)?dařit|líbit)/
         && $tnode->formeme =~ /fin/
         && grep { $_->formeme eq 'v:inf' } @echildren
         )

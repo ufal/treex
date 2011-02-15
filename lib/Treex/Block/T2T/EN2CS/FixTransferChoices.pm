@@ -3,9 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
 use Lexicon::Czech;
 
 sub process_bundle {
@@ -14,9 +11,9 @@ sub process_bundle {
     foreach my $cs_tnode ( $t_root->get_descendants() ) {
         my $lemma_and_pos = fix_lemma($cs_tnode);
         if ($lemma_and_pos) {
-            my ($new_lemma, $new_pos) = split /#/, $lemma_and_pos;
+            my ( $new_lemma, $new_pos ) = split /#/, $lemma_and_pos;
             $cs_tnode->set_t_lemma($new_lemma);
-            $cs_tnode->set_attr( 'mlayer_pos',     $new_pos );
+            $cs_tnode->set_attr( 'mlayer_pos', $new_pos );
             $cs_tnode->set_t_lemma_origin('rule-Fix_transfer_choices');
         }
         my $new_formeme = fix_formeme($cs_tnode);
@@ -56,8 +53,8 @@ sub fix_formeme {
     my $cs_tlemma   = $cs_tnode->t_lemma;
     my $cs_formeme  = $cs_tnode->formeme;
     my ($cs_parent) = $cs_tnode->get_eff_parents();
-    my $cs_parent_tlemma  = $cs_parent->t_lemma   || '#root';
-    my $cs_parent_formeme = $cs_parent->formeme   || '#root';
+    my $cs_parent_tlemma  = $cs_parent->t_lemma               || '#root';
+    my $cs_parent_formeme = $cs_parent->formeme               || '#root';
     my $cs_pos            = $cs_tnode->get_attr('mlayer_pos') || '';
     my $cs_tree_parent    = $cs_tnode->get_parent();
 
@@ -149,9 +146,9 @@ sub fix_formeme {
     return 'adj:attr' if $cs_formeme eq 'n:2' && $cs_tlemma =~ /^ten(to)?$/
             && $cs_parent_formeme =~ /^n/ && $cs_tnode->precedes($cs_parent);
 
-    return 'n:1' if $cs_formeme eq 'n:5'; # there are almost no vocatives in newspapers, unlike in CzEng
+    return 'n:1' if $cs_formeme eq 'n:5';    # there are almost no vocatives in newspapers, unlike in CzEng
 
-    return 'adv:' if $cs_pos eq 'D' and $cs_formeme =~ /n:(.+)\+/ and $1 ne "než"; # 'nez' is a conjunction indeed
+    return 'adv:' if $cs_pos eq 'D' and $cs_formeme =~ /n:(.+)\+/ and $1 ne "než";    # 'nez' is a conjunction indeed
 
     return;
 }

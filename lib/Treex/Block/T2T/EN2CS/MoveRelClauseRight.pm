@@ -3,13 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ($tnode->formeme =~ /rc/) {
+    if ( $tnode->formeme =~ /rc/ ) {
         my $parent = $tnode->get_parent;
-        if ($tnode->precedes($parent) and $parent->formeme =~ /^n/) {
+        if ( $tnode->precedes($parent) and $parent->formeme =~ /^n/ ) {
             $tnode->shift_after_subtree($parent);
         }
     }

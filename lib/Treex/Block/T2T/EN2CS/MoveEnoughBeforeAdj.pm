@@ -5,11 +5,13 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-	if (($tnode->t_lemma||'') eq 'dost'
-      and ($tnode->get_parent->get_attr('mlayer_pos')||'') eq 'A'
-      and $tnode->get_parent->precedes($tnode)) {
-        $tnode->shift_before_node($tnode->get_parent);
-	}
+    if (( $tnode->t_lemma                                || '' ) eq 'dost'
+        and ( $tnode->get_parent->get_attr('mlayer_pos') || '' ) eq 'A'
+        and $tnode->get_parent->precedes($tnode)
+        )
+    {
+        $tnode->shift_before_node( $tnode->get_parent );
+    }
 }
 
 1;
