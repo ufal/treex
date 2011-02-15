@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
@@ -14,7 +14,7 @@ sub process_tnode {
                 and grep { $_->form =~ /(\)|-RRB-)/ } @aux_a_nodes
                 )
             {
-                $t_node->set_attr( 'is_parenthesis', 1 );
+                $t_node->set_is_parenthesis(1 );
             }
     return 1;
 }

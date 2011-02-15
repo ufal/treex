@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 sub process_tnode {
@@ -32,8 +32,8 @@ sub process_tnode {
     my $new_node = $anode->create_child();
     $new_node->shift_after_node($anode);
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'lemma',      $anode->lemma );
-    $new_node->set_attr( 'form',       $anode->form );
+    $new_node->set_lemma($anode->lemma );
+    $new_node->set_form($anode->form );
     $new_node->set_attr( 'morphcat/pos', 'V' );
     $anode->set_attr( 'morphcat/subpos', 'B' );
     
@@ -50,7 +50,7 @@ sub process_tnode {
     # verb "být" which has active voice, so next code is now useless.
     #my $voice = $anode->get_attr('morphcat/voice');
     #if ( $voice eq 'P' ) {  # 'bude viden'
-    #    warn $anode->get_attr('id'), " passive future\n";
+    #    warn $anode->id, " passive future\n";
     #    $new_node->set_attr( 'morphcat/subpos', 's' );
     #    $new_node->set_attr( 'morphcat/voice',  'P' );
     #    $new_node->set_attr( 'morphcat/gender', $anode->get_attr('morphcat/gender') );

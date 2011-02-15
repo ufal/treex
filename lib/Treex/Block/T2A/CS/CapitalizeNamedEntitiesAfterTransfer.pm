@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 # One-word named entities should have their t-lemma capitalized,
@@ -29,7 +29,7 @@ sub process_zone {
     # STEP 1: gather named entities
     my $t_root = $zone->get_ttree();
     foreach my $t_node ( $t_root->get_descendants() ) {
-        my $src_t_node = $t_node->get_source_tnode() or next;
+        my $src_t_node = $t_node->src_tnode or next;
         my $src_n_node = $src_t_node->get_n_node()   or next;
         my $e_type = $src_n_node->get_attr('ne_type');
         if ( defined $e_type && $e_type =~ /^[ipg]/ ) {
@@ -50,11 +50,11 @@ sub process_zone {
 
         #HACK: rus je druh švába
         if ( $lemma eq 'rus' ) {
-            $a_node->set_attr( 'form', ucfirst $form );
+            $a_node->set_form(ucfirst $form );
             next A_NODE;
         }
 
-        my $n_node = $ent_map{ $a_node->get_attr('id') };
+        my $n_node = $ent_map{ $a_node->id };
         next A_NODE if !defined $n_node || !$to_process{$n_node};
 
         # In Czech we don't capitalize adjectives

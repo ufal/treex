@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 has 'model'   => ( is => 'rw', isa => 'Str',  default => 'conll_mcd_order2_0.01.model' );
 has 'reparse' => ( is => 'rw', isa => 'Bool', default => 0 );
 #has '_parser' => ( is => 'rw' );
@@ -96,7 +96,7 @@ sub process_atree {
         # (Parser would mostly guess this right, but not always.)
         if ( $chunk_parent != $a_root ) {
             foreach my $bracket ( $lrb, $rrb ) {
-                $bracket->set_attr( 'conll_deprel', 'P' );
+                $bracket->set_conll_deprel('P' );
                 $bracket->set_parent($first_chunk_root);
             }
         }

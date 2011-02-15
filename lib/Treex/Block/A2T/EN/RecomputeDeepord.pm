@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 sub process_ttree {
     my ( $self, $t_aux_root ) = @_;

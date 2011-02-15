@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 # verbs with object control type, copied from page 286
 # in Pollard & Sag's Head-driven phrase structure grammar

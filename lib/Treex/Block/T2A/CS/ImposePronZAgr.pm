@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 # Ideálně by tyto případy (každý z mužů, každá z žen) měly být anotovány
 # jako bridging anaphora už ve zdrojovém jazyce.

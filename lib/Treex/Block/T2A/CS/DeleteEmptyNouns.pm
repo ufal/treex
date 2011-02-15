@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 sub process_tnode {
@@ -12,7 +12,7 @@ sub process_tnode {
     my @children = $cs_tnode->get_children;
 
     if (@children == 1 and $children[0]->formeme eq 'adj:attr' and $children[0]->precedes($cs_tnode)) {
-        my $en_tnode = $cs_tnode->get_source_tnode;
+        my $en_tnode = $cs_tnode->src_tnode;
         if ($en_tnode->t_lemma eq 'one' and my $a_node = $cs_tnode->get_lex_anode) {
             foreach my $a_child ($a_node->get_children) {
                 $a_child->set_parent($a_node->get_parent);

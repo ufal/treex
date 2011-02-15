@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 has _tagger     => ( is      => 'rw' );
 
 use Morce::English;

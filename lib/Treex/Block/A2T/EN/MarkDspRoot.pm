@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 # vytazeno z BNC: [tag="V.*"] [word=":"] [word="\""]
 # a rucne lehce profiltrovano:

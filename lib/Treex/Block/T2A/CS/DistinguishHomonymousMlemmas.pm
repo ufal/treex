@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -12,7 +12,7 @@ sub process_tnode {
                 and $tnode->get_attr('mlayer_pos') eq "V") {
 
             my $anode = $tnode->get_lex_anode;
-            my $src_tnode = $tnode->get_source_tnode;
+            my $src_tnode = $tnode->src_tnode;
 
             my $index;
             my $source_tlemma =  $src_tnode->t_lemma;
@@ -27,7 +27,7 @@ sub process_tnode {
                 $index = 4;
             }
 
-            $anode->set_attr('lemma', $anode->lemma."-$index");
+            $anode->set_lemma($anode->lemma."-$index");
 
     }
     return;

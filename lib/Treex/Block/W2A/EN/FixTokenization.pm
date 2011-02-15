@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 my %MERGE_FOR = (
     'a . m .' => 'a. m.',
@@ -35,7 +35,7 @@ sub process_atree {
         # "10 th" -> "10th" (one token is better for parser and transfer)
         #if ( $forms[ $i + 1 ] =~ /^(st|nd|rd|th)$/ && $forms[$i] =~ /^\d+$/ ) {
         #    ##warn "merging $forms[$i]th\n";
-        #    $nodes[$i]->set_attr( 'form',  $forms[$i] . 'th' );
+        #    $nodes[$i]->set_form($forms[$i] . 'th' );
         #    $nodes[$i]->set_attr( 'gloss', 'merged' );
         #    $nodes[ $i + 1 ]->disconnect();
         #    $i += 1;

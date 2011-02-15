@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Block::A2T::MoveAuxFromCoordToMembers';
 
-has '+language' => ( default => 'en' );
+
 
 override 'can_be_aux_to_coord' => sub {
     my ( $self, $a_node ) = @_;

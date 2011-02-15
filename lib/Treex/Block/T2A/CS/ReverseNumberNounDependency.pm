@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 use Lexicon::Czech;
@@ -75,9 +75,9 @@ sub process_t_node {
     $t_noun->set_formeme('n:2');
     
     # For info/debuging purposes let's update formeme_origin too
-    my $noun_f_origin = $t_noun->get_attr('formeme_origin');
+    my $noun_f_origin = $t_noun->formeme_origin;
     $t_node->set_attr( 'formeme_origin', "rule-number_from_parent($noun_f_origin:$noun_formeme)" );
-    $t_noun->set_attr( 'formeme_origin', 'rule-number_genitive' );
+    $t_noun->set_formeme_origin('rule-number_genitive' );
 
     # Numbers with decimal point/comma require singular noun in Czech
     # "2,5 miliardy" (not "2,5 miliard")

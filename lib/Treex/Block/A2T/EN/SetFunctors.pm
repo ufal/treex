@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 my %tag2functor = (
     "CC"    => "CONJ",    # coordinating conjunction
@@ -144,7 +144,7 @@ sub assign_functors {
             and $lex_a_node->ord < $a_parent->ord
             )
         {
-            if ( $node->get_parent->get_attr('is_passive') ) {
+            if ( $node->get_parent->is_passive ) {
                 $functor = "PAT";
             }
             else {

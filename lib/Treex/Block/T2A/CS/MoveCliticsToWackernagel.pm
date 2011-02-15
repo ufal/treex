@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 sub process_atree {
@@ -11,7 +11,7 @@ sub process_atree {
     # Divide nodes into clauses
     my @clauses;
     foreach my $anode ( $aroot->get_descendants( { ordered => 1 } ) ) {
-        my $clause_number = $anode->get_attr('clause_number') or next;
+        my $clause_number = $anode->clause_number or next;
         if ( !$clauses[$clause_number] ) { $clauses[$clause_number] = [$anode]; }
         else                             { push @{ $clauses[$clause_number] }, $anode; }
     }
@@ -60,7 +60,7 @@ sub process_clause {
         $first = $clause_root;
     }
     else {             # 3b) otherwise $first is one of the clause root's children
-        my $n = $clause_root->get_attr('clause_number');
+        my $n = $clause_root->clause_number;
         $first = first { !_ignore( $_, $n ) } $clause_root->get_children( { ordered => 1, add_self => 1 } );
         if ( !$first ) { $first = $clause_root; }
     }
@@ -82,7 +82,7 @@ sub _verb_group_root {
     my $verb_root = $clitic;
     while ((($verb_root->get_parent->get_attr('morphcat/pos')||'') eq "V"
 	    or ($verb_root->get_parent->lemma =~ /^(vědomý|jistý)$/)) # two exceptions found in PDT2.0 t-trees
-	   and $verb_root->get_attr('clause_number') eq $verb_root->get_parent->get_attr('clause_number')
+	   and $verb_root->clause_number eq $verb_root->get_parent->clause_number
 	) {
 	$verb_root = $verb_root->get_parent;
     }
@@ -157,7 +157,7 @@ sub _ignore {
     return 1 if $anode->get_attr('morphcat/pos') eq 'Z';
 
     # subordinating clause heads
-    return 1 if $anode->get_attr('clause_number') != $clause_number;
+    return 1 if $anode->clause_number != $clause_number;
 
     # functor = 'PREC'
     return 1 if $anode->lemma =~ /^(a|ale)$/ && $anode->get_children == 0;

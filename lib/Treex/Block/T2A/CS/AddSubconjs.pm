@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 my %NUMBERPERSON2ABY = ( # 'endings' for aby/kdyby
     'S1' => 'ch',
@@ -42,7 +42,7 @@ sub process_tnode {
         if ($subconj_form =~ /^(aby|kdyby)$/) {
             my $key = ($t_node->get_attr('morphcat/number')||"").($t_node->get_attr('morphcat/person')||"");
             if ($NUMBERPERSON2ABY{$key}) {
-                $subconj_node->set_attr('form',$subconj_form.$NUMBERPERSON2ABY{$key});
+                $subconj_node->set_form($subconj_form.$NUMBERPERSON2ABY{$key});
             }
         }
 

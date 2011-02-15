@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 use Lexicon::EN::First_names;
 
@@ -78,7 +78,7 @@ sub process_personal_nnode {
              normalized_name => $lemmas[$i],
              ne_type         => $type,
         );
-        $new_nnode->set_attr( 'a.rf', [ $a_node->get_attr('id') ] );
+        $new_nnode->set_attr( 'a.rf', [ $a_node->id ] );
     }
 
     return;

@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 my $MODEL = 'generated_data/extracted_from_BNC/left_neighbours_of_nouns.tsv';
 

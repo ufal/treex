@@ -3,10 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 use Lexicon::English;
-use Readonly;
 
 Readonly my $DEBUG => 0;
 
@@ -272,7 +271,7 @@ sub _verb {
     }
 
     # First, we will process infinitives...
-    if ( !$tnode->get_attr('is_clause_head') ) {
+    if ( !$tnode->is_clause_head ) {
         $tnode->set_attr( 'gram/tense',   'nil' );
         $tnode->set_attr( 'gram/verbmod', 'ind' );
 

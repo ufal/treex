@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 sub process_tnode {
     my ($self, $tnode) = @_;
@@ -37,8 +37,8 @@ sub process_tnode {
 
     # $anode is now under $last_prep, so attribute is_member
     # moves also to the upper node. (We are in TectoMT, not PDT.)
-    $last_prep->set_attr( 'is_member', $anode->is_member );
-    $anode->set_attr( 'is_member', undef );
+    $last_prep->set_is_member($anode->is_member );
+    $anode->set_is_member(undef );
 
     # Add all prepositions to a/aux.rf of the tnode
     $tnode->add_aux_anodes( @prep_nodes );

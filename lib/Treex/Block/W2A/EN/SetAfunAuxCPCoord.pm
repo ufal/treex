@@ -3,9 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
 
-use Readonly;
+
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
@@ -27,11 +26,11 @@ sub process_atree {
         # "No Aux[CP] node can have is_memeber -> delegate it to the child"
         # - This is PDT style of is_member with its pros and cons,
         #   but we choose to not adopt this style in TectoMT.
-        #if ( $node->get_attr('is_member') ) {
-        #    $node->set_attr( 'is_member', 0 );
+        #if ( $node->is_member ) {
+        #    $node->set_is_member(0 );
         #    my @children = $node->get_children();
         #    foreach my $child (@children) {
-        #        $child->set_attr( 'is_member', 1 );
+        #        $child->set_is_member(1 );
         #    }
         #}
     }

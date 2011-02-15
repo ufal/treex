@@ -5,7 +5,7 @@ use Treex::Moose;
 
 extends 'Treex::Block::W2A::Tokenize';
 
-has '+language' => ( default => 'en', );
+
 
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;

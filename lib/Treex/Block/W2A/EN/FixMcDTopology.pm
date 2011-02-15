@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 
 use Lexicon::English;
 
@@ -89,7 +89,7 @@ sub should_switch_with_parent {
 
 sub switch_with_parent {
     my ($a_node) = @_;
-    if ( $a_node->get_attr('is_member') == 1 ) {
+    if ( $a_node->is_member == 1 ) {
         my $coord_head = $a_node->get_parent();
         my $eff_parent = $coord_head->get_parent();
         my $ggg        = $eff_parent->get_parent();

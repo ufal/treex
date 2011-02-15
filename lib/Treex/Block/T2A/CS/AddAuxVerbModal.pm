@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 my %deontmod2modalverb = (
@@ -32,8 +32,8 @@ sub process_tnode {
     
     # Set its attributes
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'lemma',         $anode->lemma );
-    $new_node->set_attr( 'form',          $anode->form );
+    $new_node->set_lemma($anode->lemma );
+    $new_node->set_form($anode->form );
     $new_node->set_attr( 'morphcat/pos',    'V' );
     $new_node->set_attr( 'morphcat/subpos', 'f' );
 
@@ -41,7 +41,7 @@ sub process_tnode {
     $new_node->set_attr( 'morphcat/negation', 'A' );
 
     $anode->set_lemma($modalverb);
-    $anode->set_attr( 'form',  undef );
+    $anode->set_form(undef );
 
     $tnode->add_aux_anodes( $new_node );
     return;

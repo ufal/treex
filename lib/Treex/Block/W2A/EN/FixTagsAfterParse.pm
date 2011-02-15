@@ -3,9 +3,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
 
-use Readonly;
+
 
 Readonly my $TAGS_FILE => 'data/models/morpho_analysis/en/forms_with_more_tags.tsv';
 
@@ -28,7 +27,7 @@ sub BUILD {
 }
 
 # TODO: Should we change m-node's tag?
-# In TectoMT there is no "knitting", so a-node's m/tag is only a copy of m-node's tag.
+# In TectoMT there is no "knitting", so a-node's tag is only a copy of m-node's tag.
 # There is a difference between:
 # $a_node->set_tag($new_tag);
 # $m_node->set_tag($new_tag);
@@ -136,7 +135,7 @@ sub get_pseudo_echildren {
     my @eff_children = ();
     while (@children) {
         my $child = shift @children;
-        my @grandchildren = grep { $_->get_attr('is_member') } $child->get_children();
+        my @grandchildren = grep { $_->is_member } $child->get_children();
         if   (@grandchildren) { push @children,     @grandchildren; }
         else                  { push @eff_children, $child; }
     }

@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 
 sub process_tnode {
@@ -20,8 +20,8 @@ sub process_tnode {
     $new_node->shift_after_node($a_node);
 
     $new_node->reset_morphcat();
-    $new_node->set_attr( 'lemma',           $a_node->lemma );
-    $new_node->set_attr( 'form',            $a_node->form );
+    $new_node->set_lemma($a_node->lemma );
+    $new_node->set_form($a_node->form );
     $new_node->set_attr( 'morphcat/gender',   $a_node->get_attr('morphcat/gender') );
     $new_node->set_attr( 'morphcat/number',   $a_node->get_attr('morphcat/number') );
     $new_node->set_attr( 'morphcat/pos',      'V' );

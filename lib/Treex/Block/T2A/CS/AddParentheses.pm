@@ -3,16 +3,16 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'cs' );
+
 
 sub process_tnode {
     my ($self, $t_node) = @_;
-    return if !$t_node->get_attr('is_parenthesis');
+    return if !$t_node->is_parenthesis;
     my $parenthetized_aroot = $t_node->get_lex_anode();
     return if !$parenthetized_aroot;
     my $clause_number = 0;
     if ( !$t_node->is_clause_head ) {
-        $clause_number = $t_node->get_attr('clause_number');
+        $clause_number = $t_node->clause_number;
     }
 
     my $left_par = add_parenthesis_node( $parenthetized_aroot, '(', $clause_number );

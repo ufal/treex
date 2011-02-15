@@ -3,12 +3,11 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( default => 'en' );
+
 has '_ner'      => ( is      => 'rw' );
 has 'model' => (is => 'rw', isa => 'Str', default => 'ner-eng-ie.crf-3-all2008.ser.gz');
 
 use NER::Stanford::English;
-use Readonly;
 
 sub BUILD {
     my ($self) = @_;
@@ -35,7 +34,7 @@ sub process_zone {
     return if !@anodes;
 
     my @words = map { $_->form } @anodes;
-    my @a_ids = map { $_->get_attr('id') } @anodes;
+    my @a_ids = map { $_->id } @anodes;
 
     # BEWARE: $ner crashes on words like "." or "/", i.e. just punct  !!!
     my $test = join( '', @words );
