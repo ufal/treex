@@ -4,6 +4,8 @@ use Treex::Core;
 use MooseX::SemiAffordanceAccessor;
 with 'MooseX::Getopt';
 
+use Cwd;
+
 has 'save' => (
     traits        => ['Getopt'],
     cmd_aliases   => 's',
@@ -89,6 +91,16 @@ has 'qsub' => (
     isa => 'String',
     documentation => 'Additional parameters passed to qsub. Requires -p.',
 );
+
+has 'command' => (
+    is => 'rw',
+    documentation => 'Command by which treex was executed (if executed from command line)',
+    );
+
+has 'argv' => (
+    is => 'rw',
+    documentation => 'reference to @ARGV (if executed from command line)'
+    );
 
 
 sub _usage_format {
@@ -181,14 +193,48 @@ sub _execute_locally {
 						 jobs => $self->jobs,
 						 modulo => $self->modulo, } );
 
-
     $self->set_scenario( $scenario );
     $self->scenario->run();
 }
 
+
 sub _execute_on_cluster {
     my ($self) = @_;
 
+    my $counter;
+    my $directory;
+
+    do {
+	$counter++;
+	$directory = sprintf "%03d-cluster-run",$counter;
+    }
+    while (-d $directory);
+
+    log_info "Creating working directory $directory";
+    mkdir $directory or log_fatal $!;
+    foreach my $subdir (qw(stdout stderr finished scripts)) {
+	mkdir "$directory/$subdir" or log_fatal $!;
+    }
+
+    foreach my $jobnumber (1..$self->jobs) {
+	my $script_filename = "$directory/scripts/job".sprintf("%03d",$jobnumber).".sh";
+	open J,">",$script_filename;
+	print J "#!/bin/bash\n";
+	print J "echo This is job $jobnumber\n";
+	print J "cd ".(Cwd::cwd)."\n";
+	print J $self->command." --modulo=$jobnumber ".(join " ",$self->argv)."\n";
+	close J;
+	chmod 775, $script_filename;
+
+	if ($Treex::Core::Config::debug_run_jobs_locally) {
+	    system "$script_filename &";
+	}
+	else {
+	    # qsub
+	}
+    }
+
 }
+
 
 1;
