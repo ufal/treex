@@ -54,6 +54,13 @@ has modulo => (
     #	       isa => 'Int',
 );
 
+
+has outdir => (
+    is => 'rw',
+    isa => 'Str',
+);
+
+
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
@@ -80,6 +87,18 @@ sub next_filename {
         my $filename;
         while (1) {
             $self->_set_file_number( $self->file_number + 1 );
+
+	    # redirecting STDOUT and STDERR to temporary files which will be gradually collected by the hub
+	    log_fatal "Cannot redirect outputs without knowing the output directory (--outdir)"
+		unless $self->outdir;
+
+	    my $stem =  $self->outdir."/".$self->file_number;
+	    log_info "opening temp files $stem";
+	    open OUTPUT, '>', "$stem.stdout" or die $!;  # where will these messages go to?
+	    open ERROR,  '>', "$stem.stderr"  or die $!;
+	    STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
+	    STDERR->fdopen( \*ERROR,  'w' ) or die $!;
+
             my $filename = $self->current_filename();
             if ( $self->file_number % $self->jobs == $self->modulo ) {
                 return $filename;

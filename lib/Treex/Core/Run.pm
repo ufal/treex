@@ -83,6 +83,14 @@ has 'modulo' => (
     documentation => 'Not to be used manually. If number of jobs is set to J and modulo set to M, only I-th files fulfilling I mod J == M are processed.',
 );
 
+has 'outdir' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => 'Not to be used manually. Dictory for collecting standard and error outputs in parallelized processing.',
+);
+
+
 has 'qsub' => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -198,6 +206,10 @@ sub _execute_locally {
         $scen_str = 'SetGlobal language=' . $self->lang . " $scen_str";
     }
 
+    if ( $self->outdir ) {
+        $scen_str = 'SetGlobal outdir=' . $self->outdir . " $scen_str";
+    }
+
     my $scenario = Treex::Core::Scenario->new(
         {   from_string => $scen_str,
             jobs        => $self->jobs,
@@ -223,7 +235,7 @@ sub _execute_on_cluster {
 
     log_info "Creating working directory $directory";
     mkdir $directory or log_fatal $!;
-    foreach my $subdir (qw(stdout stderr finished scripts)) {
+    foreach my $subdir (qw(output scripts)) {
         mkdir "$directory/$subdir" or log_fatal $!;
     }
 
@@ -233,11 +245,9 @@ sub _execute_on_cluster {
         print J "#!/bin/bash\n";
         print J "echo This is job $jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
-        print J "treex --modulo=$jobnumber " . ( join " ", @{$self->argv} ) . "\n";
+        print J "treex --modulo=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
         close J;
         chmod 0777, $script_filename;
-
-	log_info "Decision comes...n";
 
         if ($self->local) {
 	    log_info "$script_filename executed locally";
