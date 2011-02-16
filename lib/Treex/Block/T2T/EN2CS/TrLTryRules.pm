@@ -19,29 +19,25 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Obama}      => 'Obama|N',
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    # Skip nodes that were already translated by other rules
+    return if $cs_tnode->t_lemma_origin !~ /^clone/;
 
-        # Skip nodes that were already translated by other rules
-        next if $cs_tnode->t_lemma_origin !~ /^clone/;
-
-        my $en_tnode = $cs_tnode->src_tnode or next;
-        my $lemma_and_pos = get_lemma_and_pos( $en_tnode, $cs_tnode );
-        if ( defined $lemma_and_pos ) {
-            my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
-            $cs_tnode->set_t_lemma($cs_tlemma);
-            $cs_tnode->set_t_lemma_origin('rule-Translate_L_try_rules');
-            $cs_tnode->set_attr( 'mlayer_pos', $m_pos )
-        }
+    my $en_tnode = $cs_tnode->src_tnode or next;
+    my $lemma_and_pos = $self->get_lemma_and_pos( $en_tnode, $cs_tnode );
+    if ( defined $lemma_and_pos ) {
+        my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
+        $cs_tnode->set_t_lemma($cs_tlemma);
+        $cs_tnode->set_t_lemma_origin('rule-Translate_L_try_rules');
+        $cs_tnode->set_attr( 'mlayer_pos', $m_pos )
     }
     return;
 }
 
 sub get_lemma_and_pos {
-    my ( $en_tnode,  $cs_tnode )   = @_;
+    my ( $self, $en_tnode,  $cs_tnode )   = @_;
     my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
 
     # PersProns like "that" should be translated as "ten"
