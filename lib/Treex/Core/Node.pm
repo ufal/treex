@@ -111,6 +111,17 @@ sub get_layer {
     }
 }
 
+sub language {
+    my ($self) = @_;
+    $self->get_zone()->language;
+}
+
+sub selector {
+    my ($self) = @_;
+    $self->get_zone()->selector;
+}
+
+
 sub create_child {
     my $self = shift;
 
