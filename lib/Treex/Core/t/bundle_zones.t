@@ -18,6 +18,7 @@ my $bundle = $doc->create_bundle;
 
 # creating zones in the bundle
 $zones[0] = eval { $bundle->create_zone( 'en', $selectors[0] ) };
+#$zones[0] =  $bundle->create_zone( 'en', $selectors[0] ) ;
 ok( $zones[0], "Created zone w/ simple selector ($selectors[0])" );
 
 $zones[1] = eval { $bundle->create_zone('en') };
@@ -39,6 +40,7 @@ foreach ( 0 .. 2 ) {
             my $tree = eval qq/\$zone->create_${l}tree()/;
             isa_ok( $tree, "Treex::Core::Node::$u", "Tree created by create_${l}tree method" );
             my $tree2 = eval { $zone->create_tree($l) };
+            #my $tree2 =  $zone->create_tree($l) ;
             isa_ok( $tree2, "Treex::Core::Node::$u", "Tree created by create_tree($l) method" );
             is( $zone->has_tree($l), eval qq/\$zone->has_${l}tree()/, "has_tree($l) is equivalent to has_${l}tree" );
             SKIP: {

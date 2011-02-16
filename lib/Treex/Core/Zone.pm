@@ -5,6 +5,7 @@ package Treex::Core::Zone;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
+use MooseX::Params::Validate;
 
 extends 'Treex::PML::Struct';
 
@@ -49,17 +50,28 @@ sub FOREIGNBUILDARGS {
 }
 
 sub set_attr {
-    my ( $self, $attr_name, $attr_value ) = @_;
+    my $self = shift;
+    my ( $attr_name, $attr_value ) = pos_validated_list(
+		\@_,
+		{ isa => 'Str' },
+		{ isa => 'Any' },
+	);
+
     return $self->{$attr_name} = $attr_value;
 }
 
 sub get_attr {
-    my ( $self, $attr_name ) = @_;
+	my $self = shift;
+	my ( $attr_name ) = pos_validated_list(
+		\@_,
+		{ isa => 'Str' },
+	);
     return $self->{$attr_name};
 }
 
 sub get_label {
-    my ($self) = @_;
+    my $self = shift;
+	pos_validated_list(\@_);
     return $self->selector . $self->language;
 }
 1;

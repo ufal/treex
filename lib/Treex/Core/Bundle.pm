@@ -3,6 +3,7 @@ package Treex::Core::Bundle;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
+use MooseX::Params::Validate;
 
 extends 'Treex::PML::Node';
 
@@ -28,7 +29,12 @@ my @layers = qw(t a n);
 # --------- ACCESS TO ZONES ------------
 
 sub get_zone {
-    my ( $self, $language, $selector ) = @_;
+    my $self = shift;
+    my ( $language, $selector ) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector' },
+    );
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
             my ( $name, $value ) = @$element;
@@ -41,7 +47,12 @@ sub get_zone {
 }
 
 sub create_zone {
-    my ( $self, $language, $selector ) = @_;
+    my $self = shift;
+    my ( $language, $selector ) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector' },
+    );
     my $new_zone = Treex::Core::BundleZone->new(
         {
             'language' => $language,
@@ -66,7 +77,12 @@ sub create_zone {
 }
 
 sub get_or_create_zone {
-    my ( $self, $language, $selector ) = @_;
+    my $self = shift;
+    my ( $language, $selector ) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector' },
+    );
     my $zone = $self->get_zone( $language, $selector );
     if ( not defined $zone ) {
         $zone = $self->create_zone( $language, $selector );
@@ -75,14 +91,16 @@ sub get_or_create_zone {
 }
 
 sub get_all_zones {
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list ( \@_);
     return map { $_->value() } $self->{zones}->elements;
 }
 
 # --------- ACCESS TO TREES ------------
 
 sub get_all_trees {
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list (\@_);
 
     return () unless $self->{zones};
 
@@ -100,10 +118,13 @@ sub get_all_trees {
 }
 
 sub create_tree {
-    my ( $self, $tree_name ) = @_;
-    log_fatal "set_tree: incorrect number of arguments" if @_ != 2;
-
-    $tree_name =~ s/Czech/cs/;
+    my $self = shift;
+    my ( $tree_name ) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+    );
+    
+	$tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
     $tree_name =~ s/M$/A/;
 
@@ -120,20 +141,20 @@ sub create_tree {
 }
 
 sub get_tree {
-    my ( $self, $tree_name ) = @_;
-    log_fatal "get_tree: incorrect number of arguments" if @_ != 2;
-
+    my $self = shift;
+    my ( $tree_name ) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+    );
     $tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
     $tree_name =~ s/M$/A/;
-
     if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
         log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
     }
 
     else {
         my ( $selector, $language, $layer ) = ( $1, $2, $3 );
-
         my $zone = $self->get_zone( $language, $selector );
         if ( not defined $zone ) {
             log_fatal "Unavailable zone $selector$language\n";
@@ -144,8 +165,11 @@ sub get_tree {
 }
 
 sub has_tree {
-    my ( $self, $tree_name ) = @_;
-    log_fatal "has_tree: incorrect number of arguments" if @_ != 2;
+    my $self = shift;
+    my ( $tree_name ) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+    );
 
     $tree_name =~ s/Czech/cs/;
     $tree_name =~ s/English/en/;
@@ -168,8 +192,12 @@ sub has_tree {
 # --------- ACCESS TO ATTRIBUTES ------------
 
 sub set_attr {
-    my ( $self, $attr_name, $attr_value ) = @_;
-    log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
+    my $self = shift;
+    my ( $attr_name, $attr_value ) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+        { isa => 'Any' },
+    );
 
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
@@ -187,8 +215,11 @@ sub set_attr {
 }
 
 sub get_attr {
-    my ( $self, $attr_name ) = @_;
-    log_fatal "get_attr: incorrect number of arguments" if @_ != 2;
+    my $self = shift;
+    my ( $attr_name ) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+    );
 
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::attr( $self, $attr_name );
@@ -213,10 +244,11 @@ sub get_attr {
 # ------ ACCESS MESSAGE BOARD ----------
 
 sub leave_message {
-    my ( $self, $message_text ) = @_;
-    if ( not defined $message_text or $message_text eq "" ) {
-        log_fatal "Undefined or empty message";
-    }
+    my $self = shift;
+    my ( $message_text ) = pos_validated_list (
+        \@_,
+        { isa => 'Message' },
+    );
     if ( $self->get_attr('message_board') ) {
         push @{ $self->get_attr('message_board') }, $message_text;
     }
@@ -226,8 +258,8 @@ sub leave_message {
 }
 
 sub get_messages {
-    my ($self) = @_;
-    log_fatal "get_messages: incorrect number of arguments" if @_ != 1;
+    my $self = shift;
+    pos_validated_list (\@_);
     if ( $self->get_attr('message_board') ) {
         return @{ $self->get_attr('message_board') };
     }

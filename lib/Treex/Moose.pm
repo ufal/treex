@@ -37,7 +37,17 @@ use Moose::Util::TypeConstraints;
 subtype 'Selector'
     => as 'Str'
     => where { $_ eq '' or /^[ST]/ }
-=> message {'Selector must start with S (source) or T (target).'};
+=> message {"Selector must start with S (source) or T (target). You've provides $_"};
+
+subtype 'Layer'
+	=> as 'Str'
+	=> where { m/^[ptan]$/i }
+=> message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
+
+subtype 'Message' #nonempty string
+	=> as 'Str'
+	=> where { $_ ne '' }
+=> message {"Message must be nonempty"};
 
 # ISO 639-1 language code with some extensions from ISO 639-2
 my @LANG_CODES = (

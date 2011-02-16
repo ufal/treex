@@ -7,7 +7,8 @@ use Test::More;
 
 BEGIN { use_ok('Treex::Core::Bundle') }
 use Treex::Core::Document;
-
+use Treex::Core::Log;
+#log_set_error_level('WARN');
 #Construction testing
 
 my $document = Treex::Core::Document->new;
@@ -20,9 +21,8 @@ isa_ok( $bundle->get_document(), 'Treex::Core::Document' );
 #Tree testing
 my @layers = qw(N A T P);
 foreach (@layers) {
-    eval { $bundle->create_tree("SCzech$_") };
-    my $success = !$@;
-    ok( $success, "SCzech$_ tree successfully created" );
+    my $success = eval { $bundle->create_tree("SCzech$_");1; };
+    ok( $success, "SCzech$_ tree successfully created" ) or diag($@);
     SKIP: {
         skip "There is no tree SCzech$_", 2 unless $success;
         ok( $bundle->has_tree("SCzech$_"), "Bundle contains recently added tree SCzech$_" );
