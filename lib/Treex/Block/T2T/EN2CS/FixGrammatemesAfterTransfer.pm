@@ -20,22 +20,22 @@ my %prob_sg_given_lemma;
 sub BUILD {
 
     # treatment of nouns in genitive positions with unclear gram/number (created from non-nouns or from n:attr)
-    Report::debug('Loading more probable genitive noun number below other noun');
-    open my $F1, "<:utf8", "$ENV{TMT_ROOT}/share/$F1_FN" or Report::fatal $!;
+    log_debug('Loading more probable genitive noun number below other noun');
+    open my $F1, "<:utf8", "$ENV{TMT_ROOT}/share/$F1_FN" or log_fatal $!;
     while (<$F1>) {
         chomp;
         my ( $gov_lemma, $number ) = split /\t/;
         $gov_lemma_to_number{$gov_lemma} = $number;
     }
 
-    open my $F2, "<:utf8", "$ENV{TMT_ROOT}/share/$F2_FN" or Report::fatal $!;
+    open my $F2, "<:utf8", "$ENV{TMT_ROOT}/share/$F2_FN" or log_fatal $!;
     while (<$F2>) {
         chomp;
         my ( $gov_lemma, $dep_lemma, $number ) = split /\t/;
         $gov_lemma_dep_lemma_to_number{$gov_lemma}{$dep_lemma} = $number;
     }
 
-    open my $F3, '<:utf8', "$ENV{TMT_ROOT}/share/$F3_FN" or Report::fatal $!;
+    open my $F3, '<:utf8', "$ENV{TMT_ROOT}/share/$F3_FN" or log_fatal $!;
     while (<$F3>) {
         chomp;
         my ( $lemma, $prob ) = split /\t/;

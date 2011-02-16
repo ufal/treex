@@ -101,7 +101,7 @@ sub translate_compound {
         }
 
         if ( !@t_lemma_variants ) {
-            Report::warn('Something is rotten in the state of Translate_LF_compounds');
+            log_warn('Something is rotten in the state of Translate_LF_compounds');
             next SUBWORD;
         }
 

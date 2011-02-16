@@ -136,7 +136,7 @@ sub process_bundle {
                     $cs_tnode->set_attr( 'mlayer_pos', $2 );
                 }
                 else {
-                    Report::fatal "Unexpected form of label: " . $translations[0]->{label};
+                    log_fatal "Unexpected form of label: " . $translations[0]->{label};
                 }
 
                 $cs_tnode->set_attr(
@@ -149,7 +149,7 @@ sub process_bundle {
                 $cs_tnode->set_attr(
                     'translation_model/t_lemma_variants',
                     [   map {
-                            $_->{label} =~ /(.+)#(.)/ or Report::fatal "Unexpected form of label: $_->{label}";
+                            $_->{label} =~ /(.+)#(.)/ or log_fatal "Unexpected form of label: $_->{label}";
                             {   't_lemma' => $1,
                                 'pos'     => $2,
                                 'origin'  => $_->{source},

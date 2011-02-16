@@ -23,7 +23,7 @@ sub process_ttree {
 
             # Skip verbs with subject (i.e. child in nominative)
             #            next VFIN
-            #                if any { $_ ne $perspron and $_->formeme =~ /1/ } $vfin_tnode->get_eff_children();
+            #                if any { $_ ne $perspron and $_->formeme =~ /1/ } $vfin_tnode->get_echildren();
 
             # chained gram.coref. in the case of relative clauses
             if ( $antec and $antec->get_attr('coref_gram.rf') ) {

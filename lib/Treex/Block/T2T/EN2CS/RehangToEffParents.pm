@@ -9,7 +9,7 @@ sub process_bundle {
     my @nodes = $root->get_descendants();
 
     # Array of first effective parents of every node
-    my @eff_parents = map { my ($ep) = $_->get_eff_parents(); $ep } @nodes;
+    my @eff_parents = map { my ($ep) = $_->get_eparents(); $ep } @nodes;
 
     foreach my $i ( 0 .. $#nodes ) {
         my $node   = $nodes[$i];

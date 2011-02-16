@@ -28,7 +28,7 @@ sub process_bundle {
 sub fix_lemma {
     my ($cs_tnode)  = @_;
     my $cs_tlemma   = $cs_tnode->t_lemma;
-    my ($cs_parent) = $cs_tnode->get_eff_parents();
+    my ($cs_parent) = $cs_tnode->get_eparents();
 
     return 'který#P' if $cs_tlemma eq 'tento' && $cs_parent->is_relclause_head;
 
@@ -52,7 +52,7 @@ sub fix_formeme {
     my ($cs_tnode)  = @_;
     my $cs_tlemma   = $cs_tnode->t_lemma;
     my $cs_formeme  = $cs_tnode->formeme;
-    my ($cs_parent) = $cs_tnode->get_eff_parents();
+    my ($cs_parent) = $cs_tnode->get_eparents();
     my $cs_parent_tlemma  = $cs_parent->t_lemma               || '#root';
     my $cs_parent_formeme = $cs_parent->formeme               || '#root';
     my $cs_pos            = $cs_tnode->get_attr('mlayer_pos') || '';
@@ -60,7 +60,7 @@ sub fix_formeme {
 
     my $en_tnode    = $cs_tnode->src_tnode or return;
     my $en_formeme  = $en_tnode->formeme;
-    my ($en_parent) = $en_tnode->get_eff_parents();
+    my ($en_parent) = $en_tnode->get_eparents();
 
     if (( $cs_formeme eq 'n:2' or $cs_formeme eq 'n:poss' )
         and $en_formeme eq 'n:poss'

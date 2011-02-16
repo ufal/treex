@@ -10,7 +10,7 @@ sub process_ttree {
     foreach my $rc_head ( grep { $_->formeme =~ /rc/ } $t_root->get_descendants ) {
 
         # Skip verbs with subject (i.e. child in nominative)
-        #        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_eff_children();
+        #        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_echildren();
 
         # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
         # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
@@ -20,7 +20,7 @@ sub process_ttree {
         next RELCLAUSE if $src_tnode->formeme =~ /rc/;
 
         # Grammatical antecedent is typically the nominal parent of the clause
-        my ($gram_antec) = $rc_head->get_eff_parents;
+        my ($gram_antec) = $rc_head->get_eparents;
         next RELCLAUSE if !$gram_antec;
         next RELCLAUSE if $gram_antec->formeme !~ /^n/;
 

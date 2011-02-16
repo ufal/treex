@@ -9,13 +9,13 @@ sub BUILD {
     my $max_formemes = $arg_ref->{MAX_FORMEME_VARIANTS};
     my $l_sum        = $arg_ref->{LEMMA_PROB_SUM};
     my $f_sum        = $arg_ref->{FORMEME_PROB_SUM};
-    Report::fatal(
+    log_fatal(
         'Applying Cut_variants block without specifying parameters does not make sense. '
             . 'Add at least one of: MAX_LEMMA_VARIANTS, MAX_FORMEME_VARIANTS, LEMMA_PROB_SUM, FORMEME_PROB_SUM.'
         )
         if !defined $max_lemmas && !defined $max_formemes && !defined $l_sum && !defined $f_sum;
-    Report::fatal("LEMMA_PROB_SUM=$l_sum is not in <0,1>")   if defined $l_sum && ( $l_sum < 0 or $l_sum > 1 );
-    Report::fatal("FORMEME_PROB_SUM=$f_sum is not in <0,1>") if defined $f_sum && ( $f_sum < 0 or $f_sum > 1 );
+    log_fatal("LEMMA_PROB_SUM=$l_sum is not in <0,1>")   if defined $l_sum && ( $l_sum < 0 or $l_sum > 1 );
+    log_fatal("FORMEME_PROB_SUM=$f_sum is not in <0,1>") if defined $f_sum && ( $f_sum < 0 or $f_sum > 1 );
     return;
 }
 

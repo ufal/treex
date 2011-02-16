@@ -3,7 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-use Report;
 use Lexicon::Czech;
 
 sub process_tnode {

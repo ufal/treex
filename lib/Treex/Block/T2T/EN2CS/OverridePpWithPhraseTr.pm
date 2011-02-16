@@ -10,7 +10,7 @@ sub get_required_share_files { return $input_file; }
 my %enphrase2csphrase;
 
 sub BUILD {
-    open my $I, "<:encoding(utf-8)", "$ENV{TMT_ROOT}/share/$input_file" or Report::fatal "Can't open '$input_file' : $!";
+    open my $I, "<:encoding(utf-8)", "$ENV{TMT_ROOT}/share/$input_file" or log_fatal "Can't open '$input_file' : $!";
     while (<$I>) {
         chomp;
         my ( $en_phrase, $cs_phrase ) = split /\t/;
@@ -62,7 +62,7 @@ sub process_node {
     # Don't try to inflect this node in the synthesis
     $cs_tnode->set_nodetype('atom');    #TODO: more elegant hack
 
-    Report::debug( 'Success: ' . $cs_tnode->id . " : $cs_phrase", 1 );
+    log_debug( 'Success: ' . $cs_tnode->id . " : $cs_phrase", 1 );
     return 1;
 }
 

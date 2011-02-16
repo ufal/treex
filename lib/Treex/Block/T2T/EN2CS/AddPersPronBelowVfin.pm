@@ -14,7 +14,7 @@ sub process_ttree {
     foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
 
         # Skip verbs with subject (i.e. child in nominative)
-        next VFIN if any { $_->formeme =~ /1/ } $vfin_tnode->get_eff_children();
+        next VFIN if any { $_->formeme =~ /1/ } $vfin_tnode->get_echildren();
 
         # Find antecedent by heuristics: nearest noun left to the $vfin_tnode
         my $antec = first { $_->precedes($vfin_tnode) } @nouns;
