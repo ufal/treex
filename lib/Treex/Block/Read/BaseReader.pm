@@ -48,7 +48,7 @@ has jobs => (
 
     #	     isa => 'Int',
 );
-has modulo => (
+has jobindex => (
     is => 'rw',
 
     #	       isa => 'Int',
@@ -77,7 +77,7 @@ sub next_filename {
     my ($self) = @_;
 
     # local sequential processing
-    if ( not defined $self->modulo ) {
+    if ( not defined $self->jobindex ) {
         $self->_set_file_number( $self->file_number + 1 );
         return $self->current_filename();
     }
@@ -92,15 +92,13 @@ sub next_filename {
 	    log_fatal "Cannot redirect outputs without knowing the output directory (--outdir)"
 		unless $self->outdir;
 
-	    my $stem =  $self->outdir."/".$self->file_number;
-	    log_info "opening temp files $stem";
-	    open OUTPUT, '>', "$stem.stdout" or die $!;  # where will these messages go to?
-	    open ERROR,  '>', "$stem.stderr"  or die $!;
-	    STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
-	    STDERR->fdopen( \*ERROR,  'w' ) or die $!;
-
             my $filename = $self->current_filename();
-            if ( $self->file_number % $self->jobs == $self->modulo ) {
+	    last if not defined $filename;
+
+            if ( ($self->file_number - 1) % $self->jobs == ($self->jobindex-1) ) {
+
+		Treex::Core::Run::_redirect_output($self->outdir,$self->file_number,$self->jobindex);
+
                 return $filename;
             }
         }

@@ -76,7 +76,7 @@ has 'jobs' => (
     documentation => 'Number of jobs for parallelization, default 10. Requires -p.',
 );
 
-has 'modulo' => (
+has 'jobindex' => (
     traits        => ['Getopt'],
     is            => 'ro',
     isa           => 'Int',
@@ -126,6 +126,11 @@ sub BUILD {
 
     # more complicated tests on consistency of options will be place here
     my ($self) = @_;
+
+    if ($self->jobindex) {
+	_redirect_output($self->outdir,0,$self->jobindex);
+    }
+
     my @file_sources;
     if ( $self->filelist ) {
         push @file_sources, "filelist option";
@@ -142,15 +147,17 @@ sub BUILD {
     }
 
     # 'require' can't be changed to 'imply', since the number of jobs has a default value
-    if ( ( $self->qsub or $self->modulo ) and not $self->parallel ) {
-        log_fatal "Options --qsub and --modulo require --parallel";
+    if ( ( $self->qsub or $self->jobindex ) and not $self->parallel ) {
+        log_fatal "Options --qsub and --jobindex require --parallel";
     }
+
+
 }
 
 sub execute {
     my ($self) = @_;
 
-    if ( $self->parallel and not defined $self->modulo ) {
+    if ( $self->parallel and not defined $self->jobindex ) {
         log_info "Parallelized execution. This process is the head coordinating " . $self->jobs . " server processes.";
         $self->_execute_on_cluster();
     }
@@ -158,7 +165,7 @@ sub execute {
     # non-parallelized execution, or one of distributed processes
     else {
         if ( $self->parallel ) {
-            log_info "Parallelized execution. This process is one out of " . $self->jobs . " server processes, modulo==" . $self->modulo;
+            log_info "Parallelized execution. This process is one out of " . $self->jobs . " server processes, jobindex==" . $self->jobindex;
         }
         else {
             log_info "Local (single-process) execution.";
@@ -213,7 +220,8 @@ sub _execute_locally {
     my $scenario = Treex::Core::Scenario->new(
         {   from_string => $scen_str,
             jobs        => $self->jobs,
-            modulo      => $self->modulo,
+            jobindex      => $self->jobindex,
+	    outdir      => $self->outdir,
         }
     );
 
@@ -243,9 +251,9 @@ sub _execute_on_cluster {
         my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
         open J, ">", $script_filename;
         print J "#!/bin/bash\n";
-        print J "echo This is job $jobnumber\n";
+        print J "#echo This is job $jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
-        print J "treex --modulo=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
+        print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
         close J;
         chmod 0777, $script_filename;
 
@@ -259,6 +267,21 @@ sub _execute_on_cluster {
         }
     }
 }
+
+sub _redirect_output {
+    my ($outdir,$filenumber,$jobindex) = @_;
+
+    if ($jobindex==3) {
+	log_fatal "WWWWWWWWWWWw";
+    }
+
+    my $stem =  $outdir."/".sprintf("%07d",$filenumber)."-".sprintf("%03d",$jobindex);
+    open OUTPUT, '>', "$stem.stdout" or die $!;  # where will these messages go to, before redirection?
+    open ERROR,  '>', "$stem.stderr"  or die $!;
+    STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
+    STDERR->fdopen( \*ERROR,  'w' ) or die $!;
+}
+
 
 
 

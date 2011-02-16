@@ -34,11 +34,12 @@ has jobs => (
 
     #	     isa => 'Int',
 );
-has modulo => (
+has jobindex => (
     is => 'rw',
 
     #	       isa => 'Int',
 );
+
 
 use Treex::Core::Log;
 use File::Basename;
@@ -47,7 +48,7 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-
+    
     log_memory if $TMT_DEBUG_MEMORY;
 
     log_info("Initializing an instance of TectoMT::Scenario ...");
@@ -95,10 +96,10 @@ sub BUILD {
 
     # if running in parallelized mode
     # there should be a check that the reader handles BaseReader (because of next_file)
-    if ( defined $self->modulo ) {
-        $self->document_reader->set_modulo( $self->modulo );
+    if ( defined $self->jobindex ) {
+        $self->document_reader->set_jobindex( $self->jobindex );
         $self->document_reader->set_jobs( $self->jobs );
-        log_info "Jobs and modulo forwarder to the reader.";
+        log_info "Jobs and jobindex forwarder to the reader.";
     }
 
     log_info('');
@@ -215,6 +216,7 @@ sub construct_scenario_string {
             } @$block_items
     );
 }
+
 
 sub _load_block {
     my ( $self, $block_item ) = @_;

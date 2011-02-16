@@ -25,7 +25,7 @@ has from => (
 has _reader => (
     is      => 'rw',
     handles => {
-        'set_modulo' => 'set_modulo',
+        'set_jobindex' => 'set_jobindex',
         'set_jobs'   => 'set_jobs',
         }
 );
