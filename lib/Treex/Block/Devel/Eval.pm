@@ -18,6 +18,8 @@ has 'code' => (
 sub BUILD {
     my ($self) = @_;
 
+#    print "CODE ".$self->code."\n";
+
     if ($self->foreach !~ /^(document|bundle|zone|[atnp](tree|node))$/) {
 	log_fatal "Unacceptable value of the 'foreach' argument: ".$self->foreach;
     }

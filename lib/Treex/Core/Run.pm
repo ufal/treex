@@ -90,6 +90,14 @@ has 'qsub' => (
     documentation => 'Additional parameters passed to qsub. Requires -p.',
 );
 
+has 'local' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Bool',
+    documentation => 'Run jobs locally (might help with multi-core machines). Requires -p.',
+);
+
+
 has 'command' => (
     is            => 'rw',
     traits        => ['NoGetopt'],
@@ -156,6 +164,7 @@ sub _execute_locally {
     my ($self) = @_;
     my $scen_str = join ' ', @{ $self->extra_argv };
 
+    # input data files can be specified in different ways
     if ( $self->glob ) {
 	my $mask = $self->glob;
 	$mask =~ s/^['"](.+)['"]$/$1/;
@@ -174,6 +183,7 @@ sub _execute_locally {
         $self->set_filenames( \@files );
     }
 
+    # some command line options are just shortcuts for blocks; the blocks are added to the scenario now
     if ( $self->filenames ) {
         log_info "Block Read added to the beginning of the scenario.";
         $scen_str = 'Read from=' . join( ',', @{ $self->filenames } ) . " $scen_str";
@@ -223,15 +233,18 @@ sub _execute_on_cluster {
         print J "#!/bin/bash\n";
         print J "echo This is job $jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
-        print J $self->command . " --modulo=$jobnumber " . ( join " ", $self->argv ) . "\n";
+        print J "treex --modulo=$jobnumber " . ( join " ", @{$self->argv} ) . "\n";
         close J;
-        chmod 775, $script_filename;
+        chmod 0777, $script_filename;
 
-        if ($Treex::Core::Config::debug_run_jobs_locally) {
+	log_info "Decision comes...n";
+
+        if ($self->local) {
+	    log_info "$script_filename executed locally";
             system "$script_filename &";
         }
         else {
-
+	    log_info "CLUSTER";
             # qsub
         }
     }
@@ -247,11 +260,20 @@ our @EXPORT = qw(treex);
 
 # not a method !
 sub treex {
+
     my $arguments = shift; # ref to array of arguments, or a string containing all arguments as on the command line
 
     if (ref($arguments) eq "ARRAY") {
 
-	@ARGV = @$arguments;
+	@ARGV = map { # dirty!!!, god knows why spaces in arguments are not processed correctly if they come from command line
+	    if (/^(\S+=)(.+ .+)$/) {
+		split(/ /,"$1'$2'");
+	    }
+	    else {
+	        $_;
+	    }
+	} @$arguments;
+
 	my $idx   = first_index {$_ eq '--'} @ARGV;
 	my %args;
 	$args{command} = join " ",@ARGV;
