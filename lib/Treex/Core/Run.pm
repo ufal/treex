@@ -157,8 +157,10 @@ sub _execute_locally {
     my $scen_str = join ' ', @{ $self->extra_argv };
 
     if ( $self->glob ) {
-        my @files = glob $self->glob;
-        log_fatal 'No files matching mask \'' . $self->glob . '\'\n' if @files == 0;
+	my $mask = $self->glob;
+	$mask =~ s/^['"](.+)['"]$/$1/;
+        my @files = glob $mask;
+        log_fatal 'No files matching mask $mask' if @files == 0;
         $self->set_filenames( \@files );
     }
     elsif ( $self->filelist ) {

@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core::Run;
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 use Test::Output;
 
 my $test_data_file = 'dummy.treex';
