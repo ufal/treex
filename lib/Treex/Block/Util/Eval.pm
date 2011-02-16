@@ -1,4 +1,4 @@
-package Treex::Block::Devel::Eval;
+package Treex::Block::Util::Eval;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';

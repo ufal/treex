@@ -13,7 +13,7 @@ my $test_data_file = 'dummy.treex';
 my $doc = Treex::Core::Document->new();
 $doc->save($test_data_file);
 
-my $cmdline_arguments = " -q Devel::Eval foreach=document code='print 123' -- $test_data_file";
+my $cmdline_arguments = " -q Util::Eval foreach=document code='print 123' -- $test_data_file";
 
 stdout_is( sub { treex $cmdline_arguments },'123',"running treex from perl, checking processing of spaces in arguments");
 

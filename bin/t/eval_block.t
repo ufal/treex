@@ -13,6 +13,6 @@ foreach my $i (1..3) {
     $doc->save("dummy$i.treex");
 }
 
-my $cmdline_arguments = "-q Devel::Eval foreach=document code='print 1' -g 'dummy?.treex'";
-stdout_is( sub { treex $cmdline_arguments },'111',"checking Devel::Eval: treex $cmdline_arguments");
+my $cmdline_arguments = "-q Util::Eval foreach=document code='print 1' -g 'dummy?.treex'";
+stdout_is( sub { treex $cmdline_arguments },'111',"checking Util::Eval: treex $cmdline_arguments");
 
