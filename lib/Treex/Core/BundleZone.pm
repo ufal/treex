@@ -178,7 +178,7 @@ sub sentence {
 sub set_sentence {
 	my $self = shift;
     my ( $text ) = pos_validated_list(
-		@_,
+		\@_,
 		{ isa => 'Str' },
 	);
     return $self->set_attr( 'sentence', $text );
