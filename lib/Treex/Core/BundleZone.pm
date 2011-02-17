@@ -75,7 +75,8 @@ sub create_tree {
     $tree_root->set_id($new_id);
 
     # pml-typing
-    $tree_root->set_type_by_name( $self->get_document->metaData('schema'), lc($layer) . '-root.type' );
+    #$tree_root->set_type_by_name( $self->get_document->metaData('schema'), lc($layer) . '-root.type' );
+    $tree_root->set_type_by_name( $self->get_document->metaData('schema'), $tree_root->get_pml_type_name() );
 
     # vyresit usporadavaci atribut!
     my $ordering_attribute = $tree_root->get_ordering_member_name;

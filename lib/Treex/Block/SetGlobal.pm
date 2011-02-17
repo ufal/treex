@@ -18,6 +18,8 @@ sub process_document {
 
 1;
 
+__END__
+
 =head1 NAME
 
 Treex::Block::SetGlobal
@@ -39,7 +41,7 @@ you can write:
  W2A::Tag
  ...
 
- =head1 COPYRIGHT
+=head1 COPYRIGHT
 
 Copyright 2011 Martin Popel
 This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

@@ -19,6 +19,7 @@ use Treex::Core::Node;
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;
 use Treex::Core::Node::N;
+use Treex::Core::Node::P;
 use Treex::Core::BundleZone;
 
 use Treex::Core::Log;
@@ -118,74 +119,42 @@ sub get_all_trees {
 
 sub create_tree {
     my $self = shift;
-    my ( $tree_name ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list (
         \@_,
-        { isa => 'Str' },
+        { isa => 'LangCode' },
+        { isa => 'Layer' },
+        { isa => 'Selector', default=> ''}
     );
-    
-	$tree_name =~ s/Czech/cs/;
-    $tree_name =~ s/English/en/;
-    $tree_name =~ s/M$/A/;
 
-    if ( $tree_name =~ /([A-Z])([a-z]{2})([A-Z])$/ ) {
-        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
-        my $zone = $self->get_or_create_zone( $language, $selector );
-        my $tree_root = $zone->create_tree($layer);
-        return $tree_root;
-    }
-
-    else {
-        log_fatal "Tree name $tree_name not matching expected pattern";
-    }
+    my $zone = $self->get_or_create_zone( $language, $selector );
+    my $tree_root = $zone->create_tree($layer);
+    return $tree_root;
 }
 
 sub get_tree {
     my $self = shift;
-    my ( $tree_name ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list (
         \@_,
-        { isa => 'Str' },
+        { isa => 'LangCode' },
+        { isa => 'Layer' },
+        { isa => 'Selector', default=> ''}
     );
-    $tree_name =~ s/Czech/cs/;
-    $tree_name =~ s/English/en/;
-    $tree_name =~ s/M$/A/;
-    if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
-        log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
-    }
 
-    else {
-        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
-        my $zone = $self->get_zone( $language, $selector );
-        if ( not defined $zone ) {
-            log_fatal "Unavailable zone $selector$language\n";
-        }
-
-        return $zone->get_tree($layer);
-    }
+    my $zone = $self->get_zone( $language, $selector );
+    log_fatal "Unavailable zone for selector=$selector language=$language\n" if !$zone;
+    return $zone->get_tree($layer);
 }
 
 sub has_tree {
     my $self = shift;
-    my ( $tree_name ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list (
         \@_,
-        { isa => 'Str' },
+        { isa => 'LangCode' },
+        { isa => 'Layer' },
+        { isa => 'Selector', default=> ''}
     );
-
-    $tree_name =~ s/Czech/cs/;
-    $tree_name =~ s/English/en/;
-    $tree_name =~ s/M$/A/;
-
-    if ( $tree_name !~ /([ST])([a-z]{2})([A-Z])/ ) {
-        log_fatal("Tree name not structured approapriately (e.g.SenM): $tree_name");
-    }
-
-    else {
-        my ( $selector, $language, $layer ) = ( $1, $2, $3 );
-
-        my $zone = $self->get_zone( $language, $selector );
-
-        return defined $zone && $zone->has_tree($layer);
-    }
-
+    my $zone = $self->get_zone( $language, $selector );
+    return defined $zone && $zone->has_tree($layer);
 }
 
 # --------- ACCESS TO ATTRIBUTES ------------
@@ -201,7 +170,7 @@ sub set_attr {
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
     }
-
+    # TODO more selectors than [ST], lang-codes with more letters etc.
     elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
         my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
         my $zone = $self->get_or_create_zone( $language, $selector );

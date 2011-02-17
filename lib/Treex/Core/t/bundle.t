@@ -20,16 +20,16 @@ isa_ok( $bundle->get_document(), 'Treex::Core::Document' );
 
 #Tree testing
 my @layers = qw(N A T P);
-foreach (@layers) {
-    my $success = eval { $bundle->create_tree("SCzech$_");1; };
-    ok( $success, "SCzech$_ tree successfully created" ) or diag($@);
+foreach my $layer (@layers) {
+    my $success = eval { $bundle->create_tree('cs', $layer);1; };
+    ok( $success, "Czech $layer-tree successfully created" ) or diag($@);
     SKIP: {
-        skip "There is no tree SCzech$_", 2 unless $success;
-        ok( $bundle->has_tree("SCzech$_"), "Bundle contains recently added tree SCzech$_" );
-        isa_ok( $bundle->get_tree("SCzech$_"), "Treex::Core::Node::$_" );
+        skip "There is no tree cs $layer", 2 unless $success;
+        ok( $bundle->has_tree('cs', $layer), "Bundle contains recently added tree cs $layer" );
+        isa_ok( $bundle->get_tree('cs', $layer), "Treex::Core::Node::$layer" );
     }
 }
-ok( !$bundle->has_tree('TCzechT'), "Bundle doesn't contains tree, that wasn't added" );
+ok( !$bundle->has_tree('en', 'T'), "Bundle doesn't contains tree, that wasn't added" );
 
 #TODO: {
 #    todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
