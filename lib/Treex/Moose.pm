@@ -2,6 +2,7 @@ package Treex::Moose;
 use Moose;
 use Moose::Exporter;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
+use MooseX::Params::Validate;
 use Treex::Core::Log;
 use Treex::Core::Config;
 use Treex::Core::Resource;
@@ -28,6 +29,7 @@ Moose::Exporter->setup_import_methods(
         \&Readonly::Readonly,
         \&Scalar::Util::weaken,
         \&Data::Dumper::Dumper,
+        \&MooseX::Params::Validate::pos_validated_list,
         ]
 );
 
@@ -37,7 +39,7 @@ use Moose::Util::TypeConstraints;
 subtype 'Selector'
     => as 'Str'
     => where { $_ eq '' or /^[ST]/ }
-=> message {"Selector must start with S (source) or T (target). You've provides $_"};
+=> message {"Selector must start with S (source) or T (target). You've provided $_"};
 
 subtype 'Layer'
 	=> as 'Str'
@@ -48,6 +50,9 @@ subtype 'Message' #nonempty string
 	=> as 'Str'
 	=> where { $_ ne '' }
 => message {"Message must be nonempty"};
+
+subtype 'Id'
+	=> as 'Str'; #preparation for possible future constraints
 
 # ISO 639-1 language code with some extensions from ISO 639-2
 my @LANG_CODES = (
@@ -206,6 +211,7 @@ my @LANG_CODES = (
 enum 'LangCode' => @LANG_CODES;
 my %IS_LANG_CODE = map { $_ => 1 } @LANG_CODES;
 sub is_lang_code { return $IS_LANG_CODE{ $_[0] }; }
+
 
 1;
 

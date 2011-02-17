@@ -3,7 +3,6 @@ package Treex::Core::BundleZone;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
-use MooseX::Params::Validate;
 
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;

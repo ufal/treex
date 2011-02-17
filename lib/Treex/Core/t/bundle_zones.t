@@ -39,10 +39,14 @@ foreach ( 0 .. 2 ) {
             my $u    = uc($_);
             my $tree = eval qq/\$zone->create_${l}tree()/;
             isa_ok( $tree, "Treex::Core::Node::$u", "Tree created by create_${l}tree method" );
-            my $tree2 = eval { $zone->create_tree($l) };
-            #my $tree2 =  $zone->create_tree($l) ;
-            isa_ok( $tree2, "Treex::Core::Node::$u", "Tree created by create_tree($l) method" );
-            is( $zone->has_tree($l), eval qq/\$zone->has_${l}tree()/, "has_tree($l) is equivalent to has_${l}tree" );
+			ok(eval {$zone->delete_tree($l),1}, 'Tree can be deleted') or diag($@);
+            SKIP: {
+				skip "$u tree not deleted, not creating another one",1 if $zone->has_tree($l);
+				my $tree2 = eval { $zone->create_tree($l) };
+	            #my $tree2 =  $zone->create_tree($l) ;
+		        isa_ok( $tree2, "Treex::Core::Node::$u", "Tree created by create_tree($l) method" );
+			}
+			is( $zone->has_tree($l), eval qq/\$zone->has_${l}tree()/, "has_tree($l) is equivalent to has_${l}tree" );
             SKIP: {
                 skip "$u tree not created", 3 unless $zone->has_tree($l);
                 is( eval qq/\$zone->get_${l}tree()/, $tree,               "Tree I get via get_${l}tree is same as originally created" );

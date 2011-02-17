@@ -3,7 +3,6 @@ package Treex::Core::Bundle;
 use Moose;
 use Treex::Moose;
 use MooseX::NonMoose;
-use MooseX::Params::Validate;
 
 extends 'Treex::PML::Node';
 

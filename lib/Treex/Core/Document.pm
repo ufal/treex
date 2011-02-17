@@ -24,6 +24,7 @@ sub build_file_number {
 # Full filename without the extension
 sub full_filename {
     my $self = shift;
+    pos_validated_list (\@_);
     return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
 }
 
@@ -71,6 +72,12 @@ use Treex::PML::Factory;
 my $factory = Treex::PML::Factory->new();
 
 sub BUILD {
+#PREPARED FOR PARAM CHECK
+    #my $self = shift;
+    #my () = pos_validated_list (
+    #    \@_,
+    #    { isa => '' },
+    #);
     my ( $self, $params_rf ) = @_;
 
     my $pmldoc;
@@ -132,7 +139,9 @@ sub BUILD {
 }
 
 sub _pml_attribute_hash {
+#PREPARED FOR PARAM CHECK
     my $self = shift;
+    pos_validated_list (\@_);
     return $self->metaData('pml_root')->{meta};
 }
 
@@ -175,8 +184,12 @@ sub _create_empty_pml_doc {
 # --- INDEXING
 
 sub index_node_by_id() {
-    my ( $self, $id, $node ) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 3;
+    my $self = shift;
+    my ($id, $node) = pos_validated_list (
+        \@_,
+        { isa => 'Id' },
+        { isa => 'Maybe[Treex::Core::Node]' }, #jde to takhle?
+    );
     my $index = $self->_index;
     if ( defined $node ) {
         $index->{$id} = $node;
@@ -188,14 +201,21 @@ sub index_node_by_id() {
 }
 
 sub id_is_indexed {
-    my ( $self, $id ) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 2;
+    my $self = shift;
+    my ($id) = pos_validated_list (
+        \@_,
+        { isa => 'Id' },
+    );
     return ( defined $self->_index->{$id} );
 }
 
 sub get_node_by_id() {
-    my ( $self, $id ) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 2;
+#komentare se vztahuji k TectoMT a vztahu M a A vrstvy -> neni to uz vyresene jinak?
+    my $self = shift;
+    my ($id) = pos_validated_list (
+        \@_,
+        { isa => 'Id' },
+    );
     if ( defined $self->_index->{$id} ) {
         return $self->_index->{$id};
     }
@@ -224,8 +244,8 @@ sub get_node_by_id() {
 }
 
 sub get_all_node_ids() {
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
+    my $self = shift;
+    pos_validated_list (\@_);
     return ( keys %{ $self->_index } );
 }
 
@@ -233,13 +253,13 @@ sub get_all_node_ids() {
 
 sub get_bundles {
     my $self = shift;
+    pos_validated_list (\@_);
     return $self->trees;
 }
 
 sub create_bundle {
-
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
+    my $self = shift;
+    pos_validated_list (\@_);
 
     my $fsfile = $self->_pmldoc();
 
@@ -262,12 +282,19 @@ sub create_bundle {
 # -------------- ACCESS TO ZONES ---------------------------------------
 
 sub create_zone {
-    my ( $self, $language, $selector ) = @_;
-
-    if ( $language =~ /(.+)(..)/ ) {
-        $language = $2;
-        $selector = $1;
-    }
+#Now it doesn't support compound Zone selector as Scs
+    my $self = shift;
+    my ($language,$selector) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector'},
+    );
+    #my ( $self, $language, $selector ) = @_;
+	#
+    #if ( $language =~ /(.+)(..)/ ) {
+    #    $language = $2;
+    #    $selector = $1;
+    #}
 
     my $new_zone = Treex::Core::DocZone->new(
         {
@@ -290,12 +317,19 @@ sub create_zone {
 }
 
 sub get_zone {
-    my ( $self, $language, $selector ) = @_;
+#Now it doesn't support compound Zone selector as Scs
+    my $self = shift;
+    my ($language,$selector) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector'},
+    );
+    #my ( $self, $language, $selector ) = @_;
 
-    if ( $language =~ /(.+)(..)/ ) {    # temporarily expecting just two-letter language codes !!!
-        $language = $2;
-        $selector = $1;
-    }
+    #if ( $language =~ /(.+)(..)/ ) {    # temporarily expecting just two-letter language codes !!!
+    #    $language = $2;
+    #    $selector = $1;
+    #}
 
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
@@ -310,7 +344,13 @@ sub get_zone {
 }
 
 sub get_or_create_zone {
-    my ( $self, $language, $selector ) = @_;
+    my $self = shift;
+    my ($language,$selector) = pos_validated_list (
+        \@_,
+        { isa => 'LangCode' },
+        { isa => 'Selector'},
+    );
+
     my $fs_zone = $self->get_zone( $language, $selector );
     if ( not defined $fs_zone ) {
         $fs_zone = $self->create_zone( $language, $selector );
@@ -321,8 +361,12 @@ sub get_or_create_zone {
 # ----------------- ACCESS TO ATTRIBUTES -------------------
 
 sub set_attr {
-    my ( $self, $attr_name, $attr_value ) = @_;
-    log_fatal "set_attr: incorrect number of arguments" if @_ != 3;
+    my $self = shift;
+    my ($attr_name,$attr_value) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+		{ isa => 'Any' },
+    );
 
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::set_attr(
@@ -343,8 +387,11 @@ sub set_attr {
 }
 
 sub get_attr {
-    my ( $self, $attr_name ) = @_;
-    log_fatal "set_attr: incorrect number of arguments" if @_ != 2;
+    my $self = shift;
+    my ($attr_name) = pos_validated_list (
+        \@_,
+        { isa => 'Str' },
+    );
 
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, $attr_name );
