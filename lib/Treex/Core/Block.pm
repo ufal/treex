@@ -4,7 +4,7 @@ use Treex::Moose;
 use Treex::Core::Resource;
 
 has selector => ( is => 'ro', isa => 'Selector', default => '', );
-has language => ( is => 'ro', isa => 'LangCode|Undef', builder => 'build_language' );
+has language => ( is => 'ro', isa => 'Maybe[LangCode]', builder => 'build_language' );
 has scenario => (
     is       => 'ro',
     isa      => 'Treex::Core::Scenario',
@@ -20,6 +20,8 @@ has scenario => (
 # in all *::EN::* blocks and all *::??2EN::* blocks.
 sub build_language {
     my $self = shift;
+    pos_validated_list (\@_);
+
     my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
     if ( $lang && Treex::Moose::is_lang_code( lc $lang ) ) {
         return lc $lang;
@@ -34,7 +36,8 @@ sub build_language {
 #                 documentation=>'no fatal errors in robust mode');
 
 sub BUILD {
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list (\@_);
 
     foreach my $rel_path_to_file ( $self->get_required_share_files ) {
         Treex::Core::Resource::require_file_from_share( $rel_path_to_file, 'the block ' . $self->get_block_name );
@@ -44,11 +47,18 @@ sub BUILD {
 }
 
 sub get_required_share_files {
+    my $self = shift;
+    pos_validated_list (\@_);
     return ();
 }
 
 sub process_document {
-    my ( $self, $document ) = @_;
+    my $self = shift;
+    my ($document) = pos_validated_list (
+        \@_,
+        { isa => 'Treex::Core::Document' },
+    );
+
     if ( !$document->get_bundles() ) {
         log_fatal "There are no bundles in the document and block " . ref($self) .
             " doesn't override the method process_document";
@@ -60,7 +70,12 @@ sub process_document {
 }
 
 sub process_bundle {
-    my ( $self, $bundle ) = @_;
+    my $self = shift;
+    my ($bundle) = pos_validated_list (
+        \@_,
+        { isa => 'Treex::Core::Bundle' },
+    );
+
     log_fatal "Parameter language was not set and block " . ref($self)
         . " doesn't override the method process_bundle" if !$self->language;
     my $zone = $bundle->get_zone( $self->language, $self->selector );
@@ -77,7 +92,13 @@ sub process_bundle {
 }
 
 sub _try_process_layer {
-    my ( $self, $zone, $layer ) = @_;
+    my $self = shift;
+    my ($zone, $layer) = pos_validated_list (
+        \@_,
+        { isa => 'Treex::Core::Zone' },
+        { isa => 'Layer' },
+    );
+    
     return 0 if !$zone->has_tree($layer);
     my $tree = $zone->get_tree($layer);
     my $meta = $self->meta;
@@ -100,7 +121,12 @@ sub _try_process_layer {
 }
 
 sub process_zone {
-    my ( $self, $zone ) = @_;
+    my $self = shift;
+    my ($zone) = pos_validated_list (
+        \@_,
+        { isa => 'Treex::Core::Zone' },
+    );
+    
     my $overriden;
 
     for my $layer (qw(a t n p)) {
@@ -114,7 +140,8 @@ sub process_zone {
 }
 
 sub get_block_name {
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list (\@_);
     return ref($self);
 }
 
@@ -135,7 +162,11 @@ TectoMT::Block !!!!!!!!!!!!! needs to be updated
  use base qw(TectoMT::Block);
  
  sub process_bundle {
-    my ($self, $bundle) = @_;
+    my $self = shift;
+    my ($bundle) = pos_validated_list (
+        \@_,
+        { isa => 'Treex::Core::Bundle' },
+    );
     
     # processing
     
@@ -224,6 +255,12 @@ This method should be used especially for downloading statistical models,
 but not for installed tools or libraries.
 
  sub get_required_share_files {
+#PREPARED FOR PARAM CHECK
+    my $self = shift;
+    my () = pos_validated_list (
+        \@_,
+        { isa => '' },
+    );
      my $self = shift;
      return (
          'data/models/mytool/'.$self->language.'/features.gz',

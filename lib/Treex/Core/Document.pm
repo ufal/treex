@@ -73,12 +73,11 @@ my $factory = Treex::PML::Factory->new();
 
 sub BUILD {
 #PREPARED FOR PARAM CHECK
-    #my $self = shift;
-    #my () = pos_validated_list (
-    #    \@_,
-    #    { isa => '' },
-    #);
-    my ( $self, $params_rf ) = @_;
+    my $self = shift;
+    my ($params_rf) = pos_validated_list (
+        \@_,
+        { isa => 'Maybe[HashRef]' },
+    );
 
     my $pmldoc;
 
