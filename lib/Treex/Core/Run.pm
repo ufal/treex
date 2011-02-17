@@ -251,10 +251,9 @@ sub _execute_on_cluster {
         my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
         open J, ">", $script_filename;
         print J "#!/bin/bash\n";
-        print J "#echo This is job $jobnumber\n";
+	print J "touch $directory/output/started-$jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
         print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
-#	print J "perl -e 'sleep 3'\n";
 	print J "touch $directory/output/finished-$jobnumber\n";
         close J;
         chmod 0777, $script_filename;
@@ -264,15 +263,19 @@ sub _execute_on_cluster {
             system "$script_filename &";
         }
         else {
-	    log_info "CLUSTER";
+	    log_info "$script_filename submitted to the cluster";
             # qsub
         }
     }
 
-    log_info "Waiting for all jobs to be finished...";
-    my $mask = "$directory/output/finished-*";
- 
-   while ( (scalar (() = glob $mask)  ) < $self->jobs) {  # force list context
+    log_info "Waiting for all jobs to be started...";
+    while ( (scalar (() = glob "$directory/output/started-*")  ) < $self->jobs) {  # force list context
+	sleep(1);
+    }
+    
+    log_info "All jobs started. Waiting for them to be finished...";
+    
+    while ( (scalar (() = glob "$directory/output/finished-*")  ) < $self->jobs) {  # force list context
 	sleep(1);
     }
     log_info "All jobs are finished";
