@@ -37,7 +37,6 @@ sub build_language {
 
 sub BUILD {
     my $self = shift;
-    pos_validated_list (\@_);
 
     foreach my $rel_path_to_file ( $self->get_required_share_files ) {
         Treex::Core::Resource::require_file_from_share( $rel_path_to_file, 'the block ' . $self->get_block_name );
