@@ -254,6 +254,8 @@ sub _execute_on_cluster {
         print J "#echo This is job $jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
         print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
+#	print J "perl -e 'sleep 3'\n";
+	print J "touch $directory/output/finished-$jobnumber\n";
         close J;
         chmod 0777, $script_filename;
 
@@ -266,6 +268,25 @@ sub _execute_on_cluster {
             # qsub
         }
     }
+
+    log_info "Waiting for all jobs to be finished...";
+    my $mask = "$directory/output/finished-*";
+ 
+   while ( (scalar (() = glob $mask)  ) < $self->jobs) {  # force list context
+	sleep(1);
+    }
+    log_info "All jobs are finished";
+
+    foreach my $stderr_file (glob "$directory/output/*stderr") {
+	open I,$stderr_file or log_fatal $!;
+	print STDERR $_ while <I>;
+    }
+
+    foreach my $stdout_file (glob "$directory/output/*stdout") {
+	open I,$stdout_file or log_fatal $!;
+	print $_ while <I>;
+    }
+
 }
 
 sub _redirect_output {
