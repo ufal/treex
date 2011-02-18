@@ -11,13 +11,13 @@ my $document = Treex::Core::Document->new;
 my $bundle   = $document->create_bundle;
 my $zone     = $bundle->create_zone( 'cs', 'S' );
 
-foreach my $layer (qw(A T N)) {
+foreach my $layer (qw(P A T N)) {
     $zone->create_tree($layer);
 
-    cmp_ok( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), '==', $bundle->get_tree("SCzech$layer"), 'Tree can be obtained via zone or directly and result is same' );
+    #is( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), $bundle->get_tree("Scs$layer"), 'Tree can be obtained via zone or directly and result is same' ); # not supported
 
-    my $root = $zone->get_tree($layer);
-    my $ordered = defined eval { $root->ordering_attribute() };
+    my $root    = $zone->get_tree($layer);
+    my $ordered = defined $root->get_ordering_value();
     isa_ok( $root, 'Treex::Core::Node' );
     isa_ok( $root, "Treex::Core::Node::$layer" );
     my $attributes = {
@@ -111,8 +111,9 @@ foreach my $layer (qw(A T N)) {
     SKIP: {
 
         #skip 'Tree has no ordering',scalar $root->get_descendants({add_self=>1}) unless $ordered;
-        skip 'Tree has no ordering', 22 + 2 + 2 * scalar $root->get_descendants() unless $ordered;
+        skip 'Tree has no ordering', 36 + 2 + 2 * scalar $root->get_descendants() unless $ordered;
         my %ords;
+        my $max = 0;
         foreach (
             $root->get_descendants(
                 {
@@ -122,13 +123,21 @@ foreach my $layer (qw(A T N)) {
             )
             )
         {
-            ok( defined $_->get_ordering_value(), 'Node ' . $_->get_id() . ' has ordering value' );
-            cmp_ok( ++$ords{ $_->get_ordering_value() }, '==', 1, q(and it's unique) );
+            my $value = $_->get_ordering_value();
+            ok( defined $value, 'Node ' . ( $_->get_id() || 'NODE WITHOUT ID' ) . ' has ordering value' );
+            $max = $value if $value > $max;
+            cmp_ok( ++$ords{$value}, '==', 1, q(and it's unique) );
 
         }
+
+        foreach ( 0 .. $max ) {
+            cmp_ok( $ords{$_} || 0, '==', 1, qq(There's exactly 1 node with ordering $_) );
+        }
+
         ok( $root->precedes($node), 'Preceding predicate works' );
-        $root->set_attr( $root->ordering_attribute(), $node->get_ordering_value() + 1 );
-        ok( $root->precedes($node), 'Preceding predicate still works, so it is immune to direct changes' );
+
+        #$root->set_attr( $root->ordering_attribute(), $node->get_ordering_value() + 1 ); #set_attr won't be supported
+        #ok( $root->precedes($node), 'Preceding predicate still works, so it is immune to direct changes' );
     }
 
     #Reordering nodes

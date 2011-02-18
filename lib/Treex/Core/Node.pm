@@ -26,25 +26,25 @@ has id => (
 
 sub _index_my_id {
     my $self = shift;
-    pos_validated_list (\@_, {isa=>'Any', optional => 1}); #TODO
+    pos_validated_list( \@_, { isa => 'Any', optional => 1 } );    #TODO
     $self->get_document->index_node_by_id( $self->id, $self );
 }
 
 sub _pml_attribute_hash {
     my $self = shift;
-    pos_validated_list (\@_);
+    pos_validated_list( \@_ );
     return $self;
 }
 
 sub get_bundle {
     my $self = shift;
-    pos_validated_list (\@_);
+    pos_validated_list( \@_ );
     return $self->get_zone->get_bundle;
 }
 
 sub get_zone {    # reference to embeding zone is stored only with tree root, not with nodes
     my $self = shift;
-    pos_validated_list (\@_);
+    pos_validated_list( \@_ );
     my $zone;
     if ( $self->is_root ) {
         $zone = $self->_get_zone;
@@ -60,7 +60,7 @@ sub get_zone {    # reference to embeding zone is stored only with tree root, no
 
 sub disconnect {
     my $self = shift;
-    my ($arg_ref) = pos_validated_list (
+    my ($arg_ref) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]', optional => 1 },
     );
@@ -107,14 +107,14 @@ sub disconnect {
 
 sub get_pml_type_name {
     my $self = shift;
-    pos_validated_list (\@_);
+    pos_validated_list( \@_ );
     return;
 }
 
 sub get_layer {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     if ( ref($self) =~ /Node::(\w)$/ ) {
         return lc($1);
     }
@@ -125,22 +125,22 @@ sub get_layer {
 
 sub language {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     $self->get_zone()->language;
 }
 
 sub selector {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     $self->get_zone()->selector;
 }
 
-
 sub create_child {
     my $self = shift;
-	#NOT VALIDATED INTENTIONALLY - passing args to to new (and it's also black magic, so I'm not touching it)
+
+    #NOT VALIDATED INTENTIONALLY - passing args to to new (and it's also black magic, so I'm not touching it)
 
     # TODO:
     #my $new_node = ( ref $self )->new(@_);
@@ -166,12 +166,12 @@ sub create_child {
 
 sub add_to_listattr {
     my $self = shift;
-    my ($attr_name, $attr_value) = pos_validated_list (
+    my ( $attr_name, $attr_value ) = pos_validated_list(
         \@_,
         { isa => 'Str' },
         { isa => 'Any' },
     );
-    
+
     my $list = $self->attr($attr_name);
     log_fatal("Attribute $attr_name is not a list!")
         if !defined $list || ref($list) ne 'Treex::PML::List';
@@ -187,13 +187,13 @@ sub add_to_listattr {
 
 # Get more attributes at once
 sub get_attrs {
-    my $self = shift;
-    my @attr_names = pos_validated_list (
+    my $self       = shift;
+    my @attr_names = pos_validated_list(
         \@_,
-		{ isa => 'Any'}, #at least one parameter
-		MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
+        { isa => 'Any' },    #at least one parameter
+        MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
     );
-    
+
     my @attr_values;
     if ( ref $attr_names[-1] ) {
         my $arg_ref          = pop @attr_names;
@@ -216,8 +216,8 @@ sub get_attrs {
 
 sub get_document {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     my $bundle = $self->get_bundle();
     log_fatal('Cannot call get_document on a node which is in no bundle') if not defined $bundle;
     return $self->get_bundle->get_document();
@@ -225,28 +225,28 @@ sub get_document {
 
 sub get_root {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     return $self->root();
 }
 
 sub is_root {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     return ( not $self->get_parent() );
 }
 
 sub get_parent {
     my $self = shift;
-    pos_validated_list (\@_);
-    
+    pos_validated_list( \@_ );
+
     return $self->parent;
 }
 
 sub set_parent {
     my $self = shift;
-    my ($parent) = pos_validated_list (
+    my ($parent) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Node' },
     );
@@ -280,9 +280,10 @@ sub set_parent {
 }
 
 sub _check_switches {
-	#This method may be replaced by subtype and checked as parameter
+
+    #This method may be replaced by subtype and checked as parameter
     my $self = shift;
-    my ($arg_ref) = pos_validated_list (
+    my ($arg_ref) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]' },
     );
@@ -310,12 +311,11 @@ sub _check_switches {
 # This is quite an uneffective implementation in case of e.g. first_only
 sub _process_switches {
     my $self = shift;
-    my ($arg_ref, @nodes) = pos_validated_list (
+    my ( $arg_ref, @nodes ) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]' },
-		MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
+        MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
     );
-    
 
     # Check for unknown switches and not allowed combinations
     $self->_check_switches($arg_ref);
@@ -350,11 +350,11 @@ sub _process_switches {
 
 sub get_children {
     my $self = shift;
-    my ($arg_ref) = pos_validated_list (
+    my ($arg_ref) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]', optional => 1 },
     );
-    
+
     my @children = $self->children();
     return @children if !$arg_ref;
     return $self->_process_switches( $arg_ref, @children );
@@ -362,11 +362,11 @@ sub get_children {
 
 sub get_descendants {
     my $self = shift;
-    my ($arg_ref) = pos_validated_list (
+    my ($arg_ref) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]', optional => 1 },
     );
-    
+
     my @descendants;
     if ( $arg_ref && $arg_ref->{except} ) {
         my $except_node = delete $arg_ref->{except};
@@ -384,11 +384,11 @@ sub get_descendants {
 
 sub get_siblings {
     my $self = shift;
-    my ($arg_ref) = pos_validated_list (
+    my ($arg_ref) = pos_validated_list(
         \@_,
         { isa => 'Maybe[HashRef]', optional => 1 },
     );
-    
+
     my $parent = $self->get_parent();
     return if !$parent;
     my @siblings = grep { $_ ne $self } $parent->get_children();
@@ -400,14 +400,12 @@ sub get_left_neighbor  { return $_[0]->get_siblings( { preceding_only => 1, last
 sub get_right_neighbor { return $_[0]->get_siblings( { following_only => 1, first_only => 1 } ); }
 
 sub is_descendant_of {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ( $self, $another_node ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $self = shift;
+    my ($another_node) = pos_validated_list(
+        \@_,
+        { isa => 'Treex::Core::Node' },
+    );
+
     my $parent = $self->get_parent();
     while ($parent) {
         return 1 if $parent == $another_node;
@@ -420,39 +418,27 @@ sub is_descendant_of {
 #---- NODE ORDERING ------
 
 sub get_ordering_value {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
     return $self->ord;
 }
 
 sub set_ordering_value {
-##PREPARED FOR PARAM CHECK
-#   my $self = shift;
-#   my () = pos_validated_list (
-#       \@_,
-#       { isa => '' },
-#   );
-    my ( $self, $val ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $self = shift;
+    my ($val) = pos_validated_list(
+        \@_,
+        { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
+    );
     $self->set_ord($val);
     return;
 }
 
 sub precedes {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ( $self, $another_node ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $self = shift;
+    my ($another_node) = pos_validated_list(
+        \@_,
+        { isa => 'Treex::Core::Node' },
+    );
     return $self->get_ordering_value() < $another_node->get_ordering_value();
 }
 
@@ -460,15 +446,10 @@ sub precedes {
 # so they can handle deprecated fractional ords.
 # When no "fract-ords" will be used in the whole TectoMT
 # this could be reimplemented a bit more effectively.
+# Neni na to cas prave ted?
 sub get_next_node {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $my_ord = $self->get_ordering_value();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
@@ -484,14 +465,8 @@ sub get_next_node {
 }
 
 sub get_prev_node {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $my_ord = $self->get_ordering_value();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
@@ -511,14 +486,8 @@ sub get_prev_node {
 # or *::Recompute_ordering should be deleted.
 # If you allways use $node->shift_* methods, you won't need any normalization.
 sub normalize_node_ordering {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    log_fatal('Incorrect number of arguments')                             if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
     my $new_ord = 0;
     foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
@@ -529,12 +498,14 @@ sub normalize_node_ordering {
 }
 
 sub _check_shifting_method_args {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #U overovaci metody si nejsem jisty, zda overovat parametry pres MXPV
+    #my $self = shift;
+    #my ($reference_node, $arg_ref) = pos_validated_list (
+    #    \@_,
+    #    { isa => 'Treex::Core::Node' },
+    #	{ isa => 'Maybe[HashRef]', optional => 1 },
+    #);
     my ( $self, $reference_node, $arg_ref ) = @_;
     my @c     = caller 1;
     my $stack = "$c[3] called from $c[1], line $c[2]";
@@ -559,11 +530,11 @@ sub _check_shifting_method_args {
 
 sub shift_after_node {
 ##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+    #    my $self = shift;
+    #    my () = pos_validated_list (
+    #        \@_,
+    #        { isa => '' },
+    #    );
     my ( $self, $reference_node, $arg_ref ) = @_;
     return if $self == $reference_node;
     _check_shifting_method_args(@_);
@@ -573,11 +544,11 @@ sub shift_after_node {
 
 sub shift_before_node {
 ##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+    #    my $self = shift;
+    #    my () = pos_validated_list (
+    #        \@_,
+    #        { isa => '' },
+    #    );
     my ( $self, $reference_node, $arg_ref ) = @_;
     return if $self == $reference_node;
     _check_shifting_method_args(@_);
@@ -587,11 +558,11 @@ sub shift_before_node {
 
 sub shift_after_subtree {
 ##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+    #    my $self = shift;
+    #    my () = pos_validated_list (
+    #        \@_,
+    #        { isa => '' },
+    #    );
     my ( $self, $reference_node, $arg_ref ) = @_;
     _check_shifting_method_args(@_);
 
@@ -602,11 +573,11 @@ sub shift_after_subtree {
 
 sub shift_before_subtree {
 ##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+    #    my $self = shift;
+    #    my () = pos_validated_list (
+    #        \@_,
+    #        { isa => '' },
+    #    );
     my ( $self, $reference_node, $arg_ref ) = @_;
     _check_shifting_method_args(@_);
 
@@ -619,11 +590,11 @@ sub shift_before_subtree {
 # However, due to unfriendly name and arguments it's not public.
 sub _shift_to_node {
 ##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+    #    my $self = shift;
+    #    my () = pos_validated_list (
+    #        \@_,
+    #        { isa => '' },
+    #    );
     my ( $self, $reference_node, $after, $without_children ) = @_;
     my @all_nodes = $self->get_root()->get_descendants();
 
@@ -688,14 +659,8 @@ sub _shift_to_node {
 #---- OTHER ------
 
 sub get_depth {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $depth = 0;
     while ( $self = $self->get_parent() ) {
         $depth++;
@@ -704,13 +669,8 @@ sub get_depth {
 }
 
 sub get_fposition {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $id = $self->get_attr('id');
 
     my $fsfile  = $self->get_document->_get_pmldoc();
@@ -728,15 +688,8 @@ sub get_fposition {
 }
 
 sub generate_new_id {    #TODO move to Core::Document?
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-
-    log_fatal('Incorrect number of arguments') if @_ != 1;
+    my $self = shift;
+    pos_validated_list( \@_ );
 
     my $doc = $self->get_document;
 
@@ -759,12 +712,6 @@ sub generate_new_id {    #TODO move to Core::Document?
 }
 
 sub is_coap_root {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
     log_fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
 }
 
@@ -775,13 +722,8 @@ sub is_coap_root {
 # Neco se vyuziva na a-rovine, neco na t-rovine.
 # ZZ navrhoval implementovat to jiz zde, v Node.pm, tak to zkousim (MP).
 sub get_clause_root {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $my_number = $self->get_attr('clause_number');
     log_warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
         if !defined $my_number;
@@ -802,28 +744,18 @@ sub get_clause_root {
 
 # Clauses may by split in more subtrees ("Peter eats and drinks.")
 sub get_clause_nodes {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
-    my $root = $self->get_root();
+    my $self = shift;
+    pos_validated_list( \@_ );
+    my $root        = $self->get_root();
     my @descendants = $root->get_descendants( { ordered => 1 } );
-    my $my_number = $self->get_attr('clause_number');
+    my $my_number   = $self->get_attr('clause_number');
     return grep { $_->get_attr('clause_number') == $my_number } @descendants;
 }
 
 # TODO: same purpose as get_clause_root but instead of clause_number uses is_clause_head
 sub get_clause_head {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my $node = $self;
     while ( !$node->get_attr('is_clause_head') && $node->get_parent() ) {
         $node = $node->get_parent();
@@ -833,13 +765,8 @@ sub get_clause_head {
 
 # taky by mohlo byt neco jako $node->get_descendants({within_clause=>1});
 sub get_clause_descendants {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
-    my ($self) = @_;
+    my $self = shift;
+    pos_validated_list( \@_ );
     my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_children();
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
@@ -848,12 +775,8 @@ sub get_clause_descendants {
 #---- TO BE REMOVED ------
 
 sub _deprecated {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my $instead     = shift;
     my $method_name = ( caller 1 )[3];
     my $message     = "Method '$method_name' is deprecated and will be removed.";
@@ -873,12 +796,8 @@ sub _deprecated {
 # shifting among one parent's children, node and its subtree is moved
 # projective tree assumed
 sub shift_left {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent();
@@ -921,12 +840,8 @@ sub shift_left {
 # shifting among one parent's children, node and its subtree is moved
 # projective tree assumed
 sub shift_right {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent;
@@ -965,12 +880,8 @@ sub shift_right {
 }
 
 sub shift_to_leftmost {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->shift_*');
     my $parent = $self->get_parent;
@@ -996,12 +907,8 @@ sub shift_to_leftmost {
 }
 
 sub non_projective_shift_to_leftmost_of {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ( $self, $ref_parent ) = @_;
     _deprecated('$node->shift_*');
     my @my_treelet                 = $self->get_treelet_nodes();
@@ -1028,12 +935,8 @@ sub non_projective_shift_to_leftmost_of {
 }
 
 sub get_self_and_descendants {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_descendants({add_self=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1041,12 +944,8 @@ sub get_self_and_descendants {
 }
 
 sub get_ordered_children {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({ordered=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1054,12 +953,8 @@ sub get_ordered_children {
 }
 
 sub get_first_child {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({first_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1068,12 +963,8 @@ sub get_first_child {
 }
 
 sub get_ordered_descendants {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_descendants({ordered=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1081,12 +972,8 @@ sub get_ordered_descendants {
 }
 
 sub get_ordered_self_and_descendants {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_descendants({ordered=>1, add_self=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1094,12 +981,8 @@ sub get_ordered_self_and_descendants {
 }
 
 sub get_left_children {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({preceding_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1108,12 +991,8 @@ sub get_left_children {
 }
 
 sub get_right_children {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({following_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1122,12 +1001,8 @@ sub get_right_children {
 }
 
 sub get_leftmost_child {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({first_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1136,12 +1011,8 @@ sub get_leftmost_child {
 }
 
 sub get_rightmost_child {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_children({last_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1150,12 +1021,8 @@ sub get_rightmost_child {
 }
 
 sub get_ordered_siblings {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_siblings({ordered=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1163,12 +1030,8 @@ sub get_ordered_siblings {
 }
 
 sub get_left_siblings {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_siblings({preceding_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -1177,12 +1040,8 @@ sub get_left_siblings {
 }
 
 sub get_right_siblings {
-##PREPARED FOR PARAM CHECK
-#    my $self = shift;
-#    my () = pos_validated_list (
-#        \@_,
-#        { isa => '' },
-#    );
+
+    #To be removed - not checking
     my ($self) = @_;
     _deprecated('$node->get_siblings({following_only=>1})');
     log_fatal('Incorrect number of arguments') if @_ != 1;
