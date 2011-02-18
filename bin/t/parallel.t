@@ -10,11 +10,16 @@ use Treex::Core::Run;
 use Test::More tests => 1;
 use Test::Output;
 
-foreach my $i (1..3) {
+my $number_of_files = 11;
+my $number_of_jobs = 3;
+
+foreach my $i (1..$number_of_files) {
     my $doc = Treex::Core::Document->new();
-    $doc->save("dummy$i.treex");
+    $doc->save("paratest$i.treex");
 }
 
-my $cmdline_arguments = "-q -p --jobs=2 --local Util::Eval foreach=document code='print 1' -g 'dummy?.treex'";
-stdout_is( sub { treex $cmdline_arguments },'111',"checking Util::Eval: treex $cmdline_arguments");
+my $cmdline_arguments = " -q -p --jobs=$number_of_jobs --local Util::Eval foreach=document code='print 1' -g 'paratest*.treex'";
+stdout_is( sub { treex $cmdline_arguments },
+	   '1'x$number_of_files ,
+	   "running parallelized treex locally");
 

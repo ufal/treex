@@ -93,11 +93,25 @@ sub next_filename {
 		unless $self->outdir;
 
             my $filename = $self->current_filename();
-	    last if not defined $filename;
+	    if (not defined $filename) {
+		open my $F,">",$self->outdir."/filenumber" or log_fatal $!;
+		print $F ($self->file_number -1); # !!! weird
+		close $F;
+		last;
+	    }
 
-            if ( ($self->file_number - 1) % $self->jobs == ($self->jobindex-1) ) {
+            if ( ($self->file_number - 1) % $self->jobs == ($self->jobindex-1) ) { # modulo number of jobs
 
 		Treex::Core::Run::_redirect_output($self->outdir,$self->file_number,$self->jobindex);
+
+		# create a file confirming that the previous output is finished
+		if ($self->file_number > $self->jobs) {
+		    my $now = time;
+		    my $prev_file_finished = $self->outdir."/".sprintf("%07d",$self->file_number - $self->jobs).".finished";
+#		    log_info "confirming file $prev_file_finished";
+		    open my $F,">",$prev_file_finished or log_fatal "Can't open finish-confirming $prev_file_finished";
+		    close $F;
+		}
 
                 return $filename;
             }

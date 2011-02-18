@@ -251,10 +251,11 @@ sub _execute_on_cluster {
         my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
         open J, ">", $script_filename;
         print J "#!/bin/bash\n";
-	print J "touch $directory/output/started-$jobnumber\n";
+	print J "touch $directory/output/startedjob-$jobnumber\n";
         print J "cd " . (Cwd::cwd) . "\n";
         print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
-	print J "touch $directory/output/finished-$jobnumber\n";
+#	print J "sleep 1\n";
+	print J "touch $directory/output/finishedjob-$jobnumber\n";
         close J;
         chmod 0777, $script_filename;
 
@@ -269,41 +270,76 @@ sub _execute_on_cluster {
     }
 
     log_info "Waiting for all jobs to be started...";
-    while ( (scalar (() = glob "$directory/output/started-*")  ) < $self->jobs) {  # force list context
+    while ( (scalar (() = glob "$directory/output/startedjob-*")  ) < $self->jobs) {  # force list context
 	sleep(1);
     }
     
     log_info "All jobs started. Waiting for them to be finished...";
     
-    while ( (scalar (() = glob "$directory/output/finished-*")  ) < $self->jobs) {  # force list context
-	sleep(1);
-    }
-    log_info "All jobs are finished";
+    my $current_file_number = 1;
+    my $total_file_number;
 
-    foreach my $stderr_file (glob "$directory/output/*stderr") {
-	open I,$stderr_file or log_fatal $!;
-	print STDERR $_ while <I>;
+    STDOUT->autoflush(1);
+    STDERR->autoflush(1);
+
+  WAIT_LOOP:
+    while ( not defined $total_file_number or  $current_file_number <= $total_file_number) {
+
+	my $filenumber_file = "$directory/output/filenumber";
+	if (not defined $total_file_number and -f $filenumber_file) {
+	    open ( my $N, $filenumber_file);
+	    $total_file_number = <$N>;
+	    log_info "Total number of files: $total_file_number\n";
+	}
+
+	my $all_finished = (scalar(() = glob "$directory/output/finishedjob*") == $self->jobs);
+	my $current_finished = ($all_finished ||
+				(-f "$directory/output/".sprintf("%07d",$current_file_number).".finished"));
+    
+	if ($current_finished) {
+	    foreach my $stream (qw(stdout stderr)) {
+		my $mask = "$directory/output/".sprintf("%07d",$current_file_number)."*.$stream";
+		my ($filename) = glob $mask;
+
+		if ($stream eq 'stdout' and not defined $filename) { 
+		    sleep 1;
+#		    print "not ready yet\n";
+		    next WAIT_LOOP;
+		}
+
+		log_fatal "There should be a file matching mask $mask" if not defined $filename;
+
+		open my $FILE, $filename or log_fatal $!;
+		if ($stream eq "stdout") {
+		    print $_ while <$FILE>;
+		}
+		else {
+		    print STDERR $_ while <$FILE>;
+		}
+	    }
+	    $current_file_number++;
+	}
+	else {
+	    log_info "waiting...";
+	    sleep 1;
+	}
+
     }
 
-    foreach my $stdout_file (glob "$directory/output/*stdout") {
-	open I,$stdout_file or log_fatal $!;
-	print $_ while <I>;
-    }
+    log_info "All jobs finished.";
 
 }
 
 sub _redirect_output {
     my ($outdir,$filenumber,$jobindex) = @_;
 
-    if ($jobindex==3) {
-	log_fatal "WWWWWWWWWWWw";
-    }
-
     my $stem =  $outdir."/".sprintf("%07d",$filenumber)."-".sprintf("%03d",$jobindex);
     open OUTPUT, '>', "$stem.stdout" or die $!;  # where will these messages go to, before redirection?
     open ERROR,  '>', "$stem.stderr"  or die $!;
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
     STDERR->fdopen( \*ERROR,  'w' ) or die $!;
+    STDOUT->autoflush(1);
+#    $|=1;
 }
 
 
