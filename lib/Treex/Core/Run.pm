@@ -251,10 +251,16 @@ sub _execute_on_cluster {
         my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
         open J, ">", $script_filename;
         print J "#!/bin/bash\n";
-	print J "touch $directory/output/startedjob-$jobnumber\n";
+        print J "echo This is debugging output of script $jobnumber, shell \$SHELL\n";
         print J "cd " . (Cwd::cwd) . "\n";
-        print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) . "\n";
-#	print J "sleep 1\n";
+	print J "touch $directory/output/startedjob-$jobnumber\n";
+#        print J "PATH=..:\$PATH\n"; # temporary hack
+#        print J "PERL5LIB=../../lib/:\$PERL5LIBTH\n"; # temporary hack
+        print J "source ../../../config/init_devel_environ.sh\n"; # temporary hack !!!
+        print J "tectomt\n";
+        print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) .
+            " 2>$directory/output/joberror-$jobnumber\n";
+#	print J "sleep 5\n";
 	print J "touch $directory/output/finishedjob-$jobnumber\n";
         close J;
         chmod 0777, $script_filename;
@@ -265,7 +271,7 @@ sub _execute_on_cluster {
         }
         else {
 	    log_info "$script_filename submitted to the cluster";
-            # qsub
+            system "qsub -cwd -j y -e $directory/output/ -S /bin/bash $script_filename";
         }
     }
 
@@ -273,37 +279,39 @@ sub _execute_on_cluster {
     while ( (scalar (() = glob "$directory/output/startedjob-*")  ) < $self->jobs) {  # force list context
 	sleep(1);
     }
-    
+
     log_info "All jobs started. Waiting for them to be finished...";
-    
+
     my $current_file_number = 1;
     my $total_file_number;
 
     STDOUT->autoflush(1);
     STDERR->autoflush(1);
 
+    my $all_finished;
+
+
   WAIT_LOOP:
-    while ( not defined $total_file_number or  $current_file_number <= $total_file_number) {
+    while ( not defined $total_file_number or $current_file_number <= $total_file_number) {
 
-	my $filenumber_file = "$directory/output/filenumber";
-	if (not defined $total_file_number and -f $filenumber_file) {
-	    open ( my $N, $filenumber_file);
-	    $total_file_number = <$N>;
-	    log_info "Total number of files: $total_file_number\n";
-	}
+        my $filenumber_file = "$directory/output/filenumber";
+        if (not defined $total_file_number and -f $filenumber_file) {
+            open ( my $N, $filenumber_file);
+            $total_file_number = <$N>;
+            log_info "Total number of files: $total_file_number\n";
+        }
 
-	my $all_finished = (scalar(() = glob "$directory/output/finishedjob*") == $self->jobs);
+	$all_finished ||= (scalar(() = glob "$directory/output/finishedjob*") == $self->jobs);
 	my $current_finished = ($all_finished ||
 				(-f "$directory/output/".sprintf("%07d",$current_file_number).".finished"));
-    
+
 	if ($current_finished) {
 	    foreach my $stream (qw(stdout stderr)) {
 		my $mask = "$directory/output/".sprintf("%07d",$current_file_number)."*.$stream";
 		my ($filename) = glob $mask;
 
-		if ($stream eq 'stdout' and not defined $filename) { 
+		if ($stream eq 'stdout' and not defined $filename) {
 		    sleep 1;
-#		    print "not ready yet\n";
 		    next WAIT_LOOP;
 		}
 
@@ -319,6 +327,7 @@ sub _execute_on_cluster {
 	    }
 	    $current_file_number++;
 	}
+
 	else {
 	    log_info "waiting...";
 	    sleep 1;
