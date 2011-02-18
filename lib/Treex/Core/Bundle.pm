@@ -33,12 +33,12 @@ sub get_zone {
     my ( $language, $selector ) = pos_validated_list (
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
             my ( $name, $value ) = @$element;
-            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
+            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq $selector ) {
                 return $value;
             }
         }
@@ -209,7 +209,15 @@ sub get_attr {
     }
 }
 
-# ------ ACCESS MESSAGE BOARD ----------
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+
+__END__
+
+# The idea of message_board have not been used much.
+# There should be at least 5 blocks using it before reintroducing to API.
 
 sub leave_message {
     my $self = shift;
@@ -236,11 +244,22 @@ sub get_messages {
     }
 }
 
-__PACKAGE__->meta->make_immutable;
+head2 Access to the bundle message board
 
-1;
+Short unstructured pieces of information can be stored with bundles,
+e.g. because of special needs of inter-block communication. For example,
+a message can be left in a bundle that the contained sentece cannot
+be parsed by an ordinary parsing block and should be parsed later by
+a fallback-parser block.
 
-__END__
+over 4
+
+item $bundle->leave_message($message_text);
+
+item $bundle->get_messages();
+
+back
+
 
 
 =head1 NAME
@@ -342,23 +361,6 @@ Attribute names look like 'Sar sentence' (source-side arabic sentence).
 =item my $root_node = $bundle->get_generic_tree($tree_name);
 
 =item $bundle->set_generic_tree($tree_name,$root_node);
-
-=back
-
-
-=head2 Access to the bundle message board
-
-Short unstructured pieces of information can be stored with bundles,
-e.g. because of special needs of inter-block communication. For example,
-a message can be left in a bundle that the contained sentece cannot
-be parsed by an ordinary parsing block and should be parsed later by
-a fallback-parser block.
-
-=over 4
-
-=item $bundle->leave_message($message_text);
-
-=item $bundle->get_messages();
 
 =back
 

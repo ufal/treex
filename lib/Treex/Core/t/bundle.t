@@ -51,8 +51,10 @@ $bundle->set_attr( 'Attr', 'Value' );
 cmp_ok( $bundle->get_attr('Attr'), 'eq', 'Value', 'Attr test' );
 ok( !defined $bundle->get_attr('Bttr'), 'Not defined attr' );
 
-#message board testing
+=commented out 
+# message_board was deleted from bundle API (until it is neede somewhere)
 
+#message board testing
 my $message  = 'My message';
 my $message2 = reverse $message;
 my ( @list, @res );
@@ -75,7 +77,8 @@ ok( eval { $bundle->get_messages() }, q(Setting 'message_board' attribute won't 
 
 fail('Need some method for deleting messages');
 
-#generic tree access
-is_deeply( $bundle->get_tree('ScsT'), $bundle->get_tree('SCzechT'), 'Generic & named trees are the same' );
+=cut
+
+is_deeply( $bundle->get_tree('cs', 'T'), $bundle->get_zone('cs')->get_ttree(), 'get_tree("cs", "T") is a shortcut for get_zone("cs")->get_ttree()' );
 
 done_testing();
