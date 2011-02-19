@@ -13,13 +13,14 @@ use Test::Output;
 my $number_of_files = 11;
 my $number_of_jobs = 3;
 
-foreach my $i (1..$number_of_files) {
+foreach my $i (map {sprintf "%02d",$_} (1..$number_of_files)) {
     my $doc = Treex::Core::Document->new();
+    $doc->set_attr('description',$i);
     $doc->save("paratest$i.treex");
 }
 
-my $cmdline_arguments = " -q -p --jobs=$number_of_jobs Util::Eval foreach=document code='print 1' -g 'paratest*.treex'";
+my $cmdline_arguments = "  -p --jobs=$number_of_jobs Util::Eval foreach=document code='print \$document->get_attr(q(description))' -g 'paratest*.treex'";
 stdout_is( sub { treex $cmdline_arguments },
-	   '1'x$number_of_files ,
+           (join '',map {sprintf "%02d",$_} (1..$number_of_files)),
 	   "running parallelized treex on SGE cluster");
 

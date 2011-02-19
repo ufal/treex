@@ -12,7 +12,7 @@ has 'code' => (
     is => 'ro',
     required => 1,
     );
-    
+
 
 
 sub BUILD {
@@ -24,7 +24,7 @@ sub BUILD {
 	log_fatal "Unacceptable value of the 'foreach' argument: ".$self->foreach;
     }
 
-    my $processing_method = "sub process_".$self->foreach." {\nmy (\$self) = \@_;\n ".$self->code."\n}\n";
+    my $processing_method = "sub process_".$self->foreach." {\nmy (\$self,\$".$self->foreach.") = \@_;\n ".$self->code."\n}\n";
 
     eval $processing_method;
 
