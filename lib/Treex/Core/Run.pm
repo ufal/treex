@@ -247,6 +247,17 @@ sub _execute_on_cluster {
         mkdir "$directory/$subdir" or log_fatal $!;
     }
 
+    my @sge_job_numbers;
+    $SIG{INT} =
+        sub {
+            log_info "Caught Ctrl-C, all jobs will be deleted";
+            foreach my $job (@sge_job_numbers) {
+                log_info "Deleting job $job";
+                system "qdel $job";
+            }
+            exit;
+        };
+
     foreach my $jobnumber ( 1 .. $self->jobs ) {
         my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
         open J, ">", $script_filename;
@@ -254,13 +265,9 @@ sub _execute_on_cluster {
         print J "echo This is debugging output of script $jobnumber, shell \$SHELL\n";
         print J "cd " . (Cwd::cwd) . "\n";
 	print J "touch $directory/output/startedjob-$jobnumber\n";
-#        print J "PATH=..:\$PATH\n"; # temporary hack
-#        print J "PERL5LIB=../../lib/:\$PERL5LIBTH\n"; # temporary hack
         print J "source ../../../config/init_devel_environ.sh\n"; # temporary hack !!!
-        print J "tectomt\n";
         print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) .
             " 2>$directory/output/joberror-$jobnumber\n";
-#	print J "sleep 5\n";
 	print J "touch $directory/output/finishedjob-$jobnumber\n";
         close J;
         chmod 0777, $script_filename;
@@ -271,7 +278,14 @@ sub _execute_on_cluster {
         }
         else {
 	    log_info "$script_filename submitted to the cluster";
-            system "qsub -cwd -j y -e $directory/output/ -S /bin/bash $script_filename";
+
+            open my $QSUB, "qsub -cwd -j y -e $directory/output/ -S /bin/bash $script_filename |";
+
+            my $firstline = <$QSUB>;
+            chomp $firstline;
+            if ($firstline =~ /job (\d+)/) {
+                push @sge_job_numbers, $1;
+            }
         }
     }
 

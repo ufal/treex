@@ -18,7 +18,7 @@ foreach my $i (1..$number_of_files) {
     $doc->save("paratest$i.treex");
 }
 
-my $cmdline_arguments = "-q -p --jobs=$number_of_jobs Util::Eval foreach=document code='print 1' -g 'paratest*.treex'";
+my $cmdline_arguments = " -q -p --jobs=$number_of_jobs Util::Eval foreach=document code='print 1' -g 'paratest*.treex'";
 stdout_is( sub { treex $cmdline_arguments },
 	   '1'x$number_of_files ,
 	   "running parallelized treex on SGE cluster");
