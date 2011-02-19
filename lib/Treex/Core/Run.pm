@@ -255,6 +255,7 @@ sub _execute_on_cluster {
                 log_info "Deleting job $job";
                 system "qdel $job";
             }
+            log_info "You may want to inspect generated files in $directory/output";
             exit;
         };
 
@@ -265,7 +266,7 @@ sub _execute_on_cluster {
         print J "echo This is debugging output of script $jobnumber, shell \$SHELL\n";
         print J "cd " . (Cwd::cwd) . "\n";
 	print J "touch $directory/output/startedjob-$jobnumber\n";
-        print J "source ../../../config/init_devel_environ.sh\n"; # temporary hack !!!
+        print J "source ".Treex::Core::Config::lib_core_dir()."/../../../../config/init_devel_environ.sh\n"; # temporary hack !!!
         print J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{$self->argv} ) .
             " 2>$directory/output/joberror-$jobnumber\n";
 	print J "touch $directory/output/finishedjob-$jobnumber\n";
@@ -279,12 +280,16 @@ sub _execute_on_cluster {
         else {
 	    log_info "$script_filename submitted to the cluster";
 
-            open my $QSUB, "qsub -cwd -j y -e $directory/output/ -S /bin/bash $script_filename |";
+            open my $QSUB, "qsub -cwd -e $directory/output/ -S /bin/bash $script_filename |";
 
             my $firstline = <$QSUB>;
             chomp $firstline;
             if ($firstline =~ /job (\d+)/) {
                 push @sge_job_numbers, $1;
+            }
+            else {
+                log_fatal 'Job number not detected after the attempt at submitting the job. '.
+                    'Perhaps it was not possible to submit the job. See files in $directory/output';
             }
         }
     }
@@ -312,7 +317,7 @@ sub _execute_on_cluster {
         if (not defined $total_file_number and -f $filenumber_file) {
             open ( my $N, $filenumber_file);
             $total_file_number = <$N>;
-            log_info "Total number of files: $total_file_number\n";
+            log_info "Total number of files to be processed (reported by job 1): $total_file_number";
         }
 
 	$all_finished ||= (scalar(() = glob "$directory/output/finishedjob*") == $self->jobs);
@@ -329,7 +334,7 @@ sub _execute_on_cluster {
 		    next WAIT_LOOP;
 		}
 
-		log_fatal "There should be a file matching mask $mask" if not defined $filename;
+		log_fatal "There should have be a file matching mask $mask" if not defined $filename;
 
 		open my $FILE, $filename or log_fatal $!;
 		if ($stream eq "stdout") {
@@ -343,7 +348,8 @@ sub _execute_on_cluster {
 	}
 
 	else {
-	    log_info "waiting...";
+	    log_info "Waiting for processing document ".
+                ($current_file_number)." out of ".(defined $total_file_number?$total_file_number:'?')." ...";
 	    sleep 1;
 	}
 

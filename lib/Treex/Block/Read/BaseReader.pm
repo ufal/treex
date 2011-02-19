@@ -93,7 +93,7 @@ sub next_filename {
 		unless $self->outdir;
 
             my $filename = $self->current_filename();
-	    if (not defined $filename) {
+	    if (not defined $filename and $self->jobindex == 1) { # there are no more files to be processed
 		open my $F,">",$self->outdir."/filenumber" or log_fatal $!;
 		print $F ($self->file_number -1); # !!! weird
 		close $F;
