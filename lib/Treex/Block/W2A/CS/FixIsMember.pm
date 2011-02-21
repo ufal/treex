@@ -1,39 +1,32 @@
-package SCzechM_to_SCzechA::Fix_is_member;
+package Treex::Block::W2A::CS::FixIsMember;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+sub process_atree {
+    my ( $self, $a_root ) = @_;
 
-use base qw(TectoMT::Block);
+    # (1) every member must be below coap
+    foreach my $a_node ( grep { $_->is_member } $a_root->get_descendants ) {
+        my $parent_functor = $a_node->get_parent->afun || '';
+        if ( $parent_functor !~ /(Coord|Apos)/ ) {
+            $a_node->set_is_member(undef);
+        }
+    }
 
-sub process_document {
-    my ( $self, $document ) = @_;
-    foreach my $bundle ( $document->get_bundles() ) {
+    # (2) there should be at least one member below every co/ap
+    foreach my $a_node ( grep { ( $_->afun || "" ) =~ /(Coord|Apos)/ }
+        $a_root->get_descendants
+        )
+    {
+        if ( not grep { $_->is_member } $a_node->get_children ) {
 
-        my $t_root = $bundle->get_tree('SCzechA');
-
-        # (1) every member must be below coap
-        foreach my $node ( grep { $_->get_attr('is_member') } $t_root->get_descendants ) {
-            my $parent_functor = $node->get_parent->get_attr('afun') || "";
-            if ( $parent_functor !~ /(Coord|Apos)/ ) {
-                $node->set_attr( 'is_member', undef );
+            # !!! vetsinou jde opravdu o bezdetne PRECy, zbyvajici vyjimky by se musely o dost resit sloziteji
+            foreach my $child ( $a_node->get_children ) {
+                $child->set_is_member(1);
             }
         }
-
-        # (2) there should be at least one member below every co/ap
-        foreach my $node (
-            grep { ( $_->get_attr('afun') || "" ) =~ /(Coord|Apos)/ }
-            $t_root->get_descendants
-            )
-        {
-            if ( not grep { $_->get_attr('is_member') } $node->get_children ) {
-
-                # !!! vetsinou jde opravdu o bezdetne PRECy, zbyvajici vyjimky by se musely o dost resit sloziteji
-                foreach my $child ( $node->get_children ) {
-                    $child->set_attr( 'is_member', 1 );
-                }
-            }
-        }
+    }
 
     }
 }
@@ -42,7 +35,7 @@ sub process_document {
 
 =over
 
-=item SCzechM_to_SCzechA::Fix_is_member
+=item Treex::Block::W2A::CS::FixIsMember
 
 The attribute C<is_member> is fixed: (1) is_member can be equal to
 1 only below coap nodes, (2) below each coap node there has to be
@@ -52,6 +45,6 @@ at least one node with is_member equal to 1.
 
 =cut
 
-# Copyright 2008 Zdenek Zabokrtsky
+# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
