@@ -60,9 +60,8 @@ foreach my $layer (qw( A T N P )) {
     is( $children[0], $node, q($node is first $root's child) );
     my @descendants = $root->get_descendants();
     is( $descendants[0], $node, q($node is first $root's descendant) );
-    # TODO Why returns get_siblings undef?
-    cmp_ok( scalar $root->get_siblings(), '==', 0, '$root has no siblings' );
-    cmp_ok( scalar $node->get_siblings(), '==', 0, '$node has no siblings' );
+    ok(!$root->get_siblings(), '$root has no siblings' );
+    ok(!$node->get_siblings(), '$node has no siblings' );
 
     my $c1 = $root->create_child();
     my $c2 = $root->create_child();
@@ -103,7 +102,7 @@ foreach my $layer (qw( A T N P )) {
 
     ok( !defined $c3->get_parent(), 'Disconnected node has no parent' );
     cmp_ok( scalar $c3->get_children(), '==', 1, 'And it has still 1 child' );
-    cmp_ok( scalar $c3->get_siblings(), '==', 0, 'but no siblings' );
+    ok(!$c3->get_siblings(), 'but no siblings' );
     ok( $c3->is_root(), q(so it's root) );
 
     #Node ordering
