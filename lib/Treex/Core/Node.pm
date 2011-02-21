@@ -24,12 +24,19 @@ has id => (
     trigger => \&_index_my_id,
 );
 
+# TODO: Move to role Ordered
+has ord => (
+    is     => 'ro',
+    isa    => 'Int',        # TODO non-negative Int
+    writer => '_set_ord',
+);
+
 sub BUILD {
-    my ($self,$arg_ref) = @_;
-    if (not defined $arg_ref or not defined $arg_ref->{_called_from_core_}) {
+    my ( $self, $arg_ref ) = @_;
+    if ( not defined $arg_ref or not defined $arg_ref->{_called_from_core_} ) {
         log_fatal 'Because of node indexing, no nodes can be created outside of documents. '
             . 'You have to use $zone->create_tree(...) or $node->create_child() '
-                . 'instead of Treex::Core::Node...->new().';
+            . 'instead of Treex::Core::Node...->new().';
     }
 
 }
@@ -52,7 +59,8 @@ sub get_bundle {
     return $self->get_zone->get_bundle;
 }
 
-sub get_zone {    # reference to embeding zone is stored only with tree root, not with nodes
+# reference to embeding zone is stored only with tree root, not with nodes
+sub get_zone {
     my $self = shift;
     pos_validated_list( \@_ );
     my $zone;
@@ -68,50 +76,34 @@ sub get_zone {    # reference to embeding zone is stored only with tree root, no
 
 }
 
-sub disconnect {
+sub delete {
     my $self = shift;
-    my ($arg_ref) = pos_validated_list(
-        \@_,
-        { isa => 'Maybe[HashRef]', optional => 1 },
-    );
-
-    #TODO: There is actally no get_treelet_nodes() method
-    #So this step 0 is probably never called and could be safely removed?
-    # beware: phase 0 should be check for the case of disconecting a non-childfree node
-
-    # 0. update ords if requested
-    if ( $arg_ref->{update_ords} ) {
-        my $my_ord  = $self->get_ordering_value();
-        my @treelet = $self->get_treelet_nodes();
-        my $my_mass = scalar @treelet;
-        my @bag     = grep { $_->get_ordering_value() > $my_ord } $self->get_root->get_descendants();
-
-        # ords after me
-        foreach (@bag) {
-            $_->set_ordering_value( $_->get_ordering_value() - $my_mass );
-        }
-    }
-
+    pos_validated_list( \@_ );
     if ( $self->is_root ) {
-        log_fatal "Tree root cannot be disconnected from its parent";
+        log_fatal 'Tree root cannot be deleted using $root->delete().'
+            . ' Use $zone->delete_tree($layer) instead';
     }
-    else {
+    my $root     = $self->get_root();
+    my $document = $self->get_document();
 
-        # removing the nodes to be disconnected from the document's indexing table
-        foreach my $node ( $self, $self->get_descendants ) {
-            my $id = $self->get_attr('id');
-            if ( defined $id ) {
-                my $document = $node->get_document;
-                $document->index_node_by_id( $id, undef );
-            }
-
+    # Remove the subtree from the document's indexing table
+    foreach my $node ( $self, $self->get_descendants ) {
+        if ( defined $self->id ) {
+            $document->index_node_by_id( $self->id, undef );
         }
-
-        $self->cut;
-
     }
 
-    #    print STDERR "$self disconnected now!\n";
+    # Disconnect the node from its parent (& siblings) and delete all attributes
+    # It actually does: $self->cut(); undef %$_ for ($self->descendants(), $self);
+    $self->destroy;
+
+    # TODO: order normalizing can be done in a more efficient way
+    # (update just the following ords)
+    $root->_normalize_node_ordering();
+
+    # By reblessing we make sure that
+    # all methods called on deleted nodes will result in fatal errors.
+    bless $self, 'Treex::Core::Node::Deleted';
     return;
 }
 
@@ -159,11 +151,13 @@ sub create_child {
     # Substituting the hash by hashref is a workaround,
     # but the black magic is still there.
     my $arg_ref;
-    if (scalar @_ == 1 && ref $_[0] eq 'HASH') {
+    if ( scalar @_ == 1 && ref $_[0] eq 'HASH' ) {
         $arg_ref = $_[0];
-    } elsif ( @_ % 2) {
+    }
+    elsif ( @_ % 2 ) {
         log_fatal "Odd number of elements for create_child";
-    } else {
+    }
+    else {
         $arg_ref = {@_};
     }
     $arg_ref->{_called_from_core_} = 1;
@@ -181,54 +175,6 @@ sub create_child {
     $self->set_type_by_name( $fs_file->metaData('schema'), $type );
     return $new_node;
 }
-##-- end proposal
-
-sub add_to_listattr {
-    my $self = shift;
-    my ( $attr_name, $attr_value ) = pos_validated_list(
-        \@_,
-        { isa => 'Str' },
-        { isa => 'Any' },
-    );
-
-    my $list = $self->attr($attr_name);
-    log_fatal("Attribute $attr_name is not a list!")
-        if !defined $list || ref($list) ne 'Treex::PML::List';
-    my @new_list = @{$list};
-    if ( ref($attr_value) eq 'ARRAY' ) {
-        push @new_list, @{$attr_value};
-    }
-    else {
-        push @new_list, $attr_value;
-    }
-    return $self->set_attr( $attr_name, Treex::PML::List->new(@new_list) );
-}
-
-# Get more attributes at once
-sub get_attrs {
-    my $self       = shift;
-    my @attr_names = pos_validated_list(
-        \@_,
-        { isa => 'Any' },    #at least one parameter
-        MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
-    );
-
-    my @attr_values;
-    if ( ref $attr_names[-1] ) {
-        my $arg_ref          = pop @attr_names;
-        my $change_undefs_to = $arg_ref->{undefs};
-        @attr_values = map {
-            defined $self->get_attr($_) ? $self->get_attr($_) : $change_undefs_to
-        } @attr_names;
-    }
-    else {
-        @attr_values = map { $self->get_attr($_) } @attr_names;
-    }
-
-    return @attr_values;
-}
-
-# ------------------------
 
 #************************************
 #---- TREE NAVIGATION ------
@@ -270,30 +216,27 @@ sub set_parent {
         { isa => 'Treex::Core::Node' },
     );
 
-    #    UNIVERSAL::isa( $parent, 'TectoMT::Node' ) or log_fatal("Node's parent must be a TectoMT::Node (it is $parent)");
+    # TODO check for this (but set_parent is called also from create_child)
+    #if ($self->get_document() != $parent->get_document()) {
+    #    log_fatal("Cannot move a node from one document to another");
+    #}
 
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
-        my $id   = $self->get_attr('id');
-        my $p_id = $parent->get_attr('id');
+        my $id   = $self->id;
+        my $p_id = $parent->id;
         log_fatal("Attempt to set parent of $id to the node $p_id, which would lead to a cycle.");
     }
 
-    my $fsself   = $self;
-    my $fsparent = $parent;
-    if ( $fsself->parent() ) {
-        Treex::PML::Cut($fsself);
-    }
-
+    # TODO: Too much FSlib (aka Treex::PML) here
+    $self->cut();
     my $fsfile     = $parent->get_document()->_pmldoc;
-    my @fschildren = $fsparent->children();
+    my @fschildren = $parent->children();
     if (@fschildren) {
-        Treex::PML::PasteAfter( $fsself, $fschildren[-1] );
+        Treex::PML::PasteAfter( $self, $fschildren[-1] );
     }
     else {
-        Treex::PML::Paste( $fsself, $fsparent, $fsfile->FS() );
+        Treex::PML::Paste( $self, $parent, $fsfile->FS() );
     }
-
-    # vyresit prevesovani uzlu z dokumentu do dokumentu (pokud to povolime) !!!
 
     return;
 }
@@ -346,19 +289,19 @@ sub _process_switches {
 
     # Sort nodes if needed
     if (( $arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following) )
-        && @nodes && defined $nodes[0]->get_ordering_value
+        && @nodes && defined $nodes[0]->ord
         )
     {
-        @nodes = sort { $a->get_ordering_value() <=> $b->get_ordering_value() } @nodes;
+        @nodes = sort { $a->ord() <=> $b->ord() } @nodes;
     }
 
     # Leave preceding/following only if needed
-    my $my_ord = $self->get_ordering_value();
+    my $my_ord = $self->ord();
     if ( $arg_ref->{preceding_only} ) {
-        @nodes = grep { $_->get_ordering_value() <= $my_ord } @nodes;
+        @nodes = grep { $_->ord() <= $my_ord } @nodes;
     }
     elsif ( $arg_ref->{following_only} ) {
-        @nodes = grep { $_->get_ordering_value() >= $my_ord } @nodes;
+        @nodes = grep { $_->ord() >= $my_ord } @nodes;
     }
 
     # first_only / last_only
@@ -435,29 +378,13 @@ sub is_descendant_of {
 #*********************************************
 #---- NODE ORDERING ------
 
-sub get_ordering_value {
-    my $self = shift;
-    pos_validated_list( \@_ );
-    return $self->ord;
-}
-
-sub set_ordering_value {
-    my $self = shift;
-    my ($val) = pos_validated_list(
-        \@_,
-        { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
-    );
-    $self->set_ord($val);
-    return;
-}
-
 sub precedes {
     my $self = shift;
     my ($another_node) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Node' },
     );
-    return $self->get_ordering_value() < $another_node->get_ordering_value();
+    return $self->ord() < $another_node->ord();
 }
 
 # Methods get_next_node and get_prev_node are implemented
@@ -468,13 +395,13 @@ sub precedes {
 sub get_next_node {
     my $self = shift;
     pos_validated_list( \@_ );
-    my $my_ord = $self->get_ordering_value();
+    my $my_ord = $self->ord();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
     # Find closest higher ord
     my ( $next_node, $next_ord ) = ( undef, undef );
     foreach my $node ( $self->get_root()->get_descendants() ) {
-        my $ord = $node->get_ordering_value();
+        my $ord = $node->ord();
         next if $ord <= $my_ord;
         next if defined $next_ord && $ord > $next_ord;
         ( $next_node, $next_ord ) = ( $node, $ord );
@@ -485,13 +412,13 @@ sub get_next_node {
 sub get_prev_node {
     my $self = shift;
     pos_validated_list( \@_ );
-    my $my_ord = $self->get_ordering_value();
+    my $my_ord = $self->ord();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
     # Find closest lower ord
     my ( $prev_node, $prev_ord ) = ( undef, undef );
     foreach my $node ( $self->get_root()->get_descendants() ) {
-        my $ord = $node->get_ordering_value();
+        my $ord = $node->ord();
         next if $ord >= $my_ord;
         next if defined $prev_ord && $ord < $prev_ord;
         ( $prev_node, $prev_ord ) = ( $node, $ord );
@@ -499,17 +426,13 @@ sub get_prev_node {
     return $prev_node;
 }
 
-# TODO this method normalize_node_ordering should be removed.
-# Also all block as XAnylang1X_to_XAnylang2X::Normalize_ordering
-# or *::Recompute_ordering should be deleted.
-# If you allways use $node->shift_* methods, you won't need any normalization.
-sub normalize_node_ordering {
+sub _normalize_node_ordering {
     my $self = shift;
     pos_validated_list( \@_ );
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
     my $new_ord = 0;
     foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
-        $node->set_ordering_value($new_ord);
+        $node->_set_ord($new_ord);
         $new_ord++
     }
     return;
@@ -620,8 +543,8 @@ sub _shift_to_node {
     #my $maximal_ord = @all_nodes; -this does not work, since there may be gaps in ordering
     my $maximal_ord = 10000;
     foreach my $d (@all_nodes) {
-        if ( !defined $d->get_ordering_value() ) {
-            $d->set_ordering_value( $maximal_ord++ );
+        if ( !defined $d->ord() ) {
+            $d->_set_ord( $maximal_ord++ );
         }
     }
 
@@ -642,7 +565,7 @@ sub _shift_to_node {
     # Recompute ord of all nodes.
     # The technical root has ord=0 and the first node will have ord=1.
     my $counter = 1;
-    @all_nodes = sort { $a->get_ordering_value() <=> $b->get_ordering_value() } @all_nodes;
+    @all_nodes = sort { $a->ord() <=> $b->ord() } @all_nodes;
     foreach my $node (@all_nodes) {
 
         # We skip nodes that are being moved.
@@ -653,21 +576,21 @@ sub _shift_to_node {
         # then ord of the $node can be recomputed now
         # even if it is actually the $reference_node.
         if ($after) {
-            $node->set_ordering_value( $counter++ );
+            $node->_set_ord( $counter++ );
         }
 
         # Now we insert (i.e. recompute ord of) all nodes which are being moved.
         # The nodes are inserted in the original order.
         if ( $node == $reference_node ) {
             foreach my $moving_node (@nodes_to_move) {
-                $moving_node->set_ordering_value( $counter++ );
+                $moving_node->_set_ord( $counter++ );
             }
         }
 
         # If moving "before" a node, then now it is the right moment
         # for recomputing ord of the $node
         if ( !$after ) {
-            $node->set_ordering_value( $counter++ );
+            $node->_set_ord( $counter++ );
         }
     }
     return;
@@ -684,53 +607,6 @@ sub get_depth {
         $depth++;
     }
     return $depth;
-}
-
-sub get_fposition {
-    my $self = shift;
-    pos_validated_list( \@_ );
-    my $id = $self->get_attr('id');
-
-    my $fsfile  = $self->get_document->_get_pmldoc();
-    my $fs_root = $self->get_bundle;
-
-    my $bundle_number = 1;
-    TREES:
-    foreach my $t ( $fsfile->trees() ) {
-        last TREES if $t == $fs_root;
-        $bundle_number++;
-    }
-
-    my $filename = Cwd::abs_path( $self->get_document->get_fsfile_name() );
-    return "$filename##$bundle_number.$id";
-}
-
-sub generate_new_id {    #TODO move to Core::Document?
-    my $self = shift;
-    pos_validated_list( \@_ );
-
-    my $doc = $self->get_document;
-
-    my $latest_node_number = $doc->_latest_node_number;
-
-    my $new_id;
-    $self->get_root->id =~ /(.+)root/;
-    my $id_base = $1 || "";
-
-    while (1) {
-        $latest_node_number++;
-        $new_id = "${id_base}n$latest_node_number";
-        last if not $doc->id_is_indexed($new_id);
-
-    }
-
-    $doc->_set_latest_node_number($latest_node_number);
-
-    return $new_id;
-}
-
-sub is_coap_root {
-    log_fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
 }
 
 #**************************************
@@ -789,283 +665,133 @@ sub get_clause_descendants {
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
 
-#************************************
-#---- TO BE REMOVED ------
+#*************************************
+#---- DEPRECATED & QUESTIONABLE ------
 
-sub _deprecated {
+sub disconnect {
+    my $self = shift;
+    log_warn '$node->disconnect is deprecated, use $node->delete';
+    return $self->delete();
+}
 
-    #To be removed - not checking
-    my $instead     = shift;
-    my $method_name = ( caller 1 )[3];
-    my $message     = "Method '$method_name' is deprecated and will be removed.";
-    if ($instead) {
-        $message .= " Use '$instead' instead.";
-    }
-    log_warn($message);
+sub get_ordering_value {
+    my $self = shift;
+    log_warn '$node->get_ordering_value is deprecated, use $node->ord';
+    return $self->ord;
+}
 
-    # and once again to print the stack
-    log_debug($message);
+sub set_ordering_value {
+    my $self = shift;
+    log_warn '$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)';
+    my ($val) = pos_validated_list(
+        \@_,
+        { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
+    );
+    $self->set_ord($val);
     return;
 }
 
-#TODO: There is actally no get_treelet_nodes() method
-#So next 4 methods are probably never called and could be safely removed?
+sub get_fposition {
+    my $self = shift;
+    pos_validated_list( \@_ );
+    my $id = $self->get_attr('id');
 
-# shifting among one parent's children, node and its subtree is moved
-# projective tree assumed
-sub shift_left {
+    my $fsfile  = $self->get_document->_get_pmldoc();
+    my $fs_root = $self->get_bundle;
 
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->shift_*');
-    my $parent = $self->get_parent();
-    log_fatal('Cannot shift node without a parent') if !$parent;
-    my $my_ord        = $self->get_ordering_value();
-    my $left_neighbor = $self->get_left_neighbor();
-    my @my_treelet    = $self->get_treelet_nodes();
-    my @left_treelet;
+    my $bundle_number = 1;
+    TREES:
+    foreach my $t ( $fsfile->trees() ) {
+        last TREES if $t == $fs_root;
+        $bundle_number++;
+    }
 
-    # parent can stand in the way
-    if (( !defined $left_neighbor || $left_neighbor->get_ordering_value() < $parent->get_ordering_value() )
-        && $parent->get_ordering_value() < $my_ord
-        )
-    {
-        @left_treelet = ($parent);
+    my $filename = Cwd::abs_path( $self->get_document->get_fsfile_name() );
+    return "$filename##$bundle_number.$id";
+}
+
+sub generate_new_id {    #TODO move to Core::Document?
+    my $self = shift;
+    pos_validated_list( \@_ );
+
+    my $doc = $self->get_document;
+
+    my $latest_node_number = $doc->_latest_node_number;
+
+    my $new_id;
+    $self->get_root->id =~ /(.+)root/;
+    my $id_base = $1 || "";
+
+    while (1) {
+        $latest_node_number++;
+        $new_id = "${id_base}n$latest_node_number";
+        last if not $doc->id_is_indexed($new_id);
+
+    }
+
+    $doc->_set_latest_node_number($latest_node_number);
+
+    return $new_id;
+}
+
+sub is_coap_root {
+    log_fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
+}
+
+sub add_to_listattr {
+    my $self = shift;
+    my ( $attr_name, $attr_value ) = pos_validated_list(
+        \@_,
+        { isa => 'Str' },
+        { isa => 'Any' },
+    );
+
+    my $list = $self->attr($attr_name);
+    log_fatal("Attribute $attr_name is not a list!")
+        if !defined $list || ref($list) ne 'Treex::PML::List';
+    my @new_list = @{$list};
+    if ( ref($attr_value) eq 'ARRAY' ) {
+        push @new_list, @{$attr_value};
     }
     else {
-        log_fatal('Cannot shift left without a left neighbor') if !$left_neighbor;
-        @left_treelet = ( $left_neighbor, $left_neighbor->get_descendants );
-
-        # TODO: looks like useless sort?
-        @left_treelet = sort { $a->get_ordering_value <=> $b->get_ordering_value } @left_treelet;
+        push @new_list, $attr_value;
     }
-
-    my $my_mass   = scalar @my_treelet;
-    my $left_mass = scalar @left_treelet;
-
-    # ords in my treelet
-    foreach (@my_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() - $left_mass );
-    }
-
-    # ords after me
-    foreach (@left_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() + $my_mass );
-    }
-    return;
+    return $self->set_attr( $attr_name, Treex::PML::List->new(@new_list) );
 }
 
-# shifting among one parent's children, node and its subtree is moved
-# projective tree assumed
-sub shift_right {
+# Get more attributes at once
+sub get_attrs {
+    my $self       = shift;
+    my @attr_names = pos_validated_list(
+        \@_,
+        { isa => 'Any' },    #at least one parameter
+        MX_PARAMS_VALIDATE_ALLOW_EXTRA => 1,
+    );
 
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->shift_*');
-    my $parent = $self->get_parent;
-    log_fatal('Cannot shift node without a parent') if !$parent;
-    my $my_ord         = $self->get_ordering_value;
-    my $right_neighbor = $self->get_right_neighbor();
-    my @my_treelet     = $self->get_treelet_nodes();
-    my @right_treelet;
-
-    # parent can stand in the way
-    if (( !defined $right_neighbor || $parent->get_ordering_value() < $right_neighbor->get_ordering_value() )
-        && $my_ord < $parent->get_ordering_value()
-        )
-    {
-        @right_treelet = ($parent);
+    my @attr_values;
+    if ( ref $attr_names[-1] ) {
+        my $arg_ref          = pop @attr_names;
+        my $change_undefs_to = $arg_ref->{undefs};
+        @attr_values = map {
+            defined $self->get_attr($_) ? $self->get_attr($_) : $change_undefs_to
+        } @attr_names;
     }
     else {
-        log_fatal('Cannot shift left without a left neighbor') if !$right_neighbor;
-        @right_treelet = ( $right_neighbor, $right_neighbor->get_descendants );
-        @right_treelet = sort { $a->get_ordering_value <=> $b->get_ordering_value } @right_treelet;
+        @attr_values = map { $self->get_attr($_) } @attr_names;
     }
 
-    my $my_mass    = scalar @my_treelet;
-    my $right_mass = scalar @right_treelet;
-
-    # ords in my treelet
-    foreach (@my_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() + $right_mass );
-    }
-
-    # ords before me
-    foreach (@right_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() - $my_mass );
-    }
-    return;
+    return @attr_values;
 }
 
-sub shift_to_leftmost {
+# TODO: How to do this in an elegant way?
+package Treex::Core::Node::Deleted;
+use Treex::Core::Log;
 
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->shift_*');
-    my $parent = $self->get_parent;
-    log_fatal('Cannot shift node without a parent') if !$parent;
-    my @my_treelet                 = $self->get_treelet_nodes();
-    my @my_ordered_treelet         = sort { $a->get_ordering_value <=> $b->get_ordering_value } @my_treelet;
-    my $my_leftmost_descendant_ord = $my_ordered_treelet[0]->get_ordering_value();
-    my @left_treelet               = grep { $_->get_ordering_value() < $my_leftmost_descendant_ord } $parent->get_treelet_nodes();
-
-    my $my_mass   = scalar @my_treelet;
-    my $left_mass = scalar @left_treelet;
-
-    # ords in my treelet
-    foreach (@my_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() - $left_mass );
-    }
-
-    # ords after me
-    foreach (@left_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() + $my_mass );
-    }
-    return;
+sub AUTOLOAD {
+    log_fatal("You cannot call any methods on deleted nodes.");
 }
 
-sub non_projective_shift_to_leftmost_of {
-
-    #To be removed - not checking
-    my ( $self, $ref_parent ) = @_;
-    _deprecated('$node->shift_*');
-    my @my_treelet                 = $self->get_treelet_nodes();
-    my @my_ordered_treelet         = sort { $a->get_ordering_value <=> $b->get_ordering_value } @my_treelet;
-    my $my_leftmost_descendant_ord = $my_ordered_treelet[0]->get_ordering_value();
-    my @left_partial_treelet       = grep { $_->get_ordering_value() < $my_leftmost_descendant_ord } $ref_parent->get_treelet_nodes();
-
-    my $my_mass   = scalar @my_treelet;
-    my $left_mass = scalar @left_partial_treelet;
-
-    #print STDERR "<> my_mass:$my_mass left_mass:$left_mass\n";
-    #print STDERR join(' ', map { $_->get_m_lemma().'.'.$_->get_ordering_value() } $self->get_root->get_ordered_descendants())."\n";
-
-    # ords in my treelet
-    foreach (@my_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() - $left_mass );
-    }
-
-    # ords after me
-    foreach (@left_partial_treelet) {
-        $_->set_ordering_value( $_->get_ordering_value() + $my_mass );
-    }
-    return;
-}
-
-sub get_self_and_descendants {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_descendants({add_self=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    return ( $self, $self->get_descendants() );
-}
-
-sub get_ordered_children {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({ordered=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_children );
-}
-
-sub get_first_child {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({first_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my ($son) = $self->get_ordered_children;
-    return $son;
-}
-
-sub get_ordered_descendants {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_descendants({ordered=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_descendants );
-}
-
-sub get_ordered_self_and_descendants {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_descendants({ordered=>1, add_self=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } ( $self, $self->get_descendants ) );
-}
-
-sub get_left_children {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({preceding_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my $my_ordering_value = $self->get_ordering_value;
-    return ( grep { $_->get_ordering_value < $my_ordering_value } $self->get_ordered_children );
-}
-
-sub get_right_children {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({following_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my $my_ordering_value = $self->get_ordering_value;
-    return ( grep { $_->get_ordering_value > $my_ordering_value } $self->get_ordered_children );
-}
-
-sub get_leftmost_child {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({first_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my @children = $self->get_ordered_children;
-    return $children[0];
-}
-
-sub get_rightmost_child {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_children({last_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my @children = $self->get_ordered_children;
-    return $children[-1];
-}
-
-sub get_ordered_siblings {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_siblings({ordered=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    return ( sort { $a->get_ordering_value <=> $b->get_ordering_value } $self->get_siblings );
-}
-
-sub get_left_siblings {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_siblings({preceding_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my $my_ordering_value = $self->get_ordering_value;
-    return ( grep { $_->get_ordering_value < $my_ordering_value } $self->get_ordered_siblings )
-}
-
-sub get_right_siblings {
-
-    #To be removed - not checking
-    my ($self) = @_;
-    _deprecated('$node->get_siblings({following_only=>1})');
-    log_fatal('Incorrect number of arguments') if @_ != 1;
-    my $my_ordering_value = $self->get_ordering_value;
-    return ( grep { $_->get_ordering_value > $my_ordering_value } $self->get_ordered_siblings )
-}
+package Treex::Core::Node;
 
 __PACKAGE__->meta->make_immutable;
 
@@ -1080,8 +806,8 @@ Treex::Core::Node
 
 =head1 DESCRIPTION
 
-This class represents a TectoMT node.
-TectoMT trees (contained in bundles) are formed by nodes and edges.
+This class represents a Treex node.
+Treex trees (contained in bundles) are formed by nodes and edges.
 Attributes can be attached only to nodes. Edge's attributes must
 be stored as the lower node's attributes.
 Tree's attributes must be stored as attributes of the root node.
@@ -1092,7 +818,7 @@ Tree's attributes must be stored as attributes of the root node.
 
 =over 4
 
-=item  my $new_node = $existing_node->create_child( { 'attributes' => {'lemma'=>'house','tag'=>'NN' });
+=item  my $new_node = $existing_node->create_child(lemma=>'house', tag=>'NN' });
 
 Creates a new node as a child of an existing node. Some of its attribute
 can be filled. Direct calls of node constructors (->new) should be avoided.
@@ -1168,12 +894,11 @@ Returns the parent node, or undef if there is none (if $node itself is the root)
 
 Makes $node a child of $parent_node.
 
-=item $node->disconnect();
+=item $node->delete();
 
-Disconnecting a node (or a subtree rooted by the given node)
-from its parent. Underlying fs-node representation is disconnected too.
+Deletes a node and the a subtree rooted by the given node.
 Node identifier is removed from the document indexing table.
-The disconnected node cannot be further used.
+The deleted node cannot be further used.
 
 =item my $root_node = $node->get_root();
 
@@ -1282,36 +1007,6 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =over 4
 
-=item my $attrname = $node->get_ordering_attribute();
-
-Returns the name of the ordering attribute ('ord' by default).
-This method is supposed to be redefined in derived classes
-(to return e.g. 'deepord' for tectogrammatical layer nodes).
-All methods following in this section make use of this method.
-
-=item my $ord = $node->get_ordering_value();
-
-Returns the ordering value of the given node.
-(In this class, i.e. the value of 'ord' attribute.)
-
-=item $node->set_ordering_value($ord);
-
-Setting the ordering value of the given node.
-Should not be used directly, shifting methods should be used instead.
-
-=item $rootnode->normalize_node_ordering();
-
-The values of the ordering attribute of all nodes in the tree
-(possibly containing negative or fractional numbers) are normalized.
-The node ordering is preserved, but only integer values are used now
-(starting from 0 for the root, with increment 1).
-This method can be called only on tree roots (nodes without parent),
-otherwise fatal error is invoked.
-BEWARE: This method is only needed when there are some fractional values
-of the ordering atttribute in a tree. If possible, use methods from the next
-section (L<Reordering nodes|"Reordering nodes">) instead of do-it-yourself
-reordering that involves fractional ords.
-
 =item my $boolean = $node->precedes($another_node);
 
 Does this node precedes C<$another_node>?
@@ -1397,7 +1092,6 @@ Shifts (changes the ord of) the node in front of the subtree of the reference no
 =back
 
 
-
 =head2 Other methods
 
 =over 4
@@ -1408,105 +1102,27 @@ Generate new (=so far unindexed) identifier (to be used when creating new nodes)
 The new identifier is derived from the identifier of the root ($node->root), by adding
 suffix x1 (or x2, if ...x1 has already been indexed, etc.) to the root's id.
 
-=item my $position = $node->get_fposition();
-
-Return the node address, i.e. file name and node's position within the file, similarly
-to TrEd's FPosition() (but the value is only returned, not printed).
 
 =item my $levels = $node->get_depth();
 
 Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
 
+=back
+
+
+=head2 DEPRECATED & QUESTIONABLE METHODS
+
+=over
+
+=item my $position = $node->get_fposition();
+
+Return the node address, i.e. file name and node's position within the file, similarly
+to TrEd's FPosition() (but the value is only returned, not printed).
+
 =item $node->is_coap_root();
 
 Empty predecessor of a-tree and t-tree methods for recognizing
 roots of coordination and apposition constructions.
-
-=back
-
-
-=head2 DEPRECATED METHODS
-
-Instead of C<$node-E<gt>geta_xy()>, use C<$node-E<gt>get_attr('xy')>
-(the shortcut notation did not come into the use of TectoMT programmers).
-
-Instead of methods with I<ordered>, I<left>, I<right> in names,
-use appropriate L<switches|"Switches"> (for access to children / descendants / siblings)
-or L<shifting methods|"Reordering nodes"> (for shifting / reordering).
-
-
-=over
-
-=item my $value = $node->geta_ATTRNAME();
-
-Generic set of faster-to-write attribute-getter methods, such as $node->geta_functor()
-equivalent to $node->get_attr('functor'), or $node->geta_gram__number() equivalent to
-$node->get_attr('gram/number'). In the case of structured attributes, '/' in the attribute name
-is to be substituted with '__' (double underscore).
-
-=item  $node->seta_ATTRNAME($name,$value);
-
-Generic set of faster-to-write attribute-setter methods, such as $node->seta_functor('ACT')
-equivalent to $node->set_attr('functor','ACT'), or $node->seta_gram__number('pl') equivalent to
-$node->get_attr('gram/number','pl'). In the case of structured attributes, '/' in the attribute name
-is to be substituted with '__' (double underscore).
-
-=item my @child_nodes = $node->get_ordered_children();
-
-Returns array of descendants sorted using the get_ordering_value method.
-
-=item my @left_child_nodes = $node->get_left_children();
-
-Returns array of sorted descendants with the ordering value
-smaller than that of the given node.
-
-=item my @right_child_nodes = $node->get_right_children();
-
-Returns array of sorted descendants with the ordering value
-bigger than that of the given node.
-
-=item my $leftmost_child_node = $node->get_leftmost_child();
-
-Returns the child node with the smallest ordering value.
-
-=item my $rightmost_child_node = $node->get_rightmost_child();
-
-Returns the child node with the biggest ordering value.
-
-=item my @sibling_nodes = $node->get_ordered_siblings();
-
-Returns an array of sibling nodes (nodes sharing their parent with
-the current node), ordered according to get_ordering_value.
-
-=item my @left_sibling_nodes = $node->get_left_siblings();
-
-Returns an array (ordered according to get_ordering_value) of sibling nodes with
-ordering values smaller than that of the current node.
-
-=item my @right_sibling_nodes = $node->get_right_siblings();
-
-Returns an array (ordered according to get_ordering_value) of sibling nodes with
-ordering values bigger than that of the current node.
-
-=item $node->shift_left();
-
-Node and its subtree is moved among its siblings. Projective tree is assumed.
-
-=item $node->shift_right();
-
-Node and its subtree is moved among its siblings. Projective tree is assumed.
-
-=item get_self_and_descendants
-
-=item get_first_child
-
-=item get_ordered_descendants
-
-=item get_ordered_self_and_descendants
-
-=item non_projective_shift_to_leftmost_of
-
-=item shift_to_leftmost
 
 =back
 

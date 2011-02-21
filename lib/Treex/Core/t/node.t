@@ -17,7 +17,7 @@ foreach my $layer (qw( A T N P )) {
     #is( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), $bundle->get_tree("Scs$layer"), 'Tree can be obtained via zone or directly and result is same' ); # not supported
 
     my $root    = $zone->get_tree($layer);
-    my $ordered = defined $root->get_ordering_value();
+    my $ordered = defined $root->ord;
     isa_ok( $root, 'Treex::Core::Node' );
     isa_ok( $root, "Treex::Core::Node::$layer" );
     my $attributes = {
@@ -60,8 +60,8 @@ foreach my $layer (qw( A T N P )) {
     is( $children[0], $node, q($node is first $root's child) );
     my @descendants = $root->get_descendants();
     is( $descendants[0], $node, q($node is first $root's descendant) );
-    ok(!$root->get_siblings(), '$root has no siblings' );
-    ok(!$node->get_siblings(), '$node has no siblings' );
+    ok( !$root->get_siblings(), '$root has no siblings' );
+    ok( !$node->get_siblings(), '$node has no siblings' );
 
     my $c1 = $root->create_child();
     my $c2 = $root->create_child();
@@ -92,37 +92,23 @@ foreach my $layer (qw( A T N P )) {
     cmp_ok( scalar $node->get_siblings(), '==', 4, '$node has 4 siblings' );
     cmp_ok( scalar $node->get_children(), '==', 2, '$node has 2 children' );
 
-    $c3->disconnect();
-    $cc2->disconnect();
+    $c3->delete();
+    $cc2->delete();
 
     cmp_ok( scalar $root->get_children(),    '==', 4, '$root now has 4 children' );
     cmp_ok( scalar $root->get_descendants(), '==', 8, '$root now has 8 descendants' );
     cmp_ok( scalar $node->get_siblings(),    '==', 3, '$node has 3 siblings' );
     cmp_ok( scalar $node->get_children(),    '==', 1, '$node has 1 child' );
 
-    ok( !defined $c3->get_parent(), 'Disconnected node has no parent' );
-    cmp_ok( scalar $c3->get_children(), '==', 1, 'And it has still 1 child' );
-    ok(!$c3->get_siblings(), 'but no siblings' );
-    ok( $c3->is_root(), q(so it's root) );
+    # TODO: Calling methods on deleted nodes should result in fatal errors. Let's test it.
 
     #Node ordering
-    SKIP: {
-
-        #skip 'Tree has no ordering',scalar $root->get_descendants({add_self=>1}) unless $ordered;
-        skip 'Tree has no ordering', 36 + 2 + 2 * scalar $root->get_descendants() unless $ordered;
+    if ($ordered) {
         my %ords;
         my $max = 0;
-        foreach (
-            $root->get_descendants(
-                {
-                    ordered  => 1,
-                    add_self => 1,
-                }
-            )
-            )
-        {
-            my $value = $_->get_ordering_value();
-            ok( defined $value, 'Node ' . ( $_->get_id() || 'NODE WITHOUT ID' ) . ' has ordering value' );
+        foreach my $node ( $root->get_descendants( { ordered => 1, add_self => 1, } ) ) {
+            my $value = $node->ord;
+            ok( defined $value, 'Node ' . ( defined $node->id ? $node->id : 'WITHOUT ID' ) . ' has ordering value' );
             $max = $value if $value > $max;
             cmp_ok( ++$ords{$value}, '==', 1, q(and it's unique) );
 

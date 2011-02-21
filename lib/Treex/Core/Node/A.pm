@@ -12,8 +12,8 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
 has [
-    qw(ord afun is_member is_parenthesis_root conll_deprel
-        edge_to_collapse is_auxiliary clause_number is_clause_head)
+    qw(afun is_member is_parenthesis_root conll_deprel
+       edge_to_collapse is_auxiliary clause_number is_clause_head)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {

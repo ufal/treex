@@ -5,7 +5,7 @@ extends 'Treex::Core::Node';
 
 # t-layer attributes
 has [
-    qw( ord is_member clause_number is_clause_head
+    qw( is_member clause_number is_clause_head
         nodetype t_lemma functor subfunctor formeme tfa
         is_dsp_root sentmod is_parenthesis is_passive
         is_relclause_head is_name_of_person voice
