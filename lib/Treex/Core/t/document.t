@@ -8,7 +8,7 @@ use Test::More tests => 6;
 BEGIN { use_ok('Treex::Core::Document') }
 my $attr     = 'description';                # the only document's unzoned attribute
 my $sentence = q(I'm testing sentence);
-my $fname    = 'doc.test';
+my $fname    = 'test.treex';
 my $doc      = Treex::Core::Document->new;
 
 isa_ok( $doc, 'Treex::Core::Document' );
@@ -28,5 +28,6 @@ $doc->save($fname);
 my $loaded_doc = Treex::Core::Document->new( { 'filename' => $fname } );
 
 is( $loaded_doc->get_attr($attr), $doc->get_attr($attr), q(There's equal content in saved&loaded attr) );
+unlink $fname;
 
 done_testing();

@@ -11,7 +11,7 @@ my $document = Treex::Core::Document->new;
 my $bundle   = $document->create_bundle;
 my $zone     = $bundle->create_zone( 'cs', 'S' );
 
-foreach my $layer (qw(P A T N)) {
+foreach my $layer (qw( A T N P )) {
     $zone->create_tree($layer);
 
     #is( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), $bundle->get_tree("Scs$layer"), 'Tree can be obtained via zone or directly and result is same' ); # not supported
@@ -21,10 +21,8 @@ foreach my $layer (qw(P A T N)) {
     isa_ok( $root, 'Treex::Core::Node' );
     isa_ok( $root, "Treex::Core::Node::$layer" );
     my $attributes = {
-        'attributes' => {
-            'lemma' => 'house',
-            'tag'   => 'NN',
-            }
+        'lemma' => 'house',
+        'tag'   => 'NN',
     };
     my $node = $root->create_child($attributes);
     isa_ok( $node, 'Treex::Core::Node' );
@@ -62,7 +60,8 @@ foreach my $layer (qw(P A T N)) {
     is( $children[0], $node, q($node is first $root's child) );
     my @descendants = $root->get_descendants();
     is( $descendants[0], $node, q($node is first $root's descendant) );
-    cmp_ok( scalar $root->get_siblings(), '==', 0, '$root has no siblings' ) || note('Assuming empty array, not undef');
+    # TODO Why returns get_siblings undef?
+    cmp_ok( scalar $root->get_siblings(), '==', 0, '$root has no siblings' );
     cmp_ok( scalar $node->get_siblings(), '==', 0, '$node has no siblings' );
 
     my $c1 = $root->create_child();

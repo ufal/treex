@@ -79,12 +79,32 @@ sub create_tree {
     $tree_root->set_type_by_name( $self->get_document->metaData('schema'), $tree_root->get_pml_type_name() );
 
     # vyresit usporadavaci atribut!
+    # TODO: if $tree_root->does('Treex::Core::Role::OrderedTree')
     my $ordering_attribute = $tree_root->get_ordering_member_name;
     if ( defined $ordering_attribute ) {
         $tree_root->set_attr( $ordering_attribute, 0 );
     }
 
     return $tree_root;
+}
+
+sub delete_tree {
+    my $self = shift;
+    my ( $layer ) = pos_validated_list(
+        \@_,
+        { isa=>'Layer' },
+    );
+
+    # disconnect all nodes ($tree_root->disconnect does not work, in order to not be used by users)
+    my $tree_root = $self->get_tree($layer);
+    foreach my $child ($tree_root->get_children()){
+        $child->disconnect();
+    }
+    if ( $tree_root->id ) {
+        $self->get_document->index_node_by_id( $tree_root->id, undef );
+    }
+    delete $self->{trees}{lc($layer) . '_tree'};
+    return;
 }
 
 sub get_tree {
@@ -167,7 +187,6 @@ sub get_all_trees {
 
     return grep {defined}
         map     { $self->{trees}->{ $_ . "_tree" }; } qw(a t n p);
-
 }
 
 sub sentence {

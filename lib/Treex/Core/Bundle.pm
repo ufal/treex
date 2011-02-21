@@ -51,12 +51,12 @@ sub create_zone {
     my ( $language, $selector ) = pos_validated_list (
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
     my $new_zone = Treex::Core::BundleZone->new(
         {
             'language' => $language,
-            'selector' => ( $selector || '' )
+            'selector' => $selector,
         }
     );
 
@@ -81,7 +81,7 @@ sub get_or_create_zone {
     my ( $language, $selector ) = pos_validated_list (
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
     my $zone = $self->get_zone( $language, $selector );
     if ( not defined $zone ) {

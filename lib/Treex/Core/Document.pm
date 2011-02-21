@@ -116,8 +116,8 @@ sub BUILD {
                     $zone->_set_bundle($bundle);
 
                     foreach my $tree ( $zone->get_all_trees ) {
-                        $tree->type->get_structure_name =~ /(\S)-(root|node)/
-                            or log_fatal "Unexpected member in zone structure: " . $tree->type;
+                        $tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/
+                            or log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
                         my $layer = uc($1);
                         foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
                             bless $node, "Treex::Core::Node::$layer";
@@ -283,7 +283,7 @@ sub create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
 
     #my ( $self, $language, $selector ) = @_;
@@ -320,7 +320,7 @@ sub get_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
 
     #my ( $self, $language, $selector ) = @_;
@@ -347,7 +347,7 @@ sub get_or_create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector' },
+        { isa => 'Selector', default => '' },
     );
 
     my $fs_zone = $self->get_zone( $language, $selector );

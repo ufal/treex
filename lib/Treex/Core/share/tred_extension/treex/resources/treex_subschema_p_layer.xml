@@ -2,13 +2,11 @@
 
 <pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
   <revision>1.0.0</revision>
-  <description>Data for Treex (formerly TectoMT)</description>
-  <!-- Phrase-structure (constituency) trees in the Penn treebank style  -->
-
+  <description>P-layer - Phrase-structure (constituency) trees in the Penn treebank style</description>
   <import type="bbn_tag.type" schema="treex_subschema_bbn.xml"/>
 
-<type name="p-nonterminal.type">
-  <structure role="#NODE">
+  <type name="p-nonterminal.type">
+   <structure role="#NODE" name="p-nonterminal">
     <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
     <member name="is_head" ><cdata format="any"/></member>
     <member name="head_selection_rule" ><cdata format="any"/></member>
@@ -25,11 +23,11 @@
         <element name="terminal" type="p-terminal.type"/>
       </sequence>
     </member>
- </structure>
-</type>
+   </structure>
+  </type>
 
-<type name="p-terminal.type">
-     <structure role="#NODE">
+  <type name="p-terminal.type">
+     <structure role="#NODE" name="p-terminal">
         <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
         <member name="is_head" ><cdata format="any"/></member>
         <member name="head_selection_rule" ><cdata format="any"/></member>
@@ -42,7 +40,7 @@
 		<member name="bbn_tag" type="bbn_tag.type" />
 <!--        <member name="m.rf" role="#KNIT" type="m-node.type"/> -->
     </structure>
-</type>
+  </type>
 
   <type name="p-phrase.type">
     <choice>

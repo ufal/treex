@@ -148,7 +148,15 @@ sub create_child {
     # Magically, it works on UFAL machines, but nowhere else - I don't know why.
     # Substituting the hash by hashref is a workaround,
     # but the black magic is still there.
-    my $new_node = ( ref $self )->new( {@_} );
+    my $arg_ref;
+    if (scalar @_ == 1 && ref $_[0] eq 'HASH') {
+        $arg_ref = $_[0];
+    } elsif ( @_ % 2) {
+        log_fatal "Odd number of elements for create_child";
+    } else {
+        $arg_ref = {@_};
+    }
+    my $new_node = ( ref $self )->new($arg_ref);
     $new_node->set_parent($self);
 
     my $new_id = $self->generate_new_id();
@@ -388,9 +396,8 @@ sub get_siblings {
         \@_,
         { isa => 'Maybe[HashRef]', optional => 1 },
     );
-
     my $parent = $self->get_parent();
-    return if !$parent;
+    return () if !$parent;
     my @siblings = grep { $_ ne $self } $parent->get_children();
     return @siblings if !$arg_ref;
     return $self->_process_switches( $arg_ref, @siblings );
