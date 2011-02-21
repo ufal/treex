@@ -28,6 +28,12 @@ my @layers = qw(t a n);
 
 # --------- ACCESS TO ZONES ------------
 
+sub BUILD {
+    log_fatal 'Because of node indexing, no bundles can be created outside of documents. '
+        .'You have to use $document->create_bundle() instead of $bundle->new().';
+
+}
+
 sub get_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list (

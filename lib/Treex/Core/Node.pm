@@ -24,6 +24,16 @@ has id => (
     trigger => \&_index_my_id,
 );
 
+sub BUILD {
+    my ($self,$arg_ref) = @_;
+    if (not defined $arg_ref or not defined $arg_ref->{_called_from_core_}) {
+        log_fatal 'Because of node indexing, no nodes can be created outside of documents. '
+            . 'You have to use $zone->create_tree(...) or $node->create_child() '
+                . 'instead of Treex::Core::Node...->new().';
+    }
+
+}
+
 sub _index_my_id {
     my $self = shift;
     pos_validated_list( \@_, { isa => 'Any', optional => 1 } );    #TODO
@@ -156,6 +166,7 @@ sub create_child {
     } else {
         $arg_ref = {@_};
     }
+    $arg_ref->{_called_from_core_} = 1;
     my $new_node = ( ref $self )->new($arg_ref);
     $new_node->set_parent($self);
 
