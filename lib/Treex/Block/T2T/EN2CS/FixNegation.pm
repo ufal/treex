@@ -3,33 +3,32 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
-    foreach my $clause_head ( grep { $_->formeme =~ /fin|rc/ } $t_root->get_descendants() ) {
+    if ( $tnode->formeme =~ /fin|rc/ ) {
 
         # double negation
-        my @descendants_in_same_clause = $clause_head->get_clause_descendants();
+        my @descendants_in_same_clause = $tnode->get_clause_descendants();
         if ( any { $_->t_lemma =~ /^(nikdo|nic|žádný|ničí|nikdy|nikde)$/ } @descendants_in_same_clause ) {
-            $clause_head->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_attr( 'gram/negation', 'neg1' );
         }
 
         # until
-        my $en_tnode = $clause_head->src_tnode;
+        my $en_tnode = $tnode->src_tnode;
         if ( defined $en_tnode and $en_tnode->formeme =~ /(until|unless)/ ) {
-            $clause_head->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_attr( 'gram/negation', 'neg1' );
         }
 
         # "Ani neprisel, ani nezavolal.", "Nepotkal Pepu ani Frantu."
         if (grep { _is_ani_neither_nor($_) }
-            $clause_head->get_children
-            or ($clause_head->is_member
-                and _is_ani_neither_nor( $clause_head->get_parent )
+            $tnode->get_children
+            or ($tnode->is_member
+                and _is_ani_neither_nor( $tnode->get_parent )
             )
             )
         {
-            $clause_head->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_attr( 'gram/negation', 'neg1' );
         }
     }
     return;

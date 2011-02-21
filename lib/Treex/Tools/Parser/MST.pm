@@ -93,10 +93,10 @@ sub parse_sentence {
         $writer = $self->{writer};
         $reader = $self->{reader};
         Report::fatal("Treex::Tools::Parser::MST: unexpected status") if ( !defined $reader || !defined $writer );
-
-        print $writer join( "\t", @$forms_rf ) . "\n";
-        print $writer join( "\t", @$tags_rf ) . "\n";
-
+        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
+        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
+#        print $writer join( "\t", @$forms_rf ) . "\n";
+#        print $writer join( "\t", @$tags_rf ) . "\n";
         $_ = <$reader>;
         Report::fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
         chomp;
