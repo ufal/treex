@@ -12,7 +12,7 @@ my $parser;
 sub BUILD {
     my ($self) = @_;
     $self->set_model("$ENV{TMT_ROOT}/share/data/models/mst_parser/cs/pdt2_non-proj_ord2_0.05.model") if !$self->model;
-    $parser = Treex::Tools::Parser::MST->new({model => $model, decodetype => 'non-proj', order => 2, memory => '1000m'});
+    $parser = Treex::Tools::Parser::MST->new({model => $self->model, decodetype => 'non-proj', order => 2, memory => '1000m'});
     return;
 }
 

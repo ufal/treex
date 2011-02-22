@@ -27,8 +27,6 @@ sub process_atree {
             }
         }
     }
-
-    }
 }
 
 1;
