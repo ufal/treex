@@ -7,6 +7,7 @@ use File::HomeDir;
 use File::ShareDir;
 
 our $debug_run_jobs_locally;    # this should be somehow systematized, since there will be probably many switches like this one
+our %service;
 
 sub devel_version {
     return $ENV{TMT_ROOT};
