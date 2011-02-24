@@ -3,7 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 use LanguageModel::MorphoLM;
 my $morphoLM;
 
@@ -11,37 +10,28 @@ sub BUILD {
     $morphoLM = LanguageModel::MorphoLM->new() if !$morphoLM;
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
+    return if ( $cs_tnode->t_lemma_origin || '' ) !~ /^dict-first/;
+    return if !$cs_tnode->is_passive;
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants');
 
-        next if ( $cs_tnode->t_lemma_origin || "" ) !~ /^dict-first/;
+    my @compatible = grep { $_->{pos} ne "V" or _is_passivizable( $_->{t_lemma}, $cs_tnode ) }
+        map { $_->{t_lemma} =~ s/_s[ie]//; $_ }    # reflexive particles must disappear during passivization
+        @{$variants_ref};
 
-        if ( $cs_tnode->is_passive ) {
+    if ( @compatible and @compatible < @{$variants_ref} ) {
+        my $old_tlemma = $cs_tnode->t_lemma;
+        my $new_tlemma = $compatible[0]->{t_lemma};
+        if ( $old_tlemma ne $new_tlemma ) {
 
-            my $variants_ref = $cs_tnode->get_attr('translation_model/t_lemma_variants');
-
-            my @compatible = grep { $_->{pos} ne "V" or _is_passivizable( $_->{t_lemma}, $cs_tnode ) }
-                map { $_->{t_lemma} =~ s/_s[ie]//; $_ }    # reflexive particles must disappear during passivization
-                @{$variants_ref};
-
-            if ( @compatible and @compatible < @{$variants_ref} ) {
-                my $old_tlemma = $cs_tnode->t_lemma;
-                my $new_tlemma = $compatible[0]->{t_lemma};
-                if ( $old_tlemma ne $new_tlemma ) {
-
-                    #                    print "old_tlemma=$old_tlemma\tnew_tlemma=$new_tlemma\ten_sentence: ".$bundle->get_attr('english_source_sentence')."\t".$bundle->get_attr('czech_target_sentence')."\t".$cs_tnode->get_fposition()."\n";
-                    $cs_tnode->set_t_lemma( $compatible[0]->{t_lemma} );
-                    $cs_tnode->set_attr( 'mlayer_pos', $compatible[0]->{pos} );
-                }
-                $cs_tnode->set_attr( 'translation_model/t_lemma_variants', \@compatible );
-            }
-
+            #                    print "old_tlemma=$old_tlemma\tnew_tlemma=$new_tlemma\ten_sentence: ".$bundle->get_attr('english_source_sentence')."\t".$bundle->get_attr('czech_target_sentence')."\t".$cs_tnode->get_fposition()."\n";
+            $cs_tnode->set_t_lemma( $compatible[0]->{t_lemma} );
+            $cs_tnode->set_attr( 'mlayer_pos', $compatible[0]->{pos} );
         }
+        $cs_tnode->set_attr( 'translation_model/t_lemma_variants', \@compatible );
     }
-    return;
 }
 
 sub _is_passivizable {

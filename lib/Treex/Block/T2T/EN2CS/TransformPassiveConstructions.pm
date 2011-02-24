@@ -8,11 +8,11 @@ my %IS_RAISING_VERB = map { $_ => 1 } qw(
     expect suppose believe allow require think assume permit estimate
     report forbid say intend);
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_ttree {
+    my ( $self, $cs_troot ) = @_;
     my %to_be_deleted;
     NODE:
-    foreach my $cs_node ( $bundle->get_tree('TCzechT')->get_descendants() ) {
+    foreach my $cs_node ( $cs_troot->get_descendants() ) {
         next NODE if !$cs_node->is_passive;
         my $en_node = $cs_node->src_tnode or next NODE;
         my $en_lemma = $en_node->t_lemma;
@@ -28,17 +28,16 @@ sub process_bundle {
         $cs_node->set_is_passive(0);
         $cs_node->set_voice('reflexive_diathesis');
         my $perspron = $cs_node->create_child(
-                {   attributes => {
-                        t_lemma        => '#PersPron',
-                        t_lemma_origin => 'rule-Transform_passive_constructions',
-                        formeme        => 'n:1',                                    #TODO is this needed?
-                        formeme_origin => 'rule-Transform_passive_constructions',
-                        'gram/gender'  => 'neut',
-                        'gram/numer'   => 'sg',
-                        'functor'      => 'ACT',
-                        'nodetype'     => 'complex',
-                        }
-                }
+            {
+                t_lemma        => '#PersPron',
+                t_lemma_origin => 'rule-Transform_passive_constructions',
+                formeme        => 'n:1',                                    #TODO is this needed?
+                formeme_origin => 'rule-Transform_passive_constructions',
+                'gram/gender'  => 'neut',
+                'gram/numer'   => 'sg',
+                'functor'      => 'ACT',
+                'nodetype'     => 'complex',
+            }
         );
         $perspron->shift_before_node($cs_node);
 
@@ -55,7 +54,7 @@ sub process_bundle {
     }
 
     foreach my $node ( values %to_be_deleted ) {
-            $node->disconnect();
+        $node->delete();
     }
 
     return;

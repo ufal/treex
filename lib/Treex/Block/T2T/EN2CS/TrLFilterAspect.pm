@@ -3,32 +3,22 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 use Lexicon::CS::Aspect;
 
 Readonly my %IS_PHASE_VERB => (
     'začít' => 1, 'začínat' => 1, 'přestat' => 1, 'přestávat' => 1,
 );
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $node ) = @_;
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    # We want to check only verbs with more translation variants
+    return if ( $node->get_attr('gram/sempos') || '' ) ne 'v';
+    return if $node->t_lemma_origin !~ /^dict-first/;
 
-        # We want to check only verbs with more translation variants
-        next if ( $cs_tnode->get_attr('gram/sempos') || '' ) ne 'v';
-        next if $cs_tnode->t_lemma_origin !~ /^dict-first/;
-        filter_variants($cs_tnode);
-    }
-    return;
-}
-
-sub filter_variants {
-    my ($node) = @_;
     my $variants_ref = $node->get_attr('translation_model/t_lemma_variants');
 
-    my @filtred = grep { is_aspect_ok( $_->{t_lemma}, $node ) } @{$variants_ref};
+    my @filtred = grep { $self->is_aspect_ok( $_->{t_lemma}, $node ) } @{$variants_ref};
 
     # If no or all variants were filtred, don't change anything
     return if @filtred == 0 || @filtred == @{$variants_ref};
@@ -40,12 +30,10 @@ sub filter_variants {
         $node->set_t_lemma($first_lemma);
         $node->set_attr( 'mlayer_pos', $filtred[0]->{pos} );
     }
-
-    return;
 }
 
 sub is_aspect_ok {
-    my ( $cs_lemma, $node ) = @_;
+    my ( $self, $cs_lemma, $node ) = @_;
     my $aspect = Lexicon::CS::Aspect::get_verb_aspect($cs_lemma);
     return 1 if $aspect ne 'P';
 

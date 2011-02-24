@@ -28,27 +28,18 @@ sub BUILD {
     $noun2adj_model  = TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new(  { base_model => $static_model } );
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $node ) = @_;
 
-    # For all nodes with untranslated (i.e. "cloned" from source tnode) lemmas...
-    foreach my $t_node ( grep { $_->t_lemma_origin eq 'clone' } $t_root->get_descendants() ) {
-        my $en_tlemma = $t_node->t_lemma;
+    # Process untranslated (i.e. "cloned" from source tnode) lemmas
+    return if $node->t_lemma_origin ne 'clone';
 
-        # If the lemma looks like a compound, try to translate it as two or more t-nodes.
-        if ( $en_tlemma =~ /[a-z]\-[a-z]/ and $en_tlemma !~ /[A-Z]/ ) {
-            translate_compound($t_node);
-        }
-    }
+    # that look like a compound (contain a dash, but no uppercase).
+    return if $node->t_lemma !~ /[a-z]\-[a-z]/;
+    return if $node->t_lemma =~ /[A-Z]/;
 
-    return;
-}
-
-sub translate_compound {
-    my ($t_node) = @_;
-
-    my @forms = split( /\-/, $t_node->t_lemma );
+    # Try to translate it as two or more t-nodes.
+    my @forms = split( /\-/, $node->t_lemma );
     my @tags = @{ $tagger->analyze( \@forms ) };
 
     SUBWORD:
@@ -109,30 +100,29 @@ sub translate_compound {
         # create new child node.
         if (@forms) {
             my $new_formeme = $tag =~ /^D/ ? 'adv:' : 'adj:attr';
-            my $new_node = $t_node->create_child(
-                {   attributes => {
-                        't_lemma'                            => $t_lemma_variants[0]->{t_lemma},
-                        't_lemma_origin'                     => 'dict-first-Translate_LF_compounds',
-                        'nodetype'                           => 'complex',
-                        'functor'                            => '???',
-                        'gram/sempos'                        => 'adj.denot',
-                        'formeme'                            => $new_formeme,
-                        'formeme_origin'                     => 'rule-Translate_LF_compounds',
-                        'translation_model/t_lemma_variants' => [@t_lemma_variants],
-                        }
+            my $new_node = $node->create_child(
+                {
+                    't_lemma'                            => $t_lemma_variants[0]->{t_lemma},
+                    't_lemma_origin'                     => 'dict-first-Translate_LF_compounds',
+                    'nodetype'                           => 'complex',
+                    'functor'                            => '???',
+                    'gram/sempos'                        => 'adj.denot',
+                    'formeme'                            => $new_formeme,
+                    'formeme_origin'                     => 'rule-Translate_LF_compounds',
+                    'translation_model/t_lemma_variants' => [@t_lemma_variants],
                 }
             );
-            $new_node->shift_before_node( $t_node, { without_children => 1 } );
-            my $en_t_node = $t_node->src_tnode;
+            $new_node->shift_before_node( $node, { without_children => 1 } );
+            my $en_t_node = $node->src_tnode;
             $new_node->set_src_tnode($en_t_node);
         }
 
         # If translating the last sub-word of the compound,
         # save the translation into the original t_node.:
         else {
-            $t_node->set_t_lemma( $t_lemma_variants[0]->{t_lemma} );
-            $t_node->set_t_lemma_origin('dict-first-Translate_LF_compounds');
-            $t_node->set_attr( 'translation_model/t_lemma_variants', [@t_lemma_variants] );
+            $node->set_t_lemma( $t_lemma_variants[0]->{t_lemma} );
+            $node->set_t_lemma_origin('dict-first-Translate_LF_compounds');
+            $node->set_attr( 'translation_model/t_lemma_variants', [@t_lemma_variants] );
         }
     }
     return;
