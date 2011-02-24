@@ -3,26 +3,50 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-use TreeViterbi;
+has 'lm_weight' => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.2,
+    documentation => 'Weight of tree language model (or transition) logprobs.',
+);
 
+has 'formeme_weight' => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.8,
+    documentation => 'Weight of formeme forward logprobs.',
+);
+
+has 'backward_weight' => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0,
+    documentation => 'Weight of backward lemma logprobs'
+        . ' - ie. logprob(src_lemma|trg_lemma).'
+        . ' This must be number from the [0,1] interval.'
+        . ' Weight of forward logprobs - ie. logprob(trg_lemma|src_lemma)'
+        . ' is set to 1 - BACKWARD_WEIGHT.',
+);
+
+use TreeViterbi;
 use Lexicon::Czech;
 use LanguageModel::TreeLM;
 
 sub BUILD {
+    my ($self) = @_;
     MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new() );
+    MyTreeViterbiState->set_lm_weight( $self->lm_weight );
+    MyTreeViterbiState->set_formeme_weight( $self->formeme_weight );
+    MyTreeViterbiState->set_backward_weight( $self->backward_weight );
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    MyTreeViterbiState->set_lm_weight( $self->get_parameter('LM_WEIGHT') );
-    MyTreeViterbiState->set_formeme_weight( $self->get_parameter('FORMEME_WEIGHT') );
-    MyTreeViterbiState->set_backward_weight( $self->get_parameter('BACKWARD_WEIGHT') );
-    Report::progress();
+sub process_ttree {
+    my ( $self, $root ) = @_;
+    Treex::Core::Log::progress();
 
     # Do the real work
-    my $root = $bundle->get_tree('TCzechT');
     my ($root_state) = TreeViterbi::run( $root, \&get_states_of );
-    my @states = @{ $root_state->get_backpointers() };
+    my @states = @{ $root_state->backpointers };
 
     # Now follow backpointers and fill new lemmas & formemes
     while (@states) {
@@ -30,13 +54,13 @@ sub process_bundle {
         # Get first state from the queue and push in the queue its children
         my $state = shift @states;
         next if !$state;    #TODO jak se toto muze stat
-        push @states, @{ $state->get_backpointers() };
-        my $node = $state->get_node();
+        push @states, @{ $state->backpointers };
+        my $node = $state->node;
 
         # Change the lemma (only if different)
-        my $new_lemma = $state->get_lemma();
+        my $new_lemma = $state->lemma;
         my $old_pos   = $node->get_attr('mlayer_pos') || '';
-        my $new_pos   = $state->get_pos() || '';
+        my $new_pos   = $state->pos || '';
 
         if ($new_lemma ne $node->t_lemma
             or
@@ -44,12 +68,12 @@ sub process_bundle {
             )
         {    # ??? tisic.C->tisic.N makes harm!!!
             $node->set_t_lemma($new_lemma);
-            $node->set_attr( 'mlayer_pos', $state->get_pos );
-            $node->set_t_lemma_origin( 'viterbi|' . $state->get_lemma_origin );
+            $node->set_attr( 'mlayer_pos', $state->pos );
+            $node->set_t_lemma_origin( 'viterbi|' . $state->lemma_origin );
         }
 
         # Change the formeme
-        my $new_formeme = $state->get_formeme();
+        my $new_formeme = $state->formeme;
         if ( $new_formeme ne $node->formeme ) {
             $node->set_formeme($new_formeme);
             $node->set_formeme_origin('viterbi');
@@ -71,11 +95,6 @@ sub get_states_of {
     # Get lemma/formeme variants filled in previous blocks
     my $ls_ref = $node->get_attr('translation_model/t_lemma_variants');
     my $fs_ref = $node->get_attr('translation_model/formeme_variants');
-
-    # only childless nodes can have possessive forms
-    #    if ($node->get_children) {
-    #        $fs_ref = [grep {$_->{formeme} ne "n:poss"} @$fs_ref];
-    #    }
 
     # Sometimes there are no variants but only the attribute (if translated by rules)
     if ( !defined $ls_ref ) { $ls_ref = [ { t_lemma => $node->t_lemma, pos => $node->get_attr('mlayer_pos'), logprob => 0, backward_logprob => 0 } ]; }
@@ -143,61 +162,56 @@ sub is_compatible {
 # It's closely related to the block above
 # so it is comfortable to define it in the same file.
 package MyTreeViterbiState;
-use base 'TreeViterbiState';
+use Moose;
+use Treex::Moose;
+extends 'TreeViterbiState';
 
 use LanguageModel::Lemma;
 
-# Parameters
-Readonly my $DEFAULT_LM_WEIGHT       => 0.5;
-Readonly my $DEFAULT_FORMEME_WEIGHT  => 1;
-Readonly my $DEFAULT_BACKWARD_WEIGHT => 0.3;
+has [qw(lemma_v formeme_v)] => (is=>'rw');
+
+# Global attributes of all states
 my ( $lm_weight, $formeme_weight, $backward_weight, $tree_model );
-sub set_lm_weight       { return $lm_weight       = defined $_[1] ? $_[1] : $DEFAULT_LM_WEIGHT; }
-sub set_formeme_weight  { return $formeme_weight  = defined $_[1] ? $_[1] : $DEFAULT_FORMEME_WEIGHT; }
-sub set_backward_weight { return $backward_weight = defined $_[1] ? $_[1] : $DEFAULT_BACKWARD_WEIGHT; }
+sub set_lm_weight       { return $lm_weight       = $_[1]; }
+sub set_formeme_weight  { return $formeme_weight  = $_[1]; }
+sub set_backward_weight { return $backward_weight = $_[1]; }
 sub set_tree_model      { return $tree_model      = $_[1]; }
 
-## no critic (ProhibitUnusedVariables);
-## These are Class::Std attributes, not unused variables
-my %lemma_v_of : ATTR( :get<lemma_v>   :init_arg<lemma_v> );
-my %formeme_v_of : ATTR( :get<formeme_v> :init_arg<formeme_v> );
-## use critic
-
-sub get_lemma {
+sub lemma {
     my ($self) = @_;
-    return $self->get_lemma_v()->{t_lemma};
+    return $self->lemma_v->{t_lemma};
 }
 
-sub get_pos {
+sub pos {
     my ($self) = @_;
-    return $self->get_lemma_v()->{'pos'};
+    return $self->lemma_v->{pos};
 }
 
-sub get_formeme {
+sub formeme {
     my ($self) = @_;
-    return $self->get_formeme_v()->{formeme};
+    return $self->formeme_v->{formeme};
 }
 
-sub get_lemma_origin {
+sub lemma_origin {
     my ($self) = @_;
-    return ( $self->get_lemma_v()->{origin} || "undef" );
+    return ( $self->lemma_v->{origin} || 'undef' );
 }
 
 sub get_logprob {
     my ($self) = @_;
 
-    my $l = ( $backward_weight == 0 ? 0 : $backward_weight * $self->get_lemma_v()->{backward_logprob} )
-        + ( 1 - $backward_weight ) * $self->get_lemma_v()->{logprob};
+    my $l = ( $backward_weight == 0 ? 0 : $backward_weight * $self->lemma_v->{backward_logprob} )
+        + ( 1 - $backward_weight ) * $self->lemma_v->{logprob};
 
-    my $f = $self->get_formeme_v()->{logprob};
+    my $f = $self->formeme_v->{logprob};
     return $l + ( $formeme_weight * $f );
 }
 
 sub get_logprob_given_parent {
     my ( $self, $state ) = @_;
-    my $my_formeme   = $self->get_formeme();
-    my $my_lemma     = LanguageModel::Lemma->new( $self->get_lemma(), $self->get_pos() );
-    my $parent_lemma = LanguageModel::Lemma->new( $state->get_lemma(), $state->get_pos() );
+    my $my_formeme   = $self->formeme;
+    my $my_lemma     = LanguageModel::Lemma->new( $self->lemma, $self->pos );
+    my $parent_lemma = LanguageModel::Lemma->new( $state->lemma, $state->pos );
 
     my $logprob = $tree_model->get_logprob_LdFd_given_Lg( $my_lemma, $my_formeme, $parent_lemma );
     return $lm_weight * $logprob;
@@ -212,24 +226,6 @@ __END__
 =item Treex::Block::T2T::EN2CS::TrLFTreeViterbi
 
 Apply Tree-Viterbi algorithm to find optimal choices of formemes and lemmas.
-
-PARAMETERS:
-
-=over
-
-=item LM_WEIGHT = 0.5
-Weight of tree language model (or transition) logprobs.
-
-=item FORMEME_WEIGHT = 1
-Weight of formeme forward logprobs.
-
-=item BACKWARD_WEIGHT = 0.3
-Weight of backward lemma logprobs - ie. logprob(src_lemma|trg_lemma).
-This must be number from the [0,1] interval.
-Weight of forward logprobs - ie. logprob(trg_lemma|src_lemma) is set to
-1 - BACKWARD_WEIGHT.
-
-=back
 
 =back
 

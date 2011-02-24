@@ -1,15 +1,14 @@
-package Treex::Block::T2T::EN2CS::RehangToEffParents;
+package Treex::Block::T2T::RehangToEffParents;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $root  = $bundle->get_tree('TCzechT');
+sub process_ttree {
+    my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();
 
     # Array of first effective parents of every node
-    my @eff_parents = map { my ($ep) = $_->get_eparents(); $ep } @nodes;
+    my @eff_parents = map { my ($ep) = $_->get_eparents({or_topological=>1}); $ep } @nodes;
 
     foreach my $i ( 0 .. $#nodes ) {
         my $node   = $nodes[$i];
@@ -19,8 +18,6 @@ sub process_bundle {
         $node->set_deref_attr( 'original_parent.rf', $parent );
         $node->set_parent($ep);
     }
-
-    return;
 }
 
 1;
@@ -28,12 +25,12 @@ __END__
 
 =over
 
-=item Treex::Block::T2T::EN2CS::RehangToEffParents
+=item Treex::Block::T2T::RehangToEffParents
 
 Rehangs each node to its first effective parent.
 If this effective parent is different from the topological parent,
 id of the topological parent is saved to the C<original_parent.rf> attribute.
-Use L<SEnglishT_to_TCzechT::Rehang_to_orig_parents> to undo all changes.
+Use L<Treex::Block::T2T::RehangToOrigParents> to undo all changes.
 
 =back
 
