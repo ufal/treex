@@ -1,13 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
 
-use Treex::Core::Document;
+use Treex::Core;
 
 use Test::More tests => 7;
 
 my $doc = Treex::Core::Document->new;
+
+exit;
 
 my $sample_text = 'Testing text sentence 1. Testing test sentence 2.';
 
