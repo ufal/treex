@@ -26,7 +26,7 @@ sub copy_subtree {
             $a_node->set_lemma($lemma);
             $a_node->set_ord( $t_node->ord );
             if ( $t_node->is_coap_root() ) {
-                $a_node->set_attr( 'afun', $t_node->functor eq 'APPS' ? 'Apos' : 'Coord' );
+                $a_node->set_afun($t_node->functor eq 'APPS' ? 'Apos' : 'Coord' );
             }
             if ( $t_node->is_member ) {
                 $a_node->set_is_member(1);

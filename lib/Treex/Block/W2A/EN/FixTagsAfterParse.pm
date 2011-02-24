@@ -49,8 +49,8 @@ sub get_fixed_tag {
     my $form           = lc $node->form;
     my $parent         = $node->get_parent();
     my $eparent        = get_pseudo_eparent($node);
-    my $ord            = $node->get_ordering_value();
-    my $follows_parent = $parent->get_ordering_value() + 1 == $ord;
+    my $ord            = $node->ord;
+    my $follows_parent = $parent->ord + 1 == $ord;
 
     # "minus" as a noun
     # Mathematical operators (plus, minus, times, less, over) can be tagged
@@ -114,7 +114,7 @@ sub can_be_child_and_parent {
     return 1;
 }
 
-# Next 2 methods need no afun filled (unlike $node->get_eff_children())
+# Next 2 methods need no afun filled (unlike $node->get_echildren())
 sub get_pseudo_eparent {
     my ($node) = @_;
     my $parent = $node->get_parent();

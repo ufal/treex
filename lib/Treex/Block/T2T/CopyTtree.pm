@@ -84,8 +84,8 @@ sub copy_subtree {
             $target_node->set_attr( $attr, $source_node->get_attr($attr) );
         }
         $target_node->set_src_tnode($source_node);
-        $target_node->set_attr( 't_lemma_origin', 'clone' );
-        $target_node->set_attr( 'formeme_origin', 'clone' );
+        $target_node->set_t_lemma_origin('clone' );
+        $target_node->set_formeme_origin('clone' );
 
         copy_subtree( $source_node, $target_node, $src2tgt );
     }

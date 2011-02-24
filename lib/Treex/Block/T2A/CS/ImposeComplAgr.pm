@@ -7,20 +7,20 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $t_compl ( grep { $_->formeme =~ /adj:compl/ } $t_root->get_descendants ) {
-        my ($t_clause_head) = $t_compl->get_eff_parents;
+        my ($t_clause_head) = $t_compl->get_eparents;
         while (
             $t_clause_head->formeme !~ /^v.+(fin|rc)/
             and not $t_clause_head->is_root
             and not $t_clause_head->get_parent->is_root
             )
         {
-            ($t_clause_head) = $t_clause_head->get_eff_parents;
+            ($t_clause_head) = $t_clause_head->get_eparents;
         }
 
         if ($t_clause_head) {
             my ($t_subj) = grep {
                 $_ ne $t_compl and $_->formeme =~ /1/
-            } $t_clause_head->get_eff_children( { ordered => 1 } );
+            } $t_clause_head->get_echildren( { ordered => 1 } );
             if ($t_subj) {
                 my $a_compl   = $t_compl->get_lex_anode;
                 my $a_subj    = $t_subj->get_lex_anode;

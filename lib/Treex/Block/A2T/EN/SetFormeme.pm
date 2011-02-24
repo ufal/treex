@@ -104,7 +104,7 @@ sub _noun {
     return 'n:poss' if grep { $_->tag eq 'POS' } @aux_a_nodes;
     return 'n:attr' if below_noun($t_node) || below_adj($t_node);
     my ( $lemma, $id ) = $t_node->get_attrs( 't_lemma', 'id' );
-    Report::warn("Formeme n: $lemma $id") if $DEBUG;
+    log_warn("Formeme n: $lemma $id") if $DEBUG;
     return 'n:';
 }
 

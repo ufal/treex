@@ -47,7 +47,7 @@ sub drop {
     my ($t_node) = @_;
     my $a_node = $t_node->get_lex_anode();
     if ( not defined $a_node ) {
-        Report::warn "Node to be pro-dropped should have non-empty a/lex.rf";
+        log_warn "Node to be pro-dropped should have non-empty a/lex.rf";
         return;
     }
 

@@ -28,7 +28,7 @@ sub get_afun {
 
     # 1. solve IN and TO tags (conll_deprell is not much helpful here)
     my $tag = $a_node->tag;
-    my $has_verb_child = grep { $_->tag =~ /^V/ } $a_node->get_eff_children();
+    my $has_verb_child = grep { $_->tag =~ /^V/ } $a_node->get_echildren();
     if ( $tag eq 'TO' ) {
         return 'AuxV' if $has_verb_child;    # to + infinitive
         return 'AuxP';                       # to + noun
@@ -51,7 +51,7 @@ sub get_afun {
     return $afun if $afun;
 
     # 3. try some rules
-    my ($eparent) = $a_node->get_eff_parents();
+    my ($eparent) = $a_node->get_eparents();
     my $form = $a_node->form;
     return 'Pred' if $tag =~ /^V/ && $eparent->is_root();
     return 'AuxV' if $tag =~ /^V/

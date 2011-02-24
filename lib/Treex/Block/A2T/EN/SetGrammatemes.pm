@@ -254,7 +254,7 @@ sub _verb {
         ## but filter our e.g. "It appears to have grown."
         my $a_have = first { $_->lemma eq 'have' } @aux_anodes;
         my $a_to   = first { $_->lemma eq 'to' } @aux_anodes;
-        if ( $a_have->get_ordering_value() + 1 == $a_to->get_ordering_value() ) {
+        if ( $a_have->ord + 1 == $a_to->ord ) {
             $tnode->set_attr( 'gram/deontmod', 'deb' );
         }
     }
@@ -296,7 +296,7 @@ sub _verb {
 sub _guess_verb_tense {
     my ($tnode) = @_;
 
-    my @anodes = sort { $a->get_ordering_value <=> $b->get_ordering_value }
+    my @anodes = sort { $a->ord <=> $b->ord }
         grep { $_->tag =~ /^(V|MD)/ }
         $tnode->get_anodes;
 

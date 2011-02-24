@@ -42,7 +42,7 @@ sub should_switch_with_parent {
     return 0 if $tag !~ /^V/;
 
     # We must consider coordinations as "He will drink and eat."
-    # However, we can't use $a_node->get_eff_parents() since afuns are not filled yet.
+    # However, we can't use $a_node->get_eparents() since afuns are not filled yet.
     # So let's find effective parent using deprel instead.
     my $deprel  = $a_node->conll_deprel;
     my $eparent = $a_node->get_parent();

@@ -63,14 +63,14 @@ sub add_anode_to_tnode {
     # 2a) Check if there was not another lex a-node
     my $old_lex_anode = $t_node->get_lex_anode();
     if ($old_lex_anode) {
-        my ( $old_id, $new_id ) = map { $_->get_attr('id') } ( $old_lex_anode, $a_node );
+        my ( $old_id, $new_id ) = map { $_->id } ( $old_lex_anode, $a_node );
 
         # One possible solution is to change the old_lex to aux, so it's not "erased",
         # but it's not much useful anyway.
-        #Report::warn("Two lex a-nodes: $old_id and $new_id. The first one changed to aux.");
+        #log_warn("Two lex a-nodes: $old_id and $new_id. The first one changed to aux.");
         #$t_node->add_aux_anodes($old_lex_anode);
 
-        Report::warn("Two lex a-nodes: $old_id and $new_id. Creating a new sibling.");
+        log_warn("Two lex a-nodes: $old_id and $new_id. Creating a new sibling.");
         my $orig_tparent = $t_node->get_parent();
         $t_node = $orig_tparent->create_child;
 
@@ -83,7 +83,7 @@ sub add_anode_to_tnode {
     $t_node->set_lex_anode($a_node);
 
     # 2c) copy attributes: ord -> ord, lemma -> t_lemma
-    $t_node->set_ordering_value( $a_node->get_ordering_value() );
+    $t_node->set_ordering_value( $a_node->ord );
     $t_node->set_t_lemma( $a_node->lemma );
     return;
 }

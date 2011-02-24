@@ -21,7 +21,7 @@ sub process_tnode {
 
     # don't reorder when the dependent is already in the postposition
     my ($cs_tparent) = $cs_tnode->get_parent();
-    return if $cs_tparent->get_ordering_value() < $cs_tnode->get_ordering_value();
+    return if $cs_tparent->ord < $cs_tnode->ord;
 
     # now we can do the reordering
     $cs_tnode->shift_after_node($cs_tparent);

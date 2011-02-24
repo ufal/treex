@@ -21,7 +21,7 @@ sub process_atree {
     if ( any { $_ eq $last_form } ( q{"}, q{''}, q{)} ) ) {
         if ( @all_nodes == 1 ) {
             my $message = $last_node->get_fposition() . "\t Strange one-token sentence.";
-            Report::warn($message);
+            log_warn($message);
 
             #$bundle->leave_message($message);
             return;
@@ -77,7 +77,7 @@ sub fix_node {
     my $grandpa   = $parent->get_parent();
     my $g_tag     = ( $grandpa && !$grandpa->is_root() ) ? $grandpa->tag : '_root';
     my $g_lemma   = ( $grandpa && !$grandpa->is_root() ) ? $grandpa->lemma : '_root';
-    my $ord       = $node->get_ordering_value();
+    my $ord       = $node->ord;
     my $next_node = $node->get_next_node();
     my $next_tag  = '';
     if ($next_node) { $next_tag = $next_node->tag; }
@@ -123,7 +123,7 @@ sub fix_node {
     if ($lemma eq 'a'
         && $g_tag =~ /^NN/
         && !@children
-        && $grandpa->get_ordering_value() == $ord - 1
+        && $grandpa->ord == $ord - 1
         )
     {
         $node->set_afun('AuxP');

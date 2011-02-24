@@ -55,7 +55,7 @@ sub process_atree {
                 $_->tag eq 'IN' && ( $_->afun || '' ) !~ 'Aux[CP]'
             } $highest->get_children();
             foreach my $rehang (@to_rehang) {
-                $rehang->set_parent( ( $highest->get_eff_parents() )[0] );
+                $rehang->set_parent( ( $highest->get_eparents() )[0] );
             }
 
             # Fill afun

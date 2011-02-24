@@ -75,7 +75,7 @@ sub is_aux_to_parent {
     # and afterwards it will be distributed as aux to all members of the coordination.
     # Otherwise, our tree-parent is the same as effective parent.
     if ( $lemma =~ /^(more|most)$/ ) {
-        my ($eparent) = $node->get_eff_parents();
+        my ($eparent) = $node->get_eparents();
         return 0 if $eparent->is_root();
         my $ep_tag = $eparent->tag;
         return 1 && $ep_tag =~ /^(JJ|RB)/;

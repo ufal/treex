@@ -6,7 +6,6 @@ extends 'Treex::Core::Block';
 use Lexicon::Czech;
 use File::Spec;
 
-use Report;
 
 #Report::set_error_level('DEBUG');
 
@@ -97,7 +96,7 @@ sub _generate_word_form {
     # If there are no compatible forms in LM, try Hajic's morphology generator
     my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag_regex" } );
     if ( $DEBUG && $form_info ) {
-        Report::warn(
+        log_warn(
             "MORF: $lemma\t$tag_regex\t" . $form_info->get_form()
                 . "\ttmttred " . $a_node->get_fposition() . "&"
         );
@@ -117,7 +116,7 @@ sub _generate_word_form {
 
     # If there are no compatible forms from morphology analysis, return the lemma at least
     if ($DEBUG) {
-        Report::warn(
+        log_warn(
             "LEMM: $lemma\t$tag_regex\t$lemma\t"
                 . "\ttmttred " . $a_node->get_fposition() . "&\n"
         );
@@ -198,7 +197,7 @@ sub _get_tag_regex {
     foreach my $category (@CATEGORIES) {
         $morphcat{$category} = $a_node->get_attr("morphcat/$category");
         if ( !defined $morphcat{$category} ) {
-            Report::warn("Morphcat '$category' undef with lemma=$lemma id=$id");    #if $DEBUG;
+            log_warn("Morphcat '$category' undef with lemma=$lemma id=$id");    #if $DEBUG;
             $morphcat{$category} = '.';
         }
     }

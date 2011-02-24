@@ -38,7 +38,7 @@ sub BUILD {
     #my $model_name = $ENV{TMT_PARAM_MCD_EN_MODEL};
     #if ( !defined $model_name ) {
     #    $model_name = $DEFAULT_MODEL_NAME;
-    #    Report::info("Variable TMT_PARAM_MCD_EN_MODEL not set, using $model_name");
+    #    log_info("Variable TMT_PARAM_MCD_EN_MODEL not set, using $model_name");
     #}
 
     my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;

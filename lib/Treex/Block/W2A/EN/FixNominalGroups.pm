@@ -11,7 +11,7 @@ my %pair_count;
 
 sub BUILD {
     my $filename = $ENV{TMT_ROOT} . 'share/' . $MODEL;
-    open my $F, '<:utf8', $filename or Report::fatal "Can't open $filename: $!";
+    open my $F, '<:utf8', $filename or log_fatal "Can't open $filename: $!";
     while (<$F>) {
         next if /##/;
         chomp;

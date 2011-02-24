@@ -69,7 +69,7 @@ sub process_node {
 sub ttree2phrase {
     my $tnode = shift;
     my @anodes =
-        sort { $a->get_ordering_value() <=> $b->get_ordering_value() }
+        sort { $a->ord <=> $b->ord }
         map { $_->get_anodes } $tnode->get_descendants( { add_self => 1 } );
     return ( join ' ', grep {/[a-z]/i} map { $_->form } @anodes );
 }
