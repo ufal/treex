@@ -33,6 +33,7 @@ sub get_required_share_files {
     return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_HUMAN );
 }
 
+# TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
 
 sub BUILD {
@@ -78,107 +79,85 @@ sub BUILD {
     return;
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
-    $max_variants = $self->get_parameter('MAX_VARIANTS') || 0;
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
 
-    NODE:
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
+    # Skip nodes that were already translated by rules
+    return if $cs_tnode->t_lemma_origin ne 'clone';
 
-        # Skip nodes that were already translated by rules
-        next if $cs_tnode->t_lemma_origin ne 'clone';
+    # return if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
-        #        next if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
+    if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
-        if ( my $en_tnode = $cs_tnode->src_tnode ) {
+        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 
-            my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
+        my $features_array_rf = [
+            map           {"$_=$features_hash_rf->{$_}"}
+                sort grep { defined $features_hash_rf->{$_} }
+                keys %{$features_hash_rf}
+        ];
 
-            my $features_array_rf = [
-                map           {"$_=$features_hash_rf->{$_}"}
-                    sort grep { defined $features_hash_rf->{$_} }
-                    keys %{$features_hash_rf}
-            ];
+        my $en_tlemma = $en_tnode->t_lemma;
+        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
 
-            my $en_tlemma = $en_tnode->t_lemma;
-            my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
+        # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
+        # kvuli chybne extrakci trenovacich vektoru z CzEngu u posesivnich adjektiv,
+        # lepsi bude preanalyzovat CzEng a pretrenovat slovniky
 
-            # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
-            # kvuli chybne extrakci trenovacich vektoru z CzEngu u posesivnich adjektiv,
-            # lepsi bude preanalyzovat CzEng a pretrenovat slovniky
-
-            @translations = grep {
-                not($_->{label} =~ /(.+)#A/
-                    and Lexicon::Czech::get_poss_adj($1)
-                    )
-            } @translations;
-
-            # POZOR, HACK, nutno resit jinak a jinde !!!
-            # tokeny obsahujici pouze velka pismena a cisla se casto neprekladaji, pridaji se tedy mezi prekladove varianty
-            if ($en_tlemma =~ /^[\p{isUpper}\d]+$/
-                and $en_tlemma !~ /^(UN|VAT)$/
-                and $en_tnode->get_lex_anode
-                and $en_tnode->get_lex_anode->tag =~ /^NNP/
+        @translations = grep {
+            not($_->{label} =~ /(.+)#A/
+                and Lexicon::Czech::get_poss_adj($1)
                 )
-            {
-                unshift @translations, { 'label' => "$en_tlemma#N", 'source' => 'NNPs', 'prob' => 0.5 };
+        } @translations;
+
+        # POZOR, HACK, nutno resit jinak a jinde !!!
+        # tokeny obsahujici pouze velka pismena a cisla se casto neprekladaji, pridaji se tedy mezi prekladove varianty
+        if ($en_tlemma =~ /^[\p{isUpper}\d]+$/
+            and $en_tlemma !~ /^(UN|VAT)$/
+            and $en_tnode->get_lex_anode
+            and $en_tnode->get_lex_anode->tag =~ /^NNP/
+            )
+        {
+            unshift @translations, { 'label' => "$en_tlemma#N", 'source' => 'NNPs', 'prob' => 0.5 };
+        }
+
+        if ( $max_variants && @translations > $max_variants ) {
+            splice @translations, $max_variants;
+        }
+
+        if (@translations) {
+
+            if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
+                $cs_tnode->set_t_lemma($1);
+                $cs_tnode->set_attr( 'mlayer_pos', $2 );
+            }
+            else {
+                log_fatal "Unexpected form of label: " . $translations[0]->{label};
             }
 
-            if ( $max_variants && @translations > $max_variants ) {
-                splice @translations, $max_variants;
-            }
+            $cs_tnode->set_attr(
+                't_lemma_origin',
+                ( @translations == 1 ? 'dict-only' : 'dict-first' )
+                    .
+                    "|" . $translations[0]->{source}
+            );
 
-            if (@translations) {
+            $cs_tnode->set_attr(
+                'translation_model/t_lemma_variants',
+                [   map {
+                        $_->{label} =~ /(.+)#(.)/ or log_fatal "Unexpected form of label: $_->{label}";
+                        {   't_lemma' => $1,
+                            'pos'     => $2,
+                            'origin'  => $_->{source},
+                            'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
 
-                if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
-                    $cs_tnode->set_t_lemma($1);
-                    $cs_tnode->set_attr( 'mlayer_pos', $2 );
-                }
-                else {
-                    log_fatal "Unexpected form of label: " . $translations[0]->{label};
-                }
-
-                $cs_tnode->set_attr(
-                    't_lemma_origin',
-                    ( @translations == 1 ? 'dict-only' : 'dict-first' )
-                        .
-                        "|" . $translations[0]->{source}
-                );
-
-                $cs_tnode->set_attr(
-                    'translation_model/t_lemma_variants',
-                    [   map {
-                            $_->{label} =~ /(.+)#(.)/ or log_fatal "Unexpected form of label: $_->{label}";
-                            {   't_lemma' => $1,
-                                'pos'     => $2,
-                                'origin'  => $_->{source},
-                                'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
-
-                                #                           'backward_logprob' => _logprob( $_->{en_given_cs}, ),
-                            }
-                            } @translations
-                    ]
-                );
-
-                #                print "\nSENTENCE:\t".$en_tnode->get_bundle->get_attr('english_source_sentence')."\n";
-                #                print $en_tnode->t_lemma."\n";
-                #                print "Original choice: ".$cs_tnode->t_lemma."\n";
-                #                my ($first_tlemma) = split /\#/,$translations[0]->{label};
-                #                if ($cs_tnode->t_lemma ne $first_tlemma) {
-                #                    print "XXX Different\n";
-                #                }
-                #                else {
-                #                    print "XXX Same\n";
-                #                }
-                #                foreach my $translation (@translations) {
-                #                    print "$translation->{label}\t$translation->{prob}\n";
-                #                }
-
-            }
+                            # 'backward_logprob' => _logprob( $_->{en_given_cs}, ),
+                        }
+                        } @translations
+                ]
+            );
         }
     }
-    return;
 }
 
 1;

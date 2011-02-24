@@ -3,29 +3,19 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
+    my $sempos = $cs_tnode->get_attr('gram/sempos') or return;
+    return if $sempos ne 'n.quant.def';
+    my $en_tnode = $cs_tnode->src_tnode or return;
+    return if $en_tnode->formeme ne 'n:attr';
+    $cs_tnode->set_formeme('n:attr');
+    $cs_tnode->set_formeme_origin('rule-numeral');
+    $cs_tnode->set_t_lemma_origin('rule-numeral');
 
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
-        my $sempos = $cs_tnode->get_attr('gram/sempos') or next;
-        next if $sempos ne 'n.quant.def';
-        my $en_tnode = $cs_tnode->src_tnode or next;
-        next if $en_tnode->formeme ne 'n:attr';
-        $cs_tnode->set_formeme('n:attr');
-        $cs_tnode->set_formeme_origin('rule-numeral');
-        $cs_tnode->set_t_lemma_origin('rule-numeral');
-
-        # delete variants
-        $cs_tnode->set_attr( 'translation_model/t_lemma_variants', undef );
-        $cs_tnode->set_attr( 'translation_model/formeme_variants', undef );
-
-        #my $en_tnode = $cs_tnode->src_tnode or next;
-        #my $cs_lemma = $cs_tnode->t_lemma;
-        #my $en_lemma = $en_tnode->t_lemma;
-        #print "$en_lemma\t$cs_lemma\n";
-    }
-    return;
+    # delete variants
+    $cs_tnode->set_attr( 'translation_model/t_lemma_variants', undef );
+    $cs_tnode->set_attr( 'translation_model/formeme_variants', undef );
 }
 
 1;

@@ -126,7 +126,7 @@ sub _can_apply_eff {
     return 1 if !$error;
     my $method_name = ( caller 1 )[3];
     my $id          = $self->get_attr('id');
-    log_warn("$method_name called on $error ($id). Fallback to topological one.");
+    log_warn("$method_name called on $error ($id). Fallback to topological one.", 1);
     return 0;
 }
 
