@@ -670,24 +670,24 @@ sub get_clause_descendants {
 
 sub disconnect {
     my $self = shift;
-    log_warn '$node->disconnect is deprecated, use $node->delete';
+    log_debug('$node->disconnect is deprecated, use $node->delete', 1);
     return $self->delete();
 }
 
 sub get_ordering_value {
     my $self = shift;
-    log_warn '$node->get_ordering_value is deprecated, use $node->ord';
+    log_warn('$node->get_ordering_value is deprecated, use $node->ord', 1);
     return $self->ord;
 }
 
 sub set_ordering_value {
     my $self = shift;
-    log_warn '$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)';
+    log_warn('$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)', 1);
     my ($val) = pos_validated_list(
         \@_,
         { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
     );
-    $self->set_ord($val);
+    $self->_set_ord($val);
     return;
 }
 

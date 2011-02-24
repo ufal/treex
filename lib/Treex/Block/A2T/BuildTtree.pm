@@ -12,18 +12,13 @@ sub process_zone {
 
     # build t-root
     my $t_root = $zone->create_ttree;
-    $t_root->set_ordering_value(0);
     $t_root->set_deref_attr( 'atree.rf', $a_root );
 
     # recursively build whole t-tree
     build_subtree( $a_root, $t_root );
-
-    # recompute deepord
-    my $ord;
-    foreach my $t_node ( sort { $a->ord <=> $b->ord } $t_root->get_descendants ) {
-        $ord++;
-        $t_node->set_ord($ord);
-    }
+    
+    # fix ord attributes, so it is 1,2,3,... #tnodes
+    $t_root->_normalize_node_ordering();
 
     return 1;
 }
@@ -83,7 +78,7 @@ sub add_anode_to_tnode {
     $t_node->set_lex_anode($a_node);
 
     # 2c) copy attributes: ord -> ord, lemma -> t_lemma
-    $t_node->set_ordering_value( $a_node->ord );
+    $t_node->_set_ord( $a_node->ord );
     $t_node->set_t_lemma( $a_node->lemma );
     return;
 }
