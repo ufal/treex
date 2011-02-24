@@ -21,6 +21,15 @@ has 'quiet' => (
     documentation => q{Warning, info and debug messages are surpressed. Only fatal errors are reported.},
 );
 
+has 'error_level' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 'e',
+    is            => 'rw', isa => 'ErrorLevel', default => 'INFO',
+    trigger       => sub { Treex::Core::Log::set_error_level($_[1]); },
+    documentation => q{Possible error levels: ALL=0, DEBUG=1, INFO=2, WARN=3, FATAL=4},
+);
+
+
 has 'lang' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'language',
@@ -28,14 +37,21 @@ has 'lang' => (
     documentation => q{shortcut for adding "SetGlobal language=xy" at the beginning of the scenario},
 );
 
-#has 'verbose' =
-
 has 'filelist' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'l',
     is            => 'rw', isa => 'Str',
     documentation => 'TODO load a list of treex files from a file',
 );
+
+# treex -h should not print "Unknown option: h" before the usage.
+has 'help' => ( 
+    traits      => ['Getopt'],
+    cmd_aliases => 'h',
+    is          => 'ro', isa => 'Bool', default => 0,
+    documentation => q{Print usage info},
+);
+
 
 has 'filenames' => (
     traits        => ['NoGetopt'],

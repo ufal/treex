@@ -29,6 +29,9 @@ Readonly my %ERROR_LEVEL_VALUE => (
     'FATAL' => 4,
 );
 
+use Moose::Util::TypeConstraints;
+enum 'ErrorLevel' => keys %ERROR_LEVEL_VALUE;
+
 # how many characters of a string-eval are to be shown in the output
 $Carp::MaxEvalLen = 100;
 
@@ -90,8 +93,10 @@ sub short_fatal {    # !!! neodladene
 
 }
 
+# TODO: redesign API - $carp, $no_print_stack
+
 sub warn {
-    my $message = shift;
+    my ($message, $carp) = @_;
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'WARN'};
     my $line = "";
     if ($unfinished_line) {
@@ -100,7 +105,12 @@ sub warn {
     }
     $line .= "TREEX-WARN:\t$message\n";
     _ntred_message($line);
-    print STDERR $line;
+    if ($carp) {
+        Carp::carp $line;
+    }
+    else {
+        print STDERR $line;
+    }
     return;
 }
 
