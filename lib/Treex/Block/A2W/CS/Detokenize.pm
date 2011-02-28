@@ -3,15 +3,15 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root   = $bundle->get_tree('TCzechA');
-    my $sentence = "";
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    my $a_root   = $zone->get_atree();
+    my $sentence = '';
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         $sentence .= $a_node->form;
-        $sentence .= " " if !$a_node->get_attr('m/no_space_after');
+        $sentence .= ' ' if !$a_node->no_space_after;
     }
-    $bundle->set_attr( 'czech_target_sentence', $sentence );
+    $zone->set_sentence($sentence);
 }
 
 1;

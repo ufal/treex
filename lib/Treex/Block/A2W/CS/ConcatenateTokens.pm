@@ -3,10 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $a_root   = $bundle->get_tree('TCzechA');
-    my $sentence = join " ",
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    my $a_root = $zone->get_atree();
+    my $sentence = join ' ',
         grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
         map { $_->form || '' }
         $a_root->get_descendants( { ordered => 1 } );
@@ -41,7 +41,7 @@ sub process_bundle {
 
     $sentence =~ s/&#241;/ň/g;    # "ñ" is encoded as &#241; in translation dict
 
-    $bundle->set_attr( 'czech_target_sentence', $sentence );
+    $zone->set_sentence( $sentence );
     return;
 }
 

@@ -24,7 +24,7 @@ sub copy_subtree {
             $t_node->set_deref_attr( 'a/lex.rf', $a_node );
             $lemma =~ s/_s[ie]$//g;
             $a_node->set_lemma($lemma);
-            $a_node->set_ord( $t_node->ord );
+            $a_node->_set_ord( $t_node->ord );
             if ( $t_node->is_coap_root() ) {
                 $a_node->set_afun($t_node->functor eq 'APPS' ? 'Apos' : 'Coord' );
             }

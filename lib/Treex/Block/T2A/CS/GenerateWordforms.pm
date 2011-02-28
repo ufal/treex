@@ -6,9 +6,6 @@ extends 'Treex::Core::Block';
 use Lexicon::Czech;
 use File::Spec;
 
-
-#Report::set_error_level('DEBUG');
-
 # supporting auto-download of required data-files
 sub get_required_share_files {
     my ($self) = @_;

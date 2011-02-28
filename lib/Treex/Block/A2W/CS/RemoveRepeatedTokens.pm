@@ -3,10 +3,10 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-    my $original_sentence = $bundle->get_attr('czech_target_sentence');
+    my $original_sentence = $zone->sentence;
     my @tokens = split /\b/, $original_sentence;
 
     my $reduced_sentence;
@@ -31,8 +31,9 @@ sub process_bundle {
     $reduced_sentence =~ s/ ([.,])$/$1/g;
 
     if ( $original_sentence ne $reduced_sentence ) {
-        $bundle->set_attr( 'czech_target_sentence', $reduced_sentence );
+        $zone->set_sentence( $reduced_sentence );
     }
+    return;
 }
 
 1;
