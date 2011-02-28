@@ -1,4 +1,5 @@
 package Treex::Block::T2A::CS::AddClausalExpletivePronouns;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';

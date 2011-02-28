@@ -1,4 +1,5 @@
 package Treex::Block::A2W::CS::ConcatenateTokens;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';

@@ -1,4 +1,5 @@
 package Treex::Block::T2A::CS::ReverseNumberNounDependency;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';

@@ -1,4 +1,5 @@
 package Treex::Block::W2A::EN::FixDicendiVerbs;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';

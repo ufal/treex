@@ -1,4 +1,5 @@
 package Treex::Block::W2A::EN::FixTags;
+use utf8;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
