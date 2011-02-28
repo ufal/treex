@@ -5,22 +5,19 @@ extends 'Treex::Core::Block';
 
 use Lexicon::Czech;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-    foreach my $cs_tnode ( $t_root->get_descendants() ) {
-        my $lemma_and_pos = fix_lemma($cs_tnode);
-        if ($lemma_and_pos) {
-            my ( $new_lemma, $new_pos ) = split /#/, $lemma_and_pos;
-            $cs_tnode->set_t_lemma($new_lemma);
-            $cs_tnode->set_attr( 'mlayer_pos', $new_pos );
-            $cs_tnode->set_t_lemma_origin('rule-Fix_transfer_choices');
-        }
-        my $new_formeme = fix_formeme($cs_tnode);
-        if ($new_formeme) {
-            $cs_tnode->set_formeme($new_formeme);
-            $cs_tnode->set_formeme_origin('rule-Fix_transfer_choices');
-        }
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
+    my $lemma_and_pos = fix_lemma($cs_tnode);
+    if ($lemma_and_pos) {
+        my ( $new_lemma, $new_pos ) = split /#/, $lemma_and_pos;
+        $cs_tnode->set_t_lemma($new_lemma);
+        $cs_tnode->set_attr( 'mlayer_pos', $new_pos );
+        $cs_tnode->set_t_lemma_origin('rule-Fix_transfer_choices');
+    }
+    my $new_formeme = fix_formeme($cs_tnode);
+    if ($new_formeme) {
+        $cs_tnode->set_formeme($new_formeme);
+        $cs_tnode->set_formeme_origin('rule-Fix_transfer_choices');
     }
     return;
 }
@@ -28,7 +25,7 @@ sub process_bundle {
 sub fix_lemma {
     my ($cs_tnode)  = @_;
     my $cs_tlemma   = $cs_tnode->t_lemma;
-    my ($cs_parent) = $cs_tnode->get_eparents();
+    my ($cs_parent) = $cs_tnode->get_eparents({or_topological=>1});
 
     return 'který#P' if $cs_tlemma eq 'tento' && $cs_parent->is_relclause_head;
 
@@ -52,7 +49,7 @@ sub fix_formeme {
     my ($cs_tnode)  = @_;
     my $cs_tlemma   = $cs_tnode->t_lemma;
     my $cs_formeme  = $cs_tnode->formeme;
-    my ($cs_parent) = $cs_tnode->get_eparents();
+    my ($cs_parent) = $cs_tnode->get_eparents({or_topological=>1});
     my $cs_parent_tlemma  = $cs_parent->t_lemma               || '#root';
     my $cs_parent_formeme = $cs_parent->formeme               || '#root';
     my $cs_pos            = $cs_tnode->get_attr('mlayer_pos') || '';
@@ -60,7 +57,7 @@ sub fix_formeme {
 
     my $en_tnode    = $cs_tnode->src_tnode or return;
     my $en_formeme  = $en_tnode->formeme;
-    my ($en_parent) = $en_tnode->get_eparents();
+    my ($en_parent) = $en_tnode->get_eparents({or_topological=>1});
 
     if (( $cs_formeme eq 'n:2' or $cs_formeme eq 'n:poss' )
         and $en_formeme eq 'n:poss'

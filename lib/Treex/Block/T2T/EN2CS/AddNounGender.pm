@@ -4,6 +4,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
+#TODO: load in BUILD
 use CzechMorpho;
 my $analyzer = CzechMorpho::Analyzer->new();
 
@@ -25,18 +26,17 @@ my %GENDER_FOR = (sto=>'N', tisíc=>'I', milion=>'I', milión=>'I', miliarda=>'F
                   york=>'I',
  );
 
-sub process_ttree {
-    my ( $self, $t_root ) = @_;
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
 
     # For all t-nodes with no gender ...
     # (named entities have gender already filled)
-    foreach my $t_node ( grep {!defined $_->get_attr('gram/gender')} $t_root->get_descendants() ) {
-        my $gender  = get_noun_gender( $t_node );
-        if ( defined $gender ) {
-            $t_node->set_attr( 'gram/gender', $gender_tag2grammateme{$gender} );
-        }
+    return if defined $tnode->get_attr('gram/gender');
+    my $gender  = get_noun_gender( $tnode );
+    if ( defined $gender ) {
+        $tnode->set_attr( 'gram/gender', $gender_tag2grammateme{$gender} );
     }
-    return;
+   return;
 }
 
 sub get_noun_gender {

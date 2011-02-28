@@ -3,22 +3,18 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $cs_troot = $bundle->get_tree('TCzechT');
-
-    foreach my $cs_tnode ( $cs_troot->get_descendants() ) {
-        next if ( $cs_tnode->get_attr('gram/gender') || '' ) ne 'fem';
-        my $en_tnode = $cs_tnode->src_tnode    or next;
-        my $n_node   = $en_tnode->get_n_node() or next;
-        my $n_type = $n_node->get_attr('ne_type');
-        next if $n_type ne 'ps';
-        my $cs_lemma = $cs_tnode->t_lemma;
-        next if $cs_lemma =~ /[áí]$/;
-        $cs_lemma =~ s/([cs])ka$/$1ká/ or $cs_lemma =~ s/[oa]?$/ová/;
-        $cs_tnode->set_t_lemma($cs_lemma);
-        $cs_tnode->set_t_lemma_origin('Translate_L_female_surnames');
-    }
+sub process_tnode {
+    my ( $self, $cs_tnode ) = @_;
+    return if ( $cs_tnode->get_attr('gram/gender') || '' ) ne 'fem';
+    my $en_tnode = $cs_tnode->src_tnode    or return;
+    my $n_node   = $en_tnode->get_n_node() or return;
+    my $n_type = $n_node->get_attr('ne_type');
+    return if $n_type ne 'ps';
+    my $cs_lemma = $cs_tnode->t_lemma;
+    return if $cs_lemma =~ /[áí]$/;
+    $cs_lemma =~ s/([cs])ka$/$1ká/ or $cs_lemma =~ s/[oa]?$/ová/;
+    $cs_tnode->set_t_lemma($cs_lemma);
+    $cs_tnode->set_t_lemma_origin('Translate_L_female_surnames');
     return;
 }
 

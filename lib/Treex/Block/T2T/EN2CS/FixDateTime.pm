@@ -5,16 +5,12 @@ extends 'Treex::Core::Block';
 
 use Lexicon::Czech;
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('TCzechT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        my $lemma = $t_node->t_lemma;
-        if    ( $lemma =~ /^[12]\d\d\ds?$/ )          { process_year($t_node); }
-        elsif ( $lemma =~ /^[12]\d\d\d-[12]\d\d\d$/ ) { process_range_of_years($t_node); }
-        elsif ( $lemma =~ /^\d\d?\.?$/ )              { process_month($t_node); }
-    }
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
+    my $lemma = $t_node->t_lemma || ''; #TODO why || ''?
+    if    ( $lemma =~ /^[12]\d\d\ds?$/ )          { process_year($t_node); }
+    elsif ( $lemma =~ /^[12]\d\d\d-[12]\d\d\d$/ ) { process_range_of_years($t_node); }
+    elsif ( $lemma =~ /^\d\d?\.?$/ )              { process_month($t_node); }
     return;
 }
 

@@ -5,6 +5,7 @@ extends 'Treex::Core::Block';
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
+    my $document = $t_root->get_document();
     my @all_nodes = $t_root->get_descendants( { ordered => 1 } );
 
     # When looking for antecedent we need all nouns (as candidates) in reversed order
@@ -18,7 +19,7 @@ sub process_ttree {
             my $antec;
             if ( defined $perspron->get_attr('coref_gram.rf') ) {
                 my $antec_id = @{ $perspron->get_attr('coref_gram.rf') }[0];
-                $antec = $bundle->get_document->get_node_by_id($antec_id);
+                $antec = $document->get_node_by_id($antec_id);
             }
 
             # Skip verbs with subject (i.e. child in nominative)
@@ -28,7 +29,7 @@ sub process_ttree {
             # chained gram.coref. in the case of relative clauses
             if ( $antec and $antec->get_attr('coref_gram.rf') ) {
                 my $antec_id = @{ $antec->get_attr('coref_gram.rf') }[0];
-                $antec = $bundle->get_document->get_node_by_id($antec_id);
+                $antec = $document->get_node_by_id($antec_id);
             }
 
             # Find antecedent by heuristics: nearest noun left to the $vfin_tnode
