@@ -1,4 +1,5 @@
 package Treex::Moose;
+use utf8;
 use Moose;
 use Moose::Exporter;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
@@ -32,6 +33,10 @@ Moose::Exporter->setup_import_methods(
         \&MooseX::Params::Validate::pos_validated_list,
         ]
 );
+
+sub init_meta {
+    utf8::import();
+}
 
 use Moose::Util::TypeConstraints;
 
@@ -215,11 +220,35 @@ sub is_lang_code { return $IS_LANG_CODE{ $_[0] }; }
 
 1;
 
-# Write just
-#   use Treex::Moose;
-# Instead of
-#   use Moose;
-#   use MooseX::SemiAffordanceAccessor;
 
-#TODO: add
-#   use List::MoreUtils qw(first_index ...);
+=head1 NAME
+ 
+Treex::Moose - shorten the "use" part of your Perl codes
+
+=head1 SYNOPSIS
+
+Write just
+
+ use Treex::Moose;
+
+Instead of
+
+ use utf8;
+ use strict;
+ use warnings;
+ use Moose;
+ use MooseX::SemiAffordanceAccessor;
+ use MooseX::Params::Validate qw(pos_validated_list);
+ use Treex::Core::Log;
+ use Treex::Core::Config;
+ use Treex::Core::Resource;
+ use List::MoreUtils qw(all any first_index);
+ use List::Util qw(first);
+ use Scalar::Util qw(weaken);
+ use Readonly qw(Readonly);
+ use Data::Dumper qw(Dumper);
+
+=head1 COPYRIGHT
+
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
