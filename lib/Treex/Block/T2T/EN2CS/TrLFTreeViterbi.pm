@@ -29,7 +29,7 @@ has 'backward_weight' => (
         . ' is set to 1 - BACKWARD_WEIGHT.',
 );
 
-use TreeViterbi;
+use Treex::Tools::Algorithm::TreeViterbi;
 use Lexicon::Czech;
 use LanguageModel::TreeLM;
 
@@ -46,7 +46,7 @@ sub process_ttree {
     Treex::Core::Log::progress();
 
     # Do the real work
-    my ($root_state) = TreeViterbi::run( $root, \&get_states_of );
+    my ($root_state) = Treex::Tools::Algorithm::TreeViterbi::run( $root, \&get_states_of );
     my @states = @{ $root_state->backpointers };
 
     # Now follow backpointers and fill new lemmas & formemes
