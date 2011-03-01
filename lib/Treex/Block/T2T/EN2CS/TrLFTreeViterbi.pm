@@ -165,7 +165,7 @@ sub is_compatible {
 package MyTreeViterbiState;
 use Moose;
 use Treex::Moose;
-extends 'TreeViterbiState';
+extends 'Treex::Tools::Algorithm::TreeViterbiState';
 
 use LanguageModel::Lemma;
 

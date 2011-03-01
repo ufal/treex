@@ -42,5 +42,5 @@ my $filename = 'test.treex';
     ok( $ttree2->isa('Treex::Core::Node::T'),
         'nodes get proper Treex::Core::Node subtypes after reloading'
     );
-
+    unlink $filename;
 }
