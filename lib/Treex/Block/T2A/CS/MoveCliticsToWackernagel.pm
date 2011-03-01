@@ -82,17 +82,18 @@ sub process_clause {
 sub _verb_group_root {
     my $clitic    = shift;
     my $verb_root = $clitic;
-    while (
-        (   ( $verb_root->get_parent->get_attr('morphcat/pos') || '' ) eq "V"
-            or ( $verb_root->get_parent->lemma =~ /^(vědomý|jistý)$/ )
-        )    # two exceptions found in PDT2.0 t-trees
-        and $verb_root->clause_number eq $verb_root->get_parent->clause_number
-        )
-    {
-        $verb_root = $verb_root->get_parent;
+    while (1){
+        my $p = $verb_root->get_parent;
+        last if $p->is_root;
+        last if $verb_root->clause_number ne $p->clause_number;
+
+        # two exceptions found in PDT2.0 t-trees
+        last if $p->get_attr('morphcat/pos') ne 'V' && $p->lemma !~ /^(vědomý|jistý)$/;
+        
+        $verb_root = $verb_root->get_parent();
     }
 
-    if ( ( $verb_root->get_parent->afun || '' ) eq "AuxC" ) {
+    if ( ( $verb_root->get_parent->afun || '' ) eq 'AuxC' ) {
         $verb_root = $verb_root->get_parent;
     }
 
