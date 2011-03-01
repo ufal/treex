@@ -3,8 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-# TODO: re-think, re-design, re-implement, test, document :-)
-
 has [
     qw(document bundle zone
         atree ttree ntree ptree
@@ -59,7 +57,8 @@ sub process_bundle {
     return if !$self->_args->{_zone};
 
     my %do_lang = map { $_ => 1 } split /,/, $self->languages;
-    my %do_sele = map { $_ => 1 } split /,/, $self->selector;
+    my %do_sele = map { $_ => 1 } split /,/, $self->selectors;
+    $do_sele{''} = 1 if $self->selectors eq '';    # split /,/, ''; #returns empty list
 
     foreach my $zone ( $bundle->get_all_zones() ) {
         if ( $do_lang{ $zone->language } && $do_sele{ $zone->selector } ) {
@@ -73,7 +72,20 @@ sub process_bundle {
 sub process_zone {
     my ( $self, $zone ) = @_;
     eval $self->zone if $self->zone;
-    # *************** TODO ************
+
+    foreach my $layer (qw(a t n p)) {
+        next if !$zone->has_tree($layer);
+        my $tree = $zone->get_tree($layer);
+        if ( my $code = $self->_args->{"${layer}tree"} ) {
+            eval "my \$${layer}tree = \$tree; $code";
+        }
+        if ( my $code = $self->_args->{"${layer}node"} ) {
+            foreach my $node ( $tree->get_descendants() ) {
+                eval "my \$${layer}node = \$node; $code";
+            }
+        }
+    }
+    return;
 }
 
 1;
