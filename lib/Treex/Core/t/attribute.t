@@ -32,3 +32,5 @@ cmp_ok( $loaded_node->get_attr($attr_name), 'eq', $attr_value,
 
 
 # TODO: v budoucnu otestovat set_gram_number
+unlink $filename;
+done_testing();

@@ -160,6 +160,15 @@ sub create_child {
     else {
         $arg_ref = {@_};
     }
+    
+    # Structured attributes (e.g. morphcat/pos) must be handled separately
+    my %structured_attrs;
+    foreach my $attr (keys %{$arg_ref}){
+        if ($attr =~ m{/}){
+            $structured_attrs{$attr} = delete $arg_ref->{$attr};
+        }
+    }
+    
     $arg_ref->{_called_from_core_} = 1;
     my $new_node = ( ref $self )->new($arg_ref);
     $new_node->set_parent($self);
@@ -167,8 +176,10 @@ sub create_child {
     my $new_id = $self->generate_new_id();
     $new_node->set_id($new_id);
 
-    #    $self->get_document->index_node_by_id($new_id, $new_node);
-
+    foreach my $attr (keys %structured_attrs) {
+        $new_node->set_attr($attr, $structured_attrs{$attr});
+    }
+    
     my $type = $new_node->get_pml_type_name();
     return $new_node if !defined $type;
     my $fs_file = $self->get_bundle->get_document()->_pmldoc;
