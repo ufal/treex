@@ -22,16 +22,14 @@ sub process_ttree {
 
         # Create new t-node
         my $perspron = $vfin_tnode->create_child(
-            {   attributes => {
-                    nodetype       => 'complex',
-                    functor        => '???',
-                    formeme        => 'n:1',
-                    t_lemma        => '#PersPron',
-                    t_lemma_origin => 'Add_PersPron_below_vfin',
-                    mlayer_pos     => 'P',
-                    'gram/sempos'  => 'n.pron.def.pers',
-                    'gram/person'  => $antec->get_attr('gram/person') || 3,
-                    }
+            {   nodetype       => 'complex',
+                functor        => '???',
+                formeme        => 'n:1',
+                t_lemma        => '#PersPron',
+                t_lemma_origin => 'Add_PersPron_below_vfin',
+                mlayer_pos     => 'P',
+                'gram/sempos'  => 'n.pron.def.pers',
+                'gram/person'  => $antec->get_attr('gram/person') || 3,
             }
         );
         foreach my $attr_name ( 'gram/gender', 'gram/number' ) {

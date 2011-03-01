@@ -16,12 +16,10 @@ sub process_atree {
 
             foreach my $form ( split /_/, $expletive ) {
                 my $new_node = $parent->create_child(
-                    {   attributes => {
-                            'lemma'         => $form,
-                            'form'          => $form,
-                            'morphcat/pos'  => '!',
-                            'clause_number' => 0,
-                        }
+                    {   'lemma'         => $form,
+                        'form'          => $form,
+                        'morphcat/pos'  => '!',
+                        'clause_number' => 0,
                     }
                 );
                 $new_node->shift_before_subtree($subconj_ze);

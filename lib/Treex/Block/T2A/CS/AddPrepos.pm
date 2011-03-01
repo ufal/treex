@@ -58,12 +58,10 @@ sub process_tnode {
 sub _new_prep_node {
     my ( $parent, $form ) = @_;
     my $prep_node = $parent->create_child(
-        {   attributes => {
-                'lemma'        => $form,
-                'form'         => $form,
-                'afun'         => 'AuxP',
-                'morphcat/pos' => 'R',
-                }
+        {   'lemma'        => $form,
+            'form'         => $form,
+            'afun'         => 'AuxP',
+            'morphcat/pos' => 'R',
         }
     );
     $prep_node->shift_before_subtree($parent);

@@ -27,13 +27,11 @@ sub process_zone {
             and $zone->get_attr('sentence') !~ /\./;
 
     my $punct = $aroot->create_child(
-        {   attributes => {
-                'form'          => $punct_mark,
-                'lemma'         => $punct_mark,
-                'afun'          => 'AuxK',
-                'morphcat/pos'  => 'Z',
-                'clause_number' => 0,
-                }
+        {   'form'          => $punct_mark,
+            'lemma'         => $punct_mark,
+            'afun'          => 'AuxK',
+            'morphcat/pos'  => 'Z',
+            'clause_number' => 0,
         }
     );
     $punct->shift_after_subtree($aroot);

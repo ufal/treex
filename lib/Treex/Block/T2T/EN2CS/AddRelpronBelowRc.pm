@@ -27,16 +27,14 @@ sub process_ttree {
 
         # Create new t-node
         my $relpron = $rc_head->create_child(
-            {   attributes => {
-                    nodetype         => 'complex',
-                    functor          => '???',
-                    formeme          => 'n:1',
-                    t_lemma          => 'který',
-                    t_lemma_origin   => 'Add_relpron_below_rc',
-                    'gram/sempos'    => 'n.pron.indef',
-                    'gram/indeftype' => 'relat',
-                    'coref_gram.rf'  => [ $gram_antec->id ],
-                    }
+            {   nodetype         => 'complex',
+                functor          => '???',
+                formeme          => 'n:1',
+                t_lemma          => 'který',
+                t_lemma_origin   => 'Add_relpron_below_rc',
+                'gram/sempos'    => 'n.pron.indef',
+                'gram/indeftype' => 'relat',
+                'coref_gram.rf'  => [ $gram_antec->id ],
             }
         );
 

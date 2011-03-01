@@ -8,7 +8,7 @@ use Lexicon::Czech;
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    my $lemma = $t_node->t_lemma || ''; #TODO why || ''?
+    my $lemma = $t_node->t_lemma || '';    #TODO why || ''?
     if    ( $lemma =~ /^[12]\d\d\ds?$/ )          { process_year($t_node); }
     elsif ( $lemma =~ /^[12]\d\d\d-[12]\d\d\d$/ ) { process_range_of_years($t_node); }
     elsif ( $lemma =~ /^\d\d?\.?$/ )              { process_month($t_node); }
@@ -20,17 +20,15 @@ sub process_year {
     my $en_t_node = $t_node->src_tnode or return;
     my $year      = $t_node->t_lemma;
     my $new_node  = $t_node->get_parent()->create_child(
-        {   attributes => {
-                't_lemma'        => 'rok',
-                'nodetype'       => 'complex',
-                'functor'        => '???',
-                'gram/sempos'    => 'n.denot',
-                'formeme'        => $t_node->formeme,
-                'gram/number'    => 'sg',
-                'gram/gender'    => 'inan',
-                'mlayer_pos'     => 'N',
-                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
-                }
+        {   't_lemma'        => 'rok',
+            'nodetype'       => 'complex',
+            'functor'        => '???',
+            'gram/sempos'    => 'n.denot',
+            'formeme'        => $t_node->formeme,
+            'gram/number'    => 'sg',
+            'gram/gender'    => 'inan',
+            'mlayer_pos'     => 'N',
+            'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
         }
     );
 
@@ -76,17 +74,15 @@ sub process_range_of_years {
 
     # new node 'rok'
     my $rok_node = $t_node->get_parent()->create_child(
-        {   attributes => {
-                't_lemma'        => 'rok',
-                'nodetype'       => 'complex',
-                'functor'        => '???',
-                'gram/sempos'    => 'n.denot',
-                'gram/number'    => 'pl',
-                'gram/gender'    => 'neut',                                                  # 'v letech...', not 'v rocich...'
-                'mlayer_pos'     => 'N',
-                'formeme'        => $t_node->formeme,
-                'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
-                }
+        {   't_lemma'        => 'rok',
+            'nodetype'       => 'complex',
+            'functor'        => '???',
+            'gram/sempos'    => 'n.denot',
+            'gram/number'    => 'pl',
+            'gram/gender'    => 'neut',                                                  # 'v letech...', not 'v rocich...'
+            'mlayer_pos'     => 'N',
+            'formeme'        => $t_node->formeme,
+            'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
         }
     );
     $rok_node->shift_before_node( $t_node, { without_children => 1 } );
@@ -103,14 +99,12 @@ sub process_range_of_years {
 
     # second year node
     my $second_node = $t_node->get_parent()->create_child(
-        {   attributes => {
-                't_lemma'        => $second,
-                'nodetype'       => 'complex',
-                'functor'        => '???',
-                'gram/sempos'    => 'n.denot',
-                'formeme'        => 'n:až+X',
-                'formeme_origin' => 'rule-Fix_date_time',
-                }
+        {   't_lemma'        => $second,
+            'nodetype'       => 'complex',
+            'functor'        => '???',
+            'gram/sempos'    => 'n.denot',
+            'formeme'        => 'n:až+X',
+            'formeme_origin' => 'rule-Fix_date_time',
         }
     );
     $second_node->shift_after_node( $t_node, { without_children => 1 } );

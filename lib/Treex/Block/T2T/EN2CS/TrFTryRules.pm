@@ -100,16 +100,14 @@ sub formeme_for_tnode {
     if ( $en_formeme eq 'v:so_that+fin' ) {
         my $cs_parent = $cs_tnode->get_parent();
         my $tak       = $cs_parent->create_child(
-            {   attributes => {
-                    t_lemma        => 'tak',
-                    formeme        => 'adv:',
-                    mlayer_pos     => 'D',
-                    t_lemma_origin => 'rule-Translate_F_try_rules',
-                    formeme_origin => 'rule-Translate_F_try_rules',
-                    'gram/sempos'  => 'adv.pron.def',
-                    'nodetype'     => 'complex',
-                    'functor'      => '???',
-                    }
+            {   t_lemma        => 'tak',
+                formeme        => 'adv:',
+                mlayer_pos     => 'D',
+                t_lemma_origin => 'rule-Translate_F_try_rules',
+                formeme_origin => 'rule-Translate_F_try_rules',
+                'gram/sempos'  => 'adv.pron.def',
+                'nodetype'     => 'complex',
+                'functor'      => '???',
             }
         );
         $tak->shift_before_subtree($cs_tnode);

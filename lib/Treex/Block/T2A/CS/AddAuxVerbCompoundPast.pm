@@ -31,12 +31,10 @@ sub process_tnode {
     return if !$form;
 
     my $new_node = $anode->create_child(
-        {   attributes => {
-                'lemma'        => 'být',
-                'form'         => $form,
-                'afun'         => 'AuxV',
-                'morphcat/pos' => '!',
-                }
+        {   'lemma'        => 'být',
+            'form'         => $form,
+            'afun'         => 'AuxV',
+            'morphcat/pos' => '!',
         }
     );
     $new_node->shift_before_node($anode);

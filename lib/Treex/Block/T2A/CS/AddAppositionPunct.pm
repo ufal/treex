@@ -43,13 +43,11 @@ sub process_tnode {
 sub add_comma_node {
     my ($parent) = @_;
     return $parent->create_child(
-        {   attributes => {
-                'form'          => ',',
-                'lemma'         => ',',
-                'afun'          => 'AuxX',
-                'morphcat/pos'  => 'Z',
-                'clause_number' => 0,
-                }
+        {   'form'          => ',',
+            'lemma'         => ',',
+            'afun'          => 'AuxX',
+            'morphcat/pos'  => 'Z',
+            'clause_number' => 0,
         }
     );
 }

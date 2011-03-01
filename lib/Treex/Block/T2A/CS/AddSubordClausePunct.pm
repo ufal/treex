@@ -49,14 +49,11 @@ sub process_zone {
             ? $left_clause_root : $right_clause_root;
 
         my $comma = $the_higher_clause_root->create_child(
-            {   attributes => {
-                    'form'          => ',',
-                    'lemma'         => ',',
-                    'afun'          => 'AuxX',
-                    'morphcat/pos'  => 'Z',
-                    'clause_number' => 0,
-
-                    }
+            {   'form'          => ',',
+                'lemma'         => ',',
+                'afun'          => 'AuxX',
+                'morphcat/pos'  => 'Z',
+                'clause_number' => 0,
             }
         );
 

@@ -56,7 +56,7 @@ sub process_tnode_AbandonedAlternative {
 
     # Create new node $byt_node for auxiliary verb "být".
     # It should govern the original $a_node and all its children.
-    my $byt_node = $a_node->get_parent()->create_child;
+    my $byt_node = $a_node->get_parent()->create_child();
     $a_node->set_parent($byt_node);
 
     foreach my $child ( $a_node->get_children() ) {

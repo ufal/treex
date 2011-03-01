@@ -25,12 +25,10 @@ sub process_tnode {
     foreach my $subconj_form (@subconj_forms) {
 
         my $subconj_node = $a_node->get_parent()->create_child(
-            {   attributes => {
-                    'form'         => $subconj_form,
-                    'lemma'        => $subconj_form,
-                    'afun'         => 'AuxC',
-                    'morphcat/pos' => 'J',
-                    }
+            {   'form'         => $subconj_form,
+                'lemma'        => $subconj_form,
+                'afun'         => 'AuxC',
+                'morphcat/pos' => 'J',
             }
         );
 
