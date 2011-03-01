@@ -5,6 +5,7 @@ use MooseX::SemiAffordanceAccessor;
 with 'MooseX::Getopt';
 
 use Cwd;
+use File::Path;
 
 has 'save' => (
     traits        => ['Getopt'],
@@ -20,6 +21,13 @@ has 'quiet' => (
     trigger => sub { Treex::Core::Log::set_error_level('FATAL'); },
     documentation => q{Warning, info and debug messages are surpressed. Only fatal errors are reported.},
 );
+
+has 'cleanup' => (
+    traits      => ['Getopt'],
+    is          => 'rw', isa => 'Bool', default => 0,
+    documentation => q{Delete all temporary files.},
+);
+
 
 has 'error_level' => (
     traits      => ['Getopt'],
@@ -380,6 +388,12 @@ sub _execute_on_cluster {
     }
 
     log_info "All jobs finished.";
+
+    if ($self->cleanup) {
+        log_info "Deleting the directory with temporary files $directory";
+        rmtree $directory or log_fatal $!;
+
+    }
 
 }
 

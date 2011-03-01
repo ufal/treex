@@ -18,8 +18,12 @@ foreach my $i (1..$number_of_files) {
     $doc->save("paratest$i.treex");
 }
 
-my $cmdline_arguments = " -q -p --jobs=$number_of_jobs --local Util::Eval foreach=document code='print 1' -g 'paratest*.treex'";
+my $cmdline_arguments = " -q -p --jobs=$number_of_jobs --local ".
+    "Util::Eval foreach=document code='print 1' -g 'paratest*.treex' --cleanup";
 stdout_is( sub { treex $cmdline_arguments },
 	   '1'x$number_of_files ,
 	   "running parallelized treex locally");
+
+
+unlink glob "paratest*";
 

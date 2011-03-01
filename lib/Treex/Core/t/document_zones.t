@@ -37,3 +37,4 @@ my $doc3 = Treex::Core::Document->new();
 $doc3->set_attr( 'Sen text', 'hello' );
 cmp_ok( $doc3->get_attr('Sen text'), 'eq', 'hello', 'shortcut for accessing DocZones attributes' );
 
+unlink $filename;

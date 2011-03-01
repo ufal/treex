@@ -10,17 +10,27 @@ use Treex::Core::Run;
 use Test::More tests => 1;
 use Test::Output;
 
-my $number_of_files = 11;
-my $number_of_jobs = 3;
+SKIP: {
 
-foreach my $i (map {sprintf "%02d",$_} (1..$number_of_files)) {
-    my $doc = Treex::Core::Document->new();
-    $doc->set_attr('description',$i);
-    $doc->save("paratest$i.treex");
+    skip "because not running on an SGE cluster",1
+        if not defined $ENV{SGE_CLUSTER_NAME};
+
+    my $number_of_files = 11;
+    my $number_of_jobs = 3;
+
+    foreach my $i (map {sprintf "%02d",$_} (1..$number_of_files)) {
+        my $doc = Treex::Core::Document->new();
+        $doc->set_attr('description',$i);
+        $doc->save("paratest$i.treex");
+    }
+
+    my $cmdline_arguments = "  -p --jobs=$number_of_jobs ".
+     " Util::Eval foreach=document code='print \$document->get_attr(q(description))'".
+         "-g 'paratest*.treex' --cleanup";
+
+    stdout_is( sub { treex $cmdline_arguments },
+               (join '',map {sprintf "%02d",$_} (1..$number_of_files)),
+               "running parallelized treex on SGE cluster");
+
+    unlink glob "paratest*";
 }
-
-my $cmdline_arguments = "  -p --jobs=$number_of_jobs Util::Eval foreach=document code='print \$document->get_attr(q(description))' -g 'paratest*.treex'";
-stdout_is( sub { treex $cmdline_arguments },
-           (join '',map {sprintf "%02d",$_} (1..$number_of_files)),
-	   "running parallelized treex on SGE cluster");
-
