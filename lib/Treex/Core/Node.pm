@@ -799,7 +799,10 @@ package Treex::Core::Node::Deleted;
 use Treex::Core::Log;
 
 sub AUTOLOAD {
-    log_fatal("You cannot call any methods on deleted nodes.");
+    our $AUTOLOAD;
+    if ($AUTOLOAD !~ /DESTROY$/) {
+        log_fatal("You cannot call any methods on deleted nodes, but have called $AUTOLOAD");
+    }
 }
 
 package Treex::Core::Node;

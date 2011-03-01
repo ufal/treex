@@ -9,8 +9,6 @@ use Test::More tests => 7;
 
 my $doc = Treex::Core::Document->new;
 
-exit;
-
 my $sample_text = 'Testing text sentence 1. Testing test sentence 2.';
 
 # creating zones
