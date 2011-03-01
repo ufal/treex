@@ -2,6 +2,7 @@ package Treex::Moose;
 use utf8;
 use Moose;
 use Moose::Exporter;
+use Moose::Util::TypeConstraints;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
 use MooseX::Params::Validate;
 use Treex::Core::Log;
@@ -33,6 +34,7 @@ my ( $import, $unimport, $init_meta ) =
         \&Scalar::Util::weaken,
         \&Data::Dumper::Dumper,
         \&MooseX::Params::Validate::pos_validated_list,
+        \&Moose::Util::TypeConstraints::enum,
         ]
     );
 
@@ -41,8 +43,6 @@ sub import {
     utf8::import();
     goto &$import;
 }
-
-use Moose::Util::TypeConstraints;
 
 # This restriction will be perhaps deleted.
 subtype 'Selector'
@@ -239,6 +239,7 @@ Instead of
  use strict;
  use warnings;
  use Moose;
+ use Moose::Util::TypeConstraints qw(enum);
  use MooseX::SemiAffordanceAccessor;
  use MooseX::Params::Validate qw(pos_validated_list);
  use Treex::Core::Log;
