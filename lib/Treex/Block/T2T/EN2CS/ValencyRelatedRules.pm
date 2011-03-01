@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my @echildren = $tnode->get_echildren();
+    my @echildren = $tnode->get_echildren( { or_topological => 1 } );
 
     # "He managed to..." -> "Podařilo se mu..."
     if ($tnode->t_lemma    =~ /^((po)?dařit|líbit)/
