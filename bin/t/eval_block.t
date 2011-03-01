@@ -16,3 +16,5 @@ foreach my $i (1..3) {
 my $cmdline_arguments = "-q Util::Eval foreach=document code='print 1' -g 'dummy?.treex'";
 stdout_is( sub { treex $cmdline_arguments },'111',"checking Util::Eval: treex $cmdline_arguments");
 
+
+unlink glob "dummy*";
