@@ -23,11 +23,10 @@ has 'quiet' => (
 );
 
 has 'cleanup' => (
-    traits      => ['Getopt'],
-    is          => 'rw', isa => 'Bool', default => 0,
+    traits        => ['Getopt'],
+    is            => 'rw', isa => 'Bool', default => 0,
     documentation => q{Delete all temporary files.},
 );
-
 
 has 'error_level' => (
     traits      => ['Getopt'],
@@ -289,28 +288,29 @@ sub _execute_on_cluster {
         exit;
         };
 
+    my $current_dir = Cwd::cwd;
     foreach my $jobnumber ( 1 .. $self->jobs ) {
-        my $script_filename = "$directory/scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
-        open my $J, ">", $script_filename;
+        my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
+        open my $J, ">", "$directory/$script_filename";
         print $J "#!/bin/bash\n";
         print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n";
-        print $J "cd " . (Cwd::cwd) . "\n";
+        print $J "cd $current_dir\n";
         print $J "touch $directory/output/startedjob-$jobnumber\n";
         print $J "source " . Treex::Core::Config::lib_core_dir() . "/../../../../config/init_devel_environ.sh\n";    # temporary hack !!!
         print $J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{ $self->argv } ) .
             " 2>$directory/output/joberror-$jobnumber\n";
         print $J "touch $directory/output/finishedjob-$jobnumber\n";
         close $J;
-        chmod 0777, $script_filename;
+        chmod 0777, "$directory/$script_filename";
 
         if ( $self->local ) {
-            log_info "$script_filename executed locally";
-            system "$script_filename &";
+            log_info "$directory/$script_filename executed locally";
+            system "$directory/$script_filename &";
         }
         else {
-            log_info "$script_filename submitted to the cluster";
+            log_info "$directory/$script_filename submitted to the cluster";
 
-            open my $QSUB, "qsub -cwd -e $directory/output/ -S /bin/bash $script_filename |";
+            open my $QSUB, "cd $directory && qsub -cwd -e output/ -S /bin/bash $script_filename |";
 
             my $firstline = <$QSUB>;
             chomp $firstline;
@@ -389,7 +389,7 @@ sub _execute_on_cluster {
 
     log_info "All jobs finished.";
 
-    if ($self->cleanup) {
+    if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files $directory";
         rmtree $directory or log_fatal $!;
 
@@ -406,8 +406,6 @@ sub _redirect_output {
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
     STDERR->fdopen( \*ERROR,  'w' ) or die $!;
     STDOUT->autoflush(1);
-
-    #    $|=1;
 }
 
 use List::MoreUtils qw(first_index);
