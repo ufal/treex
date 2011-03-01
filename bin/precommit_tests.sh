@@ -1,8 +1,9 @@
 #!/bin/bash
 
+#   ../lib/Treex/Block/Read/t/*t
+
 for SCRIPT in \
-   ../lib/Treex/Core/t/*.t \
-   ../lib/Treex/Block/Read/t/*t
+   ../lib/Treex/Core/t/*.t
   do
     echo
     echo RUNNING $SCRIPT
