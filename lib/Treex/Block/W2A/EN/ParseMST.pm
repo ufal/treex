@@ -49,7 +49,7 @@ sub BUILD {
         $parser = Treex::Tools::Parser::MST->new(
             {   model      => $model_path,
                 memory     => $model_memory,
-                order      => 1,
+                order      => 2,
                 decodetype => 'proj'
             }
         );
