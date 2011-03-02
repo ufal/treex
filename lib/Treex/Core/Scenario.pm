@@ -31,13 +31,11 @@ has _global_params => (
 # attrs for parallelized processing (forwarder from a runner to its reader block)
 has jobs => (
     is => 'rw',
-
-    #	     isa => 'Int',
+    isa => 'Maybe[Int]',
 );
 has jobindex => (
     is => 'rw',
-
-    #	       isa => 'Int',
+    isa => 'Maybe[Int]',
 );
 
 
