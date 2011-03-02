@@ -6,6 +6,11 @@ with 'MooseX::Getopt';
 
 use Cwd;
 use File::Path;
+use List::MoreUtils qw(first_index);
+use Exporter;
+use base 'Exporter';
+our @EXPORT = qw(treex);
+
 
 has 'save' => (
     traits        => ['Getopt'],
@@ -141,8 +146,23 @@ has 'command' => (
 has 'argv' => (
     is            => 'rw',
     traits        => ['NoGetopt'],
-    documentation => 'reference to @ARGV (if executed from command line)'
+    documentation => 'reference to @ARGV (if executed from command line)',
 );
+
+has 'workdir' => (
+    is            => 'rw',
+    traits        => ['NoGetopt'],
+    documentation => 'working directory for temporary files in parallelized processing',
+);
+
+has 'sge_job_numbers' => (
+    is            => 'rw',
+    traits        => ['NoGetopt'],
+    documentation => 'list of numbers of jobs executed on sge',
+    default => sub { [] },
+);
+
+
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -168,8 +188,8 @@ sub BUILD {
         push @file_sources, "glob option";
     }
     if ( @file_sources > 1 ) {
-        log_fatal "At most one way to specify input files can be used. You combined " . ( join " and ", @file_sources ) . ".";
-
+        log_fatal "At most one way to specify input files can be used. You combined "
+            . ( join " and ", @file_sources ) . ".";
     }
 
     # 'require' can't be changed to 'imply', since the number of jobs has a default value
@@ -183,14 +203,16 @@ sub execute {
     my ($self) = @_;
 
     if ( $self->parallel and not defined $self->jobindex ) {
-        log_info "Parallelized execution. This process is the head coordinating " . $self->jobs . " server processes.";
+        log_info "Parallelized execution. This process is the head coordinating "
+            . $self->jobs . " server processes.";
         $self->_execute_on_cluster();
     }
 
     # non-parallelized execution, or one of distributed processes
     else {
         if ( $self->parallel ) {
-            log_info "Parallelized execution. This process is one out of " . $self->jobs . " server processes, jobindex==" . $self->jobindex;
+            log_info "Parallelized execution. This process is one out of "
+                . $self->jobs . " server processes, jobindex==" . $self->jobindex;
         }
         else {
             log_info "Local (single-process) execution.";
@@ -213,7 +235,8 @@ sub _execute_locally {
         $self->set_filenames( \@files );
     }
     elsif ( $self->filelist ) {
-        open my $FL, "<:utf8", $self->filelist or log_fatal "Cannot open file list " . $self->filelist;
+        open my $FL, "<:utf8", $self->filelist
+            or log_fatal "Cannot open file list " . $self->filelist;
         my @files;
         while (<$FL>) {
             chomp;
@@ -258,107 +281,91 @@ sub _execute_locally {
     $self->scenario->run();
 }
 
-sub _execute_on_cluster {
+
+sub _create_job_scripts {
     my ($self) = @_;
-
-    my $counter;
-    my $directory;
-
-    do {
-        $counter++;
-        $directory = sprintf "%03d-cluster-run", $counter;
-        }
-        while ( -d $directory );
-
-    log_info "Creating working directory $directory";
-    mkdir $directory or log_fatal $!;
-    foreach my $subdir (qw(output scripts)) {
-        mkdir "$directory/$subdir" or log_fatal $!;
-    }
-
-    my @sge_job_numbers;
-    $SIG{INT} =
-        sub {
-        log_info "Caught Ctrl-C, all jobs will be deleted";
-        foreach my $job (@sge_job_numbers) {
-            log_info "Deleting job $job";
-            system "qdel $job";
-        }
-        log_info "You may want to inspect generated files in $directory/output";
-        exit;
-        };
-
     my $current_dir = Cwd::cwd;
+    my $workdir = $self->workdir;
+    foreach my $jobnumber ( map {sprintf( "%03d",$_)} 1 .. $self->jobs ) {
+        my $script_filename = "scripts/job$jobnumber.sh";
+        open my $J, ">", "$workdir/$script_filename";
+        print $J "#!/bin/bash\n\n";
+        print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n\n";
+        print $J "cd $current_dir\n\n";
+        print $J "touch $workdir/output/job$jobnumber.started\n\n";
+        print $J "source " . Treex::Core::Config::lib_core_dir()
+            . "/../../../../config/init_devel_environ.sh\n\n";    # temporary hack !!!
+        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
+            " 2 > $workdir/output/job$jobnumber.initerror\n\n";
+        print $J "touch $workdir/output/job$jobnumber.finished\n";
+        close $J;
+        chmod 0777, "$workdir/$script_filename";
+    }
+}
+
+
+sub _run_job_scripts {
+    my ($self) = @_;
+    my $workdir = $self->workdir;
     foreach my $jobnumber ( 1 .. $self->jobs ) {
         my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
-        open my $J, ">", "$directory/$script_filename";
-        print $J "#!/bin/bash\n";
-        print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n";
-        print $J "cd $current_dir\n";
-        print $J "touch $directory/output/startedjob-$jobnumber\n";
-        print $J "source " . Treex::Core::Config::lib_core_dir() . "/../../../../config/init_devel_environ.sh\n";    # temporary hack !!!
-        print $J "treex --jobindex=$jobnumber --outdir=$directory/output " . ( join " ", @{ $self->argv } ) .
-            " 2>$directory/output/joberror-$jobnumber\n";
-        print $J "touch $directory/output/finishedjob-$jobnumber\n";
-        close $J;
-        chmod 0777, "$directory/$script_filename";
 
         if ( $self->local ) {
-            log_info "$directory/$script_filename executed locally";
-            system "$directory/$script_filename &";
+            log_info "$workdir/$script_filename executed locally";
+            system "$workdir/$script_filename &";
         }
         else {
-            log_info "$directory/$script_filename submitted to the cluster";
+            log_info "$workdir/$script_filename submitted to the cluster";
 
-            open my $QSUB, "cd $directory && qsub -cwd -e output/ -S /bin/bash $script_filename |";
+            open my $QSUB, "cd $workdir && qsub -cwd -e output/ -S /bin/bash $script_filename |";
 
             my $firstline = <$QSUB>;
             chomp $firstline;
             if ( $firstline =~ /job (\d+)/ ) {
-                push @sge_job_numbers, $1;
+                push @{$self->sge_job_numbers}, $1;
             }
             else {
                 log_fatal 'Job number not detected after the attempt at submitting the job. ' .
-                    'Perhaps it was not possible to submit the job. See files in $directory/output';
+                    'Perhaps it was not possible to submit the job. See files in $workdir/output';
             }
         }
     }
 
     log_info "Waiting for all jobs to be started...";
-    while ( ( scalar( () = glob "$directory/output/startedjob-*" ) ) < $self->jobs ) {    # force list context
+    while ( ( scalar( () = glob $self->workdir."/output/*.started" ) ) < $self->jobs ) {
         sleep(1);
     }
+    log_info "All ".$self->jobs." jobs started. Waiting for them to be finished...";
+}
 
-    log_info "All jobs started. Waiting for them to be finished...";
 
+
+sub _wait_for_jobs {
+    my ($self) = @_;
     my $current_file_number = 1;
     my $total_file_number;
-
-    STDOUT->autoflush(1);
-    STDERR->autoflush(1);
-
     my $all_finished;
 
     WAIT_LOOP:
     while ( not defined $total_file_number or $current_file_number <= $total_file_number ) {
 
-        my $filenumber_file = "$directory/output/filenumber";
+        my $filenumber_file = $self->workdir."/output/filenumber";
         if ( not defined $total_file_number and -f $filenumber_file ) {
             open( my $N, $filenumber_file );
             $total_file_number = <$N>;
             log_info "Total number of files to be processed (reported by job 1): $total_file_number";
         }
 
-        $all_finished ||= ( scalar( () = glob "$directory/output/finishedjob*" ) == $self->jobs );
+        $all_finished ||= ( scalar( () = glob $self->workdir."/output/*.finished" ) == $self->jobs );
         my $current_finished = (
             $all_finished
                 ||
-                ( -f "$directory/output/" . sprintf( "%07d", $current_file_number ) . ".finished" )
+                ( -f $self->workdir."/output/" . sprintf( "%07d", $current_file_number ) . ".finished" )
         );
 
         if ($current_finished) {
             foreach my $stream (qw(stdout stderr)) {
-                my $mask = "$directory/output/" . sprintf( "%07d", $current_file_number ) . "*.$stream";
+                my $mask = $self->workdir."/output/" . sprintf( "%07d", $current_file_number ) . "*.$stream";
                 my ($filename) = glob $mask;
 
                 if ( $stream eq 'stdout' and not defined $filename ) {
@@ -381,20 +388,58 @@ sub _execute_on_cluster {
 
         else {
             log_info "Waiting for processing document " .
-                ($current_file_number) . " out of " . ( defined $total_file_number ? $total_file_number : '?' ) . " ...";
+                ($current_file_number) . " out of " .
+                    ( defined $total_file_number ? $total_file_number : '?' ) . " ...";
             sleep 1;
         }
-
     }
+}
+
+
+sub _execute_on_cluster {
+    my ($self) = @_;
+
+    # create working directory
+    my $counter;
+    my $directory;
+    do {
+        $counter++;
+        $directory = sprintf "%03d-cluster-run", $counter;
+    }
+        while ( -d $directory );
+    $self->set_workdir($directory);
+    log_info "Creating working directory $directory";
+    mkdir $directory or log_fatal $!;
+    foreach my $subdir (qw(output scripts)) {
+        mkdir "$directory/$subdir" or log_fatal $!;
+    }
+
+    # catching Ctrl-C interruption
+    $SIG{INT} =
+        sub {
+        log_info "Caught Ctrl-C, all jobs will be interrupted";
+        foreach my $job (@{$self->sge_job_numbers}) {
+            log_info "Deleting job $job";
+            system "qdel $job";
+        }
+        log_info "You may want to inspect generated files in $directory/output";
+        exit;
+    };
+
+    $self->_create_job_scripts();
+    $self->_run_job_scripts();
+
+    STDOUT->autoflush(1);
+    STDERR->autoflush(1);
+
+    $self->_wait_for_jobs();
 
     log_info "All jobs finished.";
 
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files $directory";
         rmtree $directory or log_fatal $!;
-
     }
-
 }
 
 sub _redirect_output {
@@ -407,11 +452,6 @@ sub _redirect_output {
     STDERR->fdopen( \*ERROR,  'w' ) or die $!;
     STDOUT->autoflush(1);
 }
-
-use List::MoreUtils qw(first_index);
-use Exporter;
-use base 'Exporter';
-our @EXPORT = qw(treex);
 
 # not a method !
 sub treex {
