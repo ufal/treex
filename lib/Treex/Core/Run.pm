@@ -290,7 +290,7 @@ sub _create_job_scripts {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename";
         print $J "#!/bin/bash\n\n";
-        print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n\n";
+#        print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n\n";
         print $J "cd $current_dir\n\n";
         print $J "touch $workdir/output/job$jobnumber.started\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
@@ -358,9 +358,8 @@ sub _wait_for_jobs {
 
         $all_finished ||= ( scalar( () = glob $self->workdir."/output/job???.finished" ) == $self->jobs );
         my $current_finished = (
-            $all_finished
-                ||
-                ( -f $self->workdir."/output/" . sprintf( "%07d", $current_file_number ) . ".finished" )
+            $all_finished ||
+                ( glob $self->workdir."/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )
         );
 
         if ($current_finished) {
