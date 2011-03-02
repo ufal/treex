@@ -45,13 +45,12 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 # attrs for distributed processing
 has jobs => (
     is => 'rw',
-
-    #	     isa => 'Int',
+    isa => 'Int',
 );
+
 has jobindex => (
     is => 'rw',
-
-    #	       isa => 'Int',
+    isa => 'Int',
 );
 
 has outdir => (

@@ -11,7 +11,6 @@ use Exporter;
 use base 'Exporter';
 our @EXPORT = qw(treex);
 
-
 has 'save' => (
     traits        => ['Getopt'],
     cmd_aliases   => 's',
@@ -159,10 +158,8 @@ has 'sge_job_numbers' => (
     is            => 'rw',
     traits        => ['NoGetopt'],
     documentation => 'list of numbers of jobs executed on sge',
-    default => sub { [] },
+    default       => sub { [] },
 );
-
-
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -265,32 +262,26 @@ sub _execute_locally {
         $scen_str = 'SetGlobal selector=' . $self->selector . " $scen_str";
     }
 
-    if ( $self->outdir ) {
-        $scen_str = 'SetGlobal outdir=' . $self->outdir . " $scen_str";
-    }
+    my $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
 
-    my $scenario = Treex::Core::Scenario->new(
-        {   from_string => $scen_str,
-            jobs        => $self->jobs,
-            jobindex    => $self->jobindex,
-            outdir      => $self->outdir,
-        }
-    );
+    if ( $self->jobindex ) {
+        $scenario->document_reader->set_jobs( $self->jobs );
+        $scenario->document_reader->set_jobindex( $self->jobindex );
+        $scenario->document_reader->set_outdir( $self->outdir );
+    }
 
     $self->set_scenario($scenario);
     $self->scenario->run();
 }
 
-
 sub _create_job_scripts {
-    my ($self) = @_;
+    my ($self)      = @_;
     my $current_dir = Cwd::cwd;
-    my $workdir = $self->workdir;
-    foreach my $jobnumber ( map {sprintf( "%03d",$_)} 1 .. $self->jobs ) {
+    my $workdir     = $self->workdir;
+    foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename";
         print $J "#!/bin/bash\n\n";
-#        print $J "echo This is debugging output of script $jobnumber, shell \$SHELL\n\n";
         print $J "cd $current_dir\n\n";
         print $J "touch $workdir/output/job$jobnumber.started\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
@@ -302,7 +293,6 @@ sub _create_job_scripts {
         chmod 0777, "$workdir/$script_filename";
     }
 }
-
 
 sub _run_job_scripts {
     my ($self) = @_;
@@ -322,7 +312,7 @@ sub _run_job_scripts {
             my $firstline = <$QSUB>;
             chomp $firstline;
             if ( $firstline =~ /job (\d+)/ ) {
-                push @{$self->sge_job_numbers}, $1;
+                push @{ $self->sge_job_numbers }, $1;
             }
             else {
                 log_fatal 'Job number not detected after the attempt at submitting the job. ' .
@@ -332,13 +322,11 @@ sub _run_job_scripts {
     }
 
     log_info "Waiting for all jobs to be started...";
-    while ( ( scalar( () = glob $self->workdir."/output/*.started" ) ) < $self->jobs ) {
+    while ( ( scalar( () = glob $self->workdir . "/output/*.started" ) ) < $self->jobs ) {
         sleep(1);
     }
-    log_info "All ".$self->jobs." jobs started. Waiting for them to be finished...";
+    log_info "All " . $self->jobs . " jobs started. Waiting for them to be finished...";
 }
-
-
 
 sub _wait_for_jobs {
     my ($self) = @_;
@@ -349,22 +337,22 @@ sub _wait_for_jobs {
     WAIT_LOOP:
     while ( not defined $total_file_number or $current_file_number <= $total_file_number ) {
 
-        my $filenumber_file = $self->workdir."/output/filenumber";
+        my $filenumber_file = $self->workdir . "/output/filenumber";
         if ( not defined $total_file_number and -f $filenumber_file ) {
             open( my $N, $filenumber_file );
             $total_file_number = <$N>;
             log_info "Total number of files to be processed (reported by job 1): $total_file_number";
         }
 
-        $all_finished ||= ( scalar( () = glob $self->workdir."/output/job???.finished" ) == $self->jobs );
+        $all_finished ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
         my $current_finished = (
             $all_finished ||
-                ( glob $self->workdir."/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )
+                ( glob $self->workdir . "/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )
         );
 
         if ($current_finished) {
             foreach my $stream (qw(stdout stderr)) {
-                my $mask = $self->workdir."/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
+                my $mask = $self->workdir . "/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
                 my ($filename) = glob $mask;
 
                 if ( $stream eq 'stdout' and not defined $filename ) {
@@ -389,12 +377,11 @@ sub _wait_for_jobs {
         else {
             log_info "Waiting for processing document " .
                 ($current_file_number) . " out of " .
-                    ( defined $total_file_number ? $total_file_number : '?' ) . " ...";
+                ( defined $total_file_number ? $total_file_number : '?' ) . " ...";
             sleep 1;
         }
     }
 }
-
 
 sub _execute_on_cluster {
     my ($self) = @_;
@@ -405,7 +392,7 @@ sub _execute_on_cluster {
     do {
         $counter++;
         $directory = sprintf "%03d-cluster-run", $counter;
-    }
+        }
         while ( -d $directory );
     $self->set_workdir($directory);
     log_info "Creating working directory $directory";
@@ -418,13 +405,13 @@ sub _execute_on_cluster {
     $SIG{INT} =
         sub {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
-        foreach my $job (@{$self->sge_job_numbers}) {
+        foreach my $job ( @{ $self->sge_job_numbers } ) {
             log_info "Deleting job $job";
             system "qdel $job";
         }
         log_info "You may want to inspect generated files in $directory/output";
         exit;
-    };
+        };
 
     $self->_create_job_scripts();
     $self->_run_job_scripts();
@@ -445,7 +432,7 @@ sub _execute_on_cluster {
 sub _redirect_output {
     my ( $outdir, $filenumber, $jobindex ) = @_;
 
-    my $stem = $outdir . "/job" . sprintf( "%03d", $jobindex+0 ) . "-file" . sprintf( "%07d", $filenumber ) ;
+    my $stem = $outdir . "/job" . sprintf( "%03d", $jobindex + 0 ) . "-file" . sprintf( "%07d", $filenumber );
     open OUTPUT, '>', "$stem.stdout" or die $!;    # where will these messages go to, before redirection?
     open ERROR,  '>', "$stem.stderr" or die $!;
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
@@ -455,12 +442,11 @@ sub _redirect_output {
 
 # not a method !
 sub treex {
-
-    my $arguments = shift;    # ref to array of arguments, or a string containing all arguments as on the command line
+    my $arguments = shift;                         # ref to array of arguments, or a string containing all arguments as on the command line
 
     if ( ref($arguments) eq "ARRAY" ) {
 
-        @ARGV = map {         # dirty!!!, god knows why spaces in arguments are not processed correctly if they come from command line
+        @ARGV = map {                              # dirty!!!, god knows why spaces in arguments are not processed correctly if they come from command line
             if (/^(\S+=)(.+ .+)$/) {
                 split( / /, "$1'$2'" );
             }

@@ -1,8 +1,13 @@
 package Treex::Core::Scenario;
 use Moose;
 use Treex::Moose;
+use File::Basename;
 
-has loaded_blocks => ( is => 'ro', isa => 'ArrayRef[Treex::Core::Block]', default => sub { [] } );
+has loaded_blocks => (
+    is => 'ro',
+    isa => 'ArrayRef[Treex::Core::Block]',
+    default => sub { [] }
+);
 
 has document_reader => (
     is            => 'rw',
@@ -27,20 +32,6 @@ has _global_params => (
         #... ?
     },
 );
-
-# attrs for parallelized processing (forwarder from a runner to its reader block)
-has jobs => (
-    is => 'rw',
-    isa => 'Maybe[Int]',
-);
-has jobindex => (
-    is => 'rw',
-    isa => 'Maybe[Int]',
-);
-
-
-use Treex::Core::Log;
-use File::Basename;
 
 my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMORY} );
 
@@ -90,14 +81,6 @@ sub BUILD {
         else {
             push @{ $self->loaded_blocks }, $new_block;
         }
-    }
-
-    # if running in parallelized mode
-    # there should be a check that the reader handles BaseReader (because of next_file)
-    if ( defined $self->jobindex ) {
-        $self->document_reader->set_jobindex( $self->jobindex );
-        $self->document_reader->set_jobs( $self->jobs );
-        log_info "Jobs and jobindex forwarder to the reader.";
     }
 
     log_info('');
