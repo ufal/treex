@@ -294,9 +294,9 @@ sub _create_job_scripts {
         print $J "cd $current_dir\n\n";
         print $J "touch $workdir/output/job$jobnumber.started\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
-            . "/../../../../config/init_devel_environ.sh\n\n";    # temporary hack !!!
+            . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
-            " 2 > $workdir/output/job$jobnumber.initerror\n\n";
+            " 2> $workdir/output/job$jobnumber.initerror\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
@@ -356,7 +356,7 @@ sub _wait_for_jobs {
             log_info "Total number of files to be processed (reported by job 1): $total_file_number";
         }
 
-        $all_finished ||= ( scalar( () = glob $self->workdir."/output/*.finished" ) == $self->jobs );
+        $all_finished ||= ( scalar( () = glob $self->workdir."/output/job???.finished" ) == $self->jobs );
         my $current_finished = (
             $all_finished
                 ||
@@ -365,7 +365,7 @@ sub _wait_for_jobs {
 
         if ($current_finished) {
             foreach my $stream (qw(stdout stderr)) {
-                my $mask = $self->workdir."/output/" . sprintf( "%07d", $current_file_number ) . "*.$stream";
+                my $mask = $self->workdir."/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
                 my ($filename) = glob $mask;
 
                 if ( $stream eq 'stdout' and not defined $filename ) {
@@ -373,7 +373,8 @@ sub _wait_for_jobs {
                     next WAIT_LOOP;
                 }
 
-                log_fatal "There should have be a file matching mask $mask" if not defined $filename;
+                log_fatal "Now there should have been a file matching the mask $mask"
+                    if not defined $filename;
 
                 open my $FILE, $filename or log_fatal $!;
                 if ( $stream eq "stdout" ) {
@@ -445,7 +446,7 @@ sub _execute_on_cluster {
 sub _redirect_output {
     my ( $outdir, $filenumber, $jobindex ) = @_;
 
-    my $stem = $outdir . "/" . sprintf( "%07d", $filenumber ) . "-" . sprintf( "%03d", $jobindex );
+    my $stem = $outdir . "/job" . sprintf( "%03d", $jobindex+0 ) . "-file" . sprintf( "%07d", $filenumber ) ;
     open OUTPUT, '>', "$stem.stdout" or die $!;    # where will these messages go to, before redirection?
     open ERROR,  '>', "$stem.stderr" or die $!;
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
