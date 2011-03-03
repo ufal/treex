@@ -1,10 +1,12 @@
-package SCzechA_to_SCzechT::TBLa2t_phaseFd;
+package Treex::Block::A2T::CS::TBLa2tPhaseFd;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
+
+
 
 use TBLa2t::Common;
 use TBLa2t::Common_cs;
@@ -27,10 +29,10 @@ BEGIN
     my $f;                       # the handle for all the files
 
     # lexicon file
-    open $f, "<:utf8", "$MODEL/F/T-func.lex" or Report::fatal "Cannot open the file $MODEL/F/T-func.lex\n";
+    open $f, "<:utf8", "$MODEL/F/T-func.lex" or log_fatal "Cannot open the file $MODEL/F/T-func.lex\n";
     $_ = <$f>;
     chomp;                       # read and parse '#pattern: .*'
-    /^#pattern: ([0-9]+),([0-9]+)=>([0-9]+)/ or Report::fatal "Bad line format: \"$_\"\n";    # assumption: the functor depends on 2 other features
+    /^#pattern: ([0-9]+),([0-9]+)=>([0-9]+)/ or log_fatal "Bad line format: \"$_\"\n";    # assumption: the functor depends on 2 other features
     ( $lexf1, $lexf2, $outf ) = ( $1, $2, $3 );
     for ( 1 .. 2 ) {<$f>}                                                                     # skip '[0-9]+-grams: -----'
     while (<$f>) {                                                                            # fill %lex
@@ -42,7 +44,7 @@ BEGIN
 
     # feature file
     my %feat2nr;                                                                              # {feature_name} -> feature_no
-    open $f, "<:utf8", "$MODEL/F/feat" or Report::fatal "Cannot open the file $MODEL/F/feat\n";    # assumption: this filename
+    open $f, "<:utf8", "$MODEL/F/feat" or log_fatal "Cannot open the file $MODEL/F/feat\n";    # assumption: this filename
     $_ = <$f>;
     chomp;                                                                                                         # read and parse the only line
     my @feat = split / +/;
@@ -54,19 +56,19 @@ BEGIN
     close $f;
 
     # rule file
-    open $f, "<:utf8", "$MODEL/F/R" or Report::fatal "Cannot open the file $MODEL/F/R\n";
+    open $f, "<:utf8", "$MODEL/F/R" or log_fatal "Cannot open the file $MODEL/F/R\n";
     <$f>;                                                                                                          # skip '#train_voc_file: .*'
     for ( my $cnt = 0; defined( $_ = <$f> ); $cnt++ ) {                                                            # fill %rule_left and % rule_right
         chomp;
         my @line = split / +/;
         for ( 1 .. 4 ) { shift @line }                                                                             # remove 'GOOD:[0-9]+ BAD:[0-9]+ SCORE:[0-9]+ RULE:'
         $_ = pop @line;                                                                                            # get the output feature
-        /^[^=]+?=(.+)$/ or Report::fatal "Bad line format: \"$_\"\n";
+        /^[^=]+?=(.+)$/ or log_fatal "Bad line format: \"$_\"\n";
         $rule_right[$cnt] = $1;
 
         pop @line;                                                                                                 # remove '=>'
         for (@line) {                                                                                              # get input features
-            /^([^=]+?)=(.+)$/ or Report::fatal "Bad line format: \"$_\"\n";
+            /^([^=]+?)=(.+)$/ or log_fatal "Bad line format: \"$_\"\n";
             push @{ $rule_left[$cnt] }, [ $feat2nr{$1}, $2 ];
         }
     }
@@ -91,7 +93,7 @@ sub feature_string
         morph_real($t_node);
 
     # features of its parent
-    my $t_par = ( $t_node->get_eff_parents )[0];
+    my $t_par = ( $t_node->get_eparents )[0];
     my $a_par = get_anode($t_par);
     $ch = $t_par->get_children - 1;
     $outstr .= sprintf "%s %s %s%d ",       # lemma, afun, tag, children
@@ -113,9 +115,9 @@ sub classify
 
     for my $t_node ( $t_root->get_descendants ) {
         $t_node->get_lex_anode or next;
-        defined $t_node->get_attr('t_lemma') or Report::fatal "Assertion failed";
+        defined $t_node->t_lemma or log_fatal "Assertion failed";
 
-        #		info $t_node->get_attr('t_lemma'), "  ";
+        #		info $t_node->t_lemma, "  ";
 
         # prepare the record
         my @record = split( ' ', feature_string($t_node) );
@@ -136,11 +138,11 @@ sub classify
         }
 
         # set the functor
-        $t_node->set_attr( 'functor', $record[$outf] );
+        $t_node->set_functor($record[$outf] );
 
         #		info "\n";
         if ( !$t_node->is_coap_root && grep { $_->is_coap_member } $t_node->get_children ) {
-            $t_node->set_attr( 'functor', 'CONJ' );
+            $t_node->set_functor('CONJ' );
         }    # otherwise the error propagates to the children
     }
 }
@@ -185,9 +187,9 @@ sub process_document
 
 =over
 
-=item SCzechA_to_SCzechT::TBLa2t_phaseFd
+=item Treex::Block::A2T::CS::TBLa2tPhaseFd
 
-Assumes Czech t-trees with correct structure, C<m/lemma>, C<m/tag>, C<is_member> and C<afun>. Fills C<functors>.
+Assumes Czech t-trees with correct structure, C<lemma>, C<tag>, C<is_member> and C<afun>. Fills C<functors>.
 
 Does not use external tools. Uses the same model as phase F does.
 

@@ -1,10 +1,12 @@
-package SCzechA_to_SCzechT::Assign_nodetype;
+package Treex::Block::A2T::CS::SetNodetype;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
+
+
 
 sub process_document {
 
@@ -12,14 +14,14 @@ sub process_document {
 
     foreach my $bundle ( $document->get_bundles() ) {
         my $t_root = $bundle->get_tree('SCzechT');
-        $t_root->set_attr( 'nodetype', 'root' );
+        $t_root->set_nodetype('root' );
 
         foreach my $t_node ( $t_root->get_descendants ) {
-            my $functor = $t_node->get_attr('functor');
+            my $functor = $t_node->functor;
             my $tag;
             my $lex_anode = $t_node->get_lex_anode();
             if ($lex_anode) {
-                $tag = $lex_anode->get_attr('m/tag');
+                $tag = $lex_anode->tag;
             }
 
             my $nodetype;
@@ -33,7 +35,7 @@ sub process_document {
                 $nodetype = 'complex';
             }
 
-            $t_node->set_attr( 'nodetype', $nodetype );
+            $t_node->set_nodetype($nodetype );
 
         }
 
@@ -44,7 +46,7 @@ sub process_document {
 
 =over
 
-=item SCzechA_to_SCzechT::Assign_nodetype
+=item Treex::Block::A2T::CS::SetNodetype
 
 Value of the C<nodetype> attribute is filled
 in each SCzechT node.

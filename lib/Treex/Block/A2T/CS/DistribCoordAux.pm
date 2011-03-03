@@ -1,45 +1,22 @@
-package SCzechA_to_SCzechT::Distrib_coord_aux;
+package Treex::Block::A2T::CS::DistribCoordAux;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
-sub process_document {
-    my ( $self, $document ) = @_;
+    foreach my $t_member_node ( grep { $_->is_member && $_->get_parent->get_attr('a/aux.rf') } $t_root->get_descendants ) {
+        my $t_parent = $t_member_node->get_parent;
+        $t_member_node->set_aux_anodes(
+             $t_member_node->get_aux_anodes,
+             $t_parent->get_aux_anodes
+        );
+    }
 
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_aux_root = $bundle->get_tree('SCzechT');
-
-        foreach my $t_member_node (
-            grep {
-                $_->get_attr('is_member')
-                    and $_->get_parent->get_attr('a/aux.rf')
-            }
-            $t_aux_root->get_descendants
-            )
-        {
-            my $t_parent = $t_member_node->get_parent;
-            $t_member_node->set_attr(
-                'a/aux.rf',
-                [
-                    @{ $t_member_node->get_attr('a/aux.rf') || [] },
-                    @{ $t_parent->get_attr('a/aux.rf') || [] }
-                ]
-            );
-        }
-
-        foreach my $t_coord_node (
-            grep {
-                defined $_->get_attr('functor')
-                    and $_->get_attr('functor') =~ /^(CONJ|DISJ|ADVS)$/
-            }
-            $t_aux_root->get_descendants
-            )
-        {
-            $t_coord_node->set_attr( 'a/aux.rf', [] );
-        }
+    foreach my $t_coord_node ( grep { defined $_->functor && $_->functor =~ /^(CONJ|DISJ|ADVS)$/ } $t_root->get_descendants ) {
+        $t_coord_node->set_aux_anodes( () );
     }
 }
 
@@ -47,9 +24,9 @@ sub process_document {
 
 =over
 
-=item SCzechA_to_SCzechT::Distrib_coord_aux
+=item Treex::Block::A2T::CS::DistribCoordAux
 
-In each SCzechT tree, reference to auxiliary SCzechA nodes shared by coordination members
+In each Czech t-tree, reference to auxiliary a-nodes shared by coordination members
 (e.g. in the expression 'for girls and boys') are moved from the coordination head to the coordination
 members (as if the expression was 'for girls and for boys').
 
@@ -57,6 +34,6 @@ members (as if the expression was 'for girls and for boys').
 
 =cut
 
-# Copyright 2008 Zdenek Zabokrtsky
+# Copyright 2008-2011 Zdenek Zabokrtsky and David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

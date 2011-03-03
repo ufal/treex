@@ -1,21 +1,15 @@
-package SCzechA_to_SCzechT::Mark_relclause_heads;
+package Treex::Block::A2T::CS::MarkRelClauseHeads;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
 
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        my $t_root = $bundle->get_tree('SCzechT');
-
-        foreach my $t_node ( grep { $_->get_attr('is_clause_head') } $t_root->get_descendants ) {
-            if ( grep { $_->get_attr('a/lex.rf') and $_->get_lex_anode->get_attr('m/tag') =~ /^.[149EJK\?]/ } $t_node->get_children ) {
-                $t_node->set_attr( 'is_relclause_head', 1 );
-            }
+    if ( $t_node->is_clause_head ) {
+        if ( grep { $_->get_lex_anode && $_->get_lex_anode->tag =~ /^.[149EJK\?]/ } $t_node->get_children ) {
+            $t_node->set_is_relclause_head(1);
         }
     }
 }
@@ -24,7 +18,7 @@ sub process_document {
 
 =over
 
-=item SCzechA_to_SCzechT::Mark_relclause_heads
+=item Treex::Block::A2T::CS::MarkRelClauseHeads
 
 Finds relative clauses and mark their heads using the C<is_relclause_head> attribute.
 
@@ -32,6 +26,6 @@ Finds relative clauses and mark their heads using the C<is_relclause_head> attri
 
 =cut
 
-# Copyright 2008 Zdenek Zabokrtsky
+# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

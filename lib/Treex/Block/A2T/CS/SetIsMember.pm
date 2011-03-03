@@ -1,18 +1,20 @@
-package SCzechA_to_SCzechT::Fill_is_member;
+package Treex::Block::A2T::CS::SetIsMember;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
 
-use base qw(TectoMT::Block);
+
+
+
 
 sub fill_is_member($$) {
     my ( $t_root, $document ) = @_;
     foreach my $node ( $t_root->get_descendants ) {
         my $lex_a_node = $document->get_node_by_id( $node->get_attr('a/lex.rf') );
         my @aux_a_nodes = map { $document->get_node_by_id($_) } @{ $node->get_attr('a/aux.rf') };
-        if ( grep { $_->get_attr('is_member') } ( $lex_a_node, @aux_a_nodes ) ) {
-            $node->set_attr( 'is_member', 1 );
+        if ( grep { $_->is_member } ( $lex_a_node, @aux_a_nodes ) ) {
+            $node->set_is_member(1 );
 
             #      print "is member\n";
         }
@@ -35,7 +37,7 @@ sub process_document {
 
 =over
 
-=item SCzechA_to_SCzechT::Fill_is_member
+=item Treex::Block::A2T::CS::SetIsMember
 
 Coordination member in SCzechT trees are marked by value 1 in the C<is_member> attribute.
 Their detection is based on the same attribute in SCzechA trees.
