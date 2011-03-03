@@ -136,7 +136,7 @@ sub classify
         $t_node->set_functor($record[$outf] );
 
         #		info "\n";
-        if ( !$t_node->is_coap_root && grep { $_->is_coap_member } $t_node->get_children ) {
+        if ( !$t_node->is_coap_root && grep { $_->is_member } $t_node->get_children ) {
             $t_node->set_functor('CONJ' );
         }    # otherwise the error propagates to the children
     }
@@ -168,14 +168,10 @@ sub debug_print
 
 #======================================================================
 
-sub process_document
-{
-    my ( $self, $document ) = @_;
+sub process_ttree {
+    my ( $self, $t_root ) = @_;
 
-    #	debug_print();
-    for my $bundle ( $document->get_bundles ) {
-        classify( $bundle->get_tree('SCzechT') );
-    }
+    classify($t_root);
 }
 
 1;

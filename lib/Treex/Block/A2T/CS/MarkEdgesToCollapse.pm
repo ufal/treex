@@ -50,7 +50,7 @@ sub is_aux_to_parent {
         ( $a_node->tag =~ /^Z/ and $a_node->afun !~ /Coord|Apos/ ) ||
         ( $a_node->afun eq "AuxV" ) ||
         ( $a_node->afun eq "AuxT" ) ||
-        ( $a_node->lemma eq "jako" and $anode->afun !~ /AuxC/ ) ||
+        ( $a_node->lemma eq "jako" and $a_node->afun !~ /AuxC/ ) ||
         ( $a_node->afun eq "AuxP" and $a_node->get_parent->afun eq "AuxP" )
     );
 }

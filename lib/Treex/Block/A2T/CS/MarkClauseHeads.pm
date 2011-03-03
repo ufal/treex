@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    if ( $t_node->get_lex_anodes && grep { $_->tag =~ /^V[Bp]/ } $t_node->get_anodes ) {
+    if ( $t_node->get_lex_anode && grep { $_->tag =~ /^V[Bp]/ } $t_node->get_anodes ) {
         $t_node->set_is_clause_head(1);
     }
 }

@@ -24,10 +24,10 @@ sub process_tnode {
 
     my $a_lex_node = $t_node->get_lex_anode();
     if ($a_lex_node) {
-        if ( $a_lex_anode->tag =~ /^P[PS5678H]/ ) {    # osobni zajmena
+        if ( $a_lex_node->tag =~ /^P[PS5678H]/ ) {    # osobni zajmena
             $t_lemma = "#PersPron";
         }
-        elsif ( $a_lex_anode->tag =~ /^AU/ ) {
+        elsif ( $a_lex_node->tag =~ /^AU/ ) {
             $t_lemma = lc( possadj_to_noun( $a_lex_node->lemma ) );
         }
 

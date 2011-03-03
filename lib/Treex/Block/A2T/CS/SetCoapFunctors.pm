@@ -8,13 +8,13 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
     my $functor;
 
-    if ( $t_node->lemma eq "a" ) {
+    if ( $t_node->t_lemma eq "a" ) {
         $functor = "CONJ";
     }
-    elsif ( $t_node->lemma eq "nebo" ) {
+    elsif ( $t_node->t_lemma eq "nebo" ) {
         $functor = "DISJ";
     }
-    elsif ( $t_node->lemma eq "ale" ) {
+    elsif ( $t_node->t_lemma eq "ale" ) {
         $functor = "ADVS";
     }
     elsif ( ( $t_node->get_lex_anode->afun || "" ) eq "Coord" ) {
@@ -22,7 +22,7 @@ sub process_tnode {
     }
 
     if ( defined $functor ) {
-        $node->set_functor($functor);
+        $t_node->set_functor($functor);
     }
 }
 
