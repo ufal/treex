@@ -18,3 +18,5 @@ stdout_is( sub { treex $cmdline_arguments },'',"reading an empty file: treex $cm
 
 $cmdline_arguments =  " -q -s -- $test_data_file";
 stdout_is( sub { treex $cmdline_arguments },'',"reading and saving an empty file: $cmdline_arguments");
+
+unlink $test_data_file;

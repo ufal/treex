@@ -21,3 +21,4 @@ system "treex $cmdline_arguments > tmp";
 
 stdout_is( sub { open I,"tmp" or die $!;print $_ while (<I>) },'123',"running treex by system, checking processing of spaces in arguments");
 
+unlink 'tmp', $test_data_file;
