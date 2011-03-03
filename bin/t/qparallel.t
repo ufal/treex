@@ -24,9 +24,9 @@ SKIP: {
         $doc->save("paratest$i.treex");
     }
 
-    my $cmdline_arguments = "  -p --jobs=$number_of_jobs ".
-     " Util::Eval foreach=document code='print \$document->get_attr(q(description))'".
-         "-g 'paratest*.treex' --cleanup";
+    my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --cleanup"
+        . " Eval document='print \$document->get_attr(q(description))'"
+        . " -g 'paratest*.treex'";
 
     stdout_is( sub { treex $cmdline_arguments },
                (join '',map {sprintf "%02d",$_} (1..$number_of_files)),
