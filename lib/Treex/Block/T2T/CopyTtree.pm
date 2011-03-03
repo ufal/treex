@@ -15,12 +15,12 @@ my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generat
     gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype
     gram/politeness gram/negation gram/definiteness);
 
-sub build_source_selector {
+sub _build_source_selector {
     my ($self) = @_;
     return $self->selector;
 }
 
-sub build_source_language {
+sub _build_source_language {
     my ($self) = @_;
     return $self->language;
 }

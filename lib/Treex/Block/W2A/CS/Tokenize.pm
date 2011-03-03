@@ -7,7 +7,7 @@ extends 'Treex::Block::W2A::Tokenize';
 
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
-    $sentence =~ s/[^\s[alnum:]]/ $1 /g;
+    $sentence =~ s/([^\s[:alnum:]])/ $1 /g;
 
     # clean out extra spaces
     $sentence =~ s/\s+/ /g;

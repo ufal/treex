@@ -16,6 +16,8 @@ sub process_tnode {
         #$new_node->set_id($t_node->generate_new_id );
         $new_node->set_nodetype('complex');
         $new_node->set_attr( 'gram/sempos', 'n.pron.def.pers');
+        $new_node->shift_before_node($t_node);
+
         my @anode_tags = map { $_->tag } ( $t_node->get_lex_anode, $t_node->get_aux_anodes );
 
         my ( $person, $gender, $number );
@@ -50,7 +52,6 @@ sub process_tnode {
         $new_node->set_attr( 'gram/person', $person );
         $new_node->set_attr( 'gram/gender', $gender );
         $new_node->set_attr( 'gram/number', $number );
-
     }
 }
 
