@@ -10,6 +10,23 @@ has file_stem => (
     documentation => 'how to name the loaded documents',
 );
 
+# attrs for distributed processing
+has jobs => (
+    is => 'rw',
+    isa => 'Int',
+);
+
+has jobindex => (
+    is => 'rw',
+    isa => 'Int',
+);
+
+has outdir => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+# private attributes
 has _filenames => (
     isa           => 'HashRef[LangCode]',
     is            => 'ro',

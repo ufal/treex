@@ -4,8 +4,8 @@ use Treex::Moose;
 use File::Basename;
 
 has loaded_blocks => (
-    is => 'ro',
-    isa => 'ArrayRef[Treex::Core::Block]',
+    is      => 'ro',
+    isa     => 'ArrayRef[Treex::Core::Block]',
     default => sub { [] }
 );
 
@@ -37,7 +37,7 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-    
+
     log_memory if $TMT_DEBUG_MEMORY;
 
     log_info("Initializing an instance of TectoMT::Scenario ...");
@@ -198,7 +198,6 @@ sub construct_scenario_string {
     );
 }
 
-
 sub _load_block {
     my ( $self, $block_item ) = @_;
     my $block_name = $block_item->{block_name};
@@ -228,10 +227,10 @@ sub run {
     my ($self) = @_;
     my $reader              = $self->document_reader or log_fatal('No DocumentReader supplied');
     my $number_of_blocks    = @{ $self->loaded_blocks };
-    my $number_of_documents = $reader->number_of_documents();
+    my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
-    while ( my $document = $reader->next_document() ) {
+    while ( my $document = $reader->next_document_for_this_job() ) {
         $document_number++;
         my $doc_name = $document->full_filename;
         my $doc_from = $document->loaded_from;
@@ -244,7 +243,7 @@ sub run {
         }
     }
     log_info "Processed $document_number document"
-        . ( $document_number > 1 ? 's' : '' );
+        . ( $document_number == 1 ? '' : 's' );
     return 1;
 }
 

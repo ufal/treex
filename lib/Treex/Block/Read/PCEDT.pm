@@ -2,7 +2,6 @@ package Treex::Block::Read::PCEDT;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseReader';
-with 'Treex::Core::DocumentReader';
 
 use Treex::PML::Factory;
 my $pmldoc_factory = Treex::PML::Factory->new();

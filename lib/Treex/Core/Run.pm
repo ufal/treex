@@ -219,6 +219,27 @@ sub execute {
 
 }
 
+my %READER_FOR = (
+    treex => 'Treex',
+    txt   => 'Text',
+
+    # TODO:
+    # conll  => 'Conll',
+    # plsgz  => 'Plsgz',
+    # treex.gz
+    # tmt
+);
+
+sub _get_reader_name_for {
+    my ( $ext, @extensions ) = map {/[^.]+\.(.+)?/} @_;
+    log_fatal 'Files (' . join( ',', @_ ) . ') must have extensions' if !$ext;
+    log_fatal 'All files (' . join( ',', @_ ) . ') must have the same extension' if any { $_ ne $ext } @extensions;
+
+    my $r = $READER_FOR{$ext};
+    log_fatal "There is no DocumentReader implemented for extension '$ext'" if !$r;
+    return "Read::$r";
+}
+
 sub _execute_locally {
     my ($self) = @_;
     my $scen_str = join ' ', @{ $self->extra_argv };
@@ -245,8 +266,9 @@ sub _execute_locally {
 
     # some command line options are just shortcuts for blocks; the blocks are added to the scenario now
     if ( $self->filenames ) {
-        log_info "Block Read added to the beginning of the scenario.";
-        $scen_str = 'Read from=' . join( ',', @{ $self->filenames } ) . " $scen_str";
+        my $reader = _get_reader_name_for(@{$self->filenames});
+        log_info "Block $reader added to the beginning of the scenario.";
+        $scen_str = "$reader from=" . join( ',', @{ $self->filenames } ) . " $scen_str";
     }
 
     if ( $self->save ) {
@@ -265,13 +287,37 @@ sub _execute_locally {
     my $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
 
     if ( $self->jobindex ) {
-        $scenario->document_reader->set_jobs( $self->jobs );
-        $scenario->document_reader->set_jobindex( $self->jobindex );
-        $scenario->document_reader->set_outdir( $self->outdir );
+        my $reader = $scenario->document_reader;
+        $reader->set_jobs( $self->jobs );
+        $reader->set_jobindex( $self->jobindex );
+        $reader->set_outdir( $self->outdir );
+
+        # If we know the number of documents in advance, inform the cluster head now
+        if ( $self->jobindex == 1 && $reader->number_of_documents ) {
+            $self->_print_total_documents( $reader->number_of_documents );
+        }
     }
 
     $self->set_scenario($scenario);
     $self->scenario->run();
+
+    $self->_print_total_documents( $scenario->document_reader->doc_number );
+    return;
+}
+
+sub _total_docs_filename {
+    my ($self) = @_;
+    return $self->outdir . '/filenumber';    #TODO '/total_number_of_documents';
+}
+
+sub _print_total_documents {
+    my ( $self, $number ) = @_;
+    return if !$self->jobindex;
+    my $filename = $self->_total_docs_filename;
+    return if -f $filename;                  # the file was already created by a different job
+    open my $F, '>', $filename or log_fatal $!;
+    print $F $number;
+    close $F;
 }
 
 sub _create_job_scripts {
@@ -283,11 +329,10 @@ sub _create_job_scripts {
         open my $J, ">", "$workdir/$script_filename";
         print $J "#!/bin/bash\n\n";
         print $J "cd $current_dir\n\n";
-        print $J "touch $workdir/output/job$jobnumber.started\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
-            " 2> $workdir/output/job$jobnumber.initerror\n\n";
+            " 2> $workdir/output/job$jobnumber.init\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
@@ -322,10 +367,11 @@ sub _run_job_scripts {
     }
 
     log_info "Waiting for all jobs to be started...";
-    while ( ( scalar( () = glob $self->workdir . "/output/*.started" ) ) < $self->jobs ) {
+    while ( ( scalar( () = glob $self->workdir . "/output/*.init" ) ) < $self->jobs ) {
         sleep(1);
     }
     log_info "All " . $self->jobs . " jobs started. Waiting for them to be finished...";
+    return;
 }
 
 sub _wait_for_jobs {
@@ -333,31 +379,36 @@ sub _wait_for_jobs {
     my $current_file_number = 1;
     my $total_file_number;
     my $all_finished;
+    my $filenumber_file = $self->workdir . "/output/filenumber";
 
     WAIT_LOOP:
     while ( not defined $total_file_number or $current_file_number <= $total_file_number ) {
 
-        my $filenumber_file = $self->workdir . "/output/filenumber";
         if ( not defined $total_file_number and -f $filenumber_file ) {
             open( my $N, $filenumber_file );
             $total_file_number = <$N>;
-            log_info "Total number of files to be processed (reported by job 1): $total_file_number";
+            log_info "Total number of documents to be processed: $total_file_number";
         }
 
         $all_finished ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
         my $current_finished = (
             $all_finished ||
-                ( glob $self->workdir . "/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )
+                ( glob $self->workdir . "/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )    #TODO: tenhle soubor se nikdy nevytvari
         );
 
         if ($current_finished) {
+            log_info "Document $current_file_number out of " .
+                ( defined $total_file_number ? $total_file_number : '?' ) . " finished.";
+
             foreach my $stream (qw(stdout stderr)) {
                 my $mask = $self->workdir . "/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
                 my ($filename) = glob $mask;
 
                 if ( $stream eq 'stdout' and not defined $filename ) {
-                    sleep 1;
-                    next WAIT_LOOP;
+                    log_fatal "Document $current_file_number finished without $mask output";
+
+                    #sleep 1;
+                    #next WAIT_LOOP;
                 }
 
                 log_fatal "Now there should have been a file matching the mask $mask"
@@ -375,9 +426,6 @@ sub _wait_for_jobs {
         }
 
         else {
-            log_info "Waiting for processing document " .
-                ($current_file_number) . " out of " .
-                ( defined $total_file_number ? $total_file_number : '?' ) . " ...";
             sleep 1;
         }
     }

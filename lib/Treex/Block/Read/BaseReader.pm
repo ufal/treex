@@ -1,7 +1,12 @@
 package Treex::Block::Read::BaseReader;
 use Moose;
 use Treex::Moose;
-use File::Spec;
+with 'Treex::Core::DocumentReader';
+
+sub next_document {
+    my ($self) = @_;
+    return log_fatal "method next_document must be overriden in " . ref($self);
+}
 
 has selector => ( isa => 'Selector', is => 'ro', default => '' );
 
@@ -42,22 +47,6 @@ has is_one_doc_per_file => (
 
 has _file_numbers => ( is => 'rw', default => sub { {} } );
 
-# attrs for distributed processing
-has jobs => (
-    is => 'rw',
-    isa => 'Int',
-);
-
-has jobindex => (
-    is => 'rw',
-    isa => 'Int',
-);
-
-has outdir => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
@@ -70,53 +59,28 @@ sub current_filename {
     return $self->filenames->[ $self->file_number - 1 ];
 }
 
-sub next_filename {
+sub is_next_document_for_this_job {
     my ($self) = @_;
-
-    # local sequential processing
-    if ( not defined $self->jobindex ) {
-        $self->_set_file_number( $self->file_number + 1 );
-        return $self->current_filename();
-    }
-
-    # one of jobs in parallelized processing
-    else {
-        my $filename;
-        while (1) {
-            $self->_set_file_number( $self->file_number + 1 );
-
-            # redirecting STDOUT and STDERR to temporary files which will be gradually collected by the hub
-            log_fatal "Cannot redirect outputs without knowing the output directory (--outdir)"
-                unless $self->outdir;
-
-            my $filename = $self->current_filename();
-            if ( not defined $filename and $self->jobindex == 1 ) {    # there are no more files to be processed
-                open my $F, ">", $self->outdir . "/filenumber" or log_fatal $!;
-                print $F ( $self->file_number - 1 );                   # !!! weird
-                close $F;
-                last;
-            }
-
-            if ( ( $self->file_number - 1 ) % $self->jobs == ( $self->jobindex - 1 ) ) {    # modulo number of jobs
-
-                Treex::Core::Run::_redirect_output( $self->outdir, $self->file_number, $self->jobindex );
-
-                # create a file confirming that the previous output is finished
-                if ( $self->file_number > $self->jobs ) {
-                    my $now = time;
-                    my $prev_file_finished = $self->outdir . "/" . sprintf( "%07d", $self->file_number - $self->jobs ) . ".finished";
-
-                    #		    log_info "confirming file $prev_file_finished";
-                    open my $F, ">", $prev_file_finished or log_fatal "Can't open finish-confirming $prev_file_finished";
-                    close $F;
-                }
-
-                return $filename;
-            }
-        }
-    }
+    return 1 if !$self->jobindex;    
+    return $self->doc_number % $self->jobs == ( $self->jobindex - 1 ); 
 }
 
+sub next_filename {
+    my ($self) = @_;
+    
+    # In parallel processing and one_doc_per_file setting,
+    # we can skip files that are not supposed to be loaded by this job/reader,
+    # in order to make loading faster.
+    while ($self->is_one_doc_per_file && !$self->is_next_document_for_this_job){
+        $self->_set_file_number( $self->file_number + 1 );
+        $self->_set_doc_number( $self->doc_number + 1 );
+    }
+    $self->_set_file_number( $self->file_number + 1 );
+    return $self->current_filename();
+}
+
+
+use File::Spec;
 sub new_document {
     my ( $self, $load_from ) = @_;
     my $path = $self->current_filename();
@@ -145,12 +109,13 @@ sub new_document {
         $args{filename} = $load_from;
     }
 
+    $self->_set_doc_number( $self->doc_number + 1 );
     return Treex::Core::Document->new( \%args );
 }
 
 sub number_of_documents {
     my $self = shift;
-    return $self->is_one_doc_per_file ? scalar @{ $self->filenames } : '?';
+    return $self->is_one_doc_per_file ? scalar @{ $self->filenames } : undef;
 }
 
 1;

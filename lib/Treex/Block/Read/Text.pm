@@ -2,7 +2,6 @@ package Treex::Block::Read::Text;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Block::Read::BaseTextReader';
-with 'Treex::Core::DocumentReader';
 
 sub next_document {
     my ($self) = @_;
