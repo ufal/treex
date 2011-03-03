@@ -3,11 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
-
-
-
-
 use TBLa2t::Common;
 use TBLa2t::Common_cs;
 

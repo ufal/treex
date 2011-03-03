@@ -4,27 +4,18 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
 
+    # First, fill formeme of all t-layer nodes with a default value,
+    # so tedious undef checking (||'') is no more needed.
+    $t_node->set_formeme('???' );
 
-
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $t_root = $bundle->get_tree('SCzechT');
-
-    foreach my $t_node ( $t_root->get_descendants() ) {
-
-        # First, fill formeme of all t-layer nodes with a default value,
-        # so tedious undef checking (||'') is no more needed.
-        $t_node->set_formeme('???' );
-
-        # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
-        # fill in formemes
-        if ( $t_node->nodetype eq 'complex' ) {
-            detect_formeme($t_node);
-        }
+    # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
+    # fill in formemes
+    if ( $t_node->nodetype eq 'complex' ) {
+        detect_formeme($t_node);
     }
-
     return;
 }
 
@@ -120,7 +111,7 @@ sub detect_formeme {
 
 =item Treex::Block::A2T::CS::SetFormeme
 
-The attribute C<formeme> of SCzechT nodes is filled with
+The attribute C<formeme> of Czech t-nodes is filled with
 a value which describes the morphosyntactic form of the given
 node in the original sentence. Values such as C<v:fin> (finite verb),
 C<n:pro+X> (prepositional group), or C<n:1> are used.
@@ -129,6 +120,6 @@ C<n:pro+X> (prepositional group), or C<n:1> are used.
 
 =cut
 
-# Copyright 2008 Zdenek Zabokrtsky
+# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
