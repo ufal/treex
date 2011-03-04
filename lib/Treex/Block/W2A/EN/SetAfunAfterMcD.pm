@@ -10,7 +10,7 @@ sub process_anode {
     next if defined $anode->afun;
 
     # Fill afun
-    $a_node->set_afun( get_afun($a_node) );
+    $anode->set_afun( get_afun($anode) );
 
     return 1;
 }
