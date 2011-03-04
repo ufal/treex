@@ -26,7 +26,7 @@ has _filenames => (
         . ' automatically initialized from constructor arguments',
 );
 
-has _files_per_language => ( is => 'rw', default => 0 );
+has _files_per_zone => ( is => 'rw', default => 0 );
 
 has _file_number => (
     isa           => 'Int',
@@ -39,25 +39,29 @@ has _file_number => (
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
-        if ( Treex::Moose::is_lang_code($arg) ) {
+        my ($lang, $sele) = ($arg, '');
+        if ($arg =~ /_/) {
+            ($lang, $sele) = split /_/, $arg;
+        }
+        if ( Treex::Moose::is_lang_code($lang) ) {
             my @files = split( /[ ,]+/, $args->{$arg} );
-            if ( !$self->_files_per_language ) {
-                $self->_set_files_per_language( scalar @files );
+            if ( !$self->_files_per_zone ) {
+                $self->_set_files_per_zone( scalar @files );
             }
-            elsif ( @files != $self->_files_per_language ) {
-                log_fatal("All languages must have the same number of files");
+            elsif ( @files != $self->_files_per_zone ) {
+                log_fatal("All zones must have the same number of files");
             }
             $self->_filenames->{$arg} = \@files;
         }
         elsif ( $arg =~ /selector|language|scenario/ ) { }
-        else                                           { log_warn "$arg is not a lang_code"; }
+        else                                           { log_warn "$lang is not a lang_code"; }
     }
 }
 
 sub current_filenames {
     my ($self) = @_;
     my $n = $self->_file_number;
-    return if $n == 0 || $n > $self->_files_per_language;
+    return if $n == 0 || $n > $self->_files_per_zone;
     return map { $_ => $self->_filenames->{$_}[ $n - 1 ] } keys %{ $self->_filenames };
 }
 
@@ -108,7 +112,7 @@ sub new_document {
 
 sub number_of_documents {
     my $self = shift;
-    return $self->_files_per_language;
+    return $self->_files_per_zone;
 }
 
 1;

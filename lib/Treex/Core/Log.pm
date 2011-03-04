@@ -12,6 +12,7 @@ use Readonly;
 
 $Carp::CarpLevel = 1;
 
+binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 
 # Autoflush after every Perl statement should enforce that INFO and FATALs are ordered correctly.

@@ -51,26 +51,26 @@ sub FOREIGNBUILDARGS {
 sub set_attr {
     my $self = shift;
     my ( $attr_name, $attr_value ) = pos_validated_list(
-		\@_,
-		{ isa => 'Str' },
-		{ isa => 'Any' },
-	);
+        \@_,
+        { isa => 'Str' },
+        { isa => 'Any' },
+    );
 
     return $self->{$attr_name} = $attr_value;
 }
 
 sub get_attr {
-	my $self = shift;
-	my ( $attr_name ) = pos_validated_list(
-		\@_,
-		{ isa => 'Str' },
-	);
+    my $self = shift;
+    my ($attr_name) = pos_validated_list(
+        \@_,
+        { isa => 'Str' },
+    );
     return $self->{$attr_name};
 }
 
 sub get_label {
     my $self = shift;
-	pos_validated_list(\@_);
-    return $self->selector . $self->language;
+    pos_validated_list( \@_ );
+    return $self->language . ( $self->selector ? '_' . $self->selector : '' );
 }
 1;
