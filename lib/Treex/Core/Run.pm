@@ -331,8 +331,9 @@ sub _create_job_scripts {
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
+        print $J "echo \$HOSTNAME > $workdir/output/job$jobnumber.init\n";
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
-            " 2> $workdir/output/job$jobnumber.init\n\n";
+            " 2>> $workdir/output/job$jobnumber.init\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
@@ -400,19 +401,16 @@ sub _wait_for_jobs {
             log_info "Document $current_file_number out of " .
                 ( defined $total_file_number ? $total_file_number : '?' ) . " finished.";
 
-            foreach my $stream (qw(stdout stderr)) {
+            foreach my $stream (qw(stderr stdout)) {
                 my $mask = $self->workdir . "/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
                 my ($filename) = glob $mask;
 
-                if ( $stream eq 'stdout' and not defined $filename ) {
+                if ( !defined $filename ) {
                     log_fatal "Document $current_file_number finished without $mask output";
 
                     #sleep 1;
                     #next WAIT_LOOP;
                 }
-
-                log_fatal "Now there should have been a file matching the mask $mask"
-                    if not defined $filename;
 
                 open my $FILE, '<:utf8', $filename or log_fatal $!;
                 if ( $stream eq "stdout" ) {
