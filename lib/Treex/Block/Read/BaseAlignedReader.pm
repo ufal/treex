@@ -1,6 +1,12 @@
 package Treex::Block::Read::BaseAlignedReader;
 use Moose;
 use Treex::Moose;
+with 'Treex::Core::DocumentReader';
+
+sub next_document {
+    my ($self) = @_;
+    return log_fatal "method next_document must be overriden in " . ref($self);
+}
 
 has selector => ( isa => 'Selector', is => 'ro', default => '' );
 
@@ -8,22 +14,6 @@ has file_stem => (
     isa           => 'Str',
     is            => 'ro',
     documentation => 'how to name the loaded documents',
-);
-
-# attrs for distributed processing
-has jobs => (
-    is => 'rw',
-    isa => 'Int',
-);
-
-has jobindex => (
-    is => 'rw',
-    isa => 'Int',
-);
-
-has outdir => (
-    is  => 'rw',
-    isa => 'Str',
 );
 
 # private attributes
@@ -103,6 +93,8 @@ sub new_document {
             }
         }
     }
+    
+    $self->_set_doc_number( $self->doc_number + 1 );
     return Treex::Core::Document->new(
         {
             file_stem => $stem,
