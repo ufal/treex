@@ -110,12 +110,11 @@ sub assign_functors {
         my $mlemma      = lc $lex_a_node->lemma;     #Monday -> monday
         my @aux_a_nodes = $node->get_aux_anodes();
         my ($first_aux_mlemma) = map { $_->lemma } grep { $_->tag eq "IN" } @aux_a_nodes;
+        $first_aux_mlemma = '' if !defined $first_aux_mlemma;
 
         my $functor;
 
-        if ($node->get_parent() == $t_root           # and $lex_a_node->tag ne "CC"  # uz by to v tuhle chvili melo CONJ
-            )
-        {
+        if ( $node->get_parent() == $t_root ) {
             $functor = 'PRED'
         }
         elsif ( defined $temporal_noun{$mlemma} and ( not @aux_a_nodes or $first_aux_mlemma =~ /^(in|on)$/ ) ) {
