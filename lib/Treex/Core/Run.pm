@@ -266,7 +266,7 @@ sub _execute_locally {
 
     # some command line options are just shortcuts for blocks; the blocks are added to the scenario now
     if ( $self->filenames ) {
-        my $reader = _get_reader_name_for(@{$self->filenames});
+        my $reader = _get_reader_name_for( @{ $self->filenames } );
         log_info "Block $reader added to the beginning of the scenario.";
         $scen_str = "$reader from=" . join( ',', @{ $self->filenames } ) . " $scen_str";
     }
@@ -286,6 +286,7 @@ sub _execute_locally {
 
     my $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
 
+    my $number_of_docs;
     if ( $self->jobindex ) {
         my $reader = $scenario->document_reader;
         $reader->set_jobs( $self->jobs );
@@ -293,15 +294,26 @@ sub _execute_locally {
         $reader->set_outdir( $self->outdir );
 
         # If we know the number of documents in advance, inform the cluster head now
-        if ( $self->jobindex == 1 && $reader->number_of_documents ) {
-            $self->_print_total_documents( $reader->number_of_documents );
+        if ( $self->jobindex == 1 ) {
+            $number_of_docs = $reader->number_of_documents;
+
+            #log_info "There will be $number_of_docs documents";
+            $self->_print_total_documents($number_of_docs);
         }
     }
 
     $self->set_scenario($scenario);
     $self->scenario->run();
 
-    $self->_print_total_documents( $scenario->document_reader->doc_number );
+    if ( $self->jobindex && $self->jobindex == 1 && !$number_of_docs ) {
+        $number_of_docs = $scenario->document_reader->doc_number;
+        # This branch is executed only
+        # when the reader does not know number_of_documents in advance.
+        # TODO: Why is document_reader->doc_number is one higher than it should be?
+        
+        #log_info "There were $number_of_docs documents";
+        $self->_print_total_documents($number_of_docs);
+    }
     return;
 }
 
@@ -312,9 +324,7 @@ sub _total_docs_filename {
 
 sub _print_total_documents {
     my ( $self, $number ) = @_;
-    return if !$self->jobindex;
     my $filename = $self->_total_docs_filename;
-    return if -f $filename;                  # the file was already created by a different job
     open my $F, '>', $filename or log_fatal $!;
     print $F $number;
     close $F;
@@ -411,7 +421,7 @@ sub _wait_for_jobs {
                     #sleep 1;
                     #next WAIT_LOOP;
                 }
-                my ($jobnumber) = ($filename =~ /job(...)/);
+                my ($jobnumber) = ( $filename =~ /job(...)/ );
 
                 open my $FILE, '<:utf8', $filename or log_fatal $!;
                 if ( $stream eq "stdout" ) {
