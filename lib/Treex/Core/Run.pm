@@ -398,7 +398,9 @@ sub _wait_for_jobs {
     my $filenumber_file = $self->workdir . "/output/filenumber";
 
     WAIT_LOOP:
-    while ( not defined $total_file_number or $current_file_number <= $total_file_number ) {
+    while (not $all_finished or
+               not defined $total_file_number
+                   or $current_file_number <= $total_file_number ) {
 
         if ( not defined $total_file_number and -f $filenumber_file ) {
             open( my $N, $filenumber_file );
@@ -444,6 +446,66 @@ sub _wait_for_jobs {
         }
     }
 }
+
+sub _print_output_files {
+    my ($self, $doc_number) = @_;
+
+
+}
+
+sub _read_total_file_number {
+    my ($self) = @_;
+    my $total_doc_number_file = $self->workdir . "/output/filenumber";
+    if ( -f $total_doc_number_file ) {
+            open( my $N, $total_doc_number_file ) or log_fatal $!;
+            my $total_file_number = <$N>;
+            log_info "Total number of documents to be processed: $total_file_number";
+            return $total_file_number;
+        }
+    else {
+        return undef;
+    }
+}
+
+
+sub _doc_started {
+    my ($self, $doc_number) = @_;
+
+}
+
+sub _wait_for_jobs2 {
+    my ($self) = @_;
+    my $current_doc_number = 0;
+    my $current_doc_started;
+    my $total_doc_number;
+    my $all_jobs_finished;
+
+  WAIT: while (not $all_jobs_finished
+                   or not defined $total_doc_number
+                       or $current_doc_number <= $total_doc_number ) {
+
+        $total_doc_number ||= $self->_read_total_doc_number();
+        $all_jobs_finished ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
+        $current_doc_started ||= $self->_doc_started($current_doc_number);
+        my $next_doc_per_job_started = $self->_doc_started($current_doc_number+$self->jobs);
+        my $current_doc_finished = ( $current_doc_started and ($all_jobs_finished or $next_doc_per_job_started));
+
+        log_debug "Hub state: ".(join ' ',map {"$_=${$_}"}
+                                 qw(total_doc_number current_doc_number current_doc_started
+                                    current_doc_finished all_jobs_finished next_doc_per_job_started));
+
+        if ($current_doc_finished) {
+            $self->_print_output_files($current_doc_number);
+            $current_doc_number++;
+            $current_doc_started = undef;
+            next WAIT;
+        }
+
+        sleep 1;
+    }
+
+}
+
 
 sub _execute_on_cluster {
     my ($self) = @_;
