@@ -44,7 +44,9 @@ sub BUILD {
             ($lang, $sele) = split /_/, $arg;
         }
         if ( Treex::Moose::is_lang_code($lang) ) {
-            my @files = split( /[ ,]+/, $args->{$arg} );
+            my $files_string = $args->{$arg};
+            $files_string =~ s/^\s+|\s+$//g;
+            my @files = split( /[ ,]+/,  $files_string);
             if ( !$self->_files_per_zone ) {
                 $self->_set_files_per_zone( scalar @files );
             }
