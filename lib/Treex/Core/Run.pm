@@ -411,13 +411,14 @@ sub _wait_for_jobs {
                     #sleep 1;
                     #next WAIT_LOOP;
                 }
+                my ($jobnumber) = ($filename =~ /job(...)/);
 
                 open my $FILE, '<:utf8', $filename or log_fatal $!;
                 if ( $stream eq "stdout" ) {
                     print $_ while <$FILE>;
                 }
                 else {
-                    print STDERR $_ while <$FILE>;
+                    print STDERR "job$jobnumber: $_" while <$FILE>;
                 }
             }
             $current_file_number++;
