@@ -15,10 +15,10 @@ SKIP: {
     skip "because not running on an SGE cluster",1
         if not defined $ENV{SGE_CLUSTER_NAME};
 
-    my $number_of_files = 11;
-    my $number_of_jobs = 3;
+    my $number_of_files = 110;
+    my $number_of_jobs = 30;
 
-    foreach my $i (map {sprintf "%02d",$_} (1..$number_of_files)) {
+    foreach my $i (map {sprintf "%03d",$_} (1..$number_of_files)) {
         my $doc = Treex::Core::Document->new();
         $doc->set_attr('description',$i);
         $doc->save("paratest$i.treex");
@@ -29,7 +29,7 @@ SKIP: {
         . " -g 'paratest*.treex'";
 
     stdout_is( sub { treex $cmdline_arguments },
-               (join '',map {sprintf "%02d",$_} (1..$number_of_files)),
+               (join '',map {sprintf "%03d",$_} (1..$number_of_files)),
                "running parallelized treex on SGE cluster");
 
     unlink glob "paratest*";
