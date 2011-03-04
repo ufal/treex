@@ -357,12 +357,9 @@ sub _run_job_scripts {
         my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
 
         if ( $self->local ) {
-            log_info "$workdir/$script_filename executed locally";
             system "$workdir/$script_filename &";
         }
         else {
-            log_info "$workdir/$script_filename submitted to the cluster";
-
             open my $QSUB, "cd $workdir && qsub -cwd -e output/ -S /bin/bash $script_filename |";
 
             my $firstline = <$QSUB>;
@@ -376,9 +373,17 @@ sub _run_job_scripts {
             }
         }
     }
-
-    log_info "Waiting for all jobs to be started...";
-    while ( ( scalar( () = glob $self->workdir . "/output/*.init" ) ) < $self->jobs ) {
+    log_info $self->jobs . ' jobs '
+        . ($self->local ? 'executed locally.' : 'submitted to the cluster.')
+        . ' Waiting for confirmation that they started...';
+    log_info("Number of jobs started so far:", {same_line=>1});
+    my ($started_now, $started_1s_ago) = (0, 0);
+    while ($started_now != $self->jobs) {
+        $started_now = scalar( () = glob $self->workdir . "/output/*.init");
+        if ($started_now != $started_1s_ago) {
+            log_info(" $started_now", {same_line=>1});
+            $started_1s_ago = $started_now;
+        }
         sleep(1);
     }
     log_info "All " . $self->jobs . " jobs started. Waiting for them to be finished...";

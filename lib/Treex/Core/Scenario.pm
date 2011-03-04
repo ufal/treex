@@ -37,9 +37,6 @@ my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMOR
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-
-    log_memory if $TMT_DEBUG_MEMORY;
-
     log_info("Initializing an instance of TectoMT::Scenario ...");
 
     #<<< no perltidy
@@ -51,8 +48,6 @@ sub BUILD {
     my @block_items = parse_scenario_string( $scen_str, $arg_ref->{from_file} );
     my $blocks = @block_items;
     log_fatal('Empty block sequence cannot be used for initializing scenario!') if $blocks == 0;
-
-    log_memory if $TMT_DEBUG_MEMORY;
 
     log_info( "$blocks block" . ( $blocks > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
 
@@ -217,8 +212,6 @@ sub _load_block {
     if ($@) {
         log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n";
     }
-
-    log_memory if $TMT_DEBUG_MEMORY;
 
     return $new_block;
 }

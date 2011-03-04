@@ -55,17 +55,6 @@ sub get_error_level {
     return $current_error_level_value;
 }
 
-sub _ntred_message {
-    my $message = shift;
-    {
-        no strict;
-        no warnings;
-        if ($main::is_in_ntred) {
-            main::_msg $message;
-        }
-    }
-}
-
 # fatal error messages can't be surpressed
 sub fatal {
     my $message = shift;
@@ -77,7 +66,6 @@ sub fatal {
     $line .= "PERL ERROR MESSAGE: $OS_ERROR\n"        if $OS_ERROR;
     $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
     $line .= "PERL STACK:";
-    _ntred_message($line);
     confess $line;
 }
 
@@ -88,7 +76,6 @@ sub short_fatal {    # !!! neodladene
         $unfinished_line = 0;
     }
     my $line = "TREEX-FATAL(short):\t$message\n";
-    _ntred_message($line);
     print STDERR $line;
     exit;
 
@@ -105,7 +92,7 @@ sub warn {
         $unfinished_line = 0;
     }
     $line .= "TREEX-WARN:\t$message\n";
-    _ntred_message($line);
+
     if ($carp) {
         Carp::carp $line;
     }
@@ -124,7 +111,7 @@ sub debug {
         $unfinished_line = 0;
     }
     $line .= "TREEX-DEBUG:\t$message\n";
-    _ntred_message($line);
+
     if ($no_print_stack) {
         print STDERR $line;
     }
@@ -143,52 +130,32 @@ sub data {
         $unfinished_line = 0;
     }
     $line .= "TREEX-DATA:\t$message\n";
-    _ntred_message($line);
+
     print STDERR $line;
     return;
 }
 
 sub info {
-    my $message = shift;
+    my ($message, $arg_ref) = @_;
+    my $same_line = defined $arg_ref && $arg_ref->{same_line};
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     my $line = "";
-    if ($unfinished_line) {
+    if ($unfinished_line && !$same_line) {
         $line            = "\n";
         $unfinished_line = 0;
+    } elsif (!$same_line){
+        $line .= "TREEX-INFO:\t";
     }
-    $line .= "TREEX-INFO:\t$message\n";
-    _ntred_message($line);
-    print STDERR $line;
-    return;
-}
+    $line .= $message;
+    
+    if ($same_line){
+        $unfinished_line = 1;
+    } else {
+        $line .= "\n";
+    }
 
-sub info_unfinished {
-    my $message = shift;
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
-    my $line = "";
-    if ($unfinished_line) {
-        $line            = "\n";
-        $unfinished_line = 0;
-    }
-    $line .= "TREEX-INFO:\t$message";
-    _ntred_message($line);
     print STDERR $line;
-    STDERR->flush;
-    $unfinished_line = 1;
-    return;
-}
-
-sub info_finish {
-    my $message = shift;
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
-    my $line = "";
-    if ( not $unfinished_line ) {
-        $line = "\nTREEX-INFO:\t";
-    }
-    $unfinished_line = 0;
-    $line .= "$message\n";
-    _ntred_message($line);
-    print STDERR $line;
+    STDERR->flush if $same_line;
     return;
 }
 
@@ -203,68 +170,6 @@ sub progress {    # progress se pres ntred neposila, protoze by se stejne neflus
     return;
 }
 
-# code for reporting memory consumptions (especially because of memory leaks)
-#
-# use Proc::ProcessTable;
-# my $last_memory_usage = 0;
-#
-sub memory {
-
-    #
-    #     my $process_table = new Proc::ProcessTable;
-    #     my $current_process;
-    #
-    #    PROCESS: foreach my $process ( @{ $process_table->table } ) {
-    #        if ( $process->pid eq $$ ) {
-    #            $current_process = $process;
-    #            last PROCESS;
-    #        }
-    #    }
-    #
-    #    my $current_memory_usage = $current_process->size;
-    #    my $increase             = $current_memory_usage - $last_memory_usage;
-    #    $last_memory_usage = $current_memory_usage;
-    #
-    #    my $message = "current consumption = " . _reformat_long_number($current_memory_usage)
-    #        . " B\tincrease from previous = " . _reformat_long_number($increase) . " B";
-    #
-    #    $message = "current consumption = " . _format_bytes($current_memory_usage)
-    #        . " \tincrease from previous = " . _format_bytes($increase);
-    #
-    #    my $line = "";
-    #    if ($unfinished_line) {
-    #        $line            = "\n";
-    #        $unfinished_line = 0;
-    #    }
-    #    $line .= "TREEX-MEMORY:\t$message\n";
-    #    _ntred_message($line);
-    #    print STDERR $line;
-    #
-    return;
-}
-
-# convert size to human readable format
-sub _format_bytes {
-    defined( my $size = shift ) || return undef;
-    my $block = 1024;
-    my @args  = qw/B K M G/;
-
-    while ( @args && $size > $block ) {
-        shift @args;
-        $size /= $block;
-    }
-
-    my $truncate = 1;
-    $size = sprintf( "%.${truncate}f", $size );
-
-    return "$size$args[0]";
-}
-
-sub _reformat_long_number {
-    my $number = shift;
-    while ( $number =~ s/(\d)(\d\d\d)( |$)/$1 $2$3/ ) { }
-    return $number;
-}
 
 # ---------- EXPORTED FUNCTIONS ------------
 
@@ -280,7 +185,6 @@ our @EXPORT = qw(log_fatal log_warn log_info log_memory log_set_error_level log_
 sub log_fatal           { fatal(@_); }
 sub log_warn            { Treex::Core::Log::warn @_; }
 sub log_info            { info @_; }
-sub log_memory          { memory @_; }
 sub log_set_error_level { set_error_level @_; }
 sub log_debug           { debug @_; }
 
