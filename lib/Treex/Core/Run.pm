@@ -414,7 +414,7 @@ sub _wait_for_jobs {
                 log_fatal "Now there should have been a file matching the mask $mask"
                     if not defined $filename;
 
-                open my $FILE, $filename or log_fatal $!;
+                open my $FILE, '<:utf8', $filename or log_fatal $!;
                 if ( $stream eq "stdout" ) {
                     print $_ while <$FILE>;
                 }
