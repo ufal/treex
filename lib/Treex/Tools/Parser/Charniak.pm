@@ -5,7 +5,7 @@ use MooseX::FollowPBP;
 
 #has sentence      => (isa => 'Str', is => 'rw', required => 1);
 #to be changed
-my $bindir    = "/home/green/tectomt/personal/green/tools/reranking-parser";
+my $bindir    = $ENV{TMT_ROOT} . 'personal/green/tools/reranking-parser';
 my $command   = "$bindir/parse.sh tmt_sentence.txt";
 my @sentences = ();
 my @results;
@@ -22,7 +22,7 @@ sub BUILD {
 sub add_sentence {
 
     #@sentences=@_;
-    push( @sentences, @_[1] );
+    push( @sentences, $_[1] );
 }
 
 sub parse_sentences {
