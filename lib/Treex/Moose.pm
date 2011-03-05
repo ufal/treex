@@ -44,8 +44,8 @@ sub import {
 
 subtype 'Selector'
     => as 'Str'
-    => where { m/^[a-z]*$/i }
-    => message {"Selector must =~ /^[a-z]*\$/i. You've provided $_"};
+    => where { m/^[a-z\d]*$/i }
+    => message {"Selector must =~ /^[a-z\\d]*\$/i. You've provided $_"}; #TODO: this messege is not printed
 
 subtype 'Layer'
     => as 'Str'
