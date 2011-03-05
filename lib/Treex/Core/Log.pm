@@ -143,7 +143,8 @@ sub info {
     if ($unfinished_line && !$same_line) {
         $line            = "\n";
         $unfinished_line = 0;
-    } elsif (!$same_line){
+    }
+    if (!$same_line || !$unfinished_line){
         $line .= "TREEX-INFO:\t";
     }
     $line .= $message;

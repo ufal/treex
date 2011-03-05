@@ -288,6 +288,8 @@ sub _execute_locally {
 
     my $number_of_docs;
     if ( $self->jobindex ) {
+        open my $F, '>', $self->outdir . sprintf( "/job%03d.loaded", $self->jobindex );
+        close $F;
         my $reader = $scenario->document_reader;
         $reader->set_jobs( $self->jobs );
         $reader->set_jobindex( $self->jobindex );
@@ -298,7 +300,7 @@ sub _execute_locally {
             $number_of_docs = $reader->number_of_documents;
 
             #log_info "There will be $number_of_docs documents";
-            $self->_print_total_documents($number_of_docs);
+            $self->_write_total_doc_number($number_of_docs);
         }
     }
 
@@ -307,27 +309,39 @@ sub _execute_locally {
 
     if ( $self->jobindex && $self->jobindex == 1 && !$number_of_docs ) {
         $number_of_docs = $scenario->document_reader->doc_number;
+
         # This branch is executed only
         # when the reader does not know number_of_documents in advance.
         # TODO: Why is document_reader->doc_number is one higher than it should be?
-        
+
         #log_info "There were $number_of_docs documents";
-        $self->_print_total_documents($number_of_docs);
+        $self->_write_total_doc_number($number_of_docs);
     }
     return;
 }
 
-sub _total_docs_filename {
-    my ($self) = @_;
-    return $self->outdir . '/filenumber';    #TODO '/total_number_of_documents';
-}
-
-sub _print_total_documents {
+# This is called by distributed jobs (they don't have $self->workdir)
+sub _write_total_doc_number {
     my ( $self, $number ) = @_;
-    my $filename = $self->_total_docs_filename;
+    my $filename = $self->outdir . '/total_number_of_documents';
     open my $F, '>', $filename or log_fatal $!;
     print $F $number;
     close $F;
+}
+
+# This is called by the main treex (it doesn't have $self->outdir)
+sub _read_total_doc_number {
+    my ($self) = @_;
+    my $total_doc_number_file = $self->workdir . "/output/total_number_of_documents";
+    if ( -f $total_doc_number_file ) {
+        open( my $N, $total_doc_number_file ) or log_fatal $!;
+        my $total_file_number = <$N>;
+        log_info "Total number of documents to be processed: $total_file_number";
+        return $total_file_number;
+    }
+    else {
+        return undef;
+    }
 }
 
 sub _create_job_scripts {
@@ -338,12 +352,12 @@ sub _create_job_scripts {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename";
         print $J "#!/bin/bash\n\n";
+        print $J "echo \$HOSTNAME > $current_dir/$workdir/output/job$jobnumber.started\n";
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
-        print $J "echo \$HOSTNAME > $workdir/output/job$jobnumber.init\n";
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
-            " 2>> $workdir/output/job$jobnumber.init\n\n";
+            " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
@@ -374,138 +388,107 @@ sub _run_job_scripts {
         }
     }
     log_info $self->jobs . ' jobs '
-        . ($self->local ? 'executed locally.' : 'submitted to the cluster.')
+        . ( $self->local ? 'executed locally.' : 'submitted to the cluster.' )
         . ' Waiting for confirmation that they started...';
-    log_info("Number of jobs started so far:", {same_line=>1});
-    my ($started_now, $started_1s_ago) = (0, 0);
-    while ($started_now != $self->jobs) {
-        $started_now = scalar( () = glob $self->workdir . "/output/*.init");
-        if ($started_now != $started_1s_ago) {
-            log_info(" $started_now", {same_line=>1});
+    log_info( "Number of jobs started so far:", { same_line => 1 } );
+    my ( $started_now, $started_1s_ago ) = ( 0, 0 );
+    while ( $started_now != $self->jobs ) {
+        $started_now = scalar( () = glob $self->workdir . "/output/*.started" );
+        if ( $started_now != $started_1s_ago ) {
+            log_info( " $started_now", { same_line => 1 } );
             $started_1s_ago = $started_now;
         }
-        sleep(1);
+        else {
+            sleep(1);
+        }
     }
-    log_info "All " . $self->jobs . " jobs started. Waiting for them to be finished...";
+    log_info "All " . $self->jobs . " jobs started. Waiting for loading scenarios...";
+
+    log_info( "Number of jobs loaded so far:", { same_line => 1 } );
+    my ( $loaded_now, $loaded_1s_ago ) = ( 0, 0 );
+    while ( $loaded_now != $self->jobs ) {
+        $loaded_now = scalar( () = glob $self->workdir . "/output/*.loaded" );
+        if ( $loaded_now != $loaded_1s_ago ) {
+            log_info( " $loaded_now", { same_line => 1 } );
+            $loaded_1s_ago = $loaded_now;
+        }
+        else {
+            sleep(1);
+        }
+    }
+    log_info "All " . $self->jobs . " jobs loaded. Waiting for them to be finished...";
     return;
 }
 
-sub _wait_for_jobs {
-    my ($self) = @_;
-    my $current_file_number = 1;
-    my $total_file_number;
-    my $all_finished;
-    my $filenumber_file = $self->workdir . "/output/filenumber";
-
-    WAIT_LOOP:
-    while (not $all_finished or
-               not defined $total_file_number
-                   or $current_file_number <= $total_file_number ) {
-
-        if ( not defined $total_file_number and -f $filenumber_file ) {
-            open( my $N, $filenumber_file );
-            $total_file_number = <$N>;
-            log_info "Total number of documents to be processed: $total_file_number";
-        }
-
-        $all_finished ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
-        my $current_finished = (
-            $all_finished ||
-                ( glob $self->workdir . "/output/job*file-" . sprintf( "%07d", $current_file_number ) . ".finished" )    #TODO: tenhle soubor se nikdy nevytvari
-        );
-
-        if ($current_finished) {
-            log_info "Document $current_file_number out of " .
-                ( defined $total_file_number ? $total_file_number : '?' ) . " finished.";
-
-            foreach my $stream (qw(stderr stdout)) {
-                my $mask = $self->workdir . "/output/job*-file" . sprintf( "%07d", $current_file_number ) . "*.$stream";
-                my ($filename) = glob $mask;
-
-                if ( !defined $filename ) {
-                    log_fatal "Document $current_file_number finished without $mask output";
-
-                    #sleep 1;
-                    #next WAIT_LOOP;
-                }
-                my ($jobnumber) = ( $filename =~ /job(...)/ );
-
-                open my $FILE, '<:utf8', $filename or log_fatal $!;
-                if ( $stream eq "stdout" ) {
-                    print $_ while <$FILE>;
-                }
-                else {
-                    print STDERR "job$jobnumber: $_" while <$FILE>;
-                }
-            }
-            $current_file_number++;
-        }
-
-        else {
-            sleep 1;
-        }
-    }
-}
-
 sub _print_output_files {
-    my ($self, $doc_number) = @_;
+    my ( $self, $doc_number ) = @_;
+    foreach my $stream (qw(stderr stdout)) {
+        my $mask = $self->workdir . "/output/job*-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
+        my ($filename) = glob $mask;
 
-
-}
-
-sub _read_total_file_number {
-    my ($self) = @_;
-    my $total_doc_number_file = $self->workdir . "/output/filenumber";
-    if ( -f $total_doc_number_file ) {
-            open( my $N, $total_doc_number_file ) or log_fatal $!;
-            my $total_file_number = <$N>;
-            log_info "Total number of documents to be processed: $total_file_number";
-            return $total_file_number;
+        if ( !defined $filename ) {
+            log_fatal "Document $doc_number finished without producing $mask";
         }
-    else {
-        return undef;
-    }
-}
 
+        open my $FILE, '<:utf8', $filename or log_fatal $!;
+        if ( $stream eq "stdout" ) {
+            print $_ while <$FILE>;
+        }
+        else {
+            my ($jobnumber) = ( $filename =~ /job(...)/ );
+            print STDERR "job$jobnumber: $_" while <$FILE>;
+        }
+    }
+    return;
+}
 
 sub _doc_started {
-    my ($self, $doc_number) = @_;
+    my ( $self, $doc_number ) = @_;
+    my $mask = $self->workdir . sprintf( '/output/job*-doc%07d.stderr', $doc_number );
 
+    # Note that return glob $mask; does not work
+    # glob in scalar context iterates over files,
+    # so if the file was already "iterated", it return undef.
+    my @filenames = glob($mask);
+    return scalar @filenames;
 }
 
-sub _wait_for_jobs2 {
-    my ($self) = @_;
-    my $current_doc_number = 0;
-    my $current_doc_started;
-    my $total_doc_number;
-    my $all_jobs_finished;
+sub _wait_for_jobs {
+    my ($self)              = @_;
+    my $current_doc_number  = 1;
+    my $current_doc_started = 0;
+    my $total_doc_number    = 0;
+    my $all_jobs_finished   = 0;
+    my $done                = 0;
 
-  WAIT: while (not $all_jobs_finished
-                   or not defined $total_doc_number
-                       or $current_doc_number <= $total_doc_number ) {
-
-        $total_doc_number ||= $self->_read_total_doc_number();
-        $all_jobs_finished ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
+    while ( !$done ) {
+        $total_doc_number    ||= $self->_read_total_doc_number();
+        $all_jobs_finished   ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
         $current_doc_started ||= $self->_doc_started($current_doc_number);
-        my $next_doc_per_job_started = $self->_doc_started($current_doc_number+$self->jobs);
-        my $current_doc_finished = ( $current_doc_started and ($all_jobs_finished or $next_doc_per_job_started));
 
-        log_debug "Hub state: ".(join ' ',map {"$_=${$_}"}
-                                 qw(total_doc_number current_doc_number current_doc_started
-                                    current_doc_finished all_jobs_finished next_doc_per_job_started));
+        # If a job starts processing another doc,
+        # it means it has finished the current doc.
+        my $current_doc_finished = $all_jobs_finished;
+        $current_doc_finished ||= $self->_doc_started( $current_doc_number + $self->jobs );
 
         if ($current_doc_finished) {
             $self->_print_output_files($current_doc_number);
             $current_doc_number++;
-            $current_doc_started = undef;
-            next WAIT;
+            $current_doc_started = 0;
+        }
+        else {
+            sleep 1;
         }
 
-        sleep 1;
+        # Both of the conditions below are necessary. 
+        # - $total_doc_number might be unknown (i.e. 0) before all_jobs_finished
+        # - even if all_jobs_finished, we must wait for forwarding all output files
+        # Note that if $current_doc_number == $total_doc_number,
+        # the output of the last doc was not forwarded yet. 
+        $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
     }
-
+    return;
 }
-
 
 sub _execute_on_cluster {
     my ($self) = @_;
@@ -549,14 +532,17 @@ sub _execute_on_cluster {
 
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files $directory";
-        rmtree $directory or log_fatal $!;
+
+        #rmtree $directory or log_fatal $!;
+        #system "rm -r $directory";
     }
 }
 
 sub _redirect_output {
-    my ( $outdir, $filenumber, $jobindex ) = @_;
-
-    my $stem = $outdir . "/job" . sprintf( "%03d", $jobindex + 0 ) . "-file" . sprintf( "%07d", $filenumber );
+    my ( $outdir, $docnumber, $jobindex ) = @_;
+    my $job = sprintf( 'job%03d', $jobindex + 0 );
+    my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
+    my $stem = "$outdir/$job-$doc";
     open OUTPUT, '>', "$stem.stdout" or die $!;    # where will these messages go to, before redirection?
     open ERROR,  '>', "$stem.stderr" or die $!;
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
@@ -599,3 +585,4 @@ sub treex {
 }
 
 1;
+
