@@ -69,12 +69,12 @@ has 'filelist' => (
 );
 
 # treex -h should not print "Unknown option: h" before the usage.
-has 'help' => (
-    traits        => ['Getopt'],
-    cmd_aliases   => 'h',
-    is            => 'ro', isa => 'Bool', default => 0,
-    documentation => q{Print usage info},
-);
+#has 'help' => (
+#    traits        => ['Getopt'],
+#    cmd_aliases   => 'h',
+#    is            => 'ro', isa => 'Bool', default => 0,
+#    documentation => q{Print usage info},
+#);
 
 has 'filenames' => (
     traits        => ['NoGetopt'],
