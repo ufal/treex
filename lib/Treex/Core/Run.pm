@@ -447,10 +447,11 @@ sub _print_output_files {
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
             my $report = $self->forward_error_level;
-            while(<$FILE>){
+            while (<$FILE>) {
+
                 #TODO: better implementation
                 # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
-                my (undef, $level) = /^(TMT|TREEX)-(DEBUG|INFO|WARN|FATAL)/;
+                my ( undef, $level ) = /^(TMT|TREEX)-(DEBUG|INFO|WARN|FATAL)/;
                 next if $level =~ /^D/ && $report !~ /^[AD]/;
                 next if $level =~ /^I/ && $report !~ /^[ADI]/;
                 next if $level =~ /^W/ && $report !~ /^[ADIW]/;
@@ -518,6 +519,13 @@ sub _execute_on_cluster {
     do {
         $counter++;
         $directory = sprintf "%03d-cluster-run", $counter;
+
+        # TODO There is a strange problem when executing e.g.
+        #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
+        # where qparallel.t executes treex -p --cleanup ...
+        # I don't know the real cause of the bug, but as a workaround
+        # you can omit --cleanup or uncomment next line
+        # $directory .= sprintf "%03d-cluster-run", rand 1000;
         }
         while ( -d $directory );
     $self->set_workdir($directory);
@@ -552,8 +560,6 @@ sub _execute_on_cluster {
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files $directory";
         rmtree $directory or log_fatal $!;
-
-        #system "rm -r $directory";
     }
 }
 

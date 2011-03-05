@@ -52,7 +52,10 @@ sub next_document_for_this_job {
         $doc = $self->next_document();
     }
     
-    # TODO this is not very elegant 
+    # TODO this is not very elegant
+    # and it is also wrong, because if next_document issues some warnings,
+    # these are printed into a wrong file.
+    # However, I don't know how to get the correct doc_number before executing next_document.  
     if ($doc && $self->jobindex){
         Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );
     }
