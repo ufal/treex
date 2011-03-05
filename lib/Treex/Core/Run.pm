@@ -37,7 +37,14 @@ has 'error_level' => (
     cmd_aliases => 'e',
     is          => 'rw', isa => 'ErrorLevel', default => 'INFO',
     trigger => sub { Treex::Core::Log::set_error_level( $_[1] ); },
-    documentation => q{Possible error levels: ALL=0, DEBUG=1, INFO=2, WARN=3, FATAL=4},
+    documentation => q{Possible values: ALL, DEBUG, INFO, WARN, FATAL},
+);
+
+has 'jobs_error_level' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 'E',
+    is            => 'rw', isa => 'ErrorLevel', default => 'WARN',
+    documentation => q{error level of the distributed jobs},
 );
 
 has 'lang' => (
@@ -249,7 +256,7 @@ sub _execute_locally {
         my $mask = $self->glob;
         $mask =~ s/^['"](.+)['"]$/$1/;
         my @files = glob $mask;
-        log_fatal 'No files matching mask $mask' if @files == 0;
+        log_fatal "No files matching mask $mask" if @files == 0;
         $self->set_filenames( \@files );
     }
     elsif ( $self->filelist ) {
@@ -356,8 +363,15 @@ sub _create_job_scripts {
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
-        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output " . ( join " ", @{ $self->argv } ) .
-            " 2>> $workdir/output/job$jobnumber.started\n\n";
+        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output "
+            . ( join " ", @{ $self->argv } )
+
+            # TODO: if the original line contains -- file.treex, this doesn't work
+            # However, -e must be added at the end
+            # so it can override possible -e set by the user.
+            # More elegant solution is needed.
+            . ( $self->jobs_error_level ? ' -e ' . $self->jobs_error_level : '' )
+            . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
@@ -480,11 +494,11 @@ sub _wait_for_jobs {
             sleep 1;
         }
 
-        # Both of the conditions below are necessary. 
+        # Both of the conditions below are necessary.
         # - $total_doc_number might be unknown (i.e. 0) before all_jobs_finished
         # - even if all_jobs_finished, we must wait for forwarding all output files
         # Note that if $current_doc_number == $total_doc_number,
-        # the output of the last doc was not forwarded yet. 
+        # the output of the last doc was not forwarded yet.
         $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
     }
     return;
@@ -532,8 +546,8 @@ sub _execute_on_cluster {
 
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files $directory";
+        rmtree $directory or log_fatal $!;
 
-        #rmtree $directory or log_fatal $!;
         #system "rm -r $directory";
     }
 }

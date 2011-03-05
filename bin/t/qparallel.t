@@ -24,7 +24,7 @@ SKIP: {
         $doc->save("paratest$i.treex");
     }
 
-    my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --cleanup"
+    my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
         . " Eval document='print \$document->get_attr(q(description))'"
         . " -g 'paratest*.treex'";
 
