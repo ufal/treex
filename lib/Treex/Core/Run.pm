@@ -40,11 +40,11 @@ has 'error_level' => (
     documentation => q{Possible values: ALL, DEBUG, INFO, WARN, FATAL},
 );
 
-has 'jobs_error_level' => (
+has 'forward_error_level' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'E',
     is            => 'rw', isa => 'ErrorLevel', default => 'WARN',
-    documentation => q{error level of the distributed jobs},
+    documentation => q{messages with this level or higher will be forwarded from the distributed jobs to the main STDERR},
 );
 
 has 'lang' => (
@@ -363,14 +363,10 @@ sub _create_job_scripts {
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
+
+        # TODO: if the original line contains -- file.treex, this doesn't work
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output "
             . ( join " ", @{ $self->argv } )
-
-            # TODO: if the original line contains -- file.treex, this doesn't work
-            # However, -e must be added at the end
-            # so it can override possible -e set by the user.
-            # More elegant solution is needed.
-            . ( $self->jobs_error_level ? ' -e ' . $self->jobs_error_level : '' )
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
@@ -450,7 +446,16 @@ sub _print_output_files {
         }
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
-            print STDERR "job$jobnumber: $_" while <$FILE>;
+            my $report = $self->forward_error_level;
+            while(<$FILE>){
+                #TODO: better implementation
+                # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
+                my (undef, $level) = /^(TMT|TREEX)-(DEBUG|INFO|WARN|FATAL)/;
+                next if $level =~ /^D/ && $report !~ /^[AD]/;
+                next if $level =~ /^I/ && $report !~ /^[ADI]/;
+                next if $level =~ /^W/ && $report !~ /^[ADIW]/;
+                print STDERR "job$jobnumber: $_";
+            }
         }
     }
     return;
