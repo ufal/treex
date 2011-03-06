@@ -78,6 +78,12 @@ sub number_of_documents_per_this_job {
     return $div + ($rest >= $self->jobindex ? 1 : 0);
 }
 
+sub reset {
+    my ($self) = @_;
+    $self->_set_doc_number(0);
+    return;
+}
+
 1;
 
 __END__

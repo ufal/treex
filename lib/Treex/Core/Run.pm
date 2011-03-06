@@ -132,7 +132,7 @@ has 'outdir' => (
 has 'qsub' => (
     traits        => ['Getopt'],
     is            => 'ro',
-    isa           => 'String',
+    isa           => 'Str',
     documentation => 'Additional parameters passed to qsub. Requires -p.',
 );
 
@@ -141,6 +141,13 @@ has 'local' => (
     is            => 'ro',
     isa           => 'Bool',
     documentation => 'Run jobs locally (might help with multi-core machines). Requires -p.',
+);
+
+has 'watch' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => 're-run when the given file is changed TODO better doc',
 );
 
 has 'command' => (
@@ -205,25 +212,52 @@ sub BUILD {
 
 sub execute {
     my ($self) = @_;
-
-    if ( $self->parallel and not defined $self->jobindex ) {
-        log_info "Parallelized execution. This process is the head coordinating "
-            . $self->jobs . " server processes.";
-        $self->_execute_on_cluster();
+    my $done = 0;
+    my $time;
+    my $watch = $self->watch;
+    
+    if (defined $watch){        
+        log_fatal "Watch file $watch does not exists" if ! -f $watch;
+        $time = (stat $watch)[9];
     }
 
-    # non-parallelized execution, or one of distributed processes
-    else {
-        if ( $self->parallel ) {
-            log_info "Parallelized execution. This process is one out of "
-                . $self->jobs . " server processes, jobindex==" . $self->jobindex;
+    while ( !$done ) {
+        if ( $self->parallel and not defined $self->jobindex ) {
+            log_info "Parallelized execution. This process is the head coordinating "
+                . $self->jobs . " server processes.";
+            $self->_execute_on_cluster();
         }
+
+        # non-parallelized execution, or one of distributed processes
         else {
-            log_info "Local (single-process) execution.";
+            if ( $self->parallel ) {
+                log_info "Parallelized execution. This process is one out of "
+                    . $self->jobs . " server processes, jobindex==" . $self->jobindex;
+            }
+            else {
+                log_info "Local (single-process) execution.";
+            }
+            $self->_execute_locally();
         }
-        $self->_execute_locally();
-    }
 
+        $done = 1;
+        my $info_written = 0;
+        WATCH_CHANGE:
+        while (defined $watch && -f $watch){
+            my $new_time = (stat $watch)[9];
+            if ($new_time > $time){
+                $time = $new_time;
+                $done = 0;
+                last WATCH_CHANGE;
+            }
+            if (!$info_written){
+                log_info "Watchin '$watch' file. Touch it to re-run, delete to quit.";
+                $info_written = 1;
+            }
+            sleep 1;
+        }
+    }
+    return;
 }
 
 my %READER_FOR = (
@@ -291,7 +325,13 @@ sub _execute_locally {
         $scen_str = 'SetGlobal selector=' . $self->selector . " $scen_str";
     }
 
-    my $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
+    my $scenario = $self->scenario;
+    if (!defined $scenario){
+        $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
+    } else {
+        $scenario->reset();
+    }
+    
 
     my $number_of_docs;
     if ( $self->jobindex ) {
@@ -611,3 +651,25 @@ sub treex {
 
 1;
 
+__END__
+
+--watch option
+
+SYNOPSIS:
+touch timestamp.file
+treex --watch=timestamp.file my.scen & # or without & and open another terminal
+# after all documents are processed, treex is still running, watching timestamp.file
+# you can modify any modules/blocks and then
+touch timestamp.file
+# All modified modules will be reloaded (the number of reloaded modules is printed).
+# The document reader is reset, so it starts reading the first file again.
+# To exit this "watching loop" either rm timestamp.file or press Ctrl^C.
+
+BENEFITS:
+* much faster development cycles (e.g. most time of en-cs translation is spent on loading)
+* Now I have some non-deterministic problems with loading NER::Stanford
+  - using --watch I get it loaded on all jobs once and then I don't have to reload it.
+
+TODO:
+* modules are just reloaded, no constructors are called yet
+* not tested on cluster yet (but it should work there)

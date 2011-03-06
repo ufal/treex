@@ -117,4 +117,9 @@ sub number_of_documents {
     return $self->_files_per_zone;
 }
 
+after 'reset' => sub {
+    my $self = shift;
+    $self->_set_file_number(0);
+};
+
 1;
