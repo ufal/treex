@@ -217,7 +217,7 @@ sub execute {
     my $watch = $self->watch;
     
     if (defined $watch){        
-        log_fatal "Watch file $watch does not exists" if ! -f $watch;
+        log_fatal "Watch file '$watch' does not exists" if ! -f $watch;
         $time = (stat $watch)[9];
     }
 
@@ -251,7 +251,7 @@ sub execute {
                 last WATCH_CHANGE;
             }
             if (!$info_written){
-                log_info "Watchin '$watch' file. Touch it to re-run, delete to quit.";
+                log_info "Watching '$watch' file. Touch it to re-run, delete to quit.";
                 $info_written = 1;
             }
             sleep 1;
@@ -325,13 +325,15 @@ sub _execute_locally {
         $scen_str = 'SetGlobal selector=' . $self->selector . " $scen_str";
     }
 
+    my $loading_started = time;
     my $scenario = $self->scenario;
     if (!defined $scenario){
         $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
     } else {
         $scenario->reset();
     }
-    
+    my $loading_ended = time;
+    log_info "Loading the scenario took " . ($loading_ended - $loading_started) . " seconds";
 
     my $number_of_docs;
     if ( $self->jobindex ) {
@@ -353,6 +355,7 @@ sub _execute_locally {
 
     $self->set_scenario($scenario);
     $self->scenario->run();
+    log_info "Running the scenario took " . (time - $loading_ended) . " seconds";
 
     if ( $self->jobindex && $self->jobindex == 1 && !$number_of_docs ) {
         $number_of_docs = $scenario->document_reader->doc_number;
