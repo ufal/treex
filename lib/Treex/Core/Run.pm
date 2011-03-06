@@ -215,8 +215,8 @@ sub execute {
     my $done = 0;
     my $time;
     my $watch = $self->watch;
-    
-    if (defined $watch){        
+
+    if (defined $watch){
         log_fatal "Watch file '$watch' does not exists" if ! -f $watch;
         $time = (stat $watch)[9];
     }
@@ -454,6 +454,7 @@ sub _run_job_scripts {
         else {
             sleep(1);
         }
+        $self->_check_job_errors;
     }
     log_info "All " . $self->jobs . " jobs started. Waiting for loading scenarios...";
 
@@ -468,6 +469,7 @@ sub _run_job_scripts {
         else {
             sleep(1);
         }
+        $self->_check_job_errors;
     }
     log_info "All " . $self->jobs . " jobs loaded. Waiting for them to be finished...";
     return;
@@ -543,6 +545,8 @@ sub _wait_for_jobs {
             sleep 1;
         }
 
+        $self->_check_job_errors;
+
         # Both of the conditions below are necessary.
         # - $total_doc_number might be unknown (i.e. 0) before all_jobs_finished
         # - even if all_jobs_finished, we must wait for forwarding all output files
@@ -551,6 +555,25 @@ sub _wait_for_jobs {
         $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
     }
     return;
+}
+
+sub _check_job_errors {
+    my ($self) = @_;
+    if (glob $self->workdir.'/output/*fatalerror') {
+        log_info 'At least one job crashed with fatal error. All remaining jobs will be interrupted now.';
+        $self->_delete_jobs_and_exit;
+    }
+}
+
+sub _delete_jobs_and_exit {
+    my ($self) = @_;
+
+    foreach my $job ( @{ $self->sge_job_numbers } ) {
+        log_info "Deleting job $job";
+        system "qdel $job";
+    }
+    log_info 'You may want to inspect generated files in '.$self->workdir.'/output/';
+    exit;
 }
 
 sub _execute_on_cluster {
@@ -582,13 +605,8 @@ sub _execute_on_cluster {
     $SIG{INT} =
         sub {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
-        foreach my $job ( @{ $self->sge_job_numbers } ) {
-            log_info "Deleting job $job";
-            system "qdel $job";
-        }
-        log_info "You may want to inspect generated files in $directory/output";
-        exit;
-        };
+        $self->_delete_jobs_and_exit();
+    };
 
     $self->_create_job_scripts();
     $self->_run_job_scripts();
@@ -616,6 +634,9 @@ sub _redirect_output {
     STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
     STDERR->fdopen( \*ERROR,  'w' ) or die $!;
     STDOUT->autoflush(1);
+
+    # special file is touched if log_fatal is called
+    Treex::Core::Log::add_hook('FATAL', sub { eval "system \'touch $stem.fatalerror\'" });
 }
 
 # not a method !
