@@ -58,6 +58,7 @@ sub get_error_level {
 # fatal error messages can't be surpressed
 sub fatal {
     my $message = shift;
+    run_hooks('FATAL');
     if ($unfinished_line) {
         print STDERR "\n";
         $unfinished_line = 0;
@@ -148,7 +149,7 @@ sub info {
         $line .= "TREEX-INFO:\t";
     }
     $line .= $message;
-    
+
     if ($same_line){
         $unfinished_line = 1;
     } else {
@@ -188,6 +189,24 @@ sub log_warn            { Treex::Core::Log::warn @_; }
 sub log_info            { info @_; }
 sub log_set_error_level { set_error_level @_; }
 sub log_debug           { debug @_; }
+
+# ---------- HOOKS -----------------
+
+my %hooks; # subroutines can be associated with reported events
+
+sub add_hook {
+    my ($level, $subroutine) = @_;
+    $hooks{$level} = [] unless $hooks{$level};
+    push @{$hooks{$level}},$subroutine;
+}
+
+sub run_hooks {
+    my ($level) = @_;
+    foreach my $subroutine (@{$hooks{$level}}) {
+        &$subroutine;
+    }
+}
+
 
 1;
 
