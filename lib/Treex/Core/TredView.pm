@@ -17,6 +17,9 @@ sub get_nodelist_hook {
     return unless $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
 
     my $bundle = $fsfile->tree($treeNo);
+    bless $bundle, 'Treex::Core::Bundle'; # TODO: how to make this automatically? 
+    # Otherwise (in certain circumstances) $bundle->get_all_zones
+    # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
     my @nodes = map { $_->get_descendants( { add_self => 1, ordered => 1 } ) }
         map { $_->get_all_trees }
