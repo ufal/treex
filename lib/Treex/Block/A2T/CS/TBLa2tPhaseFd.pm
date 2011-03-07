@@ -17,9 +17,9 @@ my ( $lexf1, $lexf2, $outf );    # numbers of 2 features from the lexicon file a
 BEGIN
 {
 
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/T-func.lex" , 'user' );
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/feat", 'user' );
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/R", 'user' );
+    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/T-func.lex" , 'user' ); # list of possible functors for a given afun
+    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/feat", 'user' );        # list of used features
+    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/R", 'user' );           # transformation-based learning rules
 
     my $f;                       # the handle for all the files
 
@@ -182,7 +182,8 @@ sub process_ttree {
 
 Assumes Czech t-trees with correct structure, C<lemma>, C<tag>, C<is_member> and C<afun>. Fills C<functors>.
 
-Does not use external tools. Uses the same model as phase F does.
+Does not use external tools. Uses the same transformation based learning model as phase F (which requires
+fnTBL toolkit) does.
 
 =back
 
