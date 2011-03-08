@@ -435,7 +435,7 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, "cd $workdir && qsub -cwd " . '-q *@t*,*@s*,*@f*,*@o*,*@c*' . " -e output/ -S /bin/bash $script_filename |";
+            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |";
 
             my $firstline = <$QSUB>;
             chomp $firstline;
