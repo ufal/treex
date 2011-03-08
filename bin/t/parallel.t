@@ -30,8 +30,11 @@ foreach my $i (1..$number_of_files) {
 # QUESTION 2: How to fix this?
 # escape/quote all parameter written to scripts.
 
-my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local ".
-    "Eval document='print 1;' -g 'paratest*.treex' --cleanup";
+#my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local ".
+#    "Eval document='print 1;' -g 'paratest*.treex' --cleanup";
+
+my $cmdline_arguments = "-p --jobs=$number_of_jobs --local ".
+    "Eval document='print 1;' -g 'paratest*.treex'";
 
 stdout_is( sub { treex $cmdline_arguments },
    '1'x$number_of_files ,
