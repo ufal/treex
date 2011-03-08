@@ -7,7 +7,7 @@ use Test::More tests => 1;
 
 use Treex::Core;
 
-my $test_file  = "/net/work/people/toman/pcedt_data/pdtpml/00/wsj_0005_en.t.gz";
+my $test_file  = "/net/work/people/toman/pcedt_data/pdtpml/00/wsj_0010_en.t.gz";
 my $schema_dir = "/net/os/h/zabokrtsky/svn_checkouts/pcedt_release/schemata";
 
 my $scenario = Treex::Core::Scenario->new(
