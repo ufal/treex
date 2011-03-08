@@ -505,6 +505,7 @@ sub _print_output_files {
                 #TODO: better implementation
                 # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
                 my ( undef, $level ) = /^(TMT|TREEX)-(DEBUG|INFO|WARN|FATAL)/;
+                $level ||= '';
                 next if $level =~ /^D/ && $report !~ /^[AD]/;
                 next if $level =~ /^I/ && $report !~ /^[ADI]/;
                 next if $level =~ /^W/ && $report !~ /^[ADIW]/;
