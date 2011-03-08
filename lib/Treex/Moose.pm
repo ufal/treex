@@ -4,7 +4,6 @@ use Moose;
 use Moose::Exporter;
 use Moose::Util::TypeConstraints;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;
-use MooseX::Params::Validate;
 use Treex::Core::Log;
 use Treex::Core::Config;
 use Treex::Core::Resource;
@@ -13,6 +12,11 @@ use List::Util;
 use Scalar::Util;
 use Readonly;
 use Data::Dumper;
+
+# Validation temporarily disabled because it seems to be slow.
+#use MooseX::Params::Validate;
+
+sub pos_validated_list { return @{ $_[0] }; }
 
 my ( $import, $unimport, $init_meta ) =
     Moose::Exporter->build_import_methods(
@@ -32,8 +36,10 @@ my ( $import, $unimport, $init_meta ) =
         \&Readonly::Readonly,
         \&Scalar::Util::weaken,
         \&Data::Dumper::Dumper,
-        \&MooseX::Params::Validate::pos_validated_list,
         \&Moose::Util::TypeConstraints::enum,
+
+        #\&MooseX::Params::Validate::pos_validated_list,
+        \&pos_validated_list,
         ]
     );
 
@@ -44,174 +50,174 @@ sub import {
 
 subtype 'Selector'
     => as 'Str'
-    => where { m/^[a-z\d]*$/i }
-    => message {"Selector must =~ /^[a-z\\d]*\$/i. You've provided $_"}; #TODO: this messege is not printed
+    => where {m/^[a-z\d]*$/i}
+=> message {"Selector must =~ /^[a-z\\d]*\$/i. You've provided $_"};    #TODO: this messege is not printed
 
 subtype 'Layer'
     => as 'Str'
     => where {m/^[ptan]$/i}
 => message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
 
-subtype 'Message'                       #nonempty string
+subtype 'Message'                                                       #nonempty string
     => as 'Str'
     => where { $_ ne '' }
 => message {"Message must be nonempty"};
 
 subtype 'Id'
-    => as 'Str';                        #preparation for possible future constraints
+    => as 'Str';                                                        #preparation for possible future constraints
 
 # ISO 639-1 language code with some extensions from ISO 639-2
 my @LANG_CODES = (
 
     # major languages
-    'en',                               # English
-    'de',                               # German
-    'fr',                               # French
-    'es',                               # Spanish
-    'it',                               # Italian
-    'ru',                               # Russian
-    'ar',                               # Arabic
-    'zh',                               # Chinese
+    'en',                                                               # English
+    'de',                                                               # German
+    'fr',                                                               # French
+    'es',                                                               # Spanish
+    'it',                                                               # Italian
+    'ru',                                                               # Russian
+    'ar',                                                               # Arabic
+    'zh',                                                               # Chinese
 
     # other Slavic languages
-    'cs',                               # Czech
-    'sk',                               # Slovak
-    'pl',                               # Polish
-    'dsb',                              # Lower Sorbian
-    'hsb',                              # Upper Sorbian
-    'be',                               # Belarusian
-    'uk',                               # Ukrainian
-    'sl',                               # Slovene
-    'hr',                               # Croatian
-    'sr',                               # Serbian
-    'mk',                               # Macedonian
-    'bg',                               # Bulgarian
-    'cu',                               # Old Church Slavonic
+    'cs',                                                               # Czech
+    'sk',                                                               # Slovak
+    'pl',                                                               # Polish
+    'dsb',                                                              # Lower Sorbian
+    'hsb',                                                              # Upper Sorbian
+    'be',                                                               # Belarusian
+    'uk',                                                               # Ukrainian
+    'sl',                                                               # Slovene
+    'hr',                                                               # Croatian
+    'sr',                                                               # Serbian
+    'mk',                                                               # Macedonian
+    'bg',                                                               # Bulgarian
+    'cu',                                                               # Old Church Slavonic
 
     # other Germanic languages
-    'nl',                               # Dutch
-    'af',                               # Afrikaans
-    'fy',                               # Frisian
-    'lb',                               # Luxemburgish
-    'yi',                               # Yiddish
-    'da',                               # Danish
-    'sv',                               # Swedish
-    'no',                               # Norwegian
-    'nn',                               # Nynorsk (New Norwegian)
-    'fo',                               # Faroese
-    'is',                               # Icelandic
+    'nl',                                                               # Dutch
+    'af',                                                               # Afrikaans
+    'fy',                                                               # Frisian
+    'lb',                                                               # Luxemburgish
+    'yi',                                                               # Yiddish
+    'da',                                                               # Danish
+    'sv',                                                               # Swedish
+    'no',                                                               # Norwegian
+    'nn',                                                               # Nynorsk (New Norwegian)
+    'fo',                                                               # Faroese
+    'is',                                                               # Icelandic
 
     # other Romance and Italic languages
-    'la',                               # Latin
-    'pt',                               # Portuguese
-    'gl',                               # Galician
-    'ca',                               # Catalan
-    'oc',                               # Occitan
-    'rm',                               # Rhaeto-Romance
-    'co',                               # Corsican
-    'sc',                               # Sardinian
-    'ro',                               # Romanian
-    'mo',                               # Moldovan (deprecated: use Romanian)
+    'la',                                                               # Latin
+    'pt',                                                               # Portuguese
+    'gl',                                                               # Galician
+    'ca',                                                               # Catalan
+    'oc',                                                               # Occitan
+    'rm',                                                               # Rhaeto-Romance
+    'co',                                                               # Corsican
+    'sc',                                                               # Sardinian
+    'ro',                                                               # Romanian
+    'mo',                                                               # Moldovan (deprecated: use Romanian)
 
     # Celtic languages
-    'ga',                               # Irish
-    'gd',                               # Scottish
-    'cy',                               # Welsh
-    'br',                               # Breton
+    'ga',                                                               # Irish
+    'gd',                                                               # Scottish
+    'cy',                                                               # Welsh
+    'br',                                                               # Breton
 
     # Baltic languages
-    'lt',                               # Lithuanian
-    'lv',                               # Latvian
+    'lt',                                                               # Lithuanian
+    'lv',                                                               # Latvian
 
     # other Indo-European languages in Europe and Caucasus
-    'sq',                               # Albanian
-    'el',                               # Greek
-    'hy',                               # Armenian
+    'sq',                                                               # Albanian
+    'el',                                                               # Greek
+    'hy',                                                               # Armenian
 
     # Iranian languages
-    'fa',                               # Persian
-    'ku-latn',                          # Kurdish in Latin script
-    'ku-arab',                          # Kurdish in Arabic script
-    'ku-cyrl',                          # Kurdish in Cyrillic script
-    'os',                               # Ossetic
-    'tg',                               # Tajiki (in Cyrillic script)
-    'ps',                               # Pashto
+    'fa',                                                               # Persian
+    'ku-latn',                                                          # Kurdish in Latin script
+    'ku-arab',                                                          # Kurdish in Arabic script
+    'ku-cyrl',                                                          # Kurdish in Cyrillic script
+    'os',                                                               # Ossetic
+    'tg',                                                               # Tajiki (in Cyrillic script)
+    'ps',                                                               # Pashto
 
     # Indo-Aryan languages
-    'ks',                               # Kashmiri (in Arabic script)
-    'sd',                               # Sindhi
-    'pa',                               # Punjabi
-    'ur',                               # Urdu
-    'hi',                               # Hindi
-    'gu',                               # Gujarati
-    'mr',                               # Marathi
-    'ne',                               # Nepali
-    'or',                               # Oriya
-    'bn',                               # Bengali
-    'as',                               # Assamese
-    'rmy',                              # Romany
+    'ks',                                                               # Kashmiri (in Arabic script)
+    'sd',                                                               # Sindhi
+    'pa',                                                               # Punjabi
+    'ur',                                                               # Urdu
+    'hi',                                                               # Hindi
+    'gu',                                                               # Gujarati
+    'mr',                                                               # Marathi
+    'ne',                                                               # Nepali
+    'or',                                                               # Oriya
+    'bn',                                                               # Bengali
+    'as',                                                               # Assamese
+    'rmy',                                                              # Romany
 
     # other Semitic languages
-    'mt',                               # Maltese
-    'he',                               # Hebrew
-    'am',                               # Amharic
+    'mt',                                                               # Maltese
+    'he',                                                               # Hebrew
+    'am',                                                               # Amharic
 
     # Finno-Ugric languages
-    'hu',                               # Hungarian
-    'fi',                               # Finnish
-    'et',                               # Estonian
+    'hu',                                                               # Hungarian
+    'fi',                                                               # Finnish
+    'et',                                                               # Estonian
 
     # other European and Caucasian languages
-    'eu',                               # Basque
-    'ka',                               # Georgian
-    'ab',                               # Abkhaz
-    'ce',                               # Chechen
+    'eu',                                                               # Basque
+    'ka',                                                               # Georgian
+    'ab',                                                               # Abkhaz
+    'ce',                                                               # Chechen
 
     # Turkic languages
-    'tr',                               # Turkish
-    'az',                               # Azeri
-    'cv',                               # Chuvash
-    'ba',                               # Bashkir
-    'tt',                               # Tatar
-    'tk',                               # Turkmen
-    'uz',                               # Uzbek
-    'kaa',                              # Karakalpak
-    'kk',                               # Kazakh
-    'ky',                               # Kyrgyz
-    'ug',                               # Uyghur
-    'sah',                              # Yakut
+    'tr',                                                               # Turkish
+    'az',                                                               # Azeri
+    'cv',                                                               # Chuvash
+    'ba',                                                               # Bashkir
+    'tt',                                                               # Tatar
+    'tk',                                                               # Turkmen
+    'uz',                                                               # Uzbek
+    'kaa',                                                              # Karakalpak
+    'kk',                                                               # Kazakh
+    'ky',                                                               # Kyrgyz
+    'ug',                                                               # Uyghur
+    'sah',                                                              # Yakut
 
     # other Altay languages
-    'xal',                              # Kalmyk
-    'bxr',                              # Buryat
-    'mn',                               # Mongol
-    'ko',                               # Korean
-    'ja',                               # Japanese
+    'xal',                                                              # Kalmyk
+    'bxr',                                                              # Buryat
+    'mn',                                                               # Mongol
+    'ko',                                                               # Korean
+    'ja',                                                               # Japanese
 
     # Dravidian languages
-    'te',                               # Telugu
-    'kn',                               # Kannada
-    'ml',                               # Malayalam
-    'ta',                               # Tamil
+    'te',                                                               # Telugu
+    'kn',                                                               # Kannada
+    'ml',                                                               # Malayalam
+    'ta',                                                               # Tamil
 
     # Sino-Tibetan languages
-    'zh',                               # Mandarin Chinese
-    'hak',                              # Hakka
-    'nan',                              # Taiwanese
-    'yue',                              # Cantonese
-    'lo',                               # Lao
-    'th',                               # Thai
-    'my',                               # Burmese
-    'bo',                               # Tibetan
+    'zh',                                                               # Mandarin Chinese
+    'hak',                                                              # Hakka
+    'nan',                                                              # Taiwanese
+    'yue',                                                              # Cantonese
+    'lo',                                                               # Lao
+    'th',                                                               # Thai
+    'my',                                                               # Burmese
+    'bo',                                                               # Tibetan
 
     # Austro-Asian languages
-    'vi',                               # Vietnamese
-    'km',                               # Khmer
+    'vi',                                                               # Vietnamese
+    'km',                                                               # Khmer
 
     # other languages
-    'sw',                               # Swahili
-    'eo',                               # Esperanto
-    'und',                              # ISO 639-2 code for undetermined/unknown language
+    'sw',                                                               # Swahili
+    'eo',                                                               # Esperanto
+    'und',                                                              # ISO 639-2 code for undetermined/unknown language
 );
 
 enum 'LangCode' => @LANG_CODES;
