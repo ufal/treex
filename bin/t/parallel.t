@@ -18,23 +18,8 @@ foreach my $i (1..$number_of_files) {
     $doc->save("paratest$i.treex");
 }
 
-# TODO: The same command executed from command line does not work because
-#       the shell converts -g 'paratest*.treex' to -g paratest*.treex
-#       and this is executed from the parallel scripts with another shell
-#       which converts this to -g paratest1.treex paratest2.treex ...
-#       but this is not a valid syntax (paratest2.treex is interpreted as a block name).
-#
-# QUESTION 1: How to test this?
-# system "treex $cmdline_arguments";
-#
-# QUESTION 2: How to fix this?
-# escape/quote all parameter written to scripts.
-
-#my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local ".
-#    "Eval document='print 1;' -g 'paratest*.treex' --cleanup";
-
-my $cmdline_arguments = "-p --jobs=$number_of_jobs --local ".
-    "Eval document='print 1;' -g 'paratest*.treex'";
+my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local ".
+    "Eval document='print \"1\";' -g 'paratest*.treex'";
 
 stdout_is( sub { treex $cmdline_arguments },
    '1'x$number_of_files ,

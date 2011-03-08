@@ -395,6 +395,13 @@ sub _read_total_doc_number {
     }
 }
 
+
+sub _quote_argument {
+    my $arg = shift;
+    $arg =~ s/([\`\\\"\$])/\\$1/g;
+    return '"'.$arg.'"';
+}
+
 sub _create_job_scripts {
     my ($self)      = @_;
     my $current_dir = Cwd::cwd;
@@ -410,7 +417,7 @@ sub _create_job_scripts {
 
         # TODO: if the original line contains -- file.treex, this doesn't work
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output "
-            . ( join " ", @{ $self->argv } )
+            . ( join " ", map {_quote_argument($_)} @{ $self->argv } )
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
@@ -646,14 +653,7 @@ sub treex {
 
     if ( ref($arguments) eq "ARRAY" ) {
 
-        @ARGV = map {                              # dirty!!!, god knows why spaces in arguments are not processed correctly if they come from command line
-            if (/^(\S+=)(.+ .+)$/) {
-                split( / /, "$1'$2'" );
-            }
-            else {
-                $_;
-            }
-        } @$arguments;
+        @ARGV = @$arguments;
 
         my $idx = first_index { $_ eq '--' } @ARGV;
         my %args;

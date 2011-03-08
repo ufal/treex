@@ -202,7 +202,6 @@ sub add_hook {
 
 sub run_hooks {
     my ($level) = @_;
-    print STDERR "XXXX HOOK EXECUTED\n";
     foreach my $subroutine (@{$hooks{$level}}) {
         &$subroutine;
     }
