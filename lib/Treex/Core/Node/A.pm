@@ -13,7 +13,7 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 # Original a-layer attributes
 has [
     qw(afun is_member is_parenthesis_root conll_deprel
-       edge_to_collapse is_auxiliary clause_number is_clause_head)
+        edge_to_collapse is_auxiliary clause_number is_clause_head)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
@@ -99,7 +99,7 @@ sub get_eparents {
     # Otherwise, there is no chance getting effective parents.
     if ( !$self->get_parent() ) {
         my $id = $self->get_attr('id');
-        log_warn("The node $id has no effective nor topological parent, using the root");
+        log_warn( "The node $id has no effective nor topological parent, using the root", 1 );
         return $self->get_root();
     }
 
@@ -165,14 +165,14 @@ sub _can_apply_eff {
     return 1 if !$error;
     my $method_name = ( caller 1 )[3];
     my $id          = $self->get_attr('id');
-    log_warn("$method_name called on $error ($id). Fallback to topological one.");
+    log_warn( "$method_name called on $error ($id). Fallback to topological one.", 1 );
     return 0;
 }
 
 sub _fallback_parent {
     my ($self) = @_;
     my $id = $self->get_attr('id');
-    log_warn("The node $id has no effective parent, using the topological one.");
+    log_warn( "The node $id has no effective parent, using the topological one.", 1 );
     return $self->get_parent();
 }
 
