@@ -6,9 +6,17 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 has encoding => (
-    is => 'ro',
-    default => 'utf8',
+    is            => 'ro',
+    default       => 'utf8',
     documentation => 'Output encoding. By default utf8.',
+);
+
+has join_resegmented => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'Print the sentences re-segmented'
+        . ' by W2A::ResegmentSentences on one line.',
 );
 
 sub BUILD {
@@ -18,7 +26,14 @@ sub BUILD {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    print $zone->sentence, "\n";
+    my $bundle_id = $zone->get_bundle()->id;
+    if ( $self->join_resegmented && $bundle_id =~ /_(\d+)of(\d+)$/ && $1 != $2 ) {
+        print $zone->sentence, " ";
+    }
+    else {
+        print $zone->sentence, "\n";
+    }
+    return;
 }
 
 1;

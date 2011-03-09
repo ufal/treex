@@ -19,24 +19,23 @@ sub process_bundle {
     log_fatal $bundle->_zone_name . ' contains no "sentence" attribute'
         if !defined $zone->sentence;
 
-    my @sentences = Segmentation::en::RuleBased::get_sentences($zone->sentence);
+    my @sentences = Segmentation::en::RuleBased::get_sentences( $zone->sentence );
 
-    if (@sentences > 1) {
-        log_info 'Splitting sentence: '.$zone->sentence;
-        my $doc = $bundle->get_document;
+    if ( @sentences > 1 ) {
+        log_debug 'Splitting sentence: ' . $zone->sentence;
+        my $doc                 = $bundle->get_document;
         my $number_of_sentences = @sentences;
-        $zone->set_sentence($sentences[0]);
-        $bundle->set_id($bundle->id."_1of$number_of_sentences";
+        $zone->set_sentence( $sentences[0] );
+        $bundle->set_id( $bundle->id . "_1of$number_of_sentences" );
 
-        foreach my $i (reverse (1..$#sentences)) {
+        foreach my $i ( reverse( 1 .. $#sentences ) ) {
             my $new_bundle = $doc->create_bundle( { after => $bundle } );
             my $new_bundle_zone = $new_bundle->create_zone( $self->language, $self->selector );
-            $new_bundle_zone->set_sentence($sentences[$i]);
-            $new_bundle->set_id($new_bundle->id."_".($i+1)."of${number_of_sentences}");
+            $new_bundle_zone->set_sentence( $sentences[$i] );
+            $new_bundle->set_id( $new_bundle->id . "_" . ( $i + 1 ) . "of${number_of_sentences}" );
         }
     }
 }
-
 
 1;
 
