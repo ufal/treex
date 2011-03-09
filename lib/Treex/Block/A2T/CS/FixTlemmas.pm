@@ -8,7 +8,7 @@ sub possadj_to_noun {
     my $adj_mlemma = shift;
     $adj_mlemma =~ /\^\(\*(\d+)(.+)?\)/;
     my $cnt         = $1;
-    my $suffix      = $2;
+    my $suffix      = $2 ? $2 : ""; # no suffix if not defined (Nobelův -> Nobel)
     my $noun_mlemma = $adj_mlemma;
     $noun_mlemma =~ s/\_.+//;
     $noun_mlemma =~ s/.{$cnt}$/$suffix/;
@@ -48,6 +48,8 @@ sub process_tnode {
 =over
 
 =item Treex::Block::A2T::CS::FixTlemmas
+
+Fixes t-lemmas for personal pronous, possesive adjectives and reflexiva tantum.
 
 =back
 
