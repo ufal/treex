@@ -60,13 +60,13 @@ sub set_attr {
     return $self->SUPER::set_attr( $attr_name, $attr_value );
 }
 
-#@overrides Treex::Core::Node::disconnect
-sub disconnect {
+#@overrides Treex::Core::Node::delete
+sub delete {
     my ( $self, $arg_ref ) = @_;
     foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node(undef);
     }
-    return $self->SUPER::disconnect($arg_ref);
+    return $self->SUPER::delete($arg_ref);
 }
 
 1;
