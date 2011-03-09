@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 
 sub possadj_to_noun {
     my $adj_mlemma = shift;
+
     $adj_mlemma =~ /\^\(\*(\d+)(.+)?\)/;
     my $cnt         = $1;
     my $suffix      = $2 ? $2 : ""; # no suffix if not defined (Nobelův -> Nobel)
@@ -28,7 +29,13 @@ sub process_tnode {
             $t_lemma = "#PersPron";
         }
         elsif ( $a_lex_node->tag =~ /^AU/ ) {
-            $t_lemma = lc( possadj_to_noun( $a_lex_node->lemma ) );
+            if ( $t_lemma =~ /^(.+)_/ ) {    # von_Ryanuv, de_Gaulluv
+                my $prefix = $1;
+                $t_lemma = lc( $prefix . "_" . possadj_to_noun( $a_lex_node->lemma ) );
+            }
+            else {
+                $t_lemma = lc( possadj_to_noun( $a_lex_node->lemma ) );
+            }
         }
 
     }
