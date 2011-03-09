@@ -215,6 +215,28 @@ sub get_attr {
     }
 }
 
+# numbering of bundles starts from 0
+sub get_position {
+    my ($self) = @_;
+
+    # search for position of the bundle
+    # (ineffective, because there's no caching of positions of bundles so far)
+    my $position_of_reference;
+    my $fsfile = $self->get_document->_pmldoc;
+    foreach my $position (0..$fsfile->lastTreeNo) {
+        if ($fsfile->tree($position) eq $self) {
+            $position_of_reference = $position;
+            last;
+        }
+    }
+
+    if (not defined $position_of_reference) {
+        log_fatal "document structure inconsistency: can't detect position of bundle $self";
+    }
+
+    return $position_of_reference;
+}
+
 
 __PACKAGE__->meta->make_immutable;
 

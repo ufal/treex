@@ -261,42 +261,21 @@ sub create_bundle {
     my $position_of_new;
 
     if ($arg_ref and ($arg_ref->{after} or $arg_ref->{before})) {
-
-        # search for position of the reference bundle
-        # (ineffective, because there's no caching of positions of bundles so far)
-        my $reference = ($arg_ref->{after}) ? $arg_ref->{after} : $arg_ref->{before};
-
-        my $position_of_reference = undef;
-
-        foreach my $position (0..$fsfile->lastTreeNo) {
-            if ($fsfile->tree($position) eq $reference) {
-                $position_of_reference = $position;
-                last;
-            }
-        }
-
-        if (not defined $position_of_reference) {
-            log_fatal "Bundle $arg_ref->{after} was not found, "
-                ."it can't be used as a reference position for inserting new bundle";
-        }
-
-
+        my $reference_bundle = ($arg_ref->{after}) ? $arg_ref->{after} : $arg_ref->{before};
+        my $position_of_reference = $reference_bundle->get_position;
         $position_of_new = $position_of_reference + ($arg_ref->{after} ? 1 : 0);
     }
 
-    # default: append at the end of the file
-    else {
-        # Minimal position is 0, maximal position is number of bundles minus 1.
-        # Next free position is equal to the current number of bundles.
+    else { # default: append at the end of the document
         $position_of_new = scalar( $self->get_bundles() );
     }
-
 
     $new_bundle = $fsfile->new_tree($position_of_new);
     $new_bundle->set_type_by_name( $fsfile->metaData('schema'), 'bundle.type' );
     bless $new_bundle, "Treex::Core::Bundle";    # is this correct/sufficient with Moose ????
     $new_bundle->_set_document($self);
-    $new_bundle->set_id( "s" . ( $position_of_new + 1 ) );
+
+    $new_bundle->set_id( "s" . ( $fsfile->lastTreeNo + 1 ) );
 
     return $new_bundle;
 }
