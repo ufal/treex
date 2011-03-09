@@ -165,8 +165,10 @@ has 'argv' => (
 
 has 'workdir' => (
     is            => 'rw',
-    traits        => ['NoGetopt'],
-    documentation => 'working directory for temporary files in parallelized processing',
+    traits        => ['Getopt'],
+    isa           => 'Str',
+    documentation => 'working directory for temporary files in parallelized processing '.
+        '(if not specified, directories such as 001-cluster-run, 002-cluster-run etc. are created)',
 );
 
 has 'sge_job_numbers' => (
@@ -444,7 +446,7 @@ sub _run_job_scripts {
             }
             else {
                 log_fatal 'Job number not detected after the attempt at submitting the job. ' .
-                    'Perhaps it was not possible to submit the job. See files in $workdir/output';
+                    "Perhaps it was not possible to submit the job. See files in $workdir/output";
             }
         }
     }
@@ -588,26 +590,30 @@ sub _delete_jobs_and_exit {
 sub _execute_on_cluster {
     my ($self) = @_;
 
-    # create working directory
-    my $counter;
-    my $directory;
-    do {
-        $counter++;
-        $directory = sprintf "%03d-cluster-run", $counter;
+    # create working directory, if not specified as a command line option
+    if (not defined $self->workdir) {
+        my $counter;
+        my $directory;
+        do {
+            $counter++;
+            $directory = sprintf "%03d-cluster-run", $counter;
 
-        # TODO There is a strange problem when executing e.g.
-        #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
-        # where qparallel.t executes treex -p --cleanup ...
-        # I don't know the real cause of the bug, but as a workaround
-        # you can omit --cleanup or uncomment next line
-        # $directory .= sprintf "%03d-cluster-run", rand 1000;
+            # TODO There is a strange problem when executing e.g.
+            #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
+            # where qparallel.t executes treex -p --cleanup ...
+            # I don't know the real cause of the bug, but as a workaround
+            # you can omit --cleanup or uncomment next line
+            # $directory .= sprintf "%03d-cluster-run", rand 1000;
         }
-        while ( -d $directory );
-    $self->set_workdir($directory);
-    log_info "Creating working directory $directory";
-    mkdir $directory or log_fatal $!;
+            while ( -d $directory );
+        $self->set_workdir($directory);
+        log_info "Creating working directory $directory";
+        mkdir $directory or log_fatal $!;
+    }
+
+
     foreach my $subdir (qw(output scripts)) {
-        mkdir "$directory/$subdir" or log_fatal $!;
+        mkdir $self->workdir."/$subdir" or log_fatal $!;
     }
 
     # catching Ctrl-C interruption
@@ -628,8 +634,8 @@ sub _execute_on_cluster {
     log_info "All jobs finished.";
 
     if ( $self->cleanup ) {
-        log_info "Deleting the directory with temporary files $directory";
-        rmtree $directory or log_fatal $!;
+        log_info "Deleting the directory with temporary files ".$self->workdir;
+        rmtree $self->workdir or log_fatal $!;
     }
 }
 
