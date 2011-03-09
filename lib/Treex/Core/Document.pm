@@ -107,7 +107,8 @@ sub BUILD {
 
         foreach my $bundle ( $self->get_bundles ) {
             bless $bundle, 'Treex::Core::Bundle';
-
+            $bundle->_set_document($self);
+            
             if ( defined $bundle->{zones} ) {
                 foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
 
@@ -125,10 +126,21 @@ sub BUILD {
                         }
                         $tree->_set_zone($zone);
                     }
+                    
+                    # TODO: Backward links from a-nodes to n-nodes
+                    # should be created in n-nodes' constructors,
+                    # which must be called after constructing a-nodes.
+                    # TODO: Now, we don't call node constructors at all
+                    # during loading, we just re-bless Treex::PML::Nodes.
+                    if ($zone->has_ntree){
+                        foreach my $nnode ($zone->get_ntree()->get_descendants()) {
+                            foreach my $anode ($nnode->get_anodes()){
+                                $anode->_set_n_node($nnode);
+                            }
+                        } 
+                    }
                 }
             }
-
-            $bundle->_set_document($self);
         }
     }
 }

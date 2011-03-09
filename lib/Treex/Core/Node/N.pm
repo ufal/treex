@@ -48,8 +48,8 @@ sub set_attr {
     # However, set_attr('m.rf',$m_rf) is also used during BUILD before the node
     # is assigned to any bundle (nor document) and we cannot find the m-node.
     if ( $attr_name eq 'a.rf' && $self->get_bundle() ) {
-        foreach my $m_node ( $self->get_anodes() ) {
-            $m_node->_set_n_node(undef);
+        foreach my $a_node ( $self->get_anodes() ) {
+            $a_node->_set_n_node(undef);
         }
         my $doc = $self->get_document();
         my @new_m_nodes = $attr_value ? map { $doc->get_node_by_id($_) } @{$attr_value} : ();
