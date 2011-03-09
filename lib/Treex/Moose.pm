@@ -16,7 +16,18 @@ use Data::Dumper;
 # Validation temporarily disabled because it seems to be slow.
 #use MooseX::Params::Validate;
 
-sub pos_validated_list { return @{ $_[0] }; }
+sub pos_validated_list {
+    my $args_ref = shift;
+    my $i        = 0;
+    while ( ref $_[0] eq 'HASH' ) {
+        my $spec = shift;
+        if ( defined $spec->{default} ) {
+            $args_ref->[$i] ||= $spec->{default};
+        }
+        $i++;
+    }
+    return @{$args_ref};
+}
 
 my ( $import, $unimport, $init_meta ) =
     Moose::Exporter->build_import_methods(
