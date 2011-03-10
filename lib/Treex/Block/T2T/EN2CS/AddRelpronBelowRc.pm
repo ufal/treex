@@ -34,9 +34,12 @@ sub process_ttree {
                 t_lemma_origin   => 'Add_relpron_below_rc',
                 'gram/sempos'    => 'n.pron.indef',
                 'gram/indeftype' => 'relat',
-                'coref_gram.rf'  => [ $gram_antec->id ],
+
+                #TODO this does not work since moved to Treex
+                #'coref_gram.rf'  => [ $gram_antec->id ],
             }
         );
+        $relpron->set_deref_attr( 'coref_gram.rf', [$gram_antec] );
 
         $relpron->shift_before_subtree($rc_head);
     }
