@@ -1,0 +1,1261 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Část 1: atributy související s gramatémy
+# a výčty jejich možných hodnot
+# notace: název atributu následovaný dvojtečkou
+# a výčtem možných hodnot oddělených čárkou,
+# vše ukončeno středníkem
+
+
+WordClass: N.denot, # substantiva pojmenovací
+	N.denot.neg, # substantiva pojmenovací s formal. zprac. negace
+	N.pron.def.demon, # např. substantivní ten (ten nepřijde)
+	N.pron.def.pers , # např. &PersPron;
+	N.pron.indef, # např. kdo, nikdo, jenž
+	N.quant.def, # např. sto, tři (v subst. pozici: Přišli tři)
+	ADJ.denot, # adjektiva pojmenovací stupňovatelná i nestupňovatelná (která 
+		# nejsou deadverbiální, a tudíž nedostanou adv. trlemma)
+	ADJ.pron.def.demon, # např. takový, tenhle, adjektivní ten (ten muž)
+	ADJ.pron.indef, # např. jaký, který, nějaký
+	ADJ.quant.def, # např.tři v adj.funkci (tři děti)
+	ADJ.quant.indef, # např. kolik, několikery, tolik, málo
+	ADJ.quant.grad,
+           	ADV.denot.grad.nneg, # pojmenovací příslovce stupňovatelná (která nejsou deadjektivní, 
+		# a tudíž nedostanou adj. trlemma), např. dole, pozdě, brzy, často
+           	ADV.denot.ngrad.nneg, # pojmenovací příslovce nestupňovatelná (nejsou deadjektivní, 
+		# a tudíž nedostanou adj. trlemma), např. doma, dnes, mimo, kupříkladu
+	ADV.denot.grad.neg, 
+	ADV.denot.ngrad.neg,
+	ADV.pron.def, # např. tam, potom
+	ADV.pron.indef, # např. kdy, proč
+           	V;
+Gender: ANIM,INAN,FEM,NEUT;
+Number: SG,PL;
+DegCmp: POS,COMP,ACOMP,SUP;
+Sentmod: ENUNC,EXCL,DESID,IMPER,INTER;
+Verbmod: IND,IMP,CDN;
+Deontmod: DEB,HRT,VOL,POSS,PERM,FAC,DECL;
+Tense: SIM,ANT,POST;
+Aspect: PROC,CPL;
+Resultative: RES1,RES0;
+Dispmod: DISP1,DISP0;
+Iterativeness: IT1,IT0;
+IndefType: RELAT,INDEF1,INDEF2,INDEF3,INDEF4,INDEF5,INDEF6,INTER,NEGAT,TOTAL1,TOTAL2;
+	# k hodnotám TOTAL1/2: TOTAL1 označuje celek globálně (př. všichni), 
+	# TOTAL2 se vztahuje k jednotlivinám (př. každý)
+Person: 1,2,3; 
+NumerType: BASIC,SET,KIND,ORD,FRAC;
+Politeness: POLITE,BASIC;
+Negation: NEG0,NEG1;
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Část 2: výčet gramatémů relevantních pro danou WordClass
+# notace: hodnota WordClass následovaná dvojitou šipkou =>
+# a výčtem gramatémů (potenciálně prázdným) oddělených
+# čárkou, vše ukončeno středníkem
+ 
+N.denot => Gender,Number; 
+N.denot.neg => Gender,Number,Negation; 
+N.pron.def.demon => Gender,Number; 
+N.pron.def.pers => Gender,Number,Person,Politeness; 
+N.pron.indef => Gender,Number,IndefType,Person;
+N.quant.def => Gender,Number,NumerType;
+ADJ.denot => DegCmp,Negation;
+ADJ.pron.def.demon =>; # žádný gramatém - prázdná množina
+ADJ.quant.def => NumerType;
+ADJ.pron.indef => IndefType; 
+ADJ.quant.indef => IndefType,NumerType;
+ADJ.quant.grad => DegCmp,NumerType;
+ADV.denot.ngrad.neg => Negation;
+ADV.denot.grad.neg => DegCmp,Negation;
+ADV.denot.ngrad.nneg =>;
+ADV.denot.grad.nneg => DegCmp;
+ADV.pron.def =>; # prázdná množina
+ADV.pron.indef => IndefType;
+V => Verbmod,Deontmod,Dispmod,Tense,Aspect,Resultative,Iterativeness;
+
+# gramatém Sentmod není jako jediný přidělován uzlu na základě jeho hodnoty WordClassu,
+# v této části tedy nebyl uveden
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Část 3: výčet podmínek, které budou užity v části 4, 
+# notace: v závorce identifikátor podmínky, který ji bude reprezentovat v části 4,
+# ukončeno středníkem,
+# jediným identifikátorem budou zaznamenány podmínky jednoduché 
+# i podmínky kombinované z několika jednoduchých, 
+# uvedena vždy zvlášť kladná a zvlášť negativní podoba podmínky,
+# za křížkem stručné vysvětlení, co podmínka postihuje
+
+
+(RSTR); # uzel (s lematem, jehož se následující informace o změně lematu a o hodnotách gramatémů 
+	# týkají) má fuktor RSTR
+(notRSTR); # uzel má funktor jiný než RSTR
+(Coref); # od uzlu vede šipka koreference
+(notCoref); # od uzlu nevede šipka koreference
+(Plur); # uzel visí na uzlu, jehož lematem je pomnožné substantivum (identifikováno seznamem), popř. 
+	# se pomnožné substantivum vyskytuje jinde ve stromě
+(notPlur); # uzel nevisí na pomnožném substantivu (identifikováno seznamem) a pomnožné 
+	# substantivum se nevyskytuje ani jinde ve stromě
+(TWHEN); # uzel má funktor TWHEN
+(TTILL); # uzel má funktor TTILL
+(LOC); # uzel má funktor LOC
+(DIR3); # uzel má funktor DIR3
+(N&notRSTR); # jde o uzel s lematem středního rodu (3. pozice morfologického tagu = N) a zároveň 
+	# má tento uzel funktor jiný než RSTR 
+(notN&notRSTR); # jde o uzel s lematem jiného než středního rodu (3. pozice morfologického tagu 
+	 # jiná než N) a zároveň má tento uzel funktor jiný než RSTR 
+(Coref&RSTR); # od uzlu vede koreferenční šipka a zároveň má uzel funktor RSTR
+(Coref&notRSTR); # od uzlu vede koreferenční šipka a zároveň má uzel funktor jiný než RSTR
+(notCoref&RSTR); # od uzlu nevede šipka koreference a zároveň má uzel funktor RSTR 
+(notCoref&notRSTR); # od uzlu nevede šipka koreference a zároveň má uzel funktor jiný než RSTR
+(Coref&Plur); # od uzlu vede šipka koreference a zároveň uzel visí na uzlu, jehož lematem je 
+	# pomnožné substantivum (identifikováno seznamem), popř. se pomnožné 
+	# substantivum vyskytuje jinde ve stromě
+ (Coref&notPlur); # od uzlu vede šipka koreference a zároveň uzel nevisí na pomnožném substantivu 
+	# (identifikováno seznamem) a pomnožné substantivum se nevyskytuje ani jinde ve stromě
+(notCoref&Plur); # od uzlu nevede šipka koreference a zároveň uzel visí na uzlu, jehož lematem je 
+	# pomnožné substantivum (identifikováno seznamem), popř. se pomnožné substantivum 
+	# vyskytuje jinde ve stromě
+(notCoref&notPlur); # od uzlu nevede šipka koreference a zároveň uzel nevisí na pomnožném 
+	# substantivu (identifikováno seznamem) a pomnožné substantivum se nevyskytuje
+ 	# ani jinde ve stromě
+# - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Část 4: převodní tabulka, kdy hodnoty gramatému
+# přímo vyplývají z mrlemmatu.
+# notace: uvedení podmínky ve tvaru if + identifikátor (z části 3), která 
+# se na následující převodní případ vztahuje, 
+# na dalším řádku mrlemma (v případě více styl.variant
+# více mrlemmat oddělených čárkou) následované
+# jednoduchou šipkou -> a výčtem dvojic atribut=hodnota
+# oddělených čárkou, vše ukončeno středníkem 
+
+# ad B.2.-a (N.pron.def.demon):demonstrativní zájmena substantivní "ten" a další- vyplní se Gender 
+# a Number; ponechají si VŽDY své lema; v prosincové zprávě část 3. 2. na str. 7
+# TAKÉ: tentýž
+if notRSTR
+ten -> 	trlemma=ten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tento -> 	trlemma=tento,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tamten -> 	trlemma= tamten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+onen -> 	trlemma= onen,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tenhle -> 	trlemma= tenhle,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tenhleten -> trlemma= tenhleten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tadyhleten -> trlemma= tadyhleten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tuhleten -> trlemma= tuhleten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tamhleten -> trlemma= tamhleten,
+         	WordClass= N.pron.def.demon;
+if notRSTR
+tentýž -> 	trlemma=tentýž,
+         	WordClass= N.pron.def.demon;
+
+
+
+# ad B.4.-a (N.pron.indef); substantivní zájmena neurčitá apod. - ve zprávě tabulka 2 na str. 8
+if Coref
+kdo,kdož -> trlemma=kdo,
+	WordClass= N.pron.indef,
+	IndefType=RELAT;
+někdo -> trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF1;
+kdosi,kdos -> trlemma=kdo,
+	WordClass=N.pron.indef,
+	IndefType=INDEF2;
+kdokoli,kdokoliv -> trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF3;
+ledakdo,leckdo,ledakdos,ledaskdo -> trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF4;
+kdekdo -> trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF5;
+málokdo,sotvakdo,zřídkakdo,všelikdo,nevímkdo,kdovíkdo,bůhvíkdo,čertvíkdo -> trlemma=kdo, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíkdo i kdoví kdo)
+         	WordClass=N.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+kdo,kdopak,kdožpak,kdože -> trlemma=kdo,
+	WordClass=N.pron.indef,
+	IndefType=INTER;
+nikdo -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=NEGAT; 
+if notN&notRSTR
+všechen,všecek -> trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=TOTAL1; 
+
+
+# ad B.4.-b (N.pron.indef); substantivní zájmena neurčitá apod. - ve zprávě tabulka 2 na str. 8
+if Coref
+co,což,oč,nač,zač -> trlemma=co,
+	WordClass=N.pron.indef,
+	IndefType=RELAT;
+něco -> 	trlemma=co,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF1;
+cosi,cos -> trlemma=co,
+	WordClass=N.pron.indef,
+	IndefType=INDEF2;
+cokoli,cokoliv,cožkoli,cožkoliv -> trlemma=co,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF3;
+ledaco,lecco,leccos,ledacos,ledasco -> trlemma=co,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF4;
+kdeco -> 	trlemma=co,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF5;
+máloco,sotvaco,zřídkaco,všelico,všelicos,nevímco,kdovíco,bůhvíco,čertvíco -> trlemma=co, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíco i kdoví co)
+         	WordClass=N.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+co,copak,cožpak,cože,oč,nač,zač -> trlemma=co,
+	WordClass=N.pron.indef,
+	IndefType=INTER;
+nic -> 	trlemma=co,
+         	WordClass=N.pron.indef,
+	IndefType=NEGAT; 
+if N&notRSTR
+všechen,všechno,vše,všecek -> trlemma=co, # "všechno, vše" jako mrlemmata asi nebudou (zde pro jistotu); 
+	# "vše" jako varianta k "všechno"
+	WordClass=N.pron.indef,
+	IndefType=TOTAL1; 
+
+
+# ad B.4.-c (N.pron.indef); posesivní zajmena, která budou převedena na trlemma odpovídajícího 
+# substantivního zájmena; ve zprávě tabulka 3 na str. 9
+if Coref
+čí -> 	trlemma=kdo,
+	WordClass= N.pron.indef,
+	IndefType=RELAT;
+něčí -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF1;
+čísi -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF2;
+číkoli -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF3;
+ledačí -> 	trlemma=kdo,
+	WordClass=N.pron.indef,
+	IndefType=INDEF4;
+kdečí -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INDEF5;
+máločí-> 	trlemma=kdo,
+	WordClass=N.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+čí -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=INTER;
+ničí -> 	trlemma=kdo,
+         	WordClass=N.pron.indef,
+	IndefType=NEGAT;
+
+# ad B.4.-d (N.pron.indef); substantivní zájmena neurčitá apod. - ve zprávě tabulka 2 na str. 8
+jenž -> 	trlemma=který, # "jenž" se chápe jako stylistická varianta k subst. "který"
+	WordClass=N.pron.indef,
+	IndefType=RELAT;
+if Coref&notRSTR
+který,kterýž -> trlemma=který, # "kterýž" se chápe jako stylistická varianta k subst. "který"
+	WordClass=N.pron.indef,
+	IndefType=RELAT;
+if notRSTR
+některý -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INDEF1;
+if notRSTR
+kterýsi -> 	trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INDEF2;
+if notRSTR
+kterýkoli,kterýkoliv -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INDEF3;
+if notRSTR
+ledakterý,leckterý -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INDEF4;
+if notRSTR
+kdekterý -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INDEF5;
+if notRSTR
+málokterý,sotvakterý,zřídkakterý,všelikterý,nevímkterý,bůhvíkterý,čertvíkterý -> trlemma=který, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíkterý i kdoví který) - otázkou je, kolik 
+	# takových slov v treebanku je
+	WordClass=N.pron.indef,
+	IndefType=INDEF6;
+if notCoref&notRSTR
+který,kterýpak -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=INTER;
+if notRSTR
+žádný -> trlemma=který,
+	WordClass=N.pron.indef,
+	IndefType=NEGAT; 
+if notRSTR
+každý -> 	trlemma=který,
+         	WordClass=N.pron.indef,
+	IndefType=TOTAL2;
+
+
+# ad B.4.-e (N.pron.indef); substantivní zájmena neurčitá apod. - ve zprávě tabulka 2 na str. 8
+if Coref&notRSTR
+jaký,jakýž, jakýs -> trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=RELAT;
+if notRSTR
+nějaký -> 	trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INDEF1;
+if notRSTR
+jakýsi  -> 	trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INDEF2;
+if notRSTR
+jakýkoli,jakýkoliv -> trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INDEF3;
+if notRSTR
+ledajaký,lecjaký -> trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INDEF4;
+if notRSTR
+kdejaký -> trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INDEF5;
+if notRSTR
+málojaký,sotvajaký,zřídkajaký,všelijaký,nevímjaký,kdovíjaký,bůhvíjaký,čertvíjaký -> trlemma=jaký, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíjaký i kdoví jaký) - otázkou je, kolik takových
+	# slov v treebanku je
+	WordClass=N.pron.indef,
+	IndefType=INDEF6;
+if notCoref&notRSTR
+jaký,jakýpak,jakýs -> trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=INTER;
+if notRSTR
+nijaký -> 	trlemma=jaký,
+	WordClass=N.pron.indef,
+	IndefType=NEGAT;
+
+
+# ad B.7.-a (ADJ.pron.def.demon): adjektivní "ten", tenhle" atd.- nevyplňuje se žádný gramatém - 
+# ponechají si VŽDY své lema; ve zprávě část 3. 2. na str. 7
+if RSTR
+ten -> 	trlemma=ten,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tento -> 	trlemma=tento,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tamten -> 	trlemma= tamten,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+onen -> 	trlemma= onen,
+         	WordClass= ADJ.pron.def.demon;
+onaký -> 	trlemma= onaký,
+         	WordClass= ADJ.pron.def.demon;
+takový,taký,takýs -> 	trlemma= takový, 
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tenhle -> 	trlemma= tenhle,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tenhleten -> trlemma= tenhleten,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tadyhleten -> trlemma= tadyhleten,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tuhleten -> trlemma= tuhleten,
+         	WordClass= ADJ.pron.def.demon;
+if RSTR
+tamhleten -> trlemma= tamhleten,
+         	WordClass= ADJ.pron.def.demon;
+takovýto -> trlemma= takový,
+         	WordClass= ADJ.pron.def.demon;
+takovýhle -> trlemma= takovýhle,
+         	WordClass= ADJ.pron.def.demon;
+sám -> 	trlemma= sám,
+         	WordClass= ADJ.pron.def.demon;
+samý -> 	trlemma= samý,
+         	WordClass= ADJ.pron.def.demon;
+
+# ad B.7.-b (ADJ.pron.def.demon): identifikační (demonstrativní) zájmena (adjektivní "tentýž"
+# a "týž" - nevyplňuje se u nich žádný gramatém) - ponechají 
+# si VŽDY své lema; ve zprávě část 3. 2. na str. 7 (Otevřené otázky)
+týž -> 	trlemma= týž,
+         	WordClass= ADJ.pron.def.demon;
+tentýž -> 	trlemma= tentýž,
+         	WordClass= ADJ.pron.def.demon;
+
+
+# ad B.5. a B.8. (N.quant.def a ADJ.quant.def): číslovky určité (čísla vyjádřená slovy)
+# převod lemat a přidělení hodnot některých gramatémů 
+# ve zprávě část 5. 1. na str. 13 a dál - zde ale zatím jen pro ty číslovky, které byly nalezeny 
+# v treebanku
+
+# ad B.5. a B.8. iii)
+stý -> 	trlemma=sto,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+tisící -> 	trlemma=tisíc,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+první,prvý -> trlemma=jeden,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+druhý -> 	trlemma=dva,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třetí -> 	trlemma=tři,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+čtvrtý -> 	trlemma=čtyři,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pátý -> 	trlemma=pět,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+šestý -> 	trlemma=šest,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmý -> 	trlemma=sedm,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmý -> 	trlemma=osm,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devátý -> 	trlemma=devět,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+desátý -> 	trlemma=deset,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+jedenáctý -> trlemma=jedenáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvanáctý -> trlemma=dvanáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třináctý -> trlemma=třináct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+čtrnáctý -> trlemma=čtrnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+patnáctý -> trlemma=patnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+šestnáctý -> trlemma=šestnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmnáctý -> trlemma=sedmnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmnáctý -> trlemma=osmnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devatenáctý -> trlemma=devatenáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvacátý -> trlemma=dvacet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvaadvacátý -> trlemma=dvaadvacet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pětadvacátý -> trlemma=pětadvacet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třicátý -> 	trlemma=třicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmatřicátý -> trlemma=sedmatřicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmatřicátý -> trlemma=osmatřicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devětatřicátý -> trlemma=devětatřicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+čtyřicátý -> trlemma=čtyřicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pětačtyřicátý -> trlemma=pětačtyřicet,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+padesátý -> trlemma=padesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmapadesátý -> trlemma=sedmapadesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devětapadesátý -> trlemma=devětapadesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+šedesátý -> trlemma=šedesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+jedenašedesátý -> trlemma=jedenašedesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmašedesátý -> trlemma=osmašedesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmdesátý -> trlemma=sedmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvaasedmdesátý -> trlemma=dvaasedmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pětasedmdesátý -> trlemma=pětasedmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmasedmdesátý -> trlemma=sedmasedmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmdesátý -> trlemma=osmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třiaosmdesátý -> trlemma=třiaosmdesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devadesátý -> trlemma=devadesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+devětadevadesátý -> trlemma=devětadevadesát,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+
+# ad B.5. a B.8. iv)
+stokrát -> 	trlemma=sto,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+posté -> 	trlemma=sto,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+tisíckrát -> trlemma=tisíc,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+jednou,jedenkrát,jedinkrát -> trlemma=jeden,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+poprvé -> 	trlemma=jeden,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvakrát -> trlemma=dva,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+podruhé -> trlemma=dva,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třikrát -> 	trlemma=tři,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+potřetí -> 	trlemma=tři,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+čtyřikrát -> trlemma=čtyři,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+počtvrté -> trlemma=čtyři,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pětkrát -> 	trlemma=pět,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+popáté -> 	trlemma=pět,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+šestkrát -> trlemma=šest,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+pošesté -> trlemma=šest,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+sedmkrát -> trlemma=sedm,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+posedmé -> trlemma=sedm,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+osmkrát -> trlemma=osm,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+devětkrát -> trlemma=devět,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+desetkrát -> trlemma=deset,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+podesáté -> trlemma=deset,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+jedenáctkrát -> trlemma=jedenáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+pojedenácté -> trlemma=jedenáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvanáctkrát -> trlemma=dvanáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+podvanácté -> trlemma=dvanáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+třináctkrát -> trlemma=třináct,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+čtrnáctkrát -> trlemma=čtrnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+patnáctkrát -> trlemma=patnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+popatnácté -> trlemma=patnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+pošestnácté -> trlemma=šestnáct,
+         	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+dvacetkrát -> trlemma=dvacet,
+         	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+
+
+
+nejednou -> trlemma=nejeden,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=POS;
+
+
+
+# ad B.5. a B.8. v)
+třetina -> 	trlemma=tři,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+čtvrtina -> trlemma=čtyři,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+pětina -> 	trlemma=pět,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+šestina -> trlemma=šest,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+desetina -> trlemma=deset,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+setina -> 	trlemma=sto,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+sedmdesátina -> trlemma=sedmdesát,
+         	WordClass=N.quant.def,
+	NumerType=FRAC;
+
+# ad ADJ.quant.grad: jen slova na "krát", ostaní je v programovacím skriptu
+mnohokrát,mnohokráte -> trlemma=mnoho,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=POS;
+vícekrát,víckrát,vícekráte,víckráte -> trlemma=mnoho,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=COMP;
+bezpočtukrát,bezpočtukráte -> trlemma=bezpočet,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=POS;
+málokrát,málokráte -> trlemma=málo,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=POS;
+párkrát,párkráte -> trlemma=pár,
+         	WordClass=ADJ.quant.grad,
+	NumerType=BASIC,
+	DegCmp=POS;
+
+# ad B.9. (ADJ.pron.indef): adjektivní zájmena indefinitní atd.; ve zprávě tabulka 2 na str. 8
+if Coref&RSTR
+jaký,jakýž -> trlemma=jaký,
+	WordClass=ADJ.pron.indef,
+	IndefType=RELAT;
+if RSTR
+nějaký -> 	trlemma=jaký,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF1;
+if RSTR
+jakýsi -> 	trlemma=jaký,
+	WordClass=ADJ.pron.indef,
+	IndefType=INDEF2;
+if RSTR
+jakýkoli,jakýkoliv -> trlemma=jaký,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF3;
+if RSTR
+ledajaký,lecjaký -> trlemma=jaký,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF4;
+if RSTR
+kdejaký -> trlemma=jaký,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF5;
+if RSTR
+málojaký,sotvajaký,zřídkajaký,všelijaký,nevímjaký,kdovíjaký,bůhvíjaký,čertvíjaký -> trlemma=jaký, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíjaký i kdoví jaký) - otázkou je, kolik takových
+	# slov v treebanku je
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF6;
+if notCoref&RSTR
+jaký,jakýpak -> trlemma=jaký,
+	WordClass=ADJ.pron.indef,
+	IndefType=INTER;
+if RSTR
+nijaký -> 	trlemma=jaký,
+         	WordClass=ADJ.pron.indef,
+	IndefType=NEGAT;
+if Coref&RSTR
+který,kterýž -> trlemma=který,
+	WordClass=ADJ.pron.indef,
+	IndefType=RELAT;
+if RSTR
+některý -> trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF1;
+if RSTR
+kterýsi -> 	trlemma=který,
+	WordClass=ADJ.pron.indef,
+	IndefType=INDEF2;
+if RSTR
+kterýkoli,kterýkoliv -> trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF3;
+if RSTR
+ledakterý,leckterý -> trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF4;
+if RSTR
+kdekterý -> trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF5;
+if RSTR
+málokterý,sotvakterý,zřídkakterý,všelikterý,nevímkterý,bůhvíkterý,čertvíkterý -> trlemma=který, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíkterý i kdoví který) - otázkou je, kolik 
+	# takových slov v treebanku je
+         	WordClass=ADJ.pron.indef,
+	IndefType=INDEF6;
+if notCoref&RSTR
+který,kterýpak -> trlemma=který,
+	WordClass=ADJ.pron.indef,
+	IndefType=INTER;
+if RSTR
+žádný -> 	trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=NEGAT; 
+if RSTR
+každý -> 	trlemma=který,
+         	WordClass=ADJ.pron.indef,
+	IndefType=TOTAL2;
+if RSTR
+všechen,veškerý,všecek -> trlemma=který, # "veškerý" je stylová varianta k "všechen" 
+	WordClass=ADJ.pron.indef,
+	IndefType=TOTAL1;
+
+
+# ad B.10. - a (ADJ.quant.indef): neurčité číslovky pronominální indef. včetně adverbií
+# (ně)kolikrát / po(ně)kolikáté, která dostanou adj. trlemma (ve zprávě str. 17-18, tabulky 11-13)
+if Coref
+kolik,kolikero -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=RELAT;
+if Coref&Plur
+kolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=RELAT;
+if Coref&notPlur
+kolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=SET,
+	IndefType=RELAT;
+if Coref
+kolikerý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=KIND,
+	IndefType=RELAT;
+if Coref
+kolikátý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=RELAT;
+několik,několikero -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF1;
+if Plur
+několikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF1;
+if notPlur
+několikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=SET,
+	IndefType=INDEF1;
+několikerý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=KIND,
+	IndefType=INDEF1;
+několikátý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INDEF1;
+kdovíkolik,bůhvíkolik,čertvíkolik,nevímkolik,kdovíkolikero,bůhvíkolikero,čertvíkolikero,nevímkolikero -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF6;
+if Plur
+kdovíkolikery,bůhvíkolikery,čertvíkolikery,nevímkolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF6;
+if notPlur
+kdovíkolikery,bůhvíkolikery,čertvíkolikery,nevímkolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=SET,
+	IndefType=INDEF6;
+kdovíkolikerý,bůhvíkolikerý,čertvíkolikerý,nevímkolikerý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=KIND,
+	IndefType=INDEF6;
+kdovíkolikátý,bůhvíkolikátý,čertvíkolikátý,nevímkolikátý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INDEF6;
+if notCoref
+kolik,kolikero -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INTER;
+if notCoref&Plur
+kolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INTER;
+if notCoref&notPlur
+kolikery -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=SET,
+	IndefType=INTER;
+if notCoref
+kolikerý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=KIND,
+	IndefType=INTER;
+if notCoref
+kolikátý -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INTER;
+if Coref
+kolikrát,kolikráte ->	trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=RELAT;
+if Coref
+pokolikáté -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=RELAT;
+několikrát,několikráte -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF1;
+poněkolikáté -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INDEF1;
+kdovíkolikrát,bůhvíkolikrát,čertvíkolikrát,nevímkolikrát -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INDEF6;
+pokdovíkolikáté,pobůhvíkolikáté,počertvíkolikáté,ponevímkolikáté -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INDEF6;
+if notCoref
+kolikrát,kolikráte -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=BASIC,
+	IndefType=INTER;
+if notCoref
+pokolikáté -> trlemma=kolik,
+	WordClass=ADJ.quant.indef,
+	NumerType=ORD,
+	IndefType=INTER;
+
+# ad B.10. - b (ADJ.quant.def): ZMĚNA: neurčitá číslovky "tolik" bude patřit do URČITÝCH
+# včetně adverbií tolikrát / potolikáté, která dostanou adj. trlemma (ve zprávě str. 16-17, tabulka 10);
+# uvedena rovněž číslovka tolikhle a (identifikační) číslovka "tolikéž" - 
+# obě si ponechají původní lema (ADJ.quant.def) 
+tolik -> 	trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+if Plur
+tolikery -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+if notPlur
+tolikery -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=SET;
+tolikerý -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=KIND;
+tolikátý -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+tolikrát,tolikráte -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+potolikáté -> trlemma=tolik,
+	WordClass=ADJ.quant.def,
+	NumerType=ORD;
+tolikhle -> trlemma=tolikhle,
+	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+tolikéž -> trlemma=tolikéž,
+	WordClass=ADJ.quant.def,
+	NumerType=BASIC;
+
+
+# ad B.13. (ADV.pron.def): pronominální adverbia určitá; ve zprávě tabulka 6a,b na str. 12
+tak -> 	trlemma=tak,
+	WordClass=ADV.pron.def;
+
+onak -> 	trlemma=onak,
+	WordClass=ADV.pron.def;
+
+proto -> 	trlemma=proto,
+	WordClass=ADV.pron.def;
+teď,nyní -> trlemma=teď,
+	WordClass=ADV.pron.def;
+if TWHEN
+tu -> 	trlemma=teď,
+	WordClass=ADV.pron.def;
+
+if TWHEN
+tuhle -> 	trlemma=tuhle,
+	WordClass=ADV.pron.def;
+
+
+odteď -> 	trlemma=teď,
+	WordClass=ADV.pron.def;
+doteď -> 	trlemma=teď,
+	WordClass=ADV.pron.def;
+if TTILL
+doposud,potud,posud -> trlemma=teď,
+	WordClass=ADV.pron.def;
+potom,pak,poté -> trlemma=potom,
+	WordClass=ADV.pron.def;
+tehdy -> 	trlemma=tehdy,
+	WordClass=ADV.pron.def;
+tenkrát -> 	trlemma=tenkrát,
+	WordClass=ADV.pron.def;
+onehdy -> trlemma=onehdy,
+	WordClass=ADV.pron.def;
+předtím -> trlemma=předtím,
+	WordClass=ADV.pron.def;
+tady,zde -> trlemma=tady,
+	WordClass=ADV.pron.def;
+tadyhle -> trlemma=tadyhle,
+	WordClass=ADV.pron.def;
+if LOC
+tu -> 	trlemma=tady,
+	WordClass=ADV.pron.def;
+odtud,odsud -> trlemma=tady,
+	WordClass=ADV.pron.def;
+tudy -> 	trlemma=tady,
+	WordClass=ADV.pron.def;
+sem -> 	trlemma=tady,
+	WordClass=ADV.pron.def;
+if DIR3
+potud,posud -> trlemma=tady,
+	WordClass=ADV.pron.def;
+tam -> 	trlemma=tam,
+	WordClass=ADV.pron.def;
+odtamtud -> trlemma=tam,
+	WordClass=ADV.pron.def;
+tamtudy -> trlemma=tam,
+	WordClass=ADV.pron.def;
+
+tytam -> 	trlemma=tytam,
+	WordClass=ADV.pron.def;
+tamhle -> 	trlemma=tamhle,
+	WordClass=ADV.pron.def;
+
+tamtéž -> 	trlemma=tamtéž,
+	WordClass=ADV.pron.def;
+
+onehdá -> trlemma=onehdá,
+	WordClass=ADV.pron.def;
+onde -> 	trlemma=onde,
+	WordClass=ADV.pron.def;
+
+
+# ad B.14 (ADV.pron.indef): pronominální adverbia; ve zprávě tabulka 4 na str. 11
+if Coref
+kdy -> 	trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+odkdy -> 	trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+dokdy -> 	trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+dokud -> 	trlemma=kdy, # myslí se příslovce, nikoli spojka podřadicí (její uzel bude schovaný)
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+někdy -> 	trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+kdysi -> 	trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+kdykoli,kdykoliv -> trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+ledakdy,leckdy,ledaskdy -> trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF4;
+málokdy,sotvakdy,zřídkakdy,všelikdy,nevímkdy,kdovíkdy,bůhvíkdy,čertvíkdy -> trlemma=kdy, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíkdy i kdoví kdy)
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+kdy,kdypak,kdyže -> trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+odkdy -> trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+dokdy -> trlemma=kdy,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+dokud -> trlemma=kdy, # myslí se příslovce, nikoli spojka podřadicí (její uzel schován)
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+nikdy -> 	trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+vždy,vždycky -> trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=TOTAL1;
+navždy, navždycky -> trlemma=kdy,
+         	WordClass=ADV.pron.indef,
+	IndefType=TOTAL1;
+if Coref
+kde -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+odkud -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+kudy -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if Coref
+kam -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+někde -> 	trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+odněkud -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+někudy -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+někam -> 	trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+kdesi -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+odkudsi -> trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+kudysi -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+kamsi -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+kdekoli,kdekoliv -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+odkudkoli,odkudkoliv -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+kudykoli,kudykoliv -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+kamkoli,kamkoliv -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+ledakde,leckde,ledaskde,leckdes -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF4;
+málokde,sotvakde,zřídkakde,všelikde,nevímkde,kdovíkde,bůhvíkde,čertvíkde -> trlemma=kde, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíkde i kdoví kde)
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+kde,kdepak,kdeže -> trlemma=kde, # pozor: ne každé "kdeže" je 
+	# adverbium - to by však mělo být v morfolog.tagu (?)
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+odkud -> trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+kudy -> 	trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+if notCoref
+kam,kampak,kamže -> trlemma=kde,
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+nikde -> 	trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+odnikud -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+nikudy -> 	trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+nikam -> 	trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+všude,všade -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=TOTAL1;
+odevšad,odevšud -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=TOTAL1;
+všudy,všady -> trlemma=kde,
+         	WordClass=ADV.pron.indef,
+	IndefType=TOTAL1;
+if Coref
+jak -> 	trlemma=jak,
+	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+nějak -> 	trlemma=jak,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF1;
+jaksi -> 	trlemma=jak,
+	WordClass=ADV.pron.indef,
+	IndefType=INDEF2;
+jakkoli,jakkoliv -> trlemma=jak,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF3;
+ledajak,lecjak,ledasjak -> trlemma=jak,
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF4;
+všelijak,nevímjak,kdovíjak,bůhvíjak,čertvíjak -> trlemma=jak, 
+	# variant mrlemmatu může být ještě asi víc, navíc se některé typy dají psát 
+	# několikerým způsobem (např. kdovíjak i kdoví jak)
+         	WordClass=ADV.pron.indef,
+	IndefType=INDEF6;
+if notCoref
+jak,jakpak,jakže -> trlemma=jak, # pozor: možná ne všechna "jakže" jsou 
+	# adverbia - to by však mělo být v morfolog.tagu (?)
+	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+nijak -> 	trlemma=jak,
+         	WordClass=ADV.pron.indef,
+	IndefType=NEGAT; 
+if Coref
+proč -> 	trlemma=proč,
+         	WordClass=ADV.pron.indef,
+	IndefType=RELAT;
+if notCoref
+proč,pročpak -> trlemma=proč,
+         	WordClass=ADV.pron.indef,
+	IndefType=INTER;
+
+
+# ad B.15.: iterativní slovesa (s iterativní příponou; zatím pouze slovesa, obsažená v treebanku) - jejich 
+# trlemma se převede na trlemma odpovídajícího slovesa neiterativního
+bydlívat -> trlemma=bydlit, # možná trlemma "bydlet" - podívat se, zda je v treebanku jen jedno nebo obojí 
+	Iterativeness=IT1;
+bývat -> 	trlemma=být,
+	Iterativeness=IT1;
+bývávat -> trlemma=být, # je to iterativum "druhého stupně", ale asi se to nebude rozlišovat
+	Iterativeness=IT1;
+čítávat -> 	trlemma=číst,
+	Iterativeness=IT1;
+hrávat -> 	trlemma=hrát,
+	Iterativeness=IT1;
+jezdívat -> trlemma=jezdit,
+	Iterativeness=IT1;
+končívat -> trlemma=končit,
+	Iterativeness=IT1;
+mívat -> 	trlemma=mít,
+	Iterativeness=IT1;
+psávat -> 	trlemma=psát,
+	Iterativeness=IT1;
+říkávat -> 	trlemma=říkat,
+	Iterativeness=IT1;
+sedávat -> trlemma=sedat,
+	Iterativeness=IT1;
+slýchávat -> trlemma=slyšet, # nejdřív jsem myslela "slýchat", ale to samotné je už iterativum (SSČ)
+	Iterativeness=IT1;
+
