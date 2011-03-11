@@ -32,7 +32,7 @@ sub process_document {
             print join(
                 "\n",
                 (
-                    "ID\t" . $bundle->id . " ($doc_name##$position)",
+                    "ID\t" . $bundle->id . " ($doc_name.treex##$position)",
                     "SRC\t$src_joined",
                     "REF\t$ref_joined",
                     "TST\t$tst_joined",
