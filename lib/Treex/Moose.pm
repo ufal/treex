@@ -14,8 +14,6 @@ use Readonly;
 use Data::Dumper;
 
 # Validation temporarily disabled because it seems to be slow.
-#use MooseX::Params::Validate;
-
 sub pos_validated_list {
     my $args_ref = shift;
     my $i        = 0;
@@ -27,6 +25,13 @@ sub pos_validated_list {
         $i++;
     }
     return @{$args_ref};
+}  
+my $validation_sub = \&pos_validated_list;
+
+# But you can turn it on. TODO: After WMT the default should by to validate.
+if ($ENV{TREEX_VALIDATE}){
+    require MooseX::Params::Validate;
+    $validation_sub = \&MooseX::Params::Validate::pos_validated_list;
 }
 
 my ( $import, $unimport, $init_meta ) =
@@ -48,9 +53,7 @@ my ( $import, $unimport, $init_meta ) =
         \&Scalar::Util::weaken,
         \&Data::Dumper::Dumper,
         \&Moose::Util::TypeConstraints::enum,
-
-        #\&MooseX::Params::Validate::pos_validated_list,
-        \&pos_validated_list,
+        $validation_sub,
         ]
     );
 
