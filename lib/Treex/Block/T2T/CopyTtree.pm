@@ -9,7 +9,7 @@ has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
-    is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive is_parenthesis
+    is_name_of_person is_clause_head is_relclause_head is_dsp_root is_passive is_parenthesis is_reflexive
     voice sentmod tfa gram/sempos gram/gender gram/number gram/degcmp
     gram/verbmod gram/deontmod gram/tense gram/aspect gram/resultative
     gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype

@@ -21,7 +21,7 @@ sub process_ttree {
         next RELCLAUSE if $src_tnode->formeme =~ /rc/;
 
         # Grammatical antecedent is typically the nominal parent of the clause
-        my ($gram_antec) = $rc_head->get_eparents;
+        my ($gram_antec) = $rc_head->get_eparents({ordered=>1});
         next RELCLAUSE if !$gram_antec;
         next RELCLAUSE if $gram_antec->formeme !~ /^n/;
 
