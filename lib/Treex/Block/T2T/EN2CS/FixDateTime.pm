@@ -29,6 +29,7 @@ sub process_year {
             'gram/gender'    => 'inan',
             'mlayer_pos'     => 'N',
             'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
+            't_lemma_origin' => 'rule-Fix_date_time',
         }
     );
 

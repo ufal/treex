@@ -162,9 +162,12 @@ sub create_child {
     }
     
     # Structured attributes (e.g. morphcat/pos) must be handled separately
+    # TODO: And also attributes which don't have accessors (those are not Moose attributes).
+    # Note: mlayer_pos was not added to Treex::Core::Node::T because it goes
+    # against the "tectogrammatical ideology" and we use it as a temporary hack.
     my %structured_attrs;
     foreach my $attr (keys %{$arg_ref}){
-        if ($attr =~ m{/}){
+        if ($attr =~ m{/} || $attr eq 'mlayer_pos'){
             $structured_attrs{$attr} = delete $arg_ref->{$attr};
         }
     }
