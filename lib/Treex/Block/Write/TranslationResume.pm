@@ -17,16 +17,17 @@ sub process_document {
 
     foreach my $bundle ( $document->get_bundles ) {
         $position++;
+        my $ref_zone = $bundle->get_zone( $self->language, 'ref' );
         push @src, $bundle->get_zone( $self->source_language, 'src' )->sentence;
-        push @ref, eval { $bundle->get_zone( $self->language, 'ref' )->sentence } || '';
+        push @ref, $ref_zone ? $ref_zone->sentence : '';
         push @tst, $bundle->get_zone( $self->language, 'tst' )->sentence;
 
         if ( $bundle->id !~ /(\d+)of(\d+)$/ or $1 == $2 ) {
             my $src_joined = join ' ', @src;
             my $ref_joined = join ' ', @ref;
             my $tst_joined = join ' ', @tst;
-            $src_joined =~ s/\s$//;    #TODO why is this needed?
-            $ref_joined =~ s/\s$//;
+            $src_joined =~ s/\s+$//;    #TODO why is this needed?
+            $ref_joined =~ s/\s+$//;
             my @matchings = Eval::Bleu::add_segment( $tst_joined, $ref_joined );
             print join(
                 "\n",
