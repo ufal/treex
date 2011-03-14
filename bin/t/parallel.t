@@ -8,6 +8,7 @@ use Treex::Core::Config;
 use Treex::Core::Run;
 
 use Test::More;
+plan skip_all => 'Takes too much time, maybe infinite loop';
 eval { use Test::Output };
 plan skip_all => 'Test::Output required to test parallelism' if $@;
 plan tests => 1;
