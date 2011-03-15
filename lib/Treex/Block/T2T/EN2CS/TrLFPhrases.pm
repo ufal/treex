@@ -29,7 +29,7 @@ sub process_ttree {
     if ( $cs_troot->src_tnode->get_zone->sentence =~ /^That is,/ ) {
         my ( $that, $is ) = @cs_tnodes;
         if ( $that->t_lemma eq 'that' && $is->t_lemma eq 'be' ) {
-            $that->disconnect();
+            $that->delete();
             shift @cs_tnodes;
             $is->set_attr( 'mlayer_pos', 'X' );
             $is->set_t_lemma('Jinými slovy');
@@ -52,6 +52,10 @@ sub process_tnode {
     my $en_parent = $en_tnode->get_parent();
     return if $en_parent->is_root();
     my $cs_parent = $cs_tnode->get_parent();
+    
+    # We don't want to apply one rule (e.g. take_place -> konat_se) more times
+    # e.g. in sentence "It took place mostly in the places which ...".
+    return if $cs_parent->t_lemma_origin eq 'rule-TrLFPhrases';
     my ( $p_lemma, $p_formeme ) = $en_parent->get_attrs(qw(t_lemma formeme));
 
     # this/last year
@@ -61,14 +65,14 @@ sub process_tnode {
         if ( $p_formeme eq 'n:poss' ) {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
             $cs_parent->set_t_lemma($l);
-            $cs_parent->set_t_lemma_origin('rule-Translate_LF_phrases');
+            $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
             $cs_parent->set_attr( 'mlayer_pos', 'A' );
             $cs_parent->set_formeme('adj:attr');
-            $cs_parent->set_formeme_origin('rule-Translate_LF_phrases');
+            $cs_parent->set_formeme_origin('rule-TrLFPhrases');
             foreach my $child ( $cs_tnode->get_children() ) {
                 $child->set_parent($cs_parent);
             }
-            $cs_tnode->disconnect();
+            $cs_tnode->delete();
             return;
         }
 
@@ -79,12 +83,12 @@ sub process_tnode {
             $cs_parent->set_attr( 'mlayer_pos', 'D' );
             $cs_parent->set_t_lemma($l);
             $cs_parent->set_formeme($f);
-            $cs_parent->set_t_lemma_origin('rule-Translate_LF_phrases');
-            $cs_parent->set_formeme_origin('rule-Translate_LF_phrases');
+            $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
+            $cs_parent->set_formeme_origin('rule-TrLFPhrases');
             foreach my $child ( $cs_tnode->get_children() ) {
                 $child->set_parent($cs_parent);
             }
-            $cs_tnode->disconnect();
+            $cs_tnode->delete();
             return;
         }
 
@@ -93,7 +97,7 @@ sub process_tnode {
         if ( $en_parent->get_attr('gram/number') eq 'sg' ) {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
             $cs_tnode->set_t_lemma($l);
-            $cs_tnode->set_t_lemma_origin('rule-Translate_LF_phrases');
+            $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
             $cs_tnode->set_attr( 'mlayer_pos', 'A' );
             return;
         }
@@ -108,9 +112,9 @@ sub process_tnode {
         if ( $a_for->lemma eq 'for' ) {
             $cs_tnode->set_attr( 'mlayer_pos', 'D' );
             $cs_tnode->set_t_lemma('například');
-            $cs_tnode->set_t_lemma_origin('rule-Translate_LF_phrases');
+            $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
             $cs_tnode->set_formeme('x');
-            $cs_tnode->set_formeme_origin('rule-Translate_LF_phrases');
+            $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
             return;
         }
     }
@@ -118,10 +122,10 @@ sub process_tnode {
     # "be worth" -> "mit cenu"
     if ( $lemma eq 'worth' && $en_parent->t_lemma eq 'be' ) {
         $cs_parent->set_t_lemma('mít');
-        $cs_parent->set_t_lemma_origin('rule-Translate_LF_phrases');
+        $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
         $cs_parent->set_attr( 'mlayer_pos', 'V' );
         $cs_tnode->set_formeme('n:4');
-        $cs_tnode->set_formeme_origin('rule-Translate_LF_phrases');
+        $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
 
     }
 
@@ -136,7 +140,7 @@ sub process_tnode {
                     my ( $cs_lemma, $m_pos ) = split /#/, $_;
                     {   't_lemma' => $cs_lemma,
                         'pos'     => $m_pos,
-                        'origin'  => 'Translate_LF_phrases',
+                        'origin'  => 'TrLFPhrases',
                         'logprob' => $uniform_logprob,
                     }
                     } @variants
@@ -145,17 +149,17 @@ sub process_tnode {
         my ( $cs_lemma, $m_pos ) = split /#/, $variants[0];
         $cs_parent->set_attr( 'mlayer_pos', $m_pos );
         $cs_parent->set_t_lemma($cs_lemma);
-        $cs_parent->set_t_lemma_origin('rule-Translate_LF_phrases');
+        $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
 
         if ( $m_pos eq "D" ) {    # for the first time -> * pro poprve
             $cs_parent->set_formeme('adv');
-            $cs_parent->set_formeme_origin('rule-Translate_LF_phrases');
+            $cs_parent->set_formeme_origin('rule-TrLFPhrases');
         }
 
         foreach my $child ( $cs_tnode->get_children() ) {
             $child->set_parent($cs_parent);
         }
-        $cs_tnode->disconnect();
+        $cs_tnode->delete();
     }
     return;
 }
