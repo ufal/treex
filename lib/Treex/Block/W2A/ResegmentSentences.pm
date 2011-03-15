@@ -10,13 +10,14 @@ use Segmentation::en::RuleBased;
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
+    # TODO: language independent re-segmentation
     log_fatal 'At this moment, this block is applicable only on English (tentatively)'
         if $self->language ne 'en';
 
     my $zone = $bundle->get_zone( $self->language, $self->selector );
-    log_fatal 'The bundle does not contain a ' . $self->_doczone_name if !$bundle;
+    log_fatal 'The bundle does not contain a ' . $self->language . ' '. $self->selector . ' zone' if !$zone;
 
-    log_fatal $bundle->_zone_name . ' contains no "sentence" attribute'
+    log_fatal ' Zone "' . $zone->get_label() . '" contains no "sentence" attribute'
         if !defined $zone->sentence;
 
     my @sentences = Segmentation::en::RuleBased::get_sentences( $zone->sentence );

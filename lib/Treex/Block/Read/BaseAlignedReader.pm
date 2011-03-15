@@ -56,7 +56,7 @@ sub BUILD {
             $self->_filenames->{$arg} = \@files;
         }
         elsif ( $arg =~ /selector|language|scenario/ ) { }
-        else                                           { log_warn "$lang is not a lang_code"; }
+        else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
     }
 }
 
