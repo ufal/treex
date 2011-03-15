@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use English '-no_match_vars';
 
-use Carp;
+use Carp qw(cluck);
 
 use IO::Handle;
 use Readonly;
@@ -58,7 +58,6 @@ sub get_error_level {
 # fatal error messages can't be surpressed
 sub fatal {
     my $message = shift;
-    run_hooks('FATAL');
     if ($unfinished_line) {
         print STDERR "\n";
         $unfinished_line = 0;
@@ -67,7 +66,9 @@ sub fatal {
     $line .= "PERL ERROR MESSAGE: $OS_ERROR\n"        if $OS_ERROR;
     $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
     $line .= "PERL STACK:";
-    confess $line;
+    cluck $line;
+    run_hooks('FATAL');
+    die "\n";
 }
 
 sub short_fatal {    # !!! neodladene

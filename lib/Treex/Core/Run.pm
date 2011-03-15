@@ -592,8 +592,7 @@ sub _check_job_errors {
         # There is a hook on fatal errors that creates *.fatalerror files.
         # The error message and stack is printed (via confess) AFTER running the hook,
         # so we must wait for it.
-        log_info 'At least one job crashed with fatal error. All remaining jobs will be interrupted after 5 s.';
-        sleep 5;
+        log_info 'At least one job crashed with fatal error. All remaining jobs will be interrupted now.';
         $self->_delete_jobs_and_exit;
     }
 }
