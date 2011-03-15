@@ -39,14 +39,14 @@ has _file_number => (
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
-        my ($lang, $sele) = ($arg, '');
-        if ($arg =~ /_/) {
-            ($lang, $sele) = split /_/, $arg;
+        my ( $lang, $sele ) = ( $arg, '' );
+        if ( $arg =~ /_/ ) {
+            ( $lang, $sele ) = split /_/, $arg;
         }
         if ( Treex::Moose::is_lang_code($lang) ) {
             my $files_string = $args->{$arg};
             $files_string =~ s/^\s+|\s+$//g;
-            my @files = split( /[ ,]+/,  $files_string);
+            my @files = split( /[ ,]+/, $files_string );
             if ( !$self->_files_per_zone ) {
                 $self->_set_files_per_zone( scalar @files );
             }
@@ -84,11 +84,15 @@ sub new_document {
         ( $stem, $file_number ) = ( $self->file_stem, undef );
     }
     else {    # Magical heuristics how to choose default name for a document loaded from several files
-        foreach my $lang ( keys %filenames ) {
-            my $filename = $filenames{$lang};
+        foreach my $zone_label ( keys %filenames ) {
+            my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
             my ( $name, $extension ) = $file =~ /([^.]+)(\..+)?/;
-            $name =~ s/[_-]?$lang[_-]?//gi;
+            my ( $lang, $sele ) = ( $zone_label, '' );
+            if ( $zone_label =~ /_/ ) {
+                ( $lang, $sele ) = split /_/, $zone_label;
+            }
+            $name =~ s/[_-]?($lang|$sele|$zone_label)[_-]?//gi;
             if ( !$name && !$stem ) {
                 $name        = 'noname';
                 $file_number = undef;
@@ -99,7 +103,7 @@ sub new_document {
             }
         }
     }
-    
+
     $self->_set_doc_number( $self->doc_number + 1 );
     return Treex::Core::Document->new(
         {
