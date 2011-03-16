@@ -79,6 +79,7 @@ sub short_fatal {    # !!! neodladene
     }
     my $line = "TREEX-FATAL(short):\t$message\n";
     print STDERR $line;
+    run_hooks('FATAL');
     exit;
 
 }
@@ -86,83 +87,91 @@ sub short_fatal {    # !!! neodladene
 # TODO: redesign API - $carp, $no_print_stack
 
 sub warn {
-    my ($message, $carp) = @_;
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'WARN'};
-    my $line = "";
-    if ($unfinished_line) {
-        $line            = "\n";
-        $unfinished_line = 0;
-    }
-    $line .= "TREEX-WARN:\t$message\n";
+    my ( $message, $carp ) = @_;
+    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'WARN'} ) {
+        my $line = "";
+        if ($unfinished_line) {
+            $line            = "\n";
+            $unfinished_line = 0;
+        }
+        $line .= "TREEX-WARN:\t$message\n";
 
-    if ($carp) {
-        Carp::carp $line;
+        if ($carp) {
+            Carp::carp $line;
+        }
+        else {
+            print STDERR $line;
+        }
     }
-    else {
-        print STDERR $line;
-    }
+    run_hooks('WARN');
     return;
 }
 
 sub debug {
     my ( $message, $no_print_stack ) = @_;
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'DEBUG'};
-    my $line = "";
-    if ($unfinished_line) {
-        $line            = "\n";
-        $unfinished_line = 0;
-    }
-    $line .= "TREEX-DEBUG:\t$message\n";
+    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'DEBUG'} ) {
+        my $line = "";
+        if ($unfinished_line) {
+            $line            = "\n";
+            $unfinished_line = 0;
+        }
+        $line .= "TREEX-DEBUG:\t$message\n";
 
-    if ($no_print_stack) {
-        print STDERR $line;
+        if ($no_print_stack) {
+            print STDERR $line;
+        }
+        else {
+            Carp::cluck $line;
+        }
     }
-    else {
-        Carp::cluck $line;
-    }
+    run_hooks('DEBUG');
     return;
 }
 
 sub data {
     my $message = shift;
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
-    my $line = "";
-    if ($unfinished_line) {
-        $line            = "\n";
-        $unfinished_line = 0;
+    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'INFO'} ) {
+        my $line = "";
+        if ($unfinished_line) {
+            $line            = "\n";
+            $unfinished_line = 0;
+        }
+        $line .= "TREEX-DATA:\t$message\n";
+        print STDERR $line;
     }
-    $line .= "TREEX-DATA:\t$message\n";
-
-    print STDERR $line;
+    run_hooks('DATA');
     return;
 }
 
 sub info {
-    my ($message, $arg_ref) = @_;
-    my $same_line = defined $arg_ref && $arg_ref->{same_line};
-    return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
-    my $line = "";
-    if ($unfinished_line && !$same_line) {
-        $line            = "\n";
-        $unfinished_line = 0;
-    }
-    if (!$same_line || !$unfinished_line){
-        $line .= "TREEX-INFO:\t";
-    }
-    $line .= $message;
+    my ( $message, $arg_ref ) = @_;
+    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'INFO'} ) {
+        my $same_line = defined $arg_ref && $arg_ref->{same_line};
+        my $line = "";
+        if ( $unfinished_line && !$same_line ) {
+            $line            = "\n";
+            $unfinished_line = 0;
+        }
+        if ( !$same_line || !$unfinished_line ) {
+            $line .= "TREEX-INFO:\t";
+        }
+        $line .= $message;
 
-    if ($same_line){
-        $unfinished_line = 1;
-    } else {
-        $line .= "\n";
-    }
+        if ($same_line) {
+            $unfinished_line = 1;
+        }
+        else {
+            $line .= "\n";
+        }
 
-    print STDERR $line;
-    STDERR->flush if $same_line;
+        print STDERR $line;
+        STDERR->flush if $same_line;
+    }
+    run_hooks('INFO');
     return;
 }
 
-sub progress {    # progress se pres ntred neposila, protoze by se stejne neflushoval
+sub progress {            # progress se pres ntred neposila, protoze by se stejne neflushoval
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     if ( not $unfinished_line ) {
         print STDERR "TREEX-PROGRESS:\t";
@@ -172,7 +181,6 @@ sub progress {    # progress se pres ntred neposila, protoze by se stejne neflus
     $unfinished_line = 1;
     return;
 }
-
 
 # ---------- EXPORTED FUNCTIONS ------------
 
@@ -193,21 +201,20 @@ sub log_debug           { debug @_; }
 
 # ---------- HOOKS -----------------
 
-my %hooks; # subroutines can be associated with reported events
+my %hooks;    # subroutines can be associated with reported events
 
 sub add_hook {
-    my ($level, $subroutine) = @_;
+    my ( $level, $subroutine ) = @_;
     $hooks{$level} = [] unless $hooks{$level};
-    push @{$hooks{$level}},$subroutine;
+    push @{ $hooks{$level} }, $subroutine;
 }
 
 sub run_hooks {
     my ($level) = @_;
-    foreach my $subroutine (@{$hooks{$level}}) {
+    foreach my $subroutine ( @{ $hooks{$level} } ) {
         &$subroutine;
     }
 }
-
 
 1;
 
