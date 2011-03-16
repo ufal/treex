@@ -1,4 +1,4 @@
-package Treex::Block::W2A::EN::Segment;
+package Treex::Block::W2A::CS::Segment;
 use utf8;
 use Moose;
 use Treex::Moose;
@@ -10,11 +10,11 @@ has segmenter => (
     lazy_build => 1,
 );
 
-use Treex::Tools::Segment::EN::RuleBased;
+use Treex::Tools::Segment::CS::RuleBased;
 
 sub _build_segmenter {
     my $self = shift;
-    return Treex::Tools::Segment::EN::RuleBased->new(
+    return Treex::Tools::Segment::CS::RuleBased->new(
         use_paragraphs => $self->use_paragraphs,
         use_lines      => $self->use_lines
     );
@@ -26,7 +26,7 @@ __END__
 
 =over
 
-=item Treex::Block::W2A::EN::Segment
+=item Treex::Block::W2A::CS::Segment
 
 Sentence boundaries are detected based on a regex rules
 that detect end-sentence punctuation ([.?!]) followed by a uppercase letter.

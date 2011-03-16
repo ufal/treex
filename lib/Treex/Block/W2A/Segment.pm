@@ -23,67 +23,21 @@ has use_lines => (
         . ' and nothing else, use rather W2A::SegmentOnNewlines.)',
 );
 
-# Tokens that usually do not end a sentence even if they are followed by a period and a capital letter:
-# * single uppercase letters serve usually as first name initials
-# * in langauge-specific descendants consider adding
-#   * period-ending items that never indicate sentence breaks
-#   * titles before names of persons etc.
-#
-# Note, that we cannot write
-# sub get_unbreakers { return qr{...}; }
-# because we want the regex to be compiled just once, not on every method call.
-my $UNBREAKERS = qr{\p{Upper}};
+has segmenter => (
+    is         => 'ro',
+    handles    => [qw(get_segments)],
+    lazy_build => 1,
+);
 
-sub unbreakers {
-    return $UNBREAKERS;
+use Treex::Tools::Segment::RuleBased;
+
+sub _build_segmenter {
+    my $self = shift;
+    return Treex::Tools::Segment::RuleBased->new(
+        use_paragraphs => $self->use_paragraphs,
+        use_lines      => $self->use_lines
+    );
 }
-
-# Characters that can appear after period (or other end-sentence symbol)
-sub closings {
-    return '"”»)';
-}
-
-# Characters that can appear before the first word of a sentence
-sub openings {
-    return '"“«(';
-}
-
-override 'segment_text' => sub {
-    my ( $self, $text ) = @_;
-
-    # Pre-processing
-    my $unbreakers = $self->unbreakers;
-    $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
-
-    # two newlines usually separate paragraphs
-    if ( $self->use_paragraphs ) {
-        $text =~ s/([^.!?])\n\n+/$1<<<SEP>>>/gsm;
-    }
-
-    if ( $self->use_lines ) {
-        $text =~ s/\n/<<<SEP>>>/gsm;
-    }
-
-    # Normalize whitespaces
-    $text =~ s/\s+/ /gsm;
-
-    # This is the main regex
-    my ( $openings, $closings ) = ( $self->openings, $self->closings );
-    $text =~ s{
-        ([.?!])            # $1 = end-sentence punctuation
-        ([$closings]?)          # $2 = optional closing quote/bracket
-        \s                 #      space
-        ([$openings]?\p{Upper}) # $3 = uppercase letter (optionally preceded by opening quote)
-    }{$1$2\n$3}gsxm;
-
-    # Post-processing
-    $text =~ s/<<<SEP>>>/\n/gsmx;
-    $text =~ s/<<<DOT>>>/./gsxm;
-    $text =~ s/\s+$//gsxm;
-    $text =~ s/^\s+//gsxm;
-
-    return $text;
-};
 
 1;
 

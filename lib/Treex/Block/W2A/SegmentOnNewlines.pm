@@ -18,9 +18,8 @@ sub process_document {
     my $text = $doczone->text;
     log_fatal $self->_doczone_name . ' contains no "text" attribute' if !defined $text;
 
-    $text = $self->segment_text($text);
     my @sentences;
-    foreach my $sentence ( map { $self->normalize_sentence($_) } split /\n/, $text ) {
+    foreach my $sentence ( map { $self->normalize_sentence($_) } $self->get_segments($text) ) {
         if ( $sentence eq '' ) {
             if ( $self->delete_empty_sentences ) {
             }
@@ -66,9 +65,9 @@ sub _doczone_name {
         . ( $self->selector ne '' ? ' selector=' . $self->selector : '' );
 }
 
-sub segment_text {
+sub get_segments {
     my ( $self, $text ) = @_;
-    return $text;
+    return split /\n/, $text;
 }
 
 sub normalize_sentence {
