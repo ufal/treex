@@ -26,7 +26,8 @@ my %GENDER_OF_ROLE = (
 sub process_zone {
     my ( $self, $zone ) = @_;
 
-    my $n_root = $zone->get_ntree or return;
+    return if not $zone->has_ntree;
+    my $n_root = $zone->get_ntree;
     my @n_p = grep { $_->get_attr('ne_type') eq 'p_' } $n_root->get_descendants();
     foreach my $n_node (@n_p) {
         process_personal_nnode($n_node);

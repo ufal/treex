@@ -117,6 +117,16 @@ sub process_range_of_years {
 
 sub process_month {
     my ($t_node) = @_;
+
+    # 6th of December -> 6. prosince (period added)
+    my $next_node = $t_node->get_next_node;
+    if ($next_node and $t_node->t_lemma =~ /^\d{1,2}$/
+            and Lexicon::Czech::number_of_month( $next_node->t_lemma )) {
+        $t_node->set_t_lemma( $t_node->t_lemma . '.' );
+        $t_node->set_t_lemma_origin('rule-Fix_date_time');
+        return;
+    }
+
     my $parent = $t_node->get_parent();
     return if $parent->is_root();
     return if !Lexicon::Czech::number_of_month( $parent->t_lemma );
