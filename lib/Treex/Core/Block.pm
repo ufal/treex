@@ -20,7 +20,9 @@ has scenario => (
 # in all *::EN::* blocks and all *::??2EN::* blocks.
 sub build_language {
     my $self = shift;
-    pos_validated_list (\@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
     if ( $lang && Treex::Moose::is_lang_code( lc $lang ) ) {
@@ -47,7 +49,9 @@ sub BUILD {
 
 sub get_required_share_files {
     my $self = shift;
-    pos_validated_list (\@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return ();
 }
 
@@ -140,7 +144,9 @@ sub process_zone {
 
 sub get_block_name {
     my $self = shift;
-    pos_validated_list (\@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return ref($self);
 }
 

@@ -13,7 +13,11 @@ use Scalar::Util;
 use Readonly;
 use Data::Dumper;
 
-# Validation temporarily disabled because it seems to be slow.
+# sub reference for validating of params
+# Sets default values for unspecified params
+my $validation_sub;
+
+# Quick alternative for MooseX::Params::Validate::pos_validated_list
 sub pos_validated_list {
     my $args_ref = shift;
     my $i        = 0;
@@ -26,12 +30,13 @@ sub pos_validated_list {
     }
     return @{$args_ref};
 }  
-my $validation_sub = \&pos_validated_list;
 
-# But you can turn it on. TODO: After WMT the default should by to validate.
-if ($ENV{TREEX_VALIDATE}){
+# Choose which variant to use according to Treex::Core::Config::$params_validate
+if ($Treex::Core::Config::params_validate == 2){
     require MooseX::Params::Validate;
     $validation_sub = \&MooseX::Params::Validate::pos_validated_list;
+} else {
+    $validation_sub = \&pos_validated_list;
 }
 
 my ( $import, $unimport, $init_meta ) =

@@ -24,7 +24,9 @@ sub build_file_number {
 # Full filename without the extension
 sub full_filename {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
 }
 
@@ -147,7 +149,9 @@ sub BUILD {
 
 sub _pml_attribute_hash {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->metaData('pml_root')->{meta};
 }
 
@@ -252,7 +256,9 @@ sub get_node_by_id() {
 
 sub get_all_node_ids() {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return ( keys %{ $self->_index } );
 }
 
@@ -260,7 +266,9 @@ sub get_all_node_ids() {
 
 sub get_bundles {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->trees;
 }
 

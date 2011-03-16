@@ -98,7 +98,9 @@ sub get_or_create_zone {
 
 sub get_all_zones {
     my $self = shift;
-    pos_validated_list ( \@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return map { $_->value() } $self->{zones}->elements;
 }
 
@@ -106,7 +108,9 @@ sub get_all_zones {
 
 sub get_all_trees {
     my $self = shift;
-    pos_validated_list (\@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     return () unless $self->{zones};
 
@@ -263,7 +267,9 @@ sub leave_message {
 
 sub get_messages {
     my $self = shift;
-    pos_validated_list (\@_);
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     if ( $self->get_attr('message_board') ) {
         return @{ $self->get_attr('message_board') };
     }

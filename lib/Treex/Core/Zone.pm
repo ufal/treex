@@ -70,7 +70,9 @@ sub get_attr {
 
 sub get_label {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->language . ( $self->selector ? '_' . $self->selector : '' );
 }
 1;

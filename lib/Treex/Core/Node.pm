@@ -49,20 +49,26 @@ sub _index_my_id {
 
 sub _pml_attribute_hash {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self;
 }
 
 sub get_bundle {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_zone->get_bundle;
 }
 
 # reference to embeding zone is stored only with tree root, not with nodes
 sub get_zone {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $zone;
     if ( $self->is_root ) {
         $zone = $self->_get_zone;
@@ -78,7 +84,9 @@ sub get_zone {
 
 sub delete {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     if ( $self->is_root ) {
         log_fatal 'Tree root cannot be deleted using $root->delete().'
             . ' Use $zone->delete_tree($layer) instead';
@@ -109,13 +117,17 @@ sub delete {
 
 sub get_pml_type_name {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return;
 }
 
 sub get_layer {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     if ( ref($self) =~ /Node::(\w)$/ ) {
         return lc($1);
@@ -127,14 +139,18 @@ sub get_layer {
 
 sub language {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     $self->get_zone()->language;
 }
 
 sub selector {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     $self->get_zone()->selector;
 }
@@ -195,7 +211,9 @@ sub create_child {
 
 sub get_document {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     my $bundle = $self->get_bundle();
     log_fatal('Cannot call get_document on a node which is in no bundle') if not defined $bundle;
@@ -204,21 +222,33 @@ sub get_document {
 
 sub get_root {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     return $self->root();
 }
 
 sub is_root {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
-    return ( not $self->get_parent() );
+    return ( not $self->_get_parent() );
 }
 
 sub get_parent {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
+
+    return $self->parent;
+}
+
+sub _get_parent {
+    my $self = shift;
 
     return $self->parent;
 }
@@ -408,7 +438,9 @@ sub precedes {
 # Neni na to cas prave ted?
 sub get_next_node {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $my_ord = $self->ord();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
@@ -425,7 +457,9 @@ sub get_next_node {
 
 sub get_prev_node {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $my_ord = $self->ord();
     log_fatal('Undefined ordering value') if !defined $my_ord;
 
@@ -442,7 +476,9 @@ sub get_prev_node {
 
 sub _normalize_node_ordering {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
     my $new_ord = 0;
     foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
@@ -615,7 +651,9 @@ sub _shift_to_node {
 
 sub get_depth {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $depth = 0;
     while ( $self = $self->get_parent() ) {
         $depth++;
@@ -631,7 +669,9 @@ sub get_depth {
 # ZZ navrhoval implementovat to jiz zde, v Node.pm, tak to zkousim (MP).
 sub get_clause_root {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $my_number = $self->get_attr('clause_number');
     log_warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
         if !defined $my_number;
@@ -653,7 +693,9 @@ sub get_clause_root {
 # Clauses may by split in more subtrees ("Peter eats and drinks.")
 sub get_clause_nodes {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $root        = $self->get_root();
     my @descendants = $root->get_descendants( { ordered => 1 } );
     my $my_number   = $self->get_attr('clause_number');
@@ -663,7 +705,9 @@ sub get_clause_nodes {
 # TODO: same purpose as get_clause_root but instead of clause_number uses is_clause_head
 sub get_clause_head {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $node = $self;
     while ( !$node->get_attr('is_clause_head') && $node->get_parent() ) {
         $node = $node->get_parent();
@@ -674,7 +718,9 @@ sub get_clause_head {
 # taky by mohlo byt neco jako $node->get_descendants({within_clause=>1});
 sub get_clause_descendants {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_children();
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
@@ -707,7 +753,9 @@ sub set_ordering_value {
 
 sub get_fposition {
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     my $id = $self->get_attr('id');
 
     my $fsfile  = $self->get_document->_get_pmldoc();
@@ -726,7 +774,9 @@ sub get_fposition {
 
 sub generate_new_id {    #TODO move to Core::Document?
     my $self = shift;
-    pos_validated_list( \@_ );
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     my $doc = $self->get_document;
 
