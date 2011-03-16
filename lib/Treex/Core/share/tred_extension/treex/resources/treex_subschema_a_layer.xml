@@ -57,6 +57,10 @@
 
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
+
+      <!-- for alignment - tentative -->
+      <member name="align"><cdata format="PMLREF"/></member>
+
     </structure>
   </type>
 
