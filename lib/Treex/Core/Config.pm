@@ -12,7 +12,7 @@ our %service;
 # 0: Treex::Moose::pos_validated_list() called if params needed, skipped otherwise
 # 1: Treex::Moose::pos_validated_list() called always
 # 2: MooseX::Params::Validate::pos_validated_list called always
-our $params_validate = 1;
+our $params_validate = 0;
 
 sub devel_version {
     return $ENV{TMT_ROOT};
