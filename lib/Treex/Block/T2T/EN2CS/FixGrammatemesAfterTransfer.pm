@@ -322,9 +322,15 @@ sub process_tnode {
 
     # asymetry in degcmp
     if (($en_tlemma eq 'previously' and $cs_tlemma eq 'dřív')
-            or ($en_tlemma eq 'farther' and $cs_tlemma eq 'daleko')) {
+            or ($en_tlemma eq 'farther' and $cs_tlemma eq 'daleko') ) {
         $cs_t_node->set_attr('gram/degcmp','comp');
     }
+
+    if ( ($en_tlemma eq 'first' and $cs_tlemma eq 'brzy') ) {
+        $cs_t_node->set_attr('gram/degcmp','sup');
+    }
+
+
 
     # deleting grammatemes that became superfluous due to change of sempos
     if ( $cs_formeme !~ /^v/ ) {
