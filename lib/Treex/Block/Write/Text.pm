@@ -6,9 +6,10 @@ extends 'Treex::Core::Block';
 #TODO implement "to"
 has to => ( isa => 'Str', is => 'ro', default => '-' );
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    print $zone->text;
+sub process_document {
+    my ( $self, $doc ) = @_;
+    my $doczone = $doc->get_zone($self->language, $self->selector); 
+    print $doczone->text;
 }
 
 1;
