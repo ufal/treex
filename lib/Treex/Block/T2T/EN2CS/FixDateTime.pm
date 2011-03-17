@@ -117,20 +117,19 @@ sub process_range_of_years {
 
 sub process_month {
     my ($t_node) = @_;
-
-    # 6th of December -> 6. prosince (period added)
-    my $next_node = $t_node->get_next_node;
-    if ($next_node and $t_node->t_lemma =~ /^\d{1,2}$/
-            and Lexicon::Czech::number_of_month( $next_node->t_lemma )) {
-        $t_node->set_t_lemma( $t_node->t_lemma . '.' );
-        $t_node->set_t_lemma_origin('rule-Fix_date_time');
-        return;
+    
+    # First, try to find cases like "July 6th" and "July 6",
+    # where the month is the parent of the number.
+    my $month = $t_node->get_parent();
+    
+    # If it fails, try to find cases like "6th of July" and "6 of July",
+    # where the month is the next node (and child of the number).
+    if ($month->is_root || !Lexicon::Czech::number_of_month( $month->t_lemma ) ){
+        $month = $t_node->get_next_node;
+        
+        # If also this fails, we are finished.
+        return if !$month || !Lexicon::Czech::number_of_month( $month->t_lemma );
     }
-
-    my $parent = $t_node->get_parent();
-    return if $parent->is_root();
-    return if !Lexicon::Czech::number_of_month( $parent->t_lemma );
-    return if $t_node->precedes($parent);
 
     # 4th -> 4. -> 4. (unchanged)
     # 4   -> 4  -> 4. (period added)
@@ -141,13 +140,12 @@ sub process_month {
     }
 
     # Change word order
-    $t_node->shift_before_node( $parent, { without_children => 1 } );
-    my $p_formeme = $parent->formeme;
+    $t_node->shift_before_node( $month, { without_children => 1 } );
 
     # "on January 9" -> "9. ledna"
-    if ( $p_formeme =~ /^n:(na|v)/ ) {
-        $parent->set_formeme('n:2');
-        $parent->set_formeme_origin('rule-Fix_date_time');
+    if ( $month->formeme =~ /^n:(na|v)/ ) {
+        $month->set_formeme('n:2');
+        $month->set_formeme_origin('rule-Fix_date_time');
     }
     return;
 }
