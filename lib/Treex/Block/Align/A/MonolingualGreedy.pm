@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 has 'to_language' => (
     is         => 'ro',
     isa        => 'LangCode',
-    lazy_build => 1
+    lazy_build => 1,
 );
 
 has 'to_selector' => (
@@ -22,6 +22,7 @@ sub _build_to_language {
 
 sub _build_language { log_fatal "Language must be given"; }
 
+my ( $ref_length, $tst_length );
 my $min_score_limit = 4;
 
 my %weight = (
@@ -35,51 +36,19 @@ my %weight = (
 sub process_zone {
     my ( $self, $tst_zone ) = @_;
     my $ref_zone = $tst_zone->get_bundle()->get_zone( $self->to_language, $self->to_selector );
-
     my @tst_nodes = $tst_zone->get_atree->get_descendants( { ordered => 1 } );
     my @ref_nodes = $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+    return if @ref_nodes == 0;    # because of re-segmentation
 
-    print "TST: " . $tst_zone->sentence . "\n";
-    print "REF: " . $ref_zone->sentence . "\n\n";
-
-    $self->find_links( \@ref_nodes, \@tst_nodes );
-
-    my $doc = $tst_zone->get_document();
-    foreach my $tst_node (@tst_nodes) {
-        my $aligned_word = '';
-        if ( $tst_node->get_attr('align') ) {
-            $aligned_word = $doc->get_node_by_id( $tst_node->get_attr('align') )->form;
-        }
-        print $tst_node->form . " --> " . $aligned_word . "\n" if $tst_node->form ne $aligned_word;
-    }
-    print "\n";
-}
-
-sub get_lemma {
-    my ( $self, $anode ) = @_;
-    log_fatal "ha" if !$anode;
-    my $lemma = $anode->lemma;
-    if ( !defined $lemma ) {
-        $lemma = $anode->form;
-    }
-
-    # trim artificial lemma endings
-    $lemma =~ s/[-_].*//;
-    return lc $lemma;
-}
-my ( $ref_length, $tst_length );
-
-sub find_links {
-    my ( $self, $ref_nodes, $tst_nodes ) = @_;
-    my %ref_free = map { $_ => $_ } @$ref_nodes;
-    my %tst_free = map { $_ => $_ } @$tst_nodes;
-    $ref_length = @$ref_nodes;
-    $tst_length = @$tst_nodes;
+    my %ref_free = map { $_ => $_ } @ref_nodes;
+    my %tst_free = map { $_ => $_ } @tst_nodes;
+    $ref_length = @ref_nodes;
+    $tst_length = @tst_nodes;
 
     # First, try super-greedy alignment (to make it faster):
     # If there is only one node with the same form, align it.
     my %ref_forms;
-    foreach my $ref_node (@$ref_nodes) {
+    foreach my $ref_node (@ref_nodes) {
         if ( $ref_forms{ $ref_node->form } ) {
             $ref_forms{ $ref_node->form } = 1;
         }
@@ -87,7 +56,7 @@ sub find_links {
             $ref_forms{ $ref_node->form } = $ref_node;
         }
     }
-    foreach my $tst_node (@$tst_nodes) {
+    foreach my $tst_node (@tst_nodes) {
         my $ref_node = $ref_forms{ $tst_node->form };
         if ( $ref_node && $ref_node != 1 ) {
             $tst_node->set_attr( 'align', $ref_node->id );
@@ -139,12 +108,23 @@ sub find_links {
     return;
 }
 
+sub get_lemma {
+    my ( $self, $anode ) = @_;
+    log_fatal "ha" if !$anode;
+    my $lemma = $anode->lemma;
+    if ( !defined $lemma ) {
+        $lemma = $anode->form;
+    }
+    $lemma =~ s/[-_].*//;    # trim artificial lemma endings
+    return lc $lemma;
+}
+
 sub score {
     my ( $self, $tst_node, $ref_node ) = @_;
     my %feature_vector;
 
     $feature_vector{lemma_similarity} = $self->lemma_similarity( $tst_node, $ref_node );
-    $feature_vector{tag_similarity} = $self->tag_similarity( $tst_node, $ref_node );
+    $feature_vector{tag_similarity}   = $self->tag_similarity( $tst_node,   $ref_node );
 
     my $tst_prev = $tst_node->get_prev_node;
     my $tst_next = $tst_node->get_next_node;
@@ -183,9 +163,8 @@ sub lemma_similarity {
 sub tag_similarity {
     my ( $self, $tst_node, $ref_node ) = @_;
     return 0 if !$tst_node->tag or !$ref_node->tag;
-    return substr($tst_node->tag, 0, 1) eq substr($ref_node->tag, 0, 1);
+    return substr( $tst_node->tag, 0, 1 ) eq substr( $ref_node->tag, 0, 1 );
 }
-
 
 1;
 
