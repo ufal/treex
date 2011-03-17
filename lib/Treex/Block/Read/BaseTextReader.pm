@@ -25,7 +25,7 @@ sub next_filehandle {
     my ($self) = @_;
     my $filename = $self->next_filename();
     return if !defined $filename;
-    return *STDIN if $filename eq '-';
+    return \*STDIN if $filename eq '-';
     open my $FH, '<:utf8', $filename or die "Can't open $filename: $!";
     return $FH;
 }
