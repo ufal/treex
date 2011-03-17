@@ -75,4 +75,7 @@ sub get_label {
     }
     return $self->language . ( $self->selector ? '_' . $self->selector : '' );
 }
+
+__PACKAGE__->meta->make_immutable;
+
 1;
