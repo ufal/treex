@@ -89,7 +89,6 @@ sub _verb_group_root {
 
         # two exceptions found in PDT2.0 t-trees
         last if $p->get_attr('morphcat/pos') ne 'V' && $p->lemma !~ /^(vědomý|jistý)$/;
-        
         $verb_root = $verb_root->get_parent();
     }
 
@@ -134,7 +133,7 @@ sub _is_clitic {
     }
 
     # Word "tam" is not a real clitic, but it is very often context-bound.
-    #return 1 if $form eq 'tam';
+    return 1 if $form eq 'tam' or $form eq 'sem';
 
     return 0;
 }
@@ -148,6 +147,7 @@ sub _order {
     return 2 if $form =~ /^(se|si)$/;
     return 3 if $form =~ /^(mi|ti|mu|jí|nám|vám|jim)$/;
     return 4 if $form =~ /^(mě|tě|ho|ji|nás|vás|je|to)$/;
+    return 6 if $form =~ /^(tam|sem)$/; # according to Krivan, 2006
 
     # All other clitics have rank 5:
     # tag=.[7Hc] ses sis bysme
