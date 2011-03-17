@@ -1076,7 +1076,7 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =item my $boolean = $node->precedes($another_node);
 
-Does this node precedes C<$another_node>?
+Does this node precede C<$another_node>?
 
 =item my $following_node = $node->get_next_node();
 
