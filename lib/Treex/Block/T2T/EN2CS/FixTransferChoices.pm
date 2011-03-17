@@ -40,6 +40,13 @@ sub fix_lemma {
         return "$1#V";
     }
 
+    if ( $cs_tlemma eq 'být' ) { # to be afraid --> *mit* strach
+        my ($strach_node) = grep {$_->t_lemma eq 'strach'} $cs_tnode->get_children;
+        if ($strach_node and $strach_node->src_tnode and $strach_node->src_tnode->t_lemma eq 'afraid') {
+            return 'mít#V';
+        }
+    }
+
     # this is probably due to wrong tagging/lemmatization in CzEng
     return 'peníze#N' if $cs_tlemma eq 'peníz';
 
