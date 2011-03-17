@@ -155,6 +155,11 @@ sub fix_formeme {
 
     return 'adv:' if $cs_pos eq 'D' and $cs_formeme =~ /n:(.+)\+/ and $1 ne "než";    # 'nez' is a conjunction indeed
 
+    # 'zpusob jak ...'
+    if ( $cs_formeme eq 'v:inf' and $en_formeme eq 'v:to+inf' and $cs_parent_tlemma eq 'způsob' ) {
+        return 'v:jak+inf';
+    }
+
     return;
 }
 

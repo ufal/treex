@@ -320,6 +320,12 @@ sub process_tnode {
         $cs_t_node->set_t_lemma('naneštěstí');
     }
 
+    # asymetry in degcmp
+    if (($en_tlemma eq 'previously' and $cs_tlemma eq 'dřív')
+            or ($en_tlemma eq 'farther' and $cs_tlemma eq 'daleko')) {
+        $cs_t_node->set_attr('gram/degcmp','comp');
+    }
+
     # deleting grammatemes that became superfluous due to change of sempos
     if ( $cs_formeme !~ /^v/ ) {
         $cs_t_node->set_voice(undef);
