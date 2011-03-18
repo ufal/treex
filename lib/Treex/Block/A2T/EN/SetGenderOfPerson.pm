@@ -19,7 +19,7 @@ sub gender_of_tnode_person {
         my $type = $n_node->get_attr('ne_type');
         return 'fem'  if $type eq 'PF';
         return 'anim' if $type eq 'PM';
-        return if $type !~ /^p/;
+        return        if $type !~ /^p/;
         $n_node = $n_node->get_parent();
         return if $n_node->is_root();
     }

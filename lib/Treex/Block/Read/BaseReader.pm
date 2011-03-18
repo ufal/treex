@@ -61,17 +61,17 @@ sub current_filename {
 
 sub is_next_document_for_this_job {
     my ($self) = @_;
-    return 1 if !$self->jobindex;    
-    return $self->doc_number % $self->jobs == ( $self->jobindex - 1 ); 
+    return 1 if !$self->jobindex;
+    return $self->doc_number % $self->jobs == ( $self->jobindex - 1 );
 }
 
 sub next_filename {
     my ($self) = @_;
-    
+
     # In parallel processing and one_doc_per_file setting,
     # we can skip files that are not supposed to be loaded by this job/reader,
     # in order to make loading faster.
-    while ($self->is_one_doc_per_file && !$self->is_next_document_for_this_job){
+    while ( $self->is_one_doc_per_file && !$self->is_next_document_for_this_job ) {
         $self->_set_file_number( $self->file_number + 1 );
         $self->_set_doc_number( $self->doc_number + 1 );
     }
@@ -79,8 +79,8 @@ sub next_filename {
     return $self->current_filename();
 }
 
-
 use File::Spec;
+
 sub new_document {
     my ( $self, $load_from ) = @_;
     my $path = $self->current_filename();

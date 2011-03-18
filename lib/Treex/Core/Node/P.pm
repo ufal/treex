@@ -5,7 +5,7 @@ extends 'Treex::Core::Node';
 
 sub get_pml_type_name {
     my ($self) = @_;
-    return $self->get_children() ? 'p-nonterminal.type' : 'p-terminal.type'; #TODO is this OK?
+    return $self->get_children() ? 'p-nonterminal.type' : 'p-terminal.type';    #TODO is this OK?
 }
 
 # Nodes on the p-layer have no ordering attribute.

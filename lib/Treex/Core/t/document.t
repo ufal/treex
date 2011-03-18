@@ -19,22 +19,22 @@ my $new_bundle = $doc->create_bundle();
 
 is( scalar $doc->get_bundles(), 1, 'Now I have one bundle' );
 
-my $last_bundle = $doc->create_bundle();
-my $prepended_bundle = $doc->create_bundle({before => $new_bundle});
-my $appended_bundle = $doc->create_bundle({after => $new_bundle});
+my $last_bundle      = $doc->create_bundle();
+my $prepended_bundle = $doc->create_bundle( { before => $new_bundle } );
+my $appended_bundle  = $doc->create_bundle( { after => $new_bundle } );
 
-
-is (scalar $doc->get_bundles(), 4,
-    'Three bundles after inserting a bundle before and after the current one');
+is( scalar $doc->get_bundles(), 4,
+    'Three bundles after inserting a bundle before and after the current one'
+);
 
 $new_bundle->set_id(2);
 $prepended_bundle->set_id(1);
 $appended_bundle->set_id(3);
 $last_bundle->set_id(4);
 
-is ((join '', map {$_->id} $doc->get_bundles()), '1234',
-    'Inserted bundles are in located in correct positions');
-
+is( ( join '', map { $_->id } $doc->get_bundles() ), '1234',
+    'Inserted bundles are in located in correct positions'
+);
 
 $doc->set_attr( $attr, $sentence );
 

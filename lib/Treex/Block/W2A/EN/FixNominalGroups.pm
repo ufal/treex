@@ -35,7 +35,7 @@ sub process_atree {
             and $C->tag =~ /^N/
             and $B->get_parent eq $C
             and (
-                $A->get_parent    eq $B
+                $A->get_parent eq $B
                 or $A->get_parent eq $C
             )
             )

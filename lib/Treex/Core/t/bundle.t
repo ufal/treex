@@ -8,6 +8,7 @@ use Test::More;
 BEGIN { use_ok('Treex::Core::Bundle') }
 use Treex::Core::Document;
 use Treex::Core::Log;
+
 #log_set_error_level('WARN');
 #Construction testing
 
@@ -21,15 +22,15 @@ isa_ok( $bundle->get_document(), 'Treex::Core::Document' );
 #Tree testing
 my @layers = qw(N A T P);
 foreach my $layer (@layers) {
-    my $success = eval { $bundle->create_tree('cs', $layer);1; };
+    my $success = eval { $bundle->create_tree( 'cs', $layer ); 1; };
     ok( $success, "Czech $layer-tree successfully created" ) or diag($@);
     SKIP: {
         skip "There is no tree cs $layer", 2 unless $success;
-        ok( $bundle->has_tree('cs', $layer), "Bundle contains recently added tree cs $layer" );
-        isa_ok( $bundle->get_tree('cs', $layer), "Treex::Core::Node::$layer" );
+        ok( $bundle->has_tree( 'cs', $layer ), "Bundle contains recently added tree cs $layer" );
+        isa_ok( $bundle->get_tree( 'cs', $layer ), "Treex::Core::Node::$layer" );
     }
 }
-ok( !$bundle->has_tree('en', 'T'), "Bundle doesn't contains tree, that wasn't added" );
+ok( !$bundle->has_tree( 'en', 'T' ), "Bundle doesn't contains tree, that wasn't added" );
 
 #TODO: {
 #    todo_skip 'Get tree names test', 1 unless Treex::Core::Node->meta->has_method('get_tree_names');
@@ -79,6 +80,6 @@ fail('Need some method for deleting messages');
 
 =cut
 
-is_deeply( $bundle->get_tree('cs', 'T'), $bundle->get_zone('cs')->get_ttree(), 'get_tree("cs", "T") is a shortcut for get_zone("cs")->get_ttree()' );
+is_deeply( $bundle->get_tree( 'cs', 'T' ), $bundle->get_zone('cs')->get_ttree(), 'get_tree("cs", "T") is a shortcut for get_zone("cs")->get_ttree()' );
 
 done_testing();

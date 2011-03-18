@@ -21,7 +21,7 @@ has [qw(lemma_prob_sum formeme_prob_sum)] => (
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
     my $sum_restriction = defined $self->lemma_prob_sum || defined $self->formeme_prob_sum;
-    my $max_restriction = $self->max_lemma_variants || $self->max_formeme_variants;
+    my $max_restriction = $self->max_lemma_variants     || $self->max_formeme_variants;
 
     log_fatal(
         'Applying Cut_variants block with no restriction (parameters) does not make sense. '
@@ -40,7 +40,7 @@ sub process_tnode {
 
     # t_lemma_variants
     my $lemmas = $self->max_lemma_variants;
-    my $l_sum = $self->lemma_prob_sum;
+    my $l_sum  = $self->lemma_prob_sum;
     my $ls_ref = $node->get_attr('translation_model/t_lemma_variants');
     if ( $l_sum && $ls_ref ) {
         my ( $sum, $variants ) = ( 0, 0 );
@@ -57,7 +57,7 @@ sub process_tnode {
 
     # same for formeme_variants
     my $formemes = $self->max_formeme_variants;
-    my $f_sum = $self->formeme_prob_sum;
+    my $f_sum    = $self->formeme_prob_sum;
     my $fs_ref   = $node->get_attr('translation_model/formeme_variants');
     if ( $f_sum && $fs_ref ) {
         my ( $sum, $variants ) = ( 0, 0 );

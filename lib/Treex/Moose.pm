@@ -29,13 +29,14 @@ sub pos_validated_list {
         $i++;
     }
     return @{$args_ref};
-}  
+}
 
 # Choose which variant to use according to Treex::Core::Config::$params_validate
-if ($Treex::Core::Config::params_validate == 2){
+if ( $Treex::Core::Config::params_validate == 2 ) {
     require MooseX::Params::Validate;
     $validation_sub = \&MooseX::Params::Validate::pos_validated_list;
-} else {
+}
+else {
     $validation_sub = \&pos_validated_list;
 }
 

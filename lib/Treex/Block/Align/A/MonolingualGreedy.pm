@@ -124,7 +124,7 @@ sub score {
     my %feature_vector;
 
     $feature_vector{lemma_similarity} = $self->lemma_similarity( $tst_node, $ref_node );
-    $feature_vector{tag_similarity}   = $self->tag_similarity( $tst_node,   $ref_node );
+    $feature_vector{tag_similarity} = $self->tag_similarity( $tst_node, $ref_node );
 
     my $tst_prev = $tst_node->get_prev_node;
     my $tst_next = $tst_node->get_next_node;

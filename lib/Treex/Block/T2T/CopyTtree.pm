@@ -3,9 +3,9 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-has '+language' => ( required => 1 );
-has 'source_language' => ( is => 'rw', isa => 'Str', lazy_build => 1 );
-has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );
+has '+language'       => ( required => 1 );
+has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
+has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
@@ -84,8 +84,8 @@ sub copy_subtree {
             $target_node->set_attr( $attr, $source_node->get_attr($attr) );
         }
         $target_node->set_src_tnode($source_node);
-        $target_node->set_t_lemma_origin('clone' );
-        $target_node->set_formeme_origin('clone' );
+        $target_node->set_t_lemma_origin('clone');
+        $target_node->set_formeme_origin('clone');
 
         copy_subtree( $source_node, $target_node, $src2tgt );
     }

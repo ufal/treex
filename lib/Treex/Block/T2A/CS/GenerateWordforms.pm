@@ -70,14 +70,14 @@ sub _generate_word_form {
         $a_node->get_children();
 
     # Let the MorphoLM decides whether to use "5 let" or "5 roků"
-    if ($lemma eq 'rok') {
-        $a_node->set_attr('morphcat/gender', '.');
+    if ( $lemma eq 'rok' ) {
+        $a_node->set_attr( 'morphcat/gender', '.' );
     }
 
     my ( $tag_regex, $partial_regexps_ref ) = _get_tag_regex($a_node);
 
     # resolving spurious nouns-adjectives like 'nadřízený' - try lemma 'nadřízená'
-    if ($a_node->get_attr('morphcat/pos')       eq 'N'
+    if ($a_node->get_attr('morphcat/pos') eq 'N'
         && $a_node->get_attr('morphcat/gender') eq 'F'
         && $lemma =~ /ý$/
         )

@@ -5,7 +5,7 @@ use Moose::Role;
 # TODO: check jobs >= jobindex > 0
 has jobs => (
     is            => 'rw',
-    isa           => 'Int', 
+    isa           => 'Int',
     documentation => 'number of jobs for parallel processing',
 );
 
@@ -39,8 +39,8 @@ has doc_number => (
 # i.e. those documents where (doc_number-1) % jobs == (jobindex-1).
 sub is_current_document_for_this_job {
     my ($self) = @_;
-    return 1 if !$self->jobindex;    
-    return ($self->doc_number - 1) % $self->jobs == ( $self->jobindex - 1 ); 
+    return 1 if !$self->jobindex;
+    return ( $self->doc_number - 1 ) % $self->jobs == ( $self->jobindex - 1 );
 }
 
 # Returns a next document which should be processed by this job.
@@ -48,18 +48,18 @@ sub is_current_document_for_this_job {
 sub next_document_for_this_job {
     my ($self) = @_;
     my $doc = $self->next_document();
-    while ($doc && !$self->is_current_document_for_this_job) {
+    while ( $doc && !$self->is_current_document_for_this_job ) {
         $doc = $self->next_document();
     }
-    
+
     # TODO this is not very elegant
     # and it is also wrong, because if next_document issues some warnings,
     # these are printed into a wrong file.
-    # However, I don't know how to get the correct doc_number before executing next_document.  
-    if ($doc && $self->jobindex){
+    # However, I don't know how to get the correct doc_number before executing next_document.
+    if ( $doc && $self->jobindex ) {
         Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );
     }
-    
+
     return $doc;
 }
 
@@ -74,8 +74,8 @@ sub number_of_documents_per_this_job {
     my $total = $self->number_of_documents() or return;
     return $total if !$self->jobs;
     my $rest = $total % $self->jobs;
-    my $div  = ($total-$rest) / $self->jobs;
-    return $div + ($rest >= $self->jobindex ? 1 : 0);
+    my $div  = ( $total - $rest ) / $self->jobs;
+    return $div + ( $rest >= $self->jobindex ? 1 : 0 );
 }
 
 sub reset {

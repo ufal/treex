@@ -23,7 +23,7 @@ sub process_zone {
     #!!! dirty traversing of the pyramid at the lowest level
     # in order to distinguish full sentences from titles
     # TODO: source language dependent code in synthesis!!!
-    my $en_zone = $zone->get_bundle()->get_zone('en', 'src');
+    my $en_zone = $zone->get_bundle()->get_zone( 'en', 'src' );
     return if $en_zone && $en_zone->sentence && $en_zone->sentence !~ /\./ && $punct_mark eq '.';
 
     my $punct = $aroot->create_child(

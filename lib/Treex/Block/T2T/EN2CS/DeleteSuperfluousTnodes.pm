@@ -28,9 +28,9 @@ sub process_tnode {
     return if $tnode->get_parent()->is_root();
     return if $tnode->get_children();
 
-    my $my_lemma  = $tnode->t_lemma;
-    if ( $child_to_delete{$my_lemma}{$tnode->get_parent->t_lemma} ) {
-        log_info"_DELETED_\t$my_lemma\t"
+    my $my_lemma = $tnode->t_lemma;
+    if ( $child_to_delete{$my_lemma}{ $tnode->get_parent->t_lemma } ) {
+        log_info "_DELETED_\t$my_lemma\t"
             . $tnode->src_tnode->get_zone()->sentence . "\t"
             . $tnode->get_parent()->id . "\n" if $DEBUG;
         $tnode->disconnect;

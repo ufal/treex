@@ -82,7 +82,7 @@ sub process_clause {
 sub _verb_group_root {
     my $clitic    = shift;
     my $verb_root = $clitic;
-    while (1){
+    while (1) {
         my $p = $verb_root->get_parent;
         last if $p->is_root;
         last if $verb_root->clause_number ne $p->clause_number;
@@ -147,7 +147,7 @@ sub _order {
     return 2 if $form =~ /^(se|si)$/;
     return 3 if $form =~ /^(mi|ti|mu|jí|nám|vám|jim)$/;
     return 4 if $form =~ /^(mě|tě|ho|ji|nás|vás|je|to)$/;
-    return 6 if $form =~ /^(tam|sem)$/; # according to Krivan, 2006
+    return 6 if $form =~ /^(tam|sem)$/;                                       # according to Krivan, 2006
 
     # All other clitics have rank 5:
     # tag=.[7Hc] ses sis bysme

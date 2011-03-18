@@ -8,7 +8,7 @@ sub process_ttree {
     my @nodes = $root->get_descendants();
 
     # Array of first effective parents of every node
-    my @eff_parents = map { my ($ep) = $_->get_eparents({or_topological=>1}); $ep } @nodes;
+    my @eff_parents = map { my ($ep) = $_->get_eparents( { or_topological => 1 } ); $ep } @nodes;
 
     foreach my $i ( 0 .. $#nodes ) {
         my $node   = $nodes[$i];

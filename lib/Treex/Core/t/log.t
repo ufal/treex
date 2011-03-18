@@ -22,14 +22,24 @@ foreach my $level (@values) {
 
 log_set_error_level('FATAL');
 
-Treex::Core::Log::add_hook('WARN',sub {print 'hook1'});
+Treex::Core::Log::add_hook( 'WARN', sub { print 'hook1' } );
 
-stdout_is ( sub { eval { log_warn ('dummy message') } }, 'hook1',
-            'hook for log_fatal executed correctly, prior to reporting fatal message');
+stdout_is(
+    sub {
+        eval { log_warn('dummy message') };
+    },
+    'hook1',
+    'hook for log_fatal executed correctly, prior to reporting fatal message'
+);
 
-Treex::Core::Log::add_hook('WARN',sub {print 'hook2'});
-stdout_is ( sub { eval { log_warn ('dummy message') } }, 'hook1hook2',
-            'hooks executed in correct order');
+Treex::Core::Log::add_hook( 'WARN', sub { print 'hook2' } );
+stdout_is(
+    sub {
+        eval { log_warn('dummy message') };
+    },
+    'hook1hook2',
+    'hooks executed in correct order'
+);
 
 done_testing();
 

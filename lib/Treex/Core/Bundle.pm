@@ -30,13 +30,13 @@ my @layers = qw(t a n);
 
 sub BUILD {
     log_fatal 'Because of node indexing, no bundles can be created outside of documents. '
-        .'You have to use $document->create_bundle() instead of $bundle->new().';
+        . 'You have to use $document->create_bundle() instead of $bundle->new().';
 
 }
 
 sub get_zone {
     my $self = shift;
-    my ( $language, $selector ) = pos_validated_list (
+    my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
@@ -54,7 +54,7 @@ sub get_zone {
 
 sub create_zone {
     my $self = shift;
-    my ( $language, $selector ) = pos_validated_list (
+    my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
@@ -84,7 +84,7 @@ sub create_zone {
 
 sub get_or_create_zone {
     my $self = shift;
-    my ( $language, $selector ) = pos_validated_list (
+    my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
@@ -129,11 +129,11 @@ sub get_all_trees {
 
 sub create_tree {
     my $self = shift;
-    my ( $language, $layer, $selector ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Layer' },
-        { isa => 'Selector', default=> ''}
+        { isa => 'Selector', default => '' }
     );
 
     my $zone = $self->get_or_create_zone( $language, $selector );
@@ -143,11 +143,11 @@ sub create_tree {
 
 sub get_tree {
     my $self = shift;
-    my ( $language, $layer, $selector ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Layer' },
-        { isa => 'Selector', default=> ''}
+        { isa => 'Selector', default => '' }
     );
 
     my $zone = $self->get_zone( $language, $selector );
@@ -157,11 +157,11 @@ sub get_tree {
 
 sub has_tree {
     my $self = shift;
-    my ( $language, $layer, $selector ) = pos_validated_list (
+    my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Layer' },
-        { isa => 'Selector', default=> ''}
+        { isa => 'Selector', default => '' }
     );
     my $zone = $self->get_zone( $language, $selector );
     return defined $zone && $zone->has_tree($layer);
@@ -171,7 +171,7 @@ sub has_tree {
 
 sub set_attr {
     my $self = shift;
-    my ( $attr_name, $attr_value ) = pos_validated_list (
+    my ( $attr_name, $attr_value ) = pos_validated_list(
         \@_,
         { isa => 'Str' },
         { isa => 'Any' },
@@ -180,6 +180,7 @@ sub set_attr {
     if ( $attr_name =~ /^(\S+)$/ ) {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
     }
+
     # TODO more selectors than [ST], lang-codes with more letters etc.
     elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
         my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
@@ -194,7 +195,7 @@ sub set_attr {
 
 sub get_attr {
     my $self = shift;
-    my ( $attr_name ) = pos_validated_list (
+    my ($attr_name) = pos_validated_list(
         \@_,
         { isa => 'Str' },
     );
@@ -227,20 +228,19 @@ sub get_position {
     # (ineffective, because there's no caching of positions of bundles so far)
     my $position_of_reference;
     my $fsfile = $self->get_document->_pmldoc;
-    foreach my $position (0..$fsfile->lastTreeNo) {
-        if ($fsfile->tree($position) eq $self) {
+    foreach my $position ( 0 .. $fsfile->lastTreeNo ) {
+        if ( $fsfile->tree($position) eq $self ) {
             $position_of_reference = $position;
             last;
         }
     }
 
-    if (not defined $position_of_reference) {
+    if ( not defined $position_of_reference ) {
         log_fatal "document structure inconsistency: can't detect position of bundle $self";
     }
 
     return $position_of_reference;
 }
-
 
 __PACKAGE__->meta->make_immutable;
 

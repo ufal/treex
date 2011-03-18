@@ -4,33 +4,29 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 has 'foreach' => (
-    is=>'ro',
+    is       => 'ro',
     required => 1,
-    );
+);
 
 has 'code' => (
-    is => 'ro',
+    is       => 'ro',
     required => 1,
-    );
-
-
+);
 
 sub BUILD {
     my ($self) = @_;
 
-#    print "CODE ".$self->code."\n";
+    #    print "CODE ".$self->code."\n";
 
-    if ($self->foreach !~ /^(document|bundle|zone|[atnp](tree|node))$/) {
-	log_fatal "Unacceptable value of the 'foreach' argument: ".$self->foreach;
+    if ( $self->foreach !~ /^(document|bundle|zone|[atnp](tree|node))$/ ) {
+        log_fatal "Unacceptable value of the 'foreach' argument: " . $self->foreach;
     }
 
-    my $processing_method = "sub process_".$self->foreach." {\nmy (\$self,\$".$self->foreach.") = \@_;\n ".$self->code."\n}\n";
+    my $processing_method = "sub process_" . $self->foreach . " {\nmy (\$self,\$" . $self->foreach . ") = \@_;\n " . $self->code . "\n}\n";
 
     eval $processing_method;
 
 }
-
-
 
 1;
 

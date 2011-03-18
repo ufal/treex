@@ -8,7 +8,7 @@ has to => ( isa => 'Str', is => 'ro', default => '-' );
 
 sub process_document {
     my ( $self, $doc ) = @_;
-    my $doczone = $doc->get_zone($self->language, $self->selector); 
+    my $doczone = $doc->get_zone( $self->language, $self->selector );
     print $doczone->text;
 }
 

@@ -110,7 +110,7 @@ sub BUILD {
         foreach my $bundle ( $self->get_bundles ) {
             bless $bundle, 'Treex::Core::Bundle';
             $bundle->_set_document($self);
-            
+
             if ( defined $bundle->{zones} ) {
                 foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
 
@@ -128,18 +128,18 @@ sub BUILD {
                         }
                         $tree->_set_zone($zone);
                     }
-                    
+
                     # TODO: Backward links from a-nodes to n-nodes
                     # should be created in n-nodes' constructors,
                     # which must be called after constructing a-nodes.
                     # TODO: Now, we don't call node constructors at all
                     # during loading, we just re-bless Treex::PML::Nodes.
-                    if ($zone->has_ntree){
-                        foreach my $nnode ($zone->get_ntree()->get_descendants()) {
-                            foreach my $anode ($nnode->get_anodes()){
+                    if ( $zone->has_ntree ) {
+                        foreach my $nnode ( $zone->get_ntree()->get_descendants() ) {
+                            foreach my $anode ( $nnode->get_anodes() ) {
                                 $anode->_set_n_node($nnode);
                             }
-                        } 
+                        }
                     }
                 }
             }
@@ -273,20 +273,21 @@ sub get_bundles {
 }
 
 sub create_bundle {
-    my ($self, $arg_ref) = @_;
-#    pos_validated_list( \@_ );
+    my ( $self, $arg_ref ) = @_;
+
+    #    pos_validated_list( \@_ );
 
     my $fsfile = $self->_pmldoc();
     my $new_bundle;
     my $position_of_new;
 
-    if ($arg_ref and ($arg_ref->{after} or $arg_ref->{before})) {
-        my $reference_bundle = ($arg_ref->{after}) ? $arg_ref->{after} : $arg_ref->{before};
+    if ( $arg_ref and ( $arg_ref->{after} or $arg_ref->{before} ) ) {
+        my $reference_bundle = ( $arg_ref->{after} ) ? $arg_ref->{after} : $arg_ref->{before};
         my $position_of_reference = $reference_bundle->get_position;
-        $position_of_new = $position_of_reference + ($arg_ref->{after} ? 1 : 0);
+        $position_of_new = $position_of_reference + ( $arg_ref->{after} ? 1 : 0 );
     }
 
-    else { # default: append at the end of the document
+    else {    # default: append at the end of the document
         $position_of_new = scalar( $self->get_bundles() );
     }
 

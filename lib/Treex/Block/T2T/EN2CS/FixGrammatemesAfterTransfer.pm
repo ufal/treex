@@ -5,8 +5,8 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 has 'ignore_negation' => (
-    is => 'ro',
-    isa => 'Bool',
+    is            => 'ro',
+    isa           => 'Bool',
     documentation => 'Do not try to fix cases like "ill"=>"mocný", "dangerous"=>"bezpečný".',
 );
 
@@ -180,7 +180,7 @@ sub process_tnode {
         }
     }
 
-    if ( !$self->ignore_negation) {
+    if ( !$self->ignore_negation ) {
 
         # !!! tohle by chtelo premistit spis do Fix_negation
         # regexpy jsou tu kvuli tomu, aby byly pokryty ruzne derivaty tehoz korenu
@@ -321,16 +321,16 @@ sub process_tnode {
     }
 
     # asymetry in degcmp
-    if (($en_tlemma eq 'previously' and $cs_tlemma eq 'dřív')
-            or ($en_tlemma eq 'farther' and $cs_tlemma eq 'daleko') ) {
-        $cs_t_node->set_attr('gram/degcmp','comp');
+    if (( $en_tlemma eq 'previously' and $cs_tlemma eq 'dřív' )
+        or ( $en_tlemma eq 'farther' and $cs_tlemma eq 'daleko' )
+        )
+    {
+        $cs_t_node->set_attr( 'gram/degcmp', 'comp' );
     }
 
-    if ( ($en_tlemma eq 'first' and $cs_tlemma eq 'brzy') ) {
-        $cs_t_node->set_attr('gram/degcmp','sup');
+    if ( ( $en_tlemma eq 'first' and $cs_tlemma eq 'brzy' ) ) {
+        $cs_t_node->set_attr( 'gram/degcmp', 'sup' );
     }
-
-
 
     # deleting grammatemes that became superfluous due to change of sempos
     if ( $cs_formeme !~ /^v/ ) {

@@ -15,7 +15,8 @@ sub process_atree {
     }
 
     # (2) there should be at least one member below every co/ap
-    foreach my $a_node ( grep { ( $_->afun || "" ) =~ /(Coord|Apos)/ }
+    foreach my $a_node (
+        grep { ( $_->afun || "" ) =~ /(Coord|Apos)/ }
         $a_root->get_descendants
         )
     {

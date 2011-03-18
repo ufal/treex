@@ -303,7 +303,7 @@ sub _get_reader_name_for {
 
 sub _execute_locally {
     my ($self) = @_;
-    
+
     # Parameters can contain spaces that should be preserved
     my $scen_str = join ' ',
         map {

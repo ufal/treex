@@ -17,9 +17,9 @@ sub get_nodelist_hook {
     return unless $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
 
     my $bundle = $fsfile->tree($treeNo);
-    bless $bundle, 'Treex::Core::Bundle'; # TODO: how to make this automatically? 
-    # Otherwise (in certain circumstances) $bundle->get_all_zones
-    # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
+    bless $bundle, 'Treex::Core::Bundle';    # TODO: how to make this automatically?
+                                             # Otherwise (in certain circumstances) $bundle->get_all_zones
+                                             # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
     my @nodes = map { $_->get_descendants( { add_self => 1, ordered => 1 } ) }
         map { $_->get_all_trees }
@@ -70,8 +70,8 @@ sub precompute_visualization {
                     $root->{_precomputed_node_style} = $self->node_style( $root, $layer );
 
                     foreach my $node ( $root->get_descendants ) {
-                        $node->{_precomputed_node_style} =  $self->node_style( $node, $layer );
-                        $node->{_precomputed_labels}     = $self->nonroot_node_labels( $node, $layer );
+                        $node->{_precomputed_node_style} = $self->node_style( $node, $layer );
+                        $node->{_precomputed_labels} = $self->nonroot_node_labels( $node, $layer );
                     }
 
                 }
@@ -146,7 +146,6 @@ my %arrow_color = (
     'coref_text.rf' => 'blue',
 );
 
-
 # copied from TectoMT_TredMacros.mak
 sub node_style_hook {
     my ( $self, $node, $styles ) = @_;
@@ -155,25 +154,25 @@ sub node_style_hook {
     my @target_ids;
     my @arrow_types;
 
-    foreach my $ref_attr ('coref_gram.rf', 'coref_text.rf', 'coref_compl.rf') {
-	if (defined $node->attr($ref_attr)) {
-	    foreach my $target_id ( @{ $node->attr($ref_attr) } ) {
-		push @target_ids, $target_id;
-		push @arrow_types, $ref_attr;
-	    }
-	}
+    foreach my $ref_attr ( 'coref_gram.rf', 'coref_text.rf', 'coref_compl.rf' ) {
+        if ( defined $node->attr($ref_attr) ) {
+            foreach my $target_id ( @{ $node->attr($ref_attr) } ) {
+                push @target_ids,  $target_id;
+                push @arrow_types, $ref_attr;
+            }
+        }
     }
-    _DrawArrows($node, $styles, \%line,	\@target_ids, \@arrow_types,);
+    _DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
 }
-
 
 # copied from tred.def
 sub _AddStyle {
-    my ($styles,$style,%s)=@_;
-    if (exists($styles->{$style})) {
-	$styles->{$style}{$_}=$s{$_} for keys %s;
-    } else {
-	$styles->{$style}=\%s;
+    my ( $styles, $style, %s ) = @_;
+    if ( exists( $styles->{$style} ) ) {
+        $styles->{$style}{$_} = $s{$_} for keys %s;
+    }
+    else {
+        $styles->{$style} = \%s;
     }
 }
 
@@ -187,17 +186,17 @@ sub _DrawArrows {
     my $document = $node->get_document;
 
     foreach my $target_id (@$target_ids) {
-	my $arrow_type = shift @$arrow_types;
+        my $arrow_type = shift @$arrow_types;
 
-	my $target_node = $document->get_node_by_id($target_id);
+        my $target_node = $document->get_node_by_id($target_id);
 
-	if ( $node->get_bundle eq $target_node->get_bundle ) {# same sentence
+        if ( $node->get_bundle eq $target_node->get_bundle ) {    # same sentence
 
-	    my $T = "[?\$node->{id} eq '$target_id'?]";
-	    my $X = "(x$T-xn)";
-	    my $Y = "(y$T-yn)";
-	    my $D = "sqrt($X**2+$Y**2)";
-	    my $c = <<COORDS;
+            my $T = "[?\$node->{id} eq '$target_id'?]";
+            my $X = "(x$T-xn)";
+            my $Y = "(y$T-yn)";
+            my $D = "sqrt($X**2+$Y**2)";
+            my $c = <<COORDS;
 &n,n,
 (x$T+xn)/2 - $Y*(25/$D+0.12),
 (y$T+yn)/2 + $X*(25/$D+0.12),
@@ -206,55 +205,52 @@ x$T,y$T
 COORDS
 
             push @coords, $c;
-	}
+        }
 
         else {    # should be always the same document, if it exists at all
-   	    
+
             my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
-	    $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
-	    if ( $orientation =~ /left|right/ ) {
-		if ( $orientation eq 'left' ) {
-		    print STDERR "ref-arrows: Preceding sentence\n" if $main::macroDebug;
-		    push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
-		    $rotate_prv_snt += 10;
-		}
-		else {    #right
-		    print STDERR "ref-arrows: Following sentence\n" if $main::macroDebug;
-		    push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
-		    $rotate_nxt_snt += 10;
-		}
-	    }
-	    else {
-		print STDERR "ref-arrows: Not found!\n" if $main::macroDebug;
-		push @coords, "&n,n,n+$rotate_dfr_doc,n-25";
-		$rotate_dfr_doc += 10;
-	    }
-	}
+            $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
+            if ( $orientation =~ /left|right/ ) {
+                if ( $orientation eq 'left' ) {
+                    print STDERR "ref-arrows: Preceding sentence\n" if $main::macroDebug;
+                    push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
+                    $rotate_prv_snt += 10;
+                }
+                else {    #right
+                    print STDERR "ref-arrows: Following sentence\n" if $main::macroDebug;
+                    push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
+                    $rotate_nxt_snt += 10;
+                }
+            }
+            else {
+                print STDERR "ref-arrows: Not found!\n" if $main::macroDebug;
+                push @coords, "&n,n,n+$rotate_dfr_doc,n-25";
+                $rotate_dfr_doc += 10;
+            }
+        }
 
-	push @tags, $arrow_type;
-	push @colors, ($arrow_color{$arrow_type} || die "Unknown color for arrow type $arrow_type");
-	push @dash, '5,3';
+        push @tags, $arrow_type;
+        push @colors, ( $arrow_color{$arrow_type} || die "Unknown color for arrow type $arrow_type" );
+        push @dash, '5,3';
     }
-
 
     $line->{-coords} ||= 'n,n,p,p';
 
     if (@coords) {
-	_AddStyle(
-	    $styles, 'Line',
-	    -coords => ($line->{-coords}||'') . join( "", @coords ),
-	    -arrow      => ($line->{-arrow}||'') .      ( '&last' x @coords ),
-	    -arrowshape => ($line->{-arrowshape}||'') . ( '&16,18,3' x @coords ),
-	    -dash => ($line->{-dash}||'') . join( '&', '', @dash ),
-	    -width => ($line->{-width}||'') . ( '&1' x @coords ),
-	    -fill => ($line->{-fill}||'') . join( "&", "", @colors ),
-	    -tag  => ($line->{-tag}||'') . join( "&",  "", @tags ),
-	    -smooth => ($line->{-smooth}||'') . ( '&1' x @coords )
-	    );
+        _AddStyle(
+            $styles, 'Line',
+            -coords => ( $line->{-coords} || '' ) . join( "", @coords ),
+            -arrow      => ( $line->{-arrow}      || '' ) . ( '&last' x @coords ),
+            -arrowshape => ( $line->{-arrowshape} || '' ) . ( '&16,18,3' x @coords ),
+            -dash => ( $line->{-dash} || '' ) . join( '&', '', @dash ),
+            -width => ( $line->{-width} || '' ) . ( '&1' x @coords ),
+            -fill => ( $line->{-fill} || '' ) . join( "&", "", @colors ),
+            -tag  => ( $line->{-tag}  || '' ) . join( "&", "", @tags ),
+            -smooth => ( $line->{-smooth} || '' ) . ( '&1' x @coords )
+        );
     }
 }
-
-
 
 # --- node styling: color, size, shape... of nodes and edges
 

@@ -7,12 +7,13 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     foreach my $a_node ( $a_root->get_descendants ) {
-        if ($a_node->afun eq "AuxX" || $a_node->afun eq "AuxG") {
+        if ( $a_node->afun eq "AuxX" || $a_node->afun eq "AuxG" ) {
             my @children = $a_node->get_children();
             my $ch       = $children[0];
             if ( defined $ch && $ch->is_member ) {
+
                 # _Co under AuxX => change AuxX to Coord
-                $a_node->set_afun('Coord' );
+                $a_node->set_afun('Coord');
             }
         }
     }

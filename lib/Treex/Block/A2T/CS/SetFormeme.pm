@@ -3,13 +3,12 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     # First, fill formeme of all t-layer nodes with a default value,
     # so tedious undef checking (||'') is no more needed.
-    $t_node->set_formeme('???' );
+    $t_node->set_formeme('???');
 
     # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
     # fill in formemes
@@ -100,7 +99,7 @@ sub detect_formeme {
     }
 
     if ($formeme) {
-        $tnode->set_formeme($formeme );
+        $tnode->set_formeme($formeme);
     }
     return;
 }

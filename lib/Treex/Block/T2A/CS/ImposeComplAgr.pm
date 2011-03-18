@@ -17,7 +17,7 @@ sub process_ttree {
             ($t_clause_head) = $t_clause_head->get_eparents;
         }
 
-        if (!$t_clause_head->is_root) {
+        if ( !$t_clause_head->is_root ) {
             my ($t_subj) = grep {
                 $_ ne $t_compl and $_->formeme =~ /1/
             } $t_clause_head->get_echildren( { ordered => 1 } );

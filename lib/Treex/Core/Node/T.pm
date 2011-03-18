@@ -196,7 +196,7 @@ sub _get_shared_echildren {
 sub get_coap_members {
     my ( $self, $arg_ref ) = @_;
     log_fatal('Incorrect number of arguments') if @_ > 2;
-    return $self                               if !$self->is_coap_root();
+    return $self if !$self->is_coap_root();
     my $direct_only = $arg_ref->{direct_only};
     my $dive = $arg_ref->{dive} || sub {0};
     if ( $dive eq 'AuxCP' ) { $dive = \&_is_auxCP; }

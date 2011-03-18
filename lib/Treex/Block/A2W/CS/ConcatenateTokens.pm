@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $a_root = $zone->get_atree();
+    my $a_root   = $zone->get_atree();
     my $sentence = join ' ',
         grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
         map { $_->form || '' }
@@ -42,7 +42,7 @@ sub process_zone {
 
     $sentence =~ s/&#241;/ň/g;    # "ñ" is encoded as &#241; in translation dict
 
-    $zone->set_sentence( $sentence );
+    $zone->set_sentence($sentence);
     return;
 }
 

@@ -8,11 +8,11 @@ use File::Java;
 use DowngradeUTF8forISO2;
 use Report;
 
-has model => ( isa => 'Str', is => 'rw', required => 1 );
-has memory     => ( isa => 'Str',  is => 'rw', default => '1800m' );
-has order      => ( isa => 'Int',  is => 'rw', default => 2 );
-has decodetype => ( isa => 'Str',  is => 'rw', default => 'non-proj' );
-has robust     => ( isa => 'Bool', is => 'r',  default => 0 );
+has model      => ( isa => 'Str',  is => 'rw', required => 1 );
+has memory     => ( isa => 'Str',  is => 'rw', default  => '1800m' );
+has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
+has decodetype => ( isa => 'Str',  is => 'rw', default  => 'non-proj' );
+has robust     => ( isa => 'Bool', is => 'r',  default  => 0 );
 
 my @all_javas;    # PIDs of java processes
 
@@ -95,8 +95,9 @@ sub parse_sentence {
         Report::fatal("Treex::Tools::Parser::MST: unexpected status") if ( !defined $reader || !defined $writer );
         print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
         print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
-#        print $writer join( "\t", @$forms_rf ) . "\n";
-#        print $writer join( "\t", @$tags_rf ) . "\n";
+
+        #        print $writer join( "\t", @$forms_rf ) . "\n";
+        #        print $writer join( "\t", @$tags_rf ) . "\n";
         $_ = <$reader>;
         Report::fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
         chomp;

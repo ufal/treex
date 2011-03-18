@@ -176,18 +176,18 @@ sub create_child {
     else {
         $arg_ref = {@_};
     }
-    
+
     # Structured attributes (e.g. morphcat/pos) must be handled separately
     # TODO: And also attributes which don't have accessors (those are not Moose attributes).
     # Note: mlayer_pos was not added to Treex::Core::Node::T because it goes
     # against the "tectogrammatical ideology" and we use it as a temporary hack.
     my %structured_attrs;
-    foreach my $attr (keys %{$arg_ref}){
-        if ($attr =~ m{/} || $attr eq 'mlayer_pos'){
+    foreach my $attr ( keys %{$arg_ref} ) {
+        if ( $attr =~ m{/} || $attr eq 'mlayer_pos' ) {
             $structured_attrs{$attr} = delete $arg_ref->{$attr};
         }
     }
-    
+
     $arg_ref->{_called_from_core_} = 1;
     my $new_node = ( ref $self )->new($arg_ref);
     $new_node->set_parent($self);
@@ -195,10 +195,10 @@ sub create_child {
     my $new_id = $self->generate_new_id();
     $new_node->set_id($new_id);
 
-    foreach my $attr (keys %structured_attrs) {
-        $new_node->set_attr($attr, $structured_attrs{$attr});
+    foreach my $attr ( keys %structured_attrs ) {
+        $new_node->set_attr( $attr, $structured_attrs{$attr} );
     }
-    
+
     my $type = $new_node->get_pml_type_name();
     return $new_node if !defined $type;
     my $fs_file = $self->get_bundle->get_document()->_pmldoc;
@@ -730,19 +730,19 @@ sub get_clause_descendants {
 
 sub disconnect {
     my $self = shift;
-    log_debug('$node->disconnect is deprecated, use $node->delete', 1);
+    log_debug( '$node->disconnect is deprecated, use $node->delete', 1 );
     return $self->delete();
 }
 
 sub get_ordering_value {
     my $self = shift;
-    log_warn('$node->get_ordering_value is deprecated, use $node->ord', 1);
+    log_warn( '$node->get_ordering_value is deprecated, use $node->ord', 1 );
     return $self->ord;
 }
 
 sub set_ordering_value {
     my $self = shift;
-    log_warn('$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)', 1);
+    log_warn( '$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)', 1 );
     my ($val) = pos_validated_list(
         \@_,
         { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
@@ -853,7 +853,7 @@ use Treex::Core::Log;
 
 sub AUTOLOAD {
     our $AUTOLOAD;
-    if ($AUTOLOAD !~ /DESTROY$/) {
+    if ( $AUTOLOAD !~ /DESTROY$/ ) {
         log_fatal("You cannot call any methods on deleted nodes, but have called $AUTOLOAD");
     }
 }

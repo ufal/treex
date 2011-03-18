@@ -117,16 +117,16 @@ sub process_range_of_years {
 
 sub process_month {
     my ($t_node) = @_;
-    
+
     # First, try to find cases like "July 6th" and "July 6",
     # where the month is the parent of the number.
     my $month = $t_node->get_parent();
-    
+
     # If it fails, try to find cases like "6th of July" and "6 of July",
     # where the month is the next node (and child of the number).
-    if ($month->is_root || !Lexicon::Czech::number_of_month( $month->t_lemma ) ){
+    if ( $month->is_root || !Lexicon::Czech::number_of_month( $month->t_lemma ) ) {
         $month = $t_node->get_next_node;
-        
+
         # If also this fails, we are finished.
         return if !$month || !Lexicon::Czech::number_of_month( $month->t_lemma );
     }

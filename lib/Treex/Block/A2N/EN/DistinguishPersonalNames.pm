@@ -87,7 +87,7 @@ sub process_personal_nnode {
 # so let's check also for GENDER_OF_ROLE.
 sub guess_gender {
     my ($lemma) = @_;
-    return $GENDER_OF_ROLE{$lemma}                    || Lexicon::EN::First_names::gender_of($lemma)
+    return $GENDER_OF_ROLE{$lemma} || Lexicon::EN::First_names::gender_of($lemma)
         || firstname_gender_from_czech_morpho($lemma) || '?';
 }
 

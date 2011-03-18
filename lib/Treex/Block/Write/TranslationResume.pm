@@ -38,7 +38,7 @@ sub process_document {
                     "TST\t$tst_joined",
                     join( ' ', @matchings[ 1 .. 4 ] ),
                     '', '',
-                )
+                    )
             );
             @src = ();
             @ref = ();

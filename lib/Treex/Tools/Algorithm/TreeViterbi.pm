@@ -7,7 +7,7 @@ use utf8;
 my $get_states_hook;
 
 sub run {
-    my ($root, $get_states_sub_ref) = @_;
+    my ( $root, $get_states_sub_ref ) = @_;
     $get_states_hook = $get_states_sub_ref;
     return _process_subtree($root);
 }
@@ -16,13 +16,13 @@ sub _process_subtree {
     my ($node) = @_;
     my @states = $get_states_hook->($node);
 
-    foreach my $child ($node->get_children()) {
+    foreach my $child ( $node->get_children() ) {
         my @child_states = _process_subtree($child);
         _process_states( \@states, \@child_states );
     }
 
-    foreach my $my_state ( @states ) {
-        $my_state->increment_score($my_state->get_logprob());
+    foreach my $my_state (@states) {
+        $my_state->increment_score( $my_state->get_logprob() );
     }
 
     return @states;
@@ -34,7 +34,7 @@ sub _process_states {
     foreach my $my_state ( @{$states_ref} ) {
         my ( $max_score, $best_child_state ) = ( -9999, undef );
 
-        foreach my $child_state (@{$child_states_ref}) {
+        foreach my $child_state ( @{$child_states_ref} ) {
             my $score = $child_state->score;
             $score += $child_state->get_logprob_given_parent($my_state);
             if ( $score > $max_score ) {
@@ -46,7 +46,6 @@ sub _process_states {
     }
     return;
 }
-
 
 1;
 

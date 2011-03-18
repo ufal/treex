@@ -31,7 +31,7 @@ sub process_zone {
     $reduced_sentence =~ s/ ([.,])$/$1/g;
 
     if ( $original_sentence ne $reduced_sentence ) {
-        $zone->set_sentence( $reduced_sentence );
+        $zone->set_sentence($reduced_sentence);
     }
     return;
 }

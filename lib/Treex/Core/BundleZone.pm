@@ -11,69 +11,69 @@ use Treex::Core::Node::N;
 extends 'Treex::Core::Zone';
 
 sub _set_bundle {
-	my $self = shift;
-    my ( $bundle ) = pos_validated_list(
-		\@_,
-		{ isa=>'Treex::Core::Bundle' },
-	);
+    my $self = shift;
+    my ($bundle) = pos_validated_list(
+        \@_,
+        { isa => 'Treex::Core::Bundle' },
+    );
     $self->set_attr( '_bundle', $bundle );
 }
 
 sub get_bundle {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_attr('_bundle');
 }
 
 sub get_document {
     my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_bundle->get_document;
 }
 
 sub create_atree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->create_tree('a');
 }
 
 sub create_ttree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->create_tree('t');
 }
 
 sub create_ntree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->create_tree('n');
 }
 
 sub create_ptree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->create_tree('p');
 }
 
 sub create_tree {
-	my $self = shift;
-    my ( $layer ) = pos_validated_list(
-		\@_,
-		{ isa=>'Layer' },
-	);
-	log_fatal("Zone already contains tree at $layer layer") if $self->has_tree($layer);
+    my $self = shift;
+    my ($layer) = pos_validated_list(
+        \@_,
+        { isa => 'Layer' },
+    );
+    log_fatal("Zone already contains tree at $layer layer") if $self->has_tree($layer);
     my $class = "Treex::Core::Node::" . uc($layer);
     my $tree_root = eval "$class->new({_called_from_core_=>1})" or log_fatal $!;    #layer subclasses not available yet
 
@@ -102,29 +102,29 @@ sub create_tree {
 
 sub delete_tree {
     my $self = shift;
-    my ( $layer ) = pos_validated_list(
+    my ($layer) = pos_validated_list(
         \@_,
-        { isa=>'Layer' },
+        { isa => 'Layer' },
     );
 
     # disconnect all nodes ($tree_root->disconnect does not work, in order to not be used by users)
     my $tree_root = $self->get_tree($layer);
-    foreach my $child ($tree_root->get_children()){
+    foreach my $child ( $tree_root->get_children() ) {
         $child->disconnect();
     }
     if ( $tree_root->id ) {
         $self->get_document->index_node_by_id( $tree_root->id, undef );
     }
-    delete $self->{trees}{lc($layer) . '_tree'};
+    delete $self->{trees}{ lc($layer) . '_tree' };
     return;
 }
 
 sub get_tree {
-	my $self = shift;
-    my ( $layer ) = pos_validated_list(
-		\@_,
-		{ isa => 'Layer' },
-	);
+    my $self = shift;
+    my ($layer) = pos_validated_list(
+        \@_,
+        { isa => 'Layer' },
+    );
 
     my $tree_name = lc($layer) . "_tree";
     my $tree      = $self->{trees}->{$tree_name};
@@ -136,103 +136,103 @@ sub get_tree {
 }
 
 sub get_atree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_tree('a');
 }
 
 sub get_ttree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_tree('t');
 }
 
 sub get_ntree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_tree('n');
 }
 
 sub get_ptree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_tree('p');
 }
 
 sub has_tree {
-	my $self = shift;
-    my ( $layer ) = pos_validated_list(
-		\@_,
-		{ isa => 'Layer' },
-	);
+    my $self = shift;
+    my ($layer) = pos_validated_list(
+        \@_,
+        { isa => 'Layer' },
+    );
     my $tree_name = lc($layer) . "_tree";
     return defined $self->{trees}->{$tree_name};
 }
 
 sub has_atree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->has_tree('a');
 }
 
 sub has_ttree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->has_tree('t');
 }
 
 sub has_ntree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->has_tree('n');
 }
 
 sub has_ptree {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->has_tree('p');
 }
 
 sub get_all_trees {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
 
     return grep {defined}
         map     { $self->{trees}->{ $_ . "_tree" }; } qw(a t n p);
 }
 
 sub sentence {
-	my $self = shift;
-	if ($Treex::Core::Config::params_validate) {
-	    pos_validated_list( \@_ );
-	}
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) {
+        pos_validated_list( \@_ );
+    }
     return $self->get_attr('sentence');
 }
 
 sub set_sentence {
-	my $self = shift;
-    my ( $text ) = pos_validated_list(
-		\@_,
-		{ isa => 'Str' },
-	);
+    my $self = shift;
+    my ($text) = pos_validated_list(
+        \@_,
+        { isa => 'Str' },
+    );
     return $self->set_attr( 'sentence', $text );
 }
 

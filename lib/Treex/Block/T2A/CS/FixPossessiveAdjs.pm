@@ -10,7 +10,7 @@ sub process_tnode {
 
     if (( $t_node->formeme || "" ) eq 'n:poss'
         and ( $t_node->get_attr('mlayer_pos') || "" ) ne 'P'
-        and ( $t_node->t_lemma                || "" ) ne '#PersPron'
+        and ( $t_node->t_lemma || "" ) ne '#PersPron'
         )
     {
 

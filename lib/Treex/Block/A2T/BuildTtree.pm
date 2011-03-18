@@ -16,7 +16,7 @@ sub process_zone {
 
     # recursively build whole t-tree
     build_subtree( $a_root, $t_root );
-    
+
     # fix ord attributes, so it is 1,2,3,... #tnodes
     $t_root->_normalize_node_ordering();
 

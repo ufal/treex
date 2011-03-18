@@ -42,7 +42,7 @@ sub is_aspect_ok {
     # 1. "thay say" -> "říkají", not "řeknou"
     return 0
         if (
-        ( $node->get_attr('gram/tense')        || '' ) eq 'sim'
+        ( $node->get_attr('gram/tense') || '' ) eq 'sim'
         and ( $node->get_attr('gram/deontmod') || '' ) eq 'decl'
         and ( $node->get_attr('gram/verbmod') || '' ) ne 'cdn'
         and ( $node->is_passive               || '' ) ne '1'

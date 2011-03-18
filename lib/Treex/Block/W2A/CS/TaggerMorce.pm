@@ -22,8 +22,8 @@ sub process_atree {
     my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } $atree->get_descendants();
 
     # get tags and lemmas
-    my ($tags_rf, $lemmas_rf) = $self->_tagger->tag_sentence( \@forms );
-    if ( @$tags_rf != @forms || @$lemmas_rf != @forms) {
+    my ( $tags_rf, $lemmas_rf ) = $self->_tagger->tag_sentence( \@forms );
+    if ( @$tags_rf != @forms || @$lemmas_rf != @forms ) {
         log_fatal "Different number of tokens, tags and lemmas. TOKENS: @forms, TAGS: @$tags_rf, LEMMAS: @$lemmas_rf.";
     }
 

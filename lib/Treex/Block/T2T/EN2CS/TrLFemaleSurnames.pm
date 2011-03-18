@@ -9,7 +9,7 @@ sub process_tnode {
     return if ( $cs_tnode->get_attr('gram/gender') || '' ) ne 'fem';
     my $en_tnode = $cs_tnode->src_tnode    or return;
     my $n_node   = $en_tnode->get_n_node() or return;
-    my $n_type = $n_node->get_attr('ne_type');
+    my $n_type   = $n_node->get_attr('ne_type');
     return if $n_type ne 'ps';
     my $cs_lemma = $cs_tnode->t_lemma;
     return if $cs_lemma =~ /[áí]$/;

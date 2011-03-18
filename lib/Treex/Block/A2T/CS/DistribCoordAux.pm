@@ -3,15 +3,14 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $t_member_node ( grep { $_->is_member && $_->get_parent->get_attr('a/aux.rf') } $t_root->get_descendants ) {
         my $t_parent = $t_member_node->get_parent;
         $t_member_node->set_aux_anodes(
-             $t_member_node->get_aux_anodes,
-             $t_parent->get_aux_anodes
+            $t_member_node->get_aux_anodes,
+            $t_parent->get_aux_anodes
         );
     }
 

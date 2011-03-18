@@ -7,10 +7,12 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( ($tnode->formeme || "" ) eq 'v:fin'
-             and $tnode->parent->precedes($tnode)
-                 and $tnode->src_tnode and ($tnode->src_tnode->formeme||'')=~/v:(inf|attr|ger)/
-                     and ($tnode->get_parent->formeme||'') =~ /^n/) {
+    if (( $tnode->formeme || "" ) eq 'v:fin'
+        and $tnode->parent->precedes($tnode)
+        and $tnode->src_tnode and ( $tnode->src_tnode->formeme || '' ) =~ /v:(inf|attr|ger)/
+        and ( $tnode->get_parent->formeme || '' ) =~ /^n/
+        )
+    {
 
         $tnode->set_is_relclause_head(1);
         $tnode->set_formeme('v:rc');

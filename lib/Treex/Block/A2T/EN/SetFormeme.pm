@@ -140,13 +140,13 @@ sub _verb {
 
     if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
         return "v:$subconj+ger" if $subconj;
-        return 'v:attr'         if below_noun($t_node);
+        return 'v:attr' if below_noun($t_node);
         return 'v:ger';
     }
 
     if ( $t_node->is_clause_head ) {
-        return "v:$subconj+fin" if $subconj;                      # podradici veta spojkova
-        return 'v:rc'           if $t_node->is_relclause_head;    # podradici veta vztazna
+        return "v:$subconj+fin" if $subconj;            # podradici veta spojkova
+        return 'v:rc' if $t_node->is_relclause_head;    # podradici veta vztazna
         return 'v:fin';
     }
 

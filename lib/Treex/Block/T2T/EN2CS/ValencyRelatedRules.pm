@@ -9,7 +9,7 @@ sub process_tnode {
     my @echildren = $tnode->get_echildren( { or_topological => 1 } );
 
     # "He managed to..." -> "Podařilo se mu..."
-    if ($tnode->t_lemma    =~ /^((po)?dařit|líbit)/
+    if ($tnode->t_lemma =~ /^((po)?dařit|líbit)/
         && $tnode->formeme =~ /fin/
         && grep { $_->formeme eq 'v:inf' } @echildren
         )

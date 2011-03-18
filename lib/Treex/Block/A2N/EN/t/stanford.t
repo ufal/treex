@@ -7,7 +7,7 @@ use Test::More tests => 2;
 
 use_ok("NER::Stanford::English");
 my $ner = NER::Stanford::English->new("ner-eng-ie.crf-3-all2008.ser.gz");
-isa_ok($ner, "NER::Stanford::English", "Stanford NER loaded" );
+isa_ok( $ner, "NER::Stanford::English", "Stanford NER loaded" );
 
 __END__
 

@@ -22,9 +22,9 @@ sub next_document {
     for my $i ( 0 .. $n - 1 ) {
         my $bundle = $doc->create_bundle();
         for my $zone_label ( keys %sentences ) {
-            my ($lang, $selector) = ($zone_label, $self->selector);
-            if ($zone_label =~ /_/) {
-                ($lang, $selector) = split /_/, $zone_label;
+            my ( $lang, $selector ) = ( $zone_label, $self->selector );
+            if ( $zone_label =~ /_/ ) {
+                ( $lang, $selector ) = split /_/, $zone_label;
             }
             my $zone = $bundle->create_zone( $lang, $selector );
             $zone->set_sentence( $sentences{$zone_label}[$i] );

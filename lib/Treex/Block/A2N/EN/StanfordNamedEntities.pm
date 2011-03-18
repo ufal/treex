@@ -54,7 +54,7 @@ sub process_zone {
         my $type = $types_rf->[$i];
         if ( $type eq 'NA' ) {
             my $form = $words[$i];
-            
+
             # TODO: this is mostly caused by wrong handling of unicode in Stanford NER
             log_debug "N/A named entity type for $id '$form'";
         }

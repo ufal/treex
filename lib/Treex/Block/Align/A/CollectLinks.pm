@@ -12,9 +12,9 @@ has 'output' => (
 );
 
 has 'bigrams' => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 1,
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
     documentation => 'print also bigram substitutions?',
 );
 
@@ -34,29 +34,32 @@ sub BUILD {
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    return if $atree->id =~ /[2-9]of/; # because of re-segmentation
+    return if $atree->id =~ /[2-9]of/;    # because of re-segmentation
     my @nodes = $atree->get_descendants( { ordered => 1 } );
-    my ($last_form, $last_r_form, $last_r_ord) = ('<S>', '<S>', 0);
-    
+    my ( $last_form, $last_r_form, $last_r_ord ) = ( '<S>', '<S>', 0 );
+
     foreach my $node (@nodes) {
         my $r_node = $node->get_r_attr('align');
-        my ($r_form, $r_ord) = $r_node ? ($r_node->form, $r_node->ord) : ('', -2);
-        my $form = $node->form;        
+        my ( $r_form, $r_ord ) = $r_node ? ( $r_node->form, $r_node->ord ) : ( '', -2 );
+        my $form = $node->form;
         print { $self->output } "$form\t$r_form\n";
 
         # Two consecutive words are aligned to two consecutive words
         # either in the same order or swapped.
-        if ($self->bigrams){
-            if ($last_r_ord == $r_ord - 1 ){
+        if ( $self->bigrams ) {
+            if ( $last_r_ord == $r_ord - 1 ) {
                 print { $self->output } "$last_form $form\t$last_r_form $r_form\n";
-            } elsif ($last_r_ord == $r_ord + 1 ){
+            }
+            elsif ( $last_r_ord == $r_ord + 1 ) {
                 print { $self->output } "$last_form $form\t$r_form $last_r_form\n";
-            } elsif ($last_r_form ne '' && $r_form ne ''){
+            }
+            elsif ( $last_r_form ne '' && $r_form ne '' ) {
                 print { $self->output } "$last_form $form\tNOT_ALIGNED\n";
-            }else {
+            }
+            else {
                 print { $self->output } "$last_form $form\t$last_r_form$r_form\n";
             }
-            ($last_form, $last_r_form, $last_r_ord) = ($form, $r_form, $r_ord);
+            ( $last_form, $last_r_form, $last_r_ord ) = ( $form, $r_form, $r_ord );
         }
     }
 

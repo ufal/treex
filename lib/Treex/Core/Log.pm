@@ -171,7 +171,7 @@ sub info {
     return;
 }
 
-sub progress {            # progress se pres ntred neposila, protoze by se stejne neflushoval
+sub progress {    # progress se pres ntred neposila, protoze by se stejne neflushoval
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     if ( not $unfinished_line ) {
         print STDERR "TREEX-PROGRESS:\t";

@@ -36,10 +36,10 @@ sub BUILD {
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
-    
+
     # We want to process only nodes with more than one formeme variant
     return if $cs_tnode->formeme_origin ne 'dict-first';
-    
+
     my $en_tnode        = $cs_tnode->src_tnode;
     my $en_formeme      = $en_tnode->formeme;
     my ($en_parent)     = $en_tnode->get_eparents();

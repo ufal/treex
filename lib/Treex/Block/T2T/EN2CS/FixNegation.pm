@@ -33,11 +33,11 @@ sub process_tnode {
         }
     }
 
-    if ( $tnode->t_lemma =~ /^(už|již)$/ and not $tnode->get_children ) { # 'no longer'
+    if ( $tnode->t_lemma =~ /^(už|již)$/ and not $tnode->get_children ) {    # 'no longer'
         my $parent = $tnode->get_parent;
-        if ($parent->t_lemma =~ /^(už|již)$/) {
+        if ( $parent->t_lemma =~ /^(už|již)$/ ) {
             my $grandpa = $parent->get_parent;
-            if ($grandpa->get_attr('gram/sempos') eq 'v') {
+            if ( $grandpa->get_attr('gram/sempos') eq 'v' ) {
                 $grandpa->set_attr( 'gram/negation', 'neg1' );
                 $tnode->delete;
             }

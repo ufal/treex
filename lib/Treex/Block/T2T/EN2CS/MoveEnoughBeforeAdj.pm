@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    if (( $tnode->t_lemma                                || '' ) eq 'dost'
+    if (( $tnode->t_lemma || '' ) eq 'dost'
         and ( $tnode->get_parent->get_attr('mlayer_pos') || '' ) eq 'A'
         and $tnode->get_parent->precedes($tnode)
         )

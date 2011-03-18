@@ -3,7 +3,6 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     my $functor;

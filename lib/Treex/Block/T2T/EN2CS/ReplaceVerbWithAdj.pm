@@ -8,33 +8,34 @@ use Lexicon::Derivations::CS;
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( ($tnode->formeme || "" ) eq 'v:fin'
-             && $tnode->precedes($tnode->get_parent)
-                 && $tnode->src_tnode and ($tnode->src_tnode->formeme||'') =~ /v:(attr|ger)/
-                     && ($tnode->get_parent->formeme||'') =~ /^n/
-                 ) {
+    if (( $tnode->formeme || "" ) eq 'v:fin'
+        && $tnode->precedes( $tnode->get_parent )
+        && $tnode->src_tnode and ( $tnode->src_tnode->formeme || '' ) =~ /v:(attr|ger)/
+        && ( $tnode->get_parent->formeme || '' ) =~ /^n/
+        )
+    {
 
-        my ($short_verb_lemma,$suffix) = split /_/,$tnode->t_lemma;
+        my ( $short_verb_lemma, $suffix ) = split /_/, $tnode->t_lemma;
 
-        my ($adj_lemma) = map {Lexicon::Derivations::CS::verb2activeadj($_)}
-            ($short_verb_lemma,
-             Lexicon::Derivations::CS::perf2imperf($short_verb_lemma),
-             Lexicon::Derivations::CS::imperf2perf($short_verb_lemma),
-         ) ;
+        my ($adj_lemma) = map { Lexicon::Derivations::CS::verb2activeadj($_) }
+            (
+            $short_verb_lemma,
+            Lexicon::Derivations::CS::perf2imperf($short_verb_lemma),
+            Lexicon::Derivations::CS::imperf2perf($short_verb_lemma),
+            );
 
         if ($adj_lemma) {
             if ($suffix) {
                 $adj_lemma .= "_$suffix";
             }
             $tnode->set_t_lemma($adj_lemma);
-            $tnode->set_attr('gram/sempos','adj.denot');
-            $tnode->set_attr('gram/degcmp','pos');
-            $tnode->set_attr('formeme','adj:attr');
-            $tnode->set_attr('mlayer_pos','A');
+            $tnode->set_attr( 'gram/sempos', 'adj.denot' );
+            $tnode->set_attr( 'gram/degcmp', 'pos' );
+            $tnode->set_attr( 'formeme',     'adj:attr' );
+            $tnode->set_attr( 'mlayer_pos',  'A' );
         }
     }
 }
-
 
 1;
 

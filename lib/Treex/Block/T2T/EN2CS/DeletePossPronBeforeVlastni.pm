@@ -8,14 +8,16 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     # ordering needed (otherwise an already deleted node could be touched again)
-    foreach my $tnode ($zone->get_ttree->get_descendants({ordered=>1})) {
+    foreach my $tnode ( $zone->get_ttree->get_descendants( { ordered => 1 } ) ) {
 
-        if ( $tnode->t_lemma eq 'vlastní') {
+        if ( $tnode->t_lemma eq 'vlastní' ) {
             my $prev_node = $tnode->get_prev_node;
             if ($prev_node
-                    && $prev_node->t_lemma eq '#PersPron'
-                        && $prev_node->get_attr('gram/person') == 3
-                            && ! $prev_node->children) {
+                && $prev_node->t_lemma eq '#PersPron'
+                && $prev_node->get_attr('gram/person') == 3
+                && !$prev_node->children
+                )
+            {
                 $prev_node->delete;
             }
         }

@@ -3,7 +3,7 @@ use Moose;
 use Treex::Moose;
 use Treex::Core::Resource;
 
-has selector => ( is => 'ro', isa => 'Selector', default => '', );
+has selector => ( is => 'ro', isa => 'Selector',        default => '', );
 has language => ( is => 'ro', isa => 'Maybe[LangCode]', builder => 'build_language' );
 has scenario => (
     is       => 'ro',
@@ -57,7 +57,7 @@ sub get_required_share_files {
 
 sub process_document {
     my $self = shift;
-    my ($document) = pos_validated_list (
+    my ($document) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Document' },
     );
@@ -74,7 +74,7 @@ sub process_document {
 
 sub process_bundle {
     my $self = shift;
-    my ($bundle) = pos_validated_list (
+    my ($bundle) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Bundle' },
     );
@@ -96,12 +96,12 @@ sub process_bundle {
 
 sub _try_process_layer {
     my $self = shift;
-    my ($zone, $layer) = pos_validated_list (
+    my ( $zone, $layer ) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Zone' },
         { isa => 'Layer' },
     );
-    
+
     return 0 if !$zone->has_tree($layer);
     my $tree = $zone->get_tree($layer);
     my $meta = $self->meta;
@@ -125,11 +125,11 @@ sub _try_process_layer {
 
 sub process_zone {
     my $self = shift;
-    my ($zone) = pos_validated_list (
+    my ($zone) = pos_validated_list(
         \@_,
         { isa => 'Treex::Core::Zone' },
     );
-    
+
     my $overriden;
 
     for my $layer (qw(a t n p)) {

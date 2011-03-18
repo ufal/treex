@@ -63,7 +63,7 @@ sub process_tnode {
     ## return if $cs_tnode->t_lemma =~ /^\p{IsUpper}/;
 
     my $en_tnode = $cs_tnode->src_tnode;
-        return if !$en_tnode;
+    return if !$en_tnode;
 
     my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 
@@ -131,7 +131,7 @@ sub print_variants {
 }
 
 sub can_be_translated_as {
-    my ($self, $en_tnode, $en_formeme, $cs_formeme ) = @_;
+    my ( $self, $en_tnode, $en_formeme, $cs_formeme ) = @_;
     my $en_lemma = $en_tnode->t_lemma;
     my $en_p_lemma = $en_tnode->get_parent()->t_lemma || '_root';
     return 0 if !$self->allow_fake_formemes && $cs_formeme =~ /\?\?\?/;

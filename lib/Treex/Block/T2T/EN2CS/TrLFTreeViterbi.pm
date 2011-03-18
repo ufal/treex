@@ -169,7 +169,7 @@ extends 'Treex::Tools::Algorithm::TreeViterbiState';
 
 use LanguageModel::Lemma;
 
-has [qw(lemma_v formeme_v)] => (is=>'rw');
+has [qw(lemma_v formeme_v)] => ( is => 'rw' );
 
 # Global attributes of all states
 my ( $lm_weight, $formeme_weight, $backward_weight, $tree_model );

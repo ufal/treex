@@ -38,7 +38,7 @@ sub process_tnode {
 }
 
 sub get_lemma_and_pos {
-    my ( $self, $en_tnode,  $cs_tnode )   = @_;
+    my ( $self, $en_tnode, $cs_tnode ) = @_;
     my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
 
     # PersProns like "that" should be translated as "ten"

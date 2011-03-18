@@ -11,26 +11,25 @@ my @rule_left;     # [rule_no] -> ([feature_no, feature_value])
 my @rule_right;    # [rule_no] -> functor (from the rule file)
 my ( $lexf1, $lexf2, $outf );    # numbers of 2 features from the lexicon file and of the output one -- the functor
 
-
 #======================================================================
 
 BEGIN
 {
 
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/T-func.lex" , 'user' ); # list of possible functors for a given afun
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/feat", 'user' );        # list of used features
-    TectoMT::Block::require_file_from_share ( "data/models/TBLa2t/cs_pdt/F/R", 'user' );           # transformation-based learning rules
+    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/T-func.lex", 'user' );    # list of possible functors for a given afun
+    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/feat",       'user' );    # list of used features
+    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/R",          'user' );    # transformation-based learning rules
 
-    my $f;                       # the handle for all the files
+    my $f;                                                                                          # the handle for all the files
 
     # lexicon file
     open $f, "<:utf8", "$MODEL/F/T-func.lex" or log_fatal "Cannot open the file $MODEL/F/T-func.lex\n";
     $_ = <$f>;
-    chomp;                       # read and parse '#pattern: .*'
-    /^#pattern: ([0-9]+),([0-9]+)=>([0-9]+)/ or log_fatal "Bad line format: \"$_\"\n";    # assumption: the functor depends on 2 other features
+    chomp;                                                                                          # read and parse '#pattern: .*'
+    /^#pattern: ([0-9]+),([0-9]+)=>([0-9]+)/ or log_fatal "Bad line format: \"$_\"\n";              # assumption: the functor depends on 2 other features
     ( $lexf1, $lexf2, $outf ) = ( $1, $2, $3 );
-    for ( 1 .. 2 ) {<$f>}                                                                     # skip '[0-9]+-grams: -----'
-    while (<$f>) {                                                                            # fill %lex
+    for ( 1 .. 2 ) {<$f>}                                                                           # skip '[0-9]+-grams: -----'
+    while (<$f>) {                                                                                  # fill %lex
         chomp;
         my ( $afun1, $afun2, $func ) = split / +/;
         $lex{$afun1}{$afun2} = $func;
@@ -38,31 +37,31 @@ BEGIN
     close $f;
 
     # feature file
-    my %feat2nr;                                                                              # {feature_name} -> feature_no
-    open $f, "<:utf8", "$MODEL/F/feat" or log_fatal "Cannot open the file $MODEL/F/feat\n";    # assumption: this filename
+    my %feat2nr;                                                                                    # {feature_name} -> feature_no
+    open $f, "<:utf8", "$MODEL/F/feat" or log_fatal "Cannot open the file $MODEL/F/feat\n";         # assumption: this filename
     $_ = <$f>;
-    chomp;                                                                                                         # read and parse the only line
+    chomp;                                                                                          # read and parse the only line
     my @feat = split / +/;
     pop @feat;
-    pop @feat;                                                                                                     # remove '=> out_feature_name'
-    for my $i ( 0 .. $#feat ) {                                                                                    # fill %feat2nr
+    pop @feat;                                                                                      # remove '=> out_feature_name'
+    for my $i ( 0 .. $#feat ) {                                                                     # fill %feat2nr
         $feat2nr{ $feat[$i] } = $i;
     }
     close $f;
 
     # rule file
     open $f, "<:utf8", "$MODEL/F/R" or log_fatal "Cannot open the file $MODEL/F/R\n";
-    <$f>;                                                                                                          # skip '#train_voc_file: .*'
-    for ( my $cnt = 0; defined( $_ = <$f> ); $cnt++ ) {                                                            # fill %rule_left and % rule_right
+    <$f>;                                                                                           # skip '#train_voc_file: .*'
+    for ( my $cnt = 0; defined( $_ = <$f> ); $cnt++ ) {                                             # fill %rule_left and % rule_right
         chomp;
         my @line = split / +/;
-        for ( 1 .. 4 ) { shift @line }                                                                             # remove 'GOOD:[0-9]+ BAD:[0-9]+ SCORE:[0-9]+ RULE:'
-        $_ = pop @line;                                                                                            # get the output feature
+        for ( 1 .. 4 ) { shift @line }                                                              # remove 'GOOD:[0-9]+ BAD:[0-9]+ SCORE:[0-9]+ RULE:'
+        $_ = pop @line;                                                                             # get the output feature
         /^[^=]+?=(.+)$/ or log_fatal "Bad line format: \"$_\"\n";
         $rule_right[$cnt] = $1;
 
-        pop @line;                                                                                                 # remove '=>'
-        for (@line) {                                                                                              # get input features
+        pop @line;                                                                                  # remove '=>'
+        for (@line) {                                                                               # get input features
             /^([^=]+?)=(.+)$/ or log_fatal "Bad line format: \"$_\"\n";
             push @{ $rule_left[$cnt] }, [ $feat2nr{$1}, $2 ];
         }
@@ -109,7 +108,7 @@ sub classify
     my ($t_root) = @_;
 
     for my $t_node ( $t_root->get_descendants ) {
-        $t_node->get_lex_anode or next;
+        $t_node->get_lex_anode   or next;
         defined $t_node->t_lemma or log_fatal "Assertion failed";
 
         #		info $t_node->t_lemma, "  ";
@@ -133,11 +132,11 @@ sub classify
         }
 
         # set the functor
-        $t_node->set_functor($record[$outf] );
+        $t_node->set_functor( $record[$outf] );
 
         #		info "\n";
         if ( !$t_node->is_coap_root && grep { $_->is_member } $t_node->get_children ) {
-            $t_node->set_functor('CONJ' );
+            $t_node->set_functor('CONJ');
         }    # otherwise the error propagates to the children
     }
 }

@@ -52,7 +52,7 @@ sub process_tnode {
     my $en_parent = $en_tnode->get_parent();
     return if $en_parent->is_root();
     my $cs_parent = $cs_tnode->get_parent();
-    
+
     # We don't want to apply one rule (e.g. take_place -> konat_se) more times
     # e.g. in sentence "It took place mostly in the places which ...".
     return if $cs_parent->t_lemma_origin eq 'rule-TrLFPhrases';

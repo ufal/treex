@@ -22,10 +22,10 @@ sub process_tnode {
 
     my $a_node   = $t_node->get_lex_anode();
     my $new_node = $a_node->create_child(
-        {                'lemma'           => 'být',
-                'afun'            => 'AuxV',
-                'morphcat/pos'    => 'V',
-                'morphcat/subpos' =>, 'c',
+        {   'lemma'           => 'být',
+            'afun'            => 'AuxV',
+            'morphcat/pos'    => 'V',
+            'morphcat/subpos' =>, 'c',
         }
     );
 
