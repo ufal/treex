@@ -39,6 +39,9 @@ sub process_zone {
 
     $sentence =~ s/&#241;/ň/g;    # "ñ" is encoded as &#241; in translation dict
 
+    $sentence =~ s/^ +//;
+    $sentence =~ s/ +$//;
+
     $zone->set_sentence($sentence);
     return;
 }
