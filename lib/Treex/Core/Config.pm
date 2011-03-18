@@ -22,8 +22,16 @@ sub devel_version {
 }
 
 sub share_dir {
-    return $ENV{TMT_ROOT} . "/share/";    # temporary
-                                          # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
+    #return $ENV{TMT_ROOT} . "/share/";    # temporary
+    #                                      # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
+    if ( devel_version() ) {
+		return $ENV{TMT_ROOT} . "/share/";
+        #return lib_core_dir() . "/share/";
+    }
+    else {
+        return File::ShareDir::dist_dir('Treex-Core')
+            . "/";
+    }
 }
 
 sub tred_dir {
@@ -41,6 +49,7 @@ sub pml_schema_dir {
     }
 }
 
+# tenhle adresar ted vubec v balicku neni!
 sub tred_extension_dir {
     return pml_schema_dir() . "/../../";
 }
