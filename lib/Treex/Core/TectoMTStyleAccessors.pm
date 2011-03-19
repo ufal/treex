@@ -10,13 +10,13 @@ sub get_attr {
     log_fatal('Incorrect number of arguments') if @_ != 2;
     my $attr_hash = $self->_pml_attribute_hash();
     log_fatal('get_attr() called on an disconnected node!') if !defined $attr_hash;
-
-    if ( ref($attr_hash) eq "HASH" ) {    # meta-data seems to be an unblessed hash, docasne!!!!
-        return $attr_hash->{$attr_name};
-    }
-    else {
+    #simple attributes can be accessed directly
+    if ($attr_name =~ /^[\w\.]+$/) {
+	return $self->{$attr_name};
+    } else {
         return $attr_hash->attr($attr_name);
     }
+
 }
 
 sub set_attr {
