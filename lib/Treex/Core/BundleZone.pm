@@ -17,6 +17,7 @@ sub _set_bundle {
         { isa => 'Treex::Core::Bundle' },
     );
     $self->set_attr( '_bundle', $bundle );
+    weaken $self->{'_bundle'};
 }
 
 sub get_bundle {
