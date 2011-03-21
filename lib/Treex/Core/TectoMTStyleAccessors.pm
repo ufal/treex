@@ -10,10 +10,12 @@ sub get_attr {
     log_fatal('Incorrect number of arguments') if @_ != 2;
     my $attr_hash = $self->_pml_attribute_hash();
     log_fatal('get_attr() called on an disconnected node!') if !defined $attr_hash;
+
     #simple attributes can be accessed directly
-    if ($attr_name =~ /^[\w\.]+$/) {
-	return $self->{$attr_name};
-    } else {
+    if ( $attr_name =~ /^[\w\.]+$/ ) {
+        return $self->{$attr_name};
+    }
+    else {
         return $attr_hash->attr($attr_name);
     }
 

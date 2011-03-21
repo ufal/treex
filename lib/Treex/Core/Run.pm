@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 package Treex::Core::Run;
 use Treex::Moose;
 use Treex::Core;
@@ -219,7 +222,7 @@ sub BUILD {
     if ( ( $self->qsub or $self->jobindex ) and not $self->parallel ) {
         log_fatal "Options --qsub and --jobindex require --parallel";
     }
-
+    return;
 }
 
 sub execute {
@@ -305,11 +308,12 @@ sub _execute_locally {
     my ($self) = @_;
 
     # Parameters can contain spaces that should be preserved
+    # Tomuhle kodu nerozumim, je dost necitelny, jak ty mezery zachovava? -TK LOOK
     my $scen_str = join ' ',
         map {
         if ( my ( $name, $value ) = /(\S+)=(.+ .+)$/ ) {
             $value =~ s/'/\\'/;
-            "$name='$value'";
+            qq($name='$value');
         }
         else {$_}
         }
@@ -331,7 +335,8 @@ sub _execute_locally {
             chomp;
             push @files, $_;
         }
-        log_fatal 'No files matching mask \'' . $self->glob . '\'\n' if @files == 0;
+        close $FL or log_fatal "Cannot close file list " . $self->filelist;
+        log_fatal q(No files matching mask ') . $self->glob . q('\n) if @files == 0;
         $self->set_filenames( \@files );
     }
 
@@ -368,7 +373,8 @@ sub _execute_locally {
 
     my $number_of_docs;
     if ( $self->jobindex ) {
-        open my $F, '>', $self->outdir . sprintf( "/job%03d.loaded", $self->jobindex );
+        my $fn = $self->outdir . sprintf( "/job%03d.loaded", $self->jobindex );
+        open my $F, '>', $fn or log_fatal "Cannot open file $fn";    #LOOK
         close $F;
         my $reader = $scenario->document_reader;
         $reader->set_jobs( $self->jobs );
@@ -408,6 +414,7 @@ sub _write_total_doc_number {
     open my $F, '>', $filename or log_fatal $!;
     print $F $number;
     close $F;
+    return;
 }
 
 # This is called by the main treex (it doesn't have $self->outdir)
@@ -415,8 +422,9 @@ sub _read_total_doc_number {
     my ($self) = @_;
     my $total_doc_number_file = $self->workdir . "/output/total_number_of_documents";
     if ( -f $total_doc_number_file ) {
-        open( my $N, $total_doc_number_file ) or log_fatal $!;
+        open( my $N, '<', $total_doc_number_file ) or log_fatal $!;
         my $total_file_number = <$N>;
+        close $N;
         log_info "Total number of documents to be processed: $total_file_number";
         return $total_file_number;
     }
@@ -437,7 +445,7 @@ sub _create_job_scripts {
     my $workdir     = $self->workdir;
     foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
         my $script_filename = "scripts/job$jobnumber.sh";
-        open my $J, ">", "$workdir/$script_filename";
+        open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
         print $J "#!/bin/bash\n\n";
         print $J "echo \$HOSTNAME > $current_dir/$workdir/output/job$jobnumber.started\n";
         print $J "cd $current_dir\n\n";
@@ -452,6 +460,7 @@ sub _create_job_scripts {
         close $J;
         chmod 0777, "$workdir/$script_filename";
     }
+    return;
 }
 
 sub _run_job_scripts {
@@ -464,9 +473,10 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |";
+            open my $QSUB, '<', "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;
 
             my $firstline = <$QSUB>;
+            close $QSUB;
             chomp $firstline;
             if ( $firstline =~ /job (\d+)/ ) {
                 push @{ $self->sge_job_numbers }, $1;
@@ -524,7 +534,9 @@ sub _print_output_files {
 
         open my $FILE, '<:utf8', $filename or log_fatal $!;
         if ( $stream eq "stdout" ) {
-            print $_ while <$FILE>;
+            while (<$FILE>) {
+                print;
+            }
         }
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
@@ -541,6 +553,7 @@ sub _print_output_files {
                 print STDERR "job$jobnumber: $_";
             }
         }
+        close $FILE;
     }
     return;
 }
@@ -601,6 +614,7 @@ sub _check_job_errors {
         log_info 'At least one job crashed with fatal error. All remaining jobs will be interrupted now.';
         $self->_delete_jobs_and_exit;
     }
+    return;
 }
 
 sub _delete_jobs_and_exit {
@@ -663,6 +677,7 @@ sub _execute_on_cluster {
         log_info "Deleting the directory with temporary files " . $self->workdir;
         rmtree $self->workdir or log_fatal $!;
     }
+    return;
 }
 
 sub _redirect_output {
@@ -670,19 +685,25 @@ sub _redirect_output {
     my $job = sprintf( 'job%03d', $jobindex + 0 );
     my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
     my $stem = "$outdir/$job-$doc";
-    open OUTPUT, '>', "$stem.stdout" or die $!;    # where will these messages go to, before redirection?
-    open ERROR,  '>', "$stem.stderr" or die $!;
-    STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
-    STDERR->fdopen( \*ERROR,  'w' ) or die $!;
+    open OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
+    open ERROR,  '>', "$stem.stderr" or log_fatal $!;    #LOOK tady na me perlcritic hazi spousty chyb, ale protoze tomuhle kodu nerozumim, tak to necham byt -TK
+    STDOUT->fdopen( \*OUTPUT, 'w' ) or log_fatal $!;
+    STDERR->fdopen( \*ERROR,  'w' ) or log_fatal $!;
     STDOUT->autoflush(1);
 
     # special file is touched if log_fatal is called
-    Treex::Core::Log::add_hook( 'FATAL', sub { eval "system \'touch $stem.fatalerror\'" } );
+    Treex::Core::Log::add_hook(
+        'FATAL',
+        sub {
+            eval { system qq(touch $stem.fatalerror) };
+        }
+    );                                                   #LOOK je potreba eval?
+    return;
 }
 
 # not a method !
 sub treex {
-    my $arguments = shift;                         # ref to array of arguments, or a string containing all arguments as on the command line
+    my $arguments = shift;                               # ref to array of arguments, or a string containing all arguments as on the command line
 
     if ( ref($arguments) eq "ARRAY" ) {
 
@@ -706,6 +727,7 @@ sub treex {
     else {
         log_fatal "Unspecified arguments for running treex.";
     }
+    return;
 }
 
 1;

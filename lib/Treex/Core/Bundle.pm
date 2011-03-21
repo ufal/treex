@@ -112,7 +112,7 @@ sub get_all_trees {
         pos_validated_list( \@_ );
     }
 
-    return () unless $self->{zones};
+    return () if !$self->{zones};
 
     my @trees;
     foreach my $zone ( $self->{zones}->elements ) {

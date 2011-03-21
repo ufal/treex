@@ -1,7 +1,6 @@
-package Treex::Core::Config;
-
 use strict;
 use warnings;
+package Treex::Core::Config;
 
 use File::HomeDir;
 use File::ShareDir;
@@ -22,10 +21,12 @@ sub devel_version {
 }
 
 sub share_dir {
+
     #return $ENV{TMT_ROOT} . "/share/";    # temporary
     #                                      # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
     if ( devel_version() ) {
-		return $ENV{TMT_ROOT} . "/share/";
+        return $ENV{TMT_ROOT} . "/share/";
+
         #return lib_core_dir() . "/share/";
     }
     else {

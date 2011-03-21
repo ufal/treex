@@ -1,8 +1,9 @@
+use strict;
+use warnings;
+
 package Treex::Core::Log;
 
 use utf8;
-use strict;
-use warnings;
 use English '-no_match_vars';
 
 use Carp qw(cluck);
@@ -17,9 +18,10 @@ binmode STDERR, ":utf8";
 
 # Autoflush after every Perl statement should enforce that INFO and FATALs are ordered correctly.
 {
-    my $oldfh = select(STDERR);
-    $| = 1;
-    select($oldfh);
+    #my $oldfh = select(STDERR);
+    #$| = 1;
+    #select($oldfh);
+	*STDERR->autoFlush();
 }
 
 Readonly my %ERROR_LEVEL_VALUE => (
@@ -205,8 +207,9 @@ my %hooks;    # subroutines can be associated with reported events
 
 sub add_hook {
     my ( $level, $subroutine ) = @_;
-    $hooks{$level} = [] unless $hooks{$level};
+    $hooks{$level} = [] if !$hooks{$level};
     push @{ $hooks{$level} }, $subroutine;
+	return;
 }
 
 sub run_hooks {
@@ -214,6 +217,7 @@ sub run_hooks {
     foreach my $subroutine ( @{ $hooks{$level} } ) {
         &$subroutine;
     }
+	return;
 }
 
 1;

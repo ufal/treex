@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 package Treex::Core::Resource;
 use LWP::Simple;
 use File::Path;

@@ -7,6 +7,7 @@ my %registered_service;    # probably will be moved to some ServiceManager in th
 
 sub BUILD {
     my $self = shift;
+    return;
 }
 
 # 'instance' should be called instead of 'new': it allows to reuse already initilized services
@@ -30,6 +31,7 @@ sub initialize {
     my ( $self, $arg_ref ) = shift;
 
     #    log_info 'Method initialize is supposed to be redeclared in ' .ref($self);
+    return;
 }
 
 sub name {

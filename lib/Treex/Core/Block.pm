@@ -29,7 +29,7 @@ sub build_language {
         return lc $lang;
     }
     else {
-        return undef;
+        return;
     }
 }
 
@@ -140,6 +140,7 @@ sub process_zone {
         . "The zone '" . $zone->get_label() . "' contains trees ( "
         . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
         if !$overriden;
+	return;
 }
 
 sub get_block_name {

@@ -13,7 +13,7 @@ sub get_pml_type_name {
 #  the order is implied by the ordering of siblings.)
 override 'get_ordering_value' => sub {
     my ($self) = @_;
-    return undef;
+    return;
 };
 
 1;

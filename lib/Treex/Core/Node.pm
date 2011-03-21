@@ -38,13 +38,14 @@ sub BUILD {
             . 'You have to use $zone->create_tree(...) or $node->create_child() '
             . 'instead of Treex::Core::Node...->new().';
     }
-
+    return;
 }
 
 sub _index_my_id {
     my $self = shift;
     pos_validated_list( \@_, { isa => 'Any', optional => 1 } );    #TODO
     $self->get_document->index_node_by_id( $self->id, $self );
+    return;
 }
 
 sub _pml_attribute_hash {
@@ -77,7 +78,7 @@ sub get_zone {
         $zone = $self->get_root->_get_zone;
     }
 
-    log_fatal "a node can't reveal its zone" unless $zone;
+    log_fatal "a node can't reveal its zone" if !$zone;
     return $zone;
 
 }
@@ -143,7 +144,7 @@ sub language {
         pos_validated_list( \@_ );
     }
 
-    $self->get_zone()->language;
+    return $self->get_zone()->language;
 }
 
 sub selector {
@@ -152,7 +153,7 @@ sub selector {
         pos_validated_list( \@_ );
     }
 
-    $self->get_zone()->selector;
+    return $self->get_zone()->selector;
 }
 
 sub create_child {
@@ -783,8 +784,10 @@ sub generate_new_id {    #TODO move to Core::Document?
     my $latest_node_number = $doc->_latest_node_number;
 
     my $new_id;
-    $self->get_root->id =~ /(.+)root/;
-    my $id_base = $1 || "";
+
+    #$self->get_root->id =~ /(.+)root/;
+    #my $id_base = $1 || "";
+    my $id_base = ( $self->get_root->id =~ /(.+)root/ ) ? $1 : q();
 
     while (1) {
         $latest_node_number++;

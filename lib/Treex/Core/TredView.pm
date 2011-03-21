@@ -40,6 +40,7 @@ sub file_opened_hook {
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
     $self->precompute_visualization();
+    return;
 }
 
 sub get_value_line_hook {
@@ -78,6 +79,7 @@ sub precompute_visualization {
             }
         }
     }
+    return;
 }
 
 # ---- info displayed below nodes (should return a reference to a three-element array) ---
@@ -163,17 +165,21 @@ sub node_style_hook {
         }
     }
     _DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
+    return;
 }
 
 # copied from tred.def
 sub _AddStyle {
     my ( $styles, $style, %s ) = @_;
     if ( exists( $styles->{$style} ) ) {
-        $styles->{$style}{$_} = $s{$_} for keys %s;
+        for my $key ( keys %s ) {
+            $styles->{$style}{$key} = $s{$key};
+        }
     }
     else {
         $styles->{$style} = \%s;
     }
+    return;
 }
 
 # based on DrawCorefArrows from config/TectoMT_TredMacros.mak, simplified
@@ -196,7 +202,7 @@ sub _DrawArrows {
             my $X = "(x$T-xn)";
             my $Y = "(y$T-yn)";
             my $D = "sqrt($X**2+$Y**2)";
-            my $c = <<COORDS;
+            my $c = <<"COORDS";
 &n,n,
 (x$T+xn)/2 - $Y*(25/$D+0.12),
 (y$T+yn)/2 + $X*(25/$D+0.12),
@@ -213,25 +219,25 @@ COORDS
             $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
             if ( $orientation =~ /left|right/ ) {
                 if ( $orientation eq 'left' ) {
-                    print STDERR "ref-arrows: Preceding sentence\n" if $main::macroDebug;
+                    log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
                     $rotate_prv_snt += 10;
                 }
                 else {    #right
-                    print STDERR "ref-arrows: Following sentence\n" if $main::macroDebug;
+                    log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
                     $rotate_nxt_snt += 10;
                 }
             }
             else {
-                print STDERR "ref-arrows: Not found!\n" if $main::macroDebug;
+                log_info "ref-arrows: Not found!\n" if $main::macroDebug;
                 push @coords, "&n,n,n+$rotate_dfr_doc,n-25";
                 $rotate_dfr_doc += 10;
             }
         }
 
         push @tags, $arrow_type;
-        push @colors, ( $arrow_color{$arrow_type} || die "Unknown color for arrow type $arrow_type" );
+        push @colors, ( $arrow_color{$arrow_type} || log_fatal "Unknown color for arrow type $arrow_type" );
         push @dash, '5,3';
     }
 
@@ -250,6 +256,7 @@ COORDS
             -smooth => ( $line->{-smooth} || '' ) . ( '&1' x @coords )
         );
     }
+    return;
 }
 
 # --- node styling: color, size, shape... of nodes and edges
@@ -259,7 +266,7 @@ sub bundle_root_style {
 }
 
 sub common_node_style {
-    return '';
+    return q();
 }
 
 sub node_style {    # silly code just to avoid the need for eval

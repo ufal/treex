@@ -145,6 +145,7 @@ sub BUILD {
             }
         }
     }
+	return;
 }
 
 sub _pml_attribute_hash {
@@ -193,7 +194,7 @@ sub _create_empty_pml_doc {
 
 # --- INDEXING
 
-sub index_node_by_id() {
+sub index_node_by_id {
     my $self = shift;
     my ( $id, $node ) = pos_validated_list(
         \@_,
@@ -208,6 +209,7 @@ sub index_node_by_id() {
     else {
         delete $index->{$id};
     }
+	return;
 }
 
 sub id_is_indexed {
@@ -219,7 +221,7 @@ sub id_is_indexed {
     return ( defined $self->_index->{$id} );
 }
 
-sub get_node_by_id() {
+sub get_node_by_id {
 
     #komentare se vztahuji k TectoMT a vztahu M a A vrstvy -> neni to uz vyresene jinak?
     my $self = shift;
@@ -252,9 +254,10 @@ sub get_node_by_id() {
         # a different document, the only hack we suggest is to drop such
         # references...
     }
+	return;
 }
 
-sub get_all_node_ids() {
+sub get_all_node_ids {
     my $self = shift;
     if ($Treex::Core::Config::params_validate) {
         pos_validated_list( \@_ );

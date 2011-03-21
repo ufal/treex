@@ -270,12 +270,14 @@ sub set_aux_anodes {
     my $self       = shift;
     my @aux_anodes = @_;
     $self->set_attr( 'a/aux.rf', [ map { $_->get_attr('id') } @aux_anodes ] );
+    return;
 }
 
 sub add_aux_anodes {
     my $self = shift;
     my @prev = $self->get_aux_anodes();
     $self->set_aux_anodes( @prev, @_ );
+    return;
 }
 
 sub get_anodes {
@@ -335,6 +337,7 @@ sub src_tnode {
 sub set_src_tnode {
     my ( $self, $source_node ) = @_;
     $self->set_attr( 'src_tnode.rf', $source_node->id );
+    return;
 }
 
 # Deprecated
