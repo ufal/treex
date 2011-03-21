@@ -121,9 +121,9 @@ sub print_st {
             (   $line->{"ord"},   $line->{"form"},
                 $line->{"lemma"}, NOT_SET, $pos, NOT_SET, $pfeat, NOT_SET,
                 $line->{"head"},  NO_NUMBER, $line->{"functor"}, NOT_SET, FILL, NOT_SET,
-                $line->{"afun"}, $line->{"aux_forms"}, $line->{"aux_lemmas"}, $line->{"aux_pos"}, $line->{"aux_subpos"}, $line->{"aux_afuns"}
+                $line->{"afun"},  $line->{"aux_forms"}, $line->{"aux_lemmas"}, $line->{"aux_pos"}, $line->{"aux_subpos"}, $line->{"aux_afuns"}
+                )
             )
-        )
     );
     print("\n");
 }

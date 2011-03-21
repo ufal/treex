@@ -145,7 +145,7 @@ sub BUILD {
             }
         }
     }
-	return;
+    return;
 }
 
 sub _pml_attribute_hash {
@@ -209,7 +209,7 @@ sub index_node_by_id {
     else {
         delete $index->{$id};
     }
-	return;
+    return;
 }
 
 sub id_is_indexed {
@@ -254,7 +254,7 @@ sub get_node_by_id {
         # a different document, the only hack we suggest is to drop such
         # references...
     }
-	return;
+    return;
 }
 
 sub get_all_node_ids {

@@ -366,7 +366,7 @@ sub reset_morphcat {
             $self->set_attr( "morphcat/$category", '.' );
         }
     }
-	return;
+    return;
 }
 
 sub get_sentence_string {

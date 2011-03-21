@@ -60,7 +60,7 @@ sub is_parent_aux_to_me ($) {
     return 0 if !$a_parent;
 
     return (
-        (          $a_node->tag =~ /^Vf/
+        (   $a_node->tag =~ /^Vf/
                 && $a_node->afun ne 'Sb'
                 &&
                 $a_parent->lemma =~ /^(m[í]t|cht[í]t|muset|moci|sm[ě].t)(\_.*)?$/

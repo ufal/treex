@@ -18,7 +18,7 @@ sub _set_bundle {
     );
     $self->set_attr( '_bundle', $bundle );
     weaken $self->{'_bundle'};
-	return;
+    return;
 }
 
 sub get_bundle {
@@ -77,7 +77,7 @@ sub create_tree {
     );
     log_fatal("Zone already contains tree at $layer layer") if $self->has_tree($layer);
     my $class = "Treex::Core::Node::" . uc($layer);
-    my $tree_root = eval {$class->new({_called_from_core_=>1})} or log_fatal $!;    #layer subclasses not available yet
+    my $tree_root = eval { $class->new( { _called_from_core_ => 1 } ) } or log_fatal $!;    #layer subclasses not available yet
 
     my $bundle = $self->get_bundle;
     $tree_root->_set_zone($self);

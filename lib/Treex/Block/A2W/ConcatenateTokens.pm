@@ -6,8 +6,8 @@ extends 'Treex::Core::Block';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $a_root   = $zone->get_atree();
-    my $sentence = join ' ', grep { !/#[A-Z]/} map {$_->form} $a_root->get_descendants( { ordered => 1 } );
+    my $a_root = $zone->get_atree();
+    my $sentence = join ' ', grep { !/#[A-Z]/ } map { $_->form } $a_root->get_descendants( { ordered => 1 } );
     $zone->set_sentence($sentence);
     return;
 }

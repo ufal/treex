@@ -42,7 +42,7 @@ sub process_atree {
         my $r_node = $node->get_r_attr('align');
         my ( $r_form, $r_ord ) = $r_node ? ( $r_node->form, $r_node->ord ) : ( '', -2 );
         my $form = $node->form;
-        
+
         # There are hacks in TectoMT that generate more tokens in one node,
         # e.g.: "v pondělí", "ve čtvrtek", "v tomto případě". TODO: fix this.
         # These nodes result in misleading alignments,

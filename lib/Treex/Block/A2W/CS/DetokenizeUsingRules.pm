@@ -7,8 +7,9 @@ extends 'Treex::Core::Block';
 sub process_zone {
     my ( $self, $zone ) = @_;
     my $sentence = $zone->sentence;
+
     #    grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
-    
+
     $sentence =~ s/ +/ /g;
     $sentence =~ s/ ([,.?:;])/$1/g;
     $sentence =~ s/(["“])\./\.$1/g;

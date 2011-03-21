@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+
 package Treex::Core::Config;
 
 use File::HomeDir;

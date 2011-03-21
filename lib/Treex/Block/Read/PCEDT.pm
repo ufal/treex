@@ -25,10 +25,10 @@ sub _copy_attr {
 
 sub _copy_listref_attr {
     my ( $pml_node, $treex_node, $old_attr_name, $new_attr_name ) = @_;
-		my $list = $pml_node->attr($old_attr_name);
-		return if not ref $list;
+    my $list = $pml_node->attr($old_attr_name);
+    return if not ref $list;
 
-		my @list = map { s/^.*#//; $_ } @$list;
+    my @list = map { s/^.*#//; $_ } @$list;
     $treex_node->set_attr( $new_attr_name, \@list );
 }
 
@@ -36,54 +36,54 @@ sub _convert_ttree {
     my ( $pml_node, $treex_node, $language ) = @_;
 
     if ( $treex_node->is_root ) {
-      my $value = $pml_node->attr( 'atree.rf' );
-			$value =~ s/^.*#//;
-			$treex_node->set_attr( 'atree.rf', $value );
+        my $value = $pml_node->attr('atree.rf');
+        $value =~ s/^.*#//;
+        $treex_node->set_attr( 'atree.rf', $value );
 
-		  foreach my $attr_name ( 'id', 'nodetype' ) {
-        _copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
-      }
+        foreach my $attr_name ( 'id', 'nodetype' ) {
+            _copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
+        }
     }
 
     else {
-			  my @scalar_attribs = (
-					't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
-					'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
-					'coref_special'
-				);
-				my @gram_attribs = (
-					'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'tense', 'aspect', 'resultative',
-					'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation'
-				);
-				my @listref_attribs = (
-					'compl.rf', 'coref_text.rf', 'coref_gram.rf', 'a/aux.rf'
-				);
+        my @scalar_attribs = (
+            't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
+            'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
+            'coref_special'
+        );
+        my @gram_attribs = (
+            'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'tense', 'aspect', 'resultative',
+            'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation'
+        );
+        my @listref_attribs = (
+            'compl.rf', 'coref_text.rf', 'coref_gram.rf', 'a/aux.rf'
+        );
 
         _copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
-    
-				foreach my $attr_name ('a/lex.rf', 'val_frame.rf') {
-					my $value = $pml_node->attr($attr_name);
-					next if not $value;
-					$value =~ s/^.*#//;
-					$value = $language.'-v#'.$value if $attr_name eq 'val_frame.rf';
-					$treex_node->set_attr( $attr_name, $value );
-				}
-				
-				foreach my $attr_name (@scalar_attribs) {
-        	_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
+
+        foreach my $attr_name ( 'a/lex.rf', 'val_frame.rf' ) {
+            my $value = $pml_node->attr($attr_name);
+            next if not $value;
+            $value =~ s/^.*#//;
+            $value = $language . '-v#' . $value if $attr_name eq 'val_frame.rf';
+            $treex_node->set_attr( $attr_name, $value );
+        }
+
+        foreach my $attr_name (@scalar_attribs) {
+            _copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
         foreach my $attr_name (@listref_attribs) {
-        	_copy_listref_attr( $pml_node, $treex_node, $attr_name, $attr_name );
+            _copy_listref_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
 
         my %gram = ();
-				foreach my $attr_name (@gram_attribs) {
-					my $value = $pml_node->attr( "gram/$attr_name" );
-					$gram{$attr_name} = $value if $value;
+        foreach my $attr_name (@gram_attribs) {
+            my $value = $pml_node->attr("gram/$attr_name");
+            $gram{$attr_name} = $value if $value;
         }
-				while ( my ($attr_name, $value) = each %gram ) {
-        	$treex_node->set_attr( "gram/$attr_name", $value );
-				}
+        while ( my ( $attr_name, $value ) = each %gram ) {
+            $treex_node->set_attr( "gram/$attr_name", $value );
+        }
     }
 
     foreach my $pml_child ( $pml_node->children ) {
@@ -132,18 +132,18 @@ sub next_document {
     log_fatal "different number of trees in Czech and English t-files"
         if $pmldoc{en}{t}->trees != $pmldoc{cs}{t}->trees;
 
-		my $cs_vallex = $pmldoc{cs}{t}->metaData('refnames')->{'vallex'};
-		$cs_vallex = $pmldoc{cs}{t}->metaData('references')->{$cs_vallex};
-		my $en_vallex = $pmldoc{en}{t}->metaData('refnames')->{'vallex'};
-		$en_vallex = $pmldoc{en}{t}->metaData('references')->{$en_vallex};
-				
-		my $document = $self->new_document();    # pre-fills base name, path
-		my ( %refnames, %refs );
-		$refnames{'vallex'} = $pmldoc_factory->createAlt( ['cs-v', 'en-v'] );
-		$refs{'cs-v'} = $cs_vallex;
-		$refs{'en-v'} = $en_vallex;
-		$document->changeMetaData('references', \%refs);
-		$document->changeMetaData('refnames', \%refnames);
+    my $cs_vallex = $pmldoc{cs}{t}->metaData('refnames')->{'vallex'};
+    $cs_vallex = $pmldoc{cs}{t}->metaData('references')->{$cs_vallex};
+    my $en_vallex = $pmldoc{en}{t}->metaData('refnames')->{'vallex'};
+    $en_vallex = $pmldoc{en}{t}->metaData('references')->{$en_vallex};
+
+    my $document = $self->new_document();    # pre-fills base name, path
+    my ( %refnames, %refs );
+    $refnames{'vallex'} = $pmldoc_factory->createAlt( [ 'cs-v', 'en-v' ] );
+    $refs{'cs-v'}       = $cs_vallex;
+    $refs{'en-v'}       = $en_vallex;
+    $document->changeMetaData( 'references', \%refs );
+    $document->changeMetaData( 'refnames',   \%refnames );
 
     foreach my $tree_number ( 0 .. ( $pmldoc{en}{t}->trees - 1 ) ) {
 

@@ -696,7 +696,7 @@ sub _redirect_output {
         'FATAL',
         sub {
             eval { system qq(touch $stem.fatalerror) };
-        }
+            }
     );                                                   #LOOK je potreba eval?
     return;
 }

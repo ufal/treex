@@ -18,10 +18,11 @@ binmode STDERR, ":utf8";
 
 # Autoflush after every Perl statement should enforce that INFO and FATALs are ordered correctly.
 {
+
     #my $oldfh = select(STDERR);
     #$| = 1;
     #select($oldfh);
-	*STDERR->autoFlush();
+    *STDERR->autoflush();
 }
 
 Readonly my %ERROR_LEVEL_VALUE => (
@@ -209,7 +210,7 @@ sub add_hook {
     my ( $level, $subroutine ) = @_;
     $hooks{$level} = [] if !$hooks{$level};
     push @{ $hooks{$level} }, $subroutine;
-	return;
+    return;
 }
 
 sub run_hooks {
@@ -217,7 +218,7 @@ sub run_hooks {
     foreach my $subroutine ( @{ $hooks{$level} } ) {
         &$subroutine;
     }
-	return;
+    return;
 }
 
 1;
