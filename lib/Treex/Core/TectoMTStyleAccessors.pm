@@ -8,17 +8,15 @@ requires '_pml_attribute_hash';    # return $self for Node and Bundle, but not f
 sub get_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
-    my $attr_hash = $self->_pml_attribute_hash();
-    log_fatal('get_attr() called on an disconnected node!') if !defined $attr_hash;
 
     #simple attributes can be accessed directly
     if ( $attr_name =~ /^[\w\.]+$/ ) {
         return $self->{$attr_name};
     }
     else {
+        my $attr_hash = $self->_pml_attribute_hash();
         return $attr_hash->attr($attr_name);
     }
-
 }
 
 sub set_attr {
