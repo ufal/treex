@@ -4,7 +4,8 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
 
-my $DEFAULT_TSV = 'data/models/translation/substitutions/cs_wmt2007-2010.tsv';
+#my $DEFAULT_TSV = 'data/models/translation/substitutions/cs_wmt2007-2010.tsv';
+my $DEFAULT_TSV = 'data/models/translation/substitutions/cs_wmt2007-2010_without_dev2009.tsv';
 
 sub get_required_share_files { return $DEFAULT_TSV; }
 
