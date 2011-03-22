@@ -130,9 +130,8 @@ sub _convert_ptree {
 	  _copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
 	}
 
-	if ( $treex_node->is_root() ) {
-		_copy_attr( $pml_node, $treex_node, 'phrase', 'phrase' );
-	}
+	my $key = $pml_node->attr('phrase') ? 'phrase' : 'tag';
+	_copy_attr( $pml_node, $treex_node, $key, $key );
 
 	if ( $treex_node->get_pml_type_name() =~ m/nonterminal/ ) {
 		_copy_list_attr( $pml_node, $treex_node, 'functions', 'functions' );
@@ -143,8 +142,7 @@ sub _convert_ptree {
 	}
 
 	foreach my $pml_child ( $pml_node->children ) {
-		my $key = $pml_child->attr('phrase') ? 'phrase' : 'tag';
-		my $treex_child = $treex_node->create_child({ $key => $pml_child->attr($key) });
+		my $treex_child = $treex_node->create_child();
 		_convert_ptree( $pml_child, $treex_child );
 	}
 }
