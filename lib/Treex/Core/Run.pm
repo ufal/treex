@@ -473,7 +473,7 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, '<', "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;
+            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;
 
             my $firstline = <$QSUB>;
             close $QSUB;
