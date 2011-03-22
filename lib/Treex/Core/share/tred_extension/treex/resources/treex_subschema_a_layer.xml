@@ -55,6 +55,9 @@
       <!-- surface coreference -->
       <member name="coref" type="a_coreference.type"/>
 
+      <!-- links to p-layer -->
+      <member name="p" type="a-p.type"/>
+
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
 
