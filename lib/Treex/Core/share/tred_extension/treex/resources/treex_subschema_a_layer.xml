@@ -61,8 +61,10 @@
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
 
-      <!-- for alignment - tentative -->
-      <member name="align"><cdata format="PMLREF"/></member>
+      <member name="alignment">
+          <list ordered="0" type="align-links.type"/>
+      </member>
+      <member name="align"><cdata format="any"/></member>
 
     </structure>
   </type>

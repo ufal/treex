@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 use FileUtils;
 
 has to_language => ( isa => 'Str', is => 'ro', required => 1);
-has to_selector => ( isa => 'Str', is => 'ro', required => 1);
+has to_selector => ( isa => 'Str', is => 'ro', default  => '');
 has from => ( isa => 'Str', is => 'ro', required => 1);
 has types => (isa => 'Str', is => 'ro', default => 'int');
 #has skipped => ( isa => 'Str', is => 'ro');
@@ -35,10 +35,11 @@ sub process_atree {
 
     # delete previously made links
     foreach my $a_node ( $a_root->get_descendants ) {
-        $a_node->set_attr( 'align/links', [] );
+        $a_node->set_attr( 'alignment', [] );
+#        $a_node->set_attr( 'align', '');
     }
 
-    my $sentence_id = $a_root->bundle->id;
+    my $sentence_id = $a_root->get_document->loaded_from . "-" . $a_root->get_bundle->id;
 #    my $num = $sentence_id;
 #    $num =~ s/^.*s(\d+)$/$1/;
 #    next if $skipped{$sentence_id};
@@ -71,7 +72,7 @@ sub process_atree {
         
     # index nodes of the two trees
     my @nodes = $a_root->get_descendants( { ordered => 1 } ); 
-    my @to_nodes = $a_root->bundle->get_tree( $self->to_language, 'a', $self->to_selector )->get_descendants( { ordered => 1 } ); 
+    my @to_nodes = $a_root->get_bundle->get_tree( $self->to_language, 'a', $self->to_selector )->get_descendants( { ordered => 1 } ); 
         
     foreach my $pair (keys %aligned) {
         if ( $pair =~ /^([0-9]+)-([0-9]+)$/ ) {
@@ -81,10 +82,10 @@ sub process_atree {
             my $to_node = $to_nodes[$2];
 
             # set alignment attribut
-            my $links_rf = $node->get_attr('align/links');
-            my %new_link = ( 'counterpart.rf' => $anode2->get_attr('id'), 'type' => $aligned{$pair} );
+            my $links_rf = $node->get_attr('alignment');
+            my %new_link = ( 'counterpart.rf' => $to_node->get_attr('id'), 'type' => $aligned{$pair} );
             push( @$links_rf, \%new_link );
-            $anode->set_attr( 'align/links', $links_rf );
+            $node->set_attr( 'alignment', $links_rf );
         }
     }
 }
