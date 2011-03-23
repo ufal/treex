@@ -112,33 +112,6 @@
           <list ordered="0" type="align-links.type"/>
       </member>
 
-      <!-- to be deleted -->
-      <member name="align">
-        <structure>
-           <member name="links">
-             <list ordered="0" type="align-links.type"/>
-           </member>
-           <member name="giza_links">
-             <list ordered="0" type="align-links.type"/>
-           </member>
-           <member name="manual_links">
-             <list ordered="0" type="align-links.type"/>
-           </member>
-           <member name="rules">
-             <list ordered="0">
-               <cdata format="any"/>
-             </list>
-           </member>
-           <member name="is_aligned_edge" type="bool.type"/>
-           <member name="t_lemma_variants">
-             <list ordered="0">
-              <cdata format="any"/>
-             </list>
-           </member>
-        </structure>
-      </member>
-
-
       <!-- TimeML stuff (ptacek 22.2.2010)-->
       <member name="timeml">
 	      <structure>

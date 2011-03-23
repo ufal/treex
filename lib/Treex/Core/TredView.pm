@@ -146,6 +146,7 @@ sub nonroot_pnode_labels {
 my %arrow_color = (
     'coref_gram.rf' => 'red',
     'coref_text.rf' => 'blue',
+    'alignment'     => 'grey',
 );
 
 # copied from TectoMT_TredMacros.mak
@@ -169,7 +170,7 @@ sub node_style_hook {
     if (my $links = $node->attr('alignment')) {
         foreach my $link (@$links) {
             push @target_ids, $link->{'counterpart.rf'};
-            push @arrow_types, 'coref_gram.rf';
+            push @arrow_types, 'alignment';
         }
     }
 
