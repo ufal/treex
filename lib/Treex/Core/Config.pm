@@ -47,7 +47,7 @@ sub pml_schema_dir {
     }
     else {
         return File::ShareDir::dist_dir('Treex-Core')
-            . "/pml_schema/";
+            . "/tred_extension/treex/resources/";
     }
 }
 
