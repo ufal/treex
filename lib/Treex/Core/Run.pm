@@ -754,3 +754,11 @@ BENEFITS:
 TODO:
 * modules are just reloaded, no constructors are called yet
 * not tested on cluster yet (but it should work there)
+
+
+
+=head1 NAME
+
+Treex::Core::Run
+
+

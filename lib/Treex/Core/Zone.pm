@@ -76,3 +76,12 @@ sub get_label {
     return $self->language . ( $self->selector ? '_' . $self->selector : '' );
 }
 1;
+
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::Zone
+

@@ -239,3 +239,11 @@ sub set_sentence {
 }
 
 1;
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::BundleZone
+

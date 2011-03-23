@@ -223,6 +223,15 @@ sub run_hooks {
 
 1;
 
+__END__
+
+
+=head1 NAME
+
+Treex::Core::Log
+
+
+
 # Copyright 2007 Zdenek Zabokrtsky
 
 # This file is distributed under the GNU General Public License v2. See $TREEX_ROOT/README

@@ -4,3 +4,10 @@ use warnings;
 
 use Treex::Core::Run;
 treex (\@ARGV);
+
+
+__END__
+
+=head1 NAME
+
+treex

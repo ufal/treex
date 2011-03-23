@@ -310,3 +310,12 @@ sub pnode_style {
 # ---- END OF PRECOMPUTING VISUALIZATION ------
 
 1;
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::TredView
+
+

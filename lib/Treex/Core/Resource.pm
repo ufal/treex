@@ -36,3 +36,10 @@ sub require_file_from_share {
 }
 
 1;
+
+__END__
+
+
+=head1 NAME
+
+Treex::Core::Resources

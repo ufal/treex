@@ -55,3 +55,7 @@ sub process {
 
 __END__
 
+
+=head1 NAME
+
+Treex::Core::Service
