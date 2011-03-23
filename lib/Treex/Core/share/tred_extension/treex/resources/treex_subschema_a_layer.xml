@@ -64,7 +64,9 @@
       <member name="alignment">
           <list ordered="0" type="align-links.type"/>
       </member>
-      <member name="align"><cdata format="any"/></member>
+
+      <!-- tentative -->
+      <member name="align"><cdata format="PMLREF"/></member>  
 
     </structure>
   </type>

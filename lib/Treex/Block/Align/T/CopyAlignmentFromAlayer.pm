@@ -1,56 +1,40 @@
-package Align_SxxT_SyyT::Copy_alignment_from_Alayer;
+package Treex::Block::Align::T::CopyAlignmentFromAlayer;
+use Moose;
+use Treex::Moose;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
+has to_language => ( isa => 'Str', is => 'ro', required => 1);
+has to_selector => ( isa => 'Str', is => 'ro', default  => '');
 
-use base qw(TectoMT::Block);
 
-my $LANGUAGE1;
-my $LANGUAGE2;
+sub process_ttree {
+    my ( $self, $troot ) = @_;
 
-sub BUILD {
-    my ($self) = @_;
+    my $to_troot = $troot->get_bundle->get_tree($self->to_language, 't', $self->to_selector);
 
-    $LANGUAGE1 = $self->get_parameter('LANGUAGE1') or
-        Report::fatal('Parameter LANGUAGE1 must be specified!');
-    $LANGUAGE2 = $self->get_parameter('LANGUAGE2') or
-        Report::fatal('Parameter LANGUAGE2 must be specified!');
-    return;
-}
+    # delete previously made links
+    foreach my $tnode ( $troot->get_descendants ) {
+        $tnode->set_attr( 'alignment', [] );
+    }
 
-sub process_document {
-    my ( $self, $document ) = @_;
+    my %a2t;
+    foreach my $to_tnode ($to_troot->get_descendants) {
+        my $to_anode = $to_tnode->get_lex_anode;
+        next if not $to_anode;
+        $a2t{$to_anode->id} = $to_tnode->id;
+    }
 
-    foreach my $bundle ( $document->get_bundles() ) {
+    foreach my $tnode ($troot->get_descendants) {
+        my $anode = $tnode->get_lex_anode;
+        next if not $anode;
+        foreach my $link ( @{$anode->get_attr('alignment')} ) {
+            my $to_tnode_id = $a2t{ $link->{'counterpart.rf'} } || next;;
 
-        my $troot1 = $bundle->get_generic_tree("S${LANGUAGE1}T");
-        my $troot2 = $bundle->get_generic_tree("S${LANGUAGE2}T");
-
-        # delete previously made links
-        foreach my $tnode ( $troot1->get_descendants ) {
-            $tnode->set_attr( 'align/links', [] );
-        }
-
-        my %a2t;
-        foreach my $tnode2 ($troot2->get_descendants) {
-            my $anode2 = $tnode2->get_lex_anode;
-            next if not $anode2;
-            $a2t{$anode2->get_attr('id')} = $tnode2->get_attr('id');
-        }
-
-        foreach my $tnode1 ($troot1->get_descendants) {
-            my $anode1 = $tnode1->get_lex_anode;
-            next if not $anode1;
-            foreach my $link ( @{$anode1->get_attr('m/align/links')} ) {
-                my $tnode2_id = $a2t{ $link->{'counterpart.rf'} };
-
-                # add connection
-                my $links_rf = $tnode1->get_attr('align/links');
-                my %new_link = ( 'counterpart.rf' => $tnode2_id, 'type' => $link->{'type'} );
-                push( @$links_rf, \%new_link );
-                $tnode1->set_attr( 'align/links', $links_rf );
-            }
+            # add connection
+            my $links_rf = $tnode->get_attr('alignment');
+            my %new_link = ( 'counterpart.rf' => $to_tnode_id, 'type' => $link->{'type'} );
+            push( @$links_rf, \%new_link );
+            $tnode->set_attr( 'alignment', $links_rf );
         }
     }
 }
@@ -60,18 +44,18 @@ sub process_document {
 
 =over
 
-=item Align_SxxT_SyyT::Copy_alignment_from_Alayer;
+=item Treex::Block::Align::T::CopyAlignmentFromAlayer;
 
 PARAMETERS:
 
-- LANGUAGE1 - language in which the alignment attributes are included
+- language - language in which the alignment attributes are included
 
-- LANGUAGE2 - the other language
+- to_language - the other language
 
 =back
 
 =cut
 
-# Copyright 2009 David Marecek
+# Copyright 2009-2011 David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

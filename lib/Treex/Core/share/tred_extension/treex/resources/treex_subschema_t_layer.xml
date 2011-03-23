@@ -107,7 +107,12 @@
           </structure>
         </list>
       </member>
+      
+      <member name="alignment">
+          <list ordered="0" type="align-links.type"/>
+      </member>
 
+      <!-- to be deleted -->
       <member name="align">
         <structure>
            <member name="links">

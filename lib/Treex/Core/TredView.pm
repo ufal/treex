@@ -164,6 +164,15 @@ sub node_style_hook {
             }
         }
     }
+
+    # alignment
+    if (my $links = $node->attr('alignment')) {
+        foreach my $link (@$links) {
+            push @target_ids, $link->{'counterpart.rf'};
+            push @arrow_types, 'coref_gram.rf';
+        }
+    }
+
     _DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
     return;
 }
