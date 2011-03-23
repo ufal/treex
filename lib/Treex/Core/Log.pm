@@ -230,6 +230,9 @@ __END__
 
 Treex::Core::Log
 
+=head1 DESCRIPTION
+
+log
 
 
 # Copyright 2007 Zdenek Zabokrtsky

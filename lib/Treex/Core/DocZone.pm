@@ -15,3 +15,6 @@ __END__
 
 Treex::Core::DocZone
 
+=head1 DESCRIPTION
+
+bundlezone...

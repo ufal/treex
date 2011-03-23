@@ -59,3 +59,7 @@ __END__
 =head1 NAME
 
 Treex::Core::Service
+
+=head1 DESCRIPTION
+
+Service.pm

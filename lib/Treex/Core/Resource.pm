@@ -43,3 +43,7 @@ __END__
 =head1 NAME
 
 Treex::Core::Resources
+
+=head1 DESCRIPTION
+
+resources....

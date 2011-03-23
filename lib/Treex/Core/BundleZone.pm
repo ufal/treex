@@ -247,3 +247,6 @@ __END__
 
 Treex::Core::BundleZone
 
+=head1 DESCRIPTION
+
+bundlezone...
