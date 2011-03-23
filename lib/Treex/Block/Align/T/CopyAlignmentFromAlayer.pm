@@ -21,20 +21,16 @@ sub process_ttree {
     foreach my $to_tnode ($to_troot->get_descendants) {
         my $to_anode = $to_tnode->get_lex_anode;
         next if not $to_anode;
-        $a2t{$to_anode->id} = $to_tnode->id;
+        $a2t{$to_anode} = $to_tnode;
     }
 
     foreach my $tnode ($troot->get_descendants) {
         my $anode = $tnode->get_lex_anode;
         next if not $anode;
-        foreach my $link ( @{$anode->get_attr('alignment')} ) {
-            my $to_tnode_id = $a2t{ $link->{'counterpart.rf'} } || next;;
-
-            # add connection
-            my $links_rf = $tnode->get_attr('alignment');
-            my %new_link = ( 'counterpart.rf' => $to_tnode_id, 'type' => $link->{'type'} );
-            push( @$links_rf, \%new_link );
-            $tnode->set_attr( 'alignment', $links_rf );
+        my ($nodes, $types) = $anode->get_aligned_nodes();
+        foreach my $i (0 .. $#$nodes) {
+            my $to_tnode = $a2t{$$nodes[$i]} || next;
+            $tnode->add_aligned_node($to_tnode, $$types[$i]);
         }
     }
 }

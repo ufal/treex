@@ -36,7 +36,6 @@ sub process_atree {
     # delete previously made links
     foreach my $a_node ( $a_root->get_descendants ) {
         $a_node->set_attr( 'alignment', [] );
-#        $a_node->set_attr( 'align', '');
     }
 
     my $sentence_id = $a_root->get_document->loaded_from . "-" . $a_root->get_bundle->id;
@@ -76,16 +75,7 @@ sub process_atree {
         
     foreach my $pair (keys %aligned) {
         if ( $pair =~ /^([0-9]+)-([0-9]+)$/ ) {
-
-            # get the appropriate nodes
-            my $node = $nodes[$1];
-            my $to_node = $to_nodes[$2];
-
-            # set alignment attribut
-            my $links_rf = $node->get_attr('alignment');
-            my %new_link = ( 'counterpart.rf' => $to_node->get_attr('id'), 'type' => $aligned{$pair} );
-            push( @$links_rf, \%new_link );
-            $node->set_attr( 'alignment', $links_rf );
+            $nodes[$1]->add_aligned_node($to_nodes[$2], $aligned{$pair});
         }
     }
 }

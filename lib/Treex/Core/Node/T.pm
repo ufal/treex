@@ -235,17 +235,7 @@ sub set_lex_anode {
     return;
 }
 
-sub get_aligned_nodes {
-    my ($self) = @_;
-    my $links_rf = $self->get_attr('align/links');
-    if ($links_rf) {
-        my $document = $self->get_document;
-        return map { $document->get_node_by_id( $_->{'counterpart.rf'} ) } @$links_rf;
-    }
-    else {
-        return ();
-    }
-}
+
 
 # Named entity node corresponding to this
 sub get_n_node {

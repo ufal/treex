@@ -420,6 +420,43 @@ sub is_descendant_of {
     return 0;
 }
 
+#----------- alignment -------------
+
+sub get_aligned_nodes {
+    my ( $self ) = @_;
+    my $links_rf = $self->get_attr('alignment');
+    if ($links_rf) {
+        my $document = $self->get_document;
+        my @nodes = map { $document->get_node_by_id( $_->{'counterpart.rf'} ) } @$links_rf;
+        my @types = map { $_->{'type'} } @$links_rf;
+        return (\@nodes, \@types);
+    }
+    return (undef, undef);
+}
+
+sub is_aligned_to {
+    my ( $self, $node, $type ) = @_;
+    return grep { $_ eq $node } $self->get_aligned_nodes($node, $type) ? 1 : 0;
+}
+
+sub delete_aligned_node {
+    my ( $self, $node, $type ) = @_;
+    my $links_rf = $self->get_attr('alignment');
+    my @links = ();
+    if ($links_rf) {
+        @links = grep { $_->{'counterpart.rf'} ne $node->id || $_->{'type'} ne $type } @$links_rf;
+    }
+    $self->set_attr( 'alignment', \@links);
+}
+
+sub add_aligned_node {
+    my ( $self, $node, $type ) = @_;
+    my $links_rf = $self->get_attr('alignment');
+    my %new_link = ( 'counterpart.rf' => $node->id, 'type' => $type );
+    push( @$links_rf, \%new_link );
+    $self->set_attr( 'alignment', $links_rf );
+}
+
 #*********************************************
 #---- NODE ORDERING ------
 
