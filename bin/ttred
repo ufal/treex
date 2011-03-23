@@ -1,14 +1,32 @@
-#!/bin/bash
+#!/usr/bin/env perl
 
 # temporary script for running TrEd on treex files using the new extension
 
 # can't use runtred, as it runs setup_platform and thus destroys PERLLIBS
 
-echo "Running TrEd customized for Treex"
+use strict;
+use warnings;
 
-TRED_RUNNER=`perl -e 'use Treex::Core::Config; print Treex::Core::Config::tred_dir."/tred\n"'`
+use Treex::Core::Config;
 
-EXTENSION_DIR=`perl -e 'use Treex::Core::Config; print Treex::Core::Config::tred_extension_dir."\n"'`
+my $command =  Treex::Core::Config::tred_dir
+    . '/tred -O PreInstalledExtensionsDir='
+    . Treex::Core::Config::tred_extension_dir
+    . ' ' . (join ' ',@ARGV);
 
-$TRED_RUNNER -O PreInstalledExtensionsDir=$EXTENSION_DIR "$@"
+print "Running TrEd customized for Treex:\n$command\n";
 
+system $command;
+
+
+1;
+
+__END__
+
+=head1 NAME
+
+ttred
+
+=head1 DESCRIPTION
+
+running TrEd customized for browsing treex files
