@@ -363,7 +363,7 @@ sub get_zone {
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
         foreach my $element ( $meta->{zones}->elements ) {
-            my ( $name, $value ) = @$element;
+            my ( undef, $value ) = @$element; # $name is not needed
             if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
                 return $value;
             }

@@ -12,7 +12,7 @@ has 'pml_doc'   => ( is => 'rw' );
 use List::Util qw(first);
 
 sub get_nodelist_hook {
-    my ( $self, $fsfile, $treeNo, $currentNode, $hidden ) = @_;
+    my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
 
     return unless $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
 
@@ -44,7 +44,7 @@ sub file_opened_hook {
 }
 
 sub get_value_line_hook {
-    my ( $self, $fsfile, $treeNo ) = @_;
+    my ( $self, undef, $treeNo ) = @_; # the unused argument stands for $fsfile
     return unless $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
@@ -289,22 +289,22 @@ sub node_style {    # silly code just to avoid the need for eval
 }
 
 sub anode_style {
-    my ( $self, $node ) = @_;
+#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:green}";
 }
 
 sub tnode_style {
-    my ( $self, $node ) = @_;
+#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:blue}";
 }
 
 sub nnode_style {
-    my ( $self, $node ) = @_;
+#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:yellow}";
 }
 
 sub pnode_style {
-    my ( $self, $node ) = @_;
+#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:magenta}";
 }
 

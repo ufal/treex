@@ -43,7 +43,7 @@ sub get_zone {
     );
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
-            my ( $name, $value ) = @$element;
+            my ( undef, $value ) = @$element; # $name is not needed
             if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq $selector ) {
                 return $value;
             }
