@@ -11,9 +11,18 @@ my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    $self->set_model("$ENV{TMT_ROOT}/share/data/models/mst_parser/cs/pdt2_non-proj_ord2_0.05.model") if !$self->model;
+    if ( !$self->model ) {
+        $self->set_model("$ENV{TMT_ROOT}/share/data/models/mst_parser/cs/pdt2_non-proj_ord2_0.05.model");
+    }
     $parser = Treex::Tools::Parser::MST->new( { model => $self->model, decodetype => 'non-proj', order => 2, memory => '1000m' } );
     return;
+}
+
+sub get_short_tag {
+    my ( $self, $full_tag ) = @_;
+    my ( $p1, $p2, $p5 ) = $full_tag =~ /(.)(.)..(.)/;
+    return $p1 . $p2 if $p5 eq '-';
+    return $p1 . $p5;
 }
 
 sub process_atree {
@@ -28,7 +37,7 @@ sub process_atree {
 
     my @words      = map { $_->form } @a_nodes;
     my @tags       = map { $_->tag } @a_nodes;
-    my @short_tags = map { /(.)(.)..(.)/; ( ( $3 eq "-" ) ? ( $1 . $2 ) : ( $1 . $3 ) ); } @tags;
+    my @short_tags = map { $self->get_short_tag($_) } @tags;
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@short_tags );
 

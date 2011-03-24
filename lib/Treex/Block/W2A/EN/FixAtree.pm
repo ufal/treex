@@ -12,7 +12,7 @@ sub process_atree {
 
     my @all_nodes = $a_root->get_descendants( { ordered => 1 } );
 
-    return unless @all_nodes;
+    return if !@all_nodes;
 
     # Terminal punctuation should hang on the technical root
     # So look for the last token

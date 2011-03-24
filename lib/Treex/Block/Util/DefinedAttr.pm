@@ -32,10 +32,10 @@ sub BUILD {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    $self->check_tree( $zone, 'a', $self->anode ) if $self->anode;
-    $self->check_tree( $zone, 't', $self->tnode ) if $self->tnode;
-    $self->check_tree( $zone, 'n', $self->nnode ) if $self->nnode;
-    $self->check_tree( $zone, 'p', $self->pnode ) if $self->pnode;
+    if ( $self->anode ) { $self->check_tree( $zone, 'a', $self->anode ); }
+    if ( $self->tnode ) { $self->check_tree( $zone, 't', $self->tnode ); }
+    if ( $self->nnode ) { $self->check_tree( $zone, 'n', $self->nnode ); }
+    if ( $self->pnode ) { $self->check_tree( $zone, 'p', $self->pnode ); }
     return;
 }
 

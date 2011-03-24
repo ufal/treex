@@ -53,7 +53,7 @@ sub process_atree {
             }
         }
     }
-#    Report::progress;
+    return;
 }
 
 

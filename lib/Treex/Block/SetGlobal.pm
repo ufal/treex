@@ -5,9 +5,11 @@ extends 'Treex::Core::Block';
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-    my $scenario = $arg_ref->{scenario} or die "no scenario given";
+    my $scenario = $arg_ref->{scenario} or log_fatal "no scenario given";
     while ( my ( $name, $value ) = each %{$arg_ref} ) {
-        $scenario->set_global_param( $name, $value ) if $name ne 'scenario';
+        if ( $name ne 'scenario' ) {
+            $scenario->set_global_param( $name, $value );
+        }
     }
     return;
 }

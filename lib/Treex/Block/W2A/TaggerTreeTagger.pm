@@ -4,8 +4,8 @@ use Treex::Moose;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
-has model       => ( isa      => 'Str', is => 'rw' );
-has _tagger     => ( is       => 'rw' );
+has model => ( isa => 'Str', is => 'rw' );
+has _tagger => ( is => 'rw' );
 
 use Treex::Tools::Tagger::TreeTagger;
 

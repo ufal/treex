@@ -5,14 +5,14 @@ use Eval::Bleu;
 
 extends 'Treex::Core::Block';
 
-sub build_language { log_fatal "Parameter 'language' must be given"; }
+sub build_language { return log_fatal "Parameter 'language' must be given"; }
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 
 sub process_document {
     my ( $self, $document ) = @_;
     my $doc_name = $document->full_filename();
     $doc_name =~ s{^.*/}{};
-    my ( @src, @ref, @tst, $id );
+    my ( @src, @ref, @tst );
     my $position;
 
     foreach my $bundle ( $document->get_bundles ) {
@@ -45,6 +45,7 @@ sub process_document {
             @tst = ();
         }
     }
+    return;
 }
 
 1;

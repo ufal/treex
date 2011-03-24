@@ -10,6 +10,7 @@ sub process_document {
     my ( $self, $doc ) = @_;
     my $doczone = $doc->get_zone( $self->language, $self->selector );
     print $doczone->text;
+    return;
 }
 
 1;

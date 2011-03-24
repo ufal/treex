@@ -22,6 +22,7 @@ has join_resegmented => (
 sub BUILD {
     my ($self) = @_;
     binmode STDOUT, ':encoding(' . $self->encoding . ')';
+    return;
 }
 
 sub process_zone {
