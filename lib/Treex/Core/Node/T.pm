@@ -374,7 +374,7 @@ For example: "Bank of China"
  $n_node_for_china = $t_node_china->get_n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
- print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China 
+ print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China
 
 =back 
 

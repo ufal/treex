@@ -223,33 +223,6 @@ sub _get_shared_echildren {
     return @shared_echildren;
 }
 
-=item $node->get_coap_members($arg_ref?)
-
-If the node is a coordination/apposition head
-(see L<is_coap_root()>) a list of all coordinated members is returned.
-Otherwise, the node itself is returned. 
-
-Options (using C<$arg_ref> hash):
-
-=over
-
-=item direct_only
-
-In case of nested coordinations return only "first-level" members.
-The default is to return I<transitive> members.
-For example "(A and B) or C":
-$or->get_coap_members();                 # returns A,B,C
-$or->get_coap_members({direct_only=>1}); # returns and,C
-
-=item dive=>$sub_ref
-
-"Dive" through nodes for which the subroutine returns a true value.
-Typically this is used for prepositions and subord. conjunctions.
-
-=back
-
-=cut
-
 sub get_coap_members {
     my ( $self, $arg_ref ) = @_;
     log_fatal('Incorrect number of arguments') if @_ > 2;
@@ -425,6 +398,8 @@ Analytical node
 
 =head2 Other
 
+=over 4
+
 =item reset_morphcat
 
 =item get_pml_type_name
@@ -447,6 +422,32 @@ Analytical node
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China 
+
+
+=item $node->get_coap_members($arg_ref?)
+
+If the node is a coordination/apposition head
+(see L<is_coap_root()>) a list of all coordinated members is returned.
+Otherwise, the node itself is returned. 
+
+Options (using C<$arg_ref> hash):
+
+=over
+
+=item direct_only
+
+In case of nested coordinations return only "first-level" members.
+The default is to return I<transitive> members.
+For example "(A and B) or C":
+$or->get_coap_members();                 # returns A,B,C
+$or->get_coap_members({direct_only=>1}); # returns and,C
+
+=item dive=>$sub_ref
+
+"Dive" through nodes for which the subroutine returns a true value.
+Typically this is used for prepositions and subord. conjunctions.
+
+=back
 
 =back
 

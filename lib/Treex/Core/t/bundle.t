@@ -52,7 +52,7 @@ $bundle->set_attr( 'Attr', 'Value' );
 cmp_ok( $bundle->get_attr('Attr'), 'eq', 'Value', 'Attr test' );
 ok( !defined $bundle->get_attr('Bttr'), 'Not defined attr' );
 
-=commented out 
+=commented out
 # message_board was deleted from bundle API (until it is neede somewhere)
 
 #message board testing

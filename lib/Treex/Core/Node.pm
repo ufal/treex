@@ -97,8 +97,8 @@ sub delete {
 
     # Remove the subtree from the document's indexing table
     foreach my $node ( $self, $self->get_descendants ) {
-        if ( defined $self->id ) {
-            $document->index_node_by_id( $self->id, undef );
+        if ( defined $node->id ) {
+            $document->index_node_by_id( $node->id, undef );
         }
     }
 

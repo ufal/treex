@@ -429,7 +429,7 @@ sub _read_total_doc_number {
         return $total_file_number;
     }
     else {
-        return undef;
+        return;
     }
 }
 

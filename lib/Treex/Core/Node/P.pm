@@ -5,14 +5,14 @@ extends 'Treex::Core::Node';
 
 sub get_pml_type_name {
     my ($self) = @_;
-		
-		if ( $self->is_root() or $self->get_attr('phrase') ) {
-		  return 'p-nonterminal.type';
-		} elsif ( $self->get_attr('tag') ) {
-			return 'p-terminal.type';
-		} else {
-		  return;
-		}
+    
+    if ( $self->is_root() or $self->get_attr('phrase') ) {
+        return 'p-nonterminal.type';
+    } elsif ( $self->get_attr('tag') ) {
+        return 'p-terminal.type';
+    } else {
+        return;
+    }
 }
 
 # Nodes on the p-layer have no ordering attribute.
