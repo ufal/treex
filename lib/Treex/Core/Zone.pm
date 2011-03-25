@@ -70,7 +70,7 @@ sub get_attr {
 
 sub get_label {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return $self->language . ( $self->selector ? '_' . $self->selector : '' );

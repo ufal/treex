@@ -50,7 +50,7 @@ sub _index_my_id {
 
 sub _pml_attribute_hash {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return $self;
@@ -58,7 +58,7 @@ sub _pml_attribute_hash {
 
 sub get_bundle {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return $self->get_zone->get_bundle;
@@ -67,7 +67,7 @@ sub get_bundle {
 # reference to embeding zone is stored only with tree root, not with nodes
 sub get_zone {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $zone;
@@ -85,7 +85,7 @@ sub get_zone {
 
 sub delete {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     if ( $self->is_root ) {
@@ -118,7 +118,7 @@ sub delete {
 
 sub get_pml_type_name {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return;
@@ -126,7 +126,7 @@ sub get_pml_type_name {
 
 sub get_layer {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -140,7 +140,7 @@ sub get_layer {
 
 sub language {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -149,7 +149,7 @@ sub language {
 
 sub selector {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -212,7 +212,7 @@ sub create_child {
 
 sub get_document {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -223,7 +223,7 @@ sub get_document {
 
 sub get_root {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -232,7 +232,7 @@ sub get_root {
 
 sub is_root {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -241,7 +241,7 @@ sub is_root {
 
 sub get_parent {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -476,7 +476,7 @@ sub precedes {
 # Neni na to cas prave ted?
 sub get_next_node {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $my_ord = $self->ord();
@@ -495,7 +495,7 @@ sub get_next_node {
 
 sub get_prev_node {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $my_ord = $self->ord();
@@ -514,7 +514,7 @@ sub get_prev_node {
 
 sub _normalize_node_ordering {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
@@ -689,7 +689,7 @@ sub _shift_to_node {
 
 sub get_depth {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $depth = 0;
@@ -707,7 +707,7 @@ sub get_depth {
 # ZZ navrhoval implementovat to jiz zde, v Node.pm, tak to zkousim (MP).
 sub get_clause_root {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $my_number = $self->get_attr('clause_number');
@@ -731,7 +731,7 @@ sub get_clause_root {
 # Clauses may by split in more subtrees ("Peter eats and drinks.")
 sub get_clause_nodes {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $root        = $self->get_root();
@@ -743,7 +743,7 @@ sub get_clause_nodes {
 # TODO: same purpose as get_clause_root but instead of clause_number uses is_clause_head
 sub get_clause_head {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $node = $self;
@@ -756,7 +756,7 @@ sub get_clause_head {
 # taky by mohlo byt neco jako $node->get_descendants({within_clause=>1});
 sub get_clause_descendants {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_children();
@@ -791,7 +791,7 @@ sub set_ordering_value {
 
 sub get_fposition {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     my $id = $self->get_attr('id');
@@ -812,7 +812,7 @@ sub get_fposition {
 
 sub generate_new_id {    #TODO move to Core::Document?
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 

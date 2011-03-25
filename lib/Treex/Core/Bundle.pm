@@ -98,7 +98,7 @@ sub get_or_create_zone {
 
 sub get_all_zones {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no cricit (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return map { $_->value() } $self->{zones}->elements;
@@ -108,7 +108,7 @@ sub get_all_zones {
 
 sub get_all_trees {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
+    if ($Treex::Core::Config::params_validate) { ## no cricit (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 

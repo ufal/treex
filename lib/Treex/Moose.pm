@@ -32,7 +32,7 @@ sub pos_validated_list {
 }
 
 # Choose which variant to use according to Treex::Core::Config::$params_validate
-if ( $Treex::Core::Config::params_validate == 2 ) {
+if ( $Treex::Core::Config::params_validate == 2 ) { ## no cricit (ProhibitPackageVars)
     require MooseX::Params::Validate;
     $validation_sub = \&MooseX::Params::Validate::pos_validated_list;
 }

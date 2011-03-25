@@ -1,7 +1,6 @@
+package Treex::Core::Log;
 use strict;
 use warnings;
-
-package Treex::Core::Log;
 
 use utf8;
 use English '-no_match_vars';
