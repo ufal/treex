@@ -195,47 +195,60 @@ sub _load_functors {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::CS::SetFunctors
+=head1 Treex::Block::A2T::CS::SetFunctors
 
 Sets functors in tectogrammatical trees using a pre-trained machine learning model (logistic regression, SVM etc.)
 via the ML-Process Java executable with WEKA integration.
 
-Parameters (all of the file paths have their default value set):
+=head2 Parameters
+
+All of the file paths have their default value set:
 
 =over
 
 =item cleanup_temp
+
 Delete all temporary files after use? (default: 1, set to 0 if you want to keep the temporary files)
 
 =item ml_process_jar
+
 Path to the ML-Process executable JAR file.
 
 =item memory
+
 The maximum amount of memory reserved for the Java VM.
 
 =item model_dir
+
 Pre-trained model directory.
 
 =item model
+
 Name of the trained model file.
 
 =item plan_template
+
 Name of the ML-Process plan file template.
 
 =item filtering_ff_data 
+
 Name of the feature filtering information file.
 
 =item filtering_if_data
+
 Name of the feature removal information file.
 
 =item lang_conf
+
 Name of the feature generation configuration file.
 
 =back
 
-=back
+=head2 TODO
+
+Possibly could be made language independent, only with different models for different languages. 
 
 =cut
 

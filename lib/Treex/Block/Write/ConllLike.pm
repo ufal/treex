@@ -206,18 +206,22 @@ sub lemma_proper {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::Write::CoNLL-Like
+=pod
+
+=head1 Treex::Block::Write::CoNLL-Like
 
 Prints out all t-trees in a text format similar to CoNLL (with no APREDs and some different values
 relating to auxiliary a-nodes instead).
 
+=head2 Parameters
+
 The parameter C<language> is required.
 
-B<TODO:> Parametrize, so that the true CoNLL output as well as this extended version is possible
+=head2 TODO
 
-=back
+Parametrize, so that the true CoNLL output as well as this extended version is possible
 
 =cut
 
