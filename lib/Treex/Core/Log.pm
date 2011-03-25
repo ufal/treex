@@ -218,17 +218,114 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Log
+Treex::Core::Log - logger tailored for the needs of Treex
+
+=head1 SYNOPSIS
+
+ use Treex::Core::Log;
+ 
+ Treex::Core::Log::set_error_level('DEBUG');
+ 
+ sub epilog {
+     print STDERR "I'm going to cease!";
+ }
+ Treex::Core::Log::add_hook('FATAL',&epilog());
+ 
+ sub test_value {
+     my $value = shift;
+     log_fatal "Negative values are unacceptable" if $ARGV < 0;
+     log_warn "Zero value is suspicious" if $ARGV == 0;
+     log_debug "test: value=$value";
+ }
+
+
 
 =head1 DESCRIPTION
 
-log
-
-=head1 FUNCTIONS
-
-All the following functions are exported:
+Treex::Core::Log is a logger developed with the Treex system.
+It uses more or less standard leveled set of reporting functions,
+printing the messages at STDERR.
 
 
-# Copyright 2007 Zdenek Zabokrtsky
+Note that this module might be completely substituted
+by more elaborate solutions such as Log::Log4perl in the
+whole Treex in the future
 
-# This file is distributed under the GNU General Public License v2. See $TREEX_ROOT/README
+
+=head2 Error levels
+
+
+Specifying error level can be used for surpressing
+reports with lower severity. This module supports four
+ordered levels of report severity (plus a special value
+comprising them all).
+
+=over 4
+
+=item FATAL
+
+=item WARN
+
+=item INFO - the default value
+
+=item DEBUG
+
+=item ALL
+
+=back
+
+The current error level can be accessed by the following functions:
+
+=over 4
+
+=item set_error_level($error_level)
+
+=item get_error_level()
+
+=back
+
+
+
+=head2 Reporting functions
+
+All the following reporting functions print the message at STDERR.
+All are exported by default.
+
+=over 4
+
+=item log_fatal($message)
+
+print the Perl stack too, and exit
+
+=item log_warn($message)
+
+=item log_info($message)
+
+=item log_debug($message)
+
+=back
+
+
+
+=head2 Hooks
+
+Another functions can be called prior to reporting events.
+
+=over 4
+
+=item add_hook($level, &hook_subroutine)
+
+add the subroutine to the list of subroutines called prior
+to reporting events with the given level
+
+=item run_hooks($level)
+
+run all subroutines for the given error level
+
+=back
+
+
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky
