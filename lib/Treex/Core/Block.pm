@@ -20,7 +20,7 @@ has scenario => (
 # in all *::EN::* blocks and all *::??2EN::* blocks.
 sub build_language {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no cricit (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -49,7 +49,7 @@ sub BUILD {
 
 sub get_required_share_files {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no cricit (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return ();
@@ -145,7 +145,7 @@ sub process_zone {
 
 sub get_block_name {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no cricit (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return ref($self);
