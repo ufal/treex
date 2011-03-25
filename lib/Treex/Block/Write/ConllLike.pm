@@ -1,12 +1,16 @@
 package Treex::Block::Write::ConllLike;
+
 use Moose;
 use Treex::Moose;
+use autodie;
+use Readonly;
+
 extends 'Treex::Core::Block';
 
-use constant NOT_SET   => "_";             # CoNLL-ST format: undefined value
-use constant NO_NUMBER => -1;              # CoNLL-ST format: undefined integer value
-use constant FILL      => "_";             # CoNLL-ST format: "fill predicate"
-use constant TAG_FEATS => {
+Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
+Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
+Readonly my $FILL      => "_";    # CoNLL-ST format: "fill predicate"
+Readonly my $TAG_FEATS => {
     "SubPOS" => 1,
     "Gen"    => 2,
     "Num"    => 3,
@@ -20,7 +24,7 @@ use constant TAG_FEATS => {
     "Voi"    => 11,
     "Var"    => 14
 };    # tag positions and their meanings
-use constant TAG_NOT_SET => "-";    # tagset: undefined value
+Readonly my $TAG_NOT_SET => "-";    # tagset: undefined value
 
 has to => (
     isa           => 'Str',
@@ -37,12 +41,14 @@ has _file_handle => (
     documentation => 'the open output file handle',
 );
 
+has '+language' => ( required => 1 );
+
 sub _build_file_handle {
 
     my ($this) = @_;
 
     if ( $this->to ne "-" ) {
-        open( my $fh, '>:utf8', $this->to ) or log_fatal( "Could not open " . $this->to . " for output: $!" );
+        open( my $fh, '>:utf8', $this->to );
         return $fh;
     }
     else {
@@ -51,15 +57,16 @@ sub _build_file_handle {
 }
 
 sub DEMOLISH {
+
     my ($this) = @_;
     if ( $this->to ) {
         close( $this->_file_handle );
     }
+    return;
 }
 
 # MAIN
 sub process_ttree {
-
     my ( $this, $t_root ) = @_;
     my @data;
 
@@ -90,7 +97,7 @@ sub get_node_info {
 
     $info{"ord"}     = $t_node->ord;
     $info{"head"}    = $t_node->get_parent() ? $t_node->get_parent()->ord : 0;
-    $info{"functor"} = $t_node->functor ? $t_node->functor : NOT_SET;
+    $info{"functor"} = $t_node->functor ? $t_node->functor : $NOT_SET;
     $info{"lemma"}   = $t_node->t_lemma;
 
     if ($a_node) {    # there is a corresponding node on the a-layer
@@ -99,8 +106,8 @@ sub get_node_info {
         $info{"afun"} = $a_node->afun;
     }
     else {            # generated node
-        $info{"tag"}  = NOT_SET;
-        $info{"afun"} = NOT_SET;
+        $info{"tag"}  = $NOT_SET;
+        $info{"afun"} = $NOT_SET;
         $info{"form"} = $info{"lemma"};
     }
 
@@ -124,11 +131,11 @@ sub get_node_info {
         $info{"aux_afuns"}  .= "|" . $aux_anode->afun;
     }
 
-    $info{"aux_forms"}  = $info{"aux_forms"}  eq "" ? NOT_SET : substr( $info{"aux_forms"},  1 );
-    $info{"aux_lemmas"} = $info{"aux_lemmas"} eq "" ? NOT_SET : substr( $info{"aux_lemmas"}, 1 );
-    $info{"aux_pos"}    = $info{"aux_pos"}    eq "" ? NOT_SET : substr( $info{"aux_pos"},    1 );
-    $info{"aux_subpos"} = $info{"aux_subpos"} eq "" ? NOT_SET : substr( $info{"aux_subpos"}, 1 );
-    $info{"aux_afuns"}  = $info{"aux_afuns"}  eq "" ? NOT_SET : substr( $info{"aux_afuns"},  1 );
+    $info{"aux_forms"}  = $info{"aux_forms"}  eq "" ? $NOT_SET : substr( $info{"aux_forms"},  1 );
+    $info{"aux_lemmas"} = $info{"aux_lemmas"} eq "" ? $NOT_SET : substr( $info{"aux_lemmas"}, 1 );
+    $info{"aux_pos"}    = $info{"aux_pos"}    eq "" ? $NOT_SET : substr( $info{"aux_pos"},    1 );
+    $info{"aux_subpos"} = $info{"aux_subpos"} eq "" ? $NOT_SET : substr( $info{"aux_subpos"}, 1 );
+    $info{"aux_afuns"}  = $info{"aux_afuns"}  eq "" ? $NOT_SET : substr( $info{"aux_afuns"},  1 );
 
     return \%info;
 }
@@ -144,37 +151,45 @@ sub ord_sort {
 #     AFUN, AUX-FORMS, AUX-LEMMAS, AUX-POS, AUX-SUBPOS, AUX-AFUNS
 sub _print_st {
     my ( $this, $line )  = @_;
-    my ( $pos,  $pfeat ) = analyze_tag( $line->{"tag"} );
+    my ( $pos,  $pfeat ) = $this->_analyze_tag( $line->{"tag"} );
 
     print { $this->_file_handle } (
         join(
             "\t",
-            (   $line->{"ord"},   $line->{"form"},
-                $line->{"lemma"}, NOT_SET, $pos, NOT_SET, $pfeat, NOT_SET,
-                $line->{"head"},  NO_NUMBER, $line->{"functor"}, NOT_SET, FILL, NOT_SET,
-                $line->{"afun"}, $line->{"aux_forms"}, $line->{"aux_lemmas"}, $line->{"aux_pos"}, $line->{"aux_subpos"}, $line->{"aux_afuns"}
+            (
+                $line->{ord}, $line->{"form"}, $line->{"lemma"}, $NOT_SET,
+                $pos, $NOT_SET, $pfeat, $NOT_SET,
+                $line->{"head"}, $NO_NUMBER, $line->{"functor"}, $NOT_SET,
+                $FILL, $NOT_SET, $line->{"afun"}, $line->{"aux_forms"},
+                $line->{"aux_lemmas"}, $line->{"aux_pos"}, $line->{"aux_subpos"}, $line->{"aux_afuns"}
+                )
             )
-        )
     );
     print { $this->_file_handle } ("\n");
+    return;
 }
 
-# Returns the PoS and PoS-Feat values, given a tag, or double "_", given a "_".
-sub analyze_tag {
+# Given a tag, returns the PoS and PoS-Feat values for Czech, just the tag and "_" for any other
+# language; or double "_", given an unset tag value.
+sub _analyze_tag {
 
-    my ($tag) = @_;
+    my ( $this, $tag ) = @_;
 
-    if ( $tag eq NOT_SET ) {
-        return ( NOT_SET, NOT_SET );
+    if ( $tag eq $NOT_SET ) {
+        return ( $NOT_SET, $NOT_SET );
     }
+    if ( $this->language ne "cs" ) {
+        return ( $tag, $NOT_SET );
+    }
+
     my $pos = substr( $tag, 0, 1 );
     my $pfeat = "";
 
-    foreach my $feat ( keys %{ TAG_FEATS() } ) {
-        my $pos = TAG_FEATS->{$feat};
-        my $val = substr( $tag, $pos, 1 );
+    foreach my $feat ( keys %{$TAG_FEATS} ) {
+        my $idx = $TAG_FEATS->{$feat};
+        my $val = substr( $tag, $idx, 1 );
 
-        if ( $val ne TAG_NOT_SET ) {
+        if ( $val ne $TAG_NOT_SET ) {
             $pfeat .= $pfeat eq "" ? "" : "|";
             $pfeat .= $feat . "=" . $val;
         }
@@ -185,7 +200,6 @@ sub analyze_tag {
 # Given a PDT-style morphological lemma, returns just the "lemma proper" part without comments, links, etc.
 sub lemma_proper {
     my ($lemma) = @_;
-
     $lemma =~ s/(_;|_:|_,|_\^|`).*$//;
     return $lemma;
 }
@@ -199,8 +213,9 @@ sub lemma_proper {
 Prints out all t-trees in a text format similar to CoNLL (with no APREDs and some different values
 relating to auxiliary a-nodes instead).
 
-B<TODO:> Parametrize, so that the true CoNLL output as well as this extended version is possible;
-    enable for English, too (now strictly depends on Czech morphological tags)
+The parameter C<language> is required.
+
+B<TODO:> Parametrize, so that the true CoNLL output as well as this extended version is possible
 
 =back
 
