@@ -10,6 +10,11 @@ use Carp qw(cluck);
 use IO::Handle;
 use Readonly;
 
+use Exporter;
+use base 'Exporter';
+our @EXPORT = qw(log_fatal log_warn log_info log_memory log_debug);
+
+
 $Carp::CarpLevel = 1;
 
 binmode STDOUT, ":utf8";
@@ -58,7 +63,7 @@ sub get_error_level {
 }
 
 # fatal error messages can't be surpressed
-sub fatal {
+sub log_fatal {
     my $message = shift;
     if ($unfinished_line) {
         print STDERR "\n";
@@ -88,7 +93,7 @@ sub short_fatal {    # !!! neodladene
 
 # TODO: redesign API - $carp, $no_print_stack
 
-sub warn {
+sub log_warn {
     my ( $message, $carp ) = @_;
     if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'WARN'} ) {
         my $line = "";
@@ -109,7 +114,7 @@ sub warn {
     return;
 }
 
-sub debug {
+sub log_debug {
     my ( $message, $no_print_stack ) = @_;
     if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'DEBUG'} ) {
         my $line = "";
@@ -145,7 +150,7 @@ sub data {
     return;
 }
 
-sub info {
+sub log_info {
     my ( $message, $arg_ref ) = @_;
     if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'INFO'} ) {
         my $same_line = defined $arg_ref && $arg_ref->{same_line};
@@ -167,7 +172,9 @@ sub info {
         }
 
         print STDERR $line;
-        STDERR->flush if $same_line;
+        if ($same_line) {
+            STDERR->flush;
+        }
     }
     run_hooks('INFO');
     return;
@@ -184,22 +191,6 @@ sub progress {    # progress se pres ntred neposila, protoze by se stejne neflus
     return;
 }
 
-# ---------- EXPORTED FUNCTIONS ------------
-
-# this solution might be only tentative
-# (Log::Log4perl or MooseX::Log::Log4perl might be preferred in the future),
-# that's why the following declarations are kept apart from the old code.
-
-use Exporter;
-use base 'Exporter';
-
-our @EXPORT = qw(log_fatal log_warn log_info log_memory log_set_error_level log_debug);
-
-sub log_fatal           { fatal(@_); }
-sub log_warn            { Treex::Core::Log::warn @_; }
-sub log_info            { info @_; }
-sub log_set_error_level { set_error_level @_; }
-sub log_debug           { debug @_; }
 
 # ---------- HOOKS -----------------
 
@@ -207,7 +198,7 @@ my %hooks;    # subroutines can be associated with reported events
 
 sub add_hook {
     my ( $level, $subroutine ) = @_;
-    $hooks{$level} = [] if !$hooks{$level};
+    $hooks{$level} ||= [];
     push @{ $hooks{$level} }, $subroutine;
     return;
 }
@@ -232,6 +223,10 @@ Treex::Core::Log
 =head1 DESCRIPTION
 
 log
+
+=head1 FUNCTIONS
+
+All the following functions are exported:
 
 
 # Copyright 2007 Zdenek Zabokrtsky

@@ -12,7 +12,7 @@ my @values = qw(ALL DEBUG INFO WARN FATAL);
 
 foreach my $level (@values) {
     ok( eval {
-            log_set_error_level($level);
+            Treex::Core::Log::set_error_level($level);
             1;
         },
         "Can set errorlevel $level",
@@ -20,7 +20,7 @@ foreach my $level (@values) {
 
 }
 
-log_set_error_level('FATAL');
+Treex::Core::Log::set_error_level('FATAL');
 
 Treex::Core::Log::add_hook( 'WARN', sub { print 'hook1' } );
 
