@@ -5,7 +5,8 @@ use warnings;
 use File::HomeDir;
 use File::ShareDir;
 
-our $debug_run_jobs_locally;    # this should be somehow systematized, since there will be probably many switches like this one ## no critic (ProhibitPackageVars)
+# this should be somehow systematized, since there will be probably many switches like this one 
+our $debug_run_jobs_locally; ## no critic (ProhibitPackageVars)
 our %service; ## no critic (ProhibitPackageVars)
 
 # 0: Treex::Moose::pos_validated_list() called if params needed, skipped otherwise
