@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Treex::Core::Run;
+use Treex::Core::Run q(treex);
 
 use Test::More tests => 4;
 use Test::Output;
