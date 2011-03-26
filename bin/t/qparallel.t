@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core::Config;
 
-use Treex::Core::Run;
+use Treex::Core::Run qw(treex);
 
 use Test::More;
 eval { use Test::Output };

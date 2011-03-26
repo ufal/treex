@@ -12,12 +12,13 @@ my $bundle   = $document->create_bundle;
 my $zone     = $bundle->create_zone( 'cs', 'S' );
 
 foreach my $layer (qw( A T N P )) {
+    note("############ $layer-layer ############");
     $zone->create_tree($layer);
 
     #is( $bundle->get_zone( 'cs', 'S' )->get_tree($layer), $bundle->get_tree("Scs$layer"), 'Tree can be obtained via zone or directly and result is same' ); # not supported
 
     my $root    = $zone->get_tree($layer);
-    my $ordered = defined $root->ord;
+    my $ordered = $root->does('Treex::Core::Node::Ordered');
     isa_ok( $root, 'Treex::Core::Node' );
     isa_ok( $root, "Treex::Core::Node::$layer" );
     my $attributes = {

@@ -253,8 +253,11 @@ sub _check_switches {
 
     # Check for role Ordered
     log_fatal('This type of node does not support ordering')
-        if !$self->does('Treex::Core::Node::Ordered') && 
-        ($arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following));
+        if (
+        !$self->does('Treex::Core::Node::Ordered')
+        &&
+        ( $arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following) )
+        );
 
     # Check switches for not allowed combinations
     log_fatal('Specified both preceding_only and following_only.')
@@ -302,12 +305,11 @@ sub _process_switches {
     }
 
     # Leave preceding/following only if needed
-    my $my_ord = $self->ord();
     if ( $arg_ref->{preceding_only} ) {
-        @nodes = grep { $_->ord() <= $my_ord } @nodes;
+        @nodes = grep { $_->ord() <= $self->ord } @nodes;
     }
     elsif ( $arg_ref->{following_only} ) {
-        @nodes = grep { $_->ord() >= $my_ord } @nodes;
+        @nodes = grep { $_->ord() >= $self->ord } @nodes;
     }
 
     # first_only / last_only
@@ -431,6 +433,9 @@ sub get_depth {
         $depth++;
     }
     return $depth;
+}
+
+sub _normalize_node_ordering {
 }
 
 #**************************************
