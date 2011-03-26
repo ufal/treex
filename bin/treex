@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Treex::Core::Run;
+use Treex::Core::Run q(treex);
 treex (\@ARGV);
 
 
@@ -10,8 +10,15 @@ __END__
 
 =head1 NAME
 
-treex
+treex - bash front-end for Treex::Core::Run
 
 =head1 DESCRIPTION
 
-treex runner....
+This is a thin front-end for calling
+functionality of Treex::Core::Run from
+the bash command line. See Treex::Core::Run
+for the description of arguments.
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky

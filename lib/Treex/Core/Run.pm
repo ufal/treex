@@ -12,7 +12,7 @@ use File::Path;
 use List::MoreUtils qw(first_index);
 use Exporter;
 use base 'Exporter';
-our @EXPORT = qw(treex);
+our @EXPORT_OK = q(treex);
 
 has 'save' => (
     traits        => ['Getopt'],
@@ -225,7 +225,7 @@ sub BUILD {
     return;
 }
 
-sub execute {
+sub _execute {
     my ($self) = @_;
     if ( $self->dump_scenario ) {
         my $scen_str = join ' ', @{ $self->extra_argv };
@@ -715,8 +715,8 @@ sub treex {
         $args{command}   = join " ", @ARGV;
         $args{argv}      = \@ARGV;
         $args{filenames} = [ splice @ARGV, $idx + 1 ] if $idx != -1;
-        my $app = Treex::Core::Run->new_with_options( \%args );
-        $app->execute();
+        my $runner = Treex::Core::Run->new_with_options( \%args );
+        $runner->_execute();
 
     }
 
@@ -753,14 +753,45 @@ BENEFITS:
 
 TODO:
 * modules are just reloaded, no constructors are called yet
-* not tested on cluster yet (but it should work there)
 
-=for Pod::Coverage BUILD
+
+=for Pod::Coverage BUILD treex
 
 =head1 NAME
 
-Treex::Core::Run
+Treex::Core::Run + treex - applying Treex blocks and/or scenarios on data
+
+=head1 SYNOPSIS
+
+In bash:
+
+ > treex myscenario.scen -- data/*.treex
+ > treex My::Block1 My::Block2 -- data/*.treex
+
+In Perl:
+
+ use Treex::Core::Run q(treex);
+ treex([qw(myscenario.scen -- data/*.treex)]);
+ treex([qw(My::Block1 My::Block2 -- data/*.treex)]);
 
 =head1 DESCRIPTION
 
-run...
+Treex::Core::Run allows to apply a block, a scenario, or their mixture on a set of
+data files. It is designed to be used primarily from bash command line, using
+a thin front-end script called C<treex>. However, the same list of argument can be
+passed by an array reference to the function C<treex()> imported from Treex::Core::Run.
+
+Note that this module supports distributed processing, simply by adding switch C<-p>.
+Then there are two ways to process the data in a parallel fashion. By default,
+SGE cluster\'s qsub is expected to be available. If you have no cluster but want
+to make the computation parallelized at least on a multicore machine, add the C<--local>
+switch.
+
+=head1 USAGE
+
+__USAGE__
+
+
+=head1 AUTHORS
+
+Zdenek Zabokrtsky, Martin Popel
