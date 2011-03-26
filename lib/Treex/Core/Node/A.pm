@@ -2,6 +2,7 @@ package Treex::Core::Node::A;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
+with 'Treex::Core::Node::Ordered';
 
 # _set_n_node is called only from Treex::Core::Node::N
 # (automatically, when a new n-node is added to the n-tree).

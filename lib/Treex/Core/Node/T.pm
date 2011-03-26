@@ -2,6 +2,7 @@ package Treex::Core::Node::T;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
+with 'Treex::Core::Node::Ordered';
 
 # t-layer attributes
 has [
