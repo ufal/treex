@@ -755,7 +755,7 @@ TODO:
 * modules are just reloaded, no constructors are called yet
 * not tested on cluster yet (but it should work there)
 
-
+=for Pod::Coverage BUILD
 
 =head1 NAME
 

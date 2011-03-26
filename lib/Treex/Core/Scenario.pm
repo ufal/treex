@@ -255,6 +255,9 @@ sub reset {
 
 __END__
 
+
+=for Pod::Coverage BUILD
+
 =head1 NAME
 
 Treex::Core::Scenario
@@ -277,10 +280,6 @@ Treex::Core::Scenario
 =head2 Constructor
 
 =over 4
-
-=item BUILD
-
-The real constructor that should not be called directly.
 
 =item my $scenario = Treex::Core::Scenario->new(scen => 'W2A::Tokenize language=en  W2A::Lemmatize' );
 

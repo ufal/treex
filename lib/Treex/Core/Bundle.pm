@@ -248,53 +248,8 @@ __PACKAGE__->meta->make_immutable;
 
 __END__
 
-# The idea of message_board have not been used much.
-# There should be at least 5 blocks using it before reintroducing to API.
 
-sub leave_message {
-    my $self = shift;
-    my ( $message_text ) = pos_validated_list (
-        \@_,
-        { isa => 'Message' },
-    );
-    if ( $self->get_attr('message_board') ) {
-        push @{ $self->get_attr('message_board') }, $message_text;
-    }
-    else {
-        $self->set_attr( 'message_board', Treex::PML::List->new($message_text) );
-    }
-}
-
-sub get_messages {
-    my $self = shift;
-    if ($Treex::Core::Config::params_validate) {
-        pos_validated_list( \@_ );
-    }
-    if ( $self->get_attr('message_board') ) {
-        return @{ $self->get_attr('message_board') };
-    }
-    else {
-        return ();
-    }
-}
-
-head2 Access to the bundle message board
-
-Short unstructured pieces of information can be stored with bundles,
-e.g. because of special needs of inter-block communication. For example,
-a message can be left in a bundle that the contained sentece cannot
-be parsed by an ordinary parsing block and should be parsed later by
-a fallback-parser block.
-
-over 4
-
-item $bundle->leave_message($message_text);
-
-item $bundle->get_messages();
-
-back
-
-
+=for Pod::Coverage BUILD
 
 =head1 NAME
 

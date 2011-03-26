@@ -55,6 +55,7 @@ sub process {
 
 __END__
 
+=for Pod::Coverage BUILD
 
 =head1 NAME
 

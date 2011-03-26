@@ -449,6 +449,9 @@ __PACKAGE__->meta->make_immutable;
 __END__
 
 
+
+=for Pod::Coverage BUILD build_file_number
+
 =head1 NAME
 
 Treex::Core::Document

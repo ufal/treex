@@ -155,6 +155,8 @@ sub get_block_name {
 
 __END__
 
+=for Pod::Coverage BUILD build_language
+
 =head1 NAME
 
 TectoMT::Block !!!!!!!!!!!!! needs to be updated

@@ -81,6 +81,8 @@ sub get_label {
 __END__
 
 
+=for Pod::Coverage BUILDARGS FOREIGNBUILDARGS
+
 =head1 NAME
 
 Treex::Core::Zone
