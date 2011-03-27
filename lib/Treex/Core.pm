@@ -69,7 +69,7 @@ or the most probable parse of a given sentence from the second most probable par
 
 In Treex data structures, zones are used at two levels:
 
-- Treex::Core::DocumentZone - allows to have multiple texts stored in the
+- Treex::Core::DocZone - allows to have multiple texts stored in the
   same document
 
 - Treex::Core::BundleZone - allows to have multiple sentences and their
@@ -92,7 +92,7 @@ Technically, each document consists of a set of document zones, and of a sequenc
 
 =head3 Document zone
 
-A document can contain one ore more zone (Treex::Core::DocumentZone), each
+A document can contain one ore more zone (Treex::Core::DocZone), each
 of them containing a text.
 
 =head3 Bundle
@@ -128,8 +128,11 @@ for accessing node's parent or children). Functinality specific for the individu
 linguistic layers is implemented in the derived classes:
 
 * Treex::Core::Node::A
+
 * Treex::Core::Node::T
+
 * Treex::Core::Node::P
+
 * Treex::Core::Node::N
 
 =head3 Attributes
@@ -165,7 +168,9 @@ implemented in Treex::Core::TredView.
 =head1 AUTHOR
 
 Zdenek Zabokrtsky
+
 Martin Popel
+
 David Marecek
 
 =head1 COPYRIGHT AND LICENSE

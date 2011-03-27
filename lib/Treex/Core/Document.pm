@@ -9,6 +9,9 @@ use Treex::Core::Bundle;
 with 'Treex::Core::TectoMTStyleAccessors';
 
 use Treex::PML;
+Treex::PML::UseBackends('PMLBackend');
+Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir());
+
 use Scalar::Util qw( weaken );
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
@@ -156,13 +159,6 @@ sub _pml_attribute_hash {
     return $self->metaData('pml_root')->{meta};
 }
 
-Treex::PML::UseBackends('PMLBackend');
-Treex::PML::AddResourcePath(
-
-    #    $ENV{"TRED_DIR"},
-    #    $ENV{"TRED_DIR"} . "/resources/",
-    Treex::Core::Config::pml_schema_dir(),
-);
 
 #my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
 my $_treex_schema_file = Treex::Core::Config::pml_schema_dir . "/" . 'treex_schema.xml';
@@ -454,17 +450,58 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Document
-
-
+Treex::Core::Document - representation of a text and its linguistic analyses in the Treex framework
 
 =head1 DESCRIPTION
-
 
 A document consists of a sequence of bundles, mirroring a sequence
 of natural language sentences (typically, but not necessarily,
 originating from the same text). Attributes (attribute-value pairs)
- can to attached to a document as a whole.
+can to attached to a document as a whole.
+
+=head1 ATTRIBUTES
+
+Treex::Core::Document's instances have the following attributes:
+
+=over 4
+
+=item loaded_from
+
+=item path
+
+=item file_stem
+
+=item file_number
+
+=back
+
+The attributes can be accessed using semi-affordance accessors:
+getters have the same names as attributes, while setters start with
+'set_'. For example:
+
+=over 4
+
+=item my $value = $doc->path;
+
+=item my $doc->set_path( $value );
+
+=back
+
+The attributes are accessible also by the following methods:
+
+=over 4
+
+=item my $value = $document->get_attr( $name );
+
+Returns the value of the document attribute of the given name.
+
+=item  $document->set_attr( $name, $value );
+
+Sets the given attribute of the document with the given value.
+
+=back
+
+
 
 =head1 METHODS
 
@@ -472,69 +509,40 @@ originating from the same text). Attributes (attribute-value pairs)
 
 =over 4
 
-=item  my $new_document = Treex::Core::Document->new();
+=item  my $new_document = Treex::Core::Document->new;
 
-Creates a new empty document object.
+creates a new empty document object.
 
-=item  my $new_document = Treex::Core::Document->new( { 'fsfile' => $fsfile } );
+=item  my $new_document = Treex::Core::Document->new( { pmldoc => $pmldoc } );
 
-Creates a TectoMT document corresponding to the specified Fsfile object.
+creates a Treex::Core::Document instance from an already existing Treex::PML::Document instance
 
-=item  my $new_document = Treex::Core::Document->new( { 'filename' => $filename } );
+=item  my $new_document = Treex::Core::Document->new( { filename => $filename } );
 
-Loads the tmt file and creates a TectoMT document corresponding to its content.
+loads a Treex::Core::Document instance from a .treex file
 
 =back
 
 
-=head2 Accessing directly the PML files
+=head2 Access to zones
+
+Document zones are instances of Treex::Core::DocZone, parametrized
+by ISO TODO??? language code and possibly also by another free label
+called selector, whose purpose is to distinguish zones for the same language
+but from a different source.
 
 =over 4
 
-=item open, save, save_as
-Not implemented yet.
+=item my $zone = $doc->create_zone( $langcode, ?$selector );
 
-=item my $filename = $fsfile->get_fsfile_name();
+=item my $zone = $doc->get_zone( $langcode, ?$selector );
 
-=back
-
-=head2 Access to attributes
-
-=over 4
-
-=item my $value = $document->get_attr($name);
-
-Returns the value of the document attribute of the given name.
-
-=item  $document->set_attr($name,$value);
-
-Sets the given attribute of the document with the given value.
-If the attribute name is 'id', then the document's indexing table
-is updated.
+=item my $zone = $doc->get_or_create_zone( $langcode, ?$selector );
 
 =back
 
 
-=head2 Access to generic attributes and trees
-
-Besides document attributes with names statically predefined in the TectoMT
-pml schema (such as 'czech_source_text'), one can
-use generic attributes, which are parametrizable by
-language (using ISO 639 codes) and direction (S for source, T for target).
-Attribute names then look e.g. like 'Sar text' (source-side arabic text).
-
-=over 4
-
-=item my $value = $document->get_generic_attr($name);
-
-=item $document->set_generic_attr($name,$value);
-
-=back
-
-
-
-
-=head2 Access to the contained bundles
+=head2 Access to bundles
 
 =over 4
 
@@ -548,12 +556,12 @@ Returns the array of bundles contained in the document.
 Creates a new empty bundle and appends it
 at the end of the document.
 
-=item my $new_bundle = $document->new_bundle_before($existing_bundle);
+=item my $new_bundle = $document->new_bundle_before( $existing_bundle );
 
 Creates a new empty bundle and inserts it
 in front of the existing bundle.
 
-=item my $new_bundle = $document->new_bundle_after($existing_bundle);
+=item my $new_bundle = $document->new_bundle_after( $existing_bundle );
 
 Creates a new empty bundle and inserts it
 after the existing bundle.
@@ -565,7 +573,7 @@ after the existing bundle.
 
 =over 4
 
-=item  $document->index_node_by_id($id,$node);
+=item  $document->index_node_by_id( $id, $node );
 
 The node is added to the id2node hash table (as mentioned above, it
 is done automatically in $node->set_attr() if the attribute name
@@ -573,7 +581,7 @@ is 'id'). When using undef in the place of the second argument, the entry
 for the given id is deleted from the hash.
 
 
-=item my $node = $document->get_node_by_id($id);
+=item my $node = $document->get_node_by_id( $id );
 
 Return the node which has the value $id in its 'id' attribute,
 no matter to which tree and to which bundle in the given document
@@ -583,7 +591,7 @@ It is prohibited in TectoMT for IDs to point outside of the current document.
 In rare cases where your data has such links, we recommend you to split the
 documents differently or hack it by dropping the problematic links.
 
-=item $document->id_is_indexed($id);
+=item $document->id_is_indexed( $id );
 
 Return true if the given id is already present in the indexing table.
 
@@ -594,8 +602,27 @@ Return the array of all node identifiers indexed in the document.
 =back
 
 
+=head2 Other
 
-=head1 COPYRIGHT
+=over 4
 
-Copyright 2006 Zdenek Zabokrtsky.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+=item my $filename = $doc->full_filename;
+
+full filename without the extension
+
+=back
+
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky
+
+Martin Popel
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+
