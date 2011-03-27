@@ -81,7 +81,7 @@ sub get_label {
 __END__
 
 
-=for Pod::Coverage BUILDARGS FOREIGNBUILDARGS
+=for Pod::Coverage BUILDARGS FOREIGNBUILDARGS set_attr get_attr
 
 =head1 NAME
 
@@ -89,4 +89,29 @@ Treex::Core::Zone
 
 =head1 DESCRIPTION
 
-zone...
+Treex::Core::Zone is an abstract class, it is the antecedent
+of Treex::Core::DocZone and Treex::Core::BundleZone.
+
+=head1 ATTRIBUTES
+
+Treex::Core::BundleZone instances have the following attributes:
+
+=over 4
+
+=item language
+
+=item selector
+
+=back
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky
+
+Martin Popel
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2010-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

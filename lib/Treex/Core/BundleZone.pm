@@ -240,13 +240,152 @@ sub set_sentence {
 
 1;
 
+
 __END__
 
+=for Pod::Coverage set_sentence
 
 =head1 NAME
 
-Treex::Core::BundleZone
+Treex::Core::BundleZone - zone in a bundle containing a sentence and its linguistic representations
+
+=head1 SYNOPSIS
+
+ use Treex::Core;
+ my $doc = Treex::Core->new;
+ my $bundle = $doc->create_bundle();
+ my $zone = $bundle->create_zone('en','reference');
+ $zone->set_sentence('John loves Mary.');
+
 
 =head1 DESCRIPTION
 
-bundlezone...
+Document zones allow Treex documents to contain more texts,
+typically parallel texts (translations), or corresponding
+texts from different sources (text to be translated, reference
+translation, test translation).
+
+=head1 ATTRIBUTES
+
+Treex::Core::BundleZone instances have the following attributes:
+
+=over 4
+
+=item language
+
+=item selector
+
+=item sentence
+
+=back
+
+The attributes can be accessed using semi-affordance accessors:
+getters have the same names as attributes, while setters start with
+'set_'. For example by getter C<sentence()> and setter C<set_sentence($sentence)>
+
+
+=head1 METHODS
+
+=head2 Construction
+
+Treex::Core::BundleZone instances should not be created by the constructor,
+but should be created exclusively by calling one of the following methods
+of the embeding  Treex::Core::Bundle instance:
+
+=over 4
+
+=item create_zone
+
+=item get_or_create_zone
+
+=back
+
+
+=head2 Access to trees
+
+There are four types of linguistic trees distinguished in Treex, each of them represented
+by one letter: a - analytical treex, t - tectogrammatical trees, p - phrase-structure trees,
+n - named entity trees. You can create trees by following methods:
+
+=over 4
+
+=item $zone->create_tree($layer);
+
+=item $zone->create_atree();
+
+=item $zone->create_ttree();
+
+=item $zone->create_ptree();
+
+=item $zone->create_ntree();
+
+=back
+
+
+You can access trees by
+
+=over 4
+
+=item $zone->get_tree($layer);
+
+=item $zone->get_atree();
+
+=item $zone->get_ttree();
+
+=item $zone->get_ptree();
+
+=item $zone->get_ntree();
+
+=item $zone->get_all_trees();
+
+=back
+
+
+Presence of a tree of a certain type can be detected by
+
+=over 4
+
+=item $zone->has_tree($layer);
+
+=item $zone->has_atree();
+
+=item $zone->has_ttree();
+
+=item $zone->has_ptree();
+
+=item $zone->has_ntree();
+
+=back
+
+
+You can delete trees by
+
+=over 4
+
+=item $zone->delete_tree($layer);
+
+=back
+
+
+=head2 Access to embeding objects
+
+=item $bundle = $zone->get_bundle();
+
+returns the Treex::Core::Bundle instance which the zone belongs to
+
+=item $doc = $zone->get_document();
+
+returns the Treex::Core::Document instance which the zone belongs to
+
+
+=head1 AUTHOR
+
+Zdenek Zabokrtsky
+
+Martin Popel
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

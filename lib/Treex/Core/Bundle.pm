@@ -303,7 +303,7 @@ only within an existing documents, using the following methods of Treex::Core::D
 
 =head2 Access to zones
 
-Document zones are instances of Treex::Core::DocZone, parametrized
+Bundle zones are instances of Treex::Core::BundleZone, parametrized
 by language code and possibly also by another free label
 called selector, whose purpose is to distinguish zones for the same language
 but from a different source.

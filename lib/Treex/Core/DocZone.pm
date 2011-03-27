@@ -32,14 +32,36 @@ translation, test translation).
 
 =head1 ATTRIBUTES
 
-Treex::Core::DocZone has the only attribute C<text> that can
-be accessed as follows:
+Treex::Core::DocZone instances have the following attributes:
 
 =over 4
 
-=item $zone->set_text($text);
+=item language
+
+=item selector
 
 =item my $text = $zone->text;
+
+=back
+
+The attributes can be accessed using semi-affordance accessors:
+getters have the same names as attributes, while setters start with
+'set_'. For example by getter C<text()> and setter C<set_text($text)>
+
+
+=head1 METHODS
+
+-head2 Construction
+
+Treex::Core::DocZone instances should not be created by a constructor,
+but should be created exclusively from the embeding document
+by one of the document's methods:
+
+=over 4
+
+=item create_zone
+
+=item get_or_create_zone
 
 =back
 
