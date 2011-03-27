@@ -14,7 +14,7 @@ use List::Util qw(first);
 sub get_nodelist_hook {
     my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
 
-    return unless $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
+    return if not $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
 
     my $bundle = $fsfile->tree($treeNo);
     bless $bundle, 'Treex::Core::Bundle';    # TODO: how to make this automatically?
@@ -27,7 +27,9 @@ sub get_nodelist_hook {
 
     unshift @nodes, $bundle;
 
-    $currentNode = $nodes[0] unless first { $_ == $currentNode } @nodes;
+    if ( not ( first { $_ == $currentNode } @nodes ) ) {
+        $currentNode = $nodes[0];
+    }
     return [ \@nodes, $currentNode ];
 
 }
@@ -45,7 +47,7 @@ sub file_opened_hook {
 
 sub get_value_line_hook {
     my ( $self, undef, $treeNo ) = @_; # the unused argument stands for $fsfile
-    return unless $self->pml_doc();
+    return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
     return join "\n", map { "[" . $_->get_label . "] " . $_->get_attr('sentence') } grep { defined $_->get_attr('sentence') } $bundle->get_all_zones;
@@ -104,11 +106,24 @@ sub tree_root_labels {
 
 sub nonroot_node_labels {    # silly code just to avoid the need for eval
     my $layer = pop @_;
-    if    ( $layer eq 't' ) { return nonroot_tnode_labels(@_) }
-    elsif ( $layer eq 'a' ) { return nonroot_anode_labels(@_) }
-    elsif ( $layer eq 'n' ) { return nonroot_nnode_labels(@_) }
-    elsif ( $layer eq 'p' ) { return nonroot_pnode_labels(@_) }
-    else                    { log_fatal "Undefined or unknown layer: $layer" }
+    my %subs;
+    $subs{t} = \&nonroot_tnode_labels;
+    $subs{a} = \&nonroot_anode_labels;
+    $subs{n} = \&nonroot_nnode_labels;
+    $subs{p} = \&nonroot_pnode_labels;
+    if (defined $subs{$layer}) {
+        return &{$subs{$layer}}(@_);     
+    } else {
+        log_fatal "Undefined or unknown layer: $layer";
+    }
+    
+    #if    ( $layer eq 't' ) { return nonroot_tnode_labels(@_) }
+    #elsif ( $layer eq 'a' ) { return nonroot_anode_labels(@_) }
+    #elsif ( $layer eq 'n' ) { return nonroot_nnode_labels(@_) }
+    #elsif ( $layer eq 'p' ) { return nonroot_pnode_labels(@_) }
+    #else                    { log_fatal "Undefined or unknown layer: $layer" }
+
+    return; 
 }
 
 sub nonroot_anode_labels {
@@ -281,11 +296,22 @@ sub common_node_style {
 
 sub node_style {    # silly code just to avoid the need for eval
     my $layer = pop @_;
-    if    ( $layer eq 't' ) { return tnode_style(@_) }
-    elsif ( $layer eq 'a' ) { return anode_style(@_) }
-    elsif ( $layer eq 'n' ) { return nnode_style(@_) }
-    elsif ( $layer eq 'p' ) { return pnode_style(@_) }
-    else                    { log_fatal "Undefined or unknown layer: $layer" }
+    my %subs;
+    $subs{t} = \&tnode_style;
+    $subs{a} = \&anode_style;
+    $subs{n} = \&nnode_style;
+    $subs{p} = \&pnode_style;
+    if (defined $subs{$layer}) {
+        return &{$subs{$layer}}(@_);     
+    } else {
+        log_fatal "Undefined or unknown layer: $layer";
+    }
+    #if    ( $layer eq 't' ) { return tnode_style(@_) }
+    #elsif ( $layer eq 'a' ) { return anode_style(@_) }
+    #elsif ( $layer eq 'n' ) { return nnode_style(@_) }
+    #elsif ( $layer eq 'p' ) { return pnode_style(@_) }
+    #else                    { log_fatal "Undefined or unknown layer: $layer" }
+    return;
 }
 
 sub anode_style {
