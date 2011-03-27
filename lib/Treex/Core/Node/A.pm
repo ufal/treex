@@ -152,24 +152,9 @@ Treex::Core::Node::A
 
 =head1 DESCRIPTION
 
-Analytical node
+a-layer (analytical) node
 
 =head1 METHODS
-
-!!! missing description of
-
-=over 4
-
-=item is_coap_root
-=item get_echildren
-=item get_eparents
-=item get_coap_members
-=item is_coap_member
-=item get_transitive_coap_members
-=item get_direct_coap_members
-=item get_transitive_coap_root
-
-=back
 
 =head2 Links from a-trees to phrase-structure trees
 
@@ -177,17 +162,17 @@ Analytical node
 
 =item $node->get_terminal_pnode
 
-   Returns a terminal node from the phrase-structure tree
-   that corresponds to the a-node.
+Returns a terminal node from the phrase-structure tree
+that corresponds to the a-node.
 
 =item $node->get_nonterminal_pnodes
 
-   Returns an array of non-terminal nodes from the phrase-structure tree
-   that correspond to the a-node.
+Returns an array of non-terminal nodes from the phrase-structure tree
+that correspond to the a-node.
 
 =item $node->get_pnodes
 
-   Returns the corresponding terminal node and all non-terminal nodes.
+Returns the corresponding terminal node and all non-terminal nodes.
 
 =back
 
@@ -199,54 +184,30 @@ Analytical node
 
 =item get_pml_type_name
 
-     Root and non-root nodes have different PML type in the pml schema
-     (a-root.type, a-node.type)
+Root and non-root nodes have different PML type in the pml schema
+(a-root.type, a-node.type)
 
-=item get_mnode
+=item is_coap_root
 
-   Obsolete, should be removed after merging m- and a-layer.
+Is this node a root (or head) of a coordination/apposition construction?
+On a-layer this is decided based on C<afun =~ /^(Coord|Apos)$/>.
 
 =item get_n_node()
 
- If this a-node is a part of a named entity,
- this method returns the corresponding n-node (L<Treex::Core::Node::N>).
- If this node is a part of more than one named entities,
- only the most nested one is returned.
- For example: "Bank of China"
+If this a-node is a part of a named entity,
+this method returns the corresponding n-node (L<Treex::Core::Node::N>).
+If this node is a part of more than one named entities,
+only the most nested one is returned.
+For example: "Bank of China"
+
  $n_node_for_china = $a_node_china->get_n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China 
 
-
-=item $node->get_coap_members($arg_ref?)
-
-If the node is a coordination/apposition head
-(see L<is_coap_root()>) a list of all coordinated members is returned.
-Otherwise, the node itself is returned. 
-
-Options (using C<$arg_ref> hash):
-
-=over
-
-=item direct_only
-
-In case of nested coordinations return only "first-level" members.
-The default is to return I<transitive> members.
-For example "(A and B) or C":
-$or->get_coap_members();                 # returns A,B,C
-$or->get_coap_members({direct_only=>1}); # returns and,C
-
-=item dive=>$sub_ref
-
-"Dive" through nodes for which the subroutine returns a true value.
-Typically this is used for prepositions and subord. conjunctions.
-
-=back
-
 =back
 
 =head1 COPYRIGHT
 
-Copyright 2006-2009 Zdenek Zabokrtsky, Martin Popel.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+Copyright 2006-2011 Zdenek Zabokrtsky, Martin Popel.
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

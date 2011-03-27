@@ -252,11 +252,12 @@ OPTIONS:
 
 =over
 
-=item dive
+=item dive=>$sub_ref
 
-Using C<dive>, you can define nodes to be skipped (e.g. prepositions on a-layer).
+Using C<dive>, you can define nodes to be skipped (or I<dived>).
 C<dive> is a reference to a subroutine that decides
 whether the given node should be skipped or not.
+Typically this is used for prepositions and subord. conjunctions on a-layer.
 You can set C<dive> to the string C<AuxCP> which is a shortcut
 for C<sub {my $self=shift;return $self->afun =~ /^Aux[CP]$/;}>. 
 
@@ -287,26 +288,29 @@ return the topological parent without warnings.
 
 =back
 
-=item get_coap_members
 
-Returns all members of a coordination
-if a given node is the head of the coordination.
-Otherwise, returns the node itself.
-The default is to return also transitive (nested) members,
-see option C<direct_only>.
+
+=item $node->get_coap_members($arg_ref?)
+
+If the node is a coordination/apposition head
+(see L<is_coap_root()>) a list of all coordinated members is returned.
+Otherwise, the node itself is returned. 
 
 OPTIONS
 
 =over
 
+=item direct_only
+
+In case of nested coordinations return only "first-level" members.
+The default is to return I<transitive> members.
+For example "(A and B) or C":
+$or->get_coap_members();                 # returns A,B,C
+$or->get_coap_members({direct_only=>1}); # returns and,C
+
 =item dive
 
 see C<get_echildren>
-
-=item direct_only
-
-Return only direct members of the coordination,
-i.e. without nested members.
 
 =back
 

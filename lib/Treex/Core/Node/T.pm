@@ -171,7 +171,7 @@ Treex::Core::Node::T
 
 =head1 DESCRIPTION
 
-Tectogrammatical node
+t-layer (tectogrammatical) node
 
 
 =head1 METHODS
@@ -189,9 +189,15 @@ For example: "Bank of China"
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China
 
+
+=item is_coap_root
+
+Is this node a root (or head) of a coordination/apposition construction?
+On t-layer this is decided based on C<functor =~ /^(CONJ|CONFR|DISJ|GRAD|ADVS|CSQ|REAS|CONTRA|APPS|OPER)/>.
+
 =back 
 
 =head1 COPYRIGHT
 
-Copyright 2006-2009 Zdenek Zabokrtsky, Martin Popel.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+Copyright 2006-2011 Zdenek Zabokrtsky, Martin Popel.
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
