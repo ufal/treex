@@ -3,6 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
+with 'Treex::Core::Node::EffectiveRelations';
 
 # t-layer attributes
 has [
@@ -19,207 +20,15 @@ sub get_pml_type_name {
     return $self->is_root() ? 't-root.type' : 't-node.type';
 }
 
-#----------- Effective children and parents -------------
-
 # the node is a root of a coordination/apposition construction
-sub is_coap_root {    # analogy of PML_T::IsCoord
+# analogy of PML_T::IsCoord
+sub is_coap_root {
     my ($self) = @_;
     log_fatal("Incorrect number of arguments") if @_ != 1;
     return ( $self->functor || '' ) =~ /^(CONJ|CONFR|DISJ|GRAD|ADVS|CSQ|REAS|CONTRA|APPS|OPER)$/;
 }
 
-sub get_echildren {
-    my ( $self, $arg_ref ) = @_;
-    $arg_ref = {} if !defined $arg_ref;
-    log_fatal('Incorrect number of arguments') if @_ > 2;
-    $self->_can_apply_eff($arg_ref) or return $self->get_children();
-
-    # 1) Get my own effective children (i.e. I am their only eff. parent).
-    # These are in my subtree.
-    my @echildren = $self->_get_my_own_echildren($arg_ref);
-
-    # 2) Add shared effective children
-    # (i.e. I am their eff. parent, but not the only one).
-    # This can happen only if I am member of a coordination
-    # and these eff. children are shared modifiers of the coordination.
-    push @echildren, $self->_get_shared_echildren($arg_ref);
-
-    # 3) Process eventual switches (ordered=>1, add_self=>1,...)
-    #return @echildren if !$arg_ref; TODO this cannot happen now, see $arg_ref = {} if !defined $arg_ref;
-    delete $arg_ref->{dive};
-    delete $arg_ref->{or_topological};
-    return $self->_process_switches( $arg_ref, @echildren );
-}
-
-sub get_eparents {
-    my ( $self, $arg_ref ) = @_;
-    $arg_ref = {} if !defined $arg_ref;
-    log_fatal('Incorrect number of arguments') if @_ > 2;
-    $self->_can_apply_eff($arg_ref) or return $self->get_parent();
-
-    # 0) Check if there is a topological parent.
-    # Otherwise, there is no chance getting effective parents.
-    if ( !$self->get_parent() ) {
-        my $id = $self->id;
-
-        #TODO: log_fatal if !$robust
-        log_warn("The node $id has no effective nor topological parent, using the root");
-        return $self->get_root();
-    }
-
-    # 1) If $self is a member of a coordination/aposition,
-    # get the highest node representing $self -- i.e. the coord/apos root.
-    # Otherwise, let $node be $self.
-    my $node = $self->_get_transitive_coap_root($arg_ref) || $self;
-
-    # 2) Get the parent
-    $node = $node->get_parent() or return $self->_fallback_parent();
-
-    # 3) If it is a node to be dived, look above for the first non-dive ancestor.
-    while ( $arg_ref->{dive}->($node) ) {
-        $node = $node->get_parent() or return $self->_fallback_parent();
-    }
-
-    # If $node is not a head of a coordination/aposition,
-    # it is the effective parent we are looking for.
-    return $node if !$node->is_coap_root();
-
-    # Otherwise, there can be more than one effective parent.
-    # All effective parents (of $self) are shared modifiers
-    # of the coordination rooted in $node.
-    my @eff = $node->get_coap_members($arg_ref);
-    return @eff if @eff;
-    return $self->_fallback_parent();
-}
-
-# --- Utility methods for get_echildren and get_eparents
-
-sub _is_auxCP {
-    my ($self) = @_;
-    my $afun = $self->get_attr('afun') || '';
-    return $afun =~ /^Aux[CP]$/;
-}
-
-sub _get_direct_coap_root {
-    my ( $self, $arg_ref ) = @_;
-    my $parent = $self->get_parent() or return;
-    return $parent if $self->get_attr('is_member');
-    return if !$arg_ref->{dive} || $arg_ref->{dive}->($self);
-    while ( $arg_ref->{dive}->($parent) ) {
-        return $parent->get_parent() if $parent->get_attr('is_member');
-        $parent = $parent->get_parent() or return;
-    }
-    return;
-}
-
-sub _get_transitive_coap_root {
-    my ( $self, $arg_ref ) = @_;
-    my $root = $self->_get_direct_coap_root($arg_ref) or return;
-    while ( $root->get_attr('is_member') ) {
-        $root = $root->_get_direct_coap_root($arg_ref) or return;
-    }
-    return $root;
-}
-
-sub _can_apply_eff {
-    my ( $self, $arg_ref ) = @_;
-    if ( !$arg_ref->{dive} ) {
-        $arg_ref->{dive} = sub {0};
-    }
-    elsif ( $arg_ref->{dive} eq 'AuxCP' ) {
-        $arg_ref->{dive} = \&_is_auxCP;
-    }
-    my $error = $arg_ref->{dive}->($self)
-        ? 'a node that is "to be dived"'
-        : $self->is_coap_root() ? 'coap root' : 0;
-    return 1 if !$error;
-    return 0 if $arg_ref->{or_topological};    #TODO: document
-    my $method_name = ( caller 1 )[3];
-    my $id          = $self->id;
-    log_warn( "$method_name called on $error ($id). Fallback to topological one.", 1 );
-    return 0;
-}
-
-sub _fallback_parent {
-    my ($self) = @_;
-    my $id = $self->get_attr('id');
-    log_warn("The node $id has no effective parent, using the topological one.");
-    return $self->get_parent();
-}
-
-# Get my own effective children (i.e. I am their only eff. parent).
-sub _get_my_own_echildren {
-    my ( $self, $arg_ref ) = @_;
-    my @members = ();
-    my @queue   = $self->get_children();
-    while (@queue) {
-        my $node = shift @queue;
-        if ( $arg_ref->{dive}->($node) ) {
-            push @queue, $node->get_children();
-        }
-        elsif ( $node->is_coap_root() ) {
-            push @members, $node->get_coap_members($arg_ref);
-
-            #push @queue, grep { $_->get_attr('is_member') } $node->get_children();
-        }
-        else {
-            push @members, $node;
-        }
-    }
-    return @members;
-}
-
-# Get shared effective children
-# (i.e. I am their eff. parent but not the only one).
-sub _get_shared_echildren {
-    my ( $self, $arg_ref ) = @_;
-
-    # Only members of coord/apos can have shared eff. children
-    my $coap_root = $self->_get_direct_coap_root($arg_ref) or return ();
-    my @shared_echildren = ();
-
-    # All shared modifiers of $coap_root are eff. children of $self.
-    # We must process all possibly nested coap_roots.
-    #  In the first iteration, $self is one of children of $coap_root.
-    #  (In case of "diving", it's not $self, but its governing Aux[CP].)
-    #  However, it has is_member==1, so it won't get into @shared_echildren.
-    #  Similarly for other iterations.
-    while ($coap_root) {
-        push @shared_echildren,
-            map  { $_->get_coap_members($arg_ref) }
-            grep { !$_->get_attr('is_member') }
-            $coap_root->get_children();
-        $coap_root = $coap_root->_get_direct_coap_root($arg_ref);
-    }
-    return @shared_echildren;
-}
-
-sub get_coap_members {
-    my ( $self, $arg_ref ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ > 2;
-    return $self if !$self->is_coap_root();
-    my $direct_only = $arg_ref->{direct_only};
-    my $dive = $arg_ref->{dive} || sub {0};
-    if ( $dive eq 'AuxCP' ) { $dive = \&_is_auxCP; }
-    my @members = ();
-
-    my @queue = grep { $_->is_member } $self->get_children();
-    while (@queue) {
-        my $node = shift @queue;
-        if ( $dive->($node) ) {
-            push @queue, $node->get_children();
-        }
-        elsif ( !$direct_only && $node->is_coap_root() ) {
-            push @queue, grep { $_->is_member } $node->get_children();
-        }
-        else {
-            push @members, $node;
-        }
-    }
-    return @members;
-}
-
-#----------- a-layer nodes -------------
+#----------- a-layer (analytical) nodes -------------
 
 sub get_lex_anode {
     my ($self)   = @_;
@@ -234,15 +43,6 @@ sub set_lex_anode {
     my $new_id = defined $lex_anode ? $lex_anode->get_attr('id') : undef;
     $self->set_attr( 'a/lex.rf', $new_id );
     return;
-}
-
-
-
-# Named entity node corresponding to this
-sub get_n_node {
-    my ($self) = @_;
-    my $lex_anode = $self->get_lex_anode() or return;
-    return $lex_anode->n_node();
 }
 
 sub get_aux_anodes {
@@ -281,43 +81,16 @@ sub get_anodes {
     return $self->_process_switches( $arg_ref, @nodes );
 }
 
-sub get_transitive_coap_members {    # analogy of PML_T::ExpandCoord
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    if ( $self->is_coap_root ) {
-        return (
-            map { $_->is_coap_root ? $_->get_transitive_coap_members : ($_) }
-                grep { $_->is_member } $self->get_children
-        );
-    }
-    else {
 
-        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
-        return ($self);
-    }
+#----------- n-layer (named entity) nodes -------------
+
+sub get_n_node {
+    my ($self) = @_;
+    my $lex_anode = $self->get_lex_anode() or return;
+    return $lex_anode->n_node();
 }
 
-sub get_direct_coap_members {
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    if ( $self->is_coap_root ) {
-        return ( grep { $_->is_coap_member } $self->get_children );
-    }
-    else {
-
-        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
-        return ($self);
-    }
-}
-
-sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    while ( $self->is_coap_member ) {
-        $self = $self->get_parent;
-    }
-    return $self;
-}
+#----------- source t-layer (source-language in MT) nodes -------------
 
 sub src_tnode {
     my ($self) = @_;
@@ -346,11 +119,50 @@ sub set_source_tnode {
 
 __END__
 
-Methods C<get_eparents> and C<get_echildren> produce a warning
-"called on coap root ($id). Fallback to topological one."
-when called on a root of coordination or apposition,
-because effective children/parents are not properly defined in this case.
-This warning can be supressed by option C<or_topological>.
+######## QUESTIONABLE / DEPRECATED METHODS ###########
+
+# deprecated, use get_coap_members
+sub get_transitive_coap_members {    # analogy of PML_T::ExpandCoord
+    my ($self) = @_;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
+    if ( $self->is_coap_root ) {
+        return (
+            map { $_->is_coap_root ? $_->get_transitive_coap_members : ($_) }
+                grep { $_->is_member } $self->get_children
+        );
+    }
+    else {
+
+        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
+        return ($self);
+    }
+}
+
+# deprecated,  get_coap_members({direct_only})
+sub get_direct_coap_members {
+    my ($self) = @_;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
+    if ( $self->is_coap_root ) {
+        return ( grep { $_->is_coap_member } $self->get_children );
+    }
+    else {
+
+        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
+        return ($self);
+    }
+}
+
+# too easy to implement and too rarely used to be a part of API
+sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
+    my ($self) = @_;
+    log_fatal("Incorrect number of arguments") if @_ != 1;
+    while ( $self->is_coap_member ) {
+        $self = $self->get_parent;
+    }
+    return $self;
+}
+
+
 
 
 =head1 NAME
