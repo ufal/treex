@@ -79,48 +79,47 @@ Treex::Core::Config - centralized info about Treex configuration
 
 =head1 SYNOPSIS
 
-  bla bla
+  use Treex::Core::Config;
+  print "TrEd in availabe in " . Treex::Core::Config::tred_dir . "\n";
+  print "PML schema is available in " . Treex::Core::Config::pml_schema_dir . "\n";
 
 =head1 DESCRIPTION
 
-info about the running Treex instance
-(e.g. distinguishing development working copy from installed CPAN distribution)
+This module provides information about the current installed Treex framework,
+for instance paths to its components.
 
 =head1 FUNCTIONS
 
 =over 4
 
-=item lib_core_dir
+=item devel_version()
 
-   directory from which this code was executed
+   returns true iff the current Treex instance is running from the svn working copy
+   (which means that it is the development version, not installed from CPAN)
 
+=item lib_core_dir()
 
-=item share_dir
+   returns the directory in which this module is located (and where
+   the other Treex::Core modules are expected too)
 
-   Treex shared directory (formerly TMT_SHARE)
+=item share_dir()
 
-=item pml_schema_dir
+   returns the Treex shared directory (formerly TMT_SHARE)
 
-   directory with PML schema files
+=item pml_schema_dir()
 
-=item caller_dir
+   return the directory in which the PML schemata for .treex files are located
 
-   directory containing the source code file that called this function
-
-
-=item devel_version
-
-   returns true if this code is executed within a Treex working copy, otherwise it is
-   a part of an installed CPAN distribution and false is returned
 
 =back
 
+
 =head1 AUTHOR
 
-Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+Zdenek Zabokrtsky
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2010 Zdenek Zabokrtsky
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+Copyright 2010 by UFAL
 
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
