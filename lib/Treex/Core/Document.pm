@@ -122,9 +122,12 @@ sub BUILD {
                     $zone->_set_bundle($bundle);
 
                     foreach my $tree ( $zone->get_all_trees ) {
-                        $tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/
-                            or log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
-                        my $layer = uc($1);
+                        my $layer;
+                        if ($tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/) {
+                            $layer = uc($1);
+                        } else {
+                            log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
+                        }
                         foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
                             bless $node, "Treex::Core::Node::$layer";
                             $self->index_node_by_id( $node->get_id, $node );

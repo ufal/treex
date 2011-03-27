@@ -12,7 +12,7 @@ use Readonly;
 
 use Exporter;
 use base 'Exporter';
-our @EXPORT = qw(log_fatal log_warn log_info log_memory log_debug);
+our @EXPORT = qw(log_fatal log_warn log_info log_memory log_debug); ## no critic (ProhibitAutomaticExportation)
 
 
 $Carp::CarpLevel = 1;
@@ -70,8 +70,12 @@ sub log_fatal {
         $unfinished_line = 0;
     }
     my $line = "TREEX-FATAL:\t$message\n\n";
-    $line .= "PERL ERROR MESSAGE: $OS_ERROR\n"        if $OS_ERROR;
-    $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n" if $EVAL_ERROR;
+    if ($OS_ERROR) {
+        $line .= "PERL ERROR MESSAGE: $OS_ERROR\n";
+    }
+    if ($EVAL_ERROR) {
+        $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n";
+    }
     $line .= "PERL STACK:";
     cluck $line;
     run_hooks('FATAL');

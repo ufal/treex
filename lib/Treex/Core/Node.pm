@@ -551,7 +551,12 @@ sub generate_new_id {    #TODO move to Core::Document?
 
     #$self->get_root->id =~ /(.+)root/;
     #my $id_base = $1 || "";
-    my $id_base = ( $self->get_root->id =~ /(.+)root/ ) ? $1 : q();
+    my $id_base;
+    if ( $self->get_root->id =~ /(.+)root/ ) {
+        $id_base = $1;
+    } else {
+        $id_base = q();
+    }
 
     while (1) {
         $latest_node_number++;

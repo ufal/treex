@@ -19,7 +19,9 @@ requires 'is_coap_root';
 
 sub get_echildren {
     my ( $self, $arg_ref ) = @_;
-    $arg_ref = {} if !defined $arg_ref;
+    if (!defined $arg_ref) {
+        $arg_ref = {};
+    }
     log_fatal('Incorrect number of arguments') if @_ > 2;
     $self->_can_apply_eff($arg_ref) or return $self->get_children();
 
@@ -42,7 +44,9 @@ sub get_echildren {
 
 sub get_eparents {
     my ( $self, $arg_ref ) = @_;
-    $arg_ref = {} if !defined $arg_ref;
+    if (!defined $arg_ref) {
+        $arg_ref = {};
+    }
     log_fatal('Incorrect number of arguments') if @_ > 2;
     $self->_can_apply_eff($arg_ref) or return $self->get_parent();
 

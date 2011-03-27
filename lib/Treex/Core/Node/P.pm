@@ -5,7 +5,7 @@ extends 'Treex::Core::Node';
 
 sub get_pml_type_name {
     my ($self) = @_;
-    
+
     if ( $self->is_root() or $self->get_attr('phrase') ) {
         return 'p-nonterminal.type';
     } elsif ( $self->get_attr('tag') ) {

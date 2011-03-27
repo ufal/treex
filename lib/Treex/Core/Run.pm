@@ -707,7 +707,7 @@ sub treex {
 
     if ( ref($arguments) eq "ARRAY" ) {
 
-        @ARGV = @$arguments;
+        local @ARGV = @$arguments; #LOOK, snad jsem tim 'local' nic nepokazil
 
         #print Dumper $arguments; die;
         my $idx = first_index { $_ eq '--' } @ARGV;
