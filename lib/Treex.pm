@@ -5,7 +5,7 @@ use warnings;
 
 __END__
 
-=pod
+=encoding utf-8
 
 =head1 NAME
 
@@ -13,7 +13,7 @@ Treex - NLP framework
 
 =head1 INTRODUCTION
 
-Treex (formerly TectoMT) is a highly modular, multi-purpose,
+Treex (formerly named TectoMT) is a highly modular, multi-purpose,
 easily extendable Natural Language Processing framework.
 
 Treex architecture is inspired by the Prague Dependency Treebank,
@@ -24,16 +24,17 @@ the NLP technology developed within the PDT project.
 
 The pilot application of Treex is Machine Translation. However,
 Treex/TectoMT has been used for several other tasks as well.
+??? TODO L<Treex::Manual::Applications>
 
 Nowadays, there is a number of NLP tools integrated in TectoMT/Treex.
-??? vycet
+??? TODO L<Treex::Manual::IntegratedTools>
 
 =head1 COMPONENTS
 
 =head2 Treex::PML distribution
 
 PML stands for Prague Markup Language (PML), which is an XML-based data
-format developed for interchange of linguistic data. Treex::PML
+format developed for interchange of linguistic data. L<Treex::PML>
 comprises of a set of modules defining abstract Perl types (such
 as tree nodes) and related functionality (such as tree traversal),
 as well as procedures for storing the data structures into (and loading
@@ -46,10 +47,10 @@ were created.
 
 =head2 Treex::Core distribution
 
-Treex::Core is an additional level of functionality added to Treex::PML.
+L<Treex::Core> is an additional level of functionality added to Treex::PML.
 Most Treex::Core classes are descendants of Treex::PML classes.
 
-Unlike Treex::PML, Treex::Core it is not meant to be a universal
+Unlike Treex::PML, Treex::Core is not meant to be a universal
 library for linguistic data. Treex::Core predefines several quite specific
 types of linguistic data structures; this limitation allows Treex::Core
 to provide functionality designed specifically for these structures
