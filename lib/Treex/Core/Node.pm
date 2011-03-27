@@ -254,9 +254,9 @@ sub _check_switches {
     # Check for role Ordered
     log_fatal('This type of node does not support ordering')
         if (
-        !$self->does('Treex::Core::Node::Ordered')
-        &&
         ( $arg_ref->{ordered} || any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following) )
+        &&
+        !$self->does('Treex::Core::Node::Ordered')
         );
 
     # Check switches for not allowed combinations
