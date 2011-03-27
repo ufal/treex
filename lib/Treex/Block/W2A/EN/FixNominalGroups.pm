@@ -12,8 +12,9 @@ my %pair_count;
 sub BUILD {
     my $filename = $ENV{TMT_ROOT} . 'share/' . $MODEL;
     open my $F, '<:utf8', $filename or log_fatal "Can't open $filename: $!";
+    my $skip_header = <$F>; #skip header
     while (<$F>) {
-        next if /##/;
+        #next if /##/;
         chomp;
         my ( $lemma1, $lemma2, $count ) = split /\t/, ( lc $_ );
         $pair_count{$lemma1}{$lemma2} += $count;    # summing up all lower/upper case combinations
