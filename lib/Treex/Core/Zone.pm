@@ -32,7 +32,7 @@ sub BUILDARGS {
             "The new() method for $class expects a hash reference or a key/value list."
                 . " You passed an odd number of arguments"
         );
-        return { @_, undef };
+        return { @_, undef }; # no critic (ProhibitCommaSeparatedStatements)
     }
     else {
         return {@_};

@@ -90,9 +90,9 @@ sub load_scenario_file {
         log_fatal "Can't open scenario file $scenario_filename";
 
     my $scenario_string = do {
-        local $/;
+        local $/ = undef;
         <$SCEN>;
-    }
+    };
     $scenario_string =~ s/\n/\n /g;
     #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
     close $SCEN;
@@ -210,11 +210,8 @@ sub _load_block {
         $params{$name} = $value;
     }
 
-    my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);';
-    eval $string_to_eval;
-    if ($@) {
-        log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n";
-    }
+    my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);1';
+    eval $string_to_eval or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n";
 
     return $new_block;
 }
