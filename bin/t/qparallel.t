@@ -14,7 +14,7 @@ plan tests => 1;
 SKIP: {
 
     skip "because not running on an SGE cluster", 1
-        if not defined $ENV{SGE_CLUSTER_NAME};
+        if ! `which qsub`; # if !defined $ENV{SGE_CLUSTER_NAME};
 
     my $number_of_files = 110;
     my $number_of_jobs  = 30;
