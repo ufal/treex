@@ -34,10 +34,11 @@ sub set_attr {
     my $attr_hash = $self->_pml_attribute_hash()
         or log_fatal("set_attr($attr_name, $attr_value) called on disconnected node!");
 
-    if ( ref($attr_hash) eq "HASH" ) {    # meta-data seems to be an unblessed hash, docasne!!!!
-        return $attr_hash->{$attr_name} = $attr_value;
+    #simple attributes can be accessed directly
+    if ( $attr_name =~ /^[\w\.]+$/ ) {
+        return $self->{$attr_name} = $attr_value;
     }
-    else {                                # fs-nodes
+    else {
         return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );    # better to find superclass, but speed?
     }
 }
