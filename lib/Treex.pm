@@ -16,20 +16,43 @@ Treex - NLP framework
 Treex (formerly named TectoMT) is a highly modular, multi-purpose,
 easily extendable Natural Language Processing framework.
 
-Treex architecture is inspired by the Prague Dependency Treebank,
-especially in layered view on language, in using dependency
-representation of syntactic structures, and in distinguishing
-morphology, surface syntax and deep syntax. Treex also reuses
-the NLP technology developed within the PDT project.
+Treex has the following features:
 
-The pilot application of Treex is Machine Translation. However,
-Treex/TectoMT has been used for several other tasks as well.
-??? TODO L<Treex::Manual::Applications>
+- There is a number of NLP tools already integrated in Treex,
+  such as morphological tagger, lemmatizers, named entity recognizers,
+  dependency parsers, constituency parsers, various kinds of dictionaries.
+  TODO L<Treex::Manual::IntegratedTools>
 
-Nowadays, there is a number of NLP tools integrated in TectoMT/Treex.
-??? TODO L<Treex::Manual::IntegratedTools>
+- Treex allows storing all data in an XML-based format, which
+  simplifies data interchange with other frameworks.
+
+- Treex is tightly coupled with the tree editor Tred, which
+  allows easy visualization of syntactic structures.
+
+- Treex is language universal and supports processing multilingual
+  parallel data.
+
+- Treex facilitates distributed processing on a computer cluster.
+
+- Treex architecture is inspired by the Prague Dependency Treebank,
+  especially in layered view on language, and in distinguishing
+  surface syntax and deep syntax; the PDT's schema was used for large-scale
+  linguistic annotations in several languages.
+
+- Treex has been used for analysing large data, such as for Czech-English
+  parallel treebank CzEng.
+
+- Treex has been intensively used for several years for developing a
+  Czech-English machine translation system, which is currently the main,
+  but not the only one application of Treex.   TODO L<Treex::Manual::Applications>
+
+In a way, Treex is similar to GATE. However, in our opinion, Treex has
+a better support for deeply structured language data and for multilingual
+data.
 
 =head1 COMPONENTS
+
+Treex is divided into several distributions:
 
 =head2 Treex::PML distribution
 
@@ -42,7 +65,7 @@ from) PML files. Treex::PML is a universal format, with only a few
 assumptions about linguistic data.
 
 Treex::PML was developed by Petr Pajas, originally under the name Fslib
-as a part of Tree editor Tred and long before other components of TectoMT/Treex
+as a part of the tree editor Tred, long before other components of TectoMT/Treex
 were created.
 
 =head2 Treex::Core distribution
@@ -112,7 +135,7 @@ Berlin / Heidelberg, ISBN 978-3-642-14769-2, ISSN 0302-9743, pp. 293-304, 2010
 
 Treex is an open project, there is a number of people who have contributed.
 
-=head2 Treex Cabal
+=head2 Treex Cabal (not very original, is it?)
 
 Those who are responsible for developing and releasing Treex::Core modules.
 
@@ -136,9 +159,8 @@ Vaclav Novak
 
 Tomas Kraut
 
-
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2006-2011 Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright 2005-2011 by UFAL
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
