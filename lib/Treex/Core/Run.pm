@@ -473,7 +473,7 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;
+            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!; ## no critic (ProhibitTwoArgOpen)
 
             my $firstline = <$QSUB>;
             close $QSUB;
@@ -714,7 +714,9 @@ sub treex {
         my %args;
         $args{command}   = join " ", @ARGV;
         $args{argv}      = \@ARGV;
-        $args{filenames} = [ splice @ARGV, $idx + 1 ] if $idx != -1;
+        if ($idx != -1) {
+            $args{filenames} = [ splice @ARGV, $idx + 1 ]
+        };
         my $runner = Treex::Core::Run->new_with_options( \%args );
         $runner->_execute();
 
