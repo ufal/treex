@@ -169,7 +169,7 @@ sub has_tree {
 
 # --------- ACCESS TO ATTRIBUTES ------------
 
-sub set_attr {
+sub set_attr { # deprecated
     my $self = shift;
     my ( $attr_name, $attr_value ) = pos_validated_list(
         \@_,
@@ -193,7 +193,7 @@ sub set_attr {
     }
 }
 
-sub get_attr {
+sub get_attr { # deprecated
     my $self = shift;
     my ($attr_name) = pos_validated_list(
         \@_,
@@ -249,124 +249,118 @@ __PACKAGE__->meta->make_immutable;
 __END__
 
 
-=for Pod::Coverage BUILD
+=for Pod::Coverage BUILD set_attr get_attr
 
 =head1 NAME
 
-Treex::Core::Bundle
+Treex::Core::Bundle - a set of equivalent sentences (translations, or variants)
+and their linguistic representations in the Treex framework
 
 
 =head1 DESCRIPTION
 
-A bundle in TectoMT corresponds to one sentence in its various forms/representations
-(esp. its representations on various levels of language description, but also
-possibly including its counterpart sentence from a parallel corpus, or its
-automatically created translation, and their linguistic representations,
-be they created by analysis / transfer / synthesis). Attributes can be
-attached to a bundle as a whole.
+A bundle in Treex corresponds to one sentence or more sentences, typically translations
+or variants of each other, with all their linguistic representations. Each bundle
+is divided into zones (instances of Treex::Core::BundleZone), each of them
+containing exactly one sentence and its representations.
+
+=head1 ATTRIBUTES
+
+Each bundle has two attributes:
+
+=over 4
+
+=item id
+
+identifier accessible by the getter method C<id()> and by the setter method C<set_id($id)>
+
+=item document
+
+the document (an instance of Treex::Core::Document) which this bundle belongs to;
+accessible only by the getter method C<document()>
+
+=back
+
 
 
 =head1 METHODS
 
 =head2 Construction
 
+You cannot create a bundle by a constructor from scratch. You can create a bundle
+only within an existing documents, using the following methods of Treex::Core::Document:
+
 =over 4
 
-=item  my $new_bundle = $doc->create_bundle;
+=item create_bundle
 
-Adds a new empty tree bundle to the end of the document.
-Bundle constructor should be never called directly!
+=item new_bundle_before
+
+=item new_bundle_after
+
+=back
+
+
+=head2 Access to zones
+
+Document zones are instances of Treex::Core::DocZone, parametrized
+by language code and possibly also by another free label
+called selector, whose purpose is to distinguish zones for the same language
+but from a different source.
+
+=over 4
+
+=item my $zone = $bundle->create_zone( $langcode, ?$selector );
+
+=item my $zone = $bundle->get_zone( $langcode, ?$selector );
+
+=item my $zone = $bundle->get_or_create_zone( $langcode, ?$selector );
+
+=item my @zones = $bundle->get_all_zones();
+
+=back
+
+
+=head2 Access to trees
+
+Even if trees are not contained directly in bundle (there is the intermediate zone level),
+they can be accessed using the following shortcut methods:
+
+=over 4
+
+=item my $tree_root = $bundle->get_tree( $language, $layer, ?$selector);
+
+
+=item my $tree_root = $bundle->create_tree( $language, $layer, ?$selector );
+
+
+=item $bundle->contains_tree( $language, $layer, ?$selector );
+
+
+=item my @tree_roots = $bundle->get_all_trees();
 
 =back
 
 
 
-=head2 Access to attributes
+=head2 Other
 
 =over 4
 
-=item my $value = $bundle->get_attr($name);
+=item my $position = $bundle->get_position();
 
-Returns the value of the bundle attribute of the given name.
-
-
-=item $bundle->set_attr($name,$value);
-
-Sets the given attribute of the bundle with the given value.
+position of the bundle within the document (number, starting from 0)
 
 =back
 
 
+=head1 AUTHOR
 
-=head2 Access to the subsumed trees
+Zdenek Zabokrtsky
 
-=over 4
+=head1 COPYRIGHT AND LICENSE
 
-=item my $root_node = $bundle->get_tree($tree_name);
+Copyright 2005-2011 by UFAL
 
-Returns the TectoMT::Node object which is the root of
-the tree named $tree_name. Fatal error is caused if
-no tree of the given name is present in the bundle.
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
-
-=item $bundle->create_tree($tree_name);
-
-Creates a new tree of the type $tree_name in the bundle.
-
-
-=item $bungle->contains_tree($tree_name);
-
-Returns true if a tree of the given name is present
-in the budnle.
-
-=item $bundle->get_tree_names();
-
-Returns alphabetically sorted array of names of trees
-contained in the bundle.
-
-=item $bundle->get_all_trees();
-
-Returns the root nodes of all trees in the bundle.
-
-=back
-
-
-=head2 Access to generic attributes and trees
-
-Besides trees and bundle attributes with names statically predefined in the TectoMT
-pml schema (such as 'SCzechT' or 'czech_source_sentence'), one can
-use generic attributes and trees, which are parametrizable by
-language (using ISO 639 codes) and direction (S for source, T for target).
-Tree names then look e.g. like 'SarA' (source-side arabic analytical tree).
-Attribute names look like 'Sar sentence' (source-side arabic sentence).
-
-
-=over 4
-
-=item my $value = $bundle->get_generic_attr($name);
-
-=item $bundle->set_generic_attr($name,$value);
-
-=item my $root_node = $bundle->get_generic_tree($tree_name);
-
-=item $bundle->set_generic_tree($tree_name,$root_node);
-
-=back
-
-
-=head2 Access to the containers
-
-=over 4
-
-=item $document = $bundle->get_document();
-
-Returns the TectoMT::Document object in which the bundle is contained.
-
-=back
-
-
-
-=head1 COPYRIGHT
-
-Copyright 2006 Zdenek Zabokrtsky.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README

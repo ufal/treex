@@ -480,15 +480,8 @@ Treex::Core::Document's instances have the following attributes:
 
 The attributes can be accessed using semi-affordance accessors:
 getters have the same names as attributes, while setters start with
-'set_'. For example:
+'set_'. For example by getter C<path()> and setter C<set_path($path)>
 
-=over 4
-
-=item my $value = $doc->path;
-
-=item my $doc->set_path( $value );
-
-=back
 
 The attributes are accessible also by the following methods:
 
@@ -530,7 +523,7 @@ loads a Treex::Core::Document instance from a .treex file
 =head2 Access to zones
 
 Document zones are instances of Treex::Core::DocZone, parametrized
-by ISO TODO??? language code and possibly also by another free label
+by language code and possibly also by another free label
 called selector, whose purpose is to distinguish zones for the same language
 but from a different source.
 
