@@ -473,7 +473,7 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!; ## no critic (ProhibitTwoArgOpen)
+            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
             my $firstline = <$QSUB>;
             close $QSUB;
@@ -657,7 +657,7 @@ sub _execute_on_cluster {
     }
 
     # catching Ctrl-C interruption
-    $SIG{INT} =
+    local $SIG{INT} =
         sub {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
         $self->_delete_jobs_and_exit();
@@ -686,7 +686,7 @@ sub _redirect_output {
     my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
     my $stem = "$outdir/$job-$doc";
     open my $OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
-    open my $ERROR,  '>', "$stem.stderr" or log_fatal $!;    
+    open my $ERROR,  '>', "$stem.stderr" or log_fatal $!;
     STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
     STDERR->fdopen( $ERROR,  'w' ) or log_fatal $!;
     STDOUT->autoflush(1);
@@ -695,28 +695,24 @@ sub _redirect_output {
     Treex::Core::Log::add_hook(
         'FATAL',
         sub {
-            eval { system qq(touch $stem.fatalerror) }; ## no critic (RequireCheckingReturnValueOfEval)
+            eval { system qq(touch $stem.fatalerror) };      ## no critic (RequireCheckingReturnValueOfEval)
             }
-    );                                                
+    );
     return;
 }
 
 # not a method !
 sub treex {
-    my $arguments = shift;                               # ref to array of arguments, or a string containing all arguments as on the command line
+    my $arguments = shift;                                   # ref to array of arguments, or a string containing all arguments as on the command line
 
-    if ( ref($arguments) eq "ARRAY" ) {
-
-        local @ARGV = @$arguments; #LOOK, snad jsem tim 'local' nic nepokazil
-
-        #print Dumper $arguments; die;
-        my $idx = first_index { $_ eq '--' } @ARGV;
+    if ( ref($arguments) eq 'ARRAY' ) {
+        my $idx = first_index { $_ eq '--' } @$arguments;
         my %args;
-        $args{command}   = join " ", @ARGV;
-        $args{argv}      = \@ARGV;
-        if ($idx != -1) {
-            $args{filenames} = [ splice @ARGV, $idx + 1 ]
-        };
+        $args{command} = join " ", @$arguments;
+        $args{argv} = $arguments;
+        if ( $idx != -1 ) {
+            $args{filenames} = [ splice @$arguments, $idx + 1 ]
+        }
         my $runner = Treex::Core::Run->new_with_options( \%args );
         $runner->_execute();
 
@@ -727,7 +723,7 @@ sub treex {
     }
 
     else {
-        log_fatal "Unspecified arguments for running treex.";
+        log_fatal 'Unspecified arguments for running treex.';
     }
     return;
 }
