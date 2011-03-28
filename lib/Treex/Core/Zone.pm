@@ -32,7 +32,7 @@ sub BUILDARGS {
             "The new() method for $class expects a hash reference or a key/value list."
                 . " You passed an odd number of arguments"
         );
-        return { @_, undef }; ## no critic (ProhibitCommaSeparatedStatements)
+        return { ( @_, undef ) };
     }
     else {
         return {@_};
@@ -69,14 +69,11 @@ sub get_attr {
 }
 
 sub get_label {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->language . ( $self->selector ? '_' . $self->selector : '' );
 }
 1;
-
 
 __END__
 
