@@ -460,7 +460,7 @@ Treex::Core::Document - representation of a text and its linguistic analyses in 
 A document consists of a sequence of bundles, mirroring a sequence
 of natural language sentences (typically, but not necessarily,
 originating from the same text). Attributes (attribute-value pairs)
-can to attached to a document as a whole.
+can be attached to a document as a whole.
 
 =head1 ATTRIBUTES
 
