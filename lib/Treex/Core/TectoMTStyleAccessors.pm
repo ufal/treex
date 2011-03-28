@@ -31,8 +31,6 @@ sub set_attr {
     elsif ( ref($attr_value) eq 'ARRAY' ) {
         $attr_value = Treex::PML::List->new( @{$attr_value} );
     }
-    my $attr_hash = $self->_pml_attribute_hash()
-        or log_fatal("set_attr($attr_name, $attr_value) called on disconnected node!");
 
     #simple attributes can be accessed directly
     if ( $attr_name =~ /^[\w\.]+$/ ) {
