@@ -21,9 +21,16 @@ sub get_nodelist_hook {
                                              # Otherwise (in certain circumstances) $bundle->get_all_zones
                                              # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
-    my @nodes = map { $_->get_descendants( { add_self => 1, ordered => 1 } ) }
-        map { $_->get_all_trees }
-        $bundle->get_all_zones;
+    my @nodes;
+
+    foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
+        if ( $tree->does('Treex::Core::Node::Ordered') ) {
+            push @nodes, $tree->get_descendants( { add_self => 1, ordered => 1 } );
+        }
+        else {
+            push @nodes, $tree->get_descendants( { add_self => 1 } );
+        }
+    }
 
     unshift @nodes, $bundle;
 
