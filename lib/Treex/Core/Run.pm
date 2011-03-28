@@ -685,19 +685,19 @@ sub _redirect_output {
     my $job = sprintf( 'job%03d', $jobindex + 0 );
     my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
     my $stem = "$outdir/$job-$doc";
-    open OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
-    open ERROR,  '>', "$stem.stderr" or log_fatal $!;    #LOOK tady na me perlcritic hazi spousty chyb, ale protoze tomuhle kodu nerozumim, tak to necham byt -TK
-    STDOUT->fdopen( \*OUTPUT, 'w' ) or log_fatal $!;
-    STDERR->fdopen( \*ERROR,  'w' ) or log_fatal $!;
+    open my $OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
+    open my $ERROR,  '>', "$stem.stderr" or log_fatal $!;    
+    STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
+    STDERR->fdopen( $ERROR,  'w' ) or log_fatal $!;
     STDOUT->autoflush(1);
 
     # special file is touched if log_fatal is called
     Treex::Core::Log::add_hook(
         'FATAL',
         sub {
-            eval { system qq(touch $stem.fatalerror) };
+            eval { system qq(touch $stem.fatalerror) }; ## no critic (RequireCheckingReturnValueOfEval)
             }
-    );                                                   #LOOK je potreba eval?
+    );                                                
     return;
 }
 
