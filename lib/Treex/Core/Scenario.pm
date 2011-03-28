@@ -54,7 +54,10 @@ sub BUILD {
     # loading (using modules and constructing instances) of the blocks in the sequence
     foreach my $block_item (@block_items) {
         my $block_name = $block_item->{block_name};
-        eval {require "$block_name"; 1} or log_fatal "Can't use block $block_name !\n$@\n";
+        eval "use $block_name;"; 
+        log_fatal "Can't use block $block_name !\n$@\n" if $@; 
+        # This does not work
+        #eval {require "$block_name"; 1} or log_fatal "Can't use block $block_name !\n$@\n";
     }
 
     my $i = 0;
