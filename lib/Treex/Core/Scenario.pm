@@ -54,10 +54,7 @@ sub BUILD {
     # loading (using modules and constructing instances) of the blocks in the sequence
     foreach my $block_item (@block_items) {
         my $block_name = $block_item->{block_name};
-        eval "use $block_name;"; 
-        log_fatal "Can't use block $block_name !\n$@\n" if $@; 
-        # This does not work
-        #eval {require "$block_name"; 1} or log_fatal "Can't use block $block_name !\n$@\n";
+        eval "use $block_name; 1;" or log_fatal "Can't use block $block_name !\n$@\n";
     }
 
     my $i = 0;
@@ -97,6 +94,7 @@ sub load_scenario_file {
         <$SCEN>;
     };
     $scenario_string =~ s/\n/\n /g;
+
     #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
     close $SCEN;
     return $scenario_string;
@@ -154,6 +152,7 @@ sub parse_scenario_string {
 
         # parameter definition
         elsif ( $token =~ /(\S+)=(\S+)/ ) {
+
             # "de-escape"
             $token =~ s/%20/ /g;
             $token =~ s/%23/#/g;
