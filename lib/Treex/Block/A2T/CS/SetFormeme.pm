@@ -23,7 +23,7 @@ sub detect_formeme {
     my $lex_a_node    = $tnode->get_lex_anode() or return;
     my @aux_a_nodes   = $tnode->get_aux_anodes();
     my $tag           = $lex_a_node->tag;
-    my ($tparent)     = $tnode->get_eparents;
+    my ($tparent)     = $tnode->get_eparents({or_topological => 1});
     my $sempos        = $tnode->get_attr('gram/sempos') || '';
     my $parent_sempos = $tparent->get_attr('gram/sempos') || '';
     my $parent_anode  = $tparent->get_lex_anode();
@@ -43,7 +43,7 @@ sub detect_formeme {
             if ( $prep ne '' ) {
                 $formeme = "n:$prep+$case";
             }
-            elsif ( $parent_sempos =~ /^n/ and $tparent->get_attr('ord') > $tnode->get_attr('ord') ) {
+            elsif ( $parent_sempos =~ /^n/ and $tparent->ord > $tnode->ord ) {
                 $formeme = 'n:attr';
             }
             else {
