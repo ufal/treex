@@ -78,18 +78,18 @@ sub reset_morphcat {
     return;
 }
 
+# Used only for reading from PCEDT/PDT trees, so far.
+sub get_subtree_string {
+    my ($self) = @_;
+    return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
+}
+
+
 1;
 
 __END__
 
 ######## QUESTIONABLE / DEPRECATED METHODS ###########
-
-# If this should be part of API, it should be renamed to
-# get_subtree_string (it is a whole sentence only if self==root)
-sub get_sentence_string {
-    my ($self) = @_;
-    return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
-}
 
 
 # For backward compatibility with PDT-style
