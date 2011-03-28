@@ -112,18 +112,18 @@ sub nonroot_node_labels {    # silly code just to avoid the need for eval
     $subs{n} = \&nonroot_nnode_labels;
     $subs{p} = \&nonroot_pnode_labels;
     if (defined $subs{$layer}) {
-        return &{$subs{$layer}}(@_);     
+        return &{$subs{$layer}}(@_); 
     } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
-    
+ 
     #if    ( $layer eq 't' ) { return nonroot_tnode_labels(@_) }
     #elsif ( $layer eq 'a' ) { return nonroot_anode_labels(@_) }
     #elsif ( $layer eq 'n' ) { return nonroot_nnode_labels(@_) }
     #elsif ( $layer eq 'p' ) { return nonroot_pnode_labels(@_) }
     #else                    { log_fatal "Undefined or unknown layer: $layer" }
 
-    return; 
+    return;
 }
 
 sub nonroot_anode_labels {
@@ -302,7 +302,7 @@ sub node_style {    # silly code just to avoid the need for eval
     $subs{n} = \&nnode_style;
     $subs{p} = \&pnode_style;
     if (defined $subs{$layer}) {
-        return &{$subs{$layer}}(@_);     
+        return &{$subs{$layer}}(@_);
     } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
