@@ -14,7 +14,7 @@ extends 'Treex::Core::Block';
 has 'ml_process_jar' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/ml-process/ml-process.jar" );
 
 # Amount of memory needed for Java VM
-has 'memory' => ( is => 'ro', isa => 'Str', default => '2g' );
+has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
 
 # files related to the trained model
 has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/functors-model/" );
