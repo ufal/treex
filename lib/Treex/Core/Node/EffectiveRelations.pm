@@ -2,6 +2,12 @@ package Treex::Core::Node::EffectiveRelations;
 use Moose::Role;
 use Treex::Core::Log;
 
+has is_member => (
+    is=>'rw',
+    isa => 'Bool',
+    documentation => 'Is this node a member of a coordination?',
+);
+
 requires 'is_coap_root';
 
 # Implementation details:

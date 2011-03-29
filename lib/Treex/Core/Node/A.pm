@@ -3,6 +3,7 @@ use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
+with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
 
 # _set_n_node is called only from Treex::Core::Node::N
@@ -14,8 +15,8 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
 has [
-    qw(afun is_member is_parenthesis_root conll_deprel
-        edge_to_collapse is_auxiliary clause_number is_clause_head)
+    qw(afun is_parenthesis_root conll_deprel
+        edge_to_collapse is_auxiliary)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
