@@ -1,4 +1,4 @@
-package Treex::Block::T2T::EN2CS::SetClauseNumber;
+package Treex::Block::T2T::SetClauseNumber;
 use Moose;
 use Treex::Moose;
 extends 'Treex::Core::Block';
@@ -74,7 +74,7 @@ sub is_clause_coord {
 
 =over
 
-=item Treex::Block::T2T::EN2CS::SetClauseNumber
+=item Treex::Block::T2T::SetClauseNumber
 
 Finite clauses (induced by t-nodes representing finite verbs) are numbered
 with integer numbers. T-nodes (as well as the corresponding a-nodes)
