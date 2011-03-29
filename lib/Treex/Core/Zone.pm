@@ -101,6 +101,18 @@ Treex::Core::BundleZone instances have the following attributes:
 
 =back
 
+=head1 METHODS
+
+=over 4
+
+=item $my $label = $zone->get_label;
+
+'Zone label' is a string containing the zone's language
+and selector concatenated with '_'(if the latter one is defined,
+otherwise only the language).
+
+=back
+
 =head1 AUTHOR
 
 Zdenek Zabokrtsky

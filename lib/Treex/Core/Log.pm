@@ -12,7 +12,7 @@ use Readonly;
 
 use Exporter;
 use base 'Exporter';
-our @EXPORT = qw(log_fatal log_warn log_info log_memory log_debug); ## no critic (ProhibitAutomaticExportation)
+our @EXPORT = qw(log_fatal log_warn log_info log_debug log_memory); ## no critic (ProhibitAutomaticExportation)
 
 
 $Carp::CarpLevel = 1;
@@ -82,19 +82,6 @@ sub log_fatal {
     die "\n";
 }
 
-sub short_fatal {    # !!! neodladene
-    my $message = shift;
-    if ($unfinished_line) {
-        print STDERR "\n";
-        $unfinished_line = 0;
-    }
-    my $line = "TREEX-FATAL(short):\t$message\n";
-    print STDERR $line;
-    run_hooks('FATAL');
-    exit;
-
-}
-
 # TODO: redesign API - $carp, $no_print_stack
 
 sub log_warn {
@@ -136,21 +123,6 @@ sub log_debug {
         }
     }
     run_hooks('DEBUG');
-    return;
-}
-
-sub data {
-    my $message = shift;
-    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'INFO'} ) {
-        my $line = "";
-        if ($unfinished_line) {
-            $line            = "\n";
-            $unfinished_line = 0;
-        }
-        $line .= "TREEX-DATA:\t$message\n";
-        print STDERR $line;
-    }
-    run_hooks('DATA');
     return;
 }
 
@@ -290,16 +262,15 @@ The current error level can be accessed by the following functions:
 
 
 
-=head2 Reporting functions
+=head2 Basic reporting functions
 
-All the following reporting functions print the message at STDERR.
-All are exported by default.
+All the following functions are exported by default.
 
 =over 4
 
 =item log_fatal($message)
 
-print the Perl stack too, and exit
+print the message, print the Perl stack too, and exit
 
 =item log_warn($message)
 
@@ -311,9 +282,27 @@ print the Perl stack too, and exit
 
 
 
+=head2 Other reporting functions
+
+=over 4
+
+=item log_memory
+
+print the consumed memory
+
+=item progress
+
+print another asterisk in a 'progress bar' composed of asterisks
+
+=back
+
+
+
+
 =head2 Hooks
 
-Another functions can be called prior to reporting events.
+Another functions can be called prior to reporting events, by
+hooking a function on a certain error level event.
 
 =over 4
 

@@ -334,7 +334,7 @@ they can be accessed using the following shortcut methods:
 =item my $tree_root = $bundle->create_tree( $language, $layer, ?$selector );
 
 
-=item $bundle->contains_tree( $language, $layer, ?$selector );
+=item $bundle->has_tree( $language, $layer, ?$selector );
 
 
 =item my @tree_roots = $bundle->get_all_trees();

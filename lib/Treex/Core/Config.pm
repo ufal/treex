@@ -110,6 +110,14 @@ for instance paths to its components.
 
    return the directory in which the PML schemata for .treex files are located
 
+=item tred_dir()
+
+   the directory in which the tree editor TrEd is installed
+
+
+=item tred_extension_dir
+
+   the directory in which the TrEd extension for Treex files is stored
 
 =back
 

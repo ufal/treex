@@ -96,11 +96,7 @@ sub process_bundle {
 
 sub _try_process_layer {
     my $self = shift;
-    my ( $zone, $layer ) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Zone' },
-        { isa => 'Layer' },
-    );
+    my ( $zone, $layer ) = @_;
 
     return 0 if !$zone->has_tree($layer);
     my $tree = $zone->get_tree($layer);
@@ -159,7 +155,7 @@ __END__
 
 =head1 NAME
 
-TectoMT::Block !!!!!!!!!!!!! needs to be updated
+Treex::Core::Block - the basic data-processing unit in the Treex framework
 
 =head1 SYNOPSIS
 
@@ -167,14 +163,10 @@ TectoMT::Block !!!!!!!!!!!!! needs to be updated
  
  use strict; use warnings; use utf8;
  
- use base qw(TectoMT::Block);
+ use base qw(Treex::Core::Block);
  
  sub process_bundle {
-    my $self = shift;
-    my ($bundle) = pos_validated_list (
-        \@_,
-        { isa => 'Treex::Core::Bundle' },
-    );
+    my ( $self, $bundle) = @_;
     
     # processing
     
@@ -182,9 +174,9 @@ TectoMT::Block !!!!!!!!!!!!! needs to be updated
 
 =head1 DESCRIPTION
 
-C<TectoMT::Block> is a base class serving as a common ancestor of
-all TectoMT blocks.
-C<TectoMT::Block> can't be used directly in any scenario.
+C<Treex::Core::Block> is a base class serving as a common ancestor of
+all Treex blocks.
+C<Treex::Core::Block> can't be used directly in any scenario.
 Use it's descendants which implement method C<process_bundle()>
 (or C<process_document()>) instead.
 
@@ -194,7 +186,7 @@ Use it's descendants which implement method C<process_bundle()>
 
 =item my $block = BlockGroup::My_Block->new();
 
-Instance of a block derived from TectoMT::Block can be created
+Instance of a block derived from Treex::Core::Block can be created
 by the constructor (optionally, a reference to a hash of block parameters
 can be specified as the constructor's argument, see BLOCK PARAMETRIZATION).
 However, it is not likely to appear in your code since block initialization
@@ -204,24 +196,27 @@ is usually invoked automatically when initializing a scenario.
 
 =head1 METHODS FOR BLOCK EXECUTION
 
+You must override one of the following methods:
+
 =over 4
 
 =item $block->process_document($document);
 
-Applies the block instance on the given instance of C<TectoMT::Document>.
+Applies the block instance on the given instance of C<Treex::Core::Document>.
 The default implementation iterates over all bundles in a document
 and calls C<process_bundle()>.
 So in most cases you don't need to override this method.
 
 =item $block->process_bundle($bundle);
 
-Applies the block instance on the given bundle (C<TectoMT::Bundle>).
-This is the method you must implement to make your block working
-(unless you override C<process_document()>).
+Applies the block instance on the given bundle (C<Treex::Core::Bundle>).
 
-=item $block->process_stream($stream);
 
-Applies the block instance on the given stream (C<TectoMT::Bundle>).
+=item $block->process_zone($zone);
+
+Applies the block instance on the given bundle zone (C<Treex::Core::BundleZone>).
+Unlike C<process_document> and C<process_bundle>, C<process_zone> requires
+block attribute C<language> (and possibly also C<selector>) to be specified.
 
 
 =back
@@ -253,7 +248,7 @@ It returns the name of the block module.
 =item my @needed_files = $block->get_required_share_files();
 
 If a block requires some files to be present in the shared part
-of TectoMT, their list (with relative paths starting in $TMT_ROOT/share/) can be specified
+of Treex, their list (with relative paths starting in $TMT_ROOT/share/) can be specified
 by redefining by this method. By default, an empty list is returned. Presence
 of the files is automatically checked in the block constructor. If some of
 the required file is missing, the constructor tries to download it
@@ -281,18 +276,20 @@ but not for installed tools or libraries.
 
 =head1 SEE ALSO
 
-L<TectoMT::Node|TectoMT::Node>,
-L<TectoMT::Bundle|TectoMT::Bundle>,
-L<TectoMT::Document|TectoMT::Document>,
-L<TectoMT::Scenario|TectoMT::Scenario>,
+L<Treex::Core::Node|Treex::Core::Node>,
+L<Treex::Core::Bundle|Treex::Core::Bundle>,
+L<Treex::Core::Document|Treex::Core::Document>,
+L<Treex::Core::Scenario|Treex::Core::Scenario>,
 
 =head1 AUTHOR
 
 Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+
 Martin Popel <popel@ufal.mff.cuni.cz>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2006-2011 Zdenek Zabokrtsky, Martin Popel
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+Copyright 2006-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
