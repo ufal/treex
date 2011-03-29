@@ -21,12 +21,12 @@ SKIP: {
 
     foreach my $i ( map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ) {
         my $doc = Treex::Core::Document->new();
-        $doc->set_attr( 'description', $i );
+        $doc->set_description($i);
         $doc->save("paratest$i.treex");
     }
 
     my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
-        . " Eval document='print \$document->get_attr(q(description))'"
+        . " Util::Eval document='print \$document->description()'"
         . " -g 'paratest*.treex'";
 
     stdout_is(
