@@ -39,5 +39,47 @@ sub process_zone {
 
 1;
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+__END__
+
+=head1 NAME
+
+Treex::Block::Write::Sentences
+
+=head1 DESCRIPTION
+
+Document writer for plain text format, one sentence per line.
+
+
+=head1 ATTRIBUTES
+
+=over
+
+=item encoding
+
+Output encoding. By default utf8.
+
+=item join_resegmented
+
+Print the sentences re-segmented
+by C<W2A::ResegmentSentences> on one line.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item process_document
+
+Saves the document.
+
+=back
+
+=head1 AUTHOR
+
+Martin Popel
+
+=head1 COPYRIGHT
+
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

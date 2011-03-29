@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 has [qw(file_stem path)] => (
     isa           => 'Str',
     is            => 'ro',
-    documentation => 'overrides the attributes in documents (filled in by a DocumentReader)',
+    documentation => 'overrides the respective attributes in documents (filled in by a DocumentReader)',
 );
 
 has to => (
@@ -58,3 +58,48 @@ sub process_document {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Block::Write::Treex
+
+=head1 DESCRIPTION
+
+Document writer for the Treex file format (C<*.treex>),
+which is actually a PML instance which is a XML-based format.
+
+
+=head1 ATTRIBUTES
+
+=over
+
+=item to
+
+space or comma separated list of filenames
+
+=item file_stem path
+
+overrides the respective attributes in documents (filled in by a DocumentReader)
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item process_document
+
+Saves the document.
+
+=back
+
+=head1 AUTHOR
+
+Martin Popel
+
+=head1 COPYRIGHT
+
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

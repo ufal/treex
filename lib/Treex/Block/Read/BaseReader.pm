@@ -124,3 +124,77 @@ after 'reset' => sub {
 };
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Block::Read::BaseReader - abstract ancestor for document readers
+
+=head1 DESCRIPTION
+
+This class serves as an common ancestor for document readers,
+that have parameter C<from> with a space or comma separated list of filenames
+to be loaded.
+It is designed to implement the L<Treex::Core::DocumentReader> interface.
+
+In derived classes you need to define the C<next_document> method,
+and you can use C<next_filename> and C<new_document> methods.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item from (required)
+
+space or comma separated list of filenames, or "-" for STDIN
+(If you use this method via API you can specify C<filenames> instead.)
+
+=item file_stem (optional)
+
+How to name the loaded documents.
+This will attribute will be saved to the same-named
+attdibute in documents and it will be used in documents writers
+to decide where to save the files.
+
+=item filenames (internal)
+
+array of filenames to be loaded,
+automatically initialized from the attribute C<from>
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item next_filename
+
+returns the next filename (full path) to be loaded
+(from the list specified in the attribute C<from>)
+
+=item new_document($load_from?)
+
+Returns a new empty document with pre-filled attributes
+loaded_from, file_stem, file_number and path
+which are guessed based on C<current_filename>.
+
+=item current_filename
+
+returns the last filename returned by C<next_filename> 
+
+=back
+
+=head1 SEE
+
+L<Treex::Block::Read::BaseTextReader>
+L<Treex::Block::Read::Text>
+
+=head1 AUTHOR
+
+Martin Popel
+
+=head1 COPYRIGHT
+
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

@@ -90,14 +90,21 @@ __END__
 
 =head1 NAME
 
-Treex::Core::DocumentReader
-
-=head1 SYNOPSIS
+Treex::Core::DocumentReader - interface for all document readers
 
 =head1 DESCRIPTION
+
+Document readers are a Treex concept how to load documents to be processed by Treex.
+The documents can be stored in files (in various formats) or read from STDIN
+or retrieved from a socket etc.
+
+=head1 SEE
+
+L<Treex::Block::Read::Sentences>
+L<Treex::Block::Read::Text>
+L<Treex::Block::Read::Treex>
 
 =head1 COPYRIGHT
 
 Copyright 2011 Martin Popel
 This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
-
