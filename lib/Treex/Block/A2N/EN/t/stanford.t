@@ -13,7 +13,7 @@ __END__
 
 my $in = "Peter and Paul love Stanford";
 my $expect = 'p_Peter'.  'p_Paul' . 'i_Stanford';
-my $scen = q{Read::Sentences W2A::Tokenize A2N::EN::StanfordNamedEntities Eval nnode='print $nnode->ne_type.$nnode->normalized_name'};
+my $scen = q{Read::Sentences W2A::Tokenize A2N::EN::StanfordNamedEntities Util::Eval nnode='print $nnode->ne_type.$nnode->normalized_name'};
 open my $OUT, "echo $in | treex -q -Len $scen |";
 my $got = <$OUT>;
 is($got, $expect, 'Stanford NER');
