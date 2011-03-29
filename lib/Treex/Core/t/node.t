@@ -102,7 +102,7 @@ foreach my $layer (qw( A T N P )) {
     cmp_ok( scalar $node->get_children(),    '==', 1, '$node has 1 child' );
 
     # TODO: Calling methods on removed nodes should result in fatal errors. Let's test it.
-    ok( !eval { $cs->create_child(); 1 }, "Calling methods on removed node should result in fatal errors." );
+    ok( !eval { $c3->create_child(); 1 }, "Calling methods on removed node should result in fatal errors." );
 
     #Node ordering
     if ($ordered) {
