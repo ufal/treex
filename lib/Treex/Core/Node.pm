@@ -192,7 +192,7 @@ sub remove {
     my $self = shift;
     if ( $self->is_root ) {
         log_fatal 'Tree root cannot be removed using $root->remove().'
-            . ' Use $zone->delete_tree($layer) instead';
+            . ' Use $zone->remove_tree($layer) instead';
     }
     my $root     = $self->get_root();
     my $document = $self->get_document();

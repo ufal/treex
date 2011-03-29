@@ -102,7 +102,7 @@ sub create_tree {
     return $tree_root;
 }
 
-sub delete_tree {
+sub remove_tree {
     my $self = shift;
     my ($layer) = pos_validated_list(
         \@_,
@@ -358,11 +358,11 @@ Presence of a tree of a certain type can be detected by
 =back
 
 
-You can delete trees by
+You can remove trees by
 
 =over 4
 
-=item $zone->delete_tree($layer);
+=item $zone->remove_tree($layer);
 
 =back
 

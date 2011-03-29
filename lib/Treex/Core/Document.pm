@@ -40,7 +40,7 @@ has _pmldoc => (
 
             trees changeTrees treeList tree lastTreeNo notSaved
             currentTreeNo currentNode nodes value_line value_line_list
-            insert_tree set_tree append_tree new_tree delete_tree
+            insert_tree set_tree append_tree new_tree remove_tree
             destroy_tree swap_trees move_tree_to test_tree_type
             determine_node_type )
     },

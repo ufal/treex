@@ -38,7 +38,7 @@ foreach ( 0 .. 2 ) {
             my $u    = uc($_);
             my $tree = eval qq/\$zone->create_${l}tree()/;
             isa_ok( $tree, "Treex::Core::Node::$u", "Tree created by create_${l}tree method" ) or diag($@);
-            ok( eval { $zone->delete_tree($l), 1 }, 'Tree can be deleted' ) or diag($@);
+            ok( eval { $zone->remove_tree($l), 1 }, 'Tree can be deleted' ) or diag($@);
             ok( !$zone->has_tree($l), "Zone does not contain the deleted $u tree" );
             my $tree2 = eval { $zone->create_tree($l) };
             isa_ok( $tree2, "Treex::Core::Node::$u", "Tree created by create_tree($l) method" ) or diag($@);
