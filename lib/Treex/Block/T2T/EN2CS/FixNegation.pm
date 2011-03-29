@@ -39,7 +39,7 @@ sub process_tnode {
             my $grandpa = $parent->get_parent;
             if ( $grandpa->get_attr('gram/sempos') eq 'v' ) {
                 $grandpa->set_attr( 'gram/negation', 'neg1' );
-                $tnode->delete;
+                $tnode->remove;
             }
         }
     }

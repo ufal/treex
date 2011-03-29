@@ -11,7 +11,7 @@ my %IS_RAISING_VERB = map { $_ => 1 } qw(
 
 sub process_ttree {
     my ( $self, $cs_troot ) = @_;
-    my %to_be_deleted;
+    my %to_be_removed;
     NODE:
     foreach my $cs_node ( $cs_troot->get_descendants() ) {
         next NODE if !$cs_node->is_passive;
@@ -46,7 +46,7 @@ sub process_ttree {
         $cs_verb->set_formeme('v:že+fin');
         $cs_verb->set_formeme_origin('rule-Transform_passive_constructions');
         my $cor_node = first { $_->t_lemma eq '#Cor' } $cs_verb->get_children();
-        $to_be_deleted{$cor_node} = $cor_node if $cor_node;
+        $to_be_removed{$cor_node} = $cor_node if $cor_node;
 
         $cs_noun->shift_before_subtree($cs_verb);
         $cs_noun->set_parent($cs_verb);
@@ -54,8 +54,8 @@ sub process_ttree {
         $cs_noun->set_formeme_origin('rule-Transform_passive_constructions');
     }
 
-    foreach my $node ( values %to_be_deleted ) {
-        $node->delete();
+    foreach my $node ( values %to_be_removed ) {
+        $node->remove();
     }
 
     return;

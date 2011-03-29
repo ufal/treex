@@ -70,11 +70,11 @@ sub get_zone {
 
 }
 
-sub delete {
+sub remove {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
     if ( $self->is_root ) {
-        log_fatal 'Tree root cannot be deleted using $root->delete().'
+        log_fatal 'Tree root cannot be removed using $root->remove().'
             . ' Use $zone->delete_tree($layer) instead';
     }
     my $root     = $self->get_root();
@@ -96,7 +96,7 @@ sub delete {
     $root->_normalize_node_ordering();
 
     # By reblessing we make sure that
-    # all methods called on deleted nodes will result in fatal errors.
+    # all methods called on removed nodes will result in fatal errors.
     bless $self, 'Treex::Core::Node::Deleted';
     return;
 }
@@ -500,8 +500,8 @@ sub get_clause_descendants {
 
 sub disconnect {
     my $self = shift;
-    log_debug( '$node->disconnect is deprecated, use $node->delete', 1 );
-    return $self->delete();
+    log_debug( '$node->disconnect is deprecated, use $node->remove', 1 );
+    return $self->remove();
 }
 
 sub get_ordering_value {
@@ -620,13 +620,13 @@ sub get_attrs {
 }
 
 # TODO: How to do this in an elegant way?
-package Treex::Core::Node::Deleted;
+package Treex::Core::Node::Removed;
 use Treex::Core::Log;
 
 sub AUTOLOAD {
     our $AUTOLOAD;
     if ( $AUTOLOAD !~ /DESTROY$/ ) {
-        log_fatal("You cannot call any methods on deleted nodes, but have called $AUTOLOAD");
+        log_fatal("You cannot call any methods on removed nodes, but have called $AUTOLOAD");
     }
 }
 
@@ -735,11 +735,11 @@ Returns the parent node, or undef if there is none (if $node itself is the root)
 
 Makes $node a child of $parent_node.
 
-=item $node->delete();
+=item $node->remove();
 
 Deletes a node and the a subtree rooted by the given node.
 Node identifier is removed from the document indexing table.
-The deleted node cannot be further used.
+The removed node cannot be further used.
 
 =item my $root_node = $node->get_root();
 

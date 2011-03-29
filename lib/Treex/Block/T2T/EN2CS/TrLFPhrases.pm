@@ -29,7 +29,7 @@ sub process_ttree {
     if ( $cs_troot->src_tnode->get_zone->sentence =~ /^That is,/ ) {
         my ( $that, $is ) = @cs_tnodes;
         if ( $that->t_lemma eq 'that' && $is->t_lemma eq 'be' ) {
-            $that->delete();
+            $that->remove();
             shift @cs_tnodes;
             $is->set_attr( 'mlayer_pos', 'X' );
             $is->set_t_lemma('Jinými slovy');
@@ -72,7 +72,7 @@ sub process_tnode {
             foreach my $child ( $cs_tnode->get_children() ) {
                 $child->set_parent($cs_parent);
             }
-            $cs_tnode->delete();
+            $cs_tnode->remove();
             return;
         }
 
@@ -88,7 +88,7 @@ sub process_tnode {
             foreach my $child ( $cs_tnode->get_children() ) {
                 $child->set_parent($cs_parent);
             }
-            $cs_tnode->delete();
+            $cs_tnode->remove();
             return;
         }
 
@@ -159,7 +159,7 @@ sub process_tnode {
         foreach my $child ( $cs_tnode->get_children() ) {
             $child->set_parent($cs_parent);
         }
-        $cs_tnode->delete();
+        $cs_tnode->remove();
     }
     return;
 }

@@ -60,13 +60,13 @@ sub set_attr {
     return $self->SUPER::set_attr( $attr_name, $attr_value );
 }
 
-#@overrides Treex::Core::Node::delete
-sub delete {
+#@overrides Treex::Core::Node::remove
+sub remove {
     my ( $self, $arg_ref ) = @_; # is arg_ref needed here ???
     foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node(undef);
     }
-    return $self->SUPER::delete();
+    return $self->SUPER::remove();
 }
 
 1;

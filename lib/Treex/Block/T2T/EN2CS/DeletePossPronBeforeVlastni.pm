@@ -7,7 +7,7 @@ use utf8;
 sub process_zone {
     my ( $self, $zone ) = @_;
 
-    # ordering needed (otherwise an already deleted node could be touched again)
+    # ordering needed (otherwise an already removed node could be touched again)
     foreach my $tnode ( $zone->get_ttree->get_descendants( { ordered => 1 } ) ) {
 
         if ( $tnode->t_lemma eq 'vlastní' ) {
@@ -18,7 +18,7 @@ sub process_zone {
                 && !$prev_node->children
                 )
             {
-                $prev_node->delete;
+                $prev_node->remove;
             }
         }
     }
