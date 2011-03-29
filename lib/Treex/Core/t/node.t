@@ -93,15 +93,16 @@ foreach my $layer (qw( A T N P )) {
     cmp_ok( scalar $node->get_siblings(), '==', 4, '$node has 4 siblings' );
     cmp_ok( scalar $node->get_children(), '==', 2, '$node has 2 children' );
 
-    $c3->delete();
-    $cc2->delete();
+    $c3->remove();
+    $cc2->remove();
 
     cmp_ok( scalar $root->get_children(),    '==', 4, '$root now has 4 children' );
     cmp_ok( scalar $root->get_descendants(), '==', 8, '$root now has 8 descendants' );
     cmp_ok( scalar $node->get_siblings(),    '==', 3, '$node has 3 siblings' );
     cmp_ok( scalar $node->get_children(),    '==', 1, '$node has 1 child' );
 
-    # TODO: Calling methods on deleted nodes should result in fatal errors. Let's test it.
+    # TODO: Calling methods on removed nodes should result in fatal errors. Let's test it.
+    ok( !eval { $cs->create_child(); 1 }, "Calling methods on removed node should result in fatal errors." );
 
     #Node ordering
     if ($ordered) {
