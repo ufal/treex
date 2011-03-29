@@ -6,8 +6,8 @@ use warnings;
 use Test::More;
 
 BEGIN { use_ok('Treex::Core::Document') }
-my $attr     = 'description';                # the only document's unzoned attribute
-my $sentence = q(I'm testing sentence);
+
+my $description = q(I'm testing sentence);
 my $fname    = 'test.treex';
 my $doc      = Treex::Core::Document->new;
 
@@ -36,16 +36,16 @@ is( ( join '', map { $_->id } $doc->get_bundles() ), '1234',
     'Inserted bundles are in located in correct positions'
 );
 
-$doc->set_attr( $attr, $sentence );
+$doc->set_description( $description );
 
-is( $sentence, $doc->get_attr($attr), 'Document contains its attribute' );
+is( $doc->description, $description, 'Document contains its attribute' );
 
 $doc->save($fname);
 
 my $loaded_doc = Treex::Core::Document->new( { 'filename' => $fname } );
 
-is( $loaded_doc->get_attr($attr), $doc->get_attr($attr), q(There's equal content in saved&loaded attr) );
+is( $description, $loaded_doc->description, q(There's equal content in saved&loaded attr) );
 
-unlink $fname;
+#unlink $fname;
 
 done_testing();

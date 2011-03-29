@@ -9,7 +9,8 @@ sub next_document {
     return if !defined $text;
 
     my $document = $self->new_document();
-    $document->set_attr( $self->selector . $self->language . ' text', $text );
+    my $zone = $document->create_zone( $self->language, $self->selector );
+    $zone->set_text( $text );
     return $document;
 }
 

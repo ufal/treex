@@ -6,8 +6,6 @@ use Treex::Core::Config;
 use Treex::Core::DocZone;
 use Treex::Core::Bundle;
 
-with 'Treex::Core::TectoMTStyleAccessors';
-
 use Treex::PML;
 Treex::PML::UseBackends('PMLBackend');
 Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir());
@@ -18,20 +16,6 @@ has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
 has file_stem   => ( is => 'rw', isa => 'Str', default => 'noname' );
 has file_number => ( is => 'rw', isa => 'Str', builder => 'build_file_number' );
-my $highest_file_number = 1;
-
-sub build_file_number {
-    return sprintf "%03d", $highest_file_number++;
-}
-
-# Full filename without the extension
-sub full_filename {
-    my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
-    return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
-}
 
 has _pmldoc => (
     isa      => 'Treex::PML::Document',
@@ -73,8 +57,43 @@ has _latest_node_number => (    # for generating document-unique IDs
     default => 0,
 );
 
+
 use Treex::PML::Factory;
 my $factory = Treex::PML::Factory->new();
+
+my $highest_file_number = 1;
+
+# the description attribute is stored inside the meta structures of pml documents,
+# that is why it is not realized as a regular Moose attribute
+
+sub set_description {
+    my ($self, $attr_value) = @_;
+
+    return Treex::PML::Node::set_attr(
+        $self->metaData('pml_root')->{meta},
+        'description', $attr_value
+    );
+}
+
+sub description {
+    my $self = shift;
+    return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, 'description' );
+}
+
+
+sub build_file_number {
+    return sprintf "%03d", $highest_file_number++;
+}
+
+# Full filename without the extension
+sub full_filename {
+    my $self = shift;
+    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+        pos_validated_list( \@_ );
+    }
+    return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
+}
+
 
 sub BUILD {
     my $self = shift;
@@ -386,60 +405,6 @@ sub get_or_create_zone {
     return $fs_zone;
 }
 
-# ----------------- ACCESS TO ATTRIBUTES -------------------
-
-sub set_attr {
-    my $self = shift;
-    my ( $attr_name, $attr_value ) = pos_validated_list(
-        \@_,
-        { isa => 'Str' },
-        { isa => 'Any' },
-    );
-
-    if ( $attr_name =~ /^(\S+)$/ ) {
-        return Treex::PML::Node::set_attr(
-            $self->metaData('pml_root')->{meta},
-            $attr_name, $attr_value
-        );
-    }
-
-    elsif ( $attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/ ) {
-        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
-        my $zone = $self->get_or_create_zone( $language, $selector );
-        return $zone->set_attr( $attr_name, $attr_value );
-    }
-
-    else {
-        log_fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
-    }
-}
-
-sub get_attr {
-    my $self = shift;
-    my ($attr_name) = pos_validated_list(
-        \@_,
-        { isa => 'Str' },
-    );
-
-    if ( $attr_name =~ /^(\S+)$/ ) {
-        return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, $attr_name );
-    }
-
-    elsif ( $attr_name =~ /^([ST]?.*)([a-z]{2}) (\S+)$/ ) {
-        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
-        my $fs_zone = $self->get_zone( $language, $selector );
-        if ( defined $fs_zone ) {
-            return $fs_zone->get_attr($attr_name);
-        }
-        else {
-            return;
-        }
-    }
-
-    else {
-        log_fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
-    }
-}
 
 __PACKAGE__->meta->make_immutable;
 
@@ -449,7 +414,7 @@ __END__
 
 
 
-=for Pod::Coverage BUILD build_file_number
+=for Pod::Coverage BUILD build_file_number description set_description
 
 =head1 NAME
 
@@ -468,6 +433,10 @@ Treex::Core::Document's instances have the following attributes:
 
 =over 4
 
+=item description
+
+Textual description of the file's content that is stored in the file.
+
 =item loaded_from
 
 =item path
@@ -481,19 +450,6 @@ Treex::Core::Document's instances have the following attributes:
 The attributes can be accessed using semi-affordance accessors:
 getters have the same names as attributes, while setters start with
 'set_'. For example by getter C<path()> and setter C<set_path($path)>
-
-
-The attributes are accessible also by the following methods:
-
-=over 4
-
-=item my $value = $document->get_attr( $name );
-
-Returns the value of the document attribute of the given name.
-
-=item  $document->set_attr( $name, $value );
-
-Sets the given attribute of the document with the given value.
 
 =back
 

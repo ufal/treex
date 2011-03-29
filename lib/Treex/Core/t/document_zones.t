@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Core;
 
-use Test::More tests => 7;
+use Test::More tests => 6;
 
 my $doc = Treex::Core::Document->new;
 
@@ -31,10 +31,5 @@ my $filename = 'test.treex';
 $doc->save($filename);
 my $doc2 = Treex::Core::Document->new( { filename => $filename } );
 cmp_ok( $doc2->get_zone( 'en', 'S' )->get_attr('text'), 'eq', $sample_text, 'document zone attribute correctly stored in a file' );
-
-# shortcut for accessing DocZones attributes
-my $doc3 = Treex::Core::Document->new();
-$doc3->set_attr( 'Sen text', 'hello' );
-cmp_ok( $doc3->get_attr('Sen text'), 'eq', 'hello', 'shortcut for accessing DocZones attributes' );
 
 unlink $filename;
