@@ -81,7 +81,6 @@ sub get_anodes {
     return $self->_process_switches( $arg_ref, @nodes );
 }
 
-
 #----------- n-layer (named entity) nodes -------------
 
 sub get_n_node {

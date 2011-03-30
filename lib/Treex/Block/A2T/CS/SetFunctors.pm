@@ -182,7 +182,7 @@ sub _load_functors {
 
     for my $rec ( @{ $data->{records} } ) {
 
-        if ( $rec->{'sent-id'} != $sent_id ) {                 # move to next sentence
+        if ( $rec->{'sent-id'} != $sent_id ) {    # move to next sentence
             push @{ $this->_functors }, $sentence;
             $sentence = [];
             $sent_id++;

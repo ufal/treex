@@ -8,8 +8,8 @@ use Test::More;
 BEGIN { use_ok('Treex::Core::Document') }
 
 my $description = q(I'm testing sentence);
-my $fname    = 'test.treex';
-my $doc      = Treex::Core::Document->new;
+my $fname       = 'test.treex';
+my $doc         = Treex::Core::Document->new;
 
 isa_ok( $doc, 'Treex::Core::Document' );
 
@@ -36,7 +36,7 @@ is( ( join '', map { $_->id } $doc->get_bundles() ), '1234',
     'Inserted bundles are in located in correct positions'
 );
 
-$doc->set_description( $description );
+$doc->set_description($description);
 
 is( $doc->description, $description, 'Document contains its attribute' );
 

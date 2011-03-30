@@ -32,14 +32,12 @@ sub BUILD {
     return;
 }
 
-
 sub _index_my_id {
     my $self = shift;
     pos_validated_list( \@_, { isa => 'Any', optional => 1 } );    #TODO
     $self->get_document->index_node_by_id( $self->id, $self );
     return;
 }
-
 
 # ---- access to attributes ----
 
@@ -48,8 +46,6 @@ sub _pml_attribute_hash {
     my $self = shift;
     return $self;
 }
-
-
 
 sub get_attr {
     my ( $self, $attr_name ) = @_;
@@ -160,9 +156,7 @@ sub set_r_attr {
     return $fs->set_attr( $attr_name, $attr_values[0]->get_attr('id') );
 }
 
-
 # ---------------------
-
 
 sub get_bundle {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
@@ -617,7 +611,8 @@ sub generate_new_id {    #TODO move to Core::Document?
     my $id_base;
     if ( $self->get_root->id =~ /(.+)root/ ) {
         $id_base = $1;
-    } else {
+    }
+    else {
         $id_base = q();
     }
 

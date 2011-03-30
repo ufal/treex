@@ -1,18 +1,18 @@
 package Treex::Core::Node::Ordered;
 use Moose::Role;
 use Treex::Core::Log;
-use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
+use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
 
 has ord => (
     is     => 'ro',
-    isa    => 'Int',        # TODO non-negative Int
+    isa    => 'Int',         # TODO non-negative Int
     writer => '_set_ord',
     reader => 'ord',
 );
 
 sub precedes {
     log_fatal 'Incorrect number of arguments' if @_ != 2;
-    my ($self, $another_node) = @_;
+    my ( $self, $another_node ) = @_;
     return $self->ord() < $another_node->ord();
 }
 
@@ -186,7 +186,6 @@ sub _shift_to_node {
     }
     return;
 }
-
 
 1;
 

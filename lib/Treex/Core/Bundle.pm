@@ -43,7 +43,7 @@ sub get_zone {
     );
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
-            my ( undef, $value ) = @$element; # $name is not needed
+            my ( undef, $value ) = @$element;    # $name is not needed
             if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq $selector ) {
                 return $value;
             }
@@ -98,7 +98,7 @@ sub get_or_create_zone {
 
 sub get_all_zones {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return map { $_->value() } $self->{zones}->elements;
@@ -108,7 +108,7 @@ sub get_all_zones {
 
 sub get_all_trees {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
 
@@ -169,7 +169,7 @@ sub has_tree {
 
 # --------- ACCESS TO ATTRIBUTES ------------
 
-sub set_attr { # deprecated
+sub set_attr {    # deprecated
     my $self = shift;
     my ( $attr_name, $attr_value ) = pos_validated_list(
         \@_,
@@ -193,7 +193,7 @@ sub set_attr { # deprecated
     }
 }
 
-sub get_attr { # deprecated
+sub get_attr {    # deprecated
     my $self = shift;
     my ($attr_name) = pos_validated_list(
         \@_,

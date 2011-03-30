@@ -20,14 +20,14 @@ sub process_tnode {
 
 sub detect_formeme {
     my ($tnode) = @_;
-    my $lex_a_node    = $tnode->get_lex_anode() or return;
-    my @aux_a_nodes   = $tnode->get_aux_anodes();
-    my $tag           = $lex_a_node->tag;
-    my ($tparent)     = $tnode->get_eparents({or_topological => 1});
-    my $sempos        = $tnode->get_attr('gram/sempos') || '';
+    my $lex_a_node  = $tnode->get_lex_anode() or return;
+    my @aux_a_nodes = $tnode->get_aux_anodes();
+    my $tag         = $lex_a_node->tag;
+    my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
+    my $sempos        = $tnode->get_attr('gram/sempos')   || '';
     my $parent_sempos = $tparent->get_attr('gram/sempos') || '';
     my $parent_anode  = $tparent->get_lex_anode();
-    my $parent_tag    = ($parent_anode) ? $parent_anode->tag : '';
+    my $parent_tag = ($parent_anode) ? $parent_anode->tag : '';
     my $formeme;
 
     # semantic nouns

@@ -8,7 +8,7 @@ use Treex::Core::Bundle;
 
 use Treex::PML;
 Treex::PML::UseBackends('PMLBackend');
-Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir());
+Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir() );
 
 use Scalar::Util qw( weaken );
 
@@ -55,7 +55,6 @@ has _latest_node_number => (    # for generating document-unique IDs
     default => 0,
 );
 
-
 use Treex::PML::Factory;
 my $factory = Treex::PML::Factory->new();
 
@@ -65,7 +64,7 @@ my $highest_file_number = 1;
 # that is why it is not realized as a regular Moose attribute
 
 sub set_description {
-    my ($self, $attr_value) = @_;
+    my ( $self, $attr_value ) = @_;
 
     return Treex::PML::Node::set_attr(
         $self->metaData('pml_root')->{meta},
@@ -78,7 +77,6 @@ sub description {
     return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, 'description' );
 }
 
-
 sub build_file_number {
     return sprintf "%03d", $highest_file_number++;
 }
@@ -86,12 +84,11 @@ sub build_file_number {
 # Full filename without the extension
 sub full_filename {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
 }
-
 
 sub BUILD {
     my $self = shift;
@@ -140,9 +137,10 @@ sub BUILD {
 
                     foreach my $tree ( $zone->get_all_trees ) {
                         my $layer;
-                        if ($tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/) {
+                        if ( $tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/ ) {
                             $layer = uc($1);
-                        } else {
+                        }
+                        else {
                             log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
                         }
                         foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
@@ -173,12 +171,11 @@ sub BUILD {
 
 sub _pml_attribute_hash {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return $self->metaData('pml_root')->{meta};
 }
-
 
 #my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
 my $_treex_schema_file = Treex::Core::Config::pml_schema_dir . "/" . 'treex_schema.xml';
@@ -275,7 +272,7 @@ sub get_node_by_id {
 
 sub get_all_node_ids {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return ( keys %{ $self->_index } );
@@ -285,7 +282,7 @@ sub get_all_node_ids {
 
 sub get_bundles {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) { ## no critic (ProhibitPackageVars)
+    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
     return $self->trees;
@@ -379,7 +376,7 @@ sub get_zone {
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {
         foreach my $element ( $meta->{zones}->elements ) {
-            my ( undef, $value ) = @$element; # $name is not needed
+            my ( undef, $value ) = @$element;    # $name is not needed
             if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
                 return $value;
             }
@@ -402,7 +399,6 @@ sub get_or_create_zone {
     }
     return $fs_zone;
 }
-
 
 __PACKAGE__->meta->make_immutable;
 

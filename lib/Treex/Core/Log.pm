@@ -12,8 +12,7 @@ use Readonly;
 
 use Exporter;
 use base 'Exporter';
-our @EXPORT = qw(log_fatal log_warn log_info log_debug log_memory); ## no critic (ProhibitAutomaticExportation)
-
+our @EXPORT = qw(log_fatal log_warn log_info log_debug log_memory);    ## no critic (ProhibitAutomaticExportation)
 
 $Carp::CarpLevel = 1;
 
@@ -166,7 +165,6 @@ sub progress {    # progress se pres ntred neposila, protoze by se stejne neflus
     $unfinished_line = 1;
     return;
 }
-
 
 # ---------- HOOKS -----------------
 

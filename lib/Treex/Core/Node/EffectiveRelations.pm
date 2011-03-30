@@ -3,8 +3,8 @@ use Moose::Role;
 use Treex::Core::Log;
 
 has is_member => (
-    is=>'rw',
-    isa => 'Bool',
+    is            => 'rw',
+    isa           => 'Bool',
     documentation => 'Is this node a member of a coordination?',
 );
 
@@ -25,7 +25,7 @@ requires 'is_coap_root';
 
 sub get_echildren {
     my ( $self, $arg_ref ) = @_;
-    if (!defined $arg_ref) {
+    if ( !defined $arg_ref ) {
         $arg_ref = {};
     }
     log_fatal('Incorrect number of arguments') if @_ > 2;
@@ -50,7 +50,7 @@ sub get_echildren {
 
 sub get_eparents {
     my ( $self, $arg_ref ) = @_;
-    if (!defined $arg_ref) {
+    if ( !defined $arg_ref ) {
         $arg_ref = {};
     }
     log_fatal('Incorrect number of arguments') if @_ > 2;

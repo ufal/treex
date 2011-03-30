@@ -10,7 +10,7 @@ sub next_document {
 
     my $document = $self->new_document();
     my $zone = $document->create_zone( $self->language, $self->selector );
-    $zone->set_text( $text );
+    $zone->set_text($text);
     return $document;
 }
 

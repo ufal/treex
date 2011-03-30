@@ -5,10 +5,11 @@ extends 'Treex::Core::Block';
 
 use FileUtils;
 
-has to_language => ( isa => 'Str', is => 'ro', required => 1);
-has to_selector => ( isa => 'Str', is => 'ro', default  => '');
-has from => ( isa => 'Str', is => 'ro', required => 1);
-has types => (isa => 'Str', is => 'ro', default => 'int');
+has to_language => ( isa => 'Str', is => 'ro', required => 1 );
+has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
+has from        => ( isa => 'Str', is => 'ro', required => 1 );
+has types       => ( isa => 'Str', is => 'ro', default  => 'int' );
+
 #has skipped => ( isa => 'Str', is => 'ro');
 
 #my %skipped;
@@ -19,14 +20,14 @@ sub BUILD {
 
     *ALIGNMENT_FILE = FileUtils::my_open( $self->from );
 
-#    if ($self->skipped) {
-#        *SKIPPED = FileUtils::my_open( $SKIPPED );
-#        while (<SKIPPED>) {
-#            chomp;
-#            $skipped{$_} = 1;
-#        }
-#        close SKIPPED;
-#    }
+    #    if ($self->skipped) {
+    #        *SKIPPED = FileUtils::my_open( $SKIPPED );
+    #        while (<SKIPPED>) {
+    #            chomp;
+    #            $skipped{$_} = 1;
+    #        }
+    #        close SKIPPED;
+    #    }
     return;
 }
 
@@ -39,9 +40,10 @@ sub process_atree {
     }
 
     my $sentence_id = $a_root->get_document->loaded_from . "-" . $a_root->get_bundle->id;
-#    my $num = $sentence_id;
-#    $num =~ s/^.*s(\d+)$/$1/;
-#    next if $skipped{$sentence_id};
+
+    #    my $num = $sentence_id;
+    #    $num =~ s/^.*s(\d+)$/$1/;
+    #    next if $skipped{$sentence_id};
     my $found = 0;
     my @p;
     while ( !$found ) {
@@ -55,11 +57,11 @@ sub process_atree {
     shift @p;
     my %aligned;
     my @type = split( /_/, $self->types );
-    for (my $i = 0; $i < @p; $i++) {
+    for ( my $i = 0; $i < @p; $i++ ) {
         last if not $type[$i];
-        foreach my $pair (split( /\s/, $p[$i])) {
+        foreach my $pair ( split( /\s/, $p[$i] ) ) {
             if ( $pair =~ /^([0-9]*)-([0-9]*)$/ ) {
-                if ($aligned{$pair}) {
+                if ( $aligned{$pair} ) {
                     $aligned{$pair} .= ".$type[$i]";
                 }
                 else {
@@ -68,14 +70,14 @@ sub process_atree {
             }
         }
     }
-        
+
     # index nodes of the two trees
-    my @nodes = $a_root->get_descendants( { ordered => 1 } ); 
-    my @to_nodes = $a_root->get_bundle->get_tree( $self->to_language, 'a', $self->to_selector )->get_descendants( { ordered => 1 } ); 
-        
-    foreach my $pair (keys %aligned) {
+    my @nodes = $a_root->get_descendants( { ordered => 1 } );
+    my @to_nodes = $a_root->get_bundle->get_tree( $self->to_language, 'a', $self->to_selector )->get_descendants( { ordered => 1 } );
+
+    foreach my $pair ( keys %aligned ) {
         if ( $pair =~ /^([0-9]+)-([0-9]+)$/ ) {
-            $nodes[$1]->add_aligned_node($to_nodes[$2], $aligned{$pair});
+            $nodes[$1]->add_aligned_node( $to_nodes[$2], $aligned{$pair} );
         }
     }
 }

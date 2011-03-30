@@ -31,7 +31,6 @@ sub is_coap_root {
     return defined $self->afun && $self->afun =~ /^(Coord|Apos)$/;
 }
 
-
 # -- linking to p-layer --
 
 sub get_terminal_pnode {
@@ -84,7 +83,6 @@ sub get_subtree_string {
     my ($self) = @_;
     return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
 }
-
 
 1;
 

@@ -32,7 +32,7 @@ sub pos_validated_list {
 }
 
 # Choose which variant to use according to Treex::Core::Config::$params_validate
-if ( $Treex::Core::Config::params_validate == 2 ) { ## no critic (ProhibitPackageVars)
+if ( $Treex::Core::Config::params_validate == 2 ) {    ## no critic (ProhibitPackageVars)
     require MooseX::Params::Validate;
     $validation_sub = \&MooseX::Params::Validate::pos_validated_list;
 }
@@ -89,28 +89,29 @@ subtype 'Id'
 # ISO 639-1 language code with some extensions from ISO 639-2
 use Locale::Language;
 my %EXTRA_LANG_CODES = (
-    'bxr'                                                              => "Buryat",
-    'dsb'                                                              => "Lower Sorbian",
-    'hsb'                                                              => "Upper Sorbian",
-    'hak'                                                              => "Hakka",
-    'kaa'                                                              => "Karakalpak",
-    'ku-latn'                                                          => "Kurdish in Latin script",
-    'ku-arab'                                                          => "Kurdish in Arabic script",
-    'ku-cyrl'                                                          => "Kurdish in Cyrillic script",
-    'nan'                                                              => "Taiwanese",
-    'rmy'                                                              => "Romany",
-    'sah'                                                              => "Yakut",
-    'und'                                                              => "ISO 639-2 code for undetermined/unknown language",
-    'xal'                                                              => "Kalmyk",
-    'yue'                                                              => "Cantonese"
+    'bxr'     => "Buryat",
+    'dsb'     => "Lower Sorbian",
+    'hsb'     => "Upper Sorbian",
+    'hak'     => "Hakka",
+    'kaa'     => "Karakalpak",
+    'ku-latn' => "Kurdish in Latin script",
+    'ku-arab' => "Kurdish in Arabic script",
+    'ku-cyrl' => "Kurdish in Cyrillic script",
+    'nan'     => "Taiwanese",
+    'rmy'     => "Romany",
+    'sah'     => "Yakut",
+    'und'     => "ISO 639-2 code for undetermined/unknown language",
+    'xal'     => "Kalmyk",
+    'yue'     => "Cantonese"
 );
 
 my %IS_LANG_CODE = map { $_ => 1 } ( all_language_codes(), keys %EXTRA_LANG_CODES );
 enum 'LangCode' => keys %IS_LANG_CODE;
 sub is_lang_code { return $IS_LANG_CODE{ $_[0] }; }
+
 sub get_lang_name {
-	my $code = shift;
-	return exists $EXTRA_LANG_CODES{$code} ? $EXTRA_LANG_CODES{$code} : code2language($code);
+    my $code = shift;
+    return exists $EXTRA_LANG_CODES{$code} ? $EXTRA_LANG_CODES{$code} : code2language($code);
 }
 
 1;

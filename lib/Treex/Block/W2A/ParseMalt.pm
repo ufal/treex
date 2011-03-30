@@ -4,20 +4,20 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
-has _parser     => ( is => 'rw' );
+has _parser     => ( is       => 'rw' );
 
 use Parser::Malt::MaltParser;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser(Parser::Malt::MaltParser->new($self->language));
+    $self->_set_parser( Parser::Malt::MaltParser->new( $self->language ) );
     return;
 }
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
-    my @a_nodes = $a_root->get_descendants({ordered => 1});
+    my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
 
     # Parse the sentence (collect indices refering to parents)
     my @forms  = map { $_->form } @a_nodes;
@@ -40,7 +40,7 @@ sub process_atree {
             my $afun = $$afuns[ $i - 1 ];
             log_fatal 'Node ' . $a_nodes[$i]->id . " got no afun/conll_deprel." if !defined $afun;
 
-            if ( $self->language eq 'cs') {
+            if ( $self->language eq 'cs' ) {
                 $afun =~ s/ROOT/Pred/;    # TODO: Is this needed? And why?
                 if ( $afun =~ /^(.+)_M$/ ) {
                     $afun = $1;
@@ -55,7 +55,6 @@ sub process_atree {
     }
     return;
 }
-
 
 1;
 

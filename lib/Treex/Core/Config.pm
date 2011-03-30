@@ -5,14 +5,14 @@ use warnings;
 use File::HomeDir;
 use File::ShareDir;
 
-# this should be somehow systematized, since there will be probably many switches like this one 
-our $debug_run_jobs_locally; ## no critic (ProhibitPackageVars)
-our %service; ## no critic (ProhibitPackageVars)
+# this should be somehow systematized, since there will be probably many switches like this one
+our $debug_run_jobs_locally;    ## no critic (ProhibitPackageVars)
+our %service;                   ## no critic (ProhibitPackageVars)
 
 # 0: Treex::Core::Common::pos_validated_list() called if params needed, skipped otherwise
 # 1: Treex::Core::Common::pos_validated_list() called always
 # 2: MooseX::Params::Validate::pos_validated_list called always
-our $params_validate = 0; ## no critic (ProhibitPackageVars)
+our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 
 sub devel_version {
     return $ENV{TMT_ROOT};

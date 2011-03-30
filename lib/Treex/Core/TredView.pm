@@ -34,7 +34,7 @@ sub get_nodelist_hook {
 
     unshift @nodes, $bundle;
 
-    if ( not ( first { $_ == $currentNode } @nodes ) ) {
+    if ( not( first { $_ == $currentNode } @nodes ) ) {
         $currentNode = $nodes[0];
     }
     return [ \@nodes, $currentNode ];
@@ -53,7 +53,7 @@ sub file_opened_hook {
 }
 
 sub get_value_line_hook {
-    my ( $self, undef, $treeNo ) = @_; # the unused argument stands for $fsfile
+    my ( $self, undef, $treeNo ) = @_;    # the unused argument stands for $fsfile
     return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
@@ -118,12 +118,13 @@ sub nonroot_node_labels {    # silly code just to avoid the need for eval
     $subs{a} = \&nonroot_anode_labels;
     $subs{n} = \&nonroot_nnode_labels;
     $subs{p} = \&nonroot_pnode_labels;
-    if (defined $subs{$layer}) {
-        return &{$subs{$layer}}(@_); 
-    } else {
+    if ( defined $subs{$layer} ) {
+        return &{ $subs{$layer} }(@_);
+    }
+    else {
         log_fatal "Undefined or unknown layer: $layer";
     }
- 
+
     #if    ( $layer eq 't' ) { return nonroot_tnode_labels(@_) }
     #elsif ( $layer eq 'a' ) { return nonroot_anode_labels(@_) }
     #elsif ( $layer eq 'n' ) { return nonroot_nnode_labels(@_) }
@@ -189,9 +190,9 @@ sub node_style_hook {
     }
 
     # alignment
-    if (my $links = $node->attr('alignment')) {
+    if ( my $links = $node->attr('alignment') ) {
         foreach my $link (@$links) {
-            push @target_ids, $link->{'counterpart.rf'};
+            push @target_ids,  $link->{'counterpart.rf'};
             push @arrow_types, 'alignment';
         }
     }
@@ -308,11 +309,13 @@ sub node_style {    # silly code just to avoid the need for eval
     $subs{a} = \&anode_style;
     $subs{n} = \&nnode_style;
     $subs{p} = \&pnode_style;
-    if (defined $subs{$layer}) {
-        return &{$subs{$layer}}(@_);
-    } else {
+    if ( defined $subs{$layer} ) {
+        return &{ $subs{$layer} }(@_);
+    }
+    else {
         log_fatal "Undefined or unknown layer: $layer";
     }
+
     #if    ( $layer eq 't' ) { return tnode_style(@_) }
     #elsif ( $layer eq 'a' ) { return anode_style(@_) }
     #elsif ( $layer eq 'n' ) { return nnode_style(@_) }
@@ -322,22 +325,26 @@ sub node_style {    # silly code just to avoid the need for eval
 }
 
 sub anode_style {
-#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
+
+    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:green}";
 }
 
 sub tnode_style {
-#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
+
+    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:blue}";
 }
 
 sub nnode_style {
-#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
+
+    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:yellow}";
 }
 
 sub pnode_style {
-#    my ( $self, $node ) = @_; # style might be dependent on node features in the future
+
+    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
     return "#{Oval-fill:magenta}";
 }
 

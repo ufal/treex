@@ -8,9 +8,11 @@ sub get_pml_type_name {
 
     if ( $self->is_root() or $self->get_attr('phrase') ) {
         return 'p-nonterminal.type';
-    } elsif ( $self->get_attr('tag') ) {
+    }
+    elsif ( $self->get_attr('tag') ) {
         return 'p-terminal.type';
-    } else {
+    }
+    else {
         return;
     }
 }

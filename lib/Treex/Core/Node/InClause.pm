@@ -1,19 +1,19 @@
 package Treex::Core::Node::InClause;
 use Moose::Role;
 use Treex::Core::Log;
-use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
+use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
 
 has clause_number => (
-    is => 'rw',
-    isa => 'Maybe[Int]',
+    is            => 'rw',
+    isa           => 'Maybe[Int]',
     documentation => 'ordinal number that is shared by all nodes of a clause',
 );
 
 has is_clause_head => (
-    is => 'rw',
-    isa => 'Bool',
+    is            => 'rw',
+    isa           => 'Bool',
     documentation => 'Is this node a head of a finite clause?',
-); 
+);
 
 sub get_clause_root {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
