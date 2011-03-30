@@ -1,7 +1,7 @@
 package Treex::Block::W2A::EN::NormalizeForms;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_anode {

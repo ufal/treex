@@ -1,7 +1,7 @@
 package Treex::Core::Bundle;
 
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 use MooseX::NonMoose;
 
 extends 'Treex::PML::Node';

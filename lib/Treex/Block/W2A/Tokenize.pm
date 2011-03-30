@@ -1,7 +1,7 @@
 package Treex::Block::W2A::Tokenize;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::W2A::TokenizeOnWhitespace';
 
 override 'tokenize_sentence' => sub {

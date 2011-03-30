@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::MarkDspRoot;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # vytazeno z BNC: [tag="V.*"] [word=":"] [word="\""]

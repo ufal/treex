@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::ChooseMlemmaForPersPron;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 my %subpos_person_2_mlemma =

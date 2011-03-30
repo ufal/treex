@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::SetFormeme;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 Readonly my $DEBUG => 0;

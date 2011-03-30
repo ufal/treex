@@ -1,6 +1,6 @@
 package Treex::Block::Read::BaseAlignedTextReader;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::Read::BaseAlignedReader';
 
 has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );

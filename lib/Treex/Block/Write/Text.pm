@@ -1,6 +1,6 @@
 package Treex::Block::Write::Text;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 #TODO implement "to"

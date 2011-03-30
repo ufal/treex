@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::CapitalizeNamedEntitiesAfterTransfer;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # One-word named entities should have their t-lemma capitalized,

@@ -1,6 +1,6 @@
 package Treex::Block::W2A::ResegmentSentences;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # TODO: more elegant implementation

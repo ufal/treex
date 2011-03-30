@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::AddSentFinalPunct;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_zone {

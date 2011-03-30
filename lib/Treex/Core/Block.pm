@@ -1,6 +1,6 @@
 package Treex::Core::Block;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 use Treex::Core::Resource;
 
 has selector => ( is => 'ro', isa => 'Selector',        default => '', );
@@ -25,7 +25,7 @@ sub build_language {
     }
 
     my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
-    if ( $lang && Treex::Moose::is_lang_code( lc $lang ) ) {
+    if ( $lang && Treex::Common::is_lang_code( lc $lang ) ) {
         return lc $lang;
     }
     else {

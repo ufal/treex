@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::ReverseNumberNounDependency;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 use Lexicon::Czech;

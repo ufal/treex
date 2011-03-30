@@ -1,6 +1,6 @@
 package Treex::Block::A2T::CS::MarkEdgesToCollapse;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 use utf8;
 

@@ -1,6 +1,6 @@
 package Treex::Block::Align::A::InsertAlignmentFromFile;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 use FileUtils;

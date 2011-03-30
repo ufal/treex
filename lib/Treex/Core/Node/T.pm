@@ -1,6 +1,6 @@
 package Treex::Core::Node::T;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';

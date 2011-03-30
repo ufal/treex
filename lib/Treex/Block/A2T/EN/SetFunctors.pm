@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::SetFunctors;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 my %tag2functor = (

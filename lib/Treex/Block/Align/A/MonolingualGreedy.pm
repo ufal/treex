@@ -1,6 +1,6 @@
 package Treex::Block::Align::A::MonolingualGreedy;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has 'to_language' => (

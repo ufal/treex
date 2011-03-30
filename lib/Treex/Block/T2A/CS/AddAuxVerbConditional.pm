@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::AddAuxVerbConditional;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 my %condit_numberperson2form = (

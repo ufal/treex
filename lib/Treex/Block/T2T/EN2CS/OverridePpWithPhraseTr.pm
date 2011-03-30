@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::OverridePpWithPhraseTr;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 my $input_file = 'resource_data/translation_dictionaries/manually_selected_prob_Wt_given_Ws.tsv';

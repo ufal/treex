@@ -1,6 +1,6 @@
 package Treex::Block::A2T::MoveAuxFromCoordToMembers;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );

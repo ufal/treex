@@ -1,6 +1,6 @@
 package Treex::Core::Scenario;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 use File::Basename;
 
 has loaded_blocks => (

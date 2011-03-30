@@ -1,6 +1,6 @@
 package Treex::Block::Align::A::CS2CS::GreedyHeur;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 my $min_score_limit = 4;

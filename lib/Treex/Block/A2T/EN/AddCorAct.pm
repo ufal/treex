@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::AddCorAct;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # verbs with object control type, copied from page 286

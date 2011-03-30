@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::MoveAuxFromCoordToMembers;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::A2T::MoveAuxFromCoordToMembers';
 
 override 'can_be_aux_to_coord' => sub {

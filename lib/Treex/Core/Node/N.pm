@@ -1,6 +1,6 @@
 package Treex::Core::Node::N;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Node';
 
 has [qw(ne_type normalized_name)] => ( is => 'rw' );

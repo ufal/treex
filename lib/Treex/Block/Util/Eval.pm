@@ -1,6 +1,6 @@
 package Treex::Block::Util::Eval;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has [

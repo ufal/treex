@@ -1,6 +1,6 @@
 package Treex::Block::Read::AlignedSentences;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::Read::BaseAlignedTextReader';
 
 sub next_document {

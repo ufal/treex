@@ -1,6 +1,6 @@
 package Treex::Core::Node::P;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Node';
 
 sub get_pml_type_name {

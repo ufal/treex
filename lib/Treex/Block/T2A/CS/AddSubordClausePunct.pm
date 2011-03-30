@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::AddSubordClausePunct;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_zone {

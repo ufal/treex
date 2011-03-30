@@ -1,6 +1,6 @@
 package Treex::Block::Read::Treex;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::Read::BaseReader';
 
 sub next_document {

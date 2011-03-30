@@ -1,7 +1,7 @@
 package Treex::Core::Node::Ordered;
 use Moose::Role;
 use Treex::Core::Log;
-use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Moose for roles
+use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Common for roles
 
 has ord => (
     is     => 'ro',

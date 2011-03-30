@@ -1,7 +1,7 @@
 package Treex::Block::A2W::CS::DetokenizeUsingRules;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_zone {

@@ -1,4 +1,4 @@
-package Treex::Moose;
+package Treex::Common;
 use utf8;
 use Moose;
 use Moose::Exporter;
@@ -117,13 +117,13 @@ sub get_lang_name {
 
 =head1 NAME
  
-Treex::Moose - shorten the "use" part of your Perl codes
+Treex::Common - shorten the "use" part of your Perl codes
 
 =head1 SYNOPSIS
 
 Write just
 
- use Treex::Moose;
+ use Treex::Common;
 
 Instead of
 

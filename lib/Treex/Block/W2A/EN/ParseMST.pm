@@ -1,6 +1,6 @@
 package Treex::Block::W2A::EN::ParseMST;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has 'model'   => ( is => 'rw', isa => 'Str',  default => 'conll_mcd_order2_0.01.model' );

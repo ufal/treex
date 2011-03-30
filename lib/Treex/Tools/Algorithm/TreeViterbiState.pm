@@ -1,6 +1,6 @@
 package Treex::Tools::Algorithm::TreeViterbiState;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 
 has 'node'         => ( is => 'ro', );
 has 'score'        => ( is => 'rw', default => 0 );

@@ -1,6 +1,6 @@
 package Treex::Block::W2A::CS::FixAtreeAfterMcD;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_atree {

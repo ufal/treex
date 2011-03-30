@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::MarkClauseHeads;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # zatim nejake rozbite, znackuje to i infinitivy

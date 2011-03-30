@@ -1,7 +1,7 @@
 package Treex::Block::T2T::EN2CS::AddNounGender;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 #TODO: load in BUILD

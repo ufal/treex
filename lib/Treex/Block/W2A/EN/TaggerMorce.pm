@@ -1,6 +1,6 @@
 package Treex::Block::W2A::EN::TaggerMorce;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has _tagger => ( is => 'rw' );

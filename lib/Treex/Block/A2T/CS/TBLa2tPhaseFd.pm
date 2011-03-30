@@ -1,6 +1,6 @@
 package Treex::Block::A2T::CS::TBLa2tPhaseFd;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 use TBLa2t::Common;

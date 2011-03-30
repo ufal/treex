@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::MovePersPronNextToVerb;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {

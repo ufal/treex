@@ -1,6 +1,6 @@
 package Treex::Block::Read::Sentences;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
 sub next_document {

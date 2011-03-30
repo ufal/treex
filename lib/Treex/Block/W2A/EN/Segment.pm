@@ -1,7 +1,7 @@
 package Treex::Block::W2A::EN::Segment;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Block::W2A::Segment';
 
 has segmenter => (

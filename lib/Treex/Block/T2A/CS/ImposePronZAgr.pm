@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::ImposePronZAgr;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 # Ideálně by tyto případy (každý z mužů, každá z žen) měly být anotovány

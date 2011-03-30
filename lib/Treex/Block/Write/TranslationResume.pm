@@ -1,6 +1,6 @@
 package Treex::Block::Write::TranslationResume;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 use Eval::Bleu;
 
 extends 'Treex::Core::Block';

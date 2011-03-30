@@ -2,7 +2,7 @@ package Treex::Core::Run;
 use strict;
 use warnings;
 
-use Treex::Moose;
+use Treex::Common;
 use Treex::Core;
 use MooseX::SemiAffordanceAccessor;
 with 'MooseX::Getopt';

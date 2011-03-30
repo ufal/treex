@@ -1,7 +1,7 @@
 package Treex::Block::T2T::EN2CS::FixGrammatemesAfterTransfer;
 use utf8;
 use Moose;
-use Treex::Moose;
+use Treex::Common;
 extends 'Treex::Core::Block';
 
 has 'ignore_negation' => (
