@@ -968,9 +968,9 @@ roots of coordination and apposition constructions.
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel <popel@ufal.mff.suni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-David Mareček <marecek@ufal.mff.suni.cz>
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

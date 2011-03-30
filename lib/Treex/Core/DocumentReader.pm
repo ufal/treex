@@ -111,7 +111,7 @@ L<Treex::Block::Read::Treex>
 
 =head1 AUTHOR
 
-Martin Popel <popel@ufal.mff.suni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -285,9 +285,9 @@ L<Treex::Core::Scenario|Treex::Core::Scenario>,
 
 =head1 AUTHOR
 
-Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz> <zabokrtsky@ufal.mff.cuni.cz>
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel <popel@ufal.mff.cuni.cz <popel@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

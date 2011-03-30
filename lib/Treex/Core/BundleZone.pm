@@ -383,7 +383,7 @@ returns the Treex::Core::Document instance which the zone belongs to
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel <popel@ufal.mff.suni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

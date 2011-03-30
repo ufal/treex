@@ -284,7 +284,7 @@ Shifts (changes the ord of) the node in front of the subtree of the reference no
 
 =head1 AUTHOR
 
-Martin Popel <popel@ufal.mff.suni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
