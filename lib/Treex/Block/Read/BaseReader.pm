@@ -51,6 +51,7 @@ sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
     $self->set_filenames( [ split /[ ,]+/, $self->from ] );
+    return;
 }
 
 sub current_filename {

@@ -34,7 +34,9 @@ sub _copy_list_attr {
     my $list = $pml_node->attr($old_attr_name);
     return if not ref $list;
 
-    $list = [ map { s/^.*#//; $_ } @$list ] if $ref;
+    if ($ref) {
+        foreach (@$list) {s/^.*#//;}
+    }
     $treex_node->set_attr( $new_attr_name, $list );
     return;
 }
@@ -97,6 +99,7 @@ sub _convert_ttree {
         my $treex_child = $treex_node->create_child;
         $self->_convert_ttree( $pml_child, $treex_child, $language );
     }
+    return;
 }
 
 sub _convert_atree {
@@ -129,6 +132,7 @@ sub _convert_atree {
         my $treex_child = $treex_node->create_child;
         $self->_convert_atree( $pml_child, $treex_child );
     }
+    return;
 }
 
 # the actual conversion of all trees from all layers

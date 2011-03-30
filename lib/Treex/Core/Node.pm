@@ -173,7 +173,7 @@ sub get_zone {
         $zone = $self->_get_zone;
     }
     else {
-        $zone = $self->get_root->_get_zone;
+        $zone = $self->get_root->_get_zone;    ## no critic (ProtectPrivateSubs)
     }
 
     log_fatal "a node can't reveal its zone" if !$zone;
@@ -583,7 +583,7 @@ sub get_fposition {
     my $self = shift;
     my $id   = $self->get_attr('id');
 
-    my $fsfile  = $self->get_document->_get_pmldoc();
+    my $fsfile  = $self->get_document->_get_pmldoc();    ## no critic (ProtectPrivateSubs)
     my $fs_root = $self->get_bundle;
 
     my $bundle_number = 1;
@@ -678,17 +678,18 @@ sub get_attrs {
 }
 
 # TODO: How to do this in an elegant way?
-package Treex::Core::Node::Removed;
+# Unless we find a better way, we must disable two perlcritics
+package Treex::Core::Node::Removed;    ## no critic (ProhibitMultiplePackages)
 use Treex::Core::Log;
 
-sub AUTOLOAD {
+sub AUTOLOAD {                         ## no critic (ProhibitAutoloading)
     our $AUTOLOAD;
     if ( $AUTOLOAD !~ /DESTROY$/ ) {
         log_fatal("You cannot call any methods on removed nodes, but have called $AUTOLOAD");
     }
 }
 
-package Treex::Core::Node;
+package Treex::Core::Node;             ## no critic (ProhibitMultiplePackages)
 
 __PACKAGE__->meta->make_immutable;
 

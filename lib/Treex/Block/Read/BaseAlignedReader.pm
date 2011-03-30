@@ -58,6 +58,7 @@ sub BUILD {
         elsif ( $arg =~ /selector|language|scenario/ ) { }
         else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
     }
+    return;
 }
 
 sub current_filenames {
@@ -98,7 +99,9 @@ sub new_document {
                 $file_number = undef;
             }
             if ( $stem !~ /$name/ ) {
-                $stem .= '_' if $stem ne '';
+                if ( $stem ne '' ) {
+                    $stem .= '_';
+                }
                 $stem .= $name;
             }
         }

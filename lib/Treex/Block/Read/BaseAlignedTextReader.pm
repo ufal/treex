@@ -2,6 +2,7 @@ package Treex::Block::Read::BaseAlignedTextReader;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseAlignedReader';
+use File::Slurp;
 
 has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );
 has merge_files   => ( isa => 'Bool', is => 'ro', default => 0 );
@@ -20,7 +21,7 @@ sub next_filehandles {
     while ( my ( $lang, $filename ) = each %mapping ) {
         my $FH;
         if ( $filename eq '-' ) { $FH = *STDIN; }
-        else                    { open $FH, '<:utf8', $filename or die "Can't open $filename: $!"; }
+        else                    { open $FH, '<:utf8', $filename or log_fatal "Can't open $filename: $!"; }
         $mapping{$lang} = $FH;
     }
     return \%mapping;
@@ -36,7 +37,7 @@ sub next_document_texts {
     }
 
     while ( my ( $lang, $FH ) = each %{$FHs} ) {
-        $texts{$lang} = join '', <$FH>;
+        $texts{$lang} = read_file($FH);
     }
     return \%texts;
 }
