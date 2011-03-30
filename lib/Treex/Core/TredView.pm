@@ -352,19 +352,94 @@ sub pnode_style {
 
 1;
 
+
 __END__
 
-
-=encoding utf-8
+=for Pod::Coverage precompute_visualization
 
 =head1 NAME
 
-Treex::Core::TredView
-
+Treex::Core::TredView - visualization of Treex files in TrEd
 
 =head1 DESCRIPTION
 
-descr
+This module is used only in an extension of the Tree editor TrEd
+developed for displaying .treex files. The TrEd extension is contained
+in the same distribution as this module. The extension itself
+is very thin. It only creates an instance of Treex::Core::TredView
+and then forwards calls of hooks (subroutines with predefined
+names called by TrEd at certain events) to this instance.
+
+This module defines what information (especially which node attributes)
+should be displayed below nodes in the individual types of trees
+and what visual style (e.g. node and edge color, node size, edge
+thickness) should be used for them.
+
+The TrEd visualization is precomputed statically after a file is loaded,
+therefore the extension can be currently used only for browsing, not for
+editting the treex files.
+
+=head1 METHODS
+
+
+=head2 Methods called from the TrEd extension
+
+Methods called directly from the hooks in the TrEd extension:
+
+=over 4
+
+=item file_opened_hook
+
+Building Treex::Core::Document structure on the top of
+Treex::PML::Document structure which was provided by TrEd.
+
+=item get_nodelist_hook
+
+=item get_value_line_hook
+
+=item node_style_hook
+
+=back
+
+=head2 Methods for displaying attributes below nodes
+
+=over 4
+
+=item bundle_root_labels
+
+=item tree_root_labels
+
+=item nonroot_node_labels
+
+=item nonroot_anode_labels
+
+=item nonroot_nnode_labels
+
+=item nonroot_pnode_labels
+
+=item nonroot_tnode_labels
+
+=back
+
+=head2 Methods for defining node's style
+
+=over 4
+
+=item bundle_root_style
+
+=item common_node_style
+
+=item node_style
+
+=item nnode_style
+
+=item anode_style
+
+=item tnode_style
+
+=item pnode_style
+
+=back
 
 =head1 AUTHOR
 
@@ -377,4 +452,3 @@ David Mareček <marecek@ufal.mff.cuni.cz>
 Copyright 2011 by UFAL
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
