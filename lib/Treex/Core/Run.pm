@@ -425,7 +425,9 @@ sub _read_total_doc_number {
         open( my $N, '<', $total_doc_number_file ) or log_fatal $!;
         my $total_file_number = <$N>;
         close $N;
-        log_info "Total number of documents to be processed: $total_file_number";
+        if (defined $total_file_number){
+            log_info "Total number of documents to be processed: $total_file_number";
+        }
         return $total_file_number;
     }
     else {
