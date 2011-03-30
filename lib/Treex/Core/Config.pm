@@ -15,9 +15,9 @@ our %service;                   ## no critic (ProhibitPackageVars)
 our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 
 sub devel_version {
-    return $ENV{TMT_ROOT};
+    # return $ENV{TMT_ROOT};
 
-    # return -d lib_core_dir()."/share/";
+    return -d lib_core_dir()."/share/";
     # to je otazka, jak to co nejelegantneji poznat, ze jde o work.copy. a ne nainstalovanou distribuci
 }
 
