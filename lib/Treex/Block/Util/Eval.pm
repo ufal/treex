@@ -37,9 +37,14 @@ sub BUILD {
     return;
 }
 
+## no critic (ProhibitStringyEval) This block needs string evals
 sub process_document {
     my ( $self, $document ) = @_;
-    eval $self->document if $self->document;
+    if ( $self->document ) {
+        if ( !eval $self->document . ';1;' ) {
+            log_fatal "Eval error: $@";
+        }
+    }
 
     if ( $self->_args->{_bundle} ) {
         foreach my $bundle ( $document->get_bundles() ) {
@@ -51,14 +56,22 @@ sub process_document {
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    eval $self->bundle if $self->bundle;
+    if ( $self->bundle ) {
+        if ( !eval $self->bundle . ';1;' ) {
+            log_fatal "Eval error: $@";
+        }
+    }
 
     # quit if no parameters zone|?tree|?node
     return if !$self->_args->{_zone};
 
     my %do_lang = map { $_ => 1 } split /,/, $self->languages;
     my %do_sele = map { $_ => 1 } split /,/, $self->selectors;
-    $do_sele{''} = 1 if $self->selectors eq '';    # split /,/, ''; #returns empty list
+
+    # split /,/, ''; #returns empty list
+    if ( $self->selectors eq '' ) {
+        $do_sele{''} = 1;
+    }
 
     foreach my $zone ( $bundle->get_all_zones() ) {
         if ( $do_lang{ $zone->language } && $do_sele{ $zone->selector } ) {
@@ -71,17 +84,25 @@ sub process_bundle {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    eval $self->zone if $self->zone;
+    if ( $self->zone ) {
+        if ( !eval $self->zone . ';1;' ) {
+            log_fatal "Eval error: $@";
+        }
+    }
 
     foreach my $layer (qw(a t n p)) {
         next if !$zone->has_tree($layer);
         my $tree = $zone->get_tree($layer);
         if ( my $code = $self->_args->{"${layer}tree"} ) {
-            eval "my \$${layer}tree = \$tree; $code";
+            if ( !eval "my \$${layer}tree = \$tree; $code;1;" ) {
+                log_fatal "Eval error: $@";
+            }
         }
         if ( my $code = $self->_args->{"${layer}node"} ) {
             foreach my $node ( $tree->get_descendants() ) {
-                eval "my \$${layer}node = \$node; $code";
+                if ( !eval "my \$${layer}node = \$node; $code;1;" ) {
+                    log_fatal "Eval error: $@";
+                }
             }
         }
     }
