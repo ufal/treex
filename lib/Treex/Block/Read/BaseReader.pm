@@ -12,7 +12,7 @@ has selector => ( isa => 'Selector', is => 'ro', default => '' );
 
 has filenames => (
     isa           => 'ArrayRef[Str]',
-    is            => 'rw',
+    is            => 'ro',
     lazy_build    => 1,
     documentation => 'array of filenames to be loaded;'
         . ' automatically initialized from the attribute "from"',
@@ -50,8 +50,7 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
-    $self->set_filenames( [ split /[ ,]+/, $self->from ] );
-    return;
+    return [split /[ ,]+/, $self->from ];
 }
 
 sub current_filename {
