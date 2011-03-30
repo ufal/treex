@@ -366,7 +366,7 @@ sub _execute_locally {
         $scenario = Treex::Core::Scenario->new( { from_string => $scen_str } );
     }
     else {
-        $scenario->reset();
+        $scenario->restart();
     }
     my $loading_ended = time;
     log_info "Loading the scenario took " . ( $loading_ended - $loading_started ) . " seconds";
@@ -743,7 +743,7 @@ treex --watch=timestamp.file my.scen & # or without & and open another terminal
 # you can modify any modules/blocks and then
 touch timestamp.file
 # All modified modules will be reloaded (the number of reloaded modules is printed).
-# The document reader is reset, so it starts reading the first file again.
+# The document reader is restarted, so it starts reading the first file again.
 # To exit this "watching loop" either rm timestamp.file or press Ctrl^C.
 
 BENEFITS:

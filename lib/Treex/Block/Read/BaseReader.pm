@@ -118,7 +118,7 @@ sub number_of_documents {
     return $self->is_one_doc_per_file ? scalar @{ $self->filenames } : undef;
 }
 
-after 'reset' => sub {
+after 'restart' => sub {
     my $self = shift;
     $self->_set_file_number(0);
 };

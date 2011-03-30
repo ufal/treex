@@ -244,12 +244,12 @@ sub run {
 
 use Module::Reload;
 
-sub reset {
+sub restart {
     my ($self) = @_;
     my $changed_modules = Module::Reload->check;
     log_info "Number of reloaded modules = $changed_modules";
     log_info "reseting the document reader\n";
-    $self->document_reader->reset();
+    $self->document_reader->restart();
 
     # TODO rebuild the reloaded blocks
     return;

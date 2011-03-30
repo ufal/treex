@@ -56,8 +56,10 @@ sub next_document_for_this_job {
     # and it is also wrong, because if next_document issues some warnings,
     # these are printed into a wrong file.
     # However, I don't know how to get the correct doc_number before executing next_document.
+    # Regarding  perlcritic ProtectPrivateSubs:
+    # I consider _redirect_output as internal for Treex::Core modules.
     if ( $doc && $self->jobindex ) {
-        Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );
+        Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex ); ## no critic (ProtectPrivateSubs)
     }
 
     return $doc;
@@ -78,7 +80,7 @@ sub number_of_documents_per_this_job {
     return $div + ( $rest >= $self->jobindex ? 1 : 0 );
 }
 
-sub reset {
+sub restart {
     my ($self) = @_;
     $self->_set_doc_number(0);
     return;
