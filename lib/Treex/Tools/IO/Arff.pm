@@ -51,7 +51,7 @@ for more information about ARFF format visit http://www.cs.waikato.ac.nz/~ml/wek
 =head1 Object Attributes
 
 =head2 relation
- 
+
  This is a buffer hash
  Structure of hash:
 

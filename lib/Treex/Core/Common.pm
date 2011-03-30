@@ -121,7 +121,7 @@ __END__
 =encoding utf-8
 
 =head1 NAME
- 
+
 Treex::Core::Common - shorten the "use" part of your Perl codes
 
 =head1 SYNOPSIS

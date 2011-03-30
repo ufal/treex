@@ -172,6 +172,8 @@ __END__
 Adding t_lemma translation variants using the maxent
 translation dictionary.
 
+=back
+
 =cut
 
 # Copyright 2010 Zdenek Zabokrtsky, David Marecek, Martin Popel

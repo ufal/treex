@@ -152,9 +152,9 @@ sub process_month {
 
 1;
 
-=over
-
 =encoding utf8
+
+=over
 
 =item Treex::Block::T2T::EN2CS::FixDateTime
 

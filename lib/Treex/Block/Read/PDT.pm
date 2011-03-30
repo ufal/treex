@@ -65,6 +65,8 @@ Import from PDT 2.0 trees.
 
 =head2 Parameters
 
+=over 4
+
 =item schema_dir
 
 Must be set to the directory with corresponding PML schemas.

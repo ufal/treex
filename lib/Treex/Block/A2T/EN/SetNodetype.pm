@@ -42,11 +42,12 @@ sub process_tnode {
 =item Treex::Block::A2T::EN::SetNodetype
 
 Value of the C<nodetype> attribute is filled (accordingly to the value of C<functor> and C<t_lemma>)
-    in each SEnglishT node.
+in each SEnglishT node.
 
-    =back
-    =cut
+=back
 
-    # Copyright 2008 Zdenek Zabokrtsky
+=cut
+
+# Copyright 2008 Zdenek Zabokrtsky
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

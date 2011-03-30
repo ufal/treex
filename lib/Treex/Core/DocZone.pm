@@ -56,7 +56,7 @@ getters have the same names as attributes, while setters start with
 -head2 Construction
 
 Treex::Core::DocZone instances should not be created by a constructor,
-but should be created exclusively from the embeding document
+but should be created exclusively from the embedding document
 by one of the document's methods:
 
 =over 4

@@ -187,6 +187,8 @@ and the attributes C<_layers> and C<_file_suffix>.
 
 =head2 Parameters
 
+=over 4
+
 =item schema_dir
 
 Must be set to the directory with corresponding PML schemas.

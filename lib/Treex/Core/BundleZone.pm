@@ -291,7 +291,7 @@ getters have the same names as attributes, while setters start with
 
 Treex::Core::BundleZone instances should not be created by the constructor,
 but should be created exclusively by calling one of the following methods
-of the embeding  Treex::Core::Bundle instance:
+of the embedding  Treex::Core::Bundle instance:
 
 =over 4
 
@@ -368,7 +368,9 @@ You can remove trees by
 =back
 
 
-=head2 Access to embeding objects
+=head2 Access to embedding objects
+
+=over 4
 
 =item $bundle = $zone->get_bundle();
 
@@ -378,6 +380,7 @@ returns the Treex::Core::Bundle instance which the zone belongs to
 
 returns the Treex::Core::Document instance which the zone belongs to
 
+=back
 
 =head1 AUTHOR
 

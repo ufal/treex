@@ -164,7 +164,7 @@ sub get_bundle {
     return $self->get_zone->get_bundle;
 }
 
-# reference to embeding zone is stored only with tree root, not with nodes
+# reference to embedding zone is stored only with tree root, not with nodes
 sub get_zone {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;

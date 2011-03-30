@@ -73,7 +73,7 @@ __END__
 
  # Other realization are not implemented yet, e.g.:
  "Peter is expected to agree." -> "Od Petra se čeká, že bude souhlasit."
-    
+
 =back
 
 =cut

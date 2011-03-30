@@ -26,7 +26,7 @@ has 'quiet' => (
     cmd_aliases => 'q',
     is          => 'rw', isa => 'Bool', default => 0,
     trigger => sub { Treex::Core::Log::set_error_level('FATAL'); },
-    documentation => q{Warning, info and debug messages are surpressed. Only fatal errors are reported.},
+    documentation => q{Warning, info and debug messages are suppressed. Only fatal errors are reported.},
 );
 
 has 'cleanup' => (

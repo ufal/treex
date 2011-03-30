@@ -153,6 +153,8 @@ __END__
 Adding formeme translation variants using the maxent
 translation dictionary.
 
+=back
+
 =cut
 
 # Copyright 2009-2010 Zdenek Zabokrtsky, Martin Popel, David Marecek

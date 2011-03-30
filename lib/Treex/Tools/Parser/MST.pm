@@ -229,7 +229,6 @@ __END__
 
 Treex::Tools::Parser::MST
 
-
 =head1 SYNOPSIS
 
 

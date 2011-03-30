@@ -71,6 +71,8 @@ __END__
 Joint unigram static translation of lemmas and formemes (first only).
 Used only for prepositional groups (which are less dependent on the context).
 
+=back
+
 =cut
 
 # Copyright 2010 Zdenek Zabokrtsky

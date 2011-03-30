@@ -258,7 +258,6 @@ __END__
 Treex::Core::Bundle - a set of equivalent sentences (translations, or variants)
 and their linguistic representations in the Treex framework
 
-
 =head1 DESCRIPTION
 
 A bundle in Treex corresponds to one sentence or more sentences, typically translations

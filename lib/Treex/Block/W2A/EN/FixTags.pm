@@ -88,6 +88,8 @@ Abbreviations like I<MPs, CDs or DVDs> are tagged as plural proper noun (C<NNPS>
 
 =back
 
+=back
+
 =cut
 
 # Copyright 2008-2010 Zdenek Zabokrtsky, Martin Popel

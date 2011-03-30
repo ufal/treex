@@ -131,9 +131,9 @@ sub process_tnode {
 
 1;
 
-=over
-
 =encoding utf8
+
+=over
 
 =item Treex::Block::T2T::EN2CS::TrLFCompounds
 
@@ -141,6 +141,7 @@ Tries to translated compounds like I<ex-commander> to two or more t-nodes.
 This block should go after other blocks that add t-lemma translation variants
 (e.g. B<SEnglishT_to_TCzechT::Translate_L_add_variants>), so it tries to translate
 only the nodes which were not translated so far.
+
 =back
 
 =cut

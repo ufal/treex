@@ -414,7 +414,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Document - representation of a text and its linguistic analyses in the Treex framework
+Treex::Core::Document - representation of a text and its linguistic analysis in the Treex framework
 
 =head1 DESCRIPTION
 
@@ -446,8 +446,6 @@ Textual description of the file's content that is stored in the file.
 The attributes can be accessed using semi-affordance accessors:
 getters have the same names as attributes, while setters start with
 'set_'. For example by getter C<path()> and setter C<set_path($path)>
-
-=back
 
 
 

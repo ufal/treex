@@ -47,7 +47,7 @@ my $unfinished_line;
 # By default report only messages with INFO or higher level
 my $current_error_level_value = $ERROR_LEVEL_VALUE{'INFO'};
 
-# allows to surpress messages with lower than given importance
+# allows to suppress messages with lower than given importance
 sub set_error_level {
     my $new_error_level = uc(shift);
     if ( not defined $ERROR_LEVEL_VALUE{$new_error_level} ) {
@@ -61,7 +61,7 @@ sub get_error_level {
     return $current_error_level_value;
 }
 
-# fatal error messages can't be surpressed
+# fatal error messages can't be suppressed
 sub log_fatal {
     my $message = shift;
     if ($unfinished_line) {
@@ -231,7 +231,7 @@ whole Treex in the future
 =head2 Error levels
 
 
-Specifying error level can be used for surpressing
+Specifying error level can be used for suppressing
 reports with lower severity. This module supports four
 ordered levels of report severity (plus a special value
 comprising them all).

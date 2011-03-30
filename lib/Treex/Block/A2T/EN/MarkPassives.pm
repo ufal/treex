@@ -32,11 +32,12 @@ sub process_tnode {
 =item Treex::Block::A2T::EN::MarkPassives
 
 EnglishT nodes corresponding to passive verb expressions are
-    marked with value 1 in the C<is_passive> attribute.
+marked with value 1 in the C<is_passive> attribute.
 
-    =back
-    =cut
+=back
 
-    # Copyright 2008 Zdenek Zabokrtsky
+=cut
+
+# Copyright 2008 Zdenek Zabokrtsky
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
