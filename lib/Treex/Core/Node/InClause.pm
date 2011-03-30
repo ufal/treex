@@ -57,7 +57,7 @@ sub get_clause_head {
     return $node;
 }
 
-# taky by mohlo byt neco jako $node->get_descendants({within_clause=>1});
+# Alternative API could be: $node->get_descendants({within_clause=>1});
 sub get_clause_descendants {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
@@ -79,7 +79,7 @@ Treex::Core::Node::InClause
 =head1 DESCRIPTION
 
 Moose role for nodes in trees where (linguistic) clauses can be recognized
-based on attributes C<clause_number>.
+based on attributes C<clause_number> and C<is_clause_head>.
 
 =head1 ATTRIBUTES
 
@@ -87,6 +87,11 @@ based on attributes C<clause_number>.
 
 =item clause_number
 
+Ordinal number that is shared by all nodes of a same clause.
+
+=item is_clause_head
+
+Is this node a head of a finite clause.
 
 =back
 
@@ -94,9 +99,27 @@ based on attributes C<clause_number>.
 
 =over
 
-=item my $clause_root_node = $node->get_clause_root();
+=item my $clause_head_node = $node->get_clause_root();
 
-Return the root (head) node of a clause
+Returns the head node of a clause.
+This implementation is based on the attribute C<clause_number>.
+Note that it may give different results than C<get_clause_head>. 
+
+=item $clause_head_node = $node->get_clause_head();
+
+Returns the head node of a clause.
+This implementation is based on the attribute C<is_clause_head>.
+Note that it may give different results than C<get_clause_root>.
+
+=item my @nodes = $node->get_clause_descendants();
+
+Returns those descendants which are in the same clause as C<$node>.
+The current implementation is based on the attribute C<is_clause_head>.
+
+=item my @nodes = $node->get_clause_nodes();
+
+Returns all nodes of the clause (to which the C<$node> belongs).
+The current implementation is based on the attribute C<clause_number>.
 
 =back
 

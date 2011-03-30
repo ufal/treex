@@ -206,6 +206,11 @@ For example: "Bank of China"
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China 
 
+=item $node->get_subtree_string
+
+Return the string coresponding to a subtree rooted in C<$node>.
+It's computed based on attributes C<form> and C<no_space_after>.
+
 =back
 
 

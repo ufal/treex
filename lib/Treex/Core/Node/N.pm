@@ -62,7 +62,7 @@ sub set_attr {
 
 #@overrides Treex::Core::Node::remove
 sub remove {
-    my ( $self, $arg_ref ) = @_;    # is arg_ref needed here ???
+    my ( $self ) = @_;
     foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node(undef);
     }
@@ -82,6 +82,34 @@ Treex::Core::Node::N
 =head1 DESCRIPTION
 
 A node for storing named entities.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item ne_type
+
+Type of the named entity (string).
+
+=item normalized_name
+
+E.g. for "N.Y." this can be "New York".
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item get_anodes
+
+Return a-nodes referenced by (or corresponding to) this n-node.
+
+=item set_anodes(@anodes)
+
+Set a-nodes to be referenced by (or corresponding to) this n-node.
+
+=back
 
 =head1 AUTHOR
 

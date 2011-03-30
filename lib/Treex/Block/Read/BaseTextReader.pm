@@ -64,6 +64,8 @@ sub next_document_text {
 
 __END__
 
+=for Pod::Coverage BUILD
+
 =head1 NAME
 
 Treex::Block::Read::BaseTextReader - abstract ancestor for document readers

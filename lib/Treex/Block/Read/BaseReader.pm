@@ -168,6 +168,11 @@ automatically initialized from the attribute C<from>
 
 =over
 
+=item next_document
+
+This method must be overriden in derived classes.
+(The implementation in this class just issues fatal error.)
+
 =item next_filename
 
 returns the next filename (full path) to be loaded
@@ -182,6 +187,20 @@ which are guessed based on C<current_filename>.
 =item current_filename
 
 returns the last filename returned by C<next_filename> 
+
+=item is_next_document_for_this_job
+
+Is the document that will be returned by C<next_document>
+supposed to be processed by this job?
+This is relevant only in parallel processing,
+where each job has different C<$jobnumber> assigned.
+
+=item number_of_documents
+
+Returns the number of documents that will be read by this reader.
+If C<is_one_doc_per_file> returns true, then the number of documents
+equals the number of files given in C<from>.
+Otherwise, this method returns undef.
 
 =back
 

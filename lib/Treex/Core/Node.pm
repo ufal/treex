@@ -697,8 +697,8 @@ __PACKAGE__->meta->make_immutable;
 
 __END__
 
+=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value get_r_attr set_r_attr
 
-=for Pod::Coverage BUILD
 
 =encoding utf-8
 
@@ -741,6 +741,23 @@ Returns the L<TectoMT::Bundle|TectoMT::Bundle> object in which the node's tree i
 =item my $document = $node->get_document();
 
 Returns the L<TectoMT::Document|TectoMT::Document> object in which the node's tree is contained.
+
+=item get_layer
+
+Return the layer of this node (I<a,t,n or p>).
+
+=item get_zone
+
+Return the zone (L<Treex::Core::BundleZone>) to which this node
+(and the whole tree) belongs.
+
+=item $lang_code = $node->language
+
+shortcut for $lang_code = $node->get_zone()->language
+
+=item $selector = $node->selector
+
+shortcut for $selector = $node->get_zone()->selector
 
 =back
 
@@ -905,21 +922,6 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =back
 
-=head2 Metods for processing clauses, !!!!
-
-=over 4
-
-=item get_clause_descendants
-
-=item get_clause_head
-
-=item get_clause_nodes
-
-=item get_clause_root
-
-=back
-
-
 =head2 PML-related methods
 
 =over 4
@@ -928,6 +930,20 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =back
 
+
+=head2 Access to alignment
+
+=over
+
+=item add_aligned_node
+
+=item get_aligned_nodes
+
+=item delete_aligned_node
+
+=item is_aligned_to
+
+=back
 
 =head2 Other methods
 
@@ -955,11 +971,6 @@ Return the depth of the node. The root has depth = 0, its children have depth = 
 
 Return the node address, i.e. file name and node's position within the file, similarly
 to TrEd's FPosition() (but the value is only returned, not printed).
-
-=item $node->is_coap_root();
-
-Empty predecessor of a-tree and t-tree methods for recognizing
-roots of coordination and apposition constructions.
 
 =back
 

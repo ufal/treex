@@ -103,17 +103,6 @@ sub set_src_tnode {
     return;
 }
 
-# Deprecated
-sub get_source_tnode {
-    my $self = shift;
-    return $self->src_tnode;
-}
-
-sub set_source_tnode {
-    my $self = shift;
-    return $self->set_src_tnode(@_);
-}
-
 1;
 
 __END__
@@ -163,7 +152,6 @@ sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
 
 
 
-
 =encoding utf-8
 
 =head1 NAME
@@ -177,9 +165,60 @@ t-layer (tectogrammatical) node
 
 =head1 METHODS
 
+=head2 Access to a-layer (analytical nodes)
+
 =over
 
-=item get_n_node()
+=item $node->add_aux_anodes(@aux_anodes)
+
+Add auxiliary a-nodes (to C<a/aux.rf>)
+
+=item $anodes = $node->get_anodes()
+
+Return a-nodes (both auxiliary and lexical, ie. C<a/aux.rf> and C<a/lex.rf>)
+
+=item @aux_anodes = $node->get_aux_anodes()
+
+Return auxiliary a-nodes (from C<a/aux.rf>).
+
+=item $lex_anod = $node->get_lex_anode()
+
+Return the lexical a-nodes (from C<a/lex.rf>).
+
+=item $node->set_aux_anodes(@aux_anodes)
+
+Set the auxiliary a-nodes (to C<a/aux.rf>).
+
+=item set_lex_anode
+
+Set the lexical a-node (to C<a/lex.rf>).
+
+=back
+
+=head2 Access to source language t-layer (in MT)
+
+=over
+
+=item $src_tnode = $node->src_tnode()
+
+Return the source language (in MT) t-node (from C<src_tnode.rf>).
+
+=item set_src_tnode
+
+Set the source language (in MT) t-node (to C<src_tnode.rf>).
+
+=back
+
+=head2 Access to n-layer (named entity nodes)
+
+Note there is no C<set_n_node> method.
+You must set the link from n-node to a a-node.
+
+=over
+
+=item $node->get_n_node()
+
+This is a shortcut for  $self->get_lex_anode()->n_node;
 If this t-node is a part of a named entity,
 this method returns the corresponding n-node (L<Treex::Core::Node::N>).
 If this node is a part of more than one named entities,
@@ -190,6 +229,12 @@ For example: "Bank of China"
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China
 
+
+=back
+
+=head2 Other methods
+
+=over
 
 =item is_coap_root
 
