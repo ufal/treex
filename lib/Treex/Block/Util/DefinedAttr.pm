@@ -67,25 +67,32 @@ sub check_tree {
 
 __END__
 
-=over
 
-=item Treex::Block::Util::DefinedAttr
+=head1 NAME
+
+Treex::Block::Util::DefinedAttr - Special block for checking undef attributes
+
+=head1 SYNOPSIS
+
+  # on the command line:
+  treex Util::DefinedAttr anode=lemma on_error=die -- myfile.treex
+
+  # in a scenario:
+  SetGlobal language=en selector=T 
+  Util::DefinedAttr tnode=t_lemma,nodetype,formeme
+  Block::XY
+  Util::DefinedAttr anode=lemma on_error=die message="after block XY"
+
+
+=head1 DESCRIPTION
 
 Warns/dies if a given attribute is undefined (in any node).
-
-Example of usage in scenario:
-
- SetGlobal language=en selector=T 
- Util::DefinedAttr tnode=t_lemma,nodetype,formeme
- Block::XY
- Util::DefinedAttr anode=lemma on_error=die message="after block XY"
 
 One of parameters tnode, anode, nnode, pnode must be always specified.
 By default: on_error=warn and message is empty.
 
-=back
 
-=cut
+=head1 COPYRIGHT
 
-# Copyright 2010-2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
