@@ -78,7 +78,7 @@ Treex::Block::Util::DefinedAttr - Special block for checking undef attributes
   treex Util::DefinedAttr anode=lemma on_error=die -- myfile.treex
 
   # in a scenario:
-  SetGlobal language=en selector=T 
+  Util::SetGlobal language=en selector=T 
   Util::DefinedAttr tnode=t_lemma,nodetype,formeme
   Block::XY
   Util::DefinedAttr anode=lemma on_error=die message="after block XY"

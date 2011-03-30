@@ -1,4 +1,4 @@
-package Treex::Block::SetGlobal;
+package Treex::Block::Util::SetGlobal;
 use Moose;
 use Treex::Common;
 extends 'Treex::Core::Block';
@@ -24,7 +24,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::SetGlobal
+Treex::Block::Util::SetGlobal
 
 =head1 DESCRIPTION
 
@@ -37,7 +37,7 @@ Special block for setting global parameters in scenarios. E.g., instead of:
 
 you can write:
 
- SetGlobal language=en
+ Util::SetGlobal language=en
  Read::PlainText from=file.txt
  W2A::Tokenize
  W2A::Tag

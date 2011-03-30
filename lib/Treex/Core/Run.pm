@@ -54,14 +54,14 @@ has 'lang' => (
     traits        => ['Getopt'],
     cmd_aliases   => [ 'language', 'L' ],
     is            => 'rw', isa => 'LangCode',
-    documentation => q{shortcut for adding "SetGlobal language=xy" at the beginning of the scenario},
+    documentation => q{shortcut for adding "Util::SetGlobal language=xy" at the beginning of the scenario},
 );
 
 has 'selector' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'S',
     is            => 'rw', isa => 'Selector',
-    documentation => q{shortcut for adding "SetGlobal selector=xy" at the beginning of the scenario},
+    documentation => q{shortcut for adding "Util::SetGlobal selector=xy" at the beginning of the scenario},
 );
 
 has 'filelist' => (
@@ -353,11 +353,11 @@ sub _execute_locally {
     }
 
     if ( $self->lang ) {
-        $scen_str = 'SetGlobal language=' . $self->lang . " $scen_str";
+        $scen_str = 'Util::SetGlobal language=' . $self->lang . " $scen_str";
     }
 
     if ( $self->selector ) {
-        $scen_str = 'SetGlobal selector=' . $self->selector . " $scen_str";
+        $scen_str = 'Util::SetGlobal selector=' . $self->selector . " $scen_str";
     }
 
     my $loading_started = time;
