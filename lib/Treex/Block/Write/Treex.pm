@@ -1,6 +1,6 @@
 package Treex::Block::Write::Treex;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has [qw(file_stem path)] => (

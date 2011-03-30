@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::AddAuxVerbModal;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %deontmod2modalverb = (

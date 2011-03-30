@@ -1,6 +1,6 @@
 package Treex::Tools::Tagger::TreeTagger;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use ProcessUtils;
 
 has model => ( isa => 'Str', is => 'rw', required => 1 );

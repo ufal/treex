@@ -1,6 +1,6 @@
 package Treex::Block::T2T::CopyTtree;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );

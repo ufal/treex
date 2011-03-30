@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::FixPossessiveAdjs;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Lexicon::Czech;

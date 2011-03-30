@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::TrFRerank;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has discount_old_logprobs => (

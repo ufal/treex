@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::InitMorphcat;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %M_GENDER_FOR = (

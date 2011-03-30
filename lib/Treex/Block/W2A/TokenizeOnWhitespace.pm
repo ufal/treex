@@ -1,6 +1,6 @@
 package Treex::Block::W2A::TokenizeOnWhitespace;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub tokenize_sentence {

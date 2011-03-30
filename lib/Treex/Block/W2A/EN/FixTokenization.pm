@@ -1,6 +1,6 @@
 package Treex::Block::W2A::EN::FixTokenization;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %MERGE_FOR = (

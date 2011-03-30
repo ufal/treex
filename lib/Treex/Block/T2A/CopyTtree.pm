@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CopyTtree;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_zone {

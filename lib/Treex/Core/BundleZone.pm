@@ -1,7 +1,7 @@
 package Treex::Core::BundleZone;
 
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use MooseX::NonMoose;
 
 use Treex::Core::Node::A;

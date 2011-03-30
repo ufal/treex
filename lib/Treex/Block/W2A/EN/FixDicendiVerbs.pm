@@ -1,7 +1,7 @@
 package Treex::Block::W2A::EN::FixDicendiVerbs;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Lexicon::English;

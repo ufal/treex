@@ -1,6 +1,6 @@
 package Treex::Block::Align::T::CopyAlignmentFromAlayer;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has to_language => ( isa => 'Str', is => 'ro', required => 1);

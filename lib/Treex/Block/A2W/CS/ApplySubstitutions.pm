@@ -1,7 +1,7 @@
 package Treex::Block::A2W::CS::ApplySubstitutions;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 #my $DEFAULT_TSV = 'data/models/translation/substitutions/cs_wmt2007-2010.tsv';

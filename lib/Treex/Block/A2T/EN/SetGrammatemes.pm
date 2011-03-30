@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::SetGrammatemes;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Lexicon::English;

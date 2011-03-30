@@ -1,6 +1,6 @@
 package Treex::Block::Util::DefinedAttr;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has [qw(tnode anode nnode pnode)] => (

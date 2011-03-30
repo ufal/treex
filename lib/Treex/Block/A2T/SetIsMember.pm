@@ -1,6 +1,6 @@
 package Treex::Block::A2T::SetIsMember;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );

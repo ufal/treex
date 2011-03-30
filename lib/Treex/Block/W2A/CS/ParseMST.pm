@@ -1,6 +1,6 @@
 package Treex::Block::W2A::CS::ParseMST;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tools::Parser::MST;

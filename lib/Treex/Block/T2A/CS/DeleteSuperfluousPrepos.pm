@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::DeleteSuperfluousPrepos;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %DISTANCE_LIMIT = (

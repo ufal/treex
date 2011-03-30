@@ -1,6 +1,6 @@
 package Treex::Block::W2A::EN::FixTagsAfterParse;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 Readonly my $TAGS_FILE => 'data/models/morpho_analysis/en/forms_with_more_tags.tsv';

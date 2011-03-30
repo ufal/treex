@@ -1,7 +1,7 @@
 package Treex::Block::Write::ConllLike;
 
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use autodie;
 
 extends 'Treex::Core::Block';

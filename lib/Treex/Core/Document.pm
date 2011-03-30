@@ -1,7 +1,7 @@
 package Treex::Core::Document;
 
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use Treex::Core::Config;
 use Treex::Core::DocZone;
 use Treex::Core::Bundle;

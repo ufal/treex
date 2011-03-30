@@ -1,7 +1,7 @@
 package Treex::Block::T2A::CS::AddAuxVerbCompoundPassive;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {

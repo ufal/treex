@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::RemoveUnpassivizableVariants;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use LanguageModel::MorphoLM;

@@ -1,6 +1,6 @@
 package Treex::Block::A2T::EN::RehangSharedAttr;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_ttree {

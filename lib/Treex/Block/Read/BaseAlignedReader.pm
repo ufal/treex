@@ -1,6 +1,6 @@
 package Treex::Block::Read::BaseAlignedReader;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';
 
 sub next_document {
@@ -43,7 +43,7 @@ sub BUILD {
         if ( $arg =~ /_/ ) {
             ( $lang, $sele ) = split /_/, $arg;
         }
-        if ( Treex::Common::is_lang_code($lang) ) {
+        if ( Treex::Core::Common::is_lang_code($lang) ) {
             my $files_string = $args->{$arg};
             $files_string =~ s/^\s+|\s+$//g;
             my @files = split( /[ ,]+/, $files_string );

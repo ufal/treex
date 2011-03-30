@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::TrLFJointStatic;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use TranslationModel::Static::Model;

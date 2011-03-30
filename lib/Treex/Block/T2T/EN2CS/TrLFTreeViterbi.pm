@@ -1,7 +1,7 @@
 package Treex::Block::T2T::EN2CS::TrLFTreeViterbi;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has 'lm_weight' => (
@@ -164,7 +164,7 @@ sub is_compatible {
 # so it is comfortable to define it in the same file.
 package MyTreeViterbiState;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Tools::Algorithm::TreeViterbiState';
 
 use LanguageModel::Lemma;

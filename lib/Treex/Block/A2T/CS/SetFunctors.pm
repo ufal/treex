@@ -1,7 +1,7 @@
 package Treex::Block::A2T::CS::SetFunctors;
 
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use Treex::Block::Write::ConllLike;
 use File::Java;
 use File::Temp ();

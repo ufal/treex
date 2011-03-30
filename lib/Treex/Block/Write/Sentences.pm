@@ -1,6 +1,6 @@
 package Treex::Block::Write::Sentences;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );

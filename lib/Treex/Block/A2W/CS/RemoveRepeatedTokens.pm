@@ -1,6 +1,6 @@
 package Treex::Block::A2W::CS::RemoveRepeatedTokens;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_zone {

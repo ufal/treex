@@ -1,7 +1,7 @@
 package Treex::Tools::Segment::CS::RuleBased;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Tools::Segment::RuleBased';
 
 # Note, that we cannot write

@@ -3,7 +3,7 @@ package Treex::Core::Zone;
 # antecedent of DocZone and BundleZone
 
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 use MooseX::NonMoose;
 
 extends 'Treex::PML::Struct';

@@ -1,7 +1,7 @@
 package Treex::Tools::Segment::RuleBased;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Block::W2A::SegmentOnNewlines';
 
 has use_paragraphs => (

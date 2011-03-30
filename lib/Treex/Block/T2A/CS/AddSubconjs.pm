@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::AddSubconjs;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %NUMBERPERSON2ABY = (    # 'endings' for aby/kdyby

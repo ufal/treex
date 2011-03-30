@@ -1,6 +1,6 @@
 package Treex::Block::T2A::CS::FillTagFromMorphcat;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my @CATEGORIES = qw(pos subpos gender number case possgender possnumber

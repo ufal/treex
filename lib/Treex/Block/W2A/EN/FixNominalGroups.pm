@@ -1,6 +1,6 @@
 package Treex::Block::W2A::EN::FixNominalGroups;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my $MODEL = 'generated_data/extracted_from_BNC/left_neighbours_of_nouns.tsv';

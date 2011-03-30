@@ -1,7 +1,7 @@
 package Treex::Block::T2T::EN2CS::TrLTryRules;
 use utf8;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 #TODO These hacks should be removed from here and added to the translation dictionary

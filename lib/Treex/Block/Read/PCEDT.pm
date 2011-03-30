@@ -1,6 +1,6 @@
 package Treex::Block::Read::PCEDT;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Block::Read::BasePMLReader';
 
 use Treex::PML::Factory;

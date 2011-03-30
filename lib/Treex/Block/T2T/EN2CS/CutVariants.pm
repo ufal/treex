@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::CutVariants;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has [qw(max_lemma_variants max_formeme_variants)] => (

@@ -1,6 +1,6 @@
 package Treex::Block::A2N::EN::StanfordNamedEntities;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '_ner' => ( is => 'rw' );

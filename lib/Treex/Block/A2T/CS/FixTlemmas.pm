@@ -1,6 +1,6 @@
 package Treex::Block::A2T::CS::FixTlemmas;
 use Moose;
-use Treex::Common;
+use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub possadj_to_noun {

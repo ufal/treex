@@ -1,7 +1,7 @@
 package Treex::Core::Node;
 use Moose;
 use MooseX::NonMoose;
-use Treex::Common;
+use Treex::Core::Common;
 use Cwd;
 use Treex::PML;
 
