@@ -57,6 +57,8 @@ __END__
 
 =for Pod::Coverage BUILD
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Service
@@ -64,3 +66,14 @@ Treex::Core::Service
 =head1 DESCRIPTION
 
 Service.pm
+
+=head1 AUTHOR
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

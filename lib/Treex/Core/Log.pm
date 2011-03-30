@@ -190,6 +190,8 @@ sub run_hooks {
 __END__
 
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Log - logger tailored for the needs of Treex
@@ -319,4 +321,11 @@ run all subroutines for the given error level
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

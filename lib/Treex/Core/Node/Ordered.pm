@@ -191,6 +191,8 @@ sub _shift_to_node {
 
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Node::Ordered
@@ -280,13 +282,12 @@ Shifts (changes the ord of) the node in front of the subtree of the reference no
 =back
 
 
-
 =head1 AUTHOR
 
-Martin Popel
+Martin Popel <popel@ufal.mff.suni.cz>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2011 Martin Popel
-This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
+Copyright 2011 by UFAL
 
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

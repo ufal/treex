@@ -251,6 +251,8 @@ __END__
 
 =for Pod::Coverage BUILD set_attr get_attr
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Bundle - a set of equivalent sentences (translations, or variants)
@@ -356,7 +358,7 @@ position of the bundle within the document (number, starting from 0)
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

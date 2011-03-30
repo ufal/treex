@@ -11,6 +11,8 @@ has text => ( is => 'rw' );
 __END__
 
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::DocZone - document zone for the text attribute
@@ -68,7 +70,7 @@ by one of the document's methods:
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

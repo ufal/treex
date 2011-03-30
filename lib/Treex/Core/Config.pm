@@ -73,6 +73,8 @@ sub _caller_dir {
 
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Config - centralized info about Treex configuration
@@ -124,7 +126,7 @@ for instance paths to its components.
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -244,6 +244,8 @@ __END__
 
 =for Pod::Coverage set_sentence
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::BundleZone - zone in a bundle containing a sentence and its linguistic representations
@@ -379,9 +381,9 @@ returns the Treex::Core::Document instance which the zone belongs to
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel
+Martin Popel <popel@ufal.mff.suni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -80,6 +80,8 @@ __END__
 
 =for Pod::Coverage BUILDARGS FOREIGNBUILDARGS set_attr get_attr
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Zone
@@ -115,9 +117,9 @@ otherwise only the language).
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel
+Martin Popel <popel@ufal.mff.suni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

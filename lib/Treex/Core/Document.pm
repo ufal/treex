@@ -410,6 +410,8 @@ __END__
 
 =for Pod::Coverage BUILD build_file_number description set_description
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Document - representation of a text and its linguistic analyses in the Treex framework
@@ -561,9 +563,9 @@ full filename without the extension
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel
+Martin Popel <popel@ufal.mff.suni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

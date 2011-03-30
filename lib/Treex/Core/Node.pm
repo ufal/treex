@@ -700,6 +700,8 @@ __END__
 
 =for Pod::Coverage BUILD
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Node
@@ -961,7 +963,17 @@ roots of coordination and apposition constructions.
 
 =back
 
-=head1 COPYRIGHT
 
-Copyright 2006-2011 Zdenek Zabokrtsky, Martin Popel.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+=head1 AUTHORS
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.suni.cz>
+
+David Mareček <marecek@ufal.mff.suni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

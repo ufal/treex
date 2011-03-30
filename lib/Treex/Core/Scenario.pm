@@ -262,6 +262,8 @@ __END__
 
 =for Pod::Coverage BUILD
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Scenario
@@ -327,11 +329,14 @@ L<TectoMT::Block|TectoMT::Block>,
 
 =head1 AUTHORS
 
-Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
-Martin Popel <popel@ufal.mff.cuni.cz>
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-=head1 COPYRIGHT
+Martin Popel <popel@ufal.mff.suni.cz>
 
-Copyright 2006-2010 Zdenek Zabokrtsky, Martin Popel.
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+David Mareček <marecek@ufal.mff.suni.cz>
 
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

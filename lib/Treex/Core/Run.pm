@@ -757,6 +757,8 @@ TODO:
 
 =for Pod::Coverage BUILD treex
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Run + treex - applying Treex blocks and/or scenarios on data
@@ -791,7 +793,14 @@ switch.
 
 __USAGE__
 
+=head1 AUTHOR
 
-=head1 AUTHORS
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Zdenek Zabokrtsky, Martin Popel
+Martin Popel <popel@ufal.mff.suni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

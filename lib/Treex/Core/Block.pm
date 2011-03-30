@@ -153,6 +153,8 @@ __END__
 
 =for Pod::Coverage BUILD build_language
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Block - the basic data-processing unit in the Treex framework
@@ -283,9 +285,9 @@ L<Treex::Core::Scenario|Treex::Core::Scenario>,
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz> <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

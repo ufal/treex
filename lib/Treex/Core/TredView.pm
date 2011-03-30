@@ -355,6 +355,8 @@ sub pnode_style {
 __END__
 
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView
@@ -363,3 +365,16 @@ Treex::Core::TredView
 =head1 DESCRIPTION
 
 descr
+
+=head1 AUTHOR
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.suni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 by UFAL
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
