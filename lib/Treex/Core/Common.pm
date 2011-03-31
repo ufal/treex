@@ -155,6 +155,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2011 by UFAL
+Copyright © 2011 by UFAL
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

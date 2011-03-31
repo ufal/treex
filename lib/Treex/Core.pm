@@ -10,6 +10,8 @@ __END__
 
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core - interface to linguistic structures and processing units in Treex
@@ -160,21 +162,21 @@ Blocks from a scenario are applied on a document one after another.
 
 =head2 Support for visualizing Treex trees in TrEd
 
-Treex::Core also contains a TrEd extension ???name??? for browsing .treex files.
-The extension itself is only a thin wrapper of viewing functionality
+Treex::Core also contains a TrEd extension for browsing .treex files.
+The extension itself is only a thin wrapper for the viewing functionality
 implemented in Treex::Core::TredView.
 
 
 =head1 AUTHOR
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-David Marecek
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005-2011 by UFAL
+Copyright © 2009-2011 by UFAL
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

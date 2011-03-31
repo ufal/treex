@@ -90,6 +90,8 @@ Like Treex::PML, Treex::Core is language universal.
 
 =head1 HISTORY
 
+... historie, odkaz na UFAL
+
 1996 - tree editor Graph by Michal Kren (predecessor of TrEd)
 
 1999 - Petr Pajas started development of tree editor TrEd, inheriting the Graph's data format (fs-format)
@@ -139,11 +141,11 @@ Treex is an open project, there is a number of people who have contributed.
 
 Those who are responsible for developing and releasing Treex::Core modules.
 
-Zdenek Zabokrtsky
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-David Marecek
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 =head2 Author of TrEd and Treex::PML
 
@@ -151,16 +153,16 @@ Petr Pajas
 
 =head2 Other contributors (both present and past)
 
-Jan Ptacek
+Jan Ptáček
 
-Ondrej Bojar
+Ondřej Bojar
 
-Vaclav Novak
+Václav Novák
 
-Tomas Kraut
+Tomáš Kraut
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005-2011 by UFAL
+Copyright © 2009-2011 by ÚFAL
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
