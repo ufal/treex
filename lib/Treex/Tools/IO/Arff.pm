@@ -253,7 +253,7 @@ sub save_arff {
                     }
                     else {
                         if ( $self->debug_mode ) {
-                            print "Invali buffer passed, " . $attribute->{attribute_name} . " is not defined for record... write UNKNOWN\n";
+                            print "Invalid buffer passed, " . $attribute->{attribute_name} . " is not defined for record... write UNKNOWN\n";
                         }
                         $record_string .= q/UNKNOWN,/;
                         $self->error_count( $self->error_count + 1 );
