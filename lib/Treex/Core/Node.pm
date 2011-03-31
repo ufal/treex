@@ -628,10 +628,6 @@ sub generate_new_id {    #TODO move to Core::Document?
     return $new_id;
 }
 
-sub is_coap_root {
-    log_fatal('Method TectoMT::Node::is_coap_root is virtual, it must be overriden.');
-}
-
 sub add_to_listattr {
     my $self = shift;
     my ( $attr_name, $attr_value ) = pos_validated_list(

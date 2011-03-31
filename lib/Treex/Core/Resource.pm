@@ -50,6 +50,17 @@ Treex::Core::Resources
 
 resources....
 
+=head1 SUBROUTINES
+
+=over
+
+=item require_file_from_share($rel_path_to_file, $who_wants_it)
+
+Helper method used in L<Treex::Core::Block::get_required_share_files()>,
+but it can be used also in Tools.
+
+=back
+
 =head1 AUTHOR
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>

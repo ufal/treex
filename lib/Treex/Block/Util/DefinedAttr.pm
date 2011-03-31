@@ -67,6 +67,7 @@ sub check_tree {
 
 __END__
 
+=for check_tree
 
 =head1 NAME
 

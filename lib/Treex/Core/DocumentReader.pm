@@ -1,6 +1,10 @@
 package Treex::Core::DocumentReader;
 use Moose::Role;
 
+requires 'next_document';
+
+requires 'number_of_documents';
+
 # attrs for distributed processing
 # TODO: check jobs >= jobindex > 0
 has jobs => (
@@ -31,20 +35,12 @@ has doc_number => (
         . ' the ordinal number of the current (most recently loaded) document.',
 );
 
-# Is the document that was most recently returned by $self->next_document()
-# supossed to be processed by this job?
-# Job indices and document numbers are 1-based, so e.g. for
-# jobs = 5, jobindex = 3 we want to load documents with numbers 3,8,13,18,...
-# jobs = 5, jobindex = 5 we want to load documents with numbers 5,10,15,20,...
-# i.e. those documents where (doc_number-1) % jobs == (jobindex-1).
 sub is_current_document_for_this_job {
     my ($self) = @_;
     return 1 if !$self->jobindex;
     return ( $self->doc_number - 1 ) % $self->jobs == ( $self->jobindex - 1 );
 }
 
-# Returns a next document which should be processed by this job.
-# If jobindex is set, returns "modulo number of jobs".
 sub next_document_for_this_job {
     my ($self) = @_;
     my $doc = $self->next_document();
@@ -64,12 +60,6 @@ sub next_document_for_this_job {
 
     return $doc;
 }
-
-requires 'next_document';
-
-# total number of documents that will be produced
-# If the number is unknown, undef is returned.
-requires 'number_of_documents';
 
 sub number_of_documents_per_this_job {
     my ($self) = @_;
@@ -101,6 +91,57 @@ Treex::Core::DocumentReader - interface for all document readers
 Document readers are a Treex concept how to load documents to be processed by Treex.
 The documents can be stored in files (in various formats) or read from STDIN
 or retrieved from a socket etc.
+
+=head1 METHODS
+
+=head2 To be implemented
+
+These methods must be implemented in classes that consume this role.
+
+=over
+
+=item next_document
+
+Return next document (L<Treex::Core::Document>).
+
+=item number_of_documents
+
+Total number of documents that will be produced by this reader.
+If the number is unknown in advance, undef should be returned.
+
+=back
+
+=head2 Already implemented
+
+=over
+
+=item is_current_document_for_this_job
+
+Is the document that was most recently returned by $self->next_document()
+supossed to be processed by this job?
+Job indices and document numbers are 1-based, so e.g. for
+ jobs = 5, jobindex = 3 we want to load documents with numbers 3,8,13,18,...
+ jobs = 5, jobindex = 5 we want to load documents with numbers 5,10,15,20,...
+i.e. those documents where (doc_number-1) % jobs == (jobindex-1).
+
+=item next_document_for_this_job
+
+Returns a next document which should be processed by this job.
+If jobindex is set, returns "modulo number of jobs".
+See C<is_current_document_for_this_job>.
+
+=item number_of_documents_per_this_job
+
+Total number of documents that will be produiced by this reader for this job.
+It's computed based on C<number_of_documents>, C<jobindex> and C<jobs>.
+
+=item restart
+
+Start reading again from the first document.
+This implementation just sets the attribute C<doc_number> to zero.
+You can add additional behavior using the Moose C<after 'restart'> construct.
+
+=back
 
 =head1 SEE
 

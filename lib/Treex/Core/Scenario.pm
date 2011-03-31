@@ -287,11 +287,11 @@ Treex::Core::Scenario
 
 =over 4
 
-=item my $scenario = Treex::Core::Scenario->new(scen => 'W2A::Tokenize language=en  W2A::Lemmatize' );
+=item my $scenario = Treex::Core::Scenario->new(from_string => 'W2A::Tokenize language=en  W2A::Lemmatize' );
 
-Constructor parameter 'scen' specifies
+Constructor parameter C<from_string> specifies
 the names of blocks which are to be executed (in the specified order)
-when the scenario is applied on a Treex::Core::Document object.
+when the scenario is applied on a L<Treex::Core::Document> object.
 
 =back
 
@@ -300,9 +300,12 @@ when the scenario is applied on a Treex::Core::Document object.
 
 =over 4
 
-=item $scenario->apply_on_stream($stream);
+=item $scenario->run();
 
-It applies the blocks on a stream of treex documents.
+Run the scenario.
+On of the blocks (usually the first one) must be the document reader
+(see L<Treex::Core::DocumentReader>) that produces the documents
+on which this scenatio is applied.
 
 =back
 
@@ -317,6 +320,8 @@ It applies the blocks on a stream of treex documents.
 =item parse_scenario_string
 
 =back
+
+=head2 Experimental support
 
 
 =head1 SEE ALSO
