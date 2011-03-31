@@ -1,4 +1,11 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
+
+BEGIN {
+    unless ( $ENV{AUTHOR_TESTING} ) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests are for testing by the author' );
+    }
+}
 
 use strict;
 use warnings;
@@ -14,26 +21,26 @@ plan tests => 1;
 SKIP: {
 
     skip "because not running on an SGE cluster", 1
-        if ! `which qsub`; # if !defined $ENV{SGE_CLUSTER_NAME};
+        if !`which qsub`;    # if !defined $ENV{SGE_CLUSTER_NAME};
 
-    my $number_of_files = 110;
-    my $number_of_jobs  = 30;
+        my $number_of_files = 110;
+        my $number_of_jobs  = 30;
 
-    foreach my $i ( map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ) {
-        my $doc = Treex::Core::Document->new();
-        $doc->set_description($i);
-        $doc->save("paratest$i.treex");
+        foreach my $i ( map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ) {
+            my $doc = Treex::Core::Document->new();
+            $doc->set_description($i);
+            $doc->save("paratest$i.treex");
     }
 
     my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
         . " Util::Eval document='print \$document->description()'"
         . " -g 'paratest*.treex'";
 
-    stdout_is(
-        sub { treex $cmdline_arguments },
-        ( join '', map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ),
-        "running parallelized treex on SGE cluster"
-    );
+        stdout_is(
+            sub { treex $cmdline_arguments },
+            ( join '', map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ),
+            "running parallelized treex on SGE cluster"
+        );
 
-    unlink glob "paratest*";
-}
+        unlink glob "paratest*";
+    }
