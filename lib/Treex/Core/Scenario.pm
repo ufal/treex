@@ -35,7 +35,7 @@ has _global_params => (
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-    log_info("Initializing an instance of TectoMT::Scenario ...");
+    log_info("Initializing an instance of Treex::Core::Scenario ...");
 
     #<<< no perltidy
     my $scen_str = defined $arg_ref->{from_file} ? load_scenario_file($arg_ref->{from_file})
@@ -167,10 +167,11 @@ sub parse_scenario_string {
             my $block_filename = $token;
             $block_filename =~ s/::/\//g;
             $block_filename .= '.pm';
-            if (  Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
+            if ( Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
                 $token = "Treex::Block::$token";
             }
             else {
+
                 # TODO allow user-made blocks not-starting with Treex::Block?
                 log_fatal("Block $token (file $block_filename) does not exist!");
             }
