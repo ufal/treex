@@ -414,7 +414,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Document - representation of a text and its linguistic analysis in the Treex framework
+Treex::Core::Document - representation of a text and its linguistic analyses in the Treex framework
 
 =head1 DESCRIPTION
 
