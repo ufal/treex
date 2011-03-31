@@ -266,19 +266,50 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Scenario
+Treex::Core::Scenario - a larger Treex processing unit (composed of the basic treex processing units - blocks)
 
 =head1 SYNOPSIS
 
- use Treex::Core::Scenario;
- ??? ??? ??? ???
-
+ use Treex::Core;
+ 
+ my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
+ 
+ $scenario->run;
 
 
 =head1 DESCRIPTION
 
 
-?? ?? ?? ?? ?? ???? ?? ???? ?? ???? ?? ?? needs to be updated
+A Treex scenario consists of a sequence of (possibly parametrized) Treex blocks.
+
+Scenarios can be described by a simple textual format, which is either passed
+directly to the scenario construction, or is contained in a text file whose
+name is passed.
+
+The string description of scenarios looks as follows.
+
+1) It contains a list of block names from which their 'Treex::Block::' prefixes
+were removed.
+
+2) The block names are separated by one or more whitespaces.
+
+3) The block names are listed  in the same order in which they should be applied on data.
+
+4) For each block, there can be one or more parameters specified, using the attribute=value form.
+
+5) Comments start with '#' and end with the nearest newline character.
+
+
+Scenario example:
+
+ # morphological analysis of
+ Util::SetGlobal language=en selector=src
+ Read::Text
+ W2A::ResegmentSentences
+ W2A::EN::Tokenize
+ W2A::EN::NormalizeForms
+ W2A::EN::FixTokenization
+ W2A::EN::TaggerMorce
 
 
 =head1 METHODS
@@ -289,9 +320,12 @@ Treex::Core::Scenario
 
 =item my $scenario = Treex::Core::Scenario->new(from_string => 'W2A::Tokenize language=en  W2A::Lemmatize' );
 
-Constructor parameter C<from_string> specifies
-the names of blocks which are to be executed (in the specified order)
+Constructor parameter C<from_string> specifies the names of blocks which are to be executed (in the specified order)
 when the scenario is applied on a L<Treex::Core::Document> object.
+
+=item my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
+
+The scenario description is loaded from the file.
 
 =back
 
@@ -309,28 +343,28 @@ on which this scenatio is applied.
 
 =back
 
-=head2 Rather internal methods for loading scenarios
+=head2 Internal methods for loading scenarios
 
 =over 4
 
-=item construct_scenario_string
+=item load_scenario_file($filename)
 
-=item load_scenario_file
+loads a scenario description from a file
 
 =item parse_scenario_string
 
-=back
+parses a textual description of a scenario
 
-=head2 Experimental support
+=item construct_scenario_string
+
+constructs a scenario textual description from an existing scenario instance
+
+=back
 
 
 =head1 SEE ALSO
 
-L<TectoMT::Node|TectoMT::Node>,
-L<TectoMT::Bundle|TectoMT::Bundle>,
-L<Treex::Core::Document|Treex::Core::Document>,
-L<TectoMT::Block|TectoMT::Block>,
-
+L<Treex::Core|Treex::Core>
 
 =head1 AUTHORS
 

@@ -161,17 +161,16 @@ Treex::Core::Block - the basic data-processing unit in the Treex framework
 
 =head1 SYNOPSIS
 
- package BlockGroup::My_Block;
- 
- use strict; use warnings; use utf8;
- 
- use base qw(Treex::Core::Block);
+ package Treex::Block::My::Block;
+ use Moose;
+ use Treex::Core::Common;
+ extends 'Treex::Block::Read::BaseTextReader';
  
  sub process_bundle {
     my ( $self, $bundle) = @_;
-    
-    # processing
-    
+ 
+    # bundle processing
+ 
  }
 
 =head1 DESCRIPTION
@@ -260,12 +259,7 @@ This method should be used especially for downloading statistical models,
 but not for installed tools or libraries.
 
  sub get_required_share_files {
-#PREPARED FOR PARAM CHECK
-    my $self = shift;
-    my () = pos_validated_list (
-        \@_,
-        { isa => '' },
-    );
+     my $self = shift;
      my $self = shift;
      return (
          'data/models/mytool/'.$self->language.'/features.gz',
