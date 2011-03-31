@@ -200,7 +200,7 @@ Treex::Core::Log - logger tailored for the needs of Treex
 
  use Treex::Core::Log;
  
- Treex::Core::Log::set_error_level('DEBUG');
+ Treex::Core::Log::log_set_error_level('DEBUG');
  
  sub epilog {
      print STDERR "I'm going to cease!";
@@ -254,7 +254,7 @@ The current error level can be accessed by the following functions:
 
 =over 4
 
-=item set_error_level($error_level)
+=item log_set_error_level($error_level)
 
 =item get_error_level()
 
