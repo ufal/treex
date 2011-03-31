@@ -26,9 +26,9 @@ sub share_dir {
     #return $ENV{TMT_ROOT} . "/share/";    # temporary
     #                                      # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
     if ( devel_version() ) {
-        return $ENV{TMT_ROOT} . "/share/";
+        #return $ENV{TMT_ROOT} . "/share/";
 
-        #return lib_core_dir() . "/share/";
+        return lib_core_dir() . "/share/";
     }
     else {
         return File::ShareDir::dist_dir('Treex-Core')
