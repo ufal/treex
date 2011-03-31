@@ -93,7 +93,6 @@ sub full_filename {
 sub BUILD {
     my $self = shift;
     my ($params_rf) = @_;
-
     my $pmldoc;
 
     if ( defined $params_rf ) {
@@ -107,7 +106,6 @@ sub BUILD {
         elsif ( $params_rf->{filename} ) {
             $pmldoc = $factory->createDocumentFromFile( $params_rf->{filename} );
         }
-
     }
 
     # constructing treex document from an existing file
@@ -123,50 +121,54 @@ sub BUILD {
                 Treex::Core::DocZone->new($doczone);
             }
         }
+        $self->_rebless_and_index();
+    }
+    return;
+}
 
-        foreach my $bundle ( $self->get_bundles ) {
-            bless $bundle, 'Treex::Core::Bundle';
-            $bundle->_set_document($self);
+sub _rebless_and_index {
+    my $self = shift;
+    foreach my $bundle ( $self->get_bundles ) {
+        bless $bundle, 'Treex::Core::Bundle';
+        $bundle->_set_document($self);
 
-            if ( defined $bundle->{zones} ) {
-                foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
+        if ( defined $bundle->{zones} ) {
+            foreach my $zone ( map { $_->value() } $bundle->{zones}->elements ) {
 
-                    # $zone hashref will be reused as the blessed instance variable
-                    Treex::Core::BundleZone->new($zone);
-                    $zone->_set_bundle($bundle);
+                # $zone hashref will be reused as the blessed instance variable
+                Treex::Core::BundleZone->new($zone);
+                $zone->_set_bundle($bundle);
 
-                    foreach my $tree ( $zone->get_all_trees ) {
-                        my $layer;
-                        if ( $tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/ ) {
-                            $layer = uc($1);
-                        }
-                        else {
-                            log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
-                        }
-                        foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
-                            bless $node, "Treex::Core::Node::$layer";
-                            $self->index_node_by_id( $node->get_id, $node );
-                        }
-                        $tree->_set_zone($zone);
+                foreach my $tree ( $zone->get_all_trees ) {
+                    my $layer;
+                    if ( $tree->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/ ) {
+                        $layer = uc($1);
                     }
+                    else {
+                        log_fatal "Unexpected member in zone structure: " . $tree->type->get_structure_name;
+                    }
+                    foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
+                        bless $node, "Treex::Core::Node::$layer";
+                        $self->index_node_by_id( $node->get_id, $node );
+                    }
+                    $tree->_set_zone($zone);
+                }
 
-                    # TODO: Backward links from a-nodes to n-nodes
-                    # should be created in n-nodes' constructors,
-                    # which must be called after constructing a-nodes.
-                    # TODO: Now, we don't call node constructors at all
-                    # during loading, we just re-bless Treex::PML::Nodes.
-                    if ( $zone->has_ntree ) {
-                        foreach my $nnode ( $zone->get_ntree()->get_descendants() ) {
-                            foreach my $anode ( $nnode->get_anodes() ) {
-                                $anode->_set_n_node($nnode);
-                            }
+                # TODO: Backward links from a-nodes to n-nodes
+                # should be created in n-nodes' constructors,
+                # which must be called after constructing a-nodes.
+                # TODO: Now, we don't call node constructors at all
+                # during loading, we just re-bless Treex::PML::Nodes.
+                if ( $zone->has_ntree ) {
+                    foreach my $nnode ( $zone->get_ntree()->get_descendants() ) {
+                        foreach my $anode ( $nnode->get_anodes() ) {
+                            $anode->_set_n_node($nnode);
                         }
                     }
                 }
             }
         }
     }
-    return;
 }
 
 sub _pml_attribute_hash {
@@ -185,7 +187,7 @@ if ( not -f $_treex_schema_file ) {
 
 my $_treex_schema = Treex::PML::Schema->new( { filename => $_treex_schema_file } );
 
-sub _create_empty_pml_doc {
+sub _create_empty_pml_doc { ## no critic (ProhibitUnusedPrivateSubroutines)
     my $fsfile = Treex::PML::Document->create
         (
         name => "x",                         #$filename,  ???
