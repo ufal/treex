@@ -49,7 +49,7 @@ my ( $import, $unimport, $init_meta ) =
         \&Treex::Core::Log::log_fatal,
         \&Treex::Core::Log::log_warn,
         \&Treex::Core::Log::log_debug,
-        \&Treex::Core::Log::set_error_level,
+        \&Treex::Core::Log::log_set_error_level,
         \&Treex::Core::Log::log_info,
         \&List::MoreUtils::first_index,
         \&List::MoreUtils::all,

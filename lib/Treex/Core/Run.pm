@@ -25,7 +25,7 @@ has 'quiet' => (
     traits      => ['Getopt'],
     cmd_aliases => 'q',
     is          => 'rw', isa => 'Bool', default => 0,
-    trigger => sub { Treex::Core::Log::set_error_level('FATAL'); },
+    trigger => sub { Treex::Core::Log::log_set_error_level('FATAL'); },
     documentation => q{Warning, info and debug messages are suppressed. Only fatal errors are reported.},
 );
 
@@ -39,7 +39,7 @@ has 'error_level' => (
     traits      => ['Getopt'],
     cmd_aliases => 'e',
     is          => 'rw', isa => 'ErrorLevel', default => 'INFO',
-    trigger => sub { Treex::Core::Log::set_error_level( $_[1] ); },
+    trigger => sub { Treex::Core::Log::log_set_error_level( $_[1] ); },
     documentation => q{Possible values: ALL, DEBUG, INFO, WARN, FATAL},
 );
 

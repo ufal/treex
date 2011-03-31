@@ -48,7 +48,7 @@ my $unfinished_line;
 my $current_error_level_value = $ERROR_LEVEL_VALUE{'INFO'};
 
 # allows to suppress messages with lower than given importance
-sub set_error_level {
+sub log_set_error_level {
     my $new_error_level = uc(shift);
     if ( not defined $ERROR_LEVEL_VALUE{$new_error_level} ) {
         log_fatal("Unacceptable errorlevel: $new_error_level");
