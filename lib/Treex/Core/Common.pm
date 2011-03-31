@@ -114,9 +114,9 @@ sub get_lang_name {
     return exists $EXTRA_LANG_CODES{$code} ? $EXTRA_LANG_CODES{$code} : code2language($code);
 }
 
-__END__
-
 1;
+
+__END__
 
 =encoding utf-8
 
