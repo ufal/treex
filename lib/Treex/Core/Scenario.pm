@@ -33,8 +33,6 @@ has _global_params => (
     },
 );
 
-my $TMT_DEBUG_MEMORY = ( defined $ENV{TMT_DEBUG_MEMORY} and $ENV{TMT_DEBUG_MEMORY} );
-
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
     log_info("Initializing an instance of TectoMT::Scenario ...");
@@ -133,7 +131,6 @@ sub parse_scenario_string {
         # include of another scenario file
         if ( $token =~ /\.scen/ ) {
             my $scenario_filename = $token;
-            $scenario_filename =~ s/\$\{?TMT_ROOT\}?/$ENV{TMT_ROOT}/;
 
             my $included_scen_path;
             if ( $scenario_filename =~ m|^/| ) {    # absolute path
@@ -170,13 +167,10 @@ sub parse_scenario_string {
             my $block_filename = $token;
             $block_filename =~ s/::/\//g;
             $block_filename .= '.pm';
-            if ( -e $ENV{TMT_ROOT} . "/treex/lib/Treex/Block/$block_filename" ) {    # new Treex blocks
+            if (  Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
                 $token = "Treex::Block::$token";
             }
-            elsif ( -e $ENV{TMT_ROOT} . "/libs/blocks/$block_filename" ) {           # old TectoMT blocks
-            }
             else {
-
                 # TODO allow user-made blocks not-starting with Treex::Block?
                 log_fatal("Block $token (file $block_filename) does not exist!");
             }
