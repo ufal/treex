@@ -9,7 +9,7 @@ with 'Treex::Core::Node::EffectiveRelations';
 # t-layer attributes
 has [
     qw( nodetype t_lemma functor subfunctor formeme tfa
-        is_dsp_root sentmod is_parenthesis is_passive
+        is_dsp_root sentmod is_parenthesis is_passive is_generated
         is_relclause_head is_name_of_person voice
         t_lemma_origin formeme_origin
         )

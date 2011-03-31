@@ -852,7 +852,7 @@ Returns an array of nodes sharing the parent with the current node.
 
 =head3 Switches
 
-Actually there are 6 switches:
+Currently there are 6 switches:
 
 =over
 
