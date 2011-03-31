@@ -93,7 +93,8 @@ One of parameters tnode, anode, nnode, pnode must be always specified.
 By default: on_error=warn and message is empty.
 
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2011 Martin Popel
-This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
