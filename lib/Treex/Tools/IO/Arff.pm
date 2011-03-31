@@ -124,7 +124,7 @@ sub load_arff {
     my $attribute_count = 0;
     my $line_counter    = 1;
     my $relation        = $self->relation;
-    my $line_parser     = Text::CSV->new( { binary => 1, quote_char => '\'', escape_char => '\\' } ) or die "Cannot use CSV Parser: " . Text::CSV->error_diag();
+    my $line_parser     = Text::CSV->new( { binary => 1, quote_char => '\'', escape_char => '\\', allow_loose_escapes => 1 } ) or die "Cannot use CSV Parser: " . Text::CSV->error_diag();
 
     local *FILE;
     open( FILE, $arff_file ) or die $!;
