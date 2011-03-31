@@ -174,7 +174,7 @@ sub _replace_all {
 sub _load_functors {
 
     my ( $this, $arff_file ) = @_;
-    my $loader = Treex::Tools::IO::Arff->new();
+    my $loader = Treex::Tools::IO::Arff->new( debug_mode => 1 );
     my $data   = $loader->load_arff( $arff_file->filename );
 
     my $sentence;
@@ -248,7 +248,11 @@ Name of the feature generation configuration file.
 
 =head2 TODO
 
-Possibly could be made language independent, only with different models for different languages. 
+Possibly could be made language independent, only with different models for different languages.
+
+=head2 BUGS
+
+The used temporary directory doesn't get deleted at the end, no idea why.  
 
 =cut
 
