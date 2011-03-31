@@ -149,6 +149,23 @@ Instead of
  use Data::Dumper qw(Dumper);
 
 
+=head1 SUBROUTINES
+
+=over
+
+=item $language_name = get_lang_name($iso639_code)
+
+=item $bool = is_lang_code($iso639_code)
+
+=item pos_validated_list
+
+This subroutine is automatically exported.
+Depending on the value of C<$Treex::Core::Config::params_validate>
+it is either the (slow) one from L<MooseX::Params::Validate>
+or a fast one, that does no type checking.
+
+=back
+
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>

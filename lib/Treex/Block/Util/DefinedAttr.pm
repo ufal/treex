@@ -67,7 +67,7 @@ sub check_tree {
 
 __END__
 
-=for check_tree
+=for Pod::Coverage check_tree
 
 =head1 NAME
 
