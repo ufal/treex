@@ -588,7 +588,7 @@ sub _wait_for_jobs {
 
     while ( !$done ) {
         $total_doc_number    ||= $self->_read_total_doc_number();
-        $all_jobs_finished   ||= () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs;
+        $all_jobs_finished   ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
         # If a job starts processing another doc,
