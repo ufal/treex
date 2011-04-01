@@ -9,24 +9,23 @@ __END__
 
 =head1 NAME
 
-Treex - NLP framework
+Treex - Natural Language Processing framework
 
 =head1 INTRODUCTION
 
 Treex (formerly named TectoMT) is a highly modular, multi-purpose,
-easily extendable Natural Language Processing framework.
+multi-lingual, easily extendable Natural Language Processing framework.
 
 Treex has the following features:
 
 - There is a number of NLP tools already integrated in Treex,
   such as morphological tagger, lemmatizers, named entity recognizers,
   dependency parsers, constituency parsers, various kinds of dictionaries.
-  TODO L<Treex::Manual::IntegratedTools>
 
 - Treex allows storing all data in an XML-based format, which
   simplifies data interchange with other frameworks.
 
-- Treex is tightly coupled with the tree editor Tred, which
+- Treex is tightly coupled with the tree editor TrEd, which
   allows easy visualization of syntactic structures.
 
 - Treex is language universal and supports processing multilingual
@@ -35,20 +34,20 @@ Treex has the following features:
 - Treex facilitates distributed processing on a computer cluster.
 
 - Treex architecture is inspired by the Prague Dependency Treebank,
-  especially in layered view on language, and in distinguishing
-  surface syntax and deep syntax; the PDT's schema was used for large-scale
-  linguistic annotations in several languages.
+  especially by its layered view on language (especially distinguishing
+  surface syntax and deep syntax). Linguistic data structures used in
+  Treex are highly similar to the PDT's data structures.
 
-- Treex has been used for analysing large data, such as for Czech-English
-  parallel treebank CzEng.
+- Treex has been used for deep analysing large data, such as for Czech-English
+  parallel treebank CzEng (millions of parallel sentence pairs).
 
 - Treex has been intensively used for several years for developing a
   Czech-English machine translation system, which is currently the main,
-  but not the only one application of Treex.   TODO L<Treex::Manual::Applications>
+  but not the only one application of Treex.
 
 In a way, Treex is similar to GATE. However, in our opinion, Treex has
-a better support for deeply structured language data and for multilingual
-data.
+a better support for deeply structured language data and for processing
+multilingual data.
 
 =head1 COMPONENTS
 
@@ -86,51 +85,72 @@ Like Treex::PML, Treex::Core is language universal.
 
 =head2 Language specific distributions
 
-... are expected to be released soon.
+Language specific components of Treex are planned to be released on CPAN
+within 2011.
+
 
 =head1 HISTORY
 
-... historie, odkaz na UFAL
+Treex results from an active long-term NLP research carried out at the Institute
+of Formal and Applied Linguistics (Faculty of Mathematics and Physics, Charles University
+in Prague, Czech Republic). The following list surveys only selected technological shifts:
 
-1996 - tree editor Graph by Michal Kren (predecessor of TrEd)
 
-1999 - Petr Pajas started development of tree editor TrEd, inheriting the Graph's data format (fs-format)
+1996 - Michal Křen develops the Graph tree editor. Linguistic data structures are stored in
+a proprietary data format called fs-format.
 
-2000-2005 - developing various Perl modules for PDT data, developing Prague Markup Language
+1997 - an SGML-based format called CSTS (Czech sentence tree structure) is developed.
+In 2001, CSTS becomes the primary data format of the Prague Dependency Treebank 1.0.
 
-2006 - Jan Hajic et al.'s  PDT 2.0 was released (data completely in PML)
+2000 - Petr Pajas develops an alternative tree editor called TrEd (in Perl), which soon becomes
+the main tool used for various types of annotations realized in the department, and is used abroad
+as well. TrEd contained a library of modules for memory representation of
+linguistic structures and their storage, called Fslib.
 
-2005 - Zdenek Zabokrtsky started the development of TectoMT
+2000-2005 - Numerous NLP modules were developed at the department, aimed either at exploiting the existing PDT data, or
+at facilitating new linguistic annotations. A new generic (language-universal, theory-universal)
+XML-based format called Prague Markup Language is developed. PML was the primary format
+of Jan Hajič et al.'s  PDT 2.0 in 2006.
 
-2006 - first TectoMT-based English-Czech Machine Translation prototype,
+2005 - Zdeněk Žabokrtský starts the development of TectoMT, with the aim of creating a modular
+NLP system, primarily focused on Machine Translation with deep-syntactic (tectogrammatical) transfer.
 
-2006-2010 - numerous (both tiny and big-bang) improvements of TectoMT architecture;
-     integrating a number of NLP tools (taggers, parsers, ...) into TectoMT
+2006 - First TectoMT-based English-Czech Machine Translation experiments are performed.
 
-2010 - Fslib separated from TrEd, and restructured to a CPAN, Treex::PML
+2006-2010 -  TectoMT's architecture, as well as the translation quality, are gradually improved
+(several thousand svn revisions).  Many NLP tools such as taggers and parsers for various
+languages are  integrated.
 
-2010-2011 - rebranding TectoMT-->Treex (exploit syntactic trees), shift to Moose at the same time
+2010 - Fslib separated from TrEd, and published as a CPAN module under the name Treex::PML.
 
-2011 - Treex::Core goes to CPAN
+2010-2011 - "TectoMT" is rebranded to "Treex" - "eXploit syntactic/semantic TREEs!". All core components
+are refactored using Moose.
+
+2011 - The  Treex::Core components are packed and go to CPAN. Some other (language specific)
+distributions are hoped to appear soon too.
 
 =head1 REFERENCES
 
 Selected TectoMT/Treex-related publications:
 
-Žabokrtský Zdeněk, Ptáček Jan, Pajas Petr:
+- Žabokrtský Zdeněk, Ptáček Jan, Pajas Petr:
 TectoMT: Highly Modular MT System with Tectogrammatics Used as Transfer Layer.
 In: ACL 2008 WMT: Proceedings of the Third Workshop on Statistical Machine Translation,
 Copyright © Association for Computational Linguistics, Columbus, OH, USA,
 ISBN 978-1-932432-09-1, pp. 167-170, 2008
 
-Žabokrtský Zdeněk, Bojar Ondřej: TectoMT, Developer's Guide.
+- Žabokrtský Zdeněk, Bojar Ondřej: TectoMT, Developer's Guide.
 Technical report no. 2008/TR-2008-39, Copyright © Institute of Formal and Applied Linguistics,
 Faculty of Mathematics and Physics, Charles University in Prague, 50 pp., Dec 2008
 
-Popel Martin, Žabokrtský Zdeněk: TectoMT: Modular NLP Framework.
+- Popel Martin, Žabokrtský Zdeněk: TectoMT: Modular NLP Framework.
 In: Lecture Notes in Computer Science, Vol. 6233, Proceedings of the 7th International Conference
 on Advances in Natural Language Processing (IceTAL 2010), Copyright © Springer,
 Berlin / Heidelberg, ISBN 978-3-642-14769-2, ISSN 0302-9743, pp. 293-304, 2010
+
+- Mareček David, Popel Martin, Žabokrtský Zdeněk: Maximum Entropy Translation Model in Dependency-Based
+MT Framework. In: Proceedings of the Joint Fifth Workshop on Statistical Machine Translation and MetricsMATR,
+Copyright © Association for Computational Linguistics, Uppsala, Sweden, ISBN 978-1-932432-71-8, pp. 201-201, 2010
 
 
 =head1 AUTHOR
@@ -139,7 +159,7 @@ Treex is an open project, there is a number of people who have contributed.
 
 =head2 Treex Cabal (not very original, is it?)
 
-Those who are responsible for developing and releasing Treex::Core modules.
+Those who are responsible for maintaining Treex::Core modules.
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
@@ -151,15 +171,19 @@ David Mareček <marecek@ufal.mff.cuni.cz>
 
 Petr Pajas
 
-=head2 Other contributors (both present and past)
-
-Jan Ptáček
+=head2 Some other contributors to Treex, both present and past, alphabetically
 
 Ondřej Bojar
 
-Václav Novák
+Václav Klimeš
 
 Tomáš Kraut
+
+Václav Novák
+
+Jan Ptáček
+
+Daniel Zeman
 
 =head1 COPYRIGHT AND LICENSE
 
