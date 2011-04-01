@@ -21,25 +21,60 @@ sub get_nodelist_hook {
                                           # Otherwise (in certain circumstances) $bundle->get_all_zones
                                           # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
-    my @nodes;
-
     my $layout = get_layout();
-
+    my %nodes;
+        
     foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
-        if ( $tree->does('Treex::Core::Node::Ordered') ) {
-            push @nodes, $tree->get_descendants( { add_self => 1, ordered => 1 } );
-        } else {
-            push @nodes, $tree->get_descendants( { add_self => 1 } );
-        }
+    my $label = get_tree_label($tree);
+    my @nodes;
+    if ( $tree->does('Treex::Core::Node::Ordered') ) {
+        @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
+    } else {
+        @nodes = $tree->get_descendants( { add_self => 1 } );
+    }
+        $nodes{$label} = \@nodes;
     }
 
-    unshift @nodes, $bundle;
+    my $pick_next_tree = sub {
+        my @task = @_;
+        my $max = 0;
+        my $max_index = -1;
 
+        for ( my $i = 0; $i < scalar @task; $i++ ) {
+            my $val = $task[$i]->{'left'} / $task[$i]->{'total'};
+            if ( $val > $max ) {
+                $max = $val;
+                $max_index = $i;
+            }
+        }
+
+        return $max_index;
+    };
+        
+    my @nodes;
+        
+    for ( my $col = 0; $col < scalar @$layout; $col++ ) {
+        my @task = ();
+        for ( my $row = 0; $row < scalar @{$layout->[$col]}; $row++ ) {
+            if ( $layout->[$col]->[$row] ) {
+                my $label = $layout->[$col]->[$row];
+                my %tree_info = ();
+                $tree_info{'total'} = $tree_info{'left'} = scalar @{$nodes{$label}};
+                $tree_info{'label'} = $label;
+                push @task, \%tree_info;
+            }
+        }
+
+        while ( ( my $index = &$pick_next_tree( @task ) ) >= 0 ) {
+            push @nodes, shift @{$nodes{$task[$index]->{'label'}}};
+            $task[$index]->{'left'}--;
+        }
+    }
+        
     if ( not( first { $_ == $currentNode } @nodes ) ) {
         $currentNode = $nodes[0];
     }
     return [ \@nodes, $currentNode ];
-
 }
 
 sub file_opened_hook {
@@ -49,6 +84,8 @@ sub file_opened_hook {
     $self->pml_doc($pmldoc);
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
+    $self->precompute_tree_depths();
+    $self->precompute_tree_shifts();
     $self->precompute_visualization();
     return;
 }
@@ -64,9 +101,73 @@ sub get_value_line_hook {
 # --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
 
 my @layers = qw(a t p n);
+my %tree_depths = ();
+my %tree_shifts = ();
+
+# To be run only once when the file is opened. Tree depths never change.
+sub precompute_tree_depths {
+    my ($self) = @_;
+    foreach my $bundle ( $self->treex_doc->get_bundles ) {
+        foreach my $zone ( $bundle->get_all_zones ) {
+            foreach my $tree ( $zone->get_all_trees ) {
+                my $max_depth = 1;
+                my @front = ( 1, $tree );
+
+                while ( @front ) {
+                    my $cur_depth = shift @front;
+                    my $node = shift @front;
+                    $max_depth = $cur_depth if $cur_depth > $max_depth;
+                    for my $child ( $node->get_children ) {
+                        push @front, $cur_depth + 1, $child;
+                    }
+                }
+
+                $tree_depths{$tree->get_attr('id')} = $max_depth;
+            }
+        }
+    }
+}
+
+# Has to be run whenever the tree layout changes.
+sub precompute_tree_shifts {
+    my ($self) = @_;
+    my $layout = get_layout();
+
+    foreach my $bundle ( $self->treex_doc->get_bundles ) {
+        my %forest = ();
+        
+        foreach my $zone ( $bundle->get_all_zones ) {
+            foreach my $tree ( $zone->get_all_trees ) {
+                $forest{ get_tree_label( $tree ) } = $tree->get_attr('id');
+            }
+        }
+
+        my @trees = ( 'foo' );
+        my $row = 0;
+        my $cur_shift = 0;
+        while ( @trees ) {
+            my $max_depth = 0;
+            @trees = ();
+            for ( my $col = 0; $col < scalar @$layout; $col++ ) {
+                if ( my $label = $layout->[$col]->[$row] ) {
+                    my $depth = $tree_depths{ $forest{$label} };
+                    push @trees, $label;
+                    $max_depth = $depth if $depth > $max_depth; 
+                }
+            }
+
+            for my $label ( @trees ) {
+                $tree_shifts{ $forest{$label} } = $cur_shift;
+            }
+            $cur_shift += $max_depth;
+            $row++;
+        }
+    }
+}
 
 sub precompute_visualization {
     my ($self) = @_;
+
     foreach my $bundle ( $self->treex_doc->get_bundles ) {
 
         $bundle->{_precomputed_root_style} = $self->bundle_root_style($bundle);
@@ -77,6 +178,7 @@ sub precompute_visualization {
             foreach my $layer (@layers) {
                 if ( $zone->has_tree($layer) ) {
                     my $root = $zone->get_tree($layer);
+
                     $root->{_precomputed_labels} = $self->tree_root_labels($root);
                     $root->{_precomputed_node_style} = $self->node_style( $root, $layer );
 
@@ -84,7 +186,6 @@ sub precompute_visualization {
                         $node->{_precomputed_node_style} = $self->node_style( $node, $layer );
                         $node->{_precomputed_labels} = $self->nonroot_node_labels( $node, $layer );
                     }
-
                 }
             }
         }
@@ -257,7 +358,7 @@ COORDS
                     log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
                     $rotate_prv_snt += 10;
-                } else {        #right
+                } else { #right
                     log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
                     $rotate_nxt_snt += 10;
@@ -302,15 +403,21 @@ sub common_node_style {
     return q();
 }
 
-sub node_style {          # silly code just to avoid the need for eval
-    my $layer = pop @_;
+sub node_style { # silly code just to avoid the need for eval
+    my ( $self, $node, $layer ) = @_;
+    my $styles = '';
+
+    if ( $node->is_root() ) {
+        $styles = '#{Node-rellevel:'.$tree_shifts{ $node->get_attr('id') }.'}';
+    }
+
     my %subs;
     $subs{t} = \&tnode_style;
     $subs{a} = \&anode_style;
     $subs{n} = \&nnode_style;
     $subs{p} = \&pnode_style;
     if ( defined $subs{$layer} ) {
-        return &{ $subs{$layer} }(@_);
+        return $styles.&{ $subs{$layer} }($node);
     } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
@@ -359,14 +466,18 @@ my $tag_tree = 'tree';
 my $tag_wrap = 'wrap';
 my $tag_none = 'none';
 
+sub get_tree_label {
+    my $tree = shift;
+    return $tree->language.'-'.$tree->get_layer;
+}
+
 sub get_layout_label {
     my $bundle = $TredMacro::root;
     return unless ref($bundle) eq 'Treex::Core::Bundle';
 
     my @label;
     foreach my $zone ( sort { $a->language cmp $b->language } $TredMacro::root->get_all_zones ) {
-        my $lang = $zone->language;
-        push @label, map { $lang.'-'.$_->get_layer() } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
+        push @label, map { get_tree_label($_) } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
     }
     return join ',', @label;
 }
@@ -401,7 +512,7 @@ sub load_layouts {
         my @label = split ',', $label;
         my @coords = split ',', $coords;
         my $cols = [];
-
+        
         for ( my $i = 0; $i <= $#label; $i++ ) {
             my ( $col, $row ) = split '-', $coords[$i];
             $cols->[$col]->[$row] = $label[$i];
@@ -464,17 +575,17 @@ sub move_layout {
 sub wrap_layout {
     my $layout = shift;
     my $new_layout = [];
-
+    
     # 8 pairs of coords lying around the center point (0, 0)
     my @c = (
         -1, -1,
-        0, -1,
-        1, -1,
+         0, -1,
+         1, -1,
         -1,  0,
-        1,  0,
+         1,  0,
         -1,  1,
-        0,  1, 
-        1,  1
+         0,  1, 
+         1,  1
     );
 
     for ( my $i = 0; $i < scalar @$layout; $i++ ) {
@@ -526,19 +637,22 @@ sub normalize_layout {
 use Tk::DialogBox;
 
 sub conf_dialog {
+    my $self = shift;
     my $layout = get_layout();
     $layout = normalize_layout($layout);
     $layout = move_layout($layout, 1, 1);
     $layout = wrap_layout($layout);
 
-    my $dialog = TredMacro::ToplevelFrame()->DialogBox( -title => "Trees layout configuration", -buttons => [ "OK", "Cancel" ] );
-    my $m = 20;                 # canvas margin
-    my $w = 80;                 # rectangle width
-    my $h = 45;                 # rectangle height
+    my $m = 20; # canvas margin
+    my $w = 80; # rectangle width
+    my $h = 45; # rectangle height
     my $drag_tree = '';
     my $drag_x = '';
     my $drag_y = '';
     my $cur_tree = '';
+    
+    my $top = TredMacro::ToplevelFrame();
+    my $dialog = $top->DialogBox( -title => "Trees layout configuration", -buttons => [ "OK", "Cancel" ] );
     my $canvas = $dialog->add('Canvas', -width => 7 * $w + 8 * $m, -height => 5 * $h + 6 * $m );
 
     # Forward declaration
@@ -552,7 +666,7 @@ sub conf_dialog {
         $y /= $h + $m;
         return ( $x, $y );
     };
-
+    
     my $get_pos = sub {
         my ($x, $y) = @_;
         my $a = $x - $m;
@@ -563,7 +677,7 @@ sub conf_dialog {
         }
         $a %= $w + $m;
         $b %= $h + $m;
-
+        
         return if $a >= $w or $b >= $h;
 
         my $tree;
@@ -572,11 +686,11 @@ sub conf_dialog {
         } elsif ( $layout->[$i]->[$j] ) {
             $tree = $layout->[$i]->[$j];
         } else {
-            $tree = $tag_none;
+          $tree = $tag_none;
         }
         return ( $i * ($w+$m) + $m, $j * ($h+$m) + $m, $tree );
     };
-
+    
     my $mouse_move = sub {
         my $canvas = shift;
         my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
@@ -614,7 +728,7 @@ sub conf_dialog {
 
     my $mouse_drop = sub {
         return unless $drag_tree;
-
+        
         my $canvas = shift;
         my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
 
@@ -645,10 +759,10 @@ sub conf_dialog {
 
         $drag_tree = $drag_x = $drag_y = '';
     };
-
+    
     $draw_layout = sub {
         $canvas->delete( 'all' );
-  	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+        for ( my $i = 0; $i < scalar @$layout; $i++ ) {
             for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
                 my $tree = $layout->[$i]->[$j];
                 if ($tree and $tree ne $tag_wrap) {
@@ -674,19 +788,21 @@ sub conf_dialog {
                     );
                 }
             }
-  	}
+        }
 
-  	$canvas->CanvasBind( '<Motion>' => $mouse_move );
-  	$canvas->CanvasBind( '<ButtonPress-1>' => $mouse_drag );
-  	$canvas->CanvasBind( '<ButtonRelease-1>' => $mouse_drop );
+        $canvas->CanvasBind( '<Motion>' => $mouse_move );
+        $canvas->CanvasBind( '<ButtonPress-1>' => $mouse_drag );
+        $canvas->CanvasBind( '<ButtonRelease-1>' => $mouse_drop );
     };
 
     &$draw_layout( $canvas, $layout );
     $canvas->pack(-expand => 1, -fill => 'both');
-
+    
     my $button = $dialog->Show();
     if ( $button eq 'OK' ) {
         $layouts{ get_layout_label() } = normalize_layout( $layout );
+        $self->precompute_tree_shifts();
+        $self->precompute_visualization();
     }
 }
 
@@ -790,6 +906,8 @@ Treex::PML::Document structure which was provided by TrEd.
 =head2 Methods for configuring layout of the trees
 
 =over 4
+
+=item get_tree_label
 
 =item get_layout_label
 
