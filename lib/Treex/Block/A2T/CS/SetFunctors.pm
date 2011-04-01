@@ -17,7 +17,7 @@ has 'ml_process_jar' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/p
 has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
 
 # files related to the trained model
-has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/functors-model/" );
+has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/functors/cs/" );
 has 'model'             => ( is => 'ro', isa => 'Str', default => 'model.dat' );
 has 'plan_template'     => ( is => 'ro', isa => 'Str', default => 'plan.template' );
 has 'filtering_ff_data' => ( is => 'ro', isa => 'Str', default => 'ff-data.dat' );
