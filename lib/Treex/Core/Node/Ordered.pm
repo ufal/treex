@@ -18,9 +18,9 @@ sub precedes {
 
 # Methods get_next_node and get_prev_node are implemented
 # so they can handle deprecated fractional ords.
-# When no "fract-ords" will be used in the whole TectoMT
+# When no "fract-ords" will be used in the whole TectoMT nor Treex
 # this could be reimplemented a bit more effectively.
-# Neni na to cas prave ted?
+# TODO
 sub get_next_node {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self   = shift;

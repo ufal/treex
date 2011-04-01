@@ -113,7 +113,7 @@ sub set_deref_attr {
 
 ##-- begin proposal
 # Example usage:
-# TectoMT::Node::T methods get_lex_anode and get_aux_anodes could use:
+# Treex::Core::Node::T methods get_lex_anode and get_aux_anodes could use:
 # my $a_lex = $t_node->get_r_attr('a/lex.rf'); # returns the node or undef
 # my @a_aux = $t_node->get_r_attr('a/aux.rf'); # returns the nodes or ()
 sub get_r_attr {
@@ -732,11 +732,11 @@ can be filled. Direct calls of node constructors (->new) should be avoided.
 
 =item my $bundle = $node->get_bundle();
 
-Returns the L<TectoMT::Bundle|TectoMT::Bundle> object in which the node's tree is contained.
+Returns the L<Treex::Core::Bundle|Treex::Core::Bundle> object in which the node's tree is contained.
 
 =item my $document = $node->get_document();
 
-Returns the L<TectoMT::Document|TectoMT::Document> object in which the node's tree is contained.
+Returns the L<Treex::Core::Document|Treex::Core::Document> object in which the node's tree is contained.
 
 =item get_layer
 

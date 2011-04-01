@@ -247,19 +247,10 @@ sub get_node_by_id {
     if ( defined $self->_index->{$id} ) {
         return $self->_index->{$id};
     }
-    elsif ( $id =~ /^[ST](Czech|English)/ ) {
-
-        # PROZATIMNI RESENI
-        # nejsou linky mezi M a A vrstvou, je nutne mezi nimi skakat pomoci teto funkce
-        # toto osetruje pripady typu 'SenM' a 'SEnglishA'
-        $id =~ s/^([ST])Czech/$1cs/;
-        $id =~ s/^([ST])English/$1en/;
-        return $self->get_node_by_id($id);
-    }
     else {
         log_fatal "ID not indexed: id=\"$id\"";
 
-        # This is something very fatal. TectoMT assumes every node ID to
+        # This is something very fatal. Treex assumes every node ID to
         # be valid and pointing to a node *in the given document*.
         # (It is fine to have a node with no a/lex.rf
         # attribute, but if the attribute is there, the value
@@ -535,7 +526,7 @@ Return the node which has the value $id in its 'id' attribute,
 no matter to which tree and to which bundle in the given document
 the node belongs to.
 
-It is prohibited in TectoMT for IDs to point outside of the current document.
+It is prohibited in Treex for IDs to point outside of the current document.
 In rare cases where your data has such links, we recommend you to split the
 documents differently or hack it by dropping the problematic links.
 

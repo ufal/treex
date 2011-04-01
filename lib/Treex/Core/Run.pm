@@ -308,7 +308,6 @@ sub _execute_locally {
     my ($self) = @_;
 
     # Parameters can contain spaces that should be preserved
-    # Tomuhle kodu nerozumim, je dost necitelny, jak ty mezery zachovava? -TK LOOK
     my $scen_str = join ' ',
         map {
         if ( my ( $name, $value ) = /(\S+)=(.+ .+)$/ ) {
@@ -374,7 +373,7 @@ sub _execute_locally {
     my $number_of_docs;
     if ( $self->jobindex ) {
         my $fn = $self->outdir . sprintf( "/job%03d.loaded", $self->jobindex );
-        open my $F, '>', $fn or log_fatal "Cannot open file $fn";    #LOOK
+        open my $F, '>', $fn or log_fatal "Cannot open file $fn";
         close $F;
         my $reader = $scenario->document_reader;
         $reader->set_jobs( $self->jobs );
