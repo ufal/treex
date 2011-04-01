@@ -33,8 +33,13 @@ sub allow_switch_context_hook {
 }
 
 sub switch_context_hook {
+  $tredview->load_layouts();
   SetCurrentStylesheet('Treex_stylesheet');
 #  Redraw() if GUI();
+}
+
+sub pre_switch_context_hook {
+  $tredview->save_layouts();
 }
 
 sub file_opened_hook {
@@ -56,6 +61,20 @@ sub get_value_line_hook {
 sub node_style_hook {
     return $tredview->node_style_hook(@_);
 }
+
+sub ConfDialog {
+	$tredview->conf_dialog();
+}
+
+sub init_hook {
+	$tredview->load_layouts();
+}
+
+sub exit_hook {
+	$tredview->save_layouts();
+}
+
+#bind ConfDialog to c menu Configuration
 
 
 1;

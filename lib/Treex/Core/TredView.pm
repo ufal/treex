@@ -23,7 +23,9 @@ sub get_nodelist_hook {
 
     my @nodes;
 
-    foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
+    my $layout = get_layout();
+		
+		foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
         if ( $tree->does('Treex::Core::Node::Ordered') ) {
             push @nodes, $tree->get_descendants( { add_self => 1, ordered => 1 } );
         }
@@ -161,7 +163,12 @@ sub nonroot_nnode_labels {
 }
 
 sub nonroot_pnode_labels {
-    return ( '', '', '' );
+    my ( $self, $node ) = @_;
+    return [
+        $node->{form},
+        $node->{lemma},
+        $node->{tag},
+    ];
 }
 
 # --- arrows ----
@@ -350,6 +357,345 @@ sub pnode_style {
 
 # ---- END OF PRECOMPUTING VISUALIZATION ------
 
+# ---- LAYOUT CONFIGURATION -------
+
+my $layouts_loaded = 0;
+my $layouts_saved = 0;
+my %layouts = ();
+my $tag_text = 'text';
+my $tag_tree = 'tree';
+my $tag_wrap = 'wrap';
+my $tag_none = 'none';
+
+sub get_layout_label {
+	my $bundle = $TredMacro::root;
+	return unless ref($bundle) eq 'Treex::Core::Bundle';
+
+	my @label;
+	foreach my $zone ( sort { $a->language cmp $b->language } $TredMacro::root->get_all_zones ) {
+		my $lang = $zone->language;
+		push @label, map { $lang.'-'.$_->get_layer() } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
+	}
+	return join ',', @label;
+}
+
+sub get_layout {
+	my $label = get_layout_label();
+	if ( exists $layouts{$label} ) {
+		return $layouts{$label};
+	} else {
+		my $cols = [];
+		my @trees = split ',', $label;
+		for ( my $i = 0; $i <= $#trees; $i++ ) {
+			$cols->[$i]->[0] = $trees[$i];
+		}
+
+		$layouts{$label} = $cols;
+		return $cols;
+	}
+}
+
+sub load_layouts {
+	return if $layouts_loaded;
+	$layouts_loaded = 1;
+
+	my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
+	open CFG, $filename or return;
+	%layouts = ();
+
+	while ( <CFG> ) {
+		chomp;
+		my ($label, $coords) = split '=';
+		my @label = split ',', $label;
+		my @coords = split ',', $coords;
+		my $cols = [];
+		
+		for ( my $i = 0; $i <= $#label; $i++ ) {
+			my ( $col, $row ) = split '-', $coords[$i];
+			$cols->[$col]->[$row] = $label[$i];
+		}
+
+		$layouts{$label} = $cols;
+	}
+
+	close CFG;
+}
+
+sub save_layouts {
+	return if $layouts_saved;
+
+	my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
+	open CFG, ">$filename";
+
+	while ( my ( $label, $cols ) = each %layouts ) {
+		my %coords = ();
+		for ( my $col = 0; $col < scalar( @$cols ); $col++ ) {
+			for ( my $row = 0; $row < scalar( @{$cols->[$col]} ); $row++ ) {
+				my $tree = $cols->[$col]->[$row];
+				$coords{$tree} = "$col-$row" if $tree;
+			}
+		}
+
+		my @coords = ();
+		for my $tree ( split ',', $label ) {
+			push @coords, $coords{$tree};
+		}
+
+		print CFG $label.'='.join(',', @coords)."\n";
+	}
+
+	close CFG;
+	$layouts_saved = 1;
+}
+
+sub move_layout {
+	my ($layout, $x, $y) = @_;
+	my $new_layout = [];
+	for ( my $i = 0; $i < $x; $i++ ) {
+		$new_layout->[$i] = [];
+	}
+	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+			if ( $layout->[$i]->[$j] ) {
+				if ( $i + $x < 0 or $j + $y < 0 ) {
+					print STDERR "Error: layout is moving out of bounds.\n";
+					return;
+				}
+				$new_layout->[$i+$x]->[$j+$y] = $layout->[$i]->[$j];
+			}
+		}
+	}
+
+	return $new_layout;
+}
+
+sub wrap_layout {
+	my $layout = shift;
+	my $new_layout = [];
+	
+	# 8 pairs of coords lying around the center point (0, 0)
+	my @c = (
+		-1, -1,
+		 0, -1,
+		 1, -1,
+		-1,  0,
+		 1,  0,
+		-1,  1,
+		 0,  1, 
+		 1,  1
+	);
+
+	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+				$new_layout->[$i]->[$j] = $layout->[$i]->[$j];
+				for (my $k = 0; $k < scalar @c; $k += 2 ) {
+					my ($x, $y) = ($i + $c[$k], $j + $c[$k+1] );
+					$new_layout->[$x]->[$y] = $tag_wrap if $x >= 0 and $y >= 0 and not $new_layout->[$x]->[$y];
+				}
+			}
+		}
+	}
+
+	return $new_layout;
+}
+
+sub normalize_layout {
+	my $layout = shift;
+	my %filled_cols = ();
+	my %filled_rows = ();
+	my $gap_x = 0;
+	my $gap_y = 0;
+	my $new_layout = [];
+
+	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+		for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
+			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+				$filled_cols{$i} = 1;
+				$filled_rows{$j} = 1;
+			}
+		}
+	}
+
+	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+		$gap_y = 0;
+		$gap_x++ if not exists $filled_cols{$i};
+		for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
+			$gap_y++ if not exists $filled_rows{$j};
+			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+				$new_layout->[$i-$gap_x]->[$j-$gap_y] = $layout->[$i]->[$j];
+			}
+		}
+	}
+
+	return $new_layout;
+}
+
+use Tk::DialogBox;
+
+sub conf_dialog {
+	my $layout = get_layout();
+	$layout = normalize_layout($layout);
+	$layout = move_layout($layout, 1, 1);
+	$layout = wrap_layout($layout);
+
+	my $dialog = TredMacro::ToplevelFrame()->DialogBox( -title => "Trees layout configuration", -buttons => [ "OK", "Cancel" ] );
+	my $m = 20;  # canvas margin
+	my $w = 80; # rectangle width
+	my $h = 45;  # rectangle height
+	my $drag_tree = '';
+	my $drag_x = '';
+	my $drag_y = '';
+	my $cur_tree = '';
+	my $canvas = $dialog->add('Canvas', -width => 7 * $w + 8 * $m, -height => 5 * $h + 6 * $m );
+
+	# Forward declaration
+	my $draw_layout = sub {};
+
+	my $get_layout_coords = sub {
+		my ($x, $y) = @_;
+		$x -= $m;
+		$y -= $m;
+		$x /= $w + $m;
+		$y /= $h + $m;
+		return ( $x, $y );
+	};
+	
+	my $get_pos = sub {
+		my ($x, $y) = @_;
+		my $a = $x - $m;
+		my $b = $y - $m;
+		my ($i, $j);
+		{ use integer; $i = $a / ($w + $m); $j = $b / ($h + $m); }
+		$a %= $w + $m;
+		$b %= $h + $m;
+		
+		return if $a >= $w or $b >= $h;
+
+		my $tree;
+		if ( $i < 0 or $j < 0 ) {
+			$tree = $tag_none;
+		} elsif ( $layout->[$i]->[$j] ) {
+			$tree = $layout->[$i]->[$j];
+		} else {
+		  $tree = $tag_none;
+		}
+		return ( $i * ($w+$m) + $m, $j * ($h+$m) + $m, $tree );
+	};
+	
+	my $mouse_move = sub {
+		my $canvas = shift;
+		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+		$tree = '' if not defined $tree;
+
+		if ( $cur_tree and $tree ne $cur_tree ) {
+			if ( $cur_tree ne $tag_wrap and $cur_tree ne $tag_none ) {
+				$canvas->itemconfigure( "$cur_tree&&$tag_tree", -outline => 'black', -width => 1 );
+			} else {
+				$canvas->delete( $cur_tree );
+			}
+			$cur_tree = '';
+		}
+		if ( $tree and $tree ne $cur_tree ) {
+			if ( $tree ne $tag_wrap and $tree ne $tag_none ) {
+				my $color = $drag_tree ? ( $tree eq $drag_tree ? 'red' : 'green' ) : 'blue';
+				$canvas->itemconfigure( "$tree&&$tag_tree", -outline => $color, -width => 2 );
+			} elsif ( $drag_tree ) {
+				my $color = $tree eq $tag_wrap ? 'green' : 'red';
+				$canvas->create( 'rectangle', $x, $y, $x + $w, $y + $h, -tags => [ $tree ], -outline => $color, -width => 2 );
+			}
+			$cur_tree = $tree;
+		}
+	};
+
+	my $mouse_drag = sub {
+		my $canvas = shift;
+		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+		return if ( not $tree ) or $tree eq $tag_wrap or $tree eq $tag_none;
+
+		$drag_tree = $tree;
+		( $drag_x, $drag_y ) = &$get_layout_coords( $x, $y );
+		$canvas->itemconfigure( "$tree&&$tag_tree", -outline => 'red', -width => 2, -fill => 'yellow' );
+	};
+
+	my $mouse_drop = sub {
+		return unless $drag_tree;
+		
+		my $canvas = shift;
+		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+
+		$canvas->itemconfigure( "$drag_tree&&$tag_tree", -fill => 'white' );
+
+		if ( (not $tree) or $tree eq $tag_none ) {
+			$canvas->delete( $tag_none ) if $tree;
+			$drag_tree = $drag_x = $drag_y = '';
+			return;
+		}
+
+		$layout->[$drag_x]->[$drag_y] = undef;
+		( $x, $y ) = &$get_layout_coords( $x, $y );
+		if ( $tree ne $tag_wrap ) {
+			for ( my $i = scalar @$layout; $i > $x; $i-- ) {
+				if ( $layout->[$i-1]->[$y] ) {
+					$layout->[$i]->[$y] = $layout->[$i-1]->[$y];
+					$layout->[$i-1]->[$y] = undef;
+				}
+			}
+		}
+		$layout->[$x]->[$y] = $drag_tree;
+
+		$layout = normalize_layout( $layout );
+		$layout = move_layout( $layout, 1, 1 );
+		$layout = wrap_layout( $layout );
+		&$draw_layout();
+
+		$drag_tree = $drag_x = $drag_y = '';
+	};
+	
+  $draw_layout = sub {
+		$canvas->delete( 'all' );
+  	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+  		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+  			my $tree = $layout->[$i]->[$j];
+  			if ($tree and $tree ne $tag_wrap) {
+  				my ($lang, $layer) = split '-', $tree;
+  				$lang = Treex::Core::Common::get_lang_name($lang);
+  				$canvas->create(
+  					'rectangle',
+  					$i * ($w+$m) + $m,
+  					$j * ($h+$m) + $m,
+  					($i+1) * ($w+$m),
+  					($j+1) * ($h+$m),
+  					-tags => [ $tag_tree, $tree ],
+  					-fill => 'white'
+  				);
+  				$canvas->create(
+  					$tag_text,
+  					($i+1) * ($w+$m) - 0.5 * $w,
+  					($j+1) * ($h+$m) - 0.5 * $h,
+  					-anchor => 'center',
+  					-justify => 'center',
+  					-tags => [ $tree ],
+  					-text => "$lang\n".uc($layer)
+  				);
+  			}
+  		}
+  	}
+  
+  	$canvas->CanvasBind( '<Motion>' => $mouse_move );
+  	$canvas->CanvasBind( '<ButtonPress-1>' => $mouse_drag );
+  	$canvas->CanvasBind( '<ButtonRelease-1>' => $mouse_drop );
+  };
+
+	&$draw_layout( $canvas, $layout );
+	$canvas->pack(-expand => 1, -fill => 'both');
+	
+	my $button = $dialog->Show();
+	if ( $button eq 'OK' ) {
+		$layouts{ get_layout_label() } = normalize_layout( $layout );
+	}
+}
+
 1;
 
 
@@ -399,6 +745,12 @@ Treex::PML::Document structure which was provided by TrEd.
 
 =item node_style_hook
 
+=item load_layouts
+
+=item save_layouts
+
+=item conf_dialog
+
 =back
 
 =head2 Methods for displaying attributes below nodes
@@ -441,11 +793,27 @@ Treex::PML::Document structure which was provided by TrEd.
 
 =back
 
+=head2 Methods for configuring layout of the trees
+
+=over 4
+
+=item get_layout_label
+
+=item get_layout
+
+=item move_layout
+
+=item wrap_layout
+
+=item normalize_layout
+
 =head1 AUTHOR
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 David Mareček <marecek@ufal.mff.cuni.cz>
+
+Josef Toman <toman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
