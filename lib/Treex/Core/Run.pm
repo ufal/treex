@@ -494,7 +494,15 @@ sub _run_job_scripts {
     log_info( "Number of jobs started so far:", { same_line => 1 } );
     my ( $started_now, $started_1s_ago ) = ( 0, 0 );
     while ( $started_now != $self->jobs ) {
-        $started_now = scalar( () = glob $self->workdir . "/output/*.started" );
+
+        # $count = () = some_function();
+        # This is a Perl idiom (see e.g. page 32 of Modern Perl)
+        # for counting the number of elements returned by some_function()
+        # without using a temporary variable. It's useful when the function
+        # called in scalar context does not return the number of elements
+        # that would be returned when called in list context.
+        # And this is the case of glob which iterates in scalar context.
+        $started_now = () = glob $self->workdir . "/output/*.started";
         if ( $started_now != $started_1s_ago ) {
             log_info( " $started_now", { same_line => 1 } );
             $started_1s_ago = $started_now;
@@ -509,7 +517,7 @@ sub _run_job_scripts {
     log_info( "Number of jobs loaded so far:", { same_line => 1 } );
     my ( $loaded_now, $loaded_1s_ago ) = ( 0, 0 );
     while ( $loaded_now != $self->jobs ) {
-        $loaded_now = scalar( () = glob $self->workdir . "/output/*.loaded" );
+        $loaded_now = () = glob $self->workdir . "/output/*.loaded";
         if ( $loaded_now != $loaded_1s_ago ) {
             log_info( " $loaded_now", { same_line => 1 } );
             $loaded_1s_ago = $loaded_now;
@@ -580,7 +588,7 @@ sub _wait_for_jobs {
 
     while ( !$done ) {
         $total_doc_number    ||= $self->_read_total_doc_number();
-        $all_jobs_finished   ||= ( scalar( () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs );
+        $all_jobs_finished   ||= () = glob $self->workdir . "/output/job???.finished" ) == $self->jobs;
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
         # If a job starts processing another doc,
