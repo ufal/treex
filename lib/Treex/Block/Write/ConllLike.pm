@@ -2,9 +2,9 @@ package Treex::Block::Write::ConllLike;
 
 use Moose;
 use Treex::Core::Common;
-use autodie;
 
 extends 'Treex::Core::Block';
+with 'Treex::Block::Write::Redirectable';
 
 Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
 Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
@@ -25,44 +25,9 @@ Readonly my $TAG_FEATS => {
 };    # tag positions and their meanings
 Readonly my $TAG_NOT_SET => "-";    # tagset: undefined value
 
-has to => (
-    isa           => 'Str',
-    is            => 'ro',
-    default       => '-',
-    documentation => 'the destination filename (standard output if nothing given)',
-);
-
-has _file_handle => (
-    isa           => 'FileHandle',
-    is            => 'rw',
-    lazy_build    => 1,
-    builder       => '_build_file_handle',
-    documentation => 'the open output file handle',
-);
 
 has '+language' => ( required => 1 );
 
-sub _build_file_handle {
-
-    my ($this) = @_;
-
-    if ( $this->to ne "-" ) {
-        open( my $fh, '>:utf8', $this->to );
-        return $fh;
-    }
-    else {
-        return \*STDOUT;
-    }
-}
-
-sub DEMOLISH {
-
-    my ($this) = @_;
-    if ( $this->to ) {
-        close( $this->_file_handle );
-    }
-    return;
-}
 
 # MAIN
 sub process_ttree {
@@ -207,23 +172,45 @@ sub lemma_proper {
 
 __END__
 
-=pod
+=encoding utf-8
 
-=head1 Treex::Block::Write::CoNLL-Like
+=head1 NAME 
+
+Treex::Block::Write::ConllLike
+
+=head1 DESCRIPTION
 
 Prints out all t-trees in a text format similar to CoNLL (with no APREDs and some different values
 relating to auxiliary a-nodes instead).
 
-=head2 Parameters
+=head1 PARAMETERS
 
-The parameter C<language> is required.
+=over
 
-=head2 TODO
+=item C<language>
 
-Parametrize, so that the true CoNLL output as well as this extended version is possible
+This parameter is required.
 
-=cut
+=item C<to>
 
-# Copyright 2011 Ondrej Dusek
+Optional: the name of the output file, STDOUT by default.
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=item C<encoding>
+
+Optional: the output encoding, C<utf8> by default.
+
+=back
+
+=head1 TODO
+
+Parametrize, so that the true CoNLL output as well as this extended version is possible.
+
+=head1 AUTHOR
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
