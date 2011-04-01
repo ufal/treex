@@ -14,22 +14,21 @@ use List::Util qw(first);
 sub get_nodelist_hook {
     my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
 
-    return if not $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
+    return if not $self->pml_doc(); # get_nodelist_hook is invoked also before file_opened_hook
 
     my $bundle = $fsfile->tree($treeNo);
-    bless $bundle, 'Treex::Core::Bundle';    # TODO: how to make this automatically?
-                                             # Otherwise (in certain circumstances) $bundle->get_all_zones
-                                             # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
+    bless $bundle, 'Treex::Core::Bundle'; # TODO: how to make this automatically?
+                                          # Otherwise (in certain circumstances) $bundle->get_all_zones
+                                          # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
     my @nodes;
 
     my $layout = get_layout();
-		
-		foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
+
+    foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
         if ( $tree->does('Treex::Core::Node::Ordered') ) {
             push @nodes, $tree->get_descendants( { add_self => 1, ordered => 1 } );
-        }
-        else {
+        } else {
             push @nodes, $tree->get_descendants( { add_self => 1 } );
         }
     }
@@ -55,7 +54,7 @@ sub file_opened_hook {
 }
 
 sub get_value_line_hook {
-    my ( $self, undef, $treeNo ) = @_;    # the unused argument stands for $fsfile
+    my ( $self, undef, $treeNo ) = @_; # the unused argument stands for $fsfile
     return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
@@ -113,7 +112,7 @@ sub tree_root_labels {
     ];
 }
 
-sub nonroot_node_labels {    # silly code just to avoid the need for eval
+sub nonroot_node_labels { # silly code just to avoid the need for eval
     my $layer = pop @_;
     my %subs;
     $subs{t} = \&nonroot_tnode_labels;
@@ -122,8 +121,7 @@ sub nonroot_node_labels {    # silly code just to avoid the need for eval
     $subs{p} = \&nonroot_pnode_labels;
     if ( defined $subs{$layer} ) {
         return &{ $subs{$layer} }(@_);
-    }
-    else {
+    } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
 
@@ -215,8 +213,7 @@ sub _AddStyle {
         for my $key ( keys %s ) {
             $styles->{$style}{$key} = $s{$key};
         }
-    }
-    else {
+    } else {
         $styles->{$style} = \%s;
     }
     return;
@@ -236,7 +233,7 @@ sub _DrawArrows {
 
         my $target_node = $document->get_node_by_id($target_id);
 
-        if ( $node->get_bundle eq $target_node->get_bundle ) {    # same sentence
+        if ( $node->get_bundle eq $target_node->get_bundle ) { # same sentence
 
             my $T = "[?\$node->{id} eq '$target_id'?]";
             my $X = "(x$T-xn)";
@@ -251,9 +248,7 @@ x$T,y$T
 COORDS
 
             push @coords, $c;
-        }
-
-        else {    # should be always the same document, if it exists at all
+        } else { # should be always the same document, if it exists at all
 
             my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
             $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
@@ -262,14 +257,12 @@ COORDS
                     log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
                     $rotate_prv_snt += 10;
-                }
-                else {    #right
+                } else {        #right
                     log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
                     push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
                     $rotate_nxt_snt += 10;
                 }
-            }
-            else {
+            } else {
                 log_info "ref-arrows: Not found!\n" if $main::macroDebug;
                 push @coords, "&n,n,n+$rotate_dfr_doc,n-25";
                 $rotate_dfr_doc += 10;
@@ -309,7 +302,7 @@ sub common_node_style {
     return q();
 }
 
-sub node_style {    # silly code just to avoid the need for eval
+sub node_style {          # silly code just to avoid the need for eval
     my $layer = pop @_;
     my %subs;
     $subs{t} = \&tnode_style;
@@ -318,8 +311,7 @@ sub node_style {    # silly code just to avoid the need for eval
     $subs{p} = \&pnode_style;
     if ( defined $subs{$layer} ) {
         return &{ $subs{$layer} }(@_);
-    }
-    else {
+    } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
 
@@ -368,332 +360,334 @@ my $tag_wrap = 'wrap';
 my $tag_none = 'none';
 
 sub get_layout_label {
-	my $bundle = $TredMacro::root;
-	return unless ref($bundle) eq 'Treex::Core::Bundle';
+    my $bundle = $TredMacro::root;
+    return unless ref($bundle) eq 'Treex::Core::Bundle';
 
-	my @label;
-	foreach my $zone ( sort { $a->language cmp $b->language } $TredMacro::root->get_all_zones ) {
-		my $lang = $zone->language;
-		push @label, map { $lang.'-'.$_->get_layer() } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
-	}
-	return join ',', @label;
+    my @label;
+    foreach my $zone ( sort { $a->language cmp $b->language } $TredMacro::root->get_all_zones ) {
+        my $lang = $zone->language;
+        push @label, map { $lang.'-'.$_->get_layer() } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
+    }
+    return join ',', @label;
 }
 
 sub get_layout {
-	my $label = get_layout_label();
-	if ( exists $layouts{$label} ) {
-		return $layouts{$label};
-	} else {
-		my $cols = [];
-		my @trees = split ',', $label;
-		for ( my $i = 0; $i <= $#trees; $i++ ) {
-			$cols->[$i]->[0] = $trees[$i];
-		}
+    my $label = get_layout_label();
+    if ( exists $layouts{$label} ) {
+        return $layouts{$label};
+    } else {
+        my $cols = [];
+        my @trees = split ',', $label;
+        for ( my $i = 0; $i <= $#trees; $i++ ) {
+            $cols->[$i]->[0] = $trees[$i];
+        }
 
-		$layouts{$label} = $cols;
-		return $cols;
-	}
+        $layouts{$label} = $cols;
+        return $cols;
+    }
 }
 
 sub load_layouts {
-	return if $layouts_loaded;
-	$layouts_loaded = 1;
+    return if $layouts_loaded;
+    $layouts_loaded = 1;
 
-	my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
-	open CFG, $filename or return;
-	%layouts = ();
+    my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
+    open CFG, $filename or return;
+    %layouts = ();
 
-	while ( <CFG> ) {
-		chomp;
-		my ($label, $coords) = split '=';
-		my @label = split ',', $label;
-		my @coords = split ',', $coords;
-		my $cols = [];
-		
-		for ( my $i = 0; $i <= $#label; $i++ ) {
-			my ( $col, $row ) = split '-', $coords[$i];
-			$cols->[$col]->[$row] = $label[$i];
-		}
+    while ( <CFG> ) {
+        chomp;
+        my ($label, $coords) = split '=';
+        my @label = split ',', $label;
+        my @coords = split ',', $coords;
+        my $cols = [];
 
-		$layouts{$label} = $cols;
-	}
+        for ( my $i = 0; $i <= $#label; $i++ ) {
+            my ( $col, $row ) = split '-', $coords[$i];
+            $cols->[$col]->[$row] = $label[$i];
+        }
 
-	close CFG;
+        $layouts{$label} = $cols;
+    }
+
+    close CFG;
 }
 
 sub save_layouts {
-	return if $layouts_saved;
+    return if $layouts_saved;
 
-	my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
-	open CFG, ">$filename";
+    my $filename = TredMacro::FindMacroDir('treex').'/.layouts.cfg';
+    open CFG, ">$filename";
 
-	while ( my ( $label, $cols ) = each %layouts ) {
-		my %coords = ();
-		for ( my $col = 0; $col < scalar( @$cols ); $col++ ) {
-			for ( my $row = 0; $row < scalar( @{$cols->[$col]} ); $row++ ) {
-				my $tree = $cols->[$col]->[$row];
-				$coords{$tree} = "$col-$row" if $tree;
-			}
-		}
+    while ( my ( $label, $cols ) = each %layouts ) {
+        my %coords = ();
+        for ( my $col = 0; $col < scalar( @$cols ); $col++ ) {
+            for ( my $row = 0; $row < scalar( @{$cols->[$col]} ); $row++ ) {
+                my $tree = $cols->[$col]->[$row];
+                $coords{$tree} = "$col-$row" if $tree;
+            }
+        }
 
-		my @coords = ();
-		for my $tree ( split ',', $label ) {
-			push @coords, $coords{$tree};
-		}
+        my @coords = ();
+        for my $tree ( split ',', $label ) {
+            push @coords, $coords{$tree};
+        }
 
-		print CFG $label.'='.join(',', @coords)."\n";
-	}
+        print CFG $label.'='.join(',', @coords)."\n";
+    }
 
-	close CFG;
-	$layouts_saved = 1;
+    close CFG;
+    $layouts_saved = 1;
 }
 
 sub move_layout {
-	my ($layout, $x, $y) = @_;
-	my $new_layout = [];
-	for ( my $i = 0; $i < $x; $i++ ) {
-		$new_layout->[$i] = [];
-	}
-	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
-		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
-			if ( $layout->[$i]->[$j] ) {
-				if ( $i + $x < 0 or $j + $y < 0 ) {
-					print STDERR "Error: layout is moving out of bounds.\n";
-					return;
-				}
-				$new_layout->[$i+$x]->[$j+$y] = $layout->[$i]->[$j];
-			}
-		}
-	}
+    my ($layout, $x, $y) = @_;
+    my $new_layout = [];
+    for ( my $i = 0; $i < $x; $i++ ) {
+        $new_layout->[$i] = [];
+    }
+    for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+        for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+            if ( $layout->[$i]->[$j] ) {
+                if ( $i + $x < 0 or $j + $y < 0 ) {
+                    print STDERR "Error: layout is moving out of bounds.\n";
+                    return;
+                }
+                $new_layout->[$i+$x]->[$j+$y] = $layout->[$i]->[$j];
+            }
+        }
+    }
 
-	return $new_layout;
+    return $new_layout;
 }
 
 sub wrap_layout {
-	my $layout = shift;
-	my $new_layout = [];
-	
-	# 8 pairs of coords lying around the center point (0, 0)
-	my @c = (
-		-1, -1,
-		 0, -1,
-		 1, -1,
-		-1,  0,
-		 1,  0,
-		-1,  1,
-		 0,  1, 
-		 1,  1
-	);
+    my $layout = shift;
+    my $new_layout = [];
 
-	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
-		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
-			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
-				$new_layout->[$i]->[$j] = $layout->[$i]->[$j];
-				for (my $k = 0; $k < scalar @c; $k += 2 ) {
-					my ($x, $y) = ($i + $c[$k], $j + $c[$k+1] );
-					$new_layout->[$x]->[$y] = $tag_wrap if $x >= 0 and $y >= 0 and not $new_layout->[$x]->[$y];
-				}
-			}
-		}
-	}
+    # 8 pairs of coords lying around the center point (0, 0)
+    my @c = (
+        -1, -1,
+        0, -1,
+        1, -1,
+        -1,  0,
+        1,  0,
+        -1,  1,
+        0,  1, 
+        1,  1
+    );
 
-	return $new_layout;
+    for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+        for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+                $new_layout->[$i]->[$j] = $layout->[$i]->[$j];
+                for (my $k = 0; $k < scalar @c; $k += 2 ) {
+                    my ($x, $y) = ($i + $c[$k], $j + $c[$k+1] );
+                    $new_layout->[$x]->[$y] = $tag_wrap if $x >= 0 and $y >= 0 and not $new_layout->[$x]->[$y];
+                }
+            }
+        }
+    }
+
+    return $new_layout;
 }
 
 sub normalize_layout {
-	my $layout = shift;
-	my %filled_cols = ();
-	my %filled_rows = ();
-	my $gap_x = 0;
-	my $gap_y = 0;
-	my $new_layout = [];
+    my $layout = shift;
+    my %filled_cols = ();
+    my %filled_rows = ();
+    my $gap_x = 0;
+    my $gap_y = 0;
+    my $new_layout = [];
 
-	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
-		for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
-			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
-				$filled_cols{$i} = 1;
-				$filled_rows{$j} = 1;
-			}
-		}
-	}
+    for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+        for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+                $filled_cols{$i} = 1;
+                $filled_rows{$j} = 1;
+            }
+        }
+    }
 
-	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
-		$gap_y = 0;
-		$gap_x++ if not exists $filled_cols{$i};
-		for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
-			$gap_y++ if not exists $filled_rows{$j};
-			if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
-				$new_layout->[$i-$gap_x]->[$j-$gap_y] = $layout->[$i]->[$j];
-			}
-		}
-	}
+    for ( my $i = 0; $i < scalar @$layout; $i++ ) {
+        $gap_y = 0;
+        $gap_x++ if not exists $filled_cols{$i};
+        for ( my $j = 0; $j < scalar@{$layout->[$i]}; $j++ ) {
+            $gap_y++ if not exists $filled_rows{$j};
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $tag_wrap ) {
+                $new_layout->[$i-$gap_x]->[$j-$gap_y] = $layout->[$i]->[$j];
+            }
+        }
+    }
 
-	return $new_layout;
+    return $new_layout;
 }
 
 use Tk::DialogBox;
 
 sub conf_dialog {
-	my $layout = get_layout();
-	$layout = normalize_layout($layout);
-	$layout = move_layout($layout, 1, 1);
-	$layout = wrap_layout($layout);
+    my $layout = get_layout();
+    $layout = normalize_layout($layout);
+    $layout = move_layout($layout, 1, 1);
+    $layout = wrap_layout($layout);
 
-	my $dialog = TredMacro::ToplevelFrame()->DialogBox( -title => "Trees layout configuration", -buttons => [ "OK", "Cancel" ] );
-	my $m = 20;  # canvas margin
-	my $w = 80; # rectangle width
-	my $h = 45;  # rectangle height
-	my $drag_tree = '';
-	my $drag_x = '';
-	my $drag_y = '';
-	my $cur_tree = '';
-	my $canvas = $dialog->add('Canvas', -width => 7 * $w + 8 * $m, -height => 5 * $h + 6 * $m );
+    my $dialog = TredMacro::ToplevelFrame()->DialogBox( -title => "Trees layout configuration", -buttons => [ "OK", "Cancel" ] );
+    my $m = 20;                 # canvas margin
+    my $w = 80;                 # rectangle width
+    my $h = 45;                 # rectangle height
+    my $drag_tree = '';
+    my $drag_x = '';
+    my $drag_y = '';
+    my $cur_tree = '';
+    my $canvas = $dialog->add('Canvas', -width => 7 * $w + 8 * $m, -height => 5 * $h + 6 * $m );
 
-	# Forward declaration
-	my $draw_layout = sub {};
+    # Forward declaration
+    my $draw_layout = sub {};
 
-	my $get_layout_coords = sub {
-		my ($x, $y) = @_;
-		$x -= $m;
-		$y -= $m;
-		$x /= $w + $m;
-		$y /= $h + $m;
-		return ( $x, $y );
-	};
-	
-	my $get_pos = sub {
-		my ($x, $y) = @_;
-		my $a = $x - $m;
-		my $b = $y - $m;
-		my ($i, $j);
-		{ use integer; $i = $a / ($w + $m); $j = $b / ($h + $m); }
-		$a %= $w + $m;
-		$b %= $h + $m;
-		
-		return if $a >= $w or $b >= $h;
+    my $get_layout_coords = sub {
+        my ($x, $y) = @_;
+        $x -= $m;
+        $y -= $m;
+        $x /= $w + $m;
+        $y /= $h + $m;
+        return ( $x, $y );
+    };
 
-		my $tree;
-		if ( $i < 0 or $j < 0 ) {
-			$tree = $tag_none;
-		} elsif ( $layout->[$i]->[$j] ) {
-			$tree = $layout->[$i]->[$j];
-		} else {
-		  $tree = $tag_none;
-		}
-		return ( $i * ($w+$m) + $m, $j * ($h+$m) + $m, $tree );
-	};
-	
-	my $mouse_move = sub {
-		my $canvas = shift;
-		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
-		$tree = '' if not defined $tree;
+    my $get_pos = sub {
+        my ($x, $y) = @_;
+        my $a = $x - $m;
+        my $b = $y - $m;
+        my ($i, $j);
+        {
+            use integer; $i = $a / ($w + $m); $j = $b / ($h + $m);
+        }
+        $a %= $w + $m;
+        $b %= $h + $m;
 
-		if ( $cur_tree and $tree ne $cur_tree ) {
-			if ( $cur_tree ne $tag_wrap and $cur_tree ne $tag_none ) {
-				$canvas->itemconfigure( "$cur_tree&&$tag_tree", -outline => 'black', -width => 1 );
-			} else {
-				$canvas->delete( $cur_tree );
-			}
-			$cur_tree = '';
-		}
-		if ( $tree and $tree ne $cur_tree ) {
-			if ( $tree ne $tag_wrap and $tree ne $tag_none ) {
-				my $color = $drag_tree ? ( $tree eq $drag_tree ? 'red' : 'green' ) : 'blue';
-				$canvas->itemconfigure( "$tree&&$tag_tree", -outline => $color, -width => 2 );
-			} elsif ( $drag_tree ) {
-				my $color = $tree eq $tag_wrap ? 'green' : 'red';
-				$canvas->create( 'rectangle', $x, $y, $x + $w, $y + $h, -tags => [ $tree ], -outline => $color, -width => 2 );
-			}
-			$cur_tree = $tree;
-		}
-	};
+        return if $a >= $w or $b >= $h;
 
-	my $mouse_drag = sub {
-		my $canvas = shift;
-		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
-		return if ( not $tree ) or $tree eq $tag_wrap or $tree eq $tag_none;
+        my $tree;
+        if ( $i < 0 or $j < 0 ) {
+            $tree = $tag_none;
+        } elsif ( $layout->[$i]->[$j] ) {
+            $tree = $layout->[$i]->[$j];
+        } else {
+            $tree = $tag_none;
+        }
+        return ( $i * ($w+$m) + $m, $j * ($h+$m) + $m, $tree );
+    };
 
-		$drag_tree = $tree;
-		( $drag_x, $drag_y ) = &$get_layout_coords( $x, $y );
-		$canvas->itemconfigure( "$tree&&$tag_tree", -outline => 'red', -width => 2, -fill => 'yellow' );
-	};
+    my $mouse_move = sub {
+        my $canvas = shift;
+        my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+        $tree = '' if not defined $tree;
 
-	my $mouse_drop = sub {
-		return unless $drag_tree;
-		
-		my $canvas = shift;
-		my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+        if ( $cur_tree and $tree ne $cur_tree ) {
+            if ( $cur_tree ne $tag_wrap and $cur_tree ne $tag_none ) {
+                $canvas->itemconfigure( "$cur_tree&&$tag_tree", -outline => 'black', -width => 1 );
+            } else {
+                $canvas->delete( $cur_tree );
+            }
+            $cur_tree = '';
+        }
+        if ( $tree and $tree ne $cur_tree ) {
+            if ( $tree ne $tag_wrap and $tree ne $tag_none ) {
+                my $color = $drag_tree ? ( $tree eq $drag_tree ? 'red' : 'green' ) : 'blue';
+                $canvas->itemconfigure( "$tree&&$tag_tree", -outline => $color, -width => 2 );
+            } elsif ( $drag_tree ) {
+                my $color = $tree eq $tag_wrap ? 'green' : 'red';
+                $canvas->create( 'rectangle', $x, $y, $x + $w, $y + $h, -tags => [ $tree ], -outline => $color, -width => 2 );
+            }
+            $cur_tree = $tree;
+        }
+    };
 
-		$canvas->itemconfigure( "$drag_tree&&$tag_tree", -fill => 'white' );
+    my $mouse_drag = sub {
+        my $canvas = shift;
+        my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
+        return if ( not $tree ) or $tree eq $tag_wrap or $tree eq $tag_none;
 
-		if ( (not $tree) or $tree eq $tag_none ) {
-			$canvas->delete( $tag_none ) if $tree;
-			$drag_tree = $drag_x = $drag_y = '';
-			return;
-		}
+        $drag_tree = $tree;
+        ( $drag_x, $drag_y ) = &$get_layout_coords( $x, $y );
+        $canvas->itemconfigure( "$tree&&$tag_tree", -outline => 'red', -width => 2, -fill => 'yellow' );
+    };
 
-		$layout->[$drag_x]->[$drag_y] = undef;
-		( $x, $y ) = &$get_layout_coords( $x, $y );
-		if ( $tree ne $tag_wrap ) {
-			for ( my $i = scalar @$layout; $i > $x; $i-- ) {
-				if ( $layout->[$i-1]->[$y] ) {
-					$layout->[$i]->[$y] = $layout->[$i-1]->[$y];
-					$layout->[$i-1]->[$y] = undef;
-				}
-			}
-		}
-		$layout->[$x]->[$y] = $drag_tree;
+    my $mouse_drop = sub {
+        return unless $drag_tree;
 
-		$layout = normalize_layout( $layout );
-		$layout = move_layout( $layout, 1, 1 );
-		$layout = wrap_layout( $layout );
-		&$draw_layout();
+        my $canvas = shift;
+        my ( $x, $y, $tree ) = &$get_pos( $Tk::event->x, $Tk::event->y );
 
-		$drag_tree = $drag_x = $drag_y = '';
-	};
-	
-  $draw_layout = sub {
-		$canvas->delete( 'all' );
+        $canvas->itemconfigure( "$drag_tree&&$tag_tree", -fill => 'white' );
+
+        if ( (not $tree) or $tree eq $tag_none ) {
+            $canvas->delete( $tag_none ) if $tree;
+            $drag_tree = $drag_x = $drag_y = '';
+            return;
+        }
+
+        $layout->[$drag_x]->[$drag_y] = undef;
+        ( $x, $y ) = &$get_layout_coords( $x, $y );
+        if ( $tree ne $tag_wrap ) {
+            for ( my $i = scalar @$layout; $i > $x; $i-- ) {
+                if ( $layout->[$i-1]->[$y] ) {
+                    $layout->[$i]->[$y] = $layout->[$i-1]->[$y];
+                    $layout->[$i-1]->[$y] = undef;
+                }
+            }
+        }
+        $layout->[$x]->[$y] = $drag_tree;
+
+        $layout = normalize_layout( $layout );
+        $layout = move_layout( $layout, 1, 1 );
+        $layout = wrap_layout( $layout );
+        &$draw_layout();
+
+        $drag_tree = $drag_x = $drag_y = '';
+    };
+
+    $draw_layout = sub {
+        $canvas->delete( 'all' );
   	for ( my $i = 0; $i < scalar @$layout; $i++ ) {
-  		for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
-  			my $tree = $layout->[$i]->[$j];
-  			if ($tree and $tree ne $tag_wrap) {
-  				my ($lang, $layer) = split '-', $tree;
-  				$lang = Treex::Core::Common::get_lang_name($lang);
-  				$canvas->create(
-  					'rectangle',
-  					$i * ($w+$m) + $m,
-  					$j * ($h+$m) + $m,
-  					($i+1) * ($w+$m),
-  					($j+1) * ($h+$m),
-  					-tags => [ $tag_tree, $tree ],
-  					-fill => 'white'
-  				);
-  				$canvas->create(
-  					$tag_text,
-  					($i+1) * ($w+$m) - 0.5 * $w,
-  					($j+1) * ($h+$m) - 0.5 * $h,
-  					-anchor => 'center',
-  					-justify => 'center',
-  					-tags => [ $tree ],
-  					-text => "$lang\n".uc($layer)
-  				);
-  			}
-  		}
+            for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
+                my $tree = $layout->[$i]->[$j];
+                if ($tree and $tree ne $tag_wrap) {
+                    my ($lang, $layer) = split '-', $tree;
+                    $lang = Treex::Core::Common::get_lang_name($lang);
+                    $canvas->create(
+                        'rectangle',
+                        $i * ($w+$m) + $m,
+                        $j * ($h+$m) + $m,
+                        ($i+1) * ($w+$m),
+                        ($j+1) * ($h+$m),
+                        -tags => [ $tag_tree, $tree ],
+                        -fill => 'white'
+                    );
+                    $canvas->create(
+                        $tag_text,
+                        ($i+1) * ($w+$m) - 0.5 * $w,
+                        ($j+1) * ($h+$m) - 0.5 * $h,
+                        -anchor => 'center',
+                        -justify => 'center',
+                        -tags => [ $tree ],
+                        -text => "$lang\n".uc($layer)
+                    );
+                }
+            }
   	}
-  
+
   	$canvas->CanvasBind( '<Motion>' => $mouse_move );
   	$canvas->CanvasBind( '<ButtonPress-1>' => $mouse_drag );
   	$canvas->CanvasBind( '<ButtonRelease-1>' => $mouse_drop );
-  };
+    };
 
-	&$draw_layout( $canvas, $layout );
-	$canvas->pack(-expand => 1, -fill => 'both');
-	
-	my $button = $dialog->Show();
-	if ( $button eq 'OK' ) {
-		$layouts{ get_layout_label() } = normalize_layout( $layout );
-	}
+    &$draw_layout( $canvas, $layout );
+    $canvas->pack(-expand => 1, -fill => 'both');
+
+    my $button = $dialog->Show();
+    if ( $button eq 'OK' ) {
+        $layouts{ get_layout_label() } = normalize_layout( $layout );
+    }
 }
 
 1;
