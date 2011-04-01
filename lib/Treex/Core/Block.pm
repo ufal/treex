@@ -164,7 +164,7 @@ Treex::Core::Block - the basic data-processing unit in the Treex framework
  package Treex::Block::My::Block;
  use Moose;
  use Treex::Core::Common;
- extends 'Treex::Block::Read::BaseTextReader';
+ extends 'Treex::Core::Block';
  
  sub process_bundle {
     my ( $self, $bundle) = @_;
@@ -178,14 +178,16 @@ Treex::Core::Block - the basic data-processing unit in the Treex framework
 C<Treex::Core::Block> is a base class serving as a common ancestor of
 all Treex blocks.
 C<Treex::Core::Block> can't be used directly in any scenario.
-Use it's descendants which implement method C<process_bundle()>
-(or C<process_document()>) instead.
+Use it's descendants which implement one of the methods
+C<process_document()>, C<process_bundle()>, C<process_zone()>,
+C<process_[atnp]tree()> or C<process_[atnp]node()>.
+
 
 =head1 CONSTRUCTOR
 
 =over 4
 
-=item my $block = BlockGroup::My_Block->new();
+=item my $block = Treex::Block::My::Block->new();
 
 Instance of a block derived from Treex::Core::Block can be created
 by the constructor (optionally, a reference to a hash of block parameters
