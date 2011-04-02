@@ -11,7 +11,7 @@ use warnings;
 
 use Treex::Core::Config;
 
-use Treex::Core::Run;
+use Treex::Core::Run qw(treex);
 
 use Test::More;
 #plan skip_all => 'Takes too much time, maybe infinite loop';
@@ -27,7 +27,7 @@ foreach my $i ( 1 .. $number_of_files ) {
 }
 
 my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local " .
-    "Eval document='print \"1\";' -g 'paratest*.treex'";
+    "Util::Eval document='print \"1\";' -g 'paratest*.treex'";
 
 stdout_is(
     sub { treex $cmdline_arguments },
