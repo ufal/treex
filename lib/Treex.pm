@@ -70,10 +70,10 @@ TectoMT/Treex were created.
 =head2 Treex::Core distribution
 
 L<Treex::Core> is an additional level of functionality added to
-L<Treex::PML|Treex::PML>. Most L<Treex::Core|Treex::Core> classes are
+L<Treex::PML>. Most L<Treex::Core> classes are
 descendants of L<Treex::PML> classes.
 
-Unlike L<Treex::PML|Treex::PML>, L<Treex::Core|Treex::Core> is not meant to be 
+Unlike L<Treex::PML>, L<Treex::Core> is not meant to be 
 a universal library for linguistic data. L<Treex::Core> predefines 
 several quite specific types of linguistic data structures; this limitation 
 allows L<Treex::Core> to provide functionality designed 
@@ -81,7 +81,7 @@ specifically for these structures (such as resolving coordination, links
 between deep and surface syntax, clause segmentation, alignment of parallel 
 data, etc.). Moreover, L<Treex::Core> offers tools for distributed 
 processing of Treex files, and for their visualization in TrEd.
-Like L<Treex::PML|Treex::PML>, L<Treex::Core|Treex::Core> is language universal.
+Like L<Treex::PML>, L<Treex::Core> is language universal.
 
 =head2 Language specific distributions
 
