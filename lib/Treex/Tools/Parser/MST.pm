@@ -118,15 +118,17 @@ sub parse_sentence {
         Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
         chomp;
         @scores = split /\s/;
-
         # back to the matrix of scores
         shift @scores;
+        
         my @matrix;
-        foreach my $i ( 0 .. $#parents ) {
-            foreach my $j ( 0 .. $#parents ) {
-                $matrix[$i][$j] = shift @scores;
+        foreach my $i ( 0 .. @parents ) {
+            foreach my $j ( 0 .. @parents ) {
+                $matrix[$j][$i] = shift @scores;
             }
         }
+        # we don't want scores for root
+        shift @matrix;
 
         return ( \@parents, \@afuns, \@matrix );
     }

@@ -74,5 +74,8 @@ Reparse Czech analytical trees using McDonald's MST parser.
 
 =cut
 
-# Copyright 2011 David Marecek
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by David Marecek
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
