@@ -244,7 +244,7 @@ or C<undef> if C<$node> is the first one in the tree.
 Next four methods for changing the order of nodes
 (the word order defined by the attribute C<ord>)
 have an optional argument C<$arg_ref> for specifying switches.
-So far there is only one switch - B<without_children>
+So far there is only one switch - C<without_children>
 which is by default set to 0.
 It means that the default behavior is to shift the node
 with all its descendants.
@@ -258,26 +258,26 @@ There is no rehanging (changing parents). The node which is
 going to be shifted must be already added to the tree
 and the reference node must be in the same tree.
 
-For languages with left-to-right script: B<after> means "to the right of"
-and B<before> means "to the left of".
+For languages with left-to-right script: C<after> means "to the right of"
+and C<before> means "to the left of".
 
 =over
 
 =item $node->shift_after_node($reference_node);
 
-Shifts (changes the ord of) the node just behind the reference node.
+Shifts (changes the C<ord> of) the node just behind the reference node.
 
 =item $node->shift_after_subtree($reference_node);
 
-Shifts (changes the ord of) the node behind the subtree of the reference node.
+Shifts (changes the C<ord> of) the node behind the subtree of the reference node.
 
 =item $node->shift_before_node($reference_node);
 
-Shifts (changes the ord of) the node just in front of the reference node.
+Shifts (changes the C<ord> of) the node just in front of the reference node.
 
 =item $node->shift_before_subtree($reference_node);
 
-Shifts (changes the ord of) the node in front of the subtree of the reference node.
+Shifts (changes the C<ord> of) the node in front of the subtree of the reference node.
 
 =back
 

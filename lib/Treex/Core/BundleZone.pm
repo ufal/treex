@@ -248,7 +248,8 @@ __END__
 
 =head1 NAME
 
-Treex::Core::BundleZone - zone in a bundle containing a sentence and its linguistic representations
+Treex::Core::BundleZone - zone in a bundle containing a sentence and its 
+linguistic representations
 
 =head1 SYNOPSIS
 
@@ -268,7 +269,7 @@ translation, test translation).
 
 =head1 ATTRIBUTES
 
-Treex::Core::BundleZone instances have the following attributes:
+C<Treex::Core::BundleZone> instances have the following attributes:
 
 =over 4
 
@@ -280,18 +281,19 @@ Treex::Core::BundleZone instances have the following attributes:
 
 =back
 
-The attributes can be accessed using semi-affordance accessors:
-getters have the same names as attributes, while setters start with
-'set_'. For example by getter C<sentence()> and setter C<set_sentence($sentence)>
+The attributes can be accessed using semi-affordance accessors: getters have 
+the same names as attributes, while setters start with C<set_>. For example, 
+the attribute C<sentence> has a getter C<sentence()> and a setter 
+C<set_sentence($sentence)>
 
 
 =head1 METHODS
 
 =head2 Construction
 
-Treex::Core::BundleZone instances should not be created by the constructor,
+C<Treex::Core::BundleZone> instances should not be created by the constructor,
 but should be created exclusively by calling one of the following methods
-of the embedding  Treex::Core::Bundle instance:
+of the embedding  L<Treex::Core::Bundle> instance:
 
 =over 4
 
@@ -305,8 +307,8 @@ of the embedding  Treex::Core::Bundle instance:
 =head2 Access to trees
 
 There are four types of linguistic trees distinguished in Treex, each of them represented
-by one letter: a - analytical treex, t - tectogrammatical trees, p - phrase-structure trees,
-n - named entity trees. You can create trees by following methods:
+by one letter: I<a> - analytical treex, I<t> - tectogrammatical trees, I<p> - phrase-structure trees,
+I<n> - named entity trees. You can create trees by following methods:
 
 =over 4
 
@@ -374,11 +376,11 @@ You can remove trees by
 
 =item $bundle = $zone->get_bundle();
 
-returns the Treex::Core::Bundle instance which the zone belongs to
+returns the L<Treex::Core::Bundle> instance which the zone belongs to
 
 =item $doc = $zone->get_document();
 
-returns the Treex::Core::Document instance which the zone belongs to
+returns the L<Treex::Core::Document> instance which the zone belongs to
 
 =back
 

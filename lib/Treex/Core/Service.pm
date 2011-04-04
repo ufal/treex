@@ -65,7 +65,7 @@ Treex::Core::Service
 
 =head1 DESCRIPTION
 
-Service.pm
+C<Service.pm>
 
 =head1 AUTHOR
 

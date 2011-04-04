@@ -269,6 +269,7 @@ sub create_child {
     # against the "tectogrammatical ideology" and we use it as a temporary hack.
     my %structured_attrs;
     foreach my $attr ( keys %{$arg_ref} ) {
+        print "$attr\n";
         if ( $attr =~ m{/} || $attr eq 'mlayer_pos' ) {
             $structured_attrs{$attr} = delete $arg_ref->{$attr};
         }
@@ -716,10 +717,10 @@ Tree's attributes must be stored as attributes of the root node.
 
 =over 4
 
-=item  my $new_node = $existing_node->create_child(lemma=>'house', tag=>'NN' });
+=item  my $new_node = $existing_node->create_child({lemma=>'house', tag=>'NN' });
 
 Creates a new node as a child of an existing node. Some of its attribute
-can be filled. Direct calls of node constructors (->new) should be avoided.
+can be filled. Direct calls of node constructors (C<< ->new >>) should be avoided.
 
 
 =back
@@ -732,15 +733,15 @@ can be filled. Direct calls of node constructors (->new) should be avoided.
 
 =item my $bundle = $node->get_bundle();
 
-Returns the L<Treex::Core::Bundle|Treex::Core::Bundle> object in which the node's tree is contained.
+Returns the L<Treex::Core::Bundle> object in which the node's tree is contained.
 
 =item my $document = $node->get_document();
 
-Returns the L<Treex::Core::Document|Treex::Core::Document> object in which the node's tree is contained.
+Returns the L<Treex::Core::Document> object in which the node's tree is contained.
 
 =item get_layer
 
-Return the layer of this node (I<a,t,n or p>).
+Return the layer of this node (I<a>, I<t>, I<n> or I<p>).
 
 =item get_zone
 
@@ -749,11 +750,11 @@ Return the zone (L<Treex::Core::BundleZone>) to which this node
 
 =item $lang_code = $node->language
 
-shortcut for $lang_code = $node->get_zone()->language
+shortcut for C<< $lang_code = $node->get_zone()->language >>
 
 =item $selector = $node->selector
 
-shortcut for $selector = $node->get_zone()->selector
+shortcut for C<< $selector = $node->get_zone()->selector >>
 
 =back
 
@@ -769,9 +770,9 @@ Returns the value of the node attribute of the given name.
 =item my $node->set_attr($name,$value);
 
 Sets the given attribute of the node with the given value.
-If the attribute name is 'id', then the document's indexing table
-is updated. If value of the type List is to be filled,
-then $value must be a reference to the array of values.
+If the attribute name is C<id>, then the document's indexing table
+is updated. If value of the type C<List> is to be filled,
+then C<$value> must be a reference to the array of values.
 
 =item my $node2 = $node1->get_deref_attr($name);
 
@@ -780,7 +781,7 @@ it returns the appropriate node (or a reference to the list of nodes).
 
 =item my $node1->set_deref_attr($name, $node2);
 
-Sets the given attribute with ID (list of IDs) of the given node (list of nodes).
+Sets the given attribute with C<id> (list of C<id>s) of the given node (list of nodes).
 
 =item my $node->add_to_listattr($name, $value);
 
@@ -803,15 +804,15 @@ by a C<$value> (typically the value is an empty string).
 
 =item my $parent_node = $node->get_parent();
 
-Returns the parent node, or undef if there is none (if $node itself is the root)
+Returns the parent node, or C<undef> if there is none (if C<$node> itself is the root)
 
 =item $node->set_parent($parent_node);
 
-Makes $node a child of $parent_node.
+Makes C<$node> a child of C<$parent_node>.
 
 =item $node->remove();
 
-Deletes a node and the a subtree rooted by the given node.
+Deletes a node and the subtree rooted by the given node.
 Node identifier is removed from the document indexing table.
 The removed node cannot be further used.
 
@@ -821,11 +822,11 @@ Returns the root of the node's tree.
 
 =item my $root_node = $node->is_root();
 
-Returns true if the node has no parent.
+Returns C<true> if the node has no parent.
 
 =item $node1->is_descendant_of($node2);
 
-Tests whether $node1 is among transitive descendants of $node2;
+Tests whether C<$node1> is among transitive descendants of C<$node2>;
 
 =back
 
@@ -885,18 +886,18 @@ Names of variables in the examples suppose a language with left-to-right script.
 
 =item *
 
-B<first_only> and B<last_only> switches makes the method return just one item - a scalar,
-even if combined with the B<add_self> switch.
+C<first_only> and C<last_only> switches makes the method return just one item - 
+a scalar, even if combined with the C<add_self> switch.
 
 =item *
 
-Specifying B<(first|last|preceding|following)_only> implies B<ordered>,
-so explicit addition of B<ordered> gives a warning.
+Specifying C<(first|last|preceding|following)_only> implies C<ordered>,
+so explicit addition of C<ordered> gives a warning.
 
 =item *
 
-Specifying both B<preceding_only> and B<following_only> gives an error
-(same for combining B<first_only> and B<last_only>).
+Specifying both C<preceding_only> and C<following_only> gives an error
+(same for combining C<first_only> and C<last_only>).
 
 =back
 
@@ -947,9 +948,10 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =item $node->generate_new_id();
 
-Generate new (=so far unindexed) identifier (to be used when creating new nodes).
-The new identifier is derived from the identifier of the root ($node->root), by adding
-suffix x1 (or x2, if ...x1 has already been indexed, etc.) to the root's id.
+Generate new (= so far unindexed) identifier (to be used when creating new 
+nodes). The new identifier is derived from the identifier of the root 
+(C<< $node->root >>), by adding suffix C<x1> (or C<x2>, if C<...x1> has already 
+been indexed, etc.) to the root's C<id>.
 
 
 =item my $levels = $node->get_depth();
@@ -965,8 +967,8 @@ Return the depth of the node. The root has depth = 0, its children have depth = 
 
 =item my $position = $node->get_fposition();
 
-Return the node address, i.e. file name and node's position within the file, similarly
-to TrEd's FPosition() (but the value is only returned, not printed).
+Return the node address, i.e. file name and node's position within the file, 
+similarly to TrEd's C<FPosition()> (but the value is only returned, not  printed).
 
 =back
 

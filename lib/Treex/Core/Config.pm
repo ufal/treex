@@ -92,30 +92,30 @@ for instance paths to its components.
 
 =item devel_version()
 
-   returns true iff the current Treex instance is running from the svn working copy
-   (which means that it is the development version, not installed from CPAN)
+returns C<true> iff the current Treex instance is running from the svn working copy
+(which means that it is the development version, not installed from CPAN)
 
 =item lib_core_dir()
 
-   returns the directory in which this module is located (and where
-   the other Treex::Core modules are expected too)
+returns the directory in which this module is located (and where
+the other L<Treex::Core> modules are expected too)
 
 =item share_dir()
 
-   returns the Treex shared directory (formerly TMT_SHARE)
+returns the Treex shared directory (formerly C<$TMT_SHARE>)
 
 =item pml_schema_dir()
 
-   return the directory in which the PML schemata for .treex files are located
+return the directory in which the PML schemata for .treex files are located
 
 =item tred_dir()
 
-   the directory in which the tree editor TrEd is installed
+the directory in which the tree editor TrEd is installed
 
 
 =item tred_extension_dir
 
-   the directory in which the TrEd extension for Treex files is stored
+the directory in which the TrEd extension for Treex files is stored
 
 =back
 

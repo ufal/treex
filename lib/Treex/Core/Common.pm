@@ -122,7 +122,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Common - shorten the "use" part of your Perl codes
+Treex::Core::Common - shorten the "C<use>" part of your Perl codes
 
 =head1 SYNOPSIS
 
@@ -159,10 +159,11 @@ Instead of
 
 =item pos_validated_list
 
-This subroutine is automatically exported.
-Depending on the value of C<$Treex::Core::Config::params_validate>
-it is either the (slow) one from L<MooseX::Params::Validate>
-or a fast one, that does no type checking.
+This subroutine is automatically exported. Depending on the value of 
+L<$Treex::Core::Config::params_validate|Treex::Core::Config/params_validate> 
+it is either the (slow) one from 
+L<MooseX::Params::Validate> or a fast one, that does 
+no type checking.
 
 =back
 

@@ -244,7 +244,7 @@ you must use option C<dive>, e.g.:
     my $eff_children = $node->get_echildren({dive=>'AuxCP'});
 
 Methods C<get_eparents> and C<get_echildren> produce a warning
-"called on coap root ($id). Fallback to topological one."
+"C<called on coap root ($id). Fallback to topological one.>"
 when called on a root of coordination or apposition,
 because effective children/parents are not properly defined in this case.
 This warning can be supressed by option C<or_topological>.
@@ -275,7 +275,7 @@ for C<sub {my $self=shift;return $self->afun =~ /^Aux[CP]$/;}>.
 
 =item ordered, add_self, following_only, preceding_only, first_only, last_only
 
-You can specify the same options as in L<Treex::Core::Node::get_children()>.
+You can specify the same options as in L<Treex::Core::Node::get_children()|Treex::Core::Node/get_children>.
 
 =back
 
@@ -290,12 +290,12 @@ OPTIONS
 
 =item dive
 
-see C<get_echildren>
+see L<get_echildren>
 
 =item or_topological
 
 If the notion of effective parent is not defined
-(if $node is a head of coordination),
+(if C<$node> is a head of coordination),
 return the topological parent without warnings.
 
 =back
@@ -304,9 +304,10 @@ return the topological parent without warnings.
 
 =item $node->get_coap_members($arg_ref?)
 
-If the node is a coordination/apposition head
-(see L<is_coap_root()>) a list of all coordinated members is returned.
-Otherwise, the node itself is returned. 
+If the node is a coordination/apposition head (see
+L<Node::A::is_coap_root()|Node::A/is_coap_root> and
+L<Node::T::is_coap_root()|Node::T/is_coap_root>) a list of all coordinated 
+members is returned. Otherwise, the node itself is returned.
 
 OPTIONS
 
@@ -317,12 +318,13 @@ OPTIONS
 In case of nested coordinations return only "first-level" members.
 The default is to return I<transitive> members.
 For example "(A and B) or C":
-$or->get_coap_members();                 # returns A,B,C
-$or->get_coap_members({direct_only=>1}); # returns and,C
+
+ $or->get_coap_members();                 # returns A,B,C
+ $or->get_coap_members({direct_only=>1}); # returns and,C
 
 =item dive
 
-see C<get_echildren>
+see L<get_echildren>
 
 =back
 

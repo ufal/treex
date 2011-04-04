@@ -822,7 +822,7 @@ Treex::Core::TredView - visualization of Treex files in TrEd
 This module is used only in an extension of the Tree editor TrEd
 developed for displaying .treex files. The TrEd extension is contained
 in the same distribution as this module. The extension itself
-is very thin. It only creates an instance of Treex::Core::TredView
+is very thin. It only creates an instance of C<Treex::Core::TredView>
 and then forwards calls of hooks (subroutines with predefined
 names called by TrEd at certain events) to this instance.
 
@@ -846,8 +846,8 @@ Methods called directly from the hooks in the TrEd extension:
 
 =item file_opened_hook
 
-Building Treex::Core::Document structure on the top of
-Treex::PML::Document structure which was provided by TrEd.
+Building L<Treex::Core::Document> structure on the top of
+L<Treex::PML::Document> structure which was provided by TrEd.
 
 =item get_nodelist_hook
 
@@ -918,6 +918,8 @@ Treex::PML::Document structure which was provided by TrEd.
 =item wrap_layout
 
 =item normalize_layout
+
+=back
 
 =head1 AUTHOR
 

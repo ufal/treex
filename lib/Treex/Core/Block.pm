@@ -189,9 +189,9 @@ C<process_[atnp]tree()> or C<process_[atnp]node()>.
 
 =item my $block = Treex::Block::My::Block->new();
 
-Instance of a block derived from Treex::Core::Block can be created
+Instance of a block derived from C<Treex::Core::Block> can be created
 by the constructor (optionally, a reference to a hash of block parameters
-can be specified as the constructor's argument, see BLOCK PARAMETRIZATION).
+can be specified as the constructor's argument, see L</BLOCK PARAMETRIZATION>).
 However, it is not likely to appear in your code since block initialization
 is usually invoked automatically when initializing a scenario.
 
@@ -205,21 +205,22 @@ You must override one of the following methods:
 
 =item $block->process_document($document);
 
-Applies the block instance on the given instance of C<Treex::Core::Document>.
-The default implementation iterates over all bundles in a document
-and calls C<process_bundle()>.
-So in most cases you don't need to override this method.
+Applies the block instance on the given instance of 
+L<Treex::Core::Document>. The default implementation 
+iterates over all bundles in a document and calls C<process_bundle()>. So in 
+most cases you don't need to override this method.
 
 =item $block->process_bundle($bundle);
 
-Applies the block instance on the given bundle (C<Treex::Core::Bundle>).
-
+Applies the block instance on the given bundle 
+(L<Treex::Core::Bundle>).
 
 =item $block->process_zone($zone);
 
-Applies the block instance on the given bundle zone (C<Treex::Core::BundleZone>).
-Unlike C<process_document> and C<process_bundle>, C<process_zone> requires
-block attribute C<language> (and possibly also C<selector>) to be specified.
+Applies the block instance on the given bundle zone 
+(L<Treex::Core::BundleZone>). Unlike 
+C<process_document> and C<process_bundle>, C<process_zone> requires block 
+attribute C<language> (and possibly also C<selector>) to be specified.
 
 
 =back
@@ -236,7 +237,7 @@ pairs.
 =item my $param_value = $block->get_parameter($param_name);
 
 Parameter values used in block construction can
-be revealed by get_parameter method (but cannot be changed).
+be revealed by C<get_parameter> method (but cannot be changed).
 
 =back
 
@@ -250,18 +251,18 @@ It returns the name of the block module.
 
 =item my @needed_files = $block->get_required_share_files();
 
-If a block requires some files to be present in the shared part
-of Treex, their list (with relative paths starting in Treex::Core::Config::share_dir) can be specified
-by redefining by this method. By default, an empty list is returned. Presence
-of the files is automatically checked in the block constructor. If some of
-the required file is missing, the constructor tries to download it
-from http://ufallab.ms.mff.cuni.cz.
+If a block requires some files to be present in the shared part of Treex, 
+their list (with relative paths starting in 
+L<Treex::Core::Config::share_dir|Treex::Core::Config/share_dir>) can be 
+specified by redefining by this method. By default, an empty list is returned. 
+Presence of the files is automatically checked in the block constructor. If 
+some of the required file is missing, the constructor tries to download it 
+from L<http://ufallab.ms.mff.cuni.cz>.
 
 This method should be used especially for downloading statistical models,
 but not for installed tools or libraries.
 
  sub get_required_share_files {
-     my $self = shift;
      my $self = shift;
      return (
          'data/models/mytool/'.$self->language.'/features.gz',
@@ -274,10 +275,10 @@ but not for installed tools or libraries.
 
 =head1 SEE ALSO
 
-L<Treex::Core::Node|Treex::Core::Node>,
-L<Treex::Core::Bundle|Treex::Core::Bundle>,
-L<Treex::Core::Document|Treex::Core::Document>,
-L<Treex::Core::Scenario|Treex::Core::Scenario>,
+L<Treex::Core::Node>,
+L<Treex::Core::Bundle>,
+L<Treex::Core::Document>,
+L<Treex::Core::Scenario>,
 
 =head1 AUTHOR
 

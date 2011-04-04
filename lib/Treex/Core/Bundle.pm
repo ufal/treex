@@ -260,10 +260,11 @@ and their linguistic representations in the Treex framework
 
 =head1 DESCRIPTION
 
-A bundle in Treex corresponds to one sentence or more sentences, typically translations
-or variants of each other, with all their linguistic representations. Each bundle
-is divided into zones (instances of Treex::Core::BundleZone), each of them
-containing exactly one sentence and its representations.
+A bundle in Treex corresponds to one sentence or more sentences, typically 
+translations or variants of each other, with all their linguistic 
+representations. Each bundle is divided into zones (instances of 
+L<Treex::Core::BundleZone>), each of them containing 
+exactly one sentence and its representations.
 
 =head1 ATTRIBUTES
 
@@ -273,12 +274,13 @@ Each bundle has two attributes:
 
 =item id
 
-identifier accessible by the getter method C<id()> and by the setter method C<set_id($id)>
+identifier accessible by the getter method C<id()> and by the setter method 
+C<set_id($id)>
 
 =item document
 
-the document (an instance of Treex::Core::Document) which this bundle belongs to;
-accessible only by the getter method C<document()>
+the document (an instance of L<Treex::Core::Document>) 
+which this bundle belongs to; accessible only by the getter method C<document()>
 
 =back
 
@@ -288,8 +290,9 @@ accessible only by the getter method C<document()>
 
 =head2 Construction
 
-You cannot create a bundle by a constructor from scratch. You can create a bundle
-only within an existing documents, using the following methods of Treex::Core::Document:
+You cannot create a bundle by a constructor from scratch. You can create a 
+bundle only within an existing documents, using the following methods of 
+L<Treex::Core::Document>:
 
 =over 4
 
@@ -304,10 +307,10 @@ only within an existing documents, using the following methods of Treex::Core::D
 
 =head2 Access to zones
 
-Bundle zones are instances of Treex::Core::BundleZone, parametrized
-by language code and possibly also by another free label
-called selector, whose purpose is to distinguish zones for the same language
-but from a different source.
+Bundle zones are instances of 
+L<Treex::Core::BundleZone>, parametrized by language 
+code and possibly also by another free label called selector, whose purpose is 
+to distinguish zones for the same language but from a different source.
 
 =over 4
 
@@ -324,8 +327,8 @@ but from a different source.
 
 =head2 Access to trees
 
-Even if trees are not contained directly in bundle (there is the intermediate zone level),
-they can be accessed using the following shortcut methods:
+Even if trees are not contained directly in bundle (there is the intermediate 
+zone level), they can be accessed using the following shortcut methods:
 
 =over 4
 

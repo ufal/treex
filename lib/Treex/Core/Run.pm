@@ -785,16 +785,17 @@ In Perl:
 
 =head1 DESCRIPTION
 
-Treex::Core::Run allows to apply a block, a scenario, or their mixture on a set of
-data files. It is designed to be used primarily from bash command line, using
-a thin front-end script called C<treex>. However, the same list of argument can be
-passed by an array reference to the function C<treex()> imported from Treex::Core::Run.
+C<Treex::Core::Run> allows to apply a block, a scenario, or their mixture on a 
+set of data files. It is designed to be used primarily from bash command line, 
+using a thin front-end script called C<treex>. However, the same list of 
+arguments can be passed by an array reference to the function C<treex()> 
+imported from C<Treex::Core::Run>.
 
-Note that this module supports distributed processing, simply by adding switch C<-p>.
-Then there are two ways to process the data in a parallel fashion. By default,
-SGE cluster\'s qsub is expected to be available. If you have no cluster but want
-to make the computation parallelized at least on a multicore machine, add the C<--local>
-switch.
+Note that this module supports distributed processing, simply by adding switch 
+C<-p>. Then there are two ways to process the data in a parallel fashion. By 
+default, SGE cluster\'s C<qsub> is expected to be available. If you have no 
+cluster but want to make the computation parallelized at least on a multicore 
+machine, add the C<--local> switch.
 
 =head1 USAGE
 

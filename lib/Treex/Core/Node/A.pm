@@ -186,7 +186,7 @@ Returns the corresponding terminal node and all non-terminal nodes.
 =item get_pml_type_name
 
 Root and non-root nodes have different PML type in the pml schema
-(a-root.type, a-node.type)
+(C<a-root.type>, C<a-node.type>)
 
 =item is_coap_root
 

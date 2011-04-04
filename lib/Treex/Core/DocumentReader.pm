@@ -89,7 +89,7 @@ Treex::Core::DocumentReader - interface for all document readers
 =head1 DESCRIPTION
 
 Document readers are a Treex concept how to load documents to be processed by Treex.
-The documents can be stored in files (in various formats) or read from STDIN
+The documents can be stored in files (in various formats) or read from C<STDIN>
 or retrieved from a socket etc.
 
 =head1 METHODS
@@ -107,7 +107,7 @@ Return next document (L<Treex::Core::Document>).
 =item number_of_documents
 
 Total number of documents that will be produced by this reader.
-If the number is unknown in advance, undef should be returned.
+If the number is unknown in advance, C<undef> should be returned.
 
 =back
 
@@ -117,17 +117,17 @@ If the number is unknown in advance, undef should be returned.
 
 =item is_current_document_for_this_job
 
-Is the document that was most recently returned by $self->next_document()
+Is the document that was most recently returned by C<$self->next_document()>
 supossed to be processed by this job?
 Job indices and document numbers are 1-based, so e.g. for
- jobs = 5, jobindex = 3 we want to load documents with numbers 3,8,13,18,...
- jobs = 5, jobindex = 5 we want to load documents with numbers 5,10,15,20,...
-i.e. those documents where (doc_number-1) % jobs == (jobindex-1).
+C<jobs = 5, jobindex = 3> we want to load documents with numbers 3,8,13,18,...
+C<jobs = 5, jobindex = 5> we want to load documents with numbers 5,10,15,20,...
+i.e. those documents where C<(doc_number-1) % jobs == (jobindex-1)>.
 
 =item next_document_for_this_job
 
 Returns a next document which should be processed by this job.
-If jobindex is set, returns "modulo number of jobs".
+If C<jobindex> is set, returns "modulo number of jobs".
 See C<is_current_document_for_this_job>.
 
 =item number_of_documents_per_this_job
@@ -143,7 +143,7 @@ You can add additional behavior using the Moose C<after 'restart'> construct.
 
 =back
 
-=head1 SEE
+=head1 SEE ALSO
 
 L<Treex::Block::Read::Sentences>
 L<Treex::Block::Read::Text>

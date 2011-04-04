@@ -48,14 +48,14 @@ Treex::Core::DocZone instances have the following attributes:
 
 The attributes can be accessed using semi-affordance accessors:
 getters have the same names as attributes, while setters start with
-'set_'. For example by getter C<text()> and setter C<set_text($text)>
+'C<set_>'. For example, the attribute C<text> has a getter C<text()> and a setter C<set_text($text)>
 
 
 =head1 METHODS
 
--head2 Construction
+=head2 Construction
 
-Treex::Core::DocZone instances should not be created by a constructor,
+C<Treex::Core::DocZone> instances should not be created by a constructor,
 but should be created exclusively from the embedding document
 by one of the document's methods:
 

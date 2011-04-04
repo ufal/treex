@@ -218,12 +218,13 @@ You must set the link from n-node to a a-node.
 
 =item $node->get_n_node()
 
-This is a shortcut for  $self->get_lex_anode()->n_node;
+This is a shortcut for C<< $self->get_lex_anode()->n_node; >>
 If this t-node is a part of a named entity,
 this method returns the corresponding n-node (L<Treex::Core::Node::N>).
 If this node is a part of more than one named entities,
 only the most nested one is returned.
 For example: "Bank of China"
+
  $n_node_for_china = $t_node_china->get_n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();

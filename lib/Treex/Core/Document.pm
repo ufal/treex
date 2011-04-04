@@ -418,7 +418,7 @@ can be attached to a document as a whole.
 
 =head1 ATTRIBUTES
 
-Treex::Core::Document's instances have the following attributes:
+C<Treex::Core::Document>'s instances have the following attributes:
 
 =over 4
 
@@ -438,7 +438,7 @@ Textual description of the file's content that is stored in the file.
 
 The attributes can be accessed using semi-affordance accessors:
 getters have the same names as attributes, while setters start with
-'set_'. For example by getter C<path()> and setter C<set_path($path)>
+C<set_>. For example, the attribute C<path> has a getter C<path()> and a setter C<set_path($path)>
 
 
 
@@ -454,18 +454,18 @@ creates a new empty document object.
 
 =item  my $new_document = Treex::Core::Document->new( { pmldoc => $pmldoc } );
 
-creates a Treex::Core::Document instance from an already existing Treex::PML::Document instance
+creates a C<Treex::Core::Document> instance from an already existing L<Treex::PML::Document> instance
 
 =item  my $new_document = Treex::Core::Document->new( { filename => $filename } );
 
-loads a Treex::Core::Document instance from a .treex file
+loads a C<Treex::Core::Document> instance from a .treex file
 
 =back
 
 
 =head2 Access to zones
 
-Document zones are instances of Treex::Core::DocZone, parametrized
+Document zones are instances of L<Treex::Core::DocZone>, parametrized
 by language code and possibly also by another free label
 called selector, whose purpose is to distinguish zones for the same language
 but from a different source.
@@ -514,15 +514,15 @@ after the existing bundle.
 
 =item  $document->index_node_by_id( $id, $node );
 
-The node is added to the id2node hash table (as mentioned above, it
-is done automatically in $node->set_attr() if the attribute name
-is 'id'). When using undef in the place of the second argument, the entry
-for the given id is deleted from the hash.
+The node is added to the document's indexing table C<id2node> (it is done
+automatically in L<Treex::Core::Node::set_attr()|Treex::Core::Node/set_attr>
+if the attribute name is 'C<id>'). When using C<undef> in the place of the
+second argument, the entry for the given id is deleted from the hash.
 
 
 =item my $node = $document->get_node_by_id( $id );
 
-Return the node which has the value $id in its 'id' attribute,
+Return the node which has the value C<$id> in its 'C<id>' attribute,
 no matter to which tree and to which bundle in the given document
 the node belongs to.
 
@@ -532,7 +532,7 @@ documents differently or hack it by dropping the problematic links.
 
 =item $document->id_is_indexed( $id );
 
-Return true if the given id is already present in the indexing table.
+Return C<true> if the given C<id> is already present in the indexing table.
 
 =item $document->get_all_node_ids();
 

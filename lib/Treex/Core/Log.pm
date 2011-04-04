@@ -218,13 +218,13 @@ Treex::Core::Log - logger tailored for the needs of Treex
 
 =head1 DESCRIPTION
 
-Treex::Core::Log is a logger developed with the Treex system.
+C<Treex::Core::Log> is a logger developed with the Treex system.
 It uses more or less standard leveled set of reporting functions,
-printing the messages at STDERR.
+printing the messages at C<STDERR>.
 
 
 Note that this module might be completely substituted
-by more elaborate solutions such as Log::Log4perl in the
+by more elaborate solutions such as L<Log::Log4perl> in the
 whole Treex in the future
 
 

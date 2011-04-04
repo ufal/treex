@@ -60,28 +60,28 @@ format developed for interchange of linguistic data. L<Treex::PML>
 comprises of a set of modules defining abstract Perl types (such
 as tree nodes) and related functionality (such as tree traversal),
 as well as procedures for storing the data structures into (and loading
-from) PML files. Treex::PML is a universal format, with only a few
+from) PML files. L<Treex::PML> is a universal format, with only a few
 assumptions about linguistic data.
 
-Treex::PML was developed by Petr Pajas, originally under the name Fslib
-as a part of the tree editor Tred, long before other components of TectoMT/Treex
-were created.
+L<Treex::PML> was developed by Petr Pajas, originally under the name
+Fslib as a part of the tree editor Tred, long before other components of
+TectoMT/Treex were created.
 
 =head2 Treex::Core distribution
 
-L<Treex::Core> is an additional level of functionality added to Treex::PML.
-Most Treex::Core classes are descendants of Treex::PML classes.
+L<Treex::Core> is an additional level of functionality added to
+L<Treex::PML|Treex::PML>. Most L<Treex::Core|Treex::Core> classes are
+descendants of L<Treex::PML> classes.
 
-Unlike Treex::PML, Treex::Core is not meant to be a universal
-library for linguistic data. Treex::Core predefines several quite specific
-types of linguistic data structures; this limitation allows Treex::Core
-to provide functionality designed specifically for these structures
-(such as resolving coordination, links between deep and surface syntax,
-clause segmentation, alignment of parallel data, etc.).
-Moreover, Treex::Core offers tools for distributed processing
-of Treex files, and for their visualization in TrEd.
-
-Like Treex::PML, Treex::Core is language universal.
+Unlike L<Treex::PML|Treex::PML>, L<Treex::Core|Treex::Core> is not meant to be 
+a universal library for linguistic data. L<Treex::Core> predefines 
+several quite specific types of linguistic data structures; this limitation 
+allows L<Treex::Core> to provide functionality designed 
+specifically for these structures (such as resolving coordination, links 
+between deep and surface syntax, clause segmentation, alignment of parallel 
+data, etc.). Moreover, L<Treex::Core> offers tools for distributed 
+processing of Treex files, and for their visualization in TrEd.
+Like L<Treex::PML|Treex::PML>, L<Treex::Core|Treex::Core> is language universal.
 
 =head2 Language specific distributions
 
@@ -121,12 +121,12 @@ NLP system, primarily focused on Machine Translation with deep-syntactic (tectog
 (several thousand svn revisions).  Many NLP tools such as taggers and parsers for various
 languages are  integrated.
 
-2010 - Fslib separated from TrEd, and published as a CPAN module under the name Treex::PML.
+2010 - Fslib separated from TrEd, and published as a CPAN module under the name C<Treex::PML>.
 
 2010-2011 - "TectoMT" is rebranded to "Treex" - "eXploit syntactic/semantic TREEs!". All core components
 are refactored using Moose.
 
-2011 - The  Treex::Core components are packed and go to CPAN. Some other (language specific)
+2011 - The  C<Treex::Core> components are packed and go to CPAN. Some other (language specific)
 distributions are hoped to appear soon too.
 
 =head1 REFERENCES
@@ -182,6 +182,8 @@ Tomáš Kraut
 Václav Novák
 
 Jan Ptáček
+
+Rudolf Rosa
 
 Daniel Zeman
 

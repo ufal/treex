@@ -88,12 +88,13 @@ Treex::Core::Zone
 
 =head1 DESCRIPTION
 
-Treex::Core::Zone is an abstract class, it is the antecedent
-of Treex::Core::DocZone and Treex::Core::BundleZone.
+C<Treex::Core::Zone> is an abstract class, it is the antecedent
+of L<Treex::Core::DocZone> and
+L<Treex::Core::BundleZone>.
 
 =head1 ATTRIBUTES
 
-Treex::Core::BundleZone instances have the following attributes:
+C<Treex::Core::Zone> instances have the following attributes:
 
 =over 4
 
@@ -109,8 +110,8 @@ Treex::Core::BundleZone instances have the following attributes:
 
 =item $my $label = $zone->get_label;
 
-'Zone label' is a string containing the zone's language
-and selector concatenated with '_'(if the latter one is defined,
+I<Zone label> is a string containing the zone's language
+and selector concatenated with 'C<_>'(if the latter one is defined,
 otherwise only the language).
 
 =back
