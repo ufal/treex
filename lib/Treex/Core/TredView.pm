@@ -6,8 +6,11 @@ use Moose;
 use Treex::Core::Log;
 
 has 'grp'       => ( is => 'rw' );
-has 'treex_doc' => ( is => 'rw' );
 has 'pml_doc'   => ( is => 'rw' );
+has 'treex_doc' => (
+    is => 'rw',
+    weak_ref => 1
+);
 
 use List::Util qw(first);
 
