@@ -46,7 +46,7 @@ sub process_ttree {
     # connect generated nodes
     foreach my $tnode ( $troot->get_descendants ) {
         next if $is_aligned{$tnode};
-        next if $tnode->t_lemma !~ /^#(NewNode|Gen|PersPron)$/;
+        next if $tnode->t_lemma !~ /^#(NewNode|Gen|PersPron|Cor)$/;
         my ($nodes, $types) = $tnode->get_parent->get_aligned_nodes();
         next if !@$nodes;
         next if !$is_aligned{$$nodes[0]};
@@ -63,7 +63,7 @@ sub process_ttree {
 
 =over
 
-=item Treex::Block::Align::T::CopyAlignmentFromAlayer;
+=item Treex::Block::Align::T::PCEDTAlignment;
 
 PARAMETERS:
 
