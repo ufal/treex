@@ -16,7 +16,8 @@ sub process_document {
 
     my @sentences;
     foreach my $bundle ($document->get_bundles) {
-        push @sentences, $bundle->get_zone($self->language, $self->selector)->sentence;
+        my $sentence = $bundle->get_zone($self->language, $self->selector)->sentence;
+        push @sentences, $sentence;
     }
 
     my $counter = 0;
@@ -76,17 +77,25 @@ sub translate {
 
 1;
 
+
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2W::GoogleTranslate
+=head1 NAME
+
+Treex::Block::W2W::GoogleTranslate
+
+=head1 DESCRIPTION
 
 Uses GoogleTranslate to translate sentences from one zone to another.
 
-=back
+=head1 AUTHOR
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# Copyright 2011 David Marecek
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

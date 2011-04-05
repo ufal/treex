@@ -57,24 +57,31 @@ sub process_ttree {
             }
         }
     }
+
+    
 }
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::Align::T::PCEDTAlignment;
+=encoding utf-8
 
-PARAMETERS:
+=head1 NAME
 
-- language - language in which the alignment attributes are included
+Treex::Block::Align::T::PCEDTAlignment
 
-- to_language - the other language
+=head1 DESCRIPTION
 
-=back
+This block copies all links of type 'int' from a-layer to t-layer and
+adds some links connecting generated nodes (#NewNode, #Gen, #Cor).
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2009-2011 David Marecek
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
