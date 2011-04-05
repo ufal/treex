@@ -10,7 +10,7 @@ use Moose;
 
 use Data::Dumper;
 use String::Util ':all';
-use Text::CSV;
+use Scalar::Util 'looks_like_number';
 
 =head1 NAME
 
@@ -106,6 +106,7 @@ has debug_mode => (
     default => 0
 );
 
+
 =head1 FUNCTIONS
 
 =head2 load_arff
@@ -124,7 +125,6 @@ sub load_arff {
     my $attribute_count = 0;
     my $line_counter    = 1;
     my $relation        = $self->relation;
-    my $line_parser     = Text::CSV->new( { binary => 1, quote_char => '\'', escape_char => '\\', allow_loose_escapes => 1 } ) or die "Cannot use CSV Parser: " . Text::CSV->error_diag();
 
     local *FILE;
     open( FILE, $arff_file ) or die $!;
@@ -164,8 +164,7 @@ sub load_arff {
             }
 
             #log_msg("extracting data $current_line");
-            $line_parser->parse($current_line);
-            my @data_parts = $line_parser->fields();    # split(/,/, $current_line);
+            my @data_parts = $self->_parse_line($current_line);    # split(/,/, $current_line);
 
             my $attributes = $relation->{"attributes"};
             my $records    = $relation->{"records"};
@@ -208,6 +207,58 @@ sub load_arff {
     return $relation;
 }
 
+
+# Parse an ARFF data line, return all fields it contains. Both single and double quotes
+# are allowed, unquoted quotation marks are treated as missing values.
+sub _parse_line {
+
+    my ( $self, $line ) = @_;
+    my @fields;
+    
+    $line .= ',';
+    while ($line =~ m/([^"'][^,]*|'[^']*(\\'[^'])*'|"[^"]*(\\"[^"])*"),/g){
+        
+        my $field = $1;
+        
+        if ($field eq '?'){ # undefined value
+            push(@fields, undef);
+        }
+        elsif ($field =~ m/^['"].*['"]$/ ){ # quoted value
+            $field = substr($field, 1, length($field) - 2); # unquote
+            $field =~ s/\\(['\\])/$1/g; # unescape 
+            push(@fields, $field);
+        }
+        else { # unquoted value
+            push(@fields, $field);
+        }
+    }
+    return @fields;
+}
+
+# Compose an ARFF data line out of given fields. Quote any fields that might need it,
+# save undefined fields as unquoted quotation marks.
+sub _compose_line {
+    
+    my $self = shift;
+    my @fields = @_;
+    my $line = '';
+    
+    foreach my $field (@fields){
+        
+        if (!defined($field)){
+            $line .= '?,';
+        }
+        elsif ($field eq '' or $field =~ m/[\\'"?]/){ # we need quotes
+            $field =~ s/([\\'])/\\$1/g; # escape
+            $line .= "'$field',";
+        }
+        else {
+            $line .= "$field,";
+        }
+    }
+    return substr($line, 0, length($line) - 1); # leave last comma out
+}
+
 =head2 save_arff
 
 Save given buffer into the .arff formatted file. 
@@ -246,23 +297,18 @@ sub save_arff {
             print FILE "\n";
 
             foreach my $record ( @{ $buffer->{"records"} } ) {
-                my $record_string = q//;
+                my @record_fields = ();
                 foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
+                    
                     if ( $record->{ $attribute->{attribute_name} } ) {
-                        $record_string .= $record->{ $attribute->{attribute_name} } . q/,/;
+                        push @record_fields, $record->{ $attribute->{attribute_name} };
                     }
                     else {
-                        if ( $self->debug_mode ) {
-                            print "Invalid buffer passed, " . $attribute->{attribute_name} . " is not defined for record... write UNKNOWN\n";
-                        }
-                        $record_string .= q/UNKNOWN,/;
-                        $self->error_count( $self->error_count + 1 );
+                        push @record_fields, undef;
                     }
                 }
 
-                $record_string =~ s/,$//;
-
-                print FILE $record_string . "\n";
+                print FILE $self->_compose_line(@record_fields) . "\n";
                 $record_count++;
             }
         }
@@ -277,6 +323,94 @@ sub save_arff {
     }
 
     return 1;
+}
+
+
+=head2 prepare_headers
+
+Prepare the ARFF file headers for writing: determine between nominal and numeric attributes, fill in missing values
+for nominal attributes. All pre-set attribute type settings are kept (only missing values for nominal attributes filled). 
+
+=cut
+
+sub prepare_headers {
+    
+    my ($self, $buffer) = @_;
+            
+    # there's no work with no data
+    return if !$buffer->{records} or @{ $buffer->{records} } == 0;
+       
+    if ( !$buffer->{attributes} ){ # create the attributes declarations if not already done
+        $buffer->{attributes} = [];
+    }
+    
+    my %attribs;
+    foreach my $attribute ( @{ $buffer->{attributes} } ){
+        $attribs{ $attribute->{attribute_name} } = $attribute;
+    }    
+
+    # check if all needed attributes are present
+    foreach my $record ( @{ $buffer->{records} } ){
+                        
+        foreach my $attr_name (sort keys %{ $record } ){
+            if ( ! $attribs{$attr_name} ){
+                            
+                my $new_attr = { attribute_name => $attr_name };
+                push @{ $buffer->{attributes} }, $new_attr;
+                $attribs{$attr_name} = $new_attr;        
+            }
+        }
+    }
+    
+    $self->_set_attribute_types($buffer);       
+}
+
+
+# detect attribute types by collecting all their values and testing whether they are numeric
+sub _set_attribute_types {
+
+    my ($self, $buffer) = @_;
+
+    foreach my $attr (@{ $buffer->{attributes} }){
+
+        # skip pre-set numeric and string attributes        
+        next if ($attr->{attribute_type} and ($attr->{attribute_type} eq 'NUMERIC' or $attr->{attribute_type} eq 'STRING'));
+        
+        my %values;
+        
+        # keep pre-set values
+        if ($attr->{attribute_type} and $attr->{attribute_type} =~ m/^{.*}$/){
+            my $val_list = $attr->{attribute_type};
+            $val_list =~ s/^{(.*)}$/$1/;             
+            %values = map { $_ => 1 } $self->_parse_line($val_list); 
+        }
+
+        # find all other values
+        for my $record (@{ $buffer->{records} }){
+            if ($record->{ $attr->{attribute_name} }){
+                $values{ $record->{ $attr->{attribute_name} } } = 1;
+            }
+        }            
+        
+        # determine the type                 
+        if (!$attr->{attribute_type}){
+            my $numeric = 1;
+
+            for my $record (@{ $buffer->{records} }){
+                if ($record->{$attr->{attribute_name}} and !looks_like_number($record->{$attr->{attribute_name}})){
+                    $numeric = 0;
+                    last;
+                }
+            }
+            if ($numeric){
+                $attr->{attribute_type} = 'NUMERIC';
+            }
+        }
+        if (!$attr->{attribute_type} or $attr->{attribute_type} =~ m/^{.*}$/) {
+            $attr->{attribute_type} = '{' . $self->_compose_line(sort keys %values) . '}';
+        }
+    }
+    
 }
 
 =head1 AUTHOR
