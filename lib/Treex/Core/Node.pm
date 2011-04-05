@@ -269,7 +269,6 @@ sub create_child {
     # against the "tectogrammatical ideology" and we use it as a temporary hack.
     my %structured_attrs;
     foreach my $attr ( keys %{$arg_ref} ) {
-        print "$attr\n";
         if ( $attr =~ m{/} || $attr eq 'mlayer_pos' ) {
             $structured_attrs{$attr} = delete $arg_ref->{$attr};
         }
