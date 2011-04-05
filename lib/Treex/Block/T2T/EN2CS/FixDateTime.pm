@@ -33,7 +33,7 @@ sub process_year {
         }
     );
 
-    # The new node's source/head.rf should point to the English year-node.
+    # The new node's src_tnode.rf should point to the English year-node.
     # (It is useful e.g. when checking source node's formeme.)
 
     $new_node->set_src_tnode($en_t_node);
@@ -64,6 +64,14 @@ sub process_year {
     $t_node->set_parent($new_node);
     foreach my $child ( $t_node->get_children() ) {
         $child->set_parent($new_node);
+    }
+
+    # is_member attribute must remain directly under the conjuction
+    # e.g. "In 1980(is_member=1) and 2000(is_member=1)"
+    #  ->  "V roce(is_member=1) 1980 a roce(is_member=1) 2000"
+    if ($t_node->is_member){
+        $t_node->set_is_member(0);
+        $new_node->set_is_member(1);
     }
     return;
 }
