@@ -48,7 +48,7 @@ sub process_ttree {
         next if $is_aligned{$tnode};
         next if $tnode->t_lemma !~ /^#(NewNode|Gen|PersPron|Cor)$/;
         my ($nodes, $types) = $tnode->get_parent->get_aligned_nodes();
-        next if !@$nodes;
+        next if !$nodes || !@$nodes;
         next if !$is_aligned{$$nodes[0]};
         foreach my $candidate ( $$nodes[0]->get_children() ) {
             if ($candidate->functor eq $tnode->functor) {
