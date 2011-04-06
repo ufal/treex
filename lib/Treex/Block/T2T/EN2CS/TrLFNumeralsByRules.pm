@@ -10,8 +10,8 @@ sub process_tnode {
     my $en_tnode = $cs_tnode->src_tnode or return;
     return if $en_tnode->formeme ne 'n:attr';
     $cs_tnode->set_formeme('n:attr');
-    $cs_tnode->set_formeme_origin('rule-numeral');
-    $cs_tnode->set_t_lemma_origin('rule-numeral');
+    $cs_tnode->set_formeme_origin('rule-TrLFNumeralsByRules');
+    $cs_tnode->set_t_lemma_origin('rule-TrLFNumeralsByRules');
 
     # delete variants
     $cs_tnode->set_attr( 'translation_model/t_lemma_variants', undef );
@@ -28,7 +28,8 @@ __END__
 
 
 If succeeded, lemma and formeme are filled
-and atributtes C<formeme_origin> and C<t_lemma_origin> is set to I<rule-numeral>.
+and atributtes C<formeme_origin> and C<t_lemma_origin> is set to
+I<rule-TrLFNumeralsByRules>.
 
 =back
 
