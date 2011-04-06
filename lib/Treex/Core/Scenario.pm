@@ -148,7 +148,7 @@ sub parse_scenario_string {
         }
 
         # parameter definition
-        elsif ( $token =~ /(\S+)=(\S+)/ ) {
+        elsif ( $token =~ /(\S+)=(\S*)/ ) {
 
             # "de-escape"
             $token =~ s/%20/ /g;
