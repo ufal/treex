@@ -35,7 +35,12 @@ sub process_document {
             sleep(2); 
         }
     }
-    $output_text .= translate( $input_text, $self->language, $self->to_language ) if $input_text;
+    if ($input_text) {
+        if (length($input_text) < 100) {
+            $input_text .= "This additional text must be here, because translated sentence is too short and Google gives different output format for such short inputs\n";
+        }
+        $output_text .= translate( $input_text, $self->language, $self->to_language );
+    }
     @sentences = split(/\n/, $output_text);
 
     foreach my $bundle ($document->get_bundles) {
