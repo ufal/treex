@@ -28,10 +28,10 @@ has _file_handle => (
 
 sub _build_file_handle {
 
-    my ($this) = @_;
+    my ($self) = @_;
 
-    if ( $this->to ne "-" ) {
-        open( my $fh, '>:utf8', $this->to );
+    if ( $self->to ne "-" ) {
+        open( my $fh, '>:utf8', $self->to );
         return $fh;
     }
     else {
@@ -41,9 +41,9 @@ sub _build_file_handle {
 
 sub DEMOLISH {
 
-    my ($this) = @_;
-    if ( $this->to ) {
-        close( $this->_file_handle );
+    my ($self) = @_;
+    if ( $self->to ) {
+        close( $self->_file_handle );
     }
     return;
 }

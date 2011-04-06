@@ -1,12 +1,13 @@
 #
-# This is a copy of the Arff::Util package from CPAN with some bugfixes. I am planning to contribute the fixes
-# to CPAN and remove this file in the future.
+# This is a copy of the Arff::Util package from CPAN with a lot of fixes and improvements. I will send them to the
+# original author so that he can add them into CPAN.
 #
-# Ondrej Dusek, 2011/03/25
+# Ondrej Dusek, 2011/04/06
 #
 package Treex::Tools::IO::Arff;
 
 use Moose;
+use autodie; # die on I/O error
 
 use Data::Dumper;
 use String::Util ':all';
@@ -32,10 +33,14 @@ Quick summary of what the module does.
   use ARFF::Util;
 
   my $arff_object = ARFF::Util->new();
-  # load .arff formatted file into the buffer, and return pointer to buffer
+  # load .arff formatted file from a path or an open handle (reference) into the buffer, and return a pointer to buffer
   $arff_hash = $arff_object->load_arff($file_address);
   
-  # save given buffer into the .arff formatted file
+  # check all attribute types (fill in missing attributes from the data, if $check_presence is non-zero
+  # default to string attributes if $string is non-zero, nominal otherwise
+  $arff_object->prepare_headers($arff_hash, $check_presence, $string);
+  
+  # save the given buffer into an .arff formatted file, to a path or an open handle (reference)
   $arff_object->save_arff($arff_hash, $file_address);
 
 =head1 DESCRIPTION
@@ -56,18 +61,19 @@ for more information about ARFF format visit http://www.cs.waikato.ac.nz/~ml/wek
  Structure of hash:
 
  relation -> {
+        relation_name => name, 
 		attributes => [
 				{
 					attribute_name => x1,
 					attribute_type => x2,
 				},...
-			      ]
+			      ],
 		records    => [
 				{
 					attribute_name1 => value1,
 					attribute_name2 => value2,...
 				},...
-			      ]
+			      ],
 		data_record_count => x
 	      }
 =cut
@@ -76,7 +82,7 @@ has relation => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub {
-        {
+        {            
             attributes        => [],
             records           => [],
             data_record_count => 0
@@ -118,17 +124,25 @@ Get arff file path and load it in buffer
 sub load_arff {
     my ( $self, $arff_file ) = @_;
     my $status = q/normal/;
-    if ( $self->debug_mode ) {
-        print "Loading $arff_file ...\n";
-    }
+
     my $record_count    = 0;
     my $attribute_count = 0;
     my $line_counter    = 1;
     my $relation        = $self->relation;
+    my $io;
 
-    local *FILE;
-    open( FILE, $arff_file ) or die $!;
-    while ( my $current_line = <FILE> )
+    if (ref $arff_file ne 'IO'){
+        open($io, $arff_file);
+    }
+    else {
+        $io = $arff_file;
+        $arff_file = '<HANDLE>';
+    }
+
+    if ( $self->debug_mode ) {
+        print STDERR "Loading $arff_file ...\n";
+    }
+    while ( my $current_line = <$io> )
     {
         $current_line = trim($current_line);
 
@@ -185,7 +199,7 @@ sub load_arff {
             else
             {
                 if ( $self->debug_mode ) {
-                    print "Line $line_counter : Invalid data record: $current_line Contains " . ( scalar @data_parts ) . " Expected $attribute_count\n";
+                    print STDERR "Line $line_counter : Invalid data record: $current_line Contains " . ( scalar @data_parts ) . " Expected $attribute_count\n";
                 }
                 $self->error_count( $self->error_count + 1 );
             }
@@ -193,6 +207,9 @@ sub load_arff {
         }
         $line_counter++;
     }
+    if ($arff_file ne '<HANDLE>'){
+        close($io);
+    } 
 
     $relation->{"data_record_count"} = $record_count;
     $relation->{"attribute_count"}   = $attribute_count;
@@ -200,8 +217,8 @@ sub load_arff {
     if ( $self->debug_mode ) {
         eval("use Devel::Size qw(size total_size)");
 
-        print "$arff_file loaded with " . $self->error_count . " error(s).\n";
-        print "Buffer size: " . total_size($relation) . " bytes\n";
+        print STDERR "$arff_file loaded with " . $self->error_count . " error(s).\n";
+        print STDERR "Buffer size: " . total_size($relation) . " bytes\n";
     }
     $self->relation($relation);
     return $relation;
@@ -248,7 +265,7 @@ sub _compose_line {
         if (!defined($field)){
             $line .= '?,';
         }
-        elsif ($field eq '' or $field =~ m/[\\'"?]/){ # we need quotes
+        elsif ($field eq '' or $field =~ m/[\\,'"? \t]/){ # we need quotes
             $field =~ s/([\\'])/\\$1/g; # escape
             $line .= "'$field',";
         }
@@ -266,41 +283,52 @@ Save given buffer into the .arff formatted file.
 =cut
 
 sub save_arff {
-    my ( $self, $buffer, $arff_file ) = @_;
+    my ( $self, $buffer, $arff_file, $print_headers ) = @_;
+    my $io;
+    
+    if (!defined($print_headers)){
+        $print_headers = 1;
+    }
 
-    local *FILE;
-
-    open( FILE, ">$arff_file" );
+    if (!ref($arff_file)){     
+        open($io, '>', $arff_file );
+    }
+    else {
+        $io = $arff_file;
+        $arff_file = '<HANDLE>'; 
+    }
 
     my $record_count = 0;
 
     if ( $self->debug_mode ) {
-        print "Writing buffer to $arff_file ...\n";
+        print STDERR "Writing buffer ...\n";
     }
 
-    if ( $buffer->{relation_name} )
-    {
-        print FILE q/@RELATION / . $buffer->{relation_name} . "\n";
-    }
-    print FILE "\n";
-    print FILE "\n";
-
-    if ( $buffer->{attributes} ) {
-        foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
-            print FILE q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
+    if ( $print_headers ){
+        if ( $buffer->{relation_name} )
+        {
+            print { $io } q/@RELATION / . $buffer->{relation_name} . "\n";
         }
-        print FILE "\n";
-        print FILE "\n";
+        print { $io } "\n\n";
+    }
+    
+    if ( $buffer->{attributes} ) {
+        
+        if ( $print_headers ){
+            foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
+                print { $io }  q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
+            }
+            print { $io } "\n\n";
+            print { $io } "\@DATA\n\n";
+        }
 
         if ( $buffer->{records} ) {
-            print FILE "\@DATA\n";
-            print FILE "\n";
-
+            
             foreach my $record ( @{ $buffer->{"records"} } ) {
                 my @record_fields = ();
                 foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
                     
-                    if ( $record->{ $attribute->{attribute_name} } ) {
+                    if ( defined($record->{ $attribute->{attribute_name} }) ) {
                         push @record_fields, $record->{ $attribute->{attribute_name} };
                     }
                     else {
@@ -308,18 +336,21 @@ sub save_arff {
                     }
                 }
 
-                print FILE $self->_compose_line(@record_fields) . "\n";
+                print { $io } $self->_compose_line(@record_fields) . "\n";
                 $record_count++;
             }
         }
     }
-
+    if ($arff_file ne '<HANDLE>'){
+        close($io);
+    } 
+    
     if ( $self->debug_mode ) {
         eval("use Devel::Size qw(size total_size)");
 
-        print "Buffer saved to $arff_file with " . $self->error_count . " error(s).\n";
-        print "Buffer size: " . total_size($buffer) . " bytes\n";
-        print "Data rows count: " . $record_count . "\n";
+        print STDERR "Buffer saved to $arff_file with " . $self->error_count . " error(s).\n";
+        print STDERR "Buffer size: " . total_size($buffer) . " bytes\n";
+        print STDERR "Data rows count: " . $record_count . "\n";
     }
 
     return 1;
@@ -328,19 +359,32 @@ sub save_arff {
 
 =head2 prepare_headers
 
-Prepare the ARFF file headers for writing: determine between nominal and numeric attributes, fill in missing values
+Prepare the ARFF file headers for writing: determine between nominal (or string) and numeric attributes, fill in missing values
 for nominal attributes. All pre-set attribute type settings are kept (only missing values for nominal attributes filled). 
 
 =cut
 
 sub prepare_headers {
     
-    my ($self, $buffer) = @_;
+    my ($self, $buffer, $ensure_attribs, $string_default) = @_;
             
     # there's no work with no data
     return if !$buffer->{records} or @{ $buffer->{records} } == 0;
        
-    if ( !$buffer->{attributes} ){ # create the attributes declarations if not already done
+    if ($ensure_attribs){       
+        $self->_ensure_attributes($buffer);
+    }    
+    $self->_set_attribute_types($buffer, $string_default);       
+}
+
+
+# Check if all attributes are present.
+sub _ensure_attributes {
+
+    my ($self, $buffer) = @_;
+
+    # create the attributes declarations if not already done       
+    if ( !$buffer->{attributes} ){ 
         $buffer->{attributes} = [];
     }
     
@@ -349,7 +393,7 @@ sub prepare_headers {
         $attribs{ $attribute->{attribute_name} } = $attribute;
     }    
 
-    # check if all needed attributes are present
+    # now create the missing attributes
     foreach my $record ( @{ $buffer->{records} } ){
                         
         foreach my $attr_name (sort keys %{ $record } ){
@@ -360,16 +404,14 @@ sub prepare_headers {
                 $attribs{$attr_name} = $new_attr;        
             }
         }
-    }
-    
-    $self->_set_attribute_types($buffer);       
+    }    
 }
 
 
-# detect attribute types by collecting all their values and testing whether they are numeric
+# Detect attribute types by collecting all their values and testing whether they are numeric.
 sub _set_attribute_types {
 
-    my ($self, $buffer) = @_;
+    my ($self, $buffer, $string_default) = @_;
 
     foreach my $attr (@{ $buffer->{attributes} }){
 
@@ -378,7 +420,7 @@ sub _set_attribute_types {
         
         my %values;
         
-        # keep pre-set values
+        # keep pre-set values        
         if ($attr->{attribute_type} and $attr->{attribute_type} =~ m/^{.*}$/){
             my $val_list = $attr->{attribute_type};
             $val_list =~ s/^{(.*)}$/$1/;             
@@ -396,14 +438,17 @@ sub _set_attribute_types {
         if (!$attr->{attribute_type}){
             my $numeric = 1;
 
-            for my $record (@{ $buffer->{records} }){
-                if ($record->{$attr->{attribute_name}} and !looks_like_number($record->{$attr->{attribute_name}})){
+            for my $value (keys %values){
+                if (!looks_like_number($value)){
                     $numeric = 0;
                     last;
                 }
             }
             if ($numeric){
                 $attr->{attribute_type} = 'NUMERIC';
+            }
+            elsif ($string_default){
+                $attr->{attribute_type} = 'STRING';
             }
         }
         if (!$attr->{attribute_type} or $attr->{attribute_type} =~ m/^{.*}$/) {

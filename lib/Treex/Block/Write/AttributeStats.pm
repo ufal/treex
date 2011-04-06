@@ -6,28 +6,10 @@ use autodie;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
+with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
 
-has 'layer' => (
-    isa => enum( [ 'a', 't', 'p', 'n' ] ),
-    is => 'ro',
-    required => 1
-);
-
-has 'attributes' => (
-    isa      => 'Str',
-    is       => 'ro',
-    required => 1
-);
-
-# This is a parsed list of attributes, constructed from the attributes parameter.
-has '_attrib_list' => (
-    isa        => 'ArrayRef',
-    is         => 'ro',
-    builder    => '_build_attrib_list',
-    lazy_build => 1
-);
 
 # The statistics storage (a multi-level hash, with one level for each attribute).
 has '_attrib_stats' => (
@@ -42,31 +24,15 @@ has 'separator' => (
     default => "\t"
 );
 
-# Parse the attribute list given in parameters.
-sub _build_attrib_list {
-    my ($self) = @_;
-
-    return [ split /\s+/, $self->attributes ];
-}
-
-sub process_zone {
-
-    my $self = shift;
-    my ($zone) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Zone' },
-    );
-
-    if ( !$zone->has_tree( $self->layer ) ) {
-        log_fatal( 'No tree for ' . $self->layer . ' found.' );
-    }
-    my $tree = $zone->get_tree( $self->layer );
+sub _process_tree() {
+    
+    my ( $self, $tree ) = @_;
 
     foreach my $node ( $tree->get_descendants ) {
         $self->_process_node($node);
-    }
-    return 1;
+    }    
 }
+
 
 # Gathers the statistics for one node.
 sub _process_node() {
