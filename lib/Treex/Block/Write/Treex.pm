@@ -26,8 +26,7 @@ has filenames => (
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'to' must be defined!" if !defined $self->to;
-    $self->set_filenames( [ split /[ ,]+/, $self->to ] );
-    return;
+    return [ split /[ ,]+/, $self->to ];
 }
 
 sub process_document {
