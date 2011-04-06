@@ -83,10 +83,8 @@ sub build_file_number {
 
 # Full filename without the extension
 sub full_filename {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
 }
 

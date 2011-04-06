@@ -578,23 +578,24 @@ sub set_ordering_value {
     return;
 }
 
-sub get_fposition {
+# proposal
+sub get_address {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
+    my $self     = shift;
+    my $id       = $self->id;
+    my $bundle   = $self->get_bundle();
+    my $doc      = $bundle->get_document();
+    my $file     = $doc->loaded_from || ( $doc->full_filename . '.treex' );
+    my $position = $bundle->get_position();
+
+    #my $filename = Cwd::abs_path($file);
+    return "$file##$position.$id";
+}
+
+# deprecated
+sub get_fposition {
     my $self = shift;
-    my $id   = $self->get_attr('id');
-
-    my $fsfile  = $self->get_document->_get_pmldoc();    ## no critic (ProtectPrivateSubs)
-    my $fs_root = $self->get_bundle;
-
-    my $bundle_number = 1;
-    TREES:
-    foreach my $t ( $fsfile->trees() ) {
-        last TREES if $t == $fs_root;
-        $bundle_number++;
-    }
-
-    my $filename = Cwd::abs_path( $self->get_document->get_fsfile_name() );
-    return "$filename##$bundle_number.$id";
+    return $self->get_address();
 }
 
 sub generate_new_id {    #TODO move to Core::Document?
