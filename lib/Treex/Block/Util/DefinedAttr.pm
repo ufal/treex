@@ -51,10 +51,8 @@ sub check_tree {
         foreach my $name ( split /,/, $attrs ) {
             my $value = $node->get_attr($name);
             if ( !defined $value ) {
-                my $id = $node->id || '?';
-
-                #TODO print doc name, bundle id etc.
-                my $msg = "${layer}node id=$id\tattr_name=$name\t" . $self->message;
+                my $address = $node->get_address();
+                my $msg = "${layer}node\t$address\tundefined attr_name=$name\t" . $self->message;
                 log_fatal($msg) if $self->on_error eq 'die';
                 log_warn($msg);
             }
