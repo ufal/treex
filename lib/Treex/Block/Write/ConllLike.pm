@@ -40,9 +40,6 @@ sub process_ttree {
         push( @data, get_node_info($node) );
     }
 
-    # sort, according to deepord
-    @data = sort ord_sort @data;
-
     # print the results
     foreach my $line (@data) {
         $this->_print_st($line);
@@ -102,11 +99,6 @@ sub get_node_info {
     $info{"aux_afuns"}  = $info{"aux_afuns"}  eq "" ? $NOT_SET : substr( $info{"aux_afuns"},  1 );
 
     return \%info;
-}
-
-# Compares its arguments (hash references) according to the "ord" field.
-sub ord_sort {
-    return $a->{"ord"} <=> $b->{"ord"};
 }
 
 # Prints a data line in the pseudo-CoNLL-ST format:
