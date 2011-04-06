@@ -1,18 +1,16 @@
 package Treex::Tools::Parser::MST;
-
 use Moose;
-use MooseX::FollowPBP;
+use Treex::Core::Common;
 
 use ProcessUtils;
 use File::Java;
 use DowngradeUTF8forISO2;
-use Report;
 
-has model      => ( isa => 'Str',  is => 'rw', required => 1 );
-has memory     => ( isa => 'Str',  is => 'rw', default  => '1800m' );
-has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
-has decodetype => ( isa => 'Str',  is => 'rw', default  => 'non-proj' );
-has robust     => ( isa => 'Bool', is => 'r',  default  => 0 );
+has model => ( isa => 'Str', is => 'rw', required => 1 );
+has memory     => ( isa => 'Str',  is => 'rw', default => '1800m' );
+has order      => ( isa => 'Int',  is => 'rw', default => 2 );
+has decodetype => ( isa => 'Str',  is => 'rw', default => 'non-proj' );
+has robust     => ( isa => 'Bool', is => 'ro', default => 0 );
 
 my @all_javas;    # PIDs of java processes
 
@@ -24,7 +22,7 @@ sub BUILD {
     die "Missing $bindir\n" if !-d $bindir;
 
     #TODO this should be done better
-    my $redirect = Report::get_error_level() == 1 ? '' : '2>/dev/null';
+    my $redirect = Treex::Core::Log::get_error_level() == 1 ? '' : '2>/dev/null';
 
     # We communicate with the parser in ISO-8859-2. In principle, any encoding is
     # fine (e.g. utf8, as long as the binmode of bipipe corresponds to the
@@ -67,18 +65,18 @@ sub parse_sentence {
     my ( $self, $forms_rf, $tags_rf ) = @_;
 
     if ( ref($forms_rf) ne "ARRAY" or ref($tags_rf) ne "ARRAY" ) {
-        Report::fatal('Both arguments must be array references.');
+        log_fatal('Both arguments must be array references.');
     }
 
     if ( $#{$forms_rf} != $#{$tags_rf} or @$forms_rf == 0 ) {
-        Report::warn "FORMS: @$forms_rf\n";
-        Report::warn "TAGS:  @$tags_rf\n";
-        Report::fatal('Both arguments must be references to nonempty arrays of equal length.');
+        log_warn "FORMS: @$forms_rf\n";
+        log_warn "TAGS:  @$tags_rf\n";
+        log_fatal('Both arguments must be references to nonempty arrays of equal length.');
     }
 
     if ( my @ret = grep { $_ =~ /^\s+$/ } ( @{$forms_rf}, @{$tags_rf} ) ) {
-        Report::data("@ret");
-        Report::fatal('Elements of argument arrays must not be empty and must not contain white-space characters');
+        log_debug("@ret");
+        log_fatal('Elements of argument arrays must not be empty and must not contain white-space characters');
     }
 
     if ( @{$tags_rf} == 1 ) {
@@ -92,41 +90,43 @@ sub parse_sentence {
     if ( !$self->{robust} ) {
         $writer = $self->{writer};
         $reader = $self->{reader};
-        Report::fatal("Treex::Tools::Parser::MST: unexpected status") if ( !defined $reader || !defined $writer );
+        log_fatal("Treex::Tools::Parser::MST: unexpected status") if ( !defined $reader || !defined $writer );
         print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
         print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
 
         #        print $writer join( "\t", @$forms_rf ) . "\n";
         #        print $writer join( "\t", @$tags_rf ) . "\n";
         $_ = <$reader>;
-        Report::fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
+        log_fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
         chomp;
-        Report::fatal( "Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence '" . join( " ", @$forms_rf ) . "'" ) if ( $_ !~ /^OK/ );
+        log_fatal( "Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence '" . join( " ", @$forms_rf ) . "'" ) if ( $_ !~ /^OK/ );
         $_ = <$reader>;    # forms
         $_ = <$reader>;    # lemmas
         $_ = <$reader>;    # afuns
-        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
         chomp;
         @afuns = split /\t/;
         @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
         $_     = <$reader>;                                 # parents
-        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
         chomp;
         @parents = split /\t/;
         $_       = <$reader>;                               # blank line after a valid parse
         $_       = <$reader>;                               # scoreMatrix
-        Report::fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
         chomp;
         @scores = split /\s/;
+
         # back to the matrix of scores
         shift @scores;
-        
+
         my @matrix;
         foreach my $i ( 0 .. @parents ) {
             foreach my $j ( 0 .. @parents ) {
                 $matrix[$j][$i] = shift @scores;
             }
         }
+
         # we don't want scores for root
         shift @matrix;
 
@@ -138,12 +138,12 @@ sub parse_sentence {
     my $first_attempt = 1;
     my $ok            = 0;
     RETRY: while ( !$ok && $attempts ) {
-        Report::warn "Treex::Tools::Parser::MST: $attempts attempts remaining" if !$first_attempt;
+        log_warn "Treex::Tools::Parser::MST: $attempts attempts remaining" if !$first_attempt;
         $attempts--;
         $first_attempt = 0;
 
         if ( !defined $self->{writer} ) {
-            Report::warn "Treex::Tools::Parser::MST: Reinitializing";
+            log_warn "Treex::Tools::Parser::MST: Reinitializing";
             my $newself = Treex::Tools::Parser::MST->new( { model => $self->{model}, memory => $self->{memory}, order => $self->{order}, decodetype => $self->{decodetype} } );
             foreach my $attr (qw(reader writer pid)) {
                 $self->{$attr} = $newself->{$attr};
@@ -162,13 +162,13 @@ sub parse_sentence {
 
         $_ = <$reader>;
         if ( !defined $_ ) {
-            Report::info("Parser::MST::English: java parser died, got no parse");
+            log_info("Parser::MST::English: java parser died, got no parse");
             $self->{writer} = undef;    # ask for reinit
             goto RETRY;
         }
         chomp;
         if (/^FAIL/) {
-            Report::info("Parser::MST::English refused to parse the sentence. Building flat tree. Parser error: $_");
+            log_info("Parser::MST::English refused to parse the sentence. Building flat tree. Parser error: $_");
             @parents = map {0} @$forms_rf;
             @afuns   = map {"ExD"} @$forms_rf;
             $ok      = 1;
@@ -178,7 +178,7 @@ sub parse_sentence {
             $_ = <$reader>;             # lemmas?
             $_ = <$reader>;             # afuns
             if ( !defined $_ ) {
-                Report::info("Parser::MST::English: java parser died, got no parse");
+                log_info("Parser::MST::English: java parser died, got no parse");
                 $self->{writer} = undef;    # ask for reinit
                 goto RETRY;
             }
@@ -186,7 +186,7 @@ sub parse_sentence {
             @afuns = split /\t/;
             $_     = <$reader>;             # parents
             if ( !defined $_ ) {
-                Report::info("Parser::MST::English: java parser died, got no parse");
+                log_info("Parser::MST::English: java parser died, got no parse");
                 $self->{writer} = undef;    # ask for reinit
                 goto RETRY;
             }
@@ -199,11 +199,11 @@ sub parse_sentence {
             $_ = <$reader>;                 #Blank line after a valid parse
         }
         else {
-            Report::fatal("Parser::MST::English: unexpected status: $_");
+            log_fatal("Parser::MST::English: unexpected status: $_");
         }
     }
     if ( !$ok ) {
-        Report::info("Parser::MST::English failed to parse the sentence after several attempts. Building flat tree.");
+        log_info("Parser::MST::English failed to parse the sentence after several attempts. Building flat tree.");
         @parents = map {0} @$forms_rf;
         @afuns   = map {"ExD"} @$forms_rf;
     }
