@@ -25,9 +25,9 @@ Treex::Block::Read::Text
 =head1 DESCRIPTION
 
 Document reader for plain text format.
-The text is stored to the document's attribute C<text>,
-if you want to load a text in "on sentence per line" format to bundles,
-use L<Treex::Block::Read::Sentences>.
+The text is stored to the L<document|Treex::Core::Document>'s attribute C<text>,
+if you want to load a text in "on sentence per line" format to
+L<bundles|Treex::Core::Bundle>, use L<Treex::Block::Read::Sentences> instead.
 
 =head1 ATTRIBUTES
 

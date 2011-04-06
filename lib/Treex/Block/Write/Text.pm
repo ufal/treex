@@ -25,7 +25,7 @@ Treex::Block::Write::Text
 
 Document writer for plain text format.
 The text is taken from the document's attribute C<text>,
-if you want to save the sentences stored in bundles,
+if you want to save the sentences stored in L<bundles|Treex::Core::Bundle>,
 use L<Treex::Block::Write::Sentences>.
 
 

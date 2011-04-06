@@ -71,7 +71,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Util::DefinedAttr - Special block for checking undef attributes
+Treex::Block::Util::DefinedAttr - Special block for checking C<undef> attributes
 
 =head1 SYNOPSIS
 
@@ -89,8 +89,8 @@ Treex::Block::Util::DefinedAttr - Special block for checking undef attributes
 
 Warns/dies if a given attribute is undefined (in any node).
 
-One of parameters tnode, anode, nnode, pnode must be always specified.
-By default: on_error=warn and message is empty.
+One of parameters C<tnode>, C<anode>, C<nnode>, C<pnode> must be always specified.
+By default: C<on_error=warn> and C<message> is empty.
 
 
 =head1 COPYRIGHT AND LICENSE

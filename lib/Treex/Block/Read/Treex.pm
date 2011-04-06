@@ -20,7 +20,7 @@ Treex::Block::Read::Treex
 =head1 DESCRIPTION
 
 Document reader for the Treex file format (C<*.treex>),
-which is actually a PML instance which is a XML-based format.
+which is actually a PML instance which is an XML-based format.
 
 
 =head1 ATTRIBUTES

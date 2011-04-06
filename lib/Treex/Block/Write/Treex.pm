@@ -67,7 +67,7 @@ Treex::Block::Write::Treex
 =head1 DESCRIPTION
 
 Document writer for the Treex file format (C<*.treex>),
-which is actually a PML instance which is a XML-based format.
+which is actually a PML instance which is an XML-based format.
 
 
 =head1 ATTRIBUTES
@@ -80,7 +80,8 @@ space or comma separated list of filenames
 
 =item file_stem path
 
-overrides the respective attributes in documents (filled in by a DocumentReader)
+overrides the respective attributes in documents
+(filled in by a L<DocumentReader|Treex::Core::DocumentReader>)
 
 =back
 

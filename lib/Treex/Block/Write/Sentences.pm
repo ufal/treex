@@ -47,7 +47,8 @@ Treex::Block::Write::Sentences
 
 =head1 DESCRIPTION
 
-Document writer for plain text format, one sentence per line.
+Document writer for plain text format, one sentence
+(L<bundle|Treex::Core::Bundle>) per line.
 
 
 =head1 ATTRIBUTES
@@ -61,7 +62,7 @@ Output encoding. By default utf8.
 =item join_resegmented
 
 Print the sentences re-segmented
-by C<W2A::ResegmentSentences> on one line.
+by L<Treex::Block::W2A::ResegmentSentences> on one line.
 
 =back
 
