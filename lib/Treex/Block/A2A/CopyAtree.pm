@@ -1,4 +1,4 @@
-package Treex::Block::T2T::CopyTtree;
+package Treex::Block::A2A::CopyAtree;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
