@@ -171,9 +171,6 @@ sub _rebless_and_index {
 
 sub _pml_attribute_hash {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->metaData('pml_root')->{meta};
 }
 
@@ -262,28 +259,21 @@ sub get_node_by_id {
 }
 
 sub get_all_node_ids {
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return ( keys %{ $self->_index } );
 }
 
 # ----------------- ACCESS TO BUNDLES ----------------------
 
 sub get_bundles {
+    log_fatal('Incorrect number of arguments') if @_ != 1;
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->trees;
 }
 
 sub create_bundle {
     my ( $self, $arg_ref ) = @_;
-
-    #    pos_validated_list( \@_ );
-
     my $fsfile = $self->_pmldoc();
     my $new_bundle;
     my $position_of_new;
@@ -311,21 +301,12 @@ sub create_bundle {
 # -------------- ACCESS TO ZONES ---------------------------------------
 
 sub create_zone {
-
-    #Now it doesn't support compound Zone selector as Scs
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
     );
-
-    #my ( $self, $language, $selector ) = @_;
-    #
-    #if ( $language =~ /(.+)(..)/ ) {
-    #    $language = $2;
-    #    $selector = $1;
-    #}
 
     my $new_zone = Treex::Core::DocZone->new(
         {
@@ -348,21 +329,12 @@ sub create_zone {
 }
 
 sub get_zone {
-
-    #Now it doesn't support compound Zone selector as Scs
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
     );
-
-    #my ( $self, $language, $selector ) = @_;
-
-    #if ( $language =~ /(.+)(..)/ ) {    # temporarily expecting just two-letter language codes !!!
-    #    $language = $2;
-    #    $selector = $1;
-    #}
 
     my $meta = $self->metaData('pml_root')->{meta};
     if ( defined $meta->{zones} ) {

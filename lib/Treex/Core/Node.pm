@@ -958,14 +958,7 @@ been indexed, etc.) to the root's C<id>.
 
 Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
 
-=back
-
-
-=head2 DEPRECATED & QUESTIONABLE METHODS
-
-=over
-
-=item my $position = $node->get_fposition();
+=item my $address = $node->get_address();
 
 Return the node address, i.e. file name and node's position within the file, 
 similarly to TrEd's C<FPosition()> (but the value is only returned, not  printed).

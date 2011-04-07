@@ -24,7 +24,7 @@ use Treex::Core::BundleZone;
 
 use Treex::Core::Log;
 
-my @layers = qw(t a n);
+my @layers = qw(t a n p); # TODO should it be here?
 
 # --------- ACCESS TO ZONES ------------
 
@@ -167,60 +167,7 @@ sub has_tree {
     return defined $zone && $zone->has_tree($layer);
 }
 
-# --------- ACCESS TO ATTRIBUTES ------------
-
-sub set_attr {    # deprecated
-    my $self = shift;
-    my ( $attr_name, $attr_value ) = pos_validated_list(
-        \@_,
-        { isa => 'Str' },
-        { isa => 'Any' },
-    );
-
-    if ( $attr_name =~ /^(\S+)$/ ) {
-        return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );
-    }
-
-    # TODO more selectors than [ST], lang-codes with more letters etc.
-    elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
-        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
-        my $zone = $self->get_or_create_zone( $language, $selector );
-        return $zone->{$attr_name} = $attr_value;
-    }
-
-    else {
-        log_fatal "Attribute name not structured approapriately (e.g.'Sar text'): $attr_name";
-    }
-}
-
-sub get_attr {    # deprecated
-    my $self = shift;
-    my ($attr_name) = pos_validated_list(
-        \@_,
-        { isa => 'Str' },
-    );
-
-    if ( $attr_name =~ /^(\S+)$/ ) {
-        return Treex::PML::Node::attr( $self, $attr_name );
-    }
-
-    elsif ( $attr_name =~ /^([ST])([a-z]{2}) (\S+)$/ ) {
-        my ( $selector, $language, $attr_name ) = ( $1, $2, $3 );
-        my $zone = $self->get_zone( $language, $selector );
-        if ( defined $zone ) {
-            return $zone->{$attr_name};
-        }
-        else {
-            return;
-        }
-    }
-
-    else {
-        log_fatal "Attribute name not structured approapriately (e.g.'Sar sentence'): $attr_name";
-    }
-}
-
-# numbering of bundles starts from 0
+# TODO: numbering of bundles starts from 0
 sub get_position {
     my ($self) = @_;
 

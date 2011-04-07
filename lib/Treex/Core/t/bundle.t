@@ -19,6 +19,8 @@ isa_ok( $bundle, 'Treex::Core::Bundle' );
 
 isa_ok( $bundle->get_document(), 'Treex::Core::Document' );
 
+ok( defined $bundle->id, 'defined bundle id' );
+
 #Tree testing
 my @layers = qw(N A T P);
 foreach my $layer (@layers) {
@@ -45,40 +47,8 @@ ok( !$bundle->has_tree( 'en', 'T' ), "Bundle doesn't contains tree, that wasn't 
 #    }
 #}
 
-#Attr testing
+# TODO: test get_position
 
-$bundle->set_attr( 'Attr', 'Value' );
-
-cmp_ok( $bundle->get_attr('Attr'), 'eq', 'Value', 'Attr test' );
-ok( !defined $bundle->get_attr('Bttr'), 'Not defined attr' );
-
-=commented out
-# message_board was deleted from bundle API (until it is neede somewhere)
-
-#message board testing
-my $message  = 'My message';
-my $message2 = reverse $message;
-my ( @list, @res );
-
-@res = $bundle->get_messages();
-is_deeply( \@res, \@list, 'Returns array with no messages' );
-
-$bundle->leave_message($message);
-push( @list, $message );
-@res = $bundle->get_messages();
-is_deeply( \@res, \@list, 'Returns array w/ 1 message' );
-
-$bundle->leave_message($message2);
-push( @list, $message2 );
-@res = $bundle->get_messages();
-is_deeply( \@res, \@list, 'Returns array w/ 2 messages' );
-
-$bundle->set_attr( 'message_board', 'Evil error making string' );
-ok( eval { $bundle->get_messages() }, q(Setting 'message_board' attribute won't break message board) );
-
-fail('Need some method for deleting messages');
-
-=cut
 
 is_deeply( $bundle->get_tree( 'cs', 'T' ), $bundle->get_zone('cs')->get_ttree(), 'get_tree("cs", "T") is a shortcut for get_zone("cs")->get_ttree()' );
 
