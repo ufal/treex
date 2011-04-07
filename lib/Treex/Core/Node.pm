@@ -47,28 +47,24 @@ sub _pml_attribute_hash {
     return $self;
 }
 
+# unlike attr (implemented in Treex::PML::Instance::get_data)
+# get_attr implements only "plain" and "nested hash" attribute names,
+# i.e. no XPath-like expressions (a/aux.rf[3]) are allowed.
+# This results in much faster code.
 sub get_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
-
-    #simple attributes can be accessed directly
-    if ( $attr_name =~ /^[\w\.]+$/ ) {
-        return $self->{$attr_name};
-    }
-    #eg. gram/number can be accessed as $self->{'gram'}->{'number'}
-    elsif ( $attr_name =~ /^[\w\.\/]+$/ ) {
-        my $next = $self;
-        my @attrs = split /\//, $attr_name;
-        foreach my $name (@attrs) {
-            $next = $next->{$name};
+    my $val = $self;
+    for my $step (split /\//, $attr_name) {
+        if (!defined $val){
+            log_fatal "Attribute '$attr_name' contains strange symbols."
+              . " For XPath like constructs (e.g. 'a/aux.rf[3]') use the 'attr' method."
+              if $attr_name =~ /[^-\w\/.]/;
+            return undef;
         }
-        return $next;
+        $val = $val->{$step};
     }
-    #is there anything else?
-    else {
-        my $attr_hash = $self->_pml_attribute_hash();
-        return $attr_hash->attr($attr_name);
-    }
+    return $val;
 }
 
 sub set_attr {
@@ -96,7 +92,7 @@ sub set_attr {
 sub get_deref_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
-    my $attr_value = $self->_pml_attribute_hash()->attr($attr_name);
+    my $attr_value = $self->get_attr($attr_name);
 
     return if !$attr_value;
     my $document = $self->get_document();
@@ -109,11 +105,11 @@ sub set_deref_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 3;
     if ( ref($attr_value) eq 'ARRAY' ) {
-        my @list = map { $_->get_attr('id') } @{$attr_value};
+        my @list = map { $_->id } @{$attr_value};
         $attr_value = Treex::PML::List->new(@list);
     }
     else {
-        $attr_value = $attr_value->get_attr('id');
+        $attr_value = $attr_value->id;
     }
 
     # attr setting always through TectoMT set_attr, as it can be overidden (and it is in Node/N.pm)
@@ -129,7 +125,7 @@ sub set_deref_attr {
 sub get_r_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
-    my $attr_value = $self->_pml_attribute_hash()->attr($attr_name);
+    my $attr_value = $self->get_attr($attr_name);
 
     return if !$attr_value;
     my $document = $self->get_document();
@@ -150,11 +146,11 @@ sub get_r_attr {
 sub set_r_attr {
     my ( $self, $attr_name, @attr_values ) = @_;
     log_fatal('Incorrect number of arguments') if @_ < 3;
-    my $fs = $self->_pml_attribute_hash();
+    my $fs = $self;
 
     # TODO $fs->type nefunguje - asi protoze se v konstruktorech nenastavuje typ
     if ( $fs->type($attr_name) eq 'Treex::PML::List' ) {
-        my @list = map { $_->get_attr('id') } @attr_values;
+        my @list = map { $_->id } @attr_values;
 
         # TODO: overriden Node::N::set_attr is bypassed by this call
         return $fs->set_attr( $attr_name, Treex::PML::List->new(@list) );
@@ -163,7 +159,7 @@ sub set_r_attr {
         if @attr_values > 1;
 
     # TODO: overriden Node::N::set_attr is bypassed by this call
-    return $fs->set_attr( $attr_name, $attr_values[0]->get_attr('id') );
+    return $fs->set_attr( $attr_name, $attr_values[0]->id );
 }
 
 # ---------------------
