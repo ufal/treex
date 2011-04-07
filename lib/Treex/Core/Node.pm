@@ -586,7 +586,7 @@ sub get_address {
     my $bundle   = $self->get_bundle();
     my $doc      = $bundle->get_document();
     my $file     = $doc->loaded_from || ( $doc->full_filename . '.treex' );
-    my $position = $bundle->get_position();
+    my $position = $bundle->get_position()+1;
 
     #my $filename = Cwd::abs_path($file);
     return "$file##$position.$id";

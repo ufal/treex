@@ -46,6 +46,6 @@ my $loaded_doc = Treex::Core::Document->new( { 'filename' => $fname } );
 
 is( $description, $loaded_doc->description, q(There's equal content in saved&loaded attr) );
 
-#unlink $fname;
+unlink $fname;
 
 done_testing();

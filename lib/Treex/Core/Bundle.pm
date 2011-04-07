@@ -174,7 +174,7 @@ sub get_position {
     # (ineffective, because there's no caching of positions of bundles so far)
     my $position_of_reference;
     my $fsfile = $self->get_document->_pmldoc;
-    foreach my $position ( 1 .. $fsfile->lastTreeNo+1 ) {
+    foreach my $position ( 0 .. $fsfile->lastTreeNo ) {
         if ( $fsfile->tree($position) eq $self ) {
             $position_of_reference = $position;
             last;
@@ -299,7 +299,7 @@ zone level), they can be accessed using the following shortcut methods:
 
 =item my $position = $bundle->get_position();
 
-position of the bundle within the document (number, starting from 1)
+position of the bundle within the document (number, starting from 0)
 
 =back
 
