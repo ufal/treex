@@ -55,6 +55,16 @@ sub get_attr {
     if ( $attr_name =~ /^[\w\.]+$/ ) {
         return $self->{$attr_name};
     }
+    #eg. gram/number can be accessed as $self->{'gram'}->{'number'}
+    elsif ( $attr_name =~ /^[\w\.\/]+$/ ) {
+        my $next = $self;
+        my @attrs = split /\//, $attr_name;
+        foreach my $name (@attrs) {
+            $next = $next->{$name};
+        }
+        return $next;
+    }
+    #is there anything else?
     else {
         my $attr_hash = $self->_pml_attribute_hash();
         return $attr_hash->attr($attr_name);
