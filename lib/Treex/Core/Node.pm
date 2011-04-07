@@ -41,12 +41,6 @@ sub _index_my_id {
 
 # ---- access to attributes ----
 
-sub _pml_attribute_hash {
-    log_fatal 'Incorrect number of arguments' if @_ != 1;
-    my $self = shift;
-    return $self;
-}
-
 # unlike attr (implemented in Treex::PML::Instance::get_data)
 # get_attr implements only "plain" and "nested hash" attribute names,
 # i.e. no XPath-like expressions (a/aux.rf[3]) are allowed.
@@ -67,6 +61,7 @@ sub get_attr {
     return $val;
 }
 
+use Treex::PML::Factory;
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 3;
@@ -81,11 +76,23 @@ sub set_attr {
     }
 
     #simple attributes can be accessed directly
-    if ( $attr_name =~ /^[\w\.]+$/ ) {
-        return $self->{$attr_name} = $attr_value;
-    }
-    else {
-        return Treex::PML::Node::set_attr( $self, $attr_name, $attr_value );    # better to find superclass, but speed?
+    return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/;
+    log_fatal "Attribute '$attr_name' contains strange symbols."
+              . " No XPath like constructs (e.g. 'a/aux.rf[3]') are allowed."
+              if $attr_name =~ /[^-\w\/.]/;
+    
+    my $val = $self;
+    my @steps = split /\//, $attr_name;
+    while (1) {
+        my $step = shift @steps;
+        if (@steps){
+            if (!defined($val->{$step})) {
+                $val->{$step}=Treex::PML::Factory->createStructure();
+            }
+            $val = $val->{$step};
+        } else {
+            return $val->{$step} = $attr_value;
+        }
     }
 }
 
