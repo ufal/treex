@@ -12,7 +12,8 @@ use Treex::Core::Config;
 my $command =  Treex::Core::Config::tred_dir
     . '/tred -O PreInstalledExtensionsDir='
     . Treex::Core::Config::tred_extension_dir
-    . ' ' . (join ' ',@ARGV);
+    . ' -O MaxUndo=0 '
+    . (join ' ',@ARGV);
 
 print "Running TrEd customized for Treex:\n$command\n";
 
