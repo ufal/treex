@@ -1,11 +1,8 @@
 context:  Treex_context
-#hint:       <? TectoMT_TredMacros::get_hint($this) ?>
+hint:       <? $this->{_precomputed_hint} ?>
 rootstyle:  <? $this->{_precomputed_root_style} ?>
 style: <? $this->{_precomputed_node_style} ?>
 node: <? $this->{_precomputed_labels}->[0] ?>
 node: <? $this->{_precomputed_labels}->[1] ?>
 node: <? $this->{_precomputed_labels}->[2] ?>
-
-
-
 

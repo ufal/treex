@@ -9,10 +9,39 @@ has 'grp'       => ( is => 'rw' );
 has 'pml_doc'   => ( is => 'rw' );
 has 'treex_doc' => (
     is => 'rw',
-    weak_ref => 1
+    #weak_ref => 1
+);
+has '_label_variants' => (
+    is => 'rw',
+    isa => 'HashRef[ArrayRef[Int]]',
+    builder => '_build_label_variants'
 );
 
 use List::Util qw(first);
+
+sub _build_label_variants {
+    return {
+        'p' => [ 0, 0, 0 ],
+        'a' => [ 0, 0, 0 ],
+        't' => [ 0, 0, 0 ]
+    }
+}
+
+sub get_label_variant {
+    my ( $self ) = shift;
+    my ( $layer, $line ) = @_;
+
+    return $self->_label_variants->{ $layer }->[ $line ];
+}
+
+sub rotate_label_variant {
+    my ( $self ) = shift;
+    my ( $layer, $line ) = @_;
+    
+    my $current = $self->_label_variants->{ $layer }->[ $line ];
+    my $limit = $self->_label_variants->{ $layer.'_limit' }->[ $line ];
+    $self->_label_variants->{ $layer }->[ $line ] = $current => $limit ? 0 : $current + 1;
+}
 
 sub get_nodelist_hook {
     my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
@@ -170,6 +199,7 @@ sub precompute_tree_shifts {
 
 sub precompute_visualization {
     my ($self) = @_;
+    my %get_limits = ( 'p' => 1, 'a' => 1, 't' => 1 );
 
     foreach my $bundle ( $self->treex_doc->get_bundles ) {
 
@@ -184,10 +214,18 @@ sub precompute_visualization {
 
                     $root->{_precomputed_labels} = $self->tree_root_labels($root);
                     $root->{_precomputed_node_style} = $self->node_style( $root, $layer );
+                    $root->{_precomputed_hint} = '';
 
                     foreach my $node ( $root->get_descendants ) {
                         $node->{_precomputed_node_style} = $self->node_style( $node, $layer );
-                        $node->{_precomputed_labels} = $self->nonroot_node_labels( $node, $layer );
+                        $node->{_precomputed_hint} = $self->node_hint( $node, $layer );
+                        my $buffer = $self->nonroot_node_labels( $node, $layer );
+                        $node->{_precomputed_buffer} = $buffer;
+                        $node->{_precomputed_labels} = [
+                            $buffer->[0]->[ $self->_label_variants->{ $layer }->[0] ],
+                            $buffer->[1]->[ $self->_label_variants->{ $layer }->[1] ],
+                            $buffer->[2]->[ $self->_label_variants->{ $layer }->[2] ]
+                        ];
                     }
                 }
             }
@@ -241,36 +279,138 @@ sub nonroot_node_labels { # silly code just to avoid the need for eval
 sub nonroot_anode_labels {
     my ( $self, $node ) = @_;
     return [
-        $node->{form},
-        $node->{lemma},
-        $node->{tag},
+        [ $node->{form} ],
+        [ $node->{lemma} ],
+        [ $node->{tag} ]
     ];
 }
 
 sub nonroot_tnode_labels {
     my ( $self, $node ) = @_;
+
+    my $line1 = $node->{t_lemma};
+    $line1 = '#{customparenthesis}' . $line1 if $node->{is_parenthesis};
+    $line1 .= '#{customdetail}.'.$node->{sentmod} if $node->{sentmod};
+    
+    my %colors = (
+        'compl' => 'green',
+        'coref_text' => 'blue',
+        'coref_gram' => 'red'
+    );
+
+    foreach my $type ('compl', 'coref_text', 'coref_gram') {
+        if (defined $node->{$type.'.rf'}) {
+            foreach my $ref (TredMacro::ListV($node->{$type.'.rf'})) {
+                my $ref_node = $self->treex_doc->get_node_by_id( $ref );
+                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() ) {
+                    $line1 .= ' #{'.$colors{$type}.'}'.$ref_node->{t_lemma};
+                }
+            }
+        }
+    }
+
+    my $line2 = $node->{functor};
+    $line2 .= '#{customsubfunc}.'.$node->{subfunctor} if $node->{subfunctor};
+    $line2 .= '#{customsubfunc}.state' if $node->{is_state};
+    $line2 .= '#{customsubfunc}.dsp_root' if $node->{is_dsp_root};
+
+    my @a_nodes = ();
+    my $line3_1 = '';
+    if (defined $node->attr('a/aux.rf')) {
+        @a_nodes = TredMacro::ListV($node->attr('a/aux.rf'));
+        @a_nodes = map { $self->treex_doc->get_node_by_id($_) } @a_nodes;
+        @a_nodes = map { { form => $_->{form}, ord => $_->{ord}, type => 'aux' } } @a_nodes;
+    }
+    if (defined $node->attr('a/lex.rf')) {
+        my $a_node = $self->treex_doc->get_node_by_id($node->attr('a/lex.rf'));
+        push @a_nodes, { form => $a_node->{form}, ord => $a_node->{ord}, type => 'lex' };
+    }
+    if (@a_nodes) {
+        @a_nodes = sort { $a->{ord} <=> $b->{ord} } @a_nodes;
+        @a_nodes = map { ($_->{type} eq 'lex' ? '#{darkgreen}' : '#{darkorange}').$_->{form} } @a_nodes;
+        $line3_1 = join " ", @a_nodes;
+    }
+
+    my $line3_2 = '#{customnodetype}'.$node->{nodetype};
+    $line3_2 .= '#{customcomplex}.'.$node->attr('gram/sempos') if $node->attr('gram/sempos');
+    
     return [
-        $node->{t_lemma},
-        $node->{functor},
-        $node->{formeme},
+        [ $line1 ],
+        [ $line2 ],
+        [ $line3_1, $line3_2 ]
     ];
 }
 
 sub nonroot_nnode_labels {
     my ( $self, $node ) = @_;
     return [
-        $node->{normalized_name},
-        $node->{ne_type},
+        [ $node->{normalized_name} ],
+        [ $node->{ne_type} ],
+        []
     ];
 }
 
 sub nonroot_pnode_labels {
     my ( $self, $node ) = @_;
     return [
-        $node->{form},
-        $node->{lemma},
-        $node->{tag},
+        [ $node->{form} ],
+        [ $node->{lemma} ],
+        [ $node->{tag} ]
     ];
+}
+
+# ---- info displayed when mouse stops over a node - "hint" (should return a string, that may contain newlines) ---
+
+sub node_hint { # silly code just to avoid the need for eval
+    my $layer = pop @_;
+    my %subs;
+    $subs{t} = \&tnode_hint;
+    $subs{a} = \&anode_hint;
+    $subs{n} = \&nnode_hint;
+    $subs{p} = \&pnode_hint;
+    
+    if ( defined $subs{$layer} ) {
+        return &{ $subs{$layer} }(@_);
+    } else {
+        log_fatal "Undefined or unknown layer: $layer";
+    }
+
+    return;
+}
+
+sub anode_hint {
+    my ( $self, $node ) = @_;
+    return undef;
+}
+
+sub tnode_hint {
+    my ( $self, $node ) = @_;
+    my @lines = ();
+
+    if ( ref $node->get_attr( 'gram' ) ) {
+        foreach my $gram ( keys %{$node->get_attr( 'gram' )} ) {
+            push @lines, "gram/$gram : " . $node->get_attr( 'gram/'.$gram );
+        }
+    }
+    
+    push @lines, "Direct speech root" if $node->get_attr( 'is_dsp_root' );
+    push @lines, "Parenthesis" if $node->get_attr( 'is_parenthesis' );
+    push @lines, "Name of person" if $node->get_attr( 'is_name_of_person' );
+    push @lines, "Name" if $node->get_attr( 'is_name' );
+    push @lines, "State" if $node->get_attr( 'is_state' );
+    push @lines, "Quotation : " . join ", ", map { $_->{type} } TredMacro::ListV( $node->get_attr( 'quot' ) ) if $node->get_attr( 'quot' );
+
+    return join "\n", @lines;
+}
+
+sub nnode_hint {
+    my ( $self, $node ) = @_;
+    return undef;
+}
+
+sub pnode_hint {
+    my ( $self, $node ) = @_;
+    return undef;
 }
 
 # --- arrows ----
@@ -278,6 +418,7 @@ sub nonroot_pnode_labels {
 my %arrow_color = (
     'coref_gram.rf' => 'red',
     'coref_text.rf' => 'blue',
+    'compl.rf'      => 'green',
     'alignment'     => 'grey',
 );
 
@@ -289,7 +430,7 @@ sub node_style_hook {
     my @target_ids;
     my @arrow_types;
 
-    foreach my $ref_attr ( 'coref_gram.rf', 'coref_text.rf', 'coref_compl.rf' ) {
+    foreach my $ref_attr ( 'coref_gram.rf', 'coref_text.rf', 'compl.rf' ) {
         if ( defined $node->attr($ref_attr) ) {
             foreach my $target_id ( @{ $node->attr($ref_attr) } ) {
                 push @target_ids,  $target_id;
@@ -306,7 +447,7 @@ sub node_style_hook {
         }
     }
 
-    _DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
+    $self->_DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
     return;
 }
 
@@ -326,16 +467,14 @@ sub _AddStyle {
 # based on DrawCorefArrows from config/TectoMT_TredMacros.mak, simplified
 # ignoring special values ex and segm
 sub _DrawArrows {
-    my ( $node, $styles, $line, $target_ids, $arrow_types ) = @_;
+    my ( $self, $node, $styles, $line, $target_ids, $arrow_types ) = @_;
     my ( @coords, @colors, @dash, @tags );
     my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
-
-    my $document = $node->get_document;
 
     foreach my $target_id (@$target_ids) {
         my $arrow_type = shift @$arrow_types;
 
-        my $target_node = $document->get_node_by_id($target_id);
+        my $target_node = $self->treex_doc->get_node_by_id($target_id);
 
         if ( $node->get_bundle eq $target_node->get_bundle ) { # same sentence
 
