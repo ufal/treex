@@ -196,9 +196,9 @@ sub precompute_tree_depths {
 # Has to be run whenever the tree layout changes.
 sub precompute_tree_shifts {
     my ($self) = @_;
-    my $layout = get_layout();
 
     foreach my $bundle ( $self->treex_doc->get_bundles ) {
+        my $layout = get_layout($bundle);
         my %forest = ();
         
         foreach my $zone ( $bundle->get_all_zones ) {
@@ -770,22 +770,26 @@ my $tag_none = 'none';
 
 sub get_tree_label {
     my $tree = shift;
-    return $tree->language.'-'.$tree->get_layer;
+    my $label = $tree->language.'-'.$tree->get_layer;
+    my $sel = $tree->selector;
+    $label .= '-'.$sel if $sel;
+    return $label;
 }
 
 sub get_layout_label {
-    my $bundle = $TredMacro::root;
+    my $bundle = shift;
+    $bundle = $TredMacro::root if not $bundle;
     return unless ref($bundle) eq 'Treex::Core::Bundle';
 
     my @label;
-    foreach my $zone ( sort { $a->language cmp $b->language } $TredMacro::root->get_all_zones ) {
+    foreach my $zone ( sort { $a->language cmp $b->language } $bundle->get_all_zones ) {
         push @label, map { get_tree_label($_) } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
     }
     return join ',', @label;
 }
 
 sub get_layout {
-    my $label = get_layout_label();
+    my $label = get_layout_label(@_);
     if ( exists $layouts{$label} ) {
         return $layouts{$label};
     } else {
@@ -1068,7 +1072,7 @@ sub conf_dialog {
             for ( my $j = 0; $j < scalar @{$layout->[$i]}; $j++ ) {
                 my $tree = $layout->[$i]->[$j];
                 if ($tree and $tree ne $tag_wrap) {
-                    my ($lang, $layer) = split '-', $tree;
+                    my ($lang, $layer, $selector) = split '-', $tree, 3;
                     $lang = Treex::Core::Common::get_lang_name($lang);
                     $canvas->create(
                         'rectangle',
@@ -1086,7 +1090,7 @@ sub conf_dialog {
                         -anchor => 'center',
                         -justify => 'center',
                         -tags => [ $tree ],
-                        -text => "$lang\n".uc($layer)
+                        -text => "$lang\n".uc($layer).($selector ? "\n$selector" : '')
                     );
                 }
             }
