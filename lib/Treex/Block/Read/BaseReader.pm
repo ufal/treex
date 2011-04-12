@@ -1,6 +1,7 @@
 package Treex::Block::Read::BaseReader;
 use Moose;
 use Treex::Core::Common;
+use File::Slurp;
 with 'Treex::Core::DocumentReader';
 
 sub next_document {
@@ -66,8 +67,8 @@ sub _build_filenames {
     }
     # add all files from the filelist to the list
     if ( $self->filelist ) {
-        open LIST, $self->filelist or log_fatal 'File list ' . $self->filelist . ' cannot be opened!';
-        my @list = <LIST>;
+        my @list = read_file( $self->filelist );
+        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 and !defined($list[0]);
         @list = map { local $_ = $_; $_ =~ s/\s*\r?\n$//; $_ =~ s/^\s*//; $_ } @list; # remove EOL chars, trim
         push @{$filenames}, @list;
     }
