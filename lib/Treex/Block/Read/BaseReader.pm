@@ -15,13 +15,19 @@ has filenames => (
     is            => 'ro',
     lazy_build    => 1,
     documentation => 'array of filenames to be loaded;'
-        . ' automatically initialized from the attribute "from"',
+        . ' automatically initialized from the attributes "from" and "filelist"',
 );
 
 has from => (
     isa           => 'Str',
     is            => 'ro',
     documentation => 'space or comma separated list of filenames to be loaded',
+);
+
+has filelist => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'a file that contains the list of filenames to be loaded, one per line',
 );
 
 has file_stem => (
@@ -49,8 +55,24 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 
 sub _build_filenames {
     my $self = shift;
-    log_fatal "Parameter 'from' must be defined!" if !defined $self->from;
-    return [split /[ ,]+/, $self->from ];
+
+    log_fatal "Parameters 'from' or 'filelist' must be defined!" if !defined $self->from and !defined $self->filelist;
+
+    my $filenames = [];
+
+    # add all files in the 'from' parameter to the list
+    if ( $self->from ) {
+        push @{$filenames}, split( /[ ,]+/, $self->from );
+    }
+    # add all files from the filelist to the list
+    if ( $self->filelist ) {
+        open LIST, $self->filelist or log_fatal 'File list ' . $self->filelist . ' cannot be opened!';
+        my @list = <LIST>;
+        @list = map { local $_ = $_; $_ =~ s/\s*\r?\n$//; $_ =~ s/^\s*//; $_ } @list; # remove EOL chars, trim
+        push @{$filenames}, @list;
+    }
+    # return the resulting list
+    return $filenames;
 }
 
 sub current_filename {
@@ -145,10 +167,14 @@ and you can use C<next_filename> and C<new_document> methods.
 
 =over
 
-=item from (required)
+=item from (required, if C<filelist> is not set)
 
 space or comma separated list of filenames, or C<-> for STDIN
 (If you use this method via API you can specify C<filenames> instead.)
+
+=item filelist (required, if C<from> is not set)
+
+path to a file that contains a list of files to be read (one per line) 
 
 =item file_stem (optional)
 

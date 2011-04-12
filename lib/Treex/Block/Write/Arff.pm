@@ -209,8 +209,9 @@ Print out the desired attributes of all trees on the specified layer in the inpu
 L<ARFF file|http://www.cs.waikato.ac.nz/~ml/weka/arff.html>
 (used by the L<WEKA|http://www.cs.waikato.ac.nz/ml/weka/> machine learning environment). 
 
-Additional word and sentence IDs starting with (1,1) are assigned to each node on the output. All attributes that 
-are not numeric are considered C<STRING> in the output ARFF file specification.
+Additional word and sentence IDs starting with (1,1) are assigned to each node on the output. The word IDs correspond
+with the order of the nodes. All attributes that are not numeric are considered C<STRING> in the output ARFF file 
+specification.
 
 =head1 PARAMETERS
 
@@ -228,6 +229,18 @@ The annotation layer to be processed (i.e. C<a>, C<t>, C<n>, or C<p>). This para
 
 A space-separated list of attributes (relating to the tree nodes on the specified layer) to be processed. 
 This parameter is required.
+
+If a special parameter with the name C<head> is requested, the word ID of the current node's head will be
+returned as the value.
+
+=item C<deref_attrib>
+
+A list of attributes of referenced nodes in the form:
+   
+    reference_1:attr1 attr2, reference_2:attr1 attr2 ..., ...
+
+The returned values are the values of these attributes for referenced nodes, or empty values if there is 
+no such reference.
 
 =item C<to>
 
