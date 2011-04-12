@@ -7,10 +7,7 @@ use Treex::Core::Log;
 
 has 'grp'       => ( is => 'rw' );
 has 'pml_doc'   => ( is => 'rw' );
-has 'treex_doc' => (
-    is => 'rw',
-    #weak_ref => 1
-);
+has 'treex_doc' => ( is => 'rw' );
 has '_label_variants' => (
     is => 'rw',
     isa => 'HashRef[ArrayRef[Int]]',
@@ -27,20 +24,56 @@ sub _build_label_variants {
     }
 }
 
-sub get_label_variant {
+sub _get_label_variant {
     my ( $self ) = shift;
-    my ( $layer, $line ) = @_;
+    my ( $obj, $line ) = @_;
 
-    return $self->_label_variants->{ $layer }->[ $line ];
+    if (ref $obj and not exists $obj->{_label_variants}) {
+        $obj = $obj->get_layer;
+    }
+    
+    if (ref $obj) {
+        # $obj is a single node
+        return $obj->{_label_variants}->[ $line ];
+    } else {
+        # $obj is the name of a layer
+        return $self->_label_variants->{ $obj }->[ $line ];
+    }
 }
 
-sub rotate_label_variant {
+# $obj is a node => rotating label variant of the single given node
+# $obj is the name of a layer => rotating label variant of all nodes on the given layer
+sub _rotate_label_variant {
     my ( $self ) = shift;
-    my ( $layer, $line ) = @_;
+    my ( $obj, $line ) = @_;
+    my $layer;
+    my $current;
+    my $new;
     
-    my $current = $self->_label_variants->{ $layer }->[ $line ];
+    if (ref $obj) {
+        $layer = $obj->get_layer;
+        if (not exists $obj->{_label_variants}) {
+            for (my $i = 0; $i < 3; $i++) {
+                $obj->{_label_variants}->[$i] = $self->_get_label_variant($layer, $i);
+            }
+        }
+        $current = $obj->{_label_variants}->[ $line ];
+    } else {
+        $layer = $obj;
+        $current = $self->_get_label_variant( $obj, $line );
+    }
     my $limit = $self->_label_variants->{ $layer.'_limit' }->[ $line ];
-    $self->_label_variants->{ $layer }->[ $line ] = $current => $limit ? 0 : $current + 1;
+    $new = $current >= $limit ? 0 : $current + 1;
+    
+    return if $current == $new;
+    
+    if (ref $obj) {
+        $obj->{_label_variants}->[ $line ] = $new
+    } else {
+        $self->_label_variants->{ $layer }->[ $line ] = $new
+    }
+
+    return 1;
 }
 
 sub get_nodelist_hook {
@@ -199,7 +232,7 @@ sub precompute_tree_shifts {
 
 sub precompute_visualization {
     my ($self) = @_;
-    my %get_limits = ( 'p' => 1, 'a' => 1, 't' => 1 );
+    my %limits;
 
     foreach my $bundle ( $self->treex_doc->get_bundles ) {
 
@@ -219,18 +252,26 @@ sub precompute_visualization {
                     foreach my $node ( $root->get_descendants ) {
                         $node->{_precomputed_node_style} = $self->node_style( $node, $layer );
                         $node->{_precomputed_hint} = $self->node_hint( $node, $layer );
-                        my $buffer = $self->nonroot_node_labels( $node, $layer );
-                        $node->{_precomputed_buffer} = $buffer;
-                        $node->{_precomputed_labels} = [
-                            $buffer->[0]->[ $self->_label_variants->{ $layer }->[0] ],
-                            $buffer->[1]->[ $self->_label_variants->{ $layer }->[1] ],
-                            $buffer->[2]->[ $self->_label_variants->{ $layer }->[2] ]
-                        ];
+                        $node->{_precomputed_buffer} = $self->nonroot_node_labels( $node, $layer );
+                        $self->_set_labels($node);
+
+                        if (not defined $limits{$layer}) {
+                            for (my $i = 0; $i < 3; $i++) {
+                                $limits{$layer}->[$i] = scalar(@{$node->{_precomputed_buffer}->[$i]}) - 1;
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
+    for my $layer ('p', 'a', 't') {
+        for (my $i = 0; $i < 3; $i++) {
+            $self->_label_variants->{$layer.'_limit'}->[$i] = $limits{$layer}->[$i];
+        }
+    }
+
     return;
 }
 
@@ -267,21 +308,42 @@ sub nonroot_node_labels { # silly code just to avoid the need for eval
         log_fatal "Undefined or unknown layer: $layer";
     }
 
-    #if    ( $layer eq 't' ) { return nonroot_tnode_labels(@_) }
-    #elsif ( $layer eq 'a' ) { return nonroot_anode_labels(@_) }
-    #elsif ( $layer eq 'n' ) { return nonroot_nnode_labels(@_) }
-    #elsif ( $layer eq 'p' ) { return nonroot_pnode_labels(@_) }
-    #else                    { log_fatal "Undefined or unknown layer: $layer" }
-
     return;
 }
 
 sub nonroot_anode_labels {
     my ( $self, $node ) = @_;
+
+    my $line1 = '';
+    my $par = 0;
+    my $n = $node;
+    while ( (not $par) and $n ) {
+        $par = 1 if $n->{is_parenthesis_root};
+        $n = $n->parent;
+    }
+    $line1 = '#{customparenthesis}' if $par;
+    $line1 .= $node->{form};
+
+    my $line2 = $node->{afun} ? '#{customafun}'.$node->{afun} : '#{customerror}!!';
+    if ($node->{is_member}) {
+        my $n = $node->parent;
+        $n = $n->parent while $n and $n->{afun} =~ m/^Aux[CP]$/;
+        if ($n->{afun} =~ m/^(Ap)os|(Co)ord/) {
+            $line2 .= '_#{customcoappa}'.($1 ? $1 : $2);
+        }
+    }
+    
+    my $line3_1 = $node->{tag};
+    my $line3_2 = $node->{lemma};
+    if ( $node->language eq 'cs' ) {
+        $line3_1 = substr( $line3_1, 0, 2 );
+        $line3_2 =~ s/(.)(?:-[1-9][0-9]*)?(?:(?:`|_[:;,^]).*)?$/$1/;
+    }
+
     return [
-        [ $node->{form} ],
-        [ $node->{lemma} ],
-        [ $node->{tag} ]
+        [ $line1 ],
+        [ $line2 ],
+        [ $line3_1, $line3_2 ]
     ];
 }
 
@@ -352,11 +414,93 @@ sub nonroot_nnode_labels {
 
 sub nonroot_pnode_labels {
     my ( $self, $node ) = @_;
+
+    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+    
+    my $line1 = '';
+    my $line2 = '';
+    if ($terminal) {
+        $line1 = $node->{form};
+        $line2 = $node->{tag};
+        $line2 = '-' if $line2 eq '-NONE-';
+    } else {
+        $line1 = '#{darkblue}'.$node->{phrase}.'#{black}'.join('', map "-$_", TredMacro::ListV($node->{functions}));
+    }
+
     return [
-        [ $node->{form} ],
-        [ $node->{lemma} ],
-        [ $node->{tag} ]
+        [ $line1 ],
+        [ $line2 ],
+        [ '' ]
     ];
+}
+
+sub _identify_and_bless_node {
+    my ($self) = shift;
+    my $node = $TredMacro::this;
+    
+    my $layer;
+    if ( $node->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/ ) {
+        $layer = $1;
+    } else {
+        return;
+    }
+    bless $node, 'Treex::Core::Node::'.uc($layer);
+    
+    return $node;
+}
+
+sub _set_labels {
+    my ($self, $node) = @_;
+    
+    my $buf = $node->{_precomputed_buffer};
+    for (my $i = 0; $i < 3; $i++) {
+        $node->{_precomputed_labels}->[$i] = $buf->[$i]->[ $self->_get_label_variant($node, $i) ];
+    }
+}
+
+sub shift_label {
+    my ($self, $line, $mode) = @_;
+    my $node = $self->_identify_and_bless_node;
+    return if $node->is_root;
+    
+    my $layer = $node->get_layer;
+    my @nodes;
+    if ($mode eq 'node') {
+        return unless $self->_rotate_label_variant($node, $line);
+        @nodes = ( $node );
+    } else {
+        return unless $self->_rotate_label_variant($layer, $line);
+        foreach my $bundle ( $self->treex_doc->get_bundles ) {
+            foreach my $zone ( $bundle->get_all_zones ) {
+                if ( $zone->has_tree($layer) ) {
+                    push @nodes, $zone->get_tree($layer)->get_descendants;
+                }
+            }
+        }
+        @nodes = grep { not exists $_->{_label_variants} } @nodes;
+    }
+
+    for my $node (@nodes) {
+        $self->_set_labels($node);
+    }
+}
+
+sub reset_labels {
+    my ($self, $mode) = @_;
+    my $node = $self->_identify_and_bless_node;
+    return if $node->is_root;
+    
+    my @nodes;
+    if ($mode eq 'node') {
+        @nodes = ( $node );
+    } else {
+        @nodes = $node->get_root->get_descendants;
+    }
+
+    for $node (@nodes) {
+        delete $node->{_label_variants};
+        $self->_set_labels($node);
+    }
 }
 
 # ---- info displayed when mouse stops over a node - "hint" (should return a string, that may contain newlines) ---
@@ -380,7 +524,15 @@ sub node_hint { # silly code just to avoid the need for eval
 
 sub anode_hint {
     my ( $self, $node ) = @_;
-    return undef;
+    my @lines = ();
+
+    push @lines, "Parenthesis root" if $node->{is_parenthesis_root};
+    if ($node->language eq 'cs') {
+        push @lines, "Full lemma: ".$node->{lemma};
+        push @lines, "Full tag: ".$node->{tag};
+    }
+
+    return join "\n", @lines;
 }
 
 sub tnode_hint {
@@ -410,7 +562,20 @@ sub nnode_hint {
 
 sub pnode_hint {
     my ( $self, $node ) = @_;
-    return undef;
+    
+    my @lines = ();
+    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+
+    if ($terminal) {
+        push @lines, "lemma: ".$node->{lemma};
+        push @lines, "tag: ".$node->{tag};
+        push @lines, "form: ".$node->{form};
+    } else {
+        push @lines, "phrase: ".$node->{phrase};
+        push @lines, "functions: ".join(', ', TredMacro::ListV($node->{functions}));
+    }
+    
+    return join "\n", @lines;
 }
 
 # --- arrows ----
@@ -564,11 +729,6 @@ sub node_style { # silly code just to avoid the need for eval
         log_fatal "Undefined or unknown layer: $layer";
     }
 
-    #if    ( $layer eq 't' ) { return tnode_style(@_) }
-    #elsif ( $layer eq 'a' ) { return anode_style(@_) }
-    #elsif ( $layer eq 'n' ) { return nnode_style(@_) }
-    #elsif ( $layer eq 'p' ) { return pnode_style(@_) }
-    #else                    { log_fatal "Undefined or unknown layer: $layer" }
     return;
 }
 
