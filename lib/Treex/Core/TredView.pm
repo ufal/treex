@@ -246,11 +246,11 @@ sub precompute_visualization {
                     my $root = $zone->get_tree($layer);
 
                     $root->{_precomputed_labels} = $self->tree_root_labels($root);
-                    $root->{_precomputed_node_style} = $self->node_style( $root, $layer );
+                    $root->{_precomputed_node_style} = $self->node_style( $root );
                     $root->{_precomputed_hint} = '';
 
                     foreach my $node ( $root->get_descendants ) {
-                        $node->{_precomputed_node_style} = $self->node_style( $node, $layer );
+                        $node->{_precomputed_node_style} = $self->node_style( $node );
                         $node->{_precomputed_hint} = $self->node_hint( $node, $layer );
                         $node->{_precomputed_buffer} = $self->nonroot_node_labels( $node, $layer );
                         $self->_set_labels($node);
@@ -375,6 +375,7 @@ sub nonroot_tnode_labels {
     $line2 .= '#{customsubfunc}.'.$node->{subfunctor} if $node->{subfunctor};
     $line2 .= '#{customsubfunc}.state' if $node->{is_state};
     $line2 .= '#{customsubfunc}.dsp_root' if $node->{is_dsp_root};
+    $line2 .= '#{customcoappa}.member' if $node->{is_member};
 
     my @a_nodes = ();
     my $line3_1 = '';
@@ -706,30 +707,32 @@ sub bundle_root_style {
     return "#{nodeXSkip:15} #{nodeYSkip:2} #{lineSpacing:0.7} #{BaseXPos:0} #{BaseYPos:10} #{BalanceTree:1} #{skipHiddenLevels:0}";
 }
 
-sub common_node_style {
-    return q();
-}
-
 sub node_style { # silly code just to avoid the need for eval
-    my ( $self, $node, $layer ) = @_;
+    my ( $self, $node ) = @_;
     my $styles = '';
 
     if ( $node->is_root() ) {
         $styles = '#{Node-rellevel:'.$tree_shifts{ $node->get_attr('id') }.'}';
     }
 
+    my $layer = $node->get_layer;
     my %subs;
     $subs{t} = \&tnode_style;
     $subs{a} = \&anode_style;
     $subs{n} = \&nnode_style;
     $subs{p} = \&pnode_style;
+
     if ( defined $subs{$layer} ) {
-        return $styles.&{ $subs{$layer} }($node);
+        return $styles.&{ $subs{$layer} }($self, $node);
     } else {
         log_fatal "Undefined or unknown layer: $layer";
     }
 
     return;
+}
+
+sub common_node_style {
+    return q();
 }
 
 sub anode_style {
@@ -739,9 +742,49 @@ sub anode_style {
 }
 
 sub tnode_style {
+    my ( $self, $node ) = @_;
 
-    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
-    return "#{Oval-fill:blue}";
+    my $is_coord = sub { my $n = shift; return $n->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/ };
+    
+    my $style = '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:9}#{Node-currentheight:9}';
+    $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
+    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.TredMacro::CustomColor('current').'}';
+    $style .= '#{Oval-fill:blue}';
+
+    return $style if $node->is_root;
+    
+    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=#ddd;width=2;dash=_ }';
+    # For coordination roots
+    my $k1 = '20 / sqrt((xp-xn)**2 + (yp-yn)**2)';
+    my $x1 = 'xn-(xn-xp)*'.$k1;
+    my $y1 = 'yn-(yn-yp)*'.$k1;
+    # For coordination members
+    my $k2 = '(1 - 20 / sqrt((xp-xn)**2 + (yp-yn)**2))';
+    my $x2 = 'xn-(xn-xp)*'.$k2;
+    my $y2 = 'yn-(yn-yp)*'.$k2;
+    
+    if (($node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
+        (not $node->is_root and $node->parent->is_root)) {
+        $style .= '#{Line-width:1}#{Line-dash:2,4}';
+    } elsif ($node->{is_member}) {
+        if ($is_coord->($node) and $is_coord->($node->parent)) {
+            $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}".$coord_circle;
+            $style .= '#{Line-width:0&1}#{Line-fill:white&#6f11ea}';
+        } elsif (not $node->is_root and $is_coord->($node->parent)) {
+            $style .= "#{Line-coords:n,n,$x2,$y2}";
+        } else {
+            $style .= '#{Line-fill:'.TredMacro::CustomColor('error').'}';
+        }
+    } elsif (not $node->is_root and $is_coord->($node->parent)) {
+        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:#6f11ea}#{Line-width:1}";
+    } elsif ($is_coord->($node)) {
+        $style .= $coord_circle."#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
+        $style .= '#{Line-width:0&2}#{Line-fill:white&#bebebe}';
+    } else {
+        $style .= '';
+    }
+
+    return $style;
 }
 
 sub nnode_style {
