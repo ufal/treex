@@ -43,22 +43,21 @@ sub process_ttree {
         }
     }
 
-    # connect generated nodes
+    # connect other not yet aligned nodes, that have the same functor and their parents are aligned
     foreach my $tnode ( $troot->get_descendants ) {
         next if $is_aligned{$tnode};
-        next if $tnode->t_lemma !~ /^#(NewNode|Gen|PersPron|Cor)$/;
         my ($nodes, $types) = $tnode->get_parent->get_aligned_nodes();
         next if !$nodes || !@$nodes;
         next if !$is_aligned{$$nodes[0]};
         foreach my $candidate ( $$nodes[0]->get_children() ) {
-            if ($candidate->functor eq $tnode->functor) {
+            if (!$is_aligned{$candidate} && $candidate->functor eq $tnode->functor) {
                 $tnode->add_aligned_node( $candidate, 'rule-based' );
+                $is_aligned{$tnode} = 1;
+                $is_aligned{$candidate} = 1;
                 last;
             }
         }
     }
-
-    
 }
 
 1;
@@ -73,8 +72,9 @@ Treex::Block::Align::T::PCEDTAlignment
 
 =head1 DESCRIPTION
 
-This block copies all links of type 'int' from a-layer to t-layer and
-adds some links connecting generated nodes (#NewNode, #Gen, #Cor).
+This block copies all alignment connections of type 'int' from a-layer to t-layer using lex.rf links.
+Then it connect some remaining (not yet aligned) nodes that have the same functor and their parents are connected.
+Alignment connections copied from a-layer ar labeled 'giza++', the other are labeled 'rule-based'.
 
 =head1 AUTHOR
 
