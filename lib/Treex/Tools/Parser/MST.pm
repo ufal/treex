@@ -85,7 +85,7 @@ sub parse_sentence {
         return ( [0], ['Pred'] );
     }
 
-    my ( @parents, @afuns, @scores, $writer, $reader );
+    my ( @parents, @afuns, @matrix, $writer, $reader );
 
     if ( !$self->{robust} ) {
         $writer = $self->{writer};
@@ -99,37 +99,46 @@ sub parse_sentence {
         $_ = <$reader>;
         log_fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
         chomp;
-        log_fatal( "Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence '" . join( " ", @$forms_rf ) . "'" ) if ( $_ !~ /^OK/ );
-        $_ = <$reader>;    # forms
-        $_ = <$reader>;    # lemmas
-        $_ = <$reader>;    # afuns
-        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-        chomp;
-        @afuns = split /\t/;
-        @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
-        $_     = <$reader>;                                 # parents
-        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-        chomp;
-        @parents = split /\t/;
-        $_       = <$reader>;                               # blank line after a valid parse
-        $_       = <$reader>;                               # scoreMatrix
-        log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-        chomp;
-        @scores = split /\s/;
-
-        # back to the matrix of scores
-        shift @scores;
-
-        my @matrix;
-        foreach my $i ( 0 .. @parents ) {
-            foreach my $j ( 0 .. @parents ) {
-                $matrix[$j][$i] = shift @scores;
+        if ( $_ !~ /^OK/ ) {
+            log_warn( "Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence. Building flat tree.'" );
+            @parents = map {0} @$forms_rf;
+            @afuns   = map {"ExD"} @$forms_rf;
+            foreach my $i ( 0 .. @$forms_rf ) {
+                foreach my $j ( 0 .. @$forms_rf ) {
+                    $matrix[$j][$i] = 0;
+                }
             }
         }
+        else {
+            $_ = <$reader>;    # forms
+            $_ = <$reader>;    # lemmas
+            $_ = <$reader>;    # afuns
+            log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+            chomp;
+            @afuns = split /\t/;
+            @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
+            $_     = <$reader>;                                 # parents
+            log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+            chomp;
+            @parents = split /\t/;
+            $_       = <$reader>;                               # blank line after a valid parse
+            $_       = <$reader>;                               # scoreMatrix
+            log_fatal("Treex::Tools::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+            chomp;
+            my @scores = split /\s/;
 
-        # we don't want scores for root
-        shift @matrix;
+            # back to the matrix of scores
+            shift @scores;
 
+            foreach my $i ( 0 .. @parents ) {
+                foreach my $j ( 0 .. @parents ) {
+                    $matrix[$j][$i] = shift @scores;
+                }
+            }
+
+            # we don't want scores for root
+            shift @matrix;
+        }
         return ( \@parents, \@afuns, \@matrix );
     }
 
