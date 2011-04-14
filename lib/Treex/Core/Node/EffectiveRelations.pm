@@ -1,5 +1,8 @@
 package Treex::Core::Node::EffectiveRelations;
 use Moose::Role;
+
+# with Moose >= 2.00, this must be present also in roles
+use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
 
 has is_member => (

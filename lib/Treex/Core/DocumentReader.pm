@@ -1,6 +1,9 @@
 package Treex::Core::DocumentReader;
 use Moose::Role;
 
+# with Moose >= 2.00, this must be present also in roles
+use MooseX::SemiAffordanceAccessor;
+
 requires 'next_document';
 
 requires 'number_of_documents';
