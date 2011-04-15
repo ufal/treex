@@ -20,7 +20,7 @@ sub next_filehandles {
     my %mapping = $self->next_filenames() or return;
     while ( my ( $lang, $filename ) = each %mapping ) {
         my $FH;
-        if ( $filename eq '-' ) { $FH = *STDIN; }
+        if ( $filename eq '-' ) { $FH = \*STDIN; }
         else                    { open $FH, '<:utf8', $filename or log_fatal "Can't open $filename: $!"; }
         $mapping{$lang} = $FH;
     }
