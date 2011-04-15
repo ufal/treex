@@ -76,6 +76,33 @@ sub _rotate_label_variant {
     return 1;
 }
 
+sub _spread_nodes {
+    my ( $self, $node ) = @_;
+
+    my ( $left, $right, $gap, $pos ) = ( -1, 0, 0, 0 );
+    my ( @buf, @lower );
+    for my $child ( $node->children ) {
+        ( $pos, @buf ) = $self->_spread_nodes( $child );
+        if ( $left < 0 ) {
+            $left = $pos;
+        }
+        $right += $gap;
+        $gap = scalar(@buf);
+        push @lower, @buf;
+    }
+    $right += $pos;
+    return ( 0, $node ) unless @lower;
+
+    my $mid;
+    if ( scalar($node->children) == 1 ) {
+        $mid = int ( ($#lower + 1) / 2 - 1 );
+    } else {
+        $mid = int ( ($left + $right) / 2 );
+    }
+
+    return ($mid + 1), @lower[0..$mid], $node, @lower[($mid+1)..$#lower];
+}
+
 sub get_nodelist_hook {
     my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
 
@@ -90,13 +117,15 @@ sub get_nodelist_hook {
     my %nodes;
         
     foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
-    my $label = get_tree_label($tree);
-    my @nodes;
-    if ( $tree->does('Treex::Core::Node::Ordered') ) {
-        @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
-    } else {
-        @nodes = $tree->get_descendants( { add_self => 1 } );
-    }
+        my $label = get_tree_label($tree);
+        my @nodes;
+        if ( $tree->get_layer eq 'p' ) {
+            (my $foo, @nodes) = $self->_spread_nodes( $tree );
+        } elsif ( $tree->does('Treex::Core::Node::Ordered') ) {
+            @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
+        } else {
+            @nodes = $tree->get_descendants( { add_self => 1 } );
+        }
         $nodes{$label} = \@nodes;
     }
 
@@ -116,7 +145,7 @@ sub get_nodelist_hook {
         return $max_index;
     };
         
-    my @nodes;
+    my @nodes = ( $bundle );
         
     for ( my $col = 0; $col < scalar @$layout; $col++ ) {
         my @task = ();
@@ -184,6 +213,7 @@ sub precompute_tree_depths {
                     $max_depth = $cur_depth if $cur_depth > $max_depth;
                     for my $child ( $node->get_children ) {
                         push @front, $cur_depth + 1, $child;
+                        $child->{_depth} = $cur_depth + 1 if $child->get_layer eq 'p';
                     }
                 }
 
@@ -218,11 +248,12 @@ sub precompute_tree_shifts {
                     my $depth = $tree_depths{ $forest{$label} };
                     push @trees, $label;
                     $max_depth = $depth if $depth > $max_depth; 
+                    $tree_shifts{ $forest{$label} }{'right'} = $col;
                 }
             }
 
             for my $label ( @trees ) {
-                $tree_shifts{ $forest{$label} } = $cur_shift;
+                $tree_shifts{ $forest{$label} }{'down'} = $cur_shift;
             }
             $cur_shift += $max_depth;
             $row++;
@@ -238,6 +269,7 @@ sub precompute_visualization {
 
         $bundle->{_precomputed_root_style} = $self->bundle_root_style($bundle);
         $bundle->{_precomputed_labels}     = $self->bundle_root_labels($bundle);
+        $bundle->{_precomputed_node_style} = '#{Node-hide:1}';
 
         foreach my $zone ( $bundle->get_all_zones ) {
 
@@ -288,11 +320,17 @@ sub bundle_root_labels {
 
 sub tree_root_labels {
     my ( $self, $root ) = @_;
-    return [
-        $root->get_layer . "-tree",
-        "zone=" . $root->get_zone->get_label,
-        ''
-    ];
+
+    if ($root->get_layer eq 'p') {
+        my $buf = $self->nonroot_pnode_labels($root);
+        return [ $buf->[0]->[0], $buf->[1]->[0], $buf->[2]->[0] ];
+    } else {
+        return [
+            $root->get_layer . "-tree",
+            "zone=" . $root->get_zone->get_label,
+            ''
+        ];
+    }
 }
 
 sub nonroot_node_labels { # silly code just to avoid the need for eval
@@ -614,6 +652,17 @@ sub node_style_hook {
     }
 
     $self->_DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
+    
+    my %n = TredMacro::GetStyles( $styles, 'Node' );
+    TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
+    
+    my $xadj = $tree_shifts{$node->root->{id}}{'right'} * 50;
+    if ( ref($node) =~ m/^Treex::Core::Node/ and $node->get_layer eq 'p'
+         and not $node->is_root and scalar $node->parent->children == 1 ) {
+        $xadj += 15;
+    }
+    TredMacro::AddStyle( $styles, 'Node', -xadj => $xadj ) if $xadj;
+
     return;
 }
 
@@ -704,7 +753,11 @@ COORDS
 # --- node styling: color, size, shape... of nodes and edges
 
 sub bundle_root_style {
-    return "#{nodeXSkip:15} #{nodeYSkip:2} #{lineSpacing:0.7} #{BaseXPos:0} #{BaseYPos:10} #{BalanceTree:1} #{skipHiddenLevels:0}";
+    my $style = '#{nodeXSkip:10}#{nodeYSkip:5}#{lineSpacing:0.9}#{balance:0}';
+    $style .= '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:9}#{Node-currentheight:9}';
+    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.TredMacro::CustomColor('current').'}';
+
+    return $style;
 }
 
 sub node_style { # silly code just to avoid the need for eval
@@ -712,7 +765,7 @@ sub node_style { # silly code just to avoid the need for eval
     my $styles = '';
 
     if ( $node->is_root() ) {
-        $styles = '#{Node-rellevel:'.$tree_shifts{ $node->get_attr('id') }.'}';
+        $styles .= '#{Node-rellevel:'.$tree_shifts{ $node->get_attr('id') }{'down'}.'}';
     }
 
     my $layer = $node->get_layer;
@@ -731,14 +784,9 @@ sub node_style { # silly code just to avoid the need for eval
     return;
 }
 
-sub common_node_style {
-    return q();
-}
-
 sub anode_style {
-
-    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
-    return "#{Oval-fill:green}";
+    # my ( $self, $node ) = @_;
+    return "#{Oval-fill:#f66}";
 }
 
 sub tnode_style {
@@ -746,12 +794,10 @@ sub tnode_style {
 
     my $is_coord = sub { my $n = shift; return $n->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/ };
     
-    my $style = '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:9}#{Node-currentheight:9}';
-    $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
-    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.TredMacro::CustomColor('current').'}';
-    $style .= '#{Oval-fill:blue}';
-
+    my $style = '#{Oval-fill:#48f}';
     return $style if $node->is_root;
+    
+    $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
     
     my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=#ddd;width=2;dash=_ }';
     # For coordination roots
@@ -794,9 +840,39 @@ sub nnode_style {
 }
 
 sub pnode_style {
+    my ( $self, $node ) = @_;
+    
+    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+    
+    my $style = '#{Line-coords:n,n,n,p,p,p}';
+    $style .= '#{CurrentTextBox-fill:red}#{nodeXSkip:4}#{nodeYSkip:0}';
+    $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}#{NodeLabel-skipempty:1}';
 
-    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
-    return "#{Oval-fill:magenta}";
+    if ($terminal) {
+        my $shift = $tree_depths{$node->root->{id}} - $node->{_depth};
+        $style .= "#{Node-rellevel:$shift}";
+    }
+
+    if (not $node->is_root and scalar($node->parent->children) == 1) {
+        $style .= '#{Node-addafterskip:15}';
+    }
+    
+    if (not $terminal) {
+        $style .= '#{Oval-fill:'.($node->{is_head} ? 'lightgreen' : 'lightyellow').'}';
+        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:red}';
+        $style .= '#{CurrentOval-width:2}#{Node-surroundtext:1}#{NodeLabel-valign:center}';
+    } else {
+        $style .= '#{CurrentOval-fill:red}#{Line-dash:.}';
+        $style .= '#{Oval-fill:'.($node->{tag} eq '-NONE-' ? 'gray' : '#ff6').'}';
+    }
+    
+    if ($node->is_root and 0) {
+        my $c = $self->grp->{treeView}->{canvas};
+        my @foo = $c->find('withtag', 'node');
+        print STDERR "DEBUG-INFO: ".$node->{id}." - ".scalar(@foo)."\n";
+    }
+    
+    return $style;
 }
 
 # ---- END OF PRECOMPUTING VISUALIZATION ------
@@ -1237,8 +1313,6 @@ L<Treex::PML::Document> structure which was provided by TrEd.
 =over 4
 
 =item bundle_root_style
-
-=item common_node_style
 
 =item node_style
 
