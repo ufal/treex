@@ -33,6 +33,17 @@ foreach my $command (split /\n/,$commands) {
     combined_is( sub { bash_system $command },'',"$comment: $command");
 }
 
+my %more_commands = (
+  q(echo | treex -q -Len Read::Text Util::Eval document='print 1;') => '1',
+  q(echo | treex -q -Len Read::Text Util::Eval document='print "hello";') => 'hello',
+  q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b";') => 'a=b',
+  q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;') => 'a=b',
+);
+
+while(my ($command, $output) = each %more_commands){
+    combined_is( sub { bash_system $command }, $output, "$command # $output");    
+}
+
 
 unlink glob "*dummy.treex";
 
