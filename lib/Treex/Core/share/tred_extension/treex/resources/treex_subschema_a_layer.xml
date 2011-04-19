@@ -137,6 +137,8 @@
       <value>AuxM</value>
       <value>AuxE</value>
       <value>Ante</value>
+      <!-- values added because of Tamil tagging by Loganathan Ramasamy -->
+      <value>PObj</value>
       <!-- afun for unrecognized value -->
       <value>NR</value>
     </choice>
