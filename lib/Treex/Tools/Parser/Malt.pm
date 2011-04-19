@@ -17,17 +17,17 @@ sub BUILD {
     die "Missing $bindir\n" if !-d $bindir;
 
     my $modeldir = "$ENV{TMT_ROOT}/share/data/models/malt_parser";
-    die "Missing $modeldir\n" if !-d $model_dir;
+    die "Missing $modeldir\n" if !-d $modeldir;
 
     my ( $reader, $writer, $pid );
 
     # create temporary working directory
-    my $workdir = tempdir("maltparserXXXX", CLEANUP=>1, DIR=>".");
+    my $workdir = tempdir("maltparserXXXX", CLEANUP => 1, DIR => ".");
 
     # symlink to the model (model has to be in working directory)
-    system "ln -s $model_dir/$model.mco $workdir/$model.mco";
+    system "ln -s $modeldir/" . $self->model . " $workdir/" . $self->model;
 
-    my $command = "cd $workdir; java -jar $parser_dir/malt-1.3/malt.jar -c $model";
+    my $command = "cd $workdir; java -jar $bindir/malt-1.3/malt.jar -c " . $self->model;
 
     # start MaltParser
     ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
@@ -39,13 +39,13 @@ sub BUILD {
 }
 
 sub parse {
-    my ( $self, $forms, $lemmas, $pos, $subpos, $fetaures ) = @_;
+    my ( $self, $forms, $lemmas, $pos, $subpos, $features ) = @_;
     
     my $writer = $self->{mpwriter};
-    my $rdeader = $self->{mpreader};
+    my $reader = $self->{mpreader};
 
     my $cnt = scalar @$forms;
-    if ( $cnt != scalar @$tags || $cnt != scalar @$lemmas ) {
+    if ( $cnt != scalar @$lemmas || $cnt != scalar @$pos || $cnt != scalar @$subpos || $cnt != scalar @$features ) {
         return 0;
     }
 
@@ -85,7 +85,7 @@ Treex::Tools::Parser::Malt
 
 =head1 SYNOPSIS
 
-  my $parser = Parser::Malt::MaltParser->new(model => 'modelname');
+  my $parser = Parser::Malt::MaltParser->new({model => 'modelname'});
   my ( $parent_indices, $afuns ) = $parser->parse( \@forms, \@lemmas, \@pos, \@subpos, \@features );
 
 =cut
