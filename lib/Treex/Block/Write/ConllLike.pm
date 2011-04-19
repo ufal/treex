@@ -80,8 +80,7 @@ sub get_node_info {
     $info{"aux_afuns"}  = "";
 
     # get all aux-info nodes
-    my @aux_anodes = $t_node->get_aux_anodes();
-    @aux_anodes = sort ord_sort @aux_anodes;
+    my @aux_anodes = sort $t_node->get_aux_anodes( {ordered => 1} );
 
     # fill in the aux-info
     for my $aux_anode (@aux_anodes) {
