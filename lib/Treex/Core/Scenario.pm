@@ -62,7 +62,7 @@ sub BUILD {
         if ( $block_item->{block_parameters} ) {
             $params = join ' ', @{ $block_item->{block_parameters} };
         }
-        log_info("Loading block $block_item->{block_name} ($i/$blocks) $params...");
+        log_info("Loading block $block_item->{block_name} $params ($i/$blocks)");
         my $new_block = $self->_load_block($block_item);
 
         if ( $new_block->does('Treex::Core::DocumentReader') ) {
@@ -202,8 +202,8 @@ sub _load_block {
     my %params = ( %{ $self->_global_params }, scenario => $self );
 
     # which can be overriden by (local) block parameters.
-    foreach ( @{ $block_item->{block_parameters} } ) {
-        my ( $name, $value ) = split /=/;
+    foreach my $param ( @{ $block_item->{block_parameters} } ) {
+        my ( $name, $value ) = split /=/, $param, 2;
         $params{$name} = $value;
     }
 
