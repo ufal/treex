@@ -1,10 +1,11 @@
-package SCzechA_to_TCzechA::Fix_agreement_using_source;
+package Treex::Block::A2A::CS::FixAgreement;
+use Moose;
+use Treex::Core::Common;
+extends 'Treex::Core::Block';
 
-use 5.008;
-use strict;
-use warnings;
-
-use base qw(TectoMT::Block);
+has '+language'   => ( required => 1 );
+has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
+has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 
 use LanguageModel::MorphoLM;
 my $morphoLM = LanguageModel::MorphoLM->new();
@@ -12,27 +13,26 @@ my $morphoLM = LanguageModel::MorphoLM->new();
 use Lexicon::Generation::CS;
 my $generator = Lexicon::Generation::CS->new();
 
-my $fixcount = 0;
-
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
     
-    my $en_root = $bundle->get_tree('SEnglishA');
-    my $a_root = $bundle->get_tree('TCzechA');
+    my $en_root = $zone->get_bundle->get_tree($self->source_language, 'a', $self->source_selector);
+    my $a_root  = $zone->get_atree;
 
     # get alignment mapping
     my %en_counterpart;
     foreach my $en_node ($en_root->get_descendants) {
-        my $links = $en_node->get_attr('m/align/links');
-        next if !$links;
-        $en_counterpart{$bundle->get_document->get_node_by_id($links->[0]->{'counterpart.rf'})->get_attr('ord')} = $en_node;
+        my ($nodes, $types) = $en_node->get_aligned_nodes();
+        if ($$nodes[0]) {
+            $en_counterpart{$$nodes[0]} = $en_node;
+        }
     }
 
     # agreement between subject and predicate
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($g->{afun} eq 'Pred' && $en_counterpart{$dep->get_attr('ord')} && $en_counterpart{$dep->get_attr('ord')}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && $g->{num} ne $d->{num}) {
+        if ($gov->afun eq 'Pred' && $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && $g->{num} ne $d->{num}) {
             my $num = $d->{num};
             $g->{tag} =~ s/^(...)./$1$num/;
             if ($d->{tag} =~ /^.......([123])/) {
@@ -47,8 +47,7 @@ sub process_bundle {
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($en_counterpart{$dep->get_attr('ord')} && $en_counterpart{$dep->get_attr('ord')}->afun eq 'Sb' && $g->{tag} =~ /^Vp/ && $d->{tag} =~ /^[NP]/ && $dep->form !~ /^[Tt]o/ && ($g->{gen}.$g->{num} ne gn2pp($d->{gen}.$d->{num}))) {
-#            print STDERR $en_counterpart{$dep->get_attr('ord')}->afun . "<<<\n" if defined $en_counterpart{$dep->get_attr('ord')};
+        if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^Vp/ && $d->{tag} =~ /^[NP]/ && $dep->form !~ /^[Tt]o/ && ($g->{gen}.$g->{num} ne gn2pp($d->{gen}.$d->{num}))) {
             my $new_gn = gn2pp($d->{gen}.$d->{num});
             $g->{tag} =~ s/^(..)../$1$new_gn/;
             regenerate_node($gov, $g->{tag});
@@ -59,7 +58,7 @@ sub process_bundle {
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($g->{afun} eq 'Pred' && $d->{afun} eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ($g->{gen}.$g->{num} ne $d->{gen}.$d->{num})) {
+        if ($gov->afun eq 'Pred' && $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ($g->{gen}.$g->{num} ne $d->{gen}.$d->{num})) {
             my $new_gn = $g->{gen}.$g->{num};
             $d->{tag} =~ s/^(..)../$1$new_gn/;
             regenerate_node($dep, $d->{tag});
@@ -70,7 +69,7 @@ sub process_bundle {
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($d->{afun} eq 'AuxV' && $g->{tag} =~ /^Vf/ && $d->{tag} =~ /^VB/) {
+        if ($dep->afun eq 'AuxV' && $g->{tag} =~ /^Vf/ && $d->{tag} =~ /^VB/) {
             my $subject;
             foreach my $child ($gov->get_children()) {
                 $subject = $child if $child->afun eq 'Sb';
@@ -88,12 +87,10 @@ sub process_bundle {
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($g->{afun} eq 'AuxP' && $d->{afun} =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case}) {
+        if ($gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case}) {
             my $case = $g->{case};
             $d->{tag} =~ s/^(....)./$1$case/;
             regenerate_node($dep, $d->{tag});
-#    print STiDERR $bundle->get_attr('czech_source_sentence')."\n";
-#    print STDERR "AuxP-Atr fixed ".$dep->form." ".$gov->form."\n\n";
         }
     }
 
@@ -101,7 +98,7 @@ sub process_bundle {
     foreach my $node ($a_root->get_descendants()) {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
-        if ($d->{afun} eq 'Atr' && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A/ && $g->{ord} > $d->{ord} && ($g->{gen}.$g->{num}.$g->{case} ne $d->{gen}.$d->{num}.$d->{case})) {
+        if ($dep->afun eq 'Atr' && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A/ && $gov->ord > $dep->ord && ($g->{gen}.$g->{num}.$g->{case} ne $d->{gen}.$d->{num}.$d->{case})) {
             my $new_gnc = $g->{gen}.$g->{num}.$g->{case};
             $d->{tag} =~ s/^(..).../$1$new_gnc/;
             regenerate_node($dep, $d->{tag});
@@ -169,14 +166,14 @@ sub get_pair {
     while ($node->is_member && !$parent->is_root() && $parent->afun =~ /^(Coord|Apos)$/) {
         $parent = $parent->get_parent();
     }
-    return undef if $parent->is_root();
+    return undef if $parent->is_root;
 
     my $d_tag = $node->tag;
     my $g_tag = $parent->tag;
     $d_tag =~ /^..(.)(.)(.)/;
-    my %d_categories = (tag => $d_tag, afun => $node->afun, ord => $node->get_attr('ord'), gen => $1, num => $2, case => $3);
+    my %d_categories = (tag => $d_tag, gen => $1, num => $2, case => $3);
     $g_tag =~ /^..(.)(.)(.)/;
-    my %g_categories = (tag => $g_tag, afun => $parent->afun, ord => $parent->get_attr('ord'), gen => $1, num => $2, case => $3);
+    my %g_categories = (tag => $g_tag, gen => $1, num => $2, case => $3);
 
     return ($node, $parent, \%d_categories, \%g_categories);
 }
@@ -203,7 +200,7 @@ sub add_children {
 
 =over
 
-=item SCzechA_to_TCzechA::Fix_agreement
+=item Treex::Block::A2A::CS::FixAgreement
 
 Fixing grammatical agreement between subjects and predicates, prepositions and nouns, and nouns and adjectives in the tree TCzechA.
 The tag is changed, then the word form is regenerated.
