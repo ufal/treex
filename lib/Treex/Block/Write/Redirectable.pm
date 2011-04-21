@@ -31,7 +31,7 @@ sub _build_file_handle {
     my ($self) = @_;
 
     if ( $self->to ne "-" ) {
-        open( my $fh, '>:utf8', $self->to );
+        open( my $fh, '>:' . $self->encoding, $self->to );
         return $fh;
     }
     else {
