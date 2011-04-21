@@ -180,7 +180,7 @@ sub _get_deref_attribs {
         my $val = '';
 
         if ( ref($refs) eq 'ARRAY' ) {             # more nodes
-            foreach my $refdnode ( @{$refs} ) {
+            foreach my $refdnode ( sort { $a->ord <=> $b->ord } @{$refs} ) { # always sort referenced nodes by their ord
                 $val .= $refdnode->get_attr($attrib) . ' ';
             }
             $val = substr $val, 0, length($val) - 1;
@@ -195,6 +195,7 @@ sub _get_deref_attribs {
     return;
 }
 
+1;
 __END__
 
 =encoding utf-8

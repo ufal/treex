@@ -242,7 +242,7 @@ sub _parse_line {
         }
         elsif ($field =~ m/^['"].*['"]$/ ){ # quoted value
             $field = substr($field, 1, length($field) - 2); # unquote
-            $field =~ s/\\(['\\])/$1/g; # unescape 
+            $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
             push(@fields, $field);
         }
         else { # unquoted value
@@ -265,8 +265,9 @@ sub _compose_line {
         if (!defined($field)){
             $line .= '?,';
         }
-        elsif ($field eq '' or $field =~ m/[\\,'"? \t]/){ # we need quotes
-            $field =~ s/([\\'])/\\$1/g; # escape
+        elsif ($field eq '' or $field =~ m/[\n\r'"\\\t%{},? ]/){ # we need quotes
+                
+            $field =~ s/([\n\r'"\\\t%])/\\$1/g; # escape (same as weka.core.Utils)
             $line .= "'$field',";
         }
         else {
