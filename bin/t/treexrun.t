@@ -7,12 +7,12 @@ use Treex::Core::Run;
 
 use Test::More;
 use Test::Output;
-
+use File::Slurp;
 # checking execution of treex exactly as from the command line
-
+my $combined_file = 'combined.out';
 sub bash_system {
     my ($command) = @_;
-    system ('bash', '-c', $command);
+    system ('bash', '-c', $command . "> $combined_file 2>&1");
 }
 
 my $test_data_file = 'dummy.treex';
@@ -30,7 +30,11 @@ EOF
 
 foreach my $command (split /\n/,$commands) {
     my ($command,$comment) = split '#',$command;
-    combined_is( sub { bash_system $command },'',"$comment: $command");
+    bash_system($command);
+    my $content = read_file($combined_file);
+    is($content, '', "$comment: $command");
+    #combined_is( sub { bash_system $command },'',"$comment: $command");
+
 }
 
 my %more_commands = (
@@ -41,10 +45,13 @@ my %more_commands = (
 );
 
 while(my ($command, $output) = each %more_commands){
-    combined_is( sub { bash_system $command }, $output, "$command # $output");    
+    bash_system($command);
+    my $content = read_file($combined_file);
+    is($content, $output, "$command # $output");
+    #combined_is( sub { bash_system $command }, $output, "$command # $output");    
 }
 
-
+unlink 'combined.out';
 unlink glob "*dummy.treex";
 
 done_testing;
