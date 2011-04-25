@@ -2,6 +2,7 @@ package Treex::Core::Scenario;
 use Moose;
 use Treex::Core::Common;
 use File::Basename;
+use File::Slurp;
 
 has loaded_blocks => (
     is      => 'ro',
@@ -44,10 +45,10 @@ sub BUILD {
     log_fatal 'No blocks specified for a scenario!' if !defined $scen_str;
 
     my @block_items = parse_scenario_string( $scen_str, $arg_ref->{from_file} );
-    my $blocks = @block_items;
-    log_fatal('Empty block sequence cannot be used for initializing scenario!') if $blocks == 0;
+    my $block_count = @block_items;
+    log_fatal('Empty block sequence cannot be used for initializing scenario!') if $block_count == 0;
 
-    log_info( "$blocks block" . ( $blocks > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
+    log_info( "$block_count block" . ( $block_count > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
 
     # loading (using modules and constructing instances) of the blocks in the sequence
     foreach my $block_item (@block_items) {
@@ -62,7 +63,7 @@ sub BUILD {
         if ( $block_item->{block_parameters} ) {
             $params = join ' ', @{ $block_item->{block_parameters} };
         }
-        log_info("Loading block $block_item->{block_name} $params ($i/$blocks)");
+        log_info("Loading block $block_item->{block_name} $params ($i/$block_count)");
         my $new_block = $self->_load_block($block_item);
 
         if ( $new_block->does('Treex::Core::DocumentReader') ) {
@@ -84,17 +85,10 @@ sub BUILD {
 sub load_scenario_file {
     my ($scenario_filename) = @_;
     log_info "Loading scenario description $scenario_filename";
-    open my $SCEN, '<:utf8', $scenario_filename or
-        log_fatal "Can't open scenario file $scenario_filename";
-
-    my $scenario_string = do {
-        local $/ = undef;
-        <$SCEN>;
-    };
+    my $scenario_string = read_file($scenario_filename, binmode=>':utf8', err_mode=>'quiet')
+        or log_fatal "Can't open scenario file $scenario_filename";
     $scenario_string =~ s/\n/\n /g;
-
     #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
-    close $SCEN;
     return $scenario_string;
 }
 
@@ -102,6 +96,7 @@ sub _escape {
     my $string = shift;
     $string =~ s/ /%20/g;
     $string =~ s/#/%23/g;
+    $string =~ s/=/%3d/g;
     return $string;
 }
 
@@ -116,7 +111,7 @@ sub parse_scenario_string {
     # Quotes are deleted, whereas backticks are preserved.
     $scenario_string =~ s/="([^"]*)"/'='._escape($1)/eg;
     $scenario_string =~ s/='([^']*)'/'='._escape($1)/eg;
-    $scenario_string =~ s/(=`[^`]*`)/_escape($1)/eg;
+    $scenario_string =~ s/=(`[^`]*`)/'='._escape($1)/eg;
 
     $scenario_string =~ s/#.*\n//g;    # delete comments ended by a newline
     $scenario_string =~ s/#.+$//;      # and a comment on the last line
@@ -155,6 +150,7 @@ sub parse_scenario_string {
             $token =~ s/%23/#/g;
             $token =~ s/%22/"/g;
             $token =~ s/%27/'/g;
+            $token =~ s/%3d/=/g;
 
             if ( not @block_items ) {
                 log_fatal "Specification of block arguments before the first block name: $token\n";
@@ -336,7 +332,7 @@ The scenario description is loaded from the file.
 =item $scenario->run();
 
 Run the scenario.
-On of the blocks (usually the first one) must be the document reader (see 
+One of the blocks (usually the first one) must be the document reader (see 
 L<Treex::Core::DocumentReader>) that produces the 
 documents on which this scenatio is applied.
 
