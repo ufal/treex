@@ -630,6 +630,8 @@ my %arrow_color = (
 sub node_style_hook {
     my ( $self, $node, $styles ) = @_;
 
+    return if ref($node) eq 'Treex::Core::Bundle';
+    
     my %line = TredMacro::GetStyles( $styles, 'Line' );
     my @target_ids;
     my @arrow_types;
@@ -656,7 +658,7 @@ sub node_style_hook {
     my %n = TredMacro::GetStyles( $styles, 'Node' );
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
     
-    my $xadj = $tree_shifts{$node->root->{id}}{'right'} ? $tree_shifts{$node->root->{id}}{'right'} * 50 : 0;
+    my $xadj = $tree_shifts{$node->root->{id}}{'right'} * 50;
     if ( ref($node) =~ m/^Treex::Core::Node/ and $node->get_layer eq 'p'
          and not $node->is_root and scalar $node->parent->children == 1 ) {
         $xadj += 15;
