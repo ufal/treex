@@ -308,6 +308,8 @@ sub _execute_locally {
     my ($self) = @_;
 
     # Parameters can contain spaces that should be preserved
+    # TODO: Also newlines and other whitespaces should be preserved
+    # because Treex::Core::Scenario does $scenario_string =~ s/\s+/ /g;
     my $scen_str = join ' ',
         map {
         if ( my ( $name, $value ) = /(\S+)=(.+ .+)$/ ) {

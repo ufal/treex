@@ -35,8 +35,11 @@ my @tasks = (
   [q(treex -q -g '*dummy.treex'), ''], # postponed wildcard expansion
   [q(echo | treex -q -Len Read::Text Util::Eval document='print 1;'), '1'],
   [q(echo | treex -q -Len Read::Text Util::Eval document='print "hello";'), 'hello'],
-  [q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b";'), 'a=b'],
+  [q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1'],
+  [q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'), 'a=b  c'],
   [q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'), 'a=b'],
+  [q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
+                                                          print 1;'), '1'],
 );
 
 foreach my $task_rf (@tasks){
