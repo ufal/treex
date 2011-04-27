@@ -124,7 +124,7 @@ override '_convert_all_trees' => sub {
                 foreach my $p_node ( $proot, $proot->get_descendants ) {
                     my $type = $p_node->get_pml_type_name();
                     $type =~ s/p-(.*)\.type/$1/;
-                    $p_node->set_attr( '#name', $type );
+                    $p_node->{'#name'} = $type;
                 }
             }
         }
