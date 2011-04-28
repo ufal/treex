@@ -33,13 +33,13 @@ sub allow_switch_context_hook {
 }
 
 sub switch_context_hook {
-    $tredview->load_layouts();
+    $tredview->tree_layout->load_layouts();
     SetCurrentStylesheet('Treex_stylesheet');
     # Redraw() if GUI();
 }
 
 sub pre_switch_context_hook {
-    $tredview->save_layouts();
+    $tredview->tree_layout->save_layouts();
 }
 
 sub file_opened_hook {
@@ -67,11 +67,11 @@ sub ConfDialog {
 }
 
 sub init_hook {
-    $tredview->load_layouts();
+    $tredview->tree_layout->load_layouts();
 }
 
 sub exit_hook {
-    $tredview->save_layouts();
+    $tredview->tree_layout->save_layouts();
 }
 
 sub shift_label1_layer {
