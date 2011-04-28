@@ -74,45 +74,45 @@ sub exit_hook {
     $tredview->tree_layout->save_layouts();
 }
 
-sub shift_label1_layer {
-    $tredview->shift_label(0, 'layer');
+sub shift_labels1_layer {
+    $tredview->labels->shift_labels(0, 'layer');
 }
 
-sub shift_label1_node {
-    $tredview->shift_label(0, 'node');
+sub shift_labels1_node {
+    $tredview->labels->shift_labels(0, 'node');
 }
 
-sub shift_label2_layer {
-    $tredview->shift_label(1, 'layer');
+sub shift_labels2_layer {
+    $tredview->labels->shift_labels(1, 'layer');
 }
 
-sub shift_label2_node {
-    $tredview->shift_label(1, 'node');
+sub shift_labels2_node {
+    $tredview->labels->shift_labels(1, 'node');
 }
 
-sub shift_label3_layer {
-    $tredview->shift_label(2, 'layer');
+sub shift_labels3_layer {
+    $tredview->labels->shift_labels(2, 'layer');
 }
 
-sub shift_label3_node {
-    $tredview->shift_label(2, 'node');
+sub shift_labels3_node {
+    $tredview->labels->shift_labels(2, 'node');
 }
 
 sub reset_labels_node {
-    $tredview->reset_labels('node');
+    $tredview->labels->reset_labels('node');
 }
 
 sub reset_labels_tree {
-    $tredview->reset_labels('tree');
+    $tredview->labels->reset_labels('tree');
 }
 
 #bind ConfDialog to c menu Configuration
-#bind shift_label1_layer to KP_End menu Change content of label no.1 for current layer
-#bind shift_label1_node to Ctrl+KP_End menu Change content of label no.1 for current node
-#bind shift_label2_layer to KP_Down menu Change content of label no.2 for current layer
-#bind shift_label2_node to Ctrl+KP_Down menu Change content of label no.2 for current node
-#bind shift_label3_layer to KP_Next menu Change content of label no.3 for current layer
-#bind shift_label3_node to Ctrl+KP_Next menu Change content of label no.3 for current node
+#bind shift_labels1_layer to KP_End menu Change content of label no.1 for current layer
+#bind shift_labels1_node to Ctrl+KP_End menu Change content of label no.1 for current node
+#bind shift_labels2_layer to KP_Down menu Change content of label no.2 for current layer
+#bind shift_labels2_node to Ctrl+KP_Down menu Change content of label no.2 for current node
+#bind shift_labels3_layer to KP_Next menu Change content of label no.3 for current layer
+#bind shift_labels3_node to Ctrl+KP_Next menu Change content of label no.3 for current node
 #bind reset_labels_node to r menu Reset label settings of current node
 #bind reset_labels_tree to Ctrl+r menu Reset label settings of all nodes in current tree
 

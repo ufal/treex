@@ -426,10 +426,6 @@ a special file.
 
 =item get_layout
 
-=item
-
-=item
-
 =item load_layouts
 
 =item save_layouts
