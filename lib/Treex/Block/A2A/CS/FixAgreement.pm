@@ -97,6 +97,9 @@ sub process_zone {
         next if !$dep;
         if ($gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case}) {
             my $doCorrect;
+            #if there is an EN counterpart for $dep but it is not a preposition,
+            #it means that the CS tree is probably incorrect
+            #and the $gov prep does not belong to this $dep at all
             if ($en_counterpart{$dep}) {
                 my ($enDep, $enGov, $enD, $enG) = get_pair($en_counterpart{$dep});
                 if ($enGov and $enDep and $enGov->{afun} eq 'AuxP') {
