@@ -39,7 +39,9 @@ sub process_zone {
                 my $person = $1;
                 $g->{tag} =~ s/^(.......)./$1$person/;
             }
+            logfix1($node, "subj-pred-agree");
             regenerate_node($gov, $g->{tag});
+            logfix2($node);
         }
     }
 
@@ -50,7 +52,9 @@ sub process_zone {
         if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^Vp/ && $d->{tag} =~ /^[NP]/ && $dep->form !~ /^[Tt]o/ && ($g->{gen}.$g->{num} ne gn2pp($d->{gen}.$d->{num}))) {
             my $new_gn = gn2pp($d->{gen}.$d->{num});
             $g->{tag} =~ s/^(..)../$1$new_gn/;
+            logfix1($node, "subj-past-part-agree");
             regenerate_node($gov, $g->{tag});
+            logfix2($node);
         }
     }
 
@@ -61,7 +65,9 @@ sub process_zone {
         if ($gov->afun eq 'Pred' && $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ($g->{gen}.$g->{num} ne $d->{gen}.$d->{num})) {
             my $new_gn = $g->{gen}.$g->{num};
             $d->{tag} =~ s/^(..)../$1$new_gn/;
+            logfix1($node, "pasiv-aux-be-agree");
             regenerate_node($dep, $d->{tag});
+            logfix2($node);
         }
     }
 
@@ -78,7 +84,9 @@ sub process_zone {
             my $sub_num = substr($subject->tag, 3, 1);
             if ($sub_num ne $d->{num}) {
                 $d->{tag} =~ s/^(...)./$1$sub_num/;
+                logfix1($node, "verb-aux-be-agree");
                 regenerate_node($dep, $d->{tag});
+                logfix2($node);
             }
         }
     }
@@ -90,7 +98,9 @@ sub process_zone {
         if ($gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case}) {
             my $case = $g->{case};
             $d->{tag} =~ s/^(....)./$1$case/;
+            logfix1($node, "prep-noun-agree");
             regenerate_node($dep, $d->{tag});
+            logfix2($node);
         }
     }
 
@@ -101,10 +111,60 @@ sub process_zone {
         if ($dep->afun eq 'Atr' && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A/ && $gov->ord > $dep->ord && ($g->{gen}.$g->{num}.$g->{case} ne $d->{gen}.$d->{num}.$d->{case})) {
             my $new_gnc = $g->{gen}.$g->{num}.$g->{case};
             $d->{tag} =~ s/^(..).../$1$new_gnc/;
+            logfix1($node, "noun-adj-agree");
             regenerate_node($dep, $d->{tag});
+            logfix2($node);
         }
     }
     return;
+}
+
+my $logfixmsg = '';
+my $logfixold = '';
+my $logfixnew = '';
+
+sub logfix1 {
+    my $node = shift;
+    my $mess = shift;
+    my ($dep, $gov, $d, $g) = get_pair($node);
+    $logfixmsg = $mess;
+    
+    #original words pair
+    if ($gov->ord < $dep->ord) {
+        $logfixold = $gov->{form};
+        $logfixold .= " ";
+        $logfixold .= $dep->{form};
+    } else {
+    	$logfixold = $dep->{form};
+    	$logfixold .= " ";
+    	$logfixold .= $gov->{form};
+    }
+}
+
+sub logfix2 {
+    my $node = shift;
+    my ($dep, $gov, $d, $g) = get_pair($node);
+    
+    #new words pair
+    if ($gov->ord < $dep->ord) {
+    	$logfixnew = $gov->{form};
+    	$logfixnew .= " ";
+    	$logfixnew .= $dep->{form};
+    } else {
+    	$logfixnew = $dep->{form};
+    	$logfixnew .= " ";
+    	$logfixnew .= $gov->{form};
+	}
+    #output
+    if ($logfixold ne $logfixnew) {
+        if ($node->get_bundle->get_zone( 'cs', 'FIXLOG' )) {
+            my $sentence = $node->get_bundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . " {$logfixmsg: $logfixold -> $logfixnew}";
+            $node->get_bundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
+        } else {
+            my $sentence = "{$logfixmsg: $logfixold -> $logfixnew}";
+            $node->get_bundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
+        }
+    }
 }
 
 sub get_form { 
