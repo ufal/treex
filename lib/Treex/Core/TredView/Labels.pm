@@ -303,8 +303,6 @@ sub _pnode_labels {
     ];
 }
 
-
-
 1;
 
 __END__

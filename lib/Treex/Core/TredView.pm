@@ -6,6 +6,7 @@ use Moose;
 use Treex::Core::Log;
 use Treex::Core::TredView::TreeLayout;
 use Treex::Core::TredView::Labels;
+use Treex::Core::TredView::Styles;
 use List::Util qw(first);
 
 has 'grp'       => ( is => 'rw' );
@@ -21,6 +22,11 @@ has 'labels' => (
     isa => 'Treex::Core::TredView::Labels',
     builder => '_build_labels',
     lazy => 1
+);
+has '_styles' => (
+    is => 'ro',
+    isa => 'Treex::Core::TredView::Styles',
+    default => sub { Treex::Core::TredView::Styles->new() }
 );
 
 sub _build_labels {
@@ -147,8 +153,6 @@ sub get_value_line_hook {
 # --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
 
 my @layers = qw(a t p n);
-my %tree_depths = ();
-my %tree_shifts = ();
 
 # To be run only once when the file is opened. Tree depths never change.
 sub precompute_tree_depths {
@@ -169,7 +173,7 @@ sub precompute_tree_depths {
                     }
                 }
 
-                $tree_depths{$tree->get_attr('id')} = $max_depth;
+                $tree->{_tree_depth} = $max_depth;
             }
         }
     }
@@ -185,7 +189,7 @@ sub precompute_tree_shifts {
         
         foreach my $zone ( $bundle->get_all_zones ) {
             foreach my $tree ( $zone->get_all_trees ) {
-                $forest{ $self->tree_layout->get_tree_label( $tree ) } = $tree->get_attr('id');
+                $forest{ $self->tree_layout->get_tree_label( $tree ) } = $tree;
             }
         }
 
@@ -197,15 +201,15 @@ sub precompute_tree_shifts {
             @trees = ();
             for ( my $col = 0; $col < scalar @$layout; $col++ ) {
                 if ( my $label = $layout->[$col]->[$row] ) {
-                    my $depth = $tree_depths{ $forest{$label} };
+                    my $depth = $forest{$label}->{_tree_depth};
                     push @trees, $label;
                     $max_depth = $depth if $depth > $max_depth; 
-                    $tree_shifts{ $forest{$label} }{'right'} = $col;
+                    $forest{$label}->{'_shift_right'} = $col;
                 }
             }
 
             for my $label ( @trees ) {
-                $tree_shifts{ $forest{$label} }{'down'} = $cur_shift;
+                $forest{$label}->{'_shift_down'} = $cur_shift;
             }
             $cur_shift += $max_depth;
             $row++;
@@ -219,7 +223,7 @@ sub precompute_visualization {
 
     foreach my $bundle ( $self->treex_doc->get_bundles ) {
 
-        $bundle->{_precomputed_root_style} = $self->bundle_root_style($bundle);
+        $bundle->{_precomputed_root_style} = $self->_styles->bundle_style($bundle);
         $bundle->{_precomputed_node_style} = '#{Node-hide:1}';
 
         foreach my $zone ( $bundle->get_all_zones ) {
@@ -229,11 +233,11 @@ sub precompute_visualization {
                     my $root = $zone->get_tree($layer);
 
                     $root->{_precomputed_labels} = $self->labels->root_labels($root);
-                    $root->{_precomputed_node_style} = $self->node_style( $root );
+                    $root->{_precomputed_node_style} = $self->_styles->node_style( $root );
                     $root->{_precomputed_hint} = '';
 
                     foreach my $node ( $root->get_descendants ) {
-                        $node->{_precomputed_node_style} = $self->node_style( $node );
+                        $node->{_precomputed_node_style} = $self->_styles->node_style( $node );
                         $node->{_precomputed_hint} = $self->node_hint( $node, $layer );
                         $node->{_precomputed_buffer} = $self->labels->node_labels( $node, $layer );
                         $self->labels->set_labels($node);
@@ -374,7 +378,7 @@ sub node_style_hook {
     my %n = TredMacro::GetStyles( $styles, 'Node' );
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
     
-    my $xadj = $tree_shifts{$node->root->{id}}{'right'} * 50;
+    my $xadj = $node->root->{'_shift_right'} * 50;
     if ( ref($node) =~ m/^Treex::Core::Node/ and $node->get_layer eq 'p'
          and not $node->is_root and scalar $node->parent->children == 1 ) {
         $xadj += 15;
@@ -466,131 +470,6 @@ COORDS
         );
     }
     return;
-}
-
-# --- node styling: color, size, shape... of nodes and edges
-
-sub bundle_root_style {
-    my $style = '#{nodeXSkip:10}#{nodeYSkip:5}#{lineSpacing:0.9}#{balance:0}';
-    $style .= '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:9}#{Node-currentheight:9}';
-    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.TredMacro::CustomColor('current').'}';
-
-    return $style;
-}
-
-sub node_style { # silly code just to avoid the need for eval
-    my ( $self, $node ) = @_;
-    my $styles = '';
-
-    if ( $node->is_root() ) {
-        $styles .= '#{Node-rellevel:'.$tree_shifts{ $node->get_attr('id') }{'down'}.'}';
-    }
-
-    my $layer = $node->get_layer;
-    my %subs;
-    $subs{t} = \&tnode_style;
-    $subs{a} = \&anode_style;
-    $subs{n} = \&nnode_style;
-    $subs{p} = \&pnode_style;
-
-    if ( defined $subs{$layer} ) {
-        return $styles.&{ $subs{$layer} }($self, $node);
-    } else {
-        log_fatal "Undefined or unknown layer: $layer";
-    }
-
-    return;
-}
-
-sub anode_style {
-    # my ( $self, $node ) = @_;
-    return "#{Oval-fill:#f66}";
-}
-
-sub tnode_style {
-    my ( $self, $node ) = @_;
-
-    my $is_coord = sub { my $n = shift; return $n->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/ };
-    
-    my $style = '#{Oval-fill:#48f}';
-    return $style if $node->is_root;
-    
-    $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
-    
-    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=#ddd;width=2;dash=_ }';
-    # For coordination roots
-    my $k1 = '20 / sqrt((xp-xn)**2 + (yp-yn)**2)';
-    my $x1 = 'xn-(xn-xp)*'.$k1;
-    my $y1 = 'yn-(yn-yp)*'.$k1;
-    # For coordination members
-    my $k2 = '(1 - 20 / sqrt((xp-xn)**2 + (yp-yn)**2))';
-    my $x2 = 'xn-(xn-xp)*'.$k2;
-    my $y2 = 'yn-(yn-yp)*'.$k2;
-    
-    if (($node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
-        (not $node->is_root and $node->parent->is_root)) {
-        $style .= '#{Line-width:1}#{Line-dash:2,4}';
-    } elsif ($node->{is_member}) {
-        if ($is_coord->($node) and $is_coord->($node->parent)) {
-            $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}".$coord_circle;
-            $style .= '#{Line-width:0&1}#{Line-fill:white&#6f11ea}';
-        } elsif (not $node->is_root and $is_coord->($node->parent)) {
-            $style .= "#{Line-coords:n,n,$x2,$y2}";
-        } else {
-            $style .= '#{Line-fill:'.TredMacro::CustomColor('error').'}';
-        }
-    } elsif (not $node->is_root and $is_coord->($node->parent)) {
-        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:#6f11ea}#{Line-width:1}";
-    } elsif ($is_coord->($node)) {
-        $style .= $coord_circle."#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
-        $style .= '#{Line-width:0&2}#{Line-fill:white&#bebebe}';
-    } else {
-        $style .= '';
-    }
-
-    return $style;
-}
-
-sub nnode_style {
-
-    #    my ( $self, $node ) = @_; # style might be dependent on node features in the future
-    return "#{Oval-fill:yellow}";
-}
-
-sub pnode_style {
-    my ( $self, $node ) = @_;
-    
-    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
-    
-    my $style = '#{Line-coords:n,n,n,p,p,p}';
-    $style .= '#{CurrentTextBox-fill:red}#{nodeXSkip:4}#{nodeYSkip:0}';
-    $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}#{NodeLabel-skipempty:1}';
-
-    if ($terminal) {
-        my $shift = $tree_depths{$node->root->{id}} - $node->{_depth};
-        $style .= "#{Node-rellevel:$shift}";
-    }
-
-    if (not $node->is_root and scalar($node->parent->children) == 1) {
-        $style .= '#{Node-addafterskip:15}';
-    }
-    
-    if (not $terminal) {
-        $style .= '#{Oval-fill:'.($node->{is_head} ? 'lightgreen' : 'lightyellow').'}';
-        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:red}';
-        $style .= '#{CurrentOval-width:2}#{Node-surroundtext:1}#{NodeLabel-valign:center}';
-    } else {
-        $style .= '#{CurrentOval-fill:red}#{Line-dash:.}';
-        $style .= '#{Oval-fill:'.($node->{tag} eq '-NONE-' ? 'gray' : '#ff6').'}';
-    }
-    
-    if ($node->is_root and 0) {
-        my $c = $self->grp->{treeView}->{canvas};
-        my @foo = $c->find('withtag', 'node');
-        print STDERR "DEBUG-INFO: ".$node->{id}." - ".scalar(@foo)."\n";
-    }
-    
-    return $style;
 }
 
 # ---- END OF PRECOMPUTING VISUALIZATION ------
