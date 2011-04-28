@@ -96,11 +96,24 @@ sub process_zone {
         my ($dep, $gov, $d, $g) = get_pair($node);
         next if !$dep;
         if ($gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case}) {
-            my $case = $g->{case};
-            $d->{tag} =~ s/^(....)./$1$case/;
-            logfix1($node, "prep-noun-agree");
-            regenerate_node($dep, $d->{tag});
-            logfix2($node);
+            my $doCorrect;
+            if ($en_counterpart{$dep}) {
+                my ($enDep, $enGov, $enD, $enG) = get_pair($en_counterpart{$dep});
+                if ($enGov and $enDep and $enGov->{afun} eq 'AuxP') {
+                    $doCorrect = 1; #en_counterpart's parent is also a prep
+                } else {
+                    $doCorrect = 0; #en_counterpart's parent is not a prep
+                }
+            } else {
+                $doCorrect = 1; #no en_counterpart
+            }
+            if ($doCorrect) {
+                my $case = $g->{case};
+                $d->{tag} =~ s/^(....)./$1$case/;
+                logfix1($node, "prep-noun-agree");
+                regenerate_node($dep, $d->{tag});
+                logfix2($node);
+            } #else do not correct
         }
     }
 
