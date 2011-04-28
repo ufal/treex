@@ -33,8 +33,16 @@ my @tasks = (
   [q(treex -q -- dummy.treex), ''],    # reading an empty file
   [q(treex -q -s -- dummy.treex), ''], # reading and saving an empty file
   [q(treex -q -g '*dummy.treex'), ''], # postponed wildcard expansion
-  [q(echo | treex -q -Len Read::Text Util::Eval document='print 1;'), '1'],
+  [q(echo | treex -q -Len Read::Text Util::Eval document='print 1;'), '1'],  # @ARGV contains q{document=print 1;}
+
+# It is questionable whether we want to allow the following four constructions
+# [q(echo | treex -q -Len Read::Text Util::Eval document=\'print 1;\'), '1'],# @ARGV contains q{document='print}, q{1;'}
+# [q(echo | treex -q -Len Read::Text Util::Eval document=\"print 1;\"), '1'],# @ARGV contains q{document="print}, q{1;"}
+# [q(echo | treex -q -Len Read::Text Util::Eval document='"print 1;"'), '1'],# @ARGV contains q{document="print 1;"}
+# [q(echo | treex -q -Len Read::Text Util::Eval document="'print 1;'"), '1'],# @ARGV contains q{document='print 1;'}
+
   [q(echo | treex -q -Len Read::Text Util::Eval document='print "hello";'), 'hello'],
+  [q(echo | treex -q -Len Read::Text Util::Eval document="print 'hello';"), 'hello'],
   [q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1'],
   [q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'), 'a=b  c'],
   [q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'), 'a=b'],
