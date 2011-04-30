@@ -151,12 +151,24 @@ sub process_zone {
                 $doCorrect = 1;
             }
             if ($doCorrect) {
+                #log1
                 logfix1($node, "pres-cont");
+                #set gov's attribute to dep's attribute (preserve negation)
+                my $negation;
+                if( substr ($g->{tag}, 10, 1) eq 'N' or substr ($d->{tag}, 10, 1) eq 'N' ) {
+                    $negation = 'N';
+                } else {
+                    $negation = 'A';
+                }
+                my $tag = substr ($d->{tag}, 0, 10) . $negation . substr ($d->{tag}, 11);
+                regenerate_node($gov, $tag);
+                #move children under parent and remove
                 my $parent = $dep->get_parent;
                 foreach my $child ($dep->get_children) {
                     $child->set_parent($parent);
                 }
                 $dep->remove;
+                #log2
                 logfix2(($parent->get_children)[0]); #makes at least a little sense
             }
         }
