@@ -1,6 +1,7 @@
 package Treex::Block::A2A::CS::FixAgreement;
 use Moose;
 use Treex::Core::Common;
+use utf8;
 extends 'Treex::Core::Block';
 
 has '+language'   => ( required => 1 );
@@ -132,6 +133,32 @@ sub process_zone {
             logfix2($node);
         }
     }
+    
+    # present continuous fix ("is working" translated as "je pracuje")
+    foreach my $node ($a_root->get_descendants()) {
+        my ($dep, $gov, $d, $g) = get_pair($node);
+        next if !$dep;
+        if ($dep->{lemma} eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->{form} =~ /ing$/) {
+            my $doCorrect;
+            if ($en_counterpart{$dep}) {
+                my ($enDep, $enGov, $enD, $enG) = get_pair($en_counterpart{$dep});
+                if ($enGov and $enDep and $enGov->{form} =~ /ing$/) {
+                    $doCorrect = 1;
+                } else {
+                    $doCorrect = 0;
+                }
+            } else {
+                $doCorrect = 1;
+            }
+            if ($doCorrect) {
+                logfix1($node, "pres-cont");
+                $dep->set_form('');
+                $dep->set_no_space_after(1);
+                logfix2($node);
+            }
+        }
+    }
+
     return;
 }
 
