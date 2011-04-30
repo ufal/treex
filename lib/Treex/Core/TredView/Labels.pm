@@ -14,6 +14,11 @@ has '_treex_doc' => (
     weak_ref => 1,
     required => 1
 );
+has '_colors' => (
+    is => 'ro',
+    isa => 'Treex::Core::TredView::Colors',
+    default => sub { Treex::Core::TredView::Colors->new() }
+);
 
 sub _build_label_variants {
     return {
@@ -189,15 +194,15 @@ sub _anode_labels {
         $par = 1 if $n->{is_parenthesis_root};
         $n = $n->parent;
     }
-    $line1 = '#{customparenthesis}' if $par;
+    $line1 = $self->_colors->get('parenthesis', 1) if $par;
     $line1 .= $node->{form};
 
-    my $line2 = $node->{afun} ? '#{customafun}'.$node->{afun} : '#{customerror}!!';
+    my $line2 = $node->{afun} ? $self->_colors->get('afun', 1).$node->{afun} : $self->_colors->get('error', 1).'!!';
     if ($node->{is_member}) {
         my $n = $node->parent;
         $n = $n->parent while $n and $n->{afun} =~ m/^Aux[CP]$/;
         if ($n->{afun} =~ m/^(Ap)os|(Co)ord/) {
-            $line2 .= '_#{customcoappa}'.($1 ? $1 : $2);
+            $line2 .= '_'.$self->_colors->get('member', 1).($1 ? $1 : $2);
         }
     }
     
@@ -219,31 +224,25 @@ sub _tnode_labels {
     my ( $self, $node ) = @_;
 
     my $line1 = $node->{t_lemma};
-    $line1 = '#{customparenthesis}' . $line1 if $node->{is_parenthesis};
-    $line1 .= '#{customdetail}.'.$node->{sentmod} if $node->{sentmod};
+    $line1 = $self->_colors->get('parenthesis', 1) . $line1 if $node->{is_parenthesis};
+    $line1 .= $self->_colors->get('sentmod', 1).'.'.$node->{sentmod} if $node->{sentmod};
     
-    my %colors = (
-        'compl' => 'green',
-        'coref_text' => 'blue',
-        'coref_gram' => 'red'
-    );
-
     foreach my $type ('compl', 'coref_text', 'coref_gram') {
         if (defined $node->{$type.'.rf'}) {
             foreach my $ref (TredMacro::ListV($node->{$type.'.rf'})) {
                 my $ref_node = $self->_treex_doc->get_node_by_id( $ref );
                 if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() ) {
-                    $line1 .= ' #{'.$colors{$type}.'}'.$ref_node->{t_lemma};
+                    $line1 .= ' '.$self->_colors->get($type, 1).$ref_node->{t_lemma};
                 }
             }
         }
     }
 
     my $line2 = $node->{functor};
-    $line2 .= '#{customsubfunc}.'.$node->{subfunctor} if $node->{subfunctor};
-    $line2 .= '#{customsubfunc}.state' if $node->{is_state};
-    $line2 .= '#{customsubfunc}.dsp_root' if $node->{is_dsp_root};
-    $line2 .= '#{customcoappa}.member' if $node->{is_member};
+    $line2 .= $self->_colors->get('subfunctor', 1).'.'.$node->{subfunctor} if $node->{subfunctor};
+    $line2 .= $self->_colors->get('subfunctor', 1).'.state' if $node->{is_state};
+    $line2 .= $self->_colors->get('subfunctor', 1).'.dsp_root' if $node->{is_dsp_root};
+    $line2 .= $self->_colors->get('member', 1).'.member' if $node->{is_member};
 
     my @a_nodes = ();
     my $line3_1 = '';
@@ -258,12 +257,12 @@ sub _tnode_labels {
     }
     if (@a_nodes) {
         @a_nodes = sort { $a->{ord} <=> $b->{ord} } @a_nodes;
-        @a_nodes = map { ($_->{type} eq 'lex' ? '#{darkgreen}' : '#{darkorange}').$_->{form} } @a_nodes;
+        @a_nodes = map { ($_->{type} eq 'lex' ? $self->_colors->get('lex', 1) : $self->_colors->get('aux', 1)).$_->{form} } @a_nodes;
         $line3_1 = join " ", @a_nodes;
     }
 
-    my $line3_2 = '#{customnodetype}'.$node->{nodetype};
-    $line3_2 .= '#{customcomplex}.'.$node->attr('gram/sempos') if $node->attr('gram/sempos');
+    my $line3_2 = $self->_colors->get('nodetype', 1).$node->{nodetype};
+    $line3_2 .= $self->_colors->get('sempos', 1).'.'.$node->attr('gram/sempos') if $node->attr('gram/sempos');
     
     return [
         [ $line1 ],
@@ -293,7 +292,7 @@ sub _pnode_labels {
         $line2 = $node->{tag};
         $line2 = '-' if $line2 eq '-NONE-';
     } else {
-        $line1 = '#{darkblue}'.$node->{phrase}.'#{black}'.join('', map "-$_", TredMacro::ListV($node->{functions}));
+        $line1 = $self->_colors->get('phrase', 1).$node->{phrase}.'#{black}'.join('', map "-$_", TredMacro::ListV($node->{functions}));
     }
 
     return [

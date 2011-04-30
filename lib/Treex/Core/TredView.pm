@@ -26,12 +26,18 @@ has 'labels' => (
 has '_styles' => (
     is => 'ro',
     isa => 'Treex::Core::TredView::Styles',
-    default => sub { Treex::Core::TredView::Styles->new() }
+    builder => '_build_styles',
+    lazy => 1
 );
 
 sub _build_labels {
     my $self = shift;
     return Treex::Core::TredView::Labels->new( _treex_doc => $self->treex_doc );
+}
+
+sub _build_styles {
+    my $self = shift;
+    return Treex::Core::TredView::Styles->new( _treex_doc => $self->treex_doc );
 }
 
 sub _spread_nodes {
@@ -339,13 +345,6 @@ sub pnode_hint {
 
 # --- arrows ----
 
-my %arrow_color = (
-    'coref_gram.rf' => 'red',
-    'coref_text.rf' => 'blue',
-    'compl.rf'      => 'green',
-    'alignment'     => 'grey',
-);
-
 # copied from TectoMT_TredMacros.mak
 sub node_style_hook {
     my ( $self, $node, $styles ) = @_;
@@ -356,9 +355,9 @@ sub node_style_hook {
     my @target_ids;
     my @arrow_types;
 
-    foreach my $ref_attr ( 'coref_gram.rf', 'coref_text.rf', 'compl.rf' ) {
-        if ( defined $node->attr($ref_attr) ) {
-            foreach my $target_id ( @{ $node->attr($ref_attr) } ) {
+    foreach my $ref_attr ( 'coref_gram', 'coref_text', 'compl' ) {
+        if ( defined $node->attr($ref_attr.'.rf') ) {
+            foreach my $target_id ( @{ $node->attr($ref_attr.'.rf') } ) {
                 push @target_ids,  $target_id;
                 push @arrow_types, $ref_attr;
             }
@@ -373,7 +372,7 @@ sub node_style_hook {
         }
     }
 
-    $self->_DrawArrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
+    $self->_styles->draw_arrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
     
     my %n = TredMacro::GetStyles( $styles, 'Node' );
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
@@ -385,90 +384,6 @@ sub node_style_hook {
     }
     TredMacro::AddStyle( $styles, 'Node', -xadj => $xadj ) if $xadj;
 
-    return;
-}
-
-# copied from tred.def
-sub _AddStyle {
-    my ( $styles, $style, %s ) = @_;
-    if ( exists( $styles->{$style} ) ) {
-        for my $key ( keys %s ) {
-            $styles->{$style}{$key} = $s{$key};
-        }
-    } else {
-        $styles->{$style} = \%s;
-    }
-    return;
-}
-
-# based on DrawCorefArrows from config/TectoMT_TredMacros.mak, simplified
-# ignoring special values ex and segm
-sub _DrawArrows {
-    my ( $self, $node, $styles, $line, $target_ids, $arrow_types ) = @_;
-    my ( @coords, @colors, @dash, @tags );
-    my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
-
-    foreach my $target_id (@$target_ids) {
-        my $arrow_type = shift @$arrow_types;
-
-        my $target_node = $self->treex_doc->get_node_by_id($target_id);
-
-        if ( $node->get_bundle eq $target_node->get_bundle ) { # same sentence
-
-            my $T = "[?\$node->{id} eq '$target_id'?]";
-            my $X = "(x$T-xn)";
-            my $Y = "(y$T-yn)";
-            my $D = "sqrt($X**2+$Y**2)";
-            my $c = <<"COORDS";
-&n,n,
-(x$T+xn)/2 - $Y*(25/$D+0.12),
-(y$T+yn)/2 + $X*(25/$D+0.12),
-x$T,y$T
-
-COORDS
-
-            push @coords, $c;
-        } else { # should be always the same document, if it exists at all
-
-            my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
-            $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
-            if ( $orientation =~ /left|right/ ) {
-                if ( $orientation eq 'left' ) {
-                    log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
-                    push @coords, "\&n,n,n-30,n+$rotate_prv_snt";
-                    $rotate_prv_snt += 10;
-                } else { #right
-                    log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
-                    push @coords, "\&n,n,n+30,n+$rotate_nxt_snt";
-                    $rotate_nxt_snt += 10;
-                }
-            } else {
-                log_info "ref-arrows: Not found!\n" if $main::macroDebug;
-                push @coords, "&n,n,n+$rotate_dfr_doc,n-25";
-                $rotate_dfr_doc += 10;
-            }
-        }
-
-        push @tags, $arrow_type;
-        push @colors, ( $arrow_color{$arrow_type} || log_fatal "Unknown color for arrow type $arrow_type" );
-        push @dash, '5,3';
-    }
-
-    $line->{-coords} ||= 'n,n,p,p';
-
-    if (@coords) {
-        _AddStyle(
-            $styles, 'Line',
-            -coords => ( $line->{-coords} || '' ) . join( "", @coords ),
-            -arrow      => ( $line->{-arrow}      || '' ) . ( '&last' x @coords ),
-            -arrowshape => ( $line->{-arrowshape} || '' ) . ( '&16,18,3' x @coords ),
-            -dash => ( $line->{-dash} || '' ) . join( '&', '', @dash ),
-            -width => ( $line->{-width} || '' ) . ( '&1' x @coords ),
-            -fill => ( $line->{-fill} || '' ) . join( "&", "", @colors ),
-            -tag  => ( $line->{-tag}  || '' ) . join( "&", "", @tags ),
-            -smooth => ( $line->{-smooth} || '' ) . ( '&1' x @coords )
-        );
-    }
     return;
 }
 
@@ -531,24 +446,6 @@ L<Treex::PML::Document> structure which was provided by TrEd.
 =item node_style_hook
 
 =item conf_dialog
-
-=back
-
-=head2 Methods for defining node's style
-
-=over 4
-
-=item bundle_root_style
-
-=item node_style
-
-=item nnode_style
-
-=item anode_style
-
-=item tnode_style
-
-=item pnode_style
 
 =back
 

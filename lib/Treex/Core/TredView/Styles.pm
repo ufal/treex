@@ -2,11 +2,32 @@ package Treex::Core::TredView::Styles;
 
 use Moose;
 use Treex::Core::Log;
+use Treex::Core::TredView::Colors;
+
+has '_treex_doc' => (
+    is => 'ro',
+    isa => 'Treex::Core::Document',
+    weak_ref => 1,
+    required => 1
+);
+has '_colors' => (
+    is => 'ro',
+    isa => 'Treex::Core::TredView::Colors',
+    default => sub { Treex::Core::TredView::Colors->new() }
+);
+
+sub _is_coord {
+    my ($self, $node) = @_;
+    return 0 if $node->get_layer ne 't';
+    return $node->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/;
+}
 
 sub bundle_style {
+    my $self = shift;
     my $style = '#{nodeXSkip:10}#{nodeYSkip:5}#{lineSpacing:0.9}#{balance:0}';
-    $style .= '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:9}#{Node-currentheight:9}';
-    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.TredMacro::CustomColor('current').'}';
+    $style .= '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:10}#{Node-currentheight:10}';
+    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.$self->_colors->get('current').'}';
+    $style .= '#{Line-fill:'.$self->_colors->get('edge').'}#{Line-width:2}';
 
     return $style;
 }
@@ -34,20 +55,21 @@ sub node_style {
 }
 
 sub _anode_style {
-    return "#{Oval-fill:#f66}";
+    my ($self, $node) = @_;
+    return '#{Oval-fill:'.$self->_colors->get('anode').'}';
 }
 
 sub _tnode_style {
     my ( $self, $node ) = @_;
 
-    my $is_coord = sub { my $n = shift; return $n->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/ };
-    
-    my $style = '#{Oval-fill:#48f}';
+    my $style = '#{Oval-fill:'.$self->_colors->get('tnode').'}';
     return $style if $node->is_root;
     
     $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
     
-    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=#ddd;width=2;dash=_ }';
+    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline='.$self->_colors->get('coord').';width=1;dash=_ }';
+    $coord_circle .= '#{Line-arrow:&}#{Line-arrowshape:&}#{Line-dash:&}';
+    $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:'.$self->_colors->get('tnode_coord').'}';
     # For coordination roots
     my $k1 = '20 / sqrt((xp-xn)**2 + (yp-yn)**2)';
     my $x1 = 'xn-(xn-xp)*'.$k1;
@@ -60,20 +82,23 @@ sub _tnode_style {
     if (($node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
         (not $node->is_root and $node->parent->is_root)) {
         $style .= '#{Line-width:1}#{Line-dash:2,4}';
-    } elsif ($node->{is_member}) {
-        if ($is_coord->($node) and $is_coord->($node->parent)) {
+    }
+    if ($node->{is_member}) {
+        if ($self->_is_coord($node) and $self->_is_coord($node->parent)) {
             $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}".$coord_circle;
-            $style .= '#{Line-width:0&1}#{Line-fill:white&#6f11ea}';
-        } elsif (not $node->is_root and $is_coord->($node->parent)) {
-            $style .= "#{Line-coords:n,n,$x2,$y2}";
+            $style .= '#{Line-width:0&1}#{Line-fill:white&'.$self->_colors->get('coord').'}';
+        } elsif (not $node->is_root and $self->_is_coord($node->parent)) {
+            $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-width:1}";
+            $style .= '#{Line-fill:'.$self->_colors->get('coord').'}';
         } else {
-            $style .= '#{Line-fill:'.TredMacro::CustomColor('error').'}';
+            $style .= '#{Line-fill:'.$self->_colors->get('error').'}';
         }
-    } elsif (not $node->is_root and $is_coord->($node->parent)) {
-        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:#6f11ea}#{Line-width:1}";
-    } elsif ($is_coord->($node)) {
+    } elsif (not $node->is_root and not $node->parent->is_root and $self->_is_coord($node->parent)) {
+        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:".$self->_colors->get('coord_mod').'}';
+    } elsif ($self->_is_coord($node)) {
         $style .= $coord_circle."#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
-        $style .= '#{Line-width:0&2}#{Line-fill:white&#bebebe}';
+        $style .= '#{Line-width:0&1}#{Line-fill:white&'.$self->_colors->get('coord').'}';
+        $style .= '#{Line-dash:&2,4}' if $node->parent->is_root;
     } else {
         $style .= '';
     }
@@ -82,7 +107,8 @@ sub _tnode_style {
 }
 
 sub _nnode_style {
-    return "#{Oval-fill:yellow}";
+    my ($self, $node) = @_;
+    return '#{Oval-fill:'.$self->_colors->get('nnode').'}';
 }
 
 sub _pnode_style {
@@ -91,8 +117,8 @@ sub _pnode_style {
     my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
     
     my $style = '#{Line-coords:n,n,n,p,p,p}';
-    $style .= '#{CurrentTextBox-fill:red}#{nodeXSkip:4}#{nodeYSkip:0}';
-    $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}#{NodeLabel-skipempty:1}';
+    $style .= '#{nodeXSkip:4}#{nodeYSkip:0}#{NodeLabel-skipempty:1}';
+    $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}';
 
     if ($terminal) {
         my $shift = $node->root->{_tree_depth} - $node->{_depth};
@@ -104,15 +130,96 @@ sub _pnode_style {
     }
     
     if (not $terminal) {
-        $style .= '#{Oval-fill:'.($node->{is_head} ? 'lightgreen' : 'lightyellow').'}';
-        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:red}';
+        $style .= '#{Oval-fill:'.($node->{is_head} ? $self->_colors->get('nonterminal_head') : $self->_colors->get('nonterminal')).'}';
+        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:'.$self->_colors->get('current').'}';
         $style .= '#{CurrentOval-width:2}#{Node-surroundtext:1}#{NodeLabel-valign:center}';
     } else {
-        $style .= '#{CurrentOval-fill:red}#{Line-dash:.}';
-        $style .= '#{Oval-fill:'.($node->{tag} eq '-NONE-' ? 'gray' : '#ff6').'}';
+        $style .= '#{Line-dash:.}';
+        $style .= '#{Oval-fill:'.($node->{tag} eq '-NONE-' ? $self->_colors->get('trace') : $self->_colors->get('terminal')).'}';
     }
     
     return $style;
+}
+
+# based on DrawCorefArrows from config/TectoMT_TredMacros.mak, simplified
+# ignoring special values ex and segm
+sub draw_arrows {
+    my ( $self, $node, $styles, $line, $target_ids, $arrow_types ) = @_;
+    my ( @coords, @colors, @dash, @tags );
+    my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
+
+    foreach my $target_id (@$target_ids) {
+        my $arrow_type = shift @$arrow_types;
+
+        my $target_node = $self->_treex_doc->get_node_by_id($target_id);
+
+        if ( $node->get_bundle eq $target_node->get_bundle ) { # same sentence
+
+            my $T = "[?\$node->{id} eq '$target_id'?]";
+            my $X = "(x$T-xn)";
+            my $Y = "(y$T-yn)";
+            my $D = "sqrt($X**2+$Y**2)";
+            my $BX = 'n';
+            my $BY = 'n';
+            my $MX = "((x$T+xn)/2 - $Y*(25/$D+0.12))";
+            my $MY = "((y$T+yn)/2 + $X*(25/$D+0.12))";
+            my $EX = "x$T";
+            my $EY = "y$T";
+            my $K1 = "20 / sqrt(($MX-xn)**2 + ($MY-yn)**2)";
+            my $K2 = "20 / sqrt((x$T-$MX)**2 + (y$T-$MY)**2)";
+            
+            if ($self->_is_coord($node)) {
+                $BX = "xn-(xn-$MX)*$K1";
+                $BY = "yn-(yn-$MY)*$K1";
+            }
+            if ($self->_is_coord($target_node)) {
+                $EX = "x$T+($MX-x$T)*$K2";
+                $EY = "y$T+($MY-y$T)*$K2";
+            }
+            
+            push @coords, "$BX,$BY,$MX,$MY,$EX,$EY";
+        } else { # should be always the same document, if it exists at all
+
+            my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
+            $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
+            if ( $orientation =~ /left|right/ ) {
+                if ( $orientation eq 'left' ) {
+                    log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
+                    push @coords, "n,n,n-30,n+$rotate_prv_snt";
+                    $rotate_prv_snt += 10;
+                } else { #right
+                    log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
+                    push @coords, "n,n,n+30,n+$rotate_nxt_snt";
+                    $rotate_nxt_snt += 10;
+                }
+            } else {
+                log_info "ref-arrows: Not found!\n" if $main::macroDebug;
+                push @coords, "n,n,n+$rotate_dfr_doc,n-25";
+                $rotate_dfr_doc += 10;
+            }
+        }
+
+        push @tags, $arrow_type;
+        push @colors, ( $self->_colors->get($arrow_type) );
+        push @dash, ($arrow_type eq 'alignment' ? '5,3' : '');
+    }
+
+    $line->{-coords} ||= 'n,n,p,p';
+
+    if (@coords) {
+        TredMacro::AddStyle(
+            $styles, 'Line',
+            -coords => ( $line->{-coords} || '' ) .'&'. join( '&', @coords ),
+            -arrow      => ( $line->{-arrow} || '' ) . ( '&last' x @coords ),
+            -arrowshape => ( $line->{-arrowshape} || '' ) . ( '&16,18,3' x @coords ),
+            -dash => ( $line->{-dash} || '' ) .'&'. join( '&', @dash ),
+            -width => ( $line->{-width} || '' ) . ( '&1' x @coords ),
+            -fill => ( $line->{-fill} || '' ) .'&'. join( '&', @colors ),
+            -tag  => ( $line->{-tag}  || '' ) .'&'. join( '&', @tags ),
+            -smooth => ( $line->{-smooth} || '' ) . ( '&1' x @coords )
+        );
+    }
+    return;
 }
 
 
@@ -137,6 +244,8 @@ This packages provides styling for the trees displayed in Tred.
 =item bundle_style
 
 =item node_style
+
+=item draw_arrows
 
 =back
 
