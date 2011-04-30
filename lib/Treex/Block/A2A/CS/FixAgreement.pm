@@ -152,9 +152,12 @@ sub process_zone {
             }
             if ($doCorrect) {
                 logfix1($node, "pres-cont");
-                $dep->set_form('');
-                $dep->set_no_space_after(1);
-                logfix2($node);
+                my $parent = $dep->get_parent;
+                foreach my $child ($dep->get_children) {
+                    $child->set_parent($parent);
+                }
+                $dep->remove;
+                logfix2(($parent->get_children)[0]); #makes at least a little sense
             }
         }
     }
@@ -165,12 +168,15 @@ sub process_zone {
 my $logfixmsg = '';
 my $logfixold = '';
 my $logfixnew = '';
+my $logfixbundle = undef;
 
 sub logfix1 {
     my $node = shift;
     my $mess = shift;
     my ($dep, $gov, $d, $g) = get_pair($node);
+    
     $logfixmsg = $mess;
+    $logfixbundle = $node->get_bundle;
     
     #original words pair
     if ($gov->ord < $dep->ord) {
@@ -186,26 +192,29 @@ sub logfix1 {
 
 sub logfix2 {
     my $node = shift;
-    my ($dep, $gov, $d, $g) = get_pair($node);
-    
-    #new words pair
-    if ($gov->ord < $dep->ord) {
-    	$logfixnew = $gov->{form};
-    	$logfixnew .= " ";
-    	$logfixnew .= $dep->{form};
+    if ($node) {
+        my ($dep, $gov, $d, $g) = get_pair($node);
+        #new words pair
+        if ($gov->ord < $dep->ord) {
+        	$logfixnew = $gov->{form};
+        	$logfixnew .= " ";
+        	$logfixnew .= $dep->{form};
+        } else {
+        	$logfixnew = $dep->{form};
+        	$logfixnew .= " ";
+        	$logfixnew .= $gov->{form};
+    	}
     } else {
-    	$logfixnew = $dep->{form};
-    	$logfixnew .= " ";
-    	$logfixnew .= $gov->{form};
-	}
+    	$logfixnew = '(removal)';
+    }
     #output
     if ($logfixold ne $logfixnew) {
-        if ($node->get_bundle->get_zone( 'cs', 'FIXLOG' )) {
-            my $sentence = $node->get_bundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . " {$logfixmsg: $logfixold -> $logfixnew}";
-            $node->get_bundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
+        if ($logfixbundle->get_zone( 'cs', 'FIXLOG' )) {
+            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . " {$logfixmsg: $logfixold -> $logfixnew}";
+            $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         } else {
             my $sentence = "{$logfixmsg: $logfixold -> $logfixnew}";
-            $node->get_bundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
+            $logfixbundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
     }
 }
