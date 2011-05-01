@@ -153,7 +153,7 @@ sub process_zone {
             if ($doCorrect) {
                 #log1
                 logfix1($node, "pres-cont");
-                #set gov's attribute to dep's attribute (preserve negation)
+                #set gov's tag to dep's tag (preserve negation)
                 my $negation;
                 if( substr ($g->{tag}, 10, 1) eq 'N' or substr ($d->{tag}, 10, 1) eq 'N' ) {
                     $negation = 'N';
