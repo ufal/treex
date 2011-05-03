@@ -66,7 +66,9 @@
       </member>
 
       <!-- tentative -->
-      <member name="align"><cdata format="PMLREF"/></member>  
+      <member name="align"><cdata format="PMLREF"/></member>
+      <member name="chunks"><list ordered="0"><cdata format="any"/></list>
+      </member>  
 
     </structure>
   </type>
