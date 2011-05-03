@@ -39,7 +39,7 @@ sub process_atree {
     my ( $last_form, $last_r_form, $last_r_ord ) = ( '<S>', '<S>', 0 );
 
     foreach my $node (@nodes) {
-        my $r_node = $node->get_r_attr('align');
+        my $r_node = $node->get_deref_attr('align');
         my ( $r_form, $r_ord ) = $r_node ? ( $r_node->form, $r_node->ord ) : ( '', -2 );
         my $form = $node->form;
 

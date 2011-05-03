@@ -124,53 +124,6 @@ sub set_deref_attr {
     return $self->set_attr( $attr_name, $attr_value );
 }
 
-##-- begin proposal
-# Example usage:
-# Treex::Core::Node::T methods get_lex_anode and get_aux_anodes could use:
-# my $a_lex = $t_node->get_r_attr('a/lex.rf'); # returns the node or undef
-# my @a_aux = $t_node->get_r_attr('a/aux.rf'); # returns the nodes or ()
-sub get_r_attr {
-    my ( $self, $attr_name ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ != 2;
-    my $attr_value = $self->get_attr($attr_name);
-
-    return if !$attr_value;
-    my $document = $self->get_document();
-    if (wantarray) {
-        log_fatal("Attribute '$attr_name' is not a list, but get_r_attr() called in a list context.")
-            if ref($attr_value) ne 'Treex::PML::List';
-        return map { $document->get_node_by_id($_) } @{$attr_value};
-    }
-
-    log_fatal("Attribute $attr_name is a list, but get_r_attr() not called in a list context.")
-        if ref($attr_value) eq 'Treex::PML::List';
-    return $document->get_node_by_id($attr_value);
-}
-
-# Example usage:
-# $t_node->set_r_attr('a/lex.rf', $a_lex);
-# $t_node->set_r_attr('a/aux.rf', @a_aux);
-sub set_r_attr {
-    my ( $self, $attr_name, @attr_values ) = @_;
-    log_fatal('Incorrect number of arguments') if @_ < 3;
-    my $fs = $self;
-
-    # TODO $fs->type nefunguje - asi protoze se v konstruktorech nenastavuje typ
-    if ( $fs->type($attr_name) eq 'Treex::PML::List' ) {
-        my @list = map { $_->id } @attr_values;
-
-        # TODO: overriden Node::N::set_attr is bypassed by this call
-        return $fs->set_attr( $attr_name, Treex::PML::List->new(@list) );
-    }
-    log_fatal("Attribute '$attr_name' is not a list, but set_r_attr() called with @attr_values values.")
-        if @attr_values > 1;
-
-    # TODO: overriden Node::N::set_attr is bypassed by this call
-    return $fs->set_attr( $attr_name, $attr_values[0]->id );
-}
-
-# ---------------------
-
 sub get_bundle {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
@@ -707,7 +660,55 @@ __PACKAGE__->meta->make_immutable;
 
 __END__
 
-=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value get_r_attr set_r_attr
+##-- begin proposal
+# Example usage:
+# Treex::Core::Node::T methods get_lex_anode and get_aux_anodes could use:
+# my $a_lex = $t_node->get_r_attr('a/lex.rf'); # returns the node or undef
+# my @a_aux = $t_node->get_r_attr('a/aux.rf'); # returns the nodes or ()
+sub get_r_attr {
+    my ( $self, $attr_name ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $attr_value = $self->get_attr($attr_name);
+
+    return if !$attr_value;
+    my $document = $self->get_document();
+    if (wantarray) {
+        log_fatal("Attribute '$attr_name' is not a list, but get_r_attr() called in a list context.")
+            if ref($attr_value) ne 'Treex::PML::List';
+        return map { $document->get_node_by_id($_) } @{$attr_value};
+    }
+
+    log_fatal("Attribute $attr_name is a list, but get_r_attr() not called in a list context.")
+        if ref($attr_value) eq 'Treex::PML::List';
+    return $document->get_node_by_id($attr_value);
+}
+
+# Example usage:
+# $t_node->set_r_attr('a/lex.rf', $a_lex);
+# $t_node->set_r_attr('a/aux.rf', @a_aux);
+sub set_r_attr {
+    my ( $self, $attr_name, @attr_values ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ < 3;
+    my $fs = $self;
+
+    # TODO $fs->type nefunguje - asi protoze se v konstruktorech nenastavuje typ
+    if ( $fs->type($attr_name) eq 'Treex::PML::List' ) {
+        my @list = map { $_->id } @attr_values;
+
+        # TODO: overriden Node::N::set_attr is bypassed by this call
+        return $fs->set_attr( $attr_name, Treex::PML::List->new(@list) );
+    }
+    log_fatal("Attribute '$attr_name' is not a list, but set_r_attr() called with @attr_values values.")
+        if @attr_values > 1;
+
+    # TODO: overriden Node::N::set_attr is bypassed by this call
+    return $fs->set_attr( $attr_name, $attr_values[0]->id );
+}
+
+# ---------------------
+
+
+=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value
 
 
 =encoding utf-8
