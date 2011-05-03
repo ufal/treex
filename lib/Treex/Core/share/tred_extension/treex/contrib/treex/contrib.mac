@@ -58,6 +58,10 @@ sub get_value_line_hook {
     return $tredview->get_value_line_hook(@_);
 }
 
+sub value_line_doubleclick_hook {
+    return $tredview->value_line_doubleclick_hook(@_);
+}
+
 sub node_style_hook {
     return $tredview->node_style_hook(@_);
 }

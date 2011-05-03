@@ -153,7 +153,76 @@ sub get_value_line_hook {
     return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
-    return join "\n", map { "[" . $_->get_label . "] " . $_->get_attr('sentence') } grep { defined $_->get_attr('sentence') } $bundle->get_all_zones;
+
+    my @out = ();
+    my @t_trees = ();
+    
+    for my $zone ($bundle->get_all_zones) {
+        for my $tree ($zone->get_all_trees) {
+            push @t_trees, $tree if $tree->get_layer eq 't';
+        }
+    }
+
+    for my $t_tree (@t_trees) {
+        push @out, ( ['['.$t_tree->get_zone->get_label.']', 'label'], [' ', 'space'] );
+        
+        my $a_tree = $bundle->get_tree($t_tree->language, 'a', $t_tree->selector);
+
+        my %refs = ();
+        for my $node ($t_tree->get_descendants) {
+            for my $aux (TredMacro::ListV($node->attr('a/aux.rf'))) {
+                push @{$refs{$aux}}, $node;
+            }
+            push @{$refs{$node->attr('a/lex.rf')}}, $node if $node->attr('a/lex.rf');
+        }
+
+        my @sent = ();
+        my @a_nodes = $a_tree->get_descendants( { ordered => 1 } );
+
+        for my $node (@a_nodes) {
+            my $id = $node->get_attr('id');
+            push @{$refs{$id}}, $node;
+            if ($node->attr('p/terminal.rf')) {
+                my $p_node = $self->treex_doc->get_node_by_id($node->attr('p/terminal.rf'));
+                push @{$refs{$id}}, $p_node;
+                while ($p_node->parent) {
+                    $p_node = $p_node->parent;
+                    push @{$refs{$id}}, $p_node;
+                }
+            }
+        }
+
+        for (my $i = 0; $i <= $#a_nodes; $i++) {
+            push @out, [ $a_nodes[$i]->get_attr('form'), @{$refs{$a_nodes[$i]->get_attr('id')} || []}, 'anode:'.$a_nodes[$i]->get_attr('id') ];
+            unless ($a_nodes[$i]->get_attr('no_space_after')) {
+                push @out, [' ', 'space'];
+            }
+        }
+
+        push @out, ["\n", 'newline'];
+    }
+
+    return \@out;
+}
+
+sub value_line_doubleclick_hook {
+    my ( $self, @tags ) = @_;
+    my %tags;
+    @tags{@tags} = 1;
+
+    my $bundle = $TredMacro::root;
+    my @trees = sort {
+        my $num = sub { my $x = shift; return $x eq 't' ? 1 : ( $x eq 'a' ? 2 : ( $x eq 'p' ? 3 : 4 ) ) };
+        $num->($a->get_layer) <=> $num->($b->get_layer);
+    } $bundle->get_all_trees;
+
+    for my $tree (@trees) {
+        for my $node ($tree->get_descendants) {
+            return $node if exists $tags{"$node"};
+        }
+    }
+
+    return 'stop';
 }
 
 # --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
@@ -442,6 +511,8 @@ L<Treex::PML::Document> structure which was provided by TrEd.
 =item get_nodelist_hook
 
 =item get_value_line_hook
+
+=item value_line_doubleclick_hook
 
 =item node_style_hook
 
