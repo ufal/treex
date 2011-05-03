@@ -211,13 +211,28 @@ sub value_line_doubleclick_hook {
     @tags{@tags} = 1;
 
     my $bundle = $TredMacro::root;
-    my @trees = sort {
-        my $num = sub { my $x = shift; return $x eq 't' ? 1 : ( $x eq 'a' ? 2 : ( $x eq 'p' ? 3 : 4 ) ) };
-        $num->($a->get_layer) <=> $num->($b->get_layer);
-    } $bundle->get_all_trees;
+    
+    my $layout = $self->tree_layout->get_layout;
+    my %ordering;
+    my $i = 0;
+    my $row = 0;
+    my $found = 1;
+
+    while ($found) {
+        $found = 0;
+        for (my $col = 0; $col < scalar @$layout; $col++) {
+            if ($layout->[$col]->[$row]) {
+                $ordering{$layout->[$col]->[$row]} = $i++;
+                $found = 1;
+            }
+        }
+        $row++;
+    }
+    my @trees = sort { $ordering{$self->tree_layout->get_tree_label($a)} <=> $ordering{$self->tree_layout->get_tree_label($b)} } $bundle->get_all_trees;
 
     for my $tree (@trees) {
         for my $node ($tree->get_descendants) {
+            next if $node->get_layer eq 'p' and $node->get_pml_type_name =~ m/nonterminal/;
             return $node if exists $tags{"$node"};
         }
     }
