@@ -183,6 +183,7 @@ sub construct_scenario_string {
     my ( $block_items, $multiline ) = @_;
     return join(
         $multiline ? "\n" : ' ',
+        map {s/Treex::Block:://;$_}
         map {
             $_->{block_name} . " " . join( " ", @{ $_->{block_parameters} } )
             } @$block_items
