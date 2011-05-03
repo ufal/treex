@@ -20,7 +20,8 @@ sub process_atree {
     # Get chunks
     my %chunks;
     foreach my $a_node (@a_nodes) {
-        foreach my $name ( @{ $a_node->get_attr('chunks') } ) {
+        my $anode_chunks_ref = $a_node->get_attr('chunks') or next;
+        foreach my $name (@$anode_chunks_ref) {
             push @{ $chunks{$name} }, $a_node;
         }
     }
@@ -35,8 +36,19 @@ sub process_atree {
         # There can be a nested chunk inside $chunk,
         # which is shorter and therefore already parsed.
         # We skip all the nodes of the nested chunk except for its root
-        # if it was left attached to the $a_root.
+        # which was left attached to the $a_root.
         my @ch_nodes = grep { $_->parent == $a_root } @$chunk;
+        
+        # If this is "parenthesis chunk" (enclosed in round brackets),
+        # leave the brackets aside to be hanged on the root of the chunk later.
+        # (Parsers would mostly guess this right, but not always.)        
+        my ( $lrb, $rrb ) = @ch_nodes[ 0, -1 ];
+        if ( $lrb->form eq '(' && $rrb->form eq ')' ) {
+            shift @ch_nodes;
+            pop @ch_nodes;
+        } else {
+            $lrb = undef;
+        }
 
         # Here comes the very parsing.
         # Hopefully, the chunk has got just one root, but rather check it.
@@ -46,11 +58,9 @@ sub process_atree {
         }
 
         # If this is "parenthesis chunk" (enclosed in round brackets)
-        my ( $lrb, $rrb ) = @ch_nodes[ 0, -1 ];
-        if ( $lrb->form eq '(' && $rrb->form eq ')' ) {
+        if ($lrb) {
 
-            # Try hard to hang both of the parentheses on the root of the chunk.
-            # (Parser would mostly guess this right, but not always.)
+            # Hang both of the brackets on the root of the chunk.
             foreach my $bracket ( $lrb, $rrb ) {
                 $bracket->set_parent($ch_root);
             }
