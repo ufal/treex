@@ -63,12 +63,20 @@ sub process_atree {
             # Hang both of the brackets on the root of the chunk.
             foreach my $bracket ( $lrb, $rrb ) {
                 $bracket->set_parent($ch_root);
+                $self->label_parenthesis_token($bracket);
             }
 
             # We can guess the parent of this chunk (usually the previous word)
             $ch_root->set_parent( $lrb->get_prev_node || $rrb->get_next_node || $a_root );
         }
     }
+    return;
+}
+
+sub label_parenthesis_token {
+    my ($self, $anode) = @_;
+    $anode->set_conll_deprel('P');
+    $anode->set_afun('AuxG');
     return;
 }
 
@@ -93,6 +101,19 @@ will be parsed into its own subtree.
 
 PARAMETERS:
 reparse - process only bundles where the root node has the attribute C<reparse> set 
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item label_parenthesis_token
+
+Set the edge label of a parenthesis (round bracket) token.
+This implementation sets C<conll_deprel> attribute to I<P>
+and C<afun> to I<AuxG>,
+but the method can be overriden if needed to set.
 
 =back
 
