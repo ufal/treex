@@ -83,8 +83,15 @@ subtype 'Message'                                                       #nonempt
     => where { $_ ne '' }
 => message {"Message must be nonempty"};
 
+#preparation for possible future constraints
 subtype 'Id'
-    => as 'Str';                                                        #preparation for possible future constraints
+    => as 'Str';
+
+# TODO: Should this be named ZoneCode or ZoneLabel?
+subtype 'ZoneCode'
+    => as 'Str'
+    => where { my ( $l, $s ) = split /_/, $_; is_lang_code($l) && ( !defined $s || $s =~ /^[a-z\d]*$/i ) }
+=> message {'ZoneCode must be LangCode or LangCode_Selector, e.g. "en_src"'};
 
 # ISO 639-1 language code with some extensions from ISO 639-2
 use Locale::Language;
