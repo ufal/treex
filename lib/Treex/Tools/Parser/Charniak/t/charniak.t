@@ -2,20 +2,19 @@
 
 use strict;
 use warnings;
-
 use Treex::Tools::Parser::Charniak::Charniak;
 
 use Test::More tests => 8;
 
 my $parser = Treex::Tools::Parser::Charniak::Charniak->new();
 
-isa_ok($parser,'Parser::Charniak::Charniak','parser instantiated');
+isa_ok($parser,'Treex::Tools::Parser::Charniak::Charniak','parser instantiated');
 
 my @tokens = qw(John loves Mary);
 
 my $tree_root = $parser->parse(@tokens);
 
-isa_ok ($tree_root, 'Parser::Charniak::Node', 'tree root is Parser::Charniak::Node');
+isa_ok ($tree_root, 'Treex::Tools::Parser::Charniak::Node', 'tree root is Parser::Charniak::Node');
 
 cmp_ok($tree_root->term,'eq','S1', 'tree root is S1');
 

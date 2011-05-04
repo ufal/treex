@@ -7,6 +7,7 @@ use ProcessUtils;
 use IPC::Open2;
 use IPC::Open3;
 use IO::Handle;
+use Treex::Core::Common;
 #to be changed
 
 my $tmp_input = 'test';
@@ -71,7 +72,7 @@ sub _make_phrase_structure {
     my ($parser_output) = @_;
 	
  
- print $parser_output;
+ #print $parser_output;
  my @tree = ();
     my @final_tree=();
 
