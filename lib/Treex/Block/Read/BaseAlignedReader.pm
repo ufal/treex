@@ -18,11 +18,11 @@ has file_stem => (
 
 # private attributes
 has _filenames => (
-    isa           => 'HashRef[LangCode]',
+    isa           => 'HashRef[Str]',
     is            => 'ro',
     init_arg      => undef,
     default       => sub { {} },
-    documentation => 'mapping language->filenames to be loaded;'
+    documentation => 'mapping zone_label->filenames to be loaded;'
         . ' automatically initialized from constructor arguments',
 );
 
