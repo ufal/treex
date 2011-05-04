@@ -99,7 +99,12 @@ sub set_labels {
     
     my $buf = $node->{_precomputed_buffer};
     for (my $i = 0; $i < 3; $i++) {
-        $node->{_precomputed_labels}->[$i] = $buf->[$i]->[ $self->_get_label_variant($node, $i) ];
+        my $label_variant = $self->_get_label_variant($node, $i);
+        
+        # TODO: Why is this if needed?
+        if (defined $label_variant) {
+            $node->{_precomputed_labels}->[$i] = $buf->[$i]->[ $label_variant ];
+        }
     }
 }
 
