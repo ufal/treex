@@ -7,7 +7,7 @@ use warnings;
 use base qw(TectoMT::Block);
 use Treex::Tools::Parser::Charniak::Charniak;
 use Treex::Tools::Parser::Charniak::Node;
-use TectoMT::Node::P;
+use Treex::Core::Node::P;
 use Clone;
 
 
