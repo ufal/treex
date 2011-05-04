@@ -13,9 +13,7 @@ my $BASE_DISTANCE_LIMIT = 8;
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     return if !$tnode->is_coap_root();
-
-    # !!! potreba testovat i is_member, ten je ale zatim v datech blbe
-    my @tmembers = $tnode->get_children();
+    my @tmembers = grep {$_->is_member} $tnode->get_children();
     my @auxp_anodes =
         sort { $a->ord <=> $b->ord }
         grep { ( $_->afun || '' ) eq 'AuxP' }
