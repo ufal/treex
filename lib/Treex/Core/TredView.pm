@@ -343,7 +343,7 @@ sub precompute_visualization {
         }
     }
 
-    for my $layer ('p', 'a', 't') {
+    for my $layer ('p', 'a', 't', 'n') {
         for (my $i = 0; $i < 3; $i++) {
             $self->labels->set_limit($layer, $i, $limits{$layer}->[$i]);
         }
