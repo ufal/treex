@@ -719,7 +719,7 @@ sub treex {
     if ( ref($arguments) eq 'ARRAY' ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args;
-        $args{command} = join " ", @$arguments;
+        $args{command} = join " ", @$arguments; #TODO should preserve argument segmentation
         $args{argv} = $arguments;
         if ( $idx != -1 ) {
             $args{filenames} = [ splice @$arguments, $idx + 1 ]
