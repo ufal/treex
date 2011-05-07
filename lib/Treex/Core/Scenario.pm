@@ -85,10 +85,10 @@ sub BUILD {
 sub load_scenario_file {
     my ($scenario_filename) = @_;
     log_info "Loading scenario description $scenario_filename";
-    my $scenario_string = read_file($scenario_filename, binmode=>':utf8', err_mode=>'quiet')
+    my $scenario_string = read_file( $scenario_filename, binmode => ':utf8', err_mode => 'quiet' )
         or log_fatal "Can't open scenario file $scenario_filename";
-    $scenario_string =~ s/\n/\n /g;
-    #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
+    $scenario_string =~ s/\n/\n /g;    # TODO Is this necessary? Or it was just side effect of code below (now commented)?
+                                       #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
     return $scenario_string;
 }
 
@@ -97,7 +97,9 @@ sub _escape {
     $string =~ s/ /%20/g;
     $string =~ s/#/%23/g;
     $string =~ s/=/%3d/g;
-    return $string;
+    $string =~ s/\n/%0a/g;
+    $string =~ s/\t/%09/g;
+    return $string;                    #TODO - escaping %
 }
 
 sub parse_scenario_string {
@@ -109,15 +111,15 @@ sub parse_scenario_string {
 
     # Preserve spaces inside quotes and backticks in block parameters
     # Quotes are deleted, whereas backticks are preserved.
+    # TODO ' nested in " and vice versa
     $scenario_string =~ s/="([^"]*)"/'='._escape($1)/eg;
     $scenario_string =~ s/='([^']*)'/'='._escape($1)/eg;
     $scenario_string =~ s/=(`[^`]*`)/'='._escape($1)/eg;
 
-    $scenario_string =~ s/#.*\n//g;    # delete comments ended by a newline
-    $scenario_string =~ s/#.+$//;      # and a comment on the last line
-    $scenario_string =~ s/\s+/ /g;
-    $scenario_string =~ s/^ //g;
-    $scenario_string =~ s/ $//g;
+    $scenario_string =~ s/#.+$//mg;    # delete comments ended by a newline or last line
+    $scenario_string =~ s/\s+/ /g;     # collapse whitespaces
+    $scenario_string =~ s/^ //g;       #      -- || --
+    $scenario_string =~ s/ $//g;       #      -- || --
 
     my @tokens = split / /, $scenario_string;
     my @block_items;
@@ -151,6 +153,8 @@ sub parse_scenario_string {
             $token =~ s/%22/"/g;
             $token =~ s/%27/'/g;
             $token =~ s/%3d/=/g;
+            $token =~ s/%0a/\n/g;
+            $token =~ s/%09/\t/g;
 
             if ( not @block_items ) {
                 log_fatal "Specification of block arguments before the first block name: $token\n";
@@ -163,6 +167,8 @@ sub parse_scenario_string {
             my $block_filename = $token;
             $block_filename =~ s/::/\//g;
             $block_filename .= '.pm';
+
+            # TODO what if block doesn't reside in this directory but separately?
             if ( Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
                 $token = "Treex::Block::$token";
             }
@@ -183,8 +189,8 @@ sub construct_scenario_string {
     my ( $block_items, $multiline ) = @_;
     return join(
         $multiline ? "\n" : ' ',
-        map {s/Treex::Block:://;$_}
-        map {
+        map { s/Treex::Block:://; $_ }
+            map {
             $_->{block_name} . " " . join( " ", @{ $_->{block_parameters} } )
             } @$block_items
     );

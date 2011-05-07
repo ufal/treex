@@ -307,12 +307,10 @@ sub _get_reader_name_for {
 sub _execute_locally {
     my ($self) = @_;
 
-    # Parameters can contain spaces that should be preserved
-    # TODO: Also newlines and other whitespaces should be preserved
-    # because Treex::Core::Scenario does $scenario_string =~ s/\s+/ /g;
+    # Parameters can contain whitespaces that should be preserved
     my $scen_str = join ' ',
         map {
-        if ( my ( $name, $value ) = /(\S+)=(.+ .+)$/ ) {
+        if ( my ( $name, $value ) = /(\S+)=(.+\s.+)$/ ) {
             $value =~ s/'/\\'/;
             qq($name='$value');
         }
@@ -556,7 +554,7 @@ sub _print_output_files {
 
                 #TODO: better implementation
                 # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
-                my ( undef, $level ) = /^(TMT|TREEX)-(DEBUG|INFO|WARN|FATAL)/;
+                my ($level) = /^TREEX-(DEBUG|INFO|WARN|FATAL)/;
                 $level ||= '';
                 next if $level =~ /^D/ && $report !~ /^[AD]/;
                 next if $level =~ /^I/ && $report !~ /^[ADI]/;
@@ -719,7 +717,7 @@ sub treex {
     if ( ref($arguments) eq 'ARRAY' ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args;
-        $args{command} = join " ", @$arguments; #TODO should preserve argument segmentation
+        $args{command} = join " ", @$arguments;
         $args{argv} = $arguments;
         if ( $idx != -1 ) {
             $args{filenames} = [ splice @$arguments, $idx + 1 ]
