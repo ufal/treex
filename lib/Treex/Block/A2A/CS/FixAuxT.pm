@@ -9,7 +9,7 @@ sub fix {
     my %en_counterpart = %$en_hash;
 
     if ($dep->{form} eq 'se' && $d->{tag} =~ /^P/) {
-        if ($g->{tag} =~ /^V/) {
+        if ($g->{tag} =~ /^V/ || $g->{tag} =~ /^AG/) {
             return;
         } #else: parent is not a verb => is an error
 	    #log1
