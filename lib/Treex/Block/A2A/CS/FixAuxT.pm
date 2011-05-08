@@ -8,10 +8,10 @@ sub fix {
     my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($dep->{form} eq 'se' && $d->{tag} =~ /^P/) {
-        if ($g->{tag} =~ /^V/ || $g->{tag} =~ /^AG/) {
-            return;
-        } #else: parent is not a verb => is an error
+    if ( ( $dep->{form} eq 'se' || $dep->{form} eq 'si' ) && $d->{tag} =~ /^P/) {
+       if ($g->{tag} =~ /^V/ || $g->{tag} =~ /^A[GC]/) {
+           return;
+       } #else: parent is not a verb => is an error
 	    #log1
 	    $self->logfix1($dep, "AuxT");
 	    #move children under parent
@@ -21,7 +21,7 @@ sub fix {
 	    }
 	    #remove alignment
     	if ($en_counterpart{$dep}) {
-    	   $en_counterpart{$dep}->set_attr( 'alignment', '' );
+    	   $en_counterpart{$dep}->set_attr( 'alignment', undef );
     	}
 	    #remove
 	    $dep->remove;

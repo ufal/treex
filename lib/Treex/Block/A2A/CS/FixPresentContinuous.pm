@@ -40,7 +40,7 @@ sub fix {
 	    }
 	    #remove alignment
     	if ($en_counterpart{$dep}) {
-    	   $en_counterpart{$dep}->set_attr( 'alignment', '' );
+    	   $en_counterpart{$dep}->set_attr( 'alignment', undef );
     	}
 	    #remove
 	    $dep->remove;
