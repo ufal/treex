@@ -169,7 +169,7 @@ sub parse_scenario_string {
             $block_filename .= '.pm';
 
             # TODO what if block doesn't reside in this directory but separately?
-            if ( Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
+            if ( -e Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
                 $token = "Treex::Block::$token";
             }
             else {
