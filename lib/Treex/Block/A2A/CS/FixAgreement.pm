@@ -76,13 +76,13 @@ sub logfix1 {
     if ($gov && $dep) {
         #original words pair
         if ($gov->ord < $dep->ord) {
-            $logfixold = $gov->{form};
+            $logfixold = $gov->form;
             $logfixold .= " ";
-            $logfixold .= $dep->{form};
+            $logfixold .= $dep->form;
         } else {
-        	$logfixold = $dep->{form};
+        	$logfixold = $dep->form;
         	$logfixold .= " ";
-        	$logfixold .= $gov->{form};
+        	$logfixold .= $gov->form;
         }
     } else {
         $logfixold = '(undefined node)';
@@ -95,13 +95,13 @@ sub logfix2 {
         my ($dep, $gov, $d, $g) = $self->get_pair($node);
         #new words pair
         if ($gov->ord < $dep->ord) {
-        	$logfixnew = $gov->{form};
+        	$logfixnew = $gov->form;
         	$logfixnew .= " ";
-        	$logfixnew .= $dep->{form};
+        	$logfixnew .= $dep->form;
         } else {
-        	$logfixnew = $dep->{form};
+        	$logfixnew = $dep->form;
         	$logfixnew .= " ";
-        	$logfixnew .= $gov->{form};
+        	$logfixnew .= $gov->form;
     	}
     } else {
     	$logfixnew = '(removal)';

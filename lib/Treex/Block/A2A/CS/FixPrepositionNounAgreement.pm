@@ -15,7 +15,7 @@ sub fix {
 	#and the $gov prep does not belong to this $dep at all
 	if ($en_counterpart{$dep}) {
 	    my ($enDep, $enGov, $enD, $enG) = $self->get_pair($en_counterpart{$dep});
-	    if ($enGov and $enDep and $enGov->{afun} eq 'AuxP') {
+	    if ($enGov and $enDep and $enGov->afun eq 'AuxP') {
 		$doCorrect = 1; #en_counterpart's parent is also a prep
 	    } else {
 		$doCorrect = 0; #en_counterpart's parent is not a prep

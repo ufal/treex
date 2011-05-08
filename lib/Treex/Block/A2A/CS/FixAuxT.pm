@@ -8,7 +8,7 @@ sub fix {
     my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( ( $dep->{form} eq 'se' || $dep->{form} eq 'si' ) && $d->{tag} =~ /^P/) {
+    if ( ( $dep->form eq 'se' || $dep->form eq 'si' ) && $d->{tag} =~ /^P/) {
        if ($g->{tag} =~ /^V/ || $g->{tag} =~ /^A[GC]/) {
            return;
        } #else: parent is not a verb => is an error

@@ -8,12 +8,12 @@ sub fix {
     my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($dep->{lemma} eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->{form} =~ /ing$/) {
+    if ($dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/) {
 	my $doCorrect;
 	if ($en_counterpart{$dep}) {
 	    my ($enDep, $enGov, $enD, $enG) = $self->get_pair($en_counterpart{$dep}
 		);
-	    if ($enGov and $enDep and $enGov->{form} =~ /ing$/) {
+	    if ($enGov and $enDep and $enGov->form =~ /ing$/) {
 		$doCorrect = 1;
 	    } else {
 		$doCorrect = 0;
