@@ -33,11 +33,16 @@ sub fix {
 	    }
 	    my $tag = substr ($d->{tag}, 0, 10) . $negation . substr ($d->{tag}, 11);
 	    $self->regenerate_node($gov, $tag);
-	    #move children under parent and remove
+	    #move children under parent
 	    my $parent = $dep->get_parent;
 	    foreach my $child ($dep->get_children) {
 		$child->set_parent($parent);
 	    }
+	    #remove alignment
+    	if ($en_counterpart{$dep}) {
+    	   $en_counterpart{$dep}->set_attr( 'alignment', '' );
+    	}
+	    #remove
 	    $dep->remove;
 	    #log2
 	    $self->logfix2(($parent->get_children)[0]); #makes at least a little sense
