@@ -8,7 +8,7 @@ sub fix {
     my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($gov->afun eq 'Pred' && $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && ( $d->{case} eq '1') && $g->{num} ne $d->{num}) {
+    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && ( $d->{case} eq '1') && $g->{num} ne $d->{num}) {
     my ($enDep, $enGov, $enD, $enG) = $self->get_pair($en_counterpart{$dep});
     if ($en_counterpart{$gov} && $enGov && $en_counterpart{$gov}->id ne $enGov->id) {
         return;
