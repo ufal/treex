@@ -132,7 +132,7 @@ sub load_arff {
     my $io;
 
     if (ref $arff_file ne 'IO'){
-        open($io, $arff_file);
+        open($io, "<:utf8", $arff_file);
     }
     else {
         $io = $arff_file;
@@ -155,7 +155,7 @@ sub load_arff {
         {
             $relation->{relation_name} = $1;
         }
-        elsif ( $current_line =~ /^\s*\@ATTRIBUTE\s+(\S*)\s+(\S*)/i )
+        elsif ( $current_line =~ /^\s*\@ATTRIBUTE\s+(\S*)\s+(\S.*)\s*$/i )
         {
             if ( !$relation->{attributes} ) {
                 $relation->{attributes} = [];
@@ -191,7 +191,7 @@ sub load_arff {
                 {
                     $cur_record->{ $$attributes[$i]->{"attribute_name"} } = trim( $data_parts[$i] );
                 }
-
+                
                 #log_msg("parts: ".$#data_parts);
                 $record_count++;
                 push @$records, $cur_record;
@@ -231,9 +231,9 @@ sub _parse_line {
 
     my ( $self, $line ) = @_;
     my @fields;
-    
+        
     $line .= ',';
-    while ($line =~ m/([^"'][^,]*|'[^']*(\\'[^'])*'|"[^"]*(\\"[^"])*"),/g){
+    while ($line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g){
         
         my $field = $1;
         
@@ -292,7 +292,7 @@ sub save_arff {
     }
 
     if (!ref($arff_file)){     
-        open($io, '>', $arff_file );
+        open($io, '>utf8', $arff_file );
     }
     else {
         $io = $arff_file;
