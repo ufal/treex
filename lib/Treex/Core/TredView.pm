@@ -154,14 +154,8 @@ sub get_value_line_hook {
 
     my $bundle = $self->pml_doc->tree($treeNo);
 
-    my @out = ();
-    my @t_trees = ();
-    
-    for my $zone ($bundle->get_all_zones) {
-        for my $tree ($zone->get_all_trees) {
-            push @t_trees, $tree if $tree->get_layer eq 't';
-        }
-    }
+    my @out = ();   
+    my @t_trees = map { $_->get_ttree() } grep {$_->has_ttree()} $bundle->get_all_zones();
 
     for my $t_tree (@t_trees) {
         push @out, ( ['['.$t_tree->get_zone->get_label.']', 'label'], [' ', 'space'] );
@@ -176,11 +170,10 @@ sub get_value_line_hook {
             push @{$refs{$node->attr('a/lex.rf')}}, $node if $node->attr('a/lex.rf');
         }
 
-        my @sent = ();
         my @a_nodes = $a_tree->get_descendants( { ordered => 1 } );
 
         for my $node (@a_nodes) {
-            my $id = $node->get_attr('id');
+            my $id = $node->id;
             push @{$refs{$id}}, $node;
             if ($node->attr('p/terminal.rf')) {
                 my $p_node = $self->treex_doc->get_node_by_id($node->attr('p/terminal.rf'));
@@ -193,8 +186,8 @@ sub get_value_line_hook {
         }
 
         for (my $i = 0; $i <= $#a_nodes; $i++) {
-            push @out, [ $a_nodes[$i]->get_attr('form'), @{$refs{$a_nodes[$i]->get_attr('id')} || []}, 'anode:'.$a_nodes[$i]->get_attr('id') ];
-            unless ($a_nodes[$i]->get_attr('no_space_after')) {
+            push @out, [ $a_nodes[$i]->form, @{$refs{$a_nodes[$i]->id} || []}, 'anode:'.$a_nodes[$i]->id ];
+            if (!$a_nodes[$i]->no_space_after) {
                 push @out, [' ', 'space'];
             }
         }
