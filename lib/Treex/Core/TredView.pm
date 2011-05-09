@@ -30,6 +30,13 @@ has '_styles' => (
     lazy    => 1
 );
 
+has fast_loading => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'Do the precomputation lazily for each bundle',
+);
+
 sub _build_labels {
     my $self = shift;
     return Treex::Core::TredView::Labels->new( _treex_doc => $self->treex_doc );
@@ -146,16 +153,22 @@ sub file_opened_hook {
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
 
-    foreach my $bundle ( $treex_doc->get_bundles() ) {
-        $self->precompute_tree_depths($bundle);
-        $self->precompute_tree_shifts($bundle);
-        $self->precompute_visualization($bundle);
+    # If we don't care about slow loading of the whole file,
+    # we can precompute all bundles now, so browsing through bundles
+    # will be a bit faster.
+    if ( !$self->fast_loading ) {
+        foreach my $bundle ( $treex_doc->get_bundles() ) {
+            $self->precompute_tree_depths($bundle);
+            $self->precompute_tree_shifts($bundle);
+            $self->precompute_visualization($bundle);
+            $bundle->{_precomputed} = 1;
+        }
     }
     return;
 }
 
 sub get_value_line_hook {
-    my ( $self, undef, $treeNo ) = @_;    # the unused argument stands for $fsfile
+    my ( $self, undef, $treeNo ) = @_;                 # the unused argument stands for $fsfile
     return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
@@ -423,7 +436,7 @@ sub pnode_hint {
 sub node_style_hook {
     my ( $self, $node, $styles ) = @_;
 
-    return if ref($node) eq 'Treex::Core::Bundle';
+    return $self->check_bundle_precomputation($node) if ref($node) eq 'Treex::Core::Bundle';
 
     my %line = TredMacro::GetStyles( $styles, 'Line' );
     my @target_ids;
@@ -466,14 +479,30 @@ sub node_style_hook {
     return;
 }
 
+sub check_bundle_precomputation {
+    my ( $self, $bundle ) = @_;
+    return if $bundle->{_precomputed};
+    $self->precompute_tree_depths($bundle);
+    $self->precompute_tree_shifts($bundle);
+    $self->precompute_visualization($bundle);
+    $bundle->{_precomputed} = 1;
+    return;
+}
+
 # ---- END OF PRECOMPUTING VISUALIZATION ------
 
 sub conf_dialog {
     my $self = shift;
     if ( $self->tree_layout->conf_dialog() ) {
         foreach my $bundle ( $self->treex_doc->get_bundles() ) {
-            $self->precompute_tree_shifts();
-            $self->precompute_visualization();
+            if ( !$self->fast_loading ) {
+                $self->precompute_tree_shifts($bundle);
+                $self->precompute_visualization($bundle);
+                $bundle->{_precomputed} = 1;
+            }
+            else {
+                $bundle->{_precomputed} = 0;
+            }
         }
     }
     return;
