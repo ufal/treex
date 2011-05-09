@@ -145,9 +145,12 @@ sub file_opened_hook {
     $self->pml_doc($pmldoc);
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
-    $self->precompute_tree_depths();
-    $self->precompute_tree_shifts();
-    $self->precompute_visualization();
+
+    foreach my $bundle ( $treex_doc->get_bundles() ) {
+        $self->precompute_tree_depths($bundle);
+        $self->precompute_tree_shifts($bundle);
+        $self->precompute_visualization($bundle);
+    }
     return;
 }
 
@@ -242,99 +245,93 @@ my @layers = qw(a t p n);
 
 # To be run only once when the file is opened. Tree depths never change.
 sub precompute_tree_depths {
-    my ($self) = @_;
-    foreach my $bundle ( $self->treex_doc->get_bundles ) {
-        foreach my $zone ( $bundle->get_all_zones ) {
-            foreach my $tree ( $zone->get_all_trees ) {
-                my $max_depth = 1;
-                my @front = ( 1, $tree );
+    my ( $self, $bundle ) = @_;
 
-                while (@front) {
-                    my $cur_depth = shift @front;
-                    my $node      = shift @front;
-                    $max_depth = $cur_depth if $cur_depth > $max_depth;
-                    for my $child ( $node->get_children ) {
-                        push @front, $cur_depth + 1, $child;
-                        $child->{_depth} = $cur_depth + 1 if $child->get_layer eq 'p';
-                    }
+    foreach my $zone ( $bundle->get_all_zones ) {
+        foreach my $tree ( $zone->get_all_trees ) {
+            my $max_depth = 1;
+            my @front = ( 1, $tree );
+
+            while (@front) {
+                my $cur_depth = shift @front;
+                my $node      = shift @front;
+                $max_depth = $cur_depth if $cur_depth > $max_depth;
+                for my $child ( $node->get_children ) {
+                    push @front, $cur_depth + 1, $child;
+                    $child->{_depth} = $cur_depth + 1 if $child->get_layer eq 'p';
                 }
-
-                $tree->{_tree_depth} = $max_depth;
             }
+
+            $tree->{_tree_depth} = $max_depth;
         }
     }
+    return;
 }
 
 # Has to be run whenever the tree layout changes.
 sub precompute_tree_shifts {
-    my ($self) = @_;
+    my ( $self, $bundle ) = @_;
 
-    foreach my $bundle ( $self->treex_doc->get_bundles ) {
-        my $layout = $self->tree_layout->get_layout($bundle);
-        my %forest = ();
+    my $layout = $self->tree_layout->get_layout($bundle);
+    my %forest = ();
 
-        foreach my $zone ( $bundle->get_all_zones ) {
-            foreach my $tree ( $zone->get_all_trees ) {
-                $forest{ $self->tree_layout->get_tree_label($tree) } = $tree;
-            }
-        }
-
-        my @trees     = ('foo');
-        my $row       = 0;
-        my $cur_shift = 0;
-        while (@trees) {
-            my $max_depth = 0;
-            @trees = ();
-            for ( my $col = 0; $col < scalar @$layout; $col++ ) {
-                if ( my $label = $layout->[$col][$row] ) {
-                    my $depth = $forest{$label}{_tree_depth};
-                    push @trees, $label;
-                    $max_depth = $depth if $depth > $max_depth;
-                    $forest{$label}{'_shift_right'} = $col;
-                }
-            }
-
-            for my $label (@trees) {
-                $forest{$label}{'_shift_down'} = $cur_shift;
-            }
-            $cur_shift += $max_depth;
-            $row++;
+    foreach my $zone ( $bundle->get_all_zones ) {
+        foreach my $tree ( $zone->get_all_trees ) {
+            $forest{ $self->tree_layout->get_tree_label($tree) } = $tree;
         }
     }
+
+    my @trees     = ('foo');
+    my $row       = 0;
+    my $cur_shift = 0;
+    while (@trees) {
+        my $max_depth = 0;
+        @trees = ();
+        for ( my $col = 0; $col < scalar @$layout; $col++ ) {
+            if ( my $label = $layout->[$col][$row] ) {
+                my $depth = $forest{$label}{_tree_depth};
+                push @trees, $label;
+                $max_depth = $depth if $depth > $max_depth;
+                $forest{$label}{'_shift_right'} = $col;
+            }
+        }
+
+        for my $label (@trees) {
+            $forest{$label}{'_shift_down'} = $cur_shift;
+        }
+        $cur_shift += $max_depth;
+        $row++;
+    }
+    return;
 }
 
 sub precompute_visualization {
-    my ($self) = @_;
-    my %limits;
+    my ( $self, $bundle ) = @_;
 
-    foreach my $bundle ( $self->treex_doc->get_bundles ) {
+    $bundle->{_precomputed_root_style} = $self->_styles->bundle_style($bundle);
+    $bundle->{_precomputed_node_style} = '#{Node-hide:1}';
 
-        $bundle->{_precomputed_root_style} = $self->_styles->bundle_style($bundle);
-        $bundle->{_precomputed_node_style} = '#{Node-hide:1}';
+    foreach my $zone ( $bundle->get_all_zones ) {
+        foreach my $layer (@layers) {
+            if ( $zone->has_tree($layer) ) {
+                my $root   = $zone->get_tree($layer);
+                my $limits = $self->labels->get_limits($layer);
 
-        foreach my $zone ( $bundle->get_all_zones ) {
+                $root->{_precomputed_labels}     = $self->labels->root_labels($root);
+                $root->{_precomputed_node_style} = $self->_styles->node_style($root);
+                $root->{_precomputed_hint}       = '';
 
-            foreach my $layer (@layers) {
-                if ( $zone->has_tree($layer) ) {
-                    my $root = $zone->get_tree($layer);
-                    my $limits = $self->labels->get_limits($layer);
+                foreach my $node ( $root->get_descendants ) {
+                    $node->{_precomputed_node_style} = $self->_styles->node_style($node);
+                    $node->{_precomputed_hint}       = $self->node_hint( $node, $layer );
+                    $node->{_precomputed_buffer}     = $self->labels->node_labels( $node, $layer );
+                    $self->labels->set_labels($node);
 
-                    $root->{_precomputed_labels}     = $self->labels->root_labels($root);
-                    $root->{_precomputed_node_style} = $self->_styles->node_style($root);
-                    $root->{_precomputed_hint}       = '';
-
-                    foreach my $node ( $root->get_descendants ) {
-                        $node->{_precomputed_node_style} = $self->_styles->node_style($node);
-                        $node->{_precomputed_hint}       = $self->node_hint( $node, $layer );
-                        $node->{_precomputed_buffer}     = $self->labels->node_labels( $node, $layer );
-                        $self->labels->set_labels($node);
-
-                        if (!$limits) {
-                            for ( my $i = 0; $i < 3; $i++ ) {
-                                $self->labels->set_limit( $layer, $i, scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1);
-                            }
-                            $limits = 1;
+                    if ( !$limits ) {
+                        for ( my $i = 0; $i < 3; $i++ ) {
+                            $self->labels->set_limit( $layer, $i, scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1 );
                         }
+                        $limits = 1;
                     }
                 }
             }
@@ -456,7 +453,8 @@ sub node_style_hook {
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
 
     my $xadj = $node->root->{'_shift_right'} * 50;
-    if (ref($node) =~ m/^Treex::Core::Node/
+    if (ref($node)
+        =~ m/^Treex::Core::Node/
         and $node->get_layer eq 'p'
         and not $node->is_root and scalar $node->parent->children == 1
         )
@@ -473,9 +471,12 @@ sub node_style_hook {
 sub conf_dialog {
     my $self = shift;
     if ( $self->tree_layout->conf_dialog() ) {
-        $self->precompute_tree_shifts();
-        $self->precompute_visualization();
+        foreach my $bundle ( $self->treex_doc->get_bundles() ) {
+            $self->precompute_tree_shifts();
+            $self->precompute_visualization();
+        }
     }
+    return;
 }
 
 1;
