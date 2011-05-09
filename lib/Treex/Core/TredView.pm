@@ -188,9 +188,9 @@ sub get_value_line_hook {
             }
         }
 
-        for ( my $i = 0; $i <= $#a_nodes; $i++ ) {
-            push @out, [ $a_nodes[$i]->form, @{ $refs{ $a_nodes[$i]->id } || [] }, 'anode:' . $a_nodes[$i]->id ];
-            if ( !$a_nodes[$i]->no_space_after ) {
+        for my $anode (@a_nodes) {
+            push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
+            if ( !$anode->no_space_after ) {
                 push @out, [ ' ', 'space' ];
             }
         }
@@ -330,7 +330,7 @@ sub precompute_visualization {
 
                         if ( not defined $limits{$layer} ) {
                             for ( my $i = 0; $i < 3; $i++ ) {
-                                $limits{$layer}->[$i] = scalar( @{ $node->{_precomputed_buffer}->[$i] } ) - 1;
+                                $limits{$layer}[$i] = scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1;
                             }
                         }
                     }
@@ -339,7 +339,7 @@ sub precompute_visualization {
         }
     }
 
-    for my $layer ( 'p', 'a', 't', 'n' ) {
+    for my $layer (@layers) {
         for ( my $i = 0; $i < 3; $i++ ) {
             $self->labels->set_limit( $layer, $i, $limits{$layer}->[$i] );
         }
@@ -456,6 +456,7 @@ sub node_style_hook {
 
     $self->_styles->draw_arrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
 
+    # TODO: Would it be possible to move this code to the "_precomputed_node_style" attr?
     my %n = TredMacro::GetStyles( $styles, 'Node' );
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
 
