@@ -102,7 +102,7 @@ sub get_nodelist_hook {
         my $max_index = -1;
 
         for ( my $i = 0; $i < scalar @task; $i++ ) {
-            my $val = $task[$i]->{'left'} / $task[$i]->{'total'};
+            my $val = $task[$i]{'left'} / $task[$i]{'total'};
             if ( $val > $max ) {
                 $max       = $val;
                 $max_index = $i;
@@ -117,8 +117,8 @@ sub get_nodelist_hook {
     for ( my $col = 0; $col < scalar @$layout; $col++ ) {
         my @task = ();
         for ( my $row = 0; $row < scalar @{ $layout->[$col] }; $row++ ) {
-            if ( $layout->[$col]->[$row] ) {
-                my $label     = $layout->[$col]->[$row];
+            if ( $layout->[$col][$row] ) {
+                my $label     = $layout->[$col][$row];
                 my %tree_info = ();
                 $tree_info{'total'} = $tree_info{'left'} = scalar @{ $nodes{$label} };
                 $tree_info{'label'} = $label;
@@ -127,8 +127,8 @@ sub get_nodelist_hook {
         }
 
         while ( ( my $index = &$pick_next_tree(@task) ) >= 0 ) {
-            push @nodes, shift @{ $nodes{ $task[$index]->{'label'} } };
-            $task[$index]->{'left'}--;
+            push @nodes, shift @{ $nodes{ $task[$index]{'label'} } };
+            $task[$index]{'left'}--;
         }
     }
 
@@ -217,8 +217,8 @@ sub value_line_doubleclick_hook {
     while ($found) {
         $found = 0;
         for ( my $col = 0; $col < scalar @$layout; $col++ ) {
-            if ( $layout->[$col]->[$row] ) {
-                $ordering{ $layout->[$col]->[$row] } = $i++;
+            if ( $layout->[$col][$row] ) {
+                $ordering{ $layout->[$col][$row] } = $i++;
                 $found = 1;
             }
         }
@@ -286,16 +286,16 @@ sub precompute_tree_shifts {
             my $max_depth = 0;
             @trees = ();
             for ( my $col = 0; $col < scalar @$layout; $col++ ) {
-                if ( my $label = $layout->[$col]->[$row] ) {
-                    my $depth = $forest{$label}->{_tree_depth};
+                if ( my $label = $layout->[$col][$row] ) {
+                    my $depth = $forest{$label}{_tree_depth};
                     push @trees, $label;
                     $max_depth = $depth if $depth > $max_depth;
-                    $forest{$label}->{'_shift_right'} = $col;
+                    $forest{$label}{'_shift_right'} = $col;
                 }
             }
 
             for my $label (@trees) {
-                $forest{$label}->{'_shift_down'} = $cur_shift;
+                $forest{$label}{'_shift_down'} = $cur_shift;
             }
             $cur_shift += $max_depth;
             $row++;
@@ -341,7 +341,7 @@ sub precompute_visualization {
 
     for my $layer (@layers) {
         for ( my $i = 0; $i < 3; $i++ ) {
-            $self->labels->set_limit( $layer, $i, $limits{$layer}->[$i] );
+            $self->labels->set_limit( $layer, $i, $limits{$layer}[$i] );
         }
     }
 
