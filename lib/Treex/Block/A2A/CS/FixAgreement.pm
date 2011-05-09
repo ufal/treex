@@ -165,6 +165,7 @@ sub regenerate_node {
     my $new_form = $self->get_form( $node->lemma, $new_tag );
     return if !defined $new_form;
     $new_form = ucfirst $new_form if $old_form =~ /^(\p{isUpper})/;
+    $new_form = uc $new_form if $old_form =~ /^(\p{isUpper}*)$/;
     $node->set_form($new_form);
 
     return $new_form;
