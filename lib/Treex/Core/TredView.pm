@@ -317,6 +317,7 @@ sub precompute_visualization {
             foreach my $layer (@layers) {
                 if ( $zone->has_tree($layer) ) {
                     my $root = $zone->get_tree($layer);
+                    my $limits = $self->labels->get_limits($layer);
 
                     $root->{_precomputed_labels}     = $self->labels->root_labels($root);
                     $root->{_precomputed_node_style} = $self->_styles->node_style($root);
@@ -328,23 +329,17 @@ sub precompute_visualization {
                         $node->{_precomputed_buffer}     = $self->labels->node_labels( $node, $layer );
                         $self->labels->set_labels($node);
 
-                        if ( not defined $limits{$layer} ) {
+                        if (!$limits) {
                             for ( my $i = 0; $i < 3; $i++ ) {
-                                $limits{$layer}[$i] = scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1;
+                                $self->labels->set_limit( $layer, $i, scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1);
                             }
+                            $limits = 1;
                         }
                     }
                 }
             }
         }
     }
-
-    for my $layer (@layers) {
-        for ( my $i = 0; $i < 3; $i++ ) {
-            $self->labels->set_limit( $layer, $i, $limits{$layer}[$i] );
-        }
-    }
-
     return;
 }
 

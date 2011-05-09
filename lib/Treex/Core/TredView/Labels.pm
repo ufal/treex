@@ -171,6 +171,11 @@ sub set_limit {
     return $self->_label_variants->{ $layer . '_limit' }[$line] = $limit;
 }
 
+sub get_limits {
+    my ( $self, $layer ) = @_;
+    return $self->_label_variants->{ $layer . '_limit' };
+}
+
 sub root_labels {
     my ( $self, $root ) = @_;
 
