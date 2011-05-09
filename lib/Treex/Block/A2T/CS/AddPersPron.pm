@@ -6,7 +6,9 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    if ( $t_node->is_clause_head && !grep { ( $_->formeme || "" ) eq "n:1" } $t_node->get_echildren ) {
+    if ( $t_node->is_clause_head 
+            && !grep { (($_->functor || "") eq "ACT") || (( $_->formeme || "" ) eq "n:1") } $t_node->get_echildren ) {
+                
         my $new_node = $t_node->create_child;
         $new_node->set_t_lemma('#PersPron');
         $new_node->set_functor('ACT');
