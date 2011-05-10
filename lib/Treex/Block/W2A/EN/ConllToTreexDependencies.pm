@@ -1,9 +1,7 @@
-package Treex::Block::W2A::EN::FixMcDTopology;
+package Treex::Block::W2A::EN::ConllToTreexDependencies;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
-
-use Lexicon::English;
 
 # While recursively depth-first-traversing the tree
 # we sometimes rehang already processed parent node as a child node.
@@ -119,49 +117,21 @@ sub switch_with_parent {
 
 __END__
 
-Deleted code:
-# rehang 'to' before verbs, so it is a parent of the verb
-if ( $tag eq 'TO' && $deprel eq 'VMOD' ) {
-    $a_node->set_parent( $parent->get_parent() );
-    $parent->set_parent($a_node);
-    return;
-}
-
-Why should be "to" left hanging UNDER infinitives as it is in McD's output?
-
-There are no official guidelines for English a-layer yet.
-My reasons are pragmatically motivated, not linguistically.
-After all, it's a matter of convention.
-
-a) Otherwise, it's more work now when building a-layer and more work afterwards
- with building t-layer. When "to" is hanged above the infinitive, it must be
- handled separately, since all other aux verbs (be, do, have) are under the verb.
-
-b) What afun should get "to" before infinitives?
- I decided to reuse AuxV (in Czech only with "be"), rather than to make up new afun name.
- But even if I have decided for something like AuxTO, the problem is the same:
-   
- Methods TectoMT::Node::A::get_eff_children and get_eff_parents (and is_coap_member)
- rely on code $afun =~ /^Aux[CP]$/ i.e. only prepositions and subordinating conjunctions
- are "dived through" when looking for members of coordinations.
- When "to" is hanged under infinitive, there is no need to change that code.
-
-Martin Popel
-
 =over
 
-=item Treex::Block::W2A::EN::FixMcDTopology
+=item Treex::Block::W2A::EN::ConllToTreexDependencies
 
-Modifies the topology of trees parsed by the McDonald's parser,
+Modifies the topology of trees parsed by a CoNLL-trained parser
+(e.g. by the McDonald's MST parser or by the MaltParser),
 so it is more like PDT a-level: 
 Auxiliary verbs (I<be, have, will, do>) should depend on the main verb, not vice versa.
-Also I<to> as infinitive marker depends on the infinitive, but that is McD's default.  
+Also I<to> as infinitive marker depends on the infinitive, but that is CoNLL default.  
 
-Attributes C<is_member> must be filled before applying this block.
+Attributes C<is_member> and C<conll_deprel> must be filled before applying this block.
 
 =back
 
 =cut
 
-# Copyright 2008-2009 Vaclav Novak, Martin Popel
+# Copyright 2008-2011 Martin Popel
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
