@@ -178,49 +178,10 @@ sub get_value_line_hook {
     return if not $self->pml_doc();
 
     my $bundle = $self->pml_doc->tree($treeNo);
-
-    my @out = ();
-    my @t_trees = map { $_->get_ttree() } grep { $_->has_ttree() } $bundle->get_all_zones();
-
-    for my $t_tree (@t_trees) {
-        push @out, ( [ '[' . $t_tree->get_zone->get_label . ']', 'label' ], [ ' ', 'space' ] );
-
-        my $a_tree = $bundle->get_tree( $t_tree->language, 'a', $t_tree->selector );
-
-        my %refs = ();
-        for my $node ( $t_tree->get_descendants ) {
-            for my $aux ( TredMacro::ListV( $node->attr('a/aux.rf') ) ) {
-                push @{ $refs{$aux} }, $node;
-            }
-            push @{ $refs{ $node->attr('a/lex.rf') } }, $node if $node->attr('a/lex.rf');
-        }
-
-        my @a_nodes = $a_tree->get_descendants( { ordered => 1 } );
-
-        for my $node (@a_nodes) {
-            my $id = $node->id;
-            push @{ $refs{$id} }, $node;
-            if ( $node->attr('p/terminal.rf') ) {
-                my $p_node = $self->treex_doc->get_node_by_id( $node->attr('p/terminal.rf') );
-                push @{ $refs{$id} }, $p_node;
-                while ( $p_node->parent ) {
-                    $p_node = $p_node->parent;
-                    push @{ $refs{$id} }, $p_node;
-                }
-            }
-        }
-
-        for my $anode (@a_nodes) {
-            push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
-            if ( !$anode->no_space_after ) {
-                push @out, [ ' ', 'space' ];
-            }
-        }
-
-        push @out, [ "\n", 'newline' ];
+    if (!$bundle->{_precomputed_value_line}){
+        $self->precompute_value_line($bundle);
     }
-
-    return \@out;
+    return $bundle->{_precomputed_value_line};
 }
 
 sub value_line_doubleclick_hook {
@@ -355,6 +316,54 @@ sub precompute_visualization {
             }
         }
     }
+    return;
+}
+
+sub precompute_value_line {
+    my ( $self, $bundle ) = @_;
+
+    my @out = ();
+    my @t_trees = map { $_->get_ttree() } grep { $_->has_ttree() } $bundle->get_all_zones();
+
+    for my $t_tree (@t_trees) {
+        push @out, ( [ '[' . $t_tree->get_zone->get_label . ']', 'label' ], [ ' ', 'space' ] );
+
+        my $a_tree = $bundle->get_tree( $t_tree->language, 'a', $t_tree->selector );
+
+        my %refs = ();
+        for my $node ( $t_tree->get_descendants ) {
+            for my $aux ( TredMacro::ListV( $node->attr('a/aux.rf') ) ) {
+                push @{ $refs{$aux} }, $node;
+            }
+            push @{ $refs{ $node->attr('a/lex.rf') } }, $node if $node->attr('a/lex.rf');
+        }
+
+        my @a_nodes = $a_tree->get_descendants( { ordered => 1 } );
+
+        for my $node (@a_nodes) {
+            my $id = $node->id;
+            push @{ $refs{$id} }, $node;
+            if ( $node->attr('p/terminal.rf') ) {
+                my $p_node = $self->treex_doc->get_node_by_id( $node->attr('p/terminal.rf') );
+                push @{ $refs{$id} }, $p_node;
+                while ( $p_node->parent ) {
+                    $p_node = $p_node->parent;
+                    push @{ $refs{$id} }, $p_node;
+                }
+            }
+        }
+
+        for my $anode (@a_nodes) {
+            push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
+            if ( !$anode->no_space_after ) {
+                push @out, [ ' ', 'space' ];
+            }
+        }
+
+        push @out, [ "\n", 'newline' ];
+    }
+
+    $bundle->{_precomputed_value_line} = \@out;
     return;
 }
 
