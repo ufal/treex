@@ -6,11 +6,11 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 has _parser     => ( is       => 'rw' );
 
-use Treex::Tools::Parser::Stanford::Stanford;
+use Treex::Tools::Parser::Stanford;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Treex::Tools::Parser::Stanford::Stanford->new( $self->language ) );
+    $self->_set_parser( Treex::Tools::Parser::Stanford->new( $self->language ) );
     return;
 }
 
