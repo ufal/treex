@@ -66,6 +66,10 @@ sub node_style_hook {
     return $tredview->node_style_hook(@_);
 }
 
+sub root_style_hook {
+    return $tredview->root_style_hook(@_);
+}
+
 sub ConfDialog {
     $tredview->conf_dialog();
 }
