@@ -11,11 +11,10 @@ use Treex::Tools::Parser::Charniak::Node;
 use Treex::Core::Node::P;
 use Clone;
 use Moose;
-extends 'Treex::Block::W2A::BaseChunkParser';
 
 my $parser;
 my $string_to_parse;
-my @sentences=();
+
 my @results;
 my @final_tree;
 my $self;
@@ -28,12 +27,25 @@ my $parent;
 my @processing_nodes=();
 my @structure_nodes=();
 my $current_node;
-$parser =Treex::Tools::Parser::Charniak::Charniak->new();
-sub process_atree {  
+
+
+#sub process_atree { 
+sub process_document {  
+($self,$document) = @_;
+my @bundles = $document->get_bundles();
+my @sentences=();
+foreach my $bundle ($document->get_bundles) {
+  my $sentence = $bundle->get_zone($self->language, $self->selector)->sentence;
+  push (@sentences, $sentence);
+  }
+  
+
+
+
 #($self,@m_nodes) = @_;
- ( $self, $a_root ) = @_;
-    my $bundleno = 0;
-    my @m_nodes = $a_root->get_descendants( { ordered => 1 } );
+# ( $self, $a_root ) = @_;
+ 
+ #   my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
   #  foreach my $bundle ($document->get_bundles())
    # 	{
    	 @processing_nodes=();
@@ -46,27 +58,36 @@ sub process_atree {
 	
 	#Check for EMpty sentences        
 	#print "m_nodes".@m_nodes."\n";
-	if ( @m_nodes == 0 ) {
+#	if ( @a_nodes == 0 ) {
        #     Report::fatal "Impossible to parse an empty sentence. Bundle id=" . $bundleno;
-        }
+ #       }
 	#Get all the words per sentence with corrisponding ids
        # my @words            = map { $_->get_attr('form') } @m_nodes;
        # my @ids              = map { $_->get_attr('id') } @m_nodes;
 	
-	my @words = ();
-	foreach my $a_node (@m_nodes) {
-	  push (@words,$a_node->get_attr('form'));
-	 # print $anode_chunks_ref;
-	  }
+#	my @words = ();
+my $sentence_counter=0;
+foreach my $s (@sentences){
+my @words = split (" ", $s);
+# 	foreach my $a_node (@a_nodes) {
+# 	  push (@words,$a_node->get_attr('form'));
+# 	 # print $anode_chunks_ref;
+# 	  }
 	#create sentence to parse surrounded by <s> sentence </s>	
  	$string_to_parse="<s> ";
  	$string_to_parse.= join(" ", @words);
- 	$string_to_parse.=" </s> ";
-print $string_to_parse."\n";
-	$parser =Treex::Tools::Parser::Charniak::Charniak->new();
+ 	$string_to_parse.=" </s> \n ";
+#	print $string_to_parse."\n";
+
+$sentences[$sentence_counter]=$string_to_parse;
+$sentence_counter++;
+	}
+	#$parser =Treex::Tools::Parser::Charniak::Charniak->new();
 # 	
 # 
- my $tree_root =	$parser->parse(@words);
+# my $tree_root =	$parser->parse(@words);
+$parser =Treex::Tools::Parser::Charniak::Charniak->new();
+my @tree_roots =	$parser->parse_document(@sentences);
 # 
 # my @root_children = @{$tree_root->children};
 # $tree_root=$root_children[0];
@@ -78,8 +99,7 @@ print $string_to_parse."\n";
 # 		write_branch();
 
 	 
-	
-   	$bundleno++;
+
 #	
 
 }
