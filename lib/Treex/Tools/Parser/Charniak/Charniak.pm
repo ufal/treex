@@ -8,20 +8,21 @@ use IPC::Open2;
 use IPC::Open3;
 use IO::Handle;
 use Treex::Core::Common;
-#to be changed
+
 
 my $tmp_input = 'test';
 my $bindir = "/home/green/tectomt/personal/green/tools/reranking-parser";
 my $command = "$bindir/parse.sh $tmp_input";
-my @sentences=();
-my @results;
 
+my @results;
+ my $tmp_file;
 sub BUILD {
     my ( $self ) = @_;
     log_fatal "Missing $bindir\n" if !-d $bindir;
-
- my $tmp_file = "$bindir/temporary.txt";
+my $rand= rand();
+ $tmp_file = "$bindir/temporary-$rand.txt";
 	my $runparser_command = "sh parse.sh $tmp_file";
+	
   my ( $reader, $writer, $pid ) = ProcessUtils::bipipe("cd $bindir; $runparser_command ");
     $self->{tntreader} = $reader;
     $self->{tntwriter} = $writer;
@@ -37,7 +38,7 @@ sub string_output {
     my ($self,@tokens) = @_;
 
     # creating a temporary file - parser input
-    my $tmp_file = "$bindir/temporary.txt";
+   # my $tmp_file = "$bindir/temporary-$self.txt";
   #  log_info 'Storing the sentence into temporary file: $tmp_file';
 
  my $string = "<s> ".(join ' ',@tokens)." </s>";
@@ -49,22 +50,50 @@ sub string_output {
 
  
     my $tntwr = $self->{tntwriter};
+
     my $tntrd = $self->{tntreader};
   my $got = <$tntrd>;
 
+}
+sub document_output {
+ 
+    my ($self,@sentences) = @_;
 
 
+  my $counter=0;
+foreach my $sentence (@sentences){
+my $string = $sentence;
+ $string =~ s/''/"/g;
+  $string =~ s/``/"/g;
+  $sentences[$counter]=$string;
+  #print "$counter \t $string \n";
+  $counter++;
+}
 
+    open my $INPUT, '>:utf8', $tmp_file or log_fatal $!;
+    print $INPUT join("", @sentences);
+    close $INPUT;
 
-
-
-
+ 
+    my $tntwr = $self->{tntwriter};
+    my $tntrd = $self->{tntreader};
+ # my $got = <$tntrd>;
+ 
+ print  "output: \n";
+print <$tntrd>;
+print "\n";
 }
 
 sub parse {
     my ($self,@tokens_rf) = @_;
 _make_phrase_structure(string_output($self,@tokens_rf)); 
 
+}
+sub parse_document {
+    my ($self,@tokens_rf) = @_;\
+  document_output($self,@tokens_rf);
+#_make_phrase_structure(string_output($self,@tokens_rf)); 
+#loop through sentences (start with S1) and send to _make_phrase_structure
 }
 
 
