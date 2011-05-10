@@ -21,11 +21,14 @@ sub fix {
     	my $new_tag = $d->{tag}; #do not change $d->{tag}
     	$new_tag =~ s/^(...)./$1$num/;
     	my $old_form = $dep->form;
-        my $new_form = $self->get_form( $dep->lemma, $new_tag );
-        if ( lc($old_form) eq lc($new_form) ) {
-        	$d->{tag} =~ s/^(...)./$1$num/; #error in number, not in form
-        } #else change only case
-    } #else change only case
+        my $new_form_plural = $self->get_form( $dep->lemma, $new_tag );
+        if ( $new_form_plural && lc($old_form) eq lc($new_form_plural) ) { #it just might be a plural instead of singular
+            my $new_form_singular = $self->get_form( $dep->lemma, $d->{tag} );
+            if (!$new_form_singular || lc($old_form) ne lc($new_form_singular)) { #the singular would have a different form, the plural wouldn't
+        	   $d->{tag} =~ s/^(...)./$1$num/; #error in number, not in form
+            }
+        }
+    }
     
     $self->logfix1($dep, "Subject");
 	$self->regenerate_node($dep, $d->{tag});
