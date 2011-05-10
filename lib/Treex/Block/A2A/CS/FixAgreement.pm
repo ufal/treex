@@ -77,12 +77,22 @@ sub logfix1 {
         #original words pair
         if ($gov->ord < $dep->ord) {
             $logfixold = $gov->form;
-            $logfixold .= " ";
+            $logfixold .= "[";
+            $logfixold .= $gov->tag;
+            $logfixold .= "] ";
             $logfixold .= $dep->form;
+            $logfixold .= "[";
+            $logfixold .= $dep->tag;
+            $logfixold .= "] ";
         } else {
-        	$logfixold = $dep->form;
-        	$logfixold .= " ";
-        	$logfixold .= $gov->form;
+            $logfixold = $dep->form;
+            $logfixold .= "[";
+            $logfixold .= $dep->tag;
+            $logfixold .= "] ";
+            $logfixold .= $gov->form;
+            $logfixold .= "[";
+            $logfixold .= $gov->tag;
+            $logfixold .= "] ";
         }
     } else {
         $logfixold = '(undefined node)';
@@ -95,13 +105,23 @@ sub logfix2 {
         my ($dep, $gov, $d, $g) = $self->get_pair($node);
         #new words pair
         if ($gov->ord < $dep->ord) {
-        	$logfixnew = $gov->form;
-        	$logfixnew .= " ";
-        	$logfixnew .= $dep->form;
+            $logfixnew = $gov->form;
+            $logfixnew .= "[";
+            $logfixnew .= $gov->tag;
+            $logfixnew .= "] ";
+            $logfixnew .= $dep->form;
+            $logfixnew .= "[";
+            $logfixnew .= $dep->tag;
+            $logfixnew .= "] ";
         } else {
-        	$logfixnew = $dep->form;
-        	$logfixnew .= " ";
-        	$logfixnew .= $gov->form;
+            $logfixnew = $dep->form;
+            $logfixnew .= "[";
+            $logfixnew .= $dep->tag;
+            $logfixnew .= "] ";
+            $logfixnew .= $gov->form;
+            $logfixnew .= "[";
+            $logfixnew .= $gov->tag;
+            $logfixnew .= "] ";
     	}
     } else {
     	$logfixnew = '(removal)';
