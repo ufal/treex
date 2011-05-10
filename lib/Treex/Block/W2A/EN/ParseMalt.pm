@@ -5,7 +5,7 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 
 use Treex::Tools::Parser::Malt;
 
-has 'model' => ( is => 'rw', isa => 'Str', default => 'en.mco' );
+has 'model' => ( is => 'rw', isa => 'Str', default => 'en_nivreeager.mco' );
 
 my $parser;
 

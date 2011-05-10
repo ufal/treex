@@ -27,7 +27,7 @@ sub BUILD {
     # symlink to the model (model has to be in working directory)
     system "ln -s $modeldir/" . $self->model . " $workdir/" . $self->model;
 
-    my $command = "cd $workdir; java -jar $bindir/malt-1.3/malt.jar -c " . $self->model;
+    my $command = "cd $workdir; java -jar $bindir/malt-1.5/malt.jar -c " . $self->model;
 
     # start MaltParser
     ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
