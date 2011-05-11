@@ -45,8 +45,8 @@ sub parse {
     my $reader = $self->_reader;
     my $count  = scalar @$forms;
 
-    # write input
-    print $writer join ' ', @$forms;
+    # write input (escaping tokens with spaces)
+    print $writer join ' ', map {s/ /_/g;$_} @$forms;
     print $writer "\n";
 
     # read output
@@ -58,6 +58,7 @@ sub parse {
         my @items = split( /\t/, $got );
         $count--;
         my $token = $forms->[ $i - 1 ];
+        $token =~ s/ /_/g;
         log_fatal "Unexpected parser output '$got'.\nExpecting =~ /^$token/" if $items[0] ne $token;
         push @postags, $items[1];
         push @parents, $items[2] + 1;
