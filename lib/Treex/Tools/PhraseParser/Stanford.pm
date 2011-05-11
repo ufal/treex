@@ -20,7 +20,7 @@ sub BUILD {
     $self->set_tmpdir(
         File::Temp::tempdir( Treex::Core::Config->tmp_dir."/stanford_parser_XXXXXX") #, CLEANUP => 1
       );
-    print "Temporary directory for Stanford parser: ".$self->tmpdir."\n";
+    log_info "Temporary directory for Stanford parser: ".$self->tmpdir."\n";
     log_fatal "Missing $bindir\n" if !-d $bindir;
 }
 
@@ -28,7 +28,7 @@ sub prepare_parser_input {
     my ($self, $zones_rf) = @_;
     open my $INPUT, ">:utf8", $self->tmpdir."/input.txt" or log_fatal $!;
     foreach my $zone (@$zones_rf) {
-        print $INPUT join " ", map{$_->form} $zone->get_atree->get_descendants;
+        print $INPUT join " ", map{$_->form} $zone->get_atree->get_descendants({ordered=>1});
         print $INPUT "\n";
     }
     close $INPUT;
@@ -43,8 +43,9 @@ sub run_parser {
 
 sub convert_parser_output_to_ptrees {
     my ($self, $zones_rf) = @_;
-    my $output = read_file( $self->tmpdir."/output.txt" ) or log_fatal $!;
-    print $output;
+    my $output = read_file( $self->tmpdir."/output.txt" )
+        or log_fatal "Empty or non-existing ".$self->tmpdir."/output.txt  $!";
+
     $output =~ s/\n\(/__START__\(/gsxm;
     $output =~ s/\s+/ /gsxm;
     my @mrg_strings = split /__START__/,$output;
@@ -53,12 +54,12 @@ sub convert_parser_output_to_ptrees {
         log_fatal "There must be same number of zones and parse trees";
     }
 
-    print join("XXXXX",@mrg_strings);
-
     foreach my $zone (@$zones_rf) {
+        if ($zone->has_ptree) {
+            $zone->remove_tree('p');
+        }
         my $proot = $zone->create_ptree;
         my $mrg_string = shift @mrg_strings;
-        print "MRG: $mrg_string\n";
         $proot->create_from_mrg($mrg_string);
     }
 }
@@ -66,15 +67,10 @@ sub convert_parser_output_to_ptrees {
 
 sub parse_zones {
     my ($self, $zones_rf) = @_;
+    log_info (scalar(@$zones_rf). " sentences to be parsed");
     $self->prepare_parser_input($zones_rf);
     $self->run_parser();
     $self->convert_parser_output_to_ptrees($zones_rf);
-}
-
-sub parse {
-
-
-
 }
 
 

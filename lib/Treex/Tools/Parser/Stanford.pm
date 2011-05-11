@@ -11,8 +11,6 @@ use IO::Handle;
 use Treex::Core::Common;
 #to be changed
 
-my $tmp_input = 'test';
-
 my $bindir = "/home/green/tectomt/personal/green/tools/stanford-parser-2010-11-30";
 my $tmp_file = "$bindir/temporary.txt";
 my $command = "java -cp stanford-parser.jar edu.stanford.nlp.parser.lexparser.LexicalizedParser -sentences newline englishPCFG.ser.gz ";
@@ -28,6 +26,7 @@ sub BUILD {
     $self->{tntreader} = $reader;
     $self->{tntwriter} = $writer;
     $self->{tntpid}    = $pid;
+
     bless $self;
 }
 
@@ -36,6 +35,8 @@ sub BUILD {
 sub string_output {
 
     my ($self,@tokens) = @_;
+
+    log_info "In string_output 1 \n";
 
     # creating a temporary file - parser input
     #  log_info 'Storing the sentence into temporary file: $tmp_file';
@@ -46,17 +47,28 @@ sub string_output {
     $string =~ s/``/"/g;
     chomp($string);
     open my $INPUT, '>:utf8', $tmp_file or log_fatal $!;
-    print $INPUT $string;
+
+    log_info "In string_output 2 \n";
+
+    print $INPUT $string or log_fatal $!;
     close $INPUT;
 
+    log_info "In string_output 2.1 \n";
 
     my $writer = $self->{tntwriter};
-    print $writer $tmp_file ;
+    print STDOUT "Pokus0: $writer $tmp_file\n";
+    eval 'print $writer $tmp_file; ' or die $!;
+    print STDOUT "Pokus1\n";
+    log_info "In string_output 2.2 \n";
     my $reader = $self->{tntreader};
 
     my $out_string="";
     my $start="false";
+
+    log_info "In string_output 3 \n";
+
     while (<$reader>) {
+        log_info "In string_output 4 \n";
         chomp($_);
         #print $_;
         if ($_=~"ROOT") {
@@ -69,12 +81,14 @@ sub string_output {
         }
     }
 
+    log_info "In string_output 5 \n";
+
     return $out_string;
 }
 
 sub parse {
     my ($self,@tokens_rf) = @_;
-    _make_phrase_structure(string_output($self,@tokens_rf)); 
+    _make_phrase_structure(string_output($self,@tokens_rf));
 }
 
 sub _make_phrase_structure {

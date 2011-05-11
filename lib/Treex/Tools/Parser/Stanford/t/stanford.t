@@ -5,7 +5,7 @@ use warnings;
 
 use Treex::Tools::Parser::Stanford;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 my $parser = Treex::Tools::Parser::Stanford->new();
 
@@ -16,6 +16,10 @@ my @tokens = qw(John loves Mary);
 my $tree_root = $parser->parse(@tokens);
 
 isa_ok ($tree_root, 'Treex::Tools::Parser::Stanford::Node', 'tree root is Treex::Tools::Parser::Stanford::Node');
+
+my $tree_root2 = $parser->parse(qw(I want to ride my bicycle));
+isa_ok ($tree_root2, 'Treex::Tools::Parser::Stanford::Node', 'parsing another sentence by the same parser');
+
 
 cmp_ok($tree_root->term,'eq','ROOT', 'tree root is ROOT');
 

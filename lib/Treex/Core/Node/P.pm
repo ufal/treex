@@ -70,11 +70,12 @@ sub create_from_mrg {
     $mrg_string =~ s/ $//g;
 
     # remove extra outer parenthesis
-    $mrg_string =~ s/^\( (\(.+\)) \)$/$1/g or log_fatal ">>$mrg_string<<";
+    $mrg_string =~ s/^\(( ROOT )?(\(.+\)) \)$/$2/g;
 
     my @tokens = split / /,$mrg_string;
 
     _parse_mrg_nonterminal(\@tokens, $self);
+
 }
 
 

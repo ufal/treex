@@ -56,6 +56,11 @@ sub lib_core_dir {
     return _caller_dir();
 }
 
+sub tmp_dir { #!!! to be replaced with ~/.treex/tmp !!!
+    return lib_core_dir."../../../../tmp/";
+}
+
+
 sub _caller_dir {
     my %call_info;
     @call_info{
