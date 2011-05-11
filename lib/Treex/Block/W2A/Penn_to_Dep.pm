@@ -33,7 +33,10 @@ sub process_document {
   @preorder=();
 #not correct need to do it by children/parent relationship
 #get each SentenceP structure and rebuild penn string
- my $p_root = $bundle->get_tree('SEnglishP');
+
+#add zone information
+my  $p_root = $bundle->get_tree( 'en', 'P');
+ #my $p_root = $bundle->get_tree('SEnglishP');
  my @p_all = $p_root->get_descendants();
  my @p_children = $p_root->get_children();
 
@@ -80,15 +83,9 @@ $to_pop++;
  
 $i++;
  }
- $to_pop=$to_pop-$popped;
-
-  
+ $to_pop=$to_pop-$popped;  
    }
-
-
-
 }
-
 
 $penn = "(S ".$penn.")";
 
@@ -103,8 +100,8 @@ my ($output_ref,$indices_ref)= $converter->parse($penn,$size);
 
 #print join ( " ", @output);
 #print "\n";
-
-my $a_root = $bundle->get_tree('SEnglishA');
+my $a_root = $bundle->get_tree( 'en', 'A');
+#my $a_root = $bundle->get_tree('SEnglishA');
 my @a_nodes = $a_root->get_children();
 
 my $counter =0;
@@ -125,9 +122,6 @@ $counter++;
 }
 
 }
-
-
-
 
 }
 
