@@ -1,4 +1,4 @@
-package Treex::Block::W2A::EN::ConllToTreexDependencies;
+package Treex::Block::W2A::EN::RehangConllToPdtStyle;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -119,7 +119,7 @@ __END__
 
 =over
 
-=item Treex::Block::W2A::EN::ConllToTreexDependencies
+=item Treex::Block::W2A::EN::RehangConllToPdtStyle
 
 Modifies the topology of trees parsed by a CoNLL-trained parser
 (e.g. by the McDonald's MST parser or by the MaltParser),
