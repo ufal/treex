@@ -3,13 +3,13 @@
 use strict;
 use warnings;
 
-use Treex::Tools::Parser::Pennconverter;
+use Treex::Tools::Phrase2Dep::Pennconverter;
 
 use Test::More tests => 7;
 
-my $converter = Treex::Tools::Parser::Pennconverter->new();
+my $converter = Treex::Tools::Phrase2Dep::Pennconverter->new();
 
-isa_ok($converter,'Treex::Tools::Parser::Pennconverter','Penn Converter instantiated');
+isa_ok($converter,'Treex::Tools::Phrase2Dep::Pennconverter','Penn Converter instantiated');
 
 my ($results_ref,$indices_ref)=$converter->parse("(S (NP (NNP John)) (VP (VBZ loves) (NP (NNP Mary))))",3);
  my @results = @$results_ref;

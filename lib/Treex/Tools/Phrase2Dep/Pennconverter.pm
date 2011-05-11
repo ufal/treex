@@ -1,4 +1,4 @@
-package Treex::Tools::Parser::Pennconverter;
+package Treex::Tools::Phrase2Dep::Pennconverter;
 use Moose;
 use MooseX::FollowPBP;
 use Treex::Core::Log;
@@ -43,7 +43,7 @@ my $s= shift @_;
 my $size=shift @_;
 my $writer = $self->{writer};
 my $reader = $self->{reader};
-        Report::fatal("Treex::Tools::Parser::Pennconverter::Pennconverter unexpected status") if ( !defined $reader || !defined $writer );
+        Report::fatal("Treex::Tools::Phrase2Dep::Pennconverter unexpected status") if ( !defined $reader || !defined $writer );
 
         print $writer "$s \n" ; 
 
