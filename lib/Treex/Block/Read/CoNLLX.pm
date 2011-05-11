@@ -9,7 +9,7 @@ sub next_document {
     return if !defined $text;
 
     my $document = $self->new_document();
-    foreach my $tree ( split /\n\n/, $text ) {
+    foreach my $tree ( split /\n\s*\n/, $text ) {
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone( $self->language, $self->selector );
         my @tokens = split (/\n/, $tree);
@@ -18,6 +18,7 @@ sub next_document {
         my @nodes = ($aroot);
         my $sentence;
         foreach my $token (@tokens) {
+            next if $token =~ /^\s*$/;
             my ($id, $form, $lemma, $pos, $ppos, $feat, $head, $deprel) = split(/\t/, $token);
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
