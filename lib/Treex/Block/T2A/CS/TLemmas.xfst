@@ -1,0 +1,122 @@
+!
+! Grammateme and functor values
+!
+
+define NumerType [ "+basic" | "+frac" | "+kind" | "+ord" | "+set" ];
+define IndefType [ "+relat" | "+indef1" | "+indef2"| "+indef3"| "+indef4"| "+indef5"| "+indef6" | "+inter" | "+negat" | "+total1" | "+total2" ];
+
+define NumerFunctor [ "+TWHEN" | "+THO" ];
+define LocFunctor [ "+LOC" | "+DIR1" | "+DIR2" | "+DIR3" ];
+define TimeFunctor [ "+TWHEN" | "+TSIN" | "+TTILL" | "+TFHL" | "+THO" ];
+define IndefFunctor [ TimeFunctor | LocFunctor ];
+
+!
+! Definite numerals (1 to 100, inc. "sto", "tisíc", "milión", "miliarda")
+!
+
+define Basic [ {jeden} | {dva} | {tři} | {čtyři} | {pět} | {šest} | {sedm} | {osm} | {devět} ];
+define Twenty [ [ [ Basic - [ {jeden} | {čtyři} | {pět} | {devět} ] ] | [ {jede} | {čtr} | {pat} | {devate} ] ]  n á c t ] 
+    | [ {deset} | {nula} | {sto} | {tisíc} | {milión} | {milion} | {miliarda} ];
+define Tens [ [ [ {dva} | {tři} | {čtyři} ] {cet} ] | [ [ {pa} | {še} | {sedm} | {osm} | {deva} ] {desát} ] ];
+define HunderdStrict [ Basic | Twenty ] | [ Tens ( " " Basic ) ] ;
+define ReverseTens [ Tens -> {jedna} ... || _ " " {jeden} ,, Tens -> {dvaa} ... || _ " " {dva} ,, Tens -> {třia} ... || _ " " {tři},, 
+    Tens -> {čtyřia} ... || _ " " {čtyři} ,, Tens -> {pěta} ... || _ " " {pět} ,, Tens -> {šesta} ... || _ " " {šest} ,,
+    Tens -> {sedma} ... || _ " " {sedm} ,, Tens -> {osm} ... || _ " " {osm} ,, Tens -> {devěta} ... || _ " " {devět} ]
+    .o. [ " " Basic -> 0 ];
+define Hunderd [ HunderdStrict .o. ReverseTens ].l | HunderdStrict;
+
+define NumerWord Hunderd;
+
+! Types of numerals
+
+define NumerAllowed ~[ {jeden} [ "+kind" | "+set" ] ]; ! Disallow some non-existent combinations
+
+! Transduction rules for the individual types
+
+define Cardinal [ "+basic" -> 0 || _ [ .#. | "+THO" ] ];
+
+define FracIrreg [ {jeden} -> {jedn}, {dva} -> {polov}, {tři} -> {třet}, {čtyři} -> {čtvrt}, {devět} -> {devít}, {sto} -> {set}, 
+    {milión} -> {miliónt}, {milion} -> {miliont}, {miliarda} -> {miliardt} || _ "+frac" ];
+define Fraction ReverseTens .o. FracIrreg .o. [ "+frac" -> {ina} || _ .#. ];
+
+define KindIrreg [ {dva} -> {dvojí} "+I", {tři} -> {trojí} "+I", {čtyři} -> {čtv}, {pět} -> {pat}, {devět} -> {devat}, {deset} -> {desat}, 
+    {cet} -> {cat}, {sto} -> {st}, {milion} -> {miliont}, {milión} -> {miliónt}, {miliarda} -> {miliardt} || _ "+kind" ];
+define Kind ReverseTens .o. KindIrreg .o. [ \"+I" -> ... {erý} || _ "+kind" ] .o. [ [ "+I" | "+kind" ] -> 0 ];
+
+define OrdIrreg [ {jeden} -> {první} "+I", {dva} -> {druh}, {tři} -> {třetí} "+I", {čtyři} -> {čtvrt}, [ {ět} | {et} ] -> {át},
+    {sto} -> {st}, {milion} -> {miliont}, {milión} -> {miliónt}, {miliarda} -> {miliardt} || _ [ " " ?* | 0 ] "+ord" ];
+define Ordinal OrdIrreg .o. [ \"+I" -> ... {ý} || _ [ " " ?* | 0 ] "+ord" ] 
+    .o. [ "+THO" -> "+TWHEN" || "+ord" _ ]  ! this shouldn't be needed, actually
+    .o. [ [ "+I" | "+ord" ] -> 0 ];
+
+define Set [ "+set" -> "+kind" "+S" ] .o. Kind .o. [ í -> e, ý -> y || _ "+S" ] .o. [ "+S" -> 0 ]; ! Set numerals are in fact derived from kind numerals
+
+
+! Application of functors (TWHEN, THO) on definite numerals
+
+define ApplyNumerTWHEN [ ?* "+TWHEN" -> {po} ... || .#. _ ] .o. [ {první} -> {prvé}, {ý} -> {é} || _ "+TWHEN" ] .o. [ "+TWHEN" -> 0 ];
+define ApplyNumerTHO [ {miliarda} -> {miliardt} || _ "+THO" ] .o. [ "+THO" -> {krát} ] .o. [ {jedenkrát} -> {jednou} || .#. _ .#. ];
+define ApplyNumerFunctor [ ApplyNumerTWHEN | ApplyNumerTHO ];
+
+! The main automaton for definite numerals
+
+define Numeral [ [ NumerWord NumerType ( NumerFunctor ) ] & NumerAllowed ] .o. [ Cardinal | Fraction | Kind | Ordinal | Set ] 
+    .o. ApplyNumerFunctor .o. ~[ ?* [ NumerType | NumerFunctor ] ?* ];
+
+
+!
+! Indefinite pronouns
+! 
+
+define IndefWords [ {kde} | {co}| {kdo} | {proč} | {jak} | {který} | {jaký} | {kdy} ];
+
+define AllIndefWords [ IndefWords | {kolik} | {kolikery} | {kolikerý} | {kolikátý} ];
+define ReverseIndef [ AllIndefWords -> "+indef1" ... || _ "+indef1" ,, AllIndefWords -> "+indef4" ... || _ "+indef4" ,, 
+    AllIndefWords -> "+indef5" ... || _ "+indef5" ,, AllIndefWords -> "+indef6" ... || _ "+indef6" ,, AllIndefWords -> "+negat" ... || _ "+negat" ]
+    .o. [ "+indef1" | "+indef4" | "+indef5" | "+indef6" | "+negat" -> 0 || _ [ .#. | IndefFunctor ] ];
+
+define UnrollIndef [ "+relat" -> 0, "+indef1" -> {ně},  "+indef2" -> {si},  "+indef3" -> {koliv},
+    "+indef4" -> {lec}, "+indef5" -> {kde},  "+indef6" -> {kdoví}, "+inter" -> 0, "+negat" -> {ni} ];
+define IndefIrreg [{lecco} -> {leccos}, {nikterý} -> {žádný}, {nico} -> {nic} ];
+define UnrollTotal [ {kde} "+total1" -> {všude}, {kdy} "+total1" -> {vždy}, ~[ {kde} | {kdy} ] "+total1" -> {všechen}, ?* "+total2" -> {každý} || .#. _ ];
+
+
+define ApplyIndefLocFunctor [ {kde} -> {odkud}, {všude} -> {odevšad} || _ ?* "+DIR1" 
+    ,, {kde} -> {kudy}, {všude} -> {všudy} || _ ?* "+DIR2" ,, {kde} -> {kam} || _ ?* "+DIR3" ]
+    .o. [ ?* {od} -> {od} ...  || .#. _ {kud} ] .o. [ {odkud} -> {kud} || .#. {od} ?* _ ]       ! fix for "odkud"
+    .o. [ LocFunctor -> 0 ];
+
+define ApplyIndefTimeFunctor [ {kdy} -> {odkdy} || _ "+TSIN" ,, {kdy} -> {dokdy} || _ "+TTILL" ,, {vždy} -> {navždy} || _ "+TFHL" ]
+    .o. [ TimeFunctor -> 0 ];
+define ApplyIndefFunctor [ ApplyIndefLocFunctor |  ApplyIndefTimeFunctor ];
+
+define IndefTransform ReverseIndef .o. UnrollIndef .o. IndefIrreg .o. UnrollTotal;
+define Indef [ IndefWords IndefType ( IndefFunctor ) ] .o. IndefTransform .o. ApplyIndefFunctor .o. ~[ ?* [IndefType|IndefFunctor] ?* ];
+
+! Indefinite numeral "kolik"
+
+define KolikNumer [ "+basic" -> 0, "+set" -> {ery}, "+kind" -> {erý}, "+ord" -> {átý} ];
+define Kolik [ {kolik} NumerType IndefType ( NumerFunctor ) ] .o. KolikNumer .o. IndefTransform .o. ApplyNumerFunctor 
+    .o. [ k -> 0 || _ {krát} .#. ] .o. ~[ ?* [NumerType|IndefType|NumerFunctor] ?* ]; ! ( fix for "několikkrát" )
+
+!
+! Pronominal adverbs "tady", "tam", "teď", "potom", "tehdy"
+!
+
+define PronAdvWords [ {tady} | {tam} | {teď} | {potom} | {tehdy} ];
+
+define ApplyAdvLocFunctor [ {tady} -> {odtud}, {tam} -> {odtamtud} || _ "+DIR1" 
+    ,, {tady} -> {tudy}, {tam} -> {tamtudy} || _ "+DIR2" ,, {tady} -> {sem} || _ "+DIR3" ] .o. [ LocFunctor -> 0 ];
+define ApplyAdvTimeFunctor [ {teď} -> {odteď}, {tehdy} -> {odtehdy} || _ "+TSIN" 
+    ,, {teď} -> {dosud}, {tehdy} -> {dotehdy} || _ "+TTILL" ] .o. [ TimeFunctor -> 0 ];
+define ApplyAdvFunctor [ ApplyAdvTimeFunctor | ApplyAdvLocFunctor ];
+
+define PronAdv [ PronAdvWords ( IndefFunctor ) ] .o. ApplyAdvFunctor .o. ~[ ?* IndefFunctor ?* ];
+
+!
+! Main
+!
+
+define Main [ Numeral | Indef | Kolik | PronAdv ];
+clear
+push Main
