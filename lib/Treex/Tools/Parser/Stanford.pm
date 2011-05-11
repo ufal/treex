@@ -1,4 +1,4 @@
-package Treex::Tools::Parser::Stanford::Stanford;
+package Treex::Tools::Parser::Stanford;
 
 use Moose;
 use MooseX::FollowPBP;
@@ -23,81 +23,64 @@ sub BUILD {
     my ( $self ) = @_;
     log_fatal "Missing $bindir\n" if !-d $bindir;
 
-
-	my $runparser_command = "$command $tmp_file";
-  my ( $reader, $writer, $pid ) = ProcessUtils::bipipe("cd $bindir; $runparser_command ");
+    my $runparser_command = "$command $tmp_file";
+    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe("cd $bindir; $runparser_command ");
     $self->{tntreader} = $reader;
     $self->{tntwriter} = $writer;
     $self->{tntpid}    = $pid;
-
     bless $self;
 }
 
 
 
 sub string_output {
- 
+
     my ($self,@tokens) = @_;
 
     # creating a temporary file - parser input
-    
-  #  log_info 'Storing the sentence into temporary file: $tmp_file';
+    #  log_info 'Storing the sentence into temporary file: $tmp_file';
 
-
-
- #print (join ' ',@tokens);
- my $string = (join ' ',@tokens);
-  $string =~ s/''/"/g;
-  $string =~ s/``/"/g;
-  chomp($string);
+    #print (join ' ',@tokens);
+    my $string = (join ' ',@tokens);
+    $string =~ s/''/"/g;
+    $string =~ s/``/"/g;
+    chomp($string);
     open my $INPUT, '>:utf8', $tmp_file or log_fatal $!;
     print $INPUT $string;
     close $INPUT;
 
- 
+
     my $writer = $self->{tntwriter};
-       print $writer $tmp_file ;
+    print $writer $tmp_file ;
     my $reader = $self->{tntreader};
-    
+
     my $out_string="";
     my $start="false";
-    while (<$reader>){
-    chomp($_);
-    #print $_;
-    if($_=~"ROOT"){
-    $start="true";
-    #print $_;
+    while (<$reader>) {
+        chomp($_);
+        #print $_;
+        if ($_=~"ROOT") {
+            $start="true";
+            #print $_;
+        }
+        if ($start eq "true") {
+            # print $_;
+            $out_string.=$_;
+        }
     }
-    if($start eq "true"){
-   # print $_;
-    $out_string.=$_;
-    
-    }
-     }
 
-return $out_string;
-
-
-
-
-
-
-
+    return $out_string;
 }
 
 sub parse {
     my ($self,@tokens_rf) = @_;
-_make_phrase_structure(string_output($self,@tokens_rf)); 
-
+    _make_phrase_structure(string_output($self,@tokens_rf)); 
 }
-
 
 sub _make_phrase_structure {
     my ($parser_output) = @_;
-	
- 
- #print $parser_output;
- my @tree = ();
+    #print $parser_output;
+    my @tree = ();
     my @final_tree=();
 
     my @tags = split (" ", $parser_output);
@@ -109,7 +92,7 @@ sub _make_phrase_structure {
             substr($tag,index($tag, "\("),1,"");
             my $node=Treex::Tools::Parser::Stanford::Node->new(term=>$tag);
             push (@tree, $node);
-         #   print "added $tag\n";
+            #   print "added $tag\n";
 	}
 
         # closing the node
@@ -121,41 +104,35 @@ sub _make_phrase_structure {
             }
             my $node=Treex::Tools::Parser::Stanford::Node->new(term=>$tag);
 
-	    push (@tree, $node);        
+	    push (@tree, $node);
 	    push(@final_tree,$node);
 
             my $i=0;
-	    
+
             while ($i<$parentCount) {
-	         $node= pop(@tree); 
-		       
-             my  $parent= pop(@tree);	
-	                
+                $node= pop(@tree);
+                my  $parent= pop(@tree);
                 push(@final_tree,$node);
-                $parent->add_child($node);	
-#print "Added ".$node->get_type()." to ".$parent->get_type()." \n";	
-		push (@tree, $parent);          
+                $parent->add_child($node);
+                #print "Added ".$node->get_type()." to ".$parent->get_type()." \n";
+		push (@tree, $parent);
                 $i++;
             }
-		#add link to parent top branch) nodes where the parent is comprised of multiple sub branches
-		$node= pop(@tree); 
-		 push(@final_tree,$node);
-		my  $topBranch = pop(@tree);
-		if($topBranch){
-		$topBranch->add_child($node);	 
-#		print "Added ".$node->get_type()." to ".$topBranch->get_type()." \n";
+            #add link to parent top branch) nodes where the parent is comprised of multiple sub branches
+            $node= pop(@tree); 
+            push(@final_tree,$node);
+            my  $topBranch = pop(@tree);
+            if ($topBranch) {
+		$topBranch->add_child($node);
+                #		print "Added ".$node->get_type()." to ".$topBranch->get_type()." \n";
 		push(@tree,$topBranch);
-		}
+            }
         }
-      
     }
-
-
 
     return pop @final_tree;
 
 }
-
 
 
 

@@ -3,6 +3,20 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Node';
 
+# dirty: merging terminal and nonterminal nodes' attributes
+
+# common:
+
+has [qw(is_head is_collins_head head_selection_rule index coindex)] => ( is => 'rw' );
+
+# non-terminal specific
+
+has [qw(form lemma tag)] => ( is => 'rw' );
+
+# terminal specific
+
+has [qw( phrase functions )] => ( is => 'rw' );
+
 sub get_pml_type_name {
     my ($self) = @_;
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Test::More tests => 7;
 
 my $parser = Treex::Tools::Parser::Stanford->new();
 
-isa_ok($parser,'Treex::Tools::Parser::Stanford::Stanford','parser instantiated');
+isa_ok($parser,'Treex::Tools::Parser::Stanford','parser instantiated');
 
 my @tokens = qw(John loves Mary);
 
@@ -26,7 +26,7 @@ cmp_ok($root_children[0]->term,'eq','NP', '... and it should be NP');
 
 cmp_ok(@{$root_children[0]->children},'==','3', 'there should be two root\'s grandchildren');
 
-$parser = Treex::Tools::Parser::Stanford::Stanford->new();
+$parser = Treex::Tools::Parser::Stanford->new();
 my $stanford_output = $parser->string_output(@tokens);
 
 cmp_ok( $stanford_output, 'eq', '(ROOT  (NP (NNP John) (NNP loves) (NNP Mary)))' );
