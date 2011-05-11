@@ -46,11 +46,8 @@ sub string_output {
   $string =~ s/``/"/g;
     open my $INPUT, '>:utf8', $tmp_file or log_fatal $!;
     print $INPUT $string;
-    close $INPUT;
-
- 
+    close $INPUT; 
     my $tntwr = $self->{tntwriter};
-
     my $tntrd = $self->{tntreader};
   my $got = <$tntrd>;
 
@@ -79,9 +76,9 @@ my $string = $sentence;
     my $tntrd = $self->{tntreader};
  # my $got = <$tntrd>;
  
- print  "output: \n";
-print <$tntrd>;
-print "\n";
+#print  "output: \n";
+my $got= <$tntrd>;
+#print "\n";
 }
 
 sub parse {
@@ -91,7 +88,8 @@ _make_phrase_structure(string_output($self,@tokens_rf));
 }
 sub parse_document {
     my ($self,@tokens_rf) = @_;\
-  document_output($self,@tokens_rf);
+my $parsed=  document_output($self,@tokens_rf);
+print "parsed".$parsed;
 #_make_phrase_structure(string_output($self,@tokens_rf)); 
 #loop through sentences (start with S1) and send to _make_phrase_structure
 }
