@@ -60,7 +60,7 @@ sub parse {
         my $token = $forms->[ $i - 1 ];
         log_fatal "Unexpected parser output '$got'.\nExpecting =~ /^$token/" if $items[0] ne $token;
         push @postags, $items[1];
-        push @parents, $items[2];
+        push @parents, $items[2] + 1;
         push @deprels, $items[3];
     }
 
