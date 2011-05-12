@@ -1,6 +1,7 @@
 package Treex::Tools::Phrase2Dep::Pennconverter;
 use Moose;
 use MooseX::FollowPBP;
+use Treex::Core::Common;
 use Treex::Core::Log;
 use File::Java;
 
@@ -37,9 +38,7 @@ sub parse {
 #sendpenn style string to pennconverter.jar
 my ($self) = shift @_;
 my $s= shift @_;
-
-#my $s = shift @_;
-#my $s = "(S (NP (NNP John)) (VP (VBZ loves) (NP (NNP Mary))))";
+#print "s=".$s."\n";
 my $size=shift @_;
 my $writer = $self->{writer};
 my $reader = $self->{reader};
@@ -47,25 +46,24 @@ my $reader = $self->{reader};
 
         print $writer "$s \n" ; 
 
-
+#print <$reader>;
 my $counter=0;
 my @results=();
 my @indices=();
 #print "---------\n";
+
 while ($counter<$size){
-$_=<$reader>;
-#print $_;
-my @tokens = split("\t",$_);
+my $line=<$reader>;
+
+my @tokens = split("\t",$line);
+print $tokens[0]."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3]."\t".$tokens[4]."\t".$tokens[5]."\t".$tokens[6]."\t".$tokens[7]."\n";
 if($tokens[0]=~/\d/){
-#print $tokens[0]."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3]."\t".$tokens[4]."\t".$tokens[5]."\t".$tokens[6]."\n";
 push(@results,$tokens[7]);
 push(@indices,$tokens[6]);
 $counter++;
 }
 
 }
-
-
 
 return (\@results,\@indices);
 #return <$reader>;<    
