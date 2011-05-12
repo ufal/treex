@@ -69,8 +69,8 @@ sub create_from_mrg {
     $mrg_string =~ s/^ //g;
     $mrg_string =~ s/ $//g;
 
-    # remove extra outer parenthesis
-    $mrg_string =~ s/^\(( ROOT )?(\(.+\)) \)$/$2/g;
+    # remove extra outer parenthesis (ROOT comes from Stanford, S1 comes from Charniak parser)
+    $mrg_string =~ s/^\(( (ROOT|S1) )?(\(.+\)) \)$/$3/g;
 
     my @tokens = split / /,$mrg_string;
 
