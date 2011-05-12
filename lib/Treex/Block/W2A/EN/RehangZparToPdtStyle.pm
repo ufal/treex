@@ -18,11 +18,11 @@ sub process_anode {
         last if $member->ord > $conj->ord; 
         $member->set_parent($conj);
         if ($member->form ne ','){
-            $member->set_is_member(1);
+            $member->set_conll_deprel('COORD');
         }
     }
     $last_member->set_parent($conj);
-    $last_member->set_is_member(1);
+    $last_member->set_conll_deprel('COORD');
     return;
 }
 1;
