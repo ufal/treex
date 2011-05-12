@@ -1,4 +1,4 @@
-package Treex::Block::W2A::EN::RehangZparToPdtStyle;
+package Treex::Block::W2A::EN::RehangStanfordCoordToPdtStyle;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -74,17 +74,43 @@ __END__
 
 =over
 
-=item Treex::Block::W2A::EN::RehangZparToPdtStyle
+=item Treex::Block::W2A::EN::RehangStanfordCoordToPdtStyle
 
-Modifies the way of hanging coordinations
-from the Zpar parser (with the default pre-trained model) style
-to PDT a-level style. 
+Modifies the way of annotating coordinations
+from the Stanford style to the PDT a-level style.
 
-In ZPar the head of a coordination is the last member of coordination.
-In PDT the head of a coordination is the conjunction.
+The difference is what is the head of a coordination:  
+Stanford style uses one of the members of the coordination,
+while PDT style uses the conjunction.
 
+Stanford parser usually chooses the first member and
+Zpar parser (with the default pre-trained model) usually chooses the last member
+as the head.
+This block can handle both the cases (actually it can be any member).
 
-C<W2A::EN::RehangConllToPdtStyle> must be used also to handle auxiliary verbs.
+  Example:  "Peter and Paul love Mary"
+  PDT: Peter -> and
+       and   -> love
+       Paul  -> and
+       love  -> ROOT
+       Mary  -> love
+
+  Stanford parser:
+       Peter -> love
+       and   -> Peter
+       Paul  -> Peter
+       love  -> ROOT
+       Mary  -> love
+
+  ZPar parser:
+       Peter -> Paul
+       and   -> Paul
+       Paul  -> love
+       love  -> ROOT
+       Mary  -> love
+
+C<W2A::EN::RehangConllToPdtStyle> should be used after this block
+to handle auxiliary verbs.
 
 =back
 
