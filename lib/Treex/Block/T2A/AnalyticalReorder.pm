@@ -117,6 +117,8 @@ a-node for a t-node, infer its "analytical" position based on the position of it
 
 This parameter is required.
 
+=back 
+
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>

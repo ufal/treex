@@ -62,7 +62,7 @@ Treex::Block::T2A::CS::TransformTLemmas
 
 =head1 DESCRIPTION
 
-Technical transformations on PDT-style t-lemmas to make them look moore TectoMT-like
+Technical transformations on PDT-style t-lemmas to make them look more TectoMT-like
 (differentiating the various kinds of numerals, indefinite pronouns and pronominal adverbs)
 using finite-state machinery. 
 

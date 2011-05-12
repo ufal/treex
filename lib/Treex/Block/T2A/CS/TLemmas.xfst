@@ -57,7 +57,7 @@ define KindIrreg [ {dva} -> {dvojí} "+I", {tři} -> {trojí} "+I", {čtyři} ->
 define Kind ReverseTens .o. KindIrreg .o. [ \"+I" -> ... {erý} || _ "+kind" ] .o. [ [ "+I" | "+kind" ] -> 0 ];
 
 define OrdIrreg [ {jeden} -> {první} "+I", {dva} -> {druh}, {tři} -> {třetí} "+I", {čtyři} -> {čtvrt}, [ {ět} | {et} ] -> {át},
-    {sto} -> {st}, {milion} -> {miliont}, {milión} -> {miliónt}, {miliarda} -> {miliardt} || _ [ " " ?* | 0 ] "+ord" ];
+    {sto} -> {st}, {tisíc} -> {tisící} "+I",  {milion} -> {miliont}, {milión} -> {miliónt}, {miliarda} -> {miliardt} || _ [ " " ?* | 0 ] "+ord" ];
 define Ordinal OrdIrreg .o. [ \"+I" -> ... {ý} || _ [ " " ?* | 0 ] "+ord" ] 
     .o. [ "+THO" -> "+TWHEN" || "+ord" _ ]  ! this shouldn't be needed, actually
     .o. [ [ "+I" | "+ord" ] -> 0 ];
@@ -108,7 +108,8 @@ define Indef [ IndefWords IndefType ( IndefFunctor ) ] .o. IndefTransform .o. Ap
 
 ! Indefinite numeral "kolik"
 
-define KolikNumer [ "+basic" -> 0, "+set" -> {ery}, "+kind" -> {erý}, "+ord" -> {átý} ];
+define KolikNumer [ "+THO" -> "+TWHEN" || "+ord" _ ] .o. [ "+TWHEN" -> "+THO" || "+basic" _ ] ! these shouldn't be needed
+    .o. [ "+basic" -> 0, "+set" -> {ery}, "+kind" -> {erý}, "+ord" -> {átý} ];
 define Kolik [ {kolik} NumerType IndefType ( NumerFunctor ) ] .o. KolikNumer .o. IndefTransform .o. ApplyNumerFunctor 
     .o. [ k -> 0 || _ {krát} .#. ] .o. ~[ ?* [NumerType|IndefType|NumerFunctor] ?* ]; ! ( fix for "několikkrát" )
 
