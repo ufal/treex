@@ -123,6 +123,7 @@ foreach my $a_node (@a_nodes){
 $a_node->set_attr( 'conll_deprel', $output[$counter]);
 my $index= $indices[$counter]-1;
 if($index==-1){
+print scalar(@a_nodes)."\t".scalar(@indices)."\t". $a_node->get_attr("form")."\t".$index."\n";
 $a_node->set_parent($a_root);
 }
 else{
