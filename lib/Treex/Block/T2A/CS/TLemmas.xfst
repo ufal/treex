@@ -1,4 +1,16 @@
 !
+! Czech FST grammar for various kinds of numerals, indefinite pronouns and pronominal adverbs:
+! inferring morphological lemma based on PDT t-lemma, gramateme and functor values.
+!
+! AUTHOR:
+! Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+! 
+! COPYRIGHT AND LICENSE
+! Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+! This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+!
+
+!
 ! Grammateme and functor values
 !
 
@@ -33,7 +45,8 @@ define NumerAllowed ~[ {jeden} [ "+kind" | "+set" ] ]; ! Disallow some non-exist
 
 ! Transduction rules for the individual types
 
-define Cardinal [ "+basic" -> 0 || _ [ .#. | "+THO" ] ];
+define Cardinal [ "+TWHEN" -> "+THO" || "+basic" _ ] ! this shouldn't be needed ?
+    .o. [ "+basic" -> 0 || _ [ .#. | "+THO" ] ];
 
 define FracIrreg [ {jeden} -> {jedn}, {dva} -> {polov}, {tři} -> {třet}, {čtyři} -> {čtvrt}, {devět} -> {devít}, {sto} -> {set}, 
     {milión} -> {miliónt}, {milion} -> {miliont}, {miliarda} -> {miliardt} || _ "+frac" ];

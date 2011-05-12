@@ -43,7 +43,7 @@ sub process_tnode {
 
     # the old lemma was recognized by the grammar -> set new lemma
     if ( $new_lemma and ( $new_lemma ne '???' ) ) {
-        log_info( 'FOMA:' . $old_lemma . $numer . $indef . $functor . ' -> ' . $new_lemma . '|' 
+        log_info( 'FOMA: ' . $tnode->get_address() . ' : ' . $old_lemma . $numer . $indef . $functor . ' -> ' . $new_lemma . '|' 
             . $tnode->get_deref_attr('a/lex.rf')->lemma );
         $tnode->set_t_lemma($new_lemma);
     }
@@ -58,10 +58,13 @@ __END__
 
 =head1 NAME 
 
-
+Treex::Block::T2A::CS::TransformTLemmas
 
 =head1 DESCRIPTION
 
+Technical transformations on PDT-style t-lemmas to make them look moore TectoMT-like
+(differentiating the various kinds of numerals, indefinite pronouns and pronominal adverbs)
+using finite-state machinery. 
 
 =head1 AUTHOR
 
