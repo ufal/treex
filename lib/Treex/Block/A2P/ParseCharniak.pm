@@ -17,16 +17,8 @@ sub BUILD {
 
 sub process_document {
     my ( $self, $document ) = @_;
-
-    my $arg_ref = {language=>$self->language};
-    if ($self->selector) {
-        $arg_ref->{selector} = $self->selector;
-    }
-
-
-    my @zones =  map { $_->get_zone('en','src')} $document->get_bundles;
+    my @zones =  map { $_->get_zone($self->language,$self->selector)} $document->get_bundles;
     $self->_parser->parse_zones(\@zones);
-
 }
 
 
@@ -39,8 +31,7 @@ sub process_document {
 =item Treex::Block::A2P::ParseStanford
 
 Expects tokenized nodes (a-tree),
-creates phrase-structure trees using Stanford constituency parser.
-(not in ::EN:: in hope that there will be models for more languages)
+creates phrase-structure trees using Charniak's constituency parser.
 
 =back
 
