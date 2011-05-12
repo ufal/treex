@@ -6,7 +6,7 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 use Treex::Tools::Parser::Zpar;
 
 has model     => ( is => 'ro', isa => 'Str',  default => 'en' );
-has fill_tags => ( is => 'ro', isa => 'Bool', default => 1 );
+has fill_tags => ( is => 'ro', isa => 'Bool', default => 0 );
 
 #TODO: shared parser for more instances only if they share the same model
 my $parser;
