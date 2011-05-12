@@ -23,6 +23,7 @@ sub process_document {
         $arg_ref->{selector} = $self->selector;
     }
 
+
     my @zones =  map { $_->get_zone('en','src')} $document->get_bundles;
     $self->_parser->parse_zones(\@zones);
 

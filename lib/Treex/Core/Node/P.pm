@@ -93,7 +93,7 @@ sub _reduce {
 sub _parse_mrg_nonterminal {
     my ($tokens_rf, $parent_node) = @_;
 
-    print "Parsing non-terminal: ".join(' ',@$tokens_rf)."\n";
+#    print "Parsing non-terminal: ".join(' ',@$tokens_rf)."\n";
 
     _reduce($tokens_rf,"(");
 
@@ -122,7 +122,7 @@ sub _parse_mrg_nonterminal {
 sub _parse_mrg_terminal {
     my ($tokens_rf, $parent_node) = @_;
 
-    print "Parsing terminal: ".join(' ',@$tokens_rf)."\n";
+#    print "Parsing terminal: ".join(' ',@$tokens_rf)."\n";
     _reduce($tokens_rf,"(");
 
     my $tag = shift @{$tokens_rf};
