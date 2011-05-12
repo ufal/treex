@@ -115,6 +115,10 @@ my $a_root = $bundle->get_zone('en','src')->get_atree;
 my @a_nodes = $a_root->get_descendants({ordered=>1});
 
 
+foreach my $a_node (@a_nodes) {
+  $a_node->set_parent($a_root);
+}
+
 my $counter =0;
 #print "-------------\n";
 foreach my $a_node (@a_nodes){

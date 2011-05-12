@@ -38,7 +38,7 @@ sub parse {
 #sendpenn style string to pennconverter.jar
 my ($self) = shift @_;
 my $s= shift @_;
-#print "s=".$s."\n";
+print "s=".$s."\n";
 my $size=shift @_;
 my $writer = $self->{writer};
 my $reader = $self->{reader};
