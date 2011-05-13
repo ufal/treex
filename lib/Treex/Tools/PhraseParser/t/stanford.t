@@ -6,7 +6,7 @@ use warnings;
 use Treex::Core;
 use Treex::Tools::PhraseParser::Stanford;
 
-use Test::More tests => 8;
+use Test::More tests => 1;
 
 my $parser = Treex::Tools::PhraseParser::Stanford->new();
 
