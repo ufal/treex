@@ -20,6 +20,18 @@ sub BUILD {
 sub prepare_parser_input {
     my ($self, $zones_rf) = @_;
     open my $INPUT, ">:utf8", $self->tmpdir."/input.txt" or log_fatal $!;
+    
+    #get rid of spaces such as U. S.
+#        foreach my $z (@$zones_rf) {
+#       my @a_temp_nodes= $z->get_atree->get_descendants({ordered=>1});
+#       
+#       foreach my $a_node (@a_temp_nodes){
+#       my $f = $a_node->form;
+#       $f=~ s/\s+//g;
+#       $a_node->set_attr( 'form', $f);
+#       }
+#              }
+    
     foreach my $zone (@$zones_rf) {
         print $INPUT join " ", map{$_->form} $zone->get_atree->get_descendants({ordered=>1});
         print $INPUT "\n";

@@ -8,9 +8,19 @@ sub prepare_parser_input {
     my ($self, $zones_rf) = @_;
     open my $INPUT, ">:utf8", $self->tmpdir."/input.txt" or log_fatal $!;
     foreach my $zone (@$zones_rf) {
-        print $INPUT "<s> ".
-            (join " ", map{$_->form} $zone->get_atree->get_descendants({ordered=>1})).
-                " </s>\n\n";
+#     
+#         print $INPUT "<s> ".
+#             (join " ", map{$_->form} $zone->get_atree->get_descendants({ordered=>1})).
+#                 " </s>\n\n";
+    my $string =  "<s> ";
+    my @a_nodes= $zone->get_atree->get_descendants({ordered=>1});
+    foreach my $a_node (@a_nodes){
+     my $f = $a_node->form;
+       $f=~ s/\s+//g;
+    $string.=$f." ";
+    }
+    $string.="</s>\n\n";
+    print $INPUT $string;
     }
     close $INPUT;
 }
