@@ -38,7 +38,7 @@ sub parse {
 #sendpenn style string to pennconverter.jar
 my ($self) = shift @_;
 my $s= shift @_;
-print "s=".$s."\n";
+#print "s=".$s."\n";
 my $size=shift @_;
 my $writer = $self->{writer};
 my $reader = $self->{reader};
@@ -56,7 +56,7 @@ while ($counter<$size){
 my $line=<$reader>;
 
 my @tokens = split("\t",$line);
-print $tokens[0]."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3]."\t".$tokens[4]."\t".$tokens[5]."\t".$tokens[6]."\t".$tokens[7]."\n";
+#print $tokens[0]."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3]."\t".$tokens[4]."\t".$tokens[5]."\t".$tokens[6]."\t".$tokens[7]."\n";
 if($tokens[0]=~/\d/){
 push(@results,$tokens[7]);
 push(@indices,$tokens[6]);

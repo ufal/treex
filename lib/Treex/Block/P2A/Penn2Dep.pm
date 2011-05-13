@@ -10,11 +10,13 @@ use Treex::Core::Common;
 
 my $converter;
 my @preorder=();
+my @forms;
+my @tags;
 sub BUILD {
    if (!$converter) {
         $converter = Treex::Tools::Phrase2Dep::Pennconverter->new();
     }
-    
+
 }
 
 sub preorder {
@@ -33,7 +35,8 @@ sub process_document {
  
   foreach my $bundle ($document->get_bundles()){
   @preorder=();
-
+   @forms=();
+ @tags=();
 #get each SentenceP structure and rebuild penn string
 
 #add zone information
@@ -72,7 +75,8 @@ elsif(scalar($p->get_children) >1){
 
 #  $penn=$penn." (".$p->get_attr("phrase")." ".$p->get_attr("form").") ";
    $penn=$penn." (".$p->get_attr("tag")." ".$p->get_attr("form").") ";
- 
+ push @tags,$p->get_attr("tag");
+ push @forms,$p->get_attr("form");
  my $i=0;
   my $popped=0;
     while ($i<$to_pop){
@@ -115,10 +119,22 @@ my $a_root = $bundle->get_zone('en','src')->get_atree;
 my @a_nodes = $a_root->get_descendants({ordered=>1});
 
 
+#print @forms."\t".@indices."\n";
+
+#delete a-tree and create new
+# $bundle->get_zone('en','src')->delete_atree;
+# my $a_new_root = $bundle->get_zone('en','src')->create_atree;
+# #loop through and make all new a tree
+# my $node_count=0;
+# foreach my $i (@indices) {
+# my $new_node = $a_new_root->create_child({form=>$forms[$node_count], tag=>@tags[$node_count] });
+# 
+# $node_count++;
+# }
 foreach my $a_node (@a_nodes) {
   $a_node->set_parent($a_root);
 }
-
+#my @a_nodes = $a_new_root->get_descendants({ordered=>1});
 my $counter =0;
 #print "-------------\n";
 foreach my $a_node (@a_nodes){
@@ -127,11 +143,11 @@ foreach my $a_node (@a_nodes){
 $a_node->set_attr( 'conll_deprel', $output[$counter]);
 my $index= $indices[$counter]-1;
 if($index==-1){
-print scalar(@a_nodes)."\t".scalar(@indices)."\t". $a_node->get_attr("form")."\t".$index."\n";
+#print scalar(@a_nodes)."\t".scalar(@indices)."\t". $a_node->get_attr("form")."\t".$index."\n";
 $a_node->set_parent($a_root);
 }
 else{
-print scalar(@a_nodes)."\t".scalar(@indices)."\t". $a_node->get_attr("form")."\t".$index."\n";
+#print scalar(@a_nodes)."\t".scalar(@indices)."\t". $a_node->get_attr("form")."\t".$index."\n";
 $a_node->set_parent($a_nodes[$index]);
 }
 $counter++;
