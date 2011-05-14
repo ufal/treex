@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'flatten'         => ( is       => 'rw', isa => 'Bool', default => 0 );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(form tag lemma ord afun deprel is_member no_space_after);
@@ -35,8 +36,14 @@ sub process_bundle {
 
     my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
     my $target_root = $target_zone->create_atree();
-    
+
     copy_subtree( $source_root, $target_root );
+
+    if ( $self->flatten ) {
+        foreach my $node ($target_root->get_descendants) {
+            $node->set_parent($target_root);
+        }
+    }
 }
 
 sub copy_subtree {
@@ -61,6 +68,8 @@ sub copy_subtree {
 =item Treex::Block::A2A::CopyAtree
 
 This block copies analytical tree into another zone.
+
+Trees are made flat if the switch flatten=1 is used.
 
 =back
 
