@@ -57,6 +57,10 @@ sub process_node {
     $cs_tnode->set_formeme_origin('rule-Override_pp_with_phrase_translation');
     foreach my $descendant ( $cs_tnode->get_descendants() ) {
         $descendant->disconnect();
+        ## NOTE: we don't delete links (e.g. coref) to the deleted nodes
+        ## so this block must be executed before T2T::EN2CS::FindGramCorefForReflPron
+        ## and other block that could create links to t-nodes.
+        ## In future, the links should be deleted automatically and this note deleted.
     }
 
     # Don't try to inflect this node in the synthesis
