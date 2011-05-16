@@ -19,7 +19,7 @@ sub next_document {
         my $sentence;
         foreach my $token (@tokens) {
             next if $token =~ /^\s*$/;
-            my ($id, $form, $lemma, $pos, $ppos, $feat, $head, $deprel) = split(/\t/, $token);
+            my ($id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel) = split(/\t/, $token);
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
