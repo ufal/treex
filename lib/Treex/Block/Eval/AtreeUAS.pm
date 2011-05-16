@@ -13,7 +13,7 @@ sub process_bundle {
 
     my $ref_zone = $bundle->get_zone( $self->language, $self->selector );
     my @ref_parents = map {$_->get_parent->ord} $ref_zone->get_atree->get_descendants({ordered=>1});
-    my @compared_zones = grep {$_ ne $ref_zone} $bundle->get_all_zones();
+    my @compared_zones = grep {$_ ne $ref_zone && $_->language eq $self->language} $bundle->get_all_zones();
 
     $number_of_nodes += @ref_parents;
 
@@ -34,7 +34,7 @@ sub process_bundle {
 }
 
 END {
-    print "total number of nodes: $number_of_nodes\n";
+    print "total\t$number_of_nodes\n";
     foreach my $zone_label (keys %same_as_ref) {
         print "$zone_label\t$same_as_ref{$zone_label}\t".($same_as_ref{$zone_label} / $number_of_nodes)."\n";
     }

@@ -22,7 +22,7 @@ sub BUILD {
     my ( $reader, $writer, $pid );
 
     # create temporary working directory
-    my $workdir = tempdir("maltparserXXXX", CLEANUP => 1, DIR => ".");
+    my $workdir = tempdir(Treex::Core::Config->tmp_dir."/maltparserXXXX", CLEANUP => 1);
 
     # symlink to the model (model has to be in working directory)
     system "ln -s $modeldir/" . $self->model . " $workdir/" . $self->model;
