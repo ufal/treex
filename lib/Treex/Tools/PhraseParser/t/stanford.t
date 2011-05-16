@@ -15,6 +15,7 @@ isa_ok($parser,'Treex::Tools::PhraseParser::Stanford','parser instantiated');
 my @sentences = (
     'John loves Mary .',
     'I want to ride my bicycle .',
+    'This sentence contains parentheses (that should be escaped).'
 );
 
 
