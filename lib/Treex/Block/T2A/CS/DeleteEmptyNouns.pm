@@ -16,6 +16,7 @@ sub process_tnode {
             }
 
             $a_node->disconnect;
+            $cs_tnode->set_lex_anode(undef);
         }
     }
     return;
