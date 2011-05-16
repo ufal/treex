@@ -8,7 +8,8 @@ extends 'Treex::Core::Block';
 
 has '_foma' => ( is => 'rw', builder => '_init_foma' );
 
-# Using TLemmas.xfst locate in the same directory as the source!
+
+# Using TLemmas.xfst located in the same directory as the source!
 sub _init_foma {
 
     my $dir = __FILE__;
@@ -29,22 +30,22 @@ sub process_tnode {
 
     $indef = $indef ? '+' . $indef : '';
     $numer = $numer ? '+' . $numer : '';
-    $functor = $functor =~ m/^(TWHEN|THO|TSIN|TTILL|TFHL|THO|LOC|DIR1|DIR2|DIR3)$/ ? '+' . $functor : '';
+    $functor = $functor =~ m/^(TWHEN|THO|TSIN|TTILL|TFHL|THO|LOC|DIR1|DIR2|DIR3|EXT)$/ ? '+' . $functor : '';
+
+    $functor =~ s/^\+EXT$/+THO/;
     $functor =~ s/^\+ORIG$/+DIR1/;
-    
+
     # 'jedno střídání' vs. 'jednou vypoví banka konto'
-    if ($numer and $functor and $sempos =~ m/^n/){
+    if ( $old_lemma =~ m/[0-9]/ or ( $numer =~ m/^\+(basic|ord)$/ and $functor =~ m/^\+(THO|TWHEN)$/ and $sempos =~ m/^n/ ) ) {       
         return;
     }
 
-    if ( $old_lemma !~ /[0-9]/ and ( $indef or $numer or $old_lemma =~ /^(tady|tam|teď|potom|tehdy)$/ ) ) {
+    if ( $indef or $numer or $old_lemma =~ /^(tady|tam|teď|potom|tehdy)$/ ) {
         $new_lemma = $self->_foma->down( $old_lemma . $numer . $indef . $functor );
     }
 
     # the old lemma was recognized by the grammar -> set new lemma
-    if ( $new_lemma and ( $new_lemma ne '???' ) ) {
-        log_info( 'FOMA: ' . $tnode->get_address() . ' : ' . $old_lemma . $numer . $indef . $functor . ' -> ' . $new_lemma . '|' 
-            . $tnode->get_deref_attr('a/lex.rf')->lemma );
+    if ( $new_lemma and ( $new_lemma ne '???' ) ) {        
         $tnode->set_t_lemma($new_lemma);
     }
     return;
@@ -64,7 +65,9 @@ Treex::Block::T2A::CS::TransformTLemmas
 
 Technical transformations on PDT-style t-lemmas to make them look more TectoMT-like
 (differentiating the various kinds of numerals, indefinite pronouns and pronominal adverbs)
-using finite-state machinery. 
+using finite-state machinery.
+
+This class requires the C<TLemmas.xfst> grammar file to be located in the same directory.  
 
 =head1 AUTHOR
 
