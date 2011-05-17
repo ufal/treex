@@ -33,8 +33,7 @@ sub process_bundle {
 
     # B) The zone to be processed contains just one sentence.
     if ( defined $self->language && defined $self->selector ) {
-        my $label = $self->language . '_' . $self->selector;
-        return if @{ $sentences{$label} } == 1;
+        return if @{ $sentences{$self->zone_label} } == 1;
     }
 
     # TODO: If a zone contains less subsegments (e.g. just 1) than $segments

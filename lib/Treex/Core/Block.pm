@@ -20,10 +20,6 @@ has scenario => (
 # in all *::EN::* blocks and all *::??2EN::* blocks.
 sub build_language {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
-
     my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
     if ( $lang && Treex::Core::Common::is_lang_code( lc $lang ) ) {
         return lc $lang;
@@ -31,6 +27,15 @@ sub build_language {
     else {
         return;
     }
+}
+
+sub zone_label {
+    my ($self) = @_;
+    my $label = $self->language or return;
+    if (defined $self->selector && $self->selector ne ''){
+        $label .= '_' . $self->selector;
+    }
+    return $label;
 }
 
 # TODO
@@ -244,6 +249,8 @@ be revealed by C<get_parameter> method (but cannot be changed).
 =head1 MISCEL
 
 =over 4
+
+=item my $langcode_selector = $block->zone_label();
 
 =item my $block_name = $block->get_block_name();
 
