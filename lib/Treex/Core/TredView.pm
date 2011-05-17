@@ -139,7 +139,7 @@ sub get_nodelist_hook {
         }
     }
 
-    if ( not( first { $_ == $currentNode } @nodes ) ) {
+    unless ( $currentNode and ( first { $_ == $currentNode } @nodes ) ) {
         $currentNode = $nodes[0];
     }
     return [ \@nodes, $currentNode ];
@@ -490,7 +490,7 @@ sub node_style_hook {
 
     # TODO: Would it be possible to move this code to the "_precomputed_node_style" attr?
     my %n = TredMacro::GetStyles( $styles, 'Node' );
-    TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '&' . $node->{id} );
+    TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '#' . $node->{id} );
 
     my $xadj = $node->root->{'_shift_right'} * 50;
     if (ref($node)

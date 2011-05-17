@@ -11,21 +11,21 @@ has '_colors' => (
 
 sub _build_colors {
     return {
-        'edge' => '#555',
-        'coord' => '#bbb',
-        'error' => '#f00',
-        'coord_mod' => '#666',
+        'edge' => '#555555',
+        'coord' => '#bbbbbb',
+        'error' => '#ff0000',
+        'coord_mod' => '#666666',
         
-        'anode' => '#f66',
-        'anode_coord' => '',
-        'nnode' => '#ff0',
-        'tnode' => '#48f',
-        'tnode_coord' => '#cdf',
-        'terminal' => '#ff6',
+        'anode' => '#ff6666',
+        'anode_coord' => '#ff6666',
+        'nnode' => '#ffff00',
+        'tnode' => '#4488ff',
+        'tnode_coord' => '#ccddff',
+        'terminal' => '#ffff66',
         'nonterminal_head' => '#90ee90',
         'nonterminal' => '#ffffe0',
-        'trace' => '#aaa',
-        'current' => '#f00',
+        'trace' => '#aaaaaa',
+        'current' => '#ff0000',
         
         'coref_gram' => '#c05633',
         'coref_text' => '#4c509f',
