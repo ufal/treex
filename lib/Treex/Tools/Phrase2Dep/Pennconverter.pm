@@ -1,91 +1,104 @@
 package Treex::Tools::Phrase2Dep::Pennconverter;
 use Moose;
-use MooseX::FollowPBP;
 use Treex::Core::Common;
-use Treex::Core::Log;
+use ProcessUtils;
 use File::Java;
 
-use ProcessUtils;
+has after_rich_np => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'The phrase structure contains rich NP bracketing. '
+        . 'E.g. PennTB pathed with annotation by David Vadas.',
+);
 
-#to be changed
+has after_traces => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'The phrase structure contains traces and function tags.',
+);
 
-my @all_javas;    # PIDs of java processes
+has [qw( _reader _writer _pid )] => ( is => 'rw' );
+
 sub BUILD {
-    my ( $self ) = @_;
-    my $bindir = "$ENV{TMT_ROOT}libs/other/Parser/Pennconverter";
-    die "Missing $bindir\n" if !-d $bindir;
+    my ($self) = @_;
+    my $jar = "$ENV{TMT_ROOT}share/installed_tools/pennconverter/pennconverter.jar";
+    die "Missing $jar\n" if !-f $jar;
+    my $options = '';
 
+    if ( !$self->after_traces ) {
+        $options .= ' -raw';
+    }
+
+    if ( !$self->after_rich_np ) {
+        $options .= ' -rightBranching=false';
+    }
+
+    # Head-selection rules that should look like CoNLL 2007
+    $options .= ' -coordStructure=prague -advFuncs=false -imAsHead=false -splitSmallClauses=false -name=false';
 
     my $javabin = File::Java->javabin();
-    #my $cp = File::Java->cp( "$bindir/pennconverter.jar");
-
-     my $command = "java -jar $bindir/pennconverter.jar"; 
-        
-
-     $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
-     my ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
- 
-     $self->{reader} = $reader;
-     $self->{writer} = $writer;
-     $self->{pid}    = $pid;
- 
-    bless $self;
-    push @all_javas, $self;
+    my $command = "$javabin -jar $jar $options";
+    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe($command);
+    $self->_set_reader($reader);
+    $self->_set_writer($writer);
+    $self->_set_pid($pid);    
+    return;
 }
 
-sub parse {
+sub convert {
+    my ( $self, $penn_style_string, $size ) = @_;
+    my $writer = $self->_writer;
+    my $reader = $self->_reader;
+    print $writer $penn_style_string . "\n";
 
-#sendpenn style string to pennconverter.jar
-my ($self) = shift @_;
-my $s= shift @_;
-#print "s=".$s."\n";
-my $size=shift @_;
-my $writer = $self->{writer};
-my $reader = $self->{reader};
-        Report::fatal("Treex::Tools::Phrase2Dep::Pennconverter unexpected status") if ( !defined $reader || !defined $writer );
-
-        print $writer "$s \n" ; 
-
-#print <$reader>;
-my $counter=0;
-my @results=();
-my @indices=();
-#print "---------\n";
-
-while ($counter<$size){
-my $line=<$reader>;
-
-my @tokens = split("\t",$line);
-#print $tokens[0]."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3]."\t".$tokens[4]."\t".$tokens[5]."\t".$tokens[6]."\t".$tokens[7]."\n";
-if($tokens[0]=~/\d/){
-push(@results,$tokens[7]);
-push(@indices,$tokens[6]);
-$counter++;
-}
-
-}
-
-return (\@results,\@indices);
-#return <$reader>;<    
-      
-
-  return;
-}
-
-
-
-
-END {
-
-    foreach my $java (@all_javas) {
-        close( $java->{writer} );
-        close( $java->{reader} );
-        ProcessUtils::safewaitpid( $java->{pid} );
+    my ( @parents, @deprels );
+    for my $i ( 1 .. $size ) {
+        my $line = <$reader>;
+        my @conll_columns = split /\t/, $line;
+        push( @parents, $conll_columns[6] );
+        push( @deprels, $conll_columns[7] );
     }
+    
+    # read one empty line after the last token of the sentence
+    my $line = <$reader>; chomp $line;
+    log_fatal "Unexpected output: $line" if $line ne '';                                                              
+
+    return ( \@parents, \@deprels );
 }
 
+sub DEMOLISH {
+    my ($self) = @_;
+    close( $self->_writer );
+    close( $self->_reader );
+    ProcessUtils::safewaitpid( $self->_pid );
+    return;
+}
 
 1;
+
 __END__
 
+=head1 NAME
 
+Treex::Tools::Phrase2Dep::Pennconverter - Wrapper for Java PennConverter tool
+
+=head1 SYNOPSIS
+
+  use Treex::Tools::Phrase2Dep::Pennconverter;
+  my $pennconverter = Treex::Tools::Phrase2Dep::Pennconverter->new({
+      after_traces=>1,
+      after__rich_np=>1,
+  });
+  
+  my ($parent_indices_ref, $deprels_ref) = $pennconverter->conver();
+
+=head1 DESCRIPTION
+
+http://nlp.cs.lth.se/software/treebank_converter/
+
+=cut
+
+Copyright 2011 Martin Popel
+This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

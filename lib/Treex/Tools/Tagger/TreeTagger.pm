@@ -69,7 +69,13 @@ sub analyze {
     return \@output;
 }
 
-# TODO kill $self->_pid in DEMOLISH
+sub DEMOLISH {
+    my ($self) = @_;
+    close( $self->_writer );
+    close( $self->_reader );
+    ProcessUtils::safewaitpid( $self->_pid );
+    return;
+}
 
 1;
 
