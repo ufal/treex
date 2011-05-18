@@ -149,7 +149,10 @@ sub stringify_as_mrg {
     else {
         my $tag  = defined $self->tag  ? $self->tag  : '?';
         my $form = defined $self->form ? $self->form : '?';
+        $form =~ s/ /_/g;
         $string = "$tag $form";
+        $string =~ s/\(/-LRB-/g;
+        $string =~ s/\)/-RRB-/g;
     }
     if ( $self->children ) {
         $string .= join ' ', map { $_->stringify_as_mrg() } $self->children;
