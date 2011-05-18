@@ -43,28 +43,24 @@ sub BUILD {
     my ( $reader, $writer, $pid ) = ProcessUtils::bipipe($command);
     $self->_set_reader($reader);
     $self->_set_writer($writer);
-    $self->_set_pid($pid);    
+    $self->_set_pid($pid);
     return;
 }
 
 sub convert {
-    my ( $self, $penn_style_string, $size ) = @_;
+    my ( $self, $penn_style_string ) = @_;
     my $writer = $self->_writer;
     my $reader = $self->_reader;
     print $writer $penn_style_string . "\n";
 
     my ( @parents, @deprels );
-    for my $i ( 1 .. $size ) {
-        my $line = <$reader>;
+    while ( my $line = <$reader> ) {
+        chomp $line;
+        last if $line eq '';
         my @conll_columns = split /\t/, $line;
         push( @parents, $conll_columns[6] );
         push( @deprels, $conll_columns[7] );
     }
-    
-    # read one empty line after the last token of the sentence
-    my $line = <$reader>; chomp $line;
-    log_fatal "Unexpected output: $line" if $line ne '';                                                              
-
     return ( \@parents, \@deprels );
 }
 

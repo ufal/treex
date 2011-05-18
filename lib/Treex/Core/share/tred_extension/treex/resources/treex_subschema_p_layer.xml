@@ -73,8 +73,10 @@
       <value>WHPP</value>
       <value>X</value>
 
-      <value>TOP</value> <!-- added because of the collins parser -->
-      <value>NPB</value> <!-- added because of the collins parser -->
+      <value>TOP</value>  <!-- for Collins parser -->
+      <value>NPB</value>  <!-- for Collins parser -->
+      <value>ROOT</value> <!-- for Stanford parser -->
+      <value>S1</value>   <!-- for Charniak parser -->
     </choice>
   </type>
 
