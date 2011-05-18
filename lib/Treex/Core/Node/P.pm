@@ -69,8 +69,12 @@ sub create_from_mrg {
     $mrg_string =~ s/-LCB-/\{/g;
     $mrg_string =~ s/-RCB-/\}/g;
 
-    # remove extra outer parenthesis (ROOT comes from Stanford, S1 comes from Charniak parser)
-    $mrg_string =~ s/^\(( (ROOT|S1) )?(\(.+\)) \)$/$3/g;
+    # remove extra outer parenthesis
+    $mrg_string =~ s/^\( (.+) \)$/$1/;
+
+    # remove the root label
+    # (ROOT comes from Stanford, S1 comes from Charniak parser, S is in PennTB)
+    #$mrg_string =~ s/^(ROOT|S1?) //g;
 
     my @tokens = split / /, $mrg_string;
 
@@ -91,7 +95,6 @@ sub _reduce {
 
 sub _parse_mrg_nonterminal {
     my ( $self, $tokens_rf, $parent_node ) = @_;
-
     $self->_reduce( $tokens_rf, "(" );
 
     my $new_nonterminal = $parent_node->create_nonterminal_child;
@@ -100,6 +103,11 @@ sub _parse_mrg_nonterminal {
     my $label = shift @{$tokens_rf};
     my @label_components = split /-/, $label;
     $new_nonterminal->set_phrase( shift @label_components );
+
+    # TODO: handle traces correctly
+    # Delete trace indices (e.g. NP-SBJ-10 ... -NONE- *T*-10)
+    @label_components = grep {!/^\d+$/} @label_components;
+
     if (@label_components) {
         $new_nonterminal->set_functions( \@label_components );
     }
@@ -136,6 +144,7 @@ sub _parse_mrg_terminal {
 
 sub stringify_as_mrg {
     my ($self) = @_;
+    #my $string = $self->is_root
     log_fatal('Not implemented yet');
 }
 
