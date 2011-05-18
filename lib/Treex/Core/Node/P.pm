@@ -72,6 +72,8 @@ sub create_from_mrg {
     # remove extra outer parenthesis
     $mrg_string =~ s/^\( (\(.+) \)$/$1/;
 
+    # remove one extra non-terminal (ROOT comes from Stanford, S1 comes from Charniak parser)
+    $mrg_string =~ s/^\( (ROOT|S1) (.+) \)$/$2/g;
     my @tokens = split / /, $mrg_string;
 
     $self->_parse_mrg_nonterminal( \@tokens );

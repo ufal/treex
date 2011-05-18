@@ -26,7 +26,7 @@ sub process_zone {
     my $a_root = $zone->get_atree();
     my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
     
-    my $mrg_string = "( " . $ptree->stringify_as_mrg() . " )\n";
+    my $mrg_string = $ptree->stringify_as_mrg() . "\n";
     my ( $parents, $deprels ) = $self->_tool->convert( $mrg_string, 10 );   
     log_fatal "Wrong number of nodes returned:\n"
       . "MRG_STRING=$mrg_string\n"

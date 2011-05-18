@@ -48,10 +48,10 @@ sub BUILD {
 }
 
 sub convert {
-    my ( $self, $penn_style_string ) = @_;
+    my ( $self, $mrg_string ) = @_;
     my $writer = $self->_writer;
     my $reader = $self->_reader;
-    print $writer $penn_style_string . "\n";
+    print $writer $mrg_string . "\n";
 
     my ( @parents, @deprels );
     while ( my $line = <$reader> ) {
@@ -61,6 +61,7 @@ sub convert {
         push( @parents, $conll_columns[6] );
         push( @deprels, $conll_columns[7] );
     }
+    log_fatal "Pennconverter was not able to convert: '$mrg_string'" if !@parents;
     return ( \@parents, \@deprels );
 }
 
