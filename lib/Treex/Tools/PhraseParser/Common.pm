@@ -20,22 +20,26 @@ sub prepare_parser_input {
     my ( $self, $zones_rf ) = @_;
     open my $INPUT, ">:encoding(UTF-8)", $self->tmpdir . "/input.txt" or log_fatal $!;
     foreach my $zone (@$zones_rf) {
-
-        #         print $INPUT join " ", map{$_->form} $zone->get_atree->get_descendants({ordered=>1});
-        #         print $INPUT "\n";
-        my $string = " ";
-        my @a_nodes = $zone->get_atree->get_descendants( { ordered => 1 } );
-        foreach my $a_node (@a_nodes) {
-            my $f = $a_node->form;
-            $f =~ s/\s+//g;
-            $string .= $f . " ";
-        }
-        $string .= "\n";
-        print $string. "\n";
-        print $INPUT $string;
+        print $INPUT
+            join ' ',
+            map { $self->escape_form( $_->form ) }
+            $zone->get_atree->get_descendants( { ordered => 1 } );
+        print $INPUT "\n";
     }
     close $INPUT;
     return;
+}
+
+sub escape_form {
+    my ($self, $form) = @_;
+    $form =~ s/ /_/g;
+    $form =~ s/\(/-LRB-/g;
+    $form =~ s/\)/-RRB-/g;
+    $form =~ s/\[/-LSB-/g;
+    $form =~ s/\]/-RSB-/g;
+    $form =~ s/\{/-LCB-/g;
+    $form =~ s/\}/-RCB-/g;
+    return $form;
 }
 
 sub run_parser {

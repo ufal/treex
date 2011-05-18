@@ -6,24 +6,21 @@ extends 'Treex::Core::Node';
 # dirty: merging terminal and nonterminal nodes' attributes
 
 # common:
-
 has [qw(is_head is_collins_head head_selection_rule index coindex)] => ( is => 'rw' );
 
-# non-terminal specific
-
+# terminal specific
 has [qw(form lemma tag)] => ( is => 'rw' );
 
-# terminal specific
-
+# non-terminal specific
 has [qw( phrase functions )] => ( is => 'rw' );
 
 sub get_pml_type_name {
     my ($self) = @_;
 
-    if ( $self->is_root() or $self->get_attr('phrase') ) {
+    if ( $self->is_root() or $self->phrase ) {
         return 'p-nonterminal.type';
     }
-    elsif ( $self->get_attr('tag') ) {
+    elsif ( $self->tag ) {
         return 'p-terminal.type';
     }
     else {
@@ -65,6 +62,12 @@ sub create_from_mrg {
     $mrg_string =~ s/\s+/ /g;
     $mrg_string =~ s/^ //g;
     $mrg_string =~ s/ $//g;
+    
+    # remove back brackets (except for round)
+    $mrg_string =~ s/-LSB-/\[/g;
+    $mrg_string =~ s/-RSB-/\]/g;
+    $mrg_string =~ s/-LCB-/\{/g;
+    $mrg_string =~ s/-RCB-/\}/g;
 
     # remove extra outer parenthesis (ROOT comes from Stanford, S1 comes from Charniak parser)
     $mrg_string =~ s/^\(( (ROOT|S1) )?(\(.+\)) \)$/$3/g;
@@ -121,6 +124,8 @@ sub _parse_mrg_terminal {
 
     my $tag          = shift @{$tokens_rf};
     my $form         = shift @{$tokens_rf};
+    $form =~ s/-LRB-/\(/g;
+    $form =~ s/-RRB-/\)/g;
     my $new_terminal = $parent_node->create_terminal_child();
     $new_terminal->set_form($form);
     $new_terminal->set_tag($tag);
