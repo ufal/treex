@@ -62,7 +62,7 @@ sub create_from_mrg {
     $mrg_string =~ s/\s+/ /g;
     $mrg_string =~ s/^ //g;
     $mrg_string =~ s/ $//g;
-    
+
     # remove back brackets (except for round)
     $mrg_string =~ s/-LSB-/\[/g;
     $mrg_string =~ s/-RSB-/\]/g;
@@ -70,15 +70,11 @@ sub create_from_mrg {
     $mrg_string =~ s/-RCB-/\}/g;
 
     # remove extra outer parenthesis
-    $mrg_string =~ s/^\( (.+) \)$/$1/;
-
-    # remove the root label
-    # (ROOT comes from Stanford, S1 comes from Charniak parser, S is in PennTB)
-    #$mrg_string =~ s/^(ROOT|S1?) //g;
+    $mrg_string =~ s/^\( (\(.+) \)$/$1/;
 
     my @tokens = split / /, $mrg_string;
 
-    $self->_parse_mrg_nonterminal( \@tokens, $self );
+    $self->_parse_mrg_nonterminal( \@tokens );
     return;
 }
 
@@ -94,30 +90,30 @@ sub _reduce {
 }
 
 sub _parse_mrg_nonterminal {
-    my ( $self, $tokens_rf, $parent_node ) = @_;
+    my ( $self, $tokens_rf ) = @_;
     $self->_reduce( $tokens_rf, "(" );
-
-    my $new_nonterminal = $parent_node->create_nonterminal_child;
 
     # phrase type and (optionally) a list of grammatical functions
     my $label = shift @{$tokens_rf};
     my @label_components = split /-/, $label;
-    $new_nonterminal->set_phrase( shift @label_components );
+    $self->set_phrase( shift @label_components );
 
     # TODO: handle traces correctly
     # Delete trace indices (e.g. NP-SBJ-10 ... -NONE- *T*-10)
-    @label_components = grep {!/^\d+$/} @label_components;
+    @label_components = grep { !/^\d+$/ } @label_components;
 
     if (@label_components) {
-        $new_nonterminal->set_functions( \@label_components );
+        $self->set_functions( \@label_components );
     }
 
     while ( $tokens_rf->[0] eq "(" ) {
         if ( $tokens_rf->[2] eq "(" ) {
-            $self->_parse_mrg_nonterminal( $tokens_rf, $new_nonterminal );
+            my $new_nonterminal = $self->create_nonterminal_child();
+            $new_nonterminal->_parse_mrg_nonterminal($tokens_rf);
         }
         else {
-            $self->_parse_mrg_terminal( $tokens_rf, $new_nonterminal );
+            my $new_terminal_child = $self->create_terminal_child();
+            $new_terminal_child->_parse_mrg_terminal($tokens_rf);
         }
     }
 
@@ -126,17 +122,15 @@ sub _parse_mrg_nonterminal {
 }
 
 sub _parse_mrg_terminal {
-    my ( $self, $tokens_rf, $parent_node ) = @_;
-
+    my ( $self, $tokens_rf ) = @_;
     $self->_reduce( $tokens_rf, "(" );
 
-    my $tag          = shift @{$tokens_rf};
-    my $form         = shift @{$tokens_rf};
+    my $tag  = shift @{$tokens_rf};
+    my $form = shift @{$tokens_rf};
     $form =~ s/-LRB-/\(/g;
     $form =~ s/-RRB-/\)/g;
-    my $new_terminal = $parent_node->create_terminal_child();
-    $new_terminal->set_form($form);
-    $new_terminal->set_tag($tag);
+    $self->set_form($form);
+    $self->set_tag($tag);
 
     $self->_reduce( $tokens_rf, ")" );
     return;
@@ -144,8 +138,21 @@ sub _parse_mrg_terminal {
 
 sub stringify_as_mrg {
     my ($self) = @_;
-    #my $string = $self->is_root
-    log_fatal('Not implemented yet');
+    my $string;
+    if ( $self->phrase ) {
+        my @functions = $self->functions ? @{ $self->functions } : ();
+        $string = join '-', $self->phrase, @functions;
+        $string .= ' ';
+    }
+    else {
+        my $tag  = defined $self->tag  ? $self->tag  : '?';
+        my $form = defined $self->form ? $self->form : '?';
+        $string = "$tag $form";
+    }
+    if ( $self->children ) {
+        $string .= join ' ', map { $_->stringify_as_mrg() } $self->children;
+    }
+    return "($string)";
 }
 
 1;
