@@ -36,7 +36,10 @@ sub BUILD {
     }
 
     # Head-selection rules that should look like CoNLL 2007
-    $options .= ' -coordStructure=prague -advFuncs=false -imAsHead=false -splitSmallClauses=false -name=false';
+    # "-conll2007" seems to be a shortcut for
+    # "-coordStructure=prague   -advFuncs=false -imAsHead=false
+    #  -splitSmallClauses=false -name=false     -suffix=false"
+    $options .= ' -conll2007';
 
     my $javabin = File::Java->javabin();
     my $command = "$javabin -jar $jar $options";
