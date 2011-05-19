@@ -12,7 +12,7 @@ sub prepare_parser_input {
             join ' ',
             map { $self->escape_form( $_->form ) }
             $zone->get_atree->get_descendants( { ordered => 1 } );
-        print $INPUT "</s>\n\n";
+        print $INPUT " </s>\n\n";
     }
     close $INPUT;
     return;
