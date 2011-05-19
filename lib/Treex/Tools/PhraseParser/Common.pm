@@ -10,7 +10,7 @@ has tmpdir => ( isa => 'Str', is => 'rw' );
 sub BUILD {
     my ($self) = @_;
     $self->set_tmpdir(
-        File::Temp::tempdir( Treex::Core::Config->tmp_dir . "/parser_XXXXXX" )    #, CLEANUP => 1
+        File::Temp::tempdir( 'parser_XXXXXXX', DIR => Treex::Core::Config->tmp_dir() )    #, CLEANUP => 1
     );
     log_info "Temporary directory for a phrase-structure parser: " . $self->tmpdir . "\n";
     return;
@@ -48,8 +48,9 @@ sub run_parser {
 
 sub convert_parser_output_to_ptrees {
     my ( $self, $zones_rf ) = @_;
-    my $output = read_file( $self->tmpdir . "/output.txt" )
-        or log_fatal "Empty or non-existing " . $self->tmpdir . "/output.txt  $!";
+    my $out_filename = $self->tmpdir . '/output.txt';
+    log_fatal "The parser did not create $out_filename" if !-f $out_filename;
+    my $output = read_file($out_filename) or log_fatal "Empty $out_filename ($!)";
 
     $output =~ s/\n\(/__START__\(/gsxm;
     $output =~ s/\s+/ /gsxm;
