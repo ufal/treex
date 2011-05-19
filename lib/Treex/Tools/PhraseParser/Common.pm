@@ -56,7 +56,7 @@ sub convert_parser_output_to_ptrees {
     my @mrg_strings = split /__START__/, $output;
 
     if ( @mrg_strings != @$zones_rf ) {
-        log_fatal "There must be same number of zones and parse trees";
+        log_fatal "There must be same number of zones and parse trees. The parser produced '$output'.";
     }
 
     foreach my $zone (@$zones_rf) {

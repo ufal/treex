@@ -619,8 +619,16 @@ sub _wait_for_jobs {
 
 sub _check_job_errors {
     my ($self) = @_;
-    if ( glob $self->workdir . '/output/*fatalerror' ) {
-        log_info 'At least one job crashed with fatal error. All remaining jobs will be interrupted now.';
+    my $workdir = $self->workdir;
+    if ( defined( my $fatal_name = glob "$workdir/output/*fatalerror" ) ) {
+        log_info "At least one job crashed with fatal error ($fatal_name).";
+        my ($fatal_job) = $fatal_name =~ /job(\d+)/;
+        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/output/job$fatal_job*.stderr";
+        my $fatal_lines = qx($command);
+        log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
+        log_info "$fatal_lines\n";
+        log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
+        log_info "All remaining jobs will be interrupted now.";
         $self->_delete_jobs_and_exit;
     }
     return;
@@ -629,8 +637,8 @@ sub _check_job_errors {
 sub _delete_jobs_and_exit {
     my ($self) = @_;
 
+    log_info "Deleting jobs: " . join(', ',@{ $self->sge_job_numbers });
     foreach my $job ( @{ $self->sge_job_numbers } ) {
-        log_info "Deleting job $job";
         system "qdel $job";
     }
     log_info 'You may want to inspect generated files in ' . $self->workdir . '/output/';
