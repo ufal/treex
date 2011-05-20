@@ -1,6 +1,6 @@
 package Treex::Tools::FSM::Foma;
-use Moose;
 
+use Moose;
 use ProcessUtils;
 use Treex::Core::Common;
 
