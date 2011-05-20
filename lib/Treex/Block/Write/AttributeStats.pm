@@ -10,7 +10,6 @@ with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
 
-
 # The statistics storage (a multi-level hash, with one level for each attribute).
 has '_attrib_stats' => (
     isa     => 'HashRef',
@@ -19,20 +18,19 @@ has '_attrib_stats' => (
 );
 
 has 'separator' => (
-    isa => 'Str',
-    is => 'ro',
+    isa     => 'Str',
+    is      => 'ro',
     default => "\t"
 );
 
 sub _process_tree() {
-    
+
     my ( $self, $tree ) = @_;
 
     foreach my $node ( $tree->get_descendants ) {
         $self->_process_node($node);
-    }    
+    }
 }
-
 
 # Gathers the statistics for one node.
 sub _process_node() {
@@ -61,6 +59,7 @@ sub _process_node() {
             }
             $ref = $ref->{$val};
         }
+
         # We are at the end of the multi-level hash, don't go deeper, just collect the value
         else {
             $ref->{$val} = $ref->{$val} ? $ref->{$val} + 1 : 1;
@@ -68,6 +67,7 @@ sub _process_node() {
     }
 }
 
+# Collects statistics for individual files
 override 'process_document' => sub {
 
     my $self = shift;
@@ -76,34 +76,39 @@ override 'process_document' => sub {
         { isa => 'Treex::Core::Document' },
     );
 
-    super;    # collect statistics
+    super;
 
-    print { $self->_file_handle } 'FILE: ' . $document->path . "\n";
-
-    $self->_print_stats( $self->_attrib_stats, 'TOTAL', 0 );    # print them at the end
+    log_info( 'Stats collected for : ' . $document->path . ', total ' . $self->_attrib_stats->{'__COUNT__'} . ' entries' );
 };
 
+# Prints the whole statistics at the end of the process
+sub DEMOLISH {
 
-# Prints the specified part of the statistics (designed to be recursive) 
+    my ($self) = @_;
+
+    $self->_print_stats( $self->_attrib_stats, 'TOTAL', 0 );
+}
+
+# Prints the specified part of the statistics (designed to be recursive)
 sub _print_stats {
 
     my ( $self, $part, $caption, $depth ) = @_;
 
-    # find out the total count for the given portion    
+    # find out the total count for the given portion
     my $total = ref $part eq 'HASH' ? $part->{'__COUNT__'} : $part;
 
     # shift for the given depth
     for ( my $i = 0; $i < $depth; ++$i ) {
         print { $self->_file_handle } $self->separator;
     }
-    
+
     # print the statistics
     print { $self->_file_handle } $caption . $self->separator . $total . "\n";
 
-    if ( ref $part eq 'HASH' ) { # recurse into sub-statistics
+    if ( ref $part eq 'HASH' ) {    # recurse into sub-statistics
 
         delete $part->{'__COUNT__'};
-        
+
         foreach my $key (
             sort
             {
@@ -114,6 +119,7 @@ sub _print_stats {
             keys %{$part}
             )
         {
+
             # print the sub-statistics
             $self->_print_stats( $part->{$key}, $key, $depth + 1 );
         }
@@ -123,6 +129,7 @@ sub _print_stats {
 1;
 
 __END__
+
 =encoding utf-8
 
 =head1 NAME 
