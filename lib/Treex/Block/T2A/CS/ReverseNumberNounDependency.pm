@@ -79,7 +79,7 @@ sub process_t_node {
     # Numbers with decimal point/comma require singular noun in Czech
     # "2,5 miliardy" (not "2,5 miliard")
     if ( $t_lemma =~ /\d[\.,]\d/ ) {
-        $t_noun->set_attr( 'gram/number', 'sg' );
+        $t_noun->set_gram_number('sg');
     }
 
     return;

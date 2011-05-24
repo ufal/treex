@@ -85,30 +85,30 @@ sub process_tnode {
     my $cs_tlemma  = $cs_t_node->t_lemma;
 
     # Some English clause heads may become non-heads and vice versa
-    $cs_t_node->set_attr( 'is_clause_head', $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
+    $cs_t_node->set_is_clause_head( $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
 
     # defaultne: you --> plural
-    if ( ( $cs_t_node->get_attr('gram/person') || "" ) eq "2" ) {
-        $cs_t_node->set_attr( 'gram/number', 'pl' )
+    if ( ( $cs_t_node->gram_person || "" ) eq "2" ) {
+        $cs_t_node->set_gram_number('pl')
     }
 
     # default gender with 1st and 2nd person: masculine animate
-    if ( ( $cs_t_node->get_attr('gram/person') || "" ) =~ /[12]/ ) {
-        $cs_t_node->set_attr( 'gram/gender', 'anim' )
+    if ( ( $cs_t_node->gram_person || "" ) =~ /[12]/ ) {
+        $cs_t_node->set_gram_gender('anim')
     }
 
     # defaultni rod u pluralu bude muzsky zivotny
     if ($cs_tlemma eq '#PersPron'
-        and ( ( $cs_t_node->get_attr('gram/number') || '' ) eq 'pl' )
-        and ( ( $cs_t_node->get_attr('gram/gender') || '' ) =~ /^(|nr)$/ )
+        and ( ( $cs_t_node->gram_number || '' ) eq 'pl' )
+        and ( ( $cs_t_node->gram_gender || '' ) =~ /^(|nr)$/ )
         )
     {
-        $cs_t_node->set_attr( 'gram/gender', 'anim' );
+        $cs_t_node->set_gram_gender('anim');
     }
 
     if ( $cs_formeme =~ /^n/ and $en_formeme !~ /^n/ ) {
-        $cs_t_node->set_attr( 'gram/sempos', 'n.denot' );
-        $cs_t_node->set_attr( 'gram/number', 'sg' );
+        $cs_t_node->set_gram_sempos('n.denot');
+        $cs_t_node->set_gram_number('sg');
         foreach my $gram (qw(degcmp verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
             $cs_t_node->set_attr( "gram/$gram", undef );
         }
@@ -118,17 +118,17 @@ sub process_tnode {
     if ($cs_formeme eq "n:2"
         and $en_formeme =~ /^(n:attr|[^n])/
         and not $cs_t_node->get_parent->is_root
-        and ( $cs_t_node->get_attr('gram/number') || '' ) eq 'sg'
+        and ( $cs_t_node->gram_number || '' ) eq 'sg'
         and $cs_t_node->get_parent->formeme =~ /^n/
         )
     {
 
         #	    print "before ".$cs_t_node->get_parent->t_lemma."\t".$cs_t_node->t_lemma."\tbefore: ".
-        #		$cs_t_node->get_attr('gram/number')."\t";
+        #		$cs_t_node->gram_number."\t";
         my $predicted_number =
             more_frequent_number_for_genitive_noun_below_gov_noun( $cs_t_node->get_parent->t_lemma, $cs_tlemma );
 
-        if (( $cs_t_node->get_parent->get_attr('gram/number') || '' ) eq 'pl'
+        if (( $cs_t_node->get_parent->gram_number || '' ) eq 'pl'
             and $en_tlemma !~ /\p{IsUpper}/
             and defined $prob_sg_given_lemma{$cs_tlemma}
             and $prob_sg_given_lemma{$cs_tlemma} < 0.8
@@ -139,9 +139,9 @@ sub process_tnode {
             #		print "QQQ\t".$cs_t_node->get_parent->t_lemma."\t".$cs_t_node->t_lemma."\n";
         }
 
-        $cs_t_node->set_attr( 'gram/number', $predicted_number || 'sg' );
+        $cs_t_node->set_gram_number( $predicted_number || 'sg' );
 
-        #	    print "after: ".$cs_t_node->get_attr('gram/number')."\n";
+        #	    print "after: ".$cs_t_node->gram_number."\n";
     }
 
     # Force gram/number of lemmas with strict inclination to sg. resp. pl. according to CNK corpus
@@ -152,31 +152,31 @@ sub process_tnode {
 
             # However, don't force singular for nodes modified by numeral > 1
             if ( !grep { ( Lexicon::Czech::number_for( $_->t_lemma ) || 0 ) > 1 } $cs_t_node->get_children() ) {
-                $cs_t_node->set_attr( 'gram/number', 'sg' );
+                $cs_t_node->set_gram_number('sg');
             }
         }
         elsif ( $prob_sg_given_lemma{$cs_tlemma} < 0.05 ) {
-            $cs_t_node->set_attr( 'gram/number', 'pl' );
+            $cs_t_node->set_gram_number('pl');
         }
     }
 
     if ( $en_tlemma =~ /^(this|that|what)$/ and $cs_formeme =~ /^n/ ) {
-        $cs_t_node->set_attr( "gram/gender", 'neut' );    # should be shifted rather to synthesis???
+        $cs_t_node->set_gram_gender('neut');    # should be shifted rather to synthesis???
     }
 
     # everybody -> lemma=všechen form=všichni
     if ( $en_tlemma eq 'everybody' && $cs_tlemma =~ /^vš/ ) {
-        $cs_t_node->set_attr( "gram/number", 'pl' );
+        $cs_t_node->set_gram_number('pl');
     }
 
     # everybody -> lemma=každý, somebody -> někdo,...
     elsif ( $en_tlemma =~ /^(some|no|any|every)(one|body)$/ and $cs_formeme =~ /^n/ ) {
-        $cs_t_node->set_attr( "gram/gender", 'anim' );
-        if ( $cs_tlemma eq "všechen" ) {                 # "vsichni" indeed
-            $cs_t_node->set_attr( "gram/number", 'pl' );
+        $cs_t_node->set_gram_gender('anim');
+        if ( $cs_tlemma eq 'všechen' ) {                 # "vsichni" indeed
+            $cs_t_node->set_gram_number('pl');
         }
         else {
-            $cs_t_node->set_attr( "gram/number", 'sg' );
+            $cs_t_node->set_gram_number('sg');
         }
     }
 
@@ -228,7 +228,7 @@ sub process_tnode {
             or ( $en_tlemma =~ /^discontent/ and $cs_tlemma =~ /^(spokoj)/ )
             )
         {
-            $cs_t_node->set_attr( 'gram/negation', 'neg1' );
+            $cs_t_node->set_gram_negation('neg1');
         }
     }
 
@@ -241,7 +241,7 @@ sub process_tnode {
                 and $alex->lemma !~ /^(one|[01](\.\d+)?)$/
                 )
             {
-                $cs_t_node->set_attr( 'gram/number', 'pl' );
+                $cs_t_node->set_gram_number('pl');
                 last CHILDREN;
             }
         }
@@ -249,19 +249,19 @@ sub process_tnode {
 
     # pluralia tantum - podstatna jmena pomnozna (chovaji se jako plural)
     if ( Lexicon::Czech::is_plural_tantum( lc $cs_tlemma ) ) {
-        $cs_t_node->set_attr( 'gram/number', 'pl' );
+        $cs_t_node->set_gram_number('pl');
     }
 
     # staff -> lemma=zaměstnanec --> plural
-    if ( $en_tlemma eq 'staff' && $cs_tlemma eq "zaměstnanec" ) {
-        $cs_t_node->set_attr( "gram/number", 'pl' );
+    if ( $en_tlemma eq 'staff' && $cs_tlemma eq 'zaměstnanec' ) {
+        $cs_t_node->set_gram_number('pl');
     }
 
     # nouns that are typically in plural in English but in singular in Czech
     # (list semiautomatically collected from Czeng train00)
     # !!! regexpy by to chtelo nahradit eq, kde to jde
-    if (( $en_t_node->get_attr('gram/number') || "" ) eq "pl"
-        and ( $cs_t_node->get_attr('gram/sempos') || "" ) =~ /^n/
+    if (( $en_t_node->gram_number || "" ) eq 'pl'
+        and ( $cs_t_node->gram_sempos || "" ) =~ /^n/
         and (
             ( $en_tlemma    =~ /^goods/      and $cs_tlemma =~ /^zboží/ )
             or ( $en_tlemma =~ /^setting/    and $cs_tlemma =~ /^nastavení/ )
@@ -284,12 +284,12 @@ sub process_tnode {
         )
         )
     {
-        $cs_t_node->set_attr( 'gram/number', 'sg' );
+        $cs_t_node->set_gram_number('sg');
     }
 
     # ... and the opposite case: sg goes to pl
-    if (( $en_t_node->get_attr('gram/number') || "" ) eq "s"
-        and ( $cs_t_node->get_attr('gram/sempos') || "" ) =~ /^n/
+    if (( $en_t_node->gram_number || "" ) eq "s"
+        and ( $cs_t_node->gram_sempos || "" ) =~ /^n/
         and (
             ( $en_tlemma    =~ /^money/       and $cs_tlemma =~ /^pení/ )
             or ( $en_tlemma =~ /^both/        and $cs_tlemma =~ /^oba/ )
@@ -307,16 +307,16 @@ sub process_tnode {
         )
         )
     {
-        $cs_t_node->set_attr( 'gram/number', 'pl' );
+        $cs_t_node->set_gram_number('pl');
     }
 
     # unfortunately -> nanestesti (not generated by morphological generator)
     if ($en_tlemma                                eq "fortunately"
         and $cs_tlemma                            eq "naštěstí"
-        and $cs_t_node->get_attr('gram/negation') eq 'neg1'
+        and $cs_t_node->gram_negation eq 'neg1'
         )
     {
-        $cs_t_node->set_attr( 'gram/negation', 'neg0' );
+        $cs_t_node->set_gram_negation('neg0');
         $cs_t_node->set_t_lemma('naneštěstí');
     }
 
@@ -325,11 +325,11 @@ sub process_tnode {
         or ( $en_tlemma eq 'farther' and $cs_tlemma eq 'daleko' )
         )
     {
-        $cs_t_node->set_attr( 'gram/degcmp', 'comp' );
+        $cs_t_node->set_gram_degcmp('comp');
     }
 
     if ( ( $en_tlemma eq 'first' and $cs_tlemma eq 'brzy' ) ) {
-        $cs_t_node->set_attr( 'gram/degcmp', 'sup' );
+        $cs_t_node->set_gram_degcmp('sup');
     }
 
     # deleting grammatemes that became superfluous due to change of sempos

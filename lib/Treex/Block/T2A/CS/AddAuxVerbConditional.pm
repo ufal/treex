@@ -16,7 +16,7 @@ sub process_tnode {
 
     # We want to process only conditionals that don't have
     # 'conditional conjunctions' "aby", "kdyby" in the formeme.
-    my $verbmod = $t_node->get_attr('gram/verbmod') || '';
+    my $verbmod = $t_node->gram_verbmod || '';
     return if $verbmod ne 'cdn';
     return if $t_node->formeme =~ /(aby|kdyby)/;
 

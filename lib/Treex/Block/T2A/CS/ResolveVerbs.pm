@@ -55,10 +55,10 @@ sub resolve_imperative {
 
 sub get_subpos_tense_of_finite {
     my ( $t_node, $a_node ) = @_;
-    my $tense   = $t_node->get_attr('gram/tense')   || '';
-    my $verbmod = $t_node->get_attr('gram/verbmod') || '';
+    my $tense   = $t_node->gram_tense   || '';
+    my $verbmod = $t_node->gram_verbmod || '';
     my $voice   = $t_node->voice                    || '';
-    my $aspect  = $t_node->get_attr('gram/aspect')  || '';
+    my $aspect  = $t_node->gram_aspect  || '';
     my $formeme = $t_node->formeme;
 
     return ( 'p', undef ) if $tense eq 'ant' || $verbmod eq 'cdn' || $formeme =~ /aby|kdyby/;

@@ -49,14 +49,14 @@ sub process_year {
         $t_node->set_t_lemma("$1.");
         $t_node->set_t_lemma_origin('rule-Fix_date_time');
         $new_node->shift_after_node( $t_node, { without_children => 1 } );
-        $new_node->set_attr( 'gram/number', 'pl' );
-        $new_node->set_attr( 'gram/gender', 'neut' );    # to distinguish "v rocích" and "v letech"
+        $new_node->set_gram_number('pl');
+        $new_node->set_gram_gender('neut');    # to distinguish "v rocích" and "v letech"
     }
 
     # "in 1980" -> "v roce 1980"
     else {
         $new_node->shift_before_node( $t_node, { without_children => 1 } );
-        $new_node->set_attr( 'gram/number', 'sg' );
+        $new_node->set_gram_number('sg');
     }
 
     $t_node->set_formeme('x');

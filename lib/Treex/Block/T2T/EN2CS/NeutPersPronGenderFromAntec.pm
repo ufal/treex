@@ -6,11 +6,11 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( ( $tnode->get_attr('gram/gender') || "" ) eq 'neut' && defined $tnode->get_attr('coref_text.rf') ) {
+    if ( ( $tnode->gram_gender || "" ) eq 'neut' && defined $tnode->get_attr('coref_text.rf') ) {
         my $t_antec      = @{ $tnode->get_deref_attr('coref_text.rf') }[0];
-        my $gender_antec = $t_antec->get_attr('gram/gender');
+        my $gender_antec = $t_antec->gram_gender;
         if ( defined $gender_antec and $gender_antec ne 'neut' ) {
-            $tnode->set_attr( 'gram/gender', $gender_antec );
+            $tnode->set_gram_gender($gender_antec);
         }
     }
     return;

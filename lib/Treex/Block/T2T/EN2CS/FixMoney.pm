@@ -35,7 +35,7 @@ sub process_tnode {
         $t_node->set_t_lemma_origin('rule-FixMoney');
         $t_node->set_formeme('n:2');
         $t_node->set_formeme_origin('rule-FixMoney');
-        $t_node->set_attr( 'gram/number', 'pl' );
+        $t_node->set_gram_number('pl');
 
         # shift the currency after nodes expressing value (numbers, million, billion, m)
         my $next_node = $t_node->get_next_node;

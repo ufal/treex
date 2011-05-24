@@ -44,7 +44,7 @@ sub process_tnode {
     }
 
     # == Person ==
-    my $person = $t_node->get_attr('gram/person') || '.';
+    my $person = $t_node->gram_person || '.';
     ##if ( $person eq 'inher' ) { $person = '.'; }   # not needed yet
     $a_node->set_attr( 'morphcat/person', $person );
 
@@ -53,8 +53,8 @@ sub process_tnode {
     # M-layer number and gender of possessive pronouns (moje,moji,můj,...)
     # is determined by agreement with governing noun,
     # but this is handled in another block (Impose_rel_pron_agr).
-    my $number = $t_node->get_attr('gram/number') || '';
-    my $gender = $t_node->get_attr('gram/gender') || '';
+    my $number = $t_node->gram_number || '';
+    my $gender = $t_node->gram_gender || '';
     $a_node->set_attr( 'morphcat/number', $M_NUMBER_FOR{$number} || '.' );
     $a_node->set_attr( 'morphcat/gender', $M_GENDER_FOR{$gender} || '.' );
 
@@ -67,7 +67,7 @@ sub process_tnode {
         $a_node->set_attr( 'morphcat/subpos', $subpos );
     }
 
-    my $sempos = $t_node->get_attr('gram/sempos') || '';
+    my $sempos = $t_node->gram_sempos || '';
     my $formeme = $t_node->formeme;
 
     # Subpos of possessive nouns/adjectives  # moved to a dedicated block
@@ -81,7 +81,7 @@ sub process_tnode {
     }
 
     # == Degree of comparison ==
-    my $degree = $t_node->get_attr('gram/degcmp') || '';
+    my $degree = $t_node->gram_degcmp || '';
     if ( $degree eq 'pos' && $sempos =~ /pron|quant/ ) { $degree = ''; }
     $a_node->set_attr( 'morphcat/grade', $M_DEGREE_FOR{$degree} || '.' );
 
@@ -89,7 +89,7 @@ sub process_tnode {
     # urcovani negace (jen u subst,adj. a adv.) z gramatemu  (u sloves se resi zvlast)
     # TODO pozor na nenegovatelna prislovce, asi spojit s degcmp!!!
     if ( $sempos =~ /^[nav]/ and $t_node->t_lemma ne '#PersPron' and $sempos !~ /pron|quant/ ) {
-        if ( ( $t_node->get_attr('gram/negation') || '' ) eq 'neg1' ) {
+        if ( ( $t_node->gram_negation || '' ) eq 'neg1' ) {
             $a_node->set_attr( 'morphcat/negation', 'N' );
         }
         else {
@@ -131,10 +131,10 @@ sub get_subpos_of_perspron {
         }
 
         # Possesive pronouns (except svůj) should have filled possnumber and possgender
-        my $possnumber = $t_node->get_attr('gram/number') || '';
+        my $possnumber = $t_node->gram_number || '';
         $a_node->set_attr( 'morphcat/possnumber', $M_NUMBER_FOR{$possnumber} || '.' );
         if ( $person eq '3' ) {
-            my $possgender = $t_node->get_attr('gram/gender') || '';
+            my $possgender = $t_node->gram_gender || '';
             $a_node->set_attr( 'morphcat/possgender', $M_GENDER_FOR{$possgender} || '.' );
         }
         return 'S';
@@ -155,8 +155,8 @@ sub get_subpos_of_perspron {
     }
 
     # short pronoun forms ("ho")
-    return 'H' if $formeme =~ /[34]/ and $t_node->get_attr('gram/number') eq 'sg'
-            and $t_node->get_attr('gram/gender') ne 'fem';
+    return 'H' if $formeme =~ /[34]/ and $t_node->gram_number eq 'sg'
+            and $t_node->gram_gender ne 'fem';
 
     # other personal pronouns (on, jich, ...)
     return 'P';

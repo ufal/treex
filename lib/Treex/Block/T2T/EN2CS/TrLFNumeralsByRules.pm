@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
-    my $sempos = $cs_tnode->get_attr('gram/sempos') or return;
+    my $sempos = $cs_tnode->gram_sempos or return;
     return if $sempos ne 'n.quant.def';
     my $en_tnode = $cs_tnode->src_tnode or return;
     return if $en_tnode->formeme ne 'n:attr';

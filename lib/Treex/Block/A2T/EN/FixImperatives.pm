@@ -14,7 +14,7 @@ sub process_ttree {
         next if grep { $_->tag     eq "MD" } $tnode->get_aux_anodes;
         next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
 
-        $tnode->set_attr( 'gram/verbmod', 'imp' );
+        $tnode->set_gram_verbmod('imp');
         $tnode->set_sentmod('imper');
 
         my $perspron = $tnode->create_child;
@@ -24,10 +24,10 @@ sub process_ttree {
         $perspron->set_functor('ACT');
         $perspron->set_formeme('n:subj');    # !!! elided?
         $perspron->set_nodetype('complex');
-        $perspron->set_attr( 'gram/sempos', 'n.pron.def.pers' );
-        $perspron->set_attr( 'gram/number', 'pl' );                # default: vykani
-        $perspron->set_attr( 'gram/gender', 'anim' );
-        $perspron->set_attr( 'gram/person', '2' );
+        $perspron->set_gram_sempos('n.pron.def.pers');
+        $perspron->set_gram_number('pl');                # default: vykani
+        $perspron->set_gram_gender('anim');
+        $perspron->set_gram_person('2');
 
     }
 

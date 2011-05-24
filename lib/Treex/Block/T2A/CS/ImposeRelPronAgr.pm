@@ -8,7 +8,7 @@ sub process_ttree {
 
     foreach my $t_relpron (
         grep {
-            my $i = $_->get_attr('gram/indeftype');
+            my $i = $_->gram_indeftype;
             defined $i
                 and $i eq 'relat'
                 and defined $_->get_attr('coref_gram.rf')

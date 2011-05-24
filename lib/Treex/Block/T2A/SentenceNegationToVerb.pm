@@ -11,7 +11,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
     
     if ( $tnode->t_lemma eq '#Neg' ){
-        $tnode->parent->set_attr( 'gram/negation', 'neg1' );
+        $tnode->parent->set_gram_negation('neg1');
         $tnode->remove();
     }
 

@@ -44,13 +44,13 @@ sub get_lemma_and_pos {
     # PersProns like "that" should be translated as "ten"
     if ($en_tlemma eq '#PersPron'
         && $en_formeme !~ /poss/    #"its" is excluded
-        && $cs_tnode->get_attr('gram/number') eq 'sg'
-        && $cs_tnode->get_attr('gram/gender') eq 'neut'
+        && $cs_tnode->gram_number eq 'sg'
+        && $cs_tnode->gram_gender eq 'neut'
         && $en_tnode->get_lex_anode()->lemma ne 'itself'
         )
     {
-        $cs_tnode->set_attr( 'gram/person', undef );
-        $cs_tnode->set_attr( 'gram/sempos', 'n.pron.indef' );
+        $cs_tnode->set_gram_person(undef);
+        $cs_tnode->set_gram_sempos('n.pron.indef');
         return 'ten|P';
     }
 
@@ -75,8 +75,8 @@ sub get_lemma_and_pos {
 
     return 'buď' if $en_tlemma eq 'either' && $en_tnode->nodetype eq 'coap';
 
-    if ( $en_tlemma eq 'late' && $en_tnode->get_attr('gram/degcmp') eq 'sup' ) {
-        $cs_tnode->set_attr( 'gram/degcmp', 'pos' );
+    if ( $en_tlemma eq 'late' && $en_tnode->gram_degcmp eq 'sup' ) {
+        $cs_tnode->set_gram_degcmp('pos');
         return 'poslední|A';
     }
 

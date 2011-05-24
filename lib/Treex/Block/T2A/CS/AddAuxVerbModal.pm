@@ -18,7 +18,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     # Skip nodes with deontic modality undef or 'decl'
-    my $deontmod = $tnode->get_attr('gram/deontmod') || '';
+    my $deontmod = $tnode->gram_deontmod || '';
     my $modalverb = $deontmod2modalverb{$deontmod};
     return if !$modalverb;
 

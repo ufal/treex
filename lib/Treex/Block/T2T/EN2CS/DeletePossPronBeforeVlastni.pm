@@ -14,7 +14,7 @@ sub process_zone {
             my $prev_node = $tnode->get_prev_node;
             if ($prev_node
                 && $prev_node->t_lemma eq '#PersPron'
-                && $prev_node->get_attr('gram/person') == 3
+                && $prev_node->gram_person == 3
                 && !$prev_node->children
                 )
             {

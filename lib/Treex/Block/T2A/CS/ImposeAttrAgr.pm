@@ -10,7 +10,7 @@ sub process_tnode {
     my $a_attr = $tnode->get_lex_anode or return;    # weird, this should not happen
     my ($t_noun) = $tnode->get_eparents;
     my $a_noun = $t_noun->get_lex_anode;
-    return if !$a_noun || $a_noun->is_root();        #TODO: || $a_noun->get_attr('gram/sempos') !~ /^n/; ???
+    return if !$a_noun || $a_noun->is_root();        #TODO: || $a_noun->gram_sempos !~ /^n/; ???
 
     # By default, imposed categories are: gender number case.
     my @categories = qw(gender number case);

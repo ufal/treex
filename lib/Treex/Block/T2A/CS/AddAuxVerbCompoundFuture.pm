@@ -8,14 +8,14 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     # Process only verbs with future tense (post) and imperfective aspect (proc)
-    my $tense = $tnode->get_attr('gram/tense') || '';
+    my $tense = $tnode->gram_tense || '';
     return if $tense ne 'post';
 
     # Process only verbs with imperfective aspect (proc)
     # (but all modal verbs are imperfective, eventhough the main verb is not:
     #  "Bude moci získat.")
-    my $aspect   = $tnode->get_attr('gram/aspect')   || '';
-    my $deontmod = $tnode->get_attr('gram/deontmod') || '';
+    my $aspect   = $tnode->gram_aspect   || '';
+    my $deontmod = $tnode->gram_deontmod || '';
     return if $deontmod eq 'decl' && $aspect ne 'proc';
 
     # with the exception of few imperfective verbs which form futurum without

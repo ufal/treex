@@ -11,7 +11,7 @@ sub process_tnode {
     if ($tnode->formeme eq 'n:attr'
         and $tnode->get_parent->precedes($tnode)
         and $tnode->get_parent->formeme =~ /^n/
-        and $tnode->get_attr('gram/sempos') eq "n.denot"    # not numerals etc.
+        and $tnode->gram_sempos eq "n.denot"    # not numerals etc.
         and Lexicon::Czech::is_personal_role( $tnode->t_lemma )
         )
     {

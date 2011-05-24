@@ -29,13 +29,13 @@ sub process_tnode {
 sub detect_formeme2 {
 
     my ($t_node) = @_;
-    my $sempos = $t_node->get_attr('gram/sempos') || '';
+    my $sempos = $t_node->gram_sempos || '';
     my $lex_a_node = $t_node->get_lex_anode();
     my $tag = $lex_a_node ? $lex_a_node->tag : '';
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     
     my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
-    my $parent_sempos = $t_parent ? $t_parent->get_attr('gram/sempos') : '';
+    my $parent_sempos = $t_parent ? $t_parent->gram_sempos : '';
     $parent_sempos = '' if !$parent_sempos;
     my $parent_lex_a_node = $t_parent->get_lex_anode();
 
@@ -139,8 +139,8 @@ sub detect_formeme {
     my @aux_a_nodes = $tnode->get_aux_anodes( { ordered => 1 } );
     my $tag = $lex_a_node->tag;
     my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
-    my $sempos        = $tnode->get_attr('gram/sempos')   || '';
-    my $parent_sempos = $tparent->get_attr('gram/sempos') || '';
+    my $sempos        = $tnode->gram_sempos   || '';
+    my $parent_sempos = $tparent->gram_sempos || '';
     my $formeme;
 
     # semantic nouns

@@ -103,54 +103,48 @@ sub set_src_tnode {
     return;
 }
 
+#----------- grammatemes -------------
+
+#TODO: make these real Moose attributes
+sub gram_sempos        { return $_[0]->get_attr('gram/sempos'); }
+sub gram_gender        { return $_[0]->get_attr('gram/gender'); }
+sub gram_number        { return $_[0]->get_attr('gram/number'); }
+sub gram_degcmp        { return $_[0]->get_attr('gram/degcmp'); }
+sub gram_verbmod       { return $_[0]->get_attr('gram/verbmod'); }
+sub gram_deontmod      { return $_[0]->get_attr('gram/deontmod'); }
+sub gram_tense         { return $_[0]->get_attr('gram/tense'); }
+sub gram_aspect        { return $_[0]->get_attr('gram/aspect'); }
+sub gram_resultative   { return $_[0]->get_attr('gram/resultative'); }
+sub gram_dispmod       { return $_[0]->get_attr('gram/dispmod'); }
+sub gram_iterativeness { return $_[0]->get_attr('gram/iterativeness'); }
+sub gram_indeftype     { return $_[0]->get_attr('gram/indeftype'); }
+sub gram_person        { return $_[0]->get_attr('gram/person'); }
+sub gram_numertype     { return $_[0]->get_attr('gram/numertype'); }
+sub gram_politeness    { return $_[0]->get_attr('gram/politeness'); }
+sub gram_negation      { return $_[0]->get_attr('gram/negation'); }
+sub gram_definiteness  { return $_[0]->get_attr('gram/definiteness'); }
+
+sub set_gram_sempos        { return $_[0]->set_attr( 'gram/sempos',        $_[1] ); }
+sub set_gram_gender        { return $_[0]->set_attr( 'gram/gender',        $_[1] ); }
+sub set_gram_number        { return $_[0]->set_attr( 'gram/number',        $_[1] ); }
+sub set_gram_degcmp        { return $_[0]->set_attr( 'gram/degcmp',        $_[1] ); }
+sub set_gram_verbmod       { return $_[0]->set_attr( 'gram/verbmod',       $_[1] ); }
+sub set_gram_deontmod      { return $_[0]->set_attr( 'gram/deontmod',      $_[1] ); }
+sub set_gram_tense         { return $_[0]->set_attr( 'gram/tense',         $_[1] ); }
+sub set_gram_aspect        { return $_[0]->set_attr( 'gram/aspect',        $_[1] ); }
+sub set_gram_resultative   { return $_[0]->set_attr( 'gram/resultative',   $_[1] ); }
+sub set_gram_dispmod       { return $_[0]->set_attr( 'gram/dispmod',       $_[1] ); }
+sub set_gram_iterativeness { return $_[0]->set_attr( 'gram/iterativeness', $_[1] ); }
+sub set_gram_indeftype     { return $_[0]->set_attr( 'gram/indeftype',     $_[1] ); }
+sub set_gram_person        { return $_[0]->set_attr( 'gram/person',        $_[1] ); }
+sub set_gram_numertype     { return $_[0]->set_attr( 'gram/numertype',     $_[1] ); }
+sub set_gram_politeness    { return $_[0]->set_attr( 'gram/politeness',    $_[1] ); }
+sub set_gram_negation      { return $_[0]->set_attr( 'gram/negation',      $_[1] ); }
+sub set_gram_definiteness  { return $_[0]->set_attr( 'gram/definiteness',  $_[1] ); }
+
 1;
 
 __END__
-
-######## QUESTIONABLE / DEPRECATED METHODS ###########
-
-# deprecated, use get_coap_members
-sub get_transitive_coap_members {    # analogy of PML_T::ExpandCoord
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    if ( $self->is_coap_root ) {
-        return (
-            map { $_->is_coap_root ? $_->get_transitive_coap_members : ($_) }
-                grep { $_->is_member } $self->get_children
-        );
-    }
-    else {
-
-        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
-        return ($self);
-    }
-}
-
-# deprecated,  get_coap_members({direct_only})
-sub get_direct_coap_members {
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    if ( $self->is_coap_root ) {
-        return ( grep { $_->is_coap_member } $self->get_children );
-    }
-    else {
-
-        #log_warn("The node ".$self->get_attr('id')." is not root of a coordination/apposition construction\n");
-        return ($self);
-    }
-}
-
-# too easy to implement and too rarely used to be a part of API
-sub get_transitive_coap_root {    # analogy of PML_T::GetNearestNonMember
-    my ($self) = @_;
-    log_fatal("Incorrect number of arguments") if @_ != 1;
-    while ( $self->is_coap_member ) {
-        $self = $self->get_parent;
-    }
-    return $self;
-}
-
-
 
 =encoding utf-8
 

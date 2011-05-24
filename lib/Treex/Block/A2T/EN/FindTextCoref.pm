@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
-    my @semnouns = grep { ( $_->get_attr('gram/sempos') || "" ) =~ /^n/ } $t_root->get_descendants( { ordered => 1 } );
+    my @semnouns = grep { ( $_->gram_sempos || "" ) =~ /^n/ } $t_root->get_descendants( { ordered => 1 } );
 
     foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/ } $t_root->get_descendants ) {
 
@@ -15,14 +15,14 @@ sub process_ttree {
         my @candidates = reverse grep { $_->precedes($perspron) } @semnouns;
 
         # pruning by required agreement in number
-        @candidates = grep { ( $_->get_attr('gram/number') || "" ) eq $attrib{number} } @candidates;
+        @candidates = grep { ( $_->gram_number || "" ) eq $attrib{number} } @candidates;
 
         # pruning by required agreement in person
         if ( $attrib{person} =~ /[12]/ ) {
-            @candidates = grep { ( $_->get_attr('gram/person') || "" ) eq $attrib{person} } @candidates;
+            @candidates = grep { ( $_->gram_person || "" ) eq $attrib{person} } @candidates;
         }
         else {
-            @candidates = grep { ( $_->get_attr('gram/person') || "" ) !~ /[12]/ } @candidates;
+            @candidates = grep { ( $_->gram_person || "" ) !~ /[12]/ } @candidates;
         }
 
         #	print "Sentence:\t".$bundle->get_attr('english_source_sentence')."\t";

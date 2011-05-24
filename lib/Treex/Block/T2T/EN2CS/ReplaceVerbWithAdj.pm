@@ -29,8 +29,8 @@ sub process_tnode {
                 $adj_lemma .= "_$suffix";
             }
             $tnode->set_t_lemma($adj_lemma);
-            $tnode->set_attr( 'gram/sempos', 'adj.denot' );
-            $tnode->set_attr( 'gram/degcmp', 'pos' );
+            $tnode->set_gram_sempos('adj.denot');
+            $tnode->set_gram_degcmp('pos');
             $tnode->set_attr( 'formeme',     'adj:attr' );
             $tnode->set_attr( 'mlayer_pos',  'A' );
         }

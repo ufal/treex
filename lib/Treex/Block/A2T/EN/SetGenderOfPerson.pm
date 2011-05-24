@@ -5,9 +5,9 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    return 1 if $t_node->get_attr('gram/gender');
+    return 1 if $t_node->gram_gender;
     if ( my $gender = gender_of_tnode_person($t_node) ) {
-        $t_node->set_attr( 'gram/gender', $gender );
+        $t_node->set_gram_gender($gender);
     }
     return 1;
 }

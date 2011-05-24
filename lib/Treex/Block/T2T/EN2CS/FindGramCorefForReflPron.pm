@@ -27,10 +27,10 @@ sub process_tnode {
             if ($subject) {
 
                 #	  print STDERR "    Success3\n";
-                my $antec_number = $subject->get_attr('gram/number');
-                my $pron_number  = $perspron->get_attr('gram/number');
-                my $antec_gender = $subject->get_attr('gram/gender');
-                my $pron_gender  = $perspron->get_attr('gram/gender');
+                my $antec_number = $subject->gram_number;
+                my $pron_number  = $perspron->gram_number;
+                my $antec_gender = $subject->gram_gender;
+                my $pron_gender  = $perspron->gram_gender;
 
                 #	  print "Pron: $pron_number $pron_gender    Antec: $antec_number $antec_gender\n";
 

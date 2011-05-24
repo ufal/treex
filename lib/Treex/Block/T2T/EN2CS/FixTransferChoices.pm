@@ -85,7 +85,7 @@ sub fix_formeme {
             and (
                 $cs_tnode->get_children
                 or not Lexicon::Czech::get_poss_adj($cs_tlemma)
-                or ( $cs_tnode->get_attr('gram/number') || '' ) eq 'pl'
+                or ( $cs_tnode->gram_number || '' ) eq 'pl'
             );
 
     # "Harmonium's role" - God knows why maxent prefers n:attr in such cases
@@ -140,7 +140,7 @@ sub fix_formeme {
     # only->jediny: rhematizer in English, but adjectival attribute in Czech
     if ( $cs_tlemma eq 'jediný' and $cs_formeme eq 'x' ) {
         $cs_tnode->set_nodetype('complex');
-        $cs_tnode->set_attr( 'gram/sempos', 'adj.denot' );
+        $cs_tnode->set_gram_sempos('adj.denot');
         $cs_tnode->set_functor('RSTR');
         return 'adj:attr';
     }

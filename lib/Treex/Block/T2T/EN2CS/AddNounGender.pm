@@ -31,10 +31,10 @@ sub process_tnode {
 
     # For all t-nodes with no gender ...
     # (named entities have gender already filled)
-    return if defined $tnode->get_attr('gram/gender');
+    return if defined $tnode->gram_gender;
     my $gender  = get_noun_gender( $tnode );
     if ( defined $gender ) {
-        $tnode->set_attr( 'gram/gender', $gender_tag2grammateme{$gender} );
+        $tnode->set_gram_gender( $gender_tag2grammateme{$gender} );
     }
    return;
 }
@@ -51,7 +51,7 @@ sub get_noun_gender {
     return undef if ($t_node->formeme || '') !~ /^n/;
 
     # Some nouns have different gender in plural
-    my $number = $t_node->get_attr('gram/number');
+    my $number = $t_node->gram_number;
     if ( defined $number && $number eq 'pl') {
         $gender = $gender_in_plural{$t_lemma};
         return $gender if $gender;

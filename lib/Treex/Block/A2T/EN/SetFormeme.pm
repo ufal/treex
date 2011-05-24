@@ -46,7 +46,7 @@ sub detect_formeme {
     # If no lex_anode is found, the formeme is unrecognized
     my $a_node = $t_node->get_lex_anode() or return '???';
 
-    my $sempos = $t_node->get_attr('gram/sempos');
+    my $sempos = $t_node->gram_sempos;
     $sempos =~ s{\..*}{};
 
     # Choose the appropriate subroutine according to the sempos
@@ -198,19 +198,19 @@ sub get_subconj_string {
 sub below_noun {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^n/;    #/^[n|adj]/;
+    return ( $eff_parent->gram_sempos || '' ) =~ /^n/;    #/^[n|adj]/;
 }
 
 sub below_adj {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^adj/;
+    return ( $eff_parent->gram_sempos || '' ) =~ /^adj/;
 }
 
 sub below_verb {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->get_attr('gram/sempos') || '' ) =~ /^v/;
+    return ( $eff_parent->gram_sempos || '' ) =~ /^v/;
 }
 
 sub distinguish_objects {

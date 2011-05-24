@@ -22,10 +22,10 @@ sub process_tnode {
 
     my ( $self, $tnode ) = @_;
     my $old_lemma = $tnode->t_lemma;
-    my $numer     = $tnode->get_attr('gram/numertype');
-    my $indef     = $tnode->get_attr('gram/indeftype');
+    my $numer     = $tnode->gram_numertype;
+    my $indef     = $tnode->gram_indeftype;
     my $functor   = $tnode->functor;
-    my $sempos    = $tnode->get_attr('gram/sempos');
+    my $sempos    = $tnode->gram_sempos;
     my $new_lemma;
 
     $indef = $indef ? '+' . $indef : '';

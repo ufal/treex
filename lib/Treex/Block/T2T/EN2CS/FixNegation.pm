@@ -12,13 +12,13 @@ sub process_tnode {
         # double negation
         my @descendants_in_same_clause = $tnode->get_clause_descendants();
         if ( any { $_->t_lemma =~ /^(nikdo|nic|žádný|ničí|nikdy|nikde)$/ } @descendants_in_same_clause ) {
-            $tnode->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_gram_negation('neg1');
         }
 
         # until
         my $en_tnode = $tnode->src_tnode;
         if ( defined $en_tnode and $en_tnode->formeme =~ /(until|unless)/ ) {
-            $tnode->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_gram_negation('neg1');
         }
 
         # "Ani neprisel, ani nezavolal.", "Nepotkal Pepu ani Frantu."
@@ -29,7 +29,7 @@ sub process_tnode {
             )
             )
         {
-            $tnode->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_gram_negation('neg1');
         }
     }
 
@@ -37,8 +37,8 @@ sub process_tnode {
         my $parent = $tnode->get_parent;
         if ( $parent->t_lemma =~ /^(už|již)$/ ) {
             my $grandpa = $parent->get_parent;
-            if ( $grandpa->get_attr('gram/sempos') eq 'v' ) {
-                $grandpa->set_attr( 'gram/negation', 'neg1' );
+            if ( $grandpa->gram_sempos eq 'v' ) {
+                $grandpa->set_gram_negation('neg1');
                 $tnode->remove;
             }
         }

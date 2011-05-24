@@ -9,7 +9,7 @@ sub process_ttree {
     my @all_nodes = $t_root->get_descendants( { ordered => 1 } );
 
     # When looking for antecedent we need all nouns (as candidates) in reversed order
-    my @nouns = reverse grep { ( $_->get_attr('gram/sempos') || '' ) =~ /^n/ } @all_nodes;
+    my @nouns = reverse grep { ( $_->gram_sempos || '' ) =~ /^n/ } @all_nodes;
 
     VFIN:
     foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
@@ -44,15 +44,15 @@ sub process_ttree {
                 $perspron->set_t_lemma('#PersPron');
                 $perspron->set_nodetype('complex');
                 $perspron->set_formeme('n:1');
-                $perspron->set_attr( 'gram/sempos', 'n.pron.def.pers' );
-                $perspron->set_attr( 'gram/person', $antec->get_attr('gram/person') || 3 );
+                $perspron->set_gram_sempos('n.pron.def.pers');
+                $perspron->set_gram_person( $antec->gram_person || 3 );
 
                 foreach my $attr_name ( 'gram/gender', 'gram/number' ) {
                     $perspron->set_attr( $attr_name, $antec->get_attr($attr_name) );
                 }
 
                 if ( $antec->is_member ) {
-                    $perspron->set_attr( 'gram/number', 'pl' );
+                    $perspron->set_gram_number('pl');
                 }
 
                 $perspron->set_attr( 'coref_text.rf', $perspron->get_attr('coref_gram.rf') );

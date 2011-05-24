@@ -9,7 +9,7 @@ sub process_tnode {
 
     if ($tnode->t_lemma eq 'ještě'
         && !$tnode->children
-        && ( $parent->get_attr('gram/negation') || '' ) eq 'neg1'
+        && ( $parent->gram_negation || '' ) eq 'neg1'
         && $parent->precedes($tnode)
         )
     {

@@ -8,7 +8,7 @@ sub process_ttree {
     my @all_nodes = $t_root->get_descendants( { ordered => 1 } );
 
     # When looking for antecedent we need all nouns (as candidates) in reversed order
-    my @nouns = reverse grep { ( $_->get_attr('gram/sempos') || '' ) =~ /^n/ } @all_nodes;
+    my @nouns = reverse grep { ( $_->gram_sempos || '' ) =~ /^n/ } @all_nodes;
 
     VFIN:
     foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
@@ -29,7 +29,7 @@ sub process_ttree {
                 t_lemma_origin => 'Add_PersPron_below_vfin',
                 mlayer_pos     => 'P',
                 'gram/sempos'  => 'n.pron.def.pers',
-                'gram/person'  => $antec->get_attr('gram/person') || 3,
+                'gram/person'  => $antec->gram_person || 3,
             }
         );
         foreach my $attr_name ( 'gram/gender', 'gram/number' ) {

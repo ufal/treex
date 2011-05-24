@@ -70,6 +70,10 @@
       <!--  References -->
       <member name="a" type="t-a.type"/> <!--name of getter/setter methods may be changed soon-->
       <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
+
+      <!-- Grammatemes accesible via $number = $node->gram_number; $node->set_gram_number('pl');  -->
+      <member name="gram" type="t-gram.type"/>
+
       
       <!--**************  NOT YET COVERED BY TREEX API METHODS ************-->
       <member name="nombank_data"><cdata format="any" /></member>
@@ -93,8 +97,6 @@
       <member name="original_parent.rf"><cdata format="PMLREF"/></member><!-- When doing temporary changes of a tree structure, original parent  is saved before changing so it can be later restored. (popel 19.2.2009) -->
 
       <!-- Structured attributes -->
-      <member name="gram" type="t-gram.type"/>
-      
       <member name="translation_model" type="translation_model.type"/>
       <member name="pcedt_coref" type="t-pcedt_coref.type"/>
       <member name="quot">

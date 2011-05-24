@@ -42,7 +42,7 @@ sub process_ttree {
         );
         $perspron->shift_before_node($cs_node);
 
-        $cs_verb->set_attr( 'gram/tense', 'post' );
+        $cs_verb->set_gram_tense('post');
         $cs_verb->set_formeme('v:že+fin');
         $cs_verb->set_formeme_origin('rule-Transform_passive_constructions');
         my $cor_node = first { $_->t_lemma eq '#Cor' } $cs_verb->get_children();

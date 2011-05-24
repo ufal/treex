@@ -72,7 +72,7 @@ sub formeme_for_tnode {
             and $en_tlemma ne '#PersPron'
             and (
                 $en_tnode->get_children
-                or ( $en_tnode->get_attr('gram/number') || "" ) eq "pl"
+                or ( $en_tnode->gram_number || "" ) eq "pl"
             );
 
     #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';

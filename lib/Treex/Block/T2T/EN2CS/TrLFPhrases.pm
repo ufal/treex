@@ -94,7 +94,7 @@ sub process_tnode {
 
         # "by the end of last year" -> "koncem loňského roku"
         # But don't solve here: "in last years" -> "v posledních letech"
-        if ( $en_parent->get_attr('gram/number') eq 'sg' ) {
+        if ( $en_parent->gram_number eq 'sg' ) {
             my $l = $lemma eq 'this' ? 'letošní' : 'loňský';
             $cs_tnode->set_t_lemma($l);
             $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');

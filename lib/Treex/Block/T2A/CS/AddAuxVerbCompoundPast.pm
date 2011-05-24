@@ -15,11 +15,11 @@ my %auxpast_numberperson2form = (
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my $tense = $tnode->get_attr('gram/tense') || '';
+    my $tense = $tnode->gram_tense || '';
     return if $tense ne 'ant';
 
     # Conditionals don't have an extra auxverb for past tense "bych *jsem prišel"
-    my $verbmod = $tnode->get_attr('gram/verbmod') || '';
+    my $verbmod = $tnode->gram_verbmod || '';
     my $formeme = $tnode->formeme || '';
     return if $verbmod eq 'cdn' or $formeme =~ /(aby|kdyby)/;
 

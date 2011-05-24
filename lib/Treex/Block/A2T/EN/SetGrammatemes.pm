@@ -77,7 +77,7 @@ sub process_zone {
 
         # Sempos of all complex nodes should be defined,
         # so initialize it with a default value.
-        $t_node->set_attr( 'gram/sempos', '???' );
+        $t_node->set_gram_sempos('???');
 
         assign_grammatemes_to_tnode($t_node);
     }
@@ -106,7 +106,7 @@ sub assign_grammatemes_to_tnode {
     }
 
     if ( _is_negated($tnode) ) {
-        $tnode->set_attr( 'gram/negation', 'neg1' );
+        $tnode->set_gram_negation('neg1');
     }
 
     return;
@@ -115,14 +115,14 @@ sub assign_grammatemes_to_tnode {
 #------ Subs for each POS --------
 sub _noun {
     my ( $tnode, $tag, $form ) = @_;
-    $tnode->set_attr( 'gram/sempos', 'n.denot' );
+    $tnode->set_gram_sempos('n.denot');
     my $number = $tag =~ /S$/ ? 'pl' : 'sg';
 
     # Some lemmas have same singular as plural and tag is not reliable
     if ( $form eq 'euro' && _has_numeral_child_needed_for_plural($tnode) ) {
         $number = 'pl';
     }
-    $tnode->set_attr( 'gram/number', $number );
+    $tnode->set_gram_number($number);
     return;
 }
 
@@ -139,14 +139,14 @@ sub _adj {
     my ( $tnode, $tag, $form ) = @_;
     my %is_aux_form = map { ( lc( $_->form ) => 1 ) } $tnode->get_aux_anodes();
 
-    $tnode->set_attr( 'gram/sempos',   'adj.denot' );
-    $tnode->set_attr( 'gram/negation', 'neg0' );
+    $tnode->set_gram_sempos('adj.denot');
+    $tnode->set_gram_negation('neg0');
 
     my $degree = $tag eq 'JJS' || $is_aux_form{'most'}
         ? 'sup'
         : $tag eq 'JJR' || $is_aux_form{'more'} ? 'comp'
         :                                         'pos';
-    $tnode->set_attr( 'gram/degcmp', $degree );
+    $tnode->set_gram_degcmp($degree);
     return;
 }
 
@@ -155,21 +155,21 @@ sub _adv {
     my ( $tnode, $tag, $form ) = @_;
     my %is_aux_form = map { ( lc( $_->form ) => 1 ) } $tnode->get_aux_anodes();
 
-    $tnode->set_attr( 'gram/sempos',   'adv.denot.grad.neg' );
-    $tnode->set_attr( 'gram/negation', 'neg0' );
+    $tnode->set_gram_sempos('adv.denot.grad.neg');
+    $tnode->set_gram_negation('neg0');
 
     my $degree = $tag eq 'RBS' || $is_aux_form{'most'}
         ? 'sup'
         : $tag eq 'RBR' || $is_aux_form{'more'} ? 'comp'
         :                                         'pos';
-    $tnode->set_attr( 'gram/degcmp', $degree );
+    $tnode->set_gram_degcmp($degree);
     return;
 }
 
 # Personal pronouns
 sub _perspron {
     my ( $tnode, $tag, $form ) = @_;
-    $tnode->set_attr( 'gram/sempos', 'n.pron.def.pers' );
+    $tnode->set_gram_sempos('n.pron.def.pers');
     if ( $form =~ /sel(f|ves)$/ ) {
         $tnode->set_attr( 'is_reflexive', 1 );
     }
@@ -193,23 +193,23 @@ sub _o_pron {
     my ( $tnode, $tag, $form ) = @_;
 
     if ( any { $_ eq $form } qw(when where why how) ) {
-        $tnode->set_attr( 'gram/sempos', 'adv.pron.indef' );
+        $tnode->set_gram_sempos('adv.pron.indef');
     }
     else {
 
         # "what(sempos=n) is this" vs. "what(sempos=adj) colour is it"
         # !!! doresit - podle toho, jestli neni nalevo nahore sem. substantivum
-        $tnode->set_attr( 'gram/sempos', 'n.pron.indef' );
+        $tnode->set_gram_sempos('n.pron.indef');
 
         if ( any { $form eq $_ } qw(those these both) ) {
-            $tnode->set_attr( 'gram/number', 'pl' );
+            $tnode->set_gram_number('pl');
         }
         else {
-            $tnode->set_attr( 'gram/number', 'sg' );
+            $tnode->set_gram_number('sg');
         }
 
         if ( $tnode->get_attr('coref_gram.rf') ) {
-            $tnode->set_attr( 'gram/indeftype', 'relat' );
+            $tnode->set_gram_indeftype('relat');
         }
     }
     return;
@@ -218,7 +218,7 @@ sub _o_pron {
 sub _number {
     my ( $tnode, $tag, $form ) = @_;
     my $sempos = ( $form =~ /^(first|second|third|.+th)$/ ) ? 'adj' : 'n';
-    $tnode->set_attr( 'gram/sempos', "$sempos.quant.def" );
+    $tnode->set_gram_sempos("$sempos.quant.def");
 
     # Plural of hundred can be in English both "hundreds" and "hundred".
     # This should be distinguished already on the m-layer, but for
@@ -240,10 +240,10 @@ sub _verb {
     my ($deontmod) = map { $DEONTMOD_FOR_LEMMA{ $_->lemma } } @aux_anodes;
     my $negated = any { $is_aux_form{$_} } qw(not n't cannot);
 
-    $tnode->set_attr( 'gram/sempos',        'v' );
-    $tnode->set_attr( 'gram/iterativeness', 'it0' );
-    $tnode->set_attr( 'gram/resultative',   'res0' );
-    $tnode->set_attr( 'gram/dispmod',       'disp0' );
+    $tnode->set_gram_sempos('v');
+    $tnode->set_gram_iterativeness('it0');
+    $tnode->set_gram_resultative('res0');
+    $tnode->set_gram_dispmod('disp0');
     $tnode->set_attr( 'gram/negation',      $negated ? 'neg1' : 'neg0' );
 
     # First guess deontic modality...
@@ -255,23 +255,23 @@ sub _verb {
         my $a_have = first { $_->lemma eq 'have' } @aux_anodes;
         my $a_to   = first { $_->lemma eq 'to' } @aux_anodes;
         if ( $a_have->ord + 1 == $a_to->ord ) {
-            $tnode->set_attr( 'gram/deontmod', 'deb' );
+            $tnode->set_gram_deontmod('deb');
         }
     }
 
     # ...and "be able to".
     if ( all { $is_aux_lemma{$_} } qw(be able to) ) {
-        $tnode->set_attr( 'gram/deontmod', 'fac' );
+        $tnode->set_gram_deontmod('fac');
         if ( $is_aux_form{unable} ) {
             ##TODO: negace významových sloves vs. modálních není v TectoMT (ale ani ve FGD) dořešena
-            $tnode->set_attr( 'gram/negation', 'neg1' );
+            $tnode->set_gram_negation('neg1');
         }
     }
 
     # First, we will process infinitives...
     if ( !$tnode->is_clause_head ) {
-        $tnode->set_attr( 'gram/tense',   'nil' );
-        $tnode->set_attr( 'gram/verbmod', 'ind' );
+        $tnode->set_gram_tense('nil');
+        $tnode->set_gram_verbmod('ind');
 
         # ...because it's easy and we are quickly finished :-)
         return;
@@ -288,7 +288,7 @@ sub _verb {
     # ... but gram/tense is more intricate
     #    my $tense = _guess_verb_tense( $tnode, $tag, \%is_aux_form, \%is_aux_lemma );
     my $tense = _guess_verb_tense($tnode);
-    $tnode->set_attr( 'gram/tense', $tense );
+    $tnode->set_gram_tense($tense);
 
     return;
 }
@@ -323,7 +323,7 @@ sub _guess_verb_tense {
 # TODO (MP): update scheme, put there negation on m-level, delete this hacking sub
 sub _is_negated {
     my ($tnode) = @_;
-    my $sempos = $tnode->get_attr('gram/sempos');
+    my $sempos = $tnode->gram_sempos;
     return 0 if !defined $sempos or $sempos !~ /^(n|adj|adv)\.denot/;
 
     my $t_lemma = lc( $tnode->t_lemma ) || '';

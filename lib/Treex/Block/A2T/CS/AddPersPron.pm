@@ -17,7 +17,7 @@ sub process_tnode {
         #$new_node->set_attr( 'ord',     $t_node->get_attr('ord') - 0.1 );
         #$new_node->set_id($t_node->generate_new_id );
         $new_node->set_nodetype('complex');
-        $new_node->set_attr( 'gram/sempos', 'n.pron.def.pers' );
+        $new_node->set_gram_sempos('n.pron.def.pers');
         $new_node->shift_before_node($t_node);
 
         my @anode_tags = map { $_->tag } ( $t_node->get_lex_anode, $t_node->get_aux_anodes );
@@ -51,9 +51,9 @@ sub process_tnode {
             $gender = 'anim';
         }
 
-        $new_node->set_attr( 'gram/person', $person );
-        $new_node->set_attr( 'gram/gender', $gender );
-        $new_node->set_attr( 'gram/number', $number );
+        $new_node->set_gram_person($person);
+        $new_node->set_gram_gender($gender);
+        $new_node->set_gram_number($number);
     }
 }
 

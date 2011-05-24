@@ -14,7 +14,7 @@ sub process_tnode {
     my ( $self, $node ) = @_;
 
     # We want to check only verbs with more translation variants
-    return if ( $node->get_attr('gram/sempos') || '' ) ne 'v';
+    return if ( $node->gram_sempos || '' ) ne 'v';
     return if $node->t_lemma_origin !~ /^dict-first/;
 
     my $variants_ref = $node->get_attr('translation_model/t_lemma_variants');
@@ -42,9 +42,9 @@ sub is_aspect_ok {
     # 1. "thay say" -> "říkají", not "řeknou"
     return 0
         if (
-        ( $node->get_attr('gram/tense') || '' ) eq 'sim'
-        and ( $node->get_attr('gram/deontmod') || '' ) eq 'decl'
-        and ( $node->get_attr('gram/verbmod') || '' ) ne 'cdn'
+        ( $node->gram_tense || '' ) eq 'sim'
+        and ( $node->gram_deontmod || '' ) eq 'decl'
+        and ( $node->gram_verbmod || '' ) ne 'cdn'
         and ( $node->is_passive               || '' ) ne '1'
         and ( $node->functor                  || '' ) ne 'COND'
         );

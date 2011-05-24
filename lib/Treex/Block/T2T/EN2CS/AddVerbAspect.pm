@@ -15,8 +15,8 @@ sub get_verb_aspect {
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    if ( ( $t_node->get_attr('gram/sempos') || "" ) =~ /^v/ ) {
-        $t_node->set_attr( 'gram/aspect', get_verb_aspect( $t_node->t_lemma ) );
+    if ( ( $t_node->gram_sempos || "" ) =~ /^v/ ) {
+        $t_node->set_gram_aspect(get_verb_aspect( $t_node->t_lemma ) );
     }
     return;
 }

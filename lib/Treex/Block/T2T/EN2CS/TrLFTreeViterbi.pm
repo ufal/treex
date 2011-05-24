@@ -138,7 +138,7 @@ sub is_compatible {
         and (
             $node->get_children
             or not Lexicon::Czech::get_poss_adj( $l_v->{t_lemma} )
-            or ( $node->get_attr('gram/number') || "" ) eq "pl"
+            or ( $node->gram_number || "" ) eq "pl"
         )
         )
     {
