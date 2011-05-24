@@ -1,0 +1,95 @@
+package Treex::Tutorial::Install;
+
+=pod
+
+=head1 NAME
+
+Treex::Tutorial::Install - Installing the Treex NLP framework
+
+
+=head1 TWO WAYS TO GET TREEX
+
+You can download Treex from CPAN L<http://www.cpan.org> or from the SVN repository.
+However, so far only the latter is usable, because  
+only the core modules (C<Treex::Core>) were released on CPAN
+and to do something interesting with Treex you need also some other modules.
+
+=head2 Downloading and Installing Treex from CPAN
+
+You can install Treex and its dependecies from shell using the C<cpan> tool:
+
+    cpan Treex::Core
+
+In future, there will be also distributions for the analysis (and synthesis)
+of several languages: C<Treex::EN> for English, C<Treex::DE> for German,
+C<Treex::CS> for Czech etc. 
+
+=head2 Downloading and Installing Treex from SVN
+
+Treex is being developed in TectoMT subversion repository.
+For read-only access you can use:
+
+    cd ~
+    svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk tectomt
+    # password is "public"
+
+Install the needed Perl modules dependencies: 
+
+    cpan Moose MooseX::Getopt MooseX::NonMoose MooseX::Params::Validate\
+         MooseX::SemiAffordanceAccessor Readonly Treex::PML\
+         File::Slurp File::Basename File::HomeDir File::Path File::ShareDir\
+         LWP::Simple Data::Dumper
+
+Add Treex modules to your C<$PERLLIB> so perl can find them,
+and the C<treex> script to your C<$PATH> so you can execute it from shell.  
+Add the following lines to your C<~/.bashrc>:
+
+    export TMT_ROOT=${HOME}/tectomt/
+    export PATH="${TMT_ROOT%/}/treex/bin:$PATH"
+    export PERL5LIB="${TMT_ROOT%/}/treex/lib:${TMT_ROOT%/}/libs/other:$PERL5LIB"
+    export PERLLIB=$PERL5LIB   
+
+And C<source ~/.bashrc> or open a new terminal. Check that it works by running:
+
+    treex -h 
+
+Some Treex applications use huge pre-trained models, dictionaries etc.
+These resources are stored in an unversioned directory C<$TMT_ROOT/share>
+and they should be automatically downloaded when running the respective application.
+You should create the empty directory or symlink.
+
+    mkdir $TMT_ROOT/share
+    #ln -s /mnt/my_big_disk/tectomt_share $TMT_ROOT/share
+
+=head2 Installing other tools
+
+=head3 TrEd
+
+For visualization of trees it is beneficial to install TrEd from
+L<http://ufal.mff.cuni.cz/~pajas/tred>.
+Install it to the C<$TMT_ROOT/share/tred> directory (or symlink).
+Now you can check if you can run the Treex-modified version of TrEd:
+
+    ttred
+
+=head3 XS-based perl modules
+
+Morce is a high-quality part-of-speech tagger for English.
+You can install it by: 
+
+    cd $TMT_ROOT/libs/packaged/Morce-English
+    less INSTALL
+    # follow the instruction in INSTALL
+
+In the same way, you can install C<CzechMorpho> and C<Morce-Czech> (in this order).
+
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
