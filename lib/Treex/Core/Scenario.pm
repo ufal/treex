@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
+use Parse::RecDescent;
+use Treex::Core::ScenarioParser;
 
 has loaded_blocks => (
     is      => 'ro',
@@ -87,27 +89,34 @@ sub load_scenario_file {
     log_info "Loading scenario description $scenario_filename";
     my $scenario_string = read_file( $scenario_filename, binmode => ':utf8', err_mode => 'quiet' )
         or log_fatal "Can't open scenario file $scenario_filename";
-    $scenario_string =~ s/\n/\n /g;    # TODO Is this necessary? Or it was just side effect of code below (now commented)?
-                                       #my $scenario_string = join ' ', <$SCEN>; <- puvodni kod, nacetl cely soubor a na zacatek kazdeho krome prvniho radku pridal mezeru. Novy dela to same, jen to je snad videt z kodu
     return $scenario_string;
 }
 
 sub _escape {
     my $string = shift;
+    $string =~ s/^(["'])(.*)\1$/$2/;
     $string =~ s/ /%20/g;
     $string =~ s/#/%23/g;
     $string =~ s/=/%3d/g;
     $string =~ s/\n/%0a/g;
     $string =~ s/\t/%09/g;
-    return $string;                    #TODO - escaping %
+    return $string;    #TODO - escaping %
 }
 
 sub parse_scenario_string {
     my ( $scenario_string, $from_file ) = @_;
 
     # Preserve escaped quotes
+    $scenario_string =~ s{%}{%25}g;
     $scenario_string =~ s{\\"}{%22}g;
     $scenario_string =~ s{\\'}{%27}g;
+
+#    my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
+#
+#    log_warn("Parsing string: $scenario_string"); 
+#    return $parser->startrule($scenario_string);
+
+
 
     # Preserve spaces inside quotes and backticks in block parameters
     # Quotes are deleted, whereas backticks are preserved.
