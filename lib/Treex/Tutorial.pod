@@ -1,0 +1,64 @@
+package Treex::Tutorial;
+
+=pod
+
+=head1 NAME
+
+Treex::Tutorial - Hands-on introduction to the Treex NLP framework
+
+
+=head1 ABOUT THIS TUTORIAL
+
+This tutorial tries to present you as little theory & introductions as possible
+and it tries to start quickly with the hands-on examples.
+If you don't like this approach, try the documentation
+referenced from L<Treex::Core> and the presentation
+L<http://ufal.mff.cuni.cz/~popel/treex.pdf>. 
+
+=head1 CONTENTS
+
+=over
+
+=item L<Treex::Tutorial::Install>
+
+How to download and install Treex and related tools.
+
+=item L<Treex::Tutorial::FirstSteps>
+
+running your first Treex applications using the commnad line interface C<treex>
+
+=item TODO L<Treex::Tutorial::Visualization>
+
+Using C<ttred> (Treex-modified TrEd tree editor).
+
+=item TODO L<Treex::Tutorial::ReadersAndWriters>
+
+=item TODO L<Treex::Tutorial::Zones>
+
+=item TODO L<Treex::Tutorial::Blocks>
+
+Writing your own blocks.
+
+=item TODO L<Treex::Tutorial::WritingNewReaders>
+
+Writing a reader (input converter) for a new format.
+
+=item TODO L<Treex::Tutorial::Shortcuts>
+
+Eval block etc.
+
+=item TODO L<Treex::Tutorial::Parallel>
+
+Parallelization using SGE cluster.
+
+=back
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

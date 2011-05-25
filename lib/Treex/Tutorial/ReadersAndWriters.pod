@@ -1,0 +1,28 @@
+package Treex::Tutorial::ReadersAndWriters;
+
+=pod
+
+=head1 NAME
+
+Treex::Tutorial::ReadersAndWriters - reading/writing from/to different file formats
+
+
+=head1 FORMATS
+
+Treex can process data in many formats: plain text, HTML, CoNLL, PDT (PML),...
+For each supported format there exists a B<reader> block
+(that converts the given format to Treex in-memory representation)
+and a writer block (that prints the in-memory representation to the given format).
+
+    cat index.html | treex -q -Len Read::HTML Write::Text
+
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
