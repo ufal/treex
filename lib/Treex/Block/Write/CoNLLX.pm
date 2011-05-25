@@ -8,14 +8,23 @@ has '+language' => ( required => 1 );
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    foreach my $anode ($atree->get_descendants({ordered => 1})) {
-        my $lemma = $anode->lemma;
-        $lemma = '_' if !defined $lemma;
-        my @token = ($anode->ord, $anode->form, $lemma, $anode->tag, $anode->tag, '_', $anode->get_parent->ord, $anode->conll_deprel);
-        print join("\t", @token) . "\n";
+    foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
+        my ( $lemma, $tag, $deprel ) =
+            map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
+            qw(lemma tag conll_deprel);
+        my $ctag = $self->get_coarse_grained_tag($tag);
+        my $p_ord = $anode->get_parent->ord;
+        print join( "\t", $anode->ord, $anode->form, $lemma, $ctag, $tag, '_', $p_ord, $deprel ) . "\n";
     }
     print "\n";
+    return;
 }
+
+sub get_coarse_grained_tag {
+    my ($self, $tag) = @_;
+    return substr $tag, 0, 2;
+}
+
 
 1;
 
