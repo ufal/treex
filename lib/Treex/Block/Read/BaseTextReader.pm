@@ -10,7 +10,7 @@ has '+from' => ( default => '-' );
 has language      => ( isa => 'LangCode', is => 'ro', required => 1 );
 has lines_per_doc => ( isa => 'Int',      is => 'ro', default  => 0 );
 has merge_files   => ( isa => 'Bool',     is => 'ro', default  => 0 );
-has encoding      => ( isa => 'Str',      is => 'ro', default  => ':utf8' );
+has encoding      => ( isa => 'Str',      is => 'ro', default  => 'utf8' );
 
 has _current_fh => ( is => 'rw' );
 
@@ -30,7 +30,7 @@ sub next_filehandle {
         binmode STDIN, $self->encoding;
         return \*STDIN;
     }    
-    my $mode = '<' . $self->encoding;
+    my $mode = '<:' . $self->encoding;
     open my $FH, $mode, $filename or log_fatal "Can't open $filename: $!";
     return $FH;
 }
@@ -104,7 +104,7 @@ even from non-equally-sized files.
 
 =item encoding
 
-Whan is the encoding of the input files. E.g. ":utf8" (default), ":cp1250" etc.
+Whan is the encoding of the input files. E.g. C<utf8> (the default), C<cp1250> etc.
 
 =back
 
