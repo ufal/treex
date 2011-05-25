@@ -10,6 +10,7 @@ has '+from' => ( default => '-' );
 has language      => ( isa => 'LangCode', is => 'ro', required => 1 );
 has lines_per_doc => ( isa => 'Int',      is => 'ro', default  => 0 );
 has merge_files   => ( isa => 'Bool',     is => 'ro', default  => 0 );
+has encoding      => ( isa => 'Str',      is => 'ro', default  => ':utf8' );
 
 has _current_fh => ( is => 'rw' );
 
@@ -25,8 +26,12 @@ sub next_filehandle {
     my ($self) = @_;
     my $filename = $self->next_filename();
     return if !defined $filename;
-    return \*STDIN if $filename eq '-';
-    open my $FH, '<:utf8', $filename or log_fatal "Can't open $filename: $!";
+    if ($filename eq '-'){
+        binmode STDIN, $self->encoding;
+        return \*STDIN;
+    }    
+    my $mode = '<' . $self->encoding;
+    open my $FH, $mode, $filename or log_fatal "Can't open $filename: $!";
     return $FH;
 }
 
@@ -96,6 +101,10 @@ The default is 0 which means, don't split.
 Merge the content of all files (specified in C<from> attribute) into one stream.
 Useful in combination with C<lines_per_doc> to get equally-sized documents
 even from non-equally-sized files.
+
+=item encoding
+
+Whan is the encoding of the input files. E.g. ":utf8" (default), ":cp1250" etc.
 
 =back
 
