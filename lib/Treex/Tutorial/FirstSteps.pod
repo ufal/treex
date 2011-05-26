@@ -107,7 +107,7 @@ C<W2A::EN::Segment> is a descendant of the C<W2A::Segment> base class.
 =item Where can I find blocks' source code?
 
 All Treex blocks are stored in C<$TMT_ROOT/treex/lib/Treex/Block/>.
-The full name of C<W2A::EN::Segment> module is actually
+The full name of the C<W2A::EN::Segment> module is actually
 C<Treex::Block::W2A::EN::Segment>, but since the prefix C<Treex::Block::>
 is common to all blocks, it is not written in the scenario description.
 
@@ -132,6 +132,10 @@ There are many other options for segmentation, see (perldoc for) modules
 L<Treex::Block::W2A::Segment>,
 L<Treex::Block::W2A::SegmentOnNewlines>, and
 L<Treex::Block::W2A::ResegmentSentences>.
+
+=head1 TOKENIZATION
+
+
 
 =head1 TASKS
 

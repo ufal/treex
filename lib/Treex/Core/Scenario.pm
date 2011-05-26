@@ -3,8 +3,8 @@ use Moose;
 use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
-use Parse::RecDescent;
-use Treex::Core::ScenarioParser;
+# use Parse::RecDescent;
+# use Treex::Core::ScenarioParser;
 
 has loaded_blocks => (
     is      => 'ro',
