@@ -45,13 +45,23 @@ sub process_atree {
 
 __END__
 
-=pod
+=head1 NAME Treex::Block::W2A::TagTreeTageer
 
-=over
+=head1 Available pre-trained models
 
-=item Treex::Block::W2A::TagTreeTageer
-
-=back
+  Model   Language    Encoding
+  ------------------------
+  bg.par  Bulagarian  utf8
+  nl.par  Dutch       latin1
+  en.par  English     latin1
+  fr.par  French      utf8
+  el.par  Greek       utf8
+  it.par  Italian     utf8
+  es.par  Spanish     utf8
+  et.par  Estonian    utf8
+  sw.par  Swahili     latin1
+  la.par  Latin       latin1
+  ru.par  Russian     ?
 
 =cut
 

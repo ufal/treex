@@ -133,17 +133,41 @@ L<Treex::Block::W2A::Segment>,
 L<Treex::Block::W2A::SegmentOnNewlines>, and
 L<Treex::Block::W2A::ResegmentSentences>.
 
-=head1 TOKENIZATION
+=head1 TOKENIZATION, LEMMATIZATION, TAGGING
 
+  echo "Mr. Brown, we'll start tagging." |\
+   treex -Len Read::Sentences W2A::TokenizeOnWhitespace Write::CoNLLX
 
+  echo "Mr. Brown, we'll start tagging." |\
+   treex -Len Read::Sentences W2A::Tokenize Write::CoNLLX
 
-  echo "Mr. Brown, how are you?" |\
+  echo "Mr. Brown, we'll start tagging." |\
+   treex -Len Read::Sentences W2A::EN::Tokenize Write::CoNLLX
+
+  echo "Mr. Brown, we'll start tagging." |\
    treex -Len Read::Sentences\
               W2A::EN::Tokenize\
               W2A::TagTreeTagger\
               W2A::EN::Lemmatize\
               Write::CoNLLX
 
+  echo "Mr. Brown, we'll start tagging." |\
+   treex -Len Read::Sentences\
+              W2A::EN::Tokenize\
+              W2A::EN::TagMorce\
+              W2A::EN::Lemmatize\
+              Write::CoNLLX
+
+  echo "Es tut mir leid." |\
+   treex -Lde Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+  echo "Lo siento" |\
+   treex -Les Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+  echo "Mi dispiace" |\
+   treex -Lit Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+  echo "Je suis desolée" |\
+   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+  echo "Bohužel jsem tento tutorial nedokončil." |\
+   treex -Lfr Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX
 
 =head1 TASKS
 
