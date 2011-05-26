@@ -3,21 +3,27 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has '+language' => ( required => 1 );
-has model       => ( isa      => 'Str', is => 'rw' );
-has _tagger     => ( is       => 'rw' );
-
 use Treex::Tools::Tagger::TreeTagger;
+
+has model => ( isa => 'Str', is => 'ro', lazy_build => 1 );
+has _tagger => ( is => 'ro', lazy_build => 1 );
+sub build_language { log_fatal "Language is required"; }
+
+sub _build_model {
+    my ($self) = @_;
+    print "Lang=" .$self->language . "\n";
+    my $model = 'data/models/tagger/tree_tagger/' . $self->language . '.par';
+    $self->require_files_from_share($model);
+    return "$ENV{TMT_ROOT}/share/$model";
+}
+
+sub _build__tagger {
+    my ($self) = @_;
+    return Treex::Tools::Tagger::TreeTagger->new( { model => $self->model } );
+}
 
 sub BUILD {
     my ($self) = @_;
-
-    # if the model is not specified, check whether there is a default model for given language
-    if ( !$self->model ) {
-        $self->set_model( $self->require_file_from_share( "data/models/tree_tagger/" . $self->language . ".par" ) );
-    }
-
-    $self->_set_tagger( Treex::Tools::Tagger::TreeTagger->new( { model => $self->{model} } ) );
     return;
 }
 

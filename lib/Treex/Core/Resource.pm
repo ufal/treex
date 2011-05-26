@@ -1,7 +1,6 @@
 package Treex::Core::Resource;
-use strict;
-use warnings;
-
+use Moose;
+use Treex::Core::Common;
 use LWP::Simple;
 use File::Path;
 use Treex::Core::Log;

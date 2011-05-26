@@ -10,7 +10,12 @@ sub BUILD {
     my ($self) = @_;
 
     #to be changed
-    my $bindir = "$ENV{TMT_ROOT}/share/installed_tools/tree_tagger/bin";
+    use Treex::Core::Resource;
+    Treex::Core::Resource::require_file_from_share(
+        'installed_tools/tagger/tree_tagger/bin/tree-tagger',
+        'Treex::Tools::Tagger::TreeTagger'
+    );
+    my $bindir = "$ENV{TMT_ROOT}/share/installed_tools/tagger/tree_tagger/bin";
     die "Missing $bindir\n" if !-d $bindir;
 
     my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model;

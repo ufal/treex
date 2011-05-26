@@ -13,7 +13,7 @@ has scenario => (
 );
 
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
-# or target-language (e.g. T2T::CS2EN::FixNEgation contains "en"),
+# or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),
 # it is returned as a default value of the attribute $self->language
 # so it is not necessary to write the line
 #   has '+language' => ( default => 'en' );
@@ -32,7 +32,7 @@ sub build_language {
 sub zone_label {
     my ($self) = @_;
     my $label = $self->language or return;
-    if (defined $self->selector && $self->selector ne ''){
+    if ( defined $self->selector && $self->selector ne '' ) {
         $label .= '_' . $self->selector;
     }
     return $label;
@@ -44,19 +44,24 @@ sub zone_label {
 
 sub BUILD {
     my $self = shift;
+    $self->require_files_from_share($self->get_required_share_files());
+    return;
+}
 
-    foreach my $rel_path_to_file ( $self->get_required_share_files ) {
-        Treex::Core::Resource::require_file_from_share( $rel_path_to_file, 'the block ' . $self->get_block_name );
+sub require_files_from_share{
+    my ($self, @rel_paths) = @_;
+    my $my_name = 'the block ' . $self->get_block_name();
+    foreach my $rel_path (@rel_paths) {
+        Treex::Core::Resource::require_file_from_share( $rel_path, $my_name );
     }
-
     return;
 }
 
 sub get_required_share_files {
-    my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
+    my ( $self, @filenames ) = @_;
+
+    # By default there are no required share files.
+    # The purpose of this method is to be overriden if needed.
     return ();
 }
 
