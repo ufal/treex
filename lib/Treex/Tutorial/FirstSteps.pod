@@ -137,6 +137,14 @@ L<Treex::Block::W2A::ResegmentSentences>.
 
 
 
+  echo "Mr. Brown, how are you?" |\
+   treex -Len Read::Sentences\
+              W2A::EN::Tokenize\
+              W2A::TagTreeTagger\
+              W2A::EN::Lemmatize\
+              Write::CoNLLX
+
+
 =head1 TASKS
 
 =head2 Task1:

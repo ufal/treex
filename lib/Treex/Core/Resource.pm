@@ -1,6 +1,6 @@
 package Treex::Core::Resource;
-use Moose;
-use Treex::Core::Common;
+#use Moose;
+#use Treex::Core::Common;
 use LWP::Simple;
 use File::Path;
 use Treex::Core::Log;
@@ -31,6 +31,9 @@ sub require_file_from_share {
                     . "$url and to store it as $file ($response_code)\n"
             );
         }
+        
+        # TODO: better solution
+        chmod 0755, $file if $file =~ /installed_tools/;
     }
     return;
 }
