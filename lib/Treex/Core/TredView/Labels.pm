@@ -226,7 +226,8 @@ sub _anode_labels {
     }
     $line1 .= $node->form;
 
-    my $line2 = $node->afun ? $self->_colors->get( 'afun', 1 ) . $node->afun : $self->_colors->get( 'error', 1 ) . '!!';
+    my $edge_label = $node->afun || $node->conll_deprel;
+    my $line2 = $edge_label ? $self->_colors->get( 'afun', 1 ) . $edge_label : $self->_colors->get( 'error', 1 ) . '!!';
     if ( $node->is_member ) {
         my $parent = $node->parent;
         $parent = $parent->parent while $parent and $parent->afun =~ m/^Aux[CP]$/;
