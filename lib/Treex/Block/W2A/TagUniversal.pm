@@ -1,4 +1,4 @@
-package Treex::Block::W2A::TaggerUniversal;
+package Treex::Block::W2A::TagUniversal;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -46,16 +46,16 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::TaggerUniversal
+Treex::Block::W2A::TagUniversal
 
 =head1 SYNOPSIS
 
   # in scenario 
-  W2A::TaggerUniversal module=Treex::Tools::Tagger::NameOfMyTagger
+  W2A::TagUniversal module=Treex::Tools::Tagger::NameOfMyTagger
   
   # from command line 
   echo "Hello there" | treex -Len Read::Sentences W2A::Tokenize \
-   W2A::TaggerUniversal module=Treex::Tools::Tagger::Simple::XY \
+   W2A::TagUniversal module=Treex::Tools::Tagger::Simple::XY \
    Util::Eval anode='print $anode->form. "/" . $anode->tag . "/" . $anode->lemma .  "\n"'
 
 =head1 COPYRIGHT AND LICENCE

@@ -1,4 +1,4 @@
-package Treex::Block::W2A::TaggerTreeTagger;
+package Treex::Block::W2A::TagTreeTagger;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -44,7 +44,7 @@ __END__
 
 =over
 
-=item Treex::Block::W2A::TaggerTreeTageer
+=item Treex::Block::W2A::TagTreeTageer
 
 =back
 

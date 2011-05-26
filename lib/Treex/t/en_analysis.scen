@@ -4,7 +4,7 @@ W2A::ResegmentSentences
 W2A::EN::Tokenize
 W2A::EN::NormalizeForms
 W2A::EN::FixTokenization
-W2A::EN::TaggerMorce
+W2A::EN::TagMorce
 W2A::EN::FixTags
 W2A::EN::Lemmatize
 A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz
@@ -14,7 +14,7 @@ W2A::EN::SetIsMemberFromDeprel
 W2A::EN::FixTagsAfterParse
 W2A::EN::ParseMST reparse=1 model=conll_mcd_order2_0.01.model
 W2A::EN::SetIsMemberFromDeprel
-W2A::EN::FixMcDTopology
+W2A::EN::RehangConllToPdtStyle
 W2A::EN::FixNominalGroups
 W2A::EN::FixIsMember
 W2A::EN::FixAtree

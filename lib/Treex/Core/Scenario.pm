@@ -319,7 +319,7 @@ Scenario example:
  W2A::EN::Tokenize
  W2A::EN::NormalizeForms
  W2A::EN::FixTokenization
- W2A::EN::TaggerMorce
+ W2A::EN::TagMorce
 
 
 =head1 METHODS
