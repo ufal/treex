@@ -311,7 +311,7 @@ sub _execute_locally {
     my $scen_str = join ' ',
         map {
         if ( my ( $name, $value ) = /(\S+)=(.+\s.+)$/ ) {
-            $value =~ s/'/\\'/;
+            $value =~ s/'/\\'/g;
             qq($name='$value');
         }
         else {$_}

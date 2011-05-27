@@ -1,0 +1,42 @@
+startrule:  SCEN EOF                            {$return = $item{SCEN}}
+#startrule:  <error>
+SCEN:       LINE SCEN                           {$return = [$item{LINE},@{$item{SCEN}}]}
+SCEN:       LINE                                {$return = [$item{LINE}]}
+LINE:       BLOCK COMMENT | BLOCK               {$return = $item{BLOCK}}
+EOF:        /^\Z/
+BLOCK:      TBNAME PARAMS                       {$return = {
+                                                    block_name=>$item{TBNAME},
+                                                    block_parameters=>$item{PARAMS},
+                                                    }
+                                                }
+BLOCK:      TBNAME                              {$return = {
+                                                    block_name=>$item{TBNAME},
+                                                    block_parameters=>[],
+                                                    }
+                                                }
+BLOCK:      INCLUDE                             {$return = $item{INCLUDE}}
+INCLUDE:    /\w+\.scen/                         {
+                                                    my $incParser = new Treex::Core::ScenarioParser;
+                                                    my $incString = $item{INCLUDE};
+                                                }
+TBNAME:     BNAME                               {$return = "Treex::Block::$item{BNAME}"}
+BNAME:      /\w+::/ BNAME                       {$return = $item[1].$item[2]}
+BNAME:      /\w+/                               {$return = $item[1]}
+PARAMS:     PARAM PARAMS                        {$return = [$item{PARAM}, @{$item{PARAMS}}]}
+PARAMS:     PARAM                               {$return = [$item{PARAM}]}
+PARAM:      PNAME '=' PVALUE                      {$return = $item[1].$item[2].$item[3]}
+PNAME:      /\w+/                               {$return = $item[1]}
+PVALUE:     /'/ PSQUOTE /'/                     {$return = $item{PSQUOTE}}
+PVALUE:     /"/ PDQUOTE /"/                     {$return = $item{PDQUOTE}}
+PVALUE:     /`/ PTICKED /`/                     {$return = $item[1].$item[2].$item[3]}
+PVALUE:     PNOTQUOTED                          {$return = $item{PNOTQUOTED}}
+PSQUOTE:    NOTSQUOTE SLASHEDSQUOTE PSQUOTE     {$return = $item{NOTSQUOTE}.$item{SLASHEDSQUOTE}.$item{PSQUOTE}}
+PSQUOTE:    NOTSQUOTE
+NOTSQUOTE:  /[^']*[^'\\]/
+SLASHEDSQUOTE: /\\'/                            {$return = "'"}
+PDQUOTE:    /[^"]+/                             {$return = $item[1]}
+PNOTQUOTED: /\S+/                               {$return = $item[1]}
+PTICKED:    /[^`]+/                             {$return = $item[1]}
+COMMENT:    /#.*\n/
+SPACE:      /\s+/                               {$return = $item[1]}
+EMPTY:      //                                 

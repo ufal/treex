@@ -3,8 +3,8 @@ use Moose;
 use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
-# use Parse::RecDescent;
-# use Treex::Core::ScenarioParser;
+use Parse::RecDescent;
+use Treex::Core::ScenarioParser;
 
 has loaded_blocks => (
     is      => 'ro',
@@ -106,15 +106,17 @@ sub _escape {
 sub parse_scenario_string {
     my ( $scenario_string, $from_file ) = @_;
 
+    my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
+
+    my $parsed = $parser->startrule($scenario_string);
+    log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
+    return @$parsed;
+
     # Preserve escaped quotes
     $scenario_string =~ s{%}{%25}g;
     $scenario_string =~ s{\\"}{%22}g;
     $scenario_string =~ s{\\'}{%27}g;
 
-#    my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
-#
-#    log_warn("Parsing string: $scenario_string"); 
-#    return $parser->startrule($scenario_string);
 
 
 

@@ -41,9 +41,8 @@ sub BUILD {
 sub process_document {
     my ( $self, $document ) = @_;
     if ( $self->document ) {
-        if ( !eval $self->document . ';1;' ) {
-            log_fatal "Eval error: $@";
-        }
+        my $to_eval = $self->document . ';1;';
+        eval ($to_eval) or log_fatal( "While evaluating '$to_eval' got error: $@" );
     }
 
     if ( $self->_args->{_bundle} ) {
