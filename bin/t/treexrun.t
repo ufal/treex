@@ -56,9 +56,10 @@ my @tasks = (
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'),                           'a=b  c' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'),                           'a=b' ],
-    [   q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
+    [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 1;'), '1'
     ],
+    [ q(echo | treex -q -Len Read::Text scenarios/print1.scen), '1' ],
 );
 
 foreach my $task_rf (@tasks) {

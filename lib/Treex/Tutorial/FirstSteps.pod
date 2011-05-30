@@ -167,7 +167,7 @@ L<Treex::Block::W2A::ResegmentSentences>.
   echo "Je suis desolée" |\
    treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
   echo "Bohužel jsem tento tutorial nedokončil." |\
-   treex -Lfr Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX
+   treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX
 
 =head1 TASKS
 
