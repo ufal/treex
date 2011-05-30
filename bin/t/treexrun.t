@@ -22,22 +22,25 @@ sub is_bash_combined_output {
 my $TREEX = 'treex';    #`which treex 2>/dev/null`;
 if ( !-x $TREEX ) {
     use Treex::Core::Config;
-    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../bin/treex'; #development location - lib_core_dir is lib/Treex/Core
+    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../bin/treex';    #development location - lib_core_dir is lib/Treex/Core
 }
 if ( !-x $TREEX ) {
-    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../../bin/treex'; #release location - lib_core_dir is blib/lib/Treex/Core
+    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../../bin/treex';    #release location - lib_core_dir is blib/lib/Treex/Core
 }
 
 END {
     unlink $combined_file;
     unlink glob "*dummy.treex";
+    unlink "confuse.scen";
 }
 
 # prepare dummy input files
-my $test_data_file = 'dummy.treex';
-my $doc            = Treex::Core::Document->new();
+my $test_data_file    = 'dummy.treex';
+my $confuse_data_file = 'confuse.scen';
+my $doc               = Treex::Core::Document->new();
 $doc->save($test_data_file);
 $doc->save( '2' . $test_data_file );
+$doc->save($confuse_data_file);
 
 my @tasks = (
     [ q(treex -q -- dummy.treex),                                        '' ],     # reading an empty file
@@ -56,10 +59,11 @@ my @tasks = (
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'),                           'a=b  c' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'),                           'a=b' ],
-    [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
+    [   q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 1;'), '1'
     ],
     [ q(echo | treex -q -Len Read::Text scenarios/print1.scen), '1' ],
+    [ q(echo | treex -q -Len Read::Treex from=confuse.scen),    '' ],    #confuse parser with parameter which looks like resursive scenario load, but is in fact parameter
 );
 
 foreach my $task_rf (@tasks) {
