@@ -1,3 +1,6 @@
+{
+## no critic This will be generated code
+}
 startrule:  SCEN EOF                            {$return = $item{SCEN}}
 #startrule:  <error>
 SCEN:       LINE SCEN                           {$return = [$item{LINE},@{$item{SCEN}}]}
