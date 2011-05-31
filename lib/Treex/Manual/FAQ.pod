@@ -1,0 +1,53 @@
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Manual::FAQ - Frequently asked questions about Treex
+
+=head1 FREQUENTLY ASKED QUESTIONS
+
+=head2 General
+
+=head3 Is Treex (API, data formats,...) stable?
+
+=head3 Is Treex platform independent?
+
+=head3 Why should I use Treex and not other NLP frameworks such as GATE?
+
+=head3 My application in Treex is slow. What shall I do?
+
+=head3 I noticed that Treex require an on-line access to some data repository. Can Treex work off-line?
+
+=head3 Why should I use Treex even if it does not support the language I am interested in?
+
+=head3 I found a bug in Treex. What should I do?
+
+write a minimal test, write the version....
+
+=head3 I'd like to create a commercial application using some of Treex modules. Shall I expect any licensing troubles?
+
+=head2 Installation
+
+
+=head2 Contributing to Treex
+
+
+
+=head1 AUTHOR
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
