@@ -69,11 +69,13 @@ sub log_fatal {
         $unfinished_line = 0;
     }
     my $line = "TREEX-FATAL:\t$message\n\n";
-    if ($OS_ERROR) {
-        $line .= "PERL ERROR MESSAGE: $OS_ERROR\n";
-    }
-    if ($EVAL_ERROR) {
-        $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n";
+    if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'DEBUG'} ) {
+        if ($OS_ERROR) {
+            $line .= "PERL ERROR MESSAGE: $OS_ERROR\n";
+        }
+        if ($EVAL_ERROR) {
+            $line .= "PERL EVAL ERROR MESSAGE: $EVAL_ERROR\n";
+        }
     }
     $line .= "PERL STACK:";
     cluck $line;
