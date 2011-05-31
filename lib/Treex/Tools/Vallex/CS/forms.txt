@@ -13,7 +13,7 @@
 ???	???
 ???	???
 A	adj:1
-A:1({jako,jakožto})	adj:jako+1
+A:1({jako,jakožto})	n:jako+1
 A:1	adj:1
 A:2({jako,jako6to})	n:jako+2
 A:2({jako,jakožto})	n:jako+2
@@ -134,7 +134,7 @@ z-1(strana-3(U))	adj:z_strana+poss
 za-1(2)	n:za+4
 za-1(4)	n:za+4
 za-1(7)	n:za+7
-za-1(A)	adj:za+1
+za-1(A)	n:za+4
 za-1(A:4)	n:za+4
 zda(V)	v:zda+fin
 zdali(V)	v:zda+fin
