@@ -11,7 +11,7 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     
     my $source_root = $bundle->get_zone($self->language, $self->selector)->get_atree;
-    my $target_root = $bunlle->get_zone($self->to_language, $self->to_selector)->get_atree;
+    my $target_root = $bundle->get_zone($self->to_language, $self->to_selector)->get_atree;
 
     foreach my $node ($target_root->get_descengants) {
         $node->set_parent($target_root);
@@ -25,8 +25,8 @@ sub process_bundle {
     my @counterparts;
 
     # sort counterparts for each node from 'int' through 'gdfa' to 'right'
-    foreach my $node ($source_tree->get_descendants({ordered => 1})) {
-        my ($nodes, $types) = $source_node->get_aligned_nodes();
+    foreach my $node ($source_root->get_descendants({ordered => 1})) {
+        my ($nodes, $types) = $node->get_aligned_nodes();
         foreach my $i (0, $#$nodes) {
             if ($$types[$i] =~ /int/) {
                 push @{$counterparts[$node->ord]}, $$nodes[$i];
@@ -34,8 +34,8 @@ sub process_bundle {
             }
         }
     }
-    foreach my $node ($source_tree->get_descendants({ordered => 1})) {
-        my ($nodes, $types) = $source_node->get_aligned_nodes();
+    foreach my $node ($source_root->get_descendants({ordered => 1})) {
+        my ($nodes, $types) = $node->get_aligned_nodes();
         foreach my $i (0, $#$nodes) {
             if ($$types[$i] =~ /gdfa/ && $$types[$i] !~ /int/) {
                 push @{$counterparts[$node->ord]}, $$nodes[$i];
@@ -43,8 +43,8 @@ sub process_bundle {
             }
         }
     }
-    foreach my $node ($source_tree->get_descendants({ordered => 1})) {
-        my ($nodes, $types) = $source_node->get_aligned_nodes();
+    foreach my $node ($source_root->get_descendants({ordered => 1})) {
+        my ($nodes, $types) = $node->get_aligned_nodes();
         foreach my $i (0, $#$nodes) {
             if ($$types[$i] =~ /right/ && $$types[$i] !~ /gdfa/) {
                 push @{$counterparts[$node->ord]}, $$nodes[$i];
