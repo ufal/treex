@@ -37,7 +37,7 @@ Install the needed Perl modules dependencies:
 
     cpan Moose MooseX::Getopt MooseX::NonMoose MooseX::Params::Validate\
          MooseX::SemiAffordanceAccessor Readonly Treex::PML\
-         File::Slurp File::Basename File::HomeDir File::Path File::ShareDir\
+         File::Slurp File::HomeDir File::Path File::ShareDir\
          LWP::Simple Data::Dumper
 
 Add Treex modules to your C<$PERLLIB> so perl can find them,
