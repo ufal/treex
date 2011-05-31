@@ -96,7 +96,7 @@ Treex::Tools::FSM::Foma
 
 =head1 DESCRIPTION
 
-Perl wrapper for the Foma finite state library (C<http://foma.sourceforge.net/>), which provides finite-state transducers
+Perl wrapper for the L<Foma|http://foma.sourceforge.net/> finite state library, which provides finite-state transducers
 with XFST (Xerox Finite-State Tools)-compatible grammars.
 
 =head1 PARAMETERS
