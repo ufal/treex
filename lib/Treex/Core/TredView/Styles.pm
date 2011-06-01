@@ -67,7 +67,7 @@ sub _tnode_style {
     
     $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
     
-    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline='.$self->_colors->get('coord').';width=1;dash=5,5 }';
+    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline='.$self->_colors->get('coord').';width=1;dash=_. }';
     $coord_circle .= '#{Line-arrow:&}#{Line-arrowshape:&}#{Line-dash:&}';
     $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:'.$self->_colors->get('tnode_coord').'}';
     # For coordination roots
