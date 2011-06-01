@@ -6,11 +6,11 @@ use ProcessUtils;
 use File::Java;
 use DowngradeUTF8forISO2;
 
-has model => ( isa => 'Str', is => 'rw', required => 1 );
-has memory     => ( isa => 'Str',  is => 'rw', default => '1800m' );
-has order      => ( isa => 'Int',  is => 'rw', default => 2 );
-has decodetype => ( isa => 'Str',  is => 'rw', default => 'non-proj' );
-has robust     => ( isa => 'Bool', is => 'ro', default => 0 );
+has model      => ( isa => 'Str',  is => 'rw', required => 1 );
+has memory     => ( isa => 'Str',  is => 'rw', default  => '1800m' );
+has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
+has decodetype => ( isa => 'Str',  is => 'rw', default  => 'non-proj' );
+has robust     => ( isa => 'Bool', is => 'ro', default  => 0 );
 
 my @all_javas;    # PIDs of java processes
 
@@ -32,17 +32,23 @@ sub BUILD {
     my $javabin = File::Java->javabin();
     my $cp = File::Java->cp( "$bindir/output/mstparser.jar", "$bindir/lib/trove.jar" );
 
-    # all paths/dirs have to be formatted according to platform
-    my $model_name = File::Java->path_arg( $self->{model} );
+    my $share_path = $self->model;
+    my $share_dir  = "$ENV{TMT_ROOT}/share/";
+    if ( $share_path =~ s/^$share_dir// ) {
+        Treex::Core::Resource::require_file_from_share( $share_path, 'Treex::Tools::Parser::MST' );
+    }
+    log_fatal $self->model . ' model for MTS does not exist.' if !-f $self->model;
 
-    my $command = 'java'    #$javabin
+    # all paths/dirs have to be formatted according to platform
+    my $model_name = File::Java->path_arg( $self->model );
+    my $command    = 'java'                                  #$javabin
         . " -Xmx" . $self->{memory}
         . " -cp $cp mstparser.DependencyParser test"
         . " order:" . $self->{order}
         . " decode-type:" . $self->{decodetype}
         . " server-mode:true print-scores:true model-name:$model_name 2>/dev/null";
 
-    $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
+    $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
         = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
 
@@ -100,7 +106,7 @@ sub parse_sentence {
         log_fatal("Treex::Tools::Parser::MST returned nothing") if ( !defined $_ );
         chomp;
         if ( $_ !~ /^OK/ ) {
-            log_warn( "Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence. Building flat tree.'" );
+            log_warn("Treex::Tools::Parser::MST failed (FAIL message was returned) on sentence. Building flat tree.'");
             @parents = map {0} @$forms_rf;
             @afuns   = map {"ExD"} @$forms_rf;
             foreach my $i ( 0 .. @$forms_rf ) {
