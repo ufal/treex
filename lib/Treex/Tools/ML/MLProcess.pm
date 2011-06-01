@@ -9,6 +9,9 @@ use autodie;
 # ML-Process executable
 has 'ml_process_jar' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/ml-process/ml-process.jar" );
 
+# Error level
+has 'error_level' => ( is => 'ro', isa => 'Int', default => sub { Treex::Core::Log::get_error_level() } ); 
+
 # Amount of memory needed for Java VM
 has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
 
@@ -23,6 +26,7 @@ has '_temp_dir' => ( is => 'ro', builder => '_create_temp_dir' );
 
 # list of tempfiles used by the process
 has '_tempfiles' => ( traits => ['Array'], is => 'ro', default => sub { [] } );
+
 
 sub run {
 
@@ -53,7 +57,7 @@ sub run {
         . ' -d ' . $self->_temp_dir()
         . ( $self->cleanup_temp ? ' -l ' : '' )
         . ' ' . $plan_file
-        . ' -v 4 ';
+        . ' -v ' . $self->_verbosity() . ' ';
 
     log_info( "Running " . $command );
     system($command) == 0 or log_fatal("ML-Process not found or not working properly.");
@@ -114,6 +118,15 @@ sub _write_file_contents {
     close($file);
     return;
 }
+
+# Converts Treex error level to MLProcess verbosity (a bit skewed to the non-verbose side,
+# so that MLProcess shows only warnings and errors if the Treex error_level is set to INFO)
+sub _verbosity {
+    my ($self) = @_;
+
+    return (4, 3, 2, 1, 0) [$self->error_level];    
+}
+
 
 1;
 

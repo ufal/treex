@@ -9,8 +9,11 @@ use Treex::Tools::ML::MLProcess;
 
 extends 'Treex::Core::Block';
 
-# files related to the trained model
-has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/functors/cs/" );
+# TectoMT shared directory
+Readonly my $TMT_SHARE => "$ENV{TMT_ROOT}/share/";
+
+# files related to the trained model (within the TectoMT shared directory)
+has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "data/models/functors/cs/" );
 has 'model'             => ( is => 'ro', isa => 'Str', default => 'model.dat' );
 has 'plan_template'     => ( is => 'ro', isa => 'Str', default => 'plan.template' );
 has 'filtering_ff_data' => ( is => 'ro', isa => 'Str', default => 'ff-data.dat' );
@@ -20,14 +23,24 @@ has 'lang_conf'         => ( is => 'ro', isa => 'Str', default => 'st-cs.conf' )
 # functors loaded from the result of ML process, works as a FIFO (is first filled with the whole document, then subsequently emptied)
 has '_functors' => ( traits => ['Array'], is => 'ro', default => sub { [] } );
 
+# download shared files if necessary
+override 'get_required_share_files' => sub {
+
+    my ($self) = @_;
+
+    my @files = map { $_ = $self->model_dir . $_ }
+        ( $self->model, $self->plan_template, $self->filtering_if_data, $self->filtering_ff_data, $self->lang_conf );
+    return @files;
+};
+
 override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
-    my $mlprocess = Treex::Tools::ML::MLProcess->new( plan_template => $self->model_dir . $self->plan_template );
+    my $mlprocess = Treex::Tools::ML::MLProcess->new( plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template );
 
     my $temp_conll = $mlprocess->create_temp_file();
     my $out        = $mlprocess->create_temp_file();
-    
+
     log_info("Output file: $out");
 
     # print out data in pseudo-conll format for the ml-process program
@@ -39,10 +52,10 @@ override 'process_document' => sub {
     $mlprocess->run(
         {   "CONLL"     => $temp_conll,
             "ARFF-OUT"  => $out,
-            "FF-INFO"   => $self->model_dir . $self->filtering_ff_data,
-            "IF-INFO"   => $self->model_dir . $self->filtering_if_data,
-            "MODEL"     => $self->model_dir . $self->model,
-            "LANG-CONF" => $self->model_dir . $self->lang_conf
+            "FF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_ff_data,
+            "IF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_if_data,
+            "MODEL"     => $TMT_SHARE . $self->model_dir . $self->model,
+            "LANG-CONF" => $TMT_SHARE . $self->model_dir . $self->lang_conf
         }
     );
 
