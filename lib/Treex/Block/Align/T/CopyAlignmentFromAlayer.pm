@@ -3,8 +3,23 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has to_language => ( isa => 'Str', is => 'ro', required => 1 );
-has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
+has '+language' => ( required => 1 );
+
+has 'to_language' => ( isa => 'LangCode', is => 'ro', lazy_build => 1 );
+has 'to_selector' => ( isa => 'Str',      is => 'ro', default    => 'ref' );
+
+sub _build_to_language {
+    my ($self) = @_;
+    return $self->language;
+}
+
+sub BUILD {
+    my ($self) = @_;
+    log_info( $self->language );
+    if ( $self->language eq $self->to_language && $self->selector eq $self->to_selector ) {
+        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+    }
+}
 
 sub process_ttree {
     my ( $self, $troot ) = @_;
@@ -36,20 +51,39 @@ sub process_ttree {
 
 1;
 
-=over
+__END__
+=encoding utf-8
 
-=item Treex::Block::Align::T::CopyAlignmentFromAlayer;
+=head1 NAME 
 
-PARAMETERS:
+Treex::Block::Align::T::CopyAlignmentFromAlayer
 
-- language - language in which the alignment attributes are included
+=head1 DESCRIPTION
 
-- to_language - the other language
+This projects the tree alignment on a-layer to the corresponding t-layer trees.
 
-=back
+=head1 PARAMETERS
 
-=cut
+=item C<language>
 
-# Copyright 2009-2011 David Marecek
+The current language. This parameter is required.
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=item C<to_language>
+
+The target (reference) language for the alignment. Defaults to current C<language> setting. 
+The C<to_language> and C<to_selector> must differ from C<language> and C<selector>.
+
+=item C<to_selector>
+
+The target (reference) selector for the alignment. Defaults to current C<selector> setting.
+The C<to_language> and C<to_selector> must differ from C<language> and C<selector>.
+
+=head1 AUTHOR
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

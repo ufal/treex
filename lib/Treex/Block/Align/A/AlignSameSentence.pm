@@ -9,10 +9,20 @@ has '+language'   => ( required => 1 );
 has 'to_language' => ( is       => 'ro', isa => 'LangCode', lazy_build => 1 );
 has 'to_selector' => ( is       => 'ro', isa => 'Selector', default => 'ref' );
 
+
 sub _build_to_language {
     my ($self) = @_;
     return $self->language;
 }
+
+sub BUILD {
+    my ($self) = @_;
+    log_info( $self->language );
+    if ( $self->language eq $self->to_language && $self->selector eq $self->to_selector ) {
+        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+    }
+}
+
 
 sub process_zone {
 
@@ -41,6 +51,23 @@ Treex::Block::Align::A::AlignSameSentence
 =head1 DESCRIPTION
 
 Alignment of two analytical parses of the same sentence (i.e. containing the same list of tokens).
+
+=head1 PARAMETERS
+
+=item C<language>
+
+The current language. This parameter is required.
+
+=item C<to_language>
+
+The target (reference) language for the alignment. Defaults to current C<language> setting. 
+The C<to_language> and C<to_selector> must differ from C<language> and C<selector>.
+
+=item C<to_selector>
+
+The target (reference) selector for the alignment. Defaults to current C<selector> setting.
+The C<to_language> and C<to_selector> must differ from C<language> and C<selector>.
+
 
 =head1 AUTHOR
 

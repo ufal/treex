@@ -1,12 +1,19 @@
 package Treex::Block::A2A::CopyAtree;
+
 use Moose;
 use Treex::Core::Common;
+use Treex::Block::Align::A::AlignSameSentence;
+
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'flatten'         => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'align'           => ( is       => 'rw', isa => 'Bool', default => 0 );
+
+# alignment block
+has '_aligner' => ( is => 'rw', isa => 'Object' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(form tag lemma ord afun deprel is_member no_space_after);
@@ -26,6 +33,18 @@ sub BUILD {
     if ( $self->language eq $self->source_language && $self->selector eq $self->source_selector ) {
         log_fatal("Can't create zone with the same 'language' and 'selector'.");
     }
+
+    # initialize alignment block if needed
+    if ( $self->align ) {
+        $self->_set_aligner(
+            Treex::Block::Align::A::AlignSameSentence->new(
+                language    => $self->language,
+                selector    => $self->selector,
+                to_selector => $self->source_selector,
+                to_language => $self->source_language
+                )
+        );
+    }
 }
 
 sub process_bundle {
@@ -40,9 +59,13 @@ sub process_bundle {
     copy_subtree( $source_root, $target_root );
 
     if ( $self->flatten ) {
-        foreach my $node ($target_root->get_descendants) {
+        foreach my $node ( $target_root->get_descendants ) {
             $node->set_parent($target_root);
         }
+    }
+
+    if ( $self->align ) {
+        $self->_aligner->process_zone($target_zone);
     }
 }
 
@@ -63,18 +86,52 @@ sub copy_subtree {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2A::CopyAtree
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::A2A::CopyAtree
+
+=head1 DESCRIPTION
 
 This block copies analytical tree into another zone.
 
-Trees are made flat if the switch flatten=1 is used.
+Trees are made flat if the switch C<flatten=1> is used. The new tree is aligned to the old one if
+the switch C<align> is set to 1. 
 
-=back
+=head1 PARAMETERS
 
-=cut
+=item C<language>
 
-# Copyright 2011 David Marecek
+The current language. This parameter is required.
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=item C<source_language>
+
+The target (reference) language for the alignment. Defaults to current C<language> setting. 
+The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
+
+=item C<source_selector>
+
+The target (reference) selector for the alignment. Defaults to current C<selector> setting.
+The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
+
+=item C<flatten>
+
+If this parameter is set, the trees are made flat (i.e. all inner nodes are set as direct children
+of the root).
+
+=item C<align>
+
+If this parameter is set, the target trees are aligned to the source ones. 
+
+=head1 AUTHOR
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
