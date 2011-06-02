@@ -50,22 +50,28 @@ Treex::Block::W2W::CopySentence
 
 =head1 DESCRIPTION
 
-This simply copies the plain text sentence from one zone (denoted by a language and a selector)
+This simply copies the plain text sentence from one zone (identified by a language and a selector)
 to another. 
 
 =head1 PARAMETERS
 
 =over
 
-=item C<use_version>
+=item C<language>
 
-Which version of Czech formemes should be used (1 or 2, defaults to 1).
+The current language. This parameter is required.
+
+=item C<source_language>
+
+The source language from which the sentences should be copied. Defaults to current C<language> setting. 
+The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
+
+=item C<source_selector>
+
+The source selector from which the sentences should be copied. Defaults to current C<selector> setting.
+The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
 
 =back
-
-=TODO
-
-Test, unify versions.
 
 =head1 AUTHORS
 
