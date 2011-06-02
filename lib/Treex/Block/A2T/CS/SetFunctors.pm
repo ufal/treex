@@ -45,7 +45,11 @@ override 'process_document' => sub {
 
     # print out data in pseudo-conll format for the ml-process program
     log_info( "Writing the CoNLL-like data to " . $temp_conll );
-    my $conll_writer = Treex::Block::Write::ConllLike->new( to => $temp_conll->filename, language => 'cs' );
+    my $conll_writer = Treex::Block::Write::ConllLike->new(
+        to       => $temp_conll->filename,
+        language => $self->language,
+        selector => $self->selector
+    );
     $conll_writer->process_document($document);
 
     # run ML-Process with the specified plan file
