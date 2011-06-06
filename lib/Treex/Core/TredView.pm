@@ -407,7 +407,7 @@ sub anode_hint {
     push @lines, "Parenthesis root" if $node->{is_parenthesis_root};
     if ( $node->language eq 'cs' ) {
         push @lines, "Full lemma: " . $node->{lemma};
-        push @lines, "Full tag: " . $node->{tag};
+        push @lines, "Full tag: " . ($node->{tag} ? $node->{tag} : '');
     }
 
     return join "\n", @lines;

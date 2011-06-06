@@ -58,7 +58,7 @@ sub require_files_from_share{
 }
 
 sub get_required_share_files {
-    my ( $self, @filenames ) = @_;
+    my ( $self ) = @_;
 
     # By default there are no required share files.
     # The purpose of this method is to be overriden if needed.

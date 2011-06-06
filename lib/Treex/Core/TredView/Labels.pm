@@ -236,7 +236,7 @@ sub _anode_labels {
         }
     }
 
-    my $line3_1 = $node->tag;
+    my $line3_1 = $node->tag ? $node->tag : "";
     my $line3_2 = $node->lemma;
     if ( $node->language eq 'cs' ) {
         $line3_1 = substr( $line3_1, 0, 2 );
