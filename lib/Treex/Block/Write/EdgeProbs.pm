@@ -2,25 +2,30 @@ package Treex::Block::Write::EdgeProbs;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+with 'Treex::Block::Write::Redirectable';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
-my %edge;
-my $nodes;
+has _edge => ( is => 'ro', default => sub { {} } );
+has _nodes => ( is => 'ro', writer => '_set_nodes', default => 0 );
 
 sub process_anode {
     my ( $self, $anode ) = @_;
     my $parent = $anode->get_parent();
     return if $parent->is_root();
-    $edge{ $anode->ord - $parent->ord }++;
-    $nodes++;
+    my $edge = $self->_edge;
+    $edge->{ $anode->ord - $parent->ord }++;
+    $self->_set_nodes( $self->_nodes + 1 );
     return;
 }
 
-END {
-    for my $length ( sort { $a <=> $b } keys %edge ) {
-        my $prob = $edge{$length} / $nodes; 
-        print "$length\t$prob\n";
+sub DEMOLISH {
+    my ($self) = @_;
+    my $edge   = $self->_edge;
+    my $nodes  = $self->_nodes;
+    for my $length ( sort { $a <=> $b } keys %{$edge} ) {
+        my $prob = $edge->{$length} / $nodes;
+        print { $self->_file_handle } "$length\t$prob\n";
     }
 }
 
