@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::English;
+use Treex::Tools::Lexicon::EN;
 
 my $last_form;
 
@@ -105,7 +105,7 @@ sub fix_node {
         && $p_tag =~ /^V/
         && $g_tag =~ /^V/
         && $node->precedes($parent)
-        && !Lexicon::English::is_dicendi_verb($g_lemma)
+        && !Treex::Tools::Lexicon::EN::is_dicendi_verb($g_lemma)
         )
     {
         $node->set_parent($grandpa);
@@ -187,7 +187,7 @@ sub fix_node {
         my $grandgrandpa = $grandpa->get_parent();
         return if $node->precedes($parent) &&
                 (   $grandgrandpa->is_root()
-                    || Lexicon::English::is_dicendi_verb( $grandgrandpa->lemma )
+                    || Treex::Tools::Lexicon::EN::is_dicendi_verb( $grandgrandpa->lemma )
                 );
 
         # Process cases where parent is a preposition:

@@ -30,7 +30,7 @@ has 'backward_weight' => (
 );
 
 use Treex::Tools::Algorithm::TreeViterbi;
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::CS;
 use LanguageModel::TreeLM;
 
 sub BUILD {
@@ -137,7 +137,7 @@ sub is_compatible {
         and $f_v->{formeme} eq "n:poss"
         and (
             $node->get_children
-            or not Lexicon::Czech::get_poss_adj( $l_v->{t_lemma} )
+            or not Treex::Tools::Lexicon::CS::get_poss_adj( $l_v->{t_lemma} )
             or ( $node->gram_number || "" ) eq "pl"
         )
         )

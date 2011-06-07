@@ -3,11 +3,11 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::EN::First_names;
+use Treex::Tools::Lexicon::EN::First_names;
 
 # Czech morphology used as an additional resource for gender detections
-use Lexicon::Generation::CS;
-my $generator = Lexicon::Generation::CS->new();
+use Treex::Tools::Lexicon::Generation::CS;
+my $generator = Treex::Tools::Lexicon::Generation::CS->new();
 
 my %GENDER_OF_ROLE = (
     'Mr.'  => 'm',
@@ -87,7 +87,7 @@ sub process_personal_nnode {
 # so let's check also for GENDER_OF_ROLE.
 sub guess_gender {
     my ($lemma) = @_;
-    return $GENDER_OF_ROLE{$lemma} || Lexicon::EN::First_names::gender_of($lemma)
+    return $GENDER_OF_ROLE{$lemma} || Treex::Tools::Lexicon::EN::First_names::gender_of($lemma)
         || firstname_gender_from_czech_morpho($lemma) || '?';
 }
 

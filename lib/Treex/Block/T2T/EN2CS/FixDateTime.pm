@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
@@ -132,11 +132,11 @@ sub process_month {
 
     # If it fails, try to find cases like "6th of July" and "6 of July",
     # where the month is the next node (and child of the number).
-    if ( $month->is_root || !Lexicon::Czech::number_of_month( $month->t_lemma ) ) {
+    if ( $month->is_root || !Treex::Tools::Lexicon::CS::number_of_month( $month->t_lemma ) ) {
         $month = $t_node->get_next_node;
 
         # If also this fails, we are finished.
-        return if !$month || !Lexicon::Czech::number_of_month( $month->t_lemma );
+        return if !$month || !Treex::Tools::Lexicon::CS::number_of_month( $month->t_lemma );
     }
 
     # 4th -> 4. -> 4. (unchanged)

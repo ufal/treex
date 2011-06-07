@@ -4,8 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::English;
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::EN;
+use Treex::Tools::Lexicon::CS;
 
 #TODO These hacks should be removed from here and added to formeme translation models
 # Explanation:
@@ -75,7 +75,7 @@ sub formeme_for_tnode {
                 or ( $en_tnode->gram_number || "" ) eq "pl"
             );
 
-    #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Lexicon::English::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
+    #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Treex::Tools::Lexicon::EN::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
 
     if ( my $n_node = $en_tnode->get_n_node ) {
         return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
@@ -93,7 +93,7 @@ sub formeme_for_tnode {
     #    my $en_parent = $en_tnode->get_parent();
     #    return 'v:fin' if $en_parent->is_root();
     #    my $p_lemma = $en_parent->t_lemma;
-    #    return 'v:že+fin' if Lexicon::English::is_dicendi_verb($p_lemma);
+    #    return 'v:že+fin' if Treex::Tools::Lexicon::EN::is_dicendi_verb($p_lemma);
     #    return 'v:fin';
     #}
 

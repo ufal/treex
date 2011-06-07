@@ -1,4 +1,4 @@
-package Lexicon::Derivations::CS;
+package Treex::Tools::Lexicon::Derivations::CS;
 use Treex::Core::Common;
 use utf8;
 

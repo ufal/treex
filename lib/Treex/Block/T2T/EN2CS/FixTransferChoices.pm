@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
@@ -84,7 +84,7 @@ sub fix_formeme {
             and $cs_tlemma ne '#PersPron'
             and (
                 $cs_tnode->get_children
-                or not Lexicon::Czech::get_poss_adj($cs_tlemma)
+                or not Treex::Tools::Lexicon::CS::get_poss_adj($cs_tlemma)
                 or ( $cs_tnode->gram_number || '' ) eq 'pl'
             );
 

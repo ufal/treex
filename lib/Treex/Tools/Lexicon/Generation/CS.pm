@@ -1,4 +1,4 @@
-package Lexicon::Generation::CS;
+package Treex::Tools::Lexicon::Generation::CS;
 
 # I cannot modify CzechMorpho, since I don't have write permision
 # for /mnt/h/repl/perl_repo/lib/perl/5.8.8/CzechMorpho.pm
@@ -16,7 +16,7 @@ use CzechMorpho;
 my $generator = CzechMorpho::Generator->new();
 my $analyzer  = CzechMorpho::Analyzer->new();
 
-use Lexicon::CS::Prefixes;
+use Treex::Tools::Lexicon::CS::Prefixes;
 
 sub _split_tags {
     my $lemma_and_tags = shift;
@@ -107,7 +107,7 @@ sub _guess_forms_of_ova_cka_ska {
 
 sub _guess_forms_of_prefixed {
     my ( $self,   $lemma ) = @_;
-    my ( $prefix, $radix ) = Lexicon::CS::Prefixes::divide($lemma);
+    my ( $prefix, $radix ) = Treex::Tools::Lexicon::CS::Prefixes::divide($lemma);
     return if !$prefix;
     my @forms = $self->forms_of_lemma($radix);
     return if !@forms;
@@ -199,7 +199,7 @@ __END__
 
 =head1 NAME
 
-Lexicon::Generation::CS
+Treex::Tools::Lexicon::Generation::CS
 
 =head1 VERSION
 
@@ -207,8 +207,8 @@ Lexicon::Generation::CS
 
 =head1 SYNOPSIS
 
- use Lexicon::Generation::CS;
- my $generator = Lexicon::Generation::CS->new();
+ use Treex::Tools::Lexicon::Generation::CS;
+ my $generator = Treex::Tools::Lexicon::Generation::CS->new();
  
  my @forms = $generator->forms_of_lemma('moci');
  foreach my $form_info (@forms){

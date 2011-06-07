@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::CS;
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
@@ -98,7 +98,7 @@ sub should_be_governing {
 
 sub is_bigger_than_four_or_fraction {
     my ($lemma) = @_;
-    my $equivalent = Lexicon::Czech::number_for($lemma) or return 0;
+    my $equivalent = Treex::Tools::Lexicon::CS::number_for($lemma) or return 0;
     return $equivalent > 4 || $equivalent < 1;
 }
 

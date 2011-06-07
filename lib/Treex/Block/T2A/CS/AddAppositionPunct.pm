@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::Czech;
+use Treex::Tools::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -12,7 +12,7 @@ sub process_tnode {
         and $tnode->get_parent->precedes($tnode)
         and $tnode->get_parent->formeme =~ /^n/
         and $tnode->gram_sempos eq "n.denot"    # not numerals etc.
-        and Lexicon::Czech::is_personal_role( $tnode->t_lemma )
+        and Treex::Tools::Lexicon::CS::is_personal_role( $tnode->t_lemma )
         )
     {
 

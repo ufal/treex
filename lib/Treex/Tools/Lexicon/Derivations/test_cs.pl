@@ -3,7 +3,7 @@
 use strict;
 use utf8;
 
-use Lexicon::Derivations::CS;
+use Treex::Tools::Lexicon::Derivations::CS;
 binmode STDOUT,":utf8";
 
 my %sample_input = (
@@ -20,6 +20,6 @@ my %sample_input = (
 foreach my $type (keys %sample_input) {
     print "Derivations of type $type\n";
     foreach my $input (@{$sample_input{$type}}) {
-        print "\t$input --> " . join (", ",Lexicon::Derivations::CS::derive($type,$input))."\n";
+        print "\t$input --> " . join (", ",Treex::Tools::Lexicon::Derivations::CS::derive($type,$input))."\n";
     }
 }

@@ -15,7 +15,7 @@ foreach my $lemma (@DICENDI_VERBS) {
 
 sub is_dicendi_verb {
     my ($t_lemma) = @_;
-    Report::fatal('uninitialized t_lemma in Lexicon::English::is_dicendi_verb') if !defined $t_lemma;
+    Report::fatal('uninitialized t_lemma in Treex::Tools::Lexicon::EN::is_dicendi_verb') if !defined $t_lemma;
     return $IS_DICENDI_VERB{$t_lemma};
 }
 

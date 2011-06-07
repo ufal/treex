@@ -5,7 +5,7 @@ use utf8;
 #TODO: Better way how to make it automatically download.
 my $POSSADJ_FN = 'generated_data/extracted_from_CNK/possessive_adjectives.tsv';
 use Treex::Core::Resource;
-Treex::Core::Resource::require_file_from_share( $POSSADJ_FN, 'Lexicon::Czech' );
+Treex::Core::Resource::require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
 
 my @DICENDI_VERBS =
     qw(dodat dodávat doplnit hlásit hodnotit informovat komentovat konstatovat líčit
@@ -87,7 +87,7 @@ my %NUMBER_OF_MONTH = (
 
 sub number_of_month {
     my ($lemma) = @_;
-    log_fatal('uninitialized lemma in Lexicon::Czech::number_of_month') if !defined $lemma;
+    log_fatal('uninitialized lemma in Treex::Tools::Lexicon::CS::number_of_month') if !defined $lemma;
     return $NUMBER_OF_MONTH{$lemma};
 }
 

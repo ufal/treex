@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Lexicon::English;
+use Treex::Tools::Lexicon::EN;
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
@@ -19,7 +19,7 @@ sub process_atree {
     # Iterate through indices of all dicendi verbs
     DICENDI:
     foreach my $i_dicendi (
-        grep { Lexicon::English::is_dicendi_verb( $a_nodes[$_]->lemma ) } ( 2 .. $#a_nodes )
+        grep { Treex::Tools::Lexicon::EN::is_dicendi_verb( $a_nodes[$_]->lemma ) } ( 2 .. $#a_nodes )
         )
     {
         my $dicendi = $a_nodes[$i_dicendi];
