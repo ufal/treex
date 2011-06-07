@@ -46,7 +46,7 @@ sub number_of_month {
 }
 
 my %personal_role;
-my $persrole_filename = $ENV{TMT_ROOT} . "/libs/other/Lexicon/english_personal_roles.txt";    # !!! detekci adresare udelat poradne
+my $persrole_filename = $ENV{TMT_ROOT} . "/treex/lib/Treex/Tools/Lexicon/english_personal_roles.txt";    # !!! detekci adresare udelat poradne
 open P, "<:utf8", $persrole_filename or Report::fatal $!;
 while (<P>) {
     chomp;

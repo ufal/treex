@@ -107,7 +107,7 @@ sub is_plural_tantum {
 }
 
 my %personal_role;
-my $persrole_filename = $ENV{TMT_ROOT}."/libs/other/Lexicon/czech_personal_roles.txt"; # !!! detekci adresare udelat poradne
+my $persrole_filename = $ENV{TMT_ROOT}."/treex/lib/Treex/Tools/Lexicon/czech_personal_roles.txt"; # !!! detekci adresare udelat poradne
 open P,"<:utf8",$persrole_filename or log_fatal $!;
 while (<P>) {
     chomp;
