@@ -113,7 +113,11 @@ my %EXTRA_LANG_CODES = (
 );
 
 my %IS_LANG_CODE = map { $_ => 1 } ( all_language_codes(), keys %EXTRA_LANG_CODES );
-enum 'LangCode' => keys %IS_LANG_CODE;
+#enum 'LangCode' => keys %IS_LANG_CODE;
+subtype 'LangCode'
+    => as 'Str'
+    => where {defined $IS_LANG_CODE{$_}}
+=> message {'LangCode must be valid ISO 639-1 code. E.g. en, de, cs'};
 sub is_lang_code { return $IS_LANG_CODE{ $_[0] }; }
 
 sub get_lang_name {
