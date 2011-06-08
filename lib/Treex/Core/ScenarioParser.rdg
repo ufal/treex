@@ -1,33 +1,41 @@
 {
-## no critic This will be generated code
+use File::Slurp;
+use File::Basename;
+## no critic Generated code follows
 }
 startrule:  SCEN EOF                            {$return = $item{SCEN}}
-#startrule:  <error>
-SCEN:       LINE SCEN                           {$return = [$item{LINE},@{$item{SCEN}}]}
-SCEN:       LINE                                {$return = [$item{LINE}]}
-LINE:       BLOCK COMMENT | BLOCK               {$return = $item{BLOCK}}
+SCEN:       LINE SCEN                           {$return = [@{$item{LINE}},@{$item{SCEN}}]}
+SCEN:       LINE                                {$return = [@{$item{LINE}}]}
+LINE:       BLOCK COMMENT | BLOCK               {$return = [@{$item{BLOCK}}]}
 EOF:        /^\Z/
-BLOCK:      TBNAME PARAMS                       {$return = {
-                                                    block_name=>$item{TBNAME},
-                                                    block_parameters=>$item{PARAMS},
-                                                    }
+BLOCK:      INCLUDE                             {
+                                                    my $included = read_file($item{INCLUDE});
+                                                    $return = [ @{ $thisparser->startrule($included, 1, $item{INCLUDE})} ];
                                                 }
-BLOCK:      TBNAME                              {$return = {
-                                                    block_name=>$item{TBNAME},
-                                                    block_parameters=>[],
-                                                    }
+BLOCK:      TBNAME PARAMS                       {$return = [{
+                                                        block_name=>$item{TBNAME},
+                                                        block_parameters=>$item{PARAMS},
+                                                    }]
                                                 }
-BLOCK:      INCLUDE                             {$return = $item{INCLUDE}}
-INCLUDE:    /\w+\.scen/                         {
-                                                    my $incParser = new Treex::Core::ScenarioParser;
-                                                    my $incString = $item{INCLUDE};
+BLOCK:      TBNAME                              {$return = [{
+                                                        block_name=>$item{TBNAME},
+                                                        block_parameters=>[],
+                                                    }]
+                                                }
+INCLUDE:    /\/\S+\.scen/                       {$return = $item[1]}
+INCLUDE:    /[^\/]\S+\.scen/                    {   my $from_file = $arg[0];
+                                                    if ($from_file =~ /./) {
+                                                        $return = dirname($from_file) . "/$item[1]";
+                                                    } else {
+                                                        $return = "./$item[1]";
+                                                    }
                                                 }
 TBNAME:     BNAME                               {$return = "Treex::Block::$item{BNAME}"}
-BNAME:      /\w+::/ BNAME                       {$return = $item[1].$item[2]}
-BNAME:      /\w+/                               {$return = $item[1]}
+BNAME:      /[A-Z]\w*::/ BNAME                  {$return = $item[1].$item[2]}
+BNAME:      /[A-Z]\w*/                          {$return = $item[1]}
 PARAMS:     PARAM PARAMS                        {$return = [$item{PARAM}, @{$item{PARAMS}}]}
 PARAMS:     PARAM                               {$return = [$item{PARAM}]}
-PARAM:      PNAME '=' PVALUE                      {$return = $item[1].$item[2].$item[3]}
+PARAM:      PNAME '=' PVALUE                    {$return = $item[1].$item[2].$item[3]}
 PNAME:      /\w+/                               {$return = $item[1]}
 PVALUE:     /'/ PSQUOTE /'/                     {$return = $item{PSQUOTE}}
 PVALUE:     /"/ PDQUOTE /"/                     {$return = $item{PDQUOTE}}

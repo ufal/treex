@@ -4,7 +4,7 @@ use warnings;
 use Treex::Core::Run;
 use Test::More;
 use File::Slurp;
-
+use File::Basename;
 # We want to check execution of treex exactly as from the command line.
 # Originally, we tried to
 # use Test::Output;
@@ -41,7 +41,7 @@ my $doc               = Treex::Core::Document->new();
 $doc->save($test_data_file);
 $doc->save( '2' . $test_data_file );
 $doc->save($confuse_data_file);
-
+my $my_dir = dirname($0);
 my @tasks = (
     [ q(treex -q -- dummy.treex),                                        '' ],     # reading an empty file
     [ q(treex -q -s -- dummy.treex),                                     '' ],     # reading and saving an empty file
@@ -59,10 +59,11 @@ my @tasks = (
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'),                           'a=b  c' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'),                           'a=b' ],
-    [   q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
+    [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 1;'), '1'
     ],
-    [ q(echo | treex -q -Len Read::Text scenarios/print1.scen), '1' ],
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print1.scen), '1' ],
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen),    '' ],    #confuse parser with parameter which looks like resursive scenario load, but is in fact parameter
 );
 
