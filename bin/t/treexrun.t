@@ -19,13 +19,14 @@ sub is_bash_combined_output {
     return is( $content, $expected_output, $description );
 }
 
-my $TREEX = 'treex';    #`which treex 2>/dev/null`;
-if ( !-x $TREEX ) {
+my $TREEX = 'treex';
+my $exit_code = system('treex -h 2>/dev/null');
+if ( $exit_code == -1 ) {
     use Treex::Core::Config;
     $TREEX = Treex::Core::Config::lib_core_dir() . '../../../bin/treex';    #development location - lib_core_dir is lib/Treex/Core
-}
-if ( !-x $TREEX ) {
-    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../../bin/treex';    #release location - lib_core_dir is blib/lib/Treex/Core
+    if ( !-x $TREEX ) {
+        $TREEX = Treex::Core::Config::lib_core_dir() . '../../../../bin/treex';    #release location - lib_core_dir is blib/lib/Treex/Core
+    }
 }
 
 END {

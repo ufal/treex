@@ -15,12 +15,14 @@ my $test_output_file = 'dummy.tmp';
 my $doc = Treex::Core::Document->new();
 $doc->save($test_data_file);
 
-my $runner_cmd = 'treex';    #`which treex 2>/dev/null`;
-if ( !-x $runner_cmd ) {
+my $skip = 0;
+my $runner_cmd = 'treex';
+my $exit_code = system('treex -h 2>/dev/null');
+if ( $exit_code == -1 ) {
     use Treex::Core::Config;
-    $runner_cmd = Treex::Core::Config::lib_core_dir() . '/../../bin/treex';
+    $runner_cmd = Treex::Core::Config::lib_core_dir() . '../../../bin/treex';
+    $skip = !-x $runner_cmd;
 }
-my $skip = !-x $runner_cmd;
 
 my $cmdline_arguments = " -q Util::Eval document='print 123' -- $test_data_file";
 stdout_is( sub { treex $cmdline_arguments }, '123', "running treex from perl, checking spaces in arguments" );
