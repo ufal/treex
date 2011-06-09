@@ -5,6 +5,7 @@ use Treex::Core::Run;
 use Test::More;
 use File::Slurp;
 use File::Basename;
+
 # We want to check execution of treex exactly as from the command line.
 # Originally, we tried to
 # use Test::Output;
@@ -20,7 +21,7 @@ sub is_bash_combined_output {
     return is( $content, $expected_output, $description );
 }
 
-my $TREEX = 'treex';
+my $TREEX     = 'treex';
 my $exit_code = system('treex -h 2>/dev/null');
 if ( $exit_code == -1 ) {
     use Treex::Core::Config;
@@ -44,11 +45,11 @@ $doc->save($test_data_file);
 $doc->save( '2' . $test_data_file );
 $doc->save($confuse_data_file);
 my $my_dir = dirname($0);
-my @tasks = (
+my @tasks  = (
     [ q(treex -q -- dummy.treex),                                        '' ],     # reading an empty file
     [ q(treex -q -s -- dummy.treex),                                     '' ],     # reading and saving an empty file
     [ q(treex -q -g '*dummy.treex'),                                     '' ],     # postponed wildcard expansion
-    [ q(echo | treex -q -Len Read::Text Util::Eval document='print 1;'), '1' ],    # @ARGV contains q{document=print 1;}
+    [ q(echo | treex -q -Len Read::Text Util::Eval document='print 0;'), '0' ],    # @ARGV contains q{document=print 0;}
 
     # It is questionable whether we want to allow the following four constructions
     # [q(echo | treex -q -Len Read::Text Util::Eval document=\'print 1;\'), '1'],# @ARGV contains q{document='print}, q{1;'}
@@ -57,15 +58,15 @@ my @tasks = (
     # [q(echo | treex -q -Len Read::Text Util::Eval document="'print 1;'"), '1'],# @ARGV contains q{document='print 1;'}
 
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print "hello";'),                            'hello' ],
-    [ q(echo | treex -q -Len Read::Text Util::Eval document="print 'hello';"),                            'hello' ],
+    [ q(echo | treex -q -Len Read::Text Util::Eval document="print 'hi';"),                               'hi' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my @a=("#","is not a comment");print $#a;'), '1' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print "a=b  c";'),                           'a=b  c' ],
     [ q(echo | treex -q -Len Read::Text Util::Eval document='$_="a=b";print;'),                           'a=b' ],
-    [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
-                                                          print 1;'), '1'
+    [   q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
+                                                          print 2;'), '2'
     ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print1.scen), '1' ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print3.scen),       '3' ],
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '4' ],    # scenario file in scenario file
 
     # try to confuse the scenario parser with a parameter which looks like scenario
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '' ],
