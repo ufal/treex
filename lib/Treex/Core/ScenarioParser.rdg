@@ -6,11 +6,14 @@ use File::Basename;
 startrule:  SCEN EOF                            {$return = $item{SCEN}}
 SCEN:       LINE SCEN                           {$return = [@{$item{LINE}},@{$item{SCEN}}]}
 SCEN:       LINE                                {$return = [@{$item{LINE}}]}
-LINE:       BLOCK COMMENT | BLOCK               {$return = [@{$item{BLOCK}}]}
+LINE:       BLOCK COMMENT                       {$return = [@{$item{BLOCK}}]}
+LINE:       BLOCK                               {$return = [@{$item{BLOCK}}]}
+LINE:       COMMENT                             {$return = []}
 EOF:        /^\Z/
 BLOCK:      INCLUDE                             {
-                                                    my $included = read_file($item{INCLUDE});
-                                                    $return = [ @{ $thisparser->startrule($included, 1, $item{INCLUDE})} ];
+                                                    my $included = read_file( $item{INCLUDE} );
+                                                    my $result = $thisparser->startrule( $included, 1, $item{INCLUDE} );
+                                                    $return = [@$result];
                                                 }
 BLOCK:      TBNAME PARAMS                       {$return = [{
                                                         block_name=>$item{TBNAME},
@@ -48,6 +51,6 @@ SLASHEDSQUOTE: /\\'/                            {$return = "'"}
 PDQUOTE:    /[^"]+/                             {$return = $item[1]}
 PNOTQUOTED: /\S+/                               {$return = $item[1]}
 PTICKED:    /[^`]+/                             {$return = $item[1]}
-COMMENT:    /#.*\n/
+COMMENT:    /#[^\n]*/                           {$return = ''}
 SPACE:      /\s+/                               {$return = $item[1]}
 EMPTY:      //                                 

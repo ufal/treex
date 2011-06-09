@@ -659,7 +659,7 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT
     my $text;
     my $lastsep="";
     my $current_match;
-    my $expectation = new Parse::RecDescent::Expectation(q{/#.*\\n/});
+    my $expectation = new Parse::RecDescent::Expectation(q{/#[^\\n]*/});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -670,7 +670,7 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT
     while (!$_matched && !$commit)
     {
         
-        Parse::RecDescent::_trace(q{Trying production: [/#.*\\n/]},
+        Parse::RecDescent::_trace(q{Trying production: [/#[^\\n]*/]},
                       Parse::RecDescent::_tracefirst($_[1]),
                       q{COMMENT},
                       $tracelevel)
@@ -683,7 +683,7 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT
         my $repcount = 0;
 
 
-        Parse::RecDescent::_trace(q{Trying terminal: [/#.*\\n/]}, Parse::RecDescent::_tracefirst($text),
+        Parse::RecDescent::_trace(q{Trying terminal: [/#[^\\n]*/]}, Parse::RecDescent::_tracefirst($text),
                       q{COMMENT},
                       $tracelevel)
                         if defined $::RD_TRACE;
@@ -691,7 +691,7 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT
         $expectation->is(q{})->at($text);
         
 
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:#.*\n)/)
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:#[^\n]*)/)
         {
             
             $expectation->failed();
@@ -710,8 +710,30 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT
         push @item, $item{__PATTERN1__}=$current_match;
         
 
+        Parse::RecDescent::_trace(q{Trying action},
+                      Parse::RecDescent::_tracefirst($text),
+                      q{COMMENT},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
 
-        Parse::RecDescent::_trace(q{>>Matched production: [/#.*\\n/]<<},
+        $_tok = ($_noactions) ? 0 : do {$return = ''};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+
+        Parse::RecDescent::_trace(q{>>Matched production: [/#[^\\n]*/]<<},
                       Parse::RecDescent::_tracefirst($text),
                       q{COMMENT},
                       $tracelevel)
@@ -1404,7 +1426,7 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::LINE
     my $text;
     my $lastsep="";
     my $current_match;
-    my $expectation = new Parse::RecDescent::Expectation(q{BLOCK});
+    my $expectation = new Parse::RecDescent::Expectation(q{BLOCK, or COMMENT});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -1488,6 +1510,28 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::LINE
         
         }
 
+        Parse::RecDescent::_trace(q{Trying action},
+                      Parse::RecDescent::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = [@{$item{BLOCK}}]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
 
         Parse::RecDescent::_trace(q{>>Matched production: [BLOCK COMMENT]<<},
                       Parse::RecDescent::_tracefirst($text),
@@ -1569,6 +1613,85 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::LINE
 
 
         Parse::RecDescent::_trace(q{>>Matched production: [BLOCK]<<},
+                      Parse::RecDescent::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_trace(q{Trying production: [COMMENT]},
+                      Parse::RecDescent::_tracefirst($_[1]),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[2];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{LINE});
+        %item = (__RULE__ => q{LINE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_trace(q{Trying subrule: [COMMENT]},
+                  Parse::RecDescent::_tracefirst($text),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::Treex::Core::ScenarioParser::COMMENT($thisparser,$text,$repeating,$_noactions,sub { \@arg })))
+        {
+            
+            Parse::RecDescent::_trace(q{<<Didn't match subrule: [COMMENT]>>},
+                          Parse::RecDescent::_tracefirst($text),
+                          q{LINE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_trace(q{>>Matched subrule: [COMMENT]<< (return value: [}
+                    . $_tok . q{]},
+                      
+                      Parse::RecDescent::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{COMMENT}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_trace(q{Trying action},
+                      Parse::RecDescent::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = []};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+
+        Parse::RecDescent::_trace(q{>>Matched production: [COMMENT]<<},
                       Parse::RecDescent::_tracefirst($text),
                       q{LINE},
                       $tracelevel)
@@ -1711,8 +1834,9 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::BLOCK
         
 
         $_tok = ($_noactions) ? 0 : do {
-                                                    my $included = read_file($item{INCLUDE});
-                                                    $return = [ @{ $thisparser->startrule($included, 1, $item{INCLUDE})} ];
+                                                    my $included = read_file( $item{INCLUDE} );
+                                                    my $result = $thisparser->startrule( $included, 1, $item{INCLUDE} );
+                                                    $return = [@$result];
                                                 };
         unless (defined $_tok)
         {
@@ -4544,14 +4668,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'description' => '/\\\\s+/',
                                                                                               'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 52,
+                                                                                              'line' => 55,
                                                                                               'mod' => '',
                                                                                               'ldelim' => '/'
                                                                                             }, 'Parse::RecDescent::Token' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 52,
+                                                                                              'line' => 55,
                                                                                               'code' => '{$return = $item[1]}'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -4560,7 +4684,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'SPACE',
                                                   'vars' => '',
-                                                  'line' => 52
+                                                  'line' => 55
                                                 }, 'Parse::RecDescent::Rule' ),
                               'EMPTY' => bless( {
                                                   'impcount' => 0,
@@ -4583,7 +4707,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'description' => '//',
                                                                                               'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 53,
+                                                                                              'line' => 56,
                                                                                               'mod' => '',
                                                                                               'ldelim' => '/'
                                                                                             }, 'Parse::RecDescent::Token' )
@@ -4593,7 +4717,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'EMPTY',
                                                   'vars' => '',
-                                                  'line' => 53
+                                                  'line' => 56
                                                 }, 'Parse::RecDescent::Rule' ),
                               'PNOTQUOTED' => bless( {
                                                        'impcount' => 0,
@@ -4616,14 +4740,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                    'description' => '/\\\\S+/',
                                                                                                    'lookahead' => 0,
                                                                                                    'rdelim' => '/',
-                                                                                                   'line' => 49,
+                                                                                                   'line' => 52,
                                                                                                    'mod' => '',
                                                                                                    'ldelim' => '/'
                                                                                                  }, 'Parse::RecDescent::Token' ),
                                                                                           bless( {
                                                                                                    'hashname' => '__ACTION1__',
                                                                                                    'lookahead' => 0,
-                                                                                                   'line' => 49,
+                                                                                                   'line' => 52,
                                                                                                    'code' => '{$return = $item[1]}'
                                                                                                  }, 'Parse::RecDescent::Action' )
                                                                                         ],
@@ -4632,7 +4756,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                   ],
                                                        'name' => 'PNOTQUOTED',
                                                        'vars' => '',
-                                                       'line' => 49
+                                                       'line' => 52
                                                      }, 'Parse::RecDescent::Rule' ),
                               'SLASHEDSQUOTE' => bless( {
                                                           'impcount' => 0,
@@ -4655,14 +4779,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                       'description' => '/\\\\\\\\\'/',
                                                                                                       'lookahead' => 0,
                                                                                                       'rdelim' => '/',
-                                                                                                      'line' => 47,
+                                                                                                      'line' => 50,
                                                                                                       'mod' => '',
                                                                                                       'ldelim' => '/'
                                                                                                     }, 'Parse::RecDescent::Token' ),
                                                                                              bless( {
                                                                                                       'hashname' => '__ACTION1__',
                                                                                                       'lookahead' => 0,
-                                                                                                      'line' => 47,
+                                                                                                      'line' => 50,
                                                                                                       'code' => '{$return = "\'"}'
                                                                                                     }, 'Parse::RecDescent::Action' )
                                                                                            ],
@@ -4671,7 +4795,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                      ],
                                                           'name' => 'SLASHEDSQUOTE',
                                                           'vars' => '',
-                                                          'line' => 47
+                                                          'line' => 50
                                                         }, 'Parse::RecDescent::Rule' ),
                               'COMMENT' => bless( {
                                                     'impcount' => 0,
@@ -4686,25 +4810,31 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                           'uncommit' => undef,
                                                                           'error' => undef,
                                                                           'patcount' => 1,
-                                                                          'actcount' => 0,
+                                                                          'actcount' => 1,
                                                                           'items' => [
                                                                                        bless( {
-                                                                                                'pattern' => '#.*\\n',
+                                                                                                'pattern' => '#[^\\n]*',
                                                                                                 'hashname' => '__PATTERN1__',
-                                                                                                'description' => '/#.*\\\\n/',
+                                                                                                'description' => '/#[^\\\\n]*/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 51,
+                                                                                                'line' => 54,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
-                                                                                              }, 'Parse::RecDescent::Token' )
+                                                                                              }, 'Parse::RecDescent::Token' ),
+                                                                                       bless( {
+                                                                                                'hashname' => '__ACTION1__',
+                                                                                                'lookahead' => 0,
+                                                                                                'line' => 54,
+                                                                                                'code' => '{$return = \'\'}'
+                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                      ],
                                                                           'line' => undef
                                                                         }, 'Parse::RecDescent::Production' )
                                                                ],
                                                     'name' => 'COMMENT',
                                                     'vars' => '',
-                                                    'line' => 51
+                                                    'line' => 54
                                                   }, 'Parse::RecDescent::Rule' ),
                               'EOF' => bless( {
                                                 'impcount' => 0,
@@ -4727,7 +4857,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                             'description' => '/^\\\\Z/',
                                                                                             'lookahead' => 0,
                                                                                             'rdelim' => '/',
-                                                                                            'line' => 10,
+                                                                                            'line' => 12,
                                                                                             'mod' => '',
                                                                                             'ldelim' => '/'
                                                                                           }, 'Parse::RecDescent::Token' )
@@ -4737,7 +4867,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                            ],
                                                 'name' => 'EOF',
                                                 'vars' => '',
-                                                'line' => 10
+                                                'line' => 12
                                               }, 'Parse::RecDescent::Rule' ),
                               'NOTSQUOTE' => bless( {
                                                       'impcount' => 0,
@@ -4760,7 +4890,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                   'description' => '/[^\']*[^\'\\\\\\\\]/',
                                                                                                   'lookahead' => 0,
                                                                                                   'rdelim' => '/',
-                                                                                                  'line' => 46,
+                                                                                                  'line' => 49,
                                                                                                   'mod' => '',
                                                                                                   'ldelim' => '/'
                                                                                                 }, 'Parse::RecDescent::Token' )
@@ -4770,7 +4900,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                  ],
                                                       'name' => 'NOTSQUOTE',
                                                       'vars' => '',
-                                                      'line' => 46
+                                                      'line' => 49
                                                     }, 'Parse::RecDescent::Rule' ),
                               'TBNAME' => bless( {
                                                    'impcount' => 0,
@@ -4795,12 +4925,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 33
+                                                                                               'line' => 36
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 33,
+                                                                                               'line' => 36,
                                                                                                'code' => '{$return = "Treex::Block::$item{BNAME}"}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -4809,7 +4939,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'TBNAME',
                                                    'vars' => '',
-                                                   'line' => 33
+                                                   'line' => 36
                                                  }, 'Parse::RecDescent::Rule' ),
                               'startrule' => bless( {
                                                       'impcount' => 0,
@@ -4875,7 +5005,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                        'uncommit' => undef,
                                                                        'error' => undef,
                                                                        'patcount' => 0,
-                                                                       'actcount' => 0,
+                                                                       'actcount' => 1,
                                                                        'items' => [
                                                                                     bless( {
                                                                                              'subrule' => 'BLOCK',
@@ -4892,7 +5022,13 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
                                                                                              'line' => 9
-                                                                                           }, 'Parse::RecDescent::Subrule' )
+                                                                                           }, 'Parse::RecDescent::Subrule' ),
+                                                                                    bless( {
+                                                                                             'hashname' => '__ACTION1__',
+                                                                                             'lookahead' => 0,
+                                                                                             'line' => 9,
+                                                                                             'code' => '{$return = [@{$item{BLOCK}}]}'
+                                                                                           }, 'Parse::RecDescent::Action' )
                                                                                   ],
                                                                        'line' => undef
                                                                      }, 'Parse::RecDescent::Production' ),
@@ -4911,16 +5047,42 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 9
+                                                                                             'line' => 10
                                                                                            }, 'Parse::RecDescent::Subrule' ),
                                                                                     bless( {
                                                                                              'hashname' => '__ACTION1__',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 9,
+                                                                                             'line' => 10,
                                                                                              'code' => '{$return = [@{$item{BLOCK}}]}'
                                                                                            }, 'Parse::RecDescent::Action' )
                                                                                   ],
-                                                                       'line' => 9
+                                                                       'line' => undef
+                                                                     }, 'Parse::RecDescent::Production' ),
+                                                              bless( {
+                                                                       'number' => 2,
+                                                                       'strcount' => 0,
+                                                                       'dircount' => 0,
+                                                                       'uncommit' => undef,
+                                                                       'error' => undef,
+                                                                       'patcount' => 0,
+                                                                       'actcount' => 1,
+                                                                       'items' => [
+                                                                                    bless( {
+                                                                                             'subrule' => 'COMMENT',
+                                                                                             'matchrule' => 0,
+                                                                                             'implicit' => undef,
+                                                                                             'argcode' => undef,
+                                                                                             'lookahead' => 0,
+                                                                                             'line' => 11
+                                                                                           }, 'Parse::RecDescent::Subrule' ),
+                                                                                    bless( {
+                                                                                             'hashname' => '__ACTION1__',
+                                                                                             'lookahead' => 0,
+                                                                                             'line' => 11,
+                                                                                             'code' => '{$return = []}'
+                                                                                           }, 'Parse::RecDescent::Action' )
+                                                                                  ],
+                                                                       'line' => undef
                                                                      }, 'Parse::RecDescent::Production' )
                                                             ],
                                                  'name' => 'LINE',
@@ -4952,15 +5114,16 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 11
+                                                                                              'line' => 13
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 11,
+                                                                                              'line' => 13,
                                                                                               'code' => '{
-                                                    my $included = read_file($item{INCLUDE});
-                                                    $return = [ @{ $thisparser->startrule($included, 1, $item{INCLUDE})} ];
+                                                    my $included = read_file( $item{INCLUDE} );
+                                                    my $result = $thisparser->startrule( $included, 1, $item{INCLUDE} );
+                                                    $return = [@$result];
                                                 }'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -4981,7 +5144,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 15
+                                                                                              'line' => 18
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'subrule' => 'PARAMS',
@@ -4989,12 +5152,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 15
+                                                                                              'line' => 18
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 15,
+                                                                                              'line' => 18,
                                                                                               'code' => '{$return = [{
                                                         block_name=>$item{TBNAME},
                                                         block_parameters=>$item{PARAMS},
@@ -5019,12 +5182,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 20
+                                                                                              'line' => 23
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 20,
+                                                                                              'line' => 23,
                                                                                               'code' => '{$return = [{
                                                         block_name=>$item{TBNAME},
                                                         block_parameters=>[],
@@ -5037,7 +5200,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'BLOCK',
                                                   'vars' => '',
-                                                  'line' => 11
+                                                  'line' => 13
                                                 }, 'Parse::RecDescent::Rule' ),
                               'PNAME' => bless( {
                                                   'impcount' => 0,
@@ -5060,14 +5223,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'description' => '/\\\\w+/',
                                                                                               'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 39,
+                                                                                              'line' => 42,
                                                                                               'mod' => '',
                                                                                               'ldelim' => '/'
                                                                                             }, 'Parse::RecDescent::Token' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 39,
+                                                                                              'line' => 42,
                                                                                               'code' => '{$return = $item[1]}'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -5076,7 +5239,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'PNAME',
                                                   'vars' => '',
-                                                  'line' => 39
+                                                  'line' => 42
                                                 }, 'Parse::RecDescent::Rule' ),
                               'PTICKED' => bless( {
                                                     'impcount' => 0,
@@ -5099,14 +5262,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'description' => '/[^`]+/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 50,
+                                                                                                'line' => 53,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 50,
+                                                                                                'line' => 53,
                                                                                                 'code' => '{$return = $item[1]}'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
@@ -5115,7 +5278,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'PTICKED',
                                                     'vars' => '',
-                                                    'line' => 50
+                                                    'line' => 53
                                                   }, 'Parse::RecDescent::Rule' ),
                               'BNAME' => bless( {
                                                   'impcount' => 0,
@@ -5140,7 +5303,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'description' => '/[A-Z]\\\\w*::/',
                                                                                               'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 34,
+                                                                                              'line' => 37,
                                                                                               'mod' => '',
                                                                                               'ldelim' => '/'
                                                                                             }, 'Parse::RecDescent::Token' ),
@@ -5150,12 +5313,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 34
+                                                                                              'line' => 37
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 34,
+                                                                                              'line' => 37,
                                                                                               'code' => '{$return = $item[1].$item[2]}'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -5176,14 +5339,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'description' => '/[A-Z]\\\\w*/',
                                                                                               'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 35,
+                                                                                              'line' => 38,
                                                                                               'mod' => '',
                                                                                               'ldelim' => '/'
                                                                                             }, 'Parse::RecDescent::Token' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 35,
+                                                                                              'line' => 38,
                                                                                               'code' => '{$return = $item[1]}'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -5192,7 +5355,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'BNAME',
                                                   'vars' => '',
-                                                  'line' => 34
+                                                  'line' => 37
                                                 }, 'Parse::RecDescent::Rule' ),
                               'SCEN' => bless( {
                                                  'impcount' => 0,
@@ -5289,14 +5452,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'description' => '/\\\\/\\\\S+\\\\.scen/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 25,
+                                                                                                'line' => 28,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 25,
+                                                                                                'line' => 28,
                                                                                                 'code' => '{$return = $item[1]}'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
@@ -5317,14 +5480,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'description' => '/[^\\\\/]\\\\S+\\\\.scen/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 26,
+                                                                                                'line' => 29,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 26,
+                                                                                                'line' => 29,
                                                                                                 'code' => '{   my $from_file = $arg[0];
                                                     if ($from_file =~ /./) {
                                                         $return = dirname($from_file) . "/$item[1]";
@@ -5339,7 +5502,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'INCLUDE',
                                                     'vars' => '',
-                                                    'line' => 25
+                                                    'line' => 28
                                                   }, 'Parse::RecDescent::Rule' ),
                               'PDQUOTE' => bless( {
                                                     'impcount' => 0,
@@ -5362,14 +5525,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'description' => '/[^"]+/',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 48,
+                                                                                                'line' => 51,
                                                                                                 'mod' => '',
                                                                                                 'ldelim' => '/'
                                                                                               }, 'Parse::RecDescent::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 48,
+                                                                                                'line' => 51,
                                                                                                 'code' => '{$return = $item[1]}'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
@@ -5378,7 +5541,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'PDQUOTE',
                                                     'vars' => '',
-                                                    'line' => 48
+                                                    'line' => 51
                                                   }, 'Parse::RecDescent::Rule' ),
                               'PSQUOTE' => bless( {
                                                     'impcount' => 0,
@@ -5405,7 +5568,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 44
+                                                                                                'line' => 47
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'subrule' => 'SLASHEDSQUOTE',
@@ -5413,7 +5576,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 44
+                                                                                                'line' => 47
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'subrule' => 'PSQUOTE',
@@ -5421,12 +5584,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 44
+                                                                                                'line' => 47
                                                                                               }, 'Parse::RecDescent::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 44,
+                                                                                                'line' => 47,
                                                                                                 'code' => '{$return = $item{NOTSQUOTE}.$item{SLASHEDSQUOTE}.$item{PSQUOTE}}'
                                                                                               }, 'Parse::RecDescent::Action' )
                                                                                      ],
@@ -5447,7 +5610,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'implicit' => undef,
                                                                                                 'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 45
+                                                                                                'line' => 48
                                                                                               }, 'Parse::RecDescent::Subrule' )
                                                                                      ],
                                                                           'line' => undef
@@ -5455,7 +5618,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                ],
                                                     'name' => 'PSQUOTE',
                                                     'vars' => '',
-                                                    'line' => 44
+                                                    'line' => 47
                                                   }, 'Parse::RecDescent::Rule' ),
                               'PARAMS' => bless( {
                                                    'impcount' => 0,
@@ -5481,7 +5644,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 36
+                                                                                               'line' => 39
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'subrule' => 'PARAMS',
@@ -5489,12 +5652,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 36
+                                                                                               'line' => 39
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 36,
+                                                                                               'line' => 39,
                                                                                                'code' => '{$return = [$item{PARAM}, @{$item{PARAMS}}]}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5515,12 +5678,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 37
+                                                                                               'line' => 40
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 37,
+                                                                                               'line' => 40,
                                                                                                'code' => '{$return = [$item{PARAM}]}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5529,7 +5692,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'PARAMS',
                                                    'vars' => '',
-                                                   'line' => 36
+                                                   'line' => 39
                                                  }, 'Parse::RecDescent::Rule' ),
                               'PARAM' => bless( {
                                                   'impcount' => 0,
@@ -5555,14 +5718,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 38
+                                                                                              'line' => 41
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'pattern' => '=',
                                                                                               'hashname' => '__STRING1__',
                                                                                               'description' => '\'=\'',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 38
+                                                                                              'line' => 41
                                                                                             }, 'Parse::RecDescent::Literal' ),
                                                                                      bless( {
                                                                                               'subrule' => 'PVALUE',
@@ -5570,12 +5733,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 38
+                                                                                              'line' => 41
                                                                                             }, 'Parse::RecDescent::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 38,
+                                                                                              'line' => 41,
                                                                                               'code' => '{$return = $item[1].$item[2].$item[3]}'
                                                                                             }, 'Parse::RecDescent::Action' )
                                                                                    ],
@@ -5584,7 +5747,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                              ],
                                                   'name' => 'PARAM',
                                                   'vars' => '',
-                                                  'line' => 38
+                                                  'line' => 41
                                                 }, 'Parse::RecDescent::Rule' ),
                               'PVALUE' => bless( {
                                                    'impcount' => 0,
@@ -5612,7 +5775,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/\'/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 40,
+                                                                                               'line' => 43,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -5622,7 +5785,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 40
+                                                                                               'line' => 43
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'pattern' => '\'',
@@ -5630,14 +5793,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/\'/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 40,
+                                                                                               'line' => 43,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 40,
+                                                                                               'line' => 43,
                                                                                                'code' => '{$return = $item{PSQUOTE}}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5658,7 +5821,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/"/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 41,
+                                                                                               'line' => 44,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -5668,7 +5831,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 41
+                                                                                               'line' => 44
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'pattern' => '"',
@@ -5676,14 +5839,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/"/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 41,
+                                                                                               'line' => 44,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 41,
+                                                                                               'line' => 44,
                                                                                                'code' => '{$return = $item{PDQUOTE}}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5704,7 +5867,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/`/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 42,
+                                                                                               'line' => 45,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
@@ -5714,7 +5877,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 42
+                                                                                               'line' => 45
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'pattern' => '`',
@@ -5722,14 +5885,14 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'description' => '/`/',
                                                                                                'lookahead' => 0,
                                                                                                'rdelim' => '/',
-                                                                                               'line' => 42,
+                                                                                               'line' => 45,
                                                                                                'mod' => '',
                                                                                                'ldelim' => '/'
                                                                                              }, 'Parse::RecDescent::Token' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 42,
+                                                                                               'line' => 45,
                                                                                                'code' => '{$return = $item[1].$item[2].$item[3]}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5750,12 +5913,12 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                'implicit' => undef,
                                                                                                'argcode' => undef,
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 43
+                                                                                               'line' => 46
                                                                                              }, 'Parse::RecDescent::Subrule' ),
                                                                                       bless( {
                                                                                                'hashname' => '__ACTION1__',
                                                                                                'lookahead' => 0,
-                                                                                               'line' => 43,
+                                                                                               'line' => 46,
                                                                                                'code' => '{$return = $item{PNOTQUOTED}}'
                                                                                              }, 'Parse::RecDescent::Action' )
                                                                                     ],
@@ -5764,7 +5927,7 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                               ],
                                                    'name' => 'PVALUE',
                                                    'vars' => '',
-                                                   'line' => 40
+                                                   'line' => 43
                                                  }, 'Parse::RecDescent::Rule' )
                             },
                  '_AUTOTREE' => undef,
