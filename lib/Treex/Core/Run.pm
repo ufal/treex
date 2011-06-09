@@ -154,18 +154,6 @@ has 'watch' => (
     documentation => 're-run when the given file is changed TODO better doc',
 );
 
-has 'command' => (
-    is            => 'rw',
-    traits        => ['NoGetopt'],
-    documentation => 'Command by which treex was executed (if executed from command line)',
-);
-
-has 'argv' => (
-    is            => 'rw',
-    traits        => ['NoGetopt'],
-    documentation => 'reference to @ARGV (if executed from command line)',
-);
-
 has 'workdir' => (
     is            => 'rw',
     traits        => ['Getopt'],
@@ -455,7 +443,7 @@ sub _create_job_scripts {
 
         # TODO: if the original line contains -- file.treex, this doesn't work
         print $J "treex --jobindex=$jobnumber --outdir=$workdir/output "
-            . ( join " ", map { _quote_argument($_) } @{ $self->argv } )
+            . ( join " ", map { _quote_argument($_) } @{ $self->ARGV } )
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
@@ -727,8 +715,6 @@ sub treex {
     if ( ref($arguments) eq 'ARRAY' ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args;
-        $args{command} = join " ", @$arguments;
-        $args{argv} = $arguments;
         if ( $idx != -1 ) {
             $args{filenames} = [ splice @$arguments, $idx + 1 ]
         }
