@@ -441,9 +441,11 @@ sub _create_job_scripts {
         print $J "source " . Treex::Core::Config::lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
 
-        # TODO: if the original line contains -- file.treex, this doesn't work
-        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output "
-            . ( join " ", map { _quote_argument($_) } @{ $self->ARGV } )
+        my $opts_and_scen = join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+        if ( $self->filenames ) {
+            $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
+        }
+        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output $opts_and_scen"
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
@@ -714,9 +716,10 @@ sub treex {
 
     if ( ref($arguments) eq 'ARRAY' ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
-        my %args;
+        my %args = ( argv => $arguments );
         if ( $idx != -1 ) {
-            $args{filenames} = [ splice @$arguments, $idx + 1 ]
+            $args{filenames} = [ splice @$arguments, $idx + 1 ];
+            pop @$arguments;                  # delete "--"
         }
         my $runner = Treex::Core::Run->new_with_options( \%args );
         $runner->_execute();
