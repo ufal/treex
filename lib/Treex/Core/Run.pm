@@ -432,6 +432,21 @@ sub _create_job_scripts {
     my ($self)      = @_;
     my $current_dir = Cwd::cwd;
     my $workdir     = $self->workdir;
+    
+    # If there is some stdin piped to treex we must save it to a file
+    # and redirect it to the jobs.
+    # You cannot use interactive input from terminal to "treex -p".
+    # (If you really need it, use perl -npe 1 | treex -p ...)
+    my $input = '';
+    if (!-t STDIN){
+        my $stdin_file = "$workdir/input";
+        $input = "cat $stdin_file | ";
+        open my $TEMP, '>', $stdin_file;
+        while(<STDIN>){
+            print $TEMP $_;
+        }
+    }
+    
     foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
@@ -445,7 +460,7 @@ sub _create_job_scripts {
         if ( $self->filenames ) {
             $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
         }
-        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output $opts_and_scen"
+        print $J $input . "treex --jobindex=$jobnumber --outdir=$workdir/output $opts_and_scen"
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
