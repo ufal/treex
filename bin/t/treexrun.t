@@ -12,6 +12,7 @@ use File::Basename;
 # so we must use temporary output file.
 my $combined_file = 'combined.out';
 
+#TODO $command cannot contain "cd" (change directory), because $combined_file would be saved to that directory
 sub is_bash_combined_output {
     my ( $command, $expected_output, $description ) = @_;
     system( 'bash', '-c', $command . "> $combined_file 2>&1" );
@@ -63,8 +64,8 @@ my @tasks = (
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 1;'), '1'
     ],
-    [ qq(cd $my_dir && echo | treex -q -Len Read::Text scenarios/print1.scen), '1' ],
-    [ qq(cd $my_dir && echo | treex -q -Len Read::Text scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print1.scen), '1' ],
+    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
 
     # try to confuse the scenario parser with a parameter which looks like scenario
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '' ],
