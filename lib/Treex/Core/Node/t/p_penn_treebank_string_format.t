@@ -37,9 +37,10 @@ $proot->create_from_mrg($mrg_sample);
 my @descendants = $proot->get_descendants;
 
 
-cmp_ok(scalar(@descendants), '>', -10, 'p-tree created from its mrg description');
+is(scalar(@descendants), 28, 'p-tree created from its mrg description');
 
-$document->save('penn_sample.treex');
+# Tests should not leave generated files
+# $document->save('penn_sample.treex');
 
 
 done_testing();
