@@ -63,9 +63,11 @@ my @tasks = (
     [ q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 1;'), '1'
     ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print1.scen), '1' ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
-    [ q(echo | treex -q -Len Read::Treex from=confuse.scen),    '' ],    #confuse parser with parameter which looks like resursive scenario load, but is in fact parameter
+    [ qq(cd $my_dir && echo | treex -q -Len Read::Text scenarios/print1.scen), '1' ],
+    [ qq(cd $my_dir && echo | treex -q -Len Read::Text scenarios/scen_in_scen.scen), '1' ],   # scenario file in scenario file
+
+    # try to confuse the scenario parser with a parameter which looks like scenario
+    [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '' ],
 );
 
 foreach my $task_rf (@tasks) {

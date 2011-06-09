@@ -1,1 +1,2 @@
-Util::Eval document='print 1;'
+# Scenarios can contain comments
+Util::Eval document='print 1;' # and end-of-line comments
