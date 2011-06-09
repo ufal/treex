@@ -637,7 +637,7 @@ sub _check_job_errors {
 sub _delete_jobs_and_exit {
     my ($self) = @_;
 
-    log_info "Deleting jobs: " . join(', ',@{ $self->sge_job_numbers });
+    log_info "Deleting jobs: " . join( ', ', @{ $self->sge_job_numbers } );
     foreach my $job ( @{ $self->sge_job_numbers } ) {
         system "qdel $job";
     }
@@ -720,7 +720,9 @@ sub _redirect_output {
 
 # not a method !
 sub treex {
-    my $arguments = shift;                                   # ref to array of arguments, or a string containing all arguments as on the command line
+
+    # ref to array of arguments, or a string containing all arguments as on the command line
+    my $arguments = shift;
 
     if ( ref($arguments) eq 'ARRAY' ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
@@ -736,7 +738,7 @@ sub treex {
     }
 
     elsif ( defined $arguments ) {
-        treex( [ grep {$_} split( /\s/, $arguments ) ] );
+        treex( [ grep {defined $_ && $_ ne ''} split( /\s/, $arguments ) ] );
     }
 
     else {

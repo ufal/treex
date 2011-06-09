@@ -105,10 +105,11 @@ sub _escape {
 sub parse_scenario_string {
     my ( $scenario_string, $from_file ) = @_;
 
-    my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
-    my $parsed = $parser->startrule($scenario_string, 1, $from_file);
-    log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
-    return @$parsed;
+    # Temporary commented until comments in scenarios are parsed correctly
+    #my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
+    #my $parsed = $parser->startrule($scenario_string, 1, $from_file);
+    #log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
+    #return @$parsed;
 
     # Preserve escaped quotes
     $scenario_string =~ s{%}{%25}g;
