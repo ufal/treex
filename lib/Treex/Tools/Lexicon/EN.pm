@@ -58,6 +58,16 @@ sub is_personal_role {
     return $personal_role{$lemma};
 }
 
+sub truncate_lemma {
+    return @_;
+}
+
+# Returns true if the given belongs to a modal verb.
+sub is_modal_verb {
+    my ($lemma) = @_;
+    return $lemma =~ m/^(can|could|may|might|shall|should|must|ought|will)$/;
+}
+
 1;
 
 __END__

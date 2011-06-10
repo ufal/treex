@@ -146,7 +146,19 @@ sub get_poss_adj {
     return $noun2possadjective{$noun_lemma};
 }
 
+# This truncates Czech morphological lemmas, leaving out the explanatory part.
+# If the second parameter is set to true, the number for homonymous lemmas is truncated as well.  
+sub truncate_lemma {
+    my ($lemma, $truncate_number) = @_;    
+    $lemma =~ $truncate_number ? s/(-|`|_;|_:|_;|_,|_\^).*$// : s/(`|_;|_:|_;|_,|_\^).*$//;
+    return $lemma;
+}
 
+# Returns true if the given lemma belongs to a modal verb
+sub is_modal_verb {
+    my ($lemma) = @_;
+    return $lemma =~ m/^(muset|mít|chtít|hodlat|moci|dát|smět|dovést|umět)(_|$)/;
+}
 
 
 1;
@@ -169,6 +181,13 @@ if ( Treex::Tools::Lexicon::CS::is_dicendi_verb('říci')) {
 }
 
 print Treex::Tools::Lexicon::CS::number_for('sedm'); # prints 7
+
+print Treex::Tools::Lexicon::CS::truncate_lemma('jak-1_;L_^(živočich)'); # prints jak-1
+print Treex::Tools::Lexicon::CS::truncate_lemma('jak-1_;L_^(živočich)', 1); # prints jak
+
+if ( Treex::Tools::Lexicon::CS::is_modal_verb('muset')){
+    print "OK\n";
+}
 
 =head1 DESCRIPTION
 
