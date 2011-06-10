@@ -186,6 +186,7 @@ sub process_ttree {
     $self->_set_deleted( {} );
     $self->_gather_a_links($troot);
     $self->_process_subtree($troot);
+       
     $self->_delete_marked($troot);
     $self->_check_corefs($troot);
     return;
@@ -259,13 +260,24 @@ sub _remove_node {
         return;
     }
 
-    # merge children, if there is more than one
-    if ( @children > 1 ) {
-        $self->_merge_children( $to_remove, $self->_find_most_important_child($to_remove) );
-    }
+    # find if we have some usable (not deleted, not atomic) children
+    my $merge_child = $self->_find_most_important_child($to_remove);
 
-    # replace the node with its child, determine the new functor
-    $self->_remove_with_child($to_remove);
+    # merge children, if there is more than one, replace the node with its child, determine the new functor    
+    if ( $merge_child ) {
+        $self->_merge_children( $to_remove, $merge_child);
+        $self->_remove_with_child($to_remove);
+    }
+    # no non-deleted, non-atomic children -> rehang all atomic children to parent and remove this node 
+    else {
+        my @children = $to_remove->get_children();
+        if (@children){
+            foreach my $child (@children){
+                $child->set_parent($to_remove->get_parent());
+            }
+            $self->_mark_for_removal($to_remove, $children[0]);
+        }
+    }
 
     return;
 }
@@ -275,7 +287,7 @@ sub _mark_for_removal {
 
     my ( $self, $to_remove, $aux_backup ) = @_;
     my @anodes = $to_remove->get_aux_anodes();
-
+   
     foreach my $anode (@anodes) {
         if ( @{ $self->_a_links->{$anode} } == 1 ) {
             if (!$aux_backup){
@@ -464,6 +476,7 @@ sub _merge_coord_members {
 sub _merge_children {
 
     my ( $self, $tnode, $under ) = @_;
+    
     my @children = grep { $_ != $under } $tnode->get_children();
 
     foreach my $child (@children) {
@@ -492,9 +505,10 @@ sub _remove_with_child {
 # order (later is more important)
 sub _find_most_important_child {
 
-    # TODO remove atomic
     my ( $self, $tnode ) = @_;
-    my @children       = $tnode->get_children();
+    my @children       = grep { !$self->_deleted->{$_} and $_->nodetype ne 'atom' and !$_->is_generated } $tnode->get_children();
+    return if (!@children);
+           
     my $most_important = $children[0];
 
     for my $child (@children) {
