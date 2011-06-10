@@ -5,19 +5,17 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
-
 sub process_tnode {
 
     my ( $self, $tnode ) = @_;
-    
-    if ( $tnode->t_lemma eq '#Neg' ){
+
+    if ( $tnode->t_lemma eq '#Neg' ) {
         $tnode->parent->set_gram_negation('neg1');
         $tnode->remove();
     }
 
     return;
 }
-
 
 1;
 
