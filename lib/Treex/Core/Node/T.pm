@@ -28,6 +28,66 @@ sub is_coap_root {
     return ( $self->functor || '' ) =~ /^(CONJ|CONFR|DISJ|GRAD|ADVS|CSQ|REAS|CONTRA|APPS|OPER)$/;
 }
 
+#----------- helpers for reference lists ------------
+
+sub _get_node_list {
+    
+    my ($self, $list, $arg_ref) = @_;
+    my $doc = $self->get_document();
+    
+    $list = $self->get_attr($list);
+    my @nodes = $list ? ( map { $doc->get_node_by_id($_) } @{$list} ) : ();
+    
+    return $arg_ref ? $self->_process_switches( $arg_ref, @nodes ) : @nodes;    
+}
+
+sub _set_node_list {
+    
+    my $self = shift;
+    my $list = shift;
+    
+    $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
+    return;
+}
+
+sub _add_to_node_list {
+
+    my $self = shift;
+    my $list = shift;
+    my @prev = $self->_get_node_list($list);
+    $self->_set_node_list($list, (@prev, @_) );
+    return;
+}
+
+sub _remove_from_node_list {
+    
+    my $self = shift;
+    my $list = shift;
+    my @prev = $self->_get_node_list($list);
+    my @remain;
+    
+    foreach my $node (@prev){
+        if ( !grep { $_ == $node } @_ ){ 
+            push @remain, $node;
+        }
+    }
+    $self->_set_node_list( $list, @remain );
+    return;
+}
+
+# remove unindexed IDs from a list attribute
+sub _update_list { 
+    
+    my ($self, $list) = @_;
+    my $doc = $self->get_document();
+    
+    my $ref = $self->get_attr($list);
+    my @nodes = $ref ? ( grep { $doc->id_is_indexed($_) } @{$ref} ) : ();
+    
+    $self->set_attr($list, @nodes > 0 ? [ @nodes ] : undef );
+    return;
+}
+
 #----------- a-layer (analytical) nodes -------------
 
 sub get_lex_anode {
@@ -47,39 +107,81 @@ sub set_lex_anode {
 
 sub get_aux_anodes {
     my ( $self, $arg_ref ) = @_;
-    ##my @nodes  = $self->get_r_attr('a/aux.rf');
-    my $doc    = $self->get_document();
-    my $aux_rf = $self->get_attr('a/aux.rf');
-    my @nodes  = $aux_rf ? ( map { $doc->get_node_by_id($_) } @{$aux_rf} ) : ();
-    return @nodes if !$arg_ref;
+
     log_fatal('Switches preceding_only and following_only cannot be used with get_aux_anodes (t-nodes vs. a-nodes).')
-        if $arg_ref->{preceding_only} || $arg_ref->{following_only};
-    return $self->_process_switches( $arg_ref, @nodes );
+        if $arg_ref and ($arg_ref->{preceding_only} or $arg_ref->{following_only});
+    
+    return $self->_get_node_list('a/aux.rf', $arg_ref);
 }
 
 sub set_aux_anodes {
     my $self       = shift;
-    my @aux_anodes = @_;
-    $self->set_attr( 'a/aux.rf', [ map { $_->get_attr('id') } @aux_anodes ] );
-    return;
+    return $self->_set_node_list('a/aux.rf', @_);
 }
 
 sub add_aux_anodes {
     my $self = shift;
-    my @prev = $self->get_aux_anodes();
-    $self->set_aux_anodes( @prev, @_ );
-    return;
+    return $self->_add_to_node_list('a/aux.rf', @_);
+}
+
+sub remove_aux_anodes { 
+    my $self = shift;    
+    return $self->_remove_from_node_list('a/aux.rf', @_);
 }
 
 sub get_anodes {
     my ( $self, $arg_ref ) = @_;
     my $lex_anode = $self->get_lex_anode();
-    my @nodes = ( ( defined $lex_anode ? ($lex_anode) : () ), $self->get_aux_anodes() );
-    return @nodes if !$arg_ref;
+
     log_fatal('Switches preceding_only and following_only cannot be used with get_anodes (t-nodes vs. a-nodes).')
-        if $arg_ref->{preceding_only} || $arg_ref->{following_only};
-    return $self->_process_switches( $arg_ref, @nodes );
+        if $arg_ref and ($arg_ref->{preceding_only} or $arg_ref->{following_only});
+    
+    return ( defined $lex_anode ? ($lex_anode) : () ), $self->_get_node_list('a/aux.rf', $arg_ref);
 }
+
+#------------ coreference nodes -------------------
+
+sub get_coref_nodes {
+    my ($self, $arg_ref) = @_;
+    return ( $self->_get_node_list( 'coref_gram.rf', $arg_ref ), $self->_get_node_list( 'coref_text.rf', $arg_ref ) );        
+}
+
+sub get_coref_gram_nodes {
+    my ($self, $arg_ref) = @_;
+    return $self->_get_node_list( 'coref_gram.rf', $arg_ref );        
+}
+
+sub get_coref_text_nodes {
+    my ($self, $arg_ref) = @_;
+    return $self->_get_node_list( 'coref_text.rf', $arg_ref );        
+}
+
+sub add_coref_gram_nodes {
+    my $self = shift;
+    return $self->_add_to_node_list('coref_gram.rf', @_);
+}
+
+sub add_coref_text_nodes {
+    my $self = shift;
+    return $self->_add_to_node_list('coref_text.rf', @_);
+}
+
+sub remove_coref_nodes {
+    my $self = shift;    
+    $self->_remove_from_node_list( 'coref_gram.rf', @_ );
+    $self->_remove_from_node_list( 'coref_text.rf', @_ );
+    return;        
+}
+
+# remove unindexed IDs from coreference lists
+sub update_coref_nodes {
+    my $self = shift;
+    
+    $self->_update_list( 'coref_gram.rf' );
+    $self->_update_list( 'coref_text.rf' );
+    return;
+}
+
 
 #----------- n-layer (named entity) nodes -------------
 
@@ -186,6 +288,38 @@ Set the auxiliary a-nodes (to C<a/aux.rf>).
 =item set_lex_anode
 
 Set the lexical a-node (to C<a/lex.rf>).
+
+=item $node->remove_aux_anodes(@to_remove)
+
+Remove the specifed a-nodes from C<a/aux.rf> (if they are contained in it).
+
+=item $node->get_coref_nodes()
+
+Return textual and grammatical coreference nodes (from C<coref_gram.rf> and C<coref_text.rf>).
+
+=item $node->get_coref_gram_nodes()
+
+Return grammatical coreference nodes (from C<coref_gram.rf>).
+
+=item $node->get_coref_text_nodes()
+
+Return textual coreference nodes (from C<coref_text.rf>).
+
+=item $node->add_coref_gram_nodes(@nodes)
+
+Add grammatical coreference nodes (to C<coref_gram.rf>).
+
+=item $node->add_coref_gram_nodes(@nodes)
+
+Add textual coreference nodes (to C<coref_text.rf>).
+
+=item $node->remove_coref_nodes()
+
+Remove the specified nodes from C<coref_gram.rf> or C<coref_text.rf> (if they are contained in one or both of them). 
+
+=item $node->update_coref_nodes()
+
+Remove all invalid coreferences from C<coref_gram.rf> and C<coref_text.rf>.
 
 =back
 
