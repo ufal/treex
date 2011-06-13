@@ -71,8 +71,8 @@ my @tasks  = (
     # try to confuse the scenario parser with a parameter which looks like scenario
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '' ],
     # parameters with quotes
-    [ q(echo | treex -q -Len Read::Sentences Util::Eval selector= document='print 1;'), '' ],
-    [ q(echo | treex -q -Len Read::Sentences Util::Eval selector="" document='print 1;'), '' ],
+    [ q(echo | treex -q -Len Read::Sentences Util::Eval selector= document='print 5;'), '5' ],
+    [ q(echo | treex -q -Len Read::Sentences Util::Eval selector="" document='print 6;'), '6' ],
 );
 
 foreach my $task_rf (@tasks) {
