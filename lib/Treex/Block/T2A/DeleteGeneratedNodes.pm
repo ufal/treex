@@ -222,7 +222,8 @@ sub _process_subtree {
         # this child might have gotten deleted in the meantime
         next if ( $self->_deleted->{$child} ); 
 
-        if ( $child->is_generated and ( $child->t_lemma =~ m/^[^#]/ or $LEMMAS_TO_REMOVE->{ $child->t_lemma } ) ) {
+        if ( $child->is_generated and ( $child->t_lemma =~ m/^[^#]/ or $LEMMAS_TO_REMOVE->{ $child->t_lemma }  
+                or ($child->t_lemma eq '#PersPron' and $child->functor ne 'ACT') ) ) {
             $self->_remove_node($child);
         }
     }
@@ -268,15 +269,9 @@ sub _remove_node {
         $self->_merge_children( $to_remove, $merge_child);
         $self->_remove_with_child($to_remove);
     }
-    # no non-deleted, non-atomic children -> rehang all atomic children to parent and remove this node 
+    # no non-deleted, non-atomic children -> rehang all children to parent and remove this node 
     else {
-        my @children = $to_remove->get_children();
-        if (@children){
-            foreach my $child (@children){
-                $child->set_parent($to_remove->get_parent());
-            }
-            $self->_mark_for_removal($to_remove, $children[0]);
-        }
+        $self->_remove_with_delatom($to_remove);
     }
 
     return;
@@ -499,6 +494,27 @@ sub _remove_with_child {
     $child->set_parent($parent);
     $self->_mark_for_removal( $tnode, $child );
     return;
+}
+
+
+# This removes from the tree a node which has atomic and/or to-be-deleted children. All its children
+# are hanged to its parent; its aux.rf is moved to the first atomic child, or to its parent, if not
+# applicable.  
+sub _remove_with_delatom {
+    
+    my ( $self, $to_remove ) = @_;    
+    my @children = $to_remove->get_children();
+    my $parent = $to_remove->get_parent();
+    my $non_del;
+    
+    foreach my $child (@children){
+        $child->set_parent($parent);
+        if (!$non_del and !$self->_deleted->{$child}){ # find first non-deleted child 
+            $non_del = $child;
+        }
+    }
+    # move aux.rf to the first non-deleted child, or to the parent
+    $self->_mark_for_removal($to_remove, $non_del ? $non_del : $parent );
 }
 
 # Find the most important child in terms of functors priority (see $FUNCTORS_PRIORITY) and
