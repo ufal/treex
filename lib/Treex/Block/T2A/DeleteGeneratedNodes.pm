@@ -93,11 +93,11 @@ Readonly my $FUNCTORS_PRIORITY => {
       # (highest priority: roots of various structures, then actants - ACT > PAT > ADDR > rest, then modifiers,
       # least - rhematizers and similar)
 
-Readonly my $FUNCTORS_HIERARCHY => {
+Readonly my $FUNCTORS_HIERARCHY_PARENT => {
     'ACMP'   => 5,
     'ACT'    => 1,
     'ADDR'   => 3,
-    'ADVS'   => 5,
+    'ADVS'   => 1,
     'AIM'    => 5,
     'APP'    => 5,
     'APPS'   => 1,
@@ -129,7 +129,7 @@ Readonly my $FUNCTORS_HIERARCHY => {
     'FPHR'   => 1,
     'GRAD'   => 1,
     'HER'    => 5,
-    'ID'     => 1,
+    'ID'     => 2, # more than FPHR
     'INTF'   => 1,
     'INTT'   => 5,
     'LOC'    => 5,
@@ -163,6 +163,79 @@ Readonly my $FUNCTORS_HIERARCHY => {
     'VOCAT'  => 1
 };    # functors hierarchy -- determines which of two functors (parent-child) gets removed
 
+Readonly my $FUNCTORS_HIERARCHY_CHILD => {
+    'ACMP'   => 5,
+    'ACT'    => 1,
+    'ADDR'   => 3,
+    'ADVS'   => 10,
+    'AIM'    => 5,
+    'APP'    => 5,
+    'APPS'   => 1,
+    'ATT'    => 5,
+    'AUTH'   => 5,
+    'BEN'    => 5,
+    'CAUS'   => 5,
+    'CNCS'   => 5,
+    'CM'     => 5,
+    'COMPL'  => 5,
+    'COND'   => 5,
+    'CONFR'  => 10,
+    'CONJ'   => 10,
+    'CONTRA' => 10,
+    'CONTRD' => 5,
+    'CPHR'   => 1,
+    'CPR'    => 4,
+    'CRIT'   => 5,
+    'CSQ'    => 10,
+    'DENOM'  => 1,
+    'DIFF'   => 5,
+    'DIR1'   => 5,
+    'DIR2'   => 5,
+    'DIR3'   => 5,
+    'DISJ'   => 10,
+    'DPHR'   => 1,
+    'EFF'    => 3,
+    'EXT'    => 5,
+    'FPHR'   => 1,
+    'GRAD'   => 10,
+    'HER'    => 5,
+    'ID'     => 1,
+    'INTF'   => 1,
+    'INTT'   => 5,
+    'LOC'    => 5,
+    'MANN'   => 5,
+    'MAT'    => 3,
+    'MEANS'  => 5,
+    'MOD'    => 1,
+    'OPER'   => 1,
+    'ORIG'   => 3,
+    'PAR'    => 1,
+    'PARTL'  => 1,
+    'PAT'    => 1,
+    'PREC'   => 1,
+    'PRED'   => 1,
+    'REAS'   => 10,
+    'REG'    => 5,
+    'RESL'   => 5,
+    'RESTR'  => 5,
+    'RHEM'   => 5,
+    'RSTR'   => 5,
+    'SUBS'   => 5,
+    'TFHL'   => 5,
+    'TFRWH'  => 5,
+    'THL'    => 5,
+    'THO'    => 5,
+    'TOWH'   => 5,
+    'TPAR'   => 5,
+    'TSIN'   => 5,
+    'TTILL'  => 5,
+    'TWHEN'  => 5,
+    'VOCAT'  => 1
+};    # functors hierarchy -- determines which of two functors (parent-child) gets removed, values for children
+      # (coordination functors are promoted heree)
+
+
+
 has '+language' => ( required => 1 );
 
 # Remember what links to which a-node for the current tree
@@ -181,6 +254,8 @@ has '_deleted' => ( isa => 'HashRef', is => 'rw' );
 sub process_ttree {
 
     my ( $self, $troot ) = @_;
+    
+#    log_info('Processing ' . $troot->id);
 
     $self->_set_processed( {} );
     $self->_set_deleted( {} );
@@ -246,6 +321,7 @@ sub _remove_node {
 
     # no children -> simply remove and don't care anymore
     if ( @children == 0 ) {
+#        log_info( 'Remove-simple: ' . $to_remove->id );
         $self->_mark_for_removal($to_remove); # don't care for auxiliaries, too
         return;
     }
@@ -282,15 +358,22 @@ sub _mark_for_removal {
 
     my ( $self, $to_remove, $aux_backup ) = @_;
     my @anodes = $to_remove->get_aux_anodes();
+
+ #   log_info('Removal ' . $to_remove->id . ', backup ' . ( $aux_backup ? $aux_backup->id : '' ) );
    
     foreach my $anode (@anodes) {
-        if ( @{ $self->_a_links->{$anode} } == 1 ) {
+        # the anode would be orphaned -> save it
+        if ( $self->_a_links->{$anode} <= 1 ) { 
             if (!$aux_backup){
                 log_warn('Losing some aux-rf: ' . $to_remove->id . ' and ' . $anode->id );
             }
             else {
                 $aux_backup->add_aux_anodes($anode);
             }
+        }
+        # it won't be orphaned, but note that the number of links to it will decrease
+        else {
+            $self->_a_links->{$anode}--;
         }
     }
     $self->_deleted->{$to_remove} = 1;
@@ -334,9 +417,9 @@ sub _gather_a_links {
         my @anodes = $tnode->get_anodes();
         foreach my $anode (@anodes) {
             if ( !$links{$anode} ) {
-                $links{$anode} = [];
+                $links{$anode} = 0;
             }
-            push @{ $links{$anode} }, $tnode;
+            $links{$anode}++;
         }
     }
     $self->_set_a_links( {%links} );
@@ -373,14 +456,6 @@ sub _remove_coord {
     my $parent = $tnode->get_parent();
     my @children = $tnode->get_children( { ordered => 1 } );
 
-    # replace the fphr node type with normal nodes
-    # TODO is this required ? is dphr sufficient ?
-    for ( my $i = 0; $i < @children; ++$i ) {
-        if ( $children[$i]->nodetype eq 'fphr' ) {
-            $children[$i]->set_nodetype('dphr');
-        }
-    }
-    
     # rehang the children
     for ( my $i = 0; $i < @children; ++$i ) {
 
@@ -389,24 +464,32 @@ sub _remove_coord {
             $children[$i]->set_parent($parent);
         }
 
-        # non-members -- find nearest suitable member (skipping atomic nodes, since they can't have children)
+        # non-members -- find nearest suitable member (skipping deleted and atomic nodes, since they can't have children)
         else {
             my $j = $i + 1;
-            while ( $j < @children and ( !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
+            while ( $j < @children and ( $self->_deleted->{$children[$j]} 
+                    or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
                 $j++;
             }
             if ( $j >= @children ) {
                 $j = $i - 1;
-                while ( $j >= 0 and ( !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
+                while ( $j >= 0 and ( $self->_deleted->{$children[$j]} 
+                    or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
                     $j--;
+                }
+                # weird case -- all coordination members are atomic or deleted, rehang also non-members to parent
+                if ($j < 0){ 
+                    $children[$i]->set_parent($parent);
+                    next;
                 }
             }
             $children[$i]->set_parent( $children[$j] );
         }        
     }
 
-    # remove the node itself (shouldn't have any aux.rf)
-    $self->_mark_for_removal($tnode);
+    # remove the node itself
+#    log_info( 'Remove-coord: ' . $tnode->id );
+    $self->_mark_for_removal($tnode, $parent);
     return;
 }
 
@@ -432,31 +515,31 @@ sub _merge_coord_members {
         # find out if all of the coordinated siblings have a child with the same functor
         foreach my $child ( $tnode->get_children ) {
 
-            my $same_functor = 1;
+            my %coord_children;
 
-            foreach my $sibling (@siblings) {
-                if ( !grep { $_->functor eq $child->functor } $sibling->get_children() ) {
-                    $same_functor = 0;
-                    last;
-                }
+            foreach my $sibling (@siblings, $tnode) {
+                
+                my ($coord_child) = grep { !$self->_deleted->{$_} and $_->functor eq $child->functor } $sibling->get_children();
+                last if !$coord_child; # no need to search further if there is one without the same functor
+                $coord_children{$sibling} = $coord_child;
             }
 
-            # children with the same functor found -> rehang the whole coordination
-            if ($same_functor) {
+            # children with the same functor found with every sibling + the tnode itself -> rehang the whole coordination
+            if (keys %coord_children == @siblings + 1) {
 
                 $non_gen[0]->set_parent( $tnode->get_parent()->get_parent() );
                 $non_gen[0]->set_is_member(undef);
                 $tnode->get_parent->set_parent( $non_gen[0] );
 
                 foreach my $sibling ( @siblings, $tnode ) {
-
-                    my ($coord_child) = grep { $_->functor eq $child->functor } $sibling->get_children();
-                    $coord_child->set_parent( $tnode->get_parent() );
-                    $coord_child->set_is_member(1);
+                    
+                    $coord_children{$sibling}->set_parent( $tnode->get_parent() );
+                    $coord_children{$sibling}->set_is_member(1);
 
                     if ( $sibling != $non_gen[0] ) {
-                        $self->_merge_children( $sibling, $coord_child );
-                        $self->_mark_for_removal( $sibling, $coord_child );
+                        $self->_merge_children( $sibling, $coord_children{$sibling} );
+#                        log_info( 'Remove-coord-child: ' . $sibling->id );
+                        $self->_mark_for_removal( $sibling, $coord_children{$sibling} );
                     }
                 }
 
@@ -488,10 +571,12 @@ sub _remove_with_child {
     my $parent = $tnode->get_parent();
     my ($child) = $tnode->get_children();
 
-    if ( $FUNCTORS_HIERARCHY->{ $child->functor } < $FUNCTORS_HIERARCHY->{ $tnode->functor } ) {
+    if ( $FUNCTORS_HIERARCHY_CHILD->{ $child->functor } < $FUNCTORS_HIERARCHY_PARENT->{ $tnode->functor } ) {
         $child->set_functor( $tnode->functor );
     }
+    $child->set_is_member(1) if $tnode->is_member();
     $child->set_parent($parent);
+#    log_info( 'Remove-with-child: ' . $tnode->id );
     $self->_mark_for_removal( $tnode, $child );
     return;
 }
@@ -514,6 +599,7 @@ sub _remove_with_delatom {
         }
     }
     # move aux.rf to the first non-deleted child, or to the parent
+#    log_info( 'Remove-with-delatom: ' . $to_remove->id );
     $self->_mark_for_removal($to_remove, $non_del ? $non_del : $parent );
 }
 
@@ -522,12 +608,12 @@ sub _remove_with_delatom {
 sub _find_most_important_child {
 
     my ( $self, $tnode ) = @_;
-    my @children       = grep { !$self->_deleted->{$_} and $_->nodetype ne 'atom' and !$_->is_generated } $tnode->get_children();
+    my @children = grep { !$self->_deleted->{$_} and $_->nodetype ne 'atom' and !$_->is_generated } $tnode->get_children();
     return if (!@children);
            
     my $most_important = $children[0];
 
-    for my $child (@children) {
+    for my $child (@children) { # TODO make more sophisticated, e.g. depending on sempos, nodetype and lemma (punctuation down)
         if ( $FUNCTORS_PRIORITY->{ $child->functor } >= $FUNCTORS_PRIORITY->{ $most_important->functor } ) {
             $most_important = $child;
         }
