@@ -38,7 +38,7 @@ BNAME:      /[A-Z]\w*::/ BNAME                  {$return = $item[1].$item[2]}
 BNAME:      /[A-Z]\w*/                          {$return = $item[1]}
 PARAMS:     PARAM PARAMS                        {$return = [$item{PARAM}, @{$item{PARAMS}}]}
 PARAMS:     PARAM                               {$return = [$item{PARAM}]}
-PARAM:      PNAME '=' PVALUE                    {$return = $item[1].$item[2].$item[3]}
+PARAM:      PNAME '=' <skip: qr//> PVALUE       {$return = $item{PNAME}.'='.$item{PVALUE}}
 PNAME:      /\w+/                               {$return = $item[1]}
 PVALUE:     /'/ PSQUOTE /'/                     {$return = $item{PSQUOTE}}
 PVALUE:     /"/ PDQUOTE /"/                     {$return = $item{PDQUOTE}}
@@ -48,8 +48,9 @@ PSQUOTE:    NOTSQUOTE SLASHEDSQUOTE PSQUOTE     {$return = $item{NOTSQUOTE}.$ite
 PSQUOTE:    NOTSQUOTE
 NOTSQUOTE:  /[^']*[^'\\]/
 SLASHEDSQUOTE: /\\'/                            {$return = "'"}
-PDQUOTE:    /[^"]+/                             {$return = $item[1]}
+PDQUOTE:    /[^"]*/                             {$return = $item[1]}
 PNOTQUOTED: /\S+/                               {$return = $item[1]}
+PNOTQUOTED: EMPTY                               {$return = ''}
 PTICKED:    /[^`]+/                             {$return = $item[1]}
 COMMENT:    /#[^\n]*/                           {$return = ''}
 SPACE:      /\s+/                               {$return = $item[1]}
