@@ -1,9 +1,17 @@
 package Treex::Block::A2T::CS::SetFormeme;
 use Moose;
 use Treex::Core::Common;
+require Treex::Tools::Lexicon::CS;
+
 extends 'Treex::Core::Block';
 
-has use_version => ( is => 'ro', isa => enum( [ 1, 2 ] ), default => 1 );
+has 'use_version' => ( is => 'ro', isa => enum( [ 1, 2 ] ), default => 1 );
+
+# This serves for merging some of the rare prepositions under their more usual synonyms
+Readonly my $PREP_LEMMA_MAP => {
+    'jakožto' => 'jako',
+    'zdali'    => 'zda'
+};
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
@@ -51,7 +59,7 @@ sub detect_formeme2 {
 
         # possesive adjectives (compound prepositions also possible: 'v můj prospěch' etc.)
         if ( $tag =~ /^(AU|PS|P8)/ ) {
-            $formeme = ($prep ? "$prep+" : 'adj:') . 'poss';
+            $formeme = 'adj:' . ( $prep ? "$prep+" : '' ) . 'poss';
         }
 
         # prepended nominal congruent attribute
@@ -79,18 +87,30 @@ sub detect_formeme2 {
     }
     elsif ( $formeme eq 'adj' ) {
 
+        my $case = substr( $tag, 4, 1 );
+
+        # prepositional phrases with adjectives -- always work the same as substantives
         if ($prep) {
-            $formeme .= ":$prep+X";
+            $case = $case =~ m/[0-9]/ ? $case : ($prep_case ? $prep_case : 'X');
+            $formeme = "n:$prep+$case";
         }
 
-        # adverbs derived from adjectives
-        elsif ( $tag =~ /^D/ ) {
+        # adverbs derived from adjectives, weird form "rád"
+        elsif ( $tag =~ /^(D|Cv|Co)/ or $t_node->t_lemma eq 'rád' ) {
             $formeme = 'adv';
         }
 
-        # predicative
-        elsif ( $t_parent->t_lemma =~ /^(#EmpVerb|být)$/ and $t_node->functor eq 'PAT' ) {
-            $formeme = 'adj:pred';
+        # complement in nominative, directly dependent on a verb (-> adj:compl)
+        elsif ( $parent_sempos eq 'v' and $case eq '1' ) {
+            $formeme = 'adj:1';
+        }
+
+        # other verbal complements work the same as substantives
+        # TODO - problems: complements (COMPL, compl.rf), "mít co společného" (an error in Vallex, too - adj is not specified)
+        # "hodně prodavaček je levých" (genitive!)
+        elsif ( $parent_sempos eq 'v' ) {
+            $case = 1 if $case eq '-' and $tag =~ /^(AC|Vs)/; # short indeclinable adjectival forms "schopen", "připraven" etc.  
+            $formeme = "n:$case";
         }
 
         # attributive
@@ -103,7 +123,8 @@ sub detect_formeme2 {
         $formeme .= $prep ? ":$prep+$finity" : ":$finity";
     }
 
-    # adverbs: just one formeme 'adv', since prepositions in their aux.rf occur only in case of some weird coordination
+    # adverbs: just one formeme 'adv', since prepositions in their aux.rf occur only in case of some weird coordination,
+    # or for adverbial numerals 'u více než 20 lidí' etc. (which gets 'n:u+2')
 
     if ($formeme) {
         $t_node->set_formeme($formeme);
@@ -136,8 +157,11 @@ sub _detect_prep {
         my $gov_case = $prep_nodes[$gov_prep]->tag =~ m/^R...(\d)/ ? $1 : '';
         $gov_case = ( !$gov_case and $prep_nodes[$gov_prep]->tag =~ m/^[ND]/ ) ? 2 : $gov_case;
 
-        # gather the preposition lemmas
-        my @prep_lemmas = map { my $lemma = $_->lemma; $lemma =~ s/(-|`|_;|_:|_;|_,|_\^).*$//; $lemma } @prep_nodes;
+        # gather the preposition lemmas, shorten them
+        my @prep_lemmas = map { Treex::Tools::Lexicon::CS::truncate_lemma($_->lemma,1) } @prep_nodes;
+
+        # merge some rare lemmas under their more usual synonyms
+        @prep_lemmas = map { $_ = $PREP_LEMMA_MAP->{$_} if ( $PREP_LEMMA_MAP->{$_} ); $_ } @prep_lemmas;
 
         return ( join( '_', @prep_lemmas ), $gov_case );
     }

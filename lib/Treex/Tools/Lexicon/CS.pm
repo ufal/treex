@@ -149,8 +149,14 @@ sub get_poss_adj {
 # This truncates Czech morphological lemmas, leaving out the explanatory part.
 # If the second parameter is set to true, the number for homonymous lemmas is truncated as well.  
 sub truncate_lemma {
-    my ($lemma, $truncate_number) = @_;    
-    $lemma =~ $truncate_number ? s/(-|`|_;|_:|_;|_,|_\^).*$// : s/(`|_;|_:|_;|_,|_\^).*$//;
+    my ($lemma, $strip_numbers) = @_;
+    
+    if ($strip_numbers){
+        $lemma =~ s/(-|`|_;|_:|_;|_,|_\^).*$//;
+    }
+    else {
+        $lemma =~ s/(`|_;|_:|_;|_,|_\^).*$//;
+    }
     return $lemma;
 }
 
