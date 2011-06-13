@@ -613,7 +613,7 @@ sub _find_most_important_child {
            
     my $most_important = $children[0];
 
-    for my $child (@children) { # TODO make more sophisticated, e.g. depending on sempos, nodetype and lemma (punctuation down)
+    for my $child (@children) { 
         if ( $FUNCTORS_PRIORITY->{ $child->functor } >= $FUNCTORS_PRIORITY->{ $most_important->functor } ) {
             $most_important = $child;
         }
@@ -676,7 +676,20 @@ are hanged under the "most important" one and the previous case is applied.
 
 =head1 TODO
 
+=over
+
+=item *
+
 The C<FUNCTOR_PRIORITY> and C<FUNCTOR_HIERARCHY> should require more testing.
+
+=item *
+
+Make C<_find_most_important_child> more sophisticated, e.g. depending on sempos, nodetype and lemma (punctuation goes down).
+
+=item *
+
+Sometimes generated nodes with corresponding surface words (in C<lex.rf> or C<aux.rf>) get deleted -- check aux.rf before 
+deletion (possibly leave out verbal auxiliaries ?). 
 
 =head1 AUTHOR
 

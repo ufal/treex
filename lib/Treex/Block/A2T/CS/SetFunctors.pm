@@ -90,7 +90,7 @@ sub process_ttree {
 sub _load_functors {
 
     my ( $self, $arff_file ) = @_;
-    my $loader = Treex::Tools::IO::Arff->new( debug_mode => 1 );
+    my $loader = Treex::Tools::IO::Arff->new();
     my $data = $loader->load_arff( $arff_file->filename );
 
     my $sentence;
@@ -100,7 +100,7 @@ sub _load_functors {
 
         if ( $rec->{'sent-id'} != $sent_id ) {    # move to next sentence
             push @{ $self->_functors }, $sentence;
-            $sentence = [];
+            $sentence = []; # TODO empty sentences
             $sent_id++;
         }
         push @{$sentence}, $rec->{'deprel'};
