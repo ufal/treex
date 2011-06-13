@@ -42,7 +42,7 @@ sub process_document {
     my ( $self, $document ) = @_;
     if ( $self->document ) {
         my $to_eval = $self->document . ';1;';
-        eval ($to_eval) or log_fatal( "While evaluating '$to_eval' got error: $@" );
+        eval($to_eval) or log_fatal("While evaluating '$to_eval' got error: $@");
     }
 
     if ( $self->_args->{_bundle} ) {
@@ -55,6 +55,10 @@ sub process_document {
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
+
+    # Extract variables $document ($doc), so they can be used in eval code
+    my $document = $bundle->get_document();
+    my $doc      = $document;
     if ( $self->bundle ) {
         if ( !eval $self->bundle . ';1;' ) {
             log_fatal "Eval error: $@";
@@ -83,6 +87,11 @@ sub process_bundle {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
+
+    # Extract variables $bundle, $document ($doc), so they can be used in eval code
+    my $bundle   = $zone->get_bundle();
+    my $document = $bundle->get_document();
+    my $doc      = $document;
     if ( $self->zone ) {
         if ( !eval $self->zone . ';1;' ) {
             log_fatal "Eval error: $@";
