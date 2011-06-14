@@ -244,7 +244,7 @@ sub _verb {
     $tnode->set_gram_iterativeness('it0');
     $tnode->set_gram_resultative('res0');
     $tnode->set_gram_dispmod('disp0');
-    $tnode->set_attr( 'gram/negation',      $negated ? 'neg1' : 'neg0' );
+    $tnode->set_attr( 'gram/negation', $negated ? 'neg1' : 'neg0' );
 
     # First guess deontic modality...
     $tnode->set_attr( 'gram/deontmod', $deontmod || 'decl' );
@@ -296,9 +296,8 @@ sub _verb {
 sub _guess_verb_tense {
     my ($tnode) = @_;
 
-    my @anodes = sort { $a->ord <=> $b->ord }
-        grep { $_->tag =~ /^(V|MD)/ }
-        $tnode->get_anodes;
+    my @anodes = grep { $_->tag =~ /^(V|MD)/ }
+        $tnode->get_anodes( { ordered => 1 } );
 
     my @forms = map { lc( $_->form ) } @anodes;
     my @tags  = map { $_->tag } @anodes;
