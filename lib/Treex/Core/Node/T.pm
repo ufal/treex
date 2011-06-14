@@ -31,21 +31,21 @@ sub is_coap_root {
 #----------- helpers for reference lists ------------
 
 sub _get_node_list {
-    
-    my ($self, $list, $arg_ref) = @_;
+
+    my ( $self, $list, $arg_ref ) = @_;
     my $doc = $self->get_document();
-    
+
     $list = $self->get_attr($list);
     my @nodes = $list ? ( map { $doc->get_node_by_id($_) } @{$list} ) : ();
-    
-    return $arg_ref ? $self->_process_switches( $arg_ref, @nodes ) : @nodes;    
+
+    return $arg_ref ? $self->_process_switches( $arg_ref, @nodes ) : @nodes;
 }
 
 sub _set_node_list {
-    
+
     my $self = shift;
     my $list = shift;
-    
+
     $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
     return;
 }
@@ -55,19 +55,19 @@ sub _add_to_node_list {
     my $self = shift;
     my $list = shift;
     my @prev = $self->_get_node_list($list);
-    $self->_set_node_list($list, (@prev, @_) );
+    $self->_set_node_list( $list, ( @prev, @_ ) );
     return;
 }
 
 sub _remove_from_node_list {
-    
+
     my $self = shift;
     my $list = shift;
     my @prev = $self->_get_node_list($list);
     my @remain;
-    
-    foreach my $node (@prev){
-        if ( !grep { $_ == $node } @_ ){ 
+
+    foreach my $node (@prev) {
+        if ( !grep { $_ == $node } @_ ) {
             push @remain, $node;
         }
     }
@@ -76,15 +76,15 @@ sub _remove_from_node_list {
 }
 
 # remove unindexed IDs from a list attribute
-sub _update_list { 
-    
-    my ($self, $list) = @_;
+sub _update_list {
+
+    my ( $self, $list ) = @_;
     my $doc = $self->get_document();
-    
+
     my $ref = $self->get_attr($list);
     my @nodes = $ref ? ( grep { $doc->id_is_indexed($_) } @{$ref} ) : ();
-    
-    $self->set_attr($list, @nodes > 0 ? [ @nodes ] : undef );
+
+    $self->set_attr( $list, @nodes > 0 ? [@nodes] : undef );
     return;
 }
 
@@ -109,79 +109,78 @@ sub get_aux_anodes {
     my ( $self, $arg_ref ) = @_;
 
     log_fatal('Switches preceding_only and following_only cannot be used with get_aux_anodes (t-nodes vs. a-nodes).')
-        if $arg_ref and ($arg_ref->{preceding_only} or $arg_ref->{following_only});
-    
-    return $self->_get_node_list('a/aux.rf', $arg_ref);
+        if $arg_ref and ( $arg_ref->{preceding_only} or $arg_ref->{following_only} );
+
+    return $self->_get_node_list( 'a/aux.rf', $arg_ref );
 }
 
 sub set_aux_anodes {
-    my $self       = shift;
-    return $self->_set_node_list('a/aux.rf', @_);
+    my $self = shift;
+    return $self->_set_node_list( 'a/aux.rf', @_ );
 }
 
 sub add_aux_anodes {
     my $self = shift;
-    return $self->_add_to_node_list('a/aux.rf', @_);
+    return $self->_add_to_node_list( 'a/aux.rf', @_ );
 }
 
-sub remove_aux_anodes { 
-    my $self = shift;    
-    return $self->_remove_from_node_list('a/aux.rf', @_);
+sub remove_aux_anodes {
+    my $self = shift;
+    return $self->_remove_from_node_list( 'a/aux.rf', @_ );
 }
 
 sub get_anodes {
     my ( $self, $arg_ref ) = @_;
     my $lex_anode = $self->get_lex_anode();
-
+    my @nodes = ( ( defined $lex_anode ? ($lex_anode) : () ), $self->get_aux_anodes() );
+    return @nodes if !$arg_ref;
     log_fatal('Switches preceding_only and following_only cannot be used with get_anodes (t-nodes vs. a-nodes).')
-        if $arg_ref and ($arg_ref->{preceding_only} or $arg_ref->{following_only});
-    
-    return ( defined $lex_anode ? ($lex_anode) : () ), $self->_get_node_list('a/aux.rf', $arg_ref);
+        if $arg_ref->{preceding_only} || $arg_ref->{following_only};
+    return $self->_process_switches( $arg_ref, @nodes );
 }
 
 #------------ coreference nodes -------------------
 
 sub get_coref_nodes {
-    my ($self, $arg_ref) = @_;
-    return ( $self->_get_node_list( 'coref_gram.rf', $arg_ref ), $self->_get_node_list( 'coref_text.rf', $arg_ref ) );        
+    my ( $self, $arg_ref ) = @_;
+    return ( $self->_get_node_list( 'coref_gram.rf', $arg_ref ), $self->_get_node_list( 'coref_text.rf', $arg_ref ) );
 }
 
 sub get_coref_gram_nodes {
-    my ($self, $arg_ref) = @_;
-    return $self->_get_node_list( 'coref_gram.rf', $arg_ref );        
+    my ( $self, $arg_ref ) = @_;
+    return $self->_get_node_list( 'coref_gram.rf', $arg_ref );
 }
 
 sub get_coref_text_nodes {
-    my ($self, $arg_ref) = @_;
-    return $self->_get_node_list( 'coref_text.rf', $arg_ref );        
+    my ( $self, $arg_ref ) = @_;
+    return $self->_get_node_list( 'coref_text.rf', $arg_ref );
 }
 
 sub add_coref_gram_nodes {
     my $self = shift;
-    return $self->_add_to_node_list('coref_gram.rf', @_);
+    return $self->_add_to_node_list( 'coref_gram.rf', @_ );
 }
 
 sub add_coref_text_nodes {
     my $self = shift;
-    return $self->_add_to_node_list('coref_text.rf', @_);
+    return $self->_add_to_node_list( 'coref_text.rf', @_ );
 }
 
 sub remove_coref_nodes {
-    my $self = shift;    
+    my $self = shift;
     $self->_remove_from_node_list( 'coref_gram.rf', @_ );
     $self->_remove_from_node_list( 'coref_text.rf', @_ );
-    return;        
+    return;
 }
 
 # remove unindexed IDs from coreference lists
 sub update_coref_nodes {
     my $self = shift;
-    
-    $self->_update_list( 'coref_gram.rf' );
-    $self->_update_list( 'coref_text.rf' );
+
+    $self->_update_list('coref_gram.rf');
+    $self->_update_list('coref_text.rf');
     return;
 }
-
 
 #----------- n-layer (named entity) nodes -------------
 
