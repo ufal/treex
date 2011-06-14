@@ -1,4 +1,4 @@
-package Treex::Block::Write::EdgeProbs;
+package Treex::Block::Print::EdgeProbs;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -33,7 +33,7 @@ sub DEMOLISH {
 
 =head1 NAME
 
-Treex::Block::Write::EdgeProbs
+Treex::Block::Print::EdgeProbs
 
 =head1 DESCRIPTION
 

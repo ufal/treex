@@ -1,4 +1,4 @@
-package Treex::Block::Write::TranslationResume;
+package Treex::Block::Print::TranslationResume;
 use Moose;
 use Treex::Core::Common;
 use Eval::Bleu;
@@ -52,7 +52,7 @@ sub process_document {
 
 =over
 
-=item Treex::Block::Write::TranslationResume
+=item Treex::Block::Print::TranslationResume
 
 Prints source, reference and test sentences, and ngram statistics
 in the format expected by compare_stats.pl

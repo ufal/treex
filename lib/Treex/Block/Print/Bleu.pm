@@ -1,4 +1,4 @@
-package Treex::Block::Write::Bleu;
+package Treex::Block::Print::Bleu;
 use Moose;
 use Treex::Core::Common;
 use Eval::Bleu;
@@ -68,7 +68,7 @@ sub process_document {
 
 =over
 
-=item Treex::Block::Write::Bleu
+=item Treex::Block::Print::Bleu
 
 Prints BLEU metric (translation quality) score.
 
