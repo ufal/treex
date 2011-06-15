@@ -44,6 +44,8 @@ has fast_loading => (
     documentation => 'Do the precomputation lazily for each bundle',
 );
 
+has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
+
 sub _build_labels {
     my $self = shift;
     return Treex::Core::TredView::Labels->new( _treex_doc => $self->treex_doc );
@@ -151,9 +153,24 @@ sub get_nodelist_hook {
         }
     }
 
+    # only nodes having different clause number from their parents are
+    # displayed if node-collapsing is switched on
+    if ($self->clause_collapsing) {
+        my %hide;
+        foreach my $node (grep {ref($_) eq 'Treex::Core::Node::A'} @nodes) {
+            my $parent = $node->get_parent;
+            if (defined $node->clause_number
+                    && ($parent->clause_number||'') eq $node->clause_number) {
+                $hide{$node} = 1;
+            }
+        }
+        @nodes = grep {!$hide{$_}} @nodes;
+    }
+
     unless ( $currentNode and ( first { $_ == $currentNode } @nodes ) ) {
         $currentNode = $nodes[0];
     }
+
     return [ \@nodes, $currentNode ];
 }
 
@@ -546,6 +563,44 @@ sub conf_dialog {
     return;
 }
 
+sub _divide_clause_string {
+    my ($self, $anode) = @_;
+    my @forms = map {$_->form} $anode->get_clause_nodes;
+    my $forms_per_line = int(@forms / 3);
+    return [ (join ' ',@forms[0..$forms_per_line]),
+              (join ' ',@forms[$forms_per_line+1..2*$forms_per_line]),
+             (join ' ',@forms[2*$forms_per_line+1..$#forms]),
+         ];
+}
+
+
+sub toggle_clause_collapsing {
+    my ($self, $bundle) = @_;
+    $self->clause_collapsing(not $self->clause_collapsing);
+    print "Toggle: ".$self->clause_collapsing."\n";
+
+    # fold clauses - display word from the clause instead of node labels
+
+    foreach my $zone ($bundle->get_all_zones) {
+        if ( $zone->has_tree('a') ) {
+            my $aroot = $zone->get_atree;
+            foreach my $anode ($aroot->get_descendants) {
+
+                # fold clauses - display word from the clause instead of node labels
+                if ($self->clause_collapsing) {
+                    $anode->{_precomputed_labels_backup} = $anode->{_precomputed_labels};
+                    $anode->{_precomputed_labels} = $self->_divide_clause_string($anode);
+                }
+
+                # unfold clauses - return to full attribute labes
+                else {
+                    $anode->{_precomputed_labels} = $anode->{_precomputed_labels_backup};
+                }
+            }
+        }
+    }
+}
+
 1;
 
 __END__
@@ -597,6 +652,8 @@ L<Treex::PML::Document> structure which was provided by TrEd.
 =item node_style_hook
 
 =item conf_dialog
+
+=item toggle_clause_collapsing
 
 =back
 

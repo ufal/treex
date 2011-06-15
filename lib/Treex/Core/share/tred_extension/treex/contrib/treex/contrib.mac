@@ -12,7 +12,7 @@ use Treex::Core;
 BEGIN { import TredMacro; }
 
 use strict;
-our $grp;
+our ($grp, $root);
 
 use Treex::Core::TredView;
 my $tredview = Treex::Core::TredView->new({grp=>$grp});
@@ -116,6 +116,10 @@ sub reset_labels_tree {
     $tredview->labels->reset_labels('tree');
 }
 
+sub toggle_clause_collapsing {
+    $tredview->toggle_clause_collapsing($root);
+}
+
 sub OpenValLexicon {
   $tredview->vallex->OpenValLexicon();
 }
@@ -133,6 +137,7 @@ sub ChooseValFrame {
 #bind shift_labels3_node to Ctrl+KP_Next menu Change content of label no.3 for current node
 #bind reset_labels_node to r menu Reset label settings of current node
 #bind reset_labels_tree to Ctrl+r menu Reset label settings of all nodes in current tree
+#bind toggle_clause_collapsing to l
 
 #bind OpenValLexicon to Ctrl+Shift+Return menu Browse valency frame lexicon
 #bind ChooseValFrame to Ctrl+Return menu Select and assign valency frame
