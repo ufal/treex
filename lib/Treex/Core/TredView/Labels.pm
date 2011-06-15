@@ -1,6 +1,7 @@
 package Treex::Core::TredView::Labels;
 
 use Moose;
+use Treex::Core::TredView::Common;
 use Treex::Core::Log;
 
 has '_label_variants' => (
@@ -85,28 +86,6 @@ sub _rotate_label_variant {
     return 1;
 }
 
-sub _identify_and_bless_node {
-    my $self = shift;
-    my $node;
-
-    # TODO: no warnings should be avoided as well as the whole re-blessing
-    {
-        no warnings 'once';
-        $node = $TredMacro::this;
-    }
-
-    my $layer;
-    if ( $node->type->get_structure_name =~ /(\S)-(root|node|nonterminal|terminal)/ ) {
-        $layer = $1;
-    }
-    else {
-        return;
-    }
-    bless $node, 'Treex::Core::Node::' . uc($layer);
-
-    return $node;
-}
-
 sub set_labels {
     my ( $self, $node ) = @_;
 
@@ -119,7 +98,7 @@ sub set_labels {
 
 sub shift_labels {
     my ( $self, $line, $mode ) = @_;
-    my $node = $self->_identify_and_bless_node;
+    my $node = Treex::Core::TredView::Common::cur_node();
     return if $node->is_root and $mode eq 'node';
 
     my $layer = $node->get_layer;
@@ -148,7 +127,7 @@ sub shift_labels {
 
 sub reset_labels {
     my ( $self, $mode ) = @_;
-    my $node = $self->_identify_and_bless_node;
+    my $node = Treex::Core::TredView::Common::cur_node();
     return if $node->is_root;
 
     my @nodes;
@@ -377,8 +356,6 @@ functionality.
 =item _get_label_variant
 
 =item _rotate_label_variant
-
-=item _identify_and_bless_node
 
 =item _anode_labels
 

@@ -7,6 +7,7 @@ use Treex::Core::Log;
 use Treex::Core::TredView::TreeLayout;
 use Treex::Core::TredView::Labels;
 use Treex::Core::TredView::Styles;
+use Treex::Core::TredView::Vallex;
 use List::Util qw(first);
 
 has 'grp'       => ( is => 'rw' );
@@ -29,6 +30,12 @@ has '_styles' => (
     builder => '_build_styles',
     lazy    => 1
 );
+has 'vallex' => (
+    is      => 'ro',
+    isa     => 'Treex::Core::TredView::Vallex',
+    builder => '_build_vallex',
+    lazy    => 1
+);
 
 has fast_loading => (
     is            => 'ro',
@@ -45,6 +52,11 @@ sub _build_labels {
 sub _build_styles {
     my $self = shift;
     return Treex::Core::TredView::Styles->new( _treex_doc => $self->treex_doc );
+}
+
+sub _build_vallex {
+    my $self = shift;
+    return Treex::Core::TredView::Vallex->new( _treex_doc => $self->treex_doc );
 }
 
 sub _spread_nodes {

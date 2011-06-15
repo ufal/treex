@@ -1,6 +1,8 @@
 # -*- cperl -*-
 
 #include <contrib/pml/PML.mak>
+#ifinclude <contrib/eng-vallex/contrib.mac>
+#ifinclude <contrib/vallex/contrib.mac>
 
 package Treex_mode;
 #binding-context Treex_mode
@@ -114,6 +116,14 @@ sub reset_labels_tree {
     $tredview->labels->reset_labels('tree');
 }
 
+sub OpenValLexicon {
+  $tredview->vallex->OpenValLexicon();
+}
+
+sub ChooseValFrame {
+  $tredview->vallex->ChooseValFrame();
+}
+
 #bind ConfDialog to c menu Configuration
 #bind shift_labels1_layer to KP_End menu Change content of label no.1 for current layer
 #bind shift_labels1_node to Ctrl+KP_End menu Change content of label no.1 for current node
@@ -123,6 +133,9 @@ sub reset_labels_tree {
 #bind shift_labels3_node to Ctrl+KP_Next menu Change content of label no.3 for current node
 #bind reset_labels_node to r menu Reset label settings of current node
 #bind reset_labels_tree to Ctrl+r menu Reset label settings of all nodes in current tree
+
+#bind OpenValLexicon to Ctrl+Shift+Return menu Browse valency frame lexicon
+#bind ChooseValFrame to Ctrl+Return menu Select and assign valency frame
 
 1;
 
