@@ -691,6 +691,8 @@ Make C<_find_most_important_child> more sophisticated, e.g. depending on sempos,
 Sometimes generated nodes with corresponding surface words (in C<lex.rf> or C<aux.rf>) get deleted -- check aux.rf before 
 deletion (possibly leave out verbal auxiliaries ?). 
 
+=back
+
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
