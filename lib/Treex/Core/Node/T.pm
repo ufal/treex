@@ -143,7 +143,8 @@ sub get_anodes {
 
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
-    return ( $self->_get_node_list( 'coref_gram.rf', $arg_ref ), $self->_get_node_list( 'coref_text.rf', $arg_ref ) );
+    my @nodes = ( $self->_get_node_list( 'coref_gram.rf' ), $self->_get_node_list( 'coref_text.rf' ) );
+    return $self->_process_switches( $arg_ref, @nodes );
 }
 
 sub get_coref_gram_nodes {
