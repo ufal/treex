@@ -19,27 +19,46 @@ sub BUILD {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $ptree      = $zone->get_ptree();
-        if ( !$zone->has_atree ) {
-        log_fatal "TODO: building new a-tree not implemented yet";
+    my $ptree = $zone->get_ptree();
+    my ( $a_root, @a_nodes );
+    if ( $zone->has_atree ) {
+        $a_root = $zone->get_atree();
+        @a_nodes = $a_root->get_descendants( { ordered => 1 } );
     }
-    my $a_root = $zone->get_atree();
-    my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
-    
+    else {
+        $a_root  = $zone->create_atree();
+        @a_nodes = ();
+        my $ord = 1;
+        foreach my $terminal ( grep { $_->form } $ptree->get_descendants() ) {
+
+            # skip traces
+            next if $terminal->tag =~ /-NONE-/;
+            push @a_nodes, $a_root->create_child(
+                {
+                    form  => $terminal->form,
+                    lemma => $terminal->lemma,
+                    tag   => $terminal->tag,
+                    ord   => $ord++,
+                }
+            );
+        }
+    }
+
     my $mrg_string = $ptree->stringify_as_mrg() . "\n";
-    my ( $parents, $deprels ) = $self->_tool->convert( $mrg_string, 10 );   
+    my ( $parents, $deprels ) = $self->_tool->convert( $mrg_string, 10 );
     log_fatal "Wrong number of nodes returned:\n"
-      . "MRG_STRING=$mrg_string\n"
-      . "PARENTS=" . Dumper($parents)
-      . "DEPRELS=" . Dumper($deprels)
-      if (@$parents != @a_nodes || @$deprels != @a_nodes);
-    
+        . "MRG_STRING=$mrg_string\n"
+        . "PARENTS=" . Dumper($parents)
+        . "DEPRELS=" . Dumper($deprels)
+        . "ANODES=" . Dumper( [ map { $_->form } @a_nodes ] )
+        if ( @$parents != @a_nodes || @$deprels != @a_nodes );
+
     # flatten so there are no temporary cycles introduced
     foreach my $a_node (@a_nodes) {
         $a_node->set_parent($a_root);
     }
 
-    my @all_nodes = ($a_root, @a_nodes);
+    my @all_nodes = ( $a_root, @a_nodes );
     foreach my $a_node (@a_nodes) {
         $a_node->set_conll_deprel( shift @$deprels );
         my $index = shift @$parents;
