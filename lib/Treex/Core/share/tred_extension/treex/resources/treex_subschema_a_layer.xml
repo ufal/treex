@@ -32,6 +32,10 @@
       <member name="form"><cdata format="any"/></member>
       <member name="lemma"><cdata format="any"/></member>
       <member name="tag"><cdata format="any"/></member>
+      <!-- in CoNLL-X data the "tag" information is more structured -->
+      <member name="conll_cpos"><cdata format="any"/></member>
+      <member name="conll_pos"><cdata format="any"/></member>
+      <member name="conll_feat"><cdata format="any"/></member>
       <member name="no_space_after" type="bool.type"/>
       <member name="translit"><cdata format="any"/></member>
 
