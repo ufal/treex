@@ -4,10 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
-has '+language'   => ( required => 1 );
-has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
-has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-
 use tagset::bg::conll;
 use tagset::cs::pdt;
 
