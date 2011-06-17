@@ -29,7 +29,30 @@ sub process_zone
         my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
         my $f = tagset::bg::conll::decode($conll_tag);
         my $pdt_tag = tagset::cs::pdt::encode($f);
+        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
+        $node->set_attr('f', $f);
         $node->set_tag($pdt_tag);
+    }
+    # Adjust the tree structure.
+    attach_final_punctuation_to_root($a_root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines the last node of the sentence. If it is a punctuation, makes sure
+# that it is attached to the artificial root node.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_root
+{
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $fnode = $nodes[$#nodes];
+    my $final_pos = $fnode->get_attr('f')->{pos};
+    if($final_pos eq 'punc' && $fnode->parent()!=$root)
+    {
+        $fnode->set_parent($root);
+        $fnode->set_afun('AuxK');
     }
 }
 
