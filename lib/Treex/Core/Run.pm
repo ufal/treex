@@ -536,8 +536,10 @@ sub _run_job_scripts {
     return;
 }
 
+# Prints error messages from the output of the current document processing.
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
+  
     foreach my $stream (qw(stderr stdout)) {
         my $mask = $self->workdir . "/output/job*-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         my ($filename) = glob $mask;
@@ -555,8 +557,15 @@ sub _print_output_files {
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
             my $report = $self->forward_error_level;
+            my $success = 0;
             while (<$FILE>) {
-
+                
+                # skip [success] indicatory lines, but set the success flag to 1
+                if ($_ =~ /^Document [0-9]+\/[0-9]+ .*: \[success\]\.\r?\n?$/){
+                    $success = 1;
+                    next;
+                } 
+                
                 #TODO: better implementation
                 # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
                 my ($level) = /^TREEX-(DEBUG|INFO|WARN|FATAL)/;
@@ -566,10 +575,14 @@ sub _print_output_files {
                 next if $level =~ /^W/ && $report !~ /^[ADIW]/;
                 print STDERR "job$jobnumber: $_";
             }
+            
+            # test for the [success] indication on the last line of STDERR
+            if (!$success){
+                log_fatal "Document $doc_number has not finished successfully";
+            }
         }
         close $FILE;
     }
-    return;
 }
 
 sub _doc_started {

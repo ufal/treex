@@ -241,6 +241,12 @@ sub run {
             log_info "Applying block $block_number/$number_of_blocks " . ref($block);
             $block->process_document($document);
         }
+        # this actually marks the document as successfully done in parallel processing (if this line
+        # does not appear in the output, the parallel process will fail -- it must appear at any errorlevel,
+        # therefore not using log_info or similiar)
+        if ($self->document_reader->jobindex){
+            print STDERR "Document $document_number/$number_of_documents $doc_name: [success].\n";
+        }
     }
     log_info "Processed $document_number document"
         . ( $document_number == 1 ? '' : 's' );
