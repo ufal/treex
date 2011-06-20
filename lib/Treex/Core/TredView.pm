@@ -46,21 +46,6 @@ has fast_loading => (
 
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 
-sub _build_labels {
-    my $self = shift;
-    return Treex::Core::TredView::Labels->new( _treex_doc => $self->treex_doc );
-}
-
-sub _build_styles {
-    my $self = shift;
-    return Treex::Core::TredView::Styles->new( _treex_doc => $self->treex_doc );
-}
-
-sub _build_vallex {
-    my $self = shift;
-    return Treex::Core::TredView::Vallex->new( _treex_doc => $self->treex_doc );
-}
-
 sub _spread_nodes {
     my ( $self, $node ) = @_;
 
@@ -197,9 +182,9 @@ sub file_opened_hook {
     $self->treex_doc($treex_doc);
     
     # labels, styles and vallex must be created again for each file
-    $self->_set_labels($self->_build_labels());
-    $self->_set_styles($self->_build_styles());
-    $self->_set_vallex($self->_build_vallex());
+    $self->_set_labels(Treex::Core::TredView::Labels->new( _treex_doc => $treex_doc ));
+    $self->_set_styles(Treex::Core::TredView::Styles->new( _treex_doc => $treex_doc ));
+    $self->_set_vallex(Treex::Core::TredView::Vallex->new( _treex_doc => $treex_doc ));
 
     foreach my $bundle ( $treex_doc->get_bundles() ) {
 
