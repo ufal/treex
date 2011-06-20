@@ -18,23 +18,23 @@ has 'tree_layout' => (
     isa     => 'Treex::Core::TredView::TreeLayout',
     default => sub { Treex::Core::TredView::TreeLayout->new() }
 );
+
 has 'labels' => (
     is      => 'ro',
     isa     => 'Treex::Core::TredView::Labels',
-    builder => '_build_labels',
-    lazy    => 1
+    writer  => '_set_labels',
 );
+
 has '_styles' => (
     is      => 'ro',
     isa     => 'Treex::Core::TredView::Styles',
-    builder => '_build_styles',
-    lazy    => 1
+    writer  => '_set_styles',
 );
+
 has 'vallex' => (
     is      => 'ro',
     isa     => 'Treex::Core::TredView::Vallex',
-    builder => '_build_vallex',
-    lazy    => 1
+    writer  => '_set_vallex',
 );
 
 has fast_loading => (
@@ -195,6 +195,11 @@ sub file_opened_hook {
     $self->pml_doc($pmldoc);
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
+    
+    # labels, styles and vallex must be created again for each file
+    $self->_set_labels($self->_build_labels());
+    $self->_set_styles($self->_build_styles());
+    $self->_set_vallex($self->_build_vallex());
 
     foreach my $bundle ( $treex_doc->get_bundles() ) {
 
