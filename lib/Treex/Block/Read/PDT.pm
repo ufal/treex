@@ -6,7 +6,8 @@ extends 'Treex::Block::Read::BasePMLReader';
 use Treex::PML::Factory;
 use Treex::PML::Instance;
 
-has '+_layers' => ( default => sub { [ 'a', 't' ] } );
+has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
+has '+_layers' => ( default => sub { $_[0]->t_layer ? [ 'a', 't' ] : [ 'a' ] } );
 has '+_file_suffix' => ( default => '\.[at]\.gz$' );
 
 override '_load_all_files' => sub {
@@ -25,6 +26,8 @@ override '_load_all_files' => sub {
 override '_create_val_refs' => sub {
     my ( $self, $pmldoc, $document ) = @_;
 
+    return if not $pmldoc->{t};
+
     my $cs_vallex = $pmldoc->{t}->metaData('refnames')->{'vallex'};
     $cs_vallex = $pmldoc->{t}->metaData('references')->{$cs_vallex};
 
@@ -39,13 +42,15 @@ override '_convert_all_trees' => sub {
 
     my ( $self, $pmldoc, $document ) = @_;
 
-    foreach my $tree_number ( 0 .. ( $pmldoc->{t}->trees - 1 ) ) {
+    foreach my $tree_number ( 0 .. ( $pmldoc->{a}->trees - 1 ) ) {
 
         my $bundle = $document->create_bundle;
         my $zone   = $bundle->create_zone('cs');
 
-        my $troot = $zone->create_ttree;
-        $self->_convert_ttree( $pmldoc->{t}->tree($tree_number), $troot, undef );
+        if ( $pmldoc->{t} ) {
+            my $troot = $zone->create_ttree;
+            $self->_convert_ttree( $pmldoc->{t}->tree($tree_number), $troot, undef );
+        }
 
         my $aroot = $zone->create_atree;
         $self->_convert_atree( $pmldoc->{a}->tree($tree_number), $aroot );
@@ -70,6 +75,10 @@ Import from PDT 2.0 trees.
 =item schema_dir
 
 Must be set to the directory with corresponding PML schemas.
+
+=item t_layer
+
+Must be set to 0 if t-layer is not available or is not needed.
 
 =back
   
