@@ -101,7 +101,7 @@ sub get_nodelist_hook {
 
     my $layout = $self->tree_layout->get_layout();
     my %nodes;
-
+    
     foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
         my $label = $self->tree_layout->get_tree_label($tree);
         my @nodes;
@@ -155,16 +155,30 @@ sub get_nodelist_hook {
 
     # only nodes having different clause number from their parents are
     # displayed if node-collapsing is switched on
+    if(($self->clause_collapsing||0) != ($bundle->{_is_collapsed}||0)){
+        $self->clause_collapsing($bundle->{_is_collapsed});
+    }
     if ($self->clause_collapsing) {
+        my %root;
+        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes) {
+            if (defined $node->clause_number) {
+                $root{$node} = $node->get_clause_root;
+            }
+        }
         my %hide;
-        foreach my $node (grep {ref($_) eq 'Treex::Core::Node::A'} @nodes) {
+        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes) {
             my $parent = $node->get_parent;
-            if (defined $node->clause_number
-                    && ($parent->clause_number||'') eq $node->clause_number) {
+            if (defined $node->clause_number and $root{$node} ne $node) {
                 $hide{$node} = 1;
             }
         }
         @nodes = grep {!$hide{$_}} @nodes;
+        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
+            my $parent = $node->get_parent;
+            if ($parent and $hide{$parent}) {
+                $node->set_parent($root{$parent});
+            }
+        }
     }
 
     unless ( $currentNode and ( first { $_ == $currentNode } @nodes ) ) {
@@ -378,7 +392,11 @@ sub get_clickable_sentence_for_a_zone {
 
     my @out;
     for my $anode (@anodes) {
-        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
+        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id  ];
+        if( $anode->clause_number ) {
+            my $clr = $self->_styles->_colors->get_clause_color($anode->clause_number);
+            push @{$out[-1]}, "-foreground => $clr";
+        }
         if ( !$anode->no_space_after ) {
             push @out, [ ' ', 'space' ];
         }
@@ -565,6 +583,9 @@ sub conf_dialog {
 
 sub _divide_clause_string {
     my ($self, $anode) = @_;
+    if(!$anode->clause_number) {
+        return [ $anode->form , , ];
+    }
     my @forms = map {$_->form} $anode->get_clause_nodes;
     my $forms_per_line = int(@forms / 3);
     return [ (join ' ',@forms[0..$forms_per_line]),
@@ -577,6 +598,7 @@ sub _divide_clause_string {
 sub toggle_clause_collapsing {
     my ($self, $bundle) = @_;
     $self->clause_collapsing(not $self->clause_collapsing);
+    $bundle->{_is_collapsed} = $self->clause_collapsing;
     print "Toggle: ".$self->clause_collapsing."\n";
 
     # fold clauses - display word from the clause instead of node labels
@@ -588,6 +610,7 @@ sub toggle_clause_collapsing {
 
                 # fold clauses - display word from the clause instead of node labels
                 if ($self->clause_collapsing) {
+                    $anode->{_parent_backup} = $anode->get_parent;
                     $anode->{_precomputed_labels_backup} = $anode->{_precomputed_labels};
                     $anode->{_precomputed_labels} = $self->_divide_clause_string($anode);
                 }
@@ -595,6 +618,7 @@ sub toggle_clause_collapsing {
                 # unfold clauses - return to full attribute labes
                 else {
                     $anode->{_precomputed_labels} = $anode->{_precomputed_labels_backup};
+                    $anode->set_parent($anode->{_parent_backup}) if $anode->{_parent_backup};
                 }
             }
         }

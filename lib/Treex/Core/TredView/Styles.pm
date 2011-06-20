@@ -56,6 +56,10 @@ sub node_style {
 
 sub _anode_style {
     my ($self, $node) = @_;
+    if ($node->clause_number) {
+        my $clr = $self->_colors->get_clause_color($node->clause_number);
+        return '#{Oval-fill:'.$clr.'}'.'#{Line-fill:'.$clr.'}';
+    }
     return '#{Oval-fill:'.$self->_colors->get('anode').'}';
 }
 
