@@ -62,6 +62,11 @@ You should create the empty directory or symlink.
     mkdir $TMT_ROOT/share
     #ln -s /mnt/my_big_disk/tectomt_share $TMT_ROOT/share
 
+Similarly, some applications need a directory for temporary files.
+
+    ln -s /tmp $TMT_ROOT/tmp
+    #mkdir $TMT_ROOT/tmp
+
 =head2 Installing other tools
 
 =head3 TrEd
