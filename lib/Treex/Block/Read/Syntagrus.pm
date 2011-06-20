@@ -34,8 +34,11 @@ sub next_document {
             my $punct_before = $1;
             my $punct_after = $4;
             my $word_form = $3;
+            my $attrs = $2;
             my %attr;
-            map {m/(.+)=\"(.+)\"/; $attr{$1} = $2;} split(/\s/, $2);
+            while ($attrs =~ s/\s*([^=]+)=\"([^\"]+)\"//) {
+                $attr{$1} = $2;
+            }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($word_form);
