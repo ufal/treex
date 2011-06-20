@@ -16,7 +16,7 @@ has 'align'           => ( is       => 'rw', isa => 'Bool', default => 0 );
 has '_aligner' => ( is => 'rw', isa => 'Object' );
 
 # TODO: copy attributes in a cleverer way
-my @ATTRS_TO_COPY = qw(form tag lemma ord afun conll_deprel is_member no_space_after);
+my @ATTRS_TO_COPY = qw(form tag lemma ord afun conll_deprel is_member no_space_after is_parenthesis_root);
 
 sub _build_source_selector {
     my ($self) = @_;
