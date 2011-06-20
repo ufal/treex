@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/" version="1.1">
+  <revision>1.0.0</revision>
+  <description>DZ Interset features and values</description>
+
+  <type name="iset.type">
+    <structure>
+      <member name="pos" type="iset-pos.type"/>
+      <member name="subpos" type="iset-subpos.type"/>
+      <member name="prontype" type="iset-prontype.type"/>
+      <member name="numtype" type="iset-numtype.type"/>
+      <member name="numform" type="iset-numform.type"/>
+      <member name="numvalue" type="iset-numvalue.type"/>
+      <member name="advtype" type="iset-advtype.type"/>
+      <member name="punctype" type="iset-punctype.type"/>
+      <member name="puncside" type="iset-puncside.type"/>
+      <member name="synpos" type="iset-synpos.type"/>
+      <member name="poss" type="iset-poss.type"/>
+      <member name="reflex" type="iset-reflex.type"/>
+      <member name="negativeness" type="iset-negativeness.type"/>
+      <member name="definiteness" type="iset-definiteness.type"/>
+      <member name="gender" type="iset-gender.type"/>
+      <member name="animateness" type="iset-animateness.type"/>
+      <member name="number" type="iset-number.type"/>
+      <member name="case" type="iset-case.type"/>
+      <member name="prepcase" type="iset-prepcase.type"/>
+      <member name="degree" type="iset-degree.type"/>
+      <member name="person" type="iset-person.type"/>
+      <member name="politeness" type="iset-politeness.type"/>
+      <member name="possgender" type="iset-possgender.type"/>
+      <member name="possnumber" type="iset-possnumber.type"/>
+      <member name="subcat" type="iset-subcat.type"/>
+      <member name="verbform" type="iset-verbform.type"/>
+      <member name="mood" type="iset-mood.type"/>
+      <member name="tense" type="iset-tense.type"/>
+      <member name="subtense" type="iset-subtense.type"/>
+      <member name="voice" type="iset-voice.type"/>
+      <member name="aspect" type="iset-aspect.type"/>
+      <member name="foreign" type="iset-foreign.type"/>
+      <member name="abbr" type="iset-abbr.type"/>
+      <member name="hyph" type="iset-hyph.type"/>
+      <member name="style" type="iset-style.type"/>
+      <member name="typo" type="iset-typo.type"/>
+      <member name="variant" type="iset-variant.type"/>
+    </structure>
+  </type>
+
+  <type name="iset-pos.type">
+    <choice>
+      <value>noun</value>
+      <value>adj</value>
+      <value>num</value>
+      <value>verb</value>
+      <value>adv</value>
+      <value>prep</value>
+      <value>conj</value>
+      <value>part</value>
+      <value>int</value>
+      <value>punc</value>
+    </choice>
+  </type>
+
+  <type name="iset-subpos.type">
+    <choice>
+      <value>prop</value>
+      <value>class</value>
+      <value>pdt</value>
+      <value>det</value>
+      <value>art</value>
+      <value>aux</value>
+      <value>cop</value>
+      <value>mod</value>
+      <value>verbconj</value>
+      <value>mod</value>
+      <value>ex</value>
+      <value>voc</value>
+      <value>post</value>
+      <value>circ</value>
+      <value>preppron</value>
+      <value>comprep</value>
+      <value>coor</value>
+      <value>sub</value>
+      <value>comp</value>
+      <value>emp</value>
+      <value>res</value>
+      <value>inf</value>
+      <value>vbp</value>
+    </choice>
+  </type>
+
+  <type name="iset-prontype.type">
+    <choice>
+      <value>prs</value>
+      <value>rcp</value>
+      <value>int</value>
+      <value>rel</value>
+      <value>dem</value>
+      <value>neg</value>
+      <value>ind</value>
+      <value>tot</value>
+    </choice>
+  </type>
+
+  <type name="iset-numtype.type">
+    <choice>
+      <value>card</value>
+      <value>ord</value>
+      <value>mult</value>
+      <value>frac</value>
+      <value>gen</value>
+    </choice>
+  </type>
+
+  <type name="iset-numform.type">
+    <choice>
+      <value>word</value>
+      <value>digit</value>
+      <value>roman</value>
+    </choice>
+  </type>
+
+  <type name="iset-numvalue.type">
+    <choice>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+    </choice>
+  </type>
+
+  <type name="iset-advtype.type">
+    <choice>
+      <value>man</value>
+      <value>loc</value>
+      <value>tim</value>
+      <value>deg</value>
+      <value>cau</value>
+    </choice>
+  </type>
+
+  <type name="iset-punctype.type">
+    <choice>
+      <value>peri</value>
+      <value>qest</value>
+      <value>excl</value>
+      <value>quot</value>
+      <value>brck</value>
+      <value>comm</value>
+      <value>colo</value>
+      <value>semi</value>
+      <value>dash</value>
+      <value>symb</value>
+      <value>root</value>
+    </choice>
+  </type>
+
+  <type name="iset-puncside.type">
+    <choice>
+      <value>ini</value>
+      <value>fin</value>
+    </choice>
+  </type>
+
+  <type name="iset-synpos.type">
+    <choice>
+      <value>subst</value>
+      <value>attr</value>
+      <value>adv</value>
+      <value>pred</value>
+    </choice>
+  </type>
+
+  <type name="iset-poss.type">
+    <choice>
+      <value>poss</value>
+    </choice>
+  </type>
+
+  <type name="iset-reflex.type">
+    <choice>
+      <value>reflex</value>
+    </choice>
+  </type>
+
+  <type name="iset-negativeness.type">
+    <choice>
+      <value>pos</value>
+      <value>neg</value>
+    </choice>
+  </type>
+
+  <type name="iset-definiteness.type">
+    <choice>
+      <value>ind</value>
+      <value>def</value>
+      <value>red</value>
+    </choice>
+  </type>
+
+  <type name="iset-gender.type">
+    <choice>
+      <value>masc</value>
+      <value>fem</value>
+      <value>com</value>
+      <value>neut</value>
+    </choice>
+  </type>
+
+  <type name="iset-animateness.type">
+    <choice>
+      <value>anim</value>
+      <value>nhum</value>
+      <value>inan</value>
+    </choice>
+  </type>
+
+  <type name="iset-number.type">
+    <choice>
+      <value>sing</value>
+      <value>dual</value>
+      <value>plu</value>
+      <value>ptan</value>
+      <value>coll</value>
+    </choice>
+  </type>
+
+  <type name="iset-case.type">
+    <choice>
+      <value>nom</value>
+      <value>gen</value>
+      <value>dat</value>
+      <value>acc</value>
+      <value>voc</value>
+      <value>loc</value>
+      <value>ins</value>
+    </choice>
+  </type>
+
+  <type name="iset-prepcase.type">
+    <choice>
+      <value>npr</value>
+      <value>pre</value>
+    </choice>
+  </type>
+
+  <type name="iset-degree.type">
+    <choice>
+      <value>pos</value>
+      <value>comp</value>
+      <value>sup</value>
+      <value>abs</value>
+    </choice>
+  </type>
+
+  <type name="iset-person.type">
+    <choice>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+    </choice>
+  </type>
+
+  <type name="iset-politeness.type">
+    <choice>
+      <value>inf</value>
+      <value>pol</value>
+    </choice>
+  </type>
+
+  <type name="iset-possgender.type">
+    <choice>
+      <value>masc</value>
+      <value>fem</value>
+      <value>com</value>
+      <value>neut</value>
+    </choice>
+  </type>
+
+  <type name="iset-possnumber.type">
+    <choice>
+      <value>sing</value>
+      <value>dual</value>
+      <value>plu</value>
+    </choice>
+  </type>
+
+  <type name="iset-subcat.type">
+    <choice>
+      <value>intr</value>
+      <value>tran</value>
+    </choice>
+  </type>
+
+  <type name="iset-verbform.type">
+    <choice>
+      <value>fin</value>
+      <value>inf</value>
+      <value>sup</value>
+      <value>part</value>
+      <value>trans</value>
+      <value>ger</value>
+    </choice>
+  </type>
+
+  <type name="iset-mood.type">
+    <choice>
+      <value>ind</value>
+      <value>imp</value>
+      <value>cnd</value>
+      <value>sub</value>
+      <value>jus</value>
+    </choice>
+  </type>
+
+  <type name="iset-tense.type">
+    <choice>
+      <value>past</value>
+      <value>pres</value>
+      <value>fut</value>
+    </choice>
+  </type>
+
+  <type name="iset-subtense.type">
+    <choice>
+      <value>aor</value>
+      <value>imp</value>
+      <value>ppq</value>
+    </choice>
+  </type>
+
+  <type name="iset-voice.type">
+    <choice>
+      <value>act</value>
+      <value>pass</value>
+    </choice>
+  </type>
+
+  <type name="iset-aspect.type">
+    <choice>
+      <value>imp</value>
+      <value>perf</value>
+    </choice>
+  </type>
+
+  <type name="iset-foreign.type">
+    <choice>
+      <value>foreign</value>
+    </choice>
+  </type>
+
+  <type name="iset-abbr.type">
+    <choice>
+      <value>abbr</value>
+    </choice>
+  </type>
+
+  <type name="iset-hyph.type">
+    <choice>
+      <value>hyph</value>
+    </choice>
+  </type>
+
+  <type name="iset-style.type">
+    <choice>
+      <value>arch</value>
+      <value>form</value>
+      <value>norm</value>
+      <value>coll</value>
+      <value>vulg</value>
+    </choice>
+  </type>
+
+  <type name="iset-typo.type">
+    <choice>
+      <value>typo</value>
+    </choice>
+  </type>
+
+  <type name="iset-variant.type">
+    <choice>
+      <value>short</value>
+      <value>long</value>
+      <value>0</value>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+      <value>4</value>
+      <value>5</value>
+      <value>6</value>
+      <value>7</value>
+      <value>8</value>
+      <value>9</value>
+    </choice>
+  </type>
+
+</pml_schema>

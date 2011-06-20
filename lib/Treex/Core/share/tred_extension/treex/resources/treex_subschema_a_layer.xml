@@ -4,6 +4,8 @@
   <revision>1.0.0</revision>
   <description>Subschema for a-layer trees</description>
 
+  <import type="iset.type" schema="treex_subschema_interset.xml"/>
+
  <!--  a-layer representation (merged with m-layer) -->
 
   <type name="a-root.type">
@@ -32,6 +34,8 @@
       <member name="form"><cdata format="any"/></member>
       <member name="lemma"><cdata format="any"/></member>
       <member name="tag"><cdata format="any"/></member>
+      <!-- detailed list of morphosyntactic features (may correspond to the tag attribute) -->
+      <member name="iset" type="iset.type"/>
       <!-- in CoNLL-X data the "tag" information is more structured -->
       <member name="conll_cpos"><cdata format="any"/></member>
       <member name="conll_pos"><cdata format="any"/></member>
