@@ -38,6 +38,8 @@ sub process_zone
                 $node->set_attr("iset/$feature", $f->{$feature});
             }
         }
+        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
+        $node->set_attr('f', $f);
         $node->set_tag($pdt_tag);
     }
     # Adjust the tree structure.
