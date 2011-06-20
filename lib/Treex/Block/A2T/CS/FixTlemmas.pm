@@ -6,9 +6,13 @@ extends 'Treex::Core::Block';
 sub possadj_to_noun {
     my $adj_mlemma = shift;
 
-    $adj_mlemma =~ /\^\(\*(\d+)(.+)?\)/;
-    my $cnt         = $1;
-    my $suffix      = $2 ? $2 : "";    # no suffix if not defined (Nobelův -> Nobel)
+    $adj_mlemma =~ /\^(\([^\*][^\)]*\)_)?\(\*(\d+)(.+)?\)/;
+    if (!$2){ # unfortunately, some lemmas do not contain the derivation information (TODO fix this somehow)
+        log_warn('Cannot find base lemma for a possesive adjective: ' . $adj_mlemma);
+        return $adj_mlemma;
+    }
+    my $cnt         = $2 ? $2 : 0;
+    my $suffix      = $3 ? $3 : "";    # no suffix if not defined (Nobelův -> Nobel)
     my $noun_mlemma = $adj_mlemma;
     $noun_mlemma =~ s/\_.+//;
     $noun_mlemma =~ s/.{$cnt}$/$suffix/;
