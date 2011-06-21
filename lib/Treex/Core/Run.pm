@@ -742,7 +742,7 @@ sub treex {
     # ref to array of arguments, or a string containing all arguments as on the command line
     my $arguments = shift;
 
-    if ( ref($arguments) eq 'ARRAY' ) {
+    if ( ref($arguments) eq 'ARRAY' and scalar @$arguments > 0) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args = ( argv => $arguments );
         if ( $idx != -1 ) {
@@ -754,12 +754,13 @@ sub treex {
 
     }
 
-    elsif ( defined $arguments ) {
+    elsif ( defined $arguments and ref($arguments) ne 'ARRAY') {
         treex( [ grep {defined $_ && $_ ne ''} split( /\s/, $arguments ) ] );
     }
 
     else {
-        log_fatal 'Unspecified arguments for running treex.';
+        treex ('--help');
+        #log_fatal 'Unspecified arguments for running treex.';
     }
     return;
 }
