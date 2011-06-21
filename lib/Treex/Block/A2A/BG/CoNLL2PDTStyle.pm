@@ -94,7 +94,7 @@ sub backup_tree
     {
         # Create a copy of the child node.
         my $child1 = $root1->create_child();
-        # Měli bychom kopírovat všechny atributy, které uzel má, ale mě se nechce zjišťovat, které to jsou.
+        # Měli bychom kopírovat všechny atributy, které uzel má, ale mně se nechce zjišťovat, které to jsou.
         # Vlastně mě překvapilo, že nějaká funkce, jako je tahle, už dávno není v Node.pm.
         foreach my $attribute (qw(form lemma tag ord afun conll_deprel conll_cpos conll_pos conll_feat))
         {
