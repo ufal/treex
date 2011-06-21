@@ -68,7 +68,25 @@ variable as a preferred alternative to new attributes:
 
   my %my_new_attribute_of;
   $my_new_attribute_of{$node} = 'my_value';
- 
+
+head2 Using C<ttred>
+
+=head3 What does the name C<ttred> mean?
+
+B<TrEd> is a I<tree editor> developed by Petr Pajas - see L<http://ufal.mff.cuni.cz/~pajas/tred>.
+C<ttred> is Treex-modified TrEd capable of showing C<*.treex> files.
+Actually, it is a just light-weight wrapper which executes C<tred>
+with a path to the pre-installed Treex extension.
+
+=head3 How to change the order of zones (trees) as they are showed in C<ttred>?
+
+Press I<c> and drag&drop the zones in a matrix.
+(I<c> is a shortcut for a macro, which you can find also in the menu:
+Macros - all modes - treex_mode - Configuration.)
+You can choose both horizontal and vertical position,
+which is handy e.g. for word-aligned corpora,
+where you usually want to have the aligned trees above each other,
+so the alignment links are not too long.
 
 =head1 AUTHOR
 
