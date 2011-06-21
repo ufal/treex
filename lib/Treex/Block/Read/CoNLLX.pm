@@ -25,9 +25,9 @@ sub next_document {
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
             $newnode->set_tag($pos);
-            $newnode->set_attr('conll_cpos', $cpos);
-            $newnode->set_attr('conll_pos', $pos);
-            $newnode->set_attr('conll_feat', $feat);
+            $newnode->set_conll_cpos($cpos);
+            $newnode->set_conll_pos($pos);
+            $newnode->set_conll_feat($feat);
             $newnode->set_conll_deprel($deprel);
             $sentence .= "$form ";
             push @nodes, $newnode;

@@ -36,10 +36,6 @@
       <member name="tag"><cdata format="any"/></member>
       <!-- detailed list of morphosyntactic features (may correspond to the tag attribute) -->
       <member name="iset" type="iset.type"/>
-      <!-- in CoNLL-X data the "tag" information is more structured -->
-      <member name="conll_cpos"><cdata format="any"/></member>
-      <member name="conll_pos"><cdata format="any"/></member>
-      <member name="conll_feat"><cdata format="any"/></member>
       <member name="no_space_after" type="bool.type"/>
       <member name="translit"><cdata format="any"/></member>
 
@@ -47,7 +43,20 @@
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
       <member name="afun" type="afun.type" />
       <member name="is_member" type="bool.type"/>
-      <member name="conll_deprel"><cdata format="any"/></member>
+      
+      <!-- attribute conll_deprel is now deprecated, you should use the new structured conll/deprel instead
+          which is accessible through
+          my $deprel = $node->conll_deprel;
+          $node->set_conll_deprel($deprel);
+          (i.e. the getter and setter are the same as for the old attribute, so no code changes are needed).
+          The old unstructured attribute is left here as optional because of backward compatibility
+          (so you can open older treex files without warnings.)
+          It will be deleted in future.
+      -->
+      <member name="conll_deprel" required="0"><cdata format="any"/></member>
+
+      <!-- CoNLL shared task attributes (deprel, pos, cpos, feat) are grouped in one structure -->
+      <member name="conll" type="a-conll.type"/>
 
       <!-- attributes for conversion to t-tree -->
       <member name="edge_to_collapse" type="bool.type"/>
@@ -80,6 +89,16 @@
 
     </structure>
   </type>
+
+  <type name="a-conll.type">
+    <structure>
+      <member name="deprel"><cdata format="any"/></member> <!--dependency relation-->
+      <member name="cpos"><cdata format="any"/></member>   <!--coarse-grained part-of-speech tag-->
+      <member name="pos"><cdata format="any"/></member>    <!--fine-grained part-of-speech tag-->
+      <member name="feat"><cdata format="any"/></member>   <!--various other features separated by |-->
+    </structure>
+  </type>
+      
 
 
   <type name="a_coreference.type"> <!-- analyticka koreference pro Jirku Mirovskeho -->

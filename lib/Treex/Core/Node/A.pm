@@ -15,8 +15,7 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
 has [
-    qw(afun is_parenthesis_root conll_deprel
-        edge_to_collapse is_auxiliary)
+    qw(afun is_parenthesis_root edge_to_collapse is_auxiliary)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
@@ -83,6 +82,18 @@ sub get_subtree_string {
     my ($self) = @_;
     return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
 }
+
+#----------- CoNLL attributes -------------
+
+sub conll_deprel { return $_[0]->get_attr('conll/deprel'); }
+sub conll_cpos   { return $_[0]->get_attr('conll/cpos'); }
+sub conll_pos    { return $_[0]->get_attr('conll/pos'); }
+sub conll_feat   { return $_[0]->get_attr('conll/feat'); }
+
+sub set_conll_deprel { return $_[0]->set_attr( 'conll/deprel', $_[1] ); }
+sub set_conll_cpos   { return $_[0]->set_attr( 'conll/cpos',   $_[1] ); }
+sub set_conll_pos    { return $_[0]->set_attr( 'conll/pos',    $_[1] ); }
+sub set_conll_feat   { return $_[0]->set_attr( 'conll/feat',   $_[1] ); }
 
 1;
 

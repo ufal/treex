@@ -23,9 +23,9 @@ sub process_zone
     {
         # Current tag is probably just a copy of conll_pos.
         # We are about to replace it by a 15-character string fitting the PDT tagset.
-        my $conll_cpos = $node->get_attr('conll_cpos');
-        my $conll_pos = $node->get_attr('conll_pos');
-        my $conll_feat = $node->get_attr('conll_feat');
+        my $conll_cpos = $node->conll_cpos;
+        my $conll_pos = $node->conll_pos;
+        my $conll_feat = $node->conll_feat;
         my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
         my $f = tagset::bg::conll::decode($conll_tag);
         my $pdt_tag = tagset::cs::pdt::encode($f, 1);
@@ -292,7 +292,7 @@ sub restructure_coordination
         # Select the last delimiter as the new root.
         if(!@{$c->{delimiters}})
         {
-            die("Coordination has no delimiters. What node shall I make the new coordination root?");
+            log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
         }
         my $croot = pop(@{$c->{delimiters}});
         # Attach the new root to the parent of the coordination.
