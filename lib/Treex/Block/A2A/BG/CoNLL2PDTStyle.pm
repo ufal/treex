@@ -7,6 +7,9 @@ extends 'Treex::Core::Block';
 use tagset::bg::conll;
 use tagset::cs::pdt;
 
+###!!! DEBUG: count processed sentences
+$Treex::Block::A2A::BG::CoNLL2PDTStyle::i_sentence = 0;
+
 
 
 #------------------------------------------------------------------------------
@@ -42,12 +45,106 @@ sub process_zone
         $node->set_attr('f', $f);
         $node->set_tag($pdt_tag);
     }
+    ###!!! DEBUG
+    if(0)
+    {
+        my @nodes = $a_root->get_descendants({ordered => 1});
+        print(++$Treex::Block::A2A::BG::CoNLL2PDTStyle::i_sentence, ' ', $nodes[0]->form(), "\n");
+    }
+    # Copy the original dependency structure before adjusting it.
+    backup_zone($zone);
     # Adjust the tree structure.
     deprel_to_afun($a_root);
     attach_final_punctuation_to_root($a_root);
     process_auxiliary_particles($a_root);
+    process_auxiliary_verbs($a_root);
     restructure_coordination($a_root);
     mark_deficient_clausal_coordination($a_root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Copies the original zone so that the user can compare the original and the
+# restructured tree in TTred.
+#------------------------------------------------------------------------------
+sub backup_zone
+{
+    my $zone0 = shift;
+    # Get the bundle the zone is in.
+    my $bundle = $zone0->get_bundle();
+    my $zone1 = $bundle->create_zone($zone0->language(), 'orig');
+    # Copy a-tree only, we don't work on other layers.
+    my $aroot0 = $zone0->get_atree();
+    my $aroot1 = $zone1->create_atree();
+    backup_tree($aroot0, $aroot1);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Recursively copy children from tree0 to tree1.
+#------------------------------------------------------------------------------
+sub backup_tree
+{
+    my $root0 = shift;
+    my $root1 = shift;
+    my @children0 = $root0->children();
+    foreach my $child0 (@children0)
+    {
+        # Create a copy of the child node.
+        my $child1 = $root1->create_child();
+        # Měli bychom kopírovat všechny atributy, které uzel má, ale mě se nechce zjišťovat, které to jsou.
+        # Vlastně mě překvapilo, že nějaká funkce, jako je tahle, už dávno není v Node.pm.
+        foreach my $attribute (qw(form lemma tag ord afun conll_deprel conll_cpos conll_pos conll_feat))
+        {
+            my $value = $child0->get_attr($attribute);
+            $child1->set_attr($attribute, $value);
+        }
+        # Call recursively on the subtrees of the children.
+        backup_tree($child0, $child1);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets the value of an Interset feature. Makes sure that the result is never
+# undefined so the use/strict/warnings creature keeps quiet.
+#------------------------------------------------------------------------------
+sub get_iset
+{
+    my $node = shift;
+    my $feature = shift;
+    my $value = $node->get_attr("iset/$feature");
+    $value = '' if(!defined($value));
+    return $value;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tests multiple Interset features simultaneously. Input is a list of feature-
+# value pairs, return value is 1 if the node matches all these values.
+#
+# if(match_iset($node, 'pos' => 'noun', 'gender' => 'masc')) { ... }
+#------------------------------------------------------------------------------
+sub match_iset
+{
+    my $node = shift;
+    my @req = @_;
+    for(my $i = 0; $i<=$#req; $i += 2)
+    {
+        my $value = get_iset($node, $req[$i]);
+        my $comp = $req[$i+1] =~ s/^\!// ? 'ne' : $req[$i+1] =~ s/^\~// ? 're' : 'eq';
+        if($comp eq 'eq' && $value ne $req[$i+1] ||
+           $comp eq 'ne' && $value eq $req[$i+1] ||
+           $comp eq 're' && $value !~ m/$req[$i+1]/)
+        {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 
@@ -73,6 +170,8 @@ sub attach_final_punctuation_to_root
 
 #------------------------------------------------------------------------------
 # Try to convert dependency relation tags to analytical functions.
+# http://www.bultreebank.org/dpbtb/
+# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -83,7 +182,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         if($deprel eq 'ROOT')
         {
-            if($node->get_attr('f')->{pos} eq 'verb')
+            if($node->get_attr('f')->{pos} eq 'verb' || is_auxiliary_particle($node))
             {
                 $node->set_afun('Pred');
             }
@@ -92,10 +191,11 @@ sub deprel_to_afun
                 $node->set_afun('ExD');
             }
         }
-        elsif($deprel eq 'subj')
+        elsif($deprel =~ m/^x?subj$/)
         {
             $node->set_afun('Sb');
         }
+        # comp ... Complement (arguments of: non-verbal heads, non-finite verbal heads, copula)
         # nominal predicate: check that the governing node is a copula
         elsif($deprel eq 'comp')
         {
@@ -114,8 +214,9 @@ sub deprel_to_afun
             }
             # \x{435} = 'e' (cs:je)
             # \x{441}\x{430} = 'sa' (cs:jsou)
+            # \x{441}\x{44A}\x{43C} = 'săm' (cs:jsem)
             # \x{431}\x{44A}\x{434}\x{435} = 'băde' (cs:bude)
-            if($node!=$verb && $verb->form() =~ m/^(\x{435}|\x{441}\x{430}|\x{431}\x{44A}\x{434}\x{435})$/)
+            if($node!=$verb && $verb->form() =~ m/^(\x{435}|\x{441}\x{430}|\x{431}\x{44A}\x{434}\x{435}|\x{441}\x{44A}\x{43C})$/)
             {
                 $node->set_afun('Pnom');
             }
@@ -124,14 +225,49 @@ sub deprel_to_afun
                 $node->set_afun('Obj');
             }
         }
+        # obj ... Object (direct argument of a non-auxiliary verbal head)
+        # indobj ... Indirect Object (indirect argument of a non-auxiliary verbal head)
         # object, indirect object or complement
         elsif($deprel =~ m/^((ind)?obj)$/)
         {
             $node->set_afun('Obj');
         }
-        elsif($deprel eq 'adjunct')
+        # adjunct: free modifier of a verb
+        # xadjunct: clausal modifier
+        elsif($deprel eq 'xadjunct' && get_iset($node, 'pos') eq 'conj' && get_iset($node, 'subpos') eq 'sub')
+        {
+            $node->set_afun('AuxC');
+        }
+        # marked ... Marked (clauses, introduced by a subordinator)
+        elsif($deprel eq 'marked')
         {
             $node->set_afun('Adv');
+        }
+        elsif($deprel =~ m/^x?adjunct$/)
+        {
+            $node->set_afun('Adv');
+        }
+        # Pragmatic adjunct is an adjunct that does not change semantic of the head. It changes pragmatic meaning. Example: vocative phrases.
+        elsif($deprel eq 'pragadjunct')
+        {
+            # PDT: AuxY: "příslovce a částice, které nelze zařadit jinam"
+            # PDT: AuxZ: "zdůrazňovací slovo"
+            # The only example I saw was the word 'păk', tagged as a particle of emphasis.
+            $node->set_afun('AuxZ');
+        }
+        # xcomp: clausal complement
+        # If the clause has got a complementizer ('that'), the complementizer is tagged 'xcomp'.
+        # If there is no complementizer (such as direct speech), the root of the clause (i.e. the verb) is tagged 'xcomp'.
+        elsif($deprel eq 'xcomp')
+        {
+            if(get_iset($node, 'pos') eq 'verb')
+            {
+                $node->set_afun('Obj');
+            }
+            else
+            {
+                $node->set_afun('AuxC');
+            }
         }
         # negative particle 'ne', modifying a verb, is an adverbiale
         elsif($deprel eq 'mod' && lc($node->form()) eq "\x{43D}\x{435}")
@@ -144,9 +280,37 @@ sub deprel_to_afun
         {
             $node->set_afun('Atr');
         }
+        # clitic: often a possessive pronoun ('si', 'ni', 'j') attached to noun, adjective or pronoun => Atr
+        # sometimes a reflexive personal pronoun ('se') attached to verb (but the verb is in a nominalized form and functions as subject!)
+        elsif($deprel eq 'clitic')
+        {
+            if(match_iset($node, 'prontype' => 'prs', 'poss' => 'poss'))
+            {
+                $node->set_afun('Atr');
+            }
+            else
+            {
+                $node->set_afun('AuxT');
+            }
+        }
+        # The conjunction 'i' can serve emphasis ('even').
+        # If it builds coordination instead, its afun will be corrected later.
+        elsif($deprel eq 'conj' && $node->form() eq 'и')
+        {
+            $node->set_afun('AuxZ');
+        }
         elsif($deprel eq 'punct')
         {
-            $node->set_afun('AuxX');
+            # PDT: AuxX: "čárka (ne však nositel koordinace)"
+            # PDT: AuxG: "jiné grafické symboly, které neukončují větu"
+            if($node->form() eq ',')
+            {
+                $node->set_afun('AuxX');
+            }
+            else
+            {
+                $node->set_afun('AuxG');
+            }
         }
     }
     # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
@@ -154,7 +318,7 @@ sub deprel_to_afun
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        if($deprel eq 'prepcomp')
+        if($deprel =~ m/^x?prepcomp$/)
         {
             my $preposition = $node->parent();
             # We assume that every preposition has exactly one prepcomp child.
@@ -209,7 +373,7 @@ sub get_leftmost_verbal_child
 {
     my $node = shift;
     my @children = $node->children();
-    my @verbchildren = grep {$_->get_attr('iset/pos') eq 'verb'} (@children);
+    my @verbchildren = grep {get_iset($_, 'pos') eq 'verb' && $_->conll_deprel() eq 'comp'} (@children);
     if(@verbchildren)
     {
         return $verbchildren[0];
@@ -247,10 +411,59 @@ sub process_auxiliary_particles
                         $child->set_parent($head);
                     }
                 }
-                # Treat the particle as a subordinating conjunction.
-                $node->set_afun('AuxC');
+                # Experiment: different treatment of 'da' and 'šte'.
+                if($node->form() eq 'да')
+                {
+                    # Treat the particle as a subordinating conjunction.
+                    $node->set_afun('AuxC');
+                }
+                else # šte
+                {
+                    lift_node($head, 'AuxV');
+                }
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Constructions like "mogăl bi" (cs:mohl by). "mogăl" is a participle (in this
+# case modal but it does not matter). "bi" is a form of the auxiliary verb
+# "to be". In BulTreeBank, "bi" governs "mogăl". In PDT it would be vice versa.
+#------------------------------------------------------------------------------
+sub process_auxiliary_verbs
+{
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my @liftnodes;
+    # Search for nodes to lift.
+    foreach my $node (@nodes)
+    {
+        # Is this a non-auxiliary verb?
+        # Is its parent an auxiliary verb?
+        if(
+          match_iset($node, 'pos' => 'verb', 'subpos' => '!aux', 'verbform' => 'part')
+          # &&
+          # $node->form() eq 'могъл'
+        )
+        {
+            my $parent = $node->parent();
+            if(!$parent->is_root() &&
+              # $parent->get_attr('conll_pos') eq 'Vxi'
+              # match_iset($parent, 'pos' => 'verb', 'subpos' => 'aux', 'person' => 3, 'number' => 'sing')
+              $parent->form() =~ m/^(би(ха)?|бях)$/
+            )
+            {
+                push(@liftnodes, $node);
+            }
+        }
+    }
+    # Lift the identified nodes.
+    foreach my $node (@liftnodes)
+    {
+        lift_node($node, 'AuxV');
     }
 }
 
@@ -318,7 +531,18 @@ sub restructure_coordination
         foreach my $delimiter (@{$c->{delimiters}})
         {
             $delimiter->set_parent($croot);
-            $delimiter->set_afun('AuxG');
+            if($delimiter->conll_deprel() eq 'conj')
+            {
+                $delimiter->set_afun('AuxY');
+            }
+            elsif($delimiter->form() eq ',')
+            {
+                $delimiter->set_afun('AuxX');
+            }
+            else
+            {
+                $delimiter->set_afun('AuxG');
+            }
         }
         # Attach all shared modifiers to the new root.
         foreach my $modifier (@{$c->{shared_modifiers}})
@@ -356,7 +580,7 @@ sub detect_coordination
         # Note that the Mel'čukian structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
         my $ord0 = $root->ord();
         my $ord1 = $conjargs[1]->ord();
-        @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
+        @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && !match_iset($_, 'pos' => 'part', 'negativeness' => 'neg') && $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
         push(@{$coords}, {'members' => \@conjargs, 'delimiters' => \@delimiters, 'shared_modifiers' => \@sharedmod});
     }
     # Call this function recursively on every child.
@@ -392,6 +616,40 @@ sub mark_deficient_clausal_coordination
 
 
 
+#------------------------------------------------------------------------------
+# Swaps node with its parent. The original parent becomes a child of the node.
+# All other children of the original parent become children of the node. The
+# node also keeps its original children.
+#
+# The lifted node gets the afun of the original parent while the original
+# parent gets a new afun. The conll_deprel attribute is changed, too, to
+# prevent possible coordination destruction.
+#------------------------------------------------------------------------------
+sub lift_node
+{
+    my $node = shift;
+    my $afun = shift; # new afun for the old parent
+    my $parent = $node->parent();
+    confess('Cannot lift a child of the root') if($parent->is_root());
+    my $grandparent = $parent->parent();
+    # Reattach myself to the grandparent.
+    $node->set_parent($grandparent);
+    $node->set_afun($parent->afun());
+    $node->set_conll_deprel($parent->conll_deprel());
+    # Reattach all previous siblings to myself.
+    foreach my $sibling ($parent->children())
+    {
+        # No need to test whether $sibling==$node as we already reattached $node.
+        $sibling->set_parent($node);
+    }
+    # Reattach the previous parent to myself.
+    $parent->set_parent($node);
+    $parent->set_afun($afun);
+    $parent->set_conll_deprel('');
+}
+
+
+
 1;
 
 
@@ -407,6 +665,6 @@ the Prague Dependency Treebank. Converts tags and restructures the tree.
 
 =cut
 
-# Copyright 2011 Dan Zeman
+# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
