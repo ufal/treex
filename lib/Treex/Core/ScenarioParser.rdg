@@ -33,7 +33,8 @@ INCLUDE:    /[^\/]\S+\.scen/                    {   my $from_file = $arg[0];
                                                         $return = "./$item[1]";
                                                     }
                                                 }
-TBNAME:     BNAME                               {$return = "Treex::Block::$item{BNAME}"}
+TBNAME:     /::/ BNAME                          {$return = $item{BNAME}}                    #absolute block path starts with '::' eg. ::Lingua::EN::ExampleTreexBlock will be resolved as Lingua::EN::ExampleTreexBlock
+TBNAME:     BNAME                               {$return = "Treex::Block::$item{BNAME}"}    #relative block path starts directly  eg. W2A::Example                    will be resolved as Treex::Block::W2A::Example
 BNAME:      /[A-Z]\w*::/ BNAME                  {$return = $item[1].$item[2]}
 BNAME:      /[A-Z]\w*/                          {$return = $item[1]}
 PARAMS:     PARAM PARAMS                        {$return = [$item{PARAM}, @{$item{PARAMS}}]}
