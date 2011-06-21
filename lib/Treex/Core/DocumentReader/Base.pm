@@ -71,8 +71,8 @@ sub add_zone_filenames {
     }
 
     push @{ $self->zones }, Treex::Core::DocumentReader::ReaderZone->new(
-        language      => $lang,
-        selector      => $sele,
+        language      => $language,
+        selector      => $selector,
         filenames     => \@files,
         encoding      => $self->encoding,
         lines_per_doc => $self->lines_per_doc,
@@ -144,7 +144,7 @@ sub zonelabels {
 
 sub next_document {
     my ($self) = @_;
-    my ( %texts, $n_sentences );
+    my ( %texts, %sents, $n_sentences );
 
     foreach my $zone ( @{ $self->zones } ) {
         my $text      = $zone->next_document_text();
@@ -165,6 +165,7 @@ sub next_document {
 
     my $same_n_sentences = 1;
     foreach my $zonelabel ( $self->zonelabels ) {
+        my $text = $texts{$zonelabel};
         my @sentences = $self->get_sentences_from_doc_text( $text, $zonelabel );
         $sents{$zonelabel} = \@sentences;
         if ( !defined $n_sentences ) {
@@ -189,7 +190,7 @@ sub next_document {
                 ( $language, $selector ) = split /_/, $zonelabel;
             }
             my $zone = $bundle->create_zone( $language, $selector );
-            $self->fill_bundle_zone( $zone, $sents{$zonelabel} );
+            $self->fill_bundle_zone( $zone, $sents{$zonelabel}[ $i - 1 ] );
         }
     }
 
