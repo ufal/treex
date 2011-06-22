@@ -67,9 +67,16 @@ sub get_iset
     my $self = shift;
     my $feature = shift;
     my $value = $self->get_attr("iset/$feature");
-    if(is_known_iset($feature) && !defined($value))
+    if($self->is_known_iset($feature))
     {
-        $value = '';
+        if(!defined($value))
+        {
+            $value = '';
+        }
+    }
+    else
+    {
+        warn("Querying unknown Interset feature $feature");
     }
     return $value;
 }
@@ -90,7 +97,9 @@ sub match_iset
     my @req = @_;
     for(my $i = 0; $i<=$#req; $i += 2)
     {
-        my $value = $self->get_iset($req[$i]);
+        my $feature = $req[$i];
+        confess("Undefined feature") unless($feature);
+        my $value = $self->get_iset($feature);
         my $comp = $req[$i+1] =~ s/^\!// ? 'ne' : $req[$i+1] =~ s/^\~// ? 're' : 'eq';
         if($comp eq 'eq' && $value ne $req[$i+1] ||
            $comp eq 'ne' && $value eq $req[$i+1] ||
@@ -148,7 +157,11 @@ sub is_known_iset
 {
     my $self = shift;
     my $feature = shift;
-    my $known = list_iset_values();
+    unless($feature)
+    {
+        return 0;
+    }
+    my $known = $self->list_iset_values();
     unless(exists($known->{$feature}))
     {
         return 0;
