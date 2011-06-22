@@ -36,12 +36,14 @@ sub verbose_bipipe {
     my $reader;
     my $writer;
     *ERR = *STDOUT;
-    my $pid = open3( $reader, '>&ERR', '>&ERR' , $cmd );
+    my $pid = open3( $reader, '>&ERR', '>&ERR', $cmd );
     die "Failed to open verbose_bipipe to: $cmd" if !$pid;
+
     #$writer->autoflush(1);
     #$reader->autoflush(1);
 
     binmode( $reader, $binmode );
+
     #binmode( $writer, $binmode );
 
     return ( $reader, $writer, $pid );
@@ -54,19 +56,22 @@ sub logging_bipipe {
 
     my $reader;
     my $writer;
-    open(LOG, '>>process_utils.log');
-    my $pid = open3( $reader, $writer, '>&LOG' , $cmd );
+    {
+        # TODO use lexical filehandles instad
+        no warnings 'once';
+        open( LOG, '>>process_utils.log' );
+    }
+    my $pid = open3( $reader, $writer, '>&LOG', $cmd );
     die "Failed to open logging_pipe to: $cmd" if !$pid;
     $writer->autoflush(1);
     $reader->autoflush(1);
 
     binmode( $reader, $binmode );
+
     #binmode( $writer, $binmode );
 
     return ( $reader, $writer, $pid );
 }
-
-
 
 # Run a command very safely.
 # Synopsis: safesystem(qw(echo hello)) or die;
@@ -85,6 +90,7 @@ sub safesystem {
     }
     else {
         my $exitcode = $? >> 8;
+
         # print STDERR "Exit code: $exitcode\n" if $exitcode;
         return !$exitcode;
     }
