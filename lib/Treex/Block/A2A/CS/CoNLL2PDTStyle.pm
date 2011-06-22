@@ -38,7 +38,15 @@ sub process_zone
         {
             if(exists($f->{$feature}))
             {
-                $node->set_attr("iset/$feature", $f->{$feature});
+                if(ref($f->{$feature}) eq 'ARRAY')
+                {
+                    ###!!! PROBLEM: disjunctions of values are not defined in the PML schema.
+                    $node->set_attr("iset/$feature", join('|', @{$f->{$feature}}));
+                }
+                else
+                {
+                    $node->set_attr("iset/$feature", $f->{$feature});
+                }
             }
         }
         # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
@@ -156,6 +164,10 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun = $deprel;
+        if($afun =~ s/_M$//)
+        {
+            $node->set_is_member(1);
+        }
         $node->set_afun($afun);
     }
 }
