@@ -96,7 +96,7 @@ sub backup_tree
         my $child1 = $root1->create_child();
         # Měli bychom kopírovat všechny atributy, které uzel má, ale mně se nechce zjišťovat, které to jsou.
         # Vlastně mě překvapilo, že nějaká funkce, jako je tahle, už dávno není v Node.pm.
-        foreach my $attribute (qw(form lemma tag ord afun conll_deprel conll_cpos conll_pos conll_feat))
+        foreach my $attribute ('form', 'lemma', 'tag', 'ord', 'afun', 'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
         {
             my $value = $child0->get_attr($attribute);
             $child1->set_attr($attribute, $value);
