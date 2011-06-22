@@ -38,18 +38,25 @@ sub set_iset
     {
         if(exists($f{$feature}))
         {
-            if(ref($f{$feature}) eq 'ARRAY')
+            if($f{$feature} eq '')
             {
-                ###!!! PROBLEM: disjunctions of values are not defined in the PML schema.
-                $self->set_attr("iset/$feature", join('|', sort(@{$f{$feature}})));
+                $self->set_attr("iset/$feature", '');
+            }
+            elsif(ref($f{$feature}) eq 'ARRAY')
+            {
+                $self->set_attr("iset/$feature", join('|', $self->sort_iset_values($feature, @{$f{$feature}})));
             }
             else
             {
-                unless($f{$feature} eq '' || grep {$_ eq $f{$feature}} (@{$known->{$feature}}))
+                my @values = split(/\|/, $f{$feature});
+                foreach my $value (@values)
                 {
-                    warn("Unknown value $f{$feature} of Interset feature $feature");
+                    unless(grep {$_ eq $value} (@{$known->{$feature}}))
+                    {
+                        warn("Unknown value $value of Interset feature $feature");
+                    }
                 }
-                $self->set_attr("iset/$feature", $f{$feature});
+                $self->set_attr("iset/$feature", join('|', $self->sort_iset_values($feature, @values)));
             }
         }
     }
@@ -61,6 +68,10 @@ sub set_iset
 # Gets the value of an Interset feature. Makes sure that the result is never
 # undefined so the use/strict/warnings creature keeps quiet. It returns undef
 # only if we ask for the value of an unknown feature.
+#
+# If there is a disjunction of values (such as "fem|neut"), this function
+# returns just a string with vertical bars as delimiters. The caller can use
+# a split() function to get an array, or call get_iset_structure() instead.
 #------------------------------------------------------------------------------
 sub get_iset
 {
@@ -79,6 +90,29 @@ sub get_iset
         warn("Querying unknown Interset feature $feature");
     }
     return $value;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets the values of all Interset features and returns a hash. Any multivalues
+# (such as "fem|neut") will be converted to arrays referenced from the hash
+# (same as the result of decode() functions in Interset tagset drivers).
+#------------------------------------------------------------------------------
+sub get_iset_structure
+{
+    my $self = shift;
+    my %f;
+    foreach my $feature (list_iset_features())
+    {
+        $f{$feature} = $self->get_iset($feature);
+        if($f{$feature} =~ m/\|/)
+        {
+            my @values = split(/\|/, $f{$feature});
+            $f{$feature} = \@values;
+        }
+    }
+    return \%f;
 }
 
 
@@ -175,6 +209,30 @@ sub is_known_iset
         }
     }
     return 1;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Static method. Sorts values of a feature "intuitively" (according to order
+# defined in Interset). For example, for the number feature, singular is
+# intuitively before plural, although plural goes first alphabetically. Useful
+# for displaying lists of values.
+#------------------------------------------------------------------------------
+sub sort_iset_values
+{
+    my $self = shift;
+    my $feature = shift;
+    my @values = @_;
+    ###!!! Ordering values should be precomputed and stored in a global variable!
+    ###!!! Can we use a BEGIN block here?
+    my $known_values = $self->list_iset_values($feature);
+    my %order = ('' => 0);
+    for(my $i = 0; $i<=$#{$known_values}; $i++)
+    {
+        $order{$known_values->[$i]} = $i+1;
+    }
+    return sort {$order{$a} <=> $order{$b}} (@values);
 }
 
 
