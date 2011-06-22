@@ -4,6 +4,7 @@ use warnings;
 
 use File::HomeDir;
 use File::ShareDir;
+use Cwd qw(realpath);
 
 # this should be somehow systematized, since there will be probably many switches like this one
 our $debug_run_jobs_locally;    ## no critic (ProhibitPackageVars)
@@ -24,42 +25,39 @@ sub share_dir {
 
     # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
     if ( devel_version() ) {
-        return lib_core_dir() . "/../../../../share/";
+        return realpath( lib_core_dir() . "/../../../../share/" );
     }
     else {
-        return File::ShareDir::dist_dir('Treex-Core')
-            . "/";
+        return realpath( File::ShareDir::dist_dir('Treex-Core') );
     }
 }
 
 sub tred_dir {
-    return share_dir() . 'tred/';
+    return realpath( share_dir() . '/tred/' );
 }
 
 sub pml_schema_dir {
 
     if ( devel_version() ) {
-        return lib_core_dir() . "/share/tred_extension/treex/resources/";
+        return realpath( lib_core_dir() . "/share/tred_extension/treex/resources/" );
     }
     else {
-        return File::ShareDir::dist_dir('Treex-Core')
-            . "/tred_extension/treex/resources/";
+        return realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );
     }
 }
 
 # tenhle adresar ted vubec v balicku neni!
 sub tred_extension_dir {
-    return pml_schema_dir() . "/../../";
+    return realpath( pml_schema_dir() . "/../../" );
 }
 
 sub lib_core_dir {
-    return _caller_dir();
+    return realpath( _caller_dir() );
 }
 
-sub tmp_dir { #!!! to be replaced with ~/.treex/tmp !!!
-    return lib_core_dir."../../../../tmp/";
+sub tmp_dir {    #!!! to be replaced with ~/.treex/tmp !!!
+    return realpath( lib_core_dir . "/../../../../tmp/" );
 }
-
 
 sub _caller_dir {
     my %call_info;

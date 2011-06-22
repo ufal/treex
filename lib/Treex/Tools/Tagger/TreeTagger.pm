@@ -1,7 +1,8 @@
 package Treex::Tools::Tagger::TreeTagger;
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Core::Config;
+use Treex::Tools::ProcessUtils;
 
 has model => ( isa => 'Str', is => 'rw', required => 1 );
 has [qw( _reader _writer _pid )] => ( is => 'rw' );
@@ -13,15 +14,15 @@ sub BUILD {
     use Treex::Core::Resource;
     Treex::Core::Resource::require_file_from_share(
         'installed_tools/tagger/tree_tagger/bin/tree-tagger',
-        'Treex::Tools::Tagger::TreeTagger'
+        ref($self)
     );
-    my $bindir = "$ENV{TMT_ROOT}/share/installed_tools/tagger/tree_tagger/bin";
-    die "Missing $bindir\n" if !-d $bindir;
+    my $bindir = Treex::Core::Config::share_dir().'/installed_tools/tagger/tree_tagger/bin';
+    log_fatal("Missing $bindir\n") if !-d $bindir;
 
     my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model;
 
     # start TreeTagger and load the model
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command, ":encoding(utf-8)" );
+    my ( $reader, $writer, $pid ) = Treex::Tools::ProcessUtils::bipipe( $command, ":encoding(utf-8)" );
     $self->_set_reader($reader);
     $self->_set_writer($writer);
     $self->_set_pid($pid);
@@ -78,7 +79,7 @@ sub DEMOLISH {
     my ($self) = @_;
     close( $self->_writer );
     close( $self->_reader );
-    ProcessUtils::safewaitpid( $self->_pid );
+    Treex::Tools::ProcessUtils::safewaitpid( $self->_pid );
     return;
 }
 
@@ -89,14 +90,14 @@ __END__
 
 =head1 NAME
 
-Tagger::TreeTagger
+Treex::Tools::Tagger::TreeTagger
 
 TreeTagger. Reads list of tokens and returns list of tags
 and list of lemmas.
 
 =head1 SYNOPSIS
 
-  my $tagger = Tagger::TreeTagger->new();
+  my $tagger = Treex::Tools::Tagger::TreeTagger->new();
   my ($tags, $lemmas) = @{ $tagger->analyze(["How","are","you","?"]) };
   print join(" ", @$tags);
   print join(" ", @$lemmas);

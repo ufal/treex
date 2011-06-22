@@ -8,7 +8,7 @@ use Treex::Core::Config;
 
 sub require_file_from_share {
     my ( $rel_path_to_file, $who_wants_it ) = @_;
-    my $file = Treex::Core::Config::share_dir() . $rel_path_to_file;
+    my $file = Treex::Core::Config::share_dir() . "/$rel_path_to_file";
     if ( not -e $file ) {
         log_info("Shared file '$rel_path_to_file' is missing by $who_wants_it.");
         my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
