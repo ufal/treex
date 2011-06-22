@@ -5,6 +5,7 @@ extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
+with 'Treex::Core::Node::Interset';
 
 # _set_n_node is called only from Treex::Core::Node::N
 # (automatically, when a new n-node is added to the n-tree).
@@ -215,7 +216,7 @@ For example: "Bank of China"
  $n_node_for_china = $a_node_china->get_n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
- print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China 
+ print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China
 
 =item $node->get_subtree_string
 

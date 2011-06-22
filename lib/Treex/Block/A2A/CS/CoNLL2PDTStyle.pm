@@ -112,47 +112,6 @@ sub backup_tree
 
 
 #------------------------------------------------------------------------------
-# Gets the value of an Interset feature. Makes sure that the result is never
-# undefined so the use/strict/warnings creature keeps quiet.
-#------------------------------------------------------------------------------
-sub get_iset
-{
-    my $node = shift;
-    my $feature = shift;
-    my $value = $node->get_attr("iset/$feature");
-    $value = '' if(!defined($value));
-    return $value;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Tests multiple Interset features simultaneously. Input is a list of feature-
-# value pairs, return value is 1 if the node matches all these values.
-#
-# if(match_iset($node, 'pos' => 'noun', 'gender' => 'masc')) { ... }
-#------------------------------------------------------------------------------
-sub match_iset
-{
-    my $node = shift;
-    my @req = @_;
-    for(my $i = 0; $i<=$#req; $i += 2)
-    {
-        my $value = get_iset($node, $req[$i]);
-        my $comp = $req[$i+1] =~ s/^\!// ? 'ne' : $req[$i+1] =~ s/^\~// ? 're' : 'eq';
-        if($comp eq 'eq' && $value ne $req[$i+1] ||
-           $comp eq 'ne' && $value eq $req[$i+1] ||
-           $comp eq 're' && $value !~ m/$req[$i+1]/)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------

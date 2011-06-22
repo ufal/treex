@@ -109,47 +109,6 @@ sub backup_tree
 
 
 #------------------------------------------------------------------------------
-# Gets the value of an Interset feature. Makes sure that the result is never
-# undefined so the use/strict/warnings creature keeps quiet.
-#------------------------------------------------------------------------------
-sub get_iset
-{
-    my $node = shift;
-    my $feature = shift;
-    my $value = $node->get_attr("iset/$feature");
-    $value = '' if(!defined($value));
-    return $value;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Tests multiple Interset features simultaneously. Input is a list of feature-
-# value pairs, return value is 1 if the node matches all these values.
-#
-# if(match_iset($node, 'pos' => 'noun', 'gender' => 'masc')) { ... }
-#------------------------------------------------------------------------------
-sub match_iset
-{
-    my $node = shift;
-    my @req = @_;
-    for(my $i = 0; $i<=$#req; $i += 2)
-    {
-        my $value = get_iset($node, $req[$i]);
-        my $comp = $req[$i+1] =~ s/^\!// ? 'ne' : $req[$i+1] =~ s/^\~// ? 're' : 'eq';
-        if($comp eq 'eq' && $value ne $req[$i+1] ||
-           $comp eq 'ne' && $value eq $req[$i+1] ||
-           $comp eq 're' && $value !~ m/$req[$i+1]/)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Examines the last node of the sentence. If it is a punctuation, makes sure
 # that it is attached to the artificial root node.
 #------------------------------------------------------------------------------
@@ -234,7 +193,7 @@ sub deprel_to_afun
         }
         # adjunct: free modifier of a verb
         # xadjunct: clausal modifier
-        elsif($deprel eq 'xadjunct' && get_iset($node, 'pos') eq 'conj' && get_iset($node, 'subpos') eq 'sub')
+        elsif($deprel eq 'xadjunct' && $node->match_iset('pos' => 'conj', 'subpos' => 'sub'))
         {
             $node->set_afun('AuxC');
         }
@@ -260,7 +219,7 @@ sub deprel_to_afun
         # If there is no complementizer (such as direct speech), the root of the clause (i.e. the verb) is tagged 'xcomp'.
         elsif($deprel eq 'xcomp')
         {
-            if(get_iset($node, 'pos') eq 'verb')
+            if($node->get_iset('pos') eq 'verb')
             {
                 $node->set_afun('Obj');
             }
@@ -284,7 +243,7 @@ sub deprel_to_afun
         # sometimes a reflexive personal pronoun ('se') attached to verb (but the verb is in a nominalized form and functions as subject!)
         elsif($deprel eq 'clitic')
         {
-            if(match_iset($node, 'prontype' => 'prs', 'poss' => 'poss'))
+            if($node->match_iset('prontype' => 'prs', 'poss' => 'poss'))
             {
                 $node->set_afun('Atr');
             }
@@ -373,7 +332,7 @@ sub get_leftmost_verbal_child
 {
     my $node = shift;
     my @children = $node->children();
-    my @verbchildren = grep {get_iset($_, 'pos') eq 'verb' && $_->conll_deprel() eq 'comp'} (@children);
+    my @verbchildren = grep {$_->get_iset('pos') eq 'verb' && $_->conll_deprel() eq 'comp'} (@children);
     if(@verbchildren)
     {
         return $verbchildren[0];
@@ -444,7 +403,7 @@ sub process_auxiliary_verbs
         # Is this a non-auxiliary verb?
         # Is its parent an auxiliary verb?
         if(
-          match_iset($node, 'pos' => 'verb', 'subpos' => '!aux', 'verbform' => 'part')
+          $node->match_iset('pos' => 'verb', 'subpos' => '!aux', 'verbform' => 'part')
           # &&
           # $node->form() eq 'могъл'
         )
@@ -452,7 +411,7 @@ sub process_auxiliary_verbs
             my $parent = $node->parent();
             if(!$parent->is_root() &&
               # $parent->get_attr('conll_pos') eq 'Vxi'
-              # match_iset($parent, 'pos' => 'verb', 'subpos' => 'aux', 'person' => 3, 'number' => 'sing')
+              # $parent->match_iset('pos' => 'verb', 'subpos' => 'aux', 'person' => 3, 'number' => 'sing')
               $parent->form() =~ m/^(би(ха)?|бях)$/
             )
             {
@@ -580,7 +539,7 @@ sub detect_coordination
         # Note that the Mel'čukian structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
         my $ord0 = $root->ord();
         my $ord1 = $conjargs[1]->ord();
-        @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && !match_iset($_, 'pos' => 'part', 'negativeness' => 'neg') && $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
+        @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && !$_->match_iset('pos' => 'part', 'negativeness' => 'neg') && $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
         push(@{$coords}, {'members' => \@conjargs, 'delimiters' => \@delimiters, 'shared_modifiers' => \@sharedmod});
     }
     # Call this function recursively on every child.

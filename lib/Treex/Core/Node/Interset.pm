@@ -33,7 +33,8 @@ sub set_iset
     {
         %f = @_;
     }
-    foreach my $feature (@tagset::common::known_features)
+    my $known = list_iset_values();
+    foreach my $feature (list_iset_features())
     {
         if(exists($f{$feature}))
         {
@@ -44,6 +45,10 @@ sub set_iset
             }
             else
             {
+                unless($f{$feature} eq '' || grep {$_ eq $f{$feature}} (@{$known->{$feature}}))
+                {
+                    warn("Unknown value $f{$feature} of Interset feature $feature");
+                }
                 $self->set_attr("iset/$feature", $f{$feature});
             }
         }
@@ -54,15 +59,18 @@ sub set_iset
 
 #------------------------------------------------------------------------------
 # Gets the value of an Interset feature. Makes sure that the result is never
-# undefined so the use/strict/warnings creature keeps quiet.
-###!!! It could return undef if we ask for the value of an unknown feature.
+# undefined so the use/strict/warnings creature keeps quiet. It returns undef
+# only if we ask for the value of an unknown feature.
 #------------------------------------------------------------------------------
 sub get_iset
 {
     my $self = shift;
     my $feature = shift;
     my $value = $self->get_attr("iset/$feature");
-    $value = '' if(!defined($value));
+    if(is_known_iset($feature) && !defined($value))
+    {
+        $value = '';
+    }
     return $value;
 }
 
@@ -87,6 +95,68 @@ sub match_iset
         if($comp eq 'eq' && $value ne $req[$i+1] ||
            $comp eq 'ne' && $value eq $req[$i+1] ||
            $comp eq 're' && $value !~ m/$req[$i+1]/)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Static method. Returns the list of known Interset features. Currently just
+# an access point to a global array provided by the Interset libraries.
+# However, if for some reason the Interset libraries cannot be installed
+# together with Treex, the list could be simply copied here.
+#------------------------------------------------------------------------------
+sub list_iset_features
+{
+    return @tagset::common::known_features;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Static method. Returns the list of known values for a given Interset feature,
+# or a reference to a hash of list of values for each feature, if no specific
+# feature is asked for.
+#------------------------------------------------------------------------------
+sub list_iset_values
+{
+    my $self = shift;
+    my $feature = shift;
+    my $hash = \%tagset::common::known_values;
+    if($feature)
+    {
+        return $hash->{$feature};
+    }
+    else
+    {
+        return $hash;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Static method. Tells whether a string is a name of a known Interset feature.
+# If there is a second argument, it checks whether it is a known value of that
+# feature.
+#------------------------------------------------------------------------------
+sub is_known_iset
+{
+    my $self = shift;
+    my $feature = shift;
+    my $known = list_iset_values();
+    unless(exists($known->{$feature}))
+    {
+        return 0;
+    }
+    my @values = @{$known->{$feature}};
+    foreach my $value (@_)
+    {
+        unless($value eq '' || grep {$_ eq $value} (@values))
         {
             return 0;
         }
