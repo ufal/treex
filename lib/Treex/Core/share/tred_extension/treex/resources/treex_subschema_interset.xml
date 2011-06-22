@@ -4,45 +4,49 @@
   <revision>1.0.0</revision>
   <description>DZ Interset features and values</description>
 
+  <!-- Each Interset feature has a list of permitted values (see the iset-*.type definitions below)
+       However, we declare the features as plain strings because value combinations (such as
+       <gender>masc|neut</gender>) are also allowed. Type checking must be done elsewhere. -->
+
   <type name="iset.type">
     <structure>
-      <member name="pos" type="iset-pos.type"/>
-      <member name="subpos" type="iset-subpos.type"/>
-      <member name="prontype" type="iset-prontype.type"/>
-      <member name="numtype" type="iset-numtype.type"/>
-      <member name="numform" type="iset-numform.type"/>
-      <member name="numvalue" type="iset-numvalue.type"/>
-      <member name="advtype" type="iset-advtype.type"/>
-      <member name="punctype" type="iset-punctype.type"/>
-      <member name="puncside" type="iset-puncside.type"/>
-      <member name="synpos" type="iset-synpos.type"/>
-      <member name="poss" type="iset-poss.type"/>
-      <member name="reflex" type="iset-reflex.type"/>
-      <member name="negativeness" type="iset-negativeness.type"/>
-      <member name="definiteness" type="iset-definiteness.type"/>
-      <member name="gender" type="iset-gender.type"/>
-      <member name="animateness" type="iset-animateness.type"/>
-      <member name="number" type="iset-number.type"/>
-      <member name="case" type="iset-case.type"/>
-      <member name="prepcase" type="iset-prepcase.type"/>
-      <member name="degree" type="iset-degree.type"/>
-      <member name="person" type="iset-person.type"/>
-      <member name="politeness" type="iset-politeness.type"/>
-      <member name="possgender" type="iset-possgender.type"/>
-      <member name="possnumber" type="iset-possnumber.type"/>
-      <member name="subcat" type="iset-subcat.type"/>
-      <member name="verbform" type="iset-verbform.type"/>
-      <member name="mood" type="iset-mood.type"/>
-      <member name="tense" type="iset-tense.type"/>
-      <member name="subtense" type="iset-subtense.type"/>
-      <member name="voice" type="iset-voice.type"/>
-      <member name="aspect" type="iset-aspect.type"/>
-      <member name="foreign" type="iset-foreign.type"/>
-      <member name="abbr" type="iset-abbr.type"/>
-      <member name="hyph" type="iset-hyph.type"/>
-      <member name="style" type="iset-style.type"/>
-      <member name="typo" type="iset-typo.type"/>
-      <member name="variant" type="iset-variant.type"/>
+      <member name="pos"><cdata format="any"/></member>
+      <member name="subpos"><cdata format="any"/></member>
+      <member name="prontype"><cdata format="any"/></member>
+      <member name="numtype"><cdata format="any"/></member>
+      <member name="numform"><cdata format="any"/></member>
+      <member name="numvalue"><cdata format="any"/></member>
+      <member name="advtype"><cdata format="any"/></member>
+      <member name="punctype"><cdata format="any"/></member>
+      <member name="puncside"><cdata format="any"/></member>
+      <member name="synpos"><cdata format="any"/></member>
+      <member name="poss"><cdata format="any"/></member>
+      <member name="reflex"><cdata format="any"/></member>
+      <member name="negativeness"><cdata format="any"/></member>
+      <member name="definiteness"><cdata format="any"/></member>
+      <member name="gender"><cdata format="any"/></member>
+      <member name="animateness"><cdata format="any"/></member>
+      <member name="number"><cdata format="any"/></member>
+      <member name="case"><cdata format="any"/></member>
+      <member name="prepcase"><cdata format="any"/></member>
+      <member name="degree"><cdata format="any"/></member>
+      <member name="person"><cdata format="any"/></member>
+      <member name="politeness"><cdata format="any"/></member>
+      <member name="possgender"><cdata format="any"/></member>
+      <member name="possnumber"><cdata format="any"/></member>
+      <member name="subcat"><cdata format="any"/></member>
+      <member name="verbform"><cdata format="any"/></member>
+      <member name="mood"><cdata format="any"/></member>
+      <member name="tense"><cdata format="any"/></member>
+      <member name="subtense"><cdata format="any"/></member>
+      <member name="voice"><cdata format="any"/></member>
+      <member name="aspect"><cdata format="any"/></member>
+      <member name="foreign"><cdata format="any"/></member>
+      <member name="abbr"><cdata format="any"/></member>
+      <member name="hyph"><cdata format="any"/></member>
+      <member name="style"><cdata format="any"/></member>
+      <member name="typo"><cdata format="any"/></member>
+      <member name="variant"><cdata format="any"/></member>
     </structure>
   </type>
 
