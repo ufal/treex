@@ -217,7 +217,10 @@ sub _anode_labels {
 
     my $line3_1 = $node->tag ? $node->tag : "";
     my $line3_2 = $node->lemma;
-    if ( $node->language eq 'cs' ) {
+    # DZ: This hack tries to distinguish Dan's CoNLL trees from Pepa's PEDT trees
+    #     so that Czech tags don't get crippled in the former.
+    # if ( $node->language eq 'cs' ) {
+    if ( $node->language eq 'cs' && !$node->conll_cpos ) {
         $line3_1 = substr( $line3_1, 0, 2 );
         $line3_2 =~ s/(.)(?:-[1-9][0-9]*)?(?:(?:`|_[:;,^]).*)?$/$1/;
     }
@@ -376,4 +379,3 @@ Josef Toman <toman@ufal.mff.cuni.cz>
 Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
