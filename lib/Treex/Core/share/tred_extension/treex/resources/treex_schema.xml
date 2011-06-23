@@ -61,6 +61,19 @@
     <structure role="#NODE" name="bundle-root">
       <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
 
+      <!--CzEng meta informations (not stable, may be changed/deleted in future)
+	      align_score is a alignment quality score which may be used in filters.
+	      CzEng ids are very long, so we don't want to store them in bundle id,
+	      because id of each node is derived from the id of its bundle (and zone and tree)
+	      and we don't want to have so many long ids.
+	  -->
+      <member name="czeng">
+        <structure>
+          <member name="id"><cdata format="any"/></member>
+          <member name="align_score"><cdata format="any"/></member>
+        </structure>
+      </member>
+
       <member name="zones">
         <sequence>
           <element name="zone" type="zone.type"/>
@@ -72,7 +85,7 @@
            <cdata format="any"/>
         </list>
       </member>
-      
+
       <!-- ptacek: -->
       <member name="dialog">
        		<structure>
