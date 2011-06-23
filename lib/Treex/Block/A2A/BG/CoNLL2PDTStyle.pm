@@ -2,13 +2,10 @@ package Treex::Block::A2A::BG::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 use tagset::bg::conll;
 use tagset::cs::pdt;
-
-###!!! DEBUG: count processed sentences
-$Treex::Block::A2A::BG::CoNLL2PDTStyle::i_sentence = 0;
 
 
 
@@ -35,12 +32,6 @@ sub process_zone
         $node->set_iset($f);
         $node->set_tag($pdt_tag);
     }
-    ###!!! DEBUG
-    if(0)
-    {
-        my @nodes = $a_root->get_descendants({ordered => 1});
-        print(++$Treex::Block::A2A::BG::CoNLL2PDTStyle::i_sentence, ' ', $nodes[0]->form(), "\n");
-    }
     # Copy the original dependency structure before adjusting it.
     backup_zone($zone);
     # Adjust the tree structure.
@@ -50,69 +41,6 @@ sub process_zone
     process_auxiliary_verbs($a_root);
     restructure_coordination($a_root);
     mark_deficient_clausal_coordination($a_root);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Copies the original zone so that the user can compare the original and the
-# restructured tree in TTred.
-#------------------------------------------------------------------------------
-sub backup_zone
-{
-    my $zone0 = shift;
-    # Get the bundle the zone is in.
-    my $bundle = $zone0->get_bundle();
-    my $zone1 = $bundle->create_zone($zone0->language(), 'orig');
-    # Copy a-tree only, we don't work on other layers.
-    my $aroot0 = $zone0->get_atree();
-    my $aroot1 = $zone1->create_atree();
-    backup_tree($aroot0, $aroot1);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Recursively copy children from tree0 to tree1.
-#------------------------------------------------------------------------------
-sub backup_tree
-{
-    my $root0 = shift;
-    my $root1 = shift;
-    my @children0 = $root0->children();
-    foreach my $child0 (@children0)
-    {
-        # Create a copy of the child node.
-        my $child1 = $root1->create_child();
-        # Měli bychom kopírovat všechny atributy, které uzel má, ale mně se nechce zjišťovat, které to jsou.
-        # Vlastně mě překvapilo, že nějaká funkce, jako je tahle, už dávno není v Node.pm.
-        foreach my $attribute ('form', 'lemma', 'tag', 'ord', 'afun', 'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
-        {
-            my $value = $child0->get_attr($attribute);
-            $child1->set_attr($attribute, $value);
-        }
-        # Call recursively on the subtrees of the children.
-        backup_tree($child0, $child1);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Examines the last node of the sentence. If it is a punctuation, makes sure
-# that it is attached to the artificial root node.
-#------------------------------------------------------------------------------
-sub attach_final_punctuation_to_root
-{
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    my $fnode = $nodes[$#nodes];
-    my $final_pos = $fnode->get_iset('pos');
-    if($final_pos eq 'punc' && $fnode->parent()!=$root)
-    {
-        $fnode->set_parent($root);
-        $fnode->set_afun('AuxK');
-    }
 }
 
 
@@ -275,6 +203,25 @@ sub deprel_to_afun
             $node->set_afun($preposition->afun());
             $preposition->set_afun('AuxP');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines the last node of the sentence. If it is a punctuation, makes sure
+# that it is attached to the artificial root node.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_root
+{
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $fnode = $nodes[$#nodes];
+    my $final_pos = $fnode->get_iset('pos');
+    if($final_pos eq 'punc' && $fnode->parent()!=$root)
+    {
+        $fnode->set_parent($root);
+        $fnode->set_afun('AuxK');
     }
 }
 
@@ -558,40 +505,6 @@ sub mark_deficient_clausal_coordination
             $parent->set_is_member(1);
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Swaps node with its parent. The original parent becomes a child of the node.
-# All other children of the original parent become children of the node. The
-# node also keeps its original children.
-#
-# The lifted node gets the afun of the original parent while the original
-# parent gets a new afun. The conll_deprel attribute is changed, too, to
-# prevent possible coordination destruction.
-#------------------------------------------------------------------------------
-sub lift_node
-{
-    my $node = shift;
-    my $afun = shift; # new afun for the old parent
-    my $parent = $node->parent();
-    confess('Cannot lift a child of the root') if($parent->is_root());
-    my $grandparent = $parent->parent();
-    # Reattach myself to the grandparent.
-    $node->set_parent($grandparent);
-    $node->set_afun($parent->afun());
-    $node->set_conll_deprel($parent->conll_deprel());
-    # Reattach all previous siblings to myself.
-    foreach my $sibling ($parent->children())
-    {
-        # No need to test whether $sibling==$node as we already reattached $node.
-        $sibling->set_parent($node);
-    }
-    # Reattach the previous parent to myself.
-    $parent->set_parent($node);
-    $parent->set_afun($afun);
-    $parent->set_conll_deprel('');
 }
 
 
