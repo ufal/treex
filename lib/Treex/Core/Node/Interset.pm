@@ -44,7 +44,7 @@ sub set_iset
             }
             elsif(ref($f{$feature}) eq 'ARRAY')
             {
-                $self->set_attr("iset/$feature", join('|', $self->sort_iset_values($feature, @{$f{$feature}})));
+                $self->set_attr("iset/$feature", join('|', sort_iset_values($feature, @{$f{$feature}})));
             }
             else
             {
@@ -56,7 +56,7 @@ sub set_iset
                         warn("Unknown value $value of Interset feature $feature");
                     }
                 }
-                $self->set_attr("iset/$feature", join('|', $self->sort_iset_values($feature, @values)));
+                $self->set_attr("iset/$feature", join('|', sort_iset_values($feature, @values)));
             }
         }
     }
@@ -78,7 +78,7 @@ sub get_iset
     my $self = shift;
     my $feature = shift;
     my $value = $self->get_attr("iset/$feature");
-    if($self->is_known_iset($feature))
+    if(is_known_iset($feature))
     {
         if(!defined($value))
         {
@@ -167,7 +167,6 @@ sub list_iset_features
 #------------------------------------------------------------------------------
 sub list_iset_values
 {
-    my $self = shift;
     my $feature = shift;
     my $hash = \%tagset::common::known_values;
     if($feature)
@@ -189,13 +188,12 @@ sub list_iset_values
 #------------------------------------------------------------------------------
 sub is_known_iset
 {
-    my $self = shift;
     my $feature = shift;
     unless($feature)
     {
         return 0;
     }
-    my $known = $self->list_iset_values();
+    my $known = list_iset_values();
     unless(exists($known->{$feature}))
     {
         return 0;
@@ -221,18 +219,10 @@ sub is_known_iset
 #------------------------------------------------------------------------------
 sub sort_iset_values
 {
-    my $self = shift;
     my $feature = shift;
     my @values = @_;
-    ###!!! Ordering values should be precomputed and stored in a global variable!
-    ###!!! Can we use a BEGIN block here?
-    my $known_values = $self->list_iset_values($feature);
-    my %order = ('' => 0);
-    for(my $i = 0; $i<=$#{$known_values}; $i++)
-    {
-        $order{$known_values->[$i]} = $i+1;
-    }
-    return sort {$order{$a} <=> $order{$b}} (@values);
+    my $order = $tagset::common::order_values{$feature};
+    return sort {$order->{$a} <=> $order->{$b}} (@values);
 }
 
 
