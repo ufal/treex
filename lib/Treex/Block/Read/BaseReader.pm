@@ -110,6 +110,7 @@ sub new_document {
     log_fatal "next_filename() must be called before new_document()" if !defined $path;
     my ( $volume, $dirs, $file ) = File::Spec->splitpath($path);
     my ( $stem, $extension ) = $file =~ /([^.]+)(\..+)?/;
+    $stem =~ s/^-$/noname/;
     my %args = ( file_stem => $stem, loaded_from => $path );
     if ( defined $dirs ) {
         $args{path} = $volume . $dirs;
