@@ -33,9 +33,9 @@ sub process_zone
         $node->set_tag($pdt_tag);
     }
     # Copy the original dependency structure before adjusting it.
-    backup_zone($zone);
+    $self->backup_zone($zone);
     # Adjust the tree structure.
-    deprel_to_afun($a_root);
+    $self->deprel_to_afun($a_root);
 }
 
 
@@ -46,6 +46,7 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)

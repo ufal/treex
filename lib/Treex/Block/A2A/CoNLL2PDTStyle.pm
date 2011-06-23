@@ -12,6 +12,7 @@ extends 'Treex::Core::Block';
 #------------------------------------------------------------------------------
 sub backup_zone
 {
+    my $self = shift;
     my $zone0 = shift;
     # Get the bundle the zone is in.
     my $bundle = $zone0->get_bundle();
@@ -19,7 +20,7 @@ sub backup_zone
     # Copy a-tree only, we don't work on other layers.
     my $aroot0 = $zone0->get_atree();
     my $aroot1 = $zone1->create_atree();
-    backup_tree($aroot0, $aroot1);
+    $self->backup_tree($aroot0, $aroot1);
 }
 
 
@@ -29,6 +30,7 @@ sub backup_zone
 #------------------------------------------------------------------------------
 sub backup_tree
 {
+    my $self = shift;
     my $root0 = shift;
     my $root1 = shift;
     my @children0 = $root0->children();
@@ -44,7 +46,7 @@ sub backup_tree
             $child1->set_attr($attribute, $value);
         }
         # Call recursively on the subtrees of the children.
-        backup_tree($child0, $child1);
+        $self->backup_tree($child0, $child1);
     }
 }
 
@@ -61,6 +63,7 @@ sub backup_tree
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
@@ -83,6 +86,7 @@ sub deprel_to_afun
 #------------------------------------------------------------------------------
 sub lift_node
 {
+    my $self = shift;
     my $node = shift;
     my $afun = shift; # new afun for the old parent
     my $parent = $node->parent();

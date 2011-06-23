@@ -33,14 +33,14 @@ sub process_zone
         $node->set_tag($pdt_tag);
     }
     # Copy the original dependency structure before adjusting it.
-    backup_zone($zone);
+    $self->backup_zone($zone);
     # Adjust the tree structure.
-    deprel_to_afun($a_root);
-    attach_final_punctuation_to_root($a_root);
-    process_auxiliary_particles($a_root);
-    process_auxiliary_verbs($a_root);
-    restructure_coordination($a_root);
-    mark_deficient_clausal_coordination($a_root);
+    $self->deprel_to_afun($a_root);
+    $self->attach_final_punctuation_to_root($a_root);
+    $self->process_auxiliary_particles($a_root);
+    $self->process_auxiliary_verbs($a_root);
+    $self->restructure_coordination($a_root);
+    $self->mark_deficient_clausal_coordination($a_root);
 }
 
 
@@ -52,6 +52,7 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
@@ -59,7 +60,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         if($deprel eq 'ROOT')
         {
-            if($node->get_iset('pos') eq 'verb' || is_auxiliary_particle($node))
+            if($node->get_iset('pos') eq 'verb' || $self->is_auxiliary_particle($node))
             {
                 $node->set_afun('Pred');
             }
@@ -81,9 +82,9 @@ sub deprel_to_afun
             my $parent = $node->parent();
             my $verb = $parent;
             # If we have not processed the auxiliary particles yet, the parent is the particle and not the copula.
-            if(is_auxiliary_particle($parent))
+            if($self->is_auxiliary_particle($parent))
             {
-                my $lvc = get_leftmost_verbal_child($parent);
+                my $lvc = $self->get_leftmost_verbal_child($parent);
                 if(defined($lvc))
                 {
                     $verb = $lvc;
@@ -214,6 +215,7 @@ sub deprel_to_afun
 #------------------------------------------------------------------------------
 sub attach_final_punctuation_to_root
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     my $fnode = $nodes[$#nodes];
@@ -233,6 +235,7 @@ sub attach_final_punctuation_to_root
 #------------------------------------------------------------------------------
 sub get_prepcomp
 {
+    my $self = shift;
     my $prepnode = shift;
     # We cannot reliably assume that a preposition has only one child.
     # There may be rhematizers modifying the whole prepositional phrase.
@@ -251,6 +254,7 @@ sub get_prepcomp
 #------------------------------------------------------------------------------
 sub is_auxiliary_particle
 {
+    my $self = shift;
     my $node = shift;
     return $node->match_iset('pos' => 'part', 'subpos' => 'aux');
 }
@@ -264,6 +268,7 @@ sub is_auxiliary_particle
 #------------------------------------------------------------------------------
 sub get_leftmost_verbal_child
 {
+    my $self = shift;
     my $node = shift;
     my @children = $node->children();
     my @verbchildren = grep {$_->get_iset('pos') eq 'verb' && $_->conll_deprel() eq 'comp'} (@children);
@@ -285,14 +290,15 @@ sub get_leftmost_verbal_child
 #------------------------------------------------------------------------------
 sub process_auxiliary_particles
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if(is_auxiliary_particle($node))
+        if($self->is_auxiliary_particle($node))
         {
             # Consider the first verbal child of the particle the clausal head.
-            my $head = get_leftmost_verbal_child($node);
+            my $head = $self->get_leftmost_verbal_child($node);
             if(defined($head))
             {
                 my @children = $node->children();
@@ -312,7 +318,7 @@ sub process_auxiliary_particles
                 }
                 else # šte
                 {
-                    lift_node($head, 'AuxV');
+                    $self->lift_node($head, 'AuxV');
                 }
             }
         }
@@ -328,6 +334,7 @@ sub process_auxiliary_particles
 #------------------------------------------------------------------------------
 sub process_auxiliary_verbs
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     my @liftnodes;
@@ -356,7 +363,7 @@ sub process_auxiliary_verbs
     # Lift the identified nodes.
     foreach my $node (@liftnodes)
     {
-        lift_node($node, 'AuxV');
+        $self->lift_node($node, 'AuxV');
     }
 }
 
@@ -367,10 +374,11 @@ sub process_auxiliary_verbs
 #------------------------------------------------------------------------------
 sub restructure_coordination
 {
+    my $self = shift;
     my $root = shift;
     my @coords;
     # Collect information about all coordination structures in the tree.
-    detect_coordination($root, \@coords);
+    $self->detect_coordination($root, \@coords);
     # Loop over coordinations and restructure them.
     # Hopefully the order in which the coordinations are processed is not significant.
     foreach my $c (@coords)
@@ -389,7 +397,7 @@ sub restructure_coordination
         # If the first member is a preposition then the real afun is one level down.
         if($afun eq 'AuxP')
         {
-            my $prepcomp = get_prepcomp($firstmember);
+            my $prepcomp = $self->get_prepcomp($firstmember);
             if(defined($prepcomp))
             {
                 $ppafun = $prepcomp->afun();
@@ -410,7 +418,7 @@ sub restructure_coordination
             $member->set_parent($croot);
             $member->set_is_member(1);
             my $prepcomp;
-            if(defined($ppafun) && defined($prepcomp = get_prepcomp($member)))
+            if(defined($ppafun) && defined($prepcomp = $self->get_prepcomp($member)))
             {
                 $member->set_afun('AuxP');
                 $prepcomp->set_afun($ppafun);
@@ -452,6 +460,7 @@ sub restructure_coordination
 #------------------------------------------------------------------------------
 sub detect_coordination
 {
+    my $self = shift;
     my $root = shift;
     my $coords = shift; # reference to array where detected coordinations are collected
     # Depth-first search.
@@ -479,7 +488,7 @@ sub detect_coordination
     # Call this function recursively on every child.
     foreach my $child (@children)
     {
-        detect_coordination($child, $coords);
+        $self->detect_coordination($child, $coords);
     }
 }
 
@@ -491,6 +500,7 @@ sub detect_coordination
 #------------------------------------------------------------------------------
 sub mark_deficient_clausal_coordination
 {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({ordered => 1});
     if($nodes[0]->conll_deprel() eq 'conj')
