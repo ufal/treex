@@ -155,7 +155,8 @@ sub match_iset
 #------------------------------------------------------------------------------
 sub list_iset_features
 {
-    return @tagset::common::known_features;
+    # We do not use the Interset features 'tagset' and 'other' in Treex.
+    return grep {$_ !~ m/^(tagset|other)$/} @tagset::common::known_features;
 }
 
 
@@ -221,6 +222,7 @@ sub sort_iset_values
 {
     my $feature = shift;
     my @values = @_;
+    confess("Cannot order values of Interset feature '$feature'") if(!exists($tagset::common::order_values{$feature}));
     my $order = $tagset::common::order_values{$feature};
     return sort {$order->{$a} <=> $order->{$b}} (@values);
 }

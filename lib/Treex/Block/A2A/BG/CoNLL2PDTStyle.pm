@@ -32,17 +32,7 @@ sub process_zone
         my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
         my $f = tagset::bg::conll::decode($conll_tag);
         my $pdt_tag = tagset::cs::pdt::encode($f, 1);
-        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
-        $node->set_attr('f', $f);
-        foreach my $feature (@tagset::common::known_features)
-        {
-            if(exists($f->{$feature}))
-            {
-                $node->set_attr("iset/$feature", $f->{$feature});
-            }
-        }
-        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
-        $node->set_attr('f', $f);
+        $node->set_iset($f);
         $node->set_tag($pdt_tag);
     }
     ###!!! DEBUG
@@ -117,7 +107,7 @@ sub attach_final_punctuation_to_root
     my $root = shift;
     my @nodes = $root->get_descendants();
     my $fnode = $nodes[$#nodes];
-    my $final_pos = $fnode->get_attr('f')->{pos};
+    my $final_pos = $fnode->get_iset('pos');
     if($final_pos eq 'punc' && $fnode->parent()!=$root)
     {
         $fnode->set_parent($root);
@@ -141,7 +131,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         if($deprel eq 'ROOT')
         {
-            if($node->get_attr('f')->{pos} eq 'verb' || is_auxiliary_particle($node))
+            if($node->get_iset('pos') eq 'verb' || is_auxiliary_particle($node))
             {
                 $node->set_afun('Pred');
             }
@@ -315,10 +305,7 @@ sub get_prepcomp
 sub is_auxiliary_particle
 {
     my $node = shift;
-    my $f = $node->get_attr('f');
-    my $pos = defined($f->{pos}) ? $f->{pos} : '';
-    my $subpos = defined($f->{subpos}) ? $f->{subpos} : '';
-    return $pos eq 'part' && $subpos eq 'aux';
+    return $node->match_iset('pos' => 'part', 'subpos' => 'aux');
 }
 
 

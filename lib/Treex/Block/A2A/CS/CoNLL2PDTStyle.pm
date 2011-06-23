@@ -32,25 +32,7 @@ sub process_zone
         my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
         my $f = tagset::cs::conll::decode($conll_tag);
         my $pdt_tag = tagset::cs::pdt::encode($f, 1);
-        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
-        $node->set_attr('f', $f);
-        foreach my $feature (@tagset::common::known_features)
-        {
-            if(exists($f->{$feature}))
-            {
-                if(ref($f->{$feature}) eq 'ARRAY')
-                {
-                    ###!!! PROBLEM: disjunctions of values are not defined in the PML schema.
-                    $node->set_attr("iset/$feature", join('|', @{$f->{$feature}}));
-                }
-                else
-                {
-                    $node->set_attr("iset/$feature", $f->{$feature});
-                }
-            }
-        }
-        # Store the feature structure hash with the node (temporarily: is not in PML schema, will not be saved).
-        $node->set_attr('f', $f);
+        $node->set_iset($f);
         $node->set_tag($pdt_tag);
     }
     ###!!! DEBUG
