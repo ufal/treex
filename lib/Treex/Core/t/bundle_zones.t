@@ -6,6 +6,7 @@ use warnings;
 use Treex::Core::Document;
 
 use Test::More;    # tests=>39;
+use Test::Output;
 
 my $doc = Treex::Core::Document->new;
 
@@ -78,4 +79,18 @@ foreach ( 0 .. 2 ) {
         unlink $filename;
     }
 }
+
+
+sub create_zone_twice {
+    eval {
+        my $doc = Treex::Core::Document->new;
+        my $bundle = $doc->create_bundle;
+        for (1,2) {
+            $bundle->create_zone('en');
+        }
+    }
+}
+
+stderr_like  ( \&create_zone_twice, qr/\S/, 'Attempt at creating the same zone twice successfully detected.' );
+
 done_testing();

@@ -59,6 +59,10 @@ sub create_zone {
         { isa => 'LangCode' },
         { isa => 'Selector', default => '' },
     );
+
+    log_fatal("Bundle already contains a zone with language='$language' and selector='$selector'")
+        if $self->get_zone($language,$selector);
+
     my $new_zone = Treex::Core::BundleZone->new(
         {
             'language' => $language,
