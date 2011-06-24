@@ -248,6 +248,7 @@
       <member name="politeness" type="t-politeness.type"/>
       <member name="negation" type="t-negation.type"/>
       <member name="definiteness" type="t-definiteness.type"/>
+      <member name="diathesis" type="t-diathesis.type"/>
     </structure>
   </type>
 
@@ -473,6 +474,18 @@
       <value>neut</value>
       <value>inher</value>
       <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-diathesis.type">
+    <choice>
+      <value>act</value>
+      <value>pas</value>
+      <value>res1</value>
+      <value>res2</value>
+      <value>disp</value>
+      <value>deagent</value>
+      <value>recip</value>
     </choice>
   </type>
 
