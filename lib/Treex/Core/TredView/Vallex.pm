@@ -127,6 +127,11 @@ sub _OpenValLexicon_En {
     $TrEd::EngValLex::Editor::reviewer_can_modify = 0;
     $TrEd::EngValLex::Editor::reviewer_can_delete = 0;
 
+    # Following subroutines return 1 no matter what. We need to change this behaviour
+    require TrEd::EngValLex::Data;
+    *TrEd::EngValLex::Data::user_is_annotator = sub { return 0 };
+    *TrEd::EngValLex::Data::user_is_reviewer = sub { return 0 };
+
     my $a_node = $self->_treex_doc->get_node_by_id($node->attr('a/lex.rf'));
 	my $vallex_file = $self->_find_vallex($node);
 	return unless $vallex_file;
@@ -172,7 +177,8 @@ sub _OpenValFrameList_Cs {
         -lemma_attr => 't_lemma',
         -sempos_attr => 'gram/sempos',
         -frameid => $node->attr('val_frame.rf'),
-        -assignfunc => sub {}
+        -no_assign => 1,
+        -noadd => 1
     });
     TredMacro::ChangingFile(0);
 }
@@ -189,9 +195,13 @@ sub _OpenValFrameList_En {
     local $EngValLex::GUI::lemma_attr="t_lemma";
     local $EngValLex::GUI::framere_attr=undef;
     local $EngValLex::GUI::sempos_attr="gram/sempos";
-    
     $TrEd::EngValLex::Editor::reviewer_can_modify = 0;
     $TrEd::EngValLex::Editor::reviewer_can_delete = 0;
+
+    # Following subroutines return 1 no matter what. We need to change this behaviour
+    require TrEd::EngValLex::Data;
+    *TrEd::EngValLex::Data::user_is_annotator = sub { return 0 };
+    *TrEd::EngValLex::Data::user_is_reviewer = sub { return 0 };
 
     my $a_node = $self->_treex_doc->get_node_by_id($node->attr('a/lex.rf'));
 	my $vallex_file = $self->_find_vallex($node);
