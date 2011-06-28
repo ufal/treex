@@ -23,85 +23,88 @@ sub process_zone
         my $conll_feat = $node->conll_feat;
         my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
         
-        # Tamil POS tag has 9 positions
-        # Assigning first 2 positions: 1. POS and 2. SUBPOS
-        my $pdt_tag = "$conll_cpos$conll_pos";
+        # fine grained positional tag
+        my $pdt_tag = $node->conll_pos;
         
-        # Identify the remaining 7 positions
-        if ($conll_feat eq '_') {
-            $pdt_tag = $pdt_tag . '-------';    
-        }
-        else {
-            my @feats = split /\|/, $conll_feat;
-            my %feats_hash;
-            my $feats_str = q{};
-
-            foreach my $feat (@feats) {
-                my @f = split /\=/, $feat;
-                $feats_hash{$f[0]} = $f[1];
-            }
-
-            # 3rd position - Case
-            if (exists $feats_hash{'Cas'}) {
-                $feats_str = $feats_str . $feats_hash{'Cas'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-
-            # 4th position - Tense    
-            if (exists $feats_hash{'Ten'}) {
-                $feats_str = $feats_str . $feats_hash{'Ten'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-            
-            # 5th position - Person    
-            if (exists $feats_hash{'Per'}) {
-                $feats_str = $feats_str . $feats_hash{'Per'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-            
-            # 6th position - Number     
-            if (exists $feats_hash{'Num'}) {
-                $feats_str = $feats_str . $feats_hash{'Num'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }            
-            
-            # 7th position - Gender     
-            if (exists $feats_hash{'Gen'}) {
-                $feats_str = $feats_str . $feats_hash{'Gen'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-            
-            # 8th position - Voice  
-            if (exists $feats_hash{'Voi'}) {
-                $feats_str = $feats_str . $feats_hash{'Voi'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-
-            # 9th position - Negation
-            if (exists $feats_hash{'Voi'}) {
-                $feats_str = $feats_str . $feats_hash{'Voi'};
-            }
-            else  {
-                $feats_str = $feats_str . '-';
-            }
-            
-            # Positional tag of length 9
-            $pdt_tag = $pdt_tag . $feats_str;
-            
-        }
-        
+        ## Tamil POS tag has 9 positions
+        ## Assigning first 2 positions: 1. POS and 2. SUBPOS
+        #my $pdt_tag = "$conll_cpos$conll_pos";
+        #
+        ## Identify the remaining 7 positions
+        #if ($conll_feat eq '_') {
+        #    $pdt_tag = $pdt_tag . '-------';    
+        #}
+        #else {
+        #    my @feats = split /\|/, $conll_feat;
+        #    my %feats_hash;
+        #    my $feats_str = q{};
+        #
+        #    foreach my $feat (@feats) {
+        #        my @f = split /\=/, $feat;
+        #        $feats_hash{$f[0]} = $f[1];
+        #    }
+        #
+        #    # 3rd position - Case
+        #    if (exists $feats_hash{'Cas'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Cas'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #
+        #    # 4th position - Tense    
+        #    if (exists $feats_hash{'Ten'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Ten'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #    
+        #    # 5th position - Person    
+        #    if (exists $feats_hash{'Per'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Per'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #    
+        #    # 6th position - Number     
+        #    if (exists $feats_hash{'Num'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Num'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }            
+        #    
+        #    # 7th position - Gender     
+        #    if (exists $feats_hash{'Gen'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Gen'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #    
+        #    # 8th position - Voice  
+        #    if (exists $feats_hash{'Voi'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Voi'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #
+        #    # 9th position - Negation
+        #    if (exists $feats_hash{'Voi'}) {
+        #        $feats_str = $feats_str . $feats_hash{'Voi'};
+        #    }
+        #    else  {
+        #        $feats_str = $feats_str . '-';
+        #    }
+        #    
+        #    # Positional tag of length 9
+        #    $pdt_tag = $pdt_tag . $feats_str;
+        #    
+        #}
+        #
         #my $f = tagset::ar::conll::decode($conll_tag);
         #my $pdt_tag = tagset::cs::pdt::encode($f, 1);
 
