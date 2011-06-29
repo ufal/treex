@@ -3,16 +3,23 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-# TODO: more elegant implementation
-use Treex::Tools::Segment::RuleBased;
-use Treex::Tools::Segment::EN::RuleBased;
-use Treex::Tools::Segment::CS::RuleBased;
+#my %segmenter_for = (
+#    universal => Treex::Tools::Segment::RuleBased->new(),
+#    en        => Treex::Tools::Segment::EN::RuleBased->new(),
+#    cs        => Treex::Tools::Segment::CS::RuleBased->new(),
+#);
 
-my %segmenter_for = (
-    universal => Treex::Tools::Segment::RuleBased->new(),
-    en        => Treex::Tools::Segment::EN::RuleBased->new(),
-    cs        => Treex::Tools::Segment::CS::RuleBased->new(),
-);
+# TODO: even more elegant implementation, avoid string eval
+sub _get_segmenter {
+    my $lang     = uc shift;
+    my $specific = "Treex::Tools::Segment::${lang}::RuleBased";
+    my $fallback = "Treex::Tools::Segment::RuleBased";
+    foreach my $class ( $specific, $fallback ) {
+        my $segmenter = eval "use $class; $class->new()";
+        return $segmenter if $segmenter;
+    }
+
+}
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -22,7 +29,7 @@ sub process_bundle {
     foreach my $zone ( $bundle->get_all_zones() ) {
         my $lang      = $zone->language;
         my $label     = $zone->get_label();
-        my $segmenter = $segmenter_for{$lang} || $segmenter_for{universal};
+        my $segmenter = _get_segmenter($lang);
         $sentences{$label} = [ $segmenter->get_segments( $zone->sentence ) ];
         if ( @{ $sentences{$label} } > $segments ) { $segments = @{ $sentences{$label} }; }
     }
@@ -33,7 +40,7 @@ sub process_bundle {
 
     # B) The zone to be processed contains just one sentence.
     if ( defined $self->language && defined $self->selector ) {
-        return if @{ $sentences{$self->zone_label} } == 1;
+        return if @{ $sentences{ $self->zone_label } } == 1;
     }
 
     # TODO: If a zone contains less subsegments (e.g. just 1) than $segments
