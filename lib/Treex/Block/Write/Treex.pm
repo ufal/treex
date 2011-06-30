@@ -81,7 +81,8 @@ space or comma separated list of filenames
 =item file_stem path
 
 overrides the respective attributes in documents
-(filled in by a L<DocumentReader|Treex::Core::DocumentReader>)
+(filled in by a L<DocumentReader|Treex::Core::DocumentReader>),
+which are used for generating output file names
 
 =back
 
