@@ -85,7 +85,7 @@ sub build_file_number {
 sub full_filename {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
-    return ( $self->path ? $self->path : '' ) . $self->file_stem . $self->file_number;
+    return ( $self->path ? $self->path."/" : '' ) . $self->file_stem . $self->file_number;
 }
 
 sub BUILD {

@@ -98,6 +98,10 @@ L<document|Treex::Core::Document>.
 
 space or comma separated list of filenames
 
+=item lines_per_doc
+
+number of sentences (!) per document
+
 =back
 
 =head1 METHODS
