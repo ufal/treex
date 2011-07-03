@@ -406,7 +406,23 @@ sub restructure_coordination
         # Select the last delimiter as the new root.
         if(!@{$c->{delimiters}})
         {
-            log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
+            # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
+            # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
+            my $debug = 0;
+            if($debug)
+            {
+                # get_position() returns numbers from 0 but Tred numbers sentences from 1.
+                my $i = $root->get_bundle()->get_position()+1;
+                log_info("\#$i ".$root->get_zone()->sentence());
+                log_info("Coordination members:    ".join(' ', map {$_->form()} (@{$c->{members}})));
+                log_info("Coordination delimiters: ".join(' ', map {$_->form()} (@{$c->{delimiters}})));
+                log_info("Coordination modifiers:  ".join(' ', map {$_->form()} (@{$c->{shared_modifiers}})));
+                log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
+            }
+            else
+            {
+                return;
+            }
         }
         my $croot = pop(@{$c->{delimiters}});
         # Attach the new root to the parent of the coordination.
