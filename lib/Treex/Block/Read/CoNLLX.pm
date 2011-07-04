@@ -22,7 +22,7 @@ sub next_document_text {
   LINE:
 
     while ( <$FH> ) {
-        if ($_ eq "\n") {
+        if ($_ =~ m/^\s*$/) {
             $empty_lines++;
             return $text if $empty_lines == $self->lines_per_doc;
         }
