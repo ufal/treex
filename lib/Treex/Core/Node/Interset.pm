@@ -118,6 +118,28 @@ sub get_iset_structure
 
 
 #------------------------------------------------------------------------------
+# Gets the values of all non-empty Interset features and returns a mixed list
+# of features and their values. Useful for displaying features of a node: the
+# features are ordered according to their default order in Interset.
+#------------------------------------------------------------------------------
+sub get_iset_pairs_list
+{
+    my $self = shift;
+    my @list;
+    foreach my $feature (list_iset_features())
+    {
+        my $value = $self->get_iset($feature);
+        unless($value eq '')
+        {
+            push(@list, $feature, $value);
+        }
+    }
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Tests multiple Interset features simultaneously. Input is a list of feature-
 # value pairs, return value is 1 if the node matches all these values. This
 # function is an abbreviation for a series of get_iset() calls in an if

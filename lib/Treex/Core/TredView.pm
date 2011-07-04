@@ -86,7 +86,7 @@ sub get_nodelist_hook {
 
     my $layout = $self->tree_layout->get_layout();
     my %nodes;
-    
+
     foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
         my $label = $self->tree_layout->get_tree_label($tree);
         my @nodes;
@@ -180,7 +180,7 @@ sub file_opened_hook {
     $self->pml_doc($pmldoc);
     my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     $self->treex_doc($treex_doc);
-    
+
     # labels, styles and vallex must be created again for each file
     $self->_set_labels(Treex::Core::TredView::Labels->new( _treex_doc => $treex_doc ));
     $self->_set_styles(Treex::Core::TredView::Styles->new( _treex_doc => $treex_doc ));
@@ -446,6 +446,11 @@ sub anode_hint {
         push @lines, "Full lemma: " . $node->{lemma};
         push @lines, "Full tag: " . ( $node->{tag} ? $node->{tag} : '' );
     }
+    # List all non-empty Interset features.
+    my @iset = $node->get_iset_pairs_list();
+    for(my $i = 0; $i<=$#iset; $i += 2) {
+        push @lines, "$iset[$i]: $iset[$i+1]";
+    }
 
     return join "\n", @lines;
 }
@@ -686,4 +691,3 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
