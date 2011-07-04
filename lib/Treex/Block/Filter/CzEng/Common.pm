@@ -15,6 +15,14 @@ sub add_feature {
     return 1;
 }
 
+sub get_features {
+    my ($self, $bundle) = @_;
+    if (! $bundle->get_zone('und') || ! $bundle->get_zone('und')->sentence) {
+        return undef;
+    }
+    return shift split /\s+/, $bundle->get_zone('und')->sentence;
+} 
+
 1;
 
 =over
