@@ -22,7 +22,7 @@ Treex::Unilang - collection of blocks parametrized by language and language inde
 
 =head1 AUTHOR
 
-Tomáš Kraut <tomas.kraut@matfyz.cz>
+Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

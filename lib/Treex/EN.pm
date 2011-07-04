@@ -22,7 +22,7 @@ Treex::EN - collection of blocks for processing English
 
 =head1 AUTHOR
 
-Tomáš Kraut <tomas.kraut@matfyz.cz>
+Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -181,7 +181,7 @@ path to a file that contains a list of files to be read (one per line)
 =item file_stem (optional)
 
 How to name the loaded documents.
-This will attribute will be saved to the same-named
+This attribute will be saved to the same-named
 attribute in documents and it will be used in document writers
 to decide where to save the files.
 
