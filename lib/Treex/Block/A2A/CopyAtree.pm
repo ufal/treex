@@ -15,12 +15,6 @@ has 'align'           => ( is       => 'rw', isa => 'Bool', default => 0 );
 # alignment block
 has '_aligner' => ( is => 'rw', isa => 'Object' );
 
-# TODO: copy attributes in a cleverer way
-my @ATTRS_TO_COPY = qw(
-    form tag lemma ord afun is_member no_space_after is_parenthesis_root
-    conll/deprel conll/cpos conll/pos conll/feat
-);
-
 sub _build_source_selector {
     my ($self) = @_;
     return $self->selector;
@@ -75,16 +69,7 @@ sub process_bundle {
 sub copy_subtree {
     my ( $source_root, $target_root ) = @_;
 
-    foreach my $source_node ( $source_root->get_children( { ordered => 1 } ) ) {
-        my $target_node = $target_root->create_child();
-
-        # copying attributes
-        # TODO: this must be done in another way
-        foreach my $attr (@ATTRS_TO_COPY) {
-            $target_node->set_attr( $attr, $source_node->get_attr($attr) );
-        }
-        copy_subtree( $source_node, $target_node );
-    }
+    $source_root->copy_atree($target_root);
 }
 
 1;
@@ -93,7 +78,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::A2A::CopyAtree
 
@@ -102,7 +87,7 @@ Treex::Block::A2A::CopyAtree
 This block copies analytical tree into another zone.
 
 Trees are made flat if the switch C<flatten=1> is used. The new tree is aligned to the old one if
-the switch C<align> is set to 1. 
+the switch C<align> is set to 1.
 
 =head1 PARAMETERS
 
@@ -112,7 +97,7 @@ The current language. This parameter is required.
 
 =item C<source_language>
 
-The target (reference) language for the alignment. Defaults to current C<language> setting. 
+The target (reference) language for the alignment. Defaults to current C<language> setting.
 The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
 
 =item C<source_selector>
@@ -127,7 +112,7 @@ of the root).
 
 =item C<align>
 
-If this parameter is set, the target trees are aligned to the source ones. 
+If this parameter is set, the target trees are aligned to the source ones.
 
 =head1 AUTHOR
 

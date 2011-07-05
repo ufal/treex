@@ -41,14 +41,15 @@ sub copy_atree
 {
     my $self = shift;
     my $target = shift;
-    my @children0 = $self->children();
+    my @children0 = $self->get_children({ordered => 1});
     foreach my $child0 (@children0)
     {
         # Create a copy of the child node.
         my $child1 = $target->create_child();
         # We should copy all attributes that the node has but it is not easy to figure out which these are.
         # As a workaround, we list the attributes here directly.
-        foreach my $attribute ('form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
+        foreach my $attribute ('form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
+                               'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
         {
             my $value = $child0->get_attr($attribute);
             $child1->set_attr($attribute, $value);

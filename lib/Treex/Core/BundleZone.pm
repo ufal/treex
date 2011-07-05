@@ -238,6 +238,19 @@ sub set_sentence {
     return $self->set_attr( 'sentence', $text );
 }
 
+sub copy {
+    my $self = shift;
+    my $selector1 = shift;
+    # Get the bundle the zone is in.
+    my $bundle = $self->get_bundle();
+    my $zone1 = $bundle->get_or_create_zone($self->language(), $selector1);
+    ### TO DO: copy other trees, too (currently only copies the a-tree)
+    my $aroot0 = $self->get_atree();
+    my $aroot1 = $zone1->create_atree();
+    $aroot0->copy_atree($aroot1);
+    return $zone1;
+}
+
 1;
 
 __END__
@@ -248,7 +261,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::BundleZone - zone in a bundle containing a sentence and its 
+Treex::Core::BundleZone - zone in a bundle containing a sentence and its
 linguistic representations
 
 =head1 SYNOPSIS
@@ -281,9 +294,9 @@ C<Treex::Core::BundleZone> instances have the following attributes:
 
 =back
 
-The attributes can be accessed using semi-affordance accessors: getters have 
-the same names as attributes, while setters start with C<set_>. For example, 
-the attribute C<sentence> has a getter C<sentence()> and a setter 
+The attributes can be accessed using semi-affordance accessors: getters have
+the same names as attributes, while setters start with C<set_>. For example,
+the attribute C<sentence> has a getter C<sentence()> and a setter
 C<set_sentence($sentence)>
 
 
@@ -383,6 +396,15 @@ returns the L<Treex::Core::Bundle> instance which the zone belongs to
 returns the L<Treex::Core::Document> instance which the zone belongs to
 
 =back
+
+
+=head2 Other
+
+=over4
+
+=item $zone1 = $zone0->copy($selector1);
+
+creates a copy of the zone (currently copies only the a-tree) under the same language and a new selector
 
 =head1 AUTHOR
 

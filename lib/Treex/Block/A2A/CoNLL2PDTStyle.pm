@@ -14,13 +14,7 @@ sub backup_zone
 {
     my $self = shift;
     my $zone0 = shift;
-    # Get the bundle the zone is in.
-    my $bundle = $zone0->get_bundle();
-    my $zone1 = $bundle->create_zone($zone0->language(), 'orig');
-    # Copy a-tree only, we don't work on other layers.
-    my $aroot0 = $zone0->get_atree();
-    my $aroot1 = $zone1->create_atree();
-    $aroot0->copy_atree($aroot1);
+    return $zone0->copy('orig');
 }
 
 
