@@ -20,34 +20,7 @@ sub backup_zone
     # Copy a-tree only, we don't work on other layers.
     my $aroot0 = $zone0->get_atree();
     my $aroot1 = $zone1->create_atree();
-    $self->backup_tree($aroot0, $aroot1);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Recursively copy children from tree0 to tree1.
-#------------------------------------------------------------------------------
-sub backup_tree
-{
-    my $self = shift;
-    my $root0 = shift;
-    my $root1 = shift;
-    my @children0 = $root0->children();
-    foreach my $child0 (@children0)
-    {
-        # Create a copy of the child node.
-        my $child1 = $root1->create_child();
-        # Měli bychom kopírovat všechny atributy, které uzel má, ale mně se nechce zjišťovat, které to jsou.
-        # Vlastně mě překvapilo, že nějaká funkce, jako je tahle, už dávno není v Node.pm.
-        foreach my $attribute ('form', 'lemma', 'tag', 'ord', 'afun', 'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
-        {
-            my $value = $child0->get_attr($attribute);
-            $child1->set_attr($attribute, $value);
-        }
-        # Call recursively on the subtrees of the children.
-        $self->backup_tree($child0, $child1);
-    }
+    $aroot0->copy_atree($aroot1);
 }
 
 

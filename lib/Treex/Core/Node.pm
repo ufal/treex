@@ -80,7 +80,7 @@ sub set_attr {
     log_fatal "Attribute '$attr_name' contains strange symbols."
               . " No XPath like constructs (e.g. 'a/aux.rf[3]') are allowed."
               if $attr_name =~ /[^-\w\/.]/;
-    
+
     my $val = $self;
     my @steps = split /\//, $attr_name;
     while (1) {
@@ -900,7 +900,7 @@ Names of variables in the examples suppose a language with left-to-right script.
 
 =item *
 
-C<first_only> and C<last_only> switches makes the method return just one item - 
+C<first_only> and C<last_only> switches makes the method return just one item -
 a scalar, even if combined with the C<add_self> switch.
 
 =item *
@@ -962,9 +962,9 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =item $node->generate_new_id();
 
-Generate new (= so far unindexed) identifier (to be used when creating new 
-nodes). The new identifier is derived from the identifier of the root 
-(C<< $node->root >>), by adding suffix C<x1> (or C<x2>, if C<...x1> has already 
+Generate new (= so far unindexed) identifier (to be used when creating new
+nodes). The new identifier is derived from the identifier of the root
+(C<< $node->root >>), by adding suffix C<x1> (or C<x2>, if C<...x1> has already
 been indexed, etc.) to the root's C<id>.
 
 
@@ -974,7 +974,7 @@ Return the depth of the node. The root has depth = 0, its children have depth = 
 
 =item my $address = $node->get_address();
 
-Return the node address, i.e. file name and node's position within the file, 
+Return the node address, i.e. file name and node's position within the file,
 similarly to TrEd's C<FPosition()> (but the value is only returned, not  printed).
 
 =back

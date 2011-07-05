@@ -31,6 +31,33 @@ sub is_coap_root {
     return defined $self->afun && $self->afun =~ /^(Coord|Apos)$/;
 }
 
+#------------------------------------------------------------------------------
+# Recursively copy children from myself to another node.
+# This function is specific to the A layer because it contains the list of
+# attributes. If we could figure out the list automatically, the function would
+# become general enough to reside directly in Node.pm.
+#------------------------------------------------------------------------------
+sub copy_atree
+{
+    my $self = shift;
+    my $target = shift;
+    my @children0 = $self->children();
+    foreach my $child0 (@children0)
+    {
+        # Create a copy of the child node.
+        my $child1 = $target->create_child();
+        # We should copy all attributes that the node has but it is not easy to figure out which these are.
+        # As a workaround, we list the attributes here directly.
+        foreach my $attribute ('form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
+        {
+            my $value = $child0->get_attr($attribute);
+            $child1->set_attr($attribute, $value);
+        }
+        # Call recursively on the subtrees of the children.
+        $child0->copy_atree($child1);
+    }
+}
+
 # -- linking to p-layer --
 
 sub get_terminal_pnode {
@@ -204,6 +231,13 @@ Root and non-root nodes have different PML type in the pml schema
 
 Is this node a root (or head) of a coordination/apposition construction?
 On a-layer this is decided based on C<afun =~ /^(Coord|Apos)$/>.
+
+=item copy_atree()
+
+Recursively copy children from myself to another node.
+This method is specific to the A layer because it contains the list of
+attributes. If we could figure out the list automatically, the method would
+become general enough to reside directly in Node.pm.
 
 =item get_n_node()
 
