@@ -4,38 +4,17 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-use tagset::ar::conll2007;
-use tagset::cs::pdt;
-
 
 
 #------------------------------------------------------------------------------
-# Reads the Czech tree, converts morphosyntactic tags to the PDT tagset,
+# Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $a_root  = $zone->get_atree();
-    # Loop over tree nodes.
-    foreach my $node ($a_root->get_descendants())
-    {
-        # Current tag is probably just a copy of conll_pos.
-        # We are about to replace it by a 15-character string fitting the PDT tagset.
-        my $conll_cpos = $node->conll_cpos;
-        my $conll_pos = $node->conll_pos;
-        my $conll_feat = $node->conll_feat;
-        my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
-        my $f = tagset::ar::conll2007::decode($conll_tag);
-        my $pdt_tag = tagset::cs::pdt::encode($f, 1);
-        $node->set_iset($f);
-        $node->set_tag($pdt_tag);
-    }
-    # Copy the original dependency structure before adjusting it.
-    $self->backup_zone($zone);
-    # Adjust the tree structure.
-    $self->deprel_to_afun($a_root);
+    my $a_root = $self->SUPER::process_zone($zone, 'conll2007');
 }
 
 
