@@ -131,6 +131,26 @@ sub deprel_to_afun
 
 
 #------------------------------------------------------------------------------
+# Examines the last node of the sentence. If it is a punctuation, makes sure
+# that it is attached to the artificial root node.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_root
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $fnode = $nodes[$#nodes];
+    my $final_pos = $fnode->get_iset('pos');
+    if($final_pos eq 'punc')
+    {
+        $fnode->set_parent($root);
+        $fnode->set_afun('AuxK');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Swaps node with its parent. The original parent becomes a child of the node.
 # All other children of the original parent become children of the node. The
 # node also keeps its original children.

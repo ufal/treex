@@ -21,7 +21,6 @@ sub process_zone
     #$self->process_auxiliary_verbs($a_root);
     $self->restructure_coordination($a_root);
     #$self->mark_deficient_clausal_coordination($a_root);
-    return $a_root;
 }
 
 
@@ -51,26 +50,6 @@ sub deprel_to_afun
                 $node->set_afun('ExD');
             }
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Examines the last node of the sentence. If it is a punctuation, makes sure
-# that it is attached to the artificial root node.
-#------------------------------------------------------------------------------
-sub attach_final_punctuation_to_root
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    my $fnode = $nodes[$#nodes];
-    my $final_pos = $fnode->get_iset('pos');
-    if($final_pos eq 'punc' && $fnode->parent()!=$root)
-    {
-        $fnode->set_parent($root);
-        $fnode->set_afun('AuxK');
     }
 }
 
