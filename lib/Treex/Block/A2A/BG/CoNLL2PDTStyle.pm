@@ -21,6 +21,7 @@ sub process_zone
     $self->process_auxiliary_verbs($a_root);
     $self->restructure_coordination($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
+    $self->check_afuns($a_root);
 }
 
 
@@ -170,6 +171,16 @@ sub deprel_to_afun
                 $node->set_afun('AuxG');
             }
         }
+        # Assign pseudo-afuns to coordination members so that all nodes are guaranteed to have an afun.
+        # These will hopefully be corrected later during coordination restructuring.
+        elsif($deprel eq 'conjarg')
+        {
+            $node->set_afun('_Co');
+        }
+        elsif($deprel eq 'conj')
+        {
+            $node->set_afun('AuxY');
+        }
     }
     # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
     # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
@@ -179,10 +190,30 @@ sub deprel_to_afun
         if($deprel =~ m/^x?prepcomp$/)
         {
             my $preposition = $node->parent();
-            # We assume that every preposition has exactly one prepcomp child.
-            # Otherwise, the first prepcomp child would steal the afun and the second child would only get the newly assigned 'AuxP'.
-            $node->set_afun($preposition->afun());
+            # Do not swap afuns if the preposition is a coordination member.
+            # We do not want the prepcomp to get the '_Co' pseudo-afun because among the children of the preposition,
+            # we want to be able to distinguish (by afuns!) the argument of the preposition from another coordination member attached to the PP.
+            if($preposition->afun() eq '_Co')
+            {
+                # Another temporary pseudo-afun that does not exist in PDT.
+                $node->set_afun('PrepArg');
+            }
+            else
+            {
+                # We assume that every preposition has exactly one prepcomp child.
+                # Otherwise, the first prepcomp child would steal the afun and the second child would only get the newly assigned 'AuxP'.
+                $node->set_afun($preposition->afun());
+            }
             $preposition->set_afun('AuxP');
+        }
+    }
+    # Make sure that all nodes now have their afuns.
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if(!$afun)
+        {
+            log_warn("Missing afun for node ".$node->form()."/".$node->tag()."/".$node->conll_deprel());
         }
     }
 }
@@ -190,21 +221,31 @@ sub deprel_to_afun
 
 
 #------------------------------------------------------------------------------
-# Returns the noun phrase attached directly to the preposition in a
-# prepositional phrase.
+# After all transformations all nodes must have valid afuns (not our pseudo-
+# afuns). Report cases breaching this rule so that we can easily find them in
+# Ttred.
 #------------------------------------------------------------------------------
-sub get_prepcomp
+sub check_afuns
 {
     my $self = shift;
-    my $prepnode = shift;
-    # We cannot reliably assume that a preposition has only one child.
-    # There may be rhematizers modifying the whole prepositional phrase.
-    my @prepchildren = grep {$_->conll_deprel() eq 'prepcomp'} ($prepnode->children());
-    if(@prepchildren)
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
     {
-        return $prepchildren[0];
+        my $afun = $node->afun();
+        if($afun =~ m/^(PrepArg|_Co)$/)
+        {
+            # get_position() returns numbers from 0 but Tred numbers sentences from 1.
+            my $i = $root->get_bundle()->get_position()+1;
+            log_info("\#$i ".$root->get_zone()->sentence());
+            my $ord = $node->ord();
+            my $form = $node->form();
+            my $tag = $node->tag();
+            my $deprel = $node->conll_deprel();
+            # This cannot be fatal if we want the trees to be saved and examined in Ttred.
+            log_warn("Node $ord:$form/$tag/$deprel still has the pseudo-afun $afun.");
+        }
     }
-    return undef;
 }
 
 
@@ -330,109 +371,19 @@ sub process_auxiliary_verbs
 
 
 #------------------------------------------------------------------------------
-# Restructures coordinations from the Mel'čukian to the Prague style.
-#------------------------------------------------------------------------------
-sub restructure_coordination
-{
-    my $self = shift;
-    my $root = shift;
-    my @coords;
-    # Collect information about all coordination structures in the tree.
-    $self->detect_coordination($root, \@coords);
-    # Loop over coordinations and restructure them.
-    # Hopefully the order in which the coordinations are processed is not significant.
-    foreach my $c (@coords)
-    {
-        # The first member was the root so far. Remember its parent.
-        # Remember also the afun (we assume that it has already been set according to deprel).
-        my $firstmember = $c->{members}[0];
-        my $parent = $firstmember->parent();
-        my $afun = $firstmember->afun();
-        # Get rid of the bloody warnings.
-        unless(defined($afun))
-        {
-            $afun = '';
-        }
-        my $ppafun;
-        # If the first member is a preposition then the real afun is one level down.
-        if($afun eq 'AuxP')
-        {
-            my $prepcomp = $self->get_prepcomp($firstmember);
-            if(defined($prepcomp))
-            {
-                $ppafun = $prepcomp->afun();
-            }
-        }
-        # Select the last delimiter as the new root.
-        if(!@{$c->{delimiters}})
-        {
-            # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
-            # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
-            my $debug = 0;
-            if($debug)
-            {
-                # get_position() returns numbers from 0 but Tred numbers sentences from 1.
-                my $i = $root->get_bundle()->get_position()+1;
-                log_info("\#$i ".$root->get_zone()->sentence());
-                log_info("Coordination members:    ".join(' ', map {$_->form()} (@{$c->{members}})));
-                log_info("Coordination delimiters: ".join(' ', map {$_->form()} (@{$c->{delimiters}})));
-                log_info("Coordination modifiers:  ".join(' ', map {$_->form()} (@{$c->{shared_modifiers}})));
-                log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
-            }
-            else
-            {
-                return;
-            }
-        }
-        my $croot = pop(@{$c->{delimiters}});
-        # Attach the new root to the parent of the coordination.
-        $croot->set_parent($parent);
-        $croot->set_afun('Coord');
-        # Attach all coordination members to the new root.
-        foreach my $member (@{$c->{members}})
-        {
-            $member->set_parent($croot);
-            $member->set_is_member(1);
-            my $prepcomp;
-            if(defined($ppafun) && defined($prepcomp = $self->get_prepcomp($member)))
-            {
-                $member->set_afun('AuxP');
-                $prepcomp->set_afun($ppafun);
-            }
-            else
-            {
-                $member->set_afun($afun);
-            }
-        }
-        # Attach all remaining delimiters to the new root.
-        foreach my $delimiter (@{$c->{delimiters}})
-        {
-            $delimiter->set_parent($croot);
-            if($delimiter->conll_deprel() eq 'conj')
-            {
-                $delimiter->set_afun('AuxY');
-            }
-            elsif($delimiter->form() eq ',')
-            {
-                $delimiter->set_afun('AuxX');
-            }
-            else
-            {
-                $delimiter->set_afun('AuxG');
-            }
-        }
-        # Attach all shared modifiers to the new root.
-        foreach my $modifier (@{$c->{shared_modifiers}})
-        {
-            $modifier->set_parent($croot);
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
 # Detects coordination in Bulgarian trees.
+# - The first member is the root.
+# - The first conjunction is attached to the root and s-tagged 'conj'.
+# - The second member is attached to the root and s-tagged 'conjarg'.
+# - More than two members: all members, commas and conjunctions are attached to
+#   the root. Punctuation is s-tagged 'punct'. Occasionally, a different
+#   approach is used: the members are chained, the second member is s-tagged
+#   conjarg but its children also contain a conjarg (the third member) and
+#   punctuation/conjunctions.
+# - Shared modifiers are attached to the first member. Private modifiers are
+#   attached to the member they modify.
+# - Deficient coordination: sentence-initial conjunction is the root of the
+#   sentence, tagged ROOT. The main verb is attached to it and tagged 'conj'.
 #------------------------------------------------------------------------------
 sub detect_coordination
 {
@@ -443,28 +394,93 @@ sub detect_coordination
     # If a conjarg is found, find all nodes involved in the coordination.
     # Make sure that any conjargs further to the right are not later recognized as different coordination.
     # However, search their descendants for nested coordinations.
-    my @children = $root->children();
-    my @conjargs = grep {$_->conll_deprel() eq 'conjarg'} (@children);
-    my @delimiters;
-    my @sharedmod;
-    if(@conjargs)
+    my @members; # coordinated nodes
+    my @delimiters; # separators between members: punctuation and conjunctions
+    my @modifiers; # other children of the members, including shared modifiers of the whole coordination
+    $self->collect_coordination_members($root, \@members, \@delimiters, \@modifiers);
+    if(@members)
     {
-        # If there is a coordination, the current root is its first member.
-        unshift(@conjargs, $root);
-        # Punctuation and conjunction children are supporting the coordination.
-        @delimiters = grep {$_->conll_deprel() =~ m/^(conj|punct)$/} (@children);
         # Any left modifiers of the first member will be considered shared modifiers of the coordination.
         # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-        # Note that the Mel'čukian structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
+        # Note that the Bulgarian structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
         my $ord0 = $root->ord();
-        my $ord1 = $conjargs[1]->ord();
-        @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && !$_->match_iset('pos' => 'part', 'negativeness' => 'neg') && $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
-        push(@{$coords}, {'members' => \@conjargs, 'delimiters' => \@delimiters, 'shared_modifiers' => \@sharedmod});
+        my $ord1 = $members[1]->ord();
+        my @sharedmod = grep {($_->ord() < $ord0 || $_->ord() > $ord1) && !$_->match_iset('pos' => 'part', 'negativeness' => 'neg')} (@modifiers);
+        # If the first member is a preposition then the real afun is one level down.
+        my $afun = $root->afun();
+        if($afun eq 'AuxP')
+        {
+            my $prepcomp = $self->get_preposition_argument($root);
+            if(defined($prepcomp))
+            {
+                $afun = $prepcomp->afun();
+            }
+        }
+        push(@{$coords},
+        {
+            'members' => \@members,
+            'delimiters' => \@delimiters,
+            'shared_modifiers' => \@sharedmod,
+            'parent' => $root->parent(),
+            'afun' => $afun
+        });
+        # Call recursively on all modifier subtrees (but not on members or delimiters).
+        foreach my $modifier (@modifiers)
+        {
+            $self->detect_coordination($modifier, $coords);
+        }
     }
-    # Call this function recursively on every child.
-    foreach my $child (@children)
+    # Call recursively on all children if no coordination detected now.
+    else
     {
-        $self->detect_coordination($child, $coords);
+        foreach my $child ($root->children())
+        {
+            $self->detect_coordination($child, $coords);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects members and delimiters of coordination. The BulTreeBank uses two
+# approaches to coordination and one of them requires that this method is
+# recursive.
+#------------------------------------------------------------------------------
+sub collect_coordination_members
+{
+    my $self = shift;
+    my $croot = shift; # the first node and root of the coordination
+    my $members = shift; # reference to array where the members are collected
+    my $delimiters = shift; # reference to array where the delimiters are collected
+    my $modifiers = shift; # reference to array where the modifiers are collected
+    my @children = $croot->children();
+    my @members0 = grep {$_->conll_deprel() eq 'conjarg'} (@children);
+    if(@members0)
+    {
+        # If $croot is the real root of the whole coordination we must include it in the members, too.
+        # However, if we have been called recursively on existing members, these are already present in the list.
+        if(!@{$members})
+        {
+            push(@{$members}, $croot);
+        }
+        my @delimiters0 = grep {$_->conll_deprel() =~ m/^(conj|punct)$/} (@children);
+        my @modifiers0 = grep {$_->conll_deprel() !~ m/^(conjarg|conj|punct)$/} (@children);
+        # Add the found nodes to the caller's storage place.
+        push(@{$members}, @members0);
+        push(@{$delimiters}, @delimiters0);
+        push(@{$modifiers}, @modifiers0);
+        # If any of the members have their own conjarg children, these are also members of the same coordination.
+        foreach my $member (@members0)
+        {
+            $self->collect_coordination_members($member, $members, $delimiters, $modifiers);
+        }
+    }
+    # If some members have been found, this node is a coord member.
+    # If the node itself does not have any further member children, all its children are modifers of a coord member.
+    elsif(@{$members})
+    {
+        push(@{$modifiers}, @children);
     }
 }
 

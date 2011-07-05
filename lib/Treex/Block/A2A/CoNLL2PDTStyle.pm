@@ -151,6 +151,163 @@ sub attach_final_punctuation_to_root
 
 
 #------------------------------------------------------------------------------
+# Restructures coordinations to the Prague style.
+# Calls a treebank-specific method detect_coordination() that fills a list of
+# arrays, each containing a hash with the following keys:
+# - members: list of nodes that are members of coordination
+# - delimiters: list of nodes with commas or conjunctions between the members
+# - shared_modifiers: list of nodes that depend on the whole coordination
+# - parent: the node the coordination modifies
+# - afun: the analytical function of the whole coordination wrt. its parent
+#------------------------------------------------------------------------------
+sub restructure_coordination
+{
+    my $self = shift;
+    my $root = shift;
+    my @coords;
+    # Collect information about all coordination structures in the tree.
+    $self->detect_coordination($root, \@coords);
+    # Loop over coordinations and restructure them.
+    # Hopefully the order in which the coordinations are processed is not significant.
+    foreach my $c (@coords)
+    {
+        ###!!! DEBUG
+        #my @cnodes = sort {$a->ord() <=> $b->ord()} (@{$c->{members}}, @{$c->{delimiters}});
+        #log_info(join(' ', map {$_->ord().':'.$_->form()} (@cnodes)));
+        ###!!! END OF DEBUG
+        my $parent = $c->{parent};
+        my $afun = $c->{afun} or '';
+        # Select the last delimiter as the new root.
+        if(!@{$c->{delimiters}})
+        {
+            # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
+            # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
+            my $debug = 0;
+            if($debug)
+            {
+                $self->log_sentence($root);
+                log_info("Coordination members:    ".join(' ', map {$_->form()} (@{$c->{members}})));
+                log_info("Coordination delimiters: ".join(' ', map {$_->form()} (@{$c->{delimiters}})));
+                log_info("Coordination modifiers:  ".join(' ', map {$_->form()} (@{$c->{shared_modifiers}})));
+                log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
+            }
+            else
+            {
+                return;
+            }
+        }
+        my $croot = pop(@{$c->{delimiters}});
+        # Attach the new root to the parent of the coordination.
+        $croot->set_parent($parent);
+        $croot->set_afun('Coord');
+        # Attach all coordination members to the new root.
+        foreach my $member (@{$c->{members}})
+        {
+            $member->set_parent($croot);
+            $member->set_is_member(1);
+            my $preparg;
+            if($member->get_iset('pos') eq 'prep' && defined($preparg = $self->get_preposition_argument($member)))
+            {
+                $member->set_afun('AuxP');
+                $preparg->set_afun($afun);
+            }
+            else
+            {
+                $member->set_afun($afun);
+            }
+        }
+        # Attach all remaining delimiters to the new root.
+        foreach my $delimiter (@{$c->{delimiters}})
+        {
+            $delimiter->set_parent($croot);
+            if($delimiter->form() eq ',')
+            {
+                $delimiter->set_afun('AuxX');
+            }
+            elsif($delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/)
+            {
+                $delimiter->set_afun('AuxY');
+            }
+            else
+            {
+                $delimiter->set_afun('AuxG');
+            }
+        }
+        # Attach all shared modifiers to the new root.
+        foreach my $modifier (@{$c->{shared_modifiers}})
+        {
+            $modifier->set_parent($croot);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the noun phrase attached directly to the preposition in a
+# prepositional phrase. It is difficult to detect without understanding the
+# treebank-specific dependency relation tags because the preposition may have
+# more than one child (coordination members if the preposition governed
+# a coordination; modifiers (intensifiers) of the whole PP if the guidelines
+# rule to attach them to the preposition) and the main child need not be
+# necessarily a noun (it could be an adjective, a numeral etc.)
+#------------------------------------------------------------------------------
+sub get_preposition_argument
+{
+    my $self = shift;
+    my $prepnode = shift;
+    # The assumption is that the preposition governs the noun phrase and not vice versa.
+    # If not, run the corresponding transformation prior to calling this method.
+    # We cannot reliably assume that a preposition has only one child.
+    # There may be rhematizers modifying the whole prepositional phrase.
+    # We assume that the real argument of the preposition can only have one of selected parts of speech and afuns.
+    # (Note that PrepArg is a pseudo-afun that is not defined in PDT but subclasses can use it to explicitly mark preposition arguments
+    # whenever no other suitable afun is readily available.)
+    my @prepchildren = grep {$_->afun() eq 'PrepArg'} ($prepnode->children());
+    if(@prepchildren)
+    {
+        if(scalar(@prepchildren)>1)
+        {
+            $self->log_sentence($prepnode);
+            log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+            log_warn("More than one preposition argument.");
+        }
+        return $prepchildren[0];
+    }
+    else
+    {
+        @prepchildren = grep {$_->get_iset('pos') =~ m/^(noun|adj|num)$/} ($prepnode->children());
+        if(@prepchildren)
+        {
+            if(scalar(@prepchildren)>1)
+            {
+                $self->log_sentence($prepnode);
+                log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+                log_warn("More than one preposition argument.");
+            }
+            return $prepchildren[0];
+        }
+        else
+        {
+            @prepchildren = grep {$_->afun() =~ m/^(Sb|Obj|Pnom|Adv|Atv|Atr)$/} ($prepnode->children());
+            if(@prepchildren)
+            {
+                if(scalar(@prepchildren)>1)
+                {
+                    $self->log_sentence($prepnode);
+                    log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+                    log_warn("More than one preposition argument.");
+                }
+                return $prepchildren[0];
+            }
+        }
+    }
+    return undef;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Swaps node with its parent. The original parent becomes a child of the node.
 # All other children of the original parent become children of the node. The
 # node also keeps its original children.
@@ -181,6 +338,23 @@ sub lift_node
     $parent->set_parent($node);
     $parent->set_afun($afun);
     $parent->set_conll_deprel('');
+}
+
+
+
+#------------------------------------------------------------------------------
+# Writes the current sentence including the sentence number to the log. To be
+# used together with warnings so that the problematic sentence can be localized
+# and examined in Ttred.
+#------------------------------------------------------------------------------
+sub log_sentence
+{
+    my $self = shift;
+    my $node = shift;
+    my $root = $node->get_root();
+    # get_position() returns numbers from 0 but Tred numbers sentences from 1.
+    my $i = $root->get_bundle()->get_position()+1;
+    log_info("\#$i ".$root->get_zone()->sentence());
 }
 
 
