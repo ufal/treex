@@ -7,14 +7,20 @@ use Treex::PML::Factory;
 use Treex::PML::Instance;
 
 has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
-has '+_layers' => ( default => sub { $_[0]->t_layer ? [ 'a', 't' ] : [ 'a' ] } );
+has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.[at]\.gz$' );
+
+
+sub _build_layers {
+    my ($self) = @_;
+    return $self->t_layer ? [ 'a', 't' ] : [ 'a' ];     
+}
 
 override '_load_all_files' => sub {
 
     my ( $self, $base_filename ) = @_;
     my %pmldoc;
-
+    
     foreach my $layer ( @{ $self->_layers } ) {
         my $filename = "${base_filename}.${layer}.gz";
         log_info "Loading $filename";
