@@ -61,8 +61,8 @@ sub _build_filenames {
 
     my $filenames = [];
 
-    # add all files in the 'from' parameter to the list
-    if ( $self->from ) {
+    # add all files in the 'from' parameter to the list (avoid adding STDIN if filelist is set)
+    if ( $self->from and (!$self->filelist or $self->from ne '-') ) {
         push @{$filenames}, split( /[ ,]+/, $self->from );
     }
     # add all files from the filelist to the list
