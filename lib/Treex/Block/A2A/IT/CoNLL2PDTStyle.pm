@@ -14,6 +14,11 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+    
+    # attach terminal punctuations (., ?, ! etc) to root of the tree
+    attach_terminal_punc_to_root($a_root);
+    # swap the afun of preposition and its nominal head
+    afun_swap_prep_and_its_nhead($a_root);
 }
 
 
@@ -38,8 +43,10 @@ sub deprel_to_afun
 
         # trivial conversion to PDT style afun
         $afun = 'AuxV' if ($deprel eq 'aux');       # aux       -> AuxV
+        $afun = 'Atv' if ($deprel eq 'comp');       # comp      -> Atv
         $afun = 'AuxA' if ($deprel eq 'det');       # det       -> AuxA
         $afun = 'Atr' if ($deprel eq 'mod');        # mod       -> Atr
+        $afun = 'Atr' if ($deprel eq 'mod_rel');    # mod_rel   -> Atr
         $afun = 'AuxV' if ($deprel eq 'modal');     # modal     -> AuxV
         $afun = 'Obj' if ($deprel eq 'ogg_d');      # ogg_d     -> Obj
         $afun = 'Obj' if ($deprel eq 'ogg_i');      # ogg_i     -> Obj
@@ -52,7 +59,7 @@ sub deprel_to_afun
             if ($form eq ',') {
                 $afun = 'AuxX';
             }
-            if ($form =~ /^(\?|\:|\.|\!)$/) {
+            elsif ($form =~ /^(\?|\:|\.|\!)$/) {
                 $afun = 'AuxK';
             }
             else {
@@ -70,6 +77,34 @@ sub deprel_to_afun
             $node->set_is_member(1);
         }
         $node->set_afun($afun);
+    }
+}
+
+sub attach_terminal_punc_to_root {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $fnode = $nodes[$#nodes];
+    my $fnode_afun = $fnode->afun();
+    if ($fnode_afun eq 'AuxK') {
+        $fnode->set_parent($root);
+    }
+}
+
+# This function will swap the afun of preposition and its nominal head.
+# It was because, in the original treebank preposition was given
+# 'mod(Atr)' label and its nominal head was given 'prep(AuxP)'.
+sub afun_swap_prep_and_its_nhead {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    
+    foreach my $node (@nodes) {
+        if (($node->afun eq 'AuxP') && ($node->tag =~ /^S/))  {
+            my $parent = $node->get_parent();
+            if (($parent->afun eq 'Atr') && ($parent->tag eq 'E')) {
+                $parent->set_afun('AuxP');
+                $node->set_afun('Atr');
+            }
+        }
     }
 }
 
