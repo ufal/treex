@@ -175,36 +175,15 @@ sub deprel_to_afun
         # These will hopefully be corrected later during coordination restructuring.
         elsif($deprel eq 'conjarg')
         {
-            $node->set_afun('_Co');
+            $node->set_afun('CoordArg');
         }
         elsif($deprel eq 'conj')
         {
             $node->set_afun('AuxY');
         }
-    }
-    # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
-    # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->conll_deprel();
-        if($deprel =~ m/^x?prepcomp$/)
+        elsif($deprel =~ m/^x?prepcomp$/)
         {
-            my $preposition = $node->parent();
-            # Do not swap afuns if the preposition is a coordination member.
-            # We do not want the prepcomp to get the '_Co' pseudo-afun because among the children of the preposition,
-            # we want to be able to distinguish (by afuns!) the argument of the preposition from another coordination member attached to the PP.
-            if($preposition->afun() eq '_Co')
-            {
-                # Another temporary pseudo-afun that does not exist in PDT.
-                $node->set_afun('PrepArg');
-            }
-            else
-            {
-                # We assume that every preposition has exactly one prepcomp child.
-                # Otherwise, the first prepcomp child would steal the afun and the second child would only get the newly assigned 'AuxP'.
-                $node->set_afun($preposition->afun());
-            }
-            $preposition->set_afun('AuxP');
+            $node->set_afun('PrepArg');
         }
     }
     # Make sure that all nodes now have their afuns.
@@ -216,36 +195,9 @@ sub deprel_to_afun
             log_warn("Missing afun for node ".$node->form()."/".$node->tag()."/".$node->conll_deprel());
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# After all transformations all nodes must have valid afuns (not our pseudo-
-# afuns). Report cases breaching this rule so that we can easily find them in
-# Ttred.
-#------------------------------------------------------------------------------
-sub check_afuns
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if($afun =~ m/^(PrepArg|_Co)$/)
-        {
-            # get_position() returns numbers from 0 but Tred numbers sentences from 1.
-            my $i = $root->get_bundle()->get_position()+1;
-            log_info("\#$i ".$root->get_zone()->sentence());
-            my $ord = $node->ord();
-            my $form = $node->form();
-            my $tag = $node->tag();
-            my $deprel = $node->conll_deprel();
-            # This cannot be fatal if we want the trees to be saved and examined in Ttred.
-            log_warn("Node $ord:$form/$tag/$deprel still has the pseudo-afun $afun.");
-        }
-    }
+    # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
+    # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
+    $self->set_auxp_afuns($root);
 }
 
 
@@ -421,8 +373,7 @@ sub detect_coordination
             'members' => \@members,
             'delimiters' => \@delimiters,
             'shared_modifiers' => \@sharedmod,
-            'parent' => $root->parent(),
-            'afun' => $afun
+            'oldroot' => $root
         });
         # Call recursively on all modifier subtrees (but not on members or delimiters).
         foreach my $modifier (@modifiers)

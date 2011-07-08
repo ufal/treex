@@ -32,6 +32,130 @@ sub is_coap_root {
 }
 
 #------------------------------------------------------------------------------
+# Figures out the real function of the subtree. If its own afun is AuxP or
+# AuxC, finds the first descendant with a real afun and returns it. If this is
+# a coordination or apposition root, finds the first member and returns its
+# afun (but note that members of the same coordination can differ in afuns if
+# some of them have 'ExD').
+#------------------------------------------------------------------------------
+sub get_real_afun
+{
+    my $self = shift;
+    my $warnings = shift;
+    my $afun = $self->afun(); $afun = '' if(!defined($afun));
+    if($afun =~ m/^Aux[PC]$/)
+    {
+        my @children = $self->children();
+        my $n = scalar(@children);
+        if($n<1)
+        {
+            if($warnings)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun node does not have children (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            if($n>1 && $warnings)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun node has $n children so it is not clear which one bears the real afun (sentence $i_sentence, '$form')");
+            }
+            return $children[0]->get_real_afun();
+        }
+    }
+    elsif($self->is_coap_root())
+    {
+        my @members = $self->get_coap_members();
+        my $n = scalar(@members);
+        if($n<1)
+        {
+            if($warnings)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun does not have members (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            return $members[0]->get_real_afun();
+        }
+    }
+    return $afun;
+}
+
+#------------------------------------------------------------------------------
+# Sets the real function of the subtree. If its current afun is AuxP or AuxC,
+# finds the first descendant with a real afun replaces it. If this is
+# a coordination or apposition root, finds all the members and replaces their
+# afuns (but note that members of the same coordination can differ in afuns if
+# some of them have 'ExD'; this method can only set the same afun for all).
+#------------------------------------------------------------------------------
+sub set_real_afun
+{
+    my $self = shift;
+    my $new_afun = shift;
+    my $warnings = shift;
+    my $afun = $self->afun(); $afun = '' if(!defined($afun));
+    if($afun =~ m/^Aux[PC]$/)
+    {
+        my @children = $self->children();
+        my $n = scalar(@children);
+        if($n<1)
+        {
+            if($warnings)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun node does not have children (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            if($warnings && $n>1)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun node has $n children so it is not clear which one bears the real afun (sentence $i_sentence, '$form')");
+            }
+            foreach my $child (@children)
+            {
+                $child->set_real_afun($new_afun);
+            }
+            return;
+        }
+    }
+    elsif($self->is_coap_root())
+    {
+        my @members = $self->get_coap_members();
+        my $n = scalar(@members);
+        if($n<1)
+        {
+            if($warnings)
+            {
+                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
+                my $form = $self->form();
+                log_warn("$afun does not have members (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            foreach my $member (@members)
+            {
+                $member->set_real_afun($new_afun);
+            }
+            return;
+        }
+    }
+    $self->set_afun($new_afun);
+    return $afun;
+}
+
+#------------------------------------------------------------------------------
 # Recursively copy children from myself to another node.
 # This function is specific to the A layer because it contains the list of
 # attributes. If we could figure out the list automatically, the function would
@@ -232,6 +356,22 @@ Root and non-root nodes have different PML type in the pml schema
 
 Is this node a root (or head) of a coordination/apposition construction?
 On a-layer this is decided based on C<afun =~ /^(Coord|Apos)$/>.
+
+=item get_real_afun()
+
+Figures out the real function of the subtree. If its own afun is C<AuxP> or
+C<AuxC>, finds the first descendant with a real afun and returns it. If this is
+a coordination or apposition root, finds the first member and returns its
+afun (but note that members of the same coordination can differ in afuns if
+some of them have C<ExD>).
+
+=item set_real_afun($new_afun)
+
+Sets the real function of the subtree. If its current afun is C<AuxP> or C<AuxC>,
+finds the first descendant with a real afun replaces it. If this is
+a coordination or apposition root, finds all the members and replaces their
+afuns (but note that members of the same coordination can differ in afuns if
+some of them have C<ExD>; this method can only set the same afun for all).
 
 =item copy_atree()
 

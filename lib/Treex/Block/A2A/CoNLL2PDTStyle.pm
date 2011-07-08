@@ -38,6 +38,7 @@ sub process_zone
     #$self->process_auxiliary_verbs($a_root);
     #$self->restructure_coordination($a_root);
     #$self->mark_deficient_clausal_coordination($a_root);
+    #$self->check_afuns($a_root);
     # The return value can be used by the overriding methods of subclasses.
     return $a_root;
 }
@@ -115,6 +116,18 @@ sub convert_tag
 #
 # List and description of analytical functions in PDT 2.0:
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+#
+# We define the following pseudo-afuns that are not defined in PDT but are
+# useful for the different structures of some treebanks. Note that these
+# pseudo-afuns are expected in some methods.
+#   PrepArg ... argument of a preposition (typically a noun)
+#   SubArg .... argument of a subordinator (typically a verb)
+#   NumArg .... argument of a number (counted noun)
+#   DetArg .... argument of a determiner (typically a noun)
+#   PossArg ... argument of a possessive (possessed noun)
+#   AdjArg .... argument of an adjective (modified noun)
+#   CoordArg .. coordination member (probably not
+#               the first one, in treebanks with different coordinations)
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -131,114 +144,107 @@ sub deprel_to_afun
 
 
 #------------------------------------------------------------------------------
-# Examines the last node of the sentence. If it is a punctuation, makes sure
-# that it is attached to the artificial root node.
+# After all transformations all nodes must have valid afuns (not our pseudo-
+# afuns). Report cases breaching this rule so that we can easily find them in
+# Ttred.
 #------------------------------------------------------------------------------
-sub attach_final_punctuation_to_root
+sub check_afuns
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
-    my $fnode = $nodes[$#nodes];
-    my $final_pos = $fnode->get_iset('pos');
-    if($final_pos eq 'punc')
+    foreach my $node (@nodes)
     {
-        $fnode->set_parent($root);
-        $fnode->set_afun('AuxK');
+        my $afun = $node->afun();
+        if($afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|ExD|Coord|Apos|AuxP|AuxC|AuxV|AuxT|AuxY|AuxX|AuxZ|AuxG|AuxK)$/)
+        {
+            $self->log_sentence($root);
+            my $ord = $node->ord();
+            my $form = $node->form();
+            my $tag = $node->tag();
+            my $deprel = $node->conll_deprel();
+            # This cannot be fatal if we want the trees to be saved and examined in Ttred.
+            if($afun)
+            {
+                log_warn("Node $ord:$form/$tag/$deprel still has the pseudo-afun $afun.");
+                # Erase the pseudo-afun to avoid further complaints of Treex and Tred.
+                log_info("Removing the pseudo-afun...");
+                $node->set_afun('');
+            }
+            else
+            {
+                log_warn("Node $ord:$form/$tag/$deprel still has no afun.");
+            }
+        }
     }
 }
 
 
 
 #------------------------------------------------------------------------------
-# Restructures coordinations to the Prague style.
-# Calls a treebank-specific method detect_coordination() that fills a list of
-# arrays, each containing a hash with the following keys:
-# - members: list of nodes that are members of coordination
-# - delimiters: list of nodes with commas or conjunctions between the members
-# - shared_modifiers: list of nodes that depend on the whole coordination
-# - parent: the node the coordination modifies
-# - afun: the analytical function of the whole coordination wrt. its parent
+# Shifts afun from preposition to its argument and gives the preposition new
+# afun 'AuxP'. Useful for treebanks where prepositions bear the deprel of the
+# whole prepositional phrase. The subclass should not call this method before
+# it assigns afuns or pseudo-afuns to all nodes. Arguments of prepositions must
+# have the pseudo-afun 'PrepArg'.
+#
+# Call from the end of deprel_to_afun() like this:
+# $self->process_prep_sub_arg($root);
+#
+# Tells the parent node whether the child node wants to take the parent's afun
+# and return 'AuxP' or 'AuxC' instead. Called recursively. In some treebanks
+# there may be chains of both AuxP and AuxC such as in this Danish example:
+# parate/AA/pred til/RR/pobj at/TT/nobj gå/Vf/vobj => parate/AA/Pnom til/RR/AuxP at/TT/AuxC gå/Vf/Atr
 #------------------------------------------------------------------------------
-sub restructure_coordination
+sub process_prep_sub_arg
 {
     my $self = shift;
-    my $root = shift;
-    my @coords;
-    # Collect information about all coordination structures in the tree.
-    $self->detect_coordination($root, \@coords);
-    # Loop over coordinations and restructure them.
-    # Hopefully the order in which the coordinations are processed is not significant.
-    foreach my $c (@coords)
+    my $node = shift;
+    my $parent_current_afun = shift;
+    my $parent_new_afun = $parent_current_afun;
+    my $current_afun = $node->afun();
+    # If I am currently a prep/sub argument, let's steal the parent's afun.
+    if($current_afun eq 'PrepArg')
     {
-        ###!!! DEBUG
-        #my @cnodes = sort {$a->ord() <=> $b->ord()} (@{$c->{members}}, @{$c->{delimiters}});
-        #log_info(join(' ', map {$_->ord().':'.$_->form()} (@cnodes)));
-        ###!!! END OF DEBUG
-        my $parent = $c->{parent};
-        my $afun = $c->{afun} or '';
-        # Select the last delimiter as the new root.
-        if(!@{$c->{delimiters}})
-        {
-            # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
-            # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
-            my $debug = 0;
-            if($debug)
-            {
-                $self->log_sentence($root);
-                log_info("Coordination members:    ".join(' ', map {$_->form()} (@{$c->{members}})));
-                log_info("Coordination delimiters: ".join(' ', map {$_->form()} (@{$c->{delimiters}})));
-                log_info("Coordination modifiers:  ".join(' ', map {$_->form()} (@{$c->{shared_modifiers}})));
-                log_fatal("Coordination has no delimiters. What node shall I make the new coordination root?");
-            }
-            else
-            {
-                return;
-            }
-        }
-        my $croot = pop(@{$c->{delimiters}});
-        # Attach the new root to the parent of the coordination.
-        $croot->set_parent($parent);
-        $croot->set_afun('Coord');
-        # Attach all coordination members to the new root.
-        foreach my $member (@{$c->{members}})
-        {
-            $member->set_parent($croot);
-            $member->set_is_member(1);
-            my $preparg;
-            if($member->get_iset('pos') eq 'prep' && defined($preparg = $self->get_preposition_argument($member)))
-            {
-                $member->set_afun('AuxP');
-                $preparg->set_afun($afun);
-            }
-            else
-            {
-                $member->set_afun($afun);
-            }
-        }
-        # Attach all remaining delimiters to the new root.
-        foreach my $delimiter (@{$c->{delimiters}})
-        {
-            $delimiter->set_parent($croot);
-            if($delimiter->form() eq ',')
-            {
-                $delimiter->set_afun('AuxX');
-            }
-            elsif($delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/)
-            {
-                $delimiter->set_afun('AuxY');
-            }
-            else
-            {
-                $delimiter->set_afun('AuxG');
-            }
-        }
-        # Attach all shared modifiers to the new root.
-        foreach my $modifier (@{$c->{shared_modifiers}})
-        {
-            $modifier->set_parent($croot);
-        }
+        $current_afun = $parent_current_afun;
+        $parent_new_afun = 'AuxP';
     }
+    elsif($current_afun eq 'SubArg')
+    {
+        $current_afun = $parent_current_afun;
+        $parent_new_afun = 'AuxC';
+    }
+    # Now let's see whether my children want my afun.
+    my $new_afun = $current_afun;
+    my @children = $node->children();
+    foreach my $child (@children)
+    {
+        # Ask a child if it wants my afun and what afun it thinks I should get.
+        # A preposition can have more than one child and some of the children may not be PrepArgs.
+        # So only set $new_afun if it really differs from $current_afun (otherwise the first child could propose a change and the second could revert it).
+        ###!!! We should check whether several children claim to be prep/sub arguments. Normally it should not happen.
+        my $suggested_afun = $self->process_prep_sub_arg($child, $current_afun);
+        $new_afun = $suggested_afun unless($suggested_afun eq $current_afun);
+    }
+    ###!!! DEBUG
+    if(0 && $node->get_bundle()->get_position()+1==64)
+    {
+        my $message;
+        if($new_afun ne $node->afun())
+        {
+            $message = sprintf("%d:%s changing afun from %s to $new_afun", $node->ord(), $node->form(), $node->afun());
+        }
+        else
+        {
+            $message = sprintf("%d:%s keeping afun $current_afun", $node->ord(), $node->form());
+        }
+        log_info($message);
+    }
+    ###!!! END OF DEBUG
+    # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
+    $node->set_afun($new_afun);
+    # Let the parent know what I selected for him.
+    return $parent_new_afun;
 }
 
 
@@ -303,6 +309,185 @@ sub get_preposition_argument
         }
     }
     return undef;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the clause attached directly to the subordinating conjunction. It is
+# difficult to detect without understanding the treebank-specific dependency
+# relation tags because the conjunction may have more than one child
+# (coordination members if the conjunction governed a coordination).
+#------------------------------------------------------------------------------
+sub get_subordinator_argument
+{
+    my $self = shift;
+    my $subnode = shift;
+    my @subchildren = grep {$_->afun() eq 'SubArg'} ($subnode->children());
+    if(@subchildren)
+    {
+        if(scalar(@subchildren)>1)
+        {
+            $self->log_sentence($subnode);
+            log_info("Subordinator ".$subnode->ord().":".$subnode->form());
+            log_warn("More than one subordinator argument.");
+        }
+        return $subchildren[0];
+    }
+    else
+    {
+        @subchildren = grep {$_->get_iset('pos') =~ m/^(verb)$/} ($subnode->children());
+        if(@subchildren)
+        {
+            if(scalar(@subchildren)>1)
+            {
+                $self->log_sentence($subnode);
+                log_info("Subordinator ".$subnode->ord().":".$subnode->form());
+                log_warn("More than one subordinator argument.");
+            }
+            return $subchildren[0];
+        }
+    }
+    return undef;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines the last node of the sentence. If it is a punctuation, makes sure
+# that it is attached to the artificial root node.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_root
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $fnode = $nodes[$#nodes];
+    # Exclude some symbols.
+    # For example, DDT contained a tree where the last token was '=', s-tagged as coordinator (with missing CoordArg).
+    # Attaching such thing to the root prior to restructuring coordinations would make the root a coordination member!
+    if($fnode->get_iset('pos') eq 'punc' && $fnode->form() !~ m/^(=)$/)
+    {
+        # If the last token is a quotation mark and there is another punctuation before it (typically [.?!])
+        # then the quotation mark is attached non-projectively to its predicate and the other punctuation is AuxK.
+        if($#nodes>1 && $nodes[$#nodes-1]->get_iset('pos') eq 'punc' && $fnode->form() eq '"')
+        {
+            $fnode = $nodes[$#nodes-1];
+        }
+        $fnode->set_parent($root);
+        $fnode->set_afun('AuxK');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Restructures coordinations to the Prague style.
+# Calls a treebank-specific method detect_coordination() that fills a list of
+# arrays, each containing a hash with the following keys:
+# - members: list of nodes that are members of coordination
+# - delimiters: list of nodes with commas or conjunctions between the members
+# - shared_modifiers: list of nodes that depend on the whole coordination
+# - parent: the node the coordination modifies
+# - afun: the analytical function of the whole coordination wrt. its parent
+#------------------------------------------------------------------------------
+sub restructure_coordination
+{
+    my $self = shift;
+    my $root = shift;
+    my @coords;
+    # Collect information about all coordination structures in the tree.
+    $self->detect_coordination($root, \@coords);
+    # Loop over coordinations and restructure them.
+    # Hopefully the order in which the coordinations are processed is not significant.
+    foreach my $c (@coords)
+    {
+        my $debug = 0;
+        if($debug>1)
+        {
+            $self->log_sentence($root);
+            log_info("Coordination members:    ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{members}})));
+            log_info("Coordination delimiters: ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{delimiters}})));
+            log_info("Coordination modifiers:  ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{shared_modifiers}})));
+            if(exists($c->{private_modifiers}))
+            {
+                log_info("Member modifiers:        ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{private_modifiers}})));
+            }
+            log_info("Old root:                ".$c->{oldroot}->ord().':'.$c->{oldroot}->form());
+        }
+        elsif($debug>0)
+        {
+            my @cnodes = sort {$a->ord() <=> $b->ord()} (@{$c->{members}}, @{$c->{delimiters}});
+            log_info(join(' ', map {$_->ord().':'.$_->form()} (@cnodes)));
+        }
+        # Get the parent and afun of the whole coordination, from the old root of the coordination.
+        # Note that these may have changed since the coordination was detected,
+        # as a result of processing other coordinations, if this is a nested coordination.
+        my $parent = $c->{oldroot}->parent();
+        if(!defined($parent))
+        {
+            $self->log_sentence($root);
+            log_fatal('Coordination has no parent.');
+        }
+        # Select the last delimiter as the new root.
+        if(!@{$c->{delimiters}})
+        {
+            # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
+            # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
+            if($debug>1)
+            {
+                log_fatal('Coordination has no delimiters. What node shall I make the new coordination root?');
+            }
+            else
+            {
+                return;
+            }
+        }
+        my $croot = pop(@{$c->{delimiters}});
+        # Attach the new root to the parent of the coordination.
+        $croot->set_parent($parent);
+        # Attach all coordination members to the new root.
+        foreach my $member (@{$c->{members}})
+        {
+            $member->set_parent($croot);
+            $member->set_is_member(1);
+        }
+        # Attach all remaining delimiters to the new root.
+        foreach my $delimiter (@{$c->{delimiters}})
+        {
+            $delimiter->set_parent($croot);
+            if($delimiter->form() eq ',')
+            {
+                $delimiter->set_afun('AuxX');
+            }
+            elsif($delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/)
+            {
+                $delimiter->set_afun('AuxY');
+            }
+            else
+            {
+                $delimiter->set_afun('AuxG');
+            }
+        }
+        # Now that members and delimiters are restructured, set also the afuns of the members.
+        # Do not ask the former root about its real afun earlier.
+        # If it is a preposition and the coordination members still sit among its children, the preposition may not know where to find its real afun.
+        my $afun = $c->{oldroot}->get_real_afun() or '';
+        $croot->set_afun('Coord');
+        foreach my $member (@{$c->{members}})
+        {
+            # Assign the afun of the whole coordination to the member.
+            # Prepositional members require special treatment: the afun goes to the argument of the preposition.
+            # Some members are in fact orphan dependents of an ellided member.
+            # Their current afun is ExD and they shall keep it, unlike the normal members.
+            $member->set_real_afun($afun) unless($member->afun() eq 'ExD');
+        }
+        # Attach all shared modifiers to the new root.
+        foreach my $modifier (@{$c->{shared_modifiers}})
+        {
+            $modifier->set_parent($croot);
+        }
+    }
 }
 
 
