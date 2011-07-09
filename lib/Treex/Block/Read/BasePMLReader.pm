@@ -1,4 +1,4 @@
-package Treex::Block::Read::BasePMLReader;
+PACkage Treex::Block::Read::BasePMLReader;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
@@ -123,9 +123,6 @@ sub _convert_atree {
             $treex_node->set_attr( 'p/terminal.rf', $value );
             $self->_copy_list_attr( $pml_node, $treex_node, 'p/nonterminals.rf', 'p/nonterminals.rf', 1 );
         }
-    }
-    elsif ( $pml_node->attr('ptree.rf') ) {
-        $self->_copy_attr( $pml_node, $treex_node, 'ptree.rf', 'ptree.rf' );
     }
 
     foreach my $pml_child ( $pml_node->children ) {
