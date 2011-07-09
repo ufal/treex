@@ -14,23 +14,6 @@ has _languages => ( traits => ['Array'], is => 'ro', isa => 'ArrayRef[Str]', req
 
 has '+_file_suffix' => ( default => '(en|cs)\.[atp]\.gz$' );
 
-# override the default a-tree conversion: add links to p-trees
-override '_convert_atree' => sub {
-
-    my ( $self, $pml_node, $treex_node ) = @_;
-
-    super;    # include the default behavior
-
-    if ( not $treex_node->is_root ) {
-        if ( $pml_node->attr('p') ) {
-            my $value = $pml_node->attr('p/terminal.rf');
-            $value =~ s/^.*#//;
-            $treex_node->set_attr( 'p/terminal.rf', $value );
-            $self->_copy_list_attr( $pml_node, $treex_node, 'p/nonterminals.rf', 'p/nonterminals.rf', 1 );
-        }
-    }
-};
-
 # convert p-trees
 sub _convert_ptree {
     my ( $self, $pml_node, $treex_node ) = @_;
