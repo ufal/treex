@@ -29,9 +29,6 @@ override '_convert_atree' => sub {
             $self->_copy_list_attr( $pml_node, $treex_node, 'p/nonterminals.rf', 'p/nonterminals.rf', 1 );
         }
     }
-    elsif ( $pml_node->attr('ptree.rf') ) {
-        $self->_copy_attr( $pml_node, $treex_node, 'ptree.rf', 'ptree.rf' );
-    }
 };
 
 # convert p-trees
