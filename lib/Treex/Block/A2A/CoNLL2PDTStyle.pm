@@ -99,7 +99,7 @@ sub convert_tag
     my $conll_cpos = $node->conll_cpos;
     my $conll_pos = $node->conll_pos;
     my $conll_feat = $node->conll_feat;
-    my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
+    my $conll_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : "$conll_cpos\t$conll_pos\t$conll_feat";
     my $f = tagset::common::decode($driver, $conll_tag);
     my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_iset($f);
