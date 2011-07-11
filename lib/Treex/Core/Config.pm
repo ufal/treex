@@ -32,14 +32,12 @@ sub default_resource_dir {
 sub resource_path {
     my $path_file = config_dir() . '/path';
     my @path;
-    {
-        local $/;
-        $/ = ':';
-        @path = read_file( $path_file, err_mode => 'silent' );
-    }
+    local $/;
+    $/ = ':';
+    @path = read_file( $path_file, err_mode => 'silent' );
     if ( not defined $path[0] ) {
         @path = default_resource_dir();
-        write_file( $path_file, { no_clobber => 1, err_mode => 'silent' }, @path )
+        write_file( $path_file, { no_clobber => 1, err_mode => 'silent' }, join $/,@path )
     }
     return @path;
 }
