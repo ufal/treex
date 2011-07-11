@@ -94,10 +94,12 @@ subtype 'ZoneCode'
 => message {'ZoneCode must be LangCode or LangCode_Selector, e.g. "en_src"'};
 
 # ISO 639-1 language code with some extensions from ISO 639-2
+# Added code for Modern Greek which comes under ISO 639-3
 use Locale::Language;
 my %EXTRA_LANG_CODES = (
     'bxr'     => "Buryat",
     'dsb'     => "Lower Sorbian",
+    'ell'     => "ISO 639-3 code for Modern Greek",
     'hsb'     => "Upper Sorbian",
     'hak'     => "Hakka",
     'kaa'     => "Karakalpak",
