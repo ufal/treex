@@ -188,8 +188,8 @@ sub copy_atree
 sub get_terminal_pnode {
     my ($self) = @_;
     my $document = $self->get_document();
-    if ( $self->get_attr('p/terminal.rf') ) {
-        return $document->get_node_by_id( $self->get_attr('p/terminal.rf') );
+    if ( $self->get_attr('p-terminal.rf') ) {
+        return $document->get_node_by_id( $self->get_attr('p-terminal.rf') );
     }
     else {
         log_fatal('SEnglishA node pointing to no SEnglishP node');
@@ -199,12 +199,15 @@ sub get_terminal_pnode {
 sub get_nonterminal_pnodes {
     my ($self) = @_;
     my $document = $self->get_document();
-    if ( $self->get_attr('p/nonterminals.rf') ) {
-        return grep {$_} map { $document->get_node_by_id($_) } @{ $self->get_attr('p/nonterminals.rf') };
+    my @nonterminals = ();
+    if ( $self->get_attr('p-terminal.rf') ) {
+        my $node = $document->get_node_by_id($self->get_attr('p-terminal.rf'));
+        while ($node->get_attr('is_head')) {
+            $node = $node->get_parent();
+            push @nonterminals, $node
+        }
     }
-    else {
-        return ();
-    }
+    return @nonterminals;
 }
 
 sub get_pnodes {

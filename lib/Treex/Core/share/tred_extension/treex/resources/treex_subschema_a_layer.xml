@@ -72,8 +72,8 @@
       <!-- surface coreference -->
       <member name="coref" type="a_coreference.type"/>
 
-      <!-- links to p-layer -->
-      <member name="p" type="a-p.type"/>
+      <!-- link to p-layer -->
+      <member name="p-terminal.rf"><cdata format="PMLREF"/></member>
 
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
@@ -109,20 +109,6 @@
        <member name="target-node.rf"> <cdata format="PMLREF"/> </member>
        <member name="type"> <cdata format="any"/> </member>
        <member name="src"> <cdata format="any"/> </member>
-    </structure>
-  </type>
-
-
-  <type name="a-p.type">
-    <structure>
-       <member name="terminal.rf">
-         <cdata format="PMLREF"/>
-       </member>
-       <member name="nonterminals.rf">
-          <list ordered="0">
-             <cdata format="PMLREF"/>
-          </list>
-       </member>
     </structure>
   </type>
 

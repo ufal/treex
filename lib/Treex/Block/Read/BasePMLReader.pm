@@ -117,11 +117,11 @@ sub _convert_atree {
         foreach my $attr_name ( 'is_member', 'is_parenthesis_root' ) {
             $self->_copy_attr( $pml_node, $treex_node, "$attr_name", $attr_name );
         }
-        if ( $pml_node->attr('p') ) {
-            my $value = $pml_node->attr('p/terminal.rf');
+
+        if ($pml_node->attr('p-terminal.rf')) {
+            my $value = $pml_node->attr('p-terminal.rf');
             $value =~ s/^.*#//;
-            $treex_node->set_attr( 'p/terminal.rf', $value );
-            $self->_copy_list_attr( $pml_node, $treex_node, 'p/nonterminals.rf', 'p/nonterminals.rf', 1 );
+            $treex_node->set_attr( 'p-terminal.rf', $value );
         }
     }
 
