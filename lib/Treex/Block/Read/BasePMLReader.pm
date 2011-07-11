@@ -45,10 +45,6 @@ sub _convert_ttree {
     my ( $self, $pml_node, $treex_node, $language ) = @_;
 
     if ( $treex_node->is_root ) {
-        my $value = $pml_node->attr('atree.rf');
-        $value =~ s/^.*#//;
-        $treex_node->set_attr( 'atree.rf', $value );
-
         foreach my $attr_name ( 'id', 'nodetype' ) {
             $self->_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
