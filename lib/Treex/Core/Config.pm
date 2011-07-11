@@ -4,6 +4,7 @@ use warnings;
 
 use File::HomeDir;
 use File::ShareDir;
+use File::Slurp;
 use Cwd qw(realpath);
 
 # this should be somehow systematized, since there will be probably many switches like this one
@@ -14,6 +15,34 @@ our %service;                   ## no critic (ProhibitPackageVars)
 # 1: Treex::Core::Common::pos_validated_list() called always
 # 2: MooseX::Params::Validate::pos_validated_list called always
 our $params_validate = 0;       ## no critic (ProhibitPackageVars)
+
+sub config_dir {
+    return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );
+}
+
+sub default_resource_dir {
+    my @path = ( File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } ) );
+    if ( defined $ENV{TMT_ROOT} ) {
+        push @path, realpath( $ENV{TMT_ROOT} . '/share' );
+    }
+    return @path if wantarray;
+    return join ':', @path;
+}
+
+sub resource_path {
+    my $path_file = config_dir() . '/path';
+    my @path;
+    {
+        local $/;
+        $/ = ':';
+        @path = read_file( $path_file, err_mode => 'silent' );
+    }
+    if ( not defined $path[0] ) {
+        @path = default_resource_dir();
+        write_file( $path_file, { no_clobber => 1, err_mode => 'silent' }, @path )
+    }
+    return @path;
+}
 
 sub devel_version {
     return -d lib_core_dir() . "/share/";
@@ -126,6 +155,8 @@ the directory in which the TrEd extension for Treex files is stored
 =head1 AUTHOR
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
