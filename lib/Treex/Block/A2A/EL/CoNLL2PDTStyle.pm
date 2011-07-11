@@ -14,24 +14,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone);
-    set_pos($a_root);
-}
-
-sub set_pos {
-    my $a_root = shift;
-    # Loop over tree nodes.
-    foreach my $node ($a_root->get_descendants())
-    {
-        my $conll_cpos = $node->conll_cpos;
-        my $conll_pos = $node->conll_pos;
-        my $conll_feat = $node->conll_feat;
-        my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
-
-        # fine grained positional tag
-        my $pdt_tag = $node->conll_pos;
-        #$node->set_iset($f);
-        $node->set_tag($pdt_tag);
-    }        
 }
 
 #------------------------------------------------------------------------------
