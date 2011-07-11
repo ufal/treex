@@ -37,6 +37,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form = $node->form();
         my $pos = $node->conll_pos();
+        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
 
         # default assignment
         my $afun = $deprel;
