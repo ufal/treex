@@ -15,6 +15,9 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
+    # Adjust the tree structure.
+    $self->attach_final_punctuation_to_root($a_root);
+    $self->restructure_coordination($a_root);
 }
 
 
@@ -273,6 +276,164 @@ sub deprel_to_afun
             # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
         }
         $node->set_afun($afun);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in German trees.
+# - The first member is the root.
+# - Any non-first member is attached to the previous member with afun CoordArg.
+# - Coordinating conjunction is attached to the previous member with afun Coord.
+# - Comma is attached to the previous member with afun AuxX.
+# - Shared modifiers are attached to the first member. Private modifiers are
+#   attached to the member they modify.
+# Note that under this approach:
+# - Shared modifiers cannot be distinguished from private modifiers of the
+#   first member.
+# - Nested coordinations ("apples, oranges and [blackberries or strawberries]")
+#   cannot be distinguished from one large coordination.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $root = shift;
+    my $coords = shift; # reference to array where detected coordinations are collected
+    # Look for coordination members.
+    my @members;
+    my @delimiters;
+    my @sharedmod;
+    my @privatemod;
+    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod);
+    if(@members)
+    {
+        push(@{$coords},
+        {
+            'members' => \@members,
+            'delimiters' => \@delimiters,
+            'shared_modifiers' => \@sharedmod,
+            'private_modifiers' => \@privatemod, # for debugging purposes only
+            'oldroot' => $root
+        });
+        # Call recursively on all modifier subtrees.
+        # Do not call it on all children because they include members and delimiters.
+        # Non-first members cannot head nested coordination under this approach.
+        # All CoordArg children they may have are considered members of the current coordination.
+        foreach my $node (@sharedmod, @privatemod)
+        {
+            $self->detect_coordination($node, $coords);
+        }
+    }
+    # Call recursively on all children if no coordination detected now.
+    else
+    {
+        foreach my $child ($root->children())
+        {
+            $self->detect_coordination($child, $coords);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects members, delimiters and modifiers of one coordination. Recursive.
+# Leaves the arrays empty if called on a node that is not a coordination
+# member.
+#------------------------------------------------------------------------------
+sub collect_coordination_members
+{
+    my $self = shift;
+    my $croot = shift; # the first node and root of the coordination
+    my $members = shift; # reference to array where the members are collected
+    my $delimiters = shift; # reference to array where the delimiters are collected
+    my $sharedmod = shift; # reference to array where the shared modifiers are collected
+    my $privatemod = shift; # reference to array where the private modifiers are collected
+    # Is this the top-level call in the recursion?
+    my $toplevel = scalar(@{$members})==0;
+    my @children = $croot->children();
+    my @members0;
+    my @delimiters0;
+    my @sharedmod0;
+    my @privatemod0;
+    @members0 = grep {$_->afun() eq 'CoordArg'} (@children);
+    if(@members0)
+    {
+        # If $croot is the real root of the whole coordination we must include it in the members, too.
+        # However, if we have been called recursively on existing members, these are already present in the list.
+        if($toplevel)
+        {
+            push(@{$members}, $croot);
+        }
+        push(@{$members}, @members0);
+        # All children with the 'Coord' afun are delimiters (coordinating conjunctions).
+        # Punctuation children are usually delimiters, too.
+        # They should appear between two members, which would normally mean between $croot and its (only) CoordArg.
+        # However, the method is recursive and "before $croot" could mean between $croot and the preceding member. Same for the other end.
+        # So we take all punctuation children and hope that other punctuation (such as delimiting modifier relative clauses) would be descendant but not child.
+        my @delimiters0 = grep {$_->afun() =~ m/^(Coord|AuxX|AuxG)$/} (@children);
+        push(@{$delimiters}, @delimiters0);
+        # Recursion: If any of the member children (i.e. any members except $croot)
+        # have their own CoordArg children, these are also members of the same coordination.
+        foreach my $member (@members0)
+        {
+            $self->collect_coordination_members($member, $members, $delimiters);
+        }
+        # If this is the top-level call in the recursion, we now have the complete list of coordination members
+        # and we can call the method that collects and sorts out coordination modifiers.
+        if($toplevel)
+        {
+            $self->collect_coordination_modifiers($members, $sharedmod, $privatemod);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a list of coordination members, finds their modifiers and sorts them out
+# as shared or private. Modifiers are children whose afuns do not suggest they
+# are members (CoordArg) or delimiters (Coord|AuxX|AuxG).
+#------------------------------------------------------------------------------
+sub collect_coordination_modifiers
+{
+    my $self = shift;
+    my $members = shift; # reference to input array
+    my $sharedmod = shift; # reference to output array
+    my $privatemod = shift; # reference to output array
+    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
+    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
+    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
+    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
+    # Modifiers of the other members are always private.
+    my $croot = $members->[0];
+    my $ord0 = $croot->ord();
+    my $ord1 = $#{$members}>=1 ? $members->[1]->ord() : -1;
+    foreach my $member (@{$members})
+    {
+        my @modifying_children = grep {$_->afun() !~ m/^(CoordArg|Coord|AuxX|AuxG)$/} ($member->children());
+        if($member==$croot)
+        {
+            foreach my $mchild (@modifying_children)
+            {
+                my $ord = $mchild->ord();
+                if($ord<$ord0 || $ord1>=0 && $ord>$ord1)
+                {
+                    push(@{$sharedmod}, $mchild);
+                }
+                else
+                {
+                    # This modifier of the first member occurs between the first and the second member.
+                    # Consider it private.
+                    push(@{$privatemod}, $mchild);
+                }
+            }
+        }
+        else
+        {
+            push(@{$privatemod}, @modifying_children);
+        }
     }
 }
 
