@@ -15,7 +15,6 @@ sub _build_to_language {
 
 sub BUILD {
     my ($self) = @_;
-    log_info( $self->language );
     if ( $self->language eq $self->to_language && $self->selector eq $self->to_selector ) {
         log_fatal("Can't create zone with the same 'language' and 'selector'.");
     }

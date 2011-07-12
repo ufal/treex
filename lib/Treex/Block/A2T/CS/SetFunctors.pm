@@ -64,7 +64,7 @@ override 'process_document' => sub {
     );
 
     # parse the output file and store the results
-    $self->_load_functors($out);
+    $self->_load_functors( $out, scalar( $document->get_bundles() ) );
 
     # process all t-trees and fill them with functors
     super;
@@ -74,8 +74,8 @@ override 'process_document' => sub {
 sub process_ttree {
 
     my ( $self, $root ) = @_;
-    my @functors = @{ shift @{ $self->_functors } };           # always take results for the first tree, FIFO
-    my @nodes = $root->get_descendants( { ordered => 1 } );    # same as for printing in Write::ConllLike
+    my @functors = @{ shift @{ $self->_functors } };                      # always take results for the first tree, FIFO
+    my @nodes = $root->get_descendants( { ordered => 1 } );               # same as for printing in Write::ConllLike
 
     if ( scalar(@nodes) != scalar(@functors) ) {
         log_fatal( "Expected " . scalar(@nodes) . " functors, got " . scalar(@functors) );
@@ -89,19 +89,22 @@ sub process_ttree {
 # Load the functors assigned by the ML process from the ARFF file
 sub _load_functors {
 
-    my ( $self, $arff_file ) = @_;
+    my ( $self, $arff_file, $max_sents ) = @_;
     my $loader = Treex::Tools::IO::Arff->new();
-    my $data = $loader->load_arff( $arff_file->filename );
+    my $data   = $loader->load_arff( $arff_file->filename );
 
     my $sentence;
     my $sent_id = 1;
 
     for my $rec ( @{ $data->{records} } ) {
 
-        if ( $rec->{'sent-id'} != $sent_id ) {    # move to next sentence
+        while ( $rec->{'sent-id'} != $sent_id and $sent_id <= $max_sents ) {    # move to next non-empty sentence
             push @{ $self->_functors }, $sentence;
-            $sentence = []; # TODO empty sentences
+            $sentence = [];
             $sent_id++;
+        }
+        if ( $sent_id > $max_sents ) {
+            log_fatal( 'Sentence IDs mismatch in the loaded ARFF file: ' . $arff_file->filename );
         }
         push @{$sentence}, $rec->{'deprel'};
     }

@@ -219,7 +219,7 @@ Readonly my $FUNCTORS_HIERARCHY_CHILD => {
     'RESL'   => 5,
     'RESTR'  => 5,
     'RHEM'   => 5,
-    'RSTR'   => 5,
+    'RSTR'   => 4, # less than adverbials (under #EmpNoun-s, their (adverbial) functors are promoted, RSTR gets deleted)
     'SUBS'   => 5,
     'TFHL'   => 5,
     'TFRWH'  => 5,
@@ -680,7 +680,9 @@ are hanged under the "most important" one and the previous case is applied.
 
 =item *
 
-The C<FUNCTOR_PRIORITY> and C<FUNCTOR_HIERARCHY> should require more testing.
+The C<FUNCTOR_PRIORITY>, C<FUNCTOR_HIERARCHY_PARENT> and C<FUNCTOR_HIERARCHY_CHILD> should require more testing. 
+
+It is e.g. plausible that a higher parent hierarchy for actant functors is more desirable.
 
 =item *
 
