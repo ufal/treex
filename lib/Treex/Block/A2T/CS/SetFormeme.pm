@@ -1,19 +1,16 @@
 package Treex::Block::A2T::CS::SetFormeme;
 use Moose;
 use Treex::Core::Common;
-require Treex::Tools::Lexicon::CS;
+use Treex::Block::A2T::CS::SetFormeme::NodeInfo;
 
 extends 'Treex::Core::Block';
 
 has 'use_version' => ( is => 'ro', isa => enum( [ 1, 2 ] ), default => 1 );
 
-# This serves for merging some of the rare prepositions under their more usual synonyms
-Readonly my $PREP_LEMMA_MAP => {
-    'jakožto' => 'jako',
-    'zdali'    => 'zda'
-};
+has 'force_grammar' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 sub process_tnode {
+
     my ( $self, $t_node ) = @_;
 
     # First, fill formeme of all t-layer nodes with a default value,
@@ -24,7 +21,16 @@ sub process_tnode {
     # fill in formemes
     if ( $t_node->nodetype eq 'complex' ) {
         if ( $self->use_version == 2 ) {
-            detect_formeme2($t_node);
+           
+            my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
+                       
+            my $parent = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( t => $t_parent );
+            my $node = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( t => $t_node );            
+            my $formeme = $self->detect_formeme2($node, $parent);
+            
+            if ($formeme){
+                $t_node->set_formeme($formeme);
+            }
         }
         else {
             detect_formeme($t_node);
@@ -35,138 +41,116 @@ sub process_tnode {
 
 sub detect_formeme2 {
 
-    my ($t_node) = @_;
-    my $sempos      = $t_node->gram_sempos || '';
-    my $lex_a_node  = $t_node->get_lex_anode();
-    my $tag         = $lex_a_node ? $lex_a_node->tag : '';
-    my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-
-    my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
-    my $parent_sempos = $t_parent ? $t_parent->gram_sempos : '';
-    $parent_sempos = '' if !$parent_sempos;
-    my $parent_lex_a_node = $t_parent->get_lex_anode();
-
+    my ( $self, $node, $parent ) = @_;
+    
     # start with the sempos
-    my $formeme = $sempos;
+    my $formeme = $node->sempos;
     $formeme =~ s/\..*//;
 
-    my ( $prep, $prep_case ) = _detect_prep( $t_node, $lex_a_node, \@aux_a_nodes );
-
-    if ( $tag eq '' ) {    # elided forms have a 'drop' formeme
-        $formeme = 'drop';
+    if ( !$node->a ) { # elided forms have a 'drop' formeme
+        $formeme = 'drop';        
     }
     elsif ( $formeme eq 'n' ) {
-
         # possesive adjectives (compound prepositions also possible: 'v můj prospěch' etc.)
-        if ( $tag =~ /^(AU|PS|P8)/ ) {
-            $formeme = 'adj:' . ( $prep ? "$prep+" : '' ) . 'poss';
+        if ( $node->tag =~ /^(AU|PS|P8)/ ) {
+            $formeme = 'adj:' . ( $node->prep ? $node->prep . '+' : '' ) . 'poss';
         }
-
-        # prepended nominal congruent attribute
-        elsif (
-            $lex_a_node
-            and $parent_lex_a_node
-            and $lex_a_node->parent->id eq $parent_lex_a_node->id
-            and $parent_sempos =~ /^n/ and $lex_a_node->ord < $parent_lex_a_node->ord
-            )
-        {
+        # nominal congruent attribute
+        elsif ( $self->_is_congruent_attrib( $node, $parent ) ) {
             $formeme = 'n:attr';
         }
-
-        # prepositional cases (numerals, too)
-        elsif ( $tag =~ /^[NAPC]...(\d)/ ) {
-            my $case = $1;
-            $formeme .= $prep ? ":$prep+$case" : ":$case";
+        # prepositional or loose cases (numerals, too)
+        elsif ( $node->case =~ /[1-7]/ ) {
+            $formeme .= ':' . ($node->prep ? $node->prep . '+' : '') . $node->case;
         }
-
         # non-declined nouns, numerals etc. (infer case from preposition, if available)
         else {
-            $prep_case = 'X' if !$prep_case;
-            $formeme .= $prep ? ":$prep+$prep_case" : ':X';
+            $formeme .= ($node->prep ? ':' . $node->prep . '+' . $node->prepcase : ':X');
         }
     }
     elsif ( $formeme eq 'adj' ) {
 
-        my $case = substr( $tag, 4, 1 );
-
         # prepositional phrases with adjectives -- always work the same as substantives
-        if ($prep) {
-            $case = $case =~ m/[0-9]/ ? $case : ($prep_case ? $prep_case : 'X');
-            $formeme = "n:$prep+$case";
+        if ($node->prep) {
+            $formeme = 'n:' . $node->prep . '+' . ( $node->case ? $node->case : $node->prepcase );
         }
-
         # adverbs derived from adjectives, weird form "rád"
-        elsif ( $tag =~ /^(D|Cv|Co)/ or $t_node->t_lemma eq 'rád' ) {
+        elsif ( $node->tag =~ /^(D|Cv|Co)/ or $node->t_lemma eq 'rád' ) {
             $formeme = 'adv';
         }
-
         # complement in nominative, directly dependent on a verb (-> adj:compl)
-        elsif ( $parent_sempos eq 'v' and $case eq '1' ) {
-            $formeme = 'adj:1';
+        elsif ( $parent->sempos eq 'v' and $node->case eq '1' ) {
+            $formeme = 'adj:compl';
         }
-
         # other verbal complements work the same as substantives
         # TODO - problems: complements (COMPL, compl.rf), "mít co společného" (an error in Vallex, too - adj is not specified)
         # "hodně prodavaček je levých" (genitive!)
-        elsif ( $parent_sempos eq 'v' ) {
-            $case = 1 if $case eq '-' and $tag =~ /^(AC|Vs)/; # short indeclinable adjectival forms "schopen", "připraven" etc.  
-            $formeme = "n:$case";
+        elsif ( $parent->sempos eq 'v' ) {
+            # short indeclinable adjectival forms "schopen", "připraven" etc.
+            $formeme = 'n:1' if $node->tag =~ /^(AC|Vs)/;    
         }
-
         # attributive
         else {
             $formeme = 'adj:attr';
         }
     }
     elsif ( $formeme eq 'v' ) {
-        my $finity = ( $tag =~ /^Vf/ and not grep { $_->tag =~ /^V[Bp]/ } @aux_a_nodes ) ? 'inf' : 'fin';
-        $formeme .= $prep ? ":$prep+$finity" : ":$finity";
+        my $finity = ( $node->tag =~ /^Vf/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $node->aux } ) ? 'inf' : 'fin';
+        $formeme .= $node->prep ? ':' . $node->prep . "+$finity" : ":$finity";
     }
 
     # adverbs: just one formeme 'adv', since prepositions in their aux.rf occur only in case of some weird coordination,
     # or for adverbial numerals 'u více než 20 lidí' etc. (which gets 'n:u+2')
 
-    if ($formeme) {
-        $t_node->set_formeme($formeme);
-    }
-    return;
+    return $formeme;
 }
 
-# Detects preposition + governed case / subjunction
-sub _detect_prep {
 
-    my $t_node      = shift;
-    my $lex_a_node  = shift;
-    my @aux_a_nodes = @{ shift() };
+# Detects if the given noun is a congruent attribute
+sub _is_congruent_attrib {
 
-    # filter out auxiliary / modal verbs and everything what's already contained in the lemma
-    my @prep_nodes = grep {
-        my $lemma = $_->lemma;
-        $lemma =~ s/(-|`|_;|_:|_;|_,|_\^).*$//;
-        $lemma = $_->form if $lemma eq 'se';    # way to filter out reflexives
-        $_->tag !~ /^V/ and $t_node->t_lemma !~ /(^|_)$lemma(_|$)/
-    } @aux_a_nodes;
+    my ( $self, $node, $parent ) = @_;    
 
-    if (@prep_nodes) {
+    # Both must be normal nouns + congruent in case (and declinable, i.e. no abbreviations), 
+    # there mustn't be a preposition between them 
+    if ( $node->sempos =~ m/^n\.denot/ and $parent->sempos =~ m/^n\.denot/
+            and !$node->prep and $node->case =~ m/[1-7]/ and $node->case eq $parent->case ){
 
-        # find out the governed case; default for nominal and adverb constructions: genitive
-        my $gov_prep = -1;
-        while ( $gov_prep < @prep_nodes - 1 and ( !$lex_a_node or $prep_nodes[ $gov_prep + 1 ]->ord < $lex_a_node->ord ) ) {
-            $gov_prep++;
+        # two names are usually congruent - "Frýdku Místku" etc.
+        if ( $parent->is_name_lemma and $node->is_name_lemma ){
+                    
+            # nominative: congruency ("Josef Čapek"), or nominative ID ("Sparta Praha") ? 
+            if ( $node->case eq '1' ){
+                
+                my $term_types = $node->term_types . '+' . $parent->term_types;                 
+                                
+                # R+R: "Opel Astra", G+G: "Frýdek Místek", "Praha Motol", Y+E: "Jan Slovák", E+S: "Američan Smith"
+                # E+Y: "Američan John", Y+S: "Josef Čapek", Y+Y: "Ježíš Kristus", S+S: "Garrigue Masaryk" 
+                # (+ actually errors): Y+G: "Jozef Bednárik", S+K: "John Bovett", K+S: "Tina Turner"
+                return $term_types =~ m/^(.*R.*\+.*R.*|.*G.*\+.*G.*|.*E.*\+.*[YS].*|.*S.*\+.*[SK].*|.*Y.*\+.*[GEYS].*|.*K.*\+.*S.*)$/; 
+            }
+            # other cases are clear
+            return 1;
         }
-        my $gov_case = $prep_nodes[$gov_prep]->tag =~ m/^R...(\d)/ ? $1 : '';
-        $gov_case = ( !$gov_case and $prep_nodes[$gov_prep]->tag =~ m/^[ND]/ ) ? 2 : $gov_case;
-
-        # gather the preposition lemmas, shorten them
-        my @prep_lemmas = map { Treex::Tools::Lexicon::CS::truncate_lemma($_->lemma,1) } @prep_nodes;
-
-        # merge some rare lemmas under their more usual synonyms
-        @prep_lemmas = map { $_ = $PREP_LEMMA_MAP->{$_} if ( $PREP_LEMMA_MAP->{$_} ); $_ } @prep_lemmas;
-
-        return ( join( '_', @prep_lemmas ), $gov_case );
-    }
-    return ( '', '' );
+        
+        my $gender_congruency = ( substr( $node->tag, 2, 1 ) eq substr( $parent->tag, 2, 1 ) );
+        my $number_congruency = ( substr( $node->tag, 3, 1 ) eq substr( $parent->tag, 3, 1 ) );
+                
+        # check for congruency in number for dative, accusative, vocative and locative (except the labels)
+        if ( $node->case =~ m/[3-6]/ and ( $number_congruency or $parent->is_term_label ) ){
+            return 1;
+        }
+        # for genitive and instrumental, check for congruency in number and gender (except the labels)
+        # + at least one of the two must be a name
+        elsif ( $node->{case} =~ m/[27]/ and ( $node->is_name_lemma or $parent->is_name_lemma) 
+                and ( ( $gender_congruency and $number_congruency ) or ( $parent->is_term_label ) ) ){
+            return 1;
+        }
+        return 0;
+    } 
+    return 0;
 }
+
 
 sub detect_formeme {
     my ($tnode) = @_;
