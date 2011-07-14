@@ -14,6 +14,8 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+    
+    $self->attach_final_punctuation_to_root($a_root);
 }
 
 
@@ -32,10 +34,68 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form = $node->form();
         my $pos = $node->conll_pos();
+        
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
 
         # default assignment
         my $afun = $deprel;
+
+        # Subject
+        if ($deprel eq 'SBJ') {
+            $afun = 'Sb';
+        }
+        # Verbs   
+        if ($deprel eq 'ROOT' && $node->get_iset('pos') eq 'verb') {
+            $afun = 'Pred';
+        }
+        if (!$deprel eq 'ROOT' && $node->get_iset('subpos') eq 'mod') {
+            $afun = 'AuxV';
+        }        
+        
+        # Adjunct
+        if ($deprel eq 'ADJ' && $node->get_iset('pos') eq 'adv') {
+            $afun = 'Adv';
+        }
+        elsif ($deprel eq 'ADJ' && !$node->get_iset('pos') eq 'adv') {
+            $afun = 'Atr';
+        }
+        # Complement
+        if ($deprel eq 'COMP') {
+            $afun = 'Atv';
+        }
+        # Postpositions, adjectives, numeral
+        if ($node->get_iset('pos') eq 'prep') {
+            $afun = 'AuxP';
+        }
+        elsif ($node->get_iset('pos') eq 'adj') {
+            $afun = 'Atr';
+        }
+        elsif ($node->get_iset('pos') eq 'num') {
+            $afun = 'Atr';
+        }
+        
+        # punctuations
+        if ($deprel eq 'PUNCT') {
+            if ($form eq ',') {
+                $afun = 'AuxX';
+            }
+            elsif ($form =~ /^(\?|\:|\.|\!)$/) {
+                $afun = 'AuxK';
+            }
+            else {
+                $afun = 'AuxG';
+            }
+        }
+        
+        # Co Head
+        if ($deprel eq 'HD'  && $node->get_iset('pos') eq 'prep') {
+            $afun = 'AuxP';
+        }
+        
+        # Coordination
+        if ($pos eq 'Pcnj' || $pos eq 'CNJ') {
+            $afun = 'Coord';
+        }
         $node->set_afun($afun);
     }
 }
@@ -57,7 +117,6 @@ Converts Japanese CoNLL treebank into PDT style treebank.
 
 3. Structural conversion to match PDT   -> Yes
 
-        a) Coordination                 -> Yes
 
 =back
 
