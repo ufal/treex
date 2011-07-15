@@ -7,7 +7,25 @@ extends 'Treex::Core::Block';
 
 has 'use_version' => ( is => 'ro', isa => enum( [ 1, 2 ] ), default => 1 );
 
-has 'force_grammar' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
+
+has 'fix_numer' => ( is => 'ro', isa => 'Bool', default => 1 );
+
+# Caching of NodeInfos for better speed (they might get called more times)
+has '_node_info_cache' => ( is => 'rw', isa => 'HashRef' );
+
+sub process_ttree {
+
+    my ( $self, $t_root ) = @_;
+
+    # Clear NodeInfo cache for each tree
+    if ( $self->use_version == 2 ){
+        $self->_set_node_info_cache( {} );
+    }
+    foreach my $t_node ( $t_root->get_descendants() ){
+        $self->process_tnode( $t_node );
+    }
+}
 
 sub process_tnode {
 
@@ -24,9 +42,9 @@ sub process_tnode {
            
             my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
                        
-            my $parent = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( t => $t_parent );
-            my $node = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( t => $t_node );            
-            my $formeme = $self->detect_formeme2($node, $parent);
+            my $parent = $self->_get_node_info( $t_parent );
+            my $node =  $self->_get_node_info( $t_node );            
+            my $formeme = $self->_detect_formeme2($node, $parent);
             
             if ($formeme){
                 $t_node->set_formeme($formeme);
@@ -39,7 +57,23 @@ sub process_tnode {
     return;
 }
 
-sub detect_formeme2 {
+# Caching of NodeInfos for better speed -- retrieves from cache if available
+sub _get_node_info {
+    
+    my ( $self, $t_node ) = @_;
+    
+    if ( !$self->_node_info_cache->{$t_node->id} ){
+        
+        $self->_node_info_cache->{$t_node->id} = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( { 
+            t => $t_node, 
+            fix_numer => $self->fix_numer, 
+            fix_prep => $self->fix_prep } );
+    }
+    return $self->_node_info_cache->{$t_node->id};
+}
+
+
+sub _detect_formeme2 {
 
     my ( $self, $node, $parent ) = @_;
     
@@ -60,19 +94,15 @@ sub detect_formeme2 {
             $formeme = 'n:attr';
         }
         # prepositional or loose cases (numerals, too)
-        elsif ( $node->case =~ /[1-7]/ ) {
-            $formeme .= ':' . ($node->prep ? $node->prep . '+' : '') . $node->case;
-        }
-        # non-declined nouns, numerals etc. (infer case from preposition, if available)
         else {
-            $formeme .= ($node->prep ? ':' . $node->prep . '+' . $node->prepcase : ':X');
+            $formeme .= ':' . ($node->prep ? $node->prep . '+' : '') . $node->case;
         }
     }
     elsif ( $formeme eq 'adj' ) {
 
         # prepositional phrases with adjectives -- always work the same as substantives
         if ($node->prep) {
-            $formeme = 'n:' . $node->prep . '+' . ( $node->case ? $node->case : $node->prepcase );
+            $formeme = 'n:' . $node->prep . '+' . $node->case;
         }
         # adverbs derived from adjectives, weird form "rád"
         elsif ( $node->tag =~ /^(D|Cv|Co)/ or $node->t_lemma eq 'rád' ) {
