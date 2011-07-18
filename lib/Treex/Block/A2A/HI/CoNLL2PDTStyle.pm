@@ -14,6 +14,8 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+    
+    $self->attach_final_punctuation_to_root($a_root);    
 }
 
 
@@ -37,7 +39,98 @@ sub deprel_to_afun
 
         # default assignment
         my $afun = $deprel;
+        
+        if ($deprel eq "main") {
+            $afun = "Pred";
+        }
+        
+        # Subject
+        if ($deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|ras-k1)$/) {
+            $afun = "Sb";
+        }
+        elsif ($deprel =~ /^(jk1|mk1)$/) { 
+            $afun = "Obj";
+        }
+        elsif ($deprel eq "k1s"){                       
+            $afun = "Atv";              # noun complements
+        }
+        elsif ($deprel =~ /^(k2|k2p|k2g|k2s|k2u|r6-k2|ras-k2)$/) { 
+            $afun = "Obj";
+        }
+        elsif ($deprel eq "k3"){                       
+            $afun = "Adv";              # Instrumental 
+        }
+        elsif ($deprel eq "k4"){                       
+            $afun = "Obj";              # recipient of the action
+        }        
+        elsif ($deprel eq "k5"){                       
+            $afun = "Adv";              # source of an activity
+        }
+        elsif ($deprel =~ /^(k5prk|k7t|k7p|k7|vmod)$/){                       
+            $afun = "Adv";              # reason, location
+        }
+        elsif ($deprel =~ /^(r6|r6v)$/) {
+            $afun = "Atr";              # genitive
+        }
+        elsif ($deprel =~ /^(adv|sent-adv|rd|rh|rt|ras-NEG|rsp  )$/) {
+            $afun = "Adv";
+        }
+        elsif ($deprel eq "rs"){                       
+            $afun = "Atr";              # noun elaboration ... not sure
+        }
+        elsif ($deprel eq "rad"){                       
+            $afun = "Atr";              # address ... not sure
+        }
+        elsif ($deprel eq "nmod__relc" || $deprel eq "nmod__adj") {
+            $afun = "Atr";              # relative clause modifying noun
+        }
+        elsif ($deprel eq "rbmod__relc") {
+            $afun = "Adv";              # relative clause modifying adverb
+        }
+        elsif ($deprel eq "jjmod__relc") {
+            $afun = "Atr";              # relative clause modifying adjective
+        }
+        elsif ($deprel eq "nmod") {
+            $afun = "Atr";              # attributes
+        }
+        elsif ($deprel eq "jjmod") {
+            $afun = "Atr";              # modifiers of adjectives.
+        }
+        elsif ($deprel eq "pof") {
+            $afun = "Atr";              # modifiers of adjectives.
+        }
+        #elsif ($deprel eq "ccof") {
+        #    $afun = "Coord";              # CHECK may not be trye   
+        #}
+        elsif ($deprel eq "fragof") {
+            $afun = "Atr";              # modifiers of adjectives.
+        }
+        elsif ($deprel eq "enm") {
+            $afun = "Atr";              # enumerator
+        }           
+        
+        
+        # Some information from POS
+        if ($node->get_iset('pos') eq 'prep') {
+            $afun = 'AuxP';
+        }
+        if ($node->get_iset('subpos') eq 'mod') {
+            $afun = 'AuxV';
+        }        
+        
+        if ($deprel eq "rsym") {
+            if ($form eq ',') {
+                $afun = 'AuxX';
+            }
+            elsif ($form =~ /^(\?|\:|\.|\!)$/) {
+                $afun = 'AuxK';
+            }
+            elsif ($form =~ /^(\(|\)|[|]|\$|\%|\=)$/) {
+                $afun = 'AuxG';
+            }             
+        }
 
+      
         $node->set_afun($afun);
     }
 }
@@ -49,9 +142,9 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::JA::CoNLL2PDTStyle
+=item Treex::Block::A2A::HI::CoNLL2PDTStyle
 
-Converts Japanese CoNLL treebank into PDT style treebank.
+Converts Hindi treebank into PDT style treebank.
 
 1. Morphological conversion             -> Yes
 
