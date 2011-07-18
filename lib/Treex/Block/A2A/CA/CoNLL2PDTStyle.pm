@@ -54,40 +54,88 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
                 $node->set_afun('AuxV');
             }
         }
-        
+          #mark conjuctive clause and whatever CD is? Can't find'
+            elsif($deprel =~ 'C')
+        {
+            $node->set_afun('AuxY');
+        }
+        #do all pos specific markings
+        else{
         #mark all determiners
             if($node->tag() =~ 'd')
             {
                 $node->set_afun('Atr');
             }
-            #find terminal punctuation
+         
+            #numerals
+            if($node->tag() =~ 'Z')
+            {
+                $node->set_afun('Atr');
+            }
+            #adverbs
+            if($node->tag() =~ 'R')
+            {
+                $node->set_afun('Adv');
+            }
+             elsif($node->tag() =~ 'r')
+            {
+                $node->set_afun('Adv');
+            }
+            #default noun behavior
+            if($node->tag() =~ 'n')
+            {
+                $node->set_afun('Atr');
+            }
+            #default adjective behavioor
+            
+            #adpositions
+            if($node->tag() =~ 's')
+            {
+                $node->set_afun('AuxP');
+            }
+             #coordinating conjunctions
+            if($node->tag() =~ 'cc')
+            {
+                $node->set_afun('AuxP');
+            }
+             #subordinate conjuctions
+             elsif($node->tag() =~ 'cs')
+            {
+                $node->set_afun('Coord');
+            }
+            
+               #find terminal punctuation
             if($node->tag() =~ 'Fp')
             {
                 $node->set_afun('AuxK');
             }
             #find commas, need to resolve when it is a coordinating conjunction
-            if($node->tag() =~ 'Fc')
+            elsif($node->tag() =~ 'Fc')
             {
                 $node->set_afun('AuxX');
             }
-            #numerals
-             if($node->tag() =~ 'Z')
+            #posesive pronoun
+             if($node->tag() =~ 'px')
+            {
+                $node->set_afun('Pnom');
+            }
+            #default adjective behavioor
+                 if($node->tag() =~ 'aq')
             {
                 $node->set_afun('Atr');
             }
-            #adverbs
-             if($node->tag() =~ 'R')
-            {
-                $node->set_afun('Adv');
+            elsif($node->tag() =~ 'ao'){
+             $node->set_afun('Atr');
             }
-            #default noun behavior
-             if($node->tag() =~ 'n')
+             if ($node->tag() =~ 'vm')
             {
-                $node->set_afun('Atr');
+
+                $node->set_afun('Obj');
             }
             
+          }
             #mark the subject
-             elsif($deprel eq 'SUJ')
+             if($deprel eq 'SUJ')
         {
        
                 $node->set_afun('Sb');
