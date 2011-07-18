@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use File::Slurp;
 with 'Treex::Core::DocumentReader';
-
+use Treex::Core::Document;
 sub next_document {
     my ($self) = @_;
     return log_fatal "method next_document must be overriden in " . ref($self);
