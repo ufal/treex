@@ -33,10 +33,20 @@ sub deprel_to_afun
 
         # default assignment
         my $afun = $deprel;
-        if($afun =~ s/_Co$//)
-        {
+        
+        $afun =~ s/^IObj/Obj/;
+        $afun =~ s/_Ap$//;
+        $afun =~ s/_Pa$//;
+        
+        if ($deprel eq '---') {
+            $afun = "Atr";
+        }
+        
+        if($afun =~ /_Co$/) {
+            $afun =~ s/_Co$//;
             $node->set_is_member(1);
         }
+        
         $node->set_afun($afun);
     }
 }
@@ -47,7 +57,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::ELL::CoNLL2PDTStyle
+=item Treex::Block::A2A::EL::CoNLL2PDTStyle
 
 Converts Modern Greek dependency treebank into PDT style treebank.
 
