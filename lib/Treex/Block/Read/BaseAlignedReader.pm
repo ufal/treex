@@ -2,6 +2,7 @@ package Treex::Block::Read::BaseAlignedReader;
 use Moose;
 use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';
+use Treex::Core::Document;
 
 sub next_document {
     my ($self) = @_;
