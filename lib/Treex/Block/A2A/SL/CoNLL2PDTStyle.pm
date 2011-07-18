@@ -32,11 +32,18 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun = $deprel;
-        if($afun =~ s/_M$//)
+        $node->set_afun($afun);
+        # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
+        # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
+        # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
+        # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
+        my $pdeprel = $node->parent()->conll_deprel();
+        $pdeprel = '' if(!defined($pdeprel));
+        if($pdeprel =~ m/^(Coord|Apos)$/ &&
+           $afun !~ m/^(Aux[XY])$/)
         {
             $node->set_is_member(1);
         }
-        $node->set_afun($afun);
     }
 }
 
