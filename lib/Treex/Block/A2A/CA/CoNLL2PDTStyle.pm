@@ -86,6 +86,11 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
             {
                 $node->set_afun('Atr');
             }
+               #default pronoun behavior
+            if($node->tag() =~ 'p')
+            {
+                $node->set_afun('Atr');
+            }
             #default adjective behavioor
             
             #adpositions
