@@ -15,6 +15,8 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+    # Adjust the tree structure.
+    $self->attach_final_punctuation_to_root($a_root);
 }
 
 
@@ -40,9 +42,32 @@ sub deprel_to_afun
         my $pdeprel = $node->parent()->conll_deprel();
         $pdeprel = '' if(!defined($pdeprel));
         if($pdeprel =~ m/^(Coord|Apos)$/ &&
-           $afun !~ m/^(Aux[XY])$/)
+           $afun !~ m/^(Aux[GKXY])$/)
         {
             $node->set_is_member(1);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Final punctuation is usually attached to the root. However, if there are
+# quotation marks, these are attached to the main verb, and then the full stop
+# before the final quotation mark is also attached to the main verb. Unlike
+# PDT, where the quotes would be attached to the main verb and the full stop
+# would be attached non-projectively to the root.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_root
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxK' && $node->parent() != $root)
+        {
+            $node->set_parent($root);
         }
     }
 }
