@@ -100,6 +100,7 @@ my %EXTRA_LANG_CODES = (
     'bxr'     => "Buryat",
     'dsb'     => "Lower Sorbian",
     'ell'     => "ISO 639-3 code for Modern Greek",
+    'grc'     => "ISO 639-2 code for Ancient Greek",
     'hsb'     => "Upper Sorbian",
     'hak'     => "Hakka",
     'kaa'     => "Karakalpak",
