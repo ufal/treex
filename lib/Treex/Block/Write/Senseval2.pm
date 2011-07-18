@@ -25,7 +25,7 @@ sub _process_tree() {
     print { $self->_file_handle } '<intance id="' . $self->_sent_ctr . '">\n<answer instance="' . $self->_sent_ctr
         . '" senseid="NOTAG" />' . "\n<context>\n";
 
-    my $sent_data = join $self->separator, map { join $self->connector, $_->get_attrs( $self->attributes ) } @nodes;
+    my $sent_data = join $self->separator, map { join $self->connector, @{ $self->_get_info_list($_) } } @nodes;
     
     # compulsory XML entities
     $sent_data =~ s/&/&amp;/g;
@@ -77,6 +77,8 @@ The selected language. This parameter is required.
 
 A space-separated list of attributes whose values should be printed for the individual nodes. This parameter is required.
 
+For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
+
 =item C<layer>
 
 The annotation layer where the desired attributes are found (i.e. C<a>, C<t>, C<n>, or C<p>). This parameter is required. 
@@ -85,7 +87,7 @@ The annotation layer where the desired attributes are found (i.e. C<a>, C<t>, C<
 
 The separator character for the individual values within one sentence. Space is the default.
 
-=item C<separator>
+=item C<connector>
 
 The connector character for the values of different attributes of the same word. The circumflex ('^') character is the default.
 

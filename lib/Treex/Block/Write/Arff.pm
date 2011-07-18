@@ -37,24 +37,19 @@ has '_headers_printed' => (
     default => 0
 );
 
-# List of attributes to dereference
-has 'deref_attrib' => (
-    isa     => 'Str',
-    is      => 'ro',
-    default => ''
-);
-
-# Parsed list of attributes to dereference, constructed from the deref_attrib parameter
-has '_deref_attrib_list' => (
-    isa        => 'ArrayRef',
-    is         => 'ro',
-    builder    => '_build_deref_attrib_list',
-    lazy_build => 1
-);
 
 #
 # METHODS
 #
+
+# De-alias the 'head' parameter
+sub BUILDARGS {
+    
+    my ($class, $params) = @_;
+
+    $params->{attributes} =~ s/(^| )head($| )/$1parent->ord$2/;
+    return $params;
+} 
 
 override 'process_document' => sub {
 
@@ -92,9 +87,16 @@ sub _process_tree {
     my $word_id = 1;
     foreach my $node (@nodes) {
 
-        my $info = $self->_get_node_info($node);
+        my $info = $self->_get_info_hash($node);
+        
+        if (defined($info->{'parent->ord'})){ # 'head' aliasing
+            $info->{'head'} = $info->{'parent->ord'};
+            delete $info->{'parent->ord'};
+        }
+
         $info->{sent_id} = $self->_sent_id;
         $info->{word_id} = $word_id;
+
         push( @{ $self->_arff->relation->{records} }, $info );
         $word_id++;
     }
@@ -113,87 +115,11 @@ sub _init_arff {
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
 
-    # node attributes
-    foreach my $attrib ( @{ $self->_attrib_list } ) {
-        push( @{ $arff->relation->{attributes} }, { attribute_name => $attrib } );
-    }
-
-    # referenced attributes
-    foreach my $deref ( @{ $self->_deref_attrib_list } ) {
-        foreach my $attrib ( @{ $deref->{attr} } ) {
-            push( @{ $arff->relation->{attributes} }, { attribute_name => $deref->{name} . '-' . $attrib } );
-        }
-    }
-
+    map { push @{ $arff->relation->{attributes} }, { attribute_name => ( $_ eq 'parent->ord' ? 'head' : $_ ) } } @{ $self->_attrib_list() };
+    
     return $arff;
 }
 
-# Parse the attribute list given in parameters.
-sub _build_deref_attrib_list {
-    my ($self) = @_;
-
-    return {} if !$self->deref_attrib;
-
-    my @list = split /\s*,\s*/, $self->deref_attrib;
-    my @derefs;
-    foreach my $deref (@list) {
-        my ( $name, $attrs ) = split /\s*:\s*/, $deref;
-        my @attr_list = split /\s+/, $attrs;
-
-        push @derefs, { name => $name, attr => \@attr_list };
-    }
-    return \@derefs;
-}
-
-# Retrieve all the information needed for the conversion of each node and store it as a hash.
-sub _get_node_info {
-
-    my ( $self, $node ) = @_;
-    my %info;
-
-    foreach my $attrib ( @{ $self->_attrib_list } ) {
-
-        if ( $attrib eq 'head' ) {
-            $info{head} = $node->get_parent()->get_attr('ord');
-        }
-        else {
-            $info{$attrib} = $node->get_attr($attrib);
-        }
-    }
-
-    foreach my $deref ( @{ $self->_deref_attrib_list } ) {
-        $self->_get_deref_attribs( $node, \%info, $deref->{name}, $deref->{attr} );
-    }
-    return \%info;
-}
-
-# Retrieve all the needed information (attribs) from one reference (refname) going from the given node,
-# store it as a part of the given hash reference (info). If there is a list of references, store all the values
-# separated with spaces.
-sub _get_deref_attribs {
-
-    my ( $self, $node, $info, $refname, $attribs ) = @_;
-    my $refs = $node->get_deref_attr($refname);    # get the referenced node(s)
-
-    foreach my $attrib ( @{$attribs} ) {
-
-        my $val = '';
-
-        if ( ref($refs) eq 'ARRAY' ) {             # more nodes
-            foreach my $refdnode ( sort { $a->ord <=> $b->ord } @{$refs} ) { # always sort referenced nodes by their ord
-                $val .= $refdnode->get_attr($attrib) . ' ';
-            }
-            $val = substr $val, 0, length($val) - 1;
-        }
-        elsif ($refs) {                            # just one node
-            $val = $refs->get_attr($attrib);
-        }
-
-        # store the value(s) found
-        $info->{ $refname . '-' . $attrib } = $val;
-    }
-    return;
-}
 
 1;
 __END__
@@ -231,17 +157,9 @@ The annotation layer to be processed (i.e. C<a>, C<t>, C<n>, or C<p>). This para
 A space-separated list of attributes (relating to the tree nodes on the specified layer) to be processed. 
 This parameter is required.
 
-If a special parameter with the name C<head> is requested, the word ID of the current node's head will be
-returned as the value.
+For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
 
-=item C<deref_attrib>
-
-A list of attributes of referenced nodes in the form:
-   
-    reference_1:attr1 attr2, reference_2:attr1 attr2 ..., ...
-
-The returned values are the values of these attributes for referenced nodes, or empty values if there is 
-no such reference.
+A special attribute C<head> is an alias for dereferenced attribute C<parent-&gt;ord>.
 
 =item C<to>
 
@@ -254,7 +172,6 @@ Optional: the output encoding, C<utf8> by default.
 =back
 
 =head1 TODO
-
 
 
 =head1 AUTHOR

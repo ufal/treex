@@ -10,14 +10,18 @@ with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
 
-has 'separator' => ( isa => 'Str', is => 'ro', default  => ' ' );
+has 'separator' => ( isa => 'Str', is => 'ro', default => ' ' );
+
+has 'attr_sep' => ( isa => 'Str', is => 'ro', default => '|' );
 
 sub _process_tree() {
 
     my ( $self, $tree ) = @_;
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
-    print { $self->_file_handle } join $self->separator, map { $_->get_attr( $self->attributes ) } @nodes;
+
+    print { $self->_file_handle } join $self->separator, map { join $self->attr_sep, @{ $self->_get_info_list($_) } } @nodes;
+
     print { $self->_file_handle } "\n";
 }
 
@@ -33,7 +37,9 @@ Treex::Block::Write::AttributeSentences
 
 =head1 DESCRIPTION
 
-This prints the values of the selected attribute for all nodes in a tree, one sentence per line. 
+This prints the values of the selected attributes for all nodes in a tree, one sentence per line. 
+
+For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
 
 =head1 ATTRIBUTES
 
@@ -45,7 +51,7 @@ The selected language. This parameter is required.
 
 =item C<attributes>
 
-The name of the (single!) attribute whose values should be printed for the individual nodes. This parameter is required.
+The name of the attributes whose values should be printed for the individual nodes. This parameter is required.
 
 =item C<layer>
 
@@ -53,7 +59,11 @@ The annotation layer where the desired attribute is found (i.e. C<a>, C<t>, C<n>
 
 =item C<separator>
 
-The separator character for the individual values within one sentence. Space is the default.
+The separator character for the individual nodes within one sentence. Space is the default.
+
+=item C<attr_sep>
+
+The separator character for the individual attribute values for one node. Vertical bar ("|") is the default.
 
 =item C<to>
 
