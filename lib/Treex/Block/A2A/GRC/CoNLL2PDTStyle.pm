@@ -34,19 +34,51 @@ sub deprel_to_afun
         # default assignment
         my $afun = $deprel;
         
-        $afun =~ s/^IObj/Obj/;
-        $afun =~ s/_Ap$//;
-        $afun =~ s/_Pa$//;
-        
-        if ($deprel eq '---') {
-            $afun = "Atr";
-        }
-        
-        if($afun =~ /_Co$/) {
-            $afun =~ s/_Co$//;
+        if($afun =~ /_CO$/) {
             $node->set_is_member(1);
         }
+
+        # Remove all contents after first underscore
+        $afun =~ s/^([A-Z]+)(_.+)$/$1/;
         
+        #
+        if ($deprel eq "ADV") {
+            $afun = "Adv";
+        }
+        elsif ($deprel eq "APOS") {
+            $afun = "Apos";
+        }
+        elsif ($deprel eq "ATR") {
+            $afun = "Atr";
+        }
+        elsif ($deprel eq "ATV") {
+            $afun = "Atv";
+        }
+        elsif ($deprel eq "COORD") {
+            $afun = "Coord";
+        }
+        elsif ($deprel eq "OBJ") {
+            $afun = "Obj";
+        }        
+        elsif ($deprel eq "OCOMP") {
+            $afun = "Obj";
+        }
+        elsif ($deprel eq "PNOM") {
+            $afun = "Pnom";
+        }
+        elsif ($deprel eq "PRED") {
+            $afun = "Pred";
+        }
+        elsif ($deprel eq "SBJ") {
+            $afun = "Sb";
+        }
+        elsif ($deprel =~ /^(UNDEFINED|XSEG|_ExD0_PRED)$/) {
+            $afun = "Atr";            
+        }
+        else {
+            $afun = "Sb";            
+        }
+
         $node->set_afun($afun);
     }
 }
@@ -61,7 +93,7 @@ sub deprel_to_afun
 
 Converts Modern Greek dependency treebank into PDT style treebank.
 
-1. Morphological conversion             -> Yes 
+1. Morphological conversion             -> No
 
 2. DEPREL conversion                    -> Yes
 
