@@ -82,8 +82,14 @@ sub lib_core_dir {
     return realpath( _caller_dir() );
 }
 
-sub tmp_dir {    #!!! to be replaced with ~/.treex/tmp !!!
-    return realpath( lib_core_dir . "/../../../../tmp/" );
+sub tmp_dir {
+    my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );
+    my $suffix = 'tmp';
+    my $tmp_dir = realpath( "$dot_treex/$suffix" );
+    if (!-e $tmp_dir) {
+        mkdir $tmp_dir or log_fatal("Cannot create temporary directory"); 
+    }
+    return $tmp_dir;
 }
 
 sub _caller_dir {
