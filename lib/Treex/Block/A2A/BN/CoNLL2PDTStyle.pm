@@ -32,17 +32,20 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form = $node->form();
         my $pos = $node->conll_pos();
+        my $cpos = $node->conll_cpos();
         
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
 
         # default assignment
         my $afun = $deprel;
+        $afun = 'Atr';                  # default assignment if nothing gets assigned
+        
         if ($deprel eq "main") {
             $afun = "Pred";
         }
         
         # Subject
-        if ($deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|ras-k1)$/) {
+        if ($deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|k1s|ras-k1)$/) {
             $afun = "Sb";
         }
         elsif ($deprel =~ /^(jk1|mk1)$/) { 
@@ -57,19 +60,19 @@ sub deprel_to_afun
         elsif ($deprel eq "k3"){                       
             $afun = "Adv";              # Instrumental 
         }
-        elsif ($deprel eq "k4"){                       
+        elsif ($deprel eq "k4" || $deprel eq "k4s"){                       
             $afun = "Obj";              # recipient of the action
         }        
         elsif ($deprel eq "k5"){                       
             $afun = "Adv";              # source of an activity
         }
-        elsif ($deprel =~ /^(k5prk|k7t|k7p|k7|vmod)$/){                       
+        elsif ($deprel =~ /^(k5prk|k7t|k7p|k7|k7u|vmod)$/){                       
             $afun = "Adv";              # reason, location
         }
         elsif ($deprel =~ /^(r6|r6v)$/) {
             $afun = "Atr";              # genitive
         }
-        elsif ($deprel =~ /^(adv|sent-adv|rd|rh|rt|ras-NEG|rsp  )$/) {
+        elsif ($deprel =~ /^(adv|sent-adv|rd|rh|rt|ras-NEG|rsp|NEG)$/) {
             $afun = "Adv";
         }
         elsif ($deprel eq "rs"){                       
@@ -81,7 +84,7 @@ sub deprel_to_afun
         elsif ($deprel eq "nmod__relc" || $deprel eq "nmod__adj") {
             $afun = "Atr";              # relative clause modifying noun
         }
-        elsif ($deprel eq "rbmod__relc") {
+        elsif ($deprel eq "rbmod" || $deprel eq "rbmod__relc") {
             $afun = "Adv";              # relative clause modifying adverb
         }
         elsif ($deprel eq "jjmod__relc") {
@@ -96,9 +99,9 @@ sub deprel_to_afun
         elsif ($deprel eq "pof") {
             $afun = "Atr";              # modifiers of adjectives.
         }
-        #elsif ($deprel eq "ccof") {
-        #    $afun = "Coord";              # CHECK may not be trye   
-        #}
+        elsif ($deprel eq "ccof") {
+            $node->set_is_member(1);            
+        }
         elsif ($deprel eq "fragof") {
             $afun = "Atr";              # modifiers of adjectives.
         }
@@ -113,7 +116,14 @@ sub deprel_to_afun
         }
         if ($node->get_iset('subpos') eq 'mod') {
             $afun = 'AuxV';
-        }        
+        }
+        
+        if ($cpos eq "VAUX") {
+            $afun = 'AuxV';
+        }
+        elsif ($cpos eq "PSP") {
+            $afun = 'AuxP';
+        }
         
         if ($deprel eq "rsym") {
             if ($form eq ',') {
@@ -125,7 +135,13 @@ sub deprel_to_afun
             elsif ($form =~ /^(\(|\)|[|]|\$|\%|\=)$/) {
                 $afun = 'AuxG';
             }             
-        }      
+        }
+        elsif ($deprel =~ /^(jjmod_intf|pof__redup|pof__cn|pof__cv|lwg__cont|lwg__rest)$/) {
+            $afun = 'Atr';
+        }
+        elsif ($deprel eq "lwg__neg"){
+            $afun = 'Adv';
+        }
         $node->set_afun($afun);
     }
 }
