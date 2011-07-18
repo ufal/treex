@@ -17,6 +17,9 @@ has 'fix_numer' => ( is => 'ro', isa => 'Bool', default => 1 );
 # Fix errors in preposition congruency ?
 has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
 
+# Analyse verbal diathesis, or stay with finite/infinite ?
+has 'detect_diathesis' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 has 't_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->t->t_lemma || '' } );
 
 has 'a' => ( is => 'ro', isa => 'Maybe[Object]', lazy => 1, default => sub { $_[0]->t->get_lex_anode() } );
@@ -44,6 +47,8 @@ has 'is_term_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { 
 has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 
 has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
+
+has 'verbform' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 # Detects the case this word is or should be in
 sub _build_case {
@@ -218,6 +223,24 @@ sub _build_is_name_lemma {
     );
 }
 
+sub _build_verbform {
+    my ($self) = @_;
+    
+    return '' if ( $self->sempos ne 'v' );
+    my $finity = ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';
+    
+    return $finity if ( $finity eq 'inf' or !$self->detect_diathesis );
+    
+    return 'apass' if ( $self->tag =~ /^Vs/ );
+    
+    my ($verbal_synt_head) = grep { $self->a->parent == $_ } @{ $self->aux };
+    $verbal_synt_head = $self->a if (!$verbal_synt_head);
+    
+    return 'rpass' if ( grep { $_->afun eq 'AuxR' } $verbal_synt_head->children );
+    
+    return 'act';
+}
+
 1;
 
 __END__
@@ -236,8 +259,8 @@ Treex::Block::A2T::CS::SetFormeme::NodeInfo
 
 =head1 DESCRIPTION
 
-A helper object for L<Treex::BLock::A2T::CS::SetFormeme> that collect all the needed information for a node from
-both t-layer and a-layer, including preposition and case collected from aux-nodes and the surroundings of the node.
+A helper object for L<Treex::BLock::A2T::CS::SetFormeme> that collects all the needed information for a node from
+both t-layer and a-layer, including preposition and case collected from aux-nodes and surroundings of the node.
 
 All values except C<a> and C<aux> are always set (albeit sometimes empty), so no further checking is required.
 

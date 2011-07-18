@@ -11,6 +11,8 @@ has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has 'fix_numer' => ( is => 'ro', isa => 'Bool', default => 1 );
 
+has 'detect_diathesis' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 # Caching of NodeInfos for better speed (they might get called more times)
 has '_node_info_cache' => ( is => 'rw', isa => 'HashRef' );
 
@@ -67,7 +69,9 @@ sub _get_node_info {
         $self->_node_info_cache->{$t_node->id} = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( { 
             t => $t_node, 
             fix_numer => $self->fix_numer, 
-            fix_prep => $self->fix_prep } );
+            fix_prep => $self->fix_prep,
+            detect_diathesis => $self->detect_diathesis,
+            } );
     }
     return $self->_node_info_cache->{$t_node->id};
 }
@@ -124,9 +128,8 @@ sub _detect_formeme2 {
             $formeme = 'adj:attr';
         }
     }
-    elsif ( $formeme eq 'v' ) {
-        my $finity = ( $node->tag =~ /^Vf/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $node->aux } ) ? 'inf' : 'fin';
-        $formeme .= $node->prep ? ':' . $node->prep . "+$finity" : ":$finity";
+    elsif ( $formeme eq 'v' ) {        
+        $formeme .=  ':' . ( $node->prep ? $node->prep . '+' : '' ) . $node->verbform;
     }
 
     # adverbs: just one formeme 'adv', since prepositions in their aux.rf occur only in case of some weird coordination,
