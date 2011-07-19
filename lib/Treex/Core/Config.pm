@@ -32,8 +32,7 @@ sub default_resource_dir {
 sub resource_path {
     my $path_file = config_dir() . '/path';
     my @path;
-    local $/;
-    $/ = ':';
+    local $/ = ':';
     @path = read_file( $path_file, err_mode => 'silent' );
     if ( not defined $path[0] ) {
         @path = default_resource_dir();

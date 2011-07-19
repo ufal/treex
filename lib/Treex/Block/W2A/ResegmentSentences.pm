@@ -18,7 +18,7 @@ sub _get_segmenter {
         my $segmenter = eval "use $class; $class->new()";
         return $segmenter if $segmenter;
     }
-
+    log_fatal("Cannot create segmenter for $lang");
 }
 
 sub process_bundle {

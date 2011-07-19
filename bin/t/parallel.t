@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
 BEGIN {
-    unless ( $ENV{AUTHOR_TESTING} ) {
+    unless ( $ENV{AUTHOR_TESTING} and $ENV{EXPENSIVE_TESTING} ) {
         require Test::More;
-        Test::More::plan( skip_all => 'these tests are for testing by the author' );
+        Test::More::plan( skip_all => 'these tests are expensive and only for testing by the author' );
     }
 }
 use strict;
@@ -14,6 +14,7 @@ use Treex::Core::Config;
 use Treex::Core::Run qw(treex);
 
 use Test::More;
+
 #plan skip_all => 'Takes too much time, maybe infinite loop';
 eval { use Test::Output; 1 } or plan skip_all => 'Test::Output required to test parallelism';
 plan tests => 1;
