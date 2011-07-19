@@ -4,8 +4,11 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
+
     my ( $self, $t_node ) = @_;
     my $functor;
+    my $a_node = $t_node->get_lex_anode();
+    my $afun = $a_node ? $a_node->afun : '';
 
     if ( $t_node->t_lemma eq "a" ) {
         $functor = "CONJ";
@@ -16,13 +19,17 @@ sub process_tnode {
     elsif ( $t_node->t_lemma eq "ale" ) {
         $functor = "ADVS";
     }
-    elsif ( ( $t_node->get_lex_anode->afun || "" ) eq "Coord" ) {
-        $functor = "CONJ";
+    elsif ( $afun eq 'Coord' ) {
+        $functor = 'CONJ';
+    }
+    elsif ( $afun eq 'Apos' ) {
+        $functor = 'APPS';
     }
 
     if ( defined $functor ) {
         $t_node->set_functor($functor);
     }
+    return;
 }
 
 1;
