@@ -3,6 +3,32 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+sub next_document_text {
+    my ($self) = @_;
+    my $FH = $self->_current_fh;
+    if ( !$FH ) {
+        $FH = $self->next_filehandle() or return;
+        $self->_set_current_fh($FH);
+    }
+    if ( $self->is_one_doc_per_file ) {
+        $self->_set_current_fh(undef);
+        return read_file($FH);
+    }
+    my $text;
+    my $sent_count = 0;
+
+    LINE:
+    while ( <$FH> ) {
+        if ($_ =~ m/<\/S>/) {
+            $sent_count++;
+            return $text if $sent_count == $self->lines_per_doc;
+        }
+        $text .= $_;
+    }
+    return $text;
+}
+
+
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
