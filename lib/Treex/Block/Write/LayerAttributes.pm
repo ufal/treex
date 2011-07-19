@@ -63,21 +63,21 @@ sub _get_info_hash {
     foreach my $attrib ( @{ $self->_attrib_list } ) {
         
         # referenced attributes
-        if ($attrib =~ m/^(.*)->(.*)$/){
+        if ( my ( $ref, $name ) = ( $attrib =~ m/^(.*)->(.*)$/ ) ){
             
             my @nodes;
             
             # syntactic relations
-            if ( $1 eq 'parent' ){
+            if ( $ref eq 'parent' ){
                 @nodes =  ( $node->get_parent() );
             }
-            elsif ($1 eq 'children' ){
+            elsif ($ref eq 'children' ){
                 @nodes = $node->get_children( { ordered =>  1 } );
             }
             # referencing values
             else {
                 # find references
-                my @values = Treex::PML::Instance::get_all( $node, $1 );
+                my @values = Treex::PML::Instance::get_all( $node, $ref );
                 my $document = $node->get_document();
                 @nodes = @values ? map { $document->get_node_by_id($_) } grep {$_} @values : ();
                 # sort, if possible 
@@ -86,7 +86,7 @@ sub _get_info_hash {
                 }
             }
             # gather values in referenced nodes
-            $info{$attrib} = join( ' ', map { Treex::PML::Instance::get_all( $_, $2 ) } @nodes );
+            $info{$attrib} = join( ' ', map { Treex::PML::Instance::get_all( $_, $name ) } @nodes );
         }
         # plain attributes
         else {
