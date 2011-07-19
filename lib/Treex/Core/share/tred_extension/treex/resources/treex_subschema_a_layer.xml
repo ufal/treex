@@ -73,7 +73,7 @@
       <member name="coref" type="a_coreference.type"/>
 
       <!-- link to p-layer -->
-      <member name="p-terminal.rf"><cdata format="PMLREF"/></member>
+      <member name="p_terminal.rf"><cdata format="PMLREF"/></member>
 
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
