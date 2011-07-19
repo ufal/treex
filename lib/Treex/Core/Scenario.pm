@@ -219,7 +219,7 @@ sub _load_block {
     }
 
     my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);1';
-    eval $string_to_eval or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n";
+    eval $string_to_eval or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n\nEVAL ERROR:\t$@";
 
     return $new_block;
 }
