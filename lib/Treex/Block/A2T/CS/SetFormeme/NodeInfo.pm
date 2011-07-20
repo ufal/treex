@@ -5,7 +5,7 @@ use Treex::Core::Common;
 
 use CzechMorpho;
 require Treex::Tools::Lexicon::CS;
-require Treex::Block::A2T::CS::FixNumerals;
+require Treex::Tools::Lexicon::CS::Numerals;
 
 
 # The only required input attribute, the rest is (pre-)computed here
@@ -78,22 +78,33 @@ sub _build_case {
     return '';
 }
 
-sub _log_sent {
-    my ( $nodes ) = @_;    
-    
-    my %nodes_map = map { $_->id => 1 } @{ $nodes };    
-    my @nodes = $nodes->[0]->get_root()->get_descendants( { ordered => 1 } );
-    my $str = '';
-    
-    foreach my $node ( @nodes ){
-        $str .= $node->form;
-        if ($nodes_map{$node->id}){
-            $str .= '[' . $node->lemma . ' ' . $node->tag . ']';
-        }
-        $str .= $node->no_space_after() ? '' : ' ';        
-    }
-    return $str;
-}
+## Just for debugging purposes - given some a-nodes, print the whole sentence with lemma and tag of these nodes
+#sub _log_sent {
+#    my ( $nodes ) = @_;    
+#    
+#    my %nodes_map = map { $_->id => 1 } @{ $nodes };    
+#    my @nodes = $nodes->[0]->get_root()->get_descendants( { ordered => 1 } );
+#    my $str = '';
+#    
+#    foreach my $node ( @nodes ){
+#        $str .= $node->form;
+#        if ($nodes_map{$node->id}){
+#            $str .= '[' . $node->lemma . ' ' . $node->tag . ']';
+#        }
+#        $str .= $node->no_space_after() ? '' : ' ';        
+#    }
+#    return $str;
+#}
+#
+## Just for debugging purposes - log applications of preposition correcting rules
+#sub _log_application {
+#    my ( $caption, $case, $word, $prep ) = @_;
+#    
+#    my ($gold_word) = $word->get_aligned_nodes(); $gold_word = $gold_word->[0];
+#    my ($gold_prep) = $prep->get_aligned_nodes(); $gold_prep = $gold_prep->[0];
+#    
+#    log_warn( join("\t", ($caption, $case, $word->tag, $gold_word->tag, $prep->tag, $gold_prep->tag, _log_sent( [ $word, $prep ] ) ) ) );   
+#}
 
 # Try to fix the case indication, if there is a non-congruent numeral and this word is its genitive attribute
 sub _get_fix_numer_case {
@@ -145,11 +156,14 @@ sub _find_noncongruent_numeral {
     return if ( $self->t->is_coap_root() );
     
     my %t_children = map { $a = $_->get_lex_anode; $a->id => $_ if $a } $self->t->get_echildren();
-    my @a_parents = $self->a->get_eparents();
+    my @a_parents = $self->a->get_eparents( { or_topological => 1 } );
 
     foreach my $a_parent (@a_parents){
-        if ($t_children{$a_parent->id} and Treex::Block::A2T::CS::FixNumerals::_is_noncongruent_numeral($t_children{$a_parent->id})){
-            return $a_parent;
+        if ($t_children{$a_parent->id}){
+            my $a_child = $t_children{$a_parent->id}->get_lex_anode();
+            if ( $a_child and Treex::Tools::Lexicon::CS::Numerals::is_noncongr_numeral( $a_child->lemma, $a_child->tag ) ){
+                return $a_parent;
+            }            
         } 
     }
     return;        

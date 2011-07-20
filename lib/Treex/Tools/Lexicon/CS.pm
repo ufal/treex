@@ -160,6 +160,32 @@ sub truncate_lemma {
     return $lemma;
 }
 
+# Given a lemma, this returns all the term types (given name - Y, surname - S, geography - G etc.) this lemma belongs to
+sub get_term_types {
+    
+    my ($lemma) = @_;
+    my $term_types = '';
+    
+    while ( $lemma =~ m/_;([YSEGKRmHULjgcybuwpzo])/g ){
+        $term_types .= $1;
+    }
+    return $term_types;
+}
+
+
+my %IS_TERM_LABEL;
+my @TERM_LABELS = qw(hora kopec městečko město metropole osobnost pan podnik republika řeka ves vesnice vesnička);
+foreach my $lemma (@TERM_LABELS ) {
+    $IS_TERM_LABEL{$lemma} = 1;
+}
+
+# There words can carry a case-congruent ID label which doesn't have to be congruent in number and gender,
+# e.g. "řeka Labe", "ves Štěchovice", "město Praha" etc.
+sub is_term_label {
+    my ($lemma) = @_;
+    return $IS_TERM_LABEL{ truncate_lemma( $lemma, 1 ) };
+}
+
 # Returns true if the given lemma belongs to a modal verb
 sub is_modal_verb {
     my ($lemma) = @_;
@@ -194,6 +220,8 @@ print Treex::Tools::Lexicon::CS::truncate_lemma('jak-1_;L_^(živočich)', 1); # 
 if ( Treex::Tools::Lexicon::CS::is_modal_verb('muset')){
     print "OK\n";
 }
+
+print Treex::Tools::Lexicon::CS::get_term_types('jak-1_;L_^(živočich)'); # prints L
 
 =head1 DESCRIPTION
 
