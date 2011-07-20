@@ -50,6 +50,8 @@ has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { Cz
 
 has 'verbform' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
+has 'syntpos' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
+
 # Detects the case this word is or should be in
 sub _build_case {
 
@@ -69,42 +71,14 @@ sub _build_case {
         if ( $self->fix_numer and $case eq '2' and ( my $numeral = $self->_find_noncongruent_numeral() ) ){
             return $self->_get_fix_numer_case( $numeral );
         }
-        # if the case is not consistent with the preposition, find out which is right, if supposed to
+        # if the case is not consistent with the preposition, return X, if supposed to
         if ( $self->fix_prep and $prepcase ne 'X' and $case ne $prepcase ){            
-            return $self->_get_fix_prep_case( $case, $prepcase );
+            return 'X';
         }
         return $case;
     }
     return '';
 }
-
-## Just for debugging purposes - given some a-nodes, print the whole sentence with lemma and tag of these nodes
-#sub _log_sent {
-#    my ( $nodes ) = @_;    
-#    
-#    my %nodes_map = map { $_->id => 1 } @{ $nodes };    
-#    my @nodes = $nodes->[0]->get_root()->get_descendants( { ordered => 1 } );
-#    my $str = '';
-#    
-#    foreach my $node ( @nodes ){
-#        $str .= $node->form;
-#        if ($nodes_map{$node->id}){
-#            $str .= '[' . $node->lemma . ' ' . $node->tag . ']';
-#        }
-#        $str .= $node->no_space_after() ? '' : ' ';        
-#    }
-#    return $str;
-#}
-#
-## Just for debugging purposes - log applications of preposition correcting rules
-#sub _log_application {
-#    my ( $caption, $case, $word, $prep ) = @_;
-#    
-#    my ($gold_word) = $word->get_aligned_nodes(); $gold_word = $gold_word->[0];
-#    my ($gold_prep) = $prep->get_aligned_nodes(); $gold_prep = $gold_prep->[0];
-#    
-#    log_warn( join("\t", ($caption, $case, $word->tag, $gold_word->tag, $prep->tag, $gold_prep->tag, _log_sent( [ $word, $prep ] ) ) ) );   
-#}
 
 # Try to fix the case indication, if there is a non-congruent numeral and this word is its genitive attribute
 sub _get_fix_numer_case {
@@ -125,29 +99,6 @@ sub _get_fix_numer_case {
     }
 }
 
-
-# Try to correct the case indication if it is not consistent with the preposition 
-sub _get_fix_prep_case {
-    
-    my ( $self, $case, $prepcase ) = @_;
-    
-    my $cases_word = $self->_get_possible_cases( $self->a->form, substr( $self->a->tag, 0, 1 ) );
-    my $cases_prep = $self->_get_possible_cases( $self->_prep_case->{gov_prep}->form, 'R' );
-    
-    # use the preposition's case if it's OK with the word form
-    if ($cases_word->{$prepcase}){
-        return $prepcase;
-    }
-    # use the word's case if it's OK with the preposition
-    if ($cases_prep->{$case}){
-        return $case;
-    }
-    # find common case for word and preposition (first matching), if nothing is found, return 'X'
-    my ($common_case) = grep { $cases_prep->{$_} and $cases_word->{$_} } (1, 2, 3, 4, 5, 6, 7);
-    return $common_case ? $common_case : 'X';     
-}
-
-
 # Find (first) non-congruent numeral that governs this node on the a-layer but is governed by this node on the t-layer
 sub _find_noncongruent_numeral {
 
@@ -167,22 +118,6 @@ sub _find_noncongruent_numeral {
         } 
     }
     return;        
-}
-
-# Return a hash set keys for cases this word form might be in (limit to the given POS)
-sub _get_possible_cases {
-    
-    my ($self, $form, $pos) = @_;
-    my $ret = {};
-    
-    my @analyses = $self->_analyzer->analyze($form);
-
-    foreach my $analysis (@analyses) {
-        if ($analysis->{tag} =~ m/^$pos...([1-7X])/){
-            $ret->{$1} = 1;
-        }        
-    }    
-    return $ret;      
 }
 
 # Detects preposition + governed case / subjunction 
@@ -220,7 +155,6 @@ sub _build__prep_case {
 
         $ret->{prep} = join( '_', @prep_forms );
         $ret->{case} = $gov_case ? $gov_case : 'X';
-        $ret->{gov_prep} = $prep_nodes[$gov_prep];
     }
 
     return $ret;
@@ -254,6 +188,24 @@ sub _build_verbform {
     
     return 'act';
 }
+
+sub _build_syntpos {
+    my ($self) = @_;
+    
+    # skip conjunctions, prepositions, punctuations etc.
+    return '' if ( $self->tag =~ m/^.[%#^,FIRTVXc]/ );
+    # adjectives, adjectival numerals and pronouns
+    return 'adj' if ( $self->tag =~ m/^.[\}=\?48ACDGLOSUadhklnrwyz]/ );
+    # indefinite and negative pronous cannot be disambiguated simply based on POS (the rest are nouns)
+    return 'adj' if ( $self->lemma =~ m/^((pra|ni)?žádný|ničí|nijaký)$/ );    
+    # adverbs, adverbial numerals ("dvakrát" etc.)
+    return 'adv' if ( $self->tag =~ m/^.[\*bgouv]/);
+    # verbs
+    return 'v' if ( $self->tag =~ m/^V/ );
+    # everything else are nouns: POS -- 567EHPNJQYj@X, no POS (possibly -- generated nodes)
+    return 'n';
+}
+
 
 1;
 
