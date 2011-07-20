@@ -54,8 +54,14 @@ sub _add_to_node_list {
 
     my $self = shift;
     my $list = shift;
-    my @prev = $self->_get_node_list($list);
-    $self->_set_node_list( $list, ( @prev, @_ ) );
+    
+    # get the current elements of the list
+    my $cur_ref = $self->get_attr($list);
+    my @cur = $cur_ref ? @{ $cur_ref } : ();
+    # grep only those that aren't already in the list
+    my @new = grep { my $id = $_; !any { $_ eq $id } @cur } map { $_->get_attr('id') } @_;
+    # set the new list value
+    $self->set_attr( $list, [ @cur, @new ] );            
     return;
 }
 

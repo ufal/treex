@@ -29,8 +29,6 @@ sub process_tnode {
 
                 if ( $echild and _is_genitive_attribute($echild) ) {
 
-                    log_warn( 'REHANG: ' . $tparent->get_address() );
-
                     # rehang the other non-member children under the first one
                     my @keep_up = grep { $_ != $echild } @tsiblings;
                     map { $_->set_parent($echild) } @keep_up;
@@ -110,9 +108,8 @@ sub _rehang {
 # Rehang all the aux nodes from one node to the other (check for duplicates)
 sub _rehang_aux_nodes {
     my ( $from, $to ) = @_;
-    my %to_nodes = map { $_->id => 1 } $to->get_aux_anodes();
 
-    $to->add_aux_anodes( grep { !defined $to_nodes{ $_->id } } $from->get_aux_anodes() );
+    $to->add_aux_anodes( $from->get_aux_anodes() );
     $from->set_aux_anodes();
 
     return;
