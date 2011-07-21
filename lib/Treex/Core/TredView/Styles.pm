@@ -19,7 +19,7 @@ has '_colors' => (
 sub _is_coord {
     my ($self, $node) = @_;
     return 0 if $node->get_layer ne 't';
-    return $node->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/;
+    return $node->{functor} and $node->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/;
 }
 
 sub bundle_style {
@@ -83,7 +83,7 @@ sub _tnode_style {
     my $x2 = 'xn-(xn-xp)*'.$k2;
     my $y2 = 'yn-(yn-yp)*'.$k2;
     
-    if (($node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
+    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
         (not $node->is_root and $node->parent->is_root)) {
         $style .= '#{Line-width:1}#{Line-dash:2,4}';
     }
