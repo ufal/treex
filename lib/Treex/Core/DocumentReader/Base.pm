@@ -38,6 +38,12 @@ has zones => (
     default => sub { [] },
 );
 
+has is_one_doc_per_file => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => 1,
+);
+
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
@@ -124,8 +130,7 @@ sub new_document {
 
 sub number_of_documents {
     my $self = shift;
-
-    #TODO is_one_doc_per_file
+    return undef if !$self->is_one_doc_per_file;    
     return $self->_files_per_zone;
 }
 
