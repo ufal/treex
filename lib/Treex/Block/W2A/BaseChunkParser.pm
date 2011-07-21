@@ -39,7 +39,7 @@ sub process_atree {
         # which was left attached to the $a_root.
         my @ch_nodes = grep { $_->parent == $a_root } @$chunk;
         
-        # If this is "parenthesis chunk" (enclosed in round brackets),
+        # If this is a "parenthesis chunk" (enclosed in round brackets),
         # leave the brackets aside to be hanged on the root of the chunk later.
         # (Parsers would mostly guess this right, but not always.)        
         my ( $lrb, $rrb ) = @ch_nodes[ 0, -1 ];
