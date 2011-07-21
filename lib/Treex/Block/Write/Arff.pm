@@ -2,7 +2,7 @@ package Treex::Block::Write::Arff;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tools::IO::Arff;
+use Treex::Tool::IO::Arff;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
@@ -14,7 +14,7 @@ with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
 
-# ARFF data file structure as it's set in Treex::Tools::IO::Arff
+# ARFF data file structure as it's set in Treex::Tool::IO::Arff
 has '_arff' => (
     is         => 'ro',
     builder    => '_init_arff',
@@ -109,7 +109,7 @@ sub _process_tree {
 sub _init_arff {
 
     my ($self) = @_;
-    my $arff = Treex::Tools::IO::Arff->new();
+    my $arff = Treex::Tool::IO::Arff->new();
 
     $arff->relation->{relation_name} = $self->to;
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );

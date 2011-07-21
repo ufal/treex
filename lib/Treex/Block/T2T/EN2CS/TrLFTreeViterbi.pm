@@ -29,8 +29,8 @@ has 'backward_weight' => (
         . ' is set to 1 - BACKWARD_WEIGHT.',
 );
 
-use Treex::Tools::Algorithm::TreeViterbi;
-use Treex::Tools::Lexicon::CS;
+use Treex::Tool::Algorithm::TreeViterbi;
+use Treex::Tool::Lexicon::CS;
 use LanguageModel::TreeLM;
 
 sub BUILD {
@@ -46,7 +46,7 @@ sub process_ttree {
     Treex::Core::Log::progress();
 
     # Do the real work
-    my ($root_state) = Treex::Tools::Algorithm::TreeViterbi::run( $root, \&get_states_of );
+    my ($root_state) = Treex::Tool::Algorithm::TreeViterbi::run( $root, \&get_states_of );
     my @states = @{ $root_state->backpointers };
 
     # Now follow backpointers and fill new lemmas & formemes
@@ -137,7 +137,7 @@ sub is_compatible {
         and $f_v->{formeme} eq "n:poss"
         and (
             $node->get_children
-            or not Treex::Tools::Lexicon::CS::get_poss_adj( $l_v->{t_lemma} )
+            or not Treex::Tool::Lexicon::CS::get_poss_adj( $l_v->{t_lemma} )
             or ( $node->gram_number || "" ) eq "pl"
         )
         )
@@ -165,7 +165,7 @@ sub is_compatible {
 package MyTreeViterbiState;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Tools::Algorithm::TreeViterbiState';
+extends 'Treex::Tool::Algorithm::TreeViterbiState';
 
 use LanguageModel::Lemma;
 

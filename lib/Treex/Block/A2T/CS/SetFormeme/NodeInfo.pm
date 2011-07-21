@@ -4,8 +4,8 @@ use Moose;
 use Treex::Core::Common;
 
 use CzechMorpho;
-require Treex::Tools::Lexicon::CS;
-require Treex::Tools::Lexicon::CS::Numerals;
+require Treex::Tool::Lexicon::CS;
+require Treex::Tool::Lexicon::CS::Numerals;
 
 
 # The only required input attribute, the rest is (pre-)computed here
@@ -38,11 +38,11 @@ has 'prep' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->_pr
 
 has 'is_name_lemma' => ( is => 'ro', isa => 'Bool', lazy_build => 1 );
 
-has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tools::Lexicon::CS::truncate_lemma( $_[0]->lemma, 1 ) } );
+has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::truncate_lemma( $_[0]->lemma, 1 ) } );
 
-has 'term_types' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tools::Lexicon::CS::get_term_types( $_[0]->lemma ) } );
+has 'term_types' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::get_term_types( $_[0]->lemma ) } );
 
-has 'is_term_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { Treex::Tools::Lexicon::CS::is_term_label( $_[0]->lemma ) } );
+has 'is_term_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::is_term_label( $_[0]->lemma ) } );
 
 has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 
@@ -112,7 +112,7 @@ sub _find_noncongruent_numeral {
     foreach my $a_parent (@a_parents){
         if ($t_children{$a_parent->id}){
             my $a_child = $t_children{$a_parent->id}->get_lex_anode();
-            if ( $a_child and Treex::Tools::Lexicon::CS::Numerals::is_noncongr_numeral( $a_child->lemma, $a_child->tag ) ){
+            if ( $a_child and Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $a_child->lemma, $a_child->tag ) ){
                 return $a_parent;
             }            
         } 
@@ -131,7 +131,7 @@ sub _build__prep_case {
     # filter out punctuation, auxiliary / modal verbs and everything what's already contained in the lemma
     my @prep_nodes = grep {
         my $lemma = $_->lemma;
-        $lemma = Treex::Tools::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
+        $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
         $lemma = lc( $_->form ) if $lemma eq 'se';    # way to filter out reflexives
         $_->tag !~ /^[VZ]/ and $self->t_lemma !~ /(^|_)$lemma(_|$)/
     } @{ $self->aux };
@@ -150,7 +150,7 @@ sub _build__prep_case {
         # gather the preposition forms (lemma for the main preposition, to capture vocalic / non-vocalic forms, forms for nouns etc.)
         my @prep_forms = map { lc( $_->form ) } @prep_nodes;
         if ( $gov_prep >= 0 and $gov_prep < @prep_forms and $prep_nodes[$gov_prep]->tag =~ m/^R/ ) {
-            $prep_forms[$gov_prep] = Treex::Tools::Lexicon::CS::truncate_lemma( $prep_nodes[$gov_prep]->lemma, 1 );
+            $prep_forms[$gov_prep] = Treex::Tool::Lexicon::CS::truncate_lemma( $prep_nodes[$gov_prep]->lemma, 1 );
         }
 
         $ret->{prep} = join( '_', @prep_forms );

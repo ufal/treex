@@ -4,16 +4,16 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 #my %segmenter_for = (
-#    universal => Treex::Tools::Segment::RuleBased->new(),
-#    en        => Treex::Tools::Segment::EN::RuleBased->new(),
-#    cs        => Treex::Tools::Segment::CS::RuleBased->new(),
+#    universal => Treex::Tool::Segment::RuleBased->new(),
+#    en        => Treex::Tool::Segment::EN::RuleBased->new(),
+#    cs        => Treex::Tool::Segment::CS::RuleBased->new(),
 #);
 
 # TODO: even more elegant implementation, avoid string eval
 sub _get_segmenter {
     my $lang     = uc shift;
-    my $specific = "Treex::Tools::Segment::${lang}::RuleBased";
-    my $fallback = "Treex::Tools::Segment::RuleBased";
+    my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
+    my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
         my $segmenter = eval "use $class; $class->new()";
         return $segmenter if $segmenter;

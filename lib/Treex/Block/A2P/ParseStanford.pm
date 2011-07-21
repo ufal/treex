@@ -7,11 +7,11 @@ has '+language' => ( required => 1 );
 
 has _parser     => ( is       => 'rw', required => 1, default => 'en');
 
-use Treex::Tools::PhraseParser::Stanford;
+use Treex::Tool::PhraseParser::Stanford;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Treex::Tools::PhraseParser::Stanford->new( { language => $self->language } ) );
+    $self->_set_parser( Treex::Tool::PhraseParser::Stanford->new( { language => $self->language } ) );
     return;
 }
 

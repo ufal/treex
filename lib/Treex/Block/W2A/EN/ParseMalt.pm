@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::BaseChunkParser';
 
-use Treex::Tools::Parser::Malt;
+use Treex::Tool::Parser::Malt;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'en_nivreeager.mco' );
 
@@ -12,7 +12,7 @@ my $parser;
 sub BUILD {
     my ($self) = @_;
     if (!$parser) {
-        $parser = Treex::Tools::Parser::Malt->new( { model => $self->model } );
+        $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
     }
     return;
 }

@@ -3,17 +3,17 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Phrase2Dep::Pennconverter;
+use Treex::Tool::Phrase2Dep::Pennconverter;
 
 has '+language' => ( required => 1 );
 has _tool => (
     is  => 'rw',
-    isa => 'Treex::Tools::Phrase2Dep::Pennconverter',
+    isa => 'Treex::Tool::Phrase2Dep::Pennconverter',
 );
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-    $self->_set_tool( Treex::Tools::Phrase2Dep::Pennconverter->new($arg_ref) );
+    $self->_set_tool( Treex::Tool::Phrase2Dep::Pennconverter->new($arg_ref) );
     return;
 }
 

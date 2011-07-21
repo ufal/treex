@@ -23,7 +23,7 @@ use TranslationModel::Derivative::EN2CS::Transliterate;
 use TranslationModel::Combined::Backoff;
 use TranslationModel::Combined::Interpolated;
 
-use Treex::Tools::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
+use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
 my $MODEL_MAXENT = 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.gz';
 my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.gz';
@@ -106,7 +106,7 @@ sub process_tnode {
 
         @translations = grep {
             not($_->{label} =~ /(.+)#A/
-                and Treex::Tools::Lexicon::CS::get_poss_adj($1)
+                and Treex::Tool::Lexicon::CS::get_poss_adj($1)
                 )
         } @translations;
 

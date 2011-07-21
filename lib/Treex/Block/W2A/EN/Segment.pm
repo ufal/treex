@@ -10,11 +10,11 @@ has segmenter => (
     lazy_build => 1,
 );
 
-use Treex::Tools::Segment::EN::RuleBased;
+use Treex::Tool::Segment::EN::RuleBased;
 
 sub _build_segmenter {
     my $self = shift;
-    return Treex::Tools::Segment::EN::RuleBased->new(
+    return Treex::Tool::Segment::EN::RuleBased->new(
         use_paragraphs => $self->use_paragraphs,
         use_lines      => $self->use_lines
     );

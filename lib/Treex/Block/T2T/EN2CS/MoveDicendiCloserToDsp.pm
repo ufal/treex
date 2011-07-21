@@ -4,11 +4,11 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::CS;
+use Treex::Tool::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    return if !Treex::Tools::Lexicon::CS::is_dicendi_verb( $t_node->t_lemma );
+    return if !Treex::Tool::Lexicon::CS::is_dicendi_verb( $t_node->t_lemma );
     my @children = $t_node->get_children( { ordered => 1 } );
 
     my ($speech_root) = reverse grep { $_->formeme eq 'v:fin' } @children;

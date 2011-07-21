@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::BaseChunkParser';
 
-use Treex::Tools::Parser::MST;
+use Treex::Tool::Parser::MST;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'conll_mcd_order2_0.01.model' );
 my $parser;
@@ -28,7 +28,7 @@ sub BUILD {
     my $model_path = $model_dir . '/' . $self->model;
 
     if ( !$parser ) {
-        $parser = Treex::Tools::Parser::MST->new(
+        $parser = Treex::Tool::Parser::MST->new(
             {   model      => $model_path,
                 memory     => $model_memory,
                 order      => 2,

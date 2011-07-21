@@ -11,8 +11,8 @@ has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 use LanguageModel::MorphoLM;
 my $morphoLM = LanguageModel::MorphoLM->new();
 
-use Treex::Tools::Lexicon::Generation::CS;
-my $generator = Treex::Tools::Lexicon::Generation::CS->new();
+use Treex::Tool::Lexicon::Generation::CS;
+my $generator = Treex::Tool::Lexicon::Generation::CS->new();
 
 # this sub is to be to be redefined in child module
 sub fix {

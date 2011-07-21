@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::CS::Aspect;
+use Treex::Tool::Lexicon::CS::Aspect;
 
 Readonly my %IS_PHASE_VERB => (
     'začít' => 1, 'začínat' => 1, 'přestat' => 1, 'přestávat' => 1,
@@ -35,7 +35,7 @@ sub process_tnode {
 
 sub is_aspect_ok {
     my ( $self, $cs_lemma, $node ) = @_;
-    my $aspect = Treex::Tools::Lexicon::CS::Aspect::get_verb_aspect($cs_lemma);
+    my $aspect = Treex::Tool::Lexicon::CS::Aspect::get_verb_aspect($cs_lemma);
     return 1 if $aspect ne 'P';
 
     # Following combinations are uncompatible with perfective aspect

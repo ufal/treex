@@ -18,8 +18,8 @@ sub BUILD {
     my $module = $self->module;
     eval "use $module;1" or log_fatal "Can't use $module";
     my $parser = eval "$module->new(\$arg_ref);" or log_fatal "Can't load $module";
-    if (!$parser->does('Treex::Tools::Parser::Role')){
-        log_fatal "$module does not implement Treex::Tools::Parser::Role";
+    if (!$parser->does('Treex::Tool::Parser::Role')){
+        log_fatal "$module does not implement Treex::Tool::Parser::Role";
     }
     $self->_set_parser($parser);
     return;
@@ -54,12 +54,12 @@ Treex::Block::W2A::ParseUniversal
 =head1 SYNOPSIS
 
   # in scenario 
-  W2A::ParseUniversal module=Treex::Tools::Parser::NameOfMyParser
+  W2A::ParseUniversal module=Treex::Tool::Parser::NameOfMyParser
   
   # from command line 
   echo "Hello there" | treex -Len Read::Sentences W2A::Tokenize \
-   W2A::TaggerUniversal module=Treex::Tools::Tagger::Simple::XY \
-   W2A::ParseUniversal module=Treex::Tools::Parser::Simple::XY \
+   W2A::TaggerUniversal module=Treex::Tool::Tagger::Simple::XY \
+   W2A::ParseUniversal module=Treex::Tool::Parser::Simple::XY \
    Util::Eval anode='print $anode->form. "/" . $anode->parent->ord . "\n"'
 
 =head1 COPYRIGHT AND LICENCE

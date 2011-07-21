@@ -3,9 +3,9 @@ package Treex::Block::A2T::CS::SetFunctors;
 use Moose;
 use Treex::Core::Common;
 use Treex::Block::Write::ConllLike;
-use Treex::Tools::IO::Arff;
+use Treex::Tool::IO::Arff;
 use autodie;
-use Treex::Tools::ML::MLProcess;
+use Treex::Tool::ML::MLProcess;
 
 extends 'Treex::Core::Block';
 
@@ -36,7 +36,7 @@ override 'get_required_share_files' => sub {
 override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
-    my $mlprocess = Treex::Tools::ML::MLProcess->new( plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template );
+    my $mlprocess = Treex::Tool::ML::MLProcess->new( plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template );
 
     my $temp_conll = $mlprocess->create_temp_file();
     my $out        = $mlprocess->create_temp_file();
@@ -90,7 +90,7 @@ sub process_ttree {
 sub _load_functors {
 
     my ( $self, $arff_file, $max_sents ) = @_;
-    my $loader = Treex::Tools::IO::Arff->new();
+    my $loader = Treex::Tool::IO::Arff->new();
     my $data   = $loader->load_arff( $arff_file->filename );
 
     my $sentence;

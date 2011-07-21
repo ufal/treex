@@ -4,7 +4,7 @@ use Treex::Core::Common;
 use Treex::Core::Config;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Tagger::TreeTagger;
+use Treex::Tool::Tagger::TreeTagger;
 
 has model => ( isa => 'Str', is => 'ro', lazy_build => 1 );
 has _tagger => ( is => 'ro', lazy_build => 1 );
@@ -20,7 +20,7 @@ sub _build_model {
 
 sub _build__tagger {
     my ($self) = @_;
-    return Treex::Tools::Tagger::TreeTagger->new( { model => $self->model } );
+    return Treex::Tool::Tagger::TreeTagger->new( { model => $self->model } );
 }
 
 sub BUILD {

@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Parser::MST;
+use Treex::Tool::Parser::MST;
 
 has model_dir => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_parser/cs" );
 has model     => ( is => 'ro', isa => 'Str', default => 'pdt2_non-proj_ord2_0.05.model' );
@@ -12,7 +12,7 @@ my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    $parser = Treex::Tools::Parser::MST->new(
+    $parser = Treex::Tool::Parser::MST->new(
         {
             model      => $self->model_dir . '/' . $self->model,
             decodetype => 'non-proj',

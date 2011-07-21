@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::CS;
+use Treex::Tool::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
@@ -19,7 +19,7 @@ sub process_tnode {
 
         #            print "noun: $noun_lemma\n";
 
-        my $adj_lemma = Treex::Tools::Lexicon::CS::get_poss_adj($noun_lemma);
+        my $adj_lemma = Treex::Tool::Lexicon::CS::get_poss_adj($noun_lemma);
         $a_node->set_lemma($adj_lemma);
         $a_node->set_attr( 'morphcat/subpos', '.' );
         $a_node->set_attr( 'morphcat/pos',    'A' );

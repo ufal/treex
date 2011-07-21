@@ -272,7 +272,7 @@ sub _load_lexicon {
 
     my ($self) = @_;
 
-    my $lexicon = 'Treex::Tools::Lexicon::' . uc( $self->language );
+    my $lexicon = 'Treex::Tool::Lexicon::' . uc( $self->language );
     ( my $file = $lexicon ) =~ s|::|/|g;
     require $file . '.pm';
     return $lexicon;

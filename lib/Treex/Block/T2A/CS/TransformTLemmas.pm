@@ -2,7 +2,7 @@ package Treex::Block::T2A::CS::TransformTLemmas;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tools::FSM::Foma;
+use Treex::Tool::FSM::Foma;
 
 extends 'Treex::Core::Block';
 
@@ -14,7 +14,7 @@ sub _init_foma {
 
     my $dir = __FILE__;
     $dir =~ s/\/[^\/]*$//;
-    my $foma = Treex::Tools::FSM::Foma->new( work_dir => $dir, grammar => 'TLemmas.xfst' );
+    my $foma = Treex::Tool::FSM::Foma->new( work_dir => $dir, grammar => 'TLemmas.xfst' );
     return $foma;
 }
 

@@ -1,8 +1,8 @@
 package Treex::Block::A2T::CS::FixNumerals;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tools::Lexicon::CS;
-use Treex::Tools::Lexicon::CS::Numerals;
+use Treex::Tool::Lexicon::CS;
+use Treex::Tool::Lexicon::CS::Numerals;
 
 extends 'Treex::Core::Block';
 
@@ -11,7 +11,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
     my $anode = $tnode->get_lex_anode;
 
-    if ( $anode and Treex::Tools::Lexicon::CS::Numerals::is_noncongr_numeral( $anode->lemma, $anode->tag ) ) {
+    if ( $anode and Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $anode->lemma, $anode->tag ) ) {
 
         # more coordinated numerals (all members of a coordination)
         if ( $tnode->is_member ) {
@@ -20,7 +20,7 @@ sub process_tnode {
             my @tmembers = $tnode->get_parent->get_coap_members();
             my @amembers = map { $_->get_lex_anode } @tmembers;
 
-            if ( ( grep { Treex::Tools::Lexicon::CS::Numerals::is_noncongr_numeral( $_->lemma, $_->tag ) } @amembers ) > 1 ) {
+            if ( ( grep { Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $_->lemma, $_->tag ) } @amembers ) > 1 ) {
                                 
                 my @tsiblings = grep { !$_->is_member() } $tparent->get_children();
 
@@ -86,7 +86,7 @@ sub _is_pure_genitive {
     return 0 if ( $anode->tag !~ m/^....[2X]/ );
 
     my @auxs = grep {
-        my $lemma = Treex::Tools::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
+        my $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
         $_->tag !~ /^[VZ]/ and $tlemma !~ /(^|_)$lemma(_|$)/
     } $tnode->get_aux_anodes();
 

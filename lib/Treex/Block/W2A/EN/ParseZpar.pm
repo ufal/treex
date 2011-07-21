@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::BaseChunkParser';
 
-use Treex::Tools::Parser::Zpar;
+use Treex::Tool::Parser::Zpar;
 
 has model     => ( is => 'ro', isa => 'Str',  default => 'en' );
 has fill_tags => ( is => 'ro', isa => 'Bool', default => 0 );
@@ -14,7 +14,7 @@ my $parser;
 sub BUILD {
     my ($self) = @_;
     if ( !$parser ) {
-        $parser = Treex::Tools::Parser::Zpar->new( { model => $self->model } );
+        $parser = Treex::Tool::Parser::Zpar->new( { model => $self->model } );
     }
     return;
 }

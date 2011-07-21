@@ -7,11 +7,11 @@ has '+language' => ( required => 1 );
 
 has _parser     => ( is       => 'rw', required => 1, default => 'en');
 
-use Treex::Tools::PhraseParser::Charniak;
+use Treex::Tool::PhraseParser::Charniak;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Treex::Tools::PhraseParser::Charniak->new( { language => $self->language } ) );
+    $self->_set_parser( Treex::Tool::PhraseParser::Charniak->new( { language => $self->language } ) );
     return;
 }
 

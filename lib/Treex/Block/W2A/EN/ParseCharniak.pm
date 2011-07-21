@@ -6,8 +6,8 @@ use warnings;
 
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
-use Treex::Tools::Parser::Charniak::Charniak;
-use Treex::Tools::Parser::Charniak::Node;
+use Treex::Tool::Parser::Charniak::Charniak;
+use Treex::Tool::Parser::Charniak::Node;
 use Treex::Core::Node::P;
 use Clone;
 use Moose;
@@ -82,11 +82,11 @@ my @words = split (" ", $s);
 $sentences[$sentence_counter]=$string_to_parse;
 $sentence_counter++;
 	}
-	#$parser =Treex::Tools::Parser::Charniak::Charniak->new();
+	#$parser =Treex::Tool::Parser::Charniak::Charniak->new();
 # 	
 # 
 # my $tree_root =	$parser->parse(@words);
-$parser =Treex::Tools::Parser::Charniak::Charniak->new();
+$parser =Treex::Tool::Parser::Charniak::Charniak->new();
 my @tree_roots =	$parser->parse_document(@sentences);
 # 
 # my @root_children = @{$tree_root->children};
@@ -108,7 +108,7 @@ sub write_branch{
  
 
  while(scalar(@processing_nodes>0)){
- my Treex::Tools::Parser::Charniak::Node($node) = shift(@processing_nodes);
+ my Treex::Tool::Parser::Charniak::Node($node) = shift(@processing_nodes);
  $current_node=shift(@structure_nodes);
 
  my @node_children = @{$node->children};

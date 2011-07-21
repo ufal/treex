@@ -10,7 +10,7 @@ has 'ignore_negation' => (
     documentation => 'Do not try to fix cases like "ill"=>"mocný", "dangerous"=>"bezpečný".',
 );
 
-use Treex::Tools::Lexicon::CS;
+use Treex::Tool::Lexicon::CS;
 
 my $F1_FN = 'data/models/grammateme_transfer/en2cs/more_frequent_number_below_gov_noun.tsv';
 my $F2_FN = 'data/models/grammateme_transfer/en2cs/more_frequent_number_for_noun_below_noun.tsv';
@@ -151,7 +151,7 @@ sub process_tnode {
         if ( $prob_sg_given_lemma{$cs_tlemma} > 0.98 ) {
 
             # However, don't force singular for nodes modified by numeral > 1
-            if ( !grep { ( Treex::Tools::Lexicon::CS::number_for( $_->t_lemma ) || 0 ) > 1 } $cs_t_node->get_children() ) {
+            if ( !grep { ( Treex::Tool::Lexicon::CS::number_for( $_->t_lemma ) || 0 ) > 1 } $cs_t_node->get_children() ) {
                 $cs_t_node->set_gram_number('sg');
             }
         }
@@ -248,7 +248,7 @@ sub process_tnode {
     }
 
     # pluralia tantum - podstatna jmena pomnozna (chovaji se jako plural)
-    if ( Treex::Tools::Lexicon::CS::is_plural_tantum( lc $cs_tlemma ) ) {
+    if ( Treex::Tool::Lexicon::CS::is_plural_tantum( lc $cs_tlemma ) ) {
         $cs_t_node->set_gram_number('pl');
     }
 

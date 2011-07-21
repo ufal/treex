@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::EN;
+use Treex::Tool::Lexicon::EN;
 
 Readonly my $DEBUG => 0;
 
@@ -129,7 +129,7 @@ sub _noun {
 sub _has_numeral_child_needed_for_plural {
     my ($tnode) = @_;
     return any {
-        ( Treex::Tools::Lexicon::EN::number_for( $_->t_lemma ) || 0 ) > 1;
+        ( Treex::Tool::Lexicon::EN::number_for( $_->t_lemma ) || 0 ) > 1;
     }
     $tnode->get_children();
 }

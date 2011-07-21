@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::CS;
+use Treex::Tool::Lexicon::CS;
 use File::Spec;
 
 # supporting auto-download of required data-files
@@ -15,14 +15,14 @@ sub get_required_share_files {
 
 #use Smart::Comments;
 
-use Treex::Tools::Lexicon::Generation::CS;
+use Treex::Tool::Lexicon::Generation::CS;
 use LanguageModel::MorphoLM;
 
 my ( $morphoLM, $generator );
 
 sub BUILD {
     $morphoLM  = LanguageModel::MorphoLM->new();
-    $generator = Treex::Tools::Lexicon::Generation::CS->new();
+    $generator = Treex::Tool::Lexicon::Generation::CS->new();
 }
 
 my $DEBUG = 0;
@@ -64,7 +64,7 @@ sub _generate_word_form {
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
     return 'sta' if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
-                my $number = Treex::Tools::Lexicon::CS::number_for( $_->lemma );
+                my $number = Treex::Tool::Lexicon::CS::number_for( $_->lemma );
                 defined $number && $number > 2;
         }
         $a_node->get_children();

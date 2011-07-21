@@ -3,13 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::CS::Aspect;
+use Treex::Tool::Lexicon::CS::Aspect;
 
 my %TECTO_ASPECT_OF = ( 'P' => 'cpl', 'I' => 'proc', 'B' => 'proc' );    # obouvidova pokladam za nedokonava
 
 sub get_verb_aspect {
     my $lemma = shift;
-    return $TECTO_ASPECT_OF{ Treex::Tools::Lexicon::CS::Aspect::get_verb_aspect($lemma) };
+    return $TECTO_ASPECT_OF{ Treex::Tool::Lexicon::CS::Aspect::get_verb_aspect($lemma) };
 }
 
 sub process_tnode {

@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tools::Lexicon::Derivations::CS;
+use Treex::Tool::Lexicon::Derivations::CS;
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -17,11 +17,11 @@ sub process_tnode {
 
         my ( $short_verb_lemma, $suffix ) = split /_/, $tnode->t_lemma;
 
-        my ($adj_lemma) = map { Treex::Tools::Lexicon::Derivations::CS::verb2activeadj($_) }
+        my ($adj_lemma) = map { Treex::Tool::Lexicon::Derivations::CS::verb2activeadj($_) }
             (
             $short_verb_lemma,
-            Treex::Tools::Lexicon::Derivations::CS::perf2imperf($short_verb_lemma),
-            Treex::Tools::Lexicon::Derivations::CS::imperf2perf($short_verb_lemma),
+            Treex::Tool::Lexicon::Derivations::CS::perf2imperf($short_verb_lemma),
+            Treex::Tool::Lexicon::Derivations::CS::imperf2perf($short_verb_lemma),
             );
 
         if ($adj_lemma) {
