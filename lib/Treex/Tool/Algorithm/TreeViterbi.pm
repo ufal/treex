@@ -165,7 +165,7 @@ state of the node C<Nc_i> (where C<i=1,...,x>).
 
 =over
 
-=item L<Treex::Tool::Algorithm::TreeViterbiState|Treex::Tools::Algorithm::TreeViterbiState> utility base class of (hidden) states
+=item L<Treex::Tool::Algorithm::TreeViterbiState|Treex::Tool::Algorithm::TreeViterbiState> utility base class of (hidden) states
 
 =item L<Treex::Block::T2T::EN2CS::TrLFTreeViterbi|Treex::Block::T2T::EN2CS::TrLFTreeViterbi> for an example of usage
 
