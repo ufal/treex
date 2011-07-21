@@ -1,7 +1,6 @@
 package Treex::Tool::Lexicon::EN;
-
-use strict;
-use warnings;
+use Treex::Core::Common;
+use autodie;
 use utf8;
 
 my @DICENDI_VERBS =
@@ -15,7 +14,7 @@ foreach my $lemma (@DICENDI_VERBS) {
 
 sub is_dicendi_verb {
     my ($t_lemma) = @_;
-    Report::fatal('uninitialized t_lemma in Treex::Tool::Lexicon::EN::is_dicendi_verb') if !defined $t_lemma;
+    log_fatal('uninitialized t_lemma in Treex::Tool::Lexicon::EN::is_dicendi_verb') if !defined $t_lemma;
     return $IS_DICENDI_VERB{$t_lemma};
 }
 
@@ -46,12 +45,13 @@ sub number_of_month {
 }
 
 my %personal_role;
-my $persrole_filename = $ENV{TMT_ROOT} . "/treex/lib/Treex/Tools/Lexicon/english_personal_roles.txt";    # !!! detekci adresare udelat poradne
-open P, "<:utf8", $persrole_filename or Report::fatal $!;
-while (<P>) {
+my $persrole_filename = $ENV{TMT_ROOT} . "/treex/lib/Treex/Tool/Lexicon/english_personal_roles.txt";    # !!! detekci adresare udelat poradne
+open my $P, "<:utf8", $persrole_filename;
+while (<$P>) {
     chomp;
     $personal_role{$_} = 1;
 }
+close($P);
 
 sub is_personal_role {
     my ($lemma) = @_;
