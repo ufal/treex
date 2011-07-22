@@ -1,7 +1,7 @@
 package Treex::Tool::ATreeTransformer::DepReverser;
 
 use Moose;
-use Treex::Core;
+use Treex::Core::Log;
 
 has nodes_to_reverse => (
     is => 'rw',
@@ -25,24 +25,13 @@ has move_with_parent => (
 );
 
 
-sub _expand_coap {
-    my ($self, $node) = @_;
-
-    if ($node->afun =~ /(Coord|Apos)/) {
-        return ( map {$self->_expand_coap($_)} grep {$_->is_member} $node->get_children);
-    }
-    else {
-        return ($node);
-    }
-}
-
 sub _reverse_nodes {
     my ($self, $child, $parent) = @_;
 
     $child->set_parent($parent->get_parent);
 
-    my @move_below_original_parent = grep {!&$self->move_with_child($_)} $child->get_children;
-    my @move_below_original_child = grep {!&$self->move_with_parent($_)} $parent->get_children;
+    my @move_below_original_parent = grep {!&{$self->move_with_child}($_)} $child->get_children;
+    my @move_below_original_child = grep {!&{$self->move_with_parent}($_)} $parent->get_children;
 
     $parent->set_parent($child);
 
@@ -53,6 +42,9 @@ sub _reverse_nodes {
     foreach my $node (@move_below_original_parent) {
         $node->set_parent($parent);
     }
+
+    $child->set_is_member($parent->is_member);
+    $parent->set_is_member(undef); # the original child's is_member is never true
 }
 
 sub apply_on_tree {
@@ -67,15 +59,15 @@ sub apply_on_tree {
 
         my $parent = $child->get_parent;
 
-        my @expanded_children = $self->_expand_coap($child);
-        my @expanded_parents = $self->_expand_coap($parent);
+        my @expanded_children = $child->get_coap_members;
+        my @expanded_parents = $parent->get_coap_members;
 
-        my ($pairs, $pairs_to_swap);
+        my ($pairs, $pairs_to_swap) = (0,0);
 
         foreach my $expanded_child (@expanded_children) {
             foreach my $expanded_parent (@expanded_parents) {
                 $pairs++;
-                if (&$self->nodes_to_reverse($expanded_child, $expanded_parent)) {
+                if (&{$self->nodes_to_reverse}($expanded_child, $expanded_parent)) {
                     $pairs_to_swap++
                 }
             }
@@ -96,13 +88,13 @@ sub apply_on_tree {
             else {
                 $node_to_swap{$child} = 1;
                 $node_to_swap{$parent} = 1;
-                push @pairs_to_swap, { child => $child, parent => $parent };
+                push @pairs_to_swap, [ $child, $parent ];
             }
         }
     }
 
     foreach my $pair (@pairs_to_swap) {
-        $self->_reverse_nodes($pair->child, $pair->parent);
+        $self->_reverse_nodes(@$pair);
     }
 
 }
