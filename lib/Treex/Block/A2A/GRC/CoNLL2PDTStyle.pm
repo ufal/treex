@@ -1,4 +1,4 @@
-package Treex::Block::A2A::EL::CoNLL2PDTStyle;
+package Treex::Block::A2A::GRC::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -6,7 +6,7 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 
 #------------------------------------------------------------------------------
-# Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Ancient Greek CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
@@ -39,46 +39,54 @@ sub deprel_to_afun
         }
 
         # Remove all contents after first underscore
-        $afun =~ s/^([A-Z]+)(_.+)$/$1/;
+        if ($afun =~ /^(([A-Za-z]+)(_AP)(_.+)?)$/) {
+            $afun =~ s/^([A-Za-z]+)(_AP)(_.+)?$/$1_Ap/;
+            $afun =~ s/^ExD_Ap/ExD/;
+        }
+        else {
+            $afun =~ s/^([A-Za-z]+)(_.+)$/$1/;            
+        }
         
         #
-        if ($deprel eq "ADV") {
+        if ($deprel =~  /^ADV/) {
             $afun = "Adv";
         }
-        elsif ($deprel eq "APOS") {
+        elsif ($deprel =~  /^APOS/) {
             $afun = "Apos";
         }
-        elsif ($deprel eq "ATR") {
+        elsif ($deprel =~  /^ATR/) {
             $afun = "Atr";
         }
-        elsif ($deprel eq "ATV") {
+        elsif ($deprel =~  /^ATV/) {
             $afun = "Atv";
         }
-        elsif ($deprel eq "COORD") {
+        elsif ($deprel =~  /^AtvV/) {
+            $afun = "AtvV";
+        }
+        elsif ($deprel =~  /^COORD/) {
             $afun = "Coord";
         }
-        elsif ($deprel eq "OBJ") {
+        elsif ($deprel =~  /^OBJ/) {
             $afun = "Obj";
         }        
-        elsif ($deprel eq "OCOMP") {
+        elsif ($deprel =~  /^OCOMP/) {
             $afun = "Obj";
         }
-        elsif ($deprel eq "PNOM") {
+        elsif ($deprel =~  /^PNOM/) {
             $afun = "Pnom";
         }
-        elsif ($deprel eq "PRED") {
+        elsif ($deprel =~  /^PRED/) {
             $afun = "Pred";
         }
-        elsif ($deprel eq "SBJ") {
+        elsif ($deprel =~  /^SBJ/) {
             $afun = "Sb";
         }
         elsif ($deprel =~ /^(UNDEFINED|XSEG|_ExD0_PRED)$/) {
             $afun = "Atr";            
         }
-        else {
-            $afun = "Sb";            
+        elsif ($deprel =~ /^AuxP-CYCLE/) {
+            $afun = "AuxP";  
         }
-
         $node->set_afun($afun);
     }
 }
@@ -89,9 +97,11 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::EL::CoNLL2PDTStyle
+=item Treex::Block::A2A::GRC::CoNLL2PDTStyle
 
-Converts Modern Greek dependency treebank into PDT style treebank.
+Converts Ancient Greek dependency treebank into PDT style treebank. Most of the
+deprel tags follows PDT convention, but they are very elaborated, and has been
+shortened.
 
 1. Morphological conversion             -> No
 

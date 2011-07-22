@@ -144,6 +144,10 @@ sub deprel_to_afun
         elsif ($deprel eq "lwg__neg"){
             $afun = 'Adv';
         }
+        elsif ($deprel eq "lwg__psp"){
+            $afun = 'Adv';
+        }
+        
       
         $node->set_afun($afun);
     }
