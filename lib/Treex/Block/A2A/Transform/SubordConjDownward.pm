@@ -12,11 +12,11 @@ sub BUILD {
         Treex::Tool::ATreeTransformer::DepReverser->new({
             nodes_to_reverse => sub {
                 my ($child,$parent) = @_;
-                return ($parent->afun eq 'AuxC' and $child->afun ne 'AuxC');
+                return ($parent->afun eq 'AuxC');
             },
             move_with_parent => sub {
                 my ($node) = @_;
-                return $node->afun eq 'AuxC';
+                return $node->afun eq 'AuxY';
             },
             move_with_child => sub { 1 },
         })
