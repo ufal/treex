@@ -19,6 +19,7 @@
       <!-- Should the sentence be parsed once again?
            This is useful when tags has been fixed (with the knowledge of the parse). Popel 23.5.2009 -->
       <member name="reparse" type="bool.type"/>
+      <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 
@@ -86,6 +87,8 @@
       <member name="align"><cdata format="PMLREF"/></member>
       <member name="chunks"><list ordered="0"><cdata format="any"/></list>
       </member>  
+
+      <member name="wild_dump"><cdata format="any"/></member>
 
     </structure>
   </type>

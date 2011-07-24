@@ -11,6 +11,7 @@
       <member name="children" role="#CHILDNODES">
         <list type="n-node.type" ordered="1"/>
       </member>
+      <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 
@@ -28,6 +29,7 @@
       <member name="children" role="#CHILDNODES">
         <list type="n-node.type" ordered="1"/>
       </member>
+      <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 

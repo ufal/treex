@@ -23,6 +23,7 @@
         <element name="terminal" type="p-terminal.type"/>
       </sequence>
     </member>
+    <member name="wild_dump"><cdata format="any"/></member>
    </structure>
   </type>
 
@@ -39,6 +40,7 @@
         <member name="tag" type="p-postag.type"/>
 		<member name="bbn_tag" type="bbn_tag.type" />
 <!--        <member name="m.rf" role="#KNIT" type="m-node.type"/> -->
+        <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 

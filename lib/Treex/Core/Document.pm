@@ -10,6 +10,8 @@ use Treex::PML;
 Treex::PML::UseBackends('PMLBackend');
 Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir() );
 
+with 'Treex::Core::WildAttr';
+
 use Scalar::Util qw( weaken );
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
@@ -25,7 +27,7 @@ has _pmldoc => (
     handles  => {
         set_filename => 'changeFilename',
         map { $_ => $_ }
-            qw( load clone save writeFile writeTo filename URL
+            qw( clone writeFile writeTo filename URL
             changeFilename changeURL fileFormat changeFileFormat
             backend changeBackend encoding changeEncoding userData
             changeUserData metaData changeMetaData listMetaData
@@ -121,13 +123,27 @@ sub BUILD {
         }
         $self->_rebless_and_index();
     }
+
+    $self->deserialize_wild;
+    foreach my $bundle ($self->get_bundles) {
+        $bundle->deserialize_wild;
+        foreach my $bundlezone ($bundle->get_all_zones) {
+            foreach my $node (map {$_->get_descendants({add_self=>1})} $bundlezone->get_all_trees) {
+                $node->deserialize_wild;
+            }
+        }
+    }
+
     return;
 }
+
+
 
 sub _rebless_and_index {
     my $self = shift;
     foreach my $bundle ( $self->get_bundles ) {
         bless $bundle, 'Treex::Core::Bundle';
+
         $bundle->_set_document($self);
 
         if ( defined $bundle->{zones} ) {
@@ -362,6 +378,32 @@ sub get_or_create_zone {
     }
     return $fs_zone;
 }
+
+# -------------- LOADING AND SAVING ---------------------------------------
+
+sub load {
+    my $self = shift;
+    $self->_pmldoc->load(@_);
+    # TODO: this is unfinished: should be somehow connected with the code in BUILD
+}
+
+sub save {
+    my $self = shift;
+
+    # the following para should be some
+    $self->serialize_wild;
+    foreach my $bundle ($self->get_bundles) {
+        $bundle->serialize_wild;
+        foreach my $bundlezone ($bundle->get_all_zones) {
+            foreach my $node (map {$_->get_descendants({add_self=>1})} $bundlezone->get_all_trees) {
+                $node->serialize_wild;
+            }
+        }
+    }
+
+    $self->_pmldoc->save(@_);
+}
+
 
 __PACKAGE__->meta->make_immutable;
 

@@ -6,6 +6,7 @@ use Cwd;
 use Treex::PML;
 
 extends 'Treex::PML::Node';
+with 'Treex::Core::WildAttr';
 
 Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
 my $CHECK_FOR_CYCLES = 1;

@@ -42,6 +42,8 @@
            <element name="zone" type="language_parametrized_doc_zone.type"/>
          </sequence>
        </member>
+
+       <member name="wild_dump"><cdata format="any"/></member>
        
     </structure>
   </type>
@@ -100,6 +102,8 @@
        			<member name="local_timezone"><cdata format="any"/></member>
        		</structure>
        </member>
+
+       <member name="wild_dump"><cdata format="any"/></member>
 
     </structure>
   </type>

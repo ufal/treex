@@ -36,6 +36,7 @@
       <member name="pcedt_coref" type="t-pcedt_coref-root.type" />
       <member name="subtree_scores"  type="subtree_scores.type"/>
       <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
+      <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 
@@ -176,6 +177,8 @@
         <!-- There is (or should be for other languages) API in Treex for converting numerals to numbers and vice-versa -->
         <!-- t_lemma == 'dva' => numeric_t_lemma == '2' (ptacek 1.6.2010)-->
         <!-- <member name="numeric_t_lemma"><cdata format="any"/></member>-->
+
+        <member name="wild_dump"><cdata format="any"/></member>
     </structure>
   </type>
 

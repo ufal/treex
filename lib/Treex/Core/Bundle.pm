@@ -5,6 +5,7 @@ use Treex::Core::Common;
 use MooseX::NonMoose;
 
 extends 'Treex::PML::Node';
+with 'Treex::Core::WildAttr';
 
 has document => (
     is       => 'ro',
@@ -105,7 +106,12 @@ sub get_all_zones {
     if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
-    return map { $_->value() } $self->{zones}->elements;
+    if ($self->{zones}) {
+        return map { $_->value() } $self->{zones}->elements;
+    }
+    else {
+        return ();
+    }
 }
 
 # --------- ACCESS TO TREES ------------
