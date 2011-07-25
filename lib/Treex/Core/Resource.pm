@@ -1,4 +1,6 @@
 package Treex::Core::Resource;
+use strict;
+use warnings;
 
 #use Moose;
 #use Treex::Core::Common;
@@ -6,6 +8,10 @@ use LWP::Simple;
 use File::Path;
 use Treex::Core::Log;
 use Treex::Core::Config;
+
+use Exporter 'import';
+use vars qw(@EXPORT_OK);
+@EXPORT_OK = qw(require_file_from_share);
 
 sub require_file_from_share {
     my ( $rel_path_to_file, $who_wants_it, $make_executable ) = @_;

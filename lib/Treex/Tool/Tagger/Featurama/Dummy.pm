@@ -2,7 +2,6 @@ package Treex::Tool::Tagger::Featurama::Dummy;
 use Moose;
 
 extends 'Treex::Tool::Tagger::Featurama';
-use Treex::Core::Resource;
 override '_analyze' => sub {
     my ( $self, $wordform ) = @_;
     return (
