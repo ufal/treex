@@ -91,105 +91,13 @@ sub load_scenario_file {
     return $scenario_string;
 }
 
-sub _escape {
-    my $string = shift;
-    $string =~ s/^(["'])(.*)\1$/$2/;
-    $string =~ s/ /%20/g;
-    $string =~ s/#/%23/g;
-    $string =~ s/=/%3d/g;
-    $string =~ s/\n/%0a/g;
-    $string =~ s/\t/%09/g;
-    return $string;    #TODO - escaping %
-}
-
 sub parse_scenario_string {
     my ( $scenario_string, $from_file ) = @_;
 
-    # Temporary commented until comments in scenarios are parsed correctly
     my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
     my $parsed = $parser->startrule($scenario_string, 1, $from_file);
     log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
     return @$parsed;
-
-#commented out - dead code
-#    # Preserve escaped quotes
-#    $scenario_string =~ s{%}{%25}g;
-#    $scenario_string =~ s{\\"}{%22}g;
-#    $scenario_string =~ s{\\'}{%27}g;
-#
-#    # Preserve spaces inside quotes and backticks in block parameters
-#    # Quotes are deleted, whereas backticks are preserved.
-#    # TODO ' nested in " and vice versa
-#    $scenario_string =~ s/="([^"]*)"/'='._escape($1)/eg;
-#    $scenario_string =~ s/='([^']*)'/'='._escape($1)/eg;
-#    $scenario_string =~ s/=(`[^`]*`)/'='._escape($1)/eg;
-#
-#    $scenario_string =~ s/#.+$//mg;    # delete comments ended by a newline or last line
-#    $scenario_string =~ s/\s+/ /g;     # collapse whitespaces
-#    $scenario_string =~ s/^ //g;       #      -- || --
-#    $scenario_string =~ s/ $//g;       #      -- || --
-#
-#    my @tokens = split / /, $scenario_string;
-#    my @block_items;
-#    foreach my $token (@tokens) {
-#
-#        # include of another scenario file
-#        if ( $token =~ /\.scen/ ) {
-#            my $scenario_filename = $token;
-#
-#            my $included_scen_path;
-#            if ( $scenario_filename =~ m|^/| ) {    # absolute path
-#                $included_scen_path = $scenario_filename
-#            }
-#            elsif ( defined $from_file ) {          # relative to the "parent" scenario file
-#                $included_scen_path = dirname($from_file) . "/$scenario_filename";
-#            }
-#            else {                                  # relative to the cwd
-#                $included_scen_path = "./$scenario_filename";
-#            }
-#
-#            my $included_scen_str = load_scenario_file($included_scen_path);
-#            push @block_items, parse_scenario_string( $included_scen_str, $included_scen_path );
-#        }
-#
-#        # parameter definition
-#        elsif ( $token =~ /(\S+)=(\S*)/ ) {
-#
-#            # "de-escape"
-#            $token =~ s/%20/ /g;
-#            $token =~ s/%23/#/g;
-#            $token =~ s/%22/"/g;
-#            $token =~ s/%27/'/g;
-#            $token =~ s/%3d/=/g;
-#            $token =~ s/%0a/\n/g;
-#            $token =~ s/%09/\t/g;
-#
-#            if ( not @block_items ) {
-#                log_fatal "Specification of block arguments before the first block name: $token\n";
-#            }
-#            push @{ $block_items[-1]->{block_parameters} }, $token;
-#        }
-#
-#        # block definition
-#        else {
-#            my $block_filename = $token;
-#            $block_filename =~ s/::/\//g;
-#            $block_filename .= '.pm';
-#
-#            # TODO what if block doesn't reside in this directory but separately?
-#            if ( -e Treex::Core::Config::lib_core_dir() . "../Block/$block_filename" ) {    # new Treex blocks
-#                $token = "Treex::Block::$token";
-#            }
-#            else {
-#
-#                # TODO allow user-made blocks not-starting with Treex::Block?
-#                log_fatal("Block $token (file $block_filename) does not exist!");
-#            }
-#            push @block_items, { 'block_name' => $token, 'block_parameters' => [] };
-#        }
-#    }
-#
-#    return @block_items;
 }
 
 # reverse of parse_scenario_string, used in tools/tests/auto_diagnose.pl
