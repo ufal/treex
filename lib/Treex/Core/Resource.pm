@@ -19,8 +19,16 @@ sub require_file_from_share {
     SEARCH:
     foreach my $resource_dir ( Treex::Core::Config::resource_path() ) {
         my $file = "$resource_dir/$rel_path_to_file";
-        return $file if -e $file;
-        $writable = $resource_dir if not defined $writable and -w $resource_dir;
+        log_debug("Trying $file\n");
+        if ( -e $file ) {
+            log_debug("Found $file\n");
+            return $file;
+        }
+
+        if ( not defined $writable and -w $resource_dir ) {
+            $writable = $resource_dir;
+            log_debug("Found writable directory: $writable");
+        }
     }
 
     log_info("Shared file '$rel_path_to_file' is missing by $who_wants_it.");

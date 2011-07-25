@@ -6,6 +6,7 @@ use File::HomeDir;
 use File::ShareDir;
 use File::Slurp;
 use Cwd qw(realpath);
+use Treex::Core::Log;
 
 # this should be somehow systematized, since there will be probably many switches like this one
 our $debug_run_jobs_locally;    ## no critic (ProhibitPackageVars)
@@ -26,19 +27,23 @@ sub default_resource_dir {
         push @path, realpath( $ENV{TMT_ROOT} . '/share' );
     }
     return @path if wantarray;
-    return join ':', @path;
+    return join q{:}, @path;
 }
 
 sub resource_path {
     my $path_file = config_dir() . '/path';
+    my @lines = read_file( $path_file, err_mode => 'silent' );
     my @path;
-    local $/ = ':';
-    @path = read_file( $path_file, err_mode => 'silent' );
+    foreach my $entry (map{ split /:/}  @lines) {
+        chomp $entry;
+        push @path, $entry;
+    }
     if ( not defined $path[0] ) {
         @path = default_resource_dir();
-        write_file( $path_file, { no_clobber => 1, err_mode => 'silent' }, join $/,@path )
+        write_file( $path_file, { no_clobber => 1, err_mode => 'silent' }, join q{:},@path )
     }
-    return @path;
+    return @path if wantarray;
+    return join q{:}, @path;
 }
 
 sub devel_version {
