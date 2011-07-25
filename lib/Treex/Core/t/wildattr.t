@@ -38,6 +38,6 @@ is( $loaded_bundle->wild->{$wild_attr}, $bundle_wild_value, q(Bundle's wild attr
 my $loaded_aroot = $loaded_bundle->get_zone('en')->get_atree;
 is( $loaded_aroot->wild->{$wild_attr}, $node_wild_value, q(Nodes's wild attribute correctly restored from a saved file.) );
 
-#unlink $fname;
+unlink $fname;
 
 done_testing();
