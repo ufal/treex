@@ -2,6 +2,11 @@ package Treex::Tool::Tagger::Featurama::EN;
 use Moose;
 
 extends 'Treex::Tool::Tagger::Featurama';
+
+sub BUILDARGS {
+    return {path => 'data/models/featurama/en/default'};
+}
+
 override '_analyze' => sub {
     use Treex::Tool::EnglishMorpho::Analysis;
     my ( $self, $wordform ) = @_;

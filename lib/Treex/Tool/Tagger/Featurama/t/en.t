@@ -7,7 +7,7 @@ use Test::More;
 
 BEGIN{ use_ok('Treex::Tool::Tagger::Featurama::EN');}
 
-my $tagger = Treex::Tool::Tagger::Featurama::EN->new(path=>'data/models/featurama/en/default');
+my $tagger = Treex::Tool::Tagger::Featurama::EN->new();
 
 isa_ok($tagger, 'Treex::Tool::Tagger::Featurama::EN');
 isa_ok($tagger, 'Treex::Tool::Tagger::Featurama');
