@@ -44,27 +44,39 @@ stored in plain text format, one sentence per line.
 
 =head3 Can I add new attributes to nodes?
 
-For the "official" attributes, there are accessor methods, so e.g. for I<lemma>:
+For the I<official> attributes (defined in the Treex PML schema),
+there are accessor methods, so e.g. for I<lemma>:
 
   my $old_lemma = $anode->lemma;
   $node->set_lemma('new');
 
-You can use methods C<get_attr> and C<set_attr> to access whatever attribute you want:  
+If you want to use your own new attributes, you can use so-called 
+L<wild attributes|Treex::Core::WildAttr>:
+
+  $node->wild->{name_of_my_new_attribute} = $value;
+  $value = $node->wild->{name_of_my_new_attribute};
+
+=head4 side note
+
+You can also use methods C<get_attr> and C<set_attr>
+to access whatever attribute you want:  
 
   $node->set_attr('my_new_attribute', 'my_value');
   print $node->get_attr('my_new_attribute'); # prints "my_value"
 
-However, when saving the document (to *.treex), only attributes which are described
-in treex PML schema (stored in C<treex/lib/Treex/Core/share/tred_extension/treex/resources>)
-will be saved.
+However, when saving the document (to *.treex), only attributes
+which are described in treex PML schema
+(stored in C<treex/lib/Treex/Core/share/tred_extension/treex/resources>)
+will be saved (including all wild attributes).
 
 This means that you should not expect that a "non-schema" attribute
-saved in one block will be accessible in another block
-(it would work with both block in one scenario, but it wouldn't work
-if saved in one and loaded in another scenario, which is hard to debug).
+(except for the wild attributes)
+saved in one block will be accessible in another block.
+(It would work with both block in one scenario, but it wouldn't work
+if saved in one and loaded in another scenario, which is hard to debug.)
 
 Note, that for temporary information you can also use a separate hash
-variable as a preferred alternative to new attributes:
+variable as an alternative to new attributes:
 
   my %my_new_attribute_of;
   $my_new_attribute_of{$node} = 'my_value';

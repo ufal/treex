@@ -76,12 +76,26 @@ __END__
 
 Treex::Core::WildAttr
 
+=head1 SYNOPSIS
+
+  $node->wild->{name_of_my_new_attribute} = $value;
+  $value = $node->wild->{name_of_my_new_attribute};
+
 =head1 DESCRIPTION
 
 Moose role for Treex objects that can possess any attributes
 without defining them in the PML schema. Such 'wild'
 attributes are stored in trees data files as strings
 serialized by Data::Dumper.
+
+
+Expected use cases: you need to store some data structures which are not defined
+by the Treex PML schema because
+(1) you do not want to change the schema
+(e.g. the new attributes are still very unstable, or they are likely to serve only
+for tentative purposes, or you do not feel competent to touch the PML schema), or
+(2) you cannot change the schema, because you do not have write permissions for the
+location in which L<Treex::Core> is installed.
 
 =head1 ATTRIBUTES
 
