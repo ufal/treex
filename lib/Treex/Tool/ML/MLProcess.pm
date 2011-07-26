@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use File::Java;
 use File::Temp ();
+use Treex::Tool::IO::Arff;
 use autodie;
 
 # ML-Process executable
@@ -75,7 +76,7 @@ sub run {
 # Load the given attribute classified by the process from the ARFF file
 sub load_results {
 
-    my ( $self, $class_attr, $max_sents ) = @_;
+    my ( $self, $class_attr ) = @_;
     my $loader = Treex::Tool::IO::Arff->new();
     my $data   = $loader->load_arff( $self->output_data_file->filename );
 

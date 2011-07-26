@@ -3,88 +3,47 @@ package Treex::Block::A2T::CS::SetFunctors;
 use Moose;
 use Treex::Core::Common;
 use Treex::Block::Write::ConllLike;
-use Treex::Tool::IO::Arff;
-use autodie;
-use Treex::Tool::ML::MLProcess;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Tool::ML::MLProcessBlock';
 
-# TectoMT shared directory
-Readonly my $TMT_SHARE => "$ENV{TMT_ROOT}/share/";
+has '+model_dir'     => ( default => 'data/models/functors/cs/' );
+has '+plan_template' => ( default => 'plan.template' );
 
-# files related to the trained model (within the TectoMT shared directory)
-has 'model_dir'         => ( is => 'ro', isa => 'Str', default => "data/models/functors/cs/" );
-has 'model'             => ( is => 'ro', isa => 'Str', default => 'model.dat' );
-has 'plan_template'     => ( is => 'ro', isa => 'Str', default => 'plan.template' );
-has 'filtering_ff_data' => ( is => 'ro', isa => 'Str', default => 'ff-data.dat' );
-has 'filtering_if_data' => ( is => 'ro', isa => 'Str', default => 'if-data.dat' );
-has 'lang_conf'         => ( is => 'ro', isa => 'Str', default => 'st-cs.conf' );
+has '+model_files' => (
+    default => sub {
+        return {
+            'MODEL'     => 'model.dat',
+            'FF-INFO'   => 'ff-data.dat',
+            'IF-INFO'   => 'if-data.dat',
+            'LANG-CONF' => 'st-cs.conf'
+        };
+    }
+);
 
-# functors loaded from the result of ML process, works as a FIFO (is first filled with the whole document, then subsequently emptied)
-has '_functors' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
+has '+class_name' => ( default => 'deprel' );
 
-# download shared files if necessary
-override 'get_required_share_files' => sub {
+override '_write_input_data' => sub {
 
-    my ($self) = @_;
-
-    my @files = map { $_ = $self->model_dir . $_ }
-        ( $self->model, $self->plan_template, $self->filtering_if_data, $self->filtering_ff_data, $self->lang_conf );
-    return @files;
-};
-
-override 'process_document' => sub {
-
-    my ( $self, $document ) = @_;
-    my $mlprocess = Treex::Tool::ML::MLProcess->new( plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template );
-
-    my $temp_conll = $mlprocess->input_data_file;
+    my ( $self, $document, $file ) = @_;
 
     # print out data in pseudo-conll format for the ml-process program
-    log_info( "Writing the CoNLL-like data to " . $temp_conll );
+    log_info( "Writing the CoNLL-like data to " . $file );
     my $conll_writer = Treex::Block::Write::ConllLike->new(
-        to       => $temp_conll->filename,
+        to       => $file->filename,
         language => $self->language,
         selector => $self->selector
     );
     $conll_writer->process_document($document);
-
-    # run ML-Process with the specified plan file
-    $mlprocess->run(
-        {   "FF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_ff_data,
-            "IF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_if_data,
-            "MODEL"     => $TMT_SHARE . $self->model_dir . $self->model,
-            "LANG-CONF" => $TMT_SHARE . $self->model_dir . $self->lang_conf
-        }
-    );
-
-    # parse the output file and store the results
-    $self->_set_functors( $mlprocess->load_results('deprel') );
-
-    # process all t-trees and fill them with functors
-    super;
-    
-    # test if all functors have been used
-    if ( @{ $self->_functors } != 0 ){
-        log_fatal( "Too many functors on the ML-Process ouptut." );
-    } 
+    return;
 };
 
-# self fills a t-tree with functors, which must be preloaded in $self->_functors
-sub process_ttree {
+override '_set_class_value' => sub {
 
-    my ( $self, $root ) = @_;
-    my @nodes = $root->get_descendants( { ordered => 1 } ); # same as for printing in Write::ConllLike
+    my ( $self, $node, $value ) = @_;
 
-    if ( scalar(@nodes) > scalar( @{ $self->_functors} ) ) {
-        log_fatal( "Not enough functors on the ML-Process output." );
-    }
-    foreach my $node (@nodes) {
-        $node->set_functor( shift @{ $self->_functors } );
-    }
+    $node->set_functor($value);
     return;
-}
-
+};
 
 1;
 
@@ -101,41 +60,8 @@ Treex::Block::A2T::CS::SetFunctors
 Sets functors in tectogrammatical trees using a pre-trained machine learning model (logistic regression, SVM etc.)
 via the ML-Process Java executable with WEKA integration.
 
-=head1 PARAMETERS
-
-All of the file paths have their default value set:
-
-=over
-
-=item model_dir
-
-Pre-trained model directory.
-
-=item model
-
-Name of the trained model file.
-
-=item plan_template
-
-Name of the ML-Process plan file template.
-
-=item filtering_ff_data 
-
-Name of the feature filtering information file.
-
-=item filtering_if_data
-
-Name of the feature removal information file.
-
-=item lang_conf
-
-Name of the feature generation configuration file.
-
-=back
-
-=head1 TODO
-
-Possibly could be made language independent, only with different models for different languages.
+The path to the pre-trained model and its configuration in the shared directory is set in the C<model_dir>,
+C<plan_template> and C<model_files> parameters. 
 
 =head1 AUTHOR
 
