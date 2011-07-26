@@ -21,7 +21,7 @@ has 'filtering_if_data' => ( is => 'ro', isa => 'Str', default => 'if-data.dat' 
 has 'lang_conf'         => ( is => 'ro', isa => 'Str', default => 'st-cs.conf' );
 
 # functors loaded from the result of ML process, works as a FIFO (is first filled with the whole document, then subsequently emptied)
-has '_functors' => ( traits => ['Array'], is => 'ro', default => sub { [] } );
+has '_functors' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
 # download shared files if necessary
 override 'get_required_share_files' => sub {
@@ -38,10 +38,7 @@ override 'process_document' => sub {
     my ( $self, $document ) = @_;
     my $mlprocess = Treex::Tool::ML::MLProcess->new( plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template );
 
-    my $temp_conll = $mlprocess->create_temp_file();
-    my $out        = $mlprocess->create_temp_file();
-
-    log_info("Output file: $out");
+    my $temp_conll = $mlprocess->input_data_file;
 
     # print out data in pseudo-conll format for the ml-process program
     log_info( "Writing the CoNLL-like data to " . $temp_conll );
@@ -54,9 +51,7 @@ override 'process_document' => sub {
 
     # run ML-Process with the specified plan file
     $mlprocess->run(
-        {   "CONLL"     => $temp_conll,
-            "ARFF-OUT"  => $out,
-            "FF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_ff_data,
+        {   "FF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_ff_data,
             "IF-INFO"   => $TMT_SHARE . $self->model_dir . $self->filtering_if_data,
             "MODEL"     => $TMT_SHARE . $self->model_dir . $self->model,
             "LANG-CONF" => $TMT_SHARE . $self->model_dir . $self->lang_conf
@@ -64,64 +59,49 @@ override 'process_document' => sub {
     );
 
     # parse the output file and store the results
-    $self->_load_functors( $out, scalar( $document->get_bundles() ) );
+    $self->_set_functors( $mlprocess->load_results('deprel') );
 
     # process all t-trees and fill them with functors
     super;
+    
+    # test if all functors have been used
+    if ( @{ $self->_functors } != 0 ){
+        log_fatal( "Too many functors on the ML-Process ouptut." );
+    } 
 };
 
 # self fills a t-tree with functors, which must be preloaded in $self->_functors
 sub process_ttree {
 
     my ( $self, $root ) = @_;
-    my @functors = @{ shift @{ $self->_functors } };                      # always take results for the first tree, FIFO
-    my @nodes = $root->get_descendants( { ordered => 1 } );               # same as for printing in Write::ConllLike
+    my @nodes = $root->get_descendants( { ordered => 1 } ); # same as for printing in Write::ConllLike
 
-    if ( scalar(@nodes) != scalar(@functors) ) {
-        log_fatal( "Expected " . scalar(@nodes) . " functors, got " . scalar(@functors) );
+    if ( scalar(@nodes) > scalar( @{ $self->_functors} ) ) {
+        log_fatal( "Not enough functors on the ML-Process output." );
     }
     foreach my $node (@nodes) {
-        $node->set_functor( shift @functors );
+        $node->set_functor( shift @{ $self->_functors } );
     }
     return;
 }
 
-# Load the functors assigned by the ML process from the ARFF file
-sub _load_functors {
-
-    my ( $self, $arff_file, $max_sents ) = @_;
-    my $loader = Treex::Tool::IO::Arff->new();
-    my $data   = $loader->load_arff( $arff_file->filename );
-
-    my $sentence;
-    my $sent_id = 1;
-
-    for my $rec ( @{ $data->{records} } ) {
-
-        while ( $rec->{'sent-id'} != $sent_id and $sent_id <= $max_sents ) {    # move to next non-empty sentence
-            push @{ $self->_functors }, $sentence;
-            $sentence = [];
-            $sent_id++;
-        }
-        if ( $sent_id > $max_sents ) {
-            log_fatal( 'Sentence IDs mismatch in the loaded ARFF file: ' . $arff_file->filename );
-        }
-        push @{$sentence}, $rec->{'deprel'};
-    }
-    push @{ $self->_functors }, $sentence;
-    return;
-}
 
 1;
 
 __END__
 
-=head1 Treex::Block::A2T::CS::SetFunctors
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2T::CS::SetFunctors
+
+=head1 DESCRIPTION
 
 Sets functors in tectogrammatical trees using a pre-trained machine learning model (logistic regression, SVM etc.)
 via the ML-Process Java executable with WEKA integration.
 
-=head2 Parameters
+=head1 PARAMETERS
 
 All of the file paths have their default value set:
 
@@ -153,13 +133,16 @@ Name of the feature generation configuration file.
 
 =back
 
-=head2 TODO
+=head1 TODO
 
 Possibly could be made language independent, only with different models for different languages.
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2011 Ondrej Dusek
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
 
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
