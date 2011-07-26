@@ -196,8 +196,8 @@ sub _build_syntpos {
     return '' if ( $self->tag =~ m/^.[%#^,FIRTVXc]/ );
     # adjectives, adjectival numerals and pronouns
     return 'adj' if ( $self->tag =~ m/^.[\}=\?48ACDGLOSUadhklnrwyz]/ );
-    # indefinite and negative pronous cannot be disambiguated simply based on POS (the rest are nouns)
-    return 'adj' if ( $self->lemma =~ m/^((pra|ni)?žádný|ničí|nijaký)$/ );    
+    # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
+    return 'adj' if ( $self->tag =~ m/^.[WZ]/ and $self->lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );    
     # adverbs, adverbial numerals ("dvakrát" etc.)
     return 'adv' if ( $self->tag =~ m/^.[\*bgouv]/);
     # verbs

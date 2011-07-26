@@ -86,11 +86,11 @@ sub _get_info_hash {
                 }
             }
             # gather values in referenced nodes
-            $info{$attrib} = join( ' ', map { Treex::PML::Instance::get_all( $_, $name ) } @nodes );
+            $info{$attrib} = join( ' ', grep { defined($_) } map { Treex::PML::Instance::get_all( $_, $name ) } @nodes );
         }
         # plain attributes
         else {
-            $info{$attrib} = join( ' ', Treex::PML::Instance::get_all( $node, $attrib ) );
+            $info{$attrib} = join( ' ', grep { defined($_) } Treex::PML::Instance::get_all( $node, $attrib ) );
         }
     }
     return \%info;
