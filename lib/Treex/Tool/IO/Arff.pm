@@ -430,11 +430,11 @@ sub _set_attribute_types {
 
         # find all other values
         for my $record (@{ $buffer->{records} }){
-            if ($record->{ $attr->{attribute_name} }){
+            if ( defined( $record->{ $attr->{attribute_name} } ) ){
                 $values{ $record->{ $attr->{attribute_name} } } = 1;
             }
-        }            
-        
+        }
+               
         # determine the type                 
         if (!$attr->{attribute_type}){
             my $numeric = 1;

@@ -90,7 +90,10 @@ sub _get_info_hash {
         }
         # plain attributes
         else {
-            $info{$attrib} = join( ' ', grep { defined($_) } Treex::PML::Instance::get_all( $node, $attrib ) );
+            my @values = Treex::PML::Instance::get_all( $node, $attrib );
+            
+            next if (@values == 1 and not defined($values[0])); # leave single undefined values as undefined
+            $info{$attrib} = join( ' ', grep { defined($_) } @values );
         }
     }
     return \%info;
