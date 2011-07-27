@@ -9,7 +9,7 @@ extends 'Treex::Tool::ML::MLProcessBlock';
 has '+model_dir'     => ( default => 'data/models/functors/cs/' );
 has '+plan_template' => ( default => 'plan.template' );
 
-has '+model_files' => (
+has '+plan_vars' => (
     default => sub {
         return {
             'MODEL'     => 'model.dat',
@@ -19,6 +19,8 @@ has '+model_files' => (
         };
     }
 );
+
+has '+model_files' => ( default => sub { return [ 'model.dat', 'if-data.dat', 'ff-data.dat', 'st-cs.conf' ] } );
 
 has '+class_name' => ( default => 'deprel' );
 

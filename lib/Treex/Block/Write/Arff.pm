@@ -37,6 +37,11 @@ has '_headers_printed' => (
     default => 0
 );
 
+# Override the default data type settings (format: "columnname: type, ...") 
+has 'force_types' => ( is => 'ro', isa => 'Str', default => '' );
+
+# The data type override settings, in a hashref
+has '_forced_types' => ( is => 'ro', isa => 'HashRef', builder => '_build_forced_types', lazy_build => 1 );
 
 #
 # METHODS
@@ -44,12 +49,23 @@ has '_headers_printed' => (
 
 # De-alias the 'head' parameter
 sub BUILDARGS {
-    
-    my ($class, $params) = @_;
+
+    my ( $class, $params ) = @_;
 
     $params->{attributes} =~ s/(^| )head($| )/$1parent->ord$2/;
     return $params;
-} 
+}
+
+# Build a hashref from datatype override settings
+sub _build_forced_types {
+
+    my ($self) = @_;
+    my %forced_types = map { $_ =~ m/\s*(.*)\s*:\s*(.*)\s*/; $1 => $2 } split( /\s*,\s*/, $self->force_types );
+    
+    log_warn('FT:' . $self->force_types . ' ' . join(',', map {$_ . '=' . $forced_types{$_}} keys %forced_types ) );
+    
+    return { %forced_types };
+}
 
 override 'process_document' => sub {
 
@@ -59,7 +75,8 @@ override 'process_document' => sub {
         { isa => 'Treex::Core::Document' },
     );
 
-    super;    # _process_tree called here, store data
+    # _process_tree called here: store data
+    super;
 
     if ( !$self->_headers_printed ) {
         $self->_arff->prepare_headers( $self->_arff->relation, 0, 1 );
@@ -88,8 +105,8 @@ sub _process_tree {
     foreach my $node (@nodes) {
 
         my $info = $self->_get_info_hash($node);
-        
-        if (defined($info->{'parent->ord'})){ # 'head' aliasing
+
+        if ( defined( $info->{'parent->ord'} ) ) {    # 'head' aliasing
             $info->{'head'} = $info->{'parent->ord'};
             delete $info->{'parent->ord'};
         }
@@ -115,11 +132,18 @@ sub _init_arff {
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
 
-    map { push @{ $arff->relation->{attributes} }, { attribute_name => ( $_ eq 'parent->ord' ? 'head' : $_ ) } } @{ $self->_attrib_list() };
-    
+    foreach my $attr ( @{ $self->_attrib_list() } ) {      
+        
+        my $attr_entry = {
+            attribute_name => ( $attr eq 'parent->ord' ? 'head' : $attr ),
+            attribute_type => $self->_forced_types->{$attr}
+        };
+        
+        push @{ $arff->relation->{attributes} }, $attr_entry;
+    }
+
     return $arff;
 }
-
 
 1;
 __END__
@@ -160,6 +184,11 @@ This parameter is required.
 For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
 
 A special attribute C<head> is an alias for dereferenced attribute C<parent-&gt;ord>.
+
+=item C<force_types>
+
+Override default data type (which is 'NUMERIC', if only numeric values are used, and 'STRING' otherwise). Should
+be a comma separated list of C<attribute-name: data-type>.  
 
 =item C<to>
 

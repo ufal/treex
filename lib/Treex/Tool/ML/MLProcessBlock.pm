@@ -13,8 +13,11 @@ Readonly my $TMT_SHARE => "$ENV{TMT_ROOT}/share/";
 has 'model_dir'     => ( is => 'ro', isa => 'Str', required => 1 );
 has 'plan_template' => ( is => 'ro', isa => 'Str', required => 1 );
 
+# required files from the shared directory
+has 'model_files' => ( is => 'ro', isa => 'ArrayRef', required => 1 );
+
 # hash with plan template variables => file names, e.g. 'MODEL' => 'model.dat' ...
-has 'model_files' => ( is => 'ro', isa => 'HashRef', required => 1 );
+has 'plan_vars' => ( is => 'ro', isa => 'HashRef', required => 1 );
 
 # name of the class attribute in the output data
 has 'class_name' => ( is => 'ro', isa => 'Str', required => 1 );
@@ -27,21 +30,21 @@ override 'get_required_share_files' => sub {
 
     my ($self) = @_;
 
-    my @files = map { $self->model_dir . $_ } ( values %{ $self->model_files } );
+    my @files = map { $self->model_dir . $_ } ( @{ $self->model_files } );
     return @files;
 };
 
 override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
-    my $mlprocess = Treex::Tool::ML::MLProcess->new( { plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template, cleanup_temp => 0 } );
+    my $mlprocess = Treex::Tool::ML::MLProcess->new( { plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template } );
 
     my $temp_input = $mlprocess->input_data_file;
 
     $self->_write_input_data( $document, $temp_input );
 
     # run ML-Process with the specified plan file
-    $mlprocess->run( { map { $_ => $TMT_SHARE . $self->model_dir . $self->model_files->{$_} } keys %{ $self->model_files } } );
+    $mlprocess->run( { map { $_ => $TMT_SHARE . $self->model_dir . $self->plan_vars->{$_} } keys %{ $self->plan_vars } } );
 
     # parse the output file and store the results
     $self->_set_results( $mlprocess->load_results( $self->class_name ) );
@@ -79,7 +82,7 @@ sub _write_input_data {
 
 # Set the ML-Process results back to the current file
 sub _set_class_value {
-    my ( $self, $node, $value ) = @_;    
+    my ( $self, $node, $value ) = @_;
     log_fatal( 'The class ' . ref($self) . ' must override the _set_class_value method.' );
 }
 
@@ -108,7 +111,7 @@ C<model_dir>, C<plan_template>, C<model_files> and C<class_name> parameters.
 
 =item model_dir
 
-The directory where the pre-trained model for the ML-Process library is located.
+The directory where the pre-trained model for the ML-Process library is located (assumed to be in the shared directory).
 
 =item plan_template
 
@@ -116,8 +119,11 @@ The ML-Process scenario file template (which is filled with file name values on 
 
 =item model_files
 
-All the model file names that should replace the variables in the scenario template file, i.e. a hash
-in the following format:
+A list of required files from the model directory. 
+
+=item plan_vars
+
+All pre-set values of variables in the scenario template file, i.e. a hash in the following format:
         
         { 'MODEL' => 'model.dat', ... }
 
