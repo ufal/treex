@@ -76,7 +76,7 @@ sub process_bundle {
             # If some zone contains more segments than the "current" zone,
             # the remaining segments will be joined to the last bundle.
             if ( $i == $my_segments && $max_segments > $my_segments ) {
-                $sent .= join( ' ', @{ $sentences{$label} } );
+                $sent .= ' ' . join( ' ', @{ $sentences{$label} } );
             }
             my ( $lang, $selector ) = split /_/, $label;
             my $new_zone = $new_bundle->create_zone( $lang, $selector );
