@@ -22,7 +22,7 @@ sub BUILD {
     $arg_ref->{_bundle} = any { $arg_ref->{$_} } qw(bundle _zone);
 
     if ( !any { $arg_ref->{$_} } qw(document _bundle) ) {
-        log_fatal "You must specify at least one of the parameters:"
+        log_fatal "At least one of the following parameters must be non-empty:"
             . " document, bundle, zone, [atnp]tree, [atnp]node.";
     }
 
