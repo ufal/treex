@@ -140,7 +140,7 @@ sub load_arff {
     }
 
     if ( $self->debug_mode ) {
-        print STDERR "Loading $arff_file ...\n";
+        print STDERR "Loading $arff_file ...\n";        
     }
     while ( my $current_line = <$io> )
     {
@@ -160,12 +160,9 @@ sub load_arff {
             if ( !$relation->{attributes} ) {
                 $relation->{attributes} = [];
             }
-            my $attribute = { "attribute_name" => $1, "attribute_type" => $2 };
-            my $attributes = $relation->{"attributes"};
-
             #log_msg(Dumper $attribute);
 
-            push @$attributes, $attribute;
+            push @{ $relation->{"attributes"} }, { "attribute_name" => $1, "attribute_type" => $2 };
             $attribute_count++;
         }
         elsif ( $current_line =~ /^\s*\@DATA(\.*)/i )
@@ -178,32 +175,12 @@ sub load_arff {
             }
 
             #log_msg("extracting data $current_line");
-            my @data_parts = $self->_parse_line($current_line);    # split(/,/, $current_line);
-
-            my $attributes = $relation->{"attributes"};
-            my $records    = $relation->{"records"};
-
-            my $cur_record = {};
-
-            #log_msg("DATA PARTS".Dumper @data_parts);
-            if ( scalar @data_parts == $attribute_count ) {
-                for ( my $i = 0; $i <= $#data_parts; $i++ )
-                {
-                    $cur_record->{ $$attributes[$i]->{"attribute_name"} } = trim( $data_parts[$i] );
-                }
-                
-                #log_msg("parts: ".$#data_parts);
+            my ( $cur_record ) = $self->_parse_line($line_counter, $current_line);
+            
+            if ($cur_record){
+                push @{ $relation->{"records"} }, $cur_record;
                 $record_count++;
-                push @$records, $cur_record;
             }
-            else
-            {
-                if ( $self->debug_mode ) {
-                    print STDERR "Line $line_counter : Invalid data record: $current_line Contains " . ( scalar @data_parts ) . " Expected $attribute_count\n";
-                }
-                $self->error_count( $self->error_count + 1 );
-            }
-
         }
         $line_counter++;
     }
@@ -229,27 +206,68 @@ sub load_arff {
 # are allowed, unquoted quotation marks are treated as missing values.
 sub _parse_line {
 
-    my ( $self, $line ) = @_;
-    my @fields;
+    my ( $self, $line_num, $line ) = @_;    
+    my %values;
+    my $attributes = $self->relation->{"attributes"}; 
+
+    if ( $line =~ m/^{/ ){ # sparse instance
+
+        $line =~ s/^{//;
+        $line =~ s/}$/,/;
         
-    $line .= ',';
-    while ($line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g){
-        
-        my $field = $1;
-        
-        if ($field eq '?'){ # undefined value
-            push(@fields, undef);
+        while ( $line =~ m/([0-9]+)\s+([^"'\s][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ){
+            
+            my ( $attr_num, $field ) = ( $1, $2 );
+            
+            if ( !$attributes->[$attr_num] ){
+                if ( $self->debug_mode ){
+                    print STDERR "Line $line_num : Invalid data record: $line Attribute $attr_num out of range\n";
+                }    
+                return;            
+            }
+            
+            if ( $field eq '?' ){ # undefined value, leave as is                
+            }
+            elsif ( $field =~ m/^['"].*['"]$/ ){ # quoted value
+                $field = substr( $field, 1, length($field) - 2 ); # unquote
+                $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
+                $values{ $attributes->[$attr_num]->{"attribute_name"} } = $field;
+            }
+            else { # unquoted value (trim whitespace)
+                $values{ $attributes->[$attr_num]->{"attribute_name"} } = trim( $field );
+            }
+        }    
+    }
+    else { # dense instance
+        my $values_num = 0;
+                    
+        $line .= ',';
+        while ( $line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ){
+            
+            my $field = $1;
+            
+            if ( $field eq '?' ){ # undefined value, leave as is                
+            }
+            elsif ( $field =~ m/^['"].*['"]$/ ){ # quoted value
+                $field = substr( $field, 1, length($field) - 2 ); # unquote
+                $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
+                $values{ $attributes->[$values_num]->{"attribute_name"} } = $field;
+            }
+            else { # unquoted value (trim whitespace)
+                $values{ $attributes->[$values_num]->{"attribute_name"} } = trim( $field );
+            }
+            $values_num++;
         }
-        elsif ($field =~ m/^['"].*['"]$/ ){ # quoted value
-            $field = substr($field, 1, length($field) - 2); # unquote
-            $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
-            push(@fields, $field);
-        }
-        else { # unquoted value
-            push(@fields, $field);
+        if ( $values_num != @{ $attributes } ){
+            
+            if ( $self->debug_mode ){
+                print STDERR "Line $line_num : Invalid data record: $line Contains $values_num, Expected"
+                        . scalar( @{ $attributes } ) . "\n";
+            }            
+            return; # return undef on error
         }
     }
-    return @fields;
+    return { %values }; # return all the values if no error is encountered           
 }
 
 # Compose an ARFF data line out of given fields. Quote any fields that might need it,
