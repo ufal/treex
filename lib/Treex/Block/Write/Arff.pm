@@ -62,8 +62,6 @@ sub _build_forced_types {
     my ($self) = @_;
     my %forced_types = map { $_ =~ m/\s*(.*)\s*:\s*(.*)\s*/; $1 => $2 } split( /\s*,\s*/, $self->force_types );
     
-    log_warn('FT:' . $self->force_types . ' ' . join(',', map {$_ . '=' . $forced_types{$_}} keys %forced_types ) );
-    
     return { %forced_types };
 }
 
