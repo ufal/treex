@@ -51,7 +51,7 @@ override '_convert_all_trees' => sub {
     foreach my $tree_number ( 0 .. ( $pmldoc->{a}->trees - 1 ) ) {
 
         my $bundle = $document->create_bundle;
-        my $zone   = $bundle->create_zone('cs');
+        my $zone   = $bundle->create_zone('cs', $self->selector);
 
         if ( $pmldoc->{t} ) {
             my $troot = $zone->create_ttree;

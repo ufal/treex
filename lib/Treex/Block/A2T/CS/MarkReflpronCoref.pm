@@ -12,6 +12,7 @@ sub process_tnode {
             $clause_head = $clause_head->get_parent;
         }
         if ( $clause_head->get_parent and not $clause_head->get_parent->is_root ) {    # klauze se nasla a tudiz to nedobehlo az ke koreni
+
             my ($antec) = grep { ( $_->formeme || "" ) eq "n:1" } $clause_head->get_echildren;
             if ($antec) {
                 $t_node->set_deref_attr( 'coref_gram.rf', [$antec]);
