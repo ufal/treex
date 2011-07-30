@@ -1,4 +1,6 @@
 #!/usr/bin/env perl
+use strict;
+use warnings;
 use constant {
     OK     => 'ALL BLOCKS SUCCESSFULLY LOADED',
     CANNOT => 'Cannot parse',
@@ -16,6 +18,9 @@ my %contents = (
     'aaa aaa' => CANNOT,
     'XXX XXX' => q{Can't use block Treex::Block::XXX},  #Scenario will be Treex::Block::XXX Treex::Block::XXX
 );
+my %files = (
+    'cs_synthesis_pdt.scen' => OK,
+);
 use File::Slurp;
 use Test::More;
 use Test::Output;
@@ -32,6 +37,10 @@ foreach my $content ( keys %contents ) {
         combined_like( sub { eval{Treex::Core::Scenario->new( from_file => $name )} }, qr/$expected/, "Output of parsing '$content' contains '$expected' " );
 
     }
+}
+foreach my $file (keys %files) {
+    my $expected = $files{$file};
+    combined_like( sub { eval{Treex::Core::Scenario->new( from_file => $file )} }, qr/$expected/, "Output of parsing '$file' contains '$expected' " );
 }
 done_testing();
 

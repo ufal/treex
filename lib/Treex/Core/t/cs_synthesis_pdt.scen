@@ -1,0 +1,4 @@
+Util::SetGlobal language=cs selector=T
+cs_synthesis_goldt.scen
+#cs_synthesis_t2a.scen
+#cs_synthesis_a2w.scen

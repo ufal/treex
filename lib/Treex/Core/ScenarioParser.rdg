@@ -2,6 +2,8 @@
 use File::Slurp;
 use File::Basename;
 ## no critic Generated code follows
+no strict;
+no warnings;
 }
 startrule:  SCEN EOF                            {$return = $item{SCEN}}
 SCEN:       LINE SCEN                           {$return = [@{$item{LINE}},@{$item{SCEN}}]}
@@ -26,7 +28,7 @@ BLOCK:      TBNAME                              {$return = [{
                                                     }]
                                                 }
 INCLUDE:    /\/\S+\.scen/                       {$return = $item[1]}
-INCLUDE:    /[^\/]\S+\.scen/                    {   my $from_file = $arg[0];
+INCLUDE:    /[^\/#]\S+\.scen/                    {   my $from_file = $arg[0];
                                                     if ($from_file =~ /./) {
                                                         $return = dirname($from_file) . "/$item[1]";
                                                     } else {
