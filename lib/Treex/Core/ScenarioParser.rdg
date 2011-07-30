@@ -15,7 +15,11 @@ EOF:        /^\Z/
 BLOCK:      INCLUDE                             {
                                                     my $included = read_file( $item{INCLUDE} );
                                                     my $result = $thisparser->startrule( $included, 1, $item{INCLUDE} );
-                                                    $return = [@$result];
+                                                    if (defined $result and ref $result eq 'ARRAY') {
+                                                        $return = [@$result];
+                                                    } else {
+                                                        $return = undef;
+                                                    }
                                                 }
 BLOCK:      TBNAME PARAMS                       {$return = [{
                                                         block_name=>$item{TBNAME},
