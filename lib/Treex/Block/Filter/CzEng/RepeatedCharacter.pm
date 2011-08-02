@@ -9,7 +9,7 @@ sub process_bundle {
 
     my $en = $bundle->get_zone('en')->sentence;
     my $cs = $bundle->get_zone('cs')->sentence;
-    my $pattern = '([^\d])\2{3,}';
+    my $pattern = '([^\d])\1{3,}';
     if ($cs =~ m/$pattern/ || $en =~ m/$pattern/) {
         $self->add_feature( $bundle, 'repeated_character' );
     }
