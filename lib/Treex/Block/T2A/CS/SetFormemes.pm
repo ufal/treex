@@ -79,8 +79,8 @@ Treex::Block::T2A::CS::SetFormemes
 
 =head1 DESCRIPTION
 
-Assigns formemes in tectogrammatical trees using a pre-trained machine learning model (logistic regression, SVM etc.)
-using the ML-Process/WEKA libraries.
+Assigns formemes in tectogrammatical trees using a pre-trained machine learning model (logistic regression)
+via the ML-Process/WEKA libraries.
 
 The path to the pre-trained model and its configuration in the shared directory is set in the C<model_dir>,
 C<plan_template> and C<model_files> parameters. 
