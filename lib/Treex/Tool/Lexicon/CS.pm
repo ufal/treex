@@ -141,6 +141,15 @@ close $A;
 
 sub get_poss_adj {
     my ($noun_lemma) = @_;
+    # fallback - case changes
+    if ( !$noun2possadjective{$noun_lemma} ){
+        if ( $noun_lemma =~ /^\p{Lu}/ ){     # try lowercasing uppercase lemma
+            return $noun2possadjective{ lcfirst( $noun_lemma ) };
+        }
+        elsif ( $noun_lemma =~ /^\p{Ll}/ ) { # try uppercasing lowercase lemma
+            return $noun2possadjective{ ucfirst( $noun_lemma ) };
+        }
+    }
     return $noun2possadjective{$noun_lemma};
 }
 

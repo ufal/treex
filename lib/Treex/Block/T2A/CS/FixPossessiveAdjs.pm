@@ -20,13 +20,22 @@ sub process_tnode {
         #            print "noun: $noun_lemma\n";
 
         my $adj_lemma = Treex::Tool::Lexicon::CS::get_poss_adj($noun_lemma);
-        $a_node->set_lemma($adj_lemma);
-        $a_node->set_attr( 'morphcat/subpos', '.' );
-        $a_node->set_attr( 'morphcat/pos',    'A' );
 
-        # with adjectives, the following categories should come from agreement
-        foreach my $cat (qw(gender number)) {
-            $a_node->set_attr( "morphcat/$cat", '.' );
+        # convert to adjective only if the corresponding adjective actually exists
+        if ($adj_lemma) {
+            $a_node->set_lemma($adj_lemma);
+            $a_node->set_attr( 'morphcat/subpos', '.' );
+            $a_node->set_attr( 'morphcat/pos',    'A' );
+
+            # with adjectives, the following categories should come from agreement
+            foreach my $cat (qw(gender number)) {
+                $a_node->set_attr( "morphcat/$cat", '.' );
+            }
+        }
+        # if the adjective doesn't exist, fall back to noun in genitive
+        else {
+            $t_node->set_formeme('n:2');
+            $a_node->set_attr( 'morphcat/case', '2' );
         }
 
         #            print "$noun_lemma ==> $adj_lemma\n";
@@ -39,17 +48,26 @@ sub process_tnode {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::FixPossessiveAdjs
+=head1 NAME
 
-Nouns with the 'n:poss' formeme are turned to possessive adjectives
-on the a-layer.
+Treex::Block::T2A::CS::FixPossessiveAdjs
 
-=back
+=head1 DESCRIPTION
 
-=cut
+Nouns with the 'n:poss' formeme are turned to possessive adjectives on the a-layer. 
+If the corresponding adjectival form is not found to exist, the formeme is replaced 
+with 'n:2'.
 
-# Copyright 2010 Zdenek Zabokrtsky
+=head1 AUTHOR
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
