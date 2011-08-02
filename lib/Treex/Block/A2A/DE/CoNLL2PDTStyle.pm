@@ -17,7 +17,9 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
+    $self->process_prepositional_phrases($a_root);
     $self->restructure_coordination($a_root);
+    $self->check_afuns($a_root);
 }
 
 
@@ -282,9 +284,80 @@ sub deprel_to_afun
 
 
 #------------------------------------------------------------------------------
+# In Tiger prepositional phrases, not only the noun is attached to the
+# preposition, but also all adjectives (that in fact modify the noun).
+# Nested prepositional phrases post-modifying the nouns behave similarly.
+# Adverbs work as rhematizers and they are also attached to the noun in PDT,
+# albeit it creates nonprojectivities.
+# There can also be phrases with multiple nouns, one in any prepositional case
+# and one in genitive, as:
+#     nach einer Umfrage des Fortune Wirtschaftsmagazins unter den Bossen
+#     nach < (einer > Umfrage < (des Fortune > Wirtschaftsmagazins) (unter < (den > Bossen)))
+# The preposition does not have the 'AuxP' afun.
+#------------------------------------------------------------------------------
+sub process_prepositional_phrases
+{
+    my $self = shift;
+    my $root = shift;
+    foreach my $node ($root->get_descendants({'ordered' => 1}))
+    {
+        if($node->get_iset('pos') eq 'prep')
+        {
+            my @prepchildren = $node->children();
+            my $preparg;
+            # If there are no children this preposition cannot get the AuxP afun.
+            if(scalar(@prepchildren)==0)
+            {
+                next;
+            }
+            # If there is just one child it is the PrepArg.
+            elsif(scalar(@prepchildren)==1)
+            {
+                $preparg = $prepchildren[0];
+            }
+            # If there are two or more children we have to estimate which one is the PrepArg.
+            # We will assume that the other are in fact modifiers of the PrepArg, not of the preposition.
+            else
+            {
+                # If there are nouns among the children we will pick a noun.
+                my @nouns = grep {$_->get_iset('pos') eq 'noun'} (@prepchildren);
+                if(scalar(@nouns)>0)
+                {
+                    # If there are more than one noun we will pick the first one.
+                    # This corresponds well to the pattern noun/anyCase + noun/genitive.
+                    # However, we must also do something for other sequences of nouns.
+                    $preparg = $nouns[0];
+                }
+                # Otherwise we will just pick the first child.
+                else
+                {
+                    $preparg = $prepchildren[0];
+                }
+            }
+            # Keep PrepArg as the only child of the AuxP node.
+            # Reattach all other children to PrepArg.
+            $preparg->set_afun($node->afun());
+            $node->set_afun('AuxP');
+            foreach my $child (@prepchildren)
+            {
+                unless($child==$preparg)
+                {
+                    $child->set_parent($preparg);
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Detects coordination in German trees.
 # - The first member is the root.
 # - Any non-first member is attached to the previous member with afun CoordArg.
+#   If prepositional phrases have already been processed and there is
+#   coordination of prepositional phrases, the prepositins are tagged AuxP and
+#   the CoordArg afun is found at the only child of the preposition.
 # - Coordinating conjunction is attached to the previous member with afun Coord.
 # - Comma is attached to the previous member with afun AuxX.
 # - Shared modifiers are attached to the first member. Private modifiers are
@@ -353,11 +426,30 @@ sub collect_coordination_members
     # Is this the top-level call in the recursion?
     my $toplevel = scalar(@{$members})==0;
     my @children = $croot->children();
+    # No children to search? Nothing to do!
+    return if(scalar(@children)==0);
+    # AuxP occurs only if prepositional phrases have already been processed.
+    # AuxP node cannot be the first member of coordination ($toplevel).
+    # However, AuxP can be non-first member. In that case, its only child bears the CoordArg afun.
+    if($croot->afun() eq 'AuxP')
+    {
+        if($toplevel)
+        {
+            return;
+        }
+        else
+        {
+            # We know that there is at least one child (see above) and for AuxP, there should not be more than one child.
+            # Make the PrepArg child the member instead of the preposition.
+            $croot = $children[0];
+            @children = $croot->children();
+        }
+    }
     my @members0;
     my @delimiters0;
     my @sharedmod0;
     my @privatemod0;
-    @members0 = grep {$_->afun() eq 'CoordArg'} (@children);
+    @members0 = grep {my $x = $_; $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep {$_->afun() eq 'CoordArg'} ($x->children())} (@children);
     if(@members0)
     {
         # If $croot is the real root of the whole coordination we must include it in the members, too.
