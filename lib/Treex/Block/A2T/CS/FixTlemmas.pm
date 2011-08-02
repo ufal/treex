@@ -34,10 +34,10 @@ sub process_tnode {
         elsif ( $a_lex_node->tag =~ /^AU/ ) {
             if ( $t_lemma =~ /^(.+)_/ ) {             # von_Ryanuv, de_Gaulluv
                 my $prefix = $1;
-                $t_lemma = lc( $prefix . "_" . possadj_to_noun( $a_lex_node->lemma ) );
+                $t_lemma = lc( $prefix ) . "_" . possadj_to_noun( $a_lex_node->lemma );
             }
             else {
-                $t_lemma = lc( possadj_to_noun( $a_lex_node->lemma ) );
+                $t_lemma = possadj_to_noun( $a_lex_node->lemma );
             }
         }
 
