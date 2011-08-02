@@ -20,7 +20,8 @@ sub get_features {
     if (! $bundle->get_zone('und') || ! $bundle->get_zone('und')->sentence) {
         return undef;
     }
-    return shift split /\s+/, $bundle->get_zone('und')->sentence;
+    my (undef, @features) = split /\s+/, $bundle->get_zone('und')->sentence;
+    return @features;
 } 
 
 1;
