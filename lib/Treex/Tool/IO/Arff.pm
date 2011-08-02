@@ -214,6 +214,7 @@ sub _parse_line {
 
         $line =~ s/^{//;
         $line =~ s/}$/,/;
+        $self->_zero_fill( \%values );
         
         while ( $line =~ m/([0-9]+)\s+([^"'\s][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ){
             
@@ -226,7 +227,8 @@ sub _parse_line {
                 return;            
             }
             
-            if ( $field eq '?' ){ # undefined value, leave as is                
+            if ( $field eq '?' ){ # undefined value, delete the pre-set zero
+                delete( $values{ $attributes->[$attr_num]->{'attribute_name'} } );
             }
             elsif ( $field =~ m/^['"].*['"]$/ ){ # quoted value
                 $field = substr( $field, 1, length($field) - 2 ); # unquote
@@ -268,6 +270,31 @@ sub _parse_line {
         }
     }
     return { %values }; # return all the values if no error is encountered           
+}
+
+# insert a zero value for all numeric and nominal attributes, empty (but defined) value for string attributes
+# (knowing that string attributes in sparse ARFF files cause a lot of problems anyway) 
+sub _zero_fill {
+    
+    my ($self, $values) = @_;
+    
+    foreach my $attrib ( @{ $self->relation->{"attributes"} } ){
+        
+        # numeric attribute
+        if ( $attrib->{'attribute_type'} =~ m/^(numeric|real|integer)$/ ){
+            $values->{ $attrib->{'attribute_name'} } = 0;
+        }
+        # nominal attribute
+        elsif ( $attrib->{'attribute_type'} =~ m/^{([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/ ){
+            $values->{ $attrib->{'attribute_name'} } = $1;
+        }
+        # string attribute 
+        else {
+            $values->{ $attrib->{'attribute_name'} } = '';
+        }
+    }
+    
+    return;    
 }
 
 # Compose an ARFF data line out of given fields. Quote any fields that might need it,
