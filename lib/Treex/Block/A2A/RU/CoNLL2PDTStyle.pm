@@ -1,4 +1,4 @@
-package Treex::Block::A2A::DE::CoNLL2PDTStyle;
+package Treex::Block::A2A::RU::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -7,19 +7,18 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 
 #------------------------------------------------------------------------------
-# Reads the German tree, converts morphosyntactic tags to the PDT tagset,
+# Reads the Russian tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
+    my $a_root = $self->SUPER::process_zone($zone, 'syntagrus');
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
-    $self->process_prepositional_phrases($a_root);
-    $self->restructure_coordination($a_root);
-    $self->check_afuns($a_root);
+#    $self->restructure_coordination($a_root);
+#    $self->check_afuns($a_root);
 }
 
 
@@ -46,8 +45,9 @@ sub deprel_to_afun
         my $ppos = $parent->get_iset('pos');
         my $afun;
         # Dependency of the main verb on the artificial root node.
-        if($deprel eq 'ROOT')
+        if(!defined($deprel))
         {
+            $node->set_conll_deprel('ROOT');
             if($pos eq 'verb')
             {
                 $afun = 'Pred';
@@ -55,295 +55,6 @@ sub deprel_to_afun
             else
             {
                 $afun = 'ExD';
-            }
-        }
-        # Subject.
-        elsif($deprel eq 'SB')
-        {
-            $afun = 'Sb';
-        }
-        # EP = Expletive (výplňové) es
-        # Example: 'es' in constructions 'es gibt X' ('there is X').
-        # Formally it is the subject of the verb 'geben'.
-        elsif($deprel eq 'EP')
-        {
-            $afun = 'Sb';
-        }
-        # Nominal/adjectival predicative.
-        elsif($deprel eq 'PD')
-        {
-            $afun = 'Pnom';
-        }
-        # Subject or predicative.
-        # The parent should have exactly two such arguments. One of them is subject, the other is predicative but we do not know who is who.
-        # Our solution: odd occurrences are subjects, even occurrences are predicatives.
-        # Note: this occurs only in one sentence of the whole treebank.
-        elsif($deprel eq 'SP')
-        {
-            $sp_counter++;
-            if($sp_counter % 2)
-            {
-                $afun = 'Sb';
-            }
-            else
-            {
-                $afun = 'Pnom';
-            }
-        }
-        # Collocational verb construction (Funktionsverbgefüge): combination of full verb and prepositional phrase.
-        # Example: in/CVC Schwung/NK bringen
-        elsif($deprel eq 'CVC')
-        {
-            $afun = 'Obj';
-        }
-        # NK = Noun Kernel (?) = modifiers of nouns?
-        # AG = Genitive attribute.
-        # PG = Phrasal genitive (a von-PP used instead of a genitive).
-        # MO = Modifier.
-        # MNR = Postnominal modifier.
-        # PNC = Proper noun component (e.g. first name attached to last name).
-        # ADC = Adjective component (e.g. Bad/ADC Homburger, New/ADC Yorker).
-        # NMC = Number component (e.g. 20/NMC Millionen/NK Dollar).
-        # HD = Head (???) (e.g. Seit/RR über/RR/MO/einem einem/AA/NK/Seit halben/AA/HD/einem Jahr/NN/NK/Seit) (lit: since over a half year)
-        #      This example seems to result from an error during conversion of the Tiger constituent structure to dependencies.
-        elsif($deprel =~ m/^(NK|AG|PG|MNR|PNC|ADC|NMC|HD)$/)
-        {
-            $afun = 'Atr';
-        }
-        # Negation (usually of adjective or verb): 'nicht'.
-        elsif($deprel eq 'NG')
-        {
-            $afun = 'Adv';
-        }
-        # Measure argument of adjective.
-        # Examples: zwei Jahre alt (two years old), zehn Meter hoch (ten meters tall), um einiges besser (somewhat better)
-        elsif($deprel eq 'AMS')
-        {
-            # Inconsistent in PDT, sometimes 'Atr' or even 'Obj' but 'Adv' seems to be the most frequent.
-            $afun = 'Adv';
-        }
-        # Modifier. In NPs only focus particles are annotated as modifiers.
-        elsif($deprel eq 'MO')
-        {
-            if($ppos =~ m/^(noun|adj|num)$/)
-            {
-                $afun = 'AuxZ';
-            }
-            else
-            {
-                $afun = 'Adv';
-            }
-        }
-        # Adverb component. Example:
-        # Und/J^/AVC zwar/Db/MO jetzt/Db/ROOT !/Z:/PUNC
-        elsif($deprel eq 'AVC')
-        {
-            $afun = 'Adv';
-        }
-        # Relative clause.
-        elsif($deprel eq 'RC')
-        {
-            if($ppos =~ m/^(noun|adj|num)$/)
-            {
-                $afun = 'Atr';
-            }
-            else
-            {
-                $afun = 'Adv';
-            }
-        }
-        # OC = Clausal object. Also verb tokens building a complex verbal form and modal constructions.
-        # OA = Accusative object.
-        # OA2 = Second accusative object.
-        # OG = Genitive object.
-        # DA = Dative object or free dative.
-        # OP = Prepositional object.
-        # SBP = Logical subject in passive construction.
-        elsif($deprel =~ m/^(OC|OA2?|OG|DA|OP|SBP)$/)
-        {
-            $afun = 'Obj';
-        }
-        # Repeated element.
-        # Example:
-        # darüber/OP ,/PUNC welche/NK ... wäre/RE (darüber is subtree root, comma and wäre are attached to darüber)
-        elsif($deprel eq 'RE')
-        {
-            $afun = 'Atr';
-        }
-        # Reported speech (either direct speech in quotation marks or the pattern in the following example).
-        # Perot sei/Vc/RS ein autoritärer Macher, beschreibt/VB/ROOT ihn...
-        elsif($deprel eq 'RS')
-        {
-            $afun = 'Obj';
-        }
-        # CD = Coordinating conjunction.
-        # JU = Junctor (conjunction in the beginning of the sentence, deficient coordination).
-        elsif($deprel =~ m/^(CD|JU)$/)
-        {
-            $afun = 'Coord';
-        }
-        # Member of coordination.
-        elsif($deprel eq 'CJ')
-        {
-            $afun = 'CoordArg';
-        }
-        # Second member of apposition.
-        elsif($deprel eq 'APP')
-        {
-            $afun = 'Apos';
-        }
-        # Adposition (preposition, postposition or circumposition).
-        # If the preposition governs the prepositional phrase, its deprel is that of the whole subtree.
-        # However, dependent parts of compound prepositions will get AC.
-        # Example: aufgrund/RR von/RR Entscheidungen/NN
-        elsif($deprel eq 'AC')
-        {
-            $afun = 'AuxP';
-        }
-        # CP = Complementizer (dass)
-        # CM = Comparative conjunction
-        # CC = Comparative complement
-        # This can be a simple noun phrase with conjunction (behaving same way as prepositional phrases):
-        # wie Frankreich (like France)
-        # It can also be a dependent clause:
-        # als/CM dabei gegenwärtige Sünder abgeurteilt werden/CC
-        elsif($deprel =~ m/^C[MP]$/)
-        {
-            $afun = 'AuxC';
-        }
-        elsif($deprel eq 'CC')
-        {
-            if($ppos =~ m/^(noun|adj|num)$/)
-            {
-                $afun = 'Atr';
-            }
-            else
-            {
-                $afun = 'Adv';
-            }
-        }
-        # PAR = Parenthesis.
-        # VO = Vocative.
-        # -- = unknown function? First example was a ExD-Pa: WUNSIEDEL, 5. Juli ( dpa/-- ).
-        elsif($deprel =~ m/^(PAR|VO|--)$/)
-        {
-            $afun = 'ExD';
-            $node->set_is_parenthesis_root(1);
-        }
-        # DH = Discourse-level head (with direct speech, information about who said that).
-        # It is also used for location information in the beginning of a news report. Example:
-        # FR/DH :/PUNC Auf die Wahlerfolge... haben/ROOT die Etablierten... reagiert.
-        # In PDT such initial localizations are segmented as separate sentences and get the 'ExD' afun.
-        # DM = Discourse marker. Example: 'ja' ('yes'). In PDT, 'ano' ('yes') usually gets 'ExD'.
-        elsif($deprel =~ m/^D[HM]$/)
-        {
-            $afun = 'ExD';
-        }
-        # PH = Placeholder
-        # Example: Vorfeld-es
-        # Es naht ein Gewitter. (A storm is coming.)
-        # 'Gewitter' is subject, so 'es' cannot be subject.
-        elsif($deprel eq 'PH')
-        {
-            $afun = 'AuxO';
-        }
-        # Morphological particle: infinitival marker 'zu' with some verb infinitives.
-        # The particle is attached to the verb in Tiger treebank.
-        # In Danish DT we dealt with infinitive markers 'at' as with subordinating conjunctions. Should we do the same here?
-        elsif($deprel eq 'PM')
-        {
-            $afun = 'AuxC';
-        }
-        # SVP = Separable verb prefix.
-        elsif($deprel eq 'SVP')
-        {
-            $afun = 'AuxT';
-        }
-        # Unit component: token in embedded foreign phrase or quotation.
-        elsif($deprel eq 'UC')
-        {
-            $afun = 'Atr';
-        }
-        # Punctuation.
-        elsif($deprel eq 'PUNC')
-        {
-            if($node->form() eq ',')
-            {
-                $afun = 'AuxX';
-            }
-            else
-            {
-                $afun = 'AuxG';
-            }
-            # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
-        }
-        $node->set_afun($afun);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# In Tiger prepositional phrases, not only the noun is attached to the
-# preposition, but also all adjectives (that in fact modify the noun).
-# Nested prepositional phrases post-modifying the nouns behave similarly.
-# Adverbs work as rhematizers and they are also attached to the noun in PDT,
-# albeit it creates nonprojectivities.
-# There can also be phrases with multiple nouns, one in any prepositional case
-# and one in genitive, as:
-#     nach einer Umfrage des Fortune Wirtschaftsmagazins unter den Bossen
-#     nach < (einer > Umfrage < (des Fortune > Wirtschaftsmagazins) (unter < (den > Bossen)))
-# The preposition does not have the 'AuxP' afun.
-#------------------------------------------------------------------------------
-sub process_prepositional_phrases
-{
-    my $self = shift;
-    my $root = shift;
-    foreach my $node ($root->get_descendants({'ordered' => 1}))
-    {
-        if($node->get_iset('pos') eq 'prep')
-        {
-            my @prepchildren = $node->children();
-            my $preparg;
-            # If there are no children this preposition cannot get the AuxP afun.
-            if(scalar(@prepchildren)==0)
-            {
-                next;
-            }
-            # If there is just one child it is the PrepArg.
-            elsif(scalar(@prepchildren)==1)
-            {
-                $preparg = $prepchildren[0];
-            }
-            # If there are two or more children we have to estimate which one is the PrepArg.
-            # We will assume that the other are in fact modifiers of the PrepArg, not of the preposition.
-            else
-            {
-                # If there are nouns among the children we will pick a noun.
-                my @nouns = grep {$_->get_iset('pos') eq 'noun'} (@prepchildren);
-                if(scalar(@nouns)>0)
-                {
-                    # If there are more than one noun we will pick the first one.
-                    # This corresponds well to the pattern noun/anyCase + noun/genitive.
-                    # However, we must also do something for other sequences of nouns.
-                    $preparg = $nouns[0];
-                }
-                # Otherwise we will just pick the first child.
-                else
-                {
-                    $preparg = $prepchildren[0];
-                }
-            }
-            # Keep PrepArg as the only child of the AuxP node.
-            # Reattach all other children to PrepArg.
-            $preparg->set_afun($node->afun());
-            $node->set_afun('AuxP');
-            foreach my $child (@prepchildren)
-            {
-                unless($child==$preparg)
-                {
-                    $child->set_parent($preparg);
-                }
             }
         }
     }
@@ -384,48 +95,6 @@ sub process_prepositional_phrases
 #   In reality we will be less ambitious and develop a robust fallback for
 #   coordination without coordinators.
 #------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $root = shift;
-    my $coords = shift; # reference to array where detected coordinations are collected
-    # Look for coordination members.
-    my @members;
-    my @delimiters;
-    my @sharedmod;
-    my @privatemod;
-    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod);
-    if(@members)
-    {
-        push(@{$coords},
-        {
-            'members' => \@members,
-            'delimiters' => \@delimiters,
-            'shared_modifiers' => \@sharedmod,
-            'private_modifiers' => \@privatemod, # for debugging purposes only
-            'oldroot' => $root
-        });
-        # Call recursively on all modifier subtrees.
-        # Do not call it on all children because they include members and delimiters.
-        # Non-first members cannot head nested coordination under this approach.
-        # All CoordArg children they may have are considered members of the current coordination.
-        foreach my $node (@sharedmod, @privatemod)
-        {
-            $self->detect_coordination($node, $coords);
-        }
-    }
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ($root->children())
-        {
-            $self->detect_coordination($child, $coords);
-        }
-    }
-}
-
-
-
 #------------------------------------------------------------------------------
 # Collects members, delimiters and modifiers of one coordination. Recursive.
 # Leaves the arrays empty if called on a node that is not a coordination
@@ -555,9 +224,9 @@ sub collect_coordination_modifiers
 
 =over
 
-=item Treex::Block::A2A::DE::CoNLL2PDTStyle
+=item Treex::Block::A2A::RU::CoNLL2PDTStyle
 
-Converts Tiger trees from CoNLL to the style of
+Converts Syntagrus (Russian Dependency Treebank) trees to the style of
 the Prague Dependency Treebank.
 Morphological tags will be
 decoded into Interset and to the 15-character positional tags

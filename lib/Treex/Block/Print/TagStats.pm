@@ -15,7 +15,13 @@ sub process_anode
     my $anode = shift;
     my $tagset = $self->_tagset();
     my $tagex = $self->_tagex();
-    my $tag = $anode->conll_cpos()."\t".$anode->conll_pos()."\t".$anode->conll_feat()."\t".$anode->tag();
+    my @tag;
+    push(@tag, $anode->conll_cpos()) if(defined($anode->conll_cpos()));
+    push(@tag, $anode->conll_pos()) if(defined($anode->conll_pos()));
+    push(@tag, $anode->conll_feat()) if(defined($anode->conll_feat()));
+    push(@tag, $anode->tag()) if(defined($anode->tag()));
+    push(@tag, '') unless(@tag);
+    my $tag = join("\t", @tag);
     $tagset->{$tag}++;
     # Remember the position of the first example of every tag.
     if(!exists($tagex->{$tag}))
