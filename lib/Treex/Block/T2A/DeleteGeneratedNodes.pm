@@ -526,8 +526,6 @@ sub _merge_coord_members {
             # children with the same functor found with every sibling + the tnode itself -> rehang the whole coordination
             if (keys %coord_children == @siblings + 1) {
                 
-                log_warn('Coord-rehang: ' . $tnode->get_address());
-                
                 # move the non-generated member up
                 $non_gen[0]->set_is_member( $tnode->get_parent->is_member );
                 $non_gen[0]->set_parent( $tnode->get_parent()->get_parent() );
