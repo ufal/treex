@@ -488,7 +488,6 @@ sub _remove_coord {
     }
 
     # remove the node itself
-#    log_info( 'Remove-coord: ' . $tnode->id );
     $self->_mark_for_removal($tnode, $parent);
     return;
 }
@@ -506,7 +505,7 @@ sub _merge_coord_members {
         $self->_process_subtree($sibling);
     }
 
-    # there is one non-generated member and all the other members share the same functor
+    # there is one non-generated member and all the other members share the same functor and t-lemma
     if (@non_gen == 1
         and ( grep { $_->t_lemma eq $tnode->t_lemma and $_->functor eq $tnode->functor } @siblings ) == scalar(@siblings)
         )
@@ -526,9 +525,18 @@ sub _merge_coord_members {
 
             # children with the same functor found with every sibling + the tnode itself -> rehang the whole coordination
             if (keys %coord_children == @siblings + 1) {
-
+                
+                log_warn('Coord-rehang: ' . $tnode->get_address());
+                
+                # move the non-generated member up
+                $non_gen[0]->set_is_member( $tnode->get_parent->is_member );
                 $non_gen[0]->set_parent( $tnode->get_parent()->get_parent() );
-                $non_gen[0]->set_is_member(undef);
+                
+                # rehang non-member siblings to the one non-generated member
+                map { $_->set_parent( $non_gen[0] ) } grep { !$_->is_member } $tnode->get_siblings(); 
+                
+                # move the coordination under the non-generated member
+                $tnode->get_parent->set_is_member();
                 $tnode->get_parent->set_parent( $non_gen[0] );
 
                 foreach my $sibling ( @siblings, $tnode ) {
@@ -538,7 +546,6 @@ sub _merge_coord_members {
 
                     if ( $sibling != $non_gen[0] ) {
                         $self->_merge_children( $sibling, $coord_children{$sibling} );
-#                        log_info( 'Remove-coord-child: ' . $sibling->id );
                         $self->_mark_for_removal( $sibling, $coord_children{$sibling} );
                     }
                 }
