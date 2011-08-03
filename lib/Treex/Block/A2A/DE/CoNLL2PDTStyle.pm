@@ -367,6 +367,22 @@ sub process_prepositional_phrases
 #   first member.
 # - Nested coordinations ("apples, oranges and [blackberries or strawberries]")
 #   cannot be distinguished from one large coordination.
+# Special cases:
+# - Coordination lacks any conjunctions or punctuation with the CD deprel tag.
+#   Example:
+#   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
+#   In this example, the second 'spürst' is attached as a CoordArg to the first
+#   'Spürst'. All punctuation is attached to 'fragt', so we don't see the
+#   second comma as the potential coordinating node.
+#   Possible solutions:
+#   Ideally, there'd be a separate function that would reattach punctuation
+#   first. Commas before and after nested clauses, including direct speech,
+#   would be part of the clause and not of the surrounding main clause. Same
+#   for quotation marks around direct speech. And then we would have to
+#   find out that there is a comma before the second 'spürst' that can be used
+#   as coordinator.
+#   In reality we will be less ambitious and develop a robust fallback for
+#   coordination without coordinators.
 #------------------------------------------------------------------------------
 sub detect_coordination
 {
@@ -423,9 +439,11 @@ sub collect_coordination_members
     my $delimiters = shift; # reference to array where the delimiters are collected
     my $sharedmod = shift; # reference to array where the shared modifiers are collected
     my $privatemod = shift; # reference to array where the private modifiers are collected
+    my $debug = shift;
     # Is this the top-level call in the recursion?
     my $toplevel = scalar(@{$members})==0;
     my @children = $croot->children();
+    log_info('DEBUG ON '.scalar(@children)) if($debug);
     # No children to search? Nothing to do!
     return if(scalar(@children)==0);
     # AuxP occurs only if prepositional phrases have already been processed.

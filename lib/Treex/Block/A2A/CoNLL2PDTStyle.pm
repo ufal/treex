@@ -409,8 +409,9 @@ sub restructure_coordination
 {
     my $self = shift;
     my $root = shift;
-    #my $debug = 0;
-    my $debug = $self->sentence_contains($root, 'sondern auch mit Instrumenten');
+    my $debug = 0;
+    #my $debug = $self->sentence_contains($root, 'Spürst du das');
+    log_info('DEBUG ON') if($debug);
     # Switch between approaches to solving coordination.
     # The former reshapes coordination immediately upon finding it.
     # The latter and older approach first collects all coord structures then reshapes them.
@@ -444,6 +445,7 @@ sub shape_coordination_recursively
     my $self = shift;
     my $root = shift;
     my $debug = shift;
+    log_info('DEBUG ON') if($debug);
     # Is the current subtree root a coordination root?
     # Look for coordination members.
     my @members;
@@ -451,16 +453,17 @@ sub shape_coordination_recursively
     my @sharedmod;
     my @privatemod;
     my %coord =
-    {
+    (
         'members' => \@members,
         'delimiters' => \@delimiters,
         'shared_modifiers' => \@sharedmod,
         'private_modifiers' => \@privatemod, # for debugging purposes only
         'oldroot' => $root
-    };
-    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod);
+    );
+    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod, $debug);
     if(@members)
     {
+        log_info('COORDINATION FOUND') if($debug);
         # We have found coordination! Solve it right away.
         $self->shape_coordination(\%coord, $debug);
         # Call recursively on all modifier subtrees.
@@ -471,7 +474,7 @@ sub shape_coordination_recursively
         # All CoordArg children they may have are considered members of the current coordination.
         foreach my $node (@sharedmod, @privatemod)
         {
-            $self->shape_coordination_recursively($node);
+            $self->shape_coordination_recursively($node, $debug);
         }
     }
     # Call recursively on all children if no coordination detected now.
@@ -479,7 +482,7 @@ sub shape_coordination_recursively
     {
         foreach my $child ($root->children())
         {
-            $self->shape_coordination_recursively($child);
+            $self->shape_coordination_recursively($child, $debug);
         }
     }
 }
@@ -503,7 +506,7 @@ sub shape_coordination
     my $c = shift; # reference to hash
     my $debug = shift;
     $debug = 0 if(!defined($debug));
-    if($debug>1)
+    if($debug>=1)
     {
         $self->log_sentence($c->{oldroot});
         log_info("Coordination members:    ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{members}})));
@@ -532,16 +535,18 @@ sub shape_coordination
     # Select the last delimiter as the new root.
     if(!@{$c->{delimiters}})
     {
-        # In fact, there is an error in the CoNLL 2007 data where this happens (the conjunction is mistakenly tagged as conjarg).
-        # We have to skip such cases but we do not want to make it fatal unless we are debugging this module.
-        if($debug>1)
-        {
-            log_fatal('Coordination has no delimiters. What node shall I make the new coordination root?');
-        }
-        else
-        {
-            return;
-        }
+        # It can happen, however rare, that there are no delimiters between the coordinated nodes.
+        # Example: de:
+        #   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
+        # Here, both direct speeches are coordinated and together attached to 'fragt'.
+        # All punctuation is also attached to 'fragt', it is thus not available as coordination delimiters.
+        # We have to be robust and to survive such cases.
+        # Since there seems to be no better solution, the first member of the coordination will become the root.
+        # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
+        # If it was already a deficient coordination, i.e. if it had no delimiters and only one member, then something went wrong
+        # (probably it is no coordination at all).
+        log_fatal('Coordination has fewer than two members and no delimiters.') if(scalar(@{$c->{members}})<2);
+        push(@{$c->{delimiters}}, shift(@{$c->{members}}));
     }
     # If the last delimiter is punctuation and it occurs after the last member
     # and there is at least one delimiter before the last member, choose this other delimiter.
