@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    return if ( $t_node->voice || '' ) ne 'passive';
+    return if ( $t_node->voice || $t_node->gram_diathesis || '' ) !~ /^pas/;
     my $a_node = $t_node->get_lex_anode();
 
     # $a_node is now the passive autosemantic verb,

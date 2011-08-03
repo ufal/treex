@@ -231,6 +231,7 @@ sub gram_numertype     { return $_[0]->get_attr('gram/numertype'); }
 sub gram_politeness    { return $_[0]->get_attr('gram/politeness'); }
 sub gram_negation      { return $_[0]->get_attr('gram/negation'); }
 sub gram_definiteness  { return $_[0]->get_attr('gram/definiteness'); }
+sub gram_diathesis     { return $_[0]->get_attr('gram/diathesis'); }
 
 sub set_gram_sempos        { return $_[0]->set_attr( 'gram/sempos',        $_[1] ); }
 sub set_gram_gender        { return $_[0]->set_attr( 'gram/gender',        $_[1] ); }
@@ -249,6 +250,7 @@ sub set_gram_numertype     { return $_[0]->set_attr( 'gram/numertype',     $_[1]
 sub set_gram_politeness    { return $_[0]->set_attr( 'gram/politeness',    $_[1] ); }
 sub set_gram_negation      { return $_[0]->set_attr( 'gram/negation',      $_[1] ); }
 sub set_gram_definiteness  { return $_[0]->set_attr( 'gram/definiteness',  $_[1] ); }
+sub set_gram_diathesis     { return $_[0]->set_attr( 'gram/diathesis',     $_[1] ); }
 
 1;
 

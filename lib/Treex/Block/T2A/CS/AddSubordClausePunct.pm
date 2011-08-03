@@ -10,11 +10,11 @@ sub process_zone {
     my @anodes         = $aroot->get_descendants( { ordered => 1 } );
     my @clause_numbers = map { $_->clause_number } @anodes;
     ##my @afuns          = map { $_->afun || '' } @anodes;
-    my @lemmas = map { lc $_->lemma || '' } @anodes;
+    my @lemmas = map { lc( $_->lemma || '' ) } @anodes;
     push @lemmas, 'dummy';
 
     foreach my $i ( 0 .. $#anodes - 1 ) {
-
+        
         # Skip if we are not at the clause boundary
         next if $clause_numbers[$i] == $clause_numbers[ $i + 1 ];
 

@@ -12,31 +12,28 @@ sub process_tnode {
         my $lex_a_node = $t_node->get_lex_anode;
         return unless $lex_a_node;
 
-        my $tag = $lex_a_node->get_tag;
-
         my $diathesis;
 
-        if ( $tag =~ /^Vs/ ) {
+        if ( $lex_a_node->tag =~ /^Vs/ ) {
             $diathesis = 'pas';
         }
-        elsif (grep {$_->get_afun eq "AuxR"} $t_node->get_lex_anode->get_children) {
-            $diathesis = 'deagent'
+        elsif ( grep { $_->afun eq "AuxR" } $lex_a_node->get_children ) { # TODO shouldn't these be aux_nodes of the t_node ? 
+            $diathesis = 'deagent';
         }
         else {
             $diathesis = 'act';
         }
 
-        $t_node->set_gram_diathesis( $diathesis );
+        $t_node->set_gram_diathesis($diathesis);
     }
-
+    return;
 }
 
-
 1;
+
 __END__
 
 =encoding utf-8
-
 =head1 NAME
 
 Treex::Block::A2T::CS::SetDiathesis
@@ -47,7 +44,7 @@ The attribute C<gram/diathesis> of Czech verb t-nodes is filled
 with one of the following values:
   act - active diathesis
   pas - passive diathesis
-  deagent - deagentiv diathesis
+  deagent - deagentive diathesis
 
 =head1 AUTHORS
 
