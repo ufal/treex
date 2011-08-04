@@ -55,7 +55,6 @@ sub get_attr {
             log_fatal "Attribute '$attr_name' contains strange symbols."
               . " For XPath like constructs (e.g. 'a/aux.rf[3]') use the 'attr' method."
               if $attr_name =~ /[^-\w\/.]/;
-            return undef;
         }
         $val = $val->{$step};
     }
@@ -95,6 +94,7 @@ sub set_attr {
             return $val->{$step} = $attr_value;
         }
     }
+    return;
 }
 
 sub get_deref_attr {

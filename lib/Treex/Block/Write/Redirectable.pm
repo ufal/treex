@@ -1,7 +1,7 @@
 package Treex::Block::Write::Redirectable;
 
 use Moose::Role;
-use autodie; # die if the output file cannot be opened
+use autodie;    # die if the output file cannot be opened
 
 has to => (
     isa           => 'Str',
@@ -11,10 +11,10 @@ has to => (
 );
 
 has encoding => (
-    isa => 'Str',
-    is => 'ro',
-    default => 'utf8',
-    documentation => 'Output encoding. \'utf8\' by default.',    
+    isa           => 'Str',
+    is            => 'ro',
+    default       => 'utf8',
+    documentation => 'Output encoding. \'utf8\' by default.',
 );
 
 has _file_handle => (
@@ -24,7 +24,6 @@ has _file_handle => (
     builder       => '_build_file_handle',
     documentation => 'the open output file handle',
 );
-
 
 sub _build_file_handle {
 
@@ -47,7 +46,6 @@ sub DEMOLISH {
     }
     return;
 }
-
 
 1;
 __END__

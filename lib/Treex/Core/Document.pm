@@ -183,6 +183,7 @@ sub _rebless_and_index {
             }
         }
     }
+    return;
 }
 
 sub _pml_attribute_hash {
@@ -385,6 +386,7 @@ sub load {
     my $self = shift;
     $self->_pmldoc->load(@_);
     # TODO: this is unfinished: should be somehow connected with the code in BUILD
+    return;
 }
 
 sub save {
@@ -402,6 +404,7 @@ sub save {
     }
 
     $self->_pmldoc->save(@_);
+    return;
 }
 
 

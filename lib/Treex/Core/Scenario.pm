@@ -94,8 +94,8 @@ sub load_scenario_file {
 sub parse_scenario_string {
     my ( $scenario_string, $from_file ) = @_;
 
-    my $parser = new Treex::Core::ScenarioParser or log_fatal("Cannot create Scenario parser");
-    my $parsed = $parser->startrule($scenario_string, 1, $from_file);
+    my $parser = Treex::Core::ScenarioParser->new() or log_fatal("Cannot create Scenario parser");
+    my $parsed = $parser->startrule( $scenario_string, 1, $from_file );
     log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
     return @$parsed;
 }
@@ -103,13 +103,14 @@ sub parse_scenario_string {
 # reverse of parse_scenario_string, used in tools/tests/auto_diagnose.pl
 sub construct_scenario_string {
     my ( $block_items, $multiline ) = @_;
-    return join(
-        $multiline ? "\n" : ' ',
-        map { s/Treex::Block:://; $_ }
-            map {
-            $_->{block_name} . " " . join( " ", @{ $_->{block_parameters} } )
-            } @$block_items
-    );
+    my $delim = $multiline ? qq{\n} : q{ };
+    my @block_with_args = map { $_->{block_name} . q{ } . join( q{ }, @{ $_->{block_parameters} } ) } @$block_items;  # join block name and its parameters
+    my @stripped;
+    foreach my $block (@block_with_args) { # strip leading Treex::Block::
+        $block =~ s{^Treex::Block::}{};
+        push @stripped, $block;
+    }
+    return join $delim, @stripped;
 }
 
 sub _load_block {
@@ -150,10 +151,11 @@ sub run {
             log_info "Applying block $block_number/$number_of_blocks " . ref($block);
             $block->process_document($document);
         }
+
         # this actually marks the document as successfully done in parallel processing (if this line
         # does not appear in the output, the parallel process will fail -- it must appear at any errorlevel,
         # therefore not using log_info or similiar)
-        if ($self->document_reader->jobindex){
+        if ( $self->document_reader->jobindex ) {
             print STDERR "Document $document_number/$number_of_documents $doc_name: [success].\n";
         }
     }

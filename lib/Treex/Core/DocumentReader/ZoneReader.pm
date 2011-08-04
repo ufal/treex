@@ -53,6 +53,7 @@ sub BUILD {
 sub restart {
     my $self = shift;
     $self->_set_file_number(0);
+    return;
 }
 
 sub next_filename {
@@ -60,7 +61,7 @@ sub next_filename {
     my $file_number = $self->_file_number;
     return if $file_number == @{ $self->filenames };
     $self->_set_file_number( $file_number + 1 );
-    retrun $self->filenames->[$file_number];
+    return $self->filenames->[$file_number];
 }
 
 sub current_filename {

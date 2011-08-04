@@ -43,6 +43,7 @@ sub _set_wild_dump {
     };
 
     $storing_hash_ref->{wild_dump} = $value;
+    return;
 }
 
 
@@ -54,6 +55,7 @@ sub serialize_wild {
     else {
         $self->_set_wild_dump(Dumper($self->wild));
     }
+    return;
 }
 
 sub deserialize_wild {
@@ -64,6 +66,7 @@ sub deserialize_wild {
     else {
         $self->set_wild({});
     }
+    return;
 }
 
 1;

@@ -42,7 +42,10 @@ sub get_real_afun
 {
     my $self = shift;
     my $warnings = shift;
-    my $afun = $self->afun(); $afun = '' if(!defined($afun));
+    my $afun = $self->afun();
+    if ( not defined($afun) ) {
+        $afun = '';
+    }
     if($afun =~ m/^Aux[PC]$/)
     {
         my @children = $self->children();
@@ -100,7 +103,10 @@ sub set_real_afun
     my $self = shift;
     my $new_afun = shift;
     my $warnings = shift;
-    my $afun = $self->afun(); $afun = '' if(!defined($afun));
+    my $afun = $self->afun();
+    if ( not defined($afun) ) {
+        $afun = '';
+    }
     if($afun =~ m/^Aux[PC]$/)
     {
         my @children = $self->children();
@@ -181,6 +187,7 @@ sub copy_atree
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
+    return;
 }
 
 # -- linking to p-layer --

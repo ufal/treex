@@ -54,14 +54,19 @@ sub _add_to_node_list {
 
     my $self = shift;
     my $list = shift;
-    
+
     # get the current elements of the list
     my $cur_ref = $self->get_attr($list);
-    my @cur = $cur_ref ? @{ $cur_ref } : ();
+    my @cur = $cur_ref ? @{$cur_ref} : ();
+
     # grep only those that aren't already in the list
-    my @new = grep { my $id = $_; !any { $_ eq $id } @cur } map { $_->get_attr('id') } @_;
+    my @new = grep {
+        my $id = $_;
+        !any { $_ eq $id } @cur
+    } map { $_->get_attr('id') } @_;
+
     # set the new list value
-    $self->set_attr( $list, [ @cur, @new ] );            
+    $self->set_attr( $list, [ @cur, @new ] );
     return;
 }
 
@@ -149,7 +154,7 @@ sub get_anodes {
 
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
-    my @nodes = ( $self->_get_node_list( 'coref_gram.rf' ), $self->_get_node_list( 'coref_text.rf' ) );
+    my @nodes = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
     return $self->_process_switches( $arg_ref, @nodes );
 }
 

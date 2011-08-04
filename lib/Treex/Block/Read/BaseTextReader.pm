@@ -26,10 +26,10 @@ sub next_filehandle {
     my ($self) = @_;
     my $filename = $self->next_filename();
     return if !defined $filename;
-    if ($filename eq '-'){
+    if ( $filename eq '-' ) {
         binmode STDIN, $self->encoding;
         return \*STDIN;
-    }    
+    }
     my $mode = '<:' . $self->encoding;
     open my $FH, $mode, $filename or log_fatal "Can't open $filename: $!";
     return $FH;

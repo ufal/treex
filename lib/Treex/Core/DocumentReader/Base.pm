@@ -130,7 +130,7 @@ sub new_document {
 
 sub number_of_documents {
     my $self = shift;
-    return undef if !$self->is_one_doc_per_file;    
+    return if !$self->is_one_doc_per_file;
     return $self->_files_per_zone;
 }
 

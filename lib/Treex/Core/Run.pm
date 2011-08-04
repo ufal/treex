@@ -296,15 +296,18 @@ sub _execute_locally {
     my ($self) = @_;
 
     # Parameters can contain whitespaces that should be preserved
-    my $scen_str = join ' ',
-        map {
-        if ( my ( $name, $value ) = /(\S+)=(.+\s.+)$/ ) {
+    my @arguments;
+    foreach my $arg ( @{$self->extra_argv} ) {
+        if ( $arg =~ /(\S+)=(.+\s.+)$/ ) {
+            my ($name, $value) = ($1, $2);
             $value =~ s/'/\\'/g;
-            qq($name='$value');
+            push @arguments, qq($name='$value');
         }
-        else {$_}
+        else {
+            push @arguments, $arg;
         }
-        @{ $self->extra_argv };
+    }
+    my $scen_str = join ' ', @arguments;
 
     # input data files can be specified in different ways
     if ( $self->glob ) {
@@ -583,6 +586,7 @@ sub _print_output_files {
         }
         close $FILE;
     }
+    return;
 }
 
 sub _doc_started {
