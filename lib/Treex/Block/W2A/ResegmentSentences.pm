@@ -3,22 +3,29 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-#my %segmenter_for = (
-#    universal => Treex::Tool::Segment::RuleBased->new(),
-#    en        => Treex::Tool::Segment::EN::RuleBased->new(),
-#    cs        => Treex::Tool::Segment::CS::RuleBased->new(),
-#);
+has 'segmenters' => (
+    is => 'rw',
+    isa => 'HashRef[Treex::Tool::Segment::RuleBased]',
+    default => sub { return {} },
+);
 
 # TODO: even more elegant implementation, avoid string eval
 # TODO: new segmenters are created for each bundle (since r6002),
 #       we should cache the created segmenters.
 sub _get_segmenter {
+    my $self = shift;
     my $lang     = uc shift;
+    if (exists $self->segmenters->{$lang}) {
+        return $self->segmenters->{$lang};
+    }
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
     my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
         my $segmenter = eval "use $class; $class->new()";
-        return $segmenter if $segmenter;
+        if ($segmenter) {
+            $self->segmenters->{$lang} = $segmenter;
+            return $segmenter;
+        }
     }
     log_fatal("Cannot create segmenter for $lang");
 }
@@ -32,7 +39,7 @@ sub process_bundle {
     foreach my $zone ( $bundle->get_all_zones() ) {
         my $lang      = $zone->language;
         my $label     = $zone->get_label();
-        my $segmenter = _get_segmenter($lang);
+        my $segmenter = $self->_get_segmenter($lang);
         $sentences{$label} = [ $segmenter->get_segments( $zone->sentence ) ];
         my $segments = @{ $sentences{$label} };
         if ( $segments > $max_segments ) { $max_segments = $segments; }
