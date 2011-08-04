@@ -18,31 +18,31 @@ log_info("Loaded.\n");
 
 # --------- interface ---------
 
-sub Get_possible_tags ($) {
+sub get_possible_tags {
     my $wordform  = shift;
     my $lowerform = lc($wordform);
 
-    my $radek = "";
+    my @possible;
 
     if ( exists $muj_slovnik{$lowerform} ) {
         foreach my $tag ( keys %{ $muj_slovnik{$lowerform} } ) {
-            $radek = $radek . " " . $tag;
+            push @possible, $tag;
         }
         if ( $lowerform ne $wordform ) {
-            $radek = $radek . " NNP";
+            push @possible, qw(NNP);
         }
     }
     else {    # neni ve slovniku uzavrenych trid
         if ( exists $big_slovnik{$lowerform} ) {
             foreach my $tag ( keys %{ $big_slovnik{$lowerform} } ) {
-                $radek = $radek . " " . $tag;
+                push @possible, $tag;
             }
             if ( $lowerform ne $wordform ) {
-                $radek = $radek . " NNP NNPS";
+                push @possible, qw(NNP NNPS);
             }
         }
         else {
-            $radek = $radek . " FW JJ NN NNS RB";
+            push @possible, qw(FW JJ NN NNS RB);
 
             if (( $lowerform =~ /er$/ )
                 or ( $lowerform =~ /er-/ )
@@ -50,7 +50,8 @@ sub Get_possible_tags ($) {
                 ( $lowerform =~ /more-/ ) or ( $lowerform =~ /less-/ )
                 )
             {
-                $radek = $radek . " JJR RBR";
+                push @possible, qw(JJR RBR);
+
             }    # comparative
             if (( $lowerform =~ /est$/ )
                 or ( $lowerform =~ /est-/ )
@@ -58,79 +59,77 @@ sub Get_possible_tags ($) {
                 ( $lowerform =~ /most-/ ) or ( $lowerform =~ /least-/ )
                 )
             {
-                $radek = $radek . " JJS RBS";
+                push @possible, qw(JJS RBS);
             }    # superlative
             if ( ( $lowerform =~ /ing$/ ) or ( $lowerform =~ /[^aeiouy]in$/ ) ) {
-                $radek = $radek . " VBG";
+                push @possible, qw(VBG);
             }
             if ( $lowerform =~ /[^s]s$/ ) {
-                $radek = $radek . " VBZ";
+                push @possible, qw(VBZ);
             }    # 3. os
             else {
-                $radek = $radek . " VB VBP";
+                push @possible, qw(VB VBP);
             }    # non-3. os
 
             if ( $lowerform ne $wordform ) {
-                $radek = $radek . " NNP NNPS";
+                push @possible, qw(NNP NNPS);
             }
             elsif ( $lowerform =~ /^[0-9']/ ) {
-                $radek = $radek . " NNP";
+                push @possible, qw(NNP);
             }
             if (( $lowerform =~ /[^a-zA-Z0-9]+/ )
                 or
                 ( $lowerform =~ /^&.*;$/ )
                 )
             {
-                $radek = $radek . " SYM";
+                push @possible, qw(SYM);
             }
             if ( ( $lowerform =~ /[-0-9]+/ ) or ( $lowerform =~ /^[ixvcmd\.]+$/ ) ) {
-                $radek = $radek . " CD";
+                push @possible, qw(CD);
             }
         }
         if ( exists $past_slovesa{$lowerform} ) {
-            $radek = $radek . " VBD";
+            push @possible, qw(VBD);
         }
         if ( exists $partic_slovesa{$lowerform} ) {
-            $radek = $radek . " VBN";
+            push @possible, qw(VBN);
         }
         if ( $lowerform =~ /ed$/ ) {
-            $radek = $radek . " VBD VBN";
+            push @possible, qw(VBD VBN);
         }
     }
-
-    $radek =~ s/^ //;
-    return ( split / /, $radek );
+    return @possible;
 }
+
+# --------- private functions ---------
 
 sub _load_dictionary {
     my ( $soubor, $slovnik ) = @_;
-    my ( $radek, $slovo, @items, $tag );
 
-    open( DATA, $soubor ) or die "Can't open morphology file $soubor.";
-    while ( $radek = <DATA> ) {
-        chomp($radek);
-        if ( $radek eq '' ) {
-            next;
-        }
-        @items = split( qr/ /, $radek );
-        $slovo = shift(@items);
-        $slovo = lc($slovo);
-        while ( scalar(@items) > 0 ) {
-            $tag = shift(@items);
+    open my $DATA, '<', $soubor or treex_fatal("Can't open morphology file $soubor.");
+    LOAD:
+    while (<$DATA>) {
+        chomp;
+        next LOAD if $_ eq q{};
+        my @items = split qr/ /, $_;
+        my $slovo = lc shift(@items);
+        foreach my $tag (@items) {
             $slovnik->{$slovo}->{$tag} = 1;
         }
     }
-    close(DATA);
+    close($DATA);
+    return;
 }
 
 sub _load_list {
     my ( $soubor, $slovnik ) = @_;
-    open DATA, $soubor or die "Can't open morphology file $soubor.";
-    while (<DATA>) {
+    open my $DATA, '<', $soubor or treex_fatal("Can't open morphology file $soubor.");
+    while (<$DATA>) {
         chomp;
         $slovnik->{$_} = 1;
     }
-    close(DATA);
+    close($DATA);
+    return;
 }
 
 1;
@@ -145,7 +144,7 @@ Treex::Tool::EnglishMorpho::Analysis
  use Treex::Tool::EnglishMorpho::Analysis;
 
  foreach my $wordform (qw(John loves the yellow ball of his sister .)) {
-   my @tags = Treex::Tool::EnglishMorpho::Analysis::Get_possible_tags($wordform);
+   my @tags = Treex::Tool::EnglishMorpho::Analysis::get_possible_tags($wordform);
    print "$wordform -> @tags\n";
  }
 
@@ -153,7 +152,7 @@ Treex::Tool::EnglishMorpho::Analysis
 
 =head1 DESCRIPTION
 
-Function Get_possible_tags($wordform) returns the list of PennTreebank-style
+Function get_possible_tags($wordform) returns the list of PennTreebank-style
 morphological tags for the given word form.
 
 =head1 AUTHORS

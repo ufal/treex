@@ -11,7 +11,9 @@ sub process_anode {
 
     if ( $form eq '"' ) {
         my $previous_anode = $anode->get_prev_node();
-        $form = '``' if ( !$previous_anode || $previous_anode->form =~ /^[\(\[{<]$/ || !$previous_anode->no_space_after );
+        if ( !$previous_anode || $previous_anode->form =~ /^[\(\[{<]$/ || !$previous_anode->no_space_after ) {
+            $form = '``';
+        }
     }
 
     $form =~ s/’/'/g;

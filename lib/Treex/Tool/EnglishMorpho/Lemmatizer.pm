@@ -1,5 +1,8 @@
 package Treex::Tool::EnglishMorpho::Lemmatizer;
+use strict;
+use warnings;
 use Treex::Core::Common;
+use File::Slurp;
 use utf8;
 
 sub _directory_of_this_module {
@@ -12,13 +15,13 @@ sub _directory_of_this_module {
 }
 my $my_directory = _directory_of_this_module;
 
-my $EXCEPTIONS_FILENAME         = $my_directory . '/exceptions.tsv';
-my $NEGATION_FILENAME           = $my_directory . '/negation';
-my $CUT_NEGATION                = 1;
-my $LOWERCASE_PROPER_NAMES      = 0;
+my $EXCEPTIONS_FILENAME    = $my_directory . '/exceptions.tsv';
+my $NEGATION_FILENAME      = $my_directory . '/negation';
+my $CUT_NEGATION           = 1;
+my $LOWERCASE_PROPER_NAMES = 0;
 
-my %exceptions;
-my $negation;
+my %exceptions;    #These two variables
+my $negation;      # are filled at the end of this  module
 
 my $V   = qr/[aeiou]/;
 my $VY  = qr/[aeiouy]/;
@@ -31,11 +34,11 @@ my $PRE = qr/(be|ex|in|mis|pre|pro|re)/;
 #The most importat sub:
 #Input:  word form and POS tag (Penn style)
 #Output: lemma and was_negative_prefix
-sub lemmatize($$) {
+sub lemmatize {
     my ( $word, $tag ) = @_;
     my $negative_prefix = 0;
 
-    if ( ($tag !~ /^NNP/ || $LOWERCASE_PROPER_NAMES) && $word ne 'I' ) {
+    if ( ( $tag !~ /^NNP/ || $LOWERCASE_PROPER_NAMES ) && $word ne 'I' ) {
         $word = lc $word;
     }
 
@@ -45,12 +48,14 @@ sub lemmatize($$) {
 
     }
     else {
-        ( $word, $negative_prefix ) = _cut_negative_prefix( $word, $tag ) if $CUT_NEGATION;
+        if ($CUT_NEGATION) {
+            ( $word, $negative_prefix ) = _cut_negative_prefix( $word, $tag );
+        }
         return ( _lemmatize_by_rules( $word, $tag ), $negative_prefix );
     }
 }
 
-sub _cut_negative_prefix($$) {
+sub _cut_negative_prefix {
     my ( $word, $tag ) = @_;
 
     # We are interested only in adjectives, adverbs and nouns.
@@ -63,7 +68,7 @@ sub _cut_negative_prefix($$) {
     return ( $word, 0 );
 }
 
-sub _lemmatize_NNS_NNPS($) {
+sub _lemmatize_NNS_NNPS {
     my $word = shift;
     return $word if $word =~ s/men$/man/;          #over 600 words (in BNC)
     return $word if $word =~ s/shoes$/shoe/;
@@ -84,7 +89,7 @@ sub _lemmatize_NNS_NNPS($) {
     return $word;
 }
 
-sub _lemmatize_VBG($) {
+sub _lemmatize_VBG {
     my $word = shift;
     return $word if $word =~ s/(${CXY}z)ing$/$1/;
     return $word if $word =~ s/(${VY}z)ing$/$1e/;
@@ -122,7 +127,7 @@ sub _lemmatize_VBG($) {
     return $word;
 }
 
-sub _lemmatize_VBD_VBN($) {
+sub _lemmatize_VBD_VBN {
     my $word = shift;
     return $word if $word =~ s/en$/e/;
     return $word if $word =~ s/(${CXY}z)ed$/$1/;
@@ -159,7 +164,7 @@ sub _lemmatize_VBD_VBN($) {
     return $word;
 }
 
-sub _lemmatize_VBZ($) {
+sub _lemmatize_VBZ {
     my $word = shift;
     return $word if $word =~ s/(${V}se)s$/$1/;
     return $word if $word =~ s/(.${CXY}z)es$/$1/;
@@ -175,7 +180,7 @@ sub _lemmatize_VBZ($) {
     return $word;
 }
 
-sub _lemmatize_JJR_RBR($) {
+sub _lemmatize_JJR_RBR {
     my $word = shift;
     return $word if $word =~ s/([^e]ll)er$/$1/;                           #smaller
     return $word if $word =~ s/($C)\1er$/$1/;                             #bigger
@@ -189,7 +194,7 @@ sub _lemmatize_JJR_RBR($) {
     return $word;
 }
 
-sub _lemmatize_JJS_RBS($) {
+sub _lemmatize_JJS_RBS {
     my $word = shift;
     return $word if $word =~ s/([^e]ll)est$/$1/;                           #smallest
     return $word if $word =~ s/(.)\1est$/$1/;                              #biggest
@@ -202,7 +207,7 @@ sub _lemmatize_JJS_RBS($) {
     return $word;
 }
 
-sub _lemmatize_by_rules($$) {
+sub _lemmatize_by_rules {
     my ( $word, $tag ) = @_;
 
     my $lemma = $tag =~ /NNP?S/
@@ -214,34 +219,38 @@ sub _lemmatize_by_rules($$) {
         : $tag =~ /JJS|RBS/ ? _lemmatize_JJS_RBS($word)
         : $word
         ;
-    return $word if $lemma eq ''; # Otherwise e.g. "est"->""
+    return $word if $lemma eq '';    # Otherwise e.g. "est"->""
     return $lemma;
 }
 
-sub load_exceptions($) {
+sub load_exceptions {
     my $filename = shift;
     if ( -f $filename ) {
         log_debug( "Loading lemmatization exceptions from $filename ...", 1 );
-        open I, "<:encoding(utf-8)", $filename or die $!;
-        while (<I>) {
+        open my $I, "<:encoding(utf-8)", $filename or log_fatal($!);
+        while (<$I>) {
             chomp;
             my ( $word, $tag, $lemma, $negative_prefix ) = split /\t/;
-            $negative_prefix = 0 unless defined $negative_prefix and $negative_prefix eq '1';
+
+            $negative_prefix = ( defined $negative_prefix and $negative_prefix eq '1' );
             $exceptions{$tag}{$word} = [ $lemma, $negative_prefix ];
         }
+        close $I;
     }
     else {
         log_fatal("File with lemmatization exceptions not found. Looking at $filename\n");
     }
+    return;
 }
 
-sub load_negation($) {
+sub load_negation {
     my $filename = shift;
     my $pattern  = '';
     if ( -f $filename ) {
         log_debug( "Loading lemmatization exceptions from $filename ...", 1 );
-        open I, "<:encoding(utf-8)", $filename or die $!;
-        $pattern = join( '|', map { chomp; $_; } <I> );
+        my @lines = read_file( $filename, binmode => ':encoding(utf-8)', err_mode => 'silent' ) or log_fatal("Cannot load lemmatization exceptions from $filename");
+        chomp(@lines);
+        $pattern = join '|', @lines;
 
         #$pattern =~ s/-/\-/g;
         $negation = qr/^($pattern)/;
@@ -249,6 +258,7 @@ sub load_negation($) {
     else {
         log_fatal("File with lemmatization exceptions not found. Looking at $filename\n");
     }
+    return;
 }
 
 load_exceptions($EXCEPTIONS_FILENAME);
