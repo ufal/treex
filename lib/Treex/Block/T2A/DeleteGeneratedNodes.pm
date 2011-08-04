@@ -129,7 +129,7 @@ Readonly my $FUNCTORS_HIERARCHY_PARENT => {
     'FPHR'   => 1,
     'GRAD'   => 1,
     'HER'    => 5,
-    'ID'     => 2, # more than FPHR
+    'ID'     => 2,    # more than FPHR
     'INTF'   => 1,
     'INTT'   => 5,
     'LOC'    => 5,
@@ -219,7 +219,7 @@ Readonly my $FUNCTORS_HIERARCHY_CHILD => {
     'RESL'   => 5,
     'RESTR'  => 5,
     'RHEM'   => 5,
-    'RSTR'   => 4, # less than adverbials (under #EmpNoun-s, their (adverbial) functors are promoted, RSTR gets deleted)
+    'RSTR'   => 4,    # less than adverbials (under #EmpNoun-s, their (adverbial) functors are promoted, RSTR gets deleted)
     'SUBS'   => 5,
     'TFHL'   => 5,
     'TFRWH'  => 5,
@@ -233,8 +233,6 @@ Readonly my $FUNCTORS_HIERARCHY_CHILD => {
     'VOCAT'  => 1
 };    # functors hierarchy -- determines which of two functors (parent-child) gets removed, values for children
       # (coordination functors are promoted heree)
-
-
 
 has '+language' => ( required => 1 );
 
@@ -254,14 +252,14 @@ has '_deleted' => ( isa => 'HashRef', is => 'rw' );
 sub process_ttree {
 
     my ( $self, $troot ) = @_;
-    
-#    log_info('Processing ' . $troot->id);
+
+    #    log_info('Processing ' . $troot->id);
 
     $self->_set_processed( {} );
-    $self->_set_deleted( {} );
+    $self->_set_deleted(   {} );
     $self->_gather_a_links($troot);
     $self->_process_subtree($troot);
-       
+
     $self->_delete_marked($troot);
     $self->_check_corefs($troot);
     return;
@@ -295,10 +293,15 @@ sub _process_subtree {
         $self->_process_subtree($child);
 
         # this child might have gotten deleted in the meantime
-        next if ( $self->_deleted->{$child} ); 
+        next if ( $self->_deleted->{$child} );
 
-        if ( $child->is_generated and ( $child->t_lemma =~ m/^[^#]/ or $LEMMAS_TO_REMOVE->{ $child->t_lemma }  
-                or ($child->t_lemma eq '#PersPron' and $child->functor ne 'ACT') ) ) {
+        if ($child->is_generated and (
+                   $child->t_lemma =~ m/^[^#]/
+                or $LEMMAS_TO_REMOVE->{ $child->t_lemma }
+                or ( $child->t_lemma eq '#PersPron' and $child->functor ne 'ACT' )
+            )
+            )
+        {
             $self->_remove_node($child);
         }
     }
@@ -321,15 +324,22 @@ sub _remove_node {
 
     # no children -> simply remove and don't care anymore
     if ( @children == 0 ) {
-#        log_info( 'Remove-simple: ' . $to_remove->id );
-        $self->_mark_for_removal($to_remove); # don't care for auxiliaries, too
+        $self->_mark_for_removal($to_remove);    # don't care for auxiliaries, too
         return;
     }
 
     # handle '#Separ' separately :-)
     if ( $to_remove->nodetype eq 'coap' ) {
-        $self->_remove_coord($to_remove);
-        return;
+
+        # remove the coordination itself and rehang all to parent, if it's not root
+        if ( !$to_remove->get_parent->is_root ) {  
+            $self->_remove_coord($to_remove);
+            return;
+        }
+        # if the parent is root, just delete the "membership" and wait for $self->_merge_children
+        else {
+            map { $_->set_is_member(undef) } @children;
+        }
     }
 
     # merge duplicated coordination members
@@ -340,12 +350,13 @@ sub _remove_node {
     # find if we have some usable (not deleted, not atomic) children
     my $merge_child = $self->_find_most_important_child($to_remove);
 
-    # merge children, if there is more than one, replace the node with its child, determine the new functor    
-    if ( $merge_child ) {
-        $self->_merge_children( $to_remove, $merge_child);
+    # merge children, if there is more than one, replace the node with its child, determine the new functor
+    if ($merge_child) {
+        $self->_merge_children( $to_remove, $merge_child );
         $self->_remove_with_child($to_remove);
     }
-    # no non-deleted, non-atomic children -> rehang all children to parent and remove this node 
+
+    # no non-deleted, non-atomic children -> rehang all children to parent and remove this node
     else {
         $self->_remove_with_delatom($to_remove);
     }
@@ -359,18 +370,18 @@ sub _mark_for_removal {
     my ( $self, $to_remove, $aux_backup ) = @_;
     my @anodes = $to_remove->get_aux_anodes();
 
- #   log_info('Removal ' . $to_remove->id . ', backup ' . ( $aux_backup ? $aux_backup->id : '' ) );
-   
     foreach my $anode (@anodes) {
+
         # the anode would be orphaned -> save it
-        if ( $self->_a_links->{$anode} <= 1 ) { 
-            if (!$aux_backup){
-                log_warn('Losing some aux-rf: ' . $to_remove->id . ' and ' . $anode->id );
+        if ( $self->_a_links->{$anode} <= 1 ) {
+            if ( !$aux_backup ) {
+                log_warn( 'Losing some aux-rf: ' . $to_remove->id . ' and ' . $anode->id );
             }
             else {
                 $aux_backup->add_aux_anodes($anode);
             }
         }
+
         # it won't be orphaned, but note that the number of links to it will decrease
         else {
             $self->_a_links->{$anode}--;
@@ -381,19 +392,19 @@ sub _mark_for_removal {
 
 # This removes all nodes marked for deletion
 sub _delete_marked {
-    
+
     my ( $self, $troot ) = @_;
     my @nodes = $troot->get_descendants();
     foreach my $node (@nodes) {
 
-        if ($self->_deleted->{$node}){
+        if ( $self->_deleted->{$node} ) {
             $node->remove();
         }
     }
     return;
 }
 
-# This checks all coreference links within the tree, removing links to deleted nodes. 
+# This checks all coreference links within the tree, removing links to deleted nodes.
 sub _check_corefs {
 
     my ( $self, $troot ) = @_;
@@ -404,7 +415,6 @@ sub _check_corefs {
     }
     return;
 }
-
 
 # This just collects a list of referencing nodes for each a-layer node
 sub _gather_a_links {
@@ -467,28 +477,39 @@ sub _remove_coord {
         # non-members -- find nearest suitable member (skipping deleted and atomic nodes, since they can't have children)
         else {
             my $j = $i + 1;
-            while ( $j < @children and ( $self->_deleted->{$children[$j]} 
-                    or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
+            while (
+                $j < @children and (
+                    $self->_deleted->{ $children[$j] }
+                    or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom'
+                )
+                )
+            {
                 $j++;
             }
             if ( $j >= @children ) {
                 $j = $i - 1;
-                while ( $j >= 0 and ( $self->_deleted->{$children[$j]} 
-                    or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom' ) ) {
+                while (
+                    $j >= 0 and (
+                        $self->_deleted->{ $children[$j] }
+                        or !$children[$j]->is_member() or $children[$j]->nodetype eq 'atom'
+                    )
+                    )
+                {
                     $j--;
                 }
+
                 # weird case -- all coordination members are atomic or deleted, rehang also non-members to parent
-                if ($j < 0){ 
+                if ( $j < 0 ) {
                     $children[$i]->set_parent($parent);
                     next;
                 }
             }
             $children[$i]->set_parent( $children[$j] );
-        }        
+        }
     }
 
     # remove the node itself
-    $self->_mark_for_removal($tnode, $parent);
+    $self->_mark_for_removal( $tnode, $parent );
     return;
 }
 
@@ -516,29 +537,29 @@ sub _merge_coord_members {
 
             my %coord_children;
 
-            foreach my $sibling (@siblings, $tnode) {
-                
+            foreach my $sibling ( @siblings, $tnode ) {
+
                 my ($coord_child) = grep { !$self->_deleted->{$_} and $_->functor eq $child->functor } $sibling->get_children();
-                last if !$coord_child; # no need to search further if there is one without the same functor
+                last if !$coord_child;    # no need to search further if there is one without the same functor
                 $coord_children{$sibling} = $coord_child;
             }
 
             # children with the same functor found with every sibling + the tnode itself -> rehang the whole coordination
-            if (keys %coord_children == @siblings + 1) {
-                
+            if ( keys %coord_children == @siblings + 1 ) {
+
                 # move the non-generated member up
                 $non_gen[0]->set_is_member( $tnode->get_parent->is_member );
                 $non_gen[0]->set_parent( $tnode->get_parent()->get_parent() );
-                
+
                 # rehang non-member siblings to the one non-generated member
-                map { $_->set_parent( $non_gen[0] ) } grep { !$_->is_member } $tnode->get_siblings(); 
-                
+                map { $_->set_parent( $non_gen[0] ) } grep { !$_->is_member } $tnode->get_siblings();
+
                 # move the coordination under the non-generated member
                 $tnode->get_parent->set_is_member();
                 $tnode->get_parent->set_parent( $non_gen[0] );
 
                 foreach my $sibling ( @siblings, $tnode ) {
-                    
+
                     $coord_children{$sibling}->set_parent( $tnode->get_parent() );
                     $coord_children{$sibling}->set_is_member(1);
 
@@ -559,7 +580,7 @@ sub _merge_coord_members {
 sub _merge_children {
 
     my ( $self, $tnode, $under ) = @_;
-    
+
     my @children = grep { $_ != $under } $tnode->get_children();
 
     foreach my $child (@children) {
@@ -581,31 +602,31 @@ sub _remove_with_child {
     }
     $child->set_is_member(1) if $tnode->is_member();
     $child->set_parent($parent);
-#    log_info( 'Remove-with-child: ' . $tnode->id );
+
+    #    log_info( 'Remove-with-child: ' . $tnode->id );
     $self->_mark_for_removal( $tnode, $child );
     return;
 }
 
-
 # This removes from the tree a node which has atomic and/or to-be-deleted children. All its children
 # are hanged to its parent; its aux.rf is moved to the first atomic child, or to its parent, if not
-# applicable.  
+# applicable.
 sub _remove_with_delatom {
-    
-    my ( $self, $to_remove ) = @_;    
+
+    my ( $self, $to_remove ) = @_;
     my @children = $to_remove->get_children();
-    my $parent = $to_remove->get_parent();
+    my $parent   = $to_remove->get_parent();
     my $non_del;
-    
-    foreach my $child (@children){
+
+    foreach my $child (@children) {
         $child->set_parent($parent);
-        if (!$non_del and !$self->_deleted->{$child}){ # find first non-deleted child 
+        if ( !$non_del and !$self->_deleted->{$child} ) {    # find first non-deleted child
             $non_del = $child;
         }
     }
+
     # move aux.rf to the first non-deleted child, or to the parent
-#    log_info( 'Remove-with-delatom: ' . $to_remove->id );
-    $self->_mark_for_removal($to_remove, $non_del ? $non_del : $parent );
+    $self->_mark_for_removal( $to_remove, $non_del ? $non_del : $parent );
 }
 
 # Find the most important child in terms of functors priority (see $FUNCTORS_PRIORITY) and
@@ -614,11 +635,11 @@ sub _find_most_important_child {
 
     my ( $self, $tnode ) = @_;
     my @children = grep { !$self->_deleted->{$_} and $_->nodetype ne 'atom' and !$_->is_generated } $tnode->get_children();
-    return if (!@children);
-           
+    return if ( !@children );
+
     my $most_important = $children[0];
 
-    for my $child (@children) { 
+    for my $child (@children) {
         if ( $FUNCTORS_PRIORITY->{ $child->functor } >= $FUNCTORS_PRIORITY->{ $most_important->functor } ) {
             $most_important = $child;
         }
