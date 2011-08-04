@@ -1,6 +1,8 @@
 package Treex::Block::A2T::CS::FixTlemmas;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::CS;
+
 extends 'Treex::Core::Block';
 
 sub possadj_to_noun {
@@ -23,8 +25,7 @@ sub possadj_to_noun {
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    my $t_lemma = $t_node->t_lemma;
-    $t_lemma =~ s /[\-\_\`](.+)$//;
+    my $t_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $t_node->t_lemma, 1 );
 
     my $a_lex_node = $t_node->get_lex_anode();
     if ($a_lex_node) {

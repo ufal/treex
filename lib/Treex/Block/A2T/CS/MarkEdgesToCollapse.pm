@@ -62,13 +62,14 @@ sub is_parent_aux_to_me ($) {
     return (
         (   $a_node->tag =~ /^Vf/
                 && $a_node->afun ne 'Sb'
-                &&
-                $a_parent->lemma =~ /^(m[í]t|cht[í]t|muset|moci|sm[ě].t)(\_.*)?$/
+                && (
+                $a_parent->lemma =~ /^(muset|mít|chtít|hodlat|moci|dovést|umět|smět)(\_.*)?$/    # modal verbs
+                || ( $a_parent->lemma eq 'dát' && grep { $_->form eq 'se' } $a_parent->get_children() )    # (mostly) modal 'dát se'
+                )
         )
-            ||
-            ( $a_node->tag =~ /^Vs/ && $a_parent->lemma =~ /^(b[ý]t)(\_.*)?$/ ) ||
-            ( $a_parent->afun =~ /Aux[PC]/ && $a_node->afun !~ /^Aux[YZ]$/ ) ||
-            ( lc( $a_parent->form ) eq "jako" && $a_parent->afun eq "AuxY" )
+            || ( $a_node->tag =~ /^Vs/ && $a_parent->lemma =~ /^(b[ý]t)(\_.*)?$/ )
+            || ( $a_parent->afun =~ /Aux[PC]/ && $a_node->afun !~ /^Aux[YZ]$/ )
+            || ( lc( $a_parent->form ) eq "jako" && $a_parent->afun eq "AuxY" )
     );
 }
 
