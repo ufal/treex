@@ -20,9 +20,14 @@ sub process_anode {
     # the particle 'se/si' is marked as reflexive tantum, but that's not possible with the given verb
     if ( !Treex::Tool::Lexicon::CS::Reflexivity::is_possible_tantum($tantum_lemma) ) {
 
+        # make an adverbial ("free dative") out of it, if the particle is 'si' and there is another object besides it
+        if ( $refl->form eq 'si' and any { $_->afun eq 'Obj' } $anode->get_echildren( { or_topological => 1 } ) ) {
+            $refl->set_afun('Adv');
+        }
+
         # make an object out of it, if the verb is in 1st or 2nd person, is an infinitive or the particle is 'si'
         # (i.e. all cases where a reflexive passive is unlikely)
-        if ( $anode->tag =~ m/^V(......[12]|f)/ or $refl->form eq 'si' ) {
+        elsif ( $anode->tag =~ m/^V(......[12]|f)/ or $refl->form eq 'si' ) {
             $refl->set_afun('Obj');
         }
 
@@ -48,7 +53,7 @@ Treex::Block::W2A::CS::FixReflexiveTantum
 This makes sure that any reflexive tantum particle "se/si" as marked by the parser (C<AuxT>) hangs under an actual 
 reflexive tantum verb (or deverbative noun or adjective).
 
-If not, the C<afun> of the reflexive particle  is converted to C<AuxR> or C<Obj>.  
+If not, the C<afun> of the reflexive particle  is converted to C<AuxR>, C<Obj> or C<Adv>.  
 
 =head1 AUTHORS
 
