@@ -31,6 +31,14 @@ Treex::Block::A2T::MarkParentheses
 Fills C<is_parenthesis> attribute of parenthetized t-nodes
 (nodes having both left and right parentheses in aux a-nodes).
 
+=head1 TODO
+
+This implementation is not compliant with PDT, where all nodes that should be included in the parenthesis
+must have the C<is_parenthesis> attribute set, not only the parenthesis root (the reason is non-continuous
+parentheses, see chapter 5.7 of the PDT T-layer annotation manual). This causes a lot of superfluous parentheses
+when generating from PDT. However, it is not clear what to do with nested parentheses if the PDT-style marking 
+would be used.   
+
 =head1 AUTHOR
 
 Zdeněk Žabokrtský <zaborktsky@ufal.mff.cuni.cz>
