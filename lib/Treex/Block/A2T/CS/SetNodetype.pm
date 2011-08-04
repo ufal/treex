@@ -22,12 +22,8 @@ sub detect_nodetype {
 
     my ( $self, $t_node ) = @_;
 
-    # coordinations simply based on morphology
-    if ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^J/ ) {
-        return 'coap';
-    }
     # coordinations based on functors
-    elsif ( $self->use_functors and $t_node->functor =~ /^(APPS|CONJ|DISJ|ADVS|CSQ|GRAD|REAS|CONFR|CONTRA|OPER)/ ) {
+    if ( $self->use_functors and $t_node->functor =~ /^(APPS|CONJ|DISJ|ADVS|CSQ|GRAD|REAS|CONFR|CONTRA|OPER)/ ) {
         return 'coap';
     }
     # rhematizers
@@ -41,6 +37,10 @@ sub detect_nodetype {
     # idioms
     elsif ( $self->use_functors and $t_node->functor =~ /^DPHR$/ ) {
         return 'dphr';
+    }
+    # coordinations simply based on morphology
+    elsif ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^J/ ) {
+        return 'coap';
     }
     # a-lemmas for semantically relevant punctuation -- not modified by the current automatic analysis 
     elsif ( $t_node->t_lemma =~ /^(&|%|\*|\.|\.\.\.|:|,|;|-|–|\/|\()$/ ){
