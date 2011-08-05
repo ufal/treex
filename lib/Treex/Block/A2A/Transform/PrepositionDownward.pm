@@ -10,6 +10,7 @@ sub BUILD {
 
     $self->set_transformer(
         Treex::Tool::ATreeTransformer::DepReverser->new({
+            subscription => $self->subscription,
             nodes_to_reverse => sub {
                 my ($child,$parent) = @_;
                 return ($parent->afun eq 'AuxP' and $child->afun ne 'AuxP');

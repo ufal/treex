@@ -1,7 +1,7 @@
 package Treex::Block::A2A::Transform::PunctBelowTechRoot;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
@@ -10,9 +10,11 @@ sub process_anode {
 
         foreach my $child ($anode->get_children) {
             $child->set_parent($anode->get_parent);
+            $self->subscribe($child);
         }
 
         $anode->set_parent($anode->get_root);
+        $self->subscribe($anode);
     }
 }
 

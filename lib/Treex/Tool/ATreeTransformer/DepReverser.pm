@@ -3,6 +3,12 @@ package Treex::Tool::ATreeTransformer::DepReverser;
 use Moose;
 use Treex::Core::Log;
 
+has subscription => (
+    is => 'rw',
+#    isa => 'String',
+    documentation => 'transformation subscription that will be store in the wild',
+);
+
 has nodes_to_reverse => (
     is => 'rw',
     isa => 'CodeRef',
@@ -25,22 +31,31 @@ has move_with_parent => (
 );
 
 
+sub subscribe {
+    my ($self, $node) = @_;
+    $node->wild->{"trans_".$self->subscription} = 1;
+}
+
 sub _reverse_nodes {
     my ($self, $child, $parent) = @_;
 
     $child->set_parent($parent->get_parent);
+    $self->subscribe($child);
 
     my @move_below_original_parent = grep {!&{$self->move_with_child}($_)} $child->get_children;
     my @move_below_original_child = grep {!&{$self->move_with_parent}($_)} $parent->get_children;
 
     $parent->set_parent($child);
+    $self->subscribe($parent);
 
     foreach my $node (@move_below_original_child) {
         $node->set_parent($child);
+        $self->subscribe($node);
     }
 
     foreach my $node (@move_below_original_parent) {
         $node->set_parent($parent);
+        $self->subscribe($node);
     }
 
     $child->set_is_member($parent->is_member);
