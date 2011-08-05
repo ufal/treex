@@ -4,9 +4,9 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::Filter::CzEng::Common';
 
-has dictionary => (
+has 'dictionary' => (
     isa => 'HashRef[HashRef[Str]]',
-    is => 'ro'
+    is => 'rw'
 );
 
 sub process_bundle {
@@ -15,46 +15,38 @@ sub process_bundle {
     my @en = $bundle->get_zone('en')->get_atree->get_descendants;
     my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
 
-#    while (<>) {
-#        chomp;
-#    
-#        my ($file,$align,$score,$en,$cs,$message) = split /\t/;
-#    
-#        my $new_message;
-#    
-#        # ----------- filter-specific code starts here ---------
-#    
-#        if ($align eq "1-1") {
-#            foreach my $lang (qw(cs en)) {
-#                my $seg = eval "\$".$lang;
-#    
-#                next if $seg =~ /^\s*[0-9]+\s*[\.)]?\s*$/;
-#                  # allow sentences containing only ordinals
-#    
-#                my @seen = ();
-#                my @valid = ();
-#                  # 0->single-letter words, 1->two-letter, 2->three-letter, 3->four+
-#                $seg = lc($seg);
-#                # print STDERR "$lang: $seg\n";
-#                foreach my $w (split /\b/, $seg) {
-#                  die if length($w) == 0;
-#                  next if $w !~ /[[:alpha:]]/;
-#                  my $class = length($w)-1;
-#                  $class = 3 if $class > 3;
-#                  # print STDERR "Considering '$w' (class $class) in $lang: ".($dict->{$lang}->{$w} ? "VALID" : "")."\n";
-#                  $seen[$class]++;
-#                  $valid[$class]++ if $dict->{$lang}->{$w};
-#                }
-#                my $ok = 0;
-#                $ok = 1 if $valid[3];
-#                $ok = 1 if $ok == 0 && $valid[2] && (! defined $seen[3] || $seen[3] < 2);
-#                $ok = 1 if $ok == 0 && $valid[1] && (! defined $seen[2] || $seen[2] < 2);
-#                if (!$ok) {
-#                    $new_message = "ERRoR_no_word_in_$lang";
-#                }
-#            }
-#        }
-#    }    
+   
+        if ($align eq "1-1") {
+            foreach my $lang (qw(cs en)) {
+                my $seg = eval "\$".$lang;
+    
+                next if $seg =~ /^\s*[0-9]+\s*[\.)]?\s*$/;
+                  # allow sentences containing only ordinals
+    
+                my @seen = ();
+                my @valid = ();
+                  # 0->single-letter words, 1->two-letter, 2->three-letter, 3->four+
+                $seg = lc($seg);
+                # print STDERR "$lang: $seg\n";
+                foreach my $w (split /\b/, $seg) {
+                  die if length($w) == 0;
+                  next if $w !~ /[[:alpha:]]/;
+                  my $class = length($w)-1;
+                  $class = 3 if $class > 3;
+                  # print STDERR "Considering '$w' (class $class) in $lang: ".($dict->{$lang}->{$w} ? "VALID" : "")."\n";
+                  $seen[$class]++;
+                  $valid[$class]++ if $self->{dictionary}->{$lang}->{$w};
+                }
+                my $ok = 0;
+                $ok = 1 if $valid[3];
+                $ok = 1 if $ok == 0 && $valid[2] && (! defined $seen[3] || $seen[3] < 2);
+                $ok = 1 if $ok == 0 && $valid[1] && (! defined $seen[2] || $seen[2] < 2);
+                if (!$ok) {
+                    $new_message = "ERRoR_no_word_in_$lang";
+                }
+            }
+        }
+    }    
     return 1;
 }
 
@@ -62,6 +54,7 @@ sub BUILD
 {
     my $self = shift;
     # load dictionaries
+
     
     # for English
     # # just the English side of the old GIZA++ dictionary
@@ -69,8 +62,8 @@ sub BUILD
     my $dictf = "/net/projects/tectomt_shared/generated_data/extracted_from_BNC/freqlist";
     print STDERR "Loading dictionary for en: $dictf\n";
     my $dicth = my_open($dictf);
+    my %dict;
     binmode($dicth, ":encoding(iso-8859-1)");
-    my $dict = undef;
     while (<$dicth>) {
         chomp;
         my ($word, $tag, $cnt) = split /\t/;
@@ -78,11 +71,11 @@ sub BUILD
         next if $cnt < 2; # require at least two occs
         foreach my $w (split /\b/, $word) { # resplit words
             next if $w !~ /[[:alpha:]]/;
-            $self->dictionary->{"en"}->{lc($w)} = 1; # lowercasing
+            $self->{dictionary}->{"en"}->{lc($w)} = 1; # lowercasing
         }
     }
     close $dicth;
-    
+
     { # Czech dict
     my $dictf = "/net/projects/tectomt_shared/resource_data/czech_wordforms_from_syn.txt.gz";
     print STDERR "Loading dictionary for cs: $dictf\n";
@@ -94,11 +87,12 @@ sub BUILD
         foreach my $w (split /\b/, $word) { # resplit words
             next if $w !~ /[[:alpha:]]/;
             my $lc = lc($w); # lowercasing
-            $self->dictionary->{"cs"}->{$lc} = 1;
+            $self->{dictionary}->{"cs"}->{$lc} = 1;
         }
     }
     close $dicth;
     }
+
     return 1;
 }
 
@@ -127,6 +121,7 @@ sub my_open {
     return $hdl;
 }
 
+return 1;
 
 =pod
 
