@@ -16,6 +16,7 @@ sub process_anode
     my $deprelset = $self->_deprelset();
     my $deprelex = $self->_deprelex();
     my $deprel = $anode->conll_deprel();
+    $deprel = '' if(!defined($deprel));
     $deprelset->{$deprel}++;
     # Remember the position of the first example of every tag.
     if(!exists($deprelex->{$deprel}))
