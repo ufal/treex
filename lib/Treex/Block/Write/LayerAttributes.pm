@@ -57,7 +57,7 @@ sub _process_tree {
 # Return all the required information for a node as a hash
 sub _get_info_hash {
 
-    my ( $self, $node ) = @_;
+    my ( $self, $node, $alignment_hash ) = @_;
     my %info;
 
     foreach my $attrib ( @{ $self->_attrib_list } ) {
@@ -73,6 +73,22 @@ sub _get_info_hash {
             }
             elsif ($ref eq 'children' ){
                 @nodes = $node->get_children( { ordered =>  1 } );
+            }
+            # alignment relation
+            elsif ($ref eq 'aligned' ){
+                if ($alignment_hash) {
+                    # get alignment from the mapping provided in a hash
+                    my $id = $node->id;
+                    if ($alignment_hash->{$id}) {
+                        @nodes = @{$alignment_hash->{$id}};
+                    }
+                } else {
+                    # get alignment from Node->get_aligned_nodes()
+                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes();
+                    if ($aligned_nodes) {
+                        @nodes = @{$aligned_nodes};
+                    }
+                }
             }
             # referencing values
             else {
@@ -90,10 +106,15 @@ sub _get_info_hash {
         }
         # plain attributes
         else {
-            my @values = Treex::PML::Instance::get_all( $node, $attrib );
-            
-            next if (@values == 1 and not defined($values[0])); # leave single undefined values as undefined
-            $info{$attrib} = join( ' ', grep { defined($_) } @values );
+            if ($attrib eq 'ctag') {
+                # Czech tag simplified to POS&CASE
+                $info{$attrib} = $self->get_coarse_grained_tag($node->tag);
+            } else {
+                my @values = Treex::PML::Instance::get_all( $node, $attrib );
+                
+                next if (@values == 1 and not defined($values[0])); # leave single undefined values as undefined
+                $info{$attrib} = join( ' ', grep { defined($_) } @values );
+            }
         }
     }
     return \%info;
@@ -102,10 +123,26 @@ sub _get_info_hash {
 # Return all the required information for a node as an array
 sub _get_info_list {
     
-    my ( $self, $node ) = @_;
+    my ( $self, $node, $alignment_hash ) = @_;
     
-    my $info = $self->_get_info_hash($node);
+    my $info = $self->_get_info_hash($node, $alignment_hash);
     return [ map { $info->{$_} } @{ $self->_attrib_list } ];
+}
+
+# Czech tag simplified to POS&CASE (or POS&SUBPOS if no case)
+sub get_coarse_grained_tag {
+    my ($self, $tag) = @_;
+    
+    my $ctag;
+    if ( substr($tag, 4, 1) eq '-' ) {
+        # no case -> PosSubpos
+        $ctag = substr ($tag, 0, 2);
+    } else {
+        # case -> PosCase
+        $ctag = substr ($tag, 0, 1) . substr ($tag, 4, 1);
+    }
+
+    return $ctag;
 }
 
 
@@ -123,8 +160,19 @@ Treex::Block::Write::LayerAttributes
 A Moose role for Write blocks that may be configured to use different layers and different attributes. All blocks with this
 role must override the C<_process_tree()> method.
 
-One level of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. C<a/aux.rf-&gt;afun>, two
-special references — C<parent> and C<children> are supported in addition to any references within the nodes themselves.
+One level of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. C<a/aux.rf-&gt;afun>, three
+special references — C<parent>, C<children> and C<aligned> are supported in addition to any references within the nodes themselves.
+
+C<aligned> means all nodes aligned to this node. If alignment info is not stored
+in nodes of this tree but in their counterparts, you must provide a backward
+node id to aligned nodes mapping (Str to ArrayRef[Node]) as a hash reference,
+called C<$alignment_hash> in the code. For an example on how to do that,
+see L<Treex::Block::Write::AttributeSentencesAligned>.
+
+A special field C<ctag> (coarse grained tag) can be used for Czech, intended
+for cases where the full tag is too detailed for you. It has the form of
+C<PosCase> (eg. C<N4>) if a morphological case is set, and
+C<PosSubpos> (eg. C<VB>) otherwise.
  
 All values of multiple-valued attributes are returned, separated with a space.
 
