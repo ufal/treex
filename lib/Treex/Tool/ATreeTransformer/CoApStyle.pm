@@ -9,7 +9,7 @@ extends 'Treex::Tool::ATreeTransformer::BaseTransformer';
 enum 'AFUN', [qw( Coord Apos )];
 has afun => (
     is => 'rw',
-    isa => 'OLD_ROOT',
+#    isa => 'OLD_ROOT', # doesn't work, weird
     required => 1,
     documentation => 'to be applied on structures rooted by either Coord or Apos nodes',
 );
@@ -17,7 +17,7 @@ has afun => (
 enum 'NEW_SHAPE', [qw( chain tree )];
 has new_shape => (
     is => 'rw',
-    isa => 'NEW_SHAPE',
+#    isa => 'NEW_SHAPE',
     required => 1,
     documentation => 'new shape of the co/ap structure',
 );
@@ -25,7 +25,7 @@ has new_shape => (
 enum 'NEW_ROOT', [qw( first last )];
 has new_root => (
     is => 'rw',
-    isa => 'NEW_ROOT',
+#    isa => 'NEW_ROOT',
     required => 1,
     documentation => 'which member (first/last) should be the new root of the co/ap structure',
 );
@@ -44,7 +44,7 @@ sub apply_on_subtree {
         $self->apply_on_subtree($child);
     }
 
-    if ($old_root->afun eq $self->afun) { # either Coord or Apos
+    if ($old_root->afun and $old_root->afun eq $self->afun) { # either Coord or Apos
 
         my @nodes = $old_root->get_children({add_self=>1,ordered=>1});
 
@@ -52,7 +52,7 @@ sub apply_on_subtree {
             @nodes = reverse @nodes;
         }
 
-        # (1) choose the new root
+        # (1) choose the new root and rehang all the rest below it (just to avoid cycles)
         my @members = grep {$_->is_member and $_ ne $old_root} @nodes;
         my $new_root = $members[0];
         if (not $new_root) {
@@ -60,6 +60,9 @@ sub apply_on_subtree {
             return;
         }
         $self->rehang($new_root,$old_root->get_parent);
+        foreach my $node (grep {$_ ne $new_root} @nodes) {
+            $self->rehang($node, $new_root);
+        }
 
         # (2) rehanging all non-members and the old root below the nearest
         # following member (or below the last member, for those behind the last member)
@@ -68,6 +71,7 @@ sub apply_on_subtree {
         foreach my $node ( @nodes ) {
             if ($node->is_member) {
                 foreach my $nonmember (@nonmembers_to_rehang) {
+                    print $nonmember->form."\t".$node->form."\n";
                     $self->rehang($nonmember, $node);
                 }
                 @nonmembers_to_rehang = ();
