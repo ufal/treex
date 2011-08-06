@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Transform::SharedModifBelowMember;
+package Treex::Block::A2A::Transform::SharedModifBelowNearestMember;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';

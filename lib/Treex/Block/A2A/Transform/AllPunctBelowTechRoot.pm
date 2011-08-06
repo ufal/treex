@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Transform::PunctBelowTechRoot;
+package Treex::Block::A2A::Transform::AllPunctBelowTechRoot;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
