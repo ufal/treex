@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Transform::CoordLeftChain;
+package Treex::Block::A2A::Transform::CoordChainRootFirst;
 use Moose;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
 use Treex::Tool::ATreeTransformer::CoApStyle;

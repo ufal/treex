@@ -19,8 +19,10 @@ sub subscribe {
 sub rehang {
     my ($self, $node, $new_parent) = @_;
     print STDERR "Trying to attach '".$node->form."' below '".$new_parent->form."'\n";
-    $node->set_parent($new_parent);
-    $self->subscribe($node);
+    if ($node->parent ne $new_parent) {
+        $node->set_parent($new_parent);
+        $self->subscribe($node);
+    }
 }
 
 1;
