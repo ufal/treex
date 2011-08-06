@@ -29,23 +29,19 @@ has move_with_parent => (
 sub _reverse_nodes {
     my ($self, $child, $parent) = @_;
 
-    $child->set_parent($parent->get_parent);
-    $self->subscribe($child);
+    $self->rehang($child, $parent->get_parent);
 
     my @move_below_original_parent = grep {!&{$self->move_with_child}($_)} $child->get_children;
     my @move_below_original_child = grep {!&{$self->move_with_parent}($_)} $parent->get_children;
 
-    $parent->set_parent($child);
-    $self->subscribe($parent);
+    $self->rehang($parent,$child);
 
     foreach my $node (@move_below_original_child) {
-        $node->set_parent($child);
-        $self->subscribe($node);
+        $self->rehang($node,$child);
     }
 
     foreach my $node (@move_below_original_parent) {
-        $node->set_parent($parent);
-        $self->subscribe($node);
+        $self->rehang($node,$parent);
     }
 
     $child->set_is_member($parent->is_member);
