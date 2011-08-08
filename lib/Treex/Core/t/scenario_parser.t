@@ -25,7 +25,17 @@ cs_synthesis_goldt.scen
 #cs_synthesis_t2a.scen
 #cs_synthesis_a2w.scen
 EOF
-    'cs_synthesis_goldt' => <<'EOF',
+    'cs_synthesis_goldt.scen' => <<'EOF',
+Read::Text
+#in release there won't be T2T blocks, so I'm using basic for testing
+#T2T::CopyTtree
+#T2A::SentenceNegationToVerb
+#T2A::DeleteGeneratedNodes
+#T2A::CS::TransformTLemmas
+#T2A::RenamePunctuationTLemmas
+#T2A::CS::SetFormemes
+#T2A::CS::MarkClauseHeads
+#T2T::SetClauseNumber
 EOF
 );
 my %files = (
