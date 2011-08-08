@@ -18,6 +18,16 @@ my %contents = (
     'aaa aaa' => CANNOT,
     'XXX XXX' => q{Can't use block Treex::Block::XXX},  #Scenario will be Treex::Block::XXX Treex::Block::XXX
 );
+my %create = (
+    'cs_synthesis_pdt.scen' => <<'EOF',
+Util::SetGlobal language=cs selector=T
+cs_synthesis_goldt.scen
+#cs_synthesis_t2a.scen
+#cs_synthesis_a2w.scen
+EOF
+    'cs_synthesis_goldt' => <<'EOF',
+EOF
+);
 my %files = (
     'cs_synthesis_pdt.scen' => OK,
 );
@@ -37,6 +47,10 @@ foreach my $content ( keys %contents ) {
         combined_like( sub { eval{Treex::Core::Scenario->new( from_file => $name )} }, qr/$expected/, "Output of parsing '$content' contains '$expected' " );
 
     }
+}
+foreach my $name (keys %create) {
+    write_file( $name, $create{$name} );
+    push @filenames, $name;
 }
 foreach my $file (keys %files) {
     my $expected = $files{$file};

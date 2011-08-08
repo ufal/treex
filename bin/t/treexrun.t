@@ -5,6 +5,7 @@ use Treex::Core::Run;
 use Test::More;
 use File::Slurp;
 use File::Basename;
+use Cwd qw(realpath);
 
 # We want to check execution of treex exactly as from the command line.
 # Originally, we tried to
@@ -23,11 +24,11 @@ sub is_bash_combined_output {
 
 my $TREEX     = 'treex';
 my $exit_code = system('treex -h 2>/dev/null');
-if ( $exit_code == -1 ) {
+if ( $exit_code != 0 ) {
     use Treex::Core::Config;
-    $TREEX = Treex::Core::Config::lib_core_dir() . '../../../bin/treex';    #development location - lib_core_dir is lib/Treex/Core
+    $TREEX = realpath( Treex::Core::Config::lib_core_dir() . '/../../../bin/treex' );    #development location - lib_core_dir is lib/Treex/Core
     if ( !-x $TREEX ) {
-        $TREEX = Treex::Core::Config::lib_core_dir() . '../../../../bin/treex';    #release location - lib_core_dir is blib/lib/Treex/Core
+        $TREEX = realpath( Treex::Core::Config::lib_core_dir() . '/../../../../bin/treex' );    #release location - lib_core_dir is blib/lib/Treex/Core
     }
 }
 
@@ -70,8 +71,9 @@ my @tasks  = (
 
     # try to confuse the scenario parser with a parameter which looks like scenario
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '' ],
+
     # parameters with quotes
-    [ q(echo | treex -q -Len Read::Sentences Util::Eval param= document='print $self->_args->{param};'), '' ],
+    [ q(echo | treex -q -Len Read::Sentences Util::Eval param= document='print $self->_args->{param};'),   '' ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param="" document='print $self->_args->{param};'), '' ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param='' document='print $self->_args->{param};'), '' ],
 );
