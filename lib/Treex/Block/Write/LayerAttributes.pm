@@ -89,6 +89,31 @@ sub _get_info_hash {
                         @nodes = @{$aligned_nodes};
                     }
                 }
+                # now @nodes is an array of nodes aligned to $node
+            }
+            # parents of aligned nodes
+            elsif ($ref eq 'aligned_parent' ){
+                my @aligned_nodes;
+                if ($alignment_hash) {
+                    # get alignment from the mapping provided in a hash
+                    my $id = $node->id;
+                    if ($alignment_hash->{$id}) {
+                        @aligned_nodes = @{$alignment_hash->{$id}};
+                    }
+                } else {
+                    # get alignment from Node->get_aligned_nodes()
+                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes();
+                    if ($aligned_nodes) {
+                        @aligned_nodes = @{$aligned_nodes};
+                    }
+                }
+                foreach my $aligned_node (@aligned_nodes) {
+                    my $aligned_parent = $aligned_node->get_parent();
+                    if ($aligned_parent) {
+                        push @nodes, $aligned_parent;
+                    }
+                }
+                # now @nodes is an array of parents of nodes aligned to $node
             }
             # referencing values
             else {
@@ -160,14 +185,17 @@ Treex::Block::Write::LayerAttributes
 A Moose role for Write blocks that may be configured to use different layers and different attributes. All blocks with this
 role must override the C<_process_tree()> method.
 
-One level of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. C<a/aux.rf-&gt;afun>, three
-special references — C<parent>, C<children> and C<aligned> are supported in addition to any references within the nodes themselves.
+One level of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. C<a/aux.rf-&gt;afun>. Several
+special references — C<parent>, C<children>, C<aligned> and C<aligned_parent> - are supported in addition to any references within the nodes themselves.
 
 C<aligned> means all nodes aligned to this node. If alignment info is not stored
 in nodes of this tree but in their counterparts, you must provide a backward
 node id to aligned nodes mapping (Str to ArrayRef[Node]) as a hash reference,
 called C<$alignment_hash> in the code. For an example on how to do that,
 see L<Treex::Block::Write::AttributeSentencesAligned>.
+
+C<aligned_parent-&gt;> is a shortcut for C<aligned-&gt;parent-&gt;>
+(meant semantically, as C<aligned-&gt;parent-&gt;> itself is not supported).
 
 A special field C<ctag> (coarse grained tag) can be used for Czech, intended
 for cases where the full tag is too detailed for you. It has the form of
