@@ -7,6 +7,9 @@ has 'transformer' => ( is => 'rw',
                    #    required => 1,
                    );
 
+# warning: redefining process_atree is dangerous for blocks
+# that do not follow this structure with separate transformer object
+# (such as AllPunctBelowTechRoot)
 sub process_atree {
     my ($self,$atree) = @_;
     $self->transformer->apply_on_tree($atree);

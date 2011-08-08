@@ -3,18 +3,20 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
-sub process_anode {
-    my ( $self, $anode ) = @_;
+sub process_atree {
+    my ( $self, $atree ) = @_;
 
-    if ($anode->form =~ /^\p{IsP}+$/) {
+    foreach my $anode ($atree->get_descendants) {
+        if ($anode->form =~ /^\p{IsP}+$/) {
 
-        foreach my $child ($anode->get_children) {
-            $child->set_parent($anode->get_parent);
-            $self->subscribe($child);
+            foreach my $child ($anode->get_children) {
+                $child->set_parent($anode->get_parent);
+                $self->subscribe($child);
+            }
+
+            $anode->set_parent($anode->get_root);
+            $self->subscribe($anode);
         }
-
-        $anode->set_parent($anode->get_root);
-        $self->subscribe($anode);
     }
 }
 
