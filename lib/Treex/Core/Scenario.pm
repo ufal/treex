@@ -285,6 +285,10 @@ parses a textual description of a scenario
 
 constructs a scenario textual description from an existing scenario instance
 
+=item restart
+
+resets document readed, in future it will rebuild reloaded blocks
+
 =back
 
 

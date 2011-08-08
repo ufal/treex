@@ -400,11 +400,13 @@ returns the L<Treex::Core::Document> instance which the zone belongs to
 
 =head2 Other
 
-=over4
+=over 4
 
 =item $zone1 = $zone0->copy($selector1);
 
 creates a copy of the zone (currently copies only the a-tree) under the same language and a new selector
+
+=back
 
 =head1 AUTHOR
 

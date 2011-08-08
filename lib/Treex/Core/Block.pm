@@ -282,6 +282,9 @@ but not for installed tools or libraries.
      );
  }
 
+=item require_files_from_share()
+
+This method checks existence of files given as parameters, it tries to download them if they are not present
 
 =back
 

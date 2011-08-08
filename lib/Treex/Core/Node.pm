@@ -565,6 +565,7 @@ sub get_address {
 # deprecated
 sub get_fposition {
     my $self = shift;
+    log_warn("Method get_fposition is deprecated use get_address instead");
     return $self->get_address();
 }
 

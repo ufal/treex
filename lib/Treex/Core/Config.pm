@@ -130,6 +130,22 @@ for instance paths to its components.
 
 =over 4
 
+=item config_dir()
+
+returns directory where configuration of Treex will reside (currently just F<path> file)
+
+=item default_resource_dir()
+
+returns default path for resources, it uses dist data for C<Treex-Core> and if $TMT_ROOT variable set also $TMT_ROOT/share
+
+=item resource_path()
+
+return list of directories where resources will be searched
+
+=item tmp_dir()
+
+return temporary directory, shoud be used instead of /tmp or similar
+
 =item devel_version()
 
 returns C<true> iff the current Treex instance is running from the svn working copy
