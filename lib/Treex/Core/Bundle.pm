@@ -114,6 +114,25 @@ sub get_all_zones {
     }
 }
 
+sub remove_zone {
+    my ($self, $language, $selector) = @_;
+
+    my $zone = $self->get_zone($language, $selector);
+    if (not $zone) {
+        log_fatal "Non-existing zone cannot be removed";
+    }
+
+    # remove all trees first, so that their nodes are correctly removed from the index
+    foreach my $tree ($zone->get_all_trees) {
+        $zone->remove_tree($tree->get_layer);
+    }
+
+    $self->{zones}->delete_value($zone)
+        or log_fatal "Zone to be deleted was not found. This should never happen";
+    return;
+}
+
+
 # --------- ACCESS TO TREES ------------
 
 sub get_all_trees {
@@ -306,6 +325,10 @@ zone level), they can be accessed using the following shortcut methods:
 =head2 Other
 
 =over 4
+
+=item $bundle->remove_zone( $language, $selector );
+
+delete all zone's trees and remove the zone from the bundle
 
 =item my $position = $bundle->get_position();
 

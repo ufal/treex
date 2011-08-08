@@ -93,4 +93,9 @@ sub create_zone_twice {
 
 stderr_like  ( \&create_zone_twice, qr/\S/, 'Attempt at creating the same zone twice successfully detected.' );
 
+foreach my $selector (@selectors) {
+    $bundle->remove_zone( 'en', $selector );
+    is( $bundle->get_zone('en',$selector), undef, 'Zone successfully removed');
+}
+
 done_testing();
