@@ -87,7 +87,7 @@ sub build_file_number {
 sub full_filename {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
-    return ( $self->path ? $self->path."/" : '' ) . $self->file_stem . $self->file_number;
+    return ( $self->path ? $self->path . "/" : '' ) . $self->file_stem . $self->file_number;
 }
 
 sub BUILD {
@@ -125,10 +125,10 @@ sub BUILD {
     }
 
     $self->deserialize_wild;
-    foreach my $bundle ($self->get_bundles) {
+    foreach my $bundle ( $self->get_bundles ) {
         $bundle->deserialize_wild;
-        foreach my $bundlezone ($bundle->get_all_zones) {
-            foreach my $node (map {$_->get_descendants({add_self=>1})} $bundlezone->get_all_trees) {
+        foreach my $bundlezone ( $bundle->get_all_zones ) {
+            foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
                 $node->deserialize_wild;
             }
         }
@@ -136,8 +136,6 @@ sub BUILD {
 
     return;
 }
-
-
 
 sub _rebless_and_index {
     my $self = shift;
@@ -199,7 +197,7 @@ if ( not -f $_treex_schema_file ) {
 
 my $_treex_schema = Treex::PML::Schema->new( { filename => $_treex_schema_file } );
 
-sub _create_empty_pml_doc { ## no critic (ProhibitUnusedPrivateSubroutines)
+sub _create_empty_pml_doc {    ## no critic (ProhibitUnusedPrivateSubroutines)
     my $fsfile = Treex::PML::Document->create
         (
         name => "x",                         #$filename,  ???
@@ -384,9 +382,9 @@ sub get_or_create_zone {
 
 sub load {
     my $self = shift;
-    $self->_pmldoc->load(@_);
+    return $self->_pmldoc->load(@_);
+
     # TODO: this is unfinished: should be somehow connected with the code in BUILD
-    return;
 }
 
 sub save {
@@ -394,19 +392,17 @@ sub save {
 
     # the following para should be some
     $self->serialize_wild;
-    foreach my $bundle ($self->get_bundles) {
+    foreach my $bundle ( $self->get_bundles ) {
         $bundle->serialize_wild;
-        foreach my $bundlezone ($bundle->get_all_zones) {
-            foreach my $node (map {$_->get_descendants({add_self=>1})} $bundlezone->get_all_trees) {
+        foreach my $bundlezone ( $bundle->get_all_zones ) {
+            foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
                 $node->serialize_wild;
             }
         }
     }
 
-    $self->_pmldoc->save(@_);
-    return;
+    return $self->_pmldoc->save(@_);
 }
-
 
 __PACKAGE__->meta->make_immutable;
 
