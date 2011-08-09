@@ -61,6 +61,8 @@ sub deprel_to_afun
         {
             $afun = '';
         }
+        # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.
+        $afun =~ s/\|.*//;
         $node->set_afun($afun);
     }
 }
