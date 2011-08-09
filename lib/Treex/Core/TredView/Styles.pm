@@ -19,7 +19,7 @@ has '_colors' => (
 sub _is_coord {
     my ($self, $node) = @_;
     return 0 if $node->get_layer ne 't';
-    return $node->{functor} and $node->{functor} =~ /ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS/;
+    return ($node->{functor} and $node->{functor} =~ /^(?:ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/);
 }
 
 sub bundle_style {
