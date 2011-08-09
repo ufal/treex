@@ -71,7 +71,7 @@ sub apply_on_subtree {
         foreach my $node ( @nodes ) {
             if ($node->is_member) {
                 foreach my $nonmember (@nonmembers_to_rehang) {
-                    print $nonmember->form."\t".$node->form."\n";
+#                    print $nonmember->form."\t".$node->form."\n";
                     $self->rehang($nonmember, $node);
                 }
                 @nonmembers_to_rehang = ();
