@@ -178,6 +178,15 @@ has 'dump_scenario' => (
     documentation => 'Just dump (print to STDOUT) the given scenario and exit.',
 );
 
+has 'survive' => (
+    traits        => ['Getopt'],
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Continue collecting jobs\' outputs even if some of them crashed (risky, use with care!).',
+);
+
+
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
@@ -542,13 +551,19 @@ sub _run_job_scripts {
 # Prints error messages from the output of the current document processing.
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
-  
+
     foreach my $stream (qw(stderr stdout)) {
         my $mask = $self->workdir . "/output/job*-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         my ($filename) = glob $mask;
-
         if ( !defined $filename ) {
-            log_fatal "Document $doc_number finished without producing $mask";
+            my $message = "Document $doc_number finished without producing $mask";
+            if ($self->survive) {
+                log_warn("$message (fatal error ignored due to survival mode, be careful)");
+                return;
+            }
+            else {
+                log_fatal $message;
+            }
         }
 
         open my $FILE, '<:utf8', $filename or log_fatal $!;
@@ -562,13 +577,13 @@ sub _print_output_files {
             my $report = $self->forward_error_level;
             my $success = 0;
             while (<$FILE>) {
-                
+
                 # skip [success] indicatory lines, but set the success flag to 1
                 if ($_ =~ /^Document [0-9]+\/[0-9]+ .*: \[success\]\.\r?\n?$/){
                     $success = 1;
                     next;
-                } 
-                
+                }
+
                 #TODO: better implementation
                 # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
                 my ($level) = /^TREEX-(DEBUG|INFO|WARN|FATAL)/;
@@ -578,7 +593,7 @@ sub _print_output_files {
                 next if $level =~ /^W/ && $report !~ /^[ADIW]/;
                 print STDERR "job$jobnumber: $_";
             }
-            
+
             # test for the [success] indication on the last line of STDERR
             if (!$success){
                 log_fatal "Document $doc_number has not finished successfully";

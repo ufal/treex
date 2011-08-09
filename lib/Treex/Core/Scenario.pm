@@ -96,7 +96,7 @@ sub parse_scenario_string {
 
     my $parser = Treex::Core::ScenarioParser->new() or log_fatal("Cannot create Scenario parser");
     my $parsed = $parser->startrule( $scenario_string, 1, $from_file );
-    log_fatal("Cannot parse: $scenario_string") if not defined $parsed;
+    log_fatal("Cannot parse the scenario: $scenario_string") if not defined $parsed;
     return @$parsed;
 }
 
