@@ -19,6 +19,49 @@ sub _build_tagger {
     return $tagger;
 }
 
+sub _correct_lingua_tag {    # substitution according to http://search.cpan.org/src/ACOBURN/Lingua-EN-Tagger-0.13/README
+                             # puvodni tagset je na http://www.computing.dcu.ie/~acahill/tagset.html
+    my ( $self, $linguatag, $wordform ) = @_;
+
+    if ( $linguatag eq "DET" ) {
+        return "DT";
+    }
+    elsif ( $linguatag eq "PRPS" ) {
+        return "PRP\$";
+    }
+    elsif ( $linguatag =~ /^[LR]RB$/ ) {
+        return "-$linguatag-";
+    }
+    elsif ( $linguatag =~ /^PP/ ) {    # allowed "tags" of punctuation mark in PennTB: #  $ '' ( ) , . : ``
+        if ( $wordform =~ /^(#|$|''|,|\.|:|``)$/ ) {
+            return $wordform
+        }
+        elsif ( $wordform =~ /[\(\[\{]/ ) {
+            return "-LRB-"
+        }
+        elsif ( $wordform =~ /[\)\]\}]/ ) {
+            return "-RRB-"
+        }
+        else {
+            return ".";
+        }
+
+    }    # v lingua-taggeru maji pro punktuaci zvlastni tagy, to ale v ptb nebylo!
+
+    #  elsif ($linguatag eq "LRB") {return "."}  # hack, zavorky totiz collins nesezere  - tyhle vsechny zameny by spis mely bejt ve wrapperu ke collinsu
+    #  elsif ($linguatag eq "RRB") {return "."}
+    #  elsif ($linguatag eq "PP") {return "."}
+    #  elsif ($linguatag eq "PPL") {return "``"}
+    #  elsif ($linguatag eq "PPR") {return "''"}
+    #  elsif ($linguatag eq "PPC") {return ","}
+    #  elsif ($linguatag eq "PPS") {return ","}    #POZOR, cunarna, tagger dava PPS pomlcce a Collins na tom pak pada, ale nevim, jaky tag teda patri
+
+    else {
+        return $linguatag;
+    }
+}
+}
+
 sub process_atree {
     my ( $self, $atree ) = @_;
     my @descendants = $atree->get_descendants();
@@ -27,14 +70,21 @@ sub process_atree {
     # get tags
     my $joined = join ' ', @forms;
     my $tagged = $self->_tagger->add_tags($joined);
-    my @tags   = split m{\s}, $tagged;
+    my @pairs   = split m{\s}, $tagged;
     if ( scalar @tags != scalar @forms ) {
         log_fatal("Different number of tokens and tags. TOKENS: @forms, TAGS: @tags");
     }
 
     # fill tags
     foreach my $a_node (@descendants) {
-        $a_node->set_tag( shift @tags );
+        my $pair = shift @tags;
+        if (m{(.+)/(.+)}gx) {
+            my $wordform = $1;
+            my $tag = $self->_correct_lingua_tag($2, $wordform);
+            my $original = $a_node->form;
+            log_fatal("Mismatched tokenization: expected: $form, got: $wordform") if $wordform ne $original;
+            $a_node->set_tag( $tag );
+        } else log_fatal("Bad format of tagged data: $pair");
     }
 
     return 1;
@@ -57,7 +107,7 @@ Treex::Block::W2A::EN::TagLinguaEn
 =head1 DESCRIPTION
 
 Each node in analytical tree is tagged using C<Lingua::EN::Tagger> (Penn Treebank POS tags).
-This block does NOT do lemmatization.
+Because Lingua::EN::Tagger does its own tokenization, it checks if tokenization is same.
 
 =head1 AUTHORS
 
