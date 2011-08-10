@@ -9,6 +9,7 @@ with 'MooseX::Getopt';
 
 use Cwd;
 use File::Path;
+use File::Temp qw(tempdir);
 use List::MoreUtils qw(first_index);
 use Exporter;
 use base 'Exporter';
@@ -687,10 +688,11 @@ sub _execute_on_cluster {
     # create working directory, if not specified as a command line option
     if ( not defined $self->workdir ) {
         my $counter;
-        my $directory;
+        my $directory_prefix;
+        my @existing_dirs;
         do {
             $counter++;
-            $directory = sprintf "%03d-cluster-run", $counter;
+            $directory_prefix = sprintf "%03d-cluster-run-", $counter;
 
             # TODO There is a strange problem when executing e.g.
             #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
@@ -698,11 +700,14 @@ sub _execute_on_cluster {
             # I don't know the real cause of the bug, but as a workaround
             # you can omit --cleanup or uncomment next line
             # $directory .= sprintf "%03d-cluster-run", rand 1000;
-            }
-            while ( -d $directory );
+#            print STDERR "XXXX tested prefix $directory_prefix:".(join ' ', glob("$directory_prefix*"))."\n";
+            @existing_dirs = glob "$directory_prefix*"; # separate var because of troubles with glob context
+        }
+            while ( @existing_dirs );
+        my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
         $self->set_workdir($directory);
-        log_info "Creating working directory $directory";
-        mkdir $directory or log_fatal $!;
+        log_info "Working directory $directory created";
+#        mkdir $directory or log_fatal $!;
     }
 
     foreach my $subdir (qw(output scripts)) {
