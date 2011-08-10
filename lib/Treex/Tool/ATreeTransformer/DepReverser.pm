@@ -75,7 +75,7 @@ sub apply_on_tree {
         }
 
         if (not $pairs) {
-            log_fatal('No node pairs after combining parent and child expansions (sanity check)');
+            log_warn('No node pairs after combining parent and child expansions (probably incorrect co/ap structure)');
         }
 
         if ( $pairs_to_swap > 0 ) {

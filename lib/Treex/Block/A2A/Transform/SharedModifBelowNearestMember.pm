@@ -19,7 +19,14 @@ sub process_atree {
                 $nearest_right_member = $child;
             }
             else {
-                $child->set_parent( $nearest_right_member || $last_member)
+                my $new_parent = $nearest_right_member || $last_member;
+                if (not defined $new_parent) {
+                    log_warn('Shared modifier cannot be rehanged, since no co/ap member was found (incorrect co/ap structure)');
+                }
+                else {
+                    $child->set_parent( $nearest_right_member || $last_member);
+                    $self->subscribe($child);
+                }
             }
         }
     }
