@@ -26,7 +26,7 @@ sub process_tnode {
         my $new_tlemma = $compatible[0]->{t_lemma};
         if ( $old_tlemma ne $new_tlemma ) {
 
-            #                    print "old_tlemma=$old_tlemma\tnew_tlemma=$new_tlemma\ten_sentence: ".$bundle->get_attr('english_source_sentence')."\t".$bundle->get_attr('czech_target_sentence')."\t".$cs_tnode->get_fposition()."\n";
+            #                    print "old_tlemma=$old_tlemma\tnew_tlemma=$new_tlemma\ten_sentence: ".$bundle->get_attr('english_source_sentence')."\t".$bundle->get_attr('czech_target_sentence')."\t".$cs_tnode->get_address()."\n";
             $cs_tnode->set_t_lemma( $compatible[0]->{t_lemma} );
             $cs_tnode->set_attr( 'mlayer_pos', $compatible[0]->{pos} );
         }

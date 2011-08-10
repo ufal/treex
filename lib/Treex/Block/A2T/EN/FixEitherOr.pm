@@ -26,7 +26,7 @@ sub process_ttree {
         $or->set_nodetype('coap');
         $either->disconnect;
 
-        #        print $or->t_lemma."\t". $or->get_fposition."\n";
+        #        print $or->t_lemma."\t". $or->get_address."\n";
     }
 
     return 1;

@@ -15,12 +15,16 @@ my $test_output_file = 'dummy.tmp';
 my $doc = Treex::Core::Document->new();
 $doc->save($test_data_file);
 
-my $skip = 0;
+my $skip       = 0;
 my $runner_cmd = 'treex';
-my $exit_code = system('treex -h 2>/dev/null');
-if ( $exit_code == -1 ) {
+my $exit_code  = system('treex -h 2>/dev/null');
+if ( $exit_code != 0 ) {
     use Treex::Core::Config;
-    $runner_cmd = Treex::Core::Config::lib_core_dir() . '../../../bin/treex';
+    use Cwd qw(realpath);
+    $runner_cmd = realpath( Treex::Core::Config::lib_core_dir() . '../../../bin/treex' );
+    if ( !-x $runner_cmd ) {
+        $runner_cmd = realpath( Treex::Core::Config::lib_core_dir() . '../../../../bin/treex' );
+    }
     $skip = !-x $runner_cmd;
 }
 

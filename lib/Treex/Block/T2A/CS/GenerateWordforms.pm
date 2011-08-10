@@ -101,7 +101,7 @@ sub _generate_word_form {
     if ( $DEBUG && $form_info ) {
         log_warn(
             "MORF: $lemma\t$tag_regex\t" . $form_info->get_form()
-                . "\ttmttred " . $a_node->get_fposition() . "&"
+                . "\ttmttred " . $a_node->get_address() . "&"
         );
     }
     return $form_info->get_form() if $form_info;
@@ -121,7 +121,7 @@ sub _generate_word_form {
     if ($DEBUG) {
         log_warn(
             "LEMM: $lemma\t$tag_regex\t$lemma\t"
-                . "\ttmttred " . $a_node->get_fposition() . "&\n"
+                . "\ttmttred " . $a_node->get_address() . "&\n"
         );
     }
 

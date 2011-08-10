@@ -54,7 +54,7 @@ sub process_ttree {
                 #                print "antec:\t".$antec->t_lemma."\n";
                 $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
 
-                #                print $cor->get_fposition."\n";
+                #                print $cor->get_address."\n";
             }
             else {
 

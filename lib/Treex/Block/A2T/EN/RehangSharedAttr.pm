@@ -31,7 +31,7 @@ sub process_ttree {
             )
         {
 
-            #            print $attr->get_fposition."\n";
+            #            print $attr->get_address."\n";
             $attr->set_parent($nearest_member);
         }
 

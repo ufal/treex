@@ -89,7 +89,7 @@ sub process_zone {
             )
         {
 
-            #            print $anodes[$i]->get_fposition."\n";
+            #            print $anodes[$i]->get_address."\n";
             $anodes[$i]->shift_after_node( $anodes[ $i + 1 ], { without_children => 1 } );
         }
     }
