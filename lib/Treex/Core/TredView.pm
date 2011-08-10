@@ -448,9 +448,11 @@ sub anode_hint {
     }
 
     # List all non-empty Interset features.
-    my @iset = $node->get_iset_pairs_list();
-    for ( my $i = 0; $i <= $#iset; $i += 2 ) {
-        push @lines, "$iset[$i]: $iset[$i+1]";
+    if ( $node->does('Treex::Core::Node::Interset') ) {
+        my @iset = $node->get_iset_pairs_list();
+        for ( my $i = 0; $i <= $#iset; $i += 2 ) {
+            push @lines, "$iset[$i]: $iset[$i+1]";
+        }
     }
 
     return join "\n", @lines;
