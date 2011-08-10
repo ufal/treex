@@ -26,8 +26,8 @@ sub process_atree {
 
     # get tags
     my $joined = join ' ', @forms;
-    my $tagged = $self->_tagger->add_tags( $joined );
-    my @tags = split m{\s}, $tagged; 
+    my $tagged = $self->_tagger->add_tags($joined);
+    my @tags   = split m{\s}, $tagged;
     if ( scalar @tags != scalar @forms ) {
         log_fatal("Different number of tokens and tags. TOKENS: @forms, TAGS: @tags");
     }

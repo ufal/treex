@@ -40,46 +40,46 @@ sub is_coap_root {
 #------------------------------------------------------------------------------
 sub get_real_afun
 {
-    my $self = shift;
+    my $self     = shift;
     my $warnings = shift;
-    my $afun = $self->afun();
+    my $afun     = $self->afun();
     if ( not defined($afun) ) {
         $afun = '';
     }
-    if($afun =~ m/^Aux[PC]$/)
+    if ( $afun =~ m/^Aux[PC]$/ )
     {
         my @children = $self->children();
-        my $n = scalar(@children);
-        if($n<1)
+        my $n        = scalar(@children);
+        if ( $n < 1 )
         {
-            if($warnings)
+            if ($warnings)
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun node does not have children (sentence $i_sentence, '$form')");
             }
         }
         else
         {
-            if($n>1 && $warnings)
+            if ( $n > 1 && $warnings )
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun node has $n children so it is not clear which one bears the real afun (sentence $i_sentence, '$form')");
             }
             return $children[0]->get_real_afun();
         }
     }
-    elsif($self->is_coap_root())
+    elsif ( $self->is_coap_root() )
     {
         my @members = $self->get_coap_members();
-        my $n = scalar(@members);
-        if($n<1)
+        my $n       = scalar(@members);
+        if ( $n < 1 )
         {
-            if($warnings)
+            if ($warnings)
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun does not have members (sentence $i_sentence, '$form')");
             }
         }
@@ -100,32 +100,32 @@ sub get_real_afun
 #------------------------------------------------------------------------------
 sub set_real_afun
 {
-    my $self = shift;
+    my $self     = shift;
     my $new_afun = shift;
     my $warnings = shift;
-    my $afun = $self->afun();
+    my $afun     = $self->afun();
     if ( not defined($afun) ) {
         $afun = '';
     }
-    if($afun =~ m/^Aux[PC]$/)
+    if ( $afun =~ m/^Aux[PC]$/ )
     {
         my @children = $self->children();
-        my $n = scalar(@children);
-        if($n<1)
+        my $n        = scalar(@children);
+        if ( $n < 1 )
         {
-            if($warnings)
+            if ($warnings)
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun node does not have children (sentence $i_sentence, '$form')");
             }
         }
         else
         {
-            if($warnings && $n>1)
+            if ( $warnings && $n > 1 )
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun node has $n children so it is not clear which one bears the real afun (sentence $i_sentence, '$form')");
             }
             foreach my $child (@children)
@@ -135,16 +135,16 @@ sub set_real_afun
             return;
         }
     }
-    elsif($self->is_coap_root())
+    elsif ( $self->is_coap_root() )
     {
         my @members = $self->get_coap_members();
-        my $n = scalar(@members);
-        if($n<1)
+        my $n       = scalar(@members);
+        if ( $n < 1 )
         {
-            if($warnings)
+            if ($warnings)
             {
-                my $i_sentence = $self->get_bundle()->get_position()+1; # tred numbers from 1
-                my $form = $self->form();
+                my $i_sentence = $self->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $self->form();
                 log_warn("$afun does not have members (sentence $i_sentence, '$form')");
             }
         }
@@ -169,21 +169,26 @@ sub set_real_afun
 #------------------------------------------------------------------------------
 sub copy_atree
 {
-    my $self = shift;
-    my $target = shift;
-    my @children0 = $self->get_children({ordered => 1});
+    my $self      = shift;
+    my $target    = shift;
+    my @children0 = $self->get_children( { ordered => 1 } );
     foreach my $child0 (@children0)
     {
+
         # Create a copy of the child node.
         my $child1 = $target->create_child();
+
         # We should copy all attributes that the node has but it is not easy to figure out which these are.
         # As a workaround, we list the attributes here directly.
-        foreach my $attribute ('form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
-                               'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat')
+        foreach my $attribute (
+            'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
+            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat'
+            )
         {
             my $value = $child0->get_attr($attribute);
-            $child1->set_attr($attribute, $value);
+            $child1->set_attr( $attribute, $value );
         }
+
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
@@ -204,12 +209,12 @@ sub get_terminal_pnode {
 }
 
 sub get_nonterminal_pnodes {
-    my ($self) = @_;
-    my $document = $self->get_document();
+    my ($self)       = @_;
+    my $document     = $self->get_document();
     my @nonterminals = ();
     if ( $self->get_attr('p_terminal.rf') ) {
-        my $node = $document->get_node_by_id($self->get_attr('p_terminal.rf'));
-        while ($node->get_attr('is_head')) {
+        my $node = $document->get_node_by_id( $self->get_attr('p_terminal.rf') );
+        while ( $node->get_attr('is_head') ) {
             $node = $node->get_parent();
             push @nonterminals, $node
         }

@@ -4,15 +4,14 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
 #------------------------------------------------------------------------------
 # Reads the Ancient Greek CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
+    my $self   = shift;
+    my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
 }
 
@@ -22,78 +21,76 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $form = $node->form();
-        my $pos = $node->conll_pos();
+        my $form   = $node->form();
+        my $pos    = $node->conll_pos();
 
         # default assignment
         my $afun = $deprel;
-        
-        if($afun =~ /_CO$/) {
+
+        if ( $afun =~ /_CO$/ ) {
             $node->set_is_member(1);
         }
 
         # Remove all contents after first underscore
-        if ($afun =~ /^(([A-Za-z]+)(_AP)(_.+)?)$/) {
+        if ( $afun =~ /^(([A-Za-z]+)(_AP)(_.+)?)$/ ) {
             $afun =~ s/^([A-Za-z]+)(_AP)(_.+)?$/$1_Ap/;
             $afun =~ s/^ExD_Ap/ExD/;
         }
         else {
-            $afun =~ s/^([A-Za-z]+)(_.+)$/$1/;            
+            $afun =~ s/^([A-Za-z]+)(_.+)$/$1/;
         }
-        
+
         #
-        if ($deprel =~  /^ADV/) {
+        if ( $deprel =~ /^ADV/ ) {
             $afun = "Adv";
         }
-        elsif ($deprel =~  /^APOS/) {
+        elsif ( $deprel =~ /^APOS/ ) {
             $afun = "Apos";
         }
-        elsif ($deprel =~  /^ATR/) {
+        elsif ( $deprel =~ /^ATR/ ) {
             $afun = "Atr";
         }
-        elsif ($deprel =~  /^ATV/) {
+        elsif ( $deprel =~ /^ATV/ ) {
             $afun = "Atv";
         }
-        elsif ($deprel =~  /^AtvV/) {
+        elsif ( $deprel =~ /^AtvV/ ) {
             $afun = "AtvV";
         }
-        elsif ($deprel =~  /^COORD/) {
+        elsif ( $deprel =~ /^COORD/ ) {
             $afun = "Coord";
         }
-        elsif ($deprel =~  /^OBJ/) {
-            $afun = "Obj";
-        }        
-        elsif ($deprel =~  /^OCOMP/) {
+        elsif ( $deprel =~ /^OBJ/ ) {
             $afun = "Obj";
         }
-        elsif ($deprel =~  /^PNOM/) {
+        elsif ( $deprel =~ /^OCOMP/ ) {
+            $afun = "Obj";
+        }
+        elsif ( $deprel =~ /^PNOM/ ) {
             $afun = "Pnom";
         }
-        elsif ($deprel =~  /^PRED/) {
+        elsif ( $deprel =~ /^PRED/ ) {
             $afun = "Pred";
         }
-        elsif ($deprel =~  /^SBJ/) {
+        elsif ( $deprel =~ /^SBJ/ ) {
             $afun = "Sb";
         }
-        elsif ($deprel =~ /^(UNDEFINED|XSEG|_ExD0_PRED)$/) {
-            $afun = "Atr";            
+        elsif ( $deprel =~ /^(UNDEFINED|XSEG|_ExD0_PRED)$/ ) {
+            $afun = "Atr";
         }
-        elsif ($deprel =~ /^AuxP-CYCLE/) {
-            $afun = "AuxP";  
+        elsif ( $deprel =~ /^AuxP-CYCLE/ ) {
+            $afun = "AuxP";
         }
         $node->set_afun($afun);
     }
 }
 
 1;
-
-
 
 =over
 

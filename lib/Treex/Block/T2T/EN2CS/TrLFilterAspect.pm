@@ -45,8 +45,8 @@ sub is_aspect_ok {
         ( $node->gram_tense || '' ) eq 'sim'
         and ( $node->gram_deontmod || '' ) eq 'decl'
         and ( $node->gram_verbmod || '' ) ne 'cdn'
-        and ( $node->is_passive               || '' ) ne '1'
-        and ( $node->functor                  || '' ) ne 'COND'
+        and ( $node->is_passive   || '' ) ne '1'
+        and ( $node->functor      || '' ) ne 'COND'
         );
 
     # 2. "dokud dělal", not "dokud udělal"

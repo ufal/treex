@@ -6,75 +6,78 @@ use Treex::Core::Log;
 extends 'Treex::Tool::ATreeTransformer::BaseTransformer';
 
 has nodes_to_reverse => (
-    is => 'rw',
-    isa => 'CodeRef',
-    required => 1,
+    is            => 'rw',
+    isa           => 'CodeRef',
+    required      => 1,
     documentation => 'subroutine recognizing node pairs (a node N and its effective parent P) to swap',
 );
 
 has move_with_child => (
-    is => 'rw',
-    isa => 'CodeRef',
-    default => sub { 0 },
+    is            => 'rw',
+    isa           => 'CodeRef',
+    default       => sub {0},
     documentation => 'subroutine identifying N\'s children to be moved up together with their parent',
 );
 
 has move_with_parent => (
-    is => 'rw',
-    isa => 'CodeRef',
-    default => sub { 0 },
+    is            => 'rw',
+    isa           => 'CodeRef',
+    default       => sub {0},
     documentation => 'subroutine identifying P\'s children to be moved down together with their parent',
 );
 
 sub _reverse_nodes {
-    my ($self, $child, $parent) = @_;
+    my ( $self, $child, $parent ) = @_;
 
-    $self->rehang($child, $parent->get_parent);
+    $self->rehang( $child, $parent->get_parent );
 
-    my @move_below_original_parent = grep {!&{$self->move_with_child}($_)} $child->get_children;
-    my @move_below_original_child = grep {!&{$self->move_with_parent}($_)} $parent->get_children;
+    my @move_below_original_parent = grep { !&{ $self->move_with_child }($_) } $child->get_children;
+    my @move_below_original_child  = grep { !&{ $self->move_with_parent }($_) } $parent->get_children;
 
-    $self->rehang($parent,$child);
+    $self->rehang( $parent, $child );
 
     foreach my $node (@move_below_original_child) {
-        $self->rehang($node,$child);
+        $self->rehang( $node, $child );
     }
 
     foreach my $node (@move_below_original_parent) {
-        $self->rehang($node,$parent);
+        $self->rehang( $node, $parent );
     }
 
-    $child->set_is_member($parent->is_member);
-    $parent->set_is_member(undef); # the original child's is_member is never true
+    $child->set_is_member( $parent->is_member );
+    $parent->set_is_member(undef);    # the original child's is_member is never true
 }
 
 sub apply_on_tree {
-    my ($self, $root) = @_;
+    my ( $self, $root ) = @_;
 
     my @pairs_to_swap;
     my %node_to_swap;
 
-    foreach my $child ( grep { !$_->is_member }
-                            map {$_->get_descendants} # tech.root can't be swapped with its child
-                                $root->get_children) {
+    foreach my $child (
+        grep { !$_->is_member }
+        map  { $_->get_descendants }    # tech.root can't be swapped with its child
+        $root->get_children
+        )
+    {
 
         my $parent = $child->get_parent;
 
         my @expanded_children = $child->get_coap_members;
-        my @expanded_parents = $parent->get_coap_members;
+        my @expanded_parents  = $parent->get_coap_members;
 
-        my ($pairs, $pairs_to_swap) = (0,0);
+        my ( $pairs, $pairs_to_swap ) = ( 0, 0 );
 
         foreach my $expanded_child (@expanded_children) {
             foreach my $expanded_parent (@expanded_parents) {
                 $pairs++;
-                if (&{$self->nodes_to_reverse}($expanded_child, $expanded_parent)) {
+                if ( &{ $self->nodes_to_reverse }( $expanded_child, $expanded_parent ) ) {
                     $pairs_to_swap++
                 }
             }
         }
 
-        if (not $pairs) {
+        if ( not $pairs ) {
             log_warn('No node pairs after combining parent and child expansions (probably incorrect co/ap structure)');
         }
 
@@ -83,11 +86,11 @@ sub apply_on_tree {
             if ( $pairs_to_swap < $pairs ) {
                 log_warn('Conflicting instructions for child-parent swap in a coordination construction');
             }
-            elsif ($node_to_swap{$child} or $node_to_swap{$parent}) {
+            elsif ( $node_to_swap{$child} or $node_to_swap{$parent} ) {
                 log_warn('A node can not participate in two swaps. The second attempt is skipped.');
             }
             else {
-                $node_to_swap{$child} = 1;
+                $node_to_swap{$child}  = 1;
                 $node_to_swap{$parent} = 1;
                 push @pairs_to_swap, [ $child, $parent ];
             }
@@ -99,6 +102,5 @@ sub apply_on_tree {
     }
 
 }
-
 
 1;

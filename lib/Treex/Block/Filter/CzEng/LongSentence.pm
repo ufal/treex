@@ -7,11 +7,11 @@ extends 'Treex::Block::Filter::CzEng::Common';
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my $en = $bundle->get_zone('en')->sentence;
-    my $cs = $bundle->get_zone('cs')->sentence;
+    my $en     = $bundle->get_zone('en')->sentence;
+    my $cs     = $bundle->get_zone('cs')->sentence;
     my $length = max( length $en, length $cs );
 
-    $self->add_feature( $bundle, 'sentence_length=' . (int( $length / 50 )) * 50 );
+    $self->add_feature( $bundle, 'sentence_length=' . ( int( $length / 50 ) ) * 50 );
 
     return 1;
 }

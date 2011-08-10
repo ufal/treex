@@ -94,7 +94,7 @@ sub safesystem {
             ( $? & 127 ), ( $? & 128 ) ? 'with' : 'without';
         exit(1);
     }
-        else {
+    else {
         my $exitcode = $? >> 8;
 
         # print STDERR "Exit code: $exitcode\n" if $exitcode;

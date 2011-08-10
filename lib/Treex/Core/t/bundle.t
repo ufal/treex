@@ -49,7 +49,6 @@ ok( !$bundle->has_tree( 'en', 'T' ), "Bundle doesn't contains tree, that wasn't 
 
 # TODO: test get_position
 
-
 is_deeply( $bundle->get_tree( 'cs', 'T' ), $bundle->get_zone('cs')->get_ttree(), 'get_tree("cs", "T") is a shortcut for get_zone("cs")->get_ttree()' );
 
 done_testing();

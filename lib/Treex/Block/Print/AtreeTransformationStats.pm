@@ -6,19 +6,19 @@ with 'Treex::Block::Write::Redirectable';
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    my @zones = grep {$_->selector eq ''} $bundle->get_all_zones;
+    my @zones = grep { $_->selector eq '' } $bundle->get_all_zones;
 
-    log_fatal "There are ".scalar(@zones)
-        ." zones with empty selector, but exactly one is required to collect stats from"
+    log_fatal "There are " . scalar(@zones)
+        . " zones with empty selector, but exactly one is required to collect stats from"
         if @zones != 1;
 
-    my $zone = $zones[0];
+    my $zone     = $zones[0];
     my $language = $zone->language;
 
     $bundle->get_document->path =~ /(trans_\w+)/;
     my $directory = $1;
-    foreach my $anode ($zone->get_atree->get_descendants) {
-        my $transformation = (join ' ',grep {/^trans/} sort keys %{$anode->wild}) || '';
+    foreach my $anode ( $zone->get_atree->get_descendants ) {
+        my $transformation = ( join ' ', grep {/^trans/} sort keys %{ $anode->wild } ) || '';
         print "$language\t$directory\t$transformation\n";
     }
 }

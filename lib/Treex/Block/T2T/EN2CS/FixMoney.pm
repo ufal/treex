@@ -24,7 +24,7 @@ sub process_tnode {
             $value_tnode->set_parent( $t_node->get_parent );
             $t_node->set_parent($value_tnode);
             $value_tnode->set_formeme( $t_node->formeme );
-            if ($t_node->is_member){
+            if ( $t_node->is_member ) {
                 $t_node->set_is_member(0);
                 $value_tnode->set_is_member(1);
             }

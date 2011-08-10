@@ -11,7 +11,7 @@ my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    if (!$parser) {
+    if ( !$parser ) {
         $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
     }
     return;
@@ -24,8 +24,8 @@ sub parse_chunk {
     my @forms    = map { $_->form } @a_nodes;
     my @lemmas   = map { $_->lemma } @a_nodes;
     my @subpos   = map { $_->tag } @a_nodes;
-    my @pos      = map { substr($_, 0, 2) } @subpos;
-    my @features = map { '_' } @subpos;
+    my @pos      = map { substr( $_, 0, 2 ) } @subpos;
+    my @features = map {'_'} @subpos;
 
     # parse sentence
     my ( $parents_rf, $deprel_rf ) = $parser->parse( \@forms, \@lemmas, \@pos, \@subpos, \@features );

@@ -26,10 +26,9 @@ has '_attrib_list' => (
     lazy_build => 1
 );
 
-
 # Parse the attribute list given in parameters.
 sub _build_attrib_list {
-    
+
     my ($self) = @_;
 
     return [ split /[\s,]+/, $self->attributes ];
@@ -38,17 +37,16 @@ sub _build_attrib_list {
 sub process_zone {
 
     my $self = shift;
-    my ($zone) = @_; # pos_validated_list won't work here
+    my ($zone) = @_;    # pos_validated_list won't work here
 
     if ( !$zone->has_tree( $self->layer ) ) {
         log_fatal( 'No tree for ' . $self->layer . ' found.' );
     }
     my $tree = $zone->get_tree( $self->layer );
-    
+
     $self->_process_tree($tree);
     return 1;
 }
-
 
 sub _process_tree {
     log_fatal("Method _process_tree must be overridden for all Blocks with the LayerAttributes role.");
@@ -61,48 +59,57 @@ sub _get_info_hash {
     my %info;
 
     foreach my $attrib ( @{ $self->_attrib_list } ) {
-        
+
         # referenced attributes
-        if ( my ( $ref, $name ) = ( $attrib =~ m/^(.*)->(.*)$/ ) ){
-            
+        if ( my ( $ref, $name ) = ( $attrib =~ m/^(.*)->(.*)$/ ) ) {
+
             my @nodes;
-            
+
             # syntactic relations
-            if ( $ref eq 'parent' ){
-                @nodes =  ( $node->get_parent() );
+            if ( $ref eq 'parent' ) {
+                @nodes = ( $node->get_parent() );
             }
-            elsif ($ref eq 'children' ){
-                @nodes = $node->get_children( { ordered =>  1 } );
+            elsif ( $ref eq 'children' ) {
+                @nodes = $node->get_children( { ordered => 1 } );
             }
+
             # alignment relation
-            elsif ($ref eq 'aligned' ){
+            elsif ( $ref eq 'aligned' ) {
                 if ($alignment_hash) {
+
                     # get alignment from the mapping provided in a hash
                     my $id = $node->id;
-                    if ($alignment_hash->{$id}) {
-                        @nodes = @{$alignment_hash->{$id}};
+                    if ( $alignment_hash->{$id} ) {
+                        @nodes = @{ $alignment_hash->{$id} };
                     }
-                } else {
+                }
+                else {
+
                     # get alignment from Node->get_aligned_nodes()
-                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes();
+                    my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
                     if ($aligned_nodes) {
                         @nodes = @{$aligned_nodes};
                     }
                 }
+
                 # now @nodes is an array of nodes aligned to $node
             }
+
             # parents of aligned nodes
-            elsif ($ref eq 'aligned_parent' ){
+            elsif ( $ref eq 'aligned_parent' ) {
                 my @aligned_nodes;
                 if ($alignment_hash) {
+
                     # get alignment from the mapping provided in a hash
                     my $id = $node->id;
-                    if ($alignment_hash->{$id}) {
-                        @aligned_nodes = @{$alignment_hash->{$id}};
+                    if ( $alignment_hash->{$id} ) {
+                        @aligned_nodes = @{ $alignment_hash->{$id} };
                     }
-                } else {
+                }
+                else {
+
                     # get alignment from Node->get_aligned_nodes()
-                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes();
+                    my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
                     if ($aligned_nodes) {
                         @aligned_nodes = @{$aligned_nodes};
                     }
@@ -113,31 +120,39 @@ sub _get_info_hash {
                         push @nodes, $aligned_parent;
                     }
                 }
+
                 # now @nodes is an array of parents of nodes aligned to $node
             }
+
             # referencing values
             else {
+
                 # find references
                 my @values = Treex::PML::Instance::get_all( $node, $ref );
                 my $document = $node->get_document();
                 @nodes = @values ? map { $document->get_node_by_id($_) } grep {$_} @values : ();
-                # sort, if possible 
-                if ( @nodes > 0 and $nodes[0]->does( 'Treex::Core::Node::Ordered' ) ){
+
+                # sort, if possible
+                if ( @nodes > 0 and $nodes[0]->does('Treex::Core::Node::Ordered') ) {
                     @nodes = sort { $a->ord <=> $b->ord } @nodes;
                 }
             }
+
             # gather values in referenced nodes
             $info{$attrib} = join( ' ', grep { defined($_) } map { Treex::PML::Instance::get_all( $_, $name ) } @nodes );
         }
+
         # plain attributes
         else {
-            if ($attrib eq 'ctag') {
+            if ( $attrib eq 'ctag' ) {
+
                 # Czech tag simplified to POS&CASE
-                $info{$attrib} = $self->get_coarse_grained_tag($node->tag);
-            } else {
+                $info{$attrib} = $self->get_coarse_grained_tag( $node->tag );
+            }
+            else {
                 my @values = Treex::PML::Instance::get_all( $node, $attrib );
-                
-                next if (@values == 1 and not defined($values[0])); # leave single undefined values as undefined
+
+                next if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
                 $info{$attrib} = join( ' ', grep { defined($_) } @values );
             }
         }
@@ -147,29 +162,31 @@ sub _get_info_hash {
 
 # Return all the required information for a node as an array
 sub _get_info_list {
-    
+
     my ( $self, $node, $alignment_hash ) = @_;
-    
-    my $info = $self->_get_info_hash($node, $alignment_hash);
+
+    my $info = $self->_get_info_hash( $node, $alignment_hash );
     return [ map { $info->{$_} } @{ $self->_attrib_list } ];
 }
 
 # Czech tag simplified to POS&CASE (or POS&SUBPOS if no case)
 sub get_coarse_grained_tag {
-    my ($self, $tag) = @_;
-    
+    my ( $self, $tag ) = @_;
+
     my $ctag;
-    if ( substr($tag, 4, 1) eq '-' ) {
+    if ( substr( $tag, 4, 1 ) eq '-' ) {
+
         # no case -> PosSubpos
-        $ctag = substr ($tag, 0, 2);
-    } else {
+        $ctag = substr( $tag, 0, 2 );
+    }
+    else {
+
         # case -> PosCase
-        $ctag = substr ($tag, 0, 1) . substr ($tag, 4, 1);
+        $ctag = substr( $tag, 0, 1 ) . substr( $tag, 4, 1 );
     }
 
     return $ctag;
 }
-
 
 1;
 __END__

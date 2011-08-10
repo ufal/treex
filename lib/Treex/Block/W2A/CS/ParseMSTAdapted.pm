@@ -25,8 +25,8 @@ sub process_atree {
         $a_node->set_parent($a_root);
     }
 
-    my @words      = map { $_->form } @a_nodes;
-    my @tags       = map { $_->tag } @a_nodes;
+    my @words = map { $_->form } @a_nodes;
+    my @tags  = map { $_->tag } @a_nodes;
 
     my ( $parents_rf, $afuns_rf ) = $parser->parse_sentence( \@words, \@tags );
 

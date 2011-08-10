@@ -26,7 +26,7 @@ has 'cleanup_temp' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'input_data_file' => ( is => 'rw', isa => 'FileHandle', builder => '_create_input_file', lazy_build => 1 );
 
 # the data file from which the output of the process is read
-has 'output_data_file' =>  ( is => 'rw', isa => 'FileHandle', builder => '_create_output_file', lazy_build => 1 );
+has 'output_data_file' => ( is => 'rw', isa => 'FileHandle', builder => '_create_output_file', lazy_build => 1 );
 
 # temporary directory used by the process
 has '_temp_dir' => ( is => 'ro', builder => '_create_temp_dir' );
@@ -45,9 +45,9 @@ sub run {
     my $plan = $self->_load_file_contents( $self->plan_template );
 
     # replace input and output variables with input and output file names
-    $plan = $self->_replace( $plan, 'INPUT', $self->input_data_file->filename );
+    $plan = $self->_replace( $plan, 'INPUT',  $self->input_data_file->filename );
     $plan = $self->_replace( $plan, 'OUTPUT', $self->output_data_file->filename );
-    
+
     # replace all decided patterns
     while ( my ( $parameter, $file ) = each( %{$parameters} ) ) {
         $plan = $self->_replace( $plan, $parameter, $file );
@@ -88,7 +88,6 @@ sub load_results {
     return $out;
 }
 
-
 # create a new temporary directory
 sub _create_temp_dir {
     my ($self) = @_;
@@ -112,19 +111,17 @@ sub _create_temp_file {
     return $tempfile;
 }
 
-
 # create the input temporary file
-sub _create_input_file {    
-    my ( $self ) = @_;
+sub _create_input_file {
+    my ($self) = @_;
     return $self->_create_temp_file('input');
 }
 
 # create the output temporary file
-sub _create_output_file {    
-    my ( $self ) = @_;
+sub _create_output_file {
+    my ($self) = @_;
     return $self->_create_temp_file('output');
 }
-
 
 # Replace the given variable with the given string in the plan file template
 sub _replace {

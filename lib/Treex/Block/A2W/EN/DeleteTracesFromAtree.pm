@@ -9,18 +9,18 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     my %a2t;
-    foreach my $tnode ($zone->get_ttree->get_descendants()) {
-        foreach my $anode ($tnode->get_anodes) {
-            push @{$a2t{$anode}}, $tnode;
+    foreach my $tnode ( $zone->get_ttree->get_descendants() ) {
+        foreach my $anode ( $tnode->get_anodes ) {
+            push @{ $a2t{$anode} }, $tnode;
         }
     }
-    foreach my $anode ($zone->get_atree->get_descendants()) {
-        if ($anode->tag eq '-NONE-') {
-            foreach my $child ($anode->get_descendants) {
-                $child->set_parent($anode->get_parent);
+    foreach my $anode ( $zone->get_atree->get_descendants() ) {
+        if ( $anode->tag eq '-NONE-' ) {
+            foreach my $child ( $anode->get_descendants ) {
+                $child->set_parent( $anode->get_parent );
             }
-            foreach my $tnode (@{$a2t{$anode}}) {
-                if ($tnode->get_lex_anode && $tnode->get_lex_anode eq $anode) {
+            foreach my $tnode ( @{ $a2t{$anode} } ) {
+                if ( $tnode->get_lex_anode && $tnode->get_lex_anode eq $anode ) {
                     $tnode->set_lex_anode(undef);
                 }
                 else {

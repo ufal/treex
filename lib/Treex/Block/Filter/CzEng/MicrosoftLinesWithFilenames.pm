@@ -7,11 +7,11 @@ extends 'Treex::Block::Filter::CzEng::Common';
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my $en = $bundle->get_zone('en')->sentence;
-    my $cs = $bundle->get_zone('cs')->sentence;
+    my $en      = $bundle->get_zone('en')->sentence;
+    my $cs      = $bundle->get_zone('cs')->sentence;
     my $pattern = '\w+\.[a-z]{3}\b';
-    if ($cs =~ m/$pattern/ || $en =~ m/$pattern/) {
-        $self->add_feature( $bundle, 'microsoft_lines_with_filenames' ); 
+    if ( $cs =~ m/$pattern/ || $en =~ m/$pattern/ ) {
+        $self->add_feature( $bundle, 'microsoft_lines_with_filenames' );
     }
 
     return 1;

@@ -25,36 +25,39 @@ sub _process_tree() {
     my ( $self, $tree ) = @_;
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
-    
+
     # get alignment mapping
     my $alignment_hash = undef;
-    if ($self->alignment_is_backwards) {
+    if ( $self->alignment_is_backwards ) {
+
         # we need to provide the other direction of the relation
         $alignment_hash = {};
-        my $aligned_root = $tree->get_bundle->get_tree($self->alignment_language, $self->layer);
-        foreach my $aligned_node ($aligned_root->get_descendants) {
-            my ($nodes, $types) = $aligned_node->get_aligned_nodes();
-            foreach my $node (@{$nodes}) {
+        my $aligned_root = $tree->get_bundle->get_tree( $self->alignment_language, $self->layer );
+        foreach my $aligned_node ( $aligned_root->get_descendants ) {
+            my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
+            foreach my $node ( @{$nodes} ) {
                 my $id = $node->id;
-                if ($alignment_hash->{$id}) {
-                    my @aligned_current = @{$alignment_hash->{$id}};
+                if ( $alignment_hash->{$id} ) {
+                    my @aligned_current = @{ $alignment_hash->{$id} };
                     push @aligned_current, $aligned_node;
                     $alignment_hash->{$id} = [@aligned_current];
-                } else {
+                }
+                else {
                     $alignment_hash->{$id} = [$aligned_node];
                 }
             }
         }
     }
+
     # else: Node->get_aligned_nodes() will be used directly
-    
+
     # nodes of a sentence, each node consisting of several attributes
     print { $self->_file_handle } join $self->separator,
         map {
-            join $self->attribute_separator,
-            @{ $self->_get_info_list($_, $alignment_hash) }
+        join $self->attribute_separator,
+            @{ $self->_get_info_list( $_, $alignment_hash ) }
         } @nodes;
-    
+
     print { $self->_file_handle } $self->sentence_separator;
 }
 

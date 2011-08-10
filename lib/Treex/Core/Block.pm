@@ -44,12 +44,12 @@ sub zone_label {
 
 sub BUILD {
     my $self = shift;
-    $self->require_files_from_share($self->get_required_share_files());
+    $self->require_files_from_share( $self->get_required_share_files() );
     return;
 }
 
-sub require_files_from_share{
-    my ($self, @rel_paths) = @_;
+sub require_files_from_share {
+    my ( $self, @rel_paths ) = @_;
     my $my_name = 'the block ' . $self->get_block_name();
     foreach my $rel_path (@rel_paths) {
         Treex::Core::Resource::require_file_from_share( $rel_path, $my_name );
@@ -58,7 +58,7 @@ sub require_files_from_share{
 }
 
 sub get_required_share_files {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     # By default there are no required share files.
     # The purpose of this method is to be overriden if needed.

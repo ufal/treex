@@ -4,15 +4,14 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
 #------------------------------------------------------------------------------
 # Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
+    my $self   = shift;
+    my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
 }
 
@@ -22,38 +21,36 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $form = $node->form();
-        my $pos = $node->conll_pos();
+        my $form   = $node->form();
+        my $pos    = $node->conll_pos();
 
         # default assignment
         my $afun = $deprel;
-        
+
         $afun =~ s/^IObj/Obj/;
         $afun =~ s/_Ap$//;
         $afun =~ s/_Pa$//;
-        
-        if ($deprel eq '---') {
+
+        if ( $deprel eq '---' ) {
             $afun = "Atr";
         }
-        
-        if($afun =~ /_Co$/) {
+
+        if ( $afun =~ /_Co$/ ) {
             $afun =~ s/_Co$//;
             $node->set_is_member(1);
         }
-        
+
         $node->set_afun($afun);
     }
 }
 
 1;
-
-
 
 =over
 

@@ -13,7 +13,7 @@ sub next_document {
 
     my $n = 0;
     for my $zone_label ( keys %sentences ) {
-        if (!$n){
+        if ( !$n ) {
             $n = @{ $sentences{$zone_label} };
         }
         log_fatal "Different number of lines in aligned documents"

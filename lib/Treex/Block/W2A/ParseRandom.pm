@@ -8,23 +8,23 @@ sub process_atree {
     my @todo = List::Util::shuffle $root->get_descendants();
 
     # Flatten the tree first, if there was some topology already.
-    foreach my $node (@todo){
+    foreach my $node (@todo) {
         $node->set_parent($root);
     }
 
-    my @all_nodes = ($root, @todo);
-    while (@todo){
-        my $child = shift @todo;
-        my @possible = grep {$_ != $child && !$_->is_descendant_of($child)} @all_nodes;
-        my $parent = $self->find_parent($child, @possible);
+    my @all_nodes = ( $root, @todo );
+    while (@todo) {
+        my $child    = shift @todo;
+        my @possible = grep { $_ != $child && !$_->is_descendant_of($child) } @all_nodes;
+        my $parent   = $self->find_parent( $child, @possible );
         $child->set_parent($parent);
     }
     return;
 }
 
-sub find_parent{
-    my ($self, $child, @possible) = @_;
-    return $possible[int(rand(scalar @possible))];
+sub find_parent {
+    my ( $self, $child, @possible ) = @_;
+    return $possible[ int( rand( scalar @possible ) ) ];
 }
 
 1;

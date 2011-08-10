@@ -4,21 +4,20 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     my ($aligned) = $tnode->get_aligned_nodes();
-    
-    if ($aligned){
-        foreach my $source (@{$aligned}){
-            my $functor = $source->functor; 
-            if ($functor){
+
+    if ($aligned) {
+        foreach my $source ( @{$aligned} ) {
+            my $functor = $source->functor;
+            if ($functor) {
                 $tnode->set_functor($functor);
                 last;
             }
         }
     }
-    if (!$tnode->functor){
+    if ( !$tnode->functor ) {
         $tnode->set_functor('???');
     }
 }

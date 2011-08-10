@@ -46,7 +46,7 @@ sub get_clause_nodes {
     my $root        = $self->get_root();
     my @descendants = $root->get_descendants( { ordered => 1 } );
     my $my_number   = $self->get_attr('clause_number');
-    return grep { ($_->get_attr('clause_number')||'') eq $my_number } @descendants;
+    return grep { ( $_->get_attr('clause_number') || '' ) eq $my_number } @descendants;
 }
 
 # TODO: same purpose as get_clause_root but instead of clause_number uses is_clause_head

@@ -35,7 +35,7 @@ sub _copy_list_attr {
     return if not ref $list;
 
     if ($ref) {
-        foreach (@$list) {s/^.*#//;}
+        foreach (@$list) { s/^.*#//; }
     }
     $treex_node->set_attr( $new_attr_name, $list );
     return;
@@ -114,7 +114,7 @@ sub _convert_atree {
             $self->_copy_attr( $pml_node, $treex_node, "$attr_name", $attr_name );
         }
 
-        if ($pml_node->attr('p_terminal.rf')) {
+        if ( $pml_node->attr('p_terminal.rf') ) {
             my $value = $pml_node->attr('p_terminal.rf');
             $value =~ s/^.*#//;
             $treex_node->set_attr( 'p_terminal.rf', $value );

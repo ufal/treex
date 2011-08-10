@@ -12,7 +12,7 @@ has '+plan_template' => ( default => 'plan.template' );
 has '+plan_vars' => (
     default => sub {
         return {
-            'MODELS'   => 'model-**.dat',
+            'MODELS'  => 'model-**.dat',
             'FF-INFO' => 'ff-data.dat',
         };
         }

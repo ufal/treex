@@ -4,8 +4,8 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has 'segmenters' => (
-    is => 'rw',
-    isa => 'HashRef[Treex::Tool::Segment::RuleBased]',
+    is      => 'rw',
+    isa     => 'HashRef[Treex::Tool::Segment::RuleBased]',
     default => sub { return {} },
 );
 
@@ -14,8 +14,8 @@ has 'segmenters' => (
 #       we should cache the created segmenters.
 sub _get_segmenter {
     my $self = shift;
-    my $lang     = uc shift;
-    if (exists $self->segmenters->{$lang}) {
+    my $lang = uc shift;
+    if ( exists $self->segmenters->{$lang} ) {
         return $self->segmenters->{$lang};
     }
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";

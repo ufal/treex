@@ -5,16 +5,16 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
     if (SOMETHING_HOLDS) {
-	
-	#DO_SOMETHING
 
-	$self->logfix1($dep, "FIXNAME");
-	$self->regenerate_node($gov, $g->{tag});
-	$self->logfix2($dep);
+        #DO_SOMETHING
+
+        $self->logfix1( $dep, "FIXNAME" );
+        $self->regenerate_node( $gov, $g->{tag} );
+        $self->logfix2($dep);
     }
 }
 

@@ -5,16 +5,16 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^Vp/ && $d->{tag} =~ /^[NP]/ && $dep->form !~ /^[Tt]o/ && ($g->{gen}.$g->{num} ne $self->gn2pp($d->{gen}.$d->{num}))) {
-	my $new_gn = $self->gn2pp($d->{gen}.$d->{num});
-	$g->{tag} =~ s/^(..)../$1$new_gn/;
+    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^Vp/ && $d->{tag} =~ /^[NP]/ && $dep->form !~ /^[Tt]o/ && ( $g->{gen} . $g->{num} ne $self->gn2pp( $d->{gen} . $d->{num} ) ) ) {
+        my $new_gn = $self->gn2pp( $d->{gen} . $d->{num} );
+        $g->{tag} =~ s/^(..)../$1$new_gn/;
 
-	$self->logfix1($dep, "SubjectPastParticipleAgreement");
-	$self->regenerate_node($gov, $g->{tag});
-	$self->logfix2($dep);
+        $self->logfix1( $dep, "SubjectPastParticipleAgreement" );
+        $self->regenerate_node( $gov, $g->{tag} );
+        $self->logfix2($dep);
     }
 }
 

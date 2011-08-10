@@ -25,7 +25,7 @@ sub process_ttree {
         $perspron->set_formeme('n:subj');    # !!! elided?
         $perspron->set_nodetype('complex');
         $perspron->set_gram_sempos('n.pron.def.pers');
-        $perspron->set_gram_number('pl');                # default: vykani
+        $perspron->set_gram_number('pl');    # default: vykani
         $perspron->set_gram_gender('anim');
         $perspron->set_gram_person('2');
 

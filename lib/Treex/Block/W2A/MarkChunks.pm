@@ -50,7 +50,7 @@ sub mark_chunk {
 
     # Should we mark this type of chunk?
     return if !$min_nodes;
-    
+
     # Is the chunk long enough to be marked?
     return if @a_nodes < $min_nodes;
 

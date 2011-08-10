@@ -58,7 +58,7 @@ sub next_document_for_this_job {
     # Regarding  perlcritic ProtectPrivateSubs:
     # I consider _redirect_output as internal for Treex::Core modules.
     if ( $doc && $self->jobindex ) {
-        Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex ); ## no critic (ProtectPrivateSubs)
+        Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );    ## no critic (ProtectPrivateSubs)
     }
 
     return $doc;

@@ -20,7 +20,7 @@ sub process_tnode {
 
     # Conditionals don't have an extra auxverb for past tense "bych *jsem prišel"
     my $verbmod = $tnode->gram_verbmod || '';
-    my $formeme = $tnode->formeme || '';
+    my $formeme = $tnode->formeme      || '';
     return if $verbmod eq 'cdn' or $formeme =~ /(aby|kdyby)/;
 
     # Generate a form of the new auxverb

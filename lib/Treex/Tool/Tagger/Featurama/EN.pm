@@ -4,17 +4,19 @@ use Moose;
 extends 'Treex::Tool::Tagger::Featurama';
 
 sub BUILDARGS {
-    return {path => 'data/models/featurama/en/default'};
+    return { path => 'data/models/featurama/en/default' };
 }
 
 override '_analyze' => sub {
     use Treex::Tool::EnglishMorpho::Analysis;
     my ( $self, $wordform ) = @_;
 
-    return map {{
-        tag=>$_,
-        lemma=>$wordform,
-    }} ( Treex::Tool::EnglishMorpho::Analysis::Get_possible_tags($wordform) );
+    return map {
+        {
+            tag   => $_,
+            lemma => $wordform,
+        }
+    } ( Treex::Tool::EnglishMorpho::Analysis::Get_possible_tags($wordform) );
 };
 
 override '_get_feature_names' => sub {

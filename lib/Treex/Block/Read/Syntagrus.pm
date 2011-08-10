@@ -18,8 +18,8 @@ sub next_document_text {
     my $sent_count = 0;
 
     LINE:
-    while ( <$FH> ) {
-        if ($_ =~ m/<\/S>/) {
+    while (<$FH>) {
+        if ( $_ =~ m/<\/S>/ ) {
             $sent_count++;
             return $text if $sent_count == $self->lines_per_doc;
         }
@@ -27,7 +27,6 @@ sub next_document_text {
     }
     return $text;
 }
-
 
 sub next_document {
     my ($self) = @_;
@@ -41,39 +40,40 @@ sub next_document {
     my $aroot;
 
     foreach my $line ( split /\n/, $text ) {
+
         # what to do with generated nodes
         # so far, they have their surface form '#Fantom'
         $line =~ s/(<W[^>]+)\/>/$1>#Fantom<\/W>/;
-        if ($line =~ /^<S\s.*>/) {
+        if ( $line =~ /^<S\s.*>/ ) {
             my $bundle = $document->create_bundle();
             my $zone = $bundle->create_zone( $self->language, $self->selector );
-            $aroot = $zone->create_atree();
+            $aroot   = $zone->create_atree();
             @parents = (0);
-            @nodes = ($aroot);
+            @nodes   = ($aroot);
         }
-        elsif ($line =~ /<\/S>/) {
-            foreach my $i (1 .. $#nodes) {
-                $nodes[$i]->set_parent($nodes[$parents[$i]]);
+        elsif ( $line =~ /<\/S>/ ) {
+            foreach my $i ( 1 .. $#nodes ) {
+                $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
             }
         }
-        elsif ($line =~ /^(.*)<W\s(.+)>(.+)<\/W>(.*)$/) {
+        elsif ( $line =~ /^(.*)<W\s(.+)>(.+)<\/W>(.*)$/ ) {
             my $punct_before = $1;
-            my $punct_after = $4;
-            my $word_form = $3;
-            my $attrs = $2;
+            my $punct_after  = $4;
+            my $word_form    = $3;
+            my $attrs        = $2;
             my %attr;
-            while ($attrs =~ s/\s*([^=]+)=\"([^\"]+)\"//) {
+            while ( $attrs =~ s/\s*([^=]+)=\"([^\"]+)\"// ) {
                 $attr{$1} = $2;
             }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($word_form);
-            $newnode->set_lemma($attr{'LEMMA'});
-            $newnode->set_tag($attr{'FEAT'});
-            $newnode->set_conll_deprel($attr{'LINK'});
+            $newnode->set_lemma( $attr{'LEMMA'} );
+            $newnode->set_tag( $attr{'FEAT'} );
+            $newnode->set_conll_deprel( $attr{'LINK'} );
             $attr{'DOM'} = 0 if $attr{'DOM'} eq '_root';
             push @parents, $attr{'DOM'};
-            push @nodes, $newnode;
+            push @nodes,   $newnode;
         }
     }
     return $document;

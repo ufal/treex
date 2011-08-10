@@ -13,7 +13,7 @@ sub next_document {
 
     my $n = 0;
     for my $zone_label ( keys %sentences ) {
-        if (!$n){
+        if ( !$n ) {
             $n = @{ $sentences{$zone_label} };
         }
         log_fatal "Different number of sentences in aligned documents"
@@ -29,32 +29,32 @@ sub next_document {
                 ( $lang, $selector ) = split /_/, $zone_label;
             }
             my $zone = $bundle->create_zone( $lang, $selector );
-            my @tokens = split (/\n/, $sentences{$zone_label}[$i]);
-            my $aroot = $zone->create_atree();
+            my @tokens  = split( /\n/, $sentences{$zone_label}[$i] );
+            my $aroot   = $zone->create_atree();
             my @parents = (0);
-            my @nodes = ($aroot);
+            my @nodes   = ($aroot);
             my $sentence;
             foreach my $token (@tokens) {
-                my ($id, $form, $lemma, $plemma, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel) = split(/\t/, $token);
+                my ( $id, $form, $lemma, $plemma, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel ) = split( /\t/, $token );
                 my $newnode = $aroot->create_child();
                 $newnode->shift_after_subtree($aroot);
-                $lemma = $plemma if $lemma eq '_';
-                $pos = $ppos if $pos eq '_';
-                $head = $phead if $head eq '_';
+                $lemma  = $plemma  if $lemma  eq '_';
+                $pos    = $ppos    if $pos    eq '_';
+                $head   = $phead   if $head   eq '_';
                 $deprel = $pdeprel if $deprel eq '_';
                 $newnode->set_form($form);
                 $newnode->set_lemma($lemma);
                 $newnode->set_tag($pos);
                 $newnode->set_conll_deprel($deprel);
                 $sentence .= "$form ";
-                push @nodes, $newnode;
+                push @nodes,   $newnode;
                 push @parents, $head;
             }
-            foreach my $i (1 .. $#nodes) {
-                $nodes[$i]->set_parent($nodes[$parents[$i]]);
+            foreach my $i ( 1 .. $#nodes ) {
+                $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
             }
             $sentence =~ s/\s+$//;
-            $zone->set_sentence( $sentence );
+            $zone->set_sentence($sentence);
         }
     }
 

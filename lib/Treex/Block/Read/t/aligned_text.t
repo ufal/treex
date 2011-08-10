@@ -44,12 +44,18 @@ isa_ok( $doc, 'Treex::Core::Document', 'New document is valid Treex document' );
 #What is read is same as in file
 #note(explain($doc));
 my @bundles = $doc->get_bundles();
-cmp_ok(scalar @bundles, '==', 2, '2 bundles were loaded');
+cmp_ok( scalar @bundles, '==', 2, '2 bundles were loaded' );
 
 #Fail if texts have different size
 
-my $another_reader = Treex::Block::Read::AlignedSentences->new( en=> $en_file, cs_ref=>$cs2_file);
-stderr_like(sub {eval { $another_reader->next_document() } } , qr/Different number of lines in aligned documents/, 'Loading of files with different number of lines should fail');
+my $another_reader = Treex::Block::Read::AlignedSentences->new( en => $en_file, cs_ref => $cs2_file );
+stderr_like(
+    sub {
+        eval { $another_reader->next_document() };
+    },
+    qr/Different number of lines in aligned documents/,
+    'Loading of files with different number of lines should fail'
+);
 
 done_testing();
 

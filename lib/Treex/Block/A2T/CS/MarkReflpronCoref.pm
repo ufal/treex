@@ -15,7 +15,7 @@ sub process_tnode {
 
             my ($antec) = grep { ( $_->formeme || "" ) eq "n:1" } $clause_head->get_echildren;
             if ($antec) {
-                $t_node->set_deref_attr( 'coref_gram.rf', [$antec]);
+                $t_node->set_deref_attr( 'coref_gram.rf', [$antec] );
             }
         }
     }

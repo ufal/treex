@@ -4,25 +4,25 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub add_feature {
-    my ($self, $bundle, $feature) = @_;
+    my ( $self, $bundle, $feature ) = @_;
 
-    if (not $bundle->get_zone('und')) {
+    if ( not $bundle->get_zone('und') ) {
         my $zone = $bundle->create_zone('und');
         $zone->set_sentence('FILTER_OUTPUTS:');
     }
 
-    $bundle->get_zone('und')->set_sentence($bundle->get_zone('und')->sentence." $feature");
+    $bundle->get_zone('und')->set_sentence( $bundle->get_zone('und')->sentence . " $feature" );
     return 1;
 }
 
 sub get_features {
-    my ($self, $bundle) = @_;
-    if (! $bundle->get_zone('und') || ! $bundle->get_zone('und')->sentence) {
+    my ( $self, $bundle ) = @_;
+    if ( !$bundle->get_zone('und') || !$bundle->get_zone('und')->sentence ) {
         return undef;
     }
-    my (undef, @features) = split /\s+/, $bundle->get_zone('und')->sentence;
+    my ( undef, @features ) = split /\s+/, $bundle->get_zone('und')->sentence;
     return @features;
-} 
+}
 
 1;
 

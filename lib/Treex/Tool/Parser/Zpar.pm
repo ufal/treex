@@ -46,7 +46,7 @@ sub parse {
     my $count  = scalar @$forms;
 
     # write input (escaping tokens with spaces)
-    print $writer join ' ', map {s/ /_/g;$_} @$forms;
+    print $writer join ' ', map { s/ /_/g; $_ } @$forms;
     print $writer "\n";
 
     # read output

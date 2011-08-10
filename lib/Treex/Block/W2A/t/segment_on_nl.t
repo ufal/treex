@@ -46,18 +46,16 @@ stderr_like(
     qr/contains empty sentences/,
     'Segmenting text with empty lines should crash'
 );
-my $allow_segmenter = Treex::Block::W2A::SegmentOnNewlines->new( language=>'en', allow_empty_sentences=>1);
+my $allow_segmenter = Treex::Block::W2A::SegmentOnNewlines->new( language => 'en', allow_empty_sentences => 1 );
 $allow_segmenter->process_document($doc2);
 cmp_ok( scalar $doc2->get_bundles(), '==', 4, 'There are four sentences in four line text when allow_empty_senteces set' );
-
 
 my $doc3     = Treex::Core::Document->new();
 my $doczone3 = $doc3->create_zone('en');
 $doczone3->set_text($content_with_empty);
-my $delete_segmenter = Treex::Block::W2A::SegmentOnNewlines->new( language=>'en', delete_empty_sentences=>1);
+my $delete_segmenter = Treex::Block::W2A::SegmentOnNewlines->new( language => 'en', delete_empty_sentences => 1 );
 $delete_segmenter->process_document($doc3);
 cmp_ok( scalar $doc3->get_bundles(), '==', 3, 'There are three sentences in four line text when delete_empty_senteces set' );
-
 
 done_testing();
 

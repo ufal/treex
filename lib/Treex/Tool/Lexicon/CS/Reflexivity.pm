@@ -36,11 +36,11 @@ připlížit|hrbit|shrbit|krčit|klikatit|vynořit|skrčit|rouhat|potulovat|
 sub fix_reflexivity {
     my $lemma = shift;
 
-    if ($lemma =~ /^($tantum_si_regexp)$/sxm) {
-        return $lemma."_si";
+    if ( $lemma =~ /^($tantum_si_regexp)$/sxm ) {
+        return $lemma . "_si";
     }
-    elsif ($lemma =~ /^($tantum_se_regexp)$/sxm) {
-        return $lemma."_se";
+    elsif ( $lemma =~ /^($tantum_se_regexp)$/sxm ) {
+        return $lemma . "_se";
     }
     else {
         return $lemma;
@@ -48,8 +48,8 @@ sub fix_reflexivity {
 }
 
 # A list of all lemmas which may possibly be a reflexive tantum (in a given sense)
-my $possible_tantums = 
-"adaptovat_se|aktivizovat_se|aktivovat_se|angažovat_se|balit_se|balívat_se|batolit_se|bát_se|
+my $possible_tantums =
+    "adaptovat_se|aktivizovat_se|aktivovat_se|angažovat_se|balit_se|balívat_se|batolit_se|bát_se|
 bavit_se|belhat_se|bít_se|blížící_se|blížit_se|blýskat_se|blýsknout_se|bortit_se|bouřit_se|
 bránit_se|brát_se|brát_si|brávat_se|brávat_si|brodit_se|brousit_si|budit_se|budující_si|
 čekat_se|cenit_si|chápat_se|chlubit_se|chlubívat_se|chopit_se|chovat_se|chránit_se|chtít_se|
@@ -276,12 +276,11 @@ zvedat_se|zvednout_se|zvětšit_se|zvětšovat_se|zvrátit_se|zvrhnout_se|zvykat
 zvýraznit_se|zvýšit_se|zvyšovat_se|zvyšující_se|zželet_se|";
 
 sub is_possible_tantum {
-    
+
     my ($lemma) = @_;
-    
+
     return $lemma =~ /^($possible_tantums)$/sxm;
 }
-
 
 1;
 

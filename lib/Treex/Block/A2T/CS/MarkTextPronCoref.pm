@@ -4,9 +4,10 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has 'model_path' => (
-    is => 'ro',
+    is       => 'ro',
     required => 1,
-    isa => 'Str',
+    isa      => 'Str',
+
     #default => ''
     documentation => 'path to the trained model',
 );
@@ -14,63 +15,64 @@ has 'model_path' => (
 # TODO initialize ranker
 # the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
-    is => 'ro',
+    is       => 'ro',
     required => 1,
+
     #isa => '',
     builder => '_build_ranker'
 );
 
 sub _build_ranker {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
-    log_fatal "File " . $self->model_path . " with pronominal coreference model doesn't exist." 
-        if (! -e $self->model_path );
-   
+    log_fatal "File " . $self->model_path . " with pronominal coreference model doesn't exist."
+        if ( !-e $self->model_path );
+
     #TODO
-    return; #PerceptronRanker->new( { model_path => $self->model_path } );
+    return;    #PerceptronRanker->new( { model_path => $self->model_path } );
 }
-
 
 # according to rule presented in Nguy et al. (2009)
 # nodes with the t_lemma #PersPron and third person in gram/person
 sub _is_anaphoric {
-    my ( $t_node ) = @_;
-    
-    return ($t_node->t_lemma eq '#PersPron' && $t_node->gram_person eq '3');
-}
+    my ($t_node) = @_;
 
+    return ( $t_node->t_lemma eq '#PersPron' && $t_node->gram_person eq '3' );
+}
 
 # according to rule presented in Nguy et al. (2009)
 # semantic nouns from previous context of the current sentence and from
 # the previous sentence
 sub _get_ante_cands {
-    my ( $t_node ) = @_;
+    my ($t_node) = @_;
 
     # current sentence
     my @sent_preceding = grep { $_->precedes($t_node) }
-        $t_node->get_root->get_descendants({ordered => 1});
+        $t_node->get_root->get_descendants( { ordered => 1 } );
 
-    # previous sentence    
+    # previous sentence
     my $sent_num = $t_node->get_bundle->get_position;
-    if ($sent_num > 0) {
+    if ( $sent_num > 0 ) {
         my $prev_bundle = $t_node->get_document->get_bundles[ $sent_num - 1 ];
-        my $prev_tree = $prev_bundle->get_tree( 
+        my $prev_tree   = $prev_bundle->get_tree(
             $t_node->language,
-            $t_node->get_layer, 
-            $t_node->selector );
-        unshift @sent_preceding, $prev_tree->get_descendants({ordered => 1});
+            $t_node->get_layer,
+            $t_node->selector
+        );
+        unshift @sent_preceding, $prev_tree->get_descendants( { ordered => 1 } );
     }
     else {
+
         # TODO
         # it should inform that the previous context is not complete
     }
 
     # semantic noun filtering
-    my @cands = grep { $_->gram_sempos =~ /^n/ && $_->gram_person !~ /1|2/ } 
+    my @cands = grep { $_->gram_sempos =~ /^n/ && $_->gram_person !~ /1|2/ }
         @curr_sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers
-    return reverse @cands;    
+    return reverse @cands;
 }
 
 sub _create_instances {
@@ -79,15 +81,15 @@ sub _create_instances {
     #TODO
 }
 
-
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     return if ( $t_node->is_root );
 
-    if ( _is_anaphoric( $t_node ) ) {
+    if ( _is_anaphoric($t_node) ) {
 
-        my @ante_cands = _get_ante_cands( $t_node );
+        my @ante_cands = _get_ante_cands($t_node);
+
         # instances is a reference to hash in the form { id => instance }
         my $instances = _create_instances( $t_node, @ante_cands );
 
@@ -95,9 +97,9 @@ sub process_tnode {
         # antecedent lies in the previous sentence, which is however not
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
-        my $antec = $ranker->pick_winner( @ante_cands );
+        my $antec  = $ranker->pick_winner(@ante_cands);
 
-        $t_node->set_deref_attr( 'coref_text.ref', [ $antec ] );
+        $t_node->set_deref_attr( 'coref_text.ref', [$antec] );
     }
 
 }

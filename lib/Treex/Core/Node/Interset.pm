@@ -7,8 +7,6 @@ use Treex::Core::Log;
 use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
 use tagset::common;
 
-
-
 #------------------------------------------------------------------------------
 # Takes the Interset feature structure as a hash reference (as output by an
 # Interset decode() function). For all hash keys that are known Interset
@@ -25,44 +23,42 @@ sub set_iset
 {
     my $self = shift;
     my %f;
-    if(ref($_[0]) eq 'HASH')
+    if ( ref( $_[0] ) eq 'HASH' )
     {
-        %f = %{$_[0]};
+        %f = %{ $_[0] };
     }
     else
     {
         %f = @_;
     }
     my $known = list_iset_values();
-    foreach my $feature (list_iset_features())
+    foreach my $feature ( list_iset_features() )
     {
-        if(exists($f{$feature}))
+        if ( exists( $f{$feature} ) )
         {
-            if($f{$feature} eq '')
+            if ( $f{$feature} eq '' )
             {
-                $self->set_attr("iset/$feature", '');
+                $self->set_attr( "iset/$feature", '' );
             }
-            elsif(ref($f{$feature}) eq 'ARRAY')
+            elsif ( ref( $f{$feature} ) eq 'ARRAY' )
             {
-                $self->set_attr("iset/$feature", join('|', sort_iset_values($feature, @{$f{$feature}})));
+                $self->set_attr( "iset/$feature", join( '|', sort_iset_values( $feature, @{ $f{$feature} } ) ) );
             }
             else
             {
-                my @values = split(/\|/, $f{$feature});
+                my @values = split( /\|/, $f{$feature} );
                 foreach my $value (@values)
                 {
-                    unless(grep {$_ eq $value} (@{$known->{$feature}}))
+                    unless ( grep { $_ eq $value } ( @{ $known->{$feature} } ) )
                     {
                         warn("Unknown value $value of Interset feature $feature");
                     }
                 }
-                $self->set_attr("iset/$feature", join('|', sort_iset_values($feature, @values)));
+                $self->set_attr( "iset/$feature", join( '|', sort_iset_values( $feature, @values ) ) );
             }
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Gets the value of an Interset feature. Makes sure that the result is never
@@ -75,12 +71,12 @@ sub set_iset
 #------------------------------------------------------------------------------
 sub get_iset
 {
-    my $self = shift;
+    my $self    = shift;
     my $feature = shift;
-    my $value = $self->get_attr("iset/$feature");
-    if(is_known_iset($feature))
+    my $value   = $self->get_attr("iset/$feature");
+    if ( is_known_iset($feature) )
     {
-        if(!defined($value))
+        if ( !defined($value) )
         {
             $value = '';
         }
@@ -92,8 +88,6 @@ sub get_iset
     return $value;
 }
 
-
-
 #------------------------------------------------------------------------------
 # Gets the values of all Interset features and returns a hash. Any multivalues
 # (such as "fem|neut") will be converted to arrays referenced from the hash
@@ -103,19 +97,17 @@ sub get_iset_structure
 {
     my $self = shift;
     my %f;
-    foreach my $feature (list_iset_features())
+    foreach my $feature ( list_iset_features() )
     {
         $f{$feature} = $self->get_iset($feature);
-        if($f{$feature} =~ m/\|/)
+        if ( $f{$feature} =~ m/\|/ )
         {
-            my @values = split(/\|/, $f{$feature});
+            my @values = split( /\|/, $f{$feature} );
             $f{$feature} = \@values;
         }
     }
     return \%f;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Gets the values of all non-empty Interset features and returns a mixed list
@@ -126,18 +118,16 @@ sub get_iset_pairs_list
 {
     my $self = shift;
     my @list;
-    foreach my $feature (list_iset_features())
+    foreach my $feature ( list_iset_features() )
     {
         my $value = $self->get_iset($feature);
-        unless($value eq '')
+        unless ( $value eq '' )
         {
-            push(@list, $feature, $value);
+            push( @list, $feature, $value );
         }
     }
     return @list;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Tests multiple Interset features simultaneously. Input is a list of feature-
@@ -150,24 +140,24 @@ sub get_iset_pairs_list
 sub match_iset
 {
     my $self = shift;
-    my @req = @_;
-    for(my $i = 0; $i<=$#req; $i += 2)
+    my @req  = @_;
+    for ( my $i = 0; $i <= $#req; $i += 2 )
     {
         my $feature = $req[$i];
-        confess("Undefined feature") unless($feature);
+        confess("Undefined feature") unless ($feature);
         my $value = $self->get_iset($feature);
-        my $comp = $req[$i+1] =~ s/^\!// ? 'ne' : $req[$i+1] =~ s/^\~// ? 're' : 'eq';
-        if($comp eq 'eq' && $value ne $req[$i+1] ||
-           $comp eq 'ne' && $value eq $req[$i+1] ||
-           $comp eq 're' && $value !~ m/$req[$i+1]/)
+        my $comp = $req[ $i + 1 ] =~ s/^\!// ? 'ne' : $req[ $i + 1 ] =~ s/^\~// ? 're' : 'eq';
+        if ($comp eq 'eq' && $value ne $req[ $i + 1 ]
+            ||
+            $comp eq 'ne' && $value eq $req[ $i + 1 ] ||
+            $comp eq 're' && $value !~ m/$req[$i+1]/
+            )
         {
             return 0;
         }
     }
     return 1;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Static method. Returns the list of known Interset features. Currently just
@@ -177,11 +167,10 @@ sub match_iset
 #------------------------------------------------------------------------------
 sub list_iset_features
 {
+
     # We do not use the Interset features 'tagset' and 'other' in Treex.
-    return grep {$_ !~ m/^(tagset|other)$/} @tagset::common::known_features;
+    return grep { $_ !~ m/^(tagset|other)$/ } @tagset::common::known_features;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Static method. Returns the list of known values for a given Interset feature,
@@ -191,8 +180,8 @@ sub list_iset_features
 sub list_iset_values
 {
     my $feature = shift;
-    my $hash = \%tagset::common::known_values;
-    if($feature)
+    my $hash    = \%tagset::common::known_values;
+    if ($feature)
     {
         return $hash->{$feature};
     }
@@ -202,8 +191,6 @@ sub list_iset_values
     }
 }
 
-
-
 #------------------------------------------------------------------------------
 # Static method. Tells whether a string is a name of a known Interset feature.
 # If there is a second argument, it checks whether it is a known value of that
@@ -212,27 +199,25 @@ sub list_iset_values
 sub is_known_iset
 {
     my $feature = shift;
-    unless($feature)
+    unless ($feature)
     {
         return 0;
     }
     my $known = list_iset_values();
-    unless(exists($known->{$feature}))
+    unless ( exists( $known->{$feature} ) )
     {
         return 0;
     }
-    my @values = @{$known->{$feature}};
+    my @values = @{ $known->{$feature} };
     foreach my $value (@_)
     {
-        unless($value eq '' || grep {$_ eq $value} (@values))
+        unless ( $value eq '' || grep { $_ eq $value } (@values) )
         {
             return 0;
         }
     }
     return 1;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Static method. Sorts values of a feature "intuitively" (according to order
@@ -243,13 +228,11 @@ sub is_known_iset
 sub sort_iset_values
 {
     my $feature = shift;
-    my @values = @_;
-    confess("Cannot order values of Interset feature '$feature'") if(!exists($tagset::common::order_values{$feature}));
+    my @values  = @_;
+    confess("Cannot order values of Interset feature '$feature'") if ( !exists( $tagset::common::order_values{$feature} ) );
     my $order = $tagset::common::order_values{$feature};
-    return sort {$order->{$a} <=> $order->{$b}} (@values);
+    return sort { $order->{$a} <=> $order->{$b} } (@values);
 }
-
-
 
 1;
 

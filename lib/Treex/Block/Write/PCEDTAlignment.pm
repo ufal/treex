@@ -7,14 +7,14 @@ with 'Treex::Block::Write::Redirectable';
 has '+language' => ( required => 1 );
 
 sub process_tnode {
-    my ( $self, $tnode ) = @_;
-    my ($cs_nodes, $types) = $tnode->get_aligned_nodes();
+    my ( $self,     $tnode ) = @_;
+    my ( $cs_nodes, $types ) = $tnode->get_aligned_nodes();
     return if !$$cs_nodes[0];
     my $cs_tnode = $$cs_nodes[0];
     return if !$tnode->get_lex_anode;
     my $p_node = $tnode->get_lex_anode->get_terminal_pnode;
-    if ($p_node->id =~ /EnglishP-(wsj_.+\d)$/) {
-        print join("\t", ($1, $p_node->form, $p_node->tag, $cs_tnode->id, $cs_tnode->t_lemma, $cs_tnode->functor))."\n";
+    if ( $p_node->id =~ /EnglishP-(wsj_.+\d)$/ ) {
+        print join( "\t", ( $1, $p_node->form, $p_node->tag, $cs_tnode->id, $cs_tnode->t_lemma, $cs_tnode->functor ) ) . "\n";
     }
 }
 

@@ -13,7 +13,7 @@ my $BASE_DISTANCE_LIMIT = 8;
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     return if !$tnode->is_coap_root();
-    my @tmembers = grep {$_->is_member} $tnode->get_children();
+    my @tmembers = grep { $_->is_member } $tnode->get_children();
     my @auxp_anodes =
         sort { $a->ord <=> $b->ord }
         grep { ( $_->afun || '' ) eq 'AuxP' }

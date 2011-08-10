@@ -38,15 +38,16 @@ sub process_atree {
         # We skip all the nodes of the nested chunk except for its root
         # which was left attached to the $a_root.
         my @ch_nodes = grep { $_->parent == $a_root } @$chunk;
-        
+
         # If this is a "parenthesis chunk" (enclosed in round brackets),
         # leave the brackets aside to be hanged on the root of the chunk later.
-        # (Parsers would mostly guess this right, but not always.)        
+        # (Parsers would mostly guess this right, but not always.)
         my ( $lrb, $rrb ) = @ch_nodes[ 0, -1 ];
         if ( $lrb->form eq '(' && $rrb->form eq ')' ) {
             shift @ch_nodes;
             pop @ch_nodes;
-        } else {
+        }
+        else {
             $lrb = undef;
         }
 
@@ -74,7 +75,7 @@ sub process_atree {
 }
 
 sub label_parenthesis_token {
-    my ($self, $anode) = @_;
+    my ( $self, $anode ) = @_;
     $anode->set_conll_deprel('P');
     $anode->set_afun('AuxG');
     return;

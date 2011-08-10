@@ -7,7 +7,6 @@ use CzechMorpho;
 require Treex::Tool::Lexicon::CS;
 require Treex::Tool::Lexicon::CS::Numerals;
 
-
 # The only required input attribute, the rest is (pre-)computed here
 has 't' => ( is => 'ro', isa => 'Object', required => 1 );
 
@@ -57,22 +56,24 @@ sub _build_case {
 
     my ($self) = @_;
     my $prep;
-    
+
     if ( $self->tag =~ m/^[NAPC]...([1-7X])/ ) {
-        
-        my $case = $1;
+
+        my $case     = $1;
         my $prepcase = $self->_prep_case->{case};
-        
-        # infer the case from the preposition (if there is one), if the word's own case is not visible      
-        if ( $case eq 'X' ){
+
+        # infer the case from the preposition (if there is one), if the word's own case is not visible
+        if ( $case eq 'X' ) {
             return $prepcase;
         }
-        # change the case for non-congruent numerals, if supposed to        
-        if ( $self->fix_numer and $case eq '2' and ( my $numeral = $self->_find_noncongruent_numeral() ) ){
-            return $self->_get_fix_numer_case( $numeral );
+
+        # change the case for non-congruent numerals, if supposed to
+        if ( $self->fix_numer and $case eq '2' and ( my $numeral = $self->_find_noncongruent_numeral() ) ) {
+            return $self->_get_fix_numer_case($numeral);
         }
+
         # if the case is not consistent with the preposition, return X, if supposed to
-        if ( $self->fix_prep and $prepcase ne 'X' and $case ne $prepcase ){            
+        if ( $self->fix_prep and $prepcase ne 'X' and $case ne $prepcase ) {
             return 'X';
         }
         return $case;
@@ -82,17 +83,19 @@ sub _build_case {
 
 # Try to fix the case indication, if there is a non-congruent numeral and this word is its genitive attribute
 sub _get_fix_numer_case {
-    
+
     my ( $self, $numeral ) = @_;
-    
+
     # infer the case from the numeral itself (if visible)
-    if ( $numeral and $numeral->tag =~ m/^....([1-7])/ ){
-        return $1;                
+    if ( $numeral and $numeral->tag =~ m/^....([1-7])/ ) {
+        return $1;
     }
+
     # infer the case from the word's own preposition
-    elsif ( $self->_prep_case->{case} ne 'X' ){
+    elsif ( $self->_prep_case->{case} ne 'X' ) {
         return $self->_prep_case->{case};
     }
+
     # now we're screwed (we don't know 1 or 4); this happens with numbers, since they don't have case markings in tags
     else {
         return 'X';
@@ -105,22 +108,22 @@ sub _find_noncongruent_numeral {
     my ($self) = @_;
 
     return if ( $self->t->is_coap_root() );
-    
+
     my %t_children = map { $a = $_->get_lex_anode; $a->id => $_ if $a } $self->t->get_echildren();
     my @a_parents = $self->a->get_eparents( { or_topological => 1 } );
 
-    foreach my $a_parent (@a_parents){
-        if ($t_children{$a_parent->id}){
-            my $a_child = $t_children{$a_parent->id}->get_lex_anode();
-            if ( $a_child and Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $a_child->lemma, $a_child->tag ) ){
+    foreach my $a_parent (@a_parents) {
+        if ( $t_children{ $a_parent->id } ) {
+            my $a_child = $t_children{ $a_parent->id }->get_lex_anode();
+            if ( $a_child and Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $a_child->lemma, $a_child->tag ) ) {
                 return $a_parent;
-            }            
-        } 
+            }
+        }
     }
-    return;        
+    return;
 }
 
-# Detects preposition + governed case / subjunction 
+# Detects preposition + governed case / subjunction
 sub _build__prep_case {
 
     my ($self) = @_;
@@ -173,39 +176,43 @@ sub _build_is_name_lemma {
 
 sub _build_verbform {
     my ($self) = @_;
-    
+
     return '' if ( $self->sempos ne 'v' );
     my $finity = ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';
-    
+
     return $finity if ( $finity eq 'inf' or !$self->detect_diathesis );
-    
+
     return 'apass' if ( $self->tag =~ /^Vs/ );
-    
+
     my ($verbal_synt_head) = grep { $self->a->parent == $_ } @{ $self->aux };
-    $verbal_synt_head = $self->a if (!$verbal_synt_head);
-    
+    $verbal_synt_head = $self->a if ( !$verbal_synt_head );
+
     return 'rpass' if ( grep { $_->afun eq 'AuxR' } $verbal_synt_head->children );
-    
+
     return 'act';
 }
 
 sub _build_syntpos {
     my ($self) = @_;
-    
+
     # skip conjunctions, prepositions, punctuations etc.
     return '' if ( $self->tag =~ m/^.[%#^,FIRTVXc]/ );
+
     # adjectives, adjectival numerals and pronouns
     return 'adj' if ( $self->tag =~ m/^.[\}=\?48ACDGLOSUadhklnrwyz]/ );
+
     # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
-    return 'adj' if ( $self->tag =~ m/^.[WZ]/ and $self->lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );    
+    return 'adj' if ( $self->tag =~ m/^.[WZ]/ and $self->lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );
+
     # adverbs, adverbial numerals ("dvakrát" etc.)
-    return 'adv' if ( $self->tag =~ m/^.[\*bgouv]/);
+    return 'adv' if ( $self->tag =~ m/^.[\*bgouv]/ );
+
     # verbs
     return 'v' if ( $self->tag =~ m/^V/ );
+
     # everything else are nouns: POS -- 567EHPNJQYj@X, no POS (possibly -- generated nodes)
     return 'n';
 }
-
 
 1;
 

@@ -5,16 +5,16 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($gov->afun eq 'Pred' && $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ($g->{gen}.$g->{num} ne $d->{gen}.$d->{num})) {
-	my $new_gn = $g->{gen}.$g->{num};
-	$d->{tag} =~ s/^(..)../$1$new_gn/;
+    if ( $gov->afun eq 'Pred' && $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} ) ) {
+        my $new_gn = $g->{gen} . $g->{num};
+        $d->{tag} =~ s/^(..)../$1$new_gn/;
 
-	$self->logfix1($dep, "PassiveAuxBeAgreement");
-	$self->regenerate_node($dep, $d->{tag});
-	$self->logfix2($dep);
+        $self->logfix1( $dep, "PassiveAuxBeAgreement" );
+        $self->regenerate_node( $dep, $d->{tag} );
+        $self->logfix2($dep);
     }
 }
 

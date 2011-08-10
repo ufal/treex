@@ -7,13 +7,13 @@ extends 'Treex::Core::Block';
 has 'use_functors' => ( isa => 'Bool', is => 'ro', default => 1 );
 
 sub process_ttree {
-    
+
     my ( $self, $t_root ) = @_;
-    
+
     $t_root->set_nodetype('root');
-    
+
     foreach my $t_node ( $t_root->get_descendants ) {
-        $t_node->set_nodetype( $self->detect_nodetype( $t_node ) );
+        $t_node->set_nodetype( $self->detect_nodetype($t_node) );
     }
 }
 
@@ -26,40 +26,47 @@ sub detect_nodetype {
     if ( $self->use_functors and $t_node->functor =~ /^(APPS|CONJ|DISJ|ADVS|CSQ|GRAD|REAS|CONFR|CONTRA|OPER)/ ) {
         return 'coap';
     }
+
     # rhematizers
     elsif ( $self->use_functors and $t_node->functor =~ /^(RHEM|PREC|PARTL|MOD|ATT|INTF|CM)/ ) {
         return 'atom';
     }
+
     # foreign phrases
     elsif ( $self->use_functors and $t_node->functor =~ /^FPHR$/ ) {
         return 'fphr';
     }
+
     # idioms
     elsif ( $self->use_functors and $t_node->functor =~ /^DPHR$/ ) {
         return 'dphr';
     }
+
     # coordinations simply based on morphology
     elsif ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^J/ ) {
         return 'coap';
     }
-    # a-lemmas for semantically relevant punctuation -- not modified by the current automatic analysis 
-    elsif ( $t_node->t_lemma =~ /^(&|%|\*|\.|\.\.\.|:|,|;|-|–|\/|\()$/ ){
+
+    # a-lemmas for semantically relevant punctuation -- not modified by the current automatic analysis
+    elsif ( $t_node->t_lemma =~ /^(&|%|\*|\.|\.\.\.|:|,|;|-|–|\/|\()$/ ) {
         return 'qcomplex';
     }
+
     # t-lemmas for punctuation (PDT-style) and generated nodes
     elsif ( $t_node->t_lemma =~ /^#(Benef|Total|Cor|EmpVerb|Gen|Whose|Why|QCor|Rcp|Equal|Where|How|When|Some|AsMuch|Unsp|Amp|Ast|Deg|Percnt|Comma|Colon|Dash|Bracket|Period|Period3|Slash)/ ) {
         return 'qcomplex';
     }
+
     # list structures
     elsif ( $t_node->t_lemma =~ /^\#(Forn|Idph)/ ) {
         return 'list';
     }
+
     # default value
     else {
         return 'complex';
     }
 }
-
 
 1;
 

@@ -25,7 +25,7 @@ use Treex::Core::BundleZone;
 
 use Treex::Core::Log;
 
-my @layers = qw(t a n p); # TODO should it be here?
+my @layers = qw(t a n p);    # TODO should it be here?
 
 # --------- ACCESS TO ZONES ------------
 
@@ -62,7 +62,7 @@ sub create_zone {
     );
 
     log_fatal("Bundle already contains a zone with language='$language' and selector='$selector'")
-        if $self->get_zone($language,$selector);
+        if $self->get_zone( $language, $selector );
 
     my $new_zone = Treex::Core::BundleZone->new(
         {
@@ -106,7 +106,7 @@ sub get_all_zones {
     if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
         pos_validated_list( \@_ );
     }
-    if ($self->{zones}) {
+    if ( $self->{zones} ) {
         return map { $_->value() } $self->{zones}->elements;
     }
     else {
@@ -115,23 +115,22 @@ sub get_all_zones {
 }
 
 sub remove_zone {
-    my ($self, $language, $selector) = @_;
+    my ( $self, $language, $selector ) = @_;
 
-    my $zone = $self->get_zone($language, $selector);
-    if (not $zone) {
+    my $zone = $self->get_zone( $language, $selector );
+    if ( not $zone ) {
         log_fatal "Non-existing zone cannot be removed";
     }
 
     # remove all trees first, so that their nodes are correctly removed from the index
-    foreach my $tree ($zone->get_all_trees) {
-        $zone->remove_tree($tree->get_layer);
+    foreach my $tree ( $zone->get_all_trees ) {
+        $zone->remove_tree( $tree->get_layer );
     }
 
     $self->{zones}->delete_value($zone)
         or log_fatal "Zone to be deleted was not found. This should never happen";
     return;
 }
-
 
 # --------- ACCESS TO TREES ------------
 

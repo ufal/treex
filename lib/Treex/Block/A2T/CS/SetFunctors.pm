@@ -17,7 +17,7 @@ has '+plan_vars' => (
             'IF-INFO'   => 'if-data.dat',
             'LANG-CONF' => 'st-cs.conf'
         };
-    }
+        }
 );
 
 has '+model_files' => ( default => sub { return [ 'model.dat', 'if-data.dat', 'ff-data.dat', 'st-cs.conf' ] } );

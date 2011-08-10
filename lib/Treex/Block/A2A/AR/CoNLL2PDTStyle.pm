@@ -4,20 +4,16 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
-
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'conll2007');
+    my $self   = shift;
+    my $zone   = shift;
+    my $a_root = $self->SUPER::process_zone( $zone, 'conll2007' );
 }
-
-
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -26,52 +22,53 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $afun = $deprel;
-        if($afun =~ s/_M$//)
+        my $afun   = $deprel;
+        if ( $afun =~ s/_M$// )
         {
             $node->set_is_member(1);
         }
+
         # PADT defines some afuns that were not defined in PDT.
         # PredE = existential predicate
         # PredC = conjunction as the clause's head
         # PredP = preposition as the clause's head
-        if($afun =~ m/^Pred[ECP]$/)
+        if ( $afun =~ m/^Pred[ECP]$/ )
         {
             $afun = 'Pred';
         }
+
         # Ante = anteposition
-        elsif($afun eq 'Ante')
+        elsif ( $afun eq 'Ante' )
         {
             $afun = 'Apos';
         }
+
         # AuxE = emphasizing expression
         # AuxM = modifying expression
-        elsif($afun =~ m/^Aux[EM]$/)
+        elsif ( $afun =~ m/^Aux[EM]$/ )
         {
             $afun = 'AuxZ';
         }
+
         # _ = excessive token esp. due to a typo
-        elsif($afun eq '_')
+        elsif ( $afun eq '_' )
         {
             $afun = '';
         }
+
         # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.
         $afun =~ s/\|.*//;
         $node->set_afun($afun);
     }
 }
 
-
-
 1;
-
-
 
 =over
 

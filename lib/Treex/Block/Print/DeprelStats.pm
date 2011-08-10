@@ -7,43 +7,44 @@ with 'Treex::Block::Write::Redirectable';
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
 has _deprelset => ( is => 'ro', default => sub { {} } );
-has _deprelex => ( is => 'ro', default => sub { {} } );
+has _deprelex  => ( is => 'ro', default => sub { {} } );
 
 sub process_anode
 {
-    my $self = shift;
-    my $anode = shift;
+    my $self      = shift;
+    my $anode     = shift;
     my $deprelset = $self->_deprelset();
-    my $deprelex = $self->_deprelex();
-    my $deprel = $anode->conll_deprel();
-    $deprel = '' if(!defined($deprel));
+    my $deprelex  = $self->_deprelex();
+    my $deprel    = $anode->conll_deprel();
+    $deprel = '' if ( !defined($deprel) );
     $deprelset->{$deprel}++;
+
     # Remember the position of the first example of every tag.
-    if(!exists($deprelex->{$deprel}))
+    if ( !exists( $deprelex->{$deprel} ) )
     {
-        my $file = $anode->get_document()->full_filename();
-        my $sentence_number = $anode->get_bundle()->get_position()+1;
-        my $form = $anode->form();
+        my $file            = $anode->get_document()->full_filename();
+        my $sentence_number = $anode->get_bundle()->get_position() + 1;
+        my $form            = $anode->form();
         $deprelex->{$deprel} = "$file#$sentence_number:$form";
     }
 }
 
 sub DEMOLISH
 {
-    my $self = shift;
+    my $self      = shift;
     my $deprelset = $self->_deprelset();
-    my $deprelex = $self->_deprelex();
-    my $n_types = 0;
-    my $n_tokens = 0;
-    foreach my $tag (sort(keys(%{$deprelset})))
+    my $deprelex  = $self->_deprelex();
+    my $n_types   = 0;
+    my $n_tokens  = 0;
+    foreach my $tag ( sort( keys( %{$deprelset} ) ) )
     {
-        my $freq = $deprelset->{$tag};
+        my $freq    = $deprelset->{$tag};
         my $example = $deprelex->{$tag};
-        print {$self->_file_handle()} ("$tag\t$freq\t$example\n");
+        print { $self->_file_handle() } ("$tag\t$freq\t$example\n");
         $n_types++;
         $n_tokens += $freq;
     }
-    print {$self->_file_handle()} ("TOTAL $n_types TAG TYPES FOR $n_tokens TOKENS\n");
+    print { $self->_file_handle() } ("TOTAL $n_types TAG TYPES FOR $n_tokens TOKENS\n");
 }
 
 1;

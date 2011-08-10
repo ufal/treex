@@ -10,11 +10,11 @@ sub _subscription {
 }
 
 sub report {
-    my ($self, $node, $message) = @_;
+    my ( $self, $node, $message ) = @_;
     print $self->_subscription,
         "\t", $node->get_address,
-            ( $message? "\t$message" : '' ),
-                $message, "\n";
+        ( $message ? "\t$message" : '' ),
+        $message, "\n";
 }
 
 1;

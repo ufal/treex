@@ -18,7 +18,7 @@ sub BUILD {
     my $module = $self->module;
     eval "use $module;1" or log_fatal "Can't use $module";
     my $tagger = eval "$module->new(\$arg_ref);" or log_fatal "Can't load $module";
-    if (!$tagger->does('Treex::Tool::Tagger::Role')){
+    if ( !$tagger->does('Treex::Tool::Tagger::Role') ) {
         log_fatal "$module does not implement Treex::Tool::Tagger::Role";
     }
     $self->_set_tagger($tagger);
@@ -29,7 +29,7 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @forms = map { $_->form } $atree->get_descendants();
-    my ( $tags, $lemmas ) = $self->_tagger->tag_and_lemmatize_sentence( @forms );
+    my ( $tags, $lemmas ) = $self->_tagger->tag_and_lemmatize_sentence(@forms);
 
     # fill tags and lemmas
     foreach my $a_node ( $atree->get_descendants() ) {

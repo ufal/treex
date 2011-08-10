@@ -7,7 +7,7 @@ Moose::Exporter->setup_import_methods(
 );
 
 #works when installed (http://sourceforge.net/projects/featurama/)
-use Featurama::Perc; #when featurama will be on CPAN, it will be probably in different namespace
+use Featurama::Perc;    #when featurama will be on CPAN, it will be probably in different namespace
 use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Core::Common;
 has path => (
@@ -32,9 +32,9 @@ sub _build_perc {
     my $path   = $self->path;
     my $perc   = Featurama::Perc->new();
     my $header = join "\t", $self->_get_feature_names();
-    my $f = require_file_from_share($self->path.'.f');
-    my $dict = require_file_from_share($self->path.'.dict');
-    my $alpha = require_file_from_share($self->path.'.alpha');
+    my $f      = require_file_from_share( $self->path . '.f' );
+    my $dict   = require_file_from_share( $self->path . '.dict' );
+    my $alpha  = require_file_from_share( $self->path . '.alpha' );
     if ( not $perc->testInit( $f, $dict, $alpha, $header, 0, 1, 3 ) ) {    # TODO zjistit, co ty cislicka znamenaji
         log_fatal("Cannot initialize Featurama::Perc");
     }
@@ -67,19 +67,19 @@ sub tag_sentence {
 }
 
 sub _get_feature_names {
-    log_fatal('This method has to be overriden: ' . (caller(0))[3]);
+    log_fatal( 'This method has to be overriden: ' . ( caller(0) )[3] );
 }
 
 sub _get_features {
-    log_fatal('This method has to be overriden: ' . (caller(0))[3]);
+    log_fatal( 'This method has to be overriden: ' . ( caller(0) )[3] );
 }
 
 sub _extract_tag_and_lemma {
-    log_fatal('This method has to be overriden: ' . (caller(0))[3]);
+    log_fatal( 'This method has to be overriden: ' . ( caller(0) )[3] );
 }
 
 sub _analyze {
-    log_fatal('This method has to be overriden: ' . (caller(0))[3]);
+    log_fatal( 'This method has to be overriden: ' . ( caller(0) )[3] );
 }
 
 sub _tag {

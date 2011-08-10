@@ -80,22 +80,21 @@ foreach ( 0 .. 2 ) {
     }
 }
 
-
 sub create_zone_twice {
     eval {
-        my $doc = Treex::Core::Document->new;
+        my $doc    = Treex::Core::Document->new;
         my $bundle = $doc->create_bundle;
-        for (1,2) {
+        for ( 1, 2 ) {
             $bundle->create_zone('en');
         }
     }
 }
 
-stderr_like  ( \&create_zone_twice, qr/\S/, 'Attempt at creating the same zone twice successfully detected.' );
+stderr_like( \&create_zone_twice, qr/\S/, 'Attempt at creating the same zone twice successfully detected.' );
 
 foreach my $selector (@selectors) {
     $bundle->remove_zone( 'en', $selector );
-    is( $bundle->get_zone('en',$selector), undef, 'Zone successfully removed');
+    is( $bundle->get_zone( 'en', $selector ), undef, 'Zone successfully removed' );
 }
 
 done_testing();

@@ -9,7 +9,7 @@ sub process_bundle {
     my $en = $bundle->get_zone('en')->get_atree->get_descendants;
     my $cs = $bundle->get_zone('cs')->get_atree->get_descendants;
 
-    $self->add_feature( $bundle, 'lengthratio=' . sprintf("%.01f",$en/$cs));
+    $self->add_feature( $bundle, 'lengthratio=' . sprintf( "%.01f", $en / $cs ) );
 
     return 1;
 }

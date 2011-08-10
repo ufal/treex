@@ -19,10 +19,10 @@ sub next_document_text {
     my $text;
     my $empty_lines;
 
-  LINE:
+    LINE:
 
-    while ( <$FH> ) {
-        if ($_ =~ m/^\s*$/) {
+    while (<$FH>) {
+        if ( $_ =~ m/^\s*$/ ) {
             $empty_lines++;
             return $text if $empty_lines == $self->lines_per_doc;
         }
@@ -32,7 +32,6 @@ sub next_document_text {
     return $text;
 }
 
-
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
@@ -40,16 +39,16 @@ sub next_document {
 
     my $document = $self->new_document();
     foreach my $tree ( split /\n\s*\n/, $text ) {
-        my $bundle = $document->create_bundle();
-        my $zone = $bundle->create_zone( $self->language, $self->selector );
-        my @tokens = split (/\n/, $tree);
-        my $aroot = $zone->create_atree();
+        my $bundle  = $document->create_bundle();
+        my $zone    = $bundle->create_zone( $self->language, $self->selector );
+        my @tokens  = split( /\n/, $tree );
+        my $aroot   = $zone->create_atree();
         my @parents = (0);
-        my @nodes = ($aroot);
+        my @nodes   = ($aroot);
         my $sentence;
         foreach my $token (@tokens) {
             next if $token =~ /^\s*$/;
-            my ($id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel) = split(/\t/, $token);
+            my ( $id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel ) = split( /\t/, $token );
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
@@ -60,14 +59,14 @@ sub next_document {
             $newnode->set_conll_feat($feat);
             $newnode->set_conll_deprel($deprel);
             $sentence .= "$form ";
-            push @nodes, $newnode;
+            push @nodes,   $newnode;
             push @parents, $head;
         }
-        foreach my $i (1 .. $#nodes) {
-            $nodes[$i]->set_parent($nodes[$parents[$i]]);
+        foreach my $i ( 1 .. $#nodes ) {
+            $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
         }
         $sentence =~ s/\s+$//;
-        $zone->set_sentence( $sentence );
+        $zone->set_sentence($sentence);
     }
 
     return $document;

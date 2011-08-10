@@ -20,21 +20,21 @@ has 'tree_layout' => (
 );
 
 has 'labels' => (
-    is      => 'ro',
-    isa     => 'Treex::Core::TredView::Labels',
-    writer  => '_set_labels',
+    is     => 'ro',
+    isa    => 'Treex::Core::TredView::Labels',
+    writer => '_set_labels',
 );
 
 has '_styles' => (
-    is      => 'ro',
-    isa     => 'Treex::Core::TredView::Styles',
-    writer  => '_set_styles',
+    is     => 'ro',
+    isa    => 'Treex::Core::TredView::Styles',
+    writer => '_set_styles',
 );
 
 has 'vallex' => (
-    is      => 'ro',
-    isa     => 'Treex::Core::TredView::Vallex',
-    writer  => '_set_vallex',
+    is     => 'ro',
+    isa    => 'Treex::Core::TredView::Vallex',
+    writer => '_set_vallex',
 );
 
 has fast_loading => (
@@ -140,28 +140,28 @@ sub get_nodelist_hook {
 
     # only nodes having different clause number from their parents are
     # displayed if node-collapsing is switched on
-    if(($self->clause_collapsing||0) != ($bundle->{_is_collapsed}||0)){
-        $self->clause_collapsing($bundle->{_is_collapsed});
+    if ( ( $self->clause_collapsing || 0 ) != ( $bundle->{_is_collapsed} || 0 ) ) {
+        $self->clause_collapsing( $bundle->{_is_collapsed} );
     }
-    if ($self->clause_collapsing) {
+    if ( $self->clause_collapsing ) {
         my %root;
-        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes) {
-            if (defined $node->clause_number) {
+        foreach my $node ( grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
+            if ( defined $node->clause_number ) {
                 $root{$node} = $node->get_clause_root;
             }
         }
         my %hide;
-        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes) {
+        foreach my $node ( grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
             my $parent = $node->get_parent;
-            if (defined $node->clause_number and $root{$node} ne $node) {
+            if ( defined $node->clause_number and $root{$node} ne $node ) {
                 $hide{$node} = 1;
             }
         }
-        @nodes = grep {!$hide{$_}} @nodes;
-        foreach my $node (grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
+        @nodes = grep { !$hide{$_} } @nodes;
+        foreach my $node ( grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
             my $parent = $node->get_parent;
-            if ($parent and $hide{$parent}) {
-                $node->set_parent($root{$parent});
+            if ( $parent and $hide{$parent} ) {
+                $node->set_parent( $root{$parent} );
             }
         }
     }
@@ -182,9 +182,9 @@ sub file_opened_hook {
     $self->treex_doc($treex_doc);
 
     # labels, styles and vallex must be created again for each file
-    $self->_set_labels(Treex::Core::TredView::Labels->new( _treex_doc => $treex_doc ));
-    $self->_set_styles(Treex::Core::TredView::Styles->new( _treex_doc => $treex_doc ));
-    $self->_set_vallex(Treex::Core::TredView::Vallex->new( _treex_doc => $treex_doc ));
+    $self->_set_labels( Treex::Core::TredView::Labels->new( _treex_doc => $treex_doc ) );
+    $self->_set_styles( Treex::Core::TredView::Styles->new( _treex_doc => $treex_doc ) );
+    $self->_set_vallex( Treex::Core::TredView::Vallex->new( _treex_doc => $treex_doc ) );
 
     foreach my $bundle ( $treex_doc->get_bundles() ) {
 
@@ -382,10 +382,10 @@ sub get_clickable_sentence_for_a_zone {
 
     my @out;
     for my $anode (@anodes) {
-        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id  ];
-        if( $anode->clause_number ) {
-            my $clr = $self->_styles->_colors->get_clause_color($anode->clause_number);
-            push @{$out[-1]}, "-foreground => $clr";
+        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
+        if ( $anode->clause_number ) {
+            my $clr = $self->_styles->_colors->get_clause_color( $anode->clause_number );
+            push @{ $out[-1] }, "-foreground => $clr";
         }
         if ( !$anode->no_space_after ) {
             push @out, [ ' ', 'space' ];
@@ -446,9 +446,10 @@ sub anode_hint {
         push @lines, "Full lemma: " . $node->{lemma};
         push @lines, "Full tag: " . ( $node->{tag} ? $node->{tag} : '' );
     }
+
     # List all non-empty Interset features.
     my @iset = $node->get_iset_pairs_list();
-    for(my $i = 0; $i<=$#iset; $i += 2) {
+    for ( my $i = 0; $i <= $#iset; $i += 2 ) {
         push @lines, "$iset[$i]: $iset[$i+1]";
     }
 
@@ -577,43 +578,43 @@ sub conf_dialog {
 }
 
 sub _divide_clause_string {
-    my ($self, $anode) = @_;
-    if(!$anode->clause_number) {
-        return [ $anode->form , , ];
+    my ( $self, $anode ) = @_;
+    if ( !$anode->clause_number ) {
+        return [ $anode->form,, ];
     }
-    my @forms = map {$_->form} $anode->get_clause_nodes;
-    my $forms_per_line = int(@forms / 3);
-    return [ (join ' ',@forms[0..$forms_per_line]),
-              (join ' ',@forms[$forms_per_line+1..2*$forms_per_line]),
-             (join ' ',@forms[2*$forms_per_line+1..$#forms]),
-         ];
+    my @forms = map { $_->form } $anode->get_clause_nodes;
+    my $forms_per_line = int( @forms / 3 );
+    return [
+        ( join ' ', @forms[ 0 .. $forms_per_line ] ),
+        ( join ' ', @forms[ $forms_per_line + 1 .. 2 * $forms_per_line ] ),
+        ( join ' ', @forms[ 2 * $forms_per_line + 1 .. $#forms ] ),
+    ];
 }
 
-
 sub toggle_clause_collapsing {
-    my ($self, $bundle) = @_;
-    $self->clause_collapsing(not $self->clause_collapsing);
+    my ( $self, $bundle ) = @_;
+    $self->clause_collapsing( not $self->clause_collapsing );
     $bundle->{_is_collapsed} = $self->clause_collapsing;
-    print "Toggle: ".$self->clause_collapsing."\n";
+    print "Toggle: " . $self->clause_collapsing . "\n";
 
     # fold clauses - display word from the clause instead of node labels
 
-    foreach my $zone ($bundle->get_all_zones) {
+    foreach my $zone ( $bundle->get_all_zones ) {
         if ( $zone->has_tree('a') ) {
             my $aroot = $zone->get_atree;
-            foreach my $anode ($aroot->get_descendants) {
+            foreach my $anode ( $aroot->get_descendants ) {
 
                 # fold clauses - display word from the clause instead of node labels
-                if ($self->clause_collapsing) {
-                    $anode->{_parent_backup} = $anode->get_parent;
+                if ( $self->clause_collapsing ) {
+                    $anode->{_parent_backup}             = $anode->get_parent;
                     $anode->{_precomputed_labels_backup} = $anode->{_precomputed_labels};
-                    $anode->{_precomputed_labels} = $self->_divide_clause_string($anode);
+                    $anode->{_precomputed_labels}        = $self->_divide_clause_string($anode);
                 }
 
                 # unfold clauses - return to full attribute labes
                 else {
                     $anode->{_precomputed_labels} = $anode->{_precomputed_labels_backup};
-                    $anode->set_parent($anode->{_parent_backup}) if $anode->{_parent_backup};
+                    $anode->set_parent( $anode->{_parent_backup} ) if $anode->{_parent_backup};
                 }
             }
         }

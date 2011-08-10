@@ -7,12 +7,14 @@ extends 'Treex::Block::Filter::CzEng::Common';
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my @tokens = ($bundle->get_zone('en')->get_atree->get_descendants,
-                  $bundle->get_zone('cs')->get_atree->get_descendants);
+    my @tokens = (
+        $bundle->get_zone('en')->get_atree->get_descendants,
+        $bundle->get_zone('cs')->get_atree->get_descendants
+    );
 
     my $length = max( map { length $_->get_attr('form') } @tokens );
 
-    $self->add_feature( $bundle, 'word_length=' . (int( $length / 10 )) * 10 );
+    $self->add_feature( $bundle, 'word_length=' . ( int( $length / 10 ) ) * 10 );
 
     return 1;
 }

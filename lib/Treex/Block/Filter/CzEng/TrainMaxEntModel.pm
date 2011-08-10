@@ -6,40 +6,41 @@ use AI::MaxEntropy::Model;
 extends 'Treex::Block::Filter::CzEng::Common';
 
 has annotation => (
-    isa => 'Str',
-    is => 'ro',
-    required => 1,
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 1,
     documentation => 'file with lines containing either "x" or "ok" for each sentence'
 );
 
 has outfile => (
-    isa => 'Str',
-    is => 'ro',
-    required => 0,
-    default => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 0,
+    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
     documentation => 'output file for the model'
 );
 
 sub process_document {
-    my ($self, $document) = @_;
+    my ( $self, $document ) = @_;
     my $maxent = AI::MaxEntropy->new();
 
-    open (my $anot_hdl, $self->{annotation}) or log_fatal $!;
+    open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
     foreach my $bundle ( $document->get_bundles() ) {
         my @features = $self->get_features($bundle);
-        my $anot = <$anot_hdl>;
-        $anot = ( split("\t", $anot) )[0];
-        log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
+        my $anot     = <$anot_hdl>;
+        $anot = ( split( "\t", $anot ) )[0];
+        log_fatal "Error reading annotation file $self->{annotation}" if !defined $anot;
 
-        $maxent->see(\@features => $anot);
+        $maxent->see( \@features => $anot );
     }
     my $model = $maxent->learn();
-    
-    $model->save($self->{outfile});
+
+    $model->save( $self->{outfile} );
     return 1;
 }
 
 return 1;
+
 =over
 
 =item Treex::Block::Filter::CzEng::TrainMaxEntModel

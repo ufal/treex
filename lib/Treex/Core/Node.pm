@@ -50,11 +50,11 @@ sub get_attr {
     my ( $self, $attr_name ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 2;
     my $val = $self;
-    for my $step (split /\//, $attr_name) {
-        if (!defined $val){
+    for my $step ( split /\//, $attr_name ) {
+        if ( !defined $val ) {
             log_fatal "Attribute '$attr_name' contains strange symbols."
-              . " For XPath like constructs (e.g. 'a/aux.rf[3]') use the 'attr' method."
-              if $attr_name =~ /[^-\w\/.]/;
+                . " For XPath like constructs (e.g. 'a/aux.rf[3]') use the 'attr' method."
+                if $attr_name =~ /[^-\w\/.]/;
         }
         $val = $val->{$step};
     }
@@ -62,6 +62,7 @@ sub get_attr {
 }
 
 use Treex::PML::Factory;
+
 sub set_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 3;
@@ -78,19 +79,20 @@ sub set_attr {
     #simple attributes can be accessed directly
     return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/;
     log_fatal "Attribute '$attr_name' contains strange symbols."
-              . " No XPath like constructs (e.g. 'a/aux.rf[3]') are allowed."
-              if $attr_name =~ /[^-\w\/.]/;
+        . " No XPath like constructs (e.g. 'a/aux.rf[3]') are allowed."
+        if $attr_name =~ /[^-\w\/.]/;
 
     my $val = $self;
     my @steps = split /\//, $attr_name;
     while (1) {
         my $step = shift @steps;
-        if (@steps){
-            if (!defined($val->{$step})) {
-                $val->{$step}=Treex::PML::Factory->createStructure();
+        if (@steps) {
+            if ( !defined( $val->{$step} ) ) {
+                $val->{$step} = Treex::PML::Factory->createStructure();
             }
             $val = $val->{$step};
-        } else {
+        }
+        else {
             return $val->{$step} = $attr_value;
         }
     }
@@ -302,7 +304,7 @@ sub set_parent {
 
     # We cannot detach a node by setting an undefined parent. The if statement below will die.
     # Let's inform the user where the bad call is.
-    log_fatal('Cannot attach the node to an undefined parent') if(!defined($parent));
+    log_fatal('Cannot attach the node to an undefined parent') if ( !defined($parent) );
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
         my $id   = $self->id;
         my $p_id = $parent->id;
@@ -556,7 +558,7 @@ sub get_address {
     my $bundle   = $self->get_bundle();
     my $doc      = $bundle->get_document();
     my $file     = $doc->loaded_from || ( $doc->full_filename . '.treex' );
-    my $position = $bundle->get_position()+1;
+    my $position = $bundle->get_position() + 1;
 
     #my $filename = Cwd::abs_path($file);
     return "$file##$position.$id";

@@ -2,37 +2,35 @@ package Treex::Tool::Lexicon::Derivations::CS;
 use Treex::Core::Common;
 use utf8;
 
-binmode STDOUT,":utf8";
+binmode STDOUT, ":utf8";
 use LanguageModel::MorphoLM;
 my $morphoLM = LanguageModel::MorphoLM->new();
 
 # too much of code multiplication, should be rewritten in a more elegant fashion
 
 #TODO: Better way how to make it automatically download.
-my $NOUN2ADJ_FN  = 'generated_data/cs_lexical_derivations/extracted_noun2ajd_lowercased_utf8.lex';
-my $VERB2NOUN_FN = 'generated_data/cs_lexical_derivations/extracted_verb2deverbalnoun_lowercased_utf8.lex';
+my $NOUN2ADJ_FN       = 'generated_data/cs_lexical_derivations/extracted_noun2ajd_lowercased_utf8.lex';
+my $VERB2NOUN_FN      = 'generated_data/cs_lexical_derivations/extracted_verb2deverbalnoun_lowercased_utf8.lex';
 my $VERB2ACTIVEADJ_FN = 'generated_data/cs_lexical_derivations/extracted_verb2activeadj_utf8.lex';
-my $VERB2ADJ_FN = 'generated_data/cs_lexical_derivations/extracted_verb2adj_utf8.lex';
-my $PERF2IMPERF_FN = 'generated_data/cs_lexical_derivations/extracted_perf2imperf_utf8.lex';
-my $IMPERF2PERF_FN = 'generated_data/cs_lexical_derivations/extracted_imperf2perf_utf8.lex';
+my $VERB2ADJ_FN       = 'generated_data/cs_lexical_derivations/extracted_verb2adj_utf8.lex';
+my $PERF2IMPERF_FN    = 'generated_data/cs_lexical_derivations/extracted_perf2imperf_utf8.lex';
+my $IMPERF2PERF_FN    = 'generated_data/cs_lexical_derivations/extracted_imperf2perf_utf8.lex';
 
 use Treex::Core::Resource;
-Treex::Core::Resource::require_file_from_share( $NOUN2ADJ_FN,  'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $VERB2NOUN_FN, 'Lexicon::Derivations::CS' );
+Treex::Core::Resource::require_file_from_share( $NOUN2ADJ_FN,       'Lexicon::Derivations::CS' );
+Treex::Core::Resource::require_file_from_share( $VERB2NOUN_FN,      'Lexicon::Derivations::CS' );
 Treex::Core::Resource::require_file_from_share( $VERB2ACTIVEADJ_FN, 'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $VERB2ADJ_FN, 'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $PERF2IMPERF_FN, 'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $IMPERF2PERF_FN, 'Lexicon::Derivations::CS' );
-
-
+Treex::Core::Resource::require_file_from_share( $VERB2ADJ_FN,       'Lexicon::Derivations::CS' );
+Treex::Core::Resource::require_file_from_share( $PERF2IMPERF_FN,    'Lexicon::Derivations::CS' );
+Treex::Core::Resource::require_file_from_share( $IMPERF2PERF_FN,    'Lexicon::Derivations::CS' );
 
 my %pregenerated_pairs_filename = (
-    noun2adj  => "$ENV{TMT_ROOT}/share/$NOUN2ADJ_FN",
-    verb2noun => "$ENV{TMT_ROOT}/share/$VERB2NOUN_FN",
+    noun2adj       => "$ENV{TMT_ROOT}/share/$NOUN2ADJ_FN",
+    verb2noun      => "$ENV{TMT_ROOT}/share/$VERB2NOUN_FN",
     verb2activeadj => "$ENV{TMT_ROOT}/share/$VERB2ACTIVEADJ_FN",
-    verb2adj => "$ENV{TMT_ROOT}/share/$VERB2ADJ_FN",
-    perf2imperf => "$ENV{TMT_ROOT}/share/$PERF2IMPERF_FN",
-    imperf2perf => "$ENV{TMT_ROOT}/share/$IMPERF2PERF_FN",
+    verb2adj       => "$ENV{TMT_ROOT}/share/$VERB2ADJ_FN",
+    perf2imperf    => "$ENV{TMT_ROOT}/share/$PERF2IMPERF_FN",
+    imperf2perf    => "$ENV{TMT_ROOT}/share/$IMPERF2PERF_FN",
 );
 
 my %derivation;
@@ -55,7 +53,7 @@ sub adj2adv {
             or $adj_tlemma =~ s/lý$/le/
             or $adj_tlemma =~ s/rý$/ře/
         )
-        and $morphoLM->forms_of_lemma($adj_tlemma, {tag_regex=>'^D'})
+        and $morphoLM->forms_of_lemma( $adj_tlemma, { tag_regex => '^D' } )
         )
     {
         return ($adj_tlemma);
@@ -68,7 +66,7 @@ sub adj2adv {
 sub verb2adj {
     my $verb_tlemma = shift;
 
-    my @seen_adj = keys %{ $derivation{verb2adj}{ $verb_tlemma } };
+    my @seen_adj = keys %{ $derivation{verb2adj}{$verb_tlemma} };
 
     return @seen_adj if @seen_adj;
 
@@ -87,7 +85,7 @@ sub verb2adj {
         )
 
         #                    		  and do {print "\t\t\tTRY: $verb_tlemma\n";}
-        and $morphoLM->forms_of_lemma($verb_tlemma,{tag_regex=>'^A'})
+        and $morphoLM->forms_of_lemma( $verb_tlemma, { tag_regex => '^A' } )
         )
     {
         return ($verb_tlemma);
@@ -97,7 +95,7 @@ sub verb2adj {
     }
 }
 
-sub verb2activeadj { # koupat -> koupajici
+sub verb2activeadj {    # koupat -> koupajici
     return keys %{ $derivation{verb2activeadj}{ shift() } };
 }
 
@@ -121,7 +119,6 @@ sub derive {
     my ( $type, $input ) = @_;
     return eval "$type('$input')";
 }
-
 
 1;
 

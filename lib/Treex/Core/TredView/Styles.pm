@@ -5,29 +5,29 @@ use Treex::Core::Log;
 use Treex::Core::TredView::Colors;
 
 has '_treex_doc' => (
-    is => 'ro',
-    isa => 'Treex::Core::Document',
+    is       => 'ro',
+    isa      => 'Treex::Core::Document',
     weak_ref => 1,
     required => 1
 );
 has '_colors' => (
-    is => 'ro',
-    isa => 'Treex::Core::TredView::Colors',
+    is      => 'ro',
+    isa     => 'Treex::Core::TredView::Colors',
     default => sub { Treex::Core::TredView::Colors->new() }
 );
 
 sub _is_coord {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
     return 0 if $node->get_layer ne 't';
-    return ($node->{functor} and $node->{functor} =~ /^(?:ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/);
+    return ( $node->{functor} and $node->{functor} =~ /^(?:ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/ );
 }
 
 sub bundle_style {
-    my $self = shift;
+    my $self  = shift;
     my $style = '#{nodeXSkip:10}#{nodeYSkip:5}#{lineSpacing:0.9}#{balance:0}';
     $style .= '#{Node-width:7}#{Node-height:7}#{Node-currentwidth:10}#{Node-currentheight:10}';
-    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:'.$self->_colors->get('current').'}';
-    $style .= '#{Line-fill:'.$self->_colors->get('edge').'}#{Line-width:2}';
+    $style .= '#{CurrentOval-width:3}#{CurrentOval-outline:' . $self->_colors->get('current') . '}';
+    $style .= '#{Line-fill:' . $self->_colors->get('edge') . '}#{Line-width:2}';
 
     return $style;
 }
@@ -37,7 +37,7 @@ sub node_style {
     my $styles = '';
 
     if ( $node->is_root() ) {
-        $styles .= '#{Node-rellevel:'.$node->{'_shift_down'}.'}';
+        $styles .= '#{Node-rellevel:' . $node->{'_shift_down'} . '}';
     }
 
     my $layer = $node->get_layer;
@@ -48,62 +48,73 @@ sub node_style {
     $subs{p} = \&_pnode_style;
 
     if ( defined $subs{$layer} ) {
-        return $styles.&{ $subs{$layer} }($self, $node);
-    } else {
+        return $styles . &{ $subs{$layer} }( $self, $node );
+    }
+    else {
         log_fatal "Undefined or unknown layer: $layer";
     }
 }
 
 sub _anode_style {
-    my ($self, $node) = @_;
-    if ($node->clause_number) {
-        my $clr = $self->_colors->get_clause_color($node->clause_number);
-        return '#{Oval-fill:'.$clr.'}'.'#{Line-fill:'.$clr.'}';
+    my ( $self, $node ) = @_;
+    if ( $node->clause_number ) {
+        my $clr = $self->_colors->get_clause_color( $node->clause_number );
+        return '#{Oval-fill:' . $clr . '}' . '#{Line-fill:' . $clr . '}';
     }
-    return '#{Oval-fill:'.$self->_colors->get('anode').'}';
+    return '#{Oval-fill:' . $self->_colors->get('anode') . '}';
 }
 
 sub _tnode_style {
     my ( $self, $node ) = @_;
 
-    my $style = '#{Oval-fill:'.$self->_colors->get('tnode').'}';
+    my $style = '#{Oval-fill:' . $self->_colors->get('tnode') . '}';
     return $style if $node->is_root;
-    
-    $style .= '#{Node-shape:'.( $node->{is_generated} ? 'rectangle' : 'oval' ).'}';
-    
-    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline='.$self->_colors->get('coord').';width=1;dash=5,5 }';
+
+    $style .= '#{Node-shape:' . ( $node->{is_generated} ? 'rectangle' : 'oval' ) . '}';
+
+    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=' . $self->_colors->get('coord') . ';width=1;dash=5,5 }';
     $coord_circle .= '#{Line-arrow:&}#{Line-arrowshape:&}#{Line-dash:&}';
-    $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:'.$self->_colors->get('tnode_coord').'}';
+    $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:' . $self->_colors->get('tnode_coord') . '}';
+
     # For coordination roots
     my $k1 = '20 / sqrt((xp-xn)**2 + (yp-yn)**2)';
-    my $x1 = 'xn-(xn-xp)*'.$k1;
-    my $y1 = 'yn-(yn-yp)*'.$k1;
+    my $x1 = 'xn-(xn-xp)*' . $k1;
+    my $y1 = 'yn-(yn-yp)*' . $k1;
+
     # For coordination members
     my $k2 = '(1 - 20 / sqrt((xp-xn)**2 + (yp-yn)**2))';
-    my $x2 = 'xn-(xn-xp)*'.$k2;
-    my $y2 = 'yn-(yn-yp)*'.$k2;
-    
-    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or
-        (not $node->is_root and $node->parent->is_root)) {
+    my $x2 = 'xn-(xn-xp)*' . $k2;
+    my $y2 = 'yn-(yn-yp)*' . $k2;
+
+    if (( $node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/ )
+        or
+        ( not $node->is_root and $node->parent->is_root )
+        )
+    {
         $style .= '#{Line-width:1}#{Line-dash:2,4}';
     }
-    if ($node->{is_member}) {
-        if ($self->_is_coord($node) and $self->_is_coord($node->parent)) {
-            $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}".$coord_circle;
-            $style .= '#{Line-width:0&1}#{Line-fill:white&'.$self->_colors->get('coord').'}';
-        } elsif (not $node->is_root and $self->_is_coord($node->parent)) {
-            $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-width:1}";
-            $style .= '#{Line-fill:'.$self->_colors->get('coord').'}';
-        } else {
-            $style .= '#{Line-fill:'.$self->_colors->get('error').'}';
+    if ( $node->{is_member} ) {
+        if ( $self->_is_coord($node) and $self->_is_coord( $node->parent ) ) {
+            $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}" . $coord_circle;
+            $style .= '#{Line-width:0&1}#{Line-fill:white&' . $self->_colors->get('coord') . '}';
         }
-    } elsif (not $node->is_root and not $node->parent->is_root and $self->_is_coord($node->parent)) {
-        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:".$self->_colors->get('coord_mod').'}';
-    } elsif ($self->_is_coord($node)) {
-        $style .= $coord_circle."#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
-        $style .= '#{Line-width:0&1}#{Line-fill:white&'.$self->_colors->get('coord').'}';
+        elsif ( not $node->is_root and $self->_is_coord( $node->parent ) ) {
+            $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-width:1}";
+            $style .= '#{Line-fill:' . $self->_colors->get('coord') . '}';
+        }
+        else {
+            $style .= '#{Line-fill:' . $self->_colors->get('error') . '}';
+        }
+    }
+    elsif ( not $node->is_root and not $node->parent->is_root and $self->_is_coord( $node->parent ) ) {
+        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:" . $self->_colors->get('coord_mod') . '}';
+    }
+    elsif ( $self->_is_coord($node) ) {
+        $style .= $coord_circle . "#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
+        $style .= '#{Line-width:0&1}#{Line-fill:white&' . $self->_colors->get('coord') . '}';
         $style .= '#{Line-dash:&2,4}' if $node->parent->is_root;
-    } else {
+    }
+    else {
         $style .= '';
     }
 
@@ -111,15 +122,15 @@ sub _tnode_style {
 }
 
 sub _nnode_style {
-    my ($self, $node) = @_;
-    return '#{Oval-fill:'.$self->_colors->get('nnode').'}';
+    my ( $self, $node ) = @_;
+    return '#{Oval-fill:' . $self->_colors->get('nnode') . '}';
 }
 
 sub _pnode_style {
     my ( $self, $node ) = @_;
-    
+
     my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
-    
+
     my $style = '#{Line-coords:n,n,n,p,p,p}';
     $style .= '#{nodeXSkip:4}#{nodeYSkip:0}#{NodeLabel-skipempty:1}';
     $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}';
@@ -129,19 +140,20 @@ sub _pnode_style {
         $style .= "#{Node-rellevel:$shift}";
     }
 
-    if (not $node->is_root and scalar($node->parent->children) == 1) {
+    if ( not $node->is_root and scalar( $node->parent->children ) == 1 ) {
         $style .= '#{Node-addafterskip:15}';
     }
-    
-    if (not $terminal) {
-        $style .= '#{Oval-fill:'.($node->{is_head} ? $self->_colors->get('nonterminal_head') : $self->_colors->get('nonterminal')).'}';
-        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:'.$self->_colors->get('current').'}';
+
+    if ( not $terminal ) {
+        $style .= '#{Oval-fill:' . ( $node->{is_head} ? $self->_colors->get('nonterminal_head') : $self->_colors->get('nonterminal') ) . '}';
+        $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:' . $self->_colors->get('current') . '}';
         $style .= '#{CurrentOval-width:2}#{Node-surroundtext:1}#{NodeLabel-valign:center}';
-    } else {
-        $style .= '#{Line-dash:.}';
-        $style .= '#{Oval-fill:'.($node->{tag} eq '-NONE-' ? $self->_colors->get('trace') : $self->_colors->get('terminal')).'}';
     }
-    
+    else {
+        $style .= '#{Line-dash:.}';
+        $style .= '#{Oval-fill:' . ( $node->{tag} eq '-NONE-' ? $self->_colors->get('trace') : $self->_colors->get('terminal') ) . '}';
+    }
+
     return $style;
 }
 
@@ -157,12 +169,12 @@ sub draw_arrows {
 
         my $target_node = $self->_treex_doc->get_node_by_id($target_id);
 
-        if ( $node->get_bundle eq $target_node->get_bundle ) { # same sentence
+        if ( $node->get_bundle eq $target_node->get_bundle ) {    # same sentence
 
-            my $T = "[?\$node->{id} eq '$target_id'?]";
-            my $X = "(x$T-xn)";
-            my $Y = "(y$T-yn)";
-            my $D = "sqrt($X**2+$Y**2)";
+            my $T  = "[?\$node->{id} eq '$target_id'?]";
+            my $X  = "(x$T-xn)";
+            my $Y  = "(y$T-yn)";
+            my $D  = "sqrt($X**2+$Y**2)";
             my $BX = 'n';
             my $BY = 'n';
             my $MX = "((x$T+xn)/2 - $Y*(25/$D+0.12))";
@@ -171,18 +183,19 @@ sub draw_arrows {
             my $EY = "y$T";
             my $K1 = "20 / sqrt(($MX-xn)**2 + ($MY-yn)**2)";
             my $K2 = "20 / sqrt((x$T-$MX)**2 + (y$T-$MY)**2)";
-            
-            if ($self->_is_coord($node)) {
+
+            if ( $self->_is_coord($node) ) {
                 $BX = "xn-(xn-$MX)*$K1";
                 $BY = "yn-(yn-$MY)*$K1";
             }
-            if ($self->_is_coord($target_node)) {
+            if ( $self->_is_coord($target_node) ) {
                 $EX = "x$T+($MX-x$T)*$K2";
                 $EY = "y$T+($MY-y$T)*$K2";
             }
-            
+
             push @coords, "$BX,$BY,$MX,$MY,$EX,$EY";
-        } else { # should be always the same document, if it exists at all
+        }
+        else {    # should be always the same document, if it exists at all
 
             my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
             $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
@@ -191,12 +204,14 @@ sub draw_arrows {
                     log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
                     push @coords, "n,n,n-30,n+$rotate_prv_snt";
                     $rotate_prv_snt += 10;
-                } else { #right
+                }
+                else {    #right
                     log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
                     push @coords, "n,n,n+30,n+$rotate_nxt_snt";
                     $rotate_nxt_snt += 10;
                 }
-            } else {
+            }
+            else {
                 log_info "ref-arrows: Not found!\n" if $main::macroDebug;
                 push @coords, "n,n,n+$rotate_dfr_doc,n-25";
                 $rotate_dfr_doc += 10;
@@ -205,7 +220,7 @@ sub draw_arrows {
 
         push @tags, $arrow_type;
         push @colors, ( $self->_colors->get($arrow_type) );
-        push @dash, ($arrow_type eq 'alignment' ? '5,3' : '');
+        push @dash, ( $arrow_type eq 'alignment' ? '5,3' : '' );
     }
 
     $line->{-coords} ||= 'n,n,p,p';
@@ -213,19 +228,18 @@ sub draw_arrows {
     if (@coords) {
         TredMacro::AddStyle(
             $styles, 'Line',
-            -coords => ( $line->{-coords} || '' ) .'&'. join( '&', @coords ),
-            -arrow      => ( $line->{-arrow} || '' ) . ( '&last' x @coords ),
+            -coords => ( $line->{-coords} || '' ) . '&' . join( '&', @coords ),
+            -arrow      => ( $line->{-arrow}      || '' ) . ( '&last' x @coords ),
             -arrowshape => ( $line->{-arrowshape} || '' ) . ( '&16,18,3' x @coords ),
-            -dash => ( $line->{-dash} || '' ) .'&'. join( '&', @dash ),
+            -dash => ( $line->{-dash} || '' ) . '&' . join( '&', @dash ),
             -width => ( $line->{-width} || '' ) . ( '&1' x @coords ),
-            -fill => ( $line->{-fill} || '' ) .'&'. join( '&', @colors ),
-            -tag  => ( $line->{-tag}  || '' ) .'&'. join( '&', @tags ),
+            -fill => ( $line->{-fill} || '' ) . '&' . join( '&', @colors ),
+            -tag  => ( $line->{-tag}  || '' ) . '&' . join( '&', @tags ),
             -smooth => ( $line->{-smooth} || '' ) . ( '&1' x @coords )
         );
     }
     return;
 }
-
 
 1;
 

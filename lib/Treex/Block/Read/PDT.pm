@@ -10,17 +10,16 @@ has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.[at]\.gz$' );
 
-
 sub _build_layers {
     my ($self) = @_;
-    return $self->t_layer ? [ 'a', 't' ] : [ 'a' ];     
+    return $self->t_layer ? [ 'a', 't' ] : ['a'];
 }
 
 override '_load_all_files' => sub {
 
     my ( $self, $base_filename ) = @_;
     my %pmldoc;
-    
+
     foreach my $layer ( @{ $self->_layers } ) {
         my $filename = "${base_filename}.${layer}.gz";
         log_info "Loading $filename";
@@ -51,7 +50,7 @@ override '_convert_all_trees' => sub {
     foreach my $tree_number ( 0 .. ( $pmldoc->{a}->trees - 1 ) ) {
 
         my $bundle = $document->create_bundle;
-        my $zone   = $bundle->create_zone('cs', $self->selector);
+        my $zone = $bundle->create_zone( 'cs', $self->selector );
 
         if ( $pmldoc->{t} ) {
             my $troot = $zone->create_ttree;

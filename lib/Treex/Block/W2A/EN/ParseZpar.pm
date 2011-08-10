@@ -40,9 +40,9 @@ sub parse_chunk {
         else {
             push @roots, $a_node;
         }
-        
-        if ($self->fill_tags){
-            $a_node->set_tag(shift @$tags_rf);
+
+        if ( $self->fill_tags ) {
+            $a_node->set_tag( shift @$tags_rf );
         }
     }
     return @roots;

@@ -7,7 +7,7 @@
 package Treex::Tool::IO::Arff;
 
 use Moose;
-use autodie; # die on I/O error
+use autodie;    # die on I/O error
 
 use Data::Dumper;
 use String::Util ':all';
@@ -82,7 +82,7 @@ has relation => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub {
-        {            
+        {
             attributes        => [],
             records           => [],
             data_record_count => 0
@@ -112,7 +112,6 @@ has debug_mode => (
     default => 0
 );
 
-
 =head1 FUNCTIONS
 
 =head2 load_arff
@@ -131,16 +130,16 @@ sub load_arff {
     my $relation        = $self->relation;
     my $io;
 
-    if (ref $arff_file ne 'IO'){
-        open($io, "<:utf8", $arff_file);
+    if ( ref $arff_file ne 'IO' ) {
+        open( $io, "<:utf8", $arff_file );
     }
     else {
-        $io = $arff_file;
+        $io        = $arff_file;
         $arff_file = '<HANDLE>';
     }
 
     if ( $self->debug_mode ) {
-        print STDERR "Loading $arff_file ...\n";        
+        print STDERR "Loading $arff_file ...\n";
     }
     while ( my $current_line = <$io> )
     {
@@ -160,6 +159,7 @@ sub load_arff {
             if ( !$relation->{attributes} ) {
                 $relation->{attributes} = [];
             }
+
             #log_msg(Dumper $attribute);
 
             push @{ $relation->{"attributes"} }, { "attribute_name" => $1, "attribute_type" => $2 };
@@ -175,18 +175,18 @@ sub load_arff {
             }
 
             #log_msg("extracting data $current_line");
-            my ( $cur_record ) = $self->_parse_line($line_counter, $current_line);
-            
-            if ($cur_record){
+            my ($cur_record) = $self->_parse_line( $line_counter, $current_line );
+
+            if ($cur_record) {
                 push @{ $relation->{"records"} }, $cur_record;
                 $record_count++;
             }
         }
         $line_counter++;
     }
-    if ($arff_file ne '<HANDLE>'){
+    if ( $arff_file ne '<HANDLE>' ) {
         close($io);
-    } 
+    }
 
     $relation->{"data_record_count"} = $record_count;
     $relation->{"attribute_count"}   = $attribute_count;
@@ -201,125 +201,126 @@ sub load_arff {
     return $relation;
 }
 
-
 # Parse an ARFF data line, return all fields it contains. Both single and double quotes
 # are allowed, unquoted quotation marks are treated as missing values.
 sub _parse_line {
 
-    my ( $self, $line_num, $line ) = @_;    
+    my ( $self, $line_num, $line ) = @_;
     my %values;
-    my $attributes = $self->relation->{"attributes"}; 
+    my $attributes = $self->relation->{"attributes"};
 
-    if ( $line =~ m/^{/ ){ # sparse instance
+    if ( $line =~ m/^{/ ) {    # sparse instance
 
         $line =~ s/^{//;
         $line =~ s/}$/,/;
         $self->_zero_fill( \%values );
-        
-        while ( $line =~ m/([0-9]+)\s+([^"'\s][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ){
-            
+
+        while ( $line =~ m/([0-9]+)\s+([^"'\s][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ) {
+
             my ( $attr_num, $field ) = ( $1, $2 );
-            
-            if ( !$attributes->[$attr_num] ){
-                if ( $self->debug_mode ){
+
+            if ( !$attributes->[$attr_num] ) {
+                if ( $self->debug_mode ) {
                     print STDERR "Line $line_num : Invalid data record: $line Attribute $attr_num out of range\n";
-                }    
-                return;            
+                }
+                return;
             }
-            
-            if ( $field eq '?' ){ # undefined value, delete the pre-set zero
+
+            if ( $field eq '?' ) {    # undefined value, delete the pre-set zero
                 delete( $values{ $attributes->[$attr_num]->{'attribute_name'} } );
             }
-            elsif ( $field =~ m/^['"].*['"]$/ ){ # quoted value
-                $field = substr( $field, 1, length($field) - 2 ); # unquote
-                $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
+            elsif ( $field =~ m/^['"].*['"]$/ ) {    # quoted value
+                $field = substr( $field, 1, length($field) - 2 );    # unquote
+                $field =~ s/\\([\n\r'"\\\t%])/$1/g;                  # unescape (same as weka.core.Utils)
                 $values{ $attributes->[$attr_num]->{"attribute_name"} } = $field;
             }
-            else { # unquoted value (trim whitespace)
-                $values{ $attributes->[$attr_num]->{"attribute_name"} } = trim( $field );
+            else {                                                   # unquoted value (trim whitespace)
+                $values{ $attributes->[$attr_num]->{"attribute_name"} } = trim($field);
             }
-        }    
+        }
     }
-    else { # dense instance
+    else {                                                           # dense instance
         my $values_num = 0;
-                    
+
         $line .= ',';
-        while ( $line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ){
-            
+        while ( $line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ) {
+
             my $field = $1;
-            
-            if ( $field eq '?' ){ # undefined value, leave as is                
+
+            if ( $field eq '?' ) {                                   # undefined value, leave as is
             }
-            elsif ( $field =~ m/^['"].*['"]$/ ){ # quoted value
-                $field = substr( $field, 1, length($field) - 2 ); # unquote
-                $field =~ s/\\([\n\r'"\\\t%])/$1/g; # unescape (same as weka.core.Utils)
+            elsif ( $field =~ m/^['"].*['"]$/ ) {                    # quoted value
+                $field = substr( $field, 1, length($field) - 2 );    # unquote
+                $field =~ s/\\([\n\r'"\\\t%])/$1/g;                  # unescape (same as weka.core.Utils)
                 $values{ $attributes->[$values_num]->{"attribute_name"} } = $field;
             }
-            else { # unquoted value (trim whitespace)
-                $values{ $attributes->[$values_num]->{"attribute_name"} } = trim( $field );
+            else {                                                   # unquoted value (trim whitespace)
+                $values{ $attributes->[$values_num]->{"attribute_name"} } = trim($field);
             }
             $values_num++;
         }
-        if ( $values_num != @{ $attributes } ){
-            
-            if ( $self->debug_mode ){
+        if ( $values_num != @{$attributes} ) {
+
+            if ( $self->debug_mode ) {
                 print STDERR "Line $line_num : Invalid data record: $line Contains $values_num, Expected"
-                        . scalar( @{ $attributes } ) . "\n";
-            }            
-            return; # return undef on error
+                    . scalar( @{$attributes} ) . "\n";
+            }
+            return;                                                  # return undef on error
         }
     }
-    return { %values }; # return all the values if no error is encountered           
+    return {%values};                                                # return all the values if no error is encountered
 }
 
 # insert a zero value for all numeric and nominal attributes, empty (but defined) value for string attributes
-# (knowing that string attributes in sparse ARFF files cause a lot of problems anyway) 
+# (knowing that string attributes in sparse ARFF files cause a lot of problems anyway)
 sub _zero_fill {
-    
-    my ($self, $values) = @_;
-    
-    foreach my $attrib ( @{ $self->relation->{"attributes"} } ){
-        
+
+    my ( $self, $values ) = @_;
+
+    foreach my $attrib ( @{ $self->relation->{"attributes"} } ) {
+
         # numeric attribute
-        if ( $attrib->{'attribute_type'} =~ m/^(numeric|real|integer)$/ ){
+        if ( $attrib->{'attribute_type'} =~ m/^(numeric|real|integer)$/ ) {
             $values->{ $attrib->{'attribute_name'} } = 0;
         }
+
         # nominal attribute
-        elsif ( $attrib->{'attribute_type'} =~ m/^{([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/ ){
+        elsif ( $attrib->{'attribute_type'} =~ m/^{([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/ ) {
             $values->{ $attrib->{'attribute_name'} } = $1;
         }
-        # string attribute 
+
+        # string attribute
         else {
             $values->{ $attrib->{'attribute_name'} } = '';
         }
     }
-    
-    return;    
+
+    return;
 }
 
 # Compose an ARFF data line out of given fields. Quote any fields that might need it,
 # save undefined fields as unquoted quotation marks.
 sub _compose_line {
-    
-    my $self = shift;
+
+    my $self   = shift;
     my @fields = @_;
-    my $line = '';
-    
-    foreach my $field (@fields){
-        
-        if (!defined($field)){
+    my $line   = '';
+
+    foreach my $field (@fields) {
+
+        if ( !defined($field) ) {
             $line .= '?,';
         }
-        elsif ($field eq '' or $field =~ m/[\n\r'"\\\t%{},? ]/){ # we need quotes
-                
-            $field =~ s/([\n\r'"\\\t%])/\\$1/g; # escape (same as weka.core.Utils)
+        elsif ( $field eq '' or $field =~ m/[\n\r'"\\\t%{},? ]/ ) {    # we need quotes
+
+            $field =~ s/([\n\r'"\\\t%])/\\$1/g;                        # escape (same as weka.core.Utils)
             $line .= "'$field',";
         }
         else {
             $line .= "$field,";
         }
     }
-    return substr($line, 0, length($line) - 1); # leave last comma out
+    return substr( $line, 0, length($line) - 1 );                      # leave last comma out
 }
 
 =head2 save_arff
@@ -331,17 +332,17 @@ Save given buffer into the .arff formatted file.
 sub save_arff {
     my ( $self, $buffer, $arff_file, $print_headers ) = @_;
     my $io;
-    
-    if (!defined($print_headers)){
+
+    if ( !defined($print_headers) ) {
         $print_headers = 1;
     }
 
-    if (!ref($arff_file)){     
-        open($io, '>utf8', $arff_file );
+    if ( !ref($arff_file) ) {
+        open( $io, '>utf8', $arff_file );
     }
     else {
-        $io = $arff_file;
-        $arff_file = '<HANDLE>'; 
+        $io        = $arff_file;
+        $arff_file = '<HANDLE>';
     }
 
     my $record_count = 0;
@@ -350,31 +351,31 @@ sub save_arff {
         print STDERR "Writing buffer ...\n";
     }
 
-    if ( $print_headers ){
+    if ($print_headers) {
         if ( $buffer->{relation_name} )
         {
-            print { $io } q/@RELATION / . $buffer->{relation_name} . "\n";
+            print {$io} q/@RELATION / . $buffer->{relation_name} . "\n";
         }
-        print { $io } "\n\n";
+        print {$io} "\n\n";
     }
-    
+
     if ( $buffer->{attributes} ) {
-        
-        if ( $print_headers ){
+
+        if ($print_headers) {
             foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
-                print { $io }  q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
+                print {$io} q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
             }
-            print { $io } "\n\n";
-            print { $io } "\@DATA\n\n";
+            print {$io} "\n\n";
+            print {$io} "\@DATA\n\n";
         }
 
         if ( $buffer->{records} ) {
-            
+
             foreach my $record ( @{ $buffer->{"records"} } ) {
                 my @record_fields = ();
                 foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
-                    
-                    if ( defined($record->{ $attribute->{attribute_name} }) ) {
+
+                    if ( defined( $record->{ $attribute->{attribute_name} } ) ) {
                         push @record_fields, $record->{ $attribute->{attribute_name} };
                     }
                     else {
@@ -382,15 +383,15 @@ sub save_arff {
                     }
                 }
 
-                print { $io } $self->_compose_line(@record_fields) . "\n";
+                print {$io} $self->_compose_line(@record_fields) . "\n";
                 $record_count++;
             }
         }
     }
-    if ($arff_file ne '<HANDLE>'){
+    if ( $arff_file ne '<HANDLE>' ) {
         close($io);
-    } 
-    
+    }
+
     if ( $self->debug_mode ) {
         eval("use Devel::Size qw(size total_size)");
 
@@ -402,7 +403,6 @@ sub save_arff {
     return 1;
 }
 
-
 =head2 prepare_headers
 
 Prepare the ARFF file headers for writing: determine between nominal (or string) and numeric attributes, fill in missing values
@@ -411,97 +411,95 @@ for nominal attributes. All pre-set attribute type settings are kept (only missi
 =cut
 
 sub prepare_headers {
-    
-    my ($self, $buffer, $ensure_attribs, $string_default) = @_;
-            
+
+    my ( $self, $buffer, $ensure_attribs, $string_default ) = @_;
+
     # there's no work with no data
     return if !$buffer->{records} or @{ $buffer->{records} } == 0;
-       
-    if ($ensure_attribs){       
-        $self->_ensure_attributes($buffer);
-    }    
-    $self->_set_attribute_types($buffer, $string_default);       
-}
 
+    if ($ensure_attribs) {
+        $self->_ensure_attributes($buffer);
+    }
+    $self->_set_attribute_types( $buffer, $string_default );
+}
 
 # Check if all attributes are present.
 sub _ensure_attributes {
 
-    my ($self, $buffer) = @_;
+    my ( $self, $buffer ) = @_;
 
-    # create the attributes declarations if not already done       
-    if ( !$buffer->{attributes} ){ 
+    # create the attributes declarations if not already done
+    if ( !$buffer->{attributes} ) {
         $buffer->{attributes} = [];
     }
-    
+
     my %attribs;
-    foreach my $attribute ( @{ $buffer->{attributes} } ){
+    foreach my $attribute ( @{ $buffer->{attributes} } ) {
         $attribs{ $attribute->{attribute_name} } = $attribute;
-    }    
+    }
 
     # now create the missing attributes
-    foreach my $record ( @{ $buffer->{records} } ){
-                        
-        foreach my $attr_name (sort keys %{ $record } ){
-            if ( ! $attribs{$attr_name} ){
-                            
+    foreach my $record ( @{ $buffer->{records} } ) {
+
+        foreach my $attr_name ( sort keys %{$record} ) {
+            if ( !$attribs{$attr_name} ) {
+
                 my $new_attr = { attribute_name => $attr_name };
                 push @{ $buffer->{attributes} }, $new_attr;
-                $attribs{$attr_name} = $new_attr;        
+                $attribs{$attr_name} = $new_attr;
             }
         }
-    }    
+    }
 }
-
 
 # Detect attribute types by collecting all their values and testing whether they are numeric.
 sub _set_attribute_types {
 
-    my ($self, $buffer, $string_default) = @_;
+    my ( $self, $buffer, $string_default ) = @_;
 
-    foreach my $attr (@{ $buffer->{attributes} }){
+    foreach my $attr ( @{ $buffer->{attributes} } ) {
 
-        # skip pre-set numeric and string attributes        
-        next if ($attr->{attribute_type} and ($attr->{attribute_type} eq 'NUMERIC' or $attr->{attribute_type} eq 'STRING'));
-        
+        # skip pre-set numeric and string attributes
+        next if ( $attr->{attribute_type} and ( $attr->{attribute_type} eq 'NUMERIC' or $attr->{attribute_type} eq 'STRING' ) );
+
         my %values;
-        
-        # keep pre-set values        
-        if ($attr->{attribute_type} and $attr->{attribute_type} =~ m/^{.*}$/){
+
+        # keep pre-set values
+        if ( $attr->{attribute_type} and $attr->{attribute_type} =~ m/^{.*}$/ ) {
             my $val_list = $attr->{attribute_type};
-            $val_list =~ s/^{(.*)}$/$1/;             
-            %values = map { $_ => 1 } $self->_parse_line($val_list); 
+            $val_list =~ s/^{(.*)}$/$1/;
+            %values = map { $_ => 1 } $self->_parse_line($val_list);
         }
 
         # find all other values
-        for my $record (@{ $buffer->{records} }){
-            if ( defined( $record->{ $attr->{attribute_name} } ) ){
+        for my $record ( @{ $buffer->{records} } ) {
+            if ( defined( $record->{ $attr->{attribute_name} } ) ) {
                 $values{ $record->{ $attr->{attribute_name} } } = 1;
             }
         }
-               
-        # determine the type                 
-        if (!$attr->{attribute_type}){
+
+        # determine the type
+        if ( !$attr->{attribute_type} ) {
             my $numeric = 1;
 
-            for my $value (keys %values){
-                if (!looks_like_number($value)){
+            for my $value ( keys %values ) {
+                if ( !looks_like_number($value) ) {
                     $numeric = 0;
                     last;
                 }
             }
-            if ($numeric){
+            if ($numeric) {
                 $attr->{attribute_type} = 'NUMERIC';
             }
-            elsif ($string_default){
+            elsif ($string_default) {
                 $attr->{attribute_type} = 'STRING';
             }
         }
-        if (!$attr->{attribute_type} or $attr->{attribute_type} =~ m/^{.*}$/) {
-            $attr->{attribute_type} = '{' . $self->_compose_line(sort keys %values) . '}';
+        if ( !$attr->{attribute_type} or $attr->{attribute_type} =~ m/^{.*}$/ ) {
+            $attr->{attribute_type} = '{' . $self->_compose_line( sort keys %values ) . '}';
         }
     }
-    
+
 }
 
 =head1 AUTHOR

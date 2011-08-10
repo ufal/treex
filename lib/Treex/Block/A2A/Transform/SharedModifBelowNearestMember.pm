@@ -6,32 +6,31 @@ extends 'Treex::Core::Block';
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    foreach my $coap (grep {$_->is_coap_root} $atree->get_descendants) {
+    foreach my $coap ( grep { $_->is_coap_root } $atree->get_descendants ) {
 
-        my @children_from_right = reverse $coap->get_children({ordered=>1});
+        my @children_from_right = reverse $coap->get_children( { ordered => 1 } );
 
         my $nearest_right_member;
-        my ($last_member) = grep {$_->is_member} @children_from_right;
+        my ($last_member) = grep { $_->is_member } @children_from_right;
 
         foreach my $child (@children_from_right) {
 
-            if ($child->is_member) {
+            if ( $child->is_member ) {
                 $nearest_right_member = $child;
             }
             else {
                 my $new_parent = $nearest_right_member || $last_member;
-                if (not defined $new_parent) {
+                if ( not defined $new_parent ) {
                     log_warn('Shared modifier cannot be rehanged, since no co/ap member was found (incorrect co/ap structure)');
                 }
                 else {
-                    $child->set_parent( $nearest_right_member || $last_member);
+                    $child->set_parent( $nearest_right_member || $last_member );
                     $self->subscribe($child);
                 }
             }
         }
     }
 }
-
 
 1;
 

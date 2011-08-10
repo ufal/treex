@@ -5,7 +5,7 @@ use warnings;
 use utf8;
 
 my %pronomadv;
-map {$pronomadv{$_} = 1} qw(
+map { $pronomadv{$_} = 1 } qw(
     dokdy dokud jak jakkoliv jaksi jakž kam kamkoliv kampak kamsi kde kdekoliv
     kdepak kdesi kdeže kdy kdykoli kdysi kudy leckde leckdy málokde málokdy
     navždy nějak někam někde někdy nijak nikam nikde nikdy odevšad odkdy odkud
@@ -13,7 +13,7 @@ map {$pronomadv{$_} = 1} qw(
     tady taktéž takž tam tamhle tamtéž teď tudy tuhle tytam všudy vždy zde);
 
 my %nongradableadv;
-map{ $nongradableadv{$_} = 1} qw(
+map { $nongradableadv{$_} = 1 } qw(
     akorát alespoň ani ani_tak asi aspoň až bezděčně bezesporu bezmála bezpochyby
     beztak bohudík bohužel bůhvíkdy celkem celkem_vzato cik_cak časem čas_od_času
     dejme_tomu díkybohu dnes docela dodnes doholaido_hola dohromady dojetím
@@ -64,7 +64,7 @@ map{ $nongradableadv{$_} = 1} qw(
     ztěžka zticha zuby_nehty zvenčí zvenku zvlášť zvnějšku zvolna);
 
 my %notnegableadv;
-map {$notnegableadv{$_} = 1 } qw(
+map { $notnegableadv{$_} = 1 } qw(
     abecedně abnormálně akorát alegoricky alespoň alikvótně analogicky ani ani_tak
     antikomunisticky aprioristicky archetypálně asi asketicky aspoň astmaticky
     až báječně bedlivě bezcelně bezděčně bezdrátově bezdůvodně bezesporu bezhlavě
@@ -187,7 +187,6 @@ map {$notnegableadv{$_} = 1 } qw(
     zoufale zpaměti zpátky zpětně zpočátkuiz_počátku zpravidla zpropadeně zprvu
     zpupně zrakově zrcadlově zrovna zřejmě ztepile ztěžka zticha zvenčí zvenku
     zvlášť zvláštně zvnějšku zvolna zvukově žalostně žánrově žíznivě);
-
 
 sub is_negable {
     my $adv = shift;

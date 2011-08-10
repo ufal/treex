@@ -21,6 +21,7 @@ sub process_ttree {
         if ( $a_lex_ord >= 0 ) {
             $order{ $t_node->ord } = $a_lex_ord;
         }
+
         # no a-node: infer the ord, somehow
         else {
             my $left_neighbor  = $self->_get_a_lex_ord( $t_node->get_siblings( { preceding_only => 1, last_only  => 1 } ), 'r' );

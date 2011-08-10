@@ -296,7 +296,7 @@ sub _process_subtree {
         next if ( $self->_deleted->{$child} );
 
         if ($child->is_generated and (
-                   $child->t_lemma =~ m/^[^#]/
+                $child->t_lemma =~ m/^[^#]/
                 or $LEMMAS_TO_REMOVE->{ $child->t_lemma }
                 or ( $child->t_lemma eq '#PersPron' and $child->functor ne 'ACT' )
             )
@@ -332,10 +332,11 @@ sub _remove_node {
     if ( $to_remove->nodetype eq 'coap' ) {
 
         # remove the coordination itself and rehang all to parent, if it's not root
-        if ( !$to_remove->get_parent->is_root ) {  
+        if ( !$to_remove->get_parent->is_root ) {
             $self->_remove_coord($to_remove);
             return;
         }
+
         # if the parent is root, just delete the "membership" and wait for $self->_merge_children
         else {
             map { $_->set_is_member(undef) } @children;

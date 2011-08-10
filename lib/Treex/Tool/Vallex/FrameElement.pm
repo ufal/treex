@@ -25,10 +25,10 @@ around 'BUILDARGS' => sub {
         $params->{functor} = $xml->getAttribute('functor');
         $params->{oblig} = $xml->getAttribute('type') eq 'oblig';
 
-        if ( $params->{functor} =~  /^(DPHR|CPHR|---)$/ ) {    # skip 'DPHR', 'CPHR' and '---' entries
+        if ( $params->{functor} =~ /^(DPHR|CPHR|---)$/ ) {    # skip 'DPHR', 'CPHR' and '---' entries
             $params->{'forms'} = { '???' => 1 };
         }
-        else {                                                                  # linearize forms -> build formemes
+        else {                                                # linearize forms -> build formemes
             $params->{'forms'} = {};
             foreach my $form ( $xml->getElementsByTagName('form') ) {
 
@@ -48,9 +48,9 @@ sub has_form {
 }
 
 sub forms_list {
-    
-    my ( $self ) = @_;
-    
+
+    my ($self) = @_;
+
     return [ keys %{ $self->forms } ];
 }
 
@@ -66,11 +66,11 @@ sub _convert_formeme {
     my ( $language, $form ) = @_;
     my $linear = _linearize($form);
 
-    if ($linear ne ''){
+    if ( $linear ne '' ) {
         my $conversion = _get_conversion_table($language);
         return split / /, $conversion->{$linear};
     }
-    return ( '???' );
+    return ('???');
 }
 
 sub _get_conversion_table {
@@ -86,13 +86,13 @@ sub _get_conversion_table {
 
         open( my $fh, '<:utf8', $file );
         while ( my $line = <$fh> ) {
-            
+
             $line =~ s/\r?\n//;
-            my ($old, $new) = split(/\t/, $line, 2);
-            $conversion->{$old} = $new;            
+            my ( $old, $new ) = split( /\t/, $line, 2 );
+            $conversion->{$old} = $new;
         }
         close($fh);
-        
+
         Treex::Tool::Vallex::FrameElement->_loaded_conversion->{$language} = $conversion;
     }
     return Treex::Tool::Vallex::FrameElement->_loaded_conversion->{$language};

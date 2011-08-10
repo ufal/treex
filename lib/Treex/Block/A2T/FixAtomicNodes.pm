@@ -10,20 +10,20 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     return if ( $tnode->nodetype ne 'atom' );
-        
+
     my @children = $tnode->get_children();
 
     #  rehang all the children and the atomic node itself under the first child
-    if (@children){ 
+    if (@children) {
 
         my $firstchild = shift @children;
 
-        $firstchild->set_is_member($tnode->is_member);
+        $firstchild->set_is_member( $tnode->is_member );
         $tnode->set_is_member(undef);
-        $firstchild->set_parent($tnode->get_parent);
+        $firstchild->set_parent( $tnode->get_parent );
         $tnode->set_parent($firstchild);
-        
-        foreach my $child (@children){
+
+        foreach my $child (@children) {
             $child->set_parent($firstchild);
         }
     }

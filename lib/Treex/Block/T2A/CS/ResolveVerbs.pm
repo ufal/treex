@@ -57,7 +57,7 @@ sub get_subpos_tense_of_finite {
     my ( $t_node, $a_node ) = @_;
     my $tense   = $t_node->gram_tense   || '';
     my $verbmod = $t_node->gram_verbmod || '';
-    my $voice   = $t_node->voice                    || '';
+    my $voice   = $t_node->voice        || '';
     my $aspect  = $t_node->gram_aspect  || '';
     my $formeme = $t_node->formeme;
 

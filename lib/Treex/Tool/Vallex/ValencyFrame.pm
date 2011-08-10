@@ -18,7 +18,7 @@ has 'pos' => ( isa => 'Str', is => 'ro', required => 1 );
 # The individual frame elements (Treex::Tool::Vallex::FrameElement)
 has 'elements' => ( isa => 'ArrayRef', is => 'ro', required => 1 );
 
-# The language ID (two character string) 
+# The language ID (two character string)
 has 'language' => ( isa => 'Str', is => 'ro', required => 1 );
 
 # The ID of the frame in the lexicon
@@ -57,7 +57,7 @@ around 'BUILDARGS' => sub {
         # Fill in lemma and POS (convert their format to correspond to usual TectoMT conventions)
         $params->{lemma} = $frame_xml->parentNode->parentNode->getAttribute('lemma');
         $params->{lemma} =~ s/ /_/g;
-        $params->{pos}   = lc( $frame_xml->parentNode->parentNode->getAttribute('POS') );
+        $params->{pos} = lc( $frame_xml->parentNode->parentNode->getAttribute('POS') );
         if ( $params->{pos} eq 'a' ) {
             $params->{pos} = 'adj';
         }
@@ -70,7 +70,7 @@ around 'BUILDARGS' => sub {
     }
     else {
         $params->{lemma} =~ s/ /_/g;
-        if ($params->{pos} !~ /^(n|v|adj|adv)$/){
+        if ( $params->{pos} !~ /^(n|v|adj|adv)$/ ) {
             log_warn("Non-standard POS for a valency frame, should be n, v, adj or adv.");
         }
     }

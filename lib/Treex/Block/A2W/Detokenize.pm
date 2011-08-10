@@ -6,9 +6,9 @@ extends 'Treex::Core::Block';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $a_root = $zone->get_atree;
+    my $a_root   = $zone->get_atree;
     my $sentence = "";
-    foreach my $a_node ($a_root->get_descendants({ordered=>1})) {
+    foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         $sentence .= $a_node->form;
         $sentence .= " " if !$a_node->no_space_after;
     }

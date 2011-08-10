@@ -18,7 +18,7 @@ sub BUILD {
     my $module = $self->module;
     eval "use $module;1" or log_fatal "Can't use $module";
     my $parser = eval "$module->new(\$arg_ref);" or log_fatal "Can't load $module";
-    if (!$parser->does('Treex::Tool::Parser::Role')){
+    if ( !$parser->does('Treex::Tool::Parser::Role') ) {
         log_fatal "$module does not implement Treex::Tool::Parser::Role";
     }
     $self->_set_parser($parser);
@@ -27,18 +27,18 @@ sub BUILD {
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @nodes = $atree->get_descendants();
-    my @forms = map { $_->form } @nodes;
-    my @lemmas = map { $_->lemma } @nodes;
-    my @tags = map { $_->tag } @nodes;
+    my @nodes   = $atree->get_descendants();
+    my @forms   = map { $_->form } @nodes;
+    my @lemmas  = map { $_->lemma } @nodes;
+    my @tags    = map { $_->tag } @nodes;
     my @parents = $self->_parser->parse_sentence( \@forms, \@lemmas, \@tags );
 
     # root-note has ord=0 and should be indexed at $nodes[0]
     unshift @nodes, $atree;
-    
+
     # set parents
-    foreach my $i (1..$#nodes) {
-        $nodes[$i]->set_parent($nodes[$parents[$i-1]]);
+    foreach my $i ( 1 .. $#nodes ) {
+        $nodes[$i]->set_parent( $nodes[ $parents[ $i - 1 ] ] );
     }
     return;
 }

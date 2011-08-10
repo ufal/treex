@@ -32,6 +32,7 @@ sub process_tnode {
                 $a_node->set_attr( "morphcat/$cat", '.' );
             }
         }
+
         # if the adjective doesn't exist, fall back to noun in genitive
         else {
             $t_node->set_formeme('n:2');

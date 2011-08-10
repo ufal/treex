@@ -10,7 +10,7 @@ sub next_document {
     my $html = $self->next_document_text();
     return if !defined $html;
     my $text = HTML::FormatText->format_string($html);
-    
+
     my $document = $self->new_document();
     my $zone = $document->create_zone( $self->language, $self->selector );
     $zone->set_text($text);

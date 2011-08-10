@@ -37,7 +37,7 @@ has '_headers_printed' => (
     default => 0
 );
 
-# Override the default data type settings (format: "columnname: type, ...") 
+# Override the default data type settings (format: "columnname: type, ...")
 has 'force_types' => ( is => 'ro', isa => 'Str', default => '' );
 
 # The data type override settings, in a hashref
@@ -61,8 +61,8 @@ sub _build_forced_types {
 
     my ($self) = @_;
     my %forced_types = map { $_ =~ m/\s*(.*)\s*:\s*(.*)\s*/; $1 => $2 } split( /\s*,\s*/, $self->force_types );
-    
-    return { %forced_types };
+
+    return {%forced_types};
 }
 
 override 'process_document' => sub {
@@ -130,13 +130,13 @@ sub _init_arff {
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
 
-    foreach my $attr ( @{ $self->_attrib_list() } ) {      
-        
+    foreach my $attr ( @{ $self->_attrib_list() } ) {
+
         my $attr_entry = {
             attribute_name => ( $attr eq 'parent->ord' ? 'head' : $attr ),
             attribute_type => $self->_forced_types->{$attr}
         };
-        
+
         push @{ $arff->relation->{attributes} }, $attr_entry;
     }
 

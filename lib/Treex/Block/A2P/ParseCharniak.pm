@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
-has _parser     => ( is       => 'rw', required => 1, default => 'en');
+has _parser => ( is => 'rw', required => 1, default => 'en' );
 
 use Treex::Tool::PhraseParser::Charniak;
 
@@ -17,10 +17,9 @@ sub BUILD {
 
 sub process_document {
     my ( $self, $document ) = @_;
-    my @zones =  map { $_->get_zone($self->language,$self->selector)} $document->get_bundles;
-    $self->_parser->parse_zones(\@zones);
+    my @zones = map { $_->get_zone( $self->language, $self->selector ) } $document->get_bundles;
+    $self->_parser->parse_zones( \@zones );
 }
-
 
 1;
 
@@ -39,8 +38,4 @@ creates phrase-structure trees using Charniak's constituency parser.
 
 # Copyright 2011 Zdenek Zabokrtsky
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
-
-
-
-
 

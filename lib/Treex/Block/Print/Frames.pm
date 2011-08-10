@@ -41,8 +41,8 @@ sub frame_element {
 
 END {
     for my $lemma ( sort { $lemmas{$b} <=> $lemmas{$a} } keys %lemmas ) {
-        my $freq = $lemmas{$lemma};
-        my $unique_frames = keys %{$frames{$lemma}};
+        my $freq          = $lemmas{$lemma};
+        my $unique_frames = keys %{ $frames{$lemma} };
         print "$freq\t$unique_frames\t$lemma\n";
     }
 }

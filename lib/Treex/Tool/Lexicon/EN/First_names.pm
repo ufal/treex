@@ -7,20 +7,20 @@ use autodie;
 #TODO: Better way how to make it automatically download.
 my $FN = 'data/models/lexicon/en/first_names.tsv';
 use Treex::Core::Resource;
-Treex::Core::Resource::require_file_from_share($FN, 'Treex::Tool::Lexicon::EN::First_names');
+Treex::Core::Resource::require_file_from_share( $FN, 'Treex::Tool::Lexicon::EN::First_names' );
 
 my %GENDER_OF;
-open my $F, '<:utf8', $ENV{TMT_ROOT}."share/$FN";
-while(<$F>){
+open my $F, '<:utf8', $ENV{TMT_ROOT} . "share/$FN";
+while (<$F>) {
     chomp;
-    my ($name, $f_or_m) = split /\t/, $_;
+    my ( $name, $f_or_m ) = split /\t/, $_;
     $GENDER_OF{$name} = $f_or_m;
 }
 close $F;
 
 sub gender_of {
     my ($first_name) = @_;
-    return $GENDER_OF{lc $first_name};
+    return $GENDER_OF{ lc $first_name };
 }
 
 1;

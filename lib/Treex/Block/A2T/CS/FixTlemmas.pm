@@ -9,12 +9,12 @@ sub possadj_to_noun {
     my $adj_mlemma = shift;
 
     $adj_mlemma =~ /\^(\([^\*][^\)]*\)_)?\(\*(\d+)(.+)?\)/;
-    if (!$2){ # unfortunately, some lemmas do not contain the derivation information (TODO fix this somehow)
-        log_warn('Cannot find base lemma for a possesive adjective: ' . $adj_mlemma);
+    if ( !$2 ) {    # unfortunately, some lemmas do not contain the derivation information (TODO fix this somehow)
+        log_warn( 'Cannot find base lemma for a possesive adjective: ' . $adj_mlemma );
         return $adj_mlemma;
     }
-    my $cnt         = $2 ? $2 : 0;
-    my $suffix      = $3 ? $3 : "";    # no suffix if not defined (Nobelův -> Nobel)
+    my $cnt    = $2 ? $2 : 0;
+    my $suffix = $3 ? $3 : "";    # no suffix if not defined (Nobelův -> Nobel)
     my $noun_mlemma = $adj_mlemma;
     $noun_mlemma =~ s/\_.+//;
     $noun_mlemma =~ s/.{$cnt}$/$suffix/;
@@ -35,7 +35,7 @@ sub process_tnode {
         elsif ( $a_lex_node->tag =~ /^AU/ ) {
             if ( $t_lemma =~ /^(.+)_/ ) {             # von_Ryanuv, de_Gaulluv
                 my $prefix = $1;
-                $t_lemma = lc( $prefix ) . "_" . possadj_to_noun( $a_lex_node->lemma );
+                $t_lemma = lc($prefix) . "_" . possadj_to_noun( $a_lex_node->lemma );
             }
             else {
                 $t_lemma = possadj_to_noun( $a_lex_node->lemma );

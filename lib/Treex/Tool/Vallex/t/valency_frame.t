@@ -5,20 +5,19 @@ use warnings;
 
 use Treex::Tool::Vallex::ValencyFrame;
 
-
 {
-    my $frame = Treex::Tool::Vallex::ValencyFrame->new( {id => 'v-w3f1', lexicon => 'vallex.xml', language => 'cs'} );
-    print $frame->to_string . "\n";
-    
-    $frame = Treex::Tool::Vallex::ValencyFrame->new( {id => 'v-w3351f3', lexicon => 'vallex.xml', language => 'cs'} );
+    my $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3f1', lexicon => 'vallex.xml', language => 'cs' } );
     print $frame->to_string . "\n";
 
-    $frame = Treex::Tool::Vallex::ValencyFrame->new( {id => 'v-w3352f1', lexicon => 'vallex.xml', language => 'cs'} );
+    $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3351f3', lexicon => 'vallex.xml', language => 'cs' } );
     print $frame->to_string . "\n";
 
-    $frame = Treex::Tool::Vallex::ValencyFrame->new( {ord => '1000', lexicon => 'vallex.xml', language => 'cs'} );
+    $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3352f1', lexicon => 'vallex.xml', language => 'cs' } );
     print $frame->to_string . "\n";
-    
+
+    $frame = Treex::Tool::Vallex::ValencyFrame->new( { ord => '1000', lexicon => 'vallex.xml', language => 'cs' } );
+    print $frame->to_string . "\n";
+
 }
 
 __END__

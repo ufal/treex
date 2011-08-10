@@ -17,7 +17,7 @@ sub process_tnode {
         if ( $lex_a_node->tag =~ /^Vs/ ) {
             $diathesis = 'pas';
         }
-        elsif ( grep { $_->afun eq "AuxR" } $lex_a_node->get_children ) { # TODO shouldn't these be aux_nodes of the t_node ? 
+        elsif ( grep { $_->afun eq "AuxR" } $lex_a_node->get_children ) {    # TODO shouldn't these be aux_nodes of the t_node ?
             $diathesis = 'deagent';
         }
         else {

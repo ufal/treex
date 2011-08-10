@@ -7,14 +7,14 @@ has '+language' => ( required => 1 );
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
-    my @nodes = $a_root->get_descendants({ordered => 1});
-    my @form = map {$_->form} @nodes;
-    my @no_space_after = map {$_->no_space_after} @nodes;
-    my @tag = map {$_->tag} @nodes;
-    my $sentence = '';
-    foreach my $i (0 .. $#form) {
-        if ($tag[$i] ne '-NONE-') {
-            $sentence .= ' ' if $i > 0 && !$no_space_after[$i - 1];
+    my @nodes = $a_root->get_descendants( { ordered => 1 } );
+    my @form           = map { $_->form } @nodes;
+    my @no_space_after = map { $_->no_space_after } @nodes;
+    my @tag            = map { $_->tag } @nodes;
+    my $sentence       = '';
+    foreach my $i ( 0 .. $#form ) {
+        if ( $tag[$i] ne '-NONE-' ) {
+            $sentence .= ' ' if $i > 0 && !$no_space_after[ $i - 1 ];
             $sentence .= $form[$i];
         }
     }

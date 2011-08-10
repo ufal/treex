@@ -14,7 +14,7 @@ my @strings = (
     q(Read::Text Util::Eval document='print"hello";'),
     q(Read::Text Util::Eval document='print "hello";'),
     q(Read::Text Util::Eval document='print "hello";'),
-    dirname($0).q(/test.scen),
+    dirname($0) . q(/test.scen),
 );
 
 #plan tests => @strings + 2;
@@ -23,6 +23,7 @@ BEGIN { use_ok('Treex::Core::ScenarioParser'); }
 my $parser = new Treex::Core::ScenarioParser;
 
 isa_ok( $parser, 'Parse::RecDescent' );
+
 #$::RD_TRACE = 1;
 #$::RD_HINT  = 1;
 foreach my $string (@strings) {

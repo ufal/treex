@@ -18,8 +18,9 @@ my $my_directory = _directory_of_this_module;
 has 'exceptions_filename' => (
     is       => 'ro',
     init_arg => undef,
+
     #reader   => 'exceptions_filename',
-    default  => sub {
+    default => sub {
         return require_file_from_share('/data/models/lemmatizer/en/exceptions.tsv');
     },
 );

@@ -13,15 +13,16 @@ has outcols => (
     documentation => 'The columns to emit.',
 );
 
-
 use Scalar::Util qw(reftype);
+
 # use Data::Dumper;
 
 my $allow_links_to_different_sentences = 1;
-        # manual t-trees sometimes contain added nodes that *had* a
-        # corresponding a-node in the *previous* sentence.
-        # We cannot represent cross-sentence aux/lex.rf links so we
-        # can either die or ignore such links.
+
+# manual t-trees sometimes contain added nodes that *had* a
+# corresponding a-node in the *previous* sentence.
+# We cannot represent cross-sentence aux/lex.rf links so we
+# can either die or ignore such links.
 
 ### GetEChildren, modified from ./contrib/pml/PML_T.inc
 # i.a. to return the sons grouped as grouped by coordination:
@@ -118,96 +119,102 @@ sub GetEChildren {    # node
 }    # GetEChildren
 
 sub get_tree_name {
-  # return tree name of a given node
-  my $node = shift;
-  my $root = $node->get_root();
-  my $bundle = $node->get_bundle();
-  my ($tree_name) = grep {$bundle->get_tree($_) == $root} $bundle->get_tree_names();
-  return $tree_name;
+
+    # return tree name of a given node
+    my $node   = shift;
+    my $root   = $node->get_root();
+    my $bundle = $node->get_bundle();
+    my ($tree_name) = grep { $bundle->get_tree($_) == $root } $bundle->get_tree_names();
+    return $tree_name;
 }
 
 sub preprocessor_for_at_output {
-  # construct aidtotid map
-  my $aroot = shift;
-  my $aidtotid = undef;
-  my $bundle = $aroot->get_bundle();
-  my $doc = $aroot->get_document();
-  my $ttreename = get_tree_name($aroot);
-  $ttreename =~ s/A$/T/; # use the corresponding t-tree
-  my $troot = $bundle->get_tree($ttreename);
-  Report::fatal "Failed to get $ttreename for ".$bundle->get_attr('id')
-    if ! defined $troot;
-  foreach my $tnode ($troot->get_descendants) {
-    my $links = $tnode->get_attr("a/lex.rf");
-    if ( ref($links) eq "" ) {
-        if ( !defined $links || $links eq "" ) {
-            $links = [];
+
+    # construct aidtotid map
+    my $aroot     = shift;
+    my $aidtotid  = undef;
+    my $bundle    = $aroot->get_bundle();
+    my $doc       = $aroot->get_document();
+    my $ttreename = get_tree_name($aroot);
+    $ttreename =~ s/A$/T/;    # use the corresponding t-tree
+    my $troot = $bundle->get_tree($ttreename);
+    Report::fatal "Failed to get $ttreename for " . $bundle->get_attr('id')
+
+        if !defined $troot;
+    foreach my $tnode ( $troot->get_descendants ) {
+        my $links = $tnode->get_attr("a/lex.rf");
+        if ( ref($links) eq "" ) {
+            if ( !defined $links || $links eq "" ) {
+                $links = [];
+            }
+            else {
+                $links = [$links];
+            }
+        }
+        elsif ( reftype($links) eq "ARRAY" ) {
+            $links = [ $links->values() ];
         }
         else {
-            $links = [$links];
+            Report::fatal "Unexpected links type: " . ref($links)
         }
-    } elsif ( reftype($links) eq "ARRAY" ) {
-        $links = [ $links->values() ];
-    } else {
-        Report::fatal "Unexpected links type: " . ref($links)
+        Report::fatal "More than one lex.rf at "
+            . $tnode->get_attr('id')
+            if 1 < scalar @$links;
+        if ( 1 == scalar @$links ) {
+            my $aid = $links->[0];
+            my $tid = $tnode->get_attr('id');
+            Report::fatal "Two t-nodes point to the same a-node $aid: "
+                . "$tid vs. $aidtotid->{$aid}"
+                if defined $aidtotid->{$aid};
+            $aidtotid->{$aid} = $tid;
+        }
     }
-    Report::fatal "More than one lex.rf at "
-      .$tnode->get_attr('id')
-      if 1 < scalar @$links;
-    if (1 == scalar @$links) {
-      my $aid = $links->[0];
-      my $tid = $tnode->get_attr('id');
-      Report::fatal "Two t-nodes point to the same a-node $aid: "
-        ."$tid vs. $aidtotid->{$aid}"
-        if defined $aidtotid->{$aid};
-      $aidtotid->{$aid} = $tid;
-    }
-  }
-  return $aidtotid;
+    return $aidtotid;
 }
 
 sub producer_of_at_output {
-  my $n = shift;
-  my $aidtotid = shift;
-  my $aid = $n->get_attr('id');
-  my $tid = $aidtotid->{$aid};
-  my $tnode = undef;
-  if (defined $tid) {
-    my $doc = $n->get_document();
-    $tnode = $doc->get_node_by_id($tid);
-  }
-  return [
-      $n->get_attr('m/form'),
-      $n->get_attr('m/lemma'),
-      $n->get_attr('m/tag'),
-      $n->get_attr('ord'),
-      ( defined $n->get_parent ? $n->get_parent->get_attr('ord') : "0" ),
-      $n->get_attr('afun'),
-      ( # a sequence of t-layer attributes
-      map {
-        my $o = $tnode->get_attr($_) if defined $tnode;
-        $o = "-" if ! defined $o;
-        $o;
-        }
-        ( "t_lemma", "functor", "nodetype",
-          "formeme", "gram/sempos",
-        )
-      )
-  ];
+    my $n        = shift;
+    my $aidtotid = shift;
+    my $aid      = $n->get_attr('id');
+    my $tid      = $aidtotid->{$aid};
+    my $tnode    = undef;
+    if ( defined $tid ) {
+        my $doc = $n->get_document();
+        $tnode = $doc->get_node_by_id($tid);
+    }
+    return [
+        $n->get_attr('m/form'),
+        $n->get_attr('m/lemma'),
+        $n->get_attr('m/tag'),
+        $n->get_attr('ord'),
+        ( defined $n->get_parent ? $n->get_parent->get_attr('ord') : "0" ),
+        $n->get_attr('afun'),
+        (    # a sequence of t-layer attributes
+            map {
+                my $o = $tnode->get_attr($_) if defined $tnode;
+                $o = "-" if !defined $o;
+                $o;
+                }
+                (
+                "t_lemma", "functor", "nodetype",
+                "formeme", "gram/sempos",
+                )
+            )
+    ];
 }
 
 my $export_rules = {
-    "CzechW" => {  # Czech w-layer
+    "CzechW" => {    # Czech w-layer
         "treename" => "CzechM",
-        "sort"    => undef,
-        "factors" => sub {
+        "sort"     => undef,
+        "factors"  => sub {
             my $n = shift;
             return [
                 $n->get_attr('form'),
             ];
         },
     },
-    "CzechM" => {  # Czech m-layer
+    "CzechM" => {    # Czech m-layer
         "sort"    => undef,
         "factors" => sub {
             my $n = shift;
@@ -218,7 +225,7 @@ my $export_rules = {
             ];
         },
     },
-    "CzechA" => {  # Czech a-layer, more or less canonic
+    "CzechA" => {    # Czech a-layer, more or less canonic
         "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
@@ -232,13 +239,14 @@ my $export_rules = {
             ];
         },
     },
-    "CzechAT" => {  # Czech a-layer with additional attributes from t-layer (via lex.rf)
-        "treename" => "CzechA",
-        "sort"    => "ord",
-        "preprocessor" => sub { &preprocessor_for_at_output },
-        "factors" => sub { &producer_of_at_output },
+    "CzechAT" => {    # Czech a-layer with additional attributes from t-layer (via lex.rf)
+        "treename"     => "CzechA",
+        "sort"         => "ord",
+        "preprocessor" => sub {&preprocessor_for_at_output},
+        "factors"      => sub {&producer_of_at_output},
     },
     "EnglishM" => {
+
         # "sort"    => "ord",  # no ord attribute, preserve original order
         "factors" => sub {
             my $n = shift;
@@ -250,7 +258,7 @@ my $export_rules = {
         },
     },
     "EnglishA" => {
-        "sort"              => "ord",
+        "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
             return [
@@ -263,11 +271,11 @@ my $export_rules = {
             ];
         },
     },
-    "EnglishAT" => {  # English a-layer with additional attributes from t-layer (via lex.rf)
-        "treename" => "EnglishA",
-        "sort"    => "ord",
-        "preprocessor" => sub { &preprocessor_for_at_output },
-        "factors" => sub { &producer_of_at_output },
+    "EnglishAT" => {    # English a-layer with additional attributes from t-layer (via lex.rf)
+        "treename"     => "EnglishA",
+        "sort"         => "ord",
+        "preprocessor" => sub {&preprocessor_for_at_output},
+        "factors"      => sub {&producer_of_at_output},
     },
     "EnglishAvalem" => {
         "sort"              => "ord",
@@ -294,7 +302,7 @@ my $export_rules = {
 
                 # prepositions set valem
                 if (
-                    (      $tag eq "DT"
+                    (   $tag    eq "DT"
                         || $tag eq "JJ"
                         || $tag eq "CC"
                         || $tag eq "PRP\$" || $tag eq "PDT" || $tag eq "CD"
@@ -376,6 +384,7 @@ my $export_rules = {
         "factors" => sub {
             my $n = shift;
             return [
+
                 # obligatory attributes
                 $n->get_attr('t_lemma'),
                 $n->get_attr('functor'),
@@ -383,6 +392,7 @@ my $export_rules = {
                 ( defined $n->get_parent ? $n->get_parent->get_attr('deepord') : "0" ),
 
                 (
+
                     # optional attributes, default to '-'
                     map {
                         my $val = $n->get_attr($_);
@@ -434,6 +444,7 @@ my $export_rules = {
         "factors" => sub {
             my $n = shift;
             return [
+
                 # obligatory attributes
                 $n->get_attr('t_lemma'),
                 $n->get_attr('functor'),
@@ -441,6 +452,7 @@ my $export_rules = {
                 ( defined $n->get_parent ? $n->get_parent->get_attr('deepord') : "0" ),
 
                 map {
+
                     # optional attributes, default to '-'
                     my $val = $n->get_attr($_);
                     defined $val && $val ne "" ? $val : "-"
@@ -476,16 +488,16 @@ my $export_rules = {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $bundle = $zone->get_bundle();
+    my $bundle    = $zone->get_bundle();
     my $bundle_id = $zone->get_bundle()->id;
 
     # if ( $self->join_resegmented && $bundle_id =~ /_(\d+)of(\d+)$/ && $1 != $2 ) {
-        # print { $self->_file_handle } $zone->sentence, " ";
+    # print { $self->_file_handle } $zone->sentence, " ";
 
-#     my $tmt_param_print_factored =
-#       $self->get_parameter('TMT_PARAM_PRINT_FACTORED');
-#     Report::fatal "Please specify \$TMT_PARAM_PRINT_FACTORED"
-#         if !defined $tmt_param_print_factored;
+    #     my $tmt_param_print_factored =
+    #       $self->get_parameter('TMT_PARAM_PRINT_FACTORED');
+    #     Report::fatal "Please specify \$TMT_PARAM_PRINT_FACTORED"
+    #         if !defined $tmt_param_print_factored;
     my @colspecs = split /[\s:]+/, $self->outcols;
     Report::info "Will export: @colspecs";
 
@@ -493,7 +505,7 @@ sub process_zone {
     my $tmt_param_destination = $self->to_attribute;
 
     # my %tmt_param_flags = map { ( $_, 1 ) } split /[\s:]+/,
-      # $self->get_parameter('TMT_PARAM_PRINT_FACTORED_FLAGS');
+    # $self->get_parameter('TMT_PARAM_PRINT_FACTORED_FLAGS');
 
     # my $filename = $document->get_fsfile_name();
     my $filename = "XXXTODO";
@@ -625,20 +637,23 @@ sub process_zone {
                 else {
                     my @newlinks = map {
                         "$aid_to_aord{$_}-$tord";
-                       }
-                       grep {
-                        if (!defined $aid_to_aord{$_}) {
-                           if ($allow_links_to_different_sentences) {
-                               0;
-                           } else {
-                               Report::fatal
-                                 "Undefined a-node ID $_ in $lexaux.rf for "
+                        }
+                        grep {
+                        if ( !defined $aid_to_aord{$_} ) {
+                            if ($allow_links_to_different_sentences) {
+                                0;
+                            }
+                            else {
+                                Report::fatal
+                                    "Undefined a-node ID $_ in $lexaux.rf for "
                                     . $tnode->get_attr("id");
-                           }
-                        } else {
-                            1;  # keep this node
-                         }
-                       } @$links;
+                            }
+                        }
+                        else {
+                            1;    # keep this node
+                        }
+                        } @$links;
+
                     # for this node, return the (shortened) list of links:
                     (@newlinks);
                 }
@@ -658,9 +673,9 @@ sub process_zone {
         my $factors_generator = $export_rules->{$exportspec}->{"factors"};
 
         my $treename = $colspec;
-        $treename = substr($colspec, 0, 1)
-          .$export_rules->{$exportspec}->{"treename"}
-          if defined $export_rules->{$exportspec}->{"treename"};
+        $treename = substr( $colspec, 0, 1 )
+            . $export_rules->{$exportspec}->{"treename"}
+            if defined $export_rules->{$exportspec}->{"treename"};
         my $root = $bundle->get_tree($treename);
 
         my $top_down_modifier = $export_rules->{$exportspec}
@@ -674,9 +689,9 @@ sub process_zone {
         }
 
         # allow the export rules to set their data
-        my $preprocessor = $export_rules->{$exportspec} ->{"preprocessor"};
-        my $preprocdata = $preprocessor->($root)
-          if defined $preprocessor;
+        my $preprocessor = $export_rules->{$exportspec}->{"preprocessor"};
+        my $preprocdata  = $preprocessor->($root)
+            if defined $preprocessor;
 
         my @sorted_nodes = $root->get_descendants;
         if ( defined $sortattr ) {
@@ -687,42 +702,44 @@ sub process_zone {
 
         my @outtokens = ();
         foreach my $n (@sorted_nodes) {
-            my $outfactors = $factors_generator->($n, $preprocdata);
-            my $outtoken   = join(
+            my $outfactors = $factors_generator->( $n, $preprocdata );
+            my $outtoken = join(
                 "|",
                 map {
                     Report::fatal
-                      $bundle->get_attr("id").":"
-                      ."Bad factor value '$_' in $colspec, "
-                        ."contains space in: @$outfactors"
+                        $bundle->get_attr("id") . ":"
+                        . "Bad factor value '$_' in $colspec, "
+                        . "contains space in: @$outfactors"
                         if $_ =~ /\s/;
                     $_
-                }
-                map {
-                    if ($tmt_param_flags{"join_spaced_numbers"}) {
-                      # disregard a single space between two digits in
-                      # attribute values (form, a-lemma, t-lemma if created
-                      # by SCzechW_to_SCzechM::Tokenize_joining_numbers
-                      s/([0-9]) ([0-9])/$1$2/g;
-                      s/([0-9][,.]) ([0-9])/$1$2/g;
-                      s/([0-9]) ([,.][0-9])/$1$2/g;
                     }
-                    if ($tmt_param_flags{"escape_space"}) {
-                      # escape space with '&space;'
-                      s/ /&space;/g;
+                    map {
+                    if ( $tmt_param_flags{"join_spaced_numbers"} ) {
+
+                        # disregard a single space between two digits in
+                        # attribute values (form, a-lemma, t-lemma if created
+                        # by SCzechW_to_SCzechM::Tokenize_joining_numbers
+                        s/([0-9]) ([0-9])/$1$2/g;
+                        s/([0-9][,.]) ([0-9])/$1$2/g;
+                        s/([0-9]) ([,.][0-9])/$1$2/g;
+                    }
+                    if ( $tmt_param_flags{"escape_space"} ) {
+
+                        # escape space with '&space;'
+                        s/ /&space;/g;
                     }
                     $_
-                }
-                map { s/&/&amp;/g; s/\|/&pipe;/g; $_ }
-                map {
-                  Report::fatal
-                    $bundle->get_attr("id").":"
-                    ."Failed to export $colspec, missing or blank value in: "
-                      ."@$outfactors"
-                      if !defined $_ || $_ eq "";
+                    }
+                    map { s/&/&amp;/g; s/\|/&pipe;/g; $_ }
+                    map {
+                    Report::fatal
+                        $bundle->get_attr("id") . ":"
+                        . "Failed to export $colspec, missing or blank value in: "
+                        . "@$outfactors"
+                        if !defined $_ || $_ eq "";
                     $_
-                }
-                @$outfactors
+                    }
+                    @$outfactors
             );
             push @outtokens, $outtoken;
         }
@@ -738,14 +755,15 @@ sub process_zone {
     }
     if ($output_ok) {
         my $outstr = join( "\t", @output );
-        if (! defined $tmt_param_destination ) {
-          print $filename . ":" . $bundle->get_attr("id"). "\t"
-            . $outstr . "\n";
-        } else {
-          $bundle->set_attr($tmt_param_destination, $outstr)
+        if ( !defined $tmt_param_destination ) {
+            print $filename . ":" . $bundle->get_attr("id") . "\t"
+                . $outstr . "\n";
+        }
+        else {
+            $bundle->set_attr( $tmt_param_destination, $outstr )
         }
     }
-    
+
 }
 
 1;

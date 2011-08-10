@@ -14,7 +14,8 @@ sub _build_model {
     my ($self) = @_;
     my $model = 'data/models/tagger/tree_tagger/' . $self->language . '.par';
     $self->require_files_from_share($model);
-    return Treex::Core::Config::share_dir()."/$model";
+    return Treex::Core::Config::share_dir() . "/$model";
+
     #return "$ENV{TMT_ROOT}/share/$model";
 }
 

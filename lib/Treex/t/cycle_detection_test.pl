@@ -16,13 +16,15 @@ use File::Copy;
 
 #backup a file
 sub backup_file {
-    my $filename = shift;
-    my $filename_backup = "$filename.cdbup"; #cdbup = cycle detection backup
-    copy($filename, $filename_backup);
-    if (-e $filename_backup) {
+    my $filename        = shift;
+    my $filename_backup = "$filename.cdbup";    #cdbup = cycle detection backup
+    copy( $filename, $filename_backup );
+    if ( -e $filename_backup ) {
+
         #if (File::Compare::compare($filename, $filename_backup)) { die "Cannot backup $filename!\n"; }
         return 1;
-    } else {
+    }
+    else {
         die "Cannot backup module $filename!\n";
         return 0;
     }
@@ -30,17 +32,19 @@ sub backup_file {
 
 #restore a file from its backup done by backup_file()
 sub restore_file {
-    my $filename = shift;
-    my $filename_backup = "$filename.cdbup"; #cdbup = cycle detection backup
-    if (-e $filename_backup) {
-        move($filename_backup, $filename);
-        if (-e $filename) {
+    my $filename        = shift;
+    my $filename_backup = "$filename.cdbup";    #cdbup = cycle detection backup
+    if ( -e $filename_backup ) {
+        move( $filename_backup, $filename );
+        if ( -e $filename ) {
             return 1;
-        } else {
+        }
+        else {
             print STDERR "Cannot restore module $filename\n";
             return 0;
         }
-    } else {
+    }
+    else {
         print STDERR "Cannot restore module $filename because $filename_backup does not exist\n";
         return 0;
     }
@@ -49,13 +53,13 @@ sub restore_file {
 #add memory cycle detection code to module destructor
 sub add_cycle_detection {
     my $filenameOut = shift;
-    my $filenameIn = "$filenameOut.cdbup";
-    open my $fileIn, '<:utf8', $filenameIn or return 0;
+    my $filenameIn  = "$filenameOut.cdbup";
+    open my $fileIn,  '<:utf8', $filenameIn  or return 0;
     open my $fileOut, '>:utf8', $filenameOut or return 0;
-    
+
     my $added = 0;
     while (<$fileIn>) {
-        if (/^1;$/) { #end of module -> add cycle detection code here
+        if (/^1;$/) {    #end of module -> add cycle detection code here
             print $fileOut 'use Devel::Cycle;
                 sub DESTROY
                 {
@@ -63,10 +67,11 @@ sub add_cycle_detection {
                     find_cycle($this);
                 }
 ';
-            print $fileOut $_; #copy original line
+            print $fileOut $_;    #copy original line
             $added = 1;
-        } else {
-            print $fileOut $_; #copy original line
+        }
+        else {
+            print $fileOut $_;    #copy original line
         }
     }
 
@@ -75,46 +80,48 @@ sub add_cycle_detection {
 
     if ($added) {
         return 1;
-    } else {
+    }
+    else {
         print STDERR "Cannot add cycle detection code to file $filenameOut, end of module '1;' not found! Perhaps $filenameOut is not a perl module file?\n";
         return 0;
     }
-    
+
 }
 
 #runs silent treex (prints out only fatal errors) on the given scenario
 use Treex::Core::Log;
 use Treex::Core::Run q(treex);
+
 sub run {
     my $scenario = shift;
-    Treex::Core::Log::log_set_error_level ('FATAL');
-    treex ($scenario);
+    Treex::Core::Log::log_set_error_level('FATAL');
+    treex($scenario);
 }
-
 
 # THE MAIN PROGRAM
 
 #load commandline params
-if (@ARGV < 2) {
+if ( @ARGV < 2 ) {
     die "usage: ./cycle_detection_test.pl scenarion_file.scen module_to_test_1.pm module_to_test_2.pm module_to_test_3.pm ...\n";
 }
 my $scenario = $ARGV[0];
-if (! -e $scenario) {
+if ( !-e $scenario ) {
     die "scenarion file $scenario does not exist!\n";
 }
 my @modules;
-foreach my $argnum (1 .. $#ARGV) {
+foreach my $argnum ( 1 .. $#ARGV ) {
     my $module = $ARGV[$argnum];
-    if (-e $module) {
+    if ( -e $module ) {
         push @modules, $module;
-    } else {
+    }
+    else {
         die "File $module does not exist!\n";
     }
-    if (-e "$module.cdbup") {
+    if ( -e "$module.cdbup" ) {
         die "There exists a cycle test backup of $module!\n"
-            ." If there is another instance of cycle test running, please wait for it to stop.\n"
-            ." If the previous run did not exit correctly, you must first run\n"
-            ." ./cycle_detection_restore.pl on the module files to restore them.\n"
+            . " If there is another instance of cycle test running, please wait for it to stop.\n"
+            . " If the previous run did not exit correctly, you must first run\n"
+            . " ./cycle_detection_restore.pl on the module files to restore them.\n"
             ;
     }
 }
@@ -144,7 +151,7 @@ foreach my $module (@modules) {
 #add cycle detection to modules
 foreach my $module (@modules) {
     my $result = add_cycle_detection $module;
-    if ($result == 0) {
+    if ( $result == 0 ) {
         print STDERR "Cannot add cycle detection code to module $module\n";
     }
 }

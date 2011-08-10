@@ -9,7 +9,6 @@ has '+language'   => ( required => 1 );
 has 'to_language' => ( is       => 'ro', isa => 'LangCode', lazy_build => 1 );
 has 'to_selector' => ( is       => 'ro', isa => 'Selector', default => 'ref' );
 
-
 sub _build_to_language {
     my ($self) = @_;
     return $self->language;
@@ -22,18 +21,17 @@ sub BUILD {
     }
 }
 
-
 sub process_zone {
 
     my ( $self, $tst_zone ) = @_;
     my $ref_zone = $tst_zone->get_bundle()->get_zone( $self->to_language, $self->to_selector );
     my @tst_nodes = $tst_zone->get_atree->get_descendants( { ordered => 1 } );
     my @ref_nodes = $ref_zone->get_atree->get_descendants( { ordered => 1 } );
-    
-    log_fatal("The two zones do not have a corresponding number of nodes.") if (@ref_nodes != @tst_nodes);
 
-    for (my $i = 0; $i < @ref_nodes; ++$i){
-        $tst_nodes[$i]->add_aligned_node( $ref_nodes[$i] );        
+    log_fatal("The two zones do not have a corresponding number of nodes.") if ( @ref_nodes != @tst_nodes );
+
+    for ( my $i = 0; $i < @ref_nodes; ++$i ) {
+        $tst_nodes[$i]->add_aligned_node( $ref_nodes[$i] );
     }
 }
 

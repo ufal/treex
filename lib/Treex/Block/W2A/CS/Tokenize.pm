@@ -10,10 +10,10 @@ override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
 
     $sentence = super();
-    
-    # pad with spaces for easier regexps 
+
+    # pad with spaces for easier regexps
     $sentence =~ s/^(.*)$/ $1 /;
-    
+
     # convert Czech decimal numbers to English format, so that the tagger and parser recognize them
     $sentence =~ s/ ([0-9]+),([0-9]+) / $1.$2 /;
 

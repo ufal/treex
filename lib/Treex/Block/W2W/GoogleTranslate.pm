@@ -10,18 +10,17 @@ extends 'Treex::Core::Block';
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
 
-
 sub process_document {
-    my ($self, $document) = @_;
+    my ( $self, $document ) = @_;
 
     my @sentences;
-    foreach my $bundle ($document->get_bundles) {
-        my $sentence = $bundle->get_zone($self->language, $self->selector)->sentence;
+    foreach my $bundle ( $document->get_bundles ) {
+        my $sentence = $bundle->get_zone( $self->language, $self->selector )->sentence;
         push @sentences, $sentence;
     }
 
-    my $counter = 0;
-    my $input_text = '';
+    my $counter     = 0;
+    my $input_text  = '';
     my $output_text = '';
     while (@sentences) {
         my $sentence = shift @sentences;
@@ -29,43 +28,43 @@ sub process_document {
         $sentence =~ s/''/"/g;
         $input_text .= "$sentence\n";
         $counter++;
-        if ($counter % 50 == 0) {
-            $output_text .= translate( $input_text, $self->language, $self->to_language ) if ($counter % 50 == 0);
+        if ( $counter % 50 == 0 ) {
+            $output_text .= translate( $input_text, $self->language, $self->to_language ) if ( $counter % 50 == 0 );
             $input_text = '';
-            sleep(2); 
+            sleep(2);
         }
     }
     if ($input_text) {
-        if (length($input_text) < 100) {
+        if ( length($input_text) < 100 ) {
             $input_text .= "This additional text must be here, because translated sentence is too short and Google gives different output format for such short inputs\n";
         }
         $output_text .= translate( $input_text, $self->language, $self->to_language );
     }
-    @sentences = split(/\n/, $output_text);
+    @sentences = split( /\n/, $output_text );
 
-    foreach my $bundle ($document->get_bundles) {
-        my $zone = $bundle->get_or_create_zone($self->to_language, $self->to_selector);
-        $zone->set_sentence(shift @sentences);
+    foreach my $bundle ( $document->get_bundles ) {
+        my $zone = $bundle->get_or_create_zone( $self->to_language, $self->to_selector );
+        $zone->set_sentence( shift @sentences );
     }
 }
 
-
 sub translate {
-    my ($text, $from, $to) = @_;
+    my ( $text, $from, $to ) = @_;
     my $ua = LWP::UserAgent->new;
     $ua->agent('Mozilla/5.0');
 
-    my $response = $ua->post( "http://translate.google.com/translate_t",
-                                [ 'text' => $text,
-                                  'hl'   => 'en',
-                                  'sl'   => $from,
-                                  'tl'   => $to,
-                                  'ie'   => 'UTF8'
-                                ]
-                            );
-    log_fatal($response->status_line) if !$response->is_success;
-    
-    my $output = decode("utf8", $response->content);
+    my $response = $ua->post(
+        "http://translate.google.com/translate_t",
+        [   'text' => $text,
+            'hl'   => 'en',
+            'sl'   => $from,
+            'tl'   => $to,
+            'ie'   => 'UTF8'
+        ]
+    );
+    log_fatal( $response->status_line ) if !$response->is_success;
+
+    my $output = decode( "utf8", $response->content );
 
     $output =~ tr/\n/ /;
     log_fatal("No output returned by GoogleTranslate") if $output !~ /<span id=result_box class="long_text">/;
@@ -81,7 +80,6 @@ sub translate {
 }
 
 1;
-
 
 __END__
 

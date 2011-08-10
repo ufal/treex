@@ -3,21 +3,23 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'transformer' => ( is => 'rw',
-                   #    required => 1,
-                   );
+has 'transformer' => (
+    is => 'rw',
+
+    #    required => 1,
+);
 
 # warning: redefining process_atree is dangerous for blocks
 # that do not follow this structure with separate transformer object
 # (such as AllPunctBelowTechRoot)
 sub process_atree {
-    my ($self,$atree) = @_;
+    my ( $self, $atree ) = @_;
     $self->transformer->apply_on_tree($atree);
 }
 
 sub subscribe {
-    my ($self, $node) = @_;
-    $node->wild->{"trans_".$self->subscription} = 1;
+    my ( $self, $node ) = @_;
+    $node->wild->{ "trans_" . $self->subscription } = 1;
 }
 
 # shortened block's name (namespace prefix deleted)
@@ -28,8 +30,6 @@ sub subscription {
 }
 
 1;
-
-
 
 =over
 

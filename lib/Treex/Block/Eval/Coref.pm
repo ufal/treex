@@ -3,34 +3,32 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-
-my $tp_count = 0;
+my $tp_count  = 0;
 my $src_count = 0;
 my $ref_count = 0;
 
 my %same_as_ref;
 
 sub _count_fscore {
-    my ($eq, $src, $ref) = @_;
+    my ( $eq, $src, $ref ) = @_;
 
     my $prec = $src != 0 ? $eq / $src : 0;
     my $reca = $ref != 0 ? $eq / $ref : 0;
-    my $fsco = ($prec + $reca) != 0 ? 2*$prec*$reca / ($prec + $reca) : 0;
+    my $fsco = ( $prec + $reca ) != 0 ? 2 * $prec * $reca / ( $prec + $reca ) : 0;
 
-    return ($prec, $reca, $fsco);
+    return ( $prec, $reca, $fsco );
 }
-
 
 sub process_tnode {
     my ( $self, $ref_node ) = @_;
 
     my $src_node = $ref_node->src_tnode;
-    
-    my @ref_antec = map {$_->src_tnode} $ref_node->get_coref_gram_nodes;
+
+    my @ref_antec = map { $_->src_tnode } $ref_node->get_coref_gram_nodes;
     my @src_antec = $src_node->get_coref_gram_nodes;
 
     foreach my $ref_ante (@ref_antec) {
-        $tp_count += () = grep {$_ == $ref_ante} @src_antec;
+        $tp_count += () = grep { $_ == $ref_ante } @src_antec;
     }
     $src_count += scalar @src_antec;
     $ref_count += scalar @ref_antec;
@@ -38,14 +36,13 @@ sub process_tnode {
 }
 
 END {
-    my ($prec, $reca, $fsco) = 
+    my ( $prec, $reca, $fsco ) =
         _count_fscore( $tp_count, $src_count, $ref_count );
-    
+
     printf "P: %.2f%% (%d / %d)\t", $prec * 100, $tp_count, $src_count;
     printf "R: %.2f%% (%d / %d)\t", $reca * 100, $tp_count, $ref_count;
-    printf "F: %.2f%%\n", $fsco * 100;
+    printf "F: %.2f%%\n",           $fsco * 100;
 }
-
 
 1;
 

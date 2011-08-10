@@ -6,8 +6,6 @@ extends 'Treex::Core::Block';
 use tagset::common;
 use tagset::cs::pdt;
 
-
-
 #------------------------------------------------------------------------------
 # Reads the a-tree, converts the original morphosyntactic tags to the PDT
 # tagset, converts dependency relation tags to afuns and transforms the tree to
@@ -20,17 +18,20 @@ use tagset::cs::pdt;
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
-    my $tagset = shift; # optional argument from the subclass->process_zone()
-    # Copy the original dependency structure before adjusting it.
+    my $self   = shift;
+    my $zone   = shift;
+    my $tagset = shift;    # optional argument from the subclass->process_zone()
+                           # Copy the original dependency structure before adjusting it.
     $self->backup_zone($zone);
-    my $a_root  = $zone->get_atree();
+    my $a_root = $zone->get_atree();
+
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
-    $self->convert_tags($a_root, $tagset);
+    $self->convert_tags( $a_root, $tagset );
+
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
     $self->deprel_to_afun($a_root);
+
     # Adjust the tree structure. Some of the methods are general, some will be treebank-specific.
     # The decision whether to apply a method at all is always treebank-specific.
     #$self->attach_final_punctuation_to_root($a_root);
@@ -43,36 +44,30 @@ sub process_zone
     return $a_root;
 }
 
-
-
 #------------------------------------------------------------------------------
 # Copies the original zone so that the user can compare the original and the
 # restructured tree in TTred.
 #------------------------------------------------------------------------------
 sub backup_zone
 {
-    my $self = shift;
+    my $self  = shift;
     my $zone0 = shift;
     return $zone0->copy('orig');
 }
-
-
 
 #------------------------------------------------------------------------------
 # Converts tags of all nodes to Interset and PDT tagset.
 #------------------------------------------------------------------------------
 sub convert_tags
 {
-    my $self = shift;
-    my $root = shift;
-    my $tagset = shift; # optional, see below
-    foreach my $node ($root->get_descendants())
+    my $self   = shift;
+    my $root   = shift;
+    my $tagset = shift;    # optional, see below
+    foreach my $node ( $root->get_descendants() )
     {
-        $self->convert_tag($node, $tagset);
+        $self->convert_tag( $node, $tagset );
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Decodes the part-of-speech tag and features from a CoNLL treebank into
@@ -81,10 +76,11 @@ sub convert_tags
 #------------------------------------------------------------------------------
 sub convert_tag
 {
-    my $self = shift;
-    my $node = shift;
-    my $tagset = shift; # optional tagset identifier (default = 'conll'; sometimes we need 'conll2007' etc.)
-    $tagset = 'conll' unless($tagset);
+    my $self   = shift;
+    my $node   = shift;
+    my $tagset = shift;    # optional tagset identifier (default = 'conll'; sometimes we need 'conll2007' etc.)
+    $tagset = 'conll' unless ($tagset);
+
     # Note that the following hack will not work for all treebanks.
     # Some of them use tagsets not called '*::conll'.
     # Many others are not covered by DZ Interset yet.
@@ -95,22 +91,21 @@ sub convert_tag
         ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
         en::conll en::conll2009 it::conll pt::conll sv::conll zh::conll
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll);
-    my $driver = $node->get_zone()->language().'::'.$tagset;
-    return unless(grep {$_ eq $driver} (@known_drivers));
+    my $driver = $node->get_zone()->language() . '::' . $tagset;
+    return unless ( grep { $_ eq $driver } (@known_drivers) );
+
     # Current tag is probably just a copy of conll_pos.
     # We are about to replace it by a 15-character string fitting the PDT tagset.
-    my $tag = $node->tag();
+    my $tag        = $node->tag();
     my $conll_cpos = $node->conll_cpos();
-    my $conll_pos = $node->conll_pos();
+    my $conll_pos  = $node->conll_pos();
     my $conll_feat = $node->conll_feat();
-    my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset eq 'conll' ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
-    my $f = tagset::common::decode($driver, $src_tag);
-    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
+    my $src_tag    = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset eq 'conll' ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
+    my $f          = tagset::common::decode( $driver, $src_tag );
+    my $pdt_tag    = tagset::cs::pdt::encode( $f, 1 );
     $node->set_iset($f);
     $node->set_tag($pdt_tag);
 }
-
-
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -135,8 +130,8 @@ sub convert_tag
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
@@ -145,8 +140,6 @@ sub deprel_to_afun
     }
 }
 
-
-
 #------------------------------------------------------------------------------
 # After all transformations all nodes must have valid afuns (not our pseudo-
 # afuns). Report cases breaching this rule so that we can easily find them in
@@ -154,23 +147,25 @@ sub deprel_to_afun
 #------------------------------------------------------------------------------
 sub check_afuns
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if($afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|ExD|Coord|Apos|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/)
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|ExD|Coord|Apos|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/ )
         {
             $self->log_sentence($root);
-            my $ord = $node->ord();
-            my $form = $node->form();
-            my $tag = $node->tag();
+            my $ord    = $node->ord();
+            my $form   = $node->form();
+            my $tag    = $node->tag();
             my $deprel = $node->conll_deprel();
+
             # This cannot be fatal if we want the trees to be saved and examined in Ttred.
-            if($afun)
+            if ($afun)
             {
                 log_warn("Node $ord:$form/$tag/$deprel still has the pseudo-afun $afun.");
+
                 # Erase the pseudo-afun to avoid further complaints of Treex and Tred.
                 log_info("Removing the pseudo-afun...");
                 $node->set_afun('');
@@ -182,8 +177,6 @@ sub check_afuns
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Shifts afun from preposition to its argument and gives the preposition new
@@ -202,56 +195,58 @@ sub check_afuns
 #------------------------------------------------------------------------------
 sub process_prep_sub_arg
 {
-    my $self = shift;
-    my $node = shift;
+    my $self                = shift;
+    my $node                = shift;
     my $parent_current_afun = shift;
-    my $parent_new_afun = $parent_current_afun;
-    my $current_afun = $node->afun();
+    my $parent_new_afun     = $parent_current_afun;
+    my $current_afun        = $node->afun();
+
     # If I am currently a prep/sub argument, let's steal the parent's afun.
-    if($current_afun eq 'PrepArg')
+    if ( $current_afun eq 'PrepArg' )
     {
-        $current_afun = $parent_current_afun;
+        $current_afun    = $parent_current_afun;
         $parent_new_afun = 'AuxP';
     }
-    elsif($current_afun eq 'SubArg')
+    elsif ( $current_afun eq 'SubArg' )
     {
-        $current_afun = $parent_current_afun;
+        $current_afun    = $parent_current_afun;
         $parent_new_afun = 'AuxC';
     }
+
     # Now let's see whether my children want my afun.
     my $new_afun = $current_afun;
     my @children = $node->children();
     foreach my $child (@children)
     {
+
         # Ask a child if it wants my afun and what afun it thinks I should get.
         # A preposition can have more than one child and some of the children may not be PrepArgs.
         # So only set $new_afun if it really differs from $current_afun (otherwise the first child could propose a change and the second could revert it).
         ###!!! We should check whether several children claim to be prep/sub arguments. Normally it should not happen.
-        my $suggested_afun = $self->process_prep_sub_arg($child, $current_afun);
-        $new_afun = $suggested_afun unless($suggested_afun eq $current_afun);
+        my $suggested_afun = $self->process_prep_sub_arg( $child, $current_afun );
+        $new_afun = $suggested_afun unless ( $suggested_afun eq $current_afun );
     }
     ###!!! DEBUG
-    if(0 && $node->get_bundle()->get_position()+1==64)
+    if ( 0 && $node->get_bundle()->get_position() + 1 == 64 )
     {
         my $message;
-        if($new_afun ne $node->afun())
+        if ( $new_afun ne $node->afun() )
         {
-            $message = sprintf("%d:%s changing afun from %s to $new_afun", $node->ord(), $node->form(), $node->afun());
+            $message = sprintf( "%d:%s changing afun from %s to $new_afun", $node->ord(), $node->form(), $node->afun() );
         }
         else
         {
-            $message = sprintf("%d:%s keeping afun $current_afun", $node->ord(), $node->form());
+            $message = sprintf( "%d:%s keeping afun $current_afun", $node->ord(), $node->form() );
         }
         log_info($message);
     }
     ###!!! END OF DEBUG
     # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
     $node->set_afun($new_afun);
+
     # Let the parent know what I selected for him.
     return $parent_new_afun;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Returns the noun phrase attached directly to the preposition in a
@@ -264,8 +259,9 @@ sub process_prep_sub_arg
 #------------------------------------------------------------------------------
 sub get_preposition_argument
 {
-    my $self = shift;
+    my $self     = shift;
     my $prepnode = shift;
+
     # The assumption is that the preposition governs the noun phrase and not vice versa.
     # If not, run the corresponding transformation prior to calling this method.
     # We cannot reliably assume that a preposition has only one child.
@@ -273,39 +269,39 @@ sub get_preposition_argument
     # We assume that the real argument of the preposition can only have one of selected parts of speech and afuns.
     # (Note that PrepArg is a pseudo-afun that is not defined in PDT but subclasses can use it to explicitly mark preposition arguments
     # whenever no other suitable afun is readily available.)
-    my @prepchildren = grep {$_->afun() eq 'PrepArg'} ($prepnode->children());
-    if(@prepchildren)
+    my @prepchildren = grep { $_->afun() eq 'PrepArg' } ( $prepnode->children() );
+    if (@prepchildren)
     {
-        if(scalar(@prepchildren)>1)
+        if ( scalar(@prepchildren) > 1 )
         {
             $self->log_sentence($prepnode);
-            log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+            log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
             log_warn("More than one preposition argument.");
         }
         return $prepchildren[0];
     }
     else
     {
-        @prepchildren = grep {$_->get_iset('pos') =~ m/^(noun|adj|num)$/} ($prepnode->children());
-        if(@prepchildren)
+        @prepchildren = grep { $_->get_iset('pos') =~ m/^(noun|adj|num)$/ } ( $prepnode->children() );
+        if (@prepchildren)
         {
-            if(scalar(@prepchildren)>1)
+            if ( scalar(@prepchildren) > 1 )
             {
                 $self->log_sentence($prepnode);
-                log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+                log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
                 log_warn("More than one preposition argument.");
             }
             return $prepchildren[0];
         }
         else
         {
-            @prepchildren = grep {$_->afun() =~ m/^(Sb|Obj|Pnom|Adv|Atv|Atr)$/} ($prepnode->children());
-            if(@prepchildren)
+            @prepchildren = grep { $_->afun() =~ m/^(Sb|Obj|Pnom|Adv|Atv|Atr)$/ } ( $prepnode->children() );
+            if (@prepchildren)
             {
-                if(scalar(@prepchildren)>1)
+                if ( scalar(@prepchildren) > 1 )
                 {
                     $self->log_sentence($prepnode);
-                    log_info("Preposition ".$prepnode->ord().":".$prepnode->form());
+                    log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
                     log_warn("More than one preposition argument.");
                 }
                 return $prepchildren[0];
@@ -315,8 +311,6 @@ sub get_preposition_argument
     return undef;
 }
 
-
-
 #------------------------------------------------------------------------------
 # Returns the clause attached directly to the subordinating conjunction. It is
 # difficult to detect without understanding the treebank-specific dependency
@@ -325,28 +319,28 @@ sub get_preposition_argument
 #------------------------------------------------------------------------------
 sub get_subordinator_argument
 {
-    my $self = shift;
-    my $subnode = shift;
-    my @subchildren = grep {$_->afun() eq 'SubArg'} ($subnode->children());
-    if(@subchildren)
+    my $self        = shift;
+    my $subnode     = shift;
+    my @subchildren = grep { $_->afun() eq 'SubArg' } ( $subnode->children() );
+    if (@subchildren)
     {
-        if(scalar(@subchildren)>1)
+        if ( scalar(@subchildren) > 1 )
         {
             $self->log_sentence($subnode);
-            log_info("Subordinator ".$subnode->ord().":".$subnode->form());
+            log_info( "Subordinator " . $subnode->ord() . ":" . $subnode->form() );
             log_warn("More than one subordinator argument.");
         }
         return $subchildren[0];
     }
     else
     {
-        @subchildren = grep {$_->get_iset('pos') =~ m/^(verb)$/} ($subnode->children());
-        if(@subchildren)
+        @subchildren = grep { $_->get_iset('pos') =~ m/^(verb)$/ } ( $subnode->children() );
+        if (@subchildren)
         {
-            if(scalar(@subchildren)>1)
+            if ( scalar(@subchildren) > 1 )
             {
                 $self->log_sentence($subnode);
-                log_info("Subordinator ".$subnode->ord().":".$subnode->form());
+                log_info( "Subordinator " . $subnode->ord() . ":" . $subnode->form() );
                 log_warn("More than one subordinator argument.");
             }
             return $subchildren[0];
@@ -355,46 +349,47 @@ sub get_subordinator_argument
     return undef;
 }
 
-
-
 #------------------------------------------------------------------------------
 # Examines the last node of the sentence. If it is a punctuation, makes sure
 # that it is attached to the artificial root node.
 #------------------------------------------------------------------------------
 sub attach_final_punctuation_to_root
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
+
     # Exclude everything that looks like quotation marks and test the previous node instead.
     # PDT attaches final quote to the main verb and the previous full stop is attached nonprojectively to the root.
     my $fnode;
-    for(my $i = $#nodes; $i>0; $i--)
+    for ( my $i = $#nodes; $i > 0; $i-- )
     {
         $fnode = $nodes[$i];
+
         # Consider previous node if this is a quotation mark. Consider this node otherwise.
         # Note: The quotation mark should be attached to the main verb but we do not care about it here.
-        last unless($fnode->form() =~ m/[`'"\x{2018}-\x{201F}]/);
+        last unless ( $fnode->form() =~ m/[`'"\x{2018}-\x{201F}]/ );
     }
+
     # If the sentence contained only the artificial root, $fnode is not defined but we have no work anyway.
-    return if(!defined($fnode));
+    return if ( !defined($fnode) );
+
     # Exclude some symbols.
     # For example, DDT contained a tree where the last token was '=', s-tagged as coordinator (with missing CoordArg).
     # Attaching such thing to the root prior to restructuring coordinations would make the root a coordination member!
-    if($fnode->get_iset('pos') eq 'punc' && $fnode->form() !~ m/^(=)$/)
+    if ( $fnode->get_iset('pos') eq 'punc' && $fnode->form() !~ m/^(=)$/ )
     {
+
         # If the last token is a quotation mark and there is another punctuation before it (typically [.?!])
         # then the quotation mark is attached non-projectively to its predicate and the other punctuation is AuxK.
-        if($#nodes>1 && $nodes[$#nodes-1]->get_iset('pos') eq 'punc' && $fnode->form() eq '"')
+        if ( $#nodes > 1 && $nodes[ $#nodes - 1 ]->get_iset('pos') eq 'punc' && $fnode->form() eq '"' )
         {
-            $fnode = $nodes[$#nodes-1];
+            $fnode = $nodes[ $#nodes - 1 ];
         }
         $fnode->set_parent($root);
         $fnode->set_afun('AuxK');
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Restructures coordinations to the Prague style.
@@ -408,34 +403,36 @@ sub attach_final_punctuation_to_root
 #------------------------------------------------------------------------------
 sub restructure_coordination
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my $debug = 0;
+
     #my $debug = $self->sentence_contains($root, 'Spürst du das');
-    log_info('DEBUG ON') if($debug);
+    log_info('DEBUG ON') if ($debug);
+
     # Switch between approaches to solving coordination.
     # The former reshapes coordination immediately upon finding it.
     # The latter and older approach first collects all coord structures then reshapes them.
     # It could theoretically suffer from things changing during reshaping.
-    if(1)
+    if (1)
     {
-        $self->shape_coordination_recursively($root, $debug);
+        $self->shape_coordination_recursively( $root, $debug );
     }
     else
     {
         my @coords;
+
         # Collect information about all coordination structures in the tree.
-        $self->detect_coordination($root, \@coords);
+        $self->detect_coordination( $root, \@coords );
+
         # Loop over coordinations and restructure them.
         # Hopefully the order in which the coordinations are processed is not significant.
         foreach my $c (@coords)
         {
-            $self->shape_coordination($c, $debug);
+            $self->shape_coordination( $c, $debug );
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # A different approach: recursively search for coordinations and solve them
@@ -443,10 +440,11 @@ sub restructure_coordination
 #------------------------------------------------------------------------------
 sub shape_coordination_recursively
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my $debug = shift;
-    log_info('DEBUG ON') if($debug);
+    log_info('DEBUG ON') if ($debug);
+
     # Is the current subtree root a coordination root?
     # Look for coordination members.
     my @members;
@@ -454,41 +452,42 @@ sub shape_coordination_recursively
     my @sharedmod;
     my @privatemod;
     my %coord =
-    (
-        'members' => \@members,
-        'delimiters' => \@delimiters,
-        'shared_modifiers' => \@sharedmod,
-        'private_modifiers' => \@privatemod, # for debugging purposes only
-        'oldroot' => $root
-    );
-    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod, $debug);
-    if(@members)
+        (
+        'members'           => \@members,
+        'delimiters'        => \@delimiters,
+        'shared_modifiers'  => \@sharedmod,
+        'private_modifiers' => \@privatemod,    # for debugging purposes only
+        'oldroot'           => $root
+        );
+    $self->collect_coordination_members( $root, \@members, \@delimiters, \@sharedmod, \@privatemod, $debug );
+    if (@members)
     {
-        log_info('COORDINATION FOUND') if($debug);
+        log_info('COORDINATION FOUND') if ($debug);
+
         # We have found coordination! Solve it right away.
-        $self->shape_coordination(\%coord, $debug);
+        $self->shape_coordination( \%coord, $debug );
+
         # Call recursively on all modifier subtrees.
         # Do not call it on all children because they include members and delimiters.
         # Non-first members cannot head nested coordination under this approach.
         ###!!! TO DO: Make this function independent on coord approach taken in the current treebank!
         ###!!! Possible solution: collect_coordination_members() also returns the list of nodes for recursive search.
         # All CoordArg children they may have are considered members of the current coordination.
-        foreach my $node (@sharedmod, @privatemod)
+        foreach my $node ( @sharedmod, @privatemod )
         {
-            $self->shape_coordination_recursively($node, $debug);
+            $self->shape_coordination_recursively( $node, $debug );
         }
     }
+
     # Call recursively on all children if no coordination detected now.
     else
     {
-        foreach my $child ($root->children())
+        foreach my $child ( $root->children() )
         {
-            $self->shape_coordination_recursively($child, $debug);
+            $self->shape_coordination_recursively( $child, $debug );
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Restructures one coordination structure to the Prague style.
@@ -503,39 +502,42 @@ sub shape_coordination_recursively
 #------------------------------------------------------------------------------
 sub shape_coordination
 {
-    my $self = shift;
-    my $c = shift; # reference to hash
+    my $self  = shift;
+    my $c     = shift;    # reference to hash
     my $debug = shift;
-    $debug = 0 if(!defined($debug));
-    if($debug>=1)
+    $debug = 0 if ( !defined($debug) );
+    if ( $debug >= 1 )
     {
-        $self->log_sentence($c->{oldroot});
-        log_info("Coordination members:    ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{members}})));
-        log_info("Coordination delimiters: ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{delimiters}})));
-        log_info("Coordination modifiers:  ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{shared_modifiers}})));
-        if(exists($c->{private_modifiers}))
+        $self->log_sentence( $c->{oldroot} );
+        log_info( "Coordination members:    " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{members} } ) ) );
+        log_info( "Coordination delimiters: " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{delimiters} } ) ) );
+        log_info( "Coordination modifiers:  " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{shared_modifiers} } ) ) );
+        if ( exists( $c->{private_modifiers} ) )
         {
-            log_info("Member modifiers:        ".join(' ', map {$_->ord().':'.$_->form()} (@{$c->{private_modifiers}})));
+            log_info( "Member modifiers:        " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{private_modifiers} } ) ) );
         }
-        log_info("Old root:                ".$c->{oldroot}->ord().':'.$c->{oldroot}->form());
+        log_info( "Old root:                " . $c->{oldroot}->ord() . ':' . $c->{oldroot}->form() );
     }
-    elsif($debug>0)
+    elsif ( $debug > 0 )
     {
-        my @cnodes = sort {$a->ord() <=> $b->ord()} (@{$c->{members}}, @{$c->{delimiters}});
-        log_info(join(' ', map {$_->ord().':'.$_->form()} (@cnodes)));
+        my @cnodes = sort { $a->ord() <=> $b->ord() } ( @{ $c->{members} }, @{ $c->{delimiters} } );
+        log_info( join( ' ', map { $_->ord() . ':' . $_->form() } (@cnodes) ) );
     }
+
     # Get the parent and afun of the whole coordination, from the old root of the coordination.
     # Note that these may have changed since the coordination was detected,
     # as a result of processing other coordinations, if this is a nested coordination.
     my $parent = $c->{oldroot}->parent();
-    if(!defined($parent))
+    if ( !defined($parent) )
     {
-        $self->log_sentence($c->{oldroot});
+        $self->log_sentence( $c->{oldroot} );
         log_fatal('Coordination has no parent.');
     }
+
     # Select the last delimiter as the new root.
-    if(!@{$c->{delimiters}})
+    if ( !@{ $c->{delimiters} } )
     {
+
         # It can happen, however rare, that there are no delimiters between the coordinated nodes.
         # Example: de:
         #   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
@@ -546,37 +548,42 @@ sub shape_coordination
         # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
         # If it was already a deficient coordination, i.e. if it had no delimiters and only one member, then something went wrong
         # (probably it is no coordination at all).
-        log_fatal('Coordination has fewer than two members and no delimiters.') if(scalar(@{$c->{members}})<2);
-        push(@{$c->{delimiters}}, shift(@{$c->{members}}));
+        log_fatal('Coordination has fewer than two members and no delimiters.') if ( scalar( @{ $c->{members} } ) < 2 );
+        push( @{ $c->{delimiters} }, shift( @{ $c->{members} } ) );
     }
+
     # If the last delimiter is punctuation and it occurs after the last member
     # and there is at least one delimiter before the last member, choose this other delimiter.
     # We try to avoid non-coordinating punctuation such as quotation marks after the sentence.
     # However, some non-punctuation delimiters can occur after the last member. Example: "etc".
-    my @ordered_members = sort {$a->ord() <=> $b->ord()} (@{$c->{members}});
+    my @ordered_members  = sort { $a->ord() <=> $b->ord() } ( @{ $c->{members} } );
     my $first_member_ord = $ordered_members[0]->ord();
-    my $last_member_ord = $ordered_members[$#ordered_members]->ord();
-    my @inner_delimiters = grep {$_->ord() > $first_member_ord && $_->ord() < $last_member_ord} (@{$c->{delimiters}});
-    my $croot = scalar(@inner_delimiters) ? pop(@inner_delimiters) : pop(@{$c->{delimiters}});
+    my $last_member_ord  = $ordered_members[$#ordered_members]->ord();
+    my @inner_delimiters = grep { $_->ord() > $first_member_ord && $_->ord() < $last_member_ord } ( @{ $c->{delimiters} } );
+    my $croot            = scalar(@inner_delimiters) ? pop(@inner_delimiters) : pop( @{ $c->{delimiters} } );
+
     # Attach the new root to the parent of the coordination.
     $croot->set_parent($parent);
+
     # Attach all coordination members to the new root.
-    foreach my $member (@{$c->{members}})
+    foreach my $member ( @{ $c->{members} } )
     {
         $member->set_parent($croot);
         $member->set_is_member(1);
     }
+
     # Attach all remaining delimiters to the new root.
-    foreach my $delimiter (@{$c->{delimiters}})
+    foreach my $delimiter ( @{ $c->{delimiters} } )
     {
+
         # The $croot is not guaranteed to be removed from delimiters if it was an inner delimiter.
-        next if($delimiter==$croot);
+        next if ( $delimiter == $croot );
         $delimiter->set_parent($croot);
-        if($delimiter->form() eq ',')
+        if ( $delimiter->form() eq ',' )
         {
             $delimiter->set_afun('AuxX');
         }
-        elsif($delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/)
+        elsif ( $delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/ )
         {
             $delimiter->set_afun('AuxY');
         }
@@ -585,27 +592,28 @@ sub shape_coordination
             $delimiter->set_afun('AuxG');
         }
     }
+
     # Now that members and delimiters are restructured, set also the afuns of the members.
     # Do not ask the former root about its real afun earlier.
     # If it is a preposition and the coordination members still sit among its children, the preposition may not know where to find its real afun.
     my $afun = $c->{oldroot}->get_real_afun() or '';
     $croot->set_afun('Coord');
-    foreach my $member (@{$c->{members}})
+    foreach my $member ( @{ $c->{members} } )
     {
+
         # Assign the afun of the whole coordination to the member.
         # Prepositional members require special treatment: the afun goes to the argument of the preposition.
         # Some members are in fact orphan dependents of an ellided member.
         # Their current afun is ExD and they shall keep it, unlike the normal members.
-        $member->set_real_afun($afun) unless($member->afun() eq 'ExD');
+        $member->set_real_afun($afun) unless ( $member->afun() eq 'ExD' );
     }
+
     # Attach all shared modifiers to the new root.
-    foreach my $modifier (@{$c->{shared_modifiers}})
+    foreach my $modifier ( @{ $c->{shared_modifiers} } )
     {
         $modifier->set_parent($croot);
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Swaps node with its parent. The original parent becomes a child of the node.
@@ -618,29 +626,31 @@ sub shape_coordination
 #------------------------------------------------------------------------------
 sub lift_node
 {
-    my $self = shift;
-    my $node = shift;
-    my $afun = shift; # new afun for the old parent
+    my $self   = shift;
+    my $node   = shift;
+    my $afun   = shift;             # new afun for the old parent
     my $parent = $node->parent();
-    confess('Cannot lift a child of the root') if($parent->is_root());
+    confess('Cannot lift a child of the root') if ( $parent->is_root() );
     my $grandparent = $parent->parent();
+
     # Reattach myself to the grandparent.
     $node->set_parent($grandparent);
-    $node->set_afun($parent->afun());
-    $node->set_conll_deprel($parent->conll_deprel());
+    $node->set_afun( $parent->afun() );
+    $node->set_conll_deprel( $parent->conll_deprel() );
+
     # Reattach all previous siblings to myself.
-    foreach my $sibling ($parent->children())
+    foreach my $sibling ( $parent->children() )
     {
+
         # No need to test whether $sibling==$node as we already reattached $node.
         $sibling->set_parent($node);
     }
+
     # Reattach the previous parent to myself.
     $parent->set_parent($node);
     $parent->set_afun($afun);
     $parent->set_conll_deprel('');
 }
-
-
 
 #------------------------------------------------------------------------------
 # Writes the current sentence including the sentence number to the log. To be
@@ -652,12 +662,11 @@ sub log_sentence
     my $self = shift;
     my $node = shift;
     my $root = $node->get_root();
+
     # get_position() returns numbers from 0 but Tred numbers sentences from 1.
-    my $i = $root->get_bundle()->get_position()+1;
-    log_info("\#$i ".$root->get_zone()->sentence());
+    my $i = $root->get_bundle()->get_position() + 1;
+    log_info( "\#$i " . $root->get_zone()->sentence() );
 }
-
-
 
 #------------------------------------------------------------------------------
 # Returns 1 if the sentence of a given node contains a given substring (mind
@@ -667,18 +676,14 @@ sub log_sentence
 #------------------------------------------------------------------------------
 sub sentence_contains
 {
-    my $self = shift;
-    my $node = shift;
-    my $query = shift;
+    my $self     = shift;
+    my $node     = shift;
+    my $query    = shift;
     my $sentence = $node->get_zone()->sentence();
     return $sentence =~ m/$query/;
 }
 
-
-
 1;
-
-
 
 =over
 

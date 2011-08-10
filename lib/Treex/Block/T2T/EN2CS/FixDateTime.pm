@@ -69,7 +69,7 @@ sub process_year {
     # is_member attribute must remain directly under the conjuction
     # e.g. "In 1980(is_member=1) and 2000(is_member=1)"
     #  ->  "V roce(is_member=1) 1980 a roce(is_member=1) 2000"
-    if ($t_node->is_member){
+    if ( $t_node->is_member ) {
         $t_node->set_is_member(0);
         $new_node->set_is_member(1);
     }

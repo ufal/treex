@@ -21,7 +21,7 @@ sub process_tnode {
             my @amembers = map { $_->get_lex_anode } @tmembers;
 
             if ( ( grep { Treex::Tool::Lexicon::CS::Numerals::is_noncongr_numeral( $_->lemma, $_->tag ) } @amembers ) > 1 ) {
-                                
+
                 my @tsiblings = grep { !$_->is_member() } $tparent->get_children();
 
                 # test the first following non-member child

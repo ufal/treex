@@ -5,24 +5,24 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ($self, $dep, $gov, $d, $g, $en_hash) = @_;
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && ( $d->{case} eq '1') && $g->{num} ne $d->{num}) {
-    my ($enDep, $enGov, $enD, $enG) = $self->get_pair($en_counterpart{$dep});
-    if ($en_counterpart{$gov} && $enGov && $en_counterpart{$gov}->id ne $enGov->id) {
-        return;
-    }
-    
-	my $num = $d->{num};
-	$g->{tag} =~ s/^(...)./$1$num/;
-	if ($d->{tag} =~ /^.......([123])/) {
-	    my $person = $1;
-	    $g->{tag} =~ s/^(.......)./$1$person/;
-	}
-	$self->logfix1($dep, "SubjectPredicateAgreement");
-	$self->regenerate_node($gov, $g->{tag});
-	$self->logfix2($dep);
+    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && ( $d->{case} eq '1' ) && $g->{num} ne $d->{num} ) {
+        my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $en_counterpart{$dep} );
+        if ( $en_counterpart{$gov} && $enGov && $en_counterpart{$gov}->id ne $enGov->id ) {
+            return;
+        }
+
+        my $num = $d->{num};
+        $g->{tag} =~ s/^(...)./$1$num/;
+        if ( $d->{tag} =~ /^.......([123])/ ) {
+            my $person = $1;
+            $g->{tag} =~ s/^(.......)./$1$person/;
+        }
+        $self->logfix1( $dep, "SubjectPredicateAgreement" );
+        $self->regenerate_node( $gov, $g->{tag} );
+        $self->logfix2($dep);
     }
 }
 

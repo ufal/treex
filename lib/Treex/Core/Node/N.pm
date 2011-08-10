@@ -62,7 +62,7 @@ sub set_attr {
 
 #@overrides Treex::Core::Node::remove
 sub remove {
-    my ( $self ) = @_;
+    my ($self) = @_;
     foreach my $m_node ( $self->get_anodes() ) {
         $m_node->_set_n_node(undef);
     }

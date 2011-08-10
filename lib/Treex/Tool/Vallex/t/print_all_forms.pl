@@ -5,30 +5,29 @@ use warnings;
 
 use Treex::Tool::Vallex::ValencyFrame;
 
-
 my $i = 1;
 my %forms;
 
-while ( $i < 14983 ){
-    my $frame = Treex::Tool::Vallex::ValencyFrame->new( {ord => $i++, lexicon => 'vallex.xml', language => 'cs'} );
-    
-    foreach my $element (@{ $frame->elements }){
-        
-        foreach my $form (@{ $element->forms_list }){
-            if (!$forms{$form}){
+while ( $i < 14983 ) {
+    my $frame = Treex::Tool::Vallex::ValencyFrame->new( { ord => $i++, lexicon => 'vallex.xml', language => 'cs' } );
+
+    foreach my $element ( @{ $frame->elements } ) {
+
+        foreach my $form ( @{ $element->forms_list } ) {
+            if ( !$forms{$form} ) {
                 $forms{$form} = [];
             }
             push @{ $forms{$form} }, $frame->lemma . '-' . $frame->POS . ':' . $element->functor;
         }
     }
-    if ( $i % 100 == 0 ){
+    if ( $i % 100 == 0 ) {
         print STDERR $i . ' ';
     }
 }
 print STDERR "Loading done.\n";
-   
-foreach my $form ( keys %forms ){
-    print $form . ': ' . join(' ', @{ $forms{$form} }) . "\n"; 
+
+foreach my $form ( keys %forms ) {
+    print $form . ': ' . join( ' ', @{ $forms{$form} } ) . "\n";
 }
 
 __END__

@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $node ) = @_;
 
-    $node->set_attr('coref_gram.rf', undef);
+    $node->set_attr( 'coref_gram.rf', undef );
 }
 
 1;

@@ -4,6 +4,7 @@ use Treex::Core::Common;
 use File::Slurp;
 with 'Treex::Core::DocumentReader';
 use Treex::Core::Document;
+
 sub next_document {
     my ($self) = @_;
     return log_fatal "method next_document must be overriden in " . ref($self);
@@ -62,16 +63,18 @@ sub _build_filenames {
     my $filenames = [];
 
     # add all files in the 'from' parameter to the list (avoid adding STDIN if filelist is set)
-    if ( $self->from and (not $self->filelist or $self->from ne '-') ) {
+    if ( $self->from and ( not $self->filelist or $self->from ne '-' ) ) {
         push @{$filenames}, split( /[ ,]+/, $self->from );
     }
+
     # add all files from the filelist to the list
     if ( $self->filelist ) {
         my @list = read_file( $self->filelist );
-        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 and not defined($list[0]);
-        @list = map { local $_ = $_; $_ =~ s/\s*\r?\n$//; $_ =~ s/^\s*//; $_ } @list; # remove EOL chars, trim
+        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 and not defined( $list[0] );
+        @list = map { local $_ = $_; $_ =~ s/\s*\r?\n$//; $_ =~ s/^\s*//; $_ } @list;    # remove EOL chars, trim
         push @{$filenames}, @list;
     }
+
     # return the resulting list
     return $filenames;
 }

@@ -5,7 +5,7 @@ use Treex::Tool::Parser::Malt;
 
 use Test::More tests => 3;
 
-my $parser = Treex::Tool::Parser::Malt->new({ model => 'en_nivreeager.mco' });
+my $parser = Treex::Tool::Parser::Malt->new( { model => 'en_nivreeager.mco' } );
 
 isa_ok( $parser, 'Treex::Tool::Parser::Malt', 'parser instantiated' );
 
@@ -17,6 +17,6 @@ my @features = qw(_ _ _);
 
 my ( $parent_indices, $edge_labels ) = $parser->parse( \@forms, \@lemmas, \@cpos, \@pos, \@features );
 
-is_deeply( $parent_indices, [2, 0, 2] , 'topology' );
-is_deeply( $edge_labels, [qw(SBJ ROOT OBJ)] , 'edge labels' );
+is_deeply( $parent_indices, [ 2, 0, 2 ], 'topology' );
+is_deeply( $edge_labels, [qw(SBJ ROOT OBJ)], 'edge labels' );
 

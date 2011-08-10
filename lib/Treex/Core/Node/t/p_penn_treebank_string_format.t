@@ -24,24 +24,22 @@ my $mrg_sample = '
     (. .) ))
 ';
 
-
 my $document = Treex::Core::Document->new;
 my $bundle   = $document->create_bundle;
-my $zone     = $bundle->create_zone( 'en');
+my $zone     = $bundle->create_zone('en');
 
 my $proot = $zone->create_ptree;
+
 #my $child = $proot->create_terminal_child;
 
 $proot->create_from_mrg($mrg_sample);
 
 my @descendants = $proot->get_descendants;
 
-
-is(scalar(@descendants), 28, 'p-tree created from its mrg description');
+is( scalar(@descendants), 28, 'p-tree created from its mrg description' );
 
 # Tests should not leave generated files
 # $document->save('penn_sample.treex');
-
 
 done_testing();
 

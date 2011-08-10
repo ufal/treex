@@ -4,24 +4,23 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
 #------------------------------------------------------------------------------
 # Reads the TamilTB CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
+    my $self   = shift;
+    my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
 
     # Loop over tree nodes.
-    foreach my $node ($a_root->get_descendants())
+    foreach my $node ( $a_root->get_descendants() )
     {
         my $conll_cpos = $node->conll_cpos;
-        my $conll_pos = $node->conll_pos;
+        my $conll_pos  = $node->conll_pos;
         my $conll_feat = $node->conll_feat;
-        my $conll_tag = "$conll_cpos\t$conll_pos\t$conll_feat";
+        my $conll_tag  = "$conll_cpos\t$conll_pos\t$conll_feat";
 
         # fine grained positional tag
         my $pdt_tag = $node->conll_pos;
@@ -109,15 +108,14 @@ sub process_zone
         #my $pdt_tag = tagset::cs::pdt::encode($f, 1);
 
         my $len = length($pdt_tag);
-        if ($len != 9) {
+        if ( $len != 9 ) {
             die "Something wrong with the positional tag: $pdt_tag\n";
         }
+
         #$node->set_iset($f);
         $node->set_tag($pdt_tag);
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -125,14 +123,14 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $afun = $deprel;
-        if($afun =~ s/_M$//)
+        my $afun   = $deprel;
+        if ( $afun =~ s/_M$// )
         {
             $node->set_is_member(1);
         }
@@ -141,8 +139,6 @@ sub deprel_to_afun
 }
 
 1;
-
-
 
 =over
 

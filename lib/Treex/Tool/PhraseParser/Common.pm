@@ -31,7 +31,7 @@ sub prepare_parser_input {
 }
 
 sub escape_form {
-    my ($self, $form) = @_;
+    my ( $self, $form ) = @_;
     $form =~ s/ /_/g;
     $form =~ s/\(/-LRB-/g;
     $form =~ s/\)/-RRB-/g;

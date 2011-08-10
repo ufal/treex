@@ -97,7 +97,7 @@ sub _load_parser {
 }
 
 sub _my_dir {
-    return dirname((caller)[1]);
+    return dirname( (caller)[1] );
 }
 
 sub _build_parser {
@@ -109,10 +109,10 @@ sub _build_parser {
     } and return $parser;
     log_info("Cannot find precompiled scenario parser, trying to build it from grammar");
     use Parse::RecDescent;
-    my $dir     = $self->_my_dir();   #get module's directory
-    my $file    = "$dir/ScenarioParser.rdg";     #find grammar file
+    my $dir  = $self->_my_dir();             #get module's directory
+    my $file = "$dir/ScenarioParser.rdg";    #find grammar file
     log_fatal("Cannot find grammar file") if !-e $file;
-    my $grammar = read_file($file);              #load it
+    my $grammar = read_file($file);          #load it
     eval {
         log_info("Trying to precompile it for you");
         use File::chdir;

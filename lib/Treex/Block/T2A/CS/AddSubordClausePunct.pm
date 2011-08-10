@@ -14,7 +14,7 @@ sub process_zone {
     push @lemmas, 'dummy';
 
     foreach my $i ( 0 .. $#anodes - 1 ) {
-        
+
         # Skip if we are not at the clause boundary
         next if $clause_numbers[$i] == $clause_numbers[ $i + 1 ];
 

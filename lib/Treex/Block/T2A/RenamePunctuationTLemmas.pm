@@ -15,7 +15,7 @@ Readonly my $CONVERT_TABLE => {
     '#Comma'     => ',',      # comma
     '#Semicolon' => ';',      # semicolon
     '#Dash'      => '-',      # hyphen
-    '#Dash'      => '–',      # dash
+    '#Dash'      => '–',    # dash
     '#Slash'     => '/',      # slash
     '#Bracket'   => '(',      # (left) bracket, since right bracket is not present on the t-layer
 };    # the t-lemmas (as in PDT) and the corresponding a-lemmas

@@ -26,7 +26,7 @@ has 'separator' => (
 sub _process_tree() {
 
     my ( $self, $tree ) = @_;
-    
+
     foreach my $node ( $tree->get_descendants ) {
         $self->_process_node($node);
     }
@@ -37,11 +37,11 @@ sub _process_node() {
 
     my ( $self, $node ) = @_;
 
-    my $ref = $self->_attrib_stats;
-    my $node_data = $self->_get_info_list( $node ); 
+    my $ref       = $self->_attrib_stats;
+    my $node_data = $self->_get_info_list($node);
 
     # Proceed for each needed attribute (stored in a multi-level hash)
-    for ( my $i = 0; $i < @{ $node_data }; ++$i ) {
+    for ( my $i = 0; $i < @{$node_data}; ++$i ) {
 
         my $val = $node_data->[$i];
 
@@ -112,6 +112,7 @@ sub _print_stats {
         foreach my $key (
             sort
             {
+
                 # sort by total counts of the portions or by the counts for the given value
                 return $part->{$b} <=> $part->{$a} if ( ref $part->{$a} ne 'HASH' );
                 return $part->{$b}->{'__COUNT__'} <=> $part->{$a}->{'__COUNT__'};

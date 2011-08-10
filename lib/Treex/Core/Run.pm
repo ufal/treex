@@ -186,7 +186,6 @@ has 'survive' => (
     documentation => 'Continue collecting jobs\' outputs even if some of them crashed (risky, use with care!).',
 );
 
-
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
@@ -306,9 +305,9 @@ sub _execute_locally {
 
     # Parameters can contain whitespaces that should be preserved
     my @arguments;
-    foreach my $arg ( @{$self->extra_argv} ) {
+    foreach my $arg ( @{ $self->extra_argv } ) {
         if ( $arg =~ /(\S+)=(.+\s.+)$/ ) {
-            my ($name, $value) = ($1, $2);
+            my ( $name, $value ) = ( $1, $2 );
             $value =~ s/'/\\'/g;
             push @arguments, qq($name='$value');
         }
@@ -444,21 +443,21 @@ sub _create_job_scripts {
     my ($self)      = @_;
     my $current_dir = Cwd::cwd;
     my $workdir     = $self->workdir;
-    
+
     # If there is some stdin piped to treex we must save it to a file
     # and redirect it to the jobs.
     # You cannot use interactive input from terminal to "treex -p".
     # (If you really need it, use perl -npe 1 | treex -p ...)
     my $input = '';
-    if (!-t STDIN){
+    if ( !-t STDIN ) {
         my $stdin_file = "$workdir/input";
         $input = "cat $stdin_file | ";
         open my $TEMP, '>', $stdin_file;
-        while(<STDIN>){
+        while (<STDIN>) {
             print $TEMP $_;
         }
     }
-    
+
     foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
@@ -557,7 +556,7 @@ sub _print_output_files {
         my ($filename) = glob $mask;
         if ( !defined $filename ) {
             my $message = "Document $doc_number finished without producing $mask";
-            if ($self->survive) {
+            if ( $self->survive ) {
                 log_warn("$message (fatal error ignored due to survival mode, be careful)");
                 return;
             }
@@ -574,12 +573,12 @@ sub _print_output_files {
         }
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
-            my $report = $self->forward_error_level;
-            my $success = 0;
+            my $report      = $self->forward_error_level;
+            my $success     = 0;
             while (<$FILE>) {
 
                 # skip [success] indicatory lines, but set the success flag to 1
-                if ($_ =~ /^Document [0-9]+\/[0-9]+ .*: \[success\]\.\r?\n?$/){
+                if ( $_ =~ /^Document [0-9]+\/[0-9]+ .*: \[success\]\.\r?\n?$/ ) {
                     $success = 1;
                     next;
                 }
@@ -595,7 +594,7 @@ sub _print_output_files {
             }
 
             # test for the [success] indication on the last line of STDERR
-            if (!$success){
+            if ( !$success ) {
                 log_fatal "Document $doc_number has not finished successfully";
             }
         }
@@ -761,24 +760,25 @@ sub treex {
     # ref to array of arguments, or a string containing all arguments as on the command line
     my $arguments = shift;
 
-    if ( ref($arguments) eq 'ARRAY' and scalar @$arguments > 0) {
+    if ( ref($arguments) eq 'ARRAY' and scalar @$arguments > 0 ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args = ( argv => $arguments );
         if ( $idx != -1 ) {
             $args{filenames} = [ splice @$arguments, $idx + 1 ];
-            pop @$arguments;                  # delete "--"
+            pop @$arguments;    # delete "--"
         }
         my $runner = Treex::Core::Run->new_with_options( \%args );
         $runner->_execute();
 
     }
 
-    elsif ( defined $arguments and ref($arguments) ne 'ARRAY') {
-        treex( [ grep {defined $_ && $_ ne ''} split( /\s/, $arguments ) ] );
+    elsif ( defined $arguments and ref($arguments) ne 'ARRAY' ) {
+        treex( [ grep { defined $_ && $_ ne '' } split( /\s/, $arguments ) ] );
     }
 
     else {
-        treex ('--help');
+        treex('--help');
+
         #log_fatal 'Unspecified arguments for running treex.';
     }
     return;

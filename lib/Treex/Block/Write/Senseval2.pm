@@ -26,14 +26,14 @@ sub _process_tree() {
         . '" senseid="NOTAG" />' . "\n<context>\n";
 
     my $sent_data = join $self->separator, map { join $self->connector, @{ $self->_get_info_list($_) } } @nodes;
-    
+
     # compulsory XML entities
     $sent_data =~ s/&/&amp;/g;
     $sent_data =~ s/</\&lt;/g;
     $sent_data =~ s/>/\&gt;/g;
-    $sent_data =~ s/"/\&quot;/g;        
+    $sent_data =~ s/"/\&quot;/g;
     $sent_data =~ s/'/\&apos;/g;
-    
+
     print { $self->_file_handle } $sent_data;
 
     print { $self->_file_handle } "\n</context>\n</instance>\n";

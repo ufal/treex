@@ -3,20 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
-has '+language' => (required=>0);
+has '+language' => ( required => 0 );
 
 has [qw(lang1 lang2)] => (
-	isa => 'LangCode',
-    is => 'ro',
+    isa      => 'LangCode',
+    is       => 'ro',
     required => 1,
 );
 
 has [qw(selector1 selector2)] => (
-	isa => 'Selector',
-    is => 'ro',
+    isa     => 'Selector',
+    is      => 'ro',
     default => '',
 );
-
 
 sub next_document {
     my ($self) = @_;
@@ -26,16 +25,16 @@ sub next_document {
 
     LINE:
     foreach my $line ( split /\n/, $text ) {
-        my ($id, $align_type, $align_score, $sent1, $sent2) = split /\t/, $line;
-        if ($align_type ne '1-1'){
-			log_warn "align_type is not 1-1: $line";
-			next LINE;
-		}
+        my ( $id, $align_type, $align_score, $sent1, $sent2 ) = split /\t/, $line;
+        if ( $align_type ne '1-1' ) {
+            log_warn "align_type is not 1-1: $line";
+            next LINE;
+        }
         my $bundle = $document->create_bundle();
-        $bundle->set_attr('czeng/id', $id);
-        $bundle->set_attr('czeng/align_score', $align_score);
+        $bundle->set_attr( 'czeng/id',          $id );
+        $bundle->set_attr( 'czeng/align_score', $align_score );
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
-		$bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
+        $bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
     }
 
     return $document;

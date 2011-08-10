@@ -25,9 +25,7 @@ Readonly my $TAG_FEATS => {
 };    # tag positions and their meanings
 Readonly my $TAG_NOT_SET => "-";    # tagset: undefined value
 
-
 has '+language' => ( required => 1 );
-
 
 # MAIN
 sub process_ttree {
@@ -80,7 +78,7 @@ sub get_node_info {
     $info{"aux_afuns"}  = "";
 
     # get all aux-info nodes
-    my @aux_anodes = $t_node->get_aux_anodes( {ordered => 1} );
+    my @aux_anodes = $t_node->get_aux_anodes( { ordered => 1 } );
 
     # fill in the aux-info
     for my $aux_anode (@aux_anodes) {

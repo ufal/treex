@@ -5,15 +5,14 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
-    
+
     my ( $self, $t_node ) = @_;
 
     # designed to work with and without diathesis/relative clauses in formemes
-    if ( $t_node->formeme =~ m/^v:.*(fin|act|[ar]pass|rc)$/ ) { 
+    if ( $t_node->formeme =~ m/^v:.*(fin|act|[ar]pass|rc)$/ ) {
         $t_node->set_is_clause_head(1);
     }
 }
-
 
 1;
 

@@ -5,12 +5,11 @@ use warnings;
 
 use Treex::Tool::Vallex::ValencyFrame;
 
-
 my $i = 1;
 
-while ( $i < 14983 ){
-    my $frame = Treex::Tool::Vallex::ValencyFrame->new( {ord => $i++, lexicon => 'vallex.xml', language => 'cs'} );
-    
+while ( $i < 14983 ) {
+    my $frame = Treex::Tool::Vallex::ValencyFrame->new( { ord => $i++, lexicon => 'vallex.xml', language => 'cs' } );
+
     print $frame->to_string . "\n";
 }
 

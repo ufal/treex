@@ -4,25 +4,20 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
-
 #------------------------------------------------------------------------------
 # Reads the English tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
+    my $self   = shift;
+    my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+
     # Adjust the tree structure.
 }
 
-
-
 1;
-
-
 
 =over
 

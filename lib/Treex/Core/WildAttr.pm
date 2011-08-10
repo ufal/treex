@@ -6,27 +6,26 @@ use Treex::Core::Log;
 use Data::Dumper;
 
 has wild => (
-    is     => 'rw',
-#    isa    => 'HashRef',
-    reader => '_get_wild',
-    writer => 'set_wild',
+    is => 'rw',
+
+    #    isa    => 'HashRef',
+    reader  => '_get_wild',
+    writer  => 'set_wild',
     default => sub { return {} },
 );
 
-
 sub wild {
     my ($self) = @_;
-    if (not $self->_get_wild) {
-        $self->set_wild({});
+    if ( not $self->_get_wild ) {
+        $self->set_wild( {} );
     }
     return $self->_get_wild;
 
 }
 
-
 sub _wild_dump {
     my ($self) = @_;
-    if ($self->isa('Treex::Core::Document')) {
+    if ( $self->isa('Treex::Core::Document') ) {
         return $self->metaData('pml_root')->{meta}->{wild_dump},
     }
     else {
@@ -35,36 +34,35 @@ sub _wild_dump {
 }
 
 sub _set_wild_dump {
-    my ($self, $value) = @_;
+    my ( $self, $value ) = @_;
 
     my $storing_hash_ref = $self;
-    if ($self->isa('Treex::Core::Document')) {
+    if ( $self->isa('Treex::Core::Document') ) {
         $storing_hash_ref = $self->metaData('pml_root')->{meta};
-    };
+    }
 
     $storing_hash_ref->{wild_dump} = $value;
     return;
 }
 
-
 sub serialize_wild {
     my ($self) = @_;
-    if (not %{$self->wild}) {
+    if ( not %{ $self->wild } ) {
         $self->_set_wild_dump(undef);
     }
     else {
-        $self->_set_wild_dump(Dumper($self->wild));
+        $self->_set_wild_dump( Dumper( $self->wild ) );
     }
     return;
 }
 
 sub deserialize_wild {
     my ($self) = @_;
-    if ($self->_wild_dump) {
-        $self->set_wild(eval "my ".$self->_wild_dump.'; return $VAR1');
+    if ( $self->_wild_dump ) {
+        $self->set_wild( eval "my " . $self->_wild_dump . '; return $VAR1' );
     }
     else {
-        $self->set_wild({});
+        $self->set_wild( {} );
     }
     return;
 }

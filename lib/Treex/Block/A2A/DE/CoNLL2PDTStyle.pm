@@ -4,25 +4,22 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
-
 #------------------------------------------------------------------------------
 # Reads the German tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
+    my $self   = shift;
+    my $zone   = shift;
+    my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
+
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
     $self->process_prepositional_phrases($a_root);
     $self->restructure_coordination($a_root);
     $self->check_afuns($a_root);
 }
-
-
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -31,24 +28,26 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
+    my $self       = shift;
+    my $root       = shift;
+    my @nodes      = $root->get_descendants();
     my $sp_counter = 0;
     foreach my $node (@nodes)
     {
+
         # The corpus contains the following 46 dependency relation tags:
         # -- AC ADC AG AMS APP AVC CC CD CJ CM CP CVC DA DH DM EP HD JU MNR MO NG NK NMC
         # OA OA2 OC OG OP PAR PD PG PH PM PNC PUNC RC RE ROOT RS SB SBP SP SVP UC VO
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
-        my $pos = $node->get_iset('pos');
-        my $ppos = $parent->get_iset('pos');
+        my $pos    = $node->get_iset('pos');
+        my $ppos   = $parent->get_iset('pos');
         my $afun;
+
         # Dependency of the main verb on the artificial root node.
-        if($deprel eq 'ROOT')
+        if ( $deprel eq 'ROOT' )
         {
-            if($pos eq 'verb')
+            if ( $pos eq 'verb' )
             {
                 $afun = 'Pred';
             }
@@ -57,31 +56,35 @@ sub deprel_to_afun
                 $afun = 'ExD';
             }
         }
+
         # Subject.
-        elsif($deprel eq 'SB')
+        elsif ( $deprel eq 'SB' )
         {
             $afun = 'Sb';
         }
+
         # EP = Expletive (výplňové) es
         # Example: 'es' in constructions 'es gibt X' ('there is X').
         # Formally it is the subject of the verb 'geben'.
-        elsif($deprel eq 'EP')
+        elsif ( $deprel eq 'EP' )
         {
             $afun = 'Sb';
         }
+
         # Nominal/adjectival predicative.
-        elsif($deprel eq 'PD')
+        elsif ( $deprel eq 'PD' )
         {
             $afun = 'Pnom';
         }
+
         # Subject or predicative.
         # The parent should have exactly two such arguments. One of them is subject, the other is predicative but we do not know who is who.
         # Our solution: odd occurrences are subjects, even occurrences are predicatives.
         # Note: this occurs only in one sentence of the whole treebank.
-        elsif($deprel eq 'SP')
+        elsif ( $deprel eq 'SP' )
         {
             $sp_counter++;
-            if($sp_counter % 2)
+            if ( $sp_counter % 2 )
             {
                 $afun = 'Sb';
             }
@@ -90,12 +93,14 @@ sub deprel_to_afun
                 $afun = 'Pnom';
             }
         }
+
         # Collocational verb construction (Funktionsverbgefüge): combination of full verb and prepositional phrase.
         # Example: in/CVC Schwung/NK bringen
-        elsif($deprel eq 'CVC')
+        elsif ( $deprel eq 'CVC' )
         {
             $afun = 'Obj';
         }
+
         # NK = Noun Kernel (?) = modifiers of nouns?
         # AG = Genitive attribute.
         # PG = Phrasal genitive (a von-PP used instead of a genitive).
@@ -106,26 +111,30 @@ sub deprel_to_afun
         # NMC = Number component (e.g. 20/NMC Millionen/NK Dollar).
         # HD = Head (???) (e.g. Seit/RR über/RR/MO/einem einem/AA/NK/Seit halben/AA/HD/einem Jahr/NN/NK/Seit) (lit: since over a half year)
         #      This example seems to result from an error during conversion of the Tiger constituent structure to dependencies.
-        elsif($deprel =~ m/^(NK|AG|PG|MNR|PNC|ADC|NMC|HD)$/)
+        elsif ( $deprel =~ m/^(NK|AG|PG|MNR|PNC|ADC|NMC|HD)$/ )
         {
             $afun = 'Atr';
         }
+
         # Negation (usually of adjective or verb): 'nicht'.
-        elsif($deprel eq 'NG')
+        elsif ( $deprel eq 'NG' )
         {
             $afun = 'Adv';
         }
+
         # Measure argument of adjective.
         # Examples: zwei Jahre alt (two years old), zehn Meter hoch (ten meters tall), um einiges besser (somewhat better)
-        elsif($deprel eq 'AMS')
+        elsif ( $deprel eq 'AMS' )
         {
+
             # Inconsistent in PDT, sometimes 'Atr' or even 'Obj' but 'Adv' seems to be the most frequent.
             $afun = 'Adv';
         }
+
         # Modifier. In NPs only focus particles are annotated as modifiers.
-        elsif($deprel eq 'MO')
+        elsif ( $deprel eq 'MO' )
         {
-            if($ppos =~ m/^(noun|adj|num)$/)
+            if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
                 $afun = 'AuxZ';
             }
@@ -134,16 +143,18 @@ sub deprel_to_afun
                 $afun = 'Adv';
             }
         }
+
         # Adverb component. Example:
         # Und/J^/AVC zwar/Db/MO jetzt/Db/ROOT !/Z:/PUNC
-        elsif($deprel eq 'AVC')
+        elsif ( $deprel eq 'AVC' )
         {
             $afun = 'Adv';
         }
+
         # Relative clause.
-        elsif($deprel eq 'RC')
+        elsif ( $deprel eq 'RC' )
         {
-            if($ppos =~ m/^(noun|adj|num)$/)
+            if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
                 $afun = 'Atr';
             }
@@ -152,6 +163,7 @@ sub deprel_to_afun
                 $afun = 'Adv';
             }
         }
+
         # OC = Clausal object. Also verb tokens building a complex verbal form and modal constructions.
         # OA = Accusative object.
         # OA2 = Second accusative object.
@@ -159,47 +171,54 @@ sub deprel_to_afun
         # DA = Dative object or free dative.
         # OP = Prepositional object.
         # SBP = Logical subject in passive construction.
-        elsif($deprel =~ m/^(OC|OA2?|OG|DA|OP|SBP)$/)
+        elsif ( $deprel =~ m/^(OC|OA2?|OG|DA|OP|SBP)$/ )
         {
             $afun = 'Obj';
         }
+
         # Repeated element.
         # Example:
         # darüber/OP ,/PUNC welche/NK ... wäre/RE (darüber is subtree root, comma and wäre are attached to darüber)
-        elsif($deprel eq 'RE')
+        elsif ( $deprel eq 'RE' )
         {
             $afun = 'Atr';
         }
+
         # Reported speech (either direct speech in quotation marks or the pattern in the following example).
         # Perot sei/Vc/RS ein autoritärer Macher, beschreibt/VB/ROOT ihn...
-        elsif($deprel eq 'RS')
+        elsif ( $deprel eq 'RS' )
         {
             $afun = 'Obj';
         }
+
         # CD = Coordinating conjunction.
         # JU = Junctor (conjunction in the beginning of the sentence, deficient coordination).
-        elsif($deprel =~ m/^(CD|JU)$/)
+        elsif ( $deprel =~ m/^(CD|JU)$/ )
         {
             $afun = 'Coord';
         }
+
         # Member of coordination.
-        elsif($deprel eq 'CJ')
+        elsif ( $deprel eq 'CJ' )
         {
             $afun = 'CoordArg';
         }
+
         # Second member of apposition.
-        elsif($deprel eq 'APP')
+        elsif ( $deprel eq 'APP' )
         {
             $afun = 'Apos';
         }
+
         # Adposition (preposition, postposition or circumposition).
         # If the preposition governs the prepositional phrase, its deprel is that of the whole subtree.
         # However, dependent parts of compound prepositions will get AC.
         # Example: aufgrund/RR von/RR Entscheidungen/NN
-        elsif($deprel eq 'AC')
+        elsif ( $deprel eq 'AC' )
         {
             $afun = 'AuxP';
         }
+
         # CP = Complementizer (dass)
         # CM = Comparative conjunction
         # CC = Comparative complement
@@ -207,13 +226,13 @@ sub deprel_to_afun
         # wie Frankreich (like France)
         # It can also be a dependent clause:
         # als/CM dabei gegenwärtige Sünder abgeurteilt werden/CC
-        elsif($deprel =~ m/^C[MP]$/)
+        elsif ( $deprel =~ m/^C[MP]$/ )
         {
             $afun = 'AuxC';
         }
-        elsif($deprel eq 'CC')
+        elsif ( $deprel eq 'CC' )
         {
-            if($ppos =~ m/^(noun|adj|num)$/)
+            if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
                 $afun = 'Atr';
             }
@@ -222,52 +241,59 @@ sub deprel_to_afun
                 $afun = 'Adv';
             }
         }
+
         # PAR = Parenthesis.
         # VO = Vocative.
         # -- = unknown function? First example was a ExD-Pa: WUNSIEDEL, 5. Juli ( dpa/-- ).
-        elsif($deprel =~ m/^(PAR|VO|--)$/)
+        elsif ( $deprel =~ m/^(PAR|VO|--)$/ )
         {
             $afun = 'ExD';
             $node->set_is_parenthesis_root(1);
         }
+
         # DH = Discourse-level head (with direct speech, information about who said that).
         # It is also used for location information in the beginning of a news report. Example:
         # FR/DH :/PUNC Auf die Wahlerfolge... haben/ROOT die Etablierten... reagiert.
         # In PDT such initial localizations are segmented as separate sentences and get the 'ExD' afun.
         # DM = Discourse marker. Example: 'ja' ('yes'). In PDT, 'ano' ('yes') usually gets 'ExD'.
-        elsif($deprel =~ m/^D[HM]$/)
+        elsif ( $deprel =~ m/^D[HM]$/ )
         {
             $afun = 'ExD';
         }
+
         # PH = Placeholder
         # Example: Vorfeld-es
         # Es naht ein Gewitter. (A storm is coming.)
         # 'Gewitter' is subject, so 'es' cannot be subject.
-        elsif($deprel eq 'PH')
+        elsif ( $deprel eq 'PH' )
         {
             $afun = 'AuxO';
         }
+
         # Morphological particle: infinitival marker 'zu' with some verb infinitives.
         # The particle is attached to the verb in Tiger treebank.
         # In Danish DT we dealt with infinitive markers 'at' as with subordinating conjunctions. Should we do the same here?
-        elsif($deprel eq 'PM')
+        elsif ( $deprel eq 'PM' )
         {
             $afun = 'AuxC';
         }
+
         # SVP = Separable verb prefix.
-        elsif($deprel eq 'SVP')
+        elsif ( $deprel eq 'SVP' )
         {
             $afun = 'AuxT';
         }
+
         # Unit component: token in embedded foreign phrase or quotation.
-        elsif($deprel eq 'UC')
+        elsif ( $deprel eq 'UC' )
         {
             $afun = 'Atr';
         }
+
         # Punctuation.
-        elsif($deprel eq 'PUNC')
+        elsif ( $deprel eq 'PUNC' )
         {
-            if($node->form() eq ',')
+            if ( $node->form() eq ',' )
             {
                 $afun = 'AuxX';
             }
@@ -275,13 +301,12 @@ sub deprel_to_afun
             {
                 $afun = 'AuxG';
             }
+
             # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
         }
         $node->set_afun($afun);
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # In Tiger prepositional phrases, not only the noun is attached to the
@@ -299,48 +324,55 @@ sub process_prepositional_phrases
 {
     my $self = shift;
     my $root = shift;
-    foreach my $node ($root->get_descendants({'ordered' => 1}))
+    foreach my $node ( $root->get_descendants( { 'ordered' => 1 } ) )
     {
-        if($node->get_iset('pos') eq 'prep')
+        if ( $node->get_iset('pos') eq 'prep' )
         {
             my @prepchildren = $node->children();
             my $preparg;
+
             # If there are no children this preposition cannot get the AuxP afun.
-            if(scalar(@prepchildren)==0)
+            if ( scalar(@prepchildren) == 0 )
             {
                 next;
             }
+
             # If there is just one child it is the PrepArg.
-            elsif(scalar(@prepchildren)==1)
+            elsif ( scalar(@prepchildren) == 1 )
             {
                 $preparg = $prepchildren[0];
             }
+
             # If there are two or more children we have to estimate which one is the PrepArg.
             # We will assume that the other are in fact modifiers of the PrepArg, not of the preposition.
             else
             {
+
                 # If there are nouns among the children we will pick a noun.
-                my @nouns = grep {$_->get_iset('pos') eq 'noun'} (@prepchildren);
-                if(scalar(@nouns)>0)
+                my @nouns = grep { $_->get_iset('pos') eq 'noun' } (@prepchildren);
+                if ( scalar(@nouns) > 0 )
                 {
+
                     # If there are more than one noun we will pick the first one.
                     # This corresponds well to the pattern noun/anyCase + noun/genitive.
                     # However, we must also do something for other sequences of nouns.
                     $preparg = $nouns[0];
                 }
+
                 # Otherwise we will just pick the first child.
                 else
                 {
                     $preparg = $prepchildren[0];
                 }
             }
+
             # Keep PrepArg as the only child of the AuxP node.
             # Reattach all other children to PrepArg.
-            $preparg->set_afun($node->afun());
+            $preparg->set_afun( $node->afun() );
             $node->set_afun('AuxP');
             foreach my $child (@prepchildren)
             {
-                unless($child==$preparg)
+                unless ( $child == $preparg )
                 {
                     $child->set_parent($preparg);
                 }
@@ -348,8 +380,6 @@ sub process_prepositional_phrases
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Detects coordination in German trees.
@@ -386,45 +416,48 @@ sub process_prepositional_phrases
 #------------------------------------------------------------------------------
 sub detect_coordination
 {
-    my $self = shift;
-    my $root = shift;
-    my $coords = shift; # reference to array where detected coordinations are collected
-    # Look for coordination members.
+    my $self   = shift;
+    my $root   = shift;
+    my $coords = shift;    # reference to array where detected coordinations are collected
+                           # Look for coordination members.
     my @members;
     my @delimiters;
     my @sharedmod;
     my @privatemod;
-    $self->collect_coordination_members($root, \@members, \@delimiters, \@sharedmod, \@privatemod);
-    if(@members)
+    $self->collect_coordination_members( $root, \@members, \@delimiters, \@sharedmod, \@privatemod );
+
+    if (@members)
     {
-        push(@{$coords},
-        {
-            'members' => \@members,
-            'delimiters' => \@delimiters,
-            'shared_modifiers' => \@sharedmod,
-            'private_modifiers' => \@privatemod, # for debugging purposes only
-            'oldroot' => $root
-        });
+        push(
+            @{$coords},
+            {
+                'members'           => \@members,
+                'delimiters'        => \@delimiters,
+                'shared_modifiers'  => \@sharedmod,
+                'private_modifiers' => \@privatemod,    # for debugging purposes only
+                'oldroot'           => $root
+            }
+        );
+
         # Call recursively on all modifier subtrees.
         # Do not call it on all children because they include members and delimiters.
         # Non-first members cannot head nested coordination under this approach.
         # All CoordArg children they may have are considered members of the current coordination.
-        foreach my $node (@sharedmod, @privatemod)
+        foreach my $node ( @sharedmod, @privatemod )
         {
-            $self->detect_coordination($node, $coords);
+            $self->detect_coordination( $node, $coords );
         }
     }
+
     # Call recursively on all children if no coordination detected now.
     else
     {
-        foreach my $child ($root->children())
+        foreach my $child ( $root->children() )
         {
-            $self->detect_coordination($child, $coords);
+            $self->detect_coordination( $child, $coords );
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Collects members, delimiters and modifiers of one coordination. Recursive.
@@ -433,33 +466,37 @@ sub detect_coordination
 #------------------------------------------------------------------------------
 sub collect_coordination_members
 {
-    my $self = shift;
-    my $croot = shift; # the first node and root of the coordination
-    my $members = shift; # reference to array where the members are collected
-    my $delimiters = shift; # reference to array where the delimiters are collected
-    my $sharedmod = shift; # reference to array where the shared modifiers are collected
-    my $privatemod = shift; # reference to array where the private modifiers are collected
-    my $debug = shift;
+    my $self       = shift;
+    my $croot      = shift;    # the first node and root of the coordination
+    my $members    = shift;    # reference to array where the members are collected
+    my $delimiters = shift;    # reference to array where the delimiters are collected
+    my $sharedmod  = shift;    # reference to array where the shared modifiers are collected
+    my $privatemod = shift;    # reference to array where the private modifiers are collected
+    my $debug      = shift;
+
     # Is this the top-level call in the recursion?
-    my $toplevel = scalar(@{$members})==0;
+    my $toplevel = scalar( @{$members} ) == 0;
     my @children = $croot->children();
-    log_info('DEBUG ON '.scalar(@children)) if($debug);
+    log_info( 'DEBUG ON ' . scalar(@children) ) if ($debug);
+
     # No children to search? Nothing to do!
-    return if(scalar(@children)==0);
+    return if ( scalar(@children) == 0 );
+
     # AuxP occurs only if prepositional phrases have already been processed.
     # AuxP node cannot be the first member of coordination ($toplevel).
     # However, AuxP can be non-first member. In that case, its only child bears the CoordArg afun.
-    if($croot->afun() eq 'AuxP')
+    if ( $croot->afun() eq 'AuxP' )
     {
-        if($toplevel)
+        if ($toplevel)
         {
             return;
         }
         else
         {
+
             # We know that there is at least one child (see above) and for AuxP, there should not be more than one child.
             # Make the PrepArg child the member instead of the preposition.
-            $croot = $children[0];
+            $croot    = $children[0];
             @children = $croot->children();
         }
     }
@@ -467,39 +504,44 @@ sub collect_coordination_members
     my @delimiters0;
     my @sharedmod0;
     my @privatemod0;
-    @members0 = grep {my $x = $_; $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep {$_->afun() eq 'CoordArg'} ($x->children())} (@children);
-    if(@members0)
+    @members0 = grep {
+        my $x = $_;
+        $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { $_->afun() eq 'CoordArg' } ( $x->children() )
+    } (@children);
+    if (@members0)
     {
+
         # If $croot is the real root of the whole coordination we must include it in the members, too.
         # However, if we have been called recursively on existing members, these are already present in the list.
-        if($toplevel)
+        if ($toplevel)
         {
-            push(@{$members}, $croot);
+            push( @{$members}, $croot );
         }
-        push(@{$members}, @members0);
+        push( @{$members}, @members0 );
+
         # All children with the 'Coord' afun are delimiters (coordinating conjunctions).
         # Punctuation children are usually delimiters, too.
         # They should appear between two members, which would normally mean between $croot and its (only) CoordArg.
         # However, the method is recursive and "before $croot" could mean between $croot and the preceding member. Same for the other end.
         # So we take all punctuation children and hope that other punctuation (such as delimiting modifier relative clauses) would be descendant but not child.
-        my @delimiters0 = grep {$_->afun() =~ m/^(Coord|AuxX|AuxG)$/} (@children);
-        push(@{$delimiters}, @delimiters0);
+        my @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
+        push( @{$delimiters}, @delimiters0 );
+
         # Recursion: If any of the member children (i.e. any members except $croot)
         # have their own CoordArg children, these are also members of the same coordination.
         foreach my $member (@members0)
         {
-            $self->collect_coordination_members($member, $members, $delimiters);
+            $self->collect_coordination_members( $member, $members, $delimiters );
         }
+
         # If this is the top-level call in the recursion, we now have the complete list of coordination members
         # and we can call the method that collects and sorts out coordination modifiers.
-        if($toplevel)
+        if ($toplevel)
         {
-            $self->collect_coordination_modifiers($members, $sharedmod, $privatemod);
+            $self->collect_coordination_modifiers( $members, $sharedmod, $privatemod );
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # For a list of coordination members, finds their modifiers and sorts them out
@@ -508,50 +550,47 @@ sub collect_coordination_members
 #------------------------------------------------------------------------------
 sub collect_coordination_modifiers
 {
-    my $self = shift;
-    my $members = shift; # reference to input array
-    my $sharedmod = shift; # reference to output array
-    my $privatemod = shift; # reference to output array
-    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
-    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-    # Modifiers of the other members are always private.
-    my $croot = $members->[0];
-    my $ord0 = $croot->ord();
-    my $ord1 = $#{$members}>=1 ? $members->[1]->ord() : -1;
-    foreach my $member (@{$members})
+    my $self       = shift;
+    my $members    = shift;                                           # reference to input array
+    my $sharedmod  = shift;                                           # reference to output array
+    my $privatemod = shift;                                           # reference to output array
+                                                                      # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
+                                                                      # Any left modifiers of the first member will be considered shared modifiers of the coordination.
+                                                                      # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
+                                                                      # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
+                                                                      # Modifiers of the other members are always private.
+    my $croot      = $members->[0];
+    my $ord0       = $croot->ord();
+    my $ord1       = $#{$members} >= 1 ? $members->[1]->ord() : -1;
+    foreach my $member ( @{$members} )
     {
-        my @modifying_children = grep {$_->afun() !~ m/^(CoordArg|Coord|AuxX|AuxG)$/} ($member->children());
-        if($member==$croot)
+        my @modifying_children = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxX|AuxG)$/ } ( $member->children() );
+        if ( $member == $croot )
         {
             foreach my $mchild (@modifying_children)
             {
                 my $ord = $mchild->ord();
-                if($ord<$ord0 || $ord1>=0 && $ord>$ord1)
+                if ( $ord < $ord0 || $ord1 >= 0 && $ord > $ord1 )
                 {
-                    push(@{$sharedmod}, $mchild);
+                    push( @{$sharedmod}, $mchild );
                 }
                 else
                 {
+
                     # This modifier of the first member occurs between the first and the second member.
                     # Consider it private.
-                    push(@{$privatemod}, $mchild);
+                    push( @{$privatemod}, $mchild );
                 }
             }
         }
         else
         {
-            push(@{$privatemod}, @modifying_children);
+            push( @{$privatemod}, @modifying_children );
         }
     }
 }
 
-
-
 1;
-
-
 
 =over
 

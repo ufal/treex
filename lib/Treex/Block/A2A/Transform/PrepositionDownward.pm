@@ -9,19 +9,21 @@ sub BUILD {
     my ($self) = @_;
 
     $self->set_transformer(
-        Treex::Tool::ATreeTransformer::DepReverser->new({
-            subscription => $self->subscription,
-            nodes_to_reverse => sub {
-                my ($child,$parent) = @_;
-                return ($parent->afun eq 'AuxP' and $child->afun ne 'AuxP');
-            },
-            move_with_parent => sub {
-                my ($node) = @_;
-                return $node->afun eq 'AuxP';
-            },
-            move_with_child => sub { 1 },
-        })
-    )
+        Treex::Tool::ATreeTransformer::DepReverser->new(
+            {
+                subscription     => $self->subscription,
+                nodes_to_reverse => sub {
+                    my ( $child, $parent ) = @_;
+                    return ( $parent->afun eq 'AuxP' and $child->afun ne 'AuxP' );
+                },
+                move_with_parent => sub {
+                    my ($node) = @_;
+                    return $node->afun eq 'AuxP';
+                },
+                move_with_child => sub {1},
+            }
+            )
+        )
 }
 
 1;

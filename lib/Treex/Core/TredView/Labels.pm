@@ -217,6 +217,7 @@ sub _anode_labels {
 
     my $line3_1 = $node->tag ? $node->tag : "";
     my $line3_2 = $node->lemma;
+
     # DZ: This hack tries to distinguish Dan's CoNLL trees from Pepa's PEDT trees
     #     so that Czech tags don't get crippled in the former.
     # if ( $node->language eq 'cs' ) {
@@ -236,10 +237,10 @@ sub _tnode_labels {
     my ( $self, $node ) = @_;
 
     my $line1 = $node->t_lemma;
-    if ($node->is_parenthesis){
+    if ( $node->is_parenthesis ) {
         $line1 = $self->_colors->get( 'parenthesis', 1 ) . $line1;
     }
-    if ($node->sentmod){
+    if ( $node->sentmod ) {
         $line1 .= $self->_colors->get( 'sentmod', 1 ) . '.' . $node->sentmod;
     }
 

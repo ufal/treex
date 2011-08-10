@@ -5,20 +5,20 @@ use AI::MaxEntropy;
 extends 'Treex::Block::Filter::CzEng::Common';
 
 has modelfile => (
-    isa => 'Str',
-    is => 'ro',
-    required => 0,
-    default => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 0,
+    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
     documentation => 'file that contains a model trained by TrainMaxEntModel'
 );
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
-    my $model = AI::MaxEntropy::Model->new($self->{modelfile});
+    my $model = AI::MaxEntropy::Model->new( $self->{modelfile} );
 
     my @features = $self->get_features($bundle);
-    
-    $self->add_feature( $bundle, 'maxent_output=' . $model->predict(\@features) );
+
+    $self->add_feature( $bundle, 'maxent_output=' . $model->predict( \@features ) );
 
     return 1;
 }

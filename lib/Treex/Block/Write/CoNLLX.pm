@@ -12,7 +12,7 @@ sub process_atree {
         my ( $lemma, $tag, $deprel ) =
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
             qw(lemma tag conll_deprel);
-        my $ctag = $self->get_coarse_grained_tag($tag);
+        my $ctag  = $self->get_coarse_grained_tag($tag);
         my $p_ord = $anode->get_parent->ord;
         print join( "\t", $anode->ord, $anode->form, $lemma, $ctag, $tag, '_', $p_ord, $deprel ) . "\n";
     }
@@ -21,10 +21,9 @@ sub process_atree {
 }
 
 sub get_coarse_grained_tag {
-    my ($self, $tag) = @_;
+    my ( $self, $tag ) = @_;
     return substr $tag, 0, 2;
 }
-
 
 1;
 

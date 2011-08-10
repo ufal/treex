@@ -16,7 +16,7 @@ my %contents = (
     #reported by Zdenek Zabokrtsky
     '\\'      => CANNOT,
     'aaa aaa' => CANNOT,
-    'XXX XXX' => q{Can't use block Treex::Block::XXX},  #Scenario will be Treex::Block::XXX Treex::Block::XXX
+    'XXX XXX' => q{Can't use block Treex::Block::XXX},    #Scenario will be Treex::Block::XXX Treex::Block::XXX
 );
 my %create = (
     'cs_synthesis_pdt.scen' => <<'EOF',
@@ -48,23 +48,35 @@ my @filenames;
 BEGIN { use_ok('Treex::Core::Scenario'); }
 foreach my $content ( keys %contents ) {
     my $expected = $contents{$content};
-    my $name = 'test' . int( rand(10000) ) . '.scen';
+    my $name     = 'test' . int( rand(10000) ) . '.scen';
     SKIP: {
         push @filenames, $name;
         note("Writing '$content' to $name");
         write_file( $name, $content ) or skip "cannot write testing scenario to $name", 1;
 
-        combined_like( sub { eval{Treex::Core::Scenario->new( from_file => $name )} }, qr/$expected/, "Output of parsing '$content' contains '$expected' " );
+        combined_like(
+            sub {
+                eval { Treex::Core::Scenario->new( from_file => $name ) };
+            },
+            qr/$expected/,
+            "Output of parsing '$content' contains '$expected' "
+        );
 
     }
 }
-foreach my $name (keys %create) {
+foreach my $name ( keys %create ) {
     write_file( $name, $create{$name} );
     push @filenames, $name;
 }
-foreach my $file (keys %files) {
+foreach my $file ( keys %files ) {
     my $expected = $files{$file};
-    combined_like( sub { eval{Treex::Core::Scenario->new( from_file => $file )} }, qr/$expected/, "Output of parsing '$file' contains '$expected' " );
+    combined_like(
+        sub {
+            eval { Treex::Core::Scenario->new( from_file => $file ) };
+        },
+        qr/$expected/,
+        "Output of parsing '$file' contains '$expected' "
+    );
 }
 done_testing();
 

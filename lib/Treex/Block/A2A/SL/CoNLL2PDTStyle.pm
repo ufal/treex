@@ -4,22 +4,19 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-
-
 #------------------------------------------------------------------------------
 # Reads the Slovene tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self = shift;
-    my $zone = shift;
+    my $self   = shift;
+    my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
 }
-
-
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -27,29 +24,30 @@ sub process_zone
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $afun = $deprel;
+        my $afun   = $deprel;
         $node->set_afun($afun);
+
         # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
         # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
         # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
         # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
         my $pdeprel = $node->parent()->conll_deprel();
-        $pdeprel = '' if(!defined($pdeprel));
-        if($pdeprel =~ m/^(Coord|Apos)$/ &&
-           $afun !~ m/^(Aux[GKXY])$/)
+        $pdeprel = '' if ( !defined($pdeprel) );
+        if ($pdeprel =~ m/^(Coord|Apos)$/
+            &&
+            $afun !~ m/^(Aux[GKXY])$/
+            )
         {
             $node->set_is_member(1);
         }
     }
 }
-
-
 
 #------------------------------------------------------------------------------
 # Final punctuation is usually attached to the root. However, if there are
@@ -60,23 +58,19 @@ sub deprel_to_afun
 #------------------------------------------------------------------------------
 sub attach_final_punctuation_to_root
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxK' && $node->parent() != $root)
+        if ( $node->afun() eq 'AuxK' && $node->parent() != $root )
         {
             $node->set_parent($root);
         }
     }
 }
 
-
-
 1;
-
-
 
 =over
 
