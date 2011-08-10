@@ -14,9 +14,12 @@ sub process_bundle {
 
     my $zone = $zones[0];
     my $language = $zone->language;
+
+    $bundle->get_document->path =~ /(trans_\w+)/;
+    my $directory = $1;
     foreach my $anode ($zone->get_atree->get_descendants) {
-        my $transformation = (join ' ',grep {/^trans/} sort keys %{$anode->wild}) || 'unchanged';
-        print "$language\t$transformation\n";
+        my $transformation = (join ' ',grep {/^trans/} sort keys %{$anode->wild}) || '';
+        print "$language\t$directory\t$transformation\n";
     }
 }
 
