@@ -118,7 +118,7 @@ Treex::Core::Config - centralized info about Treex configuration
 =head1 SYNOPSIS
 
   use Treex::Core::Config;
-  print "TrEd in availabe in " . Treex::Core::Config::tred_dir . "\n";
+  print "TrEd in available in " . Treex::Core::Config::tred_dir . "\n";
   print "PML schema is available in " . Treex::Core::Config::pml_schema_dir . "\n";
 
 =head1 DESCRIPTION

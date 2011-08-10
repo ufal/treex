@@ -1,7 +1,10 @@
 package Treex::Block::A2A::Transform::SharedModifBelowNearestMember;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2A::Transform::BaseTransformer';
+
+# warning: this module does not use the 'transformer' attribute,
+# since the simple functionality is implemented directly in this module
 
 sub process_atree {
     my ( $self, $atree ) = @_;

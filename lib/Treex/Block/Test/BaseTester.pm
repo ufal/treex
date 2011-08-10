@@ -9,7 +9,7 @@ sub _subscription {
     return $1;
 }
 
-sub report {
+sub complain {
     my ( $self, $node, $message ) = @_;
     print $self->_subscription,
         "\t", $node->get_address,
@@ -24,7 +24,7 @@ sub report {
 =item Treex::Block::Test::BaseTester
 
 Common predecessor for testing blocks.
-Added method: $block->report($node,$message?)
+Added method: $block->complain($node,$message?)
 which prints block's subscription (shortened name), node address,
 and optionally an additional message.
 
