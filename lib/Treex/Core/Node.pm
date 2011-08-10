@@ -713,7 +713,7 @@ sub set_r_attr {
 # ---------------------
 
 
-=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value
+=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value get_fposition
 
 
 =encoding utf-8
