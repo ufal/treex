@@ -1,7 +1,7 @@
 package Treex::Tool::EnglishMorpho::Lemmatizer;
-use strict;
-use warnings;
+use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
 use File::Slurp;
 use utf8;
 
@@ -15,13 +15,48 @@ sub _directory_of_this_module {
 }
 my $my_directory = _directory_of_this_module;
 
-my $EXCEPTIONS_FILENAME    = $my_directory . '/exceptions.tsv';
-my $NEGATION_FILENAME      = $my_directory . '/negation';
-my $CUT_NEGATION           = 1;
-my $LOWERCASE_PROPER_NAMES = 0;
+has 'exceptions_filename' => (
+    is       => 'ro',
+    init_arg => undef,
+    #reader   => 'exceptions_filename',
+    default  => sub {
+        return require_file_from_share('/data/models/lemmatizer/en/exceptions.tsv');
+    },
+);
 
-my %exceptions;    #These two variables
-my $negation;      # are filled at the end of this  module
+has 'negation_filename' => (
+    is       => 'ro',
+    init_arg => undef,
+    default  => sub {
+        return require_file_from_share('/data/models/lemmatizer/en/negation');
+    },
+);
+
+has 'exceptions' => (
+    is       => 'ro',
+    builder  => '_load_exceptions',
+    init_arg => undef,
+    lazy     => 1,
+);
+
+has 'negation' => (
+    is       => 'ro',
+    builder  => '_load_negation',
+    init_arg => undef,
+    lazy     => 1,
+);
+
+has 'cut_negation' => (
+    isa     => 'Bool',
+    default => 1,
+    reader  => 'cut_negation',
+);
+
+has 'lowercase_proper_names' => (
+    isa     => 'Bool',
+    default => 0,
+    reader  => 'lowercase_proper_names',
+);
 
 my $V   = qr/[aeiou]/;
 my $VY  = qr/[aeiouy]/;
@@ -35,33 +70,33 @@ my $PRE = qr/(be|ex|in|mis|pre|pro|re)/;
 #Input:  word form and POS tag (Penn style)
 #Output: lemma and was_negative_prefix
 sub lemmatize {
-    my ( $word, $tag ) = @_;
+    my ( $self, $word, $tag ) = @_;
     my $negative_prefix = 0;
 
-    if ( ( $tag !~ /^NNP/ || $LOWERCASE_PROPER_NAMES ) && $word ne 'I' ) {
+    if ( ( $tag !~ /^NNP/ || $self->lowercase_proper_names ) && $word ne 'I' ) {
         $word = lc $word;
     }
 
-    my $entry = $exceptions{$tag}{$word};
+    my $entry = $self->exceptions->{$tag}{$word};
     if ($entry) {
         return @$entry;
 
     }
     else {
-        if ($CUT_NEGATION) {
-            ( $word, $negative_prefix ) = _cut_negative_prefix( $word, $tag );
+        if ( $self->cut_negation ) {
+            ( $word, $negative_prefix ) = $self->_cut_negative_prefix( $word, $tag );
         }
-        return ( _lemmatize_by_rules( $word, $tag ), $negative_prefix );
+        return ( $self->_lemmatize_by_rules( $word, $tag ), $negative_prefix );
     }
 }
 
 sub _cut_negative_prefix {
-    my ( $word, $tag ) = @_;
+    my ( $self, $word, $tag ) = @_;
 
     # We are interested only in adjectives, adverbs and nouns.
     # English verbs are negated usually by "not" (don't,...).
     # Proper nouns (NNP,NNPS) are also left unchanged (Disney, Intel, Irvin... Non-IBM).
-    if ( $tag =~ /^(J.*|R.*|NN|NNS)$/ and $word =~ $negation ) {
+    if ( $tag =~ /^(J.*|R.*|NN|NNS)$/ and $word =~ $self->negation ) {
         $word =~ s/^(un|in|im|non-?|dis-?|il|ir)//;
         return ( $word, 1 );
     }
@@ -69,6 +104,7 @@ sub _cut_negative_prefix {
 }
 
 sub _lemmatize_NNS_NNPS {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/men$/man/;          #over 600 words (in BNC)
     return $word if $word =~ s/shoes$/shoe/;
@@ -90,6 +126,7 @@ sub _lemmatize_NNS_NNPS {
 }
 
 sub _lemmatize_VBG {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/(${CXY}z)ing$/$1/;
     return $word if $word =~ s/(${VY}z)ing$/$1e/;
@@ -128,6 +165,7 @@ sub _lemmatize_VBG {
 }
 
 sub _lemmatize_VBD_VBN {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/en$/e/;
     return $word if $word =~ s/(${CXY}z)ed$/$1/;
@@ -165,6 +203,7 @@ sub _lemmatize_VBD_VBN {
 }
 
 sub _lemmatize_VBZ {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/(${V}se)s$/$1/;
     return $word if $word =~ s/(.${CXY}z)es$/$1/;
@@ -181,6 +220,7 @@ sub _lemmatize_VBZ {
 }
 
 sub _lemmatize_JJR_RBR {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/([^e]ll)er$/$1/;                           #smaller
     return $word if $word =~ s/($C)\1er$/$1/;                             #bigger
@@ -195,6 +235,7 @@ sub _lemmatize_JJR_RBR {
 }
 
 sub _lemmatize_JJS_RBS {
+    my $self = shift;
     my $word = shift;
     return $word if $word =~ s/([^e]ll)est$/$1/;                           #smallest
     return $word if $word =~ s/(.)\1est$/$1/;                              #biggest
@@ -208,7 +249,7 @@ sub _lemmatize_JJS_RBS {
 }
 
 sub _lemmatize_by_rules {
-    my ( $word, $tag ) = @_;
+    my ( $self, $word, $tag ) = @_;
 
     my $lemma = $tag =~ /NNP?S/
         ? _lemmatize_NNS_NNPS($word)
@@ -223,47 +264,35 @@ sub _lemmatize_by_rules {
     return $lemma;
 }
 
-sub load_exceptions {
-    my $filename = shift;
-    if ( -f $filename ) {
-        log_debug( "Loading lemmatization exceptions from $filename ...", 1 );
-        open my $I, "<:encoding(utf-8)", $filename or log_fatal($!);
-        while (<$I>) {
-            chomp;
-            my ( $word, $tag, $lemma, $negative_prefix ) = split /\t/;
+sub _load_exceptions {
+    my $self = shift;
+    my %exceptions;
+    log_debug( $self->exceptions_filename );
+    open my $ex_file, "<:encoding(utf-8)", $self->exceptions_filename or log_fatal($!);
+    while (<$ex_file>) {
+        chomp;
+        my ( $word, $tag, $lemma, $negative_prefix ) = split /\t/;
 
-            $negative_prefix = ( defined $negative_prefix and $negative_prefix eq '1' );
-            $exceptions{$tag}{$word} = [ $lemma, $negative_prefix ];
-        }
-        close $I;
+        $negative_prefix = ( defined $negative_prefix and $negative_prefix eq '1' );
+        $exceptions{$tag}{$word} = [ $lemma, $negative_prefix ];
     }
-    else {
-        log_fatal("File with lemmatization exceptions not found. Looking at $filename\n");
-    }
-    return;
+    close $ex_file;
+    return \%exceptions;
 }
 
-sub load_negation {
-    my $filename = shift;
-    my $pattern  = '';
-    if ( -f $filename ) {
-        log_debug( "Loading lemmatization exceptions from $filename ...", 1 );
-        my @lines = read_file( $filename, binmode => ':encoding(utf-8)', err_mode => 'silent' ) or log_fatal("Cannot load lemmatization exceptions from $filename");
-        chomp(@lines);
-        $pattern = join '|', @lines;
+sub _load_negation {
+    my $self    = shift;
+    my $pattern = '';
+    my @lines   = read_file( $self->negation_filename, binmode => ':encoding(utf-8)', err_mode => 'log_fatal' );
 
-        #$pattern =~ s/-/\-/g;
-        $negation = qr/^($pattern)/;
-    }
-    else {
-        log_fatal("File with lemmatization exceptions not found. Looking at $filename\n");
-    }
-    return;
+    # or log_fatal('Cannot load lemmatization exceptions from ' . $self->negation_filename);
+    chomp(@lines);
+    $pattern = join '|', @lines;
+
+    #$pattern =~ s/-/\-/g;
+    my $negation = qr/^($pattern)/;
+    return $negation;
 }
-
-load_exceptions($EXCEPTIONS_FILENAME);
-load_negation($NEGATION_FILENAME);
-log_debug( 'Lemmatization exceptions loaded.', 1 );
 
 1;
 

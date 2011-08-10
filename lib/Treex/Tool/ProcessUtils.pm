@@ -1,23 +1,24 @@
 package Treex::Tool::ProcessUtils;
-
-# Ondrej Bojar
 use strict;
 use warnings;
-
 use IPC::Open2;
 use IPC::Open3;
 use IO::Handle;
+
+use Treex::Core::Log;
 
 # Open a bipipe and set binmode to utf8.
 sub bipipe {
     my $cmd     = shift;
     my $binmode = shift;
-    $binmode = ":utf8" if !defined $binmode;
+    if ( !defined $binmode ) {
+        $binmode = ":utf8";
+    }
 
     my $reader;
     my $writer;
     my $pid = open2( $reader, $writer, $cmd );
-    die "Failed to open bipipe to: $cmd" if !$pid;
+    log_fatal("Failed to open bipipe to: $cmd") if !$pid;
     $writer->autoflush(1);
     $reader->autoflush(1);
 
@@ -31,13 +32,15 @@ sub bipipe {
 sub verbose_bipipe {
     my $cmd     = shift;
     my $binmode = shift;
-    $binmode = ":utf8" if !defined $binmode;
+    if ( !defined $binmode ) {
+        $binmode = ":utf8";
+    }
 
     my $reader;
     my $writer;
     *ERR = *STDOUT;
     my $pid = open3( $reader, '>&ERR', '>&ERR', $cmd );
-    die "Failed to open verbose_bipipe to: $cmd" if !$pid;
+    log_fatal("Failed to open verbose_bipipe to: $cmd") if !$pid;
 
     #$writer->autoflush(1);
     #$reader->autoflush(1);
@@ -52,17 +55,20 @@ sub verbose_bipipe {
 sub logging_bipipe {
     my $cmd     = shift;
     my $binmode = shift;
-    $binmode = ":utf8" if !defined $binmode;
+    if ( !defined $binmode ) {
+        $binmode = ":utf8";
+    }
 
     my $reader;
     my $writer;
     {
+
         # TODO use lexical filehandles instad
         no warnings 'once';
         open( LOG, '>>process_utils.log' );
     }
     my $pid = open3( $reader, $writer, '>&LOG', $cmd );
-    die "Failed to open logging_pipe to: $cmd" if !$pid;
+    log_fatal("Failed to open logging_pipe to: $cmd") if !$pid;
     $writer->autoflush(1);
     $reader->autoflush(1);
 
@@ -88,7 +94,7 @@ sub safesystem {
             ( $? & 127 ), ( $? & 128 ) ? 'with' : 'without';
         exit(1);
     }
-    else {
+        else {
         my $exitcode = $? >> 8;
 
         # print STDERR "Exit code: $exitcode\n" if $exitcode;
@@ -107,8 +113,8 @@ sub get_bytes {
     my $fn  = shift;
     my $key = shift;
     my $bytes;
-    open INF, $fn or die "Can't read $fn";
-    while (<INF>) {
+    open my $INF, $fn or die "Can't read $fn";
+    while (<$INF>) {
         chomp;
         if (/^$key\s*([0-9]+)\s*([a-zA-Z]+)\s*$/) {
             my $amount = $1;
@@ -118,7 +124,7 @@ sub get_bytes {
             last;
         }
     }
-    close INF;
+    close $INF;
     return $bytes;
 }
 

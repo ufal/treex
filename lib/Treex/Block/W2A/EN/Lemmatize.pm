@@ -5,12 +5,26 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::EnglishMorpho::Lemmatizer;
 
+has 'lemmatizer' => (
+    is       => 'ro',
+    isa      => 'Treex::Tool::EnglishMorpho::Lemmatizer',
+    builder  => '_build_lemmatizer',
+    init_arg => undef,
+    lazy     => 1,
+);
+
 sub process_anode {
     my ( $self, $anode ) = @_;
-    my ( $lemma, $neg ) = Treex::Tool::EnglishMorpho::Lemmatizer::lemmatize( $anode->form, $anode->tag );
+    my ( $lemma, $neg ) = $self->lemmatizer->lemmatize( $anode->form, $anode->tag );
     $anode->set_lemma($lemma);
 
     return 1;
+}
+
+sub _build_lemmatizer {
+    my $self       = shift;
+    my $lemmatizer = Treex::Tool::EnglishMorpho::Lemmatizer->new();
+    return $lemmatizer;
 }
 
 1;
