@@ -49,6 +49,6 @@ stdout_is( sub { treex $cmdline_arguments }, "a=b", "running treex from perl, ch
 SKIP: {
     skip "Cannot execute treex", 1 if $skip;
     system "$runner_cmd $cmdline_arguments > $test_output_file";
-    stdout_is( sub { open I, $test_output_file or die $!; print $_ while (<I>) }, "a=b", "running treex from perl, checking equal signs in arguments" );
+    stdout_is( sub { open I, $test_output_file or die $!; print $_ while (<I>) }, "a=b", "running treex by system, checking equal signs in arguments" );
 }
 unlink $test_output_file, $test_data_file;

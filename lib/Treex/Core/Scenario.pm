@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
-use Treex::Core::ScenarioParser;
 
 has loaded_blocks => (
     is      => 'ro',
@@ -35,6 +34,14 @@ has _global_params => (
     },
 );
 
+has parser => (
+    is            => 'ro',
+    isa           => 'Parse::RecDescent',
+    init_arg      => undef,
+    builder       => '_build_parser',
+    documentation => q{Parses treex scenarios}
+);
+
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
     log_info("Initializing an instance of Treex::Core::Scenario ...");
@@ -45,7 +52,7 @@ sub BUILD {
     #>>>
     log_fatal 'No blocks specified for a scenario!' if !defined $scen_str;
 
-    my @block_items = parse_scenario_string( $scen_str, $arg_ref->{from_file} );
+    my @block_items = $self->parse_scenario_string( $scen_str, $arg_ref->{from_file} );
     my $block_count = @block_items;
     log_fatal('Empty block sequence cannot be used for initializing scenario!') if $block_count == 0;
 
@@ -83,6 +90,44 @@ sub BUILD {
     return;
 }
 
+sub _load_parser {
+    my $self = shift;
+    require Treex::Core::ScenarioParser;
+    return Treex::Core::ScenarioParser->new();
+}
+
+sub _my_dir {
+    return dirname((caller)[1]);
+}
+
+sub _build_parser {
+    my $self = shift;
+    my $parser;
+    eval {
+        $parser = $self->_load_parser();
+        1;
+    } and return $parser;
+    log_info("Cannot find precompiled scenario parser, trying to build it from grammar");
+    use Parse::RecDescent;
+    my $dir     = $self->_my_dir();   #get module's directory
+    my $file    = "$dir/ScenarioParser.rdg";     #find grammar file
+    log_fatal("Cannot find grammar file") if !-e $file;
+    my $grammar = read_file($file);              #load it
+    eval {
+        log_info("Trying to precompile it for you");
+        use File::chdir;
+        local $CWD = $dir;
+        Parse::RecDescent->Precompile( $grammar, 'Treex::Core::ScenarioParser' );
+        $parser = $self->_load_parser();
+        1;
+    } or eval {
+        log_info("Cannot precompile, loading directly from grammar. Consider precompiling it manually");
+        $parser = Parse::RecDescent->new($grammar);    #create parser
+        1;
+    } or log_fatal("Cannot create Scenario parser");
+    return $parser;
+}
+
 sub load_scenario_file {
     my ($scenario_filename) = @_;
     log_info "Loading scenario description $scenario_filename";
@@ -92,10 +137,9 @@ sub load_scenario_file {
 }
 
 sub parse_scenario_string {
-    my ( $scenario_string, $from_file ) = @_;
+    my ( $self, $scenario_string, $from_file ) = @_;
 
-    my $parser = Treex::Core::ScenarioParser->new() or log_fatal("Cannot create Scenario parser");
-    my $parsed = $parser->startrule( $scenario_string, 1, $from_file );
+    my $parsed = $self->parser->startrule( $scenario_string, 1, $from_file );
     log_fatal("Cannot parse the scenario: $scenario_string") if not defined $parsed;
     return @$parsed;
 }
@@ -104,9 +148,9 @@ sub parse_scenario_string {
 sub construct_scenario_string {
     my ( $block_items, $multiline ) = @_;
     my $delim = $multiline ? qq{\n} : q{ };
-    my @block_with_args = map { $_->{block_name} . q{ } . join( q{ }, @{ $_->{block_parameters} } ) } @$block_items;  # join block name and its parameters
+    my @block_with_args = map { $_->{block_name} . q{ } . join( q{ }, @{ $_->{block_parameters} } ) } @$block_items;    # join block name and its parameters
     my @stripped;
-    foreach my $block (@block_with_args) { # strip leading Treex::Block::
+    foreach my $block (@block_with_args) {                                                                              # strip leading Treex::Block::
         $block =~ s{^Treex::Block::}{};
         push @stripped, $block;
     }
