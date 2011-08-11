@@ -6,8 +6,9 @@ use ProcessUtils;
 use File::Java;
 use File::Temp qw /tempdir/;
 
-has model  => ( isa => 'Str', is => 'rw', required => 1 );
-has memory => ( isa => 'Str', is => 'rw', default  => '1800m' );
+has model      => ( isa => 'Str', is => 'rw', required => 1);
+has memory     => ( isa => 'Str',  is => 'rw', default => '2500m' );
+
 
 sub BUILD {
     my ($self) = @_;
@@ -15,21 +16,27 @@ sub BUILD {
     my $bindir = "$ENV{TMT_ROOT}/share/installed_tools/malt_parser";
     die "Missing $bindir\n" if !-d $bindir;
 
-    my $modeldir = "$ENV{TMT_ROOT}/share/data/models/malt_parser";
-    die "Missing $modeldir\n" if !-d $modeldir;
+    my $model_path = $self->model;
+    if (!-e $model_path) {
+        $model_path = "$ENV{TMT_ROOT}/share/data/models/malt_parser/$model_path";
+    }
+    die "Missing $model_path\n" if !-e $model_path;
+
+    my $model_name = $self->model;
+    $model_name =~ s/^.+\///;
 
     my ( $reader, $writer, $pid );
 
     # create temporary working directory
-    my $workdir = tempdir( Treex::Core::Config->tmp_dir . "/maltparserXXXX", CLEANUP => 1 );
+    my $workdir = tempdir(Treex::Core::Config->tmp_dir."/maltparserXXXX", CLEANUP => 1);
 
     # symlink to the model (model has to be in working directory)
-    system "ln -s $modeldir/" . $self->model . " $workdir/" . $self->model;
+    system "ln -s $model_path $workdir/$model_name";
 
-    my $command = "cd $workdir; java -jar $bindir/malt-1.5/malt.jar -c " . $self->model;
+    my $command = "cd $workdir; java -jar $bindir/malt-1.5/malt.jar -c $model_name";
 
     # start MaltParser
-    ( $reader, $writer, $pid ) = ProcessUtils::bipipe($command);
+    ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
     $self->{mpreader} = $reader;
     $self->{mpwriter} = $writer;
     $self->{mppid}    = $pid;
@@ -39,7 +46,7 @@ sub BUILD {
 
 sub parse {
     my ( $self, $forms, $lemmas, $pos, $subpos, $features ) = @_;
-
+    
     my $writer = $self->{mpwriter};
     my $reader = $self->{mpreader};
 
@@ -50,27 +57,28 @@ sub parse {
 
     # write input
     for ( my $i = 0; $i < $cnt; $i++ ) {
-        print $writer ( $i + 1 ) . "\t$$forms[$i]\t$$lemmas[$i]\t$$pos[$i]\t$$subpos[$i]\t$$features[$i]\n";
+        print $writer ($i+1) . "\t$$forms[$i]\t$$lemmas[$i]\t$$pos[$i]\t$$subpos[$i]\t$$features[$i]\n";
     }
     print $writer "\n";
 
     # read output
     my @parents = ();
-    my @afuns   = ();
+    my @afuns = ();
     while ( $cnt > 0 ) {
         my $got = <$reader>;
         chomp $got;
         my @items = split( /\t/, $got );
         $cnt--;
         push @parents, $items[6];
-        push @afuns,   $items[7];
+        push @afuns, $items[7];
     }
 
-    # read empty line
+    # read empty line 
     <$reader>;
 
     return ( \@parents, \@afuns );
 }
+
 
 1;
 
@@ -79,7 +87,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::Malt
+Treex::Tools::Parser::Malt
 
 =head1 SYNOPSIS
 

@@ -1,76 +1,75 @@
 package Treex::Block::W2A::ParseMalt;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::W2A::BaseChunkParser';
 
-has '+language' => ( required => 1 );
-has _parser     => ( is       => 'rw' );
+use Treex::Tool::Parser::Malt;
 
-use Parser::Malt::MaltParser;
+has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
+
+my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Parser::Malt::MaltParser->new( $self->language ) );
+    if ( !$parser ) {
+        $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+    }
     return;
 }
 
-sub process_atree {
-    my ( $self, $a_root ) = @_;
+sub parse_chunk {
+    my ( $self, @a_nodes ) = @_;
 
-    my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
+    # get factors
+    my @forms    = map { $_->form } @a_nodes;
+    my @lemmas   = map { $_->lemma } @a_nodes;
+    my @subpos   = map { $_->tag } @a_nodes;
+    my @pos      = map { substr( $_, 0, 2 ) } @subpos;
+    my @features = map {'_'} @subpos;
 
-    # Parse the sentence (collect indices refering to parents)
-    my @forms  = map { $_->form } @a_nodes;
-    my @tags   = map { $_->tag } @a_nodes;
-    my @lemmas = map { $_->lemma } @a_nodes;
+    # parse sentence
+    my ( $parents_rf, $deprel_rf ) = $parser->parse( \@forms, \@lemmas, \@pos, \@subpos, \@features );
 
-    my ( $parent_indices, $afuns ) = $self->_parser->parse( \@forms, \@lemmas, \@tags );
-    if ( not $parent_indices ) {
-        log_warn "Malt parser cannot parse sentence '" . ( join " ", @forms ) . "', flat a-tree is used instead";
-    }
-    else {
-        unshift @a_nodes, $a_root;
-        foreach my $i ( 1 .. $#a_nodes ) {
+    # build a-tree
+    my @roots = ();
+    foreach my $a_node (@a_nodes) {
+        my $deprel = shift @$deprel_rf;
+        $a_node->set_conll_deprel($deprel);
 
-            # set parent
-            my $parent = $a_nodes[ $$parent_indices[ $i - 1 ] || 0 ];
-            $a_nodes[$i]->set_parent($parent);
-
-            # set afun/conll_deprel
-            my $afun = $$afuns[ $i - 1 ];
-            log_fatal 'Node ' . $a_nodes[$i]->id . " got no afun/conll_deprel." if !defined $afun;
-
-            if ( $self->language eq 'cs' ) {
-                $afun =~ s/ROOT/Pred/;    # TODO: Is this needed? And why?
-                if ( $afun =~ /^(.+)_M$/ ) {
-                    $afun = $1;
-                    $a_nodes[$i]->set_is_member(1);
-                }
-                $a_nodes[$i]->set_afun($afun);
-            }
-            else {
-                $a_nodes[$i]->set_conll_deprel($afun);
-            }
+        my $parent_index = shift @$parents_rf;
+        if ($parent_index) {
+            my $parent = $a_nodes[ $parent_index - 1 ];
+            $a_node->set_parent($parent);
+        }
+        else {
+            push @roots, $a_node;
         }
     }
-    return;
+    return @roots;
 }
 
 1;
 
 __END__
+ 
+=head1 NAME
 
-=pod
+Treex::Block::W2A::ParseMalt
 
-=over
+=head1 DECRIPTION
 
-=item Treex::Block::W2A::ParseMalt
+Malt parser (developed by Johan Hall, Jens Nilsson and Joakim Nivre, see http://maltparser.org)
+is used to determine the topology of a-layer trees and I<deprel> edge labels.
 
-Parse analytical trees using MaltParser.
+=head1 SEE ALSO
 
-=back
+L<Treex::Block::W2A::BaseChunkParser> base clase (see the C<reparse> parameter)
 
-=cut
+L<Treex::Block::W2A::MarkChunks> this block can be used before parsing
+to improve the performance by marking chunks (phrases)
+that are supposed to form a (dependency) subtree
 
-# Copyright 2009-2011 David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT
+
+Copyright 2009-2011 David Mareček
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
