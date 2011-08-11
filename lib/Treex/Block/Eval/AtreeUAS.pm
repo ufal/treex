@@ -34,9 +34,9 @@ sub process_bundle {
 }
 
 END {
-    print "total\t$number_of_nodes\n";
+#    print "total\t$number_of_nodes\n";
     foreach my $zone_label ( keys %same_as_ref ) {
-        print "$zone_label\t$same_as_ref{$zone_label}\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
+        print "$zone_label\t$same_as_ref{$zone_label}/$number_of_nodes\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
     }
 }
 
