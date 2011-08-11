@@ -5,13 +5,14 @@ extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
 
 has '+language' => ( required => 1 );
+has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel');
 
 sub process_atree {
     my ( $self, $atree ) = @_;
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
-        my ( $lemma, $tag, $deprel ) =
+        my ( $lemma, $tag, $deprel, $afun ) =
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
-            qw(lemma tag conll_deprel);
+            ('lemma', 'tag', $self->deprel_attribute);
         my $ctag  = $self->get_coarse_grained_tag($tag);
         my $p_ord = $anode->get_parent->ord;
         print join( "\t", $anode->ord, $anode->form, $lemma, $ctag, $tag, '_', $p_ord, $deprel ) . "\n";
@@ -48,6 +49,11 @@ Output encoding. C<utf8> by default.
 =item to
 
 The name of the output file, STDOUT by default.
+
+=item
+
+The name of attribute which will be printed into the 7th column (dependency relation).
+Default is C<conll/deprel>.
 
 =back
 
