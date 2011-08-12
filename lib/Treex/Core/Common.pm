@@ -112,7 +112,8 @@ my %EXTRA_LANG_CODES = (
     'sah'     => "Yakut",
     'und'     => "ISO 639-2 code for undetermined/unknown language",
     'xal'     => "Kalmyk",
-    'yue'     => "Cantonese"
+    'yue'     => "Cantonese",
+    'mul'     => "ISO 639-2 code for multiple languages",
 );
 
 my %IS_LANG_CODE = map { $_ => 1 } ( all_language_codes(), keys %EXTRA_LANG_CODES );

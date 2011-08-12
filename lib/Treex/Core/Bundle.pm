@@ -45,7 +45,8 @@ sub get_zone {
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
             my ( undef, $value ) = @$element;    # $name is not needed
-            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq $selector ) {
+            if ( ($value->{language} eq $language or $language eq 'mul')
+                     and ( $value->{selector} || '' ) eq $selector ) {
                 return $value;
             }
         }
