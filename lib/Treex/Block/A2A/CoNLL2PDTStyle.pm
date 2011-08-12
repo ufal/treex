@@ -100,9 +100,9 @@ sub convert_tag
     my $conll_cpos = $node->conll_cpos();
     my $conll_pos  = $node->conll_pos();
     my $conll_feat = $node->conll_feat();
-    my $src_tag    = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset eq 'conll' ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
-    my $f          = tagset::common::decode( $driver, $src_tag );
-    my $pdt_tag    = tagset::cs::pdt::encode( $f, 1 );
+    my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset =~ m/^conll/ ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
+    my $f = tagset::common::decode($driver, $src_tag);
+    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_iset($f);
     $node->set_tag($pdt_tag);
 }
