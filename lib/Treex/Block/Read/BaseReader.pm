@@ -58,20 +58,25 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 sub _build_filenames {
     my $self = shift;
 
-    log_fatal "Parameters 'from' or 'filelist' must be defined!" if not defined $self->from and not defined $self->filelist;
+    log_fatal "Parameters 'from' or 'filelist' must be defined!" if !defined $self->from && !defined $self->filelist;
 
     my $filenames = [];
 
     # add all files in the 'from' parameter to the list (avoid adding STDIN if filelist is set)
-    if ( $self->from and ( not $self->filelist or $self->from ne '-' ) ) {
+    if ( $self->from && ( !$self->filelist || $self->from ne '-' ) ) {
         push @{$filenames}, split( /[ ,]+/, $self->from );
     }
 
     # add all files from the filelist to the list
     if ( $self->filelist ) {
         my @list = read_file( $self->filelist );
-        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 and not defined( $list[0] );
-        @list = map { local $_ = $_; $_ =~ s/\s*\r?\n$//; $_ =~ s/^\s*//; $_ } @list;    # remove EOL chars, trim
+        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 && !defined( $list[0] );
+        @list = map {
+            local $_ = $_;
+            $_ =~ s/\s*\r?\n$//;
+            $_ =~ s/^\s*//;
+            $_
+        } @list;    # remove EOL chars, trim
         push @{$filenames}, @list;
     }
 
