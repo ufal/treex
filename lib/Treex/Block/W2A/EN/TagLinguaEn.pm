@@ -60,35 +60,84 @@ sub _correct_lingua_tag {    # substitution according to http://search.cpan.org/
         return $linguatag;
     }
 }
-}
 
-sub process_atree {
-    my ( $self, $atree ) = @_;
-    my @descendants = $atree->get_descendants();
-    my @forms = map { $_->form } @descendants;
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-    # get tags
-    my $joined = join ' ', @forms;
-    my $tagged = $self->_tagger->add_tags($joined);
-    my @pairs   = split m{\s}, $tagged;
-    if ( scalar @tags != scalar @forms ) {
-        log_fatal("Different number of tokens and tags. TOKENS: @forms, TAGS: @tags");
+    # get the source sentence
+    my $sentence = $zone->sentence;
+
+    log_fatal("No sentence in zone") if !defined $sentence;
+
+    #split on whitespace, tags nor tokens doesn't contain spaces
+    my @tagged = split /\s+/, $self->_tagger->add_tags($sentence);
+
+    # create a-tree
+    my $a_root      = $zone->create_atree();
+    my $tag_regex   = qr{<(\w+)>([^<]+)</\1>};
+    my $space_start = qr{^\s+};
+    my $ord         = 1;
+    foreach my $tag (@tagged) {
+        if ( $tag =~ $tag_regex ) {
+            my $form = $2;
+            my $tag = $self->_correct_lingua_tag( $1, $form );
+            if ( $sentence =~ s/^$form// ) {
+
+                #check if there is space after word
+                my $no_space_after = $sentence =~ m/$space_start/ ? 0 : 1;
+
+                #delete it
+                $sentence =~ s{$space_start}{};
+
+                # and create node under root
+                my $new_a_node = $a_root->create_child(
+                    form           => $form,
+                    no_space_after => $no_space_after,
+                    ord            => $ord++,
+                );
+            }
+            else {
+                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form. Original: $sentence.");
+            }
+        }
+        else {
+            log_fatal("Incorrect output format from Lingua::EN::Tagger: $tag");
+        }
+
     }
-
-    # fill tags
-    foreach my $a_node (@descendants) {
-        my $pair = shift @tags;
-        if (m{(.+)/(.+)}gx) {
-            my $wordform = $1;
-            my $tag = $self->_correct_lingua_tag($2, $wordform);
-            my $original = $a_node->form;
-            log_fatal("Mismatched tokenization: expected: $form, got: $wordform") if $wordform ne $original;
-            $a_node->set_tag( $tag );
-        } else log_fatal("Bad format of tagged data: $pair");
-    }
-
     return 1;
 }
+
+#sub process_atree {
+#    my ( $self, $atree ) = @_;
+#    my @descendants = $atree->get_descendants();
+#    my @forms = map { $_->form } @descendants;
+#
+#    # get tags
+#    my $joined = join ' ', @forms;
+#    my $tagged = $self->_tagger->add_tags($joined);
+#    my @pairs  = split m{\s}, $tagged;
+#    if ( scalar @pairs != scalar @forms ) {
+#        log_fatal("Different number of words and tags. Words: @forms, TAGS: @pairs");
+#    }
+#
+#    # fill tags
+#    foreach my $a_node (@descendants) {
+#        my $pair = shift @pairs;
+#        if (m{(.+)/(.+)}gx) {
+#            my $wordform = $1;
+#            my $tag      = $self->_correct_lingua_tag( $2, $wordform );
+#            my $original = $a_node->form;
+#            log_fatal("Mismatched tokenization: expected: $original, got: $wordform") if $wordform ne $original;
+#            $a_node->set_tag($tag);
+#        }
+#        else {
+#            log_fatal("Bad format of tagged data: $pair");
+#        }
+#    }
+#
+#    return 1;
+#}
 
 1;
 
