@@ -14,7 +14,7 @@ sub complain {
     print $self->_subscription,
         "\t", $node->get_address,
         ( $message ? "\t$message" : '' ),
-        $message, "\n";
+        "\n";
 }
 
 1;
