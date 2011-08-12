@@ -29,7 +29,13 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
-        if ( $afun =~ s/_M$// )
+        # The '_M' suffix has been used in the CoNLL version of the Czech Prague Dependency Treebank.
+        # Unfortunately it turns out that it was not used for Arabic.
+        # Thus we have to assume that all children of Coord that are not Aux[GXY] are coordination members.
+        # It means that there is no way to distinguish shared modifiers from coordination members.
+        if ( $afun =~ s/_M$// ||
+            $node->parent()->afun() =~ m/^(Coord|Apos)$/ &&
+            $afun !~ m/^Aux[GXY]$/)
         {
             $node->set_is_member(1);
         }
