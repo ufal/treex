@@ -95,7 +95,7 @@ sub get_or_create_zone {
         { isa => 'Selector', default => '' },
     );
     my $zone = $self->get_zone( $language, $selector );
-    if ( not defined $zone ) {
+    if ( !defined $zone ) {
         $zone = $self->create_zone( $language, $selector );
     }
     return $zone;
@@ -103,9 +103,6 @@ sub get_or_create_zone {
 
 sub get_all_zones {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     if ( $self->{zones} ) {
         return map { $_->value() } $self->{zones}->elements;
     }
@@ -118,7 +115,7 @@ sub remove_zone {
     my ( $self, $language, $selector ) = @_;
 
     my $zone = $self->get_zone( $language, $selector );
-    if ( not $zone ) {
+    if ( !$zone ) {
         log_fatal "Non-existing zone cannot be removed";
     }
 
@@ -209,7 +206,7 @@ sub get_position {
         }
     }
 
-    if ( not defined $position_of_reference ) {
+    if ( !defined $position_of_reference ) {
         log_fatal "document structure inconsistency: can't detect position of bundle $self";
     }
 

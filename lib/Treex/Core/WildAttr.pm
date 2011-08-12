@@ -16,7 +16,7 @@ has wild => (
 
 sub wild {
     my ($self) = @_;
-    if ( not $self->_get_wild ) {
+    if ( !$self->_get_wild ) {
         $self->set_wild( {} );
     }
     return $self->_get_wild;
@@ -47,11 +47,11 @@ sub _set_wild_dump {
 
 sub serialize_wild {
     my ($self) = @_;
-    if ( not %{ $self->wild } ) {
-        $self->_set_wild_dump(undef);
+    if ( %{ $self->wild } ) {
+        $self->_set_wild_dump( Dumper( $self->wild ) );
     }
     else {
-        $self->_set_wild_dump( Dumper( $self->wild ) );
+        $self->_set_wild_dump(undef);
     }
     return;
 }

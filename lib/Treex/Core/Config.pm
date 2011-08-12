@@ -46,7 +46,7 @@ sub resource_path {
     return join q{:}, @path;
 }
 
-sub devel_version {
+sub _devel_version {
     return -d lib_core_dir() . "/share/";
 
     # to je otazka, jak to co nejelegantneji poznat, ze jde o work.copy. a ne nainstalovanou distribuci
@@ -55,7 +55,7 @@ sub devel_version {
 sub share_dir {
 
     # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
-    if ( devel_version() ) {
+    if ( _devel_version() ) {
         return realpath( lib_core_dir() . "/../../../../share/" );
     }
     else {
@@ -69,7 +69,7 @@ sub tred_dir {
 
 sub pml_schema_dir {
 
-    if ( devel_version() ) {
+    if ( _devel_version() ) {
         return realpath( lib_core_dir() . "/share/tred_extension/treex/resources/" );
     }
     else {
@@ -146,7 +146,7 @@ return list of directories where resources will be searched
 
 return temporary directory, shoud be used instead of /tmp or similar
 
-=item devel_version()
+=item _devel_version()
 
 returns C<true> iff the current Treex instance is running from the svn working copy
 (which means that it is the development version, not installed from CPAN)

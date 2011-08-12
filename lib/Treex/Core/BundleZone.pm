@@ -23,49 +23,31 @@ sub _set_bundle {
 
 sub get_bundle {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_attr('_bundle');
 }
 
 sub get_document {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_bundle->get_document;
 }
 
 sub create_atree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->create_tree('a');
 }
 
 sub create_ttree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->create_tree('t');
 }
 
 sub create_ntree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->create_tree('n');
 }
 
 sub create_ptree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->create_tree('p');
 }
 
@@ -139,33 +121,21 @@ sub get_tree {
 
 sub get_atree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_tree('a');
 }
 
 sub get_ttree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_tree('t');
 }
 
 sub get_ntree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_tree('n');
 }
 
 sub get_ptree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_tree('p');
 }
 
@@ -181,41 +151,26 @@ sub has_tree {
 
 sub has_atree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->has_tree('a');
 }
 
 sub has_ttree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->has_tree('t');
 }
 
 sub has_ntree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->has_tree('n');
 }
 
 sub has_ptree {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->has_tree('p');
 }
 
 sub get_all_trees {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
 
     return grep {defined}
         map     { $self->{trees}->{ $_ . "_tree" }; } qw(a t n p);
@@ -223,9 +178,6 @@ sub get_all_trees {
 
 sub sentence {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return $self->get_attr('sentence');
 }
 

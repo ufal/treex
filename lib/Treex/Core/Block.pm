@@ -73,7 +73,7 @@ sub process_document {
     );
 
     if ( !$document->get_bundles() ) {
-        log_fatal "There are no bundles in the document and block " . ref($self) .
+        log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
             " doesn't override the method process_document";
     }
     foreach my $bundle ( $document->get_bundles() ) {
@@ -89,7 +89,7 @@ sub process_bundle {
         { isa => 'Treex::Core::Bundle' },
     );
 
-    log_fatal "Parameter language was not set and block " . ref($self)
+    log_fatal "Parameter language was not set and block " . $self->get_block_name()
         . " doesn't override the method process_bundle" if !$self->language;
     my $zone = $bundle->get_zone( $self->language, $self->selector );
     log_fatal(
@@ -97,7 +97,7 @@ sub process_bundle {
             . $self->language
             . ", selector="
             . $self->selector
-            . ") was not found in a bundle and block " . ref($self)
+            . ") was not found in a bundle and block " . $self->get_block_name()
             . " doesn't override the method process_bundle"
         )
         if !$zone;
@@ -151,9 +151,6 @@ sub process_zone {
 
 sub get_block_name {
     my $self = shift;
-    if ($Treex::Core::Config::params_validate) {    ## no critic (ProhibitPackageVars)
-        pos_validated_list( \@_ );
-    }
     return ref($self);
 }
 

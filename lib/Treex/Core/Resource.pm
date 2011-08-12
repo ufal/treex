@@ -25,14 +25,14 @@ sub require_file_from_share {
             return $file;
         }
 
-        if ( not defined $writable and -w $resource_dir ) {
+        if ( !defined $writable && -w $resource_dir ) {
             $writable = $resource_dir;
             log_debug("Found writable directory: $writable");
         }
     }
 
     log_info("Shared file '$rel_path_to_file' is missing by $who_wants_it.");
-    log_fatal("Cannot find writable directory for downloading from share") if not defined $writable;
+    log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
     my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
     log_info("Trying to download $url");
@@ -58,7 +58,7 @@ sub require_file_from_share {
     }
 
     # TODO: better solution
-    if ( $file =~ /installed_tools/ or $make_executable ) {
+    if ( $file =~ /installed_tools/ || $make_executable ) {
         chmod 0755, $file;
     }
     return $file;

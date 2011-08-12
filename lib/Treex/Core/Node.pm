@@ -268,8 +268,8 @@ sub get_document {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self   = shift;
     my $bundle = $self->get_bundle();
-    log_fatal('Cannot call get_document on a node which is in no bundle') if not defined $bundle;
-    return $self->get_bundle->get_document();
+    log_fatal('Cannot call get_document on a node which is in no bundle') if !defined $bundle;
+    return $bundle->get_document();
 }
 
 sub get_root {
@@ -529,7 +529,7 @@ sub _normalize_node_ordering {
 
 sub disconnect {
     my $self = shift;
-    log_debug( '$node->disconnect is deprecated, use $node->remove', 1 );
+    log_warn( '$node->disconnect is deprecated, use $node->remove', 1 );
     return $self->remove();
 }
 
@@ -567,7 +567,7 @@ sub get_address {
 # deprecated
 sub get_fposition {
     my $self = shift;
-    log_warn("Method get_fposition is deprecated use get_address instead");
+    log_warn("Method get_fposition is deprecated use get_address() instead");
     return $self->get_address();
 }
 
@@ -593,7 +593,7 @@ sub generate_new_id {    #TODO move to Core::Document?
     while (1) {
         $latest_node_number++;
         $new_id = "${id_base}n$latest_node_number";
-        last if not $doc->id_is_indexed($new_id);
+        last if !$doc->id_is_indexed($new_id);
 
     }
 

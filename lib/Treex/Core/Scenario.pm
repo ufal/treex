@@ -140,7 +140,7 @@ sub parse_scenario_string {
     my ( $self, $scenario_string, $from_file ) = @_;
 
     my $parsed = $self->parser->startrule( $scenario_string, 1, $from_file );
-    log_fatal("Cannot parse the scenario: $scenario_string") if not defined $parsed;
+    log_fatal("Cannot parse the scenario: $scenario_string") if !defined $parsed;
     return @$parsed;
 }
 
@@ -150,8 +150,8 @@ sub construct_scenario_string {
     my $delim = $multiline ? qq{\n} : q{ };
     my @block_with_args = map { $_->{block_name} . q{ } . join( q{ }, @{ $_->{block_parameters} } ) } @$block_items;    # join block name and its parameters
     my @stripped;
-    foreach my $block (@block_with_args) {                                                                              # strip leading Treex::Block::
-        $block =~ s{^Treex::Block::}{};
+    foreach my $block (@block_with_args) {
+        $block =~ s{^Treex::Block::}{} or $block = "::$block";                                                          #strip leading Treex::Block:: or add leading ::
         push @stripped, $block;
     }
     return join $delim, @stripped;
@@ -171,8 +171,10 @@ sub _load_block {
         $params{$name} = $value;
     }
 
-    my $string_to_eval = '$new_block = ' . $block_name . '->new(\%params);1';
-    eval $string_to_eval or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name by evaluating '$string_to_eval'\n\nEVAL ERROR:\t$@";
+    eval {
+        $new_block = $block_name->new( \%params );
+        1;
+    } or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name\n\nEVAL ERROR:\t$@";
 
     return $new_block;
 }

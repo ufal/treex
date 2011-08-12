@@ -216,7 +216,7 @@ sub BUILD {
     }
 
     # 'require' can't be changed to 'imply', since the number of jobs has a default value
-    if ( ( $self->qsub or $self->jobindex ) and not $self->parallel ) {
+    if ( ( $self->qsub || $self->jobindex ) && !$self->parallel ) {
         log_fatal "Options --qsub and --jobindex require --parallel";
     }
     return;
@@ -242,7 +242,7 @@ sub _execute {
     }
 
     while ( !$done ) {
-        if ( $self->parallel and not defined $self->jobindex ) {
+        if ( $self->parallel && !defined $self->jobindex ) {
             log_info "Parallelized execution. This process is the head coordinating "
                 . $self->jobs . " server processes.";
             $self->_execute_on_cluster();
@@ -700,14 +700,15 @@ sub _execute_on_cluster {
             # I don't know the real cause of the bug, but as a workaround
             # you can omit --cleanup or uncomment next line
             # $directory .= sprintf "%03d-cluster-run", rand 1000;
-#            print STDERR "XXXX tested prefix $directory_prefix:".(join ' ', glob("$directory_prefix*"))."\n";
-            @existing_dirs = glob "$directory_prefix*"; # separate var because of troubles with glob context
-        }
-            while ( @existing_dirs );
+            #            print STDERR "XXXX tested prefix $directory_prefix:".(join ' ', glob("$directory_prefix*"))."\n";
+            @existing_dirs = glob "$directory_prefix*";    # separate var because of troubles with glob context
+            }
+            while (@existing_dirs);
         my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
         $self->set_workdir($directory);
         log_info "Working directory $directory created";
-#        mkdir $directory or log_fatal $!;
+
+        #        mkdir $directory or log_fatal $!;
     }
 
     foreach my $subdir (qw(output scripts)) {
@@ -765,7 +766,7 @@ sub treex {
     # ref to array of arguments, or a string containing all arguments as on the command line
     my $arguments = shift;
 
-    if ( ref($arguments) eq 'ARRAY' and scalar @$arguments > 0 ) {
+    if ( ref($arguments) eq 'ARRAY' && scalar @$arguments > 0 ) {
         my $idx = first_index { $_ eq '--' } @$arguments;
         my %args = ( argv => $arguments );
         if ( $idx != -1 ) {
@@ -777,7 +778,7 @@ sub treex {
 
     }
 
-    elsif ( defined $arguments and ref($arguments) ne 'ARRAY' ) {
+    elsif ( defined $arguments && ref($arguments) ne 'ARRAY' ) {
         treex( [ grep { defined $_ && $_ ne '' } split( /\s/, $arguments ) ] );
     }
 
