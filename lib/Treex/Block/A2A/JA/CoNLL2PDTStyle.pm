@@ -15,6 +15,34 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     $self->attach_final_punctuation_to_root($a_root);
+    make_pdt_coordination($a_root);
+}
+
+sub make_pdt_coordination {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes - 2; $i++) {
+        my $node = $nodes[$i];        
+        my $deprel = $node->afun();        
+        my $n_node = $nodes[$i+1];
+        if ($n_node->afun() eq 'Coord') {
+            my $par = $node->get_parent();
+            my $n_par = $n_node->get_parent();
+            if (defined($par) && defined($n_par)) {
+                if ($par->ord() == $n_par->ord()) {
+                    my $nn_node = $n_node->get_parent();
+                    if (defined($nn_node->get_parent())) {
+                        print "Coordination found in : " . $n_node->id . "\n";
+                        $node->set_parent($n_node);
+                        $n_node->set_parent($nn_node->get_parent());
+                        $nn_node->set_parent($n_node);
+                        $node->set_is_member(1);
+                        $nn_node->set_is_member(1);                        
+                    }
+                }
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
