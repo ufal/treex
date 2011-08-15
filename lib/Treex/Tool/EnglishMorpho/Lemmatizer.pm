@@ -5,21 +5,9 @@ use Treex::Core::Resource qw(require_file_from_share);
 use File::Slurp;
 use utf8;
 
-sub _directory_of_this_module {
-    my %call_info;
-    @call_info{
-        qw(pack file line sub has_args wantarray evaltext is_require)
-        } = caller(0);
-    $call_info{file} =~ s/[^\/]+$//;
-    return $call_info{file};
-}
-my $my_directory = _directory_of_this_module;
-
 has 'exceptions_filename' => (
     is       => 'ro',
     init_arg => undef,
-
-    #reader   => 'exceptions_filename',
     default => sub {
         return require_file_from_share('/data/models/lemmatizer/en/exceptions.tsv');
     },
@@ -35,14 +23,14 @@ has 'negation_filename' => (
 
 has 'exceptions' => (
     is       => 'ro',
-    builder  => '_load_exceptions',
+    builder  => '_build_exceptions',
     init_arg => undef,
     lazy     => 1,
 );
 
 has 'negation' => (
     is       => 'ro',
-    builder  => '_load_negation',
+    builder  => '_build_negation',
     init_arg => undef,
     lazy     => 1,
 );
@@ -265,7 +253,7 @@ sub _lemmatize_by_rules {
     return $lemma;
 }
 
-sub _load_exceptions {
+sub _build_exceptions {
     my $self = shift;
     my %exceptions;
     log_debug( $self->exceptions_filename );
@@ -281,7 +269,7 @@ sub _load_exceptions {
     return \%exceptions;
 }
 
-sub _load_negation {
+sub _build_negation {
     my $self    = shift;
     my $pattern = '';
     my @lines   = read_file( $self->negation_filename, binmode => ':encoding(utf-8)', err_mode => 'log_fatal' );
