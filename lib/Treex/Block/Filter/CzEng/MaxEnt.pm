@@ -1,6 +1,8 @@
 package Treex::Block::Filter::CzEng::MaxEnt;
 use Moose;
 use Treex::Core::Common;
+use AI::MaxEntropy;
+use AI::MaxEntropy::Model;
 with 'Treex::Block::Filter::CzEng::Classifier';
 
 my ( $maxent, $model );
