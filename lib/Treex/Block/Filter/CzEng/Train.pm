@@ -1,8 +1,6 @@
 package Treex::Block::Filter::CzEng::Train;
 use Moose;
 use Treex::Core::Common;
-use AI::MaxEntropy;
-use AI::MaxEntropy::Model;
 extends 'Treex::Block';
 
 has annotation => (
@@ -23,21 +21,36 @@ has outfile => (
 has use_for_training => (
     isa           => 'Int',
     is            => 'ro',
-    required      => '1'
+    required      => '1',
     documentation => 'how many sentences should be used to train the model (the rest '
                      . 'is used for evaluation)'
 );
 
-has classifier => (
-    is            => 'rw',
+has classifier_type => (
+    isa           => 'Str',
+    is            => 'ro',
     required      => '1',
-    does          => 'Treex::Block::Filter::CzEng::Classifier'
-    documentation => 'a specific classifier object (such as MaxEnt)'
+    documentation => 'classifier type, can be "maxent", TODO'
 );
+
+has _classifier_obj => (
+    is            => 'rw',
+    required      => '0',
+    does          => 'Treex::Block::Filter::CzEng::Classifier',
+);
+
+sub BUILD {
+    my $self = shift;
+    if ( $self->{classifier_type} eq "maxent" ) {
+        $self->{_classifier_obj} = new Treex::Block::Filter::CzEng::MaxEnt();
+    } else {
+        log_fatal "Unknown classifier type: $self->{classifier_type}";
+    }
+}
 
 sub process_document {
     my ( $self, $document ) = @_;
-    $self->{classifier}->init();
+    $self->{_classifier_obj}->init();
 
     # train
     open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
@@ -48,10 +61,10 @@ sub process_document {
         my $anot     = <$anot_hdl>;
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
-        $self->{classifier}->see( \@features => $anot );
+        $self->{_classifier_obj}->see( \@features => $anot );
     }
-    $self->{classifier}->learn();
-    $self->{classifier}->save( $self->{outfile} );
+    $self->{_classifier_obj}->learn();
+    $self->{_classifier_obj}->save( $self->{outfile} );
 
     # evaluate
     my ( $x, $p, $tp );
@@ -61,7 +74,7 @@ sub process_document {
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
         $x++ if $anot eq 'x';
-        my $prediction = $self->{classifier}->predict( \@features );
+        my $prediction = $self->{_classifier_obj}->predict( \@features );
         $p++ if $prediction eq 'x';
         $tp++ if $prediction eq $anot;
     }
