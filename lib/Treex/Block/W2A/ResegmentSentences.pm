@@ -25,6 +25,8 @@ sub _get_segmenter {
         if ($segmenter) {
             $self->segmenters->{$lang} = $segmenter;
             return $segmenter;
+        } else {
+            log_info("Failed during creating segmenter $class: $@");
         }
     }
     log_fatal("Cannot create segmenter for $lang");

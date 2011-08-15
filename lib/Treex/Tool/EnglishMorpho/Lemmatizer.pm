@@ -8,7 +8,7 @@ use utf8;
 has 'exceptions_filename' => (
     is       => 'ro',
     init_arg => undef,
-    default => sub {
+    default  => sub {
         return require_file_from_share('/data/models/lemmatizer/en/exceptions.tsv');
     },
 );
@@ -114,7 +114,7 @@ sub _lemmatize_NNS_NNPS {
     return $word;
 }
 
-sub _lemmatize_VBG {
+sub _lemmatize_VBG {                               ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
     my $self = shift;
     my $word = shift;
     return $word if $word =~ s/(${CXY}z)ing$/$1/;
@@ -153,7 +153,7 @@ sub _lemmatize_VBG {
     return $word;
 }
 
-sub _lemmatize_VBD_VBN {
+sub _lemmatize_VBD_VBN {                                      ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
     my $self = shift;
     my $word = shift;
     return $word if $word =~ s/en$/e/;

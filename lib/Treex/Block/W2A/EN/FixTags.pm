@@ -8,7 +8,7 @@ sub process_anode {
     my ( $self, $anode ) = @_;
 
     my $old_tag = $anode->tag;
-    my $new_tag = get_tag($anode);
+    my $new_tag = $self->_get_tag($anode);
     if ( $new_tag && $new_tag ne $old_tag ) {
         $anode->set_tag($new_tag);
         $anode->set_attr( 'gloss', 'tag_origin=Fix_tags' );
@@ -17,10 +17,9 @@ sub process_anode {
     return 1;
 }
 
-sub get_tag {
-    my ($node) = @_;
+sub _get_tag {
+    my ($self, $node) = @_;
     my ( $form, $tag, $id ) = $node->get_attrs( 'form', 'tag', 'id' );
-
     # Abbreviations like MPs, CDs or DVDs should be tagged as plural proper noun
     return 'NNPS' if $tag =~ /^NN/ && $form =~ /^\p{IsUpper}{2,}s$/;
 

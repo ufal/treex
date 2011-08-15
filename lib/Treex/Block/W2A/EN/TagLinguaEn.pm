@@ -9,7 +9,7 @@ has _tagger => (
     builder       => '_build_tagger',
     lazy          => 1,
     init_arg      => undef,
-    predicate     => '_tagger_builded',
+    predicate     => '_tagger_built',
     documentation => q{Tagger object},
 );
 
@@ -66,15 +66,16 @@ sub process_zone {
 
     # get the source sentence
     my $sentence = $zone->sentence;
-
     log_fatal("No sentence in zone") if !defined $sentence;
+    log_fatal(qq{There's already atree in zone}) if $zone->has_atree();
+    log_debug("Processing sentence: $sentence");
 
     #split on whitespace, tags nor tokens doesn't contain spaces
     my @tagged = split /\s+/, $self->_tagger->add_tags($sentence);
 
     # create a-tree
-    my $a_root      = $zone->create_atree();
-    my $tag_regex   = qr{
+    my $a_root    = $zone->create_atree();
+    my $tag_regex = qr{
         <(\w+)> #<tag>
         ([^<]+) #form
         </\1>   #</tag>
@@ -89,15 +90,17 @@ sub process_zone {
 
                 #check if there is space after word
                 my $no_space_after = $sentence =~ m/$space_start/ ? 0 : 1;
-                if ($sentence eq q{}) {
+                if ( $sentence eq q{} ) {
                     $no_space_after = 0;
                 }
+
                 #delete it
                 $sentence =~ s{$space_start}{};
 
                 # and create node under root
                 my $new_a_node = $a_root->create_child(
                     form           => $form,
+                    tag            => $tag,
                     no_space_after => $no_space_after,
                     ord            => $ord++,
                 );
@@ -113,37 +116,6 @@ sub process_zone {
     }
     return 1;
 }
-
-#sub process_atree {
-#    my ( $self, $atree ) = @_;
-#    my @descendants = $atree->get_descendants();
-#    my @forms = map { $_->form } @descendants;
-#
-#    # get tags
-#    my $joined = join ' ', @forms;
-#    my $tagged = $self->_tagger->add_tags($joined);
-#    my @pairs  = split m{\s}, $tagged;
-#    if ( scalar @pairs != scalar @forms ) {
-#        log_fatal("Different number of words and tags. Words: @forms, TAGS: @pairs");
-#    }
-#
-#    # fill tags
-#    foreach my $a_node (@descendants) {
-#        my $pair = shift @pairs;
-#        if (m{(.+)/(.+)}gx) {
-#            my $wordform = $1;
-#            my $tag      = $self->_correct_lingua_tag( $2, $wordform );
-#            my $original = $a_node->form;
-#            log_fatal("Mismatched tokenization: expected: $original, got: $wordform") if $wordform ne $original;
-#            $a_node->set_tag($tag);
-#        }
-#        else {
-#            log_fatal("Bad format of tagged data: $pair");
-#        }
-#    }
-#
-#    return 1;
-#}
 
 1;
 

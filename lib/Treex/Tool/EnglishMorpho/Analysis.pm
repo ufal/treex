@@ -18,7 +18,7 @@ log_info("Loaded.\n");
 
 # --------- interface ---------
 
-sub get_possible_tags {
+sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
     my $wordform  = shift;
     my $lowerform = lc($wordform);
 
