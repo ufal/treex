@@ -74,18 +74,24 @@ sub process_zone {
 
     # create a-tree
     my $a_root      = $zone->create_atree();
-    my $tag_regex   = qr{<(\w+)>([^<]+)</\1>};
+    my $tag_regex   = qr{
+        <(\w+)> #<tag>
+        ([^<]+) #form
+        </\1>   #</tag>
+        }x;
     my $space_start = qr{^\s+};
     my $ord         = 1;
     foreach my $tag (@tagged) {
         if ( $tag =~ $tag_regex ) {
             my $form = $2;
             my $tag = $self->_correct_lingua_tag( $1, $form );
-            if ( $sentence =~ s/^$form// ) {
+            if ( $sentence =~ s/^\Q$form\E// ) {
 
                 #check if there is space after word
                 my $no_space_after = $sentence =~ m/$space_start/ ? 0 : 1;
-
+                if ($sentence eq q{}) {
+                    $no_space_after = 0;
+                }
                 #delete it
                 $sentence =~ s{$space_start}{};
 
