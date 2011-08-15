@@ -24,6 +24,9 @@ $zone->set_sentence($sentence);
 $block->process_zone($zone);
 ok( $zone->has_atree(), q(There's a_tree in result) );
 my @children = $zone->get_atree()->get_children();
+foreach my $child (@children) {
+    ok($child->tag, q(There's tag in each child));
+}
 cmp_ok( scalar @children, '==', 4, q(There are 4 tokens in s_tree) );
 my $you_node = $children[2];
 ok( $you_node->no_space_after(), q('are' has no_space_after) );
