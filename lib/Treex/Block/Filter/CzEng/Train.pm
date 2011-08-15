@@ -78,7 +78,7 @@ sub process_document {
         $p++ if $prediction eq 'x';
         $tp++ if $prediction eq $anot;
     }
-    log_info sprintf( "Precision = %.03f, Recall = %.03f\n", $tp / $p, $tp / $x );
+    log_info sprintf( "Precision = %.03f, Recall = %.03f", $tp / $p, $tp / $x );
 
     return 1;
 }
