@@ -6,16 +6,18 @@ with 'Treex::Block::Write::Redirectable';
 
 has '+language' => ( required => 1 );
 has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel');
+has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/pos');
+has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos');
 
 sub process_atree {
     my ( $self, $atree ) = @_;
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
-        my ( $lemma, $tag, $deprel, $afun ) =
+        my ( $lemma, $pos, $cpos, $deprel, $afun ) =
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
-            ('lemma', 'tag', $self->deprel_attribute);
-        my $ctag  = $self->get_coarse_grained_tag($tag);
+            ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
+        #my $ctag  = $self->get_coarse_grained_tag($tag);
         my $p_ord = $anode->get_parent->ord;
-        print join( "\t", $anode->ord, $anode->form, $lemma, $ctag, $tag, '_', $p_ord, $deprel ) . "\n";
+        print join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, '_', $p_ord, $deprel ) . "\n";
     }
     print "\n";
     return;

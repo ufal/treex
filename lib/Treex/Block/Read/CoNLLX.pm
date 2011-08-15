@@ -1,6 +1,7 @@
 package Treex::Block::Read::CoNLLX;
 use Moose;
 use Treex::Core::Common;
+use File::Slurp;
 extends 'Treex::Block::Read::BaseTextReader';
 
 sub next_document_text {

@@ -8,6 +8,7 @@ use Treex::Tool::Parser::MST;
 has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'order' => ( is => 'rw', isa => 'Str', default => '2' );
 has 'decodetype' => ( is => 'rw', isa => 'Str', default => 'non-proj' );
+has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 
 my $parser;
 
@@ -48,7 +49,7 @@ sub parse_chunk {
 
     # We deliberately approximate e.g. curly quotes with plain ones
     my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
-    my @tags  = map { $_->tag } @a_nodes;
+    my @tags  = map { $_->get_attr($self->pos_attribute) } @a_nodes;
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@tags );
 

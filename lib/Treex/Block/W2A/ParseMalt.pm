@@ -6,6 +6,7 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 use Treex::Tool::Parser::Malt;
 
 has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
+has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 
 my $parser;
 
@@ -23,7 +24,7 @@ sub parse_chunk {
     # get factors
     my @forms    = map { $_->form } @a_nodes;
     my @lemmas   = map { $_->lemma } @a_nodes;
-    my @subpos   = map { $_->tag } @a_nodes;
+    my @subpos   = map { $_->get_attr($self->pos_attribute) } @a_nodes;
     my @pos      = map { substr( $_, 0, 2 ) } @subpos;
     my @features = map {'_'} @subpos;
 
