@@ -1,13 +1,43 @@
-package Treex::Block::Filter::CzEng::TrainMaxEntModel;
+package Treex::Block::Filter::CzEng::Train;
 use Moose;
 use Treex::Core::Common;
 use AI::MaxEntropy;
 use AI::MaxEntropy::Model;
-extends 'Treex::Block::Filter::CzEng::Train';
+extends 'Treex::Block';
+
+has annotation => (
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 1,
+    documentation => 'file with lines containing either "x" or "ok" for each sentence'
+);
+
+has outfile => (
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 0,
+    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
+    documentation => 'output file for the model'
+);
+
+has use_for_training => (
+    isa           => 'Int',
+    is            => 'ro',
+    required      => '1'
+    documentation => 'how many sentences should be used to train the model (the rest '
+                     . 'is used for evaluation)'
+);
+
+has classifier => (
+    is            => 'rw',
+    required      => '1',
+    does          => 'Treex::Block::Filter::CzEng::Classifier'
+    documentation => 'a specific classifier object (such as MaxEnt)'
+);
 
 sub process_document {
     my ( $self, $document ) = @_;
-    my $maxent = AI::MaxEntropy->new();
+    $self->{classifier}->init();
 
     # train
     open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
@@ -18,10 +48,10 @@ sub process_document {
         my $anot     = <$anot_hdl>;
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
-        $maxent->see( \@features => $anot );
+        $self->{classifier}->see( \@features => $anot );
     }
-    my $model = $maxent->learn();
-    $model->save( $self->{outfile} );
+    $self->{classifier}->learn();
+    $self->{classifier}->save( $self->{outfile} );
 
     # evaluate
     my ( $x, $p, $tp );
@@ -31,7 +61,7 @@ sub process_document {
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
         $x++ if $anot eq 'x';
-        my $prediction = $model->predict( \@features );
+        my $prediction = $self->{classifier}->predict( \@features );
         $p++ if $prediction eq 'x';
         $tp++ if $prediction eq $anot;
     }
@@ -44,10 +74,9 @@ return 1;
 
 =over
 
-=item Treex::Block::Filter::CzEng::TrainMaxEntModel
+=item Treex::Block::Filter::CzEng::Train
 
-Given a manually annotated document and results of all filters,
-train a maximum entropy model and store it in 'outfile'.
+Given data and a classifier object, train and evaluate a filter model.
 
 =back
 
