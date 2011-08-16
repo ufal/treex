@@ -25,7 +25,7 @@ sub BUILD {
         'conll_mcd_order2_0.1.model'  => '540m',     # load block tested on cygwin notebook (32bit win), java-1.6.0(64bit)
     );
 
-    my $DEFAULT_MODEL_MEMORY = '10g';
+    my $DEFAULT_MODEL_MEMORY = '2500m';
     my $model_dir            = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
 
     my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;
