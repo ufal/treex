@@ -43,16 +43,16 @@ sub deprel_to_afun
         # punct quantmod rcmod rel ROOT voc xcomp
 
 
-        my $deprel = $node->conll_deprel();
-        my $parent = $node->parent();
-        my $pos    = $node->get_iset('pos');
-        my $ppos   = $parent->get_iset('pos');
+        my $deprel = $node->conll_deprel;
+        my $parent = $node->parent;
+        my @feats  = split /\|/, $node->conll_pos;
+        my @pfeats = split /\|/, $parent->conll_pos;
         my $afun;
 
         # Dependency of the main verb on the artificial root node.
-        if ( $deprel eq 'ROOT' )
+        if ( 'ROOT' eq $deprel )
         {
-            if ( $pos eq 'verb')
+            if ( grep 'V' eq $_, @feats )
             {
                 $afun = 'Pred';
             }
@@ -61,11 +61,20 @@ sub deprel_to_afun
                 $afun = 'ExD';
             }
         }
-        elsif ($deprel eq 'PUNCT')
+
+        # Punctuation
+        elsif ( 'punct' eq $deprel )
         {
-            if ($pos eq 'punct')
+            if (',' eq $node->lemma)
+            {
+                $afun = 'AuxX';
+            }
+            elsif ( 1 == @feats
+                    and 'PUNCT' eq $feats[0]
+                    and @nodes == $node->ord )
             {
                 $afun = 'AuxK';
+                $node->set_parent($nodes[0]);
             }
         }
 
