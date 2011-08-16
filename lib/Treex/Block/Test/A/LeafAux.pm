@@ -18,8 +18,8 @@ sub process_anode {
 
 =item Treex::Block::Test::A::LeafAux
 
-Nodes with afun equal to AuxT, AuxR, AuxX... (?)
-must be leaves.
+Afun values AuxT, AuxR, AuxX... (?) imply
+that the node should be a leave.
 
 =back
 
