@@ -19,7 +19,7 @@ sub process_atree {
         my $p_ord = $anode->get_parent->ord;
         print join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, '_', $p_ord, $deprel ) . "\n";
     }
-    print "\n";
+    print "\n" if $atree->get_descendants;
     return;
 }
 
