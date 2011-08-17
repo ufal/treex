@@ -14,10 +14,12 @@ sub process_zone {
     my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
 
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
+    $self->convert_coordination($a_root);
     $self->deprel_to_afun($a_root);
+    $self->convert_copullae($a_root);
     $self->check_afuns($a_root);
 } # process_zone
+
 
 # V is verb
 # PCP[12] are participles.
@@ -32,6 +34,7 @@ sub is_verb {
     return grep $_ =~ /^(?:V|PCP[12])$/, @feats;
 } # is_verb
 
+
 # N is noun; NON-TWOL is an OOV word.
 sub is_noun {
     my @feats = @_;
@@ -41,6 +44,50 @@ sub is_noun {
     }
     return grep $_ =~ /^(?:N|NON-TWOL)$/, @feats;
 } # is_noun
+
+sub convert_coordination {
+
+} # convert_coordination
+
+
+sub convert_copullae {
+    my $self = shift;
+    my $root = shift;
+    my @nodes      = $root->get_descendants();
+
+    foreach my $node (grep 'cop' eq $_->conll_deprel, @nodes) {
+        my $pnom = $node->parent;
+        unless ($pnom) {
+            warn "No Pnom for copulla ", $node->get_address, "\n";
+            next;
+        }
+
+        my $grandpa = $pnom->parent;
+        unless ($grandpa) {
+            warn "No grandparent for copulla ", $node->get_address, "\n";
+            next;
+        }
+        $node->set_parent($grandpa);
+        $pnom->set_parent($node);
+        $pnom->set_afun('Pnom');
+        $node->set_conll_deprel($pnom->conll_deprel);
+
+        my @sb = grep 'nsubj-cop' eq $_->conll_deprel, $pnom->children;
+        unless (@sb) {
+            warn "No subject for copulla ", $node->get_address, "\n";
+            next;
+        }
+        $_->set_parent($node) for @sb;
+        $_->set_afun('Sb') for @sb;
+        warn "Multiple subjects for copulla ", $node->get_address, "\n"
+            if 1 < @sb;
+
+        for my $child ($pnom->children) {
+            $child->set_parent($node) unless 'Obj' eq $child->afun;
+        }
+    }
+} # convert_copullae
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -53,14 +100,18 @@ sub deprel_to_afun {
     my @nodes      = $root->get_descendants();
 
     foreach my $node (@nodes) {
+        next if $node->afun;
 
+        # http://bionlp.utu.fi/dependencytypes.html
         # The corpus contains the following 45 dependency relation tags:
         #
-        # acomp adpos advcl advmod amod appos aux auxpass cc ccomp
-        # compar comparator complm conj cop csubj csubj-cop dep det
-        # dobj gobj iccomp infmod intj mark name neg nn nommod nsubj
-        # nsubj-cop num number parataxis partmod poss preconj prt
-        # punct quantmod rcmod rel ROOT voc xcomp
+        # acomp adpos advcl advmod appos aux auxpass cc ccomp compar
+        # comparator complm conj csubj csubj-cop dep det iccomp intj
+        # mark name neg nn num number parataxis partmod preconj prt
+        # punct quantmod rcmod rel voc xcomp
+        #
+        # finished:
+        # amod cop dobj gobj infmod nommod nsubj nsubj-cop poss ROOT
 
         my $deprel = $node->conll_deprel;
         my $parent = $node->parent;
@@ -78,31 +129,53 @@ sub deprel_to_afun {
 
         # nommod - modification expressed by a noun, can be Atr or Adv
         #          depending on the parent's POS
+        # amod - modification expressed by an adjective, should be Atr
+        # infmod - modification expressed by infinitive
         # gobj - genitive object under nominalized verb, Atr under
         #        nouns, Obj otherwise
         # dobj - direct object
         # poss - possesive, Atr under nouns, Adv otherwise
 
-        } elsif (grep $deprel eq $_, qw/nommod dobj gobj poss/) {
+        } elsif (grep $deprel eq $_,
+                 qw/nommod dobj gobj poss amod infmod/) {
             if (is_noun(@pfeats)) {
                 $afun = 'Atr';
-                warn "@pfeats head of $deprel ", $node->id, "\n"
+                warn "@pfeats head of $deprel ", $node->get_address, "\n"
                     if 'dobj' eq $deprel;
             } elsif (grep $deprel eq $_, qw/nommod poss/) {
                 $afun = 'Adv';
-                warn "@pfeats head of $deprel ", $node->id, "\n"
+                warn "@pfeats head of $deprel ", $node->get_address, "\n"
                     unless 'nommod' eq $deprel;
             } else {
                 $afun = 'Obj';
-                warn "@pfeats head of $deprel ", $node->id, "\n"
-                    unless 'dobj' eq $deprel;
+                warn "@pfeats head of $deprel ", $node->get_address, "\n"
+                    unless grep $_ eq $deprel, qw/dobj/;
             }
 
         # nsubj - the subject
         } elsif ('nsubj' eq $deprel) {
             $afun = 'Sb';
-            warn "@pfeats head of nsubj ", $node->id, "\n"
+            warn "@pfeats head of nsubj ", $node->get_address, "\n"
                 unless is_verb(@pfeats);
+
+        # ccomp - object clause
+        } elsif ('ccomp' eq $deprel) {
+            my @auxc = grep 'complm' eq $_->conll_deprel, $node->children;
+            unless (@auxc) {
+                warn 'No AuxC for ccomp ', $node->get_address, "\n";
+                next;
+            }
+            if (1 < @auxc) {
+                warn 'Too many AuxC ', $node->get_address, "\n";
+                $_->set_parent($auxc[0]) for @auxc[1 .. $#auxc];
+                $_->set_afun('AuxY') for @auxc[1 .. $#auxc];
+            }
+            $auxc[0]->set_parent($parent);
+            $auxc[0]->set_afun('AuxC');
+            $node->set_parent($auxc[0]);
+            my @auxx = grep ',' eq $_->lemma, $node->children;
+            $_->set_parent($auxc[0]) for @auxx;
+            $afun = 'Obj';
 
         # Punctuation
         } elsif ('punct' eq $deprel) {
