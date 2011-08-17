@@ -28,13 +28,18 @@ binmode STDERR, ":utf8";
     *STDERR->autoflush();
 }
 
-Readonly my %ERROR_LEVEL_VALUE => (
-    'ALL'   => 0,
-    'DEBUG' => 1,
-    'INFO'  => 2,
-    'WARN'  => 3,
-    'FATAL' => 4,
-);
+
+my @ERROR_LEVEL_NAMES = qw(ALL DEBUG INFO WARN FATAL);
+Readonly my %ERROR_LEVEL_VALUE => map {$ERROR_LEVEL_NAMES[$_] => $_} (0 .. $#ERROR_LEVEL_NAMES);
+
+#Readonly my %ERROR_LEVEL_VALUE => (
+#    'ALL'   => 0,
+#    'DEBUG' => 1,
+#    'INFO'  => 2,
+#    'WARN'  => 3,
+#    'FATAL' => 4,
+#);
+
 
 use Moose::Util::TypeConstraints;
 enum 'ErrorLevel' => keys %ERROR_LEVEL_VALUE;
@@ -58,7 +63,7 @@ sub log_set_error_level {
 }
 
 sub get_error_level {
-    return $current_error_level_value;
+    return $ERROR_LEVEL_NAMES[$current_error_level_value];
 }
 
 # fatal error messages can't be suppressed
