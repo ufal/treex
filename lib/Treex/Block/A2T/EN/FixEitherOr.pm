@@ -24,7 +24,7 @@ sub process_ttree {
         $or->add_aux_anodes( $either->get_anodes );
         $or->set_functor('DISJ');
         $or->set_nodetype('coap');
-        $either->disconnect;
+        $either->remove();
 
         #        print $or->t_lemma."\t". $or->get_address."\n";
     }

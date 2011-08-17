@@ -33,7 +33,7 @@ sub process_tnode {
         log_info "_DELETED_\t$my_lemma\t"
             . $tnode->src_tnode->get_zone()->sentence . "\t"
             . $tnode->get_parent()->id . "\n" if $DEBUG;
-        $tnode->disconnect;
+        $tnode->remove();
     }
 
 }

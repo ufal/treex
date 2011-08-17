@@ -60,7 +60,7 @@ sub drop {
     }
 
     # delete the a-node
-    $a_node->disconnect();
+    $a_node->remove();
 }
 
 1;

@@ -15,7 +15,7 @@ sub process_tnode {
                 $a_child->set_parent( $a_node->get_parent );
             }
 
-            $a_node->disconnect;
+            $a_node->remove();
             $cs_tnode->set_lex_anode(undef);
         }
     }

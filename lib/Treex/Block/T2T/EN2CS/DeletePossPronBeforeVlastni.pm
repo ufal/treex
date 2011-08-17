@@ -18,7 +18,7 @@ sub process_zone {
                 && !$prev_node->children
                 )
             {
-                $prev_node->remove;
+                $prev_node->remove();
             }
         }
     }

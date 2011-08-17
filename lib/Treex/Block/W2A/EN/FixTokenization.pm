@@ -35,7 +35,7 @@ sub process_atree {
         #    ##warn "merging $forms[$i]th\n";
         #    $nodes[$i]->set_form($forms[$i] . 'th' );
         #    $nodes[$i]->set_attr( 'gloss', 'merged' );
-        #    $nodes[ $i + 1 ]->disconnect();
+        #    $nodes[ $i + 1 ]->remove();
         #    $i += 1;
         #    next TOKEN;
         #}
@@ -51,7 +51,7 @@ sub process_atree {
             $nodes[$i]->set_form($merged);
             $nodes[$i]->set_attr( 'gloss', 'merged' );
             foreach my $node ( @nodes[ $i + 1 .. $i + $length ] ) {
-                $node->disconnect();
+                $node->remove();
             }
             $i += $length;
         }

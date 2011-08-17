@@ -91,10 +91,10 @@ sub remove_tree {
         { isa => 'Layer' },
     );
 
-    # disconnect all nodes ($tree_root->disconnect does not work, in order to not be used by users)
+    # remove all nodes ($tree_root->remove does not work, in order to not be used by users)
     my $tree_root = $self->get_tree($layer);
     foreach my $child ( $tree_root->get_children() ) {
-        $child->disconnect();
+        $child->remove();
     }
     if ( $tree_root->id ) {
         $self->get_document->index_node_by_id( $tree_root->id, undef );
