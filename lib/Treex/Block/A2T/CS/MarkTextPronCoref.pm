@@ -81,6 +81,28 @@ sub _create_instances {
     #TODO
 }
 
+before 'process_document' => sub {
+    my $self = shift; 
+    my ($document) = pos_validated_list(
+        \@_,
+        { isa => 'Treex::Core::Document' },
+    );
+    if ( !$document->get_bundles() ) {
+        log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
+            " doesn't override the method process_document";
+    }
+    my @trees = map { $_->get_tree( 
+        $self->$language, 't', $self->$selector ) }
+        $document->get_bundles;
+
+    my $fe = $self->feature_extractor;
+
+    $collocations = $fe->count_collocations( \@trees );
+    $np_freq = $fe->count_np_freq( \@trees );
+    $fe->mark_sentence_nums( \@trees );
+    $fe->mark_clause_nums( \@trees );
+}
+
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 

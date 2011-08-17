@@ -1,11 +1,12 @@
 package Treex::Tool::Coreference::PronCorefFeatures
 
-    use Treex::Core::Common
+use Treex::Core::Common
 
-    my $b_true = '1';
+my $b_true = '1';
 my $b_false = '-1';
 
-my %aktanty2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
+my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
+my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
 
 # Bere cislo a odkaz na seznam hranic skatulek. Soupne cislo tak, aby cisla mezi dvema hranicemi
 # dostala stejnou hodnotu
@@ -55,80 +56,205 @@ sub mark_clause_root($) {
     return $#vlist + 1;
 }
 
-# REFACTORED
-# TODO consider renaming or splitting into several methods
-# gets the list of all noun phrases, the list of all anaphors in the file, noun-phrase frequencies and the collocation list
-sub analyze_file {
-    my ( $document, $language, $layer, $selector ) = @_;
-    my ( $all_nps, $all_anaphs, $np_freq, $collocation );
 
-    my @all_nodes       = ();
-    my $sentnum         = 1;
-    my $file_clause_num = 0;
-
-    my @trees = map { $_->get_tree( $language, $layer, $selector ) }
-        $document->get_bundles;
-
-    foreach my $tree (@trees) {
-
-        # TODO clause numbers using Node::InClause
-        my $clause_num = mark_clause_root($tree);
-
-        push @all_nodes, $tree->descendants( { ordered => 1 } );
-
+sub count_collocations {
+    my ( $trees ) = @_;
+    my ( $collocation );
+    
+    foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {
-            $node->wild->{aca_clausenum} =
-                $node->wild->{aca_clausenum} + $file_clause_num;
-            $node->wild->{aca_sentnum} = $sentnum;
-
-            if ($node
-                && ( $node->gram_sempos =~ /^n/ )
-                && ( $node->gram_person !~ /1|2/ )
-                )
-            {
-                push @$all_nps, $node;
-
-                if (( $node->t_lemma eq '#PersPron' )
-                    && ( $node->gram_person eq '3' )
-                    )
-                {
-                    push @$all_anaphs, $node;
-                }
-                if ( $node->gram_sempos =~ /^n\.denot/ ) {
-                    $np_freq->{ $node->t_lemma }++;
-                }
-            }
-
-            elsif (
-                $node
-                && ( $node->gram_sempos =~ /^v/ )
-                && !$node->is_generated
-                )
-            {
+            
+            if (( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
+                
                 foreach my $child ( $node->get_echildren ) {
-
-                    if (   $child
-                        && $aktanty2{ $child->functor }
-                        && ( $child->gram_sempos =~ /^n\.denot/ )
-                        )
-                    {
+                    
+                    if ( $actants2{ $child->functor } && 
+                        ( $child->gram_sempos =~ /^n\.denot/ )) {
+                        
                         my $key = $child->functor . "-" . $node->t_lemma;
                         push @{ $collocation->{$key} }, $child->t_lemma;
                     }
                 }
             }
+
+        }
+    }
+
+    return ( $collocation );
+}
+
+sub count_np_freq {
+    my ( $trees ) = @_;
+    my ( $np_freq );
+    
+    foreach my $tree (@{$trees}) {
+        foreach my $node ( $tree->descendants ) {
+            
+            if (($node->gram_sempos =~ /^n\.denot/ ) 
+                && ( $node->gram_person !~ /1|2/ )) {
+                    
+                    $np_freq->{ $node->t_lemma }++;
+            }
+
+        }
+    }
+
+    return ( $np_freq );
+}
+
+sub mark_clause_nums {
+ # TODO
+}
+
+sub mark_sentence_nums {
+    my ( $trees ) = @_;
+    my $sentnum = 1;
+    
+    foreach my $tree (@{$trees}) {
+        foreach my $node ( $tree->descendants ) {
+            
+            $node->wild->{aca_sentnum} = $sentnum;
+        }
+        $sentnum++;
+    }
+}
+
+
+# REFACTORED
+# TODO consider renaming or splitting into several methods
+# gets the list of all noun phrases, the list of all anaphors in the file, noun-phrase frequencies and the collocation list
+sub analyze_file {
+    my $file_clause_num = 0;
+
+    foreach my $tree (@trees) {
+        # TODO clause numbers using Node::InClause
+        my $clause_num = mark_clause_root($tree);
+
+        foreach my $node ( $tree->descendants ) {
+            $node->wild->{aca_clausenum} =
+                $node->wild->{aca_clausenum} + $file_clause_num;
         }
 
         $file_clause_num += $clause_num;
-        $sentnum++;
     }
 
+    # TODO deepord
     my $nodeord = 0;
     foreach my $node (@all_nodes) {
         $node->wild->{aca_file_deepord} = $nodeord++;
     }
 
     return ( $all_nps, $all_anaphs, $np_freq, $collocation );
+}
+
+# returns the symbol in the $position of analytical node's tag of $node
+sub _get_atag {
+	my ($node, $position) = @_;
+	my $anode = $node->get_lex_anode;
+    if ($anode) {
+		return substr($anode->tag, $position, 1);
+	}
+    return;
+}
+
+# returns the function of an analytical node $node
+sub _get_afun {
+	my ($node) = @_;
+	my $anode = $node->get_lex_anode;
+    if ($anode) {
+		return $anode->afun;
+	}
+    return;
+}
+
+# returns $b_true if the parameter is subject; otherwise $b_false
+sub _is_subject {
+	my ($node) = @_;
+	my $par = ($node->get_eparents)[0];
+    return $b_false if (!defined $par);
+	
+    if (($par->gram_tense =~ /^(sim|ant|post)/) || 
+        ($par->functor eq 'DENOM')) {
+		
+        my @cands = $par->get_echildren;
+ 		my $sb_id;
+		foreach my $child (@cands) {
+			if ($child->gram_sempos =~ /^n/) {
+                my $achild = get_lex_anode($child);
+                if (defined $achild && ($achild->afun eq 'Sb')) {
+					$sb_id = $child->{id};
+                    last;
+				}
+			}
+		}
+		if (($node->id eq $sb_id) || 
+            (!defined $sb_id && ($node->functor eq 'ACT'))) {
+			return $b_true;
+		}	
+	}
+	return $b_false;
+}
+
+# returns whether an anaphor is APP and is in the same clause with a
+# candidate and they have a common (grand)parent CONJ|DISJ
+sub _is_app_in_coord {
+	my ($cand, $anaph) = @_;
+	if ($anaph->functor eq 'APP' && 
+        ($anaph->wild->{aca_clausenum} eq $cand->wild->{aca_clausenum})) {
+		
+        my $par = $anaph->parent;
+		while ($par && ($par != $cand) && 
+            $par->gram_tense !~ /^(sim|ant|post)/ && 
+            $par->functor !~ /^(PRED|DENOM)$/) {
+			
+            if ($par->functor =~ /^(CONJ|DISJ)$/) {
+				return (grep {$_ eq $cand} $par->descendants) ? $b_true : $b_false;
+			}
+			$par = $par->parent;
+		}
+	}
+	return $b_false;
+}
+
+# returns the first eparent's functor, sempos and lemma
+sub _get_eparent_features {
+	my ($node) = @_;
+	my $epar_fun;
+	my $epar_sempos;
+	my $epar_lemma;
+	my $epar = ($node->get_eparents)[0];
+	if ($epar) {
+		$epar_fun = $epar->functor;
+		$epar_sempos = $epar->gram_sempos;
+		$epar_lemma = $epar->t_lemma;
+#		$$coref_features{"$prefix\_epar\_fun"} = $par->{functor};
+#		$$coref_features{"$prefix\_epar\_sempos"} = $par->attr('gram/sempos');
+	}
+	return ($epar_fun, $epar_sempos, $epar_lemma);
+}
+
+# returns if $inode and $jnode have the same eparent
+sub _are_siblings {
+	my ($inode, $jnode) = @_;
+	my $ipar = ($inode->get_eparents)[0];
+	my $jpar = ($jnode->get_eparents)[0];
+	return ($ipar eq $jpar) ? $b_true : $b_false;
+#	return agreement($ipar, $jpar);
+}
+
+# return if $inode and $jnode have the same collocation
+sub _in_collocation {
+	my ($inode, $jnode, $collocation) = @_;
+	foreach my $jpar ($jnode->get_eparents) {
+		if (($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
+			my $jcoll = $jnode->functor . "-" . $jpar->t_lemma;
+			my $coll_list = $collocation->{$jcoll};
+			if (() = grep {$_ eq $inode->t_lemma} @{$coll_list}) {
+				return $b_true;
+			}
+		}
+	}
+	return $b_false;
 }
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
@@ -175,13 +301,18 @@ sub get_coref_features {
     #   4x num: sentence distance, clause distance, file deepord distance, candidate's order
     $coref_features{c_sent_dist} =
         $anaph->wild->{aca_sentnum} - $cand->wild->{aca_sentnum};
-
-    #$coref_features{c_clause_dist} = categorize($anaph->{aca_clausenum} - $cand->{aca_clausenum}, [-2,-1,0,1,2,3,7]);
+    $coref_features{c_clause_dist} = categorize(
+        $anaph->wild->{aca_clausenum} - $cand->wild->{aca_clausenum}, 
+        [-2, -1, 0, 1, 2, 3, 7]
+    );
     $coref_features{c_file_deepord_dist} = categorize(
         $anaph->wild->{aca_file_deepord} - $cand->wild->{aca_file_deepord},
-        [ 1, 2, 3, 6, 15, 25, 40, 50 ]
+        [1, 2, 3, 6, 15, 25, 40, 50]
     );
-    $coref_features{c_cand_ord} = categorize( $candord, [ 1, 2, 3, 5, 8, 11, 17, 22 ] );
+    $coref_features{c_cand_ord} = categorize(
+        $candord,
+        [1, 2, 3, 5, 8, 11, 17, 22]
+    );
 
 ###########################
     #   Morphological:
@@ -201,76 +332,74 @@ sub get_coref_features {
         ? $b_true : $b_false;
     $coref_features{c_join_num} = $coref_features{c_cand_num} . "_" . $coref_features{c_anaph_num};
 
-    #TODO: REFACTOR below
-
     #   24: 8 x tag($inode, $jnode), joined
-    $coref_features{c_cand_apos}  = get_atag( $cand,  0 );
-    $coref_features{c_anaph_apos} = get_atag( $anaph, 0 );
+    $coref_features{c_cand_apos}  = _get_atag( $cand,  0 );
+    $coref_features{c_anaph_apos} = _get_atag( $anaph, 0 );
     $coref_features{c_join_apos}  = $coref_features{c_cand_apos} . "_" . $coref_features{c_anaph_apos};
 
-    $coref_features{c_cand_asubpos}  = get_atag( $cand,  1 );
-    $coref_features{c_anaph_asubpos} = get_atag( $anaph, 1 );
+    $coref_features{c_cand_asubpos}  = _get_atag( $cand,  1 );
+    $coref_features{c_anaph_asubpos} = _get_atag( $anaph, 1 );
     $coref_features{c_join_asubpos}  = $coref_features{c_cand_asubpos} . "_" . $coref_features{c_anaph_asubpos};
 
-    $coref_features{c_cand_agen}  = get_atag( $cand,  2 );
-    $coref_features{c_anaph_agen} = get_atag( $anaph, 2 );
+    $coref_features{c_cand_agen}  = _get_atag( $cand,  2 );
+    $coref_features{c_anaph_agen} = _get_atag( $anaph, 2 );
     $coref_features{c_join_agen}  = $coref_features{c_cand_agen} . "_" . $coref_features{c_anaph_agen};
 
-    $coref_features{c_cand_anum}  = get_atag( $cand,  3 );
-    $coref_features{c_anaph_anum} = get_atag( $anaph, 3 );
+    $coref_features{c_cand_anum}  = _get_atag( $cand,  3 );
+    $coref_features{c_anaph_anum} = _get_atag( $anaph, 3 );
     $coref_features{c_join_anum}  = $coref_features{c_cand_anum} . "_" . $coref_features{c_anaph_anum};
 
-    $coref_features{c_cand_acase}  = get_atag( $cand,  4 );
-    $coref_features{c_anaph_acase} = get_atag( $anaph, 4 );
+    $coref_features{c_cand_acase}  = _get_atag( $cand,  4 );
+    $coref_features{c_anaph_acase} = _get_atag( $anaph, 4 );
     $coref_features{c_join_acase}  = $coref_features{c_cand_acase} . "_" . $coref_features{c_anaph_acase};
 
-    $coref_features{c_cand_apossgen}  = get_atag( $cand,  5 );
-    $coref_features{c_anaph_apossgen} = get_atag( $anaph, 5 );
+    $coref_features{c_cand_apossgen}  = _get_atag( $cand,  5 );
+    $coref_features{c_anaph_apossgen} = _get_atag( $anaph, 5 );
     $coref_features{c_join_apossgen}  = $coref_features{c_cand_apossgen} . "_" . $coref_features{c_anaph_apossgen};
 
-    $coref_features{c_cand_apossnum}  = get_atag( $cand,  6 );
-    $coref_features{c_anaph_apossnum} = get_atag( $anaph, 6 );
+    $coref_features{c_cand_apossnum}  = _get_atag( $cand,  6 );
+    $coref_features{c_anaph_apossnum} = _get_atag( $anaph, 6 );
     $coref_features{c_join_apossnum}  = $coref_features{c_cand_apossnum} . "_" . $coref_features{c_anaph_apossnum};
 
-    $coref_features{c_cand_apers}  = get_atag( $cand,  7 );
-    $coref_features{c_anaph_apers} = get_atag( $anaph, 7 );
+    $coref_features{c_cand_apers}  = _get_atag( $cand,  7 );
+    $coref_features{c_anaph_apers} = _get_atag( $anaph, 7 );
     $coref_features{c_join_apers}  = $coref_features{c_cand_apers} . "_" . $coref_features{c_anaph_apers};
 
 ###########################
     #   Functional:
     #   3:  functor($inode, $jnode);
-    $coref_features{c_cand_fun}  = $cand->{functor};
-    $coref_features{c_anaph_fun} = $anaph->{functor};
+    $coref_features{c_cand_fun}  = $cand->functor;
+    $coref_features{c_anaph_fun} = $anaph->functor;
     $coref_features{b_fun_agree} = ( $coref_features{c_cand_fun} eq $coref_features{c_anaph_fun} ) ? $b_true : $b_false;
     $coref_features{c_join_fun}  = $coref_features{c_cand_fun} . "_" . $coref_features{c_anaph_fun};
 
     #   3: afun($inode, $jnode);
-    $coref_features{c_cand_afun}  = get_afun($cand);
-    $coref_features{c_anaph_afun} = get_afun($anaph);
+    $coref_features{c_cand_afun}  = _get_afun($cand);
+    $coref_features{c_anaph_afun} = _get_afun($anaph);
     $coref_features{b_afun_agree} = ( $coref_features{c_cand_afun} eq $coref_features{c_anaph_afun} ) ? $b_true : $b_false;
     $coref_features{c_join_afun}  = $coref_features{c_cand_afun} . "_" . $coref_features{c_anaph_afun};
 
     #   3: aktant($inode, $jnode);
-    $coref_features{b_cand_akt}  = ( $cand->{functor}  =~ /^$aktanty$/ ) ? $b_true : $b_false;
-    $coref_features{b_anaph_akt} = ( $anaph->{functor} =~ /^$aktanty$/ ) ? $b_true : $b_false;
+    $coref_features{b_cand_akt}  = $actants{ $cand->functor  } ? $b_true : $b_false;
+    $coref_features{b_anaph_akt} = $actants{ $anaph->functor } ? $b_true : $b_false;
     $coref_features{b_akt_agree} = ( $coref_features{b_cand_akt} eq $coref_features{b_anaph_akt} ) ? $b_true : $b_false;
 
     #   3:  subject($inode, $jnode);
-    $coref_features{b_cand_subj}  = is_subject($cand);
-    $coref_features{b_anaph_subj} = is_subject($anaph);
+    $coref_features{b_cand_subj}  = _is_subject($cand);
+    $coref_features{b_anaph_subj} = _is_subject($anaph);
     $coref_features{b_subj_agree} = ( $coref_features{b_cand_subj} eq $coref_features{b_anaph_subj} ) ? $b_true : $b_false;
 
 ###########################
     #   Context:
-    $coref_features{b_cand_coord} = ( $cand->{is_member} ) ? $b_true : $b_false;
-    $coref_features{b_app_in_coord} = is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features{b_cand_coord} = ( $cand->is_member ) ? $b_true : $b_false;
+    $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
 
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
     my $cand_epar_lemma;
     my $anaph_epar_lemma;
-    ( $coref_features{c_cand_epar_fun},  $coref_features{c_cand_epar_sempos},  $cand_epar_lemma )  = get_eparent_features($cand);
-    ( $coref_features{c_anaph_epar_fun}, $coref_features{c_anaph_epar_sempos}, $anaph_epar_lemma ) = get_eparent_features($anaph);
+    ( $coref_features{c_cand_epar_fun},  $coref_features{c_cand_epar_sempos},  $cand_epar_lemma )  = _get_eparent_features($cand);
+    ( $coref_features{c_anaph_epar_fun}, $coref_features{c_anaph_epar_sempos}, $anaph_epar_lemma ) = _get_eparent_features($anaph);
     $coref_features{b_epar_fun_agree}         = ( $coref_features{c_cand_epar_fun} eq $coref_features{c_anaph_epar_fun} ) ? $b_true : $b_false;
     $coref_features{c_join_epar_fun}          = $coref_features{c_cand_epar_fun} . "_" . $coref_features{c_anaph_epar_fun};
     $coref_features{b_epar_sempos_agree}      = ( $coref_features{c_cand_epar_sempos} eq $coref_features{c_anaph_epar_sempos} ) ? $b_true : $b_false;
@@ -280,16 +409,19 @@ sub get_coref_features {
     $coref_features{c_join_clemma_aeparlemma} = $cand->{t_lemma} . "_" . $anaph_epar_lemma;
 
     #   3:  tfa($inode, $jnode);
-    $coref_features{c_cand_tfa}  = $cand->{tfa};
-    $coref_features{c_anaph_tfa} = $anaph->{tfa};
+    $coref_features{c_cand_tfa}  = $cand->tfa;
+    $coref_features{c_anaph_tfa} = $anaph->tfa;
     $coref_features{b_tfa_agree} = ( $coref_features{c_cand_tfa} eq $coref_features{c_anaph_tfa} ) ? $b_true : $b_false;
     $coref_features{c_join_tfa}  = $coref_features{c_cand_tfa} . "_" . $coref_features{c_anaph_tfa};
 
     #   1: are_siblings($inode, $jnode)
-    $coref_features{b_sibl} = are_siblings( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
 
     #   1: collocation
-    $coref_features{b_coll} = in_collocation( $cand, $anaph, $collocation ) ? $b_true : $b_false;
+    $coref_features{b_coll} = _in_collocation( $cand, $anaph, $collocation ) ? $b_true : $b_false;
+
+######### TODO CONTINUE IN REFACTORING HERE ##############
+
 
     #   1: collocation from CNK
     $coref_features{r_cnk_coll} = in_cnk_collocation( $cand, $anaph, $p_nv_freq, $p_v_freq );
