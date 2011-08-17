@@ -155,8 +155,7 @@ sub get_subpos_of_perspron {
     }
 
     # short pronoun forms ("ho")
-    return 'H' if $formeme =~ /[34]/ and $t_node->gram_number eq 'sg'
-            and $t_node->gram_gender ne 'fem';
+    return 'H' if $formeme =~ /[34]/ && $t_node->gram_number eq 'sg' && ($t_node->gram_gender || '') ne 'fem';
 
     # other personal pronouns (on, jich, ...)
     return 'P';
