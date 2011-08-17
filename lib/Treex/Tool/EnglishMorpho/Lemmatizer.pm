@@ -93,8 +93,7 @@ sub _cut_negative_prefix {
 }
 
 sub _lemmatize_NNS_NNPS {
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/men$/man/;          #over 600 words (in BNC)
     return $word if $word =~ s/shoes$/shoe/;
     return $word if $word =~ s/wives$/wife/;
@@ -115,8 +114,7 @@ sub _lemmatize_NNS_NNPS {
 }
 
 sub _lemmatize_VBG {                               ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/(${CXY}z)ing$/$1/;
     return $word if $word =~ s/(${VY}z)ing$/$1e/;
     return $word if $word =~ s/($S2)ing$/$1/;
@@ -154,8 +152,7 @@ sub _lemmatize_VBG {                               ## no critic (Subroutines::Pr
 }
 
 sub _lemmatize_VBD_VBN {                                      ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/en$/e/;
     return $word if $word =~ s/(${CXY}z)ed$/$1/;
     return $word if $word =~ s/(${VY}z)ed$/$1e/;
@@ -192,8 +189,7 @@ sub _lemmatize_VBD_VBN {                                      ## no critic (Subr
 }
 
 sub _lemmatize_VBZ {
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/(${V}se)s$/$1/;
     return $word if $word =~ s/(.${CXY}z)es$/$1/;
     return $word if $word =~ s/(${VY}ze)s$/$1/;
@@ -209,8 +205,7 @@ sub _lemmatize_VBZ {
 }
 
 sub _lemmatize_JJR_RBR {
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/([^e]ll)er$/$1/;                           #smaller
     return $word if $word =~ s/($C)\1er$/$1/;                             #bigger
     return $word if $word =~ s/ier$/y/;                                   #earlier
@@ -224,8 +219,7 @@ sub _lemmatize_JJR_RBR {
 }
 
 sub _lemmatize_JJS_RBS {
-    my $self = shift;
-    my $word = shift;
+    my ($self, $word) = @_;
     return $word if $word =~ s/([^e]ll)est$/$1/;                           #smallest
     return $word if $word =~ s/(.)\1est$/$1/;                              #biggest
     return $word if $word =~ s/iest$/y/;                                   #earliest
@@ -241,12 +235,12 @@ sub _lemmatize_by_rules {
     my ( $self, $word, $tag ) = @_;
 
     my $lemma = $tag =~ /NNP?S/
-        ? _lemmatize_NNS_NNPS($word)
-        : $tag =~ /^VBG/   ? _lemmatize_VBG($word)
-        : $tag =~ /VB[DN]/ ? _lemmatize_VBD_VBN($word)
-        : $tag eq 'VBZ' ? _lemmatize_VBZ($word)
-        : $tag =~ /JJR|RBR/ ? _lemmatize_JJR_RBR($word)
-        : $tag =~ /JJS|RBS/ ? _lemmatize_JJS_RBS($word)
+        ? $self->_lemmatize_NNS_NNPS($word)
+        : $tag =~ /^VBG/   ? $self->_lemmatize_VBG($word)
+        : $tag =~ /VB[DN]/ ? $self->_lemmatize_VBD_VBN($word)
+        : $tag eq 'VBZ' ? $self->_lemmatize_VBZ($word)
+        : $tag =~ /JJR|RBR/ ? $self->_lemmatize_JJR_RBR($word)
+        : $tag =~ /JJS|RBS/ ? $self->_lemmatize_JJS_RBS($word)
         : $word
         ;
     return $word if $lemma eq '';    # Otherwise e.g. "est"->""
