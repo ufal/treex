@@ -596,7 +596,7 @@ sub shape_coordination
     # Now that members and delimiters are restructured, set also the afuns of the members.
     # Do not ask the former root about its real afun earlier.
     # If it is a preposition and the coordination members still sit among its children, the preposition may not know where to find its real afun.
-    my $afun = $c->{oldroot}->get_real_afun() or '';
+    my $afun = $c->{oldroot}->get_real_afun() || '';
     $croot->set_afun('Coord');
     foreach my $member ( @{ $c->{members} } )
     {
