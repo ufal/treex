@@ -144,7 +144,8 @@ sub parse_scenario_string {
     return @$parsed;
 }
 
-# reverse of parse_scenario_string, used in tools/tests/auto_diagnose.pl
+# TODO: should be a method?
+# reverse of parse_scenario_string, used in Treex::Core::Run for treex --dump
 sub construct_scenario_string {
     my ( $block_items, $multiline ) = @_;
     my $delim = $multiline ? qq{\n} : q{ };
