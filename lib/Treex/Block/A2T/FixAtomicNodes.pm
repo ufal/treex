@@ -14,7 +14,7 @@ sub process_tnode {
     my @children = $tnode->get_children();
 
     #  rehang all the children and the atomic node itself under the first child
-    if (@children) {
+    if ( @children > 1 ) {
 
         my $firstchild = shift @children;
 
@@ -42,7 +42,8 @@ Treex::Block::W2A::CS::FixAtomicNodes
 
 =head1 DESCRIPTION
 
-Ensures that no atomic node (nodetype=atom) has children.
+Ensures that no atomic node (nodetype=atom) has more than one child (which is possible in phrases such as "na druhou stranu",
+"v každém případě", "s největší pravděpodobností" etc.).
 
 =head1 TODO
 
