@@ -16,8 +16,30 @@ sub process_zone {
     }
     foreach my $anode ( $zone->get_atree->get_descendants() ) {
         if ( $anode->tag eq '-NONE-' ) {
-            foreach my $child ( $anode->get_descendants ) {
-                $child->set_parent( $anode->get_parent );
+            if ( $anode->get_attr( 'p_terminal.rf' ) ) {
+                my %p_refs = map { $_->get_attr( 'p_terminal.rf' ) => $_ } $anode->get_children;
+                if ( %p_refs ) {
+                    my $document = $anode->get_document();
+                    my $pnode = $document->get_node_by_id( $anode->get_attr( 'p_terminal.rf' ) );
+                    my $desc;
+                    while ( not $desc ) {
+                        $desc = first {
+                            my $id = $_->get_attr( 'id' );
+                            grep { $_ eq $id } keys %p_refs
+                        } $pnode->get_descendants;
+                        $pnode = $pnode->get_parent();
+                    }
+
+                    my $new_parent = $p_refs{ $desc->get_attr( 'id' ) };
+                    $new_parent->set_parent( $anode->get_parent );
+                    foreach my $child ( $anode->get_children ) {
+                        $child->set_parent( $new_parent );
+                    }
+                }
+            } else {
+                foreach my $child ( $anode->get_children ) {
+                    $child->set_parent( $anode->get_parent );
+                }
             }
             foreach my $tnode ( @{ $a2t{$anode} } ) {
                 if ( $tnode->get_lex_anode && $tnode->get_lex_anode eq $anode ) {
@@ -51,6 +73,8 @@ The lex.rf and aux.rf links from t-tree are also deleted.
 =head1 AUTHOR
 
 David Mareček <marecek@ufal.mff.cuni.cz>
+
+Josef Toman <toman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
