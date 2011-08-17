@@ -8,7 +8,7 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $t_node ( $t_root->get_descendants() ) {
-        if ( $t_node->formeme =~ /^v.+(fin|rc)/ ) {
+        if ( $t_node->formeme =~ /^v.+(fin|rc|act|apass|rpass)/ ) {
             process_finite_verb($t_node);
         }
     }
@@ -24,6 +24,12 @@ sub process_finite_verb {
 
         # 'He managed to...' --> 'Podarilo se mu...'
         if ( $t_vfin->t_lemma =~ /^((po)?(dařit)|líbit)/ ) {
+            $a_vfin->set_attr( 'morphcat/gender', 'N' );
+            $a_vfin->set_attr( 'morphcat/number', 'S' );
+            $a_vfin->set_attr( 'morphcat/person', '3' );
+        }
+        # Reflexive passive -- use 3rd person neutrum
+        if ( ( $t_vfin->voice || $t_vfin->gram_diathesis || '' ) =~ m/^(reflexive_diathesis|deagent)$/ ){
             $a_vfin->set_attr( 'morphcat/gender', 'N' );
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );

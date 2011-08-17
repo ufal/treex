@@ -8,7 +8,7 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     # We want to drop only subjects that are not coordinated ("he or she")
-    return if $t_node->formeme !~ /:1$/;
+    return if $t_node->formeme !~ /(:1|^drop)$/;
     return if $t_node->is_member;
 
     # As a special case we want to drop word "to" (lemma=ten)

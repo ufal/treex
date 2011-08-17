@@ -9,7 +9,7 @@ sub process_tnode {
     if ( $t_node->t_lemma =~ /_(s[ie])$/ ) {
         $reflexive = $1;
     }
-    elsif ( ( $t_node->voice || '' ) eq 'reflexive_diathesis' ) {
+    elsif ( ( $t_node->voice || $t_node->gram_diathesis || '' ) =~ m/^(reflexive_diathesis|deagent)$/ ) {
         $reflexive = 'se';
     }
     else {

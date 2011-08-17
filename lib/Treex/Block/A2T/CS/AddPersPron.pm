@@ -11,10 +11,22 @@ sub process_tnode {
         )
     {
 
+        # There is an auxiliary reflexive
+        if ( my $auxr = first { my $a = $_->get_lex_anode(); $a and $a->afun eq 'AuxR' } $t_node->get_echildren( { or_topological => 1 } ) ){
+
+            $auxr->set_functor('ACT');
+            $auxr->set_formeme('drop');
+
+            $auxr->set_gram_gender('neut');
+            $auxr->set_gram_person('3');
+            $auxr->set_gram_number('sg');
+            return;
+        }                    
+                
         my $new_node = $t_node->create_child;
         $new_node->set_t_lemma('#PersPron');
         $new_node->set_functor('ACT');
-        $new_node->set_formeme('n:1');
+        $new_node->set_formeme('drop');
 
         #$new_node->set_attr( 'ord',     $t_node->get_attr('ord') - 0.1 );
         #$new_node->set_id($t_node->generate_new_id );
@@ -58,6 +70,7 @@ sub process_tnode {
         $new_node->set_gram_gender($gender);
         $new_node->set_gram_number($number);
     }
+    return;
 }
 
 1;
