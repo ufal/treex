@@ -65,65 +65,60 @@ sub _get_info_hash {
 
             my @nodes;
 
-            # syntactic relations
+            # special references: syntactic relations
             if ( $ref eq 'parent' ) {
                 @nodes = ( $node->get_parent() );
             }
             elsif ( $ref eq 'children' ) {
                 @nodes = $node->get_children( { ordered => 1 } );
             }
-
-            # alignment relation
-            elsif ( $ref eq 'aligned' ) {
-                if ($alignment_hash) {
-
-                    # get alignment from the mapping provided in a hash
-                    my $id = $node->id;
-                    if ( $alignment_hash->{$id} ) {
-                        @nodes = @{ $alignment_hash->{$id} };
-                    }
-                }
-                else {
-
-                    # get alignment from Node->get_aligned_nodes()
-                    my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
-                    if ($aligned_nodes) {
-                        @nodes = @{$aligned_nodes};
-                    }
-                }
-
-                # now @nodes is an array of nodes aligned to $node
+            elsif ($ref eq 'echildren' ){
+                @nodes = $node->get_echildren( { or_topological => 1, ordered => 1 } );
             }
-
-            # parents of aligned nodes
-            elsif ( $ref eq 'aligned_parent' ) {
-                my @aligned_nodes;
-                if ($alignment_hash) {
-
-                    # get alignment from the mapping provided in a hash
-                    my $id = $node->id;
-                    if ( $alignment_hash->{$id} ) {
-                        @aligned_nodes = @{ $alignment_hash->{$id} };
-                    }
-                }
-                else {
-
-                    # get alignment from Node->get_aligned_nodes()
-                    my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
-                    if ($aligned_nodes) {
-                        @aligned_nodes = @{$aligned_nodes};
-                    }
-                }
-                foreach my $aligned_node (@aligned_nodes) {
-                    my $aligned_parent = $aligned_node->get_parent();
-                    if ($aligned_parent) {
-                        push @nodes, $aligned_parent;
-                    }
-                }
-
-                # now @nodes is an array of parents of nodes aligned to $node
-            }
-
+            elsif ($ref eq 'eparents' ){
+                @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
+            }            
+            # alignment relation 
+            elsif ($ref eq 'aligned' ){ 
+                if ($alignment_hash) { 
+                    # get alignment from the mapping provided in a hash 
+                    my $id = $node->id; 
+                    if ($alignment_hash->{$id}) { 
+                        @nodes = @{$alignment_hash->{$id}}; 
+                    } 
+                } else { 
+                    # get alignment from Node->get_aligned_nodes() 
+                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes(); 
+                    if ($aligned_nodes) { 
+                        @nodes = @{$aligned_nodes}; 
+                    } 
+                } 
+                # now @nodes is an array of nodes aligned to $node 
+            } 
+            # parents of aligned nodes 
+            elsif ($ref eq 'aligned_parent' ){ 
+                my @aligned_nodes; 
+                if ($alignment_hash) { 
+                    # get alignment from the mapping provided in a hash 
+                    my $id = $node->id; 
+                    if ($alignment_hash->{$id}) { 
+                        @aligned_nodes = @{$alignment_hash->{$id}}; 
+                    } 
+                } else { 
+                    # get alignment from Node->get_aligned_nodes() 
+                    my ($aligned_nodes, $aligned_nodes_types) = $node->get_aligned_nodes(); 
+                    if ($aligned_nodes) { 
+                        @aligned_nodes = @{$aligned_nodes}; 
+                    } 
+                } 
+                foreach my $aligned_node (@aligned_nodes) { 
+                    my $aligned_parent = $aligned_node->get_parent(); 
+                    if ($aligned_parent) { 
+                        push @nodes, $aligned_parent; 
+                    } 
+                } 
+                # now @nodes is an array of parents of nodes aligned to $node 
+            }             
             # referencing values
             else {
 
@@ -141,7 +136,10 @@ sub _get_info_hash {
             # gather values in referenced nodes
             $info{$attrib} = join( ' ', grep { defined($_) } map { Treex::PML::Instance::get_all( $_, $name ) } @nodes );
         }
-
+        # special attribute -- address (calling get_address() )
+        elsif ( $attrib eq 'address' ){
+            $info{$attrib} = $node->get_address();
+        }
         # plain attributes
         else {
             if ( $attrib eq 'ctag' ) {
@@ -240,9 +238,11 @@ This parameter is required.
 
 Make the separator for multiple-valued attributes configurable.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
