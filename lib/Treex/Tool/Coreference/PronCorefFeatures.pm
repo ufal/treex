@@ -1,6 +1,6 @@
 package Treex::Tool::Coreference::PronCorefFeatures
 
-use Treex::Core::Common
+use Treex::Core::Common;
 
 has '_cnk_freqs' => (
     is          => 'ro',
@@ -472,3 +472,7 @@ sub get_coref_features {
 }
 
 1;
+
+# Copyright 2008-2011 Nguy Giang Linh, Michal Novak
+
+# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

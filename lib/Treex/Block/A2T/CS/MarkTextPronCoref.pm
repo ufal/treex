@@ -12,6 +12,16 @@ has 'model_path' => (
     documentation => 'path to the trained model',
 );
 
+# TODO initialize ranker
+# the best would be to pick among several rankers and corresponding models
+has '_ranker' => (
+    is       => 'ro',
+    required => 1,
+
+    #isa => '',
+    builder => '_build_ranker'
+);
+
 has '_collocations' => (
     is      => 'rw',
     isa     => 'HashRef[Str]'
@@ -22,15 +32,6 @@ has '_np_freq' => (
     isa     => 'HashRef[Str]'
 );
 
-# TODO initialize ranker
-# the best would be to pick among several rankers and corresponding models
-has '_ranker' => (
-    is       => 'ro',
-    required => 1,
-
-    #isa => '',
-    builder => '_build_ranker'
-);
 
 sub _build_ranker {
     my ($self) = @_;
@@ -53,6 +54,7 @@ sub _is_anaphoric {
 # according to rule presented in Nguy et al. (2009)
 # semantic nouns from previous context of the current sentence and from
 # the previous sentence
+# TODO think about preparing of all candidates in advance
 sub _get_ante_cands {
     my ($t_node) = @_;
 
@@ -117,14 +119,14 @@ sub process_tnode {
 
         my @ante_cands = _get_ante_cands($t_node);
 
-        # instances is a reference to hash in the form { id => instance }
+        # instances is a reference to a hash in the form { id => instance }
         my $instances = _create_instances( $t_node, @ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
-        my $antec  = $ranker->pick_winner(@ante_cands);
+        my $antec  = $ranker->pick_winner( $instances );
 
         $t_node->set_deref_attr( 'coref_text.ref', [$antec] );
     }
