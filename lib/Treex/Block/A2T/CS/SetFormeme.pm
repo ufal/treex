@@ -2,6 +2,7 @@ package Treex::Block::A2T::CS::SetFormeme;
 use Moose;
 use Treex::Core::Common;
 use Treex::Block::A2T::CS::SetFormeme::NodeInfo;
+use Treex::Tool::Lexicon::CS::AdjectivalComplements;
 
 extends 'Treex::Core::Block';
 
@@ -27,6 +28,7 @@ sub process_ttree {
     foreach my $t_node ( $t_root->get_descendants() ) {
         $self->process_tnode($t_node);
     }
+    return;
 }
 
 sub process_tnode {
@@ -44,11 +46,11 @@ sub process_tnode {
 
             my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
 
-            my $parent  = $self->_get_node_info($t_parent);
-            my $node    = $self->_get_node_info($t_node);
-            my $formeme = $self->_detect_formeme2( $node, $parent );
+            my $parent = $self->_get_node_info( $t_parent );
+            my $node =  $self->_get_node_info( $t_node );
+            my $formeme = $self->_detect_formeme2($node, $parent);
 
-            if ($formeme) {
+            if ($formeme){
                 $t_node->set_formeme($formeme);
             }
         }
@@ -64,16 +66,14 @@ sub _get_node_info {
 
     my ( $self, $t_node ) = @_;
 
-    if ( !$self->_node_info_cache->{ $t_node->id } ) {
+    if ( !$self->_node_info_cache->{$t_node->id} ){
 
-        $self->_node_info_cache->{ $t_node->id } = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new(
-            {
-                t                => $t_node,
-                fix_numer        => $self->fix_numer,
-                fix_prep         => $self->fix_prep,
-                detect_diathesis => $self->detect_diathesis,
-            }
-        );
+        $self->_node_info_cache->{$t_node->id} = Treex::Block::A2T::CS::SetFormeme::NodeInfo->new( {
+            t => $t_node,
+            fix_numer => $self->fix_numer,
+            fix_prep => $self->fix_prep,
+            detect_diathesis => $self->detect_diathesis,
+            } );
     }
     return $self->_node_info_cache->{ $t_node->id };
 }
@@ -83,21 +83,16 @@ sub _detect_formeme2 {
     my ( $self, $node, $parent ) = @_;
 
     # start with the sempos
-    my $formeme = $node->sempos;
+    my $formeme = $node->syntpos;
     $formeme =~ s/\..*//;
-
-    if ( !$node->a ) {    # elided forms have a 'drop' formeme
+    
+    if ( !$node->a ) { # elided forms have a 'drop' formeme
         $formeme = 'drop';
     }
     elsif ( $formeme eq 'n' ) {
 
-        # possesive adjectives (compound prepositions also possible: 'v můj prospěch' etc.)
-        if ( $node->tag =~ /^(AU|PS|P8)/ ) {
-            $formeme = 'adj:' . ( $node->prep ? $node->prep . '+' : '' ) . 'poss';
-        }
-
         # nominal congruent attribute
-        elsif ( $self->_is_congruent_attrib( $node, $parent ) ) {
+        if ( $self->_is_congruent_attrib( $node, $parent ) ) {
             $formeme = 'n:attr';
         }
 
@@ -107,9 +102,12 @@ sub _detect_formeme2 {
         }
     }
     elsif ( $formeme eq 'adj' ) {
-
+        # possesive adjectives (compound prepositions also possible: 'v můj prospěch' etc.)
+        if ( $node->tag =~ /^(AU|PS|P8)/ ) {
+            $formeme = 'adj:' . ( $node->prep ? $node->prep . '+' : '' ) . 'poss';
+        }        
         # prepositional phrases with adjectives -- always work the same as substantives
-        if ( $node->prep ) {
+        elsif ($node->prep) {
             $formeme = 'n:' . $node->prep . '+' . $node->case;
         }
 
@@ -117,19 +115,23 @@ sub _detect_formeme2 {
         elsif ( $node->tag =~ /^(D|Cv|Co)/ or $node->t_lemma eq 'rád' ) {
             $formeme = 'adv';
         }
-
-        # complement in nominative, directly dependent on a verb (-> adj:compl)
-        elsif ( $parent->sempos eq 'v' and $node->case eq '1' ) {
-            $formeme = 'adj:compl';
+        # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
+        # TODO -- fix "hodně prodavaček je levých" (genitive!)
+        elsif ( $parent->syntpos eq 'v' ) {
+            # always treat demosntrative and relative pronouns under verbs as substantival
+            if ( $node->tag !~ /^P[D4]/ and Treex::Tool::Lexicon::CS::AdjectivalComplements::requires( $parent->t_lemma, $node->case ) ){
+                $formeme = 'adj:' . $node->case;
+            }
+            else {
+                $formeme = 'n:' . $node->case;
+                $formeme = 'n:1' if $node->tag =~ /^(AC|Vs)/; # "připraven", "schopen" -- not declinable, but always under "být"
+            }
         }
-
-        # other verbal complements work the same as substantives
-        # TODO - problems: complements (COMPL, compl.rf), "mít co společného" (an error in Vallex, too - adj is not specified)
-        # "hodně prodavaček je levých" (genitive!)
-        elsif ( $parent->sempos eq 'v' ) {
-
-            # short indeclinable adjectival forms "schopen", "připraven" etc.
-            $formeme = 'n:1' if $node->tag =~ /^(AC|Vs)/;
+        # numerals in a non-attributive position (the ones hanging under verbs have been treated as verbal complements)
+        # TODO test if giving 'n:1' to non-declinable numerals is any good
+        elsif ( $self->_is_nonattributive_numeral( $node, $parent ) ){                    
+            $formeme = 'n:' . $node->case;
+            $formeme = 'n:1' if ( ( not $node->case ) or ( $node->case eq 'X' ) ); # non-declinable numerals
         }
 
         # attributive
@@ -138,7 +140,7 @@ sub _detect_formeme2 {
         }
     }
     elsif ( $formeme eq 'v' ) {
-        $formeme .= ':' . ( $node->prep ? $node->prep . '+' : '' ) . $node->verbform;
+        $formeme .=  ':' . ( $node->prep ? $node->prep . '+' : '' ) . $node->verbform;
     }
 
     # adverbs: just one formeme 'adv', since prepositions in their aux.rf occur only in case of some weird coordination,
@@ -152,19 +154,16 @@ sub _is_congruent_attrib {
 
     my ( $self, $node, $parent ) = @_;
 
-    # Both must be normal nouns + congruent in case (and declinable, i.e. no abbreviations),
-    # there mustn't be a preposition between them
-    if (    $node->sempos   =~ m/^n\.denot/
-        and $parent->sempos =~ m/^n\.denot/
-        and !$node->prep and $node->case =~ m/[1-7]/ and $node->case eq $parent->case
-        )
-    {
+    # Both must be normal nouns + congruent in case (and declinable, i.e. no abbreviations), 
+    # there mustn't be a preposition between them 
+    if ( $node->sempos =~ m/^n\.denot/ and $parent->sempos =~ m/^n\.denot/
+            and not $node->prep and $node->case =~ m/[1-7]/ and $node->case eq $parent->case ){
 
         # two names are usually congruent - "Frýdku Místku" etc.
-        if ( $parent->is_name_lemma and $node->is_name_lemma ) {
+        if ( $parent->is_name_lemma and $node->is_name_lemma ){
 
-            # nominative: congruency ("Josef Čapek"), or nominative ID ("Sparta Praha") ?
-            if ( $node->case eq '1' ) {
+            # nominative: congruency ("Josef Čapek"), or nominative ID ("Sparta Praha") ? 
+            if ( $node->case eq '1' ){
 
                 my $term_types = $node->term_types . '+' . $parent->term_types;
 
@@ -188,18 +187,31 @@ sub _is_congruent_attrib {
 
         # for genitive and instrumental, check for congruency in number and gender (except the labels)
         # + at least one of the two must be a name
-        elsif (
-            $node->{case} =~ m/[27]/
-            and ( $node->is_name_lemma or $parent->is_name_lemma )
-            and ( ( $gender_congruency and $number_congruency ) or ( $parent->is_term_label ) )
-            )
-        {
+        elsif ( $node->{case} =~ m/[27]/ and ( $node->is_name_lemma or $parent->is_name_lemma)
+                and ( ( $gender_congruency and $number_congruency ) or ( $parent->is_term_label ) ) ){
             return 1;
         }
         return 0;
     }
     return 0;
 }
+
+sub _is_nonattributive_numeral {
+    
+    my ( $self, $node, $parent ) = @_;
+    
+    # this is not a number that may be non-attributive -- return immediately    
+    return 0 if ( $node->tag !~ m/^C[\}=clny]/ );
+    # 'jeden' can behave as an ordinal numeral -- rule it out even in post-position if it's case-congruent with the parent
+    return 0 if ( ( $node->lemma eq 'jeden' and $parent->case eq $node->case ) );     
+    # "článek 3", "3)" - alone-standing numbers
+    return 1 if ( ( $parent->a and $node->a->ord > $parent->a->ord ) or ( $parent->syntpos eq '' ) );    
+    # 412 01 Litoměřice
+    return 1 if ( $parent->case eq '1' and $parent->is_name_lemma );
+    # default    
+    return 0;
+}
+
 
 sub detect_formeme {
     my ($tnode) = @_;

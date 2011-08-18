@@ -57,7 +57,18 @@ sub _build_case {
     my ($self) = @_;
     my $prep;
 
-    if ( $self->tag =~ m/^[NAPC]...([1-7X])/ ) {
+    # infer the case from preposition with numerals and unknown words, if possible
+    if ( $self->tag =~ m/^[XC]...-/ and $self->_prep_case->{case} ) {
+        return $self->_prep_case->{case};
+    }
+
+    # other unknown words get 'X' (as they're mainly treated as substantives)
+    elsif ( $self->tag =~ m/^X/ ) {
+        return 'X';
+    }
+
+    # the main case -- declinable parts of speech
+    elsif ( $self->tag =~ m/^[NAPC]...([1-7X])/ ) {
 
         my $case     = $1;
         my $prepcase = $self->_prep_case->{case};
@@ -131,12 +142,15 @@ sub _build__prep_case {
     # default values for no prepositions
     my $ret = { 'prep' => '', 'case' => 'X' };
 
+    # filter punctuation and auxiliary verbs always, prepositions only for verbs
+    my $pos_filter = $self->syntpos eq 'v' ? '[RVZ]' : '[VZ]';
+
     # filter out punctuation, auxiliary / modal verbs and everything what's already contained in the lemma
     my @prep_nodes = grep {
         my $lemma = $_->lemma;
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
         $lemma = lc( $_->form ) if $lemma eq 'se';    # way to filter out reflexives
-        $_->tag !~ /^[VZ]/ and $self->t_lemma !~ /(^|_)$lemma(_|$)/
+        $_->tag !~ /^$pos_filter/ and $self->t_lemma !~ /(^|_)$lemma(_|$)/
     } @{ $self->aux };
 
     if (@prep_nodes) {
@@ -150,8 +164,11 @@ sub _build__prep_case {
         my $gov_case = $prep_nodes[$gov_prep]->tag =~ m/^R...(\d)/ ? $1 : '';
         $gov_case = ( !$gov_case and $prep_nodes[$gov_prep]->tag =~ m/^[ND]/ ) ? 2 : $gov_case;
 
-        # gather the preposition forms (lemma for the main preposition, to capture vocalic / non-vocalic forms, forms for nouns etc.)
-        my @prep_forms = map { lc( $_->form ) } @prep_nodes;
+        # gather the auxiliaries' forms (lemma for subjunctions and the main preposition, in order to omit vocalization)
+        my @prep_forms =
+            map { $_->tag =~ m/^J,/ ? Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 ) : lc( $_->form ) }
+            @prep_nodes;
+            
         if ( $gov_prep >= 0 and $gov_prep < @prep_forms and $prep_nodes[$gov_prep]->tag =~ m/^R/ ) {
             $prep_forms[$gov_prep] = Treex::Tool::Lexicon::CS::truncate_lemma( $prep_nodes[$gov_prep]->lemma, 1 );
         }
@@ -195,8 +212,8 @@ sub _build_verbform {
 sub _build_syntpos {
     my ($self) = @_;
 
-    # skip conjunctions, prepositions, punctuations etc.
-    return '' if ( $self->tag =~ m/^.[%#^,FIRTVXc]/ );
+    # skip technical root, conjunctions, prepositions, punctuation etc.
+    return '' if ( $self->t->is_root or $self->tag =~ m/^.[%#^,FRVXc:]/ );
 
     # adjectives, adjectival numerals and pronouns
     return 'adj' if ( $self->tag =~ m/^.[\}=\?48ACDGLOSUadhklnrwyz]/ );
@@ -204,13 +221,14 @@ sub _build_syntpos {
     # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
     return 'adj' if ( $self->tag =~ m/^.[WZ]/ and $self->lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );
 
-    # adverbs, adverbial numerals ("dvakrát" etc.)
-    return 'adv' if ( $self->tag =~ m/^.[\*bgouv]/ );
+    # adverbs, adverbial numerals ("dvakrát" etc.),
+    # including interjections and particles (they behave the same if they're full nodes on t-layer)
+    return 'adv' if ( $self->tag =~ m/^.[\*bgouvTI]/ );
 
     # verbs
     return 'v' if ( $self->tag =~ m/^V/ );
 
-    # everything else are nouns: POS -- 567EHPNJQYj@X, no POS (possibly -- generated nodes)
+    # everything else are nouns: POS -- 5679EHPNJQYj@X, no POS (possibly -- generated nodes)
     return 'n';
 }
 
