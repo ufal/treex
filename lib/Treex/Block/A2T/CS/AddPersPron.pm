@@ -12,7 +12,8 @@ sub process_tnode {
     {
 
         # There is an auxiliary reflexive
-        if ( my $auxr = first { my $a = $_->get_lex_anode(); $a and $a->afun eq 'AuxR' } $t_node->get_echildren( { or_topological => 1 } ) ){
+        if ( my $auxr = first { my $a = $_->get_lex_anode(); $a and $a->afun eq 'AuxR' }
+                 $t_node->get_echildren( { or_topological => 1 } ) ){
 
             $auxr->set_functor('ACT');
             $auxr->set_formeme('drop');
@@ -39,10 +40,10 @@ sub process_tnode {
 
         my ( $person, $gender, $number );
 
-        if ( grep { $_ =~ /^V......1/ } @anode_tags ) {
+        if ( grep { $_ =~ /^(V.|J,).....1/ } @anode_tags ) { # include 'kdybychom', 'abychom'
             $person = "1";
         }
-        elsif ( grep { $_ =~ /^V......2/ } @anode_tags ) {
+        elsif ( grep { $_ =~ /^(V.|J,).....2/ } @anode_tags ) { # include 'kdybys(te)', 'abys(te)'
             $person = "2";
         }
         else {
@@ -74,18 +75,29 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::CS::AddPersPron
+=head1 NAME 
 
-New Czech nodes with t_lemma #PersPron corresponding to unexpressed
-('prodropped') subjects of finite clauses.
+Treex::Block::A2T::CS::AddPersPron
 
-=back
+=head1 DESCRIPTION
 
-=cut
+New Czech nodes with t_lemma #PersPron corresponding to unexpressed ('prodropped') subjects of finite clauses
+are added.
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+=head1 AUTHORS
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
