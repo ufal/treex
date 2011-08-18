@@ -81,6 +81,46 @@ variable as an alternative to new attributes:
   my %my_new_attribute_of;
   $my_new_attribute_of{$node} = 'my_value';
 
+=head3 How can a block/tool automatically download some resources?
+
+It is quite usual that a Treex block or a tool (C<Treex::Tool::...>)
+needs a pre-trained model, database, dictionary etc.
+These files can be huge (several GiB) so we cannot store them in svn repository and upload to CPAN.
+We store them in the Treex shared I<data> directory -- either
+in C<resources> (for treebanks, corpora and other officially published resources)
+or in C<models> (pre-trained statistical models) subdirectory.
+
+These files will be automatically downloaded from the UFAL server
+when they are first needed. To achieve this behavior, override the
+L<get_required_share_files|Treex::Core::Block/get_required_share_files> method in your block,
+so it returns a list of filenames, e.g.:
+
+  my $input_file = 'data/models/tagger/my_tagger/en_penntb.model'
+
+  sub get_required_share_files {
+      return $input_file;
+  }
+
+  sub BUILD {
+      open my $I, "<:encoding(utf-8)", "$ENV{TMT_ROOT}/share/$input_file";
+      # now load the model ...
+  }
+
+If you want to use shared files in a tool:
+
+  package Treex::Tools
+  use Treex::Core::Resource;
+  my $input_file = 'data/models/tagger/my_tagger/en_penntb.model'
+
+  sub BUILD {
+    my ($self) = @_;
+    Treex::Core::Resource::require_file_from_share($input_file, ref($self));
+    # now load the model ...
+  }
+
+The second parameter of C<require_file_from_share> is a name of the tool that needs the file,
+it is just for information -- will be printed when downloading the file.
+
 head2 Using C<ttred>
 
 =head3 What does the name C<ttred> mean?
