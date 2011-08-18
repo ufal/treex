@@ -4,6 +4,7 @@ use Treex::Core::Common;
 use Eval::Bleu;
 
 extends 'Treex::Core::Block';
+with 'Treex::Block::Print::Overall'; 
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
@@ -25,11 +26,6 @@ has print_limit => (
     default => 6,
 );
 
-has overall => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-);
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -50,7 +46,7 @@ sub _print_ngram_diff {
     return;
 }
 
-sub _print_results {
+sub _print_stats {
 
     my ($self) = @_;
 
@@ -68,33 +64,10 @@ sub _print_results {
     return;
 }
 
-sub process_document {
-    my ( $self, $document ) = @_;
-
-    if ( !$self->overall ) {
-        Eval::Bleu::reset();
-    }
-
-    foreach my $bundle ( $document->get_bundles() ) {
-        $self->process_bundle($bundle);
-    }
-
-    if ( !$self->overall ) {
-        $self->_print_results();
-    }
-    return;
+sub _reset_stats {
+    Eval::Bleu::reset();
 }
 
-# Prints the whole statistics at the end of the process
-sub DEMOLISH {
-
-    my ($self) = @_;
-
-    if ( $self->overall ) {
-        $self->_print_results();
-    }
-    return;
-}
 
 1;
 
