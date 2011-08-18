@@ -40,9 +40,9 @@ my %deprel2afun = (
     q(a) => q(Atr),
     q(ao) => q(),
     q(atr) => q(),
-    q(c) => q(AuxC), # ?
+    q(c) => q(Adv), # ?
     q(cag) => q(),
-    q(cc) => q(),
+    q(cc) => q(AuxC),
     q(cd) => q(Obj),
     q(ci) => q(Obj),
     q(conj) => q(AuxC),
@@ -63,8 +63,8 @@ my %deprel2afun = (
     q(infinitiu) => q(),
     q(interjeccio) => q(),
     q(mod) => q(Adv),
-    q(morfema.pronominal) => q(),
-    q(morfema.verbal) => q(),
+    q(morfema.pronominal) => q(AuxR),
+    q(morfema.verbal) => q(AuxR),
     q(n) => q(), # noun?
     q(neg) => q(), # negation
     q(p) => q(), # pronoun?
@@ -105,7 +105,7 @@ sub deprel_to_afun {
             $subpos2afun{$subpos} ||
                 $pos2afun{$pos} ||
                     $parentpos2afun{$ppos} ||
-                        'NR';
+                        'Atr'; # !!!!!!!!!!!!!!! temporary filler
 
         $node->set_afun($afun);
     }
