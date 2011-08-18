@@ -12,6 +12,16 @@ has 'model_path' => (
     documentation => 'path to the trained model',
 );
 
+has '_collocations' => (
+    is      => 'rw',
+    isa     => 'HashRef[Str]'
+);
+
+has '_np_freq' => (
+    is      => 'rw',
+    isa     => 'HashRef[Str]'
+);
+
 # TODO initialize ranker
 # the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
@@ -82,14 +92,10 @@ sub _create_instances {
 }
 
 before 'process_document' => sub {
-    my $self = shift; 
-    my ($document) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Document' },
-    );
+    my ($self, $document) = @_;
+
     if ( !$document->get_bundles() ) {
-        log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
-            " doesn't override the method process_document";
+        return;
     }
     my @trees = map { $_->get_tree( 
         $self->$language, 't', $self->$selector ) }
@@ -97,9 +103,8 @@ before 'process_document' => sub {
 
     my $fe = $self->feature_extractor;
 
-    $collocations = $fe->count_collocations( \@trees );
-    $np_freq = $fe->count_np_freq( \@trees );
-    $fe->mark_sentence_nums( \@trees );
+    $self->_set_collocations( $fe->count_collocations( \@trees ) );
+    $self->_set_np_freq( $fe->count_np_freq( \@trees ) );
     $fe->mark_clause_nums( \@trees );
 }
 

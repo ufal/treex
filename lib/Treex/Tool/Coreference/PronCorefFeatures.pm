@@ -2,11 +2,73 @@ package Treex::Tool::Coreference::PronCorefFeatures
 
 use Treex::Core::Common
 
+has '_cnk_freqs' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => HashRef[Str],
+    builder     => '_build_cnk_freqs',
+);
+
+has '_ewn_classes' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => HashRef[Str],
+    builder     => '_build_ewn_classes',
+);
+
 my $b_true = '1';
 my $b_false = '-1';
 
 my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
 my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
+
+sub _build_cnk_freqs {
+    my $cnk_file;   #TODO resource nv_freq-sorted.txt
+# TODO automatic download
+# TODO check if this is called just once at the beginning
+    open CNK, $cnk_file or die "Can't open $cnk_file: $!";
+    my $nv_freq;
+    my $v_freq;
+    
+    while (my $line = <CNK>) {
+        chomp $line;
+        next if ($line =~ /^být/);  # slovesa modální - muset, chtít, moci, směti, mít
+        my ($verb, $noun, $freq)= split "\t", $line;
+        next if ($freq < 2);
+
+        $v_freq->{$verb} += $freq;
+        $nv_freq->{$noun}{$verb} = $freq;
+    }
+    close CNK;
+    
+    my $cnk_freqs = { v => $v_freq, vn => $nv_freq };
+    return $cnk_freqs;
+}
+
+sub _build_ewn_classes {
+    my $ewn_file;   #TODO resource noun_to_ewn_top_ontology.tsv
+# TODO automatic download
+# TODO check if this is called just once at the beginning
+    open(EWN, $ewn_file) or die "Can't open $ewn_file: $!";
+    
+    my $ewn_noun;
+    my %ewn_all_classes;
+    while (my $line = <EWN>) {
+        chomp $line;
+        
+        my ($noun, @classes) = split /\s/, $line;
+        for my $class (@classes) {
+            $ewn_noun{$noun}{$class} = 1;
+            $ewn_all_classes{$class} = 1;
+        }
+    }
+    close EWN;
+
+    my @class_list = keys %ewn_all_classes;
+    my $ewn_classes = { nouns => $ewn_noun, all => \@class_list };
+
+    return $ewn_classes;
+}
 
 # Bere cislo a odkaz na seznam hranic skatulek. Soupne cislo tak, aby cisla mezi dvema hranicemi
 # dostala stejnou hodnotu
@@ -18,44 +80,6 @@ sub categorize {
     }
     return $retval;
 }
-
-### marks clausenum with the finite verb's clausenum
-sub mark_clause {
-    my ( $node, $clausenum, $p_vlist ) = @_;
-    if ( $node->{nodetype} eq "coap" ) {
-        foreach my $child ( $node->children ) {
-            if ( grep { $_ eq $child } @$p_vlist ) {
-                $clausenum = ( $child->{aca_clausenum} < $clausenum ) ? $child->{aca_clausenum} : $clausenum;
-
-                #		 		$clausenum = ($child->{aca_clausenum} > $clausenum) ? $child->{aca_clausenum} : $clausenum;
-            }
-        }
-    }
-    elsif ( grep { $_ eq $node } @$p_vlist ) {
-        $clausenum = $node->{aca_clausenum};
-    }
-    $node->{aca_clausenum} = $clausenum;
-    foreach my $child ( $node->children ) {
-        mark_clause( $child, $clausenum, $p_vlist );
-    }
-}
-
-### looks for finite verbs, sorts them by deepord and marks their clausenum with their ord; returns the number of finite verbs
-sub mark_clause_root($) {
-    my ($node) = @_;
-    my @vlist = grep { $_->attr('gram/tense') =~ /^(sim|ant|post)/ or $_->{functor} =~ /^(PRED|DENOM)$/ } $node->descendants;
-    @vlist = sort { $a->{deepord} <=> $b->{deepord} } @vlist;
-    my $id = 0;
-    foreach my $verb (@vlist) {
-        $verb->{aca_clausenum} = $id;
-        $id++;
-
-        #		print "$verb->{t_lemma}:$verb->{aca_clausenum}\n";
-    }
-    mark_clause( $node, 0, \@vlist );
-    return $#vlist + 1;
-}
-
 
 sub count_collocations {
     my ( $trees ) = @_;
@@ -76,10 +100,8 @@ sub count_collocations {
                     }
                 }
             }
-
         }
     }
-
     return ( $collocation );
 }
 
@@ -95,56 +117,39 @@ sub count_np_freq {
                     
                     $np_freq->{ $node->t_lemma }++;
             }
-
         }
     }
-
     return ( $np_freq );
 }
 
 sub mark_clause_nums {
- # TODO
-}
+    my ($self, $trees) = @_;
 
-sub mark_sentence_nums {
-    my ( $trees ) = @_;
-    my $sentnum = 1;
-    
+    my $curr_clause_num = 0;
     foreach my $tree (@{$trees}) {
-        foreach my $node ( $tree->descendants ) {
-            
-            $node->wild->{aca_sentnum} = $sentnum;
+        my $clause_count = 0;
+        
+        foreach my $node ($tree->descendants ) {
+            # TODO clause_number returns 0 for coap
+            $node->wild->{aca_clausenum} = 
+                $node->clause_number + $curr_clause_num;
+            if ($node->clause_number > $clause_count) {
+                $clause_count = $node->clause_number;
+            }
         }
-        $sentnum++;
+        $curr_clause_num += $clause_count;
     }
 }
-
 
 # REFACTORED
-# TODO consider renaming or splitting into several methods
-# gets the list of all noun phrases, the list of all anaphors in the file, noun-phrase frequencies and the collocation list
+# TODO destroy this method
 sub analyze_file {
-    my $file_clause_num = 0;
-
-    foreach my $tree (@trees) {
-        # TODO clause numbers using Node::InClause
-        my $clause_num = mark_clause_root($tree);
-
-        foreach my $node ( $tree->descendants ) {
-            $node->wild->{aca_clausenum} =
-                $node->wild->{aca_clausenum} + $file_clause_num;
-        }
-
-        $file_clause_num += $clause_num;
-    }
 
     # TODO deepord
     my $nodeord = 0;
     foreach my $node (@all_nodes) {
         $node->wild->{aca_file_deepord} = $nodeord++;
     }
-
-    return ( $all_nps, $all_anaphs, $np_freq, $collocation );
 }
 
 # returns the symbol in the $position of analytical node's tag of $node
@@ -227,8 +232,6 @@ sub _get_eparent_features {
 		$epar_fun = $epar->functor;
 		$epar_sempos = $epar->gram_sempos;
 		$epar_lemma = $epar->t_lemma;
-#		$$coref_features{"$prefix\_epar\_fun"} = $par->{functor};
-#		$$coref_features{"$prefix\_epar\_sempos"} = $par->attr('gram/sempos');
 	}
 	return ($epar_fun, $epar_sempos, $epar_lemma);
 }
@@ -239,7 +242,6 @@ sub _are_siblings {
 	my $ipar = ($inode->get_eparents)[0];
 	my $jpar = ($jnode->get_eparents)[0];
 	return ($ipar eq $jpar) ? $b_true : $b_false;
-#	return agreement($ipar, $jpar);
 }
 
 # return if $inode and $jnode have the same collocation
@@ -255,6 +257,23 @@ sub _in_collocation {
 		}
 	}
 	return $b_false;
+}
+
+# return if $inode and $jnode have the same collocation in CNK corpus
+sub _in_cnk_collocation {
+    my ($self, $inode, $jnode) = @_;
+    foreach my $jpar ($jnode->get_eparents) {
+        if (($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
+            my ($v_freq, $nv_freq) = map {$self->_cnk_freqs->{$_}} qw/v nv/;
+
+            my $nv_sum = $nv_freq->{$inode->t_lemma}{$jpar->t_lemma};
+            my $v_sum = $v_freq->{$jpar->t_lemma};
+            if ($v_sum && $nv_sum) {
+                return $nv_sum / $v_sum;
+            }
+        }
+    }
+    return 0;
 }
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
@@ -300,7 +319,7 @@ sub get_coref_features {
     #   Distance:
     #   4x num: sentence distance, clause distance, file deepord distance, candidate's order
     $coref_features{c_sent_dist} =
-        $anaph->wild->{aca_sentnum} - $cand->wild->{aca_sentnum};
+        $anaph->get_bundle->get_position - $cand->get_bundle->get_position;
     $coref_features{c_clause_dist} = categorize(
         $anaph->wild->{aca_clausenum} - $cand->wild->{aca_clausenum}, 
         [-2, -1, 0, 1, 2, 3, 7]
@@ -420,37 +439,29 @@ sub get_coref_features {
     #   1: collocation
     $coref_features{b_coll} = _in_collocation( $cand, $anaph, $collocation ) ? $b_true : $b_false;
 
-######### TODO CONTINUE IN REFACTORING HERE ##############
-
-
     #   1: collocation from CNK
-    $coref_features{r_cnk_coll} = in_cnk_collocation( $cand, $anaph, $p_nv_freq, $p_v_freq );
+    $coref_features{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
 
     #   1:  freq($inode);
     #    $coref_features{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
-    $coref_features{r_cand_freq} = $np_freq->{ $cand->{t_lemma} };
+    $coref_features{r_cand_freq} = $np_freq->{ $cand->t_lemma };
 
 ###########################
     #   Semantic:
     #   1:  is_name_of_person
-    $coref_features{b_cand_pers} = ( $cand->{is_name_of_person} ) ? $b_true : $b_false;
+    $coref_features{b_cand_pers} =  $cand->is_name_of_person ? $b_true : $b_false;
 
     #   EuroWordNet nouns
-    my $cand_lemma      = $cand->{t_lemma};
-    my $p_cand_class    = $p_ewn_noun->{$cand_lemma};
-    my @cand_class_list = keys %{$p_cand_class};
-    if ( $#cand_class_list >= 0 ) {
-        for my $class ( @{$p_ewn_classes} ) {
-            my $coref_class = "b_" . $class;
-            $coref_features{$coref_class} = ( grep { $_ eq $class } @cand_class_list ) ? $b_true : $b_false;
-        }
+    my $cand_lemma      = $cand->t_lemma;
+    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
+    my %cand_c = map {$_ => 1} keys %{$noun_c->{$cand_lemma}};
+    
+    for my $class ( @{$all_c} ) {
+        my $coref_class = "b_" . $class;
+        $coref_features{$coref_class} = defined $cand_c{$class} ? $b_true : $b_false;
     }
-    else {
-        for my $class ( @{$p_ewn_classes} ) {
-            my $coref_class = "b_" . $class;
-            $coref_features{$coref_class} = $b_false;
-        }
-    }
+    
+    # TODO is it neccessary to keep the feature names 
     for my $class ( @{$p_ewn_classes} ) {
         my $coref_class = "b_" . $class;
         push @feat_names, $coref_class;
@@ -459,4 +470,5 @@ sub get_coref_features {
     #   celkem 71 vlastnosti + ID
     return ( \%coref_features, \@feat_names );
 }
+
 1;
