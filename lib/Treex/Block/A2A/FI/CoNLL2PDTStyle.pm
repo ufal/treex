@@ -15,7 +15,7 @@ sub process_zone {
 
     # Adjust the tree structure.
     $self->convert_coordination($a_root);
-    $self->deprel_to_afun($a_root);
+    $self->conll_to_pdt($a_root);
     $self->convert_copullae($a_root);
     $self->check_afuns($a_root);
 } # process_zone
@@ -45,26 +45,77 @@ sub is_noun {
     return grep $_ =~ /^(?:N|NON-TWOL)$/, @feats;
 } # is_noun
 
-sub convert_coordination {
 
+sub convert_coordination {
+    my $self        = shift;
+    my $root        = shift;
+    my @nodes       = $root->get_descendants();
+    my $punct_regex = qr%^[-,/:;\x{2013}\x{2212}]$%;
+
+    foreach my $node (@nodes) {
+        next if $node->is_member or $node->afun;
+
+        # @conj will contain all the nodes to be coordinated witn $node
+        my @conj = grep 'conj' eq $_->conll_deprel, $node->children;
+        next unless @conj;
+
+        # @coord will contain all the possible coordinating nodes, the
+        # last one will be chosen as the head
+        my @coord;
+        foreach my $c (@conj) {
+            my $adept = $c->lbrother;
+            next unless $adept;
+
+            for my $punct (($c->children)[0], ($c->children)[-1],
+                           ($adept->children)[0], ($adept->children)[-1],
+                           $adept) {
+                if (ref $punct and $punct->lemma =~ $punct_regex) {
+                    push @coord, $punct;
+                }
+            }
+        }
+        push @coord, grep 'cc' eq $_->conll_deprel, $node->children;
+
+        unless (@coord) {
+            log_warn('No Coord for conj ' . $node->get_address);
+            next;
+        }
+
+        my $coord_head = $coord[-1];
+
+        # rehang punctuation before the conjunction
+        my $extra_punct;
+        if ('cc' eq $coord_head->conll_deprel) {
+            $extra_punct = $coord_head->lbrother;
+            push @coord, $extra_punct
+                if ref $extra_punct and $extra_punct->lemma =~ $punct_regex;
+        }
+
+        $coord_head->set_afun('Coord');
+        $coord_head->set_parent($node->parent);
+        $_->set_parent($coord_head)
+              for grep $coord_head != $_, $node, @conj, @coord;
+        $_->set_is_member(1) for $node, @conj;
+        $_->set_conll_deprel($node->conll_deprel) for @conj;
+    }
 } # convert_coordination
 
 
 sub convert_copullae {
-    my $self = shift;
-    my $root = shift;
-    my @nodes      = $root->get_descendants();
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
 
     foreach my $node (grep 'cop' eq $_->conll_deprel, @nodes) {
         my $pnom = $node->parent;
         unless ($pnom) {
-            warn "No Pnom for copulla ", $node->get_address, "\n";
+            log_warn('No Pnom for copulla ' . $node->get_address);
             next;
         }
 
         my $grandpa = $pnom->parent;
         unless ($grandpa) {
-            warn "No grandparent for copulla ", $node->get_address, "\n";
+            log_warn('No grandparent for copulla ' . $node->get_address);
             next;
         }
         $node->set_parent($grandpa);
@@ -74,12 +125,12 @@ sub convert_copullae {
 
         my @sb = grep 'nsubj-cop' eq $_->conll_deprel, $pnom->children;
         unless (@sb) {
-            warn "No subject for copulla ", $node->get_address, "\n";
+            log_warn('No subject for copulla ' . $node->get_address);
             next;
         }
         $_->set_parent($node) for @sb;
         $_->set_afun('Sb') for @sb;
-        warn "Multiple subjects for copulla ", $node->get_address, "\n"
+        log_warn('Multiple subjects for copulla ' . $node->get_address)
             if 1 < @sb;
 
         for my $child ($pnom->children) {
@@ -89,12 +140,16 @@ sub convert_copullae {
 } # convert_copullae
 
 
+# Prevent touching the tree before coordiantions are solved
+sub deprel_to_afun {}
+
+
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://bionlp.utu.fi/fintreebank.html
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun {
+sub conll_to_pdt {
     my $self       = shift;
     my $root       = shift;
     my @nodes      = $root->get_descendants();
@@ -140,33 +195,33 @@ sub deprel_to_afun {
                  qw/nommod dobj gobj poss amod infmod/) {
             if (is_noun(@pfeats)) {
                 $afun = 'Atr';
-                warn "@pfeats head of $deprel ", $node->get_address, "\n"
+                log_warn("@pfeats head of $deprel " . $node->get_address)
                     if 'dobj' eq $deprel;
             } elsif (grep $deprel eq $_, qw/nommod poss/) {
                 $afun = 'Adv';
-                warn "@pfeats head of $deprel ", $node->get_address, "\n"
+                log_warn("@pfeats head of $deprel " . $node->get_address)
                     unless 'nommod' eq $deprel;
             } else {
                 $afun = 'Obj';
-                warn "@pfeats head of $deprel ", $node->get_address, "\n"
+                log_warn("@pfeats head of $deprel " . $node->get_address)
                     unless grep $_ eq $deprel, qw/dobj/;
             }
 
         # nsubj - the subject
         } elsif ('nsubj' eq $deprel) {
             $afun = 'Sb';
-            warn "@pfeats head of nsubj ", $node->get_address, "\n"
+            log_warn("@pfeats head of nsubj " . $node->get_address)
                 unless is_verb(@pfeats);
 
         # ccomp - object clause
         } elsif ('ccomp' eq $deprel) {
             my @auxc = grep 'complm' eq $_->conll_deprel, $node->children;
             unless (@auxc) {
-                warn 'No AuxC for ccomp ', $node->get_address, "\n";
+                log_warn('No AuxC for ccomp ' . $node->get_address);
                 next;
             }
             if (1 < @auxc) {
-                warn 'Too many AuxC ', $node->get_address, "\n";
+                log_warn('Too many AuxC ' . $node->get_address);
                 $_->set_parent($auxc[0]) for @auxc[1 .. $#auxc];
                 $_->set_afun('AuxY') for @auxc[1 .. $#auxc];
             }
@@ -194,7 +249,7 @@ sub deprel_to_afun {
 
         $node->set_afun($afun);
     }
-} # deprel_to_afun
+} # conll_to_pdt
 
 
 
