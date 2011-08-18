@@ -5,6 +5,8 @@ use Moose::Util::TypeConstraints;
 use Treex::Core::Log;
 use Treex::PML::Instance;
 
+requires '_process_tree';
+
 has 'layer' => (
     isa => enum( [ 'a', 't', 'p', 'n' ] ),
     is => 'ro',
@@ -48,9 +50,6 @@ sub process_zone {
     return 1;
 }
 
-sub _process_tree {
-    log_fatal("Method _process_tree must be overridden for all Blocks with the LayerAttributes role.");
-}
 
 # Return all the required information for a node as a hash
 sub _get_info_hash {

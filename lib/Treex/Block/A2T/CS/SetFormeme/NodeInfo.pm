@@ -142,14 +142,13 @@ sub _build__prep_case {
     # default values for no prepositions
     my $ret = { 'prep' => '', 'case' => 'X' };
 
-    # filter punctuation and auxiliary verbs always, prepositions only for verbs
-    my $pos_filter = $self->syntpos eq 'v' ? '[RVZ]' : '[VZ]';
+    # filter punctuation, reflexive pronouns and auxiliary verbs always, prepositions only for verbs
+    my $pos_filter = $self->syntpos eq 'v' ? '([RVZ]|P7)' : '([VZ]|P7)';
 
     # filter out punctuation, auxiliary / modal verbs and everything what's already contained in the lemma
     my @prep_nodes = grep {
         my $lemma = $_->lemma;
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
-        $lemma = lc( $_->form ) if $lemma eq 'se';    # way to filter out reflexives
         $_->tag !~ /^$pos_filter/ and $self->t_lemma !~ /(^|_)$lemma(_|$)/
     } @{ $self->aux };
 

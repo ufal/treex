@@ -29,11 +29,11 @@ sub process_tnode {
 
     my $a_lex_node = $t_node->get_lex_anode();
     if ($a_lex_node) {
-        if ( $a_lex_node->tag =~ /^P[PS5678H]/ ) {    # osobni zajmena
+        if ( $a_lex_node->tag =~ /^P[PS5678H]/ ) {    # personal pronouns
             $t_lemma = "#PersPron";
         }
         elsif ( $a_lex_node->tag =~ /^AU/ ) {
-            if ( $t_lemma =~ /^(.+)_/ ) {             # von_Ryanuv, de_Gaulluv
+            if ( $t_lemma =~ /^(.+)_/ ) {             # "von_Ryanuv", "de_Gaulluv"
                 my $prefix = $1;
                 $t_lemma = lc($prefix) . "_" . possadj_to_noun( $a_lex_node->lemma );
             }
@@ -45,8 +45,8 @@ sub process_tnode {
     }
 
     my ($auxt) = grep { $_->afun eq "AuxT" } $t_node->get_aux_anodes;    # reflexiva tantum: smat_se
-    if ($auxt) {
-        $t_lemma .= "_" . lc( $auxt->form );                             # zachovane rozliseni se/si
+    if ( $auxt and not any { $_->lemma eq 'dát' } $t_node->get_aux_anodes ) {     # filter out modal 'dát se'
+        $t_lemma .= "_" . lc( $auxt->form );                                      # preserve the "se/si" distinction
     }
 
     $t_node->set_t_lemma($t_lemma);
@@ -55,17 +55,28 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::CS::FixTlemmas
+=head1 NAME 
+
+Treex::Block::A2T::CS::FixTlemmas
+
+=head1 DESCRIPTION
 
 Fixes t-lemmas for personal pronous, possesive adjectives and reflexiva tantum.
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
