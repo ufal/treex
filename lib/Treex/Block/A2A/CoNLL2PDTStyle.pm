@@ -89,7 +89,9 @@ sub convert_tag
     # List of CoNLL tagsets covered by 2011-07-05:
     my @known_drivers = qw(
         ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
-        en::conll en::conll2009 it::conll pt::conll sv::conll zh::conll
+        en::conll en::conll2009
+        es::conll2009
+        it::conll pt::conll sv::conll zh::conll
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll);
     my $driver = $node->get_zone()->language() . '::' . $tagset;
     return unless ( grep { $_ eq $driver } (@known_drivers) );

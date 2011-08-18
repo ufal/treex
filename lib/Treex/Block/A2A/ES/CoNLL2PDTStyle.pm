@@ -8,7 +8,7 @@ sub process_zone {
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
-
+#    $self->deprel_to_afun($a_root)
     $self->attach_final_punctuation_to_root($a_root);
 #    $self->process_prepositional_phrases($a_root);
 #    $self->restructure_coordination($a_root);
@@ -17,57 +17,59 @@ sub process_zone {
 
 # deprels extracted from the conll2009 data, documentation in /net/data/CoNLL/2009/es/doc/tagsets.pdf
 my %deprel2afun = (
-    qw(a) => qw(Atr),
-    qw(ao) => qw(),
-    qw(atr) => qw(),
-    qw(c) => qw(AuxC), # ?
-    qw(cag) => qw(),
-    qw(cc) => qw(Adv),
-    qw(cd) => qw(Obj),
-    qw(ci) => qw(Obj),
-    qw(conj) => qw(AuxC),
-    qw(coord) => qw(Coord),
-    qw(cpred) => qw(Compl),
-    qw(creg) => qw(AuxP),
-    qw(d) => qw(AuyA),
-    qw(et) => qw(),
-    qw(f) => qw(AuxX),
-    qw(gerundi) => qw(), # ?
-    qw(grup.a) => qw(),
-    qw(grup.adv) => qw(),
-    qw(grup.nom) => qw(),
-    qw(grup.verb) => qw(),
-    qw(i) => qw(),
-    qw(impers) => qw(),
-    qw(inc) => qw(),
-    qw(infinitiu) => qw(),
-    qw(interjeccio) => qw(),
-    qw(mod) => qw(Adv),
-    qw(morfema.pronominal) => qw(),
-    qw(morfema.verbal) => qw(),
-    qw(n) => qw(), # noun?
-    qw(neg) => qw(), # negation
-    qw(p) => qw(), # pronoun?
-    qw(participi) => qw(),
-    qw(pass) => qw(),
-    qw(prep) => qw(AuxP),
-    qw(r) => qw(Adv),
-    qw(relatiu) => qw(), # relative pronoun
-    qw(s) => qw(AuxP),
-    qw(S) => qw(Pred),
-    qw(sa) => qw(Compl),
-    qw(s.a) => qw(Atr),
-    qw(sadv) => qw(Adv),
-    qw(sentence) => qw(Pred),
-    qw(sn) => qw(),
-    qw(sp) => qw(AuxP),
-    qw(spec) => qw(AuxA),
-    qw(suj) => qw(Sb),
-    qw(v) => qw(AuxV),
-    qw(voc) => qw(),
-    qw(w) => qw(),
-    qw(z) => qw(), # number
+#    'coord' => 'uspech',
+    q(a) => q(Atr),
+    q(ao) => q(),
+    q(atr) => q(),
+    q(c) => q(AuxC), # ?
+    q(cag) => q(),
+    q(cc) => q(Adv),
+    q(cd) => q(Obj),
+    q(ci) => q(Obj),
+    q(conj) => q(AuxC),
+    q(coord) => q(Coord),
+    q(cpred) => q(Compl),
+    q(creg) => q(AuxP),
+    q(d) => q(AuyA),
+    q(et) => q(),
+    q(f) => q(AuxX),
+    q(gerundi) => q(), # ?
+    q(grup.a) => q(),
+    q(grup.adv) => q(),
+    q(grup.nom) => q(),
+    q(grup.verb) => q(),
+    q(i) => q(),
+    q(impers) => q(),
+    q(inc) => q(),
+    q(infinitiu) => q(),
+    q(interjeccio) => q(),
+    q(mod) => q(Adv),
+    q(morfema.pronominal) => q(),
+    q(morfema.verbal) => q(),
+    q(n) => q(), # noun?
+    q(neg) => q(), # negation
+    q(p) => q(), # pronoun?
+    q(participi) => q(),
+    q(pass) => q(),
+    q(prep) => q(AuxP),
+    q(r) => q(Adv),
+    q(relatiu) => q(), # relative pronoun
+    q(s) => q(AuxP),
+    q(S) => q(Pred),
+    q(sa) => q(Compl),
+    q(s.a) => q(Atr),
+    q(sadv) => q(Adv),
+    q(sentence) => q(Pred),
+    q(sn) => q(),
+    q(sp) => q(AuxP),
+    q(spec) => q(AuxA),
+    q(suj) => q(Sb),
+    q(v) => q(AuxV),
+    q(voc) => q(),
+    q(w) => q(),
+    q(z) => q(), # number
 );
+
 
 sub deprel_to_afun {
     my ( $self, $root ) = @_;
@@ -80,8 +82,6 @@ sub deprel_to_afun {
 #        my $ppos   = $parent->get_iset('pos');
 
         my $afun = $deprel2afun{$deprel} || 'NR';
-#        print "Filling $afun\n";
-
         $node->set_afun($afun);
     }
 }
