@@ -168,6 +168,7 @@ sub _get_info_list {
 }
 
 # Czech tag simplified to POS&CASE (or POS&SUBPOS if no case)
+# TODO make this somehow more general, make possible to write custom modifiers for the returned values
 sub get_coarse_grained_tag {
     my ( $self, $tag ) = @_;
 
@@ -236,7 +237,19 @@ This parameter is required.
 
 =head1 TODO
 
+=over 
+
+=item * 
+
 Make the separator for multiple-valued attributes configurable.
+
+=item *
+
+Make a more general method out of C<get_coarse_grained_tag> (e.g. via a Moose role). 
+
+=item *
+
+Make the dereference more general, e.g. usign a recursive method.
 
 =head1 AUTHORS
 

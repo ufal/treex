@@ -22,7 +22,7 @@ sub BUILD {
     die "Missing $bindir\n" if !-d $bindir;
 
     #TODO this should be done better
-    my $redirect = Treex::Core::Log::get_error_level() == 1 ? '' : '2>/dev/null';
+    my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
 
     # We communicate with the parser in ISO-8859-2. In principle, any encoding is
     # fine (e.g. utf8, as long as the binmode of bipipe corresponds to the
