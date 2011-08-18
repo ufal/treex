@@ -10,8 +10,8 @@ use autodie;
 # ML-Process executable
 has 'ml_process_jar' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/ml-process/ml-process.jar" );
 
-# Error level
-has 'error_level' => ( is => 'ro', isa => 'Int', default => sub { Treex::Core::Log::get_error_level() } );
+# Verbosity
+has 'verbosity' => ( is => 'ro', isa => 'Int', lazy_build => 1 );
 
 # Amount of memory needed for Java VM
 has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
@@ -62,12 +62,12 @@ sub run {
     # run the ml-process
     my $mlprocess = File::Java->path_arg( $self->ml_process_jar );
     my $command   = 'java '
-        . ' -Xmx' . $self->memory()
+        . ' -Xmx' . $self->memory
         . ' -jar ' . $mlprocess
         . ' -d ' . $self->_temp_dir()
         . ( $self->cleanup_temp ? ' -l ' : '' )
         . ' ' . $plan_file
-        . ' -v ' . $self->_verbosity() . ' ';
+        . ' -v ' . $self->verbosity . ' ';
 
     log_info( "Running " . $command );
     system($command) == 0 or log_fatal("ML-Process not found or not working properly.");
@@ -165,10 +165,11 @@ sub _write_file_contents {
 
 # Converts Treex error level to MLProcess verbosity (a bit skewed to the non-verbose side,
 # so that MLProcess shows only warnings and errors if the Treex error_level is set to INFO)
-sub _verbosity {
+sub _build_verbosity {
     my ($self) = @_;
 
-    return ( 4, 3, 2, 1, 0 )[ $self->error_level ];
+    my $error_level = Treex::Core::Log::get_error_level();
+    return List::MoreUtils::first_index { $_ eq $error_level } qw(FATAL WARN INFO DEBUG ALL);
 }
 
 1;
