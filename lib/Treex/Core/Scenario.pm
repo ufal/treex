@@ -37,6 +37,7 @@ has loaded_blocks => (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Block]',
     builder  => '_build_loaded_blocks',
+    predicate => 'is_initialized'
     lazy     => 1,
     init_arg => undef,
 );
@@ -200,6 +201,11 @@ sub construct_scenario_string {
 sub load_blocks {
     my $self = shift;
     $self->loaded_blocks; #just access lazy attribute
+}
+
+sub init {
+    my $self = shift;
+    $self->load_blocks();
 }
 
 sub _load_block {
@@ -384,6 +390,11 @@ accepts named parameter multiline - when set, blocks are separated by newline in
 use blocks and call their constructors
 can be used for preloading blocks for e.g. server applications
 when running scenario blocks are loaded automatically
+
+=item init
+
+do all initialization so after this method scenario is ready to run 
+currently just load blocks
 
 =item restart
 
