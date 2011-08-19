@@ -15,6 +15,7 @@ sub process_zone {
 
     # Adjust the tree structure.
     $self->convert_coordination($a_root);
+    $self->convert_apposition($a_root);
     $self->convert_copullae($a_root);
     $self->conll_to_pdt($a_root);
     $self->check_afuns($a_root);
@@ -57,25 +58,27 @@ sub convert_coordination {
         next if $node->is_member or $node->afun;
 
         # @conj will contain all the nodes to be coordinated witn $node
-        my @conj = grep 'conj' eq $_->conll_deprel, $node->children;
+        my @conj = grep 'conj' eq $_->conll_deprel, $node->get_children;
         next unless @conj;
 
         # @coord will contain all the possible coordinating nodes, the
         # last one will be chosen as the head
         my @coord;
         foreach my $c (@conj) {
-            my $adept = $c->lbrother;
+            my $adept = $c->get_left_neighbor;
             next unless $adept;
 
-            for my $punct (($c->children)[0], ($c->children)[-1],
-                           ($adept->children)[0], ($adept->children)[-1],
+            for my $punct ($c->get_children(    { first_only => 1 }),
+                           $c->get_children(    { last_only  => 1 }),
+                           $adept->get_children({ first_only => 1 }),
+                           $adept->get_children({ last_only  => 1 }),
                            $adept) {
                 if (ref $punct and $punct->lemma =~ $punct_regex) {
                     push @coord, $punct;
                 }
             }
         }
-        push @coord, grep 'cc' eq $_->conll_deprel, $node->children;
+        push @coord, grep 'cc' eq $_->conll_deprel, $node->get_children;
 
         unless (@coord) {
             log_warn("No Coord for conj\t" . $node->get_address);
@@ -86,17 +89,17 @@ sub convert_coordination {
 
         # rehang punctuation before the conjunction
         if ('cc' eq $coord_head->conll_deprel) {
-            my $extra_punct = $coord_head->lbrother;
+            my $extra_punct = $coord_head->get_left_neighbor;
             push @coord, $extra_punct
                 if ref $extra_punct and $extra_punct->lemma =~ $punct_regex;
         }
-        for my $extra_punct (($node->children)[0, -1]) {
+        for my $extra_punct (($node->get_children)[0, -1]) {
             push @coord, $extra_punct
                 if ref $extra_punct and $extra_punct->lemma =~ $punct_regex;
         }
 
         $coord_head->set_afun('Coord');
-        $coord_head->set_parent($node->parent);
+        $coord_head->set_parent($node->get_parent);
         $_->set_parent($coord_head)
               for grep $coord_head != $_, $node, @conj, @coord;
         $_->set_is_member(1) for $node, @conj;
@@ -105,19 +108,48 @@ sub convert_coordination {
 } # convert_coordination
 
 
+sub convert_apposition {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+
+    foreach my $node (grep 'appos' eq $_->conll_deprel, @nodes) {
+        next if $node->is_member;
+        my $member = $node->get_parent;
+        next if $member->is_member;
+        my $apos = $node->get_children({ first_only => 1 });
+        next unless $apos and $apos->lemma =~ /^[,(:]$/;
+        my $auxg = $node->get_children({ last_only => 1 });
+        undef $auxg unless $auxg and $auxg->lemma =~ /^[,)]$/;
+        undef $auxg if $auxg == $apos;
+        $apos->set_parent($member->get_parent);
+        $member->set_parent($apos);
+        $node->set_parent($apos);
+        $member->set_is_member(1);
+        $node->set_is_member(1);
+        $node->set_conll_deprel($member->conll_deprel);
+        $apos->set_afun('Apos');
+        if ($auxg) {
+            $auxg->set_parent($apos);
+            
+        }
+    }
+} # convert_apposition
+
+
 sub convert_copullae {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
 
     foreach my $node (grep 'cop' eq $_->conll_deprel, @nodes) {
-        my $pnom = $node->parent;
+        my $pnom = $node->get_parent;
         unless ($pnom) {
             log_warn("No Pnom for copulla\t" . $node->get_address);
             next;
         }
 
-        my $grandpa = $pnom->parent;
+        my $grandpa = $pnom->get_parent;
         unless ($grandpa) {
             log_warn("No grandparent for copulla\t" . $node->get_address);
             next;
@@ -131,7 +163,7 @@ sub convert_copullae {
             $node->set_is_member(1);
         }
 
-        foreach my $child ($pnom->children) {
+        foreach my $child ($pnom->get_children) {
             $child->set_parent($node)
                 unless $child->conll_deprel
                     =~ /^(?:dobj|amod|infmod|num|partmod|poss|rcmod)$/;
@@ -175,13 +207,13 @@ sub conll_to_pdt {
         # x 1339 num
         # x 1186 cop
         # x 1068 nsubj-cop
-        #    875 partmod
-        #    856 adpos
+        # x  875 partmod
+        # x  856 adpos
         # x  772 aux
         # x  767 number
-        #    646 det
-        #    609 nn
-        #    593 appos
+        # x  646 det
+        # x  609 nn
+        # x  593 appos
         #    591 advcl
         #    582 rel
         #    580 rcmod
@@ -227,10 +259,15 @@ sub conll_to_pdt {
             }
 
         # amod   - adjective modifier of a noun, should be Atr
+        # det    - determiner, Atr
         # gobj   - genitive object under nominalized verb, Atr
         # poss   - possesive under nouns, Atr
         # infmod - modification expressed by infinitive
-        } elsif ($deprel =~ /^(?:gobj|amod|infmod|poss)$/) {
+        # appos  - apposition. Should have been Apos, but it is not
+        #          possible to combine it with Coord - there is no way
+        #          how to find the Apos node, therefore it becomes Atr.
+        # nn     - name part
+        } elsif ($deprel =~ /^(?:appos|nn|det|gobj|amod|infmod|poss)$/) {
             $afun = 'Atr';
             log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
                 unless is_noun(@pfeats);
@@ -244,17 +281,18 @@ sub conll_to_pdt {
 
         # nommod - modification expressed by a noun, can be Atr or Adv
         #          depending on the parent's POS (buggy!)
-        } elsif ('nommod' eq $deprel) {
+        # partmod - modifier expressed by participle, mostly of nouns
+        } elsif ($deprel =~ /^(?:partmod|nommod)$/) {
             if (is_noun(@pfeats)) {
                 $afun = 'Atr';
             } else {
                 $afun = 'Adv';
             }
 
-        # advmod - adverbial modifier, AuxZ under nouns, Adv elsewhere
+        # advmod - adverbial modifier, Atr under nouns, Adv elsewhere
         } elsif ('advmod' eq $deprel) {
             if (is_noun(@pfeats)) {
-                $afun = 'AuxZ';
+                $afun = 'Atr';
             } else {
                 $afun = 'Adv';
             }
@@ -271,7 +309,7 @@ sub conll_to_pdt {
                 $afun = 'Atr';
             } else {
                 $afun = 'AuxG';
-                $_->set_parent($parent) for $node->children;
+                $_->set_parent($parent) for $node->get_children;
             }
 
         # num, number - Atr
@@ -298,9 +336,9 @@ sub conll_to_pdt {
         } elsif ('preconj' eq $deprel) {
             $afun = 'AuxY';
             if ( $parent->is_member
-                 and $parent->parent
-                 and 'Coord' eq $parent->parent->afun ) {
-                $node->set_parent($parent->parent);
+                 and $parent->get_parent
+                 and 'Coord' eq $parent->get_parent->afun ) {
+                $node->set_parent($parent->get_parent);
             } else {
                 log_warn("preconj without coordination\t" . $node->get_address);
             }
@@ -311,9 +349,9 @@ sub conll_to_pdt {
 
             # will be used later, but can't be found after moving
             # $node
-            my $punct = $node->lbrother;
+            my $punct = $node->get_left_neighbor;
 
-            my $head = $parent->parent;
+            my $head = $parent->get_parent;
             if ('Pred' eq $parent->afun) {
                 $afun = 'AuxY';
                 log_warn("complm under ROOT\t" . $node->get_address);
@@ -321,7 +359,7 @@ sub conll_to_pdt {
                 undef $punct;
 
             } elsif ($node->is_member) {
-                $head = $parent->parent->parent;
+                $head = $parent->get_parent->get_parent;
                 unless ($head) {
                     log_warn("invalid coordination for complm\t"
                              . $node->get_address);
@@ -331,7 +369,7 @@ sub conll_to_pdt {
                 $node->set_is_member(1);
                 $parent->set_is_member(0);
                 $node->set_parent($head);
-                $parent->parent->set_parent($node);
+                $parent->get_parent->set_parent($node);
             } else {
                 $node->set_parent($head);
                 $parent->set_parent($node);
@@ -339,6 +377,18 @@ sub conll_to_pdt {
 
             if ($punct and 'punct' eq $punct->conll_deprel) {
                 $punct->set_parent($node);
+            }
+
+        #adpos - pre- or post-postitions: AuxP
+        } elsif ('adpos' eq $deprel) {
+            $afun = 'AuxP';
+            my $adpositioned = $node->get_parent;
+            my $grandpa = $adpositioned->get_parent;
+            $node->set_parent($grandpa);
+            $adpositioned->set_parent($node);
+            if ($adpositioned->is_member) {
+                $adpositioned->set_is_member(0);
+                $node->set_is_member(1);
             }
 
         # Punctuation
