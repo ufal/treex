@@ -18,12 +18,13 @@ sub process_ttree {
     foreach my $node ( grep { $_->is_coap_root() } @all_nodes ) {
         unless ( grep { $_->is_member } $node->get_children ) {
 
-            # !!! vetsinou jde opravdu o bezdetne PRECy
+            # mostly it's a childless PREC
             if ( $node->get_children <= 1 ) {
                 $node->set_functor('PREC');
-
-                # !!! pokud ma ovsem alespon 2 deti, predpokladame, ze to opravdu je koordinace
+                # fix the node type as well
+                $node->set_nodetype('atom');
             }
+            # if there are at least two children, let's assume it really is a coordination             
             else {
                 map { $_->set_is_member(1) } $node->get_children;
             }

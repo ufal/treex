@@ -23,22 +23,23 @@ has 'separator' => (
     default => "\t"
 );
 
-sub _process_tree() {
+sub _process_tree {
 
     my ( $self, $tree ) = @_;
 
     foreach my $node ( $tree->get_descendants ) {
         $self->_process_node($node);
     }
+    return;
 }
 
 # Gathers the statistics for one node.
-sub _process_node() {
+sub _process_node {
 
     my ( $self, $node ) = @_;
 
-    my $ref       = $self->_attrib_stats;
-    my $node_data = $self->_get_info_list($node);
+    my $ref = $self->_attrib_stats;
+    my $node_data = $self->_get_info_list( $node );
 
     # Proceed for each needed attribute (stored in a multi-level hash)
     for ( my $i = 0; $i < @{$node_data}; ++$i ) {
@@ -65,6 +66,7 @@ sub _process_node() {
             $ref->{$val} = $ref->{$val} ? $ref->{$val} + 1 : 1;
         }
     }
+    return;
 }
 
 # Collects statistics for individual files
@@ -75,10 +77,14 @@ override 'process_document' => sub {
         \@_,
         { isa => 'Treex::Core::Document' },
     );
-
+    
+    # force initialization of the file handle (it would be too late in DEMOLISH)
+    print { $self->_file_handle } "" if (!$self->_attrib_stats->{'__COUNT__'});  
+    
     super;
 
     log_info( 'Stats collected for : ' . $document->path . ', total ' . $self->_attrib_stats->{'__COUNT__'} . ' entries' );
+    return;
 };
 
 # Prints the whole statistics at the end of the process
@@ -87,6 +93,7 @@ sub DEMOLISH {
     my ($self) = @_;
 
     $self->_print_stats( $self->_attrib_stats, 'TOTAL', 0 );
+    return;
 }
 
 # Prints the specified part of the statistics (designed to be recursive)
@@ -125,7 +132,9 @@ sub _print_stats {
             $self->_print_stats( $part->{$key}, $key, $depth + 1 );
         }
     }
+    return;
 }
+
 
 1;
 
