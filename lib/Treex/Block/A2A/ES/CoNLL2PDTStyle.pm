@@ -99,7 +99,7 @@ sub deprel_to_afun {
         my ($parent) = $node->get_eparents();
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
-        my $ppos   = ($parent ? $parent->get_iset('pos') : '');
+        my $ppos   = $parent ? $parent->get_iset('pos') : '';
 
         my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
             $subpos2afun{$subpos} ||
