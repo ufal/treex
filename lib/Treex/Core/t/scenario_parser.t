@@ -56,7 +56,10 @@ foreach my $content ( keys %contents ) {
 
         combined_like(
             sub {
-                eval { Treex::Core::Scenario->new( from_file => $name ) };
+                eval {
+                    my $scenario = Treex::Core::Scenario->new( from_file => $name );
+                    $scenario->loaded_blocks;    #it is needed because loading of block is lazy
+                };
             },
             qr/$expected/,
             "Output of parsing '$content' contains '$expected' "
@@ -72,7 +75,10 @@ foreach my $file ( keys %files ) {
     my $expected = $files{$file};
     combined_like(
         sub {
-            eval { Treex::Core::Scenario->new( from_file => $file ) };
+            eval {
+                my $scenario = Treex::Core::Scenario->new( from_file => $file );
+                $scenario->loaded_blocks;
+            };
         },
         qr/$expected/,
         "Output of parsing '$file' contains '$expected' "

@@ -4,15 +4,49 @@ use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
 
-has loaded_blocks => (
+has from_file => (
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => '_has_from_file',
+    documentation => q(Path to file with scenario),
+);
+
+has from_string => (
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => '_has_from_string',
+    documentation => q(String with scenario),
+);
+
+has scenario_string => (
     is      => 'ro',
-    isa     => 'ArrayRef[Treex::Core::Block]',
-    default => sub { [] }
+    isa     => 'Str',
+    builder => '_build_scenario_string',
+    lazy    => 1,
+);
+
+has block_items => (
+    is       => 'ro',
+    isa      => 'ArrayRef[HashRef]',
+    builder  => 'parse_scenario_string',
+    init_arg => undef,
+    lazy     => 1,
+);
+
+has loaded_blocks => (
+    is       => 'ro',
+    isa      => 'ArrayRef[Treex::Core::Block]',
+    builder  => '_build_loaded_blocks',
+    lazy     => 1,
+    init_arg => undef,
 );
 
 has document_reader => (
-    is            => 'rw',
+    is            => 'ro',
     does          => 'Treex::Core::DocumentReader',
+    predicate     => '_has_document_reader',
+    writer        => '_set_document_reader',
+    init_arg      => undef,
     documentation => 'DocumentReader starts every scenario and reads a stream of documents.'
 );
 
@@ -42,29 +76,23 @@ has parser => (
     documentation => q{Parses treex scenarios}
 );
 
-sub BUILD {
-    my ( $self, $arg_ref ) = @_;
-    log_info("Initializing an instance of Treex::Core::Scenario ...");
-
-    #<<< no perltidy
-    my $scen_str = defined $arg_ref->{from_file} ? load_scenario_file($arg_ref->{from_file})
-                 :                                 $arg_ref->{from_string};
-    #>>>
-    log_fatal 'No blocks specified for a scenario!' if !defined $scen_str;
-
-    my @block_items = $self->parse_scenario_string( $scen_str, $arg_ref->{from_file} );
-    my $block_count = @block_items;
-    log_fatal('Empty block sequence cannot be used for initializing scenario!') if $block_count == 0;
-
-    log_info( "$block_count block" . ( $block_count > 1 ? 's' : '' ) . " to be used in the scenario:\n" );
-
-    # loading (using modules and constructing instances) of the blocks in the sequence
-    foreach my $block_item (@block_items) {
-        my $block_name = $block_item->{block_name};
-        eval "use $block_name; 1;" or log_fatal "Can't use block $block_name !\n$@\n";
+sub _build_scenario_string {
+    my $self = shift;
+    if ( $self->_has_from_file ) {
+        return $self->_load_scenario_file( $self->from_file );
     }
+    elsif ( $self->_has_from_string ) {
+        return $self->from_string;
+    }
+    log_fatal("You have to provide from_file or from_string attribute");
+}
 
-    my $i = 0;
+sub _build_loaded_blocks {
+    my $self        = shift;
+    my @block_items = @{ $self->block_items };
+    my $block_count = scalar @block_items;
+    my $i           = 0;
+    my @loaded_blocks;
     foreach my $block_item (@block_items) {
         $i++;
         my $params = '';
@@ -74,20 +102,20 @@ sub BUILD {
         log_info("Loading block $block_item->{block_name} $params ($i/$block_count)");
         my $new_block = $self->_load_block($block_item);
 
+        log_debug( $block_item->{block_name} );
         if ( $new_block->does('Treex::Core::DocumentReader') ) {
             log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
-                if $self->document_reader();
-            $self->set_document_reader($new_block);
+                if $self->_has_document_reader;
+            $self->_set_document_reader($new_block);
         }
         else {
-            push @{ $self->loaded_blocks }, $new_block;
+            push @loaded_blocks, $new_block;
         }
     }
-
     log_info('');
     log_info('   ALL BLOCKS SUCCESSFULLY LOADED.');
     log_info('');
-    return;
+    return \@loaded_blocks;
 }
 
 sub _load_parser {
@@ -128,8 +156,8 @@ sub _build_parser {
     return $parser;
 }
 
-sub load_scenario_file {
-    my ($scenario_filename) = @_;
+sub _load_scenario_file {
+    my ( $self, $scenario_filename ) = @_;
     log_info "Loading scenario description $scenario_filename";
     my $scenario_string = read_file( $scenario_filename, binmode => ':utf8', err_mode => 'quiet' )
         or log_fatal "Can't open scenario file $scenario_filename";
@@ -137,25 +165,36 @@ sub load_scenario_file {
 }
 
 sub parse_scenario_string {
-    my ( $self, $scenario_string, $from_file ) = @_;
+    my $self            = shift;
+    my $scenario_string = $self->scenario_string;
+    my $from_file       = $self->from_file;
 
     my $parsed = $self->parser->startrule( $scenario_string, 1, $from_file );
     log_fatal("Cannot parse the scenario: $scenario_string") if !defined $parsed;
-    return @$parsed;
+    return $parsed;
 }
 
-# TODO: should be a method?
 # reverse of parse_scenario_string, used in Treex::Core::Run for treex --dump
 sub construct_scenario_string {
-    my ( $block_items, $multiline ) = @_;
-    my $delim = $multiline ? qq{\n} : q{ };
-    my @block_with_args = map { $_->{block_name} . q{ } . join( q{ }, @{ $_->{block_parameters} } ) } @$block_items;    # join block name and its parameters
-    my @stripped;
-    foreach my $block (@block_with_args) {
-        $block =~ s{^Treex::Block::}{} or $block = "::$block";                                                          #strip leading Treex::Block:: or add leading ::
-        push @stripped, $block;
+    my $self            = shift;
+    my %args            = @_;
+    my $multiline       = $args{multiline};
+    my @block_items     = @{$self->block_items};
+    my $delim           = $multiline ? qq{\n} : q{ };
+    my @block_strings;
+    foreach my $block_item (@block_items) {
+        my $name = $block_item->{block_name};
+        my @parameters = @{$block_item->{block_parameters}};
+        $name =~ s{^Treex::Block::}{} or $name = "::$name";                                                         #strip leading Treex::Block:: or add leading ::
+        my $params;
+        if (scalar @parameters) {
+            $params = q{ } . join q{ } , @parameters;
+        } else {
+            $params = q{};
+        }
+        push @block_strings, $name . $params;
     }
-    return join $delim, @stripped;
+    return join $delim, @block_strings;
 }
 
 sub _load_block {
@@ -172,6 +211,7 @@ sub _load_block {
         $params{$name} = $value;
     }
 
+    eval "use $block_name; 1;" or log_fatal "Can't use block $block_name !\n$@\n";
     eval {
         $new_block = $block_name->new( \%params );
         1;
@@ -182,8 +222,9 @@ sub _load_block {
 
 sub run {
     my ($self) = @_;
-    my $reader              = $self->document_reader or log_fatal('No DocumentReader supplied');
-    my $number_of_blocks    = @{ $self->loaded_blocks };
+    my $number_of_blocks = @{ $self->loaded_blocks };
+    log_fatal('No DocumentReader supplied') if !$self->_has_document_reader;
+    my $reader              = $self->document_reader;
     my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
@@ -320,7 +361,7 @@ documents on which this scenatio is applied.
 
 =over 4
 
-=item load_scenario_file($filename)
+=item _load_scenario_file($filename)
 
 loads a scenario description from a file
 
@@ -331,6 +372,7 @@ parses a textual description of a scenario
 =item construct_scenario_string
 
 constructs a scenario textual description from an existing scenario instance
+accepts named parameter multiline - when set, blocks are separated by newline instead of space
 
 =item restart
 
