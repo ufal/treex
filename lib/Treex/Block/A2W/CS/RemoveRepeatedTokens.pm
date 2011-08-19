@@ -9,21 +9,21 @@ sub process_zone {
     my $original_sentence = $zone->sentence;
     my @tokens = split /\b/, $original_sentence;
 
-    my $reduced_sentence;
-    my $prev_nonemtpy;
+    my $reduced_sentence = '';
+    my $prev_nonempty;
 
     foreach my $i ( 0 .. $#tokens ) {
 
         if ($i == 0
             or $tokens[$i] =~ /^\s+$/
-            or lc( $tokens[$i] ) ne $prev_nonemtpy
+            or lc( $tokens[$i] ) ne $prev_nonempty
             )
         {
             $reduced_sentence .= $tokens[$i];
         }
 
         if ( $tokens[$i] !~ /^\s+$/ ) {
-            $prev_nonemtpy = lc( $tokens[$i] );
+            $prev_nonempty = lc( $tokens[$i] );
         }
     }
 
