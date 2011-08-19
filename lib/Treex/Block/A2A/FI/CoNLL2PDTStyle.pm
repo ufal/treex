@@ -5,8 +5,8 @@ use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 #------------------------------------------------------------------------------
-# Reads the Finnish tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
+# Reads the Finnish tree, transforms tree to adhere to PDT guidelines,
+# converts deprel tags to afuns.
 #------------------------------------------------------------------------------
 sub process_zone {
     my $self   = shift;
@@ -15,16 +15,16 @@ sub process_zone {
 
     # Adjust the tree structure.
     $self->convert_coordination($a_root);
-    $self->conll_to_pdt($a_root);
     $self->convert_copullae($a_root);
+    $self->conll_to_pdt($a_root);
     $self->check_afuns($a_root);
 } # process_zone
 
 
-# V is verb
-# PCP[12] are participles.
-# TODO: check that they can stand on their own. Also check DV-MA and
-# similar derivations.
+## V is verb
+## PCP[12] are participles.
+## TODO: check that they can stand on their own. Also check DV-MA and
+## similar derivations.
 sub is_verb {
     my @feats = @_;
     if ( 1 == @feats
@@ -35,17 +35,18 @@ sub is_verb {
 } # is_verb
 
 
-# N is noun; NON-TWOL is an OOV word.
+## N is noun; NON-TWOL is an OOV word.
 sub is_noun {
     my @feats = @_;
     if ( 1 == @feats
          and ref $feats[0] ) {
         @feats = split /\|/, $feats[0]->conll_pos;
     }
-    return grep $_ =~ /^(?:N|NON-TWOL)$/, @feats;
+    return grep $_ =~ /^(?:N|NON-TWOL|DEM)$/, @feats;
 } # is_noun
 
 
+## Change Stanford-style coordination into PDT-style.
 sub convert_coordination {
     my $self        = shift;
     my $root        = shift;
@@ -77,16 +78,19 @@ sub convert_coordination {
         push @coord, grep 'cc' eq $_->conll_deprel, $node->children;
 
         unless (@coord) {
-            log_warn('No Coord for conj ' . $node->get_address);
+            log_warn("No Coord for conj\t" . $node->get_address);
             next;
         }
 
         my $coord_head = $coord[-1];
 
         # rehang punctuation before the conjunction
-        my $extra_punct;
         if ('cc' eq $coord_head->conll_deprel) {
-            $extra_punct = $coord_head->lbrother;
+            my $extra_punct = $coord_head->lbrother;
+            push @coord, $extra_punct
+                if ref $extra_punct and $extra_punct->lemma =~ $punct_regex;
+        }
+        for my $extra_punct (($node->children)[0, -1]) {
             push @coord, $extra_punct
                 if ref $extra_punct and $extra_punct->lemma =~ $punct_regex;
         }
@@ -109,38 +113,35 @@ sub convert_copullae {
     foreach my $node (grep 'cop' eq $_->conll_deprel, @nodes) {
         my $pnom = $node->parent;
         unless ($pnom) {
-            log_warn('No Pnom for copulla ' . $node->get_address);
+            log_warn("No Pnom for copulla\t" . $node->get_address);
             next;
         }
 
         my $grandpa = $pnom->parent;
         unless ($grandpa) {
-            log_warn('No grandparent for copulla ' . $node->get_address);
+            log_warn("No grandparent for copulla\t" . $node->get_address);
             next;
         }
         $node->set_parent($grandpa);
         $pnom->set_parent($node);
         $pnom->set_afun('Pnom');
         $node->set_conll_deprel($pnom->conll_deprel);
-
-        my @sb = grep 'nsubj-cop' eq $_->conll_deprel, $pnom->children;
-        unless (@sb) {
-            log_warn('No subject for copulla ' . $node->get_address);
-            next;
+        if ($pnom->is_member) {
+            $pnom->set_is_member(0);
+            $node->set_is_member(1);
         }
-        $_->set_parent($node) for @sb;
-        $_->set_afun('Sb') for @sb;
-        log_warn('Multiple subjects for copulla ' . $node->get_address)
-            if 1 < @sb;
 
-        for my $child ($pnom->children) {
-            $child->set_parent($node) unless 'Obj' eq $child->afun;
+        foreach my $child ($pnom->children) {
+            $child->set_parent($node)
+                unless $child->conll_deprel
+                    =~ /^(?:dobj|amod|infmod|num|partmod|poss|rcmod)$/;
         }
+
     }
 } # convert_copullae
 
 
-# Prevent touching the tree before coordiantions are solved
+## Prevent touching the tree before coordiantions are solved
 sub deprel_to_afun {}
 
 
@@ -159,17 +160,55 @@ sub conll_to_pdt {
 
         # http://bionlp.utu.fi/dependencytypes.html
         # The corpus contains the following 45 dependency relation tags:
-        #
-        # acomp adpos advcl advmod appos aux auxpass cc ccomp compar
-        # comparator complm conj csubj csubj-cop dep det iccomp intj
-        # mark name neg nn num number parataxis partmod preconj prt
-        # punct quantmod rcmod rel voc xcomp
-        #
-        # finished:
-        # amod cop dobj gobj infmod nommod nsubj nsubj-cop poss ROOT
+
+        # x 8295 punct
+        # x 7738 nommod
+        # x 4307 ROOT
+        # x 3715 nsubj
+        # x 3655 poss
+        # x 3175 advmod
+        # x 2962 dobj
+        # x 2937 conj
+        # x 2815 amod
+        # x 2724 name
+        # x 2314 cc
+        # x 1339 num
+        # x 1186 cop
+        # x 1068 nsubj-cop
+        #    875 partmod
+        #    856 adpos
+        # x  772 aux
+        # x  767 number
+        #    646 det
+        #    609 nn
+        #    593 appos
+        #    591 advcl
+        #    582 rel
+        #    580 rcmod
+        #    423 ccomp
+        #    393 xcomp
+        #    365 neg
+        #    352 mark
+        # x  347 gobj
+        # x  291 complm
+        #    189 parataxis
+        #    182 auxpass
+        #    171 dep
+        #    132 iccomp
+        #    114 quantmod
+        #    111 compar
+        # x   93 acomp
+        #     82 comparator
+        # x   71 infmod
+        # x   48 preconj
+        # x   37 csubj
+        #     33 prt
+        # x   33 csubj-cop
+        #      7 voc
+        #      1 intj
 
         my $deprel = $node->conll_deprel;
-        my $parent = $node->parent;
+        my ($parent) = $node->get_eparents;
         my @feats  = split /\|/, $node->conll_pos;
         my @pfeats = split /\|/, $parent->conll_pos;
         my $afun;
@@ -178,59 +217,129 @@ sub conll_to_pdt {
         if ('ROOT' eq $deprel) {
             if (is_verb(@feats)) {
                 $afun = 'Pred';
+            } elsif (grep $_->conll_deprel =~ /^(?:nsubj|dobj)$/,
+                     $node->get_echildren) {
+                $afun = 'Pred';
+                $node->set_tag('ERR|V');
+                log_warn("Non-verb Pred\t" . $node->get_address);
             } else {
                 $afun = 'ExD';
             }
 
-        # nommod - modification expressed by a noun, can be Atr or Adv
-        #          depending on the parent's POS
-        # amod - modification expressed by an adjective, should be Atr
+        # amod   - adjective modifier of a noun, should be Atr
+        # gobj   - genitive object under nominalized verb, Atr
+        # poss   - possesive under nouns, Atr
         # infmod - modification expressed by infinitive
-        # gobj - genitive object under nominalized verb, Atr under
-        #        nouns, Obj otherwise
-        # dobj - direct object
-        # poss - possesive, Atr under nouns, Adv otherwise
+        } elsif ($deprel =~ /^(?:gobj|amod|infmod|poss)$/) {
+            $afun = 'Atr';
+            log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
+                unless is_noun(@pfeats);
 
-        } elsif (grep $deprel eq $_,
-                 qw/nommod dobj gobj poss amod infmod/) {
+        # dobj - direct object
+        # acomp - adjective under verb
+        } elsif ($deprel =~ /^(?:acomp|dobj)$/) {
+            $afun = 'Obj';
+            log_warn("$deprel under noun\t@pfeats\t" . $node->get_address)
+                if is_noun(@pfeats);
+
+        # nommod - modification expressed by a noun, can be Atr or Adv
+        #          depending on the parent's POS (buggy!)
+        } elsif ('nommod' eq $deprel) {
             if (is_noun(@pfeats)) {
                 $afun = 'Atr';
-                log_warn("@pfeats head of $deprel " . $node->get_address)
-                    if 'dobj' eq $deprel;
-            } elsif (grep $deprel eq $_, qw/nommod poss/) {
-                $afun = 'Adv';
-                log_warn("@pfeats head of $deprel " . $node->get_address)
-                    unless 'nommod' eq $deprel;
             } else {
-                $afun = 'Obj';
-                log_warn("@pfeats head of $deprel " . $node->get_address)
-                    unless grep $_ eq $deprel, qw/dobj/;
+                $afun = 'Adv';
             }
 
-        # nsubj - the subject
-        } elsif ('nsubj' eq $deprel) {
-            $afun = 'Sb';
-            log_warn("@pfeats head of nsubj " . $node->get_address)
+        # advmod - adverbial modifier, AuxZ under nouns, Adv elsewhere
+        } elsif ('advmod' eq $deprel) {
+            if (is_noun(@pfeats)) {
+                $afun = 'AuxZ';
+            } else {
+                $afun = 'Adv';
+            }
+
+        # aux - AuxV
+        } elsif ('aux' eq $deprel) {
+            $afun = 'AuxV';
+            log_warn("aux under non-verb\t@pfeats\t" . $node->get_address)
                 unless is_verb(@pfeats);
 
-        # ccomp - object clause
-        } elsif ('ccomp' eq $deprel) {
-            my @auxc = grep 'complm' eq $_->conll_deprel, $node->children;
-            unless (@auxc) {
-                log_warn('No AuxC for ccomp ' . $node->get_address);
-                next;
+        # name - part of a name, Atr for words, AuxG for symbols
+        } elsif ('name' eq $deprel) {
+            if ($node->lemma =~ /[[:alnum:]]/) {
+                $afun = 'Atr';
+            } else {
+                $afun = 'AuxG';
+                $_->set_parent($parent) for $node->children;
             }
-            if (1 < @auxc) {
-                log_warn('Too many AuxC ' . $node->get_address);
-                $_->set_parent($auxc[0]) for @auxc[1 .. $#auxc];
-                $_->set_afun('AuxY') for @auxc[1 .. $#auxc];
+
+        # num, number - Atr
+        } elsif ($deprel =~ /^num(?:ber)?$/) {
+            $afun = 'Atr';
+            log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
+                unless is_noun(@pfeats);
+
+        # quantmod
+        } elsif ('quantmod' eq $deprel) {
+            $afun = 'AuxZ';
+            log_warn("$deprel under non-number\t@pfeats\t" . $node->get_address)
+                unless grep $_ =~ /^(?:digit|Q|ORD)/, @pfeats;
+
+        # nsubj - the subject
+        } elsif ($deprel =~ /^(?:[cn]subj(?:|-cop))$/) {
+            $afun = 'Sb';
+            unless (is_verb(@pfeats) or index $deprel, '-cop') {
+                log_warn("head of nsubj\t@pfeats\t" . $node->get_address);
+                $_->set_tag('ERR|V') for $node->get_eparents;
             }
-            $auxc[0]->set_parent($parent);
-            $auxc[0]->set_afun('AuxC');
-            $node->set_parent($auxc[0]);
-            my @auxx = grep ',' eq $_->lemma, $node->children;
-            $_->set_parent($auxc[0]) for @auxx;
-            $afun = 'Obj';
+
+        # preconj - part of multiword coordinating conjunction
+        } elsif ('preconj' eq $deprel) {
+            $afun = 'AuxY';
+            if ( $parent->is_member
+                 and $parent->parent
+                 and 'Coord' eq $parent->parent->afun ) {
+                $node->set_parent($parent->parent);
+            } else {
+                log_warn("preconj without coordination\t" . $node->get_address);
+            }
+
+        # complm - complementizer ("that" in complement clause)
+        } elsif ('complm' eq $deprel) {
+            $afun = 'AuxC';
+
+            # will be used later, but can't be found after moving
+            # $node
+            my $punct = $node->lbrother;
+
+            my $head = $parent->parent;
+            if ('Pred' eq $parent->afun) {
+                $afun = 'AuxY';
+                log_warn("complm under ROOT\t" . $node->get_address);
+                # do not rehang the comma in this case
+                undef $punct;
+
+            } elsif ($node->is_member) {
+                $head = $parent->parent->parent;
+                unless ($head) {
+                    log_warn("invalid coordination for complm\t"
+                             . $node->get_address);
+                    $node->set_afun('AuxO');
+                    next;
+                }
+                $node->set_is_member(1);
+                $parent->set_is_member(0);
+                $node->set_parent($head);
+                $parent->parent->set_parent($node);
+            } else {
+                $node->set_parent($head);
+                $parent->set_parent($node);
+            }
+
+            if ($punct and 'punct' eq $punct->conll_deprel) {
+                $punct->set_parent($node);
+            }
 
         # Punctuation
         } elsif ('punct' eq $deprel) {
@@ -246,7 +355,6 @@ sub conll_to_pdt {
                 $afun = 'AuxG';
             }
         }
-
         $node->set_afun($afun);
     }
 } # conll_to_pdt
