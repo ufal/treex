@@ -7,7 +7,8 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
+    my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
+
 #    $self->deprel_to_afun($a_root)
     $self->attach_final_punctuation_to_root($a_root);
 #    $self->process_prepositional_phrases($a_root);
