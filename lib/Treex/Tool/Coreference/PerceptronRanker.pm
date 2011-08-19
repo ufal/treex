@@ -1,25 +1,36 @@
-package Treex::Tool::Coreference::PerceptronRanker
+package Treex::Tool::Coreference::PerceptronRanker;
 
 use Treex::Core::Common;
-use Treex::Core::Resource;
+use Treex::Core::Resource qw(require_file_from_share);
 
 with 'Treex::Tool::Coreference::Ranker';
 
 has '_model' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'HashRef[Str]',
+    isa         => 'HashRef[HashRef[Num]]',
+    lazy        => 1,
     builder      => '_build_model',
 );
+
+# Attribute _model depends on the attribute model_path, whose value do not
+# have to be accessible when building other attributes. Thus, _model is
+# defined as lazy, i.e. it is built during its first access. However, we wish all
+# models to be loaded while initializing a block. Following hack ensures it.
+sub BUILD {
+    my ($self) = @_;
+
+    $self->_model;
+}
 
 sub _build_model {
     my ($self) = @_;
 
-    Treex::Core::Resource::require_file_from_share($self->model_path, ref($self));
-    log_fatal 'File ' . $self->model_path . 
+    my $model_file = require_file_from_share($self->model_path, ref($self));
+    log_fatal 'File ' . $model_file . 
         ' with a model for pronominal textual coreference resolution does not exist.' 
-        if !-f $self->model_path;
-    open MODEL, $self->model_path;
+        if !-f $model_file;
+    open MODEL, $model_file;
 
     my $perc_weights;
     my $start = 0;
@@ -66,8 +77,8 @@ sub rank {
             }
             else {
                 #my $fvalue = special_chars_off2($pfeatures->{$fname});
-                my $fvalue = $pfeatures->{$fname};
-                $feat_weight = $p_perc_weights->{$fname}{$fvalue};
+                my $fvalue = $instance->{$fname};
+                $feat_weight = $self->_model->{$fname}{$fvalue};
             }
             $cand_weight += $feat_weight;
         }
@@ -75,6 +86,8 @@ sub rank {
     }
     return $cand_weights;
 }
+
+1;
 
 
 __END__

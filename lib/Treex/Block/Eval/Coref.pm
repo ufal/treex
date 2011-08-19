@@ -3,6 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'type' => (
+    is          => 'ro',
+    isa         => enum( [qw/gram text all/] ),
+    required    => 1,
+    default     => 'text',
+);
+
 my $tp_count  = 0;
 my $src_count = 0;
 my $ref_count = 0;
@@ -21,13 +28,26 @@ sub _count_fscore {
 
 sub process_tnode {
     my ( $self, $ref_node ) = @_;
-
     my $src_node = $ref_node->src_tnode;
 
-    my @ref_antec = map { $_->src_tnode } $ref_node->get_coref_gram_nodes;
-    my @src_antec = $src_node->get_coref_gram_nodes;
 
-    foreach my $ref_ante (@ref_antec) {
+    my @ref_antec;
+    my @src_antec;
+    if ($self->type eq 'gram') {
+        @ref_antec = $ref_node->get_coref_gram_nodes;
+        @src_antec = $src_node->get_coref_gram_nodes;
+    }
+    elsif ($self->type eq 'text') {
+        @ref_antec = $ref_node->get_coref_text_nodes;
+        @src_antec = $src_node->get_coref_text_nodes;
+    }
+    else {
+# TODO both types of coreference
+    }
+
+    my @ref_antec_in_src = map { $_->src_tnode } @ref_antec;
+
+    foreach my $ref_ante (@ref_antec_in_src) {
         $tp_count += () = grep { $_ == $ref_ante } @src_antec;
     }
     $src_count += scalar @src_antec;

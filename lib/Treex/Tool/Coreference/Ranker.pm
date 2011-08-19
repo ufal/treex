@@ -23,6 +23,8 @@ sub pick_winner {
     return $cands[0];
 }
 
+1;
+
 __END__
 
 =head1 NAME

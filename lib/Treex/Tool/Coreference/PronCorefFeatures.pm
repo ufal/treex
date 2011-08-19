@@ -1,6 +1,13 @@
-package Treex::Tool::Coreference::PronCorefFeatures
+package Treex::Tool::Coreference::PronCorefFeatures;
 
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
+
+my $b_true = '1';
+my $b_false = '-1';
+
+my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
+my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
 
 has 'cnk_freqs_path' => (
     is          => 'ro',
@@ -21,14 +28,16 @@ has 'ewn_classes_path' => (
 has '_cnk_freqs' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'HashRef[Str]',
+    isa         => 'HashRef',
+    lazy        => 1,
     builder     => '_build_cnk_freqs',
 );
 
 has '_ewn_classes' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'HashRef[Str]',
+    isa         => 'HashRef',
+    lazy        => 1,
     builder     => '_build_ewn_classes',
 );
 
@@ -42,18 +51,22 @@ has '_np_freq' => (
     isa     => 'HashRef[Str]'
 );
 
-my $b_true = '1';
-my $b_false = '-1';
+# Attributes _cnk_freqs and _ewn_classes depend on attributes cnk_freqs_path
+# and ewn_classes_path, whose values do not have to be accessible when
+# building other attributes. Thus, _cnk_freqs and _ewn_classes are defined as
+# lazy, i.e. they are built during their first access. However, we wish all
+# models to be loaded while initializing a block. Following hack ensures it.
+sub BUILD {
+    my ($self) = @_;
 
-my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
-my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
+    $self->_cnk_freqs;
+    $self->_ewn_classes;
+}
 
 sub _build_cnk_freqs {
     my ($self) = @_;
     
-    my $cnk_file = $self->cnk_freqs_path;
-    Treex::Core::Resource::require_file_from_share(
-        $cnk_file, ref($self));
+    my $cnk_file = require_file_from_share( $self->cnk_freqs_path, ref($self) );
     log_fatal 'File ' . $cnk_file . 
         ' with a CNK model used for a feature' .
         ' in pronominal textual coreference resolution does not exist.' 
@@ -81,9 +94,7 @@ sub _build_cnk_freqs {
 sub _build_ewn_classes {
     my ($self) = @_;
 
-    my $ewn_file = $self->ewn_classes_path;
-    Treex::Core::Resource::require_file_from_share(
-        $ewn_file, ref($self));
+    my $ewn_file = require_file_from_share( $self->ewn_classes_path, ref($self) );
     log_fatal 'File ' . $ewn_file . 
         ' with a EuroWordNet onthology for Czech used' .
         ' in pronominal textual coreference resolution does not exist.' 
@@ -97,7 +108,7 @@ sub _build_ewn_classes {
         
         my ($noun, @classes) = split /\s/, $line;
         for my $class (@classes) {
-            $ewn_noun{$noun}{$class} = 1;
+            $ewn_noun->{$noun}{$class} = 1;
             $ewn_all_classes{$class} = 1;
         }
     }
@@ -329,7 +340,7 @@ sub _in_cnk_collocation {
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
 sub extract_features {
-    my ( $cand, $anaph, $candord ) = @_;
+    my ( $self, $cand, $anaph, $candord ) = @_;
     my %coref_features = ();
     
     #   1: anaphor's ID

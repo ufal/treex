@@ -3,22 +3,26 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Coreference::PerceptronRanker;
+use Treex::Tool::Coreference::PronCorefFeatures;
+
 has 'model_path' => (
     is       => 'ro',
     required => 1,
     isa      => 'Str',
 
-    default => 'data/models/coreference/perceptron/text.perspron.gold',
+    default => 'data/models/coreference/CS/perceptron/text.perspron.gold',
     documentation => 'path to a trained model',
 );
 
 # TODO  the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
-    is       => 'ro',
-    required => 1,
+    is          => 'ro',
+    required    => 1,
 
-    isa => 'Treex::Tool::Coreference::Ranker',
-    builder => '_build_ranker'
+    isa         => 'Treex::Tool::Coreference::Ranker',
+    lazy        => 1,
+    builder     => '_build_ranker'
 );
 
 has '_feature_extractor' => (
@@ -28,6 +32,16 @@ has '_feature_extractor' => (
     isa         => 'Treex::Tool::Coreference::PronCorefFeatures',
     builder     => '_build_feature_extractor',
 );
+
+# Attribute _ranker depends on the attribute model_path, whose value do not
+# have to be accessible when building other attributes. Thus, _ranker is
+# defined as lazy, i.e. it is built during its first access. However, we wish all
+# models to be loaded while initializing a block. Following hack ensures it.
+sub BUILD {
+    my ($self) = @_;
+
+    $self->_ranker;
+}
 
 sub _build_ranker {
     my ($self) = @_;
@@ -56,7 +70,7 @@ sub _is_anaphoric {
 # the previous sentence
 # TODO think about preparing of all candidates in advance
 sub _get_ante_cands {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
 
     # current sentence
     my @sent_preceding = grep { $_->precedes($t_node) }
@@ -65,7 +79,7 @@ sub _get_ante_cands {
     # previous sentence
     my $sent_num = $t_node->get_bundle->get_position;
     if ( $sent_num > 0 ) {
-        my $prev_bundle = $t_node->get_document->get_bundles[ $sent_num - 1 ];
+        my $prev_bundle = ( $t_node->get_document->get_bundles )[ $sent_num - 1 ];
         my $prev_tree   = $prev_bundle->get_tree(
             $t_node->language,
             $t_node->get_layer,
@@ -80,14 +94,14 @@ sub _get_ante_cands {
 
     # semantic noun filtering
     my @cands = grep { $_->gram_sempos =~ /^n/ && $_->gram_person !~ /1|2/ }
-        @curr_sent_preceding;
+        @sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers
     return reverse @cands;
 }
 
 sub _create_instances {
-    my ( $anaphor, @ante_cands ) = @_;
+    my ( $self, $anaphor, @ante_cands ) = @_;
 
     my $instances;
     my $ord = 1;
@@ -107,7 +121,7 @@ before 'process_document' => sub {
         return;
     }
     my @trees = map { $_->get_tree( 
-        $self->$language, 't', $self->$selector ) }
+        $self->language, 't', $self->selector ) }
         $document->get_bundles;
 
     my $fe = $self->_feature_extractor;
@@ -116,7 +130,7 @@ before 'process_document' => sub {
     $fe->count_np_freq( \@trees );
     $fe->mark_doc_clause_nums( \@trees );
     $fe->mark_doc_deepord( \@trees );
-}
+};
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
@@ -125,10 +139,10 @@ sub process_tnode {
 
     if ( _is_anaphoric($t_node) ) {
 
-        my @ante_cands = _get_ante_cands($t_node);
+        my @ante_cands = $self->_get_ante_cands($t_node);
 
         # instances is a reference to a hash in the form { id => instance }
-        my $instances = _create_instances( $t_node, @ante_cands );
+        my $instances = $self->_create_instances( $t_node, @ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not
