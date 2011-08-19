@@ -8,39 +8,39 @@ has 'model_path' => (
     required => 1,
     isa      => 'Str',
 
-    #default => ''
-    documentation => 'path to the trained model',
+    default => 'data/models/coreference/perceptron/text.perspron.gold',
+    documentation => 'path to a trained model',
 );
 
-# TODO initialize ranker
-# the best would be to pick among several rankers and corresponding models
+# TODO  the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
     is       => 'ro',
     required => 1,
 
-    #isa => '',
+    isa => 'Treex::Tool::Coreference::Ranker',
     builder => '_build_ranker'
 );
 
-has '_collocations' => (
-    is      => 'rw',
-    isa     => 'HashRef[Str]'
+has '_feature_extractor' => (
+    is          => 'ro',
+    required    => 1,
+# TODO this should be a role, not a concrete class
+    isa         => 'Treex::Tool::Coreference::PronCorefFeatures',
+    builder     => '_build_feature_extractor',
 );
-
-has '_np_freq' => (
-    is      => 'rw',
-    isa     => 'HashRef[Str]'
-);
-
 
 sub _build_ranker {
     my ($self) = @_;
+    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
+        { model_path => $self->model_path } 
+    );
+    return $ranker;
+}
 
-    log_fatal "File " . $self->model_path . " with pronominal coreference model doesn't exist."
-        if ( !-e $self->model_path );
-
-    #TODO
-    return;    #PerceptronRanker->new( { model_path => $self->model_path } );
+sub _build_feature_extractor {
+    my ($self) = @_;
+    my $fe = Treex::Tool::Coreference::PronCorefFeatures->new();
+    return $fe;
 }
 
 # according to rule presented in Nguy et al. (2009)
@@ -75,8 +75,7 @@ sub _get_ante_cands {
     }
     else {
 
-        # TODO
-        # it should inform that the previous context is not complete
+        # TODO it should inform that the previous context is not complete
     }
 
     # semantic noun filtering
@@ -90,7 +89,15 @@ sub _get_ante_cands {
 sub _create_instances {
     my ( $anaphor, @ante_cands ) = @_;
 
-    #TODO
+    my $instances;
+    my $ord = 1;
+    foreach my $cand (@ante_cands) {
+        my $fe = $self->_feature_extractor;
+        my $features = $fe->extract_features( $cand, $anaphor, $ord );
+        $instances->{ $cand-> id } = $features;
+        $ord++;
+    }
+    return $instances;
 }
 
 before 'process_document' => sub {
@@ -103,11 +110,12 @@ before 'process_document' => sub {
         $self->$language, 't', $self->$selector ) }
         $document->get_bundles;
 
-    my $fe = $self->feature_extractor;
+    my $fe = $self->_feature_extractor;
 
-    $self->_set_collocations( $fe->count_collocations( \@trees ) );
-    $self->_set_np_freq( $fe->count_np_freq( \@trees ) );
-    $fe->mark_clause_nums( \@trees );
+    $fe->count_collocations( \@trees );
+    $fe->count_np_freq( \@trees );
+    $fe->mark_doc_clause_nums( \@trees );
+    $fe->mark_doc_deepord( \@trees );
 }
 
 sub process_tnode {
@@ -130,7 +138,6 @@ sub process_tnode {
 
         $t_node->set_deref_attr( 'coref_text.ref', [$antec] );
     }
-
 }
 
 1;

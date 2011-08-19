@@ -1,14 +1,9 @@
 package Treex::Tool::Coreference::PerceptronRanker
 
 use Treex::Core::Common;
+use Treex::Core::Resource;
 
-has 'model_path' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Str',
-
-    documentation => 'path to the trained model',
-);
+with 'Treex::Tool::Coreference::Ranker';
 
 has '_model' => (
     is          => 'ro',
@@ -20,7 +15,10 @@ has '_model' => (
 sub _build_model {
     my ($self) = @_;
 
-    # TODO if it doesn't exist?
+    Treex::Core::Resource::require_file_from_share($self->model_path, ref($self));
+    log_fatal 'File ' . $self->model_path . 
+        ' with a model for pronominal textual coreference resolution does not exist.' 
+        if !-f $self->model_path;
     open MODEL, $self->model_path;
 
     my $perc_weights;
@@ -79,15 +77,36 @@ sub rank {
 }
 
 
-sub pick_winner {
-    my ($self, $instances) = @_;
+__END__
 
-    my $cand_weights = $self->rank( $instances );
-    my @cands = sort {$cand_weights->{$b} <=> $cand_weights->{$a}} 
-        keys %{$cand_weights};
-    return $cands[0];
-}
+=head1 NAME
 
-# Copyright 2008-2011 Nguy Giang Linh, Michal Novak
+Treex::Tool::Coreference::PerceptronRanker
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 DESCRIPTION
+
+A perceptron ranker.
+
+=head1 METHODS
+
+=over
+
+=item C<rank>
+
+Calculates scores of candidates based on the model created by ranking
+perceptron learning algorithm.
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz> 
+
+Nguy Giang Linh <linh@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

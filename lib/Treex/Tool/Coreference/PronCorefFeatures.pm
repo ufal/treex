@@ -2,18 +2,44 @@ package Treex::Tool::Coreference::PronCorefFeatures
 
 use Treex::Core::Common;
 
+has 'cnk_freqs_path' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Str',
+    default     => 
+        'data/models/coreference/CS/features/cnk_nv_freq.txt',
+);
+
+has 'ewn_classes_path' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Str',
+    default     => 
+        'data/models/coreference/CS/features/noun_to_ewn_top_ontology.tsv',
+);
+
 has '_cnk_freqs' => (
     is          => 'ro',
     required    => 1,
-    isa         => HashRef[Str],
+    isa         => 'HashRef[Str]',
     builder     => '_build_cnk_freqs',
 );
 
 has '_ewn_classes' => (
     is          => 'ro',
     required    => 1,
-    isa         => HashRef[Str],
+    isa         => 'HashRef[Str]',
     builder     => '_build_ewn_classes',
+);
+
+has '_collocations' => (
+    is      => 'rw',
+    isa     => 'HashRef[Str]'
+);
+
+has '_np_freq' => (
+    is      => 'rw',
+    isa     => 'HashRef[Str]'
 );
 
 my $b_true = '1';
@@ -23,10 +49,17 @@ my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
 my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
 
 sub _build_cnk_freqs {
-    my $cnk_file;   #TODO resource nv_freq-sorted.txt
-# TODO automatic download
-# TODO check if this is called just once at the beginning
-    open CNK, $cnk_file or die "Can't open $cnk_file: $!";
+    my ($self) = @_;
+    
+    my $cnk_file = $self->cnk_freqs_path;
+    Treex::Core::Resource::require_file_from_share(
+        $cnk_file, ref($self));
+    log_fatal 'File ' . $cnk_file . 
+        ' with a CNK model used for a feature' .
+        ' in pronominal textual coreference resolution does not exist.' 
+        if !-f $cnk_file;
+    open CNK, $cnk_file;
+    
     my $nv_freq;
     my $v_freq;
     
@@ -46,10 +79,16 @@ sub _build_cnk_freqs {
 }
 
 sub _build_ewn_classes {
-    my $ewn_file;   #TODO resource noun_to_ewn_top_ontology.tsv
-# TODO automatic download
-# TODO check if this is called just once at the beginning
-    open(EWN, $ewn_file) or die "Can't open $ewn_file: $!";
+    my ($self) = @_;
+
+    my $ewn_file = $self->ewn_classes_path;
+    Treex::Core::Resource::require_file_from_share(
+        $ewn_file, ref($self));
+    log_fatal 'File ' . $ewn_file . 
+        ' with a EuroWordNet onthology for Czech used' .
+        ' in pronominal textual coreference resolution does not exist.' 
+        if !-f $ewn_file;
+    open EWN, $ewn_file;
     
     my $ewn_noun;
     my %ewn_all_classes;
@@ -70,9 +109,10 @@ sub _build_ewn_classes {
     return $ewn_classes;
 }
 
-# Bere cislo a odkaz na seznam hranic skatulek. Soupne cislo tak, aby cisla mezi dvema hranicemi
-# dostala stejnou hodnotu
-sub categorize {
+# quantization
+# takes an array of numbers, which corresponds to the boundary values of
+# clusters
+sub _categorize {
     my ( $real, $bins_rf ) = @_;
     my $retval = "-inf";
     for (@$bins_rf) {
@@ -81,75 +121,85 @@ sub categorize {
     return $retval;
 }
 
-sub count_collocations {
-    my ( $trees ) = @_;
-    my ( $collocation );
-    
-    foreach my $tree (@{$trees}) {
-        foreach my $node ( $tree->descendants ) {
-            
-            if (( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
-                
-                foreach my $child ( $node->get_echildren ) {
-                    
-                    if ( $actants2{ $child->functor } && 
-                        ( $child->gram_sempos =~ /^n\.denot/ )) {
-                        
-                        my $key = $child->functor . "-" . $node->t_lemma;
-                        push @{ $collocation->{$key} }, $child->t_lemma;
-                    }
-                }
-            }
-        }
-    }
-    return ( $collocation );
+### returns the final gender and number of a list of coordinated nodes: Tata a mama sli; Mama a dite sly
+sub _get_coord_gennum {
+	my ($parray, $node) = @_;
+	my $antec = ($node->get_coref_gram_nodes)[0];
+	
+    my ($gen, $num);
+
+	if ((scalar @{$parray} == 0) || ($antec->functor eq 'APPS')) {
+		$gen = $parray->[0]->gram_gender;
+		$num = $parray->[0]->gram_number;
+	}
+	else {
+		$num = 'pl';
+		my %gens;
+		my @gens = (0, 0, 0, 0); # 0- anim, 1-inan, 2-fem, 3-neut
+		foreach (@{$parray}) {
+			$gens{$_->gram_gender}++;
+		}
+		if ($gens{'anim'}) {
+			$gen = 'anim';
+		}
+		elsif (($gens{'fem'} == scalar @{$parray}) || 
+            ($gens{'fem'} && $gens{'neut'})) {
+			$gen = 'fem';
+		}
+		elsif ($gens{'neut'} == scalar @{$parray}) {
+			$gen = 'neut';
+		}
+		else  {
+			$gen = 'inan';
+		}
+	}
+	return ($gen, $num);
 }
 
-sub count_np_freq {
-    my ( $trees ) = @_;
-    my ( $np_freq );
-    
-    foreach my $tree (@{$trees}) {
-        foreach my $node ( $tree->descendants ) {
-            
-            if (($node->gram_sempos =~ /^n\.denot/ ) 
-                && ( $node->gram_person !~ /1|2/ )) {
-                    
-                    $np_freq->{ $node->t_lemma }++;
-            }
-        }
-    }
-    return ( $np_freq );
+# returns the gender and number of the candidate, which is relative, according to his antecedent's gender and number
+sub _get_relat_gennum {
+	my ($node) = @_;
+	my @epars = $node->get_eparents;
+	my $par = $epars[0];
+	while ($par && !(($par->gram_sempos eq "v") 
+        && ($par->gram_tense =~ /^(sim|post|ant)$/))) {
+		
+        @epars = $par->get_eparents;
+		$par = $epars[0];
+	}
+	my @antecs = $par->get_eparents;
+	return _get_coord_gennum(\@antecs, $node);
 }
 
-sub mark_clause_nums {
-    my ($self, $trees) = @_;
-
-    my $curr_clause_num = 0;
-    foreach my $tree (@{$trees}) {
-        my $clause_count = 0;
-        
-        foreach my $node ($tree->descendants ) {
-            # TODO clause_number returns 0 for coap
-            $node->wild->{aca_clausenum} = 
-                $node->clause_number + $curr_clause_num;
-            if ($node->clause_number > $clause_count) {
-                $clause_count = $node->clause_number;
-            }
-        }
-        $curr_clause_num += $clause_count;
-    }
+### returns the gender and number of the candidate, which is reflexive, according to his antecedent's gender and number
+sub _get_refl_gennum {
+	my ($node) = @_;
+	my $antec = ($node->get_coref_gram_nodes)[0];
+	while ((!$antec->gram_gender || ($antec->gram_gender eq 'inher')) &&
+        ($antec->attr('coref_gram.rf') || $antec->attr('coref_text.rf'))) {
+		$antec = ($antec->get_coref_nodes)[0];
+	}
+	return ($antec->gram_gender, $antec->gram_number);
 }
 
-# REFACTORED
-# TODO destroy this method
-sub analyze_file {
-
-    # TODO deepord
-    my $nodeord = 0;
-    foreach my $node (@all_nodes) {
-        $node->wild->{aca_file_deepord} = $nodeord++;
-    }
+### returns the gender and number of the candidate, if cand = relative => get_relat_gennum(cand), if cand = refl => get_refl_gennum(cand)
+sub _get_cand_gennum {
+	my ($node) = @_;
+	if ($node->attr('coref_gram.rf')) {
+		if ($node->gram_indeftype eq 'relat') {
+#			my $alex = $node->attr('a/lex.rf');
+			my $anode = $node->get_lex_anode;
+			my $alemma = $anode->lemma;
+			if ($alemma !~ /^což/) {
+				return _get_relat_gennum($node);
+			}
+		}
+		elsif ((node->t_lemma eq '#PersPron') 
+            && ($node->gram_person eq 'inher')) {
+			return _get_refl_gennum($node);
+		}
+	}
+	return ($node->gram_gender, $node->gram_number);
 }
 
 # returns the symbol in the $position of analytical node's tag of $node
@@ -246,7 +296,8 @@ sub _are_siblings {
 
 # return if $inode and $jnode have the same collocation
 sub _in_collocation {
-	my ($inode, $jnode, $collocation) = @_;
+	my ($self, $inode, $jnode) = @_;
+    my $collocation = $self->_collocations;
 	foreach my $jpar ($jnode->get_eparents) {
 		if (($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
 			my $jcoll = $jnode->functor . "-" . $jpar->t_lemma;
@@ -277,41 +328,10 @@ sub _in_cnk_collocation {
 }
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
-sub get_coref_features {
-    my ( $cand, $anaph, $candord, $np_freq, $collocation ) = @_;
+sub extract_features {
+    my ( $cand, $anaph, $candord ) = @_;
     my %coref_features = ();
-    my @feat_names     = qw(
-        c_sent_dist        c_clause_dist         c_file_deepord_dist
-        c_cand_ord
-
-        c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
-        c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
-        b_cand_akt         b_anaph_akt           b_akt_agree
-        b_cand_subj        b_anaph_subj          b_subj_agree
-
-        c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
-        c_cand_num         c_anaph_num           b_num_agree               c_join_num
-        c_cand_apos        c_anaph_apos                                    c_join_apos
-        c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
-        c_cand_agen        c_anaph_agen                                    c_join_agen
-        c_cand_anum        c_anaph_anum                                    c_join_anum
-        c_cand_acase       c_anaph_acase                                   c_join_acase
-        c_cand_apossgen    c_anaph_apossgen                                c_join_apossgen
-        c_cand_apossnum    c_anaph_apossnum                                c_join_apossnum
-        c_cand_apers       c_anaph_apers                                   c_join_apers
-
-        b_cand_coord       b_app_in_coord
-        c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
-        c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
-        b_epar_lemma_agree        c_join_epar_lemma
-        c_join_clemma_aeparlemma
-        c_cand_tfa         c_anaph_tfa           b_tfa_agree               c_join_tfa
-        b_sibl             b_coll                r_cnk_coll
-        r_cand_freq
-        b_cand_pers
-
-    );
-
+    
     #   1: anaphor's ID
     $coref_features{anaph_id} = $anaph->id;
 
@@ -320,15 +340,15 @@ sub get_coref_features {
     #   4x num: sentence distance, clause distance, file deepord distance, candidate's order
     $coref_features{c_sent_dist} =
         $anaph->get_bundle->get_position - $cand->get_bundle->get_position;
-    $coref_features{c_clause_dist} = categorize(
+    $coref_features{c_clause_dist} = _categorize(
         $anaph->wild->{aca_clausenum} - $cand->wild->{aca_clausenum}, 
         [-2, -1, 0, 1, 2, 3, 7]
     );
-    $coref_features{c_file_deepord_dist} = categorize(
+    $coref_features{c_file_deepord_dist} = _categorize(
         $anaph->wild->{aca_file_deepord} - $cand->wild->{aca_file_deepord},
         [1, 2, 3, 6, 15, 25, 40, 50]
     );
-    $coref_features{c_cand_ord} = categorize(
+    $coref_features{c_cand_ord} = _categorize(
         $candord,
         [1, 2, 3, 5, 8, 11, 17, 22]
     );
@@ -338,7 +358,7 @@ sub get_coref_features {
     #   8:  gender, num, agreement, joined
 
     #TODO: REFACTOR this
-    ( $coref_features{c_cand_gen}, $coref_features{c_cand_num} ) = get_cand_gennum($cand);
+    ( $coref_features{c_cand_gen}, $coref_features{c_cand_num} ) = _get_cand_gennum( $cand );
 
     $coref_features{c_anaph_gen} = $anaph->gram_gender;
     $coref_features{c_anaph_num} = $anaph->gram_number;
@@ -437,14 +457,14 @@ sub get_coref_features {
     $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
 
     #   1: collocation
-    $coref_features{b_coll} = _in_collocation( $cand, $anaph, $collocation ) ? $b_true : $b_false;
+    $coref_features{b_coll} = $self->_in_collocation( $cand, $anaph ) ? $b_true : $b_false;
 
     #   1: collocation from CNK
     $coref_features{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
 
     #   1:  freq($inode);
     #    $coref_features{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
-    $coref_features{r_cand_freq} = $np_freq->{ $cand->t_lemma };
+    $coref_features{r_cand_freq} = $self->_np_freq->{ $cand->t_lemma };
 
 ###########################
     #   Semantic:
@@ -461,14 +481,86 @@ sub get_coref_features {
         $coref_features{$coref_class} = defined $cand_c{$class} ? $b_true : $b_false;
     }
     
-    # TODO is it neccessary to keep the feature names 
-    for my $class ( @{$p_ewn_classes} ) {
-        my $coref_class = "b_" . $class;
-        push @feat_names, $coref_class;
-    }
-
     #   celkem 71 vlastnosti + ID
-    return ( \%coref_features, \@feat_names );
+    return ( \%coref_features );
+}
+
+sub count_collocations {
+    my ( $self, $trees ) = @_;
+    my ( $collocation );
+    
+    foreach my $tree (@{$trees}) {
+        foreach my $node ( $tree->descendants ) {
+            
+            if (( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
+                
+                foreach my $child ( $node->get_echildren ) {
+                    
+                    if ( $actants2{ $child->functor } && 
+                        ( $child->gram_sempos =~ /^n\.denot/ )) {
+                        
+                        my $key = $child->functor . "-" . $node->t_lemma;
+                        push @{ $collocation->{$key} }, $child->t_lemma;
+                    }
+                }
+            }
+        }
+    }
+    $self->_set_collocations( $collocation );
+}
+
+sub count_np_freq {
+    my ( $self, $trees ) = @_;
+    my ( $np_freq );
+    
+    foreach my $tree (@{$trees}) {
+        foreach my $node ( $tree->descendants ) {
+            
+            if (($node->gram_sempos =~ /^n\.denot/ ) 
+                && ( $node->gram_person !~ /1|2/ )) {
+                    
+                    $np_freq->{ $node->t_lemma }++;
+            }
+        }
+    }
+    $self->_set_np_freq( $np_freq );
+}
+
+sub mark_doc_clause_nums {
+    my ($self, $trees) = @_;
+
+    my $curr_clause_num = 0;
+    foreach my $tree (@{$trees}) {
+        my $clause_count = 0;
+        
+        foreach my $node ($tree->descendants ) {
+            # TODO clause_number returns 0 for coap
+            $node->wild->{aca_clausenum} = 
+                $node->clause_number + $curr_clause_num;
+            if ($node->clause_number > $clause_count) {
+                $clause_count = $node->clause_number;
+            }
+        }
+        $curr_clause_num += $clause_count;
+    }
+}
+
+sub mark_doc_deepord {
+    my ($self, $trees) = @_;
+
+    my $curr_deepord = 0;
+    foreach my $tree (@{$trees}) {
+        my $node_count = 0;
+        
+        foreach my $node ($tree->descendants ) {
+            $node->wild->{aca_file_deepord} = 
+                $node->ord + $curr_deepord;
+            if ($node->ord > $node_count) {
+                $node_count = $node->ord;
+            }
+        }
+        $curr_deepord += $node_count;      
+    }
 }
 
 1;
