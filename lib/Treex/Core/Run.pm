@@ -379,6 +379,7 @@ sub _execute_locally {
     }
     else {
         $self->set_scenario( Treex::Core::Scenario->new( from_string => $scen_str ) );
+        $self->scenario->load_blocks;
     }
     my $scenario      = $self->scenario;
     my $loading_ended = time;

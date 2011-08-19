@@ -37,7 +37,7 @@ has loaded_blocks => (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Block]',
     builder  => '_build_loaded_blocks',
-    predicate => 'is_initialized'
+    predicate => 'is_initialized',
     lazy     => 1,
     init_arg => undef,
 );
