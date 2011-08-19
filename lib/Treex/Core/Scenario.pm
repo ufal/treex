@@ -197,6 +197,11 @@ sub construct_scenario_string {
     return join $delim, @block_strings;
 }
 
+sub load_blocks {
+    my $self = shift;
+    $self->loaded_blocks; #just access lazy attribute
+}
+
 sub _load_block {
     my ( $self, $block_item ) = @_;
     my $block_name = $block_item->{block_name};
@@ -374,6 +379,12 @@ parses a textual description of a scenario
 constructs a scenario textual description from an existing scenario instance
 accepts named parameter multiline - when set, blocks are separated by newline instead of space
 
+=item load_blocks
+
+use blocks and call their constructors
+can be used for preloading blocks for e.g. server applications
+when running scenario blocks are loaded automatically
+
 =item restart
 
 resets document readed, in future it will rebuild reloaded blocks
@@ -393,6 +404,8 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 Martin Popel <popel@ufal.mff.cuni.cz>
 
 David Mareček <marecek@ufal.mff.cuni.cz>
+
+Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
