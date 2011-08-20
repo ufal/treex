@@ -109,6 +109,7 @@ sub deprel_to_afun
                 $node->set_afun('AuxP');
             }
 
+	           
             #coordinating conjunctions
             if ( $node->tag() =~ 'cc' )
             {
@@ -120,6 +121,7 @@ sub deprel_to_afun
             {
                 $node->set_afun('Coord');
             }
+
 
             #find terminal punctuation
             if ( $node->tag() =~ 'Fp' )
@@ -162,6 +164,19 @@ sub deprel_to_afun
             $node->set_afun('Sb');
 
         }
-
+	
+        
+    }
+     foreach my $node (@nodes)
+    {
+    #  my $deprel = $node->conll_deprel();
+    my $parent = $node->parent();
+    my $pfun=$parent->afun();
+	
+	if( length($pfun)>0){
+	if ( $pfun=~ 'Coord' ) {	
+            $node->set_is_member(1);
+        }
+        }
     }
 }

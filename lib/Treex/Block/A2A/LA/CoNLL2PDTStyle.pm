@@ -14,7 +14,10 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
         my $ppos   = $parent->tag();
-
+	   if ( $deprel =~ /_CO$/ ) {
+            $node->set_is_member(1);
+        }
+        
         #convert into PDT style
         if ( $deprel =~ 'PNOM' )
         {
