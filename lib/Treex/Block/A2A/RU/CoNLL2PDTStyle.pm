@@ -16,8 +16,7 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
-
-    #    $self->restructure_coordination($a_root);
+    $self->restructure_coordination($a_root);
     #    $self->check_afuns($a_root);
 }
 
@@ -26,6 +25,62 @@ sub process_zone
 # http://www.ims.uni-stuttgart.de/projekte/TIGER/TIGERCorpus/annotation/tiger_scheme-syntax.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
+
+sub restructure_coordination {
+    my $self = shift;
+    my $a_root = shift;
+    
+    foreach my $a_node ( $a_root->get_descendants() ) {
+        if ( $a_node->conll_deprel =~ /^(сент-соч|сочин)$/ ) {
+            my $coord_type = $1;
+            my $fdr = $1;
+            my $common_parent = $a_node->get_parent->get_parent;
+            my $common_deprel = $a_node->get_parent->conll_deprel;
+            my @members = ( $a_node->get_parent );
+            my $conjunction;
+            my $last_member = $a_node;
+            while ( $last_member ) {
+                if ( $last_member->tag =~ /^J\^/ ) {
+                    $conjunction = $last_member;
+                    $fdr = 'соч-союзн';
+                }
+                else {
+                    push @members, $last_member;
+                }
+                my $found = 0;
+                foreach my $child ($last_member->get_children) {
+                    if ( $child->conll_deprel eq $fdr ) {
+                        log_warn("More than one coordination member in the same level.") if ( $found );
+                        $last_member = $child;
+                        $found = 1;
+                    }
+                }
+                $last_member = undef if not $found;
+            }
+            if ( $conjunction && $common_parent ) {
+                $conjunction->set_conll_deprel($common_deprel);
+                $conjunction->set_parent($common_parent);
+                foreach my $member (@members) {
+                    $member->set_conll_deprel('coord_member');
+                    $member->set_parent($conjunction);
+                    $member->set_is_member(1);
+                }
+            }
+            elsif (not $common_parent) {
+                log_warn("Coordination members have no parent node.");
+            }
+            else {
+                foreach my $member (@members) {
+                    $member->set_conll_deprel($common_deprel);
+                    $member->set_parent($common_parent);
+                }
+            }
+        }
+    }
+}
+
+
+
 sub deprel_to_afun
 {
     my $self       = shift;
@@ -35,15 +90,15 @@ sub deprel_to_afun
     foreach my $node (@nodes)
     {
 
-        # The corpus contains the following 46 dependency relation tags:
-        # -- AC ADC AG AMS APP AVC CC CD CJ CM CP CVC DA DH DM EP HD JU MNR MO NG NK NMC
-        # OA OA2 OC OG OP PAR PD PG PH PM PNC PUNC RC RE ROOT RS SB SBP SP SVP UC VO
+        # The corpus contains the following tags:
+        # ???
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
         my $afun;
 
+        
         # Dependency of the main verb on the artificial root node.
         if ( !defined($deprel) )
         {
