@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use File::Basename;
 use File::Slurp;
+use File::chdir;
 
 has from_file => (
     is            => 'ro',
@@ -34,12 +35,12 @@ has block_items => (
 );
 
 has loaded_blocks => (
-    is       => 'ro',
-    isa      => 'ArrayRef[Treex::Core::Block]',
-    builder  => '_build_loaded_blocks',
+    is        => 'ro',
+    isa       => 'ArrayRef[Treex::Core::Block]',
+    builder   => '_build_loaded_blocks',
     predicate => 'is_initialized',
-    lazy     => 1,
-    init_arg => undef,
+    lazy      => 1,
+    init_arg  => undef,
 );
 
 has document_reader => (
@@ -144,7 +145,6 @@ sub _build_parser {
     my $grammar = read_file($file);          #load it
     eval {
         log_info("Trying to precompile it for you");
-        use File::chdir;
         local $CWD = $dir;
         Parse::RecDescent->Precompile( $grammar, 'Treex::Core::ScenarioParser' );
         $parser = $self->_load_parser();
@@ -177,20 +177,21 @@ sub parse_scenario_string {
 
 # reverse of parse_scenario_string, used in Treex::Core::Run for treex --dump
 sub construct_scenario_string {
-    my $self            = shift;
-    my %args            = @_;
-    my $multiline       = $args{multiline};
-    my @block_items     = @{$self->block_items};
-    my $delim           = $multiline ? qq{\n} : q{ };
+    my $self        = shift;
+    my %args        = @_;
+    my $multiline   = $args{multiline};
+    my @block_items = @{ $self->block_items };
+    my $delim       = $multiline ? qq{\n} : q{ };
     my @block_strings;
     foreach my $block_item (@block_items) {
-        my $name = $block_item->{block_name};
-        my @parameters = @{$block_item->{block_parameters}};
-        $name =~ s{^Treex::Block::}{} or $name = "::$name";                                                         #strip leading Treex::Block:: or add leading ::
+        my $name       = $block_item->{block_name};
+        my @parameters = @{ $block_item->{block_parameters} };
+        $name =~ s{^Treex::Block::}{} or $name = "::$name";    #strip leading Treex::Block:: or add leading ::
         my $params;
-        if (scalar @parameters) {
-            $params = q{ } . join q{ } , @parameters;
-        } else {
+        if ( scalar @parameters ) {
+            $params = q{ } . join q{ }, @parameters;
+        }
+        else {
             $params = q{};
         }
         push @block_strings, $name . $params;
@@ -200,12 +201,14 @@ sub construct_scenario_string {
 
 sub load_blocks {
     my $self = shift;
-    $self->loaded_blocks; #just access lazy attribute
+    $self->loaded_blocks;    #just access lazy attribute
+    return;
 }
 
 sub init {
     my $self = shift;
     $self->load_blocks();
+    return;
 }
 
 sub _load_block {
