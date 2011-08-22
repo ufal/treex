@@ -55,7 +55,15 @@ sub convert_coordination {
     my $punct_regex = qr%^[-,/:;\x{2013}\x{2212}]$%;
 
     foreach my $node (@nodes) {
-        next if $node->is_member or $node->afun;
+        next if $node->afun;
+
+        # fix an error in the original annotation
+        if ($node->form eq 'palamassa'
+            and my ($to_be_fixed) = grep 'tai' eq $_->form,
+                                    $node->get_children) {
+            $to_be_fixed->set_conll_deprel('cc')
+                if 'conj' eq $to_be_fixed->conll_deprel;
+        }
 
         # @conj will contain all the nodes to be coordinated witn $node
         my @conj = grep 'conj' eq $_->conll_deprel, $node->get_children;
@@ -102,6 +110,7 @@ sub convert_coordination {
         $coord_head->set_parent($node->get_parent);
         $_->set_parent($coord_head)
               for grep $coord_head != $_, $node, @conj, @coord;
+        $coord_head->set_is_member(1) if $node->is_member;
         $_->set_is_member(1) for $node, @conj;
         $_->set_conll_deprel($node->conll_deprel) for @conj;
     }
@@ -338,6 +347,10 @@ sub conll_to_pdt {
                 log_warn("head of nsubj\t@pfeats\t" . $node->get_address);
                 $_->set_tag('ERR|V') for $node->get_eparents;
             }
+
+        # conj - coordination conjunctions without children -> AuxY
+        } elsif ('conj' eq $deprel) {
+            $afun = 'AuxY';
 
         # preconj - part of multiword coordinating conjunction
         } elsif ('preconj' eq $deprel) {
