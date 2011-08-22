@@ -10,8 +10,6 @@ has 'segmenters' => (
 );
 
 # TODO: even more elegant implementation, avoid string eval
-# TODO: new segmenters are created for each bundle (since r6002),
-#       we should cache the created segmenters.
 sub _get_segmenter {
     my $self = shift;
     my $lang = uc shift;
@@ -21,7 +19,7 @@ sub _get_segmenter {
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
     my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
-        my $segmenter = eval "use $class; $class->new()";
+        my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
         if ($segmenter) {
             $self->segmenters->{$lang} = $segmenter;
             return $segmenter;

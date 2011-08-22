@@ -1,14 +1,28 @@
 package Treex::Tool::Tagger::Featurama::EN;
 use Moose;
-
 extends 'Treex::Tool::Tagger::Featurama';
+
+
+use Treex::Tool::EnglishMorpho::Analysis;
+
+has _analyzer => (
+    is => 'ro',
+    isa => 'Treex::Tool::EnglishMorpho::Analysis',
+    builder => '_build_analyzer',
+    lazy => 1,
+    init_arg => undef,
+)
 
 sub BUILDARGS {
     return { path => 'data/models/featurama/en/default' };
 }
 
+sub _build_analyzer {
+    my $self = shift;
+    return Treex::Tool::EnglishMorpho::Analysis->new();
+}
+
 override '_analyze' => sub {
-    use Treex::Tool::EnglishMorpho::Analysis;
     my ( $self, $wordform ) = @_;
 
     return map {
@@ -16,7 +30,7 @@ override '_analyze' => sub {
             tag   => $_,
             lemma => $wordform,
         }
-    } ( Treex::Tool::EnglishMorpho::Analysis::Get_possible_tags($wordform) );
+    } ( $self->_analyzer->get_possible_tags($wordform) );
 };
 
 override '_get_feature_names' => sub {
@@ -101,7 +115,7 @@ Featurama feature set and analysis for English
 
 =item _analyze($wordform)
 
-Uses EnglishMorpho::Analysis::Get_possible_tags()
+Uses EnglishMorpho::Analysis::get_possible_tags()
 
 =item _get_feature_names()
 

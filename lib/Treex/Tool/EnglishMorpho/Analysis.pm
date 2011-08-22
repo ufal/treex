@@ -1,26 +1,91 @@
 package Treex::Tool::EnglishMorpho::Analysis;
+use Moose;
 
-use strict;
-use warnings;
 use Treex::Core::Log;
 use Treex::Core::Resource qw(require_file_from_share);
 
+my @params = qw(my_dict big_dict preterites participles);
+foreach my $param (@params) {
+    has $param => (
+        is       => 'ro',
+        isa      => 'HashRef',
+        lazy     => 1,
+        builder  => "_build_$param",
+        init_arg => undef,
+    );
+}
+
+has 'data_dir' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'data/models/morpho_analysis/en',
+);
+
 # --------- initialization ---------
 
-my ( %muj_slovnik, %big_slovnik, %past_slovesa, %partic_slovesa, );
-my $data_directory = 'data/models/morpho_analysis/en';
-log_info("Loading English morphology tables from $data_directory ...\n");
-_load_dictionary( require_file_from_share("$data_directory/muj_slovnik.txt"), \%muj_slovnik );
-_load_dictionary( require_file_from_share("$data_directory/big_slovnik.txt"), \%big_slovnik );
-_load_list( require_file_from_share("$data_directory/preterite.tsv"),  \%past_slovesa );
-_load_list( require_file_from_share("$data_directory/participle.tsv"), \%partic_slovesa );
-log_info("Loaded.\n");
+sub _build_my_dict {
+    my $self = shift;
+    return $self->_load_dictionary( require_file_from_share( $self->data_dir . '/muj_slovnik.txt' ) );
+}
+
+sub _build_big_dict {
+    my $self = shift;
+    return $self->_load_dictionary( require_file_from_share( $self->data_dir . '/big_slovnik.txt' ) );
+}
+
+sub _build_preterites {
+    my $self = shift;
+    return $self->_load_list( require_file_from_share( $self->data_dir . '/preterite.tsv' ) );
+}
+
+sub _build_participles {
+    my $self = shift;
+    return $self->_load_list( require_file_from_share( $self->data_dir . '/participle.tsv' ) );
+}
+
+sub _load_dictionary {
+    my $self = shift;
+    my $file = shift;
+    my $dict;
+    open my $DATA, '<', $file or treex_fatal("Can't open morphology file $file.");
+    LOAD:
+    while (<$DATA>) {
+        chomp;
+        next LOAD if $_ eq q{};
+        my @items = split qr/ /, $_;
+        my $word = lc shift(@items);
+        foreach my $tag (@items) {
+            $dict->{$word}->{$tag} = 1;
+        }
+    }
+    close($DATA);
+    return $dict;
+}
+
+sub _load_list {
+    my $self = shift;
+    my $file = shift;
+    my $list;
+    open my $DATA, '<', $file or treex_fatal("Can't open morphology file $file.");
+    while (<$DATA>) {
+        chomp;
+        $list->{$_} = 1;
+    }
+    close($DATA);
+    return $list;
+}
 
 # --------- interface ---------
 
 sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
+    my $self      = shift;
     my $wordform  = shift;
     my $lowerform = lc($wordform);
+
+    my %muj_slovnik    = %{ $self->my_dict };
+    my %big_slovnik    = %{ $self->big_dict };
+    my %past_slovesa   = %{ $self->preterites };
+    my %partic_slovesa = %{ $self->participles };
 
     my @possible;
 
@@ -101,37 +166,6 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
     return @possible;
 }
 
-# --------- private functions ---------
-
-sub _load_dictionary {
-    my ( $soubor, $slovnik ) = @_;
-
-    open my $DATA, '<', $soubor or treex_fatal("Can't open morphology file $soubor.");
-    LOAD:
-    while (<$DATA>) {
-        chomp;
-        next LOAD if $_ eq q{};
-        my @items = split qr/ /, $_;
-        my $slovo = lc shift(@items);
-        foreach my $tag (@items) {
-            $slovnik->{$slovo}->{$tag} = 1;
-        }
-    }
-    close($DATA);
-    return;
-}
-
-sub _load_list {
-    my ( $soubor, $slovnik ) = @_;
-    open my $DATA, '<', $soubor or treex_fatal("Can't open morphology file $soubor.");
-    while (<$DATA>) {
-        chomp;
-        $slovnik->{$_} = 1;
-    }
-    close($DATA);
-    return;
-}
-
 1;
 
 =head1 NAME
@@ -143,8 +177,9 @@ Treex::Tool::EnglishMorpho::Analysis
 
  use Treex::Tool::EnglishMorpho::Analysis;
 
+ my $analyser = Treex::Tool::EnglishMorpho::Analysis->new();
  foreach my $wordform (qw(John loves the yellow ball of his sister .)) {
-   my @tags = Treex::Tool::EnglishMorpho::Analysis::get_possible_tags($wordform);
+   my @tags = $analyser->get_possible_tags($wordform);
    print "$wordform -> @tags\n";
  }
 
@@ -152,7 +187,7 @@ Treex::Tool::EnglishMorpho::Analysis
 
 =head1 DESCRIPTION
 
-Function get_possible_tags($wordform) returns the list of PennTreebank-style
+Method get_possible_tags($wordform) returns the list of PennTreebank-style
 morphological tags for the given word form.
 
 =head1 AUTHORS
