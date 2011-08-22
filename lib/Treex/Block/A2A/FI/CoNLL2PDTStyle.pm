@@ -131,7 +131,6 @@ sub convert_apposition {
         $apos->set_afun('Apos');
         if ($auxg) {
             $auxg->set_parent($apos);
-            
         }
     }
 } # convert_apposition
@@ -218,26 +217,26 @@ sub conll_to_pdt {
         # x  582 rel
         # x  580 rcmod
         # x  423 ccomp
-        #    393 xcomp
-        #    365 neg
-        #    352 mark
+        # x  393 xcomp
+        # x  365 neg
+        # x  352 mark
         # x  347 gobj
         # x  291 complm
-        #    189 parataxis
-        #    182 auxpass
-        #    171 dep
-        #    132 iccomp
-        #    114 quantmod
-        #    111 compar
+        # x  189 parataxis
+        # x  182 auxpass
+        # x  171 dep
+        # x  132 iccomp
+        # x  114 quantmod
+        # x  111 compar
         # x   93 acomp
-        #     82 comparator
+        # x   82 comparator
         # x   71 infmod
         # x   48 preconj
         # x   37 csubj
-        #     33 prt
+        # x   33 prt
         # x   33 csubj-cop
-        #      7 voc
-        #      1 intj
+        # x    7 voc
+        # x    1 intj
 
         my $deprel = $node->conll_deprel;
         my ($parent) = $node->get_eparents;
@@ -276,7 +275,8 @@ sub conll_to_pdt {
         # dobj - direct object
         # acomp - adjective under verb
         # xcomp - open clausal complement
-        } elsif ($deprel =~ /^(?:[ax]comp|dobj|)$/) {
+        # iccomp - infinitival clausal complement
+        } elsif ($deprel =~ /^(?:[ax]comp|iccomp|dobj|)$/) {
             $afun = 'Obj';
             log_warn("$deprel under noun\t@pfeats\t" . $node->get_address)
                 if is_noun(@pfeats);
@@ -300,10 +300,15 @@ sub conll_to_pdt {
             }
 
         # aux - AuxV
-        } elsif ('aux' eq $deprel) {
+        # auxpass - auxiliary "to be" for passive
+        } elsif ($deprel =~ /^(?:aux|auxpass)$/) {
             $afun = 'AuxV';
             log_warn("aux under non-verb\t@pfeats\t" . $node->get_address)
                 unless is_verb(@pfeats);
+
+        # neg - negation (AuxZ)
+        } elsif ('neg' eq $deprel) {
+            $afun = 'AuxZ';
 
         # name - part of a name, Atr for words, AuxG for symbols
         } elsif ('name' eq $deprel) {
@@ -364,24 +369,51 @@ sub conll_to_pdt {
                 $afun = 'Obj';
             }
 
+        # prt - particles of phrasal verbs
+        } elsif ('prt' eq $deprel) {
+            $afun = 'Obj';
+
+        } elsif (grep $_ eq $deprel, qw/intj voc/) {
+            $afun = 'ExD';
+
         # cc - coordinating conjunction without coordination, AuxY
         } elsif ('cc' eq $deprel) {
             $afun = 'AuxY';
 
-        # complm - complementizer ("that" in complement clause)
-        } elsif ('complm' eq $deprel) {
+        # parataxis - sometimes direct speech (Obj), sometimes rather
+        #             coordination (not created) -> ExD
+        } elsif ('parataxis' eq $deprel) {
+            if (grep $parent->lemma eq $_,
+                    qw/kertoa sanoa arvioida todeta kirjoittaa kysyä
+                       vaatia painottaa reagida toistua selittää
+                       pohtia luonnehtia lisätä kuvata kommentoida
+                       jatkaa/) {
+                $afun = 'Obj';
+            } else {
+                $afun = 'ExD';
+            }
+
+        # compar - compared element
+        } elsif ('compar' eq $deprel) {
+            $afun = 'Adv';
+
+        # complm     - complementizer ("that" in complement clause)
+        # mark       - markers of non-obligatory subordinate clauses
+        # comparator - comparing conjunction
+        } elsif ($deprel =~ /^(?:complm|mark|comparator)$/) {
             $afun = 'AuxC';
 
             # will be used later, but can't be found after moving
             # $node
-            my $punct = $node->get_left_neighbor;
+            my @puncts = ($node->get_left_neighbor,
+                          $node->get_siblings({ last_only => 1 }));
 
             my $head = $parent->get_parent;
             if ('Pred' eq $parent->afun) {
                 $afun = 'AuxY';
-                log_warn("complm under ROOT\t" . $node->get_address);
+                log_warn("$deprel under ROOT\t" . $node->get_address);
                 # do not rehang the comma in this case
-                undef $punct;
+                undef @puncts;
 
             } elsif ($node->is_member) {
                 $head = $parent->get_parent->get_parent;
@@ -400,8 +432,10 @@ sub conll_to_pdt {
                 $parent->set_parent($node);
             }
 
-            if ($punct and 'punct' eq $punct->conll_deprel) {
-                $punct->set_parent($node);
+            for my $punct (@puncts) {
+                if ($punct and 'punct' eq $punct->conll_deprel) {
+                    $punct->set_parent($node);
+                }
             }
 
         # advcl - adverbial clause
@@ -420,6 +454,20 @@ sub conll_to_pdt {
             if ($adpositioned->is_member) {
                 $adpositioned->set_is_member(0);
                 $node->set_is_member(1);
+            }
+
+        # dep
+        } elsif ('dep' eq $deprel) {
+            if ('AuxP' eq $node->parent->afun) {
+                $afun = 'AuxP'
+            } elsif ('AuxC' eq $node->parent->afun) {
+                $afun = 'AuxY';
+            } else {
+                if (is_noun(@pfeats)) {
+                    $afun = 'Atr';
+                } else {
+                    $afun = 'Adv';
+                }
             }
 
         # Punctuation
