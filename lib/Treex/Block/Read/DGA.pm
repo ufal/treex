@@ -48,6 +48,10 @@ sub next_document {
             $atree->create_child({
                 'ord' => $ord++,
                 'form' => $xml_tok->{orth},
+
+                # Treex::Block::A2A::CoNLL2PDTStyle reads POS sometimes from "conll_pos" sometimes from "tag"
+                # (depending on the name of the Interset driver used), so we rather save it to both attributes.
+                'tag' => $xml_tok->{ctag},
                 'conll/pos' => $xml_tok->{ctag},
                 'conll/deprel' => $xml_tok->{syn}{reltype},
             });

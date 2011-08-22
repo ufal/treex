@@ -92,9 +92,13 @@ sub convert_tag
         en::conll en::conll2009
         es::conll2009
         it::conll nl::conll pt::conll sv::conll zh::conll
-        ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll);
+        ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
+        ro::rdt);
     my $driver = $node->get_zone()->language() . '::' . $tagset;
-    return unless ( grep { $_ eq $driver } (@known_drivers) );
+    if ( !grep { $_ eq $driver } (@known_drivers) ){
+        log_warn "Interset driver $driver not found";
+        return;
+	}
 
 
     # Current tag is probably just a copy of conll_pos.
