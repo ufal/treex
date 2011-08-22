@@ -214,10 +214,10 @@ sub conll_to_pdt {
         # x  646 det
         # x  609 nn
         # x  593 appos
-        #    591 advcl
-        #    582 rel
-        #    580 rcmod
-        #    423 ccomp
+        # x  591 advcl
+        # x  582 rel
+        # x  580 rcmod
+        # x  423 ccomp
         #    393 xcomp
         #    365 neg
         #    352 mark
@@ -242,14 +242,14 @@ sub conll_to_pdt {
         my $deprel = $node->conll_deprel;
         my ($parent) = $node->get_eparents;
         my @feats  = split /\|/, $node->conll_pos;
-        my @pfeats = split /\|/, $parent->conll_pos;
+        my @pfeats = split /\|/, $parent->tag;
         my $afun;
 
         # Dependency of the main verb on the artificial root node.
         if ('ROOT' eq $deprel) {
             if (is_verb(@feats)) {
                 $afun = 'Pred';
-            } elsif (grep $_->conll_deprel =~ /^(?:nsubj|dobj)$/,
+            } elsif (grep $_->conll_deprel =~ /^(?:nsubj|dobj|xcomp)$/,
                      $node->get_echildren) {
                 $afun = 'Pred';
                 $node->set_tag('ERR|V');
@@ -266,15 +266,17 @@ sub conll_to_pdt {
         # appos  - apposition. Should have been Apos, but it is not
         #          possible to combine it with Coord - there is no way
         #          how to find the Apos node, therefore it becomes Atr.
+        # rcmod  - relative clause
         # nn     - name part
-        } elsif ($deprel =~ /^(?:appos|nn|det|gobj|amod|infmod|poss)$/) {
+        } elsif ($deprel =~ /^(?:appos|nn|det|gobj|amod|infmod|poss|rcmod)$/) {
             $afun = 'Atr';
             log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
                 unless is_noun(@pfeats);
 
         # dobj - direct object
         # acomp - adjective under verb
-        } elsif ($deprel =~ /^(?:acomp|dobj)$/) {
+        # xcomp - open clausal complement
+        } elsif ($deprel =~ /^(?:[ax]comp|dobj|)$/) {
             $afun = 'Obj';
             log_warn("$deprel under noun\t@pfeats\t" . $node->get_address)
                 if is_noun(@pfeats);
@@ -343,6 +345,29 @@ sub conll_to_pdt {
                 log_warn("preconj without coordination\t" . $node->get_address);
             }
 
+        # rel - relativizer: Can be Sb, Obj or Adv
+        } elsif ('rel' eq $deprel) {
+            if (grep 'NOM' eq $_, @feats) {
+                $afun = 'Sb';
+            } elsif (grep $_ =~ /^(?:GEN|PTV)$/, @feats) {
+                $afun = 'Obj';
+            } else {
+                $afun = 'Adv';
+            }
+
+        # ccomp - finite clausal complement, mostly Obj
+        } elsif ('ccomp' eq $deprel) {
+            if ('olla' eq $parent->lemma
+                and not grep 'Pnom' eq $_->afun, $parent->get_echildren) {
+                $afun = 'Pnom';
+            } else {
+                $afun = 'Obj';
+            }
+
+        # cc - coordinating conjunction without coordination, AuxY
+        } elsif ('cc' eq $deprel) {
+            $afun = 'AuxY';
+
         # complm - complementizer ("that" in complement clause)
         } elsif ('complm' eq $deprel) {
             $afun = 'AuxC';
@@ -379,7 +404,13 @@ sub conll_to_pdt {
                 $punct->set_parent($node);
             }
 
-        #adpos - pre- or post-postitions: AuxP
+        # advcl - adverbial clause
+        } elsif ('advcl' eq $deprel) {
+            $afun = 'Adv';
+            log_warn("advcl under noun\t" . $node->get_address)
+                if is_noun(@pfeats);
+
+        # adpos - pre- or post-postitions: AuxP
         } elsif ('adpos' eq $deprel) {
             $afun = 'AuxP';
             my $adpositioned = $node->get_parent;
