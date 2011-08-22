@@ -2,6 +2,8 @@ package Treex::Tool::Coreference::PronCorefFeatures;
 
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
+use MooseX::SemiAffordanceAccessor;
+
 
 my $b_true = '1';
 my $b_false = '-1';
@@ -43,12 +45,12 @@ has '_ewn_classes' => (
 
 has '_collocations' => (
     is      => 'rw',
-    isa     => 'HashRef[Str]'
+    isa     => 'HashRef[ArrayRef[Str]]'
 );
 
 has '_np_freq' => (
     is      => 'rw',
-    isa     => 'HashRef[Str]'
+    isa     => 'HashRef[Int]'
 );
 
 # Attributes _cnk_freqs and _ewn_classes depend on attributes cnk_freqs_path
@@ -106,7 +108,8 @@ sub _build_ewn_classes {
     while (my $line = <EWN>) {
         chomp $line;
         
-        my ($noun, @classes) = split /\s/, $line;
+        my ($noun, $classes_string) = split /\t/, $line;
+        my (@classes) = split / /, $classes_string;
         for my $class (@classes) {
             $ewn_noun->{$noun}{$class} = 1;
             $ewn_all_classes{$class} = 1;
@@ -153,11 +156,11 @@ sub _get_coord_gennum {
 		if ($gens{'anim'}) {
 			$gen = 'anim';
 		}
-		elsif (($gens{'fem'} == scalar @{$parray}) || 
+		elsif (($gens{'fem'} && ($gens{'fem'} == scalar @{$parray})) || 
             ($gens{'fem'} && $gens{'neut'})) {
 			$gen = 'fem';
 		}
-		elsif ($gens{'neut'} == scalar @{$parray}) {
+		elsif ($gens{'neut'} && ($gens{'neut'} == scalar @{$parray})) {
 			$gen = 'neut';
 		}
 		else  {
@@ -197,7 +200,8 @@ sub _get_refl_gennum {
 sub _get_cand_gennum {
 	my ($node) = @_;
 	if ($node->attr('coref_gram.rf')) {
-		if ($node->gram_indeftype eq 'relat') {
+		if (defined $node->gram_indeftype && 
+                ($node->gram_indeftype eq 'relat')) {
 #			my $alex = $node->attr('a/lex.rf');
 			my $anode = $node->get_lex_anode;
 			my $alemma = $anode->lemma;
@@ -205,7 +209,7 @@ sub _get_cand_gennum {
 				return _get_relat_gennum($node);
 			}
 		}
-		elsif ((node->t_lemma eq '#PersPron') 
+		elsif (($node->t_lemma eq '#PersPron') 
             && ($node->gram_person eq 'inher')) {
 			return _get_refl_gennum($node);
 		}
@@ -237,24 +241,24 @@ sub _get_afun {
 sub _is_subject {
 	my ($node) = @_;
 	my $par = ($node->get_eparents)[0];
-    return $b_false if (!defined $par);
+    return $b_false if (!defined $par || $par->is_root);
 	
-    if (($par->gram_tense =~ /^(sim|ant|post)/) || 
+    if ($par->gram_tense && ($par->gram_tense =~ /^(sim|ant|post)/) || 
         ($par->functor eq 'DENOM')) {
 		
         my @cands = $par->get_echildren;
  		my $sb_id;
 		foreach my $child (@cands) {
-			if ($child->gram_sempos =~ /^n/) {
-                my $achild = get_lex_anode($child);
+			if (defined $child->gram_sempos && ($child->gram_sempos =~ /^n/)) {
+                my $achild = $child->get_lex_anode;
                 if (defined $achild && ($achild->afun eq 'Sb')) {
-					$sb_id = $child->{id};
+					$sb_id = $child->id;
                     last;
 				}
 			}
 		}
-		if (($node->id eq $sb_id) || 
-            (!defined $sb_id && ($node->functor eq 'ACT'))) {
+        if ((!defined $sb_id && ($node->functor eq 'ACT'))
+		    || (defined $sb_id && ($node->id eq $sb_id))) { 
 			return $b_true;
 		}	
 	}
@@ -270,8 +274,8 @@ sub _is_app_in_coord {
 		
         my $par = $anaph->parent;
 		while ($par && ($par != $cand) && 
-            $par->gram_tense !~ /^(sim|ant|post)/ && 
-            $par->functor !~ /^(PRED|DENOM)$/) {
+            (!$par->gram_tense || $par->gram_tense !~ /^(sim|ant|post)/) && 
+            (!$par->functor || $par->functor !~ /^(PRED|DENOM)$/)) {
 			
             if ($par->functor =~ /^(CONJ|DISJ)$/) {
 				return (grep {$_ eq $cand} $par->descendants) ? $b_true : $b_false;
@@ -310,7 +314,7 @@ sub _in_collocation {
 	my ($self, $inode, $jnode) = @_;
     my $collocation = $self->_collocations;
 	foreach my $jpar ($jnode->get_eparents) {
-		if (($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
+		if ($jpar->gram_sempos && ($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
 			my $jcoll = $jnode->functor . "-" . $jpar->t_lemma;
 			my $coll_list = $collocation->{$jcoll};
 			if (() = grep {$_ eq $inode->t_lemma} @{$coll_list}) {
@@ -325,7 +329,7 @@ sub _in_collocation {
 sub _in_cnk_collocation {
     my ($self, $inode, $jnode) = @_;
     foreach my $jpar ($jnode->get_eparents) {
-        if (($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
+        if ($jpar->gram_sempos && ($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
             my ($v_freq, $nv_freq) = map {$self->_cnk_freqs->{$_}} qw/v nv/;
 
             my $nv_sum = $nv_freq->{$inode->t_lemma}{$jpar->t_lemma};
@@ -336,6 +340,22 @@ sub _in_cnk_collocation {
         }
     }
     return 0;
+}
+
+sub join_feats {
+    my ($f1, $f2) = @_;
+    if (!defined $f1 || !defined $f2) {
+        return undef;
+    }
+    return $f1 . '_' . $f2;
+}
+
+sub agree_feats {
+    my ($f1, $f2) = @_;
+    if (!defined $f1 || !defined $f2) {
+        return undef;
+    }
+    return ($f1 eq $f2) ? $b_true : $b_false;
 }
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
@@ -374,70 +394,86 @@ sub extract_features {
     $coref_features{c_anaph_gen} = $anaph->gram_gender;
     $coref_features{c_anaph_num} = $anaph->gram_number;
 
-    $coref_features{b_gen_agree} = ( $coref_features{c_cand_gen} eq $coref_features{c_anaph_gen} )
-        ? $b_true : $b_false;
-    $coref_features{c_join_gen} = $coref_features{c_cand_gen} . "_" . $coref_features{c_anaph_gen};
+    $coref_features{b_gen_agree} 
+        = agree_feats($coref_features{c_cand_gen}, $coref_features{c_anaph_gen});
+    $coref_features{c_join_gen} 
+        = join_feats($coref_features{c_cand_gen}, $coref_features{c_anaph_gen});
 
-    $coref_features{b_num_agree} = ( $coref_features{c_cand_num} eq $coref_features{c_anaph_num} )
-        ? $b_true : $b_false;
-    $coref_features{c_join_num} = $coref_features{c_cand_num} . "_" . $coref_features{c_anaph_num};
+    $coref_features{b_num_agree} 
+        = agree_feats($coref_features{c_cand_num}, $coref_features{c_anaph_num});
+    $coref_features{c_join_num} 
+        = join_feats($coref_features{c_cand_num}, $coref_features{c_anaph_num});
 
     #   24: 8 x tag($inode, $jnode), joined
     $coref_features{c_cand_apos}  = _get_atag( $cand,  0 );
     $coref_features{c_anaph_apos} = _get_atag( $anaph, 0 );
-    $coref_features{c_join_apos}  = $coref_features{c_cand_apos} . "_" . $coref_features{c_anaph_apos};
+    $coref_features{c_join_apos}  
+        = join_feats($coref_features{c_cand_apos}, $coref_features{c_anaph_apos});
 
     $coref_features{c_cand_asubpos}  = _get_atag( $cand,  1 );
     $coref_features{c_anaph_asubpos} = _get_atag( $anaph, 1 );
-    $coref_features{c_join_asubpos}  = $coref_features{c_cand_asubpos} . "_" . $coref_features{c_anaph_asubpos};
+    $coref_features{c_join_asubpos}  
+        = join_feats($coref_features{c_cand_asubpos}, $coref_features{c_anaph_asubpos});
 
     $coref_features{c_cand_agen}  = _get_atag( $cand,  2 );
     $coref_features{c_anaph_agen} = _get_atag( $anaph, 2 );
-    $coref_features{c_join_agen}  = $coref_features{c_cand_agen} . "_" . $coref_features{c_anaph_agen};
+    $coref_features{c_join_agen}  
+        = join_feats($coref_features{c_cand_agen}, $coref_features{c_anaph_agen});
 
     $coref_features{c_cand_anum}  = _get_atag( $cand,  3 );
     $coref_features{c_anaph_anum} = _get_atag( $anaph, 3 );
-    $coref_features{c_join_anum}  = $coref_features{c_cand_anum} . "_" . $coref_features{c_anaph_anum};
+    $coref_features{c_join_anum}  
+        = join_feats($coref_features{c_cand_anum}, $coref_features{c_anaph_anum});
 
     $coref_features{c_cand_acase}  = _get_atag( $cand,  4 );
     $coref_features{c_anaph_acase} = _get_atag( $anaph, 4 );
-    $coref_features{c_join_acase}  = $coref_features{c_cand_acase} . "_" . $coref_features{c_anaph_acase};
+    $coref_features{c_join_acase}  
+        = join_feats($coref_features{c_cand_acase}, $coref_features{c_anaph_acase});
 
     $coref_features{c_cand_apossgen}  = _get_atag( $cand,  5 );
     $coref_features{c_anaph_apossgen} = _get_atag( $anaph, 5 );
-    $coref_features{c_join_apossgen}  = $coref_features{c_cand_apossgen} . "_" . $coref_features{c_anaph_apossgen};
+    $coref_features{c_join_apossgen}  
+        = join_feats($coref_features{c_cand_apossgen}, $coref_features{c_anaph_apossgen});
 
     $coref_features{c_cand_apossnum}  = _get_atag( $cand,  6 );
     $coref_features{c_anaph_apossnum} = _get_atag( $anaph, 6 );
-    $coref_features{c_join_apossnum}  = $coref_features{c_cand_apossnum} . "_" . $coref_features{c_anaph_apossnum};
+    $coref_features{c_join_apossnum}  
+        = join_feats($coref_features{c_cand_apossnum}, $coref_features{c_anaph_apossnum});
 
     $coref_features{c_cand_apers}  = _get_atag( $cand,  7 );
     $coref_features{c_anaph_apers} = _get_atag( $anaph, 7 );
-    $coref_features{c_join_apers}  = $coref_features{c_cand_apers} . "_" . $coref_features{c_anaph_apers};
+    $coref_features{c_join_apers}  
+        = join_feats($coref_features{c_cand_apers}, $coref_features{c_anaph_apers});
 
 ###########################
     #   Functional:
     #   3:  functor($inode, $jnode);
     $coref_features{c_cand_fun}  = $cand->functor;
     $coref_features{c_anaph_fun} = $anaph->functor;
-    $coref_features{b_fun_agree} = ( $coref_features{c_cand_fun} eq $coref_features{c_anaph_fun} ) ? $b_true : $b_false;
-    $coref_features{c_join_fun}  = $coref_features{c_cand_fun} . "_" . $coref_features{c_anaph_fun};
+    $coref_features{b_fun_agree} 
+        = agree_feats($coref_features{c_cand_fun}, $coref_features{c_anaph_fun});
+    $coref_features{c_join_fun}  
+        = join_feats($coref_features{c_cand_fun}, $coref_features{c_anaph_fun});
 
     #   3: afun($inode, $jnode);
     $coref_features{c_cand_afun}  = _get_afun($cand);
     $coref_features{c_anaph_afun} = _get_afun($anaph);
-    $coref_features{b_afun_agree} = ( $coref_features{c_cand_afun} eq $coref_features{c_anaph_afun} ) ? $b_true : $b_false;
-    $coref_features{c_join_afun}  = $coref_features{c_cand_afun} . "_" . $coref_features{c_anaph_afun};
+    $coref_features{b_afun_agree} 
+        = agree_feats($coref_features{c_cand_afun}, $coref_features{c_anaph_afun});
+    $coref_features{c_join_afun}  
+        = join_feats($coref_features{c_cand_afun}, $coref_features{c_anaph_afun});
 
     #   3: aktant($inode, $jnode);
     $coref_features{b_cand_akt}  = $actants{ $cand->functor  } ? $b_true : $b_false;
     $coref_features{b_anaph_akt} = $actants{ $anaph->functor } ? $b_true : $b_false;
-    $coref_features{b_akt_agree} = ( $coref_features{b_cand_akt} eq $coref_features{b_anaph_akt} ) ? $b_true : $b_false;
+    $coref_features{b_akt_agree} 
+        = agree_feats($coref_features{b_cand_akt}, $coref_features{b_anaph_akt});
 
     #   3:  subject($inode, $jnode);
     $coref_features{b_cand_subj}  = _is_subject($cand);
     $coref_features{b_anaph_subj} = _is_subject($anaph);
-    $coref_features{b_subj_agree} = ( $coref_features{b_cand_subj} eq $coref_features{b_anaph_subj} ) ? $b_true : $b_false;
+    $coref_features{b_subj_agree} 
+        = agree_feats($coref_features{b_cand_subj}, $coref_features{b_anaph_subj});
 
 ###########################
     #   Context:
@@ -450,19 +486,28 @@ sub extract_features {
     my $anaph_epar_lemma;
     ( $coref_features{c_cand_epar_fun},  $coref_features{c_cand_epar_sempos},  $cand_epar_lemma )  = _get_eparent_features($cand);
     ( $coref_features{c_anaph_epar_fun}, $coref_features{c_anaph_epar_sempos}, $anaph_epar_lemma ) = _get_eparent_features($anaph);
-    $coref_features{b_epar_fun_agree}         = ( $coref_features{c_cand_epar_fun} eq $coref_features{c_anaph_epar_fun} ) ? $b_true : $b_false;
-    $coref_features{c_join_epar_fun}          = $coref_features{c_cand_epar_fun} . "_" . $coref_features{c_anaph_epar_fun};
-    $coref_features{b_epar_sempos_agree}      = ( $coref_features{c_cand_epar_sempos} eq $coref_features{c_anaph_epar_sempos} ) ? $b_true : $b_false;
-    $coref_features{c_join_epar_sempos}       = $coref_features{c_cand_epar_sempos} . "_" . $coref_features{c_anaph_epar_sempos};
-    $coref_features{b_epar_lemma_agree}       = ( $cand_epar_lemma eq $anaph_epar_lemma ) ? $b_true : $b_false;
-    $coref_features{c_join_epar_lemma}        = $cand_epar_lemma . "_" . $anaph_epar_lemma;
-    $coref_features{c_join_clemma_aeparlemma} = $cand->{t_lemma} . "_" . $anaph_epar_lemma;
+    $coref_features{b_epar_fun_agree}
+        = agree_feats($coref_features{c_cand_epar_fun}, $coref_features{c_anaph_epar_fun});
+    $coref_features{c_join_epar_fun}          
+        = join_feats($coref_features{c_cand_epar_fun}, $coref_features{c_anaph_epar_fun});
+    $coref_features{b_epar_sempos_agree}      
+        = agree_feats($coref_features{c_cand_epar_sempos}, $coref_features{c_anaph_epar_sempos});
+    $coref_features{c_join_epar_sempos}       
+        = join_feats($coref_features{c_cand_epar_sempos}, $coref_features{c_anaph_epar_sempos});
+    $coref_features{b_epar_lemma_agree}       
+        = agree_feats($cand_epar_lemma, $anaph_epar_lemma);
+    $coref_features{c_join_epar_lemma}        
+        = join_feats($cand_epar_lemma, $anaph_epar_lemma);
+    $coref_features{c_join_clemma_aeparlemma} 
+        = join_feats($cand->t_lemma, $anaph_epar_lemma);
 
     #   3:  tfa($inode, $jnode);
     $coref_features{c_cand_tfa}  = $cand->tfa;
     $coref_features{c_anaph_tfa} = $anaph->tfa;
-    $coref_features{b_tfa_agree} = ( $coref_features{c_cand_tfa} eq $coref_features{c_anaph_tfa} ) ? $b_true : $b_false;
-    $coref_features{c_join_tfa}  = $coref_features{c_cand_tfa} . "_" . $coref_features{c_anaph_tfa};
+    $coref_features{b_tfa_agree} 
+        = agree_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
+    $coref_features{c_join_tfa}  
+        = join_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
 
     #   1: are_siblings($inode, $jnode)
     $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
@@ -502,13 +547,13 @@ sub count_collocations {
     
     foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {
-            
-            if (( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
+
+            if ($node->gram_sempos && ( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
                 
                 foreach my $child ( $node->get_echildren ) {
                     
-                    if ( $actants2{ $child->functor } && 
-                        ( $child->gram_sempos =~ /^n\.denot/ )) {
+                    if ( $child->functor && $actants2{ $child->functor } && 
+                        $child->gram_sempos && ( $child->gram_sempos =~ /^n\.denot/ )) {
                         
                         my $key = $child->functor . "-" . $node->t_lemma;
                         push @{ $collocation->{$key} }, $child->t_lemma;
@@ -527,8 +572,8 @@ sub count_np_freq {
     foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {
             
-            if (($node->gram_sempos =~ /^n\.denot/ ) 
-                && ( $node->gram_person !~ /1|2/ )) {
+            if ($node->gram_sempos && ($node->gram_sempos =~ /^n\.denot/ ) 
+                && (!$node->gram_person || ( $node->gram_person !~ /1|2/ ))) {
                     
                     $np_freq->{ $node->t_lemma }++;
             }
@@ -546,6 +591,7 @@ sub mark_doc_clause_nums {
         
         foreach my $node ($tree->descendants ) {
             # TODO clause_number returns 0 for coap
+
             $node->wild->{aca_clausenum} = 
                 $node->clause_number + $curr_clause_num;
             if ($node->clause_number > $clause_count) {

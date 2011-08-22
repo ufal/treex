@@ -73,12 +73,21 @@ sub rank {
             my $feat_weight;
             if ($fname =~ /^(r|b)_/) {
                 my $fvalue = $instance->{$fname};
-                $feat_weight = $fvalue * $self->_model->{$fname}{'weight'};
+                if (defined $fvalue) {
+                    $feat_weight = $fvalue * 
+                        ($self->_model->{$fname}{'weight'} || 0);
+                } else {
+                    $feat_weight = 0;
+                }
             }
             else {
                 #my $fvalue = special_chars_off2($pfeatures->{$fname});
                 my $fvalue = $instance->{$fname};
-                $feat_weight = $self->_model->{$fname}{$fvalue};
+                if (defined $fvalue) {
+                    $feat_weight = ( $self->_model->{$fname}{$fvalue} || 0 );
+                } else {
+                    $feat_weight = 0;
+                }
             }
             $cand_weight += $feat_weight;
         }

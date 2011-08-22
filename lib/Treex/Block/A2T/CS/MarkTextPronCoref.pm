@@ -93,7 +93,8 @@ sub _get_ante_cands {
     }
 
     # semantic noun filtering
-    my @cands = grep { $_->gram_sempos =~ /^n/ && $_->gram_person !~ /1|2/ }
+    my @cands = grep { $_->gram_sempos && ($_->gram_sempos =~ /^n/) 
+                    && (!$_->gram_person || ($_->gram_person !~ /1|2/)) }
         @sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers
@@ -150,7 +151,7 @@ sub process_tnode {
         my $ranker = $self->_ranker;
         my $antec  = $ranker->pick_winner( $instances );
 
-        $t_node->set_deref_attr( 'coref_text.ref', [$antec] );
+        $t_node->set_attr( 'coref_text.ref', [$antec] );
     }
 }
 
