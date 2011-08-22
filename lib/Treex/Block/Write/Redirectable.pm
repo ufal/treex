@@ -38,14 +38,9 @@ sub _build_file_handle {
     }
 }
 
-sub DEMOLISH {
-
-    my ($self) = @_;
-    if ( $self->to ) {
-        close( $self->_file_handle );
-    }
-    return;
-}
+# Storing a file handle in a lexical variable will cause the file handle
+# to be automatically closed when the variable goes out of scope.
+# So we don't need to close $self->_file_handle in DEMOLISH.
 
 1;
 __END__

@@ -17,9 +17,9 @@ sub process_atree {
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
         #my $ctag  = $self->get_coarse_grained_tag($tag);
         my $p_ord = $anode->get_parent->ord;
-        print join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, '_', $p_ord, $deprel ) . "\n";
+        print { $self->_file_handle } join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, '_', $p_ord, $deprel ) . "\n";
     }
-    print "\n" if $atree->get_descendants;
+    print { $self->_file_handle } "\n" if $atree->get_descendants;
     return;
 }
 
