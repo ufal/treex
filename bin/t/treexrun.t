@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Treex::Core::Run;
-use Test::More;
+use Test::More tests => 16;
 use File::Slurp;
 use File::Basename;
 use Cwd qw(realpath);
@@ -84,4 +84,4 @@ foreach my $task_rf (@tasks) {
     is_bash_combined_output( $command, $expected_output, $command );
 }
 
-done_testing;
+#done_testing;
