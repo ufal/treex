@@ -2,6 +2,7 @@ package Treex::Block::A2A::CS::ReadClauses;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Block::A2A::CS::DetectClauses;
 
 extends 'Treex::Core::Block';
 
@@ -37,6 +38,11 @@ sub process_bundle {
     my $segments_annot_rf = _read_annotation( $self->from . '/' . $annot_filename . '.seg' );
     my $is_annot_ok = $#{$segments_rf} == $#{$segments_annot_rf} ? 1 : 0;
     if ($is_annot_ok) {
+
+        Treex::Block::A2A::CS::DetectClauses->plant_seeds( 2, $source_root, $source_root, 1, 1 );
+        Treex::Block::A2A::CS::DetectClauses->add_compound_verbs( $source_root, $source_root, 1 );
+        foreach ( $source_root->get_descendants() ) { $_->set_clause_number(undef); }
+    
         my $clauses_rf    = _annotated_clauses( $segments_rf, $segments_annot_rf );
         my $clause_number = 1;
         my @color         = qw { red green yellow blue orange cyan magenta };
@@ -44,56 +50,58 @@ sub process_bundle {
             map {
                 if ( defined $_ ) {
                     $_->{clause_number} = $clause_number;
-
-                    #$_->{clause_level} = $clause->{level};
                 }
                 defined $_ ? $_->form : '##'
             } @{ $clause->{nodes} };
             $clause_number++;
         }
-        _resolve_boundaries( $source_root, $source_root );
-        _normalize_clause_ords($source_root);
+
+        #   Treex::Block::A2A::CS::DetectClauses->resolve_boundaries($source_root, $source_root);
+        #   Treex::Block::A2A::CS::DetectClauses->normalize_clause_ords($source_root);
+        #   _merge_apositions($source_root);
+
+        Treex::Block::A2A::CS::DetectClauses->complete_clauses( $source_root, $source_root );
+        Treex::Block::A2A::CS::DetectClauses->resolve_boundaries( $source_root, $source_root );
+        Treex::Block::A2A::CS::DetectClauses->normalize_clause_ords($source_root);
     }
     else {
         log_info "Missing annotation for $annot_filename. Skipping";
-
-        #        print "Segments /". $#{$segments_rf} . "\t" . $#{$segments_annot_rf} . "/\n";
     }
 }
 
-sub _resolve_boundaries {
-    my ( $node, $root ) = @_;
-    foreach my $child ( $node->get_children ) {
-        _resolve_boundaries( $child, $root );
-    }
-    if ( not defined $node->clause_number ) {
-        my @children = $node->get_children( { ordered => 1 } );
-        my $first_child = ( grep { $_->clause_number } @children )[0];
-        if ($first_child) {
-            $node->set_clause_number( $first_child->clause_number );
-            foreach my $orphan ( grep { not $_->clause_number } @children ) {
-                $orphan->set_clause_number( $node->clause_number );
+sub _merge_apositions {
+    my $root          = shift;
+    my @ordered_nodes = $root->get_descendants( { ordered => 1 } );
+    my %clauses       = map { $_->clause_number => 1 } @ordered_nodes;
+    foreach my $clause ( sort { $a <=> $b } keys %clauses ) {
+        next if $clause == 0;
+        my @clause_nodes = grep { $clause == $_->clause_number} @ordered_nodes;
+        my $startord     = $clause_nodes[0]->ord;
+        my $endord       = $clause_nodes[-1]->ord;
+        @clause_nodes    = grep { $_->ord >= $startord and $_->ord <= $endord } @ordered_nodes;
+        my $last_ord     = $clause_nodes[0]->ord;
+        my $continuous   = 1;
+        for( my $i = 1; $i <= $#clause_nodes; $i++ ) {
+            if ( $clause_nodes[$i]->ord > $last_ord + 1 ){
+                $continuous = 0;
+                last;
+            }
+            else {
+                $last_ord++;  
             }
         }
-        elsif ( $node->get_parent and $node->get_parent->clause_number ) {
-            $node->set_clause_number( $node->get_parent->clause_number );
+        #merge continuous clauses without finite verb or imperative
+        if ( $continuous and not grep { $_->tag =~ /^V[Bpi]/ } @clause_nodes ) {
+            my $prev_node = $clause_nodes[0]->get_prev_node;
+            while( $prev_node and not $prev_node->clause_number ){
+                $prev_node = $prev_node->get_prev_node;
+            }
+            if ($prev_node) {
+                foreach my $node (@clause_nodes){
+                    $node->set_clause_number( $prev_node->clause_number );
+                }
+            }
         }
-    }
-}
-
-sub _normalize_clause_ords {
-    my $root      = shift;
-    my $i         = 1;
-    my %reord     = ();
-    my @all_nodes = grep { $_->clause_number } $root->get_descendants( { ordered => 1 } );
-    map {
-        if ( not exists $reord{ $_->clause_number } ) {
-            $reord{ $_->clause_number } = $i;
-            $i++;
-        }
-    } @all_nodes;
-    foreach my $node (@all_nodes) {
-        $node->set_clause_number( $reord{ $node->clause_number } );
     }
 }
 
@@ -103,7 +111,7 @@ sub _segment {
     my $i        = 0;
     foreach my $node ( $root->get_descendants( { ordered => 1 } ) ) {
         next if not $node->parent;
-        if ( _is_boundary($node) ) {
+        if ( _is_ref_boundary($node) ) {
             $i++ if $#{ $segments[$i] } >= 0;
             push @{ $segments[$i] }, $node;
             $i++;
@@ -115,7 +123,7 @@ sub _segment {
     return \@segments;
 }
 
-sub _is_boundary {
+sub _is_ref_boundary {
     my $node = shift;
     return (
         $node->form =~ m/^(?:,|:|;|\.|\?|!|-|–|-|—|\(|\[|\{|\)|\]|\}|'|\\|„|“|“|”|"|«|»|‚|‛|‘|’|‹|›)$/ or
@@ -147,15 +155,13 @@ sub _annotated_clauses {
     my $is_new_clause  = 1;
     my %last_for_level;
     for ( my $i = 0; $i <= $#{$segments_rf}; $i++ ) {
-        my $is_boundary = ( $#{ $segments_rf->[$i] } == 0 and _is_boundary( $segments_rf->[$i][0] ) ) ? 1 : 0;
+        my $is_boundary = ( $#{ $segments_rf->[$i] } == 0 and _is_ref_boundary( $segments_rf->[$i][0] ) ) ? 1 : 0;
         my $segment_level = $segments_annot_rf->[$i]{level};
         if ( not $is_boundary ) {
             if ($is_new_clause) {
                 if ( ( defined $pending_clause ) and ( $pending_clause->{level} == $segment_level ) ) {
                     $clause         = $pending_clause;
                     $pending_clause = undef;
-
-                    #                   push @{$clause->{nodes}}, undef; # undef as placeholder
                 }
                 else {
                     push @clauses, { level => $segment_level, nodes => [] };
@@ -170,8 +176,7 @@ sub _annotated_clauses {
                 if ( $segments_annot_rf->[$i]->{inside} ) {
                     $pending_clause = $clause;
                 }
-                else
-                {
+                else {
                     $pending_clause = undef;
                 }
             }
@@ -179,10 +184,6 @@ sub _annotated_clauses {
         $is_new_clause = ( ( not defined $clause ) or ( not $segments_annot_rf->[$i]->{inside} ) ) ? 1 : 0;
         if ($is_boundary) {
             my $c = $last_for_level{$segment_level};
-
-            #            if ($clause) {
-            #               push @{ $c->{nodes} }, @{ $segments_rf->[$i] };
-            #            }
         }
         if ($is_new_clause) {
             $clause = undef;

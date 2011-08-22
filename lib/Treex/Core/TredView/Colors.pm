@@ -43,16 +43,16 @@ sub _build_colors {
         'sempos'      => '#8b008b',
         'phrase'      => '#00008b',
 
-        'clause0' => 'magenta',
-        'clause1' => 'orange',
-        'clause2' => 'blue',
-        'clause3' => 'green',
-        'clause4' => 'red',
-        'clause5' => 'DarkOrange',
-        'clause6' => 'DarkBlue',
-        'clause7' => 'DarkGreen',
-        'clause8' => 'DarkRed',
-        'clause9' => 'DarkCyan',
+        'clause0' => '#ff00ff',         #magenta
+        'clause1' => '#ffa500',         #orange
+        'clause2' => '#0000ff',         #blue
+        'clause3' => '#3cb371',         #MediumSeaGreen
+        'clause4' => '#ff0000',         #red
+        'clause5' => '#9932cc',         #DarkOrchid
+        'clause6' => '#00008b',         #DarkBlue
+        'clause7' => '#006400',         #DarkGreen
+        'clause8' => '#8b0000',         #DarkRed
+        'clause9' => '#008b8b',         #DarkCyan
     };
 }
 
