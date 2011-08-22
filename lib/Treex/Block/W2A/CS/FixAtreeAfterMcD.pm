@@ -15,7 +15,7 @@ sub process_atree {
                 # _Co under AuxX => change AuxX to Coord
                 $a_node->set_afun('Coord');
             }
-        }
+        }        
     }
 
     my @root_children = grep { $_->afun ne "AuxK" } $a_root->get_children;
@@ -27,20 +27,40 @@ sub process_atree {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::W2A::CS::FixAtreeAfterMcD
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::W2A::CS::FixAtreeAfterMcD
+
+=head1 DESCRIPTION
 
 Some hardwired fixes of McDonald parser output:
-- AuxG or AuxX above coordinated (is_member) nodes changed to Coord
-- McD sometimes generates trees with more then two children
+
+=over 
+
+=item *
+
+AuxG or AuxX above coordinated (is_member) nodes changed to Coord
+
+=item *
+
+McD sometimes generates trees with more then two children
 (there should be only one effective root and final punctuation).
 If it happens, everything is attached below the first root's child.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

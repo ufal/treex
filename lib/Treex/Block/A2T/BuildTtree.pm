@@ -26,7 +26,7 @@ sub process_zone {
 sub build_subtree {
     my ( $parent_anode, $parent_tnode ) = @_;
 
-    foreach my $a_node ( $parent_anode->get_children() ) {
+    foreach my $a_node ( $parent_anode->get_children({ ordered => 1 }) ) {
         ## By default, attach to parent ...
         my $t_node = $parent_tnode;
 
@@ -39,7 +39,7 @@ sub build_subtree {
             $t_node = $parent_tnode->create_child;
         }
 
-        add_anode_to_tnode( $a_node, $t_node );
+        $t_node = add_anode_to_tnode( $a_node, $t_node );
         build_subtree( $a_node, $t_node );
     }
     return;
@@ -51,7 +51,7 @@ sub add_anode_to_tnode {
     # 1. For aux a-nodes, we only add them to a/aux.rf
     if ( $a_node->is_auxiliary ) {
         $t_node->add_aux_anodes($a_node);
-        return;
+        return $t_node;
     }
 
     # 2. So we are adding a lex a-node
@@ -68,10 +68,6 @@ sub add_anode_to_tnode {
         log_warn("Two lex a-nodes: $old_id and $new_id. Creating a new sibling.");
         my $orig_tparent = $t_node->get_parent();
         $t_node = $orig_tparent->create_child;
-
-        # TODO: Na tenhle novej t-node uz se zadny aux neprilepi.
-        # Mozna by se hodilo lepit tam od ted uz vsechny dalsi,
-        # ale to by se musely v build_subtree prochazet deti setridene.
     }
 
     # 2b) Set attribute a/lex.rf
@@ -80,14 +76,19 @@ sub add_anode_to_tnode {
     # 2c) copy attributes: ord -> ord, lemma -> t_lemma
     $t_node->_set_ord( $a_node->ord );
     $t_node->set_t_lemma( $a_node->lemma );
-    return;
+    return $t_node;
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::BuildTtree
+=head1 NAME 
+
+Treex::Block::A2T::BuildTtree
+
+=head1 DESCRIPTION
 
 A skeleton of the tectogrammatical tree is created from the analytical tree. 
 Nodes with C<edge_to_collapse=1> are recursively "joined" with their parents.
@@ -101,14 +102,29 @@ The question is what to do when there are more non-auxiliary (i.e. lexical)
 a-nodes to be collapsed into one t-node.
 Currently a new t-node is created - but this may change in future.
 
-PARAMETERS: LANGUAGE
+=head1 PARAMETERS
 
-OPTIONAL PARAMETERS: currently none, but it would be nice to decide
-what to do with two lex anodes for one t-node.
+Required:
+
+=over
+
+=item language
 
 =back
 
-=cut
+Optional:
 
-# Copyright 2009-2010 Martin Popel, David Marecek
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Currently none, but it would be nice to decide
+what to do with two lex anodes for one t-node.
+
+=head1 AUTHORS
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -12,7 +12,7 @@ sub process_tnode {
     if ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^.[149JK\?]/ ) {
 
         my $relclause = $t_node->get_clause_head;
-        my @e_parents = $relclause->get_eparents;
+        my @e_parents = $relclause->get_eparents( { or_topological => 1 } );
         if ( scalar @e_parents > 1 ) {
 
             my @depth_sorted = sort { $a->get_depth <=> $b->get_depth } @e_parents;

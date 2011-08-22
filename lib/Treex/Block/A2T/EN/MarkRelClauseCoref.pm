@@ -21,6 +21,7 @@ sub process_ttree {
         my $t_antec = $t_relclause_head->get_parent();
         next TNODE if !$t_antec || $t_antec->is_root();
         my $a_antec = $t_antec->get_lex_anode();
+        next TNODE if !$a_antec;        
         if ( $a_antec->tag =~ /^(NN|PR|DT)/ ) {
             $t_node->set_deref_attr( 'coref_gram.rf', [$t_antec] );
         }
