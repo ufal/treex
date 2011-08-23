@@ -11,29 +11,29 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 my %RDT_DEPREL_TO_AFUN = (
     'atribut adj.'               => 'Atr',
-    'atribut adv.'               => undef,
-    'atribut num.'               => undef,
+    'atribut adv.'               => 'Atr',     # "Sentința de ieri(afun=Atr,pos=adverb)" = "the judgement of yesterday"
+    'atribut num.'               => 'Atr',
     'atribut pron.'              => 'Atr',
     'atribut subst.'             => 'Atr',
-    'atribut subst. apozitional' => undef,
-    'atribut verb.'              => undef,
+    'atribut subst. apozitional' => undef,     # TODO: either map to Atr, or create new comma node afun=Apos
+    'atribut verb.'              => 'Atr',
     'complement agent'           => 'Obj',     # Object=Actor in passive constructions, e.g. "Firma desemnata de(tag=complement agent) judecatorul(afun=Obj)" = "The company nominated by the judge"
     'complement circumst.'       => 'Adv',
     'complement dir.'            => 'Obj',
-    'complement indir.'          => 0,         # indirect object, i.e. AuxP (already done)
+    'complement indir.'          => 'Adv',     # indirect object, usually with preposition, but also "se adreseaza birourilor(case=dativ,afun=Adv|Obj???)"
     'nume pred.'                 => 'Pnom',
     'predicat'                   => 'Pred',
     'rel. aux.'                  => 'AuxV',
     'rel. comp.'                 => 'Adv',     # comparative "mai bun", superlative "cel mai bun"
     'rel. conj.'                 => 0,         # coordination member - the relevant deprel is stored with the conjunction
-    'rel. dem.'                  => undef,
-    'rel. hot.'                  => undef,
-    'rel. infinit.'              => undef,
+    'rel. dem.'                  => undef,     # TODO
+    'rel. hot.'                  => undef,     # TODO
+    'rel. infinit.'              => 'AuxV',
     'rel. negat.'                => 'Neg',     # afun used also in English analysis for "not"
     'rel. nehot.'                => 'AuxA',    # afun for articles, used also in English analysis
     'rel. poses.'                => 'Atr',
     'rel. prepoz.'               => 0,         # word governed by a preposition - the relevant deprel is stored with the preposition
-    'rel. reflex.'               => undef,
+    'rel. reflex.'               => 'Obj',     # TODO: it can be also AuxT since some Romanian verbs are reflexive tantum
     'subiect'                    => 'Sb',
 );
 
@@ -116,9 +116,19 @@ sub rdt_to_afun {
     return 'NR';
 }
 
+1;
+
 __END__
 
-1;
+TODO:
+* test.treex#30 "conditiile de solutionare si de emitere"
+  The first "de" is head of the whole coordination, while it should be just head
+  of the first member because the second member ("emitere") has its own preposition "de".
+
+* test.treex#40 check multiple appositions
+* test.treex#55 check apposition combined with coordination
+
+* test.treex#26 POS of "a" is not 'prepozitie', but 'verb aux.'
 
 =over
 
