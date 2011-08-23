@@ -41,7 +41,9 @@ sub save
 sub _create_hash
 {
     my @array = @{ $_[0] };
-    my %hash = map { split '=', $_ } @array;
+    my %hash = map {
+        $_ =~ m/=/ ? split '=', $_ : $_, 1
+    } @array;
     return \%hash;
 }
 
