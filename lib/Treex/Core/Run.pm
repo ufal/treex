@@ -2,6 +2,7 @@ package Treex::Core::Run;
 use strict;
 use warnings;
 
+use 5.6.0;
 use Treex::Core::Common;
 use Treex::Core;
 use MooseX::SemiAffordanceAccessor;
@@ -10,6 +11,7 @@ with 'MooseX::Getopt';
 use Cwd;
 use File::Path;
 use File::Temp qw(tempdir);
+use File::Which;
 use List::MoreUtils qw(first_index);
 use Exporter;
 use base 'Exporter';
@@ -18,15 +20,19 @@ our @EXPORT_OK = q(treex);
 has 'save' => (
     traits        => ['Getopt'],
     cmd_aliases   => 's',
-    is            => 'rw', isa => 'Bool', default => 0,
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
     documentation => 'save all documents',
 );
 
 has 'quiet' => (
-    traits      => ['Getopt'],
-    cmd_aliases => 'q',
-    is          => 'rw', isa => 'Bool', default => 0,
-    trigger => sub { Treex::Core::Log::log_set_error_level('FATAL'); },
+    traits        => ['Getopt'],
+    cmd_aliases   => 'q',
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+    trigger       => sub { Treex::Core::Log::log_set_error_level('FATAL'); },
     documentation => q{Warning, info and debug messages are suppressed. Only fatal errors are reported.},
 );
 
@@ -189,15 +195,39 @@ has 'survive' => (
     documentation => 'Continue collecting jobs\' outputs even if some of them crashed (risky, use with care!).',
 );
 
+has version => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    cmd_aliases   => 'v',
+    documentation => q(Print treex and perl version),
+    trigger       => sub {
+        print get_version();
+        exit();
+    },
+);
+
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
+}
+
+sub get_version {
+    my $perl_v         = $^V;
+    my $perl_x         = $^X;
+    my $treex_v        = $Treex::Core::Run::VERSION || 'DEV';
+    my $treex_x        = which('treex');
+    my $version_string = <<"VERSIONS";
+Treex version: $treex_v from $treex_x
+Perl version: $perl_v from $perl_x
+VERSIONS
+    return $version_string;
 }
 
 sub BUILD {
 
     # more complicated tests on consistency of options will be place here
     my ($self) = @_;
-
     if ( $self->jobindex ) {
         _redirect_output( $self->outdir, 0, $self->jobindex );
     }

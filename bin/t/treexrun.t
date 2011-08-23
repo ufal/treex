@@ -27,10 +27,17 @@ my $exit_code = system('treex -h 2>/dev/null');
 if ( $exit_code != 0 ) {
     use Treex::Core::Config;
     $TREEX = realpath( Treex::Core::Config::lib_core_dir() . '/../../../bin/treex' );    #development location - lib_core_dir is lib/Treex/Core
-    if ( !-x $TREEX ) {
+    if ( !defined $TREEX || !-x $TREEX ) {
         $TREEX = realpath( Treex::Core::Config::lib_core_dir() . '/../../../../bin/treex' );    #release location - lib_core_dir is blib/lib/Treex/Core
     }
 }
+
+#my $runner = Treex::Core::Run->new();
+my $perl_v = Treex::Core::Run::get_version();
+note("Perl run: \n$perl_v");
+my $sys_v  = `$TREEX -v`;
+note("Sys run: \n$sys_v");
+#is( $perl_v, $sys_v, 'We are running same version from perl and from system' );
 
 END {
     unlink $combined_file;
@@ -77,11 +84,13 @@ my @tasks  = (
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param="" document='print $self->_args->{param};'), '' ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param='' document='print $self->_args->{param};'), '' ],
 );
-
-foreach my $task_rf (@tasks) {
-    my ( $command, $expected_output ) = @$task_rf;
-    $command =~ s/treex/$TREEX/;
-    is_bash_combined_output( $command, $expected_output, $command );
+SKIP:
+{
+    skip 'We run different versions of treex binary', scalar @tasks if $perl_v ne $sys_v;
+    foreach my $task_rf (@tasks) {
+        my ( $command, $expected_output ) = @$task_rf;
+        $command =~ s/treex/$TREEX/;
+        is_bash_combined_output( $command, $expected_output, $command );
+    }
 }
-
-#done_testing;
+    #done_testing;
