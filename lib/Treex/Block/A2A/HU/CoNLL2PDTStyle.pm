@@ -4,17 +4,20 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
+# /net/data/conll/2007/hu/doc/README
+
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
 #    $self->deprel_to_afun($a_root)
     $self->attach_final_punctuation_to_root($a_root);
+    $self->deprel_to_afun($a_root);
 #    $self->process_prepositional_phrases($a_root);
 #    $self->restructure_coordination($a_root);
 #    $self->rehang_coordconj($a_root);
 #    $self->check_afuns($a_root);
-#    $self->rehang_subconj($a_root);
+    $self->rehang_subconj($a_root);
 }
 
 
@@ -25,7 +28,8 @@ my %pos2afun = (
 );
 
 my %subpos2afun = (
-    q(det) => 'AuxA',
+    q(sub) => 'AuxC',
+    q(coor) => 'Coord',
 );
 
 my %parentpos2afun = (
@@ -34,8 +38,57 @@ my %parentpos2afun = (
 );
 
 
+# for deprels see /net/data/conll/2007/hu/doc/dep_szegedtreebank_en.pdf
 my %deprel2afun = (
-    q() => q(),
+    q(ABL) => q(Adv),
+    q(ADE) => q(Adv),
+    q(ADV) => q(Adv),
+    q(ALL) => q(Adv),
+    q(ATT) => q(Atr),
+    q(AUX) => q(AuxV),
+    q(CAU) => q(Adv),
+#    q(CONJ) => q(Coord), # but also AuxC
+    q(CP) => q(Adv), # any clause
+    q(DAT) => q(Obj),
+    q(DEL) => q(Adv),
+    q(DET) => q(AuxA),
+    q(DIS) => q(Adv),
+    q(ELA) => q(Adv),
+    q(ESS) => q(Adv),
+    q(FAC) => q(Adv),
+    q(FOR) => q(Adv),
+    q(FROM) => q(Adv),
+    q(GEN) => q(Atr), # who knows
+    q(GOAL) => q(Adv),
+    q(ILL) => q(Adv),
+    q(INE) => q(Adv),
+    q(INF) => q(), # who knows
+    q(INS) => q(Adv),
+    q(LOC) => q(Adv),
+    q(LOCY) => q(Adv),
+    q(MODE) => q(Adv),
+    q(NEG) => q(Adv),
+    q(NP) => q(), # ??
+    q(OBJ) => q(Obj),
+    q(PP) => q(AuxP),
+    q(PRED) => q(), # predicate NP ???
+    q(PREVERB) => q(AuxV),
+    q(PUNCT) => q(AuxX),
+    q(QUE) => q(), # ??
+    q(ROOT) => q(Pred),
+    q(SOC) => q(Adv),
+    q(SUB) => q(Adv),
+    q(SUBJ) => q(Sb),
+    q(SUP) => q(Adv),
+    q(TEM) => q(Adv),
+    q(TER) => q(Adv),
+    q(TFROM) => q(Adv),
+    q(TLOCY) => q(Adv),
+    q(TO) => q(Adv),
+    q(TTO) => q(Adv),
+    q(UK) => q(),#?
+    q(VERB2) => q(AuxV),
+    q(XP) => q(),#?
 );
 
 
@@ -60,47 +113,25 @@ sub deprel_to_afun {
     }
 }
 
-use Treex::Tool::ATreeTransformer::DepReverser;
-my $subconj_reverser =
-    Treex::Tool::ATreeTransformer::DepReverser->new(
-            {
-                subscription     => undef,
-                nodes_to_reverse => sub {
-                    my ( $child, $parent ) = @_;
-                    return ( $child->afun eq 'AuxC' );
-                },
-                move_with_parent => sub {1;},
-                move_with_child => sub {1;},
-            }
-        );
 
 
 sub rehang_subconj {
     my ( $self, $root ) = @_;
-    $subconj_reverser->apply_on_tree($root);
+    foreach my $auxc ($root->get_descendants) {
 
-}
+        my $left_neighbor = $auxc->get_left_neighbor();
+        if ($left_neighbor and $left_neighbor->form eq ',') {
+            $left_neighbor->set_parent($auxc);
+        }
 
-sub rehang_coordconj {
-    my ( $self, $root ) = @_;
-
-    foreach my $coord (grep {$_->conll_deprel eq 'coord'}
-                           map {$_->get_descendants} $root->get_children) {
-        my $first_member = $coord->get_parent;
-        $first_member->set_is_member(1);
-        $coord->set_parent($first_member->get_parent);
-        $first_member->set_parent($coord);
-
-        my $second_member = 1;
-        foreach my $node (grep {$_->ord > $coord->ord} $first_member->get_children({ordered=>1})) {
-            $node->set_parent($coord);
-            if ($second_member) {
-                $node->set_is_member(1);
-                $second_member = 0;
-            }
+        my $right_neighbor = $auxc->get_right_neighbor();
+        if ($right_neighbor and ($right_neighbor->get_iset('pos')||'') eq 'verb') {
+            $right_neighbor->set_parent($auxc);
         }
     }
+
 }
+
 
 
 
