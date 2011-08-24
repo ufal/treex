@@ -54,13 +54,13 @@ sub restructure_coordination {
                 $last_member = undef if not $found;
             }
             if ( $conjunction && $common_parent ) {
-                $conjunction->set_conll_deprel('Coord');
                 $conjunction->set_parent($common_parent);
                 foreach my $member (@members) {
                     $member->set_conll_deprel($conjunction->conll_deprel);
                     $member->set_parent($conjunction);
                     $member->set_is_member(1);
                 }
+                $conjunction->set_conll_deprel('Coord');
             }
             elsif (not $common_parent) {
                 log_warn("Coordination members have no parent node.");
@@ -79,9 +79,15 @@ sub restructure_coordination {
 my %deprel2afun = ( 'предик' => 'Sb',
                     'предл' => 'AuxP',
                     'опред' => 'Atr',
+                    'оп-опред' => 'Atr',
+                    'аппрокс-порядк' => 'Atr',
+                    'релят' => 'Atr',
                     '1-компл' => 'Obj',
                     '2-компл' => 'Obj',
                     '3-компл' => 'Obj',
+                    '4-компл' => 'Obj',
+                    '5-компл' => 'Obj',
+                    'адр-присв' => 'Obj',
                     'Coord' => 'Coord',
                   );
 
@@ -93,11 +99,14 @@ sub deprel_to_afun {
 
     # swich deprels for preposition phrases
     foreach my $node ($a_root->get_descendants()) {
-        my $parent = $node->get_parent;
-        if (defined $parent->conll_deprel && $parent->conll_deprel eq 'предл') {
-            log_warn("Two prepositions.") if $node->conll_deprel eq 'предл';
-            $parent->set_conll_deprel($node->conll_deprel);
-            $node->set_conll_deprel('предл');
+        if ($node->conll_deprel && $node->conll_deprel eq 'предл') {
+            my $parent = $node->get_parent;
+            if ($parent->conll_deprel && $parent->conll_deprel eq 'предл') {
+                log_warn('Two prepositions');
+                next;
+            }
+            $node->set_conll_deprel($parent->conll_deprel);
+            $parent->set_conll_deprel('предл');
         }
     }
 
@@ -106,7 +115,7 @@ sub deprel_to_afun {
             $node->set_afun($deprel2afun{$node->conll_deprel});
         }
         else {
-            $node->set_afun('ExD');
+            $node->set_afun('Atr');
         }
     }
 }
