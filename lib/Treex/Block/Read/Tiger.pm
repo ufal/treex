@@ -2,7 +2,9 @@ package Treex::Block::Read::Tiger;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
+use Moose::Util qw(apply_all_roles);
 use XML::Twig;
+
 
 has bundles_per_doc => (
     is => 'ro',
@@ -43,17 +45,20 @@ sub next_document {
               my @edges;
               foreach my $nonterminal ($sentence->descendants('nt')) {
                   my $ch = $ptree->create_nonterminal_child();
+                  apply_all_roles($ch, 'Treex::Core::WildAttr');
                   $ch->set_id($nonterminal->{att}{id});
-                  $ch->set_phrase($nonterminal->{att}{cat});
+                  $ch->wild->{tiger_phrase} = $nonterminal->{att}{cat};
                   push @edges, [ $ch, @{ $_->{att} }{qw/idref label/} ]
                       for $nonterminal->children('edge');
               }
               foreach my $terminal ($sentence->descendants('t')) {
                   my $ch = $ptree->create_terminal_child();
+                  apply_all_roles($ch, 'Treex::Core::WildAttr');
                   $ch->set_id($terminal->{att}{id});
                   $ch->set_form($terminal->{att}{word});
                   $ch->set_lemma($terminal->{att}{lemma});
-                  $ch->set_tag($terminal->{att}{pos} . $terminal->{att}{morph});
+                  $ch->wild->{pos} = $terminal->{att}{pos};
+                  $ch->wild->{morph} = $terminal->{att}{morph};
               }
               foreach my $edge (@edges) {
                   my ($parent, $child_id, $label) = @$edge;
@@ -61,6 +66,7 @@ sub next_document {
                   $child->set_parent($parent);
                   $child->set_is_head($label);
               }
+              log_info 'Sentence ' . $ptree->id;
           }, # sentence handler
         });
 
