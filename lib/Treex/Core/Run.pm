@@ -528,6 +528,7 @@ sub _create_job_scripts {
 sub _run_job_scripts {
     my ($self) = @_;
     my $workdir = $self->workdir;
+    $workdir = "./$workdir" unless '/' eq substr $workdir,0,1;
     foreach my $jobnumber ( 1 .. $self->jobs ) {
         my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
 
