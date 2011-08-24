@@ -175,7 +175,7 @@ sub deprel_to_afun
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
         
         # default assignment
-        my $afun = $deprel;
+        my $afun = 'NR';
 
         # trivial conversion to PDT style afun
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
