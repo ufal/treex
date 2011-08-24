@@ -125,6 +125,10 @@ sub convert_apposition {
     foreach my $node (grep 'appos' eq $_->conll_deprel, @nodes) {
         next if $node->is_member;
         my $member = $node->get_parent;
+        if ('adpos' eq $member->conll_deprel) {
+            $member = $member->parent;
+            log_warn("adpos member\t" . $node->get_address);
+        }
         next if $member->is_member;
         my $apos = $node->get_children({ first_only => 1 });
         next unless $apos and $apos->lemma =~ /^[,(:]$/;
@@ -369,6 +373,11 @@ sub conll_to_pdt {
                 $afun = 'Sb';
             } elsif (grep $_ =~ /^(?:GEN|PTV)$/, @feats) {
                 $afun = 'Obj';
+                if(not grep 'adpos' eq $_->conll_deprel, $node->get_children) {
+                    $afun = 'Adv';
+                    log_warn("rel changed from Obj to Adv\t" . $node->get_address);
+                }
+
             } else {
                 $afun = 'Adv';
             }
@@ -428,8 +437,8 @@ sub conll_to_pdt {
                 # do not rehang the comma in this case
                 undef @puncts;
 
-            } elsif ($node->is_member) {
-                $head = $parent->get_parent->get_parent;
+            } elsif ($parent->is_member) {
+                $head = $parent->get_parent;
                 unless ($head) {
                     log_warn("invalid coordination for complm\t"
                              . $node->get_address);
@@ -437,9 +446,9 @@ sub conll_to_pdt {
                     next;
                 }
                 $node->set_is_member(1);
-                $parent->set_is_member(0);
                 $node->set_parent($head);
-                $parent->get_parent->set_parent($node);
+                $parent->set_is_member(0);
+                $parent->set_parent($node);
             } else {
                 $node->set_parent($head);
                 $parent->set_parent($node);
