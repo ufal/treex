@@ -12,9 +12,9 @@ sub process_zone {
     my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
 #    $self->deprel_to_afun($a_root)
     $self->attach_final_punctuation_to_root($a_root);
+    $self->restructure_coordination($a_root);
     $self->deprel_to_afun($a_root);
 #    $self->process_prepositional_phrases($a_root);
-#    $self->restructure_coordination($a_root);
 #    $self->rehang_coordconj($a_root);
 #    $self->check_afuns($a_root);
     $self->rehang_subconj($a_root);
@@ -29,7 +29,7 @@ my %pos2afun = (
 
 my %subpos2afun = (
     q(sub) => 'AuxC',
-    q(coor) => 'Coord',
+    q(coor) => 'AuxZ', # coord. conj. whose conjuncts were not found, look like rhematizers
 );
 
 my %parentpos2afun = (
@@ -71,7 +71,7 @@ my %deprel2afun = (
     q(NP) => q(), # ??
     q(OBJ) => q(Obj),
     q(PP) => q(AuxP),
-    q(PRED) => q(), # predicate NP ???
+    q(PRED) => q(Pnom), # predicate NP ???
     q(PREVERB) => q(AuxV),
     q(PUNCT) => q(AuxX),
     q(QUE) => q(), # ??
@@ -95,7 +95,7 @@ my %deprel2afun = (
 sub deprel_to_afun {
     my ( $self, $root ) = @_;
 
-    foreach my $node ($root->get_descendants)  {
+    foreach my $node (grep {not $_->is_coap_root and not $_->afun} $root->get_descendants)  {
 
         my $deprel = $node->conll_deprel();
         my ($parent) = $node->get_eparents();
@@ -132,7 +132,43 @@ sub rehang_subconj {
 
 }
 
+sub restructure_coordination {
+    my ( $self, $root ) = @_;
 
+    foreach my $coord (grep {($_->get_iset('subpos') || '') eq 'coor'} $root->get_descendants) {
+        my $left_neighbor = skip_commas($coord->get_left_neighbor(),'left');
+        my $right_neighbor = skip_commas($coord->get_right_neighbor(),'right');
+        if ($left_neighbor and $right_neighbor
+                and $left_neighbor->conll_deprel eq $right_neighbor->conll_deprel) {
+            $coord->set_afun('Coord');
+            $left_neighbor->set_is_member(1);
+            $left_neighbor->set_parent($coord);
+            $right_neighbor->set_is_member(1);
+            $right_neighbor->set_parent($coord);
+        }
+        elsif ($coord->ord == 1 and ($coord->get_parent->conll_deprel||'') eq 'ROOT') { # single-member sentence coordination
+            $coord->set_afun('Coord');
+            my $parent = $coord->get_parent;
+            $coord->set_parent($coord->get_root);
+            $parent->set_parent($coord);
+            $parent->set_is_member(1);
+        }
+    }
+}
+
+sub skip_commas {
+    my ($node, $direction) = @_;
+    return undef if not $node;
+    if ($node->form eq ',') {
+        if ($direction eq 'left') {
+            return skip_commas($node->get_left_neighbor,$direction);
+        }
+        else {
+            return skip_commas($node->get_right_neighbor,$direction);
+        }
+    }
+    return $node;
+}
 
 
 
