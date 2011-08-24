@@ -52,11 +52,11 @@ sub deprel_to_afun {
 
         my $deprel = ( $node->is_member ? $node->get_parent->conll_deprel : $node->conll_deprel() );
 
-        if (not defined $deprel) {
-            print $node->get_address."\n";
-
-            exit;
-        }
+#        if (not defined $deprel) {
+#            print $node->get_address."\n";
+#
+#            exit;
+#        }
 
         my $cpos    = $node->get_attr('conll/pos');
         my $parent_cpos   = ($parent and not $parent->is_root) ? $parent->get_attr('conll/cpos') : '';
@@ -64,7 +64,7 @@ sub deprel_to_afun {
         my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
                 $cpos2afun{$cpos} ||
                     $parentcpos2afun{$parent_cpos} ||
-                        undef; # !!!!!!!!!!!!!!! temporary filler
+                        'NR'; # !!!!!!!!!!!!!!! temporary filler
 
         if ($deprel eq 'obj1' and $parent_cpos eq 'Prep') {
             $afun = 'Adv';
@@ -73,6 +73,12 @@ sub deprel_to_afun {
         if ($parent->is_root and $cpos eq 'V') {
             $afun = 'Pred';
         }
+
+        if ($node->get_parent->afun eq 'Coord' and not $node->is_member
+                and ($node->get_iset('pos')||'') eq 'conj') {
+            $afun = 'AuxY';
+        }
+
 
         $node->set_afun($afun);
     }
