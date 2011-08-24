@@ -107,7 +107,7 @@ sub deprel_to_afun {
             $subpos2afun{$subpos} ||
                 $pos2afun{$pos} ||
                     $parentpos2afun{$ppos} ||
-                        'Atr'; # !!!!!!!!!!!!!!! temporary filler
+                        'NR'; # !!!!!!!!!!!!!!! temporary filler
 
         $node->set_afun($afun);
     }
