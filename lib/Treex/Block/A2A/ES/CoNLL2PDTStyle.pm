@@ -106,7 +106,11 @@ sub deprel_to_afun {
             $subpos2afun{$subpos} ||
                 $pos2afun{$pos} ||
                     $parentpos2afun{$ppos} ||
-                        'Atr'; # !!!!!!!!!!!!!!! temporary filler
+                        'NR';
+
+        if ($pos eq 'prep' and $ppos eq 'verb') {
+            $afun = 'AuxV'; # vamos a estar
+        }
 
         $node->set_afun($afun);
     }

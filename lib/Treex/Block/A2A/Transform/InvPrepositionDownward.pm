@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Transform::InvSubordConjDownward;
+package Treex::Block::A2A::Transform::InvPrepositionDownward;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
@@ -14,7 +14,9 @@ sub BUILD {
                 subscription     => $self->subscription,
                 nodes_to_reverse => sub {
                     my ( $child, $parent ) = @_;
-                    return ( ($child->afun||'') eq 'AuxC' and not $child->get_children);
+                    return ( ($child->afun||'') eq 'AuxP'
+                                 and not $child->get_children
+                                     and ($parent->afun||'') ne 'AuxP' );
                 },
                 move_with_parent => sub {1},
                 move_with_child => sub {1},
@@ -27,9 +29,9 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::InvSubordConjDownward
+=item Treex::Block::A2A::Transform::InvPrepositionDownward
 
-Inverse transformation for SubordConjDownward.
+Approximately inverse transformation for A2A::Transform::PrepositionDownward
 
 =back
 
