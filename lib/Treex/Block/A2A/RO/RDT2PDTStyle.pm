@@ -15,7 +15,7 @@ my %RDT_DEPREL_TO_AFUN = (
     'atribut num.'               => 'Atr',
     'atribut pron.'              => 'Atr',
     'atribut subst.'             => 'Atr',
-    'atribut subst. apozitional' => undef,     # TODO: either map to Atr, or create new comma node afun=Apos
+    'atribut subst. apozitional' => 'Atr',     # TODO: because of missing commas, there is no node to put afun=Apos
     'atribut verb.'              => 'Atr',
     'complement agent'           => 'Obj',     # Object=Actor in passive constructions, e.g. "Firma desemnata de(tag=complement agent) judecatorul(afun=Obj)" = "The company nominated by the judge"
     'complement circumst.'       => 'Adv',
@@ -41,17 +41,20 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     my $a_root = $self->SUPER::process_zone( $zone, 'rdt' );
 
-    # For apositions, we must create new node (comma) as a head
+    # There are no lemmata in RDT, but the attribut should not be empty
     foreach my $node ( $a_root->get_descendants() ) {
-        if ( $node->conll_deprel eq 'atribut subst. apozitional' ) {
-
-            # TODO
-        }
+        $node->set_lemma( $node->form );
     }
 
     return;
 }
 
+# For apositions, we could also create new node (comma) as a head
+# foreach my $node ( $a_root->get_descendants() ) {
+#     if ( $node->conll_deprel eq 'atribut subst. apozitional' ) {
+#         $self->handle_apposition($node);
+#     }
+# }
 sub handle_apposition {
     my ( $self, $second ) = @_;
     my $first = $second->get_parent();
@@ -62,9 +65,15 @@ sub handle_apposition {
             form            => ',',
             tag             => 'Z:-------------',
             'iset/pos'      => 'punc',
-            'iset/punctype' => 'comm'
+            'iset/punctype' => 'comm',
+            afun            => 'Apos',
         }
     );
+    $first->set_is_member(1);
+    $second->set_is_member(1);
+    $first->set_parent($comma);
+    $second->set_parent($comma);
+    return;
 }
 
 sub deprel_to_afun {
@@ -80,30 +89,32 @@ sub rdt_to_afun {
     my $deprel = $node->conll_deprel();
     my $tag    = $node->conll_pos;
 
-    # Coordination members are recognized easily based on their deprel,
-    # the deprel relevant for them is stored with the conjuction (=coord. head).
-    my $parent = $node->get_parent();
+    # Coordination members are recognized easily based on their deprel
     if ( $deprel eq 'rel. conj.' ) {
         $node->set_is_member(1);
+    }
+    
+    # The deprel relevant for coord. members is stored with the conjuction (=coord. head).
+    # The deprel relevant to the whole prepositional phrase is stored
+    # with the preposition which governs the phrase.
+    my $parent = $node->get_parent();
+    while ($deprel eq 'rel. conj.' || $deprel eq 'rel. prepoz.' ) {
         return 'NR' if $parent->is_root();
         $deprel = $parent->conll_deprel;
         $parent = $parent->get_parent();
     }
 
     # Some afuns are better recognized based on the original RDT part-of-speech tag
-    return 'AuxP' if $tag eq 'prepozitie';
+
+    # Make sure every preposition (AuxP) has either children
+    # or it is a part of complex preposition
+    return 'AuxP' if $tag eq 'prepozitie'
+            && ( $node->get_children || $parent->conll_pos eq 'prepozitie' );
 
     # Possesive article "al, a, ai, ale" is a Romanian speciality.
     # It always governs a noun in genitive, so let's treat as AuxP.
     return 'AuxP' if $tag eq 'art. poses.';
     return 'Coord' if $tag eq 'conj. coord.' && any { $_->conll_deprel eq 'rel. conj.' } $node->get_children();
-
-    # In RDT the deprel relevant to the whole prepositional phrase is stored
-    # with the preposition which governs the phrase.
-    if ( $deprel eq 'rel. prepoz.' ) {
-        return 'NR' if $parent->is_root();
-        $deprel = $parent->conll_deprel;
-    }
 
     # Some afuns can be directly mapped from RDT deprels
     my $afun = $RDT_DEPREL_TO_AFUN{$deprel};
