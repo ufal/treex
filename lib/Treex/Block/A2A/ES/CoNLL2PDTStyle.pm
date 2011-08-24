@@ -26,6 +26,7 @@ my %pos2afun = (
 
 my %subpos2afun = (
     q(det) => 'AuxA',
+    q(sub) => 'AuxC',
 );
 
 my %parentpos2afun = (
@@ -42,7 +43,7 @@ my %deprel2afun = (
     q(atr) => q(),
     q(c) => q(Adv), # ?
     q(cag) => q(),
-    q(cc) => q(AuxC),
+#    q(cc) => q(AuxC),
     q(cd) => q(Obj),
     q(ci) => q(Obj),
     q(conj) => q(AuxC),

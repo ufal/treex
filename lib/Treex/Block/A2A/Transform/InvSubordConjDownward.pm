@@ -14,7 +14,7 @@ sub BUILD {
                 subscription     => $self->subscription,
                 nodes_to_reverse => sub {
                     my ( $child, $parent ) = @_;
-                    return ( $child->afun eq 'AuxC' );
+                    return ( $child->afun eq 'AuxC' and not $child->get_children);
                 },
                 move_with_parent => sub {1},
                 move_with_child => sub {1},
