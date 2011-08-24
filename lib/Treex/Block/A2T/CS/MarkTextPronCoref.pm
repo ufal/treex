@@ -5,6 +5,7 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::Coreference::PerceptronRanker;
 use Treex::Tool::Coreference::PronCorefFeatures;
+use Treex::Tool::Coreference::TextPronAnteCandsGetter;
 
 has 'model_path' => (
     is       => 'ro',
@@ -33,6 +34,13 @@ has '_feature_extractor' => (
     builder     => '_build_feature_extractor',
 );
 
+has '_ante_cands_selector' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Treex::Tool::Coreference::AnteCandsGetter',
+    builder     => '_build_ante_cands_selector',
+);
+
 # Attribute _ranker depends on the attribute model_path, whose value do not
 # have to be accessible when building other attributes. Thus, _ranker is
 # defined as lazy, i.e. it is built during its first access. However, we wish all
@@ -57,6 +65,12 @@ sub _build_feature_extractor {
     return $fe;
 }
 
+sub _build_ante_cands_selector {
+    my ($self) = @_;
+    my $acs = Treex::Tool::Coreference::TextPronAnteCandsGetter->new();
+    return $acs;
+}
+
 # according to rule presented in Nguy et al. (2009)
 # nodes with the t_lemma #PersPron and third person in gram/person
 sub _is_anaphoric {
@@ -72,33 +86,8 @@ sub _is_anaphoric {
 sub _get_ante_cands {
     my ($self, $t_node) = @_;
 
-    # current sentence
-    my @sent_preceding = grep { $_->precedes($t_node) }
-        $t_node->get_root->get_descendants( { ordered => 1 } );
-
-    # previous sentence
-    my $sent_num = $t_node->get_bundle->get_position;
-    if ( $sent_num > 0 ) {
-        my $prev_bundle = ( $t_node->get_document->get_bundles )[ $sent_num - 1 ];
-        my $prev_tree   = $prev_bundle->get_tree(
-            $t_node->language,
-            $t_node->get_layer,
-            $t_node->selector
-        );
-        unshift @sent_preceding, $prev_tree->get_descendants( { ordered => 1 } );
-    }
-    else {
-
-        # TODO it should inform that the previous context is not complete
-    }
-
-    # semantic noun filtering
-    my @cands = grep { $_->gram_sempos && ($_->gram_sempos =~ /^n/) 
-                    && (!$_->gram_person || ($_->gram_person !~ /1|2/)) }
-        @sent_preceding;
-
-    # reverse to ensure the closer candidates to be indexed with lower numbers
-    return reverse @cands;
+    my $acs = $self->_ante_cands_selector;
+    return $acs->get_candidates( $t_node );
 }
 
 sub _create_instances {
