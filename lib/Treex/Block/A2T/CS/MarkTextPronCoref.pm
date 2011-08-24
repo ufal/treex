@@ -91,15 +91,18 @@ sub _get_ante_cands {
 }
 
 sub _create_instances {
-    my ( $self, $anaphor, @ante_cands ) = @_;
+    my ( $self, $anaphor, $ante_cands, $ords ) = @_;
+
+    if (!defined $ords) {
+        $ords = [ 1 .. scalar @$ante_cands ];
+    }
 
     my $instances;
-    my $ord = 1;
-    foreach my $cand (@ante_cands) {
+    for (my $i; $i < @$ante_cand; $i++) {
+        my $cand = $ante_cands->[$i];
         my $fe = $self->_feature_extractor;
-        my $features = $fe->extract_features( $cand, $anaphor, $ord );
-        $instances->{ $cand-> id } = $features;
-        $ord++;
+        my $features = $fe->extract_features( $cand, $anaphor, $ord->[$i] );
+        $instances->{ $cand->id } = $features;
     }
     return $instances;
 }
@@ -129,10 +132,10 @@ sub process_tnode {
 
     if ( _is_anaphoric($t_node) ) {
 
-        my @ante_cands = $self->_get_ante_cands($t_node);
+        my $ante_cands = $self->_get_ante_cands($t_node);
 
         # instances is a reference to a hash in the form { id => instance }
-        my $instances = $self->_create_instances( $t_node, @ante_cands );
+        my $instances = $self->_create_instances( $t_node, $ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not

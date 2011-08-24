@@ -40,14 +40,32 @@ sub _select_all_cands {
 }
 
 
+# This method splits all candidates to positive and negative ones
+# It returns two hashmaps of candidates indexed by their order within all
+# returned candidates.
 sub _split_pos_neg_cands {
     my ($self, $anaph, $cands, $antecs) = @_;
 
     my %ante_hash = map {$_->id => $_} @$antecs;
-
-    my @neg_cands = grep {!defined $ante_hash{$_->id}} @cands;
+    
     my $pos_cand = $self->_find_positive_cand($anaph, $cands);
-    return ( [$pos_cand], \@neg_cands );
+    my @neg_cands;
+    my @pos_ords;
+    my @neg_ords;
+
+    my $ord = 1;
+    foreach my $cand (@$cands) {
+        if (!defined $ante_hash{$cand->id}) {
+            push @neg_cands, $cand;
+            push @neg_ords, $ord;
+        }
+        elsif ($cand == $pos_cand) {
+            push @pos_ords, $ord;
+        }
+        $ord++;
+    }
+
+    return ( [$pos_cand], \@neg_cands, \@pos_ords, \@neg_ords );
 }
 
 sub _find_positive_cand {
