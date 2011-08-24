@@ -48,7 +48,7 @@ my %deprel2afun = (
     q(AUX) => q(AuxV),
     q(CAU) => q(Adv),
 #    q(CONJ) => q(Coord), # but also AuxC
-    q(CP) => q(Adv), # any clause
+    q(CP) => q(Pred), # any clause
     q(DAT) => q(Obj),
     q(DEL) => q(Adv),
     q(DET) => q(AuxA),
@@ -117,7 +117,7 @@ sub deprel_to_afun {
 
 sub rehang_subconj {
     my ( $self, $root ) = @_;
-    foreach my $auxc ($root->get_descendants) {
+    foreach my $auxc (grep {$_->afun eq 'AuxC'} $root->get_descendants) {
 
         my $left_neighbor = $auxc->get_left_neighbor();
         if ($left_neighbor and $left_neighbor->form eq ',') {
@@ -153,13 +153,25 @@ sub restructure_coordination {
             $parent->set_parent($coord);
             $parent->set_is_member(1);
         }
+        else {
+            my (@left_conjuncts) = grep {$_->conll_deprel ne 'PUNCT' and $_->precedes($coord)} $coord->get_children;
+            my (@right_conjuncts) = grep {$_->conll_deprel ne 'PUNCT' and not $_->precedes($coord)} $coord->get_children;
+            if (@left_conjuncts ==1 and @right_conjuncts==1
+                    and $left_conjuncts[0]->conll_deprel eq $right_conjuncts[0]->conll_deprel) {
+
+                $left_conjuncts[0]->set_is_member(1);
+                $right_conjuncts[0]->set_is_member(1);
+                $coord->set_afun('Coord');
+            }
+
+        }
     }
 }
 
 sub skip_commas {
     my ($node, $direction) = @_;
     return undef if not $node;
-    if ($node->form eq ',') {
+    if ($node->conll_deprel eq 'PUNCT') {
         if ($direction eq 'left') {
             return skip_commas($node->get_left_neighbor,$direction);
         }
