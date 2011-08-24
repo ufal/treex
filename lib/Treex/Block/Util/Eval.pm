@@ -40,6 +40,7 @@ sub BUILD {
 ## no critic (ProhibitStringyEval) This block needs string evals
 sub process_document {
     my ( $self, $document ) = @_;
+    my $doc = $document;
     if ( $self->document ) {
         my $to_eval = $self->document . ';1;';
         eval($to_eval) or log_fatal("While evaluating '$to_eval' got error: $@");
