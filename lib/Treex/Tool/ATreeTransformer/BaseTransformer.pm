@@ -26,7 +26,7 @@ sub rehang {
         $node->set_parent($new_parent);
         $self->subscribe($node);
         log_info( 'Rehanging fired by ' . ( $self->subscription || '?' ) . ': '
-                     . $node->form . " moved below " . $new_parent->form);
+                     . $node->form . " moved below " . $new_parent->form . "\t" . $node->get_address );
     }
 }
 
