@@ -36,7 +36,8 @@ sub _select_all_cands {
         @sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers
-    return \@{reverse @cands};
+    my @reversed_cands = reverse @cands;
+    return \@reversed_cands;
 }
 
 
@@ -48,27 +49,27 @@ sub _split_pos_neg_cands {
 
     my %ante_hash = map {$_->id => $_} @$antecs;
     
-    my $pos_cand = $self->_find_positive_cand($anaph, $cands);
-    my @neg_cands;
-    my @pos_ords;
-    my @neg_ords;
+    my $pos_cands = $self->_find_positive_cands($anaph, $cands);
+    my $neg_cands = [];
+    my $pos_ords = [];
+    my $neg_ords = [];
 
     my $ord = 1;
     foreach my $cand (@$cands) {
         if (!defined $ante_hash{$cand->id}) {
-            push @neg_cands, $cand;
-            push @neg_ords, $ord;
+            push @$neg_cands, $cand;
+            push @$neg_ords, $ord;
         }
-        elsif ($cand == $pos_cand) {
-            push @pos_ords, $ord;
+        elsif (grep {$_ == $cand} @$pos_cands) {
+            push @$pos_ords, $ord;
         }
         $ord++;
     }
 
-    return ( [$pos_cand], \@neg_cands, \@pos_ords, \@neg_ords );
+    return ( $pos_cands, $neg_cands, $pos_ords, $neg_ords );
 }
 
-sub _find_positive_cand {
+sub _find_positive_cands {
     my ($self, $jnode, $cands) = @_;
     my $non_gram_ante;
 
@@ -79,27 +80,29 @@ sub _find_positive_cand {
         $non_gram_ante = $self->_jump_to_non_gram_ante(
                 $ante, \%cands_hash);
     }
-    return $non_gram_ante;
+    return [] if (!defined $non_gram_ante);
+    return [ $non_gram_ante ];
 }
 
-# jumps to the first non-grammatical antecedent in a coreferential chain
+# jumps to the first non-grammatical antecedent in a coreferential chain which
+# is contained in the list of candidates
 sub _jump_to_non_gram_ante {            
     my ($self, $ante, $cands_hash) = @_;
 
-    if ( defined $cands_hash->{$ante->id} ) {
+    while  (!defined $cands_hash->{$ante->id}) {
         my @gram_antes = $ante->get_coref_gram_nodes;
-        if (@gram_antes == 1) {
-            return $self->_jump_to_non_gram_ante($gram_antes[0], $cands_hash);
+        if (@gram_antes > 0) {
+            $ante = $gram_antes[0];
         }
-        elsif (@gram_antes > 1) {
+#        elsif (@gram_antes > 1) {
             # co delat v pripade Adama s Evou?
-            return;
-        }
+#            return;
+#       }
         else {
-            return $ante;
+            return undef;
         }
     }
-    return;
+    return $ante;
 }
 
 # TODO doc

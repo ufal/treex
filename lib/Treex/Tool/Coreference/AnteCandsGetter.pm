@@ -16,7 +16,7 @@ sub get_pos_neg_candidates {
 
     my $cands  = $self->_select_all_cands($anaph);
     my $antecs = $self->_get_antecedents($anaph);
-    return $self->_split_pos_neg_cands($cands, $antecs);
+    return $self->_split_pos_neg_cands($anaph, $cands, $antecs);
 }
 
 sub _get_antecedents {
@@ -44,7 +44,7 @@ sub _add_following_antecs {
             }
             if ( !(grep {$_ == $node} @$p_antecs) && ($node ne $first_anaph)) {
                 push @$p_antecs, $node;                                                       
-                $self->_get_antec_ids($node, $p_antecs, $first_anaph);
+                $self->_add_following_antecs($node, $p_antecs, $first_anaph);
             }
             else {
 #               print TredMacro::FileName() . "##$node->{aca_sentnum}.$node->{deepord}\n";

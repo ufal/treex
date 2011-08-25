@@ -1,8 +1,8 @@
 package Treex::Tool::Coreference::PronCorefFeatures;
 
+use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
-use MooseX::SemiAffordanceAccessor;
 
 
 my $b_true = '1';
@@ -25,6 +25,14 @@ has 'ewn_classes_path' => (
     isa         => 'Str',
     default     => 
         'data/models/coreference/CS/features/noun_to_ewn_top_ontology.tsv',
+);
+
+has 'feature_names' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'ArrayRef[Str]',
+    lazy        => 1,
+    builder     => '_build_feature_names',
 );
 
 has '_cnk_freqs' => (
@@ -58,11 +66,56 @@ has '_np_freq' => (
 # building other attributes. Thus, _cnk_freqs and _ewn_classes are defined as
 # lazy, i.e. they are built during their first access. However, we wish all
 # models to be loaded while initializing a block. Following hack ensures it.
+# For an analogous reason feature_names are accessed here as well. 
 sub BUILD {
     my ($self) = @_;
 
     $self->_cnk_freqs;
     $self->_ewn_classes;
+    $self->_build_feature_names;
+}
+
+sub _build_feature_names {
+    my ($self) = @_;
+
+    my @feat_names = qw(
+       c_sent_dist        c_clause_dist         c_file_deepord_dist
+       c_cand_ord
+       
+       c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
+       c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
+       b_cand_akt         b_anaph_akt           b_akt_agree 
+       b_cand_subj        b_anaph_subj          b_subj_agree
+       
+       c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
+       c_cand_num         c_anaph_num           b_num_agree               c_join_num
+       c_cand_apos        c_anaph_apos                                    c_join_apos
+       c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
+       c_cand_agen        c_anaph_agen                                    c_join_agen
+       c_cand_anum        c_anaph_anum                                    c_join_anum
+       c_cand_acase       c_anaph_acase                                   c_join_acase
+       c_cand_apossgen    c_anaph_apossgen                                c_join_apossgen
+       c_cand_apossnum    c_anaph_apossnum                                c_join_apossnum
+       c_cand_apers       c_anaph_apers                                   c_join_apers
+       
+       b_cand_coord       b_app_in_coord
+       c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
+       c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
+                                                b_epar_lemma_agree        c_join_epar_lemma
+                                                                          c_join_clemma_aeparlemma
+       c_cand_tfa         c_anaph_tfa           b_tfa_agree               c_join_tfa
+       b_sibl             b_coll                r_cnk_coll
+       r_cand_freq                            
+       b_cand_pers
+
+    );
+    
+    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
+    foreach my $class (@{$all_c}) {
+        my $coref_class = "b_" . $class;
+        push @feat_names, $coref_class;
+    }
+    return \@feat_names;
 }
 
 sub _build_cnk_freqs {

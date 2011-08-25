@@ -74,7 +74,7 @@ sub _build_ante_cands_selector {
 # according to rule presented in Nguy et al. (2009)
 # nodes with the t_lemma #PersPron and third person in gram/person
 sub _is_anaphoric {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
 
     return ( $t_node->t_lemma eq '#PersPron' && $t_node->gram_person eq '3' );
 }
@@ -93,12 +93,14 @@ sub _get_ante_cands {
 sub _create_instances {
     my ( $self, $anaphor, $ante_cands, $ords ) = @_;
 
+
     if (!defined $ords) {
-        $ords = [ 1 .. scalar @$ante_cands ];
+        $ords = [ 1 .. @$ante_cands ];
     }
 
     my $instances;
-    for (my $i; $i < @$ante_cands; $i++) {
+    print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
+    for (my $i = 0; $i < @$ante_cands; $i++) {
         my $cand = $ante_cands->[$i];
         my $fe = $self->_feature_extractor;
         my $features = $fe->extract_features( $cand, $anaphor, $ords->[$i] );
@@ -130,7 +132,7 @@ sub process_tnode {
 
     return if ( $t_node->is_root );
 
-    if ( _is_anaphoric($t_node) ) {
+    if ( $self->_is_anaphoric($t_node) ) {
 
         my $ante_cands = $self->_get_ante_cands($t_node);
 
