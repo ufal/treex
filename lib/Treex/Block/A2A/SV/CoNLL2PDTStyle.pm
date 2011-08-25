@@ -15,12 +15,19 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
-    #$self->attach_final_punctuation_to_root($a_root);
+    $self->attach_final_punctuation_to_root($a_root);
     #$self->lift_noun_phrases($a_root);
-    #$self->restructure_coordination($a_root);
+    $self->restructure_coordination($a_root);
     #$self->mark_deficient_clausal_coordination($a_root);
     #$self->check_afuns($a_root);
+    $self->deprel_to_afun($a_root); # must follow coord. restructuring, probably executed twice now
 }
+
+
+my %pos2afun = (
+    prep => 'AuxP',
+);
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -44,7 +51,7 @@ sub deprel_to_afun
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
-        my $afun = 'NR';
+        my $afun;
 
         # Dependency of the main verb on the artificial root node.
         if ( $deprel eq 'ROOT' )
@@ -62,11 +69,13 @@ sub deprel_to_afun
         # Coordinating conjunction
         elsif ( $deprel eq '++' )
         {
+            $afun = 'Coord';
         }
 
         # Conjunctional adverbial
         elsif ( $deprel eq '+A' )
         {
+            $afun = 'Adv';
         }
 
         # Coordination at main clause level
@@ -77,6 +86,7 @@ sub deprel_to_afun
         # Other adverbial
         elsif ( $deprel eq 'AA' )
         {
+            $afun = 'Adv';
         }
 
         # Agent
@@ -92,11 +102,13 @@ sub deprel_to_afun
         # Nominal (adjectival) pre-modifier
         elsif ( $deprel eq 'AT' )
         {
+            $afun = 'Atr';
         }
 
         # Contrastive adverbial
         elsif ( $deprel eq 'CA' )
         {
+            $afun = 'Adv';
         }
 
         # Doubled function
@@ -107,6 +119,7 @@ sub deprel_to_afun
         # Determiner
         elsif ( $deprel eq 'DT' )
         {
+            $afun = 'AuxA';
         }
 
         # Relative clause in cleft
@@ -127,6 +140,7 @@ sub deprel_to_afun
         # Other nominal post-modifier
         elsif ( $deprel eq 'ET' )
         {
+            $afun = 'Atr';
         }
 
         # Dummy object
@@ -137,6 +151,7 @@ sub deprel_to_afun
         # Dummy subject
         elsif ( $deprel eq 'FS' )
         {
+            $afun = 'Sb';
         }
 
         # Finite predicate verb
@@ -167,21 +182,25 @@ sub deprel_to_afun
         # Comma
         elsif ( $deprel eq 'IK' )
         {
+            $afun = 'AuxX';
         }
 
         # Infinitive marker
         elsif ( $deprel eq 'IM' )
         {
+            $afun = 'AuxV';
         }
 
         # Indirect object
         elsif ( $deprel eq 'IO' )
         {
+            $afun = 'Obj';
         }
 
         # Period
         elsif ( $deprel eq 'IP' )
         {
+            $afun = 'AuxK'; # approx.
         }
 
         # Colon
@@ -207,6 +226,7 @@ sub deprel_to_afun
         # Exclamation mark
         elsif ( $deprel eq 'IU' )
         {
+            $afun = 'AuxK';
         }
 
         # Nonfinite verb
@@ -237,11 +257,13 @@ sub deprel_to_afun
         # Comparative adverbial
         elsif ( $deprel eq 'KA' )
         {
+            $afun = 'Adv';
         }
 
         # Attitude adverbial
         elsif ( $deprel eq 'MA' )
         {
+            $afun = 'Adv';
         }
 
         # Macrosyntagm
@@ -252,6 +274,7 @@ sub deprel_to_afun
         # Negation adverbial
         elsif ( $deprel eq 'NA' )
         {
+            $afun = 'Adv';
         }
 
         # Object adverbial
@@ -262,16 +285,19 @@ sub deprel_to_afun
         # Other object
         elsif ( $deprel eq 'OO' )
         {
+            $afun = 'Obj';
         }
 
         # Verb particle
         elsif ( $deprel eq 'PL' )
         {
+            $afun = 'AuxV';
         }
 
         # Preposition
         elsif ( $deprel eq 'PR' )
         {
+            $afun = 'AuxP';
         }
 
         # Predicative attribute
@@ -282,16 +308,19 @@ sub deprel_to_afun
         # Place adverbial
         elsif ( $deprel eq 'RA' )
         {
+            $afun = 'Adv';
         }
 
         # Subjective predicative complement
         elsif ( $deprel eq 'SP' )
         {
+            $afun = 'Atv';
         }
 
         # Other subject
         elsif ( $deprel eq 'SS' )
         {
+            $afun = 'Sb';
         }
 
         # Paragraph
@@ -302,16 +331,19 @@ sub deprel_to_afun
         # Time adverbial
         elsif ( $deprel eq 'TA' )
         {
+            $afun = 'Adv';
         }
 
         # Subordinating conjunction
         elsif ( $deprel eq 'UK' )
         {
+            $afun = 'AuxC';
         }
 
         # Varslande adverbial
         elsif ( $deprel eq 'VA' )
         {
+            $afun = 'Adv';
         }
 
         # Infinitive object complement
@@ -363,6 +395,7 @@ sub deprel_to_afun
         # Subordinate clause minus subordinating conjunction
         elsif ( $deprel eq 'BS' )
         {
+            $afun = 'Adv';
         }
 
         # Second conjunct (sister of conjunction) in binary branching analysis
@@ -383,15 +416,55 @@ sub deprel_to_afun
         # Complement of preposition
         elsif ( $deprel eq 'PA' )
         {
+            $afun = 'Adv';
         }
 
         # Verb group
         elsif ( $deprel eq 'VG' )
         {
+            $afun = 'Atv';
         }
+
+        $afun = $afun || $pos2afun{$pos} || 'NR';
         $node->set_afun($afun);
     }
 }
+
+
+sub restructure_coordination {
+    my ($self, $root) = @_;
+
+    foreach my $last_member (grep {$_->conll_deprel =~ /^(CC|\+F)/ and
+                                       not grep {$_->conll_deprel =~ /^(CC|\+F)/} $_->get_children}
+                                 map {$_->get_descendants} $root->get_children) {
+
+        my ($coord_root) = (grep {$_->conll_deprel eq '++'} $last_member->get_children,
+                            grep {$_->conll_deprel eq 'IK'} $last_member->get_children);
+
+        if ($coord_root) {
+
+            # climbing up to collect coordination members
+            my @members = ( $last_member );
+            my $node = $last_member;
+            while ( $node->conll_deprel =~ /^(CC|\+F)/ ) {
+                $node = $node->get_parent;
+                push @members, $node;
+            }
+
+            # TODO: rehanging commas in multiple coordinations
+
+            $coord_root->set_parent($members[-1]->get_parent);
+            $coord_root->set_afun('Coord');
+
+            foreach my $member (@members) {
+                $member->set_parent($coord_root);
+                $member->set_is_member(1);
+                $member->set_conll_deprel($members[-1]->conll_deprel);
+            }
+        }
+    }
+}
+
 
 1;
 
@@ -406,5 +479,5 @@ the Prague Dependency Treebank. Converts tags and restructures the tree.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
