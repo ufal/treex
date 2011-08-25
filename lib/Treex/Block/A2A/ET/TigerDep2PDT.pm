@@ -38,16 +38,38 @@ sub convert_coordination {
     }
 
     if ($parent->tag !~ /^(?:conj|punc)/) {
-        log_warn(join "\t",
+        if(my $coord_list = $node->get_root->wild->{coord}) {
+            for my $coord_nodes (@$coord_list) {
+                next unless grep $_ eq $node->id, @$coord_nodes;
+                my @members = grep {
+                    my $id = $_->id;
+                    grep $_ eq $id, @$coord_nodes
+                } $node->get_root->get_descendants({ordered => 1});
+                my $coord = $members[-2]->get_descendants({last_only => 1});
+                if ($coord->tag !~ /^punc/) {
+                    log_warn("No $coord\t" . $node->get_address);
+                } else {
+                    $coord->set_parent($members[-1]->parent);
+                    $coord->set_afun('Coord');
+                    $_->set_parent($coord) for @members;
+                    $_->set_is_member(1) for @members;
+                    $_->set_afun($members[-1]->afun)
+                        for @members[0 .. $#members-1];
+                }
+            }
+        } else {
+            log_warn(join "\t",
                  "Invalid Coord",
                  $parent->tag,
                  $parent->get_address);
-        return;
+                return;
+        }
+    } else {
+        my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
+        $_->set_afun($node->parent->afun) for $node, @siblings;
+        $_->set_is_member(1) for $node, @siblings;
+        $parent->set_afun('Coord');
     }
-    my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
-    $_->set_afun($node->parent->afun) for $node, @siblings;
-    $_->set_is_member(1) for $node, @siblings;
-    $parent->set_afun('Coord');
 } # convert_coordination
 
 #------------------------------------------------------------------------------
@@ -79,7 +101,7 @@ sub set_afun {
     } elsif ('A' eq $func) {
         $afun = 'Adv';
 
-    } elsif ('O' eq $func) {
+    } elsif (grep $_ eq $func, qw/O DO/) {
         $afun = 'Obj';
 
     } elsif ('S' eq $func) {
@@ -93,7 +115,7 @@ sub set_afun {
         log_info("Pnom under nonverb\t" . $achild->get_address)
             unless $ahead->tag =~ m{^v[-/]};
 
-    } elsif ('FST' eq $func) {
+    } elsif (grep $_ eq $func,qw/FST EM QM/) {
         $afun = 'AuxK';
         $achild->set_parent($achild->get_root);
 
@@ -139,7 +161,7 @@ sub set_afun {
         }
 
     } elsif (grep $_ eq $func, qw/CO D/
-             and $ahead->tag =~ /^(?:conj|punc)/) {
+             and $ahead->tag =~ m{^(?:conj|punc|v[/-])}) {
         $afun = 'AuxY';
 
     # verbal particle (similar to preposition in English phrasal
