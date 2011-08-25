@@ -1,6 +1,8 @@
 package Treex::Core::Common;
-use utf8;
 use Moose;
+use 5.008;
+
+use utf8;
 use Moose::Exporter;
 use Moose::Util::TypeConstraints;
 use MooseX::SemiAffordanceAccessor::Role::Attribute;

@@ -2,7 +2,7 @@ package Treex::Core::Run;
 use strict;
 use warnings;
 
-use 5.6.0;
+use 5.008;
 use Treex::Core::Common;
 use Treex::Core;
 use MooseX::SemiAffordanceAccessor;
@@ -212,6 +212,8 @@ sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
 
+
+#gets info about version of treex and perl
 sub get_version {
     my $perl_v         = $^V;
     my $perl_x         = $^X;
@@ -497,10 +499,11 @@ sub _create_job_scripts {
     if ( !-t STDIN ) {
         my $stdin_file = "$workdir/input";
         $input = "cat $stdin_file | ";
-        open my $TEMP, '>', $stdin_file;
+        open my $TEMP, '>', $stdin_file or log_fatal("Cannot create file $stdin_file to store input: $!");
         while (<STDIN>) {
             print $TEMP $_;
         }
+        close $TEMP;
     }
 
     foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
@@ -860,7 +863,7 @@ TODO:
 * modules are just reloaded, no constructors are called yet
 
 
-=for Pod::Coverage BUILD treex
+=for Pod::Coverage BUILD treex get_version
 
 =encoding utf-8
 

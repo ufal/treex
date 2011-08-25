@@ -2,6 +2,7 @@ package Treex::Core::Resource;
 use strict;
 use warnings;
 
+use 5.010;
 #use Moose;
 #use Treex::Core::Common;
 use LWP::Simple;

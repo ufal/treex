@@ -22,9 +22,9 @@ if ( $exit_code != 0 ) {
     use Treex::Core::Config;
     use Cwd qw(realpath);
     $runner_cmd = realpath( Treex::Core::Config::lib_core_dir() . '/../../../bin/treex' );
-    if ( !-x $runner_cmd ) {
-        $runner_cmd = realpath( Treex::Core::Config::lib_core_dir() . '/../../../../bin/treex' );
-    }
+#    if ( !-x $runner_cmd ) {
+#        $runner_cmd = realpath( Treex::Core::Config::lib_core_dir() . '/../../../../bin/treex' );
+#    }
     $skip = !-x $runner_cmd;
 }
 

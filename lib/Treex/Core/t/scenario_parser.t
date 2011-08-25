@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use 5.008;
+
 use constant {
     OK     => 'ALL BLOCKS SUCCESSFULLY LOADED',
     CANNOT => 'Cannot parse',
