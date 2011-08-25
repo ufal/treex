@@ -28,6 +28,15 @@ sub BUILD {
     return;
 }
 
+## some nodes have id that starts with -, it is invalid in xml and does
+## not work with ttred.
+sub fix_id {
+    my $id = shift;
+    if (0 == index $id, '-') {
+        $id = "i$id";
+    }
+    return $id;
+} # fix_id
 
 sub next_document {
     my ($self) = @_;
@@ -46,15 +55,18 @@ sub next_document {
               foreach my $nonterminal ($sentence->descendants('nt')) {
                   my $ch = $ptree->create_nonterminal_child();
                   apply_all_roles($ch, 'Treex::Core::WildAttr');
-                  $ch->set_id($nonterminal->{att}{id});
+                  $ch->set_id(fix_id($nonterminal->{att}{id}));
                   $ch->wild->{tiger_phrase} = $nonterminal->{att}{cat};
-                  push @edges, [ $ch, @{ $_->{att} }{qw/idref label/} ]
+                  push @edges, [ $ch,
+                                 fix_id($_->{att}{idref}),
+                                 $_->{att}{label},
+                               ]
                       for $nonterminal->children('edge');
               }
               foreach my $terminal ($sentence->descendants('t')) {
                   my $ch = $ptree->create_terminal_child();
                   apply_all_roles($ch, 'Treex::Core::WildAttr');
-                  $ch->set_id($terminal->{att}{id});
+                  $ch->set_id(fix_id($terminal->{att}{id}));
                   $ch->set_form($terminal->{att}{word});
                   $ch->set_lemma($terminal->{att}{lemma});
                   $ch->wild->{pos} = $terminal->{att}{pos};
@@ -62,7 +74,8 @@ sub next_document {
               }
               foreach my $edge (@edges) {
                   my ($parent, $child_id, $label) = @$edge;
-                  my ($child) = grep $child_id eq $_->id, $ptree->descendants;
+                  my ($child) = grep $child_id eq fix_id($_->id),
+                                $ptree->descendants;
                   $child->set_parent($parent);
                   $child->set_is_head($label);
               }
