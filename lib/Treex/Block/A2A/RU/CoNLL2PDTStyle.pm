@@ -13,12 +13,25 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'syntagrus' );
+    $self->backup_zone($zone);
+    my $a_root = $zone->get_atree();
 
+    $self->convert_tags( $a_root, 'syntagrus' );
     $self->attach_final_punctuation_to_root($a_root);
+    $self->fill_root_afun($a_root);
     $self->restructure_coordination($a_root);
     $self->deprel_to_afun($a_root);
     $self->check_afuns($a_root);
+}
+
+
+sub fill_root_afun {
+    my $self = shift;
+    my $a_root = shift;
+
+    foreach my $ch ($a_root->get_descendants) {
+        $ch->set_conll_deprel('Pred') if !$ch->conll_deprel;
+    }
 }
 
 
@@ -27,49 +40,37 @@ sub restructure_coordination {
     my $a_root = shift;
     
     foreach my $a_node ( $a_root->get_descendants() ) {
-        if ( $a_node->conll_deprel && $a_node->conll_deprel =~ /^(сент-соч|сочин)$/ ) {
-            my $coord_type = $1;
-            my $fdr = $1;
-            my $common_parent = $a_node->get_parent->get_parent;
-            my $common_deprel = $a_node->get_parent->conll_deprel;
-            my @members = ( $a_node->get_parent );
+        if ( $a_node->conll_deprel =~ /^(сент-соч|сочин|ком-сочин|соч-союзн)$/ ) {
             my $conjunction;
-            my $last_member = $a_node;
-            while ( $last_member ) {
-                if ( $last_member->tag =~ /^J\^/ ) {
-                    $conjunction = $last_member;
-                    $fdr = 'соч-союзн';
+            my $parent = $a_node->get_parent->get_parent;
+            my @members = ($a_node->get_parent);
+#            $conjunction = $members[0] if $members[0]->tag =~ /^J\^/;
+            my $current_node = $a_node;
+            while ($current_node) {
+                if ($current_node->tag =~ /^J\^/) {
+                    $conjunction = $current_node;
                 }
                 else {
-                    push @members, $last_member;
+                    push @members, $current_node;
                 }
-                my $found = 0;
-                foreach my $child ($last_member->get_children) {
-                    if ( $child->conll_deprel eq $fdr ) {
-                        log_warn("More than one coordination member in the same level.") if ( $found );
-                        $last_member = $child;
-                        $found = 1;
+                my @children = $current_node->get_children;
+                last if !@children;
+                $current_node = undef;
+                foreach my $child (@children) {
+                    if ($child->conll_deprel =~ /^(сент-соч|сочин|ком-сочин|соч-союзн)$/) {
+                        $current_node = $child;
+                        last;
                     }
                 }
-                $last_member = undef if not $found;
             }
-            if ( $conjunction && $common_parent ) {
-                $conjunction->set_parent($common_parent);
-                foreach my $member (@members) {
-                    $member->set_conll_deprel($conjunction->conll_deprel);
-                    $member->set_parent($conjunction);
-                    $member->set_is_member(1);
-                }
+            if ($conjunction) {
                 $conjunction->set_conll_deprel('Coord');
+                $conjunction->set_parent($parent);
             }
-            elsif (not $common_parent) {
-                log_warn("Coordination members have no parent node.");
-            }
-            else {
-                foreach my $member (@members) {
-                    #$member->set_conll_deprel('???');
-                    $member->set_parent($common_parent);
-                }
+            foreach my $member (@members) {
+                $member->set_parent($conjunction ? $conjunction : $parent);
+                $member->set_conll_deprel($members[0]->conll_deprel);
+                $member->set_is_member(1);
             }
         }
     }
@@ -89,30 +90,31 @@ my %deprel2afun = ( 'предик' => 'Sb',
                     '5-компл' => 'Obj',
                     'адр-присв' => 'Obj',
                     'Coord' => 'Coord',
+                    'Pred' => 'Pred',
                   );
 
 
 sub deprel_to_afun {
 
-    my $self       = shift;
-    my $a_root       = shift;
+    my $self   = shift;
+    my $a_root = shift;
 
-    # swich deprels for preposition phrases
-    foreach my $node ($a_root->get_descendants()) {
-        if ($node->conll_deprel && $node->conll_deprel eq 'предл') {
-            my $parent = $node->get_parent;
-            if ($parent->conll_deprel && $parent->conll_deprel eq 'предл') {
-                log_warn('Two prepositions');
-                next;
+    # switch deprels for preposition phrases
+    foreach my $node ($a_root->get_descendants) {
+        if ($node->tag =~ /^RR/) {
+            my $deprel = $node->conll_deprel;
+            $node->set_conll_deprel('предл');
+            foreach my $child ($node->get_children) {
+                $child->set_conll_deprel($deprel) if $child->conll_deprel eq 'предл' && $deprel ne 'предл';
             }
-            $node->set_conll_deprel($parent->conll_deprel);
-            $parent->set_conll_deprel('предл');
         }
     }
-
     foreach my $node ($a_root->get_descendants) {
-        if ($node->conll_deprel && $deprel2afun{$node->conll_deprel}) {
+        if ($deprel2afun{$node->conll_deprel}) {
             $node->set_afun($deprel2afun{$node->conll_deprel});
+        }
+        elsif ($node->tag =~ /^D/) {
+            $node->set_afun('Adv');
         }
         else {
             $node->set_afun('Atr');
