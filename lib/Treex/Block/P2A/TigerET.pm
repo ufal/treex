@@ -52,13 +52,22 @@ sub process_zone {
                 }
             );
             $anode_from_pnode{$terminal->id} = $anode;
+            $anode->wild->{function} = $terminal->is_head;
             push @anodes, $anode;
         }
         foreach my $pnode (sort { rank($b) <=> rank($a) }
                            $p_root->descendants) {
             if (my @children = $pnode->get_children) {
-                my ($phead) = grep $_->is_head =~ /^(?:[HP]|Vm(?:ain)?|CO)$/,
-                              @children;
+                my @pheads;
+                for my $child (@children) {
+                    push @pheads, $child if $child->is_head =~ /^(?:[HP]|Vm(?:ain)?)$/
+                                            or ('CO' eq $child->is_head
+                                                and grep 'CJT' eq $_->is_head,@children);
+                }
+                log_warn("Too many heads\t"
+                         . join (' ', sort map $_->is_head, @children)
+                         . "\t" . $pnode->get_address) if 1 < @pheads;
+                my $phead = $pheads[0];
                 $phead = $children[0] if 1 == @children;
                 if ($phead) {
                     my $ahead = $anode_from_pnode{$phead->id};
@@ -67,32 +76,18 @@ sub process_zone {
                         my $achild = $anode_from_pnode{$child->id};
                         if ($achild and $ahead) {
                             $achild->set_parent($ahead);
-                            set_afun($achild, $ahead, $child->is_head);
+                            $achild->wild->{function} = $child->is_head;
                         }
                     }
+                } else {
+                    log_warn("No head found\t"
+                             . join (' ', sort map $_->is_head, @children)
+                             . "\t" . $pnode->get_address);
                 }
             }
         }
     }
 } # process_zone
-
-sub set_afun {
-    my ($achild, $ahead, $func) = @_;
-    my $afun;
-    if ('D' eq $func and $ahead->tag =~ m{^(?:n|prop)/}) {
-        $afun = 'Atr';
-    } elsif ('A' eq $func) {
-        $afun = 'Adv';
-    } elsif ('O' eq $func) {
-        $afun = 'Obj';
-    } elsif ('S' eq $func) {
-        $afun = 'Sb';
-    } elsif ('FST' eq $func) {
-        $afun = 'AuxK';
-    }
-    $achild->set_afun($afun) if $afun;
-} # set_afun
-
 
 
 #-------------------------------------------------------------------------------
@@ -103,8 +98,7 @@ sub set_afun {
 
 =item Treex::Block::P2A::TigerET
 
-Converts Estonian Treebank in Tiger format to the style of the Prague
-Dependency Treebank.
+Converts phrase-based Estonian Treebank in Tiger format to dependency format.
 
 =back
 
