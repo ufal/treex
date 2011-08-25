@@ -8,10 +8,21 @@ sub _is_terminal {
     return defined $_[0]->lemma;
 } # _is_terminal
 
+
 sub _terminals {
     my ($p_root) = @_;
     return grep _is_terminal($_), $p_root->get_descendants;
 } # terminals
+
+
+sub _orphans {
+    my ($node, $anode_from_pnode) = @_;
+    my @orphans = map $anode_from_pnode->{$_->id} ? $_
+                      : _orphans($_,$anode_from_pnode),
+                  $node->get_children;
+    return @orphans;
+} # _orphans;
+
 
 { my %rank;
 sub rank {
@@ -25,6 +36,7 @@ sub rank {
     }
     return $rank{$pnode->id};
 }} # rank
+
 
 ## Reads the estonian p-tree, builds corresponding a-tree.
 sub process_zone {
@@ -60,15 +72,21 @@ sub process_zone {
             if (my @children = $pnode->get_children) {
                 my @pheads;
                 for my $child (@children) {
-                    push @pheads, $child if $child->is_head =~ /^(?:[HP]|Vm(?:ain)?)$/
-                                            or ('CO' eq $child->is_head
-                                                and grep 'CJT' eq $_->is_head,@children);
+                    push @pheads, $child
+                        if $child->is_head =~ /^(?:[HP]|Vm(?:ain)?)$/
+                            or ('CO' eq $child->is_head
+                                and grep 'CJT' eq $_->is_head,@children);
                 }
                 log_warn("Too many heads\t"
                          . join (' ', sort map $_->is_head, @children)
                          . "\t" . $pnode->get_address) if 1 < @pheads;
                 my $phead = $pheads[0];
                 $phead = $children[0] if 1 == @children;
+                if (not $phead) {
+                    my @candidates = grep $_->is_head !~ /^(?:--|FST|PNC|B)$/,
+                                @children;
+                    $phead = $candidates[0] if 1 == @candidates;
+                }
                 if ($phead) {
                     my $ahead = $anode_from_pnode{$phead->id};
                     $anode_from_pnode{$pnode->id} = $ahead;
@@ -77,6 +95,12 @@ sub process_zone {
                         if ($achild and $ahead) {
                             $achild->set_parent($ahead);
                             $achild->wild->{function} = $child->is_head;
+                        } elsif ($ahead) {
+                            my @orphans = _orphans($child, \%anode_from_pnode);
+                            log_warn("ORPHANS\t" . scalar @orphans
+                                     . "\t" . $child->get_address);
+                            $anode_from_pnode{$_->id}->set_parent($ahead)
+                                for @orphans;
                         }
                     }
                 } else {
