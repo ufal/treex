@@ -24,11 +24,31 @@ sub tiger2pdt {
     my $a_root = shift;
     for my $anode ($a_root->get_descendants) {
         set_afun($anode, $anode->get_parent, $anode->wild->{function});
+        convert_coordination($anode) if 'CJT' eq $anode->wild->{function};
     }
 } # tiger2pdt
 
+sub convert_coordination {
+    my $node = shift;
+    return if 'NR' ne $node->afun;
+    my $parent = $node->parent;
+    if (grep $_ eq $parent->wild->{function}, qw/CO --/) {
+        $parent->set_afun('Pred');
+        log_warn("Setting Pred for CO\t" . $parent->get_address);
+    }
 
-
+    if ($parent->tag !~ /^(?:conj|punc)/) {
+        log_warn(join "\t",
+                 "Invalid Coord",
+                 $parent->tag,
+                 $parent->get_address);
+        return;
+    }
+    my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
+    $_->set_afun($node->parent->afun) for $node, @siblings;
+    $_->set_is_member(1) for $node, @siblings;
+    $parent->set_afun('Coord');
+} # convert_coordination
 
 #------------------------------------------------------------------------------
 # Copies the original zone so that the user can compare the original and the
@@ -44,27 +64,54 @@ sub backup_zone
 sub set_afun {
     my ($achild, $ahead, $func) = @_;
     my $afun;
-    if ('D' eq $func and $ahead->tag =~ m{^(?:n|prop)/}) {
+    return if 'NR' ne $achild->{afun};
+
+    if (not $func) {
+        if (',' eq $achild->{form}) {
+            $afun = 'AuxX';
+        } else {
+            $afun = 'ExD';
+        }
+
+    } elsif ('D' eq $func and $ahead->tag =~ m{^(?:n|prop|num)/}) {
         $afun = 'Atr';
+
     } elsif ('A' eq $func) {
         $afun = 'Adv';
+
     } elsif ('O' eq $func) {
         $afun = 'Obj';
+
     } elsif ('S' eq $func) {
         $afun = 'Sb';
+
     } elsif ('B' eq $func) {
         $afun = 'AuxY';
+
+    } elsif ('C' eq $func) {
+        $afun = 'Pnom';
+        log_info("Pnom under nonverb\t" . $achild->get_address)
+            unless $ahead->tag =~ m{^v[-/]};
+
     } elsif ('FST' eq $func) {
         $afun = 'AuxK';
+        $achild->set_parent($achild->get_root);
+
     } elsif ('SUB' eq $func) {
         $afun = 'AuxC';
+
     } elsif ('Aneg' eq $func) {
         $afun = 'AuxZ';
+
     } elsif ('D' eq $func
              and $ahead->tag =~ m{^(?:adv|adj)}) {
         $afun = 'Adv';
-    } elsif ('Vmod' eq $func) {
+
+    } elsif (grep $_ eq $func, qw/Vmod Vaux Vph/) {
         $afun = 'AuxV';
+        log_warn("AuxV under nonverb\t" . $achild->get_address)
+            unless $ahead->tag =~ m{^v[-/]};
+
     } elsif ($func =~ /^Vm(?:ain)?$/) {
         if ('AuxS' eq $ahead->afun) {
             $afun = 'Pred';
@@ -73,15 +120,48 @@ sub set_afun {
             $afun = 'AuxV';
         }
 
+    } elsif ('D' eq $func
+             and $ahead->tag =~ m{^(?:prp|pst)/}) {
+        my @children = $ahead->get_children({ordered => 1});
+        warn "@children";
+        if (1 < @children) {
+            $_->set_afun('AuxZ') for @children;
+        }
+        $children[-1]->set_afun($ahead->afun);
+        $ahead->set_afun('AuxP');
+
+    } elsif ('P' eq $func) {
+        if ('AuxS' eq $ahead->afun) {
+            $afun = 'Pred';
+        } else {
+            $afun = 'ExD';
+            log_warn("P under non root\t", $achild->get_address);
+        }
+
+    } elsif (grep $_ eq $func, qw/CO D/
+             and $ahead->tag =~ /^(?:conj|punc)/) {
+        $afun = 'AuxY';
+
+    # verbal particle (similar to preposition in English phrasal
+    # verbs). AuxR used because there are no phrasal verbs in PDT and
+    # no reflexive objects in Estonian.
+    } elsif ('Vpart' eq $func) {
+        $afun = 'AuxR';
+        log_warn("Vpart under non-verb\t" . $achild->get_address)
+            unless $ahead->tag =~ /^v/;
+
     } elsif ('H' eq $func
              and not $achild->get_siblings) {
         $afun = 'ExD';
-    } elsif ('--' eq $func
-             and 'punc/--' eq $achild->tag 
-             and ',' eq $achild->form) {
-        $afun = 'AuxX';
-    }
 
+    } elsif ('--' eq $func
+             and 'punc/--' eq $achild->tag) {
+        if (',' eq $achild->form) {
+            $afun = 'AuxX';
+        } else {
+            $afun = 'AuxG';
+        }
+    }
 
     $achild->set_afun($afun) if $afun;
 } # set_afun
