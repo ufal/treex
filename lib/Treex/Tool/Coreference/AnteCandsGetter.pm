@@ -16,7 +16,7 @@ sub get_pos_neg_candidates {
 
     my $cands  = $self->_select_all_cands($anaph);
     my $antecs = $self->_get_antecedents($anaph);
-    return $self->_split_pos_neg_cands($cands, $antec);
+    return $self->_split_pos_neg_cands($cands, $antecs);
 }
 
 sub _get_antecedents {

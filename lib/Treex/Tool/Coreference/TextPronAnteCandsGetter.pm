@@ -86,7 +86,7 @@ sub _find_positive_cand {
 sub _jump_to_non_gram_ante {            
     my ($self, $ante, $cands_hash) = @_;
 
-    if ( defined $cands_hash->{$antec->id} ) {
+    if ( defined $cands_hash->{$ante->id} ) {
         my @gram_antes = $ante->get_coref_gram_nodes;
         if (@gram_antes == 1) {
             return $self->_jump_to_non_gram_ante($gram_antes[0], $cands_hash);

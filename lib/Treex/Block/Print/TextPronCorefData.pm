@@ -1,4 +1,4 @@
-package Treex::Block::Write::PrintTextPronCorefData;
+package Treex::Block::Print::TextPronCorefData;
 use Treex::Core::Common;
 use MooseX::SemiAffordanceAccessor;
 

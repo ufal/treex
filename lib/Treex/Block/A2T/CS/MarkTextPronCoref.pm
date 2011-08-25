@@ -98,10 +98,10 @@ sub _create_instances {
     }
 
     my $instances;
-    for (my $i; $i < @$ante_cand; $i++) {
+    for (my $i; $i < @$ante_cands; $i++) {
         my $cand = $ante_cands->[$i];
         my $fe = $self->_feature_extractor;
-        my $features = $fe->extract_features( $cand, $anaphor, $ord->[$i] );
+        my $features = $fe->extract_features( $cand, $anaphor, $ords->[$i] );
         $instances->{ $cand->id } = $features;
     }
     return $instances;
