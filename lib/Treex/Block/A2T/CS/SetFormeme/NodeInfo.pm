@@ -120,7 +120,7 @@ sub _find_noncongruent_numeral {
 
     return if ( $self->t->is_coap_root() );
 
-    my %t_children = map { $a = $_->get_lex_anode; $a->id => $_ if $a } $self->t->get_echildren();
+    my %t_children = map { $_->get_lex_anode->id => $_ } grep { $_->get_lex_anode } $self->t->get_echildren();
     my @a_parents = $self->a->get_eparents( { or_topological => 1 } );
 
     foreach my $a_parent (@a_parents) {

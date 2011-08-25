@@ -65,7 +65,7 @@ sub get_eparents {
         my $id = $self->id;
 
         #TODO: log_fatal if !$robust
-        log_warn("The node $id has no effective nor topological parent, using the root");
+        log_warn("The node $id has no effective nor topological parent, using the root", 1);
         return $self->get_root();
     }
 

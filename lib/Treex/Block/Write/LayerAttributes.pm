@@ -56,12 +56,12 @@ sub _get_modified {
 
     if ( my ( $func, $arg ) = $attrib =~ m/^([A-Za-z_0-9:]+)\((.*)\)$/ ) {
 
-        if ( $func =~ m/::./ ) { # an arbitrary function
+        if ( $func =~ m/::./ ) {    # an arbitrary function
             my $package = $func;
             $package =~ s/::[^:]+$//;
             eval "require $package";
         }
-        else { # the 'apply' function from a package under Treex::Block::Write::LayerAttributes
+        else {                      # the 'apply' function from a package under Treex::Block::Write::LayerAttributes
             $func = 'Treex::Block::Write::LayerAttributes::' . $func;
             eval "require $func";
             $func .= '::modify';
@@ -117,6 +117,19 @@ sub _get_data {
         elsif ( $ref eq 'eparents' ) {
             @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
         }
+        elsif ( $ref eq 'eparents' ) {
+            @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
+        }
+        elsif ( $ref eq 'nearest_eparent' ) {
+            @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
+            if ( @nodes > 0 ) {
+                my $nearest = $nodes[0];
+                foreach my $eparent (@nodes) {
+                    $nearest = $eparent if ( abs( $eparent->ord - $node->ord ) < abs( $nearest->ord - $node->ord ) );
+                }
+                @nodes = ($nearest);
+            }
+        }
 
         # alignment relation
         elsif ( $ref eq 'aligned' ) {
@@ -158,6 +171,7 @@ sub _get_data {
 
     # plain attributes
     else {
+
         # special attribute -- address (calling get_address() )
         if ( $attrib eq 'address' ) {
             return $node->get_address();
@@ -166,7 +180,7 @@ sub _get_data {
         # plain attributes
         else {
             my @values = Treex::PML::Instance::get_all( $node, $attrib );
-            
+
             return if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
             return join( ' ', grep { defined($_) } @values );
         }

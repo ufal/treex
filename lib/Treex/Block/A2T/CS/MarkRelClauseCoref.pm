@@ -11,19 +11,21 @@ sub process_tnode {
     # relative pronouns without "coz"
     if ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^.[149JK\?]/ ) {
 
-        my $relclause = $t_node->get_clause_head;
-        my @e_parents = $relclause->get_eparents( { or_topological => 1 } );
-        if ( scalar @e_parents > 1 ) {
-
-            my @depth_sorted = sort { $a->get_depth <=> $b->get_depth } @e_parents;
-            $antec = shift @depth_sorted;
-            while ( ( grep { !$_->is_descendant_of($antec) } @depth_sorted ) > 0 ) {
-                $antec = $antec->get_parent;
+        my $relclause = $t_node->get_clause_head;        
+        if (!$relclause->is_root){ # probably due to parsing errors, this happens from time to time
+            my @e_parents = $relclause->get_eparents( { or_topological => 1 } );
+            if ( scalar @e_parents > 1 ) {
+    
+                my @depth_sorted = sort { $a->get_depth <=> $b->get_depth } @e_parents;
+                $antec = shift @depth_sorted;
+                while ( ( grep { !$_->is_descendant_of($antec) } @depth_sorted ) > 0 ) {
+                    $antec = $antec->get_parent;
+                }
+    
             }
-
-        }
-        else {
-            $antec = $e_parents[0];
+            else {
+                $antec = $e_parents[0];
+            }
         }
     }
 

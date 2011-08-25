@@ -19,7 +19,8 @@ sub BUILD {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } $atree->get_descendants();
+    my @a_nodes = $atree->get_descendants( { ordered => 1 } );
+    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
 
     # get tags
     my ($tags_rf) = $self->_tagger->tag_sentence( \@forms );
@@ -28,7 +29,7 @@ sub process_atree {
     }
 
     # fill tags
-    foreach my $a_node ( $atree->get_descendants ) {
+    foreach my $a_node ( @a_nodes ) {
         $a_node->set_tag( shift @$tags_rf );
     }
 

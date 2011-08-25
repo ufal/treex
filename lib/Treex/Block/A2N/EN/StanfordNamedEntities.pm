@@ -60,7 +60,7 @@ sub process_zone {
         }
 
         # convert from Standford to Prague NE typology
-        $type = $type_for{$type};
+        $type = $type_for{$type} || '0'; # conceal some warnings caused by wrong handling of numbers like "8 1/2" in Stanford NER
 
         # Subsequent words with the same type are treated as one named entity.
         if ( @actual_ids && $last_type ne $type ) {
