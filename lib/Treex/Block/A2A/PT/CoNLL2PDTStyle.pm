@@ -9,8 +9,7 @@ sub process_zone {
     my $a_root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($a_root);
     $self->rehang_coordconj($a_root);
-
-    #$self->rehang_subconj($a_root);
+    $self->rehang_subconj($a_root);
     return;
 }
 
@@ -76,7 +75,7 @@ my $subconj_reverser =
         subscription     => undef,
         nodes_to_reverse => sub {
             my ( $child, $parent ) = @_;
-            return ( $child->afun eq 'AuxC' );
+            return ( $child->afun =~ /Aux[CP]/ && !$child->get_children );
         },
         move_with_parent => sub { 1; },
         move_with_child  => sub { 1; },
@@ -93,7 +92,7 @@ sub rehang_coordconj {
     my ( $self, $root ) = @_;
 
     foreach my $coord (
-        grep { $_->conll_deprel eq 'CO' }
+        grep { $_->afun eq 'Coord' }
         map { $_->get_descendants } $root->get_children
         )
     {
