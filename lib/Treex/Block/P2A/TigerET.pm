@@ -24,6 +24,15 @@ sub _orphans {
 } # _orphans;
 
 
+sub _left_neighbor {
+    my $node = shift;
+    my $parent = $node->get_parent;
+    my @pchildren = $parent->get_children;
+    my $index = 0;
+    $index++ until $pchildren[$index] == $node;
+    return $pchildren[$index - 1];
+} # _left_neighbor
+
 { my %rank;
 sub rank {
     my $pnode = shift;
@@ -75,18 +84,66 @@ sub process_zone {
                     push @pheads, $child
                         if $child->is_head =~ /^(?:[HP]|Vm(?:ain)?)$/
                             or ('CO' eq $child->is_head
-                                and grep 'CJT' eq $_->is_head,@children);
+                                and grep 'CJT' eq $_->is_head, @children);
                 }
                 log_warn("Too many heads\t"
                          . join (' ', sort map $_->is_head, @children)
                          . "\t" . $pnode->get_address) if 1 < @pheads;
-                my $phead = $pheads[0];
+                my $phead = $pheads[-1];
                 $phead = $children[0] if 1 == @children;
+
+                # No head can be found. Try to search only among
+                # "important" nodes.
                 if (not $phead) {
                     my @candidates = grep $_->is_head !~ /^(?:--|FST|PNC|B)$/,
                                 @children;
                     $phead = $candidates[0] if 1 == @candidates;
                 }
+
+                # numerical constructions of type A D
+                if (not $phead
+                    and 2 == @children
+                    and my ($num) = grep { 'A' eq $_->is_head
+                               and 'num' eq $_->wild->{pos}
+                             } @children) {
+                    $phead = $num;
+                }
+
+                # coordination without conjunction is not marked, find
+                # the graphical symbol and make it the coordination
+                my @cjt;
+                if (not $phead
+                    and @cjt = grep 'CJT' eq $_->is_head, @children
+                    and @cjt > 1) {
+                    my $coord = _left_neighbor($cjt[-1]);
+                    if ($coord
+                        and $coord->is_head
+                        and 'punc' eq $coord->wild->{pos}) {
+                        $phead = $coord;
+                    } else {
+                        $phead = $cjt[-1];
+                        push @{ $a_root->wild->{coord} }, [map $_->id, @cjt];
+                    }
+                }
+
+                # no head was found, try to find it by phrase name
+                if (not $phead) {
+                    my $phrase = $pnode->wild->{tiger_phrase};
+                    my %head_of_phrase
+                        = ( np   => 'n',
+                            adjp => 'adj',
+                            acl  => 'A');
+                    my $find = $head_of_phrase{$phrase};
+                    if ($find
+                        and my @found = grep $_->wild->{pos} eq $find
+                                        || $_->is_head eq $find, @children) {
+                        $phead = $found[0] if 1 == @found;
+                        log_info("PHRASE:\t$phrase / $find "
+                                 . scalar @found . "\t"
+                                 . $pnode->get_address);
+                    }
+                }
+
                 if ($phead) {
                     my $ahead = $anode_from_pnode{$phead->id};
                     $anode_from_pnode{$pnode->id} = $ahead;
@@ -95,9 +152,13 @@ sub process_zone {
                         if ($achild and $ahead) {
                             $achild->set_parent($ahead);
                             $achild->wild->{function} = $child->is_head;
+
+                        # The p-node does not project to a-node,
+                        # because there was no head for its
+                        # children. Make the a-head their head.
                         } elsif ($ahead) {
                             my @orphans = _orphans($child, \%anode_from_pnode);
-                            log_warn("ORPHANS\t" . scalar @orphans
+                            log_info("ORPHANS\t" . scalar @orphans
                                      . "\t" . $child->get_address);
                             $anode_from_pnode{$_->id}->set_parent($ahead)
                                 for @orphans;
@@ -105,6 +166,7 @@ sub process_zone {
                     }
                 } else {
                     log_warn("No head found\t"
+                             . $pnode->wild->{tiger_phrase} . ': '
                              . join (' ', sort map $_->is_head, @children)
                              . "\t" . $pnode->get_address);
                 }
