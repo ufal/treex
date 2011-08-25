@@ -122,7 +122,8 @@ sub process_zone {
                         $phead = $coord;
                     } else {
                         $phead = $cjt[-1];
-                        push @{ $a_root->wild->{coord} }, [map $_->id, @cjt];
+                        push @{ $a_root->wild->{coord} },
+                            [map $anode_from_pnode{$_->id}->id, @cjt];
                     }
                 }
 
@@ -147,6 +148,11 @@ sub process_zone {
                 if ($phead) {
                     my $ahead = $anode_from_pnode{$phead->id};
                     $anode_from_pnode{$pnode->id} = $ahead;
+                    if ($ahead and $ahead->wild->{function} =~ /^[DH]$/
+                        and $phead->get_parent->is_head
+                        and $phead->get_parent->is_head !~ /^[DH]$/) {
+                        $ahead->wild->{function} = $phead->get_parent->is_head;
+                    }
                     foreach my $child (grep $_ != $phead, @children) {
                         my $achild = $anode_from_pnode{$child->id};
                         if ($achild and $ahead) {
