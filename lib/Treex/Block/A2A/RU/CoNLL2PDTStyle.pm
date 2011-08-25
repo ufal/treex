@@ -29,8 +29,10 @@ sub fill_root_afun {
     my $self = shift;
     my $a_root = shift;
 
-    foreach my $ch ($a_root->get_descendants) {
-        $ch->set_conll_deprel('Pred') if !$ch->conll_deprel;
+    foreach my $ch ($a_root->get_children) {
+        if (!$ch->conll_deprel) {
+            $ch->set_conll_deprel($ch->tag =~ /^V/ ? 'Pred' : 'ExD');
+        }
     }
 }
 
@@ -43,8 +45,12 @@ sub restructure_coordination {
         if ( $a_node->conll_deprel =~ /^(сент-соч|сочин|ком-сочин|соч-союзн)$/ ) {
             my $conjunction;
             my $parent = $a_node->get_parent->get_parent;
+            next if !$parent;
             my @members = ($a_node->get_parent);
-#            $conjunction = $members[0] if $members[0]->tag =~ /^J\^/;
+            if ($members[0]->tag && $members[0]->tag =~ /^J\^/) {
+                $conjunction = $members[0];
+                @members = ();
+            }
             my $current_node = $a_node;
             while ($current_node) {
                 if ($current_node->tag =~ /^J\^/) {
@@ -68,9 +74,9 @@ sub restructure_coordination {
                 $conjunction->set_parent($parent);
             }
             foreach my $member (@members) {
-                $member->set_parent($conjunction ? $conjunction : $parent);
+                $member->set_parent($conjunction) if $conjunction;
                 $member->set_conll_deprel($members[0]->conll_deprel);
-                $member->set_is_member(1);
+                $member->set_is_member(1) if $conjunction;
             }
         }
     }
@@ -89,8 +95,24 @@ my %deprel2afun = ( 'предик' => 'Sb',
                     '4-компл' => 'Obj',
                     '5-компл' => 'Obj',
                     'адр-присв' => 'Obj',
+                    'обст'     => 'Adv',
+                    'длительн'     => 'Adv',
+                    'кратно-длительн'     => 'Adv',
+                    'дистанц'     => 'Adv',
+                    'обст-тавт'     => 'Adv',
+                    'суб-обст'     => 'Adv',
+                    'об-обст'     => 'Adv',
+                    'суб-копр'     => 'Adv',
+                    'об-копр'     => 'Adv',
+                    'огранич'     => 'Adv',
+                    'вводн'     => 'Adv',
+                    'изъясн'     => 'Adv',
+                    'разъяснит'     => 'Adv',
+                    'примыкат'     => 'Adv',
+                    'уточн'     => 'Adv',
                     'Coord' => 'Coord',
                     'Pred' => 'Pred',
+                    'ExD' => 'ExD',
                   );
 
 
@@ -112,9 +134,6 @@ sub deprel_to_afun {
     foreach my $node ($a_root->get_descendants) {
         if ($deprel2afun{$node->conll_deprel}) {
             $node->set_afun($deprel2afun{$node->conll_deprel});
-        }
-        elsif ($node->tag =~ /^D/) {
-            $node->set_afun('Adv');
         }
         else {
             $node->set_afun('Atr');
