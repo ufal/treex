@@ -52,12 +52,27 @@ sub set_afun {
         $afun = 'Obj';
     } elsif ('S' eq $func) {
         $afun = 'Sb';
+    } elsif ('B' eq $func) {
+        $afun = 'AuxY';
     } elsif ('FST' eq $func) {
         $afun = 'AuxK';
     } elsif ('SUB' eq $func) {
         $afun = 'AuxC';
     } elsif ('Aneg' eq $func) {
         $afun = 'AuxZ';
+    } elsif ('D' eq $func
+             and $ahead->tag =~ m{^(?:adv|adj)}) {
+        $afun = 'Adv';
+    } elsif ('Vmod' eq $func) {
+        $afun = 'AuxV';
+    } elsif ($func =~ /^Vm(?:ain)?$/) {
+        if ('AuxS' eq $ahead->afun) {
+            $afun = 'Pred';
+        } else {
+            log_warn("Main verb not under root\t" . $achild->get_address);
+            $afun = 'AuxV';
+        }
+
     } elsif ('H' eq $func
              and not $achild->get_siblings) {
         $afun = 'ExD';
@@ -79,12 +94,10 @@ sub set_afun {
 
 =over
 
-=item Treex::Block::A2A::FI::CoNLL2PDTStyle
+=item Treex::Block::A2A::ET::TigerDep2PDT
 
-Converts Turku Dependency Treebank trees from CoNLL to the style of
-the Prague Dependency Treebank.
-Morphological tags will be decoded into Interset and to the
-15-character positional tags of PDT.
+Converts Estonian Tiger-like Treebank converted to dependency style to
+the style of the Prague Dependency Treebank.
 
 =back
 
