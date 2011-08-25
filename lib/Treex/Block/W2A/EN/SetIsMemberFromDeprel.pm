@@ -5,7 +5,9 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    $anode->set_is_member( $anode->conll_deprel eq 'COORD' ? 1 : 0 );
+
+    $anode->set_is_member($anode->conll_deprel eq 'COORD' || $anode->is_member || 0);
+
     return 1;
 }
 
