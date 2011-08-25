@@ -212,7 +212,6 @@ sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
 }
 
-
 #gets info about version of treex and perl
 sub get_version {
     my $perl_v         = $^V;
@@ -531,7 +530,9 @@ sub _create_job_scripts {
 sub _run_job_scripts {
     my ($self) = @_;
     my $workdir = $self->workdir;
-    $workdir = "./$workdir" unless '/' eq substr $workdir,0,1;
+    if ( substr $workdir, 0, 1 ne '/' ) {
+        $workdir = "./$workdir";
+    }
     foreach my $jobnumber ( 1 .. $self->jobs ) {
         my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
 
