@@ -9,7 +9,6 @@ has 'segmenters' => (
     default => sub { return {} },
 );
 
-# TODO: even more elegant implementation, avoid string eval
 sub _get_segmenter {
     my $self = shift;
     my $lang = uc shift;
@@ -19,11 +18,19 @@ sub _get_segmenter {
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
     my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
-        my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
+        my $segmenter = eval {
+            my $name = $class;
+            $name =~ s{::}{/}g;
+            require "$name.pm";
+            return $class->new();
+        };
+
+        #my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
         if ($segmenter) {
             $self->segmenters->{$lang} = $segmenter;
             return $segmenter;
-        } else {
+        }
+        else {
             log_info("Failed during creating segmenter $class: $@");
         }
     }
