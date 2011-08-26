@@ -85,6 +85,7 @@ sub restructure_coordination {
 
 my %deprel2afun = ( 'предик' => 'Sb',
                     'предл' => 'AuxP',
+                    'подч-союзн' => 'AuxC',
                     'опред' => 'Atr',
                     'оп-опред' => 'Atr',
                     'аппрокс-порядк' => 'Atr',
@@ -130,7 +131,17 @@ sub deprel_to_afun {
                 $child->set_conll_deprel($deprel) if $child->conll_deprel eq 'предл' && $deprel ne 'предл';
             }
         }
+        elsif ($node->tag =~ /^J\^/) {
+            my $deprel = $node->conll_deprel;
+            foreach my $child ($node->get_children) {
+                if ($child->conll_deprel eq 'подч-союзн' && $deprel ne 'Coord') {
+                    $child->set_conll_deprel($deprel);
+                    $node->set_conll_deprel('подч-союзн');
+                }
+            }
+        }
     }
+
     foreach my $node ($a_root->get_descendants) {
         if ($deprel2afun{$node->conll_deprel}) {
             $node->set_afun($deprel2afun{$node->conll_deprel});
