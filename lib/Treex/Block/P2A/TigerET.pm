@@ -131,13 +131,14 @@ sub process_zone {
                 if (not $phead) {
                     my $phrase = $pnode->wild->{tiger_phrase};
                     my %head_of_phrase
-                        = ( np   => 'n',
-                            adjp => 'adj',
-                            acl  => 'A');
+                        = ( pp   => '^(?:pst|prp)',
+                            np   => '^n',
+                            adjp => '^adj',
+                            acl  => '^A');
                     my $find = $head_of_phrase{$phrase};
                     if ($find
-                        and my @found = grep $_->wild->{pos} eq $find
-                                        || $_->is_head eq $find, @children) {
+                        and my @found = grep $_->wild->{pos} =~ /$find/
+                                        || $_->is_head =~ /$find/, @children) {
                         $phead = $found[0] if 1 == @found;
                         log_info("PHRASE:\t$phrase / $find "
                                  . scalar @found . "\t"
