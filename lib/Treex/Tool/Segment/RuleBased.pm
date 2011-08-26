@@ -2,6 +2,7 @@ package Treex::Tool::Segment::RuleBased;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+#TODO: suspicious, Tool extends Block
 extends 'Treex::Block::W2A::SegmentOnNewlines';
 
 has use_paragraphs => (
@@ -88,6 +89,8 @@ sub get_segments {
 1;
 
 __END__
+
+TODO POD
 
 =over
 

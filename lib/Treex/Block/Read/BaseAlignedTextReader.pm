@@ -53,3 +53,7 @@ sub next_document_texts {
 }
 
 1;
+
+__END__
+
+TODO POD

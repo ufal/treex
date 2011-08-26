@@ -46,6 +46,8 @@ sub process_zone {
 
 __END__
 
+TODO POD
+
 =over
 
 =item Treex::Block::W2A::TokenizeOnWhitespace

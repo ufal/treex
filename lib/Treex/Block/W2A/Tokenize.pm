@@ -69,6 +69,8 @@ sub restore_urls {
 
 __END__
 
+TODO POD
+
 =over
 
 =item Treex::Block::W2A::Tokenize

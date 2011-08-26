@@ -105,6 +105,8 @@ sub process_bundle {
 
 __END__
 
+TODO POD
+
 =over
 
 =item Treex::Block::W2A::ResegmentSentences

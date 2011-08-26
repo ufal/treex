@@ -89,6 +89,8 @@ sub normalize_sentence {
 
 __END__
 
+TODO POD
+
 =over
 
 =item Treex::Block::W2A::SegmentOnNewlines

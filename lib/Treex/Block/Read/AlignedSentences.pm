@@ -40,4 +40,6 @@ sub next_document {
 
 __END__
 
+TODO POD
+
 treex Read::AlignedSentences en=en1.txt,en2.txt cs_ref=cs1.txt,cs2.txt
