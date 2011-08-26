@@ -31,7 +31,7 @@ sub tiger2pdt {
 sub convert_coordination {
     my $node = shift;
     return if 'NR' ne $node->afun;
-    my $parent = $node->parent;
+    my $parent = $node->get_parent;
     if (grep $_ eq $parent->wild->{function}, qw/CO --/) {
         $parent->set_afun('Pred');
         log_warn("Setting Pred for CO\t" . $parent->get_address);
@@ -47,9 +47,12 @@ sub convert_coordination {
                 } $node->get_root->get_descendants({ordered => 1});
                 my $coord = $members[-2]->get_descendants({last_only => 1});
                 if ($coord->tag !~ /^punc/) {
-                    log_warn("No $coord\t" . $node->get_address);
-                } else {
-                    $coord->set_parent($members[-1]->parent);
+                    log_warn("No coord\t" . $node->get_address);
+                    my $higher = $members[-1]->get_parent;
+                    $_->set_parent($higher) for @members;
+                    $_->set_afun($members[-1]->afun) for @members;
+           } else {
+                    $coord->set_parent($members[-1]->get_parent);
                     $coord->set_afun('Coord');
                     $_->set_parent($coord) for @members;
                     $_->set_is_member(1) for @members;
@@ -66,7 +69,7 @@ sub convert_coordination {
         }
     } else {
         my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
-        $_->set_afun($node->parent->afun) for $node, @siblings;
+        $_->set_afun($node->get_parent->afun) for $node, @siblings;
         $_->set_is_member(1) for $node, @siblings;
         $parent->set_afun('Coord');
     }
@@ -95,8 +98,40 @@ sub set_afun {
             $afun = 'ExD';
         }
 
-    } elsif ('D' eq $func and $ahead->tag =~ m{^(?:n|prop|num)/}) {
-        $afun = 'Atr';
+    } elsif ('X' eq $func) {
+        $afun = 'ExD';
+
+    } elsif ('D' eq $func) {
+        if ($ahead->tag =~ m{^(?:prp|pst)/}) {
+            my @children = $ahead->get_children({ordered => 1});
+            if (1 < @children) {
+                $_->set_afun('AuxZ') for @children;
+            }
+            $children[-1]->set_afun($ahead->afun);
+            $ahead->set_afun('AuxP');
+            $ahead = $ahead->get_parent;
+        }
+        if ($ahead->tag =~ m{^(?:n|pro[np]|num)[-/]}) {
+            $afun = 'Atr';
+            if ($ahead->tag =~ /^pron-dem/
+                and $achild->tag =~ /^adv/) {
+                $afun = 'Adv';
+            }
+        } elsif ($ahead->tag =~ /^(?:v|ad[jv])/) {
+            $afun = 'Adv';
+        } elsif (0 == index $ahead->tag, 'conj') {
+            if ($achild->tag =~ /^adv/) {
+                $afun = 'AuxY';
+            } else {
+                my $member = (grep 'CJT' eq $_->wild->{function},
+                              $ahead->get_children)[0];
+                if ($member) {
+                    set_afun($achild, $member, 'D');
+                } else {
+                    $afun = 'ExD';
+                }
+            }
+        }
 
     } elsif ('A' eq $func) {
         $afun = 'Adv';
@@ -112,8 +147,10 @@ sub set_afun {
 
     } elsif ('C' eq $func) {
         $afun = 'Pnom';
-        log_info("Pnom under nonverb\t" . $achild->get_address)
-            unless $ahead->tag =~ m{^v[-/]};
+        if (not $ahead->tag =~ m{^v[-/]}) { 
+            log_info("Pnom under nonverb\t" . $achild->get_address);
+            $afun = 'Atr';
+        }
 
     } elsif (grep $_ eq $func,qw/FST EM QM/) {
         $afun = 'AuxK';
@@ -124,10 +161,6 @@ sub set_afun {
 
     } elsif ('Aneg' eq $func) {
         $afun = 'AuxZ';
-
-    } elsif ('D' eq $func
-             and $ahead->tag =~ m{^(?:adv|adj)}) {
-        $afun = 'Adv';
 
     } elsif (grep $_ eq $func, qw/Vmod Vaux Vph/) {
         $afun = 'AuxV';
@@ -141,16 +174,6 @@ sub set_afun {
             log_warn("Main verb not under root\t" . $achild->get_address);
             $afun = 'AuxV';
         }
-
-    } elsif ('D' eq $func
-             and $ahead->tag =~ m{^(?:prp|pst)/}) {
-        my @children = $ahead->get_children({ordered => 1});
-        warn "@children";
-        if (1 < @children) {
-            $_->set_afun('AuxZ') for @children;
-        }
-        $children[-1]->set_afun($ahead->afun);
-        $ahead->set_afun('AuxP');
 
     } elsif ('P' eq $func) {
         if ('AuxS' eq $ahead->afun) {
