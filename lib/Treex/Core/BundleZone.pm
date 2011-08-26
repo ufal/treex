@@ -214,8 +214,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::BundleZone - zone in a bundle containing a sentence and its
-linguistic representations
+Treex::Core::BundleZone - contains a sentence and its linguistic representations
 
 =head1 SYNOPSIS
 

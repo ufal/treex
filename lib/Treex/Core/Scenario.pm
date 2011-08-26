@@ -290,8 +290,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Scenario - a larger Treex processing unit (composed of the basic 
-treex processing units - blocks)
+Treex::Core::Scenario - a larger Treex processing unit, composed of blocks
 
 =head1 SYNOPSIS
 

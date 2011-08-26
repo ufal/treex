@@ -74,10 +74,11 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Resources
+Treex::Core::Resource
 
 =head1 DESCRIPTION
 
+TODO POD
 resources....
 
 =head1 SUBROUTINES

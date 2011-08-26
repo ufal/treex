@@ -84,7 +84,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Zone
+Treex::Core::Zone - base class for Zones
 
 =head1 DESCRIPTION
 

@@ -722,7 +722,7 @@ sub set_r_attr {
 
 =head1 NAME
 
-Treex::Core::Node
+Treex::Core::Node - smallest unit that holds information in Treex
 
 =head1 DESCRIPTION
 

@@ -75,7 +75,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::WildAttr
+Treex::Core::WildAttr - role for arbitrary atributes of Treex objects
 
 =head1 SYNOPSIS
 
