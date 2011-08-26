@@ -136,6 +136,10 @@ sub set_afun {
     } elsif ('A' eq $func) {
         $afun = 'Adv';
 
+    # not sure about this one (??)
+    } elsif ('DA' eq $func) {
+        $afun = 'Adv';
+
     } elsif (grep $_ eq $func, qw/O DO/) {
         $afun = 'Obj';
 
