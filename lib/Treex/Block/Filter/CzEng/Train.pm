@@ -1,7 +1,7 @@
 package Treex::Block::Filter::CzEng::Train;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block';
+extends 'Treex::Core::Block';
 
 has annotation => (
     isa           => 'Str',
@@ -14,7 +14,7 @@ has outfile => (
     isa           => 'Str',
     is            => 'ro',
     required      => 0,
-    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/maxent",
+    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/model",
     documentation => 'output file for the model'
 );
 
@@ -30,7 +30,7 @@ has classifier_type => (
     isa           => 'Str',
     is            => 'ro',
     required      => '1',
-    documentation => 'classifier type, can be "maxent", TODO'
+    documentation => 'classifier type, can be "maxent", "naive_bayes", "decision_tree"'
 );
 
 has _classifier_obj => (
@@ -42,7 +42,11 @@ has _classifier_obj => (
 sub BUILD {
     my $self = shift;
     if ( $self->{classifier_type} eq "maxent" ) {
-        $self->{_classifier_obj} = new Treex::Block::Filter::CzEng::MaxEnt();
+        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::MaxEnt()->new();
+    } elsif ( $self->{classifier_type} eq "naive_bayes" ) {
+        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::NaiveBayes()->new();
+    } elsif ( $self->{classifier_type} eq "decision_tree" ) {
+        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::DecisionTree()->new();
     } else {
         log_fatal "Unknown classifier type: $self->{classifier_type}";
     }
@@ -83,7 +87,7 @@ sub process_document {
     return 1;
 }
 
-return 1;
+1;
 
 =over
 

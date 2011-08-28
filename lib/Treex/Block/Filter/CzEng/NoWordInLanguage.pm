@@ -47,7 +47,7 @@ sub BUILD
     # # just the English side of the old GIZA++ dictionary
     # my $dictf = "/export/projects/tectomt_shared/resource_data/translation_dictionaries/czeng.eaca.1-1.int.just-lcforms.dict.gz";
     my $dictf = "/net/projects/tectomt_shared/generated_data/extracted_from_BNC/freqlist";
-    log_info "Loading dictionary for en: $dictf\n";
+    log_info "Loading dictionary for en: $dictf";
     my $dicth = my_open($dictf);
     my %dict;
     binmode( $dicth, ":encoding(iso-8859-1)" );
@@ -66,7 +66,7 @@ sub BUILD
 
     {                                                       # Czech dict
         my $dictf = "/net/projects/tectomt_shared/resource_data/czech_wordforms_from_syn.txt.gz";
-        log_info "Loading dictionary for cs: $dictf\n";
+        log_info "Loading dictionary for cs: $dictf";
         my $dicth = my_open($dictf);
         while (<$dicth>) {
             chomp;
