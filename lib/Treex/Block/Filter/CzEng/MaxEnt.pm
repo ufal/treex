@@ -14,7 +14,7 @@ sub init
 
 sub see
 {
-    $maxent->see( $_[0] => $_[1] );
+    $maxent->see( $_[1] => $_[2] );
 }
 
 sub learn
@@ -24,21 +24,21 @@ sub learn
 
 sub predict
 {
-    return $model->predict( $_[0] );
+    return $model->predict( $_[1] );
 }
 
 sub load
 {
     if (defined $model) {
-        $model->load( $_[0] );
+        $model->load( $_[1] );
     } else {
-        $model = AI::MaxEntropy::Model->new( $_[0] );
+        $model = AI::MaxEntropy::Model->new( $_[1] );
     }
 }
 
 sub save
 {
-    $model->save( $_[0] );
+    $model->save( $_[1] );
 }
 
 1;

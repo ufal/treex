@@ -13,7 +13,7 @@ sub init
 
 sub see
 {
-    $nb->add_instance( attributes => %{ _create_hash($_[0]) }, label => $_[1] );
+    $nb->add_instance( attributes => %{ _create_hash($_[1]) }, label => $_[2] );
 }
 
 sub learn
@@ -23,17 +23,17 @@ sub learn
 
 sub predict
 {
-    return $nb->predict( attributes => %{ _create_hash($_[0]) } );
+    return $nb->predict( attributes => %{ _create_hash($_[1]) } );
 }
 
 sub load
 {
-    $nb = Algorithm::NaiveBayes->restore_state( $_[0] );
+    $nb = Algorithm::NaiveBayes->restore_state( $_[1] );
 }
 
 sub save
 {
-    $nb->save_state( $_[0] );
+    $nb->save_state( $_[1] );
 }
 
 sub _create_hash

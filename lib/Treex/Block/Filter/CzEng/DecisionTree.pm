@@ -14,7 +14,7 @@ sub init
 
 sub see
 {
-    $dtree->add_instance( attributes => %{ _create_hash($_[0]) }, result => $_[1] );
+    $dtree->add_instance( attributes => %{ _create_hash($_[1]) }, result => $_[2] );
 }
 
 sub learn
@@ -24,18 +24,18 @@ sub learn
 
 sub predict
 {
-    return $dtree->get_result( attributes => %{ _create_hash($_[0]) } );
+    return $dtree->get_result( attributes => %{ _create_hash($_[1]) } );
 }
 
 sub load
 {
-    $dtree = retrieve($_[0]) or log_fatal "Unable to load file $_[0]";
+    $dtree = retrieve($_[1]) or log_fatal "Unable to load file $_[1]";
 }
 
 sub save
 {
     $dtree->do_purge();
-    store($dtree, $_[0]);
+    store($dtree, $_[1]);
 }
 
 sub _create_hash

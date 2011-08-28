@@ -5,7 +5,7 @@ use Treex::Block::Filter::CzEng::MaxEnt;
 use Treex::Block::Filter::CzEng::NaiveBayes;
 use Treex::Block::Filter::CzEng::DecisionTree;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Filter::CzEng::Common';
 
 has annotation => (
     isa           => 'Str',
@@ -75,18 +75,20 @@ sub process_document {
     $self->{_classifier_obj}->save( $self->{outfile} );
 
     # evaluate
-    my ( $x, $p, $tp );
+    my ( $x, $p, $tp ) = qw( 0 0 0 );
     for ( my $i = $self->{use_for_training}; $i < scalar @bundles; $i++ ) {
         my @features = $self->get_features($bundles[$i]);
         my $anot     = <$anot_hdl>;
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
-        $x++ if $anot eq 'x';
         my $prediction = $self->{_classifier_obj}->predict( \@features );
+        if ($anot eq 'x') {
+            $x++;
+            $tp++ if $prediction eq 'x';
+        }
         $p++ if $prediction eq 'x';
-        $tp++ if $prediction eq $anot;
     }
-    log_info sprintf( "Precision = %.03f, Recall = %.03f", $tp / $p, $tp / $x );
+    log_info sprintf( "Precision = %.03f, Recall = %.03f", $p ? $tp / $p : 0, $x ? $tp / $x : 0);
 
     return 1;
 }
