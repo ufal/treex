@@ -9,9 +9,10 @@ sub process_bundle {
 
     my @en = $bundle->get_zone('en')->get_atree->get_descendants;
     my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
-    
-    my $en_has_plural = 1 if grep { $_ =~ m/^N.S/ } map { $_->get_attr("tag") } @en;
-    my $cs_has_plural = 1 if grep { $_ =~ m/^[NV]..P/ } map { $_->get_attr("tag") } @cs;
+   
+    my ( $en_has_plural, $cs_has_plural ) = qw( 0 0 );
+    $en_has_plural = 1 if grep { $_ =~ m/^N.S/ } map { $_->get_attr("tag") } @en;
+    $cs_has_plural = 1 if grep { $_ =~ m/^[NV]..P/ } map { $_->get_attr("tag") } @cs;
 
     $self->add_feature( $bundle, "inconsistent_number" ) if $en_has_plural != $cs_has_plural;
 

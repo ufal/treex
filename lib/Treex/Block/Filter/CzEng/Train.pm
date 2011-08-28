@@ -1,6 +1,10 @@
 package Treex::Block::Filter::CzEng::Train;
 use Moose;
 use Treex::Core::Common;
+use Treex::Block::Filter::CzEng::MaxEnt;
+use Treex::Block::Filter::CzEng::NaiveBayes;
+use Treex::Block::Filter::CzEng::DecisionTree;
+
 extends 'Treex::Core::Block';
 
 has annotation => (
@@ -42,11 +46,11 @@ has _classifier_obj => (
 sub BUILD {
     my $self = shift;
     if ( $self->{classifier_type} eq "maxent" ) {
-        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::MaxEnt()->new();
+        $self->{_classifier_obj} = new Treex::Block::Filter::CzEng::MaxEnt();
     } elsif ( $self->{classifier_type} eq "naive_bayes" ) {
-        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::NaiveBayes()->new();
+        $self->{_classifier_obj} = new Treex::Block::Filter::CzEng::NaiveBayes();
     } elsif ( $self->{classifier_type} eq "decision_tree" ) {
-        $self->{_classifier_obj} = Treex::Block::Filter::CzEng::DecisionTree()->new();
+        $self->{_classifier_obj} = new Treex::Block::Filter::CzEng::DecisionTree();
     } else {
         log_fatal "Unknown classifier type: $self->{classifier_type}";
     }

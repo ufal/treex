@@ -1,7 +1,6 @@
 package Treex::Block::Filter::CzEng::POSRatio;
 use Moose;
 use Treex::Core::Common;
-use List::Util qw( sum );
 
 extends 'Treex::Block::Filter::CzEng::Common';
 
@@ -24,10 +23,10 @@ sub process_bundle {
 
     for my $en_pos_tag (@watched_en) {
         my $cs_pos_tag = $counterparts_cs{$en_pos_tag};
-        my $en_sum = sum grep { $_ eq $en_pos_tag } @en_pos;
-        my $cs_sum = sum grep { $_ eq $cs_pos_tag } @cs_pos;
+        my $en_sum = scalar grep { $_ eq $en_pos_tag } @en_pos;
+        my $cs_sum = scalar grep { $_ eq $cs_pos_tag } @cs_pos;
         $self->add_feature( $bundle, "posratio_$en_pos_tag" . "_$cs_pos_tag="
-                            . sprintf( "%.01f", $cs_sum / $en_sum ) );                
+                            . sprintf( "%.01f", $en_sum ? $cs_sum / $en_sum : 0 ) );                
     }
 
     return 1;
