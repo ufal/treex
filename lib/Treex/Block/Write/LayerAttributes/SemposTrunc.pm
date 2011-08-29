@@ -42,7 +42,7 @@ Treex::Block::Write::LayerAttributes::SemposTrunc
 A text modifier for blocks using L<Treex::Block::Write::LayerAttributes> which takes the C<gram/sempos> argument and
 returns two values: the first field of the argument and the first + second field.
 
-=head1 AUTHORS
+=head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 

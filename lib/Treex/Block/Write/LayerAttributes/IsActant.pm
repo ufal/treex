@@ -1,0 +1,53 @@
+package Treex::Block::Write::LayerAttributes::IsActant;
+use Moose;
+use Treex::Core::Common;
+
+with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
+
+has '+return_values_names' => ( default => sub { [ '' ] } );
+
+# Return the t-lemma and sempos
+sub modify {
+
+    my ($functor) = @_;
+
+    return if ( !defined($functor) );
+
+    return '0' if ( $functor !~ m/^(ACT|PAT|ADDR|ORIG|EFF)$/ );
+    return '1';
+}
+
+1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::Write::LayerAttributes::IsActant
+
+=head1 SYNOPSIS
+
+    my $functor = 'RSTR';   
+
+    print Treex::Block::Write::LayerAttributes::IsActant::modify( $parent_tlemma, $functor ); # prints '0'
+    
+    my $functor = 'ACT';
+    
+    print Treex::Block::Write::LayerAttributes::IsActant::modify( $parent_tlemma, $functor ); # prints '1'  
+
+=head1 DESCRIPTION
+
+A text modifier for blocks using L<Treex::Block::Write::LayerAttributes> which takes the C<functor> and returns
+a 0/1 value indicating whether the given functor is an actant (ACT, PAT, ORIG, ADDR, EFF).
+
+=head1 AUTHOR
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

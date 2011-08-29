@@ -58,7 +58,7 @@ sub BUILD {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
             # find the package and check the role
-            eval "require $pckg" || log_fatal('Cannot require package ' . $pckg);
+            eval "require $pckg" || log_fatal( 'Cannot require package ' . $pckg );
             {
                 no strict 'refs';
                 $modifiers{$pckg} = $pckg->new();
@@ -76,7 +76,7 @@ sub BUILD {
 
     $self->_set_output_attrib( \@output_attr );
     $self->_set_modifiers( \%modifiers );
-   
+
     return;
 }
 
@@ -86,7 +86,7 @@ sub _split_csv_with_brackets {
     my ($str) = @_;
     $str .= ' ';
     my @arr = ();
-    while ( $str =~ m/([a-zA-Z0-9_:-]+\([^\)]*\)+|[^\(\s,]*)[\s,]+/g ){
+    while ( $str =~ m/([a-zA-Z0-9_:-]+\([^\)]*\)+|[^\(\s,]*)[\s,]+/g ) {
         push @arr, $1;
     }
 
@@ -191,14 +191,22 @@ sub _get_data {
             @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
         }
         elsif ( $ref eq 'nearest_eparent' ) {
-            @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
-            if ( @nodes > 0 ) {
-                my $nearest = $nodes[0];
-                foreach my $eparent (@nodes) {
-                    $nearest = $eparent if ( abs( $eparent->ord - $node->ord ) < abs( $nearest->ord - $node->ord ) );
-                }
-                @nodes = ($nearest);
-            }
+            @nodes = _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
+        }
+        elsif ( $ref eq 'siblings' ) {
+            @nodes = $node->get_siblings( { ordered => 1 } );
+        }
+        elsif ( $ref eq 'lsiblings' ) {
+            @nodes = $node->get_siblings( { preceding_only => 1 } );
+        }
+        elsif ( $ref eq 'rsiblings' ) {
+            @nodes = $node->get_siblings( { following_only => 1 } );
+        }
+        elsif ( $ref eq 'nearest_lsibling' ) {
+            @nodes = _get_nearest( $node, $node->get_siblings( { preceding_only => 1 } ) );
+        }
+        elsif ( $ref eq 'nearest_rsibling' ) {
+            @nodes = _get_nearest( $node, $node->get_siblings( { following_only => 1 } ) );
         }
 
         # alignment relation
@@ -258,6 +266,21 @@ sub _get_data {
     }
 }
 
+# Given a node and an array of candidate siblings/parents etc., this returns the topologically closest candidate to the node.
+sub _get_nearest {
+
+    my ( $node, @nodes ) = @_;
+    
+    if ( @nodes > 0 ) {
+        my $nearest = $nodes[0];
+        foreach my $cand (@nodes) {
+            $nearest = $cand if ( abs( $cand->ord - $node->ord ) < abs( $cand->ord - $node->ord ) );
+        }
+        return ($nearest);
+    }
+    return ();
+}
+
 # Return all the required information for a node as an array
 sub _get_info_list {
 
@@ -282,8 +305,9 @@ A Moose role for Write blocks that may be configured to use different layers and
 role must override the C<_process_tree()> method.
 
 An arbitrary number of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. 
-C<a/aux.rf-&gt;parent-&gt;tag>. Several special references — C<parent>, C<children>, C<eparents>, C<echildren> and C<aligned>
-— are supported in addition to any referencing attribute values within the nodes themselves:
+C<a/aux.rf-&gt;parent-&gt;tag>. 
+
+Several special references are supported in addition to any referencing attribute values within the nodes themselves:
 
 =over
 
@@ -295,13 +319,22 @@ node id to aligned nodes mapping (Str to ArrayRef[Node]) as a hash reference,
 called C<$alignment_hash> in the code. For an example on how to do that,
 see L<Treex::Block::Write::AttributeSentencesAligned>.
 
+=item C<parent>, C<children>: the topological parent / children of the current node. 
+
 =item C<eparents>, C<echildren> looks for all effective parents or children of the current node.
 
 =item C<nearest_eparent> finds the (topologically) nearest effective parent of this node.
 
+=item C<siblings>, C<rsiblings>, C<lsiblings>: all / preceding / following siblings of this node.
+
+=item C<nearest_lsibling>, C<nearest_rsibling> finds the nearest preceding / following sibling of this node. 
+
 =back
 
 All values of multiple-valued attributes are returned, separated with a space.
+
+There is also one special non-reference value, C<address>, which returns the result of the C<get_address> function
+call on the current node.
 
 Furthermore, text modifying functions may be applied to the retrieved attribute values, e.g. 
 C<CzechCoarseTag(a/aux.rf-&gt;tag)>. Such functions may take more arguments and return more values. Nesting
