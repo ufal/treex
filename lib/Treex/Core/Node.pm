@@ -524,6 +524,13 @@ sub get_depth {
 sub _normalize_node_ordering {
 }
 
+# Empty DESTROY method is a hack to get rid of the "Deep recursion warning"
+# in Treex::PML::Node::DESTROY and MooseX::NonMoose::Meta::Role::Class::_check_superclass_destructor.
+# Without this hack, you get the warning after creating a node with 99 or more children.
+# Deep recursion on subroutine "Class::MOP::Method::execute" at .../5.12.2/MooseX/NonMoose/Meta/Role/Class.pm line 183.
+sub DESTROY {
+}
+
 #*************************************
 #---- DEPRECATED & QUESTIONABLE ------
 
