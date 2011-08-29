@@ -9,12 +9,12 @@ my $dtree;
 
 sub init
 {
-    $dtree = Algorithm::DecisionTree->new();
+    $dtree = AI::DecisionTree->new( noise_mode => 'pick_best');
 }
 
 sub see
 {
-    $dtree->add_instance( attributes => %{ _create_hash($_[1]) }, result => $_[2] );
+    $dtree->add_instance( attributes => _create_hash($_[1]), result => $_[2] );
 }
 
 sub learn
@@ -24,7 +24,7 @@ sub learn
 
 sub predict
 {
-    return $dtree->get_result( attributes => %{ _create_hash($_[1]) } );
+    return $dtree->get_result( attributes => _create_hash($_[1]) );
 }
 
 sub load
@@ -34,6 +34,7 @@ sub load
 
 sub save
 {
+#    print STDERR join "\n", $dtree->rule_statements();
     $dtree->do_purge();
     store($dtree, $_[1]);
 }
@@ -42,7 +43,7 @@ sub _create_hash
 {
     my @array = @{ $_[0] };
     my %hash = map {
-        $_ =~ m/=/ ? split '=', $_ : $_, 1
+        $_ =~ m/=/ ? split '=', $_ : ( $_, 1 )
     } @array;
     return \%hash;
 }

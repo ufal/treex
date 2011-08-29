@@ -40,6 +40,12 @@ sub process_document {
     open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
     foreach my $bundle ($document->get_bundles()) {
         my @features = $self->get_features($bundle);
+        my $prediction = $self->{_classifier_obj}->predict( \@features );
+
+        # some classifiers (at least decision trees) sometimes don't give an answer,
+        # let's keep the sentence in such case
+        $prediction = 'ok' if ! defined $prediction;
+
         $self->add_feature($self->{_classifier_obj}->predict( \@features ));
     }
 

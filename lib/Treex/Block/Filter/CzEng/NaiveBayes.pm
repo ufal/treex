@@ -13,7 +13,7 @@ sub init
 
 sub see
 {
-    $nb->add_instance( attributes => %{ _create_hash($_[1]) }, label => $_[2] );
+    $nb->add_instance( attributes => _create_hash($_[1]), label => $_[2] );
 }
 
 sub learn
@@ -23,7 +23,8 @@ sub learn
 
 sub predict
 {
-    return $nb->predict( attributes => %{ _create_hash($_[1]) } );
+    my $prediction = $nb->predict( attributes => _create_hash($_[1]) );
+    return $prediction->{'x'} > $prediction->{'ok'} ? 'x' : 'ok';
 }
 
 sub load
@@ -40,7 +41,7 @@ sub _create_hash
 {
     my @array = @{ $_[0] };
     my %hash = map {
-        $_ =~ m/=/ ? split '=', $_ : $_, 1
+        $_ =~ m/=/ ? split '=', $_ : ( $_, 1 )
     } @array;
     return \%hash;
 }

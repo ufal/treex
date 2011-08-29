@@ -82,6 +82,7 @@ sub process_document {
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
         my $prediction = $self->{_classifier_obj}->predict( \@features );
+        $prediction = 'ok' if ! defined $prediction; # decision trees say nothing unless they know
         if ($anot eq 'x') {
             $x++;
             $tp++ if $prediction eq 'x';
