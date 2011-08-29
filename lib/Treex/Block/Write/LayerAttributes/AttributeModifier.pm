@@ -4,6 +4,8 @@ use Moose::Role;
 
 requires 'modify';
 
+has 'return_values_names' => ( isa => 'ArrayRef', is => 'ro', required => 1 );
+
 1;
 
 __END__
@@ -17,11 +19,19 @@ Treex::Block::Write::LayerAttributes::AttributeModifier
 =head1 DESCRIPTION
 
 A base Moose role of text modifiers for blocks using L<Treex::Block::Write::LayerAttributes>. The role itself
-is empty, but all actual modifier implementation must contain the C<modify()> method which takes the textual
-value of an attribute and returns its modification.
+is empty, but all actual modifier implementation musts contain the following methods/attributes:
 
-If the given attribute value is undefined, the method should return an undefined value, too; if the given attribute
-is an empty string, the result should also be an empty string.  
+=item modify()
+
+A method which takes the textual value of attribute(s) and returns its/their modification(s).
+
+If the given attribute value(s) is/are undefined, the method should return an undefined value, too; if 
+the given attribute(s) is/are empty string(s), the result should also be empty string(s).
+
+=item return_value_names
+
+This attribute must be an array reference containing the names of all the different values returned by
+the modifier.    
 
 =head1 AUTHOR
 

@@ -4,6 +4,8 @@ use Treex::Core::Common;
 
 with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
+has '+return_values_names' => ( default => sub { [ '' ] } ); 
+
 # Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case)
 sub modify {
 

@@ -130,7 +130,7 @@ sub _init_arff {
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
 
-    foreach my $attr ( @{ $self->_attrib_list() } ) {
+    foreach my $attr ( @{ $self->_output_attrib } ) {
 
         my $attr_entry = {
             attribute_name => ( $attr eq 'parent->ord' ? 'head' : $attr ),

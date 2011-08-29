@@ -24,16 +24,73 @@ has '_attrib_list' => (
     isa        => 'ArrayRef',
     is         => 'ro',
     builder    => '_build_attrib_list',
-    writer     => '_set_attrib_list',
     lazy_build => 1
+);
+
+# A list of output attributes, given all the modifiers applied
+has '_output_attrib' => (
+    isa    => 'ArrayRef',
+    is     => 'ro',
+    writer => '_set_output_attrib',
+);
+
+has '_modifiers' => (
+    isa    => 'HashRef',
+    is     => 'ro',
+    writer => '_set_modifiers',
 );
 
 # Parse the attribute list given in parameters.
 sub _build_attrib_list {
 
     my ($self) = @_;
+    return _split_csv_with_brackets( $self->attributes );
+}
 
-    return [ split /[\s,]+/, $self->attributes ];
+# Build the output attributes
+sub BUILD {
+
+    my ( $self, $args ) = @_;
+    my @output_attr = ();
+    my %modifiers   = ();
+
+    foreach my $attr ( @{ $self->_attrib_list } ) {
+        if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
+
+            # find the package and check the role
+            eval "require $pckg" || log_fatal('Cannot require package ' . $pckg);
+            {
+                no strict 'refs';
+                $modifiers{$pckg} = $pckg->new();
+            }
+            log_fatal("The $pckg package doesn't have the Treex::Block::Write::LayerAttributes::AttributeModifier role!")
+                if ( !$modifiers{$pckg}->does('Treex::Block::Write::LayerAttributes::AttributeModifier') );
+
+            # get all return values
+            push @output_attr, map { $attr . $_ } @{ $modifiers{$pckg}->return_values_names };
+        }
+        else {
+            push @output_attr, $attr;
+        }
+    }
+
+    $self->_set_output_attrib( \@output_attr );
+    $self->_set_modifiers( \%modifiers );
+   
+    return;
+}
+
+# Split space-or-comma separated values that may contain brackets with enclosed commas or spaces
+sub _split_csv_with_brackets {
+
+    my ($str) = @_;
+    $str .= ' ';
+    my @arr = ();
+    while ( $str =~ m/([a-zA-Z0-9_:-]+\([^\)]*\)+|[^\(\s,]*)[\s,]+/g ){
+        push @arr, $1;
+    }
+
+    return \@arr;
 }
 
 sub process_zone {
@@ -50,32 +107,45 @@ sub process_zone {
     return 1;
 }
 
+sub _get_function_pckg_args {
+
+    my ($attrib) = @_;
+
+    if ( my ( $func, $args ) = $attrib =~ m/^([A-Za-z_0-9:]+)\((.*)\)$/ ) {
+
+        if ( $func !~ m/::./ ) {    # default package: Treex::Block::Write::LayerAttributes
+            $func = 'Treex::Block::Write::LayerAttributes::' . $func;
+        }
+        return ( $func, $args );
+    }
+    return;
+}
+
 sub _get_modified {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
 
-    if ( my ( $func, $arg ) = $attrib =~ m/^([A-Za-z_0-9:]+)\((.*)\)$/ ) {
+    if ( my ( $pckg, $args ) = _get_function_pckg_args($attrib) ) {
 
-        if ( $func =~ m/::./ ) {    # an arbitrary function
-            my $package = $func;
-            $package =~ s/::[^:]+$//;
-            eval "require $package";
-        }
-        else {                      # the 'apply' function from a package under Treex::Block::Write::LayerAttributes
-            $func = 'Treex::Block::Write::LayerAttributes::' . $func;
-            eval "require $func";
-            $func .= '::modify';
+        # obtain all the arguments
+        my @vals = ();
+        foreach my $arg ( @{ _split_csv_with_brackets($args) } ) {
+            my ( $curnames, $curvals ) = $self->_get_modified( $node, $arg, $alignment_hash );
+            push @vals, @{$curvals};
         }
 
-        my $data = $self->_get_modified( $node, $arg, $alignment_hash );
+        # call the modifier function on them
+        my $func = $pckg . '::modify';
         {
             no strict 'refs';
-            $data = &$func($data);
+            @vals = ( &$func(@vals) );
         }
-        return $data;
+
+        # harvest the resutls
+        return ( [ map { $attrib . $_ } @{ $self->_modifiers->{$pckg}->return_values_names } ], \@vals );
     }
     else {
-        return $self->_get_data( $node, $attrib, $alignment_hash );
+        return ( [$attrib], [ $self->_get_data( $node, $attrib, $alignment_hash ) ] );
     }
 }
 
@@ -87,7 +157,10 @@ sub _get_info_hash {
 
     foreach my $attrib ( @{ $self->_attrib_list } ) {
 
-        $info{$attrib} = $self->_get_modified( $node, $attrib, $alignment_hash );
+        my ( $names, $vals ) = $self->_get_modified( $node, $attrib, $alignment_hash );
+        foreach my $i ( 0 .. ( @{$names} - 1 ) ) {
+            $info{ $names->[$i] } = $vals->[$i];
+        }
     }
     return \%info;
 }
@@ -113,9 +186,6 @@ sub _get_data {
         }
         elsif ( $ref eq 'echildren' ) {
             @nodes = $node->get_echildren( { or_topological => 1, ordered => 1 } );
-        }
-        elsif ( $ref eq 'eparents' ) {
-            @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
         }
         elsif ( $ref eq 'eparents' ) {
             @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
@@ -194,7 +264,7 @@ sub _get_info_list {
     my ( $self, $node, $alignment_hash ) = @_;
 
     my $info = $self->_get_info_hash( $node, $alignment_hash );
-    return [ map { $info->{$_} } @{ $self->_attrib_list } ];
+    return [ map { $info->{$_} } @{ $self->_output_attrib } ];
 }
 
 1;
@@ -213,26 +283,34 @@ role must override the C<_process_tree()> method.
 
 An arbitrary number of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. 
 C<a/aux.rf-&gt;parent-&gt;tag>. Several special references — C<parent>, C<children>, C<eparents>, C<echildren> and C<aligned>
-— are supported in addition to any referencing attribute values within the nodes themselves.
+— are supported in addition to any referencing attribute values within the nodes themselves:
 
-C<aligned> means all nodes aligned to this node. If alignment info is not stored
+=over
+
+=item C<aligned> means all nodes aligned to this node. 
+
+If alignment info is not stored
 in nodes of this tree but in their counterparts, you must provide a backward
 node id to aligned nodes mapping (Str to ArrayRef[Node]) as a hash reference,
 called C<$alignment_hash> in the code. For an example on how to do that,
 see L<Treex::Block::Write::AttributeSentencesAligned>.
 
+=item C<eparents>, C<echildren> looks for all effective parents or children of the current node.
+
+=item C<nearest_eparent> finds the (topologically) nearest effective parent of this node.
+
+=back
+
 All values of multiple-valued attributes are returned, separated with a space.
 
 Furthermore, text modifying functions may be applied to the retrieved attribute values, e.g. 
-C<CzechCoarseTag(a/aux.rf-&gt;tag)>. 
+C<CzechCoarseTag(a/aux.rf-&gt;tag)>. Such functions may take more arguments and return more values. Nesting
+the modifiing functions is also allowed. 
 
-All classes in the L<Treex::Block::Write::LayerAttributes> directory which implement the 
-L<Treex::Block::Write::LayerAttributes::AttributeModifier> role are supported implicitly, 
-without the need for package specification.  
-
-In addition, any arbitrary function that takes one string argument and returns a string may
-also be used; in that case, its package needs to be specified, e.g.:
-C<Treex::Tool::Lexicon::CS::truncate_lemma(a/lex.rf-&gt;lemma)> 
+The text modifying function must be a package that implements the L<Treex::Block::Write::LayerAttributes::AttributeModifier>
+role. All packages in the L<Treex::Block::Write::LayerAttributes> directory role are supported implicitly, 
+without the need for full package specification; packages in other locations need to have their full package
+name included. 
 
 =head1 PARAMETERS
 
