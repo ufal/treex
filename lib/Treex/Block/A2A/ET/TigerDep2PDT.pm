@@ -69,11 +69,32 @@ sub convert_coordination {
         }
     } else {
         my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
-        $_->set_afun($node->get_parent->afun) for $node, @siblings;
+        my $afun = $node->get_parent->afun;
+        $_->set_afun($afun) for $node, @siblings;
         $_->set_is_member(1) for $node, @siblings;
         $parent->set_afun('Coord');
     }
 } # convert_coordination
+
+
+## Rehang AuxC to PDT style (head of the clause)
+sub convert_subordinator {
+    my $auxc   = shift;
+    my $child  = $auxc->parent;
+    my $parent = $child->parent;
+    my ($punc) = grep $_->ord == $auxc->ord - 1,
+                $auxc->get_root->get_descendants;
+    if ($punc and not $punc->tag =~ /punc/) {
+        undef $punc;
+    }
+    $auxc->set_parent($parent);
+    $child->set_parent($auxc);
+    $punc->set_parent($auxc) if $punc;
+    if ($child->is_member) {
+        $child->set_is_member(0);
+        $auxc->set_is_member(1);
+    }
+} # convert_subordinator
 
 #------------------------------------------------------------------------------
 # Copies the original zone so that the user can compare the original and the
@@ -156,14 +177,15 @@ sub set_afun {
             $afun = 'Atr';
         }
 
-    } elsif (grep $_ eq $func,qw/FST EM QM/) {
+    } elsif (grep $_ eq $func,qw/FST EM QM EXC/) {
         $afun = 'AuxK';
         $achild->set_parent($achild->get_root);
 
     } elsif ('SUB' eq $func) {
         $afun = 'AuxC';
+        convert_subordinator($achild);
 
-    } elsif ('Aneg' eq $func) {
+    } elsif ($func =~ /^[AV]neg$/) {
         $afun = 'AuxZ';
 
     } elsif (grep $_ eq $func, qw/Vmod Vaux Vph/) {
@@ -191,6 +213,10 @@ sub set_afun {
              and $ahead->tag =~ m{^(?:conj|punc|v[/-])}) {
         $afun = 'AuxY';
 
+    # repetition in spoken language
+    } elsif (grep $_ eq $func, qw/UTT REP T/) {
+        $afun = 'ExD';
+
     # verbal particle (similar to preposition in English phrasal
     # verbs). AuxR used because there are no phrasal verbs in PDT and
     # no reflexive objects in Estonian.
@@ -203,14 +229,19 @@ sub set_afun {
              and not $achild->get_siblings) {
         $afun = 'ExD';
 
-    } elsif ('--' eq $func
-             and 'punc/--' eq $achild->tag) {
+    } elsif (grep $_ eq $func, qw/-- PNC/
+             and $achild->tag =~ m{^punc/(?:Com|--)$}) {
         if (',' eq $achild->form) {
             $afun = 'AuxX';
         } else {
             $afun = 'AuxG';
         }
+
+    } elsif ('H' eq $func) {
+        $afun = 'Atr';
     }
+
+
 
     $achild->set_afun($afun) if $afun;
 } # set_afun
