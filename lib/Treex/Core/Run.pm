@@ -530,7 +530,7 @@ sub _create_job_scripts {
 sub _run_job_scripts {
     my ($self) = @_;
     my $workdir = $self->workdir;
-    if ( substr $workdir, 0, 1 ne '/' ) {
+    if ( substr( $workdir, 0, 1 ) ne '/' ) {
         $workdir = "./$workdir";
     }
     foreach my $jobnumber ( 1 .. $self->jobs ) {
