@@ -109,6 +109,14 @@ sub process_zone {
                     $phead = $num;
                 }
 
+                # multiword conjunction A SUB
+                if (not $phead
+                    and 2 == @children
+                    and 'A:SUB' eq join ':', sort map $_->is_head, @children) {
+                    $phead = $children[0];
+                }
+
+
                 # coordination without conjunction is not marked, find
                 # the graphical symbol and make it the coordination
                 my @cjt;
@@ -147,6 +155,7 @@ sub process_zone {
                 }
 
                 if ($phead) {
+
                     my $ahead = $anode_from_pnode{$phead->id};
                     $anode_from_pnode{$pnode->id} = $ahead;
                     if ($ahead and $ahead->wild->{function} =~ /^[DH]$/
