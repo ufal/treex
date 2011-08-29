@@ -9,7 +9,7 @@ has 'transformer' => (
     #    required => 1,
 );
 
-# warning: redefining process_atree is dangerous for blocks
+# warning: redefining process_atree is necessary for blocks
 # that do not follow this structure with separate transformer object
 # (such as AllPunctBelowTechRoot)
 sub process_atree {

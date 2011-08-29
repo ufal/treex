@@ -46,6 +46,7 @@ sub _reverse_nodes {
 
     $child->set_is_member( $parent->is_member );
     $parent->set_is_member(undef);    # the original child's is_member is never true
+    return;
 }
 
 sub apply_on_tree {
@@ -87,7 +88,7 @@ sub apply_on_tree {
                 log_warn('Conflicting instructions for child-parent swap in a coordination construction');
             }
             elsif ( $node_to_swap{$child} or $node_to_swap{$parent} ) {
-                log_warn('A node can not participate in two swaps. The second attempt is skipped.');
+                log_warn('A node cannot participate in two swaps. The second attempt is skipped.');
             }
             else {
                 $node_to_swap{$child}  = 1;
@@ -100,7 +101,7 @@ sub apply_on_tree {
     foreach my $pair (@pairs_to_swap) {
         $self->_reverse_nodes(@$pair);
     }
-
+    return;
 }
 
 1;
