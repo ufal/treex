@@ -81,6 +81,7 @@ sub deprel_to_afun
         # Coordination at main clause level
         elsif ( $deprel eq '+F' )
         {
+            # DZ: the temporary afun 'CoordArg' would fit here but Zdeněk's processing does not use it
         }
 
         # Other adverbial
@@ -92,11 +93,24 @@ sub deprel_to_afun
         # Agent
         elsif ( $deprel eq 'AG' )
         {
+            # DZ: Used e.g. in the following sentence (train/001.treex#17):
+            # I många familjer finns diktatur, där uppfostras barnen till goda medborgare av föräldrarna på deras eget lilla vis.
+            # Google Translate:
+            # In many families there is dictatorship, which brought the children into good citizens of the parents in their own little way.
+            # The phrase 'av föräldrarna' ('of the parents') is tagged 'AG'.
+            # This could hint that the relative clause is in passive but I doubt it because of the setting of the other phrases.
+            ###!!!
         }
 
         # Apposition
         elsif ( $deprel eq 'AN' )
         {
+            # DZ: example (train/001.treex#10):
+            # flera problem t.+ex. pliktkänslan
+            # several problems, for example sense of duty
+            # Original tree: problem/OO ( flera/DT, pliktkänslan/AN ( t.+ex./CA ) )
+            # PDT style:     t.+ex./Apos ( problem/Obj_Ap ( flera/Atr ), pliktkänslan/Obj_Ap )
+            ###!!! Use the temporary afun CoordArg?
         }
 
         # Nominal (adjectival) pre-modifier
@@ -114,27 +128,52 @@ sub deprel_to_afun
         # Doubled function
         elsif ( $deprel eq 'DB' )
         {
+            # DZ: example (train/001.treex#51):
+            # Om inte samtliga individer är av samma uppfattning, som debattörerna, så är individen ifråga genast: oförstående för sitt eget bästa.
+            # If not all individuals are of the same opinion, as debaters, so is the individual in question immediately: incomprehension for his own good.
+            # Analogous Czech PDT tree:
+            #     jestliže dal, pak schválí
+            #     schválí/??? ( jestliže/AuxC ( dal/Adv, ,/AuxX ), pak/Adv )
+            # Desired PDT-style tree for the example:
+            #     är/??? ( Om/AuxC ( är/Adv, ,/AuxX ), så/Adv )
+            # Original Swedish tree for the example: 'så' attached non-projectively with 'doubled function' 'DB':
+            #     är/??? ( är/AA ( Om/UK, så/DB ), ,/IK )
+            ###!!!
         }
 
         # Determiner
         elsif ( $deprel eq 'DT' )
         {
+            # 'AuxA' is not a known value in PDT. It is used in Treex for English articles 'a', 'an', 'the'.
+            # Other determiners ('this', 'each', 'any'...) are usually tagged 'Atr'.
             $afun = 'AuxA';
         }
 
-        # Relative clause in cleft
+        # Relative clause in cleft ("trhlina, štěrbina")
         elsif ( $deprel eq 'EF' )
         {
+            ###!!!
+            # DZ: The first example of this tag (train/001.treex#29) is strange.
+            # I would not attach it to 'vad'. I believe it is coordinated with the main clause ('vi kan...')
+            # We should look at more examples before deciding.
         }
 
         # Logical object
         elsif ( $deprel eq 'EO' )
         {
+            # DZ: example (train/001.treex#176):
+            # får det enklare att klara/EO av att leva
+            # get it easier to manage/EO to live
+            $afun = 'Obj';
         }
 
         # Logical subject
         elsif ( $deprel eq 'ES' )
         {
+            # DZ: example (train/001.treex#10):
+            # det kommer några andra
+            # it comes no other (~ there is no other)
+            $afun = 'Atv'; ###!!! not sure whether this is the closest match?
         }
 
         # Other nominal post-modifier
@@ -146,6 +185,7 @@ sub deprel_to_afun
         # Dummy object
         elsif ( $deprel eq 'FO' )
         {
+            $afun = 'Obj';
         }
 
         # Dummy subject
@@ -157,26 +197,36 @@ sub deprel_to_afun
         # Finite predicate verb
         elsif ( $deprel eq 'FV' )
         {
+            # DZ: the example sentence (train/001.treex#172) currently gets restructured badly ('definitivt').
+            # But the original is bad, too.
+            # Anyway, in this particular sentence 'FV' is the main verb of an adverbial ('if'-) clause.
+            $afun = 'Adv';
         }
 
         # Question mark
         elsif ( $deprel eq 'I?' )
         {
+            ###!!! DZ: I have not checked whether 'I?' occurs elsewhere than at the end of the sentence.
+            $afun = 'AuxK';
         }
 
         # Quotation mark
         elsif ( $deprel eq 'IC' )
         {
+            $afun = 'AuxG';
         }
 
         # Part of idiom (multi-word unit)
         elsif ( $deprel eq 'ID' )
         {
+            # DZ: This tag does not occur in the treebank but it appears in the documentation.
+            # Note that there is a POS tag 'ID' with the same meaning (example 001#7: the s-tag is 'HD' in this case).
         }
 
         # Other punctuation mark
         elsif ( $deprel eq 'IG' )
         {
+            $afun = 'AuxG';
         }
 
         # Comma
@@ -188,7 +238,7 @@ sub deprel_to_afun
         # Infinitive marker
         elsif ( $deprel eq 'IM' )
         {
-            $afun = 'AuxV';
+            $afun = 'AuxV'; ###!!! converted to AuxC in some other languages; it is not a verb form, so what?
         }
 
         # Indirect object
@@ -206,21 +256,28 @@ sub deprel_to_afun
         # Colon
         elsif ( $deprel eq 'IQ' )
         {
+            $afun = 'AuxG';
         }
 
         # Parenthesis
         elsif ( $deprel eq 'IR' )
         {
+            $afun = 'AuxG';
         }
 
         # Semicolon
         elsif ( $deprel eq 'IS' )
         {
+            # DZ: Sentences in PDT are frequently split on semicolons, which are then tagged 'AuxK'.
+            # Sometimes they are also tagged 'ExD_Pa'.
+            # Otherwise a sentence-internal semicolon is tagged 'AuxG'.
+            $afun = 'AuxG';
         }
 
         # Dash
         elsif ( $deprel eq 'IT' )
         {
+            $afun = 'AuxG';
         }
 
         # Exclamation mark
@@ -232,26 +289,37 @@ sub deprel_to_afun
         # Nonfinite verb
         elsif ( $deprel eq 'IV' )
         {
+            # DZ: example (train/001.treex#31): 'kunna':
+            # Det skulle betyda att jag skulle kunna älska en partner som utförde mobbing på mig varje dag.
+            # That would mean that I could love a partner who did bullying at me every day.
+            $afun = 'AuxV';
         }
 
         # Second quotation mark
         elsif ( $deprel eq 'JC' )
         {
+            $afun = 'AuxG';
         }
 
         # Second (other) punctuation mark
         elsif ( $deprel eq 'JG' )
         {
+            # DZ: example (train/009.treex#129):
+            # 'Man och hustru äro skyldiga ...' är inledningsorden i femte kapitlet giftermålsbalken, och forsätter: '... varandra
+            # The first '...' is tagged 'IG', the second '...' is tagged 'JG'.
+            $afun = 'AuxG';
         }
 
         # Second parenthesis
         elsif ( $deprel eq 'JR' )
         {
+            $afun = 'AuxG';
         }
 
         # Second dash
         elsif ( $deprel eq 'JT' )
         {
+            $afun = 'AuxG';
         }
 
         # Comparative adverbial
@@ -269,6 +337,12 @@ sub deprel_to_afun
         # Macrosyntagm
         elsif ( $deprel eq 'MS' )
         {
+            # DZ: example (train/001.treex#10) 'kommer' in:
+            # Detta löser problem men det kommer några andra
+            # This solves the problem but there is no other
+            # Original tree: löser/ROOT ( kommer/MS ( men/++ ) )
+            # PDT style:     men/Coord ( löser/Pred_Co, kommer/Pred_Co )
+            $afun = 'Pred';
         }
 
         # Negation adverbial
@@ -280,6 +354,7 @@ sub deprel_to_afun
         # Object adverbial
         elsif ( $deprel eq 'OA' )
         {
+            $afun = 'Adv';
         }
 
         # Other object
@@ -303,6 +378,10 @@ sub deprel_to_afun
         # Predicative attribute
         elsif ( $deprel eq 'PT' )
         {
+            # DZ: example (train/001.treex#61): 'själv':
+            # än sig själv
+            # than itself
+            $afun = 'Atr';
         }
 
         # Place adverbial
@@ -326,6 +405,8 @@ sub deprel_to_afun
         # Paragraph
         elsif ( $deprel eq 'ST' )
         {
+            ###!!! ??? (train/001.treex#320: 'institution')
+            $afun = 'ExD';
         }
 
         # Time adverbial
@@ -349,47 +430,71 @@ sub deprel_to_afun
         # Infinitive object complement
         elsif ( $deprel eq 'VO' )
         {
+            # vara/VO (train/001.treex#43):
+            # I vissa fall anser man förtjänsten vara värd en omsvängning i attityden.
+            # In some cases one considers the earnings to be worth a shift in attitude.
+            $afun = 'Obj';
         }
 
         # Infinitive subject complement
         elsif ( $deprel eq 'VS' )
         {
+            # vara/VS (train/001.treex#406):
+            # familjen sägs i artikeln vara en social institution
+            # family is said in the article to be a social institution
+            $afun = 'Obj';
         }
 
         # Expressions like "så att säga" (so to speak)
         elsif ( $deprel eq 'XA' )
         {
+            # DZ: found in PDT 'takřka' tagged 'AuxZ'; found 'tak říkajíc' tagged 'Adv'
+            $afun = 'AuxZ';
         }
 
         # Fundament phrase
         elsif ( $deprel eq 'XF' )
         {
+            # 'från' (train/004.treex#64):
+            # Fr&#229n denna fria värld
+            # From this free world
+            # DZ: anyway this particular node ended up tagged correctly as 'AuxP' governing an 'Adv', so do nothing.
         }
 
         # Expressions like "så kallad" (so called)
         elsif ( $deprel eq 'XT' )
         {
+            $afun = 'Atr'; # as 'tzv' in PDT
         }
 
         # Unclassifiable grammatical function
         elsif ( $deprel eq 'XX' )
         {
+            $afun = 'ExD';
         }
 
         # Interjection phrase
         elsif ( $deprel eq 'YY' )
         {
+            # DZ: This tag has not occurred in the treebank.
         }
 
         # Conjunct
         # First conjunct in binary branching analysis of coordination
         elsif ( $deprel eq 'CJ' )
         {
+            # DZ: example (train/001.treex#387): standardkraven/CJ (attached to 'Stressen'); CC: trångboddheten, pressen, miljön
+            # Stressen standardkraven, trångboddheten, den ekonomiska pressen och miljön skapar svårigheter för en familj.
+            # Stress of the standard requirements, overcrowding, the financial press and the environment creates difficulties for a family.
+            ###!!! The example is strange and I still don't understand it fully. The above translation is from Google so I may be missing something.
+            $afun = 'Atr';
         }
 
         # Other head
         elsif ( $deprel eq 'HD' )
         {
+            # train/001.treex#4 ('sedan')
+            $afun = 'Adv';
         }
 
         # Subordinate clause minus subordinating conjunction
@@ -401,16 +506,21 @@ sub deprel_to_afun
         # Second conjunct (sister of conjunction) in binary branching analysis
         elsif ( $deprel eq 'C+' )
         {
+            # train/001.treex#120 ('hjälpsamhet' = 'helpfulness')
+            $afun = 'CoordArg';
         }
 
         # Sister of first conjunct in binary branching analysis of coordination
         elsif ( $deprel eq 'CC' )
         {
+            # DZ: Zdeněk's approach seems to work even without this.
+            #$afun = 'CoordArg';
         }
 
         # Infinitive phrase minus infinitive marker
         elsif ( $deprel eq 'IF' )
         {
+            # DZ: This tag does not occur in the treebank.
         }
 
         # Complement of preposition
