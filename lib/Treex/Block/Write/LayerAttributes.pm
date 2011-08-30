@@ -19,6 +19,11 @@ has 'attributes' => (
     required => 1
 );
 
+has 'output_attrib_names' => (
+    isa => 'Str',
+    is  => 'ro',
+);
+
 # This is a parsed list of attributes, constructed from the attributes parameter.
 has '_attrib_list' => (
     isa        => 'ArrayRef',
@@ -74,8 +79,25 @@ sub BUILD {
         }
     }
 
-    $self->_set_output_attrib( \@output_attr );
     $self->_set_modifiers( \%modifiers );
+
+    # apply user-defined overrides for attribute names
+    if ( $self->output_attrib_names ) {
+        my @override_names = @{ _split_csv_with_brackets( $self->output_attrib_names ) };
+        if ( @override_names != @output_attr ) {
+            log_fatal(
+                      'Incorrect number of output_attrib_names -- is '
+                    . scalar(@override_names)
+                    . ', should be '
+                    . scalar(@output_attr)
+            );
+        }
+        foreach my $i ( 0 .. ( @output_attr - 1 ) ) {
+            $output_attr[$i] = $override_names[$i] eq '.' ? $output_attr[$i] : $override_names[$i];
+        }
+    }
+
+    $self->_set_output_attrib( \@output_attr );
 
     return;
 }
@@ -130,7 +152,7 @@ sub _get_modified {
         # obtain all the arguments
         my @vals = ();
         foreach my $arg ( @{ _split_csv_with_brackets($args) } ) {
-            my ( $curnames, $curvals ) = $self->_get_modified( $node, $arg, $alignment_hash );
+            my $curvals = $self->_get_modified( $node, $arg, $alignment_hash );
             push @vals, @{$curvals};
         }
 
@@ -141,11 +163,11 @@ sub _get_modified {
             @vals = ( &$func(@vals) );
         }
 
-        # harvest the resutls
-        return ( [ map { $attrib . $_ } @{ $self->_modifiers->{$pckg}->return_values_names } ], \@vals );
+        # harvest the results
+        return \@vals;
     }
     else {
-        return ( [$attrib], [ $self->_get_data( $node, $attrib, $alignment_hash ) ] );
+        return [ $self->_get_data( $node, $attrib, $alignment_hash ) ];
     }
 }
 
@@ -154,12 +176,13 @@ sub _get_info_hash {
 
     my ( $self, $node, $alignment_hash ) = @_;
     my %info;
+    my $out_att_pos = 0;
 
     foreach my $attrib ( @{ $self->_attrib_list } ) {
 
-        my ( $names, $vals ) = $self->_get_modified( $node, $attrib, $alignment_hash );
-        foreach my $i ( 0 .. ( @{$names} - 1 ) ) {
-            $info{ $names->[$i] } = $vals->[$i];
+        my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
+        foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
+            $info{ $self->_output_attrib->[$out_att_pos++] } = $vals->[$i];
         }
     }
     return \%info;
@@ -174,74 +197,7 @@ sub _get_data {
     # references
     if ($ref_attr) {
 
-        # gather referenced nodes
-        my @nodes;
-
-        # special references -- methods: syntactic relations
-        if ( $ref eq 'parent' ) {
-            @nodes = ( $node->get_parent() );
-        }
-        elsif ( $ref eq 'children' ) {
-            @nodes = $node->get_children( { ordered => 1 } );
-        }
-        elsif ( $ref eq 'echildren' ) {
-            @nodes = $node->get_echildren( { or_topological => 1, ordered => 1 } );
-        }
-        elsif ( $ref eq 'eparents' ) {
-            @nodes = $node->get_eparents( { or_topological => 1, ordered => 1 } );
-        }
-        elsif ( $ref eq 'nearest_eparent' ) {
-            @nodes = _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
-        }
-        elsif ( $ref eq 'siblings' ) {
-            @nodes = $node->get_siblings( { ordered => 1 } );
-        }
-        elsif ( $ref eq 'lsiblings' ) {
-            @nodes = $node->get_siblings( { preceding_only => 1 } );
-        }
-        elsif ( $ref eq 'rsiblings' ) {
-            @nodes = $node->get_siblings( { following_only => 1 } );
-        }
-        elsif ( $ref eq 'nearest_lsibling' ) {
-            @nodes = _get_nearest( $node, $node->get_siblings( { preceding_only => 1 } ) );
-        }
-        elsif ( $ref eq 'nearest_rsibling' ) {
-            @nodes = _get_nearest( $node, $node->get_siblings( { following_only => 1 } ) );
-        }
-
-        # alignment relation
-        elsif ( $ref eq 'aligned' ) {
-
-            # get alignment from the mapping provided in a hash
-            if ($alignment_hash) {
-                my $id = $node->id;
-                if ( $alignment_hash->{$id} ) {
-                    @nodes = @{ $alignment_hash->{$id} };
-                }
-            }
-
-            # get alignment from $node->get_aligned_nodes()
-            else {
-                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
-                if ($aligned_nodes) {
-                    @nodes = @{$aligned_nodes};
-                }
-            }
-        }
-
-        # referencing attributes
-        else {
-
-            # find references
-            my @values = Treex::PML::Instance::get_all( $node, $ref );
-            my $document = $node->get_document();
-            @nodes = @values ? map { $document->get_node_by_id($_) } grep {$_} @values : ();
-
-            # sort, if possible
-            if ( @nodes > 0 and $nodes[0]->does('Treex::Core::Node::Ordered') ) {
-                @nodes = sort { $a->ord <=> $b->ord } @nodes;
-            }
-        }
+        my @nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
         # call myself recursively on the referenced nodes
         return join( ' ', grep { defined($_) } map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @nodes );
@@ -266,11 +222,105 @@ sub _get_data {
     }
 }
 
+# Given the source node and the reference name, this retrieves all the referenced nodes
+sub _get_referenced_nodes {
+
+    my ( $self, $node, $ref, $alignment_hash ) = @_;
+
+    # special references -- methods: syntactic relations (see POD)
+    if ( $ref eq 'parent' ) {
+        return ( $node->get_parent() );
+    }
+    elsif ( $ref eq 'children' ) {
+        return $node->get_children( { ordered => 1 } );
+    }
+    elsif ( $ref eq 'echildren' ) {
+        return $node->get_echildren( { or_topological => 1, ordered => 1 } );
+    }
+    elsif ( $ref eq 'eparents' ) {
+        return $node->get_eparents( { or_topological => 1, ordered => 1 } );
+    }
+    elsif ( $ref eq 'nearest_eparent' ) {
+        return _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
+    }
+    elsif ( $ref eq 'siblings' ) {
+        return $node->get_siblings( { ordered => 1 } );
+    }
+    elsif ( $ref eq 'lsiblings' ) {
+        return $node->get_siblings( { preceding_only => 1 } );
+    }
+    elsif ( $ref eq 'rsiblings' ) {
+        return $node->get_siblings( { following_only => 1 } );
+    }
+    elsif ( $ref eq 'nearest_lsibling' ) {
+        return _get_nearest( $node, $node->get_siblings( { preceding_only => 1 } ) );
+    }
+    elsif ( $ref eq 'nearest_rsibling' ) {
+        return _get_nearest( $node, $node->get_siblings( { following_only => 1 } ) );
+    }
+    elsif ( $ref =~ m/^(nearest_)?e(l|r|)siblings?$/ ) {    # effective siblings (ef. children of the nearest ef. parent)
+
+        my $eparent = _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
+        my @nodes = $eparent->get_echildren( { ordered => 1 } );
+
+        if ( $ref eq 'esiblings' ) {
+            return @nodes;
+        }
+        elsif ( $ref eq 'elsiblings' ) {
+            return grep { $_->ord < $node->ord } @nodes;
+        }
+        elsif ( $ref eq 'ersiblings' ) {
+            return grep { $_->ord > $node->ord } @nodes;
+        }
+        elsif ( $ref eq 'nearest_elsibling' ) {
+            return _get_nearest( $node, grep { $_->ord < $node->ord } @nodes );
+        }
+        elsif ( $ref eq 'nearest_ersibling' ) {
+            return _get_nearest( $node, grep { $_->ord > $node->ord } @nodes );
+        }
+    }
+
+    # alignment relation
+    elsif ( $ref eq 'aligned' ) {
+
+        # get alignment from the mapping provided in a hash
+        if ($alignment_hash) {
+            my $id = $node->id;
+            if ( $alignment_hash->{$id} ) {
+                return @{ $alignment_hash->{$id} };
+            }
+        }
+
+        # get alignment from $node->get_aligned_nodes()
+        else {
+            my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
+            if ($aligned_nodes) {
+                return @{$aligned_nodes};
+            }
+        }
+    }
+
+    # referencing attributes
+    else {
+
+        # find references
+        my @values   = Treex::PML::Instance::get_all( $node, $ref );
+        my $document = $node->get_document();
+        my @nodes    = @values ? map { $document->get_node_by_id($_) } grep {$_} @values : ();
+
+        # sort, if possible
+        if ( @nodes > 0 and $nodes[0]->does('Treex::Core::Node::Ordered') ) {
+            @nodes = sort { $a->ord <=> $b->ord } @nodes;
+        }
+        return @nodes;
+    }
+}
+
 # Given a node and an array of candidate siblings/parents etc., this returns the topologically closest candidate to the node.
 sub _get_nearest {
 
     my ( $node, @nodes ) = @_;
-    
+
     if ( @nodes > 0 ) {
         my $nearest = $nodes[0];
         foreach my $cand (@nodes) {
@@ -328,6 +378,12 @@ see L<Treex::Block::Write::AttributeSentencesAligned>.
 =item C<siblings>, C<rsiblings>, C<lsiblings>: all / preceding / following siblings of this node.
 
 =item C<nearest_lsibling>, C<nearest_rsibling> finds the nearest preceding / following sibling of this node. 
+
+=item C<esiblings>, C<ersiblings>, C<elsiblings>: all / preceding / following effective siblings of this node.
+
+An effective sibling is an effective child of the nearest effective parent of this node.
+
+=item C<nearest_elsibling>, C<nearest_ersibling>: nearest preceding / following effective sibling of the node.
 
 =back
 
