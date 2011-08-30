@@ -89,8 +89,7 @@ sub parse {
 
 sub parse_document {
     my ( $self, @tokens_rf ) = @_;
-    \
-        my $parsed = document_output( $self, @tokens_rf );
+    my $parsed = document_output( $self, @tokens_rf );
     print "parsed" . $parsed;
 
     #_make_phrase_structure(string_output($self,@tokens_rf));
