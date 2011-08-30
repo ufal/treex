@@ -91,7 +91,7 @@ sub convert_tag
         ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
         en::conll en::conll2009
         es::conll2009 tr::conll  
-        hu::conll
+        hu::conll eu::conll  
         it::conll nl::conll pt::conll sv::conll zh::conll
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
         ro::rdt);

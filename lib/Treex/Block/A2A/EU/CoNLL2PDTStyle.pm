@@ -38,12 +38,13 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
-        my $pos    = $node->conll_pos();
+        my $subpos    = $node->conll_pos();
+        my $pos    = $node->conll_cpos();
         
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
         
         # default assignment
-        my $afun = $deprel;
+        my $afun = "unkafun";
         
         $afun = 'Pred' if ($deprel eq 'ROOT');
         
@@ -61,6 +62,12 @@ sub deprel_to_afun
         $afun = 'Obj' if ($deprel eq 'xcomp_obj');
         $afun = 'Obj' if ($deprel eq 'xcomp_zobj');
 
+        # apposition
+        $afun = 'Apos' if ($deprel eq 'apocmod');
+        $afun = 'Apos' if ($deprel eq 'apoxmod');
+        $afun = 'Apos' if ($deprel eq 'aponcmod');
+        $afun = 'Apos' if ($deprel eq 'aponcpred');                
+    
         $afun = 'AuxA' if ($deprel eq 'detmod');
         $afun = 'AuxV' if ($deprel eq 'auxmod');
         
@@ -74,9 +81,6 @@ sub deprel_to_afun
             }
         }        
         
-        # 'lotat' - but, 
-        $afun = 'Adv' if ($deprel eq 'lotat');
-
         # punctuation
         if (($node->get_iset('pos') eq 'punc')) {
             if ( $form eq ',' ) {
@@ -90,25 +94,161 @@ sub deprel_to_afun
             }                      
         }
         
+        # modifiers
+        # 1. clausal & predicative modifiers are labeled as 'Adv'
+        # 2. non clausal modifiers are labeled as 'Atr'
+        
+        # 1. clausal & predicative modifiers
+        $afun = 'Adv' if ($deprel eq 'cmod');
+        $afun = 'Adv' if ($deprel eq 'xmod');
+        $afun = 'Adv' if ($deprel eq 'xpred');
+        $afun = 'Adv' if ($deprel eq 'ncpred');                
 
-        $node->set_afun($afun);
-    }
-}
 
-# This function will swap the afun of preposition and its nominal head.
-# It was because, in the original treebank preposition was given
-# 'mod(Atr)' label and its nominal head was given 'prep(AuxP)'.
-sub afun_swap_prep_and_its_nhead {
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes) {
-        if ( ( $node->afun() eq 'AuxP' ) && ( $node->conll_pos() =~ /^S/ ) ) {
-            my $parent = $node->get_parent();
-            if ( ( $parent->afun() eq 'Atr' ) && ( $parent->conll_pos() eq 'E' ) ) {
-                $parent->set_afun('AuxP');
-                $node->set_afun('Atr');
+        # connectors
+        if (($deprel eq 'lot') || ($deprel eq 'lotat')) {
+            if (($node->get_iset('pos') eq 'noun')) {
+                $afun = 'Atr';
             }
+            elsif (($node->get_iset('pos') eq 'adv')) {
+                $afun = 'Adv';
+            }
+            elsif (($node->get_iset('pos') eq 'adj')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'verb')) {
+                $afun = 'Adv';
+            }
+            elsif (($node->get_iset('pos') eq 'num')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+                $afun = 'Coord';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+                $afun = 'AuxC';
+            }            
+            
+            if ($pos eq 'ADL') {
+                $afun = 'Atr';
+            }
+            elsif ($pos eq 'LOT') {
+                $afun = 'Coord';
+            }
+            elsif ($pos eq 'ADI') {
+                $afun = 'Adv';
+            }
+            elsif ($pos eq 'IZE') {
+                $afun = 'Atr';
+            }
+            elsif ($pos eq 'BST') {
+                $afun = 'Atr';
+            }            
         }
+        
+        
+        # particles
+        $afun = 'Atr' if ($deprel eq 'prtmod');
+        $afun = 'Adv' if ($deprel eq 'galdemod');
+        
+        # interjection
+        $afun = 'Atr' if ($deprel eq 'itj_out');
+        
+        # attributes
+        $afun = 'Atr' if ($deprel eq 'entios');
+        
+        # postos
+        if ($deprel eq 'postos') {
+            if (($node->get_iset('pos') eq 'noun')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'adv')) {
+                $afun = 'Adv';
+            }
+            elsif (($node->get_iset('pos') eq 'adj')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'verb')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'num')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+                $afun = 'Coord';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+                $afun = 'AuxC';
+            }                        
+        }
+
+        # gradmod
+        if ($deprel eq 'gradmod') {
+            if (($node->get_iset('pos') eq 'noun')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'adv')) {
+                $afun = 'Adv';
+            }
+            elsif (($node->get_iset('pos') eq 'adj')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'verb')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'num')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+                $afun = 'Coord';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+                $afun = 'AuxC';
+            }                        
+        }
+        
+        # menos
+        if ($deprel eq 'menos') {
+            if (($node->get_iset('pos') eq 'noun')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'adv')) {
+                $afun = 'Adv';
+            }
+            elsif (($node->get_iset('pos') eq 'adj')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'verb')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'num')) {
+                $afun = 'Atr';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+                $afun = 'Coord';
+            }
+            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+                $afun = 'AuxC';
+            }                        
+        }        
+        
+        # haos
+        if ($deprel eq 'haos') {
+            $afun = 'Adv';
+        }
+        
+        # determiner
+        if (($node->get_iset('pos') eq 'adj') && ($node->get_iset('subpos') eq 'det')) {
+            $afun = 'AuxA';
+        }
+        
+        # default afun assignment
+        if ($afun eq "unkafun") {
+            print "Assigning Atr to " . $deprel . "\t POS: $pos ## $subpos" .  "\n";
+            $afun = 'Atr';
+        }
+        
+        $node->set_afun($afun);
     }
 }
 
@@ -116,7 +256,7 @@ sub afun_swap_prep_and_its_nhead {
 
 =over
 
-=item Treex::Block::A2A::TR::CoNLL2PDTStyle
+=item Treex::Block::A2A::EU::CoNLL2PDTStyle
 
 
 =back
