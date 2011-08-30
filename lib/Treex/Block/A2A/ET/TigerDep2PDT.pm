@@ -218,10 +218,9 @@ sub set_afun {
         $afun = 'ExD';
 
     # verbal particle (similar to preposition in English phrasal
-    # verbs). AuxR used because there are no phrasal verbs in PDT and
-    # no reflexive objects in Estonian.
+    # verbs). AuxV was used.
     } elsif ('Vpart' eq $func) {
-        $afun = 'AuxR';
+        $afun = 'AuxV';
         log_warn("Vpart under non-verb\t" . $achild->get_address)
             unless $ahead->tag =~ /^v/;
 
