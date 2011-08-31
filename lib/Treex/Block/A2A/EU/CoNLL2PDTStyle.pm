@@ -123,7 +123,12 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
-                $afun = 'Coord';
+                if ($form =~ /^(eta|edo)$/) {
+                    $afun = 'Coord';                    
+                }
+                else {
+                    $afun = 'Adv';                       
+                }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
@@ -131,9 +136,6 @@ sub deprel_to_afun
             
             if ($pos eq 'ADL') {
                 $afun = 'Atr';
-            }
-            elsif ($pos eq 'LOT') {
-                $afun = 'Coord';
             }
             elsif ($pos eq 'ADI') {
                 $afun = 'Adv';
@@ -175,7 +177,12 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
-                $afun = 'Coord';
+                if ($form =~ /^(eta|edo)$/) {
+                    $afun = 'Coord';                    
+                }
+                else {
+                    $afun = 'Adv';                       
+                }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
@@ -200,7 +207,12 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
-                $afun = 'Coord';
+                if ($form =~ /^(eta|edo)$/) {
+                    $afun = 'Coord';                    
+                }
+                else {
+                    $afun = 'Adv';                       
+                }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
@@ -225,7 +237,12 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
-                $afun = 'Coord';
+                if ($form =~ /^(eta|edo)$/) {
+                    $afun = 'Coord';                    
+                }
+                else {
+                    $afun = 'Adv';                       
+                }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
