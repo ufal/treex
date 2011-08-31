@@ -18,15 +18,15 @@ sub process_zone
     # attach terminal punctuations (., ?, ! etc) to root of the tree
     $self->attach_final_punctuation_to_root($a_root);    
     
-    make_pdt_coordination($a_root);
-    find_afun_for_unkafun($a_root);
+    $self->make_pdt_coordination($a_root);
+    $self->find_afun_for_unkafun($a_root);
     
     # swap the afun of preposition and its nominal head
-    afun_swap_prep_and_its_nhead($a_root);
+    $self->afun_swap_prep_and_its_nhead($a_root);
 }
 
 sub make_pdt_coordination {    
-    my $root = shift;
+    my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();    
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
@@ -111,7 +111,7 @@ sub make_pdt_coordination {
 }
 
 sub find_afun_for_unkafun {
-    my $root = shift;
+    my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
@@ -175,7 +175,7 @@ sub deprel_to_afun
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
         
         # default assignment
-        my $afun = 'NR';
+        my $afun = $deprel;
 
         # trivial conversion to PDT style afun
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
@@ -235,7 +235,7 @@ sub attach_terminal_punc_to_root {
 # It was because, in the original treebank preposition was given
 # 'mod(Atr)' label and its nominal head was given 'prep(AuxP)'.
 sub afun_swap_prep_and_its_nhead {
-    my $root  = shift;
+    my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();
 
     foreach my $node (@nodes) {
