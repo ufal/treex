@@ -4,25 +4,40 @@ use Treex::Core::Common;
 
 with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
-has '+return_values_names' => ( default => sub { [ '' ] } ); 
+has '+return_values_names' => ( default => sub { [''] } );
 
-# Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case)
+has 'use_case' => ( isa => 'Bool', is => 'ro', default => 1 );
+
+# Create the mode parameter out of the given parameter to new
+sub BUILDARGS {
+
+    my ( $class, @params ) = @_;
+
+    return $params[0] if ( @params == 1 && ref $params[0] eq 'HASH' );
+
+    if ( @params != 1 ) {
+        log_fatal('CzechCoarseTag:There must be just one binary parameter to new().');
+    }
+    return { use_case => $params[0] };
+}
+
+# Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case, or instructed not to use cases)
 sub modify {
 
-    my ($self, $tag) = @_;
+    my ( $self, $tag ) = @_;
 
-    return if ( !defined($tag) );
-    return '' if (!$tag);
+    return undef if ( !defined($tag) );
+    return '' if ( !$tag );
 
     my $ctag;
-    if ( substr( $tag, 4, 1 ) eq '-' ) {
 
-        # no case -> PosSubpos
+    # no case or set not to use it -> Pos + Subpos
+    if ( substr( $tag, 4, 1 ) eq '-' || !$self->use_case ) {
         $ctag = substr( $tag, 0, 2 );
     }
-    else {
 
-        # case -> PosCase
+    # has case -> Pos + Case
+    else {
         $ctag = substr( $tag, 0, 1 ) . substr( $tag, 4, 1 );
     }
 
@@ -51,7 +66,18 @@ Treex::Block::Write::LayerAttributes::CzechCoarseTag
 
 A text modifier for blocks using L<Treex::Block::Write::LayerAttributes> which takes the Czech positional morphological tag
 and makes a "coarse tag" out of it, which consists either of the coarse part-of-speech and case, if the given part-of-speech
-can be declined or of the coarse and detailed part-of-speech.
+can be declined, or of the coarse and detailed part-of-speech.
+
+=head1 PARAMETERS
+
+=over 
+
+=item C<use_case>
+
+If set to 0, the case values are not used, even if the given part-of-speech has them. Default is 1. This parameter can
+also be passed to the constructor as a single boolean value. 
+
+=back 
 
 =head1 AUTHORS
 

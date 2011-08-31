@@ -28,7 +28,7 @@ sub modify {
 
     my ( $self, $ord1, $ord2 ) = @_;
 
-    return if ( !List::MoreUtils::all { defined($_) && looks_like_number($_) } ( $ord1, $ord2 ) );
+    return undef if ( !List::MoreUtils::all { defined($_) && looks_like_number($_) } ( $ord1, $ord2 ) );
 
     if ( $self->mode eq '3level' ) {
         if ( abs( $ord1 - $ord2 ) <= 1 ) {

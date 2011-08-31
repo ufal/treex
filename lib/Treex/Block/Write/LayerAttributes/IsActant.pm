@@ -11,7 +11,7 @@ sub modify {
 
     my ($functor) = @_;
 
-    return if ( !defined($functor) );
+    return undef if ( !defined($functor) );
 
     return '0' if ( $functor !~ m/^(ACT|PAT|ADDR|ORIG|EFF)$/ );
     return '1';

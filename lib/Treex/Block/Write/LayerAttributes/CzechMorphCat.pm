@@ -18,7 +18,6 @@ sub modify {
 
     my ($self, $tag) = @_;
 
-    return if ( !defined($tag) );
     return ( '', '', '', '', '', '', '', '', '', '', '', '', '' ) if ( !$tag );
 
     my @values;

@@ -12,7 +12,7 @@ sub modify {
 
     my ($self, $tlemma, $sempos) = @_;
 
-    return if ( !defined($sempos) || !defined($tlemma) );
+    return undef if ( !defined($sempos) || !defined($tlemma) );
 
     my $sempos1 = $sempos;
     $sempos1 =~ s/\..*//;

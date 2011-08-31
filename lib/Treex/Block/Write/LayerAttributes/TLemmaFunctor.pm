@@ -11,7 +11,7 @@ sub modify {
 
     my ($self, $tlemma, $functor) = @_;
 
-    return if ( !defined($functor) );
+    return undef if ( !defined($functor) );
 
     return '' if ( $functor !~ m/^(ACT|PAT|ADDR|ORIG|EFF)$/ );
     return ( $tlemma );
