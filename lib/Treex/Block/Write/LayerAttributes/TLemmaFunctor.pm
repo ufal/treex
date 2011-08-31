@@ -9,7 +9,7 @@ has '+return_values_names' => ( default => sub { [ '' ] } );
 # Return the t-lemma and sempos
 sub modify {
 
-    my ($tlemma, $functor) = @_;
+    my ($self, $tlemma, $functor) = @_;
 
     return if ( !defined($functor) );
 
@@ -29,15 +29,16 @@ Treex::Block::Write::LayerAttributes::TLemmaFunctor
 
 =head1 SYNOPSIS
 
+    my $modif = Treex::Block::Write::LayerAttributes::TLemmaFunctor->new();
     my $parent_tlemma = 'ministr';
     my $functor = 'RSTR';   
 
-    print Treex::Block::Write::LayerAttributes::TLemmaFunctor::modify( $parent_tlemma, $functor ); # prints ''
+    print $modif->modify( $parent_tlemma, $functor ); # prints ''
     
     my $parent_tlemma = 'vládnout';
     my $functor = 'ACT';
     
-    print Treex::Block::Write::LayerAttributes::TLemmaFunctor::modify( $parent_tlemma, $functor ); # prints 'vládnout'  
+    print $modif->modify( $parent_tlemma, $functor ); # prints 'vládnout'  
 
 =head1 DESCRIPTION
 

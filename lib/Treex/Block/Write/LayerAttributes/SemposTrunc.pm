@@ -9,7 +9,7 @@ has '+return_values_names' => ( default => sub { [ '_1', '_2' ] } );
 # Sempos is truncated to the first and first + second field
 sub modify {
 
-    my ($sempos) = @_;
+    my ($self, $sempos) = @_;
 
     return if ( !defined($sempos) );
     return ( '', '' ) if ( !$sempos );
@@ -34,8 +34,9 @@ Treex::Block::Write::LayerAttributes::SemposTrunc
 
 =head1 SYNOPSIS
 
+    my $modif = Treex::Block::Write::LayerAttributes::SemposTrunc->new();
     $sempos = 'adj.quant.def';   
-    print join ' ', Treex::Block::Write::LayerAttributes::SemposTrunc::modify( $sempos ); # prints 'adj adj.quant'
+    print join ' ', $modif->modify( $sempos ); # prints 'adj adj.quant'
 
 =head1 DESCRIPTION
 

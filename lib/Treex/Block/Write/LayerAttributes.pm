@@ -7,43 +7,22 @@ use Treex::PML::Instance;
 
 requires '_process_tree';
 
-has 'layer' => (
-    isa => enum( [ 'a', 't', 'p', 'n' ] ),
-    is => 'ro',
-    required => 1
-);
+has 'layer' => ( isa => enum( [ 'a', 't', 'p', 'n' ] ), is => 'ro', required => 1 );
 
-has 'attributes' => (
-    isa      => 'Str',
-    is       => 'ro',
-    required => 1
-);
+has 'attributes' => ( isa => 'Str', is => 'ro', required => 1 );
 
-has 'output_attrib_names' => (
-    isa => 'Str',
-    is  => 'ro',
-);
+has 'output_attrib_names' => ( isa => 'Str', is => 'ro' );
+
+has 'modifier_config' => ( isa => 'Str', is => 'ro' );
 
 # This is a parsed list of attributes, constructed from the attributes parameter.
-has '_attrib_list' => (
-    isa        => 'ArrayRef',
-    is         => 'ro',
-    builder    => '_build_attrib_list',
-    lazy_build => 1
-);
+has '_attrib_list' => ( isa => 'ArrayRef', is => 'ro', builder => '_build_attrib_list', lazy_build => 1 );
 
 # A list of output attributes, given all the modifiers applied
-has '_output_attrib' => (
-    isa    => 'ArrayRef',
-    is     => 'ro',
-    writer => '_set_output_attrib',
-);
+has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
 
-has '_modifiers' => (
-    isa    => 'HashRef',
-    is     => 'ro',
-    writer => '_set_modifiers',
-);
+# This is where all created text modifier objects are stored
+has '_modifiers' => ( isa => 'HashRef', is => 'ro', writer => '_set_modifiers' );
 
 # Parse the attribute list given in parameters.
 sub _build_attrib_list {
@@ -52,22 +31,47 @@ sub _build_attrib_list {
     return _split_csv_with_brackets( $self->attributes );
 }
 
+# Parse the text modifier settings (perl code given in a parameter that must return a hashref) 
+sub _parse_modif_args {
+    my ($self) = @_;
+    
+    return {} if (!$self->modifier_config);
+    
+    my $ret = eval $self->modifier_config || log_fatal('Cannot parse modifier configuration!');
+    
+    if (ref $ret ne 'HASH'){
+        log_fatal('Modifier configuration must be a hash reference!');
+    }
+    
+    foreach my $key (keys %{$ret}){
+        
+        if ($key !~ m/::./){ # prepend default package name
+            $ret->{'Treex::Block::Write::LayerAttributes::' . $key} = $ret->{$key};
+            delete $ret->{$key};
+        }
+    }          
+    return $ret;
+}
+
+
 # Build the output attributes
 sub BUILD {
 
     my ( $self, $args ) = @_;
     my @output_attr = ();
     my %modifiers   = ();
+    my $modif_args = $self->_parse_modif_args();
 
     foreach my $attr ( @{ $self->_attrib_list } ) {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
-            # find the package and check the role
+            # find the package
             eval "require $pckg" || log_fatal( 'Cannot require package ' . $pckg );
-            {
-                no strict 'refs';
-                $modifiers{$pckg} = $pckg->new();
-            }
+            
+            # create the object (need to supply a dummy empty hash if there are no parameters, an "undef" won't do)
+            $modifiers{$pckg} = $pckg->new( defined($modif_args->{$pckg}) ? $modif_args->{$pckg} : {} );    
+            
+            # check if it does our needed role
             log_fatal("The $pckg package doesn't have the Treex::Block::Write::LayerAttributes::AttributeModifier role!")
                 if ( !$modifiers{$pckg}->does('Treex::Block::Write::LayerAttributes::AttributeModifier') );
 
@@ -86,7 +90,7 @@ sub BUILD {
         my @override_names = @{ _split_csv_with_brackets( $self->output_attrib_names ) };
         if ( @override_names != @output_attr ) {
             log_fatal(
-                      'Incorrect number of output_attrib_names -- is '
+                'Incorrect number of output_attrib_names -- is '
                     . scalar(@override_names)
                     . ', should be '
                     . scalar(@output_attr)
@@ -115,6 +119,7 @@ sub _split_csv_with_brackets {
     return \@arr;
 }
 
+# the main method
 sub process_zone {
 
     my $self = shift;
@@ -157,11 +162,7 @@ sub _get_modified {
         }
 
         # call the modifier function on them
-        my $func = $pckg . '::modify';
-        {
-            no strict 'refs';
-            @vals = ( &$func(@vals) );
-        }
+        @vals = $self->_modifiers->{$pckg}->modify(@vals);
 
         # harvest the results
         return \@vals;
@@ -182,7 +183,7 @@ sub _get_info_hash {
 
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
-            $info{ $self->_output_attrib->[$out_att_pos++] } = $vals->[$i];
+            $info{ $self->_output_attrib->[ $out_att_pos++ ] } = $vals->[$i];
         }
     }
     return \%info;
@@ -215,7 +216,7 @@ sub _get_data {
         else {
             my @values = Treex::PML::Instance::get_all( $node, $attrib );
 
-            return if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
+            return undef if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
             return join( ' ', grep { defined($_) } @values );
         }
 
@@ -280,6 +281,21 @@ sub _get_referenced_nodes {
         }
     }
 
+    # topological neighbors
+    elsif ( my ( $dir, $from, $to ) = ( $ref =~ m/^(left|right)([0-9]+)(?:_([0-9]*))?$/ ) ) {
+
+        $to = $from if ( !$to );
+
+        my $from = $dir eq 'left' ? $node->ord - $from : $node->ord + $from;
+        my $to   = $dir eq 'left' ? $node->ord - $to   : $node->ord + $to;
+        ( $from, $to ) = ( $to, $from ) if ( $dir eq 'left' );
+
+        my @sent = $node->get_root->get_descendants( { ordered => 1 } );
+        $from = List::Util::max( $from - 1, 0 );
+        $to = List::Util::min( $to - 1, scalar(@sent) - 1 );
+        return @sent[ $from .. $to ];
+    }
+
     # alignment relation
     elsif ( $ref eq 'aligned' ) {
 
@@ -324,7 +340,7 @@ sub _get_nearest {
     if ( @nodes > 0 ) {
         my $nearest = $nodes[0];
         foreach my $cand (@nodes) {
-            $nearest = $cand if ( abs( $cand->ord - $node->ord ) < abs( $cand->ord - $node->ord ) );
+            $nearest = $cand if ( abs( $cand->ord - $node->ord ) < abs( $nearest->ord - $node->ord ) );
         }
         return ($nearest);
     }
@@ -385,6 +401,10 @@ An effective sibling is an effective child of the nearest effective parent of th
 
 =item C<nearest_elsibling>, C<nearest_ersibling>: nearest preceding / following effective sibling of the node.
 
+=item C<left#>, C<left#-#>, C<right#>, C<right#-#>: the #-th neighbor to the left or right.
+
+If there are two numbers specified, all neighbors within the given range are returned.
+
 =back
 
 All values of multiple-valued attributes are returned, separated with a space.
@@ -399,7 +419,10 @@ the modifiing functions is also allowed.
 The text modifying function must be a package that implements the L<Treex::Block::Write::LayerAttributes::AttributeModifier>
 role. All packages in the L<Treex::Block::Write::LayerAttributes> directory role are supported implicitly, 
 without the need for full package specification; packages in other locations need to have their full package
-name included. 
+name included.
+
+If the attributge modifiers allow or require configuration, it may be passed to them via the C<modifier_config>
+parameter. 
 
 =head1 PARAMETERS
 
@@ -415,6 +438,27 @@ A space-or-comma-separated list of attributes (relating to the tree nodes on the
 processed, including references and text modifications (see the general description for more information).
  
 This parameter is required.
+
+=item C<output_attrib_names>
+
+A space-or-comma-separated list of override output attribute names. Their number must be the same as the
+number of output attributes, i.e. all attribute modifiers and their numbers of return values must be taken
+into account.
+
+If you don't wish a specific output attribute name to be changed, you may put a single dot (C<.>) into the 
+list instead of the new name.
+
+=item C<modifier_config>
+
+This should contain a Perl code which returns a hash reference, where the keys are the names of attribute 
+modifier packages and values are their configuration (which may be a string or a nested hash or array
+reference). 
+
+Example:
+
+    modifier_config => "{ 'Matching' => [ '^N ^V ^A', 'tlemma tag' ] }"
+
+This returns a configuration setting for the L<Treex::Block::Write::LayerAttributes::Matching> package.
 
 =back
 

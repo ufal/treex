@@ -10,7 +10,7 @@ has '+return_values_names' => ( default => sub { [ '' ] } );
 # Return the t-lemma and sempos
 sub modify {
 
-    my ($tlemma, $sempos) = @_;
+    my ($self, $tlemma, $sempos) = @_;
 
     return if ( !defined($sempos) || !defined($tlemma) );
 
@@ -32,11 +32,12 @@ Treex::Block::Write::LayerAttributes::TLemmaSempos
 
 =head1 SYNOPSIS
 
-    $tlemma = 'čtyři';
-    $sempos = 'adj.quant.def';   
+    my $modif = Treex::Block::Write::LayerAttributes::TLemmaSempos->new();
+    my $tlemma = 'čtyři';
+    my $sempos = 'adj.quant.def';   
 
     # this now prints 'čtyři.adj'
-    print Treex::Block::Write::LayerAttributes::TLemmaSempos::modify( $tlemma, $sempos ); 
+    print $modif->modify( $tlemma, $sempos ); 
 
 =head1 DESCRIPTION
 

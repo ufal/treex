@@ -30,12 +30,11 @@ Treex::Block::Write::LayerAttributes::IsActant
 =head1 SYNOPSIS
 
     my $functor = 'RSTR';   
-
-    print Treex::Block::Write::LayerAttributes::IsActant::modify( $parent_tlemma, $functor ); # prints '0'
+    my $modif = Treex::Block::Write::LayerAttributes::IsActant->new(); 
+    print $modif->modify( $parent_tlemma, $functor ); # prints '0'
     
-    my $functor = 'ACT';
-    
-    print Treex::Block::Write::LayerAttributes::IsActant::modify( $parent_tlemma, $functor ); # prints '1'  
+    my $functor = 'ACT';    
+    print $modif->modify( $parent_tlemma, $functor ); # prints '1'
 
 =head1 DESCRIPTION
 

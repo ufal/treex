@@ -9,7 +9,7 @@ has '+return_values_names' => ( default => sub { [ '' ] } );
 # Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case)
 sub modify {
 
-    my ($tag) = @_;
+    my ($self, $tag) = @_;
 
     return if ( !defined($tag) );
     return '' if (!$tag);
@@ -41,10 +41,11 @@ Treex::Block::Write::LayerAttributes::CzechCoarseTag
 
 =head1 SYNOPSIS
 
-    $tag = 'NNIS1-----A----';   
-    print Treex::Block::Write::LayerAttributes::CzechCoarseTag::modify( $tag ); # prints 'N1'
+    my $modif = Treex::Block::Write::LayerAttributes::CzechCoarseTag->new(); 
+    my $tag = 'NNIS1-----A----';   
+    print $modif->modify( $tag ); # prints 'N1'
     $tag = 'VpYS---XR-AA---';
-    print Treex::Block::Write::LayerAttributes::CzechCoarseTag::modify( $tag ); # prints 'Vp'
+    print $modif->modify( $tag ); # prints 'Vp'
 
 =head1 DESCRIPTION
 

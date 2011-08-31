@@ -16,7 +16,7 @@ has '+return_values_names' => (
 # Split Czech positional tag to attributes for all positions (except the two reserved ones)
 sub modify {
 
-    my ($tag) = @_;
+    my ($self, $tag) = @_;
 
     return if ( !defined($tag) );
     return ( '', '', '', '', '', '', '', '', '', '', '', '', '' ) if ( !$tag );
@@ -42,9 +42,9 @@ Treex::Block::Write::LayerAttributes::CzechMorphCat
 
 =head1 SYNOPSIS
 
-    $tag = 'NNIS1-----A----';   
-    # prints 'N, N, I, S, 1, -, -, -, -, -, A, -, -, -, -'
-    print join(', ', Treex::Block::Write::LayerAttributes::CzechMorphCat::modify( $tag )); 
+    my $modif = Treex::Block::Write::LayerAttributes::CzechMorphCat->new();
+    my $tag = 'NNIS1-----A----';    
+    print join(', ', $modif->modify( $tag )); # prints 'N, N, I, S, 1, -, -, -, -, -, A, -, -, -, -' 
 
 =head1 DESCRIPTION
 
