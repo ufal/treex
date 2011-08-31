@@ -14,15 +14,134 @@ sub process_zone
     my $zone   = shift;
     
     my $a_root = $self->SUPER::process_zone($zone);
+    $self->attach_final_punctuation_to_root($a_root);    
+    make_pdt_coordination($a_root);
+    set_ismember_apos($a_root);
+    correct_punctuations($a_root);
+    hang_everything_under_pred($a_root);
+    correct_coordination($a_root);
+}
 
-    #make_pdt_coordination($a_root);
-    #AuxK_under_Pred($a_root);
-    #set_ismember_apos($a_root);
-    #adjust_root_nodes($a_root);
-    
-    # attach terminal punctuations (., ?, ! etc) to root of the tree
-    #$self->attach_final_punctuation_to_root($a_root);    
+sub make_pdt_coordination {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            if ($afun eq 'Coord') {
+                my @children = $node->get_children();
+                foreach my $c (@children) {
+                    if (defined $c) {
+                        my $afunc = $c->afun();
+                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
+                    }
+                }
+            }            
+        }
+    }    
+}
 
+# punctuations such as "," and ";" hanging under a node will be
+# attached to the parents parent node
+sub correct_punctuations {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            my $ordn = $node->ord();
+            if ($afun =~ /^(AuxX|AuxG|AuxK|AuxK)$/) {
+                my $parnode = $node->get_parent();
+                if (defined $parnode) {
+                    my $parparnode = $parnode->get_parent();
+                    if (defined $parparnode) {
+                        my $ordpp = $parparnode->ord();
+                        if ($ordpp > 0) {                            
+                            $node->set_parent($parparnode);
+                        }
+                    }
+                }
+            }            
+        }                
+    }
+}
+
+# some of the nodes might be attached to technical root rather than with the
+# predicate node. those nodes will be attached to predicate node.
+sub hang_everything_under_pred {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my @dnodes;
+    my $prednode;
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            my $ordn = $node->ord();
+            my $parnode = $node->get_parent();
+            if (defined $parnode) {
+                my $ordpar = $parnode->ord();
+                if ($ordpar == 0) {
+                    if ($afun ne 'Pred') {
+                        push @dnodes, $node
+                    }
+                    else {
+                        $prednode = $node;
+                    }                           
+                }         
+            }
+        }
+    }    
+    #
+    if (scalar(@dnodes) > 0) {
+        if (defined $prednode) {
+            foreach my $dn (@dnodes) {
+                if (defined $dn) {
+                    $dn->set_parent($prednode);
+                }
+            }
+        }
+    }
+}
+
+
+sub correct_coordination {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $form = $node->form();
+            my $afun = $node->afun();
+            if (($form =~ /^(eta|edo)$/) && ($afun ne 'Coord')) {
+                $node->set_afun('Coord');
+                my @children = $node->get_children();
+                foreach my $c (@children) {
+                    if (defined $c) {
+                        my $afunc = $c->afun();
+                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
+                    }
+                }
+            }            
+        }
+    }       
+}
+
+sub set_ismember_apos {
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        my $parnode = $node->get_parent();
+        if (defined $parnode) {
+            my $parafun = $parnode->afun();
+            if ($parafun eq 'Apos') {
+                $node->set_is_member(1);
+            }            
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -147,7 +266,6 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }            
         }
-        
         
         # particles
         $afun = 'Atr' if ($deprel eq 'prtmod');
