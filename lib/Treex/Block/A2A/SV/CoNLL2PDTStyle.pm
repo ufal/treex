@@ -98,8 +98,12 @@ sub deprel_to_afun
             # Google Translate:
             # In many families there is dictatorship, which brought the children into good citizens of the parents in their own little way.
             # The phrase 'av föräldrarna' ('of the parents') is tagged 'AG'.
-            # This could hint that the relative clause is in passive but I doubt it because of the setting of the other phrases.
-            ###!!!
+            # After consultation with Silvie:
+            # The '-s' suffix of 'uppfostras' puts the verb into mediopassive. So the literal translation could be closer to:
+            # In many families there is dictatorship, where brought-are children into good citizens by the parents in their own little way.
+            # So from the point of view of the analytical layer of the PDT, we can say that the parents are Obj
+            # (while on the tectogrammatical layer they are the Actor).
+            $afun = 'Obj';
         }
 
         # Apposition
