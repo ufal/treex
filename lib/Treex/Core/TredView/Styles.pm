@@ -269,6 +269,8 @@ This packages provides styling for the trees displayed in Tred.
 
 =head2 Private methods
 
+=over 4
+
 =item _anode_style
 
 =item _tnode_style
@@ -277,7 +279,7 @@ This packages provides styling for the trees displayed in Tred.
 
 =item _pnode_style
 
-=over 4
+=back
 
 =head1 AUTHOR
 

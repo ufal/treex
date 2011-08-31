@@ -445,6 +445,8 @@ a special file.
 
 =head2 Private methods
 
+=over 4
+
 =item _move_layout
 
 =item _wrap_layout
@@ -463,7 +465,7 @@ a special file.
 
 =item _draw_layout
 
-=over 4
+=back
 
 =head1 AUTHOR
 

@@ -253,6 +253,8 @@ This packages provides browsers of vallency lexicons
 
 =head2 Private methods
 
+=over 4
+
 =item _OpenValLexicon_Cs
 
 =item _ChooseValFrame_Cs
@@ -267,7 +269,7 @@ This packages provides browsers of vallency lexicons
 
 =item _assigned_frame_pos_of
 
-=over 4
+=back
 
 =head1 AUTHOR
 

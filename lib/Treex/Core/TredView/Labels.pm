@@ -359,6 +359,8 @@ functionality.
 
 =head2 Private methods
 
+=over 4
+
 =item _build_label_variants
 
 =item _get_label_variant
@@ -373,7 +375,7 @@ functionality.
 
 =item _pnode_labels
 
-=over 4
+=back
 
 =head1 AUTHOR
 

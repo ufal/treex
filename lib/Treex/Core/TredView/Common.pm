@@ -51,6 +51,8 @@ packages.
 
 =over 4
 
+=back
+
 =head1 AUTHOR
 
 Josef Toman <toman@ufal.mff.cuni.cz>
