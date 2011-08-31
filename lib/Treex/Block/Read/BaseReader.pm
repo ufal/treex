@@ -10,7 +10,7 @@ sub next_document {
     return log_fatal "method next_document must be overriden in " . ref($self);
 }
 
-has selector => ( isa => 'Selector', is => 'ro', default => '' );
+has selector => ( isa => 'Selector', is => 'ro', default => q{} );
 
 has filenames => (
     isa           => 'ArrayRef[Str]',
@@ -63,7 +63,7 @@ sub _build_filenames {
     my $filenames = [];
 
     # add all files in the 'from' parameter to the list (avoid adding STDIN if filelist is set)
-    if ( $self->from && ( !$self->filelist || $self->from ne '-' ) ) {
+    if ( $self->from && ( !$self->filelist || $self->from ne q{-} ) ) {
         push @{$filenames}, split( /[ ,]+/, $self->from );
     }
 
@@ -71,13 +71,13 @@ sub _build_filenames {
     if ( $self->filelist ) {
         my @list = read_file( $self->filelist );
         log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 && !defined( $list[0] );
-        @list = map {
-            local $_ = $_;
-            $_ =~ s/\s*\r?\n$//;
-            $_ =~ s/^\s*//;
-            $_
-        } @list;    # remove EOL chars, trim
-        push @{$filenames}, @list;
+        my @trimmed;
+        foreach my $item (@list) {
+            $item =~ s/\s*\r?\n$//;
+            $item =~ s/^\s*//;
+            push @trimmed, $item; # remove EOL chars, trim
+        }
+        push @{$filenames}, @trimmed;
     }
 
     # return the resulting list
@@ -129,7 +129,7 @@ sub new_document {
     }
 
     if ( $self->is_one_doc_per_file && !$self->file_stem ) {
-        $args{file_number} = '';
+        $args{file_number} = q{};
     }
     else {
         my $num = $self->_file_numbers->{$stem};

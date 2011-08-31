@@ -61,7 +61,7 @@ sub _spread_nodes {
         push @lower, @buf;
     }
     $right += $pos;
-    return ( 0, $node ) unless @lower;
+    return ( 0, $node ) if ! @lower;
 
     my $mid;
     if ( scalar( $node->children ) == 1 ) {
