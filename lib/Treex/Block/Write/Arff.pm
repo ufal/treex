@@ -3,6 +3,7 @@ package Treex::Block::Write::Arff;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::IO::Arff;
+use autodie;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
@@ -15,27 +16,13 @@ with 'Treex::Block::Write::LayerAttributes';
 has '+language' => ( required => 1 );
 
 # ARFF data file structure as it's set in Treex::Tool::IO::Arff
-has '_arff' => (
-    is         => 'ro',
-    builder    => '_init_arff',
-    lazy_build => 1
-);
+has '_arff' => ( is => 'ro', builder => '_init_arff', lazy_build => 1 );
 
 # Current sentence ID, starting with 1
-has '_sent_id' => (
-    is      => 'ro',
-    isa     => 'Int',
-    writer  => '_set_sent_id',
-    default => 1
-);
+has '_sent_id' => ( is => 'ro', isa => 'Int', writer => '_set_sent_id', default => 1 );
 
 # Were the ARFF file headers already printed ?
-has '_headers_printed' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    writer  => '_set_headers_printed',
-    default => 0
-);
+has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
 
 # Override the default data type settings (format: "columnname: type, ...")
 has 'force_types' => ( is => 'ro', isa => 'Str', default => '' );
@@ -43,18 +30,45 @@ has 'force_types' => ( is => 'ro', isa => 'Str', default => '' );
 # The data type override settings, in a hashref
 has '_forced_types' => ( is => 'ro', isa => 'HashRef', builder => '_build_forced_types', lazy_build => 1 );
 
+has 'config_file' => ( is => 'ro', isa => 'Str' );
+
 #
 # METHODS
 #
 
-# De-alias the 'head' parameter
+# Read the configuration, if applicable
 sub BUILDARGS {
 
     my ( $class, $params ) = @_;
 
-    $params->{attributes} =~ s/(^| )head($| )/$1parent->ord$2/;
+    if ( $params->{config_file} ){
+        my ($attributes, $override) = _read_config_file($params->{config_file});
+        $params->{attributes} = $attributes;
+        $params->{output_attrib_names} = $override;
+    }
+    
     return $params;
 }
+
+sub _read_config_file {
+    
+    my ($file_name) = @_;
+    my ($attributes, $override) = ('', '');
+    
+    open(my $fh, '<:utf8', $file_name);
+    while (my $line = <$fh>){
+        $line =~ s/\r?\n$//;
+        my ($attr, $out_names) = split(/\t/, $line);
+        $attributes .= ' ' . $attr;
+        $override .= ' ' . $out_names;     
+    }    
+    close($fh);
+    
+    log_info('ATTR: ' . $attributes);
+    
+    return ($attributes, $override);    
+}
+
 
 # Build a hashref from datatype override settings
 sub _build_forced_types {
@@ -104,11 +118,6 @@ sub _process_tree {
 
         my $info = $self->_get_info_hash($node);
 
-        if ( defined( $info->{'parent->ord'} ) ) {    # 'head' aliasing
-            $info->{'head'} = $info->{'parent->ord'};
-            delete $info->{'parent->ord'};
-        }
-
         $info->{sent_id} = $self->_sent_id;
         $info->{word_id} = $word_id;
 
@@ -133,7 +142,7 @@ sub _init_arff {
     foreach my $attr ( @{ $self->_output_attrib } ) {
 
         my $attr_entry = {
-            attribute_name => ( $attr eq 'parent->ord' ? 'head' : $attr ),
+            attribute_name => $attr,
             attribute_type => $self->_forced_types->{$attr}
         };
 
@@ -179,9 +188,20 @@ The annotation layer to be processed (i.e. C<a>, C<t>, C<n>, or C<p>). This para
 A space-separated list of attributes (relating to the tree nodes on the specified layer) to be processed. 
 This parameter is required.
 
-For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
+For multiple-valued attributes (lists), dereferencing and text modifiers, please see 
+L<Treex::Block::Write::LayerAttributes>. 
 
-A special attribute C<head> is an alias for dereferenced attribute C<parent-&gt;ord>.
+=item C<output_attrib_names>, C<modifier_config> 
+
+See L<Treex::Block::Write::LayerAttributes>.
+
+=item C<config_file>
+
+A file containing the configuration for the C<modifier_config> and C<output_attrib_names> parameters.
+
+The format of the configuration file is as follows:
+    attribute1<tab>output_name [output_name ... ]
+    attribute2<tab>output_name [output_name ... ]
 
 =item C<force_types>
 

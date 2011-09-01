@@ -110,6 +110,7 @@ sub BUILD {
 sub _split_csv_with_brackets {
 
     my ($str) = @_;
+    $str =~ s/^[\s,]*//;
     $str .= ' ';
     my @arr = ();
     while ( $str =~ m/([a-zA-Z0-9_:-]+\([^\)]*\)+|[^\(\s,]*)[\s,]+/g ) {
