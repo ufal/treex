@@ -91,7 +91,7 @@ sub convert_tag
         ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
         en::conll en::conll2009
         es::conll2009 tr::conll  
-        hu::conll eu::conll  
+        hu::conll eu::conll  ta::tamiltb  
         it::conll nl::conll pt::conll sv::conll zh::conll
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
         ro::rdt);
@@ -108,7 +108,7 @@ sub convert_tag
     my $conll_cpos = $node->conll_cpos();
     my $conll_pos  = $node->conll_pos();
     my $conll_feat = $node->conll_feat();
-    my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset =~ m/^conll/ ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
+    my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset =~ m/^(conll|tamiltb)/ ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
     my $f = tagset::common::decode($driver, $src_tag);
     my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_iset($f);
