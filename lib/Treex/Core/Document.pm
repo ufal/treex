@@ -320,7 +320,7 @@ sub create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
 
     my $new_zone = Treex::Core::DocZone->new(
@@ -348,7 +348,7 @@ sub get_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
 
     my $meta = $self->metaData('pml_root')->{meta};
@@ -368,7 +368,7 @@ sub get_or_create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
 
     my $fs_zone = $self->get_zone( $language, $selector );

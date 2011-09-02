@@ -5,7 +5,7 @@ with 'Treex::Core::DocumentReader';
 
 has encoding => ( isa => 'Str', is => 'ro', default => 'utf8' );
 
-has selector => ( isa => 'Selector', is => 'ro', default => '' );
+has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => '' );
 
 has file_stem => (
     isa           => 'Str',

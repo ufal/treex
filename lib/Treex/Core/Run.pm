@@ -67,7 +67,7 @@ has 'lang' => (
 has 'selector' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'S',
-    is            => 'rw', isa => 'Selector',
+    is            => 'rw', isa => 'Treex::Type::Selector',
     documentation => q{shortcut for adding "Util::SetGlobal selector=xy" at the beginning of the scenario},
 );
 

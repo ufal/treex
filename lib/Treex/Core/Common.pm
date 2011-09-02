@@ -71,11 +71,6 @@ sub import {
     goto &$import;
 }
 
-subtype 'Selector'
-    => as 'Str'
-    => where {m/^[a-z\d]*$/i}
-=> message {"Selector must =~ /^[a-z\\d]*\$/i. You've provided $_"};    #TODO: this messege is not printed
-
 subtype 'Message'                                                       #nonempty string
     => as 'Str'
     => where { $_ ne q{} }
@@ -156,6 +151,7 @@ Instead of
  use Treex::Core::Log;
  use Treex::Core::Config;
  use Treex::Core::Resource;
+ use Treex::Core::Types;
  use List::MoreUtils qw(all any first_index);
  use List::Util qw(first);
  use Scalar::Util qw(weaken);

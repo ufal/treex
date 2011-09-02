@@ -10,7 +10,7 @@ extends 'Treex::PML::Struct';
 
 has language => ( is => 'rw', isa => 'LangCode', required => 1 );
 
-has selector => ( is => 'rw', isa => 'Selector', default => '' );
+has selector => ( is => 'rw', isa => 'Treex::Type::Selector', default => '' );
 
 # Based on source code of Moose::Object::BUILDARGS,
 # but we don't want to copy args (return { %{$_[0]} };).

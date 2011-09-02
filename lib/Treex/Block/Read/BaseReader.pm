@@ -10,7 +10,7 @@ sub next_document {
     return log_fatal "method next_document must be overriden in " . ref($self);
 }
 
-has selector => ( isa => 'Selector', is => 'ro', default => q{} );
+has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
 
 has filenames => (
     isa           => 'ArrayRef[Str]',

@@ -12,7 +12,7 @@ has [qw(lang1 lang2)] => (
 );
 
 has [qw(selector1 selector2)] => (
-    isa     => 'Selector',
+    isa     => 'Treex::Type::Selector',
     is      => 'ro',
     default => '',
 );

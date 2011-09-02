@@ -10,7 +10,7 @@ has language => (
     required => 1,
 );
 
-has selector => ( isa => 'Selector', is => 'ro', default => '' );
+has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => '' );
 
 sub zone_label {
     my ($self) = @_;

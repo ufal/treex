@@ -11,7 +11,7 @@ has 'to_language' => (
 
 has 'to_selector' => (
     is      => 'ro',
-    isa     => 'Selector',
+    isa     => 'Treex::Type::Selector',
     default => 'ref',
 );
 

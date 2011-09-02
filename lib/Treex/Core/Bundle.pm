@@ -40,7 +40,7 @@ sub get_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
@@ -59,7 +59,7 @@ sub create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
 
     log_fatal("Bundle already contains a zone with language='$language' and selector='$selector'")
@@ -93,7 +93,7 @@ sub get_or_create_zone {
     my ( $language, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Selector', default => '' },
+        { isa => 'Treex::Type::Selector', default => '' },
     );
     my $zone = $self->get_zone( $language, $selector );
     if ( !defined $zone ) {
@@ -159,7 +159,7 @@ sub create_tree {
         \@_,
         { isa => 'LangCode' },
         { isa => 'Treex::Type::Layer' },
-        { isa => 'Selector', default => '' }
+        { isa => 'Treex::Type::Selector', default => '' }
     );
 
     my $zone = $self->get_or_create_zone( $language, $selector );
@@ -173,7 +173,7 @@ sub get_tree {
         \@_,
         { isa => 'LangCode' },
         { isa => 'Treex::Type::Layer' },
-        { isa => 'Selector', default => '' }
+        { isa => 'Treex::Type::Selector', default => '' }
     );
 
     my $zone = $self->get_zone( $language, $selector );
@@ -187,7 +187,7 @@ sub has_tree {
         \@_,
         { isa => 'LangCode' },
         { isa => 'Treex::Type::Layer' },
-        { isa => 'Selector', default => '' }
+        { isa => 'Treex::Type::Selector', default => '' }
     );
     my $zone = $self->get_zone( $language, $selector );
     return defined $zone && $zone->has_tree($layer);

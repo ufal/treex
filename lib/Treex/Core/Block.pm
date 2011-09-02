@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 
-has selector => ( is => 'ro', isa => 'Selector',        default => '', );
+has selector => ( is => 'ro', isa => 'Treex::Type::Selector',        default => '', );
 has language => ( is => 'ro', isa => 'Maybe[LangCode]', builder => 'build_language' );
 has scenario => (
     is       => 'ro',
