@@ -9,6 +9,7 @@ use MooseX::SemiAffordanceAccessor::Role::Attribute;
 use Treex::Core::Log;
 use Treex::Core::Config;
 use Treex::Core::Resource;
+use Treex::Core::Types;
 use List::MoreUtils;
 use List::Util;
 use Scalar::Util;
@@ -82,8 +83,8 @@ subtype 'Layer'
 
 subtype 'Message'                                                       #nonempty string
     => as 'Str'
-    => where { $_ ne '' }
-=> message {"Message must be nonempty"};
+    => where { $_ ne q{} }
+=> message {'Message must be nonempty'};
 
 #preparation for possible future constraints
 subtype 'Id'
@@ -94,6 +95,11 @@ subtype 'ZoneCode'
     => as 'Str'
     => where { my ( $l, $s ) = split /_/, $_; is_lang_code($l) && ( !defined $s || $s =~ /^[a-z\d]*$/i ) }
 => message {'ZoneCode must be LangCode or LangCode_Selector, e.g. "en_src"'};
+
+subtype 'NonNegativeInt'
+    => as 'Int'
+    => where {$_ >= 0}
+=> message {"$_ isn't non-negative"};
 
 # ISO 639-1 language code with some extensions from ISO 639-2
 # Added code for Modern Greek which comes under ISO 639-3
