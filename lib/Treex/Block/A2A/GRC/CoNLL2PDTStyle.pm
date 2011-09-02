@@ -12,7 +12,23 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
+    my $a_root = $self->SUPER::process_zone($zone);    
+    $self->attach_final_punctuation_to_root($a_root);    
+    $self->check_apos_coord_membership($a_root);
+    $self->check_afuns($a_root);
+}
+
+sub check_apos_coord_membership {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ($afun =~ /^(Apos|Coord)$/) {
+            $self->identify_coap_members($node);
+        }
+    }    
 }
 
 #------------------------------------------------------------------------------
@@ -24,6 +40,7 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
+    
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();

@@ -14,16 +14,34 @@ sub process_zone
     my $zone   = shift;
     
     my $a_root = $self->SUPER::process_zone($zone);
+    $self->hang_everything_under_pred($a_root);
     $self->attach_final_punctuation_to_root($a_root);    
-    make_pdt_coordination($a_root);
-    set_ismember_apos($a_root);
-    correct_punctuations($a_root);
-    hang_everything_under_pred($a_root);
-    correct_coordination($a_root);
+    $self->make_pdt_coordination($a_root);
+    $self->correct_punctuations($a_root);
+    $self->correct_coordination($a_root);
+    $self->check_apos_coord_membership($a_root);
+    $self->check_afuns($a_root);    
 }
 
+# this function will call the function to make sure that
+# all coordination and apos members have 'is_member' set to 1
+sub check_apos_coord_membership {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ($afun =~ /^(Apos|Coord)$/) {
+            $self->identify_coap_members($node);
+        }
+    }    
+}
+
+# will make PDT style coordination from the CoNLL data
 sub make_pdt_coordination {
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
@@ -45,7 +63,8 @@ sub make_pdt_coordination {
 # punctuations such as "," and ";" hanging under a node will be
 # attached to the parents parent node
 sub correct_punctuations {
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
@@ -68,10 +87,12 @@ sub correct_punctuations {
     }
 }
 
-# some of the nodes might be attached to technical root rather than with the
-# predicate node. those nodes will be attached to predicate node.
+# In the original treebank, some of the nodes might be attached to technical root
+# rather than with the predicate node. those nodes will
+# be attached to predicate node.
 sub hang_everything_under_pred {
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     my @dnodes;
     my $prednode;
@@ -106,9 +127,11 @@ sub hang_everything_under_pred {
     }
 }
 
-
+# this function will find if there are 'Coordinations'  that are not
+# detected using the previous make_pdt_coordination function.
 sub correct_coordination {
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
@@ -127,21 +150,6 @@ sub correct_coordination {
             }            
         }
     }       
-}
-
-sub set_ismember_apos {
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        my $parnode = $node->get_parent();
-        if (defined $parnode) {
-            my $parafun = $parnode->afun();
-            if ($parafun eq 'Apos') {
-                $node->set_is_member(1);
-            }            
-        }
-    }
 }
 
 #------------------------------------------------------------------------------
@@ -399,5 +407,4 @@ sub deprel_to_afun
 =cut
 
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
-
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -92,7 +92,7 @@ sub convert_tag
         en::conll en::conll2009
         es::conll2009 tr::conll  
         hu::conll eu::conll  ta::tamiltb  
-        it::conll nl::conll pt::conll sv::conll zh::conll
+        it::conll nl::conll pt::conll sv::conll zh::conll grc::conll 
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
         ro::rdt);
     my $driver = $node->get_zone()->language() . '::' . $tagset;
@@ -161,7 +161,7 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|ExD|Coord|Apos|AuxA|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/ )
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|AuxA|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/ )
         {
             $self->log_sentence($root);
             my $ord    = $node->ord();
