@@ -158,7 +158,7 @@ sub create_tree {
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Layer' },
+        { isa => 'Treex::Type::Layer' },
         { isa => 'Selector', default => '' }
     );
 
@@ -172,7 +172,7 @@ sub get_tree {
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Layer' },
+        { isa => 'Treex::Type::Layer' },
         { isa => 'Selector', default => '' }
     );
 
@@ -186,7 +186,7 @@ sub has_tree {
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
         { isa => 'LangCode' },
-        { isa => 'Layer' },
+        { isa => 'Treex::Type::Layer' },
         { isa => 'Selector', default => '' }
     );
     my $zone = $self->get_zone( $language, $selector );

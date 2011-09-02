@@ -6,6 +6,11 @@ subtype 'Treex::Type::NonNegativeInt'
     => where {$_ >= 0}
 => message {"$_ isn't non-negative"};
 
+subtype 'Treex::Type::Layer'
+    => as 'Str'
+    => where {m/^[ptan]$/i}
+=> message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
+
 
 __END__
 
