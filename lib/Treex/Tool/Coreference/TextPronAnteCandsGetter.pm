@@ -20,7 +20,7 @@ sub _select_all_cands {
             $anaph->language,
             $anaph->get_layer,
             $anaph->selector
-        );
+        ); 
         unshift @sent_preceding, $prev_tree->get_descendants( { ordered => 1 } );
     }
     else {
@@ -65,7 +65,6 @@ sub _split_pos_neg_cands {
         }
         $ord++;
     }
-
     return ( $pos_cands, $neg_cands, $pos_ords, $neg_ords );
 }
 

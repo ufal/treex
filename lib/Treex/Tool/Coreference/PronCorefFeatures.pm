@@ -111,7 +111,7 @@ sub _build_feature_names {
     );
     
     my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
-    foreach my $class (@{$all_c}) {
+    foreach my $class (sort @{$all_c}) {
         my $coref_class = "b_" . $class;
         push @feat_names, $coref_class;
     }
@@ -126,7 +126,7 @@ sub _build_cnk_freqs {
         ' with a CNK model used for a feature' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $cnk_file;
-    open CNK, $cnk_file;
+    open CNK, "<:utf8", $cnk_file;
     
     my $nv_freq;
     my $v_freq;
@@ -154,7 +154,7 @@ sub _build_ewn_classes {
         ' with a EuroWordNet onthology for Czech used' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $ewn_file;
-    open EWN, $ewn_file;
+    open EWN, "<:utf8", $ewn_file;
     
     my $ewn_noun;
     my %ewn_all_classes;
@@ -359,7 +359,7 @@ sub _are_siblings {
 	my ($inode, $jnode) = @_;
 	my $ipar = ($inode->get_eparents)[0];
 	my $jpar = ($jnode->get_eparents)[0];
-	return ($ipar eq $jpar) ? $b_true : $b_false;
+	return ($ipar == $jpar) ? $b_true : $b_false;
 }
 
 # return if $inode and $jnode have the same collocation
@@ -406,7 +406,7 @@ sub join_feats {
 sub agree_feats {
     my ($f1, $f2) = @_;
     if (!defined $f1 || !defined $f2) {
-        return undef;
+        return $b_false;
     }
     return ($f1 eq $f2) ? $b_true : $b_false;
 }
@@ -531,7 +531,7 @@ sub extract_features {
 ###########################
     #   Context:
     $coref_features{b_cand_coord} = ( $cand->is_member ) ? $b_true : $b_false;
-    $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph );
 
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
@@ -563,17 +563,17 @@ sub extract_features {
         = join_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
 
     #   1: are_siblings($inode, $jnode)
-    $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features{b_sibl} = _are_siblings( $cand, $anaph );
 
     #   1: collocation
-    $coref_features{b_coll} = $self->_in_collocation( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features{b_coll} = $self->_in_collocation( $cand, $anaph );
 
     #   1: collocation from CNK
     $coref_features{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
 
     #   1:  freq($inode);
     #    $coref_features{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
-    $coref_features{r_cand_freq} = $self->_np_freq->{ $cand->t_lemma };
+    $coref_features{r_cand_freq} = $self->_np_freq->{ $cand->t_lemma } || 0;
 
 ###########################
     #   Semantic:
@@ -582,12 +582,12 @@ sub extract_features {
 
     #   EuroWordNet nouns
     my $cand_lemma      = $cand->t_lemma;
-    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
-    my %cand_c = map {$_ => 1} keys %{$noun_c->{$cand_lemma}};
+    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
+    my $cand_c = $noun_c->{$cand_lemma};
     
     for my $class ( @{$all_c} ) {
         my $coref_class = "b_" . $class;
-        $coref_features{$coref_class} = defined $cand_c{$class} ? $b_true : $b_false;
+        $coref_features{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
     }
     
     #   celkem 71 vlastnosti + ID
@@ -596,7 +596,7 @@ sub extract_features {
 
 sub count_collocations {
     my ( $self, $trees ) = @_;
-    my ( $collocation );
+    my ( $collocation ) = {};
     
     foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {

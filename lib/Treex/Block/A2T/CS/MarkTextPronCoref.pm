@@ -145,7 +145,9 @@ sub process_tnode {
         my $ranker = $self->_ranker;
         my $antec  = $ranker->pick_winner( $instances );
 
-        $t_node->set_attr( 'coref_text.ref', [$antec] );
+        if (defined $antec) {
+            $t_node->set_attr( 'coref_text.rf', [$antec] );
+        }
     }
 }
 

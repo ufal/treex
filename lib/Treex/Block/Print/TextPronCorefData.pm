@@ -27,6 +27,13 @@ has 'feature_sep' => (
     default     => ' ',
 );
 
+has '_char_mapping' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'HashRef[Str]',
+    builder     => '_build_char_mappping',
+);
+
 sub BUILD {
     my ($self) = @_;
 
@@ -40,14 +47,78 @@ sub _build_feature_names {
     my $names = $self->_feature_extractor->feature_names;
     return $names;
 }
+    
+sub _build_char_mappping {
+    my ($self) = @_;
+
+    return {
+        "\#"    => "spec_hash",
+        "\\|"   => "spec_pipe",
+        "\\-"   => "undef",
+        '\\"'   => "spec_quot",
+        "\\+"   => "spec_plus",
+        "\\*"   => "spec_aster",
+        "\\,"   => "spec_comma",
+        "\\."   => "spec_dot",
+        "\\!"   => "spec_exmark",
+        "\\:"   => "spec_ddot",
+        "\\;"   => "spec_semicol",
+        "\\="   => "spec_eq",
+        "\\?"   => "spec_qmark",
+        "\\^"   => "spec_head",
+        "\\~"   => "spec_tilda",
+        "\\}"   => "spec_rbrace",
+        "\\{"   => "spec_lbrace",
+        "\\("   => "spec_lpar",
+        "\\)"   => "spec_rpar",
+        "\\["   => "spec_lpar",
+        "\\]"   => "spec_rpar",
+        "\\&"   => "spec_amper",
+        "\\'"   => "spec_aph",
+        "\\`"   => "spec_aph2",
+        "\\\""  => "spec_quot",
+        "\\%"   => "spec_percnt",
+        "\\\\"  => "spec_backslash",
+        "\\\/"  => "spec_slash",
+        "\\#"   => "spec_cross",
+        "\\\$"  => "spec_dollar",
+        "\\@"   => "spec_at",
+    };
+}
+
+sub _special_chars_off {
+    my ($self, $value) = @_;
+
+    my $mapping = $self->_char_mapping;
+
+    foreach my $from (keys %{$mapping}) {
+		my $to = $mapping->{$from};
+        $value = $self->_replace_empty( $value );
+        if ($value ne "empty") {
+		    $value =~ s/$from/$to/g;
+        }
+	}
+	return $value;
+}
+
+sub _replace_empty {
+    my ($self, $value) = @_;
+    if ((!defined $value) || ($value =~ /^\s*$/)) {
+        return "empty";
+    }
+    return $value;
+}
 
 sub _create_instances_strings {
     my ($self, $instances, $y_value) = @_;
     
     my @lines;
-    foreach my $id (keys %{$instances}) {
+    foreach my $instance (@{$instances}) {
         my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
-        my @cols = map {$_ . '=' . $instances->{$id}->{$_}} @{$self->feature_names};
+        my @cols = map {$_=~ /^[br]_/ 
+                ? "r_$_=" . $self->_replace_empty( $instance->{$_} )
+                : "c_$_=" . $self->_special_chars_off( $instance->{$_} )
+            } @{$self->feature_names};
         $line .= join $self->feature_sep, @cols;
         push @lines, $line;
     }
@@ -55,14 +126,21 @@ sub _create_instances_strings {
     return @lines;
 }
 
-sub print_bundle {
-    my ($self, $pos_instances, $neg_instances) = @_;
-    
-    print "\n";
+sub _sort_instances {
+    my ($self, $instances, $cand_list) = @_;
 
+    my @sorted = map {$instances->{$_->id}} @{$cand_list};
+    return \@sorted;
+}
+
+sub print_bundle {
+    my ($self, $anaph, $pos_instances, $neg_instances) = @_;
+    
     my @pos_lines = $self->_create_instances_strings($pos_instances, 1);
     my @neg_lines = $self->_create_instances_strings($neg_instances, 0);
     
+    print "\n";
+    print '#' . $anaph->id . "\n";
     print join "\n", ( @pos_lines, @neg_lines );
     print "\n";
 }
@@ -86,10 +164,17 @@ override 'process_tnode' => sub {
             = $self->_create_instances( $t_node, $pos_cands, $pos_ords );
         my $neg_instances 
             = $self->_create_instances( $t_node, $neg_cands, $neg_ords );
+
+        my $pos_inst_list = 
+            $self->_sort_instances( $pos_instances, $pos_cands);
+        my $neg_inst_list = 
+            $self->_sort_instances( $neg_instances, $neg_cands);
         
 # TODO negative instances appeared to be of 0 size, why?
-        if ((keys %$pos_instances) > 0) {
-            $self->print_bundle($pos_instances, $neg_instances);
+        if (@{$pos_inst_list} > 0) {
+            $self->print_bundle($t_node, $pos_inst_list, $neg_inst_list);
         }
     }
 };
+
+1;
