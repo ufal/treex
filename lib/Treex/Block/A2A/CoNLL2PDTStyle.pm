@@ -772,6 +772,27 @@ sub sentence_contains
     return $sentence =~ m/$query/;
 }
 
+#------------------------------------------------------------------------------
+# Error handler: removes 'is_member' attribute if the node is not
+# part of the coordination structure.
+#------------------------------------------------------------------------------
+sub remove_ismember_membership
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes) {
+        if ($node->is_member) {
+            my $parnode = $node->get_parent();
+            if (defined $parnode) {
+                my $parafun = $parnode->afun();                                
+                if ($parafun !~ /^(Coord|Apos)$/) {# remove the 'is_member'
+                    $node->set_is_member(0);
+                }
+            }
+        }
+    }    
+}
 1;
 
 =over
