@@ -9,7 +9,10 @@ sub process_anode {
         foreach my $parent ($anode->get_eparents) {
             if (defined $parent->get_attr('iset/pos')
                     and $parent->get_attr('iset/pos') ne 'verb' ) {
-                $self->complain($anode);
+
+                if ($parent->afun() ne 'AuxC') { # modern greek 
+                    $self->complain($anode);
+                }
             }
         }
     }
@@ -41,6 +44,48 @@ Counter examples from RDT (Romanian Dependency Treebank)
  * "operatiunile(afun=Sb) vor fi mult ingreunate(pos=A)"
    "the operations will become worse" 
    similar to Czech "bude ochotno"
+
+
+Counter examples from Modern Greek Dependency Treebank
+======================================================
+
+(i)
+
+In the case of subordinating conjunctions, subordinate clause 
+often takes the grammatical function such as Subject or Object,
+which is attached to the sub conjunction (AuxC). The AuxC will
+be attached to the main clause's predicate.  
+
+The structure will look like this,
+
+                    Pred
+                  /  |  \
+                /    |   \
+                        AuxC
+                            \
+                             \
+                             Sb   ("Sb" is not just the role of a 
+                                    single word , but of the entire clause.
+                                   So the corresponding word of the "Sb" may 
+                                    even be a "VERB")
+                         
+(ii)
+
+There may also structures like this,
+
+                     
+                    Pred
+                  /  |  \
+                /    |   \
+                        AuxC
+                            \
+                             \
+                             Sb   (if the word is a "VERB")
+                               \
+                                \
+                                Sb 
+
+
 
 =over
 
