@@ -23,34 +23,10 @@ sub _get_antecedents {
     my ($self, $anaph) = @_;
 
     my $antecs = [];
-    $self->_add_following_antecs($anaph, $antecs, $anaph);
-    return $antecs;
-}
-
-
-sub _add_following_antecs {
-    my ($self, $jnode, $p_antecs, $first_anaph) = @_;       
-    my @new_antecs = ();
-    if (defined $jnode) {
-        @new_antecs = $jnode->get_coref_nodes;
-    }
-
-    if (@new_antecs) {
-        foreach my $node (@new_antecs) {                                             
-            if ($node->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/) {
-                foreach my $member ($node->children) {
-                    push @$p_antecs, $member;
-                }
-            }
-            if ( !(grep {$_ == $node} @$p_antecs) && ($node ne $first_anaph)) {
-                push @$p_antecs, $node;                                                       
-                $self->_add_following_antecs($node, $p_antecs, $first_anaph);
-            }
-            else {
-#               print TredMacro::FileName() . "##$node->{aca_sentnum}.$node->{deepord}\n";
-            }
-        }       
-    }           
+    my @antes = $anaph->get_coref_chain;
+    my @membs = map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ?
+                        $_->children : () } @antes;
+    return [ @antes, @membs ];
 }
 
 # TODO doc
