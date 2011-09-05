@@ -18,6 +18,7 @@ has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
 has file_stem   => ( is => 'rw', isa => 'Str', default => 'noname' );
 has file_number => ( is => 'rw', isa => 'Str', builder => 'build_file_number' );
+has compress    => ( is => 'rw', isa => 'Bool', default => undef, documentation => 'compression to .gz' );
 
 has _pmldoc => (
     isa      => 'Treex::PML::Document',

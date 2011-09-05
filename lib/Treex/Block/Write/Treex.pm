@@ -23,22 +23,42 @@ has filenames => (
         . ' automatically initialized from the attribute "to"',
 );
 
+has compress => (
+    is => 'rw',
+    isa => 'Bool',
+    default => undef,
+    documentation => 'compression to .gz',
+);
+
 sub _build_filenames {
     my $self = shift;
     log_fatal "Parameter 'to' must be defined!" if !defined $self->to;
     return [ split /[ ,]+/, $self->to ];
 }
 
+sub _extension {
+    my ( $self, $document ) = @_;
+    my $compress;
+    if ( defined $self->compress ) {
+        $compress = $self->compress;
+    }
+    elsif ( defined $document->compress ) {
+        $compress = $document->compress;
+    }
+
+    return  '.treex' . ( $compress ? '.gz' : '' );
+}
+
 sub process_document {
     my ( $self, $document ) = @_;
-    my $filename = $document->full_filename . '.treex';
+    my $filename = $document->full_filename . $self->_extension($document);
     if ( defined $self->path ) {
         $document->set_path( $self->path );
-        $filename = $document->full_filename . '.treex';
+        $filename = $document->full_filename . $self->_extension($document);;
     }
     if ( defined $self->file_stem ) {
         $document->set_file_stem( $self->file_stem );
-        $filename = $document->full_filename . '.treex';
+        $filename = $document->full_filename . $self->_extension($document);;
     }
     if ( defined $self->to ) {
         my ( $next_filename, @rest_filenames ) = @{ $self->filenames };

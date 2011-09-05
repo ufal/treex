@@ -142,7 +142,13 @@ sub new_document {
     }
 
     $self->_set_doc_number( $self->doc_number + 1 );
-    return Treex::Core::Document->new( \%args );
+
+    my $document = Treex::Core::Document->new( \%args );
+    if ( $load_from =~ /\.gz$/ ) {
+        $document->set_compress(1);
+    }
+
+    return $document;
 }
 
 sub number_of_documents {

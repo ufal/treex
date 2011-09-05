@@ -326,6 +326,7 @@ sub _execute {
 
 my %READER_FOR = (
     treex => 'Treex',
+    'treex.gz' => 'Treex',
     txt   => 'Text',
 
     # TODO:
