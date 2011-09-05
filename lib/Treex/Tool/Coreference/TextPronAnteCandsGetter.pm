@@ -74,7 +74,11 @@ sub _find_positive_cands {
 
     my %cands_hash = map {$_->id => $_} @$cands;
     my @antes = $jnode->get_coref_text_nodes;
-    if (@antes > 0) {
+
+# TODO to comply with the results of Linh et al. (2009), this do not handle a
+# case when an anphor points to more than ones antecedents, e.g.
+# t-cmpr9413-032-p3s2w4 (nimi) -> (pozornost, dar)
+    if (@antes == 1) {
         my $ante = $antes[0];
         $non_gram_ante = $self->_jump_to_non_gram_ante(
                 $ante, \%cands_hash);
@@ -88,19 +92,31 @@ sub _find_positive_cands {
 sub _jump_to_non_gram_ante {            
     my ($self, $ante, $cands_hash) = @_;
 
-    while  (!defined $cands_hash->{$ante->id}) {
-        my @gram_antes = $ante->get_coref_gram_nodes;
-        if (@gram_antes > 0) {
-            $ante = $gram_antes[0];
-        }
-#        elsif (@gram_antes > 1) {
-            # co delat v pripade Adama s Evou?
-#            return;
-#       }
-        else {
-            return undef;
-        }
+    my @gram_antes = $ante->get_coref_gram_nodes;
+    
+    #while  (!defined $cands_hash->{$ante->id}) {
+
+# TODO to comply with the results of Linh et al. (2009)
+    while  (@gram_antes == 1) {
+
+# TODO to comply with the results of Linh et al. (2009), a true antecedent
+# must be a semantic noun, moreover all members of the same coreferential
+# chain between the anaphor and the antecedent must be semantic nouns as well
+        return undef 
+            if (!defined $ante->gram_sempos || ($ante->gram_sempos !~ /^n/));
+
+        $ante = $gram_antes[0];
+        @gram_antes = $ante->get_coref_gram_nodes;
     }
+    
+    if (@gram_antes > 1) {
+        # co delat v pripade Adama s Evou?
+        return undef;
+    }
+    elsif (!defined $cands_hash->{$ante->id}) {
+        return undef;
+    }
+    
     return $ante;
 }
 

@@ -38,7 +38,7 @@ sub process_tnode {
         @src_antec = $src_node->get_coref_gram_nodes;
     }
     elsif ($self->type eq 'text') {
-        @ref_antec = $ref_node->get_coref_text_nodes;
+        @ref_antec = $ref_node->get_coref_chain;
         @src_antec = $src_node->get_coref_text_nodes;
     }
     else {
@@ -51,7 +51,27 @@ sub process_tnode {
         $tp_count += () = grep { $_ == $ref_ante } @src_antec;
     }
     $src_count += scalar @src_antec;
-    $ref_count += scalar @ref_antec;
+    if ($self->type eq 'text') {
+        if (@src_antec > 0) {
+            my @direct_antec = $ref_node->get_coref_text_nodes;
+            $ref_count += (@direct_antec > 0) ? 1 : 0;
+        }
+    }
+    else {
+        $ref_count += scalar @ref_antec;
+    }
+        
+    if (@ref_antec > 0) {
+        print "TRUE ANAPH: " . $src_node->id . "; ";
+        print "TRUE ANTE: " . (join ", ", (map {$_->id} @ref_antec_in_src)) . "; ";
+    }
+    if (@src_antec > 0) {
+        print "PRED ANAPH: " . $src_node->id . "; ";
+        print "PRED ANTE: " . (join ", ", (map {$_->id} @src_antec)) . "; ";
+    }
+    if ((@ref_antec > 0) || (@src_antec > 0)) {
+        print "\n";
+    }
 
 }
 

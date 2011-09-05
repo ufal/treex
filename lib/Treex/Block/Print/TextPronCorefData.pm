@@ -151,7 +151,8 @@ override 'process_tnode' => sub {
     return if ( $t_node->is_root );
 
     my @antes = $t_node->get_coref_text_nodes;
-    if ( @antes > 0) {
+
+    if ( (@antes > 0) && $self->_is_anaphoric($t_node) ) {
 
         # retrieve positive and negatve antecedent candidates separated from
         # each other
