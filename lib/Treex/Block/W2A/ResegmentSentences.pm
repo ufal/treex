@@ -18,14 +18,7 @@ sub _get_segmenter {
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
     my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
-        my $segmenter = eval {
-            my $name = $class;
-            $name =~ s{::}{/}g;
-            require "$name.pm";
-            return $class->new();
-        };
-
-        #my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
+        my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
         if ($segmenter) {
             $self->segmenters->{$lang} = $segmenter;
             return $segmenter;
@@ -107,9 +100,15 @@ __END__
 
 TODO POD
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::ResegmentSentences
+=head1 NAME
+
+Treex::Block::W2A::ResegmentSentences
+
+=head1 VERSION
+
+=head1 DESCRIPTION
 
 If the sentence segmenter says that the current sentence is
 actually composed of two or more sentences, then new bundles
@@ -127,9 +126,15 @@ the remaining subsegments will be joined in the last bundle.
 In other words, it is granted that the current zone,
 will not contain empty sentences.
 
-=back
+=head1 AUTHOR
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2011 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
