@@ -11,7 +11,7 @@ has _analyzer => (
     builder => '_build_analyzer',
     lazy => 1,
     init_arg => undef,
-)
+);
 
 sub BUILDARGS {
     return { path => 'data/models/featurama/en/default' };
