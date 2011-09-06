@@ -338,7 +338,7 @@ my %READER_FOR = (
 
 sub _get_reader_name_for {
     my $self = shift;
-    my ( $ext, @extensions ) = map {/[^.]+\.(.+)?/} @_;
+    my ( $ext, @extensions ) = map {/\.(treex(\.gz)?|txt)$/;$1} @_;
     log_fatal 'Files (' . join( ',', @_ ) . ') must have extensions' if !$ext;
     log_fatal 'All files (' . join( ',', @_ ) . ') must have the same extension' if any { $_ ne $ext } @extensions;
 
