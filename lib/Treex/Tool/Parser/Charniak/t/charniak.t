@@ -2,7 +2,14 @@
 
 use strict;
 use warnings;
-use Treex::Tool::Parser::Charniak::Charniak;
+
+if (!defined $ENV{EXPERIMENTAL}) {
+    use Test::More skip_all => 'This module is experimental';
+}
+
+
+
+require Treex::Tool::Parser::Charniak::Charniak;
 
 use Test::More tests => 8;
 

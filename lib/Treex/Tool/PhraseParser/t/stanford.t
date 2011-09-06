@@ -6,7 +6,7 @@ use warnings;
 use Treex::Core;
 use Treex::Tool::PhraseParser::Stanford;
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 my $parser = Treex::Tool::PhraseParser::Stanford->new();
 
@@ -31,6 +31,13 @@ foreach my $sentence (@sentences) {
     }
 }
 
-$parser->parse_zones( [ map { $_->get_zone('en') } $document->get_bundles ] );
+eval {
+    $parser->parse_zones( [ map { $_->get_zone('en') } $document->get_bundles ] );
+};
 
 $document->save('stanford_output.treex');
+
+TODO: {
+    local $TODO = 'Not organized as test';
+    fail('Organize as test');
+}
