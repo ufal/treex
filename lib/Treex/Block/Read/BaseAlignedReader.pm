@@ -44,7 +44,7 @@ sub BUILD {
         if ( $arg =~ /_/ ) {
             ( $lang, $sele ) = split /_/, $arg;
         }
-        if ( Treex::Core::Common::is_lang_code($lang) ) {
+        if ( is_lang_code($lang) ) {
             my $files_string = $args->{$arg};
             $files_string =~ s/^\s+|\s+$//g;
             my @files = split( /[ ,]+/, $files_string );

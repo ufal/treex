@@ -55,6 +55,7 @@ my ( $import, $unimport, $init_meta ) =
         \&Treex::Core::Log::log_set_error_level,
         \&Treex::Core::Log::log_info,
         \&Treex::Core::Types::get_lang_name,
+        \&Treex::Core::Types::is_lang_code,
         \&List::MoreUtils::first_index,
         \&List::MoreUtils::all,
         \&List::MoreUtils::any,
