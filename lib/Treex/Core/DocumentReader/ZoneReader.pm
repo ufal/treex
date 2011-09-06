@@ -6,7 +6,7 @@ use File::Slurp;
 
 has language => (
     is       => 'ro',
-    isa      => 'LangCode',
+    isa      => 'Treex::Type::LangCode',
     required => 1,
 );
 

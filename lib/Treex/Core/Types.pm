@@ -17,7 +17,56 @@ subtype 'Treex::Type::Layer'
     => where {m/^[ptan]$/i}
 => message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
 
+subtype 'Treex::Type::Message'                                                       #nonempty string
+    => as 'Str'
+    => where { $_ ne q{} }
+=> message {'Message must be nonempty'};
 
+#preparation for possible future constraints
+subtype 'Treex::Type::Id'
+    => as 'Str';
+
+# TODO: Should this be named ZoneCode or ZoneLabel?
+subtype 'Treex::Type::ZoneCode'
+    => as 'Str'
+    => where { my ( $l, $s ) = split /_/, $_; is_lang_code($l) && ( !defined $s || $s =~ /^[a-z\d]*$/i ) }
+=> message {'ZoneCode must be LangCode or LangCode_Selector, e.g. "en_src"'};
+
+# ISO 639-1 language code with some extensions from ISO 639-2
+# Added code for Modern Greek which comes under ISO 639-3
+use Locale::Language;
+my %EXTRA_LANG_CODES = (
+    'bxr'     => "Buryat",
+    'dsb'     => "Lower Sorbian",
+    'ell'     => "ISO 639-3 code for Modern Greek",
+    'grc'     => "ISO 639-2 code for Ancient Greek",
+    'hsb'     => "Upper Sorbian",
+    'hak'     => "Hakka",
+    'kaa'     => "Karakalpak",
+    'ku-latn' => "Kurdish in Latin script",
+    'ku-arab' => "Kurdish in Arabic script",
+    'ku-cyrl' => "Kurdish in Cyrillic script",
+    'nan'     => "Taiwanese",
+    'rmy'     => "Romany",
+    'sah'     => "Yakut",
+    'und'     => "ISO 639-2 code for undetermined/unknown language",
+    'xal'     => "Kalmyk",
+    'yue'     => "Cantonese",
+    'mul'     => "ISO 639-2 code for multiple languages",
+);
+
+my %IS_LANG_CODE = map { $_ => 1 } ( all_language_codes(), keys %EXTRA_LANG_CODES );
+
+subtype 'Treex::Type::LangCode'
+    => as 'Str'
+    => where { defined $IS_LANG_CODE{$_} }
+=> message {'LangCode must be valid ISO 639-1 code. E.g. en, de, cs'};
+sub is_lang_code { return $IS_LANG_CODE{ $_[0] }; }
+
+sub get_lang_name {
+    my $code = shift;
+    return exists $EXTRA_LANG_CODES{$code} ? $EXTRA_LANG_CODES{$code} : code2language($code);
+}
 __END__
 
 =encoding utf-8

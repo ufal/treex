@@ -6,7 +6,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language'   => ( required => 1 );
-has 'to_language' => ( is       => 'ro', isa => 'LangCode', lazy_build => 1 );
+has 'to_language' => ( is       => 'ro', isa => 'Treex::Type::LangCode', lazy_build => 1 );
 has 'to_selector' => ( is       => 'ro', isa => 'Treex::Type::Selector', default => 'ref' );
 
 sub _build_to_language {

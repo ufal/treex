@@ -67,3 +67,7 @@ $transformer->apply_on_tree($root);
 
 $doc->save('test.treex');
 
+TODO: {
+    local $TODO = 'not written as test';
+    fail ('Reorganize to tests');
+}

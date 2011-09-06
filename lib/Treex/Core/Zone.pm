@@ -8,7 +8,7 @@ use MooseX::NonMoose;
 
 extends 'Treex::PML::Struct';
 
-has language => ( is => 'rw', isa => 'LangCode', required => 1 );
+has language => ( is => 'rw', isa => 'Treex::Type::LangCode', required => 1 );
 
 has selector => ( is => 'rw', isa => 'Treex::Type::Selector', default => '' );
 

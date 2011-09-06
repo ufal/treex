@@ -6,7 +6,7 @@ extends 'Treex::Block::Read::BaseTextReader';
 has '+language' => ( required => 0 );
 
 has [qw(lang1 lang2)] => (
-    isa      => 'LangCode',
+    isa      => 'Treex::Type::LangCode',
     is       => 'ro',
     required => 1,
 );

@@ -5,26 +5,26 @@ extends 'Treex::Block::Read::BaseReader';
 use Moose::Util qw(apply_all_roles);
 use XML::Twig;
 
-
 has bundles_per_doc => (
-    is => 'ro',
-    isa => 'Int',
+    is      => 'ro',
+    isa     => 'Int',
     default => 0,
 );
 
-has language => ( isa => 'LangCode', is => 'ro', required => 1 );
+has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1 );
 
-has _twig => (isa    => 'XML::Twig',
-              is     => 'ro',
-              writer => '_set_twig',
-             );
+has _twig => (
+    isa    => 'XML::Twig',
+    is     => 'ro',
+    writer => '_set_twig',
+);
 
 sub BUILD {
     my ($self) = @_;
     if ( $self->bundles_per_doc ) {
         $self->set_is_one_doc_per_file(0);
     }
-    $self->_set_twig(XML::Twig::->new());
+    $self->_set_twig( XML::Twig::->new() );
     return;
 }
 
@@ -32,11 +32,11 @@ sub BUILD {
 ## not work with ttred.
 sub fix_id {
     my $id = shift;
-    if (0 == index $id, '-') {
+    if ( 0 == index $id, '-' ) {
         $id = "i$id";
     }
     return $id;
-} # fix_id
+}    # fix_id
 
 sub next_document {
     my ($self) = @_;
@@ -46,49 +46,50 @@ sub next_document {
 
     my $document = $self->new_document();
     $self->_twig->setTwigRoots(
-        { s => sub {
-              my ($twig, $sentence) = @_;
-              my $bundle = $document->create_bundle;
-              my $zone = $bundle->create_zone($self->language, $self->selector);
-              my $ptree = $zone->create_ptree;
-              my @edges;
-              foreach my $nonterminal ($sentence->descendants('nt')) {
-                  my $ch = $ptree->create_nonterminal_child();
-                  apply_all_roles($ch, 'Treex::Core::WildAttr');
-                  $ch->set_id(fix_id($nonterminal->{att}{id}));
-                  $ch->wild->{tiger_phrase} = $nonterminal->{att}{cat};
-                  push @edges, [ $ch,
-                                 fix_id($_->{att}{idref}),
-                                 $_->{att}{label},
-                               ]
-                      for $nonterminal->children('edge');
-              }
-              foreach my $terminal ($sentence->descendants('t')) {
-                  my $ch = $ptree->create_terminal_child();
-                  apply_all_roles($ch, 'Treex::Core::WildAttr');
-                  $ch->set_id(fix_id($terminal->{att}{id}));
-                  $ch->set_form($terminal->{att}{word});
-                  $ch->set_lemma($terminal->{att}{lemma});
-                  $ch->wild->{pos} = $terminal->{att}{pos};
-                  $ch->wild->{morph} = $terminal->{att}{morph};
-              }
-              foreach my $edge (@edges) {
-                  my ($parent, $child_id, $label) = @$edge;
-                  my ($child) = grep $child_id eq fix_id($_->id),
-                                $ptree->descendants;
-                  $child->set_parent($parent);
-                  $child->set_is_head($label);
-              }
-              log_info 'Sentence ' . $ptree->id;
-          }, # sentence handler
-        });
+        {   s => sub {
+                my ( $twig, $sentence ) = @_;
+                my $bundle = $document->create_bundle;
+                my $zone   = $bundle->create_zone( $self->language, $self->selector );
+                my $ptree  = $zone->create_ptree;
+                my @edges;
+                foreach my $nonterminal ( $sentence->descendants('nt') ) {
+                    my $ch = $ptree->create_nonterminal_child();
+                    apply_all_roles( $ch, 'Treex::Core::WildAttr' );
+                    $ch->set_id( fix_id( $nonterminal->{att}{id} ) );
+                    $ch->wild->{tiger_phrase} = $nonterminal->{att}{cat};
+                    push @edges, [
+                        $ch,
+                        fix_id( $_->{att}{idref} ),
+                        $_->{att}{label},
+                        ]
+                        for $nonterminal->children('edge');
+                }
+                foreach my $terminal ( $sentence->descendants('t') ) {
+                    my $ch = $ptree->create_terminal_child();
+                    apply_all_roles( $ch, 'Treex::Core::WildAttr' );
+                    $ch->set_id( fix_id( $terminal->{att}{id} ) );
+                    $ch->set_form( $terminal->{att}{word} );
+                    $ch->set_lemma( $terminal->{att}{lemma} );
+                    $ch->wild->{pos}   = $terminal->{att}{pos};
+                    $ch->wild->{morph} = $terminal->{att}{morph};
+                }
+                foreach my $edge (@edges) {
+                    my ( $parent, $child_id, $label ) = @$edge;
+                    my ($child) = grep $child_id eq fix_id( $_->id ),
+                        $ptree->descendants;
+                    $child->set_parent($parent);
+                    $child->set_is_head($label);
+                }
+                log_info 'Sentence ' . $ptree->id;
+            },    # sentence handler
+        }
+    );
 
     $self->_twig->parsefile($filename);
     $self->_twig->purge;
 
     return $document;
-} # next_document
-
+}    # next_document
 
 1;
 

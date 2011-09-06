@@ -7,10 +7,10 @@ use File::Slurp;
 # By default read from STDIN
 has '+from' => ( default => '-' );
 
-has language      => ( isa => 'LangCode', is => 'ro', required => 1 );
-has lines_per_doc => ( isa => 'Int',      is => 'ro', default  => 0 );
-has merge_files   => ( isa => 'Bool',     is => 'ro', default  => 0 );
-has encoding      => ( isa => 'Str',      is => 'ro', default  => 'utf8' );
+has language      => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1 );
+has lines_per_doc => ( isa => 'Int',                   is => 'ro', default  => 0 );
+has merge_files   => ( isa => 'Bool',                  is => 'ro', default  => 0 );
+has encoding      => ( isa => 'Str',                   is => 'ro', default  => 'utf8' );
 
 has _current_fh => ( is => 'rw' );
 

@@ -39,7 +39,7 @@ sub get_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
     if ( defined $self->{zones} ) {
@@ -58,7 +58,7 @@ sub create_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
 
@@ -92,7 +92,7 @@ sub get_or_create_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
     my $zone = $self->get_zone( $language, $selector );
@@ -157,7 +157,7 @@ sub create_tree {
     my $self = shift;
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Layer' },
         { isa => 'Treex::Type::Selector', default => '' }
     );
@@ -171,7 +171,7 @@ sub get_tree {
     my $self = shift;
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Layer' },
         { isa => 'Treex::Type::Selector', default => '' }
     );
@@ -185,7 +185,7 @@ sub has_tree {
     my $self = shift;
     my ( $language, $layer, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Layer' },
         { isa => 'Treex::Type::Selector', default => '' }
     );

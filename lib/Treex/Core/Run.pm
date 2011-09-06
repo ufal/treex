@@ -60,7 +60,7 @@ has 'forward_error_level' => (
 has 'lang' => (
     traits        => ['Getopt'],
     cmd_aliases   => [ 'language', 'L' ],
-    is            => 'rw', isa => 'LangCode',
+    is            => 'rw', isa => 'Treex::Type::LangCode',
     documentation => q{shortcut for adding "Util::SetGlobal language=xy" at the beginning of the scenario},
 );
 

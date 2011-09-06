@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
-has 'to_language' => ( isa => 'LangCode', is => 'ro', lazy_build => 1 );
+has 'to_language' => ( isa => 'Treex::Type::LangCode', is => 'ro', lazy_build => 1 );
 has 'to_selector' => ( isa => 'Str',      is => 'ro', default    => 'ref' );
 
 sub _build_to_language {

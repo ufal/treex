@@ -224,7 +224,7 @@ sub index_node_by_id {
     my $self = shift;
     my ( $id, $node ) = pos_validated_list(
         \@_,
-        { isa => 'Id' },
+        { isa => 'Treex::Type::Id' },
         { isa => 'Maybe[Treex::Core::Node]' },    #jde to takhle?
     );
     my $index = $self->_index;
@@ -242,7 +242,7 @@ sub id_is_indexed {
     my $self = shift;
     my ($id) = pos_validated_list(
         \@_,
-        { isa => 'Id' },
+        { isa => 'Treex::Type::Id' },
     );
     return ( defined $self->_index->{$id} );
 }
@@ -253,7 +253,7 @@ sub get_node_by_id {
     my $self = shift;
     my ($id) = pos_validated_list(
         \@_,
-        { isa => 'Id' },
+        { isa => 'Treex::Type::Id' },
     );
     if ( defined $self->_index->{$id} ) {
         return $self->_index->{$id};
@@ -320,7 +320,7 @@ sub create_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
 
@@ -348,7 +348,7 @@ sub get_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
 
@@ -368,7 +368,7 @@ sub get_or_create_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
         \@_,
-        { isa => 'LangCode' },
+        { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
     );
 
