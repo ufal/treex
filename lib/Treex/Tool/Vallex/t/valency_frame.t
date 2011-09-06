@@ -2,21 +2,27 @@
 
 use strict;
 use warnings;
+use utf8;
 
+use Test::More tests=>4;
 use Treex::Tool::Vallex::ValencyFrame;
-
+note ('This may fail when valency lexicon changes');
 {
     my $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3f1', lexicon => 'vallex.xml', language => 'cs' } );
-    print $frame->to_string . "\n";
+    #print $frame->to_string . "\n";
+    is ($frame->to_string, 'abdikovat-v: ACT[n:1]', 'v-w3f1');
 
     $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3351f3', lexicon => 'vallex.xml', language => 'cs' } );
-    print $frame->to_string . "\n";
+    #print $frame->to_string . "\n";
+    is ($frame->to_string, 'padat-v: ACT[n:1] (PAT[n:na+4]) (ORIG[n:z+2])', 'v-w3351f3');
 
     $frame = Treex::Tool::Vallex::ValencyFrame->new( { id => 'v-w3352f1', lexicon => 'vallex.xml', language => 'cs' } );
-    print $frame->to_string . "\n";
+    #print $frame->to_string . "\n";
+    is ($frame->to_string, 'padělání-n: ACT[n:7, n:2, adj:poss] PAT[n:2, adj:poss]', 'v-w3352f1');
 
     $frame = Treex::Tool::Vallex::ValencyFrame->new( { ord => '1000', lexicon => 'vallex.xml', language => 'cs' } );
-    print $frame->to_string . "\n";
+    #print $frame->to_string . "\n";
+    is ($frame->to_string, 'dohadování-n: ACT[n:2, adj:poss] PAT[v:jestli+fin, n:o+6, n:2, v:zda+fin] ADDR[n:s+7]', 'ord 1000');
 
 }
 

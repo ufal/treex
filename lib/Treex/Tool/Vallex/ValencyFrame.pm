@@ -117,7 +117,7 @@ sub functor {
 sub to_string {
     my ($self) = @_;
 
-    return $self->lemma . '-' . $self->POS . ': ' . join( ' ', map { $_->to_string } @{ $self->elements } );
+    return $self->lemma . '-' . $self->pos . ': ' . join( ' ', map { $_->to_string } @{ $self->elements } );
 }
 
 1;

@@ -65,3 +65,5 @@ TODO: {
     local $TODO = 'not written as test';
     fail ('Reorganize to tests');
 }
+
+done_testing();
