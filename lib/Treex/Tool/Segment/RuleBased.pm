@@ -90,11 +90,15 @@ sub get_segments {
 
 __END__
 
-TODO POD
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::Segment
+Treex::Tool::Segment::RuleBased - Rule based pseudo language-independent sentence segmenter
+
+=head1 VERSION
+
+=head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules
 that detect end-sentence punctuation ([.?!]) followed by a uppercase letter.
@@ -102,13 +106,53 @@ This class is implemented in a pseudo language-independent way,
 but it can be used as an ancestor for language-specific segmentation
 by overriding the method C<segment_text>
 (using C<around> see L<Moose::Manual::MethodModifiers>)
-or just by overriding methods C<unbrekers>, C<openings> and C<closings>.
+or just by overriding methods C<unbreakers>, C<openings> and C<closings>.
 
 See L<Treex::Block::W2A::EN::Segment>
 
+=head1 METHODS
+
+=over 4
+
+=item get_segments
+
+Returns list of sentences
+
 =back
 
-=cut
+=head1 METHODS TO OVERRIDE
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=over 4
+
+=item segment_text
+
+Do segmentation
+
+=item unbreakers
+
+Returns regex that should match tokens that usually do not end a sentence even if they are followed by a period and a capital letter:
+* single uppercase letters serve usually as first name initials
+* in langauge-specific descendants consider adding
+  * period-ending items that never indicate sentence breaks
+  * titles before names of persons etc.
+
+=item openings
+
+Returns string with characters that can appear before the first word of a sentence
+
+=item closings
+
+Returns string with characters that can appear after period (or other end-sentence symbol)
+
+=back
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
