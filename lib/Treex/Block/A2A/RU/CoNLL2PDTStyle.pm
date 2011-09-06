@@ -17,6 +17,7 @@ sub process_zone
     my $a_root = $zone->get_atree();
 
     $self->convert_tags( $a_root, 'syntagrus' );
+    $self->tag_to_pos($a_root);
     $self->attach_final_punctuation_to_root($a_root);
     $self->fill_root_afun($a_root);
     $self->restructure_coordination($a_root);
@@ -36,6 +37,13 @@ sub fill_root_afun {
     }
 }
 
+sub tag_to_pos {
+    my $self = shift;
+    my $a_root = shift;
+    foreach my $a_node ( $a_root->get_descendants() ) {
+        $a_node->set_conll_pos($a_node->tag);
+    }
+}
 
 sub restructure_coordination {
     my $self = shift;
