@@ -23,10 +23,15 @@ has [qw( _reader _writer _pid )] => ( is => 'rw' );
 
 sub BUILD {
     my ($self) = @_;
-    my $jar = "$ENV{TMT_ROOT}share/installed_tools/pennconverter/pennconverter.jar";
-    die "Missing $jar\n" if !-f $jar;
-    my $options = '';
 
+    #to be changed
+    use Treex::Core::Resource;
+    my $jar = Treex::Core::Resource::require_file_from_share(
+        'installed_tools/pennconverter/pennconverter.jar',
+        ref($self)
+    );
+
+    my $options = '';
     if ( !$self->after_traces ) {
         $options .= ' -raw';
     }
@@ -91,8 +96,9 @@ Treex::Tool::Phrase2Dep::Pennconverter - Wrapper for Java PennConverter tool
       after_traces=>1,
       after__rich_np=>1,
   });
-  
-  my ($parent_indices_ref, $deprels_ref) = $pennconverter->conver();
+
+  my $penn_string = '(S (NP (NNP John)) (VP (VBZ loves) (NP (NNP Mary))))';
+  my ($parent_indices_ref, $deprels_ref) = $pennconverter->convert($penn_string);
 
 =head1 DESCRIPTION
 
