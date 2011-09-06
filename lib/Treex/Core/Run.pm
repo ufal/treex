@@ -325,9 +325,9 @@ sub _execute {
 }
 
 my %READER_FOR = (
-    treex => 'Treex',
+    treex      => 'Treex',
     'treex.gz' => 'Treex',
-    txt   => 'Text',
+    txt        => 'Text',
 
     # TODO:
     # conll  => 'Conll',
@@ -337,13 +337,26 @@ my %READER_FOR = (
 );
 
 sub _get_reader_name_for {
-    my $self = shift;
-    my ( $ext, @extensions ) = map {/\.(treex(\.gz)?|txt)$/;$1} @_;
-    log_fatal 'Files (' . join( ',', @_ ) . ') must have extensions' if !$ext;
-    log_fatal 'All files (' . join( ',', @_ ) . ') must have the same extension' if any { $_ ne $ext } @extensions;
-
-    my $r = $READER_FOR{$ext};
-    log_fatal "There is no DocumentReader implemented for extension '$ext'" if !$r;
+    my $self  = shift;
+    my @names = @_;
+    my $re    = qr{\.(treex(\.gz)?|txt)$}; # .txt, .treex or .treex.gz
+    my @extensions;
+    my $first;
+    foreach my $name (@names) {
+        if ( $name =~ $re ) {
+            my $current = $1;
+            if (!defined $first) {
+                $first = $current;
+            }
+            log_fatal 'All files (' . join( ',', @names ) . ') must have the same extension' if ($current ne $first);
+            push @extensions, $current;
+        }
+        else {
+            log_fatal 'Files (' . join( ',', @names ) . ') must have extensions';
+        }
+    }
+    my $r = $READER_FOR{$first};
+    log_fatal "There is no DocumentReader implemented for extension '$first'" if !$r;
     return "Read::$r";
 }
 
