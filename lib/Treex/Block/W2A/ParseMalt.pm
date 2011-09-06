@@ -25,8 +25,8 @@ sub parse_chunk {
     # get factors
     my @forms    = map { $_->form } @a_nodes;
     my @lemmas   = map { $_->lemma } @a_nodes;
-    my @pos      = map { $_->get_attr($self->pos_attribute) } @a_nodes;
-    my @cpos     = map { $_->get_attr($self->cpos_attribute) } @a_nodes;
+    my @pos      = map { $_->get_attr($self->pos_attribute) || '_' } @a_nodes;
+    my @cpos     = map { $_->get_attr($self->cpos_attribute) || '_' } @a_nodes;
     my @features = map {'_'} @a_nodes;
 
     # parse sentence
