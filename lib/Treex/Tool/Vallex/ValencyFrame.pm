@@ -2,12 +2,13 @@ package Treex::Tool::Vallex::ValencyFrame;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
 use MooseX::ClassAttribute;
 use XML::LibXML;
 use Treex::Tool::Vallex::FrameElement;
 
 # Fill the default valency lexicon path here (where vallex.xml is located)
-Readonly my $DEFAULT_LEXICON_PATH => "$ENV{TMT_ROOT}/share/data/resources/pdt_vallex/";
+Readonly my $DEFAULT_LEXICON_PATH => 'data/resources/pdt_vallex/';
 
 # The lemma of the current valency frame
 has 'lemma' => ( isa => 'Str', is => 'ro', required => 1 );
@@ -87,7 +88,7 @@ sub _get_xpath_context {
     my $xc;
 
     if ( !Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name} ) {
-        my $lexicon = XML::LibXML->load_xml( location => $DEFAULT_LEXICON_PATH . $lexicon_name );
+        my $lexicon = XML::LibXML->load_xml( location => require_file_from_share($DEFAULT_LEXICON_PATH . $lexicon_name ));
         $lexicon->indexElements();
         Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name} = XML::LibXML::XPathContext->new($lexicon);
     }
