@@ -5,7 +5,14 @@ use warnings;
 
 use Test::More;
 
-BEGIN { use_ok('Treex::Tool::Tagger::Featurama::EN'); }
+eval {
+    require Featurama::Perc;
+    1;
+} or plan skip_all => 'Cannot load Featurama::Perc';
+
+plan tests => 5;
+
+use_ok('Treex::Tool::Tagger::Featurama::EN');
 
 my $tagger = Treex::Tool::Tagger::Featurama::EN->new();
 
@@ -17,5 +24,4 @@ cmp_ok( scalar @$tags_rf,   '==', 4, q{There's Correct number of tags} );
 cmp_ok( scalar @$lemmas_rf, '==', 4, q{There's Correct number of lemmas} );
 note( join ' ', @$tags_rf );
 note( join ' ', @$lemmas_rf );
-done_testing();
 

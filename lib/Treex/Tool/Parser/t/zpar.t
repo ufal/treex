@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use Treex::Tool::Parser::Zpar;
 
 use Test::More tests => 4;
 
+use Treex::Tool::Parser::Zpar;
 my $parser = Treex::Tool::Parser::Zpar->new();
 
 isa_ok( $parser, 'Treex::Tool::Parser::Zpar', 'parser instantiated' );

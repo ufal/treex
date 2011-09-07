@@ -191,7 +191,9 @@ sub load_arff {
     $relation->{"data_record_count"} = $record_count;
     $relation->{"attribute_count"}   = $attribute_count;
 
-    if ( $self->debug_mode ) {
+    if ( $self->debug_mode ) { 
+        #I recommend to put this outside eval, if Devel::Size is not installed on system, it fails with:
+        #Undefined subroutine &Treex::Tool::IO::Arff::total_size called at Arff.pm line 200.
         eval("use Devel::Size qw(size total_size)");
 
         print STDERR "$arff_file loaded with " . $self->error_count . " error(s).\n";

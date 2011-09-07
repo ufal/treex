@@ -1,8 +1,10 @@
 package Treex::Tool::Parser::Zpar;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
+use Cwd qw(realpath);
 
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 has model => ( isa => 'Str', is => 'ro', default => 'en' );
 has tool  => ( isa => 'Str', is => 'ro', default => 'zpar.en' );
@@ -11,15 +13,17 @@ has [qw( _reader _writer _pid )] => ( is => 'rw' );
 sub BUILD {
     my ($self) = @_;
 
-    my $executable = "$ENV{TMT_ROOT}/share/installed_tools/parser/zpar/" . $self->tool;
-    die "Cannot execute $executable\n" if !-x $executable;
+    #my $executable = "$ENV{TMT_ROOT}/share/installed_tools/parser/zpar/" . $self->tool;
+    my $executable = require_file_from_share('installed_tools/parser/zpar/'.$self->tool, ref $self, 1);
+    log_fatal "Cannot execute $executable\n" if !-x $executable;
 
-    my $modeldir = "$ENV{TMT_ROOT}/share/data/models/parser/zpar/";
-    die "Missing $modeldir\n" if !-d $modeldir;
-    my $model = $modeldir . $self->model;
-    die "Cannot find the model $model/depparser\n" if !-f "$model/depparser";
+    #my $modeldir = "$ENV{TMT_ROOT}/share/data/models/parser/zpar/";
+    my $model = require_file_from_share('data/models/parser/zpar/'.$self->model.'/depparser', ref $self);
+    my $modeldir = realpath("$model/..");
+    require_file_from_share('data/models/parser/zpar/'.$self->model.'/tagger', ref $self);
+    require_file_from_share('data/models/parser/zpar/'.$self->model.'/deplabeler', ref $self);
 
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe("$executable $model");
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe("$executable $modeldir");
     $self->_set_reader($reader);
     $self->_set_writer($writer);
     $self->_set_pid($pid);
