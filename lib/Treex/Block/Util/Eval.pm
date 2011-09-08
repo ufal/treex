@@ -78,7 +78,8 @@ sub process_bundle {
     }
 
     foreach my $zone ( $bundle->get_all_zones() ) {
-        if ( $do_lang{ $zone->language } && $do_sele{ $zone->selector } ) {
+        if ( ( $do_lang{ $zone->language } || $self->language eq 'mul' )
+                 && $do_sele{ $zone->selector } ) {
             $self->process_zone($zone);
         }
     }
