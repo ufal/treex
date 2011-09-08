@@ -68,6 +68,7 @@ sub process_zone {
                     lemma => $terminal->lemma,
                     tag   => $terminal->wild->{pos}
                         . '/' . $terminal->wild->{morph},
+                    'conll/pos' => $terminal->wild->{pos},
                     ord   => $ord++,
                     afun  => 'NR',
                 }
