@@ -33,8 +33,7 @@ sub next_document_texts {
     #my $FHs = $self->_next_filehandles() or return;
     my %mapping = $self->next_filenames() or return;
     my %texts;
-    if ( $self->lines_per_If C<is_one_doc_per_file> returns C<true>, then the number of documents
-doc ) {    # TODO: option lines_per_document not implemented
+    if ( $self->lines_per_doc ) {    # TODO: option lines_per_document not implemented
         log_fatal "option lines_per_document not implemented for aligned readers yet";
     }
     foreach my $lang ( keys %mapping ) {
