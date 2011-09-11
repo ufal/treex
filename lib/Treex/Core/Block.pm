@@ -21,7 +21,7 @@ has scenario => (
 sub build_language {
     my $self = shift;
     my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
-    if ( $lang && Treex::Core::Common::is_lang_code( lc $lang ) ) {
+    if ( $lang && Treex::Core::Types::is_lang_code( lc $lang ) ) {
         return lc $lang;
     }
     else {
