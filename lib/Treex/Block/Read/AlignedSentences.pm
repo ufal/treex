@@ -40,6 +40,56 @@ sub next_document {
 
 __END__
 
-TODO POD
 
-treex Read::AlignedSentences en=en1.txt,en2.txt cs_ref=cs1.txt,cs2.txt
+=head1 NAME
+
+Treex::Block::Read::AlignedSentences
+
+=head1 SYNOPSIS
+
+  # in scenarios
+  # Read::AlignedSentences en=en1.txt,en2.txt cs_ref=cs1.txt,cs2.txt
+
+=head1 DESCRIPTION
+
+Document reader for plain text format, one sentence per line.
+Aligned sentences (usually in different languages) are loaded at once into respective zones.
+The sentences are stored into L<bundles|Treex::Core::Bundle> in the 
+L<document|Treex::Core::Document>.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item any parameter in a form of a valid I<zone_label> 
+
+space or comma separated list of filenames, or C<-> for STDIN.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item next_document
+
+Loads a document.
+
+=back
+
+=head1 SEE ALSO
+
+L<Treex::Block::Read::BaseAlignedReader>
+L<Treex::Block::Read::BaseAlignedTextReader>
+L<Treex::Core::Document>
+L<Treex::Core::Bundle>
+
+=head1 AUTHOR
+
+Martin Popel
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

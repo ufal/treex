@@ -57,6 +57,8 @@ Loads a document.
 L<Treex::Block::Read::BaseTextReader>
 L<Treex::Core::Document>
 L<Treex::Core::Bundle>
+L<Treex::Block::Read::AlignedSentences>
+
 
 =head1 AUTHOR
 

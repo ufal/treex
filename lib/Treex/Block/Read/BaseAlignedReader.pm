@@ -134,4 +134,88 @@ after 'restart' => sub {
 
 __END__
 
-TODO POD
+=head1 NAME
+
+Treex::Block::Read::BaseAlignedReader - abstract ancestor for parallel-corpora document readers
+
+=head1 SYNOPSIS
+
+  # in scenarios
+  Read::MyAlignedFormat en=english.txt de=german.txt
+
+  # Zones can differ also in selectors, any number of zones can be read
+  Read::MyAlignedFormat en_ref=ref1,ref2 en_moses=mos1,mos2 en_tectomt=tmt1,tmt2
+
+=head1 DESCRIPTION
+
+This class serves as a common ancestor for document readers
+that read more zones at once -- usually parallel sentences in two (or more) languages.
+The readers take parameters named as the zones and values of the parameters
+is a space or comma separated list of filenames to be loaded into the given zone.
+The class is designed to implement the L<Treex::Core::DocumentReader> interface.
+
+In derived classes you need to define the C<next_document> method,
+and you can use C<next_filenames> and C<new_document> methods.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item any parameter in a form of a valid I<zone_label> 
+
+space or comma separated list of filenames, or C<-> for STDIN.
+
+=item file_stem (optional)
+
+How to name the loaded documents.
+This attribute will be saved to the same-named
+attribute in documents and it will be used in document writers
+to decide where to save the files.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item next_document
+
+This method must be overriden in derived classes.
+(The implementation in this class just issues fatal error.)
+
+=item next_filenames
+
+Returns a hashref of filenames (full paths) to be loaded.
+The keys of the hash are zone labels, the values are the filenames.
+
+=item new_document($load_from?)
+
+Returns a new empty document with pre-filled attributes
+C<loaded_from>, C<file_stem>, C<file_number> and C<path>
+which are guessed based on C<current_filenames>.
+
+=item current_filenames
+
+returns the last filenames returned by C<next_filenames> 
+
+=item number_of_documents
+
+Returns the number of documents that will be read by this reader.
+
+=back
+
+=head1 SEE ALSO
+
+L<Treex::Block::Read::BaseReader>
+L<Treex::Block::Read::BaseAlignedTextReader>
+
+=head1 AUTHOR
+
+Martin Popel
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
