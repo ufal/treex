@@ -1,4 +1,5 @@
 package Treex::Block::W2A::EN::TagLinguaEn;
+use 5.010;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -13,11 +14,29 @@ has _tagger => (
     documentation => q{Tagger object},
 );
 
+has _form_corrections => (
+    is => 'ro',
+    isa => 'HashRef[Str]',
+    default => sub { {
+            q(``)=>q("),
+            q('')=>q("),
+        }},
+    documentation => q{Possible changes in forms done by tagger},
+);
+
 sub _build_tagger {
     my $self   = shift;
     my $tagger = Lingua::EN::Tagger->new();
     return $tagger;
 }
+
+sub _revert_form { #because Lingua::EN::Tagger changes some forms to another, we need to restore original
+    my $self = shift;
+    my %args = @_;
+    my $new = $args{new};
+    return $self->_form_corrections->{$new} // $new;
+}
+
 
 sub _correct_lingua_tag {    # substitution according to http://search.cpan.org/src/ACOBURN/Lingua-EN-Tagger-0.13/README
                              # puvodni tagset je na http://www.computing.dcu.ie/~acahill/tagset.html
@@ -82,9 +101,9 @@ sub process_zone {
         }x;
     my $space_start = qr{^\s+};
     my $ord         = 1;
-    foreach my $tag (@tagged) {
-        if ( $tag =~ $tag_regex ) {
-            my $form = $2;
+    foreach my $tag_pair (@tagged) {
+        if ( $tag_pair =~ $tag_regex ) {
+            my $form = $self->_revert_form( new => $2 );
             my $tag = $self->_correct_lingua_tag( $1, $form );
             if ( $sentence =~ s/^\Q$form\E// ) {
 
@@ -110,7 +129,7 @@ sub process_zone {
             }
         }
         else {
-            log_fatal("Incorrect output format from Lingua::EN::Tagger: $tag");
+            log_fatal("Incorrect output format from Lingua::EN::Tagger: $tag_pair");
         }
 
     }

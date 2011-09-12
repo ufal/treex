@@ -5,6 +5,8 @@ use warnings;
 
 use Test::More;
 use File::Slurp 9999;
+use Readonly;
+Readonly::Scalar my $found_another_substitution => 0;
 
 eval {
     require Lingua::EN::Tagger;
@@ -53,7 +55,7 @@ my $result = eval{
     1;
 };
 TODO: {
-    local $TODO = q(This wasn't repaired yet);
+    local $TODO = q(This wasn't repaired yet) if $found_another_substitution;
     ok ($result, q(Succesfully tagged another sentence));
 }
 #ok ($zone2->has_atree(), q(There's a_tree in another result) );
