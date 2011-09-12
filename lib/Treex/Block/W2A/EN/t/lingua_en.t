@@ -4,8 +4,16 @@ use strict;
 use warnings;
 
 use Test::More;
+use File::Slurp 9999;
 
-BEGIN { use_ok('Treex::Block::W2A::EN::TagLinguaEn') }
+eval {
+    require Lingua::EN::Tagger;
+    1;
+} or plan skip_all=>'Cannot load Lingua::EN::Tagger';
+
+
+
+use_ok('Treex::Block::W2A::EN::TagLinguaEn');
 use Treex::Core::Document;
 use Treex::Core::Log;
 my $block = new_ok(
@@ -32,4 +40,24 @@ my $you_node = $children[2];
 ok( $you_node->no_space_after(), q('are' has no_space_after) );
 my $qmark_node = $children[3];
 ok( !$qmark_node->no_space_after(), q('?' has NOT no_space_after) );
+
+my $line = <DATA>;
+
+my $doc2      = Treex::Core::Document->new();
+my $bundle2   = $doc2->create_bundle();
+my $zone2     = $bundle2->create_zone('en');
+my $sentence2 = $line;
+$zone2->set_sentence($sentence2);
+my $result = eval{
+    $block->process_zone($zone2);
+    1;
+};
+TODO: {
+    local $TODO = q(This wasn't repaired yet);
+    ok ($result, q(Succesfully tagged another sentence));
+}
+#ok ($zone2->has_atree(), q(There's a_tree in another result) );
+
 done_testing();
+__DATA__
+"There is a strong climate of fear and all eyes are on developments in Greece," said Marc Ostwald, fixed-income research strategist at Monument Securities. "There is the possibility of a nasty shock before things get better."
