@@ -8,6 +8,7 @@ has '+language' => ( required => 1 );
 has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel');
 has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/pos');
 has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos');
+has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -16,8 +17,22 @@ sub process_atree {
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
         #my $ctag  = $self->get_coarse_grained_tag($tag);
+        my $feat;
+        if ( $self->feat_attribute eq 'conll/feat' && defined $anode->get_conll_feat() ) {
+            $feat = $anode->get_conll_feat();
+        } elsif ( $self->feat_attribute eq 'iset' && $anode->get_iset_pairs_list() ) {
+            my @list = $anode->get_iset_pairs_list();
+            my @pairs;
+            for(my $i = 0; $i<=$#list; $i += 2)
+            {
+                push(@pairs, "$list[$i]=$list[$i+1]");
+            }
+            $feat = join('|', @pairs);
+        } else {
+            $feat = '_';
+        }
         my $p_ord = $anode->get_parent->ord;
-        print { $self->_file_handle } join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, '_', $p_ord, $deprel ) . "\n";
+        print { $self->_file_handle } join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel ) . "\n";
     }
     print { $self->_file_handle } "\n" if $atree->get_descendants;
     return;
@@ -71,7 +86,7 @@ Saves the document.
 
 =head1 AUTHOR
 
-David Mareček
+David Mareček, Daniel Zeman
 
 =head1 COPYRIGHT AND LICENSE
 
