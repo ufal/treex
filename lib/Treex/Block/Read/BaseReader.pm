@@ -12,39 +12,20 @@ sub next_document {
 
 has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
 
-has filenames => (
-    isa           => 'ArrayRef[Str]',
-    is            => 'ro',
-    lazy_build    => 1,
-    documentation => 'array of filenames to be loaded;'
-        . ' automatically initialized from the attributes "from" and "filelist"',
-);
-
 has from => (
-    isa           => 'Str',
+    isa           => 'Treex::Core::Files',
     is            => 'ro',
-    documentation => 'space or comma separated list of filenames to be loaded',
-);
-
-has filelist => (
-    isa           => 'Str',
-    is            => 'ro',
-    documentation => 'a file that contains the list of filenames to be loaded, one per line',
+    coerce        => 1,
+    handles       => [qw(current_filename file_number _set_file_number)],
+    documentation => 'arrayref of filenames to be loaded, '
+        . 'coerced from a space or comma separated list of filenames, '
+        . 'see POD for details',
 );
 
 has file_stem => (
     isa           => 'Str',
     is            => 'ro',
     documentation => 'how to name the loaded documents',
-);
-
-has file_number => (
-    isa           => 'Int',
-    is            => 'ro',
-    writer        => '_set_file_number',
-    default       => 0,
-    init_arg      => undef,
-    documentation => 'Number of input files loaded so far.',
 );
 
 has is_one_doc_per_file => (
@@ -54,41 +35,6 @@ has is_one_doc_per_file => (
 );
 
 has _file_numbers => ( is => 'rw', default => sub { {} } );
-
-sub _build_filenames {
-    my $self = shift;
-
-    log_fatal "Parameters 'from' or 'filelist' must be defined!" if !defined $self->from && !defined $self->filelist;
-
-    my $filenames = [];
-
-    # add all files in the 'from' parameter to the list (avoid adding STDIN if filelist is set)
-    if ( $self->from && ( !$self->filelist || $self->from ne q{-} ) ) {
-        push @{$filenames}, split( /[ ,]+/, $self->from );
-    }
-
-    # add all files from the filelist to the list
-    if ( $self->filelist ) {
-        my @list = read_file( $self->filelist );
-        log_fatal 'File list ' . $self->filelist . ' cannot be loaded!' if @list == 1 && !defined( $list[0] );
-        my @trimmed;
-        foreach my $item (@list) {
-            $item =~ s/\s*\r?\n$//;
-            $item =~ s/^\s*//;
-            push @trimmed, $item; # remove EOL chars, trim
-        }
-        push @{$filenames}, @trimmed;
-    }
-
-    # return the resulting list
-    return $filenames;
-}
-
-sub current_filename {
-    my ($self) = @_;
-    return if $self->file_number == 0 || $self->file_number > @{ $self->filenames };
-    return $self->filenames->[ $self->file_number - 1 ];
-}
 
 sub is_next_document_for_this_job {
     my ($self) = @_;
@@ -153,7 +99,7 @@ sub new_document {
 
 sub number_of_documents {
     my $self = shift;
-    return $self->is_one_doc_per_file ? scalar @{ $self->filenames } : undef;
+    return $self->is_one_doc_per_file ? $self->from->number_of_files : undef;
 }
 
 after 'restart' => sub {
