@@ -5,6 +5,14 @@ extends 'Treex::Block::W2A::ParseMSTperl';
 has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll_2007' );
 has 'model_dir' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_perl_parser/en" );
 
+sub get_coarse_grained_tag {
+    my ( $self, $tag ) = @_;
+    
+    my $ctag = substr( $tag, 0, 2 );
+
+    return $ctag;
+}
+
 1;
 
 __END__
