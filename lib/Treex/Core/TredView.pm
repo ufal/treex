@@ -45,6 +45,7 @@ has fast_loading => (
 );
 
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'show_alignment' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub _spread_nodes {
     my ( $self, $node ) = @_;
@@ -522,7 +523,7 @@ sub node_style_hook {
     }
 
     # alignment
-    if ( my $links = $node->attr('alignment') ) {
+    if ( $self->show_alignment and my $links = $node->attr('alignment') ) {
         foreach my $link (@$links) {
             push @target_ids,  $link->{'counterpart.rf'};
             push @arrow_types, 'alignment';
@@ -621,6 +622,11 @@ sub toggle_clause_collapsing {
             }
         }
     }
+}
+
+sub toggle_alignment {
+  my $self = shift;
+  $self->show_alignment( not $self->show_alignment );
 }
 
 1;

@@ -120,6 +120,10 @@ sub toggle_clause_collapsing {
     $tredview->toggle_clause_collapsing($root);
 }
 
+sub toggle_alignment {
+    $tredview->toggle_alignment();
+}
+
 sub OpenValLexicon {
   $tredview->vallex->OpenValLexicon();
 }
@@ -135,9 +139,16 @@ sub ChooseValFrame {
 #bind shift_labels2_node to Ctrl+KP_Down menu Change content of label no.2 for current node
 #bind shift_labels3_layer to KP_Next menu Change content of label no.3 for current layer
 #bind shift_labels3_node to Ctrl+KP_Next menu Change content of label no.3 for current node
+#bind shift_labels1_layer to 1
+#bind shift_labels1_node to Ctrl+1
+#bind shift_labels2_layer to 2
+#bind shift_labels2_node to Ctrl+2
+#bind shift_labels3_layer to 3
+#bind shift_labels3_node to Ctrl+3
 #bind reset_labels_node to r menu Reset label settings of current node
 #bind reset_labels_tree to Ctrl+r menu Reset label settings of all nodes in current tree
 #bind toggle_clause_collapsing to l
+#bind toggle_alignment to a
 
 #bind OpenValLexicon to Ctrl+Shift+Return menu Browse valency frame lexicon
 #bind ChooseValFrame to Ctrl+Return menu Select and assign valency frame
