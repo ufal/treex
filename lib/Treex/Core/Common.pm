@@ -10,6 +10,7 @@ use Treex::Core::Log;
 use Treex::Core::Config;
 use Treex::Core::Resource;
 use Treex::Core::Types;
+use Treex::Core::Files;
 use List::MoreUtils;
 use List::Util;
 use Scalar::Util;
@@ -102,7 +103,8 @@ Instead of
  use Treex::Core::Config;
  use Treex::Core::Resource;
  use Treex::Core::Types;
- use List::MoreUtils qw(all any first_index);
+ use Treex::Core::Files;
+  use List::MoreUtils qw(all any first_index);
  use List::Util qw(first);
  use Scalar::Util qw(weaken);
  use Readonly qw(Readonly);
