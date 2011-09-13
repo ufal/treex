@@ -964,6 +964,8 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =item get_aligned_nodes
 
+Returns an array containing two array references. The first array contains the nodes aligned to this node, the second array contains types of the links.
+
 =item delete_aligned_node
 
 =item is_aligned_to

@@ -1,0 +1,95 @@
+# Lowercase names of fields in the input file (separated by tab in the file).
+# Use [a-z0-9_] only, using always at least one letter.
+# Use unique names, i.e. devise some names even for unused fields.
+field_names=ord,form,lemma,cpos,full_tag,parent,afun,en_ord,en_tag,en_afun,en_parent_ord
+
+# Values to set for the (technical) root node
+root_field_values=0,,,#root#,#root#,-1,AuxS,0,#root#,AuxS,-1
+
+# Name of field containing ord of parent.
+parent_ord=parent
+
+# Using cache should be turned on (1) if training with a lot of RAM or on small
+# training data, as it uses a lot of memory but speeds up the training greatly
+# (approx. by 30% to 50%). If you need to save RAM, turn it off (0).
+use_edge_features_cache=0
+
+# How many times the trainer should go through all the training data
+# (default is 10).
+number_of_iterations=8
+
+# Buckets to use for distance() function (positive integers in any order)
+# Each distance gets bucketed in the highest lower bucket (absolute-value-wise)
+distance_buckets=1,2,3,4,6,10
+
+# Features to be computed on data.
+#
+# Use lowercase field names (eg. pos) for fields of (child) nodes
+# and uppercase field names (eg. POS) for parent nodes,
+# joined together by the | sign (eg. POS|LEMMA).
+#
+# If you do not care for the parent-child role but are interested more in the
+# nodes position, use 1.field_name for the field of the two of the nodes
+# which appears first in the sentence (i.e. it has lower ord)
+# and 2.field_name for the second one (eg. 1.pos for pos of first of the nodes).
+#
+# There are also several predefined functions that you can make use of:
+#   distance(ord_field) - bucketed ord-wise distance of child and parent (ORD minus ord)
+#   preceding(field) - value of the specified field on the ord-wise preceding node
+#   (use PRECEDING(field) to get field on node preceding the PARENT)
+#   following(field) - the same for ord-wise following node
+#   between(field) - value of the specified field for each node which is
+#       ord-wise between the child node and the parent node
+#   foreach(field) - each value of the specified field (values separated by space)
+#   equals(field1,field2) - TODO
+# The parameter of a function must be a (child) field name.
+#
+
+#? foreach(en_tag)|foreach(en_afun)
+#? equals(EN_ORD,en_parent_ord)
+
+CPOS
+cpos
+CPOS|cpos
+LEMMA
+lemma
+LEMMA|lemma
+LEMMA|CPOS
+lemma|cpos
+LEMMA|CPOS|cpos
+LEMMA|CPOS|lemma
+LEMMA|lemma|cpos
+CPOS|lemma|cpos
+LEMMA|CPOS|lemma|cpos
+PRECEDING(cpos)|CPOS|cpos|following(cpos)
+PRECEDING(cpos)|CPOS|preceding(cpos)|cpos
+CPOS|FOLLOWING(cpos)|cpos|following(cpos)
+CPOS|FOLLOWING(cpos)|preceding(cpos)|cpos
+CPOS|cpos|following(cpos)
+CPOS|preceding(cpos)|cpos
+CPOS|FOLLOWING(cpos)|cpos
+PRECEDING(cpos)|CPOS|cpos
+1.cpos|between(cpos)|2.cpos
+
+distance(ord)|CPOS
+distance(ord)|cpos
+distance(ord)|CPOS|cpos
+distance(ord)|LEMMA
+distance(ord)|lemma
+distance(ord)|LEMMA|lemma
+distance(ord)|LEMMA|CPOS
+distance(ord)|lemma|cpos
+distance(ord)|LEMMA|CPOS|cpos
+distance(ord)|LEMMA|CPOS|lemma
+distance(ord)|LEMMA|lemma|cpos
+distance(ord)|CPOS|lemma|cpos
+distance(ord)|LEMMA|CPOS|lemma|cpos
+distance(ord)|PRECEDING(cpos)|CPOS|cpos|following(cpos)
+distance(ord)|PRECEDING(cpos)|CPOS|preceding(cpos)|cpos
+distance(ord)|CPOS|FOLLOWING(cpos)|cpos|following(cpos)
+distance(ord)|CPOS|FOLLOWING(cpos)|preceding(cpos)|cpos
+distance(ord)|CPOS|cpos|following(cpos)
+distance(ord)|CPOS|preceding(cpos)|cpos
+distance(ord)|CPOS|FOLLOWING(cpos)|cpos
+distance(ord)|PRECEDING(cpos)|CPOS|cpos
+distance(ord)|1.cpos|between(cpos)|2.cpos
