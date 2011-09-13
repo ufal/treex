@@ -49,7 +49,7 @@ sub parse_chunk {
 		    $field_value = '0'; # will be filled by the parser
 		} elsif ($field_name eq 'coarse_tag') {
 		    $field_value = $self->get_coarse_grained_tag($a_node->get_attr('tag'));
-		} elsif ($field_name =~ 'dummy_*') {
+		} elsif ($field_name =~ 'dummy_.*') {
 		    $field_value = '';
 		} else {
 		    die "Incorrect field $field_name!";
