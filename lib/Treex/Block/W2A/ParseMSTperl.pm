@@ -55,12 +55,16 @@ sub parse_chunk {
 	    } else {
 		$field_value = $a_node->get_attr($field_name);
 	    }
-	    push @field_values, $field_value;
+	    if (defined $field_value) {
+		push @field_values, $field_value;
+	    } else {
+		push @field_values, '';
+	    }
 	}
-	my $node = Treex::Tool::Parser::Parser::MSTperl::Node->new(fields => [@field_values], featuresControl => $featuresControl);
+	my $node = Treex::Tool::Parser::MSTperl::Node->new(fields => \@field_values, featuresControl => $featuresControl);
 	push @nodes, $node;
     }
-    my $sentence = Treex::Tool::Parser::Parser::MSTperl::Sentence->new(nodes => [@nodes], featuresControl => $featuresControl);
+    my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(nodes => \@nodes, featuresControl => $featuresControl);
     
     # run the parser
     my @node_parents = @{$parser->parse_sentence($sentence)};
