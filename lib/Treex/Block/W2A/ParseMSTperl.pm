@@ -46,9 +46,11 @@ sub parse_chunk {
 	    #if ($field_name =~ /(.+)_(.+)/) { # special field
 	    if ($field_name =~ /_/) { # special field
 		if ($field_name eq 'parent_ord') {
-		    $field_value = '0';
+		    $field_value = '0'; # will be filled by the parser
 		} elsif ($field_name eq 'coarse_tag') {
 		    $field_value = $self->get_coarse_grained_tag($a_node->get_attr('tag'));
+		} elsif ($field_name =~ 'dummy_*') {
+		    $field_value = '';
 		} else {
 		    die "Incorrect field $field_name!";
 		}
@@ -89,18 +91,8 @@ sub parse_chunk {
 }
 
 sub get_coarse_grained_tag {
+    log_fatal 'get_coarse_grained_tag must be implemented in derived clases';
     my ( $self, $tag ) = @_;
-    
-    my $ctag;
-    if ( substr( $tag, 4, 1 ) eq '-' ) {
-	# no case -> Pos + Subpos
-        $ctag = substr( $tag, 0, 2 );
-    } else {
-	# has case -> Pos + Case
-        $ctag = substr( $tag, 0, 1 ) . substr( $tag, 4, 1 );
-    }
-
-    return $ctag;
 }
 1;
 
