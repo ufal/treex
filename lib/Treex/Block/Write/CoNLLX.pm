@@ -18,8 +18,8 @@ sub process_atree {
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
         #my $ctag  = $self->get_coarse_grained_tag($tag);
         my $feat;
-        if ( $self->feat_attribute eq 'conll/feat' && defined $anode->get_conll_feat() ) {
-            $feat = $anode->get_conll_feat();
+        if ( $self->feat_attribute eq 'conll/feat' && defined $anode->conll_feat() ) {
+            $feat = $anode->conll_feat();
         } elsif ( $self->feat_attribute eq 'iset' && $anode->get_iset_pairs_list() ) {
             my @list = $anode->get_iset_pairs_list();
             my @pairs;
