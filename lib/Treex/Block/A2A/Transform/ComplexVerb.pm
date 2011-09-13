@@ -58,7 +58,7 @@ sub is_verb {
 
 sub is_aux_verb {
     my ( $self, $node ) = @_;
-    return ($node->afun||'') eq 'AuxV';
+    return ($node->iset->{subpos}||'') eq 'aux' ||($node->afun||'') eq 'AuxV';
 }
 
 sub has_morp {
