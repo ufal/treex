@@ -100,9 +100,9 @@ sub BUILD {
         }
     }
 
-    $self->_set_modifiers( \%modifiers );
-    $self->_set_output_attrib( \@output_attr );
+    $self->_set_modifiers( \%modifiers );   
     $self->_set_attrib_io( \%attr_io );
+    $self->_set_output_attrib( \@output_attr );
 
     return;
 }

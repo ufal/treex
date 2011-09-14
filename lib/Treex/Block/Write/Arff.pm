@@ -80,26 +80,28 @@ sub _build_output_attrib_names {
 }
 
 # Apply all attribute name overrides as specified in output_attrib_names
-sub _set_output_attrib {
+around '_set_output_attrib' => sub {
 
-    my ( $self, $output_attrib ) = @_;
-
+    my ( $set, $self, $output_attrib ) = @_;
+    
     my $over = $self->output_attrib_names;
     my $orig = $self->_attrib_io;
     my %ot   = ();
-
+    
     # build an override table: original name => overridden name
     foreach my $in_attr ( keys %{$orig} ) {
         foreach my $i ( 0 .. @{ $orig->{$in_attr} } - 1 ) {
             $ot{ $orig->{$in_attr}->[$i] } = $over->{$in_attr} ? $over->{$in_attr}->[$i] : $orig->{$in_attr}->[$i];
         }
     }
-
+    
     # apply the override table
     $output_attrib = [ map { $ot{$_} } @{$output_attrib} ];
+    
+    log_info( join ' ' , @{ $output_attrib } );
 
-    return $output_attrib;
-}
+    $self->$set($output_attrib);
+};
 
 override 'process_document' => sub {
 
@@ -230,8 +232,8 @@ See L<Treex::Block::Write::LayerAttributes>.
 
 =item C<force_types>
 
-Override default data type (which is 'NUMERIC', if only numeric values are used, and 'STRING' otherwise). Should
-be a comma separated list of C<attribute-name: data-type>.  
+Override default data type (which is 'NUMERIC', if only numeric values are used, and 'STRING' otherwise). Should be
+passed as a hash reference, analogous to C<output_attrib_names>.  
 
 =item C<config_file>
 
@@ -259,7 +261,10 @@ C<force_types>, in the following format:
         ModifierClassName2:
             - value1
             - value2
-   ...    
+   ...
+
+Please note that some data source names, as well as new labels and type definitions, need to be enclosed
+in quotes. 
     
 =item C<to>
 
