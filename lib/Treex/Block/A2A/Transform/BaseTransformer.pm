@@ -29,6 +29,18 @@ sub subscription {
     return $1;
 }
 
+sub rehang {
+    my ( $self, $node, $new_parent ) = @_;
+    return 0 if $node->parent == $new_parent;
+    $node->set_parent($new_parent);
+    $self->subscribe($node);
+    my $new_parent_form = $new_parent->is_root ? 'ROOT' : $new_parent->form;
+    log_info( 'Rehanging fired by ' . ( $self->subscription || '?' ) . ': '
+                 . $node->form . " moved below " . $new_parent_form . "\t" . $node->get_address );
+    return 1;
+}
+
+
 1;
 
 =over
