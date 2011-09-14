@@ -8,7 +8,7 @@ has '+return_values_names' => ( default => sub { [ '' ] } );
 
 
 # Return the t-lemma and sempos
-sub modify {
+sub modify_single {
 
     my ($self, $tlemma, $sempos) = @_;
 
@@ -37,7 +37,7 @@ Treex::Block::Write::LayerAttributes::TLemmaSempos
     my $sempos = 'adj.quant.def';   
 
     # this now prints 'čtyři.adj'
-    print $modif->modify( $tlemma, $sempos ); 
+    print $modif->modify_all( $tlemma, $sempos ); 
 
 =head1 DESCRIPTION
 

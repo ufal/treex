@@ -24,7 +24,7 @@ sub BUILDARGS {
 }
 
 
-sub modify {
+sub modify_single {
 
     my ( $self, $ord1, $ord2 ) = @_;
 
@@ -63,7 +63,7 @@ Treex::Block::Write::LayerAttributes::Distance
 
     my $modif = Treex::Block::Write::LayerAttributes::Distance->new( 'numeric' ); 
 
-    print $modif->modify( $node1->ord, $node2->ord ); # prints the topological distance b/t these two nodes
+    print $modif->modify_all( $node1->ord, $node2->ord ); # prints the topological distance b/t these two nodes
 
 =head1 DESCRIPTION
 

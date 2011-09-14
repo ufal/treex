@@ -9,50 +9,65 @@ requires '_process_tree';
 
 has 'layer' => ( isa => enum( [ 'a', 't', 'p', 'n' ] ), is => 'ro', required => 1 );
 
-has 'attributes' => ( isa => 'Str', is => 'ro', required => 1 );
+has 'attributes' => ( isa => 'ArrayRef', is => 'ro', required => 1, builder => '_build_attributes', lazy_build => 1 );
 
-has 'output_attrib_names' => ( isa => 'Str', is => 'ro' );
+has 'modifier_config' => ( isa => 'HashRef', is => 'ro', builder => '_build_modif_args', lazy_build => 1 );
 
-has 'modifier_config' => ( isa => 'Str', is => 'ro' );
-
-# This is a parsed list of attributes, constructed from the attributes parameter.
-has '_attrib_list' => ( isa => 'ArrayRef', is => 'ro', builder => '_build_attrib_list', lazy_build => 1 );
-
-# A list of output attributes, given all the modifiers applied
+# A list of output attributes, given all the modifiers are applied
 has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
+
+# Input-output attribute matching (needed for attribute name overrides)
+has '_attrib_io' => ( isa => 'HashRef', is => 'ro', writer => '_set_attrib_io' );
 
 # This is where all created text modifier objects are stored
 has '_modifiers' => ( isa => 'HashRef', is => 'ro', writer => '_set_modifiers' );
 
 # Parse the attribute list given in parameters.
-sub _build_attrib_list {
+sub _build_attributes {
 
     my ($self) = @_;
+    my $ret = $self->attributes;
+    
+    if ( ref $ret eq 'ARRAY' ){
+        return $ret;
+    }
     return _split_csv_with_brackets( $self->attributes );
 }
 
-# Parse the text modifier settings (perl code given in a parameter that must return a hashref) 
-sub _parse_modif_args {
+# Parse the text modifier settings (perl code given in a parameter that must return a hashref)
+sub _build_modif_args {
+
     my ($self) = @_;
-    
-    return {} if (!$self->modifier_config);
-    
-    my $ret = eval $self->modifier_config || log_fatal('Cannot parse modifier configuration!');
-    
-    if (ref $ret ne 'HASH'){
-        log_fatal('Modifier configuration must be a hash reference!');
-    }
-    
-    foreach my $key (keys %{$ret}){
-        
-        if ($key !~ m/::./){ # prepend default package name
-            $ret->{'Treex::Block::Write::LayerAttributes::' . $key} = $ret->{$key};
+
+    my $ret = _parse_hashref( 'modifier_config', $self->modifier_config );
+
+    foreach my $key ( keys %{$ret} ) {
+
+        if ( $key !~ m/::./ ) {    # prepend default package name
+            $ret->{ 'Treex::Block::Write::LayerAttributes::' . $key } = $ret->{$key};
             delete $ret->{$key};
         }
-    }          
+    }
     return $ret;
 }
 
+# Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
+sub _parse_hashref {
+
+    my ( $name, $hashref ) = @_;
+
+    return {} if ( !$hashref );
+
+    if ( ref $hashref ne 'HASH' ) {
+        $hashref = eval $hashref || log_fatal('Cannot parse modifier configuration!');
+
+        if ( ref $hashref ne 'HASH' ) {
+            log_fatal('Modifier configuration must be a hash reference!');
+        }
+    }
+
+    return $hashref;
+}
 
 # Build the output attributes
 sub BUILD {
@@ -60,48 +75,34 @@ sub BUILD {
     my ( $self, $args ) = @_;
     my @output_attr = ();
     my %modifiers   = ();
-    my $modif_args = $self->_parse_modif_args();
+    my %attr_io     = ();
 
-    foreach my $attr ( @{ $self->_attrib_list } ) {
+    foreach my $attr ( @{ $self->attributes } ) {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
             # find the package
             eval "require $pckg" || log_fatal( 'Cannot require package ' . $pckg );
-            
+
             # create the object (need to supply a dummy empty hash if there are no parameters, an "undef" won't do)
-            $modifiers{$pckg} = $pckg->new( defined($modif_args->{$pckg}) ? $modif_args->{$pckg} : {} );    
-            
+            $modifiers{$pckg} = $pckg->new( defined( $self->modifier_config->{$pckg} ) ? $self->modifier_config->{$pckg} : {} );
+
             # check if it does our needed role
             log_fatal("The $pckg package doesn't have the Treex::Block::Write::LayerAttributes::AttributeModifier role!")
                 if ( !$modifiers{$pckg}->does('Treex::Block::Write::LayerAttributes::AttributeModifier') );
 
             # get all return values
-            push @output_attr, map { $attr . $_ } @{ $modifiers{$pckg}->return_values_names };
+            $attr_io{$attr} = [ map { $attr . $_ } @{ $modifiers{$pckg}->return_values_names } ];
+            push @output_attr, @{ $attr_io{$attr} };
         }
         else {
+            $attr_io{$attr} = [ $attr ];
             push @output_attr, $attr;
         }
     }
 
     $self->_set_modifiers( \%modifiers );
-
-    # apply user-defined overrides for attribute names
-    if ( $self->output_attrib_names ) {
-        my @override_names = @{ _split_csv_with_brackets( $self->output_attrib_names ) };
-        if ( @override_names != @output_attr ) {
-            log_fatal(
-                'Incorrect number of output_attrib_names -- is '
-                    . scalar(@override_names)
-                    . ', should be '
-                    . scalar(@output_attr)
-            );
-        }
-        foreach my $i ( 0 .. ( @output_attr - 1 ) ) {
-            $output_attr[$i] = $override_names[$i] eq '.' ? $output_attr[$i] : $override_names[$i];
-        }
-    }
-
     $self->_set_output_attrib( \@output_attr );
+    $self->_set_attrib_io( \%attr_io );
 
     return;
 }
@@ -163,7 +164,7 @@ sub _get_modified {
         }
 
         # call the modifier function on them
-        @vals = $self->_modifiers->{$pckg}->modify(@vals);
+        @vals = $self->_modifiers->{$pckg}->modify_all(@vals);
 
         # harvest the results
         return \@vals;
@@ -180,7 +181,7 @@ sub _get_info_hash {
     my %info;
     my $out_att_pos = 0;
 
-    foreach my $attrib ( @{ $self->_attrib_list } ) {
+    foreach my $attrib ( @{ $self->attributes } ) {
 
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
@@ -439,15 +440,6 @@ A space-or-comma-separated list of attributes (relating to the tree nodes on the
 processed, including references and text modifications (see the general description for more information).
  
 This parameter is required.
-
-=item C<output_attrib_names>
-
-A space-or-comma-separated list of override output attribute names. Their number must be the same as the
-number of output attributes, i.e. all attribute modifiers and their numbers of return values must be taken
-into account.
-
-If you don't wish a specific output attribute name to be changed, you may put a single dot (C<.>) into the 
-list instead of the new name.
 
 =item C<modifier_config>
 

@@ -7,7 +7,7 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 has '+return_values_names' => ( default => sub { [ '' ] } );
 
 # Return the t-lemma and sempos
-sub modify {
+sub modify_single {
 
     my ($self, $tlemma, $functor) = @_;
 
@@ -33,12 +33,12 @@ Treex::Block::Write::LayerAttributes::TLemmaFunctor
     my $parent_tlemma = 'ministr';
     my $functor = 'RSTR';   
 
-    print $modif->modify( $parent_tlemma, $functor ); # prints ''
+    print $modif->modify_all( $parent_tlemma, $functor ); # prints ''
     
     my $parent_tlemma = 'vládnout';
     my $functor = 'ACT';
     
-    print $modif->modify( $parent_tlemma, $functor ); # prints 'vládnout'  
+    print $modif->modify_all( $parent_tlemma, $functor ); # prints 'vládnout'  
 
 =head1 DESCRIPTION
 

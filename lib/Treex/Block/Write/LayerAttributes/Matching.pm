@@ -47,7 +47,7 @@ sub _build_return_values_names {
 }
 
 # Return the t-lemma and sempos
-sub modify {
+sub modify_all {
 
     my ( $self, $tags_str, @vals ) = @_;
 
@@ -86,7 +86,7 @@ Treex::Block::Write::LayerAttributes::Matching
     my $tags = 'AAFP1----1A---- NNIS1-----A----';   
      
     # prints 'lingvista, NNIS1-----A----, 1, geniální, AAFP1----1A----, 1, , , 0'
-    print join(', ', $modif->modify($tag, $lemma, $tag));  
+    print join(', ', $modif->modify_all($tag, $lemma, $tag));  
     
 =head1 DESCRIPTION
 

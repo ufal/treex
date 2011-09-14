@@ -7,7 +7,7 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 has '+return_values_names' => ( default => sub { [ '_1', '_2' ] } );
 
 # Sempos is truncated to the first and first + second field
-sub modify {
+sub modify_single {
 
     my ($self, $sempos) = @_;
 
@@ -36,7 +36,7 @@ Treex::Block::Write::LayerAttributes::SemposTrunc
 
     my $modif = Treex::Block::Write::LayerAttributes::SemposTrunc->new();
     $sempos = 'adj.quant.def';   
-    print join ' ', $modif->modify( $sempos ); # prints 'adj adj.quant'
+    print join ' ', $modif->modify_all( $sempos ); # prints 'adj adj.quant'
 
 =head1 DESCRIPTION
 

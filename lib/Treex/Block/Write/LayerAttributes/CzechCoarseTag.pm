@@ -33,7 +33,7 @@ sub BUILDARGS {
 }
 
 # Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case, or instructed not to use cases)
-sub modify {
+sub modify_single {
 
     my ( $self, $tag ) = @_;
 
@@ -76,9 +76,9 @@ Treex::Block::Write::LayerAttributes::CzechCoarseTag
 
     my $modif = Treex::Block::Write::LayerAttributes::CzechCoarseTag->new(); 
     my $tag = 'NNIS1-----A----';   
-    print $modif->modify( $tag ); # prints 'N1'
+    print $modif->modify_all( $tag ); # prints 'N1'
     $tag = 'VpYS---XR-AA---';
-    print $modif->modify( $tag ); # prints 'Vp'
+    print $modif->modify_all( $tag ); # prints 'Vp'
 
 =head1 DESCRIPTION
 

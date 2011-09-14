@@ -29,7 +29,7 @@ sub BUILDARGS {
 }
 
 
-sub modify {
+sub modify_single {
 
     my ( $self, $lemma ) = @_;
 
@@ -52,7 +52,7 @@ Treex::Block::Write::LayerAttributes::CzechMLemmaTrunc
 
     my $modif = Treex::Block::Write::LayerAttributes::CzechMLemmaTrunc->new(); 
 
-    print $modif->modify( 'Tatra-2_;R_^(vozidlo)' ); # prints 'Tatra' or 'Tatra-2' (depending on the parameter)
+    print $modif->modify_all( 'Tatra-2_;R_^(vozidlo)' ); # prints 'Tatra' or 'Tatra-2' (depending on the parameter)
 
 =head1 DESCRIPTION
 

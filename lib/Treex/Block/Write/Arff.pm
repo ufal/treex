@@ -3,6 +3,7 @@ package Treex::Block::Write::Arff;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::IO::Arff;
+use YAML::Tiny;
 use autodie;
 
 extends 'Treex::Core::Block';
@@ -24,59 +25,80 @@ has '_sent_id' => ( is => 'ro', isa => 'Int', writer => '_set_sent_id', default 
 # Were the ARFF file headers already printed ?
 has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
 
-# Override the default data type settings (format: "columnname: type, ...")
-has 'force_types' => ( is => 'ro', isa => 'Str', default => '' );
+# Override the default data type settings
+has 'force_types' => ( is => 'ro', isa => 'HashRef', builder => '_build_force_types', lazy_build => 1 );
 
-# The data type override settings, in a hashref
-has '_forced_types' => ( is => 'ro', isa => 'HashRef', builder => '_build_forced_types', lazy_build => 1 );
+# Override output attribute names
+has 'output_attrib_names' => ( is => 'ro', isa => 'HashRef', builder => '_build_output_attrib_names', lazy_build => 1 );
 
+# Read configuration from a file
 has 'config_file' => ( is => 'ro', isa => 'Str' );
 
 #
 # METHODS
 #
 
-# Read the configuration, if applicable
+# Try to read the configuration file, if applicable, and set the returned values
 sub BUILDARGS {
 
     my ( $class, $params ) = @_;
 
-    if ( $params->{config_file} ){
-        my ($attributes, $override) = _read_config_file($params->{config_file});
-        $params->{attributes} = $attributes;
-        $params->{output_attrib_names} = $override;
+    if ( $params->{config_file} ) {
+        ( $params->{attributes}, $params->{output_attrib_names}, $params->{force_types}, $params->{modifier_config} ) =
+            _read_config_file( $params->{config_file} );
     }
-    
+
     return $params;
 }
 
+# YAML configuration file reader
 sub _read_config_file {
-    
+
     my ($file_name) = @_;
-    my ($attributes, $override) = ('', '');
-    
-    open(my $fh, '<:utf8', $file_name);
-    while (my $line = <$fh>){
-        $line =~ s/\r?\n$//;
-        my ($attr, $out_names) = split(/\t/, $line);
-        $attributes .= ' ' . $attr;
-        $override .= ' ' . $out_names;     
-    }    
-    close($fh);
-    
-    log_info('ATTR: ' . $attributes);
-    
-    return ($attributes, $override);    
+
+    my $cfg = YAML::Tiny->read($file_name);
+    log_fatal( 'Cannot read configuration file ' . $file_name ) if ( !$cfg );
+
+    $cfg = $cfg->[0];
+    my @sources = map { $_->{source} } @{ $cfg->{attributes} };
+    my %labels  = map { $_->{source} => $_->{label} ? [ split( /[\s,]\+/, $_->{label} ) ] : undef } @{ $cfg->{attributes} };
+    my %types   = map { $_->{source} => $_->{type} ? [ split( /[\s,]\+/, $_->{type} ) ] : undef } @{ $cfg->{attributes} };
+
+    return ( \@sources, \%labels, \%types, $cfg->{modifier_config} );
 }
 
-
 # Build a hashref from datatype override settings
-sub _build_forced_types {
+sub _build_force_types {
 
     my ($self) = @_;
-    my %forced_types = map { $_ =~ m/\s*(.*)\s*:\s*(.*)\s*/; $1 => $2 } split( /\s*,\s*/, $self->force_types );
+    return _parse_hashref( 'force_types', $self->force_types );
+}
 
-    return {%forced_types};
+sub _build_output_attrib_names {
+    my ($self) = @_;
+    return _parse_hashref( 'output_attrib_names', $self->output_attrib_names );
+}
+
+# Apply all attribute name overrides as specified in output_attrib_names
+sub _set_output_attrib {
+
+    my ( $self, $output_attrib ) = @_;
+
+    my $over = $self->output_attrib_names;
+    my $orig = $self->_attrib_io;
+    my %ot   = ();
+
+    # build an override table: original name => overridden name
+    foreach my $in_attr ( keys %{$orig} ) {
+        foreach my $i ( 0 .. @{ $orig->{$in_attr} } - 1 ) {
+            $ot{ $orig->{$in_attr}->[$i] } = $over->{$in_attr} ? $over->{$in_attr}->[$i] : $orig->{$in_attr}->[$i];
+        }
+    }
+
+    # apply the override table
+    $output_attrib = [ map { $ot{$_} } @{$output_attrib} ];
+
+    return $output_attrib;
 }
 
 override 'process_document' => sub {
@@ -139,14 +161,19 @@ sub _init_arff {
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
     push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
 
-    foreach my $attr ( @{ $self->_output_attrib } ) {
+    my $j = 0;
 
-        my $attr_entry = {
-            attribute_name => $attr,
-            attribute_type => $self->_forced_types->{$attr}
-        };
+    foreach my $attr ( @{ $self->attributes } ) {
 
-        push @{ $arff->relation->{attributes} }, $attr_entry;
+        foreach my $i ( 0 .. @{ $self->_attrib_io->{$attr} } - 1 ) {
+
+            my $attr_entry = {
+                'attribute_name' => $self->_output_attrib->[ $j++ ],
+                'attribute_type' => ( $self->force_types->{$attr} ? $self->force_types->{$attr}->[$i] : undef )
+            };
+
+            push @{ $arff->relation->{attributes} }, $attr_entry;
+        }
     }
 
     return $arff;
@@ -191,23 +218,49 @@ This parameter is required.
 For multiple-valued attributes (lists), dereferencing and text modifiers, please see 
 L<Treex::Block::Write::LayerAttributes>. 
 
-=item C<output_attrib_names>, C<modifier_config> 
+=item C<output_attrib_names>
+
+A hash reference containing the original attribute names as keys and their desired output names in the ARFF file
+as values (as array references, since there may be several output attributes resulting from one source, due
+to attribute modifiers, see L<Treex::Block::Write::LayerAttributes>).
+
+=item C<modifier_config> 
 
 See L<Treex::Block::Write::LayerAttributes>.
-
-=item C<config_file>
-
-A file containing the configuration for the C<modifier_config> and C<output_attrib_names> parameters.
-
-The format of the configuration file is as follows:
-    attribute1<tab>output_name [output_name ... ]
-    attribute2<tab>output_name [output_name ... ]
 
 =item C<force_types>
 
 Override default data type (which is 'NUMERIC', if only numeric values are used, and 'STRING' otherwise). Should
 be a comma separated list of C<attribute-name: data-type>.  
 
+=item C<config_file>
+
+The name of a YAML containing the settings for C<attributes>, C<output_attrib_names>, C<modifier_config> and 
+C<force_types>, in the following format:
+
+    ---
+    attributes:
+        - source: "data source, e.g. a/lex.rf->tag (attributes member)" 
+          label:  "the name override (output_attrib_names member)"
+          type:   "data type override (force_types member)"
+
+        - source: "another data source, this time no overrides"
+
+        - source: "Modifier(another data)"
+          label:  output_label_1, output_label_2, output_label_3
+
+    # a commentary        
+    modifier_config:
+
+        ModifierClassName1:
+            setting1: value
+            setting2: value
+
+        ModifierClassName2:
+            - value1
+            - value2
+   ...    
+    
 =item C<to>
 
 Optional: the name of the output file, STDOUT by default.

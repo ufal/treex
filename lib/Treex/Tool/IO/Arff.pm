@@ -9,7 +9,7 @@ package Treex::Tool::IO::Arff;
 use Moose;
 use autodie;    # die on I/O error
 
-use Data::Dumper;
+#use Data::Dumper;
 use String::Util ':all';
 use Scalar::Util 'looks_like_number';
 
@@ -192,9 +192,8 @@ sub load_arff {
     $relation->{"attribute_count"}   = $attribute_count;
 
     if ( $self->debug_mode ) { 
-        #I recommend to put this outside eval, if Devel::Size is not installed on system, it fails with:
-        #Undefined subroutine &Treex::Tool::IO::Arff::total_size called at Arff.pm line 200.
-        eval("use Devel::Size qw(size total_size)");
+        require Devel::Size;
+        Devel::Size->import( qw(size total_size) );
 
         print STDERR "$arff_file loaded with " . $self->error_count . " error(s).\n";
         print STDERR "Buffer size: " . total_size($relation) . " bytes\n";

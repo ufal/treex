@@ -1,10 +1,42 @@
 package Treex::Block::Write::LayerAttributes::AttributeModifier;
 
 use Moose::Role;
+use Treex::Core::Log;
 
-requires 'modify';
 
 has 'return_values_names' => ( isa => 'ArrayRef', is => 'ro', required => 1 );
+
+sub modify_all {
+
+    my ( $self, @args ) = @_;
+
+    # split the concatenated values of arguments (and retain undefined values)
+    @args = map { [ $_ ? split( / /, $_ ) : $_ ] } @args;
+    my @ret_vals;
+
+    # run the modifier on each arguments set
+    foreach my $i ( 0 .. @{ $args[0] } - 1 ) {
+
+        my @cur_ret_vals = $self->modify_single( map { $_->[$i] } @args );
+
+        # append the return values
+        if ( @ret_vals == 0 ) {
+            @ret_vals = @cur_ret_vals;
+        }
+        else {
+            for my $j ( 0 .. @cur_ret_vals - 1 ) {
+                $ret_vals[$j] .= $cur_ret_vals[$j] ? ' ' . $cur_ret_vals[$j] : '';
+            }
+        }
+    }
+    
+    return @ret_vals;
+};
+
+
+sub modify_single {
+    log_fatal 'Any AttributeModifier must override modify_single() or modify_all()!';
+}
 
 1;
 
@@ -18,17 +50,21 @@ Treex::Block::Write::LayerAttributes::AttributeModifier
 
 =head1 DESCRIPTION
 
-A base Moose role of text modifiers for blocks using L<Treex::Block::Write::LayerAttributes>. The role itself
-is empty, but all actual modifier implementation musts contain the following methods/attributes:
+A base Moose role of text modifiers for blocks using L<Treex::Block::Write::LayerAttributes>. 
+Any actual modifier implementation musts override the following methods/attributes:
 
-=item modify()
+=item C<modify_all()> or C<modify_single()>
 
 A method which takes the textual value of attribute(s) and returns its/their modification(s).
 
 If the given attribute value(s) is/are undefined, the method should return an undefined value, too; if 
 the given attribute(s) is/are empty string(s), the result should also be empty string(s).
 
-=item return_value_names
+The first method gets all values together, if attributes with values for more nodes separated with spaces
+are input. The second variant gets the values already split for each individual node by the default
+C<modify_all()> method.
+
+=item C<return_value_names>
 
 This attribute must be an array reference containing the names of all the different values returned by
 the modifier.    

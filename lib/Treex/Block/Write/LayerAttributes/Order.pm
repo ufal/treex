@@ -8,7 +8,7 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 has '+return_values_names' => ( default => sub { [''] } );
 
 
-sub modify {
+sub modify_single {
 
     my ( $self, $ord1, $ord2 ) = @_;
 
@@ -39,7 +39,7 @@ Treex::Block::Write::LayerAttributes::Order
 
     my $modif = Treex::Block::Write::LayerAttributes::Order->new(); 
 
-    print $modif->modify( $node1->ord, $node2->ord ); # prints 'before' (if node1 goes before node2), 'same' or 'after'
+    print $modif->modify_all( $node1->ord, $node2->ord ); # prints 'before' (if node1 goes before node2), 'same' or 'after'
 
 =head1 DESCRIPTION
 
