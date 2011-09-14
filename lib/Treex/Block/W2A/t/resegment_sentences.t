@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;
 use Treex::Block::W2A::ResegmentSentences;
+Treex::Core::Log::log_set_error_level('WARN');
 
 my $block = new_ok('Treex::Block::W2A::ResegmentSentences');
 

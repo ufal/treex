@@ -6,7 +6,13 @@ use warnings;
 use Treex::Core;
 use Treex::Tool::PhraseParser::Stanford;
 
-use Test::More tests => 2;
+use Test::More tests => 1;
+
+TODO: {
+    local $TODO = 'Not organized as test';
+    fail('Organize as test');
+}
+exit;
 
 my $parser = Treex::Tool::PhraseParser::Stanford->new();
 
@@ -37,7 +43,3 @@ eval {
 
 $document->save('stanford_output.treex');
 
-TODO: {
-    local $TODO = 'Not organized as test';
-    fail('Organize as test');
-}

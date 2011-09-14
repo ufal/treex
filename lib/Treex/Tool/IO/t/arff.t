@@ -11,7 +11,7 @@ my $test_arff = 'test.arff';
 
 write_file($test_arff, <DATA>);
 
-my $loader = Treex::Tool::IO::Arff->new( { debug_mode => 1 } );
+my $loader = Treex::Tool::IO::Arff->new( { debug_mode => 0 } );
 
 my $arff = $loader->load_arff($test_arff);
 

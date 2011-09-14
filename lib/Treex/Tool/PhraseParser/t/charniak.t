@@ -6,7 +6,13 @@ use warnings;
 use Treex::Core;
 use Treex::Tool::PhraseParser::Charniak;
 
-use Test::More tests => 2;
+use Test::More tests => 1;
+
+TODO: {
+    local $TODO = 'Not organized as test';
+    fail('Organize as test');
+}
+exit;
 
 my $parser = Treex::Tool::PhraseParser::Charniak->new();
 
@@ -35,8 +41,3 @@ eval {
 };
 
 $document->save('charniak_output.treex');
-
-TODO: {
-    local $TODO = 'Not organized as test';
-    fail('Organize as test');
-}

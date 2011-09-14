@@ -19,7 +19,7 @@ sub BUILD {
     my $bindir = Treex::Core::Config::share_dir() . '/installed_tools/tagger/tree_tagger/bin';
     log_fatal("Missing $bindir\n") if !-d $bindir;
 
-    my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model;
+    my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model . ' 2>/dev/null';
 
     # start TreeTagger and load the model
     my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command, ":encoding(utf-8)" );

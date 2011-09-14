@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Treex::Core;
+Treex::Core::Log::log_set_error_level('WARN');
 
 use Test::More;
 
