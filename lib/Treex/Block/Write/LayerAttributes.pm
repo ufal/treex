@@ -7,11 +7,15 @@ use Treex::PML::Instance;
 
 requires '_process_tree';
 
+#
+# DATA
+#
+
 has 'layer' => ( isa => enum( [ 'a', 't', 'p', 'n' ] ), is => 'ro', required => 1 );
 
 has 'attributes' => ( isa => 'ArrayRef', is => 'ro', required => 1, builder => '_build_attributes', lazy_build => 1 );
 
-has 'modifier_config' => ( isa => 'HashRef', is => 'ro', builder => '_build_modif_args', lazy_build => 1 );
+has 'modifier_config' => ( isa => 'HashRef', is => 'ro' );
 
 # A list of output attributes, given all the modifiers are applied
 has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
@@ -22,40 +26,54 @@ has '_attrib_io' => ( isa => 'HashRef', is => 'ro', writer => '_set_attrib_io' )
 # This is where all created text modifier objects are stored
 has '_modifiers' => ( isa => 'HashRef', is => 'ro', writer => '_set_modifiers' );
 
-# Parse the attribute list given in parameters.
-sub _build_attributes {
+#
+# METHODS
+#
 
-    my ($self) = @_;
-    my $ret = $self->attributes;
+# Parse the attribute list given in parameters.
+sub _parse_attributes {
+
+    my ($value) = @_;
     
-    if ( ref $ret eq 'ARRAY' ){
-        return $ret;
+    if ( ref $value eq 'ARRAY' ){
+        return $value;
     }
-    return _split_csv_with_brackets( $self->attributes );
+    return _split_csv_with_brackets( $value );
 }
 
-# Parse the text modifier settings (perl code given in a parameter that must return a hashref)
-sub _build_modif_args {
+# Parse the text modifier settings (Perl code given in a parameter that must return a hashref)
+sub _parse_modifier_config {
 
-    my ($self) = @_;
+    my ($value) = @_;
+    $value = _parse_hashref( 'modifier_config', $value );
 
-    my $ret = _parse_hashref( 'modifier_config', $self->modifier_config );
-
-    foreach my $key ( keys %{$ret} ) {
+    foreach my $key ( keys %{$value} ) {
 
         if ( $key !~ m/::./ ) {    # prepend default package name
-            $ret->{ 'Treex::Block::Write::LayerAttributes::' . $key } = $ret->{$key};
-            delete $ret->{$key};
+            $value->{ 'Treex::Block::Write::LayerAttributes::' . $key } = $value->{$key};
+            delete $value->{$key};
         }
     }
-    return $ret;
-}
+    return $value;
+};
+
+around 'BUILDARGS' => sub {
+    my ($set, $self, $args) = @_;
+
+    $self->$set($args); # call the original BUILDARGS method
+    
+    # parse the attributes list, attribute modifiers
+    $args->{modifier_config} = _parse_modifier_config( $args->{modifier_config} );
+    $args->{attributes} = _parse_attributes( $args->{attributes} );
+
+    return $args;    
+};
 
 # Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
 sub _parse_hashref {
 
     my ( $name, $hashref ) = @_;
-
+    
     return {} if ( !$hashref );
 
     if ( ref $hashref ne 'HASH' ) {
@@ -76,7 +94,7 @@ sub BUILD {
     my @output_attr = ();
     my %modifiers   = ();
     my %attr_io     = ();
-
+    
     foreach my $attr ( @{ $self->attributes } ) {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
@@ -169,7 +187,7 @@ sub _get_modified {
         # harvest the results
         return \@vals;
     }
-    else {
+    else {     
         return [ $self->_get_data( $node, $attrib, $alignment_hash ) ];
     }
 }
@@ -184,9 +202,10 @@ sub _get_info_hash {
     foreach my $attrib ( @{ $self->attributes } ) {
 
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
+
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
             $info{ $self->_output_attrib->[ $out_att_pos++ ] } = $vals->[$i];
-        }
+        }        
     }
     return \%info;
 }
@@ -203,7 +222,7 @@ sub _get_data {
         my @nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
         # call myself recursively on the referenced nodes
-        return join( ' ', grep { defined($_) } map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @nodes );
+        return join( ' ', grep { defined($_) && $_ =~ m/[^\s]/ } map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @nodes );
     }
 
     # plain attributes
@@ -219,7 +238,7 @@ sub _get_data {
             my @values = Treex::PML::Instance::get_all( $node, $attrib );
 
             return undef if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
-            return join( ' ', grep { defined($_) } @values );
+            return join( ' ', grep { defined($_) && $_ =~ m/[^\s]/ } @values );
         }
 
     }
@@ -264,7 +283,7 @@ sub _get_referenced_nodes {
     elsif ( $ref =~ m/^(nearest_)?e(l|r|)siblings?$/ ) {    # effective siblings (ef. children of the nearest ef. parent)
 
         my $eparent = _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
-        my @nodes = $eparent->get_echildren( { ordered => 1 } );
+        my @nodes = $eparent->get_echildren( { or_topological => 1, ordered => 1 } );
 
         if ( $ref eq 'esiblings' ) {
             return @nodes;

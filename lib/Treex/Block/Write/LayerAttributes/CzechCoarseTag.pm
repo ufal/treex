@@ -37,8 +37,8 @@ sub modify_single {
 
     my ( $self, $tag ) = @_;
 
-    return undef if ( !defined($tag) );
-    return '' if ( !$tag );
+    return ( $self->split ? ( undef, undef ) : undef ) if ( !defined($tag) );
+    return ( $self->split ? ( '', '' ) : '' ) if ( $tag !~ /^...../ );
 
     my $ctag;
 

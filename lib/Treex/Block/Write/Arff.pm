@@ -26,10 +26,10 @@ has '_sent_id' => ( is => 'ro', isa => 'Int', writer => '_set_sent_id', default 
 has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
 
 # Override the default data type settings
-has 'force_types' => ( is => 'ro', isa => 'HashRef', builder => '_build_force_types', lazy_build => 1 );
+has 'force_types' => ( is => 'ro', isa => 'HashRef' );
 
 # Override output attribute names
-has 'output_attrib_names' => ( is => 'ro', isa => 'HashRef', builder => '_build_output_attrib_names', lazy_build => 1 );
+has 'output_attrib_names' => ( is => 'ro', isa => 'HashRef' );
 
 # Read configuration from a file
 has 'config_file' => ( is => 'ro', isa => 'Str' );
@@ -38,17 +38,21 @@ has 'config_file' => ( is => 'ro', isa => 'Str' );
 # METHODS
 #
 
-# Try to read the configuration file, if applicable, and set the returned values
 sub BUILDARGS {
 
-    my ( $class, $params ) = @_;
+    my ( $class, $args ) = @_;
 
-    if ( $params->{config_file} ) {
-        ( $params->{attributes}, $params->{output_attrib_names}, $params->{force_types}, $params->{modifier_config} ) =
-            _read_config_file( $params->{config_file} );
+    # try to read the configuration file, if applicable, and set the returned values
+    if ( $args->{config_file} ) {
+        ( $args->{attributes}, $args->{output_attrib_names}, $args->{force_types}, $args->{modifier_config} )
+            = _read_config_file( $args->{config_file} );
     }
 
-    return $params;
+    # build some values if they are not set as hash references in the configuration file
+    $args->{force_types}         = _parse_hashref( 'force_types', $args->{force_types} );
+    $args->{output_attrib_names} = _parse_hashref( 'output_attrib_names', $args->{output_attrib_names} );
+
+    return $args;
 }
 
 # YAML configuration file reader
@@ -61,46 +65,34 @@ sub _read_config_file {
 
     $cfg = $cfg->[0];
     my @sources = map { $_->{source} } @{ $cfg->{attributes} };
-    my %labels  = map { $_->{source} => $_->{label} ? [ split( /[\s,]\+/, $_->{label} ) ] : undef } @{ $cfg->{attributes} };
-    my %types   = map { $_->{source} => $_->{type} ? [ split( /[\s,]\+/, $_->{type} ) ] : undef } @{ $cfg->{attributes} };
+    my %labels  = map { $_->{source} => $_->{label} ? [ split( /[\s,]+/, $_->{label} ) ] : undef } @{ $cfg->{attributes} };
+    my %types   = map { $_->{source} => $_->{type} ? [ split( /[\s,]+/, $_->{type} ) ] : undef } @{ $cfg->{attributes} };
 
     return ( \@sources, \%labels, \%types, $cfg->{modifier_config} );
 }
 
-# Build a hashref from datatype override settings
-sub _build_force_types {
-
-    my ($self) = @_;
-    return _parse_hashref( 'force_types', $self->force_types );
-}
-
-sub _build_output_attrib_names {
-    my ($self) = @_;
-    return _parse_hashref( 'output_attrib_names', $self->output_attrib_names );
-}
 
 # Apply all attribute name overrides as specified in output_attrib_names
 around '_set_output_attrib' => sub {
 
     my ( $set, $self, $output_attrib ) = @_;
-    
+
     my $over = $self->output_attrib_names;
     my $orig = $self->_attrib_io;
     my %ot   = ();
-    
+
     # build an override table: original name => overridden name
     foreach my $in_attr ( keys %{$orig} ) {
         foreach my $i ( 0 .. @{ $orig->{$in_attr} } - 1 ) {
             $ot{ $orig->{$in_attr}->[$i] } = $over->{$in_attr} ? $over->{$in_attr}->[$i] : $orig->{$in_attr}->[$i];
         }
     }
-    
+
     # apply the override table
     $output_attrib = [ map { $ot{$_} } @{$output_attrib} ];
-    
-    log_info( join ' ' , @{ $output_attrib } );
 
     $self->$set($output_attrib);
+    return;
 };
 
 override 'process_document' => sub {

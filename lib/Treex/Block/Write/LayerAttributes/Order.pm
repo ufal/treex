@@ -11,7 +11,7 @@ has '+return_values_names' => ( default => sub { [''] } );
 sub modify_single {
 
     my ( $self, $ord1, $ord2 ) = @_;
-
+    
     return undef if ( !List::MoreUtils::all { defined($_) && looks_like_number($_) } ( $ord1, $ord2 ) );
 
     if ( $ord1 < $ord2 ){

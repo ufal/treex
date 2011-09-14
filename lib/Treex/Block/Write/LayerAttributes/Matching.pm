@@ -61,8 +61,8 @@ sub modify_all {
         foreach my $i ( 0 .. ( @tags - 1 ) ) {
             push @idx, $i if ( $tags[$i] =~ m/$regexp/ );
         }
-
-        push @ret, map { join ' ', @{$_}[@idx] } @vals;
+        
+        push @ret, map { join ' ', grep { defined($_) } @{$_}[@idx] } @vals;
         push @ret, scalar(@idx);
     }
 
@@ -100,6 +100,21 @@ properties.
 There may be several regexps and therefore several sets of return values. The input regexps and attribute names
 must be given to the constructor via the L<Treex::Block::Write::LayerAttributes> C<modifier_config> parameter
 (as a two member array, or a hash containing the C<data_types> and C<types_regexps> members).    
+
+=head1 ATTRIBUTES
+
+=over
+
+=item C<types_regexps>
+
+A space-separated list of regexps to be used to match different groups of nodes (on the 1st value passed to the
+C<modify_all> method).
+
+=item C<data_types>
+
+The names of the different attributes that are filtered using this modifier; it will be used for the names of the
+output attributes.
+=back
 
 =head1 AUTHOR
 

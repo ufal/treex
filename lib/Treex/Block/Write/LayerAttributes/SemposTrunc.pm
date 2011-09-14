@@ -11,7 +11,7 @@ sub modify_single {
 
     my ($self, $sempos) = @_;
 
-    return if ( !defined($sempos) );
+    return ( undef, undef ) if ( !defined($sempos) );
     return ( '', '' ) if ( !$sempos );
 
     my $sempos1 = $sempos;

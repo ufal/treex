@@ -10,8 +10,8 @@ sub modify_all {
 
     my ( $self, @args ) = @_;
 
-    # split the concatenated values of arguments (and retain undefined values)
-    @args = map { [ $_ ? split( / /, $_ ) : $_ ] } @args;
+    # split the concatenated values of arguments (and retain undefined/space-only values)
+    @args = map { [ defined($_) && $_ =~ m/[^\s]/ ? split( / /, $_ ) : $_ ] } @args;
     my @ret_vals;
 
     # run the modifier on each arguments set
@@ -24,7 +24,7 @@ sub modify_all {
             @ret_vals = @cur_ret_vals;
         }
         else {
-            for my $j ( 0 .. @cur_ret_vals - 1 ) {
+            for my $j ( 0 .. @cur_ret_vals - 1 ) {                
                 $ret_vals[$j] .= $cur_ret_vals[$j] ? ' ' . $cur_ret_vals[$j] : '';
             }
         }
