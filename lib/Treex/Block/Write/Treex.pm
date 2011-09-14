@@ -27,7 +27,7 @@ has compress => (
     is => 'rw',
     isa => 'Bool',
     default => undef,
-    documentation => 'compression to .gz',
+    documentation => 'compression to .gz. If $doc->compress is undef, default is 1',
 );
 
 sub _build_filenames {
@@ -38,7 +38,7 @@ sub _build_filenames {
 
 sub _extension {
     my ( $self, $document ) = @_;
-    my $compress;
+    my $compress = 1;
     if ( defined $self->compress ) {
         $compress = $self->compress;
     }
