@@ -8,6 +8,7 @@ use Treex::Core;
 use Test::More;
 
 use Treex::Tool::ATreeTransformer::DepReverser;
+Treex::Core::Log::log_set_error_level('WARN');
 
 # testing sentence, designed to check the interplay coordinations with prepositions:
 # "do prazskeho podoli ani na lipno nepojedeme vzhledem k premnozenym sinicim a vodnim rasam"
