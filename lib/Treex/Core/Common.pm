@@ -1,5 +1,6 @@
 package Treex::Core::Common;
-use Moose;
+use strict;
+use warnings;
 use 5.008;
 
 use utf8;
@@ -47,7 +48,6 @@ else {
 my ( $import, $unimport, $init_meta ) =
     Moose::Exporter->build_import_methods(
     install         => [qw(unimport init_meta)],
-    also            => 'Moose',
     class_metaroles => { attribute => ['MooseX::SemiAffordanceAccessor::Role::Attribute'] },
     as_is           => [
         \&Treex::Core::Log::log_fatal,
@@ -95,7 +95,6 @@ Instead of
  use utf8;
  use strict;
  use warnings;
- use Moose;
  use Moose::Util::TypeConstraints qw(enum);
  use MooseX::SemiAffordanceAccessor;
  use MooseX::Params::Validate qw(pos_validated_list);
@@ -104,7 +103,7 @@ Instead of
  use Treex::Core::Resource;
  use Treex::Core::Types;
  use Treex::Core::Files;
-  use List::MoreUtils qw(all any first_index);
+ use List::MoreUtils qw(all any first_index);
  use List::Util qw(first);
  use Scalar::Util qw(weaken);
  use Readonly qw(Readonly);

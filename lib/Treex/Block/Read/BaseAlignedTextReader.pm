@@ -4,38 +4,25 @@ use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseAlignedReader';
 use File::Slurp;
 
-has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );
-has merge_files   => ( isa => 'Bool', is => 'ro', default => 0 );
+#has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );
+#has merge_files   => ( isa => 'Bool', is => 'ro', default => 0 );
 
-sub BUILD {
-    my ($self) = @_;
-    if ( $self->lines_per_doc ) {
-        $self->set_is_one_doc_per_file(0);
-    }
-    return;
-}
-
-#sub _next_filehandles {
+#sub BUILD {
 #    my ($self) = @_;
-#    my %mapping = $self->next_filenames() or return;
-#    while ( my ( $lang, $filename ) = each %mapping ) {
-#        my $FH;
-#        if ( $filename eq '-' ) { $FH = \*STDIN; }
-#        else                    { open $FH, '<:encoding(utf8)', $filename or log_fatal "Can't open $filename: $!"; }
-#        $mapping{$lang} = $FH;
+#    if ( $self->lines_per_doc ) {
+#        $self->set_is_one_doc_per_file(0);
 #    }
-#    return \%mapping;
+#    return;
 #}
 
 sub next_document_texts {
     my ($self) = @_;
 
-    #my $FHs = $self->_next_filehandles() or return;
     my %mapping = $self->next_filenames() or return;
     my %texts;
-    if ( $self->lines_per_doc ) {    # TODO: option lines_per_document not implemented
-        log_fatal "option lines_per_document not implemented for aligned readers yet";
-    }
+#    if ( $self->lines_per_doc ) {    # TODO: option lines_per_document not implemented
+#        log_fatal "option lines_per_document not implemented for aligned readers yet";
+#    }
     foreach my $lang ( keys %mapping ) {
         my $filename = $mapping{$lang};
         if ( $filename eq '-' ) {
@@ -46,16 +33,12 @@ sub next_document_texts {
         }
     }
 
-    #while ( my ( $lang, $FH ) = each %{$FHs} ) {
-    #    $texts{$lang} = read_file($FH);
-    #}
     return \%texts;
 }
 
 1;
 
 __END__
-
 
 =for Pod::Coverage BUILD
 
@@ -72,28 +55,6 @@ It is designed to implement the L<Treex::Core::DocumentReader> interface.
 
 In derived classes you need to define the C<next_document> method,
 and you can use C<next_document_texts> and C<new_document> methods.
-
-=head1 ATTRIBUTES
-
-=over
-
-=item lines_per_doc
-
-TODO: not implemented yet.
-If you want to split one file to more documents.
-The default is 0 which means, don't split.
-
-=item merge_filesIf C<is_one_doc_per_file> returns C<true>, then the number of documents
-
-
-TODO: not implemented yet.
-
-=item encoding
-
-TODO: not implemented yet (just utf8 works).
-Whan is the encoding of the input files. E.g. C<utf8> (the default), C<cp1250> etc.
-
-=back
 
 =head1 METHODS
 

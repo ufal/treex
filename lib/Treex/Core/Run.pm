@@ -1,8 +1,6 @@
 package Treex::Core::Run;
-use strict;
-use warnings;
-
 use 5.008;
+use Moose;
 use Treex::Core::Common;
 use Treex::Core;
 use MooseX::SemiAffordanceAccessor;

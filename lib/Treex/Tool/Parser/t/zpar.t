@@ -2,6 +2,13 @@
 use strict;
 use warnings;
 
+BEGIN {
+  if (!$ENV{EXPERIMENTAL} || !$ENV{EXPENSIVE_TESTING}) {
+    require Test::More;
+    Test::More::plan(skip_all => 'This test takes long time and is experimental');
+  }
+}
+
 use Test::More tests => 4;
 
 use Treex::Tool::Parser::Zpar;

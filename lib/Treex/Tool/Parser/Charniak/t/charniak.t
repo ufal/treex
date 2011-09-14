@@ -3,8 +3,11 @@
 use strict;
 use warnings;
 
-if (!defined $ENV{EXPERIMENTAL}) {
-    use Test::More skip_all => 'This module is experimental';
+BEGIN {
+  unless ($ENV{RELEASE_TESTING}) {
+    require Test::More;
+    Test::More::plan(skip_all => 'This module is experimental');
+  }
 }
 
 
