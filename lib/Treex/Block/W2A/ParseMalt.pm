@@ -8,6 +8,7 @@ use Treex::Tool::Parser::Malt;
 has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 has 'cpos_attribute' => ( is => 'rw', isa =>'Str', default => 'tag' );
+has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
 
 my $parser;
 
@@ -27,7 +28,7 @@ sub parse_chunk {
     my @lemmas   = map { $_->lemma || '_' } @a_nodes;
     my @pos      = map { $_->get_attr($self->pos_attribute) || '_' } @a_nodes;
     my @cpos     = map { $_->get_attr($self->cpos_attribute) || '_' } @a_nodes;
-    my @features = map {'_'} @a_nodes;
+    my @features = map { get_feat($_, $self->feat_attribute) } @a_nodes;
 
     # parse sentence
     my ( $parents_rf, $deprel_rf ) = $parser->parse( \@forms, \@lemmas, \@cpos, \@pos, \@features );
@@ -50,10 +51,44 @@ sub parse_chunk {
     return @roots;
 }
 
+#------------------------------------------------------------------------------
+# For a given node returns the string suitable for the CoNLL FEAT column.
+# Depending on required and available sources, the function returns either
+# the conll/feat attribute, or concatenated Interset attributes, or '_'.
+#------------------------------------------------------------------------------
+sub get_feat
+{
+    my $node = shift;
+    my $source = shift;
+    my $feat;
+    if($source =~ m/^conll/i && defined($node->conll_feat()))
+    {
+        $feat = $node->conll_feat();
+    }
+    elsif($source =~ m/^i(nter)?set/i && $node->get_iset_pairs_list())
+    {
+        my @list = $node->get_iset_pairs_list();
+        my @pairs;
+        for(my $i = 0; $i<=$#list; $i += 2)
+        {
+            my $pair = "$list[$i]=$list[$i+1]";
+            # Interset values might contain vertical bars if there are disjunctions of values.
+            $pair =~ s/\|/;/g;
+            push(@pairs, $pair);
+        }
+        $feat = join('|', @pairs);
+    }
+    else
+    {
+        $feat = '_';
+    }
+    return $feat;
+}
+
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::ParseMalt
@@ -73,5 +108,5 @@ that are supposed to form a (dependency) subtree
 
 =head1 COPYRIGHT
 
-Copyright 2009-2011 David Mareček
+Copyright 2009-2011 David Mareček, Dan Zeman
 This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
