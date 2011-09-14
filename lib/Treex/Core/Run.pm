@@ -337,7 +337,7 @@ my %READER_FOR = (
 sub _get_reader_name_for {
     my $self  = shift;
     my @names = @_;
-    my $re    = qr{\.(treex(\.gz)?|txt)$}; # .txt, .treex or .treex.gz
+    my $re    = qr{\.(treex|txt)(\.gz)?$};
     my @extensions;
     my $first;
     foreach my $name (@names) {

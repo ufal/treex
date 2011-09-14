@@ -21,13 +21,11 @@ is(
     Treex::Core::Run->_get_reader_name_for(qw(a.treex.gz b.treex.gz)),
     'Read::Treex'
 );
-TODO: {
-    local $TODO = 'Cannot mix gzipped and plain files yet';
-    is(
-        eval{ Treex::Core::Run->_get_reader_name_for(qw(a.treex.gz b.treex))},
-        'Read::Treex'
-    );
-}
+
+is(
+    eval{ Treex::Core::Run->_get_reader_name_for(qw(a.treex.gz b.treex))},
+    'Read::Treex'
+);
 
 stderr_like (
     sub {
