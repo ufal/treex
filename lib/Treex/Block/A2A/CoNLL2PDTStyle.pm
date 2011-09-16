@@ -90,9 +90,9 @@ sub convert_tag
     my @known_drivers = qw(
         ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
         en::conll en::conll2009
-        es::conll2009 tr::conll  
-        hu::conll eu::conll  ta::tamiltb  
-        it::conll nl::conll pt::conll sv::conll zh::conll grc::conll 
+        es::conll2009 tr::conll
+        hu::conll eu::conll  ta::tamiltb
+        it::conll nl::conll pt::conll sv::conll zh::conll grc::conll
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
         ro::rdt);
     my $driver = $node->get_zone()->language() . '::' . $tagset;
@@ -754,7 +754,8 @@ sub log_sentence
 
     # get_position() returns numbers from 0 but Tred numbers sentences from 1.
     my $i = $root->get_bundle()->get_position() + 1;
-    log_info( "\#$i " . $root->get_zone()->sentence() );
+    ###!!! DZ: output of log_info() got lost, trying log_warn() instead.
+    log_warn( "\#$i " . $root->get_zone()->sentence() );
 }
 
 #------------------------------------------------------------------------------
@@ -785,13 +786,13 @@ sub remove_ismember_membership
         if ($node->is_member) {
             my $parnode = $node->get_parent();
             if (defined $parnode) {
-                my $parafun = $parnode->afun();                                
+                my $parafun = $parnode->afun();
                 if ($parafun !~ /^(Coord|Apos)$/) {# remove the 'is_member'
                     $node->set_is_member(0);
                 }
             }
         }
-    }    
+    }
 }
 1;
 

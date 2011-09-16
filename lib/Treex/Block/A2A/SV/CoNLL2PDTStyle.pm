@@ -19,8 +19,12 @@ sub process_zone
     #$self->lift_noun_phrases($a_root);
     $self->restructure_coordination($a_root);
     #$self->mark_deficient_clausal_coordination($a_root);
-    #$self->check_afuns($a_root);
-    $self->deprel_to_afun($a_root); # must follow coord. restructuring, probably executed twice now
+    ###!!! DZ: Zdeněk processes Swedish differently from what I do with the other languages.
+    ###!!! For some reason he requires that deprel_to_afun() is done after coordination restructuring,
+    ###!!! which is the contrary to my approach. I get the afuns first thing, before touching the tree structure.
+    ###!!! This must be put in line with the rest somehow!
+    $self->deprel_to_afun($a_root); # ZŽ: must follow coord. restructuring, probably executed twice now
+    $self->check_afuns($a_root);
 }
 
 
@@ -115,6 +119,7 @@ sub deprel_to_afun
             # Original tree: problem/OO ( flera/DT, pliktkänslan/AN ( t.+ex./CA ) )
             # PDT style:     t.+ex./Apos ( problem/Obj_Ap ( flera/Atr ), pliktkänslan/Obj_Ap )
             ###!!! Use the temporary afun CoordArg?
+            $afun = 'Apos';
         }
 
         # Nominal (adjectival) pre-modifier
@@ -336,6 +341,13 @@ sub deprel_to_afun
         elsif ( $deprel eq 'MA' )
         {
             $afun = 'Adv';
+        }
+
+        # Undocumented tag 'MD'. 'Modifier'?
+        # Example (train/001.treex#26): subtree "den ena, eller båda" is tagged 'MD'.
+        elsif ( $deprel eq 'MA' )
+        {
+            $afun = 'Atr';
         }
 
         # Macrosyntagm
@@ -579,6 +591,19 @@ sub restructure_coordination {
     }
 }
 
+#------------------------------------------------------------------------------
+# Detects coordination in Swedish trees.
+# - The first member is the root.
+# - The second member is attached to the root and s-tagged 'CC'.
+# - The conjunction is attached to the following member and s-tagged '++'.
+# - More than two members: every member is attached to the previous member.
+#   Commas are tagged 'IK' and attached to the following member.
+# - Shared modifiers are attached to the first member. Private modifiers are
+#   attached to the member they modify.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+}
 
 1;
 
