@@ -96,12 +96,11 @@ sub convert_tag
         ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
         ro::rdt);
     my $driver = $node->get_zone()->language() . '::' . $tagset;
-    if ( !grep { $_ eq $driver } (@known_drivers) ){
-        log_warn "Interset driver $driver not found";
+    if ( !grep { $_ eq $driver } (@known_drivers) )
+    {
+        log_warn("Interset driver $driver not found");
         return;
 	}
-
-
     # Current tag is probably just a copy of conll_pos.
     # We are about to replace it by a 15-character string fitting the PDT tagset.
     my $tag        = $node->tag();
@@ -451,7 +450,6 @@ sub shape_coordination_recursively
     my $self  = shift;
     my $root  = shift;
     my $debug = shift;
-    log_info('DEBUG ON') if ($debug);
 
     # Is the current subtree root a coordination root?
     # Look for coordination members.

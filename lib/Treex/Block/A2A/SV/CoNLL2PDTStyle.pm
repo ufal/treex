@@ -17,13 +17,14 @@ sub process_zone
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
     #$self->lift_noun_phrases($a_root);
-    $self->restructure_coordination($a_root);
+    ###!!!$self->restructure_coordination($a_root);
     #$self->mark_deficient_clausal_coordination($a_root);
     ###!!! DZ: Zdeněk processes Swedish differently from what I do with the other languages.
     ###!!! For some reason he requires that deprel_to_afun() is done after coordination restructuring,
     ###!!! which is the contrary to my approach. I get the afuns first thing, before touching the tree structure.
     ###!!! This must be put in line with the rest somehow!
     $self->deprel_to_afun($a_root); # ZŽ: must follow coord. restructuring, probably executed twice now
+    $self->shape_coordination_recursively($a_root, 2);
     $self->check_afuns($a_root);
 }
 
@@ -85,7 +86,7 @@ sub deprel_to_afun
         # Coordination at main clause level
         elsif ( $deprel eq '+F' )
         {
-            # DZ: the temporary afun 'CoordArg' would fit here but Zdeněk's processing does not use it
+            $afun = 'CoordArg';
         }
 
         # Other adverbial
@@ -529,8 +530,7 @@ sub deprel_to_afun
         # Sister of first conjunct in binary branching analysis of coordination
         elsif ( $deprel eq 'CC' )
         {
-            # DZ: Zdeněk's approach seems to work even without this.
-            #$afun = 'CoordArg';
+            $afun = 'CoordArg';
         }
 
         # Infinitive phrase minus infinitive marker
@@ -594,15 +594,51 @@ sub restructure_coordination {
 #------------------------------------------------------------------------------
 # Detects coordination in Swedish trees.
 # - The first member is the root.
-# - The second member is attached to the root and s-tagged 'CC'.
+# - The second member is attached to the root and s-tagged 'CC' (our afun CoordArg).
 # - The conjunction is attached to the following member and s-tagged '++'.
 # - More than two members: every member is attached to the previous member.
 #   Commas are tagged 'IK' and attached to the following member.
 # - Shared modifiers are attached to the first member. Private modifiers are
 #   attached to the member they modify.
 #------------------------------------------------------------------------------
-sub detect_coordination
+sub collect_coordination_members
 {
+    my $self       = shift;
+    my $croot      = shift; # the first node and root of the coordination
+    my $members    = shift; # reference to array where the members are collected
+    my $delimiters = shift; # reference to array where the delimiters are collected
+    my $modifiers  = shift; # reference to array where the modifiers are collected
+    my (@children, @members0, @delimiters0, @modifiers0);
+    # The technical root of the tree cannot be a coordination root in any style.
+    return if(!$croot->parent());
+    @children = $croot->children();
+    @members0 = grep { $_->afun() eq 'CoordArg' } (@children);
+    if (@members0)
+    {
+        # If $croot is the real root of the whole coordination we must include it in the members, too.
+        # However, if we have been called recursively on existing members, these are already present in the list.
+        if ( !@{$members} )
+        {
+            push(@{$members}, $croot);
+        }
+        my @delimiters0 = grep { $_->conll_deprel() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
+        my @modifiers0 = grep { $_->conll_deprel() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
+        # Add the found nodes to the caller's storage place.
+        push( @{$members},    @members0 );
+        push( @{$delimiters}, @delimiters0 );
+        push( @{$modifiers},  @modifiers0 );
+        # If any of the members have their own CoordArg children, these are also members of the same coordination.
+        foreach my $member (@members0)
+        {
+            $self->collect_coordination_members( $member, $members, $delimiters, $modifiers );
+        }
+    }
+    # If some members have been found, this node is a coord member.
+    # If the node itself does not have any further member children, all its children are modifers of a coord member.
+    elsif ( @{$members} )
+    {
+        push( @{$modifiers}, @children );
+    }
 }
 
 1;
@@ -618,5 +654,5 @@ the Prague Dependency Treebank. Converts tags and restructures the tree.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
