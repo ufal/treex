@@ -3,52 +3,51 @@ package Treex::Tool::Parser::MSTperl::Node;
 use Moose;
 
 has featuresControl => (
-    isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is       => 'ro',
     required => '1',
 );
 
 has fields => (
-    isa => 'ArrayRef[Str]',
-    is => 'rw',
+    isa      => 'ArrayRef[Str]',
+    is       => 'rw',
     required => '1',
 );
 
 has ord => (
     isa => 'Int',
-    is => 'rw',
+    is  => 'rw',
 );
 
 has parent => (
     isa => 'Maybe[Treex::Tool::Parser::MSTperl::Node]',
-    is => 'rw',
+    is  => 'rw',
 );
 
 has parentOrd => (
-    isa => 'Int',
-    is => 'rw',
+    isa     => 'Int',
+    is      => 'rw',
     default => 0,
 );
 
 sub BUILD {
     my ($self) = @_;
-    
+
     my $parentOrdIndex = $self->featuresControl->parent_ord_field_index;
-    my $parentOrd = $self->fields->[$parentOrdIndex];
+    my $parentOrd      = $self->fields->[$parentOrdIndex];
     $self->parentOrd($parentOrd);
 }
 
 sub copy_nonparsed {
     my ($self) = @_;
-    
+
     my $copy = Treex::Tool::Parser::MSTperl::Node->new(
-        fields => $self->fields,
+        fields          => $self->fields,
         featuresControl => $self->featuresControl,
     );
-    
+
     return $copy;
 }
-
 
 1;
 

@@ -5,8 +5,8 @@ use autodie;
 use Moose;
 
 has featuresControl => (
-    isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is       => 'ro',
     required => '1',
 );
 
@@ -14,38 +14,40 @@ has featuresControl => (
 # It would help to push down the size of edge_features_cache
 # (no speedup or slowdown is expected).
 has 'weights' => (
-    is => 'rw',
-    isa => 'HashRef',
-    default => sub {{}},
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { {} },
 );
 
 # LOADING AND STORING
 
 sub store {
+
     # (Str $filename)
-    my ($self, $filename) = @_;
+    my ( $self, $filename ) = @_;
 
     print "Saving model to '$filename'... ";
 
     open my $file, ">:utf8", $filename;
     print $file Dumper $self->weights;
     close $file;
-    
+
     print "Model saved.\n";
 }
 
 sub store_tsv {
+
     # (Str $filename)
-    my ($self, $filename) = @_;
+    my ( $self, $filename ) = @_;
 
     print "Saving model to '$filename'... ";
-    
+
     open my $file, ">:utf8", $filename;
-    foreach my $feature (keys %{$self->weights} ) {
-        if ($feature =~ /^([0-9]+):(.*)$/) {
-            my $index = $1;
-            my $value = $2;
-            my $code = $self->featuresControl->feature_codes->[$index];
+    foreach my $feature ( keys %{ $self->weights } ) {
+        if ( $feature =~ /^([0-9]+):(.*)$/ ) {
+            my $index            = $1;
+            my $value            = $2;
+            my $code             = $self->featuresControl->feature_codes->[$index];
             my $feature_stringed = "$code:$value";
             print $file $feature_stringed . "\t" . $self->weights->{$feature} . "\n";
         } else {
@@ -53,47 +55,49 @@ sub store_tsv {
         }
     }
     close $file;
-    
+
     print "Model saved.\n";
 }
 
 sub load {
+
     # (Str $filename)
-    my ($self, $filename) = @_;
+    my ( $self, $filename ) = @_;
 
     print "Loading model from '$filename'... ";
-    
+
     my $weights = do $filename;
     $self->weights($weights);
-    
+
     print "Model loaded.\n";
 }
 
 sub load_tsv {
+
     # (Str $filename)
-    my ($self, $filename) = @_;
+    my ( $self, $filename ) = @_;
 
     print "Loading model from '$filename'... ";
-    
+
     my %weights;
-    
+
     #precompute feature code to feature index translation table
     my %code2index;
     my $feature_num = $self->featuresControl->all_features_num;
-    for (my $feature_index = 0; $feature_index < $feature_num; $feature_index++) {
+    for ( my $feature_index = 0; $feature_index < $feature_num; $feature_index++ ) {
         my $code = $self->featuresControl->all_feature_codes->[$feature_index];
         $code2index{$code} = $feature_index;
     }
-    
+
     #read the file
     open my $file, '<:utf8', $filename;
     while (<$file>) {
         chomp;
-        my ($feature, $weight) = split /\t/;
-        if ($feature =~ /^([^:]+):(.*)$/) {
-            my $code = $1;
-            my $value = $2;
-            my $index = $code2index{$code};
+        my ( $feature, $weight ) = split /\t/;
+        if ( $feature =~ /^([^:]+):(.*)$/ ) {
+            my $code            = $1;
+            my $value           = $2;
+            my $index           = $code2index{$code};
             my $feature_indexed = "$index:$value";
             $weights{$feature_indexed} = $weight;
         } else {
@@ -102,27 +106,29 @@ sub load_tsv {
     }
     close $file;
 
-    $self->weights(\%weights);
-    
+    $self->weights( \%weights );
+
     print "Model loaded.\n";
 }
 
 # ACCESS TO FEATURES
 
 sub score_edge {
+
     # (Treex::Tool::Parser::MSTperl::Edge $edge)
-    my ($self, $edge) = @_;
-    
+    my ( $self, $edge ) = @_;
+
     my $features_rf = $self->featuresControl->get_all_features($edge);
     return $self->score_features($features_rf);
 }
 
 sub score_features {
+
     # (ArrayRef[Str] $features)
-    my ($self, $features) = @_;
-    
+    my ( $self, $features ) = @_;
+
     my $score = 0;
-    foreach my $feature (@{$features}) {
+    foreach my $feature ( @{$features} ) {
         $score += $self->get_feature_weight($feature);
     }
 
@@ -132,9 +138,10 @@ sub score_features {
 # FEATURE WEGHTS
 
 sub get_feature_weight {
+
     # (Str $feature)
-    my ($self, $feature) = @_;
-    
+    my ( $self, $feature ) = @_;
+
     my $weight = $self->weights->{$feature};
     if ($weight) {
         return $weight;
@@ -144,16 +151,18 @@ sub get_feature_weight {
 }
 
 sub set_feature_weight {
+
     # (Str $feature, Num $weight)
-    my ($self, $feature, $weight) = @_;
-    
+    my ( $self, $feature, $weight ) = @_;
+
     $self->weights->{$feature} = $weight;
 }
 
 sub update_feature_weight {
+
     # (Str $feature, Num $update)
-    my ($self, $feature, $update) = @_;
-    
+    my ( $self, $feature, $update ) = @_;
+
     $self->weights->{$feature} += $update;
 }
 

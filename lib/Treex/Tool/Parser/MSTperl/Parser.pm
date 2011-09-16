@@ -8,100 +8,108 @@ use Treex::Tool::Parser::MSTperl::Model;
 
 use Graph;
 use Graph::Directed;
-use Graph::ChuLiuEdmonds;   #returns MINIMUM spanning tree
+use Graph::ChuLiuEdmonds;    #returns MINIMUM spanning tree
 
 has featuresControl => (
-    isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is       => 'ro',
     required => '1',
 );
 
 has model => (
     isa => 'Treex::Tool::Parser::MSTperl::Model',
-    is => 'rw',
+    is  => 'rw',
 );
 
-my $DEBUG=0;
+my $DEBUG = 0;
 
 sub BUILD {
-    my ($self, $arg_ref) = @_;
-    
-    $self->model( Treex::Tool::Parser::MSTperl::Model->new(featuresControl => $self->featuresControl) );
+    my ( $self, $arg_ref ) = @_;
+
+    $self->model( Treex::Tool::Parser::MSTperl::Model->new( featuresControl => $self->featuresControl ) );
 }
 
 sub load_model {
+
     # (Str $filename)
-    my ($self, $filename) = @_;
-    
+    my ( $self, $filename ) = @_;
+
     $self->model->load($filename);
 }
 
-
 sub parse_sentence {
+
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ($self, $sentence) = @_;
+    my ( $self, $sentence ) = @_;
 
     $sentence->clear_parse();
     my $sentence_length = $sentence->len();
-    
-    my $graph = Graph::Directed->new(vertices=>[(0..$sentence_length)]);
+
+    my $graph = Graph::Directed->new( vertices => [ ( 0 .. $sentence_length ) ] );
     my @weighted_edges;
     if ($DEBUG) { print "EDGES (parent -> child):\n"; }
-    foreach my $child (@{$sentence->nodes}) {
-        foreach my $parent (@{$sentence->nodes_with_root}) {
-            if ($child == $parent) {
+    foreach my $child ( @{ $sentence->nodes } ) {
+        foreach my $parent ( @{ $sentence->nodes_with_root } ) {
+            if ( $child == $parent ) {
                 next;
             }
-        
-            my $edge = Treex::Tool::Parser::MSTperl::Edge->new (child => $child, parent => $parent, sentence => $sentence);
-            
+
+            my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
+                child    => $child,
+                parent   => $parent,
+                sentence => $sentence
+            );
+
             # my $score = $self->model->score_edge($edge);
             my $features = $self->featuresControl->get_all_features($edge);
-            my $score = $self->model->score_features($features);
-            
+            my $score    = $self->model->score_features($features);
+
             # only progress and/or debug info
             if ($DEBUG) {
-                print $parent->ord . ' (' . $parent->form . ') -> ' . $child->ord . ' (' . $child->form . ') score: ' . $score . "\n";
-                foreach my $feature (@{$features}) {
+                print $parent->ord .
+                    ' (' . $parent->form . ') -> ' . $child->ord .
+                    ' (' . $child->form . ') score: ' . $score . "\n";
+                foreach my $feature ( @{$features} ) {
                     print $feature . ", ";
                 }
                 print "\n";
                 print "\n";
             }
+
             # END only progress and/or debug info
-            
+
             # MaxST needed but MinST is computed -> need to normalize score as -$score
-            push @weighted_edges, ( $parent->ord, $child->ord, -$score);
+            push @weighted_edges, ( $parent->ord, $child->ord, -$score );
         }
     }
 
     # only progress and/or debug info
     if ($DEBUG) {
         print "GRAPH:\n";
-        print join " ",@weighted_edges;
+        print join " ", @weighted_edges;
         print "\n";
     }
+
     # END only progress and/or debug info
-    
+
     $graph->add_weighted_edges(@weighted_edges);
-    
+
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
     if ($DEBUG) { print "RESULTS (parent -> child):\n"; }
-    
+
     #results
-    foreach my $edge ($msts->edges) {
-        my ($parent, $child) = @$edge;
-        $sentence->setChildParent($child, $parent);
-        
-        if ($DEBUG) { print "$parent (".$sentence->getNodeByOrd($parent)->form.") -> $child (".$sentence->getNodeByOrd($child)->form.")\n"; }
+    foreach my $edge ( $msts->edges ) {
+        my ( $parent, $child ) = @$edge;
+        $sentence->setChildParent( $child, $parent );
+
+        if ($DEBUG) { print "$parent (" . $sentence->getNodeByOrd($parent)->form . ") -> $child (" . $sentence->getNodeByOrd($child)->form . ")\n"; }
     }
 
     return $sentence->toParentOrdsArray();
 }
 
 1;
-
 
 __END__
 

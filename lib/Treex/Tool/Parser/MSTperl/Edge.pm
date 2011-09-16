@@ -5,44 +5,45 @@ use Moose;
 use Treex::Tool::Parser::MSTperl::Node;
 
 has parent => (
-    isa => 'Treex::Tool::Parser::MSTperl::Node',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::Node',
+    is       => 'ro',
     required => 1,
 );
 
 has child => (
-    isa => 'Treex::Tool::Parser::MSTperl::Node',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::Node',
+    is       => 'ro',
     required => 1,
 );
 
 has first => (
     isa => 'Treex::Tool::Parser::MSTperl::Node',
-    is => 'rw',
+    is  => 'rw',
 );
 
 has second => (
     isa => 'Treex::Tool::Parser::MSTperl::Node',
-    is => 'rw',
+    is  => 'rw',
 );
 
 has sentence => (
-    isa => 'Treex::Tool::Parser::MSTperl::Sentence',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::Sentence',
+    is       => 'ro',
     required => 1,
     weak_ref => 1,
 );
 
 sub BUILD {
     my ($self) = @_;
-    
-    if ($self->parent->ord < $self->child->ord) {
-        $self->first ($self->parent);
-        $self->second ($self->child);
+
+    if ( $self->parent->ord < $self->child->ord ) {
+        $self->first( $self->parent );
+        $self->second( $self->child );
     } else {
+
         # $self->child->ord < $self->parent->ord
-        $self->first ($self->child);
-        $self->second ($self->parent);
+        $self->first( $self->child );
+        $self->second( $self->parent );
     }
 
     return;
@@ -50,9 +51,12 @@ sub BUILD {
 
 sub signature {
     my ($self) = @_;
-    return $self->sentence->id . '#' . $self->parent->ord . '#' . $self->child->ord;
+    return
+        $self->sentence->id .
+        '#' . $self->parent->ord .
+        '#' . $self->child->ord;
 }
-    
+
 1;
 
 __END__
@@ -94,8 +98,8 @@ Filled automatically when edge is created.
 
 =item sentence
 
-The sentence (L<Treex::Tool::Parser::MSTperl::Sentence>) which contains the nodes (C<child> 
-and C<parent>).
+The sentence (L<Treex::Tool::Parser::MSTperl::Sentence>) which contains
+the nodes (C<child> and C<parent>).
 
 =back
 
@@ -107,7 +111,8 @@ and C<parent>).
 
 String uniquely identifying the edge, composed of sentence C<id> 
 (L<Treex::Tool::Parser::MSTperl::Sentence/id>) and C<ord>s of the edge nodes 
-(L<Treex::Tool::Parser::MSTperl::Node/ord>). Used to identify the edge in the edge features 
+(L<Treex::Tool::Parser::MSTperl::Node/ord>). Used to identify the edge
+in the edge features 
 cache (L<Treex::Tool::Parser::MSTperl::FeaturesControl/edge_features_cache>).
 
 =back

@@ -4,17 +4,18 @@ use Moose;
 use autodie;
 
 has 'config_file' => (
-    is => 'ro',
-    isa => 'Str',
+    is       => 'ro',
+    isa      => 'Str',
     required => '1',
 );
 
 # training mode or parsing mode
 has 'training' => (
-    is => 'ro',
-    isa => 'Bool',
+    is      => 'ro',
+    isa     => 'Bool',
     default => '0',
 );
+
 # (default is parsing mode)
 
 # CONFIGURATION
@@ -25,157 +26,161 @@ has 'training' => (
 # );
 
 has 'parent_ord_field_index' => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Int',
 );
 
 has 'root_field_values' => (
-    is => 'rw',
-    isa => 'ArrayRef[Str]',
+    is      => 'rw',
+    isa     => 'ArrayRef[Str]',
     default => sub { [] },
 );
 
 has 'number_of_iterations' => (
-    isa => 'Int',
-    is => 'rw',
+    isa     => 'Int',
+    is      => 'rw',
     default => 10,
 );
 
 has 'use_edge_features_cache' => (
-    is => 'rw',
-    isa => 'Bool',
+    is      => 'rw',
+    isa     => 'Bool',
     default => '0',
 );
+
 # using cache turned off to fit into RAM by default
 # turn on if training with a lot of RAM or on small training data
 # turned off when parsing (does not make any sense for parsing)
 
 has 'distance2bucket' => (
-    is => 'rw',
-    isa => 'HashRef[Int]',
+    is      => 'rw',
+    isa     => 'HashRef[Int]',
     default => sub { {} },
 );
+
 # if mapping is not found in the hash, maxBucket or minBucket is used
 
 has 'maxBucket' => (
-    isa => 'Int',
-    is => 'rw',
+    isa     => 'Int',
+    is      => 'rw',
     default => '9',
 );
+
 # any higher distance falls into this bucket
 
 has 'minBucket' => (
-    isa => 'Int',
-    is => 'rw',
+    isa     => 'Int',
+    is      => 'rw',
     default => '-9',
 );
+
 # any lower distance falls into this bucket, distance is signed (ORD minus ord)
 
 # FIELDS
 
 # field names (for conversion of field index to field name)
 has 'field_names' => (
-    is => 'rw',
-    isa => 'ArrayRef[Str]',
+    is      => 'rw',
+    isa     => 'ArrayRef[Str]',
     default => sub { [] },
 );
 
 # 1 for each field name to easily check if a field name exists
 has 'field_names_hash' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 # index of each field name in field_names
 # (for conversion of field name to field index)
 has 'field_indexes' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 # FEATURES
 
 has 'feature_count' => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Int',
 );
 
 has 'feature_codes' => (
-    is => 'rw',
-    isa => 'ArrayRef[Str]',
+    is      => 'rw',
+    isa     => 'ArrayRef[Str]',
     default => sub { [] },
 );
 
 has 'feature_codes_hash' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 has 'feature_indexes' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 # for each feature contains (a reference to) an array
 # which cointains all its subfeature indexes
 has 'feature_simple_features_indexes' => (
-    is => 'rw',
-    isa => 'ArrayRef[ArrayRef[Int]]',
+    is      => 'rw',
+    isa     => 'ArrayRef[ArrayRef[Int]]',
     default => sub { [] },
 );
 
 # features containing array simple features
 has 'array_features' => (
-    is => 'rw',
-    isa => 'HashRef[Int]',
+    is      => 'rw',
+    isa     => 'HashRef[Int]',
     default => sub { {} },
 );
 
 # SIMPLE FEATURES
 
 has 'simple_feature_count' => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Int',
 );
 
 has 'simple_feature_codes' => (
-    is => 'rw',
-    isa => 'ArrayRef[Str]',
+    is      => 'rw',
+    isa     => 'ArrayRef[Str]',
     default => sub { [] },
 );
 
 has 'simple_feature_codes_hash' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 has 'simple_feature_indexes' => (
-    is => 'rw',
-    isa => 'HashRef[Str]',
+    is      => 'rw',
+    isa     => 'HashRef[Str]',
     default => sub { {} },
 );
 
 has 'simple_feature_subs' => (
-    is => 'rw',
-    isa => 'ArrayRef',
+    is      => 'rw',
+    isa     => 'ArrayRef',
     default => sub { [] },
 );
 
 has 'simple_feature_field_indexes' => (
-    is => 'rw',
-    isa => 'ArrayRef',
+    is      => 'rw',
+    isa     => 'ArrayRef',
     default => sub { [] },
 );
 
 # simple features that return an array of values
 has 'array_simple_features' => (
-    is => 'rw',
-    isa => 'HashRef[Int]',
+    is      => 'rw',
+    isa     => 'HashRef[Int]',
     default => sub { {} },
 );
 
@@ -189,140 +194,157 @@ has 'array_simple_features' => (
 # CACHING
 
 has 'edge_features_cache' => (
-    is => 'rw',
-    isa => 'HashRef[ArrayRef[Str]]',
+    is      => 'rw',
+    isa     => 'HashRef[ArrayRef[Str]]',
     default => sub { {} },
 );
 
 sub BUILD {
     my ($self) = @_;
-    
+
     print "Processing config file " . $self->config_file . "...\n";
-    
+
     open my $config, '<:encoding(utf8)', $self->config_file;
     while (<$config>) {
         chomp;
-        if (/^\s*$/ || /^#/) {
+        if ( /^\s*$/ || /^#/ ) {
+
             # empty line or comment
             next;
         } elsif (/^(.*)=(.*)$/) {
+
             # config line
-            $self->set_config($1, $2);
+            $self->set_config( $1, $2 );
         } else {
+
             # feature definition
             $self->set_feature($_);
         }
     }
     close $config;
-    
+
     # ignore some settings if in parsing-only mode
-    if (!$self->training) {
-	$self->use_edge_features_cache (0);
+    if ( !$self->training ) {
+        $self->use_edge_features_cache(0);
     }
 
-    $self->feature_count ( scalar (@{$self->feature_codes}) );
-    $self->simple_feature_count ( scalar (@{$self->simple_feature_codes}) );
-    
+    $self->feature_count( scalar( @{ $self->feature_codes } ) );
+    $self->simple_feature_count( scalar( @{ $self->simple_feature_codes } ) );
+
     print "Done." . "\n";
 }
 
 # TODO: rewrite as a hash refeerncing subfeatures
 # or find a module for this
 sub set_config {
-    my ($self, $field, $value) = @_;
-    
-    if ($field eq 'field_names') {
+    my ( $self, $field, $value ) = @_;
+
+    if ( $field eq 'field_names' ) {
+
         # set field_names
         my @field_names = split /,/, $value;
-        $self->field_names([@field_names]);
+        $self->field_names( [@field_names] );
+
         # create fields hashes
         my %field_indexes;
         my %field_names_hash;
-        for (my $index = 0; $index < scalar (@field_names); $index++) {
+        for ( my $index = 0; $index < scalar(@field_names); $index++ ) {
             my $field_name = $field_names[$index];
-            if ($field_names_hash{$field_name}) {
+            if ( $field_names_hash{$field_name} ) {
                 croak "Duplicate field name '$field_name'!";
-            } elsif ($field_name ne lc($field_name)) {
+            } elsif ( $field_name ne lc($field_name) ) {
                 croak "Field name '$field_name' is not lowercase!";
-            } elsif (! $field_name =~ /a-z/) {
+            } elsif ( !$field_name =~ /a-z/ ) {
                 croak "Field name '$field_name' does not contain
                  any character from [a-z]!";
             } else {
                 $field_names_hash{$field_name} = 1;
-                $field_indexes{$field_name} = $index;
+                $field_indexes{$field_name}    = $index;
             }
         }
-        $self->field_names_hash (\%field_names_hash);
-        $self->field_indexes (\%field_indexes);
-#     } elsif ($field eq 'ord') {
-#         # set index of ord field
-#         my $ord_index = $self->field_name2index($value);
-#         $self->ord_field_index($ord_index);
-    } elsif ($field eq 'root_field_values') {
+        $self->field_names_hash( \%field_names_hash );
+        $self->field_indexes( \%field_indexes );
+
+        #     } elsif ($field eq 'ord') {
+        #         # set index of ord field
+        #         my $ord_index = $self->field_name2index($value);
+        #         $self->ord_field_index($ord_index);
+    } elsif ( $field eq 'root_field_values' ) {
+
         # set field values for root node
-        my @values=split /,/, $value;
-        $self->root_field_values ([@values]);
+        my @values = split /,/, $value;
+        $self->root_field_values( [@values] );
+
         # check number of fields
-        my $field_names_count = scalar(@{$self->field_names});
-        my $root_fields_count = scalar(@{$self->root_field_values});
-        if ($root_fields_count != $field_names_count) {
+        my $field_names_count = scalar( @{ $self->field_names } );
+        my $root_fields_count = scalar( @{ $self->root_field_values } );
+        if ( $root_fields_count != $field_names_count ) {
             croak "Incorrect number of root field values ($root_fields_count),
                 must be same as number of field names ($field_names_count)!";
         }
-    } elsif ($field eq 'distance_buckets') {
+    } elsif ( $field eq 'distance_buckets' ) {
+
         # set distance2bucket, maxBucket and minBucket
         my @buckets = split /,/, $value;
         my %distance2bucket;
+
         # find maximal bucket & partly fill %distance2bucket
         my $maxBucket = 0;
         foreach my $bucket (@buckets) {
-            if ($distance2bucket{$bucket}) {
+            if ( $distance2bucket{$bucket} ) {
                 print STDERR "WARNING: bucket '$bucket' is defined
                     more than once; disregarding its later definitions.";
-            } elsif ($bucket <= 0) {
+            } elsif ( $bucket <= 0 ) {
                 croak "Error on bucket '$bucket' - buckets must be positive
                     integers. Quiting.";
             } else {
                 $distance2bucket{$bucket} = $bucket;
-                $distance2bucket{-$bucket} = -$bucket;
-                if ($bucket > $maxBucket) {
+                $distance2bucket{ -$bucket } = -$bucket;
+                if ( $bucket > $maxBucket ) {
                     $maxBucket = $bucket;
                 }
             }
         }
         my $minBucket = -$maxBucket;
-        $self->maxBucket ($maxBucket);
-        $self->minBucket ($minBucket);
+        $self->maxBucket($maxBucket);
+        $self->minBucket($minBucket);
+
         # fill %distance2bucket from minBucket to maxBucket
-        if (!$distance2bucket{1}) {
+        if ( !$distance2bucket{1} ) {
             print STDERR "WARNING: bucket '1' is not defined, which does not
             make any sense; adding definition of bucket '1'.";
-            $distance2bucket{1} = 1;
+            $distance2bucket{1}  = 1;
             $distance2bucket{-1} = -1;
         }
         my $lastBucket = 1;
-        for (my $distance = 2; $distance < $maxBucket; $distance++) {
-            if ($distance2bucket{$distance}) {
+        for ( my $distance = 2; $distance < $maxBucket; $distance++ ) {
+            if ( $distance2bucket{$distance} ) {
+
                 # the distance defines a bucket
                 $lastBucket = $distance2bucket{$distance};
+
                 # = $distance
             } else {
+
                 # the distance falls into the highest lower bucket
                 $distance2bucket{$distance} = $lastBucket;
-                $distance2bucket{-$distance} = -$lastBucket;
+                $distance2bucket{ -$distance } = -$lastBucket;
             }
         }
-        $self->distance2bucket (\%distance2bucket);
-    } elsif ($field eq 'parent_ord') {
+        $self->distance2bucket( \%distance2bucket );
+    } elsif ( $field eq 'parent_ord' ) {
+
         # set index of parent's ord field
         my $parent_ord_index = $self->field_name2index($value);
-        $self->parent_ord_field_index ($parent_ord_index);
-    } elsif ($field eq 'number_of_iterations') {
+        $self->parent_ord_field_index($parent_ord_index);
+    } elsif ( $field eq 'number_of_iterations' ) {
+
         # set number of trainer iterations over training data
-        $self->number_of_iterations ($value);
-    } elsif ($field eq 'use_edge_features_cache') {
+        $self->number_of_iterations($value);
+    } elsif ( $field eq 'use_edge_features_cache' ) {
+
         # turn edge features cache on or off
-        $self->use_edge_features_cache ($value);
+        $self->use_edge_features_cache($value);
     } else {
         print STDERR "Unrecognized setting '$field' ('$field=$value')
             in config file! Quiting.";
@@ -330,44 +352,49 @@ sub set_config {
 }
 
 sub set_feature {
-    my ($self, $feature_code) = @_;
-    
-    if ($self->feature_codes_hash->{$feature_code}) {
+    my ( $self, $feature_code ) = @_;
+
+    if ( $self->feature_codes_hash->{$feature_code} ) {
         print STDERR "WARNING: feature '$feature_code'
             is defined more than once; disregarding its later definitions.";
         return;
     } else {
+
         # get simple features
         my $isArrayFeature = 0;
         my @simple_features_indexes;
         my %simple_features_hash;
-        foreach my $simple_feature_code (split (/\|/, $feature_code)) {
+        foreach my $simple_feature_code ( split( /\|/, $feature_code ) ) {
+
             # checks
-            if ($simple_features_hash{$simple_feature_code}) {
+            if ( $simple_features_hash{$simple_feature_code} ) {
                 print STDERR "WARNING: simple feature '$simple_feature_code'
                     is used more than once in '$feature_code';
                     disregarding its later uses.";
                 next;
             }
-            if (!$self->simple_feature_codes_hash->{$simple_feature_code}) {
+            if ( !$self->simple_feature_codes_hash->{$simple_feature_code} ) {
+
                 # this simple feature has not been used at all yet
                 $self->set_simple_feature($simple_feature_code);
             }
+
             # save
             my $simple_feature_index =
                 $self->simple_feature_indexes->{$simple_feature_code};
             $simple_features_hash{$simple_feature_code} = 1;
-            if ($self->array_simple_features->{$simple_feature_index}) {
+            if ( $self->array_simple_features->{$simple_feature_index} ) {
                 $isArrayFeature = 1;
             }
             push @simple_features_indexes, $simple_feature_index;
         }
+
         # save
-        my $feature_index = scalar (@{$self->feature_codes});
+        my $feature_index = scalar( @{ $self->feature_codes } );
         $self->feature_codes_hash->{$feature_code} = 1;
-        $self->feature_indexes->{$feature_code} = $feature_index;
-        push @{$self->feature_codes}, $feature_code;
-        push @{$self->feature_simple_features_indexes},
+        $self->feature_indexes->{$feature_code}    = $feature_index;
+        push @{ $self->feature_codes }, $feature_code;
+        push @{ $self->feature_simple_features_indexes },
             [@simple_features_indexes];
         if ($isArrayFeature) {
             $self->array_features->{$feature_index} = 1;
@@ -376,73 +403,81 @@ sub set_feature {
 }
 
 sub set_simple_feature {
-    my ($self, $simple_feature_code) = @_;
-    
+    my ( $self, $simple_feature_code ) = @_;
+
     # get sub reference and field index
-    my $simple_feature_index = scalar @{$self->simple_feature_codes};
+    my $simple_feature_index = scalar @{ $self->simple_feature_codes };
     my $simple_feature_sub;
     my $simple_feature_field;
-    if ($simple_feature_code =~ /^([a-z0-9_]+)$/) {
+    if ( $simple_feature_code =~ /^([a-z0-9_]+)$/ ) {
+
         # child feature
-        $simple_feature_sub = \&{feature_child};
+        $simple_feature_sub   = \&{feature_child};
         $simple_feature_field = $1;
-    } elsif ($simple_feature_code =~ /^([A-Z0-9_]+)$/) {
+    } elsif ( $simple_feature_code =~ /^([A-Z0-9_]+)$/ ) {
+
         # parent feature
-        $simple_feature_sub = \&{feature_parent};
+        $simple_feature_sub   = \&{feature_parent};
         $simple_feature_field = lc($1);
-    } elsif ($simple_feature_code =~ /^1\.([a-z0-9_]+)$/) {
+    } elsif ( $simple_feature_code =~ /^1\.([a-z0-9_]+)$/ ) {
+
         # first node feature
-        $simple_feature_sub = \&{feature_first};
+        $simple_feature_sub   = \&{feature_first};
         $simple_feature_field = $1;
-    } elsif ($simple_feature_code =~ /^2\.([a-z0-9_]+)$/) {
+    } elsif ( $simple_feature_code =~ /^2\.([a-z0-9_]+)$/ ) {
+
         # second node feature
-        $simple_feature_sub = \&{feature_second};
+        $simple_feature_sub   = \&{feature_second};
         $simple_feature_field = $1;
-    } elsif ($simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+)\)$/) {
+    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+)\)$/ ) {
+
         # function feature
         my $function_name = $1;
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
         $simple_feature_field = $2;
+
         # array function?
-        if ($function_name eq 'between' || $function_name eq 'foreach') {
+        if ( $function_name eq 'between' || $function_name eq 'foreach' ) {
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
-    } elsif ($simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+),([a-z0-9_]+)\)$/) {
+    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
+
         # two-arg function feature
         my $function_name = $1;
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
         my $simple_feature_field_1 = $2;
         my $simple_feature_field_2 = $3;
-        $simple_feature_field = [$simple_feature_field_1, $simple_feature_field_2];
+        $simple_feature_field = [ $simple_feature_field_1, $simple_feature_field_2 ];
     } else {
         croak "Incorrect simple feature format '$simple_feature_code'.";
     }
     my $simple_feature_field_index =
         $self->field_name2index($simple_feature_field);
-    
+
     # save
     $self->simple_feature_codes_hash->{$simple_feature_code} = 1;
     $self->simple_feature_indexes->{$simple_feature_code} =
         $simple_feature_index;
-    push @{$self->simple_feature_codes}, $simple_feature_code;
-    push @{$self->simple_feature_subs}, $simple_feature_sub;
-    push @{$self->simple_feature_field_indexes}, $simple_feature_field_index;
+    push @{ $self->simple_feature_codes },         $simple_feature_code;
+    push @{ $self->simple_feature_subs },          $simple_feature_sub;
+    push @{ $self->simple_feature_field_indexes }, $simple_feature_field_index;
 }
 
 sub field_name2index {
-    my ($self, $field_name) = @_;
-    
-    if (ref $field_name eq 'ARRAY') {
+    my ( $self, $field_name ) = @_;
+
+    if ( ref $field_name eq 'ARRAY' ) {
+
         # multiarg feature
         my @return;
-        foreach my $field (@{$field_name}) {
+        foreach my $field ( @{$field_name} ) {
             push @return, $self->field_name2index($field);
         }
         return [@return];
     } else {
-        if ($self->field_names_hash->{$field_name}) {
+        if ( $self->field_names_hash->{$field_name} ) {
             return $self->field_indexes->{$field_name};
         } else {
             croak "Unknown field '$field_name', quiting.";
@@ -453,13 +488,13 @@ sub field_name2index {
 # FEATURES COMPUTATION
 
 sub get_all_features {
-    my ($self, $edge) = @_;
+    my ( $self, $edge ) = @_;
 
     # try to get featres from cache
     my $edge_signature;
-    if ($self->use_edge_features_cache) {
+    if ( $self->use_edge_features_cache ) {
         $edge_signature = $edge->signature();
-        
+
         my $cache_features = $self->edge_features_cache->{$edge_signature};
         if ($cache_features) {
             return $cache_features;
@@ -467,30 +502,34 @@ sub get_all_features {
     }
 
     # double else: if cache not used or if edge features not found in cache
-    my $simple_feature_values = $self->get_simple_feature_values_array ($edge);
+    my $simple_feature_values = $self->get_simple_feature_values_array($edge);
     my @features;
     my $features_count = $self->feature_count;
-    for (my $feature_index = 0;
-            $feature_index < $features_count;
-            $feature_index++
-        ) {
+    for (
+        my $feature_index = 0;
+        $feature_index < $features_count;
+        $feature_index++
+        )
+    {
         my $feature_value =
-            $self->get_feature_value($feature_index, $simple_feature_values);
-        if ($self->array_features->{$feature_index}) {
+            $self->get_feature_value( $feature_index, $simple_feature_values );
+        if ( $self->array_features->{$feature_index} ) {
+
             #it is an array feature, the returned value is an array reference
-            foreach my $value (@{$feature_value}) {
+            foreach my $value ( @{$feature_value} ) {
                 push @features, "$feature_index:$value";
             }
         } else {
+
             #it is not an array feature, the returned value is a string
-            if ($feature_value ne '') {
+            if ( $feature_value ne '' ) {
                 push @features, "$feature_index:$feature_value";
             }
         }
     }
 
     # save result in cache
-    if ($self->use_edge_features_cache) {
+    if ( $self->use_edge_features_cache ) {
         $self->edge_features_cache->{$edge_signature} = \@features;
     }
 
@@ -498,15 +537,17 @@ sub get_all_features {
 }
 
 sub get_feature_value {
-    my ($self, $feature_index, $simple_feature_values) = @_;
-    
+    my ( $self, $feature_index, $simple_feature_values ) = @_;
+
     my $simple_features_indexes =
         $self->feature_simple_features_indexes->[$feature_index];
-    
-    if ($self->array_features->{$feature_index}) {
+
+    if ( $self->array_features->{$feature_index} ) {
         my $feature_value =
-            $self->get_array_feature_value ($simple_features_indexes,
-                $simple_feature_values, 0);
+            $self->get_array_feature_value(
+            $simple_features_indexes,
+            $simple_feature_values, 0
+            );
         if ($feature_value) {
             return $feature_value;
         } else {
@@ -514,15 +555,15 @@ sub get_feature_value {
         }
     } else {
         my @values;
-        foreach my $simple_feature_index (@{$simple_features_indexes}) {
+        foreach my $simple_feature_index ( @{$simple_features_indexes} ) {
             my $value = $simple_feature_values->[$simple_feature_index];
-            if ($value ne '') {
+            if ( $value ne '' ) {
                 push @values, $value;
             } else {
                 return '';
             }
         }
-    
+
         my $feature_value = join '|', @values;
         return $feature_value;
     }
@@ -530,32 +571,36 @@ sub get_feature_value {
 
 # for features containing subfeatures that return an array of values
 sub get_array_feature_value {
-    my ($self, $simple_features_indexes, $simple_feature_values, $start_from) =
+    my ( $self, $simple_features_indexes, $simple_feature_values, $start_from ) =
         @_;
-    
+
     # get value at this position (position = $start_from)
     my $simple_feature_index = $simple_features_indexes->[$start_from];
-    my $value = $simple_feature_values->[$simple_feature_index];
-    if (! $self->array_simple_features->{$simple_feature_index}) {
+    my $value                = $simple_feature_values->[$simple_feature_index];
+    if ( !$self->array_simple_features->{$simple_feature_index} ) {
+
         # if not an array reference
-        $value = [($value)]; # make it an array reference
+        $value = [ ($value) ];    # make it an array reference
     }
-    
+
     my $simple_features_count = scalar @{$simple_features_indexes};
-    if ($start_from < $simple_features_count - 1) {
+    if ( $start_from < $simple_features_count - 1 ) {
+
         # not the last simple feature => have to recurse
         my $append =
-            $self->get_array_feature_value ($simple_features_indexes,
-                $simple_feature_values, $start_from + 1);
+            $self->get_array_feature_value(
+            $simple_features_indexes,
+            $simple_feature_values, $start_from + 1
+            );
         my @values;
-        foreach my $my_value (@{$value}) {
-            foreach my $append_value (@{$append}) {
+        foreach my $my_value ( @{$value} ) {
+            foreach my $append_value ( @{$append} ) {
                 my $add_value = "$my_value|$append_value";
                 push @values, $add_value;
             }
         }
         return [@values];
-    } else { # else bottom of recursion
+    } else {    # else bottom of recursion
         return $value;
     }
 }
@@ -563,20 +608,23 @@ sub get_array_feature_value {
 # SIMPLE FEATURES
 
 sub get_simple_feature_values_array {
-    my ($self, $edge) = @_;
-    
+    my ( $self, $edge ) = @_;
+
     my @simple_feature_values;
     my $simple_feature_count = $self->simple_feature_count;
-    for (my $simple_feature_index = 0;
-            $simple_feature_index < $simple_feature_count;
-            $simple_feature_index++
-        ) {
+    for (
+        my $simple_feature_index = 0;
+        $simple_feature_index < $simple_feature_count;
+        $simple_feature_index++
+        )
+    {
         my $sub = $self->simple_feature_subs->[$simple_feature_index];
+
         # if the simple feature takes more than one argment,
         # then $field_index is an array reference
         my $field_index =
             $self->simple_feature_field_indexes->[$simple_feature_index];
-        my $value = &$sub($self, $edge, $field_index);
+        my $value = &$sub( $self, $edge, $field_index );
         push @simple_feature_values, $value;
     }
 
@@ -584,33 +632,33 @@ sub get_simple_feature_values_array {
 }
 
 sub get_simple_feature_sub_reference {
-    my ($self, $simple_feature_function) = @_;
-    
-    if ($simple_feature_function eq 'distance') {
+    my ( $self, $simple_feature_function ) = @_;
+
+    if ( $simple_feature_function eq 'distance' ) {
         return \&{feature_distance};
-    } elsif ($simple_feature_function eq 'preceding') {
+    } elsif ( $simple_feature_function eq 'preceding' ) {
         return \&{feature_preceding_child};
-    } elsif ($simple_feature_function eq 'PRECEDING') {
+    } elsif ( $simple_feature_function eq 'PRECEDING' ) {
         return \&{feature_preceding_parent};
-    } elsif ($simple_feature_function eq '1.preceding') {
+    } elsif ( $simple_feature_function eq '1.preceding' ) {
         return \&{feature_preceding_first};
-    } elsif ($simple_feature_function eq '2.preceding') {
+    } elsif ( $simple_feature_function eq '2.preceding' ) {
         return \&{feature_preceding_second};
-    } elsif ($simple_feature_function eq 'following') {
+    } elsif ( $simple_feature_function eq 'following' ) {
         return \&{feature_following_child};
-    } elsif ($simple_feature_function eq 'FOLLOWING') {
+    } elsif ( $simple_feature_function eq 'FOLLOWING' ) {
         return \&{feature_following_parent};
-    } elsif ($simple_feature_function eq '1.following') {
+    } elsif ( $simple_feature_function eq '1.following' ) {
         return \&{feature_following_first};
-    } elsif ($simple_feature_function eq '2.following') {
+    } elsif ( $simple_feature_function eq '2.following' ) {
         return \&{feature_following_second};
-    } elsif ($simple_feature_function eq 'between') {
+    } elsif ( $simple_feature_function eq 'between' ) {
         return \&{feature_between};
-    } elsif ($simple_feature_function eq 'foreach') {
+    } elsif ( $simple_feature_function eq 'foreach' ) {
         return \&{feature_foreach};
-    } elsif ($simple_feature_function eq 'equals') {
+    } elsif ( $simple_feature_function eq 'equals' ) {
         return \&{feature_equals};
-    } elsif ($simple_feature_function eq 'equalspc') {
+    } elsif ( $simple_feature_function eq 'equalspc' ) {
         return \&{feature_equalspc};
     } else {
         croak "Unknown feature function '$simple_feature_function'!";
@@ -618,51 +666,53 @@ sub get_simple_feature_sub_reference {
 }
 
 sub feature_distance {
-    my ($self, $edge, $field_index) = @_;
-    
+    my ( $self, $edge, $field_index ) = @_;
+
     my $distance =
         $edge->parent->fields->[$field_index]
         - $edge->child->fields->[$field_index];
-        
+
     my $bucket = $self->distance2bucket->{$distance};
     if ($bucket) {
         return $bucket;
     } else {
-        if ($distance <= $self->minBucket) {
+        if ( $distance <= $self->minBucket ) {
             return $self->minBucket;
-        } else { # $distance >= $self->maxBucket
+        } else {    # $distance >= $self->maxBucket
             return $self->maxBucket;
         }
     }
 }
 
 sub feature_child {
-    my ($self, $edge, $field_index) = @_;
-    return ($edge->child->fields->[$field_index]);
+    my ( $self, $edge, $field_index ) = @_;
+    return ( $edge->child->fields->[$field_index] );
 }
 
 sub feature_parent {
-    my ($self, $edge, $field_index) = @_;
-    return ($edge->parent->fields->[$field_index]);
+    my ( $self, $edge, $field_index ) = @_;
+    return ( $edge->parent->fields->[$field_index] );
 }
 
 sub feature_first {
-    my ($self, $edge, $field_index) = @_;
-    return ($edge->first->fields->[$field_index]);
+    my ( $self, $edge, $field_index ) = @_;
+    return ( $edge->first->fields->[$field_index] );
 }
 
 sub feature_second {
-    my ($self, $edge, $field_index) = @_;
-    return ($edge->second->fields->[$field_index]);
+    my ( $self, $edge, $field_index ) = @_;
+    return ( $edge->second->fields->[$field_index] );
 }
 
 sub feature_preceding_child {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->child->ord - 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->child->ord - 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->parent->ord == $node->ord) {
+        if ( $edge->parent->ord == $node->ord ) {
+
             # no gap between nodes
             return '#mid#';
         } else {
@@ -674,12 +724,14 @@ sub feature_preceding_child {
 }
 
 sub feature_preceding_parent {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->parent->ord - 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->parent->ord - 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->child->ord == $node->ord) {
+        if ( $edge->child->ord == $node->ord ) {
+
             # no gap between nodes
             return '#mid#';
         } else {
@@ -691,12 +743,14 @@ sub feature_preceding_parent {
 }
 
 sub feature_following_child {
-    my ($self, $edge, $field_index) = @_;
+    my ( $self, $edge, $field_index ) = @_;
 
-    my $node = $edge->sentence->getNodeByOrd($edge->child->ord + 1);
+    my $node = $edge->sentence->getNodeByOrd( $edge->child->ord + 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->parent->ord == $node->ord) {
+        if ( $edge->parent->ord == $node->ord ) {
+
             # no gap between nodes
             return '#mid#';
         } else {
@@ -708,12 +762,14 @@ sub feature_following_child {
 }
 
 sub feature_following_parent {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->parent->ord + 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->parent->ord + 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->child->ord == $node->ord) {
+        if ( $edge->child->ord == $node->ord ) {
+
             # no gap between nodes
             return '#mid#';
         } else {
@@ -725,9 +781,10 @@ sub feature_following_parent {
 }
 
 sub feature_preceding_first {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->first->ord - 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->first->ord - 1 );
+
     # $node may be undef
     if ($node) {
         return $node->fields->[$field_index];
@@ -737,12 +794,14 @@ sub feature_preceding_first {
 }
 
 sub feature_preceding_second {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->second->ord - 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->second->ord - 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->first->ord == $node->ord) {
+        if ( $edge->first->ord == $node->ord ) {
+
             # node preceding second node is first node
             return '#mid#';
         } else {
@@ -754,12 +813,14 @@ sub feature_preceding_second {
 }
 
 sub feature_following_first {
-    my ($self, $edge, $field_index) = @_;
+    my ( $self, $edge, $field_index ) = @_;
 
-    my $node = $edge->sentence->getNodeByOrd($edge->first->ord + 1);
+    my $node = $edge->sentence->getNodeByOrd( $edge->first->ord + 1 );
+
     # $node may be undef
     if ($node) {
-        if ($edge->second->ord == $node->ord) {
+        if ( $edge->second->ord == $node->ord ) {
+
             # node following first node is second node
             return '#mid#';
         } else {
@@ -771,9 +832,10 @@ sub feature_following_first {
 }
 
 sub feature_following_second {
-    my ($self, $edge, $field_index) = @_;
-    
-    my $node = $edge->sentence->getNodeByOrd($edge->second->ord + 1);
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $node = $edge->sentence->getNodeByOrd( $edge->second->ord + 1 );
+
     # $node may be undef
     if ($node) {
         return $node->fields->[$field_index];
@@ -783,29 +845,29 @@ sub feature_following_second {
 }
 
 sub feature_between {
-    my ($self, $edge, $field_index) = @_;
-    
+    my ( $self, $edge, $field_index ) = @_;
+
     my @values;
     my $from;
     my $to;
-    if ($edge->parent->ord < $edge->child->ord) {
+    if ( $edge->parent->ord < $edge->child->ord ) {
         $from = $edge->parent->ord + 1;
-        $to = $edge->child->ord - 1;
+        $to   = $edge->child->ord - 1;
     } else {
         $from = $edge->child->ord + 1;
-        $to = $edge->parent->ord - 1;
+        $to   = $edge->parent->ord - 1;
     }
-    for (my $ord = $from; $ord <= $to; $ord++) {
+    for ( my $ord = $from; $ord <= $to; $ord++ ) {
         push @values,
             $edge->sentence->getNodeByOrd($ord)->fields->[$field_index];
     }
-    
+
     return [@values];
 }
 
 sub feature_foreach {
-    my ($self, $edge, $field_index) = @_;
-    
+    my ( $self, $edge, $field_index ) = @_;
+
     my $values = $edge->child->fields->[$field_index];
     if ($values) {
         my @values = split / /, $edge->child->fields->[$field_index];
@@ -816,29 +878,31 @@ sub feature_foreach {
 }
 
 sub feature_equals {
-    my ($self, $edge, $field_indexes) = @_;
-    
+    my ( $self, $edge, $field_indexes ) = @_;
+
     # equals takes two arguments
-    if (@{$field_indexes} == 2) {
-        my ($field_index_1, $field_index_2) = @{$field_indexes};
+    if ( @{$field_indexes} == 2 ) {
+        my ( $field_index_1, $field_index_2 ) = @{$field_indexes};
         my $values_1 = $edge->child->fields->[$field_index_1];
         my $values_2 = $edge->child->fields->[$field_index_2];
+
         # we handle undefines and empties specially
-        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '') {
-            my $return = 0; # default not equal
+        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
+            my $return   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
+
             # try to find a match
             foreach my $value_1 (@values_1) {
                 foreach my $value_2 (@values_2) {
-                    if ($value_1 eq $value_2) {
-                        $return = 1; # one match is enough
+                    if ( $value_1 eq $value_2 ) {
+                        $return = 1;               # one match is enough
                     }
                 }
             }
             return $return;
         } else {
-            return -1; # undef
+            return -1;                             # undef
         }
     } else {
         croak "equals() takes TWO arguments!!!";
@@ -848,29 +912,31 @@ sub feature_equals {
 # only difference to equals is the line:
 # my $values_1 = $edge->PARENT->fields->[$field_index_1];
 sub feature_equalspc {
-    my ($self, $edge, $field_indexes) = @_;
-    
+    my ( $self, $edge, $field_indexes ) = @_;
+
     # equals takes two arguments
-    if (@{$field_indexes} == 2) {
-        my ($field_index_1, $field_index_2) = @{$field_indexes};
+    if ( @{$field_indexes} == 2 ) {
+        my ( $field_index_1, $field_index_2 ) = @{$field_indexes};
         my $values_1 = $edge->parent->fields->[$field_index_1];
         my $values_2 = $edge->child->fields->[$field_index_2];
+
         # we handle undefines and empties specially
-        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '') {
-            my $return = 0; # default not equal
+        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
+            my $return   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
+
             # try to find a match
             foreach my $value_1 (@values_1) {
                 foreach my $value_2 (@values_2) {
-                    if ($value_1 eq $value_2) {
-                        $return = 1; # one match is enough
+                    if ( $value_1 eq $value_2 ) {
+                        $return = 1;               # one match is enough
                     }
                 }
             }
             return $return;
         } else {
-            return -1; # undef
+            return -1;                             # undef
         }
     } else {
         croak "equals() takes TWO arguments!!!";
@@ -1099,10 +1165,10 @@ string codes, which would have to be parsed repeatedly. Instead their codes
 are parsed once only (in C<set_simple_feature>) and they are represented as 
 an integer index of the field which is used to compute the feature (it is the 
 actual index of the field in the input file line, accessible through 
-L<Treex::Tool::Parser::MSTperl::Node/fields>) and a reference to a subroutine (one of the 
-C<feature_*> subs, see below) which computes the feature value based on the 
-field index and the edge (L<Treex::Tool::Parser::MSTperl::Edge>). The references subroutine
-is then invoked in C<get_simple_feature_values_array>.
+L<Treex::Tool::Parser::MSTperl::Node/fields>) and a reference to a subroutine
+(one of the C<feature_*> subs, see below) which computes the feature value
+based on the field index and the edge (L<Treex::Tool::Parser::MSTperl::Edge>).
+The references subroutine is then invoked in C<get_simple_feature_values_array>.
 
 =item array_simple_features (HashRef[Int])
 
@@ -1128,8 +1194,8 @@ C<get_feature_simple_features_indexes> method are computed once only, stored
 in this cache and then retrieved when needed.
 
 The key of the hash is the edge signature (see 
-L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is (a reference to) an array of 
-fetures and their values.
+L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is
+(a reference to) an array of fetures and their values.
 
 =back
 

@@ -6,8 +6,8 @@ use Treex::Tool::Parser::MSTperl::Node;
 use Treex::Tool::Parser::MSTperl::RootNode;
 
 has featuresControl => (
-    isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
-    is => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is       => 'ro',
     required => '1',
 );
 
@@ -16,145 +16,158 @@ has featuresControl => (
 # needed for caching of features when training the parser
 # (can be undef if not needed)
 has id => (
-    is => 'ro',
+    is  => 'ro',
     isa => 'Maybe[Int]',
 );
 
 has nodes => (
-    is => 'rw',
-    isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
+    is       => 'rw',
+    isa      => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
     required => 1,
 );
 
 # root node added
 has nodes_with_root => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
 );
 
 has features => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Maybe[ArrayRef[Str]]',
 );
 
 has edges => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]]',
 );
 
-my $DEBUG=0;
+my $DEBUG = 0;
 
 sub BUILD {
     my ($self) = @_;
-    
+
     #add root
-    my $root = Treex::Tool::Parser::MSTperl::RootNode->new(fields => $self->featuresControl->root_field_values, featuresControl => $self->featuresControl);
+    my $root = Treex::Tool::Parser::MSTperl::RootNode->new(
+        fields          => $self->featuresControl->root_field_values,
+        featuresControl => $self->featuresControl
+    );
     my @nodes_with_root;
     push @nodes_with_root, $root;
-    push @nodes_with_root, @{$self->nodes};
-    $self->nodes_with_root([@nodes_with_root]);
+    push @nodes_with_root, @{ $self->nodes };
+    $self->nodes_with_root( [@nodes_with_root] );
 
     # fill node ords
     my $ord = 1;
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
         $node->ord($ord);
         $ord++;
     }
 }
 
 sub fill_fields_after_parse {
+
     # (Treex::Tool::Parser::MSTperl::FeaturesControl $featuresControl)
-    my ($self, $featuresControl) = @_;
-    
+    my ( $self, $featuresControl ) = @_;
+
     #compute edges
     my @edges;
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
+
         # fill node parent (it can be set either in parent or in parentOrd field)
-        if ($node->parent) {
+        if ( $node->parent ) {
             $node->parentOrd( $node->parent->ord );
-        } else { # $node->parentOrd
-            $node->parent( $self->getNodeByOrd($node->parentOrd) );
+        } else {    # $node->parentOrd
+            $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
         if ($DEBUG) {
             print $node->ord . ': ' . $node->form . ' <- ' . $node->parentOrd . "\n";
         }
-        
+
         # add a new edge
-        my $edge = Treex::Tool::Parser::MSTperl::Edge->new( child => $node,
-            parent => $node->parent, sentence => $self );
+        my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
+            child    => $node,
+            parent   => $node->parent,
+            sentence => $self
+        );
         push @edges, $edge;
     }
-    $self->edges([@edges]);
-    
+    $self->edges( [@edges] );
+
     #compute features
     my @features;
     foreach my $edge (@edges) {
         my $edge_features = $featuresControl->get_all_features($edge);
         push @features, @{$edge_features};
     }
-    $self->features([@features]);
+    $self->features( [@features] );
 }
 
 sub clear_parse {
     my ($self) = @_;
-    
+
     #clear node parents
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
         $node->parent(undef);
         $node->parentOrd(0);
     }
+
     #clear edges
     $self->edges(undef);
+
     #clear features
     $self->features(undef);
 }
 
 sub copy_nonparsed {
     my ($self) = @_;
-    
+
     #copy nodes
     my @nodes;
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
         my $node_copy = $node->copy_nonparsed();
         push @nodes, $node_copy;
     }
-    
+
     #create a new instance
     my $copy = Treex::Tool::Parser::MSTperl::Sentence->new(
-        id => $self->id,
-        nodes => [@nodes],
+        id              => $self->id,
+        nodes           => [@nodes],
         featuresControl => $self->featuresControl,
     );
-    
+
     return $copy;
 }
 
 sub setChildParent {
+
     # (Int $childOrd, Int $parentOrd)
-    my ($self, $childOrd, $parentOrd) = @_;
-    
-    my $child = $self->getNodeByOrd($childOrd);
+    my ( $self, $childOrd, $parentOrd ) = @_;
+
+    my $child  = $self->getNodeByOrd($childOrd);
     my $parent = $self->getNodeByOrd($parentOrd);
-    
-    $child->parent( $parent );
-    $child->parentOrd( $parentOrd );
+
+    $child->parent($parent);
+    $child->parentOrd($parentOrd);
 }
 
 sub len {
     my ($self) = @_;
-    return scalar(@{$self->nodes})
+    return scalar( @{ $self->nodes } )
 }
 
 sub score {
+
     # (Treex::Tool::Parser::MSTperl::Model $model)
-    my ($self, $model) = @_;
-    return $model->score_features($self->features);
+    my ( $self, $model ) = @_;
+    return $model->score_features( $self->features );
 }
 
 sub getNodeByOrd {
+
     # (Int $ord)
-    my ($self, $ord) = @_;
-    
+    my ( $self, $ord ) = @_;
+
     if ( $ord >= 0 && $ord <= $self->len() ) {
         return $self->nodes_with_root->[$ord];
     } else {
@@ -163,28 +176,30 @@ sub getNodeByOrd {
 }
 
 sub count_errors {
+
     # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
-    my ($self, $correct_sentence) = @_;
-    
+    my ( $self, $correct_sentence ) = @_;
+
     my $errors = 0;
+
     #assert that nodes in the sentences with the same ords are corresponding nodes
-    foreach my $my_node (@{$self->nodes}) {
-        my $my_parent = $my_node->parentOrd;
-        my $correct_node = $correct_sentence->getNodeByOrd($my_node->ord);
+    foreach my $my_node ( @{ $self->nodes } ) {
+        my $my_parent      = $my_node->parentOrd;
+        my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
         my $correct_parent = $correct_node->parentOrd;
-        if ($my_parent != $correct_parent) {
+        if ( $my_parent != $correct_parent ) {
             $errors++;
         }
     }
-    
+
     return $errors;
 }
 
 sub toString {
     my ($self) = @_;
-    
+
     my @forms;
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
         push @forms, $node->form;
     }
 
@@ -193,9 +208,9 @@ sub toString {
 
 sub toParentOrdsArray {
     my ($self) = @_;
-    
+
     my @parents;
-    foreach my $node (@{$self->nodes}) {
+    foreach my $node ( @{ $self->nodes } ) {
         push @parents, $node->parentOrd;
     }
 

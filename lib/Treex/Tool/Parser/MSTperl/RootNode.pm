@@ -5,20 +5,20 @@ use Moose;
 extends 'Treex::Tool::Parser::MSTperl::Node';
 
 has ord => (
-    isa => 'Int',
-    is => 'ro',
+    isa     => 'Int',
+    is      => 'ro',
     default => 0,
 );
 
 has parent => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Node]',
-    is => 'ro',
+    isa     => 'Maybe[Treex::Tool::Parser::MSTperl::Node]',
+    is      => 'ro',
     default => undef,
 );
 
 has parentOrd => (
-    isa => 'Int',
-    is => 'rw',
+    isa     => 'Int',
+    is      => 'rw',
     default => -1,
 );
 
