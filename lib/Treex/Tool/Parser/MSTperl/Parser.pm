@@ -105,9 +105,13 @@ sub parse_sentence {
 
 __END__
 
+=pod 
+
+=encoding utf-8
+
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Model
+Treex::Tool::Parser::MSTperl::Parser - pure Perl implementation of MST parser
 
 =head1 DESCRIPTION
 
