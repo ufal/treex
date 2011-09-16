@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Writer;
 
 use Moose;
+use autodie;
 
 has featuresControl => (
     isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
@@ -12,7 +13,7 @@ sub write_tsv {
     # (Str $filename, ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $sentences)
     my ($self, $filename, $sentences) = @_;
     
-    open my $file, '>:utf8', $filename or die("Cannot open file $filename!");
+    open my $file, '>:utf8', $filename;
     foreach my $sentence (@{$sentences}) {
         foreach my $node (@{$sentence->nodes}) {
             #($ord, $form, $lemma, $pos, $subpos, $features, $parent, $afun, $underscore1, $underscore2)

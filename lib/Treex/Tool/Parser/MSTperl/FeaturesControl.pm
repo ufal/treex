@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::FeaturesControl;
 
 use Moose;
+use autodie;
 
 has 'config_file' => (
     is => 'ro',
@@ -198,8 +199,7 @@ sub BUILD {
     
     print "Processing config file " . $self->config_file . "...\n";
     
-    open my $config, '<:utf8', $self->config_file
-        or die("Cannot open file " . $self->config_file . "!");
+    open my $config, '<:encoding(utf8)', $self->config_file;
     while (<$config>) {
         chomp;
         if (/^\s*$/ || /^#/) {
@@ -226,7 +226,8 @@ sub BUILD {
     print "Done." . "\n";
 }
 
-
+# TODO: rewrite as a hash refeerncing subfeatures
+# or find a module for this
 sub set_config {
     my ($self, $field, $value) = @_;
     
@@ -240,11 +241,11 @@ sub set_config {
         for (my $index = 0; $index < scalar (@field_names); $index++) {
             my $field_name = $field_names[$index];
             if ($field_names_hash{$field_name}) {
-                die "Duplicate field name '$field_name'!";
+                croak "Duplicate field name '$field_name'!";
             } elsif ($field_name ne lc($field_name)) {
-                die "Field name '$field_name' is not lowercase!";
+                croak "Field name '$field_name' is not lowercase!";
             } elsif (! $field_name =~ /a-z/) {
-                die "Field name '$field_name' does not contain
+                croak "Field name '$field_name' does not contain
                  any character from [a-z]!";
             } else {
                 $field_names_hash{$field_name} = 1;
@@ -265,7 +266,7 @@ sub set_config {
         my $field_names_count = scalar(@{$self->field_names});
         my $root_fields_count = scalar(@{$self->root_field_values});
         if ($root_fields_count != $field_names_count) {
-            die "Incorrect number of root field values ($root_fields_count),
+            croak "Incorrect number of root field values ($root_fields_count),
                 must be same as number of field names ($field_names_count)!";
         }
     } elsif ($field eq 'distance_buckets') {
@@ -279,7 +280,7 @@ sub set_config {
                 print STDERR "WARNING: bucket '$bucket' is defined
                     more than once; disregarding its later definitions.";
             } elsif ($bucket <= 0) {
-                die "Error on bucket '$bucket' - buckets must be positive
+                croak "Error on bucket '$bucket' - buckets must be positive
                     integers. Quiting.";
             } else {
                 $distance2bucket{$bucket} = $bucket;
@@ -416,7 +417,7 @@ sub set_simple_feature {
         my $simple_feature_field_2 = $3;
         $simple_feature_field = [$simple_feature_field_1, $simple_feature_field_2];
     } else {
-        die "Incorrect simple feature format '$simple_feature_code'.";
+        croak "Incorrect simple feature format '$simple_feature_code'.";
     }
     my $simple_feature_field_index =
         $self->field_name2index($simple_feature_field);
@@ -444,7 +445,7 @@ sub field_name2index {
         if ($self->field_names_hash->{$field_name}) {
             return $self->field_indexes->{$field_name};
         } else {
-            die "Unknown field '$field_name', quiting.";
+            croak "Unknown field '$field_name', quiting.";
         }
     }
 }
@@ -612,7 +613,7 @@ sub get_simple_feature_sub_reference {
     } elsif ($simple_feature_function eq 'equalspc') {
         return \&{feature_equalspc};
     } else {
-        die "Unknown feature function '$simple_feature_function'!";
+        croak "Unknown feature function '$simple_feature_function'!";
     }
 }
 
@@ -840,7 +841,7 @@ sub feature_equals {
             return -1; # undef
         }
     } else {
-        die "equals() takes TWO arguments!!!";
+        croak "equals() takes TWO arguments!!!";
     }
 }
 
@@ -872,7 +873,7 @@ sub feature_equalspc {
             return -1; # undef
         }
     } else {
-        die "equals() takes TWO arguments!!!";
+        croak "equals() takes TWO arguments!!!";
     }
 }
 

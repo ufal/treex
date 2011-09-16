@@ -152,7 +152,7 @@ sub mira_update {
             = features_diff($sentence_correct_parse->features, $sentence_best_parse->features);
         
         if ($features_diff_count == 0) {
-            die "Invalid assertion! (If the parses are
+            croak "Invalid assertion! (If the parses are
                 different, their features cannot be the same. If the parses are
                 the same, $error should be 0.)";
         }

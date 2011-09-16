@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Reader;
 
 use Moose;
+use autodie;
 
 has featuresControl => (
     isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
@@ -15,7 +16,7 @@ sub read_tsv {
     my @sentences;
     my @nodes;
     my $id = 1;
-    open my $file, '<:utf8', $filename or die("Cannot open file $filename!");
+    open my $file, '<:utf8', $filename;
     print "Reading '$filename'...\n";
     while (<$file>) {
         chomp;

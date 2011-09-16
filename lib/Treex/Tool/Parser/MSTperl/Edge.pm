@@ -44,6 +44,8 @@ sub BUILD {
         $self->first ($self->child);
         $self->second ($self->parent);
     }
+
+    return;
 }
 
 sub signature {
