@@ -338,7 +338,7 @@ sub _draw_layout {
             my $tree = $layout->[$i]->[$j];
             if ( $tree and $tree ne $self->_tag_wrap ) {
                 my ( $lang, $layer, $selector ) = split '-', $tree, 3;
-                $lang = Treex::Core::Common::get_lang_name($lang);
+                $lang = Treex::Core::Types::get_lang_name($lang);
                 $canvas->create(
                     'rectangle',
                     $i * ( $self->_width + $self->_margin ) + $self->_margin,
