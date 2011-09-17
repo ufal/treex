@@ -621,8 +621,8 @@ sub collect_coordination_members
         {
             push(@{$members}, $croot);
         }
-        my @delimiters0 = grep { $_->conll_deprel() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
-        my @modifiers0 = grep { $_->conll_deprel() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
+        @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
+        @modifiers0 = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
         # Add the found nodes to the caller's storage place.
         push( @{$members},    @members0 );
         push( @{$delimiters}, @delimiters0 );
@@ -634,10 +634,14 @@ sub collect_coordination_members
         }
     }
     # If some members have been found, this node is a coord member.
-    # If the node itself does not have any further member children, all its children are modifers of a coord member.
+    # If the node itself does not have any further member children, there still probably is a delimiter attached to it.
+    # Its other children are modifers of a coord member.
     elsif ( @{$members} )
     {
-        push( @{$modifiers}, @children );
+        @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
+        @modifiers0 = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
+        push( @{$delimiters}, @delimiters0 );
+        push( @{$modifiers},  @modifiers0 );
     }
 }
 
