@@ -3,7 +3,7 @@ use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
 has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll_2007' ); # TODO
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_perl_parser/cs" );
+has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/cs" );
 
 sub get_coarse_grained_tag {
     my ( $self, $tag ) = @_;

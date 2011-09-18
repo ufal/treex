@@ -8,28 +8,36 @@ use Treex::Tool::Parser::MSTperl::Parser;
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Node;
 
+use Treex::Core::Resource qw(require_file_from_share) ; 
+
 # TODO: make easier to set
 has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll_2007' );
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_perl_parser/en" );
+#has 'model_dir' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_perl_parser/en" );
+has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/en" );
 # looks for model under "model_dir/model_name.model"
 # and its config "model_dir/model_name.config"
 
-#TODO: loading each model only once should be handled in different way (copied from ParseMST)
-my $featuresControl;
-my $parser;
+has parser => (
+    is => 'ro',
+    isa => 'Treex::Tool::Parser::MSTperl::Parser',
+    init_arg => undef,
+    builder => '_build_parser',
+    lazy => 1,
+    );
 
-sub BUILD {
+sub _build_parser {
     my ($self) = @_;
 
-    if ( !$parser ) {
-	my $base_name = $self->model_dir . '/' . $self->model_name;
-	if ( !$featuresControl ) {
-	    $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => "$base_name.config", training => 0);
-	}
-	$parser = Treex::Tool::Parser::MSTperl::Parser->new(featuresControl => $featuresControl);
-	$parser->load_model("$base_name.model");
-    }
-    return;
+    my $base_name = $self->model_dir . '/' . $self->model_name;
+
+    my $config_file = require_file_from_share("$base_name.model");
+    my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => $config_file, training => 0);
+    
+    my $parser = Treex::Tool::Parser::MSTperl::Parser->new(featuresControl => $featuresControl);
+    my $model_file = require_file_from_share("$base_name.config");
+    $parser->load_model($model_file);
+
+    return $parser;
 }
 
 sub parse_chunk {
@@ -41,7 +49,7 @@ sub parse_chunk {
     foreach my $a_node (@a_nodes) {
 	# TODO: get the fields from attributes using featuresControl and get_attr
 	my @field_values;
-	foreach my $field_name (@{$featuresControl->field_names}) {
+	foreach my $field_name (@{$self->parser->featuresControl->field_names}) {
 	    my $field_value;
 	    #if ($field_name =~ /(.+)_(.+)/) { # special field
 	    if ($field_name =~ /_/) { # special field
@@ -63,13 +71,13 @@ sub parse_chunk {
 		push @field_values, '';
 	    }
 	}
-	my $node = Treex::Tool::Parser::MSTperl::Node->new(fields => \@field_values, featuresControl => $featuresControl);
+	my $node = Treex::Tool::Parser::MSTperl::Node->new(fields => \@field_values, featuresControl => $self->parser->featuresControl);
 	push @nodes, $node;
     }
-    my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(nodes => \@nodes, featuresControl => $featuresControl);
+    my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(nodes => \@nodes, featuresControl => $self->parser->featuresControl);
     
     # run the parser
-    my @node_parents = @{$parser->parse_sentence($sentence)};
+    my @node_parents = @{$self->parser->parse_sentence($sentence)};
     # TODO: maybe root should be contained?
 
     # set nodes' parents
