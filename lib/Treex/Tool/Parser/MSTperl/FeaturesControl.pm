@@ -258,8 +258,7 @@ sub set_config {
             } elsif ( $field_name ne lc($field_name) ) {
                 croak "Field name '$field_name' is not lowercase!";
             } elsif ( !$field_name =~ /a-z/ ) {
-                croak "Field name '$field_name' does not contain
-                 any character from [a-z]!";
+                croak "Field name '$field_name' does not contain any character from [a-z]!";
             } else {
                 $field_names_hash{$field_name} = 1;
                 $field_indexes{$field_name}    = $index;
@@ -282,8 +281,7 @@ sub set_config {
         my $field_names_count = scalar( @{ $self->field_names } );
         my $root_fields_count = scalar( @{ $self->root_field_values } );
         if ( $root_fields_count != $field_names_count ) {
-            croak "Incorrect number of root field values ($root_fields_count),
-                must be same as number of field names ($field_names_count)!";
+            croak "Incorrect number of root field values ($root_fields_count), must be same as number of field names ($field_names_count)!";
         }
     } elsif ( $field eq 'distance_buckets' ) {
 
@@ -295,11 +293,9 @@ sub set_config {
         my $maxBucket = 0;
         foreach my $bucket (@buckets) {
             if ( $distance2bucket{$bucket} ) {
-                print STDERR "WARNING: bucket '$bucket' is defined
-                    more than once; disregarding its later definitions.";
+                print STDERR "WARNING: bucket '$bucket' is defined more than once; disregarding its later definitions.";
             } elsif ( $bucket <= 0 ) {
-                croak "Error on bucket '$bucket' - buckets must be positive
-                    integers. Quiting.";
+                croak "Error on bucket '$bucket' - buckets must be positive integers. Quiting.";
             } else {
                 $distance2bucket{$bucket} = $bucket;
                 $distance2bucket{ -$bucket } = -$bucket;
@@ -314,8 +310,7 @@ sub set_config {
 
         # fill %distance2bucket from minBucket to maxBucket
         if ( !$distance2bucket{1} ) {
-            print STDERR "WARNING: bucket '1' is not defined, which does not
-            make any sense; adding definition of bucket '1'.";
+            print STDERR "WARNING: bucket '1' is not defined, which does not make any sense; adding definition of bucket '1'.";
             $distance2bucket{1}  = 1;
             $distance2bucket{-1} = -1;
         }
@@ -349,8 +344,7 @@ sub set_config {
         # turn edge features cache on or off
         $self->use_edge_features_cache($value);
     } else {
-        print STDERR "Unrecognized setting '$field' ('$field=$value')
-            in config file! Quiting.";
+        print STDERR "Unrecognized setting '$field' ('$field=$value') in config file! Quiting.";
     }
 
     return;
@@ -360,8 +354,7 @@ sub set_feature {
     my ( $self, $feature_code ) = @_;
 
     if ( $self->feature_codes_hash->{$feature_code} ) {
-        print STDERR "WARNING: feature '$feature_code'
-            is defined more than once; disregarding its later definitions.";
+        print STDERR "WARNING: feature '$feature_code' is defined more than once; disregarding its later definitions.";
         return;
     } else {
 
@@ -373,9 +366,7 @@ sub set_feature {
 
             # checks
             if ( $simple_features_hash{$simple_feature_code} ) {
-                print STDERR "WARNING: simple feature '$simple_feature_code'
-                    is used more than once in '$feature_code';
-                    disregarding its later uses.";
+                print STDERR "WARNING: simple feature '$simple_feature_code' is used more than once in '$feature_code'; disregarding its later uses.";
                 next;
             }
             if ( !$self->simple_feature_codes_hash->{$simple_feature_code} ) {
@@ -882,7 +873,7 @@ sub feature_foreach {
         my @values = split / /, $edge->child->fields->[$field_index];
         return [@values];
     } else {
-        return undef;
+        return '';
     }
 }
 
