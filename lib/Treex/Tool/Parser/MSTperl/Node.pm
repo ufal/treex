@@ -36,6 +36,8 @@ sub BUILD {
     my $parentOrdIndex = $self->featuresControl->parent_ord_field_index;
     my $parentOrd      = $self->fields->[$parentOrdIndex];
     $self->parentOrd($parentOrd);
+
+    return;
 }
 
 sub copy_nonparsed {

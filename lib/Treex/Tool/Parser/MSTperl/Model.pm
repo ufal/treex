@@ -33,6 +33,8 @@ sub store {
     close $file;
 
     print "Model saved.\n";
+
+    return;
 }
 
 sub store_tsv {
@@ -57,6 +59,8 @@ sub store_tsv {
     close $file;
 
     print "Model saved.\n";
+
+    return;
 }
 
 sub load {
@@ -70,6 +74,8 @@ sub load {
     $self->weights($weights);
 
     print "Model loaded.\n";
+
+    return;
 }
 
 sub load_tsv {
@@ -109,6 +115,8 @@ sub load_tsv {
     $self->weights( \%weights );
 
     print "Model loaded.\n";
+
+    return;
 }
 
 # ACCESS TO FEATURES
@@ -156,6 +164,8 @@ sub set_feature_weight {
     my ( $self, $feature, $weight ) = @_;
 
     $self->weights->{$feature} = $weight;
+
+    return;
 }
 
 sub update_feature_weight {
@@ -164,6 +174,8 @@ sub update_feature_weight {
     my ( $self, $feature, $update ) = @_;
 
     $self->weights->{$feature} += $update;
+
+    return;
 }
 
 1;

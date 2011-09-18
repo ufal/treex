@@ -232,6 +232,8 @@ sub BUILD {
     $self->simple_feature_count( scalar( @{ $self->simple_feature_codes } ) );
 
     print "Done." . "\n";
+
+    return;
 }
 
 # TODO: rewrite as a hash refeerncing subfeatures
@@ -349,6 +351,8 @@ sub set_config {
         print STDERR "Unrecognized setting '$field' ('$field=$value')
             in config file! Quiting.";
     }
+
+    return;
 }
 
 sub set_feature {
@@ -400,6 +404,8 @@ sub set_feature {
             $self->array_features->{$feature_index} = 1;
         }
     }
+
+    return;
 }
 
 sub set_simple_feature {
@@ -463,6 +469,8 @@ sub set_simple_feature {
     push @{ $self->simple_feature_codes },         $simple_feature_code;
     push @{ $self->simple_feature_subs },          $simple_feature_sub;
     push @{ $self->simple_feature_field_indexes }, $simple_feature_field_index;
+
+    return;
 }
 
 sub field_name2index {
