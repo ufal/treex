@@ -2,6 +2,7 @@ package Treex::Tool::Parser::MSTperl::FeaturesControl;
 
 use Moose;
 use autodie;
+use Carp;
 
 has 'config_file' => (
     is       => 'ro',

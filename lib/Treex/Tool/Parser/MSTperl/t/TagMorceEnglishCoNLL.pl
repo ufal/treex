@@ -9,8 +9,8 @@ print STDERR "Starting tagger...\n";
 
 my $tagger = Morce::English->new();
 my $formFieldIndex = 1;
-my $tagFieldIndex = 3;
-my $ctagFieldIndex = 4;
+my $tagFieldIndex = 4;
+my $ctagFieldIndex = 3;
 
 print STDERR "Tagging the sentences...\n";
 

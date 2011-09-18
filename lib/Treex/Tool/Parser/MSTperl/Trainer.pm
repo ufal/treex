@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Trainer;
 
 use Moose;
+use Carp;
 
 use Treex::Tool::Parser::MSTperl::Parser;
 

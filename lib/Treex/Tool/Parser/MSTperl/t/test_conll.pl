@@ -6,21 +6,21 @@ use utf8;
 binmode STDIN, ':utf8';
 binmode STDOUT, ':utf8';
 
-use Parser::MSTperl::FeaturesControl;
-use Parser::MSTperl::Reader;
-use Parser::MSTperl::Writer;
-use Parser::MSTperl::Parser;
+use Treex::Tool::Parser::MSTperl::FeaturesControl;
+use Treex::Tool::Parser::MSTperl::Reader;
+use Treex::Tool::Parser::MSTperl::Writer;
+use Treex::Tool::Parser::MSTperl::Parser;
 
 my ($test_file, $model_file, $config_file) = @ARGV;
 
-my $featuresControl = Parser::MSTperl::FeaturesControl->new(config_file => $config_file);
+my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => $config_file);
 
-my $reader = Parser::MSTperl::Reader->new(featuresControl => $featuresControl);
+my $reader = Treex::Tool::Parser::MSTperl::Reader->new(featuresControl => $featuresControl);
 my $test_data = $reader->read_tsv($test_file);
 my $sentence_count = scalar(@{$test_data});
 print "Going to test on $sentence_count sentences.\n";
 
-my $parser = Parser::MSTperl::Parser->new(featuresControl => $featuresControl);
+my $parser = Treex::Tool::Parser::MSTperl::Parser->new(featuresControl => $featuresControl);
 $parser->load_model($model_file);
 
 my $total_words = 0;
@@ -44,7 +44,7 @@ foreach my $correct_sentence (@{$test_data}) {
 #	print $child->parent->form." -> ".$child->form."\n";
 #    }
 }
-my $writer = Parser::MSTperl::Writer->new(featuresControl => $featuresControl);
+my $writer = Treex::Tool::Parser::MSTperl::Writer->new(featuresControl => $featuresControl);
 $writer->write_tsv($test_file.'.out', [@sentences]);
 
 my $total_score = 100 - (100*$total_errors/$total_words);
