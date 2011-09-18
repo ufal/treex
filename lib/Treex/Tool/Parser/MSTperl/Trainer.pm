@@ -29,10 +29,12 @@ my $DEBUG_ALPHAS = 0;
 my %feature_weights_summed;    # v
 
 sub BUILD {
-    my ( $self, $arg_ref ) = @_;
+    my ($self) = @_;
 
     $self->parser( Treex::Tool::Parser::MSTperl::Parser->new( featuresControl => $self->featuresControl ) );
     $self->model( $self->parser->model );
+
+    return;
 }
 
 sub train {
@@ -78,7 +80,7 @@ sub train {
     my $number_of_inner_iterations = $self->featuresControl->number_of_iterations * $sentence_count;    # how many times $self->mira_update() will be called
     for ( my $iteration = 1; $iteration <= $self->featuresControl->number_of_iterations; $iteration++ ) {    # for n : 1..N
         print "  Iteration number $iteration of " . $self->featuresControl->number_of_iterations . "...\n";
-        my $sentNo = 0;
+        $sentNo = 0;
         foreach my $sentence_correct_parse ( @{$training_data} ) {                                           # for t : 1..T # these are the inner iterations
             my $sentence_best_parse = $sentence_correct_parse->copy_nonparsed();                             # copy the sentence
             $self->parser->parse_sentence($sentence_best_parse);                                             # y' = argmax_y' s(x_t, y')
@@ -98,15 +100,18 @@ sub train {
 
             # END only progress and/or debug info
 
-            my $innerIteration  = ( $iteration - 1 ) * $sentence_count + $sentNo;
-	    # <0 .. (N*T-1)>
+            my $innerIteration = ( $iteration - 1 ) * $sentence_count + $sentNo;
+
+            # <0 .. (N*T-1)>
             my $sumUpdateWeight = $number_of_inner_iterations - $innerIteration;
-	    # weight of feature weights sum update <N*T .. 1>
-	    # $sumUpdateWeight denotes number of summands in which the weight would appear
-	    # if it were computed according to the definition
+
+            # weight of feature weights sum update <N*T .. 1>
+            # $sumUpdateWeight denotes number of summands in which the weight would appear
+            # if it were computed according to the definition
 
             $self->mira_update( $sentence_correct_parse, $sentence_best_parse, $sumUpdateWeight );
-	    # min ||w_i+1 - w_i|| s.t. ...
+
+            # min ||w_i+1 - w_i|| s.t. ...
 
             $sentNo++;
 
@@ -147,6 +152,8 @@ sub train {
 
     my $feature_count = scalar( keys %feature_weights_summed );
     print "Model trained with $feature_count features.\n";
+
+    return;
 }
 
 sub mira_update {
@@ -165,9 +172,7 @@ sub mira_update {
             = features_diff( $sentence_correct_parse->features, $sentence_best_parse->features );
 
         if ( $features_diff_count == 0 ) {
-            croak "Invalid assertion! (If the parses are
-                different, their features cannot be the same. If the parses are
-                the same, $error should be 0.)";
+            croak "Invalid assertion! (If the parses are different, their features cannot be the same. If the parses are the same, $error should be 0.)";
         }
 
         my $update = $error / $features_diff_count;                                     # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
@@ -202,6 +207,8 @@ sub update_feature_weight {
     $feature_weights_summed{$feature} += $sumUpdateWeight * $update;    # v = v + w_{i+1}
                                                                         # $sumUpdateWeight denotes number of summands in which the weight would appear
                                                                         # if it were computed according to the definition
+
+    return;
 }
 
 sub features_diff {

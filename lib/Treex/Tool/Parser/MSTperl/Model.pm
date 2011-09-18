@@ -28,7 +28,7 @@ sub store {
 
     print "Saving model to '$filename'... ";
 
-    open my $file, ">:utf8", $filename;
+    open my $file, ">:encoding(utf8)", $filename;
     print $file Dumper $self->weights;
     close $file;
 
@@ -44,7 +44,7 @@ sub store_tsv {
 
     print "Saving model to '$filename'... ";
 
-    open my $file, ">:utf8", $filename;
+    open my $file, ">:encoding(utf8)", $filename;
     foreach my $feature ( keys %{ $self->weights } ) {
         if ( $feature =~ /^([0-9]+):(.*)$/ ) {
             my $index            = $1;
@@ -96,7 +96,7 @@ sub load_tsv {
     }
 
     #read the file
-    open my $file, '<:utf8', $filename;
+    open my $file, '<:encoding(utf8)', $filename;
     while (<$file>) {
         chomp;
         my ( $feature, $weight ) = split /\t/;

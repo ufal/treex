@@ -63,6 +63,8 @@ sub BUILD {
         $node->ord($ord);
         $ord++;
     }
+
+    return;
 }
 
 sub fill_fields_after_parse {
@@ -101,6 +103,8 @@ sub fill_fields_after_parse {
         push @features, @{$edge_features};
     }
     $self->features( [@features] );
+
+    return;
 }
 
 sub clear_parse {
@@ -117,6 +121,8 @@ sub clear_parse {
 
     #clear features
     $self->features(undef);
+
+    return;
 }
 
 sub copy_nonparsed {
@@ -149,6 +155,8 @@ sub setChildParent {
 
     $child->parent($parent);
     $child->parentOrd($parentOrd);
+
+    return;
 }
 
 sub len {
@@ -171,7 +179,7 @@ sub getNodeByOrd {
     if ( $ord >= 0 && $ord <= $self->len() ) {
         return $self->nodes_with_root->[$ord];
     } else {
-        return undef;
+        return;    # undef
     }
 }
 

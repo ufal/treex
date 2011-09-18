@@ -14,7 +14,7 @@ sub write_tsv {
     # (Str $filename, ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $sentences)
     my ( $self, $filename, $sentences ) = @_;
 
-    open my $file, '>:utf8', $filename;
+    open my $file, '>:encoding(utf8)', $filename;
     foreach my $sentence ( @{$sentences} ) {
         foreach my $node ( @{ $sentence->nodes } ) {
 
@@ -27,6 +27,8 @@ sub write_tsv {
         print $file "\n";
     }
     close $file;
+
+    return;
 }
 
 1;

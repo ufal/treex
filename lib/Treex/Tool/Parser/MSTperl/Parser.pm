@@ -24,7 +24,7 @@ has model => (
 my $DEBUG = 0;
 
 sub BUILD {
-    my ( $self, $arg_ref ) = @_;
+    my ($self) = @_;
 
     $self->model( Treex::Tool::Parser::MSTperl::Model->new( featuresControl => $self->featuresControl ) );
 

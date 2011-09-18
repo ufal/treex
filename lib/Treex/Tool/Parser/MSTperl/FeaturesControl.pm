@@ -1051,6 +1051,8 @@ code for one edge to appear in the result.
 
 =head2 Fields
 
+=over 4
+
 =item field_names (ArrayRef[Str])
 
 Field names (for conversion of field index to field name)
@@ -1064,6 +1066,8 @@ Field names (for conversion of field index to field name)
 Index of each field name in field_names (for conversion of field name to field 
 index)
 
+=back
+
 =head2 Features
 
 TODO: slightly outdated
@@ -1073,6 +1077,8 @@ i.e. if several simple features are listed in C<simple_feature_codes> and
 then simple feature with index 9 is referred to in C<array_simple_features>, 
 it really means the C<B> simple feature which is on the 9th position in 
 C<simple_feature_codes>.
+
+=over 4
 
 =item feature_count (Int)
 

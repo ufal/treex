@@ -17,7 +17,7 @@ sub read_tsv {
     my @sentences;
     my @nodes;
     my $id = 1;
-    open my $file, '<:utf8', $filename;
+    open my $file, '<:encoding(utf8)', $filename;
     print "Reading '$filename'...\n";
     while (<$file>) {
         chomp;
