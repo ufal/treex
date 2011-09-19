@@ -1,6 +1,7 @@
 package Treex::Block::Print::TextPronCorefData;
+
+use Moose;
 use Treex::Core::Common;
-use MooseX::SemiAffordanceAccessor;
 
 # TODO this is weird, they should rather have a common ancestor class or role
 extends 'Treex::Block::A2T::CS::MarkTextPronCoref';

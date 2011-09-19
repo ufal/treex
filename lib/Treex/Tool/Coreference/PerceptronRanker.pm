@@ -1,5 +1,6 @@
 package Treex::Tool::Coreference::PerceptronRanker;
 
+use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
