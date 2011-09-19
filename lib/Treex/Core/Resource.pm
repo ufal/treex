@@ -32,11 +32,11 @@ sub require_file_from_share {
             log_debug("Found writable directory: $writable");
         }
     }
-    $who_wants_it = $who_wants_it // '';
-    log_info("Shared file '$rel_path_to_file' is missing by $who_wants_it.");
+    $who_wants_it = " by $who_wants_it" // '';
+    log_info("Shared file '$rel_path_to_file' is missing$who_wants_it.");
     log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
-    my $url = "http://ufallab.ms.mff.cuni.cz/tectomt/share/$rel_path_to_file";
+    my $url = Treex::Core::Config::share_url(). "/$rel_path_to_file";
     log_info("Trying to download $url");
 
     my $file = "$writable/$rel_path_to_file";
