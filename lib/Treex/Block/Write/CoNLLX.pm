@@ -5,10 +5,11 @@ extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
 
 has '+language' => ( required => 1 );
-has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel');
-has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/pos');
-has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos');
-has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
+has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
+has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/pos' );
+has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos' );
+has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_' );
+has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -18,6 +19,9 @@ sub process_atree {
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
         $deprel .= '_M' if ( $anode->is_member() );
         #my $ctag  = $self->get_coarse_grained_tag($tag);
+        if ($self->is_member_within_afun && $anode->is_member) {
+            $deprel .= '_M';
+        }
         my $feat;
         if ( $self->feat_attribute eq 'conll/feat' && defined $anode->conll_feat() ) {
             $feat = $anode->conll_feat();
