@@ -17,7 +17,6 @@ sub process_atree {
         my ( $lemma, $pos, $cpos, $deprel ) =
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
-        $deprel .= '_M' if ( $anode->is_member() );
         #my $ctag  = $self->get_coarse_grained_tag($tag);
         if ($self->is_member_within_afun && $anode->is_member) {
             $deprel .= '_M';
