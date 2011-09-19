@@ -59,6 +59,11 @@
       <!-- CoNLL shared task attributes (deprel, pos, cpos, feat) are grouped in one structure -->
       <member name="conll" type="a-conll.type"/>
 
+      <!-- Shared modifiers of coordinations can be distinguished in PDT style
+           just based on the fact they are hanged on the conjunction (coord. head).
+           However, in other styles (e.g. Stanford) this attribute might be useful. -->
+      <member name="is_shared_modifier" type="bool.type"/>
+
       <!-- attributes for conversion to t-tree -->
       <member name="edge_to_collapse" type="bool.type"/>
       <member name="is_auxiliary" type="bool.type"/>
