@@ -13,9 +13,10 @@ has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
 sub process_atree {
     my ( $self, $atree ) = @_;
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
-        my ( $lemma, $pos, $cpos, $deprel, $afun ) =
+        my ( $lemma, $pos, $cpos, $deprel ) =
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
+        $deprel .= '_M' if ( $anode->is_member() );
         #my $ctag  = $self->get_coarse_grained_tag($tag);
         my $feat;
         if ( $self->feat_attribute eq 'conll/feat' && defined $anode->conll_feat() ) {

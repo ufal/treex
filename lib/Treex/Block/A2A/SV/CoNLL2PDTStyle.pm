@@ -16,14 +16,6 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
-    #$self->lift_noun_phrases($a_root);
-    ###!!!$self->restructure_coordination($a_root);
-    #$self->mark_deficient_clausal_coordination($a_root);
-    ###!!! DZ: Zdeněk processes Swedish differently from what I do with the other languages.
-    ###!!! For some reason he requires that deprel_to_afun() is done after coordination restructuring,
-    ###!!! which is the contrary to my approach. I get the afuns first thing, before touching the tree structure.
-    ###!!! This must be put in line with the rest somehow!
-    $self->deprel_to_afun($a_root); # ZŽ: must follow coord. restructuring, probably executed twice now
     $self->shape_coordination_recursively($a_root, 2);
     $self->check_afuns($a_root);
 }
@@ -129,10 +121,40 @@ sub deprel_to_afun
             $afun = 'Atr';
         }
 
+        # Subordinate clause minus subordinating conjunction
+        elsif ( $deprel eq 'BS' )
+        {
+            $afun = 'Adv';
+        }
+
+        # Second conjunct (sister of conjunction) in binary branching analysis
+        elsif ( $deprel eq 'C+' )
+        {
+            # train/001.treex#120 ('hjälpsamhet' = 'helpfulness')
+            $afun = 'CoordArg';
+        }
+
         # Contrastive adverbial
         elsif ( $deprel eq 'CA' )
         {
             $afun = 'Adv';
+        }
+
+        # Sister of first conjunct in binary branching analysis of coordination
+        elsif ( $deprel eq 'CC' )
+        {
+            $afun = 'CoordArg';
+        }
+
+        # Conjunct
+        # First conjunct in binary branching analysis of coordination
+        elsif ( $deprel eq 'CJ' )
+        {
+            # DZ: example (train/001.treex#387): standardkraven/CJ (attached to 'Stressen'); CC: trångboddheten, pressen, miljön
+            # Stressen standardkraven, trångboddheten, den ekonomiska pressen och miljön skapar svårigheter för en familj.
+            # Stress of the standard requirements, overcrowding, the financial press and the environment creates difficulties for a family.
+            ###!!! The example is strange and I still don't understand it fully. The above translation is from Google so I may be missing something.
+            $afun = 'Atr';
         }
 
         # Doubled function
@@ -149,6 +171,7 @@ sub deprel_to_afun
             # Original Swedish tree for the example: 'så' attached non-projectively with 'doubled function' 'DB':
             #     är/??? ( är/AA ( Om/UK, så/DB ), ,/IK )
             ###!!!
+            $afun = 'Adv';
         }
 
         # Determiner
@@ -166,6 +189,7 @@ sub deprel_to_afun
             # DZ: The first example of this tag (train/001.treex#29) is strange.
             # I would not attach it to 'vad'. I believe it is coordinated with the main clause ('vi kan...')
             # We should look at more examples before deciding.
+            $afun = 'ExD';
         }
 
         # Logical object
@@ -213,6 +237,13 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
 
+        # Other head
+        elsif ( $deprel eq 'HD' )
+        {
+            # train/001.treex#4 ('sedan')
+            $afun = 'Adv';
+        }
+
         # Question mark
         elsif ( $deprel eq 'I?' )
         {
@@ -231,6 +262,12 @@ sub deprel_to_afun
         {
             # DZ: This tag does not occur in the treebank but it appears in the documentation.
             # Note that there is a POS tag 'ID' with the same meaning (example 001#7: the s-tag is 'HD' in this case).
+        }
+
+        # Infinitive phrase minus infinitive marker
+        elsif ( $deprel eq 'IF' )
+        {
+            # DZ: This tag does not occur in the treebank.
         }
 
         # Other punctuation mark
@@ -346,7 +383,7 @@ sub deprel_to_afun
 
         # Undocumented tag 'MD'. 'Modifier'?
         # Example (train/001.treex#26): subtree "den ena, eller båda" is tagged 'MD'.
-        elsif ( $deprel eq 'MA' )
+        elsif ( $deprel eq 'MD' )
         {
             $afun = 'Atr';
         }
@@ -378,6 +415,12 @@ sub deprel_to_afun
         elsif ( $deprel eq 'OO' )
         {
             $afun = 'Obj';
+        }
+
+        # Complement of preposition
+        elsif ( $deprel eq 'PA' )
+        {
+            $afun = 'Adv';
         }
 
         # Verb particle
@@ -444,6 +487,12 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
 
+        # Verb group
+        elsif ( $deprel eq 'VG' )
+        {
+            $afun = 'Atv';
+        }
+
         # Infinitive object complement
         elsif ( $deprel eq 'VO' )
         {
@@ -496,62 +545,7 @@ sub deprel_to_afun
             # DZ: This tag has not occurred in the treebank.
         }
 
-        # Conjunct
-        # First conjunct in binary branching analysis of coordination
-        elsif ( $deprel eq 'CJ' )
-        {
-            # DZ: example (train/001.treex#387): standardkraven/CJ (attached to 'Stressen'); CC: trångboddheten, pressen, miljön
-            # Stressen standardkraven, trångboddheten, den ekonomiska pressen och miljön skapar svårigheter för en familj.
-            # Stress of the standard requirements, overcrowding, the financial press and the environment creates difficulties for a family.
-            ###!!! The example is strange and I still don't understand it fully. The above translation is from Google so I may be missing something.
-            $afun = 'Atr';
-        }
-
-        # Other head
-        elsif ( $deprel eq 'HD' )
-        {
-            # train/001.treex#4 ('sedan')
-            $afun = 'Adv';
-        }
-
-        # Subordinate clause minus subordinating conjunction
-        elsif ( $deprel eq 'BS' )
-        {
-            $afun = 'Adv';
-        }
-
-        # Second conjunct (sister of conjunction) in binary branching analysis
-        elsif ( $deprel eq 'C+' )
-        {
-            # train/001.treex#120 ('hjälpsamhet' = 'helpfulness')
-            $afun = 'CoordArg';
-        }
-
-        # Sister of first conjunct in binary branching analysis of coordination
-        elsif ( $deprel eq 'CC' )
-        {
-            $afun = 'CoordArg';
-        }
-
-        # Infinitive phrase minus infinitive marker
-        elsif ( $deprel eq 'IF' )
-        {
-            # DZ: This tag does not occur in the treebank.
-        }
-
-        # Complement of preposition
-        elsif ( $deprel eq 'PA' )
-        {
-            $afun = 'Adv';
-        }
-
-        # Verb group
-        elsif ( $deprel eq 'VG' )
-        {
-            $afun = 'Atv';
-        }
-
-        $afun = $afun || $pos2afun{$pos} || 'NR';
+#        $afun = $afun || $pos2afun{$pos} || 'NR';
         $node->set_afun($afun);
     }
 }
