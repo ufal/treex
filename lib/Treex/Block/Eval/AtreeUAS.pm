@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
+has 'eval_is_member' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 my $number_of_nodes;
 my %same_as_ref;
@@ -13,12 +14,14 @@ sub process_bundle {
 
     my $ref_zone = $bundle->get_zone( $self->language, $self->selector );
     my @ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+    my @ref_is_member = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
     my @compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();
 
     $number_of_nodes += @ref_parents;
 
     foreach my $compared_zone (@compared_zones) {
         my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+        my @is_member = map { $_->->is_member } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 
         if ( @parents != @ref_parents ) {
             log_fatal 'There must be the same number of nodes in compared trees';
@@ -26,8 +29,8 @@ sub process_bundle {
         my $label = $compared_zone->get_label;
         foreach my $i ( 0 .. $#parents ) {
 
-            if ( $parents[$i] == $ref_parents[$i] ) {
-                $same_as_ref{$label}++
+            if ( $parents[$i] == $ref_parents[$i] && ( !$self->eval_is_member || $is_member[$i] == $ref_is_member[$i] ) ) {
+                $same_as_ref{$label}++;
             }
         }
     }
@@ -53,6 +56,6 @@ Measure similarity (in terms of unlabeled attachment score) of a-trees in all zo
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky
+# Copyright 2011 Zdenek Zabokrtsky, David Marecek
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
