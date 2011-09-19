@@ -56,6 +56,10 @@ sub parse_chunk {
     my @roots = ();
     foreach my $a_node (@a_nodes) {
         my $deprel = shift @$deprel_rf;
+        if ($deprel =~ /_M$/) {
+            $a_node->set_is_member(1);
+            $deprel =~ s/_M$//;
+        }
         $a_node->set_conll_deprel($deprel);
 
         if ($matrix_rf) {
