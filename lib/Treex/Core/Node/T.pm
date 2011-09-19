@@ -169,15 +169,22 @@ sub get_coref_text_nodes {
 }
 
 # it doesn't return a complete chain, just the members which are accessible
-# from current node
+# from the current node
 sub get_coref_chain {
     my ( $self, $arg_ref ) = @_;
     
+    my %visited_nodes = ();
     my @nodes;
     my @queue = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
     while (my $node = shift @queue) {
+        $visited_nodes{$node} = 1;
         push @nodes, $node;
-        push @queue, ( $node->_get_node_list('coref_gram.rf'), $node->_get_node_list('coref_text.rf') );
+        my @antes = ( $node->_get_node_list('coref_gram.rf'), $node->_get_node_list('coref_text.rf') );
+        foreach my $ante (@antes) {
+            if (!defined $visited_nodes{$ante}) {
+                push @queue, $ante;
+            }
+        }
     }
         
     return $self->_process_switches( $arg_ref, @nodes );

@@ -99,7 +99,7 @@ sub _create_instances {
     }
 
     my $instances;
-    print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
+    #print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
     for (my $i = 0; $i < @$ante_cands; $i++) {
         my $cand = $ante_cands->[$i];
         my $fe = $self->_feature_extractor;
