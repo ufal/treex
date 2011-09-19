@@ -51,7 +51,7 @@ sub BUILD {
         if ( $arg =~ /_/ ) {
             ( $lang, $sele ) = split /_/, $arg;
         }
-        if ( Treex::Core::Common::is_lang_code($lang) ) {
+        if ( Treex::Core::Types::is_lang_code($lang) ) {
             $self->add_zone_files( $lang, $sele, $args->{$arg} );
         }
         elsif ( $arg =~ /selector|language|scenario/ ) { }

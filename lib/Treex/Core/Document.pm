@@ -248,8 +248,6 @@ sub id_is_indexed {
 }
 
 sub get_node_by_id {
-
-    #komentare se vztahuji k TectoMT a vztahu M a A vrstvy -> neni to uz vyresene jinak?
     my $self = shift;
     my ($id) = pos_validated_list(
         \@_,
