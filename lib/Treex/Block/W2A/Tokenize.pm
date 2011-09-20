@@ -15,7 +15,7 @@ override 'tokenize_sentence' => sub {
     $sentence = $self->mark_urls($sentence);
 
     # the following characters (double-characters) are separated everywhere
-    $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚|\*|\^)/ $1 /g;
+    $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚|\*|\^)/ $1 /g; ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
 
     # short hyphen is separated if it is followed or preceeded by non-alphanuneric character and is not a part of --
     $sentence =~ s/([^\-\w])\-([^\-])/$1 - $2/g;
@@ -48,7 +48,7 @@ has _urls => ( is => 'rw' );
 sub mark_urls {
     my ( $self, $sentence ) = @_;
     my @urls;
-    while ( $sentence =~ s/(\W)((http:\/\/)?([\w\-]+\.)+(com|cz|de|es|eu|fr|hu|it|sk))(\W)/$1 XXXURLXXX $6/ ) {
+    while ( $sentence =~ s/(\W)((http:\/\/)?([\w\-]+\.)+(com|cz|de|es|eu|fr|hu|it|sk))(\W)/$1 XXXURLXXX $6/ ) { ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
         push @urls, $2;
     }
     $self->_set_urls( \@urls );

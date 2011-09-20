@@ -90,7 +90,7 @@ sub new_document {
         foreach my $zone_label ( keys %filenames ) {
             my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
-            my ( $name ) = $file =~ /([^.]+)(?:\..+)?/; #we gracefully throw away extension, because it is not used
+            my ($name) = $file =~ /([^.]+)(?:\..+)?/;    #we gracefully throw away extension, because it is not used
             my ( $lang, $sele ) = ( $zone_label, '' );
             if ( $zone_label =~ /_/ ) {
                 ( $lang, $sele ) = split /_/, $zone_label;
@@ -164,7 +164,7 @@ and you can use C<next_filenames> and C<new_document> methods.
 
 =over
 
-=item any parameter in a form of a valid I<zone_label> 
+=item any parameter in a form of a valid I<zone_label>
 
 space or comma separated list of filenames, or C<-> for STDIN.
 
@@ -199,7 +199,7 @@ which are guessed based on C<current_filenames>.
 
 =item current_filenames
 
-returns the last filenames returned by C<next_filenames> 
+returns the last filenames returned by C<next_filenames>
 
 =item number_of_documents
 

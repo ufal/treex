@@ -54,14 +54,14 @@ Treex::Block::Read::AlignedSentences
 
 Document reader for plain text format, one sentence per line.
 Aligned sentences (usually in different languages) are loaded at once into respective zones.
-The sentences are stored into L<bundles|Treex::Core::Bundle> in the 
+The sentences are stored into L<bundles|Treex::Core::Bundle> in the
 L<document|Treex::Core::Document>.
 
 =head1 ATTRIBUTES
 
 =over
 
-=item any parameter in a form of a valid I<zone_label> 
+=item any parameter in a form of a valid I<zone_label>
 
 space or comma separated list of filenames, or C<-> for STDIN.
 

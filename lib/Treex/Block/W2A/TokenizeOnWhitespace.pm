@@ -46,11 +46,15 @@ sub process_zone {
 
 __END__
 
-TODO POD
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::TokenizeOnWhitespace
+Treex::Block::W2A::TokenizeOnWhitespace - Base tokenizer, splits on whitespaces, fills no_space_after
+
+=head1 VERSION
+
+=head1 DESCRIPTION
 
 Each sentence is split into a sequence of tokens.
 Flat a-tree is built and attributes C<no_space_after> are filled.
@@ -58,9 +62,28 @@ This class tokenizes only on whitespaces,
 but it can be used as an ancestor for more apropriate tokenization
 by overriding the method C<tokenize_sentence>.
 
+=head1 METHODS
+
+=over 4
+
+=item tokenize_sentence()
+
+this method can be overridden in more advanced tokenizers
+
+=item process_zone()
+
+this method does all work of this tokenizer
+
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2011 David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
