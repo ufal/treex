@@ -170,7 +170,7 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
 
 =head1 NAME
 
-Treex::Tool::EnglishMorpho::Analysis
+Treex::Tool::EnglishMorpho::Analysis - rule based morphological analyzer for English
 
 
 =head1 SYNOPSIS
@@ -189,6 +189,16 @@ Treex::Tool::EnglishMorpho::Analysis
 
 Method get_possible_tags($wordform) returns the list of PennTreebank-style
 morphological tags for the given word form.
+
+=head1 METHODS
+
+=over 4
+
+=item get_possible_tags
+
+Given wordform returns list of possible POS tags.
+
+=back
 
 =head1 AUTHORS
 

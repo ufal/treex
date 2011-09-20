@@ -1,5 +1,6 @@
 package Treex::Block::W2A::EN::TagLinguaEn;
 use 5.010;
+use feature qw(switch);
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -15,12 +16,14 @@ has _tagger => (
 );
 
 has _form_corrections => (
-    is => 'ro',
-    isa => 'HashRef[Str]',
-    default => sub { {
-            q(``)=>q("),
-            q('')=>q("),
-        }},
+    is      => 'ro',
+    isa     => 'HashRef[Str]',
+    default => sub {
+        {
+            q(``)     => q("),
+                q('') => q("),
+        }
+    },
     documentation => q{Possible changes in forms done by tagger},
 );
 
@@ -30,53 +33,61 @@ sub _build_tagger {
     return $tagger;
 }
 
-sub _revert_form { #because Lingua::EN::Tagger changes some forms to another, we need to restore original
+sub _revert_form {    #because Lingua::EN::Tagger changes some forms to another, we need to restore original
     my $self = shift;
     my %args = @_;
-    my $new = $args{new};
+    my $new  = $args{new};
     return $self->_form_corrections->{$new} // $new;
 }
 
 
+# using new switch syntax
 sub _correct_lingua_tag {    # substitution according to http://search.cpan.org/src/ACOBURN/Lingua-EN-Tagger-0.13/README
                              # puvodni tagset je na http://www.computing.dcu.ie/~acahill/tagset.html
     my ( $self, $linguatag, $wordform ) = @_;
-
-    if ( $linguatag eq "DET" ) {
-        return "DT";
-    }
-    elsif ( $linguatag eq "PRPS" ) {
-        return "PRP\$";
-    }
-    elsif ( $linguatag =~ /^[LR]RB$/ ) {
-        return "-$linguatag-";
-    }
-    elsif ( $linguatag =~ /^PP/ ) {    # allowed "tags" of punctuation mark in PennTB: #  $ '' ( ) , . : ``
-        if ( $wordform =~ /^(#|$|''|,|\.|:|``)$/ ) {
-            return $wordform
+    given ($linguatag) {
+        when ('DET') {
+            return 'DT';
         }
-        elsif ( $wordform =~ /[\(\[\{]/ ) {
-            return "-LRB-"
+        when ('PRPS') {
+            return 'PRP$';
         }
-        elsif ( $wordform =~ /[\)\]\}]/ ) {
-            return "-RRB-"
+        when (/^[LR]RB$/) {
+            return "-$linguatag-";
         }
-        else {
-            return ".";
+        when (/^PP/) {       # allowed "tags" of punctuation mark in PennTB: #  $ '' ( ) , . : ``
+
+            given ($wordform) {
+
+                when (/^(?:#|$|''|,|\.|:|``)$/) {
+                    return $wordform;
+                }
+                when (/[\(\[\{]/) {
+                    return "-LRB-";
+                }
+                when (/[\)\]\}]/) {
+                    return "-RRB-";
+                }
+                default {
+                    return ".";
+                }
+
+            }
+        }
+        default {
+            return $linguatag;
         }
 
-    }    # v lingua-taggeru maji pro punktuaci zvlastni tagy, to ale v ptb nebylo!
+        # v lingua-taggeru maji pro punktuaci zvlastni tagy, to ale v ptb nebylo!
 
-    #  elsif ($linguatag eq "LRB") {return "."}  # hack, zavorky totiz collins nesezere  - tyhle vsechny zameny by spis mely bejt ve wrapperu ke collinsu
-    #  elsif ($linguatag eq "RRB") {return "."}
-    #  elsif ($linguatag eq "PP") {return "."}
-    #  elsif ($linguatag eq "PPL") {return "``"}
-    #  elsif ($linguatag eq "PPR") {return "''"}
-    #  elsif ($linguatag eq "PPC") {return ","}
-    #  elsif ($linguatag eq "PPS") {return ","}    #POZOR, cunarna, tagger dava PPS pomlcce a Collins na tom pak pada, ale nevim, jaky tag teda patri
+        #  when ("LRB") {return "."}  # hack, zavorky totiz collins nesezere  - tyhle vsechny zameny by spis mely bejt ve wrapperu ke collinsu
+        #  when ("RRB") {return "."}
+        #  when ("PP" ) {return "."}
+        #  when ("PPL") {return "``"}
+        #  when ("PPR") {return "''"}
+        #  when ("PPC") {return ","}
+        #  when ("PPS") {return ","}    #POZOR, cunarna, tagger dava PPS pomlcce a Collins na tom pak pada, ale nevim, jaky tag teda patri
 
-    else {
-        return $linguatag;
     }
 }
 
@@ -117,7 +128,7 @@ sub process_zone {
                 $sentence =~ s{$space_start}{};
 
                 # and create node under root
-                my $new_a_node = $a_root->create_child(
+                $a_root->create_child(
                     form           => $form,
                     tag            => $tag,
                     no_space_after => $no_space_after,

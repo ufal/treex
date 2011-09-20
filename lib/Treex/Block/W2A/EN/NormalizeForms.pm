@@ -33,18 +33,34 @@ sub process_anode {
 
 __END__
 
-=pod
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::EN::NormalizeForms
+Treex::Block::W2A::EN::NormalizeForms - normalize some wordforms
+
+=head1 DESCRIPTION
 
 Some forms are normalized, for example all the quotation marks
 get the normalized form `` or ''.
 
+=head1 OVERRIDEN METHODS
+
+=head2 from C<Treex::Core::Block>
+
+=over 4
+
+=item process_anode
+
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2010-2011 David Marecek
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010 - 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

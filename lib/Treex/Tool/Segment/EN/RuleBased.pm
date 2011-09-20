@@ -14,7 +14,7 @@ my $UNBREAKERS = qr{
     |Bart|Bldg|Brig|Bros|Capt|Cmdr|Col|Comdr|Con|Corp|Cpl|DR|Dr|Drs|Ens|Gen|Gov
     |Hon|Hr|Hosp|Insp|Lt|MM|MR|MRS|MS|Maj|Messrs|Mlle|Mme|Mr|Mrs|Ms|Msgr|Op|Ord
     |Pfc|Ph|Prof|Pvt|Rep|Reps|Res|Rev|Rt|Sen|Sens|Sfc|Sgt|Sr|St|Supt|Surg
-}x;
+}x;    ## no critic (RegularExpressions::ProhibitComplexRegexes) this is nothing complex, just list
 
 override unbreakers => sub {
     return $UNBREAKERS;
@@ -24,9 +24,15 @@ override unbreakers => sub {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Tool::Segment::EN::RuleBased
+=head1 NAME
+
+Treex::Tool::Segment::EN::RuleBased - rule based sentence segmenter for English
+
+=head1 VERSION
+
+=head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules
 that detect end-sentence punctuation ([.?!]) followed by a uppercase letter.
@@ -36,9 +42,13 @@ even if they are followed by a period and a capital letter.
 
 See L<Treex::Block::W2A::Segment>
 
-=back
+=head1 AUTHOR
 
-=cut
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

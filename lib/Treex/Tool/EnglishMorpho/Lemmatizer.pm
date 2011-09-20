@@ -93,7 +93,7 @@ sub _cut_negative_prefix {
 }
 
 sub _lemmatize_NNS_NNPS {
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/men$/man/;          #over 600 words (in BNC)
     return $word if $word =~ s/shoes$/shoe/;
     return $word if $word =~ s/wives$/wife/;
@@ -114,7 +114,7 @@ sub _lemmatize_NNS_NNPS {
 }
 
 sub _lemmatize_VBG {                               ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/(${CXY}z)ing$/$1/;
     return $word if $word =~ s/(${VY}z)ing$/$1e/;
     return $word if $word =~ s/($S2)ing$/$1/;
@@ -152,7 +152,7 @@ sub _lemmatize_VBG {                               ## no critic (Subroutines::Pr
 }
 
 sub _lemmatize_VBD_VBN {                                      ## no critic (Subroutines::ProhibitExcessComplexity) this is complex
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/en$/e/;
     return $word if $word =~ s/(${CXY}z)ed$/$1/;
     return $word if $word =~ s/(${VY}z)ed$/$1e/;
@@ -189,7 +189,7 @@ sub _lemmatize_VBD_VBN {                                      ## no critic (Subr
 }
 
 sub _lemmatize_VBZ {
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/(${V}se)s$/$1/;
     return $word if $word =~ s/(.${CXY}z)es$/$1/;
     return $word if $word =~ s/(${VY}ze)s$/$1/;
@@ -205,7 +205,7 @@ sub _lemmatize_VBZ {
 }
 
 sub _lemmatize_JJR_RBR {
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/([^e]ll)er$/$1/;                           #smaller
     return $word if $word =~ s/($C)\1er$/$1/;                             #bigger
     return $word if $word =~ s/ier$/y/;                                   #earlier
@@ -219,7 +219,7 @@ sub _lemmatize_JJR_RBR {
 }
 
 sub _lemmatize_JJS_RBS {
-    my ($self, $word) = @_;
+    my ( $self, $word ) = @_;
     return $word if $word =~ s/([^e]ll)est$/$1/;                           #smallest
     return $word if $word =~ s/(.)\1est$/$1/;                              #biggest
     return $word if $word =~ s/iest$/y/;                                   #earliest
@@ -295,13 +295,24 @@ indiscriminate ??
 
 =head1 NAME
 
-Treex::Tool::EnglishMorpho::Lemmatizer
+Treex::Tool::EnglishMorpho::Lemmatizer - rule based lemmatizer for English
 
 =head1 SYNOPSIS
 
  use Treex::Tool::EnglishMorpho::Lemmatizer;
  my ($word,  $tag) = qw( goes VBZ );
  my ($lemma, $neg) = Treex::Tool::EnglishMorpho::Lemmatizer::lemmatize($word, $tag);
+
+=head1 METHODS
+
+=over 4
+
+=item lemmatize
+
+Accepts pair of word and tag.
+Produces pair with its lemma and indication if word was negation
+
+=back
 
 =head1 DESCRIPTION
 
@@ -332,7 +343,7 @@ Covers:
 =item Tokenization
 
 I<doesn't> should be tokenized as two words: I<does> and I<n't>
-(It will be lemmatized as I<do> and I<not>). 
+(It will be lemmatized as I<do> and I<not>).
 
 =item Tagging
 
@@ -385,11 +396,13 @@ sci-fi -> sci-fus, Mitsubishi -> mitsubishus, Shanghai -> shanghaus,...
 
 =back
 
-=head1 AUTHORS
+=head1 AUTHO
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-=cut
+=head1 COPYRIGHT
 
-Copyright 2008-2010 Martin Popel
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README
+Copyright © 2008 - 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

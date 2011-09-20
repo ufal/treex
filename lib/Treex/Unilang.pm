@@ -1,4 +1,6 @@
 package Treex::Unilang;
+use strict;
+use warnings;
 
 1;
 

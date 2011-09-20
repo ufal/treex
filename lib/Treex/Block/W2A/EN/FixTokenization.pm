@@ -63,9 +63,13 @@ sub process_atree {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::EN::FixTokenization
+=head1 NAME
+
+Treex::Block::W2A::EN::FixTokenization - fix some issues in output of tokenizer
+
+=head1 DESCRIPTION
 
 Some abbreviations (with periods) are merged into one token.
 For example I<"e. g."> is in Penn Treebank one token (with tag FW).
@@ -73,9 +77,23 @@ Using only L<SEnglishW_to_SEnglishM::Penn_style_tokenization>
 we get four tokens: I<e . g .> which may be distributed by the parser
 into different clauses. And this is hard to fix afterwards.
 
+=head1 OVERRIDEN METHODS
+
+=head2 from C<Treex::Core::Block>
+
+=over 4
+
+=item process_atree
+
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2009 Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009 - 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

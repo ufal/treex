@@ -19,7 +19,8 @@ sub process_anode {
 
 sub _get_tag {
     my ($self, $node) = @_;
-    my ( $form, $tag, $id ) = $node->get_attrs( 'form', 'tag', 'id' );
+    my ( $form, $tag ) = $node->get_attrs( 'form', 'tag' );
+    #my ( $form, $tag, $id ) = $node->get_attrs( 'form', 'tag', 'id' );
     # Abbreviations like MPs, CDs or DVDs should be tagged as plural proper noun
     return 'NNPS' if $tag =~ /^NN/ && $form =~ /^\p{IsUpper}{2,}s$/;
 
@@ -62,13 +63,15 @@ sub _get_tag {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::EN::FixTags
+=head1 NAME
 
-Fixes tags for TectoMT purposes.
+Treex::Block::W2A::EN::FixTags - Fixes tags for TectoMT purposes.
 
-=over
+=head1 DESCRIPTION
+
+=over 4
 
 =item sooner
 
@@ -87,9 +90,25 @@ Abbreviations like I<MPs, CDs or DVDs> are tagged as plural proper noun (C<NNPS>
 
 =back
 
+=head1 OVERRIDEN METHODS
+
+=head2 from C<Treex::Core::Block>
+
+=over 4
+
+=item process_anode
+
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2010 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008 - 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

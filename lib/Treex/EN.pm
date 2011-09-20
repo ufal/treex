@@ -1,4 +1,6 @@
 package Treex::EN;
+use strict;
+use warnings;
 
 1;
 
@@ -10,7 +12,7 @@ __END__
 
 =head1 NAME
 
-Treex::EN - collection of blocks for processing English 
+Treex::EN - collection of blocks for processing English
 
 =head1 SYNOPSIS
 
