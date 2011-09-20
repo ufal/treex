@@ -64,7 +64,7 @@ sub BUILD {
         $ord++;
     }
 
-    return;
+    return;    # only technical
 }
 
 sub fill_fields_after_parse {
@@ -104,7 +104,7 @@ sub fill_fields_after_parse {
     }
     $self->features( [@features] );
 
-    return;
+    return 1;
 }
 
 sub clear_parse {
@@ -122,7 +122,7 @@ sub clear_parse {
     #clear features
     $self->features(undef);
 
-    return;
+    return 1;
 }
 
 sub copy_nonparsed {
@@ -156,7 +156,7 @@ sub setChildParent {
     $child->parent($parent);
     $child->parentOrd($parentOrd);
 
-    return;
+    return 1;
 }
 
 sub len {

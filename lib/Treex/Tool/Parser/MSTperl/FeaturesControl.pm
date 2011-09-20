@@ -40,7 +40,7 @@ sub _parent_ord_set {
     my $parent_ord_index = $self->field_name2index($parent_ord);
     $self->parent_ord_field_index($parent_ord_index);
 
-    return;
+    return;    # only technical
 }
 
 has 'parent_ord_field_index' => (
@@ -68,8 +68,7 @@ sub _root_field_values_set {
             "must be same as number of field names ($field_names_count)!";
     }
 
-    return;
-
+    return;    # only technical
 }
 
 has 'number_of_iterations' => (
@@ -147,7 +146,7 @@ sub _distance_buckets_set {
     }
     $self->distance2bucket( \%distance2bucket );
 
-    return;
+    return;    # only technical
 }
 
 has 'distance2bucket' => (
@@ -210,7 +209,7 @@ sub _field_names_set {
     $self->field_names_hash( \%field_names_hash );
     $self->field_indexes( \%field_indexes );
 
-    return;
+    return;    # only technical
 }
 
 # 1 for each field name to easily check if a field name exists
@@ -384,7 +383,7 @@ sub BUILD {
 
     print "Done." . "\n";
 
-    return;
+    return;    # only technical
 }
 
 sub set_feature {
@@ -393,7 +392,6 @@ sub set_feature {
     if ( $self->feature_codes_hash->{$feature_code} ) {
         warn "Feature '$feature_code' is defined more than once; " .
             "disregarding its later definitions.\n";
-        return;
     } else {
 
         # get simple features
@@ -437,7 +435,7 @@ sub set_feature {
         }
     }
 
-    return;
+    return 1;
 }
 
 sub set_simple_feature {
@@ -522,7 +520,7 @@ sub set_simple_feature {
     push @{ $self->simple_feature_subs },          $simple_feature_sub;
     push @{ $self->simple_feature_field_indexes }, $simple_feature_field_index;
 
-    return;
+    return 1;
 }
 
 sub field_name2index {
@@ -940,7 +938,7 @@ sub feature_equals {
 
         # we handle undefines and empties specially
         if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
-            my $return   = 0;                      # default not equal
+            my $result   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
 
@@ -948,11 +946,11 @@ sub feature_equals {
             foreach my $value_1 (@values_1) {
                 foreach my $value_2 (@values_2) {
                     if ( $value_1 eq $value_2 ) {
-                        $return = 1;               # one match is enough
+                        $result = 1;               # one match is enough
                     }
                 }
             }
-            return $return;
+            return $result;
         } else {
             return -1;                             # undef
         }
@@ -974,7 +972,7 @@ sub feature_equalspc {
 
         # we handle undefines and empties specially
         if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
-            my $return   = 0;                      # default not equal
+            my $result   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
 
@@ -982,11 +980,11 @@ sub feature_equalspc {
             foreach my $value_1 (@values_1) {
                 foreach my $value_2 (@values_2) {
                     if ( $value_1 eq $value_2 ) {
-                        $return = 1;               # one match is enough
+                        $result = 1;               # one match is enough
                     }
                 }
             }
-            return $return;
+            return $result;
         } else {
             return -1;                             # undef
         }

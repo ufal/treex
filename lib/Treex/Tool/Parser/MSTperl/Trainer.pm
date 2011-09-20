@@ -34,7 +34,7 @@ sub BUILD {
     $self->parser( Treex::Tool::Parser::MSTperl::Parser->new( featuresControl => $self->featuresControl ) );
     $self->model( $self->parser->model );
 
-    return;
+    return;                    # only technical
 }
 
 sub train {
@@ -153,7 +153,7 @@ sub train {
     my $feature_count = scalar( keys %feature_weights_summed );
     print "Model trained with $feature_count features.\n";
 
-    return;
+    return 1;
 }
 
 sub mira_update {
@@ -211,7 +211,7 @@ sub mira_update {
         }
     }
 
-    return;
+    return 1;
 }
 
 sub update_feature_weight {
@@ -220,15 +220,15 @@ sub update_feature_weight {
     my ( $self, $feature, $update, $sumUpdateWeight ) = @_;
 
     #adds $update to the current weight of the feature
-    $self->model->update_feature_weight( $feature, $update );
-    
+    my $result = $self->model->update_feature_weight( $feature, $update );
+
     # v = v + w_{i+1}
     # $sumUpdateWeight denotes number of summands
     # in which the weight would appear
     # if it were computed according to the definition
-    $feature_weights_summed{$feature} += $sumUpdateWeight * $update;    
+    $feature_weights_summed{$feature} += $sumUpdateWeight * $update;
 
-    return;
+    return $result;
 }
 
 sub features_diff {
@@ -244,6 +244,7 @@ sub features_diff {
     foreach my $feature ( @{$features_second} ) {
         $feature_counts{$feature}--;
     }
+
     # TODO: disregard features which occur in both parses?
 
     #do the diff

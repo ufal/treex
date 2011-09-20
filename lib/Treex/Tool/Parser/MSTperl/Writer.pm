@@ -28,7 +28,7 @@ sub write_tsv {
     }
     close $file;
 
-    return;
+    return 1;
 }
 
 1;

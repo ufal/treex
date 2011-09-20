@@ -34,7 +34,7 @@ sub store {
 
     print "Model saved.\n";
 
-    return;
+    return 1;
 }
 
 sub store_tsv {
@@ -60,7 +60,7 @@ sub store_tsv {
 
     print "Model saved.\n";
 
-    return;
+    return 1;
 }
 
 sub load {
@@ -75,7 +75,7 @@ sub load {
 
     print "Model loaded.\n";
 
-    return;
+    return 1;
 }
 
 sub load_tsv {
@@ -89,9 +89,9 @@ sub load_tsv {
 
     #precompute feature code to feature index translation table
     my %code2index;
-    my $feature_num = $self->featuresControl->all_features_num;
+    my $feature_num = $self->featuresControl->feature_count;
     for ( my $feature_index = 0; $feature_index < $feature_num; $feature_index++ ) {
-        my $code = $self->featuresControl->all_feature_codes->[$feature_index];
+        my $code = $self->featuresControl->feature_codes->[$feature_index];
         $code2index{$code} = $feature_index;
     }
 
@@ -116,7 +116,7 @@ sub load_tsv {
 
     print "Model loaded.\n";
 
-    return;
+    return 1;
 }
 
 # ACCESS TO FEATURES
@@ -165,7 +165,7 @@ sub set_feature_weight {
 
     $self->weights->{$feature} = $weight;
 
-    return;
+    return 1;
 }
 
 sub update_feature_weight {
@@ -175,7 +175,7 @@ sub update_feature_weight {
 
     $self->weights->{$feature} += $update;
 
-    return;
+    return 1;
 }
 
 1;

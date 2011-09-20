@@ -28,7 +28,7 @@ sub BUILD {
 
     $self->model( Treex::Tool::Parser::MSTperl::Model->new( featuresControl => $self->featuresControl ) );
 
-    return;
+    return;    # only technical
 }
 
 sub load_model {
@@ -36,9 +36,7 @@ sub load_model {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    $self->model->load($filename);
-
-    return;
+    return $self->model->load($filename);
 }
 
 sub parse_sentence {

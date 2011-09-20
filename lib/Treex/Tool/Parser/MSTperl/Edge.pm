@@ -36,17 +36,18 @@ has sentence => (
 sub BUILD {
     my ($self) = @_;
 
+    # parent precedes child
     if ( $self->parent->ord < $self->child->ord ) {
         $self->first( $self->parent );
         $self->second( $self->child );
-    } else {
 
-        # $self->child->ord < $self->parent->ord
+        # parent follows child
+    } else {
         $self->first( $self->child );
         $self->second( $self->parent );
     }
 
-    return;
+    return;    # only technical
 }
 
 sub signature {
