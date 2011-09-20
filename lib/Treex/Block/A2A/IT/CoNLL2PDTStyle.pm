@@ -28,8 +28,7 @@ sub process_zone
 sub make_pdt_coordination {    
     my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();    
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
+    for my $node (@nodes) {
         my $parnode = $node->get_parent();
         my $deprel = $node->afun();
         my @children = $node->get_children();
@@ -41,8 +40,7 @@ sub make_pdt_coordination {
             my @rec_nodes;
             my @coord_nodes;
             
-            for (my $j = 0; $j <= $#children; $j++) {
-                my $kid = $children[$j];
+            for my $kid (@children) {
                 my $deprel_child = $kid->afun();
                 
                 if (($deprel_child eq 'con') || ($deprel_child eq 'dis')) {
@@ -113,8 +111,7 @@ sub make_pdt_coordination {
 sub find_afun_for_unkafun {
     my ( $self, $root ) = @_;
     my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
+    for my $node (@nodes) {
         my $deprel = $node->afun();
         my $form = $node->form();
         my $newafun;
