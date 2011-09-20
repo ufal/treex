@@ -106,7 +106,7 @@ sub _distance_buckets_set {
     foreach my $bucket ( @{$distance_buckets} ) {
         if ( $distance2bucket{$bucket} ) {
             warn "Bucket '$bucket' is defined more than once; " .
-                "disregarding its later definitions.";
+                "disregarding its later definitions.\n";
         } elsif ( $bucket <= 0 ) {
             croak "MSTperl config file error: " .
                 "Error on bucket '$bucket' - " .
@@ -128,7 +128,7 @@ sub _distance_buckets_set {
     # fill %distance2bucket from minBucket to maxBucket
     if ( !$distance2bucket{1} ) {
         warn "Bucket '1' is not defined, which does not make any sense; " .
-            "adding definition of bucket '1'.";
+            "adding definition of bucket '1'.\n";
         $distance2bucket{1}  = 1;
         $distance2bucket{-1} = -1;
     }
@@ -371,7 +371,7 @@ sub BUILD {
             $self->set_feature($feature);
         }
     } else {
-        die "MSTperl config file error: " . YAML::Tiny->errstr;
+        croak "MSTperl config file error: " . YAML::Tiny->errstr;
     }
 
     # ignore some settings if in parsing-only mode
@@ -391,7 +391,8 @@ sub set_feature {
     my ( $self, $feature_code ) = @_;
 
     if ( $self->feature_codes_hash->{$feature_code} ) {
-        warn "Feature '$feature_code' is defined more than once; disregarding its later definitions.";
+        warn "Feature '$feature_code' is defined more than once; " .
+            "disregarding its later definitions.\n";
         return;
     } else {
 
@@ -403,7 +404,9 @@ sub set_feature {
 
             # checks
             if ( $simple_features_hash{$simple_feature_code} ) {
-                warn "Simple feature '$simple_feature_code' is used more than once in '$feature_code'; disregarding its later uses.";
+                warn "Simple feature '$simple_feature_code' " .
+                    "is used more than once in '$feature_code'; " .
+                    "disregarding its later uses.\n";
                 next;
             }
             if ( !$self->simple_feature_codes_hash->{$simple_feature_code} ) {
@@ -444,47 +447,67 @@ sub set_simple_feature {
     my $simple_feature_index = scalar @{ $self->simple_feature_codes };
     my $simple_feature_sub;
     my $simple_feature_field;
-    if ( $simple_feature_code =~ /^([a-z0-9_]+)$/ ) {
+
+    # simple parent/child feature
+    if ( $simple_feature_code =~ /^([a-zA-Z0-9_]+)$/ ) {
 
         # child feature
-        $simple_feature_sub   = \&{feature_child};
-        $simple_feature_field = $1;
-    } elsif ( $simple_feature_code =~ /^([A-Z0-9_]+)$/ ) {
+        if ( $simple_feature_code =~ /^([a-z0-9_]+)$/ ) {
+            $simple_feature_sub   = \&{feature_child};
+            $simple_feature_field = $1;
 
-        # parent feature
-        $simple_feature_sub   = \&{feature_parent};
-        $simple_feature_field = lc($1);
-    } elsif ( $simple_feature_code =~ /^1\.([a-z0-9_]+)$/ ) {
+            # parent feature
+        } elsif ( $simple_feature_code =~ /^([A-Z0-9_]+)$/ ) {
+            $simple_feature_sub   = \&{feature_parent};
+            $simple_feature_field = lc($1);
+        } else {
+            croak "Incorrect simple feature format '$simple_feature_code'. " .
+                "Use lowercase (" . lc($simple_feature_code) .
+                ") for child node and UPPERCASE (" . uc($simple_feature_code) .
+                ") for parent node.";
+        }
+
+        # first/second node feature
+    } elsif ( $simple_feature_code =~ /^([12])\.([a-z0-9_]+)$/ ) {
+
+        $simple_feature_field = $2;
 
         # first node feature
-        $simple_feature_sub   = \&{feature_first};
-        $simple_feature_field = $1;
-    } elsif ( $simple_feature_code =~ /^2\.([a-z0-9_]+)$/ ) {
+        if ( $1 eq '1' ) {
+            $simple_feature_sub = \&{feature_first};
 
-        # second node feature
-        $simple_feature_sub   = \&{feature_second};
-        $simple_feature_field = $1;
-    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+)\)$/ ) {
+            # second node feature
+        } elsif ( $1 eq '2' ) {
+            $simple_feature_sub = \&{feature_second};
+        } else {
+            croak "Assertion failed!";
+        }
 
         # function feature
+    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\([a-z0-9_,]+\)$/ ) {
         my $function_name = $1;
-        $simple_feature_sub =
-            $self->get_simple_feature_sub_reference($function_name);
-        $simple_feature_field = $2;
+        $simple_feature_sub = $self->get_simple_feature_sub_reference($function_name);
 
         # array function?
         if ( $function_name eq 'between' || $function_name eq 'foreach' ) {
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
-    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
 
-        # two-arg function feature
-        my $function_name = $1;
-        $simple_feature_sub =
-            $self->get_simple_feature_sub_reference($function_name);
-        my $simple_feature_field_1 = $2;
-        my $simple_feature_field_2 = $3;
-        $simple_feature_field = [ $simple_feature_field_1, $simple_feature_field_2 ];
+        # one-arg function feature
+        if ( $simple_feature_code =~ /\(([a-z0-9_]+)\)$/ ) {
+            $simple_feature_field = $1;
+
+            # two-arg function feature
+        } elsif ( $simple_feature_code =~ /\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
+            my $simple_feature_field_1 = $1;
+            my $simple_feature_field_2 = $2;
+            $simple_feature_field = [ $simple_feature_field_1, $simple_feature_field_2 ];
+
+        } else {
+            croak "Incorrect simple function feature format " .
+                "'$simple_feature_code'. " .
+                "Only one or two arguments can be used.";
+        }
     } else {
         croak "Incorrect simple feature format '$simple_feature_code'.";
     }
@@ -668,35 +691,27 @@ sub get_simple_feature_values_array {
     return [@simple_feature_values];
 }
 
+my %simple_feature_sub_references = (
+    'distance'    => \&{feature_distance},
+    'preceding'   => \&{feature_preceding_child},
+    'PRECEDING'   => \&{feature_preceding_parent},
+    '1.preceding' => \&{feature_preceding_first},
+    '2.preceding' => \&{feature_preceding_second},
+    'following'   => \&{feature_following_child},
+    'FOLLOWING'   => \&{feature_following_parent},
+    '1.following' => \&{feature_following_first},
+    '2.following' => \&{feature_following_second},
+    'between'     => \&{feature_between},
+    'foreach'     => \&{feature_foreach},
+    'equals'      => \&{feature_equals},
+    'equalspc'    => \&{feature_equalspc},
+);
+
 sub get_simple_feature_sub_reference {
     my ( $self, $simple_feature_function ) = @_;
 
-    if ( $simple_feature_function eq 'distance' ) {
-        return \&{feature_distance};
-    } elsif ( $simple_feature_function eq 'preceding' ) {
-        return \&{feature_preceding_child};
-    } elsif ( $simple_feature_function eq 'PRECEDING' ) {
-        return \&{feature_preceding_parent};
-    } elsif ( $simple_feature_function eq '1.preceding' ) {
-        return \&{feature_preceding_first};
-    } elsif ( $simple_feature_function eq '2.preceding' ) {
-        return \&{feature_preceding_second};
-    } elsif ( $simple_feature_function eq 'following' ) {
-        return \&{feature_following_child};
-    } elsif ( $simple_feature_function eq 'FOLLOWING' ) {
-        return \&{feature_following_parent};
-    } elsif ( $simple_feature_function eq '1.following' ) {
-        return \&{feature_following_first};
-    } elsif ( $simple_feature_function eq '2.following' ) {
-        return \&{feature_following_second};
-    } elsif ( $simple_feature_function eq 'between' ) {
-        return \&{feature_between};
-    } elsif ( $simple_feature_function eq 'foreach' ) {
-        return \&{feature_foreach};
-    } elsif ( $simple_feature_function eq 'equals' ) {
-        return \&{feature_equals};
-    } elsif ( $simple_feature_function eq 'equalspc' ) {
-        return \&{feature_equalspc};
+    if ( $simple_feature_sub_references{$simple_feature_function} ) {
+        return $simple_feature_sub_references{$simple_feature_function};
     } else {
         croak "Unknown feature function '$simple_feature_function'!";
     }

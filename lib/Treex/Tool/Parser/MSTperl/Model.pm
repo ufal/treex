@@ -68,7 +68,7 @@ sub load {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    print "Loading model from '$filename'... ";
+    print "Loading model from '$filename'...\n";
 
     my $weights = do $filename;
     $self->weights($weights);
