@@ -37,6 +37,7 @@ has _file_number => (
     documentation => 'Number of n-tuples of input files loaded so far.',
 );
 
+#BUILD is needed for processing generic arguments - now only shortcuts of type langcode_selector
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
@@ -133,6 +134,8 @@ after 'restart' => sub {
 1;
 
 __END__
+
+=for Pod::Coverage BUILD
 
 =head1 NAME
 
