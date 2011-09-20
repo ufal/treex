@@ -33,7 +33,7 @@ sub process_zone {
         $sentence =~ s/^\s+//;
 
         # create new a-node
-        my $new_a_node = $a_root->create_child(
+        $a_root->create_child(
             form           => $token,
             no_space_after => $no_space_after,
             ord            => $i + 1,

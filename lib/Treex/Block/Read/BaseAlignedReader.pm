@@ -89,7 +89,7 @@ sub new_document {
         foreach my $zone_label ( keys %filenames ) {
             my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
-            my ( $name, $extension ) = $file =~ /([^.]+)(\..+)?/;
+            my ( $name ) = $file =~ /([^.]+)(?:\..+)?/; #we gracefully throw away extension, because it is not used
             my ( $lang, $sele ) = ( $zone_label, '' );
             if ( $zone_label =~ /_/ ) {
                 ( $lang, $sele ) = split /_/, $zone_label;
