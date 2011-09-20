@@ -1259,13 +1259,8 @@ L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is
 
 =head2 Settings
 
-The the config file (usually C<config.txt>) is in plaintext, ASCII, with unix 
-line endings.
+The the config file (usually C<config.txt>) is in YAML format.
 
-Several things can be set, see below. These settings have the format 
-C<field=value> (no whitespaces allowed).
-
-TODO
 Some of the settings are ignored when in parsing mode (i.e. not training).
 These are use_edge_features_cache (turned off) and number_of_iterations
 (irrelevant).
@@ -1273,11 +1268,13 @@ These are use_edge_features_cache (turned off) and number_of_iterations
 These are settings which are acquired from the configuration file (see also 
 its contents, the options are also richly commented there):
 
+=head3 Basic Settings
+
 =over 4
 
 =item field_names
 
-Lowercase names of fields in the input file separated by commas
+Lowercase names of fields in the input file
 (the data fields are to be separated by tabs in the input file).
 Use [a-z0-9_] only, using always at least one letter.
 Use unique names, i.e. devise some names even for unused fields.
@@ -1306,8 +1303,10 @@ training data, as it uses a lot of memory but speeds up the training greatly
 
 =back
 
-In the second part of the config file all features to be used by the model are 
-set. Use the input file field names to use the field of the (child) node, 
+=head3 Features Settings
+
+In the C<features> field of the config file all features to be used by the model
+are set. Use the input file field names to use the field of the (child) node, 
 uppercase them to use the field of the parent, prefix them by C<1.> or C<2.> 
 to use the field on the first or second node in the sentence (i.e. based on 
 order in sentence, regardless of which is parent and which is child).
@@ -1336,6 +1335,15 @@ The same for ord-wise following node
 Value of the specified field for each node which is ord-wise between the child 
 node and the parent node
 
+=item equals(field1,field2), equalspc(field1,field2)
+
+Returns C<1> if the values of the fields equal
+(if they have multiple values, returns 1 if at least for one pair of
+their values the values equal),
+C<0> if they don't and C<-1> if at least one of the values is undefined.
+
+C<equalspc> uses C<field1> of the parent node and C<field2> of the child node.
+
 =back
 
 Lines beginning with # are comments and are ignored. Lines that contain 
@@ -1352,21 +1360,13 @@ commented and accompanied by real examples at the same time.
 =over 4
 
 =item my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file
-=> 'config.txt')
+=> 'file.config')
 
-Reads the configuration file and applies the settings by calling C<set_config>
-and C<set_feature>.
+Reads the configuration file (in YAML format) and applies the settings.
 
-=item set_config ($field, $value)
-
-Used to process settings in the format C<field=value>.
-
-Sets the specified field to the specified value; the value is often processed
-before setting as the real value of the field.
+See file C<samples/sample.config>.
 
 =item set_feature ($feature_code)
-
-Used to process settings in the format C<field=value>.
 
 Parses the feature code and (if no errors are encountered) creates its 
 representation in the fields of this package (all C<feature_>* fields and 
@@ -1526,7 +1526,7 @@ C<equalspc(en->ord, en->parent->ord)>
 
 =head1 AUTHORS
 
-Rudolf Rosa <rur@seznam.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

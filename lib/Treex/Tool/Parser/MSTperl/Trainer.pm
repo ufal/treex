@@ -221,9 +221,12 @@ sub update_feature_weight {
 
     #adds $update to the current weight of the feature
     $self->model->update_feature_weight( $feature, $update );
-    $feature_weights_summed{$feature} += $sumUpdateWeight * $update;    # v = v + w_{i+1}
-                                                                        # $sumUpdateWeight denotes number of summands in which the weight would appear
-                                                                        # if it were computed according to the definition
+    
+    # v = v + w_{i+1}
+    # $sumUpdateWeight denotes number of summands
+    # in which the weight would appear
+    # if it were computed according to the definition
+    $feature_weights_summed{$feature} += $sumUpdateWeight * $update;    
 
     return;
 }
@@ -241,6 +244,7 @@ sub features_diff {
     foreach my $feature ( @{$features_second} ) {
         $feature_counts{$feature}--;
     }
+    # TODO: disregard features which occur in both parses?
 
     #do the diff
     my @features_first;
@@ -262,6 +266,7 @@ sub features_diff {
         }    # else same count -> no difference
     }
 
+    # TODO try \@features_first
     return ( [@features_first], [@features_second], $diff_count );
 }
 
@@ -320,9 +325,9 @@ L<Treex::Tool::Parser::MSTperl::Reader>.
 =item $self->mira_update($sentence_correct_parse, $sentence_best_parse,
     $sumUpdateWeight)
 
-Performs one update of the MIRA (Margin-Infused R Algorithm) on one sentence
-from the training data. Its input is the correct parse of the sentence (from
-the training data) and the best scoring parse created by the parser.
+Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one
+sentence from the training data. Its input is the correct parse of the sentence
+(from the training data) and the best scoring parse created by the parser.
 
 The C<sumUpdateWeight> is a number by which the change of the feature weights 
 is multiplied in the sum of the weights, so that at the end of the algorithm 
@@ -333,11 +338,46 @@ from N*T to 1, where N is the number of iterations
 and T being the number of sentences in training data, N*T thus being the 
 number of inner iterations, i.e. how many times C<mira_update()> is called.
 
+=item my ( $features_diff_1, $features_diff_2, $features_diff_count ) =
+    features_diff( $features_1, $features_2 );
+    
+Compares features of two parses of a sentence, where the features
+(C<$features_1>, C<$features_2>) are represented as a reference to
+an array of strings representing the features
+(the same feature might be present repeatedly, all occurencies of the same
+feature are summed together).
+
+Features that appear exactly the same times in both parses are disregarded.
+
+The first two returned values (C<$features_diff_1>, C<$features_diff_2>)
+are array references,
+C<$features_diff_1> containing features that appear in the first parse
+(C<$features_1>) more often than in the second parse (C<$features_2>),
+and vice versa for C<$features_diff_2>.
+Each feature is contained as many times as is the difference in number
+of occurencies, eg. if the feature C<TAG|tag:NN|NN> appears 5 times in the
+first parse and 8 times in the second parse, then C<$features_diff_2>
+will contain C<'TAG|tag:NN|NN', 'TAG|tag:NN|NN', 'TAG|tag:NN|NN'>.
+
+The third returned value (C<$features_diff_count>) is a count of features
+in which the parses differ, ie.
+C<$features_diff_count = scalar(@$features_diff_1) + scalar(@$features_diff_2)>.
+
+=item update_feature_weight( $feature, $update, $sumUpdateWeight )
+
+Updates weight of C<$feature> by C<$update>
+(which might be positive or negative)
+and also updates the sum of updates of the feature
+(which is later used for overtraining avoidance),
+multiplied by C<$sumUpdateWeight>, which is simply a count of inner iterations
+yet to be performed (thus eliminating the need to update the sum on each
+inner iteration).
+
 =back
 
 =head1 AUTHORS
 
-Rudolf Rosa <rur@seznam.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

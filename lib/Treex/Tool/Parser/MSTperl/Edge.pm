@@ -107,6 +107,12 @@ the nodes (C<child> and C<parent>).
 
 =over 4
 
+=item my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
+    child    => $node,
+    parent   => $parent_node,
+    sentence => $self
+);
+
 =item my $edge_signature = $edge->signature()
 
 String uniquely identifying the edge, composed of sentence C<id> 
@@ -119,7 +125,7 @@ cache (L<Treex::Tool::Parser::MSTperl::FeaturesControl/edge_features_cache>).
 
 =head1 AUTHORS
 
-Rudolf Rosa <rur@seznam.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

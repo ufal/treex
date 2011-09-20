@@ -276,7 +276,7 @@ Stores model into file in TSV format:
 
 =head1 AUTHORS
 
-Rudolf Rosa <rur@seznam.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 

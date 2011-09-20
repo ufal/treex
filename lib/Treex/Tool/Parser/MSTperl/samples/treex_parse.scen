@@ -1,5 +1,8 @@
+# You can use this scenario for parsing sentences in Treex.
+# If you have Treex installed, just run:
+# treex treex_parse.scen
 Util::SetGlobal language=en selector=src
-Read::Sentences from=sample-en.txt
+Read::Sentences from=treex_input.txt
 W2A::ResegmentSentences
 W2A::EN::Tokenize
 W2A::EN::NormalizeForms
@@ -11,8 +14,6 @@ A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz
 A2N::EN::DistinguishPersonalNames
 W2A::MarkChunks
 W2A::EN::ParseMSTperl
-#W2A::EN::SetIsMemberFromDeprel
-#W2A::EN::RehangConllToPdtStyle
 W2A::EN::FixNominalGroups
 W2A::EN::FixIsMember
 W2A::EN::FixAtree
@@ -20,4 +21,4 @@ W2A::EN::FixMultiwordPrepAndConj
 W2A::EN::FixDicendiVerbs
 W2A::EN::SetAfunAuxCPCoord
 W2A::EN::SetAfun
-Write::Treex to=sample-en.treex
+Write::Treex to=treex_output.treex

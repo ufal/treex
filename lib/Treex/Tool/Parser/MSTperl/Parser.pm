@@ -156,7 +156,7 @@ Any parse information already contained in the sentence gets discarded
 
 =head1 AUTHORS
 
-Rudolf Rosa <rur@seznam.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
