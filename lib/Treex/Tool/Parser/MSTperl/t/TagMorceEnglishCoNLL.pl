@@ -3,13 +3,14 @@ use Moose;
 use Treex::Core::Common;
 
 use Morce::English;
+
 #use DowngradeUTF8forISO2;
 
 print STDERR "Starting tagger...\n";
 
-my $tagger = Morce::English->new();
+my $tagger         = Morce::English->new();
 my $formFieldIndex = 1;
-my $tagFieldIndex = 4;
+my $tagFieldIndex  = 4;
 my $ctagFieldIndex = 3;
 
 print STDERR "Tagging the sentences...\n";
@@ -22,8 +23,8 @@ while (<$file>) {
     if (/^$/) {
         my ($tags_rf) = $tagger->tag_sentence( \@forms );
         foreach my $line (@lines) {
-	    my $tag = shift @{$tags_rf};
-            $line->[$tagFieldIndex] = $tag;
+            my $tag = shift @{$tags_rf};
+            $line->[$tagFieldIndex]  = $tag;
             $line->[$ctagFieldIndex] = get_coarse_grained_tag($tag);
             print join "\t", @$line;
             print "\n";
@@ -34,6 +35,7 @@ while (<$file>) {
     } else {
         my @fields = split /\t/;
         push @lines, \@fields;
+
         #push @forms, DowngradeUTF8forISO2::downgrade_utf8_for_iso2($fields[$form
         push @forms, $fields[$formFieldIndex];
     }
@@ -42,11 +44,11 @@ while (<$file>) {
 if (@lines) {
     my ($tags_rf) = $tagger->tag_sentence( \@forms );
     foreach my $line (@lines) {
-	my $tag = shift @{$tags_rf};
-	$line->[$tagFieldIndex] = $tag;
-	$line->[$ctagFieldIndex] = get_coarse_grained_tag($tag);
-	print join "\t", @$line;
-	print "\n";
+        my $tag = shift @{$tags_rf};
+        $line->[$tagFieldIndex]  = $tag;
+        $line->[$ctagFieldIndex] = get_coarse_grained_tag($tag);
+        print join "\t", @$line;
+        print "\n";
     }
 }
 close $file;

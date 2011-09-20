@@ -161,34 +161,51 @@ sub mira_update {
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse, Treex::Tool::Parser::MSTperl::Sentence $sentence_best_parse, Int $sumUpdateWeight)
     my ( $self, $sentence_correct_parse, $sentence_best_parse, $sumUpdateWeight ) = @_;
 
-    my $score_correct = $sentence_correct_parse->score( $self->model );                 # s(x_t, y_t)
-    my $score_best    = $sentence_best_parse->score( $self->model );                    # s(x_t, y')
-                                                                                        #difference in scores should be greater the the margin:
-    my $margin        = $sentence_best_parse->count_errors($sentence_correct_parse);    #number of incorrectly assigned heads # L(y_t, y')
-    my $score_gain    = $score_correct - $score_best;                                   # s(x_t, y_t) - s(x_t, y')
-    my $error         = $margin - $score_gain;                                          #this should be zero or less # L(y_t, y') - [s(x_t, y_t) - s(x_t, y')]
+    # s(x_t, y_t)
+    my $score_correct = $sentence_correct_parse->score( $self->model );
+
+    # s(x_t, y')
+    my $score_best = $sentence_best_parse->score( $self->model );
+
+    # difference in scores should be greater than the margin:
+
+    # L(y_t, y')    number of incorrectly assigned heads
+    my $margin = $sentence_best_parse->count_errors($sentence_correct_parse);
+
+    # s(x_t, y_t) - s(x_t, y')    this should be zero or less
+    my $score_gain = $score_correct - $score_best;
+
+    # L(y_t, y') - [s(x_t, y_t) - s(x_t, y')]
+    my $error = $margin - $score_gain;
+
     if ( $error > 0 ) {
         my ( $features_diff_correct, $features_diff_best, $features_diff_count )
             = features_diff( $sentence_correct_parse->features, $sentence_best_parse->features );
 
         if ( $features_diff_count == 0 ) {
-            croak "Invalid assertion! (If the parses are different, their features cannot be the same. If the parses are the same, $error should be 0.)";
-        }
+            warn "Features of the best parse and the correct parse do not differ, unable to update the scores. Consider using more features.\n";
+            if ($DEBUG_ALPHAS) {
+                print "alpha: 0 on 0 features\n";
+            }
+        } else {
 
-        my $update = $error / $features_diff_count;                                     # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
-                                                                                        #$update is added to features occuring in the correct parse only
-        foreach my $feature ( @{$features_diff_correct} ) {
-            $self->update_feature_weight( $feature, $update, $sumUpdateWeight );
-        }
+            # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+            my $update = $error / $features_diff_count;
 
-        #and subtracted from features occuring in the best (and incorrect) parse only
-        foreach my $feature ( @{$features_diff_best} ) {
-            $self->update_feature_weight( $feature, -$update, $sumUpdateWeight );
+            #$update is added to features occuring in the correct parse only
+            foreach my $feature ( @{$features_diff_correct} ) {
+                $self->update_feature_weight( $feature, $update, $sumUpdateWeight );
+            }
+
+            #and subtracted from features occuring in the best (and incorrect) parse only
+            foreach my $feature ( @{$features_diff_best} ) {
+                $self->update_feature_weight( $feature, -$update, $sumUpdateWeight );
+            }
+            if ($DEBUG_ALPHAS) {
+                print "alpha: $update on $features_diff_count features\n";
+            }
         }
-        if ($DEBUG_ALPHAS) {
-            print "alpha: $update on $features_diff_count features\n";
-        }
-    } else {                                                                            #else no need to optimize
+    } else {    #else no need to optimize
         if ($DEBUG_ALPHAS) {
             print "alpha: 0 on 0 features\n";
         }
