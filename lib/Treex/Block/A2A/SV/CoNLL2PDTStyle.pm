@@ -17,7 +17,9 @@ sub process_zone
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
     $self->shape_apposition($a_root);
-    $self->shape_coordination_recursively($a_root, 2);
+    my $debug_coord = 0; # 0..2
+    $self->shape_coordination_recursively($a_root, $debug_coord);
+    $self->mark_deficient_clausal_coordination($a_root);
     $self->check_afuns($a_root);
     $self->validate_coap($a_root);
 }
@@ -181,7 +183,8 @@ sub deprel_to_afun
         {
             # 'AuxA' is not a known value in PDT. It is used in Treex for English articles 'a', 'an', 'the'.
             # Other determiners ('this', 'each', 'any'...) are usually tagged 'Atr'.
-            $afun = 'AuxA';
+            # We use 'Atr' here because the 'DT' tag is used for general determiners, not just articles.
+            $afun = 'Atr';
         }
 
         # Relative clause in cleft ("trhlina, štěrbina")
@@ -398,7 +401,7 @@ sub deprel_to_afun
             # This solves the problem but there is no other
             # Original tree: löser/ROOT ( kommer/MS ( men/++ ) )
             # PDT style:     men/Coord ( löser/Pred_Co, kommer/Pred_Co )
-            $afun = 'Pred';
+            $afun = 'CoordArg';
         }
 
         # Negation adverbial
@@ -570,7 +573,10 @@ sub collect_coordination_members
     my $croot      = shift; # the first node and root of the coordination
     my $members    = shift; # reference to array where the members are collected
     my $delimiters = shift; # reference to array where the delimiters are collected
-    my $modifiers  = shift; # reference to array where the modifiers are collected
+    # The caller wants a separate list of shared and private modifiers (the latter for debugging purposes only).
+    # Since the Swedish annotation scheme does not distinguish shared modifiers, we assume there are only private modifiers.
+    my $sharedmod = shift; # dummy reference, we will not use it
+    my $modifiers  = shift; # reference to array where the private modifiers are collected
     my (@children, @members0, @delimiters0, @modifiers0);
     # The technical root of the tree cannot be a coordination root in any style.
     return if(!$croot->parent());
@@ -593,7 +599,7 @@ sub collect_coordination_members
         # If any of the members have their own CoordArg children, these are also members of the same coordination.
         foreach my $member (@members0)
         {
-            $self->collect_coordination_members( $member, $members, $delimiters, $modifiers );
+            $self->collect_coordination_members( $member, $members, $delimiters, $sharedmod, $modifiers );
         }
     }
     # If some members have been found, this node is a coord member.
@@ -603,6 +609,7 @@ sub collect_coordination_members
     {
         @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
         @modifiers0 = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
+        # Add the found nodes to the caller's storage place.
         push( @{$delimiters}, @delimiters0 );
         push( @{$modifiers},  @modifiers0 );
     }

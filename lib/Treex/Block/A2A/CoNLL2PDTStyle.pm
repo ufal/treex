@@ -726,6 +726,40 @@ sub identify_coap_members
 }
 
 #------------------------------------------------------------------------------
+# Conjunction (such as 'and', 'but') occurring as the first word of the
+# sentence should be analyzed as deficient coordination whose only member is
+# the main verb of the main clause.
+#------------------------------------------------------------------------------
+sub mark_deficient_clausal_coordination
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants( { ordered => 1 } );
+    if ( $nodes[0]->afun() eq 'Coord' && scalar($nodes[0]->get_coap_members())==0 )
+    {
+        my $croot = $nodes[0];
+        my @root_children = $root->children();
+        # Do not reattach $croot earlier because it must not be one of @root_children.
+        # Do not reattach it later because Treex might complain about cycles.
+        $croot->set_parent($root);
+        foreach my $rc (@root_children)
+        {
+            next if($rc==$croot);
+            # The sentence-final punctuation must stay at the upper level.
+            next if($rc->afun() eq 'AuxK');
+            $rc->set_parent($croot);
+            $rc->set_is_member(1) unless($rc->afun() =~ m/^Aux[GXY]$/);
+        }
+        # It is not guaranteed that $croot now has coordination members.
+        # If we were not able to find nodes elligible as members, we must not tag $croot as Coord.
+        if(scalar($croot->get_coap_members())==0)
+        {
+            $croot->set_afun('ExD');
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
 # Validates coordination/apposition structures.
 # - A Coord/Apos node must have at least one member.
 # - A node with is_member set must have a Coord/Apos parent.
