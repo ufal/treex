@@ -16,8 +16,10 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
+    $self->shape_apposition($a_root);
     $self->shape_coordination_recursively($a_root, 2);
     $self->check_afuns($a_root);
+    $self->validate_coap($a_root);
 }
 
 
@@ -551,39 +553,6 @@ sub deprel_to_afun
 }
 
 
-sub restructure_coordination {
-    my ($self, $root) = @_;
-
-    foreach my $last_member (grep {$_->conll_deprel =~ /^(CC|\+F)/ and
-                                       not grep {$_->conll_deprel =~ /^(CC|\+F)/} $_->get_children}
-                                 map {$_->get_descendants} $root->get_children) {
-
-        my ($coord_root) = (grep {$_->conll_deprel eq '++'} $last_member->get_children,
-                            grep {$_->conll_deprel eq 'IK'} $last_member->get_children);
-
-        if ($coord_root) {
-
-            # climbing up to collect coordination members
-            my @members = ( $last_member );
-            my $node = $last_member;
-            while ( $node->conll_deprel =~ /^(CC|\+F)/ ) {
-                $node = $node->get_parent;
-                push @members, $node;
-            }
-
-            # TODO: rehanging commas in multiple coordinations
-
-            $coord_root->set_parent($members[-1]->get_parent);
-            $coord_root->set_afun('Coord');
-
-            foreach my $member (@members) {
-                $member->set_parent($coord_root);
-                $member->set_is_member(1);
-                $member->set_conll_deprel($members[-1]->conll_deprel);
-            }
-        }
-    }
-}
 
 #------------------------------------------------------------------------------
 # Detects coordination in Swedish trees.

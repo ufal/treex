@@ -622,6 +622,29 @@ sub shape_coordination
 }
 
 #------------------------------------------------------------------------------
+# Several treebanks solve apposition so that the second member is attached to
+# the first member and marked using a special dependency relation tag. Changing
+# this tag to the Apos afun is not enough Praguish: in reality we want to find
+# a suitable punctuation in between, make it the Apos root and attach both
+# members to it. Before we implement this behavior we may want to apply the
+# poor-man's solution (just to make sure that there are no invalid Apos
+# structures): remove any Apos afuns and replace them by Atr.
+#------------------------------------------------------------------------------
+sub shape_apposition
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->afun() eq 'Apos')
+    {
+        $node->set_afun('Atr');
+    }
+    foreach my $child ($node->children())
+    {
+        $self->shape_apposition($child);
+    }
+}
+
+#------------------------------------------------------------------------------
 # This method is called for coordination and apposition nodes whose members do
 # not have the is_member attribute set (e.g. in Arabic and Slovene treebanks
 # the information was lost in conversion to CoNLL). It estimates, based on
@@ -699,6 +722,45 @@ sub identify_coap_members
                 $m->set_is_member(1);
             }
         }
+    }
+}
+
+#------------------------------------------------------------------------------
+# Validates coordination/apposition structures.
+# - A Coord/Apos node must have at least one member.
+# - A node with is_member set must have a Coord/Apos parent.
+# - Note that is_member is now set directly under the Coord/Apos node,
+#   regardless of prepositions and subordinating conjunctions.
+# - Members should not have afuns AuxX (comma), AuxG (other punctuation) and
+#   AuxY (other words, e.g. parts of multi-word coordinating conjunction).
+#------------------------------------------------------------------------------
+sub validate_coap
+{
+    my $self = shift;
+    my $node = shift;
+    my $afun = $node->afun();
+    my @children = $node->get_children();
+    if($afun =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} (@children))
+    {
+        $self->log_sentence($node);
+        log_warn("The $afun node #".$node->ord()." '".$node->form()."' is missing coap members.");
+    }
+    if($node->is_member())
+    {
+        if($node->parent()->afun() !~ m/^(Coord|Apos)$/)
+        {
+            $self->log_sentence($node);
+            log_warn("The member node #".$node->ord()." '".$node->form()."' does not have a coap parent.");
+        }
+        if($afun =~ m/^Aux[GXY]$/)
+        {
+            $self->log_sentence($node);
+            log_warn("The node #".$node->ord()." '".$node->form()."' should be either coap member or $afun but not both.");
+        }
+    }
+    foreach my $child (@children)
+    {
+        $self->validate_coap($child);
     }
 }
 

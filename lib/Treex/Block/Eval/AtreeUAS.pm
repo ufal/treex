@@ -21,7 +21,7 @@ sub process_bundle {
 
     foreach my $compared_zone (@compared_zones) {
         my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
-        my @is_member = map { $_->->is_member } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+        my @is_member = map { $_->is_member } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 
         if ( @parents != @ref_parents ) {
             log_fatal 'There must be the same number of nodes in compared trees';
