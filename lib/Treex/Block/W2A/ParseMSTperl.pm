@@ -30,11 +30,11 @@ sub _build_parser {
 
     my $base_name = $self->model_dir . '/' . $self->model_name;
 
-    my $config_file = require_file_from_share("$base_name.model");
+    my $config_file = require_file_from_share("$base_name.config");
     my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => $config_file, training => 0);
     
     my $parser = Treex::Tool::Parser::MSTperl::Parser->new(featuresControl => $featuresControl);
-    my $model_file = require_file_from_share("$base_name.config");
+    my $model_file = require_file_from_share("$base_name.model");
     $parser->load_model($model_file);
 
     return $parser;
