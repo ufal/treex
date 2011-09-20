@@ -14,14 +14,14 @@ sub process_bundle {
 
     my $ref_zone = $bundle->get_zone( $self->language, $self->selector );
     my @ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
-    my @ref_is_member = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+    my @ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
     my @compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();
 
     $number_of_nodes += @ref_parents;
 
     foreach my $compared_zone (@compared_zones) {
         my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
-        my @is_member = map { $_->is_member } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+        my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 
         if ( @parents != @ref_parents ) {
             log_fatal 'There must be the same number of nodes in compared trees';
