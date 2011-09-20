@@ -12,7 +12,7 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/^/ /;
 
     # detect web sites and email addresses and protect them from tokenization
-    $sentence = $self->mark_urls($sentence);
+    $sentence = $self->_mark_urls($sentence);
 
     # the following characters (double-characters) are separated everywhere
     $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|—|„|‚|\*|\^)/ $1 /g; ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
@@ -33,7 +33,7 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/\.\s*\.\s*\./.../g;
 
     # get back web sites and e-mails
-    $sentence = $self->restore_urls($sentence);
+    $sentence = $self->_restore_urls($sentence);
 
     # clean out extra spaces
     $sentence =~ s/\s+/ /g;
@@ -45,7 +45,8 @@ override 'tokenize_sentence' => sub {
 
 has _urls => ( is => 'rw' );
 
-sub mark_urls {
+# internally marks URLs, so they won't be splitted
+sub _mark_urls {
     my ( $self, $sentence ) = @_;
     my @urls;
     while ( $sentence =~ s/(\W)((http:\/\/)?([\w\-]+\.)+(com|cz|de|es|eu|fr|hu|it|sk))(\W)/$1 XXXURLXXX $6/ ) { ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
@@ -55,7 +56,8 @@ sub mark_urls {
     return $sentence;
 }
 
-sub restore_urls {
+# pushes bask URLs, marked by C<_mark_urls>
+sub _restore_urls {
     my ( $self, $sentence ) = @_;
     my @urls = @{ $self->_urls };
     while (@urls) {
@@ -69,11 +71,15 @@ sub restore_urls {
 
 __END__
 
-TODO POD
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::Tokenize
+Treex::Block::W2A::Tokenize - language independent rule based tokenizer
+
+=head1 VERSION
+
+=head1 DESCRIPTION
 
 Each sentence is split into a sequence of tokens using a series of regexs.
 Flat a-tree is built and attributes C<no_space_after> are filled.
@@ -82,9 +88,15 @@ but it can be used as an ancestor for language-specific tokenization
 by overriding the method C<tokenize_sentence>
 or by using C<around> (see L<Moose::Manual::MethodModifiers>).
 
-=back
+=head1 AUTHOR
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# Copyright 2010-2011 David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

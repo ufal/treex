@@ -89,11 +89,15 @@ sub normalize_sentence {
 
 __END__
 
-TODO POD
+TODO: has to be reviewed
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::SegmentOnNewlines
+=head1 NAME
+
+Treex::Block::W2A::SegmentOnNewlines - segment text on new lines
+
+=head1 DESCRIPTION
 
 The source text is segmented into sentences which are stored in document bundles.
 If the document contained no bundles, the bundles are created.
@@ -111,11 +115,43 @@ This class detects sentences based on the newlines in the source text,
 but it can be used as an ancestor for more apropriate segmentations
 by overriding the method C<segment_text>.
 
-TODO: documentation of allow_empty_sentences delete_empty_sentences and normalize_sentence
+=head1 ATTRIBUTES
+
+=over 4
+
+=item allow_empty_sentences
+
+If set, empty sentences can be produced.
+
+=item delete_empty_sentences
+
+If set, empty sentences are automatically deleted.
 
 =back
 
-=cut
+If none of the previous attributes is set and empty sentence found, fatal is raised.
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 METHODS
+
+=over 4
+
+=item get_segments()
+
+This method produces segments from text given as parameter, can be overriden.
+
+=item normalize_sentence()
+
+This method does sentence normalization e.g. trims initial and terminal whitespaces.
+
+=back
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
