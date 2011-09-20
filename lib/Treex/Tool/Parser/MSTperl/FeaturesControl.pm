@@ -26,6 +26,23 @@ has 'training' => (
 #     isa => 'Int',
 # );
 
+has 'parent_ord' => (
+    is      => 'rw',
+    isa     => 'Str',
+    trigger => \&_parent_ord_set,
+);
+
+# sets parent_ord_field_index
+sub _parent_ord_set {
+    my ( $self, $parent_ord ) = @_;
+
+    # set index of parent's ord field
+    my $parent_ord_index = $self->field_name2index($parent_ord);
+    $self->parent_ord_field_index($parent_ord_index);
+
+    return;
+}
+
 has 'parent_ord_field_index' => (
     is  => 'rw',
     isa => 'Int',
@@ -35,7 +52,25 @@ has 'root_field_values' => (
     is      => 'rw',
     isa     => 'ArrayRef[Str]',
     default => sub { [] },
+    trigger => \&_root_field_values_set,
 );
+
+# checks number of root field values
+sub _root_field_values_set {
+    my ($self) = @_;
+
+    # check number of fields
+    my $field_names_count = scalar( @{ $self->field_names } );
+    my $root_fields_count = scalar( @{ $self->root_field_values } );
+    if ( $root_fields_count != $field_names_count ) {
+        croak "MSTperl config file error: " .
+            "Incorrect number of root field values ($root_fields_count), " .
+            "must be same as number of field names ($field_names_count)!";
+    }
+
+    return;
+
+}
 
 has 'number_of_iterations' => (
     isa     => 'Int',
@@ -52,6 +87,68 @@ has 'use_edge_features_cache' => (
 # using cache turned off to fit into RAM by default
 # turn on if training with a lot of RAM or on small training data
 # turned off when parsing (does not make any sense for parsing)
+
+has 'distance_buckets' => (
+    is      => 'rw',
+    isa     => 'ArrayRef[Int]',
+    default => sub { [] },
+    trigger => \&_distance_buckets_set,
+);
+
+# sets distance2bucket, maxBucket and minBucket
+sub _distance_buckets_set {
+    my ( $self, $distance_buckets ) = @_;
+
+    my %distance2bucket;
+
+    # find maximal bucket & partly fill %distance2bucket
+    my $maxBucket = 0;
+    foreach my $bucket ( @{$distance_buckets} ) {
+        if ( $distance2bucket{$bucket} ) {
+            warn "Bucket '$bucket' is defined more than once; " .
+                "disregarding its later definitions.";
+        } elsif ( $bucket <= 0 ) {
+            croak "MSTperl config file error: " .
+                "Error on bucket '$bucket' - " .
+                "buckets must be positive integers.";
+        } else {
+            $distance2bucket{$bucket} = $bucket;
+            $distance2bucket{ -$bucket } = -$bucket;
+            if ( $bucket > $maxBucket ) {
+                $maxBucket = $bucket;
+            }
+        }
+    }
+
+    # set maxBucket and minBucket
+    my $minBucket = -$maxBucket;
+    $self->maxBucket($maxBucket);
+    $self->minBucket($minBucket);
+
+    # fill %distance2bucket from minBucket to maxBucket
+    if ( !$distance2bucket{1} ) {
+        warn "Bucket '1' is not defined, which does not make any sense; " .
+            "adding definition of bucket '1'.";
+        $distance2bucket{1}  = 1;
+        $distance2bucket{-1} = -1;
+    }
+    my $lastBucket = 1;
+    for ( my $distance = 2; $distance < $maxBucket; $distance++ ) {
+        if ( $distance2bucket{$distance} ) {
+
+            # the distance defines a bucket
+            $lastBucket = $distance2bucket{$distance};
+        } else {
+
+            # the distance falls into the highest lower bucket
+            $distance2bucket{$distance} = $lastBucket;
+            $distance2bucket{ -$distance } = -$lastBucket;
+        }
+    }
+    $self->distance2bucket( \%distance2bucket );
+
+    return;
+}
 
 has 'distance2bucket' => (
     is      => 'rw',
@@ -84,7 +181,37 @@ has 'field_names' => (
     is      => 'rw',
     isa     => 'ArrayRef[Str]',
     default => sub { [] },
+    trigger => \&_field_names_set,
 );
+
+# checks field_names, sets field_names_hash and field_indexes
+sub _field_names_set {
+    my ( $self, $field_names ) = @_;
+
+    my %field_names_hash;
+    my %field_indexes;
+    for ( my $index = 0; $index < scalar( @{$field_names} ); $index++ ) {
+        my $field_name = $field_names->[$index];
+        if ( $field_names_hash{$field_name} ) {
+            croak "MSTperl config file error: " .
+                "Duplicate field name '$field_name'!";
+        } elsif ( $field_name ne lc($field_name) ) {
+            croak "MSTperl config file error: " .
+                "Field name '$field_name' is not lowercase!";
+        } elsif ( !$field_name =~ /a-z/ ) {
+            croak "MSTperl config file error: " .
+                "Field name '$field_name' does not contain " .
+                "any character from [a-z]!";
+        } else {
+            $field_names_hash{$field_name} = 1;
+            $field_indexes{$field_name}    = $index;
+        }
+    }
+    $self->field_names_hash( \%field_names_hash );
+    $self->field_indexes( \%field_indexes );
+
+    return;
+}
 
 # 1 for each field name to easily check if a field name exists
 has 'field_names_hash' => (
@@ -204,25 +331,48 @@ sub BUILD {
     my ($self) = @_;
 
     print "Processing config file " . $self->config_file . "...\n";
+    use YAML::Tiny;
+    my $config = YAML::Tiny->new;
+    $config = YAML::Tiny->read( $self->config_file );
 
-    open my $config, '<:encoding(utf8)', $self->config_file;
-    while (<$config>) {
-        chomp;
-        if ( /^\s*$/ || /^#/ ) {
+    if ($config) {
 
-            # empty line or comment
-            next;
-        } elsif (/^(.*)=(.*)$/) {
-
-            # config line
-            $self->set_config( $1, $2 );
-        } else {
-
-            # feature definition
-            $self->set_feature($_);
+        # required settings
+        my @required_fields = (
+            'field_names',
+            'root_field_values',
+            'parent_ord',
+            'distance_buckets',
+        );
+        foreach my $field (@required_fields) {
+            if ( $config->[0]->{$field} ) {
+                $self->$field( $config->[0]->{$field} );
+            } else {
+                croak "MSTperl config file error: Field $field must be set!";
+            }
         }
+
+        # optional settings
+        my @non_required_fields = (
+            'use_edge_features_cache',
+            'number_of_iterations',
+        );
+        foreach my $field (@non_required_fields) {
+            if ( $config->[0]->{$field} ) {
+                $self->$field( $config->[0]->{$field} );
+            }
+        }
+
+        # features
+        if ( !@{ $config->[0]->{features} } ) {
+            croak "MSTperl config file error: Features must be set!";
+        }
+        foreach my $feature ( @{ $config->[0]->{features} } ) {
+            $self->set_feature($feature);
+        }
+    } else {
+        die "MSTperl config file error: " . YAML::Tiny->errstr;
     }
-    close $config;
 
     # ignore some settings if in parsing-only mode
     if ( !$self->training ) {
@@ -237,124 +387,11 @@ sub BUILD {
     return;
 }
 
-# TODO: rewrite as a hash refeerncing subfeatures
-# or find a module for this
-sub set_config {
-    my ( $self, $field, $value ) = @_;
-
-    if ( $field eq 'field_names' ) {
-
-        # set field_names
-        my @field_names = split /,/, $value;
-        $self->field_names( [@field_names] );
-
-        # create fields hashes
-        my %field_indexes;
-        my %field_names_hash;
-        for ( my $index = 0; $index < scalar(@field_names); $index++ ) {
-            my $field_name = $field_names[$index];
-            if ( $field_names_hash{$field_name} ) {
-                croak "Duplicate field name '$field_name'!";
-            } elsif ( $field_name ne lc($field_name) ) {
-                croak "Field name '$field_name' is not lowercase!";
-            } elsif ( !$field_name =~ /a-z/ ) {
-                croak "Field name '$field_name' does not contain any character from [a-z]!";
-            } else {
-                $field_names_hash{$field_name} = 1;
-                $field_indexes{$field_name}    = $index;
-            }
-        }
-        $self->field_names_hash( \%field_names_hash );
-        $self->field_indexes( \%field_indexes );
-
-        #     } elsif ($field eq 'ord') {
-        #         # set index of ord field
-        #         my $ord_index = $self->field_name2index($value);
-        #         $self->ord_field_index($ord_index);
-    } elsif ( $field eq 'root_field_values' ) {
-
-        # set field values for root node
-        my @values = split /,/, $value;
-        $self->root_field_values( [@values] );
-
-        # check number of fields
-        my $field_names_count = scalar( @{ $self->field_names } );
-        my $root_fields_count = scalar( @{ $self->root_field_values } );
-        if ( $root_fields_count != $field_names_count ) {
-            croak "Incorrect number of root field values ($root_fields_count), must be same as number of field names ($field_names_count)!";
-        }
-    } elsif ( $field eq 'distance_buckets' ) {
-
-        # set distance2bucket, maxBucket and minBucket
-        my @buckets = split /,/, $value;
-        my %distance2bucket;
-
-        # find maximal bucket & partly fill %distance2bucket
-        my $maxBucket = 0;
-        foreach my $bucket (@buckets) {
-            if ( $distance2bucket{$bucket} ) {
-                print STDERR "WARNING: bucket '$bucket' is defined more than once; disregarding its later definitions.";
-            } elsif ( $bucket <= 0 ) {
-                croak "Error on bucket '$bucket' - buckets must be positive integers. Quiting.";
-            } else {
-                $distance2bucket{$bucket} = $bucket;
-                $distance2bucket{ -$bucket } = -$bucket;
-                if ( $bucket > $maxBucket ) {
-                    $maxBucket = $bucket;
-                }
-            }
-        }
-        my $minBucket = -$maxBucket;
-        $self->maxBucket($maxBucket);
-        $self->minBucket($minBucket);
-
-        # fill %distance2bucket from minBucket to maxBucket
-        if ( !$distance2bucket{1} ) {
-            print STDERR "WARNING: bucket '1' is not defined, which does not make any sense; adding definition of bucket '1'.";
-            $distance2bucket{1}  = 1;
-            $distance2bucket{-1} = -1;
-        }
-        my $lastBucket = 1;
-        for ( my $distance = 2; $distance < $maxBucket; $distance++ ) {
-            if ( $distance2bucket{$distance} ) {
-
-                # the distance defines a bucket
-                $lastBucket = $distance2bucket{$distance};
-
-                # = $distance
-            } else {
-
-                # the distance falls into the highest lower bucket
-                $distance2bucket{$distance} = $lastBucket;
-                $distance2bucket{ -$distance } = -$lastBucket;
-            }
-        }
-        $self->distance2bucket( \%distance2bucket );
-    } elsif ( $field eq 'parent_ord' ) {
-
-        # set index of parent's ord field
-        my $parent_ord_index = $self->field_name2index($value);
-        $self->parent_ord_field_index($parent_ord_index);
-    } elsif ( $field eq 'number_of_iterations' ) {
-
-        # set number of trainer iterations over training data
-        $self->number_of_iterations($value);
-    } elsif ( $field eq 'use_edge_features_cache' ) {
-
-        # turn edge features cache on or off
-        $self->use_edge_features_cache($value);
-    } else {
-        print STDERR "Unrecognized setting '$field' ('$field=$value') in config file! Quiting.";
-    }
-
-    return;
-}
-
 sub set_feature {
     my ( $self, $feature_code ) = @_;
 
     if ( $self->feature_codes_hash->{$feature_code} ) {
-        print STDERR "WARNING: feature '$feature_code' is defined more than once; disregarding its later definitions.";
+        warn "Feature '$feature_code' is defined more than once; disregarding its later definitions.";
         return;
     } else {
 
@@ -366,7 +403,7 @@ sub set_feature {
 
             # checks
             if ( $simple_features_hash{$simple_feature_code} ) {
-                print STDERR "WARNING: simple feature '$simple_feature_code' is used more than once in '$feature_code'; disregarding its later uses.";
+                warn "Simple feature '$simple_feature_code' is used more than once in '$feature_code'; disregarding its later uses.";
                 next;
             }
             if ( !$self->simple_feature_codes_hash->{$simple_feature_code} ) {
