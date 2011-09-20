@@ -27,10 +27,17 @@ sub process_bundle {
             log_fatal 'There must be the same number of nodes in compared trees';
         }
         my $label = $compared_zone->get_label;
+        my $label1 = $label.'-regardless-is_member';
         foreach my $i ( 0 .. $#parents ) {
 
             if ( $parents[$i] == $ref_parents[$i] && ( !$self->eval_is_member || $is_member[$i] == $ref_is_member[$i] ) ) {
                 $same_as_ref{$label}++;
+            }
+            # If the main score includes is_member evaluation, provide the weaker evaluation as well.
+            if ( $self->eval_is_member ) {
+                if ( $parents[$i] == $ref_parents[$i] ) {
+                    $same_as_ref{$label1}++;
+                }
             }
         }
     }
@@ -38,7 +45,7 @@ sub process_bundle {
 
 END {
 #    print "total\t$number_of_nodes\n";
-    foreach my $zone_label ( keys %same_as_ref ) {
+    foreach my $zone_label ( sort keys %same_as_ref ) {
         print "$zone_label\t$same_as_ref{$zone_label}/$number_of_nodes\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
     }
 }
