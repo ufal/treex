@@ -3,8 +3,7 @@
 use Test::More;
 use Treex::Core::Log;
 
-#Treex::Core::Log::log_set_error_level('debug');
-BEGIN { require_ok('Treex::Tool::EnglishMorpho::Lemmatizer') }
+require_ok('Treex::Tool::EnglishMorpho::Lemmatizer');
 
 my ( $word, $tag ) = qw(I PP);
 my $lemmatizer = new_ok('Treex::Tool::EnglishMorpho::Lemmatizer');
