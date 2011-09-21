@@ -12,145 +12,47 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    
+
     my $a_root = $self->SUPER::process_zone($zone);
-    
+
     # attach terminal punctuations (., ?, ! etc) to root of the tree
-    $self->attach_final_punctuation_to_root($a_root);    
-    
+    attach_final_punctuation_to_root($a_root);
+
     $self->make_pdt_coordination($a_root);
-    $self->find_afun_for_unkafun($a_root);
-    
+
     # swap the afun of preposition and its nominal head
     $self->afun_swap_prep_and_its_nhead($a_root);
 }
 
-sub make_pdt_coordination {    
-    my ( $self, $root ) = @_;
-    my @nodes = $root->get_descendants();    
+sub make_pdt_coordination {
+    my ($self, $root) = @_;
+    my @nodes = $root->get_descendants;
     for my $node (@nodes) {
-        my $parnode = $node->get_parent();
-        my $deprel = $node->afun();
-        my @children = $node->get_children();
-        
-        if ((scalar(@children) > 0) && defined($parnode)) {
-            my $coord_node;
-            my @conjuncts;
-            my $rec_coord = 0;
-            my @rec_nodes;
-            my @coord_nodes;
-            
-            for my $kid (@children) {
-                my $deprel_child = $kid->afun();
-                
-                if (($deprel_child eq 'con') || ($deprel_child eq 'dis')) {
-                    push @coord_nodes, $kid;
-                }
-                elsif (($deprel_child eq 'cong') || ($deprel_child eq 'disg')) {
-                    push @conjuncts, $kid;
-                }
-                
+        my @children = $node->get_children({ ordered => 1 });
+        if (my @coords = grep $_->afun =~ /^(?:con|dis)$/, @children) {
+            my @members = ($node, grep $_->afun =~ /^(?:con|dis)g$/, @children);
+            if (not @coords) {
+                log_warn('No coordination nodes at ' . $node->get_address);
             }
-            if (scalar(@conjuncts) > 0) {
-                if (scalar(@coord_nodes) == 0) {
-                #if (!defined($coord_node)) {
-                    $coord_node = pop @conjuncts;
-                    if (defined $coord_node) {
-                        $coord_node->set_parent($parnode);
-                        $coord_node->set_afun('Coord');
-                        $node->set_parent($coord_node);
-                        $node->set_is_member(1);
-                        $node->set_afun('unkafun') if ($deprel eq 'ROOT');
-                        if (scalar(@conjuncts) > 0) {
-                            foreach my $cjnt (@conjuncts) {
-                                if (defined $cjnt) {
-                                    $cjnt->set_parent($coord_node);
-                                    $cjnt->set_afun('unkafun');
-                                    $cjnt->set_is_member(1);
-                                }
-                            }
-                        }
-                    }                    
-                }
-                else {
-                    $coord_node = pop @coord_nodes;                    
-                    $coord_node->set_parent($parnode);
-                    $coord_node->set_afun('Coord');
-                    $node->set_parent($coord_node);
-                    $node->set_is_member(1);
-                    $node->set_afun('unkafun') if ($deprel eq 'ROOT');
-                    if (scalar(@conjuncts) > 0) {
-                        foreach my $cjnt (@conjuncts) {
-                            if (defined $cjnt) {
-                                $cjnt->set_parent($coord_node);
-                                $cjnt->set_afun('unkafun');
-                                $cjnt->set_is_member(1);
-                            }
-                        }
-                    }
-                    if (scalar(@coord_nodes) > 0) {
-                        foreach my $cn (@coord_nodes) {
-                            if (defined $cn) {
-                                #print $coord_node->id() .  "\t" . $coord_node->form() .  "\t new coord: " .  $cn->id() . "\t" . $cn->form() . "\n" ;
-                                $cn->set_parent($coord_node);
-                                if ($cn->form() eq ',') {
-                                    $cn->set_afun('AuxX');
-                                }
-                                else {
-                                    $cn->set_afun('unkafun');
-                                }
-                            }
-                        }
-                    }                    
-                }
-            }          
-        }
-    }
-}
-
-sub find_afun_for_unkafun {
-    my ( $self, $root ) = @_;
-    my @nodes = $root->get_descendants();
-    for my $node (@nodes) {
-        my $deprel = $node->afun();
-        my $form = $node->form();
-        my $newafun;
-        
-        # if any 'con' is uncaptured, then assign 'unkafun' value
-        # which will be converted into proper afun based on
-        # POS values.
-        if (($deprel eq 'con') || ($deprel eq 'dis')) {
-            $deprel = 'unkafun';
-        }
-        
-        if ($deprel eq 'unkafun') {            
-            $newafun = 'unkafun';
-            $newafun = 'Atr' if ($node->get_iset('pos') eq 'adj');
-            $newafun = 'Atr' if ($node->get_iset('pos') eq 'noun');
-            $newafun = 'AuxP' if ($node->get_iset('pos') eq 'prep');
-            $newafun = 'Atr' if ($node->get_iset('pos') eq 'num');                        
-            $newafun = 'Adv' if ($node->get_iset('pos') eq 'adv');
-            $newafun = 'Adv' if ($node->get_iset('pos') eq 'verb');
-            $newafun = 'Adv' if ($node->get_iset('pos') eq 'verb');
-            
-            if ( $node->get_iset('pos') eq 'punc' ) {
-                if ( $form eq ',' ) {
-                    $newafun = 'AuxX';
-                }
-                elsif ( $form =~ /^(\?|\:|\.|\!)$/ ) {
-                    $newafun = 'AuxK';
-                }
-                else {
-                    $newafun = 'AuxG';
-                }
+            my $coord = pop @coords;
+            $coord->set_parent($node->get_parent);
+            $coord->set_afun('Coord');
+            for my $member (@members) {
+                $member->set_parent($coord);
+                $member->set_afun($node->afun);
+                $member->set_is_member(1);
             }
-            
-            # just to confirm that some default afun is assigned
-            $newafun = 'Atr' if ($newafun eq 'unkafun');
-            
-            $node->set_afun($newafun);
+            for my $aux (@coords) {
+                $aux->set_parent($coord);
+                my $afun;
+                if (',' eq $aux->form) {
+                    $afun = 'AuxX';
+                } else {
+                    $afun = 'AuxY';
+                }
+                $aux->set_afun($afun);
+            }
         }
-
     }
 }
 
@@ -168,9 +70,9 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
-        
+
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-        
+
         # default assignment
         my $afun = $deprel;
 
@@ -218,10 +120,10 @@ sub deprel_to_afun
     }
 }
 
-sub attach_terminal_punc_to_root {
+sub attach_final_punctuation_to_root {
     my $root       = shift;
-    my @nodes      = $root->get_descendants();
-    my $fnode      = $nodes[$#nodes];
+    my @nodes      = $root->get_descendants({ ordered => 1 });
+    my $fnode      = $nodes[-1];
     my $fnode_afun = $fnode->afun();
     if ( $fnode_afun eq 'AuxK' ) {
         $fnode->set_parent($root);
