@@ -105,7 +105,14 @@ sub BUILD {
 
         # loading Treex::Core::Document from a file
         elsif ( $params_rf->{filename} ) {
-            $pmldoc = $factory->createDocumentFromFile( $params_rf->{filename} );
+            # If the file contains invalid PML (e.g. unknown afun value)
+            # Treex::PML fails with die.
+            # TODO: we should rather catch the die message and report it via log_fatal       
+            $pmldoc = eval {
+                $factory->createDocumentFromFile( $params_rf->{filename} );
+            };
+            log_fatal "Error while loading " . $params_rf->{filename}
+             if !defined $pmldoc;  
         }
     }
 
