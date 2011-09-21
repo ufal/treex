@@ -11,16 +11,16 @@ has featuresControl => (
 
 sub write_tsv {
 
-    # (Str $filename, ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $sentences)
+    # (Str $filename,
+    # ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $sentences)
     my ( $self, $filename, $sentences ) = @_;
 
     open my $file, '>:encoding(utf8)', $filename;
     foreach my $sentence ( @{$sentences} ) {
         foreach my $node ( @{ $sentence->nodes } ) {
-
-            #($ord, $form, $lemma, $pos, $subpos, $features, $parent, $afun, $underscore1, $underscore2)
             my @line = @{ $node->fields };
-            $line[ $self->featuresControl->parent_ord_field_index ] = $node->parentOrd;
+            $line[ $self->featuresControl->parent_ord_field_index ] =
+                $node->parentOrd;
             print $file join "\t", @line;
             print $file "\n";
         }
@@ -34,6 +34,12 @@ sub write_tsv {
 1;
 
 __END__
+
+=pod
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
 
 =head1 NAME
 
@@ -69,6 +75,8 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.

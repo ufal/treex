@@ -484,7 +484,8 @@ sub set_simple_feature {
         # function feature
     } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\([a-z0-9_,]+\)$/ ) {
         my $function_name = $1;
-        $simple_feature_sub = $self->get_simple_feature_sub_reference($function_name);
+        $simple_feature_sub =
+            $self->get_simple_feature_sub_reference($function_name);
 
         # array function?
         if ( $function_name eq 'between' || $function_name eq 'foreach' ) {
@@ -499,7 +500,8 @@ sub set_simple_feature {
         } elsif ( $simple_feature_code =~ /\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
             my $simple_feature_field_1 = $1;
             my $simple_feature_field_2 = $2;
-            $simple_feature_field = [ $simple_feature_field_1, $simple_feature_field_2 ];
+            $simple_feature_field =
+                [ $simple_feature_field_1, $simple_feature_field_2 ];
 
         } else {
             croak "Incorrect simple function feature format " .
@@ -629,8 +631,12 @@ sub get_feature_value {
 
 # for features containing subfeatures that return an array of values
 sub get_array_feature_value {
-    my ( $self, $simple_features_indexes, $simple_feature_values, $start_from ) =
-        @_;
+    my (
+        $self,
+        $simple_features_indexes,
+        $simple_feature_values,
+        $start_from
+    ) = @_;
 
     # get value at this position (position = $start_from)
     my $simple_feature_index = $simple_features_indexes->[$start_from];
@@ -937,7 +943,13 @@ sub feature_equals {
         my $values_2 = $edge->child->fields->[$field_index_2];
 
         # we handle undefines and empties specially
-        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
+        if (
+            defined $values_1
+            && $values_1 ne ''
+            && defined $values_2
+            && $values_2 ne ''
+            )
+        {
             my $result   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
@@ -971,7 +983,13 @@ sub feature_equalspc {
         my $values_2 = $edge->child->fields->[$field_index_2];
 
         # we handle undefines and empties specially
-        if ( defined $values_1 && $values_1 ne '' && defined $values_2 && $values_2 ne '' ) {
+        if (
+            defined $values_1
+            && $values_1 ne ''
+            && defined $values_2
+            && $values_2 ne ''
+            )
+        {
             my $result   = 0;                      # default not equal
             my @values_1 = split / /, $values_1;
             my @values_2 = split / /, $values_2;
@@ -997,6 +1015,12 @@ sub feature_equalspc {
 
 __END__
 
+=pod
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::FeaturesControl
@@ -1010,7 +1034,7 @@ Also handles the configuration.
 
 TODO: outdated, superceded by use of config file -> rewrite
 
-Each feature has a form C<code:value>. The code desribes the information which 
+Each feature has a form C<code:value>. The code desribes the information which
 is relevant for the feature, and the value is the information retained from 
 the dependency edge (and possibly other parts of the sentence 
 (L<Treex::Tool::Parser::MSTperl::Sentence>) stored in C<sentence> field).
@@ -1357,8 +1381,8 @@ commented and accompanied by real examples at the same time.
 
 =over 4
 
-=item my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file
-=> 'file.config')
+=item my $featuresControl =
+Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => 'file.config')
 
 Reads the configuration file (in YAML format) and applies the settings.
 
@@ -1443,7 +1467,8 @@ Translates the feature funtion string name (eg. C<distance>) to its reference
 =item my $value = get_simple_feature_value ($edge, 9)
 
 Returns the value of the simple feature with the given index by calling an 
-appropriate C<feature_*> method on the edge (see L<Treex::Tool::Parser::MSTperl::Edge>). If 
+appropriate C<feature_*> method on the edge
+(see L<Treex::Tool::Parser::MSTperl::Edge>). If 
 the feature cannot be computed, an empty string (C<''>) is returned (or a 
 reference to an empty array for array simple features - see 
 C<array_simple_features>).
@@ -1505,11 +1530,13 @@ This makes it possible to have a simple feature which behaves like this:
 
 =over 4
 
-=item returns 1 if the edge between child and parent is also present in the English tree
+=item returns 1 if the edge between child and parent is also present in the 
+English tree
 
 =item returns 0 if not
 
-=item returns -1 if cannot decide (alignment info is missing for some of the nodes)
+=item returns -1 if cannot decide (alignment info is missing for some of the 
+nodes)
 
 =back
 

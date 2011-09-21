@@ -35,3 +35,4 @@ ok( $trainer->model->load($model_file), "load model" );
 
 ok( $trainer->model->load_tsv( $model_file . '.tsv' ), "load model to tsv" );
 
+unlink $model_file . '.tsv';

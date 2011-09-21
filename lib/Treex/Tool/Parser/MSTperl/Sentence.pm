@@ -76,14 +76,16 @@ sub fill_fields_after_parse {
     my @edges;
     foreach my $node ( @{ $self->nodes } ) {
 
-        # fill node parent (it can be set either in parent or in parentOrd field)
+        # fill node parent
+        # (it can be set either in parent or in parentOrd field)
         if ( $node->parent ) {
             $node->parentOrd( $node->parent->ord );
         } else {    # $node->parentOrd
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
         if ($DEBUG) {
-            print $node->ord . ': ' . $node->form . ' <- ' . $node->parentOrd . "\n";
+            print $node->ord . ': ' . $node->form
+                . ' <- ' . $node->parentOrd . "\n";
         }
 
         # add a new edge
@@ -190,7 +192,8 @@ sub count_errors {
 
     my $errors = 0;
 
-    #assert that nodes in the sentences with the same ords are corresponding nodes
+    #assert that nodes in the sentences with the same ords
+    # are corresponding nodes
     foreach my $my_node ( @{ $self->nodes } ) {
         my $my_parent      = $my_node->parentOrd;
         my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
@@ -229,6 +232,12 @@ sub toParentOrdsArray {
 
 __END__
 
+=pod
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::Sentence
@@ -247,13 +256,14 @@ The C<0 ord> value is reserved for the (technical) sentence root.
 
 =item id (Int)
 
-An integer id unique for each sentence (in its proper sense, where sentence 
+An integer id unique for each sentence (in its proper sense, where sentence
 is a sequence of tokens - i.e. C<id> stays the same for copies of the same 
 sentence).
 
 =item nodes (ArrayRef[Treex::Tool::Parser::MSTperl::Node])
 
-(A reference to) an array of nodes (C<Treex::Tool::Parser::MSTperl::Node>) of the sentence.
+(A reference to) an array of nodes (C<Treex::Tool::Parser::MSTperl::Node>) of 
+the sentence.
 
 A node represents both a token of the sentence (usually this is a word) and a 
 node in the parse tree of the sentence as well (if the sentence have been 
@@ -261,15 +271,16 @@ parsed).
 
 =item nodes_with_root (ArrayRef[Treex::Tool::Parser::MSTperl::Node])
 
-Copy of C<nodes> field with a root node (L<Treex::Tool::Parser::MSTperl::RootNode>) added 
-at the beginning. As the root node's C<ord> is C<0> by definition, the 
-position of the nodes in this array exactly corresponds to its C<ord>.
+Copy of C<nodes> field with a root node 
+(L<Treex::Tool::Parser::MSTperl::RootNode>) added at the beginning. As the 
+root node's C<ord> is C<0> by definition, the position of the nodes in this 
+array exactly corresponds to its C<ord>.
 
 =item edges (Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]])
 
 If the sentence is parsed (i.e. the nodes know their parents), this field 
-contains (a reference to) an array of all edges (L<Treex::Tool::Parser::MSTperl::Edge>) in 
-the parse tree of the sentence.
+contains (a reference to) an array of all edges 
+(L<Treex::Tool::Parser::MSTperl::Edge>) in the parse tree of the sentence.
 
 This field is set by the C<sub> C<fill_fields_after_parse>.
 
@@ -296,30 +307,31 @@ If the sentence is not parsed, this field is C<undef>.
 
 =over 4
 
-=item my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(id => 12, nodes => [$node1,
- $node2, $node3, ...]);
+=item my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
+    id => 12, nodes => [$node1, $node2, $node3, ...]);
 
 Creates a new sentence. The C<id> must be unique (but copies of the same 
 sentence are to share the same id). It is used for edge signature generation 
 (L<Treex::Tool::Parser::MSTperl::Edge/signature>) in edge features caching (and 
 therefore does not have to be set if caching is disabled).
 
-The order of the nodes denotes their order 
-in the sentence, starting from the node with C<ord> 1, i.e. the technical root 
-(L<Treex::Tool::Parser::MSTperl::RootNode>) is not to be included as it is generated 
-automatically in the constructor.
-The C<ord>s of the nodes (L<Treex::Tool::Parser::MSTperl::Node/ord>) do not have to (and 
-actually shouldn't) be filled in. If they are, they are checked and a warning 
-on STDERR is issued if they do not correspond to the position of the nodes in 
-the array. If they are not, they are filled in automatically during the 
-sentence creation.
+The order of the nodes denotes their order in the sentence, starting from the 
+node with C<ord> 1, i.e. the technical root 
+(L<Treex::Tool::Parser::MSTperl::RootNode>) is not to be included as it is 
+generated automatically in the constructor.
+The C<ord>s of the nodes (L<Treex::Tool::Parser::MSTperl::Node/ord>) do not 
+have to (and actually shouldn't) be filled in. If they are, they are checked 
+and a warning on STDERR is issued if they do not correspond to the position of 
+the nodes in the array. If they are not, they are filled in automatically 
+during the sentence creation.
 
 Other fields (C<nodes_with_root>, C<edges> and C<features>) should usually not 
 be set. C<nodes_with_root> are set automatically during sentence creation (and 
 any value set to it is discarded). C<edges> and C<features> are to be set only 
 if the sentence is parsed (i.e. the nodes know their parents, see 
-L<Treex::Tool::Parser::MSTperl::Node/parent> and L<Treex::Tool::Parser::MSTperl::Node/parentOrd>) by 
-calling the C<fill_fields_after_parse> method.
+L<Treex::Tool::Parser::MSTperl::Node/parent> and 
+L<Treex::Tool::Parser::MSTperl::Node/parentOrd>) by calling the 
+C<fill_fields_after_parse> method.
 
 So, if the sentence is already parsed, you should call the 
 C<fill_fields_after_parse> method immediately after creaion of the sentence.
@@ -376,7 +388,8 @@ Each node corresponds to one word (one token to be more precise).
 =item $sentence->score()
 
 Returns model-wise score of the sentence (by calling 
-L<Treex::Tool::Parser::MSTperl::Model/score_features> on the sentence C<features>)
+L<Treex::Tool::Parser::MSTperl::Model/score_features> on the sentence 
+C<features>)
 
 =item $sentence->count_errors($correct_sentence)
 
@@ -401,7 +414,9 @@ with a space between each two adjacent tokens).
 
 =item $sentence->toParentOrdsArray()
 
-Returns (a reference to) an array of node parent ords, i.e. for the sentence "Tom is big", where "is" is a child of the root node and "Tom" and "big" are children of "is", this method returns C<[2, 0, 2]>.
+Returns (a reference to) an array of node parent ords, i.e. for the sentence 
+"Tom is big", where "is" is a child of the root node and "Tom" and "big" are 
+children of "is", this method returns C<[2, 0, 2]>.
 
 =back
 
@@ -411,6 +426,8 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.

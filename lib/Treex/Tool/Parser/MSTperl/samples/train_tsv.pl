@@ -13,10 +13,19 @@ use Treex::Tool::Parser::MSTperl::Trainer;
 
 my ( $train_file, $model_file, $config_file, $save_tsv ) = @ARGV;
 
-my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new( config_file => $config_file );
-my $reader        = Treex::Tool::Parser::MSTperl::Reader->new( featuresControl => $featuresControl );
+my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+    config_file => $config_file
+);
+
+my $reader = Treex::Tool::Parser::MSTperl::Reader->new(
+    featuresControl => $featuresControl
+);
+
 my $training_data = $reader->read_tsv($train_file);
-my $trainer       = Treex::Tool::Parser::MSTperl::Trainer->new( featuresControl => $featuresControl );
+
+my $trainer = Treex::Tool::Parser::MSTperl::Trainer->new(
+    featuresControl => $featuresControl
+);
 
 $trainer->train($training_data);
 $trainer->model->store($model_file);

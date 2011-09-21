@@ -26,7 +26,11 @@ my $DEBUG = 0;
 sub BUILD {
     my ($self) = @_;
 
-    $self->model( Treex::Tool::Parser::MSTperl::Model->new( featuresControl => $self->featuresControl ) );
+    $self->model(
+        Treex::Tool::Parser::MSTperl::Model->new(
+            featuresControl => $self->featuresControl
+            )
+    );
 
     return;    # only technical
 }
@@ -47,7 +51,9 @@ sub parse_sentence {
     $sentence->clear_parse();
     my $sentence_length = $sentence->len();
 
-    my $graph = Graph::Directed->new( vertices => [ ( 0 .. $sentence_length ) ] );
+    my $graph = Graph::Directed->new(
+        vertices => [ ( 0 .. $sentence_length ) ]
+    );
     my @weighted_edges;
     if ($DEBUG) { print "EDGES (parent -> child):\n"; }
     foreach my $child ( @{ $sentence->nodes } ) {
@@ -80,7 +86,8 @@ sub parse_sentence {
 
             # END only progress and/or debug info
 
-            # MaxST needed but MinST is computed -> need to normalize score as -$score
+            # MaxST needed but MinST is computed
+            #  -> need to normalize score as -$score
             push @weighted_edges, ( $parent->ord, $child->ord, -$score );
         }
     }
@@ -105,7 +112,11 @@ sub parse_sentence {
         my ( $parent, $child ) = @$edge;
         $sentence->setChildParent( $child, $parent );
 
-        if ($DEBUG) { print "$parent (" . $sentence->getNodeByOrd($parent)->form . ") -> $child (" . $sentence->getNodeByOrd($child)->form . ")\n"; }
+        if ($DEBUG) {
+            print "$parent (" . $sentence->getNodeByOrd($parent)->form
+                . ") -> $child (" . $sentence->getNodeByOrd($child)->form
+                . ")\n";
+        }
     }
 
     return $sentence->toParentOrdsArray();
@@ -115,7 +126,10 @@ sub parse_sentence {
 
 __END__
 
-=pod 
+
+=pod
+
+=for Pod::Coverage BUILD
 
 =encoding utf-8
 
@@ -137,15 +151,17 @@ in Proc. HLT/EMNLP.
 
 =item $parser->load_model('modelfile.model');
 
-Loads a model (= sets feature weights) using L<Treex::Tool::Parser::MSTperl::Model/load>.
+Loads a model (= sets feature weights)
+using L<Treex::Tool::Parser::MSTperl::Model/load>.
 
 A model has to be loaded before sentences can be parsed.
 
 =item $parser->parse_sentence($sentence);
 
-Parses a sentence (instance of L<Treex::Tool::Parser::MSTperl::Sentence>). It sets the 
-C<parent> field of each node (instance of L<Treex::Tool::Parser::MSTperl::Node>), i.e. a 
-word in the sentence, and also returns these parents as an array reference.
+Parses a sentence (instance of L<Treex::Tool::Parser::MSTperl::Sentence>). It
+sets the C<parent> field of each node (instance of 
+L<Treex::Tool::Parser::MSTperl::Node>), i.e. a word in the sentence, and also 
+returns these parents as an array reference.
 
 Any parse information already contained in the sentence gets discarded 
 (explicitely, by calling L<Treex::Tool::Parser::MSTperl::Sentence/clear_parse>).
@@ -160,6 +176,8 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.

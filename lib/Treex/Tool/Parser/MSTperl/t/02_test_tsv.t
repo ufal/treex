@@ -53,3 +53,7 @@ is( $total_errors, 27, 'returns on the given data 27 errors' );
 my $writer = new_ok( 'Treex::Tool::Parser::MSTperl::Writer' => [ featuresControl => $featuresControl ], "initialize Writer," );
 
 ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
+
+unlink $test_file . '.out';
+
+unlink $model_file;

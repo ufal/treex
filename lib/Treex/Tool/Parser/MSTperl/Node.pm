@@ -55,6 +55,12 @@ sub copy_nonparsed {
 
 __END__
 
+=pod
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::Node
@@ -75,7 +81,7 @@ It may also point to its parent node.
 
 Fields read from input and directly stored here,
 such as word form, morphological lemma, morphological tag etc.
-See L<Treex::Tool::Parser::MSTperl::Config> for details.
+See L<Treex::Tool::Parser::MSTperl::FeaturesControl> for details.
 
 =item ord
 
@@ -104,12 +110,34 @@ is copied here, as it is used more often than the C<parent> field itself.
 
 =back
 
+=head1 METHODS
+
+=over 4
+
+=item my $node = my $node = Treex::Tool::Parser::MSTperl::Node->new(
+    fields => [@fields],
+    featuresControl => $featuresControl,
+);
+
+Creates a new node with the given field values (C<fields>)
+and using the given L<Treex::Tool::Parser::MSTperl::FeaturesControl> instance
+(C<featuresControl>).
+
+=item my $node_copy = $node->copy_nonparsed()
+
+Copies the node without the parse information
+(i.e. without the info about its parent).
+
+=back
+
 =head1 AUTHORS
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.

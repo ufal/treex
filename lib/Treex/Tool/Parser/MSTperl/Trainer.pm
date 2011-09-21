@@ -25,13 +25,18 @@ my $DEBUG        = 0;
 my $DEBUG_ALPHAS = 0;
 
 # all values of features used during the training summed together
-# as using average weights instead of final weights is reported to help avoid overtraining
+# as using average weights instead of final weights
+# is reported to help avoid overtraining
 my %feature_weights_summed;    # v
 
 sub BUILD {
     my ($self) = @_;
 
-    $self->parser( Treex::Tool::Parser::MSTperl::Parser->new( featuresControl => $self->featuresControl ) );
+    $self->parser(
+        Treex::Tool::Parser::MSTperl::Parser->new(
+            featuresControl => $self->featuresControl
+            )
+    );
     $self->model( $self->parser->model );
 
     return;                    # only technical
@@ -40,12 +45,14 @@ sub BUILD {
 sub train {
 
     # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
-    my ( $self, $training_data ) = @_;    # Training data: T = {(x_t, y_t)} t=1..T
+    # Training data: T = {(x_t, y_t)} t=1..T
+    my ( $self, $training_data ) = @_;
 
     my $sentence_count = scalar( @{$training_data} );
 
     # only progress and/or debug info
-    print "Going to train on $sentence_count sentences with " . $self->featuresControl->number_of_iterations . " iterations.\n";
+    print "Going to train on $sentence_count sentences with "
+        . $self->featuresControl->number_of_iterations . " iterations.\n";
 
     # END only progress and/or debug info
 
@@ -53,7 +60,9 @@ sub train {
     print "Computing sentence features...\n";
     my $sentNo = 0;
     foreach my $sentence_correct_parse ( @{$training_data} ) {
-        $sentence_correct_parse->fill_fields_after_parse( $self->featuresControl );
+        $sentence_correct_parse->fill_fields_after_parse(
+            $self->featuresControl
+        );
 
         # only progress and/or debug info
         $sentNo++;
@@ -77,24 +86,45 @@ sub train {
 
     # do the training
     print "Training the model...\n";
-    my $number_of_inner_iterations = $self->featuresControl->number_of_iterations * $sentence_count;    # how many times $self->mira_update() will be called
-    for ( my $iteration = 1; $iteration <= $self->featuresControl->number_of_iterations; $iteration++ ) {    # for n : 1..N
-        print "  Iteration number $iteration of " . $self->featuresControl->number_of_iterations . "...\n";
+
+    # how many times $self->mira_update() will be called
+    my $number_of_inner_iterations =
+        $self->featuresControl->number_of_iterations * $sentence_count;
+
+    # for n : 1..N
+    for (
+        my $iteration = 1;
+        $iteration <= $self->featuresControl->number_of_iterations;
+        $iteration++
+        )
+    {
+        print "  Iteration number $iteration of "
+            . $self->featuresControl->number_of_iterations . "...\n";
         $sentNo = 0;
-        foreach my $sentence_correct_parse ( @{$training_data} ) {                                           # for t : 1..T # these are the inner iterations
-            my $sentence_best_parse = $sentence_correct_parse->copy_nonparsed();                             # copy the sentence
-            $self->parser->parse_sentence($sentence_best_parse);                                             # y' = argmax_y' s(x_t, y')
-            $sentence_best_parse->fill_fields_after_parse( $self->featuresControl );
+
+        # for t : 1..T # these are the inner iterations
+        foreach my $sentence_correct_parse ( @{$training_data} ) {
+
+            # copy the sentence
+            my $sentence_best_parse = $sentence_correct_parse->copy_nonparsed();
+
+            # y' = argmax_y' s(x_t, y')
+            $self->parser->parse_sentence($sentence_best_parse);
+            $sentence_best_parse->fill_fields_after_parse(
+                $self->featuresControl
+            );
 
             # only progress and/or debug info
             if ($DEBUG) {
                 print "CORRECT PARSE EDGES:\n";
                 foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
-                    print $edge->parent->form . " -> " . $edge->child->form . "\n";
+                    print $edge->parent->form . " -> "
+                        . $edge->child->form . "\n";
                 }
                 print "BEST PARSE EDGES:\n";
                 foreach my $edge ( @{ $sentence_best_parse->edges } ) {
-                    print $edge->parent->form . " -> " . $edge->child->form . "\n";
+                    print $edge->parent->form . " -> "
+                        . $edge->child->form . "\n";
                 }
             }
 
@@ -106,10 +136,15 @@ sub train {
             my $sumUpdateWeight = $number_of_inner_iterations - $innerIteration;
 
             # weight of feature weights sum update <N*T .. 1>
-            # $sumUpdateWeight denotes number of summands in which the weight would appear
+            # $sumUpdateWeight denotes number of summands
+            # in which the weight would appear
             # if it were computed according to the definition
 
-            $self->mira_update( $sentence_correct_parse, $sentence_best_parse, $sumUpdateWeight );
+            $self->mira_update(
+                $sentence_correct_parse,
+                $sentence_best_parse,
+                $sumUpdateWeight
+            );
 
             # min ||w_i+1 - w_i|| s.t. ...
 
@@ -138,13 +173,16 @@ sub train {
         # w = v/(N * T)
         # here used as w = 1000 * v/(N * T)
         # is not necessary but makes numbers reasonably big
-        # see also: my $number_of_inner_iterations = $self->featuresControl->number_of_iterations * $sentence_count;
-        my $weight = 1000 * $feature_weights_summed{$feature} / $number_of_inner_iterations;
+        # see also: my $number_of_inner_iterations =
+        # $self->featuresControl->number_of_iterations * $sentence_count;
+        my $weight = 1000 * $feature_weights_summed{$feature}
+            / $number_of_inner_iterations;
         $self->model->set_feature_weight( $feature, $weight );
 
         # only progress and/or debug info
         if ($DEBUG) {
-            print "$feature\t" . $self->model->get_feature_weight($feature) . "\n";
+            print "$feature\t" . $self->model->get_feature_weight($feature)
+                . "\n";
         }
 
         # END only progress and/or debug info
@@ -158,8 +196,15 @@ sub train {
 
 sub mira_update {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse, Treex::Tool::Parser::MSTperl::Sentence $sentence_best_parse, Int $sumUpdateWeight)
-    my ( $self, $sentence_correct_parse, $sentence_best_parse, $sumUpdateWeight ) = @_;
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse,
+    # Treex::Tool::Parser::MSTperl::Sentence $sentence_best_parse,
+    # Int $sumUpdateWeight)
+    my (
+        $self,
+        $sentence_correct_parse,
+        $sentence_best_parse,
+        $sumUpdateWeight
+    ) = @_;
 
     # s(x_t, y_t)
     my $score_correct = $sentence_correct_parse->score( $self->model );
@@ -180,10 +225,15 @@ sub mira_update {
 
     if ( $error > 0 ) {
         my ( $features_diff_correct, $features_diff_best, $features_diff_count )
-            = features_diff( $sentence_correct_parse->features, $sentence_best_parse->features );
+            = features_diff(
+            $sentence_correct_parse->features,
+            $sentence_best_parse->features
+            );
 
         if ( $features_diff_count == 0 ) {
-            warn "Features of the best parse and the correct parse do not differ, unable to update the scores. Consider using more features.\n";
+            warn "Features of the best parse and the correct parse do not " .
+                "differ, unable to update the scores. " .
+                "Consider using more features.\n";
             if ($DEBUG_ALPHAS) {
                 print "alpha: 0 on 0 features\n";
             }
@@ -194,12 +244,21 @@ sub mira_update {
 
             #$update is added to features occuring in the correct parse only
             foreach my $feature ( @{$features_diff_correct} ) {
-                $self->update_feature_weight( $feature, $update, $sumUpdateWeight );
+                $self->update_feature_weight(
+                    $feature,
+                    $update,
+                    $sumUpdateWeight
+                );
             }
 
-            #and subtracted from features occuring in the best (and incorrect) parse only
+            # and subtracted from features occuring
+            # in the best (and incorrect) parse only
             foreach my $feature ( @{$features_diff_best} ) {
-                $self->update_feature_weight( $feature, -$update, $sumUpdateWeight );
+                $self->update_feature_weight(
+                    $feature,
+                    -$update,
+                    $sumUpdateWeight
+                );
             }
             if ($DEBUG_ALPHAS) {
                 print "alpha: $update on $features_diff_count features\n";
@@ -254,11 +313,15 @@ sub features_diff {
     foreach my $feature ( keys %feature_counts ) {
         if ( $feature_counts{$feature} ) {
             my $count = abs( $feature_counts{$feature} );
-            if ( $feature_counts{$feature} > 0 ) {    # more often in the first array
+
+            # more often in the first array
+            if ( $feature_counts{$feature} > 0 ) {
                 for ( my $i = 0; $i < $count; $i++ ) {
                     push @features_first, $feature;
                 }
-            } else {                                  # more often in the second array
+
+                # more often in the second array
+            } else {
                 for ( my $i = 0; $i < $count; $i++ ) {
                     push @features_second, $feature;
                 }
@@ -275,6 +338,12 @@ sub features_diff {
 
 __END__
 
+=pod
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::Trainer
@@ -284,7 +353,7 @@ Treex::Tool::Parser::MSTperl::Trainer
 Trains on correctly parsed sentences and so creates and tunes the model.
 Uses single-best MIRA (McDonald et al., 2005, Proc. HLT/EMNLP)
 
-Mathematically-looking comments at ends of some lines correspond to the 
+Mathematically-looking comments at ends of some lines correspond to the
 pseudocode description of MIRA provided by McDonald et al.
 
 =head1 FIELDS
@@ -293,12 +362,13 @@ pseudocode description of MIRA provided by McDonald et al.
 
 =item model
 
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is being trained.
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is 
+being trained.
 
 =item parser
 
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is used
-for the training.
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is 
+used for the training.
 
 =item featuresControl
 
@@ -335,9 +405,10 @@ is multiplied in the sum of the weights, so that at the end of the algorithm
 the sum corresponds to its formal definition, which is a sum of all weights 
 after each of the updates. C<sumUpdateWeight> is a member of a sequence going 
 from N*T to 1, where N is the number of iterations 
-(L<Treex::Tool::Parser::MSTperl::FeaturesControl/number_of_iterations>, C<10> by default) 
-and T being the number of sentences in training data, N*T thus being the 
-number of inner iterations, i.e. how many times C<mira_update()> is called.
+(L<Treex::Tool::Parser::MSTperl::FeaturesControl/number_of_iterations>, C<10> 
+by default) and T being the number of sentences in training data, N*T thus 
+being the number of inner iterations, i.e. how many times C<mira_update()> is 
+called.
 
 =item my ( $features_diff_1, $features_diff_2, $features_diff_count ) =
     features_diff( $features_1, $features_2 );
@@ -382,6 +453,8 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.
