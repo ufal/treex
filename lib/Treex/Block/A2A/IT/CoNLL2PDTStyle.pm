@@ -129,15 +129,15 @@ sub set_afuns
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
         $afun = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
         $afun = 'AuxT'  if ( $deprel eq 'clit' );       # clit      -> AuxT
-        $afun = 'Atv'   if ( $deprel eq 'comp' );       # comp      -> Atv
+        $afun = 'Obj'   if ( $deprel eq 'comp' );       # comp      -> Obj
         $afun = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
         $afun = 'AuxC'  if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
         $afun = 'AuxA'  if ( $deprel eq 'det' );        # det       -> AuxA
         $afun = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
-        $afun = 'Atv'   if ( $deprel eq 'obl' );        # obl       -> Atv
+        $afun = 'Adv'   if ( $deprel eq 'obl' );        # obl       -> Adv
         $afun = 'Obj'   if ( $deprel eq 'ogg_d' );      # ogg_d     -> Obj
         $afun = 'Obj'   if ( $deprel eq 'ogg_i' );      # ogg_i     -> Obj
-        $afun = 'Pred'  if ( $deprel eq 'pred' );       # pred      -> Pred
+        $afun = 'Pnom'  if ( $deprel eq 'pred' );       # pred      -> Pnom
         $afun = 'AuxP'  if ( $deprel eq 'prep' );       # prep      -> AuxP
         $afun = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
 
