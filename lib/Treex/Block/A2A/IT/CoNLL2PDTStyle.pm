@@ -20,6 +20,8 @@ sub process_zone
 
     $self->make_pdt_coordination($a_root);
 
+    $self->make_pdt_prepositions($a_root);
+
     # swap the afun of preposition and its nominal head
     $self->afun_swap_prep_and_its_nhead($a_root);
 }
@@ -39,7 +41,11 @@ sub make_pdt_coordination {
             $coord->set_afun('Coord');
             for my $member (@members) {
                 $member->set_parent($coord);
-                $member->set_afun($node->afun);
+                if ('AuxP' eq $node->afun) {
+                    $member->set_afun($coord->get_parent->afun);
+                } else {
+                    $member->set_afun($node->afun);
+                }
                 $member->set_is_member(1);
             }
             for my $aux (@coords) {
@@ -55,6 +61,18 @@ sub make_pdt_coordination {
         }
     }
 }
+
+sub make_pdt_prepositions {
+    my ($self, $aroot) = @_;
+    for my $node ($aroot->get_descendants) {
+        if ('AuxP' eq $node->afun) {
+            my $auxp = $node->get_parent;
+            $auxp = $auxp->get_parent while 'Coord' eq $auxp->afun;
+            $node->set_afun($auxp->afun);
+            $auxp->set_afun('AuxP');
+        }
+    }
+} # make_pdt_prepositions
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -81,11 +99,9 @@ sub deprel_to_afun
         $afun = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
         $afun = 'Atr'   if ( $deprel eq 'clit' );       # clit      -> Atr
         $afun = 'Atv'   if ( $deprel eq 'comp' );       # comp      -> Atv
-        #$afun = 'Coord' if ( $deprel eq 'con' );        # con       -> Coord
         $afun = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
         $afun = 'AuxC'  if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
         $afun = 'AuxA'  if ( $deprel eq 'det' );        # det       -> AuxA
-        #$afun = 'Coord' if ( $deprel eq 'dis' );        # dis       -> Coord
         $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
         $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
         $afun = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
@@ -95,6 +111,9 @@ sub deprel_to_afun
         $afun = 'Pred'  if ( $deprel eq 'pred' );       # pred      -> Pred
         $afun = 'AuxP'  if ( $deprel eq 'prep' );       # prep      -> AuxP
         $afun = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
+
+        #$afun = 'Coord' if ( $deprel eq 'con' );       # con       -> Coord
+        #$afun = 'Coord' if ( $deprel eq 'dis' );       # dis       -> Coord
 
         # punctuations
         if ( $deprel eq 'punc' ) {
