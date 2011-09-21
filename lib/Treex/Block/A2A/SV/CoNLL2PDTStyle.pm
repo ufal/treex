@@ -70,7 +70,21 @@ sub deprel_to_afun
         # Coordinating conjunction
         elsif ( $deprel eq '++' )
         {
-            $afun = 'Coord';
+            if($parent->conll_deprel() =~ m/^(CC|C\+|CJ|\+F)$/)
+            {
+                $afun = 'Coord';
+            }
+            # Occasionally the coordinating conjunction may not have strictly coordinating function.
+            # Example (train/002.treex#185):
+            # nygifta, och speciellt då nygifta med småbarn
+            # newly married, and especially when newly married with small children
+            # Here, 'och' is attached to the second 'nygifta', which is an apposition of the first 'nygifta'.
+            # Deprel tags are as follows:
+            # SS IK ++ CA TA AN ET PA
+            else
+            {
+                $afun = 'AuxY';
+            }
         }
 
         # Conjunctional adverbial
@@ -145,6 +159,7 @@ sub deprel_to_afun
         }
 
         # Sister of first conjunct in binary branching analysis of coordination
+        # DZ: This is the prevailing tag for non-first coordination members.
         elsif ( $deprel eq 'CC' )
         {
             $afun = 'CoordArg';
