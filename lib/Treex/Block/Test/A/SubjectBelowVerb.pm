@@ -6,13 +6,13 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
     if (($anode->afun||'') eq 'Sb') {
-        foreach my $parent ($anode->get_eparents) {
+        foreach my $parent ($anode->get_eparents({ dive => 'AuxCP' })) {
             if (defined $parent->get_attr('iset/pos')
                     and $parent->get_attr('iset/pos') ne 'verb' ) {
 
-                if ($parent->afun() ne 'AuxC') { # modern greek 
+#                if ($parent->afun() ne 'AuxC') { # modern greek 
                     $self->complain($anode);
-                }
+#                }
             }
         }
     }
