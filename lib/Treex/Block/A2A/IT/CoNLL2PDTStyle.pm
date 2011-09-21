@@ -1,4 +1,5 @@
 package Treex::Block::A2A::IT::CoNLL2PDTStyle;
+use feature state;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -8,6 +9,9 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 # Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
+
+sub deprel_to_afun {}
+
 sub process_zone
 {
     my $self   = shift;
@@ -15,36 +19,44 @@ sub process_zone
 
     my $a_root = $self->SUPER::process_zone($zone);
 
+    $self->make_pdt_coordination($a_root);
+
+    $self->make_pdt_auxcp($a_root);
+
+    $self->set_afuns($a_root);
+
     # attach terminal punctuations (., ?, ! etc) to root of the tree
     attach_final_punctuation_to_root($a_root);
 
-    $self->make_pdt_coordination($a_root);
+    $self->remove_invalid_afuns($a_root);
 
-    $self->make_pdt_prepositions($a_root);
-
-    # swap the afun of preposition and its nominal head
-    $self->afun_swap_prep_and_its_nhead($a_root);
 }
+
 
 sub make_pdt_coordination {
     my ($self, $root) = @_;
     my @nodes = $root->get_descendants;
     for my $node (@nodes) {
         my @children = $node->get_children({ ordered => 1 });
-        if (my @coords = grep $_->afun =~ /^(?:con|dis)$/, @children) {
-            my @members = ($node, grep $_->afun =~ /^(?:con|dis)g$/, @children);
+        if (my @coords = grep $_->conll_deprel =~ /^(?:con|dis)$/, @children) {
+            next if $node->afun and 'Coord' eq $node->afun;
+            my @members = ($node,
+                           grep $_->conll_deprel =~ /^(?:con|dis)g$/,
+                               @children);
             if (not @coords) {
                 log_warn('No coordination nodes at ' . $node->get_address);
+                next;
             }
             my $coord = pop @coords;
             $coord->set_parent($node->get_parent);
             $coord->set_afun('Coord');
             for my $member (@members) {
                 $member->set_parent($coord);
-                if ('AuxP' eq $node->afun) {
-                    $member->set_afun($coord->get_parent->afun);
+                if ('prep' eq $node->conll_deprel) {
+                    $member->set_conll_deprel($coord->get_parent->conll_deprel);
+                    $coord->get_parent->set_afun('AuxP');
                 } else {
-                    $member->set_afun($node->afun);
+                    $member->set_conll_deprel($node->conll_deprel);
                 }
                 $member->set_is_member(1);
             }
@@ -62,32 +74,51 @@ sub make_pdt_coordination {
     }
 }
 
-sub make_pdt_prepositions {
+sub make_pdt_auxcp {
     my ($self, $aroot) = @_;
+    state $translate_to
+        = { prep     => 'AuxP',
+            cong_sub => 'AuxC',
+          };
+
     for my $node ($aroot->get_descendants) {
-        if ('AuxP' eq $node->afun) {
-            my $auxp = $node->get_parent;
-            $auxp = $auxp->get_parent while 'Coord' eq $auxp->afun;
-            $node->set_afun($auxp->afun);
-            $auxp->set_afun('AuxP');
+        my $deprel = $node->conll_deprel;
+        if (grep $_ eq $deprel, keys %$translate_to) {
+            my $aux = $node->get_parent;
+            $aux = $aux->get_parent while $aux->afun
+                and 'Coord' eq $aux->afun;
+            $node->set_conll_deprel($aux->conll_deprel);
+            if ($aux == $aroot) {
+                log_warn('A-Root as candidate for AuxC '
+                         . $node->get_address);
+                # HACK, error in the input data
+                $node->set_afun('Pred');
+                $node->set_is_member(1);
+            } else {
+                $aux->set_afun($translate_to->{$deprel});
+            }
         }
     }
-} # make_pdt_prepositions
+} # make_pdt_auxcp
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub set_afuns
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $form   = $node->form();
-        my $pos    = $node->conll_pos();
+        next if $node->afun;
+
+        my $deprel   = $node->conll_deprel;
+        my $form     = $node->form;
+        my $pos      = $node->conll_pos;
+        my ($parent) = $node->get_eparents({ dive => 'AuxCP' });
+        my $p_iset  = $parent->get_iset('pos');
 
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
 
@@ -97,13 +128,11 @@ sub deprel_to_afun
         # trivial conversion to PDT style afun
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
         $afun = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
-        $afun = 'Atr'   if ( $deprel eq 'clit' );       # clit      -> Atr
+        $afun = 'AuxT'  if ( $deprel eq 'clit' );       # clit      -> AuxT
         $afun = 'Atv'   if ( $deprel eq 'comp' );       # comp      -> Atv
         $afun = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
         $afun = 'AuxC'  if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
         $afun = 'AuxA'  if ( $deprel eq 'det' );        # det       -> AuxA
-        $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
-        $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
         $afun = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
         $afun = 'Atv'   if ( $deprel eq 'obl' );        # obl       -> Atv
         $afun = 'Obj'   if ( $deprel eq 'ogg_d' );      # ogg_d     -> Obj
@@ -112,8 +141,18 @@ sub deprel_to_afun
         $afun = 'AuxP'  if ( $deprel eq 'prep' );       # prep      -> AuxP
         $afun = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
 
-        #$afun = 'Coord' if ( $deprel eq 'con' );       # con       -> Coord
-        #$afun = 'Coord' if ( $deprel eq 'dis' );       # dis       -> Coord
+        # $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
+        # $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
+        # $afun = 'Coord' if ( $deprel eq 'con' );        # con       -> Coord
+        # $afun = 'Coord' if ( $deprel eq 'dis' );        # dis       -> Coord
+
+        if ($deprel =~ /^mod(?:_rel)?$/) {
+            if ($p_iset =~ /^n(?:oun|um)$/) {
+                $afun = 'Atr';
+            } else {
+                $afun = 'Adv';
+            }
+        }
 
         # punctuations
         if ( $deprel eq 'punc' ) {
@@ -143,29 +182,26 @@ sub attach_final_punctuation_to_root {
     my $root       = shift;
     my @nodes      = $root->get_descendants({ ordered => 1 });
     my $fnode      = $nodes[-1];
-    my $fnode_afun = $fnode->afun();
+    my $fnode_afun = $fnode->afun() // '';
     if ( $fnode_afun eq 'AuxK' ) {
         $fnode->set_parent($root);
     }
 }
 
-# This function will swap the afun of preposition and its nominal head.
-# It was because, in the original treebank preposition was given
-# 'mod(Atr)' label and its nominal head was given 'prep(AuxP)'.
-sub afun_swap_prep_and_its_nhead {
-    my ( $self, $root ) = @_;
-    my @nodes = $root->get_descendants();
-
-    foreach my $node (@nodes) {
-        if ( ( $node->afun() eq 'AuxP' ) && ( $node->conll_pos() =~ /^S/ ) ) {
-            my $parent = $node->get_parent();
-            if ( ( $parent->afun() eq 'Atr' ) && ( $parent->conll_pos() eq 'E' ) ) {
-                $parent->set_afun('AuxP');
-                $node->set_afun('Atr');
-            }
+# Coordination without Coord - just make the other nodes ExD
+sub remove_invalid_afuns {
+    my ($self, $aroot) = @_;
+    for my $node ($aroot->get_descendants) {
+        if (!$node->afun or $node->afun =~ /^[[:lower:]]/) {
+            $node->set_afun('NR');
+            log_info('No afun for ' . $node->get_address);
         }
     }
-}
+} # remove_invalid_afuns
+
+
+# prevent setting the afuns before coordination
+sub deprel_to_afun {}
 
 1;
 
