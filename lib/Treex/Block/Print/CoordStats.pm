@@ -19,7 +19,7 @@ sub process_bundle {
             push @features, 'is_root';
         }
         else {
-            if ($node->get_parent->afun eq 'Coord'
+            if (($node->get_parent->afun||'') eq 'Coord'
                     and not $node->is_member
                         and ($node->afun||'') !~ /AuxX|AuxY/) {
                 push @features, 'is_shared_modif';
@@ -27,7 +27,7 @@ sub process_bundle {
         }
 
         if (($node->afun||'') eq 'Coord') {
-            push @features, 'is_coord_conj';
+            push @features, 'is_coord_head';
         }
 
         if ($node->is_member) {

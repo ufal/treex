@@ -617,7 +617,8 @@ sub _print_output_files {
         my $mask = $self->workdir . "/output/job*-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         my ($filename) = glob $mask;
         if ( !defined $filename ) {
-            my $message = "Document $doc_number finished without producing $mask";
+            my $message = "Document $doc_number finished without producing $mask . " .
+                " It might be useful to inspect " . $self->workdir . "/output/job*-loading.stderr";
             if ( $self->survive ) {
                 log_warn("$message (fatal error ignored due to survival mode, be careful)");
                 return;
