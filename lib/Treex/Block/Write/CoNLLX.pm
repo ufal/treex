@@ -10,6 +10,7 @@ has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/pos' );
 has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos' );
 has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_' );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_shared_modifier_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -18,9 +19,13 @@ sub process_atree {
             map { defined $anode->get_attr($_) ? $anode->get_attr($_) : '_' }
             ('lemma', $self->pos_attribute, $self->cpos_attribute, $self->deprel_attribute);
         #my $ctag  = $self->get_coarse_grained_tag($tag);
-        if ($self->is_member_within_afun && $anode->is_member) {
-            $deprel .= '_M';
-        }
+
+        # append suffices to afuns 
+        my $suffix = '';
+        $suffix .= 'M' if $self->is_member_within_afun && $anode->is_member;
+        $suffix .= 'S' if $self->is_shared_modifier_within_afun && $anode->is_shared_modifier;
+        $deprel .= "_$suffix" if $suffix;
+
         my $feat;
         if ( $self->feat_attribute eq 'conll/feat' && defined $anode->conll_feat() ) {
             $feat = $anode->conll_feat();
