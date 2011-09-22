@@ -9,17 +9,38 @@ has family => (
     documentation => 'output coord style family (Prague, Moscow, and Stanford)',
 );
 
-has from_family => (
+#has from_family => (
+#    is            => 'ro',
+#    default       => 'Prague',
+#    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
+#);
+
+# previous, following, between
+has comma => (
     is            => 'ro',
-    default       => 'Prague',
-    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
+    default       => 'previous',
+    documentation => 'comma parents (previous, following, between)',
 );
 
-# TODO first last nearest
+# previous, following, between
+has conjunction => (
+    is            => 'ro',
+    default       => 'between',
+    documentation => 'conjunction parents (previous, following, between)',
+);
+
+# first, last, nearest
 has head => (
     is            => 'ro',
     default       => 'first',
     documentation => 'which node should be the head of the coordination structure',
+);
+
+# head, nearest
+has shared => (
+    is            => 'ro',
+    default       => 'nearest',
+    documentation => 'which node should be the head of the shared modifiers',
 );
 
 sub process_atree {
@@ -27,79 +48,106 @@ sub process_atree {
     $self->process_subtree($atree);
 }
 
+my @empty = ( members => [], shared => [], commas => [], ands => [] );
+
 sub process_subtree {
     my ( $self, $node ) = @_;
-    my $info = { members => [], shared => [], commas => [], ands => [], todo => [] };
-    if ( $node->afun eq 'Coord' ) {
-        $self->detect_prague( $node, $info );
+    my @children = $node->get_children();
+    if ( !@children ) {
+        my $type = $self->type_of_node($node) or return;
+        return { @empty, $type => [$node] };
     }
-    elsif ( $node->is_member ) {
-        $self->detect_nonprague( $node, $info );
-    }
-    $self->transform_coord( $node, $info );
 
-    foreach my $child ( @{ $info->{todo} } ) {
-        $self->process_subtree($child);
-    }
-    return;
-}
-
-#use List::MoreUtils qw(part);
-#  my ( $mem, $sha, $other ) =
-#  part { $_->is_member ? 0 : $_->is_shared_modifier ? 1 : 2 } @children;
-
-sub detect_prague {
-    my ( $self, $node, $info ) = @_;
-    push @{ $info->{ands} }, $node;
-
-    foreach my $child ( $node->get_children() ) {
-        if ( $child->is_member ) {
-            push @{ $info->{members} }, $child;
-            if ($child->afun eq 'Coord'){
-                push @{ $info->{todo} }, $child;
-            } else {
-                push @{ $info->{members} }, grep {$_->is_shared_modifier} $child->get_children();
-                push @{ $info->{todo} }, grep {!$_->is_shared_modifier} $child->get_children();
-            }
-        }
-        elsif ( $child->is_shared_modifier ) {
-            push @{ $info->{shared} }, $child;
-            push @{ $info->{todo} }, $child->get_children();
+    my $my_type = $self->type_of_node($node);
+    foreach my $child (@children) {
+        my $res = $self->process_subtree($child) or next;
+        my $child_type = $self->type_of_node($child);
+        if ( !$my_type ) {
+            $self->transform_coord( $node, $res );
         }
         else {
-            push @{ $info->{commas} }, $child;
-            push @{ $info->{todo} }, $child->get_children();
+
+            #TODO!!!
         }
     }
     return;
 }
 
-sub detect_nonprague {
-    my ( $self, $node, $info ) = @_;
-    push @{ $info->{members} }, $node;
+sub type_of_node {
+    my ( $self, $node ) = @_;
+    return 'members' if $node->is_member;
+    return 'shared'  if $node->is_shared_modifier;
+    return 'ands'    if $self->is_conjunction($node);
+    return 'commas'  if $self->is_comma($node);
+    return 0;
+}
 
-    foreach my $child ( $node->get_children() ) {
-        
+sub transform_coord {
+    my ( $self, $parent, $res ) = @_;
+    my @members = @{ $res->{members} };
+    if ( !@members ) {
+        log_warn "No conjuncts in coordination under " . $parent->get_address;
+        return;
     }
-    return;
+    my @shared      = @{ $res->{shared} };
+    my $parent_left = $parent->precedes( $members[0] );
+    my $first       = $self->head eq 'first' ? 1 : $self->head eq 'last' ? 0 : $parent_left;
+
+    if ( $self->family eq 'Prague' ) {
+        my @separators = ( @{ $res->{ands} }, @{ $res->{commas} } );
+        if ( !@separators ) {
+            log_warn "No separators in coordination under " . $parent->get_address;
+            return;
+        }
+
+        my $head = $first ? shift @separators : pop @separators;
+        $self->rehang( $head, $parent );
+        $head->set_afun('Coord');
+
+        foreach my $member (@members) {
+            $self->rehang( $member, $head );
+        }
+
+        foreach my $sep (@separators) {
+            $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
+            if ( $self->comma eq 'between' ) {
+                $self->rehang( $sep, $head );
+            }
+            else {
+
+                #TODO
+            }
+        }
+        
+        foreach my $sm (@shared) {
+            if ($self->shared eq 'head') {
+                $self->rehang( $sm, $head );
+            } else {
+                # TODO nearest member
+            }
+        }
+
+    }
+
 }
 
 # Is the given node a coordination separator such as comma or semicolon?
 sub is_comma {
     my ( $self, $node ) = @_;
-    return $node->afun =~ /Aux[XYG]/;
+
+    #return $node->afun =~ /Aux[XYG]/;
+    return $node->form =~ /^[,;]$/;
 }
 
 # Is the given node a coordination conjunction?
 sub is_conjunction {
     my ( $self, $node ) = @_;
-
-    # In future, we may add other rules for other families
-    #return 1 if $self->from_family eq 'Prague' && $self->afun eq 'Coord';
-    return $node->afun eq 'Coord';
+    return 1 if $node->afun eq 'Coord';
+    return 1 if $node->afun eq 'AuxY' && $node->get_iset('subpos') eq 'coor';
+    return 0;
 }
 
-0; #Not ready yet
+1;
 
 __END__
 
