@@ -66,7 +66,8 @@ my $transformer = Treex::Tool::ATreeTransformer::DepReverser->new
 
 $transformer->apply_on_tree($root);
 
-$doc->save('test.treex');
+# Test should unlink all temp files
+#$doc->save('test.treex');
 
 TODO: {
     local $TODO = 'not written as test';

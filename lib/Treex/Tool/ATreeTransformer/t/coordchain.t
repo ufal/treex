@@ -60,7 +60,8 @@ my $transformer = Treex::Tool::ATreeTransformer::CoApStyle->new(
 
 $transformer->apply_on_tree($root);
 
-$doc->save('chaintest.treex');
+# Test should unlink all temp files
+#$doc->save('chaintest.treex');
 
 TODO: {
     local $TODO = 'not written as test';
