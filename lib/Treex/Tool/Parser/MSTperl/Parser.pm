@@ -159,11 +159,11 @@ A model has to be loaded before sentences can be parsed.
 =item $parser->parse_sentence($sentence);
 
 Parses a sentence (instance of L<Treex::Tool::Parser::MSTperl::Sentence>). It
-sets the C<parent> field of each node (instance of 
-L<Treex::Tool::Parser::MSTperl::Node>), i.e. a word in the sentence, and also 
+sets the C<parent> field of each node (instance of
+L<Treex::Tool::Parser::MSTperl::Node>), i.e. a word in the sentence, and also
 returns these parents as an array reference.
 
-Any parse information already contained in the sentence gets discarded 
+Any parse information already contained in the sentence gets discarded
 (explicitely, by calling L<Treex::Tool::Parser::MSTperl::Sentence/clear_parse>).
 
 =back
@@ -176,8 +176,8 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles
 University in Prague
 
-This module is free software; you can redistribute it and/or modify it under 
+This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

@@ -362,12 +362,12 @@ pseudocode description of MIRA provided by McDonald et al.
 
 =item model
 
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is 
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is
 being trained.
 
 =item parser
 
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is 
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is
 used for the training.
 
 =item featuresControl
@@ -388,9 +388,9 @@ and the C<parser>).
 
 =item $trainer->train($training_data);
 
-Trains the model, using the settings from C<featuresControl> and the training 
-data in the form of a reference to an array of parsed sentences 
-(L<Treex::Tool::Parser::MSTperl::Sentence>), which can be obtained by the 
+Trains the model, using the settings from C<featuresControl> and the training
+data in the form of a reference to an array of parsed sentences
+(L<Treex::Tool::Parser::MSTperl::Sentence>), which can be obtained by the
 L<Treex::Tool::Parser::MSTperl::Reader>.
 
 =item $self->mira_update($sentence_correct_parse, $sentence_best_parse,
@@ -400,19 +400,19 @@ Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one
 sentence from the training data. Its input is the correct parse of the sentence
 (from the training data) and the best scoring parse created by the parser.
 
-The C<sumUpdateWeight> is a number by which the change of the feature weights 
-is multiplied in the sum of the weights, so that at the end of the algorithm 
-the sum corresponds to its formal definition, which is a sum of all weights 
-after each of the updates. C<sumUpdateWeight> is a member of a sequence going 
-from N*T to 1, where N is the number of iterations 
-(L<Treex::Tool::Parser::MSTperl::FeaturesControl/number_of_iterations>, C<10> 
-by default) and T being the number of sentences in training data, N*T thus 
-being the number of inner iterations, i.e. how many times C<mira_update()> is 
+The C<sumUpdateWeight> is a number by which the change of the feature weights
+is multiplied in the sum of the weights, so that at the end of the algorithm
+the sum corresponds to its formal definition, which is a sum of all weights
+after each of the updates. C<sumUpdateWeight> is a member of a sequence going
+from N*T to 1, where N is the number of iterations
+(L<Treex::Tool::Parser::MSTperl::FeaturesControl/number_of_iterations>, C<10>
+by default) and T being the number of sentences in training data, N*T thus
+being the number of inner iterations, i.e. how many times C<mira_update()> is
 called.
 
 =item my ( $features_diff_1, $features_diff_2, $features_diff_count ) =
     features_diff( $features_1, $features_2 );
-    
+
 Compares features of two parses of a sentence, where the features
 (C<$features_1>, C<$features_2>) are represented as a reference to
 an array of strings representing the features
@@ -453,8 +453,8 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles
 University in Prague
 
-This module is free software; you can redistribute it and/or modify it under 
+This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

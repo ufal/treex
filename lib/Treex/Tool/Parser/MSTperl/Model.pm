@@ -229,7 +229,7 @@ Counts the score of an edge by summing up weights of all of its features.
 =item my $score =
 $model->score_features(['0:být|VB', '1:pes|N1', ...]);
 
-Counts the score of an edge or sentence by summing up weights of all of its 
+Counts the score of an edge or sentence by summing up weights of all of its
 features, which are passed as an array reference.
 
 =item my $feature_weight = $model->get_feature_weight('1:pes|N1');
@@ -295,8 +295,8 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles 
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles
 University in Prague
 
-This module is free software; you can redistribute it and/or modify it under 
+This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

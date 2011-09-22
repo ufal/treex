@@ -1035,52 +1035,52 @@ Also handles the configuration.
 TODO: outdated, superceded by use of config file -> rewrite
 
 Each feature has a form C<code:value>. The code desribes the information which
-is relevant for the feature, and the value is the information retained from 
-the dependency edge (and possibly other parts of the sentence 
+is relevant for the feature, and the value is the information retained from
+the dependency edge (and possibly other parts of the sentence
 (L<Treex::Tool::Parser::MSTperl::Sentence>) stored in C<sentence> field).
 
-For example, the feature C<L|l:být|pes> means that the lemma of the parent node 
-(the governing word) is "být" and the lemma of its child node (the dependent 
+For example, the feature C<L|l:být|pes> means that the lemma of the parent node
+(the governing word) is "být" and the lemma of its child node (the dependent
 node) is "pes".
 
-Each (proper) feature is composed of several simple features. In the 
-aforementioned example, the simple feature codes were C<L> and C<l> and their 
-values "být" and "pes", respectively. Each simple feature code is a string 
-(case sensitive) and its value is also a string. The simple feature codes are 
-joined together by the C<|> sign to form the code of the proper feature, and 
-similarly, the simple feature values joined by C<|> form the proper feature 
-value. Then, the proper feature code and value are joined together by C<:>. 
-(Therefore, the codes and values of the simple features must not contain the 
+Each (proper) feature is composed of several simple features. In the
+aforementioned example, the simple feature codes were C<L> and C<l> and their
+values "být" and "pes", respectively. Each simple feature code is a string
+(case sensitive) and its value is also a string. The simple feature codes are
+joined together by the C<|> sign to form the code of the proper feature, and
+similarly, the simple feature values joined by C<|> form the proper feature
+value. Then, the proper feature code and value are joined together by C<:>.
+(Therefore, the codes and values of the simple features must not contain the
 C<|> and the C<:> signs.)
 
 By a naming convention,
-if the same simple feature can be computed for both the parent node and its 
-child node, their codes are the same but for the case, which is upper for the 
-parent and lower for the child. If this is not applicable, an uppercase 
+if the same simple feature can be computed for both the parent node and its
+child node, their codes are the same but for the case, which is upper for the
+parent and lower for the child. If this is not applicable, an uppercase
 code is used.
 
-For higher effectiveness the simple feature codes are translated to integers 
+For higher effectiveness the simple feature codes are translated to integers
 (see C<simple_feature_codes>).
 
-In reality the feature codes are translated to integers as well (see 
-C<feature_codes>), but this is only an internal issue. You can see these 
-numbers in the model file if you use the default L<Data::Dumper> format (see 
-C<load> and C<store>). However, if you use the tsv format (see C<load_tsv>, 
+In reality the feature codes are translated to integers as well (see
+C<feature_codes>), but this is only an internal issue. You can see these
+numbers in the model file if you use the default L<Data::Dumper> format (see
+C<load> and C<store>). However, if you use the tsv format (see C<load_tsv>,
 C<store_tsv>), you will see the real string feature codes.
 
-Currently the following simple features are available. Any subset of them can 
-be used to form a proper feature, but their order should follow their order of 
-appearance in this list (still, this is only a cleanliness and readability 
+Currently the following simple features are available. Any subset of them can
+be used to form a proper feature, but their order should follow their order of
+appearance in this list (still, this is only a cleanliness and readability
 thing, it does not affect the function of the parser in any way).
 
 =over 4
 
 =item Distance (D)
 
-Distance of the two nodes in the sentence, computed as order of the parent 
-minus the order of the child. Eg. for the sentence "To je prima pes ." and the 
-feature D computed on nodes "je" and "pes" (parent and child respectively), 
-the order of "je" is 2 and the order of "pes" is 4, yielding the feature value 
+Distance of the two nodes in the sentence, computed as order of the parent
+minus the order of the child. Eg. for the sentence "To je prima pes ." and the
+feature D computed on nodes "je" and "pes" (parent and child respectively),
+the order of "je" is 2 and the order of "pes" is 4, yielding the feature value
 of 2 - 4 = -2. This leads to a feature C<D:-2>.
 
 =item Form (F, f)
@@ -1113,12 +1113,12 @@ child node. This simple feature returns (a reference to) an array of values.
 
 =back
 
-Some of the simple features can return an empty string in case they are not 
-applicable (eg. C<U> for the last node in the sentence), then the whole 
+Some of the simple features can return an empty string in case they are not
+applicable (eg. C<U> for the last node in the sentence), then the whole
 feature is not present for the edge.
 
-Some of the simple features return an array of values (eg. the C<B> simple 
-feature). This can result in several instances of the feature with the same 
+Some of the simple features return an array of values (eg. the C<B> simple
+feature). This can result in several instances of the feature with the same
 code for one edge to appear in the result.
 
 =head1 FIELDS
@@ -1137,7 +1137,7 @@ Field names (for conversion of field index to field name)
 
 =item field_indexes (HashRef[Str])
 
-Index of each field name in field_names (for conversion of field name to field 
+Index of each field name in field_names (for conversion of field name to field
 index)
 
 =back
@@ -1146,22 +1146,22 @@ index)
 
 TODO: slightly outdated
 
-The examples used here are consistent throughout this part of documentation, 
-i.e. if several simple features are listed in C<simple_feature_codes> and 
-then simple feature with index 9 is referred to in C<array_simple_features>, 
-it really means the C<B> simple feature which is on the 9th position in 
+The examples used here are consistent throughout this part of documentation,
+i.e. if several simple features are listed in C<simple_feature_codes> and
+then simple feature with index 9 is referred to in C<array_simple_features>,
+it really means the C<B> simple feature which is on the 9th position in
 C<simple_feature_codes>.
 
 =over 4
 
 =item feature_count (Int)
 
-Alias of C<scalar @{feature_codes}> (but the integer is really 
+Alias of C<scalar @{feature_codes}> (but the integer is really
 stored in the field for faster access).
 
 =item feature_codes (ArrayRef[Str])
 
-Codes of all features to be computed. Their 
+Codes of all features to be computed. Their
 indexes in this array are used to refer to them in the code. Eg.:
 
  feature_codes ( [( 'L|T', 'l|t', 'L|T|l|t', 'T|B|t')] )
@@ -1172,14 +1172,14 @@ indexes in this array are used to refer to them in the code. Eg.:
 
 =item feature_indexes (HashRef[Str])
 
-Index of each feature code in feature_codes (for conversion of feature code to 
+Index of each feature code in feature_codes (for conversion of feature code to
 feature index)
 
 =item feature_simple_features_indexes (ArrayRef[ArrayRef[Int]])
 
-For each feature contains (a reference to) an array which contains all its 
+For each feature contains (a reference to) an array which contains all its
 simple feature indexes (corresponding to positions in C<simple_feature_codes>
-). Eg. for the 4 features (0 to 3) listed in C<feature_codes> and the 10 
+). Eg. for the 4 features (0 to 3) listed in C<feature_codes> and the 10
 simple features listed in C<simple_feature_codes> (0 to 9):
 
  feature_simple_features_indexes ( [(
@@ -1192,12 +1192,12 @@ simple features listed in C<simple_feature_codes> (0 to 9):
 
 =item array_features (HashRef)
 
-Indexes of features containing array simple features (see 
+Indexes of features containing array simple features (see
 C<array_simple_features>). Eg.:
 
  array_features( { 3 => 1} )
 
-as the feature with index 3 (C<'T|B|t'>) contains the C<B> simple feature 
+as the feature with index 3 (C<'T|B|t'>) contains the C<B> simple feature
 which is an array simple feature.
 
 =back
@@ -1208,12 +1208,12 @@ which is an array simple feature.
 
 =item simple_feature_count (Int)
 
-Alias of C<scalar @{simple_feature_codes}> (but the integer is really 
+Alias of C<scalar @{simple_feature_codes}> (but the integer is really
 stored in the field for faster access).
 
 =item simple_feature_codes (ArrayRef[Str])
 
-Codes of all simple features to be computed. Their order is important as their 
+Codes of all simple features to be computed. Their order is important as their
 indexes in this array are used to refer to them in the code, especially in the
 C<get_simple_feature> method. Eg.:
 
@@ -1225,13 +1225,13 @@ C<get_simple_feature> method. Eg.:
 
 =item simple_feature_indexes (HashRef[Str])
 
-Index of each simple feature code in simple_feature_codes (for conversion of 
+Index of each simple feature code in simple_feature_codes (for conversion of
 simple feature code to simple feature index)
 
 =item simple_feature_field_indexes (ArrayRef)
 
-For each simple feature (on the corresponsing index) contains the index of the 
-field (in C<field_names>), which is used to compute the simple feature value 
+For each simple feature (on the corresponsing index) contains the index of the
+field (in C<field_names>), which is used to compute the simple feature value
 (together with a subroutine from C<simple_feature_subs>).
 
 If the simple feature takes more than one argument (called a multiarg feature
@@ -1240,11 +1240,11 @@ of field indexes.
 
 =item simple_feature_subs (ArrayRef)
 
-For faster run, the simple features are internally not represented by their 
-string codes, which would have to be parsed repeatedly. Instead their codes 
-are parsed once only (in C<set_simple_feature>) and they are represented as 
-an integer index of the field which is used to compute the feature (it is the 
-actual index of the field in the input file line, accessible through 
+For faster run, the simple features are internally not represented by their
+string codes, which would have to be parsed repeatedly. Instead their codes
+are parsed once only (in C<set_simple_feature>) and they are represented as
+an integer index of the field which is used to compute the feature (it is the
+actual index of the field in the input file line, accessible through
 L<Treex::Tool::Parser::MSTperl::Node/fields>) and a reference to a subroutine
 (one of the C<feature_*> subs, see below) which computes the feature value
 based on the field index and the edge (L<Treex::Tool::Parser::MSTperl::Edge>).
@@ -1252,12 +1252,12 @@ The references subroutine is then invoked in C<get_simple_feature_values_array>.
 
 =item array_simple_features (HashRef[Int])
 
-Indexes of simple features that return an array of values instead of a single 
+Indexes of simple features that return an array of values instead of a single
 string value. Eg.:
 
  array_simple_features( { 9 => 1} )
 
-because in the aforementioned example the C<B> simple feature returns an array 
+because in the aforementioned example the C<B> simple feature returns an array
 of values and has the index C<9>.
 
 
@@ -1269,11 +1269,11 @@ of values and has the index C<9>.
 
 =item edge_features_cache (HashRef[ArrayRef[Str])
 
-If caching is turned on (see below), all features of any edge computed by the 
-C<get_feature_simple_features_indexes> method are computed once only, stored 
+If caching is turned on (see below), all features of any edge computed by the
+C<get_feature_simple_features_indexes> method are computed once only, stored
 in this cache and then retrieved when needed.
 
-The key of the hash is the edge signature (see 
+The key of the hash is the edge signature (see
 L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is
 (a reference to) an array of fetures and their values.
 
@@ -1287,7 +1287,7 @@ Some of the settings are ignored when in parsing mode (i.e. not training).
 These are use_edge_features_cache (turned off) and number_of_iterations
 (irrelevant).
 
-These are settings which are acquired from the configuration file (see also 
+These are settings which are acquired from the configuration file (see also
 its contents, the options are also richly commented there):
 
 =head3 Basic Settings
@@ -1301,7 +1301,7 @@ Lowercase names of fields in the input file
 Use [a-z0-9_] only, using always at least one letter.
 Use unique names, i.e. devise some names even for unused fields.
 
-=item root_field_values 
+=item root_field_values
 
 Field values to set for the (technical) root node.
 
@@ -1328,14 +1328,14 @@ training data, as it uses a lot of memory but speeds up the training greatly
 =head3 Features Settings
 
 In the C<features> field of the config file all features to be used by the model
-are set. Use the input file field names to use the field of the (child) node, 
-uppercase them to use the field of the parent, prefix them by C<1.> or C<2.> 
-to use the field on the first or second node in the sentence (i.e. based on 
+are set. Use the input file field names to use the field of the (child) node,
+uppercase them to use the field of the parent, prefix them by C<1.> or C<2.>
+to use the field on the first or second node in the sentence (i.e. based on
 order in sentence, regardless of which is parent and which is child).
 
-You can also make use of several functions. Again, you can usually (i.e. when 
-it makes sense) write their names in lowercase to invoke them on the child 
-field, uppercase for parent, or prefixed by C<1.> or C<2.> for first or second 
+You can also make use of several functions. Again, you can usually (i.e. when
+it makes sense) write their names in lowercase to invoke them on the child
+field, uppercase for parent, or prefixed by C<1.> or C<2.> for first or second
 node. The argument of a function must always be a (child) field name.
 
 =over 4
@@ -1354,7 +1354,7 @@ The same for ord-wise following node
 
 =item between(field)
 
-Value of the specified field for each node which is ord-wise between the child 
+Value of the specified field for each node which is ord-wise between the child
 node and the parent node
 
 =item equals(field1,field2), equalspc(field1,field2)
@@ -1368,15 +1368,15 @@ C<equalspc> uses C<field1> of the parent node and C<field2> of the child node.
 
 =back
 
-Lines beginning with # are comments and are ignored. Lines that contain 
+Lines beginning with # are comments and are ignored. Lines that contain
 only whitespace chars or are empty are ignored as well.
 
 =head1 METHODS
 
 =head2 Settings
 
-The best source of information about all the possible settings is the 
-configuration file itself (usually called C<config.txt>), as it is richly 
+The best source of information about all the possible settings is the
+configuration file itself (usually called C<config.txt>), as it is richly
 commented and accompanied by real examples at the same time.
 
 =over 4
@@ -1390,20 +1390,20 @@ See file C<samples/sample.config>.
 
 =item set_feature ($feature_code)
 
-Parses the feature code and (if no errors are encountered) creates its 
-representation in the fields of this package (all C<feature_>* fields and 
+Parses the feature code and (if no errors are encountered) creates its
+representation in the fields of this package (all C<feature_>* fields and
 possibly also the C<array_features> field).
 
 =item set_simple_feature ($simple_feature_code)
 
-Parses the simple feature code and creates its representation in the fields of 
-this package (all C<simple_feature_>* fields and possibly also the 
+Parses the simple feature code and creates its representation in the fields of
+this package (all C<simple_feature_>* fields and possibly also the
 C<array_simple_features> field).
 
 =item field_name2index ($field_name)
 
-Fields are referred to by names in the config files but by indexes in the 
-code. Therefore this conversion function is necessary; the other direction of 
+Fields are referred to by names in the config files but by indexes in the
+code. Therefore this conversion function is necessary; the other direction of
 the conversion is ensured by the C<field_names> field.
 
 =back
@@ -1414,36 +1414,36 @@ the conversion is ensured by the C<field_names> field.
 
 =item my $features_array_rf = $model->get_all_features($edge)
 
-Returns (a reference to) an array which contains all features of the edge 
+Returns (a reference to) an array which contains all features of the edge
 (according to settings).
 
-If caching is turned on, tries to look the features up in the cache before 
-computing them. If they are not cached yet, they are computed and stored into 
+If caching is turned on, tries to look the features up in the cache before
+computing them. If they are not cached yet, they are computed and stored into
 the cache.
 
-The value of a feature is computed by C<get_feature_value>. Values of simple 
-features are precomputed (by calling C<get_simple_feature_values_array>) and 
+The value of a feature is computed by C<get_feature_value>. Values of simple
+features are precomputed (by calling C<get_simple_feature_values_array>) and
 passed to the C<get_feature_value> method.
 
 =item my $feature_value = get_feature_value(3, $simple_feature_values)
 
 Returns the value of the feature with the given index.
 
-If it is an array feature (see C<array_features>), its value is (a reference 
-to) an array of all (string) values of the feature (a reference to an empty 
+If it is an array feature (see C<array_features>), its value is (a reference
+to) an array of all (string) values of the feature (a reference to an empty
 array if there are no values).
 
-If it is not an array feature, its value is composed from the simple feature 
-values. If some of the simple features do not have a value defined, an empty 
+If it is not an array feature, its value is composed from the simple feature
+values. If some of the simple features do not have a value defined, an empty
 string (C<''>) is returned.
 
 =item my $feature_value = get_array_feature_value ($simple_features_indexes,
     $simple_feature_values, $start_from)
 
-Recursively calls itself to compose an array of all values of the feature 
-(composed of the simple features given in C<$simple_features_indexes> array 
-reference), which is a cartesian product on all values of the simple features. 
-The C<$start_from> variable should be C<0> when this method is called and is 
+Recursively calls itself to compose an array of all values of the feature
+(composed of the simple features given in C<$simple_features_indexes> array
+reference), which is a cartesian product on all values of the simple features.
+The C<$start_from> variable should be C<0> when this method is called and is
 incremented in the recursive calls.
 
 =back
@@ -1454,9 +1454,9 @@ incremented in the recursive calls.
 
 =item my $simple_feature_values = get_simple_feature_values_array($edge)
 
-Returns (a reference to) an array of values of all simple features (see 
-C<simple_feature_codes>). For each simple feature, its value can be found 
-on the position in the returned array corresponding to its position in 
+Returns (a reference to) an array of values of all simple features (see
+C<simple_feature_codes>). For each simple feature, its value can be found
+on the position in the returned array corresponding to its position in
 C<simple_feature_codes>.
 
 =item my $sub = get_simple_feature_sub_reference ('distance')
@@ -1466,11 +1466,11 @@ Translates the feature funtion string name (eg. C<distance>) to its reference
 
 =item my $value = get_simple_feature_value ($edge, 9)
 
-Returns the value of the simple feature with the given index by calling an 
+Returns the value of the simple feature with the given index by calling an
 appropriate C<feature_*> method on the edge
-(see L<Treex::Tool::Parser::MSTperl::Edge>). If 
-the feature cannot be computed, an empty string (C<''>) is returned (or a 
-reference to an empty array for array simple features - see 
+(see L<Treex::Tool::Parser::MSTperl::Edge>). If
+the feature cannot be computed, an empty string (C<''>) is returned (or a
+reference to an empty array for array simple features - see
 C<array_simple_features>).
 
 =item feature_distance
@@ -1530,12 +1530,12 @@ This makes it possible to have a simple feature which behaves like this:
 
 =over 4
 
-=item returns 1 if the edge between child and parent is also present in the 
+=item returns 1 if the edge between child and parent is also present in the
 English tree
 
 =item returns 0 if not
 
-=item returns -1 if cannot decide (alignment info is missing for some of the 
+=item returns -1 if cannot decide (alignment info is missing for some of the
 nodes)
 
 =back
@@ -1543,7 +1543,7 @@ nodes)
 Because if the parser has (the ord of the en child node and)
 the ord of en child's parent and the ord of the en parent node
 (and the ord of the en parent's parent), the feature can check whether
-en_parent->ord = en_child->parentOrd 
+en_parent->ord = en_child->parentOrd
 
 C<equalspc(en->ord, en->parent->ord)>
 
