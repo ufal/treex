@@ -25,9 +25,10 @@ has outfile => (
 has use_for_training => (
     isa           => 'Int',
     is            => 'ro',
-    required      => '1',
+    required      => '0',
     documentation => 'how many sentences should be used to train the model (the rest '
-                     . 'is used for evaluation)'
+                     . 'is used for evaluation)',
+    default       => 0
 );
 
 has classifier_type => (
@@ -63,10 +64,13 @@ sub process_document {
     # train
     open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
     my @bundles = $document->get_bundles();
-    for ( my $i = 0; $i < $self->{use_for_training}; $i++ ) {
+
+    my $count = $self->{use_for_training};
+    $count = scalar @bundles if ! $count;
+    for ( my $i = 0; $i < $count; $i++ ) {
         log_fatal "Not enough sentences for training" if $i >= scalar @bundles;
         my @features = $self->get_features($bundles[$i]);
-        my $anot     = <$anot_hdl>;
+        chomp( my $anot = <$anot_hdl> );
         $anot = ( split( "\t", $anot ) )[0];
         log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
         $self->{_classifier_obj}->see( \@features => $anot );
@@ -75,21 +79,24 @@ sub process_document {
     $self->{_classifier_obj}->save( $self->{outfile} );
 
     # evaluate
-    my ( $x, $p, $tp ) = qw( 0 0 0 );
-    for ( my $i = $self->{use_for_training}; $i < scalar @bundles; $i++ ) {
-        my @features = $self->get_features($bundles[$i]);
-        my $anot     = <$anot_hdl>;
-        $anot = ( split( "\t", $anot ) )[0];
-        log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
-        my $prediction = $self->{_classifier_obj}->predict( \@features );
-        $prediction = 'ok' if ! defined $prediction; # decision trees say nothing unless they know
-        if ($anot eq 'x') {
-            $x++;
-            $tp++ if $prediction eq 'x';
+    if ( $self->{use_for_training} ) {
+        my ( $x, $p, $tp ) = qw( 0 0 0 );
+        for ( my $i = $count; $i < scalar @bundles; $i++ ) {
+            my @features = $self->get_features($bundles[$i]);
+            my $anot     = <$anot_hdl>;
+            $anot = ( split( "\t", $anot ) )[0];
+            log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
+            my $prediction = $self->{_classifier_obj}->predict( \@features );
+            $prediction = 'ok' if ! defined $prediction; # decision trees say nothing unless they know
+            if ($anot eq 'x') {
+                $x++;
+                $tp++ if $prediction eq 'x';
+            }
+            $p++ if $prediction eq 'x';
         }
-        $p++ if $prediction eq 'x';
+
+        log_info sprintf( "Precision = %.03f, Recall = %.03f", $p ? $tp / $p : 0, $x ? $tp / $x : 0);
     }
-    log_info sprintf( "Precision = %.03f, Recall = %.03f", $p ? $tp / $p : 0, $x ? $tp / $x : 0);
 
     return 1;
 }
@@ -100,7 +107,7 @@ sub process_document {
 
 =item Treex::Block::Filter::CzEng::Train
 
-Given data and a classifier object, train and evaluate a filter model.
+Given data and a classifier object, train and optionally evaluate a filter model.
 
 =back
 

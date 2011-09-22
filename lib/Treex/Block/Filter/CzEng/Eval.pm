@@ -1,4 +1,4 @@
-package Treex::Block::Filter::CzEng::Predict;
+package Treex::Block::Filter::CzEng::Eval;
 use Moose;
 use Treex::Core::Common;
 use Treex::Block::Filter::CzEng::MaxEnt;
@@ -6,6 +6,13 @@ use Treex::Block::Filter::CzEng::NaiveBayes;
 use Treex::Block::Filter::CzEng::DecisionTree;
 
 extends 'Treex::Block::Filter::CzEng::Common';
+
+has annotation => (
+    isa           => 'Str',
+    is            => 'ro',
+    required      => 1,
+    documentation => 'file with lines containing either "x" or "ok" for each sentence'
+);
 
 has model_file => (
     isa           => 'Str',
@@ -15,14 +22,12 @@ has model_file => (
     documentation => 'model file'
 );
 
-);
 has classifier_type => (
     isa           => 'Str',
     is            => 'ro',
     required      => '1',
     documentation => 'classifier type, can be "maxent", "naive_bayes", "decision_tree"'
 );
-
 
 has _classifier_obj => (
     is            => 'rw',
@@ -49,16 +54,22 @@ sub process_document {
     $self->{_classifier_obj}->load($self->{model_file});
 
     open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
-    foreach my $bundle ($document->get_bundles()) {
-        my @features = $self->get_features($bundle);
+    my @bundles = $document->get_bundles();
+    my ( $x, $p, $tp ) = qw( 0 0 0 );
+    for ( my $i = 0; $i < scalar @bundles; $i++ ) {
+        my @features = $self->get_features($bundles[$i]);
+        my $anot     = <$anot_hdl>;
+        $anot = ( split( "\t", $anot ) )[0];
+        log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
         my $prediction = $self->{_classifier_obj}->predict( \@features );
-
-        # some classifiers (at least decision trees) sometimes don't give an answer,
-        # let's keep the sentence in such case
-        $prediction = 'ok' if ! defined $prediction;
-
-        $self->add_feature($self->{_classifier_obj}->predict( \@features ));
+        $prediction = 'ok' if ! defined $prediction; # decision trees say nothing unless they know
+        if ($anot eq 'x') {
+            $x++;
+            $tp++ if $prediction eq 'x';
+        }
+        $p++ if $prediction eq 'x';
     }
+    log_info sprintf( "Precision = %.03f, Recall = %.03f", $p ? $tp / $p : 0, $x ? $tp / $x : 0);
 
     return 1;
 }
@@ -67,9 +78,9 @@ sub process_document {
 
 =over
 
-=item Treex::Block::Filter::CzEng::Predict
+=item Treex::Block::Filter::CzEng::Evaluate
 
-Given a classifier and model, classify bad sentence pairs.
+Given data and a classifier object, evaluate a filter model.
 
 =back
 
