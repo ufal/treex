@@ -877,7 +877,7 @@ TODO:
 * modules are just reloaded, no constructors are called yet
 
 
-=for Pod::Coverage BUILD treex get_version
+=for Pod::Coverage BUILD get_version
 
 =encoding utf-8
 
@@ -911,6 +911,16 @@ C<-p>. Then there are two ways to process the data in a parallel fashion. By
 default, SGE cluster\'s C<qsub> is expected to be available. If you have no
 cluster but want to make the computation parallelized at least on a multicore
 machine, add the C<--local> switch.
+
+=head1 SUBROUTINES
+
+=over 4
+
+=item treex
+
+create new runner and runs scenario given in parameters
+
+=back
 
 =head1 USAGE
 
