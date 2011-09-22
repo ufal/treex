@@ -93,7 +93,8 @@ sub get_nodelist_hook {
         my $label = $self->tree_layout->get_tree_label($tree);
         my @nodes;
         if ( $tree->get_layer eq 'p' ) {
-            ( my $foo, @nodes ) = $self->_spread_nodes($tree);
+            @nodes = $self->_spread_nodes($tree);
+            shift @nodes;
         }
         elsif ( $tree->does('Treex::Core::Node::Ordered') ) {
             @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
@@ -482,7 +483,7 @@ sub tnode_hint {
 
 sub nnode_hint {
     my ( $self, $node ) = @_;
-    return undef;
+    return;
 }
 
 sub pnode_hint {

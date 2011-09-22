@@ -6,7 +6,7 @@ use Moose::Util::TypeConstraints;
 
 subtype 'Treex::Type::NonNegativeInt'
     => as 'Int'
-    => where {$_ >= 0}
+    => where { $_ >= 0 }
 => message {"$_ isn't non-negative"};
 
 subtype 'Treex::Type::Selector'
@@ -23,7 +23,7 @@ sub layers {
     return qw(A T P N);
 }
 
-subtype 'Treex::Type::Message'                                                       #nonempty string
+subtype 'Treex::Type::Message'                                          #nonempty string
     => as 'Str'
     => where { $_ ne q{} }
 => message {'Message must be nonempty'};
@@ -73,6 +73,7 @@ sub get_lang_name {
     my $code = shift;
     return exists $EXTRA_LANG_CODES{$code} ? $EXTRA_LANG_CODES{$code} : code2language($code);
 }
+1;
 __END__
 
 =encoding utf-8

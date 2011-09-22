@@ -384,7 +384,7 @@ sub _execute_locally {
         $self->set_filenames( \@files );
     }
     elsif ( $self->filelist ) {
-        open my $FL, "<:utf8", $self->filelist
+        open my $FL, "<:encoding(utf8)", $self->filelist
             or log_fatal "Cannot open file list " . $self->filelist;
         my @files;
         while (<$FL>) {
@@ -628,7 +628,7 @@ sub _print_output_files {
             }
         }
 
-        open my $FILE, '<:utf8', $filename or log_fatal $!;
+        open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
         if ( $stream eq "stdout" ) {
             while (<$FILE>) {
                 print;
@@ -900,16 +900,16 @@ In Perl:
 
 =head1 DESCRIPTION
 
-C<Treex::Core::Run> allows to apply a block, a scenario, or their mixture on a 
-set of data files. It is designed to be used primarily from bash command line, 
-using a thin front-end script called C<treex>. However, the same list of 
-arguments can be passed by an array reference to the function C<treex()> 
+C<Treex::Core::Run> allows to apply a block, a scenario, or their mixture on a
+set of data files. It is designed to be used primarily from bash command line,
+using a thin front-end script called C<treex>. However, the same list of
+arguments can be passed by an array reference to the function C<treex()>
 imported from C<Treex::Core::Run>.
 
-Note that this module supports distributed processing, simply by adding switch 
-C<-p>. Then there are two ways to process the data in a parallel fashion. By 
-default, SGE cluster\'s C<qsub> is expected to be available. If you have no 
-cluster but want to make the computation parallelized at least on a multicore 
+Note that this module supports distributed processing, simply by adding switch
+C<-p>. Then there are two ways to process the data in a parallel fashion. By
+default, SGE cluster\'s C<qsub> is expected to be available. If you have no
+cluster but want to make the computation parallelized at least on a multicore
 machine, add the C<--local> switch.
 
 =head1 USAGE
