@@ -9,6 +9,7 @@ has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 has 'cpos_attribute' => ( is => 'rw', isa =>'Str', default => 'tag' );
 has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
+has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
 
 my $parser;
 
@@ -36,12 +37,15 @@ sub parse_chunk {
     # build a-tree
     my @roots = ();
     foreach my $a_node (@a_nodes) {
+        $a_node->set_is_member(0);
+        $a_node->set_is_shared_modifier(0);
         my $deprel = shift @$deprel_rf;
-        if ($deprel =~ /_M$/) {
-            $a_node->set_is_member(1);
-            $deprel =~ s/_M$//;
+        if ($deprel =~ /_(M?S?)$/) {
+             $a_node->set_is_member(1) if $1 =~ /M/;
+             $a_node->set_is_shared_modifier(1) if $1 =~ /S/;
+             $deprel =~ s/_M?S?$//;
         }
-        $a_node->set_conll_deprel($deprel);
+        $a_node->set_attr($self->deprel_attribute, $deprel);
 
         my $parent_index = shift @$parents_rf;
         if ($parent_index) {

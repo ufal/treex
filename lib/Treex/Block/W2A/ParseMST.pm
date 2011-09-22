@@ -9,6 +9,7 @@ has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'order' => ( is => 'rw', isa => 'Str', default => '2' );
 has 'decodetype' => ( is => 'rw', isa => 'Str', default => 'non-proj' );
 has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
+has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
 
 my $parser;
 
@@ -55,12 +56,15 @@ sub parse_chunk {
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
+        $a_node->set_is_member(0);
+        $a_node->set_is_shared_modifier(0);
         my $deprel = shift @$deprel_rf;
-        if ($deprel =~ /_M$/) {
-            $a_node->set_is_member(1);
-            $deprel =~ s/_M$//;
+        if ($deprel =~ /_(M?S?)$/) {
+            $a_node->set_is_member(1) if $1 =~ /M/;
+            $a_node->set_is_shared_modifier(1) if $1 =~ /S/;
+            $deprel =~ s/_M?S?$//;
         }
-        $a_node->set_conll_deprel($deprel);
+        $a_node->set_attr($self->deprel_attribute, $deprel);
 
         if ($matrix_rf) {
             my $scores = shift @$matrix_rf;
