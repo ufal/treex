@@ -3,7 +3,7 @@ use Moose;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
 use autodie;
-use Perl6::Slurp;
+use File::Slurp;
 
 has filenames => (
     is  => 'ro',
@@ -39,8 +39,8 @@ sub _token_to_filenames {
     if ($token eq '-') {
         $token = \*STDIN;
     }
-    my @filenames = slurp '<', $token, {chomp=>1};
-     return @filenames;
+    my @filenames = read_file($token, chomp=>1 );
+    return @filenames;
 }
 
 sub number_of_files{
