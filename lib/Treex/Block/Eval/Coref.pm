@@ -10,6 +10,13 @@ has 'type' => (
     default     => 'text',
 );
 
+has 'just_counts' => (
+    is          => 'ro',
+    isa         => 'Bool',
+    required    => 1,
+    default     => 0,
+);
+
 my $tp_count  = 0;
 my $src_count = 0;
 my $ref_count = 0;
@@ -61,27 +68,36 @@ sub process_tnode {
         $ref_count += scalar @ref_antec;
     }
         
-    if (@ref_antec > 0) {
-        print "TRUE ANAPH: " . $src_node->id . "; ";
-        print "TRUE ANTE: " . (join ", ", (map {$_->id} @ref_antec_in_src)) . "; ";
-    }
-    if (@src_antec > 0) {
-        print "PRED ANAPH: " . $src_node->id . "; ";
-        print "PRED ANTE: " . (join ", ", (map {$_->id} @src_antec)) . "; ";
-    }
-    if ((@ref_antec > 0) || (@src_antec > 0)) {
-        print "\n";
-    }
+# DEBUG
+#    if (@ref_antec > 0) {
+#        print "TRUE ANAPH: " . $src_node->id . "; ";
+#        print "TRUE ANTE: " . (join ", ", (map {$_->id} @ref_antec_in_src)) . "; ";
+#    }
+#    if (@src_antec > 0) {
+#        print "PRED ANAPH: " . $src_node->id . "; ";
+#        print "PRED ANTE: " . (join ", ", (map {$_->id} @src_antec)) . "; ";
+#    }
+#    if ((@ref_antec > 0) || (@src_antec > 0)) {
+#        print "\n";
+#    }
 
 }
 
-END {
+sub DEMOLISH {
+    my ($self) = shift;
+
     my ( $prec, $reca, $fsco ) =
         _count_fscore( $tp_count, $src_count, $ref_count );
 
-    printf "P: %.2f%% (%d / %d)\t", $prec * 100, $tp_count, $src_count;
-    printf "R: %.2f%% (%d / %d)\t", $reca * 100, $tp_count, $ref_count;
-    printf "F: %.2f%%\n",           $fsco * 100;
+    if ($self->just_counts) {
+        print join "\t", ($tp_count, $src_count, $ref_count);
+        print "\n";
+    }
+    else {
+        printf "P: %.2f%% (%d / %d)\t", $prec * 100, $tp_count, $src_count;
+        printf "R: %.2f%% (%d / %d)\t", $reca * 100, $tp_count, $ref_count;
+        printf "F: %.2f%%\n",           $fsco * 100;
+    }
 }
 
 1;
@@ -90,13 +106,12 @@ END {
 
 =item Treex::Block::Eval::Coref
 
-Measure similarity (in terms of unlabeled attachment score) of a-trees in all zones
-(of a given language) with respect to the reference zone specified by selector.
+Precision, recall and F-measure for coreference.
 
 =back
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky
+# Copyright 2011 Michal Novak
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
