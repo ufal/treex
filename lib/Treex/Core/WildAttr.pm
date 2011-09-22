@@ -77,6 +77,7 @@ __END__
 
 Treex::Core::WildAttr - role for arbitrary atributes of Treex objects
 
+=for test_synopsis my ($node, $value);
 =head1 SYNOPSIS
 
   $node->wild->{name_of_my_new_attribute} = $value;

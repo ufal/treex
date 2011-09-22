@@ -95,7 +95,7 @@ Treex::Core::Files - helper class for iterating over filenames
 
   while (defined (my $filename = $c->next_filename)){ ... }
   #or
-  while (my $filehandle = $c->next_filehandle)){ ... }
+  while (my $filehandle = $c->next_filehandle){ ... }
   
 =head1 DESCRIPTION
 

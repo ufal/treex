@@ -172,7 +172,7 @@ sub get_coref_text_nodes {
 # from the current node
 sub get_coref_chain {
     my ( $self, $arg_ref ) = @_;
-    
+
     my %visited_nodes = ();
     my @nodes;
     my @queue = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
@@ -186,7 +186,7 @@ sub get_coref_chain {
             }
         }
     }
-        
+
     return $self->_process_switches( $arg_ref, @nodes );
 }
 
@@ -350,7 +350,7 @@ Add textual coreference nodes (to C<coref_text.rf>).
 
 =item $node->remove_coref_nodes()
 
-Remove the specified nodes from C<coref_gram.rf> or C<coref_text.rf> (if they are contained in one or both of them). 
+Remove the specified nodes from C<coref_gram.rf> or C<coref_text.rf> (if they are contained in one or both of them).
 
 =item $node->update_coref_nodes()
 
@@ -405,7 +405,7 @@ For example: "Bank of China"
 Is this node a root (or head) of a coordination/apposition construction?
 On t-layer this is decided based on C<functor =~ /^(CONJ|CONFR|DISJ|GRAD|ADVS|CSQ|REAS|CONTRA|APPS|OPER)/>.
 
-=back 
+=back
 
 
 =head1 AUTHOR
