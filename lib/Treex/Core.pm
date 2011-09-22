@@ -1,4 +1,6 @@
 package Treex::Core;
+use strict;
+use warnings;
 use Treex::Core::Document;
 use Treex::Core::Node;
 use Treex::Core::Bundle;

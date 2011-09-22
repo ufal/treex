@@ -3,7 +3,6 @@ use File::Slurp;
 use File::Basename;
 ## no critic (Miscellanea::ProhibitUnrestrictedNoCritic)
 ## no critic Generated code follows
-no strict;
 no warnings;
 }
 startrule:  SCEN EOF                            {$return = $item{SCEN}}

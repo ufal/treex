@@ -1,4 +1,6 @@
 package Treex::Core::Types;
+use strict;
+use warnings;
 use utf8;
 use Moose::Util::TypeConstraints;
 
@@ -16,6 +18,10 @@ subtype 'Treex::Type::Layer'
     => as 'Str'
     => where {m/^[ptan]$/i}
 => message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
+
+sub layers {
+    return qw(A T P N);
+}
 
 subtype 'Treex::Type::Message'                                                       #nonempty string
     => as 'Str'
@@ -93,6 +99,40 @@ case insensitive
 =item Treex::Type::Selector
 
 Selector - only alphanumeric characters, may be empty
+
+=item Treex::Type::LangCode
+
+ISO 639-1 code
+
+=item Treex::Type::ZoneCode
+
+Combination of LangCode and Selector, e.g. "en_src"
+
+=item Treex::Type::Message
+
+just nonempty string, future constraints may be set
+
+=item Treex::Type::Id
+
+identifier, prepared for future constraints, now it is any string
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item get_lang_name
+
+Returns language name for given LangCode
+
+=item is_lang_code
+
+Checks whether given argument is valid LangCode
+
+=item layers
+
+Returns array of layers available in Treex, now (A, T, P, N)
 
 =back
 

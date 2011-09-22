@@ -8,6 +8,7 @@ use Treex::Core::TredView::TreeLayout;
 use Treex::Core::TredView::Labels;
 use Treex::Core::TredView::Styles;
 use Treex::Core::TredView::Vallex;
+use Treex::Core::Types;
 use List::Util qw(first);
 
 has 'grp'       => ( is => 'rw' );
@@ -45,7 +46,7 @@ has fast_loading => (
 );
 
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'show_alignment' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'show_alignment'    => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub _spread_nodes {
     my ( $self, $node ) = @_;
@@ -62,7 +63,7 @@ sub _spread_nodes {
         push @lower, @buf;
     }
     $right += $pos;
-    return ( 0, $node ) if ! @lower;
+    return ( 0, $node ) if !@lower;
 
     my $mid;
     if ( scalar( $node->children ) == 1 ) {
@@ -255,7 +256,7 @@ sub value_line_doubleclick_hook {
 
 # --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
 
-my @layers = qw(a t p n);
+my @layers = map {lc} Treex::Core::Types::layers();
 
 # To be run only once when the file is opened. Tree depths never change.
 sub precompute_tree_depths {
@@ -625,8 +626,8 @@ sub toggle_clause_collapsing {
 }
 
 sub toggle_alignment {
-  my $self = shift;
-  $self->show_alignment( not $self->show_alignment );
+    my $self = shift;
+    $self->show_alignment( not $self->show_alignment );
 }
 
 1;

@@ -8,6 +8,7 @@ use Test::More;
 BEGIN { use_ok('Treex::Core::Bundle') }
 use Treex::Core::Document;
 use Treex::Core::Log;
+use Treex::Core::Types;
 
 #log_set_error_level('WARN');
 #Construction testing
@@ -22,7 +23,7 @@ isa_ok( $bundle->get_document(), 'Treex::Core::Document' );
 ok( defined $bundle->id, 'defined bundle id' );
 
 #Tree testing
-my @layers = qw(N A T P);
+my @layers = Treex::Core::Types::layers();
 foreach my $layer (@layers) {
     my $success = eval { $bundle->create_tree( 'cs', $layer ); 1; };
     ok( $success, "Czech $layer-tree successfully created" ) or diag($@);

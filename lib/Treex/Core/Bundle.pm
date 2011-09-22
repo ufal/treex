@@ -25,8 +25,6 @@ use Treex::Core::BundleZone;
 
 use Treex::Core::Log;
 
-my @layers = qw(t a n p);    # TODO should it be here?
-
 # --------- ACCESS TO ZONES ------------
 
 sub BUILD {
@@ -45,8 +43,10 @@ sub get_zone {
     if ( defined $self->{zones} ) {
         foreach my $element ( $self->{zones}->elements ) {
             my ( undef, $value ) = @$element;    # $name is not needed
-            if ( ($value->{language} eq $language or $language eq 'mul')
-                     and ( $value->{selector} || '' ) eq $selector ) {
+            if (( $value->{language} eq $language or $language eq 'mul' )
+                and ( $value->{selector} || '' ) eq $selector
+                )
+            {
                 return $value;
             }
         }
@@ -143,7 +143,7 @@ sub get_all_trees {
     my @trees;
     foreach my $zone ( $self->{zones}->elements ) {
         my $structure = $zone->value;
-        foreach my $layer (@layers) {
+        foreach my $layer (Treex::Core::Types::layers()) {
             if ( exists $structure->{trees}->{"${layer}_tree"} ) {
                 push @trees, $structure->{trees}->{"${layer}_tree"};
             }
