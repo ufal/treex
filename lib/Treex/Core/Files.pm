@@ -6,8 +6,8 @@ use autodie;
 use File::Slurp;
 
 has filenames => (
-    is  => 'ro',
-    isa => 'ArrayRef[Str]',
+    is     => 'ro',
+    isa    => 'ArrayRef[Str]',
     writer => '_set_filenames',
 );
 
@@ -24,28 +24,28 @@ sub BUILD {
     my ( $self, $args ) = @_;
     return if $args->{filenames};
     log_fatal 'parameter "string" is required' if !defined $args->{string};
-    $self->_set_filenames($self->string_to_filenames($args->{string}));
+    $self->_set_filenames( $self->string_to_filenames( $args->{string} ) );
     return;
 }
 
 sub string_to_filenames {
-    my ($self, $string) = @_;
-    return [map {$self->_token_to_filenames($_)} split /[ ,]+/, $string];
+    my ( $self, $string ) = @_;
+    return [ map { $self->_token_to_filenames($_) } split /[ ,]+/, $string ];
 }
 
 sub _token_to_filenames {
-    my ($self, $token) = @_;
+    my ( $self, $token ) = @_;
     return $token if $token !~ s/^@(.*)/$1/;
-    if ($token eq '-') {
+    if ( $token eq '-' ) {
         $token = \*STDIN;
     }
-    my @filenames = read_file($token, chomp=>1 );
+    my @filenames = read_file( $token, chomp => 1 );
     return @filenames;
 }
 
-sub number_of_files{
+sub number_of_files {
     my ($self) = @_;
-    return scalar @{$self->filenames};
+    return scalar @{ $self->filenames };
 }
 
 sub current_filename {
@@ -68,7 +68,6 @@ coerce 'Treex::Core::Files'
     => from 'ArrayRef[Str]'
         => via { Treex::Core::Files->new( filenames => $_ ) };
 #>>>
-
 # TODO: POD, next_filehandle, gz support
 
 1;
