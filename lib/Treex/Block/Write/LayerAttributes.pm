@@ -213,6 +213,10 @@ sub _get_info_hash {
 sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
+    if (!$node) {
+	warn ( $self . '___' . $node . '___' . $attrib . '___' . $alignment_hash );
+	return;
+    }
 
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
