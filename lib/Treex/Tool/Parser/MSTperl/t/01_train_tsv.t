@@ -3,6 +3,9 @@ use strict;
 use warnings;
 use utf8;
 
+use FindBin;
+FindBin::again();
+
 use Test::More tests => 12;
 
 binmode STDIN,  ':encoding(utf8)';
@@ -15,7 +18,10 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::Trainer');
 }
 
-my ( $train_file, $model_file, $config_file, $save_tsv ) = qw (t/sample_train.tsv t/sample.model t/sample.config);
+my ( $train_file, $model_file, $config_file, $save_tsv ) =
+    ("$FindBin::Bin/sample_train.tsv",
+     "$FindBin::Bin/sample.model",
+     "$FindBin::Bin/sample.config");
 
 my $featuresControl = new_ok( 'Treex::Tool::Parser::MSTperl::FeaturesControl' => [ config_file => $config_file ], "process config file," );
 
