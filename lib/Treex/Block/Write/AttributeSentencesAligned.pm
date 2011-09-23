@@ -37,21 +37,23 @@ sub _process_tree() {
         my $aligned_root = $tree->get_bundle->get_tree( $self->alignment_language, $self->layer );
         foreach my $aligned_node ( $aligned_root->get_descendants ) {
             my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
-	    for (my $i = 0; $i < @{$nodes}; $i++) {
-		my $node = $nodes->[$i];
-		my $type = $types->[$i];
-                my $id = $node->id;
-		if ($self->alignment_type eq $type) {
-		    if ( $alignment_hash->{$id} ) {
-			my @aligned_current = @{ $alignment_hash->{$id} };
-			push @aligned_current, $aligned_node;
-			$alignment_hash->{$id} = [@aligned_current];
-		    }
-		    else {
-			$alignment_hash->{$id} = [$aligned_node];
+	    if ($nodes) {
+		for (my $i = 0; $i < @{$nodes}; $i++) {
+		    my $node = $nodes->[$i];
+		    my $type = $types->[$i];
+		    my $id = $node->id;
+		    if ($self->alignment_type eq $type) {
+			if ( $alignment_hash->{$id} ) {
+			    my @aligned_current = @{ $alignment_hash->{$id} };
+			    push @aligned_current, $aligned_node;
+			    $alignment_hash->{$id} = [@aligned_current];
+			}
+			else {
+			    $alignment_hash->{$id} = [$aligned_node];
+			}
 		    }
 		}
-            }
+	    }
         }
     }
 
