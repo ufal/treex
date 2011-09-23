@@ -12,19 +12,7 @@ has '+language' => ( required => 1 );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', required => 1 );
 
-has 'alignment_types_array' => ( isa => 'ArrayRef[Str]', is => 'ro', required => 1, trigger => '_build_alignment_types_array' );
-
-has 'alignment_types' => ( isa => 'HashRef[Str]', is => 'rw' );
-
-sub _alignment_types_array_set {
-    my ($self, $alignment_types_array) = @_;
-    
-    for my $type (@$alignment_types_array) {
-	$self->alignment_types->{$type} = 1;
-    }
-
-    return;    # only technical
-}
+has 'alignment_type' => ( isa => 'Str', is => 'ro', required => 1 );
 
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => "1" );
 
@@ -53,7 +41,7 @@ sub _process_tree() {
 		my $node = $nodes->[$i];
 		my $type = $types->[$i];
                 my $id = $node->id;
-		if ($self->alignment_types->{$type}) {
+		if ($self->alignment_type eq $type) {
 		    if ( $alignment_hash->{$id} ) {
 			my @aligned_current = @{ $alignment_hash->{$id} };
 			push @aligned_current, $aligned_node;
