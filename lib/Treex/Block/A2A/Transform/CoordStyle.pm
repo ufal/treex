@@ -17,10 +17,10 @@ has from_family => (
 );
 
 # previous, following, between
-has comma => (
+has punctuation => (
     is            => 'ro',
     default       => 'previous',
-    documentation => 'comma parents (previous, following, between)',
+    documentation => 'punctuation parents (previous, following, between)',
 );
 
 # previous, following, between
@@ -172,7 +172,7 @@ sub transform_coord {
         @commas = @separators;
         foreach my $sep (@separators) {
             $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
-            if ( $self->comma eq 'between' ) {
+            if ( $self->punctuation eq 'between' ) {
                 $self->rehang( $sep, $new_head );
             }
         }
@@ -183,7 +183,7 @@ sub transform_coord {
         my @andmembers = @members;
         $new_head = $is_left_top ? shift @andmembers : pop @andmembers;
         push @andmembers, @ands   if $self->conjunction eq 'between';
-        push @andmembers, @commas if $self->commas      eq 'between';
+        push @andmembers, @commas if $self->punctuation      eq 'between';
         @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
         if ( !$is_left_top ) {
             @andmembers = reverse @andmembers;
@@ -201,9 +201,9 @@ sub transform_coord {
     }
 
     # COMMAS (except "between" which is already solved)
-    if ( $self->comma =~ /previous|following/ ) {
+    if ( $self->punctuation =~ /previous|following/ ) {
         foreach my $comma (@commas) {
-            $self->rehang( $comma, $self->_nearest( $self->comma, $comma, @members ) );
+            $self->rehang( $comma, $self->_nearest( $self->punctuation, $comma, @members ) );
         }
     }
 
@@ -273,7 +273,7 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
            head=left
          shared=nearest
     conjunction=between
-          comma=previous
+    punctuation=previous
 
   #TODO the same using a shortcut
   #A2A::Transform::CoordStyle style=fMhLsNcBpP
