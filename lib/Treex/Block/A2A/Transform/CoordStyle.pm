@@ -88,16 +88,17 @@ sub process_subtree {
     my $parent      = $node->get_parent();
     my $parent_type = $self->type_of_node($parent);
     my $from_f      = $self->from_family;
-#    if ( $from_f eq 'detect' ) {
-#        if ( $my_type eq 'ands' ) {
-#            if ( $parent_type ne 'members' && !$self->is_conjunction($parent) ) {
-#                $from_f = 'Prague';
-#            }
-#        }
-#        elsif (1) {
-#
-#        }
-#    }
+
+    #    if ( $from_f eq 'detect' ) {
+    #        if ( $my_type eq 'ands' ) {
+    #            if ( $parent_type ne 'members' && !$self->is_conjunction($parent) ) {
+    #                $from_f = 'Prague';
+    #            }
+    #        }
+    #        elsif (1) {
+    #
+    #        }
+    #    }
 
     my $merged_res = $self->_merge_res(@child_res);
 
@@ -119,6 +120,22 @@ sub process_subtree {
     return $merged_res;
 }
 
+# Find the nearest previous/following member.
+# "Previous/following" is set by $direction, but if no such is found, the other direction is tried.
+sub _nearest {
+    my ( $self, $direction, $node, @members ) = @_;
+    if ( $direction eq 'previous' ) {
+        my $prev_mem = first { $_->precedes($node) } reverse @members;
+        return $prev_mem if $prev_mem
+                return first { $node->precedes($_) } @members;
+    }
+    else {    # 'following'
+        my $foll_mem = first { $node->precedes($_) } @members;
+        return $foll_mem if $foll_mem;
+        return first { $_->precedes($node) } reverse @members;
+    }
+}
+
 sub type_of_node {
     my ( $self, $node ) = @_;
     return 'members' if $node->is_member;
@@ -130,66 +147,91 @@ sub type_of_node {
 
 # returns new_head
 sub transform_coord {
-    my ( $self, $orig_head, $res ) = @_;
-    return $orig_head if !$res;
-    my $parent  = $orig_head->get_parent();
-    my @members = sort {$_->ord <=> $_->ord} @{ $res->{members} };
+    my ( $self, $old_head, $res ) = @_;
+    return $old_head if !$res;
+    my $parent = $old_head->get_parent();
+    my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
     if ( !@members ) {
         log_warn "No conjuncts in coordination under " . $parent->get_address;
-        return $orig_head;
+        return $old_head;
     }
+    my $new_head;
     my @shared      = @{ $res->{shared} };
+    my @commas      = @{ $res->{commas} };
     my $parent_left = $parent->precedes( $members[0] );
-    my $first       = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
+    my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
+    # PRAGUE
     if ( $self->family eq 'Prague' ) {
-        my @separators = ( @{ $res->{ands} }, @{ $res->{commas} } );
+        my @separators = sort { $a->ord <=> $b->ord } ( @{ $res->{ands} }, @commas );
         if ( !@separators ) {
             log_warn "No separators in coordination under " . $parent->get_address;
-            return $orig_head;
+            return $old_head;
         }
 
-        my $head = $first ? shift @separators : pop @separators;
-        $self->rehang( $head, $parent );
-        $head->set_afun('Coord');
+        # $new_head will be the leftmost (resp. rightmost) separator (depending on $self->head)
+        $new_head = $is_left_top ? shift @separators : pop @separators;
 
+        # Rehang the conjunction and members
+        $self->rehang( $new_head, $parent );
+        $new_head->set_afun('Coord');
         foreach my $member (@members) {
-            $self->rehang( $member, $head );
+            $self->rehang( $member, $new_head );
         }
 
+        # In Prague family, we treat non-head conjunctions as commas,
+        # but we must make sure their afuns are  AuxY (not Coord).
+        @commas = @separators;
         foreach my $sep (@separators) {
             $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
             if ( $self->comma eq 'between' ) {
-                $self->rehang( $sep, $head );
-            }
-            elsif ($self->comma eq 'previous') {
-                my $prev_mem = first {$_->precedes($sep)} reverse @members;
-                if (!$prev_mem){
-                    $prev_mem = first {$sep->precedes($_)} @members;
-                }
-                $self->rehang( $sep, $prev_mem );
-            } else { # $self->comma eq 'following'
-                my $foll_mem = first {$sep->precedes($_)} @members;
-                if (!$foll_mem){
-                    $foll_mem = first {$_->precedes($sep)} reverse @members;
-                }
-                $self->rehang( $sep, $foll_mem );
+                $self->rehang( $sep, $new_head );
             }
         }
-
-        foreach my $sm (@shared) {
-            if ( $self->shared eq 'head' ) {
-                $self->rehang( $sm, $head );
-            }
-            else {
-
-                # TODO nearest member
-            }
-        }
-        return $head;
     }
-    # TODO Stanford, Moscow
-    return $orig_head;
+
+    # STANFORD & MOSCOW
+    else {
+        my @andmembers = @members;
+        $new_head = $is_left_top ? shift @andmembers : pop @andmembers;
+        push @andmembers, @{ $res->{ands} } if $self->conjunction eq 'between';
+        push @andmembers, @commas           if $self->commas      eq 'between';
+        @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
+        if ( !$is_left_top ) {
+            @andmembers = reverse @andmembers;
+        }
+
+        # Rehang the members (and conjunctions and commas if "between")
+        $self->rehang( $new_head, $parent );
+        my $rehang_to = $new_head;
+        foreach my $andmember (@andmembers){
+            $self->rehang($andmember, $rehang_to);
+            if ($self->family eq 'Moscow'){
+                $rehang_to = $andmember;
+            }
+        }
+    }
+
+    # COMMAS (except "between" which is already solved)
+    if ( $self->comma =~ /previous|following/ ) {
+        foreach my $comma (@commas) {
+            $self->rehang( $comma, $self->_nearest( $self->comma, $comma, @members ) );
+        }
+    }
+
+    # SHARED MODIFIERS
+    foreach my $sm (@shared) {
+
+        # Note that if there is no following member, nearest previous will be chosen.
+        if ( $self->shared eq 'nearest' ) {
+            $self->rehang( $sm, $self->_nearest( 'following', $sm, @members ) );
+        }
+        elsif ( $self->shared eq 'head' ) {
+            $self->rehang( $sm, $new_head );
+        }
+    }
+
+    return $new_head;
 }
 
 # Is the given node a coordination separator such as comma or semicolon?
