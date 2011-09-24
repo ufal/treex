@@ -68,55 +68,40 @@ sub _merge_res {
 sub process_subtree {
     my ( $self, $node ) = @_;
     my @children = $node->get_children();
+
+    # Leaves are simple (end of recursion).
     if ( !@children ) {
         my $type = $self->type_of_node($node) or return 0;
-        return { $self->_empty_res, $type => [$node] };
+        return { $self->_empty_res, $type => [$node], head=>$node };
     }
 
-    # recursively process children subtrees
+    # Recursively process children subtrees.
     my @child_res = grep {$_} map { $self->process_subtree($_) } @children;
 
+    # If $node is not part of CS, we are finished.
+    # (@child_res should be empty, but even if not, we can't do anything about that.)
     my $my_type = $self->type_of_node($node);
-    if ( !$my_type ) {
-        foreach my $child (@children) {
-            $self->transform_coord( $node, $self->process_subtree($child) );
-        }
-        return 0;
-    }
+    return 0 if !$my_type;
 
-    # So $my_type is not empty
+    # So $node is inside CS (it has non-empty $my_type).
     my $parent      = $node->get_parent();
     my $parent_type = $self->type_of_node($parent);
     my $from_f      = $self->from_family;
+    my $merged_res  = $self->_merge_res(@child_res);
+    my @child_types = map {$self->type_of_node($_->{head})} @child_res;
 
-    #    if ( $from_f eq 'detect' ) {
-    #        if ( $my_type eq 'ands' ) {
-    #            if ( $parent_type ne 'members' && !$self->is_conjunction($parent) ) {
-    #                $from_f = 'Prague';
-    #            }
-    #        }
-    #        elsif (1) {
-    #
-    #        }
-    #    }
+    # TODO merged_res may represent more CSs in case of nested CSs and Moscow or Stanford
 
-    my $merged_res = $self->_merge_res(@child_res);
-
-    if ( $from_f eq 'Prague' && $my_type eq 'ands' ) {
-
+    # If $node is the top node of a CS, let's transform the CS now and we are finished
+    if (!$parent_type){
+        my $new_head = $self->transform_coord($node, $merged_res);
+        return 0;
     }
 
-    foreach my $child (@children) {
-        my $res = $self->process_subtree($child) or next;
-        my $child_type = $self->type_of_node($child);
-        if ( !$my_type ) {
-            $self->transform_coord( $node, $res );
-        }
-        elsif ($child_type) {
+    # TODO in case of nested CSs, we might still need to transform the CS and return some $res
+    #if ( $from_f eq 'Prague' && $my_type eq 'ands' ) {
+    #}
 
-            #TODO!!!
-        }
-    }
     return $merged_res;
 }
 
@@ -126,8 +111,8 @@ sub _nearest {
     my ( $self, $direction, $node, @members ) = @_;
     if ( $direction eq 'previous' ) {
         my $prev_mem = first { $_->precedes($node) } reverse @members;
-        return $prev_mem if $prev_mem
-                return first { $node->precedes($_) } @members;
+        return $prev_mem if $prev_mem;
+        return first { $node->precedes($_) } @members;
     }
     else {    # 'following'
         my $foll_mem = first { $node->precedes($_) } @members;
@@ -136,6 +121,8 @@ sub _nearest {
     }
 }
 
+# Note that (in nested CSs) a node can be both member and a conjunction (ands) or shared,
+# but for this purpose we treat it as a member.
 sub type_of_node {
     my ( $self, $node ) = @_;
     return 'members' if $node->is_member;
@@ -158,12 +145,13 @@ sub transform_coord {
     my $new_head;
     my @shared      = @{ $res->{shared} };
     my @commas      = @{ $res->{commas} };
+    my @ands        = @{ $res->{ands} };
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
     # PRAGUE
     if ( $self->family eq 'Prague' ) {
-        my @separators = sort { $a->ord <=> $b->ord } ( @{ $res->{ands} }, @commas );
+        my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
         if ( !@separators ) {
             log_warn "No separators in coordination under " . $parent->get_address;
             return $old_head;
@@ -194,8 +182,8 @@ sub transform_coord {
     else {
         my @andmembers = @members;
         $new_head = $is_left_top ? shift @andmembers : pop @andmembers;
-        push @andmembers, @{ $res->{ands} } if $self->conjunction eq 'between';
-        push @andmembers, @commas           if $self->commas      eq 'between';
+        push @andmembers, @ands   if $self->conjunction eq 'between';
+        push @andmembers, @commas if $self->commas      eq 'between';
         @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
         if ( !$is_left_top ) {
             @andmembers = reverse @andmembers;
@@ -204,9 +192,9 @@ sub transform_coord {
         # Rehang the members (and conjunctions and commas if "between")
         $self->rehang( $new_head, $parent );
         my $rehang_to = $new_head;
-        foreach my $andmember (@andmembers){
-            $self->rehang($andmember, $rehang_to);
-            if ($self->family eq 'Moscow'){
+        foreach my $andmember (@andmembers) {
+            $self->rehang( $andmember, $rehang_to );
+            if ( $self->family eq 'Moscow' ) {
                 $rehang_to = $andmember;
             }
         }
@@ -216,6 +204,13 @@ sub transform_coord {
     if ( $self->comma =~ /previous|following/ ) {
         foreach my $comma (@commas) {
             $self->rehang( $comma, $self->_nearest( $self->comma, $comma, @members ) );
+        }
+    }
+
+    # CONJUNCTIONS (except "between" which is already solved, and except Prague family)
+    if ( $self->conjunction =~ /previous|following/ ) {
+        foreach my $and (@ands) {
+            $self->rehang( $and, $self->_nearest( $self->conjunction, $and, @members ) );
         }
     }
 
@@ -253,6 +248,18 @@ sub is_conjunction {
 1;
 
 __END__
+
+    #    if ( $from_f eq 'detect' ) {
+    #        if ( $my_type eq 'ands' ) {
+    #            if ( $parent_type ne 'members' && !$self->is_conjunction($parent) ) {
+    #                $from_f = 'Prague';
+    #            }
+    #        }
+    #        elsif (1) {
+    #
+    #        }
+    #    }
+
 
 =head1 NAME
 
