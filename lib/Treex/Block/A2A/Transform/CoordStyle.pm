@@ -46,6 +46,8 @@ has shared => (
 
 sub process_atree {
     my ( $self, $atree ) = @_;
+
+    #return if $atree->get_bundle->get_position != 8;
     $self->process_subtree($atree);
 }
 
@@ -89,13 +91,14 @@ sub process_subtree {
     my $from_f      = $self->from_family;
     my $merged_res  = $self->_merge_res(@child_res);
     my @child_types = map { $self->type_of_node( $_->{head} ) } @child_res;
-    my $new_head    = $node; 
+    $merged_res->{head} = $node;
+    push @{ $merged_res->{$my_type} }, $node;
 
     # TODO merged_res may represent more CSs in case of nested CSs and Moscow or Stanford
 
     # If $node is the top node of a CS, let's transform the CS now and we are finished
     if ( !$parent_type ) {
-        $new_head = $self->transform_coord( $node, $merged_res );
+        my $new_head = $self->transform_coord( $node, $merged_res );
         return 0;
     }
 
@@ -103,7 +106,6 @@ sub process_subtree {
     #if ( $from_f eq 'Prague' && $my_type eq 'ands' ) {
     #}
 
-    $merged_res->{head} = $new_head;
     return $merged_res;
 }
 
@@ -135,10 +137,22 @@ sub type_of_node {
     return 0;
 }
 
+sub _dump_res {
+    my ( $self, $res ) = @_;
+    my $head = $res->{head};
+    warn "COORD_DUMP head=" . $head->form . "(id=" . $head->id . ")\n";
+    foreach my $type (qw(members ands shared commas)) {
+        warn $type . ":" . join( '|', map { $_->form } @{ $res->{$type} } ) . "\n";
+    }
+    return;
+}
+
 # returns new_head
 sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
+
+    #$self->_dump_res($res);
     my $parent = $old_head->get_parent();
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
     if ( !@members ) {
