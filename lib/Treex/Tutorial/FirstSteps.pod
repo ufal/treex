@@ -149,25 +149,25 @@ L<Treex::Block::W2A::ResegmentSentences>.
               W2A::EN::Tokenize\
               W2A::TagTreeTagger\
               W2A::EN::Lemmatize\
-              Write::CoNLLX
+              Write::CoNLLX pos_attribute=tag
 
   echo "Mr. Brown, we'll start tagging." |\
    treex -Len Read::Sentences\
               W2A::EN::Tokenize\
               W2A::EN::TagMorce\
               W2A::EN::Lemmatize\
-              Write::CoNLLX
+              Write::CoNLLX pos_attribute=tag
 
   echo "Es tut mir leid." |\
-   treex -Lde Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+   treex -Lde Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX pos_attribute=tag
   echo "Lo siento" |\
-   treex -Les Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+   treex -Les Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX pos_attribute=tag
   echo "Mi dispiace" |\
-   treex -Lit Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+   treex -Lit Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX pos_attribute=tag
   echo "Je suis desolée" |\
-   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
+   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX pos_attribute=tag
   echo "Bohužel jsem tento tutorial nedokončil." |\
-   treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX
+   treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX pos_attribute=tag
 
 =head1 TASKS
 
