@@ -541,69 +541,6 @@ sub lift_noun_phrases
 # - Deficient coordination: sentence-initial conjunction is the root of the
 #   sentence, tagged ROOT. The main verb is attached to it and tagged 'conj'.
 #------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self   = shift;
-    my $root   = shift;
-    my $coords = shift;    # reference to array where detected coordinations are collected
-                           # Look for coordination members.
-    my @members;
-    my @delimiters;
-    my @sharedmod;
-    my @privatemod;
-    $self->collect_coordination_members( $root, \@members, \@delimiters, \@sharedmod, \@privatemod );
-
-    if (@members)
-    {
-
-        # If the last delimiter is a punctuation symbol that is not typically used as coordinator (such as a quotation mark)
-        # and it lies after the last member (instead of before it) and it is not the only delimiter,
-        # it is a modifier rather than a delimiter.
-        if (   scalar(@delimiters) > 1
-            && $delimiters[$#delimiters]->form() eq '"'
-            &&
-            $delimiters[$#delimiters]->ord() > $members[$#members]->ord()
-            )
-        {
-            push( @sharedmod, pop(@delimiters) );
-        }
-        push(
-            @{$coords},
-            {
-                'members'           => \@members,
-                'delimiters'        => \@delimiters,
-                'shared_modifiers'  => \@sharedmod,
-                'private_modifiers' => \@privatemod,    # for debugging purposes only
-                'oldroot'           => $root
-            }
-        );
-
-        # Call recursively on all modifier subtrees.
-        # Call it on non-first members, too, as they might immediately head a nested coordination ("apples, oranges, and blackberries or raspberries").
-        # Do not call it on delimiters. Calling it on the last coord conjunction would yield a coordination whose first member would be the conjunction and second member would be the last member of the current coordination.
-        foreach my $node ( grep { $_->conll_deprel() !~ m/^(coord|pnct)$/ } ( $root->children() ) )
-        {
-            $self->detect_coordination( $node, $coords );
-        }
-
-        # The above loop did not include members that are not children of the current root (they are grandchildren).
-        foreach my $node ( grep { $_ != $root && $_->parent() != $root } (@members) )
-        {
-            $self->detect_coordination( $node, $coords );
-        }
-    }
-
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ( $root->children() )
-        {
-            $self->detect_coordination( $child, $coords );
-        }
-    }
-}
-
-#------------------------------------------------------------------------------
 # Collects members and delimiters of coordination. Unlike some other treebanks,
 # in DDT this function does not need to be recursive.
 #------------------------------------------------------------------------------
@@ -723,11 +660,11 @@ sub collect_coordination_modifiers
     my $members    = shift;                                           # reference to input array
     my $sharedmod  = shift;                                           # reference to output array
     my $privatemod = shift;                                           # reference to output array
-                                                                      # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
-                                                                      # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-                                                                      # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-                                                                      # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-                                                                      # Modifiers of the other members are always private.
+    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
+    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
+    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
+    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
+    # Modifiers of the other members are always private.
     my $croot      = $members->[0];
     my $ord0       = $croot->ord();
     my $ord1       = $#{$members} >= 1 ? $members->[1]->ord() : -1;
@@ -741,7 +678,12 @@ sub collect_coordination_modifiers
                 my $ord = $mchild->ord();
                 if ( $ord < $ord0 || $ord1 >= 0 && $ord > $ord1 )
                 {
-                    push( @{$sharedmod}, $mchild );
+                    # This may be either shared or private modifier.
+                    #push( @{$sharedmod}, $mchild );
+                    # Since there is no explicit information on shared modifiers in the treebank
+                    # and because the modifier is attached to one member of the coordination,
+                    # let's not add information and let's treat it as a private modifier.
+                    push(@{$privatemod}, $mchild);
                 }
                 else
                 {
