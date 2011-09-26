@@ -10,11 +10,11 @@ has family => (
 );
 
 # TODO "detect" option
-has from_family => (
-    is            => 'ro',
-    default       => 'Prague',
-    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
-);
+#has from_family => (
+#    is            => 'ro',
+#    default       => 'Prague',
+#    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
+#);
 
 # previous, following, between
 has punctuation => (
@@ -257,7 +257,7 @@ sub is_comma {
 # Is the given node a coordination conjunction?
 sub is_conjunction {
     my ( $self, $node ) = @_;
-    return 1 if ( $node->afun || '' ) eq 'Coord';
+    return 1 if ( $node->afun || '' ) eq 'Coord' && !$self->is_comma($node);
     return 1 if ( $node->afun || '' ) eq 'AuxY' && $node->get_iset('subpos') eq 'coor';
     return 0;
 }
