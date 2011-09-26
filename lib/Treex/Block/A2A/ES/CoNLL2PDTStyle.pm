@@ -120,7 +120,7 @@ use Treex::Tool::ATreeTransformer::DepReverser;
 my $subconj_reverser =
     Treex::Tool::ATreeTransformer::DepReverser->new(
             {
-                subscription     => undef,
+                subscription     => '',
                 nodes_to_reverse => sub {
                     my ( $child, $parent ) = @_;
                     return ( $child->afun eq 'AuxC' );
