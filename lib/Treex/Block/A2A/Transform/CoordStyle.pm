@@ -55,7 +55,7 @@ sub _empty_res {
 
 sub _merge_res {
     my ( $self, @results ) = @_;
-    my $merged_res = $self->_empty;
+    my $merged_res = { $self->_empty_res };
     foreach my $res ( grep {$_} @results ) {
         foreach my $type ( keys %{$merged_res} ) {
             push @{ $merged_res->{$type} }, @{ $res->{$type} };
@@ -72,7 +72,7 @@ sub process_subtree {
     # Leaves are simple (end of recursion).
     if ( !@children ) {
         my $type = $self->type_of_node($node) or return 0;
-        return { $self->_empty_res, $type => [$node], head=>$node };
+        return { $self->_empty_res, $type => [$node], head => $node };
     }
 
     # Recursively process children subtrees.
@@ -88,13 +88,14 @@ sub process_subtree {
     my $parent_type = $self->type_of_node($parent);
     my $from_f      = $self->from_family;
     my $merged_res  = $self->_merge_res(@child_res);
-    my @child_types = map {$self->type_of_node($_->{head})} @child_res;
+    my @child_types = map { $self->type_of_node( $_->{head} ) } @child_res;
+    my $new_head    = $node; 
 
     # TODO merged_res may represent more CSs in case of nested CSs and Moscow or Stanford
 
     # If $node is the top node of a CS, let's transform the CS now and we are finished
-    if (!$parent_type){
-        my $new_head = $self->transform_coord($node, $merged_res);
+    if ( !$parent_type ) {
+        $new_head = $self->transform_coord( $node, $merged_res );
         return 0;
     }
 
@@ -102,6 +103,7 @@ sub process_subtree {
     #if ( $from_f eq 'Prague' && $my_type eq 'ands' ) {
     #}
 
+    $merged_res->{head} = $new_head;
     return $merged_res;
 }
 
@@ -125,6 +127,7 @@ sub _nearest {
 # but for this purpose we treat it as a member.
 sub type_of_node {
     my ( $self, $node ) = @_;
+    return 0         if $node->is_root();
     return 'members' if $node->is_member;
     return 'shared'  if $node->is_shared_modifier;
     return 'ands'    if $self->is_conjunction($node);
@@ -183,7 +186,7 @@ sub transform_coord {
         my @andmembers = @members;
         $new_head = $is_left_top ? shift @andmembers : pop @andmembers;
         push @andmembers, @ands   if $self->conjunction eq 'between';
-        push @andmembers, @commas if $self->punctuation      eq 'between';
+        push @andmembers, @commas if $self->punctuation eq 'between';
         @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
         if ( !$is_left_top ) {
             @andmembers = reverse @andmembers;
@@ -240,8 +243,8 @@ sub is_comma {
 # Is the given node a coordination conjunction?
 sub is_conjunction {
     my ( $self, $node ) = @_;
-    return 1 if $node->afun eq 'Coord';
-    return 1 if $node->afun eq 'AuxY' && $node->get_iset('subpos') eq 'coor';
+    return 1 if ( $node->afun || '' ) eq 'Coord';
+    return 1 if ( $node->afun || '' ) eq 'AuxY' && $node->get_iset('subpos') eq 'coor';
     return 0;
 }
 
