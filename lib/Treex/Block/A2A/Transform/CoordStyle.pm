@@ -1,48 +1,60 @@
 package Treex::Block::A2A::Transform::CoordStyle;
 use Moose;
 use Treex::Core::Common;
+#use Moose::Util::TypeConstraints;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
-has family => (
-    is            => 'ro',
-    default       => 'Moscow',
-    documentation => 'output coord style family (Prague, Moscow, and Stanford)',
-);
 
-# TODO "detect" option
+# TODO "autodetect" option
 #has from_family => (
 #    is            => 'ro',
+#    isa           => enum([qw(Moscow Prague Stanford autodetect)])),
 #    default       => 'Prague',
 #    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
 #);
 
-# previous, following, between
+has family => (
+    is            => 'ro',
+    isa           => enum([qw(Moscow Prague Stanford)]),
+    default       => 'Moscow',
+    documentation => 'output coord style family (Prague, Moscow, and Stanford)',
+);
+
+has head => (
+    is            => 'ro',
+    isa           => enum([qw(left right nearest)]),
+    default       => 'right',
+    documentation => 'which node should be the head of the coordination structure',
+);
+
+has conjunction => (
+    is            => 'ro',
+    isa           => enum([qw(previous following between head)]),
+    default       => 'between',
+    documentation => 'conjunction parents (previous, following, between, head)',
+);
+
 has punctuation => (
     is            => 'ro',
+    isa           => enum([qw(previous following between)]),
     default       => 'previous',
     documentation => 'punctuation parents (previous, following, between)',
 );
 
-# previous, following, between
-has conjunction => (
-    is            => 'ro',
-    default       => 'between',
-    documentation => 'conjunction parents (previous, following, between)',
-);
-
-# left, right, nearest
-has head => (
-    is            => 'ro',
-    default       => 'left',
-    documentation => 'which node should be the head of the coordination structure',
-);
-
-# head, nearest
 has shared => (
     is            => 'ro',
+    isa           => enum([qw(head nearest)]),
     default       => 'nearest',
     documentation => 'which node should be the head of the shared modifiers',
 );
+
+sub BUILD {
+    my ($self, $args) = @_;
+    log_fatal "Prague family must have parameter conjunction=head"
+        if $self->family eq 'Prague' && $self->conjunction ne 'head';
+    return;
+}
+
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -231,7 +243,7 @@ sub transform_coord {
         }
     }
 
-    # CONJUNCTIONS (except "between" which is already solved, and except Prague family)
+    # CONJUNCTIONS (except "between" and "head" which are already solved)
     if ( $self->conjunction =~ /previous|following/ ) {
         foreach my $and (@ands) {
             $self->rehang( $and, $self->_nearest( $self->conjunction, $and, @members ) );
