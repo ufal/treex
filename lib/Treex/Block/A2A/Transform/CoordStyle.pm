@@ -283,8 +283,24 @@ sub is_comma {
 # Is the given node a coordination conjunction?
 sub is_conjunction {
     my ( $self, $node ) = @_;
+
+    # In Prague style coord. conjunctions have mostly afun=Coord
+    # (but sometimes also commas can get afun=Coord).
     return 1 if ( $node->afun || '' ) eq 'Coord' && !$self->is_comma($node);
-    return 1 if ( $node->afun || '' ) eq 'AuxY';    # && $node->get_iset('subpos') eq 'coor';
+
+    
+    if (( $node->afun || '' ) eq 'AuxY'){
+        my $parent = $node->parent;
+        return 0 if $parent->is_root;
+        return 1 if $parent->is_member;
+        return 0 if $parent->afun ne 'Coord';
+        return 0 if abs($parent->ord - $node->ord) <= 1;
+        #TODO distinguish
+        # Petr a(afun=AuxY) Pavel a Marie
+        # Myslim, a proto(afun=AuxY) jsem
+        return 1;
+    }
+
     return 0;
 }
 
