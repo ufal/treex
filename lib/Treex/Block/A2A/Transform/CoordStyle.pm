@@ -144,7 +144,9 @@ sub _nearest {
 sub type_of_node {
     my ( $self, $node ) = @_;
     return 0         if $node->is_root();
-    return 'members' if $node->is_member;
+
+    # We ignore appositions, we want only coordination members
+    return 'members' if $node->is_member && ($node->parent->afun || '') ne 'Apos';
     return 'shared'  if $node->is_shared_modifier;
     return 'ands'    if $self->is_conjunction($node);
     return 'commas'  if $self->is_comma($node);
@@ -279,7 +281,7 @@ sub is_comma {
 sub is_conjunction {
     my ( $self, $node ) = @_;
     return 1 if ( $node->afun || '' ) eq 'Coord' && !$self->is_comma($node);
-    return 1 if ( $node->afun || '' ) eq 'AuxY' && $node->get_iset('subpos') eq 'coor';
+    return 1 if ( $node->afun || '' ) eq 'AuxY';# && $node->get_iset('subpos') eq 'coor';
     return 0;
 }
 
