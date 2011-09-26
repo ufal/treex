@@ -1,9 +1,7 @@
 package Treex::Block::A2A::Transform::CoordStyle;
 use Moose;
 use Treex::Core::Common;
-#use Moose::Util::TypeConstraints;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
-
 
 # TODO "autodetect" option
 #has from_family => (
@@ -15,41 +13,41 @@ extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
 has family => (
     is            => 'ro',
-    isa           => enum([qw(Moscow Prague Stanford)]),
+    isa           => enum( [qw(Moscow Prague Stanford)] ),
     default       => 'Moscow',
     documentation => 'output coord style family (Prague, Moscow, and Stanford)',
 );
 
 has head => (
     is            => 'ro',
-    isa           => enum([qw(left right nearest)]),
+    isa           => enum( [qw(left right nearest)] ),
     default       => 'right',
     documentation => 'which node should be the head of the coordination structure',
 );
 
 has conjunction => (
     is            => 'ro',
-    isa           => enum([qw(previous following between head)]),
+    isa           => enum( [qw(previous following between head)] ),
     default       => 'between',
     documentation => 'conjunction parents (previous, following, between, head)',
 );
 
 has punctuation => (
     is            => 'ro',
-    isa           => enum([qw(previous following between)]),
+    isa           => enum( [qw(previous following between)] ),
     default       => 'previous',
     documentation => 'punctuation parents (previous, following, between)',
 );
 
 has shared => (
     is            => 'ro',
-    isa           => enum([qw(head nearest)]),
+    isa           => enum( [qw(head nearest)] ),
     default       => 'nearest',
     documentation => 'which node should be the head of the shared modifiers',
 );
 
 sub BUILD {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     log_fatal "Prague family must have parameter conjunction=head"
         if $self->family eq 'Prague' && $self->conjunction ne 'head';
     log_fatal "conjunction=head parameter is applicable only for Prague family"
@@ -57,11 +55,10 @@ sub BUILD {
     return;
 }
 
-
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position != 8;
+    #return if $atree->get_bundle->get_position > 5;
     $self->process_subtree($atree);
 }
 
@@ -143,10 +140,10 @@ sub _nearest {
 # but for this purpose we treat it as a member.
 sub type_of_node {
     my ( $self, $node ) = @_;
-    return 0         if $node->is_root();
+    return 0 if $node->is_root();
 
     # We ignore appositions, we want only coordination members
-    return 'members' if $node->is_member && ($node->parent->afun || '') ne 'Apos';
+    return 'members' if $node->is_member;
     return 'shared'  if $node->is_shared_modifier;
     return 'ands'    if $self->is_conjunction($node);
     return 'commas'  if $self->is_comma($node);
@@ -169,29 +166,35 @@ sub transform_coord {
     return $old_head if !$res;
 
     #$self->_dump_res($res);
-    my $parent = $old_head->get_parent();
+    my $parent  = $old_head->get_parent();
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
+    my @shared  = @{ $res->{shared} };
+    my @commas  = @{ $res->{commas} };
+    my @ands    = @{ $res->{ands} };
+
+    # Skip if no members
     if ( !@members ) {
-        log_warn "No conjuncts in coordination under " . $parent->get_address;
+
+        # These cases may be AuxX from appositions or incorrectly detected
+        # coordination conjunction, e.g. "A(afun=AuxY) to se podívejme."
+        # So I've commented the next line, since most warnings would be false alarms.
+        #log_warn "No conjuncts in coordination under " . $parent->get_address;
         return $old_head;
     }
     my $new_head;
-    my @shared      = @{ $res->{shared} };
-    my @commas      = @{ $res->{commas} };
-    my @ands        = @{ $res->{ands} };
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
     # Commas should have afun AuxX, conjunctions AuxY.
     # (Except for Prague family, where the head conjunction has Coord,
-    # but that will be solved later.) 
-    foreach my $sep (@commas, @ands) {
+    # but that will be solved later.)
+    foreach my $sep ( @commas, @ands ) {
         $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
     }
 
     # PRAGUE
     if ( $self->family eq 'Prague' ) {
-        my @separators  = sort { $a->ord <=> $b->ord } ( @ands, @commas );
+        my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
         if ( !@separators ) {
             log_warn "No separators in coordination under " . $parent->get_address;
             return $old_head;
@@ -281,7 +284,7 @@ sub is_comma {
 sub is_conjunction {
     my ( $self, $node ) = @_;
     return 1 if ( $node->afun || '' ) eq 'Coord' && !$self->is_comma($node);
-    return 1 if ( $node->afun || '' ) eq 'AuxY';# && $node->get_iset('subpos') eq 'coor';
+    return 1 if ( $node->afun || '' ) eq 'AuxY';    # && $node->get_iset('subpos') eq 'coor';
     return 0;
 }
 
