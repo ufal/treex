@@ -88,13 +88,13 @@ sub process_subtree {
     # So $node is inside CS (it has non-empty $my_type).
     my $parent      = $node->get_parent();
     my $parent_type = $self->type_of_node($parent);
-    my $from_f      = $self->from_family;
     my $merged_res  = $self->_merge_res(@child_res);
     my @child_types = map { $self->type_of_node( $_->{head} ) } @child_res;
     $merged_res->{head} = $node;
     push @{ $merged_res->{$my_type} }, $node;
 
     # TODO merged_res may represent more CSs in case of nested CSs and Moscow or Stanford
+    #my $from_f      = $self->from_family;
 
     # If $node is the top node of a CS, let's transform the CS now and we are finished
     if ( !$parent_type ) {
@@ -166,16 +166,25 @@ sub transform_coord {
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
+    # Commas should have afun AuxX, conjunctions AuxY.
+    # (Except for Prague family, where the head conjunction has Coord,
+    # but that will be solved later.) 
+    foreach my $sep (@commas, @ands) {
+        $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
+    }
+
     # PRAGUE
     if ( $self->family eq 'Prague' ) {
-        my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
+        my @separators  = sort { $a->ord <=> $b->ord } ( @ands, @commas );
         if ( !@separators ) {
             log_warn "No separators in coordination under " . $parent->get_address;
             return $old_head;
         }
 
         # $new_head will be the leftmost (resp. rightmost) separator (depending on $self->head)
+        # The rest of separators will be treated as commas.
         $new_head = $is_left_top ? shift @separators : pop @separators;
+        @commas = @separators;
 
         # Rehang the conjunction and members
         $self->rehang( $new_head, $parent );
@@ -184,12 +193,10 @@ sub transform_coord {
             $self->rehang( $member, $new_head );
         }
 
-        # In Prague family, we treat non-head conjunctions as commas,
-        # but we must make sure their afuns are  AuxY (not Coord).
-        @commas = @separators;
-        foreach my $sep (@separators) {
-            $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
-            if ( $self->punctuation eq 'between' ) {
+        # In Prague family, punctuation=between means that
+        # commas are hanged on the head conjunction.
+        if ( $self->punctuation eq 'between' ) {
+            foreach my $sep (@separators) {
                 $self->rehang( $sep, $new_head );
             }
         }
