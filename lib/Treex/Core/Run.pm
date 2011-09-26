@@ -641,7 +641,7 @@ sub _print_output_files {
             while (<$FILE>) {
 
                 # skip [success] indicatory lines, but set the success flag to 1
-                if ( $_ =~ /^Document [0-9]+\/[0-9]+ .*: \[success\]\.\r?\n?$/ ) {
+                if ( $_ =~ /^Document [0-9]+\/[0-9\?]+ .*: \[success\]\.\r?\n?$/ ) {
                     $success = 1;
                     next;
                 }
@@ -658,7 +658,7 @@ sub _print_output_files {
 
             # test for the [success] indication on the last line of STDERR
             if ( !$success ) {
-                log_fatal "Document $doc_number has not finished successfully";
+                log_fatal "Document $doc_number has not finished successfully (see $filename)";
             }
         }
         close $FILE;
