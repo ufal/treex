@@ -35,7 +35,7 @@ sub rehang {
     $node->set_parent($new_parent);
     $self->subscribe($node);
     my $new_parent_form = $new_parent->is_root ? 'ROOT' : $new_parent->form;
-    log_info( 'Rehanging fired by ' . ( $self->subscription || '?' ) . ': '
+    log_debug( 'Rehanging fired by ' . ( $self->subscription || '?' ) . ': '
                  . $node->form . " moved below " . $new_parent_form . "\t" . $node->get_address );
     return 1;
 }
