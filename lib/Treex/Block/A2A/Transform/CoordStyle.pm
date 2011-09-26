@@ -52,6 +52,8 @@ sub BUILD {
     my ($self, $args) = @_;
     log_fatal "Prague family must have parameter conjunction=head"
         if $self->family eq 'Prague' && $self->conjunction ne 'head';
+    log_fatal "conjunction=head parameter is applicable only for Prague family"
+        if $self->family ne 'Prague' && $self->conjunction eq 'head';
     return;
 }
 
