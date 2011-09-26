@@ -2,6 +2,7 @@ package Treex::Block::Print::TextPronCorefData;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Coreference::ValueTransformer;
 
 # TODO this is weird, they should rather have a common ancestor class or role
 extends 'Treex::Block::A2T::CS::MarkTextPronCoref';
@@ -28,12 +29,13 @@ has 'feature_sep' => (
     default     => ' ',
 );
 
-has '_char_mapping' => (
+has '_feature_transformer' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'HashRef[Str]',
-    builder     => '_build_char_mappping',
+    isa         => 'Treex::Tool::Coreference::ValueTransformer',
+    default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
 );
+
 
 sub BUILD {
     my ($self) = @_;
@@ -43,71 +45,9 @@ sub BUILD {
 
 sub _build_feature_names {
     my ($self) = @_;
-
-    # TODO fill feature names
+    
     my $names = $self->_feature_extractor->feature_names;
     return $names;
-}
-    
-sub _build_char_mappping {
-    my ($self) = @_;
-
-    return {
-        "\#"    => "spec_hash",
-        "\\|"   => "spec_pipe",
-        "\\-"   => "undef",
-        '\\"'   => "spec_quot",
-        "\\+"   => "spec_plus",
-        "\\*"   => "spec_aster",
-        "\\,"   => "spec_comma",
-        "\\."   => "spec_dot",
-        "\\!"   => "spec_exmark",
-        "\\:"   => "spec_ddot",
-        "\\;"   => "spec_semicol",
-        "\\="   => "spec_eq",
-        "\\?"   => "spec_qmark",
-        "\\^"   => "spec_head",
-        "\\~"   => "spec_tilda",
-        "\\}"   => "spec_rbrace",
-        "\\{"   => "spec_lbrace",
-        "\\("   => "spec_lpar",
-        "\\)"   => "spec_rpar",
-        "\\["   => "spec_lpar",
-        "\\]"   => "spec_rpar",
-        "\\&"   => "spec_amper",
-        "\\'"   => "spec_aph",
-        "\\`"   => "spec_aph2",
-        "\\\""  => "spec_quot",
-        "\\%"   => "spec_percnt",
-        "\\\\"  => "spec_backslash",
-        "\\\/"  => "spec_slash",
-        "\\#"   => "spec_cross",
-        "\\\$"  => "spec_dollar",
-        "\\@"   => "spec_at",
-    };
-}
-
-sub _special_chars_off {
-    my ($self, $value) = @_;
-
-    my $mapping = $self->_char_mapping;
-
-    foreach my $from (keys %{$mapping}) {
-		my $to = $mapping->{$from};
-        $value = $self->_replace_empty( $value );
-        if ($value ne "empty") {
-		    $value =~ s/$from/$to/g;
-        }
-	}
-	return $value;
-}
-
-sub _replace_empty {
-    my ($self, $value) = @_;
-    if ((!defined $value) || ($value =~ /^\s*$/)) {
-        return "empty";
-    }
-    return $value;
 }
 
 sub _create_instances_strings {
@@ -115,10 +55,17 @@ sub _create_instances_strings {
     
     my @lines;
     foreach my $instance (@{$instances}) {
-        my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+        my $line = "";
+
+        # DEBUG
+       # $line .= $instance->{cand_id} . $self->feature_sep;
+
+
+        $line .= $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+        #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
         my @cols = map {$_=~ /^[br]_/ 
-                ? "r_$_=" . $self->_replace_empty( $instance->{$_} )
-                : "c_$_=" . $self->_special_chars_off( $instance->{$_} )
+                ? "r_$_=" . $self->_feature_transformer->replace_empty( $instance->{$_} )
+                : "c_$_=" . $self->_feature_transformer->special_chars_off( $instance->{$_} )
             } @{$self->feature_names};
         $line .= join $self->feature_sep, @cols;
         push @lines, $line;

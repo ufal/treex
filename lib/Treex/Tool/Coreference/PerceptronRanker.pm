@@ -3,15 +3,25 @@ package Treex::Tool::Coreference::PerceptronRanker;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
+use Treex::Tool::Coreference::ValueTransformer;
 
 with 'Treex::Tool::Coreference::Ranker';
 
+
+# TODO this should be a separate class and a feature transformer should be a part of it
 has '_model' => (
     is          => 'ro',
     required    => 1,
     isa         => 'HashRef[HashRef[Num]]',
     lazy        => 1,
     builder      => '_build_model',
+);
+
+has '_feature_transformer' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Treex::Tool::Coreference::ValueTransformer',
+    default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
 );
 
 # Attribute _model depends on the attribute model_path, whose value do not
@@ -31,12 +41,15 @@ sub _build_model {
     log_fatal 'File ' . $model_file . 
         ' with a model for pronominal textual coreference resolution does not exist.' 
         if !-f $model_file;
-    open MODEL, $model_file;
+    open MODEL, "<:utf8", $model_file;
+
+    print STDERR "FILE: $model_file\n";
 
     my $perc_weights;
     my $start = 0;
     while (my $line = <MODEL>) {
         chomp $line;
+
         if ($line =~ /^START/) {
             $start = 1;
         }
@@ -58,7 +71,7 @@ sub _build_model {
             $perc_weights->{$fname}{$value} = $weight;
         }
     }
-    
+
     return $perc_weights;
 }
 
@@ -72,8 +85,9 @@ sub rank {
         my $cand_weight = 0;
         for my $fname (keys %{$instance}) {
             my $feat_weight;
+            my $fvalue;
             if ($fname =~ /^(r|b)_/) {
-                my $fvalue = $instance->{$fname};
+                $fvalue = $instance->{$fname};
                 if (defined $fvalue) {
                     $feat_weight = $fvalue * 
                         ($self->_model->{$fname}{'weight'} || 0);
@@ -82,8 +96,8 @@ sub rank {
                 }
             }
             else {
-                #my $fvalue = special_chars_off2($pfeatures->{$fname});
-                my $fvalue = $instance->{$fname};
+                $fvalue = $instance->{$fname};
+                $fvalue = $self->_feature_transformer->special_chars_off($fvalue);
                 if (defined $fvalue) {
                     $feat_weight = ( $self->_model->{$fname}{$fvalue} || 0 );
                 } else {
@@ -91,6 +105,11 @@ sub rank {
                 }
             }
             $cand_weight += $feat_weight;
+
+# DEBUG
+#if ($id eq 't-ln95048-055-p2s2w10') {
+#    print "$fname = $fvalue : $feat_weight\n"
+#}
         }
         $cand_weights->{$id} = $cand_weight;
     }

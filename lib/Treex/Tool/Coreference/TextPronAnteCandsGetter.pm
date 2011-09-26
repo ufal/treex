@@ -80,6 +80,13 @@ sub _find_positive_cands {
 # t-cmpr9413-032-p3s2w4 (nimi) -> (pozornost, dar)
     if (@antes == 1) {
         my $ante = $antes[0];
+
+# TODO for debugging reasons to accord with the data of Linh et al. (2009). This should be
+# cancelled afterwards
+        if ($jnode->wild->{aca_file_deepord} < $ante->wild->{aca_file_deepord}) {
+            return [];
+        }
+
         $non_gram_ante = $self->_jump_to_non_gram_ante(
                 $ante, \%cands_hash);
     }

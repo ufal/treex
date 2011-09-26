@@ -95,7 +95,7 @@ sub _create_instances {
 
 
     if (!defined $ords) {
-        $ords = [ 1 .. @$ante_cands ];
+        $ords = [ 0 .. @$ante_cands-1 ];
     }
 
     my $instances;
@@ -144,6 +144,23 @@ sub process_tnode {
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
         my $antec  = $ranker->pick_winner( $instances );
+
+        # DEBUG
+        #print "ANAPH: " . $t_node->id . "; ";
+        #print "PRED: $antec\n";
+        #print (join "\n", map {$_->id} @$ante_cands);
+        #print "\n";
+
+        # DEBUG
+        #my $test_id = 't-ln95045-100-p2s1w13';
+        #if (defined $instances->{$test_id}) {
+        #    my $feat = $instances->{$test_id};
+
+         #   foreach my $name (sort keys %$feat) {
+         #       print $name . ": " . $feat->{$name} . "\n";
+         #   }
+            
+        #}
 
         if (defined $antec) {
             $t_node->set_attr( 'coref_text.rf', [$antec] );

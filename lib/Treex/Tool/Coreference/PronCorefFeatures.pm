@@ -126,7 +126,9 @@ sub _build_cnk_freqs {
         ' with a CNK model used for a feature' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $cnk_file;
-    open CNK, "<:utf8", $cnk_file;
+# TODO adjustment to accord with Linh et al. (2009)
+open CNK, $cnk_file;
+#    open CNK, "<:utf8", $cnk_file;
     
     my $nv_freq;
     my $v_freq;
@@ -142,7 +144,7 @@ sub _build_cnk_freqs {
     }
     close CNK;
     
-    my $cnk_freqs = { v => $v_freq, vn => $nv_freq };
+    my $cnk_freqs = { v => $v_freq, nv => $nv_freq };
     return $cnk_freqs;
 }
 
@@ -154,7 +156,9 @@ sub _build_ewn_classes {
         ' with a EuroWordNet onthology for Czech used' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $ewn_file;
-    open EWN, "<:utf8", $ewn_file;
+# TODO adjustment to accord with Linh et al. (2009)
+open EWN, $ewn_file;
+#    open EWN, "<:utf8", $ewn_file;
     
     my $ewn_noun;
     my %ewn_all_classes;
@@ -192,28 +196,27 @@ sub _categorize {
 sub _get_coord_gennum {
 	my ($parray, $node) = @_;
 	my $antec = ($node->get_coref_gram_nodes)[0];
-	
+
     my ($gen, $num);
 
-	if ((scalar @{$parray} == 0) || ($antec->functor eq 'APPS')) {
+	if ((scalar @{$parray} == 1) || ($antec->functor eq 'APPS')) {
 		$gen = $parray->[0]->gram_gender;
 		$num = $parray->[0]->gram_number;
 	}
 	else {
 		$num = 'pl';
-		my %gens;
-		my @gens = (0, 0, 0, 0); # 0- anim, 1-inan, 2-fem, 3-neut
+		my %gens = (anim => 0, inan => 0, fem => 0, neut => 0);
 		foreach (@{$parray}) {
 			$gens{$_->gram_gender}++;
 		}
 		if ($gens{'anim'}) {
 			$gen = 'anim';
 		}
-		elsif (($gens{'fem'} && ($gens{'fem'} == scalar @{$parray})) || 
+		elsif (($gens{'fem'} == scalar @{$parray}) || 
             ($gens{'fem'} && $gens{'neut'})) {
 			$gen = 'fem';
 		}
-		elsif ($gens{'neut'} && ($gens{'neut'} == scalar @{$parray})) {
+		elsif ($gens{'neut'} == scalar @{$parray}) {
 			$gen = 'neut';
 		}
 		else  {
@@ -228,8 +231,8 @@ sub _get_relat_gennum {
 	my ($node) = @_;
 	my @epars = $node->get_eparents;
 	my $par = $epars[0];
-	while ($par && !(($par->gram_sempos eq "v") 
-        && ($par->gram_tense =~ /^(sim|post|ant)$/))) {
+	while ($par && !(defined $par->gram_sempos && ($par->gram_sempos eq "v") 
+        && defined $par->gram_tense && ($par->gram_tense =~ /^(sim|post|ant)$/))) {
 		
         @epars = $par->get_eparents;
 		$par = $epars[0];
@@ -255,9 +258,12 @@ sub _get_cand_gennum {
 	if ($node->attr('coref_gram.rf')) {
 		if (defined $node->gram_indeftype && 
                 ($node->gram_indeftype eq 'relat')) {
+
+
 #			my $alex = $node->attr('a/lex.rf');
 			my $anode = $node->get_lex_anode;
 			my $alemma = $anode->lemma;
+	
 			if ($alemma !~ /^což/) {
 				return _get_relat_gennum($node);
 			}
@@ -300,20 +306,30 @@ sub _is_subject {
         ($par->functor eq 'DENOM')) {
 		
         my @cands = $par->get_echildren;
- 		my $sb_id;
+ 		my @sb_ids;
 		foreach my $child (@cands) {
 			if (defined $child->gram_sempos && ($child->gram_sempos =~ /^n/)) {
                 my $achild = $child->get_lex_anode;
                 if (defined $achild && ($achild->afun eq 'Sb')) {
-					$sb_id = $child->id;
-                    last;
+					push @sb_ids, $child->id;
 				}
 			}
 		}
+
+# TODO to accord with Linh et al. (2009), just the last subjects counts
+        my $sb_id = pop @sb_ids;
+        
         if ((!defined $sb_id && ($node->functor eq 'ACT'))
 		    || (defined $sb_id && ($node->id eq $sb_id))) { 
 			return $b_true;
 		}	
+        #if ((@sb_ids == 0) && ($node->functor eq 'ACT')) {
+		#	return $b_true;
+        #}
+        #my %subj_hash = map {$_ => 1} @sb_ids; 
+		#if (defined $subj_hash{$node->id}) { 
+		#	return $b_true;
+		#}	
 	}
 	return $b_false;
 }
@@ -397,17 +413,38 @@ sub _in_cnk_collocation {
 
 sub join_feats {
     my ($f1, $f2) = @_;
-    if (!defined $f1 || !defined $f2) {
-        return undef;
+
+# TODO adjustment to accord with Linh et al. (2009)
+    if (!defined $f1) {
+        $f1 = "";
     }
+    if (!defined $f2) {
+        $f2 = "";
+    }
+
+#    if (!defined $f1 || !defined $f2) {
+#        return undef;
+#    }
     return $f1 . '_' . $f2;
 }
 
 sub agree_feats {
     my ($f1, $f2) = @_;
+
+# TODO adjustment to accord with Linh et al. (2009)
     if (!defined $f1 || !defined $f2) {
-        return $b_false;
+        if (!defined $f1 && !defined $f2) {
+            return $b_true;
+        }
+        else {
+            return $b_false;
+        }
     }
+
+#    if (!defined $f1 || !defined $f2) {
+#        return $b_false;
+#    }
+
     return ($f1 eq $f2) ? $b_true : $b_false;
 }
 
@@ -418,6 +455,7 @@ sub extract_features {
     
     #   1: anaphor's ID
     $coref_features{anaph_id} = $anaph->id;
+    $coref_features{cand_id} = $cand->id;
 
 ###########################
     #   Distance:
@@ -511,6 +549,12 @@ sub extract_features {
     #   3: afun($inode, $jnode);
     $coref_features{c_cand_afun}  = _get_afun($cand);
     $coref_features{c_anaph_afun} = _get_afun($anaph);
+
+    # DEBUG
+    #if (!defined $coref_features{c_cand_afun} || !defined $coref_features{c_anaph_afun}) {
+    #    print STDERR "UNDEFINED: " . $anaph->{id} . ", " . $cand->{id} . "\n";
+    #}
+
     $coref_features{b_afun_agree} 
         = agree_feats($coref_features{c_cand_afun}, $coref_features{c_anaph_afun});
     $coref_features{c_join_afun}  
@@ -531,7 +575,8 @@ sub extract_features {
 ###########################
     #   Context:
     $coref_features{b_cand_coord} = ( $cand->is_member ) ? $b_true : $b_false;
-    $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph );
+    # DEBUG ? $b_true : $b_false added
+    $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
 
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
@@ -563,10 +608,12 @@ sub extract_features {
         = join_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
 
     #   1: are_siblings($inode, $jnode)
-    $coref_features{b_sibl} = _are_siblings( $cand, $anaph );
+    # DEBUG ? $b_true : $b_false added
+    $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
 
     #   1: collocation
-    $coref_features{b_coll} = $self->_in_collocation( $cand, $anaph );
+    # DEBUG ? $b_true : $b_false added
+    $coref_features{b_coll} = $self->_in_collocation( $cand, $anaph )  ? $b_true : $b_false;
 
     #   1: collocation from CNK
     $coref_features{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
@@ -588,6 +635,11 @@ sub extract_features {
     for my $class ( @{$all_c} ) {
         my $coref_class = "b_" . $class;
         $coref_features{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
+    }
+
+# DEBUG
+    if (($anaph->id eq 't-cmpr9410-047-p15s2a1') && ($coref_features{b_Creature} == $b_true)) {
+        print STDERR $cand->t_lemma . "\n";
     }
     
     #   celkem 71 vlastnosti + ID
