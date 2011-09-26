@@ -338,7 +338,9 @@ sub process_auxiliary_verbs
 }
 
 #------------------------------------------------------------------------------
-# Detects coordination in Bulgarian trees.
+# Collects members and delimiters of coordination. The BulTreeBank uses two
+# approaches to coordination and one of them requires that this method is
+# recursive.
 # - The first member is the root.
 # - The first conjunction is attached to the root and s-tagged 'conj'.
 # - The second member is attached to the root and s-tagged 'conjarg'.
@@ -352,79 +354,16 @@ sub process_auxiliary_verbs
 # - Deficient coordination: sentence-initial conjunction is the root of the
 #   sentence, tagged ROOT. The main verb is attached to it and tagged 'conj'.
 #------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self   = shift;
-    my $root   = shift;
-    my $coords = shift;    # reference to array where detected coordinations are collected
-                           # Depth-first search.
-                           # If a conjarg is found, find all nodes involved in the coordination.
-                           # Make sure that any conjargs further to the right are not later recognized as different coordination.
-                           # However, search their descendants for nested coordinations.
-    my @members;           # coordinated nodes
-    my @delimiters;        # separators between members: punctuation and conjunctions
-    my @modifiers;         # other children of the members, including shared modifiers of the whole coordination
-    $self->collect_coordination_members( $root, \@members, \@delimiters, \@modifiers );
-
-    if (@members)
-    {
-
-        # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-        # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-        # Note that the Bulgarian structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-        my $ord0      = $root->ord();
-        my $ord1      = $members[1]->ord();
-        my @sharedmod = grep { ( $_->ord() < $ord0 || $_->ord() > $ord1 ) && !$_->match_iset( 'pos' => 'part', 'negativeness' => 'neg' ) } (@modifiers);
-
-        # If the first member is a preposition then the real afun is one level down.
-        my $afun = $root->afun();
-        if ( $afun eq 'AuxP' )
-        {
-            my $prepcomp = $self->get_preposition_argument($root);
-            if ( defined($prepcomp) )
-            {
-                $afun = $prepcomp->afun();
-            }
-        }
-        push(
-            @{$coords},
-            {
-                'members'          => \@members,
-                'delimiters'       => \@delimiters,
-                'shared_modifiers' => \@sharedmod,
-                'oldroot'          => $root
-            }
-        );
-
-        # Call recursively on all modifier subtrees (but not on members or delimiters).
-        foreach my $modifier (@modifiers)
-        {
-            $self->detect_coordination( $modifier, $coords );
-        }
-    }
-
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ( $root->children() )
-        {
-            $self->detect_coordination( $child, $coords );
-        }
-    }
-}
-
-#------------------------------------------------------------------------------
-# Collects members and delimiters of coordination. The BulTreeBank uses two
-# approaches to coordination and one of them requires that this method is
-# recursive.
-#------------------------------------------------------------------------------
 sub collect_coordination_members
 {
     my $self       = shift;
     my $croot      = shift;                                                  # the first node and root of the coordination
     my $members    = shift;                                                  # reference to array where the members are collected
     my $delimiters = shift;                                                  # reference to array where the delimiters are collected
-    my $modifiers  = shift;                                                  # reference to array where the modifiers are collected
+    my $sharedmod  = shift;                                                  # reference to array where the shared modifiers are collected
+    my $modifiers  = shift;                                                  # reference to array where the private modifiers are collected
+    # Since the BulTreeBank does not distinguish between shared and private modifiers
+    # we will return all modifers as private. They were attached to one member after all.
     my @children   = $croot->children();
     my @members0   = grep { $_->conll_deprel() eq 'conjarg' } (@children);
     if (@members0)
@@ -447,7 +386,7 @@ sub collect_coordination_members
         # If any of the members have their own conjarg children, these are also members of the same coordination.
         foreach my $member (@members0)
         {
-            $self->collect_coordination_members( $member, $members, $delimiters, $modifiers );
+            $self->collect_coordination_members( $member, $members, $delimiters, $sharedmod, $modifiers );
         }
     }
 
