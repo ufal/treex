@@ -7,7 +7,7 @@ use File::Java;
 use File::Temp qw /tempdir/;
 
 has model      => ( isa => 'Str', is => 'rw', required => 1);
-has memory     => ( isa => 'Str',  is => 'rw', default => '4000m' );
+has memory     => ( isa => 'Str',  is => 'rw', default => '5000m' );
 
 
 sub BUILD {
@@ -33,7 +33,7 @@ sub BUILD {
     # symlink to the model (model has to be in working directory)
     system "ln -s $model_path $workdir/$model_name";
 
-    my $command = "cd $workdir; java -jar $bindir/malt-1.5/malt.jar -c $model_name";
+    my $command = "cd $workdir; java -Xmx".$self->memory." -jar $bindir/malt-1.5/malt.jar -c $model_name";
 
     # start MaltParser
     ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
