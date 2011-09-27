@@ -23,6 +23,27 @@ sub process_zone
 sub tiger2pdt {
     my $a_root = shift;
     for my $anode ($a_root->get_descendants) {
+        # We also need CoNLL-like attributes to run the parsers same way as for other languages.
+        my $tag = $anode->tag();
+        if($tag)
+        {
+            my @tagparts = split(/,/, $tag);
+            my $pos = shift(@tagparts);
+            my ($cpos, $fpos);
+            if($pos =~ m-^(.+)/(.+)$-)
+            {
+                $cpos = $1;
+                $fpos = $2;
+            }
+            else
+            {
+                $cpos = $pos;
+                $fpos = '_';
+            }
+            $anode->set_conll_cpos($cpos);
+            $anode->set_conll_pos($fpos);
+            $anode->set_conll_feat(join('|', @tagparts));
+        }
         set_afun($anode, $anode->get_parent, $anode->wild->{function});
         convert_coordination($anode) if 'CJT' eq $anode->wild->{function};
     }
