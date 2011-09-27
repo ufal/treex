@@ -60,8 +60,9 @@ sub parse_chunk {
         $a_node->set_is_shared_modifier(0);
         my $deprel = shift @$deprel_rf;
         if ($deprel =~ /_(M?S?)$/) {
-            $a_node->set_is_member(1) if $1 =~ /M/;
-            $a_node->set_is_shared_modifier(1) if $1 =~ /S/;
+            my $suffix = $1;
+            $a_node->set_is_member(1) if $suffix =~ /M/;
+            $a_node->set_is_shared_modifier(1) if $suffix =~ /S/;
             $deprel =~ s/_M?S?$//;
         }
         $a_node->set_attr($self->deprel_attribute, $deprel);
