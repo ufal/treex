@@ -414,52 +414,6 @@ sub process_prepositional_phrases
 #   In reality we will be less ambitious and develop a robust fallback for
 #   coordination without coordinators.
 #------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self   = shift;
-    my $root   = shift;
-    my $coords = shift;    # reference to array where detected coordinations are collected
-                           # Look for coordination members.
-    my @members;
-    my @delimiters;
-    my @sharedmod;
-    my @privatemod;
-    $self->collect_coordination_members( $root, \@members, \@delimiters, \@sharedmod, \@privatemod );
-
-    if (@members)
-    {
-        push(
-            @{$coords},
-            {
-                'members'           => \@members,
-                'delimiters'        => \@delimiters,
-                'shared_modifiers'  => \@sharedmod,
-                'private_modifiers' => \@privatemod,    # for debugging purposes only
-                'oldroot'           => $root
-            }
-        );
-
-        # Call recursively on all modifier subtrees.
-        # Do not call it on all children because they include members and delimiters.
-        # Non-first members cannot head nested coordination under this approach.
-        # All CoordArg children they may have are considered members of the current coordination.
-        foreach my $node ( @sharedmod, @privatemod )
-        {
-            $self->detect_coordination( $node, $coords );
-        }
-    }
-
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ( $root->children() )
-        {
-            $self->detect_coordination( $child, $coords );
-        }
-    }
-}
-
-#------------------------------------------------------------------------------
 # Collects members, delimiters and modifiers of one coordination. Recursive.
 # Leaves the arrays empty if called on a node that is not a coordination
 # member.
@@ -554,11 +508,11 @@ sub collect_coordination_modifiers
     my $members    = shift;                                           # reference to input array
     my $sharedmod  = shift;                                           # reference to output array
     my $privatemod = shift;                                           # reference to output array
-                                                                      # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
-                                                                      # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-                                                                      # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-                                                                      # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-                                                                      # Modifiers of the other members are always private.
+    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
+    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
+    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
+    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
+    # Modifiers of the other members are always private.
     my $croot      = $members->[0];
     my $ord0       = $croot->ord();
     my $ord1       = $#{$members} >= 1 ? $members->[1]->ord() : -1;
@@ -572,7 +526,12 @@ sub collect_coordination_modifiers
                 my $ord = $mchild->ord();
                 if ( $ord < $ord0 || $ord1 >= 0 && $ord > $ord1 )
                 {
-                    push( @{$sharedmod}, $mchild );
+                    # This may be either shared or private modifier.
+                    #push( @{$sharedmod}, $mchild );
+                    # Since there is no explicit information on shared modifiers in the treebank
+                    # and because the modifier is attached to one member of the coordination,
+                    # let's not add information and let's treat it as a private modifier.
+                    push(@{$privatemod}, $mchild);
                 }
                 else
                 {
