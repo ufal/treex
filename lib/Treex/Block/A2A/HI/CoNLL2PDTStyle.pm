@@ -5,7 +5,7 @@ use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 #------------------------------------------------------------------------------
-# Reads the Japanese CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Hindi CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
@@ -99,7 +99,19 @@ sub deprel_to_afun
             $afun = "Atr";    # modifiers of adjectives.
         }
         elsif ( $deprel eq "ccof" ) {
-            $node->set_is_member(1);
+            ###!!! The original treebank does not distinguish between subordinating conjunctions used as complementizers
+            ###!!! (such as 'ki' = 'that') and coordinating conjunctions (such as 'aur' = 'and').
+            ###!!! Ideally, we would identify all subordinating cases and handle them properly.
+            ###!!! Currently we only identify the most frequent case and get away with the adverbial meaning of the relative clause.
+            if($node->parent()->get_iset('subpos') eq 'sub')
+            {
+                $node->parent()->set_afun('AuxC');
+                $afun = 'Adv';
+            }
+            else
+            {
+                $node->set_is_member(1);
+            }
         }
         elsif ( $deprel eq "fragof" ) {
             $afun = "Atr";    # modifiers of adjectives.
