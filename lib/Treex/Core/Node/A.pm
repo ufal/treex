@@ -179,16 +179,16 @@ sub copy_atree
         my $child1 = $target->create_child();
 
         # We should copy all attributes that the node has but it is not easy to figure out which these are.
-        # As a workaround, we list the attributes here directly.
+        # TODO: As a workaround, we list the attributes here directly.
         foreach my $attribute (
             'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
-            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat'
+            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier',
             )
         {
             my $value = $child0->get_attr($attribute);
             $child1->set_attr( $attribute, $value );
         }
-
+        
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
