@@ -188,7 +188,11 @@ sub copy_atree
             my $value = $child0->get_attr($attribute);
             $child1->set_attr( $attribute, $value );
         }
-        
+
+        # TODO probably we should do deepcopy
+        my %copy_of_wild = %{$child0->wild};
+        $child1->set_wild(\%copy_of_wild);
+
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
