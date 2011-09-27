@@ -11,6 +11,7 @@ has 'cpos_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/cpos' );
 has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_' );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_shared_modifier_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_coord_conjunction_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -24,6 +25,7 @@ sub process_atree {
         my $suffix = '';
         $suffix .= 'M' if $self->is_member_within_afun && $anode->is_member;
         $suffix .= 'S' if $self->is_shared_modifier_within_afun && $anode->is_shared_modifier;
+        $suffix .= 'C' if $self->is_coord_conjunction_within_afun && $anode->wild->{is_coord_conjunction};
         $deprel .= "_$suffix" if $suffix;
 
         my $feat;
