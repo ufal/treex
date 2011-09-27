@@ -47,7 +47,7 @@ sub process_zone
         {
             my $iprojective = 0;
             # Is node $i dominated by $parent?
-            for(my $j = $i; $j!=0; $j = $nodes[$j]->parent())
+            for(my $j = $i; $j!=0; $j = $nodes[$j]->parent()->ord())
             {
                 if($j==$parent->ord())
                 {
