@@ -145,7 +145,7 @@ sub type_of_node {
     # We ignore appositions, we want only coordination members
     return 'members' if $node->is_member;
     return 'shared'  if $node->is_shared_modifier;
-    return 'ands'    if $self->is_conjunction($node);
+    return 'ands'    if $node->wild->{is_coord_conjunction};
     return 'commas'  if $self->is_comma($node);
     return 0;
 }
@@ -185,11 +185,11 @@ sub transform_coord {
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
-    # Commas should have afun AuxX, conjunctions AuxY.
-    # (Except for Prague family, where the head conjunction has Coord,
+    # Commas should have afun AuxX, conjunctions Coord.
+    # (Except for Prague family, where the head conjunction has always Coord,
     # but that will be solved later.)
     foreach my $sep ( @commas, @ands ) {
-        $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'AuxY' );
+        $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'Coord' );
     }
 
     # PRAGUE
@@ -280,30 +280,6 @@ sub is_comma {
     return $node->form =~ /^[,;]$/;
 }
 
-# Is the given node a coordination conjunction?
-sub is_conjunction {
-    my ( $self, $node ) = @_;
-
-    # In Prague style coord. conjunctions have mostly afun=Coord
-    # (but sometimes also commas can get afun=Coord).
-    return 1 if ( $node->afun || '' ) eq 'Coord' && !$self->is_comma($node);
-
-    
-    if (( $node->afun || '' ) eq 'AuxY'){
-        my $parent = $node->parent;
-        return 0 if $parent->is_root;
-        return 1 if $parent->is_member;
-        return 0 if $parent->afun ne 'Coord';
-        return 0 if abs($parent->ord - $node->ord) <= 1;
-        #TODO distinguish
-        # Petr a(afun=AuxY) Pavel a Marie
-        # Myslim, a proto(afun=AuxY) jsem
-        return 1;
-    }
-
-    return 0;
-}
-
 1;
 
 __END__
@@ -340,6 +316,18 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
 =head1 DESCRIPTION
 
 TODO
+
+=head1 PREREQUISITIES
+
+  is_member
+  is_shared_modifier
+  wild->{is_coord_conjunction}
+
+=head1 SEE ALSO
+
+L<Treex::Block::A2A::SetSharedModifier>,
+L<Treex::Block::A2A::SetCoordConjunction>
+
 
 # Copyright 2011 Martin Popel
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.

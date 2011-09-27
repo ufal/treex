@@ -5,12 +5,14 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $node ) = @_;
-	if ($node->get_parent->afun eq 'Coord'
-	    && !$node->is_member
-        && ($node->afun||'') !~ /Aux[XY]/){
-		$node->set_is_shared_modifier(1);
-	}
-	return;
+    if (( $node->get_parent->afun || '' ) eq 'Coord'
+        && !$node->is_member
+        && ( $node->afun || '' ) !~ /Aux[XY]/
+        )
+    {
+        $node->set_is_shared_modifier(1);
+    }
+    return;
 }
 
 1;

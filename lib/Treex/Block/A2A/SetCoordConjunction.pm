@@ -5,25 +5,26 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $node ) = @_;
-    if ($node->afun eq 'Coord'){
+    delete $node->wild->{is_coord_conjunction};
+    if ( $node->afun eq 'Coord' && $node->form !~ /^[,;]$/) {
         $node->wild->{is_coord_conjunction} = 1;
     }
-    elsif ($node->afun eq 'AuxY'){
+    elsif ( $node->afun eq 'AuxY' ) {
         my $parent = $node->get_parent();
         return if $parent->is_root();
         return if $parent->afun ne 'Coord';
-        my ($begin, $end) = ($node, $parent);
-        if($parent->precedes($node)){
-            ($begin, $end) = ($parent, $node);
+        my ( $begin, $end ) = ( $node, $parent );
+        if ( $parent->precedes($node) ) {
+            ( $begin, $end ) = ( $parent, $node );
         }
         my @members =
-            grep {$_->is_member && $_->precedes($end) && $begin->precedes($_)} 
-            $parent->get_children({ordered=>1});
+            grep { $_->is_member && $_->precedes($end) && $begin->precedes($_) }
+            $parent->get_children( { ordered => 1 } );
         if (@members) {
             $node->wild->{is_coord_conjunction} = 1;
         }
-	}
-	return;
+    }
+    return;
 }
 
 1;
