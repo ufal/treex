@@ -213,10 +213,6 @@ sub _get_info_hash {
 sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
-    if (!$node) {
-	warn ( $self . '___' . $node . '___' . $attrib . '___' . $alignment_hash );
-	return;
-    }
 
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
@@ -329,7 +325,9 @@ sub _get_referenced_nodes {
             my $id = $node->id;
             if ( $alignment_hash->{$id} ) {
                 return @{ $alignment_hash->{$id} };
-            }
+            } else {
+		return;
+	    }
         }
 
         # get alignment from $node->get_aligned_nodes()
@@ -337,7 +335,9 @@ sub _get_referenced_nodes {
             my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
             if ($aligned_nodes) {
                 return @{$aligned_nodes};
-            }
+            } else {
+		return;
+	    }
         }
     }
 

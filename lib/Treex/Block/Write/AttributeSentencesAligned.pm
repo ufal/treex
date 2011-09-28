@@ -44,9 +44,7 @@ sub _process_tree() {
 		    my $id = $node->id;
 		    if ($self->alignment_type eq $type) {
 			if ( $alignment_hash->{$id} ) {
-			    my @aligned_current = @{ $alignment_hash->{$id} };
-			    push @aligned_current, $aligned_node;
-			    $alignment_hash->{$id} = [@aligned_current];
+                push @{ $alignment_hash->{$id} }, $aligned_node;
 			}
 			else {
 			    $alignment_hash->{$id} = [$aligned_node];
