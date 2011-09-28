@@ -274,8 +274,9 @@ sub transform_coord {
 
     # COMMAS (except "between" which is already solved)
     if ( $self->punctuation =~ /previous|following/ ) {
+        my @andmembers = sort { $a->ord <=> $b->ord } @members, @ands;
         foreach my $comma (@commas) {
-            $self->rehang( $comma, $self->_nearest( $self->punctuation, $comma, @members ) );
+            $self->rehang( $comma, $self->_nearest( $self->punctuation, $comma, @andmembers ) );
         }
     }
 
