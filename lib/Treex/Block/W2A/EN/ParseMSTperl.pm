@@ -5,6 +5,9 @@ extends 'Treex::Block::W2A::ParseMSTperl';
 has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll_2007' );
 has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/en" );
 
+has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
+has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
+
 sub get_coarse_grained_tag {
     my ( $self, $tag ) = @_;
     
