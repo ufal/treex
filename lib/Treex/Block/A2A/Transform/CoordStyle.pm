@@ -3,47 +3,76 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
-# TODO "autodetect" option
-#has from_family => (
-#    is            => 'ro',
-#    isa           => enum([qw(Moscow Prague Stanford autodetect)])),
-#    default       => 'Prague',
-#    documentation => 'input coord style family (Prague, Moscow, and Stanford)',
-#);
-
+# Output style
 has family => (
     is            => 'ro',
     isa           => enum( [qw(Moscow Prague Stanford)] ),
-    default       => 'Moscow',
+    required      => 1,
     documentation => 'output coord style family (Prague, Moscow, and Stanford)',
 );
 
 has head => (
     is            => 'ro',
     isa           => enum( [qw(left right nearest)] ),
-    default       => 'right',
+    required      => 1,
     documentation => 'which node should be the head of the coordination structure',
+);
+
+has shared => (
+    is            => 'ro',
+    isa           => enum( [qw(head nearest)] ),
+    required      => 1,
+    documentation => 'which node should be the head of the shared modifiers',
 );
 
 has conjunction => (
     is            => 'ro',
     isa           => enum( [qw(previous following between head)] ),
-    default       => 'between',
+    required      => 1,
     documentation => 'conjunction parents (previous, following, between, head)',
 );
 
 has punctuation => (
     is            => 'ro',
     isa           => enum( [qw(previous following between)] ),
-    default       => 'previous',
+    required      => 1,
     documentation => 'punctuation parents (previous, following, between)',
 );
 
-has shared => (
+# Input style
+has from_family => (
     is            => 'ro',
-    isa           => enum( [qw(head nearest)] ),
-    default       => 'nearest',
-    documentation => 'which node should be the head of the shared modifiers',
+    isa           => enum( [qw(Moscow Prague Stanford autodetect)] ),
+    default       => 'autodetect',
+    documentation => 'input coord style family',
+);
+
+has from_head => (
+    is            => 'ro',
+    isa           => enum( [qw(left right nearest autodetect)] ),
+    default       => 'autodetect',
+    documentation => 'input style head',
+);
+
+has from_shared => (
+    is            => 'ro',
+    isa           => enum( [qw(head nearest autodetect)] ),
+    default       => 'autodetect',
+    documentation => 'input style shared modifiers parents',
+);
+
+has from_conjunction => (
+    is            => 'ro',
+    isa           => enum( [qw(previous following between head autodetect)] ),
+    default       => 'autodetect',
+    documentation => 'input style conjunction parents',
+);
+
+has from_punctuation => (
+    is            => 'ro',
+    isa           => enum( [qw(previous following between autodetect)] ),
+    default       => 'autodetect',
+    documentation => 'input style punctuation parents',
 );
 
 sub BUILD {
@@ -96,7 +125,7 @@ sub process_subtree {
     my $my_type = $self->type_of_node($node);
     return 0 if !$my_type;
 
-    # So $node is inside CS (it has non-empty $my_type).
+    # So $node is a CS participant (it has non-empty $my_type).
     my $parent      = $node->get_parent();
     my $parent_type = $self->type_of_node($parent);
     my $merged_res  = $self->_merge_res(@child_res);
