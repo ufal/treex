@@ -303,7 +303,7 @@ sub _get_referenced_nodes {
     }
 
     # topological neighbors
-    elsif ( my ( $dir, $from, $to ) = ( $ref =~ m/^(left|right)([0-9]+)(?:_([0-9]*))?$/ ) ) {
+    elsif ( my ( $dir, $from, $to ) = ( $ref =~ m/^(left|right)([0-9]+)(?:-([0-9]*))?$/ ) ) {
 
         $to = $from if ( !$to );
 
