@@ -37,8 +37,8 @@ sub read_tsv {
             # END only progress and/or debug info
 
         } else {
-            my @fields = split /\t/;
-            my $node   = Treex::Tool::Parser::MSTperl::Node->new(
+            my @fields = split /\t/, $_, $self->featuresControl->field_names_count;
+            my $node = Treex::Tool::Parser::MSTperl::Node->new(
                 fields          => [@fields],
                 featuresControl => $self->featuresControl
             );

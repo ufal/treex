@@ -67,7 +67,7 @@ sub train {
         # only progress and/or debug info
         $sentNo++;
         if ( $sentNo % 50 == 0 ) {
-            print "  $sentNo sentences processed.\n";
+            print "  $sentNo/$sentence_count sentences processed (computing features)\n";
         }
         if ($DEBUG) {
             print "SENTENCE FEATURES:\n";
@@ -152,7 +152,9 @@ sub train {
 
             # only progress and/or debug info
             if ( $sentNo % 50 == 0 ) {
-                print "    $sentNo sentences processed.\n";
+                print "    $sentNo/$sentence_count sentences processed " .
+                    "(iteration $iteration/"
+                    . $self->featuresControl->number_of_iterations . ")\n";
             }
 
             # END only progress and/or debug info

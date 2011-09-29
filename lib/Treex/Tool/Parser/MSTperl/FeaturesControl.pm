@@ -60,12 +60,12 @@ sub _root_field_values_set {
     my ($self) = @_;
 
     # check number of fields
-    my $field_names_count = scalar( @{ $self->field_names } );
     my $root_fields_count = scalar( @{ $self->root_field_values } );
-    if ( $root_fields_count != $field_names_count ) {
+    if ( $root_fields_count != $self->field_names_count ) {
         croak "MSTperl config file error: " .
             "Incorrect number of root field values ($root_fields_count), " .
-            "must be same as number of field names ($field_names_count)!";
+            "must be same as number of field names (" .
+            $self->field_names_count . ")!";
     }
 
     return;    # only technical
@@ -206,11 +206,18 @@ sub _field_names_set {
             $field_indexes{$field_name}    = $index;
         }
     }
+    $self->field_names_count( scalar( @{$field_names} ) );
     $self->field_names_hash( \%field_names_hash );
     $self->field_indexes( \%field_indexes );
 
     return;    # only technical
 }
+
+has 'field_names_count' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => '0',
+);
 
 # 1 for each field name to easily check if a field name exists
 has 'field_names_hash' => (
