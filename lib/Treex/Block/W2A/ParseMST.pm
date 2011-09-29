@@ -62,7 +62,7 @@ sub parse_chunk {
         if ($deprel =~ /_(M?S?C?)$/) {
             my $suffix = $1;
             $a_node->set_is_member($suffix =~ /M/ ? 1 : 0);
-            $a_node->set_is_shared_modifier($suffix =~ /S/ ? 1 : 0;
+            $a_node->set_is_shared_modifier($suffix =~ /S/ ? 1 : 0);
             $a_node->wild->{is_coord_conjunction} = $suffix =~ /C/ ? 1 : 0;
             $deprel =~ s/_M?S?C?$//;
         }
