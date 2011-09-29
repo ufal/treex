@@ -3,39 +3,52 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2A::Transform::BaseTransformer';
 
+# Shortcuts
+has style => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => 'output coord style - shorcut for other options (e.g. fPhRsHcHpB)',
+);
+
+has from_style => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => 'input coord style - shorcut for other options (e.g. fPhRsHcHpB)',
+);
+
 # Output style
 has family => (
     is            => 'ro',
     isa           => enum( [qw(Moscow Prague Stanford)] ),
-    required      => 1,
+    writer        => '_set_family',
     documentation => 'output coord style family (Prague, Moscow, and Stanford)',
 );
 
 has head => (
     is            => 'ro',
-    isa           => enum( [qw(left right nearest)] ),
-    required      => 1,
+    isa           => enum( [qw(left right mixed)] ),
+    writer        => '_set_head',
     documentation => 'which node should be the head of the coordination structure',
 );
 
 has shared => (
     is            => 'ro',
     isa           => enum( [qw(head nearest)] ),
-    required      => 1,
+    writer        => '_set_shared',
     documentation => 'which node should be the head of the shared modifiers',
 );
 
 has conjunction => (
     is            => 'ro',
     isa           => enum( [qw(previous following between head)] ),
-    required      => 1,
+    writer        => '_set_conjunction',
     documentation => 'conjunction parents (previous, following, between, head)',
 );
 
 has punctuation => (
     is            => 'ro',
     isa           => enum( [qw(previous following between)] ),
-    required      => 1,
+    writer        => '_set_punctuation',
     documentation => 'punctuation parents (previous, following, between)',
 );
 
@@ -44,6 +57,7 @@ has from_family => (
     is            => 'ro',
     isa           => enum( [qw(Moscow Prague Stanford autodetect)] ),
     default       => 'autodetect',
+    writer        => '_set_from_family',
     documentation => 'input coord style family',
 );
 
@@ -51,6 +65,7 @@ has from_head => (
     is            => 'ro',
     isa           => enum( [qw(left right nearest autodetect)] ),
     default       => 'autodetect',
+    writer        => '_set_from_head',
     documentation => 'input style head',
 );
 
@@ -58,6 +73,7 @@ has from_shared => (
     is            => 'ro',
     isa           => enum( [qw(head nearest autodetect)] ),
     default       => 'autodetect',
+    writer        => '_set_from_shared',
     documentation => 'input style shared modifiers parents',
 );
 
@@ -65,6 +81,7 @@ has from_conjunction => (
     is            => 'ro',
     isa           => enum( [qw(previous following between head autodetect)] ),
     default       => 'autodetect',
+    writer        => '_set_from_conjunction',
     documentation => 'input style conjunction parents',
 );
 
@@ -72,15 +89,93 @@ has from_punctuation => (
     is            => 'ro',
     isa           => enum( [qw(previous following between autodetect)] ),
     default       => 'autodetect',
+    writer        => '_set_from_punctuation',
     documentation => 'input style punctuation parents',
 );
 
 sub BUILD {
     my ( $self, $args ) = @_;
+
+    # TODO: rewrite (code duplication, $self->{attr} etc.)
+    my @pars = qw(family head shared conjunction punctuation);
+    if ( $self->style ) {
+        my $style_regex = 'f[MPS]h[LRM]s[HN]c[PFBH]p[PFB]';
+        log_fatal "Parameter 'style' cannot be combined with other parameters"
+            if any { $args->{$_} } @pars;
+        log_fatal "Prameter 'style' must be in form $style_regex"
+            if $self->style !~ /^$style_regex$/;
+        $self->_fill_style_from_shortcut( 0, $self->style );
+    }
+    else {
+        for my $par (@pars) {
+            log_fatal "Parameter $par (or style) is required" if !$self->{$par};
+        }
+    }
+
+    if ( $self->from_style ) {
+        my $from_style_regex = 'f[MPSA]h[LRMA]s[HNA]c[PFBHA]p[PFBA]';
+        log_fatal "Parameter 'from_style' cannot be combined with other parameters"
+            if any { $args->{ 'from_' . $_ } } @pars;
+        log_fatal "Prameter 'from_style' must be in form $from_style_regex"
+            if $self->style !~ /^$from_style_regex$/;
+        $self->_fill_style_from_shortcut( 1, $self->from_style );
+    }
+
     log_fatal "Prague family must have parameter conjunction=head"
         if $self->family eq 'Prague' && $self->conjunction ne 'head';
     log_fatal "conjunction=head parameter is applicable only for Prague family"
         if $self->family ne 'Prague' && $self->conjunction eq 'head';
+    return;
+}
+
+my %FAMILY_NAME = (
+    M => 'Moscow',
+    P => 'Prague',
+    S => 'Stanford',
+);
+
+my %HEAD_NAME = (
+    L => 'left',
+    R => 'right',
+    M => 'mixed',
+);
+
+my %SHARED_NAME = (
+    H => 'head',
+    N => 'nearest',
+);
+
+my %CONJUNCTION_NAME = (
+    P => 'previous',
+    F => 'following',
+    B => 'between',
+    H => 'head',
+);
+
+my %PUNCTUATION_NAME = (
+    P => 'previous',
+    F => 'following',
+    B => 'between',
+);
+
+sub _fill_style_from_shortcut {
+    my ( $self, $from, $shortcut ) = @_;
+    my $style_regex = 'f([MPSA])h([LRMA])s([HNA])c([PFBHA])p([PFBA])';
+    my ( $f, $h, $s, $c, $p ) = ( $shortcut =~ /^$style_regex$/ );
+    if ( !$from ) {
+        $self->_set_family( $FAMILY_NAME{$f} );
+        $self->_set_head( $HEAD_NAME{$h} );
+        $self->_set_shared( $SHARED_NAME{$s} );
+        $self->_set_conjunction( $CONJUNCTION_NAME{$c} );
+        $self->_set_punctuation( $PUNCTUATION_NAME{$p} );
+    }
+    else {
+        $self->_set_from_family( $FAMILY_NAME{$f}           || 'autodetect' );
+        $self->_set_from_head( $HEAD_NAME{$h}               || 'autodetect' );
+        $self->_set_from_shared( $SHARED_NAME{$s}           || 'autodetect' );
+        $self->_set_from_conjunction( $CONJUNCTION_NAME{$c} || 'autodetect' );
+        $self->_set_from_punctuation( $PUNCTUATION_NAME{$p} || 'autodetect' );
+    }
     return;
 }
 
@@ -340,8 +435,8 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
     conjunction=between
     punctuation=previous
 
-  #TODO the same using a shortcut
-  #A2A::Transform::CoordStyle style=fMhLsNcBpP
+  TODO the same using a shortcut
+  A2A::Transform::CoordStyle style=fMhLsNcBpP
   
 =head1 DESCRIPTION
 
