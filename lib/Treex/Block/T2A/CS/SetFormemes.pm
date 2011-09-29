@@ -18,6 +18,7 @@ has '+plan_vars' => (
         }
 );
 
+# TODO plan.template by se měl taky psát do model_files !!!
 has '+model_files' => (
     default => sub {
         return [

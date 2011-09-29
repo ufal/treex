@@ -6,10 +6,7 @@ use Treex::Tool::ML::MLProcess;
 
 extends 'Treex::Core::Block';
 
-# TectoMT shared directory
-Readonly my $TMT_SHARE => "$ENV{TMT_ROOT}/share/";
-
-# files related to the trained model (within the TectoMT shared directory)
+# files related to the trained model (will be required from the shared directory)
 has 'model_dir'     => ( is => 'ro', isa => 'Str', required => 1 );
 has 'plan_template' => ( is => 'ro', isa => 'Str', required => 1 );
 
@@ -25,45 +22,67 @@ has 'class_name' => ( is => 'ro', isa => 'Str', required => 1 );
 # results loaded from the classfication of ML process, works as a FIFO (is first filled with the whole document, then subsequently emptied)
 has '_results' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
-# download shared files if necessary
-override 'get_required_share_files' => sub {
+# the actual locations of the files required from the shared directory
+has '_required_files' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
+
+# require files from the shared directory and save their actual path for the shared directory files
+# TODO - this should be needed for ALL blocks, if the paths may end up different !!!
+sub BUILD {
 
     my ($self) = @_;
 
     my @files = map { $self->model_dir . $_ } ( @{ $self->model_files } );
-    return @files;
-};
+    my $name = 'the block ' . $self->get_block_name();
+    foreach my $file (@files) {
+        log_info('Requiring: ' . $file);
+        my $target = Treex::Core::Resource::require_file_from_share( $file, $name );
+        log_info('Target: ' . $target);
+        $self->_required_files->{$file} = $target;
+    }
+    return;
+}
 
 override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
-    my $mlprocess = Treex::Tool::ML::MLProcess->new( { plan_template => $TMT_SHARE . $self->model_dir . $self->plan_template } );
+    
+    log_info('MLProcess params: ' . $self->model_dir . $self->plan_template . ' => ' . $self->_required_files->{ $self->model_dir . $self->plan_template } );
+    
+    my $mlprocess = Treex::Tool::ML::MLProcess->new(
+        {
+            plan_template => $self->_required_files->{ $self->model_dir . $self->plan_template }
+        }
+    );
 
     my $temp_input = $mlprocess->input_data_file;
 
     $self->_write_input_data( $document, $temp_input );
 
     # run ML-Process with the specified plan file
-    $mlprocess->run( { map { $_ => $TMT_SHARE . $self->model_dir . $self->plan_vars->{$_} } keys %{ $self->plan_vars } } );
+    $mlprocess->run(
+        {
+            map { $_ => $self->_required_files->{ $self->model_dir . $self->plan_vars->{$_} } } keys %{ $self->plan_vars }
+        }
+    );
 
     # parse the output file and store the results
     $self->_set_results( $mlprocess->load_results( $self->class_name ) );
 
-    # process all t-trees and fill them with functors
+    # process all t-trees and fill them with the results
     super;
 
-    # test if all functors have been used
+    # test if all results have been used
     if ( @{ $self->_results } != 0 ) {
-        log_fatal("Too many results on the ML-Process ouptut.");
+        log_fatal("Too many results on the ML-Process output.");
     }
     return;
 };
 
-# self fills a t-tree with functors, which must be preloaded in $self->_functors
+# self fills a t-tree with results, which must be preloaded in $self->_results
 sub process_ttree {
 
     my ( $self, $root ) = @_;
-    my @nodes = $root->get_descendants( { ordered => 1 } );    # same as for printing in Write::ConllLike
+    my @nodes = $self->_filter( $root->get_descendants( { ordered => 1 } ) );
 
     if ( scalar(@nodes) > scalar( @{ $self->_results } ) ) {
         log_fatal("Not enough results on the ML-Process output.");
@@ -84,6 +103,12 @@ sub _write_input_data {
 sub _set_class_value {
     my ( $self, $node, $value ) = @_;
     log_fatal( 'The class ' . ref($self) . ' must override the _set_class_value method.' );
+}
+
+# No filtering done by default, but may be overridden by the derived classes
+sub _filter {
+    my ($self, @nodes) = @_;
+    return @nodes;
 }
 
 1;
@@ -148,6 +173,11 @@ Write the input data for ML-Process based on the current file.
 
 Set the ML-Process results back to the current file (called for each node and the corresponding value retrieved
 from the classification).
+
+=tem $self->_filter( @nodes )
+
+Filter a set of nodes and return only those that should have the class value assigned. If this method is not 
+overridden, no filtering is done.
 
 =back
 

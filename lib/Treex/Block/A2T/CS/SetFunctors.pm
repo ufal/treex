@@ -20,7 +20,7 @@ has '+plan_vars' => (
         }
 );
 
-has '+model_files' => ( default => sub { return [ 'model.dat', 'if-data.dat', 'ff-data.dat', 'st-cs.conf' ] } );
+has '+model_files' => ( default => sub { return [ 'model.dat', 'if-data.dat', 'ff-data.dat', 'st-cs.conf', 'plan.template' ] } );
 
 has '+class_name' => ( default => 'deprel' );
 
@@ -42,7 +42,7 @@ override '_write_input_data' => sub {
 override '_set_class_value' => sub {
 
     my ( $self, $node, $value ) = @_;
-
+    
     $node->set_functor($value);
     return;
 };
