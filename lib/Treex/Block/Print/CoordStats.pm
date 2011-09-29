@@ -7,42 +7,49 @@ extends 'Treex::Core::Block';
 sub process_bundle {
 
     my ( $self, $bundle ) = @_;
-    my $zone = $bundle->get_zone('mul');
+    my $zone     = $bundle->get_zone('mul');
     my $language = $zone->language;
-    my $set = $zone->get_document->path =~ /train/ ? 'train' : 'test';
-    my $atree = $zone->get_atree;
+    my $set      = $zone->get_document->path =~ /train/ ? 'train' : 'test';
+    my $atree    = $zone->get_atree;
 
-    foreach my $node ($atree->get_descendants({add_self=>1})) {
+    foreach my $node ( $atree->get_descendants( { add_self => 1 } ) ) {
 
         my @features;
-        if ($node->is_root) {
+        if ( $node->is_root ) {
             push @features, 'is_root';
         }
-        else {
-            if (($node->get_parent->afun||'') eq 'Coord'
-                    and not $node->is_member
-                        and ($node->afun||'') !~ /AuxX|AuxY/) {
-                push @features, 'is_shared_modif';
+
+        if ( ( $node->afun || '' ) eq 'Coord' ) {
+            push @features, 'is_coord_head';
+
+            # Both the inner and outer CS is considered "nested"
+            if (( $node->get_parent && ( $node->get_parent->afun || '' ) eq 'Coord' )
+                || grep { ( $_->afun || '' ) eq 'Coord' } $node->get_children
+                )
+            {
+                push @features, 'is_nested';
             }
         }
 
-        if (($node->afun||'') eq 'Coord') {
-            push @features, 'is_coord_head';
-        }
-
-        if ($node->is_member) {
+        if ( $node->is_member ) {
             push @features, 'is_member';
         }
 
-        print join "\t", ($language, $set, @features);
+        if ( $node->is_shared_modifier ) {
+            push @features, 'is_shared_modif';
+        }
+
+        if ( $node->wild->{is_coord_conjunction} ) {
+            push @features, 'is_coord_conjunction';
+        }
+
+        print join "\t", ( $language, $set, @features );
         print "\n";
 
     }
 
     return;
 }
-
-
 
 1;
 
