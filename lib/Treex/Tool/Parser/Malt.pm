@@ -7,7 +7,7 @@ use File::Java;
 use File::Temp qw /tempdir/;
 
 has model      => ( isa => 'Str', is => 'rw', required => 1);
-has memory     => ( isa => 'Str',  is => 'rw', default => '5000m' );
+has memory     => ( isa => 'Str',  is => 'rw', default => '10g' );
 
 
 sub BUILD {
