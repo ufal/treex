@@ -5,6 +5,7 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 has 'eval_is_member' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'eval_is_shared_modifier' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 my $number_of_nodes;
 my %same_as_ref;
@@ -15,6 +16,7 @@ sub process_bundle {
     my $ref_zone = $bundle->get_zone( $self->language, $self->selector );
     my @ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
     my @ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+    my @ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
     my @compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();
 
     $number_of_nodes += @ref_parents;
@@ -22,6 +24,7 @@ sub process_bundle {
     foreach my $compared_zone (@compared_zones) {
         my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
         my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+        my @is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 
         if ( @parents != @ref_parents ) {
             log_fatal 'There must be the same number of nodes in compared trees';
@@ -30,11 +33,14 @@ sub process_bundle {
         my $label1 = $label.'-regardless-is_member';
         foreach my $i ( 0 .. $#parents ) {
 
-            if ( $parents[$i] == $ref_parents[$i] && ( !$self->eval_is_member || $is_member[$i] == $ref_is_member[$i] ) ) {
+            if ( $parents[$i] == $ref_parents[$i] &&
+                 ( !$self->eval_is_member || $is_member[$i] == $ref_is_member[$i] ) &&
+                 ( !$self->eval_is_shared_modifier || $is_shared_modifier[$i] == $ref_is_shared_modifier[$i] )
+               ) {
                 $same_as_ref{$label}++;
             }
             # If the main score includes is_member evaluation, provide the weaker evaluation as well.
-            if ( $self->eval_is_member ) {
+            if ( $self->eval_is_member || $self->eval_is_shared_modifier ) {
                 if ( $parents[$i] == $ref_parents[$i] ) {
                     $same_as_ref{$label1}++;
                 }
