@@ -54,7 +54,9 @@ sub process_bundle {
             }
         }
     }
-    if ($self->sample_size && ++$sentences_in_current_sample >= $self->sample_size){
+    
+    $sentences_in_current_sample++;
+    if ($self->sample_size && $sentences_in_current_sample >= $self->sample_size){
         print_stats();
     }
     return;
