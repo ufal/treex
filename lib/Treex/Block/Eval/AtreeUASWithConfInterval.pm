@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use POSIX qw(ceil floor);
 use Math::Complex;
-use Math::CDF;
+#use Math::CDF; #perl interface to the DCDFLIB which may not be available
 
 extends 'Treex::Core::Block';
 
@@ -160,7 +160,7 @@ sub calculate_confidence_interval {
     
     # conf interval:  ( mean-err, mean+err )
     my $err = 0.0;
-    my $z = &Math::CDF::qnorm(0.975);
+    my $z = 1.95996398454005; #&Math::CDF::qnorm(0.975);
     $err =  ($z * $std) / sqrt($n);
     
     return $err;
