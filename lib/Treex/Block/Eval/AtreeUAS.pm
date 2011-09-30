@@ -4,9 +4,16 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
-has 'eval_is_member' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'eval_is_shared_modifier' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'eval_is_member' => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'eval_is_shared_modifier' => ( is => 'ro', isa => 'Bool', default => 0 );
+has sample_size => (
+    is => 'ro',
+    isa => 'Int',
+    default => 0,
+    documentation => 'How many sentences should be in a sample (default is 0=all)',
+);
 
+my $sentences_in_current_sample = 0;
 my $number_of_nodes;
 my %same_as_ref;
 
@@ -47,12 +54,24 @@ sub process_bundle {
             }
         }
     }
+    if (++$sentences_in_current_sample >= $self->sample_size){
+        print_stats();
+    }
+    return;
+}
+
+sub print_stats {
+    foreach my $zone_label ( sort keys %same_as_ref ) {
+        print "$zone_label\t$same_as_ref{$zone_label}/$number_of_nodes\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
+    }
+    ($sentences_in_current_sample, $number_of_nodes) = (0,0);
+    %same_as_ref = ();
+    return;
 }
 
 END {
-#    print "total\t$number_of_nodes\n";
-    foreach my $zone_label ( sort keys %same_as_ref ) {
-        print "$zone_label\t$same_as_ref{$zone_label}/$number_of_nodes\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
+    if ($sentences_in_current_sample){
+        print_stats();
     }
 }
 
@@ -69,6 +88,6 @@ Measure similarity (in terms of unlabeled attachment score) of a-trees in all zo
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky, David Marecek
+# Copyright 2011 Zdenek Zabokrtsky, David Marecek, Martin Popel
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
