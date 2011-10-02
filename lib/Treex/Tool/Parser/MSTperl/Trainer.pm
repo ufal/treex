@@ -316,24 +316,29 @@ sub features_diff {
         if ( $feature_counts{$feature} ) {
             my $count = abs( $feature_counts{$feature} );
 
+            # create arrays of differing features,
+            # each differing feature is included ONCE ONLY
+            # because an optimization of update is not present
+            # and the update makes uniform changes to all differing features,
+            # in which case even repeated features should be updated ONCE ONLY
+            
             # more often in the first array
             if ( $feature_counts{$feature} > 0 ) {
-                for ( my $i = 0; $i < $count; $i++ ) {
+                # for ( my $i = 0; $i < $count; $i++ ) {
                     push @features_first, $feature;
-                }
+                # }
 
                 # more often in the second array
             } else {
-                for ( my $i = 0; $i < $count; $i++ ) {
+                # for ( my $i = 0; $i < $count; $i++ ) {
                     push @features_second, $feature;
-                }
+                # }
             }
             $diff_count += $count;
         }    # else same count -> no difference
     }
 
-    # TODO try \@features_first
-    return ( [@features_first], [@features_second], $diff_count );
+    return ( \@features_first, \@features_second, $diff_count );
 }
 
 1;
