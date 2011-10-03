@@ -529,7 +529,7 @@ after the existing bundle.
 
 =over 4
 
-=item  $document->index_node_by_id( $id, $node );
+=item $document->index_node_by_id( $id, $node );
 
 The node is added to the document's indexing table C<id2node> (it is done
 automatically in L<Treex::Core::Node::set_attr()|Treex::Core::Node/set_attr>
@@ -557,6 +557,17 @@ Return the array of all node identifiers indexed in the document.
 
 =back
 
+=head2 Serializing
+
+=over 4 
+
+=item my $document = load($filename, \%opts)
+
+Loads document from C<$filename> given C<%opts> using L<Treex::PML::Document::load()>
+
+=item $document->save($filename)
+
+Saves document to C<$filename> using L<Treex::PML::Document::save()>
 
 =head2 Other
 
