@@ -85,7 +85,7 @@ Treex::Block::Read::CoNLLX
 
 Document reader for CoNLL format.
 Each token is on separated line in the following format:
-ord<tab>form<tab>lemma<tab>pos<tab>ppos<tab>features<tab>head<tab>deprel
+ord<tab>form<tab>lemma<tab>cpos<tab>pos<tab>features<tab>head<tab>deprel
 Sentences are separated with blank line.
 The sentences are stored into L<bundles|Treex::Core::Bundle> in the 
 L<document|Treex::Core::Document>.
