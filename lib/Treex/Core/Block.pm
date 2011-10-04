@@ -76,16 +76,16 @@ sub process_document {
         log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
             " doesn't override the method process_document";
     }
-    
+
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
-        $self->process_bundle($bundle, $bundleNo++);
+        $self->process_bundle( $bundle, $bundleNo++ );
     }
     return 1;
 }
 
 sub process_bundle {
-    my ($self, $bundle, $bundleNo) = @_;
+    my ( $self, $bundle, $bundleNo ) = @_;
 
     log_fatal "Parameter language was not set and block " . $self->get_block_name()
         . " doesn't override the method process_bundle" if !$self->language;
@@ -99,7 +99,7 @@ sub process_bundle {
             . " doesn't override the method process_bundle"
         )
         if !$zone;
-    return $self->process_zone($zone, $bundleNo);
+    return $self->process_zone( $zone, $bundleNo );
 }
 
 sub _try_process_layer {
@@ -128,7 +128,7 @@ sub _try_process_layer {
 }
 
 sub process_zone {
-    my ($self, $zone, $bundleNo) = @_;
+    my ( $self, $zone, $bundleNo ) = @_;
 
     my $overriden;
 
@@ -141,6 +141,12 @@ sub process_zone {
         . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
         if !$overriden;
     return;
+}
+
+sub process_end {
+    my ($self) = @_;
+
+    # default implementation is empty, but can be overriden
 }
 
 sub get_block_name {
@@ -223,6 +229,14 @@ Applies the block instance on the given bundle zone
 C<process_document> and C<process_bundle>, C<process_zone> requires block 
 attribute C<language> (and possibly also C<selector>) to be specified.
 
+=item $block->process_end();
+
+This method is called after all documents are processed.
+The default implementation is empty, but derived classes can override it
+to e.g. print some final summaries, statistics etc.
+Overriding this method is preferable to both
+standard Perl END blocks (where you cannot access C<$self> and instance attributes),
+and DEMOLISH (which is not called in some cases, e.g. C<treex --watch>).
 
 =back
 
