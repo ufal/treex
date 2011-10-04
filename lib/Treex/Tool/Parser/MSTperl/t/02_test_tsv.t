@@ -54,7 +54,10 @@ foreach my $correct_sentence ( @{$test_data} ) {
 
 is( $total_words, 47, 'testing on 47 words' );
 
-is( $total_errors, 27, 'returns on the given data 27 errors' );
+# version with bug in learning (before rev. 6899)
+#is( $total_errors, 27, 'returns on the given data 27 errors' );
+# version without the bug (corrected in rev. 6899)
+is( $total_errors, 20, 'returns on the given data 20 errors' );
 
 my $writer = new_ok( 'Treex::Tool::Parser::MSTperl::Writer' => [ featuresControl => $featuresControl ], "initialize Writer," );
 
