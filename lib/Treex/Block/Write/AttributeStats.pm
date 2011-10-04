@@ -88,7 +88,7 @@ override 'process_document' => sub {
 };
 
 # Prints the whole statistics at the end of the process
-sub DEMOLISH {
+sub process_end {
 
     my ($self) = @_;
 

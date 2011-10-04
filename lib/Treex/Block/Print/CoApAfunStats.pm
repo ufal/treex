@@ -26,7 +26,7 @@ sub process_anode
     }
 }
 
-sub DEMOLISH
+sub process_end
 {
     my $self      = shift;
     my $deprelset = $self->_deprelset();

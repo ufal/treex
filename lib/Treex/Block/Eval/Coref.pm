@@ -83,7 +83,7 @@ sub process_tnode {
 
 }
 
-sub DEMOLISH {
+sub process_end {
     my ($self) = shift;
 
     my ( $prec, $reca, $fsco ) =

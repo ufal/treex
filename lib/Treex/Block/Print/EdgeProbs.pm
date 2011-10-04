@@ -19,7 +19,7 @@ sub process_anode {
     return;
 }
 
-sub DEMOLISH {
+sub process_end {
     my ($self) = @_;
     my $edge   = $self->_edge;
     my $nodes  = $self->_nodes;

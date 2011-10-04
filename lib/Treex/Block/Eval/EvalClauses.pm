@@ -78,7 +78,7 @@ sub _clauses_as_concat_ids {
     return \%ret;
 }
 
-sub DEMOLISH {
+sub process_end {
   my $self       = shift;
   my $hits       = $self->_hits;
   my $test_count = $self->_test_count;

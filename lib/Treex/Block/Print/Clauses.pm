@@ -159,7 +159,7 @@ sub _get_clauses_html {
     return join '', @html;
 }
 
-sub DEMOLISH {
+sub process_end {
     my $self = shift;  
     print { $self->_file_handle } '</body></html>';
 }

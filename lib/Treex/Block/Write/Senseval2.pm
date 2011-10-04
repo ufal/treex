@@ -45,7 +45,7 @@ sub BUILD {
     print { $self->_file_handle } '<corpus lang="' . $self->language . "\">\n<lexelt item=\"LEXELT\">\n";
 }
 
-sub DEMOLISH {
+sub process_end {
     my ($self) = @_;
     print { $self->_file_handle } "</lexelt>\n</corpus>\n";
 }

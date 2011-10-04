@@ -14,7 +14,7 @@ requires 'process_bundle';
 
 
 # Prints the whole statistics at the end of the process
-sub DEMOLISH {
+sub process_end {
 
     my ($self) = @_;
 
