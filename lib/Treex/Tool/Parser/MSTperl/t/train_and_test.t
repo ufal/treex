@@ -6,27 +6,55 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 16;
+use Test::More tests => 24;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
 binmode STDERR, ':encoding(utf8)';
 
+note( 'INIT' );
+
 BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::FeaturesControl');
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
+    use_ok('Treex::Tool::Parser::MSTperl::Trainer');
     use_ok('Treex::Tool::Parser::MSTperl::Writer');
     use_ok('Treex::Tool::Parser::MSTperl::Parser');
 }
 
-my ( $test_file, $model_file, $config_file ) =
-    ("$FindBin::Bin/sample_test.tsv",
+my ( $train_file, $test_file, $model_file, $config_file, $save_tsv ) =
+    ("$FindBin::Bin/sample_train.tsv",
+     "$FindBin::Bin/sample_test.tsv",
      "$FindBin::Bin/sample.model",
      "$FindBin::Bin/sample.config");
 
 my $featuresControl = new_ok( 'Treex::Tool::Parser::MSTperl::FeaturesControl' => [ config_file => $config_file ], "process config file," );
 
 my $reader = new_ok( 'Treex::Tool::Parser::MSTperl::Reader' => [ featuresControl => $featuresControl ], "initialize Reader," );
+
+
+
+note( 'TRAINING' );
+
+ok( my $training_data = $reader->read_tsv($train_file), "read training data" );
+
+my $trainer = new_ok( 'Treex::Tool::Parser::MSTperl::Trainer' => [ featuresControl => $featuresControl ], "initialize Trainer," );
+
+ok( $trainer->train($training_data), "perform training" );
+
+ok( $trainer->model->store($model_file), "save model" );
+
+ok( $trainer->model->store_tsv( $model_file . '.tsv' ), "save model to tsv" );
+
+ok( $trainer->model->load($model_file), "load model" );
+
+ok( $trainer->model->load_tsv( $model_file . '.tsv' ), "load model to tsv" );
+
+unlink $model_file . '.tsv';
+
+
+
+note( 'PARSING' );
 
 ok( my $test_data = $reader->read_tsv($test_file), "read test data" );
 
@@ -66,3 +94,5 @@ ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
 unlink $test_file . '.out';
 
 unlink $model_file;
+
+
