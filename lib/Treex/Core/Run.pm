@@ -364,7 +364,7 @@ sub _execute_locally {
     # Parameters can contain whitespaces that should be preserved
     my @arguments;
     foreach my $arg ( @{ $self->extra_argv } ) {
-        if ( $arg =~ /(\S+)=(.+\s.+)$/ ) {
+        if ( $arg =~ /(\S+)=(.*\s.*)$/ ) {
             my ( $name, $value ) = ( $1, $2 );
             $value =~ s/'/\\'/g;
             push @arguments, qq($name='$value');
