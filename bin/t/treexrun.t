@@ -39,6 +39,8 @@ my @tasks  = (
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param= document='print $self->_args->{param};'),   '' ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param="" document='print $self->_args->{param};'), '' ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param='' document='print $self->_args->{param};'), '' ],
+    [ q(echo | treex -q -Len Read::Sentences Util::Eval param=" " document='print $self->_args->{param};'), ' ' ],
+    [ q(echo | treex -q -Len Read::Sentences Util::Eval param=' ' document='print $self->_args->{param};'), ' ' ],
 );
 
 plan tests => scalar @tasks;
