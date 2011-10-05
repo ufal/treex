@@ -5,8 +5,8 @@ use autodie;
 
 #TODO: Better way how to make it automatically download.
 my $POSSADJ_FN = 'generated_data/extracted_from_CNK/possessive_adjectives.tsv';
-use Treex::Core::Resource;
-Treex::Core::Resource::require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
+use Treex::Core::Resource qw(require_file_from_share);
+my $possadj_filename = require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
 
 my @DICENDI_VERBS =
     qw(dodat dodávat doplnit hlásit hodnotit informovat komentovat konstatovat líčit
@@ -122,7 +122,6 @@ sub is_personal_role {
 }
 
 my %noun2possadjective;
-my $possadj_filename = $ENV{TMT_ROOT}.'share/'.$POSSADJ_FN;
 open my $A, '<:utf8', $possadj_filename;
 while (<$A>) {
     chomp;
