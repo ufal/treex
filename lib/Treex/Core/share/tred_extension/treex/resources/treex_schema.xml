@@ -72,6 +72,7 @@
       <member name="czeng">
         <structure>
           <member name="id"><cdata format="any"/></member>
+          <member name="origfile"><cdata format="any"/></member>
           <member name="align_score"><cdata format="any"/></member>
         </structure>
       </member>

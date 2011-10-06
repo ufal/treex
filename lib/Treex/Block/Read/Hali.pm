@@ -25,13 +25,11 @@ sub next_document {
 
     LINE:
     foreach my $line ( split /\n/, $text ) {
-        my ( $id, $align_type, $align_score, $sent1, $sent2 ) = split /\t/, $line;
-        if ( $align_type ne '1-1' ) {
-            log_warn "align_type is not 1-1: $line";
-            next LINE;
-        }
+        my ( $sentnum, $blocknum, $sentid, $origfile, $align_score,
+             $sent1, $sent2 ) = split /\t/, $line;
         my $bundle = $document->create_bundle();
-        $bundle->set_attr( 'czeng/id',          $id );
+        $bundle->set_attr( 'czeng/id',          $sentid );
+        $bundle->set_attr( 'czeng/origfile',    $origfile );
         $bundle->set_attr( 'czeng/align_score', $align_score );
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
         $bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
