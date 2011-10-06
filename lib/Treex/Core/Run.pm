@@ -716,6 +716,11 @@ sub _wait_for_jobs {
     return;
 }
 
+# To get utf8 encoding also when using qx (aka backticks):
+# my $command_output = qw($command);
+# we need to
+use open qw' :std IO :encoding(UTF-8) ';
+
 sub _check_job_errors {
     my ($self) = @_;
     my $workdir = $self->workdir;
