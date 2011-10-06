@@ -10,7 +10,7 @@ use Treex::Core::Resource;
 Treex::Core::Resource::require_file_from_share( $FN, 'Treex::Tool::Lexicon::EN::First_names' );
 
 my %GENDER_OF;
-open my $F, '<:utf8', $ENV{TMT_ROOT} . "share/$FN";
+open my $F, '<:utf8', $ENV{TMT_ROOT} . "/share/$FN";
 while (<$F>) {
     chomp;
     my ( $name, $f_or_m ) = split /\t/, $_;

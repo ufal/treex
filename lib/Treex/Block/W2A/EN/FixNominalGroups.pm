@@ -10,7 +10,7 @@ sub get_required_share_files { return $MODEL; }
 my %pair_count;
 
 sub BUILD {
-    my $filename = $ENV{TMT_ROOT} . 'share/' . $MODEL;
+    my $filename = $ENV{TMT_ROOT} . '/share/' . $MODEL;
     open my $F, '<:utf8', $filename or log_fatal "Can't open $filename: $!";
     my $skip_header = <$F>;    #skip header
     while (<$F>) {
