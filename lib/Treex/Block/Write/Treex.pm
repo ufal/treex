@@ -9,6 +9,12 @@ has [qw(file_stem path)] => (
     documentation => 'overrides the respective attributes in documents (filled in by a DocumentReader)',
 );
 
+has stem_suffix => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'a suffix to append after file_stem',
+);
+
 has to => (
     isa           => 'Str',
     is            => 'ro',
@@ -60,6 +66,12 @@ sub process_document {
         $document->set_file_stem( $self->file_stem );
         $filename = $document->full_filename . $self->_extension($document);;
     }
+    if ( defined $self->stem_suffix ) {
+        my $origstem = defined $self->file_stem
+                       ? $self->file_stem : $document->file_stem;
+        $document->set_file_stem( $origstem . $self->stem_suffix );
+        $filename = $document->full_filename . $self->_extension($document);;
+    }
     if ( defined $self->to ) {
         my ( $next_filename, @rest_filenames ) = @{ $self->filenames };
         if ( !defined $next_filename ) {
@@ -103,6 +115,10 @@ space or comma separated list of filenames
 overrides the respective attributes in documents
 (filled in by a L<DocumentReader|Treex::Core::DocumentReader>),
 which are used for generating output file names
+
+=item stem_suffix
+
+a string to append after file_stem
 
 =back
 
