@@ -2,6 +2,7 @@ package Treex::Tool::Segment::TA::RuleBased;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+extends 'Treex::Tool::Segment::RuleBased';
 
 # In Tamil, there are places where terminal punctuation '.'
 # occur but that is not a sentence boundary. The "Name intials"
@@ -29,75 +30,17 @@ mi|no|tA|cO|xi|NE|Ne|hU|hu|wi|NI|cI|NO|i|a|T|S|n|c|h|p|O|o|q|u|y|e|t|v|m|k|
 a|I|E|U|z|R|l|r|L|j|w|N|A|x
 }x;    ## no critic (RegularExpressions::ProhibitComplexRegexes) this is nothing complex, just list
 
-has use_paragraphs => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 1,
-    documentation =>
-        'Should paragraph boundaries be preserved as sentence boundaries?'
-        . ' Paragraph boundary is defined as two or more consecutive newlines.',
-);
-
-has use_lines => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-    documentation =>
-        'Should newlines in the text be preserved as sentence boundaries?'
-        . '(But if you want to detect sentence boundaries just based on newlines'
-        . ' and nothing else, use rather W2A::SegmentOnNewlines.)',
-);
-
-sub unbreakers {
-    return $UNBREAKERS;
-}
-
-# Characters that can appear after period (or other end-sentence symbol)
-sub closings {
-    return '"”»)';
-}
-
-# Characters that can appear before the first word of a sentence
-sub openings {
-    return '"“«(';
-}
-
-sub get_segments {
+override split_at_terminal_punctuation => sub  {
     my ( $self, $text ) = @_;
-
-    # Pre-processing
-    my $unbreakers = $self->unbreakers;
-    $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
-
-    # two newlines usually separate paragraphs
-    if ( $self->use_paragraphs ) {
-        $text =~ s/([^.!?])\n\n+/$1<<<SEP>>>/gsm;
-    }
-
-    if ( $self->use_lines ) {
-        $text =~ s/\n/<<<SEP>>>/gsm;
-    }
-
-    # Normalize whitespaces
-    $text =~ s/\s+/ /gsm;
-
-    # This is the main regex
     my ( $openings, $closings ) = ( $self->openings, $self->closings );
     $text =~ s{
-        ([.?!])            # $1 = end-sentence punctuation
+        ([.?!])                 # $1 = end-sentence punctuation
         ([$closings]?)          # $2 = optional closing quote/bracket
-        \s                 #      space
+        \s                      #      space
         ([$openings]?\p{Upper}?) # $3 = uppercase letter (optionally preceded by opening quote)
     }{$1$2\n$3}gsxm;
-
-    # Post-processing
-    $text =~ s/<<<SEP>>>/\n/gsmx;
-    $text =~ s/<<<DOT>>>/./gsxm;
-    $text =~ s/\s+$//gsxm;
-    $text =~ s/^\s+//gsxm;
-
-    return split /\n/, $text;
-}
+    return $text;
+};
 
 1;
 
@@ -112,12 +55,6 @@ Treex::Tool::Segment::TA::RuleBased - rule based sentence segmenter for Tamil
 =head1 VERSION
 
 =head1 DESCRIPTION
-
-(Loganthan: I did not modify Treex::Tool::Segment::RuleBased due to language specific nature.
-  So I decided to copy the code from there and did the necessary modification here.
-)
-
-TODO: DOCUMENTATION HAS TO BE ADAPTED.
 
 Sentence boundaries are detected based on a regex rules
 that detect end-sentence punctuation ([.?!]).
