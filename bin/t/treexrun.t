@@ -96,6 +96,6 @@ SKIP: {
 #done_testing;
 END {
     unlink $combined_file;
-    unlink glob "*dummy.treex";
+    unlink glob "*dummy.treex*";
     unlink "confuse.scen";
 }
