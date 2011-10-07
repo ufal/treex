@@ -27,7 +27,7 @@ sub process_bundle {
         my $en_sum = scalar grep { $_ eq $en_pos_tag } @en_pos;
         my $cs_sum = scalar grep { $_ eq $cs_pos_tag } @cs_pos;
         
-        my $reliable = max($en_sum, $cs_sum) >= 4 ? "reliable_" : "rough_";
+        my $reliable = "";# max($en_sum, $cs_sum) >= 4 ? "reliable_" : "rough_";
         my @bounds = ( 0, 0.25, 0.75, 1.25, 1.75, 5 );
         
         my $value;

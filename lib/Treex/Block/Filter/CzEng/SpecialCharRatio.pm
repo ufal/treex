@@ -31,7 +31,7 @@ sub process_bundle {
         }
     }
         
-    my $reliable = $max_total_chars >= 4 ? "reliable_" : "rough_";
+    my $reliable = "";# $max_total_chars >= 4 ? "reliable_" : "rough_";
     my @bounds = ( 0, 0.2, 0.5, 0.8, 1 );
 
     if ( $max_total_chars > 0 ) {

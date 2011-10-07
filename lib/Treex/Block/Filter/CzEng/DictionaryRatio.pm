@@ -1,7 +1,7 @@
 package Treex::Block::Filter::CzEng::DictionaryRatio;
 use Moose;
 use Treex::Core::Common;
-use TranslationDict::EN2CS;
+use TranslationDict::EN2CSAlt;
 use TranslationDict::SimplePOS;
 use Treex::Block::Filter::CzEng::Common;
 
@@ -21,7 +21,7 @@ sub process_bundle {
 
     my $covered = 0;                          # number of English words covered in Czech
 
-    my $dict = TranslationDict::EN2CS->new();
+    my $dict = TranslationDict::EN2CSAlt->new();
     my $has_translation = 0;
 
     for my $en_node (@en) {
@@ -32,7 +32,7 @@ sub process_bundle {
         $covered++ if grep { $cs_lemmas{"$_"} } map { lc $_->{"cs_tlemma"} } @trans;
     }
 
-    my $reliable = $has_translation >= 5 ? "reliable_" : "rough_";
+    my $reliable = "";# $has_translation >= 5 ? "reliable_" : "rough_";
     my @bounds = ( 0, 0.2, 0.5, 0.8, 1 );
 
     $self->add_feature( $bundle, $reliable . "dictratio="
