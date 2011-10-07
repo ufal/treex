@@ -130,6 +130,12 @@ sub _to_utf8 {
 sub pdt_lemmata_for_plain_lemma {
     my ( $self, $plain_lemma ) = @_;
 
+	# There is a bug in CzechMorpho --
+    # it uses pipe symbol (|) as a delimiter, but it does not escape it.
+    # (It expects, it cannot appear in other tokens than "|", but that's a matter of tokenization.)
+    # Since CzechMorpho is not at CPAN (but needs installation), we must hack it here.
+    $plain_lemma =~ s{\|}{%7C}g;
+
     # We analyze the plain lemma as if it was a word form.
     # Unfortunatelly, morpho_analyze_swig uses Latin2 encoding,
     # so we convert it from and to utf8 on the fly.
@@ -158,6 +164,7 @@ sub pdt_lemmata_for_plain_lemma {
     foreach my $lemma_and_tags (@lemmata_and_tags) {
         my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
         if ( any { $self->can_be_tag_of_lemma($_) } split /\//, $tags ) {
+            $pdt_lemma =~ s{%7C}{|}g;
             push( @pdt_lemmata, $pdt_lemma );
         }
     }
