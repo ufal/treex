@@ -24,6 +24,28 @@ sub get_features {
     return @features;
 }
 
+sub quantize {
+    my ( $self, $precision, $value, $max_value ) = @_;
+    my $bucket = $precision * int( $value / $precision );
+    if (defined $max_value && $bucket > $max_value) {
+        $bucket = $max_value;
+    }
+    return $bucket;
+}
+
+sub quantize_given_bounds {
+    my ( $self, $value, @bounds ) = @_;
+    my $bucket = "min";
+    for my $bound ( @bounds ) {
+        if ( $value < $bound ) {
+            last;
+        } else {
+            $bucket = $bound;
+        }
+    }
+    return $bucket;
+}
+
 1;
 
 =over

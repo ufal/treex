@@ -32,7 +32,7 @@ sub process_bundle {
         }
     }
     if ( !$ok ) {
-        $self->add_feature( $bundle, "no_word" );
+        $self->add_feature( $bundle, "no_word_in_language" );
     }
     return 1;
 }

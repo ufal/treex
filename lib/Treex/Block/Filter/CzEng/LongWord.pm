@@ -14,7 +14,8 @@ sub process_bundle {
 
     my $length = max( map { length $_->get_attr('form') } @tokens );
 
-    $self->add_feature( $bundle, 'word_length=' . ( int( $length / 10 ) ) * 10 );
+    my @bounds = ( 0, 5, 10, 20, 50 );
+    $self->add_feature( $bundle, 'max_word_length=' . $self->quantize_given_bounds( $length, @bounds ) );
 
     return 1;
 }

@@ -11,7 +11,8 @@ sub process_bundle {
     my $cs     = $bundle->get_zone('cs')->sentence;
     my $length = max( length $en, length $cs );
 
-    $self->add_feature( $bundle, 'sentence_length=' . ( int( $length / 50 ) ) * 50 );
+    my @bounds = ( 0, 10, 50, 100, 250, 500 );
+    $self->add_feature( $bundle, 'sentence_length=' . $self->quantize_given_bounds( $length, @bounds ) );
 
     return 1;
 }

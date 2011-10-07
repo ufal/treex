@@ -15,14 +15,12 @@ has model_file => (
     documentation => 'model file'
 );
 
-);
 has classifier_type => (
     isa           => 'Str',
     is            => 'ro',
     required      => '1',
     documentation => 'classifier type, can be "maxent", "naive_bayes", "decision_tree"'
 );
-
 
 has _classifier_obj => (
     is            => 'rw',
