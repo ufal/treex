@@ -2,13 +2,19 @@ package Treex::Tool::ML::MLProcess;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource;
 use File::Java;
 use File::Temp ();
 use Treex::Tool::IO::Arff;
 use autodie;
 
 # ML-Process executable
-has 'ml_process_jar' => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/personal/odusek/ml-process/ml-process.jar" );
+has 'ml_process_jar' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'installed_tools/ml-process/ml-process.jar',
+    writer  => '_set_ml_process_jar'
+);
 
 # Verbosity
 has 'verbosity' => ( is => 'ro', isa => 'Int', lazy_build => 1 );
@@ -33,6 +39,12 @@ has '_temp_dir' => ( is => 'ro', builder => '_create_temp_dir' );
 
 # list of tempfiles used by the process
 has '_tempfiles' => ( isa => 'ArrayRef', is => 'ro', default => sub { [] } );
+
+sub BUILD {
+    my ( $self, $params ) = @_;
+    # try to download the ML-Process JAR file and set its real absolute path
+    $self->_set_ml_process_jar( Treex::Core::Resource::require_file_from_share( $self->ml_process_jar ) );
+}
 
 sub run {
 
@@ -218,7 +230,7 @@ Delete all temporary files after use? (default: 1, set to 0 if you want to keep 
 
 =item ml_process_jar
 
-Path to the ML-Process executable JAR file (default location is pre-set).
+Path to the ML-Process executable JAR file within the shared directory (the default location is pre-set).
 
 =item memory
 
