@@ -31,6 +31,8 @@ has 'model_dir' => (
     default => 'data/models/mst_perl_parser/en',
 );
 
+# use features from aligned tree
+has 'parallel_parsing' => ( isa => 'Bool', is => 'ro', default => '0' );
 # the language of the tree which is already parsed and is accessed via the
 # 'aligned_' prefix, eg. en
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
@@ -152,7 +154,7 @@ sub _get_alignment_hash {
     my ($self, $bundle) = @_;
     
     my $alignment_hash;
-    if ( $self->alignment_is_backwards ) {
+    if ( $self->parallel_parsing && $self->alignment_is_backwards ) {
         # we need to provide the other direction of the relation
         $alignment_hash = {};
         # gets root of aligned Analytical tree
