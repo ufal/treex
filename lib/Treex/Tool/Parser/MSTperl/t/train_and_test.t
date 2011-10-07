@@ -12,9 +12,8 @@ binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
 binmode STDERR, ':encoding(utf8)';
 
-note( 'INIT' );
-
 BEGIN {
+    note( 'INIT' );
     use_ok('Treex::Tool::Parser::MSTperl::FeaturesControl');
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
     use_ok('Treex::Tool::Parser::MSTperl::Trainer');
