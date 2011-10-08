@@ -1,7 +1,7 @@
 package Treex::Block::Filter::CzEng::DictionaryRatio;
 use Moose;
 use Treex::Core::Common;
-use TranslationDict::EN2CSAlt;
+use TranslationDict::EN2CS;
 use TranslationDict::SimplePOS;
 use Treex::Block::Filter::CzEng::Common;
 
@@ -21,22 +21,27 @@ sub process_bundle {
 
     my $covered = 0;                          # number of English words covered in Czech
 
-    my $dict = TranslationDict::EN2CSAlt->new();
+    my $dict = TranslationDict::EN2CS->new();
     my $has_translation = 0;
 
     for my $en_node (@en) {
         my $en_lemma      = lc( $en_node->get_attr("lemma") );
         my $en_tag_simple = TranslationDict::SimplePOS::tag2simplepos( $en_node->get_attr("tag"), "ptb" );
         my @trans         = $dict->get_translations( $en_lemma, $en_lemma, $en_tag_simple );
-        $has_translation++ if @trans;
-        $covered++ if grep { $cs_lemmas{"$_"} } map { lc $_->{"cs_tlemma"} } @trans;
+        if ( @trans && $trans[0]->{cs_tlemma} ne $en_lemma ) {
+            $has_translation++;
+            $covered++ if grep { $cs_lemmas{$_} } map { lc $_->{cs_tlemma} } @trans;
+#            log_info $en_lemma . ": " . join( " ", map { lc $_->{cs_tlemma} } @trans );
+        }
     }
 
-    my $reliable = "";# $has_translation >= 5 ? "reliable_" : "rough_";
+    my $reliable = $has_translation >= 5 ? "reliable_" : "rough_";
     my @bounds = ( 0, 0.2, 0.5, 0.8, 1 );
 
-    $self->add_feature( $bundle, $reliable . "dictratio="
-        . $self->quantize_given_bounds( $covered / $has_translation, @bounds ) );
+    if ( $has_translation ) {
+        $self->add_feature( $bundle, $reliable . "dictratio="
+            . $self->quantize_given_bounds( $covered / $has_translation, @bounds ) );
+    }
 
     return 1;
 }
