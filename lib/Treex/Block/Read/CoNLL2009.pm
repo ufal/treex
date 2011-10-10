@@ -39,9 +39,12 @@ sub next_document {
 
     my $document = $self->new_document();
     foreach my $tree ( split /\n\s*\n/, $text ) {
+        my @tokens  = split( /\n/, $tree );
+        # Skip empty sentences (if any sentence is empty at all,
+        # typically it is the first or the last one because of superfluous empty lines).
+        next unless(@tokens);
         my $bundle  = $document->create_bundle();
         my $zone    = $bundle->create_zone( $self->language, $self->selector );
-        my @tokens  = split( /\n/, $tree );
         my $aroot   = $zone->create_atree();
         my @parents = (0);
         my @nodes   = ($aroot);
