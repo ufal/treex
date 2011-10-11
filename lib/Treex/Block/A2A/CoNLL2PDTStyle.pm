@@ -86,15 +86,35 @@ sub convert_tag
     # Many others are not covered by DZ Interset yet.
     # tagset::common::find_drivers() could help but it would not be efficient to call it every time.
     # Instead, every subclass of this block must know whether to call convert_tag() or not.
-    # List of CoNLL tagsets covered by 2011-07-05:
+    # List of tagsets covered so far:
     my @known_drivers = qw(
-        ar::conll ar::conll2007 bg::conll cs::conll cs::conll2009 da::conll de::conll de::conll2009
+        ar::conll ar::conll2007
+        bg::conll
+        bn::conll
+        cs::conll cs::conll2009
+        da::conll
+        de::conll de::conll2009
+        el::conll
         en::conll en::conll2009
-        es::conll2009 tr::conll
-        hu::conll eu::conll  ta::tamiltb
-        it::conll nl::conll pt::conll sv::conll zh::conll grc::conll
-        ja::conll hi::conll te::conll bn::conll el::conll ru::syntagrus sl::conll
-        ro::rdt);
+        es::conll2009
+        eu::conll
+        fi::conll
+        grc::conll
+        hi::conll
+        hu::conll
+        it::conll
+        ja::conll
+        nl::conll
+        pt::conll
+        ro::rdt
+        ru::syntagrus
+        sl::conll
+        sv::conll
+        ta::tamiltb
+        te::conll
+        tr::conll
+        zh::conll
+    );
     my $driver = $node->get_zone()->language() . '::' . $tagset;
     if ( !grep { $_ eq $driver } (@known_drivers) )
     {

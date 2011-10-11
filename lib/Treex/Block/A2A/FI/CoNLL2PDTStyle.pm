@@ -11,7 +11,7 @@ extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
+    my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
 
     # Adjust the tree structure.
     $self->convert_coordination($a_root);
