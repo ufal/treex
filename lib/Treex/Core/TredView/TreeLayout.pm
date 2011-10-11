@@ -18,10 +18,10 @@ has '_margin' => ( is => 'ro', isa => 'Int', default => 20 );
 has '_width'  => ( is => 'ro', isa => 'Int', default => 80 );
 has '_height' => ( is => 'ro', isa => 'Int', default => 45 );
 
-has '_drag_tree' => ( is => 'rw', isa => 'Str', default => '' );
+has '_drag_tree' => ( is => 'rw', isa => 'Maybe[HashRef[Str]]', default => undef );
 has '_drag_x'    => ( is => 'rw', isa => 'Int', default => -1 );
 has '_drag_y'    => ( is => 'rw', isa => 'Int', default => -1 );
-has '_cur_tree'  => ( is => 'rw', isa => 'Str', default => '' );
+has '_cur_tree'  => ( is => 'rw', isa => 'Maybe[HashRef[Str]]', default => undef );
 
 has '_cur_layout' => ( is => 'rw', isa => 'TreeLayout' );
 
@@ -58,7 +58,7 @@ sub get_layout {
         my $cols = [];
         my @trees = split ',', $label;
         for ( my $i = 0; $i <= $#trees; $i++ ) {
-            $cols->[$i]->[0] = $trees[$i];
+            $cols->[$i]->[0] = { 'label' => $trees[$i], 'visible' => 1 };
         }
 
         $self->_layouts->{$label} = $cols;
@@ -82,8 +82,9 @@ sub load_layouts {
         my $cols   = [];
 
         for ( my $i = 0; $i <= $#label; $i++ ) {
-            my ( $col, $row ) = split '-', $coords[$i];
-            $cols->[$col]->[$row] = $label[$i];
+            my ( $col, $row, $visibility ) = split '-', $coords[$i];
+            $visibility = 0 if not defined $visibility;
+            $cols->[$col]->[$row] = { 'label' => $label[$i], 'visible' => $visibility };
         }
 
         $self->_layouts->{$label} = $cols;
@@ -104,7 +105,7 @@ sub save_layouts {
         for ( my $col = 0; $col < scalar(@$cols); $col++ ) {
             for ( my $row = 0; $row < scalar( @{ $cols->[$col] } ); $row++ ) {
                 my $tree = $cols->[$col]->[$row];
-                $coords{$tree} = "$col-$row" if $tree;
+                $coords{$tree->{'label'}} = "$col-$row-".$tree->{'visible'} if $tree;
             }
         }
 
@@ -162,11 +163,13 @@ sub _wrap_layout {
 
     for ( my $i = 0; $i < scalar @$layout; $i++ ) {
         for ( my $j = 0; $j < scalar @{ $layout->[$i] }; $j++ ) {
-            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $self->_tag_wrap ) {
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j]->{'label'} ne $self->_tag_wrap ) {
                 $new_layout->[$i]->[$j] = $layout->[$i]->[$j];
                 for ( my $k = 0; $k < scalar @c; $k += 2 ) {
                     my ( $x, $y ) = ( $i + $c[$k], $j + $c[ $k + 1 ] );
-                    $new_layout->[$x]->[$y] = $self->_tag_wrap if $x >= 0 and $y >= 0 and not $new_layout->[$x]->[$y];
+                    if ($x >= 0 and $y >= 0 and not $new_layout->[$x]->[$y]) {
+                        $new_layout->[$x]->[$y] = { 'label' => $self->_tag_wrap, 'visible' => 0 };
+                    }
                 }
             }
         }
@@ -186,7 +189,7 @@ sub _normalize_layout {
 
     for ( my $i = 0; $i < scalar @$layout; $i++ ) {
         for ( my $j = 0; $j < scalar @{ $layout->[$i] }; $j++ ) {
-            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $self->_tag_wrap ) {
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j]->{'label'} ne $self->_tag_wrap ) {
                 $filled_cols{$i} = 1;
                 $filled_rows{$j} = 1;
             }
@@ -198,7 +201,7 @@ sub _normalize_layout {
         $gap_x++ if not exists $filled_cols{$i};
         for ( my $j = 0; $j < scalar @{ $layout->[$i] }; $j++ ) {
             $gap_y++ if not exists $filled_rows{$j};
-            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j] ne $self->_tag_wrap ) {
+            if ( $layout->[$i]->[$j] and $layout->[$i]->[$j]->{'label'} ne $self->_tag_wrap ) {
                 $new_layout->[ $i - $gap_x ]->[ $j - $gap_y ] = $layout->[$i]->[$j];
             }
         }
@@ -237,13 +240,13 @@ sub _get_pos {
 
     my $tree;
     if ( $i < 0 or $j < 0 ) {
-        $tree = $self->_tag_none;
+        $tree = { 'label' => $self->_tag_none, 'visible' => 0 };
     }
-    elsif ( $self->_cur_layout->[$i]->[$j] ) {
+    elsif ( defined $self->_cur_layout->[$i]->[$j] ) {
         $tree = $self->_cur_layout->[$i]->[$j];
     }
     else {
-        $tree = $self->_tag_none;
+        $tree = { 'label' => $self->_tag_none, 'visible' => 0 };
     }
     return ( $i * $wm + $self->_margin, $j * $hm + $self->_margin, $tree );
 }
@@ -251,28 +254,27 @@ sub _get_pos {
 sub _mouse_move {
     my ( $self, $canvas ) = @_;
     my ( $x, $y, $tree ) = $self->_get_pos( $Tk::event->x, $Tk::event->y );
-    $tree = '' if not defined $tree;
 
-    if ( $self->_cur_tree and $tree ne $self->_cur_tree ) {
-        if ( $self->_cur_tree ne $self->_tag_wrap and $self->_cur_tree ne $self->_tag_none ) {
-            $canvas->itemconfigure( $self->_cur_tree . '&&' . $self->_tag_tree, -outline => 'black', -width => 1 );
+    if ( $self->_cur_tree and (not $tree or $tree->{'label'} ne $self->_cur_tree->{'label'}) ) {
+        if ( $self->_cur_tree->{'label'} ne $self->_tag_wrap and $self->_cur_tree->{'label'} ne $self->_tag_none ) {
+            $canvas->itemconfigure( $self->_cur_tree->{'label'} . '&&' . $self->_tag_tree, -outline => 'black', -width => 1 );
         }
         else {
-            $canvas->delete( $self->_cur_tree );
+            $canvas->delete( $self->_cur_tree->{'label'} );
         }
-        $self->{_cur_tree} = '';
+        $self->{_cur_tree} = undef;
     }
-    if ( $tree and $tree ne $self->_cur_tree ) {
-        if ( $tree ne $self->_tag_wrap and $tree ne $self->_tag_none ) {
-            my $color = $self->_drag_tree ? ( $tree eq $self->_drag_tree ? 'red' : 'green' ) : 'blue';
-            $canvas->itemconfigure( "$tree&&" . $self->_tag_tree, -outline => $color, -width => 2 );
+    if ( $tree and (not $self->_cur_tree or $tree->{'label'} ne $self->_cur_tree->{'label'}) ) {
+        if ( $tree->{'label'} ne $self->_tag_wrap and $tree->{'label'} ne $self->_tag_none ) {
+            my $color = $self->_drag_tree ? ( $tree->{'label'} eq $self->_drag_tree->{'label'} ? 'red' : 'green' ) : 'blue';
+            $canvas->itemconfigure( $tree->{'label'}.'&&'.$self->_tag_tree, -outline => $color, -width => 2 );
         }
         elsif ( $self->_drag_tree ) {
-            my $color = $tree eq $self->_tag_wrap ? 'green' : 'red';
+            my $color = $tree->{'label'} eq $self->_tag_wrap ? 'green' : 'red';
             $canvas->create(
                 'rectangle',
                 $x, $y, $x + $self->_width, $y + $self->_height,
-                -tags => [$tree], -outline => $color, -width => 2
+                -tags => [$tree->{'label'}], -outline => $color, -width => 2
             );
         }
         $self->{_cur_tree} = $tree;
@@ -282,11 +284,11 @@ sub _mouse_move {
 sub _mouse_drag {
     my ( $self, $canvas ) = @_;
     my ( $x, $y, $tree ) = $self->_get_pos( $Tk::event->x, $Tk::event->y );
-    return if ( not $tree ) or $tree eq $self->_tag_wrap or $tree eq $self->_tag_none;
+    return if ( not $tree ) or $tree->{'label'} eq $self->_tag_wrap or $tree->{'label'} eq $self->_tag_none;
 
     $self->{_drag_tree} = $tree;
     ( $self->{_drag_x}, $self->{_drag_y} ) = $self->_get_layout_coords( $x, $y );
-    $canvas->itemconfigure( $tree . '&&' . $self->_tag_tree, -outline => 'red', -width => 2, -fill => 'yellow' );
+    $canvas->itemconfigure( $tree->{'label'} . '&&' . $self->_tag_tree, -outline => 'red', -width => 2, -fill => 'yellow' );
 }
 
 sub _mouse_drop {
@@ -295,11 +297,11 @@ sub _mouse_drop {
 
     my ( $x, $y, $tree ) = $self->_get_pos( $Tk::event->x, $Tk::event->y );
 
-    $canvas->itemconfigure( $self->_drag_tree . '&&' . $self->_tag_tree, -fill => 'white' );
+    $canvas->itemconfigure( $self->_drag_tree->{'label'} . '&&' . $self->_tag_tree, -fill => 'white' );
 
-    if ( ( not $tree ) or $tree eq $self->_tag_none ) {
+    if ( ( not $tree ) or $tree->{'label'} eq $self->_tag_none ) {
         $canvas->delete( $self->_tag_none ) if $tree;
-        $self->{_drag_tree} = '';
+        $self->{_drag_tree} = undef;
         $self->{_drag_x} = $self->{_drag_y} = -1;
         return;
     }
@@ -308,9 +310,9 @@ sub _mouse_drop {
 
     $layout->[ $self->_drag_x ]->[ $self->_drag_y ] = undef;
     ( $x, $y ) = $self->_get_layout_coords( $x, $y );
-    if ( $tree ne $self->_tag_wrap ) {
+    if ( $tree->{'label'} ne $self->_tag_wrap ) {
         for ( my $i = scalar @$layout; $i > $x; $i-- ) {
-            if ( $layout->[ $i - 1 ]->[$y] ) {
+            if ( defined $layout->[ $i - 1 ]->[$y] ) {
                 $layout->[$i]->[$y] = $layout->[ $i - 1 ]->[$y];
                 $layout->[ $i - 1 ]->[$y] = undef;
             }
@@ -324,8 +326,22 @@ sub _mouse_drop {
     $self->_wrap_layout();
     $self->_draw_layout($canvas);
 
-    $self->{_drag_tree} = '';
+    $self->{_drag_tree} = undef;
     $self->{_drag_x} = $self->{_drag_y} = -1;
+}
+
+sub _mouse_right {
+    my ( $self, $canvas ) = @_;
+    my ( $x, $y, $tree ) = $self->_get_pos( $Tk::event->x, $Tk::event->y );
+    return if ( not $tree ) or $tree->{'label'} eq $self->_tag_wrap or $tree->{'label'} eq $self->_tag_none or $self->{_drag_tree};
+
+    ( $x, $y ) = $self->_get_layout_coords( $x, $y );
+    my $layout = $self->_cur_layout;
+    my $visibility = $layout->[$x]->[$y]->{'visible'} ? 0 : 1;
+
+    $layout->[$x]->[$y]->{'visible'} = $visibility;
+    $canvas->itemconfigure( $tree->{'label'} . '&&' . $self->_tag_tree, -fill => $visibility ? 'white' : 'grey' );
+    $self->{_cur_layout} = $layout;
 }
 
 sub _draw_layout {
@@ -336,8 +352,8 @@ sub _draw_layout {
     for ( my $i = 0; $i < scalar @$layout; $i++ ) {
         for ( my $j = 0; $j < scalar @{ $layout->[$i] }; $j++ ) {
             my $tree = $layout->[$i]->[$j];
-            if ( $tree and $tree ne $self->_tag_wrap ) {
-                my ( $lang, $layer, $selector ) = split '-', $tree, 3;
+            if ( $tree and $tree->{'label'} ne $self->_tag_wrap ) {
+                my ( $lang, $layer, $selector ) = split '-', $tree->{'label'}, 3;
                 $lang = Treex::Core::Types::get_lang_name($lang);
                 $canvas->create(
                     'rectangle',
@@ -345,8 +361,8 @@ sub _draw_layout {
                     $j * ( $self->_height + $self->_margin ) + $self->_margin,
                     ( $i + 1 ) * ( $self->_width + $self->_margin ),
                     ( $j + 1 ) * ( $self->_height + $self->_margin ),
-                    -tags => [ $self->_tag_tree, $tree ],
-                    -fill => 'white'
+                    -tags => [ $self->_tag_tree, $tree->{'label'} ],
+                    -fill => $tree->{'visible'} ? 'white' : 'grey'
                 );
                 $canvas->create(
                     $self->_tag_text,
@@ -354,7 +370,7 @@ sub _draw_layout {
                     ( $j + 1 ) * ( $self->_height + $self->_margin ) - 0.5 * $self->_height,
                     -anchor  => 'center',
                     -justify => 'center',
-                    -tags    => [$tree],
+                    -tags    => [$tree->{'label'}],
                     -text    => "$lang\n" . uc($layer) . ( $selector ? "\n$selector" : '' )
                 );
             }
@@ -364,6 +380,7 @@ sub _draw_layout {
     $canvas->CanvasBind( '<Motion>'          => [ $self => '_mouse_move', $canvas ] );
     $canvas->CanvasBind( '<ButtonPress-1>'   => [ $self => '_mouse_drag', $canvas ] );
     $canvas->CanvasBind( '<ButtonRelease-1>' => [ $self => '_mouse_drop', $canvas ] );
+    $canvas->CanvasBind( '<ButtonRelease-3>' => [ $self => '_mouse_right', $canvas ] );
 }
 
 sub conf_dialog {

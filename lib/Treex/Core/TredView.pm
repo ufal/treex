@@ -45,6 +45,12 @@ has fast_loading => (
     documentation => 'Do the precomputation lazily for each bundle',
 );
 
+has _displayed_nodes => (
+    is => 'rw',
+    isa => 'HashRef[Treex::Core::Node]',
+    default => sub { {} }
+);
+
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'show_alignment'    => ( is => 'rw', isa => 'Bool', default => 1 );
 
@@ -126,8 +132,8 @@ sub get_nodelist_hook {
     for ( my $col = 0; $col < scalar @$layout; $col++ ) {
         my @task = ();
         for ( my $row = 0; $row < scalar @{ $layout->[$col] }; $row++ ) {
-            if ( $layout->[$col][$row] ) {
-                my $label     = $layout->[$col][$row];
+            if ( $layout->[$col][$row] and $layout->[$col][$row]->{'visible'} ) {
+                my $label     = $layout->[$col][$row]->{'label'};
                 my %tree_info = ();
                 $tree_info{'total'} = $tree_info{'left'} = scalar @{ $nodes{$label} };
                 $tree_info{'label'} = $label;
@@ -168,6 +174,8 @@ sub get_nodelist_hook {
             }
         }
     }
+
+    $self->{'_displayed_nodes'} = { map { $_->attr('id') => 1 } @nodes };
 
     unless ( $currentNode and ( first { $_ == $currentNode } @nodes ) ) {
         $currentNode = $nodes[0];
@@ -236,8 +244,8 @@ sub value_line_doubleclick_hook {
     while ($found) {
         $found = 0;
         for ( my $col = 0; $col < scalar @$layout; $col++ ) {
-            if ( $layout->[$col][$row] ) {
-                $ordering{ $layout->[$col][$row] } = $i++;
+            if ( defined $layout->[$col][$row] ) {
+                $ordering{ $layout->[$col][$row]->{'label'} } = $i++;
                 $found = 1;
             }
         }
@@ -304,7 +312,8 @@ sub precompute_tree_shifts {
         my $max_depth = 0;
         @trees = ();
         for ( my $col = 0; $col < scalar @$layout; $col++ ) {
-            if ( my $label = $layout->[$col][$row] ) {
+            if ( defined $layout->[$col][$row] ) {
+                my $label = $layout->[$col][$row]->{'label'};
                 my $depth = $forest{$label}{_tree_depth};
                 push @trees, $label;
                 $max_depth = $depth if $depth > $max_depth;
@@ -527,8 +536,10 @@ sub node_style_hook {
     # alignment
     if ( $self->show_alignment and my $links = $node->attr('alignment') ) {
         foreach my $link (@$links) {
-            push @target_ids,  $link->{'counterpart.rf'};
-            push @arrow_types, 'alignment';
+            if (exists $self->_displayed_nodes->{$link->{'counterpart.rf'}}) {
+                push @target_ids,  $link->{'counterpart.rf'};
+                push @arrow_types, 'alignment';
+            }
         }
     }
 
