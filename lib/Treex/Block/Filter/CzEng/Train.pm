@@ -83,7 +83,7 @@ sub process_document {
         my ( $x, $p, $tp ) = qw( 0 0 0 );
         for ( my $i = $count; $i < scalar @bundles; $i++ ) {
             my @features = $self->get_features($bundles[$i]);
-            my $anot     = <$anot_hdl>;
+            chomp( my $anot = <$anot_hdl> );
             $anot = ( split( "\t", $anot ) )[0];
             log_fatal "Error reading annotation file $self->{annotation}" if ! defined $anot;
             my $prediction = $self->{_classifier_obj}->predict( \@features );
