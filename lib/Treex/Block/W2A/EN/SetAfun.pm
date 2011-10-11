@@ -212,7 +212,11 @@ sub get_afun {
     my $grandpa = $eparent->get_parent();
     my $i_am_noun = $tag =~ $NOUN_REGEX;
     if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_tag =~ /^(IN|TO)/ && $grandpa ) {
-        my $grandpa_tag = $grandpa->tag || '_root';
+        my $grandpa_tag   = $grandpa->tag   || '_root';
+        my $grandpa_lemma = $grandpa->lemma || '_root';
+
+        # "This is of great interest(afun=Pnom,parent=of,grandpa=is)."
+        return 'Pnom' if $grandpa_lemma eq 'be' && $ep_lemma eq 'of' && $grandpa->precedes($node);
         return 'Adv' if $grandpa_tag =~ /^(V|MD)/;
         return 'Atr' if $grandpa_tag =~ $NOUN_REGEX;
         return 'Adv' if $i_am_noun;
@@ -226,6 +230,10 @@ sub get_afun {
         # This is just a heuristics - we guess wrong cases like
         # "Do you remember that year?", but there's no English Vallex to help.
         return 'Adv' if $lemma =~ /^(year|month|week|spring|summer|autumn|winter)$/;    #&& $node->get_siblings();
+
+        # "It is a dog(afun=Pnom)"
+        return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
+
         return 'Obj' if !$precedes_ep || $tag =~ /^W/;
         return 'NR';
     }
