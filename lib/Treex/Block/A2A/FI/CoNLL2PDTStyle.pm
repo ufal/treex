@@ -27,23 +27,15 @@ sub process_zone {
 ## TODO: check that they can stand on their own. Also check DV-MA and
 ## similar derivations.
 sub is_verb {
-    my @feats = @_;
-    if ( 1 == @feats
-         and ref $feats[0] ) {
-        @feats = split /\|/, $feats[0]->conll_pos;
-    }
-    return grep $_ =~ /^(?:V|PCP[12])$/, @feats;
+    my $node = shift;
+    return $node->get_iset('pos') eq 'verb';
 } # is_verb
 
 
 ## N is noun; NON-TWOL is an OOV word.
 sub is_noun {
-    my @feats = @_;
-    if ( 1 == @feats
-         and ref $feats[0] ) {
-        @feats = split /\|/, $feats[0]->conll_pos;
-    }
-    return grep $_ =~ /^(?:N|NON-TWOL|DEM)$/, @feats;
+    my $node = shift;
+    return $node->get_iset('pos') eq 'noun';
 } # is_noun
 
 
@@ -253,13 +245,13 @@ sub conll_to_pdt {
 
         my $deprel = $node->conll_deprel;
         my ($parent) = $node->get_eparents;
-        my @feats  = split /\|/, $node->conll_pos;
-        my @pfeats = split /\|/, $parent->tag;
+        my @feats  = split /\|/, $node->conll_feat if($node->conll_feat);
+        my @pfeats = split /\|/, $parent->conll_feat if($parent->conll_feat);
         my $afun;
 
         # Dependency of the main verb on the artificial root node.
         if ('ROOT' eq $deprel) {
-            if (is_verb(@feats)) {
+            if (is_verb($node)) {
                 $afun = 'Pred';
             } elsif (grep $_->conll_deprel =~ /^(?:nsubj|dobj|xcomp)$/,
                      $node->get_echildren) {
@@ -283,7 +275,7 @@ sub conll_to_pdt {
         } elsif ($deprel =~ /^(?:appos|nn|det|gobj|amod|infmod|poss|rcmod)$/) {
             $afun = 'Atr';
             log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
-                unless is_noun(@pfeats);
+                unless is_noun($parent);
 
         # dobj - direct object
         # acomp - adjective under verb
@@ -292,13 +284,13 @@ sub conll_to_pdt {
         } elsif ($deprel =~ /^(?:[ax]comp|iccomp|dobj|)$/) {
             $afun = 'Obj';
             log_warn("$deprel under noun\t@pfeats\t" . $node->get_address)
-                if is_noun(@pfeats);
+                if is_noun($parent);
 
         # nommod - modification expressed by a noun, can be Atr or Adv
         #          depending on the parent's POS (buggy!)
         # partmod - modifier expressed by participle, mostly of nouns
         } elsif ($deprel =~ /^(?:partmod|nommod)$/) {
-            if (is_noun(@pfeats)) {
+            if (is_noun($parent)) {
                 $afun = 'Atr';
             } else {
                 $afun = 'Adv';
@@ -306,7 +298,7 @@ sub conll_to_pdt {
 
         # advmod - adverbial modifier, Atr under nouns, Adv elsewhere
         } elsif ('advmod' eq $deprel) {
-            if (is_noun(@pfeats)) {
+            if (is_noun($parent)) {
                 $afun = 'Atr';
             } else {
                 $afun = 'Adv';
@@ -317,7 +309,7 @@ sub conll_to_pdt {
         } elsif ($deprel =~ /^(?:aux|auxpass)$/) {
             $afun = 'AuxV';
             log_warn("aux under non-verb\t@pfeats\t" . $node->get_address)
-                unless is_verb(@pfeats);
+                unless is_verb($parent);
 
         # neg - negation (AuxZ)
         } elsif ('neg' eq $deprel) {
@@ -336,7 +328,7 @@ sub conll_to_pdt {
         } elsif ($deprel =~ /^num(?:ber)?$/) {
             $afun = 'Atr';
             log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
-                unless is_noun(@pfeats);
+                unless is_noun($parent);
 
         # quantmod
         } elsif ('quantmod' eq $deprel) {
@@ -347,7 +339,7 @@ sub conll_to_pdt {
         # nsubj - the subject
         } elsif ($deprel =~ /^(?:[cn]subj(?:|-cop))$/) {
             $afun = 'Sb';
-            unless (is_verb(@pfeats) or index $deprel, '-cop') {
+            unless (is_verb($parent) or index $deprel, '-cop') {
                 log_warn("head of nsubj\t@pfeats\t" . $node->get_address);
                 $_->set_tag('ERR|V') for $node->get_eparents;
             }
@@ -464,7 +456,7 @@ sub conll_to_pdt {
         } elsif ('advcl' eq $deprel) {
             $afun = 'Adv';
             log_warn("advcl under noun\t" . $node->get_address)
-                if is_noun(@pfeats);
+                if is_noun($parent);
 
         # adpos - pre- or post-postitions: AuxP
         } elsif ('adpos' eq $deprel) {
@@ -485,7 +477,7 @@ sub conll_to_pdt {
             } elsif ('AuxC' eq $node->parent->afun) {
                 $afun = 'AuxY';
             } else {
-                if (is_noun(@pfeats)) {
+                if (is_noun($parent)) {
                     $afun = 'Atr';
                 } else {
                     $afun = 'Adv';
