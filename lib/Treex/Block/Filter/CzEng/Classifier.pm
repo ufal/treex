@@ -1,7 +1,7 @@
 package Treex::Block::Filter::CzEng::Classifier;
 use Moose::Role;
 
-requires qw( init see learn save load predict );
+requires qw( init see learn save load predict score );
 
 1;
 

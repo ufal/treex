@@ -27,6 +27,12 @@ sub predict
     return $prediction->{'x'} > $prediction->{'ok'} ? 'x' : 'ok';
 }
 
+sub score
+{
+    my $prediction = $nb->predict( attributes => _create_hash($_[1]) );
+    return $prediction->{'ok'};
+}
+
 sub load
 {
     $nb = Algorithm::NaiveBayes->restore_state( $_[1] );

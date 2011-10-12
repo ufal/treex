@@ -27,6 +27,11 @@ sub predict
     return $model->predict( $_[1] );
 }
 
+sub score
+{
+    return $model->score( $_[1] => "ok" );
+}
+
 sub load
 {
     if (defined $model) {

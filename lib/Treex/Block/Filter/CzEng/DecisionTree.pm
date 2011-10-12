@@ -27,6 +27,19 @@ sub predict
     return $dtree->get_result( attributes => _create_hash($_[1]) );
 }
 
+sub score
+{
+    my ( $self, $values_ref );
+
+    # not very useful in this case
+    my $prediction = $self->predict( $values_ref );
+    if (! defined( $prediction ) || $prediction eq 'ok') {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 sub load
 {
     $dtree = retrieve($_[1]) or log_fatal "Unable to load file $_[1]";
