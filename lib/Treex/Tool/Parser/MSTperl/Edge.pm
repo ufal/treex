@@ -36,13 +36,15 @@ has sentence => (
 sub BUILD {
     my ($self) = @_;
 
-    # parent precedes child
     if ( $self->parent->ord < $self->child->ord ) {
+
+        # parent precedes child
         $self->first( $self->parent );
         $self->second( $self->child );
 
-        # parent follows child
     } else {
+
+        # parent follows child
         $self->first( $self->child );
         $self->second( $self->parent );
     }
@@ -55,7 +57,8 @@ sub signature {
     return
         $self->sentence->id .
         '#' . $self->parent->ord .
-        '#' . $self->child->ord;
+        '#' . $self->child->ord .
+        '#' . $self->child->label;
 }
 
 1;
@@ -128,8 +131,11 @@ in the given C<sentence> (L<Treex::Tool::Parser::MSTperl::Sentence>).
 =item my $edge_signature = $edge->signature()
 
 String uniquely identifying the edge, composed of sentence C<id>
-(L<Treex::Tool::Parser::MSTperl::Sentence/id>) and C<ord>s of the edge nodes
-(L<Treex::Tool::Parser::MSTperl::Node/ord>). Used to identify the edge
+(L<Treex::Tool::Parser::MSTperl::Sentence/id>), C<ord>s of the edge nodes
+(L<Treex::Tool::Parser::MSTperl::Node/ord>)
+and label of the edge (which is stored with the child node -
+L<Treex::Tool::Parser::MSTperl::Node/label>).
+Used to identify the edge
 in the edge features
 cache (L<Treex::Tool::Parser::MSTperl::FeaturesControl/edge_features_cache>).
 

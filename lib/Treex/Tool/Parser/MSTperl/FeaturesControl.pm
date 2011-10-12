@@ -48,6 +48,30 @@ has 'parent_ord_field_index' => (
     isa => 'Int',
 );
 
+has 'label' => (
+    is      => 'rw',
+    isa     => 'Str',
+    trigger => \&_label_set,
+);
+
+# sets label_field_index
+sub _label_set {
+    my ( $self, $label ) = @_;
+
+    # set index of parent's ord field
+    my $label_index = $self->field_name2index($label);
+    $self->label_field_index($label_index);
+
+    return;    # only technical
+}
+
+has 'label_field_index' => (
+    is  => 'rw',
+    isa => 'Maybe[Int]',
+
+    #    default => 'undef',
+);
+
 has 'root_field_values' => (
     is      => 'rw',
     isa     => 'ArrayRef[Str]',
@@ -360,6 +384,7 @@ sub BUILD {
 
         # optional settings
         my @non_required_fields = (
+            'label',
             'use_edge_features_cache',
             'number_of_iterations',
         );
@@ -920,12 +945,22 @@ sub feature_between {
         $from = $edge->child->ord + 1;
         $to   = $edge->parent->ord - 1;
     }
+
+    # TODO: use precomputed values instead
+
     for ( my $ord = $from; $ord <= $to; $ord++ ) {
         push @values,
             $edge->sentence->getNodeByOrd($ord)->fields->[$field_index];
     }
-
     return [@values];
+
+    #     my $len = $to - $from;
+    #     if ($len >= 0) {
+    #         return $edge->sentence->betweenFeatureValues->{$field_index}->[$from]->[$len];
+    #     } else {
+    #         return;
+    #     }
+
 }
 
 sub feature_foreach {

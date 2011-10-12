@@ -48,16 +48,28 @@ sub parse_sentence {
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;
 
-    $sentence->clear_parse();
-    my $sentence_length = $sentence->len();
+    # parse sentence (does not modify $sentence)
+    my $sentence_parsed = $self->parse_sentence_unlabelled($sentence);
+
+    return $sentence_parsed->toParentOrdsArray();
+}
+
+sub parse_sentence_unlabelled {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    # copy the sentence (do not modify $sentence directly)
+    my $sentence_working_copy = $sentence->copy_nonparsed();
+    my $sentence_length       = $sentence_working_copy->len();
 
     my $graph = Graph::Directed->new(
         vertices => [ ( 0 .. $sentence_length ) ]
     );
     my @weighted_edges;
     if ($DEBUG) { print "EDGES (parent -> child):\n"; }
-    foreach my $child ( @{ $sentence->nodes } ) {
-        foreach my $parent ( @{ $sentence->nodes_with_root } ) {
+    foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+        foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
             if ( $child == $parent ) {
                 next;
             }
@@ -65,7 +77,7 @@ sub parse_sentence {
             my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
                 child    => $child,
                 parent   => $parent,
-                sentence => $sentence
+                sentence => $sentence_working_copy
             );
 
             # my $score = $self->model->score_edge($edge);
@@ -75,8 +87,8 @@ sub parse_sentence {
             # only progress and/or debug info
             if ($DEBUG) {
                 print $parent->ord .
-                    ' (' . $parent->form . ') -> ' . $child->ord .
-                    ' (' . $child->form . ') score: ' . $score . "\n";
+                    ' -> ' . $child->ord .
+                    ' score: ' . $score . "\n";
                 foreach my $feature ( @{$features} ) {
                     print $feature . ", ";
                 }
@@ -110,16 +122,18 @@ sub parse_sentence {
     #results
     foreach my $edge ( $msts->edges ) {
         my ( $parent, $child ) = @$edge;
-        $sentence->setChildParent( $child, $parent );
+        $sentence_working_copy->setChildParent( $child, $parent );
 
         if ($DEBUG) {
-            print "$parent (" . $sentence->getNodeByOrd($parent)->form
-                . ") -> $child (" . $sentence->getNodeByOrd($child)->form
-                . ")\n";
+            print "$parent -> $child\n";
         }
     }
 
-    return $sentence->toParentOrdsArray();
+    return $sentence_working_copy;
+}
+
+sub label_sentence {
+
 }
 
 1;

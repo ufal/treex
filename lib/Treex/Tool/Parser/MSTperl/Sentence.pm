@@ -37,6 +37,13 @@ has features => (
     isa => 'Maybe[ArrayRef[Str]]',
 );
 
+# TODO
+# has betweenFeatureValues => (
+#     isa      => 'HashRef',
+#     is       => 'rw',
+#     default => sub { {} },
+# );
+
 has edges => (
     is  => 'rw',
     isa => 'Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]]',
@@ -112,10 +119,11 @@ sub fill_fields_after_parse {
 sub clear_parse {
     my ($self) = @_;
 
-    #clear node parents
+    #clear node parents and labels
     foreach my $node ( @{ $self->nodes } ) {
         $node->parent(undef);
         $node->parentOrd(0);
+        $node->label('_');
     }
 
     #clear edges
@@ -139,6 +147,9 @@ sub copy_nonparsed {
 
     #create a new instance
     my $copy = Treex::Tool::Parser::MSTperl::Sentence->new(
+
+        # TODO: maybe should get a different ID for the sake of labelling
+        # (but this is curently not used anyway)
         id              => $self->id,
         nodes           => [@nodes],
         featuresControl => $self->featuresControl,
@@ -226,6 +237,17 @@ sub toParentOrdsArray {
     }
 
     return [@parents];
+}
+
+sub toLabelsArray {
+    my ($self) = @_;
+
+    my @labels;
+    foreach my $node ( @{ $self->nodes } ) {
+        push @labels, $node->label;
+    }
+
+    return [@labels];
 }
 
 1;

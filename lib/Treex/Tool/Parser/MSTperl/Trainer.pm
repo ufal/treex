@@ -105,11 +105,11 @@ sub train {
         # for t : 1..T # these are the inner iterations
         foreach my $sentence_correct_parse ( @{$training_data} ) {
 
-            # copy the sentence
-            my $sentence_best_parse = $sentence_correct_parse->copy_nonparsed();
-
+            # reparse the sentence
             # y' = argmax_y' s(x_t, y')
-            $self->parser->parse_sentence($sentence_best_parse);
+            my $sentence_best_parse = $self->parser->parse_sentence_unlabelled(
+                $sentence_correct_parse
+            );
             $sentence_best_parse->fill_fields_after_parse(
                 $self->featuresControl
             );
@@ -321,17 +321,21 @@ sub features_diff {
             # because an optimization of update is not present
             # and the update makes uniform changes to all differing features,
             # in which case even repeated features should be updated ONCE ONLY
-            
+
             # more often in the first array
             if ( $feature_counts{$feature} > 0 ) {
+
                 # for ( my $i = 0; $i < $count; $i++ ) {
-                    push @features_first, $feature;
+                push @features_first, $feature;
+
                 # }
 
                 # more often in the second array
             } else {
+
                 # for ( my $i = 0; $i < $count; $i++ ) {
-                    push @features_second, $feature;
+                push @features_second, $feature;
+
                 # }
             }
             $diff_count += $count;

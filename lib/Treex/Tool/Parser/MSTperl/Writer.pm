@@ -19,8 +19,19 @@ sub write_tsv {
     foreach my $sentence ( @{$sentences} ) {
         foreach my $node ( @{ $sentence->nodes } ) {
             my @line = @{ $node->fields };
+
+            # the parent_ord field contains -2 -> fill it with actual value
+            # which is stored in $node->parentOrd
             $line[ $self->featuresControl->parent_ord_field_index ] =
                 $node->parentOrd;
+
+            # the label field contains '_' -> fill it with actual value
+            # which is stored in $node->label
+            my $label_field_index = $self->featuresControl->label_field_index;
+            if ( defined $label_field_index ) {
+                $line[$label_field_index] = $node->label;
+            }
+
             print $file join "\t", @line;
             print $file "\n";
         }

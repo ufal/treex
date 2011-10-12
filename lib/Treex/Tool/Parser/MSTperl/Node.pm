@@ -30,12 +30,53 @@ has parentOrd => (
     default => 0,
 );
 
+has label => (
+    isa     => 'Str',
+    is      => 'rw',
+    default => '_',
+);
+
 sub BUILD {
     my ($self) = @_;
 
+    # handle parentOrd
+
     my $parentOrdIndex = $self->featuresControl->parent_ord_field_index;
     my $parentOrd      = $self->fields->[$parentOrdIndex];
-    $self->parentOrd($parentOrd);
+
+    # if parent is set (i.e. not filled with dummy value)
+    if ( $parentOrd != -2 ) {
+
+        # set the parentOrd field
+        $self->parentOrd($parentOrd);
+
+        # fill with dummy value as this must not not used
+        # (use node->parentOrd instead)
+        $self->fields->[$parentOrdIndex] = -2;
+    }
+
+    # handle label
+
+    my $labelIndex = $self->featuresControl->label_field_index;
+
+    # if label is used
+    if ( defined $labelIndex ) {
+        my $label = $self->fields->[$labelIndex];
+
+        # if label is set (i.e. not filled with dummy value)
+        if ( $label ne '_' ) {
+
+            # set the label field
+            $self->label($label);
+
+            # fill with dummy value as this must not not used
+            # (use node->label instead)
+            $self->fields->[$labelIndex] = '_';
+        }
+    }
+
+    #     my $debug = join ',', @{$self->fields};
+    #     warn "$debug\n";
 
     return;    # only technical
 }
@@ -46,6 +87,18 @@ sub copy_nonparsed {
     my $copy = Treex::Tool::Parser::MSTperl::Node->new(
         fields          => $self->fields,
         featuresControl => $self->featuresControl,
+    );
+
+    return $copy;
+}
+
+sub copy_nonlabelled {
+    my ($self) = @_;
+
+    my $copy = Treex::Tool::Parser::MSTperl::Node->new(
+        fields          => $self->fields,
+        featuresControl => $self->featuresControl,
+        parentOrd       => $self->parentOrd,
     );
 
     return $copy;

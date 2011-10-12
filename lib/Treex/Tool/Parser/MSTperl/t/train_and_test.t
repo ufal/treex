@@ -67,10 +67,12 @@ my $total_words  = 0;
 my $total_errors = 0;
 my @sentences;
 foreach my $correct_sentence ( @{$test_data} ) {
-    my $test_sentence = $correct_sentence->copy_nonparsed();
-
     #parse
-    ok( $parser->parse_sentence($test_sentence), 'parse sentence' );
+    ok(
+        my $test_sentence =
+            $parser->parse_sentence_unlabelled($correct_sentence),
+        'parse sentence'
+    );
     push @sentences, $test_sentence;
     my $sentenceLength = $test_sentence->len();
     my $errorCount     = $test_sentence->count_errors($correct_sentence);
