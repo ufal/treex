@@ -11,7 +11,7 @@ has model_file => (
     isa           => 'Str',
     is            => 'ro',
     required      => 0,
-    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/model",
+    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/model.maxent",
     documentation => 'model file'
 );
 
@@ -46,7 +46,6 @@ sub process_document {
     $self->{_classifier_obj}->init();
     $self->{_classifier_obj}->load($self->{model_file});
 
-    open( my $anot_hdl, $self->{annotation} ) or log_fatal $!;
     foreach my $bundle ($document->get_bundles()) {
         my @features = $self->get_features($bundle);
         my $prediction = $self->{_classifier_obj}->predict( \@features );
@@ -55,7 +54,7 @@ sub process_document {
         # let's keep the sentence in such case
         $prediction = 'ok' if ! defined $prediction;
 
-        $self->add_feature($self->{_classifier_obj}->predict( \@features ));
+        $self->add_feature( $bundle, "filter_prediction=$prediction" );
     }
 
     return 1;
