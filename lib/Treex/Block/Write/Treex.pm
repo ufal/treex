@@ -80,6 +80,12 @@ sub process_document {
         }
         else {
             $filename = ( defined $self->path ? $self->path : '' ) . $next_filename;
+            
+            # HACK: Treex::PML::Document->save() cannot take filehandle
+            if ($filename eq '-'){
+                $filename = '/dev/stdout';
+            }
+            
             $self->set_filenames( \@rest_filenames );
         }
     }
