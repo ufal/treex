@@ -33,44 +33,44 @@ sub _get_interlinks {
     # process nodes in the reversed order
     foreach my $bundle (reverse $doc->get_bundles) {
         
-        my ($sel, $lang) = ($self->selector, $self->language);
-        my $tree = $bundle->get_tree( $lang, 't', $sel );
-
         my %local_non_visited_ante_ids = %non_visited_ante_ids;
+        
+        foreach my $zone ($bundle->get_all_zones) {
+            my $tree = $bundle->get_tree( $zone->language, 't', $zone->selector );
 
-        foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
-            
-            # remove links where $node is an antecedent
-            foreach my $ante_id (keys %local_non_visited_ante_ids) {
-                if ($node->id eq $ante_id) {
-                    delete $local_non_visited_ante_ids{$ante_id};
+            foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
+                
+                # remove links where $node is an antecedent
+                foreach my $ante_id (keys %local_non_visited_ante_ids) {
+                    if ($node->id eq $ante_id) {
+                        delete $local_non_visited_ante_ids{$ante_id};
+                    }
                 }
-            }
 
-            # get antes
-            my @antes = ();
-            if ($type eq 'gram') {
-                @antes = $node->get_coref_gram_nodes;
-            }
-            elsif ($type eq 'text') {
-                @antes = $node->get_coref_text_nodes;
-            }
-            else {
-                @antes = $node->get_coref_nodes;
-            }
-            #use Data::Dumper;
-            #print STDERR Dumper(\@antes);
+                # get antes
+                my @antes = ();
+                if ($type eq 'gram') {
+                    @antes = $node->get_coref_gram_nodes;
+                }
+                elsif ($type eq 'text') {
+                    @antes = $node->get_coref_text_nodes;
+                }
+                else {
+                    @antes = $node->get_coref_nodes;
+                }
+                #use Data::Dumper;
+                #print STDERR Dumper(\@antes);
 
-            # skip cataphoric links
-            my @non_cataph = grep {!defined $processed_node_ids{$_->id}} @antes;
-            # new links
-            foreach my $ante (@non_cataph) {
-                push @{$local_non_visited_ante_ids{$ante->id}}, $node->id;
+                # skip cataphoric links
+                my @non_cataph = grep {!defined $processed_node_ids{$_->id}} @antes;
+                # new links
+                foreach my $ante (@non_cataph) {
+                    push @{$local_non_visited_ante_ids{$ante->id}}, $node->id;
+                }
+                
+                $processed_node_ids{ $node->id }++;
             }
-            
-            $processed_node_ids{ $node->id }++;
         }
-
         # store the number of links from this tree to previous ones
         unshift @interlinks, \%local_non_visited_ante_ids;
         # retain the unresolved links
@@ -169,9 +169,9 @@ sub process_document {
     my @break_idx_list = $self->_get_break_idx_list( @interlinks );
     
     # DEBUG
-    # print STDERR Dumper(\@interlinks);
-    #print STDERR join ", ", @break_idx_list;
-    #print STDERR "\n";
+    print STDERR Dumper(\@interlinks);
+    print STDERR join ", ", @break_idx_list;
+    print STDERR "\n";
     
     if (!$self->dry_run) {
         $self->_remove_interlinks( $doc, \@interlinks, \@break_idx_list );
