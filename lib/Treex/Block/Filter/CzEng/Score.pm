@@ -9,9 +9,9 @@ extends 'Treex::Block::Filter::CzEng::Common';
 
 has model_file => (
     isa           => 'Str',
-    is            => 'ro',
+    is            => 'rw',
     required      => 0,
-    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/model.maxent",
+    default       => "model.maxent",
     documentation => 'model file'
 );
 
@@ -39,6 +39,8 @@ sub BUILD {
     } else {
         log_fatal "Unknown classifier type: $self->{classifier_type}";
     }
+
+    $self->{model_file} = "/net/projects/tectomt_shared/data/models/czeng_filter/" . $self->{model_file};
 }
 
 sub process_document {

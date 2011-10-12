@@ -16,9 +16,9 @@ has annotation => (
 
 has outfile => (
     isa           => 'Str',
-    is            => 'ro',
+    is            => 'rw',
     required      => 0,
-    default       => "/net/projects/tectomt_shared/data/models/czeng_filter/model",
+    default       => "model.maxent",
     documentation => 'output file for the model'
 );
 
@@ -55,6 +55,8 @@ sub BUILD {
     } else {
         log_fatal "Unknown classifier type: $self->{classifier_type}";
     }
+
+    $self->{outfile} = "/net/projects/tectomt_shared/data/models/czeng_filter/" . $self->{outfile};
 }
 
 sub process_document {
