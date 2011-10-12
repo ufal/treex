@@ -239,7 +239,16 @@ sub get_afun {
     }
 
     # Verbs under verbs
-    return 'Adv' if $tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/;
+    if ($tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/){
+        
+        # TODO: distinguish Obj and Adv by better rules
+        # "I must|want|need|have to go(afun=Obj)"
+        return 'Obj' if $ep_tag eq 'MD' || $ep_lemma =~ /^(have|need)$/;
+        
+        # "Go there to see(afun=Adv) it."
+        return 'Adv';
+    }
+    
 
     # And the rest - we don't know
     return 'NR';

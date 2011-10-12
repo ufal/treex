@@ -31,14 +31,14 @@ sub process_atree {
     my @sorted_chunks = sort { @$a <=> @$b } grep { @$_ < @a_nodes } values %chunks;
 
     # Parse each chunk independently (plus the whole sentence)
+    CHUNK:
     foreach my $chunk ( @sorted_chunks, \@a_nodes ) {
 
         # There can be a nested chunk inside $chunk,
         # which is shorter and therefore already parsed.
-        # We skip all the nodes of the nested chunk except for its root
-        # which was left attached to the $a_root.
+        # We skip all the nodes of the nested chunk.
+        # This is not true anymore (except for its root which was left attached to the $a_root.)
         my @ch_nodes = grep { $_->parent == $a_root } @$chunk;
-
         # If this is a "parenthesis chunk" (enclosed in round brackets),
         # leave the brackets aside to be hanged on the root of the chunk later.
         # (Parsers would mostly guess this right, but not always.)
@@ -50,6 +50,9 @@ sub process_atree {
         else {
             $lrb = undef;
         }
+        
+        # Check special cases like "Hello ((bug))."
+        next CHUNK if !@ch_nodes;
 
         # Here comes the very parsing.
         # Hopefully, the chunk has got just one root, but rather check it.
@@ -68,7 +71,13 @@ sub process_atree {
             }
 
             # We can guess the parent of this chunk (usually the previous word)
-            $ch_root->set_parent( $lrb->get_prev_node || $rrb->get_next_node || $a_root );
+            my $ch_parent = $lrb->get_prev_node || $rrb->get_next_node || $a_root;
+            
+            # Prevent cycles in cases like "(Hello) (there)."
+            if ($ch_parent->is_descendant_of($ch_root)){
+                $ch_parent = $a_root;
+            }
+            $ch_root->set_parent($ch_parent);
         }
     }
     return;
