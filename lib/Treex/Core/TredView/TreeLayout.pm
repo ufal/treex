@@ -83,7 +83,7 @@ sub load_layouts {
 
         for ( my $i = 0; $i <= $#label; $i++ ) {
             my ( $col, $row, $visibility ) = split '-', $coords[$i];
-            $visibility = 0 if not defined $visibility;
+            $visibility = 1 if not defined $visibility;
             $cols->[$col]->[$row] = { 'label' => $label[$i], 'visible' => $visibility };
         }
 
