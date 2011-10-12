@@ -1,4 +1,4 @@
-package Treex::Block::Filter::CzEng::SuggestSegmentBreaks;
+package Treex::Block::Segment::SuggestSegmentBreaks;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -185,23 +185,39 @@ sub process_document {
 
 1;
 
-=over
+=head1 NAME
 
-=item Treex::Block::Filter::CzEng::SuggestSegmentBreaks
+Treex::Block::Segment::SuggestSegmentBreaks
+
+=head1 DESCRIPTION
 
 It suggests the places where to split the document into two segments.
 The bundle which begins a new segment is labeled with an attribute
-wild->{'segm_break'}. These places are selected in the way that the 
+C<< wild->{'segm_break'} >>. These places are selected in the way that the 
 number of disconnected coreference links is minimum.
 All places which lie between segments that are not interlinked by
 coreference relations are labeled as candidates. Intralinked segments
-larger than max_size bundles are divided in the place with the smallest
+larger than C<max_size> bundles are divided in the place with the smallest
 number links.
 
-=back
+=head1 ATTRIBUTES
 
-=cut
+=over 4
 
-# Copyright 2011 Michal Novak
+=item max_size
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+the maximum allowed size of a segment
+
+=item dry_run
+
+if equal to 1, all inter-segmental links are retained, otherwise, removed
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
