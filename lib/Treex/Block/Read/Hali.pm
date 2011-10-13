@@ -25,12 +25,12 @@ sub next_document {
 
     LINE:
     foreach my $line ( split /\n/, $text ) {
-        my ( $sentnum, $blocknum, $sentid, $origfile, $align_score,
+        my ( $sentnum, $blocknum, $sentid, $origfile, #$align_score,
              $sent1, $sent2 ) = split /\t/, $line;
         my $bundle = $document->create_bundle();
         $bundle->set_attr( 'czeng/id',          $sentid );
         $bundle->set_attr( 'czeng/origfile',    $origfile );
-        $bundle->set_attr( 'czeng/align_score', $align_score );
+        #$bundle->set_attr( 'czeng/align_score', $align_score );
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
         $bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
     }
@@ -49,13 +49,16 @@ Treex::Block::Read::Hali
 =head1 DESCRIPTION
 
 Document reader for Hunalign plain text format:
-one sentence per line, tab separated id, align_type, align_score,
+one sentence per line, tab separated
+sentence_number, block_number, sentence_id, orig_file,
 sentence_in_language1, sentence_in_language2.
+
 E.g.
   
-  ted1	1-1	1.0	A ono je.	And it is.
-  ted2	1-1	1.0	A přitom nám to dnes připadá normální.	And yet, it feels natural to us now.
+  1 1   ted1	ted1:1	A ono je.	And it is.
+  2 1   ted2	ted1:3	A přitom nám to dnes připadá normální.	And yet, it feels natural to us now.
 
+Note, align_score and align_type is no more present in hali format.
 
 =head1 ATTRIBUTES
 
