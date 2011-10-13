@@ -467,7 +467,7 @@ sub extract_features {
         [-2, -1, 0, 1, 2, 3, 7]
     );
     $coref_features{c_file_deepord_dist} = _categorize(
-        $anaph->wild->{aca_file_deepord} - $cand->wild->{aca_file_deepord},
+        $anaph->wild->{doc_ord} - $cand->wild->{doc_ord},
         [1, 2, 3, 6, 15, 25, 40, 50]
     );
     $coref_features{c_cand_ord} = _categorize(
@@ -704,24 +704,6 @@ sub mark_doc_clause_nums {
             }
         }
         $curr_clause_num += $clause_count;
-    }
-}
-
-sub mark_doc_deepord {
-    my ($self, $trees) = @_;
-
-    my $curr_deepord = 0;
-    foreach my $tree (@{$trees}) {
-        my $node_count = 0;
-        
-        foreach my $node ($tree->descendants ) {
-            $node->wild->{aca_file_deepord} = 
-                $node->ord + $curr_deepord;
-            if ($node->ord > $node_count) {
-                $node_count = $node->ord;
-            }
-        }
-        $curr_deepord += $node_count;      
     }
 }
 

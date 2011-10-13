@@ -124,7 +124,6 @@ before 'process_document' => sub {
     $fe->count_collocations( \@trees );
     $fe->count_np_freq( \@trees );
     $fe->mark_doc_clause_nums( \@trees );
-    $fe->mark_doc_deepord( \@trees );
 };
 
 sub process_tnode {

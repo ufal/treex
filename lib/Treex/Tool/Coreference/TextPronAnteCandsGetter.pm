@@ -83,7 +83,7 @@ sub _find_positive_cands {
 
 # TODO for debugging reasons to accord with the data of Linh et al. (2009). This should be
 # cancelled afterwards
-        if ($jnode->wild->{aca_file_deepord} < $ante->wild->{aca_file_deepord}) {
+        if ($jnode->wild->{doc_ord} < $ante->wild->{doc_ord}) {
             return [];
         }
 
