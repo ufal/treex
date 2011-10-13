@@ -30,11 +30,9 @@ Treex::Block::A2T::SetDocOrds
 
 =head1 DESCRIPTION
 
-# TODO
-
-=head1 ATTRIBUTES
-
-# TODO
+It sets the attribute C<< wild->{'doc_ord'} >>, which captures the ordinal number
+of the node within the whole document. It does not reflect any later changes
+in a node order or insertions and removals of nodes.
 
 =head1 AUTHORS
 
