@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 sub process_document {
     my ($self, $doc) = @_;
 
+    my $curr_deepord = 0;
     foreach my $bundle ($doc->get_bundles) {
         my $tree = $bundle->get_tree( $self->language, 't', $self->selector );
 
