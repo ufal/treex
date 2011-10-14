@@ -5,6 +5,13 @@ extends 'Treex::Core::Block';
 
 use Graph;
 
+has 'retain_cataphora' => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 0,
+    required => 1,
+);
+
 sub _create_coref_graph {
     my ($self, $doc) = @_;
 
@@ -28,6 +35,11 @@ sub _create_coref_graph {
 sub _sort_chain {
     my ($self, $chain) = @_;
 
+    if ($self->retain_cataphora) {
+        my @no_cataphors = grep {my $anaph = $_; 
+            !any {$_->wild->{doc_ord} > $anaph->wild->{doc_ord}} $anaph->get_coref_nodes} @$chain;
+        $chain = \@no_cataphors;
+    }
     my @ordered_chain = sort {$a->wild->{doc_ord} <=> $b->wild->{doc_ord}} @$chain;
 
     my $ante = shift @ordered_chain;
