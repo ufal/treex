@@ -36,8 +36,18 @@ sub _sort_chain {
     my ($self, $chain) = @_;
 
     if ($self->retain_cataphora) {
-        my @no_cataphors = grep {my $anaph = $_; 
-            !any {$_->wild->{doc_ord} > $anaph->wild->{doc_ord}} $anaph->get_coref_nodes} @$chain;
+
+        my @no_cataphors = ();
+        foreach my $anaph (@$chain) {
+            if (any {$_->wild->{doc_ord} > $anaph->wild->{doc_ord}} $anaph->get_coref_nodes) {
+                
+                my @antes = grep {$_->wild->{doc_ord} < $anaph->wild->{doc_ord}} $anaph->get_coref_nodes;
+                $anaph->remove_coref_nodes( @antes );
+            }
+            else {
+                push @no_cataphors, $anaph;
+            }
+        }
         $chain = \@no_cataphors;
     }
     my @ordered_chain = sort {$a->wild->{doc_ord} <=> $b->wild->{doc_ord}} @$chain;
@@ -48,7 +58,7 @@ sub _sort_chain {
         my @gram_antes = $anaph->get_coref_gram_nodes;
         
         # replace the current antecedent with a direct predecessor
-        $anaph->remove_coref_nodes;
+        $anaph->remove_coref_nodes( $anaph->get_coref_nodes );
         if (@gram_antes > 0) {
             $anaph->add_coref_gram_nodes( $ante );
         }
