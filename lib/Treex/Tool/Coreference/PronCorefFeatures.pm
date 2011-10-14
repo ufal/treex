@@ -638,9 +638,9 @@ sub extract_features {
     }
 
 # DEBUG
-    if (($anaph->id eq 't-cmpr9410-047-p15s2a1') && ($coref_features{b_Creature} == $b_true)) {
-        print STDERR $cand->t_lemma . "\n";
-    }
+#    if (($anaph->id eq 't-cmpr9410-047-p15s2a1') && ($coref_features{b_Creature} == $b_true)) {
+#        print STDERR $cand->t_lemma . "\n";
+#    }
     
     #   celkem 71 vlastnosti + ID
     return ( \%coref_features );
