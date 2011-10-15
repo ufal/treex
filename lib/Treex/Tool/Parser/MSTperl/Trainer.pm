@@ -5,15 +5,10 @@ use Carp;
 
 use Treex::Tool::Parser::MSTperl::Parser;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
-);
-
-has model => (
-    isa => 'Treex::Tool::Parser::MSTperl::Model',
-    is  => 'rw',
 );
 
 has parser => (
@@ -33,41 +28,149 @@ sub BUILD {
     my ($self) = @_;
 
     $self->parser(
-        Treex::Tool::Parser::MSTperl::Parser->new(
-            featuresControl => $self->featuresControl
-            )
+        Treex::Tool::Parser::MSTperl::Parser->new( config => $self->config )
     );
-    $self->model( $self->parser->model );
 
-    return;                    # only technical
+    return;
 }
 
-sub train {
+sub unlabelled_train {
 
     # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
     # Training data: T = {(x_t, y_t)} t=1..T
     my ( $self, $training_data ) = @_;
 
+    my $feature_count = $self->train_main_loop(
+        $training_data,
+        1,
+        $self->config->number_of_iterations
+    );
+
+    return $feature_count;
+}
+
+sub labelled_train {
+
+    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
+    # Training data: T = {(x_t, y_t)} t=1..T
+    my ( $self, $training_data ) = @_;
+
+    my $feature_count = $self->train_main_loop(
+        $training_data,
+        0,
+        $self->config->labeller_number_of_iterations
+    );
+
+    return $feature_count;
+}
+
+sub train_main_loop {
+
+    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data
+    #  Bool $unlabelled, Int $number_of_iterations)
+    # Training data: T = {(x_t, y_t)} t=1..T
+    my ( $self, $training_data, $unlabelled, $number_of_iterations ) = @_;
+
+    # set certain things
+    my $model;
+    my $featuresControl;
+    my $updateSub;
+    if ($unlabelled) {
+        $model           = $self->parser->unlabelled_model;
+        $featuresControl = $self->config->unlabelledFeaturesControl;
+        $updateSub       = \&{unlabelled_update};
+    } else {
+        $model           = $self->parser->labelled_model;
+        $featuresControl = $self->config->labelledFeaturesControl;
+        $updateSub       = \&{labelled_update};
+    }
+
+    # number of sentences in training data
     my $sentence_count = scalar( @{$training_data} );
+
+    # how many times $self->mira_update() will be called
+    my $number_of_inner_iterations = $number_of_iterations * $sentence_count;
 
     # only progress and/or debug info
     print "Going to train on $sentence_count sentences with "
-        . $self->featuresControl->number_of_iterations . " iterations.\n";
+        . $number_of_iterations . " iterations.\n";
 
-    # END only progress and/or debug info
+    # precompute features of sentences in training data
+    $self->precompute_sentence_features( $training_data, $featuresControl );
 
-    # compute features of sentences in training data
+    # do the training
+    # for n : 1..N
+    print "Training the model...\n";
+    my $innerIteration = 0;
+    for ( my $iteration = 1; $iteration <= $number_of_iterations; $iteration++ )
+    {
+        print "  Iteration number $iteration of $number_of_iterations...\n";
+        my $sentNo = 0;
+
+        # for t : 1..T # these are the inner iterations
+        foreach my $sentence_correct_parse ( @{$training_data} ) {
+
+            # weight of feature weights sum update <N*T .. 1>
+            # $sumUpdateWeight denotes number of summands
+            # in which the weight would appear
+            # if it were computed according to the definition
+            my $sumUpdateWeight = $number_of_inner_iterations - $innerIteration;
+
+            # update on this instance
+            &$updateSub( $self, $sentence_correct_parse, $sumUpdateWeight );
+
+            # $innerIteration = ( $iteration - 1 ) * $sentence_count + $sentNo;
+            $innerIteration++;
+
+            # only progress and/or debug info
+            $sentNo++;
+            if ( $sentNo % 50 == 0 ) {
+                print "    $sentNo/$sentence_count sentences processed " .
+                    "(iteration $iteration/$number_of_iterations)\n";
+            }
+
+        }    # end for inner iterations
+    }    # end for $iteration
+
+    # only progress and/or debug info
+    print "Done.\n";
+    if ($DEBUG) {
+        print "FINAL FEATURE WEIGTHS:\n";
+    }
+
+    # recount weights of features as averages
+    $self->recompute_feature_weights( $number_of_inner_iterations, $model );
+
+    # only progress and/or debug info
+    my $feature_count = scalar( keys %feature_weights_summed );
+    print "Model trained with $feature_count features.\n";
+
+    return $feature_count;
+
+}    # end sub train_main_loop
+
+# precompute features of sentences in training data
+sub precompute_sentence_features {
+
+    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data
+    #  Treex::Tool::Parser::MSTperl::FeaturesControl $featuresControl)
+    my ( $self, $training_data, $featuresControl ) = @_;
+
+    # only progress and/or debug info
     print "Computing sentence features...\n";
-    my $sentNo = 0;
+    my $sentence_count = scalar( @{$training_data} );
+    my $sentNo         = 0;
+
     foreach my $sentence_correct_parse ( @{$training_data} ) {
-        $sentence_correct_parse->fill_fields_after_parse(
-            $self->featuresControl
-        );
+
+        # compute the features
+        $sentence_correct_parse->fill_fields_after_parse($featuresControl);
 
         # only progress and/or debug info
         $sentNo++;
         if ( $sentNo % 50 == 0 ) {
-            print "  $sentNo/$sentence_count sentences processed (computing features)\n";
+            print "  $sentNo/$sentence_count sentences"
+                . "processed (computing features)\n";
         }
         if ($DEBUG) {
             print "SENTENCE FEATURES:\n";
@@ -80,123 +183,92 @@ sub train {
             }
         }
 
-        # END only progress and/or debug info
     }
+
     print "Done.\n";
 
-    # do the training
-    print "Training the model...\n";
+    return;
+}
 
-    # how many times $self->mira_update() will be called
-    my $number_of_inner_iterations =
-        $self->featuresControl->number_of_iterations * $sentence_count;
+# recompute feature weights as averages
+sub recompute_feature_weights {
 
-    # for n : 1..N
-    for (
-        my $iteration = 1;
-        $iteration <= $self->featuresControl->number_of_iterations;
-        $iteration++
-        )
-    {
-        print "  Iteration number $iteration of "
-            . $self->featuresControl->number_of_iterations . "...\n";
-        $sentNo = 0;
-
-        # for t : 1..T # these are the inner iterations
-        foreach my $sentence_correct_parse ( @{$training_data} ) {
-
-            # reparse the sentence
-            # y' = argmax_y' s(x_t, y')
-            my $sentence_best_parse = $self->parser->parse_sentence_unlabelled(
-                $sentence_correct_parse
-            );
-            $sentence_best_parse->fill_fields_after_parse(
-                $self->featuresControl
-            );
-
-            # only progress and/or debug info
-            if ($DEBUG) {
-                print "CORRECT PARSE EDGES:\n";
-                foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
-                    print $edge->parent->form . " -> "
-                        . $edge->child->form . "\n";
-                }
-                print "BEST PARSE EDGES:\n";
-                foreach my $edge ( @{ $sentence_best_parse->edges } ) {
-                    print $edge->parent->form . " -> "
-                        . $edge->child->form . "\n";
-                }
-            }
-
-            # END only progress and/or debug info
-
-            my $innerIteration = ( $iteration - 1 ) * $sentence_count + $sentNo;
-
-            # <0 .. (N*T-1)>
-            my $sumUpdateWeight = $number_of_inner_iterations - $innerIteration;
-
-            # weight of feature weights sum update <N*T .. 1>
-            # $sumUpdateWeight denotes number of summands
-            # in which the weight would appear
-            # if it were computed according to the definition
-
-            $self->mira_update(
-                $sentence_correct_parse,
-                $sentence_best_parse,
-                $sumUpdateWeight
-            );
-
-            # min ||w_i+1 - w_i|| s.t. ...
-
-            $sentNo++;
-
-            # only progress and/or debug info
-            if ( $sentNo % 50 == 0 ) {
-                print "    $sentNo/$sentence_count sentences processed " .
-                    "(iteration $iteration/"
-                    . $self->featuresControl->number_of_iterations . ")\n";
-            }
-
-            # END only progress and/or debug info
-
-        }
-    }
-
-    # only progress and/or debug info
-    print "Done.\n";
-    if ($DEBUG) {
-        print "FINAL FEATURE WEIGTHS:\n";
-    }
-
-    # END only progress and/or debug info
+    # Int $number_of_inner_iterations
+    my ( $self, $number_of_inner_iterations, $model ) = @_;
 
     foreach my $feature ( keys %feature_weights_summed ) {
 
         # w = v/(N * T)
-        # here used as w = 1000 * v/(N * T)
-        # is not necessary but makes numbers reasonably big
         # see also: my $number_of_inner_iterations =
-        # $self->featuresControl->number_of_iterations * $sentence_count;
-        my $weight = 1000 * $feature_weights_summed{$feature}
+        # $self->config->number_of_iterations * $sentence_count;
+        my $weight = $feature_weights_summed{$feature}
             / $number_of_inner_iterations;
-        $self->model->set_feature_weight( $feature, $weight );
+        $model->set_feature_weight( $feature, $weight );
 
         # only progress and/or debug info
         if ($DEBUG) {
-            print "$feature\t" . $self->model->get_feature_weight($feature)
+            print "$feature\t" . $model->get_feature_weight($feature)
                 . "\n";
         }
-
-        # END only progress and/or debug info
     }
 
-    my $feature_count = scalar( keys %feature_weights_summed );
-    print "Model trained with $feature_count features.\n";
+    return;
 
-    return 1;
 }
 
-sub mira_update {
+sub unlabelled_update {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse,
+    # Int $sumUpdateWeight)
+    my (
+        $self,
+        $sentence_correct_parse,
+        $sumUpdateWeight
+    ) = @_;
+
+    # reparse the sentence
+    # y' = argmax_y' s(x_t, y')
+    my $sentence_best_parse = $self->parser->parse_sentence_unlabelled(
+        $sentence_correct_parse
+    );
+    $sentence_best_parse->fill_fields_after_parse(
+        $self->config->unlabelledFeaturesControl
+    );
+
+    # only progress and/or debug info
+    if ($DEBUG) {
+        print "CORRECT PARSE EDGES:\n";
+        foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
+            print $edge->parent->form . " -> "
+                . $edge->child->form . "\n";
+        }
+        print "BEST PARSE EDGES:\n";
+        foreach my $edge ( @{ $sentence_best_parse->edges } ) {
+            print $edge->parent->form . " -> "
+                . $edge->child->form . "\n";
+        }
+    }
+
+    # min ||w_i+1 - w_i|| s.t. ...
+    $self->unlabelled_mira_update(
+        $sentence_correct_parse,
+        $sentence_best_parse,
+        $sumUpdateWeight
+    );
+
+    return;
+
+}
+
+sub labelled_update {
+
+    # TODO labelled_update
+
+    return;
+
+}
+
+sub unlabelled_mira_update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse,
     # Treex::Tool::Parser::MSTperl::Sentence $sentence_best_parse,
@@ -208,11 +280,13 @@ sub mira_update {
         $sumUpdateWeight
     ) = @_;
 
+    my $model = $self->parser->unlabelled_model;
+
     # s(x_t, y_t)
-    my $score_correct = $sentence_correct_parse->score( $self->model );
+    my $score_correct = $sentence_correct_parse->score($model);
 
     # s(x_t, y')
-    my $score_best = $sentence_best_parse->score( $self->model );
+    my $score_best = $sentence_best_parse->score($model);
 
     # difference in scores should be greater than the margin:
 
@@ -247,6 +321,7 @@ sub mira_update {
             #$update is added to features occuring in the correct parse only
             foreach my $feature ( @{$features_diff_correct} ) {
                 $self->update_feature_weight(
+                    $model,
                     $feature,
                     $update,
                     $sumUpdateWeight
@@ -257,6 +332,7 @@ sub mira_update {
             # in the best (and incorrect) parse only
             foreach my $feature ( @{$features_diff_best} ) {
                 $self->update_feature_weight(
+                    $model,
                     $feature,
                     -$update,
                     $sumUpdateWeight
@@ -272,16 +348,21 @@ sub mira_update {
         }
     }
 
-    return 1;
+    return;
+}
+
+sub labelled_mira_update {
+
+    # TODO labelled_mira_update
 }
 
 sub update_feature_weight {
 
-    # (Str $feature, Num $update)
-    my ( $self, $feature, $update, $sumUpdateWeight ) = @_;
+    # (Treex::Tool::Parser::MSTperl::Model $model, Str $feature, Num $update)
+    my ( $self, $model, $feature, $update, $sumUpdateWeight ) = @_;
 
     #adds $update to the current weight of the feature
-    my $result = $self->model->update_feature_weight( $feature, $update );
+    my $result = $model->update_feature_weight( $feature, $update );
 
     # v = v + w_{i+1}
     # $sumUpdateWeight denotes number of summands
@@ -306,7 +387,7 @@ sub features_diff {
         $feature_counts{$feature}--;
     }
 
-    # TODO: disregard features which occur in both parses?
+    # TODO: try to disregard features which occur in both parses?
 
     #do the diff
     my @features_first;
@@ -381,9 +462,9 @@ being trained.
 Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is
 used for the training.
 
-=item featuresControl
+=item config
 
-Reference to the instance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+Reference to the instance of L<Treex::Tool::Parser::MSTperl::Config>.
 
 =back
 
@@ -391,15 +472,15 @@ Reference to the instance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =over 4
 
-=item my $trainer = Treex::Tool::Parser::MSTperl::Trainer->new(featuresControl
-    => $featuresControl);
+=item my $trainer = Treex::Tool::Parser::MSTperl::Trainer->new(config
+    => $config);
 
 Creates a new instance of the trainer (also initializes a the C<model>
 and the C<parser>).
 
 =item $trainer->train($training_data);
 
-Trains the model, using the settings from C<featuresControl> and the training
+Trains the model, using the settings from C<config> and the training
 data in the form of a reference to an array of parsed sentences
 (L<Treex::Tool::Parser::MSTperl::Sentence>), which can be obtained by the
 L<Treex::Tool::Parser::MSTperl::Reader>.
@@ -446,7 +527,7 @@ The third returned value (C<$features_diff_count>) is a count of features
 in which the parses differ, ie.
 C<$features_diff_count = scalar(@$features_diff_1) + scalar(@$features_diff_2)>.
 
-=item update_feature_weight( $feature, $update, $sumUpdateWeight )
+=item update_feature_weight( $model, $feature, $update, $sumUpdateWeight )
 
 Updates weight of C<$feature> by C<$update>
 (which might be positive or negative)

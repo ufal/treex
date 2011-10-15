@@ -32,9 +32,13 @@ sub store {
     print $file Dumper $self->weights;
     close $file;
 
-    print "Model saved.\n";
-
-    return 1;
+    if ( -e $filename ) {
+        print "Model saved.\n";
+        return 1;
+    } else {
+        croak "MSTperl parser error:"
+            . "unable to create the model file '$filename'!";
+    }
 }
 
 sub store_tsv {
@@ -59,9 +63,13 @@ sub store_tsv {
     }
     close $file;
 
-    print "Model saved.\n";
-
-    return 1;
+    if ( -e $filename ) {
+        print "Model saved.\n";
+        return 1;
+    } else {
+        croak "MSTperl parser error:"
+            . "unable to create the model file '$filename'!";
+    }
 }
 
 sub load {
@@ -74,9 +82,13 @@ sub load {
     my $weights = do $filename;
     $self->weights($weights);
 
-    print "Model loaded.\n";
-
-    return 1;
+    if ( scalar( keys %{ $self->weights } ) ) {
+        print "Model loaded.\n";
+        return 1;
+    } else {
+        croak "MSTperl parser error:"
+            . "no feature weights found in the model file!";
+    }
 }
 
 sub load_tsv {
@@ -120,9 +132,13 @@ sub load_tsv {
 
     $self->weights( \%weights );
 
-    print "Model loaded.\n";
-
-    return 1;
+    if ( scalar( keys %{ $self->weights } ) ) {
+        print "Model loaded.\n";
+        return 1;
+    } else {
+        croak "MSTperl parser error:"
+            . "no feature weights found in the model file!";
+    }
 }
 
 # ACCESS TO FEATURES
@@ -171,7 +187,7 @@ sub set_feature_weight {
 
     $self->weights->{$feature} = $weight;
 
-    return 1;
+    return;
 }
 
 sub update_feature_weight {
@@ -181,7 +197,7 @@ sub update_feature_weight {
 
     $self->weights->{$feature} += $update;
 
-    return 1;
+    return;
 }
 
 1;

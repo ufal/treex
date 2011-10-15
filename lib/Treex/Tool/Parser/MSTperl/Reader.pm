@@ -3,8 +3,8 @@ package Treex::Tool::Parser::MSTperl::Reader;
 use Moose;
 use autodie;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
 );
@@ -24,7 +24,7 @@ sub read_tsv {
         if (/^$/) {
             my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
                 id => $id++, nodes => [@nodes],
-                featuresControl => $self->featuresControl
+                config => $self->config
             );
             push @sentences, $sentence;
             undef @nodes;
@@ -34,13 +34,11 @@ sub read_tsv {
                 print "  " . scalar(@sentences) . " sentences read.\n";
             }
 
-            # END only progress and/or debug info
-
         } else {
-            my @fields = split /\t/, $_, $self->featuresControl->field_names_count;
+            my @fields = split /\t/, $_, $self->config->field_names_count;
             my $node = Treex::Tool::Parser::MSTperl::Node->new(
-                fields          => [@fields],
-                featuresControl => $self->featuresControl
+                fields => [@fields],
+                config => $self->config
             );
             push @nodes, $node;
         }
@@ -83,8 +81,8 @@ Reads a TSV file C<$filename>, returns a reference to an array of sentences
 (instances of L<Treex::Tool::Parser::MSTperl::Sentence>).
 
 The structure of the file (the order of the fields)
-is determined by the C<featuresControl> field
-(instance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>),
+is determined by the C<config> field
+(instance of L<Treex::Tool::Parser::MSTperl::Config>),
 specifically by the C<field_names> setting.
 
 =back

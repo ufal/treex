@@ -5,8 +5,8 @@ use Moose;
 use Treex::Tool::Parser::MSTperl::Node;
 use Treex::Tool::Parser::MSTperl::RootNode;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
 );
@@ -56,8 +56,8 @@ sub BUILD {
 
     #add root
     my $root = Treex::Tool::Parser::MSTperl::RootNode->new(
-        fields          => $self->featuresControl->root_field_values,
-        featuresControl => $self->featuresControl
+        fields => $self->config->root_field_values,
+        config => $self->config
     );
     my @nodes_with_root;
     push @nodes_with_root, $root;
@@ -71,7 +71,7 @@ sub BUILD {
         $ord++;
     }
 
-    return;    # only technical
+    return;
 }
 
 sub fill_fields_after_parse {
@@ -113,7 +113,7 @@ sub fill_fields_after_parse {
     }
     $self->features( [@features] );
 
-    return 1;
+    return;
 }
 
 sub clear_parse {
@@ -132,7 +132,7 @@ sub clear_parse {
     #clear features
     $self->features(undef);
 
-    return 1;
+    return;
 }
 
 sub copy_nonparsed {
@@ -150,9 +150,9 @@ sub copy_nonparsed {
 
         # TODO: maybe should get a different ID for the sake of labelling
         # (but this is curently not used anyway)
-        id              => $self->id,
-        nodes           => [@nodes],
-        featuresControl => $self->featuresControl,
+        id     => $self->id,
+        nodes  => [@nodes],
+        config => $self->config,
     );
 
     return $copy;
@@ -169,7 +169,7 @@ sub setChildParent {
     $child->parent($parent);
     $child->parentOrd($parentOrd);
 
-    return 1;
+    return;
 }
 
 sub len {

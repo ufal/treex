@@ -7,28 +7,28 @@ binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
 binmode STDERR, ':encoding(utf8)';
 
-use Treex::Tool::Parser::MSTperl::FeaturesControl;
+use Treex::Tool::Parser::MSTperl::Config;
 use Treex::Tool::Parser::MSTperl::Reader;
 use Treex::Tool::Parser::MSTperl::Trainer;
 
 my ( $train_file, $model_file, $config_file, $save_tsv ) = @ARGV;
 
-my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+my $config = Treex::Tool::Parser::MSTperl::Config->new(
     config_file => $config_file
 );
 
 my $reader = Treex::Tool::Parser::MSTperl::Reader->new(
-    featuresControl => $featuresControl
+    config => $config
 );
 
 my $training_data = $reader->read_tsv($train_file);
 
 my $trainer = Treex::Tool::Parser::MSTperl::Trainer->new(
-    featuresControl => $featuresControl
+    config => $config
 );
 
-$trainer->train($training_data);
-$trainer->model->store($model_file);
+$trainer->unlabelled_train($training_data);
+$trainer->parser->unlabelled_model->store($model_file);
 if ($save_tsv) {
-    $trainer->model->store_tsv( $model_file . '.tsv' );
+    $trainer->parser->unlabelled_model->store_tsv( $model_file . '.tsv' );
 }

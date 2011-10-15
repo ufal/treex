@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Parser;
 
 use Moose;
+use Carp;
 
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Edge;
@@ -10,14 +11,19 @@ use Graph;
 use Graph::Directed;
 use Graph::ChuLiuEdmonds;    #returns MINIMUM spanning tree
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
 );
 
-has model => (
-    isa => 'Treex::Tool::Parser::MSTperl::Model',
+has unlabelled_model => (
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
+    is  => 'rw',
+);
+
+has labelled_model => (
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
     is  => 'rw',
 );
 
@@ -26,21 +32,41 @@ my $DEBUG = 0;
 sub BUILD {
     my ($self) = @_;
 
-    $self->model(
-        Treex::Tool::Parser::MSTperl::Model->new(
-            featuresControl => $self->featuresControl
-            )
-    );
+    if ( $self->config->unlabelledFeaturesControl ) {
+        $self->unlabelled_model(
+            Treex::Tool::Parser::MSTperl::Model->new(
+                featuresControl => $self->config->unlabelledFeaturesControl
+                )
+        );
+    }
 
-    return;    # only technical
+    if ( $self->config->labelledFeaturesControl ) {
+        $self->labelled_model(
+            Treex::Tool::Parser::MSTperl::Model->new(
+                featuresControl => $self->config->labelledFeaturesControl
+                )
+        );
+    }
+
+    return;
 }
 
 sub load_model {
 
     # (Str $filename)
-    my ( $self, $filename ) = @_;
+    my ( $self, $filename_unlabelled, $filename_labelled ) = @_;
 
-    return $self->model->load($filename);
+    my $result = 0;
+
+    if ( $filename_unlabelled && $self->unlabelled_model ) {
+        $result = $self->unlabelled_model->load($filename_unlabelled);
+    }
+
+    if ( $filename_labelled && $self->labelled_model ) {
+        $result = $self->labelled_model->load($filename_labelled);
+    }
+
+    return $result;
 }
 
 sub parse_sentence {
@@ -58,6 +84,10 @@ sub parse_sentence_unlabelled {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;
+
+    if ( !$self->unlabelled_model ) {
+        croak "MSTperl parser error: There is no model for unlabelled parsing!";
+    }
 
     # copy the sentence (do not modify $sentence directly)
     my $sentence_working_copy = $sentence->copy_nonparsed();
@@ -81,8 +111,9 @@ sub parse_sentence_unlabelled {
             );
 
             # my $score = $self->model->score_edge($edge);
-            my $features = $self->featuresControl->get_all_features($edge);
-            my $score    = $self->model->score_features($features);
+            my $features = $self->config->unlabelledFeaturesControl
+                ->get_all_features($edge);
+            my $score    = $self->unlabelled_model->score_features($features);
 
             # only progress and/or debug info
             if ($DEBUG) {
@@ -96,8 +127,6 @@ sub parse_sentence_unlabelled {
                 print "\n";
             }
 
-            # END only progress and/or debug info
-
             # MaxST needed but MinST is computed
             #  -> need to normalize score as -$score
             push @weighted_edges, ( $parent->ord, $child->ord, -$score );
@@ -110,8 +139,6 @@ sub parse_sentence_unlabelled {
         print join " ", @weighted_edges;
         print "\n";
     }
-
-    # END only progress and/or debug info
 
     $graph->add_weighted_edges(@weighted_edges);
 
@@ -165,7 +192,7 @@ in Proc. HLT/EMNLP.
 
 =item $parser->load_model('modelfile.model');
 
-Loads a model (= sets feature weights)
+Loads an unlabelled and/or a labelled model (= sets feature weights)
 using L<Treex::Tool::Parser::MSTperl::Model/load>.
 
 A model has to be loaded before sentences can be parsed.

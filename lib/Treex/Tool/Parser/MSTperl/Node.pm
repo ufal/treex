@@ -2,8 +2,8 @@ package Treex::Tool::Parser::MSTperl::Node;
 
 use Moose;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
 );
@@ -41,7 +41,7 @@ sub BUILD {
 
     # handle parentOrd
 
-    my $parentOrdIndex = $self->featuresControl->parent_ord_field_index;
+    my $parentOrdIndex = $self->config->parent_ord_field_index;
     my $parentOrd      = $self->fields->[$parentOrdIndex];
 
     # if parent is set (i.e. not filled with dummy value)
@@ -57,7 +57,7 @@ sub BUILD {
 
     # handle label
 
-    my $labelIndex = $self->featuresControl->label_field_index;
+    my $labelIndex = $self->config->label_field_index;
 
     # if label is used
     if ( defined $labelIndex ) {
@@ -78,15 +78,15 @@ sub BUILD {
     #     my $debug = join ',', @{$self->fields};
     #     warn "$debug\n";
 
-    return;    # only technical
+    return;
 }
 
 sub copy_nonparsed {
     my ($self) = @_;
 
     my $copy = Treex::Tool::Parser::MSTperl::Node->new(
-        fields          => $self->fields,
-        featuresControl => $self->featuresControl,
+        fields => $self->fields,
+        config => $self->config,
     );
 
     return $copy;
@@ -96,9 +96,9 @@ sub copy_nonlabelled {
     my ($self) = @_;
 
     my $copy = Treex::Tool::Parser::MSTperl::Node->new(
-        fields          => $self->fields,
-        featuresControl => $self->featuresControl,
-        parentOrd       => $self->parentOrd,
+        fields    => $self->fields,
+        config    => $self->config,
+        parentOrd => $self->parentOrd,
     );
 
     return $copy;
@@ -134,7 +134,7 @@ It may also point to its parent node.
 
 Fields read from input and directly stored here,
 such as word form, morphological lemma, morphological tag etc.
-See L<Treex::Tool::Parser::MSTperl::FeaturesControl> for details.
+See L<Treex::Tool::Parser::MSTperl::Config> for details.
 
 =item ord
 
@@ -173,7 +173,7 @@ is copied here, as it is used more often than the C<parent> field itself.
 );
 
 Creates a new node with the given field values (C<fields>)
-and using the given L<Treex::Tool::Parser::MSTperl::FeaturesControl> instance
+and using the given L<Treex::Tool::Parser::MSTperl::Config> instance
 (C<featuresControl>).
 
 =item my $node_copy = $node->copy_nonparsed()

@@ -3,8 +3,8 @@ package Treex::Tool::Parser::MSTperl::Writer;
 use Moose;
 use autodie;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
 );
@@ -22,12 +22,12 @@ sub write_tsv {
 
             # the parent_ord field contains -2 -> fill it with actual value
             # which is stored in $node->parentOrd
-            $line[ $self->featuresControl->parent_ord_field_index ] =
+            $line[ $self->config->parent_ord_field_index ] =
                 $node->parentOrd;
 
             # the label field contains '_' -> fill it with actual value
             # which is stored in $node->label
-            my $label_field_index = $self->featuresControl->label_field_index;
+            my $label_field_index = $self->config->label_field_index;
             if ( defined $label_field_index ) {
                 $line[$label_field_index] = $node->label;
             }
@@ -39,7 +39,12 @@ sub write_tsv {
     }
     close $file;
 
-    return 1;
+    if ( -e $filename ) {
+        return 1;
+    } else {
+        croak "MSTperl parser error:"
+            . "unable to create the output file '$filename'!";
+    }
 }
 
 1;
@@ -74,8 +79,8 @@ Takes a reference to an array of sentences C<$sentences>
 and writes them to file C<$filename>.
 
 The structure of the file (the order of the fields)
-is determined by the C<featuresControl> field
-(instance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>),
+is determined by the C<config> field
+(instance of L<Treex::Tool::Parser::MSTperl::Config>),
 specifically by the C<field_names> setting.
 
 =back

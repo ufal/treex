@@ -4,265 +4,24 @@ use Moose;
 use autodie;
 use Carp;
 
-has 'config_file' => (
+has 'config' => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
-    isa      => 'Str',
     required => '1',
+    weak_ref => '1',
 );
 
-# training mode or parsing mode
-has 'training' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => '0',
-);
-
-# (default is parsing mode)
-
-# CONFIGURATION
-
-# has 'ord_field_index' => (
-#     is => 'rw',
-#     isa => 'Int',
-# );
-
-has 'parent_ord' => (
-    is      => 'rw',
-    isa     => 'Str',
-    trigger => \&_parent_ord_set,
-);
-
-# sets parent_ord_field_index
-sub _parent_ord_set {
-    my ( $self, $parent_ord ) = @_;
-
-    # set index of parent's ord field
-    my $parent_ord_index = $self->field_name2index($parent_ord);
-    $self->parent_ord_field_index($parent_ord_index);
-
-    return;    # only technical
-}
-
-has 'parent_ord_field_index' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has 'label' => (
-    is      => 'rw',
-    isa     => 'Str',
-    trigger => \&_label_set,
-);
-
-# sets label_field_index
-sub _label_set {
-    my ( $self, $label ) = @_;
-
-    # set index of parent's ord field
-    my $label_index = $self->field_name2index($label);
-    $self->label_field_index($label_index);
-
-    return;    # only technical
-}
-
-has 'label_field_index' => (
-    is  => 'rw',
-    isa => 'Maybe[Int]',
-
-    #    default => 'undef',
-);
-
-has 'root_field_values' => (
-    is      => 'rw',
-    isa     => 'ArrayRef[Str]',
-    default => sub { [] },
-    trigger => \&_root_field_values_set,
-);
-
-# checks number of root field values
-sub _root_field_values_set {
-    my ($self) = @_;
-
-    # check number of fields
-    my $root_fields_count = scalar( @{ $self->root_field_values } );
-    if ( $root_fields_count != $self->field_names_count ) {
-        croak "MSTperl config file error: " .
-            "Incorrect number of root field values ($root_fields_count), " .
-            "must be same as number of field names (" .
-            $self->field_names_count . ")!";
-    }
-
-    return;    # only technical
-}
-
-has 'number_of_iterations' => (
-    isa     => 'Int',
-    is      => 'rw',
-    default => 10,
-);
-
-has 'use_edge_features_cache' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => '0',
-);
-
-# using cache turned off to fit into RAM by default
-# turn on if training with a lot of RAM or on small training data
-# turned off when parsing (does not make any sense for parsing)
-
-has 'distance_buckets' => (
-    is      => 'rw',
-    isa     => 'ArrayRef[Int]',
-    default => sub { [] },
-    trigger => \&_distance_buckets_set,
-);
-
-# sets distance2bucket, maxBucket and minBucket
-sub _distance_buckets_set {
-    my ( $self, $distance_buckets ) = @_;
-
-    my %distance2bucket;
-
-    # find maximal bucket & partly fill %distance2bucket
-    my $maxBucket = 0;
-    foreach my $bucket ( @{$distance_buckets} ) {
-        if ( $distance2bucket{$bucket} ) {
-            warn "Bucket '$bucket' is defined more than once; " .
-                "disregarding its later definitions.\n";
-        } elsif ( $bucket <= 0 ) {
-            croak "MSTperl config file error: " .
-                "Error on bucket '$bucket' - " .
-                "buckets must be positive integers.";
-        } else {
-            $distance2bucket{$bucket} = $bucket;
-            $distance2bucket{ -$bucket } = -$bucket;
-            if ( $bucket > $maxBucket ) {
-                $maxBucket = $bucket;
-            }
-        }
-    }
-
-    # set maxBucket and minBucket
-    my $minBucket = -$maxBucket;
-    $self->maxBucket($maxBucket);
-    $self->minBucket($minBucket);
-
-    # fill %distance2bucket from minBucket to maxBucket
-    if ( !$distance2bucket{1} ) {
-        warn "Bucket '1' is not defined, which does not make any sense; " .
-            "adding definition of bucket '1'.\n";
-        $distance2bucket{1}  = 1;
-        $distance2bucket{-1} = -1;
-    }
-    my $lastBucket = 1;
-    for ( my $distance = 2; $distance < $maxBucket; $distance++ ) {
-        if ( $distance2bucket{$distance} ) {
-
-            # the distance defines a bucket
-            $lastBucket = $distance2bucket{$distance};
-        } else {
-
-            # the distance falls into the highest lower bucket
-            $distance2bucket{$distance} = $lastBucket;
-            $distance2bucket{ -$distance } = -$lastBucket;
-        }
-    }
-    $self->distance2bucket( \%distance2bucket );
-
-    return;    # only technical
-}
-
-has 'distance2bucket' => (
-    is      => 'rw',
-    isa     => 'HashRef[Int]',
-    default => sub { {} },
-);
-
-# if mapping is not found in the hash, maxBucket or minBucket is used
-
-has 'maxBucket' => (
-    isa     => 'Int',
-    is      => 'rw',
-    default => '9',
-);
-
-# any higher distance falls into this bucket
-
-has 'minBucket' => (
-    isa     => 'Int',
-    is      => 'rw',
-    default => '-9',
-);
-
-# any lower distance falls into this bucket, distance is signed (ORD minus ord)
-
-# FIELDS
-
-# field names (for conversion of field index to field name)
-has 'field_names' => (
-    is      => 'rw',
-    isa     => 'ArrayRef[Str]',
-    default => sub { [] },
-    trigger => \&_field_names_set,
-);
-
-# checks field_names, sets field_names_hash and field_indexes
-sub _field_names_set {
-    my ( $self, $field_names ) = @_;
-
-    my %field_names_hash;
-    my %field_indexes;
-    for ( my $index = 0; $index < scalar( @{$field_names} ); $index++ ) {
-        my $field_name = $field_names->[$index];
-        if ( $field_names_hash{$field_name} ) {
-            croak "MSTperl config file error: " .
-                "Duplicate field name '$field_name'!";
-        } elsif ( $field_name ne lc($field_name) ) {
-            croak "MSTperl config file error: " .
-                "Field name '$field_name' is not lowercase!";
-        } elsif ( !$field_name =~ /a-z/ ) {
-            croak "MSTperl config file error: " .
-                "Field name '$field_name' does not contain " .
-                "any character from [a-z]!";
-        } else {
-            $field_names_hash{$field_name} = 1;
-            $field_indexes{$field_name}    = $index;
-        }
-    }
-    $self->field_names_count( scalar( @{$field_names} ) );
-    $self->field_names_hash( \%field_names_hash );
-    $self->field_indexes( \%field_indexes );
-
-    return;    # only technical
-}
-
-has 'field_names_count' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => '0',
-);
-
-# 1 for each field name to easily check if a field name exists
-has 'field_names_hash' => (
-    is      => 'rw',
-    isa     => 'HashRef[Str]',
-    default => sub { {} },
-);
-
-# index of each field name in field_names
-# (for conversion of field name to field index)
-has 'field_indexes' => (
-    is      => 'rw',
-    isa     => 'HashRef[Str]',
-    default => sub { {} },
-);
-
-# FEATURES
+# FEATURES for unlabelled parsing
 
 has 'feature_count' => (
     is  => 'rw',
     isa => 'Int',
+);
+
+has 'feature_codes_from_config' => (
+    is      => 'rw',
+    isa     => 'ArrayRef[Str]',
+    default => sub { [] },
 );
 
 has 'feature_codes' => (
@@ -298,7 +57,7 @@ has 'array_features' => (
     default => sub { {} },
 );
 
-# SIMPLE FEATURES
+# SIMPLE FEATURES for unlabelled parser
 
 has 'simple_feature_count' => (
     is  => 'rw',
@@ -351,6 +110,16 @@ has 'array_simple_features' => (
 
 # CACHING
 
+has 'use_edge_features_cache' => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => '0',
+);
+
+# using cache turned off to fit into RAM by default
+# turn on if training with a lot of RAM or on small training data
+# turned off when parsing (does not make any sense for parsing)
+
 has 'edge_features_cache' => (
     is      => 'rw',
     isa     => 'HashRef[ArrayRef[Str]]',
@@ -360,62 +129,20 @@ has 'edge_features_cache' => (
 sub BUILD {
     my ($self) = @_;
 
-    print "Processing config file " . $self->config_file . "...\n";
-    use YAML::Tiny;
-    my $config = YAML::Tiny->new;
-    $config = YAML::Tiny->read( $self->config_file );
-
-    if ($config) {
-
-        # required settings
-        my @required_fields = (
-            'field_names',
-            'root_field_values',
-            'parent_ord',
-            'distance_buckets',
-        );
-        foreach my $field (@required_fields) {
-            if ( $config->[0]->{$field} ) {
-                $self->$field( $config->[0]->{$field} );
-            } else {
-                croak "MSTperl config file error: Field $field must be set!";
-            }
-        }
-
-        # optional settings
-        my @non_required_fields = (
-            'label',
-            'use_edge_features_cache',
-            'number_of_iterations',
-        );
-        foreach my $field (@non_required_fields) {
-            if ( $config->[0]->{$field} ) {
-                $self->$field( $config->[0]->{$field} );
-            }
-        }
-
-        # features
-        if ( !@{ $config->[0]->{features} } ) {
-            croak "MSTperl config file error: Features must be set!";
-        }
-        foreach my $feature ( @{ $config->[0]->{features} } ) {
-            $self->set_feature($feature);
-        }
-    } else {
-        croak "MSTperl config file error: " . YAML::Tiny->errstr;
-    }
-
     # ignore some settings if in parsing-only mode
-    if ( !$self->training ) {
-        $self->use_edge_features_cache(0);
+    #     if ( !$self->training ) {
+    #         $self->use_edge_features_cache(0);
+    #     }
+
+    # features
+    foreach my $feature ( @{ $self->feature_codes_from_config } ) {
+        $self->set_feature($feature);
     }
 
     $self->feature_count( scalar( @{ $self->feature_codes } ) );
     $self->simple_feature_count( scalar( @{ $self->simple_feature_codes } ) );
 
-    print "Done." . "\n";
-
-    return;    # only technical
+    return;
 }
 
 sub set_feature {
@@ -467,7 +194,7 @@ sub set_feature {
         }
     }
 
-    return 1;
+    return;
 }
 
 sub set_simple_feature {
@@ -544,7 +271,7 @@ sub set_simple_feature {
         croak "Incorrect simple feature format '$simple_feature_code'.";
     }
     my $simple_feature_field_index =
-        $self->field_name2index($simple_feature_field);
+        $self->config->field_name2index($simple_feature_field);
 
     # save
     $self->simple_feature_codes_hash->{$simple_feature_code} = 1;
@@ -554,27 +281,7 @@ sub set_simple_feature {
     push @{ $self->simple_feature_subs },          $simple_feature_sub;
     push @{ $self->simple_feature_field_indexes }, $simple_feature_field_index;
 
-    return 1;
-}
-
-sub field_name2index {
-    my ( $self, $field_name ) = @_;
-
-    if ( ref $field_name eq 'ARRAY' ) {
-
-        # multiarg feature
-        my @return;
-        foreach my $field ( @{$field_name} ) {
-            push @return, $self->field_name2index($field);
-        }
-        return [@return];
-    } else {
-        if ( $self->field_names_hash->{$field_name} ) {
-            return $self->field_indexes->{$field_name};
-        } else {
-            croak "Unknown field '$field_name', quiting.";
-        }
-    }
+    return;
 }
 
 # FEATURES COMPUTATION
@@ -760,14 +467,14 @@ sub feature_distance {
         $edge->parent->fields->[$field_index]
         - $edge->child->fields->[$field_index];
 
-    my $bucket = $self->distance2bucket->{$distance};
+    my $bucket = $self->config->distance2bucket->{$distance};
     if ($bucket) {
         return $bucket;
     } else {
-        if ( $distance <= $self->minBucket ) {
-            return $self->minBucket;
+        if ( $distance <= $self->config->minBucket ) {
+            return $self->config->minBucket;
         } else {    # $distance >= $self->maxBucket
-            return $self->maxBucket;
+            return $self->config->maxBucket;
         }
     }
 }
@@ -956,7 +663,8 @@ sub feature_between {
 
     #     my $len = $to - $from;
     #     if ($len >= 0) {
-    #         return $edge->sentence->betweenFeatureValues->{$field_index}->[$from]->[$len];
+    #         return $edge->sentence->betweenFeatureValues->
+    #            {$field_index}->[$from]->[$len];
     #     } else {
     #         return;
     #     }
@@ -1070,7 +778,6 @@ Treex::Tool::Parser::MSTperl::FeaturesControl
 =head1 DESCRIPTION
 
 Controls the features used in the model.
-Also handles the configuration.
 
 =head2 Features
 
@@ -1164,25 +871,6 @@ feature). This can result in several instances of the feature with the same
 code for one edge to appear in the result.
 
 =head1 FIELDS
-
-=head2 Fields
-
-=over 4
-
-=item field_names (ArrayRef[Str])
-
-Field names (for conversion of field index to field name)
-
-=item field_names_hash (HashRef[Str])
-
-1 for each field name to easily check if a field name exists
-
-=item field_indexes (HashRef[Str])
-
-Index of each field name in field_names (for conversion of field name to field
-index)
-
-=back
 
 =head2 Features
 
@@ -1321,53 +1009,7 @@ L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is
 
 =back
 
-=head2 Settings
-
-The the config file (usually C<config.txt>) is in YAML format.
-
-Some of the settings are ignored when in parsing mode (i.e. not training).
-These are use_edge_features_cache (turned off) and number_of_iterations
-(irrelevant).
-
-These are settings which are acquired from the configuration file (see also
-its contents, the options are also richly commented there):
-
-=head3 Basic Settings
-
-=over 4
-
-=item field_names
-
-Lowercase names of fields in the input file
-(the data fields are to be separated by tabs in the input file).
-Use [a-z0-9_] only, using always at least one letter.
-Use unique names, i.e. devise some names even for unused fields.
-
-=item root_field_values
-
-Field values to set for the (technical) root node.
-
-=item parent_ord
-
-Name of field containing ord of the parent of the node
-(also called "head" or "governing node").
-
-=item number_of_iterations
-
-How many times the trainer (Tagger::MSTperl::Trainer) should go through
-all the training data (default is C<10>).
-
-=item use_edge_features_cache
-
-Turns on and off using the C<edge_features_cache>. Default is C<0>.
-
-Using cache should be turned on (C<1>) if training with a lot of RAM or on small
-training data, as it uses a lot of memory but speeds up the training greatly
-(approx. by 30% to 50%). If you need to save RAM, turn it off (C<0>).
-
-=back
-
-=head3 Features Settings
+=head2 Feature functions
 
 In the C<features> field of the config file all features to be used by the model
 are set. Use the input file field names to use the field of the (child) node,
@@ -1410,9 +1052,6 @@ C<equalspc> uses C<field1> of the parent node and C<field2> of the child node.
 
 =back
 
-Lines beginning with # are comments and are ignored. Lines that contain
-only whitespace chars or are empty are ignored as well.
-
 =head1 METHODS
 
 =head2 Settings
@@ -1424,11 +1063,13 @@ commented and accompanied by real examples at the same time.
 =over 4
 
 =item my $featuresControl =
-Treex::Tool::Parser::MSTperl::FeaturesControl->new(config_file => 'file.config')
+Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+    'config' => $config,
+    'feature_codes_from_config' => $feature_codes_array_reference,
+    'use_edge_features_cache' => $use_edge_features_cache,
+)
 
-Reads the configuration file (in YAML format) and applies the settings.
-
-See file C<samples/sample.config>.
+Parses feature codes and creates their in-memory representations.
 
 =item set_feature ($feature_code)
 
@@ -1441,12 +1082,6 @@ possibly also the C<array_features> field).
 Parses the simple feature code and creates its representation in the fields of
 this package (all C<simple_feature_>* fields and possibly also the
 C<array_simple_features> field).
-
-=item field_name2index ($field_name)
-
-Fields are referred to by names in the config files but by indexes in the
-code. Therefore this conversion function is necessary; the other direction of
-the conversion is ensured by the C<field_names> field.
 
 =back
 

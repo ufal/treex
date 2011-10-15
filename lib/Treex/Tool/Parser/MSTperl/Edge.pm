@@ -49,7 +49,7 @@ sub BUILD {
         $self->second( $self->parent );
     }
 
-    return;    # only technical
+    return;
 }
 
 sub signature {

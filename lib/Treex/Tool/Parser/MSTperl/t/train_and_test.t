@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 24;
+use Test::More tests => 30;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -14,11 +14,17 @@ binmode STDERR, ':encoding(utf8)';
 
 BEGIN {
     note( 'INIT' );
+    use_ok('Treex::Tool::Parser::MSTperl::Config');
+    use_ok('Treex::Tool::Parser::MSTperl::Edge');
     use_ok('Treex::Tool::Parser::MSTperl::FeaturesControl');
+    use_ok('Treex::Tool::Parser::MSTperl::Model');
+    use_ok('Treex::Tool::Parser::MSTperl::Node');
+    use_ok('Treex::Tool::Parser::MSTperl::Parser');
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
+    use_ok('Treex::Tool::Parser::MSTperl::RootNode');
+    use_ok('Treex::Tool::Parser::MSTperl::Sentence');
     use_ok('Treex::Tool::Parser::MSTperl::Trainer');
     use_ok('Treex::Tool::Parser::MSTperl::Writer');
-    use_ok('Treex::Tool::Parser::MSTperl::Parser');
 }
 
 my ( $train_file, $test_file, $model_file, $config_file, $save_tsv ) =
@@ -27,9 +33,9 @@ my ( $train_file, $test_file, $model_file, $config_file, $save_tsv ) =
      "$FindBin::Bin/sample.model",
      "$FindBin::Bin/sample.config");
 
-my $featuresControl = new_ok( 'Treex::Tool::Parser::MSTperl::FeaturesControl' => [ config_file => $config_file ], "process config file," );
+my $config = new_ok( 'Treex::Tool::Parser::MSTperl::Config' => [ config_file => $config_file ], "process config file," );
 
-my $reader = new_ok( 'Treex::Tool::Parser::MSTperl::Reader' => [ featuresControl => $featuresControl ], "initialize Reader," );
+my $reader = new_ok( 'Treex::Tool::Parser::MSTperl::Reader' => [ config => $config ], "initialize Reader," );
 
 
 
@@ -37,17 +43,17 @@ note( 'TRAINING' );
 
 ok( my $training_data = $reader->read_tsv($train_file), "read training data" );
 
-my $trainer = new_ok( 'Treex::Tool::Parser::MSTperl::Trainer' => [ featuresControl => $featuresControl ], "initialize Trainer," );
+my $trainer = new_ok( 'Treex::Tool::Parser::MSTperl::Trainer' => [ config => $config ], "initialize Trainer," );
 
-ok( $trainer->train($training_data), "perform training" );
+ok( $trainer->unlabelled_train($training_data), "perform training" );
 
-ok( $trainer->model->store($model_file), "save model" );
+ok( $trainer->parser->unlabelled_model->store($model_file), "save model" );
 
-ok( $trainer->model->store_tsv( $model_file . '.tsv' ), "save model to tsv" );
+ok( $trainer->parser->unlabelled_model->store_tsv( $model_file . '.tsv' ), "save model to tsv" );
 
-ok( $trainer->model->load($model_file), "load model" );
+ok( $trainer->parser->unlabelled_model->load($model_file), "load model" );
 
-ok( $trainer->model->load_tsv( $model_file . '.tsv' ), "load model to tsv" );
+ok( $trainer->parser->unlabelled_model->load_tsv( $model_file . '.tsv' ), "load model to tsv" );
 
 unlink $model_file . '.tsv';
 
@@ -59,7 +65,7 @@ ok( my $test_data = $reader->read_tsv($test_file), "read test data" );
 
 my $sentence_count = scalar( @{$test_data} );
 
-my $parser = new_ok( 'Treex::Tool::Parser::MSTperl::Parser' => [ featuresControl => $featuresControl ], "initialize Parser," );
+my $parser = new_ok( 'Treex::Tool::Parser::MSTperl::Parser' => [ config => $config ], "initialize Parser," );
 
 ok( $parser->load_model($model_file), "load model" );
 
@@ -88,7 +94,7 @@ is( $total_words, 47, 'testing on 47 words' );
 # version without the bug (corrected in rev. 6899)
 is( $total_errors, 20, 'returns on the given data 20 errors' );
 
-my $writer = new_ok( 'Treex::Tool::Parser::MSTperl::Writer' => [ featuresControl => $featuresControl ], "initialize Writer," );
+my $writer = new_ok( 'Treex::Tool::Parser::MSTperl::Writer' => [ config => $config ], "initialize Writer," );
 
 ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
 
