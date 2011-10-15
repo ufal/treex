@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::BaseChunkParser';
 
-use Treex::Tool::Parser::MSTperl::FeaturesControl;
+use Treex::Tool::Parser::MSTperl::Config;
 use Treex::Tool::Parser::MSTperl::Parser;
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Node;
@@ -61,13 +61,13 @@ sub _build_parser {
         :
         "$base_name.config"
     );
-    my $featuresControl = Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+    my $config = Treex::Tool::Parser::MSTperl::Config->new(
         config_file => $config_file,
         training => 0
     );
     
     my $parser = Treex::Tool::Parser::MSTperl::Parser->new(
-        featuresControl => $featuresControl
+        config => $config
     );
     my $model_file = (
         $self->model_from_share
@@ -122,7 +122,7 @@ sub _get_sentence {
     foreach my $a_node (@a_nodes) {
         # get field values
         my @field_values;
-        foreach my $field_name (@{$self->parser->featuresControl->field_names}) {
+        foreach my $field_name (@{$self->parser->config->field_names}) {
             my $field_value = $self->_get_field_value(
                 $a_node, $field_name, $alignment_hash);
             if (defined $field_value) {
@@ -134,7 +134,7 @@ sub _get_sentence {
         # create Node object
         my $node = Treex::Tool::Parser::MSTperl::Node->new(
             fields => \@field_values,
-            featuresControl => $self->parser->featuresControl
+            config => $self->parser->config
         );
         # store the Node object
         push @nodes, $node;
@@ -143,7 +143,7 @@ sub _get_sentence {
     # create object of class Treex::Tool::Parser::MSTperl::Sentence
     my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
         nodes => \@nodes,
-        featuresControl => $self->parser->featuresControl
+        config => $self->parser->config
     );
     
     return $sentence;
@@ -258,7 +258,7 @@ C<share/data/models/mst_perl_parser/en/conll_2007.model>
 It is not sensible to change the config file unless you decide to train
 your own model.
 However if you B<do> decide to train your own model, then see
-L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+L<Treex::Tool::Parser::MSTperl::Config>.
 
 TODO: provide a treex interface for the trainer?
 
