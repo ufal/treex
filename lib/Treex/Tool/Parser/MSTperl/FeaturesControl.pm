@@ -88,7 +88,7 @@ has 'simple_feature_subs' => (
     default => sub { [] },
 );
 
-has 'simple_feature_field_indexes' => (
+has 'simple_feature_sub_arguments' => (
     is      => 'rw',
     isa     => 'ArrayRef',
     default => sub { [] },
@@ -270,16 +270,23 @@ sub set_simple_feature {
     } else {
         croak "Incorrect simple feature format '$simple_feature_code'.";
     }
-    my $simple_feature_field_index =
+
+    # if $simple_feature_field is (a ref to) an array of field names,
+    #   handles that correctly by iterating over the array and returning
+    #   an array of field indexes;
+    # if there is an integer argument instead of a field name,
+    #   detects that and keeps that integer unchanged
+    my $simple_feature_sub_arguments =
         $self->config->field_name2index($simple_feature_field);
 
     # save
     $self->simple_feature_codes_hash->{$simple_feature_code} = 1;
     $self->simple_feature_indexes->{$simple_feature_code} =
         $simple_feature_index;
-    push @{ $self->simple_feature_codes },         $simple_feature_code;
-    push @{ $self->simple_feature_subs },          $simple_feature_sub;
-    push @{ $self->simple_feature_field_indexes }, $simple_feature_field_index;
+    push @{ $self->simple_feature_codes }, $simple_feature_code;
+    push @{ $self->simple_feature_subs },  $simple_feature_sub;
+    push @{ $self->simple_feature_sub_arguments },
+        $simple_feature_sub_arguments;
 
     return;
 }
@@ -289,7 +296,7 @@ sub set_simple_feature {
 sub get_all_features {
     my ( $self, $edge ) = @_;
 
-    # try to get featres from cache
+    # try to get features from cache
     my $edge_signature;
     if ( $self->use_edge_features_cache ) {
         $edge_signature = $edge->signature();
@@ -423,11 +430,13 @@ sub get_simple_feature_values_array {
     {
         my $sub = $self->simple_feature_subs->[$simple_feature_index];
 
-        # if the simple feature takes more than one argment,
-        # then $field_index is an array reference
-        my $field_index =
-            $self->simple_feature_field_indexes->[$simple_feature_index];
-        my $value = &$sub( $self, $edge, $field_index );
+        # If the simple feature has one parameter,
+        # then $arguments is the one argument;
+        # if the simple feature has more than one parameter,
+        # then $arguments is a reference to an array of arguments.
+        my $arguments =
+            $self->simple_feature_sub_arguments->[$simple_feature_index];
+        my $value = &$sub( $self, $edge, $arguments );
         push @simple_feature_values, $value;
     }
 
@@ -447,7 +456,12 @@ my %simple_feature_sub_references = (
     'between'     => \&{feature_between},
     'foreach'     => \&{feature_foreach},
     'equals'      => \&{feature_equals},
-    'equalspc'    => \&{feature_equalspc},
+    'equalspc'    => \&{feature_equals_pc},
+    'equalspcat'  => \&{feature_equals_pc_at},
+    'isfirst'     => \&{feature_child_is_first_in_sentence},
+    'ISFIRST'     => \&{feature_parent_is_first_in_sentence},
+    'islast'      => \&{feature_child_is_last_in_sentence},
+    'ISLAST'      => \&{feature_parent_is_last_in_sentence},
 );
 
 sub get_simple_feature_sub_reference {
@@ -723,7 +737,7 @@ sub feature_equals {
 
 # only difference to equals is the line:
 # my $values_1 = $edge->PARENT->fields->[$field_index_1];
-sub feature_equalspc {
+sub feature_equals_pc {
     my ( $self, $edge, $field_indexes ) = @_;
 
     # equals takes two arguments
@@ -763,45 +777,91 @@ sub feature_equalspc {
 
 # sub equalsat - does not make sense
 
-# whether the character at the given positions of the given field
+# whether the character at the given position of the given field
 #  equals in parent and in child
-sub feature_equalspcat {
-    my ( $self, $edge, $field_indexes ) = @_;
-    
-    # TODO
+sub feature_equals_pc_at {
+    my ( $self, $edge, $arguments ) = @_;
 
     # equals takes two arguments
-    if ( @{$field_indexes} == 2 ) {
-#         my ( $field_index_1, $field_index_2 ) = @{$field_indexes};
-#         my $values_1 = $edge->parent->fields->[$field_index_1];
-#         #my $values_2 = $edge->child->fields->[$field_index_2];
-# 
-#         # we handle undefines and empties specially
-#         if (
-#             defined $values_1
-#             && $values_1 ne ''
-#             && defined $values_2
-#             && $values_2 ne ''
-#             )
-#         {
-#             my $result   = 0;                      # default not equal
-#             my @values_1 = split / /, $values_1;
-#             my @values_2 = split / /, $values_2;
-# 
-#             # try to find a match
-#             foreach my $value_1 (@values_1) {
-#                 foreach my $value_2 (@values_2) {
-#                     if ( $value_1 eq $value_2 ) {
-#                         $result = 1;               # one match is enough
-#                     }
-#                 }
-#             }
-#             return $result;
-#         } else {
-#             return -1;                             # undef
-#         }
+    if ( @{$arguments} == 2 ) {
+        my ( $field_index, $position ) = @{$arguments};
+        my $field_parent = $edge->parent->fields->[$field_index];
+        my $field_child  = $edge->child->fields->[$field_index];
+
+        # we handle undefines and too short fields specially
+        if (
+            defined $field_parent
+            && length $field_parent > $position
+            && defined $field_child
+            && length $field_child > $position
+            )
+        {
+            my $value_parent = substr $field_parent, $position, 1;
+            my $value_child  = substr $field_child,  $position, 1;
+            if ( $value_parent eq $value_child ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            return -1;    # undef
+        }
     } else {
         croak "equals() takes TWO arguments!!!";
+    }
+}
+
+sub feature_child_is_first_in_sentence {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $ord = $edge->child->fields->[$field_index];
+
+    if ( $ord == 1 ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_parent_is_first_in_sentence {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $ord = $edge->parent->fields->[$field_index];
+
+    if ( $ord == 1 ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_child_is_last_in_sentence {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $ord = $edge->child->fields->[$field_index];
+
+    # last ord = number of nodes (because ords are 1-based, 0 is the root node)
+    my $last_ord = scalar( @{ $edge->sentence->nodes } );
+
+    if ( $ord == $last_ord ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_parent_is_last_in_sentence {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $ord = $edge->parent->fields->[$field_index];
+
+    # last ord = number of nodes (because ords are 1-based, 0 is the root node)
+    my $last_ord = scalar( @{ $edge->sentence->nodes } );
+
+    if ( $ord == $last_ord ) {
+        return 1;
+    } else {
+        return 0;
     }
 }
 
@@ -1002,7 +1062,7 @@ C<get_simple_feature> method. Eg.:
 Index of each simple feature code in simple_feature_codes (for conversion of
 simple feature code to simple feature index)
 
-=item simple_feature_field_indexes (ArrayRef)
+=item simple_feature_sub_arguments (ArrayRef)
 
 For each simple feature (on the corresponsing index) contains the index of the
 field (in C<field_names>), which is used to compute the simple feature value
@@ -1011,6 +1071,9 @@ field (in C<field_names>), which is used to compute the simple feature value
 If the simple feature takes more than one argument (called a multiarg feature
 here), then instead of a single field index there is a reference to an array
 of field indexes.
+
+If the simple feature takes other arguments than fields (especially integers),
+then these arguments are stored here insted of field indexes.
 
 =item simple_feature_subs (ArrayRef)
 
@@ -1224,7 +1287,7 @@ C<array_simple_features>).
 
 =item feature_foreach
 
-=item feature_equals, feature_equalspc
+=item feature_equals, feature_equals_pc, feature_equals_pc_at
 
 # from config:
 

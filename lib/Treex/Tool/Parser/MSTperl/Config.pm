@@ -360,7 +360,7 @@ sub BUILD {
         {
             $self->labelledFeaturesControl(
                 Treex::Tool::Parser::MSTperl::FeaturesControl->new(
-                    'config'                    => $self,
+                    'config' => $self,
                     'feature_codes_from_config'
                         => $config->[0]->{labeller_features},
                     'use_edge_features_cache'
@@ -369,8 +369,10 @@ sub BUILD {
             );
         }
 
-        if ( !$self->unlabelledFeaturesControl
-            && !$self->labelledFeaturesControl ) {
+        if (!$self->unlabelledFeaturesControl
+            && !$self->labelledFeaturesControl
+            )
+        {
             croak "MSTperl config file error: No features set!";
         }
 
@@ -394,7 +396,13 @@ sub field_name2index {
         return [@return];
     } else {
         if ( $self->field_names_hash->{$field_name} ) {
+
+            # everything OK -> return the field name
             return $self->field_indexes->{$field_name};
+        } elsif ( $field_name =~ /^[0-9]+$/ ) {
+
+            # not an actual field name but an integer argument -> keep it
+            return $field_name;
         } else {
             croak "Unknown field '$field_name', quiting.";
         }

@@ -113,7 +113,7 @@ sub parse_sentence_unlabelled {
             # my $score = $self->model->score_edge($edge);
             my $features = $self->config->unlabelledFeaturesControl
                 ->get_all_features($edge);
-            my $score    = $self->unlabelled_model->score_features($features);
+            my $score = $self->unlabelled_model->score_features($features);
 
             # only progress and/or debug info
             if ($DEBUG) {
