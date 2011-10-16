@@ -761,6 +761,50 @@ sub feature_equalspc {
     }
 }
 
+# sub equalsat - does not make sense
+
+# whether the character at the given positions of the given field
+#  equals in parent and in child
+sub feature_equalspcat {
+    my ( $self, $edge, $field_indexes ) = @_;
+    
+    # TODO
+
+    # equals takes two arguments
+    if ( @{$field_indexes} == 2 ) {
+#         my ( $field_index_1, $field_index_2 ) = @{$field_indexes};
+#         my $values_1 = $edge->parent->fields->[$field_index_1];
+#         #my $values_2 = $edge->child->fields->[$field_index_2];
+# 
+#         # we handle undefines and empties specially
+#         if (
+#             defined $values_1
+#             && $values_1 ne ''
+#             && defined $values_2
+#             && $values_2 ne ''
+#             )
+#         {
+#             my $result   = 0;                      # default not equal
+#             my @values_1 = split / /, $values_1;
+#             my @values_2 = split / /, $values_2;
+# 
+#             # try to find a match
+#             foreach my $value_1 (@values_1) {
+#                 foreach my $value_2 (@values_2) {
+#                     if ( $value_1 eq $value_2 ) {
+#                         $result = 1;               # one match is enough
+#                     }
+#                 }
+#             }
+#             return $result;
+#         } else {
+#             return -1;                             # undef
+#         }
+    } else {
+        croak "equals() takes TWO arguments!!!";
+    }
+}
+
 1;
 
 __END__
