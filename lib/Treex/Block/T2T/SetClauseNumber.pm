@@ -60,6 +60,7 @@ sub recursive_numbering {
 
 sub is_clause_coord {
     my ($t_node) = @_;
+    return 0 if ! defined $t_node->nodetype;
     return 0 if $t_node->nodetype ne 'coap';
 
     # In theory, either all members of a coordination are heads of clauses or none.
