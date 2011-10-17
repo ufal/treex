@@ -43,7 +43,8 @@ sub _build_model {
         if !-f $model_file;
     open MODEL, "<:utf8", $model_file;
 
-    print STDERR "FILE: $model_file\n";
+# DEBUG
+#    print STDERR "FILE: $model_file\n";
 
     my $perc_weights;
     my $start = 0;

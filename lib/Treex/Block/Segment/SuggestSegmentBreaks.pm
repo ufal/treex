@@ -32,11 +32,12 @@ sub _get_interlinks {
 
     # process nodes in the reversed order
     foreach my $bundle (reverse $doc->get_bundles) {
-        
+
         my %local_non_visited_ante_ids = %non_visited_ante_ids;
         
-        foreach my $zone ($bundle->get_all_zones) {
-            my $tree = $bundle->get_tree( $zone->language, 't', $zone->selector );
+        # iterate over all zones which contain a t-tree
+        foreach my $zone (grep {$_->has_ttree} $bundle->get_all_zones) {
+            my $tree = $zone->get_ttree;
 
             foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
                 
@@ -150,10 +151,6 @@ sub _remove_interlinks {
                 
                 # remove the coref link from anaph to ante
                 $anaph->remove_coref_nodes( $ante );
-                # DEBUG
-                if ($anaph->id eq 't-cmpr9413-002-p6s4a1') {
-                    print STDERR "GALIBA\n";
-                }
             }
         }
     }
@@ -169,9 +166,9 @@ sub process_document {
     my @break_idx_list = $self->_get_break_idx_list( @interlinks );
     
     # DEBUG
-    print STDERR Dumper(\@interlinks);
-    print STDERR join ", ", @break_idx_list;
-    print STDERR "\n";
+    #print STDERR Dumper(\@interlinks);
+    #print STDERR join ", ", @break_idx_list;
+    #print STDERR "\n";
     
     if (!$self->dry_run) {
         $self->_remove_interlinks( $doc, \@interlinks, \@break_idx_list );
