@@ -20,7 +20,10 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
-    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
+    my @forms =
+      map { substr($_, -45, 45) } # avoid words > 45 chars; Morce segfaults
+      map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
+      @a_nodes;
 
     # get tags
     my ($tags_rf) = $self->_tagger->tag_sentence( \@forms );

@@ -16,11 +16,17 @@ sub BUILD {
     return;
 }
 
+my $max_word_length = 45;
+
 sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
-    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
+    my @forms =
+      map { substr($_, -$max_word_length, $max_word_length) }
+        # avoid words > $max_word_length chars; Morce segfaults, take the suffix
+      map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
+      @a_nodes;
 
     # get tags and lemmas
     my ( $tags_rf, $lemmas_rf ) = $self->_tagger->tag_sentence( \@forms );
@@ -31,7 +37,15 @@ sub process_atree {
     # fill tags
     foreach my $a_node ( @a_nodes ) {
         $a_node->set_tag( shift @$tags_rf );
-        $a_node->set_lemma( shift @$lemmas_rf );
+        my $gotlemma = shift @$lemmas_rf;
+        if (length($gotlemma) == $max_word_length
+            && $gotlemma
+               eq substr($a_node->form, -$max_word_length, $max_word_length)) {
+          # this word was long and artificially truncated, use the full form
+          $a_node->set_lemma($a_node->form);
+        } else {
+          $a_node->set_lemma( $gotlemma );
+        }
     }
 
     return 1;
