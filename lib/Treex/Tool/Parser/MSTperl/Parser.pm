@@ -161,6 +161,20 @@ sub parse_sentence_unlabelled {
 
 sub label_sentence {
 
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    if ( !$self->labelled_model ) {
+        croak "MSTperl parser error: There is no model for labelling!";
+    }
+
+    # copy the sentence (do not modify $sentence directly)
+    my $sentence_working_copy = $sentence->copy_nonlabelled();
+    my $sentence_length       = $sentence_working_copy->len();
+
+    # TODO
+
+    return;
 }
 
 1;

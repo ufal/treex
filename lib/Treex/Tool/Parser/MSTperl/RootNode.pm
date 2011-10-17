@@ -22,12 +22,11 @@ has parentOrd => (
     default => -1,
 );
 
-# TODO: is the default value needed here?
-# has label => (
-#     isa     => 'Str',
-#     is      => 'rw',
-#     default => 'AuxS',
-# );
+has label => (
+    isa     => 'Str',
+    is      => 'rw',
+    default => 'AuxS',
+);
 
 1;
 

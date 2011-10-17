@@ -76,8 +76,9 @@ sub BUILD {
 
 sub fill_fields_after_parse {
 
-    # (Treex::Tool::Parser::MSTperl::FeaturesControl $featuresControl)
-    my ( $self, $featuresControl ) = @_;
+    my ($self) = @_;
+
+    my $featuresControl = $self->config->unlabelledFeaturesControl;
 
     #compute edges
     my @edges;
@@ -116,6 +117,23 @@ sub fill_fields_after_parse {
     return;
 }
 
+sub fill_fields_after_labelling {
+
+    my ($self) = @_;
+
+    my $featuresControl = $self->config->labelledFeaturesControl;
+
+    #compute features
+    my @features;
+    foreach my $edge ( @{ $self->edges } ) {
+        my $edge_features = $featuresControl->get_all_features($edge);
+        push @features, @{$edge_features};
+    }
+    $self->features( [@features] );
+
+    return;
+}
+
 sub clear_parse {
     my ($self) = @_;
 
@@ -142,6 +160,29 @@ sub copy_nonparsed {
     my @nodes;
     foreach my $node ( @{ $self->nodes } ) {
         my $node_copy = $node->copy_nonparsed();
+        push @nodes, $node_copy;
+    }
+
+    #create a new instance
+    my $copy = Treex::Tool::Parser::MSTperl::Sentence->new(
+
+        # TODO: maybe should get a different ID for the sake of labelling
+        # (but this is curently not used anyway)
+        id     => $self->id,
+        nodes  => [@nodes],
+        config => $self->config,
+    );
+
+    return $copy;
+}
+
+sub copy_nonlabelled {
+    my ($self) = @_;
+
+    #copy nodes
+    my @nodes;
+    foreach my $node ( @{ $self->nodes } ) {
+        my $node_copy = $node->copy_nonlabelled();
         push @nodes, $node_copy;
     }
 
@@ -196,7 +237,7 @@ sub getNodeByOrd {
     }
 }
 
-sub count_errors {
+sub count_errors_attachement {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
     my ( $self, $correct_sentence ) = @_;
@@ -210,6 +251,27 @@ sub count_errors {
         my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
         my $correct_parent = $correct_node->parentOrd;
         if ( $my_parent != $correct_parent ) {
+            $errors++;
+        }
+    }
+
+    return $errors;
+}
+
+sub count_errors_labelling {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
+    my ( $self, $correct_sentence ) = @_;
+
+    my $errors = 0;
+
+    #assert that nodes in the sentences with the same ords
+    # are corresponding nodes
+    foreach my $my_node ( @{ $self->nodes } ) {
+        my $my_label      = $my_node->label;
+        my $correct_node  = $correct_sentence->getNodeByOrd( $my_node->ord );
+        my $correct_label = $correct_node->label;
+        if ( $my_label != $correct_label ) {
             $errors++;
         }
     }
@@ -413,13 +475,24 @@ Returns model-wise score of the sentence (by calling
 L<Treex::Tool::Parser::MSTperl::Model/score_features> on the sentence
 C<features>)
 
-=item $sentence->count_errors($correct_sentence)
+=item $sentence->count_errors_attachement($correct_sentence)
 
 Compares the parse tree of the sentence with its correct parse tree,
 represented by an instance of the same sentence containing its correct parse.
 
 An error is considered to be an incorrectly assigned governing node. So, the
 parents of all nodes (obviously not including the root node) are compared and
+if they are different, it is counted as an error. This leads to a minimum
+number of errors equal to 0 and maximum number equal to the length of the
+sentence.
+
+=item $sentence->count_errors_labelling($correct_sentence)
+
+Compares the labelling of the sentence with its correct labelling,
+represented by an instance of the same sentence containing the correct labels.
+
+An error is considered to be an incorrectly assigned label. So, the
+labels of all edges (technically stored in the child nodes) are compared and
 if they are different, it is counted as an error. This leads to a minimum
 number of errors equal to 0 and maximum number equal to the length of the
 sentence.

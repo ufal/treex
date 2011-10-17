@@ -34,35 +34,18 @@ sub BUILD {
     return;
 }
 
-sub unlabelled_train {
 
-    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
-    # Training data: T = {(x_t, y_t)} t=1..T
-    my ( $self, $training_data ) = @_;
 
-    my $feature_count = $self->train_main_loop(
-        $training_data,
-        1,
-        $self->config->number_of_iterations
-    );
 
-    return $feature_count;
-}
 
-sub labelled_train {
 
-    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
-    # Training data: T = {(x_t, y_t)} t=1..T
-    my ( $self, $training_data ) = @_;
 
-    my $feature_count = $self->train_main_loop(
-        $training_data,
-        0,
-        $self->config->labeller_number_of_iterations
-    );
 
-    return $feature_count;
-}
+
+
+
+# TRAINING COMMON I
+
 
 sub train_main_loop {
 
@@ -96,7 +79,7 @@ sub train_main_loop {
         . $number_of_iterations . " iterations.\n";
 
     # precompute features of sentences in training data
-    $self->precompute_sentence_features( $training_data, $featuresControl );
+    $self->precompute_sentence_features( $training_data, $unlabelled );
 
     # do the training
     # for n : 1..N
@@ -108,7 +91,7 @@ sub train_main_loop {
         my $sentNo = 0;
 
         # for t : 1..T # these are the inner iterations
-        foreach my $sentence_correct_parse ( @{$training_data} ) {
+        foreach my $sentence_correct ( @{$training_data} ) {
 
             # weight of feature weights sum update <N*T .. 1>
             # $sumUpdateWeight denotes number of summands
@@ -117,7 +100,7 @@ sub train_main_loop {
             my $sumUpdateWeight = $number_of_inner_iterations - $innerIteration;
 
             # update on this instance
-            &$updateSub( $self, $sentence_correct_parse, $sumUpdateWeight );
+            &$updateSub( $self, $sentence_correct, $sumUpdateWeight );
 
             # $innerIteration = ( $iteration - 1 ) * $sentence_count + $sentNo;
             $innerIteration++;
@@ -153,18 +136,22 @@ sub train_main_loop {
 sub precompute_sentence_features {
 
     # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data
-    #  Treex::Tool::Parser::MSTperl::FeaturesControl $featuresControl)
-    my ( $self, $training_data, $featuresControl ) = @_;
+    #  Bool $unlabelled)
+    my ( $self, $training_data, $unlabelled ) = @_;
 
     # only progress and/or debug info
     print "Computing sentence features...\n";
     my $sentence_count = scalar( @{$training_data} );
     my $sentNo         = 0;
 
-    foreach my $sentence_correct_parse ( @{$training_data} ) {
+    foreach my $sentence_correct ( @{$training_data} ) {
 
         # compute the features
-        $sentence_correct_parse->fill_fields_after_parse($featuresControl);
+        if ($unlabelled) {
+            $sentence_correct->fill_fields_after_parse();
+        } else {
+            $sentence_correct->fill_fields_after_labelling();
+        }
 
         # only progress and/or debug info
         $sentNo++;
@@ -174,12 +161,16 @@ sub precompute_sentence_features {
         }
         if ($DEBUG) {
             print "SENTENCE FEATURES:\n";
-            foreach my $feature ( @{ $sentence_correct_parse->features } ) {
+            foreach my $feature ( @{ $sentence_correct->features } ) {
                 print "$feature\n";
             }
-            print "CORRECT PARSE EDGES:\n";
-            foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
+            print "CORRECT EDGES:\n";
+            foreach my $edge ( @{ $sentence_correct->edges } ) {
                 print $edge->parent->form . " -> " . $edge->child->form . "\n";
+            }
+            print "CORRECT LABELS:\n";
+            foreach my $node ( @{ $sentence_correct->nodes_with_root } ) {
+                print $node->form . "/" . $node->label . "\n";
             }
         }
 
@@ -216,6 +207,37 @@ sub recompute_feature_weights {
 
 }
 
+
+
+
+
+
+
+
+
+# TODO: Maybe instead of one Trainer for both unlabelled parsing and labelling
+# there should be the common part in a TrainerBase, which would be inherited
+# by TrainerUnlabelled and by TrainerLabelling, which would implement
+# the training-type-specific parts (i.e. subs and fields).
+
+# UNLABELLED TRAINING
+
+
+sub unlabelled_train {
+
+    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
+    # Training data: T = {(x_t, y_t)} t=1..T
+    my ( $self, $training_data ) = @_;
+
+    my $feature_count = $self->train_main_loop(
+        $training_data,
+        1,
+        $self->config->number_of_iterations
+    );
+
+    return $feature_count;
+}
+
 sub unlabelled_update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse,
@@ -231,9 +253,7 @@ sub unlabelled_update {
     my $sentence_best_parse = $self->parser->parse_sentence_unlabelled(
         $sentence_correct_parse
     );
-    $sentence_best_parse->fill_fields_after_parse(
-        $self->config->unlabelledFeaturesControl
-    );
+    $sentence_best_parse->fill_fields_after_parse();
 
     # only progress and/or debug info
     if ($DEBUG) {
@@ -255,14 +275,6 @@ sub unlabelled_update {
         $sentence_best_parse,
         $sumUpdateWeight
     );
-
-    return;
-
-}
-
-sub labelled_update {
-
-    # TODO labelled_update
 
     return;
 
@@ -291,7 +303,9 @@ sub unlabelled_mira_update {
     # difference in scores should be greater than the margin:
 
     # L(y_t, y')    number of incorrectly assigned heads
-    my $margin = $sentence_best_parse->count_errors($sentence_correct_parse);
+    my $margin = $sentence_best_parse->count_errors_attachement(
+        $sentence_correct_parse
+    );
 
     # s(x_t, y_t) - s(x_t, y')    this should be zero or less
     my $score_gain = $score_correct - $score_best;
@@ -351,10 +365,172 @@ sub unlabelled_mira_update {
     return;
 }
 
+
+
+
+
+
+
+
+
+
+
+# LABELLING TRAINING
+
+
+sub labelled_train {
+
+    # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data)
+    # Training data: T = {(x_t, y_t)} t=1..T
+    my ( $self, $training_data ) = @_;
+
+    my $feature_count = $self->train_main_loop(
+        $training_data,
+        0,
+        $self->config->labeller_number_of_iterations
+    );
+
+    return $feature_count;
+}
+
+sub labelled_update {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_labelling,
+    # Int $sumUpdateWeight)
+    my (
+        $self,
+        $sentence_correct_labelling,
+        $sumUpdateWeight
+    ) = @_;
+
+    # relabel the sentence
+    # l' = argmax_l' s(l', x_t, y_t)
+    my $sentence_best_labelling = $self->parser->label_sentence(
+        $sentence_correct_labelling
+    );
+    $sentence_best_labelling->fill_fields_after_labelling();
+
+    # only progress and/or debug info
+    if ($DEBUG) {
+        print "CORRECT LABELS:\n";
+        foreach my $node ( @{ $sentence_correct_labelling->nodes_with_root } ) {
+            print $node->form . "/" . $node->label . "\n";
+        }
+        print "BEST SCORING LABELS:\n";
+        foreach my $node ( @{ $sentence_best_labelling->nodes_with_root } ) {
+            print $node->form . "/" . $node->label . "\n";
+        }
+    }
+
+    # min ||w_i+1 - w_i|| s.t. ...
+    $self->labelled_mira_update(
+        $sentence_correct_labelling,
+        $sentence_best_labelling,
+        $sumUpdateWeight
+    );
+
+    return;
+
+}
+
 sub labelled_mira_update {
 
-    # TODO labelled_mira_update
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_labelling,
+    # Treex::Tool::Parser::MSTperl::Sentence $sentence_best_labelling,
+    # Int $sumUpdateWeight)
+    my (
+        $self,
+        $sentence_correct_labelling,
+        $sentence_best_labelling,
+        $sumUpdateWeight
+    ) = @_;
+
+    my $model = $self->parser->labelled_model;
+
+    # s(l_t, x_t, y_t)
+    my $score_correct = $sentence_correct_labelling->score($model);
+
+    # s(l', x_t, y_t)
+    my $score_best = $sentence_best_labelling->score($model);
+
+    # difference in scores should be greater than the margin:
+
+    # L(l_t, l')    number of incorrectly assigned labels
+    my $margin = $sentence_best_labelling->count_errors_labelling(
+        $sentence_correct_labelling
+    );
+
+    # s(l_t, x_t, y_t) - s(l', x_t, y_t)    this should be zero or less
+    my $score_gain = $score_correct - $score_best;
+
+    # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
+    my $error = $margin - $score_gain;
+
+    if ( $error > 0 ) {
+        my ( $features_diff_correct, $features_diff_best, $features_diff_count )
+            = features_diff(
+            $sentence_correct_labelling->features,
+            $sentence_best_labelling->features
+            );
+
+        if ( $features_diff_count == 0 ) {
+            warn "Features of the best parse and the correct parse do not " .
+                "differ, unable to update the scores. " .
+                "Consider using more features.\n";
+            if ($DEBUG_ALPHAS) {
+                print "alpha: 0 on 0 features\n";
+            }
+        } else {
+
+            # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+            my $update = $error / $features_diff_count;
+
+            #$update is added to features occuring in the correct parse only
+            foreach my $feature ( @{$features_diff_correct} ) {
+                $self->update_feature_weight(
+                    $model,
+                    $feature,
+                    $update,
+                    $sumUpdateWeight
+                );
+            }
+
+            # and subtracted from features occuring
+            # in the best (and incorrect) parse only
+            foreach my $feature ( @{$features_diff_best} ) {
+                $self->update_feature_weight(
+                    $model,
+                    $feature,
+                    -$update,
+                    $sumUpdateWeight
+                );
+            }
+            if ($DEBUG_ALPHAS) {
+                print "alpha: $update on $features_diff_count features\n";
+            }
+        }
+    } else {    #else no need to optimize
+        if ($DEBUG_ALPHAS) {
+            print "alpha: 0 on 0 features\n";
+        }
+    }
+
+    return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+# TRAINING COMMON II
+
 
 sub update_feature_weight {
 
@@ -425,6 +601,9 @@ sub features_diff {
 
     return ( \@features_first, \@features_second, $diff_count );
 }
+
+
+
 
 1;
 
