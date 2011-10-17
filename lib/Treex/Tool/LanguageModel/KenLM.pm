@@ -44,6 +44,15 @@ sub query {
 	return $value;
 	}
 	
+sub close {
+  my ($self) = @_;
+  my $writer = $self->{writer};
+  my $reader = $self->{reader};
+  #close KenLM
+  close($writer);
+  close($reader);
+}	
+	
 	1;
 	
 	__END__
