@@ -48,8 +48,9 @@ sub process_atree {
     my @p;
     while ( !$found ) {
         my $line = <ALIGNMENT_FILE>;
-        die "Bad alignment file, alignment for sent '$sentence_id' not found."
-          if !$line || $line =~ /^\s*$/;
+        die "Bad alignment file ".($self->from)
+          .", alignment for sent '$sentence_id' not found."
+            if !$line || $line =~ /^\s*$/;
         @p = split( /\t/, $line );
         if ( @p > 0 
             && ($p[0] eq $sentence_id || $p[0] =~ /\Q$sentence_id$/ ) ) {
