@@ -31,11 +31,23 @@ sub _select_all_cands {
     # antecedent candidates filtering
     my %banned_prons = map {$_ => 1} qw/i me my mine you your yours we us our ours one/;
         
-    my @cands = grep { my $alex = $_->get_lex_anode;
-    # candidates will be just nouns and pronouns
-                    ( $alex->tag =~ /^[N|P]/ ) &&
-    # we omit 1st and 2nd person pronouns as candidates
-                    ( $alex->tag !~ /^P/ || !defined $banned_prons{$alex->lemma} ) 
+    my @cands = grep {
+        # grammatemes are filled        
+            if (defined $_->gram_sempos) { 
+            # semantic pos is noun
+                ( $_->gram_sempos =~ /^n/ ) &&
+            # not 1st and 2nd person
+                ( !defined $_->gram_person || ( $_->gram_person !~ /1|2/ ) )
+            }
+        # grammatemes not provided
+            else {
+                my $alex = $_->get_lex_anode;
+                ( defined $alex ) &&
+            # candidates will be just nouns and pronouns
+                ( $alex->tag =~ /^[N|P]/ ) &&
+            # we omit 1st and 2nd person pronouns as candidates
+                ( $alex->tag !~ /^P/ || !defined $banned_prons{$alex->lemma} )
+            }
         } @sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers

@@ -5,6 +5,10 @@ use Treex::Core::Common;
 
 with 'Treex::Tool::Coreference::AnteCandsGetter';
 
+# according to rule presented in Nguy et al. (2009)
+# semantic nouns from previous context of the current sentence and from
+# the previous sentence
+# TODO think about preparing of all candidates in advance
 sub _select_all_cands {
     my ($self, $anaph) = @_;
     
