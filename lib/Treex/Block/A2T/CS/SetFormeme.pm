@@ -6,7 +6,8 @@ use Treex::Tool::Lexicon::CS::AdjectivalComplements;
 
 extends 'Treex::Core::Block';
 
-has 'use_version' => ( is => 'ro', isa => enum( [ 1, 2 ] ), default => 1 );
+# 1 = original version, 1a = original with syntpos instead of sempos, 2 = modified
+has 'use_version' => ( is => 'ro', isa => enum( [ '1', '1a', '2' ] ), default => '1' );
 
 has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
 
@@ -55,7 +56,7 @@ sub process_tnode {
             }
         }
         else {
-            detect_formeme($t_node);
+            detect_formeme($t_node, $self->use_version eq '1a');
         }
     }
     return;
@@ -110,21 +111,26 @@ sub _detect_formeme2 {
         elsif ($node->prep) {
             $formeme = 'n:' . $node->prep . '+' . $node->case;
         }
-
-        # adverbs derived from adjectives, weird form "rád"
-        elsif ( $node->tag =~ /^(D|Cv|Co)/ or $node->t_lemma eq 'rád' ) {
+        # adverbs derived from adjectives
+        elsif ( $node->tag =~ /^(D|Cv|Co)/ ) {
             $formeme = 'adv';
         }
         # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
         # TODO -- fix "hodně prodavaček je levých" (genitive!)
         elsif ( $parent->syntpos eq 'v' ) {
-            # always treat demosntrative and relative pronouns under verbs as substantival
+            # verbal complements (required by valency) -- exclude demonstrative and relative pronouns
             if ( $node->tag !~ /^P[D4]/ and Treex::Tool::Lexicon::CS::AdjectivalComplements::requires( $parent->t_lemma, $node->case ) ){
                 $formeme = 'adj:' . $node->case;
             }
+            # complement (verbal attribute) -- only adjectives can be there
+            elsif ( $node->a->afun =~ /^Atv/ || ( $parent->lemma ne 'být' && $node->tag =~ /^(AC|AO|Vs)/ ) ){
+                # most complements are not declinable -> pretend them to be nominative (they mostly refer to the subject)
+                $formeme = 'adj:' . ( $node->case || 1 );
+            }
+            # normal case: substantival
             else {
-                $formeme = 'n:' . $node->case;
-                $formeme = 'n:1' if $node->tag =~ /^(AC|Vs)/; # "připraven", "schopen" -- not declinable, but always under "být"
+                # "připraven", "schopen", "(ne)svůj", "tentam" -- not declinable, but always under "být" (Ac,AO,Vs)
+                $formeme = 'n:' . ( $node->case || 1 );
             }
         }
         # numerals in a non-attributive position (the ones hanging under verbs have been treated as verbal complements)
@@ -214,14 +220,26 @@ sub _is_nonattributive_numeral {
 
 
 sub detect_formeme {
-    my ($tnode) = @_;
+    my ($tnode, $use_syntpos) = @_;
     my $lex_a_node = $tnode->get_lex_anode() or return;
     my @aux_a_nodes = $tnode->get_aux_anodes( { ordered => 1 } );
     my $tag = $lex_a_node->tag;
     my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
-    my $sempos        = $tnode->gram_sempos   || '';
-    my $parent_sempos = $tparent->gram_sempos || '';
+    my $parent_lex_a_node = $tparent->get_lex_anode();
+    my ($sempos, $parent_sempos);
     my $formeme;
+    
+    # modification (v 1a) - using syntpos instead of sempos
+    if ($use_syntpos){
+        $sempos = detect_syntpos( $tnode, $tag, $lex_a_node->lemma );
+        $parent_sempos = detect_syntpos( $tparent, $parent_lex_a_node ? $parent_lex_a_node->tag : '', 
+                $parent_lex_a_node ? $parent_lex_a_node->lemma : '' );
+    }
+    # original formemes - using sempos
+    else {
+        $sempos        = $tnode->gram_sempos   || '';
+        $parent_sempos = $tparent->gram_sempos || '';        
+    }
 
     # semantic nouns
     if ( $sempos =~ /^n/ ) {
@@ -297,6 +315,34 @@ sub detect_formeme {
     return;
 }
 
+
+# Copied from NodeInfo.pm and edited to resemble the old formeme system a little bit more
+# (possesives moved to nouns)
+sub detect_syntpos {
+    my ($tnode, $tag, $lemma) = @_;
+
+    # skip technical root, conjunctions, prepositions, punctuation etc.
+    return '' if ( $tnode->is_root or $tag =~ m/^.[%#^,FRVXc:]/ );
+
+    # adjectives, adjectival numerals and pronouns
+    return 'adj' if ( $tag =~ m/^.[\}=\?4ACDGLOadhklnrwyz]/ );
+
+    # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
+    return 'adj' if ( $tag =~ m/^.[WZ]/ and $lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );
+
+    # adverbs, adverbial numerals ("dvakrát" etc.),
+    # including interjections and particles (they behave the same if they're full nodes on t-layer)
+    return 'adv' if ( $tag =~ m/^.[\*bgouvTI]/ );
+
+    # verbs
+    return 'v' if ( $tag =~ m/^V/ );
+
+    # everything else are nouns: POS -- 56789EHPNJQYj@SXU, no POS (possibly -- generated nodes)
+    return 'n';
+}
+
+
+
 1;
 __END__
 
@@ -319,7 +365,10 @@ C<n:pro+X> (prepositional group), or C<n:1> are used.
 
 =item C<use_version>
 
-Which version of Czech formemes should be used (1 or 2, defaults to 1).
+Which version of Czech formemes should be used (1, 1a or 2, defaults to 1).
+
+Version 1 is the original formemes using sempos, version 1a is a slight modification of the original using 
+syntpos instead of sempos, version 2 is a more or less completely rewritten variant with a different behavior.
 
 =back
 
