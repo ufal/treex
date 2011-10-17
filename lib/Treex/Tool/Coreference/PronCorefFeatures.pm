@@ -672,8 +672,8 @@ sub count_collocations {
 
 sub count_np_freq {
     my ( $self, $trees ) = @_;
-    my ( $np_freq );
-    
+    my $np_freq  = {};
+
     foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {
             
