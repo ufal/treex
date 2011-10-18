@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 30;
+use Test::More tests => 32;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -23,7 +23,9 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
     use_ok('Treex::Tool::Parser::MSTperl::RootNode');
     use_ok('Treex::Tool::Parser::MSTperl::Sentence');
-    use_ok('Treex::Tool::Parser::MSTperl::Trainer');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerBase');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerLabelling');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerUnlabelled');
     use_ok('Treex::Tool::Parser::MSTperl::Writer');
 }
 
@@ -45,26 +47,26 @@ my $reader = new_ok(
     "initialize Reader,"
 );
 
-note('TRAINING');
+note('UNLABELLED TRAINING');
 
 ok( my $training_data = $reader->read_tsv($train_file), "read training data" );
 
 my $trainer = new_ok(
-    'Treex::Tool::Parser::MSTperl::Trainer' => [ config => $config ],
+    'Treex::Tool::Parser::MSTperl::TrainerUnlabelled' => [ config => $config ],
     "initialize Trainer,"
 );
 
-ok( $trainer->unlabelled_train($training_data), "perform training" );
+ok( $trainer->train($training_data), "perform training" );
 
-ok( $trainer->parser->unlabelled_model->store($model_file), "save model" );
+ok( $trainer->model->store($model_file), "save model" );
 
-ok( $trainer->parser->unlabelled_model->store_tsv( $model_file . '.tsv' ),
+ok( $trainer->model->store_tsv( $model_file . '.tsv' ),
     "save model to tsv"
 );
 
-ok( $trainer->parser->unlabelled_model->load($model_file), "load model" );
+ok( $trainer->model->load($model_file), "load model" );
 
-ok( $trainer->parser->unlabelled_model->load_tsv( $model_file . '.tsv' ),
+ok( $trainer->model->load_tsv( $model_file . '.tsv' ),
     "load model to tsv"
 );
 

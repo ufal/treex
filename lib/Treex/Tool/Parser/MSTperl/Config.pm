@@ -6,6 +6,18 @@ use Carp;
 
 use Treex::Tool::Parser::MSTperl::FeaturesControl;
 
+has 'DEBUG' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => '0',
+);
+
+has 'DEBUG_ALPHAS' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => '0',
+);
+
 has 'config_file' => (
     is       => 'ro',
     isa      => 'Str',

@@ -49,8 +49,6 @@ has edges => (
     isa => 'Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]]',
 );
 
-my $DEBUG = 0;
-
 sub BUILD {
     my ($self) = @_;
 
@@ -91,7 +89,7 @@ sub fill_fields_after_parse {
         } else {    # $node->parentOrd
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
-        if ($DEBUG) {
+        if ( $self->config->DEBUG ) {
             print $node->ord . ': ' . $node->form
                 . ' <- ' . $node->parentOrd . "\n";
         }
