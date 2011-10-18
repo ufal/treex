@@ -144,6 +144,7 @@ sub get_all_trees {
     foreach my $zone ( $self->{zones}->elements ) {
         my $structure = $zone->value;
         foreach my $layer (Treex::Core::Types::layers()) {
+            $layer = lc $layer;
             if ( exists $structure->{trees}->{"${layer}_tree"} ) {
                 push @trees, $structure->{trees}->{"${layer}_tree"};
             }

@@ -237,6 +237,7 @@ sub value_line_doubleclick_hook {
 
     my $layout = $self->tree_layout->get_layout;
     my %ordering;
+    my %visible;
     my $i     = 0;
     my $row   = 0;
     my $found = 1;
@@ -245,13 +246,20 @@ sub value_line_doubleclick_hook {
         $found = 0;
         for ( my $col = 0; $col < scalar @$layout; $col++ ) {
             if ( defined $layout->[$col][$row] ) {
-                $ordering{ $layout->[$col][$row]->{'label'} } = $i++;
+                if ($layout->[$col][$row]->{'visible'}) {
+                    $ordering{ $layout->[$col][$row]->{'label'} } = $i++;
+                    $visible{$layout->[$col][$row]->{'label'}} = 1;
+                }
                 $found = 1;
             }
         }
         $row++;
     }
-    my @trees = sort { $ordering{ $self->tree_layout->get_tree_label($a) } <=> $ordering{ $self->tree_layout->get_tree_label($b) } } $bundle->get_all_trees;
+    my @trees = sort {
+        $ordering{ $self->tree_layout->get_tree_label($a) } <=> $ordering{ $self->tree_layout->get_tree_label($b) }
+    } grep {
+      exists $visible{ $self->tree_layout->get_tree_label($_) }
+    } $bundle->get_all_trees;
 
     for my $tree (@trees) {
         for my $node ( $tree->get_descendants ) {
@@ -382,8 +390,8 @@ sub get_clickable_sentence_for_a_zone {
     for my $anode (@anodes) {
         my $id = $anode->id;
         push @{ $refs{$id} }, $anode;
-        if ( $anode->attr('p/terminal.rf') ) {
-            my $pnode = $self->treex_doc->get_node_by_id( $anode->attr('p/terminal.rf') );
+        if ( $anode->attr('p_terminal.rf') ) {
+            my $pnode = $self->treex_doc->get_node_by_id( $anode->attr('p_terminal.rf') );
             push @{ $refs{$id} }, $pnode;
             while ( $pnode->parent ) {
                 $pnode = $pnode->parent;
@@ -394,7 +402,7 @@ sub get_clickable_sentence_for_a_zone {
 
     my @out;
     for my $anode (@anodes) {
-        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] }, 'anode:' . $anode->id ];
+        push @out, [ $anode->form, @{ $refs{ $anode->id } || [] } ];
         if ( $anode->clause_number ) {
             my $clr = $self->_styles->_colors->get_clause_color( $anode->clause_number );
             push @{ $out[-1] }, "-foreground => $clr";
