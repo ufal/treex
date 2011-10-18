@@ -38,7 +38,7 @@ sub update {
 
     # relabel the sentence
     # l' = argmax_l' s(l', x_t, y_t)
-    my $sentence_best_labelling = $self->labeller->label_sentence(
+    my $sentence_best_labelling = $self->labeller->label_sentence_internal(
         $sentence_correct_labelling
     );
     $sentence_best_labelling->fill_fields_after_labelling();
