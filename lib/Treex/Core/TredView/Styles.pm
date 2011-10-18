@@ -192,6 +192,11 @@ sub draw_arrows {
                 $EX = "x$T+($MX-x$T)*$K2";
                 $EY = "y$T+($MY-y$T)*$K2";
             }
+            if ( $arrow_type eq 'coindex' ) {
+                $MX = "((x$T+xn)/2 + $Y*(25/$D+0.12))";
+                $MY = "((y$T+6+yn)/2 - $X*(25/$D+0.12))";
+                $EY = "y$T+6";
+            }
 
             push @coords, "$BX,$BY,$MX,$MY,$EX,$EY";
         }

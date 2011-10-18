@@ -31,6 +31,7 @@ sub _build_colors {
         'coref_text' => '#4c509f',
         'compl'      => '#629f52',
         'alignment'  => '#bebebe',
+        'coindex'    => '#ffa500', #orange
 
         'lex'         => '#006400',
         'aux'         => '#ff8c00',

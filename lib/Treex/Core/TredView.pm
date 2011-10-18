@@ -50,6 +50,16 @@ has _displayed_nodes => (
     isa => 'HashRef[Treex::Core::Node]',
     default => sub { {} }
 );
+has _ptb_index_map => (
+    is => 'rw',
+    isa => 'HashRef[Treex::Core::Node::P]',
+    default => sub { {} }
+);
+has _ptb_coindex_map => (
+    is => 'rw',
+    isa => 'HashRef[Treex::Core::Node::P]',
+    default => sub { {} }
+);
 
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'show_alignment'    => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -93,6 +103,8 @@ sub get_nodelist_hook {
                                              # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
     my $layout = $self->tree_layout->get_layout();
+    $self->{'_ptb_index_map'} = {};
+    $self->{'_ptb_coindex_map'} = {};
     my %nodes;
 
     foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
@@ -101,6 +113,10 @@ sub get_nodelist_hook {
         if ( $tree->get_layer eq 'p' ) {
             @nodes = $self->_spread_nodes($tree);
             shift @nodes;
+            foreach my $node (@nodes) {
+                $self->{'_ptb_index_map'}->{$node->{'index'}} = $node if defined $node->{'index'};
+                $self->{'_ptb_coindex_map'}->{$node->{'coindex'}} = $node if defined $node->{'coindex'};
+            }
         }
         elsif ( $tree->does('Treex::Core::Node::Ordered') ) {
             @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
@@ -263,7 +279,7 @@ sub value_line_doubleclick_hook {
 
     for my $tree (@trees) {
         for my $node ( $tree->get_descendants ) {
-            next if $node->get_layer eq 'p' and $node->get_pml_type_name =~ m/nonterminal/;
+            next if $node->get_layer eq 'p' and not $node->is_terminal;
             return $node if exists $tags{"$node"};
         }
     }
@@ -505,11 +521,9 @@ sub nnode_hint {
 
 sub pnode_hint {
     my ( $self, $node ) = @_;
-
     my @lines = ();
-    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
 
-    if ($terminal) {
+    if ($node->is_terminal) {
         push @lines, map { "$_: " . ( defined $node->{$_} ? $node->{$_} : '' ) } qw(lemma tag form);
     }
     else {
@@ -537,6 +551,30 @@ sub node_style_hook {
             foreach my $target_id ( @{ $node->attr( $ref_attr . '.rf' ) } ) {
                 push @target_ids,  $target_id;
                 push @arrow_types, $ref_attr;
+            }
+        }
+    }
+
+    # P-layer indexes and coindexes
+    if ($node->get_layer eq 'p') {
+        my $coindex;
+        if ($node->attr('form') and $node->attr('form') =~ m/-(\d+)$/) {
+            $coindex = $1;
+        } elsif ($node->attr('coindex')) {
+            $coindex = $node->attr('coindex');
+        }
+
+        if ($coindex) {
+            my $target_node;
+            if (exists $self->{'_ptb_index_map'}->{$coindex}) {
+              $target_node = $self->{'_ptb_index_map'}->{$coindex};
+            } elsif ($node->is_terminal and exists $self->{'_ptb_coindex_map'}->{$coindex}) {
+              $target_node = $self->{'_ptb_coindex_map'}->{$coindex};
+            }
+
+            if ($target_node) {
+              push @target_ids, $target_node->{'id'};
+              push @arrow_types, 'coindex';
             }
         }
     }

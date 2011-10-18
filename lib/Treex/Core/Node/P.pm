@@ -36,6 +36,11 @@ override 'get_ordering_value' => sub {
     return;
 };
 
+sub is_terminal {
+  my $self = shift @_;
+  return $self->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+}
+
 sub create_nonterminal_child {
     my $self    = shift @_;
     my $fs_file = $self->get_bundle->get_document()->_pmldoc;
