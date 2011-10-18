@@ -646,11 +646,11 @@ sub _unary_features {
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
 sub extract_features {
-    my ( $self, $cand, $anaph, $candord ) = @_;
+    my ( $self, $anaph, $cand, $candord ) = @_;
     my $coref_features = {};
 
     $self->_unary_features( $coref_features, $anaph, 'anaph' );
-    if ($cand != $anaph) {
+    if (defined $cand) {
         $self->_unary_features( $coref_features, $cand, 'cand' );
         $self->_binary_features( $coref_features, $anaph, $cand, $candord );
     }

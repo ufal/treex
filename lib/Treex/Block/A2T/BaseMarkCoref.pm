@@ -70,25 +70,6 @@ sub _build_anaph_cands_filter {
 }
 
 
-sub _create_instances {
-    my ( $self, $anaphor, $ante_cands, $ords ) = @_;
-
-
-    if (!defined $ords) {
-        $ords = [ 0 .. @$ante_cands-1 ];
-    }
-
-    my $instances;
-    #print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
-    for (my $i = 0; $i < @$ante_cands; $i++) {
-        my $cand = $ante_cands->[$i];
-        my $fe = $self->_feature_extractor;
-        my $features = $fe->extract_features( $cand, $anaphor, $ords->[$i] );
-        $instances->{ $cand->id } = $features;
-    }
-    return $instances;
-}
-
 before 'process_document' => sub {
     my ($self, $document) = @_;
 
@@ -116,7 +97,7 @@ sub process_tnode {
         my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
         # instances is a reference to a hash in the form { id => instance }
-        my $instances = $self->_create_instances( $t_node, $ante_cands );
+        my $instances = $self->_feature_extractor->create_binary_instances( $t_node, $ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not
