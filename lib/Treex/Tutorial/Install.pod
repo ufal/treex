@@ -39,7 +39,7 @@ Install the needed Perl modules dependencies:
          MooseX::SemiAffordanceAccessor Readonly Treex::PML\
          File::Slurp File::HomeDir File::Path File::ShareDir\
          LWP::Simple Data::Dumper Module::Reload Locale::Language\
-         Parse::RecDescent Cwd Scalar::Util autodie
+         Parse::RecDescent Cwd Scalar::Util autodie String::Util
 
 Add Treex modules to your C<$PERLLIB> so perl can find them,
 and the C<treex> script to your C<$PATH> so you can execute it from shell.  
