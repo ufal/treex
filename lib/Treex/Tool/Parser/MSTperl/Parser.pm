@@ -19,12 +19,7 @@ has config => (
     required => '1',
 );
 
-has unlabelled_model => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
-    is  => 'rw',
-);
-
-has labelled_model => (
+has model => (
     isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
     is  => 'rw',
 );
@@ -32,21 +27,11 @@ has labelled_model => (
 sub BUILD {
     my ($self) = @_;
 
-    if ( $self->config->unlabelledFeaturesControl ) {
-        $self->unlabelled_model(
-            Treex::Tool::Parser::MSTperl::Model->new(
-                featuresControl => $self->config->unlabelledFeaturesControl
-                )
-        );
-    }
-
-    if ( $self->config->labelledFeaturesControl ) {
-        $self->labelled_model(
-            Treex::Tool::Parser::MSTperl::Model->new(
-                featuresControl => $self->config->labelledFeaturesControl
-                )
-        );
-    }
+    $self->model(
+        Treex::Tool::Parser::MSTperl::Model->new(
+            featuresControl => $self->config->unlabelledFeaturesControl
+        )
+    );
 
     return;
 }
@@ -54,19 +39,9 @@ sub BUILD {
 sub load_model {
 
     # (Str $filename)
-    my ( $self, $filename_unlabelled, $filename_labelled ) = @_;
+    my ( $self, $filename ) = @_;
 
-    my $result = 0;
-
-    if ( $filename_unlabelled && $self->unlabelled_model ) {
-        $result = $self->unlabelled_model->load($filename_unlabelled);
-    }
-
-    if ( $filename_labelled && $self->labelled_model ) {
-        $result = $self->labelled_model->load($filename_labelled);
-    }
-
-    return $result;
+    return $self->model->load($filename);
 }
 
 sub parse_sentence {
@@ -75,17 +50,17 @@ sub parse_sentence {
     my ( $self, $sentence ) = @_;
 
     # parse sentence (does not modify $sentence)
-    my $sentence_parsed = $self->parse_sentence_unlabelled($sentence);
+    my $sentence_parsed = $self->parse_sentence_internal($sentence);
 
     return $sentence_parsed->toParentOrdsArray();
 }
 
-sub parse_sentence_unlabelled {
+sub parse_sentence_internal {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;
 
-    if ( !$self->unlabelled_model ) {
+    if ( !$self->model ) {
         croak "MSTperl parser error: There is no model for unlabelled parsing!";
     }
 
@@ -113,7 +88,7 @@ sub parse_sentence_unlabelled {
             # my $score = $self->model->score_edge($edge);
             my $features = $self->config->unlabelledFeaturesControl
                 ->get_all_features($edge);
-            my $score = $self->unlabelled_model->score_features($features);
+            my $score = $self->model->score_features($features);
 
             # only progress and/or debug info
             if ( $self->config->DEBUG ) {
@@ -159,24 +134,6 @@ sub parse_sentence_unlabelled {
     return $sentence_working_copy;
 }
 
-sub label_sentence {
-
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
-
-    if ( !$self->labelled_model ) {
-        croak "MSTperl parser error: There is no model for labelling!";
-    }
-
-    # copy the sentence (do not modify $sentence directly)
-    my $sentence_working_copy = $sentence->copy_nonlabelled();
-    my $sentence_length       = $sentence_working_copy->len();
-
-    # TODO
-
-    return;
-}
-
 1;
 
 __END__
@@ -219,7 +176,15 @@ L<Treex::Tool::Parser::MSTperl::Node>), i.e. a word in the sentence, and also
 returns these parents as an array reference.
 
 Any parse information already contained in the sentence gets discarded
-(explicitely, by calling L<Treex::Tool::Parser::MSTperl::Sentence/clear_parse>).
+(explicitely, by calling
+L<Treex::Tool::Parser::MSTperl::Sentence/copy_nonparsed>).
+
+=item $parser->parse_sentence_internal($sentence);
+
+Does the actual parsing, returning a parsed instance of 
+L<Treex::Tool::Parser::MSTperl::Sentence>. The C<parse_sentence> sub is 
+actually only a wrapper for this method which extracts the parents of the 
+nodes and returns these.
 
 =back
 

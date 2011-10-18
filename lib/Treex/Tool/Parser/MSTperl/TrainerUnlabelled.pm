@@ -2,16 +2,22 @@ package Treex::Tool::Parser::MSTperl::TrainerUnlabelled;
 
 use Moose;
 
-# use Carp;
-
 extends 'Treex::Tool::Parser::MSTperl::TrainerBase';
 
-# use Treex::Tool::Parser::MSTperl::Parser;
+use Treex::Tool::Parser::MSTperl::Parser;
+
+has parser => (
+    isa => 'Treex::Tool::Parser::MSTperl::Parser',
+    is  => 'rw',
+);
 
 sub BUILD {
     my ($self) = @_;
 
-    $self->model( $self->parser->unlabelled_model );
+    $self->parser(
+        Treex::Tool::Parser::MSTperl::Parser->new( config => $self->config )
+    );
+    $self->model( $self->parser->model );
     $self->featuresControl( $self->config->unlabelledFeaturesControl );
     $self->number_of_iterations( $self->config->number_of_iterations );
 
@@ -32,7 +38,7 @@ sub update {
 
     # reparse the sentence
     # y' = argmax_y' s(x_t, y')
-    my $sentence_best_parse = $self->parser->parse_sentence_unlabelled(
+    my $sentence_best_parse = $self->parser->parse_sentence_internal(
         $sentence_correct_parse
     );
     $sentence_best_parse->fill_fields_after_parse();
@@ -176,6 +182,11 @@ Uses single-best MIRA (McDonald et al., 2005, Proc. HLT/EMNLP)
 =head1 FIELDS
 
 =over 4
+
+=item parser
+
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is
+used for the training.
 
 =item model
 

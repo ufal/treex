@@ -2,16 +2,22 @@ package Treex::Tool::Parser::MSTperl::TrainerLabelling;
 
 use Moose;
 
-# use Carp;
-
 extends 'Treex::Tool::Parser::MSTperl::TrainerBase';
 
-# use Treex::Tool::Parser::MSTperl::Parser;
+use Treex::Tool::Parser::MSTperl::Labeller;
+
+has labeller => (
+    isa => 'Treex::Tool::Parser::MSTperl::Labeller',
+    is  => 'rw',
+);
 
 sub BUILD {
     my ($self) = @_;
 
-    $self->model( $self->parser->labelled_model );
+    $self->labeller(
+        Treex::Tool::Parser::MSTperl::Labeller->new( config => $self->config )
+    );
+    $self->model( $self->labeller->model );
     $self->featuresControl( $self->config->labelledFeaturesControl );
     $self->number_of_iterations( $self->config->labeller_number_of_iterations );
 
@@ -32,7 +38,7 @@ sub update {
 
     # relabel the sentence
     # l' = argmax_l' s(l', x_t, y_t)
-    my $sentence_best_labelling = $self->parser->label_sentence(
+    my $sentence_best_labelling = $self->labeller->label_sentence(
         $sentence_correct_labelling
     );
     $sentence_best_labelling->fill_fields_after_labelling();
@@ -99,9 +105,9 @@ sub mira_update {
             );
 
         if ( $features_diff_count == 0 ) {
-            warn "Features of the best parse and the correct parse do not " .
-                "differ, unable to update the scores. " .
-                "Consider using more features.\n";
+            warn "Features of the best labelling and the correct labelling" .
+                "do not differ, unable to update the scores. " .
+                "This is somewhat weird.\n";
             if ( $self->config->DEBUG_ALPHAS ) {
                 print "alpha: 0 on 0 features\n";
             }
@@ -110,7 +116,7 @@ sub mira_update {
             # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
             my $update = $error / $features_diff_count;
 
-            #$update is added to features occuring in the correct parse only
+            #$update is added to features occuring in the correct labelling only
             foreach my $feature ( @{$features_diff_correct} ) {
                 $self->update_feature_weight(
                     $feature,
@@ -120,7 +126,7 @@ sub mira_update {
             }
 
             # and subtracted from features occuring
-            # in the best (and incorrect) parse only
+            # in the best (and incorrect) labelling only
             foreach my $feature ( @{$features_diff_best} ) {
                 $self->update_feature_weight(
                     $feature,
@@ -175,6 +181,11 @@ Uses single-best MIRA (McDonald et al., 2005, Proc. HLT/EMNLP)
 
 =over 4
 
+=item labeller
+
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::Labeller> which is
+used for the training.
+
 =item model
 
 Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is
@@ -189,17 +200,16 @@ being trained.
 =item $trainer->train($training_data);
 
 Trains the model, using the settings from C<config> and the training
-data in the form of a reference to an array of parsed sentences
+data in the form of a reference to an array of labelled sentences
 (L<Treex::Tool::Parser::MSTperl::Sentence>), which can be obtained by the
 L<Treex::Tool::Parser::MSTperl::Reader>.
 
-=item $self->mira_update($sentence_correct_parse, $sentence_best_parse,
-    $sumUpdateWeight)
+=item $self->mira_update($sentence_correct, $sentence_best, $sumUpdateWeight)
 
 Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one 
 sentence from the training data. Its input is the correct labelling of the 
 sentence (from the training data) and the best scoring labelling created by 
-the parser.
+the labeller.
 
 =back
 

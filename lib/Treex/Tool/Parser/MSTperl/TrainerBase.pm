@@ -3,17 +3,10 @@ package Treex::Tool::Parser::MSTperl::TrainerBase;
 use Moose;
 use Carp;
 
-use Treex::Tool::Parser::MSTperl::Parser;
-
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
-);
-
-has parser => (
-    isa => 'Treex::Tool::Parser::MSTperl::Parser',
-    is  => 'rw',
 );
 
 # to be filled in extending packages!
@@ -48,16 +41,6 @@ has feature_weights_summed => (
     is      => 'rw',
     default => sub { {} },
 );
-
-sub BUILD {
-    my ($self) = @_;
-
-    $self->parser(
-        Treex::Tool::Parser::MSTperl::Parser->new( config => $self->config )
-    );
-
-    return;
-}
 
 # TRAINING COMMON SUBS
 
@@ -345,11 +328,6 @@ pseudocode description of MIRA provided by McDonald et al.
 
 =over 4
 
-=item parser
-
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Parser> which is
-used for the training.
-
 =item config
 
 Reference to the instance of L<Treex::Tool::Parser::MSTperl::Config>.
@@ -359,13 +337,6 @@ Reference to the instance of L<Treex::Tool::Parser::MSTperl::Config>.
 =head1 METHODS
 
 =over 4
-
-=item my $trainer = Treex::Tool::Parser::MSTperl::Trainer->new(config
-    => $config);
-
-Creates a new instance of the trainer (also initializes a the C<model>
-and the C<parser>).
-
 
 
 

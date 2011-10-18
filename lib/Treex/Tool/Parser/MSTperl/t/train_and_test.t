@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 32;
+use Test::More tests => 33;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -20,6 +20,7 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::Model');
     use_ok('Treex::Tool::Parser::MSTperl::Node');
     use_ok('Treex::Tool::Parser::MSTperl::Parser');
+    use_ok('Treex::Tool::Parser::MSTperl::Labeller');
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
     use_ok('Treex::Tool::Parser::MSTperl::RootNode');
     use_ok('Treex::Tool::Parser::MSTperl::Sentence');
@@ -93,7 +94,7 @@ foreach my $correct_sentence ( @{$test_data} ) {
     #parse
     ok(
         my $test_sentence =
-            $parser->parse_sentence_unlabelled($correct_sentence),
+            $parser->parse_sentence_internal($correct_sentence),
         'parse sentence'
     );
     push @sentences, $test_sentence;
