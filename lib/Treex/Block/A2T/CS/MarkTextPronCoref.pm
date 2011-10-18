@@ -4,8 +4,8 @@ use Treex::Core::Common;
 extends 'Treex::Block::A2T::BaseMarkCoref';
 
 use Treex::Tool::Coreference::PerceptronRanker;
-use Treex::Tool::Coreference::PronCorefFeatures;
-use Treex::Tool::Coreference::TextPronAnteCandsGetter;
+use Treex::Tool::Coreference::CS::PronCorefFeatures;
+use Treex::Tool::Coreference::CS::TextPronAnteCandsGetter;
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
 
 has '+model_path' => (
@@ -22,13 +22,13 @@ override '_build_ranker' => sub {
 
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
-    my $fe = Treex::Tool::Coreference::PronCorefFeatures->new();
+    my $fe = Treex::Tool::Coreference::CS::PronCorefFeatures->new();
     return $fe;
 };
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::TextPronAnteCandsGetter->new();
+    my $acs = Treex::Tool::Coreference::CS::TextPronAnteCandsGetter->new();
     return $acs;
 };
 

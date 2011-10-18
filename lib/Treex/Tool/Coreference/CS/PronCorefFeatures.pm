@@ -1,9 +1,10 @@
-package Treex::Tool::Coreference::PronCorefFeatures;
+package Treex::Tool::Coreference::CS::PronCorefFeatures;
 
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
+with 'Treex::Tool::Coreference::CorefFeatures';
 
 my $b_true = '1';
 my $b_false = '-1';

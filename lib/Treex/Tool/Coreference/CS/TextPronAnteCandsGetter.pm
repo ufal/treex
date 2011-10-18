@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::TextPronAnteCandsGetter;
+package Treex::Tool::Coreference::CS::TextPronAnteCandsGetter;
 
 use Moose;
 use Treex::Core::Common;

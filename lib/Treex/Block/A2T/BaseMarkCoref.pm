@@ -3,11 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tool::Coreference::PerceptronRanker;
-use Treex::Tool::Coreference::PronCorefFeatures;
-use Treex::Tool::Coreference::TextPronAnteCandsGetter;
-use Treex::Tool::Coreference::CS::PronAnaphFilter;
-
 has 'model_path' => (
     is       => 'ro',
     required => 1,
@@ -29,7 +24,7 @@ has '_feature_extractor' => (
     is          => 'ro',
     required    => 1,
 # TODO this should be a role, not a concrete class
-    isa         => 'Treex::Tool::Coreference::PronCorefFeatures',
+    isa         => 'Treex::Tool::Coreference::CorefFeatures',
     builder     => '_build_feature_extractor',
 );
 
@@ -74,33 +69,6 @@ sub _build_anaph_cands_filter {
     return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
 }
 
-=for comment
-sub _build_ranker {
-    my ($self) = @_;
-    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
-        { model_path => $self->model_path } 
-    );
-    return $ranker;
-}
-
-sub _build_feature_extractor {
-    my ($self) = @_;
-    my $fe = Treex::Tool::Coreference::PronCorefFeatures->new();
-    return $fe;
-}
-
-sub _build_ante_cands_selector {
-    my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::TextPronAnteCandsGetter->new();
-    return $acs;
-}
-
-sub _build_anaph_cands_filter {
-    my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::CS::PronAnaphFilter->new();
-    return $acf;
-}
-=cut
 
 sub _create_instances {
     my ( $self, $anaphor, $ante_cands, $ords ) = @_;
