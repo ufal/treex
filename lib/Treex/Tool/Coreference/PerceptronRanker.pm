@@ -66,9 +66,12 @@ sub _build_model {
             elsif ($vals[1] =~ /^c_/) {
                 my @cat_feats = split /§/, $vals[1];
                 $fname = substr($cat_feats[0], 2);
-                $value = $cat_feats[1];
+                $value = $cat_feats[1] || "";
             }
             
+            if (!defined $value) {
+                print STDERR $fname."\n";
+            }
             $perc_weights->{$fname}{$value} = $weight;
         }
     }

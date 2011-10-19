@@ -111,7 +111,7 @@ sub process_tnode {
             
         #}
 
-        if (defined $antec) {
+        if (defined $antec && ($antec ne $t_node->id)) {
             $t_node->set_attr( 'coref_text.rf', [$antec] );
         }
     }

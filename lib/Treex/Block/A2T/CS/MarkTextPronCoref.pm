@@ -28,7 +28,9 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::CS::TextPronAnteCandsGetter->new();
+    my $acs = Treex::Tool::Coreference::CS::TextPronAnteCandsGetter->new({
+        anaphor_as_candidate => 1,
+    });
     return $acs;
 };
 

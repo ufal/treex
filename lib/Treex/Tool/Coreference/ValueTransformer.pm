@@ -75,7 +75,7 @@ sub special_chars_off {
 sub replace_empty {
     my ($self, $value) = @_;
     if ((!defined $value) || ($value =~ /^\s*$/)) {
-        return "empty";
+        return "";
     }
     return $value;
 }
