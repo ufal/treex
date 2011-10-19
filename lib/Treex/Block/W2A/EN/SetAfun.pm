@@ -179,11 +179,13 @@ sub get_afun {
     # Negation
     return 'Neg' if $lemma eq 'not';
 
-    # Determiners (except the already solved articles)
+    # Precompute some values (eparent can be the root, so let's use undefs => '')
     my ($eparent) = $node->get_eparents();
-    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma' );
+    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma', {undefs => ''} );
     my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
     my $precedes_ep = $node->precedes($eparent);
+
+    # Determiners (except the already solved articles)
     if ( $tag eq 'DT' ) {
         return 'Atr' if $ep_is_noun && $precedes_ep;
         return 'Adv' if $ep_tag =~ /^JJ/;
@@ -239,16 +241,15 @@ sub get_afun {
     }
 
     # Verbs under verbs
-    if ($tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/){
-        
+    if ( $tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/ ) {
+
         # TODO: distinguish Obj and Adv by better rules
         # "I must|want|need|have to go(afun=Obj)"
         return 'Obj' if $ep_tag eq 'MD' || $ep_lemma =~ /^(have|need)$/;
-        
+
         # "Go there to see(afun=Adv) it."
         return 'Adv';
     }
-    
 
     # And the rest - we don't know
     return 'NR';
