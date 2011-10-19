@@ -304,7 +304,7 @@ sub set_parent {
 
     # We cannot detach a node by setting an undefined parent. The if statement below will die.
     # Let's inform the user where the bad call is.
-    log_fatal('Cannot attach the node to an undefined parent') if ( !defined($parent) );
+    log_fatal('Cannot attach the node ' . $self->id . ' to an undefined parent') if ( !defined($parent) );
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
         my $id   = $self->id;
         my $p_id = $parent->id;

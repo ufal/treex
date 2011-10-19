@@ -58,6 +58,7 @@ sub process_bundle {
     if ( $self->flatten ) {
         foreach my $node ( $target_root->get_descendants ) {
             $node->set_parent($target_root);
+            $node->set_is_member();
         }
     }
 
