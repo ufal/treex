@@ -96,6 +96,8 @@ sub load_layouts {
 sub save_layouts {
     my $self = shift;
     return if $self->_layouts_saved;
+    # There's no point in saving layouts when GUI is not running (e.q. btred processing)
+    return unless ref(TredMacro::GUI()) eq 'TrEd::Window';
 
     my $filename = TredMacro::FindMacroDir('treex') . '/.layouts.cfg';
     open CFG, ">$filename";
