@@ -6,6 +6,7 @@ use Carp;
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Edge;
 use Treex::Tool::Parser::MSTperl::Model;
+use Treex::Tool::Parser::MSTperl::TransitionModel;
 
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
@@ -18,12 +19,23 @@ has model => (
     is  => 'rw',
 );
 
+has transitionModel => (
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::TransitionModel]',
+    is  => 'rw',
+);
+
 sub BUILD {
     my ($self) = @_;
 
     $self->model(
         Treex::Tool::Parser::MSTperl::Model->new(
             featuresControl => $self->config->labelledFeaturesControl
+        )
+    );
+
+    $self->transitionModel(
+        Treex::Tool::Parser::MSTperl::TransitionModel->new(
+#            featuresControl => $self->config->labelledFeaturesControl
         )
     );
 
@@ -62,9 +74,36 @@ sub label_sentence_internal {
     my $sentence_working_copy = $sentence->copy_nonlabelled();
     my $sentence_length       = $sentence_working_copy->len();
 
+    
     # TODO
+    my $root = $sentence_working_copy->getNodeByOrd(0);
+    $self->label_subtree($root);
+    # take the root
+    # take its children
+    # find best scoring labelling sequence
+    # recursion
+
+    # Node has to know its children (fill these as a part of fill_fields_after_parse)
 
     return $sentence_working_copy;
+}
+
+# assign labels to edges going from the $parent node to its children
+# (and recurse on the children)
+# directly modifies the sentence (or better: the nodes within the sentence)
+sub label_subtree {
+
+    # (Treex::Tool::Parser::MSTperl::Node $parent)
+    my ($self, $parent) = @_;
+
+
+    # label the nodes
+
+
+    # recursion
+
+
+    return;
 }
 
 1;
@@ -80,8 +119,8 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Lebeller - pure Perl implementation
-of a lebeller for the MST parser
+Treex::Tool::Parser::MSTperl::Labeller - pure Perl implementation
+of a labeller for the MST parser
 
 =head1 DESCRIPTION
 
