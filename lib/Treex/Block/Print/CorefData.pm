@@ -1,11 +1,10 @@
-package Treex::Block::Print::TextPronCorefData;
+package Treex::Block::Print::CorefData;
 
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::ValueTransformer;
 
-# TODO this is weird, they should rather have a common ancestor class or role
-extends 'Treex::Block::A2T::CS::MarkTextPronCoref';
+extends 'Treex::Core::Block';
 
 has 'y_feat_name' => (
     is          => 'ro',
@@ -36,6 +35,28 @@ has '_feature_transformer' => (
     default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
 );
 
+has '_feature_extractor' => (
+    is          => 'ro',
+    required    => 1,
+# TODO this should be a role, not a concrete class
+    lazy        => 1,
+    isa         => 'Treex::Tool::Coreference::CorefFeatures',
+    builder     => '_build_feature_extractor',
+);
+
+has '_ante_cands_selector' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Treex::Tool::Coreference::AnteCandsGetter',
+    builder     => '_build_ante_cands_selector',
+);
+
+has '_anaph_cands_filter' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Treex::Tool::Coreference::AnaphFilter',
+    builder     => '_build_anaph_cands_filter',
+);
 
 sub BUILD {
     my ($self) = @_;
@@ -49,6 +70,20 @@ sub _build_feature_names {
     my $names = $self->_feature_extractor->feature_names;
     return $names;
 }
+
+sub _build_feature_extractor {
+    my ($self) = @_;
+    return log_fatal "method _build_feature_extractor must be overriden in " . ref($self);
+}
+sub _build_ante_cands_selector {
+    my ($self) = @_;
+    return log_fatal "method _build_ante_cands_selector must be overriden in " . ref($self);
+}
+sub _build_anaph_cands_filter {
+    my ($self) = @_;
+    return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
+}
+
 
 sub _create_instances_strings {
     my ($self, $instances, $y_value) = @_;
@@ -93,14 +128,22 @@ sub print_bundle {
     print "\n";
 }
 
-override 'process_tnode' => sub {
+before 'process_document' => sub {
+    my ($self, $doc) = @_;
+
+    $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
+};
+
+sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     return if ( $t_node->is_root );
 
-    my @antes = $t_node->get_coref_text_nodes;
-
-    if ( (@antes > 0) && $self->_is_anaphoric($t_node) ) {
+    # If we identify anaphors seperately
+    #my @antes = $t_node->get_coref_text_nodes;
+    #if ( (@antes > 0) && $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
+    
+    if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
 
         # retrieve positive and negatve antecedent candidates separated from
         # each other
@@ -110,9 +153,9 @@ override 'process_tnode' => sub {
 
         # instances is a reference to a hash in the form { id => instance }
         my $pos_instances 
-            = $self->_create_instances( $t_node, $pos_cands, $pos_ords );
+            = $self->_feature_extractor->create_instances( $t_node, $pos_cands, $pos_ords );
         my $neg_instances 
-            = $self->_create_instances( $t_node, $neg_cands, $neg_ords );
+            = $self->_feature_extractor->create_instances( $t_node, $neg_cands, $neg_ords );
 
         my $pos_inst_list = 
             $self->_sort_instances( $pos_instances, $pos_cands);
@@ -124,6 +167,6 @@ override 'process_tnode' => sub {
             $self->print_bundle($t_node, $pos_inst_list, $neg_inst_list);
         }
     }
-};
+}
 
 1;

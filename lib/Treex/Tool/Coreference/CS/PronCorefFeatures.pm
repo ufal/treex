@@ -659,6 +659,21 @@ sub extract_features {
     return $coref_features;
 }
 
+sub init_doc_features {
+    my ($self, $doc, $lang, $sel) = @_;
+    
+    if ( !$doc->get_bundles() ) {
+        return;
+    }
+    my @trees = map { $_->get_tree( 
+        $lang, 't', $sel ) }
+        $doc->get_bundles;
+
+    $self->count_collocations( \@trees );
+    $self->count_np_freq( \@trees );
+    $self->mark_doc_clause_nums( \@trees );
+}
+
 sub count_collocations {
     my ( $self, $trees ) = @_;
     my ( $collocation ) = {};

@@ -71,20 +71,9 @@ sub _build_anaph_cands_filter {
 
 
 before 'process_document' => sub {
-    my ($self, $document) = @_;
+    my ($self, $doc) = @_;
 
-    if ( !$document->get_bundles() ) {
-        return;
-    }
-    my @trees = map { $_->get_tree( 
-        $self->language, 't', $self->selector ) }
-        $document->get_bundles;
-
-    my $fe = $self->_feature_extractor;
-
-    $fe->count_collocations( \@trees );
-    $fe->count_np_freq( \@trees );
-    $fe->mark_doc_clause_nums( \@trees );
+    $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
 };
 
 sub process_tnode {
@@ -97,7 +86,7 @@ sub process_tnode {
         my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
         # instances is a reference to a hash in the form { id => instance }
-        my $instances = $self->_feature_extractor->create_binary_instances( $t_node, $ante_cands );
+        my $instances = $self->_feature_extractor->create_instances( $t_node, $ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not

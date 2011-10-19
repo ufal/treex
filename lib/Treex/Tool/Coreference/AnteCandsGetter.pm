@@ -5,10 +5,21 @@ use Moose::Role;
 requires '_select_all_cands';
 requires '_find_positive_cands';
 
+has 'anaphor_as_candidate' => (
+    isa => 'Bool',
+    is  => 'ro',
+    required => 1,
+    default => 0,
+);
+
 sub get_candidates {
     my ($self, $anaph) = @_;
 
-    return $self->_select_all_cands($anaph);
+    my $cands = $self->_select_all_cands($anaph);
+    if ($self->anaphor_as_candidate) {
+        unshift @$cands, $anaph;
+    }
+    return $cands;
 }
 
 sub get_pos_neg_candidates {
@@ -41,6 +52,15 @@ sub _split_pos_neg_cands {
     my $neg_cands = [];
     my $pos_ords = [];
     my $neg_ords = [];
+
+    if ($self->anaphor_as_candidate) {
+        if (@$pos_cands > 0) {
+            push @$neg_cands, $anaph;
+        }
+        else {
+            push @$pos_cands, $anaph;
+        }
+    }
 
     my $ord = 1;
     foreach my $cand (@$cands) {
