@@ -60,7 +60,10 @@ sub recursive_numbering {
 
 sub is_clause_coord {
     my ($t_node) = @_;
-    return 0 if ! defined $t_node->nodetype;
+
+    # nodetype eq 'coap' is usually filled in a separate block (A2T::CS::SetCoapFunctors)
+    # before other nodetypes (A2T::CS::SetNodetype), so undef value is OK.
+    return 0 if !defined $t_node->nodetype;
     return 0 if $t_node->nodetype ne 'coap';
 
     # In theory, either all members of a coordination are heads of clauses or none.
