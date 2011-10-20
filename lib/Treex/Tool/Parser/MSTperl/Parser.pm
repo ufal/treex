@@ -29,7 +29,7 @@ sub BUILD {
 
     $self->model(
         Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
-            featuresControl => $self->config->unlabelledFeaturesControl
+            config => $self->config,
         )
     );
 

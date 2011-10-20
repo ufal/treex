@@ -14,17 +14,42 @@ has 'transitions' => (
     default => sub { {} },
 );
 
-sub add_transition {
-    my ($self, $label_first, $label_second) = @_;
+
+sub BUILD {
+    my ($self) = @_;
     
-    $self->transitions->{$label_first}->{$self->config->UNIGRAM_PROB_KEY} += 1;
-    if ($label_second) {
-        $self->transitions->{$label_first}->{$label_second} += 1;
+    $self->featuresControl($self->config->labelledFeaturesControl);
+    
+    return;
+}
+
+
+sub add_transition {
+    my ($self, $label_this, $label_prev) = @_;
+    
+    # increment sum of numbers of unigrams
+    $self->transitions->{$self->config->UNIGRAM_PROB_KEY} += 1;
+    # increment number of unigrams
+    $self->transitions->{$label_this}->{$self->config->UNIGRAM_PROB_KEY} += 1;
+    if ($label_prev) {
+        # increment number of bigrams
+        $self->transitions->{$label_prev}->{$label_this} += 1;
     }
     
     return;
 }
 
+# called after preprocessing training data, before entering the MIRA phase
+sub prepare_for_mira {
+    
+    my ($self) = @_;
+    
+    # recompute transition counts to probabilities
+    my $grandTotal = $self->transitions->{$self->config->UNIGRAM_PROB_KEY};
+    
+    
+    return;
+}
 
 1;
 

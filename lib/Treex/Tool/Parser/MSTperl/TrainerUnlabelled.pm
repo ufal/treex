@@ -31,6 +31,17 @@ sub BUILD {
 
 # UNLABELLED TRAINING
 
+# compute the features of the sentence
+sub preprocess_sentence {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    $sentence->fill_fields_after_parse();
+
+    return;
+}
+
 sub update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_parse,
@@ -150,17 +161,6 @@ sub mira_update {
             print "alpha: 0 on 0 features\n";
         }
     }
-
-    return;
-}
-
-# compute the features of the sentence
-sub preprocess_sentence {
-
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
-
-    $sentence->fill_fields_after_parse();
 
     return;
 }

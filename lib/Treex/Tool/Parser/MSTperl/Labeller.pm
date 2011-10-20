@@ -24,7 +24,7 @@ sub BUILD {
 
     $self->model(
         Treex::Tool::Parser::MSTperl::ModelLabelling->new(
-            featuresControl => $self->config->labelledFeaturesControl
+            config => $self->config,
         )
     );
 

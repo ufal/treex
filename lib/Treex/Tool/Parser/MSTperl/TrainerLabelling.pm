@@ -31,6 +31,39 @@ sub BUILD {
 
 # LABELLING TRAINING
 
+# compute the features of the sentence,
+# build list of existing labels
+# and compute the transition probs
+sub preprocess_sentence {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    # compute edges and their features
+    $sentence->fill_fields_before_labelling();
+    # $sentence->fill_fields_after_labelling();
+
+    # compute transition counts
+    $self->compute_transition_counts($sentence->getNodeByOrd(0));
+
+    return;
+}
+
+sub compute_transition_counts {
+    # (Treex::Tool::Parser::MSTperl::Node $parent_node)
+    my ( $self, $parent_node ) = @_;
+    
+    my $last_label = undef;
+    foreach my $edge (@{$parent_node->children}) {
+        my $this_label = $edge->child->label;
+        $self->model->add_transition($this_label, $last_label);
+        $last_label = $this_label;
+        $self->compute_transition_counts($edge->child);
+    }
+
+    return;
+}
+
 sub update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_labelling,
@@ -46,7 +79,9 @@ sub update {
     my $sentence_best_labelling = $self->labeller->label_sentence_internal(
         $sentence_correct_labelling
     );
-    $sentence_best_labelling->fill_fields_after_labelling();
+    
+    # nothing to do now in fill_fields_after_labelling()
+    # $sentence_best_labelling->fill_fields_after_labelling();
 
     # only progress and/or debug info
     if ( $self->config->DEBUG ) {
@@ -147,39 +182,6 @@ sub mira_update {
         if ( $self->config->DEBUG_ALPHAS ) {
             print "alpha: 0 on 0 features\n";
         }
-    }
-
-    return;
-}
-
-# compute the features of the sentence,
-# build list of existing labels
-# and compute the transition probs
-sub preprocess_sentence {
-
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
-
-    # compute edges and their features
-    $sentence->fill_fields_before_labelling();
-    # $sentence->fill_fields_after_labelling();
-
-    # compute transition counts
-    $self->compute_transition_counts($sentence->getNodeByOrd(0));
-
-    return;
-}
-
-sub compute_transition_counts {
-    # (Treex::Tool::Parser::MSTperl::Node $parent_node)
-    my ( $self, $parent_node ) = @_;
-    
-    my $last_label = undef;
-    foreach my $child_edge (@{$parent_node->children}) {
-        my $this_label = $child_edge->child->label;
-        $self->model->add_transition($last_label, $this_label);
-        $last_label = $this_label;
-        $self->compute_transition_counts($child_edge->child);
     }
 
     return;

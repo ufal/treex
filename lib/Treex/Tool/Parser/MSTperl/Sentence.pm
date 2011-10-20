@@ -300,7 +300,7 @@ sub count_errors_labelling {
         my $my_label      = $my_node->label;
         my $correct_node  = $correct_sentence->getNodeByOrd( $my_node->ord );
         my $correct_label = $correct_node->label;
-        if ( $my_label != $correct_label ) {
+        if ( $my_label ne $correct_label ) {
             $errors++;
         }
     }

@@ -169,6 +169,8 @@ sub preprocess_sentences {
 
     }
 
+    $self->model->prepare_for_mira();
+
     print "Done.\n";
 
     return;
@@ -201,6 +203,20 @@ sub recompute_feature_weights {
 
 # ABSTRACT TRAINING SUB STUBS (TO BE REDEFINED IN DESCENDED PACKAGES)
 
+# compute the features of the sentence
+# in labelling also used to get the list of labels and of transition probs
+sub preprocess_sentence {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    croak 'TrainerBase::preprocess_sentence is an abstract method,'
+        . ' it must be called'
+        . ' either from TrainerUnlabelled or TrainerLabelling!';
+
+    return;
+}
+
 sub update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct,
@@ -220,20 +236,6 @@ sub mira_update {
 
     croak 'TrainerBase::mira_update is an abstract method, it must be called'
         . ' either from TrainerUnlabelled or TrainerLabelling!';
-}
-
-# compute the features of the sentence
-# in labelling also used to get the list of labels and of transition probs
-sub preprocess_sentence {
-
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
-
-    croak 'TrainerBase::fill_sentence_fields is an abstract method,'
-        . ' it must be called'
-        . ' either from TrainerUnlabelled or TrainerLabelling!';
-
-    return;
 }
 
 # TRAINING SUPPORTING SUBS

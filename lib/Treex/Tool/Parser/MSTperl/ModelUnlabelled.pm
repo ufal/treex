@@ -4,6 +4,13 @@ use Moose;
 
 extends 'Treex::Tool::Parser::MSTperl::ModelBase';
 
+sub BUILD {
+    my ($self) = @_;
+    
+    $self->featuresControl($self->config->unlabelledFeaturesControl);
+    
+    return;
+}
 
 1;
 

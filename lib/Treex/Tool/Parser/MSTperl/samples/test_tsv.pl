@@ -38,10 +38,10 @@ foreach my $correct_sentence ( @{$test_data} ) {
 
     #parse
     #$parser->parse_sentence($test_sentence);
-    my $test_sentence = $parser->parse_sentence_unlabelled($correct_sentence);
+    my $test_sentence = $parser->parse_sentence_internal($correct_sentence);
     push @sentences, $test_sentence;
     my $sentenceLength = $test_sentence->len();
-    my $errorCount     = $test_sentence->count_errors($correct_sentence);
+    my $errorCount     = $test_sentence->count_errors_attachement($correct_sentence);
 
     #    my $score = 100 - (100*$errorCount/$sentenceLength);
     #    print "score: $score% ($errorCount errors in $sentenceLength words)\n";

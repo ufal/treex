@@ -4,10 +4,15 @@ use Data::Dumper;
 use autodie;
 use Moose;
 
-has featuresControl => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+has 'config' => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
     required => '1',
+);
+
+has 'featuresControl' => (
+    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is       => 'rw',
 );
 
 # TODO: features indexed? (i.e. weights would be an ArrayRef etc.)
@@ -18,6 +23,18 @@ has 'weights' => (
     isa     => 'HashRef',
     default => sub { {} },
 );
+
+
+
+# called after preprocessing training data, before entering the MIRA phase
+sub prepare_for_mira {
+    
+    my ($self) = @_;
+    
+    # nothing in the base, to be overridden in extending packages
+    
+    return;
+}
 
 # LOADING AND STORING
 
