@@ -18,6 +18,14 @@ has 'DEBUG_ALPHAS' => (
     default => '0',
 );
 
+# used in labeller transition probs to denote unigram counts
+# (meaning "a label and no label after it")
+has 'UNIGRAM_PROB_KEY' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => '',
+);
+
 has 'config_file' => (
     is       => 'ro',
     isa      => 'Str',

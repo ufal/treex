@@ -4,6 +4,27 @@ use Moose;
 
 extends 'Treex::Tool::Parser::MSTperl::ModelBase';
 
+# has the from of:
+#  transitions->{label_prev}->{label_this} = count
+# unigram counts stored as:
+#  transitions->{label_this}->{$config->UNIGRAM_PROB_KEY} = count
+has 'transitions' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { {} },
+);
+
+sub add_transition {
+    my ($self, $label_first, $label_second) = @_;
+    
+    $self->transitions->{$label_first}->{$self->config->UNIGRAM_PROB_KEY} += 1;
+    if ($label_second) {
+        $self->transitions->{$label_first}->{$label_second} += 1;
+    }
+    
+    return;
+}
+
 
 1;
 

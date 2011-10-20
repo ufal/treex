@@ -155,7 +155,7 @@ sub mira_update {
 }
 
 # compute the features of the sentence
-sub fill_sentence_fields {
+sub preprocess_sentence {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;

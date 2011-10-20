@@ -64,7 +64,9 @@ sub train {
         . $self->number_of_iterations . " iterations.\n";
 
     # precompute features of sentences in training data
-    $self->precompute_sentence_features($training_data);
+    # in labelled parsing also gets the list of labels
+    # and computes the transition probs
+    $self->preprocess_sentences($training_data);
 
     # do the training
     # for n : 1..N
@@ -126,7 +128,7 @@ sub train {
 }    # end sub train
 
 # precompute features of sentences in training data
-sub precompute_sentence_features {
+sub preprocess_sentences {
 
     # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data
     #  Bool $unlabelled)
@@ -139,7 +141,10 @@ sub precompute_sentence_features {
 
     foreach my $sentence_correct ( @{$training_data} ) {
 
-        $self->fill_sentence_fields($sentence_correct);
+        # compute sentence features
+        # in labelled parsing also gets the list of labels
+        # and computes the transition probs
+        $self->preprocess_sentence($sentence_correct);
 
         # only progress and/or debug info
         $sentNo++;
@@ -218,7 +223,8 @@ sub mira_update {
 }
 
 # compute the features of the sentence
-sub fill_sentence_fields {
+# in labelling also used to get the list of labels and of transition probs
+sub preprocess_sentence {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;

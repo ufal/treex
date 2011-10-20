@@ -152,13 +152,35 @@ sub mira_update {
     return;
 }
 
-# compute the features of the sentence
-sub fill_sentence_fields {
+# compute the features of the sentence,
+# build list of existing labels
+# and compute the transition probs
+sub preprocess_sentence {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;
 
-    $sentence->fill_fields_after_labelling();
+    # compute edges and their features
+    $sentence->fill_fields_before_labelling();
+    # $sentence->fill_fields_after_labelling();
+
+    # compute transition counts
+    $self->compute_transition_counts($sentence->getNodeByOrd(0));
+
+    return;
+}
+
+sub compute_transition_counts {
+    # (Treex::Tool::Parser::MSTperl::Node $parent_node)
+    my ( $self, $parent_node ) = @_;
+    
+    my $last_label = undef;
+    foreach my $child_edge (@{$parent_node->children}) {
+        my $this_label = $child_edge->child->label;
+        $self->model->add_transition($last_label, $this_label);
+        $last_label = $this_label;
+        $self->compute_transition_counts($child_edge->child);
+    }
 
     return;
 }

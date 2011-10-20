@@ -31,7 +31,7 @@ has parentOrd => (
 );
 
 has children => (
-    isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
+    isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Edge]',
     is  => 'rw',
     default => sub { [] },
 );

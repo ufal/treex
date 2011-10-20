@@ -33,6 +33,11 @@ has sentence => (
     weak_ref => 1,
 );
 
+has features => (
+    is  => 'rw',
+    isa => 'Maybe[ArrayRef[Str]]',
+);
+
 sub BUILD {
     my ($self) = @_;
 
