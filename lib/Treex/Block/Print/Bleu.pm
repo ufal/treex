@@ -1,7 +1,7 @@
 package Treex::Block::Print::Bleu;
 use Moose;
 use Treex::Core::Common;
-use Eval::Bleu;
+use Treex::Tool::Eval::Bleu;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Print::Overall'; 
@@ -31,13 +31,13 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $tst = $bundle->get_zone( $self->language, $self->selector )->sentence;
     my $ref = $bundle->get_zone( $self->language, $self->reference_selector )->sentence;
-    Eval::Bleu::add_segment( defined($tst) ? $tst : '', $ref );
+    Treex::Tool::Eval::Bleu::add_segment( defined($tst) ? $tst : '', $ref );
     return;
 }
 
 sub _print_ngram_diff {
     my ( $self, $n, $limit ) = @_;
-    my ( $miss_ref, $extra_ref ) = Eval::Bleu::get_diff( $n, $limit, $limit );
+    my ( $miss_ref, $extra_ref ) = Treex::Tool::Eval::Bleu::get_diff( $n, $limit, $limit );
     print "________ Top missing $n-grams: ________   ________ Top extra $n-grams: ________\n";
     for my $i ( 0 .. $limit - 1 ) {
         printf "%30s %5d %30s %6d\n",
@@ -50,12 +50,12 @@ sub _print_stats {
 
     my ($self) = @_;
 
-    my $bleu = Eval::Bleu::get_bleu();
+    my $bleu = Treex::Tool::Eval::Bleu::get_bleu();
     if ( $bleu == 0 ) {
         print "BLEU = 0\n";
     }
     else {
-        my $bp = Eval::Bleu::get_brevity_penalty();
+        my $bp = Treex::Tool::Eval::Bleu::get_brevity_penalty();
         for my $ngram ( 1 .. $self->print_ngrams ) {
             $self->_print_ngram_diff( $ngram, $self->print_limit );
         }
@@ -65,7 +65,7 @@ sub _print_stats {
 }
 
 sub _reset_stats {
-    Eval::Bleu::reset();
+    Treex::Tool::Eval::Bleu::reset();
 }
 
 
