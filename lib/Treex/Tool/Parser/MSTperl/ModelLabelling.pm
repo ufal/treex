@@ -26,9 +26,9 @@ has 'weights' => (
 
 sub BUILD {
     my ($self) = @_;
-    
-    $self->featuresControl($self->config->labelledFeaturesControl);
-    
+
+    $self->featuresControl( $self->config->labelledFeaturesControl );
+
     return;
 }
 
@@ -36,83 +36,102 @@ sub BUILD {
 
 sub get_data_to_store {
     my ($self) = @_;
-    
+
     return {
         'transitions' => $self->transitions,
-        'weights' => $self->weights,
+        'weights'     => $self->weights,
     };
 }
 
 # TRANSITION COUNTS AND PROBABILITIES
 
 sub add_transition {
-    my ($self, $label_this, $label_prev) = @_;
-    
-    if ($self->config->DEBUG) {
+    my ( $self, $label_this, $label_prev ) = @_;
+
+    if ( $self->config->DEBUG ) {
         print "add_transition($label_this, $label_prev)\n";
     }
-    
+
     # increment sum of numbers of unigrams
-    $self->transitions->{$self->config->UNIGRAM_PROB_KEY} += 1;
+    $self->transitions->{ $self->config->UNIGRAM_PROB_KEY } += 1;
+
     # increment number of unigrams
     $self->transitions->{$label_this}->
-        {$self->config->UNIGRAM_PROB_KEY} += 1;
+        { $self->config->UNIGRAM_PROB_KEY } += 1;
     if ($label_prev) {
+
         # increment number of bigrams
         $self->transitions->{$label_prev}->{$label_this} += 1;
     }
-    
+
     return;
 }
 
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
-    
+
     my ($self) = @_;
-    
+
     my $UNIGRAM_PROB_KEY = $self->config->UNIGRAM_PROB_KEY;
-    
+
     # recompute transition counts to probabilities
     my $grandTotal = $self->transitions->{$UNIGRAM_PROB_KEY};
-    foreach my $label (keys %{$self->transitions}) {
-        if ($label eq $UNIGRAM_PROB_KEY) { next; }
-        
+    foreach my $label ( keys %{ $self->transitions } ) {
+        if ( $label eq $UNIGRAM_PROB_KEY ) { next; }
+
         # prob to assign to unigram $label
         my $label_prob = $self->transitions->{$label}->{$UNIGRAM_PROB_KEY}
             / $grandTotal;
-        
+
         # count sum of next labels
         my $labelTotal = 0;
-        foreach my $next_label (keys %{$self->transitions->{$label}}) {
+        foreach my $next_label ( keys %{ $self->transitions->{$label} } ) {
             $labelTotal += $self->transitions->{$label}->{$next_label};
         }
+
         # $UNIGRAM_PROB_KEY was not skipped, must be subtracted
         $labelTotal -= $self->transitions->{$label}->{$UNIGRAM_PROB_KEY};
-        
+
         if ($labelTotal) {
+
             # assign transition probs
-            foreach my $next_label (keys %{$self->transitions->{$label}}) {
+            foreach my $next_label ( keys %{ $self->transitions->{$label} } ) {
                 $self->transitions->{$label}->{$next_label}
                     = $self->transitions->{$label}->{$next_label} / $labelTotal;
             }
         }
-        
+
         # assign unigram prob
         $self->transitions->{$label}->{$UNIGRAM_PROB_KEY} = $label_prob;
     }
-    
+
     return;
 }
+
+sub get_transition_prob {
+
+    # (Str $feature)
+    my ( $self, $label_this, $label_prev ) = @_;
+
+    if ( $self->transitions->{$label_prev}
+        && $self->transitions->{$label_prev}->{$label_this} ) {
+        return $self->transitions->{$label_prev}->{$label_this};
+    } else {
+        # TODO: provide some smoothing?
+        return 0;
+    }
+}
+
 
 # FEATURE WEIGHTS
 
 sub get_feature_weight {
 
     # (Str $feature)
-#    my ( $self, $feature, $label ) = @_;
+    #    my ( $self, $feature, $label ) = @_;
     my ( $self, $feature ) = @_;
 
-#    my $weight = $self->weights->{$feature}->{$label};
+    #    my $weight = $self->weights->{$feature}->{$label};
     my $weight = $self->weights->{$feature};
     if ($weight) {
         return $weight;
@@ -124,10 +143,10 @@ sub get_feature_weight {
 sub set_feature_weight {
 
     # (Str $feature, Num $weight)
-#    my ( $self, $feature, $label, $weight ) = @_;
+    #    my ( $self, $feature, $label, $weight ) = @_;
     my ( $self, $feature, $weight ) = @_;
 
-#    $self->weights->{$feature}->{$label} = $weight;
+    #    $self->weights->{$feature}->{$label} = $weight;
     $self->weights->{$feature} = $weight;
 
     return;
@@ -136,10 +155,10 @@ sub set_feature_weight {
 sub update_feature_weight {
 
     # (Str $feature, Num $update)
-#    my ( $self, $feature, $label, $update ) = @_;
+    #    my ( $self, $feature, $label, $update ) = @_;
     my ( $self, $feature, $update ) = @_;
 
-#    $self->weights->{$feature}->{$label} += $update;
+    #    $self->weights->{$feature}->{$label} += $update;
     $self->weights->{$feature} += $update;
 
     return;

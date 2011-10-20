@@ -41,24 +41,27 @@ sub preprocess_sentence {
 
     # compute edges and their features
     $sentence->fill_fields_before_labelling();
+
     # $sentence->fill_fields_after_labelling();
 
     # compute transition counts
-    $self->compute_transition_counts($sentence->getNodeByOrd(0));
+    $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
 
     return;
 }
 
 sub compute_transition_counts {
+
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
     my ( $self, $parent_node ) = @_;
     
+    # TODO a special label for sequence boundaries?
     my $last_label = undef;
-    foreach my $edge (@{$parent_node->children}) {
+    foreach my $edge ( @{ $parent_node->children } ) {
         my $this_label = $edge->child->label;
-        $self->model->add_transition($this_label, $last_label);
+        $self->model->add_transition( $this_label, $last_label );
         $last_label = $this_label;
-        $self->compute_transition_counts($edge->child);
+        $self->compute_transition_counts( $edge->child );
     }
 
     return;
@@ -79,7 +82,7 @@ sub update {
     my $sentence_best_labelling = $self->labeller->label_sentence_internal(
         $sentence_correct_labelling
     );
-    
+
     # nothing to do now in fill_fields_after_labelling()
     # $sentence_best_labelling->fill_fields_after_labelling();
 

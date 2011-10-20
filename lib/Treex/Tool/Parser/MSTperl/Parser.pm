@@ -1,7 +1,5 @@
 package Treex::Tool::Parser::MSTperl::Parser;
 
-# TODO: most probably refactor to two classes, Parser and Labeller
-
 use Moose;
 use Carp;
 
@@ -30,7 +28,7 @@ sub BUILD {
     $self->model(
         Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
             config => $self->config,
-        )
+            )
     );
 
     return;

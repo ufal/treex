@@ -15,9 +15,9 @@ has 'weights' => (
 
 sub BUILD {
     my ($self) = @_;
-    
-    $self->featuresControl($self->config->unlabelledFeaturesControl);
-    
+
+    $self->featuresControl( $self->config->unlabelledFeaturesControl );
+
     return;
 }
 
@@ -25,13 +25,13 @@ sub BUILD {
 
 sub get_data_to_store {
     my ($self) = @_;
-    
+
     return $self->weights;
 }
 
 sub get_tsv_data_to_store {
     my ($self) = @_;
-    
+
     my @result;
     foreach my $feature ( keys %{ $self->weights } ) {
         if ( $feature =~ /^([0-9]+):(.*)$/ ) {
@@ -44,14 +44,14 @@ sub get_tsv_data_to_store {
             print STDERR "Feature $feature is not in correct format!\n";
         }
     }
-    
+
     return [@result];
 }
 
 sub load_data {
-    
-    my ($self, $data) = @_;
-    
+
+    my ( $self, $data ) = @_;
+
     $self->weights($data);
 
     if ( scalar( keys %{ $self->weights } ) ) {
@@ -62,8 +62,8 @@ sub load_data {
 }
 
 sub load_tsv_data {
-    
-    my ($self, $data) = @_;
+
+    my ( $self, $data ) = @_;
 
     my %weights;
 
@@ -92,7 +92,7 @@ sub load_tsv_data {
             print STDERR "Feature $feature is not in correct format!\n";
         }
     }
-    
+
     $self->weights( \%weights );
 
     if ( scalar( keys %{ $self->weights } ) ) {

@@ -78,9 +78,9 @@ sub fill_fields_after_parse {
 
     #compute edges
     $self->compute_edges();
-    
+
     #compute features
-    $self->compute_features($self->config->unlabelledFeaturesControl);
+    $self->compute_features( $self->config->unlabelledFeaturesControl );
 
     return;
 }
@@ -91,21 +91,21 @@ sub fill_fields_before_labelling {
 
     #compute edges
     $self->compute_edges();
-    
+
     #compute features
-    $self->compute_features($self->config->labelledFeaturesControl);
+    $self->compute_features( $self->config->labelledFeaturesControl );
 
     return;
 }
 
 # sub fill_fields_after_labelling {
-# 
+#
 #     my ($self) = @_;
-# 
-#     seems there is nothing to compute here 
+#
+#     seems there is nothing to compute here
 #     (provided that the labels are somewhat extra,
 #      i.e. not part of the feature values)
-# 
+#
 #     return;
 # }
 
@@ -113,7 +113,7 @@ sub fill_fields_before_labelling {
 # used both in fill_fields_after_parse and fill_fields_before_labelling methods
 sub compute_edges {
     my ($self) = @_;
-    
+
     my @edges;
     foreach my $node ( @{ $self->nodes } ) {
 
@@ -124,7 +124,7 @@ sub compute_edges {
         } else {    # $node->parentOrd
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
-    
+
         if ( $self->config->DEBUG ) {
             print $node->ord . ': ' . ' <- ' . $node->parentOrd . "\n";
         }
@@ -136,31 +136,31 @@ sub compute_edges {
             sentence => $self
         );
         push @edges, $edge;
+
         # add edge to the parent's list of children
-        push @{$node->parent->children}, $edge;
-        
+        push @{ $node->parent->children }, $edge;
+
     }
     $self->edges( [@edges] );
-    
+
     return;
 }
 
 # compute edge features and join them into sentence features
 sub compute_features {
-    
-    my ($self, $featuresControl) = @_ ;
-    
+
+    my ( $self, $featuresControl ) = @_;
+
     my @features;
-    foreach my $edge (@{$self->edges}) {
+    foreach my $edge ( @{ $self->edges } ) {
         my $edge_features = $featuresControl->get_all_features($edge);
         $edge->features($edge_features);
         push @features, @{$edge_features};
     }
     $self->features( [@features] );
-    
+
     return;
 }
-
 
 sub clear_parse {
     my ($self) = @_;

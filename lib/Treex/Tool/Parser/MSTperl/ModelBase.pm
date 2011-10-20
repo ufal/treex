@@ -11,18 +11,17 @@ has 'config' => (
 );
 
 has 'featuresControl' => (
-    isa      => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
-    is       => 'rw',
+    isa => 'Treex::Tool::Parser::MSTperl::FeaturesControl',
+    is  => 'rw',
 );
-
 
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
-    
+
     my ($self) = @_;
-    
+
     # nothing in the base, to be overridden in extending packages
-    
+
     return;
 }
 
@@ -50,7 +49,7 @@ sub store {
 
 sub get_data_to_store {
     my ($self) = @_;
-    
+
     croak 'abstract method get_data_to_store to be overridden' .
         ' and called on extending packages!';
 }
@@ -63,7 +62,7 @@ sub store_tsv {
     print "Saving model to '$filename'... ";
 
     open my $file, ">:encoding(utf8)", $filename;
-    print $file join "\n", @{$self->get_tsv_data_to_store()};
+    print $file join "\n", @{ $self->get_tsv_data_to_store() };
     close $file;
 
     if ( -e $filename ) {
@@ -77,7 +76,7 @@ sub store_tsv {
 
 sub get_tsv_data_to_store {
     my ($self) = @_;
-    
+
     croak 'abstract method get_tsv_data_to_store to be overridden' .
         ' and called on extending packages!';
 }
@@ -89,10 +88,10 @@ sub load {
 
     print "Loading model from '$filename'...\n";
 
-    my $data = do $filename;
+    my $data   = do $filename;
     my $result = $self->load_data($data);
 
-    if ( $result ) {
+    if ($result) {
         print "Model loaded.\n";
         return 1;
     } else {
@@ -102,11 +101,11 @@ sub load {
 }
 
 sub load_data {
-    my ($self, $data) = @_;
-    
+    my ( $self, $data ) = @_;
+
     croak 'abstract method load_data to be overridden' .
         ' and called on extending packages!';
-    
+
 }
 
 sub load_tsv {
@@ -126,9 +125,9 @@ sub load_tsv {
     }
     close $file;
 
-    my $result = $self->load_tsv_data([@data]);
+    my $result = $self->load_tsv_data( [@data] );
 
-    if ( $result ) {
+    if ($result) {
         print "Model loaded.\n";
         return 1;
     } else {
@@ -138,13 +137,12 @@ sub load_tsv {
 }
 
 sub load_tsv_data {
-    my ($self, $data) = @_;
-    
+    my ( $self, $data ) = @_;
+
     croak 'abstract method load_tsv_data to be overridden' .
         ' and called on extending packages!';
-    
-}
 
+}
 
 # ACCESS TO FEATURES
 
