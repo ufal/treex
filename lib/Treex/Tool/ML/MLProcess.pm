@@ -8,11 +8,28 @@ use File::Temp ();
 use Treex::Tool::IO::Arff;
 use autodie;
 
+# The base directory for the ML-Process tool
+Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process/';
+
+# All files the ML-Process tool needs for its work (except the executable JAR)
+Readonly my $ML_PROCESS_LIBRARIES => [
+    'lib/google-collect-1.0.jar',
+    'lib/java-getopt-1.0.13.jar',
+    'lib/liblinear-1.51.jar',
+    'lib/libsvm-2.91.jar',
+    'lib/lpsolve55j.jar',
+    'lib/weka-3.7.1.jar',
+    'dll_32/liblpsolve55.so',
+    'dll_32/liblpsolve55j.so',
+    'dll_64/liblpsolve55.so',
+    'dll_64/liblpsolve55.so',    
+];
+
 # ML-Process executable
 has 'ml_process_jar' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'installed_tools/ml-process/ml-process.jar',
+    default => $ML_PROCESS_BASEDIR . 'ml-process.jar',
     writer  => '_set_ml_process_jar'
 );
 
@@ -42,7 +59,12 @@ has '_tempfiles' => ( isa => 'ArrayRef', is => 'ro', default => sub { [] } );
 
 sub BUILD {
     my ( $self, $params ) = @_;
-    # try to download the ML-Process JAR file and set its real absolute path
+
+    # try to download the ML-Process JAR file + other libraries and set their real absolute path
+    # (assuming everything is downloaded into one subtree)
+    foreach my $shared_file ( @{ $ML_PROCESS_LIBRARIES } ){
+        Treex::Core::Resource::require_file_from_share( $ML_PROCESS_BASEDIR . $shared_file );
+    }
     $self->_set_ml_process_jar( Treex::Core::Resource::require_file_from_share( $self->ml_process_jar ) );
 }
 

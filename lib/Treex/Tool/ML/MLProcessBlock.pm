@@ -6,6 +6,9 @@ use Treex::Tool::ML::MLProcess;
 
 extends 'Treex::Core::Block';
 
+# cleanup temporary files (default = 1)
+has 'cleanup_temp' => ( is => 'ro', isa => 'Bool', default => 1 );
+
 # files related to the trained model (will be required from the shared directory)
 has 'model_dir'     => ( is => 'ro', isa => 'Str', required => 1 );
 has 'plan_template' => ( is => 'ro', isa => 'Str', required => 1 );
@@ -50,7 +53,8 @@ override 'process_document' => sub {
     
     my $mlprocess = Treex::Tool::ML::MLProcess->new(
         {
-            plan_template => $self->_required_files->{ $self->model_dir . $self->plan_template }
+            plan_template => $self->_required_files->{ $self->model_dir . $self->plan_template },
+            cleanup_temp => $self->cleanup_temp            
         }
     );
 
@@ -155,7 +159,11 @@ All pre-set values of variables in the scenario template file, i.e. a hash in th
 =item class_name
 
 The name of the attribute which ML-Process will classify and which is to be loaded into the individual nodes
-(via the C<_set_class_value> method). 
+(via the C<_set_class_value> method).
+
+=item cleanup_temp
+
+Should the ML-Process temporary files be deleted at the end of the processing (default: 1)?  
 
 =back
 
