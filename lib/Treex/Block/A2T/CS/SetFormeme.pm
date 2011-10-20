@@ -23,7 +23,7 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     # Clear NodeInfo cache for each tree
-    if ( $self->use_version == 2 ) {
+    if ( $self->use_version eq '2' ) {
         $self->_set_node_info_cache( {} );
     }
     foreach my $t_node ( $t_root->get_descendants() ) {
@@ -43,7 +43,7 @@ sub process_tnode {
     # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
     # fill in formemes
     if ( $t_node->nodetype eq 'complex' ) {
-        if ( $self->use_version == 2 ) {
+        if ( $self->use_version eq '2' ) {
 
             my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
 
