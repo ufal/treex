@@ -4,16 +4,25 @@ use Moose;
 
 extends 'Treex::Tool::Parser::MSTperl::ModelBase';
 
-# has the from of:
-#  transitions->{label_prev}->{label_this} = count
+# transition probs:
+#   transitions->{label_prev}->{label_this} = count
 # unigram counts stored as:
-#  transitions->{label_this}->{$config->UNIGRAM_PROB_KEY} = count
+#   transitions->{label_this}->{$config->UNIGRAM_PROB_KEY} = count
+#
 has 'transitions' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub { {} },
 );
 
+# emission scores (maybe should be probabilities?):
+#   weights->{feature}->{label} = weight
+#
+has 'weights' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { {} },
+);
 
 sub BUILD {
     my ($self) = @_;
@@ -23,14 +32,31 @@ sub BUILD {
     return;
 }
 
+# STORING AND LOADING
+
+sub get_data_to_store {
+    my ($self) = @_;
+    
+    return {
+        'transitions' => $self->transitions,
+        'weights' => $self->weights,
+    };
+}
+
+# TRANSITION COUNTS AND PROBABILITIES
 
 sub add_transition {
     my ($self, $label_this, $label_prev) = @_;
     
+    if ($self->config->DEBUG) {
+        print "add_transition($label_this, $label_prev)\n";
+    }
+    
     # increment sum of numbers of unigrams
     $self->transitions->{$self->config->UNIGRAM_PROB_KEY} += 1;
     # increment number of unigrams
-    $self->transitions->{$label_this}->{$self->config->UNIGRAM_PROB_KEY} += 1;
+    $self->transitions->{$label_this}->
+        {$self->config->UNIGRAM_PROB_KEY} += 1;
     if ($label_prev) {
         # increment number of bigrams
         $self->transitions->{$label_prev}->{$label_this} += 1;
@@ -44,10 +70,78 @@ sub prepare_for_mira {
     
     my ($self) = @_;
     
+    my $UNIGRAM_PROB_KEY = $self->config->UNIGRAM_PROB_KEY;
+    
     # recompute transition counts to probabilities
-    my $grandTotal = $self->transitions->{$self->config->UNIGRAM_PROB_KEY};
+    my $grandTotal = $self->transitions->{$UNIGRAM_PROB_KEY};
+    foreach my $label (keys %{$self->transitions}) {
+        if ($label eq $UNIGRAM_PROB_KEY) { next; }
+        
+        # prob to assign to unigram $label
+        my $label_prob = $self->transitions->{$label}->{$UNIGRAM_PROB_KEY}
+            / $grandTotal;
+        
+        # count sum of next labels
+        my $labelTotal = 0;
+        foreach my $next_label (keys %{$self->transitions->{$label}}) {
+            $labelTotal += $self->transitions->{$label}->{$next_label};
+        }
+        # $UNIGRAM_PROB_KEY was not skipped, must be subtracted
+        $labelTotal -= $self->transitions->{$label}->{$UNIGRAM_PROB_KEY};
+        
+        if ($labelTotal) {
+            # assign transition probs
+            foreach my $next_label (keys %{$self->transitions->{$label}}) {
+                $self->transitions->{$label}->{$next_label}
+                    = $self->transitions->{$label}->{$next_label} / $labelTotal;
+            }
+        }
+        
+        # assign unigram prob
+        $self->transitions->{$label}->{$UNIGRAM_PROB_KEY} = $label_prob;
+    }
     
-    
+    return;
+}
+
+# FEATURE WEIGHTS
+
+sub get_feature_weight {
+
+    # (Str $feature)
+#    my ( $self, $feature, $label ) = @_;
+    my ( $self, $feature ) = @_;
+
+#    my $weight = $self->weights->{$feature}->{$label};
+    my $weight = $self->weights->{$feature};
+    if ($weight) {
+        return $weight;
+    } else {
+        return 0;
+    }
+}
+
+sub set_feature_weight {
+
+    # (Str $feature, Num $weight)
+#    my ( $self, $feature, $label, $weight ) = @_;
+    my ( $self, $feature, $weight ) = @_;
+
+#    $self->weights->{$feature}->{$label} = $weight;
+    $self->weights->{$feature} = $weight;
+
+    return;
+}
+
+sub update_feature_weight {
+
+    # (Str $feature, Num $update)
+#    my ( $self, $feature, $label, $update ) = @_;
+    my ( $self, $feature, $update ) = @_;
+
+#    $self->weights->{$feature}->{$label} += $update;
+    $self->weights->{$feature} += $update;
+
     return;
 }
 

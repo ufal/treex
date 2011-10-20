@@ -63,13 +63,13 @@ sub update {
     if ( $self->config->DEBUG ) {
         print "CORRECT PARSE EDGES:\n";
         foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
-            print $edge->parent->form . " -> "
-                . $edge->child->form . "\n";
+            print $edge->parent->ord . " -> "
+                . $edge->child->ord . "\n";
         }
         print "BEST PARSE EDGES:\n";
         foreach my $edge ( @{ $sentence_best_parse->edges } ) {
-            print $edge->parent->form . " -> "
-                . $edge->child->form . "\n";
+            print $edge->parent->ord . " -> "
+                . $edge->child->ord . "\n";
         }
     }
 

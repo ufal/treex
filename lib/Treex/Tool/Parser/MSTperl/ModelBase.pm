@@ -15,16 +15,6 @@ has 'featuresControl' => (
     is       => 'rw',
 );
 
-# TODO: features indexed? (i.e. weights would be an ArrayRef etc.)
-# It would help to push down the size of edge_features_cache
-# (no speedup or slowdown is expected).
-has 'weights' => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    default => sub { {} },
-);
-
-
 
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
@@ -46,7 +36,7 @@ sub store {
     print "Saving model to '$filename'... ";
 
     open my $file, ">:encoding(utf8)", $filename;
-    print $file Dumper $self->weights;
+    print $file Dumper $self->get_data_to_store();
     close $file;
 
     if ( -e $filename ) {
@@ -56,6 +46,13 @@ sub store {
         croak "MSTperl parser error:"
             . "unable to create the model file '$filename'!";
     }
+}
+
+sub get_data_to_store {
+    my ($self) = @_;
+    
+    croak 'abstract method get_data_to_store to be overridden' .
+        ' and called on extending packages!';
 }
 
 sub store_tsv {
@@ -66,18 +63,7 @@ sub store_tsv {
     print "Saving model to '$filename'... ";
 
     open my $file, ">:encoding(utf8)", $filename;
-    foreach my $feature ( keys %{ $self->weights } ) {
-        if ( $feature =~ /^([0-9]+):(.*)$/ ) {
-            my $index       = $1;
-            my $value       = $2;
-            my $code        = $self->featuresControl->feature_codes->[$index];
-            my $feature_str = "$code:$value";
-            print $file $feature_str . "\t" . $self->weights->{$feature}
-                . "\n";
-        } else {
-            print STDERR "Feature $feature is not in correct format!\n";
-        }
-    }
+    print $file join "\n", @{$self->get_tsv_data_to_store()};
     close $file;
 
     if ( -e $filename ) {
@@ -89,6 +75,13 @@ sub store_tsv {
     }
 }
 
+sub get_tsv_data_to_store {
+    my ($self) = @_;
+    
+    croak 'abstract method get_tsv_data_to_store to be overridden' .
+        ' and called on extending packages!';
+}
+
 sub load {
 
     # (Str $filename)
@@ -96,16 +89,24 @@ sub load {
 
     print "Loading model from '$filename'...\n";
 
-    my $weights = do $filename;
-    $self->weights($weights);
+    my $data = do $filename;
+    my $result = $self->load_data($data);
 
-    if ( scalar( keys %{ $self->weights } ) ) {
+    if ( $result ) {
         print "Model loaded.\n";
         return 1;
     } else {
         croak "MSTperl parser error:"
-            . "no feature weights found in the model file!";
+            . "model file data error!";
     }
+}
+
+sub load_data {
+    my ($self, $data) = @_;
+    
+    croak 'abstract method load_data to be overridden' .
+        ' and called on extending packages!';
+    
 }
 
 sub load_tsv {
@@ -115,48 +116,35 @@ sub load_tsv {
 
     print "Loading model from '$filename'... ";
 
-    my %weights;
-
-    #precompute feature code to feature index translation table
-    my %code2index;
-    my $feature_num = $self->featuresControl->feature_count;
-    for (
-        my $feature_index = 0;
-        $feature_index < $feature_num;
-        $feature_index++
-        )
-    {
-        my $code = $self->featuresControl->feature_codes->[$feature_index];
-        $code2index{$code} = $feature_index;
-    }
+    my @data;
 
     #read the file
     open my $file, '<:encoding(utf8)', $filename;
     while (<$file>) {
         chomp;
-        my ( $feature, $weight ) = split /\t/;
-        if ( $feature =~ /^([^:]+):(.*)$/ ) {
-            my $code            = $1;
-            my $value           = $2;
-            my $index           = $code2index{$code};
-            my $feature_indexed = "$index:$value";
-            $weights{$feature_indexed} = $weight;
-        } else {
-            print STDERR "Feature $feature is not in correct format!\n";
-        }
+        push @data, $_;
     }
     close $file;
 
-    $self->weights( \%weights );
+    my $result = $self->load_tsv_data([@data]);
 
-    if ( scalar( keys %{ $self->weights } ) ) {
+    if ( $result ) {
         print "Model loaded.\n";
         return 1;
     } else {
         croak "MSTperl parser error:"
-            . "no feature weights found in the model file!";
+            . "model file data error!";
     }
 }
+
+sub load_tsv_data {
+    my ($self, $data) = @_;
+    
+    croak 'abstract method load_tsv_data to be overridden' .
+        ' and called on extending packages!';
+    
+}
+
 
 # ACCESS TO FEATURES
 
@@ -180,41 +168,6 @@ sub score_features {
     }
 
     return $score;
-}
-
-# FEATURE WEGHTS
-
-sub get_feature_weight {
-
-    # (Str $feature)
-    my ( $self, $feature ) = @_;
-
-    my $weight = $self->weights->{$feature};
-    if ($weight) {
-        return $weight;
-    } else {
-        return 0;
-    }
-}
-
-sub set_feature_weight {
-
-    # (Str $feature, Num $weight)
-    my ( $self, $feature, $weight ) = @_;
-
-    $self->weights->{$feature} = $weight;
-
-    return;
-}
-
-sub update_feature_weight {
-
-    # (Str $feature, Num $update)
-    my ( $self, $feature, $update ) = @_;
-
-    $self->weights->{$feature} += $update;
-
-    return;
 }
 
 1;

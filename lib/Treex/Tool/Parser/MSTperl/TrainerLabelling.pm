@@ -87,11 +87,11 @@ sub update {
     if ( $self->config->DEBUG ) {
         print "CORRECT LABELS:\n";
         foreach my $node ( @{ $sentence_correct_labelling->nodes_with_root } ) {
-            print $node->form . "/" . $node->label . "\n";
+            print $node->ord . "/" . $node->label . "\n";
         }
         print "BEST SCORING LABELS:\n";
         foreach my $node ( @{ $sentence_best_labelling->nodes_with_root } ) {
-            print $node->form . "/" . $node->label . "\n";
+            print $node->ord . "/" . $node->label . "\n";
         }
     }
 

@@ -159,11 +159,11 @@ sub preprocess_sentences {
             }
             print "CORRECT EDGES:\n";
             foreach my $edge ( @{ $sentence_correct->edges } ) {
-                print $edge->parent->form . " -> " . $edge->child->form . "\n";
+                print $edge->parent->ord . " -> " . $edge->child->ord . "\n";
             }
             print "CORRECT LABELS:\n";
             foreach my $node ( @{ $sentence_correct->nodes_with_root } ) {
-                print $node->form . "/" . $node->label . "\n";
+                print $node->ord . "/" . $node->label . "\n";
             }
         }
 

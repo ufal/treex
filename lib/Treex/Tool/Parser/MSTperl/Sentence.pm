@@ -126,8 +126,7 @@ sub compute_edges {
         }
     
         if ( $self->config->DEBUG ) {
-            print $node->ord . ': ' . $node->form
-                . ' <- ' . $node->parentOrd . "\n";
+            print $node->ord . ': ' . ' <- ' . $node->parentOrd . "\n";
         }
 
         # add a new edge
@@ -306,17 +305,6 @@ sub count_errors_labelling {
     }
 
     return $errors;
-}
-
-sub toString {
-    my ($self) = @_;
-
-    my @forms;
-    foreach my $node ( @{ $self->nodes } ) {
-        push @forms, $node->form;
-    }
-
-    return join ' ', @forms;
 }
 
 sub toParentOrdsArray {
