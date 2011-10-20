@@ -2,9 +2,9 @@ package Treex::Core::Config;
 use strict;
 use warnings;
 
-use File::HomeDir;
+use File::HomeDir 0.97;
 use File::ShareDir;
-use File::Slurp;
+use File::Slurp 9999;
 use Cwd qw(realpath);
 use Treex::Core::Log;
 
