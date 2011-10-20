@@ -11,7 +11,7 @@ has config => (
 
 # to be filled in extending packages!
 has model => (
-    isa => 'Treex::Tool::Parser::MSTperl::Model',
+    isa => 'Treex::Tool::Parser::MSTperl::ModelBase',
     is  => 'rw',
 );
 

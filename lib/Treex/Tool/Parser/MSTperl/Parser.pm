@@ -7,7 +7,7 @@ use Carp;
 
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Edge;
-use Treex::Tool::Parser::MSTperl::Model;
+use Treex::Tool::Parser::MSTperl::ModelUnlabelled;
 
 use Graph;
 use Graph::Directed;
@@ -20,7 +20,7 @@ has config => (
 );
 
 has model => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelUnlabelled]',
     is  => 'rw',
 );
 
@@ -28,7 +28,7 @@ sub BUILD {
     my ($self) = @_;
 
     $self->model(
-        Treex::Tool::Parser::MSTperl::Model->new(
+        Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
             featuresControl => $self->config->unlabelledFeaturesControl
         )
     );
@@ -164,7 +164,7 @@ in Proc. HLT/EMNLP.
 =item $parser->load_model('modelfile.model');
 
 Loads an unlabelled and/or a labelled model (= sets feature weights)
-using L<Treex::Tool::Parser::MSTperl::Model/load>.
+using L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
 
 A model has to be loaded before sentences can be parsed.
 

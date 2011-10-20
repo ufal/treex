@@ -30,6 +30,12 @@ has parentOrd => (
     default => 0,
 );
 
+has children => (
+    isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
+    is  => 'rw',
+    default => sub { [] },
+);
+
 has label => (
     isa     => 'Str',
     is      => 'rw',

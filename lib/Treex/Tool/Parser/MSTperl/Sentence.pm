@@ -89,6 +89,10 @@ sub fill_fields_after_parse {
         } else {    # $node->parentOrd
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
+    
+        # add node to its parent's list of children
+        push @{$node->parent->children}, $node;
+        
         if ( $self->config->DEBUG ) {
             print $node->ord . ': ' . $node->form
                 . ' <- ' . $node->parentOrd . "\n";
@@ -218,7 +222,7 @@ sub len {
 
 sub score {
 
-    # (Treex::Tool::Parser::MSTperl::Model $model)
+    # (Treex::Tool::Parser::MSTperl::ModelBase $model)
     my ( $self, $model ) = @_;
     return $model->score_features( $self->features );
 }
@@ -470,7 +474,7 @@ Each node corresponds to one word (one token to be more precise).
 =item $sentence->score()
 
 Returns model-wise score of the sentence (by calling
-L<Treex::Tool::Parser::MSTperl::Model/score_features> on the sentence
+L<Treex::Tool::Parser::MSTperl::ModelBase/score_features> on the sentence
 C<features>)
 
 =item $sentence->count_errors_attachement($correct_sentence)

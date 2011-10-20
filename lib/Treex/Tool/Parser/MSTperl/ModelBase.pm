@@ -1,4 +1,4 @@
-package Treex::Tool::Parser::MSTperl::Model;
+package Treex::Tool::Parser::MSTperl::ModelBase;
 
 use Data::Dumper;
 use autodie;
@@ -212,11 +212,12 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Model
+Treex::Tool::Parser::MSTperl::ModelBase
 
 =head1 DESCRIPTION
 
-This is an in-memory represenation of a parsing model.
+This is a base class for an in-memory represenation of a parsing or labelling
+model.
 The model is represented by features and their weights.
 
 =head1 FIELDS

@@ -5,8 +5,7 @@ use Carp;
 
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Edge;
-use Treex::Tool::Parser::MSTperl::Model;
-use Treex::Tool::Parser::MSTperl::TransitionModel;
+use Treex::Tool::Parser::MSTperl::ModelLabelling;
 
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
@@ -15,27 +14,17 @@ has config => (
 );
 
 has model => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Model]',
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelLabelling]',
     is  => 'rw',
 );
 
-has transitionModel => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::TransitionModel]',
-    is  => 'rw',
-);
 
 sub BUILD {
     my ($self) = @_;
 
     $self->model(
-        Treex::Tool::Parser::MSTperl::Model->new(
+        Treex::Tool::Parser::MSTperl::ModelLabelling->new(
             featuresControl => $self->config->labelledFeaturesControl
-        )
-    );
-
-    $self->transitionModel(
-        Treex::Tool::Parser::MSTperl::TransitionModel->new(
-#            featuresControl => $self->config->labelledFeaturesControl
         )
     );
 
@@ -135,7 +124,7 @@ McDonald et al.:
 =item $labeller->load_model('modelfile.model');
 
 Loads a labelled model (= sets feature weights)
-using L<Treex::Tool::Parser::MSTperl::Model/load>.
+using L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
 
 A model has to be loaded before sentences can be labelled.
 

@@ -6,6 +6,11 @@ extends 'Treex::Tool::Parser::MSTperl::TrainerBase';
 
 use Treex::Tool::Parser::MSTperl::Labeller;
 
+has model => (
+    isa => 'Treex::Tool::Parser::MSTperl::ModelLabelling',
+    is  => 'rw',
+);
+
 has labeller => (
     isa => 'Treex::Tool::Parser::MSTperl::Labeller',
     is  => 'rw',
@@ -188,8 +193,8 @@ used for the training.
 
 =item model
 
-Reference to an instance of L<Treex::Tool::Parser::MSTperl::Model> which is
-being trained.
+Reference to an instance of L<Treex::Tool::Parser::MSTperl::ModelLabeller>
+which is being trained.
 
 =back
 
