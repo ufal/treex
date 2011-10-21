@@ -6,10 +6,14 @@ use Carp;
 
 use Treex::Tool::Parser::MSTperl::FeaturesControl;
 
+# varied levels of debug info,
+# ranging from 0 (no debug info)
+# through 1 (progress messages - this is the default setting)
+# through 2, 3 and 4 to 5 (more and more debug info)
 has 'DEBUG' => (
     is      => 'rw',
-    isa     => 'Bool',
-    default => '0',
+    isa     => 'Int',
+    default => '1',
 );
 
 has 'DEBUG_ALPHAS' => (
@@ -24,6 +28,20 @@ has 'UNIGRAM_PROB_KEY' => (
     is      => 'ro',
     isa     => 'Str',
     default => '',
+);
+
+# Viterbi settings
+
+has 'SEQUENCE_BOUNDARY_LABEL' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => '###',
+);
+
+has 'VITERBI_STATES_NUM_THRESHOLD' => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 5,
 );
 
 has 'config_file' => (

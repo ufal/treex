@@ -83,81 +83,79 @@ sub label_subtree {
 
     # (Treex::Tool::Parser::MSTperl::Node $parent)
     my ( $self, $parent ) = @_;
-    
-    my @edges = @{$parent->children};
+
+    my @edges = @{ $parent->children };
 
     # label the nodes using Viterbi
-    
+
     # Viterbi has been copied from NPFL068 homework and is being fitted a little
-    
-    my $SEQUENCE_BOUNDARY_LABEL = '###';
-    my $DEBUG = 0;
-    my $VITERBI_STATES_NUM_THRESHOLD = 5;
-    
+
     # States structure: for each state (its key being a label)
     # there is an array with the current best path to it as 'path' (append-only)
     # and its current probability 'prob' (product of probs on the path)
     my %states;
-    my $starting_state_key = $SEQUENCE_BOUNDARY_LABEL;
+    my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
     $states{$starting_state_key} = {
-        'path' => [$SEQUENCE_BOUNDARY_LABEL],
+        'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
         'prob' => 1e300,
     };
-    
+
     # run Viterbi
     # In each cycle generates %new_states and sets them as %states,
     # so at the end it suffices to find the state with the best prob in %states
     # and use its path as the result.
     foreach my $edge (@edges) {
-        if ($DEBUG >= 2) {
-            print STDERR "  Currently there are "
-                . (keys %states) . " states\n";
+        if ( $self->config->DEBUG >= 3 ) {
+            print "  Currently there are "
+                . ( keys %states ) . " states\n";
         }
         my %new_states;
-        foreach my $last_state (keys %states) {
-    	    if ($DEBUG >= 3) {
-                print STDERR "    Processing state $last_state (prob "
+        foreach my $last_state ( keys %states ) {
+            if ( $self->config->DEBUG >= 4 ) {
+                print "    Processing state $last_state (prob "
                     . $states{$last_state}->{'prob'} . ")\n";
             }
+
             # only possible labels / all labels? (depends on smoothing style)
-            
+
             my @possible_labels;
             my $branch;
+
             # @possible_labels = keys %all_labels;
-            
+
             # TODO compute possible labels and their scores
             # emission_probs{label} = prob
             my %emission_probs = ( Obj => 0.2, Atr => 0.8 );
-#
-#             TODO this should be somehow done in the sub providing the labels
-#
-#             if (keys %emission_probs) {
-#                 foreach my $label (keys %{$emission_probs{$word}}) {
-#                     $possible_labels_temp{$label} = 1;
-#                 }
-#             } else {
-#                 # no labels suggested by the model
-#                 $branch = 2;
-#                 keys %emission_probs = %all_labels->unigram_probs;
-            
-    	    if ($DEBUG >= 3) {
+
+            #
+            # TODO this should be somehow done in the sub providing the labels
+            #
+            # if (keys %emission_probs) {
+            #     foreach my $label (keys %{$emission_probs{$word}}) {
+            #         $possible_labels_temp{$label} = 1;
+            #     }
+            # } else {
+            #     # no labels suggested by the model
+            #     $branch = 2;
+            #     keys %emission_probs = %all_labels->unigram_probs;
+
+            if ( $self->config->DEBUG >= 4 ) {
                 my $tmp = join ' ', keys %emission_probs;
-                print STDERR "    " . scalar(keys %emission_probs)
+                print "    " . scalar( keys %emission_probs )
                     . " possible labels are $tmp\n";
             }
-            
 
-            foreach my $new_label (keys %emission_probs) {
+            foreach my $new_label ( keys %emission_probs ) {
                 my $emission_prob = $emission_probs{$new_label};
                 my $transition_prob
-                    = $self->model->get_transition_prob (
-                        $new_label, $last_state
+                    = $self->model->get_transition_prob(
+                    $new_label, $last_state
                     );
                 my $new_state_prob
                     = $states{$last_state}->{'prob'} * $emission_prob
                     * $transition_prob;
-        		if ($DEBUG >= 4) {
-                    print STDERR "      Trying label $new_label, "
+                if ( $self->config->DEBUG >= 5 ) {
+                    print "      Trying label $new_label, "
                         . "prob $new_state_prob\n";
                 }
 
@@ -165,90 +163,100 @@ sub label_subtree {
                 # use this new state
                 if ($new_state_prob > 0
                     && (!$new_states{$new_label}
-                        || $new_states{$new_label}->{'prob'} < $new_state_prob)
-                ) {
+                        || $new_states{$new_label}->{'prob'} < $new_state_prob
+                    )
+                    )
+                {
                     my $new_state_path = $states{$last_state}->{'path'};
                     push @$new_state_path, $new_label;
                     $new_states{$new_label} = {
                         'path' => $new_state_path,
                         'prob' => $new_state_prob,
-                    }
+                        }
                 }
+
                 # else we already have a state with the same key but higher prob
             }
         }
-        
+
         # pruning
-        
+
         # pruning type 1 commented out because emission scores are not probs
         # (they do not sum up to 1)
         #
         # pruning: keep as many best states so that their normed prob
         # sums up to at least $VITERBI_STATES_PROB_SUM_THRESHOLD
-#         %states = ();
-#         my @best_states = sort { $new_states{$b}->{'prob'} <=> $new_states{$a}->{'prob'} } keys %new_states;
-#         my $prob_sum = 0;
-#         foreach my $state (@best_states) {
-#             $prob_sum += $new_states{$state}->{'prob'};
-#         }
-#         my $threshold = $prob_sum * $VITERBI_STATES_PROB_SUM_THRESHOLD;
-#         my $best_prob_sum = 0;
-#         while ($best_prob_sum < $threshold) {
-#             my $state = shift @best_states;
-#             $states{$state} = $new_states{$state};
-#             $best_prob_sum += $new_states{$state}->{'prob'};
-#         }
+        #         %states = ();
+        #         my @best_states = sort {
+        #                 $new_states{$b}->{'prob'}
+        #                 <=> $new_states{$a}->{'prob'}
+        #             } keys %new_states;
+        #         my $prob_sum = 0;
+        #         foreach my $state (@best_states) {
+        #             $prob_sum += $new_states{$state}->{'prob'};
+        #         }
+        #         my $threshold = $prob_sum
+        #             * $VITERBI_STATES_PROB_SUM_THRESHOLD;
+        #         my $best_prob_sum = 0;
+        #         while ($best_prob_sum < $threshold) {
+        #             my $state = shift @best_states;
+        #             $states{$state} = $new_states{$state};
+        #             $best_prob_sum += $new_states{$state}->{'prob'};
+        #         }
 
         # simple pruning: keep n best states
         %new_states = %states;
-        %states = ();
+        %states     = ();
         my @best_states
             = sort {
-                $new_states{$b}->{'prob'} <=> $new_states{$a}->{'prob'}
+            $new_states{$b}->{'prob'} <=> $new_states{$a}->{'prob'}
             } keys %new_states;
-        for (my $i = 0;
-            $i < $VITERBI_STATES_NUM_THRESHOLD && $i < @best_states;
+        for (
+            my $i = 0;
+            $i < $self->config->VITERBI_STATES_NUM_THRESHOLD
+            && $i < @best_states;
             $i++
-        ) {
+            )
+        {
             my $state = shift @best_states;
             $states{$state} = $new_states{$state};
         }
 
     }
-    
+
     # End - find the state with the best prob - this is the result
     my $best_state_label = undef;
+
     # "negative infinity" (works both with real probs and with their logs)
     my $best_state_prob = -999999999;
-    foreach my $state_label (keys %states) {
-        if ($DEBUG >= 1) {
-            print STDERR $states{$state_label}->{'prob'} . "\n";
+    foreach my $state_label ( keys %states ) {
+        if ( $self->config->DEBUG >= 2 ) {
+            print $states{$state_label}->{'prob'} . "\n";
         }
-        if ($states{$state_label}->{'prob'} > $best_state_prob) {
+        if ( $states{$state_label}->{'prob'} > $best_state_prob ) {
             $best_state_label = $state_label;
-            $best_state_prob = $states{$state_label}->{'prob'};
+            $best_state_prob  = $states{$state_label}->{'prob'};
         }
     }
     if ($best_state_label) {
-        # if ($DEBUG >= 1) print STDERR join ' ', @{$states{$best_state_label}->{'path'}};
-        # return $states{$best_state_label}->{'path'};
-        
-        my @labels = @{$states{$best_state_label}->{'path'}};
+        my @labels = @{ $states{$best_state_label}->{'path'} };
         foreach my $edge (@edges) {
             my $label = shift @labels;
-            $edge->child->label ($label)
+            $edge->child->label($label)
+        }
+
+        if ( $self->config->DEBUG >= 2 ) {
+            print join ' ', @{ $states{$best_state_label}->{'path'} };
         }
     } else {
-        die "No best state generated, cannot continue. (This is a weird error.)";
+        die "No best state generated, cannot continue. (This is weird.)";
     }
 
     # end of Viterbi copy
 
-
-
     # recursion
     foreach my $edge (@edges) {
-        $self->label_subtree ($edge->child);
+        $self->label_subtree( $edge->child );
     }
 
     return;

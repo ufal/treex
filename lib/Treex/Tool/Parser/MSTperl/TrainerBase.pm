@@ -112,7 +112,7 @@ sub train {
 
     # only progress and/or debug info
     print "Done.\n";
-    if ( $self->config->DEBUG ) {
+    if ( $self->config->DEBUG >= 2 ) {
         print "FINAL FEATURE WEIGTHS:\n";
     }
 
@@ -152,7 +152,7 @@ sub preprocess_sentences {
             print "  $sentNo/$sentence_count sentences"
                 . "processed (computing features)\n";
         }
-        if ( $self->config->DEBUG ) {
+        if ( $self->config->DEBUG >= 2 ) {
             print "SENTENCE FEATURES:\n";
             foreach my $feature ( @{ $sentence_correct->features } ) {
                 print "$feature\n";
@@ -191,7 +191,7 @@ sub recompute_feature_weights {
         $self->model->set_feature_weight( $feature, $weight );
 
         # only progress and/or debug info
-        if ( $self->config->DEBUG ) {
+        if ( $self->config->DEBUG >= 2 ) {
             print "$feature\t" . $self->model->get_feature_weight($feature)
                 . "\n";
         }

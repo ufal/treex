@@ -54,9 +54,9 @@ sub compute_transition_counts {
 
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
     my ( $self, $parent_node ) = @_;
-    
-    # TODO a special label for sequence boundaries?
-    my $last_label = undef;
+
+    # TODO add SEQUENCE_BOUNDARY_LABEL to end of sequence as well?
+    my $last_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $edge ( @{ $parent_node->children } ) {
         my $this_label = $edge->child->label;
         $self->model->add_transition( $this_label, $last_label );
@@ -87,7 +87,7 @@ sub update {
     # $sentence_best_labelling->fill_fields_after_labelling();
 
     # only progress and/or debug info
-    if ( $self->config->DEBUG ) {
+    if ( $self->config->DEBUG >= 2 ) {
         print "CORRECT LABELS:\n";
         foreach my $node ( @{ $sentence_correct_labelling->nodes_with_root } ) {
             print $node->ord . "/" . $node->label . "\n";
@@ -151,7 +151,7 @@ sub mira_update {
             warn "Features of the best labelling and the correct labelling" .
                 "do not differ, unable to update the scores. " .
                 "This is somewhat weird.\n";
-            if ( $self->config->DEBUG_ALPHAS ) {
+            if ( $self->config->DEBUG >= 3 ) {
                 print "alpha: 0 on 0 features\n";
             }
         } else {
@@ -177,12 +177,12 @@ sub mira_update {
                     $sumUpdateWeight
                 );
             }
-            if ( $self->config->DEBUG_ALPHAS ) {
+            if ( $self->config->DEBUG >= 3 ) {
                 print "alpha: $update on $features_diff_count features\n";
             }
         }
     } else {    #else no need to optimize
-        if ( $self->config->DEBUG_ALPHAS ) {
+        if ( $self->config->DEBUG >= 3 ) {
             print "alpha: 0 on 0 features\n";
         }
     }

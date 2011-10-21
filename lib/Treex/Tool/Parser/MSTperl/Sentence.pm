@@ -125,7 +125,7 @@ sub compute_edges {
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
 
-        if ( $self->config->DEBUG ) {
+        if ( $self->config->DEBUG >= 2 ) {
             print $node->ord . ': ' . ' <- ' . $node->parentOrd . "\n";
         }
 

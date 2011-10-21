@@ -60,7 +60,7 @@ sub update {
     $sentence_best_parse->fill_fields_after_parse();
 
     # only progress and/or debug info
-    if ( $self->config->DEBUG ) {
+    if ( $self->config->DEBUG >= 2 ) {
         print "CORRECT PARSE EDGES:\n";
         foreach my $edge ( @{ $sentence_correct_parse->edges } ) {
             print $edge->parent->ord . " -> "
@@ -126,7 +126,7 @@ sub mira_update {
             warn "Features of the best parse and the correct parse do not " .
                 "differ, unable to update the scores. " .
                 "Consider using more features.\n";
-            if ( $self->config->DEBUG_ALPHAS ) {
+            if ( $self->config->DEBUG >= 3 ) {
                 print "alpha: 0 on 0 features\n";
             }
         } else {
@@ -152,12 +152,12 @@ sub mira_update {
                     $sumUpdateWeight
                 );
             }
-            if ( $self->config->DEBUG_ALPHAS ) {
+            if ( $self->config->DEBUG >= 3 ) {
                 print "alpha: $update on $features_diff_count features\n";
             }
         }
     } else {    #else no need to optimize
-        if ( $self->config->DEBUG_ALPHAS ) {
+        if ( $self->config->DEBUG >= 3 ) {
             print "alpha: 0 on 0 features\n";
         }
     }

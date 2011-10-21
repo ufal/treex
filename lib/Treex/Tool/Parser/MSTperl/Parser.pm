@@ -70,7 +70,7 @@ sub parse_sentence_internal {
         vertices => [ ( 0 .. $sentence_length ) ]
     );
     my @weighted_edges;
-    if ( $self->config->DEBUG ) { print "EDGES (parent -> child):\n"; }
+    if ( $self->config->DEBUG >= 2 ) { print "EDGES (parent -> child):\n"; }
     foreach my $child ( @{ $sentence_working_copy->nodes } ) {
         foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
             if ( $child == $parent ) {
@@ -89,7 +89,7 @@ sub parse_sentence_internal {
             my $score = $self->model->score_features($features);
 
             # only progress and/or debug info
-            if ( $self->config->DEBUG ) {
+            if ( $self->config->DEBUG >= 2 ) {
                 print $parent->ord .
                     ' -> ' . $child->ord .
                     ' score: ' . $score . "\n";
@@ -107,7 +107,7 @@ sub parse_sentence_internal {
     }
 
     # only progress and/or debug info
-    if ( $self->config->DEBUG ) {
+    if ( $self->config->DEBUG >= 2 ) {
         print "GRAPH:\n";
         print join " ", @weighted_edges;
         print "\n";
@@ -117,14 +117,14 @@ sub parse_sentence_internal {
 
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
-    if ( $self->config->DEBUG ) { print "RESULTS (parent -> child):\n"; }
+    if ( $self->config->DEBUG >= 2 ) { print "RESULTS (parent -> child):\n"; }
 
     #results
     foreach my $edge ( $msts->edges ) {
         my ( $parent, $child ) = @$edge;
         $sentence_working_copy->setChildParent( $child, $parent );
 
-        if ( $self->config->DEBUG ) {
+        if ( $self->config->DEBUG >= 2 ) {
             print "$parent -> $child\n";
         }
     }

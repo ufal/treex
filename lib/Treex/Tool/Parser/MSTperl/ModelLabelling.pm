@@ -48,7 +48,7 @@ sub get_data_to_store {
 sub add_transition {
     my ( $self, $label_this, $label_prev ) = @_;
 
-    if ( $self->config->DEBUG ) {
+    if ( $self->config->DEBUG >= 2 ) {
         print "add_transition($label_this, $label_prev)\n";
     }
 
@@ -113,15 +113,17 @@ sub get_transition_prob {
     # (Str $feature)
     my ( $self, $label_this, $label_prev ) = @_;
 
-    if ( $self->transitions->{$label_prev}
-        && $self->transitions->{$label_prev}->{$label_this} ) {
+    if ($self->transitions->{$label_prev}
+        && $self->transitions->{$label_prev}->{$label_this}
+        )
+    {
         return $self->transitions->{$label_prev}->{$label_this};
     } else {
+
         # TODO: provide some smoothing?
         return 0;
     }
 }
-
 
 # FEATURE WEIGHTS
 
