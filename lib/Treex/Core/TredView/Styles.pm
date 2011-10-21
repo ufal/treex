@@ -86,37 +86,49 @@ sub _tnode_style {
     my $x2 = 'xn-(xn-xp)*' . $k2;
     my $y2 = 'yn-(yn-yp)*' . $k2;
 
-    if (( $node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/ )
-        or
-        ( not $node->is_root and $node->parent->is_root )
-        )
-    {
-        $style .= '#{Line-width:1}#{Line-dash:2,4}';
-    }
-    if ( $node->{is_member} ) {
-        if ( $self->_is_coord($node) and $self->_is_coord( $node->parent ) ) {
-            $style .= "#{Line-coords:n,n,n,n&$x1,$y1,$x2,$y2}" . $coord_circle;
-            $style .= '#{Line-width:0&1}#{Line-fill:white&' . $self->_colors->get('coord') . '}';
+    my $line_width = 2;
+    my $line_color = $self->_colors->get('edge');
+    my $line_coords;
+    my $line_dash;
+
+    if ($node->{is_member}) {
+        if (not $node->is_root and $self->_is_coord($node->parent)) {
+            $line_width = 1;
+            $line_color = $self->_colors->get('coord');
+        } else {
+            $line_color = $self->_colors->get('error');
         }
-        elsif ( not $node->is_root and $self->_is_coord( $node->parent ) ) {
-            $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-width:1}";
-            $style .= '#{Line-fill:' . $self->_colors->get('coord') . '}';
-        }
-        else {
-            $style .= '#{Line-fill:' . $self->_colors->get('error') . '}';
-        }
+    } elsif (not $node->is_root and $self->_is_coord($node->parent)) {
+        $line_color = $self->_colors->get('coord_mod');
+    } elsif ($self->_is_coord($node)) {
+        $line_color = $self->_colors->get('coord');
+        $line_width = 1;
     }
-    elsif ( not $node->is_root and not $node->parent->is_root and $self->_is_coord( $node->parent ) ) {
-        $style .= "#{Line-coords:n,n,$x2,$y2}#{Line-fill:" . $self->_colors->get('coord_mod') . '}';
+
+    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root)) {
+        $line_width = 1;
+        $line_dash = '2,4';
+        $line_color = $self->_colors->get('edge');
     }
-    elsif ( $self->_is_coord($node) ) {
-        $style .= $coord_circle . "#{Line-coords:n,n,n,n&$x1,$y1,p,p}";
-        $style .= '#{Line-width:0&1}#{Line-fill:white&' . $self->_colors->get('coord') . '}';
-        $style .= '#{Line-dash:&2,4}' if $node->parent->is_root;
+
+    if ($self->_is_coord($node)) {
+        $line_coords = "n,n,n,n&$x1,$y1";
+        $line_width = '0&'.$line_width;
+        $line_color = 'white&'.$line_color;
+        $line_dash = '&'.$line_dash if $line_dash;
+    } else {
+        $line_coords = 'n,n';
     }
-    else {
-        $style .= '';
+
+    if (not $node->is_root and $self->_is_coord($node->parent)) {
+        $line_coords .= ",$x2,$y2";
+    } else {
+        $line_coords .= ',p,p';
     }
+
+    $style .= $coord_circle if $self->_is_coord($node);
+    $style .= "#{Line-width:$line_width}#{Line-fill:$line_color}#{Line-coords:$line_coords}";
+    $style .= "#{Line-dash:$line_dash}" if $line_dash;
 
     return $style;
 }

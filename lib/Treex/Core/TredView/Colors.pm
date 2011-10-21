@@ -14,7 +14,7 @@ sub _build_colors {
         'edge'      => '#555555',
         'coord'     => '#bbbbbb',
         'error'     => '#ff0000',
-        'coord_mod' => '#666666',
+        'coord_mod' => 'aquamarine4',
 
         'anode'            => '#ff6666',
         'anode_coord'      => '#ff6666',
