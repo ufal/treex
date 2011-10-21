@@ -32,14 +32,18 @@ sub store {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    print "Saving model to '$filename'... ";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Saving model to '$filename'... ";
+    }
 
     open my $file, ">:encoding(utf8)", $filename;
     print $file Dumper $self->get_data_to_store();
     close $file;
 
     if ( -e $filename ) {
-        print "Model saved.\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            print "Model saved.\n";
+        }
         return 1;
     } else {
         croak "MSTperl parser error:"
@@ -59,14 +63,18 @@ sub store_tsv {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    print "Saving model to '$filename'... ";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Saving model to '$filename'... ";
+    }
 
     open my $file, ">:encoding(utf8)", $filename;
     print $file join "\n", @{ $self->get_tsv_data_to_store() };
     close $file;
 
     if ( -e $filename ) {
-        print "Model saved.\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            print "Model saved.\n";
+        }
         return 1;
     } else {
         croak "MSTperl parser error:"
@@ -86,13 +94,17 @@ sub load {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    print "Loading model from '$filename'...\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Loading model from '$filename'...\n";
+    }
 
     my $data   = do $filename;
     my $result = $self->load_data($data);
 
     if ($result) {
-        print "Model loaded.\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            print "Model loaded.\n";
+        }
         return 1;
     } else {
         croak "MSTperl parser error:"
@@ -113,7 +125,9 @@ sub load_tsv {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    print "Loading model from '$filename'... ";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Loading model from '$filename'... ";
+    }
 
     my @data;
 
@@ -128,7 +142,9 @@ sub load_tsv {
     my $result = $self->load_tsv_data( [@data] );
 
     if ($result) {
-        print "Model loaded.\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            print "Model loaded.\n";
+        }
         return 1;
     } else {
         croak "MSTperl parser error:"

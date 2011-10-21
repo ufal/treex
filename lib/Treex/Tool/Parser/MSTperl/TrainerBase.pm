@@ -60,8 +60,10 @@ sub train {
     );
 
     # only progress and/or debug info
-    print "Going to train on $sentence_count sentences with "
-        . $self->number_of_iterations . " iterations.\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Going to train on $sentence_count sentences with "
+            . $self->number_of_iterations . " iterations.\n";
+    }
 
     # precompute features of sentences in training data
     # in labelled parsing also gets the list of labels
@@ -70,7 +72,9 @@ sub train {
 
     # do the training
     # for n : 1..N
-    print "Training the model...\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Training the model...\n";
+    }
     my $innerIteration = 0;
     for (
         my $iteration = 1;
@@ -78,8 +82,10 @@ sub train {
         $iteration++
         )
     {
-        print "  Iteration number $iteration of "
-            . $self->number_of_iterations . "...\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            print "  Iteration number $iteration of "
+                . $self->number_of_iterations . "...\n";
+        }
         my $sentNo = 0;
 
         # for t : 1..T # these are the inner iterations
@@ -99,19 +105,23 @@ sub train {
             $innerIteration++;
 
             # only progress and/or debug info
-            $sentNo++;
-            if ( $sentNo % 50 == 0 ) {
-                print "    $sentNo/$sentence_count sentences processed " .
-                    "(iteration $iteration/"
-                    . $self->number_of_iterations
-                    . ")\n";
+            if ( $self->config->DEBUG >= 1 ) {
+                if ( $sentNo % 50 == 0 ) {
+                    $sentNo++;
+                    print "    $sentNo/$sentence_count sentences processed " .
+                        "(iteration $iteration/"
+                        . $self->number_of_iterations
+                        . ")\n";
+                }
             }
 
         }    # end for inner iterations
     }    # end for $iteration
 
     # only progress and/or debug info
-    print "Done.\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Done.\n";
+    }
     if ( $self->config->DEBUG >= 2 ) {
         print "FINAL FEATURE WEIGTHS:\n";
     }
@@ -121,7 +131,9 @@ sub train {
 
     # only progress and/or debug info
     my $feature_count = scalar( keys %{ $self->feature_weights_summed } );
-    print "Model trained with $feature_count features.\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Model trained with $feature_count features.\n";
+    }
 
     return $feature_count;
 
@@ -135,7 +147,9 @@ sub preprocess_sentences {
     my ( $self, $training_data ) = @_;
 
     # only progress and/or debug info
-    print "Computing sentence features...\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Computing sentence features...\n";
+    }
     my $sentence_count = scalar( @{$training_data} );
     my $sentNo         = 0;
 
@@ -147,10 +161,12 @@ sub preprocess_sentences {
         $self->preprocess_sentence($sentence_correct);
 
         # only progress and/or debug info
-        $sentNo++;
-        if ( $sentNo % 50 == 0 ) {
-            print "  $sentNo/$sentence_count sentences"
-                . "processed (computing features)\n";
+        if ( $self->config->DEBUG >= 1 ) {
+            $sentNo++;
+            if ( $sentNo % 50 == 0 ) {
+                print "  $sentNo/$sentence_count sentences"
+                    . "processed (computing features)\n";
+            }
         }
         if ( $self->config->DEBUG >= 2 ) {
             print "SENTENCE FEATURES:\n";
@@ -171,7 +187,9 @@ sub preprocess_sentences {
 
     $self->model->prepare_for_mira();
 
-    print "Done.\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Done.\n";
+    }
 
     return;
 }

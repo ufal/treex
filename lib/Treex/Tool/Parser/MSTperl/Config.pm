@@ -328,7 +328,9 @@ has 'field_indexes' => (
 sub BUILD {
     my ($self) = @_;
 
-    print "Processing config file " . $self->config_file . "...\n";
+    if ( $self->DEBUG >= 1 ) {
+        print "Processing config file " . $self->config_file . "...\n";
+    }
     use YAML::Tiny;
     my $config = YAML::Tiny->new;
     $config = YAML::Tiny->read( $self->config_file );
@@ -416,7 +418,9 @@ sub BUILD {
 
     }
 
-    print "Done." . "\n";
+    if ( $self->DEBUG >= 1 ) {
+        print "Done." . "\n";
+    }
 
     return;
 }

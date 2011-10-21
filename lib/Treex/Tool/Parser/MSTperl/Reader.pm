@@ -18,7 +18,9 @@ sub read_tsv {
     my @nodes;
     my $id = 1;
     open my $file, '<:encoding(utf8)', $filename;
-    print "Reading '$filename'...\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Reading '$filename'...\n";
+    }
     while (<$file>) {
         chomp;
         if (/^$/) {
@@ -30,8 +32,10 @@ sub read_tsv {
             undef @nodes;
 
             # only progress and/or debug info
-            if ( scalar(@sentences) % 50 == 0 ) {
-                print "  " . scalar(@sentences) . " sentences read.\n";
+            if ( $self->config->DEBUG >= 1 ) {
+                if ( scalar(@sentences) % 50 == 0 ) {
+                    print "  " . scalar(@sentences) . " sentences read.\n";
+                }
             }
 
         } else {
@@ -44,7 +48,9 @@ sub read_tsv {
         }
     }
     close $file;
-    print "Done.\n";
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Done.\n";
+    }
 
     return [@sentences];
 }

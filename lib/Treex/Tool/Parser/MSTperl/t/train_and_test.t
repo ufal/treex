@@ -41,7 +41,10 @@ my ( $train_file, $test_file, $model_file, $config_file, $save_tsv ) =
     );
 
 my $config = new_ok(
-    'Treex::Tool::Parser::MSTperl::Config' => [ config_file => $config_file ],
+    'Treex::Tool::Parser::MSTperl::Config' => [
+        config_file => $config_file,
+        DEBUG => 0,
+    ],
     "process config file,"
 );
 
