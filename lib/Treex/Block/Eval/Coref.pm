@@ -38,6 +38,11 @@ my $src_count = 0;
 my $ref_count = 0;
 
 my %same_as_ref;
+    
+    # DEBUG
+    my $IS_GEN = 0;
+    my $REF_MISS = 0;
+    my $GEN_MISS = 0;
 
 sub BUILD {
     my ($self) = @_;
@@ -64,32 +69,53 @@ sub _count_fscore {
     return ( $prec, $reca, $fsco );
 }
 
+sub _get_corresponding_node {
+    my ($self, $ref_node) = @_;
+
+    my $src_node = $ref_node->src_tnode;
+    if (!defined $src_node) {
+        my ($aligned, $types) = $ref_node->get_aligned_nodes;
+        $src_node = $aligned->[0];
+        if (@$aligned > 1) {
+            print STDERR "MORE THAN ONE ALIGNED NODE: ". $ref_node->id. " -> " .(join ", ", (map {$_->id} @$aligned)). "\n";
+        }
+    }
+    return $src_node;
+}
+
 sub process_tnode {
     my ( $self, $ref_node ) = @_;
+
     
     my $af = $self->_anaph_cands_filter;
     if (!defined $af || $af->is_candidate( $ref_node )) {
 
-        my $src_node = $ref_node->src_tnode;
+        my $src_node = $self->_get_corresponding_node( $ref_node );
+        
+        
+        $IS_GEN += $ref_node->is_generated ? 1 : 0;
+        $REF_MISS += !defined $src_node ? 1 : 0;
+        $GEN_MISS += ($ref_node->is_generated && !defined $src_node) ? 1 : 0;
 
         my @ref_antec;
         my @src_antec;
         if ($self->type eq 'gram') {
             @ref_antec = $ref_node->get_coref_gram_nodes;
-            @src_antec = $src_node->get_coref_gram_nodes;
+            @src_antec = $src_node ? $src_node->get_coref_gram_nodes : ();
         }
         elsif ($self->type eq 'text') {
             @ref_antec = $ref_node->get_coref_chain;
-            @src_antec = $src_node->get_coref_text_nodes;
+            @src_antec = $src_node ? $src_node->get_coref_text_nodes : ();
         }
         else {
             # TODO both types of coreference
             return log_fatal "Evaluation of both types of coreference not yet implemented";
         }
 
-        my @ref_antec_in_src = map { $_->src_tnode } @ref_antec;
+        my @ref_antec_in_src = map { $self->_get_corresponding_node( $_ ) } @ref_antec;
 
         foreach my $ref_ante (@ref_antec_in_src) {
+            next if (!defined $ref_ante);
             $tp_count += () = grep { $_ == $ref_ante } @src_antec;
         }
         $src_count += scalar @src_antec;
@@ -101,6 +127,7 @@ sub process_tnode {
             $ref_count += scalar @ref_antec;
         }
     }
+
         
 # DEBUG
 #    if (@ref_antec > 0) {
@@ -131,6 +158,8 @@ sub process_end {
         printf "R: %.2f%% (%d / %d)\t", $reca * 100, $tp_count, $ref_count;
         printf "F: %.2f%%\n",           $fsco * 100;
     }
+# DEBUG
+    print STDERR "IS_GEN: $IS_GEN, REF_MISS: $REF_MISS, GEN_MISS: $GEN_MISS\n";
 }
 
 1;
