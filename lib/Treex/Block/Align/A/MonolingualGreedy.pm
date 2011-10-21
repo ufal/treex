@@ -67,7 +67,7 @@ sub process_zone {
     foreach my $tst_node (@tst_nodes) {
         my $ref_node = $ref_forms{ $tst_node->form };
         if ( $ref_node && $ref_node != 1 ) {
-            $tst_node->set_attr( 'align', $ref_node->id );
+            $tst_node->add_aligned_node( $ref_node );
             delete $ref_free{$ref_node};
             delete $tst_free{$tst_node};
         }
@@ -87,7 +87,7 @@ sub process_zone {
     foreach my $tst_node ( values %tst_free ) {
         my $ref_node = $ref_lemmas{ $self->get_lemma($tst_node) };
         if ( $ref_node && $ref_node != 1 ) {
-            $tst_node->set_attr( 'align', $ref_node->id );
+            $tst_node->add_aligned_node( $ref_node );
             delete $ref_free{$ref_node};
             delete $tst_free{$tst_node};
         }
@@ -109,7 +109,7 @@ sub process_zone {
         }
 
         last if $max_score < $min_score_limit;
-        $tst_winner->set_attr( 'align', $ref_winner->id );
+        $tst_winner->add_aligned_node( $ref_winner );
         delete $ref_free{$ref_winner};
         delete $tst_free{$tst_winner};
     }
