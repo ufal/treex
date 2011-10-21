@@ -1,24 +1,11 @@
-package Treex::Block::A2T::EN::MarkTextPronCoref;
+package Treex::Block::Print::EN::TextPronCorefData;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2T::BaseMarkCoref';
+extends 'Treex::Block::Print::CorefData';
 
-use Treex::Tool::Coreference::PerceptronRanker;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::EN::TextPronAnteCandsGetter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
-
-has '+model_path' => (
-    default => 'data/models/coreference/EN/perceptron/text.perspron.gold',
-);
-
-override '_build_ranker' => sub {
-    my ($self) = @_;
-    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
-        { model_path => $self->model_path } 
-    );
-    return $ranker;
-};
 
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
@@ -28,7 +15,9 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::EN::TextPronAnteCandsGetter->new();
+    my $acs = Treex::Tool::Coreference::EN::TextPronAnteCandsGetter->new({
+#        anaphor_as_candidate => 1,
+    });
     return $acs;
 };
 
@@ -42,7 +31,7 @@ override '_build_anaph_cands_filter' => sub {
 
 =over
 
-=item Treex::Block::A2T::EN::MarkTextPronCoref
+=item Treex::Block::Print::EN::TextPronCorefData
 
 
 =back

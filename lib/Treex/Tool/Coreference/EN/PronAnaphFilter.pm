@@ -20,7 +20,7 @@ sub _build_banned_prons {
 }
 
 sub is_candidate {
-    my ($self, $node) = @_;
+    my ($self, $t_node) = @_;
 
     my $is_3rd_pers = 0;
     if ( defined $t_node->gram_person ) {
@@ -28,8 +28,8 @@ sub is_candidate {
     }
     else {
         my $anode = $t_node->get_lex_anode;
-        if (!defined $anode) return 0;
-        $is_3rd_pers = (!defined $banned_prons{$anode->lemma});
+        return 0 if (!defined $anode);
+        $is_3rd_pers = (!defined $self->banned_prons->{$anode->lemma});
     }
     return ( $t_node->t_lemma eq '#PersPron' && $is_3rd_pers );
 }

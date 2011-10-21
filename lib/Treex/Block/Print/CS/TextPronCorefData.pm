@@ -31,7 +31,7 @@ override '_build_anaph_cands_filter' => sub {
 
 =over
 
-=item Treex::Block::Print::TextPronCorefData
+=item Treex::Block::Print::CS::TextPronCorefData
 
 
 =back

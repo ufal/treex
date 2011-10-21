@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
+with 'Treex::Tool::Coreference::CorefFeatures';
 
 my $b_true = '1';
 my $b_false = '-1';
@@ -63,7 +64,7 @@ has '_np_freq' => (
 
 has 'tag_properties' => (
     is => 'ro',
-    isa => 'HashRef[HashRef[Str]]',
+    isa => 'HashRef[HashRef[Maybe[Str]]]',
     builder => '_build_tag_properties',
     required => 1,
 );
@@ -104,7 +105,7 @@ sub _build_tag_properties {
         PDT => { pos => 'Det', subpos => undef, number => undef, gender => undef},     # Predeterminer
         POS => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Possessive ending
         PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Personal pronoun
-        PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},$    # Possessive pronoun
+        PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},    # Possessive pronoun
         RB => { pos => 'D', subpos => undef, number => undef, gender => undef},  # Adverb
         RBR => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, comparative
         RBS => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, superlative
@@ -120,7 +121,7 @@ sub _build_tag_properties {
         VBZ => { pos => 'V', subpos => undef, number => undef, gender => undef},     # Verb, 3rd person singular present
         WDT => { pos => 'Det', subpos => undef, number => undef, gender => undef},     # Wh-determiner
         WP => { pos => 'P', subpos => undef, number => undef, gender => undef},  # Wh-pronoun
-        WP => { pos => 'P', subpos => undef, number => undef, gender => undef},$     # Possessive wh-pronoun
+        WP => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Possessive wh-pronoun
         WRB => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Wh-adverb 
     };
     return $tag_properties;
@@ -244,23 +245,23 @@ sub _categorize {
 }
 
 sub _get_pos {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my $tag = $self->_get_atag( $node );
     return undef if (!defined $tag);
-    
-    my $prop = $self->tag_properties->{$anode->tag};
+
+    my $prop = $self->tag_properties->{$tag};
     return undef if (!defined $prop);
-    
+
     return $prop->{pos};
 }
 sub _get_number {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my $tag = $self->_get_atag( $node );
     return undef if (!defined $tag);
-    
-    my $prop = $self->tag_properties->{$anode->tag};
+
+    my $prop = $self->tag_properties->{$tag};
     return undef if (!defined $prop);
-    
+
     return $prop->{number};
 }
 sub _get_gender {
@@ -268,7 +269,7 @@ sub _get_gender {
 }
 
 sub _get_atag {
-	my ($node) = @_;
+	my ($self, $node) = @_;
 	my $anode = $node->get_lex_anode;
     if ($anode) {
 		return $anode->tag;
@@ -440,9 +441,9 @@ sub agree_feats {
 
 ### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
 sub extract_features {
-    my ( $self, $cand, $anaph, $candord ) = @_;
+    my ( $self, $anaph, $cand, $candord ) = @_;
     my %coref_features = ();
-    
+
     #   1: anaphor's ID
     $coref_features{anaph_id} = $anaph->id;
     $coref_features{cand_id} = $cand->id;
@@ -468,19 +469,19 @@ sub extract_features {
 ###########################
     #   Morphological:
     #   24: 8 x tag($inode, $jnode), joined
-    $coref_features{c_cand_atag} = _get_atag( $cand );
-    $coref_features{c_anaph_atag} = _get_atag( $anaph );
+    $coref_features{c_cand_atag} = $self->_get_atag( $cand );
+    $coref_features{c_anaph_atag} = $self->_get_atag( $anaph );
     $coref_features{c_join_atag}  
         = join_feats($coref_features{c_cand_atag}, $coref_features{c_anaph_atag});
 
 
-    $coref_features{c_cand_apos}  = _get_pos( $cand );
-    $coref_features{c_anaph_apos} = _get_pos( $anaph );
+    $coref_features{c_cand_apos}  = $self->_get_pos( $cand );
+    $coref_features{c_anaph_apos} = $self->_get_pos( $anaph );
     $coref_features{c_join_apos}  
         = join_feats($coref_features{c_cand_apos}, $coref_features{c_anaph_apos});
-
-    $coref_features{c_cand_anum}  = _get_number( $cand );
-    $coref_features{c_anaph_anum} = _get_number( $anaph );
+    
+    $coref_features{c_cand_anum}  = $self->_get_number( $cand );
+    $coref_features{c_anaph_anum} = $self->_get_number( $anaph );
     $coref_features{c_join_anum}  
         = join_feats($coref_features{c_cand_anum}, $coref_features{c_anaph_anum});
 
@@ -494,7 +495,7 @@ sub extract_features {
         = agree_feats($coref_features{c_cand_fun}, $coref_features{c_anaph_fun});
     $coref_features{c_join_fun}  
         = join_feats($coref_features{c_cand_fun}, $coref_features{c_anaph_fun});
-
+    
     #   3: afun($inode, $jnode);
     $coref_features{c_cand_afun}  = _get_afun($cand);
     $coref_features{c_anaph_afun} = _get_afun($anaph);
@@ -508,25 +509,25 @@ sub extract_features {
         = agree_feats($coref_features{c_cand_afun}, $coref_features{c_anaph_afun});
     $coref_features{c_join_afun}  
         = join_feats($coref_features{c_cand_afun}, $coref_features{c_anaph_afun});
-
+    
     #   3: aktant($inode, $jnode);
     $coref_features{b_cand_akt}  = $actants{ $cand->functor  } ? $b_true : $b_false;
     $coref_features{b_anaph_akt} = $actants{ $anaph->functor } ? $b_true : $b_false;
     $coref_features{b_akt_agree} 
         = agree_feats($coref_features{b_cand_akt}, $coref_features{b_anaph_akt});
-
+    
     #   3:  subject($inode, $jnode);
     $coref_features{b_cand_subj}  = _is_subject($cand);
     $coref_features{b_anaph_subj} = _is_subject($anaph);
     $coref_features{b_subj_agree} 
         = agree_feats($coref_features{b_cand_subj}, $coref_features{b_anaph_subj});
-
+    
 ###########################
     #   Context:
     $coref_features{b_cand_coord} = ( $cand->is_member ) ? $b_true : $b_false;
     # DEBUG ? $b_true : $b_false added
     $coref_features{b_app_in_coord} = _is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
-
+    
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
     my $cand_epar_lemma;
@@ -547,7 +548,7 @@ sub extract_features {
         = join_feats($cand_epar_lemma, $anaph_epar_lemma);
     $coref_features{c_join_clemma_aeparlemma} 
         = join_feats($cand->t_lemma, $anaph_epar_lemma);
-
+    
     #   3:  tfa($inode, $jnode);
     $coref_features{c_cand_tfa}  = $cand->tfa;
     $coref_features{c_anaph_tfa} = $anaph->tfa;
@@ -555,7 +556,7 @@ sub extract_features {
         = agree_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
     $coref_features{c_join_tfa}  
         = join_feats($coref_features{c_cand_tfa}, $coref_features{c_anaph_tfa});
-
+    
     #   1: are_siblings($inode, $jnode)
     # DEBUG ? $b_true : $b_false added
     $coref_features{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
@@ -566,7 +567,7 @@ sub extract_features {
 
     #   1: collocation from CNK
     $coref_features{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
-
+    
     #   1:  freq($inode);
     #    $coref_features{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
     $coref_features{r_cand_freq} = $self->_np_freq->{ $cand->t_lemma } || 0;
@@ -576,13 +577,13 @@ sub extract_features {
     #   1:  is_name_of_person
     $coref_features{b_cand_pers} =  $cand->is_name_of_person ? $b_true : $b_false;
 
-    #   EuroWordNet nouns
+        #   EuroWordNet nouns
     my $cand_lemma      = $cand->t_lemma;
-    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
-    my $cand_c = $noun_c->{$cand_lemma};
-    
-    for my $class ( @{$all_c} ) {
-        my $coref_class = "b_" . $class;
+        my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
+        my $cand_c = $noun_c->{$cand_lemma};
+        
+        for my $class ( @{$all_c} ) {
+            my $coref_class = "b_" . $class;
         $coref_features{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
     }
 
@@ -591,9 +592,24 @@ sub extract_features {
 #        print STDERR $cand->t_lemma . "\n";
 #    }
 =cut
-    
+
     #   celkem 71 vlastnosti + ID
-    return ( \%coref_features );
+    return \%coref_features;
+}
+
+sub init_doc_features {
+    my ($self, $doc, $lang, $sel) = @_;
+    
+    if ( !$doc->get_bundles() ) {
+        return;
+    }
+    my @trees = map { $_->get_tree( 
+        $lang, 't', $sel ) }
+        $doc->get_bundles;
+
+    $self->count_collocations( \@trees );
+    $self->count_np_freq( \@trees );
+    $self->mark_doc_clause_nums( \@trees );
 }
 
 sub count_collocations {
@@ -622,8 +638,8 @@ sub count_collocations {
 
 sub count_np_freq {
     my ( $self, $trees ) = @_;
-    my ( $np_freq );
-    
+    my $np_freq  = {};
+
     foreach my $tree (@{$trees}) {
         foreach my $node ( $tree->descendants ) {
             
