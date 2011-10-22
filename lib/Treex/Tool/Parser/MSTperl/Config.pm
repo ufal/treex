@@ -16,12 +16,6 @@ has 'DEBUG' => (
     default => '1',
 );
 
-has 'DEBUG_ALPHAS' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => '0',
-);
-
 # used in labeller transition probs to denote unigram counts
 # (meaning "a label and no label after it")
 has 'UNIGRAM_PROB_KEY' => (

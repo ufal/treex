@@ -43,6 +43,23 @@ sub get_data_to_store {
     };
 }
 
+sub load_data {
+
+    my ( $self, $data ) = @_;
+
+    $self->transitions( $data->{'transitions'} );
+    $self->weights( $data->{'weights'} );
+
+    if (scalar( keys %{ $self->transitions } )
+        && scalar( keys %{ $self->weights } )
+        )
+    {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 # TRANSITION COUNTS AND PROBABILITIES
 
 sub add_transition {
@@ -103,6 +120,21 @@ sub prepare_for_mira {
 
         # assign unigram prob
         $self->transitions->{$label}->{$UNIGRAM_PROB_KEY} = $label_prob;
+
+        # create a probability table of labels under weights->UNIGRAM_PROB_KEY->
+        # TODO: other weights are NOT probabilities, so these are uncomparable
+        $self->weights->{$UNIGRAM_PROB_KEY}->{$label} = $label_prob;
+    }
+
+    delete $self->weights->{$UNIGRAM_PROB_KEY}
+        ->{ $self->config->SEQUENCE_BOUNDARY_LABEL };
+
+    if ( $self->config->DEBUG >= 2 ) {
+        print "Label probabilities:\n";
+        foreach my $label ( keys %{ $self->weights->{$UNIGRAM_PROB_KEY} } ) {
+            print "$label: " . $self->weights->{$UNIGRAM_PROB_KEY}->{$label}
+                . "\n";
+        }
     }
 
     return;
@@ -127,41 +159,126 @@ sub get_transition_prob {
 
 # FEATURE WEIGHTS
 
+# get weight for the feature and the label
 sub get_feature_weight {
 
-    # (Str $feature)
-    #    my ( $self, $feature, $label ) = @_;
-    my ( $self, $feature ) = @_;
+    # (Str $feature, Str $label)
+    my ( $self, $feature, $label ) = @_;
 
-    #    my $weight = $self->weights->{$feature}->{$label};
-    my $weight = $self->weights->{$feature};
-    if ($weight) {
-        return $weight;
+    if ( $self->weights->{$feature} && $self->weights->{$feature}->{$label} ) {
+        return $self->weights->{$feature}->{$label};
     } else {
         return 0;
     }
 }
 
+# for the given feature get a HashRef in the format ->{label}->weight
+sub get_feature_weights {
+
+    # (Str $feature)
+    my ( $self, $feature ) = @_;
+
+    my $weights = $self->weights->{$feature};
+    if ($weights) {
+        return $weights;
+    } else {
+        return;
+    }
+}
+
+# get PROBABILITIES of all possible labels based on all the features
+# (i.e. for each feature do get_feature_weights(), sum it together
+# and recompute it to probabilities)
+sub get_emission_probs {
+
+    # (ArrayRef[Str] $features)
+    my ( $self, $features ) = @_;
+
+    my %result;
+
+    # get scores
+    foreach my $feature (@$features) {
+        if ( $self->weights->{$feature} ) {
+            foreach my $label ( keys %{ $self->weights->{$feature} } ) {
+                $result{$label} += $self->weights->{$feature}->{$label};
+            }
+        }
+    }
+
+    # find min and max score
+    # TODO: delete zeros?
+    my $min = 1e300;
+    my $max = -1e300;
+    foreach my $label ( keys %result ) {
+        if ( $result{$label} < $min ) {
+            $min = $result{$label};
+        } elsif ( $result{$label} > $max ) {
+            $max = $result{$label};
+        }
+
+        # else is between $min and $max
+    }
+
+    # recompute scores to probs
+    if ( $min < $max ) {
+
+        # the typical case
+        my $subtractant = $min;
+        my $divisor     = $max - $min;
+
+        # TODO: asigns zero probability to least probable labels,
+        # should not do that (but what to do?!)
+        foreach my $label ( keys %result ) {
+            $result{$label} = ( $result{$label} - $min ) / $divisor;
+        }
+    } elsif ( $min == $max ) {
+
+        # uniform prob distribution
+        my $prob = 1 / scalar( keys %result );
+        foreach my $label ( keys %result ) {
+            $result{$label} = $prob;
+        }
+    } else {
+
+        # $min > $max, i.e. nothing has been generated
+        %result = %{ $self->weights->{ $self->config->UNIGRAM_PROB_KEY } };
+    }
+
+    return \%result;
+}
+
+# get score of assigning the edge with the given features the given label
+# TODO: somehow include transition probs as well?
+sub get_edge_score {
+
+    # (Treex::Tool::Parser::MSTperl::Edge $edge, Str $label)
+    my ( $self, $edge, $label ) = @_;
+
+    my $result = 0;
+
+    foreach my $feature ( @{ $edge->features } ) {
+        $result += $self->get_feature_weight( $feature, $label );
+    }
+
+    return $result;
+}
+
 sub set_feature_weight {
 
-    # (Str $feature, Num $weight)
-    #    my ( $self, $feature, $label, $weight ) = @_;
-    my ( $self, $feature, $weight ) = @_;
+    # (Str $feature, Num $weight, Str $label)
+    my ( $self, $feature, $weight, $label ) = @_;
 
-    #    $self->weights->{$feature}->{$label} = $weight;
-    $self->weights->{$feature} = $weight;
+    $self->weights->{$feature}->{$label} = $weight;
 
     return;
 }
 
 sub update_feature_weight {
 
-    # (Str $feature, Num $update)
-    #    my ( $self, $feature, $label, $update ) = @_;
-    my ( $self, $feature, $update ) = @_;
+    # (Str $feature, Num $update, Str $label)
+    my ( $self, $feature, $update, $label ) = @_;
 
-    #    $self->weights->{$feature}->{$label} += $update;
-    $self->weights->{$feature} += $update;
+    $self->weights->{$feature}->{$label} += $update;
 
     return;
 }

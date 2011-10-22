@@ -126,7 +126,12 @@ sub compute_edges {
         }
 
         if ( $self->config->DEBUG >= 2 ) {
-            print $node->ord . ': ' . ' <- ' . $node->parentOrd . "\n";
+            print $node->parentOrd
+                . '(' . $node->parent->fields->[1] . ')'
+                . ' -> '
+                . $node->ord
+                . '(' . $node->fields->[1] . ')'
+                . "\n";
         }
 
         # add a new edge
@@ -293,13 +298,12 @@ sub count_errors_labelling {
 
     my $errors = 0;
 
-    #assert that nodes in the sentences with the same ords
-    # are corresponding nodes
-    foreach my $my_node ( @{ $self->nodes } ) {
-        my $my_label      = $my_node->label;
-        my $correct_node  = $correct_sentence->getNodeByOrd( $my_node->ord );
-        my $correct_label = $correct_node->label;
-        if ( $my_label ne $correct_label ) {
+    my @correct_labels =
+        map { $_->label } @{ $correct_sentence->nodes };
+    my @my_labels =
+        map { $_->label } @{ $self->nodes };
+    for ( my $i = 0; $i < @correct_labels; $i++ ) {
+        if ( $correct_labels[$i] ne $my_labels[$i] ) {
             $errors++;
         }
     }

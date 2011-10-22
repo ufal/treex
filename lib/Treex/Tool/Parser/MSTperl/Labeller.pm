@@ -60,18 +60,17 @@ sub label_sentence_internal {
 
     # copy the sentence (do not modify $sentence directly)
     my $sentence_working_copy = $sentence->copy_nonlabelled();
+    $sentence_working_copy->fill_fields_before_labelling();
 
-    # TODO
+    if ( $self->config->DEBUG >= 2 ) {
+        print "Labelling sentence: "
+            . ( join ' ', map { $_->fields->[1] } @{ $sentence->nodes } )
+            . " \n";
+    }
+
+    # take root's children, find best scoring labelling sequence, recursion
     my $root = $sentence_working_copy->getNodeByOrd(0);
     $self->label_subtree($root);
-
-    # take the root
-    # take its children
-    # find best scoring labelling sequence
-    # recursion
-
-    # Node has to know its children
-    # (fill these as a part of fill_fields_after_parse)
 
     return $sentence_working_copy;
 }
@@ -84,11 +83,18 @@ sub label_subtree {
     # (Treex::Tool::Parser::MSTperl::Node $parent)
     my ( $self, $parent ) = @_;
 
+    if ( $self->config->DEBUG >= 2 ) {
+        print "Label subtree of node number " . $parent->ord . ' '
+            . $parent->fields->[1] . "\n";
+    }
+
     my @edges = @{ $parent->children };
+    if ( $self->config->DEBUG >= 3 ) {
+        print "There are " . scalar(@edges) . " children edges \n";
+    }
 
-    # label the nodes using Viterbi
-
-    # Viterbi has been copied from NPFL068 homework and is being fitted a little
+    # label the nodes using Viterbi algorithm
+    # (this is my own implementation of Viterbi, fitted for this task)
 
     # States structure: for each state (its key being a label)
     # there is an array with the current best path to it as 'path' (append-only)
@@ -97,8 +103,10 @@ sub label_subtree {
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
     $states{$starting_state_key} = {
         'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
-        'prob' => 1e300,
+        'prob' => 1,
     };
+
+    #        'prob' => 1e300,
 
     # run Viterbi
     # In each cycle generates %new_states and sets them as %states,
@@ -123,21 +131,10 @@ sub label_subtree {
 
             # @possible_labels = keys %all_labels;
 
-            # TODO compute possible labels and their scores
             # emission_probs{label} = prob
-            my %emission_probs = ( Obj => 0.2, Atr => 0.8 );
-
-            #
-            # TODO this should be somehow done in the sub providing the labels
-            #
-            # if (keys %emission_probs) {
-            #     foreach my $label (keys %{$emission_probs{$word}}) {
-            #         $possible_labels_temp{$label} = 1;
-            #     }
-            # } else {
-            #     # no labels suggested by the model
-            #     $branch = 2;
-            #     keys %emission_probs = %all_labels->unigram_probs;
+            my %emission_probs = %{
+                $self->model->get_emission_probs( $edge->features )
+                };
 
             if ( $self->config->DEBUG >= 4 ) {
                 my $tmp = join ' ', keys %emission_probs;
@@ -231,7 +228,7 @@ sub label_subtree {
     my $best_state_prob = -999999999;
     foreach my $state_label ( keys %states ) {
         if ( $self->config->DEBUG >= 2 ) {
-            print $states{$state_label}->{'prob'} . "\n";
+            print "best state prob: " . $states{$state_label}->{'prob'} . "\n";
         }
         if ( $states{$state_label}->{'prob'} > $best_state_prob ) {
             $best_state_label = $state_label;
@@ -239,14 +236,22 @@ sub label_subtree {
         }
     }
     if ($best_state_label) {
+
         my @labels = @{ $states{$best_state_label}->{'path'} };
+
+        # get rid of SEQUENCE_BOUNDARY_LABEL
+        shift @labels;
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 2 ) {
+            print "best path: "
+                . ( join ' ', @labels )
+                . "\n";
+        }
+
         foreach my $edge (@edges) {
             my $label = shift @labels;
             $edge->child->label($label)
-        }
-
-        if ( $self->config->DEBUG >= 2 ) {
-            print join ' ', @{ $states{$best_state_label}->{'path'} };
         }
     } else {
         die "No best state generated, cannot continue. (This is weird.)";

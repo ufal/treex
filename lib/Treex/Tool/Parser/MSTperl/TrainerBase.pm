@@ -36,8 +36,10 @@ has number_of_inner_iterations => (
 # all values of features used during the training summed together
 # as using average weights instead of final weights
 # is reported to help avoid overtraining
+# For labeller has the form of ->{feature}->{label}->weight
+# instead of ->{feature}->weight
 has feature_weights_summed => (
-    isa     => 'HashRef[Str]',
+    isa     => 'HashRef',
     is      => 'rw',
     default => sub { {} },
 );
@@ -130,6 +132,7 @@ sub train {
     $self->recompute_feature_weights();
 
     # only progress and/or debug info
+    # disregards labels in labelled training (but is not completely wrong)
     my $feature_count = scalar( keys %{ $self->feature_weights_summed } );
     if ( $self->config->DEBUG >= 1 ) {
         print "Model trained with $feature_count features.\n";
@@ -204,15 +207,8 @@ sub recompute_feature_weights {
         # w = v/(N * T)
         # see also: my $self->number_of_inner_iterations =
         # $self->number_of_iterations * $sentence_count;
-        my $weight = $self->feature_weights_summed->{$feature}
-            / $self->number_of_inner_iterations;
-        $self->model->set_feature_weight( $feature, $weight );
 
-        # only progress and/or debug info
-        if ( $self->config->DEBUG >= 2 ) {
-            print "$feature\t" . $self->model->get_feature_weight($feature)
-                . "\n";
-        }
+        $self->recompute_feature_weight($feature);
     }
 
     return;
@@ -256,21 +252,40 @@ sub mira_update {
         . ' either from TrainerUnlabelled or TrainerLabelling!';
 }
 
+sub recompute_feature_weight {
+
+    # Str $feature
+    my ( $self, $feature ) = @_;
+
+    croak 'TrainerBase::recompute_feature_weight is an abstract method, it '
+        . 'must be called either from TrainerUnlabelled or TrainerLabelling!';
+}
+
 # TRAINING SUPPORTING SUBS
 
 sub update_feature_weight {
 
-    # (Str $feature, Num $update)
-    my ( $self, $feature, $update, $sumUpdateWeight ) = @_;
+    # TODO probably refactor into 2 subs, for labelled and unlabelled
+
+    # (Str $feature, Num $update, Num $sumUpdateWeight, Maybe[Str] $label)
+    # in unlabelled training the $label is undef
+    # which is not a problem as it just gets ignored
+    my ( $self, $feature, $update, $sumUpdateWeight, $label ) = @_;
 
     #adds $update to the current weight of the feature
-    my $result = $self->model->update_feature_weight( $feature, $update );
+    my $result =
+        $self->model->update_feature_weight( $feature, $update, $label );
 
     # v = v + w_{i+1}
     # $sumUpdateWeight denotes number of summands
     # in which the weight would appear
     # if it were computed according to the definition
-    $self->feature_weights_summed->{$feature} += $sumUpdateWeight * $update;
+    if ($label) {
+        $self->feature_weights_summed->{$feature}->{$label}
+            += $sumUpdateWeight * $update;
+    } else {
+        $self->feature_weights_summed->{$feature} += $sumUpdateWeight * $update;
+    }
 
     return $result;
 }

@@ -55,7 +55,6 @@ sub compute_transition_counts {
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
     my ( $self, $parent_node ) = @_;
 
-    # TODO add SEQUENCE_BOUNDARY_LABEL to end of sequence as well?
     my $last_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $edge ( @{ $parent_node->children } ) {
         my $this_label = $edge->child->label;
@@ -63,6 +62,11 @@ sub compute_transition_counts {
         $last_label = $this_label;
         $self->compute_transition_counts( $edge->child );
     }
+
+    # add SEQUENCE_BOUNDARY_LABEL to end of sequence as well (TODO: do that?)
+    $self->model->add_transition(
+        $self->config->SEQUENCE_BOUNDARY_LABEL, $last_label
+    );
 
     return;
 }
@@ -121,69 +125,128 @@ sub mira_update {
         $sumUpdateWeight
     ) = @_;
 
-    # s(l_t, x_t, y_t)
-    my $score_correct = $sentence_correct_labelling->score( $self->model );
+    my @correct_labels =
+        map { $_->label } @{ $sentence_correct_labelling->nodes_with_root };
+    my @best_labels =
+        map { $_->label } @{ $sentence_best_labelling->nodes_with_root };
 
-    # s(l', x_t, y_t)
-    my $score_best = $sentence_best_labelling->score( $self->model );
+    foreach my $edge ( @{ $sentence_correct_labelling->edges } ) {
 
-    # difference in scores should be greater than the margin:
+        my $ord = $edge->child->ord;
+        if ( $correct_labels[$ord] ne $best_labels[$ord] ) {
 
-    # L(l_t, l')    number of incorrectly assigned labels
-    my $margin = $sentence_best_labelling->count_errors_labelling(
-        $sentence_correct_labelling
-    );
+            my $correct_label = $correct_labels[$ord];
+            my $best_label    = $best_labels[$ord];
 
-    # s(l_t, x_t, y_t) - s(l', x_t, y_t)    this should be zero or less
-    my $score_gain = $score_correct - $score_best;
+            # TODO: open question: include also the transition probs?
 
-    # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
-    my $error = $margin - $score_gain;
+            # s(l_t, x_t, y_t)
+            my $score_correct =
+                $self->model->get_edge_score( $edge, $correct_label );
 
-    if ( $error > 0 ) {
-        my ( $features_diff_correct, $features_diff_best, $features_diff_count )
-            = $self->features_diff(
-            $sentence_correct_labelling->features,
-            $sentence_best_labelling->features
-            );
+            # s(l', x_t, y_t)
+            my $score_best =
+                $self->model->get_edge_score( $edge, $best_label );
 
-        if ( $features_diff_count == 0 ) {
-            warn "Features of the best labelling and the correct labelling" .
-                "do not differ, unable to update the scores. " .
-                "This is somewhat weird.\n";
-            if ( $self->config->DEBUG >= 3 ) {
-                print "alpha: 0 on 0 features\n";
+            # difference in scores should be greater than the margin:
+
+            # L(l_t, l')    number of incorrectly assigned labels
+            # edge-based factorization -> always one error (or none)
+            my $margin = 1;
+
+            # my $margin = $sentence_best_labelling->count_errors_labelling(
+            #     $sentence_correct_labelling
+            # );
+
+            # s(l_t, x_t, y_t) - s(l', x_t, y_t)    this should be zero or less
+            my $score_gain = $score_correct - $score_best;
+
+            # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
+            my $error = $margin - $score_gain;
+
+            if ( $error > 0 ) {
+
+                # features do not depend on sentence labelling
+                # (TODO: actually they may depend on parent labelling,
+                # but we chose to ignore this as we can assume that the
+                # parent is labelled correctly;
+                # that's why we use $sentence_correct_labelling here)
+                my $features_diff       = $sentence_correct_labelling->features;
+                my $features_diff_count = scalar( @{$features_diff} );
+
+                if ( $features_diff_count > 0 ) {
+
+                    # min ||w_i+1 - w_i||
+                    # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+                    my $update = $error / $features_diff_count;
+
+                    foreach my $feature ( @{$features_diff} ) {
+
+                        # $update is added to features of the correct labelling
+                        $self->update_feature_weight(
+                            $feature,
+                            $update,
+                            $sumUpdateWeight,
+                            $correct_label
+                        );
+
+                        # and subtracted from features of the "best" labelling
+                        $self->update_feature_weight(
+                            $feature,
+                            -$update,
+                            $sumUpdateWeight,
+                            $best_label
+                        );
+                    }
+
+                    if ( $self->config->DEBUG >= 3 ) {
+                        print "alpha: $update on $features_diff_count features"
+                            . " (correct $correct_label, best $best_label)\n";
+                    }
+
+                } else {
+
+                    # $features_diff_count == 0
+                    die "It seems that there are no features!" .
+                        "This is somewhat weird.";
+                }
+            } else {
+
+                # $error <= 0 (correct is better but transition ruled it out)
+                # TODO: incorporate transition probs?
+                if ( $self->config->DEBUG >= 3 ) {
+                    print "correct label $correct_label on $ord "
+                        . "has higher score than incorrect $best_label "
+                        . "but transition probs preferred the incorrect one\n";
+                }
             }
         } else {
 
-            # min ||w_i+1 - w_i|| s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
-            my $update = $error / $features_diff_count;
-
-            #$update is added to features occuring in the correct labelling only
-            foreach my $feature ( @{$features_diff_correct} ) {
-                $self->update_feature_weight(
-                    $feature,
-                    $update,
-                    $sumUpdateWeight
-                );
-            }
-
-            # and subtracted from features occuring
-            # in the best (and incorrect) labelling only
-            foreach my $feature ( @{$features_diff_best} ) {
-                $self->update_feature_weight(
-                    $feature,
-                    -$update,
-                    $sumUpdateWeight
-                );
-            }
+            # $correct_labels[$ord] eq $best_labels[$ord]
             if ( $self->config->DEBUG >= 3 ) {
-                print "alpha: $update on $features_diff_count features\n";
+                print "label on $ord is correct, no need to optimize\n";
             }
         }
-    } else {    #else no need to optimize
-        if ( $self->config->DEBUG >= 3 ) {
-            print "alpha: 0 on 0 features\n";
+    }
+
+    return;
+}
+
+sub recompute_feature_weight {
+
+    # Str $feature
+    my ( $self, $feature ) = @_;
+
+    foreach my $label ( keys %{ $self->feature_weights_summed->{$feature} } ) {
+        my $weight = $self->feature_weights_summed->{$feature}->{$label}
+            / $self->number_of_inner_iterations;
+        $self->model->set_feature_weight( $feature, $weight, $label );
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 2 ) {
+            print "$feature\t$label\t"
+                . $self->model->get_feature_weight( $feature, $label )
+                . "\n";
         }
     }
 

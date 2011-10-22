@@ -165,6 +165,24 @@ sub mira_update {
     return;
 }
 
+sub recompute_feature_weight {
+
+    # Str $feature
+    my ( $self, $feature ) = @_;
+
+    my $weight = $self->feature_weights_summed->{$feature}
+        / $self->number_of_inner_iterations;
+    $self->model->set_feature_weight( $feature, $weight );
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 2 ) {
+        print "$feature\t" . $self->model->get_feature_weight($feature)
+            . "\n";
+    }
+
+    return;
+}
+
 1;
 
 __END__
