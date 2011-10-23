@@ -35,7 +35,7 @@ has 'SEQUENCE_BOUNDARY_LABEL' => (
 has 'VITERBI_STATES_NUM_THRESHOLD' => (
     is      => 'ro',
     isa     => 'Int',
-    default => 5,
+    default => 50,
 );
 
 has 'config_file' => (

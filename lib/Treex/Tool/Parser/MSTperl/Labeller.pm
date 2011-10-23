@@ -93,6 +93,10 @@ sub label_subtree {
         print "There are " . scalar(@edges) . " children edges \n";
     }
 
+    if (@edges == 0) {
+        return;
+    }
+
     # label the nodes using Viterbi algorithm
     # (this is my own implementation of Viterbi, fitted for this task)
 
@@ -113,29 +117,30 @@ sub label_subtree {
     # so at the end it suffices to find the state with the best prob in %states
     # and use its path as the result.
     foreach my $edge (@edges) {
+        
+        # only progress and/or debug info
         if ( $self->config->DEBUG >= 3 ) {
+            print "  Labelling edge to node "
+                . $edge->child->ord . ' ' . $edge->child->fields->[1] . "\n";
             print "  Currently there are "
                 . ( keys %states ) . " states\n";
         }
+    
         my %new_states;
         foreach my $last_state ( keys %states ) {
+            
+            # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
                 print "    Processing state $last_state (prob "
                     . $states{$last_state}->{'prob'} . ")\n";
             }
-
-            # only possible labels / all labels? (depends on smoothing style)
-
-            my @possible_labels;
-            my $branch;
-
-            # @possible_labels = keys %all_labels;
 
             # emission_probs{label} = prob
             my %emission_probs = %{
                 $self->model->get_emission_probs( $edge->features )
                 };
 
+            # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
                 my $tmp = join ' ', keys %emission_probs;
                 print "    " . scalar( keys %emission_probs )
@@ -161,20 +166,65 @@ sub label_subtree {
                 if ($new_state_prob > 0
                     && (!$new_states{$new_label}
                         || $new_states{$new_label}->{'prob'} < $new_state_prob
-                    )
+                        )
                     )
                 {
-                    my $new_state_path = $states{$last_state}->{'path'};
-                    push @$new_state_path, $new_label;
+                    # only progress and/or debug info
+                    if ( $self->config->DEBUG >= 5 ) {
+                        print "        Old state path "
+                            . ( join ' ', @{$states{$last_state}->{'path'}} )
+                            . " \n";
+                        print "        Old states: "
+                            . ( join ' ',
+                                map {"$_ (" . (
+                                    join ' ', @{$states{$_}->{'path'}}
+                                ) . ")"} keys %states )
+                            . " \n";
+                        print "        New states: "
+                            . ( join ' ',
+                                map {"$_ (" . (
+                                    join ' ', @{$new_states{$_}->{'path'}}
+                                ) . ")"} keys %new_states )
+                            . " \n";
+                    }
+                
+                    my @new_state_path = @{$states{$last_state}->{'path'}};
+                    push @new_state_path, $new_label;
                     $new_states{$new_label} = {
-                        'path' => $new_state_path,
+                        'path' => \@new_state_path,
                         'prob' => $new_state_prob,
-                        }
+                        };
+
+                    # only progress and/or debug info
+                    if ( $self->config->DEBUG >= 5 ) {
+                        print "        New state path "
+                            . ( join ' ', @new_state_path )
+                            . " \n";
+                        print "        Old states: "
+                            . ( join ' ',
+                                map {"$_ (" . (
+                                    join ' ', @{$states{$_}->{'path'}}
+                                ) . ")"} keys %states )
+                            . " \n";
+                        print "        New states: "
+                            . ( join ' ',
+                                map {"$_ (" . (
+                                    join ' ', @{$new_states{$_}->{'path'}}
+                                ) . ")"} keys %new_states )
+                            . " \n";
+                    }
                 }
 
                 # else we already have a state with the same key but higher prob
+                
+            } # foreach $new_label
+        
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 4 ) {
+                print "    Now there are "
+                    . ( keys %new_states ) . " new states\n";
             }
-        }
+        } # foreach $last_state
 
         # pruning
 
@@ -201,25 +251,37 @@ sub label_subtree {
         #             $best_prob_sum += $new_states{$state}->{'prob'};
         #         }
 
+        # states going form pruning phase 1 to pruning phase 2
+        # %new_states = %states;
+        
         # simple pruning: keep n best states
-        %new_states = %states;
-        %states     = ();
+        %states = ();
         my @best_states
             = sort {
             $new_states{$b}->{'prob'} <=> $new_states{$a}->{'prob'}
             } keys %new_states;
         for (
             my $i = 0;
-            $i < $self->config->VITERBI_STATES_NUM_THRESHOLD
-            && $i < @best_states;
+            @best_states && $i < $self->config->VITERBI_STATES_NUM_THRESHOLD;
             $i++
             )
         {
             my $state = shift @best_states;
             $states{$state} = $new_states{$state};
+
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 5 ) {
+                print "      Pruning let thrgough the state $state"
+                    . "\n";
+            }
+        }
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 4 ) {
+            print "    After pruning there are "
+                . ( keys %states ) . " states\n";
         }
 
-    }
+    } # foreach $edge
 
     # End - find the state with the best prob - this is the result
     my $best_state_label = undef;
@@ -227,8 +289,9 @@ sub label_subtree {
     # "negative infinity" (works both with real probs and with their logs)
     my $best_state_prob = -999999999;
     foreach my $state_label ( keys %states ) {
-        if ( $self->config->DEBUG >= 2 ) {
-            print "best state prob: " . $states{$state_label}->{'prob'} . "\n";
+        if ( $self->config->DEBUG >= 4 ) {
+            print "state $state_label prob: "
+                . $states{$state_label}->{'prob'} . "\n";
         }
         if ( $states{$state_label}->{'prob'} > $best_state_prob ) {
             $best_state_label = $state_label;
@@ -244,6 +307,8 @@ sub label_subtree {
 
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 2 ) {
+            print "best state $best_state_label prob: "
+                . $best_state_prob . "\n";
             print "best path: "
                 . ( join ' ', @labels )
                 . "\n";
@@ -257,7 +322,7 @@ sub label_subtree {
         die "No best state generated, cannot continue. (This is weird.)";
     }
 
-    # end of Viterbi copy
+    # end of Viterbi
 
     # recursion
     foreach my $edge (@edges) {
