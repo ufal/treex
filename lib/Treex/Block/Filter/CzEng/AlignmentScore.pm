@@ -5,28 +5,22 @@ use List::Util qw( max );
 
 extends 'Treex::Block::Filter::CzEng::Common';
 
-has aliscore_file => (
-    isa           => 'Str',
-    is            => 'ro',
-    required      => 1,
-    documentation => 'file with logs of word alignment score for each sentence'
-);
+my @bounds = ( -50, -25, -10, -5, -2, -1 );
 
 sub process_document {
     my ( $self, $document ) = @_;
-    open( my $scores_hdl, $self->{aliscore_file} ) or log_fatal $!;
 
     for my $bundle ( $document->get_bundles() ) {
-        chomp( my $score = <$scores_hdl> );
-        log_fatal "Error reading file $self->{aliscore_file}" if ! defined $score;
         my @en = $bundle->get_zone('en')->get_atree->get_descendants;
         my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
-        my $therescore = $bundle->get_zone('cs')->get_atree->get_attr( "giza_scores/therevalue " );
-        my $backscore = $bundle->get_zone('cs')->get_atree->get_attr( "giza_scores/backvalue " );
+        my $therescore = $bundle->get_zone('cs')
+            ->get_atree->get_attr( "giza_scores/therevalue" );
+        next if !defined $therescore;
+        my $backscore = $bundle->get_zone('cs')
+            ->get_atree->get_attr( "giza_scores/backvalue" );
+        next if !defined $therescore;
 
-        my @bounds = ( -50, -25, -10, -5, -2, -1 );
         my $score = $therescore / @cs + $backscore / @en;
-
         $self->add_feature( $bundle, "word_alignment_score="
             . $self->quantize_given_bounds( $score, @bounds ) );
     }
