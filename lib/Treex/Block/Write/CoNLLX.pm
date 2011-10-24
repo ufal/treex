@@ -10,7 +10,7 @@ has '+language'                        => ( required => 1 );
 has 'deprel_attribute'                 => ( is       => 'rw', isa => 'Str', default => 'autodetect' );
 has 'pos_attribute'                    => ( is       => 'rw', isa => 'Str', default => 'autodetect' );
 has 'cpos_attribute'                   => ( is       => 'rw', isa => 'Str', default => 'conll/cpos' );
-has 'feat_attribute'                   => ( is       => 'rw', isa => 'Str', default => '_' );
+has 'feat_attribute'                   => ( is       => 'rw', isa => 'Str', default => 'conll/feat' );
 has 'is_member_within_afun'            => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_shared_modifier_within_afun'   => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', default => 0 );
