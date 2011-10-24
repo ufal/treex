@@ -10,6 +10,8 @@ has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.[at]\.gz$' );
 
+has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
+
 sub _build_layers {
     my ($self) = @_;
     return $self->t_layer ? [ 'a', 't' ] : ['a'];

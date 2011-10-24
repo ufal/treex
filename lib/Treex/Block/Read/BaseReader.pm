@@ -11,7 +11,13 @@ sub next_document {
 }
 
 has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
-has language => ( isa => 'Maybe[Treex::Type::LangCode]', is => 'ro' );
+
+# Note that "language" is intentionally not required here,
+# because some derived classes (e.g. Read::Treex) do not need it.
+# However, if a derived class reads a format where the language is not specified,
+# it must add the parameter language using:
+#has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
+
 
 has from => (
     isa           => 'Treex::Core::Files',
