@@ -70,7 +70,6 @@ sub process_atree {
             my $tgttree = $a_root->get_bundle->get_tree( $self->to_language, 'a', $self->to_selector );
             $a_root->set_attr("giza_scores/".$there_or_back."value", $score);
             $a_root->set_attr("giza_scores/counterpart.rf", $tgttree->id);
-            print STDERR "Saving $score into ", $a_root->id, "\n";
         } else {
             # real alignment type
             foreach my $pair ( split( /\s/, $p[$i] ) ) {
