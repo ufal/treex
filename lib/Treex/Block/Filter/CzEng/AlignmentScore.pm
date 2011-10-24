@@ -18,9 +18,9 @@ sub process_document {
         next if !defined $therescore;
         my $backscore = $bundle->get_zone('cs')
             ->get_atree->get_attr( "giza_scores/backvalue" );
-        next if !defined $therescore;
+        next if !defined $backscore;
 
-        my $score = $therescore / @cs + $backscore / @en;
+        my $score = log( $therescore ) / @cs + log( $backscore ) / @en;
         $self->add_feature( $bundle, "word_alignment_score="
             . $self->quantize_given_bounds( $score, @bounds ) );
     }
