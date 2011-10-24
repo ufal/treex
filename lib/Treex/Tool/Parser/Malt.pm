@@ -31,7 +31,9 @@ sub BUILD {
     my $workdir = tempdir(Treex::Core::Config->tmp_dir."/maltparserXXXX", CLEANUP => 1);
 
     # symlink to the model (model has to be in working directory)
-    system "ln -s $model_path $workdir/$model_name";
+    # The symlinked path must be absolute unless we want a loop such as "malt.mco -> malt.mco"!
+    my $abs_model_path = absolutize_path($model_path);
+    system "ln -s $abs_model_path $workdir/$model_name";
 
     my $command = "cd $workdir; java -Xmx".$self->memory." -jar $bindir/malt-1.5/malt.jar -c $model_name";
 
@@ -46,7 +48,7 @@ sub BUILD {
 
 sub parse {
     my ( $self, $forms, $lemmas, $pos, $subpos, $features ) = @_;
-    
+
     my $writer = $self->{mpwriter};
     my $reader = $self->{mpreader};
 
@@ -73,10 +75,88 @@ sub parse {
         push @afuns, $items[7];
     }
 
-    # read empty line 
+    # read empty line
     <$reader>;
 
     return ( \@parents, \@afuns );
+}
+
+
+
+#==============================================================================
+# Functions to get absolute paths. (Copied from Dan Zeman's dzsys.pm.)
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Figures out the current absolute path. If we want to know the caller's path
+# we must call this before we change the current folder.
+#------------------------------------------------------------------------------
+sub get_current_path
+{
+    my $mydir = `pwd`;
+    $mydir =~ s/\r?\n$//;
+    return $mydir;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Figures out the absolute path to the script.
+#------------------------------------------------------------------------------
+sub get_script_path
+{
+    my $scriptdir = $0;
+    # Strip script name, leave path to its folder.
+    if($scriptdir !~ m-/-)
+    {
+        $scriptdir = ".";
+    }
+    else
+    {
+        # Remove the rightmost slash and everything after it.
+        $scriptdir =~ s-/[^/]*$--;
+    }
+    my $current_path = get_current_path();
+    chdir("$scriptdir") or die("Cannot change to $scriptdir folder: $!\n");
+    $scriptdir = `pwd`;
+    $scriptdir =~ s/\r?\n$//;
+    chdir($current_path) or die("Cannot change to $current_path folder: $!\n");
+    return $scriptdir;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Concatenates two paths. If the right path is absolute, the left path is
+# ignored. Otherwise, the right path is relative to the left path (which could
+# be relative as well).
+#------------------------------------------------------------------------------
+sub join_paths
+{
+    my $left = shift;
+    my $right = shift;
+    if($right =~ m-^/-)
+    {
+        return $right;
+    }
+    else
+    {
+        $left =~ s-/$--;
+        return $left."/".$right;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes a relative path absolute. Joins the absolute current path.
+#------------------------------------------------------------------------------
+sub absolutize_path
+{
+    my $path = shift;
+    return join_paths(get_current_path(), $path);
 }
 
 
@@ -96,7 +176,5 @@ Treex::Tools::Parser::Malt
 
 =cut
 
-# Copyright 2009-2011 David Marecek
-
+# Copyright 2009-2011 David Mareček, Dan Zeman
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
-
