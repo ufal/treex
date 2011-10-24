@@ -56,10 +56,13 @@ sub process_atree {
   set_indices();
   
   if ( $self->fold eq "left" ) {
-    fold_sequences_furthest_left();
+  #  fold_sequences_furthest_left();
+  fold_sequences_left();
+  
   }
   elsif ( $self->fold eq "right" ) {
-    fold_sequences_furthest_right();
+    #fold_sequences_furthest_right();
+    fold_sequences_right();
   }
   
   if (   $current_sentence[ $current_sentence_size - 1 ]->tag eq "."
@@ -441,7 +444,22 @@ sub fold_sequences_furthest_right {
     $i++;
   }
 }
-
+sub fold_sequences_right {
+  my $i         = 0;
+  my $fold_size = $current_sentence_size;
+  while ( $i < $fold_size - 1 ) {
+    
+    #  print "$i\t".($fold_size-1)."\n";
+    if ( $nodes[$i] eq $nodes[ $i + 1 ] ) {
+      my $j = $i + 1;
+       $indices{ $indices_offset{$i} } = $indices_offset{$j};
+      update_indices($i);
+      splice( @nodes, $i, 1 );
+      $fold_size--;
+    }
+    $i++;
+  }
+}
 sub fold_sequences_furthest_left {
   my $i         = $current_sentence_size - 1;
   my $fold_size = $current_sentence_size;
@@ -467,7 +485,25 @@ sub fold_sequences_furthest_left {
     $i--;
   }
 }
-
+sub fold_sequences_left {
+  my $i         = $current_sentence_size - 1;
+  my $fold_size = $current_sentence_size;
+  while ( $i > 0 ) {
+    
+    #print "$i\t".($fold_size-1)."\n";
+    if ( $nodes[$i] eq $nodes[ $i - 1 ] ) {
+      my $j = $i - 1;
+      
+      #print "i=$i\tj=$j\n";
+      #print "i=$indices_offset{$i}\tj=$indices_offset{$j}\n";
+      $indices{ $indices_offset{$i} } = $indices_offset{$j};
+      update_indices($i);
+      splice( @nodes, $i, 1 );
+      $fold_size--;
+    }
+    $i--;
+  }
+}
 1;
 
 __END__
