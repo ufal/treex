@@ -8,7 +8,7 @@ use FileUtils;
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
 has from        => ( isa => 'Str', is => 'ro', required => 1 );
-has types       => ( isa => 'Str', is => 'ro', default  => 'int' );
+has inputcols   => ( isa => 'Str', is => 'ro', default  => 'int' );
 
 #has skipped => ( isa => 'Str', is => 'ro');
 
@@ -48,6 +48,7 @@ sub process_atree {
     my @p;
     while ( !$found ) {
         my $line = <ALIGNMENT_FILE>;
+        chomp $line;
         die "Bad alignment file ".($self->from)
           .", alignment for sent '$sentence_id' not found."
             if !$line || $line =~ /^\s*$/;
@@ -59,16 +60,27 @@ sub process_atree {
     }
     shift @p;
     my %aligned;
-    my @type = split( /_/, $self->types );
+    my @type = split( /_/, $self->inputcols );
     for ( my $i = 0; $i < @p; $i++ ) {
         last if not $type[$i];
-        foreach my $pair ( split( /\s/, $p[$i] ) ) {
-            if ( $pair =~ /^([0-9]*)-([0-9]*)$/ ) {
-                if ( $aligned{$pair} ) {
-                    $aligned{$pair} .= ".$type[$i]";
-                }
-                else {
-                    $aligned{$pair} = $type[$i];
+        if ($type[$i] =~ /^(there|back)score$/o) {
+            # this column means alignment score
+            my $there_or_back = $1;
+            my $score = $p[$i];
+            my $tgttree = $a_root->get_bundle->get_tree( $self->to_language, 'a', $self->to_selector );
+            $a_root->set_attr("giza_scores/".$there_or_back."value", $score);
+            $a_root->set_attr("giza_scores/counterpart.rf", $tgttree->id);
+            print STDERR "Saving $score into ", $a_root->id, "\n";
+        } else {
+            # real alignment type
+            foreach my $pair ( split( /\s/, $p[$i] ) ) {
+                if ( $pair =~ /^([0-9]*)-([0-9]*)$/ ) {
+                    if ( $aligned{$pair} ) {
+                        $aligned{$pair} .= ".$type[$i]";
+                    }
+                    else {
+                        $aligned{$pair} = $type[$i];
+                    }
                 }
             }
         }
@@ -108,7 +120,10 @@ PARAMETERS:
 - from - input file, each line in the format
   path:sent_id<TAB>first_alignment<TAB>second_alignment<TAB>third_alignment<TAB>...
 
-- types - names of particular alignments separated by '_', for example 'int_gdf_uni'
+- inputcols - names of particular alignments separated by '_'. Two special
+  names are used to indicate columns with GIZA++ alignment score: 'therescore'
+  and 'backscore' for a-b and b-a, resp. For example
+  'int_gdf_uni_therescore_backscore'
 
 - to_language, to_separator
 

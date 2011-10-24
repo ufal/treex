@@ -11,6 +11,20 @@
   <type name="a-root.type">
     <structure role="#NODE" name="a-root">
       <member name="id" role="#ID" as_attribute="1"  required="1"><cdata format="ID"/></member>
+      
+      <member name="giza_scores">
+        <structure>
+           <member name="counterpart.rf">
+              <cdata format="PMLREF"/>
+           </member>
+           <member name="therevalue">
+              <cdata format="any"/>
+           </member>
+           <member name="backvalue">
+              <cdata format="any"/>
+           </member>
+        </structure>
+      </member>
       <member name="ptree.rf"><cdata format="PMLREF"/></member>
       <member name="s.rf"><cdata format="PMLREF"/></member>
       <member name="afun"><constant>AuxS</constant></member>
