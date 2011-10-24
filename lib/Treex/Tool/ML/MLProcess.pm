@@ -9,7 +9,7 @@ use Treex::Tool::IO::Arff;
 use autodie;
 
 # The base directory for the ML-Process tool
-Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process/';
+Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process1/';
 
 # All files the ML-Process tool needs for its work (except the executable JAR)
 Readonly my $ML_PROCESS_LIBRARIES => [
@@ -76,6 +76,7 @@ sub run {
 
     # load the plan template
     log_info( "Creating plan file " . $plan_file );
+
     my $plan = $self->_load_file_contents( $self->plan_template );
 
     # replace input and output variables with input and output file names
@@ -161,6 +162,7 @@ sub _create_output_file {
 sub _replace {
     my ( $self, $string, $var_name, $replacement ) = @_;
 
+    $var_name =~ s/([|\[\]])/\\$1/g; # TODO capture all regexp special characters 
     $string =~ s/\|$var_name\|/$replacement/g;
 
     return $string;

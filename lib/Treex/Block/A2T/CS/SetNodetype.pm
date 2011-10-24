@@ -43,7 +43,7 @@ sub detect_nodetype {
     }
 
     # coordinations simply based on morphology (only if the functors are not be used or are not set)
-    elsif ( ( !$self->use_functors or !$t_node->functor ) and $t_node->get_lex_anode and $t_node->get_lex_anode->tag =~ /^J\^/ ) {
+    elsif ( ( !$self->use_functors or !$t_node->functor ) and $t_node->get_lex_anode and $t_node->get_lex_anode->afun =~ /^(Coord|Apos)/ ) {
         return 'coap';
     }
 

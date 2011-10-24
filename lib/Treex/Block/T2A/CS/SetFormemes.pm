@@ -46,7 +46,7 @@ override '_write_input_data' => sub {
     my ( $self, $document, $file ) = @_;
 
     log_info( "Writing the ARFF data to " . $file );
-    my $conll_writer = Treex::Block::Write::Arff->new(
+    my $arff_writer = Treex::Block::Write::Arff->new(
         {
             to          => $file->filename,
             language    => $self->language,
@@ -56,7 +56,7 @@ override '_write_input_data' => sub {
             force_types => 'formeme: STRING'
         }
     );
-    $conll_writer->process_document($document);
+    $arff_writer->process_document($document);
     return;
 };
 

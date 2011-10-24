@@ -10,7 +10,7 @@ extends 'Treex::Core::Block';
 has 'cleanup_temp' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 # files related to the trained model (will be required from the shared directory)
-has 'model_dir'     => ( is => 'ro', isa => 'Str', required => 1 );
+has 'model_dir' => ( is => 'ro', isa => 'Str', writer => '_set_model_dir', required => 1 );
 has 'plan_template' => ( is => 'ro', isa => 'Str', required => 1 );
 
 # required files from the shared directory
@@ -25,9 +25,6 @@ has 'class_name' => ( is => 'ro', isa => 'Str', required => 1 );
 # results loaded from the classfication of ML process, works as a FIFO (is first filled with the whole document, then subsequently emptied)
 has '_results' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
-# the actual locations of the files required from the shared directory
-has '_required_files' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
-
 # require files from the shared directory and save their actual path for the shared directory files
 # TODO - this should be needed for ALL blocks, if the paths may end up different !!!
 sub BUILD {
@@ -35,12 +32,19 @@ sub BUILD {
     my ($self) = @_;
 
     my @files = map { $self->model_dir . $_ } ( @{ $self->model_files } );
-    my $name = 'the block ' . $self->get_block_name();
+
+    my $name         = 'the block ' . $self->get_block_name();
+    my $up_model_dir = 1;
+
     foreach my $file (@files) {
-        log_info('Requiring: ' . $file);
         my $target = Treex::Core::Resource::require_file_from_share( $file, $name );
-        log_info('Target: ' . $target);
-        $self->_required_files->{$file} = $target;
+
+        if ($up_model_dir) {
+            $file   =~ s/([\/\\\[\]])/\\$1/g;
+            $target =~ s/(.*)$file$/$1/;
+            $self->_set_model_dir( $target . $self->model_dir );
+            $up_model_dir = 0;
+        }
     }
     return;
 }
@@ -48,13 +52,11 @@ sub BUILD {
 override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
-    
-    log_info('MLProcess params: ' . $self->model_dir . $self->plan_template . ' => ' . $self->_required_files->{ $self->model_dir . $self->plan_template } );
-    
+
     my $mlprocess = Treex::Tool::ML::MLProcess->new(
         {
-            plan_template => $self->_required_files->{ $self->model_dir . $self->plan_template },
-            cleanup_temp => $self->cleanup_temp            
+            plan_template => $self->model_dir . $self->plan_template,
+            cleanup_temp  => $self->cleanup_temp
         }
     );
 
@@ -65,7 +67,7 @@ override 'process_document' => sub {
     # run ML-Process with the specified plan file
     $mlprocess->run(
         {
-            map { $_ => $self->_required_files->{ $self->model_dir . $self->plan_vars->{$_} } } keys %{ $self->plan_vars }
+            map { $_ => $self->model_dir . $self->plan_vars->{$_} } keys %{ $self->plan_vars }
         }
     );
 
@@ -111,7 +113,7 @@ sub _set_class_value {
 
 # No filtering done by default, but may be overridden by the derived classes
 sub _filter {
-    my ($self, @nodes) = @_;
+    my ( $self, @nodes ) = @_;
     return @nodes;
 }
 
