@@ -11,7 +11,7 @@ sub next_document {
 }
 
 has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
-has language => ( isa => 'Maybe[Treex::Type::LangCode]', is => 'ro', default => q{} );
+has language => ( isa => 'Maybe[Treex::Type::LangCode]', is => 'ro' );
 
 has from => (
     isa           => 'Treex::Core::Files',
