@@ -21,8 +21,11 @@ sub process_document {
         log_fatal "Error reading file $self->{aliscore_file}" if ! defined $score;
         my @en = $bundle->get_zone('en')->get_atree->get_descendants;
         my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
-        my $max_len = max( scalar @en, scalar @cs );
+        my $therescore = $bundle->get_zone('cs')->get_atree->get_attr( "giza_scores/therevalue " );
+        my $backscore = $bundle->get_zone('cs')->get_atree->get_attr( "giza_scores/backvalue " );
+
         my @bounds = ( -50, -25, -10, -5, -2, -1 );
+        my $score = $therescore / @cs + $backscore / @en;
 
         $self->add_feature( $bundle, "word_alignment_score="
             . $self->quantize_given_bounds( $score, @bounds ) );
