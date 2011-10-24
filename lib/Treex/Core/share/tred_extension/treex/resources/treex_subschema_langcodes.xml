@@ -78,6 +78,7 @@
       <!-- other Indo-European languages in Europe and Caucasus -->
       <value>sq</value> <!-- Albanian -->
       <value>el</value> <!-- Greek -->
+      <value>grc</value> <!-- Ancient Greek -->
       <value>hy</value> <!-- Armenian -->
       <!-- Iranian languages -->
       <value>fa</value> <!-- Persian -->
