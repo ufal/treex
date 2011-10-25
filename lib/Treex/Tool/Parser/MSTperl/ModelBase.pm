@@ -3,6 +3,7 @@ package Treex::Tool::Parser::MSTperl::ModelBase;
 use Data::Dumper;
 use autodie;
 use Moose;
+use Carp;
 
 has 'config' => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',

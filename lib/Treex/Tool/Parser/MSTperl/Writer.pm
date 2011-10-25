@@ -2,6 +2,7 @@ package Treex::Tool::Parser::MSTperl::Writer;
 
 use Moose;
 use autodie;
+use Carp;
 
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
