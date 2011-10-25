@@ -5,7 +5,7 @@ use List::Util qw( min max );
 
 extends 'Treex::Block::Filter::CzEng::Common';
 
-my @bounds = ( 0, 0.25, 0.5, 0.75, 1 );
+my @bounds = ( 0, 0.1, 0.2, 0.35, 0.5, 0.75, 1 );
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
