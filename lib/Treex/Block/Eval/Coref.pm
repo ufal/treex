@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
+use Treex::Tool::Coreference::EN::PronAnaphFilter;
 
 has 'type' => (
     is          => 'ro',
@@ -54,7 +55,15 @@ sub _build_anaph_cands_filter {
     my ($self) = @_;
     
     if ($self->anaphor_type eq 'pron') {
-        return Treex::Tool::Coreference::CS::PronAnaphFilter->new();
+        if ($self->language eq 'cs') {
+            return Treex::Tool::Coreference::CS::PronAnaphFilter->new();
+        }
+        elsif ($self->language eq 'en') {
+            return Treex::Tool::Coreference::EN::PronAnaphFilter->new();
+        }
+        else {
+            return log_fatal "language " . $self->language . " is not supported";
+        }
     }
     return undef;
 }

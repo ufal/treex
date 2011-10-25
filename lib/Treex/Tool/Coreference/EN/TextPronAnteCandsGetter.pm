@@ -40,14 +40,14 @@ sub _select_all_cands {
                 ( !defined $_->gram_person || ( $_->gram_person !~ /1|2/ ) )
             }
         # grammatemes not provided
-            else {
-                my $alex = $_->get_lex_anode;
-                ( defined $alex ) &&
+#            else {
+#                my $alex = $_->get_lex_anode;
+#                ( defined $alex ) &&
             # candidates will be just nouns and pronouns
-                ( $alex->tag =~ /^[N|P]/ ) &&
+#                ( $alex->tag =~ /^[N|P]/ ) &&
             # we omit 1st and 2nd person pronouns as candidates
-                ( $alex->tag !~ /^P/ || !defined $banned_prons{$alex->lemma} )
-            }
+#                ( $alex->tag !~ /^P/ || !defined $banned_prons{$alex->lemma} )
+#            }
         } @sent_preceding;
 
     # reverse to ensure the closer candidates to be indexed with lower numbers
