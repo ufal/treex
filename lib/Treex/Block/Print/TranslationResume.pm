@@ -1,7 +1,7 @@
 package Treex::Block::Print::TranslationResume;
 use Moose;
 use Treex::Core::Common;
-use Eval::Bleu;
+use Treex::Tool::Eval::Bleu;
 
 extends 'Treex::Core::Block';
 
