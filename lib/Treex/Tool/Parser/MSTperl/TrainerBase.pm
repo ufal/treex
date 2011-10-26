@@ -167,7 +167,7 @@ sub preprocess_sentences {
         if ( $self->config->DEBUG >= 1 ) {
             $sentNo++;
             if ( $sentNo % 50 == 0 ) {
-                print "  $sentNo/$sentence_count sentences"
+                print "  $sentNo/$sentence_count sentences "
                     . "processed (computing features)\n";
             }
         }

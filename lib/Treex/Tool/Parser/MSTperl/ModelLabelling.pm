@@ -240,11 +240,19 @@ sub get_emission_probs {
         }
     } else {
 
-        # $min > $max, i.e. nothing has been generated
-        %result = %{ $self->weights->{ $self->config->UNIGRAM_PROB_KEY } };
+        # $min > $max, i.e. nothing has been generated -> backoff
+        %result = %{ $self->get_blind_emission_probs() };
     }
 
     return \%result;
+}
+
+# backoff emission probabilities (ignoring the features, just pure MLE)
+sub get_blind_emission_probs {
+    
+    my ($self) = @_;
+    
+    return $self->weights->{ $self->config->UNIGRAM_PROB_KEY };
 }
 
 # get score of assigning the edge with the given features the given label

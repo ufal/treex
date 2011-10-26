@@ -135,88 +135,75 @@ sub label_subtree {
                     . $states{$last_state}->{'prob'} . ")\n";
             }
 
+            # compute the possible labels probabilities,
+            # i.e. products of emission and transition probs
             # emission_probs{label} = prob
-            my %emission_probs = %{
-                $self->model->get_emission_probs( $edge->features )
-                };
+            my %possible_labels = %{ $self->get_possible_labels (
+                $edge,
+                $last_state,
+                $states{$last_state}->{'prob'},
+            )};
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
-                my $tmp = join ' ', keys %emission_probs;
-                print "    " . scalar( keys %emission_probs )
-                    . " possible labels are $tmp\n";
+                print "    " . scalar( keys %possible_labels )
+                    . " possible labels are "
+                    . (join ' ', keys %possible_labels)
+                    . "\n";
             }
-
-            foreach my $new_label ( keys %emission_probs ) {
-                my $emission_prob = $emission_probs{$new_label};
-                my $transition_prob
-                    = $self->model->get_transition_prob(
-                    $new_label, $last_state
-                    );
-                my $new_state_prob
-                    = $states{$last_state}->{'prob'} * $emission_prob
-                    * $transition_prob;
+        
+            foreach my $new_label ( keys %possible_labels ) {
+                my $new_state_prob = $possible_labels{$new_label};
+                
                 if ( $self->config->DEBUG >= 5 ) {
                     print "      Trying label $new_label, "
                         . "prob $new_state_prob\n";
                 }
 
-                # if no state like that yet or better than current max,
-                # use this new state
-                if ($new_state_prob > 0
-                    && (!$new_states{$new_label}
-                        || $new_states{$new_label}->{'prob'} < $new_state_prob
-                        )
-                    )
-                {
-                    # only progress and/or debug info
-                    if ( $self->config->DEBUG >= 5 ) {
-                        print "        Old state path "
-                            . ( join ' ', @{$states{$last_state}->{'path'}} )
-                            . " \n";
-                        print "        Old states: "
-                            . ( join ' ',
-                                map {"$_ (" . (
-                                    join ' ', @{$states{$_}->{'path'}}
-                                ) . ")"} keys %states )
-                            . " \n";
-                        print "        New states: "
-                            . ( join ' ',
-                                map {"$_ (" . (
-                                    join ' ', @{$new_states{$_}->{'path'}}
-                                ) . ")"} keys %new_states )
-                            . " \n";
-                    }
-                
-                    my @new_state_path = @{$states{$last_state}->{'path'}};
-                    push @new_state_path, $new_label;
-                    $new_states{$new_label} = {
-                        'path' => \@new_state_path,
-                        'prob' => $new_state_prob,
-                        };
-
-                    # only progress and/or debug info
-                    if ( $self->config->DEBUG >= 5 ) {
-                        print "        New state path "
-                            . ( join ' ', @new_state_path )
-                            . " \n";
-                        print "        Old states: "
-                            . ( join ' ',
-                                map {"$_ (" . (
-                                    join ' ', @{$states{$_}->{'path'}}
-                                ) . ")"} keys %states )
-                            . " \n";
-                        print "        New states: "
-                            . ( join ' ',
-                                map {"$_ (" . (
-                                    join ' ', @{$new_states{$_}->{'path'}}
-                                ) . ")"} keys %new_states )
-                            . " \n";
-                    }
+                # only progress and/or debug info
+                if ( $self->config->DEBUG >= 5 ) {
+                    print "        Old state path "
+                        . ( join ' ', @{$states{$last_state}->{'path'}} )
+                        . " \n";
+                    print "        Old states: "
+                        . ( join ' ',
+                            map {"$_ (" . (
+                                join ' ', @{$states{$_}->{'path'}}
+                            ) . ")"} keys %states )
+                        . " \n";
+                    print "        New states: "
+                        . ( join ' ',
+                            map {"$_ (" . (
+                                join ' ', @{$new_states{$_}->{'path'}}
+                            ) . ")"} keys %new_states )
+                        . " \n";
                 }
+            
+                my @new_state_path = @{$states{$last_state}->{'path'}};
+                push @new_state_path, $new_label;
+                $new_states{$new_label} = {
+                    'path' => \@new_state_path,
+                    'prob' => $new_state_prob,
+                    };
 
-                # else we already have a state with the same key but higher prob
-                
+                # only progress and/or debug info
+                if ( $self->config->DEBUG >= 5 ) {
+                    print "        New state path "
+                        . ( join ' ', @new_state_path )
+                        . " \n";
+                    print "        Old states: "
+                        . ( join ' ',
+                            map {"$_ (" . (
+                                join ' ', @{$states{$_}->{'path'}}
+                            ) . ")"} keys %states )
+                        . " \n";
+                    print "        New states: "
+                        . ( join ' ',
+                            map {"$_ (" . (
+                                join ' ', @{$new_states{$_}->{'path'}}
+                            ) . ")"} keys %new_states )
+                        . " \n";
+                }
             } # foreach $new_label
         
             # only progress and/or debug info
@@ -333,6 +320,85 @@ sub label_subtree {
 
     return;
 }
+
+# computes possible labels for an edge, using info about
+# the emission probs, transition probs and last state's prob
+sub get_possible_labels {
+    my ($self, $edge, $last_state, $last_state_prob) = @_;
+    
+    my $emission_probs = $self->model->get_emission_probs( $edge->features );
+    
+    my $transition_probs = {};
+    foreach my $possible_label ( keys %$emission_probs ) {
+        $transition_probs->{$possible_label} =
+            $self->model->get_transition_prob( $possible_label, $last_state );
+    }
+    
+    my $possible_labels = $self->get_possible_labels_internal (
+        $emission_probs,
+        $transition_probs,
+        $last_state_prob,
+    );
+    
+    if (scalar(keys %$possible_labels) > 0) {
+        return $possible_labels;
+    } else {
+        # no possible states generated -> backoff
+        # TODO: is this the best backoff?
+        # maybe more reasonable would be to keep the emission probs
+        # and smooth the transition probs
+        my $blind_probs = $self->model->get_blind_emission_probs();
+        
+        $possible_labels = $self->get_possible_labels_internal (
+            $blind_probs,
+            $transition_probs,
+            $last_state_prob,
+        );
+        
+        if (scalar(keys %$possible_labels) > 0) {
+            return $possible_labels;
+        } else {
+            $possible_labels = $self->get_possible_labels_internal (
+                $blind_probs,
+                $blind_probs,
+                $last_state_prob,
+            );
+            
+            return $possible_labels;
+        }
+    }
+}
+
+sub get_possible_labels_internal {
+    my ($self, $emission_probs, $transition_probs, $last_state_prob) = @_;
+    
+    my %possible_labels;
+    foreach my $possible_label ( keys %$emission_probs ) {
+        my $emission_prob = $emission_probs->{$possible_label};
+        my $transition_prob = $transition_probs->{$possible_label};
+        if (! defined $transition_prob) {
+            next;
+        }
+        my $possible_state_prob
+            = $last_state_prob * $emission_prob * $transition_prob;
+            
+        # if no state like that yet or better than current max,
+        # use this new state
+        if ($possible_state_prob > 0
+            && (!$possible_labels{$possible_label}
+                || $possible_labels{$possible_label}->{'prob'}
+                    < $possible_state_prob
+                )
+            )
+        {
+            $possible_labels{$possible_label} = $possible_state_prob;
+        }
+        # else we already have a state with the same key but higher prob
+    } # end foreach $possible_label
+    
+    return \%possible_labels;
+}
+
 
 1;
 
