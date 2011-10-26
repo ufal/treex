@@ -319,6 +319,8 @@ sub label_subtree {
             $edge->child->label($label)
         }
     } else {
+        # TODO do not die, provide some backoff instead
+        # (do some smoothing, at least when no states are generated)
         die "No best state generated, cannot continue. (This is weird.)";
     }
 

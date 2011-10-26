@@ -170,8 +170,8 @@ sub mira_update {
                 # (TODO: actually they may depend on parent labelling,
                 # but we chose to ignore this as we can assume that the
                 # parent is labelled correctly;
-                # that's why we use $sentence_correct_labelling here)
-                my $features_diff       = $sentence_correct_labelling->features;
+                # that's why we use edges from $sentence_correct_labelling here)
+                my $features_diff       = $edge->features;
                 my $features_diff_count = scalar( @{$features_diff} );
 
                 if ( $features_diff_count > 0 ) {
