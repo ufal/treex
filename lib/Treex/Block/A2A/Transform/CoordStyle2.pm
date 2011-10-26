@@ -179,10 +179,12 @@ sub _fill_style_from_shortcut {
     return;
 }
 
+my %entered;
+
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position > 6;
+    #return if $atree->get_bundle->get_position != 34; #DEBUG
     my $from_f = $self->from_family;
     if ( $from_f eq 'Prague' ) {
         $self->detect_prague($atree);
@@ -195,12 +197,14 @@ sub process_atree {
     }
     else {
         log_fatal "$from_f not implemented";
+
         #TODO
     }
+
+    # clean temporary variables, so we save some memory
+    %entered = ();
     return;
 }
-
-my %entered;
 
 sub detect_prague {
     my ( $self, $node ) = @_;
@@ -208,7 +212,7 @@ sub detect_prague {
 
     # If $node is not a head of coordination,
     # just skip it and recursively process its children.
-    if ( ($node->afun || '') ne 'Coord' ) {
+    if ( ( $node->afun || '' ) ne 'Coord' ) {
         foreach my $child (@children) {
             $self->detect_prague($child);
         }
@@ -251,7 +255,7 @@ sub detect_prague {
     }
 
     # Transform the detected coordination
-    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head=>$node };
+    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head => $node };
     my $new_head = $self->transform_coord( $node, $res );
     return $new_head;
 }
@@ -263,12 +267,20 @@ sub detect_stanford {
     return $node if $entered{$node};
     $entered{$node} = 1;
 
+    #warn "dive [" . $node->form . "]\n"; #DEBUG
+
     my @children = $node->get_children( { ordered => 1 } );
     my @members = grep { $_->is_member } @children;
 
     # If $node is not a head of coordination,
     # just skip it and recursively process its children.
-    if ( !$node->is_member || !@members) {
+    # In Stanford style, the head of coordination is recognized iff
+    #  - there are conjuncts (marked by is_member=1) among its children
+    #  - or thera are coordinating conjunctions among its children.
+    # For CSs with only one conjunct (the head) only the latter holds.
+    # E.g. "And I love her." is in some annotation styles considered as a CS
+    # with only one conjunct ("love") and one conjunction ("And").
+    if ( !@members && !grep { $_->wild->{is_coord_conjunction} } @children ) {
         foreach my $child (@children) {
             $self->detect_stanford($child);
         }
@@ -289,9 +301,10 @@ sub detect_stanford {
     }
     my @todo = grep { !$_->is_member && !$_->is_shared_modifier } @children;
 
-    if ($self->from_conjunction =~ /previous|following/ ){
+    if ( $self->from_conjunction =~ /previous|following/ ) {
         @ands = grep { $_->wild->{is_coord_conjunction} } map { $_->get_children } @members;
-    } else {
+    }
+    else {
         @ands = grep { $_->wild->{is_coord_conjunction} } @todo;
         @todo = grep { !$_->wild->{is_coord_conjunction} } @todo;
     }
@@ -306,18 +319,15 @@ sub detect_stanford {
 
     @members = map { $self->detect_stanford($_); } @members;
     @shared  = map { $self->detect_stanford($_); } @shared;
+    @todo    = map { $self->detect_stanford($_); } @todo;      # private modifiers of the head
 
     #TODO? @commas, @ands (these should be mostly leaves)
 
-
-    #push @members, $node;
-
     # Transform the detected coordination
-    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head=>$node };
+    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head => $node };
     my $new_head = $self->transform_coord( $node, $res );
     return $new_head;
 }
-
 
 # Find the nearest previous/following member.
 # "Previous/following" is set by $direction, but if no such is found, the other direction is tried.
@@ -335,18 +345,6 @@ sub _nearest {
     }
 }
 
-# Note that (in nested CSs) a node can be both member and a conjunction (ands) or shared,
-# but for this purpose we treat it as a member.
-sub type_of_node {
-    my ( $self, $node ) = @_;
-    return 0         if $node->is_root();
-    return 'ands'    if $node->wild->{is_coord_conjunction};
-    return 'shared'  if $node->is_shared_modifier;
-    return 'members' if $node->is_member;
-    return 'commas'  if $self->is_comma($node);
-    return 0;
-}
-
 sub _dump_res {
     my ( $self, $res ) = @_;
     my $head = $res->{head};
@@ -362,7 +360,7 @@ sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
 
-    #$self->_dump_res($res);
+    #$self->_dump_res($res); #DEBUG
     my $parent  = $old_head->get_parent();
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
     my @shared  = @{ $res->{shared} };
@@ -388,11 +386,6 @@ sub transform_coord {
     foreach my $sep ( @commas, @ands ) {
         $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'Coord' );
         $sep->set_is_member(0);
-    }
-
-    # Set is_member (can be assigned to ands/commas in Prague)
-    foreach my $memeber (@members){
-        $memeber->set_is_member(1);
     }
 
     # PRAGUE
@@ -444,6 +437,19 @@ sub transform_coord {
                 $rehang_to = $andmember;
             }
         }
+    }
+
+    # SET is_member LABELS
+    # Generally, is_member=1 iff a given word is a conjunct ("a member of a coordination").
+    # However, there are exceptions for each style family:
+    # * Prague:   In nested coordinations, also coordination head
+    #             (conjunction or comma) can have is_member=1.
+    # * Stanford: The coordination head (the first/last conjunct) is NOT marked
+    #             as is_member (unless it is also a non-head conjunct of a nested coordination).
+    # * Moscow:   Same as Stanford (but may be changed because of problematic
+    #             distinguishing of nested coordinations from multi-conjunct coordinations).
+    foreach my $member (@members) {
+        $member->set_is_member( $member != $new_head );
     }
 
     # COMMAS (except "between" which is already solved)
