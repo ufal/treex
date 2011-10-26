@@ -28,7 +28,7 @@ sub process_document {
             my $tst_joined = join ' ', @tst;
             $src_joined =~ s/\s+$//;    #TODO why is this needed?
             $ref_joined =~ s/\s+$//;
-            my @matchings = Eval::Bleu::add_segment( $tst_joined, $ref_joined );
+            my @matchings = Treex::Tool::Eval::Bleu::add_segment( $tst_joined, $ref_joined );
             print join(
                 "\n",
                 (
