@@ -143,7 +143,8 @@ sub load_arff {
     }
     while ( my $current_line = <$io> )
     {
-        $current_line = trim($current_line);
+        $current_line =~ s/^\s+//;
+        $current_line =~ s/\s*\r?\n?//;
 
         #Check for comments
         if ( $current_line =~ /^\s*%/i )
@@ -236,7 +237,9 @@ sub _parse_line {
                 $values{ $attributes->[$attr_num]->{"attribute_name"} } = $field;
             }
             else {                                                   # unquoted value (trim whitespace)
-                $values{ $attributes->[$attr_num]->{"attribute_name"} } = trim($field);
+                $field =~ s/^\s+//;
+                $field =~ s/\s+$//;
+                $values{ $attributes->[$attr_num]->{"attribute_name"} } = $field;
             }
         }
     }
@@ -256,7 +259,9 @@ sub _parse_line {
                 $values{ $attributes->[$values_num]->{"attribute_name"} } = $field;
             }
             else {                                                   # unquoted value (trim whitespace)
-                $values{ $attributes->[$values_num]->{"attribute_name"} } = trim($field);
+                $field =~ s/^\s+//;
+                $field =~ s/\s+$//;            
+                $values{ $attributes->[$values_num]->{"attribute_name"} } = $field;
             }
             $values_num++;
         }

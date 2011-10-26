@@ -4,6 +4,7 @@ use Moose::Role;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Log;
 use Treex::PML::Instance;
+use Readonly;
 
 requires '_process_tree';
 
@@ -26,6 +27,8 @@ has '_attrib_io' => ( isa => 'HashRef', is => 'ro', writer => '_set_attrib_io' )
 # This is where all created text modifier objects are stored
 has '_modifiers' => ( isa => 'HashRef', is => 'ro', writer => '_set_modifiers' );
 
+has '_cache' => ( isa => 'HashRef', is => 'ro', writer => '_set_cache' );
+
 #
 # METHODS
 #
@@ -34,11 +37,11 @@ has '_modifiers' => ( isa => 'HashRef', is => 'ro', writer => '_set_modifiers' )
 sub _parse_attributes {
 
     my ($value) = @_;
-    
-    if ( ref $value eq 'ARRAY' ){
+
+    if ( ref $value eq 'ARRAY' ) {
         return $value;
     }
-    return _split_csv_with_brackets( $value );
+    return _split_csv_with_brackets($value);
 }
 
 # Parse the text modifier settings (Perl code given in a parameter that must return a hashref)
@@ -55,25 +58,25 @@ sub _parse_modifier_config {
         }
     }
     return $value;
-};
+}
 
 around 'BUILDARGS' => sub {
-    my ($set, $self, $args) = @_;
+    my ( $set, $self, $args ) = @_;
 
-    $self->$set($args); # call the original BUILDARGS method
-    
+    $self->$set($args);            # call the original BUILDARGS method
+
     # parse the attributes list, attribute modifiers
     $args->{modifier_config} = _parse_modifier_config( $args->{modifier_config} );
-    $args->{attributes} = _parse_attributes( $args->{attributes} );
+    $args->{attributes}      = _parse_attributes( $args->{attributes} );
 
-    return $args;    
+    return $args;
 };
 
 # Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
 sub _parse_hashref {
 
     my ( $name, $hashref ) = @_;
-    
+
     return {} if ( !$hashref );
 
     if ( ref $hashref ne 'HASH' ) {
@@ -94,7 +97,7 @@ sub BUILD {
     my @output_attr = ();
     my %modifiers   = ();
     my %attr_io     = ();
-    
+
     foreach my $attr ( @{ $self->attributes } ) {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
@@ -113,12 +116,12 @@ sub BUILD {
             push @output_attr, @{ $attr_io{$attr} };
         }
         else {
-            $attr_io{$attr} = [ $attr ];
+            $attr_io{$attr} = [$attr];
             push @output_attr, $attr;
         }
     }
 
-    $self->_set_modifiers( \%modifiers );   
+    $self->_set_modifiers( \%modifiers );
     $self->_set_attrib_io( \%attr_io );
     $self->_set_output_attrib( \@output_attr );
 
@@ -150,6 +153,7 @@ sub process_zone {
     }
     my $tree = $zone->get_tree( $self->layer );
 
+    $self->_set_cache( {} );
     $self->_process_tree($tree);
     return 1;
 }
@@ -187,7 +191,7 @@ sub _get_modified {
         # harvest the results
         return \@vals;
     }
-    else {     
+    else {
         return [ $self->_get_data( $node, $attrib, $alignment_hash ) ];
     }
 }
@@ -198,14 +202,15 @@ sub _get_info_hash {
     my ( $self, $node, $alignment_hash ) = @_;
     my %info;
     my $out_att_pos = 0;
+    my $out_att = $self->_output_attrib;
 
     foreach my $attrib ( @{ $self->attributes } ) {
 
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
 
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
-            $info{ $self->_output_attrib->[ $out_att_pos++ ] } = $vals->[$i];
-        }        
+            $info{ $out_att->[ $out_att_pos++ ] } = $vals->[$i];
+        }
     }
     return \%info;
 }
@@ -219,10 +224,14 @@ sub _get_data {
     # references
     if ($ref_attr) {
 
-        my @nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
+        my $nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
         # call myself recursively on the referenced nodes
-        return join( ' ', grep { defined($_) && $_ =~ m/[^\s]/ } map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @nodes );
+        return join(
+            ' ',
+            grep { defined($_) && $_ =~ m/[^\s]/ }
+                map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @{$nodes}
+        );
     }
 
     # plain attributes
@@ -235,126 +244,94 @@ sub _get_data {
 
         # plain attributes
         else {
-            my @values = Treex::PML::Instance::get_all( $node, $attrib );
-
-            return undef if ( @values == 1 and not defined( $values[0] ) );    # leave single undefined values as undefined
-            return join( ' ', grep { defined($_) && $_ =~ m/[^\s]/ } @values );
+            return $node->get_attr($attrib);
         }
-
     }
 }
+
+# Simple helper methods for _get_referenced_nodes
+Readonly my $GET_REF_NODES => {
+    'lex_a_node'  => sub { return $_[1]->get_lex_anode() },
+    'aux_a_nodes' => sub { return $_[1]->get_aux_anodes( { ordered => 1 } ) },
+    'parent'      => sub { return ( $_[1]->get_parent() ) },
+    'children'    => sub { return $_[1]->get_children( { ordered => 1 } ) },
+    'echildren'   => sub { return $_[1]->get_echildren( { or_topological => 1, ordered => 1 } ) },
+    'eparents'    => sub { return $_[1]->get_eparents( { or_topological => 1, ordered => 1 } ) },
+    'siblings'  => sub { return $_[1]->get_siblings( { ordered        => 1 } ) },
+    'lsiblings' => sub { return $_[1]->get_siblings( { preceding_only => 1 } ) },
+    'rsiblings' => sub { return $_[1]->get_siblings( { following_only => 1 } ) },
+    'nearest_eparent' => sub { return _get_nearest( $_[1], $_[1]->get_eparents( { or_topological => 1, ordered => 1 } ) ) },
+    'nearest_lsibling' => sub { return _get_nearest( $_[1], $_[1]->get_siblings( { preceding_only => 1 } ) ) },
+    'nearest_rsibling' => sub { return _get_nearest( $_[1], $_[1]->get_siblings( { following_only => 1 } ) ) },
+    'elsiblings'       => sub {
+        my ( $self, $node ) = @_;
+        return grep { $_->ord < $node->ord } @{ $self->_get_esiblings( $node ) };
+    },
+    'ersiblings' => sub {
+        my ( $self, $node ) = @_;
+        return grep { $_->ord > $node->ord } @{ $self->_get_esiblings( $node ) };
+    },
+    'nearest_elsibling' => sub {
+        my ( $self, $node ) = @_;
+        return _get_nearest( $node, grep { $_->ord < $node->ord } @{ $self->_get_esiblings( $node ) } );
+    },
+    'nearest_ersibling' => sub {
+        my ( $self, $node ) = @_;
+        return _get_nearest( $node, grep { $_->ord > $node->ord } @{ $self->_get_esiblings( $node ) } );
+    },
+};
 
 # Given the source node and the reference name, this retrieves all the referenced nodes
 sub _get_referenced_nodes {
 
     my ( $self, $node, $ref, $alignment_hash ) = @_;
 
-    # special references -- methods: syntactic relations (see POD)
-    if ( $ref eq 'parent' ) {
-        return ( $node->get_parent() );
-    }
-    elsif ( $ref eq 'children' ) {
-        return $node->get_children( { ordered => 1 } );
-    }
-    elsif ( $ref eq 'echildren' ) {
-        return $node->get_echildren( { or_topological => 1, ordered => 1 } );
-    }
-    elsif ( $ref eq 'eparents' ) {
-        return $node->get_eparents( { or_topological => 1, ordered => 1 } );
-    }
-    elsif ( $ref eq 'nearest_eparent' ) {
-        return _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
-    }
-    elsif ( $ref eq 'siblings' ) {
-        return $node->get_siblings( { ordered => 1 } );
-    }
-    elsif ( $ref eq 'lsiblings' ) {
-        return $node->get_siblings( { preceding_only => 1 } );
-    }
-    elsif ( $ref eq 'rsiblings' ) {
-        return $node->get_siblings( { following_only => 1 } );
-    }
-    elsif ( $ref eq 'nearest_lsibling' ) {
-        return _get_nearest( $node, $node->get_siblings( { preceding_only => 1 } ) );
-    }
-    elsif ( $ref eq 'nearest_rsibling' ) {
-        return _get_nearest( $node, $node->get_siblings( { following_only => 1 } ) );
-    }
-    elsif ( $ref =~ m/^(nearest_)?e(l|r|)siblings?$/ ) {    # effective siblings (ef. children of the nearest ef. parent)
+    if ( !defined( $self->_cache->{$ref}->{$node} ) ) {
 
-        my $eparent = _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) );
-        my @nodes = $eparent->get_echildren( { or_topological => 1, ordered => 1 } );
-
-        if ( $ref eq 'esiblings' ) {
-            return @nodes;
-        }
-        elsif ( $ref eq 'elsiblings' ) {
-            return grep { $_->ord < $node->ord } @nodes;
-        }
-        elsif ( $ref eq 'ersiblings' ) {
-            return grep { $_->ord > $node->ord } @nodes;
-        }
-        elsif ( $ref eq 'nearest_elsibling' ) {
-            return _get_nearest( $node, grep { $_->ord < $node->ord } @nodes );
-        }
-        elsif ( $ref eq 'nearest_ersibling' ) {
-            return _get_nearest( $node, grep { $_->ord > $node->ord } @nodes );
-        }
-    }
-
-    # topological neighbors
-    elsif ( my ( $dir, $from, $to ) = ( $ref =~ m/^(left|right)([0-9]+)(?:-([0-9]*))?$/ ) ) {
-
-        $to = $from if ( !$to );
-
-        my $from = $dir eq 'left' ? $node->ord - $from : $node->ord + $from;
-        my $to   = $dir eq 'left' ? $node->ord - $to   : $node->ord + $to;
-        ( $from, $to ) = ( $to, $from ) if ( $dir eq 'left' );
-
-        my @sent = $node->get_root->get_descendants( { ordered => 1 } );
-        $from = List::Util::max( $from - 1, 0 );
-        $to = List::Util::min( $to - 1, scalar(@sent) - 1 );
-        return @sent[ $from .. $to ];
-    }
-
-    # alignment relation
-    elsif ( $ref eq 'aligned' ) {
-
-        # get alignment from the mapping provided in a hash
-        if ($alignment_hash) {
-            my $id = $node->id;
-            if ( $alignment_hash->{$id} ) {
-                return @{ $alignment_hash->{$id} };
-            } else {
-		return;
-	    }
+        # any usual neighboring relation (see $GET_REF_NODES for possibilities)
+        if ( $GET_REF_NODES->{$ref} ) {
+            $self->_cache->{$ref}->{$node} = [ $GET_REF_NODES->{$ref}->($self, $node) ];
         }
 
-        # get alignment from $node->get_aligned_nodes()
+        # topological neighbors
+        elsif ( my ( $dir, $from, $to ) = ( $ref =~ m/^(left|right)([0-9]+)(?:-([0-9]*))?$/ ) ) {
+
+            $self->_cache->{$ref}->{$node} = $self->_get_topol_neighbors( $node, $dir, $from, $to );
+        }
+
+        # alignment relation
+        elsif ( $ref eq 'aligned' ) {
+
+            # get alignment from the mapping provided in a hash
+            if ($alignment_hash) {
+                my $id = $node->id;
+                if ( $alignment_hash->{$id} ) {
+                    $self->_cache->{$ref}->{$node} = $alignment_hash->{$id};
+                }
+                else {
+                    $self->_cache->{$ref}->{$node} = [];
+                }
+            }
+
+            # get alignment from $node->get_aligned_nodes()
+            else {
+                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
+                if ($aligned_nodes) {
+                    $self->_cache->{$ref}->{$node} = $aligned_nodes;
+                }
+                else {
+                    $self->_cache->{$ref}->{$node} = [];
+                }
+            }
+        }
+
+        # unknown relation
         else {
-            my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
-            if ($aligned_nodes) {
-                return @{$aligned_nodes};
-            } else {
-		return;
-	    }
+            log_fatal( "Unknown node reference type: " . $ref );
         }
     }
 
-    # referencing attributes
-    else {
-
-        # find references
-        my @values   = Treex::PML::Instance::get_all( $node, $ref );
-        my $document = $node->get_document();
-        my @nodes    = @values ? map { $document->get_node_by_id($_) } grep {$_} @values : ();
-
-        # sort, if possible
-        if ( @nodes > 0 and $nodes[0]->does('Treex::Core::Node::Ordered') ) {
-            @nodes = sort { $a->ord <=> $b->ord } @nodes;
-        }
-        return @nodes;
-    }
+    return $self->_cache->{$ref}->{$node};
 }
 
 # Given a node and an array of candidate siblings/parents etc., this returns the topologically closest candidate to the node.
@@ -363,6 +340,7 @@ sub _get_nearest {
     my ( $node, @nodes ) = @_;
 
     if ( @nodes > 0 ) {
+
         my $nearest = $nodes[0];
         foreach my $cand (@nodes) {
             $nearest = $cand if ( abs( $cand->ord - $node->ord ) < abs( $nearest->ord - $node->ord ) );
@@ -370,6 +348,41 @@ sub _get_nearest {
         return ($nearest);
     }
     return ();
+}
+
+# Returns the 'effective siblings' of a node (effective children of its effective parent)
+sub _get_esiblings {
+    
+    my ($self, $node) = @_;
+    
+    if ( !defined( $self->_cache->{esiblings}->{$node} ) ){
+        if (!defined( $self->_cache->{nearest_eparent}->{$node})){
+            $self->_cache->{nearest_eparent}->{$node} = [ _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) ) ];
+        }
+        my $eparent = $self->_cache->{nearest_eparent}->{$node}->[0];
+        $self->_cache->{esiblings}->{$node} = [ $eparent->get_echildren( { or_topological => 1, ordered => 1 } ) ];
+    }
+    return $self->_cache->{esiblings}->{$node};
+}
+
+
+sub _get_topol_neighbors {
+    my ($self, $node, $dir, $from, $to) = @_;
+    
+    my $start = $node->ord;
+    $to = $from if ( !$to );
+
+    $from = $dir eq 'left' ? $start - $from : $start + $from;
+    $to   = $dir eq 'left' ? $start - $to   : $start + $to;
+    ( $from, $to ) = ( $to, $from ) if ( $dir eq 'left' );
+
+    if ( !defined( $self->_cache->{sent} ) ){
+        $self->_cache->{sent} = [ $node->get_root->get_descendants( { ordered => 1 } ) ];
+    }
+    my $sent = $self->_cache->{sent};
+    $from = List::Util::max( $from - 1, 0 );
+    $to = List::Util::min( $to - 1, scalar(@{$sent}) - 1 );
+    return [ @{$sent}[ $from .. $to ] ]; 
 }
 
 # Return all the required information for a node as an array

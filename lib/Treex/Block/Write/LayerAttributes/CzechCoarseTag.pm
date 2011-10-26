@@ -10,6 +10,9 @@ has 'use_case' => ( isa => 'Bool', is => 'ro', default => 1 );
 
 has 'split' => ( isa => 'Bool', is => 'ro', default => 0 );
 
+has 'no_tense' => ( isa => 'Bool', is => 'ro', default => 0 );
+
+has 'no_voc' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 # Get the use_case and split parameters out of the given parameters to new
 sub BUILDARGS {
@@ -17,19 +20,21 @@ sub BUILDARGS {
     my ( $class, @params ) = @_;
 
     return $params[0] if ( @params == 1 && ref $params[0] eq 'HASH' );
-    
-    return { use_case => $params[0]->[0], split => $params[0]->[1] } if ( @params == 1 && ref $params[0] eq 'ARRAY' ); 
 
-    if ( @params > 2 ) {
-        log_fatal('CzechCoarseTag:There must be up to two binary parameters to new().');
+    @params = @{ $params[0] } if ( @params == 1 && ref $params[0] eq 'ARRAY' );
+
+    if ( @params > 4 ) {
+        log_fatal('CzechCoarseTag:There must be up to 4 binary parameters to new().');
     }
-    if ( @params == 2 ) {
-        return { use_case => $params[0], split => $params[1] };
-    }
-    elsif ( @params == 1 ) {
-        return { use_case => $params[0] };
-    }
-    return {};
+
+    my $ret = {};
+
+    $ret->{no_voc}   = $params[3] if ( @params >= 4 );
+    $ret->{no_tense} = $params[2] if ( @params >= 3 );
+    $ret->{split}    = $params[1] if ( @params >= 2 );
+    $ret->{use_case} = $params[0] if ( @params >= 1 );
+
+    return $ret;
 }
 
 # Czech POS tag simplified to POS&CASE (or POS&SUBPOS if no case, or instructed not to use cases)
@@ -38,7 +43,7 @@ sub modify_single {
     my ( $self, $tag ) = @_;
 
     return ( $self->split ? ( undef, undef ) : undef ) if ( !defined($tag) );
-    return ( $self->split ? ( '', '' ) : '' ) if ( $tag !~ /^...../ );
+    return ( $self->split ? ( '',    '' )    : '' )    if ( length($tag) < 5 );
 
     my $ctag;
 
@@ -51,6 +56,9 @@ sub modify_single {
     else {
         $ctag = substr( $tag, 0, 1 ) . substr( $tag, 4, 1 );
     }
+    
+    $ctag = 'VB' if ( $self->no_tense && $ctag =~ m/^V/ );
+    $ctag = 'RR' if ( $self->no_voc && $ctag =~ m/^R/ );
 
     return $self->split ? split //, $ctag : $ctag;
 }
@@ -58,9 +66,8 @@ sub modify_single {
 # Build the return values names based on the split parameter
 sub _build_retval_names {
     my ($self) = @_;
-    return $self->split ? [ '_MainPOS', '_SubPOS' ] : [ '' ]; 
+    return $self->split ? [ '_MainPOS', '_SubPOS' ] : [''];
 }
-
 
 1;
 
