@@ -7,6 +7,8 @@ use Treex::Tool::Parser::MST;
 
 has model_dir => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_parser/cs" );
 has model     => ( is => 'ro', isa => 'Str', default => 'pdt2_non-proj_ord2_0.05.model' );
+has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
+
 
 my $parser;
 
@@ -17,7 +19,8 @@ sub BUILD {
             model      => $self->model_dir . '/' . $self->model,
             decodetype => 'non-proj',
             order      => 2,
-            memory     => '1000m'
+            memory     => '1000m',
+            robust     => $self->robust,
         }
     );
     return;
