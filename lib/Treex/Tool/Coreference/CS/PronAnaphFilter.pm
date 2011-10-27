@@ -9,7 +9,8 @@ with 'Treex::Tool::Coreference::AnaphFilter';
 # nodes with the t_lemma #PersPron and third person in gram/person
 sub is_candidate {
     my ($self, $node) = @_;
-    return ( $node->t_lemma eq '#PersPron' && $node->gram_person eq '3' );
+    return ( (defined $node->t_lemma) && ($node->t_lemma eq '#PersPron') 
+        && (defined $node->gram_person) && ($node->gram_person eq '3') );
 }
 
 # TODO doc

@@ -200,6 +200,11 @@ sub _get_coord_gennum {
 
     my ($gen, $num);
 
+# TODO temporary hack
+    if (@{$parray} < 1) {
+        return ('inan','sg');
+    }
+
 	if ((scalar @{$parray} == 1) || ($antec->functor eq 'APPS')) {
 		$gen = $parray->[0]->gram_gender;
 		$num = $parray->[0]->gram_number;
@@ -232,13 +237,18 @@ sub _get_relat_gennum {
 	my ($node) = @_;
 	my @epars = $node->get_eparents;
 	my $par = $epars[0];
-	while ($par && !(defined $par->gram_sempos && ($par->gram_sempos eq "v") 
+	while ($par && !($par->is_root) && !(defined $par->gram_sempos && ($par->gram_sempos eq "v") 
         && defined $par->gram_tense && ($par->gram_tense =~ /^(sim|post|ant)$/))) {
 		
         @epars = $par->get_eparents;
 		$par = $epars[0];
 	}
-	my @antecs = $par->get_eparents;
+
+	my @antecs = ();
+    if (!$par->is_root) {
+# TODO this should be get_echildren, shouldn't it be?
+        $par->get_eparents;
+    }
 	return _get_coord_gennum(\@antecs, $node);
 }
 
