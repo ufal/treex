@@ -8,6 +8,8 @@ extends 'Treex::Core::Block';
 
 # cleanup temporary files (default = 1)
 has 'cleanup_temp' => ( is => 'ro', isa => 'Bool', default => 1 );
+# Amount of memory needed for ML-Process Java VM
+has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
 
 # files related to the trained model (will be required from the shared directory)
 has 'model_dir' => ( is => 'ro', isa => 'Str', writer => '_set_model_dir', required => 1 );
@@ -56,7 +58,8 @@ override 'process_document' => sub {
     my $mlprocess = Treex::Tool::ML::MLProcess->new(
         {
             plan_template => $self->model_dir . $self->plan_template,
-            cleanup_temp  => $self->cleanup_temp
+            cleanup_temp  => $self->cleanup_temp,
+            memory => $self->memory
         }
     );
 
