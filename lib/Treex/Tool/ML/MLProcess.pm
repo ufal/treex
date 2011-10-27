@@ -105,7 +105,8 @@ sub run {
         . ' -v ' . $self->verbosity . ' ';
 
     log_info( "Running " . $command );
-    system($command) == 0 or log_fatal("ML-Process not found or not working properly.");
+    my $rv = system($command);
+    log_fatal("ML-Process not found or not working properly. Return value: $rv.") if ($rv != 0 );
 }
 
 # Load the given attribute classified by the process from the ARFF file
