@@ -108,8 +108,8 @@ sub train {
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 1 ) {
+                $sentNo++;
                 if ( $sentNo % 50 == 0 ) {
-                    $sentNo++;
                     print "    $sentNo/$sentence_count sentences processed " .
                         "(iteration $iteration/"
                         . $self->number_of_iterations
