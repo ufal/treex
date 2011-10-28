@@ -213,7 +213,9 @@ sub _get_coord_gennum {
 		$num = 'pl';
 		my %gens = (anim => 0, inan => 0, fem => 0, neut => 0);
 		foreach (@{$parray}) {
-			$gens{$_->gram_gender}++;
+            if (defined $_->gram_gender) {
+			    $gens{$_->gram_gender}++;
+            }
 		}
 		if ($gens{'anim'}) {
 			$gen = 'anim';
@@ -353,10 +355,10 @@ sub _is_app_in_coord {
         ($anaph->wild->{aca_clausenum} eq $cand->wild->{aca_clausenum})) {
 		
         my $par = $anaph->parent;
-		while ($par && ($par != $cand) && 
+		while ($par && ($par != $cand) && !$par->is_root && 
             (!$par->gram_tense || $par->gram_tense !~ /^(sim|ant|post)/) && 
             (!$par->functor || $par->functor !~ /^(PRED|DENOM)$/)) {
-			
+
             if ($par->functor =~ /^(CONJ|DISJ)$/) {
 				return (grep {$_ eq $cand} $par->descendants) ? $b_true : $b_false;
 			}
