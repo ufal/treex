@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 35;
+use Test::More tests => 46;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -32,12 +32,14 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::Writer');
 }
 
-my ( $train_file, $test_file, $model_file, $config_file, $save_tsv ) =
+my ( $train_file, $test_file, $config_file,
+    $unlabelled_model_file, $labelling_model_file ) =
     (
     "$FindBin::Bin/sample_train.tsv",
     "$FindBin::Bin/sample_test.tsv",
+    "$FindBin::Bin/sample.config",
     "$FindBin::Bin/sample.model",
-    "$FindBin::Bin/sample.config"
+    "$FindBin::Bin/sample.lmodel",
     );
 
 my $config = new_ok(
@@ -53,30 +55,37 @@ my $reader = new_ok(
     "initialize Reader,"
 );
 
+
+
+
 note('UNLABELLED TRAINING');
 
 ok( my $training_data = $reader->read_tsv($train_file), "read training data" );
 
 my $trainer = new_ok(
     'Treex::Tool::Parser::MSTperl::TrainerUnlabelled' => [ config => $config ],
-    "initialize Trainer,"
+    "initialize Unlabelled Trainer,"
 );
 
 ok( $trainer->train($training_data), "perform training" );
 
-ok( $trainer->model->store($model_file), "save model" );
+ok( $trainer->model->store($unlabelled_model_file), "save model" );
 
-ok( $trainer->model->store_tsv( $model_file . '.tsv' ),
+ok( $trainer->model->store_tsv( $unlabelled_model_file . '.tsv' ),
     "save model to tsv"
 );
 
-ok( $trainer->model->load($model_file), "load model" );
+ok( $trainer->model->load($unlabelled_model_file), "load model" );
 
-ok( $trainer->model->load_tsv( $model_file . '.tsv' ),
+ok( $trainer->model->load_tsv( $unlabelled_model_file . '.tsv' ),
     "load model to tsv"
 );
 
-unlink $model_file . '.tsv';
+unlink $unlabelled_model_file . '.tsv';
+
+
+
+
 
 note('PARSING');
 
@@ -89,7 +98,7 @@ my $parser = new_ok(
     "initialize Parser,"
 );
 
-ok( $parser->load_model($model_file), "load model" );
+ok( $parser->load_model($unlabelled_model_file), "load model" );
 
 my $total_words  = 0;
 my $total_errors = 0;
@@ -128,5 +137,79 @@ ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
 
 unlink $test_file . '.out';
 
-unlink $model_file;
+unlink $unlabelled_model_file;
+
+
+
+
+
+note('LABELLED TRAINING');
+
+my $ltrainer = new_ok(
+    'Treex::Tool::Parser::MSTperl::TrainerLabelling' => [ config => $config ],
+    "initialize Labelling Trainer,"
+);
+
+ok( $ltrainer->train($training_data), "perform training" );
+
+ok( $ltrainer->model->store($labelling_model_file), "save model" );
+
+# tsv model load/store not yet implemented
+# ok( $ltrainer->model->store_tsv( $labelling_model_file . '.tsv' ),
+#     "save model to tsv"
+# );
+
+ok( $ltrainer->model->load($labelling_model_file), "load model" );
+
+# tsv model load/store not yet implemented
+# ok( $ltrainer->model->load_tsv( $labelling_model_file . '.tsv' ),
+#     "load model to tsv"
+# );
+
+# tsv model load/store not yet implemented
+# unlink $labelling_model_file . '.tsv';
+
+
+
+
+note('LABELLING');
+
+my $labeller = new_ok(
+    'Treex::Tool::Parser::MSTperl::Labeller' => [ config => $config ],
+    "initialize Labeller,"
+);
+
+ok( $labeller->load_model($labelling_model_file), "load model" );
+
+$total_words  = 0;
+$total_errors = 0;
+@sentences = ();
+foreach my $correct_sentence ( @{$test_data} ) {
+
+    #label
+    ok(
+        my $test_sentence =
+            $labeller->label_sentence_internal($correct_sentence),
+        'label sentence'
+    );
+    push @sentences, $test_sentence;
+    my $sentenceLength = $test_sentence->len();
+    my $errorCount     = $test_sentence->count_errors_labelling(
+        $correct_sentence
+    );
+
+    $total_words  += $sentenceLength;
+    $total_errors += $errorCount;
+}
+
+is( $total_words, 47, 'testing on 47 words' );
+
+# still very live version so do not test the performance as it changes often
+# is( $total_errors, 20, 'returns on the given data 20 errors' );
+
+ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
+
+unlink $test_file . '.out';
+
+unlink $labelling_model_file;
 
