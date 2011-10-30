@@ -29,7 +29,7 @@ sub get_data_to_store {
     return $self->weights;
 }
 
-sub get_tsv_data_to_store {
+sub get_data_to_store_tsv {
     my ($self) = @_;
 
     my @result;
@@ -61,7 +61,7 @@ sub load_data {
     }
 }
 
-sub load_tsv_data {
+sub load_data_tsv {
 
     my ( $self, $data ) = @_;
 
@@ -158,7 +158,13 @@ extended from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
 =head1 FIELDS
 
-=head2 
+=head2 Feature weights
+
+=over 4
+
+=item weights
+
+A hash reference containing weights of all features. This is the actual model.
 
 =back
 

@@ -47,9 +47,17 @@ sub preprocess_sentence {
     # compute transition counts
     $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
+    if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+
+        # compute MLE emission counts for Viterbi
+        $self->compute_emission_counts($sentence);
+    }
+
     return;
 }
 
+# computes transition counts and label unigram counts
 sub compute_transition_counts {
 
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
@@ -71,6 +79,21 @@ sub compute_transition_counts {
     return;
 }
 
+sub compute_emission_counts {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    foreach my $edge ( @{ $sentence->edges } ) {
+        my $label = $edge->child->label;
+        foreach my $feature ( @{ $edge->features } ) {
+            $self->model->add_emission( $feature, $label );
+        }
+    }
+
+    return;
+}
+
 sub update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct_labelling,
@@ -80,6 +103,14 @@ sub update {
         $sentence_correct_labelling,
         $sumUpdateWeight
     ) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
+
+        # these are pure MLE setups with no use of MIRA
+        return;
+    }
 
     # relabel the sentence
     # l' = argmax_l' s(l', x_t, y_t)
@@ -125,6 +156,8 @@ sub mira_update {
         $sumUpdateWeight
     ) = @_;
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
     my @correct_labels =
         map { $_->label } @{ $sentence_correct_labelling->nodes_with_root };
     my @best_labels =
@@ -138,15 +171,22 @@ sub mira_update {
             my $correct_label = $correct_labels[$ord];
             my $best_label    = $best_labels[$ord];
 
-            # TODO: open question: include also the transition probs?
+            # TODO: open question: also include the transition probs?
+
+            my $label_scores =
+                $self->model->get_emission_probs( $edge->features );
 
             # s(l_t, x_t, y_t)
-            my $score_correct =
-                $self->model->get_edge_score( $edge, $correct_label );
+            my $score_correct = $label_scores->{$correct_label};
+            if ( !defined $score_correct ) {
+                $score_correct = 0;
+            }
 
             # s(l', x_t, y_t)
-            my $score_best =
-                $self->model->get_edge_score( $edge, $best_label );
+            my $score_best = $label_scores->{$best_label};
+            if ( !defined $score_best ) {
+                $score_best = 0;
+            }
 
             # difference in scores should be greater than the margin:
 
@@ -166,49 +206,126 @@ sub mira_update {
 
             if ( $error > 0 ) {
 
-                # features do not depend on sentence labelling
-                # (TODO: actually they may depend on parent labelling,
-                # but we chose to ignore this as we can assume that the
-                # parent is labelled correctly;
-                # that's why we use edges from $sentence_correct_labelling here)
-                my $features_diff       = $edge->features;
-                my $features_diff_count = scalar( @{$features_diff} );
+                if ($ALGORITHM == 0
+                    || $ALGORITHM == 1
+                    || $ALGORITHM == 2 || $ALGORITHM == 3
+                    )
+                {
 
-                if ( $features_diff_count > 0 ) {
+                    # features do not depend on sentence labelling
+                    # (TODO: actually they may depend on parent labelling,
+                    # but we chose to ignore this as we can assume that the
+                    # parent is labelled correctly;
+                    # that's why we use edges
+                    # from $sentence_correct_labelling here)
+                    my $features_diff       = $edge->features;
+                    my $features_diff_count = scalar( @{$features_diff} );
 
-                    # min ||w_i+1 - w_i||
-                    # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
-                    my $update = $error / $features_diff_count;
+                    if ( $features_diff_count > 0 ) {
 
-                    foreach my $feature ( @{$features_diff} ) {
+                        # min ||w_i+1 - w_i||
+                        # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+                        my $update = $error / $features_diff_count;
 
-                        # $update is added to features of the correct labelling
-                        $self->update_feature_weight(
-                            $feature,
-                            $update,
-                            $sumUpdateWeight,
-                            $correct_label
-                        );
+                        foreach my $feature ( @{$features_diff} ) {
 
-                        # and subtracted from features of the "best" labelling
-                        $self->update_feature_weight(
-                            $feature,
-                            -$update,
-                            $sumUpdateWeight,
-                            $best_label
-                        );
+                            # $update is added to features of correct labelling
+                            $self->update_feature_weight(
+                                $feature,
+                                $update,
+                                $sumUpdateWeight,
+                                $correct_label
+                            );
+
+                            # and subtracted from features of "best" labelling
+                            $self->update_feature_weight(
+                                $feature,
+                                -$update,
+                                $sumUpdateWeight,
+                                $best_label
+                            );
+                        }
+
+                        if ( $self->config->DEBUG >= 3 ) {
+                            print "alpha: $update on $features_diff_count"
+                                . " features (correct $correct_label,"
+                                . " best $best_label)\n";
+                        }
+
+                    } else {
+
+                        # $features_diff_count == 0
+                        die "It seems that there are no features!" .
+                            "This is somewhat weird.";
                     }
+                } elsif ( $ALGORITHM == 6 ) {
 
-                    if ( $self->config->DEBUG >= 3 ) {
-                        print "alpha: $update on $features_diff_count features"
-                            . " (correct $correct_label, best $best_label)\n";
+                    # features do not depend on sentence labelling
+                    # (TODO: actually they may depend on parent labelling,
+                    # but we chose to ignore this as we can assume that the
+                    # parent is labelled correctly;
+                    # that's why we use edges
+                    # from $sentence_correct_labelling here)
+                    my ( $features_good, $features_bad ) =
+                        $self->features_diff(
+                        $edge, $correct_label, $best_label
+                        );
+                    my $features_diff_count =
+                        scalar( @{$features_good} )
+                        + scalar( @{$features_bad} );
+
+                    if ( $features_diff_count > 0 ) {
+
+                        # min ||w_i+1 - w_i||
+                        # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+                        # TODO: just temporary!!! must be computed somehow!!!
+                        # no way that this is correct!!!
+                        # (I don't know how right now,
+                        # and I am not even sure what properties it should have,
+                        # apart from that after relabelling the same edge using
+                        # the new weights the correct label should score
+                        # at least 1 point higher than the current best;
+                        # still, I don't even know if one should also
+                        # take transition probs into account...)
+                        my $update = $error;
+
+                        foreach my $feature ( @{$features_good} ) {
+
+                            # $update is added to features
+                            # of the correct labelling
+                            $self->update_feature_weight(
+                                $feature,
+                                $update,
+                                $sumUpdateWeight
+                            );
+                        }
+
+                        foreach my $feature ( @{$features_bad} ) {
+
+                            # and subtracted from features
+                            # of the "best" labelling
+                            $self->update_feature_weight(
+                                $feature,
+                                -$update,
+                                $sumUpdateWeight
+                            );
+                        }
+
+                        if ( $self->config->DEBUG >= 3 ) {
+                            print "alpha: $update on"
+                                . " $features_diff_count features"
+                                . " (correct $correct_label,"
+                                . " best $best_label)\n";
+                        }
+
+                    } else {
+
+                        # $features_diff_count == 0
+                        warn "Features diff returned nothing," .
+                            " probably you're using too few features.\n";
                     }
-
                 } else {
-
-                    # $features_diff_count == 0
-                    die "It seems that there are no features!" .
-                        "This is somewhat weird.";
+                    die "Algorithm number $ALGORITHM does not use MIRA!";
                 }
             } else {
 
@@ -237,17 +354,43 @@ sub recompute_feature_weight {
     # Str $feature
     my ( $self, $feature ) = @_;
 
-    foreach my $label ( keys %{ $self->feature_weights_summed->{$feature} } ) {
-        my $weight = $self->feature_weights_summed->{$feature}->{$label}
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ($ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2 || $ALGORITHM == 3
+        )
+    {
+        foreach my $label (
+            keys %{ $self->feature_weights_summed->{$feature} }
+            )
+        {
+            my $weight = $self->feature_weights_summed->{$feature}->{$label}
+                / $self->number_of_inner_iterations;
+            $self->model->set_feature_weight( $feature, $weight, $label );
+
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 2 ) {
+                print "$feature\t$label\t"
+                    . $self->model->get_feature_weight( $feature, $label )
+                    . "\n";
+            }
+        }
+    } elsif ( $ALGORITHM == 6 ) {
+        my $weight = $self->feature_weights_summed->{$feature}
             / $self->number_of_inner_iterations;
-        $self->model->set_feature_weight( $feature, $weight, $label );
+        $self->model->set_feature_weight( $feature, $weight );
 
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 2 ) {
-            print "$feature\t$label\t"
-                . $self->model->get_feature_weight( $feature, $label )
+            print "$feature\t" . $self->model->get_feature_weight($feature)
                 . "\n";
         }
+    } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
+
+        # nothing to do (MIRA not used)
+    } else {
+        die "algorithm no $ALGORITHM must implement recompute_feature_weight!";
     }
 
     return;

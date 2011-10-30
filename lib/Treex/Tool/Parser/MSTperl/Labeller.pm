@@ -83,6 +83,8 @@ sub label_subtree {
     # (Treex::Tool::Parser::MSTperl::Node $parent)
     my ( $self, $parent ) = @_;
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
     if ( $self->config->DEBUG >= 2 ) {
         print "Label subtree of node number " . $parent->ord . ' '
             . $parent->fields->[1] . "\n";
@@ -93,7 +95,7 @@ sub label_subtree {
         print "There are " . scalar(@edges) . " children edges \n";
     }
 
-    if (@edges == 0) {
+    if ( @edges == 0 ) {
         return;
     }
 
@@ -105,19 +107,21 @@ sub label_subtree {
     # and its current probability 'prob' (product of probs on the path)
     my %states;
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
+
+    # correspont to algorithms
+    my @starting_probs = ( 1e300, 1, 1, 1, 1e300, 1e300, 1 );
+
     $states{$starting_state_key} = {
         'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
-        'prob' => 1,
+        'prob' => $starting_probs[$ALGORITHM],
     };
-
-    #        'prob' => 1e300,
 
     # run Viterbi
     # In each cycle generates %new_states and sets them as %states,
     # so at the end it suffices to find the state with the best prob in %states
     # and use its path as the result.
     foreach my $edge (@edges) {
-        
+
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 3 ) {
             print "  Labelling edge to node "
@@ -125,10 +129,10 @@ sub label_subtree {
             print "  Currently there are "
                 . ( keys %states ) . " states\n";
         }
-    
+
         my %new_states;
         foreach my $last_state ( keys %states ) {
-            
+
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
                 print "    Processing state $last_state (prob "
@@ -138,23 +142,25 @@ sub label_subtree {
             # compute the possible labels probabilities,
             # i.e. products of emission and transition probs
             # emission_probs{label} = prob
-            my %possible_labels = %{ $self->get_possible_labels (
-                $edge,
-                $last_state,
-                $states{$last_state}->{'prob'},
-            )};
+            my %possible_labels = %{
+                $self->get_possible_labels(
+                    $edge,
+                    $last_state,
+                    $states{$last_state}->{'prob'},
+                    )
+                };
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
                 print "    " . scalar( keys %possible_labels )
                     . " possible labels are "
-                    . (join ' ', keys %possible_labels)
+                    . ( join ' ', keys %possible_labels )
                     . "\n";
             }
-        
+
             foreach my $new_label ( keys %possible_labels ) {
                 my $new_state_prob = $possible_labels{$new_label};
-                
+
                 if ( $self->config->DEBUG >= 5 ) {
                     print "      Trying label $new_label, "
                         . "prob $new_state_prob\n";
@@ -163,28 +169,36 @@ sub label_subtree {
                 # only progress and/or debug info
                 if ( $self->config->DEBUG >= 5 ) {
                     print "        Old state path "
-                        . ( join ' ', @{$states{$last_state}->{'path'}} )
+                        . ( join ' ', @{ $states{$last_state}->{'path'} } )
                         . " \n";
                     print "        Old states: "
-                        . ( join ' ',
-                            map {"$_ (" . (
-                                join ' ', @{$states{$_}->{'path'}}
-                            ) . ")"} keys %states )
+                        . (
+                        join ' ',
+                        map {
+                            "$_ (" . (
+                                join ' ', @{ $states{$_}->{'path'} }
+                                ) . ")"
+                            } keys %states
+                        )
                         . " \n";
                     print "        New states: "
-                        . ( join ' ',
-                            map {"$_ (" . (
-                                join ' ', @{$new_states{$_}->{'path'}}
-                            ) . ")"} keys %new_states )
+                        . (
+                        join ' ',
+                        map {
+                            "$_ (" . (
+                                join ' ', @{ $new_states{$_}->{'path'} }
+                                ) . ")"
+                            } keys %new_states
+                        )
                         . " \n";
                 }
-            
-                my @new_state_path = @{$states{$last_state}->{'path'}};
+
+                my @new_state_path = @{ $states{$last_state}->{'path'} };
                 push @new_state_path, $new_label;
                 $new_states{$new_label} = {
                     'path' => \@new_state_path,
                     'prob' => $new_state_prob,
-                    };
+                };
 
                 # only progress and/or debug info
                 if ( $self->config->DEBUG >= 5 ) {
@@ -192,26 +206,34 @@ sub label_subtree {
                         . ( join ' ', @new_state_path )
                         . " \n";
                     print "        Old states: "
-                        . ( join ' ',
-                            map {"$_ (" . (
-                                join ' ', @{$states{$_}->{'path'}}
-                            ) . ")"} keys %states )
+                        . (
+                        join ' ',
+                        map {
+                            "$_ (" . (
+                                join ' ', @{ $states{$_}->{'path'} }
+                                ) . ")"
+                            } keys %states
+                        )
                         . " \n";
                     print "        New states: "
-                        . ( join ' ',
-                            map {"$_ (" . (
-                                join ' ', @{$new_states{$_}->{'path'}}
-                            ) . ")"} keys %new_states )
+                        . (
+                        join ' ',
+                        map {
+                            "$_ (" . (
+                                join ' ', @{ $new_states{$_}->{'path'} }
+                                ) . ")"
+                            } keys %new_states
+                        )
                         . " \n";
                 }
-            } # foreach $new_label
-        
+            }    # foreach $new_label
+
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
                 print "    Now there are "
                     . ( keys %new_states ) . " new states\n";
             }
-        } # foreach $last_state
+        }    # foreach $last_state
 
         # pruning
 
@@ -240,7 +262,7 @@ sub label_subtree {
 
         # states going form pruning phase 1 to pruning phase 2
         # %new_states = %states;
-        
+
         # simple pruning: keep n best states
         %states = ();
         my @best_states
@@ -262,13 +284,17 @@ sub label_subtree {
                     . "\n";
             }
         }
+
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 4 ) {
             print "    After pruning there are "
                 . ( keys %states ) . " states\n";
         }
 
-    } # foreach $edge
+    }    # foreach $edge
+
+    # TODO: foreach last state multiply its prob
+    # by the label->sequence_boundary probability
 
     # End - find the state with the best prob - this is the result
     my $best_state_label = undef;
@@ -306,6 +332,7 @@ sub label_subtree {
             $edge->child->label($label)
         }
     } else {
+
         # TODO do not die, provide some backoff instead
         # (do some smoothing, at least when no states are generated)
         die "No best state generated, cannot continue. (This is weird.)";
@@ -324,81 +351,123 @@ sub label_subtree {
 # computes possible labels for an edge, using info about
 # the emission probs, transition probs and last state's prob
 sub get_possible_labels {
-    my ($self, $edge, $last_state, $last_state_prob) = @_;
-    
+    my ( $self, $edge, $previous_label, $previous_label_prob ) = @_;
+
+    # now these are often not really probs but more of some kind of scores
     my $emission_probs = $self->model->get_emission_probs( $edge->features );
-    
+
     my $transition_probs = {};
     foreach my $possible_label ( keys %$emission_probs ) {
         $transition_probs->{$possible_label} =
-            $self->model->get_transition_prob( $possible_label, $last_state );
+            $self->model->get_transition_prob(
+            $possible_label, $previous_label
+            );
     }
-    
-    my $possible_labels = $self->get_possible_labels_internal (
+
+    my $possible_labels = $self->get_possible_labels_internal(
         $emission_probs,
         $transition_probs,
-        $last_state_prob,
+        $previous_label_prob,
     );
-    
-    if (scalar(keys %$possible_labels) > 0) {
+
+    if ( scalar( keys %$possible_labels ) > 0 ) {
         return $possible_labels;
     } else {
+
         # no possible states generated -> backoff
-        # TODO: is this the best backoff?
-        # maybe more reasonable would be to keep the emission probs
-        # and smooth the transition probs
-        my $blind_probs = $self->model->get_blind_emission_probs();
-        
-        $possible_labels = $self->get_possible_labels_internal (
+        my $blind_probs = $self->model->unigrams;
+
+        # TODO: smoothing (now a very stupid way is used
+        # just to lower the probs below the unblind probs)
+        foreach my $label ( keys %$blind_probs ) {
+            $blind_probs->{$label} *= 0.01;
+        }
+
+        # fall back to unigram distribution for transitions
+        # TODO: smoothing of bigram, unigram and uniform distros for transitions
+        # (this fallback should then become obsolete)
+        $possible_labels = $self->get_possible_labels_internal(
+            $emission_probs,
             $blind_probs,
-            $transition_probs,
-            $last_state_prob,
+            $previous_label_prob,
         );
-        
-        if (scalar(keys %$possible_labels) > 0) {
+
+        if ( scalar( keys %$possible_labels ) > 0 ) {
             return $possible_labels;
         } else {
-            $possible_labels = $self->get_possible_labels_internal (
+            warn "Based on the training data, no possible label was found"
+                . " for an edge. This usually means that either"
+                . " your training data are not big enough or that"
+                . " the set of features you are using"
+                . " is not well constructed - either it is too small"
+                . " or it lacks features that would be general enough"
+                . " to cover all possible sentences."
+                . " Using blind emission probabilities instead.\n";
+
+            # TODO: these are more or less probabilities, which might
+            # be unappropriate for some of the algorithms -> recompute somehow;
+            # also they do contain the SEQUENCE_BOUNDARY_LABEL prob
+
+            $possible_labels = $self->get_possible_labels_internal(
                 $blind_probs,
                 $blind_probs,
-                $last_state_prob,
+                $previous_label_prob,
             );
-            
-            return $possible_labels;
+
+            if ( scalar( keys %$possible_labels ) > 0 ) {
+                return $possible_labels;
+            } else {
+                die "no possible labels generated, no fallback helped:"
+                    . " probably there is a bug in the code!";
+            }
         }
     }
 }
 
 sub get_possible_labels_internal {
-    my ($self, $emission_probs, $transition_probs, $last_state_prob) = @_;
-    
+    my ( $self, $emission_probs, $transition_probs, $last_state_prob ) = @_;
+
+    # still, $emission_probs are often not really probs but scores
+
     my %possible_labels;
     foreach my $possible_label ( keys %$emission_probs ) {
-        my $emission_prob = $emission_probs->{$possible_label};
+        my $emission_prob   = $emission_probs->{$possible_label};
         my $transition_prob = $transition_probs->{$possible_label};
-        if (! defined $transition_prob) {
+        if ( !defined $transition_prob ) {
             next;
         }
-        my $possible_state_prob
-            = $last_state_prob * $emission_prob * $transition_prob;
-            
+
+        my $ALGORITHM = $self->config->labeller_algorithm;
+
+        my $possible_state_prob;
+        if ( $ALGORITHM == 2 ) {
+            $possible_state_prob
+                = $last_state_prob + $emission_prob * $transition_prob;
+        } else {
+            $possible_state_prob
+                = $last_state_prob * $emission_prob * $transition_prob;
+        }
+
+        # TODO: also try not using $transition_prob at all,
+        # i.e. always using $transition_prob = 1
+
         # if no state like that yet or better than current max,
         # use this new state
         if ($possible_state_prob > 0
             && (!$possible_labels{$possible_label}
                 || $possible_labels{$possible_label}->{'prob'}
-                    < $possible_state_prob
-                )
+                < $possible_state_prob
+            )
             )
         {
             $possible_labels{$possible_label} = $possible_state_prob;
         }
+
         # else we already have a state with the same key but higher prob
-    } # end foreach $possible_label
-    
+    }    # end foreach $possible_label
+
     return \%possible_labels;
 }
-
 
 1;
 
@@ -419,8 +488,8 @@ of a labeller for the MST parser
 =head1 DESCRIPTION
 
 This is a Perl implementation of the labeller for MST Parser described in
-McDonald et al.:
-#TODO
+McDonald, Ryan: Discriminative Learning And Spanning Tree Algorithms
+For Dependency Parsing, 2006 (chapter 3.3.3 Two-Stage Labelling)
 
 =head1 METHODS
 

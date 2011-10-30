@@ -266,9 +266,12 @@ sub recompute_feature_weight {
 sub update_feature_weight {
 
     # TODO probably refactor into 2 subs, for labelled and unlabelled
+    # and probably not :-)
 
     # (Str $feature, Num $update, Num $sumUpdateWeight, Maybe[Str] $label)
     # in unlabelled training the $label is undef
+    # (in labelled it is sometimes defined and sometimes not,
+    # depending on the algorithm used)
     # which is not a problem as it just gets ignored
     my ( $self, $feature, $update, $sumUpdateWeight, $label ) = @_;
 
@@ -280,11 +283,11 @@ sub update_feature_weight {
     # $sumUpdateWeight denotes number of summands
     # in which the weight would appear
     # if it were computed according to the definition
+    my $summed_update = $sumUpdateWeight * $update;
     if ($label) {
-        $self->feature_weights_summed->{$feature}->{$label}
-            += $sumUpdateWeight * $update;
+        $self->feature_weights_summed->{$feature}->{$label} += $summed_update;
     } else {
-        $self->feature_weights_summed->{$feature} += $sumUpdateWeight * $update;
+        $self->feature_weights_summed->{$feature} += $summed_update;
     }
 
     return $result;

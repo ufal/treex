@@ -16,14 +16,6 @@ has 'DEBUG' => (
     default => '1',
 );
 
-# used in labeller transition probs to denote unigram counts
-# (meaning "a label and no label after it")
-has 'UNIGRAM_PROB_KEY' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => '',
-);
-
 # Viterbi settings
 
 has 'SEQUENCE_BOUNDARY_LABEL' => (
@@ -69,6 +61,14 @@ has 'training' => (
 #     is => 'rw',
 #     isa => 'Int',
 # );
+
+# just temporary before it is found out
+# which algorithm is the best one
+has 'labeller_algorithm' => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => '0',
+);
 
 has 'parent_ord' => (
     is      => 'rw',
@@ -345,6 +345,7 @@ sub BUILD {
             'labeller_use_edge_features_cache',
             'number_of_iterations',
             'labeller_number_of_iterations',
+            'labeller_algorithm',
         );
 
         # name => required?

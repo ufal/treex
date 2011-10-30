@@ -69,7 +69,7 @@ sub store_tsv {
     }
 
     open my $file, ">:encoding(utf8)", $filename;
-    print $file join "\n", @{ $self->get_tsv_data_to_store() };
+    print $file join "\n", @{ $self->get_data_to_store_tsv() };
     close $file;
 
     if ( -e $filename ) {
@@ -83,7 +83,7 @@ sub store_tsv {
     }
 }
 
-sub get_tsv_data_to_store {
+sub get_data_to_store_tsv {
     my ($self) = @_;
 
     croak 'abstract method get_tsv_data_to_store to be overridden' .
@@ -140,7 +140,7 @@ sub load_tsv {
     }
     close $file;
 
-    my $result = $self->load_tsv_data( [@data] );
+    my $result = $self->load_data_tsv( [@data] );
 
     if ($result) {
         if ( $self->config->DEBUG >= 1 ) {
@@ -153,7 +153,7 @@ sub load_tsv {
     }
 }
 
-sub load_tsv_data {
+sub load_data_tsv {
     my ( $self, $data ) = @_;
 
     croak 'abstract method load_tsv_data to be overridden' .
@@ -201,19 +201,20 @@ Treex::Tool::Parser::MSTperl::ModelBase
 
 =head1 DESCRIPTION
 
+TODO: outdated; some of the information should be moved to ModelUnlabelled
+and some should be added
+
 This is a base class for an in-memory represenation of a parsing or labelling
 model.
 The model is represented by features and their weights.
 
 =head1 FIELDS
 
-=head2 Feature weights
-
 =over 4
 
-=item weights
+=item config
 
-A hash reference containing weights of all features. This is the actual model.
+=item featuresControl
 
 =back
 
