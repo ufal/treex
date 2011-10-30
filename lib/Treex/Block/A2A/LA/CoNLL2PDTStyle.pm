@@ -4,6 +4,18 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
+#------------------------------------------------------------------------------
+# Reads the Latin CoNLL trees, converts morphosyntactic tags to the positional
+# tagset and transforms the tree to adhere to PDT guidelines.
+#------------------------------------------------------------------------------
+sub process_zone
+{
+    my $self   = shift;
+    my $zone   = shift;
+    my $a_root = $self->SUPER::process_zone($zone);
+    $self->check_afuns($a_root);
+}
+
 sub deprel_to_afun
 {
     my $self  = shift;
@@ -17,7 +29,7 @@ sub deprel_to_afun
 	   if ( $deprel =~ /_CO$/ ) {
             $node->set_is_member(1);
         }
-        
+
         #convert into PDT style
         if ( $deprel =~ 'PNOM' )
         {
@@ -111,4 +123,3 @@ sub deprel_to_afun
 
     }
 }
-
