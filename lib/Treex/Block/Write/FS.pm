@@ -21,6 +21,8 @@ BEGIN
     print("\@V form\n");
     # Attribute form is positional, i.e. it can be printed without the attribute name (i.e. both "form=dog" and "dog" are allowed).
     print("\@P form\n");
+    # Header must be separated by a blank line from the body.
+    print("\n");
 }
 
 
@@ -74,6 +76,12 @@ sub get_feature_structure
         'afun'  => $node->afun().($node->is_member() ? '_M' : ''),
         'ord'   => $node->ord()
     );
+    if($fhash{ord}==0)
+    {
+        $fhash{form} = $fhash{lemma} = '#';
+        $fhash{tag} = 'Z#-------------';
+        $fhash{afun} = 'AuxS';
+    }
     my @flist = qw(form lemma tag afun ord);
     return get_feature_structure_fhash(\%fhash, \@flist);
 }
@@ -117,8 +125,8 @@ END
     print("\n");
     print("//Tred:Custom-Attribute:\${form}\n");
     print("//Tred:Custom-Attribute:\${lemma}\n");
-    print("//Tred:Custom-Attribute:\${tag}\n");
-    print("//Tred:Custom-Attribute:\${afun}\n");
+    print("//Tred:Custom-Attribute:#{blue}\${tag}\n");
+    print("//Tred:Custom-Attribute:#{green}\${afun}\n");
 }
 
 
