@@ -453,7 +453,7 @@ sub get_emission_probs {
         # get scores
         foreach my $feature (@$features) {
             if ( $self->emissions->{$feature} ) {
-                foreach my $label ( keys %{ $self->weights->{$feature} } ) {
+                foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
                     if ( defined $self->emissions->{$feature}->{$label} ) {
                         $result->{$label} +=
                             $self->emissions->{$feature}->{$label}

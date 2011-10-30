@@ -65,7 +65,7 @@ has 'training' => (
 # just temporary before it is found out
 # which algorithm is the best one
 has 'labeller_algorithm' => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Int',
     default => '0',
 );

@@ -12,10 +12,14 @@ use Treex::Tool::Parser::MSTperl::Reader;
 use Treex::Tool::Parser::MSTperl::Writer;
 use Treex::Tool::Parser::MSTperl::Labeller;
 
-my ( $test_file, $model_file, $config_file ) = @ARGV;
+my ( $test_file, $model_file, $config_file, $algorithm ) = @ARGV;
 
+if (!defined $algorithm) {
+    $algorithm = 0;
+}
 my $config = Treex::Tool::Parser::MSTperl::Config->new(
-    config_file => $config_file
+    config_file => $config_file,
+    labeller_algorithm => $algorithm,
 );
 
 my $reader = Treex::Tool::Parser::MSTperl::Reader->new(
