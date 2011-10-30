@@ -14,13 +14,18 @@ has _was        => ( is => 'rw', default => sub{{}} );
 #------------------------------------------------------------------------------
 BEGIN
 {
-    # Attribute ord is numerical and its values define the word order.
-    print("\@N ord\n");
     # Attribute form is the surface representation of the node.
     # It should be used if the sentence is to be printed.
     print("\@V form\n");
-    # Attribute form is positional, i.e. it can be printed without the attribute name (i.e. both "form=dog" and "dog" are allowed).
+    # Attributes with @P are positional, i.e. they can be printed without the attribute name (i.e. both "form=dog" and "dog" are allowed) if their ordering is kept.
+    # It is not necessary to enumerate all attributes here that will appear in the data.
+    # However, only those listed here will be searchable in Tred.
     print("\@P form\n");
+    print("\@P lemma\n");
+    print("\@P tag\n");
+    print("\@P afun\n");
+    # Attribute ord is numerical and its values define the word order.
+    print("\@N ord\n");
     # Header must be separated by a blank line from the body.
     print("\n");
 }
@@ -124,9 +129,9 @@ END
 {
     print("\n");
     print("//Tred:Custom-Attribute:\${form}\n");
-    print("//Tred:Custom-Attribute:\${lemma}\n");
+    print("//Tred:Custom-Attribute:#{brown}\${lemma}\n");
     print("//Tred:Custom-Attribute:#{blue}\${tag}\n");
-    print("//Tred:Custom-Attribute:#{green}\${afun}\n");
+    print("//Tred:Custom-Attribute:#{darkgreen}\${afun}\n");
 }
 
 
