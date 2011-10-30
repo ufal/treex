@@ -104,6 +104,7 @@ sub convert_tag
         hu::conll
         it::conll
         ja::conll
+        la::conll
         nl::conll
         pt::conll
         ro::rdt
