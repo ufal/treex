@@ -467,6 +467,11 @@ sub _set_attribute_types {
 
         # skip pre-set numeric and string attributes
         next if ( $attr->{attribute_type} and ( $attr->{attribute_type} eq 'NUMERIC' or $attr->{attribute_type} eq 'STRING' ) );
+        
+        # set all to string if string_default is imposed
+        if (!$attr->{attribute_type} && $string_default){
+            $attr->{attribute_type} = 'STRING';
+        }
 
         my %values;
 
@@ -484,7 +489,7 @@ sub _set_attribute_types {
             }
         }
 
-        # determine the type
+        # determine the type (numeric or nominal)
         if ( !$attr->{attribute_type} ) {
             my $numeric = 1;
 
@@ -496,9 +501,6 @@ sub _set_attribute_types {
             }
             if ($numeric) {
                 $attr->{attribute_type} = 'NUMERIC';
-            }
-            elsif ($string_default) {
-                $attr->{attribute_type} = 'STRING';
             }
         }
         if ( !$attr->{attribute_type} or $attr->{attribute_type} =~ m/^{.*}$/ ) {

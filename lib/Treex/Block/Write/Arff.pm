@@ -19,9 +19,6 @@ has '+language' => ( required => 1 );
 # ARFF data file structure as it's set in Treex::Tool::IO::Arff
 has '_arff' => ( is => 'ro', builder => '_init_arff', lazy_build => 1 );
 
-# Current sentence ID, starting with 1
-has '_sent_id' => ( is => 'ro', isa => 'Int', writer => '_set_sent_id', default => 1 );
-
 # Were the ARFF file headers already printed ?
 has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
 
@@ -49,7 +46,7 @@ sub BUILDARGS {
     }
 
     # build some values if they are not set as hash references in the configuration file
-    $args->{force_types}         = _parse_hashref( 'force_types', $args->{force_types} );
+    $args->{force_types}         = _parse_hashref( 'force_types',         $args->{force_types} );
     $args->{output_attrib_names} = _parse_hashref( 'output_attrib_names', $args->{output_attrib_names} );
 
     return $args;
@@ -134,7 +131,8 @@ sub _process_tree {
 
         my $info = $self->_get_info_hash($node);
 
-        $info->{sent_id} = $self->_sent_id;
+        $info->{sent_id} = $tree->get_document->file_stem . $tree->get_document->file_number . '##' . $tree->id;
+        $info->{sent_id} =~ s/[-_]root$//;
         $info->{word_id} = $word_id;
 
         push( @{ $self->_arff->relation->{records} }, $info );
@@ -145,15 +143,15 @@ sub _process_tree {
     return 1;
 }
 
-# Initialize the ARFF reader
+# Initialize the ARFF I/O module
 sub _init_arff {
 
     my ($self) = @_;
     my $arff = Treex::Tool::IO::Arff->new();
 
-    $arff->relation->{relation_name} = $self->to;
-    push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id' } );
-    push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id' } );
+    $arff->relation->{relation_name} = $self->to ? $self->to : 'RELATION'; # TODO update this to use with new Writers
+    push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id', attribute_type => 'STRING' } );
+    push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id', attribute_type => 'NUMERIC' } );
 
     my $j = 0;
 
@@ -188,9 +186,10 @@ Print out the desired attributes of all trees on the specified layer in the inpu
 L<ARFF file|http://www.cs.waikato.ac.nz/~ml/weka/arff.html>
 (used by the L<WEKA|http://www.cs.waikato.ac.nz/ml/weka/> machine learning environment). 
 
-Additional word and sentence IDs starting with (1,1) are assigned to each node on the output. The word IDs correspond
-with the order of the nodes. All attributes that are not numeric are considered C<STRING> in the output ARFF file 
-specification.
+Additional word and sentence IDs  are assigned to each node on the output. The sentence IDs are a concatenation of 
+the file name and tree root IDs, The word IDs correspond with the order of the nodes. All attributes are considered 
+C<STRING> by default in the output ARFF file specification, unless instructed otherwise in C<force_types>
+or the configuration file.
 
 =head1 PARAMETERS
 
