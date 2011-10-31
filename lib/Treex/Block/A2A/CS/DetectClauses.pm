@@ -40,11 +40,7 @@ sub add_compound_verbs {
         if ( $parent[0]->afun eq 'Coord' and not $child->is_member ) {
             push @parent, grep { $_->is_member and not $_->clause_number } $parent[0]->get_children;
         }
-        my $is_finite = $child->tag =~ /^V[Bp]/;
-        my $is_pred   = $child->afun =~ /^(?:Pred|Obj)$/;
         my $is_verb   = $child->tag =~ /^V[Bpf]/;
-        my $has_child = $child->get_children;
-        my $cnt       = 0;
         foreach my $parent (@parent) {
             if (    $parent
                 and $parent->tag
@@ -53,18 +49,11 @@ sub add_compound_verbs {
                     # === 1 ==== ma-li
                     ($is_verb and $parent eq $parent[0] and $parent->lemma =~ /^li$/)
 
-                    # === 2 === byl napsan [Vs] bude mit [Vf]
-                    or (not $is_pred and $is_finite and $parent->tag =~ /^V[sf]/ )
-
-                    # === 3 === napsali [Vp] jsme [VB]
-                    or (not $is_pred and $parent->tag =~ /^Vp/ and not $has_child)
-
                     # === 4 === auxiliary verb
                     or ($child->afun eq 'AuxV')
                 )
                 )
             {
-                $cnt += $parent eq $parent[0] ? 1 : 2;
                 if ( not $parent->clause_number ) {
                     $parent->set_clause_number( $child->clause_number );
                     $parent->{seed_type} = $child->{seed_type};
@@ -175,9 +164,9 @@ sub complete_clauses {
 
     foreach my $child (@children){
         if ( not $child->clause_number ) {
-            my $copy_from = $node;
+            #my $copy_from = $copy_from;
             if ( $node->tag and ( $node->tag =~ /^J\^/ or $node->afun =~ /Coord/ ) ) {
-
+                
                 my @right_siblings = grep {
                         $_->clause_number
                     and $_->is_member
@@ -207,6 +196,15 @@ sub complete_clauses {
                     $n->set_clause_number( $copy_from->clause_number );
                     $n = $n->get_parent;
                 }
+            }
+            elsif ( $node->tag and ( $node->lemma =~ /^být/ and $node->afun =~ /Apos/ ) ) {
+                print {*STDERR} "DEBUG: jako_je Apos\n"; 
+                my $first_child = $node->get_children( {first_only => 1} );
+                $copy_from = $node unless $first_child->id eq $child->id;
+                #$copy_from = $node;
+            }
+            else {
+              $copy_from = $node; #copy from parent; 
             }
             $child->set_clause_number( $copy_from->clause_number );
         }
