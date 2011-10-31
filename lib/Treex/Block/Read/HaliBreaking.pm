@@ -1,4 +1,4 @@
-package Treex::Block::Read::Hali;
+package Treex::Block::Read::HaliBreaking;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
@@ -17,20 +17,42 @@ has [qw(selector1 selector2)] => (
     default => '',
 );
 
+has [qw(id_regex_indicating_doc_break)] => (
+    isa      => 'Str',
+    is       => 'ro',
+    required => 0,
+);
+
 sub next_document {
     my ($self) = @_;
-    my $text = $self->next_document_text();
-    return if !defined $text;
+    if (!defined $self->{"linecache"} || 0 == scalar(@{$self->{"linecache"}})) {
+      my $text = $self->next_document_text();
+      return if !defined $text;
+      $self->{"linecache"} = [ split /\n/, $text ];
+    }
     my $document = $self->new_document();
+    my $lastid = undef;
 
     LINE:
-    foreach my $line ( split /\n/, $text ) {
+    my $line;
+    while ($line = shift @{$self->{"linecache"}}) {
         my ( $sentnum, $blocknum, $sentid, $origfile, $align_score,
              $sent1, $sent2 ) = split /\t/, $line;
+        my $regex = $self->id_regex_indicating_doc_break;
+        if (defined $regex && $sentid =~ /$regex/o) {
+            my $thisid = $1;
+            print STDERR "this $thisid, last $lastid\n";
+            if (defined $lastid && $thisid ne $lastid) {
+                # this sentence starts a new document, emit the previous one
+                unshift @{$self->{"linecache"}}, $line;
+                return $document;
+            }
+            $lastid = $thisid;
+        }
+
+        # extend the current document
         my $bundle = $document->create_bundle();
-        my $blockid = $1 if $sentid =~ /-b([0-9]+)s[0-9]+$/;
         $bundle->set_attr( 'czeng/id',          $sentid );
-        $bundle->set_attr( 'czeng/blockid',     $blockid ) if defined $blockid;
         $bundle->set_attr( 'czeng/origfile',    $origfile );
         $bundle->set_attr( 'czeng/align_score', $align_score );
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
@@ -46,7 +68,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Read::Hali
+Treex::Block::Read::HaliBreaking
 
 =head1 DESCRIPTION
 
