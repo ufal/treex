@@ -249,7 +249,7 @@ sub _get_relat_gennum {
 	my @antecs = ();
     if (!$par->is_root) {
 # TODO this should be get_echildren, shouldn't it be?
-        $par->get_eparents;
+        @antecs = $par->get_eparents;
     }
 	return _get_coord_gennum(\@antecs, $node);
 }
