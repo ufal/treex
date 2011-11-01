@@ -100,10 +100,13 @@ sub get_data_to_store {
     my ($self) = @_;
 
     return {
-        'unigrams'    => $self->unigrams,
-        'transitions' => $self->transitions,
-        'emissions'   => $self->emissions,
-        'weights'     => $self->weights,
+        'unigrams'        => $self->unigrams,
+        'transitions'     => $self->transitions,
+        'emissions'       => $self->emissions,
+        'weights'         => $self->weights,
+        'smooth_uniform'  => $self->smooth_uniform,
+        'smooth_unigrams' => $self->smooth_unigrams,
+        'smooth_bigrams'  => $self->smooth_bigrams,
     };
 }
 
@@ -116,24 +119,27 @@ sub load_data {
     $self->emissions( $data->{'emissions'} );
     $self->weights( $data->{'weights'} );
 
-    #     $self->smooth_uniform( $data->{'smooth_uniform'} );
-    #     $self->smooth_unigrams( $data->{'smooth_unigrams'} );
-    #     $self->smooth_bigrams( $data->{'smooth_bigrams'} );
+    $self->smooth_uniform( $data->{'smooth_uniform'} );
+    $self->smooth_unigrams( $data->{'smooth_unigrams'} );
+    $self->smooth_bigrams( $data->{'smooth_bigrams'} );
 
     my $unigrams_ok    = scalar( keys %{ $self->unigrams } );
     my $transitions_ok = scalar( keys %{ $self->transitions } );
     my $emissions_ok   = scalar( keys %{ $self->emissions } );
     my $weights_ok     = scalar( keys %{ $self->weights } );
 
-    #     my $smooth_ok      = ($self->smooth_uniform + $self->smooth_unigrams
-    #         + $self->smooth_bigrams == 1);
-    # TODO check this if necessary
+    my $smooth_sum = $self->smooth_uniform + $self->smooth_unigrams
+        + $self->smooth_bigrams;
+
+    # should be 1 but might be a little shifted
+    my $smooth_ok = ( $smooth_sum > 0.999 && $smooth_sum < 1.001 );
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     if ($ALGORITHM == 0
         || $ALGORITHM == 1
-        || $ALGORITHM == 2 || $ALGORITHM == 3
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
         )
     {
 
@@ -147,7 +153,19 @@ sub load_data {
         $weights_ok = 1;
     }
 
-    if ( $unigrams_ok && $transitions_ok && $emissions_ok && $weights_ok ) {
+    if ( $ALGORITHM != 5 && $ALGORITHM != 6 ) {
+
+        # onle these two use lambda smoothing
+        $smooth_ok = 1;
+    }
+
+    if (   $unigrams_ok
+        && $transitions_ok
+        && $emissions_ok
+        && $weights_ok 
+        && $smooth_ok
+        )
+    {
         return 1;
     } else {
         return 0;
