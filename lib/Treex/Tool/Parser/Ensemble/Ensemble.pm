@@ -12,12 +12,12 @@ sub BUILD {
 }
 
 sub add_edge {
-  my ( $self, $node, $parent ) = @_;
+  my ( $self, $node, $parent, $weight ) = @_;
   if ( exists $edges{$node}{$parent} ) {
-    $edges{$node}{$parent} = $edges{$node}{$parent} + 1;
+    $edges{$node}{$parent} = $edges{$node}{$parent} + $weight;
   }
   else {
-    $edges{$node}{$parent} = 1;
+    $edges{$node}{$parent} = $weight;
   }
 }
 
