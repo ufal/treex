@@ -27,6 +27,31 @@ has 'transitions' => (
     default => sub { {} },
 );
 
+# smoothing parameters of transition probabilities
+# (to be computed by EM algorithm)
+# PROB(label|prev_label) =
+#    smooth_bigrams  * transitions->{prev_label}->{label} +
+#    smooth_unigrams * unigrams->{label} +
+#    smooth_uniform
+
+has 'smooth_bigrams' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.6,
+);
+
+has 'smooth_unigrams' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.3,
+);
+
+has 'smooth_uniform' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.1,
+);
+
 # standard MLE emission probs for Viterbi
 #   emissions->{feature}->{label} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
@@ -52,6 +77,14 @@ has 'weights' => (
 # what is learned by MIRA is called weights,
 # what is computed from data by MLE is called emissions
 # (the probably-correct algorithm No. 6 uses both)
+
+# just an array ref with the sentences that represent the heldout data
+# to be able to run the EM algorithm in prepare_for_mira()
+has 'EM_heldout_data' => (
+    is      => 'rw',
+    isa     => 'ArrayRef[Treex::Tool::Parser::MSTperl::Sentence]',
+    default => sub { [] },
+);
 
 sub BUILD {
     my ($self) = @_;
@@ -83,10 +116,18 @@ sub load_data {
     $self->emissions( $data->{'emissions'} );
     $self->weights( $data->{'weights'} );
 
-    my $unigrams       = scalar( keys %{ $self->unigrams } );
+    #     $self->smooth_uniform( $data->{'smooth_uniform'} );
+    #     $self->smooth_unigrams( $data->{'smooth_unigrams'} );
+    #     $self->smooth_bigrams( $data->{'smooth_bigrams'} );
+
+    my $unigrams_ok    = scalar( keys %{ $self->unigrams } );
     my $transitions_ok = scalar( keys %{ $self->transitions } );
     my $emissions_ok   = scalar( keys %{ $self->emissions } );
     my $weights_ok     = scalar( keys %{ $self->weights } );
+
+    #     my $smooth_ok      = ($self->smooth_uniform + $self->smooth_unigrams
+    #         + $self->smooth_bigrams == 1);
+    # TODO check this if necessary
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
@@ -106,7 +147,7 @@ sub load_data {
         $weights_ok = 1;
     }
 
-    if ( $transitions_ok && $emissions_ok && $weights_ok ) {
+    if ( $unigrams_ok && $transitions_ok && $emissions_ok && $weights_ok ) {
         return 1;
     } else {
         return 0;
@@ -165,18 +206,24 @@ sub prepare_for_mira {
         foreach my $feature ( keys %{ $self->emissions } ) {
             $self->compute_probs_from_counts( $self->emissions->{$feature} );
         }
-    }
 
-    if ( $ALGORITHM == 6 ) {
+        if ( $ALGORITHM == 5 || $ALGORITHM == 6 ) {
 
-        # init feature weights
-        foreach my $feature ( keys %{ $self->emissions } ) {
+            # run the EM algorithm to compute transtition probs smoothing params
+            $self->compute_smoothing_params();
 
-            # TODO: 100 is just an arbitrary number
-            # but something non-zero is needed
-            $self->weights->{$feature} = 100;
-        }
-    }
+            if ( $ALGORITHM == 6 ) {
+
+                # init feature weights
+                foreach my $feature ( keys %{ $self->emissions } ) {
+
+                    # TODO: 100 is just an arbitrary number
+                    # but something non-zero is needed
+                    $self->weights->{$feature} = 100;
+                }
+            }    # end if $ALGORITHM == 6
+        }    # end if $ALGORITHM == 5 || $ALGORITHM == 6
+    }    # end if $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6
 
     return;
 }
@@ -196,21 +243,202 @@ sub compute_probs_from_counts {
     return;
 }
 
+# EM algorithm to estimate linear interpolation smoothing parameters
+# for smoothing of transition probabilities
+sub compute_smoothing_params {
+    my ($self) = @_;
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Running EM algorithm to estimate lambdas...\n";
+    }
+
+    my $change = 1;
+    while ( $change > $self->config->EM_EPSILON ) {
+
+        #compute "expected counts"
+        my $expectedCounts    = $self->count_expected_counts_all();
+        my $expectedCountsSum = $expectedCounts->[0] + $expectedCounts->[1]
+            + $expectedCounts->[2];
+
+        #compute new lambdas
+        my @new_lambdas = map { $_ / $expectedCountsSum } @$expectedCounts;
+
+        #compute the change (sum of changes of lambdas)
+        $change = abs( $self->smooth_uniform - $new_lambdas[0] )
+            + abs( $self->smooth_unigrams - $new_lambdas[1] )
+            + abs( $self->smooth_bigrams - $new_lambdas[2] );
+
+        # set new lambdas
+        $self->smooth_uniform( $new_lambdas[0] );
+        $self->smooth_unigrams( $new_lambdas[1] );
+        $self->smooth_bigrams( $new_lambdas[2] );
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 2 ) {
+            print "Last change: $change\n";
+        }
+    }
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 2 ) {
+        print "Final lambdas:\n"
+            . "uniform: " . $self->smooth_uniform
+            . "unigram: " . $self->smooth_unigrams
+            . "bigram: " . $self->smooth_bigrams;
+    }
+    if ( $self->config->DEBUG >= 1 ) {
+        print "Done.\n";
+    }
+
+    return;
+}
+
+#count "expected counts" of lambdas
+sub count_expected_counts_all {
+    my ($self) = @_;
+
+    my $expectedCounts = [ 0, 0, 0 ];
+    my $sentence_counts;
+
+    foreach my $sentence ( @{ $self->EM_heldout_data } ) {
+        $sentence_counts = $self->count_expected_counts_tree(
+            $sentence->nodes_with_root->[0]
+        );
+        $expectedCounts->[0] += $sentence_counts->[0];
+        $expectedCounts->[1] += $sentence_counts->[1];
+        $expectedCounts->[2] += $sentence_counts->[2];
+    }
+
+    return $expectedCounts;
+}
+
+#count "expected counts" of lambdas for a parse (sub)tree, recursively
+sub count_expected_counts_tree {
+    my ( $self, $root_node ) = @_;
+
+    my @edges = @{ $root_node->children };
+
+    # get sequence of labels
+    my @labels = map { $_->child->label } @edges;
+
+    # counts for this sequence
+    my $expectedCounts = $self->count_expected_counts_sequence( \@labels );
+
+    # recursion
+    my $subtree_counts;
+    foreach my $edge (@edges) {
+        $subtree_counts = $self->count_expected_counts_tree( $edge->child );
+        $expectedCounts->[0] += $subtree_counts->[0];
+        $expectedCounts->[1] += $subtree_counts->[1];
+        $expectedCounts->[2] += $subtree_counts->[2];
+    }
+
+    return $expectedCounts;
+}
+
+# count "expected counts" of lambdas for a sequence of labels
+# (including the boundaries)
+sub count_expected_counts_sequence {
+
+    my ( $self, $labels_sequence ) = @_;
+
+    # to be computed here
+    my $expectedCounts = [ 0, 0, 0 ];
+
+    # boundary at the beginning
+    my $label_prev = $self->config->SEQUENCE_BOUNDARY_LABEL;
+
+    # boundary at the end
+    push @$labels_sequence, $self->config->SEQUENCE_BOUNDARY_LABEL;
+
+    foreach my $label_this (@$labels_sequence) {
+
+        # get probs
+        my $ngramProbs =
+            $self->get_transition_probs_array( $label_this, $label_prev );
+        my $finalProb = $ngramProbs->[0] * $self->smooth_uniform
+            + $ngramProbs->[1] * $self->smooth_unigrams
+            + $ngramProbs->[2] * $self->smooth_bigrams;
+
+        # update expected counts
+        $expectedCounts->[0] +=
+            $self->smooth_uniform * $ngramProbs->[0] / $finalProb;
+        $expectedCounts->[1] +=
+            $self->smooth_unigrams * $ngramProbs->[1] / $finalProb;
+        $expectedCounts->[2] +=
+            $self->smooth_bigrams * $ngramProbs->[2] / $finalProb;
+
+        $label_prev = $label_this;
+    }
+
+    return $expectedCounts;
+}
+
 sub get_transition_prob {
 
-    # (Str $feature)
+    # (Str $label_this, Str $label_prev)
     my ( $self, $label_this, $label_prev ) = @_;
 
-    if ($self->transitions->{$label_prev}
-        && $self->transitions->{$label_prev}->{$label_this}
+    if ($self->config->labeller_algorithm == 5
+        || $self->config->labeller_algorithm == 6
         )
     {
-        return $self->transitions->{$label_prev}->{$label_this};
+
+        # smoothing by linear combination
+        # PROB(label|prev_label) =
+        #    smooth_bigrams  * transitions->{prev_label}->{label} +
+        #    smooth_unigrams * unigrams->{label} +
+        #    smooth_uniform
+
+        my $probs =
+            $self->get_transition_probs_array( $label_this, $label_prev );
+
+        my $result = $probs->[0] * $self->smooth_uniform
+            + $probs->[1] * $self->smooth_unigrams
+            + $probs->[2] * $self->smooth_bigrams;
+
+        return $result;
+
     } else {
 
-        # TODO: provide better smoothing (EM algorithm?)
-        return 0.00001;
+        # no real smoothing
+        if ($self->transitions->{$label_prev}
+            && $self->transitions->{$label_prev}->{$label_this}
+            )
+        {
+            return $self->transitions->{$label_prev}->{$label_this};
+        } else {
+            return 0.00001;
+        }
     }
+}
+
+# $result->[0] = uniform prob
+# $result->[1] = unigram prob
+# $result->[2] = bigram prob
+sub get_transition_probs_array {
+
+    # (Str $label_this, Str $label_prev)
+    my ( $self, $label_this, $label_prev ) = @_;
+
+    my $result = [ 0, 0, 0 ];
+
+    # uniform
+    $result->[0] = 1 / ( keys %{ $self->unigrams } );
+
+    if ( $self->unigrams->{$label_this} ) {
+
+        # unigram
+        $result->[1] = $self->unigrams->{$label_this};
+
+        if ( $self->transitions->{$label_prev}->{$label_this} ) {
+
+            # bigram
+            $result->[2] = $self->transitions->{$label_prev}->{$label_this};
+        }
+    }
+    return $result;
 }
 
 # FEATURE WEIGHTS
@@ -260,8 +488,8 @@ sub get_emission_probs {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    my $warnNoEmissionProbs =
-        "Based on the training data, no possible label was found"
+    my $warnNoEmissionProbs = "!!! WARNING !!! "
+        . "Based on the training data, no possible label was found"
         . " for an edge. This usually means that either"
         . " your training data are not big enough or that"
         . " the set of features you are using"
@@ -306,8 +534,8 @@ sub get_emission_probs {
             if ( $min > $max ) {
 
                 # $min > $max, i.e. nothing has been generated -> backoff
-                if ( $self->config->DEBUG >= 1 ) {
-                    warn $warnNoEmissionProbs;
+                if ( $self->config->DEBUG >= 2 ) {
+                    print $warnNoEmissionProbs;
                 }
                 $result = $self->unigrams;
             } else {
@@ -401,7 +629,6 @@ sub get_emission_probs {
     } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
 
         # basic or full MLE, no MIRA
-        # TODO distinguish 4 and 5 (now it's 4)
 
         my %counts    = ();
         my %prob_sums = ();
@@ -409,12 +636,10 @@ sub get_emission_probs {
         # get scores
         foreach my $feature (@$features) {
             if ( $self->emissions->{$feature} ) {
-                foreach my $label ( keys %{ $self->weights->{$feature} } ) {
-                    if ( defined $self->emissions->{$feature}->{$label} ) {
-                        $prob_sums{$label} +=
-                            $self->emissions->{$feature}->{$label};
-                        $counts{$label}++;
-                    }
+                foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
+                    $prob_sums{$label} +=
+                        $self->emissions->{$feature}->{$label};
+                    $counts{$label}++;
                 }
             }
         }
@@ -430,8 +655,8 @@ sub get_emission_probs {
         } else {
 
             # backoff
-            if ( $self->config->DEBUG >= 1 ) {
-                warn $warnNoEmissionProbs;
+            if ( $self->config->DEBUG >= 2 ) {
+                print $warnNoEmissionProbs;
             }
             $result = $self->unigrams;
         }
@@ -478,8 +703,8 @@ sub get_emission_probs {
         if ( scalar keys %$result == 0 ) {
 
             # backoff
-            if ( $self->config->DEBUG >= 1 ) {
-                warn $warnNoEmissionProbs;
+            if ( $self->config->DEBUG >= 2 ) {
+                print $warnNoEmissionProbs;
             }
             $result = $self->unigrams;
         }
@@ -487,6 +712,9 @@ sub get_emission_probs {
         die "Number $ALGORITHM is not a valid algorithm number!"
             . "Please consult the config file.";
     }
+
+    # the boundary label is NOT a valid label
+    delete $result->{ $self->config->SEQUENCE_BOUNDARY_LABEL };
 
     return $result;
 }

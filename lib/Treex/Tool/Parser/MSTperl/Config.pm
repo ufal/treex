@@ -30,6 +30,23 @@ has 'VITERBI_STATES_NUM_THRESHOLD' => (
     default => 50,
 );
 
+# stopping criterion of EM algorithm (when the sum of change of smoothing
+# parameters is lower than the epsilon, the algorithm stops)
+has 'EM_EPSILON' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 0.00001,
+);
+
+# where in training data do heldout data for EM algorithm start
+# (a number between 0 and 1, eg. 0.75 means that first 75% of sentences
+#  are training data and the last 25% are heldout data)
+has 'EM_heldout_data_at' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 0.9,
+);
+
 has 'config_file' => (
     is       => 'ro',
     isa      => 'Str',

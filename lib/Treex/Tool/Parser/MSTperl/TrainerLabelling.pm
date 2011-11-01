@@ -36,18 +36,30 @@ sub BUILD {
 # and compute the transition probs
 sub preprocess_sentence {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence, Num $progress)
+    my ( $self, $sentence, $progress ) = @_;
 
     # compute edges and their features
     $sentence->fill_fields_before_labelling();
 
     # $sentence->fill_fields_after_labelling();
 
-    # compute transition counts
-    $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
-
     my $ALGORITHM = $self->config->labeller_algorithm;
+
+    # compute transition counts
+    if ( $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+        if ( $progress < $self->config->EM_heldout_data_at ) {
+            $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
+        } else {
+
+            # do not use this sentence for transition counts,
+            # it will be used for EM algorithm to compute smoothing params
+            push @{ $self->model->EM_heldout_data }, $sentence;
+        }
+    } else {
+        $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
+    }
+
     if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6 ) {
 
         # compute MLE emission counts for Viterbi
@@ -57,11 +69,16 @@ sub preprocess_sentence {
     return;
 }
 
-# computes transition counts and label unigram counts
+# computes transition counts and label unigram counts for a tree (recursively)
 sub compute_transition_counts {
 
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
     my ( $self, $parent_node ) = @_;
+
+    # stopping condition
+    if ( scalar( @{ $parent_node->children } ) == 0 ) {
+        return;
+    }
 
     my $last_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $edge ( @{ $parent_node->children } ) {
@@ -71,7 +88,7 @@ sub compute_transition_counts {
         $self->compute_transition_counts( $edge->child );
     }
 
-    # add SEQUENCE_BOUNDARY_LABEL to end of sequence as well (TODO: do that?)
+    # add SEQUENCE_BOUNDARY_LABEL to end of sequence as well
     $self->model->add_transition(
         $self->config->SEQUENCE_BOUNDARY_LABEL, $last_label
     );
@@ -268,7 +285,7 @@ sub mira_update {
                     # from $sentence_correct_labelling here)
                     my ( $features_good, $features_bad ) =
                         $self->features_diff(
-                        $edge, $correct_label, $best_label
+                        $edge->features, $correct_label, $best_label
                         );
                     my $features_diff_count =
                         scalar( @{$features_good} )
@@ -347,6 +364,54 @@ sub mira_update {
     }
 
     return;
+}
+
+# tells "good" and "bad" features one from another,
+# i.e. features which score the correct label better than the bad label are good
+# the ones that score the bad one better are bad, and ties are removed
+# used in agorithm no 6
+# TODO: probably incorporate transition probs as well
+sub features_diff {
+
+    # (ArrayRef[Str] $features, Str $correct_label, Str $bad_label)
+    my ( $self, $features, $correct_label, $bad_label ) = @_;
+
+    my $features_good = [];
+    my $features_bad  = [];
+
+    my $correct_score;
+    my $bad_score;
+    foreach my $feature (@$features) {
+        if ( $self->model->emissions->{$feature} ) {
+
+            # get the scores of the labels
+            $correct_score =
+                $self->model->emissions->{$feature}->{$correct_label};
+            if ( defined $correct_score ) {
+                $correct_score *= $self->model->weights->{$feature};
+            } else {
+                $correct_score = 0;
+            }
+            $bad_score =
+                $self->model->emissions->{$feature}->{$bad_label};
+            if ( defined $bad_score ) {
+                $bad_score *= $self->model->weights->{$feature};
+            } else {
+                $bad_score = 0;
+            }
+
+            # do the diff
+            if ( $correct_score > $bad_score ) {
+                push @$features_good, $feature;
+            } elsif ( $correct_score < $bad_score ) {
+                push @$features_bad, $feature;
+            }
+
+            # else a tie -> ignore
+        }
+    }
+
+    return ( $features_good, $features_bad );
 }
 
 sub recompute_feature_weight {

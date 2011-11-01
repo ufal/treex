@@ -165,6 +165,59 @@ sub mira_update {
     return;
 }
 
+sub features_diff {
+
+    # (ArrayRef[Str] $features_first, ArrayRef[Str] $features_second)
+    my ( $self, $features_first, $features_second ) = @_;
+
+    #get feature counts
+    my %feature_counts;
+    foreach my $feature ( @{$features_first} ) {
+        $feature_counts{$feature}++;
+    }
+    foreach my $feature ( @{$features_second} ) {
+        $feature_counts{$feature}--;
+    }
+
+    # TODO: try to disregard features which occur in both parses?
+
+    #do the diff
+    my @features_first;
+    my @features_second;
+    my $diff_count = 0;
+    foreach my $feature ( keys %feature_counts ) {
+        if ( $feature_counts{$feature} ) {
+            my $count = abs( $feature_counts{$feature} );
+
+            # create arrays of differing features,
+            # each differing feature is included ONCE ONLY
+            # because an optimization of update is not present
+            # and the update makes uniform changes to all differing features,
+            # in which case even repeated features should be updated ONCE ONLY
+
+            # more often in the first array
+            if ( $feature_counts{$feature} > 0 ) {
+
+                # for ( my $i = 0; $i < $count; $i++ ) {
+                push @features_first, $feature;
+
+                # }
+
+                # more often in the second array
+            } else {
+
+                # for ( my $i = 0; $i < $count; $i++ ) {
+                push @features_second, $feature;
+
+                # }
+            }
+            $diff_count += $count;
+        }    # else same count -> no difference
+    }
+
+    return ( \@features_first, \@features_second, $diff_count );
+}
+
 sub recompute_feature_weight {
 
     # Str $feature

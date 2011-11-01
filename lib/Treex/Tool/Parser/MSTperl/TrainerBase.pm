@@ -133,6 +133,7 @@ sub train {
 
     # only progress and/or debug info
     # disregards labels in labelled training (but is not completely wrong)
+    # TODO true only for some algorithms!!
     my $feature_count = scalar( keys %{ $self->feature_weights_summed } );
     if ( $self->config->DEBUG >= 1 ) {
         print "Model trained with $feature_count features.\n";
@@ -153,6 +154,7 @@ sub preprocess_sentences {
     if ( $self->config->DEBUG >= 1 ) {
         print "Computing sentence features...\n";
     }
+
     my $sentence_count = scalar( @{$training_data} );
     my $sentNo         = 0;
 
@@ -161,11 +163,13 @@ sub preprocess_sentences {
         # compute sentence features
         # in labelled parsing also gets the list of labels
         # and computes the transition probs
-        $self->preprocess_sentence($sentence_correct);
+        $sentNo++;
+        $self->preprocess_sentence(
+            $sentence_correct, $sentNo / $sentence_count
+        );
 
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 1 ) {
-            $sentNo++;
             if ( $sentNo % 50 == 0 ) {
                 print "  $sentNo/$sentence_count sentences "
                     . "processed (computing features)\n";
@@ -221,8 +225,8 @@ sub recompute_feature_weights {
 # in labelling also used to get the list of labels and of transition probs
 sub preprocess_sentence {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
-    my ( $self, $sentence ) = @_;
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence, Num $progress)
+    my ( $self, $sentence, $progress ) = @_;
 
     croak 'TrainerBase::preprocess_sentence is an abstract method,'
         . ' it must be called'
@@ -291,59 +295,6 @@ sub update_feature_weight {
     }
 
     return $result;
-}
-
-sub features_diff {
-
-    # (ArrayRef[Str] $features_first, ArrayRef[Str] $features_second)
-    my ( $self, $features_first, $features_second ) = @_;
-
-    #get feature counts
-    my %feature_counts;
-    foreach my $feature ( @{$features_first} ) {
-        $feature_counts{$feature}++;
-    }
-    foreach my $feature ( @{$features_second} ) {
-        $feature_counts{$feature}--;
-    }
-
-    # TODO: try to disregard features which occur in both parses?
-
-    #do the diff
-    my @features_first;
-    my @features_second;
-    my $diff_count = 0;
-    foreach my $feature ( keys %feature_counts ) {
-        if ( $feature_counts{$feature} ) {
-            my $count = abs( $feature_counts{$feature} );
-
-            # create arrays of differing features,
-            # each differing feature is included ONCE ONLY
-            # because an optimization of update is not present
-            # and the update makes uniform changes to all differing features,
-            # in which case even repeated features should be updated ONCE ONLY
-
-            # more often in the first array
-            if ( $feature_counts{$feature} > 0 ) {
-
-                # for ( my $i = 0; $i < $count; $i++ ) {
-                push @features_first, $feature;
-
-                # }
-
-                # more often in the second array
-            } else {
-
-                # for ( my $i = 0; $i < $count; $i++ ) {
-                push @features_second, $feature;
-
-                # }
-            }
-            $diff_count += $count;
-        }    # else same count -> no difference
-    }
-
-    return ( \@features_first, \@features_second, $diff_count );
 }
 
 1;

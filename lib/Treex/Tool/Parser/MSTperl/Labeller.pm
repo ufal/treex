@@ -109,7 +109,7 @@ sub label_subtree {
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
     # correspont to algorithms
-    my @starting_probs = ( 1e300, 1, 1, 1, 1e300, 1e300, 1 );
+    my @starting_probs = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1 );
 
     $states{$starting_state_key} = {
         'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
