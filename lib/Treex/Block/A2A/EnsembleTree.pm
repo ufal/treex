@@ -6,12 +6,19 @@ use Graph;
 use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
-
+has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
 my $ENSEMBLE;
+my %use_tree = ();
 
+#must pass into this class a string 'trees' with the format parser#weight-parser#weight  for as many parsers as you want used out of the a-trees
 sub BUILD {
   my ($self) = @_;
   
+  my @trees_to_process = split( "-", $self->trees );
+  foreach my $tree (@trees_to_process) {
+    my ( $sel, $weight ) = split( "#", $tree );
+    $use_tree{$sel} = $weight;
+  }
   my %edges = ();
   
   if ( !$ENSEMBLE ) {
@@ -23,11 +30,11 @@ sub BUILD {
 
 #this method will process each atree passed to it and add its edges to our edge matrix
 sub process_tree {
-  my ($root) = @_;
+  my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
   foreach my $node (@todo) {
-    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord );
+    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );
     
   }
   
@@ -38,10 +45,12 @@ sub process_bundle {
   my @zones = $bundle->get_all_zones();
   $ENSEMBLE->clear_edges();
   foreach my $zone (@zones) {
-    if (    $zone->get_atree()->selector ne "ref"
-      and $zone->get_atree()->selector ne "" )
-    {
-      process_tree( $zone->get_atree() );
+    
+    # if (    $zone->get_atree()->selector ne "ref"
+    # and $zone->get_atree()->selector ne "" )
+    if ( exists $use_tree{ $zone->get_atree()->selector } ) {
+      process_tree( $zone->get_atree(),
+		    $use_tree{ $zone->get_atree()->selector } );
     }
   }
   make_graph($bundle);
