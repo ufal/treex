@@ -27,7 +27,7 @@ sub process_ttree {
         $a2t{$to_anode} = $to_tnode;
     }
 
-    # copy links form a-layer
+    # copy links from a-layer
     foreach my $tnode ( $troot->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
         next if not $anode;
@@ -35,15 +35,30 @@ sub process_ttree {
         foreach my $i ( 0 .. $#$nodes ) {
             my $to_tnode = $a2t{ $$nodes[$i] } || next;
 
-            # copy only 'intersection' links
+            # copy only intersection links
             if ( $$types[$i] =~ /int/ ) {
-                $tnode->add_aligned_node( $to_tnode, 'giza++' );
+                $tnode->add_aligned_node( $to_tnode, 'int.gdfa' );
                 $is_aligned{$tnode}    = 1;
                 $is_aligned{$to_tnode} = 1;
             }
         }
     }
+    foreach my $tnode ( $troot->get_descendants ) {
+        my $anode = $tnode->get_lex_anode;
+        next if not $anode;
+        my ( $nodes, $types ) = $anode->get_aligned_nodes();
+        foreach my $i ( 0 .. $#$nodes ) {
+            my $to_tnode = $a2t{ $$nodes[$i] } || next;
 
+            # copy gdfa links that connect two not yet aligned nodes
+            if ( $$types[$i] =~ /gdfa/ && !$is_aligned{$tnode} && !$is_aligned{$to_tnode} ) {
+                $tnode->add_aligned_node( $to_tnode, 'gdfa' );
+                $is_aligned{$tnode}    = 1;
+                $is_aligned{$to_tnode} = 1;
+            }
+        }
+    }
+    
     # connect other not yet aligned nodes, that have the same functor and their parents are aligned
     foreach my $tnode ( $troot->get_descendants ) {
         next if $is_aligned{$tnode};
