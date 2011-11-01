@@ -52,6 +52,13 @@ has punctuation => (
     documentation => 'punctuation parents (previous, following, between)',
 );
 
+has prefer_conjunction => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'In Prague family, if possible prefer conjunction as head instead of commas',
+);
+
 # Input style
 has from_family => (
     is            => 'ro',
@@ -389,7 +396,40 @@ sub transform_coord {
     }
 
     # PRAGUE
-    if ( $self->family eq 'Prague' ) {
+    if ( $self->family eq 'Prague' && $self->prefer_conjunction ) {
+
+        # Find the $new_head - prefer conjunctions over commas.
+        # $new_head will be the leftmost (resp. rightmost) one (depending on $self->head).
+        if (@ands) {
+            $new_head = $is_left_top ? shift @ands : pop @ands;
+        }
+        elsif (@commas) {
+            $new_head = $is_left_top ? shift @commas : pop @commas;
+        }
+        else {
+            log_warn "No separators in coordination under " . $parent->get_address;
+            return $old_head;
+        }
+
+        # The rest of ands (conjunctions) will be treated as commas.
+        push @commas, @ands;
+
+        # Rehang the conjunction and members
+        $self->rehang( $new_head, $parent );
+        $new_head->set_afun('Coord');
+        foreach my $member (@members) {
+            $self->rehang( $member, $new_head );
+        }
+
+        # In Prague family, punctuation=between means that
+        # commas are hanged on the head conjunction.
+        if ( $self->punctuation eq 'between' ) {
+            foreach my $comma (@commas) {
+                $self->rehang( $comma, $new_head );
+            }
+        }
+    }
+    elsif ( $self->family eq 'Prague' ) {
         my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
         if ( !@separators ) {
             log_warn "No separators in coordination under " . $parent->get_address;
