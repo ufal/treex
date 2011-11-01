@@ -6,7 +6,7 @@ use Treex::Block::Write::Arff;
 
 extends 'Treex::Tool::ML::MLProcessBlock';
 
-has '+model_dir'      => ( default => 'data/models/functors/cs1/' );
+has '+model_dir'      => ( default => 'data/models/functors/cs/' );
 has '+plan_template'  => ( default => 'plan.template' );
 has 'features_config' => ( isa     => 'Str', is => 'ro', default => 'features.yml' );
 
@@ -60,12 +60,6 @@ override '_set_class_value' => sub {
 
     $node->set_functor($value);
     return;
-};
-
-# filter out generated and coap-type nodes
-override '_filter' => sub {
-    my ( $self, @nodes ) = @_;
-    return grep { !$_->is_generated && $_->nodetype ne 'coap' } @nodes;
 };
 
 1;

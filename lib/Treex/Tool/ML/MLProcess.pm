@@ -9,7 +9,7 @@ use Treex::Tool::IO::Arff;
 use autodie;
 
 # The base directory for the ML-Process tool
-Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process1/';
+Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process/';
 
 # All files the ML-Process tool needs for its work (except the executable JAR)
 Readonly my $ML_PROCESS_LIBRARIES => [
