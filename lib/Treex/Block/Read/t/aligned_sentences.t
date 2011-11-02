@@ -10,7 +10,7 @@ use Treex::Block::Read::AlignedSentences;
 use File::Slurp;
 use Treex::Core::Config;
 
-my $TMP_DIR = Treex::Core::Config::tmp_dir();
+my $TMP_DIR = Treex::Core::Config->tmp_dir();
 
 my $en_content = <<'EOF';
 Hi.

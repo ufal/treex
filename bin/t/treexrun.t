@@ -61,7 +61,7 @@ sub is_bash_combined_output {
 }
 SKIP: {
     my $PERL_X  = $^X;
-    my $core_dir = Treex::Core::Config::lib_core_dir();
+    my $core_dir = Treex::Core::Config->lib_core_dir();
     my $TREEX_X = realpath( $core_dir . '/../../../bin/treex' );    #development location - lib_core_dir is lib/Treex/Core
     if ( !defined $TREEX_X || !-e $TREEX_X ) {
         $TREEX_X = realpath( $core_dir . '/../../../script/treex' );    #blib location

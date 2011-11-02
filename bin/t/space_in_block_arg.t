@@ -19,7 +19,7 @@ $doc->save($test_data_file);
 
 my $skip;
 my $PERL_X   = $^X;
-my $core_dir = Treex::Core::Config::lib_core_dir();
+my $core_dir = Treex::Core::Config->lib_core_dir();
 my $TREEX_X  = realpath( $core_dir . '/../../../bin/treex' );    #development location - lib_core_dir is lib/Treex/Core
 my $TREEX;
 if ( !defined $TREEX_X || !-e $TREEX_X ) {

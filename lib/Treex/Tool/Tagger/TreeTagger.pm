@@ -16,7 +16,7 @@ sub BUILD {
         'installed_tools/tagger/tree_tagger/bin/tree-tagger',
         ref($self)
     );
-    my $bindir = Treex::Core::Config::share_dir() . '/installed_tools/tagger/tree_tagger/bin';
+    my $bindir = Treex::Core::Config->share_dir() . '/installed_tools/tagger/tree_tagger/bin';
     log_fatal("Missing $bindir\n") if !-d $bindir;
 
     my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model . ' 2>/dev/null';

@@ -9,9 +9,9 @@ use warnings;
 
 use Treex::Core::Config;
 
-my $command =  Treex::Core::Config::tred_dir
+my $command =  Treex::Core::Config->tred_dir
     . '/tred -O PreInstalledExtensionsDir='
-    . Treex::Core::Config::tred_extension_dir
+    . Treex::Core::Config->tred_extension_dir
     . ' -O MaxUndo=0 '
     . ' -J* '
     . ' -j treex '

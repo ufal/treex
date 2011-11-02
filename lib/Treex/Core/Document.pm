@@ -8,7 +8,7 @@ use Treex::Core::Bundle;
 
 use Treex::PML;
 Treex::PML::UseBackends('PMLBackend');
-Treex::PML::AddResourcePath( Treex::Core::Config::pml_schema_dir() );
+Treex::PML::AddResourcePath( Treex::Core::Config->pml_schema_dir() );
 
 with 'Treex::Core::WildAttr';
 
@@ -198,7 +198,7 @@ sub _pml_attribute_hash {
 }
 
 #my $_treex_schema_file = Treex::PML::ResolvePath( '.', 'treex_schema.xml', 1 );
-my $_treex_schema_file = Treex::Core::Config::pml_schema_dir . "/" . 'treex_schema.xml';
+my $_treex_schema_file = Treex::Core::Config->pml_schema_dir . "/" . 'treex_schema.xml';
 if ( not -f $_treex_schema_file ) {
     log_fatal "Can't find PML schema $_treex_schema_file";
 }

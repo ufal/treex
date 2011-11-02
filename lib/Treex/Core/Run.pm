@@ -523,7 +523,7 @@ sub _create_job_scripts {
         print $J "#!/bin/bash\n\n";
         print $J "echo \$HOSTNAME > $current_dir/$workdir/output/job$jobnumber.started\n";
         print $J "cd $current_dir\n\n";
-        print $J "source " . Treex::Core::Config::lib_core_dir()
+        print $J "source " . Treex::Core::Config->lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
 
         my $opts_and_scen = join ' ', map { _quote_argument($_) } @{ $self->ARGV };

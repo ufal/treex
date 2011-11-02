@@ -21,7 +21,7 @@ Second sentence.
 After empty.
 EOF
 
-my $TMP_DIR = Treex::Core::Config::tmp_dir();
+my $TMP_DIR = Treex::Core::Config->tmp_dir();
 
 my $plain_file  = "$TMP_DIR/plain.txt";
 my $spaced_file = "$TMP_DIR/spaced.txt";
