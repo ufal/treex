@@ -47,7 +47,7 @@ sub preprocess_sentence {
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     # compute transition counts
-    if ( $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+    if ( $ALGORITHM >= 5 ) {
         if ( $progress < $self->config->EM_heldout_data_at ) {
             $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
         } else {
@@ -60,7 +60,7 @@ sub preprocess_sentence {
         $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
     }
 
-    if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+    if ( $ALGORITHM >= 4 ) {
 
         # compute MLE emission counts for Viterbi
         $self->compute_emission_counts($sentence);
@@ -275,7 +275,7 @@ sub mira_update {
                         die "It seems that there are no features!" .
                             "This is somewhat weird.";
                     }
-                } elsif ( $ALGORITHM == 6 ) {
+                } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
 
                     # features do not depend on sentence labelling
                     # (TODO: actually they may depend on parent labelling,
@@ -441,7 +441,7 @@ sub recompute_feature_weight {
                     . "\n";
             }
         }
-    } elsif ( $ALGORITHM == 6 ) {
+    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
         my $weight = $self->feature_weights_summed->{$feature}
             / $self->number_of_inner_iterations;
         $self->model->set_feature_weight( $feature, $weight );

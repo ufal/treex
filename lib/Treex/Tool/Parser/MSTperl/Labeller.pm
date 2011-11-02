@@ -109,7 +109,7 @@ sub label_subtree {
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
     # correspont to algorithms
-    my @starting_probs = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1 );
+    my @starting_probs = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1 );
 
     $states{$starting_state_key} = {
         'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
@@ -139,9 +139,9 @@ sub label_subtree {
                     . $states{$last_state}->{'prob'} . ")\n";
             }
 
-            # compute the possible labels probabilities,
+            # compute the possible labels scores (typically probabilities),
             # i.e. products of emission and transition probs
-            # emission_probs{label} = prob
+            # possible_labels{label} = score
             my %possible_labels = %{
                 $self->get_possible_labels(
                     $edge,
@@ -161,13 +161,10 @@ sub label_subtree {
             foreach my $new_label ( keys %possible_labels ) {
                 my $new_state_prob = $possible_labels{$new_label};
 
+                # only progress and/or debug info
                 if ( $self->config->DEBUG >= 5 ) {
                     print "      Trying label $new_label, "
                         . "prob $new_state_prob\n";
-                }
-
-                # only progress and/or debug info
-                if ( $self->config->DEBUG >= 5 ) {
                     print "        Old state path "
                         . ( join ' ', @{ $states{$last_state}->{'path'} } )
                         . " \n";
@@ -192,6 +189,22 @@ sub label_subtree {
                         )
                         . " \n";
                 }
+
+                if ($ALGORITHM == 7) {
+                    # test if this is the best
+                    if (defined $new_states{$new_label}
+                        && $new_states{$new_label} > $new_state_prob
+                        )
+                    {
+    
+                        # there is already the same state state
+                        # with higher score
+                        next;
+                    }
+                    }
+
+                # else such a state is not yet there resp. it is but its score
+                # is lower than $new_state_prob -> set it (resp. replace it)
 
                 my @new_state_path = @{ $states{$last_state}->{'path'} };
                 push @new_state_path, $new_label;

@@ -153,16 +153,16 @@ sub load_data {
         $weights_ok = 1;
     }
 
-    if ( $ALGORITHM != 5 && $ALGORITHM != 6 ) {
+    if ( $ALGORITHM != 5 && $ALGORITHM != 6  && $ALGORITHM != 7 ) {
 
         # onle these two use lambda smoothing
         $smooth_ok = 1;
     }
 
-    if (   $unigrams_ok
+    if ($unigrams_ok
         && $transitions_ok
         && $emissions_ok
-        && $weights_ok 
+        && $weights_ok
         && $smooth_ok
         )
     {
@@ -218,19 +218,19 @@ sub prepare_for_mira {
         $self->compute_probs_from_counts( $self->transitions->{$label} );
     }
 
-    if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+    if ( $ALGORITHM >= 4 ) {
 
         # compute emission probs
         foreach my $feature ( keys %{ $self->emissions } ) {
             $self->compute_probs_from_counts( $self->emissions->{$feature} );
         }
 
-        if ( $ALGORITHM == 5 || $ALGORITHM == 6 ) {
+        if ( $ALGORITHM >= 5 ) {
 
             # run the EM algorithm to compute transtition probs smoothing params
             $self->compute_smoothing_params();
 
-            if ( $ALGORITHM == 6 ) {
+            if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
 
                 # init feature weights
                 foreach my $feature ( keys %{ $self->emissions } ) {
@@ -239,9 +239,9 @@ sub prepare_for_mira {
                     # but something non-zero is needed
                     $self->weights->{$feature} = 100;
                 }
-            }    # end if $ALGORITHM == 6
-        }    # end if $ALGORITHM == 5 || $ALGORITHM == 6
-    }    # end if $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 6
+            }    # end if $ALGORITHM == 6|7
+        }    # end if $ALGORITHM == 5|6|7
+    }    # end if $ALGORITHM == 4|5|6|7
 
     return;
 }
@@ -400,6 +400,7 @@ sub get_transition_prob {
 
     if ($self->config->labeller_algorithm == 5
         || $self->config->labeller_algorithm == 6
+        || $self->config->labeller_algorithm == 7
         )
     {
 
@@ -679,7 +680,7 @@ sub get_emission_probs {
             $result = $self->unigrams;
         }
 
-    } elsif ( $ALGORITHM == 6 ) {
+    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
 
         # 6 approx the correct way hopefully
         # (full MLE + MIRA weighting of features, init weights with 100,
