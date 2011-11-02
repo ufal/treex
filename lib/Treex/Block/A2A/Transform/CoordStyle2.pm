@@ -383,6 +383,10 @@ sub transform_coord {
         #log_warn "No conjuncts in coordination under " . $parent->get_address;
         return $old_head;
     }
+    
+    # Filter incorrectly detected commas: commas should be between members.
+    @commas = grep {$members[0]->precedes($_) && $_->precedes($members[-1])} @commas;
+    
     my $new_head;
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
@@ -396,25 +400,27 @@ sub transform_coord {
     }
 
     # PRAGUE
-    if ( $self->family eq 'Prague' && $self->prefer_conjunction ) {
-
-        # Find the $new_head - prefer conjunctions over commas.
-        # $new_head will be the leftmost (resp. rightmost) one (depending on $self->head).
-        if (@ands) {
-            $new_head = $is_left_top ? shift @ands : pop @ands;
+    if ( $self->family eq 'Prague') {
+        
+        # Possible heads are @ands (conjunctions), but if missing
+        # or if we don't want to distinguish them from @commas (i.e. not $self->prefer_conjunction)
+        # then we should include commas as "eligible" for the head.
+        if (!@ands || !$self->prefer_conjunction){
+            push @ands, @commas;
+            @commas = ();
         }
-        elsif (@commas) {
-            $new_head = $is_left_top ? shift @commas : pop @commas;
-        }
-        else {
+        if ( !@ands ) {
             log_warn "No separators in coordination under " . $parent->get_address;
             return $old_head;
         }
+        @ands = sort { $a->ord <=> $b->ord } @ands;
 
-        # The rest of ands (conjunctions) will be treated as commas.
+        # Choose one of the possible heads as $new_head,
+        # the rest will be treated as commas.
+        $new_head = $is_left_top ? shift @ands : pop @ands;
         push @commas, @ands;
 
-        # Rehang the conjunction and members
+        # Rehang the new_head and members
         $self->rehang( $new_head, $parent );
         $new_head->set_afun('Coord');
         foreach my $member (@members) {
@@ -422,41 +428,14 @@ sub transform_coord {
         }
 
         # In Prague family, punctuation=between means that
-        # commas are hanged on the head conjunction.
+        # commas (and remaining conjunctions) are hanged on the head.
         if ( $self->punctuation eq 'between' ) {
             foreach my $comma (@commas) {
                 $self->rehang( $comma, $new_head );
             }
         }
     }
-    elsif ( $self->family eq 'Prague' ) {
-        my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
-        if ( !@separators ) {
-            log_warn "No separators in coordination under " . $parent->get_address;
-            return $old_head;
-        }
-
-        # $new_head will be the leftmost (resp. rightmost) separator (depending on $self->head)
-        # The rest of separators will be treated as commas.
-        $new_head = $is_left_top ? shift @separators : pop @separators;
-        @commas = @separators;
-
-        # Rehang the conjunction and members
-        $self->rehang( $new_head, $parent );
-        $new_head->set_afun('Coord');
-        foreach my $member (@members) {
-            $self->rehang( $member, $new_head );
-        }
-
-        # In Prague family, punctuation=between means that
-        # commas are hanged on the head conjunction.
-        if ( $self->punctuation eq 'between' ) {
-            foreach my $sep (@separators) {
-                $self->rehang( $sep, $new_head );
-            }
-        }
-    }
-
+    
     # STANFORD & MOSCOW
     else {
         my @andmembers = @members;
