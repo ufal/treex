@@ -63,7 +63,7 @@ sub BUILD {
     # try to download the ML-Process JAR file + other libraries and set their real absolute path
     # (assuming everything is downloaded into one subtree)
     foreach my $shared_file ( @{ $ML_PROCESS_LIBRARIES } ){
-        Treex::Core::Resource::require_file_from_share( $ML_PROCESS_BASEDIR . $shared_file );
+        Treex::Core::Resource::require_file_from_share( $ML_PROCESS_BASEDIR . $shared_file, 'the ML-Process tool block' );
     }
     $self->_set_ml_process_jar( Treex::Core::Resource::require_file_from_share( $self->ml_process_jar ) );
 }
