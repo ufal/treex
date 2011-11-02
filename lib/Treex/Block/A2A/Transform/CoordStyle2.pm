@@ -316,8 +316,9 @@ sub detect_stanford {
         @todo = grep { !$_->wild->{is_coord_conjunction} } @todo;
     }
 
+    my @andmembers = sort { $a->ord <=> $b->ord } (@ands, @members);
     if ( $self->from_punctuation =~ /previous|following/ ) {
-        @commas = grep { $self->is_comma($_) } map { $_->get_children } @members;
+        @commas = grep { $self->is_comma($_) } map { $_->get_children } @andmembers;
     }
     else {
         @commas = grep { $self->is_comma($_) } @todo;
