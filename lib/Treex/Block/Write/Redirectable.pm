@@ -2,12 +2,20 @@ package Treex::Block::Write::Redirectable;
 
 use Moose::Role;
 use autodie;    # die if the output file cannot be opened
+use File::Path;
+use File::Basename;
+use Treex::Core::Common; # log_info
 
 has to => (
     isa           => 'Str',
     is            => 'ro',
-    default       => '-',
-    documentation => 'the destination filename (standard output if nothing given)',
+    documentation => 'the destination filename (use - for standard output)',
+);
+
+has clobber => (
+    isa           => 'Bool',
+    is            => 'ro',
+    documentation => 'allow overwriting output files',
 );
 
 has encoding => (
@@ -20,22 +28,71 @@ has encoding => (
 has _file_handle => (
     isa           => 'FileHandle',
     is            => 'rw',
-    lazy_build    => 1,
-    builder       => '_build_file_handle',
     documentation => 'the open output file handle',
 );
+has _lastfilename => (
+    isa           => 'Str',
+    is            => 'rw',
+    documentation => 'Last output filename, to keep stream open if unchanged.',
+);
 
-sub _build_file_handle {
+around 'process_document' => sub {
+    my $orig = shift;
+    my $self = shift;
 
-    my ($self) = @_;
+    my $document = $_[0];
+    my $filename;
+    
+    $filename = $document->full_filename . ($document->compress ? ".gz" : "");
 
-    if ( $self->to ne "-" ) {
-        open( my $fh, '>:' . $self->encoding, $self->to );
-        return $fh;
+    # Now allow to overwrite the defailt name
+    if ($self->to) {
+        $filename = $self->to;
     }
-    else {
-        return \*STDOUT;
+
+    if (defined $self->_lastfilename
+        && $filename eq $self->_lastfilename) {
+        # nothing to do, keep writing to the old filename
+    } else {
+        # need to switch output stream
+        close $self->_file_handle
+            if defined $self->_file_handle
+                && (! defined $self->_lastfilename || $self->_lastfilename ne "-");
+
+        # open the new output stream
+        log_info "Saving to $filename";
+        log_fatal "Won't overwrite $filename (use clobber=1 to force)."
+            if ! $self->clobber && -e $filename;
+        $self->_file_handle($self->my_save($filename));
     }
+    $self->_lastfilename($filename);
+
+    # call the main process_document
+    $self->$orig(@_);
+};
+
+sub my_save {
+  my $self = shift;
+  my $f = shift;
+  if ($f eq "-") {
+    binmode(STDOUT, ":".$self->encoding);
+    return \*STDOUT;
+  }
+
+  my $opn;
+  my $hdl;
+  # file might not recognize some files!
+  if ($f =~ /\.gz$/) {
+    $opn = "| gzip -c > '$f'";
+  } elsif ($f =~ /\.bz2$/) {
+    $opn = "| bzip2 > '$f'";
+  } else {
+    $opn = ">$f";
+  }
+  mkpath( dirname($f) );
+  open $hdl, $opn or die "Can't write to '$opn': $!";
+  binmode($hdl, ":".$self->encoding);
+  return $hdl;
 }
 
 # Storing a file handle in a lexical variable will cause the file handle
@@ -73,6 +130,7 @@ The output encoding, C<utf8> by default.
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+Ondřej Bojar <bojar@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

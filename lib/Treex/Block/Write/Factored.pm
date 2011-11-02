@@ -1,5 +1,6 @@
 package Treex::Block::Write::Factored;
 use Moose;
+use File::Spec;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 with 'Treex::Block::Write::Redirectable';
@@ -11,7 +12,7 @@ has flags => ( isa => 'Str', is => 'ro' );
 has outcols => (
     is            => 'ro',
     isa           => 'Str',
-    default       => 'RFaux-cs',
+    default       => 'relpath_with_id:RFaux-cs',
     documentation => 'The columns to emit.',
 );
 
@@ -508,14 +509,28 @@ sub process_bundle {
     # print to stdout or put to an attribute?
     my $tmt_param_destination = $self->to_attribute;
 
-    my $filename = $bundle->get_document->_pmldoc->filename();
-
+    my $pathname_cached = undef;
     my @output    = ();
     my $output_ok = 1;
     for ( my $i = 0; $i < scalar(@{$self->{colspecs}}); $i++ ) {
         my $colspec = $self->{colspecs}->[$i];
 
-        if ( $colspec =~ /ALI([TM])(..)(.*)/ ) {
+        if ( $colspec =~ /^(abs|rel)path(_with_id)?$/) {
+            if (!defined $pathname_cached) {
+                my $absrel = $1;
+                my $maybundleid = $2;
+                $pathname_cached = $bundle->get_document->_pmldoc->filename();
+                $pathname_cached = File::Spec->abs2rel($pathname_cached)
+                    if $absrel eq "rel";
+                $pathname_cached .= ":".$bundle->id()
+                    if $maybundleid;
+            }
+            push @output, $pathname_cached;
+            next;
+            # TODO: maybe we should sort alignments by ord ?
+        }
+
+        if ( $colspec =~ /^ALI([TM])(..)(.*)/ ) {
             die "Unimplemented";
             my $layer  = $1;
             my $srctgt = $1;
@@ -759,7 +774,7 @@ sub process_bundle {
     if ($output_ok) {
         my $outstr = join( "\t", @output );
         if ( !defined $tmt_param_destination ) {
-            print $filename, ":", $bundle->id, "\t",
+            print { $self->_file_handle } # to be redirectable
                 $outstr, "\n";
         }
         else {
@@ -800,6 +815,9 @@ a sequence of keywords, each keyword introduces an
 output column.
 
 The following keywords (i.e. output columns) are supported:
+
+  (rel|abs)path(_with_id)
+    ... the pathname of the document, followed by colon and bundle ID
 
   ALI[tm]-<Language1>-<Language2>
     ... print alignments between corresponding t- or m- layers. Nodes are
