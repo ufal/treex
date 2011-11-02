@@ -1,10 +1,11 @@
 package Treex::Block::Write::Redirectable;
 
 use Moose::Role;
+use Treex::Core::Log;
 use autodie;    # die if the output file cannot be opened
 use File::Path;
 use File::Basename;
-use Treex::Core::Common; # log_info
+use Treex::Core::Common;    # log_info
 
 has to => (
     isa           => 'Str',
@@ -27,11 +28,12 @@ has encoding => (
 );
 
 has _file_handle => (
-    isa           => 'FileHandle',
+    isa           => 'Maybe[FileHandle]',
     is            => 'rw',
-    documentation => 'the open output file handle',
+    documentation => 'The open output file handle.',
 );
-has _lastfilename => (
+
+has _last_filename => (
     isa           => 'Str',
     is            => 'rw',
     documentation => 'Last output filename, to keep stream open if unchanged.',
@@ -43,57 +45,62 @@ around 'process_document' => sub {
 
     my $document = $_[0];
     my $filename;
-    
-    $filename = $document->full_filename . ($document->compress ? ".gz" : "");
+
+    $filename = $document->full_filename . ( $document->compress ? ".gz" : "" );
 
     # Now allow to overwrite the defailt name
-    if ($self->to) {
+    if ( $self->to ) {
         $filename = $self->to;
     }
 
-    if (defined $self->_lastfilename
-        && $filename eq $self->_lastfilename) {
+    if ( defined $self->_last_filename && $filename eq $self->_last_filename ) {
+
         # nothing to do, keep writing to the old filename
-    } else {
+    }
+    else {
+
         # need to switch output stream
         close $self->_file_handle
             if defined $self->_file_handle
-                && (! defined $self->_lastfilename || $self->_lastfilename ne "-");
+                && ( !defined $self->_last_filename || $self->_last_filename ne "-" );
 
         # open the new output stream
         log_info "Saving to $filename";
         log_fatal "Won't overwrite $filename (use clobber=1 to force)."
-            if ! $self->clobber && -e $filename;
-        $self->_file_handle($self->my_save($filename));
+            if !$self->clobber && -e $filename;
+        $self->_file_handle( $self->_open_stream($filename) );
     }
-    $self->_lastfilename($filename);
+    $self->_last_filename($filename);
 
     # call the main process_document
     $self->$orig(@_);
 };
 
-sub my_save {
-  my $self = shift;
-  my $f = shift;
-  if ($f eq "-") {
-    binmode(STDOUT, ":".$self->encoding);
-    return \*STDOUT;
-  }
+sub _open_stream {
+    my $self = shift;
+    my $f    = shift;
+    if ( $f eq "-" ) {
+        binmode( STDOUT, ":" . $self->encoding );
+        return \*STDOUT;
+    }
 
-  my $opn;
-  my $hdl;
-  # file might not recognize some files!
-  if ($f =~ /\.gz$/) {
-    $opn = "| gzip -c > '$f'";
-  } elsif ($f =~ /\.bz2$/) {
-    $opn = "| bzip2 > '$f'";
-  } else {
-    $opn = ">$f";
-  }
-  mkpath( dirname($f) );
-  open $hdl, $opn or log_fatal "Can't write to '$opn': $!";
-  binmode($hdl, ":".$self->encoding);
-  return $hdl;
+    my $opn;
+    my $hdl;
+
+    # file might not recognize some files!
+    if ( $f =~ /\.gz$/ ) {
+        $opn = "| gzip -c > '$f'";
+    }
+    elsif ( $f =~ /\.bz2$/ ) {
+        $opn = "| bzip2 > '$f'";
+    }
+    else {
+        $opn = ">$f";
+    }
+    mkpath( dirname($f) );
+    open $hdl, $opn;    # we use autodie
+    binmode( $hdl, ":" . $self->encoding );
+    return $hdl;
 }
 
 # Storing a file handle in a lexical variable will cause the file handle
@@ -101,6 +108,7 @@ sub my_save {
 # So we don't need to close $self->_file_handle in DEMOLISH.
 
 1;
+
 __END__
 
 =encoding utf-8
@@ -111,8 +119,13 @@ Treex::Block::Write::Redirectable
 
 =head1 DESCRIPTION
 
-A Moose role for Write blocks that can be redirected to a file. All blocks using this role must C<print> using the 
-C<_file_handle> attribute. 
+A Moose role for Write blocks that can be redirected to a file. 
+
+All blocks using this role must C<print> using the C<_file_handle> attribute. The handle is opened in a C<before> 
+modifier of C<process_document>, so that this role may be used with single as well as multiple files output.
+
+Due to how Moose handles C<override> and C<before>, if overrides to C<process_document> need to be applied, they 
+must be placed above the C<with> clause for this role.    
 
 =head1 PARAMETERS
 
@@ -121,6 +134,9 @@ C<_file_handle> attribute.
 =item C<to>
 
 The name of the output file, STDOUT by default.
+
+If this role is used together with the L<Treex::Block::Write::MultipleFiles> role, its own list of files is 
+taken into account.
 
 =item C<encoding>
 

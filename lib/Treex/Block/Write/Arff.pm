@@ -7,7 +7,7 @@ use YAML::Tiny;
 use autodie;
 
 extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+# with 'Treex::Block::Write::Redirectable'; - cannot apply the role with a modifier to process_document before overriding it
 with 'Treex::Block::Write::LayerAttributes';
 
 #
@@ -34,6 +34,37 @@ has 'config_file' => ( is => 'ro', isa => 'Str' );
 #
 # METHODS
 #
+
+override 'process_document' => sub {
+
+    my $self = shift;
+    my ($document) = pos_validated_list(
+        \@_,
+        { isa => 'Treex::Core::Document' },
+    );
+
+    # _process_tree called here: store data
+    super;
+
+    if ( !$self->_headers_printed ) {
+        $self->_arff->prepare_headers( $self->_arff->relation, 0, 1 );
+    }
+
+    # print out the data
+    $self->_arff->save_arff( $self->_arff->relation, $self->_file_handle, !$self->_headers_printed );
+
+    if ( !$self->_headers_printed ) {
+        $self->_set_headers_printed(1);
+    }
+
+    # clear the data in memory
+    $self->_arff->relation->{records}           = [];
+    $self->_arff->relation->{data_record_count} = 0;
+};
+
+# now, it's possible to apply the role
+with 'Treex::Block::Write::Redirectable';
+
 
 sub BUILDARGS {
 
@@ -92,32 +123,6 @@ around '_set_output_attrib' => sub {
     return;
 };
 
-override 'process_document' => sub {
-
-    my $self = shift;
-    my ($document) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Document' },
-    );
-
-    # _process_tree called here: store data
-    super;
-
-    if ( !$self->_headers_printed ) {
-        $self->_arff->prepare_headers( $self->_arff->relation, 0, 1 );
-    }
-
-    # print out the data
-    $self->_arff->save_arff( $self->_arff->relation, $self->_file_handle, !$self->_headers_printed );
-
-    if ( !$self->_headers_printed ) {
-        $self->_set_headers_printed(1);
-    }
-
-    # clear the data in memory
-    $self->_arff->relation->{records}           = [];
-    $self->_arff->relation->{data_record_count} = 0;
-};
 
 # Store node data from one tree as ARFF
 sub _process_tree {
@@ -139,7 +144,6 @@ sub _process_tree {
         $word_id++;
     }
 
-    $self->_set_sent_id( $self->_sent_id + 1 );
     return 1;
 }
 

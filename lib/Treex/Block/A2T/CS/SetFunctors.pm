@@ -47,6 +47,7 @@ override '_write_input_data' => sub {
             config_file => $self->model_dir . $self->features_config,
             layer       => 't',
             force_types => 'formeme: STRING',
+            clobber     => 1
         }
     );
 
