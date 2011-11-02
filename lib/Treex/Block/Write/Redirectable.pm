@@ -15,6 +15,7 @@ has to => (
 has clobber => (
     isa           => 'Bool',
     is            => 'ro',
+    default       => 0,
     documentation => 'allow overwriting output files',
 );
 
@@ -90,7 +91,7 @@ sub my_save {
     $opn = ">$f";
   }
   mkpath( dirname($f) );
-  open $hdl, $opn or die "Can't write to '$opn': $!";
+  open $hdl, $opn or log_fatal "Can't write to '$opn': $!";
   binmode($hdl, ":".$self->encoding);
   return $hdl;
 }
