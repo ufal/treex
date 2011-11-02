@@ -348,7 +348,8 @@ sub label_subtree {
 
         # TODO do not die, provide some backoff instead
         # (do some smoothing, at least when no states are generated)
-        die "No best state generated, cannot continue. (This is weird.)";
+        warn "No best state generated, cannot label the sentence!"
+            . " (This is weird.)";
     }
 
     # end of Viterbi
@@ -365,7 +366,7 @@ sub label_subtree {
 # the emission probs, transition probs and last state's prob
 sub get_possible_labels {
     my ( $self, $edge, $previous_label, $previous_label_prob ) = @_;
-
+    
     # now these are often not really probs but more of some kind of scores
     my $emission_probs = $self->model->get_emission_probs( $edge->features );
 
@@ -415,7 +416,15 @@ sub get_possible_labels {
                 . " is not well constructed - either it is too small"
                 . " or it lacks features that would be general enough"
                 . " to cover all possible sentences."
-                . " Using blind emission probabilities instead.\n";
+                . " Using blind emission probabilities instead.\n"
+                . " get_possible_labels ($edge, $previous_label,"
+                . " $previous_label_prob ) \n"
+                . $edge->sentence->id
+                . ': '
+                . $edge->parent->fields->[1]
+                . " -> "
+                . $edge->child->fields->[1]
+                . "\n";
 
             # TODO: these are more or less probabilities, which might
             # be unappropriate for some of the algorithms -> recompute somehow;
@@ -430,8 +439,14 @@ sub get_possible_labels {
             if ( scalar( keys %$possible_labels ) > 0 ) {
                 return $possible_labels;
             } else {
-                die "no possible labels generated, no fallback helped:"
-                    . " probably there is a bug in the code!";
+                warn "no possible labels generated, no fallback helped:"
+                    . " probably there is a bug in the code!"
+                    . " get_possible_labels ($edge, $previous_label,"
+                    . " $previous_label_prob ) "
+                    . $edge->parent->fields->[1]
+                    . " -> "
+                    . $edge->child->fields->[1];
+                return {};
             }
         }
     }
