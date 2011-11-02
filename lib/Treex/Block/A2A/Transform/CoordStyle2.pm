@@ -124,7 +124,7 @@ sub BUILD {
         log_fatal "Parameter 'from_style' cannot be combined with other parameters"
             if any { $args->{ 'from_' . $_ } } @pars;
         log_fatal "Prameter 'from_style' must be in form $from_style_regex"
-            if $self->style !~ /^$from_style_regex$/;
+            if $self->from_style !~ /^$from_style_regex$/;
         $self->_fill_style_from_shortcut( 1, $self->from_style );
     }
 
@@ -296,6 +296,7 @@ sub detect_stanford {
 
     # Add the head as a member
     push @members, $node;
+    @members = sort { $a->ord <=> $b->ord } @members;
 
     # So $node is a head of coordination.
     # Detect all coordination participants.
@@ -315,8 +316,9 @@ sub detect_stanford {
         @ands = grep { $_->wild->{is_coord_conjunction} } @todo;
         @todo = grep { !$_->wild->{is_coord_conjunction} } @todo;
     }
+    @ands = sort { $a->ord <=> $b->ord } @ands;
 
-    my @andmembers = sort { $a->ord <=> $b->ord } (@ands, @members);
+    my @andmembers = sort { $a->ord <=> $b->ord } ( @ands, @members );
     if ( $self->from_punctuation =~ /previous|following/ ) {
         @commas = grep { $self->is_comma($_) } map { $_->get_children } @andmembers;
     }
@@ -324,6 +326,13 @@ sub detect_stanford {
         @commas = grep { $self->is_comma($_) } @todo;
         @todo   = grep { !$self->is_comma($_) } @todo;
     }
+
+    # Try to distinguish nested coordinations from multi-conjunct coordinations.
+    # If last conjunction precedes penultimate conjunct, e.g.: C1 and C2 , C3
+    # nested interpretation is more probable: (C1 and C2) , (C3).
+    #if (@members > 2 && @ands && $ands[-1]->precedes($members[-2])){
+    #
+    #}
 
     @members = map { $self->detect_stanford($_); } @members;
     @shared  = map { $self->detect_stanford($_); } @shared;
@@ -346,14 +355,14 @@ sub _nearest {
         return $prev_mem if $prev_mem;
         return first { $node->precedes($_) } @members;
     }
-    elsif ( $direction eq 'following'){
+    elsif ( $direction eq 'following' ) {
         my $foll_mem = first { $node->precedes($_) } @members;
         return $foll_mem if $foll_mem;
         return first { $_->precedes($node) } reverse @members;
     }
-    elsif ( $direction eq 'any'){
+    elsif ( $direction eq 'any' ) {
         my $my_ord = $node->ord;
-        my @sorted = sort {abs($a->ord-$my_ord) <=> abs($b->ord-$my_ord)} @members;
+        my @sorted = sort { abs( $a->ord - $my_ord ) <=> abs( $b->ord - $my_ord ) } @members;
         return $sorted[0];
     }
     else {
