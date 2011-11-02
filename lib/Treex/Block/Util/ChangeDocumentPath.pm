@@ -1,4 +1,4 @@
-package Treex::Block::Meta::ChangeDocumentPath;
+package Treex::Block::Util::ChangeDocumentPath;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -38,14 +38,14 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Meta::ChangeDocumentPath
+Treex::Block::Util::ChangeDocumentPath
 
 =head1 DESCRIPTION
 
 Modifies the document meta-information on filename. Useful before various
 Writers.
 
-  Meta::ChangeDocumentPath pathre=/foo/bar/
+  Util::ChangeDocumentPath pathre=/foo/bar/
 
 =head1 COPYRIGHT AND LICENSE
 
