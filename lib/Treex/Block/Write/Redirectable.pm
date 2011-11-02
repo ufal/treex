@@ -121,8 +121,7 @@ Treex::Block::Write::Redirectable
 
 A Moose role for Write blocks that can be redirected to a file. 
 
-All blocks using this role must C<print> using the C<_file_handle> attribute. The handle is opened in a C<before> 
-modifier of C<process_document>, so that this role may be used with single as well as multiple files output.
+All blocks using this role must C<print> using the C<_file_handle> attribute.
 
 Due to how Moose handles C<override> and C<before>, if overrides to C<process_document> need to be applied, they 
 must be placed above the C<with> clause for this role.    
@@ -135,16 +134,13 @@ must be placed above the C<with> clause for this role.
 
 The name of the output file, STDOUT by default.
 
-If this role is used together with the L<Treex::Block::Write::MultipleFiles> role, its own list of files is 
-taken into account.
-
 =item C<encoding>
 
 The output encoding, C<utf8> by default.
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 Ondřej Bojar <bojar@ufal.mff.cuni.cz>
