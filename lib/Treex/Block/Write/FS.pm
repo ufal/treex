@@ -78,7 +78,7 @@ sub get_feature_structure
         'form'  => $node->form(),
         'lemma' => $node->lemma(),
         'tag'   => $node->tag(),
-        'afun'  => $node->afun().($node->is_member() ? '_M' : ''),
+        'afun'  => ($node->afun() ? $node->afun() : $node->conll_deprel()).($node->is_member() ? '_M' : ''),
         'ord'   => $node->ord()
     );
     if($fhash{ord}==0)
