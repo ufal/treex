@@ -345,10 +345,18 @@ sub _nearest {
         return $prev_mem if $prev_mem;
         return first { $node->precedes($_) } @members;
     }
-    else {    # 'following'
+    elsif ( $direction eq 'following'){
         my $foll_mem = first { $node->precedes($_) } @members;
         return $foll_mem if $foll_mem;
         return first { $_->precedes($node) } reverse @members;
+    }
+    elsif ( $direction eq 'any'){
+        my $my_ord = $node->ord;
+        my @sorted = sort {abs($a->ord-$my_ord) <=> abs($b->ord-$my_ord)} @members;
+        return $sorted[0];
+    }
+    else {
+        log_fatal "unknown direction '$direction'";
     }
 }
 
@@ -383,10 +391,10 @@ sub transform_coord {
         #log_warn "No conjuncts in coordination under " . $parent->get_address;
         return $old_head;
     }
-    
+
     # Filter incorrectly detected commas: commas should be between members.
-    @commas = grep {$members[0]->precedes($_) && $_->precedes($members[-1])} @commas;
-    
+    @commas = grep { $members[0]->precedes($_) && $_->precedes( $members[-1] ) } @commas;
+
     my $new_head;
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
@@ -400,12 +408,12 @@ sub transform_coord {
     }
 
     # PRAGUE
-    if ( $self->family eq 'Prague') {
-        
+    if ( $self->family eq 'Prague' ) {
+
         # Possible heads are @ands (conjunctions), but if missing
         # or if we don't want to distinguish them from @commas (i.e. not $self->prefer_conjunction)
         # then we should include commas as "eligible" for the head.
-        if (!@ands || !$self->prefer_conjunction){
+        if ( !@ands || !$self->prefer_conjunction ) {
             push @ands, @commas;
             @commas = ();
         }
@@ -419,6 +427,7 @@ sub transform_coord {
         # the rest will be treated as commas.
         $new_head = $is_left_top ? shift @ands : pop @ands;
         push @commas, @ands;
+        for (@commas) { $_->set_afun('AuxY'); }
 
         # Rehang the new_head and members
         $self->rehang( $new_head, $parent );
@@ -435,7 +444,7 @@ sub transform_coord {
             }
         }
     }
-    
+
     # STANFORD & MOSCOW
     else {
         my @andmembers = @members;
@@ -491,7 +500,7 @@ sub transform_coord {
 
         # Note that if there is no following member, nearest previous will be chosen.
         if ( $self->shared eq 'nearest' ) {
-            $self->rehang( $sm, $self->_nearest( 'following', $sm, @members ) );
+            $self->rehang( $sm, $self->_nearest( 'any', $sm, @members ) );
         }
         elsif ( $self->shared eq 'head' ) {
             $self->rehang( $sm, $new_head );
