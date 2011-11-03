@@ -148,7 +148,7 @@ sub tred_extension_dir {
 
 sub lib_core_dir {
     my $self = shift;
-    return realpath( _caller_dir() );
+    return realpath( $self->_caller_dir() );
 }
 
 sub tmp_dir {
@@ -169,6 +169,7 @@ sub _default_tmp_dir {
 }
 
 sub _caller_dir {
+    my $self = shift;
     my %call_info;
     @call_info{
         qw(pack file line sub has_args wantarray evaltext is_require)
@@ -190,8 +191,8 @@ Treex::Core::Config - centralized info about Treex configuration
 =head1 SYNOPSIS
 
   use Treex::Core::Config;
-  print "TrEd in available in " . Treex::Core::Config->tred_dir . "\n";
-  print "PML schema is available in " . Treex::Core::Config->pml_schema_dir . "\n";
+  print "TrEd in available in " . Treex::Core::Config->tred_dir() . "\n";
+  print "PML schema is available in " . Treex::Core::Config->pml_schema_dir() . "\n";
 
 =head1 DESCRIPTION
 
@@ -245,7 +246,7 @@ return the directory in which the PML schemata for .treex files are located
 the directory in which the tree editor TrEd is installed
 
 
-=item tred_extension_dir
+=item tred_extension_dir()
 
 the directory in which the TrEd extension for Treex files is stored
 
