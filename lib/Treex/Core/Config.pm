@@ -26,7 +26,9 @@ sub _load_config {
     my $self = shift;
     my %args = @_;
     my $from = $args{from} // $self->config_file();
-    return LoadFile($from);
+    my $yaml = read_file($from, {err_mode => 'silent'});
+    my $toReturn = YAML::Load($yaml);
+    return $toReturn // {}; #rather than undef return empty hashref
 }
 
 sub _save_config {
