@@ -10,7 +10,8 @@ use Treex::Core::Common;    # log_info
 has to => (
     isa           => 'Str',
     is            => 'ro',
-    documentation => 'the destination filename (use - for standard output)',
+    default       => '-',
+    documentation => 'the destination filename (default is "-" meaning standard output)',
 );
 
 has clobber => (
