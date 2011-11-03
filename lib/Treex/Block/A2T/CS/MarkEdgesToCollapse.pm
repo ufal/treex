@@ -28,13 +28,13 @@ sub process_anode {
         $a_node->set_is_auxiliary(1);
     }
 
-    # Should collapse to parent because the $parent is auxiliary?
+    # Should collapse to node because the $parent is auxiliary?
     elsif ( is_parent_aux_to_me($a_node) ) {
         $a_node->set_edge_to_collapse(1);
         $parent->set_is_auxiliary(1);
     }
 
-    # Some a-nodes don't belong to any of the t-nodes
+    # Some a-nodes don't belong to any of the t-nodes, but are auxiliary
     if ( is_aux_to_nothing($a_node) ) {
         $a_node->set_edge_to_collapse(0);
         $a_node->set_is_auxiliary(1);
@@ -46,8 +46,7 @@ sub is_aux_to_parent {
     my ($a_node) = shift;
     return (
         ( $a_node->tag =~ /^Z/ and $a_node->afun !~ /Coord|Apos/ ) ||
-            ( $a_node->afun  eq "AuxV" ) ||
-            ( $a_node->afun  eq "AuxT" ) ||
+            ( $a_node->afun =~ m/Aux[RVT]/ ) || # auxiliary verbs, reflexive passive + reflexiva tantum
             ( $a_node->lemma eq "jako" and $a_node->afun !~ /AuxC/ ) ||
             ( $a_node->afun  eq "AuxP" and $a_node->get_parent->afun eq "AuxP" )
     );
