@@ -88,7 +88,7 @@ sub resource_path {
 
 sub _devel_version {
     my $self = shift;
-    return -d lib_core_dir() . "/share/";
+    return -d $self->lib_core_dir() . "/share/";
 
     # to je otazka, jak to co nejelegantneji poznat, ze jde o work.copy. a ne nainstalovanou distribuci
 }
@@ -103,10 +103,10 @@ sub share_dir {
 
         # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
         if ( _devel_version() ) {
-            $share_dir = realpath( lib_core_dir() . "/../../../../share/" );
+            $share_dir = realpath( $self->lib_core_dir() . "/../../../../share/" ); # default on UFAL machines
         }
         else {
-            $share_dir = realpath( File::ShareDir::dist_dir('Treex-Core') );
+            $share_dir = File::Spec->catdir($self->config_dir(), 'share' ); # by default take ~/.treex/share
         }
         $config->{share_dir} = $share_dir;
         return $share_dir;
@@ -116,33 +116,49 @@ sub share_dir {
 
 sub share_url {
     my $self = shift;
-    return 'http://ufallab.ms.mff.cuni.cz/tectomt/share';
+    $config->{share_url} = 'http://ufallab.ms.mff.cuni.cz/tectomt/share' if !defined $config->{share_url};
+    return $config->{share_url};
 }
 
 sub tred_dir {
-    return realpath( share_dir() . '/tred/' );
+    my $self = shift;
+    $config->{tred_dir} = realpath( $self->share_dir() . '/tred/' ) if !defined $config->{tred_dir};
+    return $config->{tred_dir};
 }
 
 sub pml_schema_dir {
     my $self = shift;
-    if ( _devel_version() ) {
-        return realpath( lib_core_dir() . "/share/tred_extension/treex/resources/" );
+    if (!defined $config->{pml_schema_dir}) {
+        if ( _devel_version() ) {
+            $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
+        }
+        else {
+            $config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" ); #that's different share than former TMT_SHARE
+        }
     }
-    else {
-        return realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );
-    }
+    return $config->{pml_schema_dir};
 }
 
 # tenhle adresar ted vubec v balicku neni!
 sub tred_extension_dir {
-    return realpath( pml_schema_dir() . "/../../" );
+    my $self = shift;
+    $config->{tred_extension_dir} = realpath( $self->pml_schema_dir() . "/../../" ) if !defined $config->{tred_extension_dir};
+    return $config->{tred_extension_dir};
 }
 
 sub lib_core_dir {
+    my $self = shift;
     return realpath( _caller_dir() );
 }
 
 sub tmp_dir {
+    my $self = shift;
+    $config->{tmp_dir} = $self->_default_tmp_dir() if !defined $config->{tmp_dir};
+    return $config->{tmp_dir};
+}
+
+sub _default_tmp_dir {
+    my $self = shift;
     my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );
     my $suffix    = 'tmp';
     my $tmp_dir   = realpath("$dot_treex/$suffix");

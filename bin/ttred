@@ -7,11 +7,17 @@
 use strict;
 use warnings;
 
+use Treex::Core::Log;
 use Treex::Core::Config;
 
-my $command =  Treex::Core::Config->tred_dir
+my $tred_dir = Treex::Core::Config->tred_dir();
+log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
+my $tred_extension_dir = Treex::Core::Config->tred_extension_dir();
+log_warn('TrEd extension dir not set') if !defined $tred_extension_dir;
+
+my $command =  $tred_dir
     . '/tred -O PreInstalledExtensionsDir='
-    . Treex::Core::Config->tred_extension_dir
+    . $tred_extension_dir
     . ' -O MaxUndo=0 '
     . ' -J* '
     . ' -j treex '
