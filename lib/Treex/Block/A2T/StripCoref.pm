@@ -17,7 +17,7 @@ sub process_tnode {
     
     if ($type eq 'all') {
         $node->set_attr( 'coref_gram.rf', undef );
-        $node->set_attr( 'coref_gram.rf', undef );
+        $node->set_attr( 'coref_text.rf', undef );
     }
     else {
         $node->set_attr( "coref_$type.rf", undef );
