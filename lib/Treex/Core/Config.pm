@@ -102,7 +102,7 @@ sub share_dir {
         my $share_dir;
 
         # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
-        if ( _devel_version() ) {
+        if ( $self->_devel_version() ) {
             $share_dir = realpath( $self->lib_core_dir() . "/../../../../share/" ); # default on UFAL machines
         }
         else {
@@ -129,7 +129,7 @@ sub tred_dir {
 sub pml_schema_dir {
     my $self = shift;
     if (!defined $config->{pml_schema_dir}) {
-        if ( _devel_version() ) {
+        if ( $self->_devel_version() ) {
             $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
         }
         else {
