@@ -27,12 +27,13 @@ sub recursive_numbering {
         my $first_clause_number;
 
         # All clauses in this coordination get a new number
-        foreach my $clause_child ( grep { $_->is_member } @children ) {
+        foreach my $clause_child ( grep { $_->is_member || $_->is_clause_head } @children ) {
             if ( !$first_clause_number ) { $first_clause_number = $max_number + 1; }
             recursive_numbering( $clause_child, ++$max_number );
         }
 
         # All shared modifiers get a number of the nearest clause
+        if ( !$first_clause_number ) { $first_clause_number = $max_number + 1; }
         my $nearest_number = $first_clause_number;
         foreach my $child (@children) {
             if ( $child->is_member ) {
