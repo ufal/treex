@@ -12,12 +12,27 @@ has 'anaphor_as_candidate' => (
     default => 0,
 );
 
+has 'cands_within_czeng_blocks' => (
+    isa => 'Bool',
+    is  => 'ro',
+    required => 1,
+    default => 0,
+);
+
 sub get_candidates {
     my ($self, $anaph) = @_;
 
     my $cands = $self->_select_all_cands($anaph);
     if ($self->anaphor_as_candidate) {
         unshift @$cands, $anaph;
+    }
+    if ($self->cands_within_czeng_blocks) {
+        my $block_id = $anaph->get_bundle->attr('czeng/blockid');
+        if (defined $block_id) {
+            my @cands_in_block = grep { 
+                defined $_ && ($_->get_bundle->attr('czeng/blockid') eq $block_id)} @$cands;
+            $cands = \@cands_in_block;
+        }
     }
     return $cands;
 }
