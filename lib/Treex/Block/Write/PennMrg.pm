@@ -8,7 +8,7 @@ has '+language' => ( required => 1 );
 
 sub process_ptree {
     my ( $self, $ptree ) = @_;
-    print "( " . $ptree->stringify_as_mrg() . " )\n";
+    print { $self->_file_handle } "( " . $ptree->stringify_as_mrg() . " )\n";
 }
 
 1;
