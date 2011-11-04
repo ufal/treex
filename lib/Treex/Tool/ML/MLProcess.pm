@@ -22,7 +22,7 @@ Readonly my $ML_PROCESS_LIBRARIES => [
     'dll_32/liblpsolve55.so',
     'dll_32/liblpsolve55j.so',
     'dll_64/liblpsolve55.so',
-    'dll_64/liblpsolve55.so',    
+    'dll_64/liblpsolve55.so',
 ];
 
 # ML-Process executable
@@ -34,7 +34,7 @@ has 'ml_process_jar' => (
 );
 
 # Verbosity
-has 'verbosity' => ( is => 'ro', isa => 'Int', lazy_build => 1 );
+has 'verbosity' => ( is => 'ro', isa => enum( [ 0, 1, 2, 3, 4 ] ), lazy_build => 1 );
 
 # Amount of memory needed for Java VM
 has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
@@ -62,7 +62,7 @@ sub BUILD {
 
     # try to download the ML-Process JAR file + other libraries and set their real absolute path
     # (assuming everything is downloaded into one subtree)
-    foreach my $shared_file ( @{ $ML_PROCESS_LIBRARIES } ){
+    foreach my $shared_file ( @{$ML_PROCESS_LIBRARIES} ) {
         Treex::Core::Resource::require_file_from_share( $ML_PROCESS_BASEDIR . $shared_file, 'the ML-Process tool block' );
     }
     $self->_set_ml_process_jar( Treex::Core::Resource::require_file_from_share( $self->ml_process_jar ) );
@@ -106,7 +106,7 @@ sub run {
 
     log_info( "Running " . $command );
     my $rv = system($command);
-    log_fatal("ML-Process not found or not working properly. Return value: $rv.") if ($rv != 0 );
+    log_fatal("ML-Process not found or not working properly. Return value: $rv.") if ( $rv != 0 );
 }
 
 # Load the given attribute classified by the process from the ARFF file
@@ -163,8 +163,8 @@ sub _create_output_file {
 sub _replace {
     my ( $self, $string, $var_name, $replacement ) = @_;
 
-    $var_name =~ s/([|\[\]])/\\$1/g; # TODO capture all regexp special characters 
-    $string =~ s/\|$var_name\|/$replacement/g;
+    $var_name =~ s/([|\[\]])/\\$1/g;               # TODO capture all regexp special characters
+    $string   =~ s/\|$var_name\|/$replacement/g;
 
     return $string;
 }

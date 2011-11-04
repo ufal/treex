@@ -8,8 +8,12 @@ extends 'Treex::Core::Block';
 
 # cleanup temporary files (default = 1)
 has 'cleanup_temp' => ( is => 'ro', isa => 'Bool', default => 1 );
+
 # Amount of memory needed for ML-Process Java VM
 has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
+
+# Override the default treex error level for ML-Process (0 = nothing, 4 = debug)
+has 'verbosity' => ( is => 'ro', isa => 'Maybe[Int]' );
 
 # files related to the trained model (will be required from the shared directory)
 has 'model_dir' => ( is => 'ro', isa => 'Str', writer => '_set_model_dir', required => 1 );
@@ -55,13 +59,13 @@ override 'process_document' => sub {
 
     my ( $self, $document ) = @_;
 
-    my $mlprocess = Treex::Tool::ML::MLProcess->new(
-        {
-            plan_template => $self->model_dir . $self->plan_template,
-            cleanup_temp  => $self->cleanup_temp,
-            memory => $self->memory
-        }
-    );
+    my $params = {
+        plan_template => $self->model_dir . $self->plan_template,
+        cleanup_temp  => $self->cleanup_temp,
+        memory        => $self->memory,
+    };
+    $params->{verbosity} = $self->verbosity if ( defined( $self->verbosity ) );
+    my $mlprocess = Treex::Tool::ML::MLProcess->new($params);
 
     my $temp_input = $mlprocess->input_data_file;
 
@@ -169,6 +173,15 @@ The name of the attribute which ML-Process will classify and which is to be load
 =item cleanup_temp
 
 Should the ML-Process temporary files be deleted at the end of the processing (default: 1)?  
+
+=item memory
+
+Amount of memory to be used for ML-Process Java VM (default: 1g). Same settings as for C<java -Xmx> apply here.
+
+=item verbosity
+
+Verbosity setting for the ML-Process tool. Allowed values: 0 = nothing, 1 = warning, 2 = important,
+3 = info, 4 = debug. If unset, a default is inferred from the current Treex error level. 
 
 =back
 
