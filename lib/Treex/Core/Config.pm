@@ -131,7 +131,7 @@ sub tred_dir {
 
 sub pml_schema_dir {
     my $self = shift;
-    if (!defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} ) {
+    if (!defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} )) {
             if ( $self->_devel_version() ) {
                 $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
             }
