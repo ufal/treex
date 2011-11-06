@@ -23,12 +23,12 @@ our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 my $config = __PACKAGE__->_load_config();
 
 sub _load_config {
-    my $self = shift;
-    my %args = @_;
-    my $from = $args{from} // $self->config_file();
-    my $yaml = read_file($from, {err_mode => 'silent'});
+    my $self     = shift;
+    my %args     = @_;
+    my $from     = $args{from} // $self->config_file();
+    my $yaml     = read_file( $from, { err_mode => 'silent' } );
     my $toReturn = YAML::Load($yaml);
-    return $toReturn // {}; #rather than undef return empty hashref
+    return $toReturn // {};     #rather than undef return empty hashref
 }
 
 sub _save_config {
@@ -50,7 +50,8 @@ sub config_dir {
     }
     if ( -d $dirname ) {
         return $dirname;
-    } else {
+    }
+    else {
         return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );
     }
 }
@@ -63,8 +64,8 @@ sub config_file {
 sub _default_resource_path {
     my $self = shift;
     my @path;
-    push @path, File::Spec->catdir($self->config_dir(), 'share' );
-    push @path, File::HomeDir->my_dist_data( 'Treex-Core', { create => 0 } ) ;
+    push @path, File::Spec->catdir( $self->config_dir(), 'share' );
+    push @path, File::HomeDir->my_dist_data( 'Treex-Core', { create => 0 } );
     if ( defined $ENV{TMT_ROOT} ) {
         push @path, realpath( $ENV{TMT_ROOT} . '/share' );
     }
@@ -95,7 +96,7 @@ sub _devel_version {
 
 sub share_dir {
     my $self = shift;
-    if ( defined $config->{share_dir} ) {
+    if ( defined $config->{share_dir} && defined realpath( $config->{share_dir} ) ) {
         return $config->{share_dir};
     }
     else {
@@ -103,10 +104,10 @@ sub share_dir {
 
         # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
         if ( $self->_devel_version() ) {
-            $share_dir = realpath( $self->lib_core_dir() . "/../../../../share/" ); # default on UFAL machines
+            $share_dir = realpath( $self->lib_core_dir() . "/../../../../share/" );    # default on UFAL machines
         }
         else {
-            $share_dir = File::Spec->catdir($self->config_dir(), 'share' ); # by default take ~/.treex/share
+            $share_dir = File::Spec->catdir( $self->config_dir(), 'share' );           # by default take ~/.treex/share
         }
         $config->{share_dir} = $share_dir;
         return $share_dir;
@@ -122,63 +123,69 @@ sub share_url {
 
 sub tred_dir {
     my $self = shift;
-    $config->{tred_dir} = realpath( $self->share_dir() . '/tred/' ) if !defined $config->{tred_dir};
+    if ( !defined $config->{tred_dir} || !defined realpath( $config->{tred_dir} ) ) {
+        $config->{tred_dir} = realpath( $self->share_dir() . '/tred/' );
+    }
     return $config->{tred_dir};
 }
 
 sub pml_schema_dir {
     my $self = shift;
-    if (!defined $config->{pml_schema_dir}) {
-        if ( $self->_devel_version() ) {
-            $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
+    if (!defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} ) {
+            if ( $self->_devel_version() ) {
+                $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
+            }
+            else {
+                $config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
+            }
         }
-        else {
-            $config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" ); #that's different share than former TMT_SHARE
+        return $config->{pml_schema_dir};
+    }
+
+    # tenhle adresar ted vubec v balicku neni!
+    sub tred_extension_dir {
+        my $self = shift;
+        if ( !defined $config->{tred_extension_dir} || !defined realpath( $config->{tred_extension_dir} ) ) {
+            $config->{tred_extension_dir} = realpath( $self->pml_schema_dir() . "/../../" );
         }
+        return $config->{tred_extension_dir};
     }
-    return $config->{pml_schema_dir};
-}
 
-# tenhle adresar ted vubec v balicku neni!
-sub tred_extension_dir {
-    my $self = shift;
-    $config->{tred_extension_dir} = realpath( $self->pml_schema_dir() . "/../../" ) if !defined $config->{tred_extension_dir};
-    return $config->{tred_extension_dir};
-}
-
-sub lib_core_dir {
-    my $self = shift;
-    return realpath( $self->_caller_dir() );
-}
-
-sub tmp_dir {
-    my $self = shift;
-    $config->{tmp_dir} = $self->_default_tmp_dir() if !defined $config->{tmp_dir};
-    return $config->{tmp_dir};
-}
-
-sub _default_tmp_dir {
-    my $self = shift;
-    my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );
-    my $suffix    = 'tmp';
-    my $tmp_dir   = realpath("$dot_treex/$suffix");
-    if ( !-e $tmp_dir ) {
-        mkdir $tmp_dir or log_fatal("Cannot create temporary directory");
+    sub lib_core_dir {
+        my $self = shift;
+        return realpath( $self->_caller_dir() );
     }
-    return $tmp_dir;
-}
 
-sub _caller_dir {
-    my $self = shift;
-    my %call_info;
-    @call_info{
-        qw(pack file line sub has_args wantarray evaltext is_require)
-        } = caller(0);
-    $call_info{file} =~ s/[^\/]+$//;
-    return $call_info{file};
-}
+    sub tmp_dir {
+        my $self = shift;
+        if ( !defined $config->{tmp_dir} || !defined realpath( $config->{tmp_dir} ) ) {
+            $config->{tmp_dir} = $self->_default_tmp_dir();
+        }
+        return $config->{tmp_dir};
+    }
 
-1;
+    sub _default_tmp_dir {
+        my $self      = shift;
+        my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );
+        my $suffix    = 'tmp';
+        my $tmp_dir   = realpath("$dot_treex/$suffix");
+        if ( !-e $tmp_dir ) {
+            mkdir $tmp_dir or log_fatal("Cannot create temporary directory");
+        }
+        return $tmp_dir;
+    }
+
+    sub _caller_dir {
+        my $self = shift;
+        my %call_info;
+        @call_info{
+            qw(pack file line sub has_args wantarray evaltext is_require)
+            } = caller(0);
+        $call_info{file} =~ s/[^\/]+$//;
+        return $call_info{file};
+    }
+
+    1;
 
 __END__
 
