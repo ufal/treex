@@ -50,15 +50,20 @@ sub process_atree {
         else {
             $lrb = undef;
         }
-        
+
         # Check special cases like "Hello ((bug))."
         next CHUNK if !@ch_nodes;
 
         # Here comes the very parsing.
         # Hopefully, the chunk has got just one root, but rather check it.
+        ###!!! DZ: No!
+        # If the chunk is the whole sentence, there are at least two chunk "roots",
+        # i.e. nodes that ought to be attached directly to the artificial sentence root.
+        # I am disabling reattaching the second and other chunk roots to the first chunk root.
+        # That should ensure that they remain attached to the main a-root (see resetting above).
         my ( $ch_root, @other_ch_roots ) = $self->parse_chunk(@ch_nodes);
         foreach my $another_ch_root (@other_ch_roots) {
-            $another_ch_root->set_parent($ch_root);
+            ###!!!$another_ch_root->set_parent($ch_root);
         }
 
         # If this is "parenthesis chunk" (enclosed in round brackets)
@@ -72,7 +77,7 @@ sub process_atree {
 
             # We can guess the parent of this chunk (usually the previous word)
             my $ch_parent = $lrb->get_prev_node || $rrb->get_next_node || $a_root;
-            
+
             # Prevent cycles in cases like "(Hello) (there)."
             if ($ch_parent->is_descendant_of($ch_root)){
                 $ch_parent = $a_root;
@@ -98,7 +103,7 @@ sub parse_chunk {
 1;
 
 __END__
- 
+
 =over
 
 =item Treex::Block::W2A::BaseChunkParser
@@ -110,7 +115,7 @@ The goal of segmenting a sentence into chunks is to guarantee that each chunk
 will be parsed into its own subtree.
 
 PARAMETERS:
-reparse - process only bundles where the root node has the attribute C<reparse> set 
+reparse - process only bundles where the root node has the attribute C<reparse> set
 
 =back
 
