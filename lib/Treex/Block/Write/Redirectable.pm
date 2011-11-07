@@ -6,12 +6,19 @@ use autodie;    # die if the output file cannot be opened
 use File::Path;
 use File::Basename;
 use Treex::Core::Common;    # log_info
+use Encode 'decode';
 
 has to => (
     isa           => 'Str',
     is            => 'ro',
     default       => '-',
     documentation => 'the destination filename (default is "-" meaning standard output)',
+);
+
+has to_bundle_attr => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'set to an attribute name and the string per bundle will go there',
 );
 
 has clobber => (
@@ -40,6 +47,37 @@ has _last_filename => (
     documentation => 'Last output filename, to keep stream open if unchanged.',
 );
 
+around 'process_bundle' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    if (defined $self->to_bundle_attr) {
+        my $bundle = $_[0];
+
+        # Open a temp file handle redirected to string
+        my $output = '';
+        my $fh = undef;
+        open $fh, '>', \$output
+            or log_fatal "Can't open TOOUTPUT: $!";
+        binmode( $fh, ":utf8" );
+        $self->_file_handle($fh);
+
+        # call the main process_bundle
+        $self->$orig(@_);
+
+        # Close the temp file handle
+        close $fh;
+        $self->_file_handle(undef);
+
+        # Store the output
+        chomp($output);
+        $bundle->set_attr($self->to_bundle_attr, decode("utf8", $output));
+    } else {
+        # call the main process_bundle
+        $self->$orig(@_);
+    }
+};
+
 around 'process_document' => sub {
     my $orig = shift;
     my $self = shift;
@@ -49,7 +87,7 @@ around 'process_document' => sub {
 
     $filename = $document->full_filename . ( $document->compress ? ".gz" : "" );
 
-    # Now allow to overwrite the defailt name
+    # Now allow to overwrite the default name
     if ( $self->to ) {
         $filename = $self->to;
     }

@@ -515,6 +515,11 @@ sub process_bundle {
     for ( my $i = 0; $i < scalar(@{$self->{colspecs}}); $i++ ) {
         my $colspec = $self->{colspecs}->[$i];
 
+        if ( $colspec =~ /^ATTR(.*)$/) {
+            push @output, $bundle->attr($1);
+            next;
+        }
+
         if ( $colspec =~ /^(abs|rel)path(_with_id)?$/) {
             if (!defined $pathname_cached) {
                 my $absrel = $1;
@@ -818,6 +823,9 @@ The following keywords (i.e. output columns) are supported:
 
   (rel|abs)path(_with_id)
     ... the pathname of the document, followed by colon and bundle ID
+
+  ATTR<bundle-attribute-name>
+    ... verbatim copy of the given bundle attribute name
 
   ALI[tm]-<Language1>-<Language2>
     ... print alignments between corresponding t- or m- layers. Nodes are
