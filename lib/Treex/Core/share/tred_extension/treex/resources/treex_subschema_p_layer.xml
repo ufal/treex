@@ -39,6 +39,9 @@
         <member name="lemma"><cdata format="any"/></member>
         <member name="tag" type="p-postag.type"/>
 		<member name="bbn_tag" type="bbn_tag.type" />
+        <member name="alignment">
+            <list ordered="0" type="align-links.type"/>
+        </member>
 <!--        <member name="m.rf" role="#KNIT" type="m-node.type"/> -->
         <member name="wild_dump"><cdata format="any"/></member>
     </structure>
@@ -176,5 +179,17 @@
 
     </choice>
   </type>
+
+  <type name="align-links.type">
+    <structure>
+       <member name="counterpart.rf">
+          <cdata format="PMLREF"/>
+       </member>
+       <member name="type">
+          <cdata format="any"/>
+       </member>
+    </structure>
+ </type>
+
 
 </pml_schema>
