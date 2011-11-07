@@ -3,6 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has quotes => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+    documentation => 'mark quotation marks as auxiliary?',
+);
+
 sub process_anode {
     my ( $self, $node ) = @_;
     my $parent = $node->get_parent();
@@ -17,13 +24,13 @@ sub process_anode {
     }
 
     # Should collapse to parent because the $node is auxiliary?
-    elsif ( is_aux_to_parent($node) ) {
+    elsif ( $self->is_aux_to_parent($node) ) {
         $node->set_edge_to_collapse(1);
         $node->set_is_auxiliary(1);
     }
 
     # Should collapse to parent because the $parent is auxiliary?
-    elsif ( is_parent_aux_to_me($node) ) {
+    elsif ( $self->is_parent_aux_to_me($node) ) {
         $node->set_edge_to_collapse(1);
         $parent->set_is_auxiliary(1);
     }
@@ -32,7 +39,7 @@ sub process_anode {
 }
 
 sub is_aux_to_parent {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(tag lemma afun));
 
     # 1a) some afuns indicate that the node is aux to parent
@@ -48,9 +55,12 @@ sub is_aux_to_parent {
     # 1b) some tags indicate that the node is aux to parent
     # RP = adverb particle (up, off, out), EX = existential there,
     # POS = possessive 's, -LRB- -RBR- brackets (not a Penn-style tag)
-    # not quotes - just pragmatic reasons - easier way of translation
-    #return 1 if $tag =~ /^(''|``)$/;
     return 1 if $tag =~ /^(RP|EX|POS|-NONE-|-LRB-|-RRB-)$/;
+    
+    # PDT treats quotation marks as auxiliaries,
+    # but for pragmatic reasons (easier way of translation) it is optional
+    return 1 if $tag =~ /^(''|``)$/ && $self->quotes;
+    
 
     # 1c) Prepositions and subord. conjunctions with no children
     # must collapse to parent. Otherwise, they would become t-nodes.
@@ -84,13 +94,13 @@ sub is_aux_to_parent {
     # In PDT-style, modal verbs should govern their main verbs,
     # but if something goes wrong ...
     my $p_tag = $node->get_parent()->tag;
-    return 1 if $p_tag =~ /^V/ && is_modal($lemma) && !any { $_->tag =~ /^V/ } @children;
+    return 1 if $p_tag =~ /^V/ && $self->is_modal($lemma) && !any { $_->tag =~ /^V/ } @children;
 
     return 0;
 }
 
 sub is_parent_aux_to_me {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my $parent = $node->get_parent();
     my ( $tag, $lemma, $afun ) = $node->get_attrs(qw(tag lemma afun));
     my ( $p_tag, $p_form, $p_lemma, $p_afun ) = $parent->get_attrs(qw(tag form lemma afun));
@@ -156,7 +166,7 @@ sub is_parent_aux_to_me {
     # 2b) Modal verbs are governing their main verbs on a-layer.
     # "What would you do(tag=VB, parent=would)?"
     #return 1 if $tag =~ /^V/ && $parent->precedes($node) && is_modal($p_lemma);
-    if ( is_modal($p_lemma) ) {
+    if ( $self->is_modal($p_lemma) ) {
         return 0 if $node->precedes($parent) || ( $tag !~ /^V/ && $afun ne 'Coord' );
         my $rival = first { $_->tag =~ /^V/ && $parent->precedes($_) } $node->get_siblings( { ordered => 1 } );
         if ( $afun eq 'Coord' ) {
@@ -184,7 +194,7 @@ sub is_parent_aux_to_me {
 }
 
 sub is_modal {
-    my ($lemma) = @_;
+    my ($self, $lemma) = @_;
     return $lemma =~ /^(can|cannot|must|may|might|should|would|could|shall)$/;
 }
 
