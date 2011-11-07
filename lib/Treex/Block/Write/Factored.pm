@@ -778,7 +778,7 @@ sub process_bundle {
                         map {
                         if ( ( !defined $_ || $_ eq "" )
                              && defined $self->{default_value} ) {
-                          $self->{default_value}
+                          $_ = $self->{default_value};
                         }
                         $_
                         }
