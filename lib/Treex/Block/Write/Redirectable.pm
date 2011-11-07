@@ -12,7 +12,7 @@ has to => (
     isa           => 'Str',
     is            => 'ro',
     default       => '-',
-    documentation => 'the destination filename (default is "-" meaning standard output)',
+    documentation => 'the destination filename (default is "-" meaning standard output; use "." for the filename inherited from upstream blocks)',
 );
 
 has to_bundle_attr => (
@@ -88,7 +88,8 @@ around 'process_document' => sub {
     $filename = $document->full_filename . ( $document->compress ? ".gz" : "" );
 
     # Now allow to overwrite the default name
-    if ( $self->to ) {
+    # Specifying to=. means the target file name as inherited from upstream
+    if ( defined $self->to && $self->to ne "." ) {
         $filename = $self->to;
     }
 
