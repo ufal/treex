@@ -729,6 +729,7 @@ sub process_bundle {
                             $bundle->id() . ":"
                             . "Bad factor value '$_' in $colspec, "
                             . "contains space in: @$outfactors"
+                            . "; Use flags=escape_space"
                             if $_ =~ /\s/;
                         $_
                         }
@@ -799,16 +800,15 @@ Treex::Block::Write::Factored
 
 =head1 DESCRIPTION
 
-Document writer for plain text format.
-The text is taken from the document's attribute C<text>,
-if you want to save the sentences stored in L<bundles|Treex::Core::Bundle>,
-use L<Treex::Block::Write::Sentences>.
-
 Document writer for 'factored' or 'export' format.
-For every sentence produces one line of information.
-The line consist of
-filename:sentid column followed by columns according to your specification in
+For every sentence produces one line of information: tab-delimited columns
+according to the attribute outcols.
 
+Sample usage:
+
+  Write::Factored
+    outcols=relpath_with_id:ena:ent:RFlex-en:RFaux-en
+    flags=join_spaced_numbers:escape_space
 
 =head1 ATTRIBUTES
 
