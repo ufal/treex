@@ -10,8 +10,18 @@ sub process_zone {
     my $proot = $zone->create_ptree();
     # $troot->set_deref_attr( 'ptree.rf', $troot );
 
-    copy_subtree( $troot, $proot );
+    my @tchilds = $troot->get_children();
 
+    if (1 == scalar @tchilds) {
+        $proot->set_phrase($tchilds[0]->functor);
+        copy_subtree( $tchilds[0], $proot );
+    } else {
+        $proot->set_phrase("GLUE");
+        copy_subtree( $troot, $proot );
+        log_warn $troot->id()
+            .":Glueing children. Expected 1 child, got "
+            .scalar(@tchilds);
+    }
 }
 
 sub copy_subtree {
@@ -33,8 +43,11 @@ sub copy_subtree {
             # $lemma =~ s/_s[ie]$//g;
             $pnode->set_lemma($lemma);
             $pnode->set_form($lemma);
-            $pnode->set_tag("---");
+            my $tag = $troot->formeme;
+            $tag = "---" if !defined $tag;
+            $pnode->set_tag($tag);
             $emitted = 1;
+            $pnode->add_aligned_node($troot, "T2P::CopyTtree");
         }
 
         if (defined $tnode) {
