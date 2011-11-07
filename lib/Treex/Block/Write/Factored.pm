@@ -16,6 +16,12 @@ has outcols => (
     documentation => 'The columns to emit.',
 );
 
+has default_value => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => 'The default value for empty factors.',
+);
+
 use Scalar::Util qw(reftype);
 
 # use Data::Dumper;
@@ -767,6 +773,13 @@ sub process_bundle {
                             . "Failed to export $colspec, missing or blank value in: "
                             . "@$outfactors"
                             if !defined $_ || $_ eq "";
+                        $_
+                        }
+                        map {
+                        if ( ( !defined $_ || $_ eq "" )
+                             && defined $self->{default_value} ) {
+                          $self->{default_value}
+                        }
                         $_
                         }
                         @$outfactors
