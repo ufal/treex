@@ -204,8 +204,18 @@ sub producer_of_at_output {
 }
 
 my $export_rules = {
+    "enw" => {    # Czech w-layer
+        "uselayer" => "a",
+        "sort"     => undef,
+        "factors"  => sub {
+            my $n = shift;
+            return [
+                $n->get_attr('form'),
+            ];
+        },
+    },
     "csw" => {    # Czech w-layer
-        "treename" => "CzechM",
+        "uselayer" => "a",
         "sort"     => undef,
         "factors"  => sub {
             my $n = shift;
@@ -681,7 +691,7 @@ sub process_bundle {
             next;
         }
 
-        if ( $colspec =~ /^(..)([matA])(.*)$/ ) {
+        if ( $colspec =~ /^(..)([wmatA])(.*)$/ ) {
             my $lang   = $1;
             my $layer   = $2;
             my $selector = $3;
@@ -838,6 +848,7 @@ The following keywords (i.e. output columns) are supported:
     
   <Language><Layer><Selector>
     Layer is one of:
+      w       = w-layer, just tokens
       m, a, t = m-, a- and t-layer
                 ... print factored version of every t- or a- node in sentord or
                     ord.
