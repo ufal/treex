@@ -21,6 +21,11 @@ sub process_bundle
     foreach my $zone (@zones)
     {
         my $label = $zone->get_label();
+        # Make sure that all zones appear in the report even if they are projective.
+        if(!exists($n_nonproj{$label}))
+        {
+            $n_nonproj{$label} = 0;
+        }
         my $count_nodes = $label eq $self->language();
         my $root = $zone->get_atree();
         my @nodes = $root->get_descendants({'add_self' => 1, 'ordered' => 1});
@@ -48,10 +53,18 @@ sub process_bundle
 #------------------------------------------------------------------------------
 END
 {
-    foreach my $zone (sort(keys(%n_nonproj)))
+    my @zones = sort(keys(%n_nonproj));
+    if(@zones)
     {
-        my $ratio = $n_nodes ? $n_nonproj{$zone}/$n_nodes : 0;
-        print("$zone\t$n_nonproj{$zone}/$n_nodes\t$ratio\n");
+        foreach my $zone (sort(keys(%n_nonproj)))
+        {
+            my $ratio = $n_nodes ? $n_nonproj{$zone}/$n_nodes : 0;
+            print("$zone\t$n_nonproj{$zone}/$n_nodes\t$ratio\n");
+        }
+    }
+    else
+    {
+        print("No zone visited, no nonprojectivity found.\n");
     }
 }
 
