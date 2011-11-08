@@ -4,40 +4,69 @@ use Treex::Tool::Parser::Ensemble::Ensemble;
 use Moose;
 use Graph;
 use Treex::Core::Common;
+use Treex::Tool::ML::Clustering::C_Cluster;
 
 extends 'Treex::Core::Block';
 has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
+has 'use_pos' => ( is => 'rw', isa => 'Str');
 my $ENSEMBLE;
 my %use_tree = ();
-
-#must pass into this class a string 'trees' with the format parser#weight-parser#weight  for as many parsers as you want used out of the a-trees
+my $cluster;
+my $fcm;
+#must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
 sub BUILD {
   my ($self) = @_;
   
-  my @trees_to_process = split( "-", $self->trees );
+  my @trees_to_process = split( "~", $self->trees );
   foreach my $tree (@trees_to_process) {
     my ( $sel, $weight ) = split( "#", $tree );
     $use_tree{$sel} = $weight;
   }
   my %edges = ();
-  
+    if($self->use_pos eq "true"){
+    $cluster = Treex::Tool::ML::Clustering::C_Cluster->new(); 
+    $fcm=$cluster->get_clusters();    
+    print @{$fcm->centroids};
+    print "\n";
+    # show cluster centroids
+    foreach my $centroid ( @{ $fcm->centroids } ) {
+      print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
+      keys %{$centroid};
+      print "\n";
+    }    
+    # show clustering result
+    foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
+      printf "%s\t%s\n", $id,
+      join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
+    }
+    
+  }
   if ( !$ENSEMBLE ) {
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
   }
-  return;
-  
+  return;  
 }
 
 #this method will process each atree passed to it and add its edges to our edge matrix
+sub process_tree_pos {
+  my ( $root, $weight_tree ) = @_;
+  my @todo = $root->get_descendants( { ordered => 1 } );
+  $ENSEMBLE->set_n( scalar @todo );
+
+  
+  foreach my $node (@todo) {
+    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
+  }  
+}
+
+#Weight edge depending on the POS
 sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
   foreach my $node (@todo) {
-    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );
-    
-  }
-  
+    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
+  }  
 }
 
 sub process_bundle {
@@ -45,12 +74,15 @@ sub process_bundle {
   my @zones = $bundle->get_all_zones();
   $ENSEMBLE->clear_edges();
   foreach my $zone (@zones) {
-    
-    # if (    $zone->get_atree()->selector ne "ref"
-    # and $zone->get_atree()->selector ne "" )
-    if ( exists $use_tree{ $zone->get_atree()->selector } ) {
+   if ( exists $use_tree{ $zone->get_atree()->selector } ) {
+      if($self->use_pos eq "true"){
+	process_tree_pos( $zone->get_atree(),
+		      $use_tree{ $zone->get_atree()->selector } );
+      }
+      else{
       process_tree( $zone->get_atree(),
 		    $use_tree{ $zone->get_atree()->selector } );
+      }
     }
   }
   make_graph($bundle);
@@ -78,8 +110,7 @@ sub make_graph {
 	$todo[$i]->set_parent($node);
       }
     }
-  }
-  
+  }  
 }
 
 1;
