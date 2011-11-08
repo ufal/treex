@@ -127,9 +127,7 @@ sub _build_cnk_freqs {
         ' with a CNK model used for a feature' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $cnk_file;
-# TODO adjustment to accord with Linh et al. (2009)
-open CNK, $cnk_file;
-#    open CNK, "<:utf8", $cnk_file;
+    open CNK, "<:utf8", $cnk_file;
     
     my $nv_freq;
     my $v_freq;
@@ -157,9 +155,7 @@ sub _build_ewn_classes {
         ' with a EuroWordNet onthology for Czech used' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $ewn_file;
-# TODO adjustment to accord with Linh et al. (2009)
-open EWN, $ewn_file;
-#    open EWN, "<:utf8", $ewn_file;
+    open EWN, "<:utf8", $ewn_file;
     
     my $ewn_noun;
     my %ewn_all_classes;
@@ -329,20 +325,13 @@ sub _is_subject {
 			}
 		}
 
-# TODO to accord with Linh et al. (2009), just the last subjects counts
-        my $sb_id = pop @sb_ids;
-        
-        if ((!defined $sb_id && ($node->functor eq 'ACT'))
-		    || (defined $sb_id && ($node->id eq $sb_id))) { 
+        if ((@sb_ids == 0) && ($node->functor eq 'ACT')) {
+			return $b_true;
+        }
+        my %subj_hash = map {$_ => 1} @sb_ids; 
+		if (defined $subj_hash{$node->id}) { 
 			return $b_true;
 		}	
-        #if ((@sb_ids == 0) && ($node->functor eq 'ACT')) {
-		#	return $b_true;
-        #}
-        #my %subj_hash = map {$_ => 1} @sb_ids; 
-		#if (defined $subj_hash{$node->id}) { 
-		#	return $b_true;
-		#}	
 	}
 	return $b_false;
 }
@@ -537,8 +526,7 @@ sub _binary_features {
         = agree_feats($coref_features->{b_cand_subj}, $coref_features->{b_anaph_subj});
     
     #   Context:
-    # DEBUG ? $b_true : $b_false added
-    $coref_features->{b_app_in_coord} = _is_app_in_coord( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features->{b_app_in_coord} = _is_app_in_coord( $cand, $anaph );
     
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
@@ -565,14 +553,13 @@ sub _binary_features {
         = join_feats($coref_features->{c_cand_tfa}, $coref_features->{c_anaph_tfa});
     
     #   1: are_siblings($inode, $jnode)
-    # DEBUG ? $b_true : $b_false added
-    $coref_features->{b_sibl} = _are_siblings( $cand, $anaph ) ? $b_true : $b_false;
+    $coref_features->{b_sibl} = _are_siblings( $cand, $anaph );
 
     #   1: collocation
-    # DEBUG ? $b_true : $b_false added
-    $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph )  ? $b_true : $b_false;
+    $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph );
 
     #   1: collocation from CNK
+    # TODO this feature should be quantized
     $coref_features->{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
 }
 

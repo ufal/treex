@@ -57,12 +57,6 @@ sub _find_positive_cands {
     if (@antes == 1) {
         my $ante = $antes[0];
 
-# TODO for debugging reasons to accord with the data of Linh et al. (2009). This should be
-# cancelled afterwards
-        if ($jnode->wild->{doc_ord} < $ante->wild->{doc_ord}) {
-            return [];
-        }
-
         $non_gram_ante = $self->_jump_to_non_gram_ante(
                 $ante, \%cands_hash);
     }
