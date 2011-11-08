@@ -39,22 +39,24 @@ sub process_bundle {
         my $label = $compared_zone->get_label;
         my $label1 = $label.'-regardless-is_member';
         foreach my $i ( 0 .. $#parents ) {
-
-            if ( $parents[$i] == $ref_parents[$i] &&
-                 ( !$self->eval_is_member || $is_member[$i] == $ref_is_member[$i] ) &&
-                 ( !$self->eval_is_shared_modifier || $is_shared_modifier[$i] == $ref_is_shared_modifier[$i] )
+            my $eqp = $parents[$i] == $ref_parents[$i];
+            my $eqm = $is_member[$i] == $ref_is_member[$i];
+            my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
+            $same_as_ref{'UASp('.$label.')'}++ if($eqp);
+            $same_as_ref{'UASpm('.$label.')'}++ if($eqp && $eqm);
+            $same_as_ref{'UASps('.$label.')'}++ if($eqp && $eqs);
+            $same_as_ref{'UASpms('.$label.')'}++ if($eqp && $eqm && $eqs);
+            # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
+            # For the sake of compatibility, we will output it only with the label, without extras.
+            if ( $eqp &&
+                 ( !$self->eval_is_member || $eqm ) &&
+                 ( !$self->eval_is_shared_modifier || $eqs )
                ) {
                 $same_as_ref{$label}++;
             }
-            # If the main score includes is_member evaluation, provide the weaker evaluation as well.
-            if ( $self->eval_is_member || $self->eval_is_shared_modifier ) {
-                if ( $parents[$i] == $ref_parents[$i] ) {
-                    $same_as_ref{$label1}++;
-                }
-            }
         }
     }
-    
+
     $sentences_in_current_sample++;
     if ($self->sample_size && $sentences_in_current_sample >= $self->sample_size){
         print_stats();
