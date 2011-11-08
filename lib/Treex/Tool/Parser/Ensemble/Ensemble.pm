@@ -13,6 +13,7 @@ sub BUILD {
 
 sub add_edge {
   my ( $self, $node, $parent, $weight ) = @_;
+  #print "$weight\n";
   if ( exists $edges{$node}{$parent} ) {
     $edges{$node}{$parent} = $edges{$node}{$parent} + $weight;
   }
