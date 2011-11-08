@@ -60,7 +60,7 @@ sub _get_tag {
     # In "There!" it is not an existential there, but simple adverb.
     # Otherwise, we would get an empty t-tree for such sentences.
     return 'RB' if $tag eq 'EX'
-            && join( '', map { $_->form } $node->get_root->get_descendants( { ordered => 1 } ) ) =~ /There.?/;
+            && join( '', map { $_->form } $node->get_root->get_descendants( { ordered => 1 } ) ) =~ /^There.?$/;
 
     return;
 }
