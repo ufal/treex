@@ -25,6 +25,8 @@ has 'a' => ( is => 'ro', isa => 'Maybe[Object]', lazy => 1, default => sub { $_[
 
 has 'tag' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->tag : '' } );
 
+has 'afun' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->afun : '' } );
+
 has 'lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->lemma : '' } );
 
 has 'sempos' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->t->gram_sempos || '' } );
@@ -192,10 +194,10 @@ sub _build_is_name_lemma {
 
 sub _build_verbform {
     my ($self) = @_;
-
-    return '' if ( $self->sempos ne 'v' );
+    
+    return '' if ( $self->syntpos ne 'v' );
     my $finity = ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';
-
+   
     return $finity if ( $finity eq 'inf' or !$self->detect_diathesis );
 
     return 'apass' if ( $self->tag =~ /^Vs/ );

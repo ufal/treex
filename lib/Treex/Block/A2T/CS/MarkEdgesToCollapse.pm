@@ -46,7 +46,8 @@ sub is_aux_to_parent {
     my ($a_node) = shift;
     return (
         ( $a_node->tag =~ /^Z/ and $a_node->afun !~ /Coord|Apos/ ) ||
-            ( $a_node->afun =~ m/Aux[RVT]/ ) || # auxiliary verbs, reflexive passive + reflexiva tantum
+            ( $a_node->afun  eq "AuxV" ) ||
+            ( $a_node->afun  eq "AuxT" ) ||
             ( $a_node->lemma eq "jako" and $a_node->afun !~ /AuxC/ ) ||
             ( $a_node->afun  eq "AuxP" and $a_node->get_parent->afun eq "AuxP" )
     );
