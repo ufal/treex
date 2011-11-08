@@ -21,7 +21,7 @@ sub _build_model_files {
         'ff.dat',
         $self->plan_template,
         $self->features_config,
-        map { 'model-' . $_ . '.dat' } ( '', 'n', 'adj', 'adv', 'v', '[3f][3f][3f]', '[5b]OTHER[5d]' ), 
+        map { 'model-' . $_ . '.dat' } ( '', 'n', 'adj', 'adv', 'v', '[3f][3f][3f]', '[5b]OTHER[5d]', 'coap' ), 
     ];
 }
 
