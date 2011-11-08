@@ -39,6 +39,7 @@ sub process_atree {
         # We skip all the nodes of the nested chunk.
         # This is not true anymore (except for its root which was left attached to the $a_root.)
         my @ch_nodes = grep { $_->parent == $a_root } @$chunk;
+
         # If this is a "parenthesis chunk" (enclosed in round brackets),
         # leave the brackets aside to be hanged on the root of the chunk later.
         # (Parsers would mostly guess this right, but not always.)
@@ -55,16 +56,12 @@ sub process_atree {
         next CHUNK if !@ch_nodes;
 
         # Here comes the very parsing.
-        # Hopefully, the chunk has got just one root, but rather check it.
-        ###!!! DZ: No!
-        # If the chunk is the whole sentence, there are at least two chunk "roots",
-        # i.e. nodes that ought to be attached directly to the artificial sentence root.
-        # I am disabling reattaching the second and other chunk roots to the first chunk root.
-        # That should ensure that they remain attached to the main a-root (see resetting above).
         my ( $ch_root, @other_ch_roots ) = $self->parse_chunk(@ch_nodes);
-        foreach my $another_ch_root (@other_ch_roots) {
-            ###!!!$another_ch_root->set_parent($ch_root);
-        }
+
+        # We should not force one root, because e.g. the whole sentence in PDT
+        # has (typically) two roots: the main verb and the final punctuation
+        # and both should be atttached to the technical root.
+        # foreach my $a_root (@other_ch_roots) {$a_root->set_parent($ch_root);}
 
         # If this is "parenthesis chunk" (enclosed in round brackets)
         if ($lrb) {
@@ -79,7 +76,7 @@ sub process_atree {
             my $ch_parent = $lrb->get_prev_node || $rrb->get_next_node || $a_root;
 
             # Prevent cycles in cases like "(Hello) (there)."
-            if ($ch_parent->is_descendant_of($ch_root)){
+            if ( $ch_parent->is_descendant_of($ch_root) ) {
                 $ch_parent = $a_root;
             }
             $ch_root->set_parent($ch_parent);
