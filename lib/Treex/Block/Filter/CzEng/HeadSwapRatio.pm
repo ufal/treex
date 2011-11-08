@@ -12,11 +12,11 @@ sub process_bundle {
 
     my ( $pairs, $swaps ) = ( 0, 0 );
 
-    my @parents = $bundle->get_zone('cs')->get_atree();
+    my @parents = $bundle->get_zone('cs')->get_atree->get_descendants;
 
     for my $parent ( @parents ) {
         for my $child ( $parent->get_children() ) {
-            next if ! $parent->get_attr( 'alignment') || ! $child->get_attr( 'alignment ');
+            next if ! $parent->get_attr( 'alignment' ) || ! $child->get_attr( 'alignment' );
             for my $parent_link ( @{ $parent->get_attr( "alignment" ) } ) {
                 for my $child_link ( @{ $child->get_attr( "alignment" ) } ) {
                     # only care about points included in GDFA alignment
@@ -26,8 +26,8 @@ sub process_bundle {
 
                     my $parent_cp_id = $parent_link->{"counterpart.rf"};
                     my $child_cp_id = $child_link->{"counterpart.rf"};
-                    my $parent_cp = $bundle->get_node_by_id( $parent_cp_id );
-                    my $child_cp = $bundle->get_node_by_id( $child_cp_id );
+                    my $parent_cp = $bundle->get_document->get_node_by_id( $parent_cp_id );
+                    my $child_cp = $bundle->get_document->get_node_by_id( $child_cp_id );
 
                     if ( grep { $_ eq $child_cp_id } map { $_->{id} } $parent_cp->get_children() ) {
                         $pairs++;
