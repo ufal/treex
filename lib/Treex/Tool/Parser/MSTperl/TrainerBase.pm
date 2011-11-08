@@ -36,8 +36,8 @@ has number_of_inner_iterations => (
 # all values of features used during the training summed together
 # as using average weights instead of final weights
 # is reported to help avoid overtraining
-# For labeller has the form of ->{feature}->{label}->weight
-# instead of ->{feature}->weight
+# For labeller has the form of ->{feature}->{label} = weight
+# instead of ->{feature} = weight
 has feature_weights_summed => (
     isa     => 'HashRef',
     is      => 'rw',
@@ -267,34 +267,18 @@ sub recompute_feature_weight {
 
 # TRAINING SUPPORTING SUBS
 
+# update weight of the feature
+# (also update the sum of feature weights: feature_weights_summed)
 sub update_feature_weight {
 
-    # TODO probably refactor into 2 subs, for labelled and unlabelled
-    # and probably not :-)
+    # (Str $feature, Num $update, Num $sumUpdateWeight,
+    #   Maybe[Str] $label, Maybe[Str] $label_prev)
 
-    # (Str $feature, Num $update, Num $sumUpdateWeight, Maybe[Str] $label)
-    # in unlabelled training the $label is undef
-    # (in labelled it is sometimes defined and sometimes not,
-    # depending on the algorithm used)
-    # which is not a problem as it just gets ignored
-    my ( $self, $feature, $update, $sumUpdateWeight, $label ) = @_;
+    my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev ) = @_;
 
-    #adds $update to the current weight of the feature
-    my $result =
-        $self->model->update_feature_weight( $feature, $update, $label );
-
-    # v = v + w_{i+1}
-    # $sumUpdateWeight denotes number of summands
-    # in which the weight would appear
-    # if it were computed according to the definition
-    my $summed_update = $sumUpdateWeight * $update;
-    if ($label) {
-        $self->feature_weights_summed->{$feature}->{$label} += $summed_update;
-    } else {
-        $self->feature_weights_summed->{$feature} += $summed_update;
-    }
-
-    return $result;
+    croak 'TrainerBase::update_feature_weight is an abstract method,'
+        . ' it must be called'
+        . ' either from TrainerUnlabelled or TrainerLabelling!';
 }
 
 1;

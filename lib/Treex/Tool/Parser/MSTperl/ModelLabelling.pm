@@ -20,7 +20,9 @@ has 'unigrams' => (
 # standard MLE transition probs for Viterbi:
 #   transitions->{label_prev}->{label_this} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
-#  and are only recomputed to probs on calling prepare_for_mira() )
+#  and are only recomputed to probs on calling prepare_for_mira() );
+# transition feature weights if algorithm = 8, in the form of
+#   transitions->{feature}->{label_prev}->{label_this} = score
 has 'transitions' => (
     is      => 'rw',
     isa     => 'HashRef',
@@ -56,6 +58,8 @@ has 'smooth_uniform' => (
 #   emissions->{feature}->{label} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
 #  and are only recomputed to probs on calling prepare_for_mira() )
+# emission feature weights if algorithm = 8, in the form of
+#   emissions->{feature}->{label} = score
 has 'emissions' => (
     is      => 'rw',
     isa     => 'HashRef',
@@ -74,9 +78,10 @@ has 'weights' => (
 );
 
 # weights versus transitions:
-# what is learned by MIRA is called weights,
-# what is computed from data by MLE is called emissions
-# (the probably-correct algorithm No. 6 uses both)
+# what is learned by MIRA is called weights if it is one-level (0 to 3, 6, 7),
+# what is computed from data by MLE is called emissions (4 to 7);
+# if MIRA learns two levels of weights (8), these are emissions and transitions
+#   and can be initialized by MLE (TODO 9 ?)
 
 # just an array ref with the sentences that represent the heldout data
 # to be able to run the EM algorithm in prepare_for_mira()
@@ -143,19 +148,28 @@ sub load_data {
         )
     {
 
-        # these "pure MIRA" algorithms do not use these MLE estimates
+        # these algorithms do not use emission probs (they use only weights)
         $emissions_ok = 1;
     }
 
-    if ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
+    if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 8 ) {
 
-        # these "pure MLE" algorithms do not use MIRA
+        # these algorithms do not use weights
+        # (they use emissions and transitions)
         $weights_ok = 1;
     }
 
-    if ( $ALGORITHM != 5 && $ALGORITHM != 6  && $ALGORITHM != 7 ) {
+    if ($ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        || $ALGORITHM == 4
+        || $ALGORITHM == 8
+        )
+    {
 
-        # onle these two use lambda smoothing
+        # these algorithms do not use lambda smoothing
+        # (smoothing is kind of part of the learning)
         $smooth_ok = 1;
     }
 
@@ -218,14 +232,23 @@ sub prepare_for_mira {
         $self->compute_probs_from_counts( $self->transitions->{$label} );
     }
 
-    if ( $ALGORITHM >= 4 ) {
+    if ($ALGORITHM == 4
+        || $ALGORITHM == 5
+        || $ALGORITHM == 6
+        || $ALGORITHM == 7
+        )
+    {
 
         # compute emission probs
         foreach my $feature ( keys %{ $self->emissions } ) {
             $self->compute_probs_from_counts( $self->emissions->{$feature} );
         }
 
-        if ( $ALGORITHM >= 5 ) {
+        if ($ALGORITHM == 5
+            || $ALGORITHM == 6
+            || $ALGORITHM == 7
+            )
+        {
 
             # run the EM algorithm to compute transtition probs smoothing params
             $self->compute_smoothing_params();
@@ -393,16 +416,88 @@ sub count_expected_counts_sequence {
     return $expectedCounts;
 }
 
-sub get_transition_prob {
+sub get_all_labels {
+    my ($self) = @_;
 
-    # (Str $label_this, Str $label_prev)
-    my ( $self, $label_this, $label_prev ) = @_;
+    my @labels = keys %{ $self->unigrams };
 
-    if ($self->config->labeller_algorithm == 5
-        || $self->config->labeller_algorithm == 6
-        || $self->config->labeller_algorithm == 7
-        )
-    {
+    return \@labels;
+}
+
+sub get_label_score {
+
+    # (Str $label, Str $label_prev, ArrayRef[Str] $features)
+    my ( $self, $label, $label_prev, $features ) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+
+        my $result = 0;
+
+        # foreach present feature
+        foreach my $feature (@$features) {
+
+            # add "emission score" and "transition score"
+            $result +=
+                $self->get_emission_score( $label, $feature )
+                +
+                $self->get_transition_score(
+                $label, $label_prev, $feature
+                )
+                ;
+        }    # end foreach $feature
+
+        return $result;
+
+    } else {
+        die "ModelLabelling->get_label_score not implemented"
+            . " for algorithm no. $ALGORITHM!";
+    }
+}
+
+sub get_emission_score {
+
+    # (Str $label, Str $feature)
+    my ( $self, $label, $feature ) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+
+        if ($self->emissions->{$feature}
+            && $self->emissions->{$feature}->{$label}
+            )
+        {
+            return $self->emissions->{$feature}->{$label};
+        } else {
+            return 0;
+        }
+
+    } else {
+        die "ModelLabelling->get_emission_score not implemented"
+            . " for algorithm no. $ALGORITHM!";
+    }
+}
+
+sub get_transition_score {
+
+    # (Str $label_this, Str $label_prev, Maybe[Str] $feature)
+    my ( $self, $label_this, $label_prev, $feature ) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+        if ($self->transitions->{$feature}
+            && $self->transitions->{$feature}->{$label_prev}
+            && $self->transitions->{$feature}->{$label_prev}->{$label_this}
+            )
+        {
+            return $self->transitions->{$feature}->{$label_prev}->{$label_this};
+        } else {
+            return 0;
+        }
+    } elsif ( $ALGORITHM == 5 || $ALGORITHM == 6 || $ALGORITHM == 7 ) {
 
         # smoothing by linear combination
         # PROB(label|prev_label) =
@@ -492,7 +587,7 @@ sub get_feature_weight {
 # get "probabilities" of all possible labels based on all the features
 # (gives different numbers for different algorithms,
 # often they are not real probabilities but more of a sort of scores)
-sub get_emission_probs {
+sub get_emission_scores {
 
     # (ArrayRef[Str] $features)
     my ( $self, $features ) = @_;
@@ -728,8 +823,8 @@ sub get_emission_probs {
             $result = $self->unigrams;
         }
     } else {
-        die "Number $ALGORITHM is not a valid algorithm number!"
-            . "Please consult the config file.";
+        die "ModelLabelling->get_emission_scores not implemented"
+            . " for algorithm no. $ALGORITHM!";
     }
 
     # the boundary label is NOT a valid label
@@ -738,29 +833,55 @@ sub get_emission_probs {
     return $result;
 }
 
+# updates weights->$feature by $update
+# for alg. 8 updates emissions (when $label_prev is not set)
+# or transitions (when it is set)
 sub set_feature_weight {
 
-    # (Str $feature, Num $weight, Str $label)
-    my ( $self, $feature, $weight, $label ) = @_;
+    # (Str $feature, Num $weight, Str $label, Maybe[Str] $label_prev)
+    my ( $self, $feature, $weight, $label, $label_prev ) = @_;
 
-    if ( defined $label ) {
-        $self->weights->{$feature}->{$label} = $weight;
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+        if ( defined $label_prev ) {
+            $self->transitions->{$feature}->{$label_prev}->{$label} = $weight;
+        } else {
+            $self->emissions->{$feature}->{$label} = $weight;
+        }
     } else {
-        $self->weights->{$feature} = $weight;
+        if ( defined $label ) {
+            $self->weights->{$feature}->{$label} = $weight;
+        } else {
+            $self->weights->{$feature} = $weight;
+        }
     }
 
     return;
 }
 
+# updates weights->$feature by $update
+# for alg. 8 updates emissions (when $label_prev is not set)
+# or transitions (when it is set)
 sub update_feature_weight {
 
-    # (Str $feature, Num $update, Str $label)
-    my ( $self, $feature, $update, $label ) = @_;
+    # (Str $feature, Num $update, Str $label, Maybe[Str] $label_prev)
+    my ( $self, $feature, $update, $label, $label_prev ) = @_;
 
-    if ( defined $label ) {
-        $self->weights->{$feature}->{$label} += $update;
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+        if ( defined $label_prev ) {
+            $self->transitions->{$feature}->{$label_prev}->{$label} += $update;
+        } else {
+            $self->emissions->{$feature}->{$label} += $update;
+        }
     } else {
-        $self->weights->{$feature} += $update;
+        if ( defined $label ) {
+            $self->weights->{$feature}->{$label} += $update;
+        } else {
+            $self->weights->{$feature} += $update;
+        }
     }
 
     return;

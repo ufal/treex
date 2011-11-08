@@ -218,6 +218,29 @@ sub features_diff {
     return ( \@features_first, \@features_second, $diff_count );
 }
 
+# update weight of the feature
+# (also update the sum of feature weights: feature_weights_summed)
+sub update_feature_weight {
+
+    # (Str $feature, Num $update, Num $sumUpdateWeight)
+    my ( $self, $feature, $update, $sumUpdateWeight ) = @_;
+
+    #adds $update to the current weight of the feature
+    my $result =
+        $self->model->update_feature_weight( $feature, $update );
+
+    # v = v + w_{i+1}
+    # $sumUpdateWeight denotes number of summands
+    # in which the weight would appear
+    # if it were computed according to the definition
+    my $summed_update = $sumUpdateWeight * $update;
+    $self->feature_weights_summed->{$feature} += $summed_update;
+
+    return $result;
+}
+
+# recompute weight of $feature as an average
+# (probably using feature_weights_summed)
 sub recompute_feature_weight {
 
     # Str $feature

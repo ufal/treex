@@ -104,21 +104,25 @@ sub label_subtree {
 
     # States structure: for each state (its key being a label)
     # there is an array with the current best path to it as 'path' (append-only)
-    # and its current probability 'prob' (product of probs on the path)
+    # and its current score 'score' (computed somehow,
+    # i.e. differently for different algorithms)
     my %states;
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
-    # correspont to algorithms
-    my @starting_probs = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1 );
+    # correspond to algorithms
+    #                       0      1  2  3      4      5      6  7  8  9
+    my @starting_scores = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0 );
 
+    # path could be constructed by backpointers
+    # but one would have to keep all the states the whole time
     $states{$starting_state_key} = {
-        'path' => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
-        'prob' => $starting_probs[$ALGORITHM],
+        'path'  => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
+        'score' => $starting_scores[$ALGORITHM],
     };
 
     # run Viterbi
     # In each cycle generates %new_states and sets them as %states,
-    # so at the end it suffices to find the state with the best prob in %states
+    # so at the end it suffices to find the state with the best score in %states
     # and use its path as the result.
     foreach my $edge (@edges) {
 
@@ -135,8 +139,8 @@ sub label_subtree {
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 4 ) {
-                print "    Processing state $last_state (prob "
-                    . $states{$last_state}->{'prob'} . ")\n";
+                print "    Processing state $last_state (score "
+                    . $states{$last_state}->{'score'} . ")\n";
             }
 
             # compute the possible labels scores (typically probabilities),
@@ -146,7 +150,7 @@ sub label_subtree {
                 $self->get_possible_labels(
                     $edge,
                     $last_state,
-                    $states{$last_state}->{'prob'},
+                    $states{$last_state}->{'score'},
                     )
                 };
 
@@ -159,12 +163,12 @@ sub label_subtree {
             }
 
             foreach my $new_label ( keys %possible_labels ) {
-                my $new_state_prob = $possible_labels{$new_label};
+                my $new_state_score = $possible_labels{$new_label};
 
                 # only progress and/or debug info
                 if ( $self->config->DEBUG >= 5 ) {
                     print "      Trying label $new_label, "
-                        . "prob $new_state_prob\n";
+                        . "score $new_state_score\n";
                     print "        Old state path "
                         . ( join ' ', @{ $states{$last_state}->{'path'} } )
                         . " \n";
@@ -190,27 +194,28 @@ sub label_subtree {
                         . " \n";
                 }
 
-                if ($ALGORITHM == 7) {
+                if ( $ALGORITHM == 7 || $ALGORITHM == 8 ) {
+
                     # test if this is the best
                     if (defined $new_states{$new_label}
-                        && $new_states{$new_label} > $new_state_prob
+                        && $new_states{$new_label} > $new_state_score
                         )
                     {
-    
+
                         # there is already the same state state
                         # with higher score
                         next;
                     }
-                    }
+                }
 
                 # else such a state is not yet there resp. it is but its score
-                # is lower than $new_state_prob -> set it (resp. replace it)
+                # is lower than $new_state_score -> set it (resp. replace it)
 
                 my @new_state_path = @{ $states{$last_state}->{'path'} };
                 push @new_state_path, $new_label;
                 $new_states{$new_label} = {
-                    'path' => \@new_state_path,
-                    'prob' => $new_state_prob,
+                    'path'  => \@new_state_path,
+                    'score' => $new_state_score,
                 };
 
                 # only progress and/or debug info
@@ -257,12 +262,12 @@ sub label_subtree {
         # sums up to at least $VITERBI_STATES_PROB_SUM_THRESHOLD
         #         %states = ();
         #         my @best_states = sort {
-        #                 $new_states{$b}->{'prob'}
-        #                 <=> $new_states{$a}->{'prob'}
+        #                 $new_states{$b}->{'score'}
+        #                 <=> $new_states{$a}->{'score'}
         #             } keys %new_states;
         #         my $prob_sum = 0;
         #         foreach my $state (@best_states) {
-        #             $prob_sum += $new_states{$state}->{'prob'};
+        #             $prob_sum += $new_states{$state}->{'score'};
         #         }
         #         my $threshold = $prob_sum
         #             * $VITERBI_STATES_PROB_SUM_THRESHOLD;
@@ -270,7 +275,7 @@ sub label_subtree {
         #         while ($best_prob_sum < $threshold) {
         #             my $state = shift @best_states;
         #             $states{$state} = $new_states{$state};
-        #             $best_prob_sum += $new_states{$state}->{'prob'};
+        #             $best_prob_sum += $new_states{$state}->{'score'};
         #         }
 
         # states going form pruning phase 1 to pruning phase 2
@@ -280,7 +285,7 @@ sub label_subtree {
         %states = ();
         my @best_states
             = sort {
-            $new_states{$b}->{'prob'} <=> $new_states{$a}->{'prob'}
+            $new_states{$b}->{'score'} <=> $new_states{$a}->{'score'}
             } keys %new_states;
         for (
             my $i = 0;
@@ -306,22 +311,22 @@ sub label_subtree {
 
     }    # foreach $edge
 
-    # TODO: foreach last state multiply its prob
+    # TODO: foreach last state multiply its score
     # by the label->sequence_boundary probability
 
-    # End - find the state with the best prob - this is the result
+    # End - find the state with the best score - this is the result
     my $best_state_label = undef;
 
     # "negative infinity" (works both with real probs and with their logs)
-    my $best_state_prob = -999999999;
+    my $best_state_score = -999999999;
     foreach my $state_label ( keys %states ) {
         if ( $self->config->DEBUG >= 4 ) {
-            print "state $state_label prob: "
-                . $states{$state_label}->{'prob'} . "\n";
+            print "state $state_label score: "
+                . $states{$state_label}->{'score'} . "\n";
         }
-        if ( $states{$state_label}->{'prob'} > $best_state_prob ) {
+        if ( $states{$state_label}->{'score'} > $best_state_score ) {
             $best_state_label = $state_label;
-            $best_state_prob  = $states{$state_label}->{'prob'};
+            $best_state_score = $states{$state_label}->{'score'};
         }
     }
     if ($best_state_label) {
@@ -333,8 +338,8 @@ sub label_subtree {
 
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 2 ) {
-            print "best state $best_state_label prob: "
-                . $best_state_prob . "\n";
+            print "best state $best_state_label score: "
+                . $best_state_score . "\n";
             print "best path: "
                 . ( join ' ', @labels )
                 . "\n";
@@ -363,135 +368,171 @@ sub label_subtree {
 }
 
 # computes possible labels for an edge, using info about
-# the emission probs, transition probs and last state's prob
+# the emission scores, transition scores and last state's score
 sub get_possible_labels {
-    my ( $self, $edge, $previous_label, $previous_label_prob ) = @_;
-    
-    # now these are often not really probs but more of some kind of scores
-    my $emission_probs = $self->model->get_emission_probs( $edge->features );
+    my ( $self, $edge, $previous_label, $previous_label_score ) = @_;
 
-    my $transition_probs = {};
-    foreach my $possible_label ( keys %$emission_probs ) {
-        $transition_probs->{$possible_label} =
-            $self->model->get_transition_prob(
-            $possible_label, $previous_label
-            );
-    }
+    my $ALGORITHM = $self->config->labeller_algorithm;
 
-    my $possible_labels = $self->get_possible_labels_internal(
-        $emission_probs,
-        $transition_probs,
-        $previous_label_prob,
-    );
+    if ( $ALGORITHM == 8 ) {
 
-    if ( scalar( keys %$possible_labels ) > 0 ) {
-        return $possible_labels;
+        my $result     = {};
+        my $all_labels = $self->model->get_all_labels();
+
+        # foreach possible label (actually foreach existing label)
+        foreach my $label ( @{$all_labels} ) {
+
+            # score = previous score + new score
+
+            $result->{$label} =
+                $previous_label_score
+                + $self->model->get_label_score(
+                $label, $previous_label, $edge->features
+                )
+                ;
+
+        }    # end foreach $label
+
+        return $result;
+
     } else {
 
-        # no possible states generated -> backoff
-        my $blind_probs = $self->model->unigrams;
+        # now these are often not really probs but more of some kind of scores
+        my $emission_scores =
+            $self->model->get_emission_scores( $edge->features );
 
-        # TODO: smoothing (now a very stupid way is used
-        # just to lower the probs below the unblind probs)
-        foreach my $label ( keys %$blind_probs ) {
-            $blind_probs->{$label} *= 0.01;
+        my $transition_scores = {};
+        foreach my $possible_label ( keys %$emission_scores ) {
+            $transition_scores->{$possible_label} =
+                $self->model->get_transition_score(
+                $possible_label, $previous_label
+                );
         }
 
-        # fall back to unigram distribution for transitions
-        # TODO: smoothing of bigram, unigram and uniform distros for transitions
-        # (this fallback should then become obsolete)
-        $possible_labels = $self->get_possible_labels_internal(
-            $emission_probs,
-            $blind_probs,
-            $previous_label_prob,
+        my $possible_labels = $self->get_possible_labels_internal(
+            $emission_scores,
+            $transition_scores,
+            $previous_label_score,
         );
 
         if ( scalar( keys %$possible_labels ) > 0 ) {
             return $possible_labels;
         } else {
-            warn "Based on the training data, no possible label was found"
-                . " for an edge. This usually means that either"
-                . " your training data are not big enough or that"
-                . " the set of features you are using"
-                . " is not well constructed - either it is too small"
-                . " or it lacks features that would be general enough"
-                . " to cover all possible sentences."
-                . " Using blind emission probabilities instead.\n"
-                . " get_possible_labels ($edge, $previous_label,"
-                . " $previous_label_prob ) \n"
-                . $edge->sentence->id
-                . ': '
-                . $edge->parent->fields->[1]
-                . " -> "
-                . $edge->child->fields->[1]
-                . "\n";
 
-            # TODO: these are more or less probabilities, which might
-            # be unappropriate for some of the algorithms -> recompute somehow;
-            # also they do contain the SEQUENCE_BOUNDARY_LABEL prob
+            # no possible states generated -> backoff
+            my $blind_scores = $self->model->unigrams;
 
+            # TODO: smoothing (now a very stupid way is used
+            # just to lower the scores below the unblind scores)
+            foreach my $label ( keys %$blind_scores ) {
+                $blind_scores->{$label} *= 0.01;
+            }
+
+            # fall back to unigram distribution for transitions
+            # TODO: smoothing of bigram, unigram and uniform distros
+            # for transitions
+            # (this fallback should then become obsolete)
             $possible_labels = $self->get_possible_labels_internal(
-                $blind_probs,
-                $blind_probs,
-                $previous_label_prob,
+                $emission_scores,
+                $blind_scores,
+                $previous_label_score,
             );
 
             if ( scalar( keys %$possible_labels ) > 0 ) {
                 return $possible_labels;
             } else {
-                warn "no possible labels generated, no fallback helped:"
-                    . " probably there is a bug in the code!"
+                warn "Based on the training data, no possible label was found"
+                    . " for an edge. This usually means that either"
+                    . " your training data are not big enough or that"
+                    . " the set of features you are using"
+                    . " is not well constructed - either it is too small"
+                    . " or it lacks features that would be general enough"
+                    . " to cover all possible sentences."
+                    . " Using blind emission probabilities instead.\n"
                     . " get_possible_labels ($edge, $previous_label,"
-                    . " $previous_label_prob ) "
+                    . " $previous_label_score ) \n"
+                    . $edge->sentence->id
+                    . ': '
                     . $edge->parent->fields->[1]
                     . " -> "
-                    . $edge->child->fields->[1];
-                return {};
+                    . $edge->child->fields->[1]
+                    . "\n";
+
+                # TODO: these are more or less probabilities, which might
+                # be unappropriate for some of the
+                # algorithms -> recompute somehow;
+                # also they do contain the SEQUENCE_BOUNDARY_LABEL prob
+
+                $possible_labels = $self->get_possible_labels_internal(
+                    $blind_scores,
+                    $blind_scores,
+                    $previous_label_score,
+                );
+
+                if ( scalar( keys %$possible_labels ) > 0 ) {
+                    return $possible_labels;
+                } else {
+                    warn "no possible labels generated, no fallback helped:"
+                        . " probably there is a bug in the code!"
+                        . " get_possible_labels ($edge, $previous_label,"
+                        . " $previous_label_score ) "
+                        . $edge->parent->fields->[1]
+                        . " -> "
+                        . $edge->child->fields->[1];
+                    return {};
+                }
             }
         }
     }
 }
 
 sub get_possible_labels_internal {
-    my ( $self, $emission_probs, $transition_probs, $last_state_prob ) = @_;
+    my ( $self, $emission_scores, $transition_scores, $last_state_score ) = @_;
 
-    # still, $emission_probs are often not really probs but scores
+    # $emission_scores are often not really probs but scores
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ( $ALGORITHM == 8 ) {
+        die "Labeller->get_possible_labels_internal not implemented"
+            . " for algorithm no $ALGORITHM!";
+    }
 
     my %possible_labels;
-    foreach my $possible_label ( keys %$emission_probs ) {
-        my $emission_prob   = $emission_probs->{$possible_label};
-        my $transition_prob = $transition_probs->{$possible_label};
-        if ( !defined $transition_prob ) {
+    foreach my $possible_label ( keys %$emission_scores ) {
+        my $emission_score   = $emission_scores->{$possible_label};
+        my $transition_score = $transition_scores->{$possible_label};
+        if ( !defined $transition_score ) {
             next;
         }
 
         my $ALGORITHM = $self->config->labeller_algorithm;
 
-        my $possible_state_prob;
+        my $possible_state_score;
         if ( $ALGORITHM == 2 ) {
-            $possible_state_prob
-                = $last_state_prob + $emission_prob * $transition_prob;
+            $possible_state_score
+                = $last_state_score + $emission_score * $transition_score;
         } else {
-            $possible_state_prob
-                = $last_state_prob * $emission_prob * $transition_prob;
+            $possible_state_score
+                = $last_state_score * $emission_score * $transition_score;
         }
 
-        # TODO: also try not using $transition_prob at all,
-        # i.e. always using $transition_prob = 1
+        # TODO: also try not using $transition_score at all,
+        # i.e. always using $transition_score = 1
 
         # if no state like that yet or better than current max,
         # use this new state
-        if ($possible_state_prob > 0
+        if ($possible_state_score > 0
             && (!$possible_labels{$possible_label}
-                || $possible_labels{$possible_label}->{'prob'}
-                < $possible_state_prob
+                || $possible_labels{$possible_label}->{'score'}
+                < $possible_state_score
             )
             )
         {
-            $possible_labels{$possible_label} = $possible_state_prob;
+            $possible_labels{$possible_label} = $possible_state_score;
         }
 
-        # else we already have a state with the same key but higher prob
+        # else we already have a state with the same key but higher score
     }    # end foreach $possible_label
 
     return \%possible_labels;
