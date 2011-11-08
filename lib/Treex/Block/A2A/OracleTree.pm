@@ -11,11 +11,11 @@ has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
 
 my %use_tree = ();
 
-#must pass into this class a string 'trees' with the format parser#weight-parser#weight  for as many parsers as you want used out of the a-trees
+#must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
 
 sub BUILD {
   my ($self) = @_;
-  my @trees_to_process = split( "-", $self->trees );
+  my @trees_to_process = split( "~", $self->trees );
   
   #print "Trees used in Oracle=".$self->trees;
   foreach my $tree (@trees_to_process) {
