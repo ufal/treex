@@ -347,27 +347,24 @@ foreach my $id ( keys %training ) {
   $fcm->do_clustering( $num_cluster, $num_iter );
   
   # show clustering result
-  foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
-    printf "%s\t%s\n", $id,
-    join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
-  }
+ # foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
+ #   printf "%s\t%s\n", $id,
+ #   join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
+ # }
   
   # show cluster centroids
-  foreach my $centroid ( @{ $fcm->centroids } ) {
-    print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
-    keys %{$centroid};
-    print "\n";
-  }
+  #foreach my $centroid ( @{ $fcm->centroids } ) {
+  #  print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
+  #  keys %{$centroid};
+  #  print "\n";
+  #}
 }
 
-sub get_memberships{
+sub get_clusters{
 
-  return $fcm->memberships;
+  return $fcm;
 }
-sub get_centroids{
-  
-  return $fcm->centroidss;
-}
+
 							 1;
 							 
 							 __END__
