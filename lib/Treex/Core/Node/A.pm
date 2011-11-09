@@ -344,6 +344,40 @@ Treex::Core::Node::A
 
 a-layer (analytical) node
 
+=head1 ATTRIBUTES
+
+For each attribute (e.g. C<tag>), there is
+a getter method (C<< my $tag = $anode->tag(); >>)
+and a setter method (C<< $anode->set_tag('NN'); >>).
+
+=head2 Original w-layer and m-layer attributes
+
+=over
+
+=item form
+
+=item lemma
+
+=item tag
+
+=item no_space_after
+
+=back
+
+=head2 Original a-layer attributes
+
+=over
+
+=item afun
+
+=item is_parenthesis_root
+
+=item edge_to_collapse
+
+=item is_auxiliary
+
+=back
+
 =head1 METHODS
 
 =head2 Links from a-trees to phrase-structure trees
