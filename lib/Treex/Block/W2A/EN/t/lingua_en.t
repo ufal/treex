@@ -29,19 +29,20 @@ my $doc      = Treex::Core::Document->new();
 my $bundle   = $doc->create_bundle();
 my $zone     = $bundle->create_zone('en');
 my $sentence = q(How are you?);
+my $expected_tags = 'WRB VBP PRP .';
 note("Using testing sentence: $sentence");
 $zone->set_sentence($sentence);
 $block->process_zone($zone);
 ok( $zone->has_atree(), q(There's a_tree in result) );
 my @children = $zone->get_atree()->get_children();
-foreach my $child (@children) {
-    ok($child->tag, q(There's tag in each child));
-}
-cmp_ok( scalar @children, '==', 4, q(There are 4 tokens in s_tree) );
+cmp_ok( scalar @children, '==', 4, q(There are 4 tokens in the a_tree) );
 my $you_node = $children[2];
-ok( $you_node->no_space_after(), q('are' has no_space_after) );
+ok( $you_node->no_space_after(), q('you' has no_space_after) );
 my $qmark_node = $children[3];
 ok( !$qmark_node->no_space_after(), q('?' has NOT no_space_after) );
+
+my $tags = join ' ', map {$_->tag} @children;
+is($tags, $expected_tags, 'Correct tags assigned');
 
 my $line = <DATA>;
 
