@@ -60,8 +60,13 @@ sub process_tnode {
         if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
             $gender = 'fem';
         }
-        if ( grep { $_ =~ /^V.N/ } @anode_tags ) {
+        elsif ( grep { $_ =~ /^V.N/ } @anode_tags ) {
             $gender = 'neut';
+        }
+        # evidence from the data - gender of the generated perspron can be anything, 
+        # if the verb is in present tense and 1st or 2nd person
+        elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
+            $gender = 'nr';
         }
         else {
             $gender = 'anim';
