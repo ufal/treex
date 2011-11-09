@@ -13,6 +13,10 @@ my $ENSEMBLE;
 my %use_tree = ();
 my $cluster;
 my $fcm;
+my %cluster1;
+my %cluster2;
+my %cluster3;
+my %pos_weights;
 #must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
 sub BUILD {
   my ($self) = @_;
@@ -26,19 +30,38 @@ sub BUILD {
     if($self->use_pos eq "true"){
     $cluster = Treex::Tool::ML::Clustering::C_Cluster->new(); 
     $fcm=$cluster->get_clusters();    
-    print @{$fcm->centroids};
-    print "\n";
+   my @hashes= @{$fcm->centroids};
+    %cluster1=%{$hashes[0]};
+    %cluster2=%{$hashes[1]};
+    %cluster3=%{$hashes[2]};
+  
+  #  %pos_weights=%{ $fcm->memberships };
+  #  my @nnp= @{$pos_weights{"NNP"}};
+  #  print "$nnp[0]\t$nnp[1]\t$nnp[2]\n";
+    
+    #?Organize all the weighting values per POS into a hash
+    while( my ($k, $v) = each %{ $fcm->memberships } ) {
+	print "key: $k, value: $v.\n";
+	my @weights=@{$v};
+	#print @weights[0]."\n";
+	$pos_weights{$k}{"0"}=@weights[0];
+	$pos_weights{$k}{1}=@weights[1];
+	$pos_weights{$k}{2}=@weights[2];
+	
+	#print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
+         }
+      
     # show cluster centroids
-    foreach my $centroid ( @{ $fcm->centroids } ) {
-      print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
-      keys %{$centroid};
-      print "\n";
-    }    
+   # foreach my $centroid ( @{ $fcm->centroids } ) {
+   #   print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
+   #   keys %{$centroid};
+   #   print "\n";
+   # }    
     # show clustering result
-    foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
-      printf "%s\t%s\n", $id,
-      join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
-    }
+ #  foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
+ #     printf "%s\t%s\n", $id,
+ #     join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
+ #   }
     
   }
   if ( !$ENSEMBLE ) {
@@ -49,7 +72,8 @@ sub BUILD {
 
 #this method will process each atree passed to it and add its edges to our edge matrix
 sub process_tree_pos {
-  my ( $root, $weight_tree ) = @_;
+  my ( $root, $weight_tree, $model ) = @_;
+  #model=selecter. We want to get the  weights from pos_weights. Then apply those weights to the 3 clusters which individual weight the parsers.
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
 
@@ -77,7 +101,7 @@ sub process_bundle {
    if ( exists $use_tree{ $zone->get_atree()->selector } ) {
       if($self->use_pos eq "true"){
 	process_tree_pos( $zone->get_atree(),
-		      $use_tree{ $zone->get_atree()->selector } );
+			  $use_tree{ $zone->get_atree()->selector },$zone->get_atree()->selector );
       }
       else{
       process_tree( $zone->get_atree(),
