@@ -20,8 +20,8 @@ has _form_corrections => (
     isa     => 'HashRef[Str]',
     default => sub {
         {
-            q(``)     => q("),
-                q('') => q("),
+            q(``) => q("),
+            q('') => q("),
         }
     },
     documentation => q{Possible changes in forms done by tagger},
@@ -45,6 +45,7 @@ sub _revert_form {    #because Lingua::EN::Tagger changes some forms to another,
 sub _correct_lingua_tag {    # substitution according to http://search.cpan.org/src/ACOBURN/Lingua-EN-Tagger-0.13/README
                              # puvodni tagset je na http://www.computing.dcu.ie/~acahill/tagset.html
     my ( $self, $linguatag, $wordform ) = @_;
+    $linguatag = uc $linguatag; # newer versions of Lingua::EN::Tagger use lowercased tags
     given ($linguatag) {
         when ('DET') {
             return 'DT';
