@@ -6,11 +6,13 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ( $self, $anode ) = @_;
     if ( $anode->tag =~ /^V/ ) {
-        foreach my $child ( $anode->get_echildren() ) {
-            if ( $child->afun eq 'Obj' ) {
-                $child->shift_before_node($anode);
-            }
+        foreach my $right_child ( $anode->get_children({following_only=>1}) ) {
+             $right_child->shift_before_node($anode);
         }
+        foreach my $adverb ( grep {$_->afun eq 'Adv'} $anode->get_children({ordered=>1}) ) {
+             $adverb->shift_before_node($anode);
+        }
+
     }
     return;
 }
