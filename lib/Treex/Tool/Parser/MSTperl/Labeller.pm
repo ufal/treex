@@ -420,7 +420,8 @@ sub get_possible_labels {
         } else {
 
             # no possible states generated -> backoff
-            my $blind_scores = $self->model->unigrams;
+            my %unigrams_copy = %{$self->model->unigrams};
+            my $blind_scores = \%unigrams_copy;
 
             # TODO: smoothing (now a very stupid way is used
             # just to lower the scores below the unblind scores)
@@ -478,7 +479,8 @@ sub get_possible_labels {
                         . " $previous_label_score ) "
                         . $edge->parent->fields->[1]
                         . " -> "
-                        . $edge->child->fields->[1];
+                        . $edge->child->fields->[1]
+                        . "\n";
                     return {};
                 }
             }

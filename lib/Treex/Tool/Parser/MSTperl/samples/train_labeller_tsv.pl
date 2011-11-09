@@ -11,14 +11,18 @@ use Treex::Tool::Parser::MSTperl::Config;
 use Treex::Tool::Parser::MSTperl::Reader;
 use Treex::Tool::Parser::MSTperl::TrainerLabelling;
 
-my ( $train_file, $model_file, $config_file, $save_tsv, $algorithm ) = @ARGV;
+my ( $train_file, $model_file, $config_file, $save_tsv, $algorithm, $debuglevel ) = @ARGV;
 
 if (!defined $algorithm) {
     $algorithm = 0;
 }
+if (!defined $debuglevel) {
+    $debuglevel = 1;
+}
 my $config = Treex::Tool::Parser::MSTperl::Config->new(
     config_file => $config_file,
     labeller_algorithm => $algorithm,
+    DEBUG => $debuglevel,
 );
 
 my $reader = Treex::Tool::Parser::MSTperl::Reader->new(
