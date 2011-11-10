@@ -65,7 +65,7 @@ sub get_ewn_group_lemmas {
 
 
 sub BUILD {
-    %rcp_lemma_cnt = get_rcp_verb_lemmas($rcp_lemmas_path);
+    %rcp_lemma_cnt = get_rcp_verb_lemma_functor($rcp_lemmas_path);
     @group_lemmas = get_ewn_group_lemmas($ewn_path);
 }
 
