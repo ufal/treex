@@ -118,19 +118,23 @@ sub _detect_formeme2 {
         # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
         # TODO -- fix "hodně prodavaček je levých" (genitive!)
         elsif ( $parent->syntpos eq 'v' ) {
-            # verbal complements (required by valency) -- exclude demonstrative and relative pronouns
-            if ( $node->tag !~ /^P[D4]/ and Treex::Tool::Lexicon::CS::AdjectivalComplements::requires( $parent->t_lemma, $node->case ) ){
+            # exclude reflexive passive markers
+            if ( $node->afun eq 'AuxR' ){
+                $formeme = 'drop';
+            }
+            # verbal complements (required by valency) -- exclude subjects, demonstrative and relative pronouns
+            elsif ( $node->tag !~ /^P[D4]/ and $node->afun ne 'Sb' 
+                    and Treex::Tool::Lexicon::CS::AdjectivalComplements::requires( $parent->t_lemma, $node->case ) ){
                 $formeme = 'adj:' . $node->case;
             }
             # complement (verbal attribute) -- only adjectives can be there
-            elsif ( $node->a->afun =~ /^Atv/ || ( $parent->lemma ne 'být' && $node->tag =~ /^(AC|AO|Vs)/ ) ){
+            elsif ( $node->afun =~ /^Atv/ || $node->tag =~ /^(AC|AO|Vs)/ ){
                 # most complements are not declinable -> pretend them to be nominative (they mostly refer to the subject)
                 $formeme = 'adj:' . ( $node->case || 1 );
             }
             # normal case: substantival
             else {
-                # "připraven", "schopen", "(ne)svůj", "tentam" -- not declinable, but always under "být" (Ac,AO,Vs)
-                $formeme = 'n:' . ( $node->case || 1 );
+                $formeme = 'n:' . ( $node->case || 'X' );
             }
         }
         # numerals in a non-attributive position (the ones hanging under verbs have been treated as verbal complements)
