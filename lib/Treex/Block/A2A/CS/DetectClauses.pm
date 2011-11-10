@@ -35,11 +35,11 @@ sub add_compound_verbs {
     }
     ## compound verbs
     foreach my $child ( grep { $_->clause_number } @children ) {
-        my @parent = ($node);
-        next if not @parent or not $parent[0]->get_parent;
-        if ( $parent[0]->afun eq 'Coord' and not $child->is_member ) {
-            push @parent, grep { $_->is_member and not $_->clause_number } $parent[0]->get_children;
-        }
+        next if not $node or not $node->get_parent;
+        my @parent = $child->get_eparents ( { ordered=>1 } );
+        #if ( $parent[0]->afun eq 'Coord' and not $child->is_member ) {
+        #    push @parent, grep { $_->is_member and not $_->clause_number } $parent[0]->get_children;
+        #}
         my $is_verb   = $child->tag =~ /^V[Bpf]/;
         foreach my $parent (@parent) {
             if (    $parent
@@ -60,6 +60,7 @@ sub add_compound_verbs {
                 }
                 else {
                     $child->set_clause_number( $parent->clause_number );
+                    last;
                 }
             }
         }
@@ -158,13 +159,12 @@ sub _is_boundary {
 sub complete_clauses {
     my ( $self, $node, $copy_from ) = @_;
 
-    #     $copy_from = $node->clause_number ? $node : $copy_from;
 
     my @children = $node->get_children( { ordered => 1 } );
 
     foreach my $child (@children){
         if ( not $child->clause_number ) {
-            #my $copy_from = $copy_from;
+            
             if ( $node->tag and ( $node->tag =~ /^J\^/ or $node->afun =~ /Coord/ ) ) {
                 
                 my @right_siblings = grep {
@@ -198,10 +198,8 @@ sub complete_clauses {
                 }
             }
             elsif ( $node->tag and ( $node->lemma =~ /^být/ and $node->afun =~ /Apos/ ) ) {
-                print {*STDERR} "DEBUG: jako_je Apos\n"; 
                 my $first_child = $node->get_children( {first_only => 1} );
                 $copy_from = $node unless $first_child->id eq $child->id;
-                #$copy_from = $node;
             }
             else {
               $copy_from = $node; #copy from parent; 
@@ -270,6 +268,7 @@ sub resolve_boundaries {
     my ( $self, $root ) = @_;
     my @ordered_nodes   = $root->get_descendants( { ordered => 1 } );
     my $last_clause     = 0;
+    my @last_boundaries = ();
     foreach my $node (@ordered_nodes) {
         if ( _is_boundary($node) ) {
             $node->set_clause_number(undef);  
@@ -278,7 +277,8 @@ sub resolve_boundaries {
     while (@ordered_nodes) {
         my $node = shift @ordered_nodes;
         if ( $node->clause_number) {
-            $last_clause = $node->clause_number;  
+            $last_clause = $node->clause_number;
+            @last_boundaries = ();
         }
         else {
             my $next_clause = 0;
@@ -286,7 +286,13 @@ sub resolve_boundaries {
             my @next_child  = grep { $_->clause_number } $node->get_children( { following_only => 1 });
             my $parent = $node->get_parent;
             if ( @prev_child and @next_child and ( $prev_child[-1]->clause_number || '' ) eq ( $next_child[0]->clause_number || '' ) ) {
-                $node->set_clause_number( $next_child[0]->clause_number );
+                if ( @last_boundaries and $last_clause == $next_child[0]->clause_number ){
+                    $_->set_clause_number($next_child[0]->clause_number) for @last_boundaries;
+                }
+                if ( @last_boundaries or $last_clause == $next_child[0]->clause_number ) {
+                    $node->set_clause_number( $next_child[0]->clause_number );
+                }
+                $last_clause = $next_child[0]->clause_number;
                 next;
             }
             foreach my $next_node (@ordered_nodes) {
@@ -299,10 +305,15 @@ sub resolve_boundaries {
                 $node->set_clause_number($last_clause);
             }
             elsif ( ($next_clause == 0 or $last_clause == 0 ) and _is_boundary($node) < 2 ) {
+                if ( @last_boundaries and $last_clause == ($next_clause || $last_clause) ){
+                    $_->set_clause_number( $next_clause || $last_clause ) for @last_boundaries;
+                }
                 $node->set_clause_number( $next_clause || $last_clause );
+                $last_clause = $next_clause || $last_clause;
             }
             else {
                 $node->set_clause_number(0);
+                push @last_boundaries, $node;
             }
         }
     }
