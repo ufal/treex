@@ -5,16 +5,19 @@ use warnings;
 use utf8;
 
 # Czech verbs that require an adjectival complement in nominative case
-my $adj1 = "cítit_se|cítívat_se|přijít|zůstávat|zůstat|chodit|narodit_se|ponechávat|ponechat|nechat|nechávat|uchovávat_se|
-uchovat_se|vypadat|ukazovat_se|ukázat_se|jevit_se|připadat|připadávat|zdát_se|zdávat_se|prokázat_se|prokazovatse";
+my $adj1 = "být|cítit_se|cítívat_se|chodit|chodívat|jevit_se|narodit_se|nechat|nechávat|ponechávat|ponechat|prokázat_se|
+prokazovat_se|přijít|připadat|připadávat|uchovávat_se|uchovat_se|ukazovat_se|ukázat_se|vypadat|zdát_se|zdávat_se|zůstat|
+zůstávat";
 
 # Czech verbs that require an adjectival complement in accusative case
-my $adj4 = "mít|nahlížet|nahlédnout|nechat|nechávat|představovat_si|představit_si|přidržovat|přidržet|uchovávat|uchovat|vidět|
+
+my $adj4 = "mít|mívat|nechat|nechávat|představovat_si|představit_si|přidržovat|přidržet|uchovávat|uchovat|vidět|vídat|
 zachovávat|zachovat|zanechávat|zanechat|udržovat|udržet";
 
 # Czech verbs that require an adjectival complement in instrumental case
-my $adj7 = "ukazovat_se|ukázat_se|jevit_se|připadat|připadávat|zdát_se|zdávat_se|prokázat_se|prokazovat_se|udržovat|udržet|
-uznat|uznávat";
+my $adj7 = "být|cítit_se|cítívat_se|činit|činívat|dělat|dělávat|jevit_se|prokázat_se|prokazovat_se|přijít|připadat|připadávat|
+shledávat|shledat|stávat_se|stát_se|učinit|udělat|udržovat|udržet|ukazovat_se|ukázat_se|uznat|uznávat|zdát_se|zdávat_se|
+zůstávat|zůstat";
 
 sub requires {
 
