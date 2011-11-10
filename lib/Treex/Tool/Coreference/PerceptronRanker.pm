@@ -7,6 +7,13 @@ use Treex::Tool::Coreference::ValueTransformer;
 
 with 'Treex::Tool::Coreference::Ranker';
 
+has 'model_path' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Str',
+
+    documentation => 'path to the trained model',
+);
 
 # TODO this should be a separate class and a feature transformer should be a part of it
 has '_model' => (
@@ -82,6 +89,9 @@ sub _build_model {
 sub rank {
     my ($self, $instances) = @_;
 
+# DEBUG
+#    my ($self, $instances, $debug) = @_;
+
     my $cand_weights;
 
     foreach my $id (keys %{$instances}) {
@@ -111,7 +121,7 @@ sub rank {
             $cand_weight += $feat_weight;
 
 # DEBUG
-#if ($id eq 't-ln95048-055-p2s2w10') {
+#if ($debug && ($id eq 't_tree-cs_src-s15-n1119')) {
 #    print "$fname = $fvalue : $feat_weight\n"
 #}
         }

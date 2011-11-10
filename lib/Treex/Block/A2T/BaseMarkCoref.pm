@@ -85,6 +85,12 @@ sub process_tnode {
 
         my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
+# DEBUG
+#        my $debug = 0;
+#        if ($t_node->id eq "t_tree-cs_src-s15-n1119") {
+#            $debug = 1;
+#        }
+
         # instances is a reference to a hash in the form { id => instance }
         my $instances = $self->_feature_extractor->create_instances( $t_node, $ante_cands );
 
@@ -93,6 +99,9 @@ sub process_tnode {
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
         my $antec  = $ranker->pick_winner( $instances );
+
+# DEBUG
+#        my $antec  = $ranker->pick_winner( $instances, $debug );
 
         # DEBUG
         #print "ANAPH: " . $t_node->id . "; ";

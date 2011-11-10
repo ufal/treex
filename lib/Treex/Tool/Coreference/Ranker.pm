@@ -2,22 +2,22 @@ package Treex::Tool::Coreference::Ranker;
 
 use Moose::Role;
 
-has 'model_path' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Str',
-
-    documentation => 'path to the trained model',
-);
-
-requires '_build_model';
 requires 'rank';
 
 
 sub pick_winner {
-    my ($self, $instances) = @_;
+    my ($self, $instances, $debug) = @_;
 
     my $cand_weights = $self->rank( $instances );
+    # DEBUG
+    #my $cand_weights = $self->rank( $instances, $debug );
+    
+    # DEBUG
+    #if ($debug) {
+    #    print STDERR join "\n", (map {$_ . " : " . $cand_weights->{$_}} keys %{$cand_weights});
+    #    print STDERR "\n";
+    #}
+    
     my @cands = sort {$cand_weights->{$b} <=> $cand_weights->{$a}} 
         keys %{$cand_weights};
     return $cands[0];
