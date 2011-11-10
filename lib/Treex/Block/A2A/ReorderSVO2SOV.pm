@@ -6,11 +6,22 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ( $self, $anode ) = @_;
     if ( $anode->tag =~ /^V/ ) {
+
+        # Verbs go to the end
+        #$anode->shift_after_subtree( $anode, { without_children => 1 } );
         foreach my $right_child ( $anode->get_children({following_only=>1}) ) {
              $right_child->shift_before_node($anode);
         }
-        foreach my $adverb ( grep {$_->afun eq 'Adv'} $anode->get_children({ordered=>1}) ) {
-             $adverb->shift_before_node($anode);
+
+        # Adverbs go just before verbs
+        my @children = $anode->get_children( { ordered => 1 } );
+        foreach my $adverb ( grep { $_->afun eq 'Adv' }  @children ) {
+            $adverb->shift_before_node($anode);
+        }
+        
+        # Auxiliary verbs go after the main verb
+        foreach my $auxv ( grep { $_->afun eq 'AuxV' } @children ) {
+            $auxv->shift_after_node($anode);
         }
 
     }
