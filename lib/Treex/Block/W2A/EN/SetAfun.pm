@@ -20,8 +20,10 @@ sub process_atree {
 
 sub get_afun_for_subroot {
     my ($subroot) = @_;
+    
     my $afun = $subroot->afun;
     return $afun if $afun;
+    
     return 'AuxK' if $subroot->form =~ /^[.?!]$/;
     return 'Pred' if $subroot->tag  =~ /^(V|MD)/;
     return 'ExD';
@@ -84,35 +86,48 @@ sub find_subjects_of {
         grep { $_->tag =~ /^(NN|PRP|WP|CD$|\$)/ }
         map { is_aux_or_modal_verb($_) ? $_->get_children() : $_ }
         @left_echildren;
-
-    # Most common case: just one noun before verb -> subject
-    return $left_nouns[0] if @left_nouns == 1;
-
-    # More than 1 noun before verb:
-    if ( @left_nouns > 1 ) {
-
-        # It can be a coordination "Peter and Paul went there."
-        my @coordinated = grep { $_->get_parent()->is_coap_root() } @left_nouns;
-        return @coordinated if @coordinated;
-
-        # Otherwise try the nearest noun before verb "This summer, it was ..."
-        return $left_nouns[-1];
-    }
+        
+    my @subjects = _select_subjects(@left_nouns);
+    return @subjects if @subjects;        
 
     # No left nouns found, so get also some noun-like children -
     # "which" or "that" in relative clauses can be also subjects.
-    @left_nouns = grep { $_->tag =~ /^(WDT|DT)/ } @left_echildren;
-    return $left_nouns[0]  if @left_nouns == 1;
+    # exclude 'the' and 'a/an' since they never can be subjects
+    @left_nouns = grep { $_->tag =~ /^(WDT|DT)/ && $_->form !~ m/^(an?|the)$/i } @left_echildren;
+    
     return $left_nouns[-1] if @left_nouns;
 
-    # "'It is reveresed', said Peter."
+    # "'It is reversed', said Peter."
     if ( any { $_->tag =~ /^(V|MD)/ && $_->get_children() } @left_echildren ) {
         my $noun = first { $_->tag =~ $NOUN_REGEX } @echildren;
         return $noun if $noun;
     }
+    
+    @left_nouns = grep { $_->tag =~ /^JJ/ } @left_echildren;    
+    return _select_subjects(@left_nouns);
 
+}
+
+
+sub _select_subjects {
+    my (@nouns) = @_;
+
+    # Most common case: just one noun before verb -> subject
+    return $nouns[0] if @nouns == 1;
+
+    # More than 1 noun before verb:
+    if ( @nouns > 1 ) {
+
+        # It can be a coordination "Peter and Paul went there."
+        my @coordinated = grep { $_->get_parent()->is_coap_root() } @nouns;
+        return @coordinated if @coordinated;
+
+        # Otherwise try the nearest noun before verb "This summer, it was ..."
+        return $nouns[-1];
+    }
     return;
 }
+
 
 # Is $node one of auxiliary verbs: be, do, will, have?
 # This subroutine is called only on nodes that precede their eff. parent.
@@ -170,7 +185,7 @@ sub get_afun {
     my $form = $node->form;
     return 'AuxK' if $form =~ /[?!]/;
     return 'AuxX' if $form eq ',';
-    return 'AuxG' if $form =~ /^[.()[\]{}]$/;    # TODO add :-/... (that's not an emoticon)
+    return 'AuxG' if $form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/; # any punctuation, including ``, -LRB-, -RRB-
 
     # Articles a, an, the
     my $lemma = $node->lemma;
@@ -268,7 +283,7 @@ __END__
 Fill the afun attribute by several heuristic rules.
 Before applying this block, afun values C<Coord> (coordinating conjunction),
 C<AuxC> (subordination conjunction) and C<AuxP> (preposition) must be already filled.
-This block doesn't change already filled afun values.
+This block doesn't change already filled afun values, except for the C<Sb> afun.
 
 =back
 
