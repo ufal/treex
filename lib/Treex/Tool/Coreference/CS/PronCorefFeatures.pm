@@ -414,7 +414,6 @@ sub _in_cnk_collocation {
 sub join_feats {
     my ($f1, $f2) = @_;
 
-# TODO adjustment to accord with Linh et al. (2009)
     if (!defined $f1) {
         $f1 = "";
     }
@@ -431,7 +430,6 @@ sub join_feats {
 sub agree_feats {
     my ($f1, $f2) = @_;
 
-# TODO adjustment to accord with Linh et al. (2009)
     if (!defined $f1 || !defined $f2) {
         if (!defined $f1 && !defined $f2) {
             return $b_true;
