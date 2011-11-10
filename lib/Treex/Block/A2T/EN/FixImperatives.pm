@@ -11,7 +11,8 @@ sub process_ttree {
 
         next if ( $tnode->sentmod || '' ) eq 'inter';
         next if not $anode or $anode->tag ne "VB";
-        next if grep { $_->tag     eq "MD" } $tnode->get_aux_anodes;
+        # rule out expressions with modals and auxiliaries or infinitives 
+        next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
         next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
 
         $tnode->set_gram_verbmod('imp');
