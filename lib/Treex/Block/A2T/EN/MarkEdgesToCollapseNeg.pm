@@ -12,6 +12,10 @@ sub process_anode {
     # Skip nodes that are already marked to be collapsed to parent.
     # Without this check we could rarely create a t-node with no lex a-node.
     return if $a_node->edge_to_collapse;
+    # Skip rare parser errors with elipsis ( "..., not to mention X, ..." ), where "not" is marked as
+    # a coordination head 
+    return if ($a_node->is_coap_root);
+    
     my ($eparent) = $a_node->get_eparents() or next;
 
     my $p_tag = $eparent->tag || '_root';
