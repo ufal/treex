@@ -16,7 +16,7 @@ sub process_bundle {
 
     if ( $en !~ /^\s*[0-9]+\s*[\.)]?\s*$/ && $cs !~ /^\s*[0-9]+\s*[\.)]?\s*$/ ) {
         my $min_letter_count = min( ( $en =~ s/p{L}//g ), ( $cs =~ s/p{L}//g ) );
-        $self->add_feature( $bundle, quantize_given_bounds( $min_letter_count, @bounds ) );
+        $self->add_feature( $bundle, $self->quantize_given_bounds( $min_letter_count, @bounds ) );
     }
 
     return 1;
