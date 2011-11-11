@@ -22,6 +22,17 @@ sub add_edge {
   }
 }
 
+sub multiply_edge {
+  my ( $self, $node, $parent, $weight ) = @_;
+  #print "$weight\n";
+  if ( exists $edges{$node}{$parent} ) {
+    $edges{$node}{$parent} = $weight+($edges{$node}{$parent} * $weight);
+  }
+  else {
+    $edges{$node}{$parent} = $weight;
+  }
+}
+
 sub clear_edges {
   my ($self) = @_;
   
