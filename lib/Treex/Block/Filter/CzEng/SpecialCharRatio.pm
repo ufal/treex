@@ -5,7 +5,7 @@ use List::Util qw( min max sum );
 
 extends 'Treex::Block::Filter::CzEng::Common';
 
-my @watched = qw# . | ! / ( ) { } [ ] ? ; : - #;
+my @watched = qw# . | ! / ( ) { } [ ] ? ; : - " #;
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
