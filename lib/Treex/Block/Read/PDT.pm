@@ -8,7 +8,7 @@ use Treex::PML::Instance;
 
 has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
-has '+_file_suffix' => ( default => '\.[at]\.gz$' );
+has '+_file_suffix' => ( default => '\.[at](\.gz)?$' );
 
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
 
@@ -23,7 +23,10 @@ override '_load_all_files' => sub {
     my %pmldoc;
 
     foreach my $layer ( @{ $self->_layers } ) {
-        my $filename = "${base_filename}.${layer}.gz";
+        my $filename = "${base_filename}.${layer}";
+        if (!-e $filename) {
+            $filename .= ".gz";
+        }
         log_info "Loading $filename";
         $pmldoc{$layer} = $self->_pmldoc_factory->createDocumentFromFile($filename);
     }
