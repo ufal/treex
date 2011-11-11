@@ -14,8 +14,11 @@ my %use_tree = ();
 my $cluster;
 my $fcm;
 my %cluster1;
+my $sumcluster1=0;
 my %cluster2;
+my $sumcluster2=0;
 my %cluster3;
+my $sumcluster3=0;
 my %pos_weights;
 #must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
 sub BUILD {
@@ -35,34 +38,23 @@ sub BUILD {
     %cluster2=%{$hashes[1]};
     %cluster3=%{$hashes[2]};
   
-  #  %pos_weights=%{ $fcm->memberships };
-  #  my @nnp= @{$pos_weights{"NNP"}};
-  #  print "$nnp[0]\t$nnp[1]\t$nnp[2]\n";
-    
+ 
+    while( my ($k, $v) = each %use_tree ) {
+      $sumcluster1+=$cluster1{$k};
+      $sumcluster2+=$cluster2{$k};
+      $sumcluster3+=$cluster3{$k};
+    }
     #?Organize all the weighting values per POS into a hash
     while( my ($k, $v) = each %{ $fcm->memberships } ) {
-	print "key: $k, value: $v.\n";
+	#print "key: $k, value: $v.\n";
 	my @weights=@{$v};
 	#print @weights[0]."\n";
-	$pos_weights{$k}{"0"}=@weights[0];
-	$pos_weights{$k}{1}=@weights[1];
-	$pos_weights{$k}{2}=@weights[2];
+	$pos_weights{$k}{"0"}=$weights[0];
+	$pos_weights{$k}{"1"}=$weights[1];
+	$pos_weights{$k}{"2"}=$weights[2];
 	
 	#print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
          }
-      
-    # show cluster centroids
-   # foreach my $centroid ( @{ $fcm->centroids } ) {
-   #   print join "\t", map { sprintf "%s:%.4f", $_, $centroid->{$_} }
-   #   keys %{$centroid};
-   #   print "\n";
-   # }    
-    # show clustering result
- #  foreach my $id ( sort { $a cmp $b } keys %{ $fcm->memberships } ) {
- #     printf "%s\t%s\n", $id,
- #     join "\t", map { sprintf "%.4f", $_ } @{ $fcm->memberships->{$id} };
- #   }
-    
   }
   if ( !$ENSEMBLE ) {
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
@@ -76,10 +68,17 @@ sub process_tree_pos {
   #model=selecter. We want to get the  weights from pos_weights. Then apply those weights to the 3 clusters which individual weight the parsers.
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
-
   
+  #print  "$model\t".($cluster1{$model}/$sumcluster1)."\n";
+  
+  #print $model."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"0"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"1"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"2"})."\n";
   foreach my $node (@todo) {
-    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
+    #print $node->tag;
+    my $w =(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"0"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"1"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"2"});
+    $w= $w ** 10;
+   # $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );    
+   $ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );    
+   
   }  
 }
 
