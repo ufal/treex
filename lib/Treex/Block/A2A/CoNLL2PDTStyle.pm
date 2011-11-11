@@ -91,6 +91,7 @@ sub convert_tag
         ar::conll ar::conll2007
         bg::conll
         bn::conll
+        ca::conll2009
         cs::conll cs::conll2009
         da::conll
         de::conll de::conll2009
