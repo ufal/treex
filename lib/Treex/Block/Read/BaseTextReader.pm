@@ -2,8 +2,9 @@ package Treex::Block::Read::BaseTextReader;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
-use File::Slurp 9999;
-use PerlIO::gzip;
+#use File::Slurp 9999;
+use Perl6::Slurp;
+use PerlIO::via::gzip;
 
 # By default read from STDIN
 has '+from' => ( default => '-' );
@@ -31,7 +32,7 @@ sub next_filehandle {
         binmode STDIN, $self->encoding;
         return \*STDIN;
     }
-    my $mode = $filename =~ /[.]gz$/ ? '<:gzip:' : '<:';
+    my $mode = $filename =~ /[.]gz$/ ? '<:via(gzip):' : '<:';
     $mode .= $self->encoding;
     open my $FH, $mode, $filename or log_fatal "Can't open $filename: $!";
     return $FH;
@@ -47,7 +48,7 @@ sub next_document_text {
 
     if ( $self->is_one_doc_per_file ) {
         $self->_set_current_fh(undef);
-        return read_file($FH);
+        return slurp($FH);
     }
 
     my $text = '';
