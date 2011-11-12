@@ -137,15 +137,14 @@ sub _OpenValLexicon_En {
     my $vallex_file = $self->_find_vallex($node);
     return unless $vallex_file;
 
-    TrEd::EngValLex::GUI::OpenEditor(
-        {
-            -vallex_file => $vallex_file,
-            -lemma       => $node->attr('t_lemma'),
-            -sempos      => $node->attr('gram/sempos'),
-            -frameid     => $node->attr('val_frame.rf'),
-            -pos         => $a_node->attr('tag')
-        }
-    );
+    my $opts = {
+        -vallex_file => $vallex_file,
+        -lemma       => $node->attr('t_lemma'),
+        -sempos      => $node->attr('gram/sempos'),
+        -frameid     => $node->attr('val_frame.rf')
+    };
+    $opts->{-pos} = $a_node->attr('tag') if $a_node->attr('tag');
+    TrEd::EngValLex::GUI::OpenEditor($opts);
     TredMacro::ChangingFile(0);
     return;
 }
@@ -211,19 +210,18 @@ sub _OpenValFrameList_En {
     my $vallex_file = $self->_find_vallex($node);
     return unless $vallex_file;
 
-    TrEd::EngValLex::GUI::ChooseFrame(
-        {
-            -withdraw    => 1,
-            -vallex_file => $vallex_file,
-            -lemma       => $node->{t_lemma} || undef,
-            -sempos      => $node->attr('gram/sempos') || undef,
-            -lemma_attr  => 't_lemma',
-            -sempos_attr => 'gram/sempos',
-            -frameid     => $node->attr('val_frame.rf'),
-            -assignfunc  => sub { },
-            -pos         => $a_node->attr('tag')
-        }
-    );
+    my $opts = {
+        -withdraw    => 1,
+        -vallex_file => $vallex_file,
+        -lemma       => $node->{t_lemma} || undef,
+        -sempos      => $node->attr('gram/sempos') || undef,
+        -lemma_attr  => 't_lemma',
+        -sempos_attr => 'gram/sempos',
+        -frameid     => $node->attr('val_frame.rf'),
+        -assignfunc  => sub { }
+    };
+    $opts->{-pos} = $a_node->attr('tag') if $a_node->attr('tag');
+    TrEd::EngValLex::GUI::ChooseFrame($opts);
     TredMacro::ChangingFile(0);
 }
 
