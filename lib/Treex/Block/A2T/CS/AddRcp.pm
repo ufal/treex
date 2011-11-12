@@ -3,15 +3,12 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-my $rcp_verb_list_pl = 'podobat_se|lišit_se|odlišovat_se';
+# my $rcp_verb_list_pl = 'podobat_se|lišit_se|odlišovat_se';
 my $rcp_verb_list_without_s = 'dohadovat_se|hádat_se|potkat_se|prát_se|přetahovat_se|sdružit_se|sdružovat_se|vyříkat_si|dohodnout|dohodnout_se|shodnout_se|sejít_se|scházet_se|srazit_se|střetávat_se|střetnout_se|rozcházet_se|utkat_se|utkávat_se|setkat_se|setkávat_se|domlouvat_se|domluvit_se|povídat_si|vystřídat_se|shodovat_se|střídat_se|sloučit_se|sjednotit_se|seznámit_se|vyměnit_si';
-my $rcp_verb_list_has_se = 'potkat';
-my $rcp_verb_list_mezi_pat = 'rozlišit|rozlišovat';
-my $rcp_verb_list_pl_pat = 'sjednocovat|sjednotit|sdružovat|sdružit|porovnávat';
+my $rcp_verb_list_pl_pat = 'sjednocovat|sjednotit|sdružovat|sdružit|porovnat|porovnávat|spojit|spojovat|kombinovat|rozlišit|rozlišovat|oddělit|oddělovat';
 my $rcp_verb_list_has_spolu = 'bavit_se|mluvit|hovořit|diskutovat';
-my $rcp_jine = 'jednat|projednat|projednávat|dojednat|sjednat';
-# my $rcp_jine2 = 'setkat_se|setkávat_se|domlouvat_se|domluvit_se|povídat_si'; # podminka: mnozne cislo + s nekym anim + oba museji byt vedle sebe
-my $rcp_jine3 = 'bavit_se';
+# my $rcp_jine = 'jednat|projednat|projednávat|dojednat|sjednat';
+# my $rcp_jine3 = 'bavit_se';
 
 my $rcp_lemmas_path = "/a/gah/tmp/tectomt/personal/linh/pdt_to_tmt/rcp/data/rcp_verb_lemma_functor.txt";
 my $ewn_path = "/a/gah/tmp/tectomt/personal/linh/common/noun_to_ewn_top_ontology.tsv";
@@ -137,7 +134,7 @@ sub is_pl {
     my ($t_node) = @_;
     return 1 if ( $t_node->get_lex_anode and $t_node->get_lex_anode->tag =~ /^...P/ );
     return 1 if ( grep { $_ eq $t_node->{t_lemma } } @group_lemmas );
-    return 1 if ( $t_node->parent->functor =~ /^(CONJ|CONTRA)$/ );
+    return 1 if ( $t_node->get_parent->functor =~ /^(CONJ|CONTRA)$/ );
     my ($mat) = grep { $_->functor eq "MAT" and not $_->{is_generated} } $t_node->get_echildren( { or_topological => 1 } );
     return (
         $mat and $mat->get_lex_anode and $mat->get_lex_anode->tag =~ /^...P/
@@ -206,6 +203,14 @@ sub rule_PL_PAT {
     return ( $t_node->t_lemma =~ /^($rcp_verb_list_pl_pat)$/ ) ? 1 : 0;
 }
 
+sub rule_HAS_SPOLU {
+    my ($t_node) = @_;
+    return ( 
+        $t_node->t_lemma =~ /^($rcp_verb_list_has_spolu)$/ 
+        and grep { $_->t_lemma eq "společný" } $t_node->get_echildren( { or_topological => 1 } )
+    ) ? 1 : 0;
+}
+
 sub is_rcp_cand {
     my ($t_node) = @_;
     my @rcp_lemmas = keys %rcp_lemma_cnt;
@@ -245,6 +250,33 @@ sub rule_CONJ {
     return 0;
 }
 
+sub get_predict_antec {
+    my ($t_node) = @_;
+    my $antec;
+    my @echildren = $t_node->get_echildren( { or_topological => 1 } );
+    if ( $t_node->{t_lemma} =~ /^($rcp_verb_list_pl_pat)$/ ) {
+        ($antec) = grep { $_->functor eq "PAT" } @echildren;
+    }
+    else {
+        ($antec) = grep { $_->functor eq "ACT" } @echildren;
+    }
+    return $antec;
+}
+
+# Antecedent is in coordination -> get the coordination node, the nearest to the reciprocity verbs
+# e.g. závislost(predicted antec) -> #Comma -> či -> oddělovat(reciprocity verb) => či will be the coordination antec
+sub get_coord_antec {
+    my ($antec, $rcp_verb) = @_;
+    if ( $antec and grep { $_ eq $antec } $rcp_verb->descendants ) {
+        my $antec_par = $antec;
+        while ( $antec_par->get_parent and $antec_par->get_parent ne $rcp_verb ) {
+            $antec_par = $antec_par->get_parent;
+        }
+        return $antec_par if ( $antec_par and ($antec_par->functor || "") =~ /^(APPS|CONJ|DISJ|GRAD)$/ );
+    }
+    return $antec;
+}
+
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     
@@ -280,6 +312,12 @@ sub process_tnode {
         $new_node->set_gram_sempos('n.pron.def.pers');
         $new_node->set_is_generated(1);
         $new_node->shift_before_node($t_node);
+        my $predict_antec = get_predict_antec($t_node);
+        $predict_antec = get_coord_antec($predict_antec, $t_node);
+        if ( $predict_antec ) {
+            $new_node->set_deref_attr( 'coref_gram.rf', [$predict_antec] );
+        }
+#         print $t_node->get_address . "\n";
     }
 }
 
@@ -289,7 +327,9 @@ sub process_tnode {
 
 =item Treex::Block::A2T::CS::AddRcp
 
-Adds reconstructed prodropped nodes with t-lemma #Rcp
+1. Adds reconstructed prodropped nodes with t-lemma #Rcp (reciprocity)
+2. Adds a coreferential link from the newly reconstructed #Rcp node to its antecedent taking coordination into account
+
 
 =back
 
