@@ -208,17 +208,18 @@ sub set_simple_feature {
     # simple parent/child feature
     if ( $simple_feature_code =~ /^([a-zA-Z0-9_]+)$/ ) {
 
-        # child feature
         if ( $simple_feature_code =~ /^([a-z0-9_]+)$/ ) {
+
+            # child feature
             $simple_feature_sub   = \&{feature_child};
             $simple_feature_field = $1;
+        } elsif ( $simple_feature_code =~ /^([A-Z0-9_]+)$/ ) {
 
             # parent feature
-        } elsif ( $simple_feature_code =~ /^([A-Z0-9_]+)$/ ) {
             $simple_feature_sub   = \&{feature_parent};
             $simple_feature_field = lc($1);
         } else {
-            croak "Incorrect simple feature format '$simple_feature_code'. " .
+            die "Incorrect simple feature format '$simple_feature_code'. " .
                 "Use lowercase (" . lc($simple_feature_code) .
                 ") for child node and UPPERCASE (" . uc($simple_feature_code) .
                 ") for parent node.";
@@ -229,46 +230,54 @@ sub set_simple_feature {
 
         $simple_feature_field = $2;
 
-        # first node feature
         if ( $1 eq '1' ) {
+
+            # first node feature
             $simple_feature_sub = \&{feature_first};
+        } elsif ( $1 eq '2' ) {
 
             # second node feature
-        } elsif ( $1 eq '2' ) {
             $simple_feature_sub = \&{feature_second};
         } else {
             croak "Assertion failed!";
         }
 
         # function feature
-    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\([a-z0-9_,]+\)$/ ) {
+    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\([a-z0-9_,]*\)$/ ) {
         my $function_name = $1;
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
 
-        # array function?
         if ( $function_name eq 'between' || $function_name eq 'foreach' ) {
+
+            # array function
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
 
-        # one-arg function feature
-        if ( $simple_feature_code =~ /\(([a-z0-9_]+)\)$/ ) {
+        # set $simple_feature_field
+        if ( $simple_feature_code =~ /$function_name\(\)$/ ) {
+
+            # no-arg function feature
+            $simple_feature_field = [];
+        } elsif ( $simple_feature_code =~ /$function_name\(([a-z0-9_]+)\)$/ ) {
+
+            # one-arg function feature
             $simple_feature_field = $1;
+        } elsif ( $simple_feature_code
+            =~ /$function_name\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
 
             # two-arg function feature
-        } elsif ( $simple_feature_code =~ /\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
             my $simple_feature_field_1 = $1;
             my $simple_feature_field_2 = $2;
             $simple_feature_field =
                 [ $simple_feature_field_1, $simple_feature_field_2 ];
-
         } else {
-            croak "Incorrect simple function feature format " .
+            die "Incorrect simple function feature format " .
                 "'$simple_feature_code'. " .
-                "Only one or two arguments can be used.";
+                "Only zero, one or two arguments can be used.";
         }
     } else {
-        croak "Incorrect simple feature format '$simple_feature_code'.";
+        die "Incorrect simple feature format '$simple_feature_code'.";
     }
 
     # if $simple_feature_field is (a ref to) an array of field names,
@@ -444,24 +453,29 @@ sub get_simple_feature_values_array {
 }
 
 my %simple_feature_sub_references = (
-    'distance'    => \&{feature_distance},
-    'preceding'   => \&{feature_preceding_child},
-    'PRECEDING'   => \&{feature_preceding_parent},
-    '1.preceding' => \&{feature_preceding_first},
-    '2.preceding' => \&{feature_preceding_second},
-    'following'   => \&{feature_following_child},
-    'FOLLOWING'   => \&{feature_following_parent},
-    '1.following' => \&{feature_following_first},
-    '2.following' => \&{feature_following_second},
-    'between'     => \&{feature_between},
-    'foreach'     => \&{feature_foreach},
-    'equals'      => \&{feature_equals},
-    'equalspc'    => \&{feature_equals_pc},
-    'equalspcat'  => \&{feature_equals_pc_at},
-    'isfirst'     => \&{feature_child_is_first_in_sentence},
-    'ISFIRST'     => \&{feature_parent_is_first_in_sentence},
-    'islast'      => \&{feature_child_is_last_in_sentence},
-    'ISLAST'      => \&{feature_parent_is_last_in_sentence},
+    'distance'     => \&{feature_distance},
+    'attdir'       => \&{feature_attachement_direction},
+    'preceding'    => \&{feature_preceding_child},
+    'PRECEDING'    => \&{feature_preceding_parent},
+    '1.preceding'  => \&{feature_preceding_first},
+    '2.preceding'  => \&{feature_preceding_second},
+    'following'    => \&{feature_following_child},
+    'FOLLOWING'    => \&{feature_following_parent},
+    '1.following'  => \&{feature_following_first},
+    '2.following'  => \&{feature_following_second},
+    'between'      => \&{feature_between},
+    'foreach'      => \&{feature_foreach},
+    'equals'       => \&{feature_equals},
+    'equalspc'     => \&{feature_equals_pc},
+    'equalspcat'   => \&{feature_equals_pc_at},
+    'isfirst'      => \&{feature_child_is_first_in_sentence},
+    'ISFIRST'      => \&{feature_parent_is_first_in_sentence},
+    'islast'       => \&{feature_child_is_last_in_sentence},
+    'ISLAST'       => \&{feature_parent_is_last_in_sentence},
+    'isfirstchild' => \&{feature_child_is_first_child},
+    'islastchild'  => \&{feature_child_is_last_child},
+    'childno'      => \&{feature_number_of_childs_children},
+    'CHILDNO'      => \&{feature_number_of_parents_children},
 );
 
 sub get_simple_feature_sub_reference {
@@ -490,6 +504,19 @@ sub feature_distance {
         } else {    # $distance >= $self->maxBucket
             return $self->config->maxBucket;
         }
+    }
+}
+
+sub feature_attachement_direction {
+    my ( $self, $edge, $field_index ) = @_;
+
+    if ($edge->parent->fields->[$field_index]
+        < $edge->child->fields->[$field_index]
+        )
+    {
+        return -1;
+    } else {
+        return 1;
     }
 }
 
@@ -860,6 +887,51 @@ sub feature_parent_is_last_in_sentence {
 
     if ( $ord == $last_ord ) {
         return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_child_is_first_child {
+    my ( $self, $edge ) = @_;
+
+    my $children = $edge->parent->children;
+    if ( $children->[0]->child->ord == $edge->child->ord ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_child_is_last_child {
+    my ( $self, $edge ) = @_;
+
+    my $children    = $edge->parent->children;
+    my $childrenNum = scalar(@$children);
+    if ( $children->[ $childrenNum - 1 ]->child->ord == $edge->child->ord ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub feature_number_of_childs_children {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $children = $edge->child->children;
+    if ( $children && scalar(@$children) ) {
+        return scalar(@$children);
+    } else {
+        return 0;
+    }
+}
+
+sub feature_number_of_parents_children {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $children = $edge->parent->children;
+    if ( $children && scalar(@$children) ) {
+        return scalar(@$children);
     } else {
         return 0;
     }
