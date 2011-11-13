@@ -89,6 +89,10 @@ sub fill_fields_before_labelling {
 
     my ($self) = @_;
 
+    if ( $self->config->DEBUG >= 3 ) {
+        print $self->id . " fill_fields_before_labelling()\n";
+    }
+
     #compute edges
     $self->compute_edges();
 
@@ -125,7 +129,7 @@ sub compute_edges {
             $node->parent( $self->getNodeByOrd( $node->parentOrd ) );
         }
 
-        if ( $self->config->DEBUG >= 2 ) {
+        if ( $self->config->DEBUG >= 3 ) {
             print $node->parentOrd
                 . '(' . $node->parent->fields->[1] . ')'
                 . ' -> '

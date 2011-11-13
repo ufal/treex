@@ -194,7 +194,7 @@ sub label_subtree {
                         . " \n";
                 }
 
-                if ( $ALGORITHM == 7 || $ALGORITHM == 8 ) {
+                if ( $ALGORITHM == 7 || $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
                     # test if this is the best
                     if (defined $new_states{$new_label}
@@ -374,7 +374,7 @@ sub get_possible_labels {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
         my $result     = {};
         my $all_labels = $self->model->get_all_labels();
@@ -395,7 +395,7 @@ sub get_possible_labels {
 
         return $result;
 
-    } else {
+    } else {    # $ALGORITHM not in 8,9
 
         # now these are often not really probs but more of some kind of scores
         my $emission_scores =
@@ -420,8 +420,8 @@ sub get_possible_labels {
         } else {
 
             # no possible states generated -> backoff
-            my %unigrams_copy = %{$self->model->unigrams};
-            my $blind_scores = \%unigrams_copy;
+            my %unigrams_copy = %{ $self->model->unigrams };
+            my $blind_scores  = \%unigrams_copy;
 
             # TODO: smoothing (now a very stupid way is used
             # just to lower the scores below the unblind scores)
@@ -482,10 +482,10 @@ sub get_possible_labels {
                         . $edge->child->fields->[1]
                         . "\n";
                     return {};
-                }
-            }
-        }
-    }
+                }    # end no backoff helped
+            }    # end backoff by unigrams for emission and transition scores
+        }    # end backoff by unigrams for transition scores
+    }    # end $ALGORITHM not in 8,9
 }
 
 sub get_possible_labels_internal {
@@ -495,8 +495,8 @@ sub get_possible_labels_internal {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
-        die "Labeller->get_possible_labels_internal not implemented"
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+        croak "Labeller->get_possible_labels_internal not implemented"
             . " for algorithm no $ALGORITHM!";
     }
 

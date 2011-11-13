@@ -137,6 +137,13 @@ sub update_feature_weight {
     return;
 }
 
+# returns number of features in the model
+sub get_feature_count {
+    my ($self) = @_;
+
+    return scalar( keys %{ $self->weights } );
+}
+
 1;
 
 __END__

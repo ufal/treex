@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::ModelLabelling;
 
 use Moose;
+use Carp;
 
 extends 'Treex::Tool::Parser::MSTperl::ModelBase';
 
@@ -21,7 +22,7 @@ has 'unigrams' => (
 #   transitions->{label_prev}->{label_this} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
 #  and are only recomputed to probs on calling prepare_for_mira() );
-# transition feature weights if algorithm = 8, in the form of
+# transition feature weights if algorithm = 8 | 9, in the form of
 #   transitions->{feature}->{label_prev}->{label_this} = score
 has 'transitions' => (
     is      => 'rw',
@@ -58,7 +59,7 @@ has 'smooth_uniform' => (
 #   emissions->{feature}->{label} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
 #  and are only recomputed to probs on calling prepare_for_mira() )
-# emission feature weights if algorithm = 8, in the form of
+# emission feature weights if algorithm = 8 | 9, in the form of
 #   emissions->{feature}->{label} = score
 has 'emissions' => (
     is      => 'rw',
@@ -80,8 +81,9 @@ has 'weights' => (
 # weights versus transitions:
 # what is learned by MIRA is called weights if it is one-level (0 to 3, 6, 7),
 # what is computed from data by MLE is called emissions (4 to 7);
-# if MIRA learns two levels of weights (8), these are emissions and transitions
-#   and can be initialized by MLE (TODO 9 ?)
+# if MIRA learns two levels of weights (8 | 9),
+# these are emissions and transitions
+# and can be initialized by MLE (9)
 
 # just an array ref with the sentences that represent the heldout data
 # to be able to run the EM algorithm in prepare_for_mira()
@@ -152,7 +154,12 @@ sub load_data {
         $emissions_ok = 1;
     }
 
-    if ( $ALGORITHM == 4 || $ALGORITHM == 5 || $ALGORITHM == 8 ) {
+    if ($ALGORITHM == 4
+        || $ALGORITHM == 5
+        || $ALGORITHM == 8
+        || $ALGORITHM == 9
+        )
+    {
 
         # these algorithms do not use weights
         # (they use emissions and transitions)
@@ -165,6 +172,7 @@ sub load_data {
         || $ALGORITHM == 3
         || $ALGORITHM == 4
         || $ALGORITHM == 8
+        || $ALGORITHM == 9
         )
     {
 
@@ -189,18 +197,39 @@ sub load_data {
 # TRANSITION AND EMISSION COUNTS AND PROBABILITIES
 # (more or less standard MLE)
 
-sub add_transition {
-    my ( $self, $label_this, $label_prev ) = @_;
+sub add_unigram {
+    my ( $self, $label ) = @_;
 
     if ( $self->config->DEBUG >= 2 ) {
-        print "add_transition($label_this, $label_prev)\n";
+        print "add_unigram($label)\n";
     }
 
-    # increment number of bigrams
-    $self->transitions->{$label_prev}->{$label_this} += 1;
-
     # increment number of unigrams
-    $self->unigrams->{$label_this} += 1;
+    $self->unigrams->{$label} += 1;
+
+    return;
+}
+
+sub add_transition {
+
+    # Str, Str, Maybe[Str]
+    my ( $self, $label_this, $label_prev, $feature ) = @_;
+
+    if ( defined $feature ) {
+        if ( $self->config->DEBUG >= 2 ) {
+            print "add_transition($label_this, $label_prev, $feature)\n";
+        }
+
+        # increment number of bigrams
+        $self->transitions->{$feature}->{$label_prev}->{$label_this} += 1;
+    } else {
+        if ( $self->config->DEBUG >= 2 ) {
+            print "add_transition($label_this, $label_prev)\n";
+        }
+
+        # increment number of bigrams
+        $self->transitions->{$label_prev}->{$label_this} += 1;
+    }
 
     return;
 }
@@ -220,51 +249,106 @@ sub add_emission {
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
 
-    my ($self) = @_;
+    my ( $self, $trainer ) = @_;
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    # compute unigram probs
-    $self->compute_probs_from_counts( $self->unigrams );
+    if ( $ALGORITHM == 9 ) {
 
-    # compute transition probs
-    foreach my $label ( keys %{ $self->transitions } ) {
-        $self->compute_probs_from_counts( $self->transitions->{$label} );
-    }
+        # no need to recompute to probabilities (counts are OK)
+        # but have to update feature_weights_summed
+        # and feature_weights_summed_bi appropriately
 
-    if ($ALGORITHM == 4
+        my $sumUpdateWeight = $trainer->number_of_inner_iterations;
+
+        # emissions->{feature}->{label}
+        foreach my $feature ( keys %{ $self->emissions } ) {
+            foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
+                $trainer->feature_weights_summed->{$feature}->{$label}
+                    = $sumUpdateWeight * $self->emissions->{$feature}->{$label};
+            }
+        }
+
+        # transitions->{feature}->{label_prev}->{label_this}
+        foreach my $feature ( keys %{ $self->transitions } ) {
+            foreach my $label_prev (
+                keys %{ $self->transitions->{$feature} }
+                )
+            {
+                foreach my $label_this (
+                    keys %{ $self->transitions->{$feature}->{$label_prev} }
+                    )
+                {
+                    $trainer->feature_weights_summed_bi
+                        ->{$feature}->{$label_prev}->{$label_this}
+                        = $sumUpdateWeight * $self->transitions
+                        ->{$feature}->{$label_prev}->{$label_this};
+                }
+            }
+        }
+
+    } elsif ( $ALGORITHM == 1 || $ALGORITHM == 8 ) {
+
+        # no recomputing taking place
+    } elsif (
+        $ALGORITHM == 0
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        || $ALGORITHM == 4
         || $ALGORITHM == 5
         || $ALGORITHM == 6
         || $ALGORITHM == 7
         )
     {
 
-        # compute emission probs
-        foreach my $feature ( keys %{ $self->emissions } ) {
-            $self->compute_probs_from_counts( $self->emissions->{$feature} );
+        # compute unigram probs
+        $self->compute_probs_from_counts( $self->unigrams );
+
+        # compute transition probs
+        foreach my $label ( keys %{ $self->transitions } ) {
+            $self->compute_probs_from_counts( $self->transitions->{$label} );
         }
 
-        if ($ALGORITHM == 5
+        if ($ALGORITHM == 4
+            || $ALGORITHM == 5
             || $ALGORITHM == 6
             || $ALGORITHM == 7
             )
         {
 
-            # run the EM algorithm to compute transtition probs smoothing params
-            $self->compute_smoothing_params();
+            # compute emission probs
+            foreach my $feature ( keys %{ $self->emissions } ) {
+                $self->compute_probs_from_counts(
+                    $self->emissions->{$feature}
+                );
+            }
 
-            if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
+            if ($ALGORITHM == 5
+                || $ALGORITHM == 6
+                || $ALGORITHM == 7
+                )
+            {
 
-                # init feature weights
-                foreach my $feature ( keys %{ $self->emissions } ) {
+                # run the EM algorithm to compute
+                # transtition probs smoothing params
+                $self->compute_smoothing_params();
 
-                    # TODO: 100 is just an arbitrary number
-                    # but something non-zero is needed
-                    $self->weights->{$feature} = 100;
-                }
-            }    # end if $ALGORITHM == 6|7
-        }    # end if $ALGORITHM == 5|6|7
-    }    # end if $ALGORITHM == 4|5|6|7
+                if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
+
+                    # init feature weights
+                    foreach my $feature ( keys %{ $self->emissions } ) {
+
+                        # TODO: 100 is just an arbitrary number
+                        # but something non-zero is needed
+                        $self->weights->{$feature} = 100;
+                    }
+                }    # end if $ALGORITHM == 6|7
+            }    # end if $ALGORITHM == 5|6|7
+        }    # end if $ALGORITHM == 4|5|6|7
+    } else {    # $ALGORITHM not in 0~9
+        croak "ModelLabelling->prepare_for_mira not implemented"
+            . " for algorithm no. $ALGORITHM!";
+    }
 
     return;
 }
@@ -431,7 +515,7 @@ sub get_label_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
         my $result = 0;
 
@@ -451,7 +535,7 @@ sub get_label_score {
         return $result;
 
     } else {
-        die "ModelLabelling->get_label_score not implemented"
+        croak "ModelLabelling->get_label_score not implemented"
             . " for algorithm no. $ALGORITHM!";
     }
 }
@@ -463,7 +547,7 @@ sub get_emission_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
         if ($self->emissions->{$feature}
             && $self->emissions->{$feature}->{$label}
@@ -475,7 +559,7 @@ sub get_emission_score {
         }
 
     } else {
-        die "ModelLabelling->get_emission_score not implemented"
+        croak "ModelLabelling->get_emission_score not implemented"
             . " for algorithm no. $ALGORITHM!";
     }
 }
@@ -487,7 +571,7 @@ sub get_transition_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
         if ($self->transitions->{$feature}
             && $self->transitions->{$feature}->{$label_prev}
             && $self->transitions->{$feature}->{$label_prev}->{$label_this}
@@ -514,7 +598,14 @@ sub get_transition_score {
 
         return $result;
 
-    } else {
+    } elsif (
+        $ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        || $ALGORITHM == 4
+        )
+    {
 
         # no real smoothing
         if ($self->transitions->{$label_prev}
@@ -525,6 +616,9 @@ sub get_transition_score {
         } else {
             return 0.00001;
         }
+    } else {
+        croak "ModelLabelling->get_transition_score not implemented"
+            . " for algorithm no. $ALGORITHM!";
     }
 }
 
@@ -614,7 +708,8 @@ sub get_emission_scores {
 
     if ($ALGORITHM == 0
         || $ALGORITHM == 1
-        || $ALGORITHM == 2 || $ALGORITHM == 3
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
         )
     {
 
@@ -823,7 +918,7 @@ sub get_emission_scores {
             $result = $self->unigrams;
         }
     } else {
-        die "ModelLabelling->get_emission_scores not implemented"
+        croak "ModelLabelling->get_emission_scores not implemented"
             . " for algorithm no. $ALGORITHM!";
     }
 
@@ -833,8 +928,8 @@ sub get_emission_scores {
     return $result;
 }
 
-# updates weights->$feature by $update
-# for alg. 8 updates emissions (when $label_prev is not set)
+# sets weights->$feature to $weight
+# for alg. 8 | 9 sets emissions (when $label_prev is not set)
 # or transitions (when it is set)
 sub set_feature_weight {
 
@@ -843,7 +938,7 @@ sub set_feature_weight {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
         if ( defined $label_prev ) {
             $self->transitions->{$feature}->{$label_prev}->{$label} = $weight;
         } else {
@@ -861,7 +956,7 @@ sub set_feature_weight {
 }
 
 # updates weights->$feature by $update
-# for alg. 8 updates emissions (when $label_prev is not set)
+# for alg. 8 | 9 updates emissions (when $label_prev is not set)
 # or transitions (when it is set)
 sub update_feature_weight {
 
@@ -870,7 +965,7 @@ sub update_feature_weight {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
         if ( defined $label_prev ) {
             $self->transitions->{$feature}->{$label_prev}->{$label} += $update;
         } else {
@@ -885,6 +980,83 @@ sub update_feature_weight {
     }
 
     return;
+}
+
+# returns number of features in the model (where a "feature" can stand for
+# various things depending on the algorithm used)
+sub get_feature_count {
+    my ($self) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ($ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        )
+    {
+
+        # structure: weights->{feature}->{label} = score
+
+        my $count = 0;
+        foreach my $feature ( keys %{ $self->weights } ) {
+            $count += scalar( keys %{ $self->weights->{$feature} } );
+        }
+        return $count;
+    } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
+
+        # structure:
+        # emissions->{feature}->{label} = score
+        # transitions->{label_prev}->{label} = score
+
+        my $count = 0;
+        foreach my $feature ( keys %{ $self->emissions } ) {
+            $count += scalar( keys %{ $self->emissions->{$feature} } );
+        }
+        foreach my $label_prev ( keys %{ $self->transitions } ) {
+            $count += scalar( keys %{ $self->transitions->{$label_prev} } );
+        }
+        return $count;
+    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
+
+        # structure:
+        # weights->{feature} = score
+        # emissions->{feature}->{label} = score
+        # transitions->{label_prev}->{label} = score
+
+        my $count = scalar( keys %{ $self->weights } );
+        foreach my $feature ( keys %{ $self->emissions } ) {
+            $count += scalar( keys %{ $self->emissions->{$feature} } );
+        }
+        foreach my $label_prev ( keys %{ $self->transitions } ) {
+            $count += scalar( keys %{ $self->transitions->{$label_prev} } );
+        }
+        return $count;
+    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+
+        # structure:
+        # emissions->{feature}->{label} = score
+        # transitions->{feature}->{label_prev}->{label} = score
+
+        my $count = 0;
+        foreach my $feature ( keys %{ $self->emissions } ) {
+            $count += scalar( keys %{ $self->emissions->{$feature} } );
+        }
+        foreach my $feature ( keys %{ $self->transitions } ) {
+            foreach my $label_prev (
+                keys %{ $self->transitions->{$feature} }
+                )
+            {
+                $count += scalar(
+                    keys %{ $self->transitions->{$feature}->{$label_prev} }
+                );
+            }
+        }
+        return $count;
+    } else {
+        croak
+            "algorithm no. $ALGORITHM does not implement get_feature_count()!";
+    }
 }
 
 1;

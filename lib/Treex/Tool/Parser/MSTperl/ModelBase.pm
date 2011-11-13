@@ -19,11 +19,21 @@ has 'featuresControl' => (
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
 
-    my ($self) = @_;
+    my ( $self, $trainer ) = @_;
 
     # nothing in the base, to be overridden in extending packages
 
     return;
+}
+
+# returns number of features in the model (where a "feature" can stand for
+# various things depending on the algorithm used)
+sub get_feature_count {
+    my ($self) = @_;
+
+    # nothing in the base, to be overridden in extending packages
+
+    return 0;
 }
 
 # LOADING AND STORING

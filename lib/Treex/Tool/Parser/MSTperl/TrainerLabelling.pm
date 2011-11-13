@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::TrainerLabelling;
 
 use Moose;
+use Carp;
 
 extends 'Treex::Tool::Parser::MSTperl::TrainerBase';
 
@@ -52,15 +53,18 @@ sub preprocess_sentence {
 
     # $sentence->fill_fields_after_labelling();
 
+    $self->compute_unigram_counts($sentence);
+
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     # compute transition counts
     if ($ALGORITHM == 5
         || $ALGORITHM == 6
         || $ALGORITHM == 7
-        || $ALGORITHM == 9
         )
     {
+
+        # transitions with smoothing
         if ( $progress < $self->config->EM_heldout_data_at ) {
             $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
         } else {
@@ -69,9 +73,19 @@ sub preprocess_sentence {
             # it will be used for EM algorithm to compute smoothing params
             push @{ $self->model->EM_heldout_data }, $sentence;
         }
-    } else {
+    } elsif (
+        $ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        || $ALGORITHM == 4
+        || $ALGORITHM == 9
+        )
+    {
+
+        # transitions without smoothing
         $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
-    }
+    }    # else (8) MLE transition counts not used
 
     if ($ALGORITHM == 4
         || $ALGORITHM == 5
@@ -88,7 +102,24 @@ sub preprocess_sentence {
     return;
 }
 
-# computes transition counts and label unigram counts for a tree (recursively)
+# computes label unigram counts for a sentence
+sub compute_unigram_counts {
+
+    # (Treex::Tool::Parser::MSTperl::Node $parent_node)
+    my ( $self, $sentence ) = @_;
+
+    foreach my $edge ( @{ $sentence->edges } ) {
+        my $label = $edge->child->label;
+        $self->model->add_unigram($label);
+    }
+
+    # TODO: do this?
+    $self->model->add_unigram( $self->config->SEQUENCE_BOUNDARY_LABEL );
+
+    return;
+}
+
+# computes transition counts for a tree (recursively)
 sub compute_transition_counts {
 
     # (Treex::Tool::Parser::MSTperl::Node $parent_node)
@@ -99,18 +130,43 @@ sub compute_transition_counts {
         return;
     }
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    # compute transition counts
     my $last_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $edge ( @{ $parent_node->children } ) {
         my $this_label = $edge->child->label;
-        $self->model->add_transition( $this_label, $last_label );
+        if ( $ALGORITHM == 9 ) {
+            my $features = $edge->features;
+            foreach my $feature (@$features) {
+                $self->model->add_transition(
+                    $this_label, $last_label, $feature
+                );
+            }
+        } else {
+            $self->model->add_transition( $this_label, $last_label );
+        }
         $last_label = $this_label;
         $self->compute_transition_counts( $edge->child );
     }
 
     # add SEQUENCE_BOUNDARY_LABEL to end of sequence as well
-    $self->model->add_transition(
-        $self->config->SEQUENCE_BOUNDARY_LABEL, $last_label
-    );
+    # TODO: currently not used in Viterbi
+    if ( $ALGORITHM == 9 ) {
+
+        # TODO: cannot use this since there is actually no such edge
+        # and therefore has no features
+        my $features = [];
+        foreach my $feature (@$features) {
+            $self->model->add_transition(
+                $self->config->SEQUENCE_BOUNDARY_LABEL, $last_label, $feature
+            );
+        }
+    } else {
+        $self->model->add_transition(
+            $self->config->SEQUENCE_BOUNDARY_LABEL, $last_label
+        );
+    }
 
     return;
 }
@@ -194,7 +250,7 @@ sub mira_update {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
         $self->mira_tree_update(
             $sentence_correct_labelling->nodes_with_root->[0],
             $sentence_best_labelling,
@@ -372,7 +428,7 @@ sub mira_update {
                                 " probably you're using too few features.\n";
                         }
                     } else {
-                        die "Algorithm number $ALGORITHM does not use MIRA!";
+                        croak "Algorithm number $ALGORITHM does not use MIRA!";
                     }
                 } else {
 
@@ -428,7 +484,7 @@ sub mira_tree_update {
         my $label_best    = (
             $sentence_best_labelling->getNodeByOrd(
                 $correct_edge->child->ord
-            )
+                )
         )->label;
 
         if ( $label_correct ne $label_best ) {
@@ -650,7 +706,7 @@ sub recompute_feature_weight {
                     . "\n";
             }
         }
-    } elsif ( $ALGORITHM == 8 ) {
+    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
         # emissions
         foreach my $label (
@@ -713,7 +769,8 @@ sub recompute_feature_weight {
 
         # nothing to do (MIRA not used)
     } else {
-        die "algorithm no $ALGORITHM must implement recompute_feature_weight!";
+        croak "algorithm no $ALGORITHM must"
+            . " implement recompute_feature_weight!";
     }
 
     return;

@@ -145,7 +145,7 @@ unlink $unlabelled_model_file;
 
 note('LABELLED TRAINING');
 
-# TODO test various algorithms
+# TODO test various algorithms (?)
 
 my $ltrainer = new_ok(
     'Treex::Tool::Parser::MSTperl::TrainerLabelling' => [ config => $config ],

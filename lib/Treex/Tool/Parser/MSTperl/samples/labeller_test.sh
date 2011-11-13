@@ -1,2 +1,2 @@
 #!/bin/bash
-./test_labeller_tsv.pl sample_test.tsv sample.Lmodel sample.config 0
+./test_labeller_tsv.pl sample_test.tsv sample.Lmodel sample.config $@

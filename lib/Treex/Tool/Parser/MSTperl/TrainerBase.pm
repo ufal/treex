@@ -132,9 +132,7 @@ sub train {
     $self->recompute_feature_weights();
 
     # only progress and/or debug info
-    # disregards labels in labelled training (but is not completely wrong)
-    # TODO true only for some algorithms!!
-    my $feature_count = scalar( keys %{ $self->feature_weights_summed } );
+    my $feature_count = $self->model->get_feature_count();
     if ( $self->config->DEBUG >= 1 ) {
         print "Model trained with $feature_count features.\n";
     }
@@ -175,7 +173,7 @@ sub preprocess_sentences {
                     . "processed (computing features)\n";
             }
         }
-        if ( $self->config->DEBUG >= 2 ) {
+        if ( $self->config->DEBUG >= 3 ) {
             print "SENTENCE FEATURES:\n";
             foreach my $feature ( @{ $sentence_correct->features } ) {
                 print "$feature\n";
@@ -192,7 +190,7 @@ sub preprocess_sentences {
 
     }
 
-    $self->model->prepare_for_mira();
+    $self->model->prepare_for_mira($self);
 
     if ( $self->config->DEBUG >= 1 ) {
         print "Done.\n";
