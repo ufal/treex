@@ -5,9 +5,12 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::EN::First_names;
 
-# Czech morphology used as an additional resource for gender detections
-use Treex::Tool::Lexicon::Generation::CS;
-my $generator = Treex::Tool::Lexicon::Generation::CS->new();
+has generator => (
+    is => 'ro',
+    isa => 'Maybe[Treex::Tool::Lexicon::Generation::CS]',
+    builder => '_build_generator',
+    documentation => 'Czech morphology used as an additional resource for gender detections',
+);
 
 my %GENDER_OF_ROLE = (
     'Mr.'  => 'm',
@@ -23,6 +26,17 @@ my %GENDER_OF_ROLE = (
     lady   => 'f',
 );
 
+sub _build_generator {
+    my $self = shift;
+    my $generator;
+    eval {
+        require Treex::Tool::Lexicon::Generation::CS;
+        $generator = Treex::Tool::Lexicon::Generation::CS->new();
+        1;
+    } or return;
+    return $generator;
+}
+
 sub process_zone {
     my ( $self, $zone ) = @_;
 
@@ -30,12 +44,13 @@ sub process_zone {
     my $n_root = $zone->get_ntree;
     my @n_p = grep { $_->get_attr('ne_type') eq 'p_' } $n_root->get_descendants();
     foreach my $n_node (@n_p) {
-        process_personal_nnode($n_node);
+        $self->process_personal_nnode($n_node);
     }
     return;
 }
 
 sub process_personal_nnode {
+    my $self = shift;
     my ($n_node) = @_;
     my @a_nodes = $n_node->get_anodes();
     my @lemmas = map { $_->lemma } @a_nodes;
@@ -47,7 +62,7 @@ sub process_personal_nnode {
         my $prev_lemma = $prev_anode->lemma;
         $gender = $GENDER_OF_ROLE{$prev_lemma};
     }
-    my @genders = map { guess_gender($_) } @lemmas;
+    my @genders = map { $self->guess_gender($_) } @lemmas;
 
     if ( !$gender ) {
         $gender = first { $_ ne '?' } @genders;
@@ -86,9 +101,10 @@ sub process_personal_nnode {
 # Stanford NER considers "Mr." or "Mrs." a part of NE
 # so let's check also for GENDER_OF_ROLE.
 sub guess_gender {
+    my $self = shift;
     my ($lemma) = @_;
     return $GENDER_OF_ROLE{$lemma} || Treex::Tool::Lexicon::EN::First_names::gender_of($lemma)
-        || firstname_gender_from_czech_morpho($lemma) || '?';
+        || $self->firstname_gender_from_czech_morpho($lemma) || '?';
 }
 
 # HACK: m-layer has no ord attribute, so $tmt_node->get_prev_node does not work.
@@ -100,10 +116,12 @@ sub guess_gender {
 #}
 
 sub firstname_gender_from_czech_morpho {
+    my $self = shift;
+    return if !defined $self->generator;
     my ($lemma) = shift;
     my ($gender) = map { $_->get_tag =~ /^..(.)/; lc($1) }
         grep { $_->get_lemma =~ /;[Y]/ }
-        $generator->forms_of_lemma( $lemma, { tag_regex => 'N..S1.+' } );
+        $self->generator->forms_of_lemma( $lemma, { tag_regex => 'N..S1.+' } );
     return $gender;
 }
 
