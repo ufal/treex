@@ -93,14 +93,15 @@ sub process_atree {
         if ( $pair =~ /^([0-9]+)-([0-9]+)$/ ) {
             my $srcidx = $1;
             my $tgtidx = $2;
-            log_fatal "Bad alignment point $pair: $srcidx outside of"
-                ." source sentence '$sentence_id' ("
-                .scalar(@nodes)." tokens long)"
-              if $srcidx < 0 || $srcidx > $#nodes;
-            log_fatal "Bad alignment point $pair: $tgtidx outside of"
-                ." target sentence '$sentence_id' ("
-                .scalar(@to_nodes)." tokens long)"
-              if $tgtidx < 0 || $tgtidx > $#to_nodes;
+#            log_fatal "Bad alignment point $pair: $srcidx outside of"
+#                ." source sentence '$sentence_id' ("
+#                .scalar(@nodes)." tokens long)"
+#              if $srcidx < 0 || $srcidx > $#nodes;
+#            log_fatal "Bad alignment point $pair: $tgtidx outside of"
+#                ." target sentence '$sentence_id' ("
+#                .scalar(@to_nodes)." tokens long)"
+#              if $tgtidx < 0 || $tgtidx > $#to_nodes;
+            next if $srcidx > $#nodes ||  $tgtidx > $#to_nodes;
             $nodes[$srcidx]->add_aligned_node( $to_nodes[$tgtidx], $aligned{$pair} );
         } else {
             log_fatal "Bad alignment point '$pair' for '$sentence_id'";
