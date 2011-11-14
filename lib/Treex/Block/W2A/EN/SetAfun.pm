@@ -185,7 +185,8 @@ sub get_afun {
     my $form = $node->form;
     return 'AuxK' if $form =~ /[?!]/;
     return 'AuxX' if $form eq ',';
-    return 'AuxG' if $form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/; # any punctuation, including ``, -LRB-, -RRB-
+    # any punctuation, including ``, -LRB-, -RRB-, but excluding % wrongly assigned to the Unicode punctuation category
+    return 'AuxG' if ($form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $form ne '%'); 
 
     # Articles a, an, the
     my $lemma = $node->lemma;

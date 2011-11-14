@@ -37,7 +37,7 @@ sub detect_formeme {
     # Non-complex type nodes (coordinations, rhematizers etc.)
     # have special formeme value instead of undef,
     # so tedious undef checking (||'') is no more needed.
-    return 'x' if $t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(&|%|°|Percnt|Amp|Deg)/;
+    return 'x' if ($t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))$/);
     
     # Punctuation in most cases should not remain on t-layer, but anyway
     # it makes no sense detecting formemes. (These are not unrecognized ???.)    
@@ -46,7 +46,8 @@ sub detect_formeme {
     # If no lex_anode is found, the formeme is unrecognized
     my $a_node = $t_node->get_lex_anode() or return '???';
 
-    my $sempos = $t_node->gram_sempos || 'n';
+    my $sempos = $t_node->gram_sempos;
+    $sempos = 'n' if ($t_node->nodetype ne 'complex'); 
     $sempos =~ s{\..*}{};
 
     # Choose the appropriate subroutine according to the sempos
