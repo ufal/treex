@@ -356,7 +356,7 @@ sub mira_update {
                         } else {
 
                             # $features_diff_count == 0
-                            die "It seems that there are no features!" .
+                            croak "It seems that there are no features!" .
                                 "This is somewhat weird.";
                         }
                     } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
@@ -824,9 +824,9 @@ L<Treex::Tool::Parser::MSTperl::Reader>.
 
 =item $self->mira_update($sentence_correct, $sentence_best, $sumUpdateWeight)
 
-Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one 
-sentence from the training data. Its input is the correct labelling of the 
-sentence (from the training data) and the best scoring labelling created by 
+Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one
+sentence from the training data. Its input is the correct labelling of the
+sentence (from the training data) and the best scoring labelling created by
 the labeller.
 
 =back

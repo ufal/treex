@@ -179,7 +179,7 @@ A hash reference containing weights of all features. This is the actual model.
 
 =over 4
 
-=item 
+=item
 
 =back
 

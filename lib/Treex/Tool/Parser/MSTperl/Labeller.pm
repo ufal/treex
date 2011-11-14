@@ -106,7 +106,7 @@ sub label_subtree {
     # there is an array with the current best path to it as 'path' (append-only)
     # and its current score 'score' (computed somehow,
     # i.e. differently for different algorithms)
-    my %states;
+    my $states = {};
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
     # correspond to algorithms
@@ -115,7 +115,7 @@ sub label_subtree {
 
     # path could be constructed by backpointers
     # but one would have to keep all the states the whole time
-    $states{$starting_state_key} = {
+    $states->{$starting_state_key} = {
         'path'  => [ $self->config->SEQUENCE_BOUNDARY_LABEL ],
         'score' => $starting_scores[$ALGORITHM],
     };
@@ -131,185 +131,13 @@ sub label_subtree {
             print "  Labelling edge to node "
                 . $edge->child->ord . ' ' . $edge->child->fields->[1] . "\n";
             print "  Currently there are "
-                . ( keys %states ) . " states\n";
+                . ( keys %$states ) . " states\n";
         }
 
-        my %new_states;
-        foreach my $last_state ( keys %states ) {
-
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 4 ) {
-                print "    Processing state $last_state (score "
-                    . $states{$last_state}->{'score'} . ")\n";
-            }
-
-            # compute the possible labels scores (typically probabilities),
-            # i.e. products of emission and transition probs
-            # possible_labels{label} = score
-            my %possible_labels = %{
-                $self->get_possible_labels(
-                    $edge,
-                    $last_state,
-                    $states{$last_state}->{'score'},
-                    )
-                };
-
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 4 ) {
-                print "    " . scalar( keys %possible_labels )
-                    . " possible labels are "
-                    . ( join ' ', keys %possible_labels )
-                    . "\n";
-            }
-
-            foreach my $new_label ( keys %possible_labels ) {
-                my $new_state_score = $possible_labels{$new_label};
-
-                # only progress and/or debug info
-                if ( $self->config->DEBUG >= 5 ) {
-                    print "      Trying label $new_label, "
-                        . "score $new_state_score\n";
-                    print "        Old state path "
-                        . ( join ' ', @{ $states{$last_state}->{'path'} } )
-                        . " \n";
-                    print "        Old states: "
-                        . (
-                        join ' ',
-                        map {
-                            "$_ (" . (
-                                join ' ', @{ $states{$_}->{'path'} }
-                                ) . ")"
-                            } keys %states
-                        )
-                        . " \n";
-                    print "        New states: "
-                        . (
-                        join ' ',
-                        map {
-                            "$_ (" . (
-                                join ' ', @{ $new_states{$_}->{'path'} }
-                                ) . ")"
-                            } keys %new_states
-                        )
-                        . " \n";
-                }
-
-                if ( $ALGORITHM == 7 || $ALGORITHM == 8 || $ALGORITHM == 9 ) {
-
-                    # test if this is the best
-                    if (defined $new_states{$new_label}
-                        && $new_states{$new_label} > $new_state_score
-                        )
-                    {
-
-                        # there is already the same state state
-                        # with higher score
-                        next;
-                    }
-                }
-
-                # else such a state is not yet there resp. it is but its score
-                # is lower than $new_state_score -> set it (resp. replace it)
-
-                my @new_state_path = @{ $states{$last_state}->{'path'} };
-                push @new_state_path, $new_label;
-                $new_states{$new_label} = {
-                    'path'  => \@new_state_path,
-                    'score' => $new_state_score,
-                };
-
-                # only progress and/or debug info
-                if ( $self->config->DEBUG >= 5 ) {
-                    print "        New state path "
-                        . ( join ' ', @new_state_path )
-                        . " \n";
-                    print "        Old states: "
-                        . (
-                        join ' ',
-                        map {
-                            "$_ (" . (
-                                join ' ', @{ $states{$_}->{'path'} }
-                                ) . ")"
-                            } keys %states
-                        )
-                        . " \n";
-                    print "        New states: "
-                        . (
-                        join ' ',
-                        map {
-                            "$_ (" . (
-                                join ' ', @{ $new_states{$_}->{'path'} }
-                                ) . ")"
-                            } keys %new_states
-                        )
-                        . " \n";
-                }
-            }    # foreach $new_label
-
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 4 ) {
-                print "    Now there are "
-                    . ( keys %new_states ) . " new states\n";
-            }
-        }    # foreach $last_state
-
-        # pruning
-
-        # pruning type 1 commented out because emission scores are not probs
-        # (they do not sum up to 1)
-        #
-        # pruning: keep as many best states so that their normed prob
-        # sums up to at least $VITERBI_STATES_PROB_SUM_THRESHOLD
-        #         %states = ();
-        #         my @best_states = sort {
-        #                 $new_states{$b}->{'score'}
-        #                 <=> $new_states{$a}->{'score'}
-        #             } keys %new_states;
-        #         my $prob_sum = 0;
-        #         foreach my $state (@best_states) {
-        #             $prob_sum += $new_states{$state}->{'score'};
-        #         }
-        #         my $threshold = $prob_sum
-        #             * $VITERBI_STATES_PROB_SUM_THRESHOLD;
-        #         my $best_prob_sum = 0;
-        #         while ($best_prob_sum < $threshold) {
-        #             my $state = shift @best_states;
-        #             $states{$state} = $new_states{$state};
-        #             $best_prob_sum += $new_states{$state}->{'score'};
-        #         }
-
-        # states going form pruning phase 1 to pruning phase 2
-        # %new_states = %states;
-
-        # simple pruning: keep n best states
-        %states = ();
-        my @best_states
-            = sort {
-            $new_states{$b}->{'score'} <=> $new_states{$a}->{'score'}
-            } keys %new_states;
-        for (
-            my $i = 0;
-            @best_states && $i < $self->config->VITERBI_STATES_NUM_THRESHOLD;
-            $i++
-            )
-        {
-            my $state = shift @best_states;
-            $states{$state} = $new_states{$state};
-
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 5 ) {
-                print "      Pruning let thrgough the state $state"
-                    . "\n";
-            }
-        }
-
-        # only progress and/or debug info
-        if ( $self->config->DEBUG >= 4 ) {
-            print "    After pruning there are "
-                . ( keys %states ) . " states\n";
-        }
-
-    }    # foreach $edge
+        # do one Viterbi step - assign possible labels to $edge
+        # (including appropriate scores of course)
+        $states = $self->label_edge ($edge, $states);
+    }
 
     # TODO: foreach last state multiply its score
     # by the label->sequence_boundary probability
@@ -319,19 +147,19 @@ sub label_subtree {
 
     # "negative infinity" (works both with real probs and with their logs)
     my $best_state_score = -999999999;
-    foreach my $state_label ( keys %states ) {
+    foreach my $state_label ( keys %$states ) {
         if ( $self->config->DEBUG >= 4 ) {
             print "state $state_label score: "
-                . $states{$state_label}->{'score'} . "\n";
+                . $states->{$state_label}->{'score'} . "\n";
         }
-        if ( $states{$state_label}->{'score'} > $best_state_score ) {
+        if ( $states->{$state_label}->{'score'} > $best_state_score ) {
             $best_state_label = $state_label;
-            $best_state_score = $states{$state_label}->{'score'};
+            $best_state_score = $states->{$state_label}->{'score'};
         }
     }
     if ($best_state_label) {
 
-        my @labels = @{ $states{$best_state_label}->{'path'} };
+        my @labels = @{ $states->{$best_state_label}->{'path'} };
 
         # get rid of SEQUENCE_BOUNDARY_LABEL
         shift @labels;
@@ -353,8 +181,8 @@ sub label_subtree {
 
         # TODO do not die, provide some backoff instead
         # (do some smoothing, at least when no states are generated)
-        warn "No best state generated, cannot label the sentence!"
-            . " (This is weird.)";
+        print "No best state generated, cannot label the sentence!"
+            . " (This is weird.)\n";
     }
 
     # end of Viterbi
@@ -365,6 +193,204 @@ sub label_subtree {
     }
 
     return;
+}
+
+# used as an internal part of label_subtree
+# to get all probable labels for an edge
+# i.e. make one step of the Viterbi algorithm
+sub label_edge {
+
+    my ($self, $edge, $states) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    my $new_states = {};
+    foreach my $last_state ( keys %$states ) {
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 4 ) {
+            print "    Processing state $last_state (score "
+                . $states->{$last_state}->{'score'} . ")\n";
+        }
+
+        # compute the possible labels scores (typically probabilities),
+        # i.e. products of emission and transition probs
+        # possible_labels{label} = score
+        my %possible_labels = %{
+            $self->get_possible_labels(
+                $edge,
+                $last_state,
+                $states->{$last_state}->{'score'},
+                )
+            };
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 4 ) {
+            print "    " . scalar( keys %possible_labels )
+                . " possible labels are "
+                . ( join ' ', keys %possible_labels )
+                . "\n";
+        }
+
+        foreach my $new_label ( keys %possible_labels ) {
+            my $new_state_score = $possible_labels{$new_label};
+
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 5 ) {
+                print "      Trying label $new_label, "
+                    . "score $new_state_score\n";
+                print "        Old state path "
+                    . ( join ' ', @{ $states->{$last_state}->{'path'} } )
+                    . " \n";
+                print "        Old states: "
+                    . (
+                    join ' ',
+                    map {
+                        "$_ (" . (
+                            join ' ', @{ $states->{$_}->{'path'} }
+                            ) . ")"
+                        } keys %$states
+                    )
+                    . " \n";
+                print "        New states: "
+                    . (
+                    join ' ',
+                    map {
+                        "$_ (" . (
+                            join ' ', @{ $new_states->{$_}->{'path'} }
+                            ) . ")"
+                        } keys %$new_states
+                    )
+                    . " \n";
+            }
+
+            if ( $ALGORITHM == 7 || $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+
+                # test if this is the best
+                if (defined $new_states->{$new_label}
+                    && $new_states->{$new_label} > $new_state_score
+                    )
+                {
+
+                    # there is already the same state state
+                    # with higher score
+                    next;
+                }
+            }
+
+            # else such a state is not yet there resp. it is but its score
+            # is lower than $new_state_score -> set it (resp. replace it)
+
+            my @new_state_path = @{ $states->{$last_state}->{'path'} };
+            push @new_state_path, $new_label;
+            $new_states->{$new_label} = {
+                'path'  => \@new_state_path,
+                'score' => $new_state_score,
+            };
+
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 5 ) {
+                print "        New state path "
+                    . ( join ' ', @new_state_path )
+                    . " \n";
+                print "        Old states: "
+                    . (
+                    join ' ',
+                    map {
+                        "$_ (" . (
+                            join ' ', @{ $states->{$_}->{'path'} }
+                            ) . ")"
+                        } keys %$states
+                    )
+                    . " \n";
+                print "        New states: "
+                    . (
+                    join ' ',
+                    map {
+                        "$_ (" . (
+                            join ' ', @{ $new_states->{$_}->{'path'} }
+                            ) . ")"
+                        } keys %$new_states
+                    )
+                    . " \n";
+            }
+        }    # foreach $new_label
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 4 ) {
+            print "    Now there are "
+                . ( keys %$new_states ) . " new states\n";
+        }
+    }    # foreach $last_state
+
+
+    $new_states = $self->prune($new_states);
+
+    return $new_states;
+}
+
+# prune the states (keep only some of the best)
+sub prune {
+
+    my ($self, $states) = @_;
+
+    # pruning
+
+    # pruning type 1 commented out because emission scores are not probs
+    # (they do not sum up to 1)
+    #
+    # pruning: keep as many best states so that their normed prob
+    # sums up to at least $VITERBI_STATES_PROB_SUM_THRESHOLD
+    #         %states = ();
+    #         my @best_states = sort {
+    #                 $new_states{$b}->{'score'}
+    #                 <=> $new_states{$a}->{'score'}
+    #             } keys %new_states;
+    #         my $prob_sum = 0;
+    #         foreach my $state (@best_states) {
+    #             $prob_sum += $new_states{$state}->{'score'};
+    #         }
+    #         my $threshold = $prob_sum
+    #             * $VITERBI_STATES_PROB_SUM_THRESHOLD;
+    #         my $best_prob_sum = 0;
+    #         while ($best_prob_sum < $threshold) {
+    #             my $state = shift @best_states;
+    #             $states{$state} = $new_states{$state};
+    #             $best_prob_sum += $new_states{$state}->{'score'};
+    #         }
+
+    # states going form pruning phase 1 to pruning phase 2
+    # %new_states = %states;
+
+    # simple pruning: keep n best states
+    my $new_states = {};
+    my @best_states
+        = sort {
+            $states->{$b}->{'score'} <=> $states->{$a}->{'score'}
+        } keys %$states;
+    for (
+        my $i = 0;
+        @best_states && $i < $self->config->VITERBI_STATES_NUM_THRESHOLD;
+        $i++
+        )
+    {
+        my $state = shift @best_states;
+        $new_states->{$state} = $states->{$state};
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 5 ) {
+            print "      Pruning let thrgough the state $state"
+                . "\n";
+        }
+    }
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 4 ) {
+        print "    After pruning there are "
+            . ( keys %$new_states ) . " states\n";
+    }
+
+    return $new_states;
 }
 
 # computes possible labels for an edge, using info about
@@ -508,8 +534,6 @@ sub get_possible_labels_internal {
             next;
         }
 
-        my $ALGORITHM = $self->config->labeller_algorithm;
-
         my $possible_state_score;
         if ( $ALGORITHM == 2 ) {
             $possible_state_score
@@ -586,9 +610,9 @@ L<Treex::Tool::Parser::MSTperl::Sentence/copy_nonlabelled>).
 
 =item $parser->label_sentence_internal($sentence);
 
-Does the actual labelling, returning a labelled instance of 
-L<Treex::Tool::Parser::MSTperl::Sentence>. The C<label_sentence> sub is 
-actually only a wrapper for this method which extracts the labels of the 
+Does the actual labelling, returning a labelled instance of
+L<Treex::Tool::Parser::MSTperl::Sentence>. The C<label_sentence> sub is
+actually only a wrapper for this method which extracts the labels of the
 nodes and returns these.
 
 =back

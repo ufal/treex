@@ -222,7 +222,7 @@ sub set_simple_feature {
             die "Incorrect simple feature format '$simple_feature_code'. " .
                 "Use lowercase (" . lc($simple_feature_code) .
                 ") for child node and UPPERCASE (" . uc($simple_feature_code) .
-                ") for parent node.";
+                ") for parent node.\n";
         }
 
         # first/second node feature
@@ -274,10 +274,10 @@ sub set_simple_feature {
         } else {
             die "Incorrect simple function feature format " .
                 "'$simple_feature_code'. " .
-                "Only zero, one or two arguments can be used.";
+                "Only zero, one or two arguments can be used.\n";
         }
     } else {
-        die "Incorrect simple feature format '$simple_feature_code'.";
+        die "Incorrect simple feature format '$simple_feature_code'.\n";
     }
 
     # if $simple_feature_field is (a ref to) an array of field names,
@@ -916,7 +916,7 @@ sub feature_child_is_last_child {
 }
 
 sub feature_number_of_childs_children {
-    my ( $self, $edge, $field_index ) = @_;
+    my ( $self, $edge ) = @_;
 
     my $children = $edge->child->children;
     if ( $children && scalar(@$children) ) {
@@ -927,7 +927,7 @@ sub feature_number_of_childs_children {
 }
 
 sub feature_number_of_parents_children {
-    my ( $self, $edge, $field_index ) = @_;
+    my ( $self, $edge ) = @_;
 
     my $children = $edge->parent->children;
     if ( $children && scalar(@$children) ) {

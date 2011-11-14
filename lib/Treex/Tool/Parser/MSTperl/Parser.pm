@@ -179,9 +179,9 @@ L<Treex::Tool::Parser::MSTperl::Sentence/copy_nonparsed>).
 
 =item $parser->parse_sentence_internal($sentence);
 
-Does the actual parsing, returning a parsed instance of 
-L<Treex::Tool::Parser::MSTperl::Sentence>. The C<parse_sentence> sub is 
-actually only a wrapper for this method which extracts the parents of the 
+Does the actual parsing, returning a parsed instance of
+L<Treex::Tool::Parser::MSTperl::Sentence>. The C<parse_sentence> sub is
+actually only a wrapper for this method which extracts the parents of the
 nodes and returns these.
 
 =back

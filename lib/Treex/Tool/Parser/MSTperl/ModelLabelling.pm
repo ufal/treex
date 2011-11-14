@@ -696,227 +696,17 @@ sub get_emission_scores {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    my $warnNoEmissionProbs = "!!! WARNING !!! "
-        . "Based on the training data, no possible label was found"
-        . " for an edge. This usually means that either"
-        . " your training data are not big enough or that"
-        . " the set of features you are using"
-        . " is not well constructed - either it is too small"
-        . " or it lacks features that would be general enough"
-        . " to cover all possible sentences."
-        . " Using blind emission probabilities instead.\n";
-
     if ($ALGORITHM == 0
         || $ALGORITHM == 1
         || $ALGORITHM == 2
         || $ALGORITHM == 3
         )
     {
-
-        # "pure MIRA", i.e. no MLE
-
-        # get scores
-        foreach my $feature (@$features) {
-            if ( $self->weights->{$feature} ) {
-                foreach my $label ( keys %{ $self->weights->{$feature} } ) {
-                    $result->{$label} += $self->weights->{$feature}->{$label};
-                }
-            }
-        }
-
-        # subtracting the minimum from the score
-        if ( $ALGORITHM == 0 || $ALGORITHM == 1 || $ALGORITHM == 2 ) {
-
-            # find min and max score
-            my $min = 1e300;
-            my $max = -1e300;
-            foreach my $label ( keys %$result ) {
-                if ( $result->{$label} < $min ) {
-                    $min = $result->{$label};
-                } elsif ( $result->{$label} > $max ) {
-                    $max = $result->{$label};
-                }
-
-                # else is between $min and $max -> keep the values as they are
-            }
-
-            if ( $min > $max ) {
-
-                # $min > $max, i.e. nothing has been generated -> backoff
-                if ( $self->config->DEBUG >= 2 ) {
-                    print $warnNoEmissionProbs;
-                }
-                $result = $self->unigrams;
-            } else {
-
-                # something has been generated, now 0 and 1 start to differ
-                if ( $ALGORITHM == 0 ) {
-
-                    # 0 MIRA-trained weights recomputed by +abs(min)
-                    # and converted to probs
-                    if ( $min < $max ) {
-
-                        # the typical case
-                        my $subtractant = $min;
-                        my $divisor     = 0;
-
-                        foreach my $label ( keys %$result ) {
-                            $result->{$label} = ( $result->{$label} - $min );
-                            $divisor += $result->{$label};
-                        }
-                        foreach my $label ( keys %$result ) {
-                            $result->{$label} = $result->{$label} / $divisor;
-                        }
-                    } else {
-
-                        # $min == $max
-
-                        # uniform prob distribution
-                        my $prob = 1 / scalar( keys %$result );
-                        foreach my $label ( keys %$result ) {
-                            $result->{$label} = $prob;
-                        }
-                    }
-
-                    # end $ALGORITHM == 0
-                } else {
-
-                    # $ALGORITHM == 1|2
-                    # 1 dtto, NOT converted to probs
-                    #   (but should behave the same as 0)
-                    # 2 dtto, sum in Viterbi instead of product
-                    #   (new_prob = old_prob + emiss*trans)
-                    # (for 1 and 2 the emission probs are completely the same,
-                    # they are just handled differently by the Labeller)
-
-                    if ( $min < $max ) {
-
-                        # the typical case
-                        my $subtractant = $min;
-
-                        foreach my $label ( keys %$result ) {
-                            $result->{$label} = ( $result->{$label} - $min );
-                        }
-                    } else {
-
-                        # $min == $max
-                        # uniform prob distribution
-
-                        if ( $min <= 0 ) {
-
-                            # we would like to keep the values
-                            # but this is not possible in this case
-                            foreach my $label ( keys %$result ) {
-
-                                # so lets just assign ones
-                                $result->{$label} = 1;
-                            }
-                        }
-
-                        # else there is already a uniform distribution
-                        # so let's keep it as it is
-                    }
-
-                    # end $ALGORITHM == 1|2
-                }
-            }
-
-            # end $ALGORITHM == 0|1|2
-        } else {
-
-            # $ALGORITHM == 3
-            # no subtraction of minimum, just throw away <= 0
-
-            foreach my $label ( keys %$result ) {
-                if ( $result->{$label} <= 0 ) {
-                    delete $result->{$label};
-                }
-
-                # else > 0 -> just keep it there and that's it
-            }
-        }    # end $ALGORITHM == 3
+        $result = $self->get_emission_scores_basic_MIRA ($features);
     } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
-
-        # basic or full MLE, no MIRA
-
-        my %counts    = ();
-        my %prob_sums = ();
-
-        # get scores
-        foreach my $feature (@$features) {
-            if ( $self->emissions->{$feature} ) {
-                foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
-                    $prob_sums{$label} +=
-                        $self->emissions->{$feature}->{$label};
-                    $counts{$label}++;
-                }
-            }
-        }
-
-        if ( keys %prob_sums ) {
-            foreach my $label ( keys %prob_sums ) {
-
-                # something like average pobability
-                # = all features have the weight of 1
-                # (or more precisely 1/number_of_features)
-                $result->{$label} = $prob_sums{$label} / $counts{$label};
-            }
-        } else {
-
-            # backoff
-            if ( $self->config->DEBUG >= 2 ) {
-                print $warnNoEmissionProbs;
-            }
-            $result = $self->unigrams;
-        }
-
+        $result = $self->get_emission_scores_no_MIRA($features);
     } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-
-        # 6 approx the correct way hopefully
-        # (full MLE + MIRA weighting of features, init weights with 100,
-        # update with $error, not really probs but prob-like scores)
-
-        # no need to recompute to probs since for each label the scores are
-        # generated in the same way, using the same feature weights,
-        # and so they behave exactly like probabilities
-        # (only, unlike probs, they can be negative;
-        #  this must be handled carefully!)
-
-        my %prob_sums = ();
-
-        # get scores
-        foreach my $feature (@$features) {
-            if ( $self->emissions->{$feature} ) {
-                foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
-                    if ( defined $self->emissions->{$feature}->{$label} ) {
-                        $result->{$label} +=
-                            $self->emissions->{$feature}->{$label}
-                            * $self->weights->{$feature};
-                    }
-                }
-            }
-        }
-
-        # score must not be negative (at least I think that it must not)
-        # becase it then gets multiplied by the transition prob
-        # which gives nonsensical result if score is negative
-        # (and even worse when this happens even number of times...)
-        # Can also safely delete zeros as they would not make it
-        # to output anyway
-        foreach my $label ( keys %$result ) {
-            if ( $result->{$label} <= 0 ) {
-                delete $result->{$label};
-            }
-        }
-
-        if ( scalar keys %$result == 0 ) {
-
-            # backoff
-            if ( $self->config->DEBUG >= 2 ) {
-                print $warnNoEmissionProbs;
-            }
-            $result = $self->unigrams;
-        }
+        $result = $self->get_emission_scores_MIRA_simple_weights ($features);
     } else {
         croak "ModelLabelling->get_emission_scores not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -927,6 +717,266 @@ sub get_emission_scores {
 
     return $result;
 }
+
+sub get_emission_scores_basic_MIRA {
+
+    my ($self, $features) = @_;
+
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    my $result = {};
+
+    my $warnNoEmissionProbs = "!!! WARNING !!! "
+        . "Based on the training data, no possible label was found"
+        . " for an edge. This usually means that either"
+        . " your training data are not big enough or that"
+        . " the set of features you are using"
+        . " is not well constructed - either it is too small"
+        . " or it lacks features that would be general enough"
+        . " to cover all possible sentences."
+        . " Using blind emission probabilities instead.\n";
+
+    # "pure MIRA", i.e. no MLE
+
+    # get scores
+    foreach my $feature (@$features) {
+        if ( $self->weights->{$feature} ) {
+            foreach my $label ( keys %{ $self->weights->{$feature} } ) {
+                $result->{$label} += $self->weights->{$feature}->{$label};
+            }
+        }
+    }
+
+    # subtracting the minimum from the score
+    if ( $ALGORITHM == 0 || $ALGORITHM == 1 || $ALGORITHM == 2 ) {
+
+        # find min and max score
+        my $min = 1e300;
+        my $max = -1e300;
+        foreach my $label ( keys %$result ) {
+            if ( $result->{$label} < $min ) {
+                $min = $result->{$label};
+            } elsif ( $result->{$label} > $max ) {
+                $max = $result->{$label};
+            }
+
+            # else is between $min and $max -> keep the values as they are
+        }
+
+        if ( $min > $max ) {
+
+            # $min > $max, i.e. nothing has been generated -> backoff
+            if ( $self->config->DEBUG >= 2 ) {
+                print $warnNoEmissionProbs;
+            }
+            $result = $self->unigrams;
+        } else {
+
+            # something has been generated, now 0 and 1 start to differ
+            if ( $ALGORITHM == 0 ) {
+
+                # 0 MIRA-trained weights recomputed by +abs(min)
+                # and converted to probs
+                if ( $min < $max ) {
+
+                    # the typical case
+                    my $subtractant = $min;
+                    my $divisor     = 0;
+
+                    foreach my $label ( keys %$result ) {
+                        $result->{$label} = ( $result->{$label} - $min );
+                        $divisor += $result->{$label};
+                    }
+                    foreach my $label ( keys %$result ) {
+                        $result->{$label} = $result->{$label} / $divisor;
+                    }
+                } else {
+
+                    # $min == $max
+
+                    # uniform prob distribution
+                    my $prob = 1 / scalar( keys %$result );
+                    foreach my $label ( keys %$result ) {
+                        $result->{$label} = $prob;
+                    }
+                }
+
+                # end $ALGORITHM == 0
+            } else {
+
+                # $ALGORITHM == 1|2
+                # 1 dtto, NOT converted to probs
+                #   (but should behave the same as 0)
+                # 2 dtto, sum in Viterbi instead of product
+                #   (new_prob = old_prob + emiss*trans)
+                # (for 1 and 2 the emission probs are completely the same,
+                # they are just handled differently by the Labeller)
+
+                if ( $min < $max ) {
+
+                    # the typical case
+                    my $subtractant = $min;
+
+                    foreach my $label ( keys %$result ) {
+                        $result->{$label} = ( $result->{$label} - $min );
+                    }
+                } else {
+
+                    # $min == $max
+                    # uniform prob distribution
+
+                    if ( $min <= 0 ) {
+
+                        # we would like to keep the values
+                        # but this is not possible in this case
+                        foreach my $label ( keys %$result ) {
+
+                            # so lets just assign ones
+                            $result->{$label} = 1;
+                        }
+                    }
+
+                    # else there is already a uniform distribution
+                    # so let's keep it as it is
+                }
+
+                # end $ALGORITHM == 1|2
+            }
+        }
+
+        # end $ALGORITHM == 0|1|2
+    } else {
+
+        # $ALGORITHM == 3
+        # no subtraction of minimum, just throw away <= 0
+
+        foreach my $label ( keys %$result ) {
+            if ( $result->{$label} <= 0 ) {
+                delete $result->{$label};
+            }
+
+            # else > 0 -> just keep it there and that's it
+        }
+    }    # end $ALGORITHM == 3
+
+    return $result;
+} # end get_emission_scores_basic_MIRA
+
+sub get_emission_scores_no_MIRA {
+
+    my ($self, $features) = @_;
+
+    my $result = {};
+
+    my $warnNoEmissionProbs = "!!! WARNING !!! "
+        . "Based on the training data, no possible label was found"
+        . " for an edge. This usually means that either"
+        . " your training data are not big enough or that"
+        . " the set of features you are using"
+        . " is not well constructed - either it is too small"
+        . " or it lacks features that would be general enough"
+        . " to cover all possible sentences."
+        . " Using blind emission probabilities instead.\n";
+
+    # basic or full MLE, no MIRA
+
+    my %counts    = ();
+    my %prob_sums = ();
+
+    # get scores
+    foreach my $feature (@$features) {
+        if ( $self->emissions->{$feature} ) {
+            foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
+                $prob_sums{$label} +=
+                    $self->emissions->{$feature}->{$label};
+                $counts{$label}++;
+            }
+        }
+    }
+
+    if ( keys %prob_sums ) {
+        foreach my $label ( keys %prob_sums ) {
+
+            # something like average pobability
+            # = all features have the weight of 1
+            # (or more precisely 1/number_of_features)
+            $result->{$label} = $prob_sums{$label} / $counts{$label};
+        }
+    } else {
+
+        # backoff
+        if ( $self->config->DEBUG >= 2 ) {
+            print $warnNoEmissionProbs;
+        }
+        $result = $self->unigrams;
+    }
+
+    return $result;
+} # end get_emission_scores_no_MIRA
+
+sub get_emission_scores_MIRA_simple_weights {
+
+    my ($self, $features) = @_;
+
+    my $result = {};
+
+    my $warnNoEmissionProbs = "!!! WARNING !!! "
+        . "Based on the training data, no possible label was found"
+        . " for an edge. This usually means that either"
+        . " your training data are not big enough or that"
+        . " the set of features you are using"
+        . " is not well constructed - either it is too small"
+        . " or it lacks features that would be general enough"
+        . " to cover all possible sentences."
+        . " Using blind emission probabilities instead.\n";
+
+    # (full MLE + MIRA weighting of features, init weights with 100,
+    # update with $error, not really probs but prob-like scores)
+
+    # no need to recompute to probs since for each label the scores are
+    # generated in the same way, using the same feature weights,
+    # and so they behave exactly like probabilities
+    # (only, unlike probs, they can be negative;
+    #  this must be handled carefully!)
+
+    my %prob_sums = ();
+
+    # get scores
+    foreach my $feature (@$features) {
+        if ( $self->emissions->{$feature} ) {
+            foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
+                if ( defined $self->emissions->{$feature}->{$label} ) {
+                    $result->{$label} +=
+                        $self->emissions->{$feature}->{$label}
+                        * $self->weights->{$feature};
+                }
+            }
+        }
+    }
+
+    # score must not be negative (at least I think that it must not)
+    # becase it then gets multiplied by the transition prob
+    # which gives nonsensical result if score is negative
+    # (and even worse when this happens even number of times...)
+    # Can also safely delete zeros as they would not make it
+    # to output anyway
+    foreach my $label ( keys %$result ) {
+        if ( $result->{$label} <= 0 ) {
+            delete $result->{$label};
+        }
+    }
+
+    if ( scalar keys %$result == 0 ) {
+
+        # backoff
+        if ( $self->config->DEBUG >= 2 ) {
+            print $warnNoEmissionProbs;
+        }
+        $result = $self->unigrams;
+    }
+
+    return $result;
+} # end get_emission_scores_MIRA_simple_weights
 
 # sets weights->$feature to $weight
 # for alg. 8 | 9 sets emissions (when $label_prev is not set)
@@ -1084,7 +1134,7 @@ extended from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
 =over 4
 
-=item 
+=item
 
 =back
 
