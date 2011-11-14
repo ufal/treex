@@ -65,9 +65,9 @@ sub process_tnode {
         }
         # evidence from the data - gender of the generated perspron can be anything, 
         # if the verb is in present tense and 1st or 2nd person
-        elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
-            $gender = 'nr';
-        }
+        #elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
+        #    $gender = 'nr';
+        #}
         else {
             $gender = 'anim';
         }
