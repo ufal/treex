@@ -6,7 +6,10 @@ use Treex::Unilang 0.07295;
 1;
 
 __END__
-
+#Module is here for synchronizing EN with Unilang
+#TODO - synopsis, example of parsing
+#a) from commandline
+#b) directly from perl
 =pod
 
 =encoding utf-8
@@ -14,12 +17,6 @@ __END__
 =head1 NAME
 
 Treex::EN - collection of blocks for processing English
-
-=head1 SYNOPSIS
-
- use Treex::EN;
-
- #TODO
 
 =head1 DESCRIPTION
 

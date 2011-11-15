@@ -6,7 +6,7 @@ use Treex::Core 0.07191;
 1;
 
 __END__
-
+#TODO this is module just to keep synchronized Unilang with Core
 =pod
 
 =encoding utf-8
@@ -14,12 +14,6 @@ __END__
 =head1 NAME
 
 Treex::Unilang - collection of blocks parametrized by language and language independent
-
-=head1 SYNOPSIS
-
- use Treex::Unilang;
-
- #TODO
 
 =head1 DESCRIPTION
 
