@@ -1,6 +1,7 @@
 package Treex::Block::W2A::EN::FixTagsAfterParse;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
 extends 'Treex::Core::Block';
 
 Readonly my $TAGS_FILE => 'data/models/morpho_analysis/en/forms_with_more_tags.tsv';
@@ -12,7 +13,9 @@ sub get_required_share_files { return $TAGS_FILE; }
 my %CAN_BE;
 
 sub BUILD {
-    open my $IN, '<:utf8', "$ENV{TMT_ROOT}/share/$TAGS_FILE";
+    my $self = shift;
+    my $file_path = require_file_from_share($TAGS_FILE);
+    open my $IN, '<:encoding(utf8)', $file_path;
     while (<$IN>) {
         chomp;
         my ( $form, @tags ) = split /\t/, $_;
