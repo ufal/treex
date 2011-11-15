@@ -112,14 +112,28 @@ sub fix_node {
         $parent->set_parent($node);
     }
 
-    # WH-pronouns should not have children
-    # with exception of "when" as subord. conjunction
+    # other WH-pronouns should not have children, except for "how + adjective" 
     elsif ( $tag =~ /^W/ && @children ) {
+        
+        my $adj_child;
+
+        # find an adjective under 'how', rehang its children
+        # TODO: 'how much of a boost the economy will have' and similar (rare), 'how American firms ... etc.' 
+        if ( $lemma eq 'how' && ($adj_child = first { $_->tag eq 'JJ' || $_->lemma eq 'about' } @children) ){
+            
+            foreach my $grandchild ($adj_child->get_children()){
+                $grandchild->set_parent($parent);
+            }
+        }
+        
         foreach my $child (@children) {
-            $child->set_parent($parent);
+            if (!$adj_child || $child != $adj_child){
+                $child->set_parent($parent);
+            }
         }
     }
-
+    
+  
     # Article "a" serving as a preposition "per" or "for"
     # "eight days a week" "$5 a day"
     if ($lemma eq 'a'
