@@ -11,9 +11,10 @@ you should set the $PERL5LIB environment variable (add "export PERL5LIB=$HOME/my
      cpan Bundle::CPAN Term::ReadLine::Perl
    This step is optional. You can use up/down keys for browsing history in the "cpan" CLI.
 
-2) To be able to install the modules in step 3, you need some C header files, which can be missing on your system.
+2) To be able to install the modules in step 3 and 4, you need some C header files (and the patch tool for installing TrEd),
+   which can be missing on your system.
    For Ubuntu/Debian, you can use
-     sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev zlib1g-dev libxml2-dev
+     sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev zlib1g-dev libxml2-dev patch
    For other distros, the names of the packages may be different.
 
 3) Install three more modules (including their dependencies) from CPAN:

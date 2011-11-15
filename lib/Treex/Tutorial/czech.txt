@@ -20,7 +20,7 @@ jsou až na Tk závislostí Treexu, ale občas bývá s jejich instalací
 nějaký problém, tak je radši instaluji zvlášť předem. Např. je obvykle
 potřeba doinstalovat některé hlavičkové soubory, na Ubuntu používám
 "sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev
-libpng12-dev zlib1g-dev libxml2-dev".)
+libpng12-dev zlib1g-dev libxml2-dev patch".)
 
 - pro zobrazení stromů se hodí nainstalovat si editor Tred -
 http://ufal.mff.cuni.cz/tred/ (Je zde také install_tred.bash, který
