@@ -217,7 +217,7 @@ sub _o_pron {
 
 sub _number {
     my ( $tnode, $tag, $form ) = @_;
-    my $sempos = ( $form =~ /^(first|second|third|.+th)$/ ) ? 'adj' : 'n';
+    my $sempos = ( $form =~ /^[^\/]*((fir|1)st|(seco|2)nd|(thi|3)rd|th)$/ ) ? 'adj' : 'n';
     $tnode->set_gram_sempos("$sempos.quant.def");
 
     # Plural of hundred can be in English both "hundreds" and "hundred".
