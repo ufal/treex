@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
 #use File::Slurp 9999;
-use Perl6::Slurp;
 use PerlIO::via::gzip;
 
 # By default read from STDIN
@@ -48,7 +47,8 @@ sub next_document_text {
 
     if ( $self->is_one_doc_per_file ) {
         $self->_set_current_fh(undef);
-        return slurp($FH);
+        local $/ = undef;
+        return <$FH>;
     }
 
     my $text = '';
