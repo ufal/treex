@@ -106,7 +106,7 @@ sub label_subtree {
     # there is an array with the current best path to it as 'path' (append-only)
     # and its current score 'score' (computed somehow,
     # i.e. differently for different algorithms)
-    my $states = {};
+    my $states             = {};
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
     # correspond to algorithms
@@ -136,7 +136,7 @@ sub label_subtree {
 
         # do one Viterbi step - assign possible labels to $edge
         # (including appropriate scores of course)
-        $states = $self->label_edge ($edge, $states);
+        $states = $self->label_edge( $edge, $states );
     }
 
     # TODO: foreach last state multiply its score
@@ -200,7 +200,7 @@ sub label_subtree {
 # i.e. make one step of the Viterbi algorithm
 sub label_edge {
 
-    my ($self, $edge, $states) = @_;
+    my ( $self, $edge, $states ) = @_;
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
@@ -323,7 +323,6 @@ sub label_edge {
         }
     }    # foreach $last_state
 
-
     $new_states = $self->prune($new_states);
 
     return $new_states;
@@ -332,7 +331,7 @@ sub label_edge {
 # prune the states (keep only some of the best)
 sub prune {
 
-    my ($self, $states) = @_;
+    my ( $self, $states ) = @_;
 
     # pruning
 
@@ -366,7 +365,7 @@ sub prune {
     my $new_states = {};
     my @best_states
         = sort {
-            $states->{$b}->{'score'} <=> $states->{$a}->{'score'}
+        $states->{$b}->{'score'} <=> $states->{$a}->{'score'}
         } keys %$states;
     for (
         my $i = 0;
@@ -578,42 +577,189 @@ __END__
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::Labeller - pure Perl implementation
-of a labeller for the MST parser
+of a dependency tree labeller for the MST parser
 
 =head1 DESCRIPTION
 
-This is a Perl implementation of the labeller for MST Parser described in
+This is a Perl implementation of the labeller for MST Parser
+which is (most probably) described in
 McDonald, Ryan: Discriminative Learning And Spanning Tree Algorithms
-For Dependency Parsing, 2006 (chapter 3.3.3 Two-Stage Labelling)
+For Dependency Parsing, 2006 (chapter 3.3.3 Two-Stage Labelling).
+
+For a dependency parse tree - presumably, but not necessarily, obtained using 
+the MST parser (L<Treex::Tool::Parser::MSTperl::Parser>), possibly 
+non-projective - assigns the most probable labels to the edges of the tree, 
+using the given model (L<Treex::Tool::Parser::MSTperl::ModelLabelling>).
+
+Assigning labels is implemented as sequence labelling, where the sequence to 
+be labelled is each sequence of edges between a parent node and its children. 
+First-order Markov factorization is used, but because we do the labelling as a 
+separate second stage to the parsing, many non-local features can be used, 
+exploiting the knowledge of the structure of the whole tree; also we go from 
+to root downwards and are therefore able to use the knowledge of labels 
+assigned to ancestor edges (especially the edge leading to the common parent 
+node).
+
+Each label is technically stored with the child node of the edge it belongs to,
+ so sometimes I will talk about a node label, which actually means the label 
+of the edge between the node and its parent.
+
+A variant of the Viterbi algorithm is used to find the best scoring sequence 
+of labels. However, instead of probabilities we use (real-valued) scores and 
+therefore instead of multiplication addition is used in Viterbi.
+
+For detail on the features and training see 
+L<Treex::Tool::Parser::MSTperl::TrainerLabelling>.
+
+
+I have used several sources of information to implement it, especially:
+
+Kevin Gimpel and Shay Cohen:
+Discriminative Online Algorithms for Sequence Labeling - A Comparative Study
+(2007)
+
+And also parts of these:
+
+Jun’ichi Kazama and Kentaro Torisawa:
+A New Perceptron Algorithm for Sequence Labeling with Non-local Features
+(2007)
+
+Wenliang Chen, Yujie Zhang, Hitoshi Isahara:
+A Two-stage Parser for Multilingual Dependency Parsing
+(2007)
+
+Binyamin Rozenfeld, Ronen Feldman, Moshe Fresko:
+A Systematic Cross-Comparison of Sequence Classifiers
+(2004?)
+
+=head1 FIELDS
+
+=over 4
+
+=item config
+
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+used with labeller.
+
+Currently the settings most relevant to the Labeller are the following:
+
+=over 8
+
+=item VITERBI_STATES_NUM_THRESHOLD
+
+Number of states to keep when pruning. The pruning takes place after each 
+Viterbi step (i.e. after each computation of possible labels and their scores 
+for one edge). For more details see the C<prune> subroutine.
+
+=item labeller_algorithm
+
+Algorithm used for Viterbi labelling as well as for training. Several 
+possibilities are being tried out; if one of them finally significantly 
+outscores the other variants, this will become obsolete and get deleted.
+
+=item unlabelledFeaturesControl
+
+Provides access to labeller features, especially enabling their computation. 
+Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+
+=item SEQUENCE_BOUNDARY_LABEL
+
+This is only a technical thing; a label must be assigned to the (basically 
+virtual) boundary of a sequence, different from any label used in the data. 
+The default value is '###', so if you use this exact label as a valid label in 
+your data, change the setting to something else. If nothing goes wrong, you 
+should never see this label in the output; however, it is contained in the 
+model and used for "transition scores" to score the "transition" between the 
+sequence boundary and the first/last node (i.e. it determines the scores of 
+labels used as the first or last label in the sequence where no actual 
+transition takes place and the transition scores would otherwise get ignored).
+
+=back
+
+=item model
+
+An instance of L<Treex::Tool::Parser::MSTperl::ModelLabelling>
+used to label the trees. It can be changed if needed (it is usually needed
+when training the labeller).
+
+=back
 
 =head1 METHODS
 
 =over 4
 
-=item $labeller->load_model('modelfile.model');
+=item my $labeller = Treex::Tool::Parser::MSTperl::Labeller->new(
+config => $self->config);
 
-Loads a labelled model (= sets feature weights)
+Creates an instance of the labeller using the given configuration, also 
+initializing the model.
+
+=item $labeller->load_model('modelfile.lmodel');
+
+Loads a labelled model
 using L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
 
-A model has to be loaded before sentences can be labelled.
+A model has to be loaded or created in an other way
+before sentences can be labelled.
 
-=item $parser->label_sentence($sentence);
+=item $labeller->label_sentence($sentence);
 
 Labels a sentence (instance of L<Treex::Tool::Parser::MSTperl::Sentence>). It
-sets the C<label> field of each node (instance of
-L<Treex::Tool::Parser::MSTperl::Node>), i.e. a word in the sentence, and also
-returns these labels as an array reference.
+finds the best labels for the sentence and returns them as an array reference.
 
-Any labelling information already contained in the sentence gets discarded
-(explicitely, by calling
-L<Treex::Tool::Parser::MSTperl::Sentence/copy_nonlabelled>).
+The given sentence is left intact and any labelling information already
+contained in the sentence is disregarded.
 
-=item $parser->label_sentence_internal($sentence);
+=item $labeller->label_sentence_internal($sentence);
 
 Does the actual labelling, returning a labelled instance of
 L<Treex::Tool::Parser::MSTperl::Sentence>. The C<label_sentence> sub is
 actually only a wrapper for this method which extracts the labels of the
-nodes and returns these.
+nodes and returns these. If you are only interested in getting the labels,
+use C<label_sentence>, but if it is handy for you to get a whole instance of
+L<Treex::Tool::Parser::MSTperl::Sentence> (which is labelled), use
+C<label_sentence_internal>. The subroutines are otherwise equivalent.
+
+The given sentence is left intact and any labelling information already
+contained in the sentence is disregarded. All other information from the
+given sentence is copied to the returned sentence, the sentence only differ
+in the labels assigned.
+
+=item $labeller->label_subtree($parent);
+
+Assign labels to edges going from the $parent node to its children
+(and recurse on the children).
+Directly modifies the sentence
+(or more precisely: the nodes within the sentence).
+
+=item $labeller->label_edge($edge, $states);
+
+Used as an internal part of label_subtree
+to get all probable labels for an edge $edge
+i.e. make one step of the Viterbi algorithm.
+The $states is a hash reference of all currently active Viterbi states.
+
+=item $labeller->prune($states);
+
+Prune the states (passed as a hash ref), currently does n-best pruning
+with n = C<config->VITERBI_STATES_NUM_THRESHOLD>, keeping always n best scoring
+states at maximum (all states if there are less than n). Is called after
+each Viterbi step, i.e. at the end of each call of C<label_edge>.
+Returns the new pruned states (does not modify its input).
+
+=item $labeller->get_possible_labels($edge, $previous_label,
+$previous_label_score);
+
+Computes possible labels for an edge, using info about the emission scores, 
+transition scores and last state's score. (Because of the first order Markov 
+factorization used, the states correspond to labels assigned to the edges they 
+corresond to.)
+
+=item $labeller->get_possible_labels_internal
+($emission_scores, $transition_scores, $last_state_score);
+
+Does the actual generation of possible labels for an edge, where the emission
+and transition scores are already computed for this particular edge.
 
 =back
 

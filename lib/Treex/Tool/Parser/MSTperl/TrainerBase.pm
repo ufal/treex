@@ -315,7 +315,7 @@ Reference to the instance of L<Treex::Tool::Parser::MSTperl::Config>.
 
 =over 4
 
-
+=item TODO
 
 
 The C<sumUpdateWeight> is a number by which the change of the feature weights
