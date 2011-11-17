@@ -58,9 +58,13 @@ sub preprocess_sentence {
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     # compute transition counts
+
     if ($ALGORITHM == 5
         || $ALGORITHM == 6
         || $ALGORITHM == 7
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
+        || $ALGORITHM == 16
         )
     {
 
@@ -80,12 +84,16 @@ sub preprocess_sentence {
         || $ALGORITHM == 3
         || $ALGORITHM == 4
         || $ALGORITHM == 9
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
         )
     {
 
         # transitions without smoothing
         $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
-    }    # else (8) MLE transition counts not used
+    }
+
+    # else (8) MLE transition counts not used
 
     if ($ALGORITHM == 4
         || $ALGORITHM == 5
@@ -250,7 +258,7 @@ sub mira_update {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
         $self->mira_tree_update(
             $sentence_correct_labelling->nodes_with_root->[0],
             $sentence_best_labelling,
@@ -290,24 +298,23 @@ sub mira_update {
                 # difference in scores should be greater than the margin:
 
                 # L(l_t, l')    number of incorrectly assigned labels
-                # edge-based factorization -> always one error (or none)
+                # edge-based factorization -> always one error
+                # (in case of an error)
                 my $margin = 1;
 
-                # my $margin = $sentence_best_labelling->count_errors_labelling(
-                #     $sentence_correct_labelling
-                # );
-
-                # s(l_t, x_t, y_t) - s(l', x_t, y_t) this should be zero or less
-                my $score_gain = $score_correct - $score_best;
-
                 # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
-                my $error = $margin - $score_gain;
+                my $error = $score_best - $score_correct + $margin;
 
                 if ( $error > 0 ) {
 
                     if ($ALGORITHM == 0
                         || $ALGORITHM == 1
-                        || $ALGORITHM == 2 || $ALGORITHM == 3
+                        || $ALGORITHM == 2
+                        || $ALGORITHM == 3
+                        || $ALGORITHM == 10
+                        || $ALGORITHM == 11
+                        || $ALGORITHM == 12
+                        || $ALGORITHM == 13
                         )
                     {
 
@@ -475,6 +482,8 @@ sub mira_tree_update {
         return;
     }
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
     my $label_prev_correct = $self->config->SEQUENCE_BOUNDARY_LABEL;
     my $label_prev_best    = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $correct_edge (@correct_edges) {
@@ -522,54 +531,89 @@ sub mira_tree_update {
 
             my $features_count = scalar( @{$features} );
 
-            # the same update is done four times with each feature
-            my $update = $error / $features_count / 4;
+            if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
-            foreach my $feature ( @{$features} ) {
+                # the same update is done four times with each feature
+                my $update = $error / $features_count / 4;
 
-                # TODO: which labels to use in transitions updates?
-                # none of the articles I have read mentions that specifically
-                # but according to their definitions they use
-                # $label_prev_correct for positive updates
-                # and $label_prev_best for negative updates
-                # (which makes some sense but several other combinations would
-                # make some sense as well -> let's try them, later)
+                foreach my $feature ( @{$features} ) {
 
-                # positive emission update
-                $self->update_feature_weight(
-                    $feature,
-                    $update,
-                    $sumUpdateWeight,
-                    $label_correct,
-                );
+                    # TODO: which labels to use in transitions updates?
+                    # none of the articles I have read
+                    # mentions that specifically
+                    # but according to their definitions they use
+                    # $label_prev_correct for positive updates
+                    # and $label_prev_best for negative updates
+                    # (which makes some sense but
+                    # several other combinations would
+                    # make some sense as well -> let's try them, later)
 
-                # positive transition update
-                $self->update_feature_weight(
-                    $feature,
-                    $update,
-                    $sumUpdateWeight,
-                    $label_correct,
-                    $label_prev_correct,
-                );
+                    # positive emission update
+                    $self->update_feature_weight(
+                        $feature,
+                        $update,
+                        $sumUpdateWeight,
+                        $label_correct,
+                    );
 
-                # negative emission update
-                $self->update_feature_weight(
-                    $feature,
-                    -$update,
-                    $sumUpdateWeight,
-                    $label_best,
-                );
+                    # positive transition update
+                    $self->update_feature_weight(
+                        $feature,
+                        $update,
+                        $sumUpdateWeight,
+                        $label_correct,
+                        $label_prev_correct,
+                    );
 
-                # negative transition update
-                $self->update_feature_weight(
-                    $feature,
-                    -$update,
-                    $sumUpdateWeight,
-                    $label_best,
-                    $label_prev_best,
-                );
+                    # negative emission update
+                    $self->update_feature_weight(
+                        $feature,
+                        -$update,
+                        $sumUpdateWeight,
+                        $label_best,
+                    );
+
+                    # negative transition update
+                    $self->update_feature_weight(
+                        $feature,
+                        -$update,
+                        $sumUpdateWeight,
+                        $label_best,
+                        $label_prev_best,
+                    );
+                }
+
+                # end if $ALGORITHM == 8|9
+            } elsif ( $ALGORITHM == 16 ) {
+
+                # the same update is done twice with each feature
+                my $update = $error / $features_count / 2;
+
+                foreach my $feature ( @{$features} ) {
+
+                    # positive emission update
+                    $self->update_feature_weight(
+                        $feature,
+                        $update,
+                        $sumUpdateWeight,
+                        $label_correct,
+                    );
+
+                    # negative emission update
+                    $self->update_feature_weight(
+                        $feature,
+                        -$update,
+                        $sumUpdateWeight,
+                        $label_best,
+                    );
+
+                }
+
+                # end if $ALGORITHM == 16
+            } else {
+                croak "TrainerLabelling->mira_tree_update not implemented"
+                    . " for algorithm no. $ALGORITHM!";
             }
-
         }
 
         # else label is correct, do not update
@@ -688,7 +732,12 @@ sub recompute_feature_weight {
 
     if ($ALGORITHM == 0
         || $ALGORITHM == 1
-        || $ALGORITHM == 2 || $ALGORITHM == 3
+        || $ALGORITHM == 2
+        || $ALGORITHM == 3
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
         )
     {
         foreach my $label (
@@ -706,7 +755,7 @@ sub recompute_feature_weight {
                     . "\n";
             }
         }
-    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
 
         # emissions
         foreach my $label (
@@ -725,33 +774,37 @@ sub recompute_feature_weight {
             }
         }
 
-        # transitions
-        foreach my $label_prev (
-            keys %{ $self->feature_weights_summed_bi->{$feature} }
-            )
-        {
-            foreach my $label
-                (
-                keys %{
-                    $self->feature_weights_summed_bi->{$feature}->{$label_prev}
-                }
+        if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+
+            # transitions
+            foreach my $label_prev (
+                keys %{ $self->feature_weights_summed_bi->{$feature} }
                 )
             {
-                my $weight =
-                    $self->feature_weights_summed_bi->{$feature}->{$label_prev}
-                    ->{$label}
-                    / $self->number_of_inner_iterations;
-                $self->model->set_feature_weight(
-                    $feature, $weight, $label, $label_prev
-                );
+                foreach my $label
+                    (
+                    keys %{
+                        $self->feature_weights_summed_bi->
+                            {$feature}->{$label_prev}
+                    }
+                    )
+                {
+                    my $weight =
+                        $self->feature_weights_summed_bi->
+                        {$feature}->{$label_prev}->{$label}
+                        / $self->number_of_inner_iterations;
+                    $self->model->set_feature_weight(
+                        $feature, $weight, $label, $label_prev
+                    );
 
-                # only progress and/or debug info
-                if ( $self->config->DEBUG >= 2 ) {
-                    print "$feature\t$label_prev\t$label\t"
-                        . $self->model->get_feature_weight(
-                        $feature, $label, $label_prev
-                        )
-                        . "\n";
+                    # only progress and/or debug info
+                    if ( $self->config->DEBUG >= 2 ) {
+                        print "$feature\t$label_prev\t$label\t"
+                            . $self->model->get_feature_weight(
+                            $feature, $label, $label_prev
+                            )
+                            . "\n";
+                    }
                 }
             }
         }

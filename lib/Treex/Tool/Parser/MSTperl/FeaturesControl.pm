@@ -263,8 +263,11 @@ sub set_simple_feature {
 
             # one-arg function feature
             $simple_feature_field = $1;
-        } elsif ( $simple_feature_code
-            =~ /$function_name\(([a-z0-9_]+),([a-z0-9_]+)\)$/ ) {
+        } elsif (
+            $simple_feature_code
+            =~ /$function_name\(([a-z0-9_]+),([a-z0-9_]+)\)$/
+            )
+        {
 
             # two-arg function feature
             my $simple_feature_field_1 = $1;

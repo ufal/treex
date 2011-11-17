@@ -111,7 +111,12 @@ sub label_subtree {
 
     # correspond to algorithms
     #                       0      1  2  3      4      5      6  7  8  9
-    my @starting_scores = ( 1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0 );
+    my @starting_scores = (
+        1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0,
+
+        # 10     11     12     13                 16
+        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0,
+    );
 
     # path could be constructed by backpointers
     # but one would have to keep all the states the whole time
@@ -264,7 +269,14 @@ sub label_edge {
                     . " \n";
             }
 
-            if ( $ALGORITHM == 7 || $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+            if (   $ALGORITHM == 7
+                || $ALGORITHM == 8
+                || $ALGORITHM == 9
+                || $ALGORITHM == 10 || $ALGORITHM == 11
+                || $ALGORITHM == 12 || $ALGORITHM == 13
+                || $ALGORITHM == 16
+                )
+            {
 
                 # test if this is the best
                 if (defined $new_states->{$new_label}
@@ -399,7 +411,11 @@ sub get_possible_labels {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    if (   $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 16
+        )
+    {
 
         my $result     = {};
         my $all_labels = $self->model->get_all_labels();
@@ -520,7 +536,10 @@ sub get_possible_labels_internal {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+
+        # these algorithms have such a simple way of computing possible labels
+        # they they do not need to have it split into two subroutines
         croak "Labeller->get_possible_labels_internal not implemented"
             . " for algorithm no $ALGORITHM!";
     }
@@ -541,9 +560,6 @@ sub get_possible_labels_internal {
             $possible_state_score
                 = $last_state_score * $emission_score * $transition_score;
         }
-
-        # TODO: also try not using $transition_score at all,
-        # i.e. always using $transition_score = 1
 
         # if no state like that yet or better than current max,
         # use this new state

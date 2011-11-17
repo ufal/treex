@@ -55,6 +55,14 @@ has 'smooth_uniform' => (
     default => 0.1,
 );
 
+# = 1 / ( keys %{ $self->unigrams } )
+# set in compute_smoothing_params
+has 'uniform_prob' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.02,
+);
+
 # standard MLE emission probs for Viterbi
 #   emissions->{feature}->{label} = prob
 # (during the precomputing phase, counts are temporarily stored instead of probs
@@ -147,6 +155,10 @@ sub load_data {
         || $ALGORITHM == 1
         || $ALGORITHM == 2
         || $ALGORITHM == 3
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
         )
     {
 
@@ -158,6 +170,7 @@ sub load_data {
         || $ALGORITHM == 5
         || $ALGORITHM == 8
         || $ALGORITHM == 9
+        || $ALGORITHM == 16
         )
     {
 
@@ -173,6 +186,8 @@ sub load_data {
         || $ALGORITHM == 4
         || $ALGORITHM == 8
         || $ALGORITHM == 9
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
         )
     {
 
@@ -290,6 +305,7 @@ sub prepare_for_mira {
     } elsif ( $ALGORITHM == 1 || $ALGORITHM == 8 ) {
 
         # no recomputing taking place
+
     } elsif (
         $ALGORITHM == 0
         || $ALGORITHM == 2
@@ -298,6 +314,11 @@ sub prepare_for_mira {
         || $ALGORITHM == 5
         || $ALGORITHM == 6
         || $ALGORITHM == 7
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
+        || $ALGORITHM == 16
         )
     {
 
@@ -316,35 +337,39 @@ sub prepare_for_mira {
             )
         {
 
-            # compute emission probs
+            # compute emission probs (MLE)
             foreach my $feature ( keys %{ $self->emissions } ) {
                 $self->compute_probs_from_counts(
                     $self->emissions->{$feature}
                 );
             }
-
-            if ($ALGORITHM == 5
-                || $ALGORITHM == 6
-                || $ALGORITHM == 7
-                )
-            {
-
-                # run the EM algorithm to compute
-                # transtition probs smoothing params
-                $self->compute_smoothing_params();
-
-                if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-
-                    # init feature weights
-                    foreach my $feature ( keys %{ $self->emissions } ) {
-
-                        # TODO: 100 is just an arbitrary number
-                        # but something non-zero is needed
-                        $self->weights->{$feature} = 100;
-                    }
-                }    # end if $ALGORITHM == 6|7
-            }    # end if $ALGORITHM == 5|6|7
         }    # end if $ALGORITHM == 4|5|6|7
+
+        if ($ALGORITHM == 5
+            || $ALGORITHM == 6
+            || $ALGORITHM == 7
+            || $ALGORITHM == 12
+            || $ALGORITHM == 13
+            || $ALGORITHM == 16
+            )
+        {
+
+            # run the EM algorithm to compute
+            # transtition probs smoothing params
+            $self->compute_smoothing_params();
+        }    # end if $ALGORITHM == 5|6|7|12|12|16
+
+        if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
+
+            # init feature weights
+            foreach my $feature ( keys %{ $self->emissions } ) {
+
+                # 100 is just an arbitrary number
+                # but something non-zero is needed
+                $self->weights->{$feature} = 100;
+            }
+        }    # end if $ALGORITHM == 6|7
+
     } else {    # $ALGORITHM not in 0~9
         croak "ModelLabelling->prepare_for_mira not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -377,6 +402,9 @@ sub compute_smoothing_params {
     if ( $self->config->DEBUG >= 1 ) {
         print "Running EM algorithm to estimate lambdas...\n";
     }
+
+    # uniform probability is 1 / number of different labels
+    $self->uniform_prob( 1 / ( keys %{ $self->unigrams } ) );
 
     my $change = 1;
     while ( $change > $self->config->EM_EPSILON ) {
@@ -534,6 +562,20 @@ sub get_label_score {
 
         return $result;
 
+    } elsif ( $ALGORITHM == 16 ) {
+
+        my $result = 0;
+
+        # sum of emission scores
+        foreach my $feature (@$features) {
+            $result += $self->get_emission_score( $label, $feature );
+        }
+
+        # multiply by transitions score
+        $result *= $self->get_transition_score( $label, $label_prev );
+
+        return $result;
+
     } else {
         croak "ModelLabelling->get_label_score not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -547,7 +589,7 @@ sub get_emission_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
 
         if ($self->emissions->{$feature}
             && $self->emissions->{$feature}->{$label}
@@ -579,9 +621,17 @@ sub get_transition_score {
         {
             return $self->transitions->{$feature}->{$label_prev}->{$label_this};
         } else {
+
+            # no smoothing as it is used in addition, not in multiplication
             return 0;
         }
-    } elsif ( $ALGORITHM == 5 || $ALGORITHM == 6 || $ALGORITHM == 7 ) {
+    } elsif (
+        $ALGORITHM == 5
+        || $ALGORITHM == 6
+        || $ALGORITHM == 7
+        || $ALGORITHM == 12 || $ALGORITHM == 13 || $ALGORITHM == 16
+        )
+    {
 
         # smoothing by linear combination
         # PROB(label|prev_label) =
@@ -604,6 +654,8 @@ sub get_transition_score {
         || $ALGORITHM == 2
         || $ALGORITHM == 3
         || $ALGORITHM == 4
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
         )
     {
 
@@ -633,7 +685,7 @@ sub get_transition_probs_array {
     my $result = [ 0, 0, 0 ];
 
     # uniform
-    $result->[0] = 1 / ( keys %{ $self->unigrams } );
+    $result->[0] = $self->uniform_prob;
 
     if ( $self->unigrams->{$label_this} ) {
 
@@ -700,13 +752,17 @@ sub get_emission_scores {
         || $ALGORITHM == 1
         || $ALGORITHM == 2
         || $ALGORITHM == 3
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
         )
     {
-        $result = $self->get_emission_scores_basic_MIRA ($features);
+        $result = $self->get_emission_scores_basic_MIRA($features);
     } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
         $result = $self->get_emission_scores_no_MIRA($features);
     } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-        $result = $self->get_emission_scores_MIRA_simple_weights ($features);
+        $result = $self->get_emission_scores_MIRA_simple_weights($features);
     } else {
         croak "ModelLabelling->get_emission_scores not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -720,7 +776,7 @@ sub get_emission_scores {
 
 sub get_emission_scores_basic_MIRA {
 
-    my ($self, $features) = @_;
+    my ( $self, $features ) = @_;
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
@@ -738,6 +794,15 @@ sub get_emission_scores_basic_MIRA {
 
     # "pure MIRA", i.e. no MLE
 
+    if ( $ALGORITHM == 11 || $ALGORITHM == 13 ) {
+
+        # initialize all label scores with 0 (so that all labels get some score)
+        my $all_labels = $self->get_all_labels();
+        foreach my $label (@$all_labels) {
+            $result->{$label} = 0;
+        }
+    }
+
     # get scores
     foreach my $feature (@$features) {
         if ( $self->weights->{$feature} ) {
@@ -748,7 +813,14 @@ sub get_emission_scores_basic_MIRA {
     }
 
     # subtracting the minimum from the score
-    if ( $ALGORITHM == 0 || $ALGORITHM == 1 || $ALGORITHM == 2 ) {
+    if (   $ALGORITHM == 0
+        || $ALGORITHM == 1
+        || $ALGORITHM == 2
+        || $ALGORITHM == 10 || $ALGORITHM == 11
+        || $ALGORITHM == 12 
+        || $ALGORITHM == 13
+        )
+    {
 
         # find min and max score
         my $min = 1e300;
@@ -756,7 +828,8 @@ sub get_emission_scores_basic_MIRA {
         foreach my $label ( keys %$result ) {
             if ( $result->{$label} < $min ) {
                 $min = $result->{$label};
-            } elsif ( $result->{$label} > $max ) {
+            }
+            if ( $result->{$label} > $max ) {
                 $max = $result->{$label};
             }
 
@@ -765,15 +838,27 @@ sub get_emission_scores_basic_MIRA {
 
         if ( $min > $max ) {
 
+            if ( $ALGORITHM == 11 || $ALGORITHM == 13 ) {
+                die "this is impossible, there must be at least all zeroes";
+            }
+
             # $min > $max, i.e. nothing has been generated -> backoff
             if ( $self->config->DEBUG >= 2 ) {
                 print $warnNoEmissionProbs;
             }
+
+            # backoff by using unigram probabilities
+            # (or unigram counts in some algorithms)
             $result = $self->unigrams;
         } else {
 
             # something has been generated, now 0 and 1 start to differ
-            if ( $ALGORITHM == 0 ) {
+            if ($ALGORITHM == 0
+                || $ALGORITHM == 10 || $ALGORITHM == 11
+                || $ALGORITHM == 12 
+                || $ALGORITHM == 13
+                )
+            {
 
                 # 0 MIRA-trained weights recomputed by +abs(min)
                 # and converted to probs
@@ -801,7 +886,7 @@ sub get_emission_scores_basic_MIRA {
                     }
                 }
 
-                # end $ALGORITHM == 0
+                # end $ALGORITHM == 0|10|11|12|13
             } else {
 
                 # $ALGORITHM == 1|2
@@ -844,7 +929,7 @@ sub get_emission_scores_basic_MIRA {
             }
         }
 
-        # end $ALGORITHM == 0|1|2
+        # end $ALGORITHM == 0|1|2|10|11|12|13
     } else {
 
         # $ALGORITHM == 3
@@ -860,11 +945,11 @@ sub get_emission_scores_basic_MIRA {
     }    # end $ALGORITHM == 3
 
     return $result;
-} # end get_emission_scores_basic_MIRA
+}    # end get_emission_scores_basic_MIRA
 
 sub get_emission_scores_no_MIRA {
 
-    my ($self, $features) = @_;
+    my ( $self, $features ) = @_;
 
     my $result = {};
 
@@ -908,15 +993,18 @@ sub get_emission_scores_no_MIRA {
         if ( $self->config->DEBUG >= 2 ) {
             print $warnNoEmissionProbs;
         }
+
+        # backoff by using unigram probabilities
+        # (or unigram counts in some algorithms)
         $result = $self->unigrams;
     }
 
     return $result;
-} # end get_emission_scores_no_MIRA
+}    # end get_emission_scores_no_MIRA
 
 sub get_emission_scores_MIRA_simple_weights {
 
-    my ($self, $features) = @_;
+    my ( $self, $features ) = @_;
 
     my $result = {};
 
@@ -972,11 +1060,14 @@ sub get_emission_scores_MIRA_simple_weights {
         if ( $self->config->DEBUG >= 2 ) {
             print $warnNoEmissionProbs;
         }
+
+        # backoff by using unigram probabilities
+        # (or unigram counts in some algorithms)
         $result = $self->unigrams;
     }
 
     return $result;
-} # end get_emission_scores_MIRA_simple_weights
+}    # end get_emission_scores_MIRA_simple_weights
 
 # sets weights->$feature to $weight
 # for alg. 8 | 9 sets emissions (when $label_prev is not set)
@@ -994,6 +1085,8 @@ sub set_feature_weight {
         } else {
             $self->emissions->{$feature}->{$label} = $weight;
         }
+    } elsif ( $ALGORITHM == 16 ) {
+        $self->emissions->{$feature}->{$label} = $weight;
     } else {
         if ( defined $label ) {
             $self->weights->{$feature}->{$label} = $weight;
@@ -1021,6 +1114,8 @@ sub update_feature_weight {
         } else {
             $self->emissions->{$feature}->{$label} += $update;
         }
+    } elsif ( $ALGORITHM == 16 ) {
+        $self->emissions->{$feature}->{$label} += $update;
     } else {
         if ( defined $label ) {
             $self->weights->{$feature}->{$label} += $update;
@@ -1043,6 +1138,10 @@ sub get_feature_count {
         || $ALGORITHM == 1
         || $ALGORITHM == 2
         || $ALGORITHM == 3
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
+        || $ALGORITHM == 13
         )
     {
 
@@ -1101,6 +1200,16 @@ sub get_feature_count {
                     keys %{ $self->transitions->{$feature}->{$label_prev} }
                 );
             }
+        }
+        return $count;
+    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+
+        # structure:
+        # emissions->{feature}->{label} = score
+
+        my $count = 0;
+        foreach my $feature ( keys %{ $self->emissions } ) {
+            $count += scalar( keys %{ $self->emissions->{$feature} } );
         }
         return $count;
     } else {
