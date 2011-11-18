@@ -732,8 +732,14 @@ sub _check_job_errors {
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
         log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
-        log_info "All remaining jobs will be interrupted now.";
-        $self->_delete_jobs_and_exit;
+        if ($self->survive){
+            log_warn("fatal error ignored due to the --survive option, be careful");
+            return;
+        }
+        else {
+            log_info "All remaining jobs will be interrupted now.";
+            $self->_delete_jobs_and_exit;
+        }
     }
     return;
 }
