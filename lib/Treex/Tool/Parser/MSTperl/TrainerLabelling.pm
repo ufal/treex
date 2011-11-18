@@ -64,6 +64,7 @@ sub preprocess_sentence {
         || $ALGORITHM == 7
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 15
         || $ALGORITHM == 16
         )
     {
@@ -86,6 +87,7 @@ sub preprocess_sentence {
         || $ALGORITHM == 9
         || $ALGORITHM == 10
         || $ALGORITHM == 11
+        || $ALGORITHM == 14
         )
     {
 
@@ -258,7 +260,12 @@ sub mira_update {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+    if (   $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 14 || $ALGORITHM == 15
+        || $ALGORITHM == 16
+        )
+    {
         $self->mira_tree_update(
             $sentence_correct_labelling->nodes_with_root->[0],
             $sentence_best_labelling,
@@ -277,8 +284,6 @@ sub mira_update {
 
                 my $correct_label = $correct_labels[$ord];
                 my $best_label    = $best_labels[$ord];
-
-                # TODO: open question: also include the transition scores?
 
                 my $label_scores =
                     $self->model->get_emission_scores( $edge->features );
@@ -584,10 +589,19 @@ sub mira_tree_update {
                 }
 
                 # end if $ALGORITHM == 8|9
-            } elsif ( $ALGORITHM == 16 ) {
+            } elsif (
+                $ALGORITHM == 14
+                || $ALGORITHM == 15
+                || $ALGORITHM == 16
+                )
+            {
 
                 # the same update is done twice with each feature
-                my $update = $error / $features_count / 2;
+                my $update = $error / $features_count;
+
+                if ( $ALGORITHM == 16 ) {
+                    $update /= 2;
+                }
 
                 foreach my $feature ( @{$features} ) {
 
@@ -738,6 +752,8 @@ sub recompute_feature_weight {
         || $ALGORITHM == 11
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         )
     {
         foreach my $label (

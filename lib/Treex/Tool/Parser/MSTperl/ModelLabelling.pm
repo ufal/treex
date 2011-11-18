@@ -159,6 +159,8 @@ sub load_data {
         || $ALGORITHM == 11
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         )
     {
 
@@ -188,6 +190,7 @@ sub load_data {
         || $ALGORITHM == 9
         || $ALGORITHM == 10
         || $ALGORITHM == 11
+        || $ALGORITHM == 14
         )
     {
 
@@ -318,6 +321,8 @@ sub prepare_for_mira {
         || $ALGORITHM == 11
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         || $ALGORITHM == 16
         )
     {
@@ -350,6 +355,7 @@ sub prepare_for_mira {
             || $ALGORITHM == 7
             || $ALGORITHM == 12
             || $ALGORITHM == 13
+            || $ALGORITHM == 15
             || $ALGORITHM == 16
             )
         {
@@ -562,6 +568,20 @@ sub get_label_score {
 
         return $result;
 
+    } elsif ( $ALGORITHM == 14 || $ALGORITHM == 15 ) {
+
+        my $label_scores = $self->get_emission_scores($features);
+
+        my $result = $label_scores->{$label};
+        if ( !defined $result ) {
+            $result = 0;
+        }
+
+        # multiply by transitions score
+        $result *= $self->get_transition_score( $label, $label_prev );
+
+        return $result;
+
     } elsif ( $ALGORITHM == 16 ) {
 
         my $result = 0;
@@ -629,7 +649,9 @@ sub get_transition_score {
         $ALGORITHM == 5
         || $ALGORITHM == 6
         || $ALGORITHM == 7
-        || $ALGORITHM == 12 || $ALGORITHM == 13 || $ALGORITHM == 16
+        || $ALGORITHM == 12 || $ALGORITHM == 13
+        || $ALGORITHM == 15
+        || $ALGORITHM == 16
         )
     {
 
@@ -656,6 +678,7 @@ sub get_transition_score {
         || $ALGORITHM == 4
         || $ALGORITHM == 10
         || $ALGORITHM == 11
+        || $ALGORITHM == 14
         )
     {
 
@@ -756,6 +779,8 @@ sub get_emission_scores {
         || $ALGORITHM == 11
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         )
     {
         $result = $self->get_emission_scores_basic_MIRA($features);
@@ -813,12 +838,15 @@ sub get_emission_scores_basic_MIRA {
     }
 
     # subtracting the minimum from the score
-    if (   $ALGORITHM == 0
+    if ($ALGORITHM == 0
         || $ALGORITHM == 1
         || $ALGORITHM == 2
-        || $ALGORITHM == 10 || $ALGORITHM == 11
-        || $ALGORITHM == 12 
+        || $ALGORITHM == 10
+        || $ALGORITHM == 11
+        || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         )
     {
 
@@ -854,9 +882,12 @@ sub get_emission_scores_basic_MIRA {
 
             # something has been generated, now 0 and 1 start to differ
             if ($ALGORITHM == 0
-                || $ALGORITHM == 10 || $ALGORITHM == 11
-                || $ALGORITHM == 12 
+                || $ALGORITHM == 10
+                || $ALGORITHM == 11
+                || $ALGORITHM == 12
                 || $ALGORITHM == 13
+                || $ALGORITHM == 14
+                || $ALGORITHM == 15
                 )
             {
 
@@ -886,7 +917,7 @@ sub get_emission_scores_basic_MIRA {
                     }
                 }
 
-                # end $ALGORITHM == 0|10|11|12|13
+                # end $ALGORITHM == 0|10|11|12|13|14|15
             } else {
 
                 # $ALGORITHM == 1|2
@@ -929,7 +960,7 @@ sub get_emission_scores_basic_MIRA {
             }
         }
 
-        # end $ALGORITHM == 0|1|2|10|11|12|13
+        # end $ALGORITHM == 0|1|2|10|11|12|13|14|15
     } else {
 
         # $ALGORITHM == 3
@@ -1142,6 +1173,8 @@ sub get_feature_count {
         || $ALGORITHM == 11
         || $ALGORITHM == 12
         || $ALGORITHM == 13
+        || $ALGORITHM == 14
+        || $ALGORITHM == 15
         )
     {
 

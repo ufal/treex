@@ -114,7 +114,7 @@ sub label_subtree {
     my @starting_scores = (
         1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0,
 
-        # 10     11     12     13                 16
+        # 10     11     12     13     14     15   16
         1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0,
     );
 
@@ -269,11 +269,12 @@ sub label_edge {
                     . " \n";
             }
 
-            if (   $ALGORITHM == 7
+            if ($ALGORITHM == 7
                 || $ALGORITHM == 8
                 || $ALGORITHM == 9
                 || $ALGORITHM == 10 || $ALGORITHM == 11
                 || $ALGORITHM == 12 || $ALGORITHM == 13
+                || $ALGORITHM == 14 || $ALGORITHM == 15
                 || $ALGORITHM == 16
                 )
             {
@@ -411,7 +412,7 @@ sub get_possible_labels {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if (   $ALGORITHM == 8
+    if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 16
         )
