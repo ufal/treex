@@ -65,14 +65,14 @@ sub detect_syntpos {
     if ( $tag =~ m/^(WP|WRB|WDT|DT|WP\$)$/ ) {
         return ( $form =~ m/^(when|where|why|how)$/ ) ? 'adv' : 'n';
     }
+    # predeterminers
+    return 'adj' if ( $tag eq 'PDT' );
+
     # numerals
-#    elsif ( $tag eq 'PDT' ){
-#        return 'adj';
-#    }
-    elsif ( $tag =~ m/^(CD|PDT)$/ ) {
-        return ( $form =~ /^[^\/]*((fir|1)st|(seco|2)nd|(thi|3)rd|th)$/ ) ? 'adj' : 'n';
-    }
-    return 'n';    # default to noun
+    my ($t_parent) = $t_node->get_eparents({or_topological => 1});
+    return 'adj' if ( $tag eq 'CD' && $t_parent && ($t_parent->ord > $t_node->ord ) ); 
+    
+    return 'n';    # default to noun    
 }
 
 sub detect_formeme {
@@ -104,12 +104,7 @@ sub _noun {
     return 'n:poss' if $a_node->tag eq 'PRP$';
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    # When  aux_anodes are not ordered, we have formemes like
-    # v:to_order_in (instead of v:in_order_to), n:to_up+X (instead of n:up_to+X) etc.
-    # On the target side there is the same error, so we have Czech formemes like n:v_než+X.
-    # However, formemes dictionaries are saved with this wrong mapping,
-    # so they must be repaired first.
-    # TODO: Also postpositons are not handled: n:ago+X instead of n:X+ago
+    # TODO: Postpositons are not handled: n:ago+X instead of n:X+ago
     # my @aux_a_nodes = $t_node->get_aux_anodes();
 
     my $prep = get_aux_string(@aux_a_nodes);
