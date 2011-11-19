@@ -273,7 +273,7 @@ zranit_se|žrát_se|zrcadlit_se|zredukovat_se|zřeknout_se|zříci_se|zříkat_s
 zrodit_se|zrychlit_se|zrychlovat_se|ztenčit_se|ztížit_se|ztotožnit_se|ztotožňovat_se|
 ztrácet_se|ztratit_se|ztrojnásobit_se|zúčastnit_se|zúčastňovat_se|zúročit_se|zúžit_se|
 zvedat_se|zvednout_se|zvětšit_se|zvětšovat_se|zvrátit_se|zvrhnout_se|zvykat_si|zvyknout_si|
-zvýraznit_se|zvýšit_se|zvyšovat_se|zvyšující_se|zželet_se|";
+zvýraznit_se|zvýšit_se|zvyšovat_se|zvyšující_se|zželet_se|rozednít_se|(za|roz|)chechtat_se";
 
 sub is_possible_tantum {
 
