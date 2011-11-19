@@ -11,8 +11,8 @@ sub process_anode {
 
     return if ( $anode->is_root );
 
-    # fix the '*' and '%' signs
-    if ( $anode->form =~ m/^(\*|%)$/ ){
+    # fix the '*', '!' and '%' signs (not recognized by the morphology)
+    if ( $anode->form =~ m/^(\*|%|!)$/ ){
         $anode->set_tag('Z:-------------');
     }
     # fix Czech decimal numerals
@@ -40,7 +40,7 @@ An attempt to (hopefully temporarily) fix some of the most common current tagger
 
 =item *
 
-Sets the tag 'Z:' for asterisks ("*") and percent signs ("%").
+Sets the tag 'Z:' for asterisks ("*"), exclamation marks ("!") and percent signs ("%").
 
 =item *
 

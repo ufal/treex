@@ -14,7 +14,8 @@ override 'tokenize_sentence' => sub {
     # pad with spaces for easier regexps
     $sentence =~ s/^(.*)$/ $1 /;
 
-    # possibly add some work here
+    # Czech conditional enclitic "-li" should be treated as a separate token
+    $sentence =~ s/ (\p{Letter}+)-(li|LI) / $1 - $2 /g;
 
     # clean out extra spaces
     $sentence =~ s/^\s*//g;
