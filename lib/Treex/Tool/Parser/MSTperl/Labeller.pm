@@ -278,7 +278,7 @@ sub label_edge {
                     . " \n";
             }
 
-            if (   $ALGORITHM == 8
+            if ($ALGORITHM == 8
                 || $ALGORITHM == 9
                 || $ALGORITHM == 10 || $ALGORITHM == 11
                 || $ALGORITHM == 12 || $ALGORITHM == 13
@@ -448,7 +448,6 @@ sub get_possible_labels {
 
     } else {    # $ALGORITHM not in 8,9
 
-        # now these are often not really probs but more of some kind of scores
         my $emission_scores =
             $self->model->get_emission_scores( $edge->features );
 

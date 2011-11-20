@@ -17,9 +17,25 @@ has labeller => (
     is  => 'rw',
 );
 
-# same as feature_weights_summed but for pairs of labels
-# feature_weights_summed_bi->{feature}->{label_prev}->{label} = weight
-has feature_weights_summed_bi => (
+# All emissions used during the training summed together
+# as averaging is reported to help avoid overtraining
+# (M. Collins. 2002. Discriminative training methods for
+# hidden Markov models: Theory and experiments with
+# perceptron algorithms. In Proc. EMNLP.)
+# Structure:
+# emissions_summed->{feature}->{label} = score
+has emissions_summed => (
+    isa     => 'HashRef',
+    is      => 'rw',
+    default => sub { {} },
+);
+
+# same as emissions_summed but for pairs of labels, structure is
+# transitions_summed->{feature}->{label_prev}->{label} = score
+# or
+# transitions_summed->{label_prev}->{label} = score
+# depending on the algorithm used
+has transitions_summed => (
     isa     => 'HashRef',
     is      => 'rw',
     default => sub { {} },
@@ -68,7 +84,7 @@ sub preprocess_sentence {
         )
     {
 
-        # transitions with smoothing
+        # MLE transitions with smoothing
         if ( $progress < $self->config->EM_heldout_data_at ) {
             $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
         } else {
@@ -90,7 +106,7 @@ sub preprocess_sentence {
         )
     {
 
-        # transitions without smoothing
+        # MLE transitions without smoothing
         $self->compute_transition_counts( $sentence->getNodeByOrd(0) );
     }
 
@@ -143,6 +159,7 @@ sub compute_transition_counts {
     my $last_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $edge ( @{ $parent_node->children } ) {
         my $this_label = $edge->child->label;
+
         if ( $ALGORITHM == 9 ) {
             my $features = $edge->features;
             foreach my $feature (@$features) {
@@ -153,6 +170,7 @@ sub compute_transition_counts {
         } else {
             $self->model->add_transition( $this_label, $last_label );
         }
+
         $last_label = $this_label;
         $self->compute_transition_counts( $edge->child );
     }
@@ -282,107 +300,10 @@ sub mira_update {
                 my $correct_label = $correct_labels[$ord];
                 my $best_label    = $best_labels[$ord];
 
-                my $label_scores =
-                    $self->model->get_emission_scores( $edge->features );
+                $self->mira_edge_update(
+                    $edge, $correct_label, $best_label, $sumUpdateWeight
+                );
 
-                # s(l_t, x_t, y_t)
-                my $score_correct = $label_scores->{$correct_label};
-                if ( !defined $score_correct ) {
-                    $score_correct = 0;
-                }
-
-                # s(l', x_t, y_t)
-                my $score_best = $label_scores->{$best_label};
-                if ( !defined $score_best ) {
-                    $score_best = 0;
-                }
-
-                # difference in scores should be greater than the margin:
-
-                # L(l_t, l')    number of incorrectly assigned labels
-                # edge-based factorization -> always one error
-                # (in case of an error)
-                my $margin = 1;
-
-                # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
-                my $error = $score_best - $score_correct + $margin;
-
-                if ( $error > 0 ) {
-
-                    if ($ALGORITHM == 0
-                        || $ALGORITHM == 1
-                        || $ALGORITHM == 2
-                        || $ALGORITHM == 3
-                        || $ALGORITHM == 10
-                        || $ALGORITHM == 11
-                        || $ALGORITHM == 12
-                        || $ALGORITHM == 13
-                        )
-                    {
-
-                        # features do not depend on sentence labelling
-                        # (TODO: actually they may depend on parent labelling,
-                        # but we chose to ignore this as we can assume that the
-                        # parent is labelled correctly;
-                        # that's why we use edges
-                        # from $sentence_correct_labelling here)
-                        my $features_diff       = $edge->features;
-                        my $features_diff_count = scalar( @{$features_diff} );
-
-                        if ( $features_diff_count > 0 ) {
-
-                            # min ||w_i+1 - w_i||
-                            # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
-                            my $update = $error / $features_diff_count;
-
-                            foreach my $feature ( @{$features_diff} ) {
-
-                                # $update is added to features
-                                # of correct labelling
-                                $self->update_feature_weight(
-                                    $feature,
-                                    $update,
-                                    $sumUpdateWeight,
-                                    $correct_label
-                                );
-
-                                # and subtracted from features
-                                # of "best" labelling
-                                $self->update_feature_weight(
-                                    $feature,
-                                    -$update,
-                                    $sumUpdateWeight,
-                                    $best_label
-                                );
-                            }
-
-                            if ( $self->config->DEBUG >= 3 ) {
-                                print "alpha: $update on $features_diff_count"
-                                    . " features (correct $correct_label,"
-                                    . " best $best_label)\n";
-                            }
-
-                        } else {
-
-                            # $features_diff_count == 0
-                            croak "It seems that there are no features!" .
-                                "This is somewhat weird.";
-                        }
-                    } else {
-                        croak "Algorithm number $ALGORITHM does not use MIRA!";
-                    }
-                } else {
-
-                    # $error <= 0
-                    # (correct is better but transition ruled it out)
-                    # TODO: incorporate transition scores?
-                    if ( $self->config->DEBUG >= 3 ) {
-                        print "correct label $correct_label on $ord "
-                            . "has higher score than incorrect $best_label "
-                            . "but transition scores preferred "
-                            . "the incorrect one\n";
-                    }
-                }
             } else {
 
                 # $correct_labels[$ord] eq $best_labels[$ord]
@@ -432,7 +353,10 @@ sub mira_tree_update {
 
         if ( $label_correct ne $label_best ) {
 
-            # label is incorrect, we have to update the weights
+            # label is incorrect, we have to update the scores
+
+            # $self->mira_edge_tree_update(
+            #    $edge, $correct_label, $best_label, $sumUpdateWeight);
 
             my $score_correct = $self->model->get_label_score(
                 $label_correct, $label_prev_correct, $features
@@ -483,7 +407,7 @@ sub mira_tree_update {
                     # make some sense as well -> let's try them, later)
 
                     # positive emission update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         $update,
                         $sumUpdateWeight,
@@ -491,7 +415,7 @@ sub mira_tree_update {
                     );
 
                     # positive transition update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         $update,
                         $sumUpdateWeight,
@@ -500,7 +424,7 @@ sub mira_tree_update {
                     );
 
                     # negative emission update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         -$update,
                         $sumUpdateWeight,
@@ -508,7 +432,7 @@ sub mira_tree_update {
                     );
 
                     # negative transition update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         -$update,
                         $sumUpdateWeight,
@@ -532,7 +456,7 @@ sub mira_tree_update {
                 foreach my $feature ( @{$features} ) {
 
                     # positive emission update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         $update,
                         $sumUpdateWeight,
@@ -540,7 +464,7 @@ sub mira_tree_update {
                     );
 
                     # negative emission update
-                    $self->update_feature_weight(
+                    $self->update_feature_score(
                         $feature,
                         -$update,
                         $sumUpdateWeight,
@@ -578,146 +502,232 @@ sub mira_tree_update {
     return;
 }
 
-# update weight of the feature
-# (also update the sum of feature weights: feature_weights_summed)
-sub update_feature_weight {
+sub mira_edge_update {
+
+    my ( $self, $edge, $correct_label, $best_label, $sumUpdateWeight ) = @_;
+
+    my $label_scores = $self->model->get_emission_scores( $edge->features );
+
+    # s(l_t, x_t, y_t)
+    my $score_correct = $label_scores->{$correct_label};
+    if ( !defined $score_correct ) {
+        $score_correct = 0;
+    }
+
+    # s(l', x_t, y_t)
+    my $score_best = $label_scores->{$best_label};
+    if ( !defined $score_best ) {
+        $score_best = 0;
+    }
+
+    # difference in scores should be greater than the margin:
+
+    # L(l_t, l')    number of incorrectly assigned labels
+    # edge-based factorization -> always one error
+    # (in case of an error)
+    my $margin = 1;
+
+    # L(l_t, l') - [s(l_t, x_t, y_t) - s(l', x_t, y_t)]
+    my $error = $score_best - $score_correct + $margin;
+
+    if ( $error > 0 ) {
+
+        # features do not depend on sentence labelling
+        # (TODO: actually they may depend on parent labelling,
+        # but we chose to ignore this as we can assume that the
+        # parent is labelled correctly;
+        # that's why we use edges
+        # from $sentence_correct_labelling here)
+        my $features_diff       = $edge->features;
+        my $features_diff_count = scalar( @{$features_diff} );
+
+        if ( $features_diff_count > 0 ) {
+
+            # min ||w_i+1 - w_i||
+            # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
+            my $update = $error / $features_diff_count;
+
+            foreach my $feature ( @{$features_diff} ) {
+
+                # $update is added to features
+                # of correct labelling
+                $self->update_feature_score(
+                    $feature,
+                    $update,
+                    $sumUpdateWeight,
+                    $correct_label
+                );
+
+                # and subtracted from features
+                # of "best" labelling
+                $self->update_feature_score(
+                    $feature,
+                    -$update,
+                    $sumUpdateWeight,
+                    $best_label
+                );
+            }
+
+            if ( $self->config->DEBUG >= 3 ) {
+                print "alpha: $update on $features_diff_count"
+                    . " features (correct $correct_label,"
+                    . " best $best_label)\n";
+            }
+
+        } else {
+
+            # $features_diff_count == 0
+            croak "It seems that there are no features!" .
+                "This is somewhat weird.";
+        }
+    } else {
+
+        # $error <= 0
+        # (correct is better but transition ruled it out)
+        # TODO: incorporate transition scores?
+        if ( $self->config->DEBUG >= 3 ) {
+            print "correct label $correct_label "
+                . "has higher score than incorrect $best_label "
+                . "but transition scores preferred "
+                . "the incorrect one\n";
+        }
+    }
+
+    return;
+}
+
+# update score of the feature
+# (also update emissions_summed or transitions_summed)
+sub update_feature_score {
 
     # (Str $feature, Num $update, Num $sumUpdateWeight,
-    #   Maybe[Str] $label, Maybe[Str] $label_prev)
+    #   Str $label, Maybe[Str] $label_prev)
     my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev ) = @_;
 
-    #adds $update to the current weight of the feature
-    my $result =
-        $self->model->update_feature_weight(
+    # adds $update to the current score of the feature
+    my $result = $self->model->update_feature_score(
         $feature, $update, $label, $label_prev
-        )
-        ;
+    );
 
     # v = v + w_{i+1}
     # $sumUpdateWeight denotes number of summands
-    # in which the weight would appear
+    # in which the score would appear
     # if it were computed according to the definition
     my $summed_update = $sumUpdateWeight * $update;
-    if ( defined $label ) {
-        if ( defined $label_prev ) {
-            $self->feature_weights_summed_bi->{$feature}->{$label_prev}
-                ->{$label} += $summed_update;
-        } else {
-            $self->feature_weights_summed->{$feature}
-                ->{$label} += $summed_update;
-        }
+    if ( defined $label_prev ) {
+
+        # transition score update
+        $self->transitions_summed->{$feature}->{$label_prev}
+            ->{$label} += $summed_update;
     } else {
-        $self->feature_weights_summed->{$feature} += $summed_update;
+
+        # emission score update
+        $self->emissions_summed->{$feature}->{$label} += $summed_update;
     }
 
     return $result;
 }
 
-# recompute weight of $feature as an average
-# (probably using feature_weights_summed)
-sub recompute_feature_weight {
+# SCORES AVERAGING
 
-    # Str $feature
-    my ( $self, $feature ) = @_;
+# recompute feature scores as averages
+# using emissions_summed and transitions_summed
+# ( w = v/(N * T) )
+sub scores_averaging {
+
+    my ($self) = @_;
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ($ALGORITHM == 0
-        || $ALGORITHM == 1
-        || $ALGORITHM == 2
-        || $ALGORITHM == 3
-        || $ALGORITHM == 10
-        || $ALGORITHM == 11
-        || $ALGORITHM == 12
-        || $ALGORITHM == 13
-        || $ALGORITHM == 14
-        || $ALGORITHM == 15
-        )
-    {
-        foreach my $label (
-            keys %{ $self->feature_weights_summed->{$feature} }
-            )
-        {
-            my $weight = $self->feature_weights_summed->{$feature}->{$label}
-                / $self->number_of_inner_iterations;
-            $self->model->set_feature_weight( $feature, $weight, $label );
+    if ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
 
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 2 ) {
-                print "$feature\t$label\t"
-                    . $self->model->get_feature_weight( $feature, $label )
-                    . "\n";
-            }
-        }
-    } elsif (
-        $ALGORITHM == 8
-        || $ALGORITHM == 9
-        || $ALGORITHM == 16
-        || $ALGORITHM == 17
-        )
-    {
+        # nothing to do (MIRA not used)
 
-        # emissions
-        foreach my $label (
-            keys %{ $self->feature_weights_summed->{$feature} }
-            )
-        {
-            my $weight = $self->feature_weights_summed->{$feature}->{$label}
-                / $self->number_of_inner_iterations;
-            $self->model->set_feature_weight( $feature, $weight, $label );
+    } else {
 
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 2 ) {
-                print "$feature\t$label\t"
-                    . $self->model->get_feature_weight( $feature, $label )
-                    . "\n";
-            }
-        }
+        # emissions computed by MIRA
+        $self->scores_averaging_emissions();
 
         if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
 
-            # transitions
-            foreach my $label_prev (
-                keys %{ $self->feature_weights_summed_bi->{$feature} }
-                )
-            {
-                foreach my $label
-                    (
-                    keys %{
-                        $self->feature_weights_summed_bi->
-                            {$feature}->{$label_prev}
-                    }
-                    )
-                {
-                    my $weight =
-                        $self->feature_weights_summed_bi->
-                        {$feature}->{$label_prev}->{$label}
-                        / $self->number_of_inner_iterations;
-                    $self->model->set_feature_weight(
-                        $feature, $weight, $label, $label_prev
-                    );
-
-                    # only progress and/or debug info
-                    if ( $self->config->DEBUG >= 2 ) {
-                        print "$feature\t$label_prev\t$label\t"
-                            . $self->model->get_feature_weight(
-                            $feature, $label, $label_prev
-                            )
-                            . "\n";
-                    }
-                }
-            }
+            # transitions also computed by MIRA
+            $self->scores_averaging_transitions();
         }
-    } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
-
-        # nothing to do (MIRA not used)
-    } else {
-        croak "algorithm no $ALGORITHM must"
-            . " implement recompute_feature_weight!";
     }
 
     return;
-}    # end recompute_feature_weight
+}
+
+sub scores_averaging_emissions {
+
+    my ($self) = @_;
+
+    my $divisor = $self->number_of_inner_iterations;
+
+    my @features = keys %{ $self->emissions_summed };
+    foreach my $feature (@features) {
+
+        my @labels = keys %{ $self->emissions_summed->{$feature} };
+        foreach my $label (@labels) {
+
+            # get the sum of scores
+            my $score_sum = $self->emissions_summed->{$feature}->{$label};
+
+            # compute the average score
+            my $new_score = $score_sum / $divisor;
+
+            # set the new score
+            $self->model->set_feature_score( $feature, $new_score, $label );
+
+            # only progress and/or debug info
+            if ( $self->config->DEBUG >= 2 ) {
+                print "$feature\t$label\t$new_score\n";
+            }
+        }
+    }
+
+    return;
+}
+
+sub scores_averaging_transitions {
+
+    my ($self) = @_;
+
+    my $divisor = $self->number_of_inner_iterations;
+
+    my @features = keys %{ $self->transitions_summed };
+    foreach my $feature (@features) {
+
+        my @labels = keys %{ $self->transitions_summed->{$feature} };
+        foreach my $label_prev (@labels) {
+
+            my @following_labels = keys %{
+                $self->transitions_summed->{$feature}->{$label_prev}
+                };
+            foreach my $label (@following_labels) {
+
+                # get the sum of scores
+                my $score_sum = $self->transitions_summed->
+                    {$feature}->{$label_prev}->{$label};
+
+                # compute the average score
+                my $new_score = $score_sum / $divisor;
+
+                # set the new score
+                $self->model->set_feature_score(
+                    $feature, $new_score, $label, $label_prev
+                );
+
+                # only progress and/or debug info
+                if ( $self->config->DEBUG >= 2 ) {
+                    print "$feature\t$label_prev\t$label\t$new_score\n";
+                }
+            }
+        }
+    }
+
+    return;
+}
 
 1;
 

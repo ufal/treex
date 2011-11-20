@@ -16,6 +16,18 @@ has parser => (
     is  => 'rw',
 );
 
+# v
+# all values of features used during the training summed together
+# as using average weights instead of final weights
+# is reported to help avoid overtraining
+# For labeller has the form of ->{feature}->{label} = weight
+# instead of ->{feature} = weight
+has feature_weights_summed => (
+    isa     => 'HashRef',
+    is      => 'rw',
+    default => sub { {} },
+);
+
 sub BUILD {
     my ($self) = @_;
 
@@ -240,20 +252,28 @@ sub update_feature_weight {
 }
 
 # recompute weight of $feature as an average
-# (probably using feature_weights_summed)
-sub recompute_feature_weight {
+# (using feature_weights_summed)
+sub scores_averaging {
 
     # Str $feature
-    my ( $self, $feature ) = @_;
+    my ($self) = @_;
 
-    my $weight = $self->feature_weights_summed->{$feature}
-        / $self->number_of_inner_iterations;
-    $self->model->set_feature_weight( $feature, $weight );
+    foreach my $feature ( keys %{ $self->feature_weights_summed } ) {
 
-    # only progress and/or debug info
-    if ( $self->config->DEBUG >= 2 ) {
-        print "$feature\t" . $self->model->get_feature_weight($feature)
-            . "\n";
+        # w = v/(N * T)
+        # see also: my $self->number_of_inner_iterations =
+        # $self->number_of_iterations * $sentence_count;
+
+        my $weight = $self->feature_weights_summed->{$feature}
+            / $self->number_of_inner_iterations;
+        $self->model->set_feature_weight( $feature, $weight );
+
+        # only progress and/or debug info
+        if ( $self->config->DEBUG >= 2 ) {
+            print "$feature\t" . $self->model->get_feature_weight($feature)
+                . "\n";
+
+        }
     }
 
     return;
@@ -296,6 +316,16 @@ which is being trained.
 
 =head1 METHODS
 
+The C<sumUpdateWeight> is a number by which the change of the feature weights
+is multiplied in the sum of the weights, so that at the end of the algorithm
+the sum corresponds to its formal definition, which is a sum of all weights
+after each of the updates. C<sumUpdateWeight> is a member of a sequence going
+from N*T to 1, where N is the number of iterations
+(L<Treex::Tool::Parser::MSTperl::FeaturesControl/number_of_iterations>, C<10>
+by default) and T being the number of sentences in training data, N*T thus
+being the number of inner iterations, i.e. how many times C<mira_update()> is
+called.
+
 =over 4
 
 =item $trainer->train($training_data);
@@ -311,6 +341,41 @@ L<Treex::Tool::Parser::MSTperl::Reader>.
 Performs one update of the MIRA (Margin-Infused Relaxed Algorithm) on one
 sentence from the training data. Its input is the correct parse of the sentence
 (from the training data) and the best scoring parse created by the parser.
+
+=item my ( $features_diff_1, $features_diff_2, $features_diff_count ) =
+    features_diff( $features_1, $features_2 );
+
+Compares features of two parses of a sentence, where the features
+(C<$features_1>, C<$features_2>) are represented as a reference to
+an array of strings representing the features
+(the same feature might be present repeatedly, all occurencies of the same
+feature are summed together).
+
+Features that appear exactly the same times in both parses are disregarded.
+
+The first two returned values (C<$features_diff_1>, C<$features_diff_2>)
+are array references,
+C<$features_diff_1> containing features that appear in the first parse
+(C<$features_1>) more often than in the second parse (C<$features_2>),
+and vice versa for C<$features_diff_2>.
+Each feature is contained as many times as is the difference in number
+of occurencies, eg. if the feature C<TAG|tag:NN|NN> appears 5 times in the
+first parse and 8 times in the second parse, then C<$features_diff_2>
+will contain C<'TAG|tag:NN|NN', 'TAG|tag:NN|NN', 'TAG|tag:NN|NN'>.
+
+The third returned value (C<$features_diff_count>) is a count of features
+in which the parses differ, ie.
+C<$features_diff_count = scalar(@$features_diff_1) + scalar(@$features_diff_2)>.
+
+=item update_feature_weight( $model, $feature, $update, $sumUpdateWeight )
+
+Updates weight of C<$feature> by C<$update>
+(which might be positive or negative)
+and also updates the sum of updates of the feature
+(which is later used for overtraining avoidance),
+multiplied by C<$sumUpdateWeight>, which is simply a count of inner iterations
+yet to be performed (thus eliminating the need to update the sum on each
+inner iteration).
 
 =back
 
