@@ -150,11 +150,11 @@ sub load_data {
 
     # should be 1 but might be a little shifted
     my $smooth_ok = (
-               $smooth_sum > 0.999
+        $smooth_sum > 0.999
             && $smooth_sum < 1.001
 
             # must be between 0 and 1
-            && $self->uniform_prob > 0 
+            && $self->uniform_prob > 0
             && $self->uniform_prob < 1
     );
 
@@ -182,6 +182,7 @@ sub load_data {
         || $ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 16
+        || $ALGORITHM == 17
         )
     {
 
@@ -333,6 +334,7 @@ sub prepare_for_mira {
         || $ALGORITHM == 14
         || $ALGORITHM == 15
         || $ALGORITHM == 16
+        || $ALGORITHM == 17
         )
     {
 
@@ -366,13 +368,14 @@ sub prepare_for_mira {
             || $ALGORITHM == 13
             || $ALGORITHM == 15
             || $ALGORITHM == 16
+            || $ALGORITHM == 17
             )
         {
 
             # run the EM algorithm to compute
             # transtition probs smoothing params
             $self->compute_smoothing_params();
-        }    # end if $ALGORITHM == 5|6|7|12|12|16
+        }    # end if $ALGORITHM == 5|6|7|12|12|16|17
 
         if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
 
@@ -605,6 +608,39 @@ sub get_label_score {
 
         return $result;
 
+    } elsif ( $ALGORITHM == 17 ) {
+
+        my $result = 0;
+
+        # sum of emission scores
+        foreach my $feature (@$features) {
+            $result += $self->get_emission_score( $label, $feature );
+        }
+
+        # multiply by transitions score
+        if ( $result > 0 ) {
+            $result *= $self->get_transition_score( $label, $label_prev );
+        } else {
+
+            # For negative scores this works the other way round,
+            # eg. if I had two labels, both with emission score -5
+            # and their transition probs were 0.2 and 0.9,
+            # then the latter should get a higher score;
+            # simple mltiplication won't help as that would yield scores
+            # of -1.0 and -4.5, thus inverting the order.
+            # What I do is that for transition prob p I use (1-p)
+            # which yields 0.8 and 0.1 transition probabilities here,
+            # giving scores of -4.0 and -0.5, which is much better.
+            # Still, a label with negative emission score, even if very close
+            # to 0 and with a high transition prob, cannot outscore any label
+            # with a positive emission score, even if low with a low transition
+            # prob - normalizing scores to be non-negative would be necessary
+            # for this, as is alg 0 and similar.
+            $result *= ( 1 - $self->get_transition_score( $label, $label_prev ) );
+        }
+
+        return $result;
+
     } else {
         croak "ModelLabelling->get_label_score not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -618,7 +654,12 @@ sub get_emission_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+    if (   $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 16 
+        || $ALGORITHM == 17
+        )
+    {
 
         if ($self->emissions->{$feature}
             && $self->emissions->{$feature}->{$label}
@@ -660,7 +701,7 @@ sub get_transition_score {
         || $ALGORITHM == 7
         || $ALGORITHM == 12 || $ALGORITHM == 13
         || $ALGORITHM == 15
-        || $ALGORITHM == 16
+        || $ALGORITHM == 16 || $ALGORITHM == 17
         )
     {
 
@@ -1125,7 +1166,7 @@ sub set_feature_weight {
         } else {
             $self->emissions->{$feature}->{$label} = $score;
         }
-    } elsif ( $ALGORITHM == 16 ) {
+    } elsif ( $ALGORITHM == 16 || $ALGORITHM == 17 ) {
         $self->emissions->{$feature}->{$label} = $score;
     } else {
         if ( defined $label ) {
@@ -1154,7 +1195,7 @@ sub update_feature_weight {
         } else {
             $self->emissions->{$feature}->{$label} += $update;
         }
-    } elsif ( $ALGORITHM == 16 ) {
+    } elsif ( $ALGORITHM == 16 || $ALGORITHM == 17 ) {
         $self->emissions->{$feature}->{$label} += $update;
     } else {
         if ( defined $label ) {
@@ -1244,7 +1285,13 @@ sub get_feature_count {
             }
         }
         return $count;
-    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+    } elsif (
+        $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 16 
+        || $ALGORITHM == 17
+        )
+    {
 
         # structure:
         # emissions->{feature}->{label} = score
@@ -1258,7 +1305,7 @@ sub get_feature_count {
         croak
             "algorithm no. $ALGORITHM does not implement get_feature_count()!";
     }
-}
+}    # end get_feature_count
 
 1;
 
@@ -1289,7 +1336,7 @@ Fields inherited from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
 =item config
 
-Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be
 used for the model.
 
 Currently the settings most relevant to the model are the following:
@@ -1316,7 +1363,7 @@ See L<Treex::Tool::Parser::MSTperl::Config/SEQUENCE_BOUNDARY_LABEL>.
 
 =item featuresControl
 
-Provides access to labeller features, especially enabling their computation. 
+Provides access to labeller features, especially enabling their computation.
 Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =back
@@ -1479,13 +1526,13 @@ Subroutines overriding stubs in L<Treex::Tool::Parser::MSTperl::ModelBase>.
 =item $data = get_data_to_store(), $data = get_data_to_store_tsv()
 
 Returns the model data, containing the following fields:
-C<unigrams>, 
-C<transitions>, 
-C<emissions>, 
-C<weights>, 
-C<smooth_uniform>, 
-C<smooth_unigrams>, 
-C<smooth_bigrams>, 
+C<unigrams>,
+C<transitions>,
+C<emissions>,
+C<weights>,
+C<smooth_uniform>,
+C<smooth_unigrams>,
+C<smooth_bigrams>,
 C<uniform_prob>
 
 =item load_data($data), load_data_tsv($data)
@@ -1564,7 +1611,7 @@ Increment count for the label in C<unigrams>.
 
 =item add_transition ($label_this, $label_prev, $feature)
 
-Increment count for the transition in C<transitions>, possible including a 
+Increment count for the transition in C<transitions>, possible including a
 feature on "this" edge if the algorithm uses features with transitions.
 
 =item add_emission ($feature, $label)
@@ -1585,8 +1632,8 @@ C<emissions>, C<transitions> and C<unigrams>.
 
 =item compute_smoothing_params()
 
-The main method containing an implementation of the Expectation Maximization 
-Algorithm to compute smoothing parameters (C<smooth_bigrams>, 
+The main method containing an implementation of the Expectation Maximization
+Algorithm to compute smoothing parameters (C<smooth_bigrams>,
 C<smooth_unigrams>, C<smooth_uniform>) for transition probabilities
 smoothing by linear combination of bigram, unigram and uniform probability.
 Iteratively tries to find

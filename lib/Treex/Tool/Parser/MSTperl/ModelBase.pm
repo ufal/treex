@@ -224,12 +224,12 @@ The model is represented by features and their weights.
 
 =item config
 
-Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be
 used for the model.
 
 =item featuresControl
 
-Provides access to features, especially enabling their computation. 
+Provides access to features, especially enabling their computation.
 Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =back

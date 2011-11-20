@@ -122,8 +122,8 @@ sub label_subtree {
     my @starting_scores = (
         1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0,
 
-        # 10     11     12     13     14     15   16
-        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0,
+        # 10     11     12     13     14     15   16 17
+        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0,
     );
 
     # path could be constructed by backpointers
@@ -283,7 +283,7 @@ sub label_edge {
                 || $ALGORITHM == 10 || $ALGORITHM == 11
                 || $ALGORITHM == 12 || $ALGORITHM == 13
                 || $ALGORITHM == 14 || $ALGORITHM == 15
-                || $ALGORITHM == 16
+                || $ALGORITHM == 16 || $ALGORITHM == 17
                 )
             {
 
@@ -423,6 +423,7 @@ sub get_possible_labels {
     if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 16
+        || $ALGORITHM == 17
         )
     {
 
@@ -545,7 +546,12 @@ sub get_possible_labels_internal {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+    if (   $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 16 
+        || $ALGORITHM == 17
+        )
+    {
 
         # these algorithms have such a simple way of computing possible labels
         # they they do not need to have it split into two subroutines
@@ -611,29 +617,29 @@ which is (most probably) described in
 McDonald, Ryan: Discriminative Learning And Spanning Tree Algorithms
 For Dependency Parsing, 2006 (chapter 3.3.3 Two-Stage Labelling).
 
-For a dependency parse tree - presumably, but not necessarily, obtained using 
-the MST parser (L<Treex::Tool::Parser::MSTperl::Parser>), possibly 
-non-projective - assigns the most probable labels to the edges of the tree, 
+For a dependency parse tree - presumably, but not necessarily, obtained using
+the MST parser (L<Treex::Tool::Parser::MSTperl::Parser>), possibly
+non-projective - assigns the most probable labels to the edges of the tree,
 using the given model (L<Treex::Tool::Parser::MSTperl::ModelLabelling>).
 
-Assigning labels is implemented as sequence labelling, where the sequence to 
-be labelled is each sequence of edges between a parent node and its children. 
-First-order Markov factorization is used, but because we do the labelling as a 
-separate second stage to the parsing, many non-local features can be used, 
-exploiting the knowledge of the structure of the whole tree; also we go from 
-to root downwards and are therefore able to use the knowledge of labels 
-assigned to ancestor edges (especially the edge leading to the common parent 
+Assigning labels is implemented as sequence labelling, where the sequence to
+be labelled is each sequence of edges between a parent node and its children.
+First-order Markov factorization is used, but because we do the labelling as a
+separate second stage to the parsing, many non-local features can be used,
+exploiting the knowledge of the structure of the whole tree; also we go from
+to root downwards and are therefore able to use the knowledge of labels
+assigned to ancestor edges (especially the edge leading to the common parent
 node).
 
 Each label is technically stored with the child node of the edge it belongs to,
- so sometimes I will talk about a node label, which actually means the label 
+ so sometimes I will talk about a node label, which actually means the label
 of the edge between the node and its parent.
 
-A variant of the Viterbi algorithm is used to find the best scoring sequence 
-of labels. However, instead of probabilities we use (real-valued) scores and 
+A variant of the Viterbi algorithm is used to find the best scoring sequence
+of labels. However, instead of probabilities we use (real-valued) scores and
 therefore instead of multiplication addition is used in Viterbi.
 
-For detail on the features and training see 
+For detail on the features and training see
 L<Treex::Tool::Parser::MSTperl::TrainerLabelling>.
 
 
@@ -663,7 +669,7 @@ A Systematic Cross-Comparison of Sequence Classifiers
 
 =item config
 
-Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be
 used with labeller.
 
 Currently the settings most relevant to the Labeller are the following:
@@ -703,7 +709,7 @@ when training the labeller).
 =item my $labeller = Treex::Tool::Parser::MSTperl::Labeller->new(
 config => $self->config);
 
-Creates an instance of the labeller using the given configuration, also 
+Creates an instance of the labeller using the given configuration, also
 initializing the model.
 
 =item $labeller->load_model('modelfile.lmodel');
@@ -765,9 +771,9 @@ Returns the new pruned states (does not modify its input).
 =item $labeller->get_possible_labels($edge, $previous_label,
 $previous_label_score);
 
-Computes possible labels for an edge, using info about the emission scores, 
-transition scores and last state's score. (Because of the first order Markov 
-factorization used, the states correspond to labels assigned to the edges they 
+Computes possible labels for an edge, using info about the emission scores,
+transition scores and last state's score. (Because of the first order Markov
+factorization used, the states correspond to labels assigned to the edges they
 corresond to.)
 
 =item $labeller->get_possible_labels_internal

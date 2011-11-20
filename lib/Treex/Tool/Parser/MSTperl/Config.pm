@@ -520,9 +520,9 @@ settings provided that you keep things like formating of the file unchanged
 (some whitespaces are significant etc.). Actually only a subset of all
 all that YAML provides is used.
 
-Contents of a line from the # character till the end of the line are comments 
-and are ignored (if you need to actually use the # sign, you can quote it - 
-eg. C<'#empty#'> is interpreted as C<#empty#>). Lines that contain only 
+Contents of a line from the # character till the end of the line are comments
+and are ignored (if you need to actually use the # sign, you can quote it -
+eg. C<'#empty#'> is interpreted as C<#empty#>). Lines that contain only
 whitespace chars or are empty are ignored as well.
 
 Some of the settings are ignored when in parsing mode (i.e. not training).
@@ -597,8 +597,8 @@ settings in future.
 
 =item labeller_algorithm
 
-Algorithm used for Viterbi labelling as well as for training. Several 
-possibilities are being tried out; if one of them finally significantly 
+Algorithm used for Viterbi labelling as well as for training. Several
+possibilities are being tried out; if one of them finally significantly
 outscores the other variants, this will become obsolete and get deleted.
 
 =item DEBUG
@@ -620,20 +620,20 @@ part).
 
 =item SEQUENCE_BOUNDARY_LABEL
 
-This is only a technical thing; a label must be assigned to the (basically 
-virtual) boundary of a sequence, different from any label used in the data. 
-The default value is '###', so if you use this exact label as a valid label in 
-your data, change the setting to something else. If nothing goes wrong, you 
-should never see this label in the output; however, it is contained in the 
-model and used for "transition scores" to score the "transition" between the 
-sequence boundary and the first/last node (i.e. it determines the scores of 
-labels used as the first or last label in the sequence where no actual 
+This is only a technical thing; a label must be assigned to the (basically
+virtual) boundary of a sequence, different from any label used in the data.
+The default value is '###', so if you use this exact label as a valid label in
+your data, change the setting to something else. If nothing goes wrong, you
+should never see this label in the output; however, it is contained in the
+model and used for "transition scores" to score the "transition" between the
+sequence boundary and the first/last node (i.e. it determines the scores of
+labels used as the first or last label in the sequence where no actual
 transition takes place and the transition scores would otherwise get ignored).
 
 =item VITERBI_STATES_NUM_THRESHOLD
 
-Number of states to keep when pruning. The pruning takes place after each 
-Viterbi step (i.e. after each computation of possible labels and their scores 
+Number of states to keep when pruning. The pruning takes place after each
+Viterbi step (i.e. after each computation of possible labels and their scores
 for one edge). For more details see the C<prune> subroutine.
 
 =item EM_EPSILON
@@ -667,12 +667,12 @@ Provide access to things needed in more than one of the other packages.
 
 =item unlabelledFeaturesControl
 
-Provides access to unlabelled features, especially enabling their computation. 
+Provides access to unlabelled features, especially enabling their computation.
 Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =item labelledFeaturesControl
 
-Provides access to labeller features, especially enabling their computation. 
+Provides access to labeller features, especially enabling their computation.
 Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =back

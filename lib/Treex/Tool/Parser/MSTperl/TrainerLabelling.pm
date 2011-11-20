@@ -66,6 +66,7 @@ sub preprocess_sentence {
         || $ALGORITHM == 13
         || $ALGORITHM == 15
         || $ALGORITHM == 16
+        || $ALGORITHM == 17
         )
     {
 
@@ -263,7 +264,7 @@ sub mira_update {
     if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 14 || $ALGORITHM == 15
-        || $ALGORITHM == 16
+        || $ALGORITHM == 16 || $ALGORITHM == 17
         )
     {
         $self->mira_tree_update(
@@ -593,15 +594,12 @@ sub mira_tree_update {
                 $ALGORITHM == 14
                 || $ALGORITHM == 15
                 || $ALGORITHM == 16
+                || $ALGORITHM == 17
                 )
             {
 
                 # the same update is done twice with each feature
-                my $update = $error / $features_count;
-
-                if ( $ALGORITHM == 16 ) {
-                    $update /= 2;
-                }
+                my $update = $error / $features_count / 2;
 
                 foreach my $feature ( @{$features} ) {
 
@@ -623,7 +621,7 @@ sub mira_tree_update {
 
                 }
 
-                # end if $ALGORITHM == 16
+                # end if $ALGORITHM == 16|17
             } else {
                 croak "TrainerLabelling->mira_tree_update not implemented"
                     . " for algorithm no. $ALGORITHM!";
@@ -771,7 +769,13 @@ sub recompute_feature_weight {
                     . "\n";
             }
         }
-    } elsif ( $ALGORITHM == 8 || $ALGORITHM == 9 || $ALGORITHM == 16 ) {
+    } elsif (
+        $ALGORITHM == 8
+        || $ALGORITHM == 9
+        || $ALGORITHM == 16 
+        || $ALGORITHM == 17
+        )
+    {
 
         # emissions
         foreach my $label (
