@@ -491,7 +491,9 @@ Handles the configuration of the parser.
 
 =head1 FIELDS
 
-=head2 Fields
+=head2 Data fields
+
+Fields describing fields used with nodes, such as form, pos, lemma...
 
 =over 4
 
@@ -512,10 +514,16 @@ index)
 
 =head2 Settings
 
-The the config file (usually C<config.txt>) is in YAML format.
+Most of the settings are set by a config file in YAML format.
+However, you do not have to understand YAML to be able to change the
+settings provided that you keep things like formating of the file unchanged
+(some whitespaces are significant etc.). Actually only a subset of all
+all that YAML provides is used.
 
-Lines beginning with # are comments and are ignored. Lines that contain
-only whitespace chars or are empty are ignored as well.
+Contents of a line from the # character till the end of the line are comments 
+and are ignored (if you need to actually use the # sign, you can quote it - 
+eg. C<'#empty#'> is interpreted as C<#empty#>). Lines that contain only 
+whitespace chars or are empty are ignored as well.
 
 Some of the settings are ignored when in parsing mode (i.e. not training).
 These are use_edge_features_cache (turned off) and number_of_iterations
@@ -567,6 +575,105 @@ training data, as it uses a lot of memory but speeds up the training greatly
 
 Features codes to use in the unlabelled/labelled parser.
 See L<Treex::Tool::Parser::MSTperl::FeaturesControl> for details.
+
+=back
+
+=head3 Internal technical settings
+
+These fields cannot be set by the config file, their default values are
+hard-coded at beginning of the source code and they can be set
+on creating the Config object, eg.:
+
+ my $config = Treex::Tool::Parser::MSTperl::Config->new(
+     config_file => 'file.config',
+     VITERBI_STATES_NUM_THRESHOLD => '5',
+     EM_EPSILON => '0.00000001',
+ )
+
+If there is a need, they might be changed to fully config-file-configurable
+settings in future.
+
+=over 4
+
+=item labeller_algorithm
+
+Algorithm used for Viterbi labelling as well as for training. Several 
+possibilities are being tried out; if one of them finally significantly 
+outscores the other variants, this will become obsolete and get deleted.
+
+=item DEBUG
+
+An integer specifying how much debug information you will be getting while
+running the program, ranging from 0 (no debug info)
+through 1 (progress messages - this is the default setting)
+through 2, 3 and 4 to 5 (more and more debug info).
+
+If you set this value to something higher than 1, you should always redirect
+the output to a file as printing it to the console is very very slow
+(and there is so much info that you wouldn't be able to
+read anything anyway).
+
+This the only read-write field in this section, it is therefore possible
+to change its value not only on creating a new Config instance but also
+while running the program (eg, if you only want to debug only a particular
+part).
+
+=item SEQUENCE_BOUNDARY_LABEL
+
+This is only a technical thing; a label must be assigned to the (basically 
+virtual) boundary of a sequence, different from any label used in the data. 
+The default value is '###', so if you use this exact label as a valid label in 
+your data, change the setting to something else. If nothing goes wrong, you 
+should never see this label in the output; however, it is contained in the 
+model and used for "transition scores" to score the "transition" between the 
+sequence boundary and the first/last node (i.e. it determines the scores of 
+labels used as the first or last label in the sequence where no actual 
+transition takes place and the transition scores would otherwise get ignored).
+
+=item VITERBI_STATES_NUM_THRESHOLD
+
+Number of states to keep when pruning. The pruning takes place after each 
+Viterbi step (i.e. after each computation of possible labels and their scores 
+for one edge). For more details see the C<prune> subroutine.
+
+=item EM_EPSILON
+
+Stopping criterion of EM algorithm which is used to compute smoothing
+parameters for linear combination smoothing of transition probabilities
+in some variants of the Labeller.
+(when the sum of change of smoothing
+parameters is lower than the epsilon, the algorithm stops).
+
+=item EM_heldout_data_at
+
+A number between 0 and 1 specifying
+where in training data do heldout data for EM algorithm start
+(eg. 0.75 means that first 75% of sentences
+are training data and the last 25% are heldout data).
+
+The training/heldout data division only affects computation of transition
+probabilities by MLE, it does not affect MIRA training or MLE for emission
+probabilities.
+
+If EM is not used for smoothing, all data are used as training data.
+
+=back
+
+=head2 Technical fields
+
+Provide access to things needed in more than one of the other packages.
+
+=over 4
+
+=item unlabelledFeaturesControl
+
+Provides access to unlabelled features, especially enabling their computation. 
+Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+
+=item labelledFeaturesControl
+
+Provides access to labeller features, especially enabling their computation. 
+Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =back
 

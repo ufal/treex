@@ -224,7 +224,13 @@ The model is represented by features and their weights.
 
 =item config
 
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+used for the model.
+
 =item featuresControl
+
+Provides access to features, especially enabling their computation. 
+Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =back
 
@@ -297,6 +303,37 @@ Stores model into file in L<Data::Dumper> format.
 
 Stores model into file in TSV format:
 
+=back
+
+=head3 Method stubs to be overridden in extending packages.
+
+=over 4
+
+=item $data = get_data_to_store(), $data = get_data_to_store_tsv()
+
+Returns the data that form the model to be saved to a model file.
+
+=item load_data($data), load_data_tsv($data)
+
+Fills the model with model data acquired from a model file.
+
+=back
+
+=head2 Training support
+
+=head3 Method stubs to be overridden in extending packages.
+
+=over 4
+
+=item prepare_for_mira
+
+Called after preprocessing training data, before entering the MIRA phase.
+
+=item get_feature_count
+
+Only to provide information about the model.
+Returns number of features in the model (where a "feature" can stand for
+various things depending on the algorithm used).
 
 =back
 

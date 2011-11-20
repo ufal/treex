@@ -36,7 +36,8 @@ my $trainer = Treex::Tool::Parser::MSTperl::TrainerLabelling->new(
 );
 
 $trainer->train($training_data);
-$trainer->model->store($model_file);
+
+$trainer->store_model($model_file);
 if ($save_tsv) {
-    $trainer->model->store_tsv( $model_file . '.tsv' );
+    $trainer->store_model_tsv( $model_file . '.tsv' );
 }

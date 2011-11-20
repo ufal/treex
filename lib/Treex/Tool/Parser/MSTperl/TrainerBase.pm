@@ -279,6 +279,24 @@ sub update_feature_weight {
         . ' either from TrainerUnlabelled or TrainerLabelling!';
 }
 
+sub store_model {
+
+    my ( $self, $filename ) = @_;
+
+    $self->model->store($filename);
+
+    return;
+}
+
+sub store_model_tsv {
+
+    my ( $self, $filename ) = @_;
+
+    $self->model->store_tsv($filename);
+
+    return;
+}
+
 1;
 
 __END__

@@ -122,6 +122,7 @@ sub get_data_to_store {
         'smooth_uniform'  => $self->smooth_uniform,
         'smooth_unigrams' => $self->smooth_unigrams,
         'smooth_bigrams'  => $self->smooth_bigrams,
+        'uniform_prob'    => $self->smooth_bigrams,
     };
 }
 
@@ -137,6 +138,7 @@ sub load_data {
     $self->smooth_uniform( $data->{'smooth_uniform'} );
     $self->smooth_unigrams( $data->{'smooth_unigrams'} );
     $self->smooth_bigrams( $data->{'smooth_bigrams'} );
+    $self->uniform_prob( $data->{'uniform_prob'} );
 
     my $unigrams_ok    = scalar( keys %{ $self->unigrams } );
     my $transitions_ok = scalar( keys %{ $self->transitions } );
@@ -147,7 +149,14 @@ sub load_data {
         + $self->smooth_bigrams;
 
     # should be 1 but might be a little shifted
-    my $smooth_ok = ( $smooth_sum > 0.999 && $smooth_sum < 1.001 );
+    my $smooth_ok = (
+               $smooth_sum > 0.999
+            && $smooth_sum < 1.001
+
+            # must be between 0 and 1
+            && $self->uniform_prob > 0 
+            && $self->uniform_prob < 1
+    );
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
@@ -1105,24 +1114,24 @@ sub get_emission_scores_MIRA_simple_weights {
 # or transitions (when it is set)
 sub set_feature_weight {
 
-    # (Str $feature, Num $weight, Str $label, Maybe[Str] $label_prev)
-    my ( $self, $feature, $weight, $label, $label_prev ) = @_;
+    # (Str $feature, Num $score, Str $label, Maybe[Str] $label_prev)
+    my ( $self, $feature, $score, $label, $label_prev ) = @_;
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
         if ( defined $label_prev ) {
-            $self->transitions->{$feature}->{$label_prev}->{$label} = $weight;
+            $self->transitions->{$feature}->{$label_prev}->{$label} = $score;
         } else {
-            $self->emissions->{$feature}->{$label} = $weight;
+            $self->emissions->{$feature}->{$label} = $score;
         }
     } elsif ( $ALGORITHM == 16 ) {
-        $self->emissions->{$feature}->{$label} = $weight;
+        $self->emissions->{$feature}->{$label} = $score;
     } else {
         if ( defined $label ) {
-            $self->weights->{$feature}->{$label} = $weight;
+            $self->weights->{$feature}->{$label} = $score;
         } else {
-            $self->weights->{$feature} = $weight;
+            $self->weights->{$feature} = $score;
         }
     }
 
@@ -1272,19 +1281,447 @@ extended from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
 =head1 FIELDS
 
-=head2 Feature weights
+=head2 Inherited from base package
+
+Fields inherited from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
 =over 4
 
-=item
+=item config
+
+Instance of L<Treex::Tool::Parser::MSTperl::Config> containing settings to be 
+used for the model.
+
+Currently the settings most relevant to the model are the following:
+
+=over 8
+
+=item EM_EPSILON
+
+See L<Treex::Tool::Parser::MSTperl::Config/EM_EPSILON>.
+
+=item labeller_algorithm
+
+See L<Treex::Tool::Parser::MSTperl::Config/labeller_algorithm>.
+
+=item labelledFeaturesControl
+
+See L<Treex::Tool::Parser::MSTperl::Config/labelledFeaturesControl>.
+
+=item SEQUENCE_BOUNDARY_LABEL
+
+See L<Treex::Tool::Parser::MSTperl::Config/SEQUENCE_BOUNDARY_LABEL>.
+
+=back
+
+=item featuresControl
+
+Provides access to labeller features, especially enabling their computation. 
+Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+
+=back
+
+=head2 Label scoring
+
+=over 4
+
+=item emissions
+
+Emission scores for Viterbi. They follow the edge-based factorization
+and provide scores for various labels for an edge based on its features.
+
+The structure is:
+
+  emissions->{feature}->{label} = score
+
+Scores may or may not be probabilities, based on the algorithm used.
+Also based on the algorithm they may be MIRA-computed
+or they might be obtained by standard MLE.
+
+=item weights
+
+Obsolete, will be refactored to emissions.
+
+Feature weights or (feature, label) pair scores:
+
+  weights->{feature} = weight
+
+or
+
+  weights->{feature}->{label} = weight
+
+(depending on the algorithm used)
+
+TODO: weights seem to be obsolete and will most probably be
+refactored to emissions and deleted soon.
+
+=item transitions
+
+Transition scores for Viterbi. They follow the
+first order Markov chain edge-based factorization
+and provide scores for various labels for an edge
+probably based on its features
+and always based on previous edge label.
+
+Scores may or may not be probabilities, based on the algorithm used.
+Also based on the algorithm they may be obtained by standard MLE
+or they might be MIRA-computed.
+
+The structure is:
+
+  transitions->{label_prev}->{label_this} = prob
+
+or
+
+  transitions->{feature}->{label_prev}->{label_this} = score
+
+=back
+
+=head2 Transitions smoothing
+
+In some algorithms linear combination smoothing is used
+for transition probabilities.
+The resulting transition probability is then obtained as:
+
+ PROB(label|prev_label) =
+    smooth_bigrams  * transitions->{prev_label}->{label} +
+    smooth_unigrams * unigrams->{label} +
+    smooth_uniform
+
+=over 4
+
+=item smooth_bigrams
+
+=item smooth_unigrams
+
+=item smooth_uniform
+
+The actual smoothing parameters computed by EM algorithm.
+Each of them is between 0 and 1 and together they sum up to 1.
+
+=item uniform_prob
+
+Unifrom probability of a label, computed as
+C<1 / ( keys %{ $self->unigrams } )>.
+
+Set in C<compute_smoothing_params>.
+
+=item unigrams
+
+Basic MLE from data, the structure is
+
+ unigrams->{label} = prob
+
+To be used for transitions smoothing and/or backoff
+(can be used both for emissions and transitions)
+It also contains the C<SEQUENCE_BOUNDARY_LABEL> prob
+(the SEQUENCE_BOUNDARY_LABEL is counted once for each sequence)
+which might be unappropriate in some cases (eg. for emission probs).
+
+=item EM_heldout_data
+
+Just an array ref with the sentences that represent the heldout data
+to be able to run the EM algorithm in C<prepare_for_mira()>.
+Used only in training.
 
 =back
 
 =head1 METHODS
 
+=head2 Inherited
+
+Subroutines inherited from L<Treex::Tool::Parser::MSTperl::ModelBase>.
+
+=head3 Load and store
+
 =over 4
 
-=item
+=item store
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/store>.
+
+=item store_tsv
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/store_tsv>.
+
+=item load
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
+
+=item load_tsv
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/load_tsv>.
+
+=back
+
+=head3 Scoring
+
+=over 4
+
+=item score_edge
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/score_edge>.
+
+=item score_features
+
+See L<Treex::Tool::Parser::MSTperl::ModelBase/score_features>.
+
+=back
+
+=head2 Overriden
+
+Subroutines overriding stubs in L<Treex::Tool::Parser::MSTperl::ModelBase>.
+
+=head3 Load and store
+
+=over 4
+
+=item $data = get_data_to_store(), $data = get_data_to_store_tsv()
+
+Returns the model data, containing the following fields:
+C<unigrams>, 
+C<transitions>, 
+C<emissions>, 
+C<weights>, 
+C<smooth_uniform>, 
+C<smooth_unigrams>, 
+C<smooth_bigrams>, 
+C<uniform_prob>
+
+=item load_data($data), load_data_tsv($data)
+
+Tries to get all necessary data from C<$data>
+(see C<get_data_to_store> to see what data are stored).
+Also does basic checks on the data, eg. for non-emptiness, but nothing
+sophisticated. Is algorithm-sensitive, i.e. if some data are not needed
+for the algorithm used, they do not have to be contained in the hash.
+
+=back
+
+=head3 Training support
+
+=over 4
+
+=item prepare_for_mira
+
+Called after preprocessing training data, before entering the MIRA phase.
+
+Function varies depending on algorithm used.
+Usually recomputes counts stored in C<emissions>, C<transitions> and C<unigrams>
+to probabilities that have been computed by C<add_emission>,
+C<add_transition> and C<add_unigram>.
+Also calls C<compute_smoothing_params> to estimate smoothing parameters
+for smoothing of transition probabilities.
+
+=item get_feature_count
+
+Only to provide information about the model.
+Returns number of features in the model (where a "feature" can stand for
+various things depending on the algorithm used).
+
+=back
+
+=head2 Technical methods
+
+=over 4
+
+=item BUILD
+
+ my $model = Treex::Tool::Parser::MSTperl::ModelLabelling->new(
+    config => $config,
+ );
+
+Creates an empty model. If you are training the model, this is probably what you
+want, otherwise you can use C<load> or C<load_tsv>
+to load an existing labelling model from a file.
+
+However, most often you would probably use a model for a labeller
+(L<Treex::Tool::Parser::MSTperl::Labeller>)
+or a labelling trainer
+(L<Treex::Tool::Parser::MSTperl::TrainerLabelling>)
+which both automatically create the model on build.
+The labeller also provides wrapping methods
+L<Treex::Tool::Parser::MSTperl::Labeller/load_model>
+and
+L<Treex::Tool::Parser::MSTperl::Labeller/load_model_tsv>
+which you can call to load the model from a file.
+(Btw. as you might expect, the trainer provides methods
+L<Treex::Tool::Parser::MSTperl::TrainerLabelling/store_model>
+and
+L<Treex::Tool::Parser::MSTperl::TrainerLabelling/store_model_tsv>.)
+
+=back
+
+=head2 Processing training data
+
+=over 4
+
+=item add_unigram ($label)
+
+Increment count for the label in C<unigrams>.
+
+=item add_transition ($label_this, $label_prev)
+
+=item add_transition ($label_this, $label_prev, $feature)
+
+Increment count for the transition in C<transitions>, possible including a 
+feature on "this" edge if the algorithm uses features with transitions.
+
+=item add_emission ($feature, $label)
+
+Increment count for this label on an edge with this feature in C<emissions>.
+
+=item compute_probs_from_counts ($self->emissions)
+
+Takes a hash reference with label counts and chnages the counts
+to probabilities. Called in C<prepare_for_mira> on
+C<emissions>, C<transitions> and C<unigrams>.
+
+=back
+
+=head2 EM algorithm
+
+=over 4
+
+=item compute_smoothing_params()
+
+The main method containing an implementation of the Expectation Maximization 
+Algorithm to compute smoothing parameters (C<smooth_bigrams>, 
+C<smooth_unigrams>, C<smooth_uniform>) for transition probabilities
+smoothing by linear combination of bigram, unigram and uniform probability.
+Iteratively tries to find
+such parameters that the probabilities from training data
+(C<transitions>, C<unigrams> and C<uniform_prob>) combined together by
+the smoothing parameters model well enough the heldout data
+(C<EM_heldout_data>), i.e. tries to maximize the probability of the heldout
+data given the training data probabilities by adjusting the smoothing
+parameters values.
+
+Uses C<EM_EPSILON> as a stopping criterion, i.e. stops when the sum of
+absolute values of changes to all smoothing parameters are lower
+than the value of C<EM_EPSILON>.
+
+=item count_expected_counts_all()
+
+=item count_expected_counts_tree($root_node)
+
+=item count_expected_counts_sequence($labels_sequence)
+
+Support methods to C<compute_smoothing_params>, in the order in which they
+call each other.
+
+=back
+
+=head2 Scoring
+
+A bunch of methods to score the likelihood of a label being assigned to an
+edge based on the edge's features and the label assigned to the previous
+edge.
+
+=over 4
+
+=item get_all_labels()
+
+Returns (a reference to) an array of all labels found in the training data
+(eg. C<['Subj', 'Obj', 'Atr']>).
+
+=item get_label_score($label, $label_prev, $features)
+
+Computes a score of assigning the given label to an edge,
+given the features of the edge and the label assigned to the previous edge.
+
+Always a higher score means a more likely label for the edge.
+Some algorithms may give a negative score.
+
+Is semantically equivalent to calling C<get_emission_score>
+and C<get_transition_score> and then combining it together somehow.
+
+=item get_emission_score($label, $feature)
+
+Computes the "emission score" of assigning the given label to an edge,
+given one of the feature of the edge and disregarding
+the label assigned to the previous edge.
+
+=item get_transition_score($label_this, $label_prev, $feature)
+
+Computes the "transition score" of assigning the given label to an edge,
+given the label assigned to the previous edge
+and possibly also one of the features of the edge
+but NOT including the emission score returned by C<get_emission_score>.
+
+=item $result = get_transition_probs_array ($label_this, $label_prev)
+
+Returns (a reference to) an array of the probabilities of the transition
+from label_prev to label_this (to be smoothed together),
+having the following structure:
+
+    $result->[0] = uniform prob
+    $result->[1] = unigram prob
+    $result->[2] = bigram prob
+
+=item get_feature_weight($feature, $label)
+
+TODO obsolete, will be refactored to get_emission_score
+
+=item $result = get_emission_scores($features)
+
+Get scores of assigning each of the possible labels to an edge
+based on all the features of the edge. Is semantically equivalent
+to doing:
+
+ foreach label
+    foreach feature
+        get_emission_score(label, feature)
+
+The structure is:
+
+ $result->{label} = score
+
+Actually only serves as a switch for several implementations of the method
+(C<get_emission_scores_basic_MIRA>, C<get_emission_scores_no_MIRA> and
+C<get_emission_scores_MIRA_simple_weights>);
+the method to be used is selected based on the algorithm being used.
+
+=item get_emission_scores_basic_MIRA($features)
+
+A C<get_emission_scores> implementation used with algorithms
+where the emission scores are computed by MIRA (this is currently
+the most successful implementation).
+
+=item get_emission_scores_no_MIRA($features)
+
+A C<get_emission_scores> implementation using only MLE. Probably obsolete now.
+
+=item get_emission_scores_MIRA_simple_weights($features)
+
+A C<get_emission_scores> implementation using weights
+of whole features, not (feature, label) pairs. Most probably obsolete.
+
+=back
+
+=head2 Changing the scores
+
+Methods used by the trainer
+(L<Treex::Tool::Parser::MSTperl::TrainerLabelling>)
+to adjust the scores to whatever seems to be
+the best idea at the moment. Used only in MIRA training
+(MLE uses C<add_unigram>, C<add_emission>, C<add_transition>
+and C<compute_probs_from_counts> instead).
+
+=over 4
+
+=item set_feature_weight($feature, $weight, $label, $label_prev)
+
+Sets the specified emission score (if label_prev is not set)
+or transition score (if it is)
+to the given value (C<$score>).
+
+=item update_feature_weight($feature, $update, $label, $label_prev)
+
+Updates the specified emission score (if label_prev is not set)
+or transition score (if it is)
+by the given value (C<$update>), i.e. adds that value to the
+current value.
 
 =back
 

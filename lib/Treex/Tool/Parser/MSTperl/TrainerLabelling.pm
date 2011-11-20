@@ -260,7 +260,7 @@ sub mira_update {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if (   $ALGORITHM == 8
+    if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 14 || $ALGORITHM == 15
         || $ALGORITHM == 16

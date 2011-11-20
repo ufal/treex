@@ -38,6 +38,14 @@ sub load_model {
     return $self->model->load($filename);
 }
 
+sub load_model_tsv {
+
+    # (Str $filename)
+    my ( $self, $filename ) = @_;
+
+    return $self->model->load_tsv($filename);
+}
+
 sub label_sentence {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
@@ -664,32 +672,19 @@ Currently the settings most relevant to the Labeller are the following:
 
 =item VITERBI_STATES_NUM_THRESHOLD
 
-Number of states to keep when pruning. The pruning takes place after each 
-Viterbi step (i.e. after each computation of possible labels and their scores 
-for one edge). For more details see the C<prune> subroutine.
+See L<Treex::Tool::Parser::MSTperl::Config/VITERBI_STATES_NUM_THRESHOLD>.
 
 =item labeller_algorithm
 
-Algorithm used for Viterbi labelling as well as for training. Several 
-possibilities are being tried out; if one of them finally significantly 
-outscores the other variants, this will become obsolete and get deleted.
+See L<Treex::Tool::Parser::MSTperl::Config/labeller_algorithm>.
 
-=item unlabelledFeaturesControl
+=item labelledFeaturesControl
 
-Provides access to labeller features, especially enabling their computation. 
-Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+See L<Treex::Tool::Parser::MSTperl::Config/labelledFeaturesControl>.
 
 =item SEQUENCE_BOUNDARY_LABEL
 
-This is only a technical thing; a label must be assigned to the (basically 
-virtual) boundary of a sequence, different from any label used in the data. 
-The default value is '###', so if you use this exact label as a valid label in 
-your data, change the setting to something else. If nothing goes wrong, you 
-should never see this label in the output; however, it is contained in the 
-model and used for "transition scores" to score the "transition" between the 
-sequence boundary and the first/last node (i.e. it determines the scores of 
-labels used as the first or last label in the sequence where no actual 
-transition takes place and the transition scores would otherwise get ignored).
+See L<Treex::Tool::Parser::MSTperl::Config/SEQUENCE_BOUNDARY_LABEL>.
 
 =back
 
@@ -713,8 +708,11 @@ initializing the model.
 
 =item $labeller->load_model('modelfile.lmodel');
 
+=item $labeller->load_model_tsv('modelfile.tsv');
+
 Loads a labelled model
-using L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
+using L<Treex::Tool::Parser::MSTperl::ModelBase/load>
+or L<Treex::Tool::Parser::MSTperl::ModelBase/load_tsv>.
 
 A model has to be loaded or created in an other way
 before sentences can be labelled.
