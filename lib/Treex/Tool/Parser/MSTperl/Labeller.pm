@@ -118,9 +118,10 @@ sub label_subtree {
     my $starting_state_key = $self->config->SEQUENCE_BOUNDARY_LABEL;
 
     # correspond to algorithms
-    #                       0      1  2  3      4      5      6  7  8  9
     my @starting_scores = (
-        1e300, 1, 1, 1e300, 1e300, 1e300, 1, 1, 0, 0,
+
+        # 0    1  2  3      4      5       6   7  8  9
+        1e300, 1, 1, 1e300, 1e300, 1e300, -1, -1, 0, 0,
 
         # 10     11     12     13     14     15   16 17
         1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0,
@@ -277,8 +278,7 @@ sub label_edge {
                     . " \n";
             }
 
-            if ($ALGORITHM == 7
-                || $ALGORITHM == 8
+            if (   $ALGORITHM == 8
                 || $ALGORITHM == 9
                 || $ALGORITHM == 10 || $ALGORITHM == 11
                 || $ALGORITHM == 12 || $ALGORITHM == 13

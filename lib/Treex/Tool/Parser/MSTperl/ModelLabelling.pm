@@ -325,8 +325,6 @@ sub prepare_for_mira {
         || $ALGORITHM == 3
         || $ALGORITHM == 4
         || $ALGORITHM == 5
-        || $ALGORITHM == 6
-        || $ALGORITHM == 7
         || $ALGORITHM == 10
         || $ALGORITHM == 11
         || $ALGORITHM == 12
@@ -348,8 +346,6 @@ sub prepare_for_mira {
 
         if ($ALGORITHM == 4
             || $ALGORITHM == 5
-            || $ALGORITHM == 6
-            || $ALGORITHM == 7
             )
         {
 
@@ -359,11 +355,9 @@ sub prepare_for_mira {
                     $self->emissions->{$feature}
                 );
             }
-        }    # end if $ALGORITHM == 4|5|6|7
+        }    # end if $ALGORITHM == 4|5
 
         if ($ALGORITHM == 5
-            || $ALGORITHM == 6
-            || $ALGORITHM == 7
             || $ALGORITHM == 12
             || $ALGORITHM == 13
             || $ALGORITHM == 15
@@ -375,18 +369,7 @@ sub prepare_for_mira {
             # run the EM algorithm to compute
             # transtition probs smoothing params
             $self->compute_smoothing_params();
-        }    # end if $ALGORITHM == 5|6|7|12|12|16|17
-
-        if ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-
-            # init feature weights
-            foreach my $feature ( keys %{ $self->emissions } ) {
-
-                # 100 is just an arbitrary number
-                # but something non-zero is needed
-                $self->weights->{$feature} = 100;
-            }
-        }    # end if $ALGORITHM == 6|7
+        }    # end if $ALGORITHM == 5|12|12|16|17
 
     } else {    # $ALGORITHM not in 0~9
         croak "ModelLabelling->prepare_for_mira not implemented"
@@ -394,7 +377,7 @@ sub prepare_for_mira {
     }
 
     return;
-}
+}    # end prepare_for_mira
 
 # basic MLE
 sub compute_probs_from_counts {
@@ -698,8 +681,6 @@ sub get_transition_score {
         }
     } elsif (
         $ALGORITHM == 5
-        || $ALGORITHM == 6
-        || $ALGORITHM == 7
         || $ALGORITHM == 12 || $ALGORITHM == 13
         || $ALGORITHM == 15
         || $ALGORITHM == 16 || $ALGORITHM == 17
@@ -837,8 +818,6 @@ sub get_emission_scores {
         $result = $self->get_emission_scores_basic_MIRA($features);
     } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
         $result = $self->get_emission_scores_no_MIRA($features);
-    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-        $result = $self->get_emission_scores_MIRA_simple_weights($features);
     } else {
         croak "ModelLabelling->get_emission_scores not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -1080,71 +1059,6 @@ sub get_emission_scores_no_MIRA {
     return $result;
 }    # end get_emission_scores_no_MIRA
 
-sub get_emission_scores_MIRA_simple_weights {
-
-    my ( $self, $features ) = @_;
-
-    my $result = {};
-
-    my $warnNoEmissionProbs = "!!! WARNING !!! "
-        . "Based on the training data, no possible label was found"
-        . " for an edge. This usually means that either"
-        . " your training data are not big enough or that"
-        . " the set of features you are using"
-        . " is not well constructed - either it is too small"
-        . " or it lacks features that would be general enough"
-        . " to cover all possible sentences."
-        . " Using blind emission probabilities instead.\n";
-
-    # (full MLE + MIRA weighting of features, init weights with 100,
-    # update with $error, not really probs but prob-like scores)
-
-    # no need to recompute to probs since for each label the scores are
-    # generated in the same way, using the same feature weights,
-    # and so they behave exactly like probabilities
-    # (only, unlike probs, they can be negative;
-    #  this must be handled carefully!)
-
-    # get scores
-    foreach my $feature (@$features) {
-        if ( $self->emissions->{$feature} ) {
-            foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
-                if ( defined $self->emissions->{$feature}->{$label} ) {
-                    $result->{$label} +=
-                        $self->emissions->{$feature}->{$label}
-                        * $self->weights->{$feature};
-                }
-            }
-        }
-    }
-
-    # score must not be negative (at least I think that it must not)
-    # becase it then gets multiplied by the transition prob
-    # which gives nonsensical result if score is negative
-    # (and even worse when this happens even number of times...)
-    # Can also safely delete zeros as they would not make it
-    # to output anyway
-    foreach my $label ( keys %$result ) {
-        if ( $result->{$label} <= 0 ) {
-            delete $result->{$label};
-        }
-    }
-
-    if ( scalar keys %$result == 0 ) {
-
-        # backoff
-        if ( $self->config->DEBUG >= 2 ) {
-            print $warnNoEmissionProbs;
-        }
-
-        # backoff by using unigram probabilities
-        # (or unigram counts in some algorithms)
-        $result = $self->unigrams;
-    }
-
-    return $result;
-}    # end get_emission_scores_MIRA_simple_weights
-
 # sets weights->$feature to $weight
 # for alg. 8 | 9 sets emissions (when $label_prev is not set)
 # or transitions (when it is set)
@@ -1237,21 +1151,6 @@ sub get_feature_count {
         # transitions->{label_prev}->{label} = score
 
         my $count = 0;
-        foreach my $feature ( keys %{ $self->emissions } ) {
-            $count += scalar( keys %{ $self->emissions->{$feature} } );
-        }
-        foreach my $label_prev ( keys %{ $self->transitions } ) {
-            $count += scalar( keys %{ $self->transitions->{$label_prev} } );
-        }
-        return $count;
-    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-
-        # structure:
-        # weights->{feature} = score
-        # emissions->{feature}->{label} = score
-        # transitions->{label_prev}->{label} = score
-
-        my $count = scalar( keys %{ $self->weights } );
         foreach my $feature ( keys %{ $self->emissions } ) {
             $count += scalar( keys %{ $self->emissions->{$feature} } );
         }

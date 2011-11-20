@@ -60,8 +60,6 @@ sub preprocess_sentence {
     # compute transition counts
 
     if ($ALGORITHM == 5
-        || $ALGORITHM == 6
-        || $ALGORITHM == 7
         || $ALGORITHM == 12
         || $ALGORITHM == 13
         || $ALGORITHM == 15
@@ -100,8 +98,6 @@ sub preprocess_sentence {
 
     if ($ALGORITHM == 4
         || $ALGORITHM == 5
-        || $ALGORITHM == 6
-        || $ALGORITHM == 7
         || $ALGORITHM == 9
         )
     {
@@ -372,74 +368,6 @@ sub mira_update {
                             croak "It seems that there are no features!" .
                                 "This is somewhat weird.";
                         }
-                    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-
-                        # features do not depend on sentence labelling
-                        # (TODO: actually they may depend on parent labelling,
-                        # but we chose to ignore this as we can assume that the
-                        # parent is labelled correctly;
-                        # that's why we use edges
-                        # from $sentence_correct_labelling here)
-                        my ( $features_good, $features_bad ) =
-                            $self->features_diff(
-                            $edge->features, $correct_label, $best_label
-                            );
-                        my $features_diff_count =
-                            scalar( @{$features_good} )
-                            + scalar( @{$features_bad} );
-
-                        if ( $features_diff_count > 0 ) {
-
-                            # min ||w_i+1 - w_i||
-                            # s.t. s(x_t, y_t) - s(x_t, y') >= L(y_t, y')
-                            # TODO: just temporary!!! must be computed somehow!!
-                            # no way that this is correct!!!
-                            # (I don't know how right now,
-                            # and I am not even sure what properties
-                            # it should have,
-                            # apart from that after relabelling
-                            # the same edge using
-                            # the new weights the correct label should score
-                            # at least 1 point higher than the current best;
-                            # still, I don't even know if one should also
-                            # take transition scores into account...)
-                            my $update = $error;
-
-                            foreach my $feature ( @{$features_good} ) {
-
-                                # $update is added to features
-                                # of the correct labelling
-                                $self->update_feature_weight(
-                                    $feature,
-                                    $update,
-                                    $sumUpdateWeight
-                                );
-                            }
-
-                            foreach my $feature ( @{$features_bad} ) {
-
-                                # and subtracted from features
-                                # of the "best" labelling
-                                $self->update_feature_weight(
-                                    $feature,
-                                    -$update,
-                                    $sumUpdateWeight
-                                );
-                            }
-
-                            if ( $self->config->DEBUG >= 3 ) {
-                                print "alpha: $update on"
-                                    . " $features_diff_count features"
-                                    . " (correct $correct_label,"
-                                    . " best $best_label)\n";
-                            }
-
-                        } else {
-
-                            # $features_diff_count == 0
-                            warn "Features diff returned nothing," .
-                                " probably you're using too few features.\n";
-                        }
                     } else {
                         croak "Algorithm number $ALGORITHM does not use MIRA!";
                     }
@@ -650,54 +578,6 @@ sub mira_tree_update {
     return;
 }
 
-# tells "good" and "bad" features one from another,
-# i.e. features which score the correct label better than the bad label are good
-# the ones that score the bad one better are bad, and ties are removed
-# used in agorithm no 6
-# TODO: probably incorporate transition scores as well
-sub features_diff {
-
-    # (ArrayRef[Str] $features, Str $correct_label, Str $bad_label)
-    my ( $self, $features, $correct_label, $bad_label ) = @_;
-
-    my $features_good = [];
-    my $features_bad  = [];
-
-    my $correct_score;
-    my $bad_score;
-    foreach my $feature (@$features) {
-        if ( $self->model->emissions->{$feature} ) {
-
-            # get the scores of the labels
-            $correct_score =
-                $self->model->emissions->{$feature}->{$correct_label};
-            if ( defined $correct_score ) {
-                $correct_score *= $self->model->weights->{$feature};
-            } else {
-                $correct_score = 0;
-            }
-            $bad_score =
-                $self->model->emissions->{$feature}->{$bad_label};
-            if ( defined $bad_score ) {
-                $bad_score *= $self->model->weights->{$feature};
-            } else {
-                $bad_score = 0;
-            }
-
-            # do the diff
-            if ( $correct_score > $bad_score ) {
-                push @$features_good, $feature;
-            } elsif ( $correct_score < $bad_score ) {
-                push @$features_bad, $feature;
-            }
-
-            # else a tie -> ignore
-        }
-    }
-
-    return ( $features_good, $features_bad );
-}
-
 # update weight of the feature
 # (also update the sum of feature weights: feature_weights_summed)
 sub update_feature_weight {
@@ -828,16 +708,6 @@ sub recompute_feature_weight {
                 }
             }
         }
-    } elsif ( $ALGORITHM == 6 || $ALGORITHM == 7 ) {
-        my $weight = $self->feature_weights_summed->{$feature}
-            / $self->number_of_inner_iterations;
-        $self->model->set_feature_weight( $feature, $weight );
-
-        # only progress and/or debug info
-        if ( $self->config->DEBUG >= 2 ) {
-            print "$feature\t" . $self->model->get_feature_weight($feature)
-                . "\n";
-        }
     } elsif ( $ALGORITHM == 4 || $ALGORITHM == 5 ) {
 
         # nothing to do (MIRA not used)
@@ -847,7 +717,7 @@ sub recompute_feature_weight {
     }
 
     return;
-}
+}    # end recompute_feature_weight
 
 1;
 
