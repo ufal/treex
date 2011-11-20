@@ -548,7 +548,7 @@ sub get_possible_labels_internal {
 
     if (   $ALGORITHM == 8
         || $ALGORITHM == 9
-        || $ALGORITHM == 16 
+        || $ALGORITHM == 16
         || $ALGORITHM == 17
         )
     {

@@ -19,7 +19,7 @@ has 'featuresControl' => (
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
 
-    my ( $self, $trainer ) = @_;
+    # my ( $self, $trainer ) = @_;
 
     # nothing in the base, to be overridden in extending packages
 
@@ -29,7 +29,8 @@ sub prepare_for_mira {
 # returns number of features in the model (where a "feature" can stand for
 # various things depending on the algorithm used)
 sub get_feature_count {
-    my ($self) = @_;
+
+    # my ($self) = @_;
 
     # nothing in the base, to be overridden in extending packages
 
@@ -63,7 +64,8 @@ sub store {
 }
 
 sub get_data_to_store {
-    my ($self) = @_;
+
+    # my ($self) = @_;
 
     croak 'abstract method get_data_to_store to be overridden' .
         ' and called on extending packages!';
@@ -94,7 +96,8 @@ sub store_tsv {
 }
 
 sub get_data_to_store_tsv {
-    my ($self) = @_;
+
+    # my ($self) = @_;
 
     croak 'abstract method get_tsv_data_to_store to be overridden' .
         ' and called on extending packages!';
@@ -124,7 +127,8 @@ sub load {
 }
 
 sub load_data {
-    my ( $self, $data ) = @_;
+
+    # my ( $self, $data ) = @_;
 
     croak 'abstract method load_data to be overridden' .
         ' and called on extending packages!';
@@ -164,7 +168,8 @@ sub load_tsv {
 }
 
 sub load_data_tsv {
-    my ( $self, $data ) = @_;
+
+    # my ( $self, $data ) = @_;
 
     croak 'abstract method load_tsv_data to be overridden' .
         ' and called on extending packages!';

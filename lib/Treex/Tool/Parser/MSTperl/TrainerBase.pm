@@ -224,20 +224,18 @@ sub recompute_feature_weights {
 sub preprocess_sentence {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence, Num $progress)
-    my ( $self, $sentence, $progress ) = @_;
+    # my ( $self, $sentence, $progress ) = @_;
 
     croak 'TrainerBase::preprocess_sentence is an abstract method,'
         . ' it must be called'
         . ' either from TrainerUnlabelled or TrainerLabelling!';
-
-    return;
 }
 
 sub update {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct,
     # Int $sumUpdateWeight)
-    my ( $self, $sentence_correct, $sumUpdateWeight ) = @_;
+    # my ( $self, $sentence_correct, $sumUpdateWeight ) = @_;
 
     croak 'TrainerBase::update is an abstract method, it must be called'
         . ' either from TrainerUnlabelled or TrainerLabelling!';
@@ -248,7 +246,7 @@ sub mira_update {
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence_correct,
     # Treex::Tool::Parser::MSTperl::Sentence $sentence_best,
     # Int $sumUpdateWeight)
-    my ( $self, $sentence_correct, $sentence_best, $sumUpdateWeight ) = @_;
+    # my ( $self, $sentence_correct, $sentence_best, $sumUpdateWeight ) = @_;
 
     croak 'TrainerBase::mira_update is an abstract method, it must be called'
         . ' either from TrainerUnlabelled or TrainerLabelling!';
@@ -257,7 +255,7 @@ sub mira_update {
 sub recompute_feature_weight {
 
     # Str $feature
-    my ( $self, $feature ) = @_;
+    # my ( $self, $feature ) = @_;
 
     croak 'TrainerBase::recompute_feature_weight is an abstract method, it '
         . 'must be called either from TrainerUnlabelled or TrainerLabelling!';
@@ -272,7 +270,7 @@ sub update_feature_weight {
     # (Str $feature, Num $update, Num $sumUpdateWeight,
     #   Maybe[Str] $label, Maybe[Str] $label_prev)
 
-    my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev ) = @_;
+    # my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev ) = @_;
 
     croak 'TrainerBase::update_feature_weight is an abstract method,'
         . ' it must be called'

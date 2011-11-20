@@ -772,7 +772,7 @@ sub recompute_feature_weight {
     } elsif (
         $ALGORITHM == 8
         || $ALGORITHM == 9
-        || $ALGORITHM == 16 
+        || $ALGORITHM == 16
         || $ALGORITHM == 17
         )
     {

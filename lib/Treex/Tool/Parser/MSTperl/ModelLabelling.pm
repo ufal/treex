@@ -656,7 +656,7 @@ sub get_emission_score {
 
     if (   $ALGORITHM == 8
         || $ALGORITHM == 9
-        || $ALGORITHM == 16 
+        || $ALGORITHM == 16
         || $ALGORITHM == 17
         )
     {
@@ -916,10 +916,6 @@ sub get_emission_scores_basic_MIRA {
 
         if ( $min > $max ) {
 
-            if ( $ALGORITHM == 11 || $ALGORITHM == 13 ) {
-                die "this is impossible, there must be at least all zeroes";
-            }
-
             # $min > $max, i.e. nothing has been generated -> backoff
             if ( $self->config->DEBUG >= 2 ) {
                 print $warnNoEmissionProbs;
@@ -946,7 +942,7 @@ sub get_emission_scores_basic_MIRA {
                 if ( $min < $max ) {
 
                     # the typical case
-                    my $subtractant = $min;
+                    # my $subtractant = $min;
                     my $divisor     = 0;
 
                     foreach my $label ( keys %$result ) {
@@ -981,7 +977,7 @@ sub get_emission_scores_basic_MIRA {
                 if ( $min < $max ) {
 
                     # the typical case
-                    my $subtractant = $min;
+                    # my $subtractant = $min;
 
                     foreach my $label ( keys %$result ) {
                         $result->{$label} = ( $result->{$label} - $min );
@@ -1107,8 +1103,6 @@ sub get_emission_scores_MIRA_simple_weights {
     # and so they behave exactly like probabilities
     # (only, unlike probs, they can be negative;
     #  this must be handled carefully!)
-
-    my %prob_sums = ();
 
     # get scores
     foreach my $feature (@$features) {
@@ -1288,7 +1282,7 @@ sub get_feature_count {
     } elsif (
         $ALGORITHM == 8
         || $ALGORITHM == 9
-        || $ALGORITHM == 16 
+        || $ALGORITHM == 16
         || $ALGORITHM == 17
         )
     {
