@@ -270,7 +270,8 @@ sub update_feature_weight {
     # (Str $feature, Num $update, Num $sumUpdateWeight,
     #   Maybe[Str] $label, Maybe[Str] $label_prev)
 
-    # my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev ) = @_;
+    # my ( $self, $feature, $update, $sumUpdateWeight, $label, $label_prev )
+    #     = @_;
 
     croak 'TrainerBase::update_feature_weight is an abstract method,'
         . ' it must be called'

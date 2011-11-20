@@ -97,10 +97,10 @@ sub mira_update {
     ) = @_;
 
     # s(x_t, y_t)
-    my $score_correct = $sentence_correct_parse->score( $self->model );
+    my $score_correct = $self->model->score_sentence($sentence_correct_parse);
 
     # s(x_t, y')
-    my $score_best = $sentence_best_parse->score( $self->model );
+    my $score_best = $self->model->score_sentence($sentence_best_parse);
 
     # difference in scores should be greater than the margin:
 

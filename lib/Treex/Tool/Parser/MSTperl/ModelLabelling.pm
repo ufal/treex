@@ -636,7 +636,8 @@ sub get_label_score {
             # with a positive emission score, even if low with a low transition
             # prob - normalizing scores to be non-negative would be necessary
             # for this, as is alg 0 and similar.
-            $result *= ( 1 - $self->get_transition_score( $label, $label_prev ) );
+            $result *=
+                ( 1 - $self->get_transition_score( $label, $label_prev ) );
         }
 
         return $result;
@@ -654,7 +655,7 @@ sub get_emission_score {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if (   $ALGORITHM == 8
+    if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 16
         || $ALGORITHM == 17
@@ -943,7 +944,7 @@ sub get_emission_scores_basic_MIRA {
 
                     # the typical case
                     # my $subtractant = $min;
-                    my $divisor     = 0;
+                    my $divisor = 0;
 
                     foreach my $label ( keys %$result ) {
                         $result->{$label} = ( $result->{$label} - $min );
@@ -1492,20 +1493,6 @@ See L<Treex::Tool::Parser::MSTperl::ModelBase/load>.
 =item load_tsv
 
 See L<Treex::Tool::Parser::MSTperl::ModelBase/load_tsv>.
-
-=back
-
-=head3 Scoring
-
-=over 4
-
-=item score_edge
-
-See L<Treex::Tool::Parser::MSTperl::ModelBase/score_edge>.
-
-=item score_features
-
-See L<Treex::Tool::Parser::MSTperl::ModelBase/score_features>.
 
 =back
 

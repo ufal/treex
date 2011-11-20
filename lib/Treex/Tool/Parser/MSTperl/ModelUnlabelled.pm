@@ -104,6 +104,38 @@ sub load_data_tsv {
 
 # FEATURE WEIGHTS
 
+sub score_edge {
+
+    # (Treex::Tool::Parser::MSTperl::Edge $edge)
+    my ( $self, $edge ) = @_;
+
+    my $features_rf = $self->featuresControl->get_all_features($edge);
+    return $self->score_features($features_rf);
+}
+
+sub score_sentence {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    my ( $self, $sentence ) = @_;
+
+    my $score = $self->score_features( $sentence->features );
+
+    return $score;
+}
+
+sub score_features {
+
+    # (ArrayRef[Str] $features)
+    my ( $self, $features ) = @_;
+
+    my $score = 0;
+    foreach my $feature ( @{$features} ) {
+        $score += $self->get_feature_weight($feature);
+    }
+
+    return $score;
+}
+
 sub get_feature_weight {
 
     # (Str $feature)
@@ -163,6 +195,8 @@ Treex::Tool::Parser::MSTperl::ModelUnlabelled
 This is an in-memory represenation of a parsing model,
 extended from L<Treex::Tool::Parser::MSTperl::ModelBase>.
 
+The model is represented by features and their weights.
+
 =head1 FIELDS
 
 =head2 Feature weights
@@ -177,9 +211,39 @@ A hash reference containing weights of all features. This is the actual model.
 
 =head1 METHODS
 
+=head2 Access to feature weights
+
 =over 4
 
-=item
+=item my $edge_score = $model->score_edge($edge);
+
+Counts the score of an edge by summing up weights of all of its features.
+
+=item my $sentence_score = $model->score_sentence($sentence)
+
+Returns score of the sentence (by calling
+C<score_features> on the sentence features).
+
+=item my $score = $model->score_features(['0:být|VB', '1:pes|N1', ...]);
+
+Counts the score of an edge or sentence by summing up weights of all of its
+features, which are passed as an array reference.
+
+=item my $feature_weight = $model->get_feature_weight('1:pes|N1');
+
+Returns the weight of a given feature,
+or C<0> if the feature is not contained in the model.
+
+=item $model->set_feature_weight('1:pes|N1', 0.0021);
+
+Sets a new weight for a given feature.
+
+=item $model->update_feature_weight('1:pes|N1', 0.0042);
+
+Adds the update value to current feature weight - eg. if the weight of the
+feature C<'1:pes|N1'> is currently C<0.0021>, it will be C<0.0063> after the
+call.
+The update can also be negative - then the weight of the feature decreases.
 
 =back
 

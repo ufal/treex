@@ -255,13 +255,6 @@ sub len {
     return scalar( @{ $self->nodes } )
 }
 
-sub score {
-
-    # (Treex::Tool::Parser::MSTperl::ModelBase $model)
-    my ( $self, $model ) = @_;
-    return $model->score_features( $self->features );
-}
-
 sub getNodeByOrd {
 
     # (Int $ord)
@@ -493,12 +486,6 @@ the C<edges> and C<features> fields and also unsets the parents of all nodes
 
 Returns length of the sentence, i.e. number of nodes in the sentence.
 Each node corresponds to one word (one token to be more precise).
-
-=item $sentence->score()
-
-Returns model-wise score of the sentence (by calling
-L<Treex::Tool::Parser::MSTperl::ModelBase/score_features> on the sentence
-C<features>)
 
 =item $sentence->count_errors_attachement($correct_sentence)
 

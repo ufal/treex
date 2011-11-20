@@ -546,7 +546,7 @@ sub get_possible_labels_internal {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if (   $ALGORITHM == 8
+    if ($ALGORITHM == 8
         || $ALGORITHM == 9
         || $ALGORITHM == 16
         || $ALGORITHM == 17
