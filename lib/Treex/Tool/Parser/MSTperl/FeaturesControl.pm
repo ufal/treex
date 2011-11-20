@@ -456,29 +456,31 @@ sub get_simple_feature_values_array {
 }
 
 my %simple_feature_sub_references = (
-    'distance'     => \&{feature_distance},
-    'attdir'       => \&{feature_attachement_direction},
-    'preceding'    => \&{feature_preceding_child},
-    'PRECEDING'    => \&{feature_preceding_parent},
-    '1.preceding'  => \&{feature_preceding_first},
-    '2.preceding'  => \&{feature_preceding_second},
-    'following'    => \&{feature_following_child},
-    'FOLLOWING'    => \&{feature_following_parent},
-    '1.following'  => \&{feature_following_first},
-    '2.following'  => \&{feature_following_second},
-    'between'      => \&{feature_between},
-    'foreach'      => \&{feature_foreach},
-    'equals'       => \&{feature_equals},
-    'equalspc'     => \&{feature_equals_pc},
-    'equalspcat'   => \&{feature_equals_pc_at},
-    'isfirst'      => \&{feature_child_is_first_in_sentence},
-    'ISFIRST'      => \&{feature_parent_is_first_in_sentence},
-    'islast'       => \&{feature_child_is_last_in_sentence},
-    'ISLAST'       => \&{feature_parent_is_last_in_sentence},
-    'isfirstchild' => \&{feature_child_is_first_child},
-    'islastchild'  => \&{feature_child_is_last_child},
-    'childno'      => \&{feature_number_of_childs_children},
-    'CHILDNO'      => \&{feature_number_of_parents_children},
+    'distance'          => \&{feature_distance},
+    'attdir'            => \&{feature_attachement_direction},
+    'preceding'         => \&{feature_preceding_child},
+    'PRECEDING'         => \&{feature_preceding_parent},
+    '1.preceding'       => \&{feature_preceding_first},
+    '2.preceding'       => \&{feature_preceding_second},
+    'following'         => \&{feature_following_child},
+    'FOLLOWING'         => \&{feature_following_parent},
+    '1.following'       => \&{feature_following_first},
+    '2.following'       => \&{feature_following_second},
+    'between'           => \&{feature_between},
+    'foreach'           => \&{feature_foreach},
+    'equals'            => \&{feature_equals},
+    'equalspc'          => \&{feature_equals_pc},
+    'equalspcat'        => \&{feature_equals_pc_at},
+    'isfirst'           => \&{feature_child_is_first_in_sentence},
+    'ISFIRST'           => \&{feature_parent_is_first_in_sentence},
+    'islast'            => \&{feature_child_is_last_in_sentence},
+    'ISLAST'            => \&{feature_parent_is_last_in_sentence},
+    'isfirstchild'      => \&{feature_child_is_first_child},
+    'islastchild'       => \&{feature_child_is_last_child},
+    'islastleftchild'   => \&{feature_child_is_last_left_child},
+    'isfirstrightchild' => \&{feature_child_is_first_right_child},
+    'childno'           => \&{feature_number_of_childs_children},
+    'CHILDNO'           => \&{feature_number_of_parents_children},
 );
 
 sub get_simple_feature_sub_reference {
@@ -541,6 +543,55 @@ sub feature_first {
 sub feature_second {
     my ( $self, $edge, $field_index ) = @_;
     return ( $edge->second->fields->[$field_index] );
+}
+
+sub feature_left_sibling {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $siblings = $edge->parent->children;
+    my $is_first = ( $siblings->[0]->child->ord == $edge->child->ord );
+    if ($is_first) {
+
+        # there is no left sibling to the leftmost node
+        return '#start#';
+    } else {
+
+        # find my position among parent's children (is at least 1)
+        my $my_index = 1;
+        while ( $siblings->[$my_index]->child->ord != $edge->child->ord ) {
+            $my_index++;
+        }
+
+        # now ($my_index-1) is the index of my (closest) left sibling
+        return ( $siblings->[ $my_index - 1 ]->child->fields->[$field_index] );
+    }
+}
+
+sub feature_right_sibling {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $siblings           = $edge->parent->children;
+    my $last_sibling_index = scalar(@$siblings) - 1;
+    my $is_last            = (
+        $siblings->[$last_sibling_index]->child->ord
+            == $edge->child->ord
+    );
+    if ($is_last) {
+
+        # there is no right sibling to the rightmost node
+        return '#end#';
+    } else {
+
+        # find my position among parent's children
+        # (is at most $last_sibling_index - 1)
+        my $my_index = $last_sibling_index - 1;
+        while ( $siblings->[$my_index]->child->ord != $edge->child->ord ) {
+            $my_index--;
+        }
+
+        # now ($my_index+1) is the index of my (closest) right sibling
+        return ( $siblings->[ $my_index + 1 ]->child->fields->[$field_index] );
+    }
 }
 
 sub feature_preceding_child {
@@ -914,6 +965,95 @@ sub feature_child_is_last_child {
     if ( $children->[ $childrenNum - 1 ]->child->ord == $edge->child->ord ) {
         return 1;
     } else {
+        return 0;
+    }
+}
+
+sub feature_child_is_first_right_child {
+    my ( $self, $edge ) = @_;
+
+    my $is_right = ( $edge->parent->ord < $edge->child->ord );
+    if ($is_right) {
+        my $siblings = $edge->parent->children;
+        my $is_first = ( $siblings->[0]->child->ord == $edge->child->ord );
+        if ($is_first) {
+
+            # is right & is first (= leftmost) of all siblings
+            return 1;
+        } else {
+
+            # find my position among parent's children (is at least 1)
+            my $my_index = 1;
+            while ( $siblings->[$my_index]->child->ord != $edge->child->ord ) {
+                $my_index++;
+            }
+
+            # now ($my_index-1) is the index of my (closest) left sibling
+            my $sibling_is_left =
+                (
+                $siblings->[ $my_index - 1 ]->child->ord
+                    < $edge->parent->ord
+                );
+            if ($sibling_is_left) {
+
+                # is right and closest left sibling is left
+                return 1;
+            } else {
+
+                # is right but not the first one
+                return 0;
+            }
+        }
+    } else {
+
+        # is left
+        return 0;
+    }
+}
+
+sub feature_child_is_last_left_child {
+    my ( $self, $edge ) = @_;
+
+    my $is_left = ( $edge->child->ord < $edge->parent->ord );
+    if ($is_left) {
+        my $siblings           = $edge->parent->children;
+        my $last_sibling_index = scalar(@$siblings) - 1;
+        my $is_last            = (
+            $siblings->[$last_sibling_index]->child->ord
+                == $edge->child->ord
+        );
+        if ($is_last) {
+
+            # is left & is last of all siblings
+            return 1;
+        } else {
+
+            # find my position among parent's children
+            # (is at most $last_sibling_index - 1)
+            my $my_index = $last_sibling_index - 1;
+            while ( $siblings->[$my_index]->child->ord != $edge->child->ord ) {
+                $my_index--;
+            }
+
+            # now ($my_index+1) is the index of my (closest) right sibling
+            my $sibling_is_right =
+                (
+                $edge->parent->ord
+                    < $siblings->[ $my_index + 1 ]->child->ord
+                );
+            if ($sibling_is_right) {
+
+                # is left and closest right sibling is right
+                return 1;
+            } else {
+
+                # is left but not the last one
+                return 0;
+            }
+        }
+    } else {
+
+        # is right
         return 0;
     }
 }
