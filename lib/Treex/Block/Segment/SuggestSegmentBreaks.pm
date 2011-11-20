@@ -28,35 +28,98 @@ has 'true_values' => (
     required => 1,
 );
 
-sub _get_break_idx_list {
-    my ($self, @scores) = @_;
+has 'regul_param' => (
+    is  => 'ro',
+    isa => 'Num',
+    default => 0.5,
+    required => 1,
+);
+
+sub _divide_to_equal_parts {
+    my ($self, $scores, $block_breaks) = @_;
 
     my @break_idx_list = (0);
+    my $without_break = 1;
     
-    my $without_break = 0;
-    my $min_idx = 0;
+    # to reduce a rate of segmentation, documents are processed in the reversed order
+    # at least at the beginning of a document, the number of interlinks is a non-decreasing sequence of integers
+    for (my $i = 1; $i < scalar @$scores; $i++) {
+        if (defined $block_breaks->{$i}) {
+            push @break_idx_list, $i;
+            $without_break = 1;
+            next;
+        }
+        if ($without_break % $self->max_size == 0) {
+            push @break_idx_list, $i;
+        }
+        $without_break++;
+    }
 
-    for (my $i = 0; $i < scalar @scores; $i++) {
+    return @break_idx_list;
+}
+
+sub _get_break_idx_list {
+    my ($self, $scores, $block_breaks) = @_;
+
+    my @break_idx_list = (0);
+
+    my $sum = 0;
+    my $min_avg_diff = undef;
+    
+    my $without_break = 1;
+    my $min_idx = undef;
+
+    # to reduce a rate of segmentation, documents are processed in the reversed order
+    # at least at the beginning of a document, the number of interlinks is a non-decreasing sequence of integers
+    for (my $i = 1; $i < scalar @$scores; $i++) {
+
+        #print STDERR "$i:$without_break\n";
         
+        if (defined $block_breaks->{$i}) {
+            push @break_idx_list, $i;
+            $without_break = 1;
+            $min_idx = $i + 1;
+            $min_avg_diff = undef;
+            $sum = $scores->[$i];
+            next;
+        }
+
         # find and set a break if the size of the segment exceedes the maximum size
-        if ($without_break >= $self->max_size) {
+        if ($without_break > $self->max_size) {
             push @break_idx_list, $min_idx;
-            $without_break = $i - $min_idx;
-            $min_idx++;
-            for (my $j = $min_idx; $j < $i + 1; $j++) {
-                if ($scores[$j] <= $scores[$min_idx]) {
+            $sum = $scores->[$min_idx];
+            $min_avg_diff = undef;
+            $without_break = 1;
+            for (my $j = $min_idx + 1; $j <= $i; $j++) {
+                $without_break++;
+                $sum += $scores->[$j];
+                #my $curr_avg_diff = $scores->[$j] - ($sum / $without_break);
+                my $curr_avg_diff = $scores->[$j] - ($sum / $without_break) + $self->regul_param * ($self->max_size - $without_break);
+                #if (!defined $min_avg_diff || ($curr_avg_diff <= $min_avg_diff)) {
+                if (($curr_avg_diff < 0) && (!defined $min_avg_diff || ($curr_avg_diff < $min_avg_diff))) {
+                    $min_avg_diff = $curr_avg_diff;
+                    $min_idx = $j;
+                }
+                if (!defined $min_avg_diff) {
                     $min_idx = $j;
                 }
             }
         }
         else {
+            $without_break++;
+            $sum += $scores->[$i];
+            #my $curr_avg_diff = $scores->[$i] - ($sum / $without_break);
+            my $curr_avg_diff = $scores->[$i] - ($sum / $without_break) + $self->regul_param * ($self->max_size - $without_break);
             # cut a longer continuous segment in the last place with the minimum score
-            if ($scores[$i] <= $scores[$min_idx]) {
+    #        if (!defined $min_avg_diff || ($curr_avg_diff <= $min_avg_diff)) {
+            if (($curr_avg_diff < 0) && (!defined $min_avg_diff || ($curr_avg_diff < $min_avg_diff))) {
+                $min_avg_diff = $curr_avg_diff;
                 $min_idx = $i;
             }
-            $without_break++;
+            if (!defined $min_avg_diff) {
+                $min_idx = $i;
+            }
         }
-
         # always set a break if the segments are not interlinked
         #if ($self->_link_count($interlinks[$i]) == 0) {
         #    $min_idx = $i + 1;
@@ -64,7 +127,30 @@ sub _get_break_idx_list {
         #    push @break_idx_list, $i;
         #}
     }
+    # find and set a break if the size of the segment exceedes the maximum size
+    if ($without_break > $self->max_size) {
+        push @break_idx_list, $min_idx;
+    }
+
     return @break_idx_list;
+}
+
+sub _get_already_set_breaks {
+    my ($self, @bundles) = @_;
+
+    my $breaks_hash = {};
+
+    my $i = 0;
+    my $prev_id = undef;
+    foreach my $bundle (@bundles) {
+        my $curr_id = $bundle->attr('czeng/blockid');
+        if (defined $curr_id && (!defined $prev_id || ($curr_id ne $prev_id))) {
+            $breaks_hash->{$i} = $curr_id;
+        }
+        $prev_id = $curr_id;
+        $i++;
+    }
+    return $breaks_hash;
 }
 
 sub process_document {
@@ -75,8 +161,33 @@ sub process_document {
         $type_prefix = 'true';
     }
 
+    my $old_breaks = $self->_get_already_set_breaks( $doc->get_bundles );
+
+    #print STDERR Dumper($old_breaks);
+    #print STDERR "\n";
+
     my @scores = map {$_->wild->{$type_prefix . '_interlinks'}} $doc->get_bundles;
-    my @break_idx_list = $self->_get_break_idx_list( @scores );
+    #print STDERR "SCORES: " . join ", ", @scores;
+    #print STDERR "\n";
+    
+    my @break_idx_list;
+    my @clever_idx_list = $self->_get_break_idx_list( \@scores, $old_breaks );
+    my @equal_idx_list = $self->_divide_to_equal_parts( \@scores, $old_breaks );
+        
+    #print STDERR join ", ", @equal_idx_list;
+    #print STDERR "\n";
+    use List::Util qw/sum/;
+    my $clever = sum (map {$scores[$_]} @clever_idx_list);
+    my $equal = sum (map {$scores[$_]} @equal_idx_list);
+    #if ($clever < $equal) {
+    #    @break_idx_list = @clever_idx_list;
+        #print STDERR $doc->full_filename . "\n";
+    #}
+    #else {
+        @break_idx_list = @equal_idx_list;
+    #}
+    #print STDERR join ", ", @break_idx_list;
+    #print STDERR "\n";
     
     if (!$self->dry_run) {
         my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ doc => $doc });
@@ -88,6 +199,7 @@ sub process_document {
 
     my @bundles = $doc->get_bundles;
     foreach my $bundle (map {$bundles[$_]} @break_idx_list) {
+        #print STDERR $bundle->wild->{true_interlinks} . "\t" . $bundle->wild->{estim_interlinks} . "\n";
         $bundle->wild->{$type_prefix . '_segm_break'} = 1;
     }
 }
