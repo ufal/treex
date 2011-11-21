@@ -337,7 +337,7 @@ sub _is_app_in_coord {
             (!$par->gram_tense || $par->gram_tense !~ /^(sim|ant|post)/) && 
             (!$par->functor || $par->functor !~ /^(PRED|DENOM)$/)) {
 			
-            if ($par->functor =~ /^(CONJ|DISJ)$/) {
+            if (defined $par->functor && ($par->functor =~ /^(CONJ|DISJ)$/)) {
 				return (grep {$_ eq $cand} $par->descendants) ? $b_true : $b_false;
 			}
 			$par = $par->parent;
