@@ -10,6 +10,14 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
     
     if ( $tnode->t_lemma =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $tnode->t_lemma ne '%' && !$tnode->get_children() ){
+
+        my $anode = $tnode->get_lex_anode();
+        my ($parent) = $tnode->get_eparents( {or_topological => 1 } );
+        
+        if ($anode && $parent){
+            $parent->add_aux_anodes($anode);
+        }         
+        
         $tnode->remove();
     }
 }
