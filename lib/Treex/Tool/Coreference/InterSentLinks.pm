@@ -24,6 +24,9 @@ has 'interlinks' => (
     builder     => '_build_interlinks',
 );
 
+has language => ( is => 'rw', isa => 'Treex::Type::LangCode', required => 1 );
+has selector => ( is => 'rw', isa => 'Treex::Type::Selector', default => '' );
+
 sub BUILD {
     my ($self) = @_;
 
@@ -44,41 +47,38 @@ sub _build_interlinks {
     foreach my $bundle (reverse $self->doc->get_bundles) {
 
         my %local_non_visited_ante_ids = %non_visited_ante_ids;
+
+        my $tree = $bundle->get_tree($self->language, 't', $self->selector);
         
-        # iterate over all zones which contain a t-tree
-        foreach my $zone (grep {$_->has_ttree} $bundle->get_all_zones) {
-            my $tree = $zone->get_ttree;
-
-            foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
-                
-                # remove links where $node is an antecedent
-                foreach my $ante_id (keys %local_non_visited_ante_ids) {
-                    if ($node->id eq $ante_id) {
-                        delete $local_non_visited_ante_ids{$ante_id};
-                    }
+        foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
+            
+            # remove links where $node is an antecedent
+            foreach my $ante_id (keys %local_non_visited_ante_ids) {
+                if ($node->id eq $ante_id) {
+                    delete $local_non_visited_ante_ids{$ante_id};
                 }
-
-                # get antes
-                my @antes = ();
-                if ($self->type eq 'gram') {
-                    @antes = $node->get_coref_gram_nodes;
-                }
-                elsif ($self->type eq 'text') {
-                    @antes = $node->get_coref_text_nodes;
-                }
-                else {
-                    @antes = $node->get_coref_nodes;
-                }
-
-                # skip cataphoric links
-                my @non_cataph = grep {!defined $processed_node_ids{$_->id}} @antes;
-                # new links
-                foreach my $ante (@non_cataph) {
-                    push @{$local_non_visited_ante_ids{$ante->id}}, $node->id;
-                }
-                
-                $processed_node_ids{ $node->id }++;
             }
+
+            # get antes
+            my @antes = ();
+            if ($self->type eq 'gram') {
+                @antes = $node->get_coref_gram_nodes;
+            }
+            elsif ($self->type eq 'text') {
+                @antes = $node->get_coref_text_nodes;
+            }
+            else {
+                @antes = $node->get_coref_nodes;
+            }
+
+            # skip cataphoric links
+            my @non_cataph = grep {!defined $processed_node_ids{$_->id}} @antes;
+            # new links
+            foreach my $ante (@non_cataph) {
+                push @{$local_non_visited_ante_ids{$ante->id}}, $node->id;
+            }
+            
+            $processed_node_ids{ $node->id }++;
         }
 
         #print STDERR Dumper(\%local_non_visited_ante_ids);

@@ -163,8 +163,9 @@ sub process_document {
 
     my $old_breaks = $self->_get_already_set_breaks( $doc->get_bundles );
 
-    #print STDERR Dumper($old_breaks);
+    #print STDERR join ", ", sort {$a <=> $b} (keys %$old_breaks);
     #print STDERR "\n";
+    #print STDERR "COUTN: " . (scalar (keys %$old_breaks)) . "\n";
 
     my @scores = map {$_->wild->{$type_prefix . '_interlinks'}} $doc->get_bundles;
     #print STDERR "SCORES: " . join ", ", @scores;
@@ -174,32 +175,21 @@ sub process_document {
     my @clever_idx_list = $self->_get_break_idx_list( \@scores, $old_breaks );
     my @equal_idx_list = $self->_divide_to_equal_parts( \@scores, $old_breaks );
         
-    #print STDERR join ", ", @equal_idx_list;
-    #print STDERR "\n";
-    use List::Util qw/sum/;
-    my $clever = sum (map {$scores[$_]} @clever_idx_list);
-    my $equal = sum (map {$scores[$_]} @equal_idx_list);
-    #if ($clever < $equal) {
-    #    @break_idx_list = @clever_idx_list;
-        #print STDERR $doc->full_filename . "\n";
-    #}
-    #else {
-        @break_idx_list = @equal_idx_list;
-    #}
+    #@break_idx_list = @clever_idx_list;
+    @break_idx_list = @equal_idx_list;
+    
     #print STDERR join ", ", @break_idx_list;
     #print STDERR "\n";
     
     if (!$self->dry_run) {
-        my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ doc => $doc });
+        my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
+            doc => $doc, language => $self->language, selector => $self->selector
+        });
         $interlinks->remove_selected( \@break_idx_list );
     }
 
-    #print STDERR Dumper(\@break_idx_list);
-    #print STDERR Dumper($self->_scores);
-
     my @bundles = $doc->get_bundles;
     foreach my $bundle (map {$bundles[$_]} @break_idx_list) {
-        #print STDERR $bundle->wild->{true_interlinks} . "\t" . $bundle->wild->{estim_interlinks} . "\n";
         $bundle->wild->{$type_prefix . '_segm_break'} = 1;
     }
 }

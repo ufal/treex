@@ -33,13 +33,10 @@ sub process_document {
         $doc_id++;
     }
 
-    my $interlinks = Treex::Tool::Coreference::InterSentLinks->new(
-        { doc =>$doc }
-    );
+    my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({
+        doc =>$doc, language => $self->language, selector => $self->selector,
+    });
     $interlinks->remove_selected( \@break_list );
-    $interlinks = Treex::Tool::Coreference::InterSentLinks->new(
-        { doc =>$doc }
-    );
 
     #print STDERR "BREKAS: ";
     #print STDERR join ", ", @break_list;

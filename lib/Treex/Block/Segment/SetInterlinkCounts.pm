@@ -9,8 +9,12 @@ use Treex::Tool::Coreference::InterSentLinks;
 sub process_document {
     my ($self, $doc) = @_;
 
-    my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ doc => $doc });
+    my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
+        doc => $doc, language => $self->language, selector => $self->selector
+    });
     my @link_counts = $interlinks->counts;
+
+    #print STDERR Dumper($interlinks->interlinks);
 
     #print STDERR Dumper(\@link_counts);
 
@@ -19,7 +23,10 @@ sub process_document {
 #        if ($count == 0) {
 #            $bundle->wild->{segm_break} = 1;
 #        }
-        $bundle->wild->{true_interlinks} = $count;
+
+        my $label = 'true_interlinks/' . $self->language . '_' . $self->selector;
+
+        $bundle->wild->{$label} = $count;
     }
 }
 
