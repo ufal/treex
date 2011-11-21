@@ -12,8 +12,12 @@ sub process_anode {
     return if ( $anode->is_root );
 
     # fix the '*', '!' and '%' signs (not recognized by the morphology)
-    if ( $anode->form =~ m/^(\*|%|!)$/ ){
+    if ( $anode->form =~ m/^(\*|!)$/ ){
         $anode->set_tag('Z:-------------');
+    }
+    # treat '%' as a noun abbreviation 
+    elsif ( $anode->form eq '%' ){
+        $anode->set_tag('NNIXX-----A---8');
     }
     # fix Czech decimal numerals
     elsif ( $anode->form =~ m/[0-9]\+,[0-9]\+/ ){
@@ -40,7 +44,13 @@ An attempt to (hopefully temporarily) fix some of the most common current tagger
 
 =item *
 
-Sets the tag 'Z:' for asterisks ("*"), exclamation marks ("!") and percent signs ("%").
+Sets the tag 'Z:' for asterisks ("*") and exclamation marks ("!").
+
+=item *
+
+Sets the tag 'NNIXX-----A---8' for percent signs (even though it's marked 'Z:' in Czech National Corpus and PDT), 
+since parsing works better with this tag and in an analogous case, the degree sign and the 'Kč' sign get the same tag
+(except for gender).
 
 =item *
 
