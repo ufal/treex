@@ -43,7 +43,7 @@ sub detect_nodetype {
     }
 
     # a-lemmas for semantically relevant punctuation (are not changed to t-lemmas by the current automatic analysis)
-    elsif ( $t_lemma =~ /^(&|%|°|\*|\.|\.\.\.|:|,|;|-|–|\/|\()$/ ) {
+    elsif ( $t_lemma =~ /^(&|%|°|\*|\.|\.\.\.|:|,|;|-|--|–|\/|\()$/ ) {
         return 'qcomplex';
     }
 

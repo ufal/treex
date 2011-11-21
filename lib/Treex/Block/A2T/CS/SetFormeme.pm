@@ -42,22 +42,26 @@ sub process_tnode {
 
     # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
     # fill in formemes
-    if ( $t_node->nodetype eq 'complex' ) {
-        if ( $self->use_version eq '2' ) {
+    if ( $self->use_version eq '2' ) {
 
+        if ( $t_node->nodetype eq 'complex' || $t_node->t_lemma =~ /^(%|°|#(Percnt|Deg))/ ) {
+            
             my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
-
+    
             my $parent = $self->_get_node_info( $t_parent );
             my $node =  $self->_get_node_info( $t_node );
             my $formeme = $self->_detect_formeme2($node, $parent);
-
+    
             if ($formeme){
                 $t_node->set_formeme($formeme);
             }
         }
         else {
-            detect_formeme($t_node, $self->use_version eq '1a');
+            $t_node->set_formeme('x');
         }
+    }
+    elsif ( $t_node->nodetype eq 'complex' ){
+        detect_formeme($t_node, $self->use_version eq '1');
     }
     return;
 }
@@ -73,7 +77,6 @@ sub _get_node_info {
             t => $t_node,
             fix_numer => $self->fix_numer,
             fix_prep => $self->fix_prep,
-            detect_diathesis => $self->detect_diathesis,
             } );
     }
     return $self->_node_info_cache->{ $t_node->id };
