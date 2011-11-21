@@ -81,7 +81,7 @@ sub _build_feature_names {
 
     my @feat_names = qw(
        c_sent_dist        c_clause_dist         c_file_deepord_dist
-       c_cand_ord
+       c_cand_ord         c_anaph_sentord
        
        c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
        c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
@@ -566,6 +566,13 @@ sub _unary_features {
 
     #   1: anaphor's ID
     $coref_features->{$type.'_id'} = $node->id;
+    
+    if ($type eq 'anaph') {
+        $coref_features->{c_anaph_sentord} = _categorize(
+            $node->get_root->wild->{czeng_sentord},
+            [0, 1, 2, 3]
+        );
+    }
 
 ###########################
     #   Morphological:
@@ -669,6 +676,7 @@ sub init_doc_features {
     $self->count_collocations( \@trees );
     $self->count_np_freq( \@trees );
     $self->mark_doc_clause_nums( \@trees );
+    $self->mark_sentord_within_blocks( \@trees );
 }
 
 sub count_collocations {

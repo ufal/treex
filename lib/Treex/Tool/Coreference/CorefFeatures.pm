@@ -33,6 +33,28 @@ sub create_instances {
     return $instances;
 }
 
+sub mark_sentord_within_blocks {
+    my ($self, $trees) = @_;
+
+    my @non_def = grep {!defined $_->get_bundle->attr('czeng/blockid')} @$trees;
+
+    my $is_czeng = (@non_def > 0) ? 0 : 1;
+
+    my $i = 0;
+    my $prev_blockid = undef;
+    foreach my $tree (@$trees) {
+        if ($is_czeng) {
+            my $block_id = $tree->get_bundle->attr('czeng/blockid');
+            if (defined $prev_blockid && ($block_id ne $prev_blockid)) {
+                $i = 0;
+            }
+            $prev_blockid = $block_id;
+        }
+        $tree->wild->{czeng_sentord} = $i;
+        $i++;
+    }
+}
+
 
 # TODO doc
 1;
