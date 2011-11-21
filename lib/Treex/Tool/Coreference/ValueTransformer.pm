@@ -65,7 +65,7 @@ sub special_chars_off {
     foreach my $from (keys %{$mapping}) {
 		my $to = $mapping->{$from};
         $value = $self->replace_empty( $value );
-        if ($value ne "empty") {
+        if ($value ne "") {
 		    $value =~ s/$from/$to/g;
         }
 	}
@@ -77,6 +77,7 @@ sub replace_empty {
     if ((!defined $value) || ($value =~ /^\s*$/)) {
         return "";
     }
+    $value =~ s/\s+/_/g;
     return $value;
 }
 
