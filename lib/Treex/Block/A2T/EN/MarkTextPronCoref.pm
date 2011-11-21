@@ -9,7 +9,7 @@ use Treex::Tool::Coreference::EN::TextPronAnteCandsGetter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
 
 has '+model_path' => (
-    default => 'data/models/coreference/EN/perceptron/text.perspron.gold',
+    default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
 );
 
 override '_build_ranker' => sub {
