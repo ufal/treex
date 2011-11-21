@@ -11,7 +11,7 @@
     <member name="is_head" ><cdata format="any"/></member>
     <member name="head_selection_rule" ><cdata format="any"/></member>
     <member name="is_collins_head" ><cdata format="any"/></member>
-    <member name="phrase" type="p-phrase.type"  />
+    <member name="phrase"><cdata format="any"/></member>
     <member name="functions">
       <list type="p-function.type" ordered="1"/>
     </member>
@@ -37,8 +37,8 @@
         <member name="coindex"><cdata format="any"/></member>
         <member name="form"><cdata format="any"/></member>
         <member name="lemma"><cdata format="any"/></member>
-        <member name="tag" type="p-postag.type"/>
-		<member name="bbn_tag" type="bbn_tag.type" />
+        <member name="tag"><cdata format="any"/></member>
+        <member name="bbn_tag" type="bbn_tag.type" />
         <member name="alignment">
             <list ordered="0" type="align-links.type"/>
         </member>
