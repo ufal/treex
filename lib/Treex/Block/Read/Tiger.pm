@@ -56,7 +56,7 @@ sub next_document {
                     my $ch = $ptree->create_nonterminal_child();
                     apply_all_roles( $ch, 'Treex::Core::WildAttr' );
                     $ch->set_id( fix_id( $nonterminal->{att}{id} ) );
-                    $ch->wild->{tiger_phrase} = $nonterminal->{att}{cat};
+                    $ch->set_phrase( $nonterminal->{att}{cat} );
                     push @edges, [
                         $ch,
                         fix_id( $_->{att}{idref} ),
@@ -70,6 +70,7 @@ sub next_document {
                     $ch->set_id( fix_id( $terminal->{att}{id} ) );
                     $ch->set_form( $terminal->{att}{word} );
                     $ch->set_lemma( $terminal->{att}{lemma} );
+                    $ch->set_tag( $terminal->{att}{pos} );
                     $ch->wild->{pos}   = $terminal->{att}{pos};
                     $ch->wild->{morph} = $terminal->{att}{morph};
                 }
