@@ -141,7 +141,7 @@ sub _nnode_style {
 sub _pnode_style {
     my ( $self, $node ) = @_;
 
-    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+    my $terminal = $node->is_leaf;
 
     my $style = '#{Line-coords:n,n,n,p,p,p}';
     $style .= '#{nodeXSkip:4}#{nodeYSkip:0}#{NodeLabel-skipempty:1}';

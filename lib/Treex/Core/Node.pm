@@ -284,6 +284,12 @@ sub is_root {
     return !$self->parent;
 }
 
+sub is_leaf {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
+    my $self = shift;
+    return not $self->firstson;
+}
+
 sub get_parent {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
@@ -895,6 +901,10 @@ Returns the root of the node's tree.
 =item my $root_node = $node->is_root();
 
 Returns C<true> if the node has no parent.
+
+=item my $root_node = $node->is_leaf();
+
+Returns C<true> if the node has no children.
 
 =item $node1->is_descendant_of($node2);
 

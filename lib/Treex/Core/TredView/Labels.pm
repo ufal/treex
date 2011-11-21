@@ -304,11 +304,12 @@ sub _nnode_labels {
 sub _pnode_labels {
     my ( $self, $node ) = @_;
 
-    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
+#    my $terminal = $node->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
 
     my $line1 = '';
     my $line2 = '';
-    if ($terminal) {
+    print "$node is_leaf ".$node->is_leaf."\n";
+    if ( $node->is_leaf ) {
         $line1 = $node->{form};
         $line2 = $node->{tag};
         $line2 = '-' if $line2 eq '-NONE-';
