@@ -8,16 +8,16 @@ extends 'Treex::Core::Block';
 sub process_tnode {
 
     my ( $self, $tnode ) = @_;
-    
-    if ( $tnode->t_lemma =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $tnode->t_lemma ne '%' && !$tnode->get_children() ){
+
+    if ( $tnode->t_lemma =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $tnode->t_lemma ne '%' && !$tnode->get_children() ) {
 
         my $anode = $tnode->get_lex_anode();
-        my ($parent) = $tnode->get_eparents( {or_topological => 1 } );
-        
-        if ($anode && $parent){
+        my ($parent) = $tnode->get_eparents( { or_topological => 1 } );
+
+        if ( $anode && $parent && !$parent->is_root ) {
             $parent->add_aux_anodes($anode);
-        }         
-        
+        }
+
         $tnode->remove();
     }
 }
@@ -33,7 +33,8 @@ Treex::Block::A2T::DeleteChildlessPunctuation
 
 =head1 DESCRIPTION
 
-Deletes all punctuation t-nodes with no children.   
+Deletes all punctuation t-nodes with no children. Moves the corresponding lexical a-node to the list of auxiliary
+a-nodes of the t-node's parent, if possible.  
 
 =head1 AUTHORS
 
