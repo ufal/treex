@@ -30,6 +30,7 @@ override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
     my $acs = Treex::Tool::Coreference::EN::TextPronAnteCandsGetter->new({
         anaphor_as_candidate => 1,
+        cands_within_czeng_blocks => 1,
     });
     return $acs;
 };
