@@ -289,7 +289,7 @@ sub label_edge {
 
                 # test if this is the best
                 if (defined $new_states->{$new_label}
-                    && $new_states->{$new_label} > $new_state_score
+                    && $new_states->{$new_label}->{'score'} > $new_state_score
                     )
                 {
 
