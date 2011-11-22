@@ -308,7 +308,9 @@ sub _pnode_labels {
 
     my $line1 = '';
     my $line2 = '';
-    print "$node is_leaf ".$node->is_leaf."\n";
+
+#    print "$node is_leaf ".$node->is_leaf."\n";
+
     if ( $node->is_leaf ) {
         $line1 = $node->{form};
         $line2 = $node->{tag};
