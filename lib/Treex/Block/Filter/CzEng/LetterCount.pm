@@ -11,12 +11,13 @@ my @bounds = ( 2, 5, 10 );
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my $en      = $bundle->get_zone('en')->sentence;
-    my $cs      = $bundle->get_zone('cs')->sentence;
+    my $en = $bundle->get_zone('en')->sentence;
+    my $cs = $bundle->get_zone('cs')->sentence;
 
     if ( $en !~ /^\s*[0-9]+\s*[\.)]?\s*$/ && $cs !~ /^\s*[0-9]+\s*[\.)]?\s*$/ ) {
-        my $min_letter_count = min( ( $en =~ s/p{L}//g ), ( $cs =~ s/p{L}//g ) );
-        $self->add_feature( $bundle, $self->quantize_given_bounds( $min_letter_count, @bounds ) );
+        my $min_letter_count = min( ( $en =~ s/\p{L}//g ), ( $cs =~ s/\p{L}//g ) );
+        $self->add_feature( $bundle, "letter_count="
+            . $self->quantize_given_bounds( $min_letter_count, @bounds ) );
     }
 
     return 1;
