@@ -278,25 +278,15 @@ sub label_edge {
                     . " \n";
             }
 
-            if ($ALGORITHM == 8
-                || $ALGORITHM == 9
-                || $ALGORITHM == 10 || $ALGORITHM == 11
-                || $ALGORITHM == 12 || $ALGORITHM == 13
-                || $ALGORITHM == 14 || $ALGORITHM == 15
-                || $ALGORITHM == 16 || $ALGORITHM == 17
+            # test if this is the best
+            if (defined $new_states->{$new_label}
+                && $new_states->{$new_label}->{'score'} > $new_state_score
                 )
             {
 
-                # test if this is the best
-                if (defined $new_states->{$new_label}
-                    && $new_states->{$new_label}->{'score'} > $new_state_score
-                    )
-                {
-
-                    # there is already the same state state
-                    # with higher score
-                    next;
-                }
+                # there is already the same state state
+                # with higher score
+                next;
             }
 
             # else such a state is not yet there resp. it is but its score
