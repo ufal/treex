@@ -100,7 +100,7 @@ sub get_data_to_store {
         'smooth_uniform'  => $self->smooth_uniform,
         'smooth_unigrams' => $self->smooth_unigrams,
         'smooth_bigrams'  => $self->smooth_bigrams,
-        'uniform_prob'    => $self->smooth_bigrams,
+        'uniform_prob'    => $self->uniform_prob,
     };
 }
 
