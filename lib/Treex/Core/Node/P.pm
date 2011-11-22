@@ -6,7 +6,7 @@ extends 'Treex::Core::Node';
 # dirty: merging terminal and nonterminal nodes' attributes
 
 # common:
-has [qw(is_head is_collins_head head_selection_rule index coindex)] => ( is => 'rw' );
+has [qw(is_head is_collins_head head_selection_rule index coindex edgelabel)] => ( is => 'rw' );
 
 # terminal specific
 has [qw(form lemma tag)] => ( is => 'rw' );
