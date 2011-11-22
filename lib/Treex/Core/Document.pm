@@ -41,7 +41,7 @@ has _pmldoc => (
             hint changeHint pattern_count pattern patterns
             changePatterns tail changeTail
 
-            trees changeTrees treeList tree lastTreeNo notSaved
+            trees changeTrees treeList tree delete_tree lastTreeNo notSaved
             currentTreeNo currentNode nodes value_line value_line_list
             determine_node_type )
     },

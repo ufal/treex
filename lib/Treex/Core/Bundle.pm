@@ -130,6 +130,34 @@ sub remove_zone {
     return;
 }
 
+sub remove {
+    my ( $self ) = @_;
+
+    # clean the bundle's content first (to ensure de-indexing)
+    foreach my $zone ( $self->get_all_zones ) {
+        $self->remove_zone( $zone->language, $zone->selector );
+    }
+
+    my $position = 0;
+
+    # find the bundle's position (this is quite inefficient, as the info about
+    # budnle's position is stored nowhere), and delete the bundle using Treex::PML API
+  BUNDLE:
+    foreach my $bundle ( $self->get_document->get_bundles ) {
+        if ( $bundle eq $self ) {
+            last BUNDLE;
+        }
+        else {
+            $position++;
+        }
+    }
+
+    $self->get_document->delete_tree($position);
+    bless $self, 'Treex::Core::Node::Removed';
+    return;
+}
+
+
 # --------- ACCESS TO TREES ------------
 
 sub get_all_trees {
