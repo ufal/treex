@@ -317,7 +317,8 @@ sub _pnode_labels {
         $line2 = '-' if $line2 eq '-NONE-';
     }
     else {
-        $line1 = $self->_colors->get( 'phrase', 1 ) . $node->{phrase} . '#{black}' . join( '', map {"-$_"} TredMacro::ListV( $node->{functions} ) );
+        my $phrase = $node->{phrase} ? $node->{phrase} : '';
+        $line1 = $self->_colors->get( 'phrase', 1 ) . $phrase . '#{black}' . join( '', map {"-$_"} TredMacro::ListV( $node->{functions} ) );
     }
 
     return [
