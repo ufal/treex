@@ -10,7 +10,7 @@ sub process_tnode {
     next if !defined $lex_a_node;    # gracefully handle e.g. generated nodes
     my @aux_a_nodes = $t_node->get_aux_anodes();
 
-    if ($lex_a_node->tag =~ /VB[ND]/
+    if ($lex_a_node->tag =~ /^VB[ND]/
         and (
             ( grep { $_->lemma eq "be" } @aux_a_nodes )
             or not $t_node->is_clause_head    # 'informed citizens' is marked too
@@ -31,8 +31,7 @@ sub process_tnode {
 
 =item Treex::Block::A2T::EN::MarkPassives
 
-EnglishT nodes corresponding to passive verb expressions are
-marked with value 1 in the C<is_passive> attribute.
+EnglishT nodes corresponding to passive verb expressions are marked with value 1 in the C<is_passive> attribute.
 
 =back
 

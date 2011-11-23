@@ -7,7 +7,8 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     if ($t_node->is_clause_head
-        && !grep { ( ( $_->functor || "" ) eq "ACT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } $t_node->get_echildren( { or_topological => 1 } )
+        && !grep { ( ( $_->functor || "" ) eq "ACT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } 
+        $t_node->get_echildren( { or_topological => 1 } )
         )
     {
 

@@ -16,9 +16,6 @@ has 'fix_numer' => ( is => 'ro', isa => 'Bool', default => 1 );
 # Fix errors in preposition congruency ?
 has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
 
-# Analyse verbal diathesis, or stay with finite/infinite ?
-has 'detect_diathesis' => ( is => 'ro', isa => 'Bool', default => 0 );
-
 has 't_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->t->t_lemma || '' } );
 
 has 'a' => ( is => 'ro', isa => 'Maybe[Object]', lazy => 1, default => sub { $_[0]->t->get_lex_anode() } );
@@ -86,8 +83,8 @@ sub _build_case {
         }
 
         # if the case is not consistent with the preposition, return X, if supposed to
-        if ( $self->fix_prep and $prepcase ne 'X' and $case ne $prepcase ) {
-            return 'X';
+        if ( $prepcase ne 'X' and $case ne $prepcase ) {
+            return $self->fix_prep ? 'X' : $prepcase;
         }
         return $case;
     }
@@ -196,18 +193,10 @@ sub _build_verbform {
     my ($self) = @_;
     
     return '' if ( $self->syntpos ne 'v' );
-    my $finity = ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';
-   
-    return $finity if ( $finity eq 'inf' or !$self->detect_diathesis );
-
-    return 'apass' if ( $self->tag =~ /^Vs/ );
-
-    my ($verbal_synt_head) = grep { $self->a->parent == $_ } @{ $self->aux };
-    $verbal_synt_head = $self->a if ( !$verbal_synt_head );
-
-    return 'rpass' if ( grep { $_->afun eq 'AuxR' } $verbal_synt_head->children );
-
-    return 'act';
+    
+    return 'rc' if ( $self->t->is_relclause_head );
+    
+    return ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';   
 }
 
 sub _build_syntpos {

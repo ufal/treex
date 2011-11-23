@@ -38,7 +38,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::W2A::CS::FixAtomicNodes
+Treex::Block::A2T::FixAtomicNodes
 
 =head1 DESCRIPTION
 
