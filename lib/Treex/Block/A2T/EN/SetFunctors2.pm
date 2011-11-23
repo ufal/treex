@@ -1,12 +1,11 @@
-package Treex::Block::A2T::CS::SetFunctors;
+package Treex::Block::A2T::EN::SetFunctors2;
 
 use Moose;
 use Treex::Core::Common;
 
 extends 'Treex::Block::A2T::SetFunctors';
 
-
-has '+model_dir' => ( default => 'data/models/functors/cs/' );
+has '+model_dir' => ( default => 'data/models/functors/en/' );
 
 has '+plan_template'  => ( default => 'plan.template' );
 
@@ -23,7 +22,7 @@ sub _build_model_files {
         'ff.dat',
         $self->plan_template,
         $self->features_config,
-        map { 'model-' . $_ . '.dat' } ( '', 'n', 'adj', 'adv', 'v', '[3f][3f][3f]', 'x', 'coap' ), 
+        map { 'model-' . $_ . '.dat' } ( '', 'n', 'adj', 'adv', 'v', 'x', 'coap' ), 
     ];
 }
 
@@ -44,11 +43,11 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2T::CS::SetFunctors
+Treex::Block::A2T::EN::SetFunctors
 
 =head1 DESCRIPTION
 
-This is just a default configuration of L<Treex::Block::A2T::SetFunctors> for Czech, containing pre-set
+This is just a default configuration of L<Treex::Block::A2T::SetFunctors> for English, containing pre-set
 paths to the trained models and configuration in the Treex shared directory. 
 
 =head1 AUTHOR
