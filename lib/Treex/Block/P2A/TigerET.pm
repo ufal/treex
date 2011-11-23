@@ -67,11 +67,18 @@ sub process_zone {
     } else {
         $a_root  = $zone->create_atree();
         @anodes = ();
-        my $ord = 1;
         my %anode_from_pnode;
         # Prepare a-nodes for all terminal p-nodes.
         foreach my $terminal (_terminals($p_root)) {
-            my $conll_feat = $terminal->wild->{morph} or '';
+            # The node may have been orphan due to error in the TIGER-XML input data.
+            # In such case its current edge label is 'ORPHAN'.
+            # Let's attempt to estimate better edge label now.
+            # We could not do that in Read::Tiger because that block is general and does not know about the Estonian treebank labels.
+            if($terminal->edgelabel() eq 'ORPHAN' && $terminal->wild->{pos} eq 'v' && $terminal->wild->{morph} =~ m/^main/)
+            {
+                $terminal->set_edgelabel('P');
+            }
+            my $conll_feat = $terminal->wild->{morph};
             $conll_feat =~ s/,/|/g;
             my $anode = $a_root->create_child(
                 {
@@ -82,7 +89,8 @@ sub process_zone {
                     'conll/pos'    => $terminal->wild->{pos},
                     'conll/feat'   => $conll_feat,
                     'conll/deprel' => $terminal->edgelabel,
-                    ord   => $ord++,
+                    # The p-tree cannot preserve the word order. It assumes that phrase structures are projective but in Tiger it need not be the case.
+                    ord   => $terminal->wild->{span1},
                 }
             );
             $anode_from_pnode{$terminal->id} = $anode;
@@ -94,6 +102,18 @@ sub process_zone {
             if (my @children = $pnode->get_children) {
                 my $phead = find_head($pnode, @children);
                 if ($phead) {
+                    # The head-finding procedure may have identified problematic coordinations that we want to know about later during PDT style normalization.
+                    # The normalization block will look for them at the root of the a-tree.
+                    # At this moment they are stored at the phead because the head-finding procedure knows nothing about the a-tree.
+                    if($phead->wild->{coord})
+                    {
+                        foreach my $coordination (@{$phead->wild->{coord}})
+                        {
+                            my @p_conjunct_ids = map {$_->id()} @{$coordination};
+                            push(@{$a_root->wild->{coord}}, [map $anode_from_pnode{$_}->id, @p_conjunct_ids]);
+                        }
+                        delete($phead->wild->{coord});
+                    }
                     # Attach the non-head children to the head in the a-tree.
                     my $ahead = $anode_from_pnode{$phead->id};
                     # Associate the parent nonterminal with the same a-node as the head child.
@@ -125,7 +145,12 @@ sub process_zone {
                     }
                     else
                     {
-                        log_warn("No a-head for p-head ".$phead->form()."\t".$phead->get_address());
+                        my $label = $phead->form();
+                        if(!defined($label))
+                        {
+                            $label = $phead->phrase() ? $phead->phrase() : '';
+                        }
+                        log_warn("No a-head for p-head '$label'\t".$phead->get_address());
                     }
                 } else {
                     my $edgelabels = join(' ', sort map $_->edgelabel(), @children);
@@ -152,10 +177,11 @@ sub find_head
     # The head of coordination is the coordinating conjunction ('CO').
     for my $child (@children) {
         my $edgelabel = $child->edgelabel();
-        push @pheads, $child
-            if $edgelabel =~ /^(?:[HP]|Vm(?:ain)?)$/
-                or ('CO' eq $edgelabel
-                    and grep 'CJT' eq $_->edgelabel(), @children);
+        if($edgelabel =~ /^(?:[HP]|Vm(?:ain)?)$/
+            or ('CO' eq $edgelabel and grep 'CJT' eq $_->edgelabel(), @children))
+        {
+            push @pheads, $child
+        }
     }
     # There should be just one head.
     if(scalar(@pheads)>1) {
@@ -193,6 +219,8 @@ sub find_head
     if (not $phead
         and @cjt = grep 'CJT' eq $_->edgelabel(), @children
         and @cjt > 1) {
+        # Get the closest left sibling of the last conjunct.
+        # If it is punctuation make it coordination head.
         my $coord = _left_neighbor($cjt[-1]);
         if ($coord
             and $coord->edgelabel()
@@ -200,9 +228,14 @@ sub find_head
             and 'punc' eq $coord->wild->{pos}) {
             $phead = $coord;
         } else {
+            # Otherwise make the last conjunct the coordination head.
             $phead = $cjt[-1];
-            push @{ $a_root->wild->{coord} },
-                [map $anode_from_pnode{$_->id}->id, @cjt];
+            # Remember problematic coordinations (lists of conjuncts) for later processing and normalization.
+            # JŠ was storing them at the root of the a-tree but we want to keep this function independent of the a-tree.
+            # So we store it at the coordination head instead.
+            # If the caller is building an a-tree, it is its own business to propagate the information further (and translate p-nodes to a-nodes).
+            #push @{ $aroot->wild->{coord} }, [map $anode_from_pnode->{$_->id}->id, @cjt];
+            push(@{$phead->wild->{coord}}, \@cjt);
         }
     }
 

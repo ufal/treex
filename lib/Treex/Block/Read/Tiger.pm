@@ -172,6 +172,7 @@ sub attach_orphans
         log_warn('  '.$orphan->get_address());
         # Attach the orphan to the closest surrounding phrase.
         $orphan->set_parent($surround);
+        $orphan->set_edgelabel('ORPHAN');
     }
 }
 
