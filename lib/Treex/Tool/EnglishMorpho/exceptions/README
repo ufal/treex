@@ -1,0 +1,14 @@
+Files in this directory are lists of exceptional word forms which are not covered by rules in EnglishMorpho::Lemmatizer.pm.
+
+However, it is also possible to use some of lists also for the inverse operation - generation of word forms from lemmata.
+
+Lists are stored inside perl scripts (instead in traditional *.tsv files) so the lists can be stored in a comprehensive format
+and short procedure (in the end of each script) will generate full format suitable for lemmatization.
+Original list is printed when a script is invoked with option -d (dump).
+To print a list suitable for lemmatization (format: word_form TAB tag TAB lemma) use option -a (analyze). 
+In future may be added option -g (generation).
+
+Be aware that word forms covered by lemmatization rules in EnglishMorpho::Lemmatizer.pm are NOT INCLUDED in respective lists.
+So for example verb_ending_with_e.pl is NOT a COMPLETE list of such verbs.
+
+Also be carefull not to include errors.pl into EnglishMorpho/exceptions.tsv unless you really want Lemmatizer to do same errors as PEDT::MorphologyAnalysis.
