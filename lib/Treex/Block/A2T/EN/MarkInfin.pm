@@ -3,44 +3,57 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-sub process_ttree {
-    my ( $self, $t_root ) = @_;
+sub process_tnode {
 
-    TNODE: foreach my $t_node ( $t_root->get_descendants )
-    {
+    my ( $self, $tnode ) = @_;
+    my $anode = $tnode->get_lex_anode();
 
-        my $lex_a_node = $t_node->get_lex_anode();
-        next TNODE if !defined $lex_a_node;
+    return if ( !$anode );
 
-        if ( $lex_a_node->tag eq "VB" ) {
-            my @aux_a_nodes = $t_node->get_aux_anodes;
-            if (grep { $_->tag eq "TO" }
-                @aux_a_nodes
-                and not grep { $_->tag =~ /^V/ } @aux_a_nodes
-                )
-            {
+    if ( $anode->tag =~ /^VB[NG]?$/ ) {
+        my @aux = $tnode->get_aux_anodes();
+        my $to = first { $_->tag eq 'TO' } @aux;    # find the infinitive particle 'to'
 
-                #	if (@aux_a_nodes == 1 and $aux_a_nodes[0]->tag eq "TO") {
-                $t_node->set_attr( 'is_infin', 1 );
-            }
+        return if ( !$to );
+
+        if (( $anode->ord > $to->ord )    # require the particle 'to' in front of the main verb
+            && ( all { $_->ord > $to->ord } grep { $_->tag =~ /^[VM]/ } @aux )    # and in front of all auxiliaries
+            && ( $anode->tag eq 'VB' || any { $_->form =~ /^(be|have)$/i } @aux ) # require base form (possibly of an auxiliary)
+            )
+        {
+            $tnode->set_is_infin(1);
         }
     }
-    return 1;
+    return;
 }
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::EN::MarkInfin
+=encoding utf-8
 
-EnglishT nodes corresponding to non-finite verbal expression are marked
+=head1 NAME
+
+Treex::Block::A2T::CS::MarkInfin
+
+=head1 DESCRIPTION
+
+EnglishT nodes corresponding to non-finite verbal expressions (with the particle "to") are marked
 by value 1 in the C<is_infin> attribute.
 
-=back
+=head1 TODO
 
-=cut
+Mark also infinitives without the particle "to" ?
 
-# Copyright 2008 Zdenek Zabokrtsky
+=head1 AUTHOR
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
