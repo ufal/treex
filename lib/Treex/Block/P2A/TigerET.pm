@@ -261,6 +261,8 @@ sub find_head
         }
     }
 
+    # Set the head-indicating attribute of the head node.
+    $phead->set_is_head(1) if($phead);
     return $phead;
 }
 
