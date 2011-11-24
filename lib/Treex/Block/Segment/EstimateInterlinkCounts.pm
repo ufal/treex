@@ -73,7 +73,8 @@ sub process_ttree {
 
     # save the score for a further processing
     my $bundle = $tree->get_bundle;
-    $bundle->wild->{estim_interlinks} = $score;
+    my $label = 'estim_interlinks/' . $self->language . '_' . $self->selector;
+    $bundle->wild->{ $label } = $score;
 }
 
 1;
