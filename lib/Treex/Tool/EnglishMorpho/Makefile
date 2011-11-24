@@ -12,7 +12,8 @@ ${MERGE}: exceptions/*.pl
 	    echo Adding `perl $$script -a | tee -a ${MERGE} | wc -l` $$script; \
 	  fi; \
 	done
-	@sort -o ${MERGE} ${MERGE}
+	@export LC_COLLATE=en_US.UTF-8 && sort -o ${MERGE} ${MERGE}
+	# cp exceptions.tsv ${TMT_ROOT}/share/data/models/lemmatizer/en/
 
 merge_including_errors: ${MERGE}
 	@echo Adding `wc -l ${ERRORS_FILE}`;
