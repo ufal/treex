@@ -42,7 +42,11 @@ sub get_layout_label {
     return unless ref($bundle) eq 'Treex::Core::Bundle';
 
     my @label;
-    foreach my $zone ( sort { $a->language cmp $b->language } $bundle->get_all_zones ) {
+    ###!!! DZ: Occasionally we get a 'zone' of the type Treex::PML::Struct (instead of Treex::Core::BundleZone).
+    ###!!! Ttred then complains "Can't locate object method "get_all_trees" via package..."
+    ###!!! I am grepping the zones for real ones but one may want to find the cause within get_all_zones() instead.
+    my @zones = grep {ref($_) ne 'Treex::PML::Struct'} $bundle->get_all_zones();
+    foreach my $zone ( sort { $a->language cmp $b->language } @zones ) {
         push @label, map { $self->get_tree_label($_) } sort { $a->get_layer cmp $b->get_layer } $zone->get_all_trees();
     }
     return join ',', @label;

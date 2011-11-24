@@ -51,7 +51,7 @@ sub tiger2pdt {
 
 sub convert_coordination {
     my $node = shift;
-    return if 'NR' ne $node->afun;
+    return if defined($node->{afun}) && 'NR' ne $node->afun;
     my $parent = $node->get_parent;
     if (grep $_ eq $parent->wild->{function}, qw/CO --/) {
         $parent->set_afun('Pred');
@@ -131,6 +131,10 @@ sub backup_zone
 sub set_afun {
     my ($achild, $ahead, $func) = @_;
     my $afun;
+    if(!defined($achild->{afun}))
+    {
+        $achild->{afun} = 'NR';
+    }
     return if 'NR' ne $achild->{afun};
 
     if (not $func) {
@@ -193,7 +197,7 @@ sub set_afun {
 
     } elsif ('C' eq $func) {
         $afun = 'Pnom';
-        if (not $ahead->tag =~ m{^v[-/]}) { 
+        if (not $ahead->tag =~ m{^v[-/]}) {
             log_info("Pnom under nonverb\t" . $achild->get_address);
             $afun = 'Atr';
         }
@@ -231,7 +235,7 @@ sub set_afun {
         }
 
     } elsif (grep $_ eq $func, qw/CO D/
-             and $ahead->tag =~ m{^(?:conj|punc|v[/-])}) {
+             and $ahead->tag && $ahead->tag =~ m{^(?:conj|punc|v[/-])}) {
         $afun = 'AuxY';
 
     # repetition in spoken language
