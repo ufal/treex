@@ -44,10 +44,16 @@ sub process_t_node {
     $a_node->set_parent( $a_noun->get_parent() );
     $a_noun->set_parent($a_node);
 
-    # is_member attribute must stay with the governing node
+    # is_member and is_parenthesis attributes must stay with the governing node
+    # TODO: there may be more such attributes
+    #       node dependency reversing is done also elsewhere in Treex, so it might be handy to implement it just once 
     if ( $a_noun->is_member ) {
         $a_noun->set_is_member(0);
         $a_node->set_is_member(1);
+    }
+    if ( $a_noun->wild->{is_parenthesis} ) {
+        $a_noun->wild->{is_parenthesis} = 0;
+        $a_node->wild->{is_parenthesis} = 1;
     }
 
     # In some cases there can be prepositions in the formeme of $t_node
