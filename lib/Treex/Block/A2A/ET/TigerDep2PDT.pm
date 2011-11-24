@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
+use tagset::common;
+use tagset::cs::pdt;
 
 #------------------------------------------------------------------------------
 # Reads the Estonian tree, transforms tree to adhere to PDT guidelines,
@@ -17,8 +19,45 @@ sub process_zone
     $self->backup_zone($zone);
     my $a_root = $zone->get_atree();
     tiger2pdt($a_root);
+    # Convert Estonian POS tags and features to Interset and PDT if possible.
+    # Jan's tiger2pdt uses the original tags so we must not change $tag before structural and s-tag conversion is done.
+    $self->convert_tags( $a_root, 'puudepank' );
     return $a_root;
 } # process_zone
+
+#------------------------------------------------------------------------------
+# Converts tags of all nodes to Interset and PDT tagset.
+#------------------------------------------------------------------------------
+sub convert_tags
+{
+    my $self   = shift;
+    my $root   = shift;
+    my $tagset = shift;    # optional, see below
+    foreach my $node ( $root->get_descendants() )
+    {
+        $self->convert_tag( $node, $tagset );
+    }
+}
+
+#------------------------------------------------------------------------------
+# Decodes the part-of-speech tag and features from the original tagset into
+# Interset features. Stores the features with the node. Then sets the tag
+# attribute to the closest match in the PDT tagset.
+#------------------------------------------------------------------------------
+sub convert_tag
+{
+    my $self   = shift;
+    my $node   = shift;
+    my $tagset = shift;
+    my $driver = $node->get_zone()->language() . '::' . $tagset;
+    # Current tag is probably just a copy of the original tag.
+    # We are about to replace it by a 15-character string fitting the PDT tagset.
+    my $tag = $node->tag();
+    my $f = tagset::common::decode($driver, $tag);
+    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
+    $node->set_iset($f);
+    $node->set_tag($pdt_tag);
+}
 
 sub tiger2pdt {
     my $a_root = shift;
@@ -125,7 +164,9 @@ sub backup_zone
 {
     my $self  = shift;
     my $zone0 = shift;
-    return $zone0->copy('orig');
+    my $zone1 = $zone0->copy('orig');
+    $zone0->remove_tree('p');
+    return $zone1;
 }
 
 sub set_afun {

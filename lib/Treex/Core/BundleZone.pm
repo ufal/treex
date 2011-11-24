@@ -197,10 +197,13 @@ sub copy {
     # Get the bundle the zone is in.
     my $bundle = $self->get_bundle();
     my $zone1 = $bundle->get_or_create_zone( $self->language(), $selector1 );
-    ### TO DO: copy other trees, too (currently only copies the a-tree)
+    ### TO DO: copy other trees, too (currently only copies a-tree and p-tree)
     my $aroot0 = $self->get_atree();
     my $aroot1 = $zone1->create_atree();
     $aroot0->copy_atree($aroot1);
+    my $proot0 = $self->get_ptree();
+    my $proot1 = $zone1->create_ptree();
+    $proot0->copy_ptree($proot1);
     return $zone1;
 }
 

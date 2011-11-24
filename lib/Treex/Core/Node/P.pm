@@ -165,6 +165,51 @@ sub stringify_as_mrg {
     return "($string)";
 }
 
+#------------------------------------------------------------------------------
+# Recursively copy children from myself to another node.
+# This function is specific to the P layer because it contains the list of
+# attributes. If we could figure out the list automatically, the function would
+# become general enough to reside directly in Node.pm.
+#------------------------------------------------------------------------------
+sub copy_ptree
+{
+    my $self      = shift;
+    my $target    = shift;
+
+    # TODO probably we should do deepcopy
+    my %copy_of_wild = %{$self->wild};
+    $target->set_wild(\%copy_of_wild);
+
+    my @children0 = $self->get_children();
+    foreach my $child0 (@children0)
+    {
+
+        # Create a copy of the child node.
+        my $child1 = $child0->is_leaf() ? $target->create_terminal_child() : $target->create_nonterminal_child();
+
+        # We should copy all attributes that the node has but it is not easy to figure out which these are.
+        # TODO: As a workaround, we list the attributes here directly.
+        foreach my $attribute (
+            'form', 'lemma', 'tag', # terminal
+            'phrase', 'functions', # nonterminal
+            'edgelabel', 'is_head', 'is_collins_head', 'head_selection_rule', 'index', 'coindex' # common
+            )
+        {
+            my $value = $child0->get_attr($attribute);
+            $child1->set_attr( $attribute, $value );
+        }
+
+        # TODO probably we should do deepcopy
+        my %copy_of_wild = %{$child0->wild};
+        $child1->set_wild(\%copy_of_wild);
+
+        # Call recursively on the subtrees of the children.
+        $child0->copy_ptree($child1);
+    }
+
+    return;
+}
+
 1;
 
 __END__
@@ -179,11 +224,19 @@ Treex::Core::Node::P
 
 Representation of nodes of phrase structure (constituency) trees.
 
+=item copy_ptree()
+
+Recursively copy children from myself to another node.
+This method is specific to the P layer because it contains the list of
+attributes. If we could figure out the list automatically, the method would
+become general enough to reside directly in Node.pm.
+
 
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
-Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
