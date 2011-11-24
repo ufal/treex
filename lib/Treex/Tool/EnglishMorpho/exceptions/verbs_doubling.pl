@@ -1,4 +1,9 @@
 #!/usr/bin/env perl
+
+# Some of these verbs do not have doubled consonant in American English
+# e.g. British cancelled vs. American canceled
+# Most of the American verbs are handled by rules, but some are included
+# in verbs_not_ending_with_e.pl
 my @DATA = qw(
     abat abet abhor abut accur acquit adlib admit aerobat aerosol
     agendaset allot alot anagram annul appal apparel armbar aver babysit
