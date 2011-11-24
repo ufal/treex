@@ -153,8 +153,9 @@ sub process_zone {
                         log_warn("No a-head for p-head '$label'\t".$phead->get_address());
                     }
                 } else {
-                    my $edgelabels = join(' ', sort map $_->edgelabel(), @children);
-                    log_warn("No head found\t" . $pnode->phrase() . ": $edgelabels\t" . $pnode->get_address);
+                    my $edgelabels = join(' ', map $_->edgelabel(), @children);
+                    my $nodelabels = join(' ', map {$_->form() ? $_->form() : $_->phrase()} (@children));
+                    log_warn("No head found\t" . $pnode->phrase() . ": $edgelabels ($nodelabels)\t" . $pnode->get_address);
                 }
             }
         }
@@ -183,11 +184,146 @@ sub find_head
             push @pheads, $child
         }
     }
+    # Special cases
+    if(!@pheads)
+    {
+        my $els = ' '.join(' ', sort(map {$_->edgelabel()} (@children))).' ';
+        my $tags = ' '.join(' ', map {$_->wild->{pos} ? $_->wild->{pos} : $_->phrase() ? $_->phrase() : 'UNKNOWN'} (@children)).' ';
+        # Eesmärk - viia telekaabel kuue kuuga 50000 Tallinna kodusse.
+        # The goal - to bring cable television in six months to 50000 Tallinn homes.
+        # The root acl (adverbial clause) phrase is composed of:
+        # - Eesmärk/noun/S
+        # - -/punc/--
+        # - icl/C (complement infinite clause)
+        # - ./punc/FST
+        # Solution: 'Eesmärk' is the head (the icl is apposition adjunct).
+        if($els =~ m/ [AC] (.* )?S /)
+        {
+            @pheads = grep {$_->edgelabel() eq 'S'} @children;
+            #log_info("PHRASE ".join(',', map {$_->edgelabel()} @children)." solved by making S the head.");
+        }
+        # Ei!
+        # No!
+        # The exclamation mark has the edge label 'EM' that has not been defined.
+        # Anyhow, the adverb 'ei' shall become the head.
+        elsif($els eq ' A EM ')
+        {
+            @pheads = grep {$_->edgelabel() eq 'A'} @children;
+            #log_info("PHRASE ".join(',', map {$_->edgelabel()} @children)." solved by making A the head.");
+        }
+        # sigaret sigareti järel
+        # cigarette after cigarette
+        # sigaret/n/A (pp/A sigareti/n/D järel/prp/H)
+        elsif($els eq ' A A '
+              && $children[0]->wild->{pos} && $children[0]->wild->{pos} eq 'n'
+              && $children[1]->phrase() && $children[1]->phrase() =~ m/^pp/)
+        {
+            @pheads = ($children[0]);
+        }
+        # nagu/conj-s/SUB (np/C pikantne prantsuse film)
+        # as savory French film
+        # Solution: the subordinating conjunction 'nagu' is the head.
+        elsif($els eq ' C SUB ')
+        {
+            @pheads = grep {$_->edgelabel() eq 'SUB'} @children;
+            #log_info("PHRASE ".join(',', map {$_->edgelabel()} @children)." solved by making SUB the head.");
+        }
+        # mitte/adv/A niivõrd/adv/A np/A kui/conj-s/A np/A
+        # not so much X as Y
+        # Y rather than X
+        # Solution: 'kui' is the head.
+        elsif($els eq ' A A A A A '
+              && lc(join(' ', map {$_->form() ? $_->form() : $_->phrase()} (@children))) =~ m/^mitte niivõrd .+ kui .+$/)
+        {
+            @pheads = ($children[3]);
+            #log_info("PHRASE ".join(',', map {$_->edgelabel()} @children)." solved by making 'kui' the head.");
+        }
+        # jah/b/B jaa/b/B
+        # yeah yeah
+        # b = B = discourse particle
+        # Solution: coordination without conjunction. Last conjunct is the head.
+        elsif($els =~ m/^( B)+ $/)
+        {
+            @pheads = ($children[-1]);
+        }
+        elsif($els eq ' D D ')
+        {
+            # Ta/pron-pers/S siseneb/v-fin/P (np/A (adjp/D vastas/adv/D olevasse/adj/D) kabinetti/n/H) ./punc/FST
+            # He enters opposite office.
+            # (np/D mitu/pron-def/H meetrit/n/D) edasi/pst/D
+            # several meters on
+            # on several meters
+            # The postposition 'edasi' should be the head but erroneously it is tagged as dependent.
+            # (adjp/D erutusest hingeldav) politseinink/n/D
+            # breathless of-excitement policeman
+            if($tags eq ' adv adj ' ||
+               $tags eq ' pron-dem n ' ||
+               $tags =~ m/np.* (prp|pst)/ ||
+               $tags =~ m/adjp.* n $/)
+            {
+                @pheads = ($children[1]);
+            }
+        }
+        # oma tavalist kolmekümne kahe minutilist bensiinilõhnalist ja ühel lõigul kergelt hingeldamapanevat maršruuti
+        # their usual thirty two minutes gas-smelling and one section slightly pant-putting route
+        # edge labels: D D D D D
+        # constituents: (oma) (tavalist) (kolmekümne-kahe-minutilist) (bensiini...) (maršruuti)
+        # Solution: the noun (last constituent) is the head.
+        elsif($els eq ' D D D D D ' &&
+              $tags =~ m/^ pron-poss adj adjp.* par.* n $/)
+        {
+            @pheads = ($children[-1]);
+        }
+    }
     # There should be just one head.
     if(scalar(@pheads)>1) {
-        my $edgelabels = join (' ', sort map $_->edgelabel(), @children);
-        log_warn("Too many heads\t$edgelabels\t" . $pnode->get_address());
+        # Special cases
+        # kaks konkureerivat kaabelTV firmade liitu
+        # two competing cable-TV companies union
+        # kaks/num/H konkureerivat/adj/D (np/S kaabelTV firmade) liitu/n/H
+        # There should be one more nonterminal level but there is not:
+        # (np (np kaks konkureerivat (np kaabelTV firmade)) liitu)
+        # Anyway, the noun 'liitu' should be the head here.
+        if(scalar(@pheads)==2 && $pheads[0]->wild->{pos} eq 'num' && $pheads[1]->wild->{pos} eq 'n')
+        {
+            #log_info("Two heads (".join(', ', map {$_->form()} (@pheads))."); selected ".$pheads[1]->form());
+            shift(@pheads);
+        }
+        # If there are more than one conjunction in coordination (they could also be parts of a multi-word conjunction)
+        # use the last one as the head.
+        elsif(join('', map {$_->edgelabel()} (@pheads)) =~ m/^(CO)+$/)
+        {
+            #log_info("Multiple conjunction heads (".join(', ', map {$_->form()} (@pheads))."); selected ".$pheads[-1]->form());
+            @pheads = ($pheads[-1]);
+        }
+        # Two "main" verbs (is it an error? I would not say they both are main):
+        # said kirjutatud
+        # were written
+        # Solution: the finite verb is the head, the participle is dependent.
+        elsif(scalar(@pheads)==2
+              && join('', map {$_->edgelabel()} (@pheads)) =~ m/^(Vm)+$/
+              && $pheads[0]->wild->{morph} =~ m/,indic,/
+              && $pheads[1]->wild->{morph} =~ m/,partic,/)
+        {
+            #log_info("Multiple conjunction heads (".join(', ', map {$_->form()} (@pheads))."); selected ".$pheads[0]->form());
+            pop(@pheads);
+        }
+        # Multiple predicates in spoken data indicate repetitions.
+        # nhh/b/B Marel/prop/A on/v-fin/P ka/adv/A (np/S nelisada/num/H pööret/n/D) on/v-fin/P seal/adv/A ./punc/--
+        # hmm Marel is also four-hundred revolutions is there.
+        # Solution: as in coordination without conjunction, the last predicate is the head.
+        elsif(join('', map {$_->edgelabel()} (@pheads)) =~ m/^P+$/)
+        {
+            #log_info("Multiple conjunction heads (".join(', ', map {$_->form()} (@pheads))."); selected ".$pheads[-1]->form());
+            @pheads = ($pheads[-1]);
+        }
+        else
+        {
+            my $edgelabels = join (' ', sort map $_->edgelabel(), @children);
+            log_warn("Too many heads\t$edgelabels\t" . $pnode->get_address());
+        }
     }
+    # If more than one head was found, use the last one.
     my $phead = $pheads[-1];
     $phead = $children[0] if 1 == @children;
 
@@ -257,7 +393,7 @@ sub find_head
             and my @found = grep $_->wild->{pos} && $_->wild->{pos} =~ /$find/
                             || $_->edgelabel() && $_->edgelabel() =~ /$find/, @children) {
             $phead = $found[0] if 1 == @found;
-            log_info("PHRASE:\t$phrase / $find " . scalar @found . "\t" . $pnode->get_address);
+            #log_info("PHRASE:\t$phrase / $find " . scalar @found . "\t" . $pnode->get_address);
         }
     }
 
