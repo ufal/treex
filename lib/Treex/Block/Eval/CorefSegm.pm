@@ -9,9 +9,9 @@ my $total_estim_links = 0;
 sub process_bundle {
     my ($self, $bundle) = @_;
 
-    my $true_links = $bundle->wild->{true_interlinks};
-    my $true_segm_break = $bundle->wild->{true_segm_break};
-    my $estim_segm_break = $bundle->wild->{estim_segm_break};
+    my $true_links = $bundle->wild->{'true_interlinks/cs_ref'};
+    my $true_segm_break = $bundle->wild->{refsegm_break};
+    my $estim_segm_break = $bundle->wild->{srcsegm_break};
 
     if ($estim_segm_break) {
         $total_estim_links += $true_links;
