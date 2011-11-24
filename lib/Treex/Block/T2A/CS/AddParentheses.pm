@@ -3,21 +3,23 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-sub process_tnode {
-    my ( $self, $t_node ) = @_;
-    return if !$t_node->is_parenthesis;
-    my $parenthetized_aroot = $t_node->get_lex_anode();
-    return if !$parenthetized_aroot;
-    my $clause_number = 0;
-    if ( !$t_node->is_clause_head ) {
-        $clause_number = $t_node->clause_number;
+sub process_anode {
+    my ( $self, $anode ) = @_;
+    return if !$anode->wild->{is_parenthesis};
+    my $clause_number = $anode->clause_number;
+
+    # If a whole clause is parenthetized, then the parentheses serve as a clause boundary
+    # and should have clause_number==0 ,(otherwise there would be added an extra comma).
+    # So let's check whether $anode is a clause head (but the is_clause_head attribute is not filled).
+    if (!$anode->get_parent->is_root() && $anode->get_parent->clause_number != $clause_number) {
+        $clause_number = 0;
     }
 
-    my $left_par = add_parenthesis_node( $parenthetized_aroot, '(', $clause_number );
-    $left_par->shift_before_subtree($parenthetized_aroot);
+    my $left_par = add_parenthesis_node( $anode, '(', $clause_number );
+    $left_par->shift_before_subtree($anode);
 
-    my $right_par = add_parenthesis_node( $parenthetized_aroot, ')', $clause_number );
-    $right_par->shift_after_subtree($parenthetized_aroot);
+    my $right_par = add_parenthesis_node( $anode, ')', $clause_number );
+    $right_par->shift_after_subtree($anode);
 
     return;
 }

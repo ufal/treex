@@ -31,6 +31,9 @@ sub copy_subtree {
             if ( $t_node->is_member ) {
                 $a_node->set_is_member(1);
             }
+            if ( $t_node->is_parenthesis ) {
+                $a_node->wild->{is_parenthesis} = 1;
+            }
             copy_subtree( $t_node, $a_node );
         }
         else {
