@@ -179,7 +179,11 @@ sub process_document {
     #print STDERR "\n";
     
     if (!$self->dry_run) {
-        foreach my $lang ($self->languages) {
+        foreach my $lang (@{$self->languages}) {
+
+            # skip non-existing zones
+            next if (!defined $bundles[0]->get_zone($lang, $self->selector));
+            
             my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
                 doc => $doc, language => $lang, selector => $self->selector
             });
