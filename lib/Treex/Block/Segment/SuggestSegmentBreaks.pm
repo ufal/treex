@@ -76,7 +76,7 @@ sub _split_scores_on_sure_breaks {
     my $start_idx = (shift @sorted_idxs) || 0;
 
     foreach my $end_idx (@sorted_idxs) {
-        my @seg = $scores->[ $start_idx .. $end_idx-1 ];
+        my @seg = @{$scores}[ $start_idx .. ($end_idx - 1) ];
         push @segs, \@seg;
         $start_idx = $end_idx;
     }
@@ -94,7 +94,7 @@ sub _split_scores_on_sure_breaks {
 sub _get_already_set_breaks {
     my ($self, @bundles) = @_;
 
-    my @breaks = (0);
+    my @breaks = ();
 
     my $i = 0;
     my $prev_id = undef;
@@ -106,6 +106,11 @@ sub _get_already_set_breaks {
         $prev_id = $curr_id;
         $i++;
     }
+    
+    if (@breaks == 0) {
+        push @breaks, 0;
+    }
+
     return @breaks;
 }
 
@@ -133,7 +138,7 @@ sub process_document {
 
     my @sure_breaks = $self->_get_already_set_breaks( @bundles );
     
-    #print STDERR join ", ", sort {$a <=> $b} (keys %$old_breaks);
+    #print STDERR join ", ", @sure_breaks;
     #print STDERR "\n";
     #print STDERR "COUTN: " . (scalar (keys %$old_breaks)) . "\n";
 

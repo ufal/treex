@@ -5,6 +5,7 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
+use Treex::Tool::Coreference::CS::RelPronAnaphFilter;
 
 has 'type' => (
     is          => 'ro',
@@ -15,7 +16,7 @@ has 'type' => (
 
 has 'anaphor_type' => (
     is          => 'ro',
-    isa         => enum( [qw/pron all/] ),
+    isa         => enum( [qw/pron rel all/] ),
     required    => 1,
     default     => 'all',
 );
@@ -44,6 +45,8 @@ my %same_as_ref;
     my $IS_GEN = 0;
     my $REF_MISS = 0;
     my $GEN_MISS = 0;
+    my $GEN_OTHER = 0;
+    my $GEN_OK = 0;
 
 sub BUILD {
     my ($self) = @_;
@@ -63,6 +66,11 @@ sub _build_anaph_cands_filter {
         }
         else {
             return log_fatal "language " . $self->language . " is not supported";
+        }
+    }
+    elsif ($self->anaphor_type eq 'rel') {
+        if ($self->language eq 'cs') {
+            return Treex::Tool::Coreference::CS::RelPronAnaphFilter->new();
         }
     }
     return undef;
@@ -94,17 +102,19 @@ sub _get_corresponding_node {
 
 sub process_tnode {
     my ( $self, $ref_node ) = @_;
-
     
     my $af = $self->_anaph_cands_filter;
     if (!defined $af || $af->is_candidate( $ref_node )) {
-
+        
         my $src_node = $self->_get_corresponding_node( $ref_node );
         
+#        print STDERR "SOMTU\n";
         
         $IS_GEN += $ref_node->is_generated ? 1 : 0;
         $REF_MISS += !defined $src_node ? 1 : 0;
-        $GEN_MISS += ($ref_node->is_generated && !defined $src_node) ? 1 : 0;
+        #if (!defined $src_node) {
+        #    print STDERR "ID: " . $ref_node->id . ", " . $ref_node->get_bundle->get_position . "\n";
+        #}
 
         my @ref_antec;
         my @src_antec;
@@ -114,19 +124,28 @@ sub process_tnode {
         }
         elsif ($self->type eq 'text') {
             @ref_antec = $ref_node->get_coref_chain;
-            @src_antec = $src_node ? $src_node->get_coref_text_nodes : ();
+            @src_antec = (defined $src_node) ? $src_node->get_coref_text_nodes : ();
         }
         else {
             # TODO both types of coreference
             return log_fatal "Evaluation of both types of coreference not yet implemented";
         }
+        $GEN_MISS += ($ref_node->is_generated && (@ref_antec > 0) && !defined $src_node) ? 1 : 0;
 
         my @ref_antec_in_src = map { $self->_get_corresponding_node( $_ ) } @ref_antec;
 
+        my $tp_node_count = 0;
         foreach my $ref_ante (@ref_antec_in_src) {
             next if (!defined $ref_ante);
-            $tp_count += () = grep { $_ == $ref_ante } @src_antec;
+            my @agree = grep { $_ == $ref_ante } @src_antec;
+            $tp_node_count += scalar @agree;
+            if (scalar @agree > 0) {
+                $GEN_OK += (defined $src_node && $ref_node->is_generated) ? 1 : 0;
+            } else {
+                $GEN_OTHER += (defined $src_node && $ref_node->is_generated) ? 1 : 0;
+            }
         }
+        $tp_count += $tp_node_count;
         $src_count += scalar @src_antec;
         if ($self->type eq 'text') {
             my @direct_antec = $ref_node->get_coref_text_nodes;
@@ -168,7 +187,7 @@ sub process_end {
         printf "F: %.2f%%\n",           $fsco * 100;
     }
 # DEBUG
-    print STDERR "IS_GEN: $IS_GEN, REF_MISS: $REF_MISS, GEN_MISS: $GEN_MISS\n";
+    print STDERR "IS_GEN: $IS_GEN, REF_MISS: $REF_MISS, GEN_MISS: $GEN_MISS, GEN_OTHER: $GEN_OTHER, GEN_OK: $GEN_OK\n";
 }
 
 1;
