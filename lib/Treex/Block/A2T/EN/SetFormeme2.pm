@@ -13,7 +13,7 @@ sub process_ttree {
     # 0. Fill syntpos (avoid using sempos)
     foreach my $t_node (@root_descendants) {
         my $syntpos = detect_syntpos($t_node);
-        $t_node->set_attr('syntpos', $syntpos); # no need to store it in the wild attributes (used only here)
+        $t_node->set_attr('syntpos', $syntpos); # no need to store it in the wild attributes (used only in this block)
     }
 
     # 1. Fill formemes (but use just n:obj instead of n:obj1 and n:obj2)
@@ -190,7 +190,10 @@ sub _verb {
     }
 
     if ( $tag =~ /VB[DN]/ && !$has_non_VBG_verb_aux ) {
-        return 'v:attr' if below_noun($t_node);
+
+        # if there is a subjunction, mostly it is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
+        return "v:$subconj+fin" if $subconj;  
+        return 'v:attr' if below_noun($t_node); # TODO -- what about adjectives ?
         return 'v:fin';
     }
 
@@ -199,14 +202,17 @@ sub _verb {
         and
         any { $_->tag eq 'TO' } @aux_a_nodes
         )
-    {    # having to + infinitive
+    {   # having to + infinitive
+
         return "v:$subconj+ger" if $subconj;
         return 'v:ger';
     }
 
-    return "v:$subconj+???" if $subconj;
+    # now we don't know if it's infinitive or not (mostly parsing errors) -- assume finite forms
+    return "v:$subconj+fin" if $subconj;
 
     # TODO:tady jeste muze byt vztazna !!!
+    # direct speech, imperatives, parsing errors (which in fact mostly are finite forms, if they're verbs at all)
     return 'v:fin';
 }
 
@@ -289,18 +295,29 @@ sub distinguish_objects {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::EN::SetFormeme2
+=head1 NAME 
 
-The attribute C<formeme> of SEnglishT nodes is filled with
+Treex::Block::A2T::EN::SetFormeme2
+
+=head1 DESCRIPTION
+
+The attribute C<formeme> of English t-nodes is filled with
 a value which describes the morphosyntactic form of the given
 node in the original sentence. Values such as C<v:fin> (finite verb),
 C<n:for+X> (prepositional group), or C<n:subj> are used.
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008 - 2009 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
