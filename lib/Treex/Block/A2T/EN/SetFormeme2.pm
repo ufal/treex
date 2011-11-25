@@ -166,16 +166,15 @@ sub _verb {
     my ( $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    # my @aux_a_nodes = $t_node->get_aux_anodes();
     my $tag         = $a_node->tag;
 
-    if ( $t_node->get_attr('is_infin') ) {
-        ## TODO: !!! vyresit jeste 'in order to'
-        return 'v:to+inf' if any { $_->lemma eq 'to' } @aux_a_nodes;
+    my $subconj = get_subconj_string($a_node, @aux_a_nodes);
+
+    if ( $t_node->get_attr('is_infin') ) {        
+        return "v:$subconj+inf" if ($subconj); # this includes the particle 'to'
         return 'v:inf';
     }
 
-    my $subconj = get_subconj_string(@aux_a_nodes);
     my $has_non_VBG_verb_aux = any { $_->tag =~ /^VB[^G]?$/ } @aux_a_nodes;
 
     if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
@@ -229,9 +228,14 @@ sub is_prep_or_conj {
 }
 
 sub get_subconj_string {
-    my @aux_a_nodes = @_;
+
+    my ($a_node, @aux_a_nodes) = @_;
+    my $first_aux_verb = ( first { $_->tag =~ m/^[VM]/ } @aux_a_nodes ) || $a_node;
+
+    @aux_a_nodes = grep { $_->ord < $first_aux_verb->ord } @aux_a_nodes; 
+
     return join '_', map { $_->lemma }
-        grep { $_->tag eq 'IN' || $_->afun eq 'AuxC' }
+        grep { $_->tag =~ /^(IN|TO)$/ || $_->afun eq 'AuxC' }
         @aux_a_nodes;
 }
 
