@@ -62,11 +62,21 @@ sub truncate_lemma {
     return @_;
 }
 
-# Returns true if the given belongs to a modal verb.
+# Returns true if the given lemma belongs to a modal verb.
 sub is_modal_verb {
     my ($lemma) = @_;
     return $lemma =~ m/^(can|could|may|might|shall|should|must|ought|will)$/;
 }
+
+# a list of English verbs that take a bare infinitive (without "to") as an object
+Readonly my $BARE_INFIN_VERBS => "hear|see|watch|feel|sense|make|bid|let|have|help|dare";
+
+sub takes_bare_infin {
+    my ($lemma) = @_; 
+    return $lemma =~ m/^($BARE_INFIN_VERBS)$/;       
+}
+
+
 
 1;
 

@@ -1,6 +1,9 @@
 package Treex::Block::A2T::EN::MarkInfin;
+
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::EN;
+
 extends 'Treex::Core::Block';
 
 sub process_tnode {
@@ -11,19 +14,38 @@ sub process_tnode {
     return if ( !$anode );
 
     if ( $anode->tag =~ /^VB[NG]?$/ ) {
+        
+        # find the infinitive particle 'to'
         my @aux = $tnode->get_aux_anodes();
-        my $to = first { $_->tag eq 'TO' } @aux;    # find the infinitive particle 'to'
+        my $to = first { $_->tag eq 'TO' } @aux;
 
-        return if ( !$to );
+         # require base form (possibly of an auxiliary)
+        return if ( $anode->tag ne 'VB' && !(any { $_->form =~ /^(be|have)$/i } @aux) );
+        
+        # infinitive with the particle "to"
+        if ( $to ){
 
-        if (( $anode->ord > $to->ord )    # require the particle 'to' in front of the main verb
-            && ( all { $_->ord > $to->ord } grep { $_->tag =~ /^[VM]/ } @aux )    # and in front of all auxiliaries
-            && ( $anode->tag eq 'VB' || any { $_->form =~ /^(be|have)$/i } @aux ) # require base form (possibly of an auxiliary)
-            )
-        {
-            $tnode->set_is_infin(1);
+            # require the particle 'to' in front of the main verb and in front of all auxiliaries
+            if ( all { $_->ord > $to->ord } grep { $_->tag =~ /^[VM]/ } ($anode, @aux) ){
+                $tnode->set_is_infin(1);
+                return;
+            }
         }
-    }
+        # try plain infinitives (with specified verbs)
+        else {
+
+            my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
+            return if (!$tparent || $tparent->is_root );
+            my $aparent = $tparent->get_lex_anode();
+            return if (!$aparent);
+        
+            if ( Treex::Tool::Lexicon::EN::takes_bare_infin( $aparent->lemma ) ){
+                $tnode->set_is_infin(1);
+                return;
+            }
+        }
+    }   
+    
     return;
 }
 
@@ -39,12 +61,8 @@ Treex::Block::A2T::CS::MarkInfin
 
 =head1 DESCRIPTION
 
-EnglishT nodes corresponding to non-finite verbal expressions (with the particle "to") are marked
+English t-nodes corresponding to non-finite verbal expressions (with or without the particle "to") are marked
 by value 1 in the C<is_infin> attribute.
-
-=head1 TODO
-
-Mark also infinitives without the particle "to" ?
 
 =head1 AUTHOR
 
