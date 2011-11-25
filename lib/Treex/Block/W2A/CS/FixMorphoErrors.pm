@@ -5,23 +5,56 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
+my %_frequent_abbrevs = (
+    'odst' => 'odstavec NNIXX-----A---8',
+    'čl'   => 'článek NNIXX-----A---8',
+    'písm' => 'písmeno NNIXX-----A---8',
+    'věst' => 'věstník NNIXX-----A---8',
+    'úř'   => 'úřední AAXXX-----A---8',
+);
+
 sub process_anode {
-
     my ( $self, $anode ) = @_;
-
     return if ( $anode->is_root );
 
-    # fix the '*', '!' and '%' signs (not recognized by the morphology)
-    if ( $anode->form =~ m/^(\*|!)$/ ){
-        $anode->set_tag('Z:-------------');
+    my ($new_tag, $new_lemma);
+
+    # treat '%' as a noun abbreviation
+    if ( $anode->form eq '%' ){
+        $new_tag = 'NNIXX-----A---8';
     }
-    # treat '%' as a noun abbreviation 
-    elsif ( $anode->form eq '%' ){
-        $anode->set_tag('NNIXX-----A---8');
+
+    # the following rules are weaker: they should not override
+    # the tag if the token was already recognized by morphology
+    if ( $anode->tag =~ /^X/ ) {
+        # abbreviations such as DNS; longer words are probably uppercased unknown words
+        if ( $anode->form =~ /^\p{IsUpper}{2,6}$/ ) {
+            $new_tag = 'NNXXX-----A---8';
+        }
+
+        elsif ( $_frequent_abbrevs{ lc($anode->form) } ) {
+            ( $new_lemma, $new_tag ) = split / /, $_frequent_abbrevs{ lc($anode->form) };
+        }
+
+        # fix the '*', '!' and other signs
+        elsif ( $anode->form =~ /^[[:punct:]]$/ ){
+            $new_tag = 'Z:-------------';
+        }
+
+        # fix Czech decimal numerals
+        elsif ( $anode->form =~ /[0-9]+,[0-9]+/ ){
+            $new_tag = 'C=-------------';
+        }
     }
-    # fix Czech decimal numerals
-    elsif ( $anode->form =~ m/[0-9]+,[0-9]+/ ){
-        $anode->set_tag('C=-------------');
+
+    if ( $new_tag ) {
+#        print "form ". $anode->form." oldtag: ".$anode->tag." newtag:$new_tag\n";
+        $anode->set_tag($new_tag);
+    }
+
+    if ( $new_lemma ) {
+#        print "oldlemma: ".$anode->lemma." newlemma:$new_lemma\n";
+        $anode->set_lemma($new_lemma);
     }
 
     return;
@@ -32,7 +65,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::CS::FixMorphoErrors
 
@@ -59,6 +92,7 @@ Sets the tag 'C=' for Czech numbers with decimal comma.
 =head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
