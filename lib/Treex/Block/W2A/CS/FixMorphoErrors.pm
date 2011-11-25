@@ -20,7 +20,7 @@ sub process_anode {
         $anode->set_tag('NNIXX-----A---8');
     }
     # fix Czech decimal numerals
-    elsif ( $anode->form =~ m/[0-9]\+,[0-9]\+/ ){
+    elsif ( $anode->form =~ m/[0-9]+,[0-9]+/ ){
         $anode->set_tag('C=-------------');
     }
 
