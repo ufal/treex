@@ -168,16 +168,15 @@ sub _verb {
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     my $tag         = $a_node->tag;
 
-    my $subconj = get_subconj_string($a_node, @aux_a_nodes);
+    my $first_verbform = ( first { $_->tag =~ m/^[VM]/ } @aux_a_nodes ) || $a_node;
+    my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
 
     if ( $t_node->get_attr('is_infin') ) {        
         return "v:$subconj+inf" if ($subconj); # this includes the particle 'to'
         return 'v:inf';
     }
 
-    my $has_non_VBG_verb_aux = any { $_->tag =~ /^VB[^G]?$/ } @aux_a_nodes;
-
-    if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
+    if ( $first_verbform->tag eq 'VBG' ) {        
         return "v:$subconj+ger" if $subconj;
         return 'v:attr' if below_noun($t_node);
         return 'v:ger';
@@ -189,23 +188,11 @@ sub _verb {
         return 'v:fin';
     }
 
-    if ( $tag =~ /VB[DN]/ && !$has_non_VBG_verb_aux ) {
-
-        # if there is a subjunction, mostly it is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
+    if ( $first_verbform->tag =~ /VB[DN]/ ) {
+        # if there is a subjunction, it mostly is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
         return "v:$subconj+fin" if $subconj;  
         return 'v:attr' if below_noun($t_node); # TODO -- what about adjectives ?
         return 'v:fin';
-    }
-
-    if (any { $_->form =~ /^[Hh]aving$/ }
-        @aux_a_nodes
-        and
-        any { $_->tag eq 'TO' } @aux_a_nodes
-        )
-    {   # having to + infinitive
-
-        return "v:$subconj+ger" if $subconj;
-        return 'v:ger';
     }
 
     # now we don't know if it's infinitive or not (mostly parsing errors) -- assume finite forms
@@ -235,10 +222,9 @@ sub is_prep_or_conj {
 
 sub get_subconj_string {
 
-    my ($a_node, @aux_a_nodes) = @_;
-    my $first_aux_verb = ( first { $_->tag =~ m/^[VM]/ } @aux_a_nodes ) || $a_node;
-
-    @aux_a_nodes = grep { $_->ord < $first_aux_verb->ord } @aux_a_nodes; 
+    my ($first_verbform, @aux_a_nodes) = @_;
+    
+    @aux_a_nodes = grep { $_->ord < $first_verbform->ord } @aux_a_nodes; 
 
     return join '_', map { $_->lemma }
         grep { $_->tag =~ /^(IN|TO)$/ || $_->afun eq 'AuxC' }
