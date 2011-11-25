@@ -154,7 +154,7 @@ sub process_document {
         #my @links = qw/0 1 3 5 3 4 5 6 7 8 9 4 3 4 3 2 2 1/;
         #my @break_idx_segm = $self->_find_breaks( \@links );
         
-        print STDERR "BREAKS: " . (join ", ", @break_idx_segm) . "\n";
+        #print STDERR "BREAKS: " . (join ", ", @break_idx_segm) . "\n";
         
 
         my @break_bundles = map {
