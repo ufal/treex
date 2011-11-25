@@ -2,11 +2,19 @@ package Treex::Tool::Parallel::MessageBoard;
 
 use Moose;
 use Treex::Core::Common;
+use File::Temp qw(tempdir);
 
-has directory => (
+has path => (
     is => 'rw',
     isa => 'Str',
-    documentation => 'directory in which messages are stored',
+    default => '.',
+    documentation => 'directory in which working directory structure will be created',
+);
+
+has workdir => (
+    is => 'rw',
+    isa => 'Str',
+    documentation => 'working directory created for storing messages',
 );
 
 has sharers => (
@@ -18,16 +26,32 @@ has sharers => (
 has current => (
     is => 'rw',
     isa => 'Int',
-    documentation => 'the number representing the current participant',
+    documentation => 'the number representing the current participant (1 <= current <= sharers)',
 );
 
 sub BUILD {
     my ( $self ) = @_;
+
     if ( $self->current and $self->current > $self->sharers ) {
         log_fatal 'Number of the current participant cannnot be higher than the total number of participants';
     }
-    if (not -d $self->directory) {
-        log_fatal 'Directory '.$self->directory.' does not exists.';
+
+    if ( not $self->workdir ) {
+        my $counter;
+        my $directory_prefix;
+        my @existing_dirs;
+
+        # search for the first unoccupied directory prefix
+        do {
+            $counter++;
+            $directory_prefix = sprintf $self->path."/%03d-message-board-", $counter;
+            @existing_dirs = glob "$directory_prefix*";
+        }
+            while (@existing_dirs);
+
+        my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
+        $self->set_workdir($directory);
+        log_info "Working directory $directory created";
     }
 }
 
