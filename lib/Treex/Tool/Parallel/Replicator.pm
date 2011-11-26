@@ -4,8 +4,8 @@ use Moose;
 use Treex::Core::Common;
 use File::Temp qw(tempdir);
 use Cwd 'abs_path';
-use Storable;
 use Treex::Tool::Parallel::MessageBoard;
+
 
 has path => (
     is => 'rw',
@@ -40,7 +40,6 @@ has message_board => (
 
 sub BUILD {
     my ( $self ) = @_;
-
 
     if ( $ENV{REPLICATOR_WORKDIR} ) {
         $self->_initialize_replicant();
@@ -86,17 +85,44 @@ sub _initialize_hub {
       );
 
     # STEP 3 - create bash script for jobs
-    mkdir $self->workdir."/scripts" or log_fatal $!;
-    foreach my $jobnumber (1..$self->jobs) {
-
-
-    }
+    $self->_create_job_scripts();
 
     # STEP 4 - send the jobs to the cluster
 
 
+    # STEP 5 - wait until all jobs are ready
 
 }
+
+sub _create_job_scripts { # mostly copied from Treex::Core::Run
+    my ($self)      = @_;
+    my $current_dir = Cwd::cwd;
+    my $workdir     = $self->workdir;
+    mkdir $self->workdir."/scripts" or log_fatal $!;
+    foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
+        my $script_filename = "scripts/job$jobnumber.sh";
+        open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
+        print $J "#!/bin/bash\n\n";
+        print $J "echo \$HOSTNAME > $current_dir/$workdir/output/job$jobnumber.started\n";
+        print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
+        print $J "cd $current_dir\n\n";
+        print $J "source " . Treex::Core::Config->lib_core_dir()
+            . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
+
+        my $opts_and_scen = join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+        if ( $self->filenames ) {
+            $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
+        }
+        # tady bude spusteni stejneho skriptu
+#        print $J "treex --jobindex=$jobnumber --outdir=$workdir/output $opts_and_scen"
+            . " 2>> $workdir/output/job$jobnumber.started\n\n";
+        print $J "touch $workdir/output/job$jobnumber.finished\n";
+        close $J;
+        chmod 0777, "$workdir/$script_filename";
+    }
+    return;
+}
+
 
 
 sub _initialize_replicant {
@@ -115,6 +141,8 @@ sub _initialize_replicant {
             sharers => $self->jobs + 1,
         )
       );
+
+    $self->message_board({type=>'READY'},0);
 
 }
 
