@@ -4,18 +4,21 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Coreference::CS::CorefSegmentsFeatures;
-use AI::MaxEntropy::Model;
+#use AI::MaxEntropy::Model;
+use Treex::Tool::ML::LinearRegression::Model;
 
 has 'model_path' => (
     is          => 'ro',
     isa         => 'Str',
     required    => 1,
-    default => 'data/models/coreference/segments.maxent.gold',
+#    default => 'data/models/coreference/segments.maxent.gold',
+    default => 'data/models/coreference/segments.lr.gold',
 );
 
 has '_model' => (
     is          => 'ro',
-    isa         => 'AI::MaxEntropy::Model',
+    isa         => 'Treex::Tool::ML::LinearRegression::Model',
+#    isa         => 'AI::MaxEntropy::Model',
     required    => 1,
     lazy        => 1,
     builder     => '_build_model',
@@ -43,7 +46,8 @@ sub _build_model {
     log_fatal 'File ' . $model_file . 
         ' with a model for coreference segmentation does not exist.' 
         if !-f $model_file;
-    return AI::MaxEntropy::Model->new( $model_file );
+    return Treex::Tool::ML::LinearRegression::Model->new({model_path => $model_file});
+#    return AI::MaxEntropy::Model->new( $model_file );
 }
 
 sub _build_feature_extractor {
