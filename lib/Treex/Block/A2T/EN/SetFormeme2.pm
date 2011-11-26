@@ -166,9 +166,8 @@ sub _verb {
     my ( $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    my $tag         = $a_node->tag;
-
-    my $first_verbform = ( first { $_->tag =~ m/^[VM]/ } @aux_a_nodes ) || $a_node;
+    my $first_verbform = ( first { $_->tag =~ m/^[VM]/ && $_->afun !~ /^Aux[CP]$/ } $t_node->get_anodes( { ordered => 1 } ) ) || $a_node;
+    
     my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
 
     if ( $t_node->get_attr('is_infin') ) {        
@@ -227,7 +226,7 @@ sub get_subconj_string {
     @aux_a_nodes = grep { $_->ord < $first_verbform->ord } @aux_a_nodes; 
 
     return join '_', map { $_->lemma }
-        grep { $_->tag =~ /^(IN|TO)$/ || $_->afun eq 'AuxC' }
+        grep { $_->tag =~ /^(IN|TO)$/ || $_->afun =~ /Aux[CP]/ }
         @aux_a_nodes;
 }
 
