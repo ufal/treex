@@ -308,6 +308,29 @@ sub count_errors_labelling {
     return $errors;
 }
 
+sub count_errors_attachement_and_labelling {
+
+    # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
+    my ( $self, $correct_sentence ) = @_;
+
+    my $errors = 0;
+
+    #assert that nodes in the sentences with the same ords
+    # are corresponding nodes
+    foreach my $my_node ( @{ $self->nodes } ) {
+        my $my_parent      = $my_node->parentOrd;
+        my $my_label       = $my_node->label;
+        my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
+        my $correct_parent = $correct_node->parentOrd;
+        my $correct_label  = $correct_node->label;
+        if ( $my_parent != $correct_parent || $my_label != $correct_label ) {
+            $errors++;
+        }
+    }
+
+    return $errors;
+}
+
 sub toParentOrdsArray {
     my ($self) = @_;
 
