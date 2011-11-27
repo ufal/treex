@@ -260,7 +260,7 @@ sub _execute {
         # TODO: execute_locally does the same work as the following line in a more safe ways
         # (If someone wants to run treex -d My::Block my_scen.scen)
         my $scen_str = join ' ', @{ $self->extra_argv };
-        $self->set_scenario( Treex::Core::Scenario->new( scenario_string => $scen_str ) );
+        $self->set_scenario( Treex::Core::Scenario->new( scenario_string => $scen_str, runner => $self ) );
 
         # TODO: Do it properly - perhaps, add a Scenario option to not load all the blocks.
         # We cannot create the real scenario instance without loading all the blocks
@@ -421,7 +421,7 @@ sub _execute_locally {
         $self->scenario->restart();
     }
     else {
-        $self->set_scenario( Treex::Core::Scenario->new( from_string => $scen_str ) );
+        $self->set_scenario( Treex::Core::Scenario->new( from_string => $scen_str, runner => $self ) );
         $self->scenario->load_blocks;
     }
     my $scenario      = $self->scenario;

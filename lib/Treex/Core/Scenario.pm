@@ -78,6 +78,14 @@ has parser => (
     documentation => q{Parses treex scenarios}
 );
 
+has runner => (
+    is       => 'ro',
+    isa      => 'Treex::Core::Run',
+    writer   => '_set_runner',
+    weak_ref => 1,
+    documentation => 'Treex::Core::Run instance in which the scenario is running',
+);
+
 sub _build_scenario_string {
     my $self = shift;
     if ( $self->_has_from_file ) {
