@@ -16,7 +16,7 @@ has path => (
 has workdir => (
     is => 'rw',
     isa => 'Str',
-    documentation => 'working directory created for storing messages',
+    documentation => 'working directory for storing messages; is not specified, a unique one is created in path',
 );
 
 has sharers => (
@@ -61,11 +61,14 @@ sub BUILD {
         my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
         $self->set_workdir($directory);
 
+        log_info "Working directory $directory created";
+    }
+
+    if ( $self->current == 1) {
         foreach my $sharer (1..$self->sharers) {
             mkdir $self->_dir_for_writing($sharer) or log_fatal $!;
             mkdir $self->_dir_for_reading($sharer) or log_fatal $!;
         }
-        log_info "Working directory $directory created";
     }
 }
 

@@ -10,7 +10,7 @@ BEGIN { use_ok('Treex::Tool::Parallel::MessageBoard') }
 my $number_of_sharers = 4;
 my $first_sharer = Treex::Tool::Parallel::MessageBoard->new( current => 1,
                                                              sharers => $number_of_sharers,
-                                                             init => 1);
+                                                         );
 my @sharers = ($first_sharer,
     map { Treex::Tool::Parallel::MessageBoard->new(
         current => $_,
