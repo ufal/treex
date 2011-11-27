@@ -1,0 +1,280 @@
+package Treex::Block::W2A::LabelMIRA;
+use Moose;
+use Treex::Core::Common;
+extends 'Treex::Core::Block';
+
+use Treex::Tool::Parser::MSTperl::Config;
+use Treex::Tool::Parser::MSTperl::Labeller;
+use Treex::Tool::Parser::MSTperl::Sentence;
+use Treex::Tool::Parser::MSTperl::Node;
+
+use Treex::Core::Resource qw(require_file_from_share) ; 
+
+# Look for model under "model_dir/model_name.model"
+# and its config "model_dir/model_name.config".
+# Absolute path is needed if not a model from share.
+has 'model_from_share' => (
+    is => 'ro',
+    isa => 'Bool',
+    default => '1',
+);
+
+has 'model_name' => (
+    is => 'ro',
+    isa => 'Str',
+    default => 'conll_2007',
+);
+
+has 'model_dir' => (
+    is => 'ro',
+    isa => 'Str',
+    default => 'data/models/labeller_mira/en',
+);
+
+# use features from aligned tree
+has 'parallel_labelling' => ( isa => 'Bool', is => 'ro', default => '0' );
+# the language of the tree which is already parsed and is accessed via the
+# 'aligned_' prefix, eg. en
+has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
+# alignment type to use, eg. int.gdfa
+has 'alignment_type' => ( isa => 'Str', is => 'ro', default => 'int.gdfa' );
+# use alignment info from the other tree
+has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
+
+has labeller => (
+    is => 'ro',
+    isa => 'Treex::Tool::Parser::MSTperl::Labeller',
+    init_arg => undef,
+    builder => '_build_labeller',
+    lazy => 1,
+    );
+
+sub _build_labeller {
+    my ($self) = @_;
+
+    my $base_name = $self->model_dir . '/' . $self->model_name;
+
+    my $config_file = (
+        $self->model_from_share
+        ?
+        require_file_from_share("$base_name.config", ref($self))
+        :
+        "$base_name.config"
+    );
+    my $config = Treex::Tool::Parser::MSTperl::Config->new(
+        config_file => $config_file,
+        training => 0,
+        DEBUG => 2,
+    );
+    
+    my $labeller = Treex::Tool::Parser::MSTperl::Labeller->new(
+        config => $config,
+    );
+    my $model_file = (
+        $self->model_from_share
+        ?
+        require_file_from_share("$base_name.lmodel", ref($self))
+        :
+        "$base_name.lmodel"
+    );
+    $labeller->load_model($model_file);
+
+    return $labeller;
+}
+
+sub process_zone {
+    my ( $self, $zone ) = @_;
+
+    my $a_root = $zone->get_atree;
+
+    # get alignment mapping
+    my $alignment_hash = $self->_get_alignment_hash( $zone->get_bundle() );
+
+    # convert from treex data structures to labeller data structures
+    my $sentence = $self->_get_sentence($alignment_hash, $a_root);
+    
+    # run the labeller
+    my @node_labels = @{$self->labeller->label_sentence($sentence)};
+    
+    # set nodes' labels
+    foreach my $a_node ($a_root->get_descendants()) {
+        my $label = shift @node_labels;
+        $a_node->set_attr('afun', $label);
+    }
+
+    return;
+}
+
+
+# convert from treex data structures to labeller data structures
+sub _get_sentence {
+    my ( $self, $alignment_hash, $a_root ) = @_;
+
+    # create objects of class Treex::Tool::Parser::MSTperl::Node
+    my @nodes;
+    foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
+        # get field values
+        my @field_values;
+        foreach my $field_name (@{$self->labeller->config->field_names}) {
+            my $field_value = $self->_get_field_value(
+                $a_node, $field_name, $alignment_hash);
+            if (defined $field_value) {
+                push @field_values, $field_value;
+            } else {
+                push @field_values, '';
+            }
+        }
+        # create Node object
+        my $node = Treex::Tool::Parser::MSTperl::Node->new(
+            fields => \@field_values,
+            config => $self->labeller->config
+        );
+        # store the Node object
+        push @nodes, $node;
+    }
+
+    # create object of class Treex::Tool::Parser::MSTperl::Sentence
+    my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
+        nodes => \@nodes,
+        config => $self->labeller->config
+    );
+    
+    return $sentence;
+}
+
+# get alignment mapping
+sub _get_alignment_hash {
+    my ($self, $bundle) = @_;
+    
+    my $alignment_hash;
+    if ( $self->parallel_labelling && $self->alignment_is_backwards ) {
+        # we need to provide the other direction of the relation
+        $alignment_hash = {};
+        # gets root of aligned Analytical tree
+        my $aligned_root =
+            $bundle->get_tree( $self->alignment_language, 'A' );
+        # foreach node in the aligned-language tree
+        foreach my $aligned_node ( $aligned_root->get_descendants ) {
+            # find all nodes which it is aligned to
+            my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
+            if ($nodes) {
+                # store alignment mapping to this node
+                for (my $i = 0; $i < @{$nodes}; $i++) {
+                    my $node = $nodes->[$i];
+                    my $type = $types->[$i];
+                    my $id = $node->id;
+                    # alignment is of the desired type
+                    if ($self->alignment_type eq $type) {
+                        # store mapping: node_id->aligned_node
+                        push @{ $alignment_hash->{$id} }, $aligned_node;
+                    }
+                }
+            }
+        }
+    } else {
+        #Node->get_aligned_nodes() will be used directly
+        $alignment_hash = undef;
+    }
+
+    return $alignment_hash;
+}
+
+sub _get_field_value {
+    my ( $self, $node, $field_name, $alignment_hash ) = @_;
+
+    my $field_value = '';
+    
+    my ( $field_name_head, $field_name_tail ) = split( /_/, $field_name, 2 );
+    # combined field (contains '_')
+    if ($field_name_tail) {
+        
+        # field on aligned nodes
+        if ($field_name_head eq 'aligned') {
+            $field_value = $self->_get_field_value(
+                $node, $field_name_tail, $alignment_hash
+            );
+        
+        # dummy or ignored field
+        } elsif ($field_name_head eq 'dummy') {
+            $field_value = '';
+        
+        # special field
+        } else {
+            
+            # ord of the parent node
+            if ($field_name eq 'parent_ord') {
+                my $parent = $node->get_parent();
+                $field_value = $parent->get_attr('ord');
+            
+            # language-specific coarse grained tag
+            } elsif ($field_name eq 'coarse_tag') {
+                $field_value = $self->get_coarse_grained_tag($node->get_attr('tag'));
+                
+            } else {
+                die "Incorrect field $field_name!";
+            }
+        }
+    
+    # ordinary field (does not contain '_')
+    } else {
+        $field_value = $node->get_attr($field_name);
+    }
+
+    return $field_value;
+}
+
+sub get_coarse_grained_tag {
+    log_warn 'get_coarse_grained_tag should be implemented in derived classes';
+    my ( $self, $tag ) = @_;
+    
+    return substr ($tag, 0, 1);
+}
+1;
+
+__END__
+ 
+=head1 NAME
+
+Treex::Block::W2A::LabelMIRA
+
+=head1 DECRIPTION
+
+MIRA Labeller is an implementation of a dependency tree labeller
+created mainly as a second stage to the MST Perl Parser
+described by R. McDonald
+(see L<Treex::Block::W2A::ParseMSTperl>),
+but it can be used with any analytical trees.
+It takes an analytical tree as input and assigns labels (afuns)
+to its nodes.
+
+Settings are provided via a config file accompanying the model file.
+The script loads the model C<model_dir/model_name.lmodel>
+and its config <model_dir/model_name.config>.
+The default is the English model
+C<share/data/models/labeller_mira/en/conll_2007.lmodel>
+(and C<conll_2007.config> in the same directory).
+
+TODO train an English model once the labeller is more or less finished.
+
+It is not sensible to change the config file unless you decide to train
+your own model.
+However if you B<do> decide to train your own model, then see
+L<Treex::Tool::Parser::MSTperl::Config>.
+
+TODO: provide a treex interface for the trainer?
+
+=head1 SEE ALSO
+
+L<Treex::Block::W2A::ParseMSTperl> the MST Perl Parser
+
+=head1 AUTHORS
+
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
