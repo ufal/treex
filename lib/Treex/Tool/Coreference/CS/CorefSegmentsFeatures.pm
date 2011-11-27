@@ -57,9 +57,9 @@ sub _build_feature_names {
         r_perspron_first_clause
         r_demonpron_first_clause
         r_equal_nouns
+        r_synon_nouns
     );
     return \@feat_names;
-        #r_synon_nouns
 }
 
 sub _build_synon_model {
@@ -211,7 +211,7 @@ sub extract_features {
     $features->{'r_perspron_first_clause'} = $self->perspron_in_first_clause($tree);
     $features->{'r_demonpron_first_clause'} = $self->demonpron_in_first_clause($tree);
     $features->{'r_equal_nouns'} = $self->_noun_ctx_equal->{$tree->id};
-    #$features->{'r_synon_nouns'} = $self->_noun_ctx_synon->{$tree->id};
+    $features->{'r_synon_nouns'} = $self->_noun_ctx_synon->{$tree->id};
 
     return $features;
 }

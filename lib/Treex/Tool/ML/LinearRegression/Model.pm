@@ -1,17 +1,21 @@
 package Treex::Tool::ML::LinearRegression::Model;
 
 use Moose;
+use Treex::Tool::ML::LinearRegression::Util;
 use YAML::Syck;
 
-has 'model_path'    => (is => 'ro', isa => 'Str', required => 1);
+has 'model_path'    => (is => 'ro', isa => 'Str');
 has 'lambda'        => (is => 'rw', isa => 'ArrayRef[Num]');
 has 'means'         => (is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] });
 has 'ranges'        => (is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] });
+has 'poly_degree'   => (is => 'rw', isa => 'Int', default => 1);
 
 sub BUILD {
     my ($self) = @_;
 
-    $self->load( $self->model_path );
+    if (defined $self->model_path) {
+        $self->load( $self->model_path );
+    }
 }
 
 sub load {
@@ -22,6 +26,7 @@ sub load {
     $self->lambda($model->[0]);
     $self->means($model->[1]); 
     $self->ranges($model->[2]); 
+    $self->poly_degree($model->[3]); 
 }
 
 sub save {
@@ -30,6 +35,7 @@ sub save {
         $self->lambda,
         $self->means,
         $self->ranges,
+        $self->poly_degree,
     ];
     DumpFile($file, $data);    
 }
@@ -45,15 +51,21 @@ sub predict {
 
     my $means = $self->means;
     my $ranges = $self->ranges;
-    my @x_normed = map {($x->[$_] - $means->[$_]) / $ranges->[$_]} (0 .. @$x-1);
+    
+    my $x_poly = Treex::Tool::ML::LinearRegression::Util->extract_polyn_feats(
+        $x, $self->poly_degree
+    );
+    my $x_norm = Treex::Tool::ML::LinearRegression::Util->normalize(
+        $x_poly, $self->means, $self->ranges
+    );
 
     my $lambdas = $self->lambda;
 
     # calculate score
     my $lambda_f = $lambdas->[0];
     for (my $i = 1; $i < @$lambdas; $i++) {
-        if (defined $x_normed[$i]) {
-            $lambda_f += $lambdas->[$i] * $x_normed[$i];
+        if (defined $x_norm->[$i]) {
+            $lambda_f += $lambdas->[$i] * $x_norm->[$i];
         }
     }
     return $lambda_f; 
