@@ -56,7 +56,7 @@ sub BUILD {
         # set the parentOrd field
         $self->parentOrd($parentOrd);
 
-        # fill with dummy value as this must not not used
+        # fill with dummy value as this must not be used
         # (use node->parentOrd instead)
         $self->fields->[$parentOrdIndex] = -2;
     }
@@ -75,7 +75,7 @@ sub BUILD {
             # set the label field
             $self->label($label);
 
-            # fill with dummy value as this must not not used
+            # fill with dummy value as this must not be used
             # (use node->label instead)
             $self->fields->[$labelIndex] = '_';
         }

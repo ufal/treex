@@ -25,9 +25,9 @@ has 'SEQUENCE_BOUNDARY_LABEL' => (
 );
 
 has 'VITERBI_STATES_NUM_THRESHOLD' => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Int',
-    default => 50,
+    default => 5,
 );
 
 # stopping criterion of EM algorithm (when the sum of change of smoothing
@@ -363,6 +363,7 @@ sub BUILD {
             'number_of_iterations',
             'labeller_number_of_iterations',
             'labeller_algorithm',
+            'VITERBI_STATES_NUM_THRESHOLD',
         );
 
         # name => required?
