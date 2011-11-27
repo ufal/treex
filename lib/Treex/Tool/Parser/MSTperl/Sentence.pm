@@ -323,7 +323,7 @@ sub count_errors_attachement_and_labelling {
         my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
         my $correct_parent = $correct_node->parentOrd;
         my $correct_label  = $correct_node->label;
-        if ( $my_parent != $correct_parent || $my_label != $correct_label ) {
+        if ( $my_parent != $correct_parent || $my_label ne $correct_label ) {
             $errors++;
         }
     }
