@@ -41,13 +41,13 @@ sub process_documents {
 
     $self->message_board->synchronize; # let's wait for all blocks to count their documents
 
-    foreach my $message ( $self->message_board->synchronize ) {
+    foreach my $message ( $self->message_board->read_messages ) {
         $number_of_documents += $message->{number};
     }
     log_info "All blocks have $number_of_documents documents in total";
 }
 
-sub DEMOLISH {
+sub process_end {
     my ( $self ) = @_;
     $self->process_documents( $self->_documents );
 }
