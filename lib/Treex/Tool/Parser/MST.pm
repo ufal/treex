@@ -35,12 +35,12 @@ sub BUILD {
     my $share_path = $self->model;
     my $share_dir  = "$ENV{TMT_ROOT}/share/";
     if ( $share_path =~ s/^$share_dir// ) {
-        Treex::Core::Resource::require_file_from_share( $share_path, 'Treex::Tool::Parser::MST' );
+        $share_path = Treex::Core::Resource::require_file_from_share( $share_path, 'Treex::Tool::Parser::MST' );
     }
-    log_fatal $self->model . ' model for MTS does not exist.' if !-f $self->model;
+    log_fatal $share_path . ' model for MTS does not exist.' if !-f $share_path;
 
     # all paths/dirs have to be formatted according to platform
-    my $model_name = File::Java->path_arg( $self->model );
+    my $model_name = File::Java->path_arg( $share_path );
     my $command    = 'java'                                  #$javabin
         . " -Xmx" . $self->{memory}
         . " -cp $cp mstparser.DependencyParser test"
