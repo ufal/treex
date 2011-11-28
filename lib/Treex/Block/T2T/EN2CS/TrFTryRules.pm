@@ -43,6 +43,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     #    'n:poss'        => 'n:2',
     'n:of_over+X' => 'n:převyšující+2',
     'n:of_ago+X'  => 'n:před+7',
+    'v:inf'       => 'v:inf',
 );
 
 sub process_tnode {
