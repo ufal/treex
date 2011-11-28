@@ -308,17 +308,16 @@ sub _pnode_labels {
 
     my $line1 = '';
     my $line2 = '';
-
+    my $edgelabel = $node->edgelabel() ? '/'.$node->edgelabel() : '';
 #    print "$node is_leaf ".$node->is_leaf."\n";
-
     if ( $node->is_leaf ) {
         $line1 = $node->{form};
-        $line2 = $node->{tag};
+        $line2 = $node->{tag}.$edgelabel;
         $line2 = '-' if $line2 eq '-NONE-';
     }
     else {
         my $phrase = $node->{phrase} ? $node->{phrase} : '';
-        $line1 = $self->_colors->get( 'phrase', 1 ) . $phrase . '#{black}' . join( '', map {"-$_"} TredMacro::ListV( $node->{functions} ) );
+        $line1 = $self->_colors->get( 'phrase', 1 ) . $phrase.$edgelabel . '#{black}' . join( '', map {"-$_"} TredMacro::ListV( $node->{functions} ) );
     }
 
     return [

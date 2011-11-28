@@ -291,14 +291,6 @@ sub next_document {
                         $ptree->descendants;
                     $child->set_parent($parent);
                     $child->set_edgelabel($label);
-                    if(defined($child->phrase()))
-                    {
-                        $child->set_phrase($child->phrase().'/'.$label);
-                    }
-                    else
-                    {
-                        $child->set_tag($child->tag().'/'.$label);
-                    }
                 }
                 # Once the tree has been completely built we can compute the span of the nonterminals.
                 foreach my $nt ($ptree, @nonterminals)
