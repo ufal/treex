@@ -9,6 +9,9 @@ sub process_tnode {
 
     # Process infinitives only
     return if !$infin_verb->is_infin;
+    
+    # Some infinitives may have subject (actor) on surface -> let's skip them
+    return if any {$_->functor eq 'ACT'} $infin_verb->get_children();
 
     # Add the generated #Cor node
     my $cor = $infin_verb->create_child(
