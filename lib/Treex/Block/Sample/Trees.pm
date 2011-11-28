@@ -5,7 +5,6 @@ use Treex::Tool::Parallel::MessageBoard;
 
 extends 'Treex::Block::Sample::Base';
 
-
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
 
@@ -26,7 +25,7 @@ sub process_documents {
             }
         }
     }
-    # send the initial count of this job to others
+    # send the initial count of this job to the others
     $self->message_board->write_message( { initial_count => \%count } );
 
     # let's wait for all blocks to send their initial counts
@@ -47,7 +46,8 @@ sub process_documents {
             $logprob += log(($i + $ALPHA) / ($total_count + $C_ALPHA));
         }
     }
-    foreach my $iteration (1 .. 10) {
+    foreach my $iteration (1 .. 20) {
+    log_info "Iteration $iteration, logprob $logprob";
         foreach my $document (@$documents_rf) {
             foreach my $bundle ($document->get_bundles) {
                 my $aroot = $bundle->get_tree($self->language, 'a', $self->selector);
@@ -87,8 +87,16 @@ sub process_documents {
                 }
             }
         }
-
+        # send count differences to the other jobs
         $self->message_board->write_message( { diff_count => \%diff_count } );
+
+        # update counts of this job
+        foreach my $edge ( keys %diff_count ) {
+             $count{$edge} += $diff_count{$edge};
+        }
+        %diff_count = ();
+        
+        # collect update of counts from the other jobs
         foreach my $message ( $self->message_board->read_messages ) {
             foreach my $edge ( keys %{$message->{diff_count}} ) {
                 $count{$edge} += $message->diff_count->{$edge};
