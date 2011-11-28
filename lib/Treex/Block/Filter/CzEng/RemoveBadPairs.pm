@@ -25,7 +25,7 @@ sub process_document {
             $bundle->remove();
         } else {
             if ( $bad_section_length > 0 && defined $last_correct_bundle ) {
-                $last_correct_bundle->wild->{missing_bundles} = $bad_section_length;
+                $last_correct_bundle->set_attr('czeng/missing_sents_above', $bad_section_length);
             }
             $bad_section_length = 0;
             $last_correct_bundle = $bundle;    
