@@ -389,7 +389,7 @@ sub precompute_visualization {
 }
 
 sub get_clickable_sentence_for_a_zone {
-    my ( $self, $zone ) = @_;
+    my ( $self, $zone, $alignment ) = @_;
     return if !$zone->has_atree();
     my %refs = ();
 
@@ -397,8 +397,16 @@ sub get_clickable_sentence_for_a_zone {
         for my $tnode ( $zone->get_ttree->get_descendants ) {
             for my $aux ( TredMacro::ListV( $tnode->attr('a/aux.rf') ) ) {
                 push @{ $refs{$aux} }, $tnode;
+                if ( exists $alignment->{ $tnode->get_attr('id') } ) {
+                    push @{ $refs{$aux} }, @{ $alignment->{ $tnode->get_attr('id') } };
+                }
             }
-            push @{ $refs{ $tnode->attr('a/lex.rf') } }, $tnode if $tnode->attr('a/lex.rf');
+            if ( $tnode->attr('a/lex.rf') ) {
+                push @{ $refs{ $tnode->attr('a/lex.rf') } }, $tnode;
+                if ( exists $alignment->{ $tnode->get_attr('id') } ) {
+                    push @{ $refs{ $tnode->attr('a/lex.rf') } }, @{ $alignment->{ $tnode->get_attr('id') } };
+                }
+            }
         }
     }
 
@@ -406,6 +414,9 @@ sub get_clickable_sentence_for_a_zone {
     for my $anode (@anodes) {
         my $id = $anode->id;
         push @{ $refs{$id} }, $anode;
+        if ( exists $alignment->{$id} ) {
+            push @{ $refs{$id} }, @{ $alignment->{ $id } };
+        }
         if ( $anode->attr('p_terminal.rf') ) {
             my $pnode = $self->treex_doc->get_node_by_id( $anode->attr('p_terminal.rf') );
             push @{ $refs{$id} }, $pnode;
@@ -435,10 +446,27 @@ sub get_clickable_sentence_for_a_zone {
 sub precompute_value_line {
     my ( $self, $bundle ) = @_;
 
+    my %alignment = ();
+    foreach my $zone ( $bundle->get_all_zones() ) {
+        foreach my $layer ( @layers ) {
+            if ( $zone->has_tree($layer) ) {
+                my $root = $zone->get_tree( $layer );
+                foreach my $node ( $root, $root->get_descendants ) {
+                    if ( exists $node->{'alignment'} ) {
+                        foreach my $ref ( @{ $node->get_attr('alignment') } ) {
+                            push @{$alignment{$node->{id}}}, $self->treex_doc->get_node_by_id( $ref->{'counterpart.rf'} );
+                            push @{$alignment{$ref->{'counterpart.rf'}}}, $node;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     my @out = ();
     foreach my $zone ( $bundle->get_all_zones() ) {
         push @out, ( [ '[' . $zone->get_label . ']', 'label' ], [ ' ', 'space' ] );
-        if ( my $sentence = $self->get_clickable_sentence_for_a_zone($zone) ) {
+        if ( my $sentence = $self->get_clickable_sentence_for_a_zone($zone, \%alignment) ) {
             push @out, @$sentence;
         }
         elsif ( defined $zone->sentence ) {
