@@ -16,10 +16,11 @@ sub process_tnode {
     # Add the generated #Cor node
     my $cor = $infin_verb->create_child(
         {
-            t_lemma  => '#Cor',
-            functor  => 'ACT',
-            formeme  => 'n:elided',
-            nodetype => 'qcomplex',
+            is_generated => 1,
+            t_lemma      => '#Cor',
+            functor      => 'ACT',
+            formeme      => 'n:elided',
+            nodetype     => 'qcomplex',
         }
     );
     $cor->shift_before_node($infin_verb);

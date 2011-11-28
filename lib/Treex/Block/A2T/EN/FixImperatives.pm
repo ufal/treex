@@ -21,6 +21,8 @@ sub process_ttree {
         my $perspron = $tnode->create_child;
         $perspron->shift_before_node($tnode);
 
+        $perspron->set_is_generated(1);
+        
         $perspron->set_t_lemma('#PersPron');
         $perspron->set_functor('ACT');
         $perspron->set_formeme('n:subj');    # !!! elided?
