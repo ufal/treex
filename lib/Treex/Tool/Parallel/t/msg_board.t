@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+BEGIN {
+  if (!$ENV{EXPERIMENTAL}) {
+    require Test::More;
+    Test::More::plan(skip_all => 'This test is experimental');
+  }
+}
 
 use strict;
 use warnings;
