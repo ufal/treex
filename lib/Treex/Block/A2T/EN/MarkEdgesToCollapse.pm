@@ -94,7 +94,7 @@ sub is_aux_to_parent {
     # In PDT-style, modal verbs should govern their main verbs,
     # but if something goes wrong ...
     my $p_tag = $node->get_parent()->tag;
-    return 1 if $p_tag =~ /^V/ && $self->is_modal($lemma) && !any { $_->tag =~ /^V/ } @children;
+    return 1 if $p_tag =~ /^V/ && $self->is_modal($lemma) && !any { $_->tag =~ /^V/ } $node->get_echildren();
 
     return 0;
 }
