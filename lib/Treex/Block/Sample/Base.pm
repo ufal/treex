@@ -5,7 +5,7 @@ use Treex::Tool::Parallel::MessageBoard;
 
 extends 'Treex::Core::Block';
 
-has _documents => (
+has documents => (
     is => 'rw',
     isa => 'ArrayRef',
     default => sub {[]},
@@ -29,7 +29,7 @@ sub BUILD {
 
 sub process_document {
     my ( $self, $document ) = @_;
-    push @{$self->_documents}, $document;
+    push @{$self->documents}, $document;
 }
 
 sub process_documents {
@@ -39,8 +39,11 @@ sub process_documents {
     log_info "Let's tell other blocks that this one has $number_of_documents documents at its disposal";
     $self->message_board->write_message( { number => (scalar @{$self->documents})} );
 
+    log_info "Let's wait for other blocks to synchronize";
     $self->message_board->synchronize; # let's wait for all blocks to count their documents
+    log_info "All block synchronized";
 
+    log_info "Let's read messages from other blocks";
     foreach my $message ( $self->message_board->read_messages ) {
         $number_of_documents += $message->{number};
     }
@@ -49,7 +52,7 @@ sub process_documents {
 
 sub process_end {
     my ( $self ) = @_;
-    $self->process_documents( $self->_documents );
+    $self->process_documents( $self->documents );
 }
 
 1;

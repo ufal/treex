@@ -78,6 +78,13 @@ sub BUILD {
             mkdir $self->_dir_for_reading($sharer) or log_fatal $!;
         }
     }
+
+    else { # wait for the first peer to create the message board directory
+        while (not -d $self->_dir_for_writing($self->current)) {
+            log_info "Message board directory structure not ready, waiting";
+            sleep 1;
+        }
+    }
 }
 
 sub _dir_for_writing {

@@ -531,7 +531,7 @@ sub _create_job_scripts {
         if ( $self->filenames ) {
             $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
         }
-        print $J $input . "treex --jobindex=$jobnumber --outdir=$workdir/output $opts_and_scen"
+        print $J $input . "treex --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
         print $J "touch $workdir/output/job$jobnumber.finished\n";
         close $J;
