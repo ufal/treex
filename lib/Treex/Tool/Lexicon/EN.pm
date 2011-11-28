@@ -77,6 +77,21 @@ sub takes_bare_infin {
 }
 
 
+# verbs with object control type, copied from page 286
+# in Pollard & Sag's Head-driven phrase structure grammar
+my @OBJECT_CONTROL_VERBS =
+ qw(order persuade bid charge command direct enjoin
+ instruct advise authorize mandate convince impel induce influence inspire
+ motivate move pressure prompt sway stir compel press propel push spur
+ encourage exhort goad incite urge bring lead signal ask empower appeal
+ dare defy beg prevent forbid allow permit enable cause force consider);
+my %IS_OBJECT_CONTROL_VERB = map {$_ => 1} @OBJECT_CONTROL_VERBS;
+
+sub is_object_control_verb {
+    my ($t_lemma) = @_;
+    log_fatal('uninitialized t_lemma in Treex::Tool::Lexicon::EN::is_object_control_verb') if !defined $t_lemma;
+    return $IS_OBJECT_CONTROL_VERB{$t_lemma};
+}
 
 1;
 
@@ -97,6 +112,13 @@ print Treex::Tool::Lexicon::EN::number_for('seven'); # prints 7
 
 This module should include support for miscellaneous queries
 involving English lexicon and morphology.  
+
+=head1 FUNCTIONS
+
+=head2 $bool = is_object_control_verb($lemma)
+
+Verbs with object control type, copied from page 286
+in Pollard & Sag's Head-driven phrase structure grammar.
 
 =cut
 

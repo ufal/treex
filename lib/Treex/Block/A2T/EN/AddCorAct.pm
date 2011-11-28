@@ -2,88 +2,61 @@ package Treex::Block::A2T::EN::AddCorAct;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+use Treex::Tool::Lexicon::EN;
 
-# verbs with object control type, copied from page 286
-# in Pollard & Sag's Head-driven phrase structure grammar
+sub process_tnode {
+    my ( $self, $infin_verb ) = @_;
 
-# ??? premistit do english lexicon???
-sub _object_control {
-    my $t_lemma = shift;
-    return $t_lemma =~ /^(order|persuade|bid|charge|command|direct|enjoin
-|instruct|advise|authorize|mandate|convince|impel|induce|influence|inspire
-|motivate|move|pressure|prompt|sway|stir|compel|press|propel|push|spur
-|encourage|exhort|goad|incite|urge|bring|lead|signal|ask|empower|appeal
-|dare|defy|beg|prevent|forbid|allow|permit|enable|cause|force|consider)$/sxm;
-}
+    # Process infinitives only
+    return if !$infin_verb->is_infin;
 
-sub process_ttree {
-    my ( $self, $t_root ) = @_;
-
-    foreach my $infin_verb (
-        grep { ( $_->formeme || "" ) =~ /inf/ }
-        $t_root->get_descendants
-        )
-    {
-        my $cor = $infin_verb->create_child;
-        $cor->shift_before_node($infin_verb);
-        $cor->set_t_lemma('#Cor');
-        $cor->set_functor('ACT');
-        $cor->set_formeme('n:elided');
-        $cor->set_nodetype('qcomplex');
-
-        if ( not $infin_verb->get_parent->is_root and my ($grandpa) = $infin_verb->get_eparents ) {
-
-            #            print $grandpa->t_lemma."  xxx\n";
-            my $antec;
-            my $type_of_control;
-
-            if ( _object_control( ( $grandpa->t_lemma || '_root' ) ) ) {
-                $type_of_control = "OBJ";
-                ($antec) = grep { $_->formeme eq "n:obj" } $grandpa->get_echildren;
-            }
-            else {
-                ($antec) = grep { $_->formeme eq "n:subj" } $grandpa->get_echildren;
-                $type_of_control = "SUBJ";
-            }
-
-            #            print "sentence:\t".$bundle->get_attr('english_source_sentence')."\n";
-            #            print "grandpa:\t".$grandpa->t_lemma."\n";
-            #            print "infin:\t".$infin_verb->t_lemma."\n";
-            if ($antec) {
-
-                #                print "antec:\t".$antec->t_lemma."\n";
-                $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
-
-                #                print $cor->get_address."\n";
-            }
-            else {
-
-                #                print "antec:\tNOT FOUND\n";
-            }
-
-            #            print "\n";
-
+    # Add the generated #Cor node
+    my $cor = $infin_verb->create_child(
+        {
+            t_lemma  => '#Cor',
+            functor  => 'ACT',
+            formeme  => 'n:elided',
+            nodetype => 'qcomplex',
         }
+    );
+    $cor->shift_before_node($infin_verb);
 
+   
+    # distinguish the control type (object vs. subject)
+    return if $infin_verb->get_parent->is_root;
+    my ($grandpa) = $infin_verb->get_eparents();
+    my $antec_formeme = Treex::Tool::Lexicon::EN::is_object_control_verb( $grandpa->t_lemma || '_root' )
+     ? 'n:obj' : 'n:subj';
+     
+    # Find the antecedent and fill the coreference link
+    my $antec = first { $_->formeme eq $antec_formeme } $grandpa->get_echildren;
+    if ($antec) {
+        $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
     }
 
     return 1;
 }
 
 1;
+__END__
 
-=over
+=head1 NAME
 
-=item Treex::Block::A2T::EN::AddCorAct
+Treex::Block::A2T::EN::AddCorAct - add C<#Cor> nodes under infinitive
 
-New SEnglishT nodes with t_lemma #Cor corresponding to unexpressed actors of infinitive
+=head1 DESCRIPTION
+
+New t-nodes with t_lemma C<#Cor> corresponding to unexpressed actors of infinitive
 verbs are created. Grammatical coreference links are established to heuristically found
 antecedents.
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský
+Martin Popel
 
-# Copyright 2010 Zdenek Zabokrtsky
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2010-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
