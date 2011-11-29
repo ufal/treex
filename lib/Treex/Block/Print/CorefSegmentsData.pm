@@ -71,7 +71,7 @@ sub process_ttree{
     my $instance = $self->_feature_extractor->extract_features( $tree );
 
     my $bundle = $tree->get_bundle;
-    my $label = 'true_interlinks/' . $self->language . '_' . $self->selector;
+    my $label = 'true_interlinks/' . $self->language . '_ref';
     my $y_value = $bundle->wild->{$label};
 
     # print the instance

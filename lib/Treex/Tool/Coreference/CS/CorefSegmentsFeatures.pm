@@ -49,6 +49,10 @@ has '_noun_ctx_synon' => (
     is      => 'rw',
     isa     => 'HashRef[Num]',
 );
+has '_sentords' => (
+    is      => 'rw',
+    isa     => 'HashRef[Num]',
+);
 
 sub _build_feature_names {
     my ($self) = @_;
@@ -58,6 +62,8 @@ sub _build_feature_names {
         r_demonpron_first_clause
         r_equal_nouns
         r_synon_nouns
+        r_interlinks
+        r_sentord
     );
     return \@feat_names;
 }
@@ -203,6 +209,38 @@ sub similar_nouns {
     return $feat_vals;
 }
 
+sub _interlink_count {
+    my ($self, $tree) = @_;
+
+    my $label = 'true_interlinks/' . $tree->language . '_' . $tree->selector;
+    return $tree->get_bundle->wild->{ $label };
+}
+
+sub mark_sentord_within_blocks {
+    my ($self, $trees) = @_;
+
+    my @non_def = grep {!defined $_->get_bundle->attr('czeng/blockid')} @$trees;
+
+    my $is_czeng = (@non_def > 0) ? 0 : 1;
+
+    my %sentords = ();
+
+    my $i = 0;
+    my $prev_blockid = undef;
+    foreach my $tree (@$trees) {
+        if ($is_czeng) {
+            my $block_id = $tree->get_bundle->attr('czeng/blockid');
+            if (defined $prev_blockid && ($block_id ne $prev_blockid)) {
+                $i = 0;
+            }
+            $prev_blockid = $block_id;
+        }
+        $sentords{$tree->id} = $i;
+        $i++;
+    }
+    $self->_set_sentords( \%sentords );
+}
+
 sub extract_features {
     my ($self, $tree) = @_;
 
@@ -212,6 +250,8 @@ sub extract_features {
     $features->{'r_demonpron_first_clause'} = $self->demonpron_in_first_clause($tree);
     $features->{'r_equal_nouns'} = $self->_noun_ctx_equal->{$tree->id};
     $features->{'r_synon_nouns'} = $self->_noun_ctx_synon->{$tree->id};
+    $features->{'r_interlinks'} = $self->_interlink_count($tree);
+    $features->{'r_sentord'} = $self->_sentords->{$tree->id};
 
     return $features;
 }
@@ -227,6 +267,7 @@ sub init_doc_features {
 
     $self->equal_nouns( \@trees );
     $self->synon_nouns( \@trees );
+    $self->mark_sentord_within_blocks( \@trees );
 }
 
 

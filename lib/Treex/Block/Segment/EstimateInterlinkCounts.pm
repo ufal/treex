@@ -12,7 +12,7 @@ has 'model_path' => (
     isa         => 'Str',
     required    => 1,
 #    default => 'data/models/coreference/segments.maxent.gold',
-    default => 'data/models/coreference/segments.lr.gold',
+    default => 'data/models/coreference/segments.lr.analysed',
 );
 
 has '_model' => (
