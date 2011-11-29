@@ -125,13 +125,26 @@ sub toggle_alignment {
 }
 
 sub OpenValLexicon {
-  $tredview->vallex->OpenValLexicon();
+    $tredview->vallex->OpenValLexicon();
 }
 
 sub ChooseValFrame {
-  $tredview->vallex->ChooseValFrame();
+    $tredview->vallex->ChooseValFrame();
 }
 
+sub recompute_visualization {
+    $tredview->recompute_visualization($root);
+}
+
+sub after_edit_attr_hook {
+    $tredview->recompute_visualization($root);
+}
+
+sub after_edit_node_hook {
+    $tredview->recompute_visualization($root);
+}
+
+#bind recompute_visualization to q
 #bind ConfDialog to c menu Configuration
 #bind shift_labels1_layer to 1 menu Change content of label no.1 for current layer
 #bind shift_labels1_node to Ctrl+1 menu Change content of label no.1 for current node

@@ -21,6 +21,7 @@ our %service;                   ## no critic (ProhibitPackageVars)
 our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 
 my $config = __PACKAGE__->_load_config();
+my $running_in_tred;
 
 sub _load_config {
     my $self     = shift;

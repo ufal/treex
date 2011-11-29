@@ -11,6 +11,9 @@ use Treex::Core::TredView::Vallex;
 use Treex::Core::Types;
 use List::Util qw(first);
 
+use Treex::Core::Config;
+$Treex::Core::Config::running_in_tred = 1;
+
 has 'grp'       => ( is => 'rw' );
 has 'pml_doc'   => ( is => 'rw' );
 has 'treex_doc' => ( is => 'rw' );
@@ -198,6 +201,13 @@ sub get_nodelist_hook {
     }
 
     return [ \@nodes, $currentNode ];
+}
+
+sub recompute_visualization {
+    my ( $self, $bundle ) = @_;
+    $self->precompute_tree_depths($bundle);
+    $self->precompute_tree_shifts($bundle);
+    $self->precompute_visualization($bundle);
 }
 
 sub file_opened_hook {

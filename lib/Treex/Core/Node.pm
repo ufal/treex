@@ -4,6 +4,7 @@ use MooseX::NonMoose;
 use Treex::Core::Common;
 use Cwd;
 use Treex::PML;
+our $grp;
 
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
@@ -25,7 +26,9 @@ has id => (
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
-    if ( not defined $arg_ref or not defined $arg_ref->{_called_from_core_} ) {
+
+    if ( (not defined $arg_ref or not defined $arg_ref->{_called_from_core_})
+             and not $Treex::Core::Config::running_in_tred) {
         log_fatal 'Because of node indexing, no nodes can be created outside of documents. '
             . 'You have to use $zone->create_tree(...) or $node->create_child() '
             . 'instead of Treex::Core::Node...->new().';
