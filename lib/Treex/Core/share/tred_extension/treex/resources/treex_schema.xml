@@ -75,7 +75,7 @@
           <member name="blockid"><cdata format="any"/></member>
           <member name="origfile"><cdata format="any"/></member>
           <member name="align_score"><cdata format="any"/></member>
-          <member name="missing_sents_above"><cdata format="any"/></member>
+          <member name="missing_sents_before"><cdata format="any"/></member>
         </structure>
       </member>
 

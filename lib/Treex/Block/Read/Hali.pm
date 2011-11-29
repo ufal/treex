@@ -26,13 +26,15 @@ sub next_document {
     LINE:
     foreach my $line ( split /\n/, $text ) {
         my ( $sentnum, $blocknum, $sentid, $origfile, $align_score,
-             $sent1, $sent2 ) = split /\t/, $line;
+             $missing_sents, $sent1, $sent2 ) = split /\t/, $line;
         my $bundle = $document->create_bundle();
         my $blockid = $1 if $sentid =~ /-b([0-9]+)s[0-9]+$/;
-        $bundle->set_attr( 'czeng/id',          $sentid );
-        $bundle->set_attr( 'czeng/blockid',     $blockid ) if defined $blockid;
-        $bundle->set_attr( 'czeng/origfile',    $origfile );
-        $bundle->set_attr( 'czeng/align_score', $align_score );
+        $missing_sents =~ s/[^:]+//;
+        $bundle->set_attr( 'czeng/id',                   $sentid );
+        $bundle->set_attr( 'czeng/blockid',              $blockid ) if defined $blockid;
+        $bundle->set_attr( 'czeng/origfile',             $origfile );
+        $bundle->set_attr( 'czeng/align_score',          $align_score );
+        $bundle->set_attr( 'czeng/missing_sents_before', $missing_sents );
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
         $bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
     }
@@ -57,8 +59,8 @@ sentence_in_language1, sentence_in_language2.
 
 E.g.
   
-  1 1   ted1	ted1.txt.seg-1	1.433   A ono je.	And it is.
-  2 1   ted2	ted1.txt.seg-1	-0.3    A přitom nám to dnes připadá normální.	And yet, it feels natural to us now.
+  1 1   ted1	ted1.txt.seg-1	1.433   missing_sents_before:0	A ono je.	And it is.
+  2 1   ted2	ted1.txt.seg-1	-0.3    missing_sents_before:0	A přitom nám to dnes připadá normální.	And yet, it feels natural to us now.
 
 =head1 ATTRIBUTES
 

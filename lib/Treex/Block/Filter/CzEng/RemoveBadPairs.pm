@@ -13,7 +13,6 @@ has threshold => (
 );
 
 sub process_document {
-    my $last_correct_bundle = undef;
     my $bad_section_length = 0;
 
     my ( $self, $document ) = @_;
@@ -23,13 +22,13 @@ sub process_document {
         if ( $score < $self->{threshold} ) {
             $bad_section_length++;
             $bundle->remove();
-            log_info "successfully removed bundle";
         } else {
-            if ( $bad_section_length > 0 && defined $last_correct_bundle ) {
-                $last_correct_bundle->set_attr('czeng/missing_sents_above', $bad_section_length);
+            if ( $bad_section_length > 0 ) {
+                my $prev_missing = $bundle->get_attr( 'czeng/missing_sents_before' );
+                $bad_section_length += $prev_missing if defined $prev_missing; 
+                $bundle->set_attr( 'czeng/missing_sents_before', $bad_section_length );
             }
             $bad_section_length = 0;
-            $last_correct_bundle = $bundle;    
         }
     }
 }
@@ -41,7 +40,7 @@ sub process_document {
 =item Treex::Block::Filter::CzEng::RemoveBadPairs
 
 Remove bundles with filter score below threshold. The number of removed bundles
-is stored in the last correct bundle in wild->{missing_bundles}.
+is stored in the next correct bundle in 'czeng/missing_sentences_before'.
 
 =back
 
