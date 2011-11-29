@@ -16,7 +16,12 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my ( $score ) = grep { $_ =~ m/filter_score/ } $self->get_features($bundle);
     $score =~ s/filter_score=//;
-    $bundle->wild->{to_delete} = 1 if $score < $self->{threshold};
+    # always update the attribute to_delete, either to 1 or to undef
+    if ($score < $self->{threshold}) {
+      $bundle->wild->{to_delete} = 1;
+    } else {
+      delete $bundle->wild->{to_delete};
+    }
 }
 
 1;
