@@ -23,6 +23,7 @@ sub process_document {
         if ( $score < $self->{threshold} ) {
             $bad_section_length++;
             $bundle->remove();
+            log_info "successfully removed bundle";
         } else {
             if ( $bad_section_length > 0 && defined $last_correct_bundle ) {
                 $last_correct_bundle->set_attr('czeng/missing_sents_above', $bad_section_length);
