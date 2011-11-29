@@ -29,12 +29,12 @@ sub next_document {
              $missing_sents, $sent1, $sent2 ) = split /\t/, $line;
         my $bundle = $document->create_bundle();
         my $blockid = $1 if $sentid =~ /-b([0-9]+)s[0-9]+$/;
-        $missing_sents =~ s/[^:]+//;
+        $missing_sents =~ s/[^:]+://;
         $bundle->set_attr( 'czeng/id',                   $sentid );
         $bundle->set_attr( 'czeng/blockid',              $blockid ) if defined $blockid;
         $bundle->set_attr( 'czeng/origfile',             $origfile );
         $bundle->set_attr( 'czeng/align_score',          $align_score );
-        $bundle->set_attr( 'czeng/missing_sents_before', $missing_sents );
+        $bundle->set_attr( 'czeng/missing_sents_before', $missing_sents ) if $missing_sents != 0;
         $bundle->create_zone( $self->lang1, $self->selector1 )->set_sentence($sent1);
         $bundle->create_zone( $self->lang2, $self->selector2 )->set_sentence($sent2);
     }
