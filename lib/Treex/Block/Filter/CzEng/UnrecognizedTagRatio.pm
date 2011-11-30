@@ -9,7 +9,7 @@ my @bounds = ( 0, 0.2, 0.4, 0.6, 0.8, 1 );
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    for my $zone ( qw( cs en ) ) {
+    for my $zone ( qw( cs ) ) { # just for Czech; English analysis never outputs 'unknown'
         my @nodes = $bundle->get_zone( $zone )->get_atree->get_descendants;
         my @pos = map { substr( $_->get_attr( "tag" ), 0, 1 ) } @nodes;
         my $unrecognized = grep { $_ eq 'X' } @pos;
