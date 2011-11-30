@@ -1,7 +1,6 @@
 package Treex::Block::Print::CzEngBlockIDs;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Coreference::ValueTransformer;
 
 extends 'Treex::Core::Block';
 
@@ -18,7 +17,12 @@ sub process_document {
             print join(" ", @outids);
             @outids = ();
         }
+        next if $bundle->wild->{"to_delete"};
         push @outids, $bundle->id;
+    }
+    if (0 < scalar @outids) {
+      print "\t";
+      print join(" ", @outids);
     }
     print "\n";
     return;
