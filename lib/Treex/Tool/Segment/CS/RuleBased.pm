@@ -7,7 +7,7 @@ extends 'Treex::Tool::Segment::RuleBased';
 # Note, that we cannot write
 # sub get_unbreakers { return qr{...}; }
 # because we want the regex to be compiled just once, not on every method call.
-my $UNBREAKERS = qr{ing|dr|mgr|bc|gen|sv}xi;
+my $UNBREAKERS = qr{\p{Upper}|ing|dr|mgr|bc|gen|sv}xi;
 
 override unbreakers => sub {
     return $UNBREAKERS;
