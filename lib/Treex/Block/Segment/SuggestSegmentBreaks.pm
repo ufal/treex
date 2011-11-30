@@ -12,6 +12,13 @@ has 'max_size' => (
     required => 1,
 );
 
+has 'miss_sents_to_break' => (
+    is  => 'ro',
+    isa => 'Int',
+    default => 3,
+    required => 1,
+);
+
 has 'languages' => (
     is  => 'ro',
     isa => 'ArrayRef[Treex::Type::LangCode]',
@@ -97,16 +104,53 @@ sub _get_already_set_breaks {
     my @breaks = ();
 
     my $i = 0;
-    my $prev_id = undef;
+    my $prev_doc = undef;
     foreach my $bundle (@bundles) {
-        my $curr_id = $bundle->attr('czeng/blockid');
-        if (defined $curr_id && (!defined $prev_id || ($curr_id ne $prev_id))) {
+        
+        ############## break in case of a document change ##############
+        
+        # find out the name of the full document
+        my $curr_doc = $bundle->attr('czeng/origfile');
+        $curr_doc =~ s/\.seg-\d+$//;
+
+        my $doc_break = 0;
+
+        # make a break
+        if (defined $curr_doc && (!defined $prev_doc || ($curr_doc ne $prev_doc))) {
+            $doc_break = 1;
+        }
+        $prev_doc = $curr_doc;
+
+        ############# break in case of a too large gap #################
+
+        my $total_missing_sents = $bundle->attr('czeng/missing_sents_before') || 0;
+        # in a dry run, the number of missing bundles coming from a soft filtering is not 
+        # included in the attribute above, it is stored separately in a wild attribute
+        if ($self->dry_run) {
+            $total_missing_sents += $bundle->wild->{'missing_sents_before'};
+        }
+
+        my $miss_break = 0;
+
+        if ($total_missing_sents >= $self->miss_sents_to_break) {
+            $miss_break = 1;
+        }
+            
+        ############ make a break #########################
+
+        if ($doc_break || $miss_break) {
             push @breaks, $i;
         }
-        $prev_id = $curr_id;
+        
+        # this should't happen
+        if ($doc_break && $miss_break) {
+            log_warn "Document break cannot appear at the same place as a break due too many missing sentences";
+        }
+
         $i++;
     }
-    
+   
+    # the beginning of document is always a break
     if (@breaks == 0) {
         push @breaks, 0;
     }
@@ -134,7 +178,9 @@ sub _count_scores {
 
 sub process_document {
     my ($self, $doc) = @_;
-    my @bundles = $doc->get_bundles;
+    
+    # remove_bundles doesn't work, bundles to remove are just labeled with the 'to_remove' attribute
+    my @bundles = grep {!$bundle->wild->{to_delete}} $doc->get_bundles;
 
     my @sure_breaks = $self->_get_already_set_breaks( @bundles );
     
