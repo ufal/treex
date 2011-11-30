@@ -24,7 +24,7 @@ sub process_document {
             $bundle->remove();
         } else {
             if ( $bad_section_length > 0 ) {
-                my $prev_missing = $bundle->get_attr( 'czeng/missing_sents_before' );
+                my $prev_missing = $bundle->attr( 'czeng/missing_sents_before' );
                 $bad_section_length += $prev_missing if defined $prev_missing; 
                 $bundle->set_attr( 'czeng/missing_sents_before', $bad_section_length );
             }
