@@ -27,6 +27,7 @@ sub process_document {
     for my $bundle ( $document->get_bundles() ) {
         my ( $score ) = grep { $_ =~ m/filter_score/ } $self->get_features($bundle);
         my $doc = $bundle->attr( 'czeng/origfile' );
+        $doc =~ s/-\d+$//;
         $score =~ s/filter_score=//;
         if ( $score < $self->{threshold} ) {
             $bad_section_length++;
@@ -37,7 +38,7 @@ sub process_document {
             if ( $bad_section_length > 0 ) {
                 if ( $doc eq $last_doc ) {
                     my $prev_missing = $bundle->attr( 'czeng/missing_sents_before' );
-                    $bad_section_length += $prev_missing if defined $prev_missing; 
+                    $bad_section_length += $prev_missing if ( defined $prev_missing ) && $self->{dry_run}; 
                     $self->_set_missing_sents_count( $bundle, $bad_section_length );
                 } else {
                     # this is a start of a new document (file) => nothing is missing
@@ -52,7 +53,7 @@ sub process_document {
 
 sub _set_missing_sents_count {
     my ( $self, $bundle, $count ) = @_;
-    if ( $self->dry_run ) {
+    if ( $self->{dry_run} ) {
         if ( defined $count ) {
             $bundle->wild->{missing_sents_before} = $count;
         } else {
