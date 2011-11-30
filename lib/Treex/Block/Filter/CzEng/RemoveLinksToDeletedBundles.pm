@@ -7,7 +7,15 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    $t_node->update_coref_nodes;
+    my @antes = $t_node->get_coref_nodes;
+    foreach my $ante (@antes) {
+        if ($ante->get_bundle->wild->{'to_delete'}) {
+            $t_node->remove_coref_nodes( $ante );
+
+# TODO if a coreference chain continues to other segment and the gap is not
+# too large, connect them
+        }
+    }
 }
 
 1;
