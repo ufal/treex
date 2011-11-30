@@ -38,7 +38,7 @@ sub process_document {
             if ( $bad_section_length > 0 ) {
                 if ( $doc eq $last_doc ) {
                     my $prev_missing = $bundle->attr( 'czeng/missing_sents_before' );
-                    $bad_section_length += $prev_missing if ( defined $prev_missing ) && $self->{dry_run}; 
+                    $bad_section_length += $prev_missing if defined( $prev_missing ) && ! $self->{dry_run}; 
                     $self->_set_missing_sents_count( $bundle, $bad_section_length );
                 } else {
                     # this is a start of a new document (file) => nothing is missing
