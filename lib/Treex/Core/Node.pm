@@ -4,7 +4,6 @@ use MooseX::NonMoose;
 use Treex::Core::Common;
 use Cwd;
 use Treex::PML;
-our $grp;
 
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
