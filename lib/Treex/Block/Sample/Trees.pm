@@ -102,6 +102,11 @@ sub process_documents {
                 $count{$edge} += $message->diff_count->{$edge};
             }
         }
+
+        # save documents # TEMPORARY HACK !!!
+        foreach my $document (@$documents_rf) {
+            $document->save($document->full_filename . '.treex');
+        }
     }
 }
 
