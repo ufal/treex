@@ -56,9 +56,10 @@ sub process_documents {
                     my $tag = $node->tag;
                     my $parent_tag = $node->get_parent->is_root ? '<root>' : $node->get_parent->tag;
                     my $direction = $node->ord < $node->get_parent->ord ? 'L' : 'R';
+                    my $distance = $node->get_parent->is_root ? 20 : $node->ord - $node->get_parent->ord;
                     my $edge = "$tag $parent_tag $direction";
                     $diff_count{$edge}--;
-                    my $new_logprob = $logprob - log(($count{$edge} || 0) + ($diff_count{$edge} || 0) + $ALPHA);
+                    my $new_logprob = $logprob - log(($count{$edge} || 0) + ($diff_count{$edge} || 0) + $ALPHA) - log( 1 / (abs($distance)**2));
                     my %is_descendant;
                     map {$is_descendant{$_} = 1} $node->get_descendants;
                     my @possible_parents = grep {!$is_descendant{$_} && $_ ne $node} ($aroot->get_descendants, $aroot);
@@ -69,8 +70,9 @@ sub process_documents {
                     foreach my $p (0 .. $#possible_parents) {
                         my $new_direction = $node->ord < $possible_parents[$p]->ord ? 'L' : 'R';
                         my $new_parent_tag = $possible_parents[$p] eq $aroot ? '<root>' : $possible_parents[$p]->tag;
+                        my $new_distance = $possible_parents[$p]->is_root ? 20 : $node->ord - $possible_parents[$p]->ord;
                         $new_edge[$p] = "$tag $new_parent_tag $new_direction";
-                        $new_logprob[$p] = $new_logprob + log(($count{$new_edge[$p]} || 0) + ($diff_count{$new_edge[$p]} || 0) + $ALPHA);
+                        $new_logprob[$p] = $new_logprob + log(($count{$new_edge[$p]} || 0) + ($diff_count{$new_edge[$p]} || 0) + $ALPHA) + log( 1 / (abs($new_distance)**2));
                         $weight[$p] = exp($new_logprob[$p] - $logprob);
                         $sum_weight += $weight[$p];
                     }
