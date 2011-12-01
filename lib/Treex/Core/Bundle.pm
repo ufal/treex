@@ -121,6 +121,10 @@ sub remove_zone {
     }
 
     # remove all trees first, so that their nodes are correctly removed from the index
+    # (n-trees have to be removed first because of circular references with a-trees)
+    if ( $zone->has_ntree ) {
+        $zone->remove_tree( 'n' );
+    }
     foreach my $tree ( $zone->get_all_trees ) {
         $zone->remove_tree( $tree->get_layer );
     }
@@ -141,7 +145,7 @@ sub remove {
     my $position = 0;
 
     # find the bundle's position (this is quite inefficient, as the info about
-    # budnle's position is stored nowhere), and delete the bundle using Treex::PML API
+    # bundle's position is stored nowhere), and delete the bundle using Treex::PML API
   BUNDLE:
     foreach my $bundle ( $self->get_document->get_bundles ) {
         if ( $bundle eq $self ) {
@@ -242,6 +246,18 @@ sub get_position {
 
     return $position_of_reference;
 }
+
+# --------- ACCESS TO ATTRIBUTES ------------
+
+sub get_attr {
+    my $self = shift;
+    my ($attr_name) = pos_validated_list(
+        \@_,
+        { isa => 'Str' },
+    );
+    return $self->{$attr_name};
+}
+
 
 __PACKAGE__->meta->make_immutable;
 
