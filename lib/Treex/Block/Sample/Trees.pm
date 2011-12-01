@@ -33,8 +33,9 @@ sub process_documents {
 
     # collect counts
     foreach my $message ( $self->message_board->read_messages ) {
-        foreach my $edge ( keys %{$message->{initial_count}} ) {
-            $count{$edge} += $message->initial_count->{$edge};
+        my %new_counts = %{$message->{initial_count}};
+        foreach my $edge ( keys %new_counts ) {
+            $count{$edge} += $new_counts{$edge};
         }
     }
 
@@ -95,18 +96,22 @@ sub process_documents {
              $count{$edge} += $diff_count{$edge};
         }
         %diff_count = ();
+    
+        # let's wait for all blocks to send their diff counts
+        $self->message_board->synchronize;
         
         # collect update of counts from the other jobs
         foreach my $message ( $self->message_board->read_messages ) {
-            foreach my $edge ( keys %{$message->{diff_count}} ) {
-                $count{$edge} += $message->diff_count->{$edge};
+            my %new_counts = %{$message->{diff_count}};
+            foreach my $edge ( keys %new_counts ) {
+                $count{$edge} += $new_counts{$edge};
             }
         }
 
-        # save documents # TEMPORARY HACK !!!
-        foreach my $document (@$documents_rf) {
-            $document->save($document->full_filename . '.treex');
-        }
+    }
+    # save documents # TEMPORARY HACK !!!
+    foreach my $document (@$documents_rf) {
+        $document->save($document->full_filename . '.treex');
     }
 }
 
