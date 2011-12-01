@@ -71,8 +71,10 @@
 	  -->
       <member name="czeng">
         <structure>
-          <member name="id"><cdata format="any"/></member>
+          <member name="section"><cdata format="any"/></member>
           <member name="blockid"><cdata format="any"/></member>
+          <member name="domain"><cdata format="any"/></member>
+          <member name="id"><cdata format="any"/></member>
           <member name="origfile"><cdata format="any"/></member>
           <member name="align_score"><cdata format="any"/></member>
           <member name="missing_sents_before"><cdata format="any"/></member>
