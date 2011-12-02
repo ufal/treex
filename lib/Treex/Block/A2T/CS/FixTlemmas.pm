@@ -18,7 +18,7 @@ sub possadj_to_noun {
     my $noun_mlemma = $adj_mlemma;
     $noun_mlemma =~ s/\_.+//;
     $noun_mlemma =~ s/.{$cnt}$/$suffix/;
-    $noun_mlemma =~ s/\-.+//;
+    $noun_mlemma =~ s/\-[0-9].*//;
     return $noun_mlemma;
 }
 
