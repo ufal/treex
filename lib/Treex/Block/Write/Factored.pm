@@ -551,39 +551,46 @@ sub process_bundle {
             # TODO: maybe we should sort alignments by ord ?
         }
 
-        if ( $colspec =~ /^ALI([TM])(..)(.*)/ ) {
-            die "Unimplemented";
+        if ( $colspec =~ /^ALI([ta])-(..)([^-]*?)-(..)([^-]*?)(-.*)?/ ) {
             my $layer  = $1;
-            my $srctgt = $1;
-
-            if ( $layer eq "M" ) {
-                log_info "AlignM not yet supported";
-                push @output, "";
-                next;
-            }
+            my $lang1 = $2;
+            my $sel1 = $3;
+            my $lang2 = $4;
+            my $sel3 = $5;
+            my $require_type = $6;
+            $require_type =~ s/^-// if defined $require_type;
+            $require_type = undef
+              if defined $require_type && $require_type eq "";
 
             # t-layer alignment is contained in SCzechT align/links[$i] {counterpart.rf}
-            my $cztree = $bundle->get_tree( $srctgt . "CzechT" );
-            log_fatal "Missing t-layer for $colspec"
-                unless defined $cztree;
+            my $tree1 = $bundle->get_tree($lang1, $layer, $sel1);
+            log_fatal "Missing t-layer for $lang1 (selector '$sel1')"
+                if ! defined $tree1;
 
-            my $document = $cztree->get_document();
+            my $document = $tree1->get_document();
 
             # Extracting T-layer alignments
             my @alignments = ();
-            foreach my $node ( sort { $a->get_attr('ord') <=> $b->get_attr('ord') } $cztree->get_descendants ) {
-                my $czord    = $node->get_attr('ord') - 1;
-                my $links_rf = $node->get_attr("align/links");
-                next unless defined $links_rf;
-                for ( my $i = 0; $i < $links_rf->count; $i++ ) {
-                    next unless defined $links_rf->[$i]{"counterpart.rf"};
-                    my $enord = $document->get_node_by_id( $links_rf->[$i]{"counterpart.rf"} )->get_attr("ord") - 1;
-                    push @alignments, "$enord-$czord";
+            foreach my $node1 ( sort { $a->get_attr('ord') <=> $b->get_attr('ord') } $tree1->get_descendants ) {
+                my $ord1    = $node1->get_attr('ord') - 1;
+                my ($nodes2, $types) = $node1->get_aligned_nodes();
+                next if ! defined $nodes2;
+                for(my $i=0; $i<scalar(@$nodes2); $i++) {
+#                 foreach my $node2 (keys %$counterparts_and_type) {
+#                   my $type = $counterparts_and_type->{$node2};
+                  my $type = $types->[$i];
+                  my $node2 = $nodes2->[$i];
+                  my $ord2 = $node2->get_attr("ord") - 1;
+                  if (defined $require_type) {
+                    push @alignments, "$ord1-$ord2"
+                      if $type =~ /\b$require_type\b/;
+                  } else {
+                    push @alignments, "$type:$ord1-$ord2";
+                  }
                 }
             }
-            push @output, join( " ", @alignments );
+            push @output, join( " ", sort {$a cmp $b} @alignments );
             next;
-            # TODO: maybe we should sort alignments by ord ?
         }
 
         if ( $colspec =~ /RF(lex|aux)-(..)(.*)$/ ) {
