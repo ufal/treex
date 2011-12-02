@@ -25,10 +25,9 @@ sub process_document {
 
     my ( $self, $document ) = @_;
     for my $bundle ( $document->get_bundles() ) {
-        my ( $score ) = grep { $_ =~ m/filter_score/ } $self->get_features($bundle);
+        my $score = $self->get_final_score( $bundle );
         my $doc = $bundle->attr( 'czeng/origfile' );
         $doc =~ s/-\d+$//;
-        $score =~ s/filter_score=//;
         if ( $score < $self->{threshold} ) {
             $bad_section_length++;
             $bundle->wild->{to_delete} = 1;                

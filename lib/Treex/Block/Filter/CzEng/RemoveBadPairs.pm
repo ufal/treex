@@ -17,8 +17,7 @@ sub process_document {
 
     my ( $self, $document ) = @_;
     for my $bundle ( $document->get_bundles() ) {
-        my ( $score ) = grep { $_ =~ m/filter_score/ } $self->get_features($bundle);
-        $score =~ s/filter_score=//;
+        my $score = $self->get_final_score( $bundle );
         if ( $score < $self->{threshold} ) {
             $bad_section_length++;
             $bundle->remove();

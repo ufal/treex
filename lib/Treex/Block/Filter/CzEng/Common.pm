@@ -6,22 +6,32 @@ extends 'Treex::Core::Block';
 sub add_feature {
     my ( $self, $bundle, $feature ) = @_;
 
-    if ( not $bundle->get_zone('und') ) {
-        my $zone = $bundle->create_zone('und');
-        $zone->set_sentence('FILTER_OUTPUTS:');
+    my $previous = $bundle->attr( 'czeng/filter_features' );
+    if ( defined $previous ) {
+        $bundle->set_attr( 'czeng/filter_features', $previous . " ". $feature );
+    } else {
+        $bundle->set_attr( 'czeng/filter_features', $feature );
     }
-
-    $bundle->get_zone('und')->set_sentence( $bundle->get_zone('und')->sentence . " $feature" );
     return 1;
 }
 
 sub get_features {
     my ( $self, $bundle ) = @_;
-    if ( !$bundle->get_zone('und') || !$bundle->get_zone('und')->sentence ) {
+    if ( ! defined $bundle->attr( 'czeng/filter_features' ) ) {
         return undef;
     }
-    my ( undef, @features ) = split /\s+/, $bundle->get_zone('und')->sentence;
+    my ( @features ) = split /\s+/, $bundle->attr( 'czeng/filter_features' );
     return @features;
+}
+
+sub get_final_score {
+    my ( $self, $bundle ) = @_;
+    return $bundle->attr( 'czeng/filter_score' );
+}
+
+sub set_final_score {
+    my ( $self, $bundle, $score ) = @_;
+    $bundle->set_attr( 'czeng/filter_score', $score );
 }
 
 sub quantize {

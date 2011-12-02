@@ -51,7 +51,7 @@ sub process_document {
     foreach my $bundle ($document->get_bundles()) {
         my @features = $self->get_features($bundle);
         my $score = $self->{_classifier_obj}->score( \@features );
-        $self->add_feature( $bundle, "filter_score=" . sprintf( "%.08f", $score ) );
+        $self->set_final_score( $bundle, sprintf( "%.08f", $score ) );
     }
 
     return 1;
