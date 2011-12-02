@@ -111,7 +111,7 @@ sub _get_already_set_breaks {
         
         # find out the name of the full document
         my $curr_doc = $bundle->attr('czeng/origfile');
-        $curr_doc =~ s/\.seg-\d+$//;
+        $curr_doc =~ s/\.seg-\d+$// if defined $curr_doc;
 
         my $doc_break = 0;
 
@@ -127,7 +127,7 @@ sub _get_already_set_breaks {
         # in a dry run, the number of missing bundles coming from a soft filtering is not 
         # included in the attribute above, it is stored separately in a wild attribute
         if ($self->dry_run) {
-            $total_missing_sents += $bundle->wild->{'missing_sents_before'};
+            $total_missing_sents += $bundle->wild->{'missing_sents_before'} || 0;
         }
 
         my $miss_break = 0;
@@ -180,7 +180,7 @@ sub process_document {
     my ($self, $doc) = @_;
     
     # remove_bundles doesn't work, bundles to remove are just labeled with the 'to_remove' attribute
-    my @bundles = grep {!$bundle->wild->{to_delete}} $doc->get_bundles;
+    my @bundles = grep {!$_->wild->{to_delete}} $doc->get_bundles;
 
     my @sure_breaks = $self->_get_already_set_breaks( @bundles );
     
