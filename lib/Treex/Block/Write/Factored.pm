@@ -212,7 +212,7 @@ sub producer_of_at_output {
 my $export_rules = {
     "enw" => {    # Czech w-layer
         "uselayer" => "a",
-        "sort"     => undef,
+        "sort"    => "ord",
         "factors"  => sub {
             my $n = shift;
             return [
@@ -222,7 +222,7 @@ my $export_rules = {
     },
     "csw" => {    # Czech w-layer
         "uselayer" => "a",
-        "sort"     => undef,
+        "sort"    => "ord",
         "factors"  => sub {
             my $n = shift;
             return [
@@ -231,7 +231,7 @@ my $export_rules = {
         },
     },
     "csm" => {    # Czech m-layer
-        "sort"    => undef,
+        "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
             return [
@@ -262,7 +262,7 @@ my $export_rules = {
         "factors"      => sub {&producer_of_at_output},
     },
     "enm" => {
-        # "sort"    => "ord",  # no ord attribute, preserve original order
+        "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
             return [
