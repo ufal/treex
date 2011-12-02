@@ -46,6 +46,11 @@ sub process_anode {
             $new_tag = 'C=-------------';
         }
     }
+    
+    # a hack for unrecognized lemmas
+    if ( $anode->lemma eq '-UNKNOWN-' ){
+        $new_lemma = lc $anode->form;
+    }
 
     if ( $new_tag ) {
 #        print "form ". $anode->form." oldtag: ".$anode->tag." newtag:$new_tag\n";
@@ -55,7 +60,7 @@ sub process_anode {
     if ( $new_lemma ) {
 #        print "oldlemma: ".$anode->lemma." newlemma:$new_lemma\n";
         $anode->set_lemma($new_lemma);
-    }
+    }        
 
     return;
 }
