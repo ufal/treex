@@ -5,12 +5,13 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
+
     my ( $self, $t_node ) = @_;
 
-    if ( $t_node->gram_sempos and $t_node->gram_sempos eq 'v' ) {
+    my $lex_a_node = $t_node->get_lex_anode;
+    return unless $lex_a_node;
 
-        my $lex_a_node = $t_node->get_lex_anode;
-        return unless $lex_a_node;
+    if ( $lex_a_node->tag =~ /^V/ ) {
 
         my $diathesis;
 
