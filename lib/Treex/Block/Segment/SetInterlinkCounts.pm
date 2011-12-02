@@ -9,8 +9,9 @@ use Treex::Tool::Coreference::InterSentLinks;
 sub process_document {
     my ($self, $doc) = @_;
 
+    my @trees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
     my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
-        doc => $doc, language => $self->language, selector => $self->selector
+        trees => \@trees,
     });
     my @link_counts = $interlinks->counts;
 

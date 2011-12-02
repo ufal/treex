@@ -33,8 +33,9 @@ sub process_document {
         $doc_id++;
     }
 
+    my @trees = map {$_->get_tree($lang, 't', $self->selector)} @bundles;
     my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({
-        doc =>$doc, language => $self->language, selector => $self->selector,
+        trees => \@trees,
     });
     $interlinks->remove_selected( \@break_list );
 

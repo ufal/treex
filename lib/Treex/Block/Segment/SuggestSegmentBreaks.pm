@@ -92,7 +92,7 @@ sub _split_scores_on_sure_breaks {
         push @segs, \@last_seg;
     }
     else {
-        return log_fatal "last seg should be always > 0" . ref($self);
+        log_warn "No bundles in the current document. (" . ref($self) . ")";
     }
 
     return @segs;
@@ -106,7 +106,7 @@ sub _get_already_set_breaks {
     my $i = 0;
     my $prev_doc = undef;
     foreach my $bundle (@bundles) {
-        
+
         ############## break in case of a document change ##############
         
         # find out the name of the full document
@@ -142,19 +142,9 @@ sub _get_already_set_breaks {
             push @breaks, $i;
         }
         
-        # this should't happen
-        if ($doc_break && $miss_break) {
-            log_warn "Document break cannot appear at the same place as a break due too many missing sentences";
-        }
-
         $i++;
     }
    
-    # the beginning of document is always a break
-    if (@breaks == 0) {
-        push @breaks, 0;
-    }
-
     return @breaks;
 }
 
@@ -179,12 +169,16 @@ sub _count_scores {
 sub process_document {
     my ($self, $doc) = @_;
     
+    #print STDERR "BUNDLE_COUNT: " . $doc->get_bundles . "\n";
+
     # remove_bundles doesn't work, bundles to remove are just labeled with the 'to_remove' attribute
     my @bundles = grep {!$_->wild->{to_delete}} $doc->get_bundles;
+    #print STDERR "BUNDLE_COUNT: " . @bundles . "\n";
+
 
     my @sure_breaks = $self->_get_already_set_breaks( @bundles );
     
-    #print STDERR join ", ", @sure_breaks;
+    #print STDERR "SURE BREAKS: " . join ", ", @sure_breaks;
     #print STDERR "\n";
     #print STDERR "COUTN: " . (scalar (keys %$old_breaks)) . "\n";
 
@@ -221,17 +215,24 @@ sub process_document {
         $bundles[$_]->wild->{$self->selector . 'segm_break'}
     } (0 .. @bundles-1);
     
-    #print STDERR join ", ", @break_idx_list;
+    #print STDERR "BREAKS: " . join ", ", @break_idxs;
     #print STDERR "\n";
     
     if (!$self->dry_run) {
-        foreach my $lang (@{$self->languages}) {
+
+        my %langs = map {
+            map {$_->language => 1} (grep {($_->selector eq $self->selector) && ($_->has_ttree)} $_->get_all_zones)
+        } @bundles;
+        #print STDERR "LANGS: " . (join ", ", keys %langs) . "\n";
+        foreach my $lang (keys %langs) {
+        #foreach my $lang (@{$self->languages}) {
 
             # skip non-existing zones
-            next if (!defined $bundles[0]->get_zone($lang, $self->selector));
+            #next if (!defined $bundles[0]->get_zone($lang, $self->selector));
+            my @trees = map {$_->get_tree($lang, 't', $self->selector)} @bundles;
             
             my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
-                doc => $doc, language => $lang, selector => $self->selector
+                trees => \@trees
             });
             $interlinks->remove_selected( \@break_idxs );
         }

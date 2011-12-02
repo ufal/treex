@@ -3,9 +3,9 @@ package Treex::Tool::Coreference::InterSentLinks;
 use Moose;
 use Treex::Core::Common;
 
-has 'doc' => (
+has 'trees' => (
     is          => 'ro',
-    isa         => 'Treex::Core::Document',
+    isa         => 'ArrayRef[Treex::Core::Node]',
     required    => 1,
 );
 
@@ -24,8 +24,11 @@ has 'interlinks' => (
     builder     => '_build_interlinks',
 );
 
-has language => ( is => 'rw', isa => 'Treex::Type::LangCode', required => 1 );
-has selector => ( is => 'rw', isa => 'Treex::Type::Selector', default => '' );
+has '_id_to_node' => (
+    is => 'rw',
+    isa => 'HashRef[Treex::Core::Node]',
+    default => sub { {} },
+);
 
 sub BUILD {
     my ($self) = @_;
@@ -44,11 +47,10 @@ sub _build_interlinks {
     my %non_visited_ante_ids = ();
 
     # process nodes in the reversed order
-    foreach my $bundle (reverse $self->doc->get_bundles) {
+    foreach my $tree (reverse @{$self->trees}) {
 
         my %local_non_visited_ante_ids = %non_visited_ante_ids;
 
-        my $tree = $bundle->get_tree($self->language, 't', $self->selector);
         
         foreach my $node (reverse $tree->get_descendants({ ordered => 1 })) {
             
@@ -76,6 +78,15 @@ sub _build_interlinks {
             # new links
             foreach my $ante (@non_cataph) {
                 push @{$local_non_visited_ante_ids{$ante->id}}, $node->id;
+
+                # register anaph and ante if they are not yet
+                my $id_reg = $self->_id_to_node;
+                if (!$id_reg->{$node->id}) {
+                    $id_reg->{$node->id} = $node;
+                }
+                if (!$id_reg->{$ante->id}) {
+                    $id_reg->{$ante->id} = $ante;
+                }
             }
             
             $processed_node_ids{ $node->id }++;
@@ -115,7 +126,6 @@ sub counts {
 sub remove_selected {
     my ($self, $break_idx_list) = @_;
     
-    my $doc = $self->doc;
     my $interlinks = $self->interlinks;
 
     foreach my $i (@$break_idx_list) {
@@ -127,8 +137,8 @@ sub remove_selected {
             my $anaph_ids = $local_links->{$ante_id};
 
             foreach my $anaph_id (@$anaph_ids) {
-                my $anaph = $doc->get_node_by_id( $anaph_id );
-                my $ante  = $doc->get_node_by_id( $ante_id  );
+                my $anaph = $self->_id_to_node->{ $anaph_id };
+                my $ante  = $self->_id_to_node->{ $ante_id  };
                 
                 # remove the coref link from anaph to ante
                 $anaph->remove_coref_nodes( $ante );
