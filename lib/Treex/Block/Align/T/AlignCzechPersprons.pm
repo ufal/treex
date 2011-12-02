@@ -12,7 +12,7 @@ sub process_ttree {
     my $to_troot = $troot->get_bundle->get_tree( $self->to_language, 't', $self->to_selector );
 
     foreach my $t_node ( $troot->get_descendants ) {
-        if ($t_node->is_generated && $t_node->t_lemma eq '#PersPron') {
+        if ($t_node->is_generated) {
             my ($eparent) = $t_node->get_eparents;
             next if !$eparent;
             my ($en_tnodes, $types) = $eparent->get_aligned_nodes;
@@ -20,7 +20,7 @@ sub process_ttree {
             next if !$en_eparent;
             foreach my $en_child ($en_eparent->get_echildren) {
                 if ($en_child->functor eq $t_node->functor) {
-                    $t_node->add_aligned_node( $en_child, 'rule_based');
+                    $t_node->add_aligned_node( $en_child, 'rule-based');
                 }
             }
         }
