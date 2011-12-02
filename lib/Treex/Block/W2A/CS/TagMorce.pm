@@ -16,20 +16,32 @@ sub BUILD {
     return;
 }
 
-my $max_word_length = 45;
+Readonly my $max_word_length => 45;
 
 sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
-    my @forms =
-      map { substr($_, -$max_word_length, $max_word_length) }
-        # avoid words > $max_word_length chars; Morce segfaults, take the suffix
-      map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
-      @a_nodes;
+    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
+        
+    my (@prefs, @sufs); # if needed, strip parts of words for tagging, store them and return to lemmas
+
+    foreach my $form (@forms){
+        my ($pref, $suf) = ('', $form);
+        if (length($form) > $max_word_length){ # avoid words > $max_word_length chars; Morce segfaults, take the suffix            
+            $pref = substr($form, 0, length($form) - $max_word_length);
+            $suf = substr($form, -$max_word_length, $max_word_length);
+        }
+        if ($suf =~ m/^(.*)-([^-]+)$/){ # avoid words that contain dashes, take just what's after the dash    
+            $pref .= $1 . '-';
+            $suf = $2;
+        }
+        push @prefs, $pref;
+        push @sufs, $suf;
+    }      
 
     # get tags and lemmas
-    my ( $tags_rf, $lemmas_rf ) = $self->_tagger->tag_sentence( \@forms );
+    my ( $tags_rf, $lemmas_rf ) = $self->_tagger->tag_sentence( \@sufs );
     if ( @$tags_rf != @forms || @$lemmas_rf != @forms ) {
         log_fatal "Different number of tokens, tags and lemmas. TOKENS: @forms, TAGS: @$tags_rf, LEMMAS: @$lemmas_rf.";
     }
@@ -38,14 +50,9 @@ sub process_atree {
     foreach my $a_node ( @a_nodes ) {
         $a_node->set_tag( shift @$tags_rf );
         my $gotlemma = shift @$lemmas_rf;
-        if (length($gotlemma) == $max_word_length
-            && $gotlemma
-               eq substr($a_node->form, -$max_word_length, $max_word_length)) {
-          # this word was long and artificially truncated, use the full form
-          $a_node->set_lemma($a_node->form);
-        } else {
-          $a_node->set_lemma( $gotlemma );
-        }
+        my $pref = shift @prefs; # return the previously stripped part, if applicable
+        
+        $a_node->set_lemma( $pref . $gotlemma );
     }
 
     return 1;
