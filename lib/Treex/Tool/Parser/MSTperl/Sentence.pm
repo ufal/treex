@@ -32,6 +32,7 @@ has nodes_with_root => (
     isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
 );
 
+# used only in unlabelled parsing
 has features => (
     is  => 'rw',
     isa => 'Maybe[ArrayRef[Str]]',
@@ -166,6 +167,8 @@ sub compute_features {
         $edge->features($edge_features);
         push @features, @{$edge_features};
     }
+
+    # (TODO) used only in unlabelled parsing
     $self->features( [@features] );
 
     return;

@@ -456,6 +456,7 @@ sub get_simple_feature_values_array {
 }
 
 my %simple_feature_sub_references = (
+    'LABEL'             => \&{feature_parent_label},
     'distance'          => \&{feature_distance},
     'attdir'            => \&{feature_attachement_direction},
     'preceding'         => \&{feature_preceding_child},
@@ -533,6 +534,11 @@ sub feature_child {
 sub feature_parent {
     my ( $self, $edge, $field_index ) = @_;
     return ( $edge->parent->fields->[$field_index] );
+}
+
+sub feature_parent_label {
+    my ( $self, $edge ) = @_;
+    return ( $edge->parent->label );
 }
 
 sub feature_first {

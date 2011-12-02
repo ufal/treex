@@ -40,6 +40,37 @@ has label => (
     isa     => 'Str',
     is      => 'rw',
     default => '_',
+    trigger => \&_label_set,
+);
+
+# label updated => need to update features of children
+# which contain LABEL
+# (i.e. FeaturesControl->feature_parent on config->label_field_index)
+sub _label_set {
+
+    my ($self) = @_;
+
+    # my ( $self, $parent_label ) = @_;
+
+    if ( $self->_fully_built ) {
+
+        # TODO: not necessary to update ALL of the features!
+        foreach my $child_edge ( @{ $self->children } ) {
+            my $edge_features = $self->config->
+                labelledFeaturesControl->get_all_features($child_edge);
+            $child_edge->features($edge_features);
+        }
+    }
+
+    # else only just building -> no updating yet!
+
+    return;
+}
+
+has _fully_built => (
+    isa     => 'Bool',
+    is      => 'rw',
+    default => '0',
 );
 
 sub BUILD {
@@ -83,6 +114,8 @@ sub BUILD {
 
     #     my $debug = join ',', @{$self->fields};
     #     warn "$debug\n";
+
+    $self->_fully_built(1);
 
     return;
 }
