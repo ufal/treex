@@ -18,7 +18,7 @@ sub BUILD {
 
 sub cluster {
   
-  # input documents
+  # input documents FOR TEST DATA
   my %training = (
   'PDT' => {
     'charniak' => 16,
