@@ -97,7 +97,7 @@ sub process_zone {
     my @node_labels = @{$self->labeller->label_sentence($sentence)};
     
     # set nodes' labels
-    foreach my $a_node ($a_root->get_descendants()) {
+    foreach my $a_node ($a_root->get_descendants( { ordered => 1 } ) ) {
         my $label = shift @node_labels;
         $a_node->set_attr('afun', $label);
     }
