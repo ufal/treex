@@ -28,14 +28,23 @@ sub process_atree {
 
     foreach my $form (@forms){
         my ($pref, $suf) = ('', $form);
-        if (length($form) > $max_word_length){ # avoid words > $max_word_length chars; Morce segfaults, take the suffix            
+
+        # avoid words > $max_word_length chars; Morce segfaults, take the suffix
+        if (length($form) > $max_word_length){             
             $pref = substr($form, 0, length($form) - $max_word_length);
             $suf = substr($form, -$max_word_length, $max_word_length);
         }
-        if ($suf =~ m/^(.*)-([^-]+)$/){ # avoid words that contain dashes, take just what's after the dash    
+        # avoid words that contain dashes, take just what's after the dash (exclude very short words to prevent clashing
+        # with a preposition, exclude shorter uppercase words (usually abbreviations), exclude "on-line" which is analyzed 
+        # correctly only together)
+        if ( $suf !~ /^on-line/i 
+            && ($suf =~ m/[^\p{Upper}-]/ || $suf =~ m/^\p{Upper}{7,}/ || $suf =~ m/\p{Upper}{7,}$/) 
+            && $suf =~ m/^(.*)-([^-]{3,})$/ ){     
+            
             $pref .= $1 . '-';
             $suf = $2;
         }
+
         push @prefs, $pref;
         push @sufs, $suf;
     }      
