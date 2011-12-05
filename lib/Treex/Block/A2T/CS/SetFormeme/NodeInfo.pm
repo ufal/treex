@@ -56,7 +56,12 @@ sub _build_case {
     my ($self) = @_;
     my $prep;
 
-    # infer the case from preposition with numerals and unknown words, if possible
+    # use only prepositions for generated nodes (their case is not reliable in case of ellipsis)
+    if ( $self->t->is_generated && $self->sempos =~ m/^(n|adj)/ ){
+        return $self->_prep_case->{case};
+    }
+    
+    # infer the case from preposition with non-declinable numerals and unknown words, if possible
     if ( $self->tag =~ m/^[XC]...-/ and $self->_prep_case->{case} ) {
         return $self->_prep_case->{case};
     }
