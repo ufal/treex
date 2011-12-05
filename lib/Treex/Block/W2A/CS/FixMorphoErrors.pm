@@ -27,8 +27,8 @@ sub process_anode {
     # the following rules are weaker: they should not override
     # the tag if the token was already recognized by morphology
     if ( $anode->tag =~ /^X/ ) {
-        # abbreviations such as DNS; longer words are probably uppercased unknown words
-        if ( $anode->form =~ /^\p{IsUpper}{2,6}$/ ) {
+        # abbreviations such as DNS, MS-DOS, DVB-T; longer words without dash are probably uppercased unknown words
+        if ( $anode->form =~ /^\p{IsUpper}{2,6}(-\p{IsUpper}{1,6})?$/ ) {
             $new_tag = 'NNXXX-----A---8';
         }
 
