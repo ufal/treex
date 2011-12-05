@@ -114,19 +114,15 @@ sub _detect_formeme2 {
         elsif ($node->prep) {
             $formeme = 'n:' . $node->prep . '+' . $node->case;
         }
-        # adverbs derived from adjectives
+        # adverbs derived from adjectives # TODO -- this shouldn't be needed if we're dealing with syntpos only
         elsif ( $node->tag =~ /^(D|Cv|Co)/ ) {
             $formeme = 'adv';
         }
         # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
         # TODO -- fix "hodně prodavaček je levých" (genitive!)
         elsif ( $parent->syntpos eq 'v' ) {
-            # exclude reflexive passive markers
-            if ( $node->afun eq 'AuxR' ){
-                $formeme = 'drop';
-            }
             # verbal complements (required by valency) -- exclude subjects, demonstrative and relative pronouns
-            elsif ( $node->tag !~ /^P[D4]/ and $node->afun ne 'Sb' 
+            if ( $node->tag !~ /^P[D4]/ and $node->afun ne 'Sb' 
                     and Treex::Tool::Lexicon::CS::AdjectivalComplements::requires( $parent->t_lemma, $node->case ) ){
                 $formeme = 'adj:' . $node->case;
             }
