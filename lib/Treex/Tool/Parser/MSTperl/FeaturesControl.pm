@@ -243,7 +243,11 @@ sub set_simple_feature {
         }
 
         # function feature
-    } elsif ( $simple_feature_code =~ /^([12\.a-z]+|[A-Z]+)\([a-z0-9_,]*\)$/ ) {
+    } elsif (
+        $simple_feature_code
+        =~ /^([12\.a-z]+|[A-Z]+)\([-a-z0-9_,]*\)$/
+        )
+    {
         my $function_name = $1;
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
@@ -259,25 +263,22 @@ sub set_simple_feature {
 
             # no-arg function feature
             $simple_feature_field = [];
-        } elsif ( $simple_feature_code =~ /$function_name\(([a-z0-9_]+)\)$/ ) {
+        } elsif ( $simple_feature_code =~ /$function_name\(([-a-z0-9_]+)\)$/ ) {
 
             # one-arg function feature
             $simple_feature_field = $1;
         } elsif (
             $simple_feature_code
-            =~ /$function_name\(([a-z0-9_]+),([a-z0-9_]+)\)$/
+            =~ /$function_name\(([-a-z0-9_,]+)\)$/
             )
         {
 
-            # two-arg function feature
-            my $simple_feature_field_1 = $1;
-            my $simple_feature_field_2 = $2;
-            $simple_feature_field =
-                [ $simple_feature_field_1, $simple_feature_field_2 ];
+            # multiarg function feature
+            my @fields = split /,/, $1;
+            $simple_feature_field = \@fields;
         } else {
             die "Incorrect simple function feature format " .
-                "'$simple_feature_code'. " .
-                "Only zero, one or two arguments can be used.\n";
+                "'$simple_feature_code'.\n";
         }
     } else {
         die "Incorrect simple feature format '$simple_feature_code'.\n";
@@ -482,6 +483,8 @@ my %simple_feature_sub_references = (
     'isfirstrightchild' => \&{feature_child_is_first_right_child},
     'childno'           => \&{feature_number_of_childs_children},
     'CHILDNO'           => \&{feature_number_of_parents_children},
+    'substr'            => \&{feature_substr_child},
+    'SUBSTR'            => \&{feature_substr_parent},
 );
 
 sub get_simple_feature_sub_reference {
@@ -895,6 +898,54 @@ sub feature_equals_pc_at {
         }
     } else {
         croak "equals() takes TWO arguments!!!";
+    }
+}
+
+# substring (field, start, length)
+sub feature_substr_child {
+    my ( $self, $edge, $arguments ) = @_;
+
+    # substr takes two or three arguments
+    if ( @{$arguments} != 3 && @{$arguments} != 2 ) {
+        croak "substr() takes THREE or TWO arguments!!!";
+    } else {
+        my ( $field_index, $start, $length ) = @{$arguments};
+        my $field = $edge->child->fields->[$field_index];
+
+        my $value = '';
+        if ( defined $field ) {
+            if ( defined $length ) {
+                $value = substr( $field, $start, $length );
+            } else {
+                $value = substr( $field, $start );
+            }
+        }
+
+        return $value;
+    }
+}
+
+# substring (field, start, length)
+sub feature_substr_parent {
+    my ( $self, $edge, $arguments ) = @_;
+
+    # substr takes two or three arguments
+    if ( @{$arguments} != 3 && @{$arguments} != 2 ) {
+        croak "substr() takes THREE or TWO arguments!!!";
+    } else {
+        my ( $field_index, $start, $length ) = @{$arguments};
+        my $field = $edge->parent->fields->[$field_index];
+
+        my $value = '';
+        if ( defined $field ) {
+            if ( defined $length ) {
+                $value = substr( $field, $start, $length );
+            } else {
+                $value = substr( $field, $start );
+            }
+        }
+
+        return $value;
     }
 }
 

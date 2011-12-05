@@ -454,7 +454,7 @@ sub field_name2index {
 
             # everything OK -> return the field name
             return $self->field_indexes->{$field_name};
-        } elsif ( $field_name =~ /^[0-9]+$/ ) {
+        } elsif ( $field_name =~ /^-?[0-9]+$/ ) {
 
             # not an actual field name but an integer argument -> keep it
             return $field_name;
