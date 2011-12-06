@@ -7,6 +7,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
+    # remove to deleted
     my @antes = $t_node->get_coref_nodes;
     foreach my $ante (@antes) {
         if ($ante->get_bundle->wild->{'to_delete'}) {
@@ -16,6 +17,12 @@ sub process_tnode {
 # too large, connect them
         }
     }
+
+    # remove from deleted
+    if ($t_node->get_bundle->wild->{'to_delete'}) {
+        $t_node->remove_coref_nodes( @antes );
+    }
+
 }
 
 1;
