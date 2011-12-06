@@ -25,4 +25,4 @@ treex -p --jobs 5 \
 
 ### Train model with Maximum Entropy Toolkit
 
-# TODO
+qsub -cwd -V -S /bin/bash submit_training_to_maxent.sh
