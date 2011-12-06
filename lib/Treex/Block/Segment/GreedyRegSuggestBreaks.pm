@@ -13,7 +13,7 @@ has 'regul_param' => (
 sub _find_breaks {
     my ($self, $scores) = @_;
 
-    my @break_idx_list = (0);
+    my @break_idx_list = ();
 
     my $sum = 0;
     my $min_avg_diff = undef;

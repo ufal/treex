@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use List::Util qw/sum/;
+
 use Treex::Tool::Coreference::InterSentLinks;
 
 has 'max_size' => (
@@ -35,39 +37,12 @@ has 'dry_run' => (
     required => 1,
 );
 
-has '_feats' => (
-    is => 'ro',
-    isa => 'ArrayRef[Str]',
-    required => 1,
-    lazy => 1,
-    builder => '_build_feats',
+my %FEAT_WEIGHTS = (
+    estim_interlinks => 1,
+    true_interlinks => 3,
+    missing_sents_before => -10,   # the strongest feature, the longer the gap, the higher the probability is
 );
 
-sub BUILD {
-    my ($self) = @_;
-
-    $self->_feats;
-}
-
-
-sub _build_feats {
-    my ($self) = @_;
-
-    my @feat_names = ();
-
-    # langs should come from a parameter
-    my $langs = $self->languages;
-    my @types = qw/estim true/;
-
-    foreach my $lang (@$langs) {
-        foreach my $type (@types) {
-            my $feat_name = $type . '_interlinks/' . $lang . '_' . $self->selector;
-            push @feat_names, $feat_name;
-        }
-    }
-
-    return \@feat_names;
-}
 
 sub _find_breaks {
     my ($self) = @_;
@@ -78,9 +53,17 @@ sub _split_scores_on_sure_breaks {
     my ($self, $scores, $sure_breaks) = @_;
 
     my @segs = ();
-
     my @sorted_idxs = sort {$a <=> $b} @$sure_breaks;
-    my $start_idx = (shift @sorted_idxs) || 0;
+
+    if (@sorted_idxs == 0) {
+        log_warn "No bundles in the current document. (" . ref($self) . ")";
+        return @segs;
+    }
+
+    my $start_idx = shift @sorted_idxs;
+    if ($start_idx > 0) {
+        log_warn "Sure breaks must contain idx=0. (" . ref($self) . ")";
+    }
 
     foreach my $end_idx (@sorted_idxs) {
         my @seg = @{$scores}[ $start_idx .. ($end_idx - 1) ];
@@ -88,12 +71,7 @@ sub _split_scores_on_sure_breaks {
         $start_idx = $end_idx;
     }
     my @last_seg = @{$scores}[ $start_idx .. (@$scores - 1) ];
-    if (@last_seg > 0) {
-        push @segs, \@last_seg;
-    }
-    else {
-        log_warn "No bundles in the current document. (" . ref($self) . ")";
-    }
+    push @segs, \@last_seg;
 
     return @segs;
 }
@@ -101,10 +79,19 @@ sub _split_scores_on_sure_breaks {
 sub _get_already_set_breaks {
     my ($self, @bundles) = @_;
 
-    my @breaks = ();
+    if (@bundles == 0) {
+        return ();
+    }
 
-    my $i = 0;
-    my $prev_doc = undef;
+    # beginning is always a break
+    my @breaks = (0);
+
+    # skip the gap before the first bundle
+    my $first_bundle = shift @bundles;
+    my $prev_doc = $first_bundle->attr('czeng/origfile');
+    $prev_doc =~ s/\.seg-\d+$// if defined $prev_doc;
+
+    my $i = 1;
     foreach my $bundle (@bundles) {
 
         ############## break in case of a document change ##############
@@ -144,26 +131,41 @@ sub _get_already_set_breaks {
         
         $i++;
     }
+
+    # set the leading technical zero (break at the beginning of the doc) if it's missing
+    #if (!grep {$_ == 0} @breaks) {
+    #    push @breaks, 0;
+    #}
    
     return @breaks;
 }
 
-sub _count_scores {
-    my ($self, @bundles) = @_;
+sub _count_score {
+    my ($self, $bundle) = @_;
 
-    my @scores = ();
+    my $langs = $self->languages;
 
-    foreach my $bundle (@bundles) {
-        my @values = map { $bundle->wild->{$_} || 0 } @{$self->_feats};
-
-        #print STDERR join ", ", @values;
-        #print STDERR "\n";
-
-        my $score = 0;
-        $score += $_ foreach (@values);
-        push @scores, $score;
+    #################### prepare feature values ##########################
+    my %feats = ();
+    my $estim_label = 'estim_interlinks';
+    $feats{$estim_label} = sum(map {$bundle->wild->{$estim_label . "/" . $_ . "_" . $self->selector} || 0} @$langs);
+    my $true_label = 'true_interlinks';
+    $feats{$true_label} = sum(map {$bundle->wild->{$true_label . "/" . $_ . "_" . $self->selector} || 0} @$langs);
+    my $total_missing_sents = $bundle->attr('czeng/missing_sents_before') || 0;
+    # in a dry run, the number of missing bundles coming from a soft filtering is not 
+    # included in the attribute above, it is stored separately in a wild attribute
+    if ($self->dry_run) {
+        $total_missing_sents += $bundle->wild->{'missing_sents_before'} || 0;
     }
-    return @scores;
+    $feats{'missing_sents_before'} = $total_missing_sents;
+
+
+    #print STDERR join ", ", @values;
+    #print STDERR "\n";
+
+    my $score = 0;
+    $score += $feats{$_} * $FEAT_WEIGHTS{$_} foreach (keys %feats);
+    return $score;
 }
 
 sub process_document {
@@ -182,20 +184,20 @@ sub process_document {
     #print STDERR "\n";
     #print STDERR "COUTN: " . (scalar (keys %$old_breaks)) . "\n";
 
-    #print STDERR join ", ", @{$self->_feats};
-    #print STDERR "\n";
-
-    my @scores = $self->_count_scores( @bundles );
+    my @scores = map {$self->_count_score($_)} @bundles;
     #print STDERR "SCORES: " . join ", ", @scores;
     #print STDERR "\n";
 
     #print STDERR "SCORES: " . (join ", ", @scores) . "\n";
 
     my @score_segms = $self->_split_scores_on_sure_breaks( \@scores, \@sure_breaks );
+
+    #print STDERR "SCORES_SEGM_SIZES: " . (join ", ", map {scalar @{$_}} @score_segms) . "\n";
     
     for (my $i = 0; $i < @score_segms; $i++) {
         
         my @break_idx_segm = $self->_find_breaks( $score_segms[$i] );
+        unshift @break_idx_segm, 0;
         #my @links = qw/0 1 3 5 3 4 5 6 7 8 9 4 3 4 3 2 2 1/;
         #my @break_idx_segm = $self->_find_breaks( \@links );
         

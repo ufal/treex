@@ -9,7 +9,7 @@ sub _find_breaks {
 
     my @break_idx_list = ();
     
-    for (my $i = 0; $i < scalar @$scores; $i++) {
+    for (my $i = 1; $i < scalar @$scores; $i++) {
         if ($i % $self->max_size == 0) {
             push @break_idx_list, $i;
         }
