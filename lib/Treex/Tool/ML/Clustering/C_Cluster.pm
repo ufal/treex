@@ -18,326 +18,373 @@ sub BUILD {
 
 sub cluster {
   
-  # input documents FOR TEST DATA
-  my %training = (
-  'PDT' => {
-    'charniak' => 16,
-    'stanford' => 14,
-    'mst'      => 15,
-    'malt'     => 16,
-    'zpar'     => 14
-    },
-  'CC' => {
-    'charniak' => 1147,
-  'stanford' => 1026,
-  'mst'      => 977,
-  'malt'     => 904,
-  'zpar'     => 280
-  },
-  'NNP' => {
-    'charniak' => 5598,
-  'stanford' => 5454,
-  'mst'      => 5210,
-  'malt'     => 5159,
-  'zpar'     => 4360
-  },
-  ',' => {
-    'charniak' => 2586,
-  'stanford' => 2389,
-  'mst'      => 1933,
-  'malt'     => 1841,
-  'zpar'     => 2010
-  },
-  'WP$' => {
-    'charniak' => 19,
-  'stanford' => 15,
-  'mst'      => 18,
-  'malt'     => 19,
-  'zpar'     => 0
-  },
-  'VBN' => {
-    'charniak' => 1008,
-  'stanford' => 987,
-  'mst'      => 993,
-  'malt'     => 980,
-  'zpar'     => 970
-  },
-  'WP' => {
-    'charniak' => 93,
-  'stanford' => 89,
-  'mst'      => 89,
-  'malt'     => 92,
-  'zpar'     => 3
-  },
-  'CD' => {
-    'charniak' => 1826,
-  'stanford' => 1783,
-  'mst'      => 1639,
-  'malt'     => 1625,
-  'zpar'     => 1590
-  },
-  'RBR' => {
-    'charniak' => 87,
-  'stanford' => 70,
-  'mst'      => 84,
-  'malt'     => 86,
-  'zpar'     => 77
-  },
-  'RP' => {
-    'charniak' => 175,
-  'stanford' => 173,
-  'mst'      => 177,
-  'malt'     => 174,
-  'zpar'     => 172
-  },
-  'JJ' => {
-    'charniak' => 3537,
-  'stanford' => 3447,
-  'mst'      => 3502,
-  'malt'     => 3481,
-  'zpar'     => 3316
-  },
-  'PRP' => {
-    'charniak' => 1032,
-  'stanford' => 1015,
-  'mst'      => 1020,
-  'malt'     => 1009,
-  'zpar'     => 1007
-  },
-  'TO' => {
-    'charniak' => 1172,
-  'stanford' => 1109,
-  'mst'      => 1132,
-  'malt'     => 1125,
-  'zpar'     => 1099
-  },
-  'EX' => {
-    'charniak' => 55,
-  'stanford' => 56,
-  'mst'      => 57,
-  'malt'     => 57,
-  'zpar'     => 55
-  },
-  'WRB' => {
-    'charniak' => 85,
-  'stanford' => 81,
-  'mst'      => 91,
-  'malt'     => 98,
-  'zpar'     => 6
-  },
-  'RB' => {
-    'charniak' => 1771,
-  'stanford' => 1640,
-  'mst'      => 1673,
-  'malt'     => 1672,
-  'zpar'     => 1655
-  },
-  'FW' => {
-    'charniak' => 11,
-  'stanford' => 9,
-  'mst'      => 12,
-  'malt'     => 5,
-  'zpar'     => 7
-  },
-  'WDT' => {
-    'charniak' => 272,
-  'stanford' => 267,
-  'mst'      => 270,
-  'malt'     => 266,
-  'zpar'     => 26
-  },
-  'VBP' => {
-    'charniak' => 733,
-  'stanford' => 668,
-  'mst'      => 649,
-  'malt'     => 608,
-  'zpar'     => 408
-  },
-  'VBZ' => {
-    'charniak' => 1134,
-  'stanford' => 1077,
-  'mst'      => 1034,
-  'malt'     => 996,
-  'zpar'     => 714
-  },
-  'JJR' => {
-    'charniak' => 175,
-  'stanford' => 160,
-  'mst'      => 148,
-  'malt'     => 139,
-  'zpar'     => 135
-  },
-  'NNPS' => {
-    'charniak' => 41,
-  'stanford' => 40,
-  'mst'      => 42,
-  'malt'     => 40,
-  'zpar'     => 29
-  },
-  '(' => {
-    'charniak' => 53,
-    'stanford' => 54,
-    'mst'      => 39,
-    'malt'     => 42,
-    'zpar'     => 11
-  },
-    'POS' => {
-      'charniak' => 539,
-    'stanford' => 530,
-    'mst'      => 541,
-    'malt'     => 542,
-    'zpar'     => 1
-    },
-    'UH' => {
-      'charniak' => 7,
-    'stanford' => 5,
-    'mst'      => 6,
-    'malt'     => 3,
-    'zpar'     => 3
-    },
-    '$' => {
-      'charniak' => 311,
-    'stanford' => 300,
-    'mst'      => 253,
-    'malt'     => 249,
-    'zpar'     => 196
-    },
-    '``' => {
-      'charniak' => 446,
-    'stanford' => 423,
-    'mst'      => 404,
-    'malt'     => 313,
-    'zpar'     => 393
-    },
-    ':' => {
-      'charniak' => 250,
-    'stanford' => 235,
-    'mst'      => 149,
-    'malt'     => 144,
-    'zpar'     => 174
-    },
-    'JJS' => {
-      'charniak' => 122,
-    'stanford' => 115,
-    'mst'      => 112,
-    'malt'     => 110,
-    'zpar'     => 105
-    },
-    'LS' => {
-      'charniak' => 3,
-    'stanford' => 2,
-    'mst'      => 4,
-    'malt'     => 3,
-    'zpar'     => 3
-    },
-    '.' => {
-      'charniak' => 2270,
-    'stanford' => 2209,
-    'mst'      => 2152,
-    'malt'     => 2006,
-    'zpar'     => 2069
-    },
-    'VB' => {
-      'charniak' => 1470,
-    'stanford' => 1398,
-    'mst'      => 1443,
-    'malt'     => 1437,
-    'zpar'     => 1333
-    },
-    'MD' => {
-      'charniak' => 523,
-    'stanford' => 479,
-    'mst'      => 485,
-    'malt'     => 460,
-    'zpar'     => 301
-    },
-    'NN' => {
-      'charniak' => 7085,
-    'stanford' => 6833,
-    'mst'      => 6694,
-    'malt'     => 6583,
-    'zpar'     => 6345
-    },
-    'NNS' => {
-      'charniak' => 3265,
-    'stanford' => 3139,
-    'mst'      => 3180,
-    'malt'     => 3109,
-    'zpar'     => 2768
-    },
-    'DT' => {
-      'charniak' => 4701,
-    'stanford' => 4646,
-    'mst'      => 4686,
-    'malt'     => 4672,
-    'zpar'     => 4440
-    },
-    'VBD' => {
-      'charniak' => 1712,
-    'stanford' => 1601,
-    'mst'      => 1584,
-    'malt'     => 1519,
-    'zpar'     => 1181
-    },
-    '\'\'' => {
-      'charniak' => 452,
-    'stanford' => 429,
-    'mst'      => 419,
-    'malt'     => 358,
-    'zpar'     => 409
-    },
-    '#' => {
-      'charniak' => 5,
-    'stanford' => 4,
-    'mst'      => 0,
-    'malt'     => 0,
-    'zpar'     => 0
-    },
-    'RBS' => {
-      'charniak' => 27,
-    'stanford' => 23,
-    'mst'      => 28,
-    'malt'     => 28,
-    'zpar'     => 26
-    },
-    'IN' => {
-      'charniak' => 5140,
-    'stanford' => 4605,
-    'mst'      => 4885,
-    'malt'     => 4729,
-    'zpar'     => 4278
-    },
-    ')' => {
-      'charniak' => 51,
-  'stanford' => 56,
-  'mst'      => 34,
-  'malt'     => 40,
-  'zpar'     => 9
-    },
-  'PRP$' => {
-    'charniak' => 497,
-  'stanford' => 489,
-  'mst'      => 491,
-  'malt'     => 493,
-  'zpar'     => 474
-  },
-  'SYM' => {
-    'charniak' => 1,
-  'stanford' => 1,
-  'mst'      => 1,
-  'malt'     => 0,
-  'zpar'     => 0
-  },
-  'VBG' => {
-    'charniak' => 696,
-  'stanford' => 671,
-  'mst'      => 676,
-  'malt'     => 672,
-  'zpar'     => 664
-  },
-  );
+  #input documents FOR TEST DATA
+#   my %training = (
+#   'PDT' => {
+#     'charniak' => 16,
+#     'stanford' => 14,
+#     'mst'      => 15,
+#     'malt'     => 16,
+#     'zpar'     => 14
+#     },
+#   'CC' => {
+#     'charniak' => 1147,
+#   'stanford' => 1026,
+#   'mst'      => 977,
+#   'malt'     => 904,
+#   'zpar'     => 280
+#   },
+#   'NNP' => {
+#     'charniak' => 5598,
+#   'stanford' => 5454,
+#   'mst'      => 5210,
+#   'malt'     => 5159,
+#   'zpar'     => 4360
+#   },
+#   ',' => {
+#     'charniak' => 2586,
+#   'stanford' => 2389,
+#   'mst'      => 1933,
+#   'malt'     => 1841,
+#   'zpar'     => 2010
+#   },
+#   'WP$' => {
+#     'charniak' => 19,
+#   'stanford' => 15,
+#   'mst'      => 18,
+#   'malt'     => 19,
+#   'zpar'     => 0
+#   },
+#   'VBN' => {
+#     'charniak' => 1008,
+#   'stanford' => 987,
+#   'mst'      => 993,
+#   'malt'     => 980,
+#   'zpar'     => 970
+#   },
+#   'WP' => {
+#     'charniak' => 93,
+#   'stanford' => 89,
+#   'mst'      => 89,
+#   'malt'     => 92,
+#   'zpar'     => 3
+#   },
+#   'CD' => {
+#     'charniak' => 1826,
+#   'stanford' => 1783,
+#   'mst'      => 1639,
+#   'malt'     => 1625,
+#   'zpar'     => 1590
+#   },
+#   'RBR' => {
+#     'charniak' => 87,
+#   'stanford' => 70,
+#   'mst'      => 84,
+#   'malt'     => 86,
+#   'zpar'     => 77
+#   },
+#   'RP' => {
+#     'charniak' => 175,
+#   'stanford' => 173,
+#   'mst'      => 177,
+#   'malt'     => 174,
+#   'zpar'     => 172
+#   },
+#   'JJ' => {
+#     'charniak' => 3537,
+#   'stanford' => 3447,
+#   'mst'      => 3502,
+#   'malt'     => 3481,
+#   'zpar'     => 3316
+#   },
+#   'PRP' => {
+#     'charniak' => 1032,
+#   'stanford' => 1015,
+#   'mst'      => 1020,
+#   'malt'     => 1009,
+#   'zpar'     => 1007
+#   },
+#   'TO' => {
+#     'charniak' => 1172,
+#   'stanford' => 1109,
+#   'mst'      => 1132,
+#   'malt'     => 1125,
+#   'zpar'     => 1099
+#   },
+#   'EX' => {
+#     'charniak' => 55,
+#   'stanford' => 56,
+#   'mst'      => 57,
+#   'malt'     => 57,
+#   'zpar'     => 55
+#   },
+#   'WRB' => {
+#     'charniak' => 85,
+#   'stanford' => 81,
+#   'mst'      => 91,
+#   'malt'     => 98,
+#   'zpar'     => 6
+#   },
+#   'RB' => {
+#     'charniak' => 1771,
+#   'stanford' => 1640,
+#   'mst'      => 1673,
+#   'malt'     => 1672,
+#   'zpar'     => 1655
+#   },
+#   'FW' => {
+#     'charniak' => 11,
+#   'stanford' => 9,
+#   'mst'      => 12,
+#   'malt'     => 5,
+#   'zpar'     => 7
+#   },
+#   'WDT' => {
+#     'charniak' => 272,
+#   'stanford' => 267,
+#   'mst'      => 270,
+#   'malt'     => 266,
+#   'zpar'     => 26
+#   },
+#   'VBP' => {
+#     'charniak' => 733,
+#   'stanford' => 668,
+#   'mst'      => 649,
+#   'malt'     => 608,
+#   'zpar'     => 408
+#   },
+#   'VBZ' => {
+#     'charniak' => 1134,
+#   'stanford' => 1077,
+#   'mst'      => 1034,
+#   'malt'     => 996,
+#   'zpar'     => 714
+#   },
+#   'JJR' => {
+#     'charniak' => 175,
+#   'stanford' => 160,
+#   'mst'      => 148,
+#   'malt'     => 139,
+#   'zpar'     => 135
+#   },
+#   'NNPS' => {
+#     'charniak' => 41,
+#   'stanford' => 40,
+#   'mst'      => 42,
+#   'malt'     => 40,
+#   'zpar'     => 29
+#   },
+#   '(' => {
+#     'charniak' => 53,
+#     'stanford' => 54,
+#     'mst'      => 39,
+#     'malt'     => 42,
+#     'zpar'     => 11
+#   },
+#     'POS' => {
+#       'charniak' => 539,
+#     'stanford' => 530,
+#     'mst'      => 541,
+#     'malt'     => 542,
+#     'zpar'     => 1
+#     },
+#     'UH' => {
+#       'charniak' => 7,
+#     'stanford' => 5,
+#     'mst'      => 6,
+#     'malt'     => 3,
+#     'zpar'     => 3
+#     },
+#     '$' => {
+#       'charniak' => 311,
+#     'stanford' => 300,
+#     'mst'      => 253,
+#     'malt'     => 249,
+#     'zpar'     => 196
+#     },
+#     '``' => {
+#       'charniak' => 446,
+#     'stanford' => 423,
+#     'mst'      => 404,
+#     'malt'     => 313,
+#     'zpar'     => 393
+#     },
+#     ':' => {
+#       'charniak' => 250,
+#     'stanford' => 235,
+#     'mst'      => 149,
+#     'malt'     => 144,
+#     'zpar'     => 174
+#     },
+#     'JJS' => {
+#       'charniak' => 122,
+#     'stanford' => 115,
+#     'mst'      => 112,
+#     'malt'     => 110,
+#     'zpar'     => 105
+#     },
+#     'LS' => {
+#       'charniak' => 3,
+#     'stanford' => 2,
+#     'mst'      => 4,
+#     'malt'     => 3,
+#     'zpar'     => 3
+#     },
+#     '.' => {
+#       'charniak' => 2270,
+#     'stanford' => 2209,
+#     'mst'      => 2152,
+#     'malt'     => 2006,
+#     'zpar'     => 2069
+#     },
+#     'VB' => {
+#       'charniak' => 1470,
+#     'stanford' => 1398,
+#     'mst'      => 1443,
+#     'malt'     => 1437,
+#     'zpar'     => 1333
+#     },
+#     'MD' => {
+#       'charniak' => 523,
+#     'stanford' => 479,
+#     'mst'      => 485,
+#     'malt'     => 460,
+#     'zpar'     => 301
+#     },
+#     'NN' => {
+#       'charniak' => 7085,
+#     'stanford' => 6833,
+#     'mst'      => 6694,
+#     'malt'     => 6583,
+#     'zpar'     => 6345
+#     },
+#     'NNS' => {
+#       'charniak' => 3265,
+#     'stanford' => 3139,
+#     'mst'      => 3180,
+#     'malt'     => 3109,
+#     'zpar'     => 2768
+#     },
+#     'DT' => {
+#       'charniak' => 4701,
+#     'stanford' => 4646,
+#     'mst'      => 4686,
+#     'malt'     => 4672,
+#     'zpar'     => 4440
+#     },
+#     'VBD' => {
+#       'charniak' => 1712,
+#     'stanford' => 1601,
+#     'mst'      => 1584,
+#     'malt'     => 1519,
+#     'zpar'     => 1181
+#     },
+#     '\'\'' => {
+#       'charniak' => 452,
+#     'stanford' => 429,
+#     'mst'      => 419,
+#     'malt'     => 358,
+#     'zpar'     => 409
+#     },
+#     '#' => {
+#       'charniak' => 5,
+#     'stanford' => 4,
+#     'mst'      => 0,
+#     'malt'     => 0,
+#     'zpar'     => 0
+#     },
+#     'RBS' => {
+#       'charniak' => 27,
+#     'stanford' => 23,
+#     'mst'      => 28,
+#     'malt'     => 28,
+#     'zpar'     => 26
+#     },
+#     'IN' => {
+#       'charniak' => 5140,
+#     'stanford' => 4605,
+#     'mst'      => 4885,
+#     'malt'     => 4729,
+#     'zpar'     => 4278
+#     },
+#     ')' => {
+#       'charniak' => 51,
+#   'stanford' => 56,
+#   'mst'      => 34,
+#   'malt'     => 40,
+#   'zpar'     => 9
+#     },
+#   'PRP$' => {
+#     'charniak' => 497,
+#   'stanford' => 489,
+#   'mst'      => 491,
+#   'malt'     => 493,
+#   'zpar'     => 474
+#   },
+#   'SYM' => {
+#     'charniak' => 1,
+#   'stanford' => 1,
+#   'mst'      => 1,
+#   'malt'     => 0,
+#   'zpar'     => 0
+#   },
+#   'VBG' => {
+#     'charniak' => 696,
+#   'stanford' => 671,
+#   'mst'      => 676,
+#   'malt'     => 672,
+#   'zpar'     => 664
+#   },
+#   );
 		   
 
+  
+  #tUNING DATA
+  
+  my %training = ('PDT' => {'charniak'     =>3,'stanford'     =>4,'mst'     =>2,'malt'     =>3,'zpar'     =>1},
+		  'CC' => {'charniak'     =>848,'stanford'     =>762,'mst'     =>722,'malt'     =>502,'zpar'     =>181},
+		  'NNP' => {'charniak'     =>3826,'stanford'     =>3706,'mst'     =>3621,'malt'     =>3535,'zpar'     =>3035},
+		  ',' => {'charniak'     =>1788,'stanford'     =>1650,'mst'     =>1385,'malt'     =>1259,'zpar'     =>1292},
+		  'WP$' => {'charniak'     =>8,'stanford'     =>5,'mst'     =>9,'malt'     =>9,'zpar'     =>0},
+		  'VBN' => {'charniak'     =>781,'stanford'     =>785,'mst'     =>776,'malt'     =>760,'zpar'     =>730},
+		  'WP' => {'charniak'     =>74,'stanford'     =>73,'mst'     =>69,'malt'     =>67,'zpar'     =>8},
+		  'CD' => {'charniak'     =>1765,'stanford'     =>1708,'mst'     =>1591,'malt'     =>1584,'zpar'     =>1572},
+		  'RBR' => {'charniak'     =>81,'stanford'     =>62,'mst'     =>81,'malt'     =>72,'zpar'     =>71},
+		  'RP' => {'charniak'     =>123,'stanford'     =>122,'mst'     =>121,'malt'     =>124,'zpar'     =>123},
+		  'JJ' => {'charniak'     =>2353,'stanford'     =>2294,'mst'     =>2337,'malt'     =>2297,'zpar'     =>2190},
+		  'PRP' => {'charniak'     =>603,'stanford'     =>591,'mst'     =>588,'malt'     =>569,'zpar'     =>576},
+		  'TO' => {'charniak'     =>821,'stanford'     =>761,'mst'     =>797,'malt'     =>785,'zpar'     =>782},
+		  'EX' => {'charniak'     =>31,'stanford'     =>31,'mst'     =>32,'malt'     =>32,'zpar'     =>31},
+		  'WRB' => {'charniak'     =>59,'stanford'     =>55,'mst'     =>62,'malt'     =>52,'zpar'     =>3},
+		  'RB' => {'charniak'     =>1151,'stanford'     =>1035,'mst'     =>1066,'malt'     =>1054,'zpar'     =>1073},
+		  'FW' => {'charniak'     =>2,'stanford'     =>2,'mst'     =>0,'malt'     =>1,'zpar'     =>2},
+		  'WDT' => {'charniak'     =>170,'stanford'     =>167,'mst'     =>169,'malt'     =>164,'zpar'     =>11},
+		  'VBP' => {'charniak'     =>297,'stanford'     =>281,'mst'     =>271,'malt'     =>235,'zpar'     =>150},
+		  'VBZ' => {'charniak'     =>633,'stanford'     =>609,'mst'     =>583,'malt'     =>508,'zpar'     =>404},
+		  'JJR' => {'charniak'     =>122,'stanford'     =>115,'mst'     =>101,'malt'     =>100,'zpar'     =>96},
+		  'NNPS' => {'charniak'     =>1,'stanford'     =>1,'mst'     =>1,'malt'     =>1,'zpar'     =>0},
+		  '(' => {'charniak'     =>42,'stanford'     =>44,'mst'     =>40,'malt'     =>36,'zpar'     =>12},
+		    'POS' => {'charniak'     =>424,'stanford'     =>417,'mst'     =>424,'malt'     =>425,'zpar'     =>1},
+		    'UH' => {'charniak'     =>4,'stanford'     =>3,'mst'     =>2,'malt'     =>2,'zpar'     =>3},
+		    '$' => {'charniak'     =>288,'stanford'     =>271,'mst'     =>228,'malt'     =>207,'zpar'     =>166},
+		    '``' => {'charniak'     =>217,'stanford'     =>204,'mst'     =>195,'malt'     =>155,'zpar'     =>193},
+		    ':' => {'charniak'     =>161,'stanford'     =>140,'mst'     =>54,'malt'     =>44,'zpar'     =>111},
+		    'JJS' => {'charniak'     =>80,'stanford'     =>80,'mst'     =>76,'malt'     =>76,'zpar'     =>73},
+		    'LS' => {'charniak'     =>5,'stanford'     =>3,'mst'     =>4,'malt'     =>5,'zpar'     =>5},
+		    'VB' => {'charniak'     =>905,'stanford'     =>870,'mst'     =>885,'malt'     =>836,'zpar'     =>789},
+		    '.' => {'charniak'     =>1603,'stanford'     =>1562,'mst'     =>1512,'malt'     =>1205,'zpar'     =>1437},
+		    'MD' => {'charniak'     =>311,'stanford'     =>282,'mst'     =>281,'malt'     =>231,'zpar'     =>167},
+		    'NNS' => {'charniak'     =>2305,'stanford'     =>2216,'mst'     =>2255,'malt'     =>2161,'zpar'     =>1961},
+		    'NN' => {'charniak'     =>5353,'stanford'     =>5139,'mst'     =>5087,'malt'     =>4943,'zpar'     =>4720},
+		    'DT' => {'charniak'     =>3424,'stanford'     =>3399,'mst'     =>3414,'malt'     =>3390,'zpar'     =>3215},
+		    'VBD' => {'charniak'     =>1610,'stanford'     =>1508,'mst'     =>1472,'malt'     =>1228,'zpar'     =>1061},
+		    '\'\'' => {'charniak'     =>213,'stanford'     =>192,'mst'     =>197,'malt'     =>181,'zpar'     =>193},
+		    '#' => {'charniak'     =>7,'stanford'     =>7,'mst'     =>0,'malt'     =>0,'zpar'     =>0},
+		    'RBS' => {'charniak'     =>12,'stanford'     =>13,'mst'     =>12,'malt'     =>14,'zpar'     =>15},
+		    'IN' => {'charniak'     =>3546,'stanford'     =>3145,'mst'     =>3321,'malt'     =>3259,'zpar'     =>3006},
+		    'PRP$' => {'charniak'     =>284,'stanford'     =>274,'mst'     =>273,'malt'     =>280,'zpar'     =>261},
+		    ')' => {'charniak'     =>42,'stanford'     =>46,'mst'     =>34,'malt'     =>34,'zpar'     =>13},
+		  'VBG' => {'charniak'     =>498,'stanford'     =>477,'mst'     =>497,'malt'     =>447,'zpar'     =>459},);
 foreach my $id ( keys %training ) {
   $fcm->add_document( $id, $training{$id} );
   }
