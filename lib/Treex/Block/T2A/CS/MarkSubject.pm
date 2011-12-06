@@ -14,7 +14,7 @@ sub process_ttree {
     # avoiding nominatives in prepositional groups (such as 'n:jako+1')
     # avoiding temporal modifiers (today, this time.TWHEN)
     foreach my $tnode (@tnodes) {
-        if (( $tnode->formeme =~ /\+1/ or $tnode->functor =~ /^T/ )
+        if (( $tnode->formeme !~ /^(n:1|drop)$/ or $tnode->functor =~ /^T/ )
             and my $anode = $tnode->get_lex_anode()
             )
         {
@@ -41,10 +41,7 @@ sub _find_subject {
         $a_vfin->get_echildren( { following_only => 1 } )
     );
 
-    my @nominatives = grep {
-        ( $_->get_attr('morphcat/case') || "" ) eq '1'
-            and not $to_avoid_ref->{$_}
-    } @candidates;
+    my @nominatives = grep { not $to_avoid_ref->{$_} } @candidates;
 
     return if !@nominatives;
 

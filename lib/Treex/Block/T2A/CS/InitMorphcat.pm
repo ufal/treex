@@ -76,8 +76,13 @@ sub process_tnode {
     #    }
 
     # == Case ==
-    if ( $formeme =~ /(\d)/ && $a_node->get_attr('morphcat/case') eq '.' ) {
-        $a_node->set_attr( 'morphcat/case', $1 );
+    if ( $a_node->get_attr('morphcat/case') eq '.' ){
+        if ( $formeme =~ /(\d)/ ) {
+            $a_node->set_attr( 'morphcat/case', $1 );
+        }
+        elsif ( $formeme eq 'drop' ){
+            $a_node->set_attr( 'morphcat/case', '1' );
+        }
     }
 
     # == Degree of comparison ==
