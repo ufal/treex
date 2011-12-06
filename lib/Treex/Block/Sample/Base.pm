@@ -18,8 +18,15 @@ has message_board => (  # TODO: this could be moved to a role, as it might be us
     documentation => 'message board shared by blocks of the same type executed in the same treex run',
 );
 
+has parallel => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 1,
+);
+
 sub BUILD {
     my ( $self ) = @_;
+    return undef if !$self->parallel;
     $self->set_message_board(Treex::Tool::Parallel::MessageBoard->new(
         workdir => $self->scenario->runner->workdir,
         sharers => $self->scenario->runner->jobs,
@@ -34,6 +41,8 @@ sub process_document {
 
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
+    
+    return if !$self->parallel;
 
     my $number_of_documents = scalar @{$self->documents};
     log_info "Let's tell other blocks that this one has $number_of_documents documents at its disposal";
@@ -70,6 +79,9 @@ to all processed documents. All documents are first accumulated
 in process_document() calls. $block->process_documents is invoked
 when the block instance is to be destructed.
 
+This block can be run on single machine (wihout the option -p) by setting parallel=0.
+Communication between jobs is then disabled.
+
 =head1 METHODS
 
 $block->process_documents($doc_array_ref)
@@ -79,6 +91,7 @@ $block->process_documents($doc_array_ref)
 =head1 AUTHOR
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
