@@ -18,20 +18,23 @@ has message_board => (  # TODO: this could be moved to a role, as it might be us
     documentation => 'message board shared by blocks of the same type executed in the same treex run',
 );
 
-has parallel => (
+has _parallel_execution => (
     is => 'rw',
     isa => 'Bool',
-    default => 1,
+    default => 0,
+    documentation => 'allows communication between individual jobs; is set automatically to 1 when running parallel',
 );
 
 sub BUILD {
     my ( $self ) = @_;
-    return undef if !$self->parallel;
-    $self->set_message_board(Treex::Tool::Parallel::MessageBoard->new(
-        workdir => $self->scenario->runner->workdir,
-        sharers => $self->scenario->runner->jobs,
-        current => $self->scenario->runner->jobindex,
-    ));
+    if (defined $self->scenario->runner->jobindex) {
+        $self->set_message_board(Treex::Tool::Parallel::MessageBoard->new(
+            workdir => $self->scenario->runner->workdir,
+            sharers => $self->scenario->runner->jobs,
+            current => $self->scenario->runner->jobindex,
+        ));
+        $self->_set_parallel_execution(1);
+    }
 }
 
 sub process_document {
@@ -42,7 +45,7 @@ sub process_document {
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
     
-    return if !$self->parallel;
+    return if !$self->_parallel_execution;
 
     my $number_of_documents = scalar @{$self->documents};
     log_info "Let's tell other blocks that this one has $number_of_documents documents at its disposal";
@@ -78,9 +81,6 @@ Base class for sampling blocks, which need random access
 to all processed documents. All documents are first accumulated
 in process_document() calls. $block->process_documents is invoked
 when the block instance is to be destructed.
-
-This block can be run on single machine (wihout the option -p) by setting parallel=0.
-Communication between jobs is then disabled.
 
 =head1 METHODS
 
