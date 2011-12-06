@@ -9,13 +9,17 @@ has iterations => (is => 'rw', isa => 'Int', default => 10);
 
 has other_languages => ( is => 'rw', isa => 'Str', default => '');
 
+has alignment => (is => 'rw', isa => 'HashRef');
+
+my %alignment;
+
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
 
     my $ALPHA = 0.01;
     my $C_ALPHA = 1000;
 
-    my $ALIGNMENT_PENALTY = 0.000001;
+    my $ALIGNMENT_PENALTY = 1;
     my $PUNCTUATION_PENALTY = 0.01;
 
     my %count;
@@ -64,19 +68,16 @@ sub process_documents {
     }
 
     # precompute alignment links
-    my %alignment;
     foreach my $document (@$documents_rf) {
         foreach my $bundle ($document->get_bundles) {
-            foreach my $lang (@other_languages) {
-                foreach my $node ($bundle->get_tree($lang, 'a', $self->selector)->get_descendants) {
+                foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
                     my ($nodes, $types) = $node->get_aligned_nodes();
                     foreach my $i (0 .. $#$nodes) {
                         if ($$types[$i] =~ /int/) {
-                            $alignment{$lang}{$node} = $$nodes[$i];
-                            $alignment{$self->language}{$$nodes[$i]} = $node;
+                            $alignment{$node} = $$nodes[$i];
+                            $alignment{$$nodes[$i]} = $node;
                         }
                     }
-                }
             }
         }
     }
@@ -87,7 +88,7 @@ sub process_documents {
             foreach my $lang1 ($self->language, $other_languages[0]) {
                 my $lang2 = $lang1 eq $self->language ? $other_languages[0] : $self->language;
                 foreach my $node ($bundle->get_tree($lang1, 'a', $self->selector)->get_descendants) {
-                    $logprob += log($ALIGNMENT_PENALTY) if !aligned_edge($node, $node->get_parent, $lang2, \%alignment);
+                    $logprob += log($ALIGNMENT_PENALTY) if !aligned_edge($node, $node->get_parent->id, $lang2);
                     $logprob += log($PUNCTUATION_PENALTY) if ($node->get_parent->form || 'undef') =~ /^[\.,!\?;]$/;
                 }
             }
@@ -110,7 +111,7 @@ sub process_documents {
                         my $edge = "$lang1 $tag $parent_tag $direction";
                         $diff_count{$edge}--;
                         my $new_logprob = $logprob - log(($count{$edge} || 0) + ($diff_count{$edge} || 0) + $ALPHA) - log( 1 / (abs($distance)**2));
-                        $new_logprob -= log($ALIGNMENT_PENALTY) if !aligned_edge($node, $node->parent, $lang2, \%alignment);
+                        $new_logprob -= log($ALIGNMENT_PENALTY) if !aligned_edge($node, $node->parent, $lang2);
                         $new_logprob -= log($PUNCTUATION_PENALTY) if ($node->get_parent->form || 'undef') =~ /^[\.,!\?;]$/;
                         my %is_descendant;
                         map {$is_descendant{$_} = 1} $node->get_descendants;
@@ -125,7 +126,8 @@ sub process_documents {
                             my $new_distance = $possible_parents[$p]->is_root ? 20 : $node->ord - $possible_parents[$p]->ord;
                             $new_edge[$p] = "$lang1 $tag $new_parent_tag $new_direction";
                             $new_logprob[$p] = $new_logprob + log(($count{$new_edge[$p]} || 0) + ($diff_count{$new_edge[$p]} || 0) + $ALPHA) + log( 1 / (abs($new_distance)**2));
-                            $new_logprob[$p] += log($ALIGNMENT_PENALTY) if !aligned_edge($node, $p, $lang2, \%alignment);
+                           # my $alignment_penalty = aligned_edge($node, $p, $lang2) ? 1 : $ALIGNMENT_PENALTY;
+                            $new_logprob[$p] += log($ALIGNMENT_PENALTY) if !aligned_edge($node, $possible_parents[$p], $lang2);
                             $new_logprob[$p] += log($PUNCTUATION_PENALTY) if ($possible_parents[$p]->form || 'undef') =~ /^[\.,!\?;]$/;
                             $weight[$p] = exp($new_logprob[$p] - $logprob);
                             $sum_weight += $weight[$p];
@@ -177,10 +179,11 @@ sub process_documents {
 }
 
 sub aligned_edge {
-    my ($node, $parent, $language, $alignment) = @_;
-    return ( $$alignment{$language}{$node}
-          && $$alignment{$language}{$parent}
-          && $$alignment{$language}{$node}->get_parent eq $$alignment{$language}{$parent} ) ? 1 : 0;
+    my ($node, $parent, $language) = @_;
+    return (defined $alignment{$node}
+        && defined $alignment{$parent}
+        && $alignment{$node}->get_parent eq $alignment{$parent}
+        ? 1 : 0);
 }
 
 1;
