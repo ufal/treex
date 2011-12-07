@@ -376,7 +376,7 @@ sub get_feature_value {
         my @values;
         foreach my $simple_feature_index ( @{$simple_features_indexes} ) {
             my $value = $simple_feature_values->[$simple_feature_index];
-            if ( $value ne '' ) {
+            if ( defined $value && $value ne '' ) {
                 push @values, $value;
             } else {
                 return '';
