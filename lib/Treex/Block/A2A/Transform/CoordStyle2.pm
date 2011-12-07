@@ -100,6 +100,15 @@ has from_punctuation => (
     documentation => 'input style punctuation parents',
 );
 
+# Other options
+
+has guess_nested => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 1,
+    documentation => 'try to distinguish nested coordinations from multi-conjunct coordinations',
+);
+
 sub BUILD {
     my ( $self, $args ) = @_;
 
@@ -192,20 +201,20 @@ sub _fill_style_from_shortcut {
 #   @rest = grep {!/a/} @rest;
 # you can write just
 #   my @picked = pick {/a/} @rest;
-sub pick(&\@){
-  my ($code, $array_ref) = @_;
-  my (@picked, @notpicked);
-  foreach (@$array_ref){
-    if ($code->($_)){
-      push @picked, $_;
-    } else {
-      push @notpicked, $_;
+sub pick(&\@) {
+    my ( $code, $array_ref ) = @_;
+    my ( @picked, @notpicked );
+    foreach (@$array_ref) {
+        if ( $code->($_) ) {
+            push @picked, $_;
+        }
+        else {
+            push @notpicked, $_;
+        }
     }
-  }
-  @$array_ref = @notpicked;
-  return @picked;
+    @$array_ref = @notpicked;
+    return @picked;
 }
-
 
 my %entered;
 
@@ -302,7 +311,7 @@ sub detect_stanford {
     # just skip it and recursively process its children.
     # In Stanford style, the head of coordination is recognized iff
     #  - there are conjuncts (marked by is_member=1) among its children
-    #  - or thera are coordinating conjunctions among its children.
+    #  - or there are coordinating conjunctions among its children.
     # For CSs with only one conjunct (the head) only the latter holds.
     # E.g. "And I love her." is in some annotation styles considered as a CS
     # with only one conjunct ("love") and one conjunction ("And").
@@ -345,29 +354,49 @@ sub detect_stanford {
     }
 
     # Try to distinguish nested coordinations from multi-conjunct coordinations.
-    if (@members > 2 && @ands){
-        my $nested = 0;
-    
-        # The nested interpretation is more probable
-        # a) if the last conjunction precedes penultimate conjunct,
-        #    e.g. (C1 and C2) , (C3).
-        if ($ands[-1]->precedes($members[-2])){
-            $nested = 1;    
-        }
-        
-        # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3)
-        if (@ands > 1 && lc($ands[0]->form) ne lc($ands[1]->form)){
-            $nested = 1;
-        }
-        
-        if ($nested){
-            #TODO
+    # This is just a heuristics!
+    my $new_nested_head;
+    if ( $self->guess_nested && @members > 2 && @ands ) {
+
+        # The nested interpretation may be more probable if
+        # a) the last conjunction precedes penultimate conjunct, e.g. (C1 and C2) , (C3)
+        # if ($ands[-1]->precedes( $members[-2] ))
+        # but there are counter-examples like C1 and C2(afun=ExD) C3(afun=ExD).
+
+        # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
+        if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
+            ## Suppose the first two members are in the nested coordination
+            #  TODO: it might be three or more (but that's very rare)
+            my @nested_members = splice @members, 0, 2;
+            my $last_nested = $nested_members[-1];
+
+            # Suppose all nodes before $last_nested are in the nested coordination
+            my @nested_shared = pick { $_->precedes($last_nested) } @shared;
+            my @nested_ands   = pick { $_->precedes($last_nested) } @ands;
+            my @nested_commas = pick { $_->precedes($last_nested) } @commas;
+
+            # Process the nested coord. in the same way as the outer coord.
+            @nested_members = map { $self->detect_stanford($_); } @nested_members;
+            @nested_shared  = map { $self->detect_stanford($_); } @nested_shared;
+            my $nested_res = {
+                members => \@nested_members,
+                ands    => \@nested_ands,
+                shared  => \@nested_shared,
+                commas  => \@nested_commas,
+                head    => $node
+            };
+            $new_nested_head = $self->transform_coord( $node, $nested_res );
+            $node = $new_nested_head;
         }
     }
 
     @members = map { $self->detect_stanford($_); } @members;
     @shared  = map { $self->detect_stanford($_); } @shared;
     @todo    = map { $self->detect_stanford($_); } @todo;      # private modifiers of the head
+
+    if ($new_nested_head) {
+        unshift @members, $new_nested_head;
+    }
 
     #TODO? @commas, @ands (these should be mostly leaves)
 
@@ -556,7 +585,6 @@ sub is_comma {
     my ( $self, $node ) = @_;
     return $node->form =~ /^[,;]$/;
 }
-
 
 1;
 
