@@ -95,6 +95,29 @@ sub compute_counts_and_logprob {
     return $logprob;
 }
 
+
+sub choose_edge {
+    my ($self, $nodes, $parents, $type, $language) = @_;
+    log_fatal "Number of nodes an parents doesn't match" if $#$nodes != $#$parents;
+    my @logprob;
+    my $sum_prob = 0;
+    foreach my $i (0 .. $#$nodes) {
+        $logprob[$i] = $self->make_change($$nodes[$i], $$parents[$i], $type, 0, $language);
+        $sum_prob += exp($logprob[$i]);
+    }
+    my $random_value = rand($sum_prob);
+    my $current_value = 0;
+    foreach my $i (0 .. $#$nodes) {
+        $current_value += exp($logprob[$i]);
+        if ($current_value >= $random_value) {
+            $self->make_change($$nodes[$i], $$parents[$i], $type, 1, $language);
+            return ($i, $logprob[$i]);
+        }
+    }
+    return undef;
+}
+
+
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
 
@@ -107,7 +130,7 @@ sub process_documents {
     my @other_languages = split /-/, $self->other_languages;
 
     my $logprob = $self->compute_counts_and_logprob($documents_rf);
-    print STDERR "Initial logprob: $logprob\n";
+    log_info "Initial logprob: $logprob";
     
     $self->update_counts if $self->_parallel_execution;
 
@@ -153,50 +176,36 @@ sub process_documents {
                     my $aroot = $bundle->get_tree($lang1, 'a', $self->selector);
                     my @shuffled_nodes = List::Util::shuffle $aroot->get_descendants;
                     foreach my $node (@shuffled_nodes) {
-#print STDERR "$logprob ";
-                        my $new_logprob = $logprob + $self->make_change($node, $node->get_parent, 'del', 1, $lang1);
-#print STDERR "$new_logprob ";
+                        $logprob += $self->make_change($node, $node->get_parent, 'del', 1, $lang1);
+                        my @parents = grep {$node ne $_} (@shuffled_nodes, $aroot);
+                        my @nodes = map{$node} @parents;
+                        my ($winner, $logprob_change) = $self->choose_edge(\@nodes, \@parents, 'ins', $lang1);
+                        my $chosen_parent = $parents[$winner];
+                        $logprob += $logprob_change;
                         my %is_descendant;
                         map {$is_descendant{$_} = 1} $node->get_descendants;
-                        my @possible_parents = grep {!$is_descendant{$_} && $_ ne $node} ($aroot->get_descendants, $aroot);
-                        my @new_logprob;
-                        my @weight;
-                        my $sum_weight = 0;
-                        foreach my $p (0 .. $#possible_parents) {
-                            $new_logprob[$p] = $new_logprob + $self->make_change($node, $possible_parents[$p], 'ins', 0, $lang1);
-                            $weight[$p] = exp($new_logprob[$p] - $logprob);
-                            $sum_weight += $weight[$p];
-                        }
-                        my $random_value = rand($sum_weight);
-                        my $current_value = 0;
-                        my $chosen_parent = 0;
-                        foreach my $p (0 .. $#possible_parents) {
-                            $current_value += $weight[$p];
-                            if ($current_value >= $random_value) {
-                                $logprob = $new_logprob[$p];
-#print STDERR "$logprob\n";
-                                $self->make_change($node, $possible_parents[$p], 'ins', 1, $lang1);
-                                $node->set_parent($possible_parents[$p]);
-                                last;
-                            }
-                        }
-=c
+                        my $chosen_from_cycle;
                         if ($is_descendant{$chosen_parent}) {
-                            my $n = $chosen_parent;
                             my @nodes_in_cycle;
+                            my @parents_in_cycle;
+                            my $n = $chosen_parent;
                             while ($n ne $node) {
                                 push @nodes_in_cycle, $n;
                                 $n = $n->get_parent;
+                                push @parents_in_cycle, $n;
                             }
                             push @nodes_in_cycle, $node;
-                            @new_logprob = ();
-                            foreach my $n (@nodes_in_cycle) {
-                                my $d_direction = $n->ord < $n->get_parent->ord ? 'L' : 'R';
-                                my $d_parent_tag = $n-possible_parents[$p] eq $aroot ? '<root>' : $possible_parents[$p]->tag;
-                                my $d_distance = $possible_parents[$p]->is_root ? 20 : $node->ord - $possible_parents[$p]->ord;
-
-=cut
-
+                            push @parents_in_cycle, $chosen_parent;
+                            ($winner, $logprob_change) = $self->choose_edge(\@nodes_in_cycle, \@parents_in_cycle, 'del', $lang1);
+                            $chosen_from_cycle = $nodes_in_cycle[$winner];
+                            $logprob += $logprob_change;
+                            my @possible_parents = grep {$node ne $_ && !$is_descendant{$_}} (@shuffled_nodes, $aroot);
+                            my @possible_nodes = map{$chosen_from_cycle} @possible_parents;
+                            ($winner, $logprob_change) = $self->choose_edge(\@possible_nodes, \@possible_parents, 'ins', $lang1);
+                            $chosen_from_cycle->set_parent($possible_parents[$winner]);
+                            $logprob += $logprob_change;
+                        }
+                        $node->set_parent($chosen_parent) if (!defined $chosen_from_cycle || $chosen_from_cycle ne $node);
                     }
                 }
             }
@@ -207,7 +216,7 @@ sub process_documents {
 
     # compute counts and logprob
     $logprob = $self->compute_counts_and_logprob($documents_rf);
-    print STDERR "Final logprob: $logprob\n";
+    log_info "Final logprob: $logprob";
 
 
     # save documents # TEMPORARY HACK !!!
