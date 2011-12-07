@@ -245,6 +245,7 @@ sub next_document {
     $self->_twig->setTwigRoots(
         {   s => sub {
                 my ( $twig, $sentence ) = @_;
+                $twig->purge;
                 my $bundle = $document->create_bundle;
                 my $zone   = $bundle->create_zone( $self->language, $self->selector );
                 my $ptree  = $zone->create_ptree;
@@ -308,7 +309,6 @@ sub next_document {
     );
 
     $self->_twig->parsefile($filename);
-    $self->_twig->purge;
 
     return $document;
 }    # next_document
