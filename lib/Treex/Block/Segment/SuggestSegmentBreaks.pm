@@ -177,6 +177,11 @@ sub process_document {
     my @bundles = grep {!$_->wild->{to_delete}} $doc->get_bundles;
     #print STDERR "BUNDLE_COUNT: " . @bundles . "\n";
 
+    # remove old segment breaks
+    foreach my $bundle (grep {$_->wild->{$self->selector . 'segm_break'}} @bundles) {
+        $bundle->wild->{$self->selector . 'segm_break'} = 0;
+    }
+
 
     my @sure_breaks = $self->_get_already_set_breaks( @bundles );
     
