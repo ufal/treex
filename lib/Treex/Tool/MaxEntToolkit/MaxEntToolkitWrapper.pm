@@ -3,6 +3,7 @@ package Treex::Tool::MaxEntToolkit::MaxEntToolkitWrapper;
 use Moose;
 use Treex::Core::Common;
 use File::Temp;
+use File::Slurp;
 use autodie;
 
 # path to maxent binary
@@ -33,7 +34,7 @@ sub train {
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    $self->_write_file_contents($input_file, join("\n", @$instances_ref));
+    write_file($input_file, join("\n", @$instances_ref));
 
     # run maxent toolkit
     my $command = $self->maxent_binary . " " . $input_file . " -b -m " . $self->model . " -i 30";
@@ -48,7 +49,7 @@ sub predict {
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    $self->_write_file_contents($input_file, $instance);
+    write_file($input_file, $instance);
 
     # create output file
     my $output_file = $self->_create_output_file();
@@ -58,7 +59,7 @@ sub predict {
     log_info("Running maxent toolkit with command:\n$command");
     my $exit_status = system($command);
     log_fatal("Maxent prediction exited unsuccessfully with return value: $exit_status.") unless $exit_status == 0;
-    my $output_string = $self->_load_file_contents($output_file);
+    my $output_string = read_file($output_file);
     chomp $output_string;
 
     return $output_string;
@@ -95,26 +96,6 @@ sub _create_input_file {
 sub _create_output_file {
     my ($self) = @_;
     return $self->_create_temp_file('output');
-}
-
-# read the contents of a file (given name) to a string
-sub _load_file_contents {
-    my ( $self, $filename ) = @_;
-    my $fr;
-    open( $fr, '<:utf8', $filename );
-    my @contents = <$fr>;
-    close($fr);
-    return join( "", @contents );
-}
-
-# write a string to the given file (given name)
-sub _write_file_contents {
-    my ( $self, $filename, $contents ) = @_;
-    my $fw;
-    open ( $fw, '>:utf8', $filename );
-    print $fw ($contents);
-    close($fw);
-    return;
 }
 
 1;
