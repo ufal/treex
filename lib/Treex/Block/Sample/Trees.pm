@@ -7,11 +7,13 @@ extends 'Treex::Block::Sample::Base';
 
 has iterations => (is => 'rw', isa => 'Int', default => 10); 
 has other_languages => ( is => 'rw', isa => 'Str', default => '');
-has alpha => (is => 'rw', default => 0.01);
+has alpha => (is => 'rw', default => 1000000000);
 has punctuation_penalty => (is => 'rw', default => 0.01);
+has alignment_penalty => (is => 'rw', default => 0.0001);
 has _alignment => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _count => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _diff_count => (is => 'rw', default => sub { my %hash; return \%hash; });
+has _other_languages => (is => 'rw');
 
 
 sub increase_count {
@@ -66,13 +68,17 @@ sub make_change {
     my $edge = "$language $tag $parent_tag $direction";
     my $diff_logprob = 0;
     if ($type eq 'del') {
-        $diff_logprob -= log($self->get_count($edge) - 1 + $self->alpha) + log( 1 / (abs($distance)**2));
-        $diff_logprob -= log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;]$/;
+        $diff_logprob -= log($self->get_count($edge) - 1 + $self->alpha);
+        $diff_logprob -= log( 1 / (abs($distance)**3));
+        $diff_logprob -= log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
+        $diff_logprob -= log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
         $self->increase_count($edge, -1) if $change_counts;
     }
     elsif ($type eq 'ins') {
-        $diff_logprob += log($self->get_count($edge) + $self->alpha) + log( 1 / (abs($distance)**2));
-        $diff_logprob += log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;]$/;
+        $diff_logprob += log($self->get_count($edge) + $self->alpha);
+        $diff_logprob += log( 1 / (abs($distance)**3));
+        $diff_logprob += log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
+        $diff_logprob += log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
         $self->increase_count($edge, +1) if $change_counts;
     }
     return $diff_logprob;
@@ -86,9 +92,11 @@ sub compute_counts_and_logprob {
     $self->reset_counts();
     foreach my $document (@$documents_rf) {
         foreach my $bundle ($document->get_bundles) {
-            foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
-                $logprob += $self->make_change($node, $node->get_parent, 'ins', 1, $self->language) - log($total + 10000);
-                $total++;
+            foreach my $language ($self->language, @{$self->_other_languages}) {
+                foreach my $node ($bundle->get_tree($language, 'a', $self->selector)->get_descendants) {
+                    $logprob += $self->make_change($node, $node->get_parent, 'ins', 1, $language) - log($total + 10000);
+                    $total++;
+                }
             }
         }
     }
@@ -118,16 +126,37 @@ sub choose_edge {
 }
 
 
+sub precompute_alignment {
+    my ($self, $documents_rf) = @_;
+    foreach my $document (@$documents_rf) {
+        foreach my $bundle ($document->get_bundles) {
+            foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
+                my ($nodes, $types) = $node->get_aligned_nodes();
+                foreach my $i (0 .. $#$nodes) {
+                    if ($$types[$i] =~ /int/) {
+                        $self->_alignment->{$node} = $$nodes[$i];
+                        $self->_alignment->{$$nodes[$i]} = $node;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+sub aligned_edge {
+    my ($self, $node, $parent) = @_;
+    my $n = $self->_alignment->{$node};
+    my $p = $self->_alignment->{$parent};
+    return (defined $n && defined $p && $n->get_parent eq $p ? 1 : 0);
+}
+
+
 sub process_documents {
     my ( $self, $documents_rf ) = @_;
 
-    my $ALPHA = 0.01;
-    my $C_ALPHA = 1000;
-
-    my $ALIGNMENT_PENALTY = 0.01;
-    my $PUNCTUATION_PENALTY = 0.01;
-
-    my @other_languages = split /-/, $self->other_languages;
+    my @ol = split /-/, $self->other_languages;
+    $self->_set_other_languages(\@ol);
 
     my $logprob = $self->compute_counts_and_logprob($documents_rf);
     log_info "Initial logprob: $logprob";
@@ -135,51 +164,20 @@ sub process_documents {
     $self->update_counts if $self->_parallel_execution;
 
     # precompute alignment links
-#    foreach my $document (@$documents_rf) {
-#        foreach my $bundle ($document->get_bundles) {
-#                foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
-#                    my ($nodes, $types) = $node->get_aligned_nodes();
-#                    foreach my $i (0 .. $#$nodes) {
-#                        if ($$types[$i] =~ /int/) {
-#                            $alignment{$node} = $$nodes[$i];
-#                            $alignment{$$nodes[$i]} = $node;
-#                        }
-#                    }
-#            }
-#        }
-#    }
-
-#    # add penalties for not aligned edges to the logprob
-#    if (@other_languages) {
-#        foreach my $document (@$documents_rf) {
-#            foreach my $bundle ($document->get_bundles) {
-#                foreach my $lang1 ($self->language, $other_languages[0]) {
-#                    my $lang2 = $lang1 eq $self->language ? $other_languages[0] : $self->language;
-#                    foreach my $node ($bundle->get_tree($lang1, 'a', $self->selector)->get_descendants) {
-#                        $logprob += log($ALIGNMENT_PENALTY) if !aligned_edge($node, $node->get_parent->id);
-#                        $logprob += log($PUNCTUATION_PENALTY) if ($node->get_parent->form || 'undef') =~ /^[\.,!\?;]$/;
-#                    }
-#                }
-#            }
-#        }
-#    }
+    $self->precompute_alignment($documents_rf);
 
     # Gibbs sampling
     foreach my $iteration (1 .. $self->iterations) {
         foreach my $document (@$documents_rf) {
             foreach my $bundle ($document->get_bundles) {
-                foreach my $lang1 ($self->language, @other_languages) {
-                    my $lang2;
-                    if (@other_languages) {
-                        $lang2 = $lang1 eq $self->language ? $other_languages[0] : $self->language;
-                    }
-                    my $aroot = $bundle->get_tree($lang1, 'a', $self->selector);
+                foreach my $language ($self->language, @{$self->_other_languages}) {
+                    my $aroot = $bundle->get_tree($language, 'a', $self->selector);
                     my @shuffled_nodes = List::Util::shuffle $aroot->get_descendants;
                     foreach my $node (@shuffled_nodes) {
-                        $logprob += $self->make_change($node, $node->get_parent, 'del', 1, $lang1);
+                        $logprob += $self->make_change($node, $node->get_parent, 'del', 1, $language);
                         my @parents = grep {$node ne $_} (@shuffled_nodes, $aroot);
                         my @nodes = map{$node} @parents;
-                        my ($winner, $logprob_change) = $self->choose_edge(\@nodes, \@parents, 'ins', $lang1);
+                        my ($winner, $logprob_change) = $self->choose_edge(\@nodes, \@parents, 'ins', $language);
                         my $chosen_parent = $parents[$winner];
                         $logprob += $logprob_change;
                         my %is_descendant;
@@ -196,12 +194,12 @@ sub process_documents {
                             }
                             push @nodes_in_cycle, $node;
                             push @parents_in_cycle, $chosen_parent;
-                            ($winner, $logprob_change) = $self->choose_edge(\@nodes_in_cycle, \@parents_in_cycle, 'del', $lang1);
+                            ($winner, $logprob_change) = $self->choose_edge(\@nodes_in_cycle, \@parents_in_cycle, 'del', $language);
                             $chosen_from_cycle = $nodes_in_cycle[$winner];
                             $logprob += $logprob_change;
                             my @possible_parents = grep {$node ne $_ && !$is_descendant{$_}} (@shuffled_nodes, $aroot);
                             my @possible_nodes = map{$chosen_from_cycle} @possible_parents;
-                            ($winner, $logprob_change) = $self->choose_edge(\@possible_nodes, \@possible_parents, 'ins', $lang1);
+                            ($winner, $logprob_change) = $self->choose_edge(\@possible_nodes, \@possible_parents, 'ins', $language);
                             $chosen_from_cycle->set_parent($possible_parents[$winner]);
                             $logprob += $logprob_change;
                         }
@@ -224,15 +222,7 @@ sub process_documents {
         $document->save($document->full_filename . '.treex');
     }
 }
-=c
-sub aligned_edge {
-    my ($node, $parent) = @_;
-    return (defined $alignment{$node}
-        && defined $alignment{$parent}
-        && $alignment{$node}->get_parent eq $alignment{$parent}
-        ? 1 : 0);
-}
-=cut
+
 1;
 
 =encoding utf-8
