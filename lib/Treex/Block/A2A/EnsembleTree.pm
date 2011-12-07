@@ -72,12 +72,23 @@ sub process_tree_pos {
   #print  "$model\t".($cluster1{$model}/$sumcluster1)."\n";
   
   #print $model."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"0"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"1"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"2"})."\n";
+
   foreach my $node (@todo) {
+    my $w;
     #print $node->tag;
-    my $w =(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"0"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"1"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"2"});
-    $w= $w ** 10;
-   # $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );    
-   $ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );    
+   if(exists $pos_weights{$node->tag}){
+     $w =(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"0"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"1"})+(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"2"});
+      }
+     else{
+       my $uni_weight=.33;
+        $w =(($cluster1{$model}/$sumcluster1)*$uni_weight)+(($cluster1{$model}/$sumcluster1)*$uni_weight)+(($cluster1{$model}/$sumcluster1)*$uni_weight);
+#       
+     }
+    #exponential $w= $w ** exp
+    
+    $w= $w ** 2;
+    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );    
+   #$ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );    
    
   }  
 }
@@ -87,8 +98,12 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
+  $weight_tree= $weight_tree ** 6;
   foreach my $node (@todo) {
-    $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
+   
+    #$ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
+    $ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $weight_tree );    
+    
   }  
 }
 
