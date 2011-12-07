@@ -186,6 +186,27 @@ sub _fill_style_from_shortcut {
     return;
 }
 
+# function similar to grep, but it deletes the selected items from the array
+# So instead of
+#   my @picked = grep {/a/} @rest;
+#   @rest = grep {!/a/} @rest;
+# you can write just
+#   my @picked = pick {/a/} @rest;
+sub pick(&\@){
+  my ($code, $array_ref) = @_;
+  my (@picked, @notpicked);
+  foreach (@$array_ref){
+    if ($code->($_)){
+      push @picked, $_;
+    } else {
+      push @notpicked, $_;
+    }
+  }
+  @$array_ref = @notpicked;
+  return @picked;
+}
+
+
 my %entered;
 
 sub process_atree {
@@ -237,14 +258,12 @@ sub detect_prague {
         @shared = grep { $_->is_shared_modifier } @children;
     }
     my @todo = grep { !$_->is_member && !$_->is_shared_modifier } @children;
-    my @ands = grep { $_->wild->{is_coord_conjunction} } @todo;
-    @todo = grep { !$_->wild->{is_coord_conjunction} } @todo;
+    my @ands = pick { $_->wild->{is_coord_conjunction} } @todo;
     if ( $self->from_punctuation =~ /previous|following/ ) {
         @commas = grep { $self->is_comma($_) } map { $_->get_children } @members;
     }
     else {
-        @commas = grep { $self->is_comma($_) } @todo;
-        @todo   = grep { !$self->is_comma($_) } @todo;
+        @commas = pick { $self->is_comma($_) } @todo;
     }
 
     # Recursion
@@ -313,8 +332,7 @@ sub detect_stanford {
         @ands = grep { $_->wild->{is_coord_conjunction} } map { $_->get_children } @members;
     }
     else {
-        @ands = grep { $_->wild->{is_coord_conjunction} } @todo;
-        @todo = grep { !$_->wild->{is_coord_conjunction} } @todo;
+        @ands = pick { $_->wild->{is_coord_conjunction} } @todo;
     }
     @ands = sort { $a->ord <=> $b->ord } @ands;
 
@@ -323,16 +341,29 @@ sub detect_stanford {
         @commas = grep { $self->is_comma($_) } map { $_->get_children } @andmembers;
     }
     else {
-        @commas = grep { $self->is_comma($_) } @todo;
-        @todo   = grep { !$self->is_comma($_) } @todo;
+        @commas = pick { $self->is_comma($_) } @todo;
     }
 
     # Try to distinguish nested coordinations from multi-conjunct coordinations.
-    # If last conjunction precedes penultimate conjunct, e.g.: C1 and C2 , C3
-    # nested interpretation is more probable: (C1 and C2) , (C3).
-    #if (@members > 2 && @ands && $ands[-1]->precedes($members[-2])){
-    #
-    #}
+    if (@members > 2 && @ands){
+        my $nested = 0;
+    
+        # The nested interpretation is more probable
+        # a) if the last conjunction precedes penultimate conjunct,
+        #    e.g. (C1 and C2) , (C3).
+        if ($ands[-1]->precedes($members[-2])){
+            $nested = 1;    
+        }
+        
+        # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3)
+        if (@ands > 1 && lc($ands[0]->form) ne lc($ands[1]->form)){
+            $nested = 1;
+        }
+        
+        if ($nested){
+            #TODO
+        }
+    }
 
     @members = map { $self->detect_stanford($_); } @members;
     @shared  = map { $self->detect_stanford($_); } @shared;
@@ -525,6 +556,7 @@ sub is_comma {
     my ( $self, $node ) = @_;
     return $node->form =~ /^[,;]$/;
 }
+
 
 1;
 
