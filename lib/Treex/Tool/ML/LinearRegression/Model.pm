@@ -21,8 +21,8 @@ sub BUILD {
 sub load {
     my ($self, $file) = @_;
     my $model = LoadFile($file);
-    use Data::Dumper;
-    print STDERR Dumper($model->[0]);
+    #use Data::Dumper;
+    #print STDERR Dumper($model->[0]);
     $self->lambda($model->[0]);
     $self->means($model->[1]); 
     $self->ranges($model->[2]); 
@@ -64,8 +64,8 @@ sub predict {
     # calculate score
     my $lambda_f = $lambdas->[0];
     for (my $i = 1; $i < @$lambdas; $i++) {
-        if (defined $x_norm->[$i]) {
-            $lambda_f += $lambdas->[$i] * $x_norm->[$i];
+        if (defined $x_norm->[$i-1]) {
+            $lambda_f += $lambdas->[$i] * $x_norm->[$i-1];
         }
     }
     return $lambda_f; 

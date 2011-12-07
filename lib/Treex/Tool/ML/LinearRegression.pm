@@ -157,8 +157,8 @@ sub learn {
     my $o = Algorithm::LBFGS->new(%{$self->algorithm});
     $lambda = $o->fmin(\&_cost_function, $lambda,
         $self->algorithm->{progress_cb}, $self);
-    use Data::Dumper;
-    print STDERR Dumper($lambda);
+    #use Data::Dumper;
+    #print STDERR Dumper($lambda);
     
     $self->lambda($lambda);
     return $self->_create_model;
