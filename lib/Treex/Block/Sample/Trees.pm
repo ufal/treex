@@ -7,13 +7,37 @@ extends 'Treex::Block::Sample::Base';
 
 has iterations => (is => 'rw', isa => 'Int', default => 10); 
 has other_languages => ( is => 'rw', isa => 'Str', default => '');
-has alpha => (is => 'rw', default => 1000000000);
+has alpha => (is => 'rw', default => 0.3);
 has punctuation_penalty => (is => 'rw', default => 0.01);
-has alignment_penalty => (is => 'rw', default => 0.0001);
+has alignment_penalty => (is => 'rw', default => 1);
+has priors_from => (is => 'rw', isa => 'Str', default => '');
+has temperature => (is => 'rw', isa => 'Num', default => 1);
 has _alignment => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _count => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _diff_count => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _other_languages => (is => 'rw');
+has _prior_probabilities => (is => 'rw');
+
+
+sub BUILD {
+    my ($self) = @_;
+    my %priors;
+    if ($self->priors_from) {
+        open (PRIORS, "<:utf8", $self->priors_from) or log_fatal "File ".$self->priors_from." doesn't exsist.";
+        while (<PRIORS>) {
+            chomp;
+            my ($label, $prior) = split /\t/;
+            $priors{$label} = $prior;
+        }
+    }
+    $self->_set_prior_probabilities(\%priors);
+}
+
+
+sub get_prior {
+    my ($self, $key) = @_;
+    return $self->_prior_probabilities->{$key} || 0;
+}
 
 
 sub increase_count {
@@ -31,6 +55,12 @@ sub reset_counts {
     my ($self) = @_;
     my %hash;
     $self->_set_diff_count(\%hash);
+}
+
+sub decrease_temperature {
+    my ($self) = @_;
+    my $t = $self->temperature;
+    $self->set_temperature(0.9 * $t);
 }
 
 sub update_counts {
@@ -67,16 +97,17 @@ sub make_change {
     my $distance = $parent->is_root ? 20 : $node->ord - $parent->ord;
     my $edge = "$language $tag $parent_tag $direction";
     my $diff_logprob = 0;
+    my $BETA = 0.001;
     if ($type eq 'del') {
-        $diff_logprob -= log($self->get_count($edge) - 1 + $self->alpha);
-        $diff_logprob -= log( 1 / (abs($distance)**3));
+        $diff_logprob -= log($self->get_count($edge) - 1 + $self->alpha * $self->get_prior($edge) + $BETA);
+        $diff_logprob -= log( 1 / (2**abs($distance)));
         $diff_logprob -= log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
         $diff_logprob -= log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
         $self->increase_count($edge, -1) if $change_counts;
     }
     elsif ($type eq 'ins') {
-        $diff_logprob += log($self->get_count($edge) + $self->alpha);
-        $diff_logprob += log( 1 / (abs($distance)**3));
+        $diff_logprob += log($self->get_count($edge) + $self->alpha * $self->get_prior($edge) + $BETA);
+        $diff_logprob += log( 1 / (2**abs($distance)));
         $diff_logprob += log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
         $diff_logprob += log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
         $self->increase_count($edge, +1) if $change_counts;
@@ -111,12 +142,12 @@ sub choose_edge {
     my $sum_prob = 0;
     foreach my $i (0 .. $#$nodes) {
         $logprob[$i] = $self->make_change($$nodes[$i], $$parents[$i], $type, 0, $language);
-        $sum_prob += exp($logprob[$i]);
+        $sum_prob += exp($logprob[$i])**(1/$self->temperature);
     }
     my $random_value = rand($sum_prob);
     my $current_value = 0;
     foreach my $i (0 .. $#$nodes) {
-        $current_value += exp($logprob[$i]);
+        $current_value += exp($logprob[$i])**(1/$self->temperature);
         if ($current_value >= $random_value) {
             $self->make_change($$nodes[$i], $$parents[$i], $type, 1, $language);
             return ($i, $logprob[$i]);
@@ -208,8 +239,9 @@ sub process_documents {
                 }
             }
         }
-        log_info "Iteration $iteration, logprob $logprob";
+        log_info "Iteration $iteration, logprob $logprob, temperature ".$self->temperature;
         $self->update_counts if $self->_parallel_execution;
+        $self->decrease_temperature();
     }
 
     # compute counts and logprob
