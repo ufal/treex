@@ -18,6 +18,10 @@ sub _find_breaks {
     return @break_idx_list;
 }
 
+sub name {
+    return '';
+}
+
 1;
 
 # TODO POD

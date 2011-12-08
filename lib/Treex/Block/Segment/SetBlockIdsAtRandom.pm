@@ -11,7 +11,7 @@ my $MISS_SENTS_TO_BREAK = 3;
 
 sub BUILD {
     my ($self) = @_;
-    srand(1986);
+    srand(2011);
 }
 
 sub _reconnect_corefs {
@@ -37,7 +37,7 @@ sub _reconnect_corefs {
 
 sub process_document {
     my ($self, $doc) = @_;
-
+   
     my $block_len = int(rand() * $MAX_BLOCK_SIZE) + 1;
     my $block_id = 0;
 
@@ -51,8 +51,12 @@ sub process_document {
         if ($i >= $block_len) {
             
             my $miss_sents = int(rand() * $MAX_MISS_SENTS) + 1;
+            if ($miss_sents + $j >= @bundles) {
+                $miss_sents = @bundles - $j - 1;
+            }
             for (my $k = 0; $k < $miss_sents; $k++) {
                 $bundles[$j + $k]->wild->{'to_delete'} = 1;
+                $bundles[$j + $k]->set_attr('czeng/blockid', $block_id);
             }
             $j += $miss_sents;
             $bundles[$j]->set_attr("czeng/missing_sents_before", $miss_sents);

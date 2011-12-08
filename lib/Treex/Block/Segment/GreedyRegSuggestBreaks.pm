@@ -78,6 +78,10 @@ sub _find_breaks {
     return @break_idx_list;
 }
 
+sub name {
+    return 'greedy_';
+}
+
 1;
 
 # TODO POD

@@ -40,13 +40,18 @@ has 'dry_run' => (
 my %FEAT_WEIGHTS = (
     estim_interlinks => 1,
     true_interlinks => 3,
-    missing_sents_before => -10,   # the strongest feature, the longer the gap, the higher the probability is
+    missing_sents_before => 1, 
 );
 
 
 sub _find_breaks {
     my ($self) = @_;
-    return log_fatal "method _find_breaks must be overriden in " . ref($self);
+    return log_fatal "method '_find_breaks' must be overriden in " . ref($self);
+}
+
+sub name {
+    my ($self) = @_;
+    return log_fatal "method 'name' must be overriden in " . ref($self);
 }
 
 sub _split_scores_on_sure_breaks {
@@ -178,8 +183,8 @@ sub process_document {
     #print STDERR "BUNDLE_COUNT: " . @bundles . "\n";
 
     # remove old segment breaks
-    foreach my $bundle (grep {$_->wild->{$self->selector . 'segm_break'}} @bundles) {
-        $bundle->wild->{$self->selector . 'segm_break'} = 0;
+    foreach my $bundle (grep {$_->wild->{$self->selector . $self->name  . 'segm_break'}} @bundles) {
+        $bundle->wild->{$self->selector . $self->name  . 'segm_break'} = 0;
     }
 
 
@@ -190,8 +195,6 @@ sub process_document {
     #print STDERR "COUTN: " . (scalar (keys %$old_breaks)) . "\n";
 
     my @scores = map {$self->_count_score($_)} @bundles;
-    #print STDERR "SCORES: " . join ", ", @scores;
-    #print STDERR "\n";
 
     #print STDERR "SCORES: " . (join ", ", @scores) . "\n";
 
@@ -206,6 +209,7 @@ sub process_document {
         #my @links = qw/0 1 3 5 3 4 5 6 7 8 9 4 3 4 3 2 2 1/;
         #my @break_idx_segm = $self->_find_breaks( \@links );
         
+        #print STDERR "SEGMENT: " . (join ", ", @{$score_segms[$i]}) . "\n";
         #print STDERR "BREAKS: " . (join ", ", @break_idx_segm) . "\n";
         
 
@@ -213,16 +217,16 @@ sub process_document {
             $bundles[$sure_breaks[$i] + $_]
         } @break_idx_segm;
         foreach my $bundle (@break_bundles) {
-            $bundle->wild->{$self->selector . 'segm_break'} = 1;
+            $bundle->wild->{$self->selector . $self->name  . 'segm_break'} = 1;
         }
 
     }
 
     my @break_idxs = grep {
-        $bundles[$_]->wild->{$self->selector . 'segm_break'}
+        $bundles[$_]->wild->{$self->selector . $self->name  . 'segm_break'}
     } (0 .. @bundles-1);
     
-    #print STDERR "BREAKS: " . join ", ", @break_idxs;
+    #print STDERR "BREAKS-" . $self->selector . ": " . join ", ", @break_idxs;
     #print STDERR "\n";
     
     if (!$self->dry_run) {

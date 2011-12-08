@@ -5,6 +5,15 @@ extends 'Treex::Block::Segment::SuggestSegmentBreaks';
 
 has 'local_offset' => ( is => 'ro', isa => 'Int', default => 2, required => 1 );
 
+# JUST FOR DEBUGGING REASONS
+#has 'doc_no' => ( is => 'rw', isa => 'Int', default => 0);
+
+#before 'process_document' => sub {
+#    my ($self, $doc) = @_;
+#    srand($self->doc_no);
+#    $self->set_doc_no( $self->doc_no + 1 );
+#};
+
 sub _find_breaks {
     my ($self, $scores) = @_;
 
@@ -43,6 +52,10 @@ sub _find_breaks {
     }
 
     return @break_idx_list;
+}
+
+sub name {
+    return 'randomized_';
 }
 
 1;
