@@ -12,8 +12,8 @@ sub process_bundle {
 
     my $true_links = $bundle->wild->{'true_interlinks/cs_ref'};
     my $true_naive_segm_break = $bundle->wild->{refsegm_break};
-    my $true_randomized_segm_break = $bundle->wild->{ref_randomized_segm_break};
-    my $estim_segm_break = $bundle->wild->{src_randomized_segm_break};
+    my $true_randomized_segm_break = $bundle->wild->{refrandomized_segm_break};
+    my $estim_segm_break = $bundle->wild->{srcrandomized_segm_break};
 
     if ($true_naive_segm_break) {
         $total_true_naive_links += $true_links;
