@@ -103,9 +103,9 @@ has from_punctuation => (
 # Other options
 
 has guess_nested => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 1,
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
     documentation => 'try to distinguish nested coordinations from multi-conjunct coordinations',
 );
 
@@ -367,13 +367,22 @@ sub detect_stanford {
         if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
             ## Suppose the first two members are in the nested coordination
             #  TODO: it might be three or more (but that's very rare)
-            my @nested_members = splice @members, 0, 2;
-            my $last_nested = $nested_members[-1];
+            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
+            my @nested_members = splice @members, ( $head_right ? -2 : 0 ), 2;
+            my $border = $nested_members[ $head_right ? 0 : -1 ];
 
-            # Suppose all nodes before $last_nested are in the nested coordination
-            my @nested_shared = pick { $_->precedes($last_nested) } @shared;
-            my @nested_ands   = pick { $_->precedes($last_nested) } @ands;
-            my @nested_commas = pick { $_->precedes($last_nested) } @commas;
+            # Suppose $border is the borderline between the nested and the outer coordination
+            my ( @nested_shared, @nested_ands, @nested_commas );
+            if ($head_right) {
+                @nested_shared = pick { $border->precedes($_) } @shared;
+                @nested_ands   = pick { $border->precedes($_) } @ands;
+                @nested_commas = pick { $border->precedes($_) } @commas;
+            }
+            else {
+                @nested_shared = pick { $_->precedes($border) } @shared;
+                @nested_ands   = pick { $_->precedes($border) } @ands;
+                @nested_commas = pick { $_->precedes($border) } @commas;
+            }
 
             # Process the nested coord. in the same way as the outer coord.
             @nested_members = map { $self->detect_stanford($_); } @nested_members;
@@ -395,7 +404,7 @@ sub detect_stanford {
     @todo    = map { $self->detect_stanford($_); } @todo;      # private modifiers of the head
 
     if ($new_nested_head) {
-        unshift @members, $new_nested_head;
+        push @members, $new_nested_head;
     }
 
     #TODO? @commas, @ands (these should be mostly leaves)
