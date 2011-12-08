@@ -472,7 +472,7 @@ sub transform_coord {
     }
 
     # Filter incorrectly detected commas: commas should be between members.
-    @commas = grep { $members[0]->precedes($_) && $_->precedes( $members[-1] ) } @commas;
+    my @noncommas = pick { $_->precedes( $members[0] ) || $members[-1]->precedes($_) } @commas;
 
     my $new_head;
     my $parent_left = $parent->precedes( $members[0] );
@@ -564,6 +564,24 @@ sub transform_coord {
         my @andmembers = sort { $a->ord <=> $b->ord } @members, @ands;
         foreach my $comma (@commas) {
             $self->rehang( $comma, $self->_nearest( $self->punctuation, $comma, @andmembers ) );
+        }
+    }
+
+    # commas that were not separating conjunct should remain on the same position
+    # which means if they were below (old) head they shoulb be below (new) head.
+    foreach my $noncomma (@noncommas) {
+        my @would_be_nonproj;
+        if ( $noncomma->parent == $old_head ) {
+            
+            # Don't rehang $noncomma if it would result in new non-projectivities 
+            if ($old_head->precedes($noncomma)){
+                @would_be_nonproj = grep {$noncomma->precedes($_)} $old_head->get_children();
+            } else {
+                @would_be_nonproj = grep {$_->precedes($noncomma)} $old_head->get_children();
+            }
+            if (!@would_be_nonproj){
+                $self->rehang( $noncomma, $new_head );
+            }
         }
     }
 
