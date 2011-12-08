@@ -526,49 +526,6 @@ sub get_depth {
     return $depth;
 }
 
-#------------------------------------------------------------------------------
-# Tells whether the node is attached to its parent nonprojectively, i.e. there
-# is at least one node between this node and its parent that is not dominated
-# by the parent.
-#------------------------------------------------------------------------------
-sub is_nonprojective
-{
-    log_fatal('Incorrect number of arguments') if(scalar(@_)!=1);
-    my $self = shift;
-    my $parent = $self->parent();
-    # A node that does not have a parent cannot be nonprojective.
-    return 0 if(!$parent);
-    # Get a hash of all descendants of the parent.
-    my @pdesc = $parent->get_descendants({add_self=>1});
-    my %pdesc; map {$pdesc{$_}++} (@pdesc);
-    # Figure out whether the node is to the left or to the right from its parent.
-    my $nord = $self->ord();
-    my $pord = $parent->ord();
-    my ($x, $y);
-    if($pord>$nord)
-    {
-        $x = $self;
-        $y = $parent;
-    }
-    else
-    {
-        $x = $parent;
-        $y = $self;
-    }
-    # Get the ordered list of all nodes between $x and $y.
-    my $xord = $x->ord();
-    my $yord = $y->ord();
-    my @between = grep {$_->ord()>$xord && $_->ord()<$yord} ($parent->root()->get_descendants({ordered=>1}));
-    # This node is nonprojective if @between contains anything that is not in %pdesc.
-    foreach my $b (@between)
-    {
-        if(!$pdesc{$b})
-        {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 # This is called from $node->remove()
 # so it must be defined in this class,
@@ -1043,12 +1000,6 @@ been indexed, etc.) to the root's C<id>.
 =item my $levels = $node->get_depth();
 
 Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
-
-=item my $nonproj = $node->is_nonprojective();
-
-Return 1 if the node is attached to its parent nonprojectively, i.e. there is
-at least one node between this node and its parent that is not descendant of
-the parent. Return 0 otherwise.
 
 =item my $address = $node->get_address();
 

@@ -159,7 +159,7 @@ sub _shift_to_node {
 
     # Recompute ord of all nodes.
     # The technical root has ord=0 and the first node will have ord=1.
-    my $counter = 1;
+    my $counter     = 1;
     my $nodes_moved = 0;
     @all_nodes = sort { $a->ord() <=> $b->ord() } @all_nodes;
     foreach my $node (@all_nodes) {
@@ -190,15 +190,65 @@ sub _shift_to_node {
             $node->_set_ord( $counter++ );
         }
     }
-    
+
     # If $is_moving{$reference_node}, e.g. when there is just one node in the tree,
     # we need to do the reordering now (otherwise the ord would be still 10000).
-    if (!$nodes_moved) {
+    if ( !$nodes_moved ) {
         foreach my $moving_node (@nodes_to_move) {
             $moving_node->_set_ord( $counter++ );
         }
     }
     return;
+}
+
+#------------------------------------------------------------------------------
+# Tells whether the node is attached to its parent nonprojectively, i.e. there
+# is at least one node between this node and its parent that is not dominated
+# by the parent.
+#------------------------------------------------------------------------------
+sub is_nonprojective
+{
+    log_fatal('Incorrect number of arguments') if ( scalar(@_) != 1 );
+    my $self   = shift;
+    my $parent = $self->parent();
+
+    # A node that does not have a parent cannot be nonprojective.
+    return 0 if ( !$parent );
+
+    # Get a hash of all descendants of the parent.
+    my @pdesc = $parent->get_descendants( { add_self => 1 } );
+    my %pdesc;
+    map { $pdesc{$_}++ } (@pdesc);
+
+    # Figure out whether the node is to the left or to the right from its parent.
+    my $nord = $self->ord();
+    my $pord = $parent->ord();
+    my ( $x, $y );
+    if ( $pord > $nord )
+    {
+        $x = $self;
+        $y = $parent;
+    }
+    else
+    {
+        $x = $parent;
+        $y = $self;
+    }
+
+    # Get the ordered list of all nodes between $x and $y.
+    my $xord    = $x->ord();
+    my $yord    = $y->ord();
+    my @between = grep { $_->ord() > $xord && $_->ord() < $yord } ( $parent->root()->get_descendants( { ordered => 1 } ) );
+
+    # This node is nonprojective if @between contains anything that is not in %pdesc.
+    foreach my $b (@between)
+    {
+        if ( !$pdesc{$b} )
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 1;
@@ -292,6 +342,18 @@ Shifts (changes the C<ord> of) the node just in front of the reference node.
 =item $node->shift_before_subtree($reference_node);
 
 Shifts (changes the C<ord> of) the node in front of the subtree of the reference node.
+
+=back
+
+=head2 Nonprojectivity
+
+=over
+
+=item my $nonproj = $node->is_nonprojective();
+
+Return 1 if the node is attached to its parent nonprojectively, i.e. there is
+at least one node between this node and its parent that is not descendant of
+the parent. Return 0 otherwise.
 
 =back
 
