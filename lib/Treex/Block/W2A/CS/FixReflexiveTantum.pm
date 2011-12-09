@@ -15,7 +15,7 @@ sub process_anode {
 
     return if ( !$refl );
 
-    my $tantum_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $anode->lemma, 1 ) . '_' . $refl->form;
+    my $tantum_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $anode->lemma, 1 ) . '_' . lc( $refl->form );
 
     # the particle 'se/si' is marked as reflexive tantum, but that's not possible with the given verb
     if ( !Treex::Tool::Lexicon::CS::Reflexivity::is_possible_tantum($tantum_lemma) ) {
