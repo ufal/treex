@@ -153,7 +153,7 @@ sub _build__prep_case {
     my @prep_nodes = grep {
         my $lemma = $_->lemma;
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
-        $_->tag !~ /^$pos_filter/ and $self->t_lemma !~ /(^|_)$lemma(_|$)/
+        $_->tag !~ /^$pos_filter/ and $self->t_lemma !~ /(^|_)\Q$lemma\E(_|$)/
     } @{ $self->aux };
 
     if (@prep_nodes) {
