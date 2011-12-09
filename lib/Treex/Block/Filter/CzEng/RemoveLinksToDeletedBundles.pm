@@ -4,24 +4,47 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-sub process_tnode {
-    my ( $self, $t_node ) = @_;
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
 
-    # remove to deleted
-    my @antes = $t_node->get_coref_nodes;
-    foreach my $ante (@antes) {
-        if ($ante->get_bundle->wild->{'to_delete'}) {
-            $t_node->remove_coref_nodes( $ante );
+    # skip bundles to delete
+    return if ($bundle->wild->{'to_delete'});
 
-# TODO if a coreference chain continues to other segment and the gap is not
-# too large, connect them
+    foreach my $zone (grep {$_->has_ttree} $bundle->get_all_zones) {
+        my $tree = $zone->get_ttree;
+
+        foreach my $t_node ($tree->descendants) {
+            
+            # find out if the node points to a bundle to be removed
+            my @coref_nodes = $t_node->get_coref_nodes;
+            my $num = () = grep {$_->get_bundle->wild->{'to_delete'}} @coref_nodes;
+            
+            # skip the nodes with correct links
+            next if (!$num);
+
+            # find the first antecedent in the chain, which isn't going to be removed
+            my @coref_chain = $t_node->get_coref_chain;
+            my $ante = shift @coref_chain;
+            while (@coref_chain && ($ante->get_bundle->wild->{'to_delete'})) {
+                $ante = shift @coref_chain;
+            }
+            
+            # remove links pointing out from this node
+            $t_node->remove_coref_nodes( @coref_nodes );
+            # add a distant but in-the-same-chain antecedent
+            if (!$ante->get_bundle->wild->{'to_delete'}) {
+               $t_node->add_coref_text_nodes( $ante );
+               print STDERR "COREF: " . $t_node->id . "\n";
+            }
+            
+            # remove from deleted
+            #if ($bundle->wild->{'to_delete'}) {
+            #    $t_node->remove_coref_nodes( @antes );
+            #}
+
         }
     }
 
-    # remove from deleted
-    if ($t_node->get_bundle->wild->{'to_delete'}) {
-        $t_node->remove_coref_nodes( @antes );
-    }
 
 }
 
