@@ -15,10 +15,10 @@ sub process_document {
         my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
         my $therescore = $bundle->get_zone('cs')
             ->get_atree->get_attr( "giza_scores/therevalue" );
-        next if !defined $therescore;
+        next if ! $therescore; # we don't want 0 in log()
         my $backscore = $bundle->get_zone('cs')
             ->get_atree->get_attr( "giza_scores/backvalue" );
-        next if !defined $backscore;
+        next if ! $backscore;
 
         my $score = log( $therescore ) / @cs + log( $backscore ) / @en;
         $self->add_feature( $bundle, "word_alignment_score="
