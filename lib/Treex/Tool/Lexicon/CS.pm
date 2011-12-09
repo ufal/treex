@@ -158,9 +158,9 @@ sub truncate_lemma {
     my ($lemma, $strip_numbers) = @_;
     
     if ($strip_numbers){
-        $lemma =~ s/-[0-9].*$//;
+        $lemma =~ s/(.+)-[0-9].*$/$1/;
     }
-    $lemma =~ s/(`|_;|_:|_;|_,|_\^).+$//;
+    $lemma =~ s/(.+)(`|_;|_:|_;|_,|_\^).+$/$1/;
     return $lemma;
 }
 
