@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has distance_distribution => (is => 'rw', isa => 'Str', default => 'uniform');
+
 sub process_atree {
     my ( $self, $root ) = @_;
     my @todo = List::Util::shuffle $root->get_descendants();
@@ -24,7 +26,25 @@ sub process_atree {
 
 sub find_parent {
     my ( $self, $child, @possible ) = @_;
-    return $possible[ int( rand( scalar @possible ) ) ];
+    my %weight;
+    my $sum_weight = 0;
+    foreach my $parent (@possible) {
+        my $distance = $parent->is_root ? 10 : abs($parent->ord - $child->ord);
+        if ($self->distance_distribution eq 'exp') {
+            $weight{$parent} = 1/(2**$distance);
+        }
+        else {
+            $weight{$parent} = 1;
+        }
+        $sum_weight += $weight{$parent};
+    }
+    my $random_number = rand($sum_weight);
+    my $current_value = 0;
+    foreach my $parent (@possible) {
+        $current_value += $weight{$parent};
+        return $parent if $current_value >= $random_number;
+    }
+    return;
 }
 
 1;
@@ -50,9 +70,14 @@ So the tree wouldn't be actually random.
 
 Therefore, we iterate over the nodes in a random order (using C<shuffle>).
 
+We can define distance (edge lenght) distribution. By default, it is uniform.
+distance_distribution=exp means that the probability of edge decreases
+exponentially with its length
+
+
 =head1 COPYRIGHT AND LICENCE
 
-Copyright 2011 Martin Popel
+Copyright 2011 Martin Popel, David Marecek
 
 This module is free software;
 you can redistribute it and/or modify it under the same terms as Perl itself.
