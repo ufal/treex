@@ -7,7 +7,9 @@ extends 'Treex::Block::Sample::Base';
 
 has iterations => (is => 'rw', isa => 'Int', default => 10); 
 has other_languages => ( is => 'rw', isa => 'Str', default => '');
-has alpha => (is => 'rw', default => 0.3);
+has alpha => (is => 'rw', default => 0.01);
+has beta => (is => 'rw', default => 0.01);
+has gamma => (is => 'rw', default => 0.01);
 has punctuation_penalty => (is => 'rw', default => 0.01);
 has alignment_penalty => (is => 'rw', default => 1);
 has priors_from => (is => 'rw', isa => 'Str', default => '');
@@ -36,19 +38,19 @@ sub BUILD {
 
 sub get_prior {
     my ($self, $key) = @_;
-    return $self->_prior_probabilities->{$key} || 0;
+    return $self->_prior_probabilities->{$key} || 0.5;
 }
 
 
 sub increase_count {
-    my ($self, $key, $value) = @_;
-    $self->_diff_count->{$key} += $value;
+    my ($self, $type, $label, $value) = @_;
+    $self->_diff_count->{$type}->{$label} += $value;
 }
 
 
 sub get_count {
-    my ($self, $key) = @_;
-    return ($self->_count->{$key} || 0) + ($self->_diff_count->{$key} || 0);
+    my ($self, $type, $label) = @_;
+    return ($self->_count->{$type}->{$label} || 0) + ($self->_diff_count->{$type}->{$label} || 0);
 }
 
 sub reset_counts {
@@ -60,7 +62,7 @@ sub reset_counts {
 sub decrease_temperature {
     my ($self) = @_;
     my $t = $self->temperature;
-    $self->set_temperature(0.9 * $t);
+    $self->set_temperature(0.97 * $t);
 }
 
 sub update_counts {
@@ -74,14 +76,19 @@ sub update_counts {
 
     # collect count changes of others
     foreach my $message ( $self->message_board->read_messages ) {
-        my %new_counts = %{$message->{count}};
-        foreach my $edge ( keys %new_counts ) {
-            $self->_count->{$edge} += $new_counts{$edge};
+        my $new_counts = $message->{count};
+        foreach my $type ( keys %{$new_counts} ) {
+            foreach my $label (keys %{$new_counts->{$type}}) {
+                $self->_count->{$type}->{$label} += $new_counts->{$type}->{$label};
+            }
         }
     }
     # collect my count changes
-    foreach my $edge (keys %{$self->_diff_count}) {
-        $self->_count->{$edge} += $self->_diff_count->{$edge};
+    my $new_counts = $self->_diff_count;
+    foreach my $type ( keys %{$new_counts} ) {
+        foreach my $label (keys %{$new_counts->{$type}}) {
+            $self->_count->{$type}->{$label} += $new_counts->{$type}->{$label};
+        }
     }
 
     # delete count changes
@@ -93,24 +100,42 @@ sub make_change {
     my ($self, $node, $parent, $type, $change_counts, $language) = @_;
     my $tag = $node->tag;
     my $parent_tag = $parent->is_root ? '<root>' : $parent->tag;
+    my $form = $node->form;
+    my $parent_form = $parent->is_root ? '<root>' : $parent->form;
     my $direction = $node->ord < $parent->ord ? 'L' : 'R';
-    my $distance = $parent->is_root ? 20 : $node->ord - $parent->ord;
+    my $distance = $parent->is_root ? 50 : $node->ord - $parent->ord;
     my $edge = "$language $tag $parent_tag $direction";
+    my $child_dist = "$tag $distance";
     my $diff_logprob = 0;
-    my $BETA = 0.001;
     if ($type eq 'del') {
-        $diff_logprob -= log($self->get_count($edge) - 1 + $self->alpha * $self->get_prior($edge) + $BETA);
-        $diff_logprob -= log( 1 / (2**abs($distance)));
+        $diff_logprob -= log($self->get_count('ctag-ptag-dir', $edge) - 1 + $self->alpha) - log($self->get_count('ptag', "$parent_tag") - 1 + $self->alpha*60);
+#        $diff_logprob -= log($self->get_count('ctag-dist', $child_dist) - 1 + $self->beta);
+        $diff_logprob -= log($self->get_count('cform-pform', "$form $parent_form") - 1 + $self->gamma) - log($self->get_count('pform', "$parent_form") - 1 + $self->gamma*10000);
+        $diff_logprob -= log( 1 / (abs($distance)**2));
         $diff_logprob -= log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
         $diff_logprob -= log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
-        $self->increase_count($edge, -1) if $change_counts;
+        if ($change_counts) {
+            $self->increase_count('ctag-ptag-dir', $edge, -1);
+#            $self->increase_count('ctag-dist', $child_dist, -1);
+            $self->increase_count('cform-pform', "$form $parent_form", -1);
+            $self->increase_count('pform', "$parent_form", -1);
+            $self->increase_count('ptag', "$parent_tag", -1);
+        }
     }
     elsif ($type eq 'ins') {
-        $diff_logprob += log($self->get_count($edge) + $self->alpha * $self->get_prior($edge) + $BETA);
-        $diff_logprob += log( 1 / (2**abs($distance)));
+        $diff_logprob += log($self->get_count('ctag-ptag-dir', $edge) + $self->alpha) - log($self->get_count('ptag', "$parent_tag") + $self->alpha*60);
+#        $diff_logprob += log($self->get_count('ctag-dist', $child_dist) + $self->beta);
+        $diff_logprob += log($self->get_count('cform-pform', "$form $parent_form") + $self->gamma) - log($self->get_count('pform', "$parent_form") + $self->gamma*10000);
+        $diff_logprob += log( 1 / (abs($distance)**2));
         $diff_logprob += log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
         $diff_logprob += log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
-        $self->increase_count($edge, +1) if $change_counts;
+        if ($change_counts) {
+            $self->increase_count('ctag-ptag-dir', $edge, +1);
+#            $self->increase_count('ctag-dist', $child_dist, +1);
+            $self->increase_count('cform-pform', "$form $parent_form", +1);
+            $self->increase_count('pform', "$parent_form", +1);
+            $self->increase_count('ptag', "$parent_tag", +1);
+        }
     }
     return $diff_logprob;
 }
