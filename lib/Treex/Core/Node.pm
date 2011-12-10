@@ -498,7 +498,9 @@ sub delete_aligned_node {
     my $links_rf = $self->get_attr('alignment');
     my @links    = ();
     if ($links_rf) {
-        @links = grep { $_->{'counterpart.rf'} ne $node->id || $_->{'type'} ne $type } @$links_rf;
+        @links = grep { $_->{'counterpart.rf'} ne $node->id 
+            || (defined($type) && defined($_->{'type'}) && $_->{'type'} ne $type) } 
+            @$links_rf;
     }
     $self->set_attr( 'alignment', \@links );
     return;

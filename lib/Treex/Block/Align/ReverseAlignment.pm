@@ -1,4 +1,4 @@
-package Treex::Block::Align::AlignForward;
+package Treex::Block::Align::ReverseAlignment;
 
 use Moose;
 use Treex::Core::Common;
