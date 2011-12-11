@@ -6,6 +6,7 @@ use List::Util qw( max );
 extends 'Treex::Block::Filter::CzEng::Common';
 
 my @bounds = ( -50, -25, -10, -5, -2, -1 );
+my $ZERO = 1e-300;
 
 sub process_document {
     my ( $self, $document ) = @_;
@@ -19,6 +20,9 @@ sub process_document {
         my $backscore = $bundle->get_zone('cs')
             ->get_atree->get_attr( "giza_scores/backvalue" );
         next if ! $backscore;
+
+        $therescore = max( $ZERO, $therescore );
+        $backscore = max( $ZERO, $backscore );
 
         my $score = log( $therescore ) / @cs + log( $backscore ) / @en;
         $self->add_feature( $bundle, "word_alignment_score="
