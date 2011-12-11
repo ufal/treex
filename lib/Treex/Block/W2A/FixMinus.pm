@@ -16,14 +16,14 @@ sub process_atree {
     my $i = 0;
     while ( $i < @anodes ) {
 
-        log_info('CURRENT: ' . $current );
-        log_info('PAST :' . $past);
+        #log_info('CURRENT: ' . $current );
+        #log_info('PAST :' . $past);
 
         log_info(($anodes[$i]->form eq '-') . '+' . ($current =~ m/^-[0-9]+([,.][0-9]+)?/) . '+' . ($past !~ m/[0-9]$/));
 
         if ( $anodes[$i]->form eq '-' && $current =~ m/^-[0-9]+([,.][0-9]+)?/ && $past =~ m/\s$/ && $past !~ m/[0-9]\s*$/ ) {
             
-            log_info('FIRED');
+            #log_info('FIRED');
             
             $anodes[ $i + 1 ]->set_form( '-' . $anodes[ $i + 1 ]->form );
 
@@ -36,7 +36,12 @@ sub process_atree {
         }
         
         my $form = $anodes[$i]->form;
-        $current = substr( $current, length($form) ); 
+        if ( $form =~ m/^(``|''|--)$/ && $current =~ m/["“”«»—"]/ ){
+            $current = substr( $current, 1 );
+        }
+        else {
+            $current = substr( $current, length($form) );
+        } 
         $current =~ s/^(\s*)//;
         $past .= $form . $1;
         ++$i;
