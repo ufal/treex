@@ -109,6 +109,13 @@ has guess_nested => (
     documentation => 'try to distinguish nested coordinations from multi-conjunct coordinations',
 );
 
+has try_projective_commas => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'try to not introduce new non-projectivities for commas that are not separating conjuncts (but are in CS)',
+);
+
 sub BUILD {
     my ( $self, $args ) = @_;
 
@@ -567,20 +574,26 @@ sub transform_coord {
         }
     }
 
-    # commas that were not separating conjunct should remain on the same position
-    # which means if they were below (old) head they shoulb be below (new) head.
-    foreach my $noncomma (@noncommas) {
-        my @would_be_nonproj;
-        if ( $noncomma->parent == $old_head ) {
-            
-            # Don't rehang $noncomma if it would result in new non-projectivities 
-            if ($old_head->precedes($noncomma)){
-                @would_be_nonproj = grep {$noncomma->precedes($_)} $old_head->get_children();
-            } else {
-                @would_be_nonproj = grep {$_->precedes($noncomma)} $old_head->get_children();
-            }
-            if (!@would_be_nonproj){
-                $self->rehang( $noncomma, $new_head );
+    # Commas that were not separating conjunct should remain on the same position
+    # (which means if they were below (old) head they should be below (new) head)
+    # if they would otherwise result in non-projectivities.
+    if ( $self->try_projective_commas ) {
+        foreach my $noncomma (@noncommas) {
+            my @would_be_nonproj;
+
+            # If it is now non-projective
+            if ( $noncomma->parent == $old_head && $noncomma->is_nonprojective() ) {
+
+                # try to rehang it
+                $noncomma->set_parent($new_head);
+                # and if it is non-projective, then log the change, otherwise revert it
+                if ( $noncomma->is_nonprojective() ) {
+                    $noncomma->set_parent($old_head);
+                    $self->rehang( $noncomma, $new_head );
+                }
+                else {
+                    $noncomma->set_parent($old_head);
+                }
             }
         }
     }
