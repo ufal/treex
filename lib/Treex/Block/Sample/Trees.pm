@@ -2,6 +2,9 @@ package Treex::Block::Sample::Trees;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Parallel::MessageBoard;
+use Graph;
+use Graph::Directed;
+use Graph::ChuLiuEdmonds;
 
 extends 'Treex::Block::Sample::Base';
 
@@ -9,9 +12,11 @@ has iterations => (is => 'rw', isa => 'Int', default => 10);
 has other_languages => ( is => 'rw', isa => 'Str', default => '');
 has alpha => (is => 'rw', default => 0.01);
 has beta => (is => 'rw', default => 0.01);
-has gamma => (is => 'rw', default => 0.01);
+has gamma => (is => 'rw', default => 1000);
 has punctuation_penalty => (is => 'rw', default => 0.01);
 has alignment_penalty => (is => 'rw', default => 1);
+has nonprojectivity_penalty => (is => 'rw', default => 0.5);
+has deletability_penalty => (is => 'rw', default => '0.1');
 has priors_from => (is => 'rw', isa => 'Str', default => '');
 has temperature => (is => 'rw', isa => 'Num', default => 1);
 has _alignment => (is => 'rw', default => sub { my %hash; return \%hash; });
@@ -19,6 +24,9 @@ has _count => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _diff_count => (is => 'rw', default => sub { my %hash; return \%hash; });
 has _other_languages => (is => 'rw');
 has _prior_probabilities => (is => 'rw');
+has _deletability => (is => 'rw');
+has deletability_from => (is => 'rw', isa => 'Str', default => '');
+has _dependency_counter => (is => 'rw', default => sub { my %hash; return \%hash; });
 
 
 sub BUILD {
@@ -31,8 +39,20 @@ sub BUILD {
             my ($label, $prior) = split /\t/;
             $priors{$label} = $prior;
         }
+        close PRIORS;
     }
     $self->_set_prior_probabilities(\%priors);
+    my %del = ();
+    if ($self->deletability_from) {
+        open (DELETABILITY, "<:utf8", $self->deletability_from) or log_fatal "File ".$self->deletability_from." doesn't exsist.";
+        while (<DELETABILITY>) {
+            chomp;
+            my ($tag, $score) = split /\t/;
+            $del{$tag} = $score;
+        }
+        close DELETABILITY;
+    }
+    $self->_set_deletability(\%del);
 }
 
 
@@ -106,35 +126,54 @@ sub make_change {
     my $distance = $parent->is_root ? 50 : $node->ord - $parent->ord;
     my $edge = "$language $tag $parent_tag $direction";
     my $child_dist = "$tag $distance";
+    my $non_projective = 0;
+    my $wrong_order = 0;
+    if (defined $self->_deletability->{$tag} && defined $self->_deletability->{$parent_tag} && $self->_deletability->{$parent_tag} > $self->_deletability->{$tag}) {
+        $wrong_order = 1;
+    }
+#    if (!$parent->is_root) {
+#        my $descendants_between = 0;
+#        foreach my $n ($node->get_descendants) {
+#            if (   ($direction eq 'L' && $n->ord > $node->ord && $n->ord < $parent->ord)
+#                || ($direction eq 'R' && $n->ord < $node->ord && $n->ord > $parent->ord)) {
+#                    $descendants_between++;
+#            }
+#        }
+#        $non_projective = 1 if $descendants_between < abs($node->ord - $parent->ord) - 1;
+#    }
     my $diff_logprob = 0;
     if ($type eq 'del') {
-        $diff_logprob -= log($self->get_count('ctag-ptag-dir', $edge) - 1 + $self->alpha) - log($self->get_count('ptag', "$parent_tag") - 1 + $self->alpha*60);
+        $diff_logprob -= log($self->get_count('ctag-ptag-dir', $edge) - 1 + $self->alpha);# - log($self->get_count('ptag', "$parent_tag") - 1 + $self->alpha*60);
 #        $diff_logprob -= log($self->get_count('ctag-dist', $child_dist) - 1 + $self->beta);
-        $diff_logprob -= log($self->get_count('cform-pform', "$form $parent_form") - 1 + $self->gamma) - log($self->get_count('pform', "$parent_form") - 1 + $self->gamma*10000);
+#        $diff_logprob -= log($self->get_count('cform-pform', "$form $parent_form") - 1 + $self->gamma) - log($self->get_count('pform', "$parent_form") - 1 + $self->gamma*10000);
         $diff_logprob -= log( 1 / (abs($distance)**2));
+        $diff_logprob -= log($self->deletability_penalty) if $wrong_order;
         $diff_logprob -= log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
-        $diff_logprob -= log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
+#        $diff_logprob -= log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
+#        $diff_logprob -= log($self->nonprojectivity_penalty) if $non_projective;
         if ($change_counts) {
             $self->increase_count('ctag-ptag-dir', $edge, -1);
 #            $self->increase_count('ctag-dist', $child_dist, -1);
-            $self->increase_count('cform-pform', "$form $parent_form", -1);
-            $self->increase_count('pform', "$parent_form", -1);
-            $self->increase_count('ptag', "$parent_tag", -1);
+#            $self->increase_count('cform-pform', "$form $parent_form", -1);
+#            $self->increase_count('pform', "$parent_form", -1);
+#            $self->increase_count('ptag', "$parent_tag", -1);
         }
     }
     elsif ($type eq 'ins') {
-        $diff_logprob += log($self->get_count('ctag-ptag-dir', $edge) + $self->alpha) - log($self->get_count('ptag', "$parent_tag") + $self->alpha*60);
+        $diff_logprob += log($self->get_count('ctag-ptag-dir', $edge) + $self->alpha);# - log($self->get_count('ptag', "$parent_tag") + $self->alpha*60);
 #        $diff_logprob += log($self->get_count('ctag-dist', $child_dist) + $self->beta);
-        $diff_logprob += log($self->get_count('cform-pform', "$form $parent_form") + $self->gamma) - log($self->get_count('pform', "$parent_form") + $self->gamma*10000);
+#        $diff_logprob += log($self->get_count('cform-pform', "$form $parent_form") + $self->gamma) - log($self->get_count('pform', "$parent_form") + $self->gamma*10000);
         $diff_logprob += log( 1 / (abs($distance)**2));
+        $diff_logprob += log($self->deletability_penalty) if $wrong_order;
         $diff_logprob += log($self->punctuation_penalty) if ($parent->form || 'undef') =~ /^[\.,!\?;\-]$/;
-        $diff_logprob += log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
+#        $diff_logprob += log($self->alignment_penalty) if !$self->aligned_edge($node, $node->get_parent);
+#        $diff_logprob += log($self->nonprojectivity_penalty) if $non_projective;
         if ($change_counts) {
             $self->increase_count('ctag-ptag-dir', $edge, +1);
 #            $self->increase_count('ctag-dist', $child_dist, +1);
-            $self->increase_count('cform-pform', "$form $parent_form", +1);
-            $self->increase_count('pform', "$parent_form", +1);
-            $self->increase_count('ptag', "$parent_tag", +1);
+#            $self->increase_count('cform-pform', "$form $parent_form", +1);
+#            $self->increase_count('pform', "$parent_form", +1);
+#            $self->increase_count('ptag', "$parent_tag", +1);
         }
     }
     return $diff_logprob;
@@ -260,25 +299,74 @@ sub process_documents {
                             $logprob += $logprob_change;
                         }
                         $node->set_parent($chosen_parent) if (!defined $chosen_from_cycle || $chosen_from_cycle ne $node);
+                        $self->collect_counts($documents_rf) if rand() < 0.01 && $iteration > 5;
                     }
                 }
             }
         }
         log_info "Iteration $iteration, logprob $logprob, temperature ".$self->temperature;
         $self->update_counts if $self->_parallel_execution;
-        $self->decrease_temperature();
+#        $self->decrease_temperature();
     }
 
     # compute counts and logprob
     $logprob = $self->compute_counts_and_logprob($documents_rf);
     log_info "Final logprob: $logprob";
 
+    # run maximum spanning tree algorithm
+    log_info "Computing maximum spanning trees.";
+    $self->run_mst($documents_rf);
+
 
     # save documents # TEMPORARY HACK !!!
     foreach my $document (@$documents_rf) {
-        $document->save($document->full_filename . '.treex');
+        $document->save($document->full_filename . '.treex.gz');
     }
 }
+
+
+sub collect_counts {
+    my ($self, $documents_rf) = @_;
+    my $dep_counter = $self->_dependency_counter;
+    foreach my $document (@$documents_rf) {
+        foreach my $bundle ($document->get_bundles) {
+            foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
+#                my $label = $bundle->id." ".$node->ord." ".$node->get_parent->ord;
+#print STDERR "$label ";
+                $dep_counter->{$node}{$node->get_parent}++;
+            }
+        }
+    }
+}
+
+
+
+sub run_mst {
+    my ($self, $documents_rf) = @_;
+    my $dep_counter = $self->_dependency_counter;
+    foreach my $document (@$documents_rf) {
+        foreach my $bundle ($document->get_bundles) {
+            my $aroot = $bundle->get_tree($self->language, 'a', $self->selector);
+            my @nodes = ($aroot, $aroot->get_descendants);
+            my $graph = Graph::Directed->new( vertices => \@nodes );
+            foreach my $n ( 1 .. $#nodes ) {
+                $nodes[$n]->set_parent($aroot);
+                foreach my $p ( 0 .. $#nodes) {
+                    next if $n == $p;
+#                    my $weight = -($dep_counter->{$bundle->id." ".$nodes[$n]->ord." ".$nodes[$p]->ord} || 0);
+                    my $weight = -($dep_counter->{$nodes[$n]}{$nodes[$p]} || 0);
+#                    print "$weight ";
+                    $graph->add_weighted_edge($p, $n, $weight);
+                }
+            }
+            my $mst = $graph->MST_ChuLiuEdmonds($graph);
+            foreach my $edge ($mst->edges) {
+                $nodes[$edge->[1]]->set_parent($nodes[$edge->[0]]);
+            }
+        }
+    }
+}
+
 
 1;
 
