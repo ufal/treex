@@ -26,8 +26,10 @@ has id => (
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
 
-    if ( (not defined $arg_ref or not defined $arg_ref->{_called_from_core_})
-             and not $Treex::Core::Config::running_in_tred) {
+    if (( not defined $arg_ref or not defined $arg_ref->{_called_from_core_} )
+        and not $Treex::Core::Config::running_in_tred
+        )
+    {
         log_fatal 'Because of node indexing, no nodes can be created outside of documents. '
             . 'You have to use $zone->create_tree(...) or $node->create_child() '
             . 'instead of Treex::Core::Node...->new().';
@@ -312,7 +314,7 @@ sub set_parent {
 
     # We cannot detach a node by setting an undefined parent. The if statement below will die.
     # Let's inform the user where the bad call is.
-    log_fatal('Cannot attach the node ' . $self->id . ' to an undefined parent') if ( !defined($parent) );
+    log_fatal( 'Cannot attach the node ' . $self->id . ' to an undefined parent' ) if ( !defined($parent) );
     if ( $self == $parent || $CHECK_FOR_CYCLES && $parent->is_descendant_of($self) ) {
         my $id   = $self->id;
         my $p_id = $parent->id;
@@ -488,9 +490,24 @@ sub get_aligned_nodes {
     return ( undef, undef );
 }
 
+sub get_aligned_nodes_of_type {
+    my ( $self, $type_regex ) = @_;
+    my @nodes;
+    my ( $n_rf, $t_rf ) = $self->get_aligned_nodes();
+    return if !$n_rf;
+    my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
+    while ( my ( $node, $type ) = $iterator->() ) {
+        if ( $type =~ /$type_regex/ ) {
+            push @nodes, $node;
+        }
+    }
+    return @nodes;
+}
+
 sub is_aligned_to {
     my ( $self, $node, $type ) = @_;
-    return grep { $_ eq $node } $self->get_aligned_nodes( $node, $type ) ? 1 : 0;
+    log_fatal 'Incorrect number of parameters' if @_ != 3;
+    return any { $_ eq $node } $self->get_aligned_nodes_of_type( $node, $type ) ? 1 : 0;
 }
 
 sub delete_aligned_node {
@@ -498,8 +515,10 @@ sub delete_aligned_node {
     my $links_rf = $self->get_attr('alignment');
     my @links    = ();
     if ($links_rf) {
-        @links = grep { $_->{'counterpart.rf'} ne $node->id 
-            || (defined($type) && defined($_->{'type'}) && $_->{'type'} ne $type) } 
+        @links = grep {
+            $_->{'counterpart.rf'} ne $node->id
+                || ( defined($type) && defined( $_->{'type'} ) && $_->{'type'} ne $type )
+            }
             @$links_rf;
     }
     $self->set_attr( 'alignment', \@links );
@@ -527,7 +546,6 @@ sub get_depth {
     }
     return $depth;
 }
-
 
 # This is called from $node->remove()
 # so it must be defined in this class,
@@ -964,7 +982,7 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =head2 PML-related methods
 
-=over 4
+=over
 
 =item my $type = $node->get_pml_type_name;
 
@@ -977,9 +995,11 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 =item add_aligned_node
 
-=item get_aligned_nodes
+=item my ($nodes_rf, $types_rf) = $node->get_aligned_nodes();
 
 Returns an array containing two array references. The first array contains the nodes aligned to this node, the second array contains types of the links.
+
+=item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type);
 
 =item delete_aligned_node
 
