@@ -4,6 +4,7 @@ use warnings;
 
 sub _node_and_parent {
     my ( $tnode, $prefix ) = @_;
+    return if $tnode->is_root();
 
     # features from the given tnode
     my %feats = (
