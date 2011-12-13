@@ -7,8 +7,8 @@ use Treex::Tool::Parser::MST;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'conll_mcd_order2_0.01.model' );
 has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
-
-my $parser;
+has _parser => (is=>rw);
+my %loaded_models;
 
 #TODO: loading each model only once should be handled in different way
 
@@ -29,8 +29,8 @@ sub BUILD {
 
     my $model_path = $model_dir . '/' . $self->model;
 
-    if ( !$parser ) {
-        $parser = Treex::Tool::Parser::MST->new(
+    if (!$loaded_models{$model_path}){
+         my $parser = Treex::Tool::Parser::MST->new(
             {   model      => $model_path,
                 memory     => $model_memory,
                 order      => 2,
@@ -38,7 +38,10 @@ sub BUILD {
                 robust     => $self->robust,
             }
         );
+        $loaded_models{$model_path} = $parser;
     }
+    $self->_set_parser($loaded_models{$model_path});
+
     return;
 }
 
@@ -49,7 +52,7 @@ sub parse_chunk {
     my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
     my @tags  = map { $_->tag } @a_nodes;
 
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@tags );
+    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
