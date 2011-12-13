@@ -7,7 +7,7 @@ use Treex::Tool::Parser::MST;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'conll_mcd_order2_0.01.model' );
 has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
-has _parser => (is=>rw);
+has _parser => (is=>'rw');
 my %loaded_models;
 
 #TODO: loading each model only once should be handled in different way
