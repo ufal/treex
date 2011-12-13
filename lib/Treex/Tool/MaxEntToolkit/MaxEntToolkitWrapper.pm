@@ -106,7 +106,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::MaxEntToolkit::MaxEntToolkitWrapper
+Treex::Tool::MaxEntToolkit::MaxEntToolkitWrapper
 
 =head1 SYNOPSIS
 
