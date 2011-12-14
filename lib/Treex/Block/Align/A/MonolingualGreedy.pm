@@ -25,7 +25,7 @@ has '+language' => ( required => 1 );
 sub BUILD {
     my ($self) = @_;
     if ( $self->language eq $self->to_language && $self->selector eq $self->to_selector ) {
-        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+        log_fatal("Can't align a zone to itself.");
     }
 }
 
