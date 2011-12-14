@@ -70,7 +70,7 @@ has from_family => (
 
 has from_head => (
     is            => 'ro',
-    isa           => enum( [qw(left right nearest autodetect)] ),
+    isa           => enum( [qw(left right mixed autodetect)] ),
     default       => 'autodetect',
     writer        => '_set_from_head',
     documentation => 'input style head',
