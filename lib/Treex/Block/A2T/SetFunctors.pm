@@ -15,7 +15,7 @@ override '_write_input_data' => sub {
 
     my ( $self, $document, $file ) = @_;
 
-    # print out data in pseudo-conll format for the ml-process program
+    # print out data in ARFF format for the ML-Process program
     log_info( "Writing the ARFF data to " . $file );
     my $arff_writer = Treex::Block::Write::Arff->new(
         {

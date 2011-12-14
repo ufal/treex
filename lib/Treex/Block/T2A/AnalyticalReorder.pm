@@ -73,7 +73,7 @@ sub process_ttree {
 }
 
 # Return the ord property of the lexical a-node associated to this t-node, or -1 if there's no such a-node
-# If the subtree_parameter is set, return the order of the leftmost ('l') or rightmost ('r') child on the a-layer
+# If the subtree_dir parameter is set, return the order of the leftmost ('l') or rightmost ('r') child on the a-layer
 sub _get_a_lex_ord {
 
     my ( $self, $node, $subtree_dir ) = @_;

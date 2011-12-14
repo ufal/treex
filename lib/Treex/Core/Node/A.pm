@@ -187,7 +187,7 @@ sub copy_atree
         # TODO: As a workaround, we list the attributes here directly.
         foreach my $attribute (
             'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
-            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier',
+            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
             )
         {
             my $value = $child0->get_attr($attribute);
