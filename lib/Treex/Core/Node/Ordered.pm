@@ -201,54 +201,27 @@ sub _shift_to_node {
     return;
 }
 
-#------------------------------------------------------------------------------
-# Tells whether the node is attached to its parent nonprojectively, i.e. there
-# is at least one node between this node and its parent that is not dominated
-# by the parent.
-#------------------------------------------------------------------------------
-sub is_nonprojective
-{
-    log_fatal('Incorrect number of arguments') if ( scalar(@_) != 1 );
-    my $self   = shift;
-    my $parent = $self->parent();
+sub is_nonprojective {
+    my ($self) = @_;
 
-    # A node that does not have a parent cannot be nonprojective.
-    return 0 if ( !$parent );
+    # Root and its children are always projective
+    my $parent = $self->get_parent();
+    return 0 if !$parent || $parent->is_root();
 
-    # Get a hash of all descendants of the parent.
-    my @pdesc = $parent->get_descendants( { add_self => 1 } );
-    my %pdesc;
-    map { $pdesc{$_}++ } (@pdesc);
-
-    # Figure out whether the node is to the left or to the right from its parent.
-    my $nord = $self->ord();
-    my $pord = $parent->ord();
-    my ( $x, $y );
-    if ( $pord > $nord )
-    {
-        $x = $self;
-        $y = $parent;
+    # Edges between neighbouring nodes are always projective.
+    # Check it now to make it a bit faster.
+    my ( $ordA, $ordB ) = ( $self->ord, $parent->ord );
+    if ( $ordA > $ordB ) {
+        ( $ordA, $ordB ) = ( $ordB, $ordA );
     }
-    else
-    {
-        $x = $parent;
-        $y = $self;
-    }
+    my $distance = $ordB - $ordA;
+    return 0 if $distance == 1;
 
-    # Get the ordered list of all nodes between $x and $y.
-    my $xord    = $x->ord();
-    my $yord    = $y->ord();
-    my @between = grep { $_->ord() > $xord && $_->ord() < $yord } ( $parent->root()->get_descendants( { ordered => 1 } ) );
+    # Get all the descendants of $parent that are in the span of the edge.
+    my @span = grep { $_->ord > $ordA && $_->ord < $ordB } $parent->get_descendants();
 
-    # This node is nonprojective if @between contains anything that is not in %pdesc.
-    foreach my $b (@between)
-    {
-        if ( !$pdesc{$b} )
-        {
-            return 1;
-        }
-    }
-    return 0;
+    # For projective edges @span must include all the nodes between $parent and $self.
+    return @span == $distance - 1;
 }
 
 1;
