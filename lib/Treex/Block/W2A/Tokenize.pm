@@ -19,7 +19,7 @@ override 'tokenize_sentence' => sub {
 
     # short hyphen is separated if it is followed or preceeded by non-alphanuneric character and is not a part of --, or a unary minus
     $sentence =~ s/([^\-\w])\-([^\-0-9])/$1 - $2/g;
-    $sentence =~ s/([0-9]\s*)\-([0-9])/$1 - $2/g; # followed and preceded by a number - not a unary minus
+    $sentence =~ s/([0-9]\s+)\-([0-9])/$1 - $2/g; # preceded by a number - not a unary minus
     $sentence =~ s/([^\-])\-([^\-\w])/$1 - $2/g;
     
     # plus is separated everywhere, except at the end of a word (separated by a space) and as unary plus

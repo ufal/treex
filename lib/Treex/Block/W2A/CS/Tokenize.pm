@@ -16,6 +16,9 @@ override 'tokenize_sentence' => sub {
 
     # Czech conditional enclitic "-li" should be treated as a separate token
     $sentence =~ s/ (\p{Letter}+)-(li|LI) / $1 - $2 /g;
+    
+    # Number ranges are considered 3 tokens in PDT (and thus learned to be treated so by parsers)
+    $sentence =~ s/([0-9])\-([0-9])/$1 - $2/g;
 
     # clean out extra spaces
     $sentence =~ s/^\s*//g;
