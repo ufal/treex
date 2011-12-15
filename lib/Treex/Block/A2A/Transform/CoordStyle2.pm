@@ -623,7 +623,7 @@ sub transform_coord {
 # Is the given node a coordination separator such as comma or semicolon?
 sub is_comma {
     my ( $self, $node ) = @_;
-    return $node->form =~ /^[,;]$/;
+    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier;
 }
 
 1;
