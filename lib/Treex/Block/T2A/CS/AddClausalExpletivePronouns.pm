@@ -10,8 +10,9 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     foreach my $subconj_ze ( grep { ( $_->form || '' ) eq 'že' } $a_root->get_descendants() ) {
-        my $parent    = $subconj_ze->get_parent;
-        my $expletive = $verb2expletive{ $parent->lemma };
+        my $parent    = $subconj_ze->get_parent; 
+        my $expletive = $verb2expletive{ $parent->lemma || '' }; # (lemma is undefined if parent is root)
+        
         if ( $expletive and $parent->precedes($subconj_ze) ) {
 
             foreach my $form ( split /_/, $expletive ) {
