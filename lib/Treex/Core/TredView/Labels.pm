@@ -203,7 +203,12 @@ sub _anode_labels {
     if ($par) {
         $line1 = $self->_colors->get( 'parenthesis', 1 );
     }
-    $line1 .= $node->form;
+    if ( $node->form ){
+        $line1 .= $node->form;
+    }
+    elsif ( $node->lemma ){
+        $line1 .= $self->_colors->get( 'error', 1 ) . $node->lemma;
+    }
 
     my $edge_label = $node->afun || $node->conll_deprel;
     my $color = $edge_label && $edge_label ne 'NR' ? $self->_colors->get( 'afun', 1 ) : $self->_colors->get( 'error', 1 );
@@ -278,7 +283,7 @@ sub _tnode_labels {
     }
     if (@a_nodes) {
         @a_nodes = sort { $a->{ord} <=> $b->{ord} } @a_nodes;
-        @a_nodes = map { ( $_->{type} eq 'lex' ? $self->_colors->get( 'lex', 1 ) : $self->_colors->get( 'aux', 1 ) ) . $_->{form} } @a_nodes;
+        @a_nodes = map { ( $_->{type} eq 'lex' ? $self->_colors->get( 'lex', 1 ) : $self->_colors->get( 'aux', 1 ) ) . ( $_->{form} || '' ) } @a_nodes;
         $line3_1 = join " ", @a_nodes;
     }
 
