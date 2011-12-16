@@ -33,6 +33,7 @@ sub process_tnode {
     $new_node->set_form( $anode->form );
     $new_node->set_attr( 'morphcat/pos',    'V' );
     $new_node->set_attr( 'morphcat/subpos', 'f' );
+    $new_node->set_afun( 'Obj' );
 
     # negace bude orisek, zatim zustava u vyznamoveho
     $new_node->set_attr( 'morphcat/negation', 'A' );

@@ -9,35 +9,39 @@ extends 'Treex::Tool::ML::MLProcessBlock';
 has '+model_dir'     => ( default => 'data/models/formemes/cs/' );
 has '+plan_template' => ( default => 'plan.template' );
 
+has 'features_config' => ( isa => 'Str', is => 'ro', default => 'features.yml' );
+
+has '+model_files' => ( builder => '_build_model_files', lazy_build => 1 );
+
 has '+plan_vars' => (
     default => sub {
         return {
             'MODELS'  => 'model-**.dat',
-            'FF-INFO' => 'ff-data.dat',
+            'FF-INFO' => 'ff.dat',
         };
         }
 );
 
-# TODO plan.template by se měl taky psát do model_files !!!
-has '+model_files' => (
-    default => sub {
-        return [
-            'ff-data.dat',    # filtering information
-            map { 'model-' . $_ . '.dat' }    # models for individual functors
-                (
-                '[3f][3f][3f]', '[5b]OTHER[5d]',                                      # filename-encoded '???' and '[OTHER]'
-                'ACMP', 'ACT', 'ADDR', 'ADVS', 'AIM', 'APP', 'APPS', 'ATT', 'AUTH',
-                'BEN',  'CAUS', 'CM',   'CNCS', 'COMPL', 'COND',
-                'CONJ', 'CPHR', 'CPR',  'CRIT', 'CSQ',   'DENOM', 'DIFF', 'DIR1',
-                'DIR2', 'DIR3', 'DISJ', 'DPHR', 'EFF',   'EXT', 'FPHR', 'GRAD',
-                'ID',   'LOC',  'MANN', 'MAT',  'MEANS', 'MOD', 'OPER', 'ORIG',
-                'PAR',  'PAT',  'PREC', 'PRED', 'REAS',  'REG', 'RESL', 'RESTR',
-                'RHEM', 'RSTR', 'SUBS', 'TFHL', 'THL',   'THO', 'TPAR', 'TSIN',
-                'TTILL', 'TWHEN',
-                )
-            ]
-        }
-);
+sub _build_model_files {
+    my ($self) = @_;
+    return [
+        'ff.dat',
+        $self->plan_template,
+        $self->features_config,
+        map { 'model-' . $_ . '.dat' }    # models for individual functors
+            (
+            '[3f][3f][3f]', '[5b]OTHER[5d]',                                      # filename-encoded '???' and '[OTHER]'
+            'ACMP', 'ACT', 'ADDR', 'ADVS', 'AIM', 'APP', 'APPS', 'ATT', 'AUTH',
+            'BEN',  'CAUS', 'CM',   'CNCS', 'COMPL', 'COND',
+            'CONJ', 'CPHR', 'CPR',  'CRIT', 'CSQ',   'DENOM', 'DIFF', 'DIR1',
+            'DIR2', 'DIR3', 'DISJ', 'DPHR', 'EFF',   'EXT', 'FPHR', 'GRAD',
+            'ID',   'LOC',  'MANN', 'MAT',  'MEANS', 'MOD', 'OPER', 'ORIG',
+            'PAR',  'PAT',  'PREC', 'PRED', 'REG', 'RESL', 'RESTR',
+            'RHEM', 'RSTR', 'SUBS', 'TFHL', 'THL',   'THO', 'TPAR', 'TSIN',
+            'TTILL', 'TWHEN',
+            )
+    ];
+}
 
 has '+class_name' => ( default => 'formeme' );
 
@@ -45,17 +49,19 @@ override '_write_input_data' => sub {
 
     my ( $self, $document, $file ) = @_;
 
+    # print out data in ARFF format for the ML-Process program
     log_info( "Writing the ARFF data to " . $file );
     my $arff_writer = Treex::Block::Write::Arff->new(
         {
             to          => $file->filename,
             language    => $self->language,
             selector    => $self->selector,
+            config_file => $self->model_dir . $self->features_config,
             layer       => 't',
-            attributes  => 't_lemma functor head formeme gram/sempos',
-            force_types => 'formeme: STRING'
+            clobber     => 1
         }
     );
+
     $arff_writer->process_document($document);
     return;
 };

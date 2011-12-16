@@ -241,7 +241,10 @@ sub _get_data {
         if ( $attrib eq 'address' ) {
             return $node->get_address();
         }
-
+        # return the actual node (for attribute modifiers)
+        elsif ( $attrib eq 'node' ){
+            return $node;
+        }
         # plain attributes
         else {
             return $node->get_attr($attrib);

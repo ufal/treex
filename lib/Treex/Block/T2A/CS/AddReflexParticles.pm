@@ -6,11 +6,15 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     my $reflexive;
+    my $afun;
+
     if ( $t_node->t_lemma =~ /_(s[ie])$/ ) {
         $reflexive = $1;
+        $afun      = 'AuxT';
     }
     elsif ( ( $t_node->voice || $t_node->gram_diathesis || '' ) =~ m/^(reflexive_diathesis|deagent)$/ ) {
         $reflexive = 'se';
+        $afun      = 'AuxR';
     }
     else {
         return;
@@ -21,7 +25,7 @@ sub process_tnode {
     $refl_node->reset_morphcat();
     $refl_node->set_form($reflexive);
     $refl_node->set_lemma($reflexive);
-    $refl_node->set_afun('AuxT');
+    $refl_node->set_afun($afun);
     $refl_node->set_attr( 'morphcat/pos',    'P' );
     $refl_node->set_attr( 'morphcat/subpos', '7' );
     $refl_node->set_attr( 'morphcat/number', 'X' );

@@ -40,6 +40,7 @@ sub process_tnode {
 
     $anode->set_lemma('být');
     $anode->set_attr( 'morphcat/tense', 'F' );
+    $anode->set_afun( 'AuxV' );
 
     $new_node->set_attr( 'morphcat/subpos', 'f' );    # 'bude videt'
 

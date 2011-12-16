@@ -144,7 +144,7 @@ sub load_arff {
     while ( my $current_line = <$io> )
     {
         $current_line =~ s/^\s+//;
-        $current_line =~ s/\s*\r?\n?//;
+        $current_line =~ s/\s*\r?\n?$//;
 
         #Check for comments
         if ( $current_line =~ /^\s*%/i )
@@ -245,12 +245,11 @@ sub _parse_line {
     }
     else {                                                           # dense instance
         my $values_num = 0;
-
         $line .= ',';
         while ( $line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ) {
 
             my $field = $1;
-
+            
             if ( $field eq '?' ) {                                   # undefined value, leave as is
             }
             elsif ( $field =~ m/^['"].*['"]$/ ) {                    # quoted value

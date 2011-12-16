@@ -52,7 +52,7 @@ sub process_node {
     return if !defined $cs_phrase;
 
     $cs_tnode->set_t_lemma($cs_phrase);
-    $cs_tnode->set_formeme('phrase:');
+    $cs_tnode->set_formeme('x');
     $cs_tnode->set_t_lemma_origin('rule-Override_pp_with_phrase_translation');
     $cs_tnode->set_formeme_origin('rule-Override_pp_with_phrase_translation');
     foreach my $descendant ( $cs_tnode->get_descendants() ) {

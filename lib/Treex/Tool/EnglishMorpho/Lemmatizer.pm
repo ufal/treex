@@ -396,7 +396,7 @@ sci-fi -> sci-fus, Mitsubishi -> mitsubishus, Shanghai -> shanghaus,...
 
 =back
 
-=head1 AUTHO
+=head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 

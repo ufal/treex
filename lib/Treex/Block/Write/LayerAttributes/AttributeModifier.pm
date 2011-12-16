@@ -11,7 +11,7 @@ sub modify_all {
     my ( $self, @args ) = @_;
 
     # split the concatenated values of arguments (and retain undefined/space-only values)
-    @args = map { [ defined($_) && $_ =~ m/[^\s]/ ? split( / /, $_ ) : $_ ] } @args;
+    @args = map { [ defined($_) && $_ =~ m/(\s.*[^\s]|[^\s].*\s)/ ? split( / /, $_ ) : $_ ] } @args;
     my @ret_vals;
 
     # run the modifier on each arguments set

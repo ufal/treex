@@ -2,7 +2,7 @@ package Treex::Block::A2A::CopyAtree;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Block::Align::A::AlignSameSentence;
+use Treex::Block::Align::AlignSameSentence;
 
 extends 'Treex::Core::Block';
 
@@ -34,11 +34,12 @@ sub BUILD {
     # initialize alignment block if needed
     if ( $self->align ) {
         $self->_set_aligner(
-            Treex::Block::Align::A::AlignSameSentence->new(
+            Treex::Block::Align::AlignSameSentence->new(
                 language    => $self->language,
                 selector    => $self->selector,
                 to_selector => $self->source_selector,
-                to_language => $self->source_language
+                to_language => $self->source_language,
+                layer       => 'a'
                 )
         );
     }
