@@ -27,7 +27,7 @@ We will start traditionally with the "Hello, world!" example :-).
 
 The desired output was printed to STDOUT, but there are some info messages
 around printed to STDERR. To filter out these messages you can either use the
-C<--quite> option (C<-q>) or the standard redirection of STDERR.
+C<--quiet> option (C<-q>) or the standard redirection of STDERR.
 
   echo 'Hello, world!' | treex -q Read::Text language=en Write::Text language=en
   echo 'Hello, world!' | treex Read::Text language=en Write::Text language=en 2>/dev/null
@@ -43,7 +43,7 @@ and its value is C<en> (which is ISO 639-1 code for English).
 
 =item Why is the C<language> parameter needed?
 
-One Treex document can contain sentences in more language
+One Treex document can contain sentences in more languages
 (which is useful for task like word alignment or machine translation),
 so it is necessary to instruct each block on which language it should operate.
 

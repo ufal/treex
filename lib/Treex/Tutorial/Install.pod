@@ -16,7 +16,7 @@ and to do something interesting with Treex you need also some other modules.
 
 =head2 Downloading and Installing Treex from CPAN
 
-You can install Treex and its dependecies from shell using the C<cpan> tool:
+You can install Treex and its dependencies from shell using the C<cpan> tool:
 
     cpan Treex::Core
 
