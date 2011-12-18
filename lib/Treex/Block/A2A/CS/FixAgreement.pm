@@ -105,6 +105,7 @@ sub logfix2 {
     my ( $self, $node ) = @_;
     if ($node) {
         my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
+        return if !$dep;
 
         #new words pair
         if ( $gov->ord < $dep->ord ) {
@@ -198,10 +199,15 @@ sub regenerate_node {
 sub get_pair {
     my ( $self, $node ) = @_;
 
+    # "old"
     my $parent = $node->get_parent;
     while ( $node->is_member && !$parent->is_root() && $parent->afun =~ /^(Coord|Apos)$/ ) {
         $parent = $parent->get_parent();
     }
+
+    # "new"
+    # my $parent = $node->get_eparents({first_only => 1, or_topological => 1});
+    
     return undef if $parent->is_root;
 
     my $d_tag = $node->tag;
