@@ -61,6 +61,12 @@ sub get_echildren {
 }
 
 sub get_eparents {
+    # TODO: ignores most switches passed in $arg_ref, should end in something like:
+    # return $self->_process_switches( $arg_ref, @eparents );
+    # but it contains too many "hard" returns so it means too much work to correct it
+    # -> whoever wrote it this way (Martin?) deserves to go through the trouble of rewriting it! ;-)))
+    # (I needed to use get_eparents({first_only}) but for obvious reasons this didn't work...)
+
     my ( $self, $arg_ref ) = @_;
     if ( !defined $arg_ref ) {
         $arg_ref = {};
@@ -84,11 +90,11 @@ sub get_eparents {
     my $node = $self->_get_transitive_coap_root($arg_ref) || $self;
 
     # 2) Get the parent
-    $node = $node->get_parent() or return $self->_fallback_parent();
+    $node = $node->get_parent() or return $self->_fallback_parent($arg_ref);
 
     # 3) If it is a node to be dived, look above for the first non-dive ancestor.
     while ( $arg_ref->{dive}->($node) ) {
-        $node = $node->get_parent() or return $self->_fallback_parent();
+        $node = $node->get_parent() or return $self->_fallback_parent($arg_ref);
     }
 
     # If $node is not a head of a coordination/aposition,
@@ -99,8 +105,17 @@ sub get_eparents {
     # All effective parents (of $self) are shared modifiers
     # of the coordination rooted in $node.
     my @eff = $node->get_coap_members($arg_ref);
-    return @eff if @eff;
-    return $self->_fallback_parent();
+
+    # TODO: whoever corrects this sub as described above
+    # should delete this hack (I only needed to use first_only)
+    if ($arg_ref->{first_only}) {
+	return $eff[0] if @eff;
+    } else {
+	return @eff if @eff;
+    }
+    # end of hack
+
+    return $self->_fallback_parent($arg_ref);
 }
 
 # --- Utility methods for get_echildren and get_eparents
@@ -152,9 +167,11 @@ sub _can_apply_eff {
 }
 
 sub _fallback_parent {
-    my ($self) = @_;
+    my ($self, $arg_ref) = @_;
     my $id = $self->get_attr('id');
-    log_warn("The node $id has no effective parent, using the topological one.");
+    # I probably do not understand the "or_topological" switch well
+    # but I would expect not to get this warning if or_topological == 1
+    log_warn "The node $id has no effective parent, using the topological one." if (!$arg_ref || !$arg_ref->{or_topological});
     return $self->get_parent();
 }
 
