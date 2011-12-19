@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has distance_distribution => (is => 'rw', isa => 'Str', default => 'uniform');
+has single_root => (is => 'rw', isa => 'Bool', default => 0);
 
 sub process_atree {
     my ( $self, $root ) = @_;
@@ -15,11 +16,14 @@ sub process_atree {
     }
 
     my @all_nodes = ( $root, @todo );
+    my $root_used = 0;
+
     while (@todo) {
         my $child    = shift @todo;
-        my @possible = grep { $_ != $child && !$_->is_descendant_of($child) } @all_nodes;
+        my @possible = grep { $_ != $child && !$_->is_descendant_of($child) && ($_ ne $root || !$root_used) } @all_nodes;
         my $parent   = $self->find_parent( $child, @possible );
         $child->set_parent($parent);
+        $root_used = 1 if $parent eq $root && $self->single_root;
     }
     return;
 }
