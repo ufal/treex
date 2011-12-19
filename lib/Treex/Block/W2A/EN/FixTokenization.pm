@@ -8,6 +8,7 @@ my %MERGE_FOR = (
     'p . m .' => 'p. m.',
     'U . S .' => 'U. S.',
     'e . g .' => 'e. g.',
+    'i . e .' => 'i. e.',
     'Mrs .'   => 'Mrs.',
     'Mr .'    => 'Mr.',
     'Ms .'    => 'Ms.',
@@ -50,6 +51,8 @@ sub process_atree {
             #warn "merging $merged\n";
             $nodes[$i]->set_form($merged);
             $nodes[$i]->set_attr( 'gloss', 'merged' );
+            $nodes[$i]->set_no_space_after( $nodes[ $i + $length ]->no_space_after );
+            
             foreach my $node ( @nodes[ $i + 1 .. $i + $length ] ) {
                 $node->remove();
             }
