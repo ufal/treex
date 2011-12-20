@@ -14,6 +14,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{p. m.}      => 'hodin odpoledne|X',
     q{e. g.}      => 'například|D',
     q{U. S.}      => 'USA|N',
+    q{i. e.}      => 'tj.|D',
     q{Mrs.}       => 'paní|N',
     q{Mr.}        => 'pan|N',
     q{Ms.}        => 'slečna|N',
