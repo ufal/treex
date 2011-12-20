@@ -6,14 +6,19 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 use Treex::Tool::Parser::Malt;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'en_nivreeager.mco' );
-
+my %loaded_models;
 my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    if ( !$parser ) {
-        $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+    if (!$loaded_models{$self->model}){
+          if ( !$parser ) {
+	  $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+    	  }
+    	  $loaded_models{$self->model} = $parser;
     }
+    $parser=$loaded_models{$self->model};
+    	  
     return;
 }
 
