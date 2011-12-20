@@ -6,19 +6,20 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 use Treex::Tool::Parser::Malt;
 
 has 'model' => ( is => 'rw', isa => 'Str', default => 'en_nivreeager.mco' );
+has _parser => (is=>'rw');
 my %loaded_models;
-my $parser;
+#my $parser;
 
 sub BUILD {
     my ($self) = @_;
     if (!$loaded_models{$self->model}){
-          if ( !$parser ) {
-	  $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
-    	  }
+         # if ( !$parser ) {
+	 my $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+    	 # }
     	  $loaded_models{$self->model} = $parser;
     }
-    $parser=$loaded_models{$self->model};
-    	  
+    #$parser=$loaded_models{$self->model};
+    $self->_set_parser($loaded_models{$self->model});	  
     return;
 }
 
@@ -33,7 +34,7 @@ sub parse_chunk {
     my @features = map {'_'} @subpos;
 
     # parse sentence
-    my ( $parents_rf, $deprel_rf ) = $parser->parse( \@forms, \@lemmas, \@pos, \@subpos, \@features );
+    my ( $parents_rf, $deprel_rf ) = $self->_parser->parse( \@forms, \@lemmas, \@pos, \@subpos, \@features );
 
     # build a-tree
     my @roots = ();
