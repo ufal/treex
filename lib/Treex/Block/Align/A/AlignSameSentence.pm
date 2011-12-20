@@ -21,6 +21,44 @@ sub BUILD {
     }
 }
 
+sub _align_asymmetry {
+    my ($self, $tst_list, $ref_list) = @_;
+
+    foreach my $tst_node (@$tst_list) {
+        foreach my $ref_node (@$ref_list) {
+            $tst_node->add_aligned_node( $ref_node, 'monolingual');
+        }
+    }
+}
+
+sub _align_diff_tokenized {
+    my ($self, $tst_node, $ref_node, $tst_rest, $ref_rest) = @_;
+
+    my @tst_diff_toks = ($tst_node);
+    my @ref_diff_toks = ($ref_node);
+
+    my $tst_diff_len = length $tst_node->form;
+    my $ref_diff_len = length $ref_node->form;
+
+    $tst_node = shift @$tst_rest;
+    $ref_node = shift @$ref_rest;
+    
+    while ($tst_node->form ne $ref_node->form) {
+        if ($tst_diff_len > $ref_diff_len) {
+            $ref_diff_len += length $ref_node->form;
+            push @ref_diff_toks, $ref_node;
+            $ref_node = shift @$ref_rest;
+        } else {
+            $tst_diff_len += length $tst_node->form;
+            push @tst_diff_toks, $tst_node;
+            $tst_node = shift @$tst_rest;
+        }
+    }
+
+    $self->_align_asymmetry( \@tst_diff_toks, \@ref_diff_toks );
+    $tst_node->add_aligned_node( $ref_node, 'monolingual' );
+}
+
 sub process_zone {
 
     my ( $self, $tst_zone ) = @_;
@@ -28,10 +66,19 @@ sub process_zone {
     my @tst_nodes = $tst_zone->get_atree->get_descendants( { ordered => 1 } );
     my @ref_nodes = $ref_zone->get_atree->get_descendants( { ordered => 1 } );
 
-    log_fatal("The two zones do not have a corresponding number of nodes.") if ( @ref_nodes != @tst_nodes );
+    my $tst_i = 0;
+    my $ref_i = 0;
 
-    for ( my $i = 0; $i < @ref_nodes; ++$i ) {
-        $tst_nodes[$i]->add_aligned_node( $ref_nodes[$i] );
+    while (@tst_nodes && @ref_nodes) {
+        my $tst_node = shift @tst_nodes;
+        my $ref_node = shift @ref_nodes;
+        
+        if ($tst_node->form eq $ref_node->form) {
+            $tst_node->add_aligned_node( $ref_node, 'monolingual' );
+        }
+        else {
+            $self->_align_diff_tokenized( $tst_node, $ref_node, \@tst_nodes, \@ref_nodes );
+        }
     }
 }
 
@@ -48,6 +95,10 @@ Treex::Block::Align::A::AlignSameSentence
 =head1 DESCRIPTION
 
 Alignment of two analytical parses of the same sentence (i.e. containing the same list of tokens).
+A situation, when the sentences are tokenized in a different way, is fixed in a greedy way - it is
+searched for a first identical word pair and the words in differently tokenized chunks are aligned
+with each other. This can lead to quadratic time complexity (instead of linear) if the "same"
+sentences are totally different.
 
 =head1 PARAMETERS
 
@@ -69,6 +120,8 @@ The C<to_language> and C<to_selector> must differ from C<language> and C<selecto
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
