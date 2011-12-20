@@ -11,8 +11,11 @@ has 'decodetype' => ( is => 'rw', isa => 'Str', default => 'non-proj' );
 has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
 has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
+has _parser => (is=>'rw');
+my %loaded_models;
 
-my $parser;
+
+#my $parser;
 
 #TODO: loading each model only once should be handled in different way
 # !!! copied from EN::ParseMST
@@ -29,21 +32,25 @@ sub BUILD {
 
     my $DEFAULT_MODEL_MEMORY = '4000m';
     my $model_dir            = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
-
+   
     my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;
-
-#    my $model_path = $model_dir . '/' . $self->model;
-
-    if ( !$parser ) {
-        $parser = Treex::Tool::Parser::MST->new(
-            {   model      => $self->model,
+   
+    my $model_path = $model_dir . '/' . $self->model;
+    
+    if (!$loaded_models{$model_path}){
+       my $parser = Treex::Tool::Parser::MST->new(
+       {   	model      => $model_path,
                 memory     => $model_memory,
                 order      => $self->order,
                 decodetype => $self->decodetype,
                 robust     => $self->robust,
             }
-        );
-    }
+            
+            );
+	    $loaded_models{$model_path} = $parser;
+}
+$self->_set_parser($loaded_models{$model_path});
+
     return;
 }
 
@@ -54,7 +61,7 @@ sub parse_chunk {
     my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
     my @tags  = map { $_->get_attr($self->pos_attribute) } @a_nodes;
 
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@tags );
+    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
