@@ -108,6 +108,7 @@ A situation, when the sentences are tokenized in a different way, is fixed in a 
 searched for a first identical word pair and the words in differently tokenized chunks are aligned
 with each other. This can lead to quadratic time complexity (instead of linear) if the "same"
 sentences are totally different.
+However, in such situations L<Treex::Block::Align::A::MonolingualGreedy> might be better and faster.
 
 =head1 PARAMETERS
 
