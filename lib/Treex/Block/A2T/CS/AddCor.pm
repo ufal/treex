@@ -31,7 +31,7 @@ sub is_passive {
     ) ? 1 : 0;
 }
 
-sub is_byt_videt {
+sub in_byt_videt {
     my ($t_node) = @_;
     my ($epar) = $t_node->get_eparents( { or_topological => 1 } ) if ( $t_node );
     return ( $epar
@@ -87,7 +87,7 @@ sub get_cor_verb {
     my ( $depend_verb ) = @_;
     my ($cor_verb) = $depend_verb->get_eparents( { or_topological => 1 } );
     if ( $cor_verb and not $cor_verb->is_generated 
-        and not is_byt_videt($cor_verb, $depend_verb)
+        and not in_byt_videt($cor_verb, $depend_verb)
         and (($cor_verb->gram_sempos || "") eq "v" 
         or $cor_verb->functor eq "CPHR") ) {
         if ( $cor_verb->functor eq "CPHR" ) {
