@@ -306,10 +306,21 @@ sub set_simple_feature {
 
 # FEATURES COMPUTATION
 
+# array (ref) of all features of the edge,       
+# in the form of "feature_index:values_string" strings,
+# where feature_index is the index of the feature
+# (index in feature_codes, translatable via feature_indexes)
+# and values_string are values of corresponding simple features,
+# joined together by '|'
+# (if any of the simple features does not return a value, the whole feature
+# is not present)                                
+# TODO maybe not returning a value is still a valuable information -> include?
 sub get_all_features {
     my ( $self, $edge ) = @_;
 
     # try to get features from cache
+    # TODO: cache not used now and probably does not even work:
+    # check&fix or remove
     my $edge_signature;
     if ( $self->use_edge_features_cache ) {
         $edge_signature = $edge->signature();
@@ -355,6 +366,10 @@ sub get_all_features {
     return \@features;
 }
 
+# returns value of feature: simple feature values joined by '|'
+# or '' if any of them is undefined or empty;
+# for an array feature returns an array (ref) of these
+# or an empty array (ref)
 sub get_feature_value {
     my ( $self, $feature_index, $simple_feature_values ) = @_;
 
