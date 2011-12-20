@@ -10,14 +10,17 @@ has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
 has 'cpos_attribute' => ( is => 'rw', isa =>'Str', default => 'tag' );
 has 'feat_attribute' => ( is => 'rw', isa => 'Str', default => '_');
 has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
-
-my $parser;
+has _parser => (is=>'rw');
+my %loaded_models;
+#my $parser;
 
 sub BUILD {
     my ($self) = @_;
-    if ( !$parser ) {
-        $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+    if (!$loaded_models{$self->model}){
+    #if ( !$parser ) {
+      my  $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
     }
+    $self->_set_parser($loaded_models{$self->model});	
     return;
 }
 
@@ -32,7 +35,7 @@ sub parse_chunk {
     my @features = map { get_feat($_, $self->feat_attribute) } @a_nodes;
 
     # parse sentence
-    my ( $parents_rf, $deprel_rf ) = $parser->parse( \@forms, \@lemmas, \@cpos, \@pos, \@features );
+    my ( $parents_rf, $deprel_rf ) = $self->_parser->parse( \@forms, \@lemmas, \@cpos, \@pos, \@features );
 
     # build a-tree
     my @roots = ();
