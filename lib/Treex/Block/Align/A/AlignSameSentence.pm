@@ -43,7 +43,7 @@ sub _align_diff_tokenized {
     $tst_node = shift @$tst_rest;
     $ref_node = shift @$ref_rest;
     
-    while ($tst_node->form ne $ref_node->form) {
+    while ($tst_node && $ref_node && ($tst_node->form ne $ref_node->form)) {
         if ($tst_diff_len > $ref_diff_len) {
             $ref_diff_len += length $ref_node->form;
             push @ref_diff_toks, $ref_node;
@@ -55,8 +55,17 @@ sub _align_diff_tokenized {
         }
     }
 
+    if (!$tst_node && $ref_node) {
+        push @ref_diff_toks, ($ref_node, @$ref_rest);
+    }
+    if (!$ref_node && $tst_node) {
+        push @tst_diff_toks, ($tst_node, @$tst_rest);
+    }
+
     $self->_align_asymmetry( \@tst_diff_toks, \@ref_diff_toks );
-    $tst_node->add_aligned_node( $ref_node, 'monolingual' );
+    if ($tst_node && $ref_node) {
+        $tst_node->add_aligned_node( $ref_node, 'monolingual' );
+    }
 }
 
 sub process_zone {
