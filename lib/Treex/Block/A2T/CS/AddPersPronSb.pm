@@ -50,34 +50,45 @@ sub is_byt_videt {
 
 sub has_o_ending {
     my ( $t_node ) = @_;
-#     TODO
+    return ( $t_node->get_lex_anode and $t_node->get_lex_anode->form =~ /o$/ 
+    ) ? 1 : 0;
+}
+
+sub is_active_present_3_sg {
+    my ( $t_node ) = @_;
+    my $a_node = $t_node->get_lex_anode;
+    my @anodes = ($a_node, $t_node->get_aux_anodes);
+    if ( $a_node ) {
+        if ( $a_node->tag !~ /^Vs/ 
+            and grep { $_->tag =~ /^V.......P/ } @anodes 
+            and grep { $_->tag =~ /^V......3/ } @anodes 
+            and grep { $_->tag =~ /^V..S/ } @anodes ) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 # returns 1 if the given node has an echild with #Gen as its subject
 sub is_GEN {
     my ( $t_node ) = @_;
-    my $b_is_active_present_3_sg = 0; # TODO
     return ( is_byt_videt($t_node)
         or has_o_ending($t_node)
-        or (is_refl_pass($t_node) and b_is_active_present_3_sg)
+        or (is_refl_pass($t_node) and is_active_present_3_sg($t_node))
     ) ? 1 : 0;
 }
 
 # # returns 1 if eg. jde o zivot - impersonal (It's about ...)
 sub is_jit_o {
     my ( $t_node ) = @_;
-#     TODO
-#     my ($node) = @_;
-#     if ( $node->{t_lemma} eq "jít" and not $node->{is_generated} ) {
-#         my @echildren = grep { $_->{functor} eq "ACT" } PML_T::GetEChildren($node);
-#         foreach my $echild ( @echildren ) {
-#             my @anodes = PML_T::GetANodes($echild);
-#             foreach my $anode ( @anodes ) {
-#                 return 1 if ( $anode->attr('m/form') eq "o" );
-#             }
-#         }
-#     }
-#     return 0;
+    if ( $t_node->t_lemma eq "jít" ) {
+        foreach my $echild ( grep { $_->functor eq "ACT" } $t_node->get_echildren ( { or_topological => 1 } ) ) {
+            foreach my $anode ( $echild->get_anodes ) {
+                return 1 if ( $anode->form eq "o" );
+            }
+        }
+    }
+    return 0;
 }
 
 # returns 1 if the given node is an impersonal verb
@@ -88,7 +99,7 @@ sub is_IMPERS {
     ) ? 1 : 0;
 }
 
-sub process_tnode {
+sub process_tnode_final {
     my ( $self, $t_node ) = @_;
 
 #     if ( $t_node->is_clause_head

@@ -40,7 +40,7 @@ sub in_byt_videt {
     ) ? 1 : 0;
 }
 
-sub get_predict_antec {
+sub predict_antec {
     my ( $cor_verb ) = @_;
     my $antec;
     my $cor_verb_lemma = $cor_verb->t_lemma;
@@ -109,7 +109,7 @@ sub process_tnode {
 #     searching for t_nodes = dependent verbs
     if ( is_infinitive($t_node)
         and not $t_node->is_generated
-        and $t_node->functor eq "PAT" 
+        and $t_node->functor eq "PAT" )
     {
         my $depend_verb = $t_node;
         my $cor_verb = get_cor_verb($depend_verb);
