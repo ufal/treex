@@ -6,7 +6,7 @@ use Treex::Tool::Phrase2Dep::StanfordConverter;
 
 has '+language' => ( required => 1 );
 
-has _converter => ( is => 'rw', required => 1, default => 'en' );
+has _converter => ( is => 'rw' );
 
 sub BUILD {
     my ($self) = @_;
