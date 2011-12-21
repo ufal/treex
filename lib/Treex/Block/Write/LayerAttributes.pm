@@ -176,6 +176,7 @@ sub _get_modified {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
 
+    # if a modifier should be called
     if ( my ( $pckg, $args ) = _get_function_pckg_args($attrib) ) {
 
         # obtain all the arguments
@@ -192,6 +193,7 @@ sub _get_modified {
         return \@vals;
     }
     else {
+        # just obtain the attribute
         return [ $self->_get_data( $node, $attrib, $alignment_hash ) ];
     }
 }
@@ -219,6 +221,13 @@ sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
 
+    # needed for references with nodes, eg. parent->node
+    my $first_only = 0;
+    if ($attrib =~ /^(.+):first_only$/) {
+        $attrib = $1;
+        $first_only = 1;
+    }
+
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
     # references
@@ -226,12 +235,17 @@ sub _get_data {
 
         my $nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
-        # call myself recursively on the referenced nodes
-        return join(
-            ' ',
-            grep { defined($_) && $_ =~ m/[^\s]/ }
-                map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @{$nodes}
-        );
+        if ($first_only) {
+            my $reffed_node = $nodes->[0];
+            return $self->_get_data( $reffed_node, $ref_attr, $alignment_hash );
+        } else {
+            # call myself recursively on the referenced nodes
+            return join(
+                ' ',
+                grep { defined($_) && $_ =~ m/[^\s]/ }
+                    map { $self->_get_data( $_, $ref_attr, $alignment_hash ) } @{$nodes}
+            );
+        }
     }
 
     # plain attributes
