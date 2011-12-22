@@ -462,7 +462,7 @@ sub transform_coord {
     return $old_head if !$res;
 
     #$self->_dump_res($res); #DEBUG
-    my $parent  = $old_head->get_parent();
+    my $parent  = $old_head->get_parent() or return $old_head;
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
     my @shared  = @{ $res->{shared} };
     my @commas  = @{ $res->{commas} };
