@@ -7,11 +7,13 @@ use Treex::Tool::Lexicon::CS;
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
+    my $parent = $tnode->get_parent();
+    return if $parent->is_root();
 
     if ($tnode->formeme eq 'n:attr'
-        and $tnode->get_parent->precedes($tnode)
-        and $tnode->get_parent->formeme =~ /^n/
-        and $tnode->gram_sempos eq "n.denot"    # not numerals etc.
+        and $parent->precedes($tnode)
+        and $parent->formeme =~ /^n/
+        and ( $tnode->gram_sempos || '' ) eq 'n.denot'    # not numerals etc.
         and Treex::Tool::Lexicon::CS::is_personal_role( $tnode->t_lemma )
         )
     {
