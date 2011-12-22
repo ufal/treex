@@ -6,12 +6,14 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 has _parser => ( is => 'rw', required => 1, default => 'en' );
-
+has use_tags => ( isa => 'Bool', is => 'rw', default => 0, );
+has memory =>  ( isa => 'Str', is => 'rw', default => '2G', );
+# default => '2G',
 use Treex::Tool::PhraseParser::Stanford;
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Treex::Tool::PhraseParser::Stanford->new( { language => $self->language } ) );
+    $self->_set_parser( Treex::Tool::PhraseParser::Stanford->new( { language => $self->language, use_tags => $self->use_tags, memory => $self->memory } ) );
     return;
 }
 
