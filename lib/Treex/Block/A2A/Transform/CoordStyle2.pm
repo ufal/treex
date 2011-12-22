@@ -228,7 +228,7 @@ my %entered;
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position != 34; #DEBUG
+    #return if $atree->get_bundle->get_position != 12; # note that 13th sentence has position 12, DEBUG
     my $from_f = $self->from_family;
     if ( $from_f eq 'Prague' ) {
         $self->detect_prague($atree);
@@ -623,7 +623,7 @@ sub transform_coord {
 # Is the given node a coordination separator such as comma or semicolon?
 sub is_comma {
     my ( $self, $node ) = @_;
-    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier;
+    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier && (!$node->is_member || $self->from_family eq 'Prague');
 }
 
 1;
