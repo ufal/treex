@@ -63,7 +63,19 @@ has 'labelledFeaturesControl' => (
     is  => 'rw',
 );
 
+has 'imlabelledFeaturesControl' => (
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::FeaturesControl]',
+    is  => 'rw',
+);
+
 # CONFIGURATION
+
+# only assigning is_member (as opposed to afun labelling)
+has 'is_member_labelling' => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => '0',
+);
 
 # training mode or parsing mode
 has 'training' => (
@@ -119,7 +131,7 @@ has 'label' => (
 sub _label_set {
     my ( $self, $label ) = @_;
 
-    # set index of parent's ord field
+    # set index of label field
     my $label_index = $self->field_name2index($label);
     $self->label_field_index($label_index);
 
@@ -127,6 +139,30 @@ sub _label_set {
 }
 
 has 'label_field_index' => (
+    is  => 'rw',
+    isa => 'Maybe[Int]',
+
+    #    default => 'undef',
+);
+
+has 'ismember' => (
+    is      => 'rw',
+    isa     => 'Str',
+    trigger => \&_ismember_set,
+);
+
+# sets ismember_field_index
+sub _ismember_set {
+    my ( $self, $ismember ) = @_;
+
+    # set index of ismember field
+    my $ismember_index = $self->field_name2index($ismember);
+    $self->ismember_field_index($ismember_index);
+
+    return;
+}
+
+has 'ismember_field_index' => (
     is  => 'rw',
     isa => 'Maybe[Int]',
 
@@ -168,6 +204,12 @@ has 'labeller_number_of_iterations' => (
     default => 10,
 );
 
+has 'imlabeller_number_of_iterations' => (
+    isa     => 'Int',
+    is      => 'rw',
+    default => 10,
+);
+
 has 'use_edge_features_cache' => (
     is      => 'rw',
     isa     => 'Bool',
@@ -175,6 +217,12 @@ has 'use_edge_features_cache' => (
 );
 
 has 'labeller_use_edge_features_cache' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => '0',
+);
+
+has 'imlabeller_use_edge_features_cache' => (
     is      => 'rw',
     isa     => 'Bool',
     default => '0',
@@ -360,8 +408,10 @@ sub BUILD {
             'label',
             'use_edge_features_cache',
             'labeller_use_edge_features_cache',
+            'imlabeller_use_edge_features_cache',
             'number_of_iterations',
             'labeller_number_of_iterations',
+            'imlabeller_number_of_iterations',
             'labeller_algorithm',
             'VITERBI_STATES_NUM_THRESHOLD',
         );
@@ -422,8 +472,25 @@ sub BUILD {
             );
         }
 
+        # imlabeller features
+        if ($config->[0]->{imlabeller_features}
+            && @{ $config->[0]->{imlabeller_features} }
+            )
+        {
+            $self->imlabelledFeaturesControl(
+                Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+                    'config' => $self,
+                    'feature_codes_from_config'
+                        => $config->[0]->{imlabeller_features},
+                    'use_edge_features_cache'
+                        => $self->imlabeller_use_edge_features_cache,
+                    )
+            );
+        }
+
         if (!$self->unlabelledFeaturesControl
             && !$self->labelledFeaturesControl
+            && !$self->imlabelledFeaturesControl
             )
         {
             croak "MSTperl config file error: No features set!";
