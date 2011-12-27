@@ -50,6 +50,7 @@ sub process_zone {
 
     #do the fix for each node
     foreach my $node ( $a_root->get_descendants() ) {
+	next if $node =~ 'Treex::Core::Node::Deleted';
         my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
         next if !$dep;
         $self->fix( $dep, $gov, $d, $g, \%en_counterpart );
@@ -220,12 +221,66 @@ sub get_pair {
     return ( $node, $parent, \%d_categories, \%g_categories );
 }
 
+# returns the opposite morphological number
+# TODO: probably more useful if the whole tag is the input and output
+sub switch_num {
+    my ( $self, $num ) = @_;
+    
+    if ( $num eq 'S' ) {
+	return 'P';
+    } else {
+	return 'S';
+    }
+}
+
+# tries to guess whether the given node is a name
+# TODO: the roughest possible implementation,
+# use a proper named entity recognizer instead
+sub isName {
+    my ( $self, $node ) = @_;
+    
+    if ( $node->form && lc($node->form) eq $node->form ) {
+	# with very high probability not a name
+	return 0;
+    } else {
+	# can be a name, the start of a sentence, ...
+	return 1;
+    }
+}
+
 sub gn2pp {
     my ( $self, $gn ) = @_;
     $gn =~ s/[IF]P/TP/;
     $gn =~ s/[MI]S/YS/;
     $gn =~ s/(FS|NP)/QW/;
     return $gn;
+}
+
+sub remove_node {
+    my ($self, $node, $en_hash, $rehang_under_en_eparent) = @_;
+
+    #move children under parent
+    my $parent = $node->get_parent;
+    if ($rehang_under_en_eparent && $en_hash->{$node}) {
+	my $en_parent = $en_hash->{$node}->get_eparents({first_only=>1, or_topological => 1});
+        my ( $nodes ) = $en_parent->get_aligned_nodes();
+        if ( $nodes->[0] && !$nodes->[0]->is_descendant_of($node) ) {
+            $parent = $nodes->[0];
+        }
+    }
+    foreach my $child ( $node->get_children ) {
+	$child->set_parent($parent);
+    }
+
+    #remove alignment
+    if ( $en_hash->{$node} ) {
+	$en_hash->{$node}->set_attr( 'alignment', undef );
+    }
+
+    #remove
+    $node->remove;
+
+    return;
 }
 
 1;
