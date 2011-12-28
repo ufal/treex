@@ -19,6 +19,7 @@ sub BUILD {
     if (!$loaded_models{$self->model}){
     #if ( !$parser ) {
       my  $parser = Treex::Tool::Parser::Malt->new( { model => $self->model } );
+$loaded_models{$self->model} = $parser;
     }
     $self->_set_parser($loaded_models{$self->model});	
     return;
