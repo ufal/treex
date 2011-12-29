@@ -85,35 +85,42 @@ around 'process_document' => sub {
     my $document = $_[0];
     my $filename;
 
-    $filename = $document->full_filename . ( $document->compress ? ".gz" : "" );
-
-    # Now allow to overwrite the default name
-    # Specifying to=. means the target file name as inherited from upstream
-    if ( defined $self->to && $self->to ne "." ) {
-        $filename = $self->to;
+    if (defined $self->to_bundle_attr) {
+        # just call the main process_document, we will hopefully get our
+        # callback at process_bundle
+        log_info "Saving to attribute ".$self->to_bundle_attr;
+        $self->$orig(@_);
+    } else {
+        $filename = $document->full_filename . ( $document->compress ? ".gz" : "" );
+    
+        # Now allow to overwrite the default name
+        # Specifying to=. means the target file name as inherited from upstream
+        if ( defined $self->to && $self->to ne "." ) {
+            $filename = $self->to;
+        }
+    
+        if ( defined $self->_last_filename && $filename eq $self->_last_filename ) {
+    
+            # nothing to do, keep writing to the old filename
+        }
+        else {
+    
+            # need to switch output stream
+            close $self->_file_handle
+                if defined $self->_file_handle
+                    && ( !defined $self->_last_filename || $self->_last_filename ne "-" );
+    
+            # open the new output stream
+            log_info "Saving to $filename";
+            log_fatal "Won't overwrite $filename (use clobber=1 to force)."
+                if !$self->clobber && -e $filename;
+            $self->_file_handle( $self->_open_stream($filename) );
+        }
+        $self->_last_filename($filename);
+    
+        # call the main process_document
+        $self->$orig(@_);
     }
-
-    if ( defined $self->_last_filename && $filename eq $self->_last_filename ) {
-
-        # nothing to do, keep writing to the old filename
-    }
-    else {
-
-        # need to switch output stream
-        close $self->_file_handle
-            if defined $self->_file_handle
-                && ( !defined $self->_last_filename || $self->_last_filename ne "-" );
-
-        # open the new output stream
-        log_info "Saving to $filename";
-        log_fatal "Won't overwrite $filename (use clobber=1 to force)."
-            if !$self->clobber && -e $filename;
-        $self->_file_handle( $self->_open_stream($filename) );
-    }
-    $self->_last_filename($filename);
-
-    # call the main process_document
-    $self->$orig(@_);
 };
 
 sub _open_stream {
