@@ -551,16 +551,20 @@ sub process_bundle {
             # TODO: maybe we should sort alignments by ord ?
         }
 
-        if ( $colspec =~ /^ALI([ta])-(..)([^-]*?)-(..)([^-]*?)(-.*)?/ ) {
-            my $layer  = $1;
-            my $lang1 = $2;
-            my $sel1 = $3;
-            my $lang2 = $4;
-            my $sel3 = $5;
-            my $require_type = $6;
+        if ( $colspec =~ /^(rev)?ALI([ta])-(..)([^-]*?)-(..)([^-]*?)(-.*)?/ ) {
+            my $mayrev  = $1;
+            my $layer  = $2;
+            my $lang1 = $3;
+            my $sel1 = $4;
+            my $lang2 = $5;
+            my $sel3 = $6;
+            my $require_type = $7;
             $require_type =~ s/^-// if defined $require_type;
             $require_type = undef
               if defined $require_type && $require_type eq "";
+            # a flag to reverse the alignment before printing
+            my $rev = 0;
+            $rev = 1 if defined $mayrev && $mayrev eq "rev";
 
             # t-layer alignment is contained in SCzechT align/links[$i] {counterpart.rf}
             my $tree1 = $bundle->get_tree($lang1, $layer, $sel1);
@@ -581,11 +585,12 @@ sub process_bundle {
                   my $type = $types->[$i];
                   my $node2 = $nodes2->[$i];
                   my $ord2 = $node2->get_attr("ord") - 1;
+                  my $outpair = ($rev ? "$ord2-$ord1" : "$ord1-$ord2" );
                   if (defined $require_type) {
-                    push @alignments, "$ord1-$ord2"
+                    push @alignments, $outpair
                       if $type =~ /\b$require_type\b/;
                   } else {
-                    push @alignments, "$type:$ord1-$ord2";
+                    push @alignments, "$type:$outpair";
                   }
                 }
             }
@@ -857,7 +862,7 @@ The following keywords (i.e. output columns) are supported:
   ATTR<bundle-attribute-name>
     ... verbatim copy of the given bundle attribute name
 
-  ALI[tm]-<Language1>-<Language2>
+  (rev)?ALI[tm]-<Language1>-<Language2>(-RequiredTypes)?
     ... print alignments between corresponding t- or m- layers. Nodes are
         refered to using ord values minus 1 (thus node with actual deepord 5 is
         refered to by 4).
@@ -875,11 +880,6 @@ The following keywords (i.e. output columns) are supported:
       A       = like a-layer but with extra factors from t-layer
       0       = just the <sentence> attribute from the zone
 
-  [TS]EnglishCzechAlign[TM]
-    ... print alignments between corresponding t- or m- layers. Nodes are
-        refered to using deepord for t- layer and linear (sentord/ord) for m-
-        layer starting from 0 (thus node with actual deepord 5 is refered to by
-        4).
 
 =item to
 
