@@ -8,7 +8,9 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case} ) {
+#    if ( $gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case} ) {
+    if ( $gov->afun eq 'AuxP' && $g->{tag} =~ /^R/ && $d->{tag} =~ /^[NA]/ && $g->{case} ne $d->{case} ) {
+#    if ( $gov->afun eq 'AuxP' && $g->{tag} =~ /^R/ && $g->{case} ne $d->{case} ) {
         my $doCorrect;
 
         #if there is an EN counterpart for $dep but its eparent is not a preposition,
@@ -27,8 +29,11 @@ sub fix {
             $doCorrect = 1;        #no en_counterpart
         }
         if ($doCorrect) {
+
             my $case = $g->{case};
             $d->{tag} =~ s/^(....)./$1$case/;
+            $d->{tag} = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag});
+
             $self->logfix1( $dep, "PrepositionNounAgreement" );
             $self->regenerate_node( $dep, $d->{tag} );
             $self->logfix2($dep);

@@ -147,6 +147,53 @@ sub logfix2 {
     }
 }
 
+my %byt_forms = (
+    # correct forms
+    'VB-S---3P-AA---' => 'je',
+    'VB-S---3P-NA---' => 'není',
+    'VB-P---3P-AA---' => 'jsou',
+    'VB-P---3P-NA---' => 'nejsou',
+    'VB-S---3F-AA---' => 'bude',
+    'VB-S---3F-NA---' => 'nebude',
+    'VB-P---3F-AA---' => 'budou',
+    'VB-P---3F-NA---' => 'nebudou',
+    'VpYS---XR-AA---' => 'byl',
+    'VpYS---XR-NA---' => 'nebyl',
+    'VpQW---XR-AA---' => 'byla',
+    'VpQW---XR-NA---' => 'nebyla',
+    'VpNS---XR-AA---' => 'bylo',
+    'VpNS---XR-NA---' => 'nebylo',
+    'VpMP---XR-AA---' => 'byli',
+    'VpMP---XR-NA---' => 'nebyli',
+    'VpTP---XR-AA---' => 'byly',
+    'VpTP---XR-NA---' => 'nebyly',
+    # heuristics for incomplete or overcomplete tags
+    # present
+    'VB-----3P-AA---' => 'je',
+    'VB-----3P-NA---' => 'není',
+    'VB-X---3P-AA---' => 'je',
+    'VB-X---3P-NA---' => 'není',
+    # future
+    'VB-----3F-AA---' => 'bude',
+    'VB-----3F-NA---' => 'nebude',
+    'VB-X---3F-AA---' => 'bude',
+    'VB-X---3F-NA---' => 'nebude',
+    # past
+    'VpM----XR-AA---' => 'byl',
+    'VpM----XR-NA---' => 'nebyl',
+    'VpMX---XR-AA---' => 'byl',
+    'VpMX---XR-NA---' => 'nebyl',
+    'VpI----XR-AA---' => 'byl',
+    'VpI----XR-NA---' => 'nebyl',
+    'VpIX---XR-AA---' => 'byl',
+    'VpIX---XR-NA---' => 'nebyl',
+    'VpF----XR-AA---' => 'byla',
+    'VpF----XR-NA---' => 'nebyla',
+    'VpFX---XR-AA---' => 'byla',
+    'VpFX---XR-NA---' => 'nebyla',
+    
+);
+
 sub get_form {
 
     my ( $self, $lemma, $tag ) = @_;
@@ -175,6 +222,20 @@ sub get_form {
         my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag" } );
         $form = $form_info->get_form() if $form_info;
     }
+
+    # the "1" variant can be safely ignored
+    if ( !$form && $tag =~ /1$/ ) {
+	$tag =~ s/1$/-/;
+	return $self->get_form($lemma, $tag);
+    }
+
+# reasonable but does not bring any improvement:
+# if the tag is corrupt, it is usually a good idea not to try to
+# generate any form and to keep the current form unchanged
+#    if ( !$form && $lemma eq 'být' && $byt_forms{$tag} ) {
+#	return $byt_forms{$tag};
+#    }
+
     if ( !$form ) {
         print STDERR "Can't find a word for lemma '$lemma' and tag '$tag'.\n";
     }
@@ -221,15 +282,41 @@ sub get_pair {
     return ( $node, $parent, \%d_categories, \%g_categories );
 }
 
-# returns the opposite morphological number
-# TODO: probably more useful if the whole tag is the input and output
-sub switch_num {
-    my ( $self, $num ) = @_;
-    
-    if ( $num eq 'S' ) {
-	return 'P';
+# if the form is about to change, it might be reasonable
+# to change the morphological number instead
+# and keep the form intact
+# Returns the best tag to be used
+sub try_switch_num {
+    my ($self, $old_form, $lemma, $tag) = @_;
+
+    my $new_form = $self->get_form( $lemma, $tag );
+
+    # form is about to change
+    if ( !$new_form || lc($old_form) ne lc($new_form) ) {
+	# try to switch the number
+	my $switched_tag = $self->switch_num($tag);
+	$new_form = $self->get_form( $lemma, $switched_tag );
+	if ( $new_form && lc($old_form) eq lc($new_form) ) {
+	    # form does not change if number is switched
+	    return $switched_tag;
+	} else {
+	    return $tag;
+	}
     } else {
-	return 'S';
+	# form doesn't change, no need to change the number
+	return $tag;
+    }
+}
+
+# returns the same tag with the opposite morphological number
+sub switch_num {
+    my ( $self, $tag ) = @_;
+    
+    if ( $tag =~ /^(...)S(.+)$/ ) {
+	return $1.'P'.$2;
+    } else {
+	$tag =~ /^(...).(.+)$/;
+	return $1.'S'.$2;
     }
 }
 
@@ -245,6 +332,61 @@ sub isName {
     } else {
 	# can be a name, the start of a sentence, ...
 	return 1;
+    }
+}
+
+
+my %time_expr = (
+    'Monday' => 1,
+    'Tuesday' => 1,
+    'Wednesday' => 1,
+    'Thursday' => 1,
+    'Friday' => 1,
+    'Saturday' => 1,
+    'Sunday' => 1,
+    'Januray' => 1,
+    'February' => 1,
+    'March' => 1,
+    'April' => 1,
+    'May' => 1,
+    'June' => 1,
+    'July' => 1,
+    'August' => 1,
+    'September' => 1,
+    'October' => 1,
+    'November' => 1,
+    'December' => 1,
+    'second' => 1,
+    'minute' => 1,
+    'hour' => 1,
+    'day' => 1,
+    'week' => 1,
+    'month' => 1,
+    'year' => 1,
+    'decade' => 1,
+    'century' => 1,
+    'beginning' => 1,
+    'end' => 1,
+);
+
+sub isTimeExpr {
+    my ( $self, $lemma ) = @_;
+    
+    if ($time_expr{$lemma}) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+# TODO never fires, why?!
+sub isNumber {
+    my ( $self, $node ) = @_;
+    
+    if ($node->tag =~ /^C/ || $node->form =~ /^[0-9%]/ ) {
+	return 1;
+    } else {
+	return 0;
     }
 }
 

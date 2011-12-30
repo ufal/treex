@@ -22,6 +22,7 @@ sub fix {
 	&& $aligned_parent->form
 	&& $aligned_parent->form eq 'of'
 	&& !$self->isName($dep)
+	&& !$self->isTimeExpr($en_counterpart{$dep}->lemma)
 	) {
 
 	# now find the correct case and number for this situation
@@ -30,27 +31,9 @@ sub fix {
 
 	if ($new_case != $original_case) {
 
-            my $original_num = $d->{num};
-            my $new_num = $original_num;
+	    $d->{tag} =~ s/^(....)./$1$new_case/;
+            $d->{tag} = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag});
 
-            my $new_tag = $d->{tag};
-            $new_tag =~ s/^(....)./$1$new_case/;
-            my $old_form = $dep->form;
-            my $new_form = $self->get_form( $dep->lemma, $new_tag );
-
-            # maybe the form is correct but the number is tagged incorrcetly
-            if ( !$new_form || lc($old_form) ne lc($new_form) ) {
-                my $try_num = $self->switch_num($original_num);
-                $new_tag =~ s/^(...)../$1$try_num$new_case/;
-                $new_form = $self->get_form( $dep->lemma, $new_tag );
-                if ( $new_form && lc($old_form) eq lc($new_form) ) {
-                    # keep form, change number in tag
-                    $new_num = $try_num;
-                }
-            }
-
-            $d->{tag} =~ s/^(...)../$1$new_num$new_case/;
-	    
 	    $self->logfix1( $dep, "Of" );
 	    $self->regenerate_node( $dep, $d->{tag} );
 	    $self->logfix2($dep);
