@@ -23,7 +23,8 @@ sub fix {
 	&& $aligned_parent->form
 	&& $aligned_parent->form eq 'by'
         && !$self->isName($dep)
-        && !$self->isNumber($en_counterpart{$dep})
+	# ord-wise following node approximation (I do not know how to do this better)
+        && !$self->isNumber($aligned_parent->get_descendants( { following_only => 1, first_only => 1 } ))
         && !$self->isTimeExpr($en_counterpart{$dep}->lemma)
 	) {
 

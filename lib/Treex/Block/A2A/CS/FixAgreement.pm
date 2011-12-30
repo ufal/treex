@@ -344,7 +344,7 @@ my %time_expr = (
     'Friday' => 1,
     'Saturday' => 1,
     'Sunday' => 1,
-    'Januray' => 1,
+    'January' => 1,
     'February' => 1,
     'March' => 1,
     'April' => 1,
@@ -379,12 +379,15 @@ sub isTimeExpr {
     }
 }
 
-# TODO never fires, why?!
 sub isNumber {
     my ( $self, $node ) = @_;
     
+    if (!defined $node) {
+	return 0;
+    }
+
     if ($node->tag =~ /^C/ || $node->form =~ /^[0-9%]/ ) {
-	return 1;
+ 	return 1;
     } else {
 	return 0;
     }
