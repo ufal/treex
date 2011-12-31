@@ -9,36 +9,36 @@ use Treex::Tool::Parser::MSTperl::Labeller;
 use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Node;
 
-use Treex::Core::Resource qw(require_file_from_share) ; 
+use Treex::Core::Resource qw(require_file_from_share);
 
 # Look for model under "model_dir/model_name.model"
 # and its config "model_dir/model_name.config".
 # Absolute path is needed if not a model from share.
 has 'model_from_share' => (
-    is => 'ro',
-    isa => 'Bool',
+    is      => 'ro',
+    isa     => 'Bool',
     default => '1',
 );
 
 has 'model_name' => (
-    is => 'ro',
-    isa => 'Str',
+    is      => 'ro',
+    isa     => 'Str',
     default => 'conll_2007',
 );
 
 has 'model_dir' => (
-    is => 'ro',
-    isa => 'Str',
+    is      => 'ro',
+    isa     => 'Str',
     default => 'data/models/labeller_mira/en',
 );
 
 has labeller => (
-    is => 'ro',
-    isa => 'Treex::Tool::Parser::MSTperl::Labeller',
+    is       => 'ro',
+    isa      => 'Treex::Tool::Parser::MSTperl::Labeller',
     init_arg => undef,
-    builder => '_build_labeller',
-    lazy => 1,
-    );
+    builder  => '_build_labeller',
+    lazy     => 1,
+);
 
 sub _build_labeller {
     my ($self) = @_;
@@ -48,25 +48,25 @@ sub _build_labeller {
     my $config_file = (
         $self->model_from_share
         ?
-        require_file_from_share("$base_name.config", ref($self))
+            require_file_from_share( "$base_name.config", ref($self) )
         :
-        "$base_name.config"
+            "$base_name.config"
     );
     my $config = Treex::Tool::Parser::MSTperl::Config->new(
         config_file => $config_file,
-        training => 0,
-        DEBUG => 1,
+        training    => 0,
+        DEBUG       => 1,
     );
-    
+
     my $labeller = Treex::Tool::Parser::MSTperl::Labeller->new(
         config => $config,
     );
     my $model_file = (
         $self->model_from_share
         ?
-        require_file_from_share("$base_name.lmodel", ref($self))
+            require_file_from_share( "$base_name.lmodel", ref($self) )
         :
-        "$base_name.lmodel"
+            "$base_name.lmodel"
     );
     $labeller->load_model($model_file);
 
@@ -82,20 +82,19 @@ sub process_zone {
     my $alignment_hash = $self->_get_alignment_hash( $zone->get_bundle() );
 
     # convert from treex data structures to labeller data structures
-    my $sentence = $self->_get_sentence($alignment_hash, $a_root);
-    
+    my $sentence = $self->_get_sentence( $alignment_hash, $a_root );
+
     # run the labeller
-    my @node_labels = @{$self->labeller->label_sentence($sentence)};
-    
+    my @node_labels = @{ $self->labeller->label_sentence($sentence) };
+
     # set nodes' labels
-    foreach my $a_node ($a_root->get_descendants( { ordered => 1 } ) ) {
+    foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         my $label = shift @node_labels;
-        $a_node->set_attr('afun', $label);
+        $a_node->set_attr( 'afun', $label );
     }
 
     return;
 }
-
 
 # convert from treex data structures to labeller data structures
 sub _get_sentence {
@@ -104,45 +103,49 @@ sub _get_sentence {
     # create objects of class Treex::Tool::Parser::MSTperl::Node
     my @nodes;
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
+
         # get field values
         my @field_values;
-        foreach my $field_name (@{$self->labeller->config->field_names}) {
+        foreach my $field_name ( @{ $self->labeller->config->field_names } ) {
             my $field_value = $self->_get_field_value(
-                $a_node, $field_name, $alignment_hash);
-            if (defined $field_value) {
+                $a_node, $field_name, $alignment_hash
+            );
+            if ( defined $field_value ) {
                 push @field_values, $field_value;
             } else {
                 push @field_values, '';
             }
         }
+
         # create Node object
         my $node = Treex::Tool::Parser::MSTperl::Node->new(
             fields => \@field_values,
             config => $self->labeller->config
         );
+
         # store the Node object
         push @nodes, $node;
     }
 
     # create object of class Treex::Tool::Parser::MSTperl::Sentence
     my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
-        nodes => \@nodes,
+        nodes  => \@nodes,
         config => $self->labeller->config
     );
-    
+
     return $sentence;
 }
 
 sub get_coarse_grained_tag {
     log_warn 'get_coarse_grained_tag should be implemented in derived classes';
     my ( $self, $tag ) = @_;
-    
-    return substr ($tag, 0, 1);
+
+    return substr( $tag, 0, 1 );
 }
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::LabelMIRA
