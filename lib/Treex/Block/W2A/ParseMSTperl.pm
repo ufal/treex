@@ -87,7 +87,8 @@ sub parse_chunk {
     # (BaseChunkParser ensures that now)
 
     # get alignment mapping
-    my $alignment_hash = $self->_get_alignment_hash( $a_nodes[0]->get_bundle() );
+    my $alignment_hash =
+        $self->_get_alignment_hash( $a_nodes[0]->get_bundle() );
 
     # convert from treex data structures to parser data structures
     my $sentence = $self->_get_sentence($alignment_hash, @a_nodes);
@@ -149,7 +150,12 @@ sub _get_sentence {
     return $sentence;
 }
 
-# get alignment mapping
+# get alignment mapping:
+# CURRENT VERSION:
+#   $alignment_hash->{node_id} = aligned_node
+#   (if there are multiple aligned nodes, the first one is used)
+# PREVIOUS VERSION:
+#   $alignment_hash->{node_id} = [aligned_node1, aligned_node2, ...]
 sub _get_alignment_hash {
     my ($self, $bundle) = @_;
     
@@ -162,28 +168,49 @@ sub _get_alignment_hash {
             $bundle->get_tree( $self->alignment_language, 'A' );
         # foreach node in the aligned-language tree
         foreach my $aligned_node ( $aligned_root->get_descendants ) {
-            # find all nodes which it is aligned to
-            my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
-            if ($nodes) {
-                # store alignment mapping to this node
-                for (my $i = 0; $i < @{$nodes}; $i++) {
-                    my $node = $nodes->[$i];
-                    my $type = $types->[$i];
-                    my $id = $node->id;
-                    # alignment is of the desired type
-                    if ($self->alignment_type eq $type) {
-                        # store mapping: node_id->aligned_node
-                        push @{ $alignment_hash->{$id} }, $aligned_node;
-                    }
-                }
+            my $node = $self->_get_aligned_node($aligned_node);
+            if (defined $node) {
+                # if there is a node aligned to $aligned_node,
+                # store this information into $alignment_hash
+                $alignment_hash->{$node->id} = $aligned_node;
             }
         }
     } else {
-        #Node->get_aligned_nodes() will be used directly
+        # Node->get_aligned_nodes() will be used directly
         $alignment_hash = undef;
     }
 
     return $alignment_hash;
+}
+
+# get the first node aligned to $node
+# with alignment of type set in $self->alignment_type
+# directly using $node->get_aligned_nodes()
+# (or return undef)
+sub _get_aligned_node {
+    my ($self, $node) = @_;
+    
+    my $aligned_node = undef;
+    
+    my ( $aligned_nodes, $types ) = $node->get_aligned_nodes();
+    if ($aligned_nodes) {
+        # try to find an aligned node with the right type of alignment
+        for (my $i = 0; $i < @{$aligned_nodes}; $i++) {
+            my $current_aligned_node = $aligned_nodes->[$i];
+            my $current_type = $types->[$i];
+            # alignment is of the desired type
+            if ($self->alignment_type eq $current_type) {
+                # this is the node we were looking for
+                $aligned_node = $current_aligned_node;
+                # we want to get the first of such nodes
+                last;
+            }
+        }
+        # now $aligned_node either has been set to a node of the right kind
+        # or is still undef because there is no such node
+    } # else: there are no aligned nodes, undef will be returned
+
+    return $aligned_node;
 }
 
 sub _get_field_value {
@@ -195,12 +222,30 @@ sub _get_field_value {
     # combined field (contains '_')
     if ($field_name_tail) {
         
-        # field on aligned nodes
+        # field on aligned node(s)
+        # (current version: take one aligned node at maximum)
         if ($field_name_head eq 'aligned') {
-            $field_value = $self->_get_field_value(
-                $node, $field_name_tail, $alignment_hash
-            );
+            
+            # get aligned node
+            my $aligned_node = undef;
+            if (defined $alignment_hash) {
+                # get alignment from the alignment_hash
+                $aligned_node = $alignment_hash->{$node->id};
+            } else {
+                # get alignment directly from the node
+                $aligned_node = $self->_get_aligned_node($node);
+            }
         
+            # get field value on the aligned node
+            if (defined $aligned_node) {
+                # if there is an aligned node, call _get_field_value on it
+                $field_value =
+                    $self->_get_field_value($aligned_node, $field_name_tail);
+            } else {
+                # if there isn't one, return ''
+                $field_value = '';
+            }
+            
         # dummy or ignored field
         } elsif ($field_name_head eq 'dummy') {
             $field_value = '';
@@ -214,7 +259,8 @@ sub _get_field_value {
             
             # language-specific coarse grained tag
             } elsif ($field_name eq 'coarse_tag') {
-                $field_value = $self->get_coarse_grained_tag($node->get_attr('tag'));
+                $field_value =
+                    $self->get_coarse_grained_tag($node->get_attr('tag'));
                 
             } else {
                 die "Incorrect field $field_name!";
