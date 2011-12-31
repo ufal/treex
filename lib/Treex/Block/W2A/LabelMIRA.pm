@@ -2,6 +2,7 @@ package Treex::Block::W2A::LabelMIRA;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+with 'Treex::Block::W2A::AnalysisWithAlignedTrees';
 
 use Treex::Tool::Parser::MSTperl::Config;
 use Treex::Tool::Parser::MSTperl::Labeller;
@@ -30,16 +31,6 @@ has 'model_dir' => (
     isa => 'Str',
     default => 'data/models/labeller_mira/en',
 );
-
-# use features from aligned tree
-has 'parallel_labelling' => ( isa => 'Bool', is => 'ro', default => '0' );
-# the language of the tree which is already parsed and is accessed via the
-# 'aligned_' prefix, eg. en
-has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
-# alignment type to use, eg. int.gdfa
-has 'alignment_type' => ( isa => 'Str', is => 'ro', default => 'int.gdfa' );
-# use alignment info from the other tree
-has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
 
 has labeller => (
     is => 'ro',
@@ -140,87 +131,6 @@ sub _get_sentence {
     );
     
     return $sentence;
-}
-
-# get alignment mapping
-sub _get_alignment_hash {
-    my ($self, $bundle) = @_;
-    
-    my $alignment_hash;
-    if ( $self->parallel_labelling && $self->alignment_is_backwards ) {
-        # we need to provide the other direction of the relation
-        $alignment_hash = {};
-        # gets root of aligned Analytical tree
-        my $aligned_root =
-            $bundle->get_tree( $self->alignment_language, 'A' );
-        # foreach node in the aligned-language tree
-        foreach my $aligned_node ( $aligned_root->get_descendants ) {
-            # find all nodes which it is aligned to
-            my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
-            if ($nodes) {
-                # store alignment mapping to this node
-                for (my $i = 0; $i < @{$nodes}; $i++) {
-                    my $node = $nodes->[$i];
-                    my $type = $types->[$i];
-                    my $id = $node->id;
-                    # alignment is of the desired type
-                    if ($self->alignment_type eq $type) {
-                        # store mapping: node_id->aligned_node
-                        push @{ $alignment_hash->{$id} }, $aligned_node;
-                    }
-                }
-            }
-        }
-    } else {
-        #Node->get_aligned_nodes() will be used directly
-        $alignment_hash = undef;
-    }
-
-    return $alignment_hash;
-}
-
-sub _get_field_value {
-    my ( $self, $node, $field_name, $alignment_hash ) = @_;
-
-    my $field_value = '';
-    
-    my ( $field_name_head, $field_name_tail ) = split( /_/, $field_name, 2 );
-    # combined field (contains '_')
-    if ($field_name_tail) {
-        
-        # field on aligned nodes
-        if ($field_name_head eq 'aligned') {
-            $field_value = $self->_get_field_value(
-                $node, $field_name_tail, $alignment_hash
-            );
-        
-        # dummy or ignored field
-        } elsif ($field_name_head eq 'dummy') {
-            $field_value = '';
-        
-        # special field
-        } else {
-            
-            # ord of the parent node
-            if ($field_name eq 'parent_ord') {
-                my $parent = $node->get_parent();
-                $field_value = $parent->get_attr('ord');
-            
-            # language-specific coarse grained tag
-            } elsif ($field_name eq 'coarse_tag') {
-                $field_value = $self->get_coarse_grained_tag($node->get_attr('tag'));
-                
-            } else {
-                die "Incorrect field $field_name!";
-            }
-        }
-    
-    # ordinary field (does not contain '_')
-    } else {
-        $field_value = $node->get_attr($field_name);
-    }
-
-    return $field_value;
 }
 
 sub get_coarse_grained_tag {
