@@ -154,6 +154,24 @@ sub _get_field_value {
                 $field_value =
                     $self->get_coarse_grained_tag( $node->get_attr('tag') );
 
+            } elsif ( $field_name eq 'tree_distance_aligned' ) {
+
+                # array of tree distances
+                # of the node aligned to this node as the child node
+                # and nodes aligned to all other nodes as parent nodes
+                my @tree_distances;
+                my @all_nodes =
+                    ( $node->get_root() )->get_descendants( { ordered => 1 } );
+
+                foreach my $parent (@all_nodes) {
+                    push @tree_distances,
+                        $self->compute_tree_distance_aligned(
+                        $parent, $node, $alignment_hash
+                        );
+                }
+
+                $field_value = join ' ', @tree_distances;
+
             } else {
                 die "Incorrect field $field_name!";
             }
@@ -173,6 +191,98 @@ sub get_coarse_grained_tag {
 
     return substr( $tag, 0, 1 );
 }
+
+# TODO: tree_distance computing basically copied from
+# Treex::Block::Write::LayerAttributes::TreeDistance
+# which is not a good practice -> find one best place where to have it
+# and only call it from here
+
+sub compute_tree_distance_aligned {
+
+    # TODO: not very effective -> make more effective
+    # (at least quickly identify zeroes - they occur very often;
+    # maybe it'd be better to compute the whole matrix at once...)
+    my ( $self, $parent, $child, $alignment_hash ) = @_;
+
+    # get aligned nodes
+    my $aligned_parent = undef;
+    my $aligned_child  = undef;
+    if ( defined $alignment_hash ) {
+
+        # get alignment from the alignment_hash
+        $aligned_parent = $alignment_hash->{ $parent->id };
+        $aligned_child  = $alignment_hash->{ $child->id };
+    } else {
+
+        # get alignment directly from the nodes
+        $aligned_parent = $self->_get_aligned_node($parent);
+        $aligned_child  = $self->_get_aligned_node($child);
+    }
+
+    # call compute_tree_distance
+    my $distance = 0;
+    if ( defined $aligned_parent && defined $aligned_child ) {
+        $distance =
+            $self->compute_tree_distance( $aligned_parent, $aligned_child );
+    }
+
+    # else: keep $distance = 0
+
+    return $distance;
+}
+
+sub compute_tree_distance {
+
+    my ( $self, $ancestor, $descendent ) = @_;
+
+    my $distance = 0;
+
+    # try standard distance
+    $distance =
+        $self->_compute_tree_distance_1_direction( $ancestor, $descendent );
+    if ( $distance == 0 ) {
+
+        # try inversed distance
+        $distance = -(
+            $self->_compute_tree_distance_1_direction(
+                $descendent, $ancestor
+                )
+        );
+    }
+
+    return $distance;
+}
+
+sub _compute_tree_distance_1_direction {
+
+    my ( $self, $ancestor, $descendent ) = @_;
+
+    my $ancestor_id   = $ancestor->get_attr('id');
+    my $descendent_id = $descendent->get_attr('id');
+
+    my $current_node = $descendent;
+    my $distance     = 0;
+    while (
+        !$current_node->is_root()
+        && $current_node->get_attr('id') ne $ancestor_id
+        )
+    {
+
+        # TODO: apply 'effective' parameter
+        $current_node = $current_node->get_parent();
+        $distance++;
+    }
+
+    if ( $current_node->get_attr('id') ne $ancestor_id ) {
+
+        # the $ancestor node was not found as an ancestor of $descendent node
+        # i.e. the cycle stopped because $current_node->is_root()
+        $distance = 0;
+    }
+
+    return $distance;
+}
+
 1;
 
 __END__
