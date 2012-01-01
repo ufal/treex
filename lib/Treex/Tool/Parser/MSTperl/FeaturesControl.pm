@@ -306,14 +306,14 @@ sub set_simple_feature {
 
 # FEATURES COMPUTATION
 
-# array (ref) of all features of the edge,       
+# array (ref) of all features of the edge,
 # in the form of "feature_index:values_string" strings,
 # where feature_index is the index of the feature
 # (index in feature_codes, translatable via feature_indexes)
 # and values_string are values of corresponding simple features,
 # joined together by '|'
 # (if any of the simple features does not return a value, the whole feature
-# is not present)                                
+# is not present)
 # TODO maybe not returning a value is still a valuable information -> include?
 sub get_all_features {
     my ( $self, $edge ) = @_;
@@ -488,6 +488,8 @@ my %simple_feature_sub_references = (
     'equals'            => \&{feature_equals},
     'equalspc'          => \&{feature_equals_pc},
     'equalspcat'        => \&{feature_equals_pc_at},
+    'arrayat'           => \&{feature_array_at_child},
+    'ARRAYAT'           => \&{feature_array_at_parent},
     'isfirst'           => \&{feature_child_is_first_in_sentence},
     'ISFIRST'           => \&{feature_parent_is_first_in_sentence},
     'islast'            => \&{feature_child_is_last_in_sentence},
@@ -958,6 +960,49 @@ sub feature_substr_parent {
             } else {
                 $value = substr( $field, $start );
             }
+        }
+
+        return $value;
+    }
+}
+
+# arrayat (array, index)
+sub feature_array_at_child {
+    my ( $self, $edge, $arguments ) = @_;
+
+    # arrayat takes two arguments
+    if ( @{$arguments} != 2 ) {
+        croak "arrayat() takes TWO arguments!!!";
+    } else {
+        my ( $array_field, $index_field ) = @{$arguments};
+        my $array = $edge->child->fields->[$array_field];
+        my $index = $edge->child->fields->[$index_field];
+
+        my @array = split / /, $array;
+        my $value = $array[$index];
+        if ( !defined $value ) {
+            $value = '';
+        }
+
+        return $value;
+    }
+}
+
+sub feature_array_at_parent {
+    my ( $self, $edge, $arguments ) = @_;
+
+    # arrayat takes two arguments
+    if ( @{$arguments} != 2 ) {
+        croak "arrayat() takes TWO arguments!!!";
+    } else {
+        my ( $array_field, $index_field ) = @{$arguments};
+        my $array = $edge->parent->fields->[$array_field];
+        my $index = $edge->parent->fields->[$index_field];
+
+        my @array = split / /, $array;
+        my $value = $array[$index];
+        if ( !defined $value ) {
+            $value = '';
         }
 
         return $value;

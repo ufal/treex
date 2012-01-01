@@ -83,7 +83,6 @@ sub parse_sentence_internal {
                 sentence => $sentence_working_copy
             );
 
-            # my $score = $self->model->score_edge($edge);
             my $features = $self->config->unlabelledFeaturesControl
                 ->get_all_features($edge);
             my $score = $self->model->score_features($features);
