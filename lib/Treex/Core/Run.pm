@@ -404,8 +404,8 @@ sub _execute_locally {
     }
 
     if ( $self->save ) {
-        log_info "Block Write::Treex added to the end of the scenario.";
-        $scen_str .= ' Write::Treex';
+        log_info "Block Write::Treex clobber=1 added to the end of the scenario.";
+        $scen_str .= ' Write::Treex clobber=1';
     }
 
     if ( $self->lang ) {
