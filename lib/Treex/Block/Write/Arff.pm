@@ -6,13 +6,15 @@ use Treex::Tool::IO::Arff;
 use YAML::Tiny;
 use autodie;
 
-extends 'Treex::Core::Block';
-# with 'Treex::Block::Write::Redirectable'; - cannot apply the role with a modifier to process_document before overriding it
+extends 'Treex::Block::Write::BaseTextWriter';
+
 with 'Treex::Block::Write::LayerAttributes';
 
 #
 # DATA
 #
+
+has '+extension' => ( default => '.arff' );
 
 has '+language' => ( required => 1 );
 
@@ -61,10 +63,6 @@ override 'process_document' => sub {
     $self->_arff->relation->{records}           = [];
     $self->_arff->relation->{data_record_count} = 0;
 };
-
-# now, it's possible to apply the role
-with 'Treex::Block::Write::Redirectable';
-
 
 sub BUILDARGS {
 

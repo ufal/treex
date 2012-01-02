@@ -4,11 +4,12 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
+
+has '+extension' => ( default => '.xml' );
 
 has 'separator' => ( isa => 'Str', is => 'ro', default => ' ' );
 

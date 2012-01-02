@@ -4,9 +4,12 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
+
 with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Print::Overall';
+
+has '+extension' => ( default => '.tsv' );
 
 has '+language' => ( required => 1 );
 
@@ -54,7 +57,7 @@ sub _process_node {
         $ref->{'__COUNT__'} = $ref->{'__COUNT__'} ? $ref->{'__COUNT__'} + 1 : 1;
 
         # If further hash levels are needed, create them and proceed into them
-        if ( $i < @{ $self->_attrib_list } - 1 ) {
+        if ( $i < @{ $self->_output_attrib } - 1 ) {
             if ( !$ref->{$val} ) {
                 $ref->{$val} = {};
             }
@@ -69,35 +72,23 @@ sub _process_node {
     return;
 }
 
-# Collects statistics for individual files
-override 'process_document' => sub {
 
-    my $self = shift;
-    my ($document) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Document' },
-    );
-    
-    # force initialization of the file handle (it would be too late in DEMOLISH)
-    print { $self->_file_handle } "" if (!$self->_attrib_stats->{'__COUNT__'});  
-    
-    super;
-
-    log_info( 'Stats collected for : ' . $document->path . ', total ' . $self->_attrib_stats->{'__COUNT__'} . ' entries' );
-    return;
-};
+sub _reset_stats {
+    my ($self) = @_;
+    $self->_set_attrib_stats( {} );
+}
 
 # Prints the whole statistics at the end of the process
-sub process_end {
+sub _print_stats {
 
     my ($self) = @_;
 
-    $self->_print_stats( $self->_attrib_stats, 'TOTAL', 0 );
+    $self->_print_stats_part( $self->_attrib_stats, 'TOTAL', 0 );
     return;
 }
 
 # Prints the specified part of the statistics (designed to be recursive)
-sub _print_stats {
+sub _print_stats_part {
 
     my ( $self, $part, $caption, $depth ) = @_;
 
@@ -129,10 +120,21 @@ sub _print_stats {
         {
 
             # print the sub-statistics
-            $self->_print_stats( $part->{$key}, $key, $depth + 1 );
+            $self->_print_stats_part( $part->{$key}, $key, $depth + 1 );
         }
     }
     return;
+}
+
+sub _dump_stats {
+    my ($self) = @_;
+    return { 'stats' => $self->_attrib_stats };
+}
+
+sub _merge_stats {
+    my ( $self, $stats ) = @_;
+
+    merge_hashes( $self->_attrib_stats, $stats->{stats} );
 }
 
 

@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Block::Print::AttributeArrays;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Print::Overall';
 
 has '+language' => ( required => 1 );
@@ -55,7 +55,7 @@ sub process_bundle {
 
     my ( $self, $bundle ) = @_;
     my $tst = $bundle->get_zone( $self->language, $self->selector );
-    my $ref = $bundle->get_zone( $self->language, $self->reference_selector );   
+    my $ref = $bundle->get_zone( $self->language, $self->reference_selector );
 
     log_fatal('Zone does not exist!') if ( !$tst || !$ref );
 
@@ -67,10 +67,10 @@ sub process_bundle {
     # Count the total number of nodes and the number of nodes with the correct value of the specified attribute(s)
     $self->_set_total( $self->_total + @tst_vals );
 
-    my $good = 0;
+    my $good   = 0;
     my $errors = $self->_errors;
     for ( my $i = 0; $i < @tst_vals; ++$i ) {
-        if ( $tst_vals[$i] eq $ref_vals[$i] ){
+        if ( $tst_vals[$i] eq $ref_vals[$i] ) {
             $good++;
         }
         else {
@@ -93,6 +93,19 @@ sub _reset_stats {
     $self->_set_errors( {} );
 }
 
+sub _dump_stats {
+    my ($self) = @_;
+    return { 'total' => $self->_total, 'good' => $self->_good, 'errors' => $self->_errors };
+}
+
+sub _merge_stats {
+    my ( $self, $stats ) = @_;
+
+    $self->_set_total( $self->_total + $stats->{total} );
+    $self->_set_good( $self->_good + $stats->{good} );
+    merge_hashes( $self->_errors, $stats->{errors} );
+}
+
 sub _print_stats {
 
     my ($self) = @_;
@@ -102,17 +115,17 @@ sub _print_stats {
     print "\tTotal: " . $self->_total . ", Good: " . $self->_good . "\n";
     print "Most common errors:\n";
     printf "%-35s %-35s %6s\n", 'TST', 'REF', 'COUNT';
-    
+
     my @sorted_errs = sort { $self->_errors->{$b} <=> $self->_errors->{$a} } keys %{ $self->_errors };
-    if ( $self->print_limit < @sorted_errs ){
+    if ( $self->print_limit < @sorted_errs ) {
         @sorted_errs = @sorted_errs[ 0 .. $self->print_limit - 1 ];
     }
-        
-    foreach my $err (@sorted_errs){
-        my ($tst, $ref) = split /\t/, $err;
+
+    foreach my $err (@sorted_errs) {
+        my ( $tst, $ref ) = split /\t/, $err;
         printf "%-35.35s %-35.35s %6d\n", $tst, $ref, $self->_errors->{$err};
     }
-    
+
     return;
 }
 

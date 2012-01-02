@@ -1,23 +1,23 @@
 package Treex::Block::Print::Overall;
 use Moose::Role;
+use Treex::Core::Log;
+use Storable qw(store retrieve);
+use Scalar::Util qw(looks_like_number);
 
+has 'overall' => ( is => 'ro', isa => 'Bool', default => 0 );
 
-has 'overall' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-);
+has 'dump_to_file' => ( is => 'ro', isa => 'Maybe[Str]' );
 
 requires '_reset_stats';
 requires '_print_stats';
 requires 'process_bundle';
-
+# TODO rozchodit BLEU -- requires '_dump_stats';
+#requires '_merge_stats';
 
 # Prints the whole statistics at the end of the process
 sub process_end {
 
     my ($self) = @_;
-
     if ( $self->overall ) {
         $self->_print_stats();
     }
@@ -28,19 +28,60 @@ sub process_document {
 
     my ( $self, $document ) = @_;
 
+    $self->_prepare_file_handle( $document );  # prepare the output file handle first
+
     if ( !$self->overall ) {
         $self->_reset_stats();
-    }        
+    }
 
     foreach my $bundle ( $document->get_bundles() ) {
         $self->process_bundle($bundle);
     }
 
-    if ( !$self->overall ) {
+    if ( defined( $self->dump_to_file ) ) {
+        store( $self->_dump_stats(), $self->dump_to_file . $document->file_stem . $document->file_number . '.pls' );
+    }
+    elsif ( !$self->overall ) {
         $self->_print_stats();
-    }    
+    }
 
     return;
+}
+
+sub load_and_print {
+    
+    my $self = shift;
+    $self->_reset_stats();  
+   
+    foreach my $file (@_){
+        $self->_merge_stats( retrieve($file) );        
+    }
+    
+    $self->_print_stats();
+}
+
+sub merge_hashes {
+    my ( $h1, $h2 ) = @_;
+
+    foreach my $key ( keys %{$h2} ) {
+        if ( exists( $h1->{$key} ) ) {
+            if ( ref( $h1->{$key} ) eq 'HASH' ) {
+                merge_hashes( $h1->{$key}, $h2->{$key} );
+            }
+            elsif ( ref( $h1->{$key} ) eq 'ARRAY' ) {
+                push @{ $h1->{$key} }, @{ $h2->{$key} };
+            }
+            elsif ( looks_like_number( $h1->{$key} ) ) {
+                $h1->{$key} += $h2->{$key};
+            }
+            else {
+                $h1->{$key} .= $h2->{$key};
+            }
+        }
+        else {
+            $h1->{$key} = $h2->{$key};
+        }
+    }
 }
 
 1;

@@ -2,7 +2,6 @@ package Treex::Block::Write::FS;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
 
 has '+language' => ( required => 1 );
 has _was        => ( is => 'rw', default => sub{{}} );
@@ -149,19 +148,9 @@ Treex::Block::Write::FS
 Document writer for the old FS file format that can be opened, searched and edited in Tred.
 This format was used in the first years of the Prague Dependency Treebank (1997) in the predecessor of Tred, called Graph.
 
-=head1 PARAMETERS
+=head1 TODO
 
-=over
-
-=item encoding
-
-Output encoding. C<utf8> by default.
-
-=item to
-
-The name of the output file, STDOUT by default.
-
-=back
+Moosify, use standard base class. 
 
 =head1 AUTHOR
 

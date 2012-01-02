@@ -4,12 +4,15 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Block::Print::AttributeArrays;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Print::Overall';
 
 has '+language' => ( required => 1 );
 
 has 'layer' => ( isa => enum( [ 'a', 't', 'p', 'n' ] ), is => 'ro', required => 1 );
+
+has 'skip_empty' => ( isa => 'Bool', is => 'ro', default => 0 );
+
 
 has 'attr_x' => ( isa => 'Str', is => 'ro', required => 1 );
 has 'attr_y' => ( isa => 'Str', is => 'ro', required => 1 );
@@ -51,8 +54,15 @@ sub process_bundle {
 
     # record the statistics for entropy computation
     my ( $stats_x, $stats_y, $stats_xy ) = ( $self->_stats_x, $self->_stats_y, $self->_stats_xy );
+    my $count = 0;
 
     for ( my $i = 0; $i < @vals_x; ++$i ) {
+
+        next
+            if (
+            $self->skip_empty &&
+            ( !defined( $vals_x[$i] ) || $vals_x[$i] eq '' || !defined( $vals_y[$i] ) || $vals_y[$i] eq '' )
+            );
 
         $stats_x->{ $vals_x[$i] } = 0 if ( !$stats_x->{ $vals_x[$i] } );
         $stats_x->{ $vals_x[$i] }++;
@@ -60,10 +70,11 @@ sub process_bundle {
         $stats_y->{ $vals_y[$i] }++;
         $stats_xy->{ $vals_xy[$i] } = 0 if ( !$stats_xy->{ $vals_xy[$i] } );
         $stats_xy->{ $vals_xy[$i] }++;
+        $count++;
     }
-    
+
     # increase the total count
-    $self->_set_count( $self->_count + @vals_x );
+    $self->_set_count( $self->_count + $count );
 
     return;
 }
@@ -101,6 +112,25 @@ sub _print_stats {
     printf " = %.4f \n", $mi;
 
     return;
+}
+
+sub _dump_stats {
+    my ($self) = @_;
+    return {
+        'stats_x'  => $self->_stats_x,
+        'stats_y'  => $self->_stats_y,
+        'stats_xy' => $self->_stats_xy,
+        'count'    => $self->_count
+    };
+}
+
+sub _merge_stats {
+    my ( $self, $stats ) = @_;
+
+    $self->_set_count( $self->_count + $stats->{count} );
+    merge_hashes( $self->_stats_x,  $stats->{stats_x} );
+    merge_hashes( $self->_stats_y,  $stats->{stats_y} );
+    merge_hashes( $self->_stats_xy, $stats->{stats_xy} );
 }
 
 1;

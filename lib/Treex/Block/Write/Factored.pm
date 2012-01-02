@@ -2,8 +2,8 @@ package Treex::Block::Write::Factored;
 use Moose;
 use File::Spec;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
+with 'Treex::Block::Write::ToBundleAttr';
 
 has to_attribute => ( isa => 'Str', is => 'ro' );
 
@@ -21,6 +21,8 @@ has default_value => (
     isa           => 'Str',
     documentation => 'The default value for empty factors.',
 );
+
+has '+extension' => ( default => '.tsv' );
 
 use Scalar::Util qw(reftype);
 

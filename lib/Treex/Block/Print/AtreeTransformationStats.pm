@@ -1,8 +1,8 @@
 package Treex::Block::Print::AtreeTransformationStats;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+
+extends 'Treex::Block::Write::BaseTextWriter';
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -19,7 +19,7 @@ sub process_bundle {
     my $directory = $1;
     foreach my $anode ( $zone->get_atree->get_descendants ) {
         my $transformation = ( join ' ', grep {/^trans/} sort keys %{ $anode->wild } ) || '';
-        print "$language\t$directory\t$transformation\n";
+        print { $self->_file_handle } "$language\t$directory\t$transformation\n";
     }
 }
 
@@ -36,5 +36,5 @@ transformations in various languages.
 
 =cut
 
-# Copyright 2011 Zdenìk ®abokrtský <zabokrtsky@ufal.mff.cuni.cz>
+# Copyright 2011 ZdenÄ›k Å½abokrtskÃ½ <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.

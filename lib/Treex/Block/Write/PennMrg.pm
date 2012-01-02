@@ -1,10 +1,11 @@
 package Treex::Block::Write::PennMrg;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
+
+has '+extension' => ( default => '.mrg' );
 
 sub process_ptree {
     my ( $self, $ptree ) = @_;

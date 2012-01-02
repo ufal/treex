@@ -6,8 +6,7 @@ use Tk;
 use Tk::Button;
 use Treex::Block::Eval::EvalClauses;
 
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 

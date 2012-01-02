@@ -1,10 +1,11 @@
 package Treex::Block::Write::Sentences;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
+
+has '+extension' => ( default => '.txt' );
 
 has join_resegmented => (
     is            => 'ro',

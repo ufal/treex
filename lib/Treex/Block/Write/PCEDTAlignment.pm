@@ -1,10 +1,12 @@
 package Treex::Block::Write::PCEDTAlignment;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+
+extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
+
+has '+extension' => ( default => '.align' );
 
 sub process_tnode {
     my ( $self,     $tnode ) = @_;
@@ -14,7 +16,7 @@ sub process_tnode {
     return if !$tnode->get_lex_anode;
     my $p_node = $tnode->get_lex_anode->get_terminal_pnode;
     if ( $p_node->id =~ /EnglishP-(wsj_.+\d)$/ ) {
-        print join( "\t", ( $1, $p_node->form, $p_node->tag, $cs_tnode->id, $cs_tnode->t_lemma, $cs_tnode->functor ) ) . "\n";
+        print { $self->_file_handle } join( "\t", ( $1, $p_node->form, $p_node->tag, $cs_tnode->id, $cs_tnode->t_lemma, $cs_tnode->functor ) ) . "\n";
     }
 }
 
@@ -32,6 +34,6 @@ David Mareček
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

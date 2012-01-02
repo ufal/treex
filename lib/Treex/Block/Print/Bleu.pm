@@ -109,6 +109,10 @@ How many of the top missing / extra n-grams should be printed (default: 6).
 If this is set to 1, an overall score for all the processed documents is printed instead of a score for each single
 document.
 
+=head1 TODO
+
+Use default base class.
+
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>

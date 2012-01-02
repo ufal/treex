@@ -3,8 +3,7 @@ package Treex::Block::Write::ConllLike;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
 Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
@@ -26,6 +25,8 @@ Readonly my $TAG_FEATS => {
 Readonly my $TAG_NOT_SET => "-";    # tagset: undefined value
 
 has '+language' => ( required => 1 );
+
+has '+extension' => ( default => '.conll' );
 
 # MAIN
 sub process_ttree {

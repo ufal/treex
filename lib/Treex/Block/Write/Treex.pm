@@ -1,96 +1,37 @@
 package Treex::Block::Write::Treex;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
 
-has [qw(file_stem path)] => (
-    isa           => 'Str',
-    is            => 'ro',
-    documentation => 'overrides the respective attributes in documents (filled in by a DocumentReader)',
-);
+extends 'Treex::Block::Write::BaseWriter';
 
-has stem_suffix => (
-    isa           => 'Str',
-    is            => 'ro',
-    documentation => 'a suffix to append after file_stem',
-);
+has '+extension' => ( default => '.treex' );
 
-has to => (
-    isa           => 'Str',
-    is            => 'ro',
-    documentation => 'space or comma separated list of filenames',
-);
+# HACKS: Treex::PML::Document->save() cannot take filehandle
 
-has filenames => (
-    isa           => 'ArrayRef[Str]',
-    is            => 'rw',
-    lazy_build    => 1,
-    documentation => 'array of filenames where to save the documents;'
-        . ' automatically initialized from the attribute "to"',
-);
+# Allow writing to STDOUT
+override '_get_filename' => sub {
 
-has compress => (
-    is => 'rw',
-    isa => 'Bool',
-    default => undef,
-    documentation => 'compression to .gz. If $doc->compress is undef, default is 1',
-);
+    my $filename = super();
 
-sub _build_filenames {
-    my $self = shift;
-    log_fatal "Parameter 'to' must be defined!" if !defined $self->to;
-    return [ split /[ ,]+/, $self->to ];
-}
-
-sub _extension {
-    my ( $self, $document ) = @_;
-    my $compress = 1;
-    if ( defined $self->compress ) {
-        $compress = $self->compress;
+    if ( $filename eq '-' ) {
+        $filename = '/dev/stdout';
     }
-    elsif ( defined $document->compress ) {
-        $compress = $document->compress;
-    }
+    return $filename;
+};
 
-    return  '.treex' . ( $compress ? '.gz' : '' );
-}
+# If a gzipped file is opened first, the header won't be correct
+override '_open_file_handle' => sub {
+    return undef;
+};
 
 sub process_document {
+
     my ( $self, $document ) = @_;
-    my $filename = $document->full_filename . $self->_extension($document);
-    if ( defined $self->path ) {
-        $document->set_path( $self->path );
-        $filename = $document->full_filename . $self->_extension($document);;
-    }
-    if ( defined $self->file_stem ) {
-        $document->set_file_stem( $self->file_stem );
-        $filename = $document->full_filename . $self->_extension($document);;
-    }
-    if ( defined $self->stem_suffix ) {
-        my $origstem = defined $self->file_stem
-                       ? $self->file_stem : $document->file_stem;
-        $document->set_file_stem( $origstem . $self->stem_suffix );
-        $filename = $document->full_filename . $self->_extension($document);;
-    }
-    if ( defined $self->to ) {
-        my ( $next_filename, @rest_filenames ) = @{ $self->filenames };
-        if ( !defined $next_filename ) {
-            log_warn "There are more documents to save than filenames given ("
-                . $self->to . "). Falling back to the filename filled in by a DocumentReader ($filename).";
-        }
-        else {
-            $filename = ( defined $self->path ? $self->path : '' ) . $next_filename;
-            
-            # HACK: Treex::PML::Document->save() cannot take filehandle
-            if ($filename eq '-'){
-                $filename = '/dev/stdout';
-            }
-            
-            $self->set_filenames( \@rest_filenames );
-        }
-    }
-    log_info "Saving to $filename";
-    $document->save($filename);
+
+    # prepare the correct file name    
+    $self->_prepare_file_handle( $document );
+
+    $document->save( $self->_last_filename );
     return 1;
 }
 
@@ -107,26 +48,8 @@ Treex::Block::Write::Treex
 Document writer for the Treex file format (C<*.treex>),
 which is actually a PML instance which is an XML-based format.
 
-
-=head1 ATTRIBUTES
-
-=over
-
-=item to
-
-space or comma separated list of filenames
-
-=item file_stem path
-
-overrides the respective attributes in documents
-(filled in by a L<DocumentReader|Treex::Core::DocumentReader>),
-which are used for generating output file names
-
-=item stem_suffix
-
-a string to append after file_stem
-
-=back
+For a list of possible attributes, see 
+L<BaseWriter|Treex::Block::Write::BaseWriter>.
 
 =head1 METHODS
 
@@ -138,12 +61,14 @@ Saves the document.
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

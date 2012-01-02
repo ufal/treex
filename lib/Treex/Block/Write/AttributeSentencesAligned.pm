@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseWriter';
 with 'Treex::Block::Write::Redirectable';
 with 'Treex::Block::Write::LayerAttributes';
 

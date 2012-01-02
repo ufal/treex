@@ -1,8 +1,7 @@
 package Treex::Block::Write::CoNLLX;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 my %FALLBACK_FOR = ( 'pos' => 'tag', 'deprel' => 'afun', );
 
@@ -17,6 +16,7 @@ has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', def
 
 has _was => ( is => 'rw', default => sub{{}} );
 
+has '+extension' => ( default => '.conll' );
 
 sub process_atree {
     my ( $self, $atree ) = @_;

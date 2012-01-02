@@ -31,5 +31,7 @@ sub process_atree {
 
 1;
 
+# TODO Use standard base class.
+
 # Copyright 2011 David Marecek
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.

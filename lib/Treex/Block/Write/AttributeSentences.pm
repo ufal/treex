@@ -4,8 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
@@ -13,6 +12,8 @@ has '+language' => ( required => 1 );
 has 'separator' => ( isa => 'Str', is => 'ro', default => ' ' );
 
 has 'attr_sep' => ( isa => 'Str', is => 'ro', default => '|' );
+
+has '+extension' => ( default => '.txt' );
 
 sub _process_tree() {
 

@@ -1,8 +1,7 @@
 package Treex::Block::Print::DeprelStats;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
