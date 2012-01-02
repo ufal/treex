@@ -4,8 +4,8 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-extends 'Treex::Block::Write::BaseWriter';
-with 'Treex::Block::Write::Redirectable';
+extends 'Treex::Block::Write::BaseTextWriter';
+
 with 'Treex::Block::Write::LayerAttributes';
 
 has '+language' => ( required => 1 );
