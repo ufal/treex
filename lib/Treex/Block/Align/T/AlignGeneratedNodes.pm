@@ -76,7 +76,7 @@ sub process_zone {
             # DEBUG
             # print  STDERR "[" . $winner->[0]->id . ", " . $winner->[1]->id . "]" . "\n";
             
-            $winner->[0]->add_aligned_node( $winner->[1] );
+            $winner->[0]->add_aligned_node( $winner->[1], 'monolingual' );
             delete $src_free{$winner->[0]};
             delete $trg_free{$winner->[1]};
         }
@@ -89,8 +89,8 @@ sub compare_aligned_nodes {
     my %trg_nodes_ids = map {$_->id => 1} @$trg_nodes;
 
     my @src_nodes_trg = map {
-        my ($align) = $_->get_aligned_nodes;
-        defined $align ? @$align : () } @$src_nodes;
+        $_->get_aligned_nodes_of_type('monolingual');
+    } @$src_nodes;
     my $both_count = () = grep {$trg_nodes_ids{$_->id}} @src_nodes_trg;
     my $src_count = scalar @src_nodes_trg;
     my $trg_count = scalar @$trg_nodes;
@@ -106,9 +106,8 @@ sub score {
     $feature_vector{lemma_equality} = $src_node->t_lemma eq $trg_node->t_lemma;
 
     my $src_par = $src_node->get_parent;
-    my $src_par_trg = ($src_par->get_aligned_nodes)[0] ? ${($src_par->get_aligned_nodes)[0]}[0] : undef;
-
-    $feature_vector{aligned_parent} = (defined $src_par_trg && ($src_par_trg == $trg_node->get_parent)) ? 1 : 0;
+    
+    $feature_vector{aligned_parent} = $src_par->is_aligned_to($trg_node->get_parent, 'monolingual') ? 1 : 0;
     
     my @src_eparents = $src_node->get_eparents;
     my @trg_eparents = $trg_node->get_eparents;

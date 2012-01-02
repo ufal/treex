@@ -8,6 +8,8 @@ has '+language' => ( required => 1 );
 has 'to_language' => ( isa => 'Treex::Type::LangCode', is => 'ro', lazy_build => 1 );
 has 'to_selector' => ( isa => 'Str',      is => 'ro', default => '' );
 
+has 'del_prev_align' => ( isa => 'Bool', is => 'ro', default => 1, required => 1 );
+
 sub _build_to_language {
     my ($self) = @_;
     return $self->language;
@@ -26,8 +28,10 @@ sub process_ttree {
     my $to_troot = $troot->get_bundle->get_tree( $self->to_language, 't', $self->to_selector );
 
     # delete previously made links
-    foreach my $tnode ( $troot->get_descendants ) {
-        $tnode->set_attr( 'alignment', [] );
+    if ($self->del_prev_align) {
+        foreach my $tnode ( $troot->get_descendants ) {
+            $tnode->set_attr( 'alignment', [] );
+        }
     }
 
     my %a2t;
