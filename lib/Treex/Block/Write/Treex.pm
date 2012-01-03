@@ -5,6 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseWriter';
 
 has '+extension' => ( default => '.treex' );
+has '+compress' => ( default => 1 );
 
 # HACKS: Treex::PML::Document->save() cannot take filehandle
 
