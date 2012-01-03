@@ -16,7 +16,8 @@ has 'use_aligned_tree' => ( isa => 'Bool', is => 'ro', default => '0' );
 # 'aligned_' prefix, eg. en
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
 
-# alignment type to use, eg. int.gdfa
+# alignment type to use, eg. 'int' or 'int.gdfa'
+# (see Align::A::InsertAlignmentFromFile/symmetrizations)
 has 'alignment_type' => ( isa => 'Str', is => 'ro', default => 'int.gdfa' );
 
 # use alignment info from the other tree
@@ -41,8 +42,10 @@ sub _get_alignment_hash {
         my $aligned_root =
             $bundle->get_tree( $self->alignment_language, 'A' );
 
+	my @aligned_nodes = $aligned_root->get_descendants;
+
         # foreach node in the aligned-language tree
-        foreach my $aligned_node ( $aligned_root->get_descendants ) {
+        foreach my $aligned_node ( @aligned_nodes ) {
             my $node = $self->_get_aligned_node($aligned_node);
             if ( defined $node ) {
 

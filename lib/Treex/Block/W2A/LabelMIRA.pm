@@ -55,7 +55,7 @@ sub _build_labeller {
     my $config = Treex::Tool::Parser::MSTperl::Config->new(
         config_file => $config_file,
         training    => 0,
-        DEBUG       => 1,
+        DEBUG       => 0,
     );
 
     my $labeller = Treex::Tool::Parser::MSTperl::Labeller->new(

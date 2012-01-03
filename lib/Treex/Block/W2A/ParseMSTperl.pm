@@ -54,7 +54,8 @@ sub _build_parser {
     );
     my $config = Treex::Tool::Parser::MSTperl::Config->new(
         config_file => $config_file,
-        training    => 0
+        training    => 0,
+	DEBUG => 0,
     );
 
     my $parser = Treex::Tool::Parser::MSTperl::Parser->new(
