@@ -268,7 +268,9 @@ sub get_pair {
     }
 
     # "new"
-    # my $parent = $node->get_eparents({first_only => 1, or_topological => 1});
+    # my $parent = $node->get_eparents({first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1});
+    # or probably better:
+    # my ($parent) = $node->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
     
     return undef if $parent->is_root;
 
