@@ -221,25 +221,22 @@ sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
 
-    # needed for references with nodes, eg. parent->node
-    my $first_only = 0;
-    if ($attrib =~ /^(.+):first_only$/) {
-        $attrib = $1;
-        $first_only = 1;
-    }
-
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
     # references
     if ($ref_attr) {
 
+        my $first_only = ( $ref =~ s/^(.+):first$/$1/ ); # will be 1 if the name ends with 'first'        
         my $nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
+        # use only the first referenced node
         if ($first_only) {
             my $reffed_node = $nodes->[0];
             return $self->_get_data( $reffed_node, $ref_attr, $alignment_hash );
-        } else {
-            # call myself recursively on the referenced nodes
+        } 
+        # call myself recursively on all the referenced nodes
+        else {
+
             return join(
                 ' ',
                 grep { defined($_) && $_ =~ m/[^\s]/ }
