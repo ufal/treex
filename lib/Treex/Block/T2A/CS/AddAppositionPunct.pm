@@ -11,7 +11,7 @@ sub process_tnode {
     return if $parent->is_root();
 
     if ($tnode->formeme eq 'n:attr'
-        and $parent->precedes($tnode)
+        and $parent->precedes($tnode) and !$parent->is_root
         and $parent->formeme =~ /^n/
         and ( $tnode->gram_sempos || '' ) eq 'n.denot'    # not numerals etc.
         and Treex::Tool::Lexicon::CS::is_personal_role( $tnode->t_lemma )

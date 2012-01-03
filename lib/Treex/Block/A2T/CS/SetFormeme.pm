@@ -118,6 +118,10 @@ sub _detect_formeme2 {
         elsif ( $node->tag =~ /^(D|Cv|Co)/ ) {
             $formeme = 'adv';
         }
+        # adjectives hanging directly under the root -- nominal usage
+        elsif ( $parent->t->is_root ){
+            $formeme = 'n:' . $node->case;
+        }
         # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
         # TODO -- fix "hodně prodavaček je levých" (genitive!)
         elsif ( $parent->syntpos eq 'v' ) {
@@ -131,7 +135,7 @@ sub _detect_formeme2 {
                 # most complements are not declinable -> pretend them to be nominative (they mostly refer to the subject)
                 $formeme = 'adj:' . ( $node->case || 1 );
             }
-            # normal case: substantival
+            # normal case: nominal
             else {
                 $formeme = 'n:' . ( $node->case || 'X' );
             }

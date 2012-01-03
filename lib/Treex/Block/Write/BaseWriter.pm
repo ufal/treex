@@ -48,7 +48,7 @@ has to => (
 );
 
 has _filenames => (
-    isa           => 'Maybe[ArrayRef[Str]]',
+    isa           => 'ArrayRef[Str]',
     is            => 'rw',
     builder       => '_build_filenames',
     writer        => '_set_filenames',

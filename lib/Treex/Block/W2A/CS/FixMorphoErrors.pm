@@ -26,7 +26,7 @@ sub process_anode {
 
     # the following rules are weaker: they should not override
     # the tag if the token was already recognized by morphology
-    if ( $anode->tag =~ /^X/ ) {
+    elsif ( $anode->tag =~ /^X/ ) {
         # abbreviations such as DNS, MS-DOS, DVB-T; longer words without dash are probably uppercased unknown words
         if ( $anode->form =~ /^\p{IsUpper}{2,6}(-\p{IsUpper}{1,6})?$/ ) {
             $new_tag = 'NNXXX-----A---8';
@@ -82,7 +82,7 @@ An attempt to (hopefully temporarily) fix some of the most common current tagger
 
 =item *
 
-Sets the tag 'Z:' for asterisks ("*") and exclamation marks ("!").
+Sets the tag 'Z:' for unrecognized punctuation, such as asterisks ("*") and exclamation marks ("!").
 
 =item *
 
@@ -93,6 +93,11 @@ since parsing works better with this tag and in an analogous case, the degree si
 =item *
 
 Sets the tag 'C=' for Czech numbers with decimal comma.
+
+=item * 
+
+Sets the right tag and lemma for some unrecognized frequent Czech abbreviations, such as "čl.", "odst." etc. 
+Also sets the abbreviation tag 'NNXXX-----A---8' for unrecognized words composed only of uppercase letters.
 
 =head1 AUTHORS
 
