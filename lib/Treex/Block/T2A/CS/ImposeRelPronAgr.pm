@@ -19,7 +19,7 @@ sub process_ttree {
         my $a_relpron = $t_relpron->get_lex_anode;
         my $t_antec   = @{ $t_relpron->get_deref_attr('coref_gram.rf') }[0];
 
-        my $a_antec = $t_antec->get_lex_anode;
+        my $a_antec = $t_antec->get_lex_anode or next;
 
         if ( $t_relpron->formeme =~ /poss|attr/ ) {    # possessive relative pronouns
             $a_relpron->set_attr( 'morphcat/possgender', $a_antec->get_attr('morphcat/gender') );
