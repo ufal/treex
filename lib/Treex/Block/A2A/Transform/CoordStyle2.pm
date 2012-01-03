@@ -228,7 +228,7 @@ my %entered;
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position != 12; # note that 13th sentence has position 12, DEBUG
+    #return if $atree->get_bundle->get_position != 11;    # note that 13th sentence has position 12, DEBUG
     my $from_f = $self->from_family;
     if ( $from_f eq 'Prague' ) {
         $self->detect_prague($atree);
@@ -461,12 +461,17 @@ sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
 
-    #$self->_dump_res($res); #DEBUG
-    my $parent  = $old_head->get_parent() or return $old_head;
+    #$self->_dump_res($res);    #DEBUG
+    my $parent = $old_head->get_parent() or return $old_head;
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
-    my @shared  = @{ $res->{shared} };
-    my @commas  = @{ $res->{commas} };
-    my @ands    = @{ $res->{ands} };
+
+    # @members, @shared, @commas and @ands should be disjunct sets
+    # However, some members may be incorrectly included in @commas etc.
+    # (because of rare nested cases), so let's filter them out.
+    my %is_done = map { $_ => 1 } @members;
+    my @shared = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{shared} };
+    my @commas = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{commas} };
+    my @ands   = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{ands} };
 
     # Skip if no members
     if ( !@members ) {
@@ -586,6 +591,7 @@ sub transform_coord {
 
                 # try to rehang it
                 $noncomma->set_parent($new_head);
+
                 # and if it is non-projective, then log the change, otherwise revert it
                 if ( $noncomma->is_nonprojective() ) {
                     $noncomma->set_parent($old_head);
@@ -623,7 +629,7 @@ sub transform_coord {
 # Is the given node a coordination separator such as comma or semicolon?
 sub is_comma {
     my ( $self, $node ) = @_;
-    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier && (!$node->is_member || $self->from_family eq 'Prague');
+    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier && ( !$node->is_member || $self->from_family eq 'Prague' );
 }
 
 1;
