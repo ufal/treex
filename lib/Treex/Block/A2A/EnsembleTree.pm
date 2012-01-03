@@ -8,7 +8,8 @@ use Treex::Tool::ML::Clustering::C_Cluster;
 
 extends 'Treex::Core::Block';
 has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
-has 'use_pos' => ( is => 'rw', isa => 'Str');
+has 'use_pos' => ( is => 'rw', isa => 'Str', default => 'false');
+has 'language' => ( is => 'rw', isa => 'Str', default =>'en');
 my $ENSEMBLE;
 my %use_tree = ();
 my $cluster;
@@ -140,6 +141,7 @@ sub process_bundle {
   my @zones = $bundle->get_all_zones();
   $ENSEMBLE->clear_edges();
   foreach my $zone (@zones) {
+    if($zone->get_atree()->language eq $self->language){
    if ( exists $use_tree{ $zone->get_atree()->selector } ) {
       if($self->use_pos eq "true"){
 	process_tree_pos( $zone->get_atree(),
@@ -151,14 +153,15 @@ sub process_bundle {
       }
     }
   }
-  make_graph($bundle);
+  }
+  make_graph($self,$bundle);
 }
 
 sub make_graph {
-  my ($bundle) = @_;
+  my ($self,$bundle) = @_;
   my $mst = $ENSEMBLE->get_mst();
   my $node;
-  my $tree_root = $bundle->get_tree( 'en', 'a' );
+  my $tree_root = $bundle->get_tree( $self->language, 'a' );
   
   my @todo = $tree_root->get_descendants( { ordered => 1, add_self => 1 } );
   

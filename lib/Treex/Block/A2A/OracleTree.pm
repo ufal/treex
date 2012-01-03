@@ -8,7 +8,7 @@ extends 'Treex::Core::Block';
 my @reference_nodes;
 my @oracle_nodes;
 has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
-
+has 'language' => ( is => 'rw', isa => 'Str', default =>'en');
 my %use_tree = ();
 
 #must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
@@ -46,8 +46,8 @@ sub process_tree {
 
 sub process_bundle {
   my ( $self, $bundle ) = @_;
-  my $reference_root = $bundle->get_tree( "en", "a", "ref" );
-  my $oracle_root    = $bundle->get_tree( "en", "a", "oracle" );
+  my $reference_root = $bundle->get_tree( $self->language, "a", "ref" );
+  my $oracle_root    = $bundle->get_tree( $self->language, "a", "oracle" );
   @reference_nodes = $reference_root->get_descendants( { ordered => 1 } );
   @oracle_nodes =
   $oracle_root->get_descendants( { ordered => 1,, add_self => 1 } );
