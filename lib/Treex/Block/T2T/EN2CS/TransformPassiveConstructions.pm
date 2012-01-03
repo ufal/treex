@@ -26,8 +26,11 @@ sub process_ttree {
         next NODE if $en_noun->formeme ne 'n:subj';
         next NODE if $en_verb->formeme ne 'v:to+inf';
 
+        # todo remove the need to use three diferent markings for the same thing
         $cs_node->set_is_passive(0);
         $cs_node->set_voice('reflexive_diathesis');
+        $cs_node->set_gram_diathesis('deagent'); 
+        
         my $perspron = $cs_node->create_child(
             {
                 t_lemma        => '#PersPron',

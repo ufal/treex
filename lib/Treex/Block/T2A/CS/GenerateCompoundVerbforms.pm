@@ -61,27 +61,33 @@ override '_set_class_value' => sub {
 
     return if ( $value eq '' );
 
+    $tnode->wild->{verbform} = $value;
+
     my $anode = $tnode->get_lex_anode();
     return if ( !$anode );
 
     # create the new verbal subtree
     my $aparent = $anode->get_parent();
-    my ($child) = $self->_create_subtree( $anode, $value );
+    my $child = $self->_create_subtree( $anode, $value );
     $child->set_parent($aparent);
 
-    my @new_anodes = $child->get_descendants( { add_self => 1 } );
+    # copy some needed attributes from the old node into the new root node    
+    $child->wild->{is_parenthesis} = $anode->wild->{is_parenthesis};
 
     # copy some attributes off the old node into the whole structure
+    my @new_anodes = $child->get_descendants( { add_self => 1 } );
     my ( $person, $number, $gender ) = (
         $anode->get_attr('morphcat/person'),
-        $anode->get_attr('morphcat/number'), 
+        $anode->get_attr('morphcat/number'),
         $anode->get_attr('morphcat/gender')
     );
-    
+
     foreach my $node (@new_anodes) {
+
         foreach my $cat ( 'case', 'grade', 'possgender', 'possnumber', 'reserve1', 'reserve2' ) {
             $node->set_attr( 'morphcat/' . $cat, '.' );
         }
+
         $node->set_attr( 'morphcat/person', $person );
         $node->set_attr( 'morphcat/number', $number );
         $node->set_attr( 'morphcat/gender', $gender );
@@ -132,8 +138,8 @@ sub _create_subtree {
 
         # fill in the needed values
         else {
-            my ( $morph, $lemma ) = $topology =~ m/([^ ]+) ([^\(\)]+)/;
-            $topology =~ s/^[^\(\)]+([\(\)])/$1/;
+            my ( $morph, $lemma ) = $topology =~ m/([^ ]+) ([^ ]+)/;
+            $topology =~ s/^[^ ]+ [^ ]+ //;
             $right = 1;
 
             $node->set_lemma($lemma);

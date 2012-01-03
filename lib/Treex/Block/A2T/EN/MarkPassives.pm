@@ -18,9 +18,11 @@ sub process_tnode {
         )
     {                                         # ??? to je otazka, jestli obe
         $t_node->set_is_passive(1);
+        $t_node->set_gram_diathesis('pas');
     }
     else {
-        $t_node->set_is_passive(undef);
+        $t_node->set_is_passive(undef);        
+        $t_node->set_gram_diathesis('act') if ( $lex_a_node->tag =~ m/^[VM]/ );
     }
     return 1;
 }

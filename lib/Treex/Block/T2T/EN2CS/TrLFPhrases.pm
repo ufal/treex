@@ -34,7 +34,7 @@ sub process_ttree {
             $is->set_attr( 'mlayer_pos', 'X' );
             $is->set_t_lemma('Jinými slovy');
             $is->set_t_lemma_origin('rule-Translate_LF_phrases');
-            $is->set_formeme('phrase');
+            $is->set_formeme('x');
             $is->set_formeme_origin('rule-Translate_LF_phrases');
         }
     }

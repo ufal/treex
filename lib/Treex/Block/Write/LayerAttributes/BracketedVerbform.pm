@@ -48,7 +48,7 @@ sub _get_subtree {
         $tag =~ s/^(..)......(.).(..).*$/$1$2$3/;    # POS, SubPOS, Tense, Negation, Voice
 
         return '(' . join( '', map { _get_subtree( $_, $find ) } @left )
-            . $tag . ' ' . $lemma
+            . $tag . ' ' . $lemma . ' '
             . join( '', map { _get_subtree( $_, $find ) } @right ) . ')';
     }
 

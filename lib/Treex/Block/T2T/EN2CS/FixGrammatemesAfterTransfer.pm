@@ -87,7 +87,7 @@ sub process_tnode {
     # Some English clause heads may become non-heads and vice versa
     $cs_t_node->set_is_clause_head( $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
 
-    # defaultne: you --> plural
+    # default: you --> plural
     if ( ( $cs_t_node->gram_person || "" ) eq "2" ) {
         $cs_t_node->set_gram_number('pl')
     }
@@ -97,7 +97,7 @@ sub process_tnode {
         $cs_t_node->set_gram_gender('anim')
     }
 
-    # defaultni rod u pluralu bude muzsky zivotny
+    # default gender for plural will be masculine animate
     if ($cs_tlemma eq '#PersPron'
         and ( ( $cs_t_node->gram_number || '' ) eq 'pl' )
         and ( ( $cs_t_node->gram_gender || '' ) =~ /^(|nr)$/ )
@@ -336,6 +336,17 @@ sub process_tnode {
     if ( $cs_formeme !~ /^v/ ) {
         $cs_t_node->set_voice(undef);
         $cs_t_node->set_is_passive(undef);
+        $cs_t_node->set_gram_diathesis(undef);
+    }
+    
+    # Set the correct gram/verbmod in clauses with English 'to+inf' translated to Czech 'aby+fin' 
+    if ( $cs_formeme =~ m/[:_]aby\+/ ){
+        $cs_t_node->set_gram_verbmod( 'cdn' );
+    }
+    # "aby", "kdyby" always have 'ant' tense in Czech, a vast majority of other conditionals is 'sim'
+    # (with the exception of rare cases like "byl by (býval) dělal"). 
+    if ( ( $cs_t_node->gram_verbmod || '' ) eq 'cdn' ){        
+        $cs_t_node->set_gram_tense( $cs_formeme =~ m/(aby|kdyby)/ ? 'ant' : 'sim' );
     }
 
     return;

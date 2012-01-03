@@ -48,8 +48,8 @@ sub _should_generate {
     return (
         defined $a_node->get_attr('morphcat/pos')
             and $a_node->get_attr('morphcat/pos') !~ /[ZJR!]/    # neohybat neohebne a ty, co uz ohnute jsou (znak !)
-            and $a_node->get_attr('morphcat/subpos') ne 'c'      # tvary kondicionalnich AuxV uz jsou urcene
-            and $a_node->lemma =~ /^(\w|#Neg)/                   # mimo #PersPron a cislicove cislovky
+            and ( $a_node->get_attr('morphcat/subpos') ne 'c' || !defined( $a_node->form ) )    # tvary kondicionalnich AuxV uz jsou urcene
+            and $a_node->lemma =~ /^(\w|#Neg)/                                                  # mimo #PersPron a cislicove cislovky
     );
 }
 
@@ -101,7 +101,7 @@ sub _generate_word_form {
     if ( $DEBUG && $form_info ) {
         log_warn(
             "MORF: $lemma\t$tag_regex\t" . $form_info->get_form()
-                . "\ttmttred " . $a_node->get_address() . "&"
+                . "\tttred " . $a_node->get_address() . " &"
         );
     }
     return $form_info->get_form() if $form_info;
@@ -248,7 +248,7 @@ sub _get_tag_regex {
 
     $morphcat{possnumber} =~ s/([PS])/\[${1}X\]/;
 
-    $morphcat{person} =~ s/(\d)/\[${1}X\]/;
+    $morphcat{person} =~ s/(\d)/\[${1}X\-\]/;
 
     $morphcat{tense} =~ s/F/\[FX\]/;
     $morphcat{tense} =~ s/P/\[PHX\]/;
