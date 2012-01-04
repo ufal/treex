@@ -215,7 +215,16 @@ sub file_opened_hook {
     my $pmldoc = $self->grp()->{FSFile};
 
     $self->pml_doc($pmldoc);
-    my $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
+
+    my $treex_doc;
+    if ( defined $pmldoc->[13]->{_treex_core_document} ) { # if it comes from storable (i.e., already with moose)
+        $treex_doc = $pmldoc->[13]->{_treex_core_document}
+    }
+    else {
+        $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
+    }
+
+
     $self->treex_doc($treex_doc);
 
     # labels, styles and vallex must be created again for each file
@@ -224,7 +233,6 @@ sub file_opened_hook {
     $self->_set_vallex( Treex::Core::TredView::Vallex->new( _treex_doc => $treex_doc ) );
 
     foreach my $bundle ( $treex_doc->get_bundles() ) {
-
         # If we don't care about slow loading of the whole file,
         # we can precompute all bundles now, so browsing through bundles
         # will be a bit faster.
