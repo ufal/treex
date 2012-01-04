@@ -75,6 +75,6 @@ my $f1 = sub { 4 + 5*$_[0] };
 $error_rate = train_test($f1, 1, 2);
 ok($error_rate < 0.001, 'prediction of a linear function');
 
-my $f1 = sub { 41 - 2*($_[0]**2) + 7*$_[0]*$_[1] - $_[1]**3 };
+$f1 = sub { 41 - 2*($_[0]**2) + 7*$_[0]*$_[1] - $_[1]**3 };
 $error_rate = train_test($f1, 2, 3);
 ok($error_rate < 0.001, 'prediction of a polynomial function');
