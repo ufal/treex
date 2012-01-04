@@ -7,6 +7,12 @@ extends 'Treex::Block::Write::BaseWriter';
 has '+extension' => ( default => '.treex' );
 has '+compress' => ( default => 1 );
 
+has storable => (
+    is            => 'rw',
+    isa           => 'Bool',
+    documentation => 'Use the Storable module (instead of Treex::PML) for storing into .streex files. Defaults to document->compress, or 0.'
+);
+
 # HACKS: Treex::PML::Document->save() cannot take filehandle
 
 # Allow writing to STDOUT
@@ -25,11 +31,27 @@ override '_open_file_handle' => sub {
     return undef;
 };
 
+override '_document_extension' => sub {
+    my ( $self, $document ) = @_;
+
+    my $storable = $self->storable;
+    if ( not defined $storable ) {
+        $storable = $document->storable;
+    }
+
+    if ($storable) {
+        return '.streex';
+    }
+    else {
+        return super;
+    }
+};
+
 sub process_document {
 
     my ( $self, $document ) = @_;
 
-    # prepare the correct file name    
+    # prepare the correct file name
     $self->_prepare_file_handle( $document );
 
     $document->save( $self->_last_filename );
