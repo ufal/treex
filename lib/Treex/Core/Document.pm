@@ -110,7 +110,7 @@ sub BUILD {
         # loading Treex::Core::Document from a file
         elsif ( $params_rf->{filename} ) {
 
-            if ( $params_rf->{filename} =~ /.streex(.gz)?$/ ) {
+            if ( $params_rf->{filename} =~ /.streex$/ ) {
                 log_fatal 'Storable (.streex) docs must be retrieved by Treex::Core::Document->retrieve_storable($filename)';
             }
 
@@ -408,15 +408,9 @@ sub save {
     my $self = shift;
     my ($filename) = @_;
 
-    if ( $filename =~ /.streex(.gz)?$/ ) {
-        my $F;
-        if ( $1 ) {
-            open (F, ">:gzip", $filename) or log_fatal $!;
-        }
-        else {
-            open (F, ">", $filename) or log_fatal $!;
-        }
-        Storable::nstore_fd($self,*F) or log_fatal $!;;
+    if ( $filename =~ /.streex$/ ) {
+        open (my $F, ">:gzip", $filename) or log_fatal $!;
+        Storable::nstore_fd($self,*$F) or log_fatal $!;;
     }
 
     else {
@@ -436,22 +430,14 @@ sub save {
 sub retrieve_storable {
     my ($class, $filename) = @_;
 
-    if ( $filename =~ /.streex(.gz)?$/ ) {
-
-        my $F;
-        if ( $1 ) {
-            open F, "<:gzip",  $filename or log_fatal($!);
-        }
-        else {
-            open F,  $filename or log_fatal($!);
-        }
-
-        my $retrieved_doc = Storable::retrieve_fd(*F) or log_fatal($!);
+    if ( $filename =~ /.streex$/ ) {
+        open my $F, "<:gzip",  $filename or log_fatal($!);
+        my $retrieved_doc = Storable::retrieve_fd(*$F) or log_fatal($!);
         return $retrieved_doc;
     }
 
     else {
-        log_fatal "filename=$filename, but Treex::Core::Document->retrieve(\$filenmae) can be used only for .streex.gz files";
+        log_fatal "filename=$filename, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files";
     }
 }
 

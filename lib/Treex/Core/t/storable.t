@@ -9,7 +9,7 @@ BEGIN { use_ok('Treex::Core::Document') }
 
 my $description = q(I'm a magical testing sentence);
 my $testlemma   = q(blahblah);
-my $fname       = 'test.streex.gz';
+my $fname       = 'test.streex';
 
 # preparing a document for testing
 my $doc = Treex::Core::Document->new;
