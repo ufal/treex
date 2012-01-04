@@ -10,18 +10,18 @@ use Treex::Core::Common;
 use Treex::Tool::Parser::MSTperl::Node;
 
 # use features from aligned tree
-has 'use_aligned_tree' => ( isa => 'Bool', is => 'ro', default => '0' );
+has 'use_aligned_tree' => ( isa => 'Bool', is => 'ro', default => '1' );
 
 # the language of the tree which is already parsed and is accessed via the
 # 'aligned_' prefix, eg. en
-has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
+has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );
 
 # alignment type to use, eg. 'int' or 'int.gdfa'
 # (see Align::A::InsertAlignmentFromFile/symmetrizations)
 has 'alignment_type' => ( isa => 'Str', is => 'ro', default => 'int.gdfa' );
 
 # use alignment info from the other tree
-has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
+has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '1' );
 
 # get alignment mapping:
 # CURRENT VERSION:
@@ -51,7 +51,7 @@ sub _get_alignment_hash {
 
                 # if there is a node aligned to $aligned_node,
                 # store this information into $alignment_hash
-                $alignment_hash->{ $node->id } = $aligned_node;
+                $alignment_hash->{ $node->get_attr('id') } = $aligned_node;
             }
         }
     } else {
@@ -117,7 +117,7 @@ sub _get_field_value {
             if ( defined $alignment_hash ) {
 
                 # get alignment from the alignment_hash
-                $aligned_node = $alignment_hash->{ $node->id };
+                $aligned_node = $alignment_hash->{ $node->get_attr('id') };
             } else {
 
                 # get alignment directly from the node
@@ -213,8 +213,8 @@ sub compute_tree_distance_aligned {
     if ( defined $alignment_hash ) {
 
         # get alignment from the alignment_hash
-        $aligned_parent = $alignment_hash->{ $parent->id };
-        $aligned_child  = $alignment_hash->{ $child->id };
+        $aligned_parent = $alignment_hash->{ $parent->get_attr('id') }->[0];
+        $aligned_child  = $alignment_hash->{ $child->get_attr('id') }->[0];
     } else {
 
         # get alignment directly from the nodes
