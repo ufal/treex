@@ -96,7 +96,15 @@ sub new_document {
 
     $self->_set_doc_number( $self->doc_number + 1 );
 
-    my $document = Treex::Core::Document->new( \%args );
+    my $document;
+    if ( defined $load_from and $load_from =~ /\.streex/ ) {
+        $document = Treex::Core::Document->retrieve_storable($load_from);
+        $document->set_storable(1);
+    }
+    else {
+        $document = Treex::Core::Document->new( \%args );
+    }
+
     if ( defined $load_from && $load_from =~ /\.gz$/ ) {
         $document->set_compress(1);
     }

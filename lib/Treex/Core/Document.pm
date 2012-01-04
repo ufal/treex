@@ -408,7 +408,7 @@ sub save {
     my $self = shift;
     my ($filename) = @_;
 
-    if ( $filename =~ /.streex$/ ) {
+    if ( $filename =~ /\.streex$/ ) {
         open (my $F, ">:gzip", $filename) or log_fatal $!;
         Storable::nstore_fd($self,*$F) or log_fatal $!;;
     }
@@ -430,7 +430,7 @@ sub save {
 sub retrieve_storable {
     my ($class, $filename) = @_;
 
-    if ( $filename =~ /.streex$/ ) {
+    if ( $filename =~ /\.streex$/ ) {
         open my $F, "<:gzip",  $filename or log_fatal($!);
         my $retrieved_doc = Storable::retrieve_fd(*$F) or log_fatal($!);
         return $retrieved_doc;
