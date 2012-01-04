@@ -12,7 +12,7 @@ Treex::PML::AddResourcePath( Treex::Core::Config->pml_schema_dir() );
 
 with 'Treex::Core::WildAttr';
 
-use Scalar::Util qw( weaken );
+use Scalar::Util qw( weaken reftype );
 
 use Storable;
 
@@ -428,17 +428,21 @@ sub save {
 }
 
 sub retrieve_storable {
-    my ($class, $filename) = @_;
+    my ($class, $file) = @_; # $file stands for a file name, but it can be also file handle (needed by the TrEd backend for .streex)
 
-    if ( $filename =~ /\.streex$/ ) {
-        open my $F, "<:gzip",  $filename or log_fatal($!);
-        my $retrieved_doc = Storable::retrieve_fd(*$F) or log_fatal($!);
-        return $retrieved_doc;
+    my $FILEHANDLE;
+
+    if ( reftype($file) eq 'GLOB' ) {
+        $FILEHANDLE = $file;
     }
-
     else {
-        log_fatal "filename=$filename, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files";
+        log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
+            unless $file =~ /\.streex$/;
+        open $FILEHANDLE, "<:gzip",  $file or log_fatal($!);
     }
+
+    my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
+    return $retrieved_doc;
 }
 
 __PACKAGE__->meta->make_immutable;

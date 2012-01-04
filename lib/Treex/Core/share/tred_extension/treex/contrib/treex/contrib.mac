@@ -8,6 +8,7 @@ package Treex_mode;
 #binding-context Treex_mode
 
 use Treex::Core;
+#use Treex::Core::TredView::BackendStorable;
 
 BEGIN { import TredMacro; }
 

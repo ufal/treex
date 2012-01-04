@@ -19,6 +19,7 @@ my $command =  $tred_dir
     . '/tred -O PreInstalledExtensionsDir='
     . $tred_extension_dir
     . ' -O MaxUndo=0 '
+    . ' -B Treex::Core::TredView::BackendStorable ' # extra backends
     . ' -J* '
     . ' -j treex '
     . (join ' ',@ARGV);
