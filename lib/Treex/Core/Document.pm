@@ -14,11 +14,15 @@ with 'Treex::Core::WildAttr';
 
 use Scalar::Util qw( weaken );
 
+use Storable;
+
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
 has file_stem   => ( is => 'rw', isa => 'Str', default => 'noname' );
 has file_number => ( is => 'rw', isa => 'Str', builder => 'build_file_number' );
 has compress    => ( is => 'rw', isa => 'Bool', default => undef, documentation => 'compression to .gz' );
+has storable    => ( is => 'rw', isa => 'Bool', default => undef,
+                     documentation => 'using Storable with gz compression instead of Treex::PML' );
 
 has _pmldoc => (
     isa      => 'Treex::PML::Document',
@@ -105,14 +109,21 @@ sub BUILD {
 
         # loading Treex::Core::Document from a file
         elsif ( $params_rf->{filename} ) {
-            # If the file contains invalid PML (e.g. unknown afun value)
-            # Treex::PML fails with die.
-            # TODO: we should rather catch the die message and report it via log_fatal
-            $pmldoc = eval {
-                $factory->createDocumentFromFile( $params_rf->{filename} );
-            };
-            log_fatal "Error while loading " . $params_rf->{filename}
-             if !defined $pmldoc;
+
+            if ( $params_rf->{filename} =~ /.streex(.gz)?$/ ) {
+                log_fatal 'Storable (.streex) docs must be retrieved by Treex::Core::Document->retrieve_storable($filename)';
+            }
+
+            else {
+                # If the file contains invalid PML (e.g. unknown afun value)
+                # Treex::PML fails with die.
+                # TODO: we should rather catch the die message and report it via log_fatal
+                $pmldoc = eval {
+                    $factory->createDocumentFromFile( $params_rf->{filename} );
+                };
+                log_fatal "Error while loading " . $params_rf->{filename}
+                    if !defined $pmldoc;
+            }
         }
     }
 
@@ -395,19 +406,53 @@ sub load {
 
 sub save {
     my $self = shift;
+    my ($filename) = @_;
 
-    # the following para should be some
-    $self->serialize_wild;
-    foreach my $bundle ( $self->get_bundles ) {
-        $bundle->serialize_wild;
-        foreach my $bundlezone ( $bundle->get_all_zones ) {
-            foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
-                $node->serialize_wild;
-            }
+    if ( $filename =~ /.streex(.gz)?$/ ) {
+        my $F;
+        if ( $1 ) {
+            open (F, ">:gzip", $filename) or log_fatal $!;
         }
+        else {
+            open (F, ">", $filename) or log_fatal $!;
+        }
+        Storable::nstore_fd($self,*F) or log_fatal $!;;
     }
 
-    return $self->_pmldoc->save(@_);
+    else {
+        $self->serialize_wild;
+        foreach my $bundle ( $self->get_bundles ) {
+            $bundle->serialize_wild;
+            foreach my $bundlezone ( $bundle->get_all_zones ) {
+                foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
+                    $node->serialize_wild;
+                }
+            }
+        }
+        return $self->_pmldoc->save(@_);
+    }
+}
+
+sub retrieve_storable {
+    my ($class, $filename) = @_;
+
+    if ( $filename =~ /.streex(.gz)?$/ ) {
+
+        my $F;
+        if ( $1 ) {
+            open F, "<:gzip",  $filename or log_fatal($!);
+        }
+        else {
+            open F,  $filename or log_fatal($!);
+        }
+
+        my $retrieved_doc = Storable::retrieve_fd(*F) or log_fatal($!);
+        return $retrieved_doc;
+    }
+
+    else {
+        log_fatal "filename=$filename, but Treex::Core::Document->retrieve(\$filenmae) can be used only for .streex.gz files";
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -567,7 +612,12 @@ Loads document from C<$filename> given C<%opts> using L<Treex::PML::Document::lo
 
 =item $document->save($filename)
 
-Saves document to C<$filename> using L<Treex::PML::Document::save()>
+Saves document to C<$filename> using L<Treex::PML::Document::save()>,
+or by the Storable module if the file's extension is .streex.gz.
+
+=item Treex::Core::Document->retrieve_storable($filename)
+
+Loading a document from the .streex (Storable) format.
 
 =head2 Other
 
