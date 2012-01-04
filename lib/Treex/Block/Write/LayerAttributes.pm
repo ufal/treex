@@ -256,6 +256,9 @@ sub _get_data {
         elsif ( $attrib eq 'node' ){
             return $node;
         }
+        elsif ( $attrib eq 'alignment_hash' ){
+            return $alignment_hash;
+        }
         # plain attributes
         else {
             return $node->get_attr($attrib);
