@@ -64,7 +64,7 @@ Treex::Block::Write::LayerAttributes::AlignedTreeDistances
         alignment_type=int.gdfa \
         attributes="ord form lemma CzechCoarseTag(tag) tag parent->ord afun \
         aligned->ord aligned->tag aligned->afun aligned->parent->ord \
-        AlignedTreeDistances(node)"
+        AlignedTreeDistances(node,alignment_hash)"
 
     # in future one will be also able to add something like
         modifier_config="{ TreeDistance => {mode => 'numeric',
