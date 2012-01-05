@@ -3,6 +3,7 @@ package Treex::Tool::Lexicon::CS::Aspect;
 use strict;
 use warnings;
 use utf8;
+use Treex::Tool::Lexicon::CS;
 
 my @verbs = qw(
     číhat-I čalounit-I čarovat-I číslovat-I časovat-I číst-I častit-I častovat-I
@@ -876,7 +877,12 @@ foreach my $verb (@verbs) {
 
 sub get_verb_aspect {
     my $lemma = shift;
-    $lemma =~ s/_s[ie]//;
+    
+    # normalize reflexive t-lemmas
+    $lemma =~ s/_s[ie]$//;
+    # normalize numbered m-lemmas
+    $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma, 1); 
+    
     my $aspect = $aspect_of{$lemma};
     if ( defined $aspect ) {
         return $aspect;

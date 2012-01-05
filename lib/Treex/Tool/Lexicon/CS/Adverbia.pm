@@ -206,6 +206,326 @@ sub is_pronom {
     return 0;
 }
 
+# tohle je velmi tupe, pole by se melo omezit jen na ty, ktere nejdou odvodit pravidelne (tezce-tezky)
+my %adv2adj;
+map { my ($j, $r) = split '-', $_; $adv2adj{$r} = $j } qw(
+    abecedně-abecední abnormálně-abnormální absolutně-absolutní abstraktně-abstraktní
+    absurdně-absurdní adekvátně-adekvátní adresně-adresný agresivně-agresivní
+    akademicky-akademický aktivně-aktivní alegoricky-alegorický alibisticky-alibistický
+    alikvótně-alikvótní amatérsky-amatérský americky-americký analogicky-analogický
+    andělsky-andělský anglicky-anglický anonymně-anonymní antikomunisticky-antikomunistický
+    antisemitsky-antisemitský aprioristicky-aprioristický apriorně-apriorní
+    archetypálně-archetypální asketicky-asketický astmaticky-astmatický autenticky-autentický
+    automaticky-automatický autoritativně-autoritativní báječně-báječný banálně-banální
+    barevně-barevný barvitě-barvitý bedlivě-bedlivý bezcelně-bezcelní bezdrátově-bezdrátový
+    bezdůvodně-bezdůvodný bezhlavě-bezhlavý bezhlesně-bezhlesný bezchybně-bezchybný
+    bezkonkurenčně-bezkonkurenční bezmezně-bezmezný bezmocně-bezmocný bezmyšlenkovitě-bezmyšlenkovitý
+    beznadějně-beznadějný bezpečně-bezpečný bezpečnostně-bezpečnostní bezplatně-bezplatný
+    bezpodmínečně-bezpodmínečný bezproblémově-bezproblémový bezprostředně-bezprostřední
+    bezradně-bezradný beztrestně-beztrestný bezúplatně-bezúplatný bezúročně-bezúročný
+    bezúspěšně-bezúspěšný bezvládně-bezvládný bezvýhradně-bezvýhradný bezvýsledně-bezvýsledný
+    běžně-běžný bídně-bídný bigbítově-bigbítový bíle-bílý biograficky-biografický
+    biologicky-biologický bizarně-bizarní blahobytně-blahobytný bláznivě-bláznivý
+    blbě-blbý bledě-bledý bleskově-bleskový bohatě-bohatý bolestivě-bolestivý
+    bombasticky-bombastický bouřlivě-bouřlivý branně-branný bravurně-bravurní
+    brilantně-brilantní briskně-briskní brutálně-brutální bystře-bystrý bytostně-bytostný
+    bývale-bývalý cele-celý celkově-celkový celoročně-celoroční celostátně-celostátní
+    celosvětově-celosvětový cenově-cenový centrálně-centrální cílevědomě-cílevědomý
+    církevně-církevní citelně-citelný citlivě-citlivý citově-citový civilně-civilní
+    cudně-cudný cynicky-cynický časně-časný časopisecky-časopisecký časově-časový
+    částečně-částečný čecháčkovsky-čecháčkovský čerstvě-čerstvý červenobíle-červenobílý
+    česky-český čestně-čestný čiperně-čiperný číslicově-číslicový čistě-čistý
+    čítankově-čítankový čitelně-čitelný čtenářsky-čtenářský čtvrtletně-čtvrtletní
+    čtyřnásobně-čtyřnásobný dalece-daleký dálkově-dálkový daňově-daňový definitivně-definitivní
+    dekadentně-dekadentní delikátně-delikátní demagogicky-demagogický demokraticky-demokratický
+    denně-denní dennodenně-dennodenní desetinásobně-desetinásobný destruktivně-destruktivní
+    detailně-detailní dětsky-dětský diametrálně-diametrální diferencovaně-diferencovaný
+    digitálně-digitální diplomaticky-diplomatický disciplinárně-disciplinární
+    disciplinovaně-disciplinovaný diskrétně-diskrétní diskriminačně-diskriminační
+    diskursivně-diskursivní divácky-divácký divadelně-divadelní divoce-divoký
+    dlouho-dlouhý dlouhodobě-dlouhodobý dlouze-dlouhý dobromyslně-dobromyslný
+    dobrovolně-dobrovolný dobře-dobrý dočasně-dočasný dodatečně-dodatečný dojemně-dojemný
+    dokonale-dokonalý doktrinárně-doktrinární domněle-domnělý doslovně-doslovný
+    dostatečně-dostatečný dotčeně-dotčený dovedně-dovedný doživotně-doživotní
+    draho-drahý dramaticky-dramatický dramaturgicky-dramaturgický drasticky-drastický
+    draze-drahý dráždivě-dráždivý drogově-drogový drsně-drsný druhotně-druhotný
+    duchovně-duchovní důkladně-důkladný důležitě-důležitý důmyslně-důmyslný
+    důrazně-důrazný důsledně-důsledný důstojně-důstojný duševně-duševní dutě-dutý
+    důvěrně-důvěrný důvodně-důvodný dvojjazyčně-dvojjazyčný dvojnásob-dvojnásobný
+    dvojnásobně-dvojnásobný dvořákovsky-dvořákovský dvoukolově-dvoukolový dychtivě-dychtivý
+    dylanovsky-dylanovský dynamicky-dynamický ebenově-ebenový efektivně-efektivní
+    efektně-efektní ekologicky-ekologický ekonomicky-ekonomický elegantně-elegantní
+    elektricky-elektrický elitářsky-elitářský emocionálně-emocionální energeticky-energetický
+    energicky-energický enormně-enormní eroticky-erotický erudovaně-erudovaný
+    esteticky-estetický eticky-etický etnicky-etnický eventuálně-eventuální
+    evidentně-evidentní evropsky-evropský excelentně-excelentní excentricky-excentrický
+    existenčně-existenční exkluzivně-exkluzivní exoticky-exotický experimentálně-experimentální
+    exponenciálně-exponenciální exportně-exportní externě-externí extrémně-extrémní
+    fakticky-faktický faktograficky-faktografický falešně-falešný familiérně-familiérní
+    famózně-famózní fantasticky-fantastický fašisticky-fašistický fatálně-fatální
+    feministicky-feministický fér-férový férově-férový filozoficky-filozofický
+    finančně-finanční fixně-fixní flagrantně-flagrantní flegmaticky-flegmatický
+    folklorně-folklórní foneticky-fonetický formálně-formální formulačně-formulační
+    francouzsky-francouzský frontálně-frontální funkčně-funkční fyzicky-fyzický
+    fyzikálně-fyzikální galantně-galantní generačně-generační geometricky-geometrický
+    globálně-globální gólově-gólový goticky-gotický graficky-grafický gramaticky-gramatický
+    halasně-halasný hazardérsky-hazardérský herecky-herecký herně-herní hezky-hezký
+    historicky-historický hladce-hladký hladově-hladový hlasitě-hlasitý hlasově-hlasový
+    hlavně-hlavní hluboce-hluboký hluboko-hluboký hlučně-hlučný hmotně-hmotný
+    hněvivě-hněvivý hodnotově-hodnotový hojně-hojný horce-horký horečně-horečný
+    horlivě-horlivý hořce-hořký hospodárně-hospodárný hospodářsky-hospodářský
+    hotově-hotový houfně-houfný houževnatě-houževnatý hravě-hravý hrdě-hrdý
+    hromadně-hromadný hrozivě-hrozivý hrozně-hrozný hrubě-hrubý hudebně-hudební
+    humorně-humorný hutně-hutný hygienicky-hygienický hypoteticky-hypotetický
+    chaoticky-chaotický chladně-chladný chladno-chladný chlapecky-chlapecký
+    chrabře-chrabrý chronologicky-chronologický chtěně-chtěný chvalně-chvalný
+    chybně-chybný chytře-chytrý ideálně-ideální ideologicky-ideologický ideově-ideový
+    ikonologicky-ikonologický ilegálně-ilegální individuálně-individuální informačně-informační
+    informativně-informativní informovaně-informovaný instinktivně-instinktivní
+    intelektově-intelektový intelektuálně-intelektuální intenzivně-intenzívní
+    intenzívně-intenzívní interně-interní intimně-intimní invenčně-invenční
+    investičně-investiční ironicky-ironický janáčkovsky-janáčkovský jasně-jasný
+    jasno-jasný jazykově-jazykový jedině-jediný jednoduše-jednoduchý jednohlasně-jednohlasný
+    jednolitě-jednolitý jednomyslně-jednomyslný jednorázově-jednorázový jednostranně-jednostranný
+    jednostrunně-jednostrunný jednotlivě-jednotlivý jednotně-jednotný jednoznačně-jednoznačný
+    jemně-jemný jihovýchodně-jihovýchodní jihozápadně-jihozápadní jistě-jistý
+    jižně-jižní jmenovitě-jmenovitý kacířsky-kacířský kapacitně-kapacitní kapitálově-kapitálový
+    kategoricky-kategorický každodenně-každodenní každoročně-každoroční kladně-kladný
+    klamavě-klamavý klasicky-klasický klaunsky-klaunský klidně-klidný klimaticky-klimatický
+    kmenově-kmenový knižně-knižní kolektivně-kolektivní kolmo-kolmý komediálně-komediální
+    komerčně-komerční komicky-komický komorně-komorní kompaktně-kompaktní kompetenčně-kompetenční
+    kompetentně-kompetentní kompletně-kompletní komplexně-komplexní kompozičně-kompoziční
+    koncepčně-koncepční konečně-konečný konfrontačně-konfrontační konkrétně-konkrétní
+    konstantně-konstantní konstrukčně-konstrukční kontraktačně-kontraktační
+    kontrastně-kontrastní kontrolovaně-kontrolovaný kontumačně-kontumační korektně-korektní
+    kovově-kovový kradmo-kradmý krajně-krajní krásně-krásný krátce-krátký kratičce-kratičký
+    krátko-krátký krátkodobě-krátkodobý kriticky-kritický krutě-krutý krvavě-krvavý
+    křečovitě-křečovitý křesťansky-křesťanský kulantně-kulantní kultivovaně-kultivovaný
+    kulturně-kulturní kuponově-kuponový kuriózně-kuriózní kvalifikovaně-kvalifikovaný
+    kvalitativně-kvalitativní kvalitně-kvalitní kvantitativně-kvantitativní
+    kvapně-kvapný kyvadlově-kyvadlový laboratorně-laboratorní lacině-laciný
+    lacino-laciný laicky-laický lajdácky-lajdácký lakonicky-lakonický lapidárně-lapidární
+    laskavě-laskavý ledově-ledový legálně-legální legislativně-legislativní
+    legitimně-legitimní legračně-legrační lehce-lehký lehko-lehký lehkomyslně-lehkomyslný
+    lehounce-lehounký letecky-letecký levicově-levicový levně-levný lexikálně-lexikální
+    libě-libý liberálně-liberální libovolně-libovolný lidově-lidový liknavě-liknavý
+    líně-líný logicky-logický maďarsky-maďarský maličko-maličký málo-malý manuálně-manuální
+    markantně-markantní marketingově-marketingový marně-marný masajsky-masajský
+    masivně-masivní masově-masový materiálně-materiální maximálně-maximální
+    mechanicky-mechanický měkce-měkký mělce-mělký melodicky-melodický mentálně-mentální
+    meritorně-meritorní měsíčně-měsíční metodicky-metodický metodologicky-metodologický
+    meziměsíčně-meziměsíční mezinárodně-mezinárodní meziročně-meziroční mile-milý
+    militantně-militantní milosrdně-milosrdný mimořádně-mimořádný minimálně-minimální
+    minule-minulý mírně-mírný místně-místní mistrně-mistrný mistrovsky-mistrovský
+    mizerně-mizerný mlčenlivě-mlčenlivý mlhavě-mlhavý mnohomluvně-mnohomluvný
+    mnohonásobně-mnohonásobný mnohovrstevně-mnohovrstevný mocensky-mocenský
+    mocně-mocný moderně-moderní módně-módní modře-modrý mohutně-mohutný momentálně-momentální
+    monetálně-monetální monolitně-monolitní monotematicky-monotematický moralisticky-moralistický
+    morálně-morální morfologicky-morfologický moudře-moudrý možná-možný mravně-mravní
+    mylně-mylný myšlenkově-myšlenkový nábožensky-náboženský nacionalisticky-nacionalistický
+    nacionálně-nacionální nadějně-nadějný nádherně-nádherný nadměrně-nadměrný
+    nadmíru-nadměrný nadneseně-nadnesený nadprůměrně-nadprůměrný nadstandardně-nadstandardní
+    nadšeně-nadšený náhle-náhlý nahodile-nahodilý náhodně-náhodný naivně-naivní
+    naléhavě-naléhavý náležitě-náležitý nápaditě-nápaditý nápadně-nápadný narativně-narativní
+    narkoticky-narkotický národně-národní národnostně-národnostní násilně-násilný
+    následně-následný následovně-následovný názorně-názorný názorově-názorový
+    nečekaně-nečekaný nečinně-nečinný nedávno-nedávný nedbale-nedbalý negativně-negativní
+    nehorázně-nehorázný nechtěně-nechtěný nějak-nějaký několikanásobně-několikanásobný
+    nekompromisně-kompromisní německy-německý neměně-neměnný nenávratně-nenávratný
+    neobyčejně-neobyčejný neočekávaně-neočekávaný neodbytně-neodbytný neoddiskutovatelně-neodiskutovatelný
+    neodkladně-neodkladný neodlučně-neodlučný neodmyslitelně-neodmyslitelný
+    neodolatelně-neodolatelný neodůvodnitelně-neodůvodnitelný neodvratně-neodvratný
+    neohroženě-neohrožený neomylně-neomylný neopakovatelně-neopakovatelný neotřele-neotřelý
+    neovladatelně-neovladatelný nepatrně-nepatrný nepochybně-nepochybný nepokrytě-nepokrytý
+    nepopiratelně-nepopiratelný nepopsatelně-nepopsatelný nepotlačitelně-nepotlačitelný
+    nepozorovaně-nepozorovaný neprodleně-neprodlený nepřeberně-nepřeberný nepřehlédnutelně-nepřehlédnutelný
+    nepřetržitě-nepřetržitý nepřítomně-nepřítomný nerozhodně-nerozhodný nerozlučně-nerozlučný
+    nerušeně-nerušený nervózně-nervózní nesčetně-nesčetný neskonale-neskonalý
+    neskutečně-neskutečný nesmírně-nesmírný nesmyslně-nesmyslný nesouměřitelně-nesouměřitelný
+    nesporně-nesporný nesrovnatelně-nesrovnatelný nestranně-nestranný neúnavně-neúnavný
+    neustále-neustálý neústupně-neústupný neutrálně-neutrální neuvěřitelně-neuvěřitelný
+    nevěřícně-nevěřícný nevinně-nevinný nevyhnutelně-nevyhnutelný nevysvětlitelně-nevysvětlitelný
+    nezadržitelně-nezadržitelný nezaměnitelně-nezaměnitelný nezávisle-nezávislý
+    nezbytně-nezbytný nezvratně-nezvratný nezvykle-nezvyklý něžně-něžný nízko-nízký
+    noblesně-noblesní normálně-normální nostalgicky-nostalgický notářsky-notářský
+    notně-notný notoricky-notorický nouzově-nouzový nově-nový nuceně-nucený
+    nudně-nudný nutně-nutný občansky-občanský obdivně-obdivný obdivuhodně-obdivuhodný
+    obdobně-obdobný obecně-obecný obezřetně-obezřetný obchodně-obchodní objektivně-objektivní
+    objevně-objevný oblačno-oblačný obludně-obludný oborově-oborový oboustranně-oboustranný
+    obráceně-obrácený obranně-obranný obratně-obratný obrazně-obrazný obrazově-obrazový
+    obrovsky-obrovský obsáhle-obsáhlý obsahově-obsahový obtížně-obtížný obvykle-obvyklý
+    obyčejně-obyčejný očividně-očividný odborně-odborný odděleně-oddělený odlišně-odlišný
+    odloučeně-odloučený odmítavě-odmítavý odpovědně-odpovědný odtažitě-odtažitý
+    odůvodněně-odůvodněný odvážně-odvážný oficiálně-oficiální ohleduplně-ohleduplný
+    ohnivě-ohnivý ohromně-ohromný ochotně-ochotný ochotnicky-ochotnický ojediněle-ojedinělý
+    okamžitě-okamžitý okatě-okatý okázale-okázalý okrajově-okrajový okupačně-okupační
+    omezeně-omezený opačně-opačný opakovaně-opakovaný opatrně-opatrný operativně-operativní
+    opětně-opětný opětovně-opětovný opodstatněně-opodstatněný opožděně-opožděný
+    opravdově-opravdový oprávněně-oprávněný optimálně-optimální optimisticky-optimistický
+    oranžově-oranžový organizačně-organizační originálně-originální ortodoxně-ortodoxní
+    osminásobně-osminásobný osobně-osobní ostře-ostrý osudově-osudový ošklivě-ošklivý
+    otevřeně-otevřený otrocky-otrocký oulisně-úlisný ozdobně-ozdobný pádně-pádný
+    palčivě-palčivý památkově-památkový papírově-papírový parádně-parádní paradoxně-paradoxní
+    paralelně-paralelní pasivně-pasivní patentově-patentový pateticky-patetický
+    patrně-patrný patřičně-patřičný paušálně-paušální pečlivě-pečlivý pejorativně-pejorativní
+    pěkně-pěkný perfektně-perfektní periodicky-periodický permanentně-permanentní
+    perně-perný personálně-personální perspektivně-perspektivní pesimisticky-pesimistický
+    pestře-pestrý pěvecky-pěvecký pevně-pevný pietně-pietní pikantně-pikantní
+    pilně-pilný pirátsky-pirátský písemně-písemný planě-planý planetárně-planetární
+    plasticky-plastický platově-platový plebejsky-plebejský plně-plný plno-plný
+    plnohodnotně-plnohodnotný plošně-plošný plynule-plynulý pobaveně-pobavený
+    poctivě-poctivý počítačově-počítačový podbízivě-podbízivý podezřele-podezřelý
+    podivně-podivný podloudně-podloudný podloženě-podložený podmínečně-podmínečný
+    podmíněně-podmíněný podobně-podobný podrobně-podrobný podstatně-podstatný
+    podvědomě-podvědomý pofidérně-pofidérní pohádkově-pohádkový pohlavně-pohlavní
+    pohodlně-pohodlný pohotově-pohotový pohrdavě-pohrdavý pohrdlivě-pohrdlivý
+    pohyblivě-pohyblivý pochopitelně-pochopitelný pochvalně-pochvalný pochybně-pochybný
+    pokojně-pokojný pokorně-pokorný pokoutně-pokoutný politicky-politický polohově-polohový
+    polojasno-polojasný polopaticky-polopatický polystylově-polystylový pomalu-pomalý
+    poměrně-poměrný populárně-populární populisticky-populistický porovnatelně-porovnatelný
+    pořádně-pořádný posledně-poslední posluchačsky-posluchačský poslušně-poslušný
+    posměšně-posměšný posmrtně-posmrtný postmodernisticky-postmodernistický
+    postupně-postupný posupně-posupný pošetile-pošetilý potenciálně-potenciální
+    potěšitelně-potěšitelný poťouchle-poťouchlý poučeně-poučený poutavě-poutavý
+    povahově-povahový povážlivě-povážlivý povědomě-povědomý povinně-povinný
+    povrchově-povrchový pozitivně-pozitivní pozorně-pozorný pozoruhodně-pozoruhodný
+    pracně-pracný pracovně-pracovní pragmaticky-pragmatický prakticky-praktický
+    pravděpodobně-pravděpodobný pravicově-pravicový pravidelně-pravidelný právně-právní
+    pravomocně-pravomocný pravopisně-pravopisný pregnantně-pregnantní preventivně-preventivní
+    principiálně-principiální problematicky-problematický procentuálně-procentuální
+    profesionálně-profesionální profesně-profesní profesorsky-profesorský programově-programový
+    progresivně-progresivní prohibitně-prohibitní projektově-projektový prokazatelně-prokazatelný
+    proklamativně-proklamativní proloženě-proložený promptně-promptní promyšleně-promyšlený
+    propagandisticky-propagandistický proporcionálně-proporcionální prospěšně-prospěšný
+    prostě-prostý prostorově-prostorový prostředně-prostřední protestantsky-protestantský
+    protestně-protestní protibakteriálně-protibakteriální protiinflačně-protiinflační
+    protikladně-protikladný protikomunisticky-protikomunistický protinacisticky-protinacistický
+    protiněmecky-protiněmecký protiprávně-protiprávní protiústavně-protiústavní
+    protiválečně-protiválečný protizákonně-protizákonný protokolárně-protokolární
+    provinile-provinilý provizorně-provizorní provokativně-provokativní prozaicky-prozaický
+    prozíravě-prozíravý průběžně-průběžný prudce-prudký průhledně-průhledný
+    průměrně-průměrný průmyslově-průmyslový průrazně-průrazný průzračně-průzračný
+    pružně-pružný přátelsky-přátelský předběžně-předběžný předčasně-předčasný
+    předně-přední přednostně-přednostní přehledně-přehledný přehnaně-přehnaný
+    přechodně-přechodný překvapeně-překvapený překvapivě-překvapivý přemrštěně-přemrštěný
+    přeneseně-přenesený přerývaně-přerývaný přesně-přesný přesvědčivě-přesvědčivý
+    převážně-převážný převelice-převeliký převratně-převratný přibližně-přibližný
+    příjemně-příjemný příjmově-příjmový příkladně-příkladný příležitostně-příležitostný
+    přiměřeně-přiměřený přímo-přímý přímočaře-přímočarý případně-případný přirozeně-přirozený
+    příslušně-příslušný přísně-přísný příspěvkově-příspěvkový příště-příští
+    přitažlivě-přitažlivý příznačně-příznačný příznivě-příznivý psychicky-psychický
+    psychologicky-psychologický původně-původní pyšně-pyšný racionálně-racionální
+    radikálně-radikální radostně-radostný rafinovaně-rafinovaný raně-raný rapidně-rapidní
+    rasově-rasový razantně-razantní rázně-rázný realisticky-realistický reálně-reálný
+    recipročně-reciproční redakčně-redakční reflektivně-reflektivní regulérně-regulérní
+    rekordně-rekordní rekreačně-rekreační relativně-relativní rentabilně-rentabilní
+    reprezentativně-reprezentativní resortně-resortní restriktivně-restriktivní
+    rezolutně-rezolutní riskantně-riskantní rizikově-rizikový rockově-rockový
+    ročně-roční romanticky-romantický rovnoměrně-rovnoměrný rovnoprávně-rovnoprávný
+    rozechvěle-rozechvělý rozhodně-rozhodný rozhořčeně-rozhořčený rozkošně-rozkošný
+    rozpačitě-rozpačitý rozporně-rozporný rozporuplně-rozporuplný rozsáhle-rozsáhlý
+    rozšafně-rozšafný roztomile-roztomilý rozumně-rozumný rozvážně-rozvážný
+    rozverně-rozverný rozvroucněně-rozvroucněný ručně-ruční rusky-ruský rušno-rušný
+    rutinně-rutinní různě-různý růžově-růžový rychle-rychlý rytmicky-rytmický
+    řádně-řádný řádově-řádový řečnicky-řečnický řemeslně-řemeslný řetězovitě-řetězovitý
+    řídce-řídký samočinně-samočinný samostatně-samostatný samoúčelně-samoúčelný
+    samozřejmě-samozřejmý samozvaně-samozvaný sarkasticky-sarkastický satiricky-satirický
+    sebevědomě-sebevědomý sebevražedně-sebevražedný sedminásobně-sedminásobný
+    selektivně-selektivní sériově-sériový seriózně-seriózní setrvačně-setrvačný
+    severně-severní severozápadně-severozápadní sevřeně-sevřený sexuálně-sexuální
+    sezonně-sezónní shodně-shodný shrnutě-shrnutý silně-silný silově-silový
+    skandálně-skandální skandovaně-skandovaný skepticky-skeptický skromně-skromný
+    skrytě-skrytý skutečně-skutečný skvěle-skvělý skvostně-skvostný slabě-slabý
+    sladce-sladký slavně-slavný slavnostně-slavnostní slepě-slepý slibně-slibný
+    slovensky-slovenský slovně-slovní složitě-složitý sluchově-sluchový slušivě-slušivý
+    slušně-slušný služebně-služební směle-smělý směšně-směšný smírně-smírný
+    smluvně-smluvní smrtelně-smrtelný smutně-smutný smyslově-smyslový snadno-snadný
+    snesitelně-snesitelný sociálně-sociální sociologicky-sociologický solidně-solidní
+    sólově-sólový souběžně-souběžný souborně-souborný současně-současný soudně-soudný
+    soudržně-soudržný souhlasně-souhlasný souhrnně-souhrnný soukromě-soukromý
+    soustavně-soustavný soustředěně-soustředěný soutěžně-soutěžní sovětsky-sovětský
+    speciálně-speciální specificky-specifický spokojeně-spokojený společensky-společenský
+    společně-společný spolehlivě-spolehlivý spolu-společný spontánně-spontánní
+    sponzorsky-sponzorský sporadicky-sporadický sporně-sporný sportovně-sportovní
+    spořádaně-spořádaný spoře-sporý spravedlivě-spravedlivý správně-správný
+    srovnatelně-srovnatelný srozumitelně-srozumitelný stabilně-stabilní stále-stálý
+    standardně-standardní staročesky-staročeský statečně-statečný statisticky-statistický
+    stavebně-stavební stejně-stejný stonásobně-stonásobný stoprocentně-stoprocentní
+    stranicky-stranický strašlivě-strašlivý strašně-strašný strategicky-strategický
+    striktně-striktní strojně-strojní stručně-stručný středně-střední střelecky-střelecký
+    střídavě-střídavý střídmě-střídmý střízlivě-střízlivý studeně-studený stupňovitě-stupňovitý
+    stylově-stylový subjektivně-subjektivní sugestivně-sugestivní surově-surový
+    surrealisticky-surrealistický suše-suchý suverénně-suverénní svahilsky-svahilský
+    svědomitě-svědomitý svérázně-svérázný sveřepě-sveřepý světle-světlý světově-světový
+    svévolně-svévolný svisle-svislý svižně-svižný svobodně-svobodný svobodomyslně-svobodomyslný
+    svorně-svorný svrchovaně-svrchovaný symbolicky-symbolický symfonicky-symfonický
+    sympaticky-sympatický syrově-syrový systematicky-systematický šalamounsky-šalamounský
+    šedě-šedý šetrně-šetrný šikmo-šikmý šikovně-šikovný široce-široký široko-široký
+    škaredě-škaredý škodlivě-škodlivý šokovaně-šokovaný španělsky-španělský
+    špatně-špatný špičkově-špičkový špinavě-špinavý šťastně-šťastný tabulkově-tabulkový
+    tajemně-tajemný tajně-tajný takticky-taktický takzvaně-takzvaný tanečně-taneční
+    taxativně-taxativní teenagersky-teenagerský technicky-technický technologicky-technologický
+    telefonicky-telefonický tělesně-tělesný televizně-televizní tematicky-tematický
+    temně-temný teoreticky-teoretický tepelně-tepelný těsně-těsný textově-textový
+    těžce-těžký těžko-těžký tiše-tichý totálně-totální tradičně-tradiční tragicky-tragický
+    transdisciplinárně-transdisciplinární trapně-trapný trefně-trefný tréninkově-tréninkový
+    trestně-trestní trestuhodně-trestuhodný triumfálně-triumfální trojnásobně-trojnásobný
+    trpce-trpký trpělivě-trpělivý trpně-trpný trvale-trvalý tržně-tržný tučně-tučný
+    tvrdě-tvrdý tvrdošíjně-tvrdošíjný týdně-týdní typicky-typický typově-typový
+    uctivě-uctivý účelně-účelný účelově-účelový účetně-účetní-1 účinně-účinný
+    údajně-údajný uhrančivě-uhrančivý úhrnně-úhrnný úlevně-úlevný úlisně-úlisný
+    uměle-umělý umělecky-umělecký úměrně-úměrný umně-umný úmyslně-úmyslný unaveně-unavený
+    univerzálně-univerzální únosně-únosný úplně-úplný upřeně-upřený upřímně-upřímný
+    úrazově-úrazový urbionalisticky-urbionalistický určitě-určitý urychleně-urychlený
+    úředně-úřední úsečně-úsečný usilovně-usilovný uspěchaně-uspěchaný úspěšně-úspěšný
+    uspokojivě-uspokojivý ustavičně-ustavičný ústavně-ústavní ústně-ústní ústrojně-ústrojný
+    utěšeně-utěšený uvěřitelně-uvěřitelný uvnitř-vnitřní úzce-úzký územně-územní
+    územněsprávně-územněsprávní úzkostlivě-úzkostlivý úzkostně-úzkostný valně-valný
+    vančurovsky-vančurovský varovně-varovný vášnivě-vášnivý vážně-vážný věcně-věcný
+    věčně-věčný vědecky-vědecký vědomě-vědomý vehementně-vehementní věkově-věkový
+    velkoryse-velkorysý verbálně-verbální věrně-věrný věrohodně-věrohodný vertikálně-vertikální
+    veřejně-veřejný veřejnoprávně-veřejnoprávní vesele-veselý větrno-větrný
+    vhod-vhodný vhodně-vhodný víceúčelově-víceúčelový viditelně-viditelný virtuózně-virtuózní
+    vítězně-vítězný vkusně-vkusný vlastnoručně-vlastnoruční vlažně-vlažný vnějškově-vnějškový
+    vnímavě-vnímavý vnitropoliticky-vnitropolitický vnitřně-vnitřní vodivě-vodivý
+    vodorovně-vodorovný vojensky-vojenský vokálně-vokální volně-volný vratce-vratký
+    vrcholně-vrcholný vrcholově-vrcholový vrozeně-vrozený vřele-vřelý vstřícně-vstřícný
+    všelijak-všelijaký všeobecně-všeobecný všestranně-všestranný vtipně-vtipný
+    vtíravě-vtíravý vulgárně-vulgární výběrově-výběrový výborně-výborný vybraně-vybraný
+    výdajově-výdajový vydatně-vydatný výdělečně-výdělečný výhledově-výhledový
+    výhodně-výhodný výhradně-výhradní vyhýbavě-vyhýbavý výjimečně-výjimečný
+    vyloženě-vyložený výlučně-výlučný výmluvně-výmluvný vypjatě-vypjatý výrazně-výrazný
+    výrazově-výrazový vyrovnaně-vyrovnaný výřečně-výřečný výsledně-výsledný
+    vysloveně-vyslovený výslovně-výslovný vysoce-vysoký vysoko-vysoký vysokoškolsky-vysokoškolský
+    výstižně-výstižný výtečně-výtečný vytrvale-vytrvalý vytrženě-vytržený výtvarně-výtvarný
+    významně-významný významově-významový vyzrále-vyzrálý vzácně-vzácný vzájemně-vzájemný
+    vzdáleně-vzdálený vzhledově-vzhledový vzorně-vzorný vzrušeně-vzrušený záhadně-záhadný
+    zahraničně-zahraniční zajímavě-zajímavý zákonitě-zákonitý zákonně-zákonný
+    zakřiknutě-zakřiknutý zálibně-zálibný zálohově-zálohový záměrně-záměrný
+    zamračeně-zamračený zanedbatelně-zanedbatelný zaníceně-zanícený zaobaleně-zaobalený
+    západně-západní záporně-záporný zarputile-zarputilý zaručeně-zaručený zarytě-zarytý
+    zařaditelně-zařaditelný zásadně-zásadní zaslouženě-zasloužený zastřeně-zastřený
+    zasvěceně-zasvěcený zatraceně-zatracený zatvrzele-zatvrzelý závazně-závazný
+    závažně-závažný záviděníhodně-záviděníhodný závistivě-závistivý závratně-závratný
+    zázračně-zázračný zběsile-zběsilý zbrkle-zbrklý zbytečně-zbytečný zdánlivě-zdánlivý
+    zdařile-zdařilý zděšeně-zděšený zdlouhavě-zdlouhavý zdravě-zdravý zdravotně-zdravotní
+    zdrženlivě-zdrženlivý zdvořile-zdvořilý zelenobíle-zelenobílý zevrubně-zevrubný
+    zištně-zištný zjednodušeně-zjednodušený zjevně-zjevný zkoumavě-zkoumavý
+    zkratkovitě-zkratkovitý zlatavě-zlatavý zle-zlý zlobně-zlobný zlomyslně-zlomyslný
+    zlověstně-zlověstný značně-značný znamenitě-znamenitý znatelně-znatelný
+    znechuceně-znechucený zodpovědně-zodpovědný zoufale-zoufalý zpětně-zpětný
+    zpropadeně-zpropadený zprostředkovaně-zprostředkovaný zpupně-zpupný zrakově-zrakový
+    zrcadlově-zrcadlový zrychleně-zrychlený zřejmě-zřejmý zřetelně-zřetelný
+    ztepile-ztepilý zvláštně-zvláštní zvukově-zvukový žalostně-žalostný žánrově-žánrový
+    živě-živý životně-životní žíznivě-žíznivý);
+    
+    
+sub get_adjective {
+    my $adv = shift;
+    return $adv2adj{$adv};
+}
+
+
 1;
 
 __END__
