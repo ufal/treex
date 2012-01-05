@@ -339,16 +339,16 @@ sub process_tnode {
         $cs_t_node->set_gram_diathesis(undef);
     }
     
-    # Set the correct gram/verbmod in clauses with English 'to+inf' translated to Czech 'aby+fin' 
-    if ( $cs_formeme =~ m/[:_]aby\+/ ){
-        $cs_t_node->set_gram_verbmod( 'cdn' );
+    # Set the correct tense and verbmod in clauses translated to Czech 'aby+fin' or 'kdyby+fin'
+    # (even though what's correct in the golden data is not correct from the semantic point of view) 
+    if ( $cs_formeme =~ m/[:_](aby|kdyby)\+/ ){
+        $cs_t_node->set_gram_tense( 'ant' );
+        $cs_t_node->set_gram_verbmod( 'ind' );
     }
-    # "aby", "kdyby" always have 'ant' tense in Czech, a vast majority of other conditionals is 'sim'
-    # (with the exception of rare cases like "byl by (býval) dělal"). 
+    # A vast majority of all conditionals is 'sim' (with the exception of rare cases like "byl by (býval) dělal"). 
     if ( ( $cs_t_node->gram_verbmod || '' ) eq 'cdn' ){        
-        $cs_t_node->set_gram_tense( $cs_formeme =~ m/(aby|kdyby)/ ? 'ant' : 'sim' );
+        $cs_t_node->set_gram_tense( 'sim' );
     }
-
     return;
 }
 
