@@ -1,6 +1,7 @@
 package Treex::Block::Write::LayerAttributes::BracketedVerbform;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::CS;
 
 with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
@@ -27,7 +28,8 @@ sub modify_single {
     return '' if ( !$lex );
 
     my $root = $lex->get_root();
-    my %anodes = map { $_->id => 1 } grep { ($_->afun || '') =~ m/^Aux[RV]$/ || _get_tag($_) =~ m/^V/ } $tnode->get_aux_anodes();
+    my %anodes = map { $_->id => 1 }
+        grep { ( $_->afun || '' ) =~ m/^Aux[RV]$/ || _get_tag($_) =~ m/^V/ } $tnode->get_aux_anodes();
     $anodes{ $lex->id } = 2;
 
     return _get_subtree( $root, \%anodes );
@@ -43,12 +45,15 @@ sub _get_subtree {
 
         my $tag = _get_tag($node);
         log_info( $node->get_address() ) if ( !$tag );
-        my $lemma = $find->{ $node->id } eq '2' ? '_' : $node->lemma;
+        my $lemma = $find->{ $node->id } eq '2' ? '_L' : $node->lemma;
+
+        $lemma = '_M' if ( Treex::Tool::Lexicon::CS::is_modal_verb($lemma) );
+        $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma);
 
         $tag =~ s/^(..)......(.).(..).*$/$1$2$3/;    # POS, SubPOS, Tense, Negation, Voice
 
         return '(' . join( '', map { _get_subtree( $_, $find ) } @left )
-            . $tag . ' ' . $lemma . ' '
+            . $tag . ' ' . $lemma
             . join( '', map { _get_subtree( $_, $find ) } @right ) . ')';
     }
 
@@ -83,7 +88,8 @@ Treex::Block::Write::LayerAttributes::BracketedVerbform
 =head1 DESCRIPTION
 
 For a given verbal t-node, output the corresponding compound verbform on the a-layer (as bracketed tree,
-auxiliary verb lemmas and partial tags of all forms, thus marking POS, SubPOS, Tense, Voice, Person, and Negation)
+auxiliary verb lemmas (except the modal verb) and partial tags of all forms, thus marking POS, 
+SubPOS, Tense, Voice, and Negation)
 
 =head1 AUTHOR
 

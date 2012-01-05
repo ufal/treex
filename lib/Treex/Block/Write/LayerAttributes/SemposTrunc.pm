@@ -9,10 +9,10 @@ has '+return_values_names' => ( default => sub { [ '_1', '_2' ] } );
 # Sempos is truncated to the first and first + second field
 sub modify_single {
 
-    my ($self, $sempos) = @_;
+    my ( $self, $sempos ) = @_;
 
     return ( undef, undef ) if ( !defined($sempos) );
-    return ( '', '' ) if ( !$sempos );
+    return ( '',    '' )    if ( !$sempos );
 
     my $sempos1 = $sempos;
     my $sempos2 = $sempos;

@@ -4,13 +4,12 @@ use Treex::Core::Common;
 
 with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
-has '+return_values_names' => ( default => sub { [ '' ] } );
-
+has '+return_values_names' => ( default => sub { [''] } );
 
 # Return the t-lemma and sempos
 sub modify_single {
 
-    my ($self, $tlemma, $sempos) = @_;
+    my ( $self, $tlemma, $sempos ) = @_;
 
     return undef if ( !defined($sempos) || !defined($tlemma) );
 
@@ -23,7 +22,6 @@ sub modify_single {
 1;
 
 __END__
-
 =encoding utf-8
 
 =head1 NAME 

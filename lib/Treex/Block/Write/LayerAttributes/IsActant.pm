@@ -4,12 +4,12 @@ use Treex::Core::Common;
 
 with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
-has '+return_values_names' => ( default => sub { [ '' ] } );
+has '+return_values_names' => ( default => sub { [''] } );
 
 # Return the t-lemma and sempos
 sub modify_single {
 
-    my ($functor) = @_;
+    my ( $self, $functor ) = @_;
 
     return undef if ( !defined($functor) );
 

@@ -9,18 +9,18 @@ has '+return_values_names' => ( default => sub { [ '_POS', '_RJ', '_form' ] } );
 # The formeme is split into three parts: the part-of-speech, preposition or subjunction and form
 sub modify_single {
 
-    my ($self, $formeme) = @_;
+    my ( $self, $formeme ) = @_;
 
     return ( undef, undef, undef ) if ( !defined($formeme) );
-    return ( '', '', '' ) if ( !$formeme );
+    return ( '',    '',    '' )    if ( !$formeme );
 
-    my $pos = $formeme;
-    my $rj = $formeme;
+    my $pos  = $formeme;
+    my $rj   = $formeme;
     my $form = $formeme;
-    
+
     $pos =~ s/:.*$//;
     $rj = ( $rj =~ m/^.*:(([^\+]*)\+).*$/ ? $2 : "" );
-    $form =~ s/^.*[:\+]//; 
+    $form =~ s/^.*[:\+]//;
 
     return ( $pos, $rj, $form );
 }

@@ -193,7 +193,7 @@ sub is_term_label {
 # Returns true if the given lemma belongs to a modal verb
 sub is_modal_verb {
     my ($lemma) = @_;
-    return $lemma =~ m/^(muset|mít|chtít|hodlat|moci|dát|smět|dovést|umět)(_|$)/;
+    return $lemma =~ m/^(mus[ei]t|mít|chtít|hodlat|moci|dát|smět|dovést|umět)(_|$)/;
 }
 
 

@@ -34,6 +34,16 @@ sub _build_model_files {
 
 has '+class_name' => ( default => 'verbform' );
 
+# Conversion table from deontmod grammateme values to modal verb lemmas
+Readonly my %DEONTMOD_TO_MODAL_VERB => (
+    'poss' => 'moci',
+    'vol'  => 'chtít',
+    'deb'  => 'muset',
+    'hrt'  => 'mít',
+    'fac'  => 'moci',     # translation of 'be able to'
+    'perm' => 'moci',     # translation of 'might'
+);
+
 override '_write_input_data' => sub {
 
     my ( $self, $document, $file ) = @_;
@@ -68,14 +78,14 @@ override '_set_class_value' => sub {
 
     # create the new verbal subtree
     my $aparent = $anode->get_parent();
-    my $child = $self->_create_subtree( $anode, $value );
-    $child->set_parent($aparent);
+    my $top_anode = $self->_create_subtree( $anode, $value );
+    $top_anode->set_parent($aparent);
 
-    # copy some needed attributes from the old node into the new root node    
-    $child->wild->{is_parenthesis} = $anode->wild->{is_parenthesis};
+    # copy some needed attributes from the old node into the new root node
+    $top_anode->wild->{is_parenthesis} = $anode->wild->{is_parenthesis};
 
     # copy some attributes off the old node into the whole structure
-    my @new_anodes = $child->get_descendants( { add_self => 1 } );
+    my @new_anodes = $top_anode->get_descendants( { add_self => 1 } );
     my ( $person, $number, $gender ) = (
         $anode->get_attr('morphcat/person'),
         $anode->get_attr('morphcat/number'),
@@ -93,18 +103,24 @@ override '_set_class_value' => sub {
         $node->set_attr( 'morphcat/gender', $gender );
     }
 
+    # find out the modal verb and fill in its lemma
+    my $modal_anode = first { $_->lemma eq '_M' } @new_anodes;
+    if ($modal_anode) {
+        $modal_anode->set_lemma( $DEONTMOD_TO_MODAL_VERB{ $tnode->gram_deontmod } );
+    }
+
     # find out the main verb and fill in its lemma
-    my ($new_anode) = grep { $_->lemma eq '_' } @new_anodes;
-    $new_anode->set_lemma( $anode->lemma );
+    my $new_lex_anode = first { $_->lemma eq '_L' } @new_anodes;
+    $new_lex_anode->set_lemma( $anode->lemma );
 
     # rehang all the children of the original verb under the new structure
     foreach my $child ( $anode->get_children ) {
-        $child->set_parent($new_anode);
+        $child->set_parent( ( $child->afun || '' ) eq 'Sb' ? $top_anode : $new_lex_anode );
     }
 
     # set the new structure as aux and lex anodes of the corresponding t-node
-    $tnode->set_lex_anode($new_anode);
-    $tnode->add_aux_anodes( grep { $_ != $new_anode } @new_anodes );
+    $tnode->set_lex_anode($new_lex_anode);
+    $tnode->add_aux_anodes( grep { $_ != $new_lex_anode } @new_anodes );
 
     # remove the old verbal node
     $anode->remove();
@@ -138,13 +154,13 @@ sub _create_subtree {
 
         # fill in the needed values
         else {
-            my ( $morph, $lemma ) = $topology =~ m/([^ ]+) ([^ ]+)/;
-            $topology =~ s/^[^ ]+ [^ ]+ //;
+            my ( $morph, $lemma ) = $topology =~ m/([^ ]+) ([^\(\)]+)/;
+            $topology =~ s/^[^ ]+ [^\(\)]+//;
             $right = 1;
 
             $node->set_lemma($lemma);
 
-            if ( $lemma ne '_' ) {
+            if ( $lemma !~ m/^_/ ) {
                 $node->set_afun('AuxV');
             }
 
@@ -171,6 +187,11 @@ Treex::Block::T2A::CS::GenerateCompoundVerbforms
 
 =head1 DESCRIPTION
 
+This block generates whole Czech compound verb form subtrees from the verbal t-node and its
+grammatemes, according to a machine learning model using L<Treex::Tool::ML::MLProcess>.
+
+Some values, such as modal verb and main verb lemmas, person, number and gender, are filled-in
+directly from the t-node attributes.   
 
 =head1 AUTHOR
 
