@@ -6,6 +6,13 @@ use Treex::Tool::Coreference::ValueTransformer;
 
 extends 'Treex::Core::Block';
 
+has 'unsupervised' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Bool',
+    default     => 0,
+);
+
 has 'y_feat_name' => (
     is          => 'ro',
     required    => 1,
@@ -93,10 +100,12 @@ sub _create_instances_strings {
         my $line = "";
 
         # DEBUG
-       # $line .= $instance->{cand_id} . $self->feature_sep;
+        #$line .= $instance->{cand_id} . $self->feature_sep;
 
 
-        $line .= $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+        if (defined $y_value) {
+            $line .= $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+        }
         #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
         my @cols = map {$_=~ /^[br]_/ 
                 ? "r_$_=" . $self->_feature_transformer->replace_empty( $instance->{$_} )
@@ -116,16 +125,28 @@ sub _sort_instances {
     return \@sorted;
 }
 
-sub print_bundle {
+sub _print_bundle {
+    my ($self, $anaph_id, @lines) = @_;
+
+    print "\n";
+    print '#' . $anaph_id . "\n";
+    print join "\n", @lines;
+    print "\n";
+}
+
+sub print_unsup_bundle {
+    my ($self, $anaph, $instances) = @_;
+    
+    my @lines = $self->_create_instances_strings($instances);
+    $self->_print_bundle( $anaph->id, @lines );
+}
+
+sub print_sup_bundle {
     my ($self, $anaph, $pos_instances, $neg_instances) = @_;
     
     my @pos_lines = $self->_create_instances_strings($pos_instances, 1);
     my @neg_lines = $self->_create_instances_strings($neg_instances, 0);
-    
-    print "\n";
-    print '#' . $anaph->id . "\n";
-    print join "\n", ( @pos_lines, @neg_lines );
-    print "\n";
+    $self->_print_bundle( $anaph->id, (@pos_lines, @neg_lines) );
 }
 
 before 'process_document' => sub {
@@ -144,27 +165,42 @@ sub process_tnode {
     #if ( (@antes > 0) && $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
     
     if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
-
-        # retrieve positive and negatve antecedent candidates separated from
-        # each other
+            
         my $acs = $self->_ante_cands_selector;
-        my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
-            = $acs->get_pos_neg_candidates( $t_node );
+        my $fe = $self->_feature_extractor;
 
-        # instances is a reference to a hash in the form { id => instance }
-        my $pos_instances 
-            = $self->_feature_extractor->create_instances( $t_node, $pos_cands, $pos_ords );
-        my $neg_instances 
-            = $self->_feature_extractor->create_instances( $t_node, $neg_cands, $neg_ords );
+        if ($self->unsupervised) {
+            my $cands = $acs->get_candidates( $t_node );
+            my $instances 
+                = $fe->create_instances( $t_node, $cands );
+            my $sorted_insts =
+                $self->_sort_instances( $instances, $cands);
+            if (@$cands > 0) {
+                $self->print_unsup_bundle($t_node, $sorted_insts);
+            }
+        }
+        else {
 
-        my $pos_inst_list = 
-            $self->_sort_instances( $pos_instances, $pos_cands);
-        my $neg_inst_list = 
-            $self->_sort_instances( $neg_instances, $neg_cands);
-        
+            # retrieve positive and negatve antecedent candidates separated from
+            # each other
+            my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
+                = $acs->get_pos_neg_candidates( $t_node );
+
+            # instances is a reference to a hash in the form { id => instance }
+            my $pos_instances 
+                = $fe->create_instances( $t_node, $pos_cands, $pos_ords );
+            my $neg_instances 
+                = $fe->create_instances( $t_node, $neg_cands, $neg_ords );
+
+            my $pos_inst_list = 
+                $self->_sort_instances( $pos_instances, $pos_cands);
+            my $neg_inst_list = 
+                $self->_sort_instances( $neg_instances, $neg_cands);
+            
 # TODO negative instances appeared to be of 0 size, why?
-        if (@{$pos_inst_list} > 0) {
-            $self->print_bundle($t_node, $pos_inst_list, $neg_inst_list);
+            if (@{$pos_inst_list} > 0) {
+                $self->print_sup_bundle($t_node, $pos_inst_list, $neg_inst_list);
+            }
         }
     }
 }
