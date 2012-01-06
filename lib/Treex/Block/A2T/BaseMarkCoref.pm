@@ -92,7 +92,8 @@ sub process_tnode {
 #        }
 
         # instances is a reference to a hash in the form { id => instance }
-        my $instances = $self->_feature_extractor->create_instances( $t_node, $ante_cands );
+        my $fe = $self->_feature_extractor;
+        my $instances = $fe->create_joint_instances( $t_node, $ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not

@@ -13,6 +13,13 @@ has 'unsupervised' => (
     default     => 0,
 );
 
+has 'format' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => enum([qw/percep unsup/]),
+    default     => 'percep',
+);
+
 has 'y_feat_name' => (
     is          => 'ro',
     required    => 1,
@@ -91,31 +98,53 @@ sub _build_anaph_cands_filter {
     return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
 }
 
-
-sub _create_instances_strings {
-    my ($self, $instances, $y_value) = @_;
+sub _create_instance_string {
+    my ($self, $instance, $names, $y_value) = @_;
     
-    my @lines;
-    foreach my $instance (@{$instances}) {
-        my $line = "";
+    my $line = "";
 
-        # DEBUG
-        #$line .= $instance->{cand_id} . $self->feature_sep;
+    # DEBUG
+    #$line .= $instance->{cand_id} . $self->feature_sep;
 
 
-        if (defined $y_value) {
-            $line .= $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+    if (defined $y_value) {
+        if ($self->format ne 'unsup') {
+            $line .= $self->y_feat_name . '=';
         }
-        #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
-        my @cols = map {$_=~ /^[br]_/ 
-                ? "r_$_=" . $self->_feature_transformer->replace_empty( $instance->{$_} )
-                : "c_$_=" . $self->_feature_transformer->special_chars_off( $instance->{$_} )
-            } @{$self->feature_names};
-        $line .= join $self->feature_sep, @cols;
-        push @lines, $line;
+        $line .= $y_value . $self->feature_sep;
     }
+    #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
 
-    return @lines;
+    #use Data::Dumper;
+    #print STDERR Dumper($names);
+    #print STDERR Dumper($instance);
+
+    #my @cols = ();
+    #foreach my $name (@$names) {
+    #    my $col = "";
+    #    if ($name =~ /^[br]_/) {
+    #        if ($self->format ne 'unsup') {
+    #            $col .= "r_$name=";
+    #        }
+    #        $col .= $self->_feature_transformer->replace_empty( $instance->{$name} );
+    #    }
+    #    else {
+    #        if ($self->format ne 'unsup') {
+    #            $col .= "c_$name=";
+    #        }
+    #        $col .= $self->_feature_transformer->special_chars_off( $instance->{$name} )
+    #    }
+    #}
+
+    my @cols = map {
+        $_=~ /^[br]_/ 
+            ? (($self->format ne 'unsup') ? "r_$_=" : "") 
+                . $self->_feature_transformer->replace_empty( $instance->{$_} )
+            : (($self->format ne 'unsup') ? "c_$_=" : "") 
+                . $self->_feature_transformer->special_chars_off( $instance->{$_} )
+        } @{$names};
+    $line .= join $self->feature_sep, @cols;
+    return $line;
 }
 
 sub _sort_instances {
@@ -134,19 +163,32 @@ sub _print_bundle {
     print "\n";
 }
 
-sub print_unsup_bundle {
-    my ($self, $anaph, $instances) = @_;
-    
-    my @lines = $self->_create_instances_strings($instances);
-    $self->_print_bundle( $anaph->id, @lines );
+sub _create_lines_unsup_format {
+    my ($self, $anaph, $cands) = @_;
+
+    my $fe = $self->_feature_extractor;
+    my $insts = $fe->create_instances( $anaph, $cands );
+
+    my @lines = ();
+    push @lines,
+        $self->_create_instance_string( $insts->{'anaph'}, $fe->anaph_feature_names );
+    my @cand_insts = $self->_sort_instances( $insts->{'cands'}, $cands );
+    push @lines,
+        map {$self->_create_instance_string( $_, $fe->nonanaph_feature_names )} @cand_insts;
+    return @lines;
 }
 
-sub print_sup_bundle {
-    my ($self, $anaph, $pos_instances, $neg_instances) = @_;
-    
-    my @pos_lines = $self->_create_instances_strings($pos_instances, 1);
-    my @neg_lines = $self->_create_instances_strings($neg_instances, 0);
-    $self->_print_bundle( $anaph->id, (@pos_lines, @neg_lines) );
+sub _create_lines_percep_format {
+    my ($self, $anaph, $cands, $y_value, $ords) = @_;
+
+    my $fe = $self->_feature_extractor;
+    my $insts = $fe->create_joint_instances( $anaph, $cands );
+
+    my @lines = ();
+    my $cand_insts = $self->_sort_instances( $insts, $cands );
+    push @lines,
+        map {$self->_create_instance_string( $_, $fe->feature_names, $y_value )} @$cand_insts;
+    return @lines;
 }
 
 before 'process_document' => sub {
@@ -171,12 +213,16 @@ sub process_tnode {
 
         if ($self->unsupervised) {
             my $cands = $acs->get_candidates( $t_node );
-            my $instances 
-                = $fe->create_instances( $t_node, $cands );
-            my $sorted_insts =
-                $self->_sort_instances( $instances, $cands);
+
             if (@$cands > 0) {
-                $self->print_unsup_bundle($t_node, $sorted_insts);
+                my @lines = ();
+                if ($self->format eq 'unsup') {
+                    @lines = $self->_create_lines_unsup_format( $t_node, $cands );
+                }
+                else {
+                    @lines = $self->_create_lines_percep_format( $t_node, $cands );
+                }
+                $self->_print_bundle( $t_node->id, @lines );
             }
         }
         else {
@@ -186,20 +232,12 @@ sub process_tnode {
             my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
                 = $acs->get_pos_neg_candidates( $t_node );
 
-            # instances is a reference to a hash in the form { id => instance }
-            my $pos_instances 
-                = $fe->create_instances( $t_node, $pos_cands, $pos_ords );
-            my $neg_instances 
-                = $fe->create_instances( $t_node, $neg_cands, $neg_ords );
+            my @pos_lines = $self->_create_lines_percep_format( $t_node, $pos_cands, 1, $pos_ords );
+            my @neg_lines = $self->_create_lines_percep_format( $t_node, $neg_cands, 0, $neg_ords );
 
-            my $pos_inst_list = 
-                $self->_sort_instances( $pos_instances, $pos_cands);
-            my $neg_inst_list = 
-                $self->_sort_instances( $neg_instances, $neg_cands);
-            
 # TODO negative instances appeared to be of 0 size, why?
-            if (@{$pos_inst_list} > 0) {
-                $self->print_sup_bundle($t_node, $pos_inst_list, $neg_inst_list);
+            if (@pos_lines > 0) {
+                $self->_print_bundle( $t_node->id, (@pos_lines, @neg_lines) );
             }
         }
     }
