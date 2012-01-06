@@ -37,6 +37,8 @@ sub process_anode {
     if ( _should_generate($a_node) ) {
         my $form = _generate_word_form($a_node);
         
+        log_info($form);
+        
         $a_node->set_form( $form->get_form() );
         $a_node->set_tag( $form->get_tag() );
     }
@@ -99,7 +101,11 @@ sub _generate_word_form {
         my $prefix       = $1;
         my $lemma_suffix = $2;
         my $form_suffix  = $morphoLM->best_form_of_lemma( $lemma_suffix, $tag_regex );
-        return $prefix . $form_suffix if $form_suffix;
+        if ($form_suffix){
+            $form_suffix->set_lemma( $prefix . $form_suffix->get_lemma() );
+            $form_suffix->set_form( $prefix . $form_suffix->get_form() );
+            return $form_suffix;
+        }
     }
 
     # If there are no compatible forms in LM, try Hajic's morphology generator
