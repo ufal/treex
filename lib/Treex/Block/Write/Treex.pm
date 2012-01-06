@@ -54,7 +54,9 @@ sub process_document {
     # prepare the correct file name
     $self->_prepare_file_handle( $document );
 
-    $document->save( $self->_last_filename );
+    my $filename = $self->_last_filename;
+    $document->set_filename($filename);
+    $document->save($filename);
     return 1;
 }
 
