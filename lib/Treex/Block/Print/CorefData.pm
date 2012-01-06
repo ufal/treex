@@ -151,9 +151,9 @@ sub _create_lines_unsup_format {
     my @lines = ();
     push @lines,
         $self->_create_instance_string( $insts->{'anaph'}, $fe->anaph_feature_names );
-    my @cand_insts = $self->_sort_instances( $insts->{'cands'}, $cands );
+    my $cand_insts = $self->_sort_instances( $insts->{'cands'}, $cands );
     push @lines,
-        map {$self->_create_instance_string( $_, $fe->nonanaph_feature_names )} @cand_insts;
+        map {$self->_create_instance_string( $_, $fe->nonanaph_feature_names )} @$cand_insts;
     return @lines;
 }
 
@@ -161,7 +161,7 @@ sub _create_lines_percep_format {
     my ($self, $anaph, $cands, $y_value, $ords) = @_;
 
     my $fe = $self->_feature_extractor;
-    my $insts = $fe->create_joint_instances( $anaph, $cands );
+    my $insts = $fe->create_joint_instances( $anaph, $cands, $ords );
 
     my @lines = ();
     my $cand_insts = $self->_sort_instances( $insts, $cands );
