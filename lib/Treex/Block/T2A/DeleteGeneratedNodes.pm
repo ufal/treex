@@ -19,6 +19,7 @@ Readonly my $LEMMAS_TO_REMOVE => {
     '#Rcp'     => 1,
     '#Separ'   => 1,
     '#Some'    => 1,
+    '#NewNode' => 1,
 };    # the t-lemmas of the nodes to be deleted
 
 Readonly my $FUNCTORS_PRIORITY => {
@@ -413,6 +414,7 @@ sub _check_corefs {
 
     foreach my $node (@nodes) {
         $node->update_coref_nodes();
+        $node->update_compl_nodes();
     }
     return;
 }

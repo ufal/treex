@@ -34,6 +34,9 @@ sub _build_model_files {
 
 has '+class_name' => ( default => 'verbform' );
 
+# Conversion a-node -> t-node
+has '_a2t' => ( isa => 'HashRef', is => 'rw' );
+
 # Conversion table from deontmod grammateme values to modal verb lemmas
 Readonly my %DEONTMOD_TO_MODAL_VERB => (
     'poss' => 'moci',
@@ -43,6 +46,21 @@ Readonly my %DEONTMOD_TO_MODAL_VERB => (
     'fac'  => 'moci',     # translation of 'be able to'
     'perm' => 'moci',     # translation of 'might'
 );
+
+# Prepare a-node -> t-node map
+override 'process_ttree' => sub {
+
+    my ( $self, $troot ) = @_;
+
+    $self->_set_a2t( {} );
+
+    foreach my $tnode ( $troot->get_descendants() ) {
+        foreach my $anode ( $tnode->get_anodes() ) {
+            $self->_a2t->{$anode} = $tnode;
+        }
+    }
+    super;
+};
 
 override '_write_input_data' => sub {
 
@@ -83,6 +101,7 @@ override '_set_class_value' => sub {
 
     # copy some needed attributes from the old node into the new root node
     $top_anode->wild->{is_parenthesis} = $anode->wild->{is_parenthesis};
+    $top_anode->set_is_member( $anode->is_member );
 
     # copy some attributes off the old node into the whole structure
     my @new_anodes = $top_anode->get_descendants( { add_self => 1 } );
@@ -115,7 +134,9 @@ override '_set_class_value' => sub {
 
     # rehang all the children of the original verb under the new structure
     foreach my $child ( $anode->get_children ) {
-        $child->set_parent( ( $child->afun || '' ) eq 'Sb' ? $top_anode : $new_lex_anode );
+        my $lex_child = $self->_get_lex_anode($child);
+        my $rehang_to_lex = $lex_child ? $lex_child->wild->{lex_verb_child} : 0;
+        $child->set_parent( $rehang_to_lex ? $new_lex_anode : $top_anode );
     }
 
     # set the new structure as aux and lex anodes of the corresponding t-node
@@ -125,6 +146,15 @@ override '_set_class_value' => sub {
     # remove the old verbal node
     $anode->remove();
 };
+
+# For an a-node, return the corresponding LEXICAL a-node (via the a-node to t-node map)
+sub _get_lex_anode {
+    my ( $self, $anode ) = @_;
+    
+    my $tnode = $self->_a2t->{$anode};
+    return undef if (!$tnode);
+    return $tnode->get_lex_anode();
+}
 
 sub _create_subtree {
 

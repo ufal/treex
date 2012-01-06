@@ -37,6 +37,9 @@ sub process_anode {
 
     my $subpos = $a_node->get_attr('morphcat/subpos') || '.';
     my $person = $a_node->get_attr('morphcat/person') || '.';
+    
+    $person =~ s/^inher$/./;
+    
     my $pronoun_mlemma = $M_LEMMA_FOR{ $subpos . $person };
     return if !$pronoun_mlemma;
     $a_node->set_lemma($pronoun_mlemma);

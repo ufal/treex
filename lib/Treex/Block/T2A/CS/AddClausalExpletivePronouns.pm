@@ -10,10 +10,12 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     foreach my $subconj_ze ( grep { ( $_->form || '' ) eq 'že' } $a_root->get_descendants() ) {
-        my $parent    = $subconj_ze->get_parent; 
-        my $expletive = $verb2expletive{ $parent->lemma || '' }; # (lemma is undefined if parent is root)
-        
-        if ( $expletive and $parent->precedes($subconj_ze) ) {
+        my $parent    = $subconj_ze->get_parent;
+        my $refl_part = first { ( $_->afun || '' ) eq 'AuxT' } $parent->get_echildren( { or_topological => 1 } );
+        my $lemma     = ( $parent->lemma || '' ) . ( $refl_part ? ( $refl_part->lemma || '' ) : '' );
+        my $expletive = $verb2expletive{$lemma};
+
+        if ( $expletive and !$refl_part and $parent->precedes($subconj_ze) ) {
 
             foreach my $form ( split /_/, $expletive ) {
                 my $new_node = $parent->create_child(
@@ -56,12 +58,13 @@ sub process_atree {
 
     #    qw(věřit) => qw(tomu),
     #    qw(tajit) => qw(tím),
-    qw(přesvědčit) => qw(o_tom),
-    qw(vycházet)     => qw(z_toho),
-    qw(trvat)         => qw(na_tom),
-    qw(počítat)     => qw(s_tím),
-    qw(shodovat)      => qw(v_tom),
-    qw(dopustit)      => qw(tím),
+    qw(přesvědčit)    => qw(o_tom),
+    qw(přesvědčit_se) => qw(o_tom),
+    qw(vycházet)        => qw(z_toho),
+    qw(trvat)            => qw(na_tom),
+    qw(počítat)        => qw(s_tím),
+    qw(shodovat_se)         => qw(v_tom),
+    qw(dopustit_se)         => qw(tím),
 
     #    qw(jít) => qw(o_to),
     qw(hovořit) => qw(o_tom),

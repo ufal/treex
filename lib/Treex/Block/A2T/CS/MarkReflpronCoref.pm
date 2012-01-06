@@ -11,7 +11,7 @@ sub process_tnode {
         while ( $clause_head->get_parent and not $clause_head->is_clause_head ) {
             $clause_head = $clause_head->get_parent;
         }
-        if ( $clause_head->get_parent and not $clause_head->get_parent->is_root ) {    # klauze se nasla a tudiz to nedobehlo az ke koreni
+        if ( !$clause_head->is_root ) {    # klauze se nasla a tudiz to nedobehlo az ke koreni
 
             my ($antec) = grep { ( $_->formeme || "" ) =~ m/^(n:1|drop)$/ } $clause_head->get_echildren( { or_topological => 1 } );
             if ($antec) {

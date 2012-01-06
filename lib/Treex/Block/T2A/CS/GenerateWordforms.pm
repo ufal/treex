@@ -35,7 +35,10 @@ my @CATEGORIES = qw(pos subpos gender number case possgender possnumber
 sub process_anode {
     my ( $self, $a_node ) = @_;
     if ( _should_generate($a_node) ) {
-        $a_node->set_form( _generate_word_form($a_node) );
+        my $form = _generate_word_form($a_node);
+        
+        $a_node->set_form( $form->get_form() );
+        $a_node->set_tag( $form->get_tag() );
     }
     elsif ( !defined $a_node->form ) {
         $a_node->set_form( $a_node->lemma );
@@ -58,11 +61,14 @@ sub _generate_word_form {
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
-    return $lemma if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
-    return 'ne' if $lemma eq '#Neg';
+    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } ) 
+        if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
+    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------'} ) 
+        if $lemma eq '#Neg';
 
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
-    return 'sta' if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
+    return LanguageModel::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } ) 
+    if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
                 my $number = Treex::Tool::Lexicon::CS::number_for( $_->lemma );
                 defined $number && $number > 2;
@@ -104,7 +110,7 @@ sub _generate_word_form {
                 . "\tttred " . $a_node->get_address() . " &"
         );
     }
-    return $form_info->get_form() if $form_info;
+    return $form_info if $form_info;
 
     # (HACK) try capitalized lemma
     my $capitalized_lemma = ucfirst $lemma;
@@ -112,7 +118,7 @@ sub _generate_word_form {
     return $form if $form;
 
     ($form_info) = $generator->forms_of_lemma( $capitalized_lemma, { tag_regex => "^$tag_regex" } );
-    return $form_info->get_form() if $form_info;
+    return $form_info if $form_info;
 
     $form = _form_after_tag_relaxing( $lemma, $tag_regex, $partial_regexps_ref, $a_node );
     return $form if $form;
@@ -126,7 +132,7 @@ sub _generate_word_form {
     }
 
     $lemma =~ s/(..t)-\d$/$1/;    # removing suffices distinguishing homonymous lemmas (stat-2)
-    return $lemma;
+    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
 }
 
 # relax regexp requirements: avoid pieces that cannot be satisfied for the given lemma anyway
@@ -275,24 +281,38 @@ sub _get_tag_regex {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::GenerateWordforms
+=head1 NAME 
 
-This module generates wordforms according to the given lemma and constraints
-on morphological categories in each TCzechA node.
+Treex::Block::T2A::CS::GenerateWordforms
+
+=item DESCRIPTION
+
+This module generates word forms according to the given lemma and constraints
+on morphological categories in each target side a-node.
+
 Quite usually there is an underspecified tag, for example we do not know the gender
-of a verb. If there are more czech forms of the given lemma which are compatible
+of a verb. If there are more Czech forms of the given lemma which are compatible
 with the (underspecified) tag then the most frequent form is choosen.
+
 Forms and their frequencies are taken from C<LanguageModel::MorphoLM>.
 C<CzechMorpho> interface to Jan Hajic's morphology is now used only as a fallback
 when there are no compatible forms in C<LanguageModel::MorphoLM>.
-The resulting values are stored in TCzechA nodes' attribute form.
 
-=back
+The resulting form and its corresponding tag are stored in the node attributes
+C<form> and C<tag>.
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2010 Zdenek Zabokrtsky, Martin Popel
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
