@@ -27,14 +27,6 @@ has 'y_feat_name' => (
     default     => 'class',
 );
 
-has 'feature_names' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'ArrayRef[Str]',
-    lazy        => 1,
-    builder     => '_build_feature_names',
-);
-
 has 'feature_sep' => (
     is          => 'ro',
     required    => 1,
@@ -71,19 +63,6 @@ has '_anaph_cands_filter' => (
     isa         => 'Treex::Tool::Coreference::AnaphFilter',
     builder     => '_build_anaph_cands_filter',
 );
-
-sub BUILD {
-    my ($self) = @_;
-
-    $self->feature_names;
-}
-
-sub _build_feature_names {
-    my ($self) = @_;
-    
-    my $names = $self->_feature_extractor->feature_names;
-    return $names;
-}
 
 sub _build_feature_extractor {
     my ($self) = @_;
