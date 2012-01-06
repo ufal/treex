@@ -34,7 +34,7 @@ has '_element_map' => ( isa => 'HashRef', is => 'ro', builder => '_build_element
 # Loaded valency dictionaires cache
 class_has '_loaded_dicts' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
 
-# This serves mainly for converting the lexicon + id into lemma, pos and elements.
+# Constructor, converting the lexicon + id into lemma, pos and elements (i.e. loading data from lexicon).
 around 'BUILDARGS' => sub {
 
     my $orig = shift;
@@ -44,7 +44,7 @@ around 'BUILDARGS' => sub {
     my $params = $self->$orig(@_);
 
     # Find in the valency dictionary and parse
-    if ( ( $params->{id} or $params->{ord} ) and $params->{lexicon} ) {
+    if ( ( $params->{id} or $params->{ord} ) and $params->{lexicon} and !$params->{lemma} ) {
 
         my $xc = _get_xpath_context( $params->{lexicon} );
         my ($frame_xml) = $params->{id}
@@ -54,20 +54,8 @@ around 'BUILDARGS' => sub {
         if ( !$frame_xml ) {
             log_warn( "The specified valency frame ID was not found: " . ( $params->{id} ? $params->{id} : $params->{ord} ) );
         }
-
-        # Fill in lemma and POS (convert their format to correspond to usual TectoMT conventions)
-        $params->{lemma} = $frame_xml->parentNode->parentNode->getAttribute('lemma');
-        $params->{lemma} =~ s/ /_/g;
-        $params->{pos} = lc( $frame_xml->parentNode->parentNode->getAttribute('POS') );
-        if ( $params->{pos} eq 'a' ) {
-            $params->{pos} = 'adj';
-        }
-
-        # Fill in valency members
-        $params->{elements} = [];
-        foreach my $element ( $frame_xml->getElementsByTagName('element') ) {
-            push( @{ $params->{elements} }, Treex::Tool::Vallex::FrameElement->new( xml => $element, language => $params->{language} ) );
-        }
+        # Fill the valency frame from dictionary XML 
+        _fill_params_from_xml( $frame_xml, $params );
     }
     else {
         $params->{lemma} =~ s/ /_/g;
@@ -80,6 +68,29 @@ around 'BUILDARGS' => sub {
     return $params;
 };
 
+
+# Fill valency frame parameters from a XML context in the dictionary
+sub _fill_params_from_xml {
+
+    my ( $frame_xml, $params ) = @_;
+
+    # Fill in lemma and POS (convert their format to correspond to usual TectoMT conventions)
+    $params->{lemma} = $frame_xml->parentNode->parentNode->getAttribute('lemma');
+    $params->{lemma} =~ s/ /_/g;
+    $params->{pos} = lc( $frame_xml->parentNode->parentNode->getAttribute('POS') );
+    $params->{pos} =~ s/^a$/adj/;
+    $params->{pos} =~ s/^d$/adv/;
+
+    # Fill in valency members
+    $params->{elements} = [];
+    foreach my $element ( $frame_xml->getElementsByTagName('element') ) {
+        push(
+            @{ $params->{elements} },
+            Treex::Tool::Vallex::FrameElement->new( xml => $element, language => $params->{language} )
+        );
+    }
+}
+
 # This is able to load the valency lexicon into the memory, or to retrieve an already loaded one.
 # The XPath context for the lexicon is returned, as this is what's needed for the search by id or order
 sub _get_xpath_context {
@@ -88,11 +99,33 @@ sub _get_xpath_context {
     my $xc;
 
     if ( !Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name} ) {
-        my $lexicon = XML::LibXML->load_xml( location => require_file_from_share($DEFAULT_LEXICON_PATH . $lexicon_name ));
+        my $lexicon = XML::LibXML->load_xml( location => require_file_from_share( $DEFAULT_LEXICON_PATH . $lexicon_name ) );
         $lexicon->indexElements();
         Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name} = XML::LibXML::XPathContext->new($lexicon);
     }
     return Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name};
+}
+
+# Retrieve all frames for the given lemma
+sub get_frames_for_lemma {
+
+    my ( $lexicon_name, $language, $lemma, $pos ) = @_;
+    my $xc = _get_xpath_context($lexicon_name);
+    my @frames;
+    
+    $pos =~ s/^adj$/a/;
+    $pos =~ s/^adv$/d/;
+    $pos = uc $pos;
+    
+    my @found = $xc->findnodes( "//word[\@lemma=\"$lemma\" and \@POS=\"$pos\"]//frame" );
+
+    foreach my $frame_xml (@found){       
+    
+        my $params = { language => $language, lexicon => $lexicon_name, id => $frame_xml->getAttribute('id') };
+        _fill_params_from_xml($frame_xml, $params);
+        push @frames, Treex::Tool::Vallex::ValencyFrame->new($params);
+    }
+    return @frames;
 }
 
 # This constructs the hashmap of the frame elements by their functor
@@ -145,12 +178,15 @@ L<PDT-Vallex|http://ufal.mff.cuni.cz/pdt2.0/data/pdt-vallex/vallex.xml> Czech va
     # create a frame from the valency dictionary
     $frame = Treex::Tool::Vallex::ValencyFrame->new( {ord => 3, lexicon => 'vallex.xml', language => 'cs'} );
     $frame = Treex::Tool::Vallex::ValencyFrame->new( {id => 'v-w3f1', lexicon => 'vallex.xml', language => 'cs'} );
+   
+    # get all frames for the specified lemma from the valency dictionary
+    my @frames = Treex::Tool::Vallex::ValencyFrame::get_frames_for_lemma( 'vallex.xml', 'cs', 'být', 'v' );
     
     # print the frame
     $frame->to_string();
 
     # access the individual frame elements (Treex::Tool::Vallex::FrameElement)  
-    my $element = $frame->functor('ACT');
+    my $element = $frame->functor('ACT'); # will be undef if the frame does not have such functor
     $element = $frame->elements()->[0];
 
 =head1 METHODS
@@ -220,6 +256,16 @@ elements follows (according to the string versions of the individual frame eleme
 
 =back
 
+=head1 CLASS METHODS
+
+=over
+
+=item get_frames_for_lemma( $lexicon_name, $language, $lemma, $pos )
+
+This returns a list of all frames with the specified lemma and part-of-speech found in the specified lexicon.
+
+=back
+
 =head1 TODO
 
 =over
@@ -244,6 +290,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

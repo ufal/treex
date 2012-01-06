@@ -13,6 +13,7 @@ sub process_atree {
     my %aligned = map { $_ => _get_aligned_node($_) } @anodes;
 
     map { $_->set_form( $aligned{$_}->form ) if ( $aligned{$_} ) } @anodes;
+    map { $_->set_lemma( $aligned{$_}->lemma ) if ( $aligned{$_} ) } @anodes; # ???
 
     @anodes = sort { return ( $aligned{$a}->ord <=> $aligned{$b}->ord ) if ( $aligned{$a} && $aligned{$b} ); return $a->ord <=> $b->ord } @anodes;
     for ( my $i = 0; $i < @anodes; ++$i ) {
@@ -21,6 +22,7 @@ sub process_atree {
 
 }
 
+# A simplification -- retrieve the first aligned node
 sub _get_aligned_node {
 
     my ( $anode ) = @_;

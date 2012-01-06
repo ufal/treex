@@ -101,7 +101,7 @@ pod-1(7)	n:pod+7
 podle-2(2)	n:podle+2
 prima	adv
 pro-1(4)	n:pro+4
-prospěch(v-1_2)	n:v_prospěch+2
+prospěch(v-1_2)	n:ve_prospěch+2
 prospěch(v-1_U)	adj:v_prospěch+poss
 proti-1(3)	n:proti+3
 proti-1(3)_aby(V)	n:proti+3 v:aby+fin
@@ -113,8 +113,8 @@ raději	adv
 rád	adv
 s-1(7)	n:s+7
 stran(2)	n:stran+2
-strana-3(z-1)	n:z_strana+2
-strana-3(z-1_2)	n:z_strana+2
+strana-3(z-1)	n:ze_strany+2
+strana-3(z-1_2)	n:ze_strany+2
 svůj-2	adj:poss
 tak-3	adv
 tak	adv
@@ -122,15 +122,15 @@ u-1(2)	n:u+2
 v-1(4)	n:v+4
 v-1(6)	n:v+6
 v-1(7)	n:v+6
-v-1(prospěch_2)	n:v_prospěch+2
+v-1(prospěch_2)	n:ve_prospěch+2
 v-1(věc(tento))	n:v+6
-v-1(věc)	n:v_věc+2
+v-1(věc)	n:ve_věci+2
 v-1({prospěch,neprospěch}(U))	adj:v_prospěch+poss adj:v_neprospěch+poss
-věc(v-1_2)	n:v_věc+2
+věc(v-1_2)	n:ve_věci+2
 všechen	adj:1
 vůči(3)	n:vůči+3
 z-1(2)	n:z+2
-z-1(strana-3(U))	adj:z_strana+poss
+z-1(strana-3(U))	adj:ze_strany+poss
 za-1(2)	n:za+4
 za-1(4)	n:za+4
 za-1(7)	n:za+7
@@ -139,7 +139,7 @@ za-1(A:4)	n:za+4
 zda(V)	v:zda+fin
 zdali(V)	v:zda+fin
 zdarma	adv
-{prospěch,neprospěch}(v-1_2)	n:v_prospěch+2 n:v_neprospěch+2
-{strana-2}(z-1_2)	n:z_strana+2
+{prospěch,neprospěch}(v-1_2)	n:ve_prospěch+2 n:v_neprospěch+2
+{strana-2}(z-1_2)	n:ze_strany+2
 že(V)	v:že+fin
 že	v:že+fin
