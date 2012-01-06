@@ -166,6 +166,9 @@ sub set_real_afun
 # This function is specific to the A layer because it contains the list of
 # attributes. If we could figure out the list automatically, the function would
 # become general enough to reside directly in Node.pm.
+#
+# NOTE: We could possibly make just copy_attributes() layer-dependent and unify
+# the main copy_atree code.
 #------------------------------------------------------------------------------
 sub copy_atree
 {
@@ -173,6 +176,7 @@ sub copy_atree
     my $target    = shift;
 
     # TODO probably we should do deepcopy
+    # Why is this here ? the attributes of the root node are NOT copied, are they ??
     my %copy_of_wild = %{$self->wild};
     $target->set_wild(\%copy_of_wild);
 
@@ -182,25 +186,36 @@ sub copy_atree
 
         # Create a copy of the child node.
         my $child1 = $target->create_child();
-
-        # We should copy all attributes that the node has but it is not easy to figure out which these are.
-        # TODO: As a workaround, we list the attributes here directly.
-        foreach my $attribute (
-            'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
-            'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
-            )
-        {
-            my $value = $child0->get_attr($attribute);
-            $child1->set_attr( $attribute, $value );
-        }
-
-        # TODO probably we should do deepcopy
-        my %copy_of_wild = %{$child0->wild};
-        $child1->set_wild(\%copy_of_wild);
+        
+        # Copy all attributes of the original node to the new one        
+        $child0->copy_attributes($child1);
 
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
+
+    return;
+}
+
+
+sub copy_attributes 
+{
+    my ($self, $other) = @_;
+
+    # We should copy all attributes that the node has but it is not easy to figure out which these are.
+    # TODO: As a workaround, we list the attributes here directly.
+    foreach my $attribute (
+        'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
+        'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
+        )
+    {
+        my $value = $self->get_attr($attribute);
+        $other->set_attr( $attribute, $value );
+    }
+    
+    # TODO probably we should do deepcopy
+    my %copy_of_wild = %{$self->wild};
+    $other->set_wild(\%copy_of_wild);
 
     return;
 }

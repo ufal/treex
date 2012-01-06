@@ -534,6 +534,21 @@ sub add_aligned_node {
     return;
 }
 
+# remove invalid alignment links (leading to unindexed nodes)
+sub update_aligned_nodes {
+
+    my ( $self ) = @_;
+    my $doc = $self->get_document();
+    my $links_rf = $self->get_attr('alignment');
+    my @new_links;
+        
+    foreach my $link (@{$links_rf}){
+        push @new_links, $link if ($doc->id_is_indexed( $link->{'counterpart.rf'} ));
+    }
+    $self->set_attr( 'alignment', \@new_links );
+    return;    
+}
+
 #************************************
 #---- OTHER ------
 
@@ -1004,6 +1019,10 @@ Returns an array containing two array references. The first array contains the n
 =item delete_aligned_node
 
 =item is_aligned_to
+
+=item update_aligned_nodes()
+
+Removes all alignment links leading to nodes which have been deleted.
 
 =back
 

@@ -216,6 +216,25 @@ sub update_coref_nodes {
     return;
 }
 
+# ----------- complement nodes -------------
+
+sub add_compl_nodes {
+    my $self = shift;
+    return $self->_add_to_node_list( 'compl.rf', @_ );
+}
+
+sub remove_compl_nodes {
+    my $self = shift;
+    $self->_remove_from_node_list( 'compl.rf', @_ );
+    return;
+}
+
+sub update_compl_nodes {
+    my $self = shift;
+    $self->_update_list('compl.rf');
+    return;
+}
+
 #----------- n-layer (named entity) nodes -------------
 
 sub get_n_node {
