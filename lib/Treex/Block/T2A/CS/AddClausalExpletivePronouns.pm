@@ -52,7 +52,7 @@ sub process_atree {
     qw(souhlasit)     => qw(s_tím),
     qw(rozhodnout)    => qw(o_tom),
     qw(mluvit)        => qw(o_tom),
-    qw(shodnout)      => qw(na_tom),
+    qw(shodnout_se)      => qw(na_tom),
     qw(zdůvodnit)    => qw(tím),
     qw(dojít)        => qw(k_tomu),
 
