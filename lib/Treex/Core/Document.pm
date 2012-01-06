@@ -432,7 +432,7 @@ sub retrieve_storable {
 
     my $FILEHANDLE;
 
-    if ( reftype($file) eq 'GLOB' ) {
+    if ( ref($file) and reftype($file) eq 'GLOB' ) {
         $FILEHANDLE = $file;
     }
     else {
