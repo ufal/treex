@@ -13,28 +13,19 @@ has '+return_values_names' => ( default => sub { [''] } );
 
 # has 'effective' => ( isa => Bool, is => 'ro', default => '0' );
 
-# TODO: where do I get the $alignment_hash ?!
-
 sub modify_single {
 
     my ( $self, $node, $alignment_hash ) = @_;
 
-    my $field_value;
+    my %alignment_hash_single_best;
 
-    my @tree_distances;
-    my @all_nodes =
-        ( $node->get_root() )->get_descendants( { ordered => 1 } );
-
-    foreach my $parent (@all_nodes) {
-        push @tree_distances,
-            $self->compute_tree_distance_aligned(
-            $parent, $node, $alignment_hash
-            );
+    foreach my $key (keys %$alignment_hash) {
+	$alignment_hash_single_best{$key} = $alignment_hash->{$key}->[0];
     }
 
-    $field_value = join ' ', @tree_distances;
-
-    return $field_value;
+    return $self->compute_tree_distance_aligned(
+	$node, \%alignment_hash_single_best
+	);
 }
 
 1;
@@ -71,6 +62,9 @@ Treex::Block::Write::LayerAttributes::AlignedTreeDistances
             signed => '1', effective => '0'} }"
 
 =head1 DESCRIPTION
+
+Is a wrapper for AnalysisWithAlignedTrees
+
 
 Prints an array of tree distances
 of the node aligned to this node as the child node
