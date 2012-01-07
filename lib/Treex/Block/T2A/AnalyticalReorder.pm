@@ -65,9 +65,10 @@ sub process_ttree {
 
     # assign new ord numbers according to the ascending order of a-nodes
     my @sorted = sort { $order{$a} <=> $order{$b} } keys %order;
+    my %t_nodes_by_ord = map { $_->ord => $_ } @t_nodes; # original ord values might not be continuous
 
     for ( my $ord = 0; $ord < @sorted; $ord++ ) {
-        $t_nodes[ $sorted[$ord] - 1 ]->_set_ord( $ord + 1 );
+        $t_nodes_by_ord{ $sorted[$ord] }->_set_ord( $ord + 1 );
     }
 
 }
