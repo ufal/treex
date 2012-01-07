@@ -64,7 +64,8 @@ sub _delete_if_no_aligned {
 
         if ( $self->_a2t->{$anode} ) {
             my $tnode = $self->_a2t->{$anode};
-            if ( $anode == $tnode->get_lex_anode() ) {
+            my $lex_a = $tnode->get_lex_anode();
+            if ( $lex_a && $anode == $lex_a ) {
                 $tnode->set_lex_anode(undef);
             }
             else {
