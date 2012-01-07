@@ -91,6 +91,7 @@ sub process_zone {
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         my $label = shift @node_labels;
         $a_node->set_attr( 'afun', $label );
+        # $a_node->set_is_member(0);
     }
 
     return;
