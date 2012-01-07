@@ -189,7 +189,7 @@ sub assign_automatic_grammatemes {
 
     # ------------- jednotlive tridy komplexnich uzlu -----------
 
-    if ( $t_node->t_lemma eq "#EmpNoun" ) {    # nikde neexistuje !!!
+    if ( $t_node->t_lemma eq "#EmpNoun" ) {
         $t_node->set_gram_sempos('n.pron.def.demon');    # X011
         set_gn_by_adj_agreement( $t_node, 'gender', $temp_attrs );
         set_gn_by_adj_agreement( $t_node, 'number', $temp_attrs );
@@ -720,8 +720,9 @@ sub assign_automatic_grammatemes {
     #       set_attr($t_node,'negation','neg0');
     #   }
 
-    else {
+    else {        
         $t_node->set_gram_sempos('n.denot');
+        log_warn('Unknown: ' . $t_node->t_lemma . ' ' . $t_node->get_address) if (!$tgender ||!$tnumber); 
         $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
         $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
     }
@@ -944,9 +945,9 @@ sub apply_postprocessing {
         }
     }
 
-    if ( $t_node->gram_sempos eq "n.pron.def.demon" ) {
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} ) if $tgender2ggender{$tgender};
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} ) if $tnumber2gnumber{$tnumber};
+    if ( $t_node->gram_sempos eq "n.pron.def.demon" ) { # tgender and tnumber might be undefined for #EmpNoun        
+        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} ) if ($tgender && $tgender2ggender{$tgender});
+        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} ) if ($tnumber && $tnumber2gnumber{$tnumber});
     }
 
     # gramatem negation u pojmenovacich uzlu

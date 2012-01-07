@@ -37,8 +37,6 @@ sub process_anode {
     if ( _should_generate($a_node) ) {
         my $form = _generate_word_form($a_node);
         
-        log_info($form);
-        
         $a_node->set_form( $form->get_form() );
         $a_node->set_tag( $form->get_tag() );
     }

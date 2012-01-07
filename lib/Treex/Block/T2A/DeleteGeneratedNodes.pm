@@ -366,7 +366,7 @@ sub _remove_node {
     return;
 }
 
-# This moves all orphaned a/aux.rf links from the node to another one and marks it for deletion
+# This moves all orphaned a/aux.rf links from the node to another one and marks the node for deletion
 sub _mark_for_removal {
 
     my ( $self, $to_remove, $aux_backup ) = @_;
@@ -376,15 +376,15 @@ sub _mark_for_removal {
 
         # the anode would be orphaned -> save it
         if ( $self->_a_links->{$anode} <= 1 ) {
-            if ( !$aux_backup ) {
-                log_warn( 'Losing some aux-rf: ' . $to_remove->id . ' and ' . $anode->id );
+            if ( !$aux_backup || $anode->is_root ) {
+                log_warn( 'Losing aux-rf: ' . $to_remove->id . ' and ' . $anode->id . ( $anode->is_root ? ' (ROOT!)' : '' ) );
             }
-            else {
+            else {                
                 $aux_backup->add_aux_anodes($anode);
             }
         }
 
-        # it won't be orphaned, but note that the number of links to it will decrease
+        # this a/aux.rf won't be orphaned, but note that the number of links to it will decrease
         else {
             $self->_a_links->{$anode}--;
         }
