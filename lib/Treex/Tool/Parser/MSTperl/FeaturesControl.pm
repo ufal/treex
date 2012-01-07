@@ -490,6 +490,7 @@ my %simple_feature_sub_references = (
     'equalspcat'        => \&{feature_equals_pc_at},
     'arrayat'           => \&{feature_array_at_child},
     'ARRAYAT'           => \&{feature_array_at_parent},
+    'arrayatcp'         => \&{feature_array_at_cp},
     'isfirst'           => \&{feature_child_is_first_in_sentence},
     'ISFIRST'           => \&{feature_parent_is_first_in_sentence},
     'islast'            => \&{feature_child_is_last_in_sentence},
@@ -997,6 +998,28 @@ sub feature_array_at_parent {
     } else {
         my ( $array_field, $index_field ) = @{$arguments};
         my $array = $edge->parent->fields->[$array_field];
+        my $index = $edge->parent->fields->[$index_field];
+
+        my @array = split / /, $array;
+        my $value = $array[$index];
+        if ( !defined $value ) {
+            $value = '';
+        }
+
+        return $value;
+    }
+}
+
+# arrayatcp (array, index)
+sub feature_array_at_cp {
+    my ( $self, $edge, $arguments ) = @_;
+
+    # arrayat takes two arguments
+    if ( @{$arguments} != 2 ) {
+        croak "arrayat() takes TWO arguments!!!";
+    } else {
+        my ( $array_field, $index_field ) = @{$arguments};
+        my $array = $edge->child->fields->[$array_field];
         my $index = $edge->parent->fields->[$index_field];
 
         my @array = split / /, $array;

@@ -89,6 +89,9 @@ sub parse_sentence_internal {
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 2 ) {
+		print $parent->ord . ' ' . $parent->fields->[1] .
+		    ' -> ' . $child->ord . ' ' . $child->fields->[1] .
+		    ' score: ' . $score . "\n";
                 print $parent->ord .
                     ' -> ' . $child->ord .
                     ' score: ' . $score . "\n";
