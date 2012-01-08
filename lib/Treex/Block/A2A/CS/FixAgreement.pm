@@ -216,10 +216,11 @@ sub get_form {
 
     $tag =~ s/^(P.+)(\d)(..........)/$1\[$2X\]$3/;
 
-    my $form = $morphoLM->best_form_of_lemma( $lemma, $tag );
+    my $form_info = $morphoLM->best_form_of_lemma( $lemma, $tag );
+    my $form = $form_info->get_form() if $form_info;
 
     if ( !$form ) {
-        my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag" } );
+        ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag" } );
         $form = $form_info->get_form() if $form_info;
     }
 
