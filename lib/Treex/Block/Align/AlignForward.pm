@@ -13,17 +13,24 @@ has 'overwrite' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has 'keep_if_no_other' => ( is => 'ro', isa => 'Bool', default => 0 );
 
+has 'preserve_type' => ( is => 'ro', isa => 'Bool', default => 1 );
+
 sub process_zone {
     my ( $self, $zone ) = @_;
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
 
     foreach my $x (@nodes) {
-        my ($ys) = $x->get_aligned_nodes();
-        foreach my $y ( @{$ys} ) {
+        
+        my ( $ys, $ytypes ) = $x->get_aligned_nodes();
+        next if (!$ys); 
+
+        for ( my $i = 0; $i < @{$ys}; ++$i ) {
+
+            my ( $y, $ytype ) = ( $ys->[$i], $ytypes->[$i] );
 
             my ($zs) = $y->get_aligned_nodes();
             foreach my $z ( @{$zs} ) {
-                $x->add_aligned_node( $z, 'align_forward' );
+                $x->add_aligned_node( $z, $self->preserve_type ? $ytype : 'align_forward' );
             }
 
             if ( $self->overwrite && ( ( $zs && scalar( @{$zs} ) ) || !$self->keep_if_no_other ) ) {
@@ -45,8 +52,11 @@ Treex::Block::Align::AlignForward
 
 =head1 DESCRIPTION
 
-Replaces two steps of alignment with one (e.g.: X -> Y -> Z to X -> Z). Takes all aligned nodes and all
-their aligned nodes, changes the alignment type to "align_forward".
+Replaces two steps of alignment with one (e.g.: X -> Y -> Z to X -> Z). Uses all aligned nodes and all
+their aligned nodes for each source node. 
+
+The alignment type cat be either changed to "align_forward", or left as the original type of first
+link going from the source node. 
 
 =head1 PARAMETERS
 
@@ -65,6 +75,11 @@ The current selector (default: empty).
 =item C<overwrite>
 
 Toggle overwrite current alignment links (default: 1).
+
+=item C<preserve_type>
+
+Toggle preserve alignment type (default: 1). If this is off, the new alignment type will be changed to
+'align_forward'.
 
 =item C<keep_if_no_other>
 
