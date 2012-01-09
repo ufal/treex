@@ -211,7 +211,11 @@ sub _get_info_hash {
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
 
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
-            $info{ $out_att->[ $out_att_pos++ ] } = $vals->[$i];
+            my $value = $vals->[$i];
+            if (!defined $value) {
+                $value = '';
+            }
+            $info{ $out_att->[ $out_att_pos++ ] } = $value;
         }
     }
     return \%info;
