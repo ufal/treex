@@ -522,7 +522,7 @@ sub _binary_features {
     
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
-	my ($anaph_epar_lemma, $cand_epar_lemma) = map {my $epar = ($_->get_eparents)[0]; $epar->t_lemma} ($anaph, $cand);
+	#my ($anaph_epar_lemma, $cand_epar_lemma) = map {my $epar = ($_->get_eparents)[0]; $epar->t_lemma} ($anaph, $cand);
     $coref_features->{b_epar_fun_agree}
         = agree_feats($set_features->{c_cand_epar_fun}, $set_features->{c_anaph_epar_fun});
     $coref_features->{c_join_epar_fun}          
@@ -532,11 +532,14 @@ sub _binary_features {
     $coref_features->{c_join_epar_sempos}       
         = join_feats($set_features->{c_cand_epar_sempos}, $set_features->{c_anaph_epar_sempos});
     $coref_features->{b_epar_lemma_agree}       
-        = agree_feats($cand_epar_lemma, $anaph_epar_lemma);
+        #= agree_feats($cand_epar_lemma, $anaph_epar_lemma);
+        = agree_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
     $coref_features->{c_join_epar_lemma}        
-        = join_feats($cand_epar_lemma, $anaph_epar_lemma);
+        #= join_feats($cand_epar_lemma, $anaph_epar_lemma);
+        = join_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
     $coref_features->{c_join_clemma_aeparlemma} 
-        = join_feats($cand->t_lemma, $anaph_epar_lemma);
+        #= join_feats($cand->t_lemma, $anaph_epar_lemma);
+        = join_feats($cand->t_lemma, $set_features->{c_anaph_epar_lemma});
     
     #   3:  tfa($inode, $jnode);
     $coref_features->{b_tfa_agree} 
@@ -618,6 +621,8 @@ sub _unary_features {
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
     ( $coref_features->{'c_'.$type.'_epar_fun'},  $coref_features->{'c_'.$type.'_epar_sempos'} )  = _get_eparent_features($node);
+	my $eparent = ($node->get_eparents)[0];
+	$coref_features->{'c_'.$type.'_epar_lemma'} = $eparent->t_lemma;
     
     #   3:  tfa($inode, $jnode);
     $coref_features->{'c_'.$type.'_tfa'}  = $node->tfa;

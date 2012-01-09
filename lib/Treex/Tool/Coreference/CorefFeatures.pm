@@ -1,5 +1,7 @@
 package Treex::Tool::Coreference::CorefFeatures;
+
 use Moose::Role;
+use Moose::Util::TypeConstraints;
 
 has 'feature_names' => (
     is          => 'ro',
@@ -7,6 +9,13 @@ has 'feature_names' => (
     isa         => 'ArrayRef[Str]',
     lazy        => 1,
     builder     => '_build_feature_names',
+);
+
+has 'format' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => enum([qw/percep unsup/]),
+    default     => 'percep',
 );
 
 requires '_build_feature_names';
@@ -44,11 +53,26 @@ sub extract_nonanaph_features {
     return {%$cand_features, %$binary_features};
 }
 
-sub create_joint_instances {
+sub create_instances {
+    my ($self, $anaph, $ante_cands, $ords) = @_;
+
+    if ($self->format eq 'unsup') {
+        return $self->_create_instances(
+            $anaph, $ante_cands, $ords
+        );
+    }
+    else {
+        return $self->_create_joint_instances(
+            $anaph, $ante_cands, $ords
+        );
+    }
+}
+
+sub _create_joint_instances {
     my ($self, $anaph, $ante_cands, $ords) = @_;
 
     my $instances = 
-        $self->create_instances( $anaph, $ante_cands, $ords );
+        $self->_create_instances( $anaph, $ante_cands, $ords );
     my $joint_instances = $instances->{'cands'};
 
     foreach my $cand_id (keys %{$joint_instances}) {
@@ -60,7 +84,7 @@ sub create_joint_instances {
     return $joint_instances;
 }
 
-sub create_instances {
+sub _create_instances {
     my ( $self, $anaph, $ante_cands, $ords ) = @_;
 
     if (!defined $ords) {
