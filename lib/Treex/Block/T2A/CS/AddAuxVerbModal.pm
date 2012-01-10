@@ -9,8 +9,8 @@ my %deontmod2modalverb = (
     'vol'  => 'chtít',
     'deb'  => 'muset',
     'hrt'  => 'mít',
-    'fac'  => 'moci', # 'moci' vadi u 'be able to'
-    'perm' => 'moci', # 'smet' vadi u 'might'
+    'fac'  => 'moci', # should/could be "umět", but "be able to" translates as "moci"
+    'perm' => 'moci', # should/could be "smět", but "might" translates as "moci"
 );
 
 sub process_tnode {
