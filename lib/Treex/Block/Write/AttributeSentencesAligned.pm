@@ -67,6 +67,31 @@ sub _process_tree() {
     print { $self->_file_handle } $self->sentence_separator;
 }
 
+# Return all the required information for a node as a hash
+sub _get_info_hash {
+
+    my ( $self, $node, $alignment_hash ) = @_;
+    my %info;
+    my $out_att_pos = 0;
+    my $out_att = $self->_output_attrib;
+
+    foreach my $attrib ( @{ $self->attributes } ) {
+
+        my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
+
+        foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
+            my $value = $vals->[$i];
+            if (!defined $value) {
+                $value = '';
+            }
+            $info{ $out_att->[ $out_att_pos++ ] } = $value;
+        }
+    }
+    return \%info;
+}
+
+
+
 1;
 
 __END__
