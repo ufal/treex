@@ -4,11 +4,13 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use FileUtils;
+use threads;
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
 has dir_or_sym => ( isa => 'Str', is => 'ro', default => 'grow-diag-final' );
+has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 
 # XXX replace with path in tectomt_shared
 my $mgizadir = "/home/tamchyna/tectomt_devel/trunk/treex/lib/Treex/Block/Align/A/mgizapp/";
@@ -19,16 +21,56 @@ my $snt2cooc = "$mgizadir/bin/snt2cooc";
 my $symal = "$mgizadir/bin/symal";
 my $merge = "$mgizadir/scripts/merge_alignment.py";
 
+my $mytmpdir;
+
 sub process_document {
     my ( $self, $document ) = @_; 
-    my $mytmpdir = get_unique_temporary_filename( "alignmgiza" );
-    _write_plain( $document, $self->{from_language}, $self->{align_attr}, "$mytmpdir/txt-a" );
-    _write_plain( $document, $self->{to_language}, $self->{align_attr}, "$mytmpdir/txt-b" );
-    _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" );
-    _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" );
-    my $src_vcb = _collect_vocabulary( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" );
-    my $tgt_vcb = _collect_vocabulary( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" );
-    my ( $alitype, $alidiag, $alifinal, $alifinaland ) = _parse_dirsym( $self->{dir_or_sym} );
+
+    # create tempdir
+    $mytmpdir = get_unique_temporary_filename( "alignmgiza" );
+    mkdir $mytmpdir;
+
+    # set number of cores
+    if ( $self->cpu_cores == -1 ) {
+        chomp(my $cores =  `cat /proc/cpuinfo | grep CPU | wc -l`);
+        $self->cpu_cores($cores);
+    }
+    if ($self->dir_or_sym ne "left" && $self->dir_or_sym ne "right") {
+        $self->cpu_cores( $self->cpu_cores / 2 ); # we run 2 mgizas in parallel         
+    }
+
+    # output sentences into plain text
+    # XXX not parallel, not sure if Treex accessors are re-entrant
+    _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
+    _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
+
+    # create word classes
+    _run_parallel(
+        sub { _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" ) },
+        sub { _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" ) }
+    );
+
+    # create vocabulary lists
+    my ( $src_vcb, $tgt_vcb ) = _run_parallel(
+        sub { _collect_vocabulary( "$mytmpdir/txt-a", "$mytmpdir/vcb-a" ) },
+        sub { _collect_vocabulary( "$mytmpdir/txt-b", "$mytmpdir/vcb-b" ) }
+    );
+
+    # get symmetrization arguments
+    my ( $alitype, $alidiag, $alifinal, $alifinaland ) = _parse_dirsym( $self->dir_or_sym );
+
+    # run mgiza (both ways if symmetrization is specified, not direction)
+    if ( $self->align_attr eq "left" ) {
+        $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 );
+    } elsif (  $self->align_attr eq "right" ) {
+        $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 );
+    } else {
+        # run mgiza in both directions and merge
+        _run_parallel(
+            sub { $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 ) },
+            sub { $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 ) }
+        );
+    }
 }
 
 sub _write_plain {
@@ -73,6 +115,21 @@ sub _collect_vocabulary {
     return \%vcb;
 }
 
+sub _create_corpus {
+    my ( $outfile, $src_txt, $src_vcb, $tgt_txt, $tgt_vcb ) = @_;
+    my $out_hdl = my_open( $outfile );
+    my $src_hdl = my_open( $src_txt );
+    my $tgt_hdl = my_open( $tgt_txt );
+
+    while ( chomp( my $src_line = <$src_hdl> ) ) {
+        chomp( my $tgt_line = <$tgt_hdl> );
+        my @src_numbers = map { $src_vcb->{$_} } split / /, $src_line;
+        my @tgt_numbers = map { $tgt_vcb->{$_} } split / /, $tgt_line;
+        print $out_hdl join( " ", @src_numbers ), "\t", ( " ", @tgt_numbers ), "\n";
+    }
+    close $out_hdl;
+}
+
 sub _parse_dirsym {
     my $dirsym = shift;
     my $alitype = undef;
@@ -103,6 +160,42 @@ sub _parse_dirsym {
     return ( $alitype, $alidiag, $alifinal, $alifinaland );
 }
 
+sub _run_mgiza {
+    my ( $self, $src_vcb, $tgt_vcb, $inverse ) = @_;
+    my $a = $inverse ? "b" : "a";
+    my $b = $inverse ? "a" : "b";
+
+    # prepare training corpus
+    my $corpus = "$mytmpdir/$a-$b.snt";
+    _create_corpus( $corpus, "$mytmpdir/txt-$a", $src_vcb, "$mytmpdir/txt-$b", $tgt_vcb );
+
+    # prepare coocurrence file
+    my $cooc_file = "$mytmpdir/$a-$b.cooc";
+    _safesystem( "$snt2cooc $mytmpdir/vcb-$a $mytmpdir/vcb-$b $corpus > $cooc_file" );
+
+    my %mgiza_options = ( 
+        p0 => .999 ,
+        m1 => 5 , 
+        m2 => 0 , 
+        m3 => 3 , 
+        m4 => 3 , 
+        nodumps => 0 , 
+        onlyaldumps => 0 , 
+        nsmooth => 4 , 
+        model1dumpfrequency => 1,
+        model4smoothfactor => 0.4 ,
+        s => "$mytmpdir/vcb-$a",
+        t => "$mytmpdir/vcb-$b",
+        c => $corpus,
+        ncpu => $self->cpu_cores,
+        CoocurrenceFile => $cooc_file,
+        o => "$mytmpdir/$a-$b.A3.final"
+    );
+
+    my $options_str;
+    map { $options_str .= " -$_ $mgiza_options{$_}" } sort keys %mgiza_options;
+}
+
 sub _safesystem {
     log_info "Executing: @_";
     system(@_);
@@ -118,6 +211,14 @@ sub _safesystem {
         log_info "Exit code: $exitcode" if $exitcode;
         return ! $exitcode;
     }
+}
+
+sub _run_parallel {
+    my ( $first, $second ) = @_;
+    my $thread_first = threads->new( $first );
+    my $result_second = &$second;
+    my $result_first = $thread_first->join();
+    return ( $result_first, $result_second );
 }
 
 1;
@@ -158,6 +259,10 @@ or "grow-diag-final-and". Default is "grow-diag-final".
 =item C<align_attr>
 
 The node attribute, over which to compute the alignment. Default is "lemma".
+
+=item C<cpu_cores>
+
+How many CPU cores should be used. Default is -1 (autodetect).
 
 =back 
 
