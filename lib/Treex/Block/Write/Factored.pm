@@ -233,6 +233,7 @@ my $export_rules = {
         },
     },
     "csm" => {    # Czech m-layer
+        "uselayer" => "a",
         "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
@@ -264,6 +265,7 @@ my $export_rules = {
         "factors"      => sub {&producer_of_at_output},
     },
     "enm" => {
+        "uselayer" => "a",
         "sort"    => "ord",
         "factors" => sub {
             my $n = shift;
