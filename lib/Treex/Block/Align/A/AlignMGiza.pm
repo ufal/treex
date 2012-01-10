@@ -75,7 +75,7 @@ sub process_document {
     # run mgiza (both ways if symmetrization is specified, not direction)
     if ( $self->align_attr eq "left" ) {
         $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 );
-    } elsif (  $self->align_attr eq "right" ) {
+    } elsif ( $self->align_attr eq "right" ) {
         $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 );
     } else {
         # run mgiza in both directions and merge
@@ -134,11 +134,12 @@ sub _create_corpus {
     my $src_hdl = _my_open( $src_txt );
     my $tgt_hdl = _my_open( $tgt_txt );
 
-    while ( chomp( my $src_line = <$src_hdl> ) ) {
+    while ( my $src_line = <$src_hdl> ) {
+        chomp( $src_line );
         chomp( my $tgt_line = <$tgt_hdl> );
         my @src_numbers = map { $src_vcb->{$_} } split / /, $src_line;
         my @tgt_numbers = map { $tgt_vcb->{$_} } split / /, $tgt_line;
-        print $out_hdl join( " ", @src_numbers ), "\t", join( " ", @tgt_numbers ), "\n";
+        print $out_hdl "1\n", join( " ", @tgt_numbers ), "\n", join( " ", @src_numbers ), "\n";
     }
     close $out_hdl;
 }
@@ -203,7 +204,7 @@ sub _run_mgiza {
         c => $corpus,
         ncpu => $self->cpu_cores,
         CoocurrenceFile => $cooc_file,
-        o => "$mytmpdir/$a-$b.A3.final"
+        o => "$mytmpdir/$a-$b"
     );
 
     my $options_str;
@@ -217,6 +218,97 @@ sub _run_mgiza {
 
     # remove alignment parts
     _safesystem( "rm -f $mytmpdir/$a-$b.A3.final.part*" );
+}
+
+sub _read_align {
+    my $ali_hdl = shift;
+    my ( $t1, $s1 );
+    my @a = ();
+    
+    my $stats = <$ali_hdl>; ## header
+    chomp( $s1 = <$ali_hdl> );
+    chomp( $t1 = <$ali_hdl> );
+    
+    my $aliscore = undef;
+    chomp $stats;
+    $aliscore = $1 if $stats =~ m/ : (.+)$/;
+    
+    #get target statistics
+    my $n = 1;
+    $t1 =~ s/NULL \(\{(( \d+)*) \}\)//;
+    while ( $t1 =~ s/(\S+) \(\{(( \d+)*) \}\)// ) {
+        foreach $_ (split / /, $2) {
+          next if $_ eq "";
+          $a[$_] = $n;
+        }
+        $n++;
+    }
+    
+    my @s1 = split / /, $s1;
+    my $M = scalar @s1;
+    
+    for ( my $j = 1; $j < $M + 1; $j++ ) {
+        $a[$j]=0 if !$a[$j];
+    }
+    
+    return ( $n - 1, $M, \@a, $s1, $t1, $aliscore );
+}
+
+
+sub _read_bidirectional_align {
+    my ( $there_hdl, $back_hdl ) = @_;
+    my ( $t1, $t2, $s1, $s2, $stats );
+    my ( @a, @b );
+    my $c = 1;
+    
+    chomp( $stats = <$there_hdl> ); ## header
+    chomp( $s1 = <$there_hdl> );
+    chomp( $t1 = <$there_hdl> );
+    my $aliscore1 = $1 if $stats =~ m/ : (.+)$/;
+    
+    chomp( $stats= <$back_hdl> ); ## header
+    chomp( $s2= <$back_hdl> );
+    chomp( $t2= <$back_hdl> );
+    my $aliscore2 = $1 if $stats =~ m/ : (.+)$/;
+    
+    #get target statistics
+    my $n = 1;
+    $t1 =~ s/NULL \(\{(( \d+)*) \}\)//;
+    while ( $t1 =~ s/(\S+) \(\{(( \d+)*) \}\)// ) {
+        foreach $_ ( split / /, $2 ) {
+          next if $_ eq "";
+          $a[$_] = $n;
+        }
+        $n++;
+    }
+    
+    my $m = 1;
+    $t2 =~ s/NULL \(\{(( \d+)*) \}\)//;
+    while ( $t2 =~ s/(\S+) \(\{(( \d+)*) \}\)// ) {
+        foreach $_ ( split / /, $2 ) {
+          next if $_ eq "";
+          $b[$_] = $m;
+        }
+        $m++;
+    }
+    
+    my @s1 = split / /, $s1;
+    my $M = scalar @s1;
+    my @s2 = split / /, $s2;
+    my $N = scalar @s2;
+    
+    return ( 0, undef, undef, $s1, $s2, $c, $aliscore1, $aliscore2 )
+      if $m != ($M + 1) || $n != ($N + 1);
+    
+    for ( my $j = 1; $j < $m; $j++ ) {
+        $a[$j] = 0 if ! $a[$j];
+    }
+    
+    for ( my $i = 1; $i < $n; $i++ ) {
+        $b[$i] = 0 if ! $b[$i];
+    }
+    
+    return ( 1, \@a, \@b, $s1, $s2, $c, $aliscore1, $aliscore2 );
 }
 
 sub _safesystem {
