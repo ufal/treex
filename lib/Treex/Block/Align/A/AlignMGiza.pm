@@ -4,19 +4,21 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use FileUtils;
+use File::Temp;
 use threads;
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
 has dir_or_sym => ( isa => 'Str', is => 'ro', default => 'grow-diag-final' );
+has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 
 # XXX replace with path in tectomt_shared
 my $mgizadir = "/home/tamchyna/tectomt_devel/trunk/treex/lib/Treex/Block/Align/A/mgizapp/";
 
 my $mkcls = "$mgizadir/bin/mkcls";
-my $giza = "$mgizadir/bin/mgiza";
+my $mgiza = "$mgizadir/bin/mgiza";
 my $snt2cooc = "$mgizadir/bin/snt2cooc";
 my $symal = "$mgizadir/bin/symal";
 my $merge = "$mgizadir/scripts/merge_alignment.py";
@@ -27,28 +29,37 @@ sub process_document {
     my ( $self, $document ) = @_; 
 
     # create tempdir
-    $mytmpdir = get_unique_temporary_filename( "alignmgiza" );
-    mkdir $mytmpdir;
+    $mytmpdir = File::Temp::tempdir( "alignmgizaXXXXXX", DIR => $self->tmp_dir );
+    log_info "Created temporary dir: $mytmpdir";
 
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
-        chomp(my $cores =  `cat /proc/cpuinfo | grep CPU | wc -l`);
-        $self->cpu_cores($cores);
+        chomp(my $cores = `cat /proc/cpuinfo | grep CPU | wc -l`);
+        $self->{cpu_cores} = $cores;
     }
+    log_info "Using " . $self->cpu_cores . " cores";
+
     if ($self->dir_or_sym ne "left" && $self->dir_or_sym ne "right") {
-        $self->cpu_cores( $self->cpu_cores / 2 ); # we run 2 mgizas in parallel         
+    # XXX parallel processing does not work yet, may as well use all cores
+#        $self->{cpu_cores} = $self->cpu_cores / 2; # we run 2 mgizas in parallel         
     }
+
+    log_info "Writing document as plain text";
 
     # output sentences into plain text
     # XXX not parallel, not sure if Treex accessors are re-entrant
     _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
     _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
 
+    log_info "Running mkcls";
+
     # create word classes
     _run_parallel(
         sub { _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" ) },
         sub { _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" ) }
     );
+
+    log_info "Creating vocabulary files";
 
     # create vocabulary lists
     my ( $src_vcb, $tgt_vcb ) = _run_parallel(
@@ -58,6 +69,8 @@ sub process_document {
 
     # get symmetrization arguments
     my ( $alitype, $alidiag, $alifinal, $alifinaland ) = _parse_dirsym( $self->dir_or_sym );
+
+    log_info "Running MGiza";
 
     # run mgiza (both ways if symmetrization is specified, not direction)
     if ( $self->align_attr eq "left" ) {
@@ -75,7 +88,7 @@ sub process_document {
 
 sub _write_plain {
     my ( $document, $language, $attr, $file ) = @_;
-    my $hdl = my_open( $file );
+    my $hdl = _my_save( $file );
     for my $bundle( $document->get_bundles ) {
         my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants();
         print $hdl join( " ", map { $_->get_attr( $attr ) } @nodes ), "\n";    
@@ -93,7 +106,7 @@ sub _collect_vocabulary {
     log_info "Collecting vocabulary for $src_file";
   
     my %count;
-    my $src_hdl = my_open( $src_file );
+    my $src_hdl = _my_open( $src_file );
     while(<$src_hdl>) {
         chomp;
         foreach (split) { $count{$_}++; }
@@ -101,7 +114,7 @@ sub _collect_vocabulary {
     close $src_hdl;
   
     my %vcb;
-    my $tgt_hdl = my_open( $tgt_file );
+    my $tgt_hdl = _my_save( $tgt_file );
     print $tgt_hdl "1\tUNK\t0\n";
     my $id = 2;
     foreach my $word (sort {$count{$b}<=>$count{$a}} keys %count) {
@@ -117,15 +130,15 @@ sub _collect_vocabulary {
 
 sub _create_corpus {
     my ( $outfile, $src_txt, $src_vcb, $tgt_txt, $tgt_vcb ) = @_;
-    my $out_hdl = my_open( $outfile );
-    my $src_hdl = my_open( $src_txt );
-    my $tgt_hdl = my_open( $tgt_txt );
+    my $out_hdl = _my_save( $outfile );
+    my $src_hdl = _my_open( $src_txt );
+    my $tgt_hdl = _my_open( $tgt_txt );
 
     while ( chomp( my $src_line = <$src_hdl> ) ) {
         chomp( my $tgt_line = <$tgt_hdl> );
         my @src_numbers = map { $src_vcb->{$_} } split / /, $src_line;
         my @tgt_numbers = map { $tgt_vcb->{$_} } split / /, $tgt_line;
-        print $out_hdl join( " ", @src_numbers ), "\t", ( " ", @tgt_numbers ), "\n";
+        print $out_hdl join( " ", @src_numbers ), "\t", join( " ", @tgt_numbers ), "\n";
     }
     close $out_hdl;
 }
@@ -171,8 +184,9 @@ sub _run_mgiza {
 
     # prepare coocurrence file
     my $cooc_file = "$mytmpdir/$a-$b.cooc";
-    _safesystem( "$snt2cooc $mytmpdir/vcb-$a $mytmpdir/vcb-$b $corpus > $cooc_file" );
+    _safesystem( "$snt2cooc $cooc_file $mytmpdir/vcb-$a $mytmpdir/vcb-$b $corpus" );
 
+    # generate options for MGiza
     my %mgiza_options = ( 
         p0 => .999 ,
         m1 => 5 , 
@@ -184,8 +198,8 @@ sub _run_mgiza {
         nsmooth => 4 , 
         model1dumpfrequency => 1,
         model4smoothfactor => 0.4 ,
-        s => "$mytmpdir/vcb-$a",
-        t => "$mytmpdir/vcb-$b",
+        s => "$mytmpdir/vcb-$b",
+        t => "$mytmpdir/vcb-$a",
         c => $corpus,
         ncpu => $self->cpu_cores,
         CoocurrenceFile => $cooc_file,
@@ -194,6 +208,15 @@ sub _run_mgiza {
 
     my $options_str;
     map { $options_str .= " -$_ $mgiza_options{$_}" } sort keys %mgiza_options;
+
+    # run mgiza
+    _safesystem( "$mgiza $options_str >&2" );
+
+    # merge alignment parts
+    _safesystem( "$merge $mytmpdir/$a-$b.A3.final.part* > $mytmpdir/$a-$b.A3.final" );
+
+    # remove alignment parts
+    _safesystem( "rm -f $mytmpdir/$a-$b.A3.final.part*" );
 }
 
 sub _safesystem {
@@ -213,11 +236,55 @@ sub _safesystem {
     }
 }
 
+sub _my_open {
+  my $f = shift;
+  log_fatal "Not found: $f" if ! -e $f;
+
+  my $opn;
+  my $hdl;
+  my $ft = `file $f`;
+  # file might not recognize some files!
+  if ($f =~ /\.gz$/ || $ft =~ /gzip compressed data/) {
+    $opn = "zcat $f |";
+  } elsif ($f =~ /\.bz2$/ || $ft =~ /bzip2 compressed data/) {
+    $opn = "bzcat $f |";
+  } else {
+    $opn = "$f";
+  }
+  open $hdl, $opn or die "Can't open '$opn': $!";
+  binmode $hdl, ":utf8";
+  return $hdl;
+}
+
+sub _my_save {
+  my $f = shift;
+  if ($f eq "-") {
+    binmode(STDOUT, ":utf8");
+    return *STDOUT;
+  }
+
+  my $opn;
+  my $hdl;
+  # file might not recognize some files!
+  if ($f =~ /\.gz$/) {
+    $opn = "| gzip -c > '$f'";
+  } elsif ($f =~ /\.bz2$/) {
+    $opn = "| bzip2 > '$f'";
+  } else {
+    $opn = ">$f";
+  }
+  open $hdl, $opn or die "Can't write to '$opn': $!";
+  binmode $hdl, ":utf8";
+  return $hdl;
+}
+
 sub _run_parallel {
     my ( $first, $second ) = @_;
-    my $thread_first = threads->new( $first );
+#     my $thread_first = threads->new( $first );
+#     my $result_second = &$second;
+#     my $result_first = $thread_first->join();
+    my $result_first = &$first; # I get a segfault when using threads
     my $result_second = &$second;
-    my $result_first = $thread_first->join();
     return ( $result_first, $result_second );
 }
 
