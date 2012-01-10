@@ -154,6 +154,15 @@ has 'local' => (
     documentation => 'Run jobs locally (might help with multi-core machines). Requires -p.',
 );
 
+has 'priority' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 0,
+    documentation => 'Priority for qsub (an integer in the range -1023 to 1024, default=0). Requires -p.',
+);
+
+
 has 'watch' => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -554,7 +563,11 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            open my $QSUB, "cd $workdir && qsub -cwd " . $self->qsub . " -e output/ -S /bin/bash $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+            my $qsub_opts = '-cwd -e output/ -S /bin/bash ' . $self->qsub;
+            if ($self->priority){
+                $qsub_opts .= ' -p ' . $self->priority;
+            }
+            open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
             my $firstline = <$QSUB>;
             close $QSUB;
