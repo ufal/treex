@@ -20,6 +20,14 @@ sub _select_features {
 
 sub _base_distrib {
     my ($self, $cand_num, $anaph_num) = @_;
+    
+    #if (($cand_num eq $anaph_num ) && 
+    #    (($cand_num eq 'sg') || ($cand_num eq 'pl'))) {
+    #    return (0.5 / 2);
+    #}
+    #else {
+    #    return (0.5 / ($self->number_count ** 2 - 2));
+    #}
 
     return (1 / $self->number_count);
 }

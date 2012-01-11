@@ -24,6 +24,15 @@ sub _select_features {
 sub _base_distrib {
     my ($self, $cand_gen, $anaph_gen) = @_;
 
+#    if (($cand_gen eq $anaph_gen ) && 
+#        (($cand_gen eq 'anim') || ($cand_gen eq 'inan') ||
+#         ($cand_gen eq 'neut') || ($cand_gen eq 'fem'))) {
+#        return (0.5 / 4);
+#    }
+#    else {
+#        return (0.5 / ($self->gender_count ** 2 - 4));
+#    }
+
     return (1 / $self->gender_count);
 }
 

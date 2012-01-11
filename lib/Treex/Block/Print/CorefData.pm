@@ -116,11 +116,15 @@ sub _create_instance_string {
     #}
 
     my @cols = map {
-        $_=~ /^[br]_/ 
-            ? (($self->format ne 'unsup') ? "r_$_=" : "") 
-                . $self->_feature_transformer->replace_empty( $instance->{$_} )
-            : (($self->format ne 'unsup') ? "c_$_=" : "") 
-                . $self->_feature_transformer->special_chars_off( $instance->{$_} )
+        if ($_ =~ /id$/) {
+            (($self->format ne 'unsup') ? "$_=" : "") . $instance->{$_};
+        } else {
+            $_=~ /^[br]_/ 
+                ? (($self->format ne 'unsup') ? "r_$_=" : "") 
+                    . $self->_feature_transformer->replace_empty( $instance->{$_} )
+                : (($self->format ne 'unsup') ? "c_$_=" : "") 
+                    . $self->_feature_transformer->special_chars_off( $instance->{$_} )
+        }
         } @{$names};
     $line .= join $self->feature_sep, @cols;
     return $line;
@@ -161,7 +165,7 @@ sub _create_lines_percep_format {
     my ($self, $anaph, $cands, $y_value, $ords) = @_;
 
     my $fe = $self->_feature_extractor;
-    my $insts = $fe->create_joint_instances( $anaph, $cands, $ords );
+    my $insts = $fe->create_instances( $anaph, $cands, $ords );
 
     my @lines = ();
     my $cand_insts = $self->_sort_instances( $insts, $cands );

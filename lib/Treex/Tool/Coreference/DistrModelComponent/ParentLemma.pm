@@ -34,6 +34,10 @@ sub _base_distrib {
     my ($self, $cand_par_lemma, $anaph_par_lemma) = @_;
 
     my $len = length($anaph_par_lemma);
+    # because of too long words
+    if ($len > 20) {
+        $len = 20;
+    }
     my $prob = (0.5 ** $len) * ((1 / $self->char_count) ** $len);
 
     return $prob;

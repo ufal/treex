@@ -247,8 +247,8 @@ sub _get_refl_gennum {
 	my ($node) = @_;
 	my $antec = ($node->get_coref_gram_nodes)[0];
 	while ((!$antec->gram_gender || ($antec->gram_gender eq 'inher')) &&
-        ($antec->attr('coref_gram.rf') || $antec->attr('coref_text.rf'))) {
-		$antec = ($antec->get_coref_nodes)[0];
+        $antec->attr('coref_gram.rf') ) {
+		$antec = ($antec->get_coref_gram_nodes)[0];
 	}
 	return ($antec->gram_gender, $antec->gram_number);
 }

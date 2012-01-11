@@ -54,11 +54,29 @@ sub _build_model {
     return $model;
 }
 
+sub _transform_values {
+    my ($self, $instances) = @_;
+
+    my $ft = $self->_feature_transformer;
+    
+    my $anaph = $instances->{'anaph'};
+    my $cands = $instances->{'cands'};
+    foreach my $key (keys %$anaph) {
+        $anaph->{$key} = $ft->special_chars_off($anaph->{$key});
+    }
+    foreach my $cand_id (keys %$cands) {
+        foreach my $key (keys %{$cands->{$cand_id}}) {
+            $cands->{$cand_id}{$key} = $ft->special_chars_off($cands->{$cand_id}{$key});
+        }
+    }
+}
+
 sub rank {
     my ($self, $instances) = @_;
 
     my $model = $self->_model;
-
+    
+    $self->_transform_values($instances);
     my $anaph = $instances->{'anaph'};
     my $cands = $instances->{'cands'};
 
