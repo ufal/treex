@@ -9,6 +9,7 @@ set -e
 language=cs
 
 # training data
+# TODO all data here
 pdt_data=/net/projects/pdt/pdt20/data/full/tamw/train-1
 pdt_schemas=/net/projects/pdt/pdt20/data/schemas
 

@@ -5,6 +5,7 @@ use Fcntl ':flock';
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::SRLParser::FeatureExtractor;
+use Treex::Tool::SRLParser::PredicateIdentifier;
 
 extends 'Treex::Core::Block';
 
@@ -41,6 +42,7 @@ sub process_ttree {
     
     # create positive and negative instances and their classification features
     my $feature_extractor = Treex::Tool::SRLParser::FeatureExtractor->new();
+    my $predicate_identifier = Treex::Tool::SRLParser::PredicateIdentifier->new();
 
     my $zone = $t_root->get_zone;
     my $a_root = $zone->get_atree;
@@ -48,6 +50,7 @@ sub process_ttree {
 
     my @lines;
     foreach my $predicate (@a_nodes) {
+        next if not $predicate_identifier->is_predicate($predicate); 
         foreach my $depword (@a_nodes) {
             my $key = $predicate->id ." ". $depword->id;
             my $label = exists $positive_instances{$key} ? $positive_instances{$key} : $self->empty_sign;
