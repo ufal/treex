@@ -424,6 +424,7 @@ sub remove_node {
     #remove alignment
     if ( $en_hash->{$node} ) {
 	$en_hash->{$node}->set_attr( 'alignment', undef );
+        # delete $en_hash->{$node};
     }
 
     #remove

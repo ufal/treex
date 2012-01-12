@@ -38,6 +38,9 @@ sub fix {
 		$self->logfix2(undef);
 		# now have to regenerate these as they might have been invalidated
 		( $dep, $gov, $d, $g ) = $self->get_pair($dep);
+		# it might happen that $dep has no effective parent any more
+		# and we have to quit in that case
+		return if !$dep;
 	    }
 	}
 
