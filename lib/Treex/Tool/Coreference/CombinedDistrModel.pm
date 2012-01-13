@@ -6,6 +6,7 @@ use Treex::Tool::Coreference::DistrModelComponent::Gender;
 use Treex::Tool::Coreference::DistrModelComponent::Number;
 use Treex::Tool::Coreference::DistrModelComponent::SentDist;
 use Treex::Tool::Coreference::DistrModelComponent::ParentLemma;
+use Treex::Tool::Coreference::DistrModelComponent::CandOrd;
 
 use List::Util qw/sum/;
 use Data::Dumper;
@@ -39,6 +40,11 @@ sub increment_counts {
     foreach my $submodel (@{$self->components}) {
         $submodel->increment_counts($anaph, $new_cand);
     }
+}
+
+sub dump {
+    my ($self) = @_;
+    print Dumper($self->components);
 }
 
 sub save {
