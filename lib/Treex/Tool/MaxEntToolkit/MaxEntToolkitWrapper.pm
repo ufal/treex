@@ -34,7 +34,7 @@ sub train {
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    write_file($input_file, join("\n", @$instances_ref));
+    write_file($input_file, {binmode => ':utf8'}, join("\n", @$instances_ref));
 
     # run maxent toolkit
     my $command = $self->maxent_binary . " " . $input_file . " -b -m " . $self->model . " -i 30";
@@ -49,7 +49,7 @@ sub predict {
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    write_file($input_file, $instance);
+    write_file($input_file, {binmode => ':utf8'}, $instance);
 
     # create output file
     my $output_file = $self->_create_output_file();
