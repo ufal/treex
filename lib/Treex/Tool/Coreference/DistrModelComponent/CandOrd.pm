@@ -20,6 +20,10 @@ sub _select_features {
 sub _base_distrib {
     my ($self, $cand_ord) = @_;
 
+    if ($cand_ord > 500) {
+        $cand_ord = 500;
+    }
+
     return ($self->last_one_prob ** $cand_ord) * (1 - $self->last_one_prob);
 }
 

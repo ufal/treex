@@ -8,6 +8,13 @@ has 'init_weight' => (
     required    => 1,
 );
 
+has 'feat_union_delim' => (
+    is          => 'ro',
+    isa         => 'Str',
+    required    => 1,
+    default     => '/',
+);
+
 has '_counts' => (
     is          => 'rw',
     isa         => 'HashRef',
@@ -42,64 +49,118 @@ sub prob {
 
 sub _get_sum {
     my ($self, @feats) = @_;
+    my $delim = $self->feat_union_delim;
 
-    my $level = $self->_sums;
+    my @levels = ($self->_sums);
     pop @feats;
 
-    foreach my $feat (@feats) {
-        if (!defined $feat) {
-            print STDERR ref($self) . "\n";
+    foreach my $feat_union (@feats) {
+        my @new_levels = ();
+        foreach my $level (@levels) {
+            foreach my $feat (split /$delim/, $feat_union) {
+                push @new_levels, $level->{$feat};
+            }
         }
-        $level = $level->{$feat};
+        @levels = @new_levels;
     }
-    return $level->{__sum__} || 0;
+    my $total_count = 0;
+    foreach my $level (@levels) {
+        $total_count += $level->{__sum__} || 0;
+    }
+    return $total_count;
 }
 
 sub _update_sums {
     my ($self, $value, @feats) = @_;
-    
-    # last feature is not needed for sums
-    pop @feats;
+    my $delim = $self->feat_union_delim;
 
-    my $level = $self->_sums;
+    my @feats_split = map {[split /$delim/, $_]} @feats;
+    my @products = ();
+    my $product = 1;
+    for (my $i = @feats_split-1; $i >= 0; $i--) {
+        $product *= scalar(@{$feats_split[$i]});
+        unshift @products, $product;
+    }
+    #print STDERR Dumper(\@feats_split, \@products);
+
+    # last feature is not needed for sums
+    pop @feats_split;
 
     # increment overall sum
-    $level->{__sum__} += $value;
+    $self->_sums->{__sum__} += $value * shift @products;
+    
+    my @levels = ($self->_sums);
 
-    foreach my $feat (@feats) {
-        if (!defined $level->{$feat}) {
-            $level->{$feat} = {};
+    foreach my $feat_union (@feats_split) {
+        my @new_levels = ();
+        my $level_count = shift @products;
+        foreach my $level (@levels) {
+            foreach my $feat (@$feat_union) {
+                if (!defined $level->{$feat}) {
+                    $level->{$feat} = {};
+                }
+                push @new_levels, $level->{$feat};
+                $level->{$feat}{__sum__} += $value * $level_count;
+            }
         }
-        my $level = $level->{$feat};
-        $level->{__sum__} += $value;
+        @levels = @new_levels;
     }
+    
+    #use Data::Dumper;
+    #print STDERR Dumper(\@feats, \@feats_split, \@products);
+    #print STDERR Dumper($self->_sums);
+    #exit;
 }
 
 sub _get_count {
     my ($self, @feats) = @_;
+    my $delim = $self->feat_union_delim;
 
-    my $level = $self->_counts;
-    my $last_feat = pop @feats;
+    my @levels = ($self->_counts);
+    my $last_feat_union = pop @feats;
 
-    foreach my $feat (@feats) {
-        $level = $level->{$feat};
+    foreach my $feat_union (@feats) {
+        my @new_levels = ();
+        foreach my $level (@levels) {
+            foreach my $feat (split /$delim/, $feat_union) {
+                push @new_levels, $level->{$feat};
+            }
+        }
+        @levels = @new_levels;
     }
-    return $level->{$last_feat} || 0;
+    my $total_count = 0;
+    foreach my $level (@levels) {
+        foreach my $last_feat (split /$delim/, $last_feat_union) {
+            $total_count += $level->{$last_feat} || 0;
+        }
+    }
+    return $total_count;
 }
 
 sub _update_counts {
     my ($self, $value, @feats) = @_;
+    my $delim = $self->feat_union_delim;
     
-    my $level = $self->_counts;
-    my $last_feat = pop @feats;
+    my @levels = ($self->_counts);
+    my $last_feat_union = pop @feats;
 
-    foreach my $feat (@feats) {
-        if (!defined $level->{$feat}) {
-            $level->{$feat} = {};
+    foreach my $feat_union (@feats) {
+        my @new_levels = ();
+        foreach my $level (@levels) {
+            foreach my $feat (split /$delim/, $feat_union) {
+                if (!defined $level->{$feat}) {
+                    $level->{$feat} = {};
+                }
+                push @new_levels, $level->{$feat};
+            }
         }
-        $level = $level->{$feat};
+        @levels = @new_levels;
     }
-    $level->{$last_feat} += $value;
+    foreach my $level (@levels) {
+        foreach my $last_feat (split /$delim/, $last_feat_union) {
+            $level->{$last_feat} += $value;
+        }
+    }
 }
 
 sub increment_counts {
