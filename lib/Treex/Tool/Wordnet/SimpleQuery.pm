@@ -3,10 +3,8 @@ use Moose;
 use Treex::Core::Common;
 
 use DBI;
-use File::Spec;
+use File::Temp;
 use Memoize;
-
-# use utf8;
 
 has 'language' => ( isa => 'Str', is => 'ro', required => 1 );
 
@@ -19,8 +17,11 @@ has 'wn_file' => ( isa => 'Str', is => 'ro', default => 'simple-wn-2.0.sqlite' )
 # Database connection
 has '_dbh' => ( is => 'rw' );
 
-# WTF ?
+# Prepared DB query template 
 has '_find_by_literal_stm' => ( is => 'rw' );
+
+# Create a local copy of the Wordnet DB to minimize network traffic
+has 'local_db_copy' => ( isa => 'Bool', is => 'ro', default => 1 );
 
 #---------------------------------
 # class methods
@@ -33,22 +34,31 @@ sub BUILD {
     my $data_path = Treex::Core::Resource::require_file_from_share(
         $self->resource_dir . '/' . $self->language . '/' . $self->wn_file
     );
-    
+
+    # copy the DB to a local file to
+    if ( $self->local_db_copy ){ 
+        my $local = File::Temp->new( TEMPLATE => 'wnsimplequeryXXXX', SUFFIX => 'sqlite' );
+        log_info('Making a local copy of ' . $data_path . ' in ' . $local );
+        copy( $data_path, $local );
+        $data_path = $local->filename;
+    } 
+
     my $db_options = {
         PrintError     => 1,
         RaiseError     => 1,
         sqlite_unicode => 1,
     };
 
-    my $dbh = DBI->connect( "dbi:SQLite:dbname=" . $data_path, qw(), qw(), $db_options )
+    my $dbh = DBI->connect( "dbi:SQLite:dbname=" . $data_path, '', '', $db_options )
         || log_fatal("Unable to open sqlite db file.");
+
     # seems like db_options have no mojo :(
     $dbh->{sqlite_unicode} = 1;
 
     my $find_by_literal_stm = $dbh->prepare('select * from t where literal_pos = ? order by sense asc');
-    
-    $self->_set_dbh( $dbh );
-    $self->_set_find_by_literal_stm( $find_by_literal_stm );
+
+    $self->_set_dbh($dbh);
+    $self->_set_find_by_literal_stm($find_by_literal_stm);
 }
 
 memoize 'find_by_literal';
@@ -60,17 +70,16 @@ sub find_by_literal {
     return @result;
 }
 
-
 sub DESTROY {
     my ($self) = @_;
-    if ( defined $self->_find_by_literal_stm ) { 
-        $self->_find_by_literal_stm->finish(); 
+    if ( defined $self->_find_by_literal_stm ) {
+        $self->_find_by_literal_stm->finish();
     }
-    $self->_set_find_by_literal_stm( undef );
-    if ( defined $self->_dbh ) { 
-        $self->_dbh->disconnect(); 
+    $self->_set_find_by_literal_stm(undef);
+    if ( defined $self->_dbh ) {
+        $self->_dbh->disconnect();
     }
-    $self->_set_dbh( undef );
+    $self->_set_dbh(undef);
 }
 
 1;
@@ -104,7 +113,7 @@ Optimized for quick retrieval - just one flat table, no joins.
 
 Jan Ptáček
 
-Ondřej Dušek
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

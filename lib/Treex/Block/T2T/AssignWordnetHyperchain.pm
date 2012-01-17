@@ -9,11 +9,14 @@ my $DEBUG = 0;
 
 has '_wordnet' => ( isa => 'Object', is => 'rw' );
 
+has '+language' => ( required => 1 );
+
+has 'wn_file' => ( isa => 'Str', is => 'ro', default => 'simple-wn-2.1.sqlite' ); 
 
 sub BUILD {
 	my ($self) = @_;
 	$self->_set_wordnet( Treex::Tool::Wordnet::SimpleQuery->new( { language => $self->language, 
-		wn_file => 'simple-wn-2.1.sqlite'} ) );
+		wn_file => $self->wn_file } ) );
 	return;
 }
 
