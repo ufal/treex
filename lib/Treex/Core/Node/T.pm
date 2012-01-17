@@ -45,8 +45,12 @@ sub _set_node_list {
 
     my $self = shift;
     my $list = shift;
-
+    my $document = $self->get_document;
+    my $id = $self->id;
+    
+    $document->remove_backref($list, $id, $self->get_attr($list) ); # remove previous reverse reference
     $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
+    $document->index_backref($list, $id, $self->get_attr($list) ); # add new reverse reference
     return;
 }
 
@@ -67,6 +71,7 @@ sub _add_to_node_list {
 
     # set the new list value
     $self->set_attr( $list, [ @cur, @new ] );
+    $self->get_document->index_backref($list, $self->id, \@new ); # add new reverse reference
     return;
 }
 
@@ -76,6 +81,7 @@ sub _remove_from_node_list {
     my $list = shift;
     my @prev = $self->_get_node_list($list);
     my @remain;
+    my @removed;
 
     foreach my $node (@prev) {
         if ( !grep { $_ == $node } @_ ) {
@@ -83,6 +89,7 @@ sub _remove_from_node_list {
         }
     }
     $self->_set_node_list( $list, @remain );
+    $self->get_document->remove_backref($list, $self->id, \@_ ); # remove reverse references
     return;
 }
 
@@ -93,9 +100,21 @@ sub _update_list {
     my $doc = $self->get_document();
 
     my $ref = $self->get_attr($list);
-    my @nodes = $ref ? ( grep { $doc->id_is_indexed($_) } @{$ref} ) : ();
+    my (@nodes, @invalid);
+    
+    return if (!$ref);
+    
+    foreach my $id (@{$ref}){
+        if ($doc->id_is_indexed($id)){
+            push @nodes, $id;
+        }
+        else {
+            push @invalid, $id;
+        }
+    }    
 
     $self->set_attr( $list, @nodes > 0 ? [@nodes] : undef );
+    $self->get_document->remove_backref($list, $self->id, \@invalid ); # remove reverse references of invalid
     return;
 }
 
@@ -111,8 +130,14 @@ sub get_lex_anode {
 
 sub set_lex_anode {
     my ( $self, $lex_anode ) = @_;
+    my $id = $self->id;
+    my $document = $self->get_document;
+    
+    $document->remove_backref('a/lex.rf', $id, [ $self->get_attr('a/lex.rf') ] ); # remove previous reverse reference
+    
     my $new_id = defined $lex_anode ? $lex_anode->get_attr('id') : undef;
     $self->set_attr( 'a/lex.rf', $new_id );
+    $document->index_backref('a/lex.rf', $id, [ $new_id ] ); # add new reverse reference
     return;
 }
 
@@ -176,12 +201,12 @@ sub get_coref_chain {
     my %visited_nodes = ();
     my @nodes;
     my @queue = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
-    while (my $node = shift @queue) {
+    while ( my $node = shift @queue ) {
         $visited_nodes{$node} = 1;
         push @nodes, $node;
         my @antes = ( $node->_get_node_list('coref_gram.rf'), $node->_get_node_list('coref_text.rf') );
         foreach my $ante (@antes) {
-            if (!defined $visited_nodes{$ante}) {
+            if ( !defined $visited_nodes{$ante} ) {
                 push @queue, $ante;
             }
         }
@@ -256,6 +281,34 @@ sub set_src_tnode {
     $self->set_attr( 'src_tnode.rf', $source_node->id );
     return;
 }
+
+# ---- ids of all referenced nodes
+
+override '_get_referenced_ids' => sub {
+    my ($self) = @_;
+
+    my $ref = super;
+
+    # single attributes
+    foreach my $ref_attr ('a/lex.rf', 'original_parent.rf', 'src_tnode.rf'){
+
+        my $val = $self->get_attr($ref_attr);
+        next if ( !$val );
+
+        $ref->{$ref_attr} = [ $val ];
+    }
+
+    # reference arrays
+    foreach my $ref_attr ('a/aux.rf', 'compl.rf', 'coref_gram.rf', 'coref_text.rf'){
+
+        my $val = $self->get_attr($ref_attr);
+        next if ( !$val );
+
+        $ref->{$ref_attr} = $val;
+    }
+
+    return $ref;
+};
 
 #----------- grammatemes -------------
 
@@ -433,8 +486,10 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

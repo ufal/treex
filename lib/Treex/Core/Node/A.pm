@@ -229,7 +229,8 @@ sub get_terminal_pnode {
         return $document->get_node_by_id( $self->get_attr('p_terminal.rf') );
     }
     else {
-        log_fatal('SEnglishA node pointing to no SEnglishP node');
+        # TODO: shouldn't this just return undef and keep going? This is not consistent with other references.
+        log_fatal('SEnglishA node pointing to no SEnglishP node');  
     }
 }
 
@@ -251,6 +252,18 @@ sub get_pnodes {
     my ($self) = @_;
     return ( $self->get_terminal_pnode, $self->get_nonterminal_pnodes );
 }
+
+# -- referenced node ids --
+
+override '_get_referenced_ids' => sub {
+    my ($self) = @_;
+    
+    my $ref = super;    
+    my $p_term = $self->get_attr('p_terminal.rf');
+    
+    $ref->{'p_terminal.rf'} = [ $p_term ] if ($p_term);
+    return $ref;
+};
 
 # -- other --
 
@@ -483,6 +496,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

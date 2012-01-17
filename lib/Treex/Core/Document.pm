@@ -20,9 +20,13 @@ has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
 has file_stem   => ( is => 'rw', isa => 'Str', default => 'noname' );
 has file_number => ( is => 'rw', isa => 'Str', builder => 'build_file_number' );
-has compress    => ( is => 'rw', isa => 'Bool', default => undef, documentation => 'compression to .gz' );
-has storable    => ( is => 'rw', isa => 'Bool', default => undef,
-                     documentation => 'using Storable with gz compression instead of Treex::PML' );
+has compress => ( is => 'rw', isa => 'Bool', default => undef, documentation => 'compression to .gz' );
+has storable => (
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => undef,
+    documentation => 'using Storable with gz compression instead of Treex::PML'
+);
 
 has _pmldoc => (
     isa      => 'Treex::PML::Document',
@@ -53,6 +57,11 @@ has _pmldoc => (
 );
 
 has _index => (
+    is => 'rw',
+    default => sub { return {} },
+);
+
+has _backref => (
     is => 'rw',
     default => sub { return {} },
 );
@@ -115,6 +124,7 @@ sub BUILD {
             }
 
             else {
+
                 # If the file contains invalid PML (e.g. unknown afun value)
                 # Treex::PML fails with die.
                 # TODO: we should rather catch the die message and report it via log_fatal
@@ -249,10 +259,75 @@ sub index_node_by_id {
     if ( defined $node ) {
         $index->{$id} = $node;
         weaken $index->{$id};
+
+        my $refs = $node->_get_referenced_ids;
+        foreach my $type ( keys %{$refs} ) {
+            $self->index_backref( $type, $id, $refs->{$type} );
+        }
     }
     else {
         delete $index->{$id};
     }
+    return;
+}
+
+# Add references to the reversed references list
+sub index_backref {
+
+    my ( $self, $type, $source, $targets ) = @_;
+    my $backref = $self->_backref;
+
+    foreach my $target ( @{$targets} ) {
+        next if ( !defined($target) );
+        my $target_backrefs = $backref->{$target} // {};
+        $backref->{$target} = $target_backrefs;
+
+        $target_backrefs->{$type} = [] if ( !$target_backrefs->{$type} );
+        push @{ $target_backrefs->{$type} }, $source;
+    }
+    return;
+}
+
+# Remove references from the reversed references list
+sub remove_backref {
+
+    my ( $self, $type, $source, $targets ) = @_;
+    my $backref = $self->_backref;
+
+    foreach my $target ( @{$targets} ) {
+        next if ( !defined($target) );
+        my $target_backrefs = $backref->{$target};
+        next if ( !$target_backrefs );
+
+        $target_backrefs->{$type} = [ grep { $_ ne $source } @{ $target_backrefs->{$type} } ];
+    }
+    return;
+}
+
+# Return a hash of references ( type->[nodes] ) leading to the node with the given id
+sub get_references_to_id {
+    my ( $self, $id ) = @_;
+    my $backref = $self->_backref;
+    
+    return if (!$backref->{$id});
+    return $backref->{$id}; # TODO clone ?
+}
+
+# Remove all references leading to the node with the given id (calls remove_reference() on the source nodes)
+sub remove_references_to_id {
+
+    my ( $self, $id ) = @_;
+    my $backref = $self->_backref;
+
+    return if ( !$backref->{$id} );
+    my $node_backref = $backref->{$id};
+
+    foreach my $type ( keys %{$node_backref} ) {
+        foreach my $source ( @{ $node_backref->{$type} } ) {
+            $self->get_node_by_id($source)->remove_reference( $type, $id );
+        }
+    }
+    delete $backref->{$id};
     return;
 }
 
@@ -409,8 +484,8 @@ sub save {
     my ($filename) = @_;
 
     if ( $filename =~ /\.streex$/ ) {
-        open (my $F, ">:gzip", $filename) or log_fatal $!;
-        Storable::nstore_fd($self,*$F) or log_fatal $!;;
+        open( my $F, ">:gzip", $filename ) or log_fatal $!;
+        Storable::nstore_fd( $self, *$F ) or log_fatal $!;
     }
 
     else {
@@ -428,7 +503,7 @@ sub save {
 }
 
 sub retrieve_storable {
-    my ($class, $file) = @_; # $file stands for a file name, but it can be also file handle (needed by the TrEd backend for .streex)
+    my ( $class, $file ) = @_;    # $file stands for a file name, but it can be also file handle (needed by the TrEd backend for .streex)
 
     my $FILEHANDLE;
 
@@ -438,7 +513,7 @@ sub retrieve_storable {
     else {
         log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
             unless $file =~ /\.streex$/;
-        open $FILEHANDLE, "<:gzip",  $file or log_fatal($!);
+        open $FILEHANDLE, "<:gzip", $file or log_fatal($!);
     }
 
     my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
@@ -590,6 +665,15 @@ Return C<true> if the given C<id> is already present in the indexing table.
 
 Return the array of all node identifiers indexed in the document.
 
+=item $document->get_references_to_id( $id );
+
+Return all references leading to the given node id in a hash (keys are reference types, e.g. 'alignment',
+'a/lex.rf' etc., values are arrays of nodes referencing this node).
+
+=item $document->remove_refences_to_id( $id );
+
+Remove all references to the given node id (calls remove_reference() on each referencing node).
+
 =back
 
 =head2 Serializing
@@ -626,8 +710,10 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

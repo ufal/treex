@@ -168,6 +168,7 @@ sub remove {
     foreach my $node ( $self, $self->get_descendants ) {
         if ( defined $node->id ) {
             $document->index_node_by_id( $node->id, undef );
+            $document->remove_references_to_id( $node->id );
         }
     }
 
@@ -182,6 +183,44 @@ sub remove {
     # By reblessing we make sure that
     # all methods called on removed nodes will result in fatal errors.
     bless $self, 'Treex::Core::Node::Deleted';
+    return;
+}
+
+# Return all nodes that have a reference of the given type (e.g. 'alignment', 'a/lex.rf') to this node
+sub get_referencing_nodes {
+    my ( $self, $type ) = @_;
+    my $doc  = $self->get_document;
+    my $refs = $doc->get_references_to_id( $self->id );
+    return if ( !$refs || !$refs->{$type} );
+    return map { $doc->get_node_by_id($_) } @{ $refs->{$type} };
+}
+
+# Remove a reference of the given type to the given node. This will not remove a reverse reference from document
+# index, since it is itself called from when removing reverse references; use the API methods for the individual
+# references if you want to keep reverse references up-to-date.
+sub remove_reference {
+
+    my ( $self, $type, $id ) = @_;
+
+    if ( $type eq 'alignment' ) {    # handle alignment links separately
+
+        my $links = $self->get_attr('alignment');
+
+        if ($links) {
+            my $document = $self->get_document;
+            $self->set_attr( 'alignment', [ grep { $_->{'counterpart.rf'} ne $id } @{$links} ] );
+        }
+    }
+    else {
+        my $attr = $self->get_attr($type);
+
+        if ( $attr eq $id || scalar( @{$attr} ) <= 1 ) {    # single-value attributes
+            $self->set_attr( $type, undef );
+        }
+        else {
+            $attr->delete_value($id);                       # TODO : will it be always a Treex::PML::List? Looks like it works.
+        }
+    }
     return;
 }
 
@@ -537,16 +576,16 @@ sub add_aligned_node {
 # remove invalid alignment links (leading to unindexed nodes)
 sub update_aligned_nodes {
 
-    my ( $self ) = @_;
-    my $doc = $self->get_document();
+    my ($self)   = @_;
+    my $doc      = $self->get_document();
     my $links_rf = $self->get_attr('alignment');
     my @new_links;
-        
-    foreach my $link (@{$links_rf}){
-        push @new_links, $link if ($doc->id_is_indexed( $link->{'counterpart.rf'} ));
+
+    foreach my $link ( @{$links_rf} ) {
+        push @new_links, $link if ( $doc->id_is_indexed( $link->{'counterpart.rf'} ) );
     }
     $self->set_attr( 'alignment', \@new_links );
-    return;    
+    return;
 }
 
 #************************************
@@ -696,6 +735,18 @@ sub get_attrs {
     }
 
     return @attr_values;
+}
+
+# Return IDs of all nodes to which there are reference links from this node (must be overridden in
+# the respective node types)
+sub _get_referenced_ids {
+
+    my ($self) = @_;
+    my $links_rf = $self->get_attr('alignment');
+
+    return {} if ( !$links_rf );
+
+    return { alignment => [ map { $_->{'counterpart.rf'} } @{$links_rf} ] };
 }
 
 # TODO: How to do this in an elegant way?
@@ -1026,6 +1077,16 @@ Removes all alignment links leading to nodes which have been deleted.
 
 =back
 
+=head2 References (alignment and other references depending on node subtype)
+
+=over
+
+=item my @refnodes = $node->get_referencing_nodes($ref_type);
+
+Returns an array of nodes referencing this node with the given reference type (e.g. 'alignment', 'a/lex.rf' etc.).
+
+=back 
+
 =head2 Other methods
 
 =over 4
@@ -1060,8 +1121,10 @@ David Mareček <marecek@ufal.mff.cuni.cz>
 
 Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
