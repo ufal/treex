@@ -4,6 +4,7 @@ use MooseX::NonMoose;
 use Treex::Core::Common;
 use Cwd;
 use Treex::PML;
+use Treex::PML::Schema;
 
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
@@ -22,6 +23,28 @@ has id => (
     is      => 'rw',
     trigger => \&_index_my_id,
 );
+
+has refs => (
+    is      => 'ro',
+    isa     => 'HashRef[HashRef[Treex::Core::Node]]',
+#    default => \&_build_refs,
+    builder => '_build_refs',
+    lazy    => 1,
+    init_arg => undef,
+    documentation => q{Nodes referenced by this node},
+);
+
+has backrefs => (
+    is      => 'ro',
+    isa     => 'HashRef[HashRef[Treex::Core::Node]]',
+#    default => \&_build_refs,
+    builder => '_build_refs',
+    lazy    => 1,
+    init_arg => undef,
+    documentation => q{Nodes referring this node},
+);
+
+sub _build_refs { {} }
 
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
@@ -586,6 +609,149 @@ sub update_aligned_nodes {
     }
     $self->set_attr( 'alignment', \@new_links );
     return;
+}
+
+#----------- references -------------
+
+my $_pmlrefs = {};
+my $_external_ref_format = qr{^$Treex::PML::Schema::CDATA::NCName\#$Treex::PML::Schema::CDATA::NCName$}o;
+
+# collect all possilble references for current type
+sub find_all_refs {
+    my $self = shift;
+    my $type = $self->type;
+    my $name = $type->{name};
+    return $_pmlrefs->{$name} if defined $_pmlrefs->{$name};
+
+    $_pmlrefs->{$name} = [ ];
+    return unless $type->get_decl_type == PML_STRUCTURE_DECL;
+    my @m = map [$_->get_name, $_->get_knit_content_decl, [ ]], $type->get_members;
+    while (my $member = shift (@m)) {
+        my ($member_name, $decl, $path) = @$member;
+        next unless $decl;
+        my $decl_is = $decl->get_decl_type;
+        next if ($decl->get_role||'') eq '#CHILDNODES';
+        next if $decl_is == PML_TYPE_DECL or $decl_is==PML_ROOT_DECL;
+        my $p = $decl->get_parent_decl;
+        next if ($p and $p->get_decl_type == PML_MEMBER_DECL and ($p->get_role||'') eq '#CHILDNODES'); 
+        my @path =@$path;
+        if ($decl_is == PML_CDATA_DECL and $decl->get_format eq 'PMLREF') {
+            my $attr_name = ($member_name eq '#value') ? join('/', @path) : join('/', @path, $member_name);
+            if ($attr_name and not($attr_name ~~ @{$_pmlrefs->{$name}})) {
+                push @{$_pmlrefs->{$name}}, $attr_name;
+            }
+        } else {
+            push @path, $member_name unless ($member_name eq '#content' or $member_name eq '#value');
+            if ($decl_is == PML_STRUCTURE_DECL) {
+                push @m, map [$_->get_name, $_->get_knit_content_decl, [@path]], $decl->get_members;
+            } elsif ($decl_is == PML_CONTAINER_DECL) {
+                push @m, ['#content', $_->get_content_decl, [@path]],map [$_->get_name, $_->get_content_decl, [@path]], $decl->get_attributes;
+            } elsif ($decl_is == PML_SEQUENCE_DECL) {
+                push @m, map [$_->get_name, $_->get_knit_content_decl, [@path]], $decl->get_elements;
+            } elsif ($decl_is == PML_LIST_DECL or $decl_is == PML_ALT_DECL) {
+                push @m, ['#value', $decl->get_knit_content_decl, [@path]];
+            } else { next }
+        }
+    }
+    return $_pmlrefs->{$name};
+}
+
+# initial back reference construction
+sub construct_backrefs {
+    my $self = shift;
+    my $node_refs = $self->find_all_refs;
+    foreach my $ref (@$node_refs) {
+        # for now we will ignore external references
+        my @refs = grep { $_ and $_ !~ $_external_ref_format } Treex::PML::Instance::get_all($self, $ref);
+        next unless @refs;
+        foreach (@refs) {
+            next unless $_;
+            my $node = $self->get_document->get_node_by_id($_);
+            $self->set_ref($ref, $node);
+            $node->set_backref($ref, $self);
+        }
+    }
+}
+
+sub set_ref {
+    my $self = shift;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $refs = $self->refs;
+    $self->_ref_setter(@_, $refs);
+}
+
+sub set_backref {
+    my $self = shift;
+    log_fatal('Incorrect number of arguments') if @_ != 2;
+    my $refs = $self->backrefs;
+    $self->_ref_setter(@_, $refs);
+}
+
+#sub remove_ref {
+#    my ( $self, $path, $node ) = @_;
+#    log_fatal('Incorrect number of arguments') if @_ != 3;
+#    
+#    my $id = $node->id;
+#    my @nodes;
+#    my $sub = sub { my $opts = shift; push @nodes, $opts->{path} if $opts->{value} eq $id; };
+#    Treex::PML::Instance::for_each_match($self, { $path => $sub });
+#    foreach (@nodes) { Treex::PML::Instance::set_data($self, $_, undef, 1); }
+#    $self->_ref_setter($path, undef, $self->refs);
+#    $node->_ref_setter($path, undef, $node->backrefs);
+#}
+#
+#sub remove_backref {
+#    my ( $self, $path, $node ) = @_;
+#    log_fatal('Incorrect number of arguments') if @_ != 3;
+#    
+#    $node->remove_ref($path, $self);
+#}
+#
+## removes all references or only references to specified node
+#sub remove_all_refs {
+#    my ( $self, $node ) = @_;
+#    
+#    my %refs = %{$self->refs};
+#    for my $path (keys %refs)
+#    {
+#        if ($node)
+#        {
+#            $self->remove_ref($path, $node) if defined $refs{$path}->{$node->id};
+#        } else {
+#            foreach (values %{$refs{$path}}) { $self->remove_ref($path, $_); }            
+#        }
+#    }
+#}
+#
+#sub remove_all_backrefs {
+#    my ( $self, $node ) = @_;
+#    
+#    my %refs = %{$self->backrefs};
+#    for my $path (keys %refs)
+#    {
+#        if ($node)
+#        {
+#            $node->remove_ref($path, $self) if defined $refs{$path}->{$node->id};
+#        } else {
+#            foreach (values %{$refs{$path}}) { $_->remove_ref($path, $self); }            
+#        }
+#    }    
+#}
+
+sub _ref_setter {
+    my ( $self, $path, $node, $refs ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ != 4;
+    
+    unless (defined $refs->{$path}) {
+        $refs->{$path} = { };
+    }
+    if (defined $node)
+    {
+        $refs->{$path}->{$node->id} = $node unless $refs->{$path}->{$node->id};
+        return;
+    } else {
+        delete $refs->{$path}->{$node->id};
+    }
 }
 
 #************************************

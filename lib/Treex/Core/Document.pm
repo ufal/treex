@@ -210,7 +210,17 @@ sub _rebless_and_index {
             }
         }
     }
+    $self->_make_backrefs if $ENV{'TREEX_MAKE_BACKREFS'};
+    
     return;
+}
+
+sub _make_backrefs {
+    my $self = shift;
+    my $index = $self->_index;
+    foreach (values %$index) {
+        $_->construct_backrefs;
+    }
 }
 
 sub _pml_attribute_hash {
