@@ -1,8 +1,8 @@
 package Treex::Block::Write::MosesTree;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-with 'Treex::Block::Write::Redirectable';
+
+extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
 

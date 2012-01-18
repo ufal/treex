@@ -6,14 +6,14 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
 has '+return_values_names' => ( default => sub { [''] } );
 
-# Return the t-lemma and sempos
+# Return 1 if the functor is an actant, 0 otherwise
 sub modify_single {
 
     my ( $self, $functor ) = @_;
 
     return undef if ( !defined($functor) );
 
-    return '0' if ( $functor !~ m/^(ACT|PAT|ADDR|ORIG|EFF)$/ );
+    return '0' if ( $functor !~ m/^(ACT|PAT|ADDR|ORIG|EFF|CPHR|DPHR)$/ );
     return '1';
 }
 
@@ -31,10 +31,10 @@ Treex::Block::Write::LayerAttributes::IsActant
 
     my $functor = 'RSTR';   
     my $modif = Treex::Block::Write::LayerAttributes::IsActant->new(); 
-    print $modif->modify_all( $parent_tlemma, $functor ); # prints '0'
+    print $modif->modify_all( $functor ); # prints '0'
     
     my $functor = 'ACT';    
-    print $modif->modify_all( $parent_tlemma, $functor ); # prints '1'
+    print $modif->modify_all( $functor ); # prints '1'
 
 =head1 DESCRIPTION
 
@@ -47,6 +47,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
