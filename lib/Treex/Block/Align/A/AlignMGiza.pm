@@ -10,7 +10,7 @@ use threads;
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
-has dir_or_sym => ( isa => 'Str', is => 'ro', default => 'grow-diag-final' );
+has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' );
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 
@@ -24,9 +24,12 @@ my $symal = "$mgizadir/bin/symal";
 my $merge = "$mgizadir/scripts/merge_alignment.py";
 
 my $mytmpdir;
+my @parsed_dir_or_sym;
 
 sub process_document {
     my ( $self, $document ) = @_; 
+
+    @parsed_dir_or_sym = split ',', $self->dir_or_sym;
 
     # create tempdir
     $mytmpdir = File::Temp::tempdir( "alignmgizaXXXXXX", DIR => $self->tmp_dir );
@@ -39,52 +42,42 @@ sub process_document {
     }
     log_info "Using " . $self->cpu_cores . " cores";
 
-    if ($self->dir_or_sym ne "left" && $self->dir_or_sym ne "right") {
-    # XXX parallel processing does not work yet, may as well use all cores
-#        $self->{cpu_cores} = $self->cpu_cores / 2; # we run 2 mgizas in parallel         
-    }
-
     log_info "Writing document as plain text";
 
     # output sentences into plain text
-    # XXX not parallel, not sure if Treex accessors are re-entrant
     _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
     _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
 
     log_info "Running mkcls";
 
     # create word classes
-    _run_parallel(
-        sub { _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" ) },
-        sub { _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" ) }
-    );
+    _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" );
+    _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" );
 
     log_info "Creating vocabulary files";
 
     # create vocabulary lists
-    my ( $src_vcb, $tgt_vcb ) = _run_parallel(
-        sub { _collect_vocabulary( "$mytmpdir/txt-a", "$mytmpdir/vcb-a" ) },
-        sub { _collect_vocabulary( "$mytmpdir/txt-b", "$mytmpdir/vcb-b" ) }
-    );
-
-    # get symmetrization arguments
-    my ( $alitype, $alidiag, $alifinal, $alifinaland ) = _parse_dirsym( $self->dir_or_sym );
+    my $src_vcb = _collect_vocabulary( "$mytmpdir/txt-a", "$mytmpdir/vcb-a" );
+    my $tgt_vcb = _collect_vocabulary( "$mytmpdir/txt-b", "$mytmpdir/vcb-b" );
 
     log_info "Running MGiza";
 
-    # run mgiza (both ways if symmetrization is specified, not direction)
-    if ( $self->dir_or_sym eq "left" ) {
+    # run mgiza
+    my ( $ranthere, $ranback ) = qw( 0 0 );
+    if ( grep { $_ eq 'left' } @parsed_dir_or_sym ) {
         $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 );
-        $self->_store_uni_align( $document );
-    } elsif ( $self->dir_or_sym eq "right" ) {
+        $self->_store_uni_align( $document, 'left' );
+        $ranthere = 1;
+    }
+    if ( grep { $_ eq 'right' } @parsed_dir_or_sym ) {
         $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 );
-        $self->_store_uni_align( $document );
-    } else {
-        # run mgiza in both directions and merge
-        _run_parallel(
-            sub { $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 ) },
-            sub { $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 ) }
-        );
+        $self->_store_uni_align( $document, 'right' );
+        $ranback = 1;
+    } 
+    if ( grep { $_ ne 'right' && $_ ne 'left' } @parsed_dir_or_sym ) {
+        # run mgiza in both directions if necessary and merge
+        $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 ) if ! $ranthere;
+        $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 ) if ! $ranback;
         $self->_store_bi_align( $document );
     }
 }
@@ -150,9 +143,16 @@ sub _create_corpus {
 sub _parse_dirsym {
     my $dirsym = shift;
     my $alitype = undef;
+    my $revneeded = 0;
     my $alidiag = "no";
     my $alifinal = "no";
     my $alifinaland = "no";
+
+    if ($dirsym =~ /^rev/) {
+        $revneeded = 1;
+        $dirsym =~ s/^rev//;
+    }
+
     if ($dirsym eq "left" || $dirsym eq "right") {
         # ok
     } elsif ($dirsym eq "int" || $dirsym eq "intersect") {
@@ -174,7 +174,7 @@ sub _parse_dirsym {
         $alifinal = "yes";
         $alifinaland = "yes";
     }
-    return ( $alitype, $alidiag, $alifinal, $alifinaland );
+    return ( $revneeded, $alitype, $alidiag, $alifinal, $alifinaland );
 }
 
 sub _run_mgiza {
@@ -224,9 +224,9 @@ sub _run_mgiza {
 }
 
 sub _store_uni_align {
-    my ( $self, $document ) = @_;
+    my ( $self, $document, $direction ) = @_;
     my ( $a, $b );
-    my $inv = ( $self->dir_or_sym eq "left" ) ? 0 : 1;
+    my $inv = ( $direction eq "left" ) ? 0 : 1;
     if ( ! $inv ) {
         $a = 'a';
         $b = 'b';
@@ -236,24 +236,90 @@ sub _store_uni_align {
     }
     my $ali_hdl = _my_open( "$mytmpdir/$a-$b.A3.final" );
     my @bundles = $document->get_bundles;
-    my $index = 0;
+
+    # read the MGiza output
     while ( ! eof $ali_hdl ) {
-        $index++;
         my $bundle = shift @bundles;
         my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
         my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
-        my ( $alignment, $aliscore ) = _read_align( $ali_hdl );
-        $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
-        my $score_direction = $inv ? "back" : "there"; # XXX is this correct?
-        $src_root->set_attr( "giza_scores/" . $score_direction .  "value", $aliscore );
         my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
         my @tgt_nodes = $tgt_root->get_descendants( { ordered => 1 } );
+
+        # get alignment for one sentence
+        my ( $alignment, $aliscore ) = _read_align( $ali_hdl );
+
+        # set tree alignment score and counterpart
+        $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
+        my $score_direction = $inv ? "back" : "there"; # XXX is this correct
+        $src_root->set_attr( "giza_scores/" . $score_direction .  "value", $aliscore );
+
+        # store all alignment points
         for ( my $i = 0; $i < scalar @$alignment; $i++ ) {
             next if ! defined $alignment->[$i] || $alignment->[$i] == 0;
             my $from = $inv ? $alignment->[$i] - 1 : $i - 1;
             my $to = $inv ? $i - 1 : $alignment->[$i] - 1;
-            $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $self->dir_or_sym );
+            $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $direction );
         }
+    }
+}
+
+sub _store_bi_align {
+    my ( $self, $document ) = @_;
+    my $symalin_left_hdl = _my_save( "$mytmpdir/out.left" );
+    my $symalin_right_hdl = _my_save( "$mytmpdir/out.right" );
+    my $alileft_hdl = _my_open( "$mytmpdir/a-b.A3.final" );
+    my $aliright_hdl = _my_open( "$mytmpdir/b-a.A3.final" );
+
+    my @toskip; # lines that we should supply empty alignment for
+
+    my @bundles = $document->get_bundles;
+    # read MGiza outputs in both directions, prepare input for symal
+    my $sent_number = 0;
+    while ( ! eof $alileft_hdl ) {
+        $sent_number++;
+        my ( $ok, $alithere, $aliback, $src_sent, $tgt_sent, $therescore, $backscore )
+            = _read_bidirectional_align( $alileft_hdl, $aliright_hdl );
+        if ( $ok ) {
+            my @points_there = @$alithere;
+            my @points_back = @$aliback;
+
+            # write the normal symal input
+            print $symalin_left_hdl "1\n";
+            print $symalin_left_hdl "$#points_there $src_sent \# ",
+                @points_there[1..$#points_there], "\n";
+            print $symalin_left_hdl "$#points_back $tgt_sent \# ",
+                @points_back[1..$#points_back], "\n";
+
+            # write the reverse symal input
+            print $symalin_right_hdl "1\n";
+            print $symalin_right_hdl "$#points_back $tgt_sent \# ",
+                @points_back[1..$#points_back], "\n";
+            print $symalin_right_hdl "$#points_there $src_sent \# ",
+                @points_there[1..$#points_there], "\n";
+
+            # store alignment scores in the atree
+            my $bundle = shift @bundles;
+            my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
+            my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+            $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
+            $src_root->set_attr( "giza_scores/therevalue", $therescore );
+            $src_root->set_attr( "giza_scores/backvalue", $backscore );
+        } else {
+            push @toskip, $sent_number;
+        }
+    }
+    close $symalin_left_hdl;
+    close $symalin_right_hdl;
+    close $alileft_hdl;
+    close $aliright_hdl;
+
+    # run symal and write the symm
+    for my $sym ( @parsed_dir_or_sym ) {
+        # we skip 'left'/'right' here, they were already output if user wanted them
+        next if $sym eq "left" || $sym eq "right";
+
+        # get symmetrization arguments
+        my @symal_args = _parse_dirsym( $sym );
     }
 }
 
@@ -296,7 +362,6 @@ sub _read_bidirectional_align {
     my ( $there_hdl, $back_hdl ) = @_;
     my ( $t1, $t2, $s1, $s2, $stats );
     my ( @a, @b );
-    my $c = 1;
     
     chomp( $stats = <$there_hdl> ); ## header
     chomp( $s1 = <$there_hdl> );
@@ -334,7 +399,7 @@ sub _read_bidirectional_align {
     my @s2 = split / /, $s2;
     my $N = scalar @s2;
     
-    return ( 0, undef, undef, $s1, $s2, $c, $aliscore1, $aliscore2 )
+    return ( 0, undef, undef, $aliscore1, $aliscore2 )
       if $m != ($M + 1) || $n != ($N + 1);
     
     for ( my $j = 1; $j < $m; $j++ ) {
@@ -345,7 +410,7 @@ sub _read_bidirectional_align {
         $b[$i] = 0 if ! $b[$i];
     }
     
-    return ( 1, \@a, \@b, $s1, $s2, $c, $aliscore1, $aliscore2 );
+    return ( 1, \@a, \@b, $s1, $s2, $aliscore1, $aliscore2 );
 }
 
 sub _safesystem {
