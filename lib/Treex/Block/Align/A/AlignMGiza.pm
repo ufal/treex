@@ -238,7 +238,9 @@ sub _store_uni_align {
     my @bundles = $document->get_bundles;
 
     # read the MGiza output
+    my $sent_number = 0;
     while ( ! eof $ali_hdl ) {
+        $sent_number++;
         my $bundle = shift @bundles;
         my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
         my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
@@ -258,8 +260,16 @@ sub _store_uni_align {
             next if ! defined $alignment->[$i] || $alignment->[$i] == 0;
             my $from = $inv ? $alignment->[$i] - 1 : $i - 1;
             my $to = $inv ? $i - 1 : $alignment->[$i] - 1;
-            $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $direction );
+            if ( scalar( @src_nodes ) <= $from || scalar( @tgt_nodes ) <= $to ) {
+                log_warn "Sentence $sent_number: Alignment point $from-$to out of bounds";
+            } else {
+                $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $direction );
+            }
         }
+    }
+    if ( defined $bundles[0] ) {
+        log_warn "Only aligned $sent_number sentences. ",
+            "The document has " . scalar( @bundles ) . " more sentences";
     }
 }
 
@@ -270,13 +280,14 @@ sub _store_bi_align {
     my $alileft_hdl = _my_open( "$mytmpdir/a-b.A3.final" );
     my $aliright_hdl = _my_open( "$mytmpdir/b-a.A3.final" );
 
-    my @toskip; # lines that we should supply empty alignment for
+    my @empty_lines; # lines that we should supply empty alignment for
 
     my @bundles = $document->get_bundles;
     # read MGiza outputs in both directions, prepare input for symal
     my $sent_number = 0;
     while ( ! eof $alileft_hdl ) {
         $sent_number++;
+        my $bundle = shift @bundles;
         my ( $ok, $alithere, $aliback, $src_sent, $tgt_sent, $therescore, $backscore )
             = _read_bidirectional_align( $alileft_hdl, $aliright_hdl );
         if ( $ok ) {
@@ -298,14 +309,13 @@ sub _store_bi_align {
                 @points_there[1..$#points_there], "\n";
 
             # store alignment scores in the atree
-            my $bundle = shift @bundles;
             my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
             my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
             $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
             $src_root->set_attr( "giza_scores/therevalue", $therescore );
             $src_root->set_attr( "giza_scores/backvalue", $backscore );
         } else {
-            push @toskip, $sent_number;
+            push @empty_lines, $sent_number;
         }
     }
     close $symalin_left_hdl;
@@ -317,9 +327,54 @@ sub _store_bi_align {
     for my $sym ( @parsed_dir_or_sym ) {
         # we skip 'left'/'right' here, they were already output if user wanted them
         next if $sym eq "left" || $sym eq "right";
+        $self->_run_symal( $sym, $document, @empty_lines );
+    }
+}
 
-        # get symmetrization arguments
-        my @symal_args = _parse_dirsym( $sym );
+sub _run_symal {
+    my ( $self, $sym, $document, @empty_lines ) = @_;
+
+    # get symmetrization arguments
+    my ( $reverse, $symal_args ) = _parse_dirsym( $sym );
+
+    my $symal_outfile = "$mytmpdir/out.$sym";
+    my $symal_infile = $reverse ? "$mytmpdir/out.right" : "$mytmpdir/out.right";
+
+    # run symal
+    _safesystem( "$symal < $symal_infile > $symal_outfile" );
+
+    # read its output and store it in Treex
+    my $symal_outfile_hdl = _my_open( $symal_outfile );        
+    my $sent_number = 0;
+    my @bundles = $document->get_bundles;
+    while ( <$symal_outfile_hdl> ) {
+        chomp( my $line );
+        my $bundle = shift @bundles;
+        $sent_number++;
+
+        # skip over sentences with empty alignment
+        while ( grep { $_ == $sent_number } @empty_lines ) {
+            $sent_number++;
+            $bundle = shift @bundles;
+        }
+        my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
+        my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+        my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
+        my @tgt_nodes = $tgt_root->get_descendants( { ordered => 1 } );
+
+        for my $point (split ' ', $line) {
+            my ( $from, $to );
+            if ( $reverse ) {
+                ( $to, $from ) = split '-', $point;
+            } else {
+                ( $from, $to ) = split '-', $point;
+            }
+            if ( scalar( @src_nodes ) <= $from || scalar( @tgt_nodes ) <= $to ) {
+                log_warn "Sentence $sent_number: Alignment point $from-$to out of bounds";
+            } else {
+                $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $sym );
+            }
+        }
     }
 }
 
@@ -472,16 +527,6 @@ sub _my_save {
   return $hdl;
 }
 
-sub _run_parallel {
-    my ( $first, $second ) = @_;
-#     my $thread_first = threads->new( $first );
-#     my $result_second = &$second;
-#     my $result_first = $thread_first->join();
-    my $result_first = &$first; # I get a segfault when using threads
-    my $result_second = &$second;
-    return ( $result_first, $result_second );
-}
-
 1;
 
 =head1 NAME 
@@ -513,9 +558,9 @@ The source language. Required.
 
 =item C<dir_or_sym>
 
-Direction or symmetrization of alignment. For direction, values "left" and "right" are recognized.
-For symmetrizaton, use values "union", "intersection", "grow", "grow-diag", "grow-diag-final",
-or "grow-diag-final-and". Default is "grow-diag-final".
+Comma delimited directions or symmetrizations of alignment. For direction, values "left"
+and "right" are recognized. For symmetrizaton, use values "union", "intersection", "grow",
+"grow-diag", "grow-diag-final", or "grow-diag-final-and". Default is "grow-diag-final".
 
 =item C<align_attr>
 
