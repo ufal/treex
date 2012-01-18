@@ -73,16 +73,19 @@ sub process_document {
     log_info "Running MGiza";
 
     # run mgiza (both ways if symmetrization is specified, not direction)
-    if ( $self->align_attr eq "left" ) {
+    if ( $self->dir_or_sym eq "left" ) {
         $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 );
-    } elsif ( $self->align_attr eq "right" ) {
+        $self->_store_uni_align( $document );
+    } elsif ( $self->dir_or_sym eq "right" ) {
         $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 );
+        $self->_store_uni_align( $document );
     } else {
         # run mgiza in both directions and merge
         _run_parallel(
             sub { $self->_run_mgiza( $src_vcb, $tgt_vcb, 0 ) },
             sub { $self->_run_mgiza( $tgt_vcb, $src_vcb, 1 ) }
         );
+        $self->_store_bi_align( $document );
     }
 }
 
@@ -91,14 +94,14 @@ sub _write_plain {
     my $hdl = _my_save( $file );
     for my $bundle( $document->get_bundles ) {
         my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants();
-        print $hdl join( " ", map { $_->get_attr( $attr ) } @nodes ), "\n";    
+        print $hdl join( " ", map { s/ /_/g; $_ } map { $_->get_attr( $attr ) } @nodes ), "\n";    
     }
     close $hdl;
 }
 
 sub _make_cls {
     my ( $src_file, $tgt_file ) = @_;
-    _safesystem( "$mkcls -c50 -n2 -p$src_file -V$tgt_file opt >&2" );
+    _safesystem( "$mkcls -c50 -n2 -p$src_file -V$tgt_file opt" );
 }
 
 sub _collect_vocabulary {
@@ -211,13 +214,47 @@ sub _run_mgiza {
     map { $options_str .= " -$_ $mgiza_options{$_}" } sort keys %mgiza_options;
 
     # run mgiza
-    _safesystem( "$mgiza $options_str >&2" );
+    _safesystem( "$mgiza $options_str" );
 
     # merge alignment parts
     _safesystem( "$merge $mytmpdir/$a-$b.A3.final.part* > $mytmpdir/$a-$b.A3.final" );
 
     # remove alignment parts
     _safesystem( "rm -f $mytmpdir/$a-$b.A3.final.part*" );
+}
+
+sub _store_uni_align {
+    my ( $self, $document ) = @_;
+    my ( $a, $b );
+    my $inv = ( $self->dir_or_sym eq "left" ) ? 0 : 1;
+    if ( ! $inv ) {
+        $a = 'a';
+        $b = 'b';
+    } else { # inverse alignment
+        $a = 'b';
+        $b = 'a';
+    }
+    my $ali_hdl = _my_open( "$mytmpdir/$a-$b.A3.final" );
+    my @bundles = $document->get_bundles;
+    my $index = 0;
+    while ( ! eof $ali_hdl ) {
+        $index++;
+        my $bundle = shift @bundles;
+        my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
+        my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+        my ( $alignment, $aliscore ) = _read_align( $ali_hdl );
+        $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
+        my $score_direction = $inv ? "back" : "there"; # XXX is this correct?
+        $src_root->set_attr( "giza_scores/" . $score_direction .  "value", $aliscore );
+        my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
+        my @tgt_nodes = $tgt_root->get_descendants( { ordered => 1 } );
+        for ( my $i = 0; $i < scalar @$alignment; $i++ ) {
+            next if ! defined $alignment->[$i] || $alignment->[$i] == 0;
+            my $from = $inv ? $alignment->[$i] - 1 : $i - 1;
+            my $to = $inv ? $i - 1 : $alignment->[$i] - 1;
+            $src_nodes[$from]->add_aligned_node( $tgt_nodes[$to], $self->dir_or_sym );
+        }
+    }
 }
 
 sub _read_align {
@@ -251,7 +288,7 @@ sub _read_align {
         $a[$j]=0 if !$a[$j];
     }
     
-    return ( $n - 1, $M, \@a, $s1, $t1, $aliscore );
+    return ( \@a, $aliscore );
 }
 
 
