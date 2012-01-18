@@ -5,6 +5,8 @@ use Treex::Core::Common;
 use DBI;
 use File::Temp;
 use Memoize;
+use File::Copy;
+
 
 has 'language' => ( isa => 'Str', is => 'ro', required => 1 );
 
@@ -40,7 +42,7 @@ sub BUILD {
         my $local = File::Temp->new( TEMPLATE => 'wnsimplequeryXXXX', SUFFIX => 'sqlite' );
         log_info('Making a local copy of ' . $data_path . ' in ' . $local );
         copy( $data_path, $local );
-        $data_path = $local->filename;
+        $data_path = $local;
     } 
 
     my $db_options = {
