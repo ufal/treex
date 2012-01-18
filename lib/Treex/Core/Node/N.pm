@@ -74,14 +74,9 @@ sub set_attr {
     return $self->SUPER::set_attr( $attr_name, $attr_value );
 }
 
-override '_get_referenced_ids' => sub {
+override '_get_reference_attrs' => sub {
     my ($self) = @_;
-    
-    my $ref = super;    
-    my $a = $self->get_attr('a.rf');
-    
-    $ref->{'a.rf'} = [ $a ] if ($a);
-    return $ref;
+    return ('a.rf');
 };
 
 

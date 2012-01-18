@@ -282,32 +282,12 @@ sub set_src_tnode {
     return;
 }
 
-# ---- ids of all referenced nodes
+# ---- attributes that contain references
 
-override '_get_referenced_ids' => sub {
+override '_get_reference_attrs' => sub {
+
     my ($self) = @_;
-
-    my $ref = super;
-
-    # single attributes
-    foreach my $ref_attr ('a/lex.rf', 'original_parent.rf', 'src_tnode.rf'){
-
-        my $val = $self->get_attr($ref_attr);
-        next if ( !$val );
-
-        $ref->{$ref_attr} = [ $val ];
-    }
-
-    # reference arrays
-    foreach my $ref_attr ('a/aux.rf', 'compl.rf', 'coref_gram.rf', 'coref_text.rf'){
-
-        my $val = $self->get_attr($ref_attr);
-        next if ( !$val );
-
-        $ref->{$ref_attr} = $val;
-    }
-
-    return $ref;
+    return ('a/lex.rf', 'original_parent.rf', 'src_tnode.rf', 'a/aux.rf', 'compl.rf', 'coref_gram.rf', 'coref_text.rf');
 };
 
 #----------- grammatemes -------------

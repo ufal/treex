@@ -188,9 +188,11 @@ sub remove {
 
 # Return all nodes that have a reference of the given type (e.g. 'alignment', 'a/lex.rf') to this node
 sub get_referencing_nodes {
+
     my ( $self, $type ) = @_;
     my $doc  = $self->get_document;
     my $refs = $doc->get_references_to_id( $self->id );
+
     return if ( !$refs || !$refs->{$type} );
     return map { $doc->get_node_by_id($_) } @{ $refs->{$type} };
 }
@@ -737,16 +739,34 @@ sub get_attrs {
     return @attr_values;
 }
 
+# Return all attributes of the given node (sub)type that contain references
+sub _get_reference_attrs {
+    my ($self) = @_;    
+    return ();
+}
+
 # Return IDs of all nodes to which there are reference links from this node (must be overridden in
 # the respective node types)
 sub _get_referenced_ids {
 
     my ($self) = @_;
+    my $ret = {};
+
+    # handle alignment separately
     my $links_rf = $self->get_attr('alignment');
+    $ret->{alignment} = [ map { $_->{'counterpart.rf'} } @{$links_rf} ] if ($links_rf);
 
-    return {} if ( !$links_rf );
-
-    return { alignment => [ map { $_->{'counterpart.rf'} } @{$links_rf} ] };
+    # all other references
+    foreach my $ref_attr ( $self->_get_reference_attrs() ) {
+        my $val = $self->get_attr($ref_attr);
+        if ( !ref $val ) {    # single-valued
+            $ret->{$ref_attr} = [$val];
+        }
+        else {
+            $ret->{$ref_attr} = $val;
+        }
+    }
+    return $ret;
 }
 
 # TODO: How to do this in an elegant way?

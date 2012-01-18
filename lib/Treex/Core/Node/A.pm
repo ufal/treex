@@ -255,14 +255,9 @@ sub get_pnodes {
 
 # -- referenced node ids --
 
-override '_get_referenced_ids' => sub {
+override '_get_reference_attrs' => sub {
     my ($self) = @_;
-    
-    my $ref = super;    
-    my $p_term = $self->get_attr('p_terminal.rf');
-    
-    $ref->{'p_terminal.rf'} = [ $p_term ] if ($p_term);
-    return $ref;
+    return ('p_terminal.rf');    
 };
 
 # -- other --
