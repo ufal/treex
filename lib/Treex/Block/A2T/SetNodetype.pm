@@ -9,6 +9,10 @@ Readonly my $QCOMPLEX_TLEMMA => "Oblfm|Benef|Total|Cor|EmpVerb|Gen|Whose|Why|QCo
 Unsp|Amp|Ast|Deg|Percnt|Comma|Colon|Dash|Bracket|Period|Period3|Slash";
 
 
+# Mark also 'atom', 'fphr' and 'dphr'
+has 'mark_rhem_phr' => ( isa => 'Bool', is => 'ro', default => 1 );
+
+
 sub process_ttree {
 
     my ( $self, $t_root ) = @_;
@@ -33,12 +37,12 @@ sub detect_nodetype {
     }
 
     # rhematizers
-    elsif ( $functor =~ /^(RHEM|PREC|PARTL|MOD|ATT|INTF|CM)/ ) {
+    elsif ( $functor =~ /^(RHEM|PREC|PARTL|MOD|ATT|INTF|CM)/ && $self->mark_rhem_phr ) {
         return 'atom';
     }
 
     # foreign phrases, idioms
-    elsif ( $functor =~ /^[FD]PHR$/ ) {
+    elsif ( $functor =~ /^[FD]PHR$/ && $self->mark_rhem_phr ) {
         return lc $t_node->functor;
     }
 
@@ -81,6 +85,20 @@ Depending on whether all functors are already set, the behavior of this block is
 functors are set, 'atom', 'fphr' and 'dphr' nodetypes are not distinguished. If no functors are set, not even the
 'coap' nodetype is recognized.
 
+Marking of 'atom', 'fphr' and 'dphr' nodetypes may be turned off using the C<mark_rhem_phr> switch if functors
+are already set.
+
+=head1 PARAMETERS
+
+=over
+
+=item mark_rhem_phr
+
+A boolean value indicating if 'atom', 'fphr' and 'dphr' nodetypes should be marked according to functor values.
+1 is the default. 
+
+=back
+
 =head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
@@ -91,6 +109,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
