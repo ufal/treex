@@ -174,7 +174,8 @@ sub _parse_dirsym {
         $alifinal = "yes";
         $alifinaland = "yes";
     }
-    return ( $revneeded, $alitype, $alidiag, $alifinal, $alifinaland );
+    return ( $revneeded, "-alignment='$alitype' -diagonal='$alidiag'"
+                        . " -final='$alifinal' -both='$alifinaland'" );
 }
 
 sub _run_mgiza {
@@ -296,17 +297,17 @@ sub _store_bi_align {
 
             # write the normal symal input
             print $symalin_left_hdl "1\n";
-            print $symalin_left_hdl "$#points_there $src_sent \# ",
-                @points_there[1..$#points_there], "\n";
-            print $symalin_left_hdl "$#points_back $tgt_sent \# ",
-                @points_back[1..$#points_back], "\n";
+            print $symalin_left_hdl "$#points_there $src_sent # ",
+                join(" ", @points_there[1..$#points_there]), "\n";
+            print $symalin_left_hdl "$#points_back $tgt_sent # ",
+                join(" ", @points_back[1..$#points_back]), "\n";
 
             # write the reverse symal input
             print $symalin_right_hdl "1\n";
-            print $symalin_right_hdl "$#points_back $tgt_sent \# ",
-                @points_back[1..$#points_back], "\n";
-            print $symalin_right_hdl "$#points_there $src_sent \# ",
-                @points_there[1..$#points_there], "\n";
+            print $symalin_right_hdl "$#points_back $tgt_sent # ",
+                join(" ", @points_back[1..$#points_back]), "\n";
+            print $symalin_right_hdl "$#points_there $src_sent # ",
+                join(" ", @points_there[1..$#points_there]), "\n";
 
             # store alignment scores in the atree
             my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
@@ -341,14 +342,16 @@ sub _run_symal {
     my $symal_infile = $reverse ? "$mytmpdir/out.right" : "$mytmpdir/out.right";
 
     # run symal
-    _safesystem( "$symal < $symal_infile > $symal_outfile" );
+    log_info "Running symal for symmetrization '$sym'";
+    _safesystem( "$symal $symal_args < $symal_infile > $symal_outfile" );
 
     # read its output and store it in Treex
     my $symal_outfile_hdl = _my_open( $symal_outfile );        
     my $sent_number = 0;
     my @bundles = $document->get_bundles;
     while ( <$symal_outfile_hdl> ) {
-        chomp( my $line );
+        chomp( my $line = $_ );
+        $line =~ s/.*{##} //; # original sentences are printed first
         my $bundle = shift @bundles;
         $sent_number++;
 
