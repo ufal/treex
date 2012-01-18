@@ -37,7 +37,7 @@ sub process_tnode {
         my $parent = $tnode->get_parent;
         if ( $parent->t_lemma =~ /^(už|již)$/ ) {
             my $grandpa = $parent->get_parent;
-            if ( $grandpa->gram_sempos eq 'v' ) {
+            if ( ( $grandpa->gram_sempos || '' ) eq 'v' ) {
                 $grandpa->set_gram_negation('neg1');
                 $tnode->remove;
             }
