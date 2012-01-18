@@ -399,7 +399,7 @@ sub _read_bidirectional_align {
     my @s2 = split / /, $s2;
     my $N = scalar @s2;
     
-    return ( 0, undef, undef, $aliscore1, $aliscore2 )
+    return ( 0, undef, undef, $s1, $s2, $aliscore1, $aliscore2 )
       if $m != ($M + 1) || $n != ($N + 1);
     
     for ( my $j = 1; $j < $m; $j++ ) {
