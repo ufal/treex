@@ -342,15 +342,14 @@ my %READER_FOR = (
     # TODO:
     # conll  => 'Conll',
     # plsgz  => 'Plsgz',
-    # treex.gz
     # tmt
 );
 
 sub _get_reader_name_for {
     my $self  = shift;
     my @names = @_;
-    my $base_re = join("|", keys %READER_FOR);
-    my $re    = qr{\.($base_re)?$};
+    my $base_re = join('|', keys %READER_FOR);
+    my $re    = qr{\.($base_re)$};
     my @extensions;
     my $first;
     print STDERR $re, "\n";
