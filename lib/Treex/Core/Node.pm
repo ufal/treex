@@ -118,17 +118,39 @@ sub get_deref_attr {
 sub set_deref_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 3;
+
+    # Remove previous back (reverse) references
+    my $document  = $self->get_document();
+    my $old_value = $self->get_attr($attr_name);
+    if ($old_value) {
+        if ( ref $old_value eq 'Treex::PML::List' && @$old_value ) {
+            $document->remove_backref( $attr_name, $self->id, $old_value );
+        }
+        else {
+            $document->remove_backref( $attr_name, $self->id, [$old_value] );
+        }
+    }
+
+    # If $attr_value is an array of nodes
     if ( ref($attr_value) eq 'ARRAY' ) {
         my @list = map { $_->id } @{$attr_value};
         $attr_value = Treex::PML::List->new(@list);
-    }
-    else {
-        $attr_value = $attr_value->id;
+
+        # Set new back references
+        $document->index_backref( $attr_name, $self->id, \@list );
     }
 
-    # attr setting always through TectoMT set_attr, as it can be overidden (and it is in Node/N.pm)
-    #return $fsnode{ ident $self}->set_attr( $attr_name, $attr_value );
-    return $self->set_attr( $attr_name, $attr_value );
+    # If $attr_value is just one node
+    else {
+        $attr_value = $attr_value->id;
+
+        # Set the new back reference
+        $document->index_backref( $attr_name, $self->id, [$attr_value] );
+    }
+
+    # Set the new reference(s)
+    $self->set_attr( $attr_name, $attr_value );
+    return;
 }
 
 sub get_bundle {
@@ -201,7 +223,6 @@ sub get_referencing_nodes {
 # index, since it is itself called from when removing reverse references; use the API methods for the individual
 # references if you want to keep reverse references up-to-date.
 sub remove_reference {
-
     my ( $self, $type, $id ) = @_;
 
     if ( $type eq 'alignment' ) {    # handle alignment links separately
@@ -215,12 +236,13 @@ sub remove_reference {
     }
     else {
         my $attr = $self->get_attr($type);
+        log_fatal "undefined attr $type (id=$id)" if !defined $attr;
 
-        if ( $attr eq $id || scalar( @{$attr} ) <= 1 ) {    # single-value attributes
+        if ( $attr eq $id || scalar( @{$attr} ) <= 1 ) {                # single-value attributes
             $self->set_attr( $type, undef );
         }
         else {
-            $attr->delete_value($id);                       # TODO : will it be always a Treex::PML::List? Looks like it works.
+            $attr->delete_value($id);                                   # TODO : will it be always a Treex::PML::List? Looks like it works.
         }
     }
     return;
@@ -741,7 +763,7 @@ sub get_attrs {
 
 # Return all attributes of the given node (sub)type that contain references
 sub _get_reference_attrs {
-    my ($self) = @_;    
+    my ($self) = @_;
     return ();
 }
 
