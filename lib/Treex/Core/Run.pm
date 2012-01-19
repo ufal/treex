@@ -352,7 +352,7 @@ sub _get_reader_name_for {
     my $re    = qr{\.($base_re)$};
     my @extensions;
     my $first;
-    print STDERR $re, "\n";
+
     foreach my $name (@names) {
         if ( $name =~ /$re/ ) {
             my $current = $1;
