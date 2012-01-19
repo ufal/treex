@@ -5,7 +5,7 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 
 use Treex::Tool::Coreference::PerceptronRanker;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
-use Treex::Tool::Coreference::EN::TextPronAnteCandsGetter;
+use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
 
 has '+model_path' => (
@@ -28,7 +28,8 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::EN::TextPronAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+        prev_sents_num => 1,
         anaphor_as_candidate => 1,
         cands_within_czeng_blocks => 1,
     });

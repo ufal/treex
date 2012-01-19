@@ -5,17 +5,20 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 
 use Treex::Tool::Coreference::PerceptronRanker;
 #use Treex::Tool::Coreference::RuleBasedRanker;
+#use Treex::Tool::Coreference::ProbDistrRanker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
-use Treex::Tool::Coreference::CS::TextPronAnteCandsGetter;
+use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
 
 has '+model_path' => (
     default => 'data/models/coreference/CS/perceptron/text.perspron.analysed',
+#    default => 'data/models/coreference/CS/gibbs/text.perspron.analysed',
 );
 
 override '_build_ranker' => sub {
     my ($self) = @_;
 #    my $ranker = Treex::Tool::Coreference::RuleBasedRanker->new();
+#    my $ranker = Treex::Tool::Coreference::ProbDistrRanker->new(
     my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
         { model_path => $self->model_path } 
     );
@@ -24,13 +27,17 @@ override '_build_ranker' => sub {
 
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
-    my $fe = Treex::Tool::Coreference::CS::PronCorefFeatures->new();
+    #my $fe = Treex::Tool::Coreference::CS::PronCorefFeatures->new();
+    my $fe = Treex::Tool::Coreference::CS::PronCorefFeatures->new({
+    #    format => 'unsup'
+    });
     return $fe;
 };
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::CS::TextPronAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+        prev_sents_num => 1,
         anaphor_as_candidate => 1,
         cands_within_czeng_blocks => 1,
     });

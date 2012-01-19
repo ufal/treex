@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::CS::RelPronAnaphFilter;
 use Moose;
 use Treex::Core::Common;
 
-with 'Treex::Tool::Coreference::AnaphFilter';
+with 'Treex::Tool::Coreference::NodeFilter';
 
 # according to rule presented in Nguy et al. (2009)
 # nodes with the t_lemma #PersPron and third person in gram/person

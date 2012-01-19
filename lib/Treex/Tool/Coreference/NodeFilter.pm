@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::AnaphFilter;
+package Treex::Tool::Coreference::NodeFilter;
 use Moose::Role;
 
 requires 'is_candidate';

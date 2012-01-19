@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::EN::PronAnaphFilter;
 use Moose;
 use Treex::Core::Common;
 
-with 'Treex::Tool::Coreference::AnaphFilter';
+with 'Treex::Tool::Coreference::NodeFilter';
 
 has 'banned_prons' => (
     isa => 'HashRef[Str]',
