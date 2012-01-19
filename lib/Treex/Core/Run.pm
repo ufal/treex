@@ -517,9 +517,10 @@ sub _create_job_scripts {
     # You cannot use interactive input from terminal to "treex -p".
     # (If you really need it, use perl -npe 1 | treex -p ...)
     my $input = '';
-    if ( !-t STDIN ) {
+    if ( ! IO::Interactive::is_interactive(STDIN) ) {
         my $stdin_file = "$workdir/input";
         $input = "cat $stdin_file | ";
+        ## no critic (ProhibitExplicitStdin)
         open my $TEMP, '>', $stdin_file or log_fatal("Cannot create file $stdin_file to store input: $!");
         while (<STDIN>) {
             print $TEMP $_;
