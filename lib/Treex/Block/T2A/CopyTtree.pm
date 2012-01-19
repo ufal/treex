@@ -11,6 +11,9 @@ sub process_zone {
     $t_root->set_deref_attr( 'atree.rf', $t_root );
 
     copy_subtree( $t_root, $a_root );
+    
+    # Since #Cor nodes are skipped, there may be gaps in ordering
+    $a_root->_normalize_node_ordering();
 
 }
 
