@@ -52,7 +52,8 @@ sub drop {
         return;
     }
 
-    # This is no more needed with backrefs
+    # This is no more needed with backrefs.
+    # Moreover, using set_attr for *.rf attributes is now forbidden.
     #$t_node->set_attr( 'a/lex.rf', undef );
 
     # rehang PersPron's children (theoretically there should be none, but ...)
