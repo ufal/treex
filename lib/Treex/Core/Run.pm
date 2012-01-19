@@ -11,6 +11,7 @@ use File::Path;
 use File::Temp qw(tempdir);
 use File::Which;
 use List::MoreUtils qw(first_index);
+use IO::Interactive;
 use Exporter;
 use base 'Exporter';
 our @EXPORT_OK = q(treex);
@@ -332,10 +333,11 @@ sub _execute {
 }
 
 my %READER_FOR = (
-    treex      => 'Treex',
-    streex     => 'Treex',
-    'treex.gz' => 'Treex',
-    txt        => 'Text',
+    'treex' => 'Treex',
+    'treex.gz' => 'Treex',      
+    'txt'   => 'Text',
+    'txt.gz'   => 'Text',
+    'streex'   => 'Treex',
 
     # TODO:
     # conll  => 'Conll',
@@ -347,12 +349,15 @@ my %READER_FOR = (
 sub _get_reader_name_for {
     my $self  = shift;
     my @names = @_;
-    my $re    = qr{\.(s?treex|txt)(\.gz)?$};
+    my $base_re = join("|", keys %READER_FOR);
+    my $re    = qr{\.($base_re)?$};
     my @extensions;
     my $first;
+    print STDERR $re, "\n";
     foreach my $name (@names) {
-        if ( $name =~ $re ) {
+        if ( $name =~ /$re/ ) {
             my $current = $1;
+            $current =~ s/\.gz$//;
             if (!defined $first) {
                 $first = $current;
             }
@@ -517,7 +522,7 @@ sub _create_job_scripts {
     # You cannot use interactive input from terminal to "treex -p".
     # (If you really need it, use perl -npe 1 | treex -p ...)
     my $input = '';
-    if ( ! IO::Interactive::is_interactive(STDIN) ) {
+    if ( ! IO::Interactive::is_interactive(*STDIN) ) {
         my $stdin_file = "$workdir/input";
         $input = "cat $stdin_file | ";
         ## no critic (ProhibitExplicitStdin)
