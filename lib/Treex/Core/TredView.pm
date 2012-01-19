@@ -49,18 +49,18 @@ has fast_loading => (
 );
 
 has _displayed_nodes => (
-    is => 'rw',
-    isa => 'HashRef[Treex::Core::Node]',
+    is      => 'rw',
+    isa     => 'HashRef[Treex::Core::Node]',
     default => sub { {} }
 );
 has _ptb_index_map => (
-    is => 'rw',
-    isa => 'HashRef[Treex::Core::Node::P]',
+    is      => 'rw',
+    isa     => 'HashRef[Treex::Core::Node::P]',
     default => sub { {} }
 );
 has _ptb_coindex_map => (
-    is => 'rw',
-    isa => 'HashRef[Treex::Core::Node::P]',
+    is      => 'rw',
+    isa     => 'HashRef[Treex::Core::Node::P]',
     default => sub { {} }
 );
 
@@ -106,7 +106,7 @@ sub get_nodelist_hook {
                                              # results in Can't locate object method "get_all_zones" via package "Treex::PML::Node" at /ha/work/people/popel/tectomt/treex/lib/Treex/Core/TredView.pm line 22
 
     my $layout = $self->tree_layout->get_layout();
-    $self->{'_ptb_index_map'} = {};
+    $self->{'_ptb_index_map'}   = {};
     $self->{'_ptb_coindex_map'} = {};
     my %nodes;
 
@@ -117,8 +117,8 @@ sub get_nodelist_hook {
             @nodes = $self->_spread_nodes($tree);
             shift @nodes;
             foreach my $node (@nodes) {
-                $self->{'_ptb_index_map'}->{$node->{'index'}} = $node if defined $node->{'index'};
-                $self->{'_ptb_coindex_map'}->{$node->{'coindex'}} = $node if defined $node->{'coindex'};
+                $self->{'_ptb_index_map'}->{ $node->{'index'} }     = $node if defined $node->{'index'};
+                $self->{'_ptb_coindex_map'}->{ $node->{'coindex'} } = $node if defined $node->{'coindex'};
             }
         }
         elsif ( $tree->does('Treex::Core::Node::Ordered') ) {
@@ -217,13 +217,12 @@ sub file_opened_hook {
     $self->pml_doc($pmldoc);
 
     my $treex_doc;
-    if ( defined $pmldoc->[13]->{_treex_core_document} ) { # if it comes from storable (i.e., already with moose)
+    if ( defined $pmldoc->[13]->{_treex_core_document} ) {    # if it comes from storable (i.e., already with moose)
         $treex_doc = $pmldoc->[13]->{_treex_core_document}
     }
     else {
         $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
     }
-
 
     $self->treex_doc($treex_doc);
 
@@ -233,6 +232,7 @@ sub file_opened_hook {
     $self->_set_vallex( Treex::Core::TredView::Vallex->new( _treex_doc => $treex_doc ) );
 
     foreach my $bundle ( $treex_doc->get_bundles() ) {
+
         # If we don't care about slow loading of the whole file,
         # we can precompute all bundles now, so browsing through bundles
         # will be a bit faster.
@@ -280,9 +280,9 @@ sub value_line_doubleclick_hook {
         $found = 0;
         for ( my $col = 0; $col < scalar @$layout; $col++ ) {
             if ( defined $layout->[$col][$row] ) {
-                if ($layout->[$col][$row]->{'visible'}) {
+                if ( $layout->[$col][$row]->{'visible'} ) {
                     $ordering{ $layout->[$col][$row]->{'label'} } = $i++;
-                    $visible{$layout->[$col][$row]->{'label'}} = 1;
+                    $visible{ $layout->[$col][$row]->{'label'} }  = 1;
                 }
                 $found = 1;
             }
@@ -291,9 +291,9 @@ sub value_line_doubleclick_hook {
     }
     my @trees = sort {
         $ordering{ $self->tree_layout->get_tree_label($a) } <=> $ordering{ $self->tree_layout->get_tree_label($b) }
-    } grep {
-      exists $visible{ $self->tree_layout->get_tree_label($_) }
-    } $bundle->get_all_trees;
+        } grep {
+        exists $visible{ $self->tree_layout->get_tree_label($_) }
+        } $bundle->get_all_trees;
 
     for my $tree (@trees) {
         for my $node ( $tree->get_descendants ) {
@@ -433,7 +433,7 @@ sub get_clickable_sentence_for_a_zone {
         my $id = $anode->id;
         push @{ $refs{$id} }, $anode;
         if ( exists $alignment->{$id} ) {
-            push @{ $refs{$id} }, @{ $alignment->{ $id } };
+            push @{ $refs{$id} }, @{ $alignment->{$id} };
         }
         if ( $anode->attr('p_terminal.rf') ) {
             my $pnode = $self->treex_doc->get_node_by_id( $anode->attr('p_terminal.rf') );
@@ -466,25 +466,25 @@ sub precompute_value_line {
 
     my %alignment = ();
     foreach my $zone ( $bundle->get_all_zones() ) {
-        foreach my $layer ( @layers ) {
+        foreach my $layer (@layers) {
             if ( $zone->has_tree($layer) ) {
-                my $root = $zone->get_tree( $layer );
+                my $root = $zone->get_tree($layer);
                 foreach my $node ( $root, $root->get_descendants ) {
                     if ( exists $node->{'alignment'} ) {
                         foreach my $ref ( @{ $node->get_attr('alignment') } ) {
-                            push @{$alignment{$node->{id}}}, $self->treex_doc->get_node_by_id( $ref->{'counterpart.rf'} );
-                            push @{$alignment{$ref->{'counterpart.rf'}}}, $node;
+                            push @{ $alignment{ $node->{id} } }, $self->treex_doc->get_node_by_id( $ref->{'counterpart.rf'} );
+                            push @{ $alignment{ $ref->{'counterpart.rf'} } }, $node;
                         }
                     }
                 }
             }
         }
     }
-    
+
     my @out = ();
     foreach my $zone ( $bundle->get_all_zones() ) {
         push @out, ( [ '[' . $zone->get_label . ']', 'label' ], [ ' ', 'space' ] );
-        if ( my $sentence = $self->get_clickable_sentence_for_a_zone($zone, \%alignment) ) {
+        if ( my $sentence = $self->get_clickable_sentence_for_a_zone( $zone, \%alignment ) ) {
             push @out, @$sentence;
         }
         elsif ( defined $zone->sentence ) {
@@ -546,7 +546,7 @@ sub tnode_hint {
 
     if ( ref $node->get_attr('gram') ) {
         foreach my $gram ( keys %{ $node->get_attr('gram') } ) {
-            push @lines, "gram/$gram : " . $node->get_attr( 'gram/' . $gram );
+            push @lines, "gram/$gram : " . ( $node->get_attr( 'gram/' . $gram ) || '' );
         }
     }
 
@@ -569,7 +569,7 @@ sub pnode_hint {
     my ( $self, $node ) = @_;
     my @lines = ();
 
-    if ($node->is_terminal) {
+    if ( $node->is_terminal ) {
         push @lines, map { "$_: " . ( defined $node->{$_} ? $node->{$_} : '' ) } qw(lemma tag form);
     }
     else {
@@ -602,25 +602,27 @@ sub node_style_hook {
     }
 
     # P-layer indexes and coindexes
-    if ($node->get_layer eq 'p') {
+    if ( $node->get_layer eq 'p' ) {
         my $coindex;
-        if ($node->attr('form') and $node->attr('form') =~ m/-(\d+)$/) {
+        if ( $node->attr('form') and $node->attr('form') =~ m/-(\d+)$/ ) {
             $coindex = $1;
-        } elsif ($node->attr('coindex')) {
+        }
+        elsif ( $node->attr('coindex') ) {
             $coindex = $node->attr('coindex');
         }
 
         if ($coindex) {
             my $target_node;
-            if (exists $self->{'_ptb_index_map'}->{$coindex}) {
-              $target_node = $self->{'_ptb_index_map'}->{$coindex};
-            } elsif ($node->is_terminal and exists $self->{'_ptb_coindex_map'}->{$coindex}) {
-              $target_node = $self->{'_ptb_coindex_map'}->{$coindex};
+            if ( exists $self->{'_ptb_index_map'}->{$coindex} ) {
+                $target_node = $self->{'_ptb_index_map'}->{$coindex};
+            }
+            elsif ( $node->is_terminal and exists $self->{'_ptb_coindex_map'}->{$coindex} ) {
+                $target_node = $self->{'_ptb_coindex_map'}->{$coindex};
             }
 
             if ($target_node) {
-              push @target_ids, $target_node->{'id'};
-              push @arrow_types, 'coindex';
+                push @target_ids,  $target_node->{'id'};
+                push @arrow_types, 'coindex';
             }
         }
     }
@@ -628,7 +630,7 @@ sub node_style_hook {
     # alignment
     if ( $self->show_alignment and my $links = $node->attr('alignment') ) {
         foreach my $link (@$links) {
-            if (exists $self->_displayed_nodes->{$link->{'counterpart.rf'}}) {
+            if ( exists $self->_displayed_nodes->{ $link->{'counterpart.rf'} } ) {
                 push @target_ids,  $link->{'counterpart.rf'};
                 push @arrow_types, 'alignment';
             }
