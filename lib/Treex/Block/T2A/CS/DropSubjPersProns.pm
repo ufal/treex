@@ -52,7 +52,8 @@ sub drop {
         return;
     }
 
-    $t_node->set_attr( 'a/lex.rf', undef );
+    # This is no more needed with backrefs
+    #$t_node->set_attr( 'a/lex.rf', undef );
 
     # rehang PersPron's children (theoretically there should be none, but ...)
     foreach my $a_child ( $a_node->get_children() ) {
