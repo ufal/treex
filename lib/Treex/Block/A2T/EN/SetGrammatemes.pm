@@ -49,7 +49,7 @@ Readonly my %PERSPRON_INFO => (
 );
 
 Readonly my %TECTO_NAME_FOR => (
-    'F' => 'fem', 'M' => 'inan', 'N' => 'neut',    # TODO why not 'M'=>'anim'?
+    'F' => 'fem', 'M' => 'anim', 'N' => 'neut',
     'S' => 'sg',  'P' => 'pl',
     '1' => '1',   '2' => '2',    '3' => '3',
     '-' => 'nr',
