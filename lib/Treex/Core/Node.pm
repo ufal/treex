@@ -80,6 +80,25 @@ sub set_attr {
         $attr_value = Treex::PML::List->new( @{$attr_value} );
     }
 
+    if ($attr_name =~ /\.rf$/){
+        my $document = $self->get_document();
+
+        # Delete previous back references
+        my $old_value = $self->get_attr($attr_name);
+        if ($old_value) {
+            if ( ref $old_value eq 'Treex::PML::List' && @$old_value ) {
+                $document->remove_backref( $attr_name, $self->id, $old_value );
+            }
+            else {
+                $document->remove_backref( $attr_name, $self->id, [$old_value] );
+            }
+        }
+
+        # Set new back references
+        my $ids = ref($attr_value) eq 'Treex::PML::List' ? $attr_value : [$attr_value];
+        $document->index_backref( $attr_name, $self->id, $ids );
+    }
+
     #simple attributes can be accessed directly
     return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/;
     log_fatal "Attribute '$attr_name' contains strange symbols."
@@ -119,33 +138,15 @@ sub set_deref_attr {
     my ( $self, $attr_name, $attr_value ) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 3;
 
-    # Remove previous back (reverse) references
-    my $document  = $self->get_document();
-    my $old_value = $self->get_attr($attr_name);
-    if ($old_value) {
-        if ( ref $old_value eq 'Treex::PML::List' && @$old_value ) {
-            $document->remove_backref( $attr_name, $self->id, $old_value );
-        }
-        else {
-            $document->remove_backref( $attr_name, $self->id, [$old_value] );
-        }
-    }
-
     # If $attr_value is an array of nodes
     if ( ref($attr_value) eq 'ARRAY' ) {
         my @list = map { $_->id } @{$attr_value};
         $attr_value = Treex::PML::List->new(@list);
-
-        # Set new back references
-        $document->index_backref( $attr_name, $self->id, \@list );
     }
 
     # If $attr_value is just one node
     else {
         $attr_value = $attr_value->id;
-
-        # Set the new back reference
-        $document->index_backref( $attr_name, $self->id, [$attr_value] );
     }
 
     # Set the new reference(s)
@@ -189,8 +190,8 @@ sub remove {
     # Remove the subtree from the document's indexing table
     foreach my $node ( $self, $self->get_descendants ) {
         if ( defined $node->id ) {
+            $document->_remove_references_to_node( $node );
             $document->index_node_by_id( $node->id, undef );
-            $document->remove_references_to_id( $node->id );
         }
     }
 
@@ -770,7 +771,6 @@ sub _get_reference_attrs {
 # Return IDs of all nodes to which there are reference links from this node (must be overridden in
 # the respective node types)
 sub _get_referenced_ids {
-
     my ($self) = @_;
     my $ret = {};
 
@@ -780,7 +780,7 @@ sub _get_referenced_ids {
 
     # all other references
     foreach my $ref_attr ( $self->_get_reference_attrs() ) {
-        my $val = $self->get_attr($ref_attr);
+        my $val = $self->get_attr($ref_attr) or next;
         if ( !ref $val ) {    # single-valued
             $ret->{$ref_attr} = [$val];
         }

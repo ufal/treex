@@ -273,7 +273,6 @@ sub index_node_by_id {
 
 # Add references to the reversed references list
 sub index_backref {
-
     my ( $self, $type, $source, $targets ) = @_;
     my $backref = $self->_backref;
 
@@ -290,7 +289,6 @@ sub index_backref {
 
 # Remove references from the reversed references list
 sub remove_backref {
-
     my ( $self, $type, $source, $targets ) = @_;
     my $backref = $self->_backref;
 
@@ -313,12 +311,19 @@ sub get_references_to_id {
     return $backref->{$id}; # TODO clone ?
 }
 
-# Remove all references leading to the node with the given id (calls remove_reference() on the source nodes)
-sub remove_references_to_id {
-
-    my ( $self, $id ) = @_;
+# Remove all references and backreferences leading to the $node (calls remove_reference() on the source nodes)
+sub _remove_references_to_node {
+    my ( $self, $node ) = @_;
+    my $id = $node->id;
     my $backref = $self->_backref;
 
+    # First, delete backreferences to the $node
+    my $refs = $node->_get_referenced_ids();
+    foreach my $type ( keys %{$refs} ) {
+        $self->remove_backref($type, $id, $refs->{$type} );
+    }
+
+    # Second, delete references to the $node
     return if ( !$backref->{$id} );
     my $node_backref = $backref->{$id};
 
@@ -327,6 +332,8 @@ sub remove_references_to_id {
             $self->get_node_by_id($source)->remove_reference( $type, $id );
         }
     }
+
+    # Third, delete backreferences from the $node
     delete $backref->{$id};
     return;
 }

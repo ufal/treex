@@ -31,31 +31,21 @@ sub is_coap_root {
 #----------- helpers for reference lists ------------
 
 sub _get_node_list {
-
     my ( $self, $list, $arg_ref ) = @_;
-    my $doc = $self->get_document();
-
     $list = $self->get_attr($list);
+    my $doc = $self->get_document();
     my @nodes = $list ? ( map { $doc->get_node_by_id($_) } @{$list} ) : ();
-
     return $arg_ref ? $self->_process_switches( $arg_ref, @nodes ) : @nodes;
 }
 
 sub _set_node_list {
-
     my $self = shift;
-    my $list = shift;
-    my $document = $self->get_document;
-    my $id = $self->id;
-    
-    $document->remove_backref($list, $id, $self->get_attr($list) ); # remove previous reverse reference
+    my $list = shift;    
     $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
-    $document->index_backref($list, $id, $self->get_attr($list) ); # add new reverse reference
     return;
 }
 
 sub _add_to_node_list {
-
     my $self = shift;
     my $list = shift;
 
@@ -71,17 +61,14 @@ sub _add_to_node_list {
 
     # set the new list value
     $self->set_attr( $list, [ @cur, @new ] );
-    $self->get_document->index_backref($list, $self->id, \@new ); # add new reverse reference
     return;
 }
 
 sub _remove_from_node_list {
-
     my $self = shift;
     my $list = shift;
     my @prev = $self->_get_node_list($list);
     my @remain;
-    my @removed;
 
     foreach my $node (@prev) {
         if ( !grep { $_ == $node } @_ ) {
@@ -89,10 +76,10 @@ sub _remove_from_node_list {
         }
     }
     $self->_set_node_list( $list, @remain );
-    $self->get_document->remove_backref($list, $self->id, \@_ ); # remove reverse references
     return;
 }
 
+# TODO: with backrefs this method is no more needed
 # remove unindexed IDs from a list attribute
 sub _update_list {
 
@@ -114,7 +101,6 @@ sub _update_list {
     }    
 
     $self->set_attr( $list, @nodes > 0 ? [@nodes] : undef );
-    $self->get_document->remove_backref($list, $self->id, \@invalid ); # remove reverse references of invalid
     return;
 }
 
@@ -130,14 +116,8 @@ sub get_lex_anode {
 
 sub set_lex_anode {
     my ( $self, $lex_anode ) = @_;
-    my $id = $self->id;
-    my $document = $self->get_document;
-    
-    $document->remove_backref('a/lex.rf', $id, [ $self->get_attr('a/lex.rf') ] ); # remove previous reverse reference
-    
     my $new_id = defined $lex_anode ? $lex_anode->get_attr('id') : undef;
     $self->set_attr( 'a/lex.rf', $new_id );
-    $document->index_backref('a/lex.rf', $id, [ $new_id ] ); # add new reverse reference
     return;
 }
 
@@ -195,6 +175,7 @@ sub get_coref_text_nodes {
 
 # it doesn't return a complete chain, just the members which are accessible
 # from the current node
+# TODO: with backrefs the whole chain is accessible now
 sub get_coref_chain {
     my ( $self, $arg_ref ) = @_;
 

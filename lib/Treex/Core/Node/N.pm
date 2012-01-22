@@ -28,8 +28,8 @@ sub get_anodes {
 sub set_anodes {
     my $self = shift;
 
-    $self->_clear_a_nodes();    
-    $self->get_document->index_backref('a.rf', $self->id, \@_ ); # add new reverse reference
+    #$self->_clear_a_nodes();    
+    #$self->get_document->index_backref('a.rf', $self->id, \@_ ); # add new reverse reference
     return $self->set_attr( 'a.rf', [ map { $_->get_attr('id') } @_ ] );
 }
 
@@ -48,7 +48,7 @@ sub _clear_a_nodes {
     my ($self) = @_;
     
     my $old_refs = $self->get_attr('a.rf');
-    $self->get_document->remove_backref('a.rf', $self->id, $old_refs ); # remove old reverse references    
+    #$self->get_document->remove_backref('a.rf', $self->id, $old_refs ); # remove old reverse references    
     foreach my $anode (@{$old_refs}){
         $anode->_set_n_node(undef);
     }    
