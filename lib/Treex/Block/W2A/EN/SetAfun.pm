@@ -20,10 +20,10 @@ sub process_atree {
 
 sub get_afun_for_subroot {
     my ($subroot) = @_;
-    
+
     my $afun = $subroot->afun;
     return $afun if $afun;
-    
+
     return 'AuxK' if $subroot->form =~ /^[.?!]$/;
     return 'Pred' if $subroot->tag  =~ /^(V|MD)/;
     return 'ExD';
@@ -84,17 +84,17 @@ sub find_subjects_of {
     # on the main verb or vice versa. Parsers may give such outputs.)
     my @left_nouns =
         grep { $_->tag =~ /^(NN|PRP|WP|CD$|\$)/ }
-        map { is_aux_or_modal_verb($_) ? $_->get_children() : $_ }
+        map { is_aux_or_modal_upwards($_) ? $_->get_children() : $_ }
         @left_echildren;
-        
+
     my @subjects = _select_subjects(@left_nouns);
-    return @subjects if @subjects;        
+    return @subjects if @subjects;
 
     # No left nouns found, so get also some noun-like children -
     # "which" or "that" in relative clauses can be also subjects.
     # exclude 'the' and 'a/an' since they never can be subjects
     @left_nouns = grep { $_->tag =~ /^(WDT|DT)/ && $_->form !~ m/^(an?|the)$/i } @left_echildren;
-    
+
     return $left_nouns[-1] if @left_nouns;
 
     # "'It is reversed', said Peter."
@@ -102,12 +102,11 @@ sub find_subjects_of {
         my $noun = first { $_->tag =~ $NOUN_REGEX } @echildren;
         return $noun if $noun;
     }
-    
-    @left_nouns = grep { $_->tag =~ /^JJ/ } @left_echildren;    
+
+    @left_nouns = grep { $_->tag =~ /^JJ/ } @left_echildren;
     return _select_subjects(@left_nouns);
 
 }
-
 
 sub _select_subjects {
     my (@nouns) = @_;
@@ -127,7 +126,6 @@ sub _select_subjects {
     }
     return;
 }
-
 
 # Is $node one of auxiliary verbs: be, do, will, have?
 # This subroutine is called only on nodes that precede their eff. parent.
@@ -154,11 +152,19 @@ sub is_aux_verb {
     return 0;
 }
 
-sub is_aux_or_modal_verb {
+sub is_aux_or_modal_upwards {
     my ($node) = @_;
     my $afun = $node->afun || '';
-    return 1 if $afun eq 'AuxV';
-    return $node->tag eq 'MD';
+
+    # $node is not aux nor modal verb
+    return 0 if $afun ne 'AuxV' && $node->tag ne 'MD';
+
+    # $node is aux/modal, but probably "downwards" as usual
+    return 0 if any { $_->tag =~ /V/ } $node->get_children();
+
+    # $node is aux/modal with no verb children,
+    # so it is probably wrong parsing and the main verb is its parent
+    return 1;
 }
 
 sub before_been {
@@ -185,8 +191,9 @@ sub get_afun {
     my $form = $node->form;
     return 'AuxK' if $form =~ /[?!]/;
     return 'AuxX' if $form eq ',';
+
     # any punctuation, including ``, -LRB-, -RRB-, but excluding % wrongly assigned to the Unicode punctuation category
-    return 'AuxG' if ($form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $form ne '%'); 
+    return 'AuxG' if ( $form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $form ne '%' );
 
     # Articles a, an, the
     my $lemma = $node->lemma;
@@ -197,7 +204,7 @@ sub get_afun {
 
     # Precompute some values (eparent can be the root, so let's use undefs => '')
     my ($eparent) = $node->get_eparents();
-    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma', {undefs => ''} );
+    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma', { undefs => '' } );
     my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
     my $precedes_ep = $node->precedes($eparent);
 
