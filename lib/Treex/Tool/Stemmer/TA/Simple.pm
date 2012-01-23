@@ -94,22 +94,24 @@ sub stem_sentence {
 
     foreach my $i ( 0 .. $#words ) {
         my $len_w = length $words[$i];
-        foreach my $n (@noun_suffixes_sorted) {
-            my $len_n = length $n;
-            next if ( $len_n == $len_w );
-            if ( $words[$i] =~ /$n$/ ) {
-                $words[$i] =~ s/$n$/ $noun_suffixes{$n}/;
-                last;
+        if ($len_w > 4) {
+            foreach my $n (@noun_suffixes_sorted) {
+                my $len_n = length $n;
+                next if ( $len_n == $len_w );
+                if ( $words[$i] =~ /$n$/ ) {
+                    $words[$i] =~ s/$n$/ $noun_suffixes{$n}/;
+                    last;
+                }
             }
-        }
-
-        foreach my $s (@verb_suffixes_sorted) {
-            my $len_v = length $s;
-            next if ( $len_v == $len_w );
-            if ( $words[$i] =~ /$s$/ ) {
-                $words[$i] =~ s/$s$/ $verb_suffixes{$s}/;
-                last;
-            }
+    
+            foreach my $s (@verb_suffixes_sorted) {
+                my $len_v = length $s;
+                next if ( $len_v == $len_w );
+                if ( $words[$i] =~ /$s$/ ) {
+                    $words[$i] =~ s/$s$/ $verb_suffixes{$s}/;
+                    last;
+                }
+            }            
         }
     }
     my $stemmed_sentence = join " ", @words;
