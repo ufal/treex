@@ -9,18 +9,29 @@ my $noun_suffixes_file =
   "$ENV{'TMT_ROOT'}/share/data/models/simple_stemmer/ta/noun_suffixes.txt";
 
 # load verb suffixes
-print STDERR "Loading Tamil verb suffixes ...\t\t";
+print STDERR "Loading Tamil verb suffixes:\t\t";
 our %verb_suffixes = load_suffixes($verb_suffixes_file);
 my @suff = keys %verb_suffixes;
 our @verb_suffixes_sorted = sort_hash_keys_by_length( \@suff );
 print STDERR "Done\n";
 
 # load noun suffixes
-print STDERR "Loading Tamil noun suffixes ...\t\t";
+print STDERR "Loading Tamil noun suffixes:\t\t";
 our %noun_suffixes = load_suffixes($noun_suffixes_file);
 @suff = keys %noun_suffixes;
 our @noun_suffixes_sorted = sort_hash_keys_by_length( \@suff );
 print STDERR "Done\n";
+
+# clitics {TAn, E, O, A, um}
+our $clitics = q{TAn};
+
+# postpositions
+our $postpositions = q{itamiruwTu|TotarpAka|TotarpAna|iliruwTu|maTTiyil|mUlamAka|TotarwTu|uLLAkavE|
+vaziyAka|eTirAna|illAmal|itaiyil|kuRiTTa|kuRiTTu|muRaiyE|paRRiya|allATa|allATu|
+arukil|cArpil|cArwTa|cErTTu|cErwTa|eTiril|illATa|iruwTa|iruwTu|itaiyE|kuRiTT|
+KuRiTT|mElAna|mITAna|munnAl|pinnar|piRaku|Tavira|utpata|arukE|koNta|mITum|mUlam|
+munpu|munpE|muTal|paRRi|pOnRa|varai|Akac|Akak|Akap|anRu|aRRa|inRi|itam|kIzE|mElE
+|mITu|otti|pati|kUta|pOla|pOTu|uLLa|utan|vita|Aka|Ana|kIz|mEl|Otu};
 
 sub load_suffixes {
     my $file = shift;
@@ -55,14 +66,30 @@ sub stem_sentence {
     chomp $sentence;
 
     $sentence =~ s/(^\s+|\s+$)//;
-    $sentence =~ s/\./ ./;
+    
+    # at least "comma"" and "." has to be separated from the original 
+    $sentence =~ s/\.$/ ./;
+    
+    # take out the sandhis (ex: patikkac => patikka +c) 
+    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
+
+    # split the clitics from word forms
+    $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 $2 /g;
+
+    # split the postpositions from word forms 
+    $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 $2 /g;
+
+    # take out the sandhis (ex: patikkac => patikka +c)  
+    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
 
     # get word tokens
     my @words = split /\s+/, $sentence;
-
+    
     foreach my $i ( 0 .. $#words ) {
-
+        my $len_w = length $words[$i];
         foreach my $n (@noun_suffixes_sorted) {
+            my $len_n = length $n;
+            next if ($len_n == $len_w);
             if ( $words[$i] =~ /$n$/ ) {
                 $words[$i] =~ s/$n$/ $noun_suffixes{$n}/;
                 last;
@@ -70,6 +97,8 @@ sub stem_sentence {
         }
 
         foreach my $s (@verb_suffixes_sorted) {
+            my $len_v = length $s;
+            next if ($len_v == $len_w);
             if ( $words[$i] =~ /$s$/ ) {
                 $words[$i] =~ s/$s$/ $verb_suffixes{$s}/;
                 last;
@@ -84,14 +113,21 @@ sub stem_document {
     my ( $infile, $outfile ) = @_;
     open( RHANDLE, "<", $infile ) or die "Error: cannot open file $infile\n";
     my @data = <RHANDLE>;
+    my $size = scalar(@data);
     close RHANDLE;
-
+    print "\n\n";
+    
+    $|=1;
     open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
-    map {
-        print WHANDLE Treex::Tool::Stemmer::TA::Simple::stem_sentence($_) . "\n"
-    } @data;
+    foreach my $i (0..$#data) {
+        my $out = sprintf("Morph splitting progress = [%08d / %08d] sentences completed", ($i+1), $size);
+        print $out;
+        print WHANDLE Treex::Tool::Stemmer::TA::Simple::stem_sentence($data[$i]) . "\n";
+        print "\r";        
+    }
     close WHANDLE;
 }
+
 1;
 
 __END__
