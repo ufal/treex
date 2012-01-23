@@ -269,6 +269,7 @@ sub _tnode_labels {
     $line2 .= $self->_colors->get( 'subfunctor', 1 ) . '.state'                  if $node->{is_state};
     $line2 .= $self->_colors->get( 'subfunctor', 1 ) . '.dsp_root'               if $node->{is_dsp_root};
     $line2 .= $self->_colors->get( 'member',     1 ) . '.member'                 if $node->{is_member};
+    $line2 .= $self->_colors->get( 'formeme',    1 ) . ' ' . $node->formeme      if $node->formeme;
 
     my @a_nodes = ();
     my $line3_1 = '';
