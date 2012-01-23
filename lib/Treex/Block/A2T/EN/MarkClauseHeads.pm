@@ -35,11 +35,16 @@ sub is_clause_head {
 
     # Rule 4: verb forms for which a subject candidate can be found, are likely to be finite
     if ( grep {/^(VB|VBD|VBN|VBP)$/} @tags ) {
-        my @leftchildren = map { $_->get_echildren( { or_topological => 1, preceding_only => 1 } ) }
+        return 1 if
+            any { $_->afun eq 'Sb' }
+            map { $_->get_echildren( { or_topological => 1 } ) }
             grep { $_->tag =~ /^V/ } @anodes;
-        for my $child (@leftchildren) {
-            return 1 if is_possible_subject($child);
-        }
+
+        #my @leftchildren = map { $_->get_echildren( { or_topological => 1, preceding_only => 1 } ) }
+        #    grep { $_->tag =~ /^V/ } @anodes;
+        #for my $child (@leftchildren) {
+        #    return 1 if is_possible_subject($child);
+        #}
     }
 
     # Otherwise: non-finite
