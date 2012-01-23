@@ -34,7 +34,8 @@ my $sumcluster8=0;
 #must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
 sub BUILD {
   my ($self) = @_;
-  
+  print "TREES".$self->trees;
+  print "\n";
   my @trees_to_process = split( "~", $self->trees );
   foreach my $tree (@trees_to_process) {
     my ( $sel, $weight ) = split( "#", $tree );
@@ -48,21 +49,21 @@ sub BUILD {
     %cluster1=%{$hashes[0]};
     %cluster2=%{$hashes[1]};
     %cluster3=%{$hashes[2]};
-    %cluster4=%{$hashes[3]};
-    %cluster5=%{$hashes[4]};
-   %cluster6=%{$hashes[5]};
-   %cluster7=%{$hashes[6]};
-   %cluster8=%{$hashes[7]};
+#     %cluster4=%{$hashes[3]};
+#     %cluster5=%{$hashes[4]};
+#    %cluster6=%{$hashes[5]};
+#    %cluster7=%{$hashes[6]};
+#    %cluster8=%{$hashes[7]};
  
     while( my ($k, $v) = each %use_tree ) {
       $sumcluster1+=$cluster1{$k};
       $sumcluster2+=$cluster2{$k};
       $sumcluster3+=$cluster3{$k};
-      $sumcluster4+=$cluster4{$k};
-      $sumcluster5+=$cluster5{$k};
-      $sumcluster6+=$cluster6{$k};
-      $sumcluster7+=$cluster7{$k};
-      $sumcluster8+=$cluster8{$k};
+#       $sumcluster4+=$cluster4{$k};
+#       $sumcluster5+=$cluster5{$k};
+#       $sumcluster6+=$cluster6{$k};
+#       $sumcluster7+=$cluster7{$k};
+#       $sumcluster8+=$cluster8{$k};
     }
     #?Organize all the weighting values per POS into a hash
     while( my ($k, $v) = each %{ $fcm->memberships } ) {
@@ -72,17 +73,17 @@ sub BUILD {
 	$pos_weights{$k}{"0"}=$weights[0];
 	$pos_weights{$k}{"1"}=$weights[1];
 	$pos_weights{$k}{"2"}=$weights[2];
-	$pos_weights{$k}{"3"}=$weights[3];
-	$pos_weights{$k}{"4"}=$weights[4];
-	$pos_weights{$k}{"5"}=$weights[5];
-	$pos_weights{$k}{"6"}=$weights[6];
-	$pos_weights{$k}{"7"}=$weights[7];
+# 	$pos_weights{$k}{"3"}=$weights[3];
+# 	$pos_weights{$k}{"4"}=$weights[4];
+# 	$pos_weights{$k}{"5"}=$weights[5];
+# 	$pos_weights{$k}{"6"}=$weights[6];
+# 	$pos_weights{$k}{"7"}=$weights[7];
 	#print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
          }
   }
-  if ( !$ENSEMBLE ) {
+ # if ( !$ENSEMBLE ) {
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
-  }
+ # }
   return;  
 }
 
@@ -94,20 +95,19 @@ sub process_tree_pos {
   $ENSEMBLE->set_n( scalar @todo );
   
   #print  "$model\t".($cluster1{$model}/$sumcluster1)."\n";
-  
   #print $model."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"0"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"1"})."\t".(($cluster1{$model}/$sumcluster1)*$pos_weights{"NNP"}{"2"})."\n";
-my $num_of_clusters=3;
+#my $num_of_clusters=3;
 
 
   foreach my $node (@todo) {
     my $w;
     #print $node->tag;
    if(exists $pos_weights{$node->tag}){
-     $w =(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"0"})+(($cluster2{$model}/$sumcluster2)*$pos_weights{$node->tag}{"1"})+(($cluster3{$model}/$sumcluster3)*$pos_weights{$node->tag}{"2"})+ (($cluster4{$model}/$sumcluster4)*$pos_weights{$node->tag}{"3"})+ (($cluster5{$model}/$sumcluster5)*$pos_weights{$node->tag}{"4"})+ (($cluster6{$model}/$sumcluster6)*$pos_weights{$node->tag}{"5"})+ (($cluster7{$model}/$sumcluster7)*$pos_weights{$node->tag}{"6"})+ (($cluster8{$model}/$sumcluster8)*$pos_weights{$node->tag}{"7"});
+     $w =(($cluster1{$model}/$sumcluster1)*$pos_weights{$node->tag}{"0"})+(($cluster2{$model}/$sumcluster2)*$pos_weights{$node->tag}{"1"})+(($cluster3{$model}/$sumcluster3)*$pos_weights{$node->tag}{"2"});
      #+ (($cluster4{$model}/$sumcluster4)*$pos_weights{$node->tag}{"3"})+ (($cluster5{$model}/$sumcluster5)*$pos_weights{$node->tag}{"4"})+ (($cluster6{$model}/$sumcluster6)*$pos_weights{$node->tag}{"5"})+ (($cluster7{$model}/$sumcluster7)*$pos_weights{$node->tag}{"6"})+ (($cluster8{$model}/$sumcluster8)*$pos_weights{$node->tag}{"7"})   
    }
      else{
-       my $uni_weight=.125;
+       my $uni_weight=.333;
 	#3
        $w =(($cluster1{$model}/$sumcluster1)*$uni_weight)+(($cluster2{$model}/$sumcluster2)*$uni_weight)+(($cluster3{$model}/$sumcluster3)*$uni_weight);
        
@@ -115,7 +115,7 @@ my $num_of_clusters=3;
      }
     #exponential $w= $w ** exp
     
-    $w= $w ** .5;
+   # $w= $w ** 10;
     $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );    
    #$ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );    
    
@@ -127,11 +127,12 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
-  $weight_tree= $weight_tree ** 11;
+  #$weight_tree= $weight_tree ** 10;
   #$weight_tree= 2 ** $weight_tree;
   
   #$weight_tree= (-1* log ($weight_tree));
  #$weight_tree=1;
+ #print "WEIGHT=$weight_tree\n";
   foreach my $node (@todo) {
    
     $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );    
