@@ -10,8 +10,9 @@ extends 'Treex::Core::Block';
 has 'trees' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'use_pos' => ( is => 'rw', isa => 'Str', default => 'false');
 has 'language' => ( is => 'rw', isa => 'Str', default =>'en');
+has 'ensemblename' => ( is => 'rw', isa => 'Str', default =>'ensemble');
 my $ENSEMBLE;
-my %use_tree = ();
+
 my $cluster;
 my $fcm;
 my %cluster1;
@@ -36,51 +37,8 @@ sub BUILD {
   my ($self) = @_;
   print "TREES".$self->trees;
   print "\n";
-  my @trees_to_process = split( "~", $self->trees );
-  foreach my $tree (@trees_to_process) {
-    my ( $sel, $weight ) = split( "#", $tree );
-    $use_tree{$sel} = $weight;
-  }
-  my %edges = ();
-    if($self->use_pos eq "true"){
-    $cluster = Treex::Tool::ML::Clustering::C_Cluster->new(); 
-    $fcm=$cluster->get_clusters();    
-   my @hashes= @{$fcm->centroids};
-    %cluster1=%{$hashes[0]};
-    %cluster2=%{$hashes[1]};
-    %cluster3=%{$hashes[2]};
-#     %cluster4=%{$hashes[3]};
-#     %cluster5=%{$hashes[4]};
-#    %cluster6=%{$hashes[5]};
-#    %cluster7=%{$hashes[6]};
-#    %cluster8=%{$hashes[7]};
- 
-    while( my ($k, $v) = each %use_tree ) {
-      $sumcluster1+=$cluster1{$k};
-      $sumcluster2+=$cluster2{$k};
-      $sumcluster3+=$cluster3{$k};
-#       $sumcluster4+=$cluster4{$k};
-#       $sumcluster5+=$cluster5{$k};
-#       $sumcluster6+=$cluster6{$k};
-#       $sumcluster7+=$cluster7{$k};
-#       $sumcluster8+=$cluster8{$k};
-    }
-    #?Organize all the weighting values per POS into a hash
-    while( my ($k, $v) = each %{ $fcm->memberships } ) {
-	#print "key: $k, value: $v.\n";
-	my @weights=@{$v};
-	#print @weights[0]."\n";
-	$pos_weights{$k}{"0"}=$weights[0];
-	$pos_weights{$k}{"1"}=$weights[1];
-	$pos_weights{$k}{"2"}=$weights[2];
-# 	$pos_weights{$k}{"3"}=$weights[3];
-# 	$pos_weights{$k}{"4"}=$weights[4];
-# 	$pos_weights{$k}{"5"}=$weights[5];
-# 	$pos_weights{$k}{"6"}=$weights[6];
-# 	$pos_weights{$k}{"7"}=$weights[7];
-	#print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
-         }
-  }
+  
+   
  # if ( !$ENSEMBLE ) {
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
  # }
@@ -145,6 +103,52 @@ sub process_bundle {
   my ( $self, $bundle ) = @_;
   my @zones = $bundle->get_all_zones();
   $ENSEMBLE->clear_edges();
+  my %use_tree = ();
+  my @trees_to_process = split( "~", $self->trees );
+  foreach my $tree (@trees_to_process) {
+    my ( $sel, $weight ) = split( "#", $tree );
+    $use_tree{$sel} = $weight;
+  }
+  
+  if($self->use_pos eq "true"){
+    $cluster = Treex::Tool::ML::Clustering::C_Cluster->new(); 
+    $fcm=$cluster->get_clusters();    
+    my @hashes= @{$fcm->centroids};
+    %cluster1=%{$hashes[0]};
+    %cluster2=%{$hashes[1]};
+    %cluster3=%{$hashes[2]};
+    #     %cluster4=%{$hashes[3]};
+    #     %cluster5=%{$hashes[4]};
+    #    %cluster6=%{$hashes[5]};
+    #    %cluster7=%{$hashes[6]};
+    #    %cluster8=%{$hashes[7]};
+    
+    while( my ($k, $v) = each %use_tree ) {
+      $sumcluster1+=$cluster1{$k};
+      $sumcluster2+=$cluster2{$k};
+      $sumcluster3+=$cluster3{$k};
+      #       $sumcluster4+=$cluster4{$k};
+      #       $sumcluster5+=$cluster5{$k};
+      #       $sumcluster6+=$cluster6{$k};
+      #       $sumcluster7+=$cluster7{$k};
+      #       $sumcluster8+=$cluster8{$k};
+    }
+    #?Organize all the weighting values per POS into a hash
+    while( my ($k, $v) = each %{ $fcm->memberships } ) {
+      #print "key: $k, value: $v.\n";
+      my @weights=@{$v};
+      #print @weights[0]."\n";
+      $pos_weights{$k}{"0"}=$weights[0];
+      $pos_weights{$k}{"1"}=$weights[1];
+      $pos_weights{$k}{"2"}=$weights[2];
+      # 	$pos_weights{$k}{"3"}=$weights[3];
+      # 	$pos_weights{$k}{"4"}=$weights[4];
+      # 	$pos_weights{$k}{"5"}=$weights[5];
+      # 	$pos_weights{$k}{"6"}=$weights[6];
+      # 	$pos_weights{$k}{"7"}=$weights[7];
+      #print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
+    }
+    }
   foreach my $zone (@zones) {
     if($zone->get_atree()->language eq $self->language){
    if ( exists $use_tree{ $zone->get_atree()->selector } ) {
@@ -166,7 +170,7 @@ sub make_graph {
   my ($self,$bundle) = @_;
   my $mst = $ENSEMBLE->get_mst();
   my $node;
-  my $tree_root = $bundle->get_tree( $self->language, 'a' );
+  my $tree_root = $bundle->get_tree( $self->language, 'a' ,$self->ensemblename );
   
   my @todo = $tree_root->get_descendants( { ordered => 1, add_self => 1 } );
   
