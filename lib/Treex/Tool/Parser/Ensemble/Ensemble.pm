@@ -4,11 +4,12 @@ use Graph::Directed;
 use Graph::ChuLiuEdmonds;
 use Moose;
 
-my %edges = ();
+my %edges;
 my $N     = 0;
 
 sub BUILD {
   my ( $self, $params ) = @_;
+  %edges = ();
 }
 
 sub add_edge {
