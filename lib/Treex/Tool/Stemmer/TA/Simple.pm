@@ -26,7 +26,8 @@ print STDERR "Done\n";
 our $clitics = q{TAn};
 
 # postpositions
-our $postpositions = q{itamiruwTu|TotarpAka|TotarpAna|iliruwTu|maTTiyil|mUlamAka|TotarwTu|uLLAkavE|
+our $postpositions =
+  q{itamiruwTu|TotarpAka|TotarpAna|iliruwTu|maTTiyil|mUlamAka|TotarwTu|uLLAkavE|
 vaziyAka|eTirAna|illAmal|itaiyil|kuRiTTa|kuRiTTu|muRaiyE|paRRiya|allATa|allATu|
 arukil|cArpil|cArwTa|cErTTu|cErwTa|eTiril|illATa|iruwTa|iruwTu|itaiyE|kuRiTT|
 KuRiTT|mElAna|mITAna|munnAl|pinnar|piRaku|Tavira|utpata|arukE|koNta|mITum|mUlam|
@@ -67,29 +68,35 @@ sub stem_sentence {
 
     $sentence =~ s/(^\s+|\s+$)//;
     
-    # at least "comma"" and "." has to be separated from the original 
+    return '' if ($sentence eq '');
+
+    # at least "comma"" and "." has to be separated from the original
     $sentence =~ s/\.$/ ./;
+    $sentence =~ s/,/ ,/g;
     
-    # take out the sandhis (ex: patikkac => patikka +c) 
+    # preserve the existing "+" symbols to avoid confusion with suffixes
+    $sentence =~ s/\+/<<+>>/g;
+
+    # take out the sandhis (ex: patikkac => patikka +c)
     $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
 
     # split the clitics from word forms
     $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 $2 /g;
 
-    # split the postpositions from word forms 
+    # split the postpositions from word forms
     $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 $2 /g;
 
-    # take out the sandhis (ex: patikkac => patikka +c)  
+    # take out the sandhis (ex: patikkac => patikka +c)
     $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
 
     # get word tokens
     my @words = split /\s+/, $sentence;
-    
+
     foreach my $i ( 0 .. $#words ) {
         my $len_w = length $words[$i];
         foreach my $n (@noun_suffixes_sorted) {
             my $len_n = length $n;
-            next if ($len_n == $len_w);
+            next if ( $len_n == $len_w );
             if ( $words[$i] =~ /$n$/ ) {
                 $words[$i] =~ s/$n$/ $noun_suffixes{$n}/;
                 last;
@@ -98,7 +105,7 @@ sub stem_sentence {
 
         foreach my $s (@verb_suffixes_sorted) {
             my $len_v = length $s;
-            next if ($len_v == $len_w);
+            next if ( $len_v == $len_w );
             if ( $words[$i] =~ /$s$/ ) {
                 $words[$i] =~ s/$s$/ $verb_suffixes{$s}/;
                 last;
@@ -109,6 +116,40 @@ sub stem_sentence {
     return $stemmed_sentence;
 }
 
+sub restore_sentence {
+    my $sentence = shift;
+    my $restored_sentence;
+    chomp $sentence;
+
+    $sentence =~ s/(^\s+|\s+$)//;
+    
+    return '' if ($sentence eq ''); 
+  
+    my @words = split /\s+/, $sentence;
+    my @st1;        
+    foreach my $i (0..$#words) {
+        my $st1_len = scalar(@st1);
+        if ($words[$i] =~ /^\+/) {
+            if ($st1_len > 0) {
+                $words[$i] =~ s/^\+//;
+                $st1[$#st1] = $st1[$#st1] . $words[$i]; 
+            }
+            else {
+                push @st1, $words[$i];
+            }
+        }
+        else {
+            push @st1, $words[$i];
+        }
+    }    
+    $restored_sentence = join " ", @st1;    
+    
+    # bring back the original "+" symbols in the document
+    $restored_sentence =~ s/<<\+>>/+/g;
+    
+    return $restored_sentence;
+}
+
 sub stem_document {
     my ( $infile, $outfile ) = @_;
     open( RHANDLE, "<", $infile ) or die "Error: cannot open file $infile\n";
@@ -116,16 +157,42 @@ sub stem_document {
     my $size = scalar(@data);
     close RHANDLE;
     print "\n\n";
-    
-    $|=1;
+
+    $| = 1;
     open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
-    foreach my $i (0..$#data) {
-        my $out = sprintf("Morph splitting progress = [%08d / %08d] sentences completed", ($i+1), $size);
+    foreach my $i ( 0 .. $#data ) {
+        my $out = sprintf(
+            "Morph splitting progress = [%08d / %08d] sentences completed",
+            ( $i + 1 ), $size );
         print $out;
-        print WHANDLE Treex::Tool::Stemmer::TA::Simple::stem_sentence($data[$i]) . "\n";
-        print "\r";        
+        print WHANDLE Treex::Tool::Stemmer::TA::Simple::stem_sentence(
+            $data[$i] )
+          . "\n";
+        print "\r";
     }
     close WHANDLE;
+}
+
+sub restore_document {
+    my ( $infile, $outfile ) = @_;
+    open( RHANDLE, "<", $infile ) or die "Error: cannot open file $infile\n";
+    my @data = <RHANDLE>;
+    my $size = scalar(@data);
+    close RHANDLE;
+    
+    $| = 1;
+    open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
+    foreach my $i ( 0 .. $#data ) {
+        my $out = sprintf(
+            "Restoring document progress = [%08d / %08d] sentences completed",
+            ( $i + 1 ), $size );
+        print $out;
+        print WHANDLE Treex::Tool::Stemmer::TA::Simple::restore_sentence(
+            $data[$i] )
+          . "\n";
+        print "\r";
+    }
+    close WHANDLE;    
 }
 
 1;
@@ -153,6 +220,27 @@ Treex::Tool::Stemmer::TA::Simple - rule based stemmer for Tamil
 
 use Treex::Tool::Stemmer::TA::Simple
 Treex::Tool::Stemmer::TA::Simple::stem_document($infile, $outfile);
+
+=head1 METHODS
+
+=over 10
+
+=item C<stem_sentence>
+
+Returns a stemmed sentence
+
+=item C<stem_document>
+
+Performs stemming on the entire document and writes the stemmed output to a file.
+
+=item C<restore_document>
+
+Given a stemmed document, this function restores the original document, meaning it concatenates all the 
+separated suffixes to the word form. It will restore only upto the point where the stemming started. That means,
+any preprocessing done for the aid of stemming a sentence will be lost. This will not impact the quality of the original document seriously. 
+
+=back
+ 
 
 =head1 AUTHOR
 
