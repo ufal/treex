@@ -34,39 +34,49 @@ sub process_tnode {
 
         my $parent = $t_node->get_parent;
         if (   defined $parent
-            && defined $parent->get_parent
-            &&
+            && defined $parent->get_parent &&
             defined $parent->get_parent->get_lex_anode &&
-            $parent->get_parent->get_lex_anode->lemma =~ /^[,-]$/
+            $parent->get_parent->get_lex_anode->lemma =~ /^[,-]$/ &&
+            defined $parent->get_left_neighbor
             )
         {
             $antec = $parent->get_left_neighbor;
         }
         else {
-            my $doc   = $t_node->get_document;
-            my @trees = map {
-                $_->get_tree(
-                    $t_node->language, $t_node->get_layer, $t_node->selector
-                    )
-            } $doc->get_bundles;
+            my @nodes = grep {$_->ord < $t_node->ord} 
+                $t_node->get_root->get_descendants({ordered => 1});
+            my @clause_heads = grep {$_->is_clause_head} @nodes;
 
-            my $tree_idx = List::MoreUtils::first_index { $_ == $t_node->get_root } @trees;
+            if (@clause_heads > 0) {
+                $antec = pop @clause_heads;
+            }
 
-            if ( $tree_idx > 0 ) {
-                my $prev_tree = $trees[ $tree_idx - 1 ];
 
-                my @prev_verbs = sort { $a->get_depth <=> $b->get_depth }
-                    (
-                    grep { defined $_->get_lex_anode && $_->get_lex_anode->tag =~ /^V/ }
-                        $prev_tree->descendants
-                    );
+
+            #my $doc   = $t_node->get_document;
+            #my @trees = map {
+            #    $_->get_tree(
+            #        $t_node->language, $t_node->get_layer, $t_node->selector
+            #        )
+            #} $doc->get_bundles;
+
+            #my $tree_idx = List::MoreUtils::first_index { $_ == $t_node->get_root } @trees;
+
+            #if ( $tree_idx > 0 ) {
+            #    my $prev_tree = $trees[ $tree_idx - 1 ];
+
+            #    my @prev_verbs = sort { $a->get_depth <=> $b->get_depth }
+            #        (
+            #        grep { defined $_->get_lex_anode && $_->get_lex_anode->tag =~ /^V/ }
+            #            $prev_tree->descendants
+            #        );
 
                 #$antec = $prev_verbs[0];
 
                 #my @prev_words = $prev_tree->descendants({ordered => 1});
                 #$antec = first { defined $_->get_lex_anode
                 #    && $_->get_lex_anode->tag =~ /^V/ } reverse @prev_words;
-            }
+            #}
 
         }
 
