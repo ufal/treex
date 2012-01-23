@@ -388,46 +388,47 @@ sub cluster {
 
   #Japenese data
   
-#   my %training = ('N' => {'mstproj'     =>875,'mstnonproj'     =>717,'nivreeager'     =>965,'nivrestandard'     =>967,'stacklazy'     =>958,'stackeager'     =>967,'stackproj'     =>954,'planar'     =>939,'2planar'     =>935,'covnonproj'     =>966,'covproj'     =>964},
-# 		  'ITJ' => {'mstproj'     =>213,'mstnonproj'     =>217,'nivreeager'     =>217,'nivrestandard'     =>218,'stacklazy'     =>217,'stackeager'     =>218,'stackproj'     =>214,'planar'     =>218,'2planar'     =>218,'covnonproj'     =>217,'covproj'     =>218},
-# 		  'V' => {'mstproj'     =>341,'mstnonproj'     =>321,'nivreeager'     =>375,'nivrestandard'     =>375,'stacklazy'     =>377,'stackeager'     =>377,'stackproj'     =>374,'planar'     =>371,'2planar'     =>345,'covnonproj'     =>376,'covproj'     =>379},
-# 		  '--' => {'mstproj'     =>4,'mstnonproj'     =>3,'nivreeager'     =>3,'nivrestandard'     =>3,'stacklazy'     =>2,'stackeager'     =>2,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},
-# 		  'UNIT' => {'mstproj'     =>17,'mstnonproj'     =>18,'nivreeager'     =>21,'nivrestandard'     =>21,'stacklazy'     =>21,'stackeager'     =>21,'stackproj'     =>21,'planar'     =>21,'2planar'     =>19,'covnonproj'     =>21,'covproj'     =>21},
-# 		  'CD' => {'mstproj'     =>257,'mstnonproj'     =>235,'nivreeager'     =>283,'nivrestandard'     =>277,'stacklazy'     =>281,'stackeager'     =>275,'stackproj'     =>277,'planar'     =>278,'2planar'     =>275,'covnonproj'     =>281,'covproj'     =>278},
-# 		  'CNJ' => {'mstproj'     =>97,'mstnonproj'     =>103,'nivreeager'     =>80,'nivrestandard'     =>96,'stacklazy'     =>85,'stackeager'     =>82,'stackproj'     =>77,'planar'     =>73,'2planar'     =>78,'covnonproj'     =>82,'covproj'     =>94},
-# 		  '.' => {'mstproj'     =>703,'mstnonproj'     =>708,'nivreeager'     =>708,'nivrestandard'     =>708,'stacklazy'     =>708,'stackeager'     =>708,'stackproj'     =>708,'planar'     =>708,'2planar'     =>708,'covnonproj'     =>708,'covproj'     =>708},
-# 		  'GR' => {'mstproj'     =>11,'mstnonproj'     =>11,'nivreeager'     =>11,'nivrestandard'     =>11,'stacklazy'     =>11,'stackeager'     =>11,'stackproj'     =>11,'planar'     =>11,'2planar'     =>11,'covnonproj'     =>11,'covproj'     =>11},
-# 		  'NT' => {'mstproj'     =>44,'mstnonproj'     =>42,'nivreeager'     =>56,'nivrestandard'     =>55,'stacklazy'     =>56,'stackeager'     =>55,'stackproj'     =>56,'planar'     =>56,'2planar'     =>56,'covnonproj'     =>55,'covproj'     =>56},
-# 		  'NAME' => {'mstproj'     =>180,'mstnonproj'     =>173,'nivreeager'     =>198,'nivrestandard'     =>194,'stacklazy'     =>193,'stackeager'     =>198,'stackproj'     =>194,'planar'     =>199,'2planar'     =>198,'covnonproj'     =>197,'covproj'     =>192},
-# 		  'ADV' => {'mstproj'     =>183,'mstnonproj'     =>167,'nivreeager'     =>219,'nivrestandard'     =>221,'stacklazy'     =>223,'stackeager'     =>224,'stackproj'     =>220,'planar'     =>199,'2planar'     =>193,'covnonproj'     =>220,'covproj'     =>219},
-# 		  'VAUX' => {'mstproj'     =>81,'mstnonproj'     =>76,'nivreeager'     =>86,'nivrestandard'     =>85,'stacklazy'     =>86,'stackeager'     =>86,'stackproj'     =>86,'planar'     =>85,'2planar'     =>83,'covnonproj'     =>87,'covproj'     =>86},
-# 		  'P' => {'mstproj'     =>826,'mstnonproj'     =>732,'nivreeager'     =>953,'nivrestandard'     =>950,'stacklazy'     =>955,'stackeager'     =>957,'stackproj'     =>951,'planar'     =>925,'2planar'     =>927,'covnonproj'     =>970,'covproj'     =>954},
-# 		  'ADJ' => {'mstproj'     =>171,'mstnonproj'     =>176,'nivreeager'     =>209,'nivrestandard'     =>207,'stacklazy'     =>209,'stackeager'     =>208,'stackproj'     =>206,'planar'     =>206,'2planar'     =>195,'covnonproj'     =>209,'covproj'     =>205},
-# 		  'VS' => {'mstproj'     =>78,'mstnonproj'     =>78,'nivreeager'     =>94,'nivrestandard'     =>96,'stacklazy'     =>92,'stackeager'     =>93,'stackproj'     =>96,'planar'     =>93,'2planar'     =>92,'covnonproj'     =>94,'covproj'     =>95},
-# 		  'PV' => {'mstproj'     =>337,'mstnonproj'     =>343,'nivreeager'     =>349,'nivrestandard'     =>348,'stacklazy'     =>347,'stackeager'     =>347,'stackproj'     =>348,'planar'     =>344,'2planar'     =>343,'covnonproj'     =>348,'covproj'     =>349},
-# 		  'VADJ' => {'mstproj'     =>41,'mstnonproj'     =>40,'nivreeager'     =>41,'nivrestandard'     =>41,'stacklazy'     =>41,'stackeager'     =>41,'stackproj'     =>41,'planar'     =>37,'2planar'     =>35,'covnonproj'     =>41,'covproj'     =>41},
-# 		  'PS' => {'mstproj'     =>424,'mstnonproj'     =>417,'nivreeager'     =>428,'nivrestandard'     =>435,'stacklazy'     =>443,'stackeager'     =>443,'stackproj'     =>431,'planar'     =>434,'2planar'     =>427,'covnonproj'     =>441,'covproj'     =>441},);
-  
-  #Italian
-  my %training = ('S' => {'mstproj'     =>1025,'mstnonproj'     =>976,'nivreeager'     =>1076,'nivrestandard'     =>992,'stacklazy'     =>995,'stackeager'     =>81,'stackproj'     =>81,'planar'     =>1077,'2planar'     =>81,'covnonproj'     =>81,'covproj'     =>81},
-		  'A' => {'mstproj'     =>277,'mstnonproj'     =>272,'nivreeager'     =>274,'nivrestandard'     =>274,'stacklazy'     =>274,'stackeager'     =>3,'stackproj'     =>3,'planar'     =>275,'2planar'     =>3,'covnonproj'     =>3,'covproj'     =>3},
-		  'PU' => {'mstproj'     =>557,'mstnonproj'     =>435,'nivreeager'     =>660,'nivrestandard'     =>660,'stacklazy'     =>662,'stackeager'     =>1,'stackproj'     =>1,'planar'     =>664,'2planar'     =>1,'covnonproj'     =>1,'covproj'     =>1},
-		  'N' => {'mstproj'     =>121,'mstnonproj'     =>106,'nivreeager'     =>135,'nivrestandard'     =>136,'stacklazy'     =>136,'stackeager'     =>6,'stackproj'     =>6,'planar'     =>133,'2planar'     =>6,'covnonproj'     =>6,'covproj'     =>6},
-		  'P' => {'mstproj'     =>102,'mstnonproj'     =>109,'nivreeager'     =>162,'nivrestandard'     =>120,'stacklazy'     =>128,'stackeager'     =>1,'stackproj'     =>1,'planar'     =>159,'2planar'     =>1,'covnonproj'     =>1,'covproj'     =>1},
-		  'E' => {'mstproj'     =>557,'mstnonproj'     =>495,'nivreeager'     =>608,'nivrestandard'     =>586,'stacklazy'     =>581,'stackeager'     =>4,'stackproj'     =>4,'planar'     =>603,'2planar'     =>4,'covnonproj'     =>4,'covproj'     =>4},
-		  'B' => {'mstproj'     =>149,'mstnonproj'     =>137,'nivreeager'     =>157,'nivrestandard'     =>148,'stacklazy'     =>150,'stackeager'     =>0,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},
-		  'V' => {'mstproj'     =>398,'mstnonproj'     =>415,'nivreeager'     =>464,'nivrestandard'     =>422,'stacklazy'     =>402,'stackeager'     =>226,'stackproj'     =>226,'planar'     =>475,'2planar'     =>226,'covnonproj'     =>226,'covproj'     =>226},
-		  'SA' => {'mstproj'     =>2,'mstnonproj'     =>2,'nivreeager'     =>2,'nivrestandard'     =>2,'stacklazy'     =>2,'stackeager'     =>0,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},
-		  'C' => {'mstproj'     =>85,'mstnonproj'     =>71,'nivreeager'     =>110,'nivrestandard'     =>94,'stacklazy'     =>95,'stackeager'     =>0,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},
-		  'D' => {'mstproj'     =>41,'mstnonproj'     =>37,'nivreeager'     =>41,'nivrestandard'     =>37,'stacklazy'     =>37,'stackeager'     =>0,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},
-		  'R' => {'mstproj'     =>328,'mstnonproj'     =>320,'nivreeager'     =>370,'nivrestandard'     =>246,'stacklazy'     =>217,'stackeager'     =>0,'stackproj'     =>0,'planar'     =>0,'2planar'     =>0,'covnonproj'     =>0,'covproj'     =>0},);
+  my %training = ('N' => {'mstproj'     =>821,'mstnonproj'     =>661,'nivreeager'     =>921,'nivrestandard'     =>924,'stacklazy'     =>938,'stackeager'     =>931,'stackproj'     =>924,'planar'     =>895,'2planar'     =>890,},
+		  'ITJ' => {'mstproj'     =>151,'mstnonproj'     =>153,'nivreeager'     =>152,'nivrestandard'     =>153,'stacklazy'     =>154,'stackeager'     =>153,'stackproj'     =>149,'planar'     =>153,'2planar'     =>153,},
+		  'V' => {'mstproj'     =>305,'mstnonproj'     =>305,'nivreeager'     =>366,'nivrestandard'     =>368,'stacklazy'     =>369,'stackeager'     =>367,'stackproj'     =>365,'planar'     =>365,'2planar'     =>351,},
+		  '--' => {'mstproj'     =>5,'mstnonproj'     =>4,'nivreeager'     =>3,'nivrestandard'     =>4,'stacklazy'     =>3,'stackeager'     =>4,'stackproj'     =>1,'planar'     =>4,'2planar'     =>3,},
+		  'UNIT' => {'mstproj'     =>17,'mstnonproj'     =>18,'nivreeager'     =>19,'nivrestandard'     =>19,'stacklazy'     =>19,'stackeager'     =>19,'stackproj'     =>19,'planar'     =>18,'2planar'     =>18,},
+		  'CD' => {'mstproj'     =>178,'mstnonproj'     =>171,'nivreeager'     =>213,'nivrestandard'     =>211,'stacklazy'     =>210,'stackeager'     =>211,'stackproj'     =>211,'planar'     =>209,'2planar'     =>208,},
+		  'CNJ' => {'mstproj'     =>53,'mstnonproj'     =>61,'nivreeager'     =>69,'nivrestandard'     =>75,'stacklazy'     =>70,'stackeager'     =>67,'stackproj'     =>64,'planar'     =>65,'2planar'     =>66,},
+		  '.' => {'mstproj'     =>498,'mstnonproj'     =>500,'nivreeager'     =>500,'nivrestandard'     =>500,'stacklazy'     =>500,'stackeager'     =>500,'stackproj'     =>500,'planar'     =>500,'2planar'     =>500,},
+		  'GR' => {'mstproj'     =>5,'mstnonproj'     =>5,'nivreeager'     =>5,'nivrestandard'     =>5,'stacklazy'     =>5,'stackeager'     =>5,'stackproj'     =>5,'planar'     =>5,'2planar'     =>5,},
+		  'NT' => {'mstproj'     =>45,'mstnonproj'     =>44,'nivreeager'     =>54,'nivrestandard'     =>54,'stacklazy'     =>53,'stackeager'     =>54,'stackproj'     =>54,'planar'     =>53,'2planar'     =>52,},
+		  'ADV' => {'mstproj'     =>177,'mstnonproj'     =>163,'nivreeager'     =>201,'nivrestandard'     =>203,'stacklazy'     =>205,'stackeager'     =>204,'stackproj'     =>202,'planar'     =>187,'2planar'     =>188,},
+		  'NAME' => {'mstproj'     =>94,'mstnonproj'     =>87,'nivreeager'     =>103,'nivrestandard'     =>101,'stacklazy'     =>102,'stackeager'     =>102,'stackproj'     =>101,'planar'     =>101,'2planar'     =>102,},
+		  'VAUX' => {'mstproj'     =>80,'mstnonproj'     =>80,'nivreeager'     =>82,'nivrestandard'     =>81,'stacklazy'     =>81,'stackeager'     =>81,'stackproj'     =>81,'planar'     =>81,'2planar'     =>81,},
+		  'P' => {'mstproj'     =>785,'mstnonproj'     =>684,'nivreeager'     =>891,'nivrestandard'     =>884,'stacklazy'     =>900,'stackeager'     =>897,'stackproj'     =>882,'planar'     =>853,'2planar'     =>858,},
+		  'ADJ' => {'mstproj'     =>177,'mstnonproj'     =>172,'nivreeager'     =>189,'nivrestandard'     =>189,'stacklazy'     =>189,'stackeager'     =>190,'stackproj'     =>188,'planar'     =>190,'2planar'     =>182,},
+		  'VS' => {'mstproj'     =>65,'mstnonproj'     =>64,'nivreeager'     =>72,'nivrestandard'     =>73,'stacklazy'     =>72,'stackeager'     =>72,'stackproj'     =>73,'planar'     =>72,'2planar'     =>72,},
+		  'PV' => {'mstproj'     =>330,'mstnonproj'     =>342,'nivreeager'     =>351,'nivrestandard'     =>350,'stacklazy'     =>351,'stackeager'     =>351,'stackproj'     =>344,'planar'     =>348,'2planar'     =>344,},
+		  'VADJ' => {'mstproj'     =>52,'mstnonproj'     =>49,'nivreeager'     =>55,'nivrestandard'     =>55,'stacklazy'     =>55,'stackeager'     =>55,'stackproj'     =>55,'planar'     =>54,'2planar'     =>49,},
+		  'PS' => {'mstproj'     =>370,'mstnonproj'     =>375,'nivreeager'     =>410,'nivrestandard'     =>401,'stacklazy'     =>402,'stackeager'     =>406,'stackproj'     =>382,'planar'     =>394,'2planar'     =>385,},);
+#   
+#   #Italian
+#   my %training = ('A' => {'mstproj'     =>639,'mstnonproj'     =>629,'nivreeager'     =>639,'nivrestandard'     =>637,'stacklazy'     =>634,'stackeager'     =>642,'stackproj'     =>637,'planar'     =>643,'2planar'     =>645,},
+# 		  'S' => {'mstproj'     =>2147,'mstnonproj'     =>2148,'nivreeager'     =>2283,'nivrestandard'     =>2270,'stacklazy'     =>2285,'stackeager'     =>2290,'stackproj'     =>2285,'planar'     =>2287,'2planar'     =>2303,},
+# 		  'PU' => {'mstproj'     =>1206,'mstnonproj'     =>1049,'nivreeager'     =>1390,'nivrestandard'     =>1380,'stacklazy'     =>1377,'stackeager'     =>1380,'stackproj'     =>1383,'planar'     =>1390,'2planar'     =>1394,},
+# 		  'N' => {'mstproj'     =>233,'mstnonproj'     =>228,'nivreeager'     =>230,'nivrestandard'     =>234,'stacklazy'     =>235,'stackeager'     =>232,'stackproj'     =>232,'planar'     =>230,'2planar'     =>242,},
+# 		  'X' => {'mstproj'     =>1,'mstnonproj'     =>0,'nivreeager'     =>1,'nivrestandard'     =>1,'stacklazy'     =>1,'stackeager'     =>1,'stackproj'     =>1,'planar'     =>1,'2planar'     =>1,},
+# 		  'P' => {'mstproj'     =>359,'mstnonproj'     =>361,'nivreeager'     =>377,'nivrestandard'     =>370,'stacklazy'     =>374,'stackeager'     =>373,'stackproj'     =>372,'planar'     =>379,'2planar'     =>379,},
+# 		  'B' => {'mstproj'     =>387,'mstnonproj'     =>392,'nivreeager'     =>425,'nivrestandard'     =>415,'stacklazy'     =>421,'stackeager'     =>413,'stackproj'     =>412,'planar'     =>424,'2planar'     =>420,},
+# 		  'E' => {'mstproj'     =>1136,'mstnonproj'     =>990,'nivreeager'     =>1215,'nivrestandard'     =>1199,'stacklazy'     =>1205,'stackeager'     =>1201,'stackproj'     =>1211,'planar'     =>1213,'2planar'     =>1230,},
+# 		  'V' => {'mstproj'     =>849,'mstnonproj'     =>832,'nivreeager'     =>931,'nivrestandard'     =>902,'stacklazy'     =>889,'stackeager'     =>898,'stackproj'     =>910,'planar'     =>918,'2planar'     =>948,},
+# 		  'SA' => {'mstproj'     =>2,'mstnonproj'     =>3,'nivreeager'     =>7,'nivrestandard'     =>10,'stacklazy'     =>9,'stackeager'     =>9,'stackproj'     =>10,'planar'     =>8,'2planar'     =>8,},
+# 		  'C' => {'mstproj'     =>231,'mstnonproj'     =>216,'nivreeager'     =>314,'nivrestandard'     =>293,'stacklazy'     =>297,'stackeager'     =>305,'stackproj'     =>304,'planar'     =>297,'2planar'     =>293,},
+# 		  'D' => {'mstproj'     =>113,'mstnonproj'     =>114,'nivreeager'     =>115,'nivrestandard'     =>116,'stacklazy'     =>117,'stackeager'     =>117,'stackproj'     =>117,'planar'     =>115,'2planar'     =>116,},
+# 		  'R' => {'mstproj'     =>809,'mstnonproj'     =>815,'nivreeager'     =>828,'nivrestandard'     =>825,'stacklazy'     =>825,'stackeager'     =>827,'stackproj'     =>826,'planar'     =>830,'2planar'     =>829,},);
   
   foreach my $id ( keys %training ) {
   $fcm->add_document( $id, $training{$id} );
   }
   
-  my $num_cluster = 8;
-  my $num_iter    = 40;
+  my $num_cluster = 3;
+  my $num_iter    = 20;
   $fcm->do_clustering( $num_cluster, $num_iter );
   
  # show clustering result
