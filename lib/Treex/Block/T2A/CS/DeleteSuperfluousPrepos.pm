@@ -31,11 +31,9 @@ sub process_tnode {
         $prev_ord = $ord;
     }
 
-    my %deleted_id;
     foreach my $anode (@auxp_anodes) {
         foreach my $child ( $anode->get_children ) {
             if ( ( $child->afun || '' ) eq 'AuxP' ) {
-                $deleted_id{ $child->id } = 1;
                 $child->remove();
             }
             else {
@@ -43,24 +41,9 @@ sub process_tnode {
                 $child->set_is_member( $anode->is_member );
             }
         }
-        $deleted_id{ $anode->id } = 1;
         $anode->remove();
     }
 
-    return if !%deleted_id;
-    foreach my $tnode (@tmembers) {
-        $self->_delete_aux_references( $tnode, \%deleted_id );
-    }
-    return;
-}
-
-# Until back-references are implemented in Treex,
-# we must delete references to deleted nodes manually.
-sub _delete_aux_references {
-    my ( $self, $tnode, $deleted_id_ref ) = @_;
-    my $aux_anodes_ref = $tnode->get_attr('a/aux.rf') or return;
-    my @ids = grep { !$deleted_id_ref->{$_} } @$aux_anodes_ref;
-    $tnode->set_attr( 'a/aux.rf', Treex::PML::List->new(@ids) );
     return;
 }
 
