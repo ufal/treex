@@ -67,13 +67,13 @@ sub stem_sentence {
     chomp $sentence;
 
     $sentence =~ s/(^\s+|\s+$)//;
-    
-    return '' if ($sentence eq '');
+
+    return '' if ( $sentence eq '' );
 
     # at least "comma"" and "." has to be separated from the original
     $sentence =~ s/\.$/ ./;
     $sentence =~ s/,/ ,/g;
-    
+
     # preserve the existing "+" symbols to avoid confusion with suffixes
     $sentence =~ s/\+/<<+>>/g;
 
@@ -81,10 +81,10 @@ sub stem_sentence {
     $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
 
     # split the clitics from word forms
-    $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 $2 /g;
+    $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 +$2 /g;
 
     # split the postpositions from word forms
-    $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 $2 /g;
+    $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 +$2 /g;
 
     # take out the sandhis (ex: patikkac => patikka +c)
     $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
@@ -92,29 +92,50 @@ sub stem_sentence {
     # get word tokens
     my @words = split /\s+/, $sentence;
 
+    # words after application of noun suffixes separation
+    my @words_after_n;
+
     foreach my $i ( 0 .. $#words ) {
         my $len_w = length $words[$i];
-        if ($len_w > 4) {
+        if ( $len_w > 4 ) {
+            my $change = 0;
             foreach my $n (@noun_suffixes_sorted) {
                 my $len_n = length $n;
                 next if ( $len_n == $len_w );
                 if ( $words[$i] =~ /$n$/ ) {
                     $words[$i] =~ s/$n$/ $noun_suffixes{$n}/;
+                    $words[$i] =~ s/(^\s+|\s+$)//;
+                    my @newwords = split /\s+/, $words[$i];
+                    push @words_after_n, @newwords;
+                    $change = 1;
                     last;
                 }
             }
-    
-            foreach my $s (@verb_suffixes_sorted) {
-                my $len_v = length $s;
-                next if ( $len_v == $len_w );
-                if ( $words[$i] =~ /$s$/ ) {
-                    $words[$i] =~ s/$s$/ $verb_suffixes{$s}/;
-                    last;
-                }
-            }            
+            if ( !$change ) {
+                push @words_after_n, $words[$i];
+            }
+        }
+        else {
+            push @words_after_n, $words[$i];
         }
     }
-    my $stemmed_sentence = join " ", @words;
+
+    #print "words before= " . join ("\t:", @words_after_n) . "\n";
+    foreach my $i ( 0 .. $#words_after_n ) {
+        my $len_w = length $words_after_n[$i];
+        if ( $len_w > 4 ) {
+            foreach my $s (@verb_suffixes_sorted) {
+                my $len_v = length $s;
+                last if ( $words_after_n[$i] =~ /^\+/ );
+                next if ( $len_v == $len_w );
+                if ( $words_after_n[$i] =~ /$s$/ ) {
+                    $words_after_n[$i] =~ s/$s$/ $verb_suffixes{$s}/;
+                    last;
+                }
+            }
+        }
+    }
+    my $stemmed_sentence = join " ", @words_after_n;
     return $stemmed_sentence;
 }
 
@@ -124,17 +145,17 @@ sub restore_sentence {
     chomp $sentence;
 
     $sentence =~ s/(^\s+|\s+$)//;
-    
-    return '' if ($sentence eq ''); 
-  
+
+    return '' if ( $sentence eq '' );
+
     my @words = split /\s+/, $sentence;
-    my @st1;        
-    foreach my $i (0..$#words) {
+    my @st1;
+    foreach my $i ( 0 .. $#words ) {
         my $st1_len = scalar(@st1);
-        if ($words[$i] =~ /^\+/) {
-            if ($st1_len > 0) {
+        if ( $words[$i] =~ /^\+/ ) {
+            if ( $st1_len > 0 ) {
                 $words[$i] =~ s/^\+//;
-                $st1[$#st1] = $st1[$#st1] . $words[$i]; 
+                $st1[$#st1] = $st1[$#st1] . $words[$i];
             }
             else {
                 push @st1, $words[$i];
@@ -143,12 +164,12 @@ sub restore_sentence {
         else {
             push @st1, $words[$i];
         }
-    }    
-    $restored_sentence = join " ", @st1;    
-    
+    }
+    $restored_sentence = join " ", @st1;
+
     # bring back the original "+" symbols in the document
     $restored_sentence =~ s/<<\+>>/+/g;
-    
+
     return $restored_sentence;
 }
 
@@ -181,7 +202,7 @@ sub restore_document {
     my @data = <RHANDLE>;
     my $size = scalar(@data);
     close RHANDLE;
-    
+
     $| = 1;
     open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
     foreach my $i ( 0 .. $#data ) {
@@ -194,7 +215,7 @@ sub restore_document {
           . "\n";
         print "\r";
     }
-    close WHANDLE;    
+    close WHANDLE;
 }
 
 1;
