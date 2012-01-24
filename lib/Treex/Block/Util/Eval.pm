@@ -47,15 +47,19 @@ sub process_document {
     }
 
     if ( $self->_args->{_bundle} ) {
+        my $bundleNo = 1;
         foreach my $bundle ( $document->get_bundles() ) {
-            $self->process_bundle($bundle);
+            if ( !$self->grep_bundle || $self->grep_bundle == $bundleNo ) {
+                $self->process_bundle($bundle, $bundleNo);
+            }
+            $bundleNo++;
         }
     }
     return;
 }
 
 sub process_bundle {
-    my ( $self, $bundle ) = @_;
+    my ( $self, $bundle, $bundleNo ) = @_;
 
     # Extract variables $document ($doc), so they can be used in eval code
     my $document = $bundle->get_document();

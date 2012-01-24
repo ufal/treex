@@ -12,6 +12,14 @@ has scenario => (
     weak_ref => 1,
 );
 
+has grep_bundle => (
+    is            => 'ro',
+    isa           => 'Int',                                            # or regex in future?
+    default       => 0,
+    documentation => 'apply process_bundle only on the n-th bundle,'
+        . ' 0 (default) means apply to all bundles. Useful for debugging.',
+);
+
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
 # or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),
 # it is returned as a default value of the attribute $self->language
@@ -79,7 +87,10 @@ sub process_document {
 
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
-        $self->process_bundle( $bundle, $bundleNo++ );
+        if ( !$self->grep_bundle || $self->grep_bundle == $bundleNo ) {
+            $self->process_bundle( $bundle, $bundleNo );
+        }
+        $bundleNo++;
     }
     return 1;
 }
