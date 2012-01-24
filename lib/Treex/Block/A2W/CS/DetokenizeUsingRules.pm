@@ -8,17 +8,13 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     my $sentence = $zone->sentence;
 
-    #    grep { !/#[A-Z]/ and !/^\-[A-Z]{3}\-$/ }
-
     $sentence =~ s/ +/ /g;
-    $sentence =~ s/ ([,.?:;])/$1/g;
+    $sentence =~ s/ ([,.?:;!])/$1/g;
     $sentence =~ s/ “/“/g;
     $sentence =~ s/„ /„/g;
 
-    $sentence =~ s/([\-\"„;:,]),/$1/g;          # !!! tohle by chtelo udelat poradne a umazavat uz a-uzly
-    $sentence =~ s/ ?([\.,]) ?([“"])/$1$2/g;    # mazani mezer kolem interpunkce
-    $sentence =~ s/ se by / by se /g;             # !!! na prerovnani klitik bude potreba samostatny blok
-    $sentence =~ s/ by že / že by /g;           # !!! na prerovnani klitik bude potreba samostatny blok
+    $sentence =~ s/([-"„;:,]),/$1/g;          # !!! tohle by chtelo udelat poradne a umazavat uz a-uzly
+    $sentence =~ s/ ?([.,!?]) ?([“"])/$1$2/g;    # mazani mezer kolem interpunkce
 
     $sentence =~ s/ -- / - /g;
 
