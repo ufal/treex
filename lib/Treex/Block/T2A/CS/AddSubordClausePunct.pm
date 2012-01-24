@@ -79,6 +79,13 @@ sub process_zone {
         #        }
         #    }
         #}
+
+        #if ( $lemmas[$i] eq '“'){
+        #    my $quot_root = $anodes[$i]->get_parent(); 
+        #    if ($quot_root->get_attr('morphcat/pos') eq 'V' && $quot_root->precedes($comma) ) {
+        #        $comma->shift_before_node( $anodes[$i] );
+        #    }
+        #}
     }
 
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';

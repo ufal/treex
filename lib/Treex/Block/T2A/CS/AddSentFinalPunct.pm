@@ -21,10 +21,15 @@ sub process_zone {
     my $punct_mark = ( ( $first_troot->sentmod || '' ) eq 'inter' ) ? '?' : '.';
 
     #!!! dirty traversing of the pyramid at the lowest level
-    # in order to distinguish full sentences from titles
+    # in order to distinguish full sentences from titles and imperatives
     # TODO: source language dependent code in synthesis!!!
     my $en_zone = $zone->get_bundle()->get_zone( 'en', 'src' );
-    return if $en_zone && $en_zone->sentence && $en_zone->sentence !~ /\./ && $punct_mark eq '.';
+    if ($en_zone && $en_zone->sentence){
+        if ($en_zone->sentence =~ /!$/ ) {
+            $punct_mark = '!';
+        }
+        return if $punct_mark eq '.' && $en_zone->sentence !~ /\./;
+    }
 
     my $punct = $aroot->create_child(
         {   'form'          => $punct_mark,
@@ -34,10 +39,32 @@ sub process_zone {
             'clause_number' => 0,
         }
     );
-    $punct->shift_after_subtree($aroot);
+
+    # The $punct goes to the end, except for some sentences with quotes:
+    #   Do you know the word "pun"?
+    #   "How are you?"
+    if (  _ends_with_clause_in_quotes($last_token) ) {
+        $punct->shift_before_node( $last_token->get_lex_anode() );
+    }
+    else {
+        $punct->shift_after_subtree($aroot);
+    }
 
     # TODO jednou by se mely pridat i koreny primych reci!!!
     return;
+}
+
+sub _ends_with_clause_in_quotes {
+    my ($last_token) = @_;
+    return 0 if $last_token->t_lemma ne q{“};
+    my @toks = $last_token->get_root->get_descendants( { ordered => 1 } );
+    pop @toks;
+    while (@toks) {
+        my $tok = pop @toks;
+        return 0 if $tok->t_lemma eq '„';
+        return 1 if $tok->is_clause_head();
+    }
+    return 0;
 }
 
 1;

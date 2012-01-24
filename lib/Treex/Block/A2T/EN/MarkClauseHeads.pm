@@ -33,7 +33,7 @@ sub is_clause_head {
         return 0 if $forms[$index] eq 'to';
     }
 
-    # Rule 4: verb forms for which a subject candidate can be found, are likely to be finite
+    # Rule 4: verb forms for with a subject are (likely to be) finite
     if ( grep {/^(VB|VBD|VBN|VBP)$/} @tags ) {
         return 1 if
             any { $_->afun eq 'Sb' }

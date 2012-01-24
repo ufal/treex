@@ -345,8 +345,12 @@ sub _get_sentmod {
     my ($zone) = @_;
     my $a_root = $zone->get_atree;
 
-    # Questions must have a questionmark as the last token.
-    my $last_token = $a_root->get_descendants( { last_only => 1 } );
+    # Questions must have a questionmark as the $last_token
+    # (but the $last_token may be followed by quotation marks or brackets).
+    my ($last_token, @toks) = reverse $a_root->get_descendants( { ordered => 1 } );
+    if (@toks && $last_token->afun eq 'AuxG'){
+        $last_token = shift @toks;
+    }
     return 'inter' if $last_token && $last_token->form eq '?';
 
     # In imperative sentences, the head of the main clause

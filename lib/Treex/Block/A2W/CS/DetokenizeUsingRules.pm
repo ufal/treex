@@ -12,7 +12,6 @@ sub process_zone {
 
     $sentence =~ s/ +/ /g;
     $sentence =~ s/ ([,.?:;])/$1/g;
-    $sentence =~ s/(["“])\./\.$1/g;
     $sentence =~ s/ “/“/g;
     $sentence =~ s/„ /„/g;
 
