@@ -43,7 +43,7 @@ sub _build_colors {
         'nodetype'    => '#00008b',
         'sempos'      => '#8b008b',
         'phrase'      => '#00008b',
-        'formeme'     => '#004000',
+        'formeme'     => '#b000b0',
 
         'clause0' => '#ff00ff',         #magenta
         'clause1' => '#ffa500',         #orange
