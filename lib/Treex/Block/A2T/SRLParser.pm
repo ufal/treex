@@ -34,22 +34,30 @@ sub process_atree {
     my %has_parent;
 
     # predict labels with MaxEntToolkit
+    my @features = ();
     foreach my $predicate (@a_nodes) {
-        if ($predicate_identifier->is_predicate($predicate)) { 
-            foreach my $depword (@a_nodes) {
-                my $features = $feature_extractor->extract_features($predicate, $depword);
-                # TODO submit features to maxent to get probability distribution of possible labels
-                # For now, make first shot by predicting label with MaxEntToolkit.
-                my $label = $maxent->predict($features);
-               
-                if ($label ne $self->empty_sign) {
-                    $semantic_dependencies{$predicate->id} = {} if not exists $semantic_dependencies{$predicate->id};
-                    $semantic_dependencies{$predicate->id}{$depword->id} = $label;
-                    $id_to_a_node{$predicate->id} = $predicate;
-                    $id_to_a_node{$depword->id} = $depword;
-                    $has_parent{$depword->id} = 1;
-                } 
-            }
+        next if not $predicate_identifier->is_predicate($predicate);
+
+        foreach my $depword (@a_nodes) {
+            push @features, $feature_extractor->extract_features($predicate, $depword);
+        }
+    }
+
+    my @labels = $maxent->predict(@features);
+
+    foreach my $predicate (@a_nodes) {
+        next if not $predicate_identifier->is_predicate($predicate);
+
+        foreach my $depword (@a_nodes) {
+            my $label = shift @labels;
+            
+            if ($label ne $self->empty_sign) {
+                $semantic_dependencies{$predicate->id} = {} if not exists $semantic_dependencies{$predicate->id};
+                $semantic_dependencies{$predicate->id}{$depword->id} = $label;
+                $id_to_a_node{$predicate->id} = $predicate;
+                $id_to_a_node{$depword->id} = $depword;
+                $has_parent{$depword->id} = 1;
+            } 
         }
     }
 
