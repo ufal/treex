@@ -40,6 +40,9 @@ sub process_tnode {
         my @anode_tags = map { $_->tag } ( $t_node->get_lex_anode, $t_node->get_aux_anodes );
 
         my ( $person, $gender, $number );
+        my ( $aux_gender, $aux_number );
+
+        # TODO the verb can be just "to be", so take dependent adjectives into account
 
         if ( grep { $_ =~ /^(V.|J,).....1/ } @anode_tags ) { # include 'kdybychom', 'abychom'
             $person = "1";
@@ -54,28 +57,61 @@ sub process_tnode {
         if ( grep { $_ =~ /^V..P/ } @anode_tags ) {
             $number = 'pl';
         }
+        elsif ( grep { $_ =~ /^V..S/ } @anode_tags ) {
+            $number = 'sg';
+        }
+        # in fact, this can appear just with 'Q' gender
+        elsif ( grep { $_ =~ /^V..W/ } @anode_tags ) {
+            $aux_number = 'sg/pl';
+            $number = 'sg';
+        }
+        # number position is '-'
         else {
+            $aux_number = 'sg/pl';
             $number = 'sg';
         }
 
         if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
+            $aux_gender = 'fem/neut';
             $gender = 'fem';
         }
+        # in fact, it can appear just in singular
         elsif ( grep { $_ =~ /^V.N/ } @anode_tags ) {
             $gender = 'neut';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.M/ } @anode_tags ) {
+            $gender = 'anim';
+        }
+        elsif ( grep { $_ =~ /^V.Y/ } @anode_tags ) {
+            $aux_gender = 'anim/inan';
+            $gender = 'anim';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.T/ } @anode_tags ) {
+            $aux_gender = 'inan/fem';
+            $gender = 'anim';
+        }
+        elsif ( grep { $_ =~ /^V.H/ } @anode_tags ) {
+            $aux_gender = 'fem/neut';
+            $gender = 'anim';
+        }
+        # gender position is '-'
+        else {
+            $aux_gender = 'anim/inan/fem/neut';
+            $gender = 'anim';
         }
         # evidence from the data - gender of the generated perspron can be anything, 
         # if the verb is in present tense and 1st or 2nd person
         #elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
         #    $gender = 'nr';
         #}
-        else {
-            $gender = 'anim';
-        }
 
         $new_node->set_gram_person($person);
         $new_node->set_gram_gender($gender);
         $new_node->set_gram_number($number);
+        $new_node->wild->{'aux_gram/number'} = $aux_number if (defined $aux_number);
+        $new_node->wild->{'aux_gram/gender'} = $aux_gender if (defined $aux_gender);
     }
     return;
 }
