@@ -20,16 +20,16 @@ has weights => (
 );
 
 has punct_tag_regex => (
-	is => 'ro',
-	default => '^([.,;?!]$|SENT$|Z:)',
-	documentation => 'which POS tags represent punctuation symbols',
+    is            => 'ro',
+    default       => '^([.,;?!]$|SENT$|Z:)',
+    documentation => 'which POS tags represent punctuation symbols',
 );
 
 has debug => (
-	is => 'ro',
-	isa => 'Int',
-	default => 0,
-	documentation => 'debug level, by default 0=no messages',
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 0,
+    documentation => 'debug level, by default 0=no messages',
 );
 
 sub _build_weights {
@@ -62,7 +62,7 @@ sub align_sentence {
     $self->prealign_same( $args, 'forms' );
     $self->prealign_same( $args, 'lemmas' );
 
-	# Pre-computed scores for all pairs of free nodes
+    # Pre-computed scores for all pairs of free nodes
     my $max_score = 0;
     my ( $max_h, $max_r, @score );
     foreach my $h ( @{ $args->{free_h} } ) {
@@ -103,10 +103,12 @@ sub align_sentence {
 
 sub _check_args {
     my ( $self, $args ) = @_;
-    confess "no args provided" if !$args;
+    confess 'no args provided' if !$args;
+    confess '$args must be a hashref' if ref $args ne 'HASH';
     for my $rh (qw(r h)) {
         my $forms = $args->{ $rh . 'forms' } or confess "${rh}forms is a required arg";
         my $len = @$forms;
+        confess "${rh}forms must contain one or more word forms" if $len == 0;
 
         # remember the index of the last token in a reference/hypothesis sentence
         $args->{"${rh}last"} = $len - 1;
@@ -177,23 +179,23 @@ sub _align {
     # Delete the aligned nodes from the pool of free nodes.
     $args->{free_h} = [ grep { $_ != $h } @{ $args->{free_h} } ];
     $args->{free_r} = [ grep { $_ != $r } @{ $args->{free_r} } ];
-	
-	if ($self->debug){
-		my ( $hform, $rform ) = ( $args->{hforms}[$h], $args->{rforms}[$r] );
-		warn "score=$score\taligning $h-$r: $hform-$rform\n";
-		if ($self->debug > 1){
-			my %feats = %{$self->compute_features($args, $h, $r)};
-			while (my ($f,$v) = each %feats){
-				warn sprintf("$f=%.3f\n",$v) if $v;
-			}
-		}
-	}
+
+    if ( $self->debug ) {
+        my ( $hform, $rform ) = ( $args->{hforms}[$h], $args->{rforms}[$r] );
+        warn "score=$score\taligning $h-$r: $hform-$rform\n";
+        if ( $self->debug > 1 ) {
+            my %feats = %{ $self->compute_features( $args, $h, $r ) };
+            while ( my ( $f, $v ) = each %feats ) {
+                warn sprintf( "$f=%.3f\n", $v ) if $v;
+            }
+        }
+    }
     return;
 }
 
 sub score {
     my ( $self, $args, $h, $r ) = @_;
-    my %features = %{$self->compute_features($args, $h, $r)};
+    my %features = %{ $self->compute_features( $args, $h, $r ) };
 
     my $score = 0;
     foreach my $feature_name ( keys %features ) {
@@ -211,24 +213,24 @@ sub compute_features {
     $features{tag_similarity} = $self->tag_similarity( $args, $h, $r );
     $features{aligned_left_neighbor}  = 1 if $h           && $args->{align}[ $h - 1 ] == $r - 1;
     $features{aligned_right_neighbor} = 1 if $h != $hlast && $args->{align}[ $h + 1 ] == $r + 1;
-    $features{ord_similarity} = 1 - abs( ( $h / $hlast ) - ( $r / $rlast ) );
-	return \%features;
+    $features{ord_similarity} = 1 - abs( ( $h / ( $hlast || 1 ) ) - ( $r / ( $rlast || 1 ) ) );
+    return \%features;
 }
 
 use Text::JaroWinkler;
 
 sub lemma_similarity {
     my ( $self, $args, $h, $r ) = @_;
-	my ( $hlemma, $rlemma ) = ( $args->{hlemmas}[$h], $args->{rlemmas}[$r] );
-	return 0 if !defined $hlemma || !defined $rlemma;
+    my ( $hlemma, $rlemma ) = ( $args->{hlemmas}[$h], $args->{rlemmas}[$r] );
+    return 0 if !defined $hlemma || !defined $rlemma;
     my $jw = Text::JaroWinkler::strcmp95( $hlemma, $rlemma, 20 );
 
-	# jw==0.6 means that the two lemmas are too different
-	# to be derivations of each other or spelling variants,
-	# so the lemma_similarity for such lemmas should be 0.
-	my $limit = 0.6;
-	return 0 if $jw <= $limit;
-	return ($jw - $limit) / (1 - $limit);
+    # jw==0.6 means that the two lemmas are too different
+    # to be derivations of each other or spelling variants,
+    # so the lemma_similarity for such lemmas should be 0.
+    my $limit = 0.6;
+    return 0 if $jw <= $limit;
+    return ( $jw - $limit ) / ( 1 - $limit );
 }
 
 sub tag_similarity {
@@ -236,18 +238,71 @@ sub tag_similarity {
     my ( $htag, $rtag ) = ( $args->{htags}[$h], $args->{rtags}[$r] );
     return 0 if !defined $htag || !defined $rtag;
 
-	# Same tags have the maximum score of 1
-	return 1 if $htag eq $rtag;
+    # Same tags have the maximum score of 1
+    return 1 if $htag eq $rtag;
 
-	# Punctuation should not be aligned to non-punctuation.
-	return -10 if (($htag =~ $self->punct_tag_regex) != ($rtag =~ $self->punct_tag_regex));
+    # Punctuation should not be aligned to non-punctuation.
+    return -10 if ( ( $htag =~ $self->punct_tag_regex ) != ( $rtag =~ $self->punct_tag_regex ) );
 
-	# If the first letter of POS tag is the same, it usually means coarse-grained POS is the same
+    # If the first letter of POS tag is the same, it usually means coarse-grained POS is the same
     return 0.5 if substr( $htag, 0, 1 ) eq substr( $rtag, 0, 1 );
-	return 0;
+    return 0;
 }
 
 1;
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later.
+__END__
+ 
+=head1 NAME
+
+Treex::Tool::Align::MonolingualGreedy - align paraphrases, e.g. MT-output and reference
+
+=head1 SYNOPSIS
+
+  use Treex::Tool::Align::MonolingualGreedy;
+  my $greedy = Treex::Tool::Align::MonolingualGreedy->new();
+  my $args     = {
+        hforms  => [qw(William          hates examples)],
+        rforms  => [qw(Bill    does not hate  samples)],
+        hlemmas => [qw(William          hate  example)],
+        rlemmas => [qw(Bill    do   not hate  sample)],
+        htags   => [qw(NNP              VBZ   NNS)],
+        rtags   => [qw(NNP     VB   RB  VB    NNS)],
+    };
+  my $ali = $greedy->align_sentence($args);
+  print join ' ', map { $ali->[$_] == -1 ? () : $_ . '-' . $ali->[$_] } (0 .. 2);
+  # prints 0-0 1-3 2-4
+
+=head1 DESCRIPTION
+
+Aligns two sentences which are suposed to be in a same or similar language.
+Only one-to-one alignments are created, but some words may remain unaligned.
+Forms, lemmas and tags can be exploited.
+
+The tool scores all possible alignment links
+and then greedily chooses the currently highest scoring one,
+creating the respective alignment link from word A (in the reference) to word B (in the hypothesis)
+and deleting all scores of links from A or to B,
+so that one-to-one alignments are enforced.
+The process is terminated when no links with a score higher than a given threshold are available,
+some words may thus remain unaligned.
+The score is computed as a linear combination of the five following features:
+word form similarity based on Jaro-Winkler distance,
+tag similarity,
+similarity in relative position in the sentence,
+and an indication whether the word following (or preceding) A was already aligned to the word following (or preceding) B.
+Unlike bilingual word aligners, this tool needs no training.
+
+=head1 PARAMETERS
+
+TODO
+
+=head1 SEE ALSO
+
+L<Treex::Block::Align::A::MonolingualGreedy>
+L<Text::JaroWinkler>
+
+=head1 COPYRIGHT
+
+Copyright 2012 Martin Popel
+This file is distributed under the GNU General Public License v2 or later.
