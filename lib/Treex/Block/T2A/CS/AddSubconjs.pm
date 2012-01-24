@@ -34,7 +34,7 @@ sub process_tnode {
 
         # the only 'flective' subordinating conjunctions are 'aby' and 'kdyby'
         if ( $subconj_form =~ /^(aby|kdyby)$/ ) {
-            my $key = ( $t_node->get_attr('morphcat/number') || "" ) . ( $t_node->get_attr('morphcat/person') || "" );
+            my $key = ( $a_node->get_attr('morphcat/number') || "" ) . ( $a_node->get_attr('morphcat/person') || "" );
             if ( $NUMBERPERSON2ABY{$key} ) {
                 $subconj_node->set_form( $subconj_form . $NUMBERPERSON2ABY{$key} );
             }
