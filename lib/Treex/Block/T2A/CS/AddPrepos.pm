@@ -42,14 +42,14 @@ sub process_tnode {
     $tnode->add_aux_anodes(@prep_nodes);
 
     # moving leading adverbs in front of the prepositional group ('v zejmena USA' --> 'zejmena v USA')
-    my $leftmost_tchild = $tnode->get_children( { preceding_only => 1, first_only => 1 } );
+    my $t_first = $tnode->get_children( { preceding_only => 1, first_only => 1 } );
     if ($formeme =~ /^n/
-        and defined $leftmost_tchild
-        and $leftmost_tchild->formeme =~ /^adv/
-        and $leftmost_tchild->get_lex_anode
+        && defined $t_first
+        && ($t_first->functor eq 'RHEM' || $t_first->formeme =~ /^adv/)
+        && $t_first->get_lex_anode
         )
     {
-        $leftmost_tchild->get_lex_anode->shift_before_node( $prep_nodes[0] );
+        $t_first->get_lex_anode->shift_before_node( $prep_nodes[0] );
     }
 
     return;
