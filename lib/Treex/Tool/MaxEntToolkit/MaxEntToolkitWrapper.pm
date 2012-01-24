@@ -49,7 +49,7 @@ sub predict {
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    write_file($input_file, {binmode => ':utf8'}, join("\n", @instances));
+    write_file($input_file, {binmode => ':utf8'}, join("\n", map { "dummy_label ".$_ } @instances));
 
     # create output file
     my $output_file = $self->_create_output_file();
