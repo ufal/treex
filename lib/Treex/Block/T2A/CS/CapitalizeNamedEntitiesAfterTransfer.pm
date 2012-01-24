@@ -45,6 +45,7 @@ sub process_zone {
     A_NODE:
     foreach my $a_node ( $a_root->get_descendants( { ordered => 1 } ) ) {
         my ( $form, $pos, $lemma ) = $a_node->get_attrs(qw(form morphcat/pos lemma));
+        my $n_node = $ent_map{ $a_node->id };
 
         #HACK: rus je druh švába
         if ( $lemma eq 'rus' ) {
@@ -52,7 +53,17 @@ sub process_zone {
             next A_NODE;
         }
 
-        my $n_node = $ent_map{ $a_node->id };
+        # Some named entities are not recognized in the source sentence,
+        # but we can detect them based on the capitalized source form.
+        if (!defined $n_node && $pos eq 'X' && $a_node->ord > 1){
+            my $en_zone = $zone->get_bundle()->get_zone( 'en', 'src' );
+            next A_NODE if !$en_zone || !$en_zone->sentence;
+            my $ucform = ucfirst $form;
+            if ($en_zone->sentence =~ /\Q$ucform\E/){
+                $a_node->set_form($ucform);
+            }
+        }
+        
         next A_NODE if !defined $n_node || !$to_process{$n_node};
 
         # In Czech we don't capitalize adjectives
