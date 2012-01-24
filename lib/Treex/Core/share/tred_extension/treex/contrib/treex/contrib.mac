@@ -1,6 +1,6 @@
 # -*- cperl -*-
 
-#include <contrib/pml/PML.mak>
+#ifinclude <contrib/pml/PML.mak>
 #ifinclude <contrib/eng-vallex/contrib.mac>
 #ifinclude <contrib/vallex/contrib.mac>
 
