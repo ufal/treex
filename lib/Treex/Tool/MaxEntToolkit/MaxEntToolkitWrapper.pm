@@ -43,13 +43,13 @@ sub train {
     log_fatal("Maxent training exited unsuccessfully with return value: $exit_status.") unless $exit_status == 0;
 }
 
-# predict given instance
+# predict given instances
 sub predict {
-    my ( $self, $instance ) = @_;
+    my ( $self, @instances ) = @_;
 
     # write input to file
     my $input_file = $self->_create_input_file();
-    write_file($input_file, {binmode => ':utf8'}, $instance);
+    write_file($input_file, {binmode => ':utf8'}, join("\n", @instances));
 
     # create output file
     my $output_file = $self->_create_output_file();
@@ -59,10 +59,9 @@ sub predict {
     log_info("Running maxent toolkit with command:\n$command");
     my $exit_status = system($command);
     log_fatal("Maxent prediction exited unsuccessfully with return value: $exit_status.") unless $exit_status == 0;
-    my $output_string = read_file($output_file);
-    chomp $output_string;
+    my @output_strings = split "\n", read_file($output_file);
 
-    return $output_string;
+    return @output_strings;
 }
 
 ### File management ###
