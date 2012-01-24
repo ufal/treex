@@ -221,7 +221,7 @@ sub is_nonprojective {
     my @span = grep { $_->ord > $ordA && $_->ord < $ordB } $parent->get_descendants();
 
     # For projective edges @span must include all the nodes between $parent and $self.
-    return @span == $distance - 1;
+    return @span != $distance - 1;
 }
 
 1;
