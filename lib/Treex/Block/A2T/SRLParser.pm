@@ -4,7 +4,9 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::SRLParser::FeatureExtractor;
 use Treex::Tool::SRLParser::PredicateIdentifier;
-use Treex::Tool::MaxEntToolkit::MaxEntToolkitWrapper;
+
+use lib '/net/projects/tectomt_shared/external_libs/';
+use MaxEntToolkit;
 
 extends 'Treex::Core::Block';
 
@@ -20,13 +22,23 @@ has 'feature_delim' => (
     default => ' ',
 );
 
+my $model;
+
+sub BUILD {
+    my ($self, @params) = @_;
+
+    if (!$model) {
+        $model = MaxEntToolkit::MaxentModel->new();
+        # TODO make 'model' parameters
+        $model->load("$ENV{TMT_ROOT}/share/data/models/srl_parser/srl_parser_model_cs");
+    }
+}
+
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
     my $feature_extractor = Treex::Tool::SRLParser::FeatureExtractor->new();
     my $predicate_identifier = Treex::Tool::SRLParser::PredicateIdentifier->new();
-    # TODO make 'maxent_binary' and 'model' parameters
-    my $maxent = Treex::Tool::MaxEntToolkit::MaxEntToolkitWrapper->new({'maxent_binary' => '${TMT_ROOT}/share/external_tools/MaxEntToolkit/maxent_x86_64', 'model' => '${TMT_ROOT}/share/data/models/srl_parser/srl_parser_model_cs'});
     
     my @a_nodes = $a_root->get_descendants;
     my %semantic_dependencies;
@@ -34,22 +46,14 @@ sub process_atree {
     my %has_parent;
 
     # predict labels with MaxEntToolkit
-    my @features = ();
     foreach my $predicate (@a_nodes) {
         next if not $predicate_identifier->is_predicate($predicate);
 
         foreach my $depword (@a_nodes) {
-            push @features, $feature_extractor->extract_features($predicate, $depword);
-        }
-    }
+            my @features = split /\s+/, $feature_extractor->extract_features($predicate, $depword);
 
-    my @labels = $maxent->predict(@features);
-
-    foreach my $predicate (@a_nodes) {
-        next if not $predicate_identifier->is_predicate($predicate);
-
-        foreach my $depword (@a_nodes) {
-            my $label = shift @labels;
+            # TODO Use whole distribution (returned by eval_all).
+            my $label = $model->predict(\@features);
             
             if ($label ne $self->empty_sign) {
                 $semantic_dependencies{$predicate->id} = {} if not exists $semantic_dependencies{$predicate->id};
