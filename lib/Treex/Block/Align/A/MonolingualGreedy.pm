@@ -58,7 +58,7 @@ sub process_zone {
     for my $h ( 0 .. $#h_nodes ) {
         my $r = $alignment->[$h];
         if ( $r != -1 ) {
-            $h_nodes[$h]->add_aligned_node( $r_nodes[$r] );
+            $h_nodes[$h]->add_aligned_node( $r_nodes[$r], 'monolingual' );
         }
     }
 
