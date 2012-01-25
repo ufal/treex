@@ -43,7 +43,9 @@ sub process_zone {
     my $r_zone = $h_zone->get_bundle()->get_zone( $self->to_language, $self->to_selector );
     my @h_nodes = $h_zone->get_atree->get_descendants( { ordered => 1 } );
     my @r_nodes = $r_zone->get_atree->get_descendants( { ordered => 1 } );
-    return if @r_nodes == 0;    # because of re-segmentation
+    
+    # Skip empty sentences (because of re-segmentation, empty translation etc.)
+    return if @r_nodes == 0 || @h_nodes == 0;
 
     my $args = {
         hforms  => [ map { $_->form } @h_nodes ],
