@@ -28,8 +28,9 @@ sub process_finite_verb {
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );
         }
+
         # Reflexive passive -- use 3rd person neutrum
-        if ( ( $t_vfin->voice || $t_vfin->gram_diathesis || '' ) =~ m/^(reflexive_diathesis|deagent)$/ ){
+        if ( ( $t_vfin->voice || $t_vfin->gram_diathesis || '' ) =~ m/^(reflexive_diathesis|deagent)$/ ) {
             $a_vfin->set_attr( 'morphcat/gender', 'N' );
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );
@@ -92,20 +93,26 @@ sub find_a_subject_of {
     return;
 }
 
-use CzechMorpho;
-my $generator = CzechMorpho::Generator->new();
+use LanguageModel::MorphoLM;
+my $morphoLM = LanguageModel::MorphoLM->new();
 
 sub is_neutrum_lemma {
     my ($subj_lemma) = @_;
-    return (
-        ( $subj_lemma =~ /^\d+$/ && $subj_lemma > 4 )
-            || $subj_lemma =~ /^\d+,\d+$/
-            || $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)/
 
-            # 'osm z deseti stacilo','malo stacilo'
-            || first { $_->{tag} =~ /^C[na]/ }
-        $generator->generate_all($subj_lemma)
-    );
+    # Numbers higher than 4 and decimals behave like neutrum.
+    return 1 if $subj_lemma =~ /^\d+$/ && $subj_lemma > 4;
+    return 1 if $subj_lemma =~ /^\d+,\d+$/;
+
+    # Few pronouns (and numerals) behave like neutrum
+    # (but the morphological tag has no gender marked).
+    return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/;
+
+    # Numerals with subpos "n" or "s" behave like neutrum,
+    # e.g. "osm z deseti stacilo", "malo stacilo".
+    return 1 if defined $morphoLM->best_form_of_lemma( $subj_lemma, '^C[na]' );
+
+    # Otherwise, not neutrum
+    return 0;
 }
 
 1;
@@ -124,6 +131,6 @@ Special treatment of agreement in copula constructions.
 
 =cut
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+# Copyright 2008-2012 Zdenek Zabokrtsky, Martin Popel
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
