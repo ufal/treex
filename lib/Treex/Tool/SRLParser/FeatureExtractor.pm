@@ -27,6 +27,73 @@ has 'empty_sign' => (
     default => '_',
 );
 
+has '_feature_to_code' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    default     => sub { {  'ChildrenPOS'       => 'P1',
+                            'ChildrenPOSNoDup'  => 'P2',
+                            'ConstituentPOSPattern' => 'P3',
+                            'ConstituentPOSPattern+DepRelation' => 'P4',
+                            'ConstituentPOSPattern+DepwordLemma' => 'P5',
+                            'ConstituentPOSPattern+HeadwordLemma' => 'P6',
+                            'DepRelation' => 'P7',
+                            'DepRelation+DepwordLemma' => 'P8',
+                            'DepRelation+HeadwordLemma' => 'P9',
+                            'DepRelation+HeadwordLemma+DepwordLemma' => 'P10',
+                            'Depword' => 'P11',
+                            'DepwordLemma' => 'P12',
+                            'DepwordLemma+RelationPath' => 'P13',
+                            'DepwordPOS' => 'P13',
+                            'DepwordPOS+HeadwordPOS' => 'P14',
+                            'DownPathLength' => 'P15',
+                            'FirstLemma' => 'P16',
+                            'FirstPOS' => 'P17',
+                            'FirstPOS+DepwordPOS' => 'P18',
+                            'HeadwordLemma' => 'P19',
+                            'HeadwordLemma+RelationPath' => 'P20',
+                            'HeadwordPOS' => 'P21',
+                            'LastLemma' => 'P22',
+                            'LastPOS' => 'P23',
+                            'Path' => 'P24',
+                            'Path+RelationPath' => 'P25',
+                            'PathLength' => 'P26',
+                            'PFEATSplit' => 'P27',
+                            'PositionWithPredicate' => 'P28',
+                            'Predicate' => 'P29',
+                            'Predicate+PredicateFamilyship' => 'P30',
+                            'PredicateLemma' => 'P31',
+                            'PredicateLemma+PredicateFamilyship' => 'P32',
+                            'PredicateSense' => 'P33',
+                            'PredicateSense+DepRelation' => 'P34',
+                            'PredicateSense+DepwordLemma' => 'P35',
+                            'PredicateSense+DepwordPOS' => 'P36',
+                            'RelationPath' => 'P37',
+                            'SiblingsRELNoDup' => 'P38',
+                            'UpPath' => 'P39',
+                            'UpPathLength' => 'P40',
+                            'UpRelationPath+HeadwordLemma' => 'P41',
+                            'PredicatePOS' => 'P42',
+                            'DepwordFeat' => 'P43',
+                            'PredicateFeat' => 'P44',
+                            'Distance' => 'P45',
+                            'PositionToPredicate' => 'P46',
+                            'PredicatePosition' => 'P47',
+                            'DepwordPosition' => 'P48',
+                            'PredicateHeadword' => 'P49',
+                            'PredicateHeadword' => 'P50',
+                            'PredicateHeadwordPOS' => 'P51',
+                            'PredicateHeadwordLemma' => 'P52',
+                            'DepwordConstituentFirstWord' => 'P53',
+                            'DepwordConstituentFirstPOS' => 'P54',
+                            'DepwordConstituentFirstLemma' => 'P55',
+                            'DepwordConstituentLastWord' => 'P56',
+                            'DepwordConstituentLastPOS' => 'P57',
+                            'DepwordConstituentLastLemma' => 'P58',
+                            'IsInFrame' => 'P59',
+                            'Frame' => 'P60',
+                        } },
+);
+
 sub extract_features() {
     my ( $self, $predicate, $depword ) = @_; 
 
@@ -109,7 +176,7 @@ sub extract_features() {
 sub _make_feature() {
     my ( $self, $name, @values ) = @_;
 
-    return $name . $self->value_delim . join($self->value_delim, @values)
+    return $self->_feature_to_code->{$name} . $self->value_delim . join($self->value_delim, @values)
 }
 
 1;
