@@ -4,12 +4,11 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::PronCorefFeatures';
 
 my $b_true = '1';
 my $b_false = '-1';
 
-my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
 my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
 
 has 'cnk_freqs_path' => (
@@ -169,17 +168,96 @@ sub _build_ewn_classes {
     return $ewn_classes;
 }
 
-# quantization
-# takes an array of numbers, which corresponds to the boundary values of
-# clusters
-sub _categorize {
-    my ( $real, $bins_rf ) = @_;
-    my $retval = "-inf";
-    for (@$bins_rf) {
-        $retval = $_ if $real >= $_;
+override '_binary_features' => sub {
+    my ($self, $set_features, $anaph, $cand, $candord) = @_;
+    my $coref_features = super();
+
+###########################
+    #   Morphological:
+    #   8:  gender, num, agreement, joined
+    
+    $coref_features->{b_gen_agree} 
+        = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+    $coref_features->{c_join_gen} 
+        = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+
+    $coref_features->{b_num_agree} 
+        = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+    $coref_features->{c_join_num} 
+        = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+
+    $coref_features->{c_join_asubpos}  
+        = $self->_join_feats($set_features->{c_cand_asubpos}, $set_features->{c_anaph_asubpos});
+    $coref_features->{c_join_agen}  
+        = $self->_join_feats($set_features->{c_cand_agen}, $set_features->{c_anaph_agen});
+    $coref_features->{c_join_acase}  
+        = $self->_join_feats($set_features->{c_cand_acase}, $set_features->{c_anaph_acase});
+    $coref_features->{c_join_apossgen}  
+        = $self->_join_feats($set_features->{c_cand_apossgen}, $set_features->{c_anaph_apossgen});
+    $coref_features->{c_join_apossnum}  
+        = $self->_join_feats($set_features->{c_cand_apossnum}, $set_features->{c_anaph_apossnum});
+    $coref_features->{c_join_apers}  
+        = $self->_join_feats($set_features->{c_cand_apers}, $set_features->{c_anaph_apers});
+    #   1: collocation
+    $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph );
+
+    #   1: collocation from CNK
+    # TODO this feature should be quantized
+    $coref_features->{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
+
+    return $coref_features;
+};
+
+override '_unary_features' => sub {
+    my ($self, $node, $type) = @_;
+    my $coref_features = super();
+
+###########################
+    #   Morphological:
+    #   8:  gender, num, agreement, joined
+
+    if ($type eq 'cand') {
+        ( $coref_features->{c_cand_gen}, $coref_features->{c_cand_num} ) = _get_cand_gennum( $node );
     }
-    return $retval;
-}
+    else {
+        $coref_features->{c_anaph_gen} = $node->gram_gender;
+        $coref_features->{c_anaph_num} = $node->gram_number;
+    }
+
+    #   24: 8 x tag($inode, $jnode), joined
+    $coref_features->{'c_'.$type.'_apos'}  = _get_atag( $node,  0 );
+    $coref_features->{'c_'.$type.'_asubpos'}  = _get_atag( $node,  1 );
+    $coref_features->{'c_'.$type.'_agen'}  = _get_atag( $node,  2 );
+    $coref_features->{'c_'.$type.'_anum'}  = _get_atag( $node,  3 );
+    $coref_features->{'c_'.$type.'_acase'}  = _get_atag( $node,  4 );
+    $coref_features->{'c_'.$type.'_apossgen'}  = _get_atag( $node,  5 );
+    $coref_features->{'c_'.$type.'_apossnum'}  = _get_atag( $node,  6 );
+    $coref_features->{'c_'.$type.'_apers'}  = _get_atag( $node,  7 );
+    #   1:  freq($inode);
+    #    $coref_features->{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
+    
+    if ($type eq 'cand') {
+        $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
+    }
+
+###########################
+    #   Semantic:
+    #   1:  is_name_of_person
+    if ($type eq 'cand') {
+        $coref_features->{b_cand_pers} =  $node->is_name_of_person ? $b_true : $b_false;
+
+        #   EuroWordNet nouns
+        my $cand_lemma      = $node->t_lemma;
+        my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
+        my $cand_c = $noun_c->{$cand_lemma};
+        
+        for my $class ( @{$all_c} ) {
+            my $coref_class = "b_" . $class;
+            $coref_features->{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
+        }
+    }
+    return $coref_features;
+};
 
 ### returns the final gender and number of a list of coordinated nodes: Tata a mama sli; Mama a dite sly
 sub _get_coord_gennum {
@@ -287,89 +365,6 @@ sub _get_atag {
     return;
 }
 
-# returns the function of an analytical node $node
-sub _get_afun {
-	my ($node) = @_;
-	my $anode = $node->get_lex_anode;
-    if ($anode) {
-		return $anode->afun;
-	}
-    return;
-}
-
-# returns $b_true if the parameter is subject; otherwise $b_false
-sub _is_subject {
-	my ($node) = @_;
-	my $par = ($node->get_eparents)[0];
-    return $b_false if (!defined $par || $par->is_root);
-	
-    if ($par->gram_tense && ($par->gram_tense =~ /^(sim|ant|post)/) || 
-        ($par->functor eq 'DENOM')) {
-		
-        my @cands = $par->get_echildren;
- 		my @sb_ids;
-		foreach my $child (@cands) {
-			if (defined $child->gram_sempos && ($child->gram_sempos =~ /^n/)) {
-                my $achild = $child->get_lex_anode;
-                if (defined $achild && ($achild->afun eq 'Sb')) {
-					push @sb_ids, $child->id;
-				}
-			}
-		}
-
-        if ((@sb_ids == 0) && ($node->functor eq 'ACT')) {
-			return $b_true;
-        }
-        my %subj_hash = map {$_ => 1} @sb_ids; 
-		if (defined $subj_hash{$node->id}) { 
-			return $b_true;
-		}	
-	}
-	return $b_false;
-}
-
-# returns whether an anaphor is APP and is in the same clause with a
-# candidate and they have a common (grand)parent CONJ|DISJ
-sub _is_app_in_coord {
-	my ($cand, $anaph) = @_;
-	if ($anaph->functor eq 'APP' && 
-        ($anaph->wild->{aca_clausenum} eq $cand->wild->{aca_clausenum})) {
-		
-        my $par = $anaph->parent;
-		while ($par && ($par != $cand) && !$par->is_root && 
-            (!$par->gram_tense || $par->gram_tense !~ /^(sim|ant|post)/) && 
-            (!$par->functor || $par->functor !~ /^(PRED|DENOM)$/)) {
-
-            if ($par->functor =~ /^(CONJ|DISJ)$/) {
-				return (grep {$_ eq $cand} $par->descendants) ? $b_true : $b_false;
-			}
-			$par = $par->parent;
-		}
-	}
-	return $b_false;
-}
-
-# returns the first eparent's functor, sempos
-sub _get_eparent_features {
-	my ($node) = @_;
-	my $epar_fun;
-	my $epar_sempos;
-	my $epar = ($node->get_eparents)[0];
-	if ($epar) {
-		$epar_fun = $epar->functor;
-		$epar_sempos = $epar->gram_sempos;
-	}
-	return ($epar_fun, $epar_sempos);
-}
-
-# returns if $inode and $jnode have the same eparent
-sub _are_siblings {
-	my ($inode, $jnode) = @_;
-	my $ipar = ($inode->get_eparents)[0];
-	my $jpar = ($jnode->get_eparents)[0];
-	return ($ipar == $jpar) ? $b_true : $b_false;
-}
-
 # return if $inode and $jnode have the same collocation
 sub _in_collocation {
 	my ($self, $inode, $jnode) = @_;
@@ -403,272 +398,13 @@ sub _in_cnk_collocation {
     return 0;
 }
 
-sub join_feats {
-    my ($f1, $f2) = @_;
-
-    if (!defined $f1) {
-        $f1 = "";
-    }
-    if (!defined $f2) {
-        $f2 = "";
-    }
-
-#    if (!defined $f1 || !defined $f2) {
-#        return undef;
-#    }
-    return $f1 . '_' . $f2;
-}
-
-sub agree_feats {
-    my ($f1, $f2) = @_;
-
-    if (!defined $f1 || !defined $f2) {
-        if (!defined $f1 && !defined $f2) {
-            return $b_true;
-        }
-        else {
-            return $b_false;
-        }
-    }
-
-#    if (!defined $f1 || !defined $f2) {
-#        return $b_false;
-#    }
-
-    return ($f1 eq $f2) ? $b_true : $b_false;
-}
-
-
-sub _binary_features {
-    my ($self, $set_features, $anaph, $cand, $candord) = @_;
-
-    my $coref_features = {};
-
-###########################
-    #   Distance:
-    #   4x num: sentence distance, clause distance, file deepord distance, candidate's order
-    $coref_features->{c_sent_dist} =
-        $anaph->get_bundle->get_position - $cand->get_bundle->get_position;
-    $coref_features->{c_clause_dist} = _categorize(
-        $anaph->wild->{aca_clausenum} - $cand->wild->{aca_clausenum}, 
-        [-2, -1, 0, 1, 2, 3, 7]
-    );
-    $coref_features->{c_file_deepord_dist} = _categorize(
-        $anaph->wild->{doc_ord} - $cand->wild->{doc_ord},
-        [1, 2, 3, 6, 15, 25, 40, 50]
-    );
-    $coref_features->{c_cand_ord} = _categorize(
-        $candord,
-        [1, 2, 3, 5, 8, 11, 17, 22]
-    );
-
-###########################
-    #   Morphological:
-    #   8:  gender, num, agreement, joined
+override 'init_doc_features_from_trees' => sub {
+    my ($self, $trees) = @_;
+    super();
     
-    $coref_features->{b_gen_agree} 
-        = agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
-    $coref_features->{c_join_gen} 
-        = join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
-
-    $coref_features->{b_num_agree} 
-        = agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
-    $coref_features->{c_join_num} 
-        = join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
-
-    #   24: 8 x tag($inode, $jnode), joined
-    
-    $coref_features->{c_join_apos}  
-        = join_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
-    $coref_features->{c_join_asubpos}  
-        = join_feats($set_features->{c_cand_asubpos}, $set_features->{c_anaph_asubpos});
-    $coref_features->{c_join_agen}  
-        = join_feats($set_features->{c_cand_agen}, $set_features->{c_anaph_agen});
-    $coref_features->{c_join_anum}  
-        = join_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
-    $coref_features->{c_join_acase}  
-        = join_feats($set_features->{c_cand_acase}, $set_features->{c_anaph_acase});
-    $coref_features->{c_join_apossgen}  
-        = join_feats($set_features->{c_cand_apossgen}, $set_features->{c_anaph_apossgen});
-    $coref_features->{c_join_apossnum}  
-        = join_feats($set_features->{c_cand_apossnum}, $set_features->{c_anaph_apossnum});
-    $coref_features->{c_join_apers}  
-        = join_feats($set_features->{c_cand_apers}, $set_features->{c_anaph_apers});
-
-###########################
-    #   Functional:
-    #   3:  functor($inode, $jnode);
-    $coref_features->{b_fun_agree} 
-        = agree_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
-    $coref_features->{c_join_fun}  
-        = join_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
-    
-    #   3: afun($inode, $jnode);
-    $coref_features->{b_afun_agree} 
-        = agree_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
-    $coref_features->{c_join_afun}  
-        = join_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
-    
-    #   3: aktant($inode, $jnode);
-    $coref_features->{b_akt_agree} 
-        = agree_feats($set_features->{b_cand_akt}, $set_features->{b_anaph_akt});
-    
-    #   3:  subject($inode, $jnode);
-    $coref_features->{b_subj_agree} 
-        = agree_feats($set_features->{b_cand_subj}, $set_features->{b_anaph_subj});
-    
-    #   Context:
-    $coref_features->{b_app_in_coord} = _is_app_in_coord( $cand, $anaph );
-    
-    #   4: get candidate and anaphor eparent functor and sempos
-    #   2: agreement in eparent functor and sempos
-	#my ($anaph_epar_lemma, $cand_epar_lemma) = map {my $epar = ($_->get_eparents)[0]; $epar->t_lemma} ($anaph, $cand);
-    $coref_features->{b_epar_fun_agree}
-        = agree_feats($set_features->{c_cand_epar_fun}, $set_features->{c_anaph_epar_fun});
-    $coref_features->{c_join_epar_fun}          
-        = join_feats($set_features->{c_cand_epar_fun}, $set_features->{c_anaph_epar_fun});
-    $coref_features->{b_epar_sempos_agree}      
-        = agree_feats($set_features->{c_cand_epar_sempos}, $set_features->{c_anaph_epar_sempos});
-    $coref_features->{c_join_epar_sempos}       
-        = join_feats($set_features->{c_cand_epar_sempos}, $set_features->{c_anaph_epar_sempos});
-    $coref_features->{b_epar_lemma_agree}       
-        #= agree_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = agree_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
-    $coref_features->{c_join_epar_lemma}        
-        #= join_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = join_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
-    $coref_features->{c_join_clemma_aeparlemma} 
-        #= join_feats($cand->t_lemma, $anaph_epar_lemma);
-        = join_feats($cand->t_lemma, $set_features->{c_anaph_epar_lemma});
-    
-    #   3:  tfa($inode, $jnode);
-    $coref_features->{b_tfa_agree} 
-        = agree_feats($set_features->{c_cand_tfa}, $set_features->{c_anaph_tfa});
-    $coref_features->{c_join_tfa}  
-        = join_feats($set_features->{c_cand_tfa}, $set_features->{c_anaph_tfa});
-    
-    #   1: are_siblings($inode, $jnode)
-    $coref_features->{b_sibl} = _are_siblings( $cand, $anaph );
-
-    #   1: collocation
-    $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph );
-
-    #   1: collocation from CNK
-    # TODO this feature should be quantized
-    $coref_features->{r_cnk_coll} = $self->_in_cnk_collocation( $cand, $anaph );
-
-    return $coref_features;
-}
-
-sub _unary_features {
-    my ($self, $node, $type) = @_;
-
-    my $coref_features = {};
-
-    #   1: anaphor's ID
-    $coref_features->{$type.'_id'} = $node->id;
-    
-    if ($type eq 'anaph') {
-        $coref_features->{c_anaph_sentord} = _categorize(
-            $node->get_root->wild->{czeng_sentord},
-            [0, 1, 2, 3]
-        );
-    }
-
-###########################
-    #   Morphological:
-    #   8:  gender, num, agreement, joined
-
-    return if (($type ne 'cand') && ($type ne 'anaph'));
-    
-    if ($type eq 'cand') {
-        ( $coref_features->{c_cand_gen}, $coref_features->{c_cand_num} ) = _get_cand_gennum( $node );
-    }
-    else {
-        $coref_features->{c_anaph_gen} = $node->gram_gender;
-        $coref_features->{c_anaph_num} = $node->gram_number;
-    }
-    
-    #   24: 8 x tag($inode, $jnode), joined
-    $coref_features->{'c_'.$type.'_apos'}  = _get_atag( $node,  0 );
-    $coref_features->{'c_'.$type.'_asubpos'}  = _get_atag( $node,  1 );
-    $coref_features->{'c_'.$type.'_agen'}  = _get_atag( $node,  2 );
-    $coref_features->{'c_'.$type.'_anum'}  = _get_atag( $node,  3 );
-    $coref_features->{'c_'.$type.'_acase'}  = _get_atag( $node,  4 );
-    $coref_features->{'c_'.$type.'_apossgen'}  = _get_atag( $node,  5 );
-    $coref_features->{'c_'.$type.'_apossnum'}  = _get_atag( $node,  6 );
-    $coref_features->{'c_'.$type.'_apers'}  = _get_atag( $node,  7 );
-
-###########################
-    #   Functional:
-    #   3:  functor($inode, $jnode);
-    $coref_features->{'c_'.$type.'_fun'}  = $node->functor;
-    
-    #   3: afun($inode, $jnode);
-    $coref_features->{'c_'.$type.'_afun'}  = _get_afun($node);
-    
-    #   3: aktant($inode, $jnode);
-    $coref_features->{'b_'.$type.'_akt'}  = $actants{ $node->functor  } ? $b_true : $b_false;
-    
-    #   3:  subject($inode, $jnode);
-    $coref_features->{'b_'.$type.'_subj'}  = _is_subject($node);
-    
-    #   Context:
-    if ($type eq 'cand') {
-        $coref_features->{b_cand_coord} = ( $node->is_member ) ? $b_true : $b_false;
-    }
-    
-    #   4: get candidate and anaphor eparent functor and sempos
-    #   2: agreement in eparent functor and sempos
-    ( $coref_features->{'c_'.$type.'_epar_fun'},  $coref_features->{'c_'.$type.'_epar_sempos'} )  = _get_eparent_features($node);
-	my $eparent = ($node->get_eparents)[0];
-	$coref_features->{'c_'.$type.'_epar_lemma'} = $eparent->t_lemma;
-    
-    #   3:  tfa($inode, $jnode);
-    $coref_features->{'c_'.$type.'_tfa'}  = $node->tfa;
-    
-    #   1:  freq($inode);
-    #    $coref_features->{cand_freq} = ($$np_freq{$cand->{t_lemma}} > 1) ? $b_true : $b_false;
-    if ($type eq 'cand') {
-        $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
-    }
-
-###########################
-    #   Semantic:
-    #   1:  is_name_of_person
-    if ($type eq 'cand') {
-        $coref_features->{b_cand_pers} =  $node->is_name_of_person ? $b_true : $b_false;
-
-        #   EuroWordNet nouns
-        my $cand_lemma      = $node->t_lemma;
-        my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
-        my $cand_c = $noun_c->{$cand_lemma};
-        
-        for my $class ( @{$all_c} ) {
-            my $coref_class = "b_" . $class;
-            $coref_features->{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
-        }
-    }
-    return $coref_features;
-}
-
-### 18: gets anaphor's and antecedent-candidate' features (unary) and coreference features (binary)
-
-sub init_doc_features {
-    my ($self, $doc, $lang, $sel) = @_;
-    
-    if ( !$doc->get_bundles() ) {
-        return;
-    }
-    my @trees = map { $_->get_tree( 
-        $lang, 't', $sel ) }
-        $doc->get_bundles;
-
-    $self->count_collocations( \@trees );
-    $self->count_np_freq( \@trees );
-    $self->mark_doc_clause_nums( \@trees );
-    $self->mark_sentord_within_blocks( \@trees );
-}
+    $self->count_collocations( $trees );
+    $self->count_np_freq( $trees );
+};
 
 sub count_collocations {
     my ( $self, $trees ) = @_;
@@ -709,26 +445,6 @@ sub count_np_freq {
         }
     }
     $self->_set_np_freq( $np_freq );
-}
-
-sub mark_doc_clause_nums {
-    my ($self, $trees) = @_;
-
-    my $curr_clause_num = 0;
-    foreach my $tree (@{$trees}) {
-        my $clause_count = 0;
-        
-        foreach my $node ($tree->descendants ) {
-            # TODO clause_number returns 0 for coap
-
-            $node->wild->{aca_clausenum} = 
-                $node->clause_number + $curr_clause_num;
-            if ($node->clause_number > $clause_count) {
-                $clause_count = $node->clause_number;
-            }
-        }
-        $curr_clause_num += $clause_count;
-    }
 }
 
 1;

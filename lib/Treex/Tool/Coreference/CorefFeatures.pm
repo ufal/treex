@@ -23,8 +23,8 @@ requires '_build_feature_names';
 requires '_unary_features';
 requires '_binary_features';
 
-# TODO following is here just for the time being. it is not abstract enough
-requires 'init_doc_features';
+my $b_true = '1';
+my $b_false = '-1';
 
 sub anaph_feature_names {
     my ($self) = @_;
@@ -118,6 +118,26 @@ sub _create_instances {
     return $instances;
 }
 
+sub init_doc_features {
+    my ($self, $doc, $lang, $sel) = @_;
+    
+    if ( !$doc->get_bundles() ) {
+        return;
+    }
+    my @trees = map { $_->get_tree( 
+        $lang, 't', $sel ) }
+        $doc->get_bundles;
+
+    $self->init_doc_features_from_trees( \@trees );
+}
+
+sub init_doc_features_from_trees {
+    my ($self, $trees) = @_;
+    
+    $self->mark_doc_clause_nums( $trees );
+    $self->mark_sentord_within_blocks( $trees );
+}
+
 sub mark_sentord_within_blocks {
     my ($self, $trees) = @_;
 
@@ -139,6 +159,76 @@ sub mark_sentord_within_blocks {
         $i++;
     }
 }
+
+sub mark_doc_clause_nums {
+    my ($self, $trees) = @_;
+
+    my $curr_clause_num = 0;
+    foreach my $tree (@{$trees}) {
+        my $clause_count = 0;
+        
+        foreach my $node ($tree->descendants ) {
+            # TODO clause_number returns 0 for coap
+
+            $node->wild->{aca_clausenum} = 
+                $node->clause_number + $curr_clause_num;
+            if ($node->clause_number > $clause_count) {
+                $clause_count = $node->clause_number;
+            }
+        }
+        $curr_clause_num += $clause_count;
+    }
+}
+
+# quantization
+# takes an array of numbers, which corresponds to the boundary values of
+# clusters
+sub _categorize {
+    my ( $real, $bins_rf ) = @_;
+    my $retval = "-inf";
+    for (@$bins_rf) {
+        $retval = $_ if $real >= $_;
+    }
+    return $retval;
+}
+
+sub _join_feats {
+    my ($self, $f1, $f2) = @_;
+
+# TODO adjustment to accord with Linh et al. (2009)
+    if (!defined $f1) {
+        $f1 = "";
+    }
+    if (!defined $f2) {
+        $f2 = "";
+    }
+
+#    if (!defined $f1 || !defined $f2) {
+#        return undef;
+#    }
+    return $f1 . '_' . $f2;
+}
+
+sub _agree_feats {
+    my ($self, $f1, $f2) = @_;
+
+# TODO adjustment to accord with Linh et al. (2009)
+    if (!defined $f1 || !defined $f2) {
+        if (!defined $f1 && !defined $f2) {
+            return $b_true;
+        }
+        else {
+            return $b_false;
+        }
+    }
+
+#    if (!defined $f1 || !defined $f2) {
+#        return $b_false;
+#    }
+
+    return ($f1 eq $f2) ? $b_true : $b_false;
+}
+
 
 
 # TODO doc
