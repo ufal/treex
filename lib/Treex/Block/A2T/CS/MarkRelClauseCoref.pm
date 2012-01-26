@@ -26,6 +26,10 @@ sub process_tnode {
             else {
                 $antec = $e_parents[0];
             }
+            # cancel the link if it points to a verb
+            #if (defined $antec && $antec->gram_sempos eq "v") {
+            #    $antec = undef;
+            #}
         }
     }
 
