@@ -15,7 +15,7 @@ sub is_candidate {
     # if the node is not generated, leave just nouns, pronouns, adjectives and foreign words
     my $not_certain_pos = !$anode || ($anode->tag !~ /^[CJRTDIZV]/);
 
-    return ($is_sem_noun && $not_first_second_pers );
+    return ($is_sem_noun && $not_first_second_pers && $not_certain_pos);
 }
 
 # TODO doc
