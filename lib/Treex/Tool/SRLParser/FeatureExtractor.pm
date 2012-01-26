@@ -31,6 +31,8 @@ has '_feature_to_code' => (
     is          => 'ro',
     isa         => 'HashRef',
     default     => sub { {  'ChildrenPOS'       => 'P1',
+                            'PredicateChildrenPOS'  => 'P1a',
+                            'DepwordChildrenPOS'    => 'P1b',
                             'ChildrenPOSNoDup'  => 'P2',
                             'ConstituentPOSPattern' => 'P3',
                             'ConstituentPOSPattern+DepRelation' => 'P4',
@@ -58,6 +60,8 @@ has '_feature_to_code' => (
                             'Path+RelationPath' => 'P25',
                             'PathLength' => 'P26',
                             'PFEATSplit' => 'P27',
+                            'PredicatePFEATSplit' => 'P27a',
+                            'DepwordPFEATSplit' => 'P27b',
                             'PositionWithPredicate' => 'P28',
                             'Predicate' => 'P29',
                             'Predicate+PredicateFamilyship' => 'P30',
@@ -97,18 +101,31 @@ has '_feature_to_code' => (
 sub extract_features() {
     my ( $self, $predicate, $depword ) = @_; 
 
+    # Preprocessing: find out some information about predicate and depword candidates
+    # to use in classification features 
+    my $deprel = $depword->get_parent->id eq $predicate->id ? $depword->afun : $self->empty_sign;
+    my @predicate_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
+    my @depword_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
+    
     my @features;
 
     ### Features from Che & spol. ###
-    
+    # For explanation of these feature names, see paper
+    # "A Cascaded Syntactic and Semantic Dependency Parsing System":
+    # http://ir.hit.edu.cn/~car/papers/conll08.pdf
+
     # ChildrenPOS
+    push @features, $self->_make_feature('PredicateChildrenPOS', @predicate_children_pos);
+    push @features, $self->_make_feature('DepwordChildrenPOS', @depword_children_pos);
     # ChildrenPOSNoDup
     # ConstituentPOSPattern
     # ConstituentPOSPattern+DepRelation
     # ConstituentPOSPattern+DepwordLemma
     # ConstituentPOSPattern+HeadwordLemma
     # DepRelation
+    push @features, $self->_make_feature('DepRelation', $deprel);
     # DepRelation+DepwordLemma
+    push @features, $self->_make_feature('DepRelation+DepwordLemma', ( $deprel, $depword->lemma )); 
     # DepRelation+HeadwordLemma
     # DepRelation+HeadwordLemma+DepwordLemma
     # Depword
@@ -117,6 +134,7 @@ sub extract_features() {
     push @features, $self->_make_feature('DepwordLemma', $depword->lemma);
     # DepwordLemma+RelationPath
     # DepwordPOS
+    push @features, $self->_make_feature('DepwordPOS', substr($depword->tag, 0, 1));
     # DepwordPOS+HeadwordPOS
     # DownPathLength
     # FirstLemma
@@ -151,8 +169,11 @@ sub extract_features() {
     ### My features ###
 
     # PredicatePOS
+    push @features, $self->_make_feature('PredicatePOS', substr($predicate->tag, 0, 1));
     # DepwordFeat
+    push @features, $self->_make_feature('DepwordFeat', $depword->tag);
     # PredicateFeat
+    push @features, $self->_make_feature('PredicateFeat', $predicate->tag);
     # Distance
     # PositionToPredicate
     # PredicatePosition
@@ -169,14 +190,14 @@ sub extract_features() {
     # DepwordConstituentLastLemma
     # IsInFrame
     # Frame
-    
+   
     return join($self->feature_delim, @features);
 }
 
 sub _make_feature() {
     my ( $self, $name, @values ) = @_;
 
-    return $self->_feature_to_code->{$name} . $self->value_delim . join($self->value_delim, @values)
+    return $self->_feature_to_code->{$name} . $self->value_delim . (@values ? join($self->value_delim, @values) : $self->empty_sign);
 }
 
 1;
