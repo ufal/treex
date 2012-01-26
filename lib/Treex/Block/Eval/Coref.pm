@@ -31,7 +31,7 @@ has 'just_counts' => (
 has '_anaph_cands_filter' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'Maybe[Treex::Tool::Coreference::AnaphFilter]',
+    isa         => 'Maybe[Treex::Tool::Coreference::NodeFilter]',
     builder     => '_build_anaph_cands_filter',
 );
 
