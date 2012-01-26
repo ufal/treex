@@ -18,6 +18,10 @@ my $analyzer  = CzechMorpho::Analyzer->new();
 
 use Treex::Tool::Lexicon::CS::Prefixes;
 
+# If the string is longer than 249 bytes, the C code will die.
+# We set the limit lower (there are no such long words in Czech, anyway) so even twobyte unicode chars can fit in 249 bytes. 
+my $MAXCHARS = 120;
+
 sub _split_tags {
     my $lemma_and_tags = shift;
     my ( $pdt_lemma, $tags ) = split /\t/, $lemma_and_tags, 2;
@@ -33,6 +37,7 @@ sub _split_tags {
 sub forms_of_lemma {
     my ( $self, $lemma, $arg_ref ) = @_;
     log_fatal('No lemma given to forms_of_lemma()') if !defined $lemma;
+    return if length $lemma > $MAXCHARS;
     my $tag_regex = $arg_ref->{'tag_regex'} || '.*';
     my $limit     = $arg_ref->{'limit'}     || 0;
     my $guess = defined $arg_ref->{'guess'} ? $arg_ref->{'guess'} : 1;
