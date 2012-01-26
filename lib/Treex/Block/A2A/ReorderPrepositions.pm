@@ -5,13 +5,17 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    if (!$anode->get_parent->is_root
-        && $anode->get_parent->afun eq 'AuxP'
-        && $anode->afun ne 'AuxP'
-        )
-    {
+    my $parent = $anode->get_parent();
+    return if $parent->is_root();
+    
+    if ($parent->afun eq 'AuxP' && $anode->afun ne 'AuxP'){
         $anode->shift_before_node( $anode->get_parent );
     }
+    
+    if ($anode->lemma eq 'of' && $parent->tag =~ /^NN/){
+        $anode->shift_before_subtree( $anode->get_parent );
+    }
+    
     return;
 }
 
