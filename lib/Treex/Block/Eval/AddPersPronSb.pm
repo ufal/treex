@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-my $impersonal_verbs = 'jednat_se|pršet|zdát_se|dařit_se|oteplovat_se|ochladit_se';
+my $impersonal_verbs = 'jednat_se|pršet|zdát_se|dařit_se|oteplovat_se|ochladit_se|stát_se|záležet';
 
 # returns 1 if the given node is a reflexive passivum
 sub is_refl_pass {
@@ -99,15 +99,45 @@ sub is_IMPERS {
     ) ? 1 : 0;
 }
 
-sub has_sb {
+# returns 1 if the node has a subject among t-children and a-children of all anodes; otherwise 0
+sub has_asubject {
     my ( $t_node ) = @_;
-    return ( grep { ( $_->formeme || "" ) =~ /^(n:1|n:subj)$/ } $t_node->get_echildren( { or_topological => 1 } )
+    return 1 if ( grep { not $_->is_generated and $_->get_lex_anode->afun eq "Sb" } $t_node->get_echildren( { or_topological => 1 } ) );
+#     foreach my $child ( grep { not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) ) {
+#         return 1 if ( $child->get_lex_anode->afun eq "Sb" );
+#     }
+    foreach my $averb ( grep { $_->tag =~ /^V/ } $t_node->get_anodes ) {
+        return 1 if ( grep { $_->afun eq "Sb" } $averb->children );
+        my ($acoord) = grep { $_->afun eq "Coord" } $averb->children;
+        if ( $acoord ) {
+            return 1 if ( grep { $_->afun eq "Sb" } $acoord->children );
+        }
+    }
+    return 0;
+}
+
+# error in adding functor, the predicate of the subject subordinate clause has PAT functor
+sub has_sb_clause {
+    my ( $t_node ) = @_;
+    return ( grep { $_->functor eq "PAT"
+            and ($_->gram_sempos || "") eq "v"
+            and not $_->is_generated
+            and $_->get_lex_anode->tag =~ /^Vs/
+        } $t_node->get_echildren ( { or_topological => 1 } )
     ) ? 1 : 0;
 }
 
-my $correct_sum;
-my $eval_sum;
-my $total_sum;
+sub has_subject {
+    my ( $t_node ) = @_;
+    return ( grep { ( $_->formeme || "" ) eq "n:1" } $t_node->get_echildren( { or_topological => 1 } )
+        or has_asubject($t_node)
+        or has_sb_clause($t_node)
+    ) ? 1 : 0;
+}
+
+my $correct_sum = 0;
+my $eval_sum = 0;
+my $total_sum = 0;
 
 sub get_aligned_node {
     my ( $t_node ) = @_;
@@ -123,28 +153,47 @@ sub is_in_coord {
     }
 }
 
+sub get_total_sum {
+    my ( $gold_tree ) = @_;
+    my $total_sum = 0;
+    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $gold_tree->get_descendants ) {
+        my @eparents = grep { ($_->gram_sempos || "" ) eq "v" } $perspron->get_eparents ( { or_topological => 1 } );
+        if ( @eparents > 0 ) {
+            if ( ( is_passive($eparents[0]) and $perspron->functor eq "PAT" )
+                or not is_passive($eparents[0]) and $perspron->functor eq "ACT" ) {
+                $total_sum += @eparents;
+            }
+        }
+    }
+    return $total_sum;
+}
+
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my %autom2gold_node;
-    my $gold_tree = $bundle->get_zone('cs', 'ref')->get_ttree;
-    my $autom_tree = $bundle->get_zone('cs', 'src')->get_ttree;
-    foreach my $gold_node ( $gold_tree->get_descendants ) {
-        my $autom_node = get_aligned_node($gold_node);
-        $autom2gold_node{$autom_node} = $gold_node if ( $autom_node );
-    }
+    my $gold_tree = $bundle->get_zone('cs')->get_ttree;
+    my $autom_tree = $bundle->get_zone('cs', 'autom')->get_ttree;
+#     my $gold_tree = $bundle->get_zone('cs', 'ref')->get_ttree;
+#     my $autom_tree = $bundle->get_zone('cs', 'src')->get_ttree;
+#     foreach my $gold_node ( $gold_tree->get_descendants ) {
+#         my $autom_node = get_aligned_node($gold_node);
+#         $autom2gold_node{$autom_node} = $gold_node if ( $autom_node );
+#     }
     my @predicted_verbs;
+    $total_sum += get_total_sum($gold_tree);
     foreach my $cand_verb ( grep {
             $_->is_clause_head
             and not is_passive_having_PAT($_)
             and not is_active_having_ACT($_)
             and not is_GEN($_)
             and not is_IMPERS($_)
-            and not has_sb($_)
+            and not has_subject($_)
         } $autom_tree->get_descendants )
     {
         $eval_sum++;
         push @predicted_verbs, $cand_verb;
-        my $gold_verb = $autom2gold_node{$cand_verb};
+        my $gold_verb = get_aligned_node($cand_verb);
+#         my $gold_verb = $autom2gold_node{$cand_verb};
         if ( $gold_verb ) {
 #             in golden data are constructions "jsem presvedcen" annotated as "byt"->"presvedceny"; in automatic data as "presvedcit"
             if ( $gold_verb->gram_sempos =~ /^adj\.denot/ ) {
@@ -156,9 +205,11 @@ sub process_bundle {
             }
             elsif ( is_in_coord($gold_verb) ) {
             }
-    #         DEBUG
+    #         DEBUG TODO Pr. Formed hradi, kdezto nehradi: v gold plati Formed pro oba hradit, v autom jen jednou, podruhe bude PersPron a je to spravne!
             else {
-                print $cand_verb->get_address . "\n";
+#                 print $cand_verb->get_address . "\n";
+#                 print $cand_verb->t_lemma . "\n";
+#                 print "GEN: " . is_GEN($cand_verb) . "\n";
             }
         }
     }
@@ -171,6 +222,7 @@ sub process_bundle {
 #             }
 #         }
 #     }
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
 
 1;
