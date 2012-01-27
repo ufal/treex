@@ -231,14 +231,6 @@ sub _check_congruency {
 }
 
 
-sub print_two {
-    my ($mess, $node, $parent) = @_;
-    my ($first, $second) = sort { $a->a->ord <=> $b->a->ord } ($node, $parent);
-    my $rel = $first->a->form . ( $first == $node ? '->' : '<-' ) . $second->a->form;
-    my $sent = join " ", map { $_->form } $node->a->get_root()->get_descendants( {ordered => 1 } );
-    print( $mess . ":\t" . $rel . "\t" . $node->lemma . "\t" . $parent->lemma . "\t" . $node->t->get_address() . "\t" . $sent . "\n" );           
-}
-
 sub _is_nonattributive_numeral {
     
     my ( $self, $node, $parent ) = @_;
