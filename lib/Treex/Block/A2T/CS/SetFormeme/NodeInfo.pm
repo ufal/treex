@@ -6,6 +6,7 @@ use Treex::Core::Common;
 use CzechMorpho;
 require Treex::Tool::Lexicon::CS;
 require Treex::Tool::Lexicon::CS::Numerals;
+require Treex::Tool::Lexicon::CS::NamedEntityLabels;
 
 # The only required input attribute, the rest is (pre-)computed here
 has 't' => ( is => 'ro', isa => 'Object', required => 1 );
@@ -34,13 +35,13 @@ has 'case' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'prep' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->_prep_case->{prep} } );
 
-has 'is_name_lemma' => ( is => 'ro', isa => 'Bool', lazy_build => 1 );
-
 has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::truncate_lemma( $_[0]->lemma, 1 ) } );
 
-has 'term_types' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::get_term_types( $_[0]->lemma ) } );
+has 'is_term_label' => ( is => 'ro', isa => enum(['', 'congr', 'incon']), lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_label( $_[0]->lemma ) } );
 
-has 'is_term_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::is_term_label( $_[0]->lemma ) } );
+has 'is_geo_congr_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_geo_congr_label( $_[0]->lemma ) } );
+
+has 'ne_type' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 
@@ -124,7 +125,7 @@ sub _find_noncongruent_numeral {
 
     return if ( $self->t->is_coap_root() );
 
-    my %t_children = map { $_->get_lex_anode->id => $_ } grep { $_->get_lex_anode } $self->t->get_echildren();
+    my %t_children = map { $_->get_lex_anode->id => $_ } grep { $_->get_lex_anode } $self->t->get_echildren( { or_topological => 1 } );
     my @a_parents = $self->a->get_eparents( { or_topological => 1 } );
 
     foreach my $a_parent (@a_parents) {
@@ -183,17 +184,6 @@ sub _build__prep_case {
     return $ret;
 }
 
-sub _build_is_name_lemma {
-    my ($self) = @_;
-
-    return 1 if $self->term_types =~ m/[YSGKRm]/;
-
-    return (
-        substr( $self->trunc_lemma, 0, 1 ) eq uc( substr( $self->trunc_lemma, 0, 1 ) )
-            and substr( $self->trunc_lemma, 1 ) eq lc( substr( $self->trunc_lemma, 1 ) )
-    );
-}
-
 sub _build_verbform {
     my ($self) = @_;
     
@@ -211,7 +201,7 @@ sub _build_syntpos {
     return '' if ( $self->t->is_root or $self->tag =~ m/^.[%#^,FRVXc:]/ );
 
     # adjectives, adjectival numerals and pronouns
-    return 'adj' if ( $self->tag =~ m/^.[\}=\?48ACDGLOSUadhklnrwyz]/ );
+    return 'adj' if ( $self->tag =~ m/^.[\}=\?148ACDGLOSUadhklnrwyz]/ );
 
     # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
     return 'adj' if ( $self->tag =~ m/^.[WZ]/ and $self->lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );
@@ -225,6 +215,14 @@ sub _build_syntpos {
 
     # everything else are nouns: POS -- 5679EHPNJQYj@X, no POS (possibly -- generated nodes)
     return 'n';
+}
+
+sub _build_ne_type {
+    my ($self) = @_;
+    my $n_node = $self->a->n_node;
+    
+    return '' if (!$n_node);
+    return $n_node->ne_type;
 }
 
 1;

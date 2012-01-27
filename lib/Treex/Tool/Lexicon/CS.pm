@@ -155,7 +155,7 @@ sub get_poss_adj {
 # This truncates Czech morphological lemmas, leaving out the explanatory part.
 # If the second parameter is set to true, the number for homonymous lemmas is truncated as well.  
 sub truncate_lemma {
-    my ($lemma, $strip_numbers) = @_;
+    my ($lemma, $strip_numbers) = @_;    
     
     if ($strip_numbers){
         $lemma =~ s/(.+)-[0-9].*$/$1/;
@@ -176,19 +176,6 @@ sub get_term_types {
     return $term_types;
 }
 
-
-my %IS_TERM_LABEL;
-my @TERM_LABELS = qw(hora kopec městečko město metropole osobnost pan podnik republika řeka ves vesnice vesnička);
-foreach my $lemma (@TERM_LABELS ) {
-    $IS_TERM_LABEL{$lemma} = 1;
-}
-
-# There words can carry a case-congruent ID label which doesn't have to be congruent in number and gender,
-# e.g. "řeka Labe", "ves Štěchovice", "město Praha" etc.
-sub is_term_label {
-    my ($lemma) = @_;
-    return $IS_TERM_LABEL{ truncate_lemma( $lemma, 1 ) };
-}
 
 # Returns true if the given lemma belongs to a modal verb
 sub is_modal_verb {
@@ -231,7 +218,12 @@ print Treex::Tool::Lexicon::CS::get_term_types('jak-1_;L_^(živočich)'); # prin
 This module should include support for miscellaneous queries
 involving Czech lexicon and morphology.
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2009 Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
