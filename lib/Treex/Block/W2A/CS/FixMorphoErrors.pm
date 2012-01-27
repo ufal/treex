@@ -47,8 +47,13 @@ sub process_anode {
         }
     }
     
+    # a temporary hack for the weirdest Morce errors  
+    if ( $anode->lemma eq 'pan-2_;L_^(živočich)' ){ # turning apes back into humans 
+        $new_lemma = 'pan-1_^(oslovení)';
+    }
+    
     # a hack for unrecognized lemmas
-    if ( $anode->lemma eq '-UNKNOWN-' ){
+    elsif ( $anode->lemma eq '-UNKNOWN-' ){
         $new_lemma = lc $anode->form;
     }
 
