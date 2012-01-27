@@ -45,11 +45,11 @@ sub process_anode {
 sub is_aux_to_parent {
     my ($a_node) = shift;
     return (
-        ( $a_node->tag =~ /^Z/ and $a_node->afun !~ /Coord|Apos/ ) ||
-            ( $a_node->afun  eq "AuxV" ) ||
-            ( $a_node->afun  eq "AuxT" ) ||
-            ( $a_node->lemma eq "jako" and $a_node->afun !~ /AuxC/ ) ||
-            ( $a_node->afun  eq "AuxP" and $a_node->get_parent->afun eq "AuxP" )
+        ( $a_node->tag =~ /^Z/ and $a_node->afun !~ /Coord|Apos/ ) 
+            || ( $a_node->afun  eq 'AuxV' )
+            || ( $a_node->afun  eq 'AuxT' )
+            || ( lc( $a_node->form ) eq 'jako' and $a_node->afun ne 'AuxC' )
+            || ( $a_node->afun  eq 'AuxP' and $a_node->get_parent->afun eq 'AuxP' )
     );
 }
 
