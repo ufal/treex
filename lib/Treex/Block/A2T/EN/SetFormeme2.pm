@@ -40,6 +40,7 @@ Readonly my %SUB_FOR_SYNTPOS => (
 Readonly my %SYNTPOS_FOR_TAG => (
     NN => 'n', NNS => 'n', NNP => 'n', NNPS => 'n', '$' => 'n',
     JJ => 'adj', JJR => 'adj', JJS => 'adj',
+    PDT => 'adj',
     PRP => 'n', 'PRP$' => 'n',
     VB => 'v', VBP => 'v', VBZ => 'v', VBG => 'v', VBD => 'v', VBN => 'v',
     RB => 'adv', RBR => 'adv', RBS => 'adv',
@@ -65,8 +66,6 @@ sub detect_syntpos {
     if ( $tag =~ m/^(WP|WRB|WDT|DT|WP\$)$/ ) {
         return ( $form =~ m/^(when|where|why|how)$/ ) ? 'adv' : 'n';
     }
-    # predeterminers
-    return 'adj' if ( $tag eq 'PDT' );
 
     # numerals
     my ($t_parent) = $t_node->get_eparents({or_topological => 1});

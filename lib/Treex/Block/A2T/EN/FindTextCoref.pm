@@ -8,7 +8,7 @@ sub process_ttree {
 
     my @semnouns = grep { ( $_->gram_sempos || "" ) =~ /^n/ } $t_root->get_descendants( { ordered => 1 } );
 
-    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/ } $t_root->get_descendants ) {
+    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->formeme =~ /poss/ and $_->nodetype eq 'complex' } $t_root->get_descendants ) {
 
         my %attrib = map { ( $_ => $perspron->get_attr("gram/$_") ) } qw(gender number person);
 
