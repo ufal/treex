@@ -85,7 +85,7 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
-  #$weight_tree= $weight_tree ** 10;
+  $weight_tree= $weight_tree ** 2;
   #$weight_tree= 2 ** $weight_tree;
   
   #$weight_tree= (-1* log ($weight_tree));
