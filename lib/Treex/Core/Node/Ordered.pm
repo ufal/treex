@@ -114,7 +114,14 @@ sub shift_after_subtree {
     my ( $self, $reference_node, $arg_ref ) = @_;
     _check_shifting_method_args(@_);
 
-    my $last_node = $reference_node->get_descendants( { except => $self, last_only => 1, add_self => 1 } );
+    my $last_node;
+    if ( $arg_ref->{without_children} ) {
+        ($last_node) = reverse grep { $_ != $self } $reference_node->get_descendants( { ordered => 1, add_self => 1 } );
+    }
+    else {
+        $last_node = $reference_node->get_descendants( { except => $self, last_only => 1, add_self => 1 } );
+    }
+    return if !defined $last_node;
     return $self->_shift_to_node( $last_node, 1, $arg_ref->{without_children} ) if $arg_ref;
     return $self->_shift_to_node( $last_node, 1, 0 );
 }
@@ -123,7 +130,14 @@ sub shift_before_subtree {
     my ( $self, $reference_node, $arg_ref ) = @_;
     _check_shifting_method_args(@_);
 
-    my $first_node = $reference_node->get_descendants( { except => $self, first_only => 1, add_self => 1 } );
+    my $first_node;
+    if ( $arg_ref->{without_children} ) {
+        ($first_node) = grep { $_ != $self } $reference_node->get_descendants( { ordered => 1, add_self => 1 } );
+    }
+    else {
+        $first_node = $reference_node->get_descendants( { except => $self, first_only => 1, add_self => 1 } );
+    }
+    return if !defined $first_node;
     return $self->_shift_to_node( $first_node, 0, $arg_ref->{without_children} ) if $arg_ref;
     return $self->_shift_to_node( $first_node, 0, 0 );
 }
