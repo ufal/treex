@@ -21,12 +21,7 @@ push (@tset,$ds);
 $svm->train(@tset);
 print $svm;
 
-my $dstest = new Algorithm::SVM::DataSet(Label => "test",
-				     Data  => ["NNP",3,32]);
-				     
-				     
-$res = $svm->predict($dstest);
-print "Results \t". $res . "\n";
+
 
 
  #Change some of the SVM parameters.
