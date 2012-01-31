@@ -54,10 +54,11 @@ __END__
 
   Model   Language    Encoding
   ------------------------
-  bg.par  Bulagarian  utf8
+  bg.par  Bulgarian   utf8
   nl.par  Dutch       latin1
   en.par  English     latin1
   fr.par  French      utf8
+  de.par  German      utf8
   el.par  Greek       utf8
   it.par  Italian     utf8
   es.par  Spanish     utf8
@@ -68,5 +69,5 @@ __END__
 
 =cut
 
-# Copyright 2010-2011 David Marecek, Martin Popel
+# Copyright 2010-2011 David Mareček, Martin Popel
 This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
