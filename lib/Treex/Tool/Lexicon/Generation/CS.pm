@@ -19,8 +19,11 @@ my $analyzer  = CzechMorpho::Analyzer->new();
 use Treex::Tool::Lexicon::CS::Prefixes;
 
 # If the string is longer than 249 bytes, the C code will die.
-# We set the limit lower (there are no such long words in Czech, anyway) so even twobyte unicode chars can fit in 249 bytes. 
+# For safety, we set the limit a bit lower.
+# For speed,  we add another limit on (possibly multi-byte Unicode) characters.
+my $MAXBYTES = 200;
 my $MAXCHARS = 120;
+
 
 sub _split_tags {
     my $lemma_and_tags = shift;
@@ -47,6 +50,10 @@ sub forms_of_lemma {
 
     # prepare special utf8 glyphs for conversion (like three dots)
     my $dlemma = DowngradeUTF8forISO2::downgrade_utf8_for_iso2($lemma);
+    {
+        use bytes;
+        return if length $dlemma > $MAXBYTES;
+    }
     $dlemma =~ s/&#241;/ň/g;    # "ñ" is not in latin2, "ň" looks similar
 
     # get numbered pdt-lemmata
