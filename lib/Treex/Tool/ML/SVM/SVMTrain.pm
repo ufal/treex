@@ -1,26 +1,29 @@
+use strict;
+use warnings;
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 # Load the model stored in the file 'sample.model'
-$svm = new Algorithm::SVM();
+my $svm = new Algorithm::SVM();
 
 
-@tset = ();
+my @tset = ();
 
+#input file format label <tab> feature one <tab> feature 2<tab> and so on
 while (<>){
 my @tokens=split ("\t",$_);
 
+#right now hard coded for 3 features. Should change to accept as variable
 my $ds = new Algorithm::SVM::DataSet(Label => $tokens[0],
 				     Data  => [$tokens[1],$tokens[2],$tokens[3]]);
-				     
-				#     print $tokens[0] ."\t".$tokens[1]."\t".$tokens[2]."\t".$tokens[3];
 push (@tset,$ds);
 }
-		   
 
 # Train a new SVM on some new datasets.
 $svm->train(@tset);
 print $svm;
 
+# Save the model to a file.
+$svm->save('new.model');
 
 
 
@@ -33,8 +36,6 @@ print $svm;
 # Perform cross validation on the training set.
 #$accuracy = $svm->validate(5);
 
-# Save the model to a file.
-#$svm->save('new-sample.model');
 
 # Load a saved model from a file.
 #$svm->load('new-sample.model');
