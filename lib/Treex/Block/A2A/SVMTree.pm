@@ -8,7 +8,7 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 has 'language'     => ( is => 'rw', isa => 'Str', default  => 'en' );
-has 'treename' => ( is => 'rw', isa => 'Str', default  => 'ensemble' );
+has 'treename' => ( is => 'rw', isa => 'Str', default  => 'svm' );
 my $SVM;
 my $POSKEY="/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/poskey";
 my $MODELKEY="/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/modelkey";
@@ -20,7 +20,7 @@ sub BUILD {
   my ($self) = @_;
     $SVM = Treex::Tool::ML::SVM::SVM->new();
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
-    $ENSEMBLE->clear_edges();
+    
     open POS, "$POSKEY" or die $!;
     my @lines = <POS>;
     foreach my $line (@lines){
@@ -67,6 +67,8 @@ sub process_bundle {
   my $pos=0;
   my $sentence_length=scalar @todo;
   my $quartile=0;
+  $ENSEMBLE->set_n( scalar @todo );
+  $ENSEMBLE->clear_edges();
   
   my $i=0;
   foreach my $node (@todo){
@@ -79,12 +81,7 @@ sub process_bundle {
     }
 
   $quartile=find_bucket($i,$sentence_length);
-#   print $pos; 
-#   print "\t" ;
-#   print $quartile ;
-#   print "\t" ;
-#   print $sentence_length; 
-#   print "\n";
+
   
   my $dstest = new Algorithm::SVM::DataSet(Label => "predict",
 					   Data  => [$pos,$quartile,$sentence_length]);
@@ -93,16 +90,21 @@ sub process_bundle {
  
  my $tree_root = $bundle->get_tree( $self->language, 'a', $modelhash{chomp($predictedModel)} );  
  my @modelNodes = $tree_root->get_descendants( { ordered => 1 } );  
+#  print $modelNodes[$i]->parent->ord ;
+#  print "\t ". $node->ord;
+#  print "\n";
  $ENSEMBLE->add_edge( $modelNodes[$i]->parent->ord, $node->ord, 1 );
 
   $i++;
   }
+ # $ENSEMBLE->print_edge_matrix();
   make_graph( $self, $bundle );
 }
 
 sub make_graph {
   my ( $self, $bundle ) = @_;
   my $mst = $ENSEMBLE->get_mst();
+  #print "mst:".$mst;
   my $node;
   my $tree_root =
   $bundle->get_tree( $self->language, 'a', $self->treename );
