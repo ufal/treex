@@ -5,9 +5,9 @@ my %pos;
 my %models;
 my $posIndex=1;
 my $modelIndex=1;
-open (MYFILE, '>>input');
-
-
+open (MYFILE, '>input');
+open (MYMODELKEY, '>modelkey');
+open (MYPOSKEY, '>poskey');
 while (<>){
   my @tokens=split ("\t",$_);
   
@@ -16,6 +16,7 @@ while (<>){
   }
   else{
     $models{$tokens[0]}=$modelIndex;
+    print MYMODELKEY  $modelIndex."\t". $tokens[0]."\n";
     $tokens[0]=$models{$tokens[0]};
     $modelIndex++;
   }
@@ -26,6 +27,7 @@ while (<>){
   }
   else{
     $pos{$tokens[1]}=$posIndex;
+    print MYPOSKEY $tokens[1] ."\t".$posIndex ."\n";
     $tokens[1]=$pos{$tokens[1]};
     $posIndex++;
   }
@@ -36,3 +38,5 @@ while (<>){
  
 }
 close (MYFILE); 
+close (MYMODELKEY);
+close (MYPOSKEY);
