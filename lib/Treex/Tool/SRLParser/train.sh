@@ -10,6 +10,7 @@ language=cs
 cs_train_filelist="cs_train_filelist.txt"
 pdt_schemas=/net/projects/pdt/pdt20/data/schemas
 training_features=/net/work/people/strakova/robust_parsing/training_features.txt
+heldout_features=/net/work/people/strakova/robust_parsing/heldout_features.txt
 
 ### Print classification features to file ###
 
@@ -18,6 +19,12 @@ treex -p --jobs 10 \
     Util::SetGlobal language=$language \
     Read::PDT from="@$cs_train_filelist" schema_dir=$pdt_schemas/ \
     Print::SRLParserFeaturePrinter filename=$training_features
+
+rm -f $heldout_features
+treex -p --jobs 10 \
+    Util::SetGlobal language=$language \
+    Read::PDT from="`echo /net/projects/pdt/pdt20/data/full/tamw/dtest/*.t.gz`" schema_dir=$pdt_schemas \
+    Print::SRLParserFeaturePrinter filename=$heldout_features
 
 ### Train model with Maximum Entropy Toolkit
 
