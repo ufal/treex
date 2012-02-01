@@ -40,6 +40,7 @@ sub process_anode {
     }
 
     $conj->set_parent($coord_parent);
+    $conj->set_conll_deprel($h_member->conll_deprel);
     foreach my $comma (@commas) {
         $comma->set_parent($conj);
     }
