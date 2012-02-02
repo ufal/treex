@@ -55,7 +55,8 @@ sub tag_sentence {
     if ( !$analyses_rf ) {
 
         # array of analyses, each analysis is an array of lemma/tag info stored in a hash
-        my @analyses = map { [ $self->_analyze($_) ] } @{$wordforms_rf};
+        my @temp = @{$wordforms_rf};
+        my @analyses = map { [ $self->_analyze($_) ] } @temp;
 
         $analyses_rf = \@analyses;
     }
@@ -89,6 +90,7 @@ sub _tag {
 
     # extract features
     foreach my $i ( 0 .. $#{$forms} ) {    #go through word forms and analyses
+    
         my $form     = $forms->[$i];
         my $analysis = $analyses->[$i];
 

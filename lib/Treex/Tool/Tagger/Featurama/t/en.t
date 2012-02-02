@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use EnglishMorpho::Analysis;
 
 eval {
     require Featurama::Perc;
@@ -13,6 +14,7 @@ eval {
 plan tests => 5;
 
 use_ok('Treex::Tool::Tagger::Featurama::EN');
+
 
 my $tagger = Treex::Tool::Tagger::Featurama::EN->new();
 

@@ -2,14 +2,13 @@ package Treex::Tool::Tagger::Featurama::EN;
 use Moose;
 extends 'Treex::Tool::Tagger::Featurama';
 
-
 use Treex::Tool::EnglishMorpho::Analysis;
 
 has _analyzer => (
-    is => 'ro',
-    isa => 'Treex::Tool::EnglishMorpho::Analysis',
-    builder => '_build_analyzer',
-    lazy => 1,
+    is       => 'ro',
+    isa      => 'Treex::Tool::EnglishMorpho::Analysis',
+    builder  => '_build_analyzer',
+    lazy     => 1,
     init_arg => undef,
 );
 
@@ -34,7 +33,8 @@ override '_analyze' => sub {
 };
 
 override '_get_feature_names' => sub {
-    return qw(Form Prefix1 Prefix2 Prefix3 Prefix4 Prefix5 Prefix6 Prefix7 Prefix8 Prefix9 Suffix1 Suffix2 Suffix3 Suffix4 Suffix5 Suffix6 Suffix7 Suffix8 Suffix9 Num Cap Dash Tag);
+    return qw(Form Prefix1 Prefix2 Prefix3 Prefix4 Prefix5 Prefix6 Prefix7 Prefix8 Prefix9 Suffix1 Suffix2
+        Suffix3 Suffix4 Suffix5 Suffix6 Suffix7 Suffix8 Suffix9 Num Cap Dash Tag);
 };
 
 override '_get_features' => sub {
