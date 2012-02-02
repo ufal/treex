@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Test::More;
-use EnglishMorpho::Analysis;
 
 eval {
     require Featurama::Perc;
