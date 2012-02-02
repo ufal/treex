@@ -12,7 +12,6 @@ sub process_document {
     my ( $self, $document ) = @_;
     my $doc_name = $document->full_filename();
     $doc_name =~ s{^.*/}{};
-    $doc_name .= $document->storable ? ".streex" : ".treex.gz";
     my ( @src, @ref, @tst );
     my $position;
 
@@ -33,7 +32,7 @@ sub process_document {
             print join(
                 "\n",
                 (
-                    "ID\t" . $bundle->id . " ($doc_name##$position)",
+                    "ID\t" . $bundle->id . " ($doc_name.streex##$position)",
                     "SRC\t$src_joined",
                     "REF\t$ref_joined",
                     "TST\t$tst_joined",
