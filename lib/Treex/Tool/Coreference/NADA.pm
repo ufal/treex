@@ -8,31 +8,33 @@ use NADA;
 has 'weights_path' => (
     is => 'ro',
     isa => 'Str',
-    default => 'data/models/coreference/EN/NADA/',
+    default => 'data/models/coreference/EN/NADA/featureWeights.dat',
     required => 1,
 );
 has 'ngrams_path' => (
     is => 'ro',
     isa => 'Str',
-    default => 'data/models/coreference/EN/NADA/',
+    default => 'data/models/coreference/EN/NADA/ngrams',
     required => 1,
 );
 
 has '_weights' => (
     is => 'ro',
     isa => 'Object',
-    builder => '_build_weights'
+    builder => '_build_weights',
+    lazy => 1,
 );
 has '_ngrams' => (
     is => 'ro', 
     isa => 'NADA::NgramCompressedCntMap',
     builder => '_build_ngrams',
+    lazy => 1,
 );
 
 sub BUILD {
     my ($self) = @_;
-    $self->weights_path;
-    $self->ngrams_path;
+    $self->_weights;
+    $self->_ngrams;
 }
 
 sub _build_weights {
@@ -40,7 +42,7 @@ sub _build_weights {
     my $weights_file = require_file_from_share( $self->weights_path, ref($self) );
     log_fatal 'File ' . $weights_file . 
         ' with a NADA model used for'.
-        'anaphoricity determination does not exist.' 
+        ' anaphoricity determination does not exist.' 
         if !-f $weights_file;
     return NADA::initializeFeatureWeights($weights_file);
 }
@@ -63,7 +65,7 @@ sub process_sentence {
     
     my $result = NADA::processSentence(\@sentence, $self->_weights, $self->_ngrams, \@positions);
     my %result_hash = map {$positions[$_] => $result->[$_]} (0 .. $#positions);
-    return ($result_hash);
+    return \%result_hash;
 }
 
 1;

@@ -81,6 +81,10 @@ sub process_tnode {
 
     return if ( $t_node->is_root );
 
+    # skip nodes marked as non-referential
+    my $is_refer = $t_node->wild->{referential};
+    return if (defined $is_refer && ($is_refer == 0));
+
     if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
 
         my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );

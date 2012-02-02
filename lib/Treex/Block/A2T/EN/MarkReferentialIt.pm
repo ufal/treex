@@ -33,6 +33,7 @@ sub process_zone {
         my @anode_ids = map {$_->id} $t_node->get_anodes;
         my ($it_id) = grep {defined $it_ref_probs{$_}} @anode_ids;
         if (defined $it_id) {
+#            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
             $t_node->wild->{'referential'} = $it_ref_probs{$it_id} > 0.5 ? 1 : 0;
         }
     }
