@@ -59,7 +59,7 @@ sub serialize_wild {
 sub deserialize_wild {
     my ($self) = @_;
     if ( $self->_wild_dump ) {
-        $self->set_wild( eval "my " . $self->_wild_dump . '; return $VAR1' );
+        $self->set_wild( eval "my " . $self->_wild_dump . '; return $VAR1' ); ## no critic (ProhibitStringyEval)
     }
     else {
         $self->set_wild( {} );

@@ -491,7 +491,7 @@ sub save {
     my ($filename) = @_;
 
     if ( $filename =~ /\.streex$/ ) {
-        open( my $F, ">:gzip", $filename ) or log_fatal $!;
+        open( my $F, ">:gzip", $filename ) or log_fatal $!; ## no critic (RequireBriefOpen)
         Storable::nstore_fd( $self, *$F ) or log_fatal $!;
     }
 
@@ -528,7 +528,7 @@ sub retrieve_storable {
     else {
         log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
             unless $file =~ /\.streex$/;
-        open $FILEHANDLE, "<:gzip", $file or log_fatal($!);
+        open $FILEHANDLE, "<:gzip", $file or log_fatal($!);  ## no critic (RequireBriefOpen)
     }
 
     my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
@@ -707,6 +707,8 @@ or by the Storable module if the file's extension is .streex.gz.
 =item Treex::Core::Document->retrieve_storable($filename)
 
 Loading a document from the .streex (Storable) format.
+
+=back
 
 =head2 Other
 

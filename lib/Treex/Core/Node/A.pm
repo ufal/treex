@@ -198,8 +198,7 @@ sub copy_atree
 }
 
 
-sub copy_attributes 
-{
+sub copy_attributes {
     my ($self, $other) = @_;
 
     # We should copy all attributes that the node has but it is not easy to figure out which these are.
@@ -477,7 +476,7 @@ For example: "Bank of China"
 
 =item $node->get_subtree_string
 
-Return the string coresponding to a subtree rooted in C<$node>.
+Return the string corresponding to a subtree rooted in C<$node>.
 It's computed based on attributes C<form> and C<no_space_after>.
 
 =back

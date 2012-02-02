@@ -22,7 +22,7 @@ sub open_backend {
     return $FILEHANDLE;
 }
 
-sub read {
+sub read { ## no critic (ProhibitBuiltinHomonyms)
 
     my ($filehandle,$pmldoc)=@_;
     my $doc = Treex::Core::Document->retrieve_storable($filehandle);
@@ -38,7 +38,7 @@ sub read {
 }
 
 
-sub write {
+sub write { ## no critic (ProhibitBuiltinHomonyms)
     my ($fd,$fs)=@_;
     log_fatal "Saving of .streex files in TrEd not implemented yet";
 }

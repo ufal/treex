@@ -173,7 +173,7 @@ automatically initialized from the attribute C<from>
 
 =item next_document
 
-This method must be overriden in derived classes.
+This method must be overridden in derived classes.
 (The implementation in this class just issues fatal error.)
 
 =item next_filename

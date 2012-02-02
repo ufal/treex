@@ -224,6 +224,8 @@ Treex::Core::Node::P
 
 Representation of nodes of phrase structure (constituency) trees.
 
+=over 4
+
 =item copy_ptree()
 
 Recursively copy children from myself to another node.
@@ -231,6 +233,7 @@ This method is specific to the P layer because it contains the list of
 attributes. If we could figure out the list automatically, the method would
 become general enough to reside directly in Node.pm.
 
+=back
 
 =head1 AUTHOR
 

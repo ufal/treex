@@ -768,7 +768,7 @@ thickness) should be used for them.
 
 The TrEd visualization is precomputed statically after a file is loaded,
 therefore the extension can be currently used only for browsing, not for
-editting the treex files.
+editing the treex files.
 
 =head1 METHODS
 
