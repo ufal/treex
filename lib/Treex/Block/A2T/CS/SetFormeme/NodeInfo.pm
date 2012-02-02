@@ -191,7 +191,13 @@ sub _build_verbform {
     
     return 'rc' if ( $self->t->is_relclause_head );
     
-    return ( $self->tag =~ /^V[fme]/ and not grep { $_->tag =~ /^V[Bp]/ } @{ $self->aux } ) ? 'inf' : 'fin';   
+    # finite aux -> finite form
+    return 'fin' if ( any { $_->tag =~ /^V[Bp]/ } @{ $self->aux } );    
+    # active infinitive / transgressive || passive infinitive
+    return 'inf' if ( $self->tag =~ /^V[fme]/ || ( $self->tag =~ /^Vs/ && grep { $_->lemma eq 'být' } @{ $self->aux } ) );
+    
+    # default: finite
+    return 'fin';   
 }
 
 sub _build_syntpos {

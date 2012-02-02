@@ -42,7 +42,7 @@ foreach my $lemma (@GEO_LABELS) {
 # Returns 1 if the given lemma can be a congruent label of a geographic named entity 
 sub is_geo_congr_label {
     my ($lemma) = @_;
-    return $GEO_LABELS{$lemma} == 1;
+    return $GEO_LABELS{$lemma} ? 1 : 0;
 }
 
 1;
