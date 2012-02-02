@@ -111,6 +111,10 @@ sub extract_features() {
     my @depword_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
     my @path = $self->_find_path($a_root, $predicate, $depword);
     my $path_length = @path;
+    my @pos_path = map { $_->tag ? substr($_->tag, 0, 1) : $self->empty_sign } @path;
+    my @rel_path = map { $_->afun } @path;
+    my $distance = abs($predicate->ord - $depword->ord);
+    my $ord_diff = $predicate->ord - $depword->ord;
  
     my @features;
 
@@ -140,6 +144,7 @@ sub extract_features() {
     # DepwordLemma
     push @features, $self->_make_feature('DepwordLemma', $depword->lemma);
     # DepwordLemma+RelationPath
+    push @features, $self->_make_feature('DepwordLemma+RelationPath', ($depword->lemma, @rel_path));
     # DepwordPOS
     push @features, $self->_make_feature('DepwordPOS', substr($depword->tag, 0, 1));
     # DepwordPOS+HeadwordPOS
@@ -153,7 +158,9 @@ sub extract_features() {
     # LastLemma
     # LastPOS
     # Path
+    push @features, $self->_make_feature('Path', @pos_path);
     # Path+RelationPath
+    push @features, $self->_make_feature('Path+RelationPath', (@pos_path, @rel_path));
     # PathLength
     push @features, $self->_make_feature('PathLength', $path_length);
     # PFEATSplit
@@ -169,6 +176,7 @@ sub extract_features() {
     # PredicateSense+DepwordLemma
     # PredicateSense+DepwordPOS
     # RelationPath
+    push @features, $self->_make_feature('RelationPath', @rel_path);
     # SiblingsRELNoDup
     # UpPath
     # UpPathLength
@@ -183,9 +191,13 @@ sub extract_features() {
     # PredicateFeat
     push @features, $self->_make_feature('PredicateFeat', $predicate->tag);
     # Distance
+    push @features, $self->_make_feature('Distance', $distance);
     # PositionToPredicate
+    push @features, $self->_make_feature('PositionToPredicate', ($ord_diff == 0 ? "IsPredicate" : ($ord_diff > 0 ? "BeforePredicate" : "AfterPredicate")));  
     # PredicatePosition
+    push @features, $self->_make_feature('PredicatePosition', $predicate->ord);
     # DepwordPosition
+    push @features, $self->_make_feature('DepwordPosition', $depword->ord);
     # PredicateHeadword
     # PredicateHeadword
     # PredicateHeadwordPOS
