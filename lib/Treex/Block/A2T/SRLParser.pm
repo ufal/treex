@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::SRLParser::FeatureExtractor;
 use Treex::Tool::SRLParser::PredicateIdentifier;
+use Treex::Tool::SRLParser::LPInference;
 
 use lib '/net/projects/tectomt_shared/external_libs/';
 use MaxEntToolkit;
@@ -41,32 +42,43 @@ sub process_atree {
     my $predicate_identifier = Treex::Tool::SRLParser::PredicateIdentifier->new();
     
     my @a_nodes = $a_root->get_descendants;
-    my %semantic_dependencies;
     my %id_to_a_node;
-    my %has_parent;
+    my %probs;
 
-    # predict labels with MaxEntToolkit
+    # get labels probability distribution with MaxEntToolkit
     foreach my $predicate (@a_nodes) {
+        $id_to_a_node{$predicate->id} = $predicate;
         next if not $predicate_identifier->is_predicate($predicate);
 
         foreach my $depword (@a_nodes) {
             my @features = split /\s+/, $feature_extractor->extract_features($a_root, $predicate, $depword);
 
-            # TODO Use whole distribution (returned by eval_all).
-            my $label = $model->predict(\@features);
-            
-            if ($label ne $self->empty_sign) {
-                $semantic_dependencies{$predicate->id} = {} if not exists $semantic_dependencies{$predicate->id};
-                $semantic_dependencies{$predicate->id}{$depword->id} = $label;
-                $id_to_a_node{$predicate->id} = $predicate;
-                $id_to_a_node{$depword->id} = $depword;
-                $has_parent{$depword->id} = 1;
-            } 
+            my $outcome_labels = MaxEntToolkit::StringVector->new();
+            my $outcome_probs = MaxEntToolkit::DoubleVector->new();
+            $model->eval_all(\@features, $outcome_labels, $outcome_probs);
+            for (my $i = 0; $i < $outcome_labels->size(); $i++) {
+                my $key = $predicate->id." ".$depword->id." ".$outcome_labels->get($i);
+                $probs{$key} = $outcome_probs->get($i);
+            }
         }
     }
 
-    # TODO submit to lpsolve to globally optimize labels
-    # For now, we are using values predicted by MaxEntToolkit.
+    # globally solve with LPSolve
+    my $lp = Treex::Tool::SRLParser::LPInference->new();
+    my @selected_variables = $lp->lpsolve_srl(\%probs);
+
+    # use @selected_variables
+    my %semantic_dependencies;
+    my %has_parent;
+
+    foreach my $var (@selected_variables) {
+        my ($predicate_id, $depword_id, $functor) = split / /, $var;
+        if ($functor ne $self->empty_sign) {
+            $semantic_dependencies{$predicate_id} = {} if not exists $semantic_dependencies{$predicate_id};
+            $semantic_dependencies{$predicate_id}{$depword_id} = $functor;
+            $has_parent{$depword_id} = 1;
+        }
+    }
 
     # build t-root
     my $zone = $a_root->get_zone;
