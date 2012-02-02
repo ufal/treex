@@ -90,6 +90,7 @@ override '_set_class_value' => sub {
     return if ( $value eq '' );
 
     $tnode->wild->{verbform} = $value;
+    log_info( 'Predicted: ' . $tnode->get_address() . ' ' . $value );
 
     my $anode = $tnode->get_lex_anode();
     return if ( !$anode );
@@ -158,7 +159,8 @@ sub _get_lex_anode {
 
 sub _create_subtree {
 
-    my ( $self, $node, $topology, $right ) = @_;
+    my ( $self, $node, $topology, $par_right ) = @_;
+    my $right = 0;    
     my $child;
 
     while ($topology) {
@@ -229,6 +231,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
