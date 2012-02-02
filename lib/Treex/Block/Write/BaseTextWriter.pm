@@ -50,11 +50,11 @@ sub _build_to {
 
 # Append everything to one file if the 'to' parameter is set just to one file.
 override '_get_next_filename' => sub {
-    
+
     my ($self) = @_;
-    
+
     return $self->to if ($self->to !~ m/[ ,]/);
-    return super();              
+    return super();
 };
 
 1;

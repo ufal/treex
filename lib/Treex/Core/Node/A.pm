@@ -186,8 +186,8 @@ sub copy_atree
 
         # Create a copy of the child node.
         my $child1 = $target->create_child();
-        
-        # Copy all attributes of the original node to the new one        
+
+        # Copy all attributes of the original node to the new one
         $child0->copy_attributes($child1);
 
         # Call recursively on the subtrees of the children.
@@ -212,7 +212,7 @@ sub copy_attributes
         my $value = $self->get_attr($attribute);
         $other->set_attr( $attribute, $value );
     }
-    
+
     # TODO probably we should do deepcopy
     my %copy_of_wild = %{$self->wild};
     $other->set_wild(\%copy_of_wild);
@@ -230,7 +230,7 @@ sub get_terminal_pnode {
     }
     else {
         # TODO: shouldn't this just return undef and keep going? This is not consistent with other references.
-        log_fatal('SEnglishA node pointing to no SEnglishP node');  
+        log_fatal('SEnglishA node pointing to no SEnglishP node');
     }
 }
 
@@ -257,7 +257,7 @@ sub get_pnodes {
 
 override '_get_reference_attrs' => sub {
     my ($self) = @_;
-    return ('p_terminal.rf');    
+    return ('p_terminal.rf');
 };
 
 # -- other --

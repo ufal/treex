@@ -40,7 +40,7 @@ sub _get_node_list {
 
 sub _set_node_list {
     my $self = shift;
-    my $list = shift;    
+    my $list = shift;
     $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
     return;
 }
@@ -88,9 +88,9 @@ sub _update_list {
 
     my $ref = $self->get_attr($list);
     my (@nodes, @invalid);
-    
+
     return if (!$ref);
-    
+
     foreach my $id (@{$ref}){
         if ($doc->id_is_indexed($id)){
             push @nodes, $id;
@@ -98,7 +98,7 @@ sub _update_list {
         else {
             push @invalid, $id;
         }
-    }    
+    }
 
     $self->set_attr( $list, @nodes > 0 ? [@nodes] : undef );
     return;

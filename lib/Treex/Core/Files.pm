@@ -3,7 +3,7 @@ use Moose;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
 use autodie;
-use File::Slurp 9999.19; 
+use File::Slurp 9999.19;
 
 has filenames => (
     is     => 'ro',
@@ -76,7 +76,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Files - helper class for iterating over filenames 
+Treex::Core::Files - helper class for iterating over filenames
 
 =head1 SYNOPSIS
 

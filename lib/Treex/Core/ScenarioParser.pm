@@ -38,14 +38,14 @@ sub Parse::RecDescent::Treex::Core::ScenarioParser::SPACE
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SPACE"};
-    
+
     Parse::RecDescent::_trace(q{Trying rule: [SPACE]},
                   Parse::RecDescent::_tracefirst($_[1]),
                   q{SPACE},
                   $tracelevel)
                     if defined $::RD_TRACE;
 
-    
+
     my $err_at = @{$thisparser->{errors}};
 
     my $score;
