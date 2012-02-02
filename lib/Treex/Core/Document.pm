@@ -306,21 +306,21 @@ sub remove_backref {
 sub get_references_to_id {
     my ( $self, $id ) = @_;
     my $backref = $self->_backref;
-    
-    return if (!$backref->{$id});
-    return $backref->{$id}; # TODO clone ?
+
+    return if ( !$backref->{$id} );
+    return $backref->{$id};    # TODO clone ?
 }
 
 # Remove all references and backreferences leading to the $node (calls remove_reference() on the source nodes)
 sub _remove_references_to_node {
     my ( $self, $node ) = @_;
-    my $id = $node->id;
+    my $id      = $node->id;
     my $backref = $self->_backref;
 
     # First, delete backreferences to the $node
     my $refs = $node->_get_referenced_ids();
     foreach my $type ( keys %{$refs} ) {
-        $self->remove_backref($type, $id, $refs->{$type} );
+        $self->remove_backref( $type, $id, $refs->{$type} );
     }
 
     # Second, delete references to the $node
@@ -496,17 +496,23 @@ sub save {
     }
 
     else {
-        $self->serialize_wild;
-        foreach my $bundle ( $self->get_bundles ) {
-            $bundle->serialize_wild;
-            foreach my $bundlezone ( $bundle->get_all_zones ) {
-                foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
-                    $node->serialize_wild;
-                }
-            }
-        }
+        $self->_serialize_all_wild();
         return $self->_pmldoc->save(@_);
     }
+}
+
+sub _serialize_all_wild {
+    my ($self) = @_;
+    $self->serialize_wild;
+    foreach my $bundle ( $self->get_bundles ) {
+        $bundle->serialize_wild;
+        foreach my $bundlezone ( $bundle->get_all_zones ) {
+            foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
+                $node->serialize_wild;
+            }
+        }
+    }
+    return;
 }
 
 sub retrieve_storable {

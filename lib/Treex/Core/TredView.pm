@@ -218,7 +218,10 @@ sub file_opened_hook {
 
     my $treex_doc;
     if ( defined $pmldoc->[13]->{_treex_core_document} ) {    # if it comes from storable (i.e., already with moose)
-        $treex_doc = $pmldoc->[13]->{_treex_core_document}
+        $treex_doc = $pmldoc->[13]->{_treex_core_document};
+
+        # streex files do not have "wild_dump" filled, but we want to show this in ttred
+        $treex_doc->_serialize_all_wild();
     }
     else {
         $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
