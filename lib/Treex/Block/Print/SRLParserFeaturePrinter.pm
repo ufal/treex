@@ -54,7 +54,7 @@ sub process_ttree {
         foreach my $depword (@a_nodes) {
             my $key = $predicate->id ." ". $depword->id;
             my $label = exists $positive_instances{$key} ? $positive_instances{$key} : $self->empty_sign;
-            push @lines, $label . $self->feature_delim . $feature_extractor->extract_features($predicate, $depword);
+            push @lines, $label . $self->feature_delim . $feature_extractor->extract_features($a_root, $predicate, $depword);
         }
     }
 

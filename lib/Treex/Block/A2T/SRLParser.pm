@@ -50,7 +50,7 @@ sub process_atree {
         next if not $predicate_identifier->is_predicate($predicate);
 
         foreach my $depword (@a_nodes) {
-            my @features = split /\s+/, $feature_extractor->extract_features($predicate, $depword);
+            my @features = split /\s+/, $feature_extractor->extract_features($a_root, $predicate, $depword);
 
             # TODO Use whole distribution (returned by eval_all).
             my $label = $model->predict(\@features);

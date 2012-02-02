@@ -2,6 +2,7 @@ package Treex::Tool::SRLParser::FeatureExtractor;
 
 use Moose;
 use Treex::Core::Common;
+use List::MoreUtils qw/ uniq /;
 
 has 'feature_delim' => (
     is      => 'rw',
@@ -34,6 +35,8 @@ has '_feature_to_code' => (
                             'PredicateChildrenPOS'  => 'P1a',
                             'DepwordChildrenPOS'    => 'P1b',
                             'ChildrenPOSNoDup'  => 'P2',
+                            'PredicateChildrenPOSNoDup' => 'P2a',
+                            'DepwordChildrenPOSNoDup' => 'P2b',
                             'ConstituentPOSPattern' => 'P3',
                             'ConstituentPOSPattern+DepRelation' => 'P4',
                             'ConstituentPOSPattern+DepwordLemma' => 'P5',
@@ -99,14 +102,16 @@ has '_feature_to_code' => (
 );
 
 sub extract_features() {
-    my ( $self, $predicate, $depword ) = @_; 
+    my ( $self, $a_root, $predicate, $depword ) = @_; 
 
     # Preprocessing: find out some information about predicate and depword candidates
     # to use in classification features 
     my $deprel = $depword->get_parent->id eq $predicate->id ? $depword->afun : $self->empty_sign;
     my @predicate_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
     my @depword_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
-    
+    my @path = $self->_find_path($a_root, $predicate, $depword);
+    my $path_length = @path;
+ 
     my @features;
 
     ### Features from Che & spol. ###
@@ -118,6 +123,8 @@ sub extract_features() {
     push @features, $self->_make_feature('PredicateChildrenPOS', @predicate_children_pos);
     push @features, $self->_make_feature('DepwordChildrenPOS', @depword_children_pos);
     # ChildrenPOSNoDup
+    push @features, $self->_make_feature('PredicateChildrenPOSNoDup', uniq @predicate_children_pos);
+    push @features, $self->_make_feature('DepwordChildrenPOSNoDup', uniq @depword_children_pos);
     # ConstituentPOSPattern
     # ConstituentPOSPattern+DepRelation
     # ConstituentPOSPattern+DepwordLemma
@@ -148,6 +155,7 @@ sub extract_features() {
     # Path
     # Path+RelationPath
     # PathLength
+    push @features, $self->_make_feature('PathLength', $path_length);
     # PFEATSplit
     # PositionWithPredicate
     # Predicate
@@ -198,6 +206,47 @@ sub _make_feature() {
     my ( $self, $name, @values ) = @_;
 
     return $self->_feature_to_code->{$name} . $self->value_delim . (@values ? join($self->value_delim, @values) : $self->empty_sign);
+}
+
+# Find path from start a-node to end a-node 
+# and return an array of a-nodes along the path.
+# The algorithm depends on each a-node having at most one parent
+# and the a-tree having no loops.
+sub _find_path() {
+    my ( $self, $a_root, $start, $end ) = @_;
+   
+    return ($start) if ($start->id eq $end->id);
+
+    # go up from a-node "start" to "a_root" and mark visited a-nodes
+    my %start_up_path_nodes;
+    my @start_up_path = ();
+    
+    my $act = $start;
+    $start_up_path_nodes{$act->id} = 1;
+    push @start_up_path, $act;
+    
+    while ($act->id ne $a_root->id) {
+        $act = $act->parent;
+        $start_up_path_nodes{$act->id} = 1;
+        push @start_up_path, $act;
+    }
+
+    # go up from a-node end until marked a-node is reached
+    my @end_up_path = ();
+    $act = $end;
+    while (not exists $start_up_path_nodes{$act->id}) {
+        push @end_up_path, $act;
+        $act = $act->parent;
+    }
+
+    # delete all a-nodes from common parent to a-root
+    my $common_parent = $act;
+    while ((pop @start_up_path)->id ne $common_parent->id) {
+    }
+
+    # concatenate paths
+    my @path = (@start_up_path, $common_parent, reverse(@end_up_path)); 
+    return @path;
 }
 
 1;
