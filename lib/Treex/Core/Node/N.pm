@@ -52,6 +52,7 @@ sub _clear_a_nodes {
     foreach my $anode (@{$old_refs}){
         $anode->_set_n_node(undef);
     }
+    return;
 }
 
 #@overrides Treex::Core::Node::set_attr

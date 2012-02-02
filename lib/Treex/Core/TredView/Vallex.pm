@@ -21,6 +21,7 @@ sub _extension_missing {
     my $message = "This function requires additional extension that is missing.\n";
     $message .= "Please install extension '$name'.";
     TredMacro::ToplevelFrame->messageBox( -type => 'ok', -message => $message );
+    return;
 }
 
 sub _find_vallex {
@@ -184,6 +185,7 @@ sub _OpenValFrameList_Cs {
         }
     );
     TredMacro::ChangingFile(0);
+    return;
 }
 
 sub _OpenValFrameList_En {
@@ -223,6 +225,7 @@ sub _OpenValFrameList_En {
     $opts->{-pos} = $a_node->attr('tag') if $a_node->attr('tag');
     TrEd::EngValLex::GUI::ChooseFrame($opts);
     TredMacro::ChangingFile(0);
+    return;
 }
 
 1;

@@ -34,6 +34,7 @@ sub read {
     # this is a hack for passing the already created Treex::Core structure up to TredView modules;
     # God knows what the 13th slot is, probably it's a slot for some application data
     $pmldoc->[13]->{_treex_core_document} = $doc;
+    return;
 }
 
 

@@ -95,6 +95,7 @@ sub load_layouts {
     }
 
     close CFG;
+    return;
 }
 
 sub save_layouts {
@@ -125,6 +126,7 @@ sub save_layouts {
 
     close CFG;
     $self->{_layouts_saved} = 1;
+    return;
 }
 
 sub _move_layout {
@@ -148,6 +150,7 @@ sub _move_layout {
     }
 
     $self->{_cur_layout} = $new_layout;
+    return;
 }
 
 sub _wrap_layout {
@@ -182,6 +185,7 @@ sub _wrap_layout {
     }
 
     $self->{_cur_layout} = $new_layout;
+    return;
 }
 
 sub _normalize_layout {
@@ -214,6 +218,7 @@ sub _normalize_layout {
     }
 
     $self->{_cur_layout} = $new_layout;
+    return;
 }
 
 sub _get_layout_coords {
@@ -285,6 +290,7 @@ sub _mouse_move {
         }
         $self->{_cur_tree} = $tree;
     }
+    return;
 }
 
 sub _mouse_drag {
@@ -295,6 +301,7 @@ sub _mouse_drag {
     $self->{_drag_tree} = $tree;
     ( $self->{_drag_x}, $self->{_drag_y} ) = $self->_get_layout_coords( $x, $y );
     $canvas->itemconfigure( $tree->{'label'} . '&&' . $self->_tag_tree, -outline => 'red', -width => 2, -fill => 'yellow' );
+    return;
 }
 
 sub _mouse_drop {
@@ -334,6 +341,7 @@ sub _mouse_drop {
 
     $self->{_drag_tree} = undef;
     $self->{_drag_x} = $self->{_drag_y} = -1;
+    return;
 }
 
 sub _mouse_right {
@@ -348,6 +356,7 @@ sub _mouse_right {
     $layout->[$x]->[$y]->{'visible'} = $visibility;
     $canvas->itemconfigure( $tree->{'label'} . '&&' . $self->_tag_tree, -fill => $visibility ? 'white' : 'grey' );
     $self->{_cur_layout} = $layout;
+    return;
 }
 
 sub _draw_layout {
@@ -387,6 +396,7 @@ sub _draw_layout {
     $canvas->CanvasBind( '<ButtonPress-1>'   => [ $self => '_mouse_drag', $canvas ] );
     $canvas->CanvasBind( '<ButtonRelease-1>' => [ $self => '_mouse_drop', $canvas ] );
     $canvas->CanvasBind( '<ButtonRelease-3>' => [ $self => '_mouse_right', $canvas ] );
+    return;
 }
 
 sub conf_dialog {

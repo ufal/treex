@@ -208,6 +208,7 @@ sub recompute_visualization {
     $self->precompute_tree_depths($bundle);
     $self->precompute_tree_shifts($bundle);
     $self->precompute_visualization($bundle);
+    return;
 }
 
 sub file_opened_hook {
@@ -732,11 +733,13 @@ sub toggle_clause_collapsing {
             }
         }
     }
+    return;
 }
 
 sub toggle_alignment {
     my $self = shift;
     $self->show_alignment( not $self->show_alignment );
+    return;
 }
 
 1;

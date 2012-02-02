@@ -156,8 +156,8 @@ sub process_zone {
 
 sub process_end {
     my ($self) = @_;
-
     # default implementation is empty, but can be overriden
+    return;
 }
 
 sub get_block_name {

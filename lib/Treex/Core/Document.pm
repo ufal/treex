@@ -499,6 +499,8 @@ sub save {
         $self->_serialize_all_wild();
         return $self->_pmldoc->save(@_);
     }
+
+    return;
 }
 
 sub _serialize_all_wild {
