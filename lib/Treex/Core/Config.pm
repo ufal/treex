@@ -225,7 +225,7 @@ return list of directories where resources will be searched
 
 =item tmp_dir()
 
-return temporary directory, shoud be used instead of /tmp or similar
+return temporary directory, should be used instead of /tmp or similar
 
 =item _devel_version()
 

@@ -326,15 +326,15 @@ name is passed.
 
 The string description of scenarios looks as follows.
 
-1) It contains a list of block names from which their 'C<Treex::Block::>' 
+1) It contains a list of block names from which their 'C<Treex::Block::>'
 prefixes were removed.
 
-2) The block names are separated by one or more whitespaces.
+2) The block names are separated by one or more white spaces.
 
-3) The block names are listed in the same order in which they should be 
+3) The block names are listed in the same order in which they should be
 applied on data.
 
-4) For each block, there can be one or more parameters specified, using the 
+4) For each block, there can be one or more parameters specified, using the
 C<attribute=value> form.
 
 5) Comments start with 'C<#>' and end with the nearest newline character.
@@ -378,9 +378,9 @@ The scenario description is loaded from the file.
 =item $scenario->run();
 
 Run the scenario.
-One of the blocks (usually the first one) must be the document reader (see 
-L<Treex::Core::DocumentReader>) that produces the 
-documents on which this scenatio is applied.
+One of the blocks (usually the first one) must be the document reader (see
+L<Treex::Core::DocumentReader>) that produces the
+documents on which this scenario is applied.
 
 =back
 
@@ -409,12 +409,12 @@ when running scenario blocks are loaded automatically
 
 =item init
 
-do all initialization so after this method scenario is ready to run 
+do all initialization so after this method scenario is ready to run
 currently just load blocks
 
 =item restart
 
-resets document readed, in future it will rebuild reloaded blocks
+resets the document reader, in future it will rebuild reloaded blocks
 
 =back
 

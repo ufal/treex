@@ -28,7 +28,7 @@ override '_get_filename' => sub {
 
 # If a gzipped file is opened first, the header won't be correct
 override '_open_file_handle' => sub {
-    return undef;
+    return;
 };
 
 override '_document_extension' => sub {

@@ -121,7 +121,7 @@ If the number is unknown in advance, C<undef> should be returned.
 =item is_current_document_for_this_job
 
 Is the document that was most recently returned by C<$self->next_document()>
-supossed to be processed by this job?
+supposed to be processed by this job?
 Job indices and document numbers are 1-based, so e.g. for
 C<jobs = 5, jobindex = 3> we want to load documents with numbers 3,8,13,18,...
 C<jobs = 5, jobindex = 5> we want to load documents with numbers 5,10,15,20,...
@@ -135,7 +135,7 @@ See C<is_current_document_for_this_job>.
 
 =item number_of_documents_per_this_job
 
-Total number of documents that will be produiced by this reader for this job.
+Total number of documents that will be produced by this reader for this job.
 It's computed based on C<number_of_documents>, C<jobindex> and C<jobs>.
 
 =item restart

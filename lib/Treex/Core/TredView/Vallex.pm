@@ -234,11 +234,11 @@ __END__
 
 =head1 NAME
 
-Treex::Core::TredView::Vallex - Browsing vallency lexicons
+Treex::Core::TredView::Vallex - Browsing valency lexicons
 
 =head1 DESCRIPTION
 
-This packages provides browsers of vallency lexicons
+This package provides browsers of valency lexicons
 
 =head1 METHODS
 

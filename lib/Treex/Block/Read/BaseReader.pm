@@ -7,7 +7,7 @@ use Treex::Core::Document;
 
 sub next_document {
     my ($self) = @_;
-    return log_fatal "method next_document must be overriden in " . ref($self);
+    return log_fatal "method next_document must be overridden in " . ref($self);
 }
 
 has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );

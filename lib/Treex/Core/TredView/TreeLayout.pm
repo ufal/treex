@@ -444,7 +444,7 @@ It's purpose is to allow an user friendly configuration of the placement of
 the trees stored in a bundle.
 
 The mechanism works only with bundles. Each bundle gets a label that describes
-it's content (conbination of layers, languages and selectors). When there is a
+it's content (combination of layers, languages and selectors). When there is a
 bundle to be displayed, the package constructs its label and tries to find its
 layout. If the label is unknown (no layout found), default is provided.
 

@@ -107,7 +107,7 @@ even from non-equally-sized files.
 
 =item encoding
 
-Whan is the encoding of the input files. E.g. C<utf8> (the default), C<cp1250> etc.
+What is the encoding of the input files. E.g. C<utf8> (the default), C<cp1250> etc.
 
 =back
 

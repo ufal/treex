@@ -359,7 +359,7 @@ Set the lexical a-node (to C<a/lex.rf>).
 
 =item $node->remove_aux_anodes(@to_remove)
 
-Remove the specifed a-nodes from C<a/aux.rf> (if they are contained in it).
+Remove the specified a-nodes from C<a/aux.rf> (if they are contained in it).
 
 =item $node->get_coref_nodes()
 

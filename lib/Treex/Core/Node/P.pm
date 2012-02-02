@@ -200,7 +200,7 @@ sub copy_ptree
         }
 
         # TODO probably we should do deepcopy
-        my %copy_of_wild = %{$child0->wild};
+        %copy_of_wild = %{$child0->wild};
         $child1->set_wild(\%copy_of_wild);
 
         # Call recursively on the subtrees of the children.

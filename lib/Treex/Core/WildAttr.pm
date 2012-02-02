@@ -75,7 +75,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::WildAttr - role for arbitrary atributes of Treex objects
+Treex::Core::WildAttr - role for arbitrary attributes of Treex objects
 
 =for test_synopsis my ($node, $value);
 =head1 SYNOPSIS
