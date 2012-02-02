@@ -63,7 +63,6 @@ sub lpsolve_srl() {
 
     # solve LP
     my $return_code = LPSolve::solve($lp);
-    print STDERR "LP solve finished with code $return_code.\n";
 
     # get selected variables
     my $outcome_variables = LPSolve::DoubleArray->new($n_variables);
