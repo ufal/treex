@@ -32,32 +32,42 @@ sub get_document {
 }
 
 sub create_atree {
-    my $self = shift;
-    return $self->create_tree('a');
+    my ($self,$params_rf) = @_;
+    return $self->create_tree('a',$params_rf);
 }
 
 sub create_ttree {
-    my $self = shift;
-    return $self->create_tree('t');
+    my ($self,$params_rf) = @_;
+    return $self->create_tree('t',$params_rf);
 }
 
 sub create_ntree {
-    my $self = shift;
-    return $self->create_tree('n');
+    my ($self,$params_rf) = @_;
+    return $self->create_tree('n',$params_rf);
 }
 
 sub create_ptree {
-    my $self = shift;
-    return $self->create_tree('p');
+    my ($self,$params_rf) = @_;
+    return $self->create_tree('p',$params_rf);
 }
 
 sub create_tree {
     my $self = shift;
-    my ($layer) = pos_validated_list(
+    my ($layer,$params_rf) = pos_validated_list(
         \@_,
         { isa => 'Treex::Type::Layer' },
+        { isa => 'Ref' },
     );
-    log_fatal("Zone already contains tree at $layer layer") if $self->has_tree($layer);
+
+    if ($self->has_tree($layer)) {
+        if (defined $params_rf and $params_rf->{overwrite}) {
+            $self->remove_tree($layer);
+        }
+        else {
+            log_fatal("Zone already contains tree at $layer layer");
+        }
+    }
+
     my $class = "Treex::Core::Node::" . uc($layer);
     my $tree_root = eval { $class->new( { _called_from_core_ => 1 } ) } or log_fatal $!;    #layer subclasses not available yet
 

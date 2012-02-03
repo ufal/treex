@@ -41,6 +41,7 @@ foreach ( 0 .. 2 ) {
             isa_ok( $tree, "Treex::Core::Node::$u", "Tree created by create_${l}tree method" ) or diag($@);
             ok( eval { $zone->remove_tree($l), 1 }, 'Tree can be deleted' ) or diag($@);
             ok( !$zone->has_tree($l), "Zone does not contain the deleted $u tree" );
+
             my $tree2 = eval { $zone->create_tree($l) };
             isa_ok( $tree2, "Treex::Core::Node::$u", "Tree created by create_tree($l) method" ) or diag($@);
 
@@ -51,6 +52,9 @@ foreach ( 0 .. 2 ) {
                 is( $zone->get_tree($l),             $tree2,              "Tree I get via get_tree($l) is same as originally created" );
                 is( eval qq/\$zone->get_${l}tree()/, $zone->get_tree($l), "I get same tree via get_${l}tree and get_tree($l)" )         or diag($@);
             }
+
+            my $tree3 = eval { $zone->create_tree($l,{overwrite=>1}) };
+            isa_ok( $tree3, "Treex::Core::Node::$u", "Existing tree can be overwritten using {overwrite=>1}" ) or diag($@);
         }
 
         # accessing created zones
