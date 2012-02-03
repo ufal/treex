@@ -243,7 +243,6 @@ sub _verb {
     $tnode->set_gram_sempos('v');
     $tnode->set_gram_iterativeness('it0');
     $tnode->set_gram_resultative('res0');
-    $tnode->set_gram_dispmod('disp0');
     $tnode->set_attr( 'gram/negation', $negated ? 'neg1' : 'neg0' );
 
     # First guess deontic modality...
@@ -270,14 +269,17 @@ sub _verb {
 
     # First, we will process infinitives...
     if ( !$tnode->is_clause_head ) {
+
         $tnode->set_gram_tense('nil');
-        $tnode->set_gram_verbmod('ind');
+        $tnode->set_gram_verbmod('nil');
+        $tnode->set_gram_dispmod('nil');
 
         # ...because it's easy and we are quickly finished :-)
         return;
     }
 
     # So now we deal with a finite verb
+    $tnode->set_gram_dispmod('disp0');
 
     # Verbal modality is quite straightforward...
     my $is_conditional = any { $is_aux_lemma{$_} } qw(would could should might);

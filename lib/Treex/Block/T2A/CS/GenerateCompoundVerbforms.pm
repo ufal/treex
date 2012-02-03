@@ -90,7 +90,6 @@ override '_set_class_value' => sub {
     return if ( $value eq '' );
 
     $tnode->wild->{verbform} = $value;
-    log_info( 'Predicted: ' . $tnode->get_address() . ' ' . $value );
 
     my $anode = $tnode->get_lex_anode();
     return if ( !$anode );

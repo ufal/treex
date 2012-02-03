@@ -66,8 +66,6 @@ sub process_tnode {
     my $en_t_node  = $cs_t_node->src_tnode or return;
     my $cs_formeme = $cs_t_node->formeme;
     my $en_formeme = $en_t_node->formeme;
-    my $en_tlemma  = $en_t_node->t_lemma;
-    my $cs_tlemma  = $cs_t_node->t_lemma;
 
     # Some English clause heads may become non-heads and vice versa
     $cs_t_node->set_is_clause_head( $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
@@ -84,7 +82,7 @@ sub process_tnode {
     $self->_fix_degcmp( $cs_t_node, $en_t_node );
 
     # fix verbal grammatemes if verbal form has changed  
-    $self->_fix_tense_verbmod( $cs_t_node, $en_t_node );
+    $self->_fix_tense_verbmod( $cs_t_node, $en_t_node ) if ( $cs_formeme =~ /^v/ );
     
     return;
 }
@@ -432,9 +430,17 @@ sub _fix_tense_verbmod {
 
     my $cs_formeme = $cs_t_node->formeme;
     
-    # Fix tense if changing from English infinitive to a Czech finite clause
-    if ( ( $cs_t_node->gram_tense || '' ) =~ /^(nil)?$/ && $cs_formeme =~ /fin/ ){
+    # Fix tense if changing from English infinitive to a Czech finite clause ...
+    if ( ( $cs_t_node->gram_tense || '' ) =~ /^(nil)?$/ && $cs_formeme =~ /(fin|rc)/ ){
         $cs_t_node->set_gram_tense( 'sim' );
+        $cs_t_node->set_gram_verbmod( 'ind' );
+        $cs_t_node->set_gram_dispmod( 'disp0' );
+    }
+    # and back again
+    if ( $cs_formeme =~ /inf$/ ){
+        $cs_t_node->set_gram_tense( 'nil' );
+        $cs_t_node->set_gram_verbmod( 'nil' );
+        $cs_t_node->set_gram_dispmod( 'nil' );
     }
     
     # Set the correct tense and verbmod in clauses translated to Czech 'aby+fin' or 'kdyby+fin'
