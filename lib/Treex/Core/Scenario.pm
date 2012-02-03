@@ -193,7 +193,7 @@ sub construct_scenario_string {
     my @block_strings;
     foreach my $block_item (@block_items) {
         my $name       = $block_item->{block_name};
-        my @parameters = @{ $block_item->{block_parameters} };
+        my @parameters = map {_add_quotes($_)} @{ $block_item->{block_parameters} };
         $name =~ s{^Treex::Block::}{} or $name = "::$name";    #strip leading Treex::Block:: or add leading ::
         my $params;
         if ( scalar @parameters ) {
@@ -205,6 +205,15 @@ sub construct_scenario_string {
         push @block_strings, $name . $params;
     }
     return join $delim, @block_strings;
+}
+
+sub _add_quotes { # adding quotes only if param. value contains a space
+    my ( $block_parameter ) = @_;
+    my ( $name, $value ) = split /=/,$block_parameter,2;
+    if ( $value =~ /\s/ ) {
+        return "$name=\"$value\"";
+    }
+    return $block_parameter;
 }
 
 sub load_blocks {

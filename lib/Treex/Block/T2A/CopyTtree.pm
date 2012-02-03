@@ -7,11 +7,11 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     my $t_root = $zone->get_ttree();
-    my $a_root = $zone->create_atree();
+    my $a_root = $zone->create_atree({overwrite=>1});
     $t_root->set_deref_attr( 'atree.rf', $t_root );
 
     copy_subtree( $t_root, $a_root );
-    
+
     # Since #Cor nodes are skipped, there may be gaps in ordering
     $a_root->_normalize_node_ordering();
 

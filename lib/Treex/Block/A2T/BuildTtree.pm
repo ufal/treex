@@ -11,7 +11,7 @@ sub process_zone {
     my $a_root = $zone->get_atree;
 
     # build t-root
-    my $t_root = $zone->create_ttree;
+    my $t_root = $zone->create_ttree({overwrite=>1});
     $t_root->set_deref_attr( 'atree.rf', $a_root );
 
     # recursively build whole t-tree

@@ -42,7 +42,7 @@ sub process_document {
         my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
         my $source_root = $source_zone->get_ttree;
 
-        my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
+        my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector, {overwrite=>1} );
         my $target_root = $target_zone->create_ttree();
         $target_root->set_attr( 'atree.rf', undef );
 
