@@ -14,7 +14,7 @@ stderr_like(
     sub {
         eval { $reader->next_document() };
     },
-    qr/method next_document must be overriden in/,
+    qr/method next_document must be overridden in/,
     'subroutine next_document has to fail'
 );
 
