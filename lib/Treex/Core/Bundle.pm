@@ -56,14 +56,24 @@ sub get_zone {
 
 sub create_zone {
     my $self = shift;
-    my ( $language, $selector ) = pos_validated_list(
+    my ( $language, $selector, $params_rf ) = pos_validated_list(
         \@_,
         { isa => 'Treex::Type::LangCode' },
         { isa => 'Treex::Type::Selector', default => '' },
+        { isa => 'Ref' },
     );
 
-    log_fatal("Bundle already contains a zone with language='$language' and selector='$selector'")
-        if $self->get_zone( $language, $selector );
+    if ( $self->get_zone( $language, $selector ) ) {
+        if (defined $params_rf and $params_rf->{overwrite}) {
+
+        }
+        else {
+            log_fatal("Bundle already contains a zone with language='$language' and selector='$selector'. "
+                          . "Use create_zone(...,{overwrite=>1}) to remove it first.")
+        }
+    }
+
+
 
     my $new_zone = Treex::Core::BundleZone->new(
         {
@@ -331,7 +341,11 @@ to distinguish zones for the same language but from a different source.
 
 =over 4
 
-=item my $zone = $bundle->create_zone( $langcode, ?$selector );
+=item my $zone = $bundle->create_zone( $langcode, ?$selector, ?$params_rf );
+
+If the third argument is {overwrite=>1}, then the newly created empty zone
+overwrites the previously existing one (if any). Fatal error appears if
+the zone to be created already exists and this switch is not used.
 
 =item my $zone = $bundle->get_zone( $langcode, ?$selector );
 

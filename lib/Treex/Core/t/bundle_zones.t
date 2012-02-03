@@ -101,4 +101,6 @@ foreach my $selector (@selectors) {
     is( $bundle->get_zone( 'en', $selector ), undef, 'Zone successfully removed' );
 }
 
+ok( eval { for (0..2){;$bundle->create_zone('en',undef,{overwrite=>1})} 1;}, 'Rewriting an old zone by a newly created one allowed if {overwrite=>1}');              
+
 done_testing();
