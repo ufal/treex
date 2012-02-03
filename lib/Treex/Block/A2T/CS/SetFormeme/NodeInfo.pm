@@ -111,9 +111,16 @@ sub _get_fix_numer_case {
     elsif ( $self->_prep_case->{case} ne 'X' ) {
         return $self->_prep_case->{case};
     }
-
+    
+    # a heuristics: try to infer the case from the syntactic function (Sb, Pnom, ExD is nominative,
+    # Atr tends to be something between nominative and genitive "v hodnotě 6 mil. korun", Adv and Obj is usually accusative)
+    elsif ( $numeral->afun =~ m/^(ExD|Pnom|Sb|Obj|Atr|Adv)$/ ){
+        log_warn( 'NUM-CASE: ' .  $self->t->get_address() ); 
+        return $numeral->afun =~ /^(ExD|Pnom|Sb|Atr)$/ ? 1 : 4;
+    }
     # now we're screwed (we don't know 1 or 4); this happens with numbers, since they don't have case markings in tags
     else {
+        log_warn( 'NUM-SCREWED: ' . $self->t->get_address() );
         return 'X';
     }
 }
