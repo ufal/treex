@@ -13,6 +13,8 @@ my $pleon_path_cs = 'it_pleon_cs.ls';
 
 my $impersonal_verbs = 'jednat_se|pršet|zdát_se|dařit_se|oteplovat_se|ochladit_se|stát_se|záležet';
 
+my ($correct_sum, $eval_sum, $total_sum) = (0, 0 ,0);
+
 sub is_byt_videt {
     my ($t_node) = @_;
     my ($epar) = $t_node->get_eparents( { or_topological => 1 } ) if ( $t_node );
@@ -150,23 +152,95 @@ sub analyze_en {
     close(PLEON);
 }
 
+sub test_it_en {
+    my ( $en_tree ) = @_;
+    foreach my $t_node ( $en_tree->get_descendants ) {
+        my ($it) = grep { $_->form =~ /^[iI][tT]$/ } $t_node->get_anodes;
+        if ( $it ) {
+            my $verb;
+            if ( $t_node->t_lemma ne "#PersPron" ) {
+                $verb = $t_node;
+                $total_sum++;
+            }
+            else {
+                ($verb) = $t_node->get_eparents( { or_topological => 1} );
+            }
+            if ( $verb
+                and grep { $_->functor eq "ACT"
+                    and $_ ne $t_node
+                    and not $_->is_generated
+                } $verb->get_echildren( { or_topological => 1} )
+                and $it->afun eq "Sb"
+            ) {
+#                 if ( grep { $_->functor eq "ACT" and $_ ne $t_node and not $_->is_generated} @verb_echildren
+#                 and grep { $_->functor eq "PAT" and $_ ne $t_node } @verb_echildren ) {
+# #                     There is a pleonastic "it"
+                $eval_sum++;
+                if ( $t_node->t_lemma ne "#PersPron" ) {
+                    $correct_sum++;
+                }
+                else {
+                    print $t_node->get_address . "\n";
+                }
+            }
+        }
+    }
+}
+
+# returns 1 if the given node is a reflexive passivum
+sub is_refl_pass {
+    my ($t_node) = @_;
+    foreach my $anode ( $t_node->get_anodes ) {
+        return 1 if ( grep { $_->afun eq "AuxR" and $_->form eq "se" } $anode->children );
+    }
+    return 0;
+}
+
+# returns 1 if the given node is a passive verb
+sub is_passive {
+    my ($t_node) = @_;
+    return (  ( $t_node->get_lex_anode and $t_node->get_lex_anode->tag =~ /^Vs/ )
+        or is_refl_pass($t_node)
+    ) ? 1 : 0;
+}
+
+# returns 1 if the given node is an passive verb and has an echild with PAT => possibly has an overt subject
+# PAT can be an expressed word or a #PersPron drop
+sub is_passive_having_PAT {
+    my ( $t_node ) = @_;
+    return ( is_passive($t_node)
+        and grep { ($_->functor || "" ) eq "PAT" 
+            and ( not $_->is_generated or $_->t_lemma eq "#PersPron" ) } $t_node->get_echildren( { or_topological => 1 } ) 
+    ) ? 1 : 0;
+}
+
+# returns 1 if the given node is an active verb and has an echild with ACT => possibly has an overt subject
+# ACT can be an expressed word or a #PersPron drop
+sub is_active_having_ACT {
+    my ( $t_node ) = @_;
+    return ( not is_passive($t_node)
+        and grep { ($_->functor || "" ) eq "ACT" 
+            and ( not $_->is_generated or $_->t_lemma eq "#PersPron" ) } $t_node->get_echildren( { or_topological => 1 } ) 
+    ) ? 1 : 0;
+}
+
 sub analyze_cs {
     my ( $cs_tree ) = @_;
 
     open(ANAPH_CS, ">>:encoding(UTF-8)", $anaph_path_cs) || die "Can't open $anaph_path_cs: $!";
     open(NON_ANAPH_CS, ">>:encoding(UTF-8)", $non_anaph_path_cs) || die "Can't open $non_anaph_path_cs: $!";
     open(PLEON_CS, ">>:encoding(UTF-8)", $pleon_path_cs) || die "Can't open $pleon_path_cs: $!";
-
-    foreach my $cand_verb ( 
+    
+    foreach my $cand_verb (
         grep { 
             ($_->gram_sempos || "") eq "v"
-            and not has_asubject($_) 
-            and is_3_sg_neut($_) } 
-        $cs_tree->get_descendants ) {
-        
-        if ( is_GEN($cand_verb) 
-            or is_IMPERS($cand_verb)
-            or has_sb_clause($cand_verb) ) {
+            and is_3_sg_neut($_)
+        } $cs_tree->get_descendants
+    ) {
+#         pleonastic it
+        if ( not is_passive_having_PAT($cand_verb)
+            and not is_active_having_ACT($cand_verb)
+        ) {
             print PLEON_CS $cand_verb->get_address . "\n";
         }
         else {
@@ -179,6 +253,28 @@ sub analyze_cs {
             }
         }
     }
+#     foreach my $cand_verb ( 
+#         grep { 
+#             ($_->gram_sempos || "") eq "v"
+#             and not has_asubject($_) 
+#             and is_3_sg_neut($_) } 
+#         $cs_tree->get_descendants ) {
+#         
+#         if ( is_GEN($cand_verb) 
+#             or is_IMPERS($cand_verb)
+#             or has_sb_clause($cand_verb) ) {
+#             print PLEON_CS $cand_verb->get_address . "\n";
+#         }
+#         else {
+#             my ( $perspron ) = grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $cand_verb->get_echildren( { or_topological => 1 } );
+#             if ( $perspron and $perspron->get_coref_nodes > 0 ) {
+#                 print ANAPH_CS $perspron->get_address . "\n";
+#             }
+#             elsif ( $perspron ){
+#                 print NON_ANAPH_CS $perspron->get_address . "\n";
+#             }
+#         }
+#     }
 
     close(ANAPH_CS);
     close(NON_ANAPH_CS);
@@ -189,8 +285,9 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $en_tree = $bundle->get_zone('en')->get_ttree;
     my $cs_tree = $bundle->get_zone('cs')->get_ttree;
-    analyze_en($en_tree);
+#     analyze_en($en_tree);
     analyze_cs($cs_tree);
+#     test_it_en($en_tree);
 # #     my %autom2gold_node;
 # #     my $gold_tree = $bundle->get_zone('cs', 'ref')->get_ttree;
 # #     my $autom_tree = $bundle->get_zone('cs', 'src')->get_ttree;
