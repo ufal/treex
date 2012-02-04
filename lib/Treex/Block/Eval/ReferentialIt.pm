@@ -99,18 +99,24 @@ sub process_anode {
             }
             return;
         }
-        
+            
         my $src_tnode = $self->_get_src_tnode_for_lex($lex_tnode);
         # node was incorrectly labeled as pleonastic (or correctly as reffering to a segment)
-        if (!$self->_is_referential($src_tnode)) {
-            if ($self->segmref_as_pleo) {
-                my @antes_ref = $lex_tnode->get_coref_nodes;
-                # it really refers to a larger segment
-                if (@antes_ref == 0) {
+        my $is_pleo =  !$self->_is_referential($src_tnode);
+        
+        if ($self->segmref_as_pleo) {
+            my @antes_ref = $lex_tnode->get_coref_nodes;
+            # it really refers to a larger segment
+            if (@antes_ref == 0) {
+                # correctly marked as pleonastic
+                if ($is_pleo) {
                     $tp_count++;    # true positive
-                    $ref_count++;   # true
                 }
+                $ref_count++;   # true
             }
+        }
+        # marked as pleonastic
+        if ($is_pleo) {
             $src_count++;   # positive
         }
     }
