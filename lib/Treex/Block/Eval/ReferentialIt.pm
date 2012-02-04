@@ -1,7 +1,24 @@
-package Treex::Block::Eval::Coref;
+package Treex::Block::Eval::ReferentialIt;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+
+has 'print_types' => (
+    is => 'ro',
+    isa => 'Bool',
+    required => 1,
+    default => 0,
+);
+
+has 'segmref_as_pleo' => (
+    is => 'ro',
+    isa => 'Bool',
+    required => 1,
+    default => 0,
+);
+
+
+my $carp = 1;
 
 my $tp_count  = 0;
 my $src_count = 0;
@@ -12,41 +29,46 @@ sub _is_it {
     return ($str =~ /^[Ii]t$/);
 }
 
-sub _check_true_referential_node {
+sub _get_src_tnode_for_lex {
     my ($self, $ref_tnode) = @_;
 
     my @src_tnodes = $ref_tnode->get_aligned_nodes_of_type('monolingual');
     if (@src_tnodes > 1) {
-        log_warn "Ref-node " . $ref_tnode->id . " aligned with several src-nodes";
+        log_debug "Ref-node " . $ref_tnode->id . " aligned with several src-nodes", $carp;
     }
     my $src_tnode = shift @src_tnodes;
-
-    my $refer = $src_tnode->wild->{referential};
-    if (!defined $refer) {
-        log_warn "Src-node " . $src_tnode->id . 
-            " is aligned with ref-'it' but 'referential' flag is not assigned";
-    }
-    return $refer;
+    return $src_tnode;
 }
 
-sub _check_true_pleonastic_node {
+sub _get_src_tnode_for_aux {
     my ($self, $ref_anode) = @_;
 
     my @src_anodes = $ref_anode->get_aligned_nodes_of_type('monolingual');
     if (@src_anodes > 1) {
-        log_warn "Ref-node " . $ref_anode->id . " aligned with several src-nodes";
+        log_debug "Ref-node " . $ref_anode->id . " aligned with several src-nodes", $carp;
     }
     my $src_anode = shift @src_anodes;
 
-    my $src_tnode = $src_anode->get_referencing_nodes('a/lex.rf');
-    if ($src_anode->get_referencing_nodes('a/aux.rf')) {
-        log_warn "Src-tnode " . $src_tnode->id . " is auxilliary";
+    my ($src_tnode) = $src_anode->get_referencing_nodes('a/lex.rf');
+    my ($src_aux_tnode) = $src_anode->get_referencing_nodes('a/aux.rf');
+    if (defined $src_aux_tnode) {
+        log_debug "Src-tnode " . $src_aux_tnode->id . " is auxilliary", $carp;
     }
+
+    if (!defined $src_tnode) {
+        $src_tnode = $src_aux_tnode;
+        log_debug "Src-tnode does not exist for the src-anode " . $src_anode->id, $carp;
+    }
+    return $src_tnode;
+}
+
+sub _is_referential {
+    my ($self, $src_tnode) = @_;
 
     my $refer = $src_tnode->wild->{referential};
     if (!defined $refer) {
-        log_warn "Src-node " . $src_tnode->id . 
-            " is aligned with ref-'it' but 'referential' flag is not assigned";
+        log_debug "Src-node " . $src_tnode->id . 
+            " is aligned with ref-'it' but 'referential' flag is not assigned", $carp;
     }
     return $refer;
 }
@@ -63,29 +85,57 @@ sub process_anode {
     # referential it
     if (@lex_tnodes > 0) {
         if (@lex_tnodes != 1) {
-            log_warn "T-nodes " . (join ", ", (map {$_->id} @lex_tnodes)) . " point lexically to the same a-node";
+            log_debug "T-nodes " . (join ", ", (map {$_->id} @lex_tnodes)) . " point lexically to the same a-node", $carp;
         }
         my $lex_tnode = shift @lex_tnodes;
+
+        if ($self->print_types) {
+            my @coref_tnodes = $lex_tnode->get_coref_nodes;
+            if (@coref_tnodes > 0) {
+                print "LEX WITH COREF\n"
+            }
+            else {
+                print "LEX WITHOUT COREF\n";
+            }
+            return;
+        }
         
-        # node was correctly labeled as referential
-        if ($self->_check_true_referential_node($lex_tnode)) {
+        my $src_tnode = $self->_get_src_tnode_for_lex($lex_tnode);
+        # node was incorrectly labeled as pleonastic (or correctly as reffering to a segment)
+        if (!$self->_is_referential($src_tnode)) {
+            if ($self->segmref_as_pleo) {
+                my @antes_ref = $lex_tnode->get_coref_nodes;
+                # it really refers to a larger segment
+                if (@antes_ref == 0) {
+                    $tp_count++;    # true positive
+                    $ref_count++;   # true
+                }
+            }
+            $src_count++;   # positive
+        }
+    }
+    
+    # pleonastic it
+    else {
+        if ($self->print_types) {
+            print "AUX\n";
+            return;
+        }
+
+        my $src_tnode = $self->_get_src_tnode_for_aux($ref_anode);
+        # node was correctly labeled as pleonastic
+        if (!$self->_is_referential($src_tnode)) {
             $tp_count++;    # true positive
             $src_count++;   # positive
         }
         $ref_count++;   # true
     }
-    
-    # pleonastic it
-    else {
-        # true pleonastic was incorrectly labeled as referential
-        if (!$self->_check_true_pleonastic_node($ref_anode)) {
-            $src_count++;   # positive
-        }
-    }
 }
 
 sub process_end {
     my ($self) = shift;
+
+    return if ($self->print_types);
 
     print join "\t", ($tp_count, $src_count, $ref_count);
     print "\n";

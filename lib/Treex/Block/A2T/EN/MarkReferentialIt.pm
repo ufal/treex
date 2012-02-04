@@ -12,6 +12,13 @@ has '_resolver' => (
     builder => '_build_resolver',
 );
 
+has 'threshold' => (
+    is => 'ro',
+    isa => 'Num',
+    required => 1,
+    default => 0.5,
+);
+
 sub _build_resolver {
     my ($self) = @_;
     return Treex::Tool::Coreference::NADA->new();
@@ -34,7 +41,8 @@ sub process_zone {
         my ($it_id) = grep {defined $it_ref_probs{$_}} @anode_ids;
         if (defined $it_id) {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
-            $t_node->wild->{'referential'} = $it_ref_probs{$it_id} > 0.5 ? 1 : 0;
+#            print STDERR (join " ", @words) . "\n";
+            $t_node->wild->{'referential'} = $it_ref_probs{$it_id} > $self->threshold ? 1 : 0;
         }
     }
 }
