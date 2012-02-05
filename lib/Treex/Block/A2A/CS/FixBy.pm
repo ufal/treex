@@ -55,9 +55,22 @@ sub fix {
 	if ($g->{tag} =~ /^N/) {
 	    #set dependent case to genitive
 	    $new_case = 2;
-	} elsif ($g->{tag} =~ /^[VA]/) {
+	} elsif ($g->{tag} =~ /^A/) {
 	    #set dependent case to instrumental
 	    $new_case = 7;
+	} elsif ($g->{tag} =~ /^V/) {
+#	    if ($g->{tag} =~ /^Vs/) {
+	    if ($g->{tag} =~ /^Vs/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
+		#set dependent case to instrumental
+		$new_case = 7;
+		# this is now NOT the subject
+		if ($dep->afun eq 'Sb') {
+		    $dep->set_afun('Obj');
+		}
+	    } else {
+		# passive transformed into active => this IS now the subject
+		$dep->set_afun('Sb');
+	    }
 	}
 
 	if ($new_case != $original_case) {

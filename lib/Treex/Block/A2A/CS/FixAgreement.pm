@@ -75,6 +75,9 @@ sub logfix1 {
 
     if ( $gov && $dep ) {
 
+#	my $distance = abs($gov->ord - $dep->ord);
+#	warn "FIXDISTANCE: $distance\n";
+
         #original words pair
         if ( $gov->ord < $dep->ord ) {
             $logfixold = $gov->form;
