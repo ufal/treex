@@ -14,6 +14,7 @@ with 'Treex::Core::WildAttr';
 
 use Scalar::Util qw( weaken reftype );
 
+use PerlIO::gzip;
 use Storable;
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );

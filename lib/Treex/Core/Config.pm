@@ -118,7 +118,9 @@ sub share_dir {
 
 sub share_url {
     my $self = shift;
-    $config->{share_url} = 'http://ufallab.ms.mff.cuni.cz/tectomt/share' if !defined $config->{share_url};
+    if ( !defined $config->{share_url} ) {
+        $config->{share_url} = 'http://ufallab.ms.mff.cuni.cz/tectomt/share';
+    }
     return $config->{share_url};
 }
 
