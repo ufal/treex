@@ -7,9 +7,8 @@ use Treex::Tool::Parser::MSTperl::Sentence;
 use Treex::Tool::Parser::MSTperl::Edge;
 use Treex::Tool::Parser::MSTperl::ModelUnlabelled;
 
-use Graph;
-use Graph::Directed;
-use Graph::ChuLiuEdmonds;    #returns MINIMUM spanning tree
+use Graph 0.94;
+use Graph::ChuLiuEdmonds 0.05;    #returns MINIMUM spanning tree
 
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
@@ -66,7 +65,7 @@ sub parse_sentence_internal {
     my $sentence_working_copy = $sentence->copy_nonparsed();
     my $sentence_length       = $sentence_working_copy->len();
 
-    my $graph = Graph::Directed->new(
+    my $graph = Graph->new(
         vertices => [ ( 0 .. $sentence_length ) ]
     );
     my @weighted_edges;
