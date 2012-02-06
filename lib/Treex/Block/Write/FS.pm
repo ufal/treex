@@ -6,27 +6,13 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
 
-override 'process_document' => sub {
-
-    my ( $self, $document ) = @_;
-
-    # set _file_handle properly
-    $self->_prepare_file_handle($document);
-
-    $self->_print_header();
-
-    # call process_atree for each a-tree in the specified zone, let the superclass do the zone selection
-    $self->Treex::Core::Block::process_document($document);
-
-    $self->_print_footer();
-};
 
 #------------------------------------------------------------------------------
 # Prints a minimal FS file header.
 #------------------------------------------------------------------------------
-sub _print_header {
+override 'print_header' => sub {
 
-    my ($self) = @_;
+    my ( $self, $document ) = @_;
 
     # Attribute form is the surface representation of the node.
     # It should be used if the sentence is to be printed.
@@ -45,7 +31,7 @@ sub _print_header {
 
     # Header must be separated by a blank line from the body.
     print { $self->_file_handle } "\n";
-}
+};
 
 #------------------------------------------------------------------------------
 # Prepares a feature-value pair. Escapes special characters.
@@ -130,16 +116,16 @@ sub process_atree
 #------------------------------------------------------------------------------
 # Prints Tred parameters, namely defines custom stylesheet.
 #------------------------------------------------------------------------------
-sub _print_footer {
+override 'print_footer' => sub {
 
-    my ($self) = @_;
+    my ( $self, $document ) = @_;
 
     print { $self->_file_handle } "\n";
     print { $self->_file_handle } "//Tred:Custom-Attribute:\${form}\n";
     print { $self->_file_handle } "//Tred:Custom-Attribute:#{brown}\${lemma}\n";
     print { $self->_file_handle } "//Tred:Custom-Attribute:#{blue}\${tag}\n";
     print { $self->_file_handle } "//Tred:Custom-Attribute:#{darkgreen}\${afun}\n";
-}
+};
 
 1;
 

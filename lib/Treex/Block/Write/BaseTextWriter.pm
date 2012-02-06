@@ -36,7 +36,6 @@ around '_open_file_handle' => sub {
     return $handle;
 };
 
-
 # Default to standard output if no output file is set.
 sub _build_to {
 
@@ -53,9 +52,39 @@ override '_get_next_filename' => sub {
 
     my ($self) = @_;
 
-    return $self->to if ($self->to !~ m/[ ,]/);
+    return $self->to if ( $self->to !~ m/[ ,]/ );
     return super();
 };
+
+# Default process_document method for all Writer blocks.
+override 'process_document' => sub {
+
+    my ( $self, $document ) = @_;
+
+    # set _file_handle properly (this MUST be called if process_document is overridden)
+    $self->_prepare_file_handle($document);
+
+    # allow header printing (in overrides)
+    $self->print_header($document);
+
+    # call the original process_document with _file_handle set
+    $self->Treex::Core::Block::process_document($document);
+
+    # allow footer printing (in overrides)
+    $self->print_footer($document);
+
+    return;
+};
+
+sub print_header {
+    my ( $self, $document ) = @_;
+    return;
+}
+
+sub print_footer {
+    my ( $self, $document ) = @_;
+    return;
+}
 
 1;
 
@@ -90,6 +119,23 @@ The output encoding, C<utf8> by default.
 
 Before creating a class derived from C<BaseTextWriter>, please see the instructions in
 L<Treex::Block::Write::BaseWriter>.
+
+There is a possibility to override the following two methods in addition to those described in 
+L<Treex::Block::Write::BaseWriter>:
+
+=over
+
+=item C<$self->print_header($document)>
+
+Print a document header. Called before the standard C<process_document> is launched. Will not be
+called if C<process_document> is overridden (and C<super> not called)!
+
+=item C<$self->print_footer($document)>
+
+Print a document footer. Called after the standard C<process_document> is launched. Will not be
+called if C<process_document> is overridden (and C<super> not called)!
+
+=back
 
 =head1 AUTHOR
 
