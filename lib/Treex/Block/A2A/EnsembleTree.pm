@@ -12,7 +12,7 @@ has 'use_pos'      => ( is => 'rw', isa => 'Str', default  => 'false' );
 has 'language'     => ( is => 'rw', isa => 'Str', default  => 'en' );
 has 'ensemblename' => ( is => 'rw', isa => 'Str', default  => 'ensemble' );
 my $ENSEMBLE;
-
+my $root_deprel="ROOT";
 my $cluster;
 my $fcm;
 my %cluster1;
@@ -99,7 +99,7 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
-  $weight_tree = $weight_tree**2;
+  $weight_tree = $weight_tree**5;
   
   #$weight_tree= 2 ** $weight_tree;
   
@@ -189,6 +189,7 @@ sub process_bundle {
     }
   }
   make_graph( $self, $bundle );
+  copy_deprel($self,$bundle);
 }
 
 sub make_graph {
@@ -215,6 +216,58 @@ sub make_graph {
       }
     }
   }
+}
+
+sub copy_deprel {
+  #Ensemble system only combines structures. Here we will copy the Deprel of any tree that matches the edge. 
+  # By default the last matching edge will win. If labeled accuracy becomes a problem we can do an ensemble label matching.
+  my ( $self, $bundle ) = @_;
+ # my $reference_root = $bundle->get_tree( $self->language, "a", "charniak" );
+ # my @reference_nodes = $reference_root->get_descendants( { ordered => 1 } );
+   my $tree_root =
+  $bundle->get_tree( $self->language, 'a', $self->ensemblename );
+  
+  my %use_tree = ();
+  my @trees_to_process = split( "~", $self->trees );
+  foreach my $tree (@trees_to_process) {
+    my ( $sel, $weight ) = split( "#", $tree );
+    $use_tree{$sel} = $weight;
+  }
+  
+  
+  my @todo = $tree_root->get_descendants( { ordered => 1 } );
+
+  
+  my @zones = $bundle->get_all_zones();
+  foreach my $zone (@zones) {
+    if ( $zone->get_atree()->language eq $self->language ) {
+      if ( exists $use_tree{ $zone->get_atree()->selector } ) {
+	my $reference_root=$zone->get_atree();
+	
+	my @reference_nodes = $reference_root->get_descendants( { ordered => 1 } );
+	my $i = 0;
+	foreach my $node (@todo) {
+	  if ( $node->parent->ord == $reference_nodes[$i]->parent->ord ) {
+	    $node->set_conll_deprel($reference_nodes[$i]->conll_deprel() );
+	   }
+	  if($node->parent eq $tree_root ){
+	    $node->set_conll_deprel($root_deprel);
+	  }
+	  $i++;
+	
+	}
+	
+      }
+    }
+  }
+	
+ 
+
+ 
+  
+
+
+
 }
 
 1;
