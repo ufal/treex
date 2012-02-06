@@ -131,10 +131,6 @@ sub remove_zone {
     }
 
     # remove all trees first, so that their nodes are correctly removed from the index
-    # (n-trees have to be removed first because of circular references with a-trees)
-    if ( $zone->has_ntree ) {
-        $zone->remove_tree( 'n' );
-    }
     foreach my $tree ( $zone->get_all_trees ) {
         $zone->remove_tree( $tree->get_layer );
     }

@@ -7,10 +7,6 @@ with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
 with 'Treex::Core::Node::Interset';
 
-# _set_n_node is called only from Treex::Core::Node::N
-# (automatically, when a new n-node is added to the n-tree).
-has 'n_node' => ( is => 'ro', writer => '_set_n_node', );
-
 # Original w-layer and m-layer attributes
 has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
@@ -29,6 +25,12 @@ sub is_coap_root {
     my ($self) = @_;
     log_fatal('Incorrect number of arguments') if @_ != 1;
     return defined $self->afun && $self->afun =~ /^(Coord|Apos)$/;
+}
+
+sub n_node {
+    my ($self) = @_;
+    my ($first_n_node) = $self->get_referencing_nodes('a.rf'); 
+    return $first_n_node;
 }
 
 #------------------------------------------------------------------------------

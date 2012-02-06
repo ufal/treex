@@ -195,19 +195,6 @@ sub _rebless_and_index {
                     }
                     $tree->_set_zone($zone);
                 }
-
-                # TODO: Backward links from a-nodes to n-nodes
-                # should be created in n-nodes' constructors,
-                # which must be called after constructing a-nodes.
-                # TODO: Now, we don't call node constructors at all
-                # during loading, we just re-bless Treex::PML::Nodes.
-                if ( $zone->has_ntree ) {
-                    foreach my $nnode ( $zone->get_ntree()->get_descendants() ) {
-                        foreach my $anode ( $nnode->get_anodes() ) {
-                            $anode->_set_n_node($nnode);
-                        }
-                    }
-                }
             }
         }
     }
