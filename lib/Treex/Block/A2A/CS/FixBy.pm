@@ -59,7 +59,8 @@ sub fix {
 	    #set dependent case to instrumental
 	    $new_case = 7;
 	} elsif ($g->{tag} =~ /^V/) {
-#	    if ($g->{tag} =~ /^Vs/) {
+	    # if ($g->{tag} =~ /^Vs/) {
+	    # if ($g->{tag} =~ /^V[fs]/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
 	    if ($g->{tag} =~ /^Vs/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
 		#set dependent case to instrumental
 		$new_case = 7;
@@ -68,8 +69,12 @@ sub fix {
 		    $dep->set_afun('Obj');
 		}
 	    } else {
-		# passive transformed into active => this IS now the subject
-		$dep->set_afun('Sb');
+		# check whether there is passive in EN
+		my $en_by_parent = $aligned_parent->get_eparents({first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1});
+		if ($en_by_parent->tag =~ /^VB[ND]/ && grep { $_->lemma eq "be" } $en_by_parent->get_children) {
+		    # passive transformed into active => this IS now the subject
+		    $dep->set_afun('Sb');
+		}
 	    }
 	}
 

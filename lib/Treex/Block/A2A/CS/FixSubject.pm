@@ -11,7 +11,11 @@ sub fix {
     #    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
-    if ( $dep->afun eq 'Sb' && $d->{case} ne '1' && $d->{case} ne '-' && $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' ) {
+    if ( $dep->afun eq 'Sb' && $d->{case} ne '1' && $d->{case} ne '-'
+	 && $en_counterpart{$dep}
+	 && ( $en_counterpart{$dep}->afun eq 'Sb'
+	      || $en_counterpart{$dep}->get_eparents({first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1})->form eq 'by'
+	 ) ) {
 
         my $case = '1';
         $d->{tag} =~ s/^(....)./$1$case/;
