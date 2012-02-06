@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More tests => 14;
 use Treex::Core;
 my $filename = 'dummy.treex';
 my $document = Treex::Core::Document->new();
@@ -16,8 +16,8 @@ my $nnode    = $nroot->create_child( { ne_type => 'g_', normalized_name => 'New 
 $nnode->set_anodes( $anode1, $anode2 );
 is( $nnode->normalized_name, 'New York', 'Normalized name retrieved' );
 is_deeply( [ $nnode->get_anodes() ], [ $anode1, $anode2 ], 'a-nodes retrieved' );
-is_deeply( $anode1->n_node, $nnode, 'Backward link from a-node to t-node' );
-is_deeply( $anode2->n_node, $nnode, 'Backward link from a-node to t-node' );
+is_deeply( $anode1->n_node, $nnode, 'Backward link from a-node to n-node' );
+is_deeply( $anode2->n_node, $nnode, 'Backward link from a-node to n-node' );
 ok( $document->save($filename), 'Document saved' );
 ok( my $d = Treex::Core::Document->new( { 'filename' => $filename } ), 'Document loaded' );
 my ($b)  = $d->get_bundles();
@@ -28,8 +28,12 @@ my ($nn) = $nr->get_children();
 my ( $a1, $a2 ) = $ar->get_children( { ordered => 1 } );
 is( $nn->normalized_name, 'New York', 'Normalized name retrieved' );
 is_deeply( [ $nn->get_anodes() ], [ $a1, $a2 ], 'a-nodes retrieved' );
-is_deeply( $a1->n_node, $nn, 'Backward link from a-node to t-node' );
-is_deeply( $a2->n_node, $nn, 'Backward link from a-node to t-node' );
+is_deeply( $a1->n_node, $nn, 'Backward link from a-node to n-node' );
+is_deeply( $a2->n_node, $nn, 'Backward link from a-node to n-node' );
+ok($a1->remove() || 1, 'Deleting the first a-node');
+is_deeply( [ $nn->get_anodes() ], [$a2], 'Now, only the second a-node is retrieved' );
+is_deeply( $a2->n_node, $nn, 'Backward link from a-node to n-node' );
+ok($b->remove_zone('en', '') || 1, 'Removing the whole zone from the bundle');
 
 unlink $filename;
-done_testing();
+#done_testing();
