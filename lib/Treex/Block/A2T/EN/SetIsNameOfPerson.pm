@@ -10,7 +10,7 @@ sub process_ttree {
     # Get all t-nodes recognized by named entity recognizer as personal names
     my @personal_tnodes = grep {
         my $n = $_->get_n_node();
-        defined $n && $n->get_attr('ne_type') =~ /^p/
+        defined $n && $n->ne_type =~ /^p/
     } @tnodes;
 
     # Mark all the nodes except Mr., Mrs., and Ms.

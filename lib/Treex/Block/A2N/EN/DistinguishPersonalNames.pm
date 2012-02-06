@@ -67,7 +67,8 @@ sub process_personal_nnode {
     if ( !$gender ) {
         $gender = first { $_ ne '?' } @genders;
     }
-    $n_node->set_attr( 'ne_type', !$gender ? 'P' : $gender eq 'f' ? 'PF' : 'PM' );
+    $n_node->set_ne_type(!$gender ? 'P' : $gender eq 'f' ? 'PF' : 'PM' );
+    $n_node->set_anodes();
 
     my $was_first_name = 0;
     for my $i ( 0 .. $#a_nodes ) {
@@ -92,7 +93,7 @@ sub process_personal_nnode {
             normalized_name => $lemmas[$i],
             ne_type         => $type,
         );
-        $new_nnode->set_attr( 'a.rf', [ $a_node->id ] );
+        $new_nnode->set_anodes($a_node);
     }
 
     return;
