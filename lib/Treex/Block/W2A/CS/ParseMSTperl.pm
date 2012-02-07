@@ -2,7 +2,7 @@ package Treex::Block::W2A::CS::ParseMSTperl;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll' );
+has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_dz_wf_3' );
 has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/cs" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );
