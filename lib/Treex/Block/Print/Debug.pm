@@ -6,6 +6,13 @@ use Data::Dumper;
 
 extends 'Treex::Core::Block';
 
+has 'with_traces' => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+    required => 1,
+);
+
 sub process_bundle {
     my ($self, $bundle) = @_;
     
@@ -62,13 +69,20 @@ sub prepare_sentence {
     my ($self, $zone, $feats_for_id) = @_;
 
     my @t_nodes = $zone->get_ttree->get_descendants({ordered => 1});
-    my $gener_by_aord = $self->_gener_nodes_by_aord(\@t_nodes);
+    
+    # traces are enabled
+    my $gener_by_aord;
+    if ($self->with_traces) {
+        $gener_by_aord = $self->_gener_nodes_by_aord(\@t_nodes);
+    }
 
     my @tokens = ();
 
-    # print generated nodes that precede all a-nodes
-    foreach my $t_node (@{$gener_by_aord->{-1}}) {
-        push @tokens, $self->_form_token($t_node->lemma, $feats_for_id->{$t_node->id});
+    # print generated nodes that precede all a-nodes (if traces are enabled)
+    if (defined $gener_by_aord) {
+        foreach my $t_node (@{$gener_by_aord->{-1}}) {
+            push @tokens, $self->_form_token($t_node->lemma, $feats_for_id->{$t_node->id});
+        }
     }
 
     my @a_nodes = $zone->get_atree->get_descendants({ordered => 1});
@@ -76,8 +90,8 @@ sub prepare_sentence {
         my $ord = $a_node->ord;
         # print a-nodes
         push @tokens, $self->_form_token($a_node->form, $feats_for_id->{$a_node->id});
-        # print generated nodes
-        if (defined $gener_by_aord->{$ord}) {
+        # print generated nodes (if traces are enabled)
+        if (defined $gener_by_aord && defined $gener_by_aord->{$ord}) {
             foreach my $t_node (@{$gener_by_aord->{$ord}}) {
                 push @tokens, $self->_form_token($t_node->t_lemma, $feats_for_id->{$t_node->id});
             }
@@ -88,19 +102,34 @@ sub prepare_sentence {
 
 1;
 
-=over
+=head1 NAME 
 
-=item Treex::Block::Print::Debug
+Treex::Block::Print::Debug
+
+=head1 DESCRIPTION
 
 A base class for debugging resolution tasks. It prints out the sentence
 (with generated t-nodes as traces) with observed feature concatenated to 
 words (after "/"). For each sentence it prints out the gold standard (REF)
 as well as the system (TST) result.
 
+=head1 PARAMETERS
+
+=over
+
+=item with_traces
+
+If enabled, it prints out also the nodes generated on the t-layer.
+Disabled by default.
+
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2012 Michal Novak
+Michal Novak <mnovak@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
