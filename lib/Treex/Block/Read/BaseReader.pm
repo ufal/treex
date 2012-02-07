@@ -23,6 +23,7 @@ has from => (
     isa           => 'Treex::Core::Files',
     is            => 'ro',
     coerce        => 1,
+    required      => 1,
     handles       => [qw(current_filename file_number _set_file_number)],
     documentation => 'arrayref of filenames to be loaded, '
         . 'coerced from a space or comma separated list of filenames, '
@@ -144,14 +145,17 @@ and you can use C<next_filename> and C<new_document> methods.
 
 =over
 
-=item from (required, if C<filelist> is not set)
+=item from (required)
 
 space or comma separated list of filenames, or C<-> for STDIN
-(If you use this method via API you can specify C<filenames> instead.)
 
-=item filelist (required, if C<from> is not set)
+An '@' directly in front of a file name causes this file to be interpreted as a file
+list, with one file name per line, e.g. '@filelist.txt' causes the reader to open
+'filelist.txt' and read a list of files from it. File lists may be arbitrarily 
+mixed with regular files in the parameter. 
 
-path to a file that contains a list of files to be read (one per line) 
+(If you use this method via API you can specify a string array reference or a
+L<Treex::Core::Files> object.)
 
 =item file_stem (optional)
 
@@ -159,11 +163,6 @@ How to name the loaded documents.
 This attribute will be saved to the same-named
 attribute in documents and it will be used in document writers
 to decide where to save the files.
-
-=item filenames (internal)
-
-array of filenames to be loaded,
-automatically initialized from the attribute C<from>
 
 =back
 
@@ -214,10 +213,10 @@ L<Treex::Block::Read::Text>
 
 =head1 AUTHOR
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
