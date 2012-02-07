@@ -13,16 +13,22 @@ my %DISTANCE_LIMIT = (
 my $BASE_DISTANCE_LIMIT = 8;
 
 sub process_tnode {
+
     my ( $self, $tnode ) = @_;
+
+    # Only work on coordination nodes
     return if !$tnode->is_coap_root();
+
+    # Get AuxCP members of my coordination (must be min. 2)
     my @tmembers = grep { $_->is_member } $tnode->get_children();
     my @auxCP_nodes =
         sort { $a->ord <=> $b->ord }
         grep { ( $_->afun || '' ) =~ /Aux[CP]/ }
         map { $_->get_aux_anodes() }
         @tmembers;
-    return if !@auxCP_nodes;
+    return if ( !@auxCP_nodes || @auxCP_nodes < 2 );
 
+    # Find those that should be deleted (exclude the first one)
     my $first_auxCP_node = shift @auxCP_nodes;
     my $afun             = $first_auxCP_node->afun;
     my $prev_ord         = $first_auxCP_node->ord;
@@ -30,43 +36,87 @@ sub process_tnode {
 
     foreach my $anode (@auxCP_nodes) {
         my $ord = $anode->ord;
+
+        # Keep all AuxCP if some are too far apart from each other
         return if $prev_ord + $limit < $ord;
+
+        # Keep all AuxCP if some have different lemmas
         return if $anode->lemma ne $first_auxCP_node->lemma;
         $prev_ord = $ord;
     }
 
+    # Rehang the first (possibly compound) AuxCP above the coordination (incl. punctuation)
+    my $coord_node = $first_auxCP_node->get_parent;
+    my $above      = $coord_node->get_parent;
+    foreach my $child ( grep { ( $_->afun || '' ) !~ /^($afun|Aux[XG])$/ } $first_auxCP_node->get_children ) {
+        $child->set_parent($coord_node);
+        $child->set_is_member( $first_auxCP_node->is_member );
+    }
+    $first_auxCP_node->set_parent($above);
+    $first_auxCP_node->set_is_member( $coord_node->is_member );
+    $first_auxCP_node->set_clause_number( $coord_node->clause_number ); 
+    $coord_node->set_is_member();
+    $coord_node->set_parent($first_auxCP_node);
+
+    # Delete the remaining AuxCPs
     my %deleted;
     foreach my $anode (@auxCP_nodes) {
+
+        # Skip already deleted parts of a complex AuxCP
+        # TODO this shouldn't be needed (??); an AuxCP CHILD of a complex AuxCP will not get in the @auxCP_nodes array
         next if $deleted{$anode};
+
         foreach my $child ( $anode->get_children ) {
+
+            # Remove all AuxCP nodes of a complex AuxCP
             if ( ( $child->afun || '' ) eq $afun ) {
                 $child->remove();
                 $deleted{$child} = 1;
             }
+                        
+            # Move all regular children upwards
             else {
                 $child->set_parent( $anode->get_parent );
                 $child->set_is_member( $anode->is_member );
             }
         }
+
+        # Remove the base AuxCP
         $anode->remove();
     }
-
     return;
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::DeleteSuperfluousAuxCP
+=head1 NAME
+
+Treex::Block::T2A::CS::DeleteSuperfluousAuxCP
+
+=head1 DESCRIPTION
 
 In constructions such as 'for X and Y', the second
 preposition or subordinate conjunction created on the target side ('pro X a pro Y')
 is removed.
 
-=back
+=head1 TODO
 
-=cut
+Distribute the link in C<aux.rf> to the first preposition for all t-nodes with deleted prepositions. 
 
-# Copyright 2008-2010 Zdenek Zabokrtsky, David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 AUTHORS 
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

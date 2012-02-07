@@ -52,30 +52,79 @@ sub process_clause {
     #	}
     #    }
 
-    # 3) Find the word (called $first) before Wackernagel's position
-    # 3a) Clause root is the leftmost node = $first (typical for subordinating conjunctions)
+    # 3) Find the word (called $first) before Wackernagel's position, beware of coordinated/ing conjunction taking the 1st pos
+    my $coord = _is_coord_taking_1st_pos( $clause_root );
     my $first;
-    if ($clause_root == $nodes[0]
+
+    if ( !$coord ){
+        $first = _find_eo1st_pos( $clause_root, $nodes[0] );    
+    }
+    
+    log_info( 'COORD: ' . $coord . ' ' . $clause_root->get_address() );
+
+    # 4) Shift all clitics
+    # 4a) at the beginning of the clause if the coordinated subjunction/coordinating conjunction fills the 1st position
+    if ( $coord ){
+        foreach my $clitic (@clitics) { $clitic->shift_before_subtree( $clause_root, { without_children => 1 } ); }
+    }
+    # 4b) after the word $first if it is the clause root
+    elsif ( $first == $clause_root ) {
+        foreach my $clitic (@clitics) { $clitic->shift_after_node( $first, { without_children => 1 } ); }
+    }
+    # 4c) after the subtree of $first
+    else {
+        foreach my $clitic (@clitics) { $clitic->shift_after_subtree( $first, { without_children => 1 } ); }
+    }
+    return;
+}
+
+
+# Return 1 if the given clause root is coordinated and the coordinating conjunction / shared subordinating
+# conjunction is taking up the 1st position.
+
+# E.g., in "Běžel, aby se zahřál a dostal se dřív domů.", the word "zahřál" gets 1, since "aby" fills 
+# the 1st position, "dostal" gets 0, since "a" does not take up the 1st pos.
+# In "Stačí, když to přinesete na úřad nebo to tam pošlete doporučeně", both "přinesete" and "pošlete"
+# will get 1, since "když" and "nebo" both take up the 1st pos.  
+sub _is_coord_taking_1st_pos {
+    
+    my ( $clause_root ) = @_;
+    
+    my ($coap) = $clause_root->get_parent;
+    return 0 if ( !$coap || !$coap->is_coap_root );
+    
+    my ($eparent) = $clause_root->get_eparents;    
+    return 0 if ( !$eparent || ( $eparent->afun || '' ) ne 'AuxC' );
+
+    my (@coord_members) = grep { $_->is_member } $coap->get_children( { ordered=>1 } );
+    return 0 if ( !@coord_members );
+
+    # only fire for the first coordination member and the last one with selected coord. conjunctions 
+    # ('a' and 'ale' do not fill the 1st position)
+    return ( $clause_root == $coord_members[0] )
+        || ( $clause_root == $coord_members[-1] && $coap->lemma !~ /^(a|ale)$/ );     
+}
+
+
+# Find the last word at the "1st" position, just before Wackernagel position.
+sub _find_eo1st_pos {
+    my ( $clause_root, $clause_first ) = @_;
+    my $first;
+    
+    # 3a) Clause root is the leftmost node = $first (typical for subordinating conjunctions)
+    if ($clause_root == $clause_first
         and not first { ( $_->afun || "" ) eq "AuxC" } $clause_root->get_children
         )
     {    # but not a multiword one
         $first = $clause_root;
     }
-    else {    # 3b) otherwise $first is one of the clause root's children
+    # 3b) otherwise $first is one of the clause root's children
+    else {   
         my $n = $clause_root->clause_number;
         $first = first { !_ignore( $_, $n ) } $clause_root->get_children( { ordered => 1, add_self => 1 } );
         if ( !$first ) { $first = $clause_root; }
     }
-
-    # 4) Shift all clitics
-    # 4a) after the word $first if it is the clause root
-    if ( $first == $clause_root ) {
-        foreach my $clitic (@clitics) { $clitic->shift_after_node( $first, { without_children => 1 } ); }
-    }
-    else {    # 4b) after the subtree of $first
-        foreach my $clitic (@clitics) { $clitic->shift_after_subtree( $first, { without_children => 1 } ); }
-    }
-    return;
+    return $first;
 }
 
 # climbing up as long as there are only verbs (or the governing AuxC) along the path
@@ -193,19 +242,30 @@ sub _move_je {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::MoveCliticsToWackernagel
+=head1 NAME
+
+Treex::Block::T2A::CS::MoveCliticsToWackernagel
+
+=head1 DESCRIPTION
 
 In each clause, a-nodes which represent clitics are moved
 to the so called second position in the clause
 (according to Wackernagel's law). If there are more clitics in
 one clause, they are sorted according to simple grammatical rules.
 
-=back
+=head1 AUTHORS 
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

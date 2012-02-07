@@ -39,37 +39,48 @@ sub process_tnode {
                 $subconj_node->set_form( $subconj_form . $NUMBERPERSON2ABY{$key} );
             }
         }
-
+        # hang the first subconj node above the clause
         if ( not $first_subconj_node ) {
             $subconj_node->shift_before_subtree($a_node);
             $a_node->set_parent($subconj_node);
             $first_subconj_node = $subconj_node;
+            # move the is_member attribute to the conjunction
+            $subconj_node->set_is_member( $a_node->is_member ); 
+            $a_node->set_is_member();
         }
+        # hang all other parts of a compound subconj under the first part
         else {
             $subconj_node->set_parent($first_subconj_node);
             $subconj_node->shift_after_node($first_subconj_node);
         }
 
         $t_node->add_aux_anodes($subconj_node);
-
     }
 
     return;
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::AddSubconjs
+=head1 NAME 
+
+Treex::Block::T2A::CS::AddSubconjs
+
+=head1 DESCRIPTION
 
 Add a-nodes corresponding to subordinating conjunctions
-(accordingly to the corresponding t-node's formeme).
+(according to the corresponding t-node's formeme).
 
-=back
+=head1 AUTHORS 
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
