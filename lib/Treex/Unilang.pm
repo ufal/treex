@@ -1,7 +1,7 @@
 package Treex::Unilang;
 use strict;
 use warnings;
-use Treex::Core 0.07191;
+use Treex::Core 0.08051;
 
 1;
 
