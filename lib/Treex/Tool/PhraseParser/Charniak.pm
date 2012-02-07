@@ -21,7 +21,7 @@ sub prepare_parser_input {
 sub run_parser {
     my ($self)  = @_;
     my $tmpdir  = $self->tmpdir;
-    my $bindir  = "/net/work/people/green/Code/tectomt/personal/green/tools/reranking-parser";
+    my $bindir  = "$ENV{TMT_ROOT}/share/installed_tools/reranking-parser";
     my $command = "cd $bindir; sh parse.sh $tmpdir/input.txt > $tmpdir/output.txt 2>$tmpdir/stderr.txt";
     ProcessUtils::safesystem($command);
 }

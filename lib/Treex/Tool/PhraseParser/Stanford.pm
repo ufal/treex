@@ -18,7 +18,7 @@ sub run_parser {
 	$command .= " -sentences newline -tokenized";
 	$command .= " -tagSeparator /" if $self->use_tags;
 	$command .= " wsjPCFG.ser.gz $tmpdir/input.txt > $tmpdir/output.txt 2>$tmpdir/stderr.txt";
-	print "$command\n";
+	#print "$command\n";
     ProcessUtils::safesystem($command);
     return;
 }
