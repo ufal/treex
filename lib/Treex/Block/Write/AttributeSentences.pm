@@ -15,6 +15,21 @@ has 'attr_sep' => ( isa => 'Str', is => 'ro', default => '|' );
 
 has '+extension' => ( default => '.txt' );
 
+
+# Change '\n', '\r', '\t'
+sub BUILDARGS {
+    my ($self, $args) = @_;
+    
+    if ($args->{separator} =~ /^\\([nrt])$/){
+        $args->{separator} = eval "return \"\\$1\"";
+    }
+    if ($args->{attr_sep} =~ /^\\([nrt])$/){
+        $args->{attr_sep} = eval "return \"\\$1\"";
+    }
+    return;
+}
+
+
 sub _process_tree() {
 
     my ( $self, $tree ) = @_;
@@ -60,11 +75,13 @@ The annotation layer where the desired attribute is found (i.e. C<a>, C<t>, C<n>
 
 =item C<separator>
 
-The separator character for the individual nodes within one sentence. Space is the default.
+The separator character for the individual nodes within one sentence. Space is the default. C<\n>, C<\t> and C<\r> 
+provided as values will be replaced by LF, tab and CR, respectively.
 
 =item C<attr_sep>
 
 The separator character for the individual attribute values for one node. Vertical bar ("|") is the default.
+C<\n>, C<\t> and C<\r> provided as values will be replaced by LF, tab and CR, respectively.
 
 =item C<to>
 
