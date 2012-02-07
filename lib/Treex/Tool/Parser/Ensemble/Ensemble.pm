@@ -85,7 +85,7 @@ sub get_mst {
 	if ( $i != $j ) {
 	  
 	  #add if you want a complete graph
-	  # $graph->add_weighted_edge($i,$j,$N);
+	#   $graph->add_weighted_edge($i,$j,$N);
 	}
       }
     }
