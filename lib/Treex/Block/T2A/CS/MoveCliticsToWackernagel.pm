@@ -60,8 +60,6 @@ sub process_clause {
         $first = _find_eo1st_pos( $clause_root, $nodes[0] );    
     }
     
-    log_info( 'COORD: ' . $coord . ' ' . $clause_root->get_address() );
-
     # 4) Shift all clitics
     # 4a) at the beginning of the clause if the coordinated subjunction/coordinating conjunction fills the 1st position
     if ( $coord ){
