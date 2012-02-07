@@ -77,8 +77,6 @@ __END__
 
 Treex::Core::Resource - Access to shared resources
 
-=head1 VERSION
-
 =head1 SYNOPSIS
 
 use Treex::Core::Resource qw(require_file_from_share);
