@@ -86,7 +86,7 @@ sub process_tree_pos {
     
     #exponential $w= $w ** exp
     
-    # $w= $w ** 10;
+     $w= $w**10;
     $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );
     
     #$ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );
@@ -99,7 +99,7 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
- # $weight_tree = $weight_tree**5;
+  $weight_tree = $weight_tree**10;
   
   #$weight_tree= 2 ** $weight_tree;
   
@@ -171,7 +171,9 @@ sub process_bundle {
       #print $pos_weights{$k}{"0"}."\t".$pos_weights{$k}{"1"}."\t".$pos_weights{$k}{"2"}."\n";
     }
   }
+ 
   foreach my $zone (@zones) {
+    if($zone->has_atree()){
     if ( $zone->get_atree()->language eq $self->language ) {
       if ( exists $use_tree{ $zone->get_atree()->selector } ) {
 	if ( $self->use_pos eq "true" ) {
@@ -186,16 +188,20 @@ sub process_bundle {
 			$use_tree{ $zone->get_atree()->selector } );
 	}
       }
+      }
     }
   }
+ 
   make_graph( $self, $bundle );
   copy_deprel( $self, $bundle );
+  
 }
 
 sub make_graph {
   my ( $self, $bundle ) = @_;
   my $mst = $ENSEMBLE->get_mst();
   my $node;
+  if($bundle->has_tree( $self->language, 'a', $self->ensemblename )){
   my $tree_root =
   $bundle->get_tree( $self->language, 'a', $self->ensemblename );
   
@@ -216,6 +222,7 @@ sub make_graph {
       }
     }
   }
+  }
 }
 
 sub copy_deprel {
@@ -226,6 +233,7 @@ sub copy_deprel {
   
   # my $reference_root = $bundle->get_tree( $self->language, "a", "charniak" );
   # my @reference_nodes = $reference_root->get_descendants( { ordered => 1 } );
+  if($bundle->has_tree( $self->language, 'a', $self->ensemblename )){
   my $tree_root =
   $bundle->get_tree( $self->language, 'a', $self->ensemblename );
   
@@ -240,6 +248,7 @@ sub copy_deprel {
   
   my @zones = $bundle->get_all_zones();
   foreach my $zone (@zones) {
+    if($zone->has_atree()){
     if ( $zone->get_atree()->language eq $self->language ) {
       if ( exists $use_tree{ $zone->get_atree()->selector } ) {
 	my $reference_root = $zone->get_atree();
@@ -264,7 +273,8 @@ sub copy_deprel {
       }
     }
   }
-  
+  }
+  }
 }
 
 1;
