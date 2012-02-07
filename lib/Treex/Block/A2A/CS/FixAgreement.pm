@@ -140,11 +140,11 @@ sub logfix2 {
     #output
     if ( $logfixold ne $logfixnew ) {
         if ( $logfixbundle->get_zone( 'cs', 'FIXLOG' ) ) {
-            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . " {$logfixmsg: $logfixold -> $logfixnew}";
+            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
             $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
         else {
-            my $sentence = "{$logfixmsg: $logfixold -> $logfixnew}";
+            my $sentence = "{$logfixmsg: $logfixold -> $logfixnew} ";
             $logfixbundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
     }
