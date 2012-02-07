@@ -14,7 +14,7 @@ has 'with_traces' => (
 );
 
 sub process_bundle {
-    my ($self, $bundle) = @_;
+    my ($self, $bundle, $bundle_no) = @_;
     
     my $ref_zone = $bundle->get_zone($self->language, 'ref');
     my $feats_ref_for_id = $self->prepare_features_ref($ref_zone);
@@ -24,8 +24,12 @@ sub process_bundle {
     my $feats_tst_for_id = $self->prepare_features_tst($tst_zone);
     my $tst_sentence = $self->prepare_sentence($tst_zone, $feats_tst_for_id);
 
-    print "REF $ref_sentence\n";
-    print "TST $tst_sentence\n";
+    my $doc_name = $bundle->get_document->full_filename;
+    $doc_name =~ s{^.*/}{};
+
+    print "ID\t" . $bundle->id . " ($doc_name##$bundle_no)\n";
+    print "REF\t$ref_sentence\n";
+    print "TST\t$tst_sentence\n";
     print "\n";
 }
 
