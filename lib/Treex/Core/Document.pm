@@ -14,7 +14,7 @@ with 'Treex::Core::WildAttr';
 
 use Scalar::Util qw( weaken reftype );
 
-use PerlIO::gzip;
+use PerlIO::via::gzip;
 use Storable;
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
@@ -479,8 +479,10 @@ sub save {
     my ($filename) = @_;
 
     if ( $filename =~ /\.streex$/ ) {
-        open( my $F, ">:gzip", $filename ) or log_fatal $!; ## no critic (RequireBriefOpen)
-        Storable::nstore_fd( $self, *$F ) or log_fatal $!;
+        open( my $F, ">:via(gzip)", $filename ) or log_fatal $!;
+        print $F Storable::nfreeze( $self );
+        close $F;
+        # using  Storable::nstore_fd($self,*$F) emits 'Inappropriate ioctl for device'
     }
 
     else {
@@ -510,16 +512,25 @@ sub retrieve_storable {
 
     my $FILEHANDLE;
 
+    my $stringified_doc;
+
     if ( ref($file) and reftype($file) eq 'GLOB' ) {
         $FILEHANDLE = $file;
     }
     else {
         log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
             unless $file =~ /\.streex$/;
-        open $FILEHANDLE, "<:gzip", $file or log_fatal($!);  ## no critic (RequireBriefOpen)
+        open $FILEHANDLE, "<:via(gzip)", $file or log_fatal($!);
     }
 
-    my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
+    my $serialized;
+    # reading it this way is silly, but both slurping the file or
+    #  using Storable::retrieve_fd lead to errors when used with via(gzip)
+    while (<$FILEHANDLE>) {
+        $serialized .= $_;
+    }
+    #    my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
+    my $retrieved_doc = Storable::thaw( $serialized ) or log_fatal $!;
     return $retrieved_doc;
 }
 
