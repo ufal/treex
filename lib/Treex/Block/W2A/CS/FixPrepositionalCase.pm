@@ -101,7 +101,7 @@ sub _get_possible_cases {
             # changing gender/lemma is more than changing number
             $dist += 2 if ( ( $orig_gen and $orig_gen ne $gen ) or ( $orig_lemma and $orig_lemma ne $analysis->{lemma} ) );
 
-            if ( ( not $tags->{$case} ) or $dist < $dists ) {
+            if ( ( not $tags->{$case} ) or $dist < $dists->{$case} ) {
                 $tags->{$case}   = $analysis->{tag};
                 $lemmas->{$case} = $analysis->{lemma};
                 $dists->{$case}  = $dist;
