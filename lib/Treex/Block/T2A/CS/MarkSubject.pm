@@ -27,7 +27,6 @@ sub process_ttree {
         my $a_vfin = $t_vfin->get_lex_anode;
         if ( my $a_subj = _find_subject( $a_vfin, \%to_avoid ) ) {
             $a_subj->set_afun('Sb');
-
             #	    print $a_subj->id."\t".$a_subj->lemma."\n";
         }
     }

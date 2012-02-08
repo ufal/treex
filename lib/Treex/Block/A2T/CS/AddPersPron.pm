@@ -6,25 +6,12 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
+    # Add ACT/#PersPron nodes 
     if ($t_node->is_clause_head
         && !grep { ( ( $_->functor || "" ) eq "ACT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } 
         $t_node->get_echildren( { or_topological => 1 } )
         )
-    {
-
-        # There is an auxiliary reflexive
-        if ( my $auxr = first { my $a = $_->get_lex_anode(); $a and $a->afun eq 'AuxR' }
-                 $t_node->get_echildren( { or_topological => 1 } ) ){
-
-            $auxr->set_functor('ACT');
-            $auxr->set_formeme('drop');
-
-            $auxr->set_gram_gender('neut');
-            $auxr->set_gram_person('3');
-            $auxr->set_gram_number('sg');
-            return;
-        }                    
-                
+    {                
         my $new_node = $t_node->create_child;
         $new_node->set_t_lemma('#PersPron');
         $new_node->set_functor('ACT');
@@ -140,6 +127,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

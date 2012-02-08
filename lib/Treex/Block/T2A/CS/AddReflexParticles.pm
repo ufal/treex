@@ -30,6 +30,7 @@ sub process_tnode {
     $refl_node->set_attr( 'morphcat/subpos', '7' );
     $refl_node->set_attr( 'morphcat/number', 'X' );
     $refl_node->set_attr( 'morphcat/case',   $reflexive eq 'si' ? 3 : 4 );
+    $refl_node->wild->{lex_verb_child} = ( $afun eq 'AuxT' ? 1 : 0 );
 
     $t_node->add_aux_anodes($refl_node);
 

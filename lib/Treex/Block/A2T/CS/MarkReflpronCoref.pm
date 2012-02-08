@@ -4,17 +4,25 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
+    
     my ( $self, $t_node ) = @_;
 
-    if ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^.[678]/ ) {
-        my $clause_head = $t_node;
+    # Select only such reflexive pronouns that are full t-nodes (not reflexive passives (qcomplex) or auxiliaries (no t-nodes))
+    if ( $t_node->get_lex_anode && $t_node->nodetype eq 'complex' && $t_node->get_lex_anode->tag =~ /^.[678]/ ) {
+    
+        # Attempt to find the clause head
+        my $clause_head = $t_node;    
         while ( $clause_head->get_parent and not $clause_head->is_clause_head ) {
             $clause_head = $clause_head->get_parent;
         }
-        if ( !$clause_head->is_root ) {    # klauze se nasla a tudiz to nedobehlo az ke koreni
+    
+        # We found a clause head (since it did not run all the way up to the root)
+        if ( !$clause_head->is_root ) {
 
             my ($antec) = grep { ( $_->formeme || "" ) =~ m/^(n:1|drop)$/ } $clause_head->get_echildren( { or_topological => 1 } );
-            if ($antec) {
+            
+            # Mark the coreference (skip AuxR 'ACT/PersPron' nodes which have the 'drop')
+            if ($antec && $antec != $t_node) {
                 $t_node->set_deref_attr( 'coref_gram.rf', [$antec] );
             }
         }
@@ -22,20 +30,30 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::CS::MarkReflpronCoref
+=head1 NAME 
+
+Treex::Block::A2T::CS::MarkReflpronCoref
+
+=head1 DESCRIPTION
 
 Coreference link between a t-node corresponding to reflexive pronoun (inc. reflexive possesives)
-and its antecedent (in the sense of grammatical coreference) is detected in SCzechT trees
-and store into the C<coref_gram.rf> attribute (warning: this block requires formemes and
-reconstructed prodropped subjects).
+and its antecedent (in the sense of grammatical coreference) is detected in Czech t-trees
+and stored in the C<coref_gram.rf> attribute.
 
-=back
+This block requires formemes and reconstructed pro-dropped subjects and reflexive passive #Gen subjects.
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
