@@ -30,8 +30,8 @@ override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
     my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
         prev_sents_num => 1,
-        anaphor_as_candidate => 1,
-        cands_within_czeng_blocks => 1,
+        anaphor_as_candidate => $self->anaphor_as_candidate,
+#        cands_within_czeng_blocks => 1,
     });
     return $acs;
 };
@@ -43,16 +43,29 @@ override '_build_anaph_cands_filter' => sub {
 };
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::EN::MarkTextPronCoref
+=head1 NAME 
 
+Treex::Block::A2T::EN::MarkTextPronCoref
 
-=back
+=head1 DESCRIPTION
 
-=cut
+Pronoun coreference resolver for English.
+Settings:
+* English personal pronoun filtering of anaphor
+* candidates for the antecedent are nouns from current (prior to anaphor) and previous sentence
+* English pronoun coreference feature extractor
+* using a model trained by a perceptron ranker
 
-# Copyright 2008-2011 Michal Novak
+=head1 AUTHORS
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

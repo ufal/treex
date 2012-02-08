@@ -31,7 +31,13 @@ sub is_candidate {
         return 0 if (!defined $anode);
         $is_3rd_pers = (!defined $self->banned_prons->{$anode->lemma});
     }
-    return ( $t_node->t_lemma eq '#PersPron' && $is_3rd_pers );
+    # skip nodes marked as non-referential
+    my $is_refer = $t_node->wild->{referential};
+    return (
+        (!defined $is_refer || ($is_refer == 1)) &&  # referential (if it's set)
+        ($t_node->t_lemma eq '#PersPron') &&  # personal pronoun 
+        $is_3rd_pers    # third person
+    );
 }
 
 # TODO doc

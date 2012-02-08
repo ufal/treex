@@ -34,6 +34,14 @@ has 'feature_sep' => (
     default     => ' ',
 );
 
+has 'anaphor_as_candidate' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Bool',
+    default     => 1,
+    documentation => 'joint anaphoricity determination and antecedent selection',
+);
+
 has '_feature_transformer' => (
     is          => 'ro',
     required    => 1,
@@ -54,6 +62,7 @@ has '_ante_cands_selector' => (
     is          => 'ro',
     required    => 1,
     isa         => 'Treex::Tool::Coreference::AnteCandsGetter',
+    lazy        => 1,
     builder     => '_build_ante_cands_selector',
 );
 
@@ -63,6 +72,11 @@ has '_anaph_cands_filter' => (
     isa         => 'Treex::Tool::Coreference::NodeFilter',
     builder     => '_build_anaph_cands_filter',
 );
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_ante_cands_selector;
+}
 
 sub _build_feature_extractor {
     my ($self) = @_;

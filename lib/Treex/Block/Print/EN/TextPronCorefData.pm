@@ -17,7 +17,7 @@ override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
     my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
         prev_sents_num => 1,
-        anaphor_as_candidate => 1,
+        anaphor_as_candidate => $self->anaphor_as_candidate,
     });
     return $acs;
 };

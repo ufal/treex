@@ -10,6 +10,14 @@ has 'model_path' => (
     documentation => 'path to a trained model',
 );
 
+has 'anaphor_as_candidate' => (
+    is       => 'ro',
+    isa      => 'Bool',
+    required => 1,
+    default  => 1,
+    documentation => 'joint anaphoricity determination and antecedent selection',
+);
+
 # TODO  the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
     is          => 'ro',
@@ -32,6 +40,7 @@ has '_ante_cands_selector' => (
     is          => 'ro',
     required    => 1,
     isa         => 'Treex::Tool::Coreference::AnteCandsGetter',
+    lazy        => 1,
     builder     => '_build_ante_cands_selector',
 );
 
@@ -50,6 +59,7 @@ sub BUILD {
     my ($self) = @_;
 
     $self->_ranker;
+    $self->_ante_cands_selector;
 }
 
 sub _build_ranker {
@@ -80,11 +90,7 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     return if ( $t_node->is_root );
-
-    # skip nodes marked as non-referential
-    my $is_refer = $t_node->wild->{referential};
-    return if (defined $is_refer && ($is_refer == 0));
-
+    
     if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
 
         my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
@@ -127,21 +133,54 @@ sub process_tnode {
 
         if (defined $antec && ($antec ne $t_node->id)) {
             $t_node->set_attr( 'coref_text.rf', [$antec] );
+            $t_node->wild->{referential} = 1;
+        }
+        else {
+            $t_node->wild->{referential} = 0;
         }
     }
 }
 
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::A2T::BaseMarkCoref
+
+=head1 DESCRIPTION
+
+A base class for all textual coreference resolution blocks. 
+It combines the following modules:
+* anaphor candidate filter - it determines the nodes, for which an antecedent will be seleted
+* antecedent candidate selector - for each anaphor, it selects a bunch of antecedent candidates
+* feature extractor - it extracts features that describe an anaphor - antecedent candidate couple
+* ranker - it ranks the antecedent candidates based on the feature values
+ID of the predicted antecedent is filled in the anaphor's 'coref_text.rf' attribute.
+
+=head1 PARAMETERS
 
 =over
 
-=item Treex::Block::A2T::BaseMarkCoref
+=item model_path
 
+The path of the model used for resolution.
+
+=item anaphor_as_candidate
+
+If enabled, the block provides joint anaphoricity determination and antecedent selection.
+If disabled, this block must be preceded by a block resolving anaphoricity of anaphor candidates. 
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2011 Michal Novak
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
