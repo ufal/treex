@@ -5,19 +5,13 @@ use Treex::Core::Common;
 
 use CzechMorpho;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2A::CS::FixAgreement';
 
 has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
 
-sub process_anode {
-
-    my ( $self, $anode ) = @_;
-
-    return if ( $anode->is_root );
-
-    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
-
-    return if ( $aparent->is_root );
+sub fix {
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
+    my %en_counterpart = %$en_hash;
 
     # capture only prepositional groups ...
     if ( $aparent->tag !~ m/[NAC]/ and $aparent->afun eq 'AuxP' and $anode->afun ne 'AuxP' ) {
@@ -111,36 +105,6 @@ sub _get_possible_cases {
     return ( $tags, $lemmas );
 }
 
-## Just for debugging purposes - given some a-nodes, print the whole sentence with lemma and tag of these nodes
-#sub _log_sent {
-#    my ($nodes) = @_;
-#
-#    my %nodes_map = map { $_->id => 1 } @{$nodes};
-#    my @nodes = $nodes->[0]->get_root()->get_descendants( { ordered => 1 } );
-#    my $str = '';
-#
-#    foreach my $node (@nodes) {
-#        $str .= $node->form;
-#        if ( $nodes_map{ $node->id } ) {
-#            $str .= '[' . $node->lemma . ' ' . $node->tag . ']';
-#        }
-#        $str .= $node->no_space_after() ? '' : ' ';
-#    }
-#    return $str;
-#}
-#
-## Just for debugging purposes - log applications of preposition correcting rules
-#sub _log_application {
-#    my ( $caption, $case, $word, $prep ) = @_;
-#
-#    my ($gold_word) = $word->get_aligned_nodes();
-#    $gold_word = $gold_word->[0];
-#    my ($gold_prep) = $prep->get_aligned_nodes();
-#    $gold_prep = $gold_prep->[0];
-#
-#    log_warn( join( "\t", ( $caption, $case, $word->tag, $gold_word->tag, $prep->tag, $gold_prep->tag, _log_sent( [ $word, $prep ] ) ) ) );
-#}
-
 1;
 __END__
 
@@ -152,13 +116,15 @@ Treex::Block::A2A::CS::FixPrepositionalCase
 
 =head1 DESCRIPTION
 
-Copied from Treex::Block::W2A::CS::FixPrepositionalCase to be fitted for depfix.
+Adapted from Treex::Block::W2A::CS::FixPrepositionalCase for needs of depfix.
 
 Correction of wrong POS in prepositional phrases.
 
 This block looks for all nodes that depend on a preposition and do not match its case. If their form can match the preposition's
 case with a different tag or the preposition can have a different case so that the two are congruent, the case of the
 node and/or its preposition is changed.
+
+Some unfrequent preposition-case combinations are not used.
 
 =head1 PARAMETERS
 
@@ -170,6 +136,8 @@ and examining their children.
 =head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+adapted by Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
