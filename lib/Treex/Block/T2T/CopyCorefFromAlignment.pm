@@ -36,8 +36,8 @@ sub process_tnode {
     # nothing to do if no antecedent
     return if (@antec == 0);
     
-    my @aligned_anaphs = @{($tnode->get_aligned_nodes)[0] // []};
-    my @aligned_antec = map {@{$_ // []}} (map {($_->get_aligned_nodes)[0]} @antec);
+    my @aligned_anaphs = $tnode->get_aligned_nodes_of_type('monolingual');
+    my @aligned_antec = map {$_->get_aligned_nodes_of_type('monolingual')} @antec;
 
     foreach my $source ( @aligned_anaphs ) {
         if (!defined $source) {
