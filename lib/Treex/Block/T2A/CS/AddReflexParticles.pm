@@ -41,18 +41,27 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::AddReflexParticles
+=head1 NAME
 
-For reflexive tantum verbs (_si or _se in their tlemma),
-create new a-nodes corresponding to reflexive particles/pronouns.
+Treex::Block::T2A::CS::AddReflexParticles
 
-=back
+=head1 DESCRIPTION
 
-=cut
+Create new a-nodes corresponding to reflexive particles
+for reflexive tantum verbs (having '_si' or '_se' in their tlemma) or verbs with 
+deagentive (reflexive passive) diathesis.
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+=head1 AUTHORS
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zaborktsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
