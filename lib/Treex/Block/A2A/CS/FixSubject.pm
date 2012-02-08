@@ -11,6 +11,7 @@ sub fix {
     #    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
+    # TODO: I am getting "Use of uninitialized value in string eq" here for some reason
     if ( $dep->afun eq 'Sb' && $d->{case} ne '1' && $d->{case} ne '-'
 	 && $en_counterpart{$dep}
 	 && ( $en_counterpart{$dep}->afun eq 'Sb'

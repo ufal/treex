@@ -9,66 +9,113 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 
 has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
 
-sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+has 'skip_prep_tag' => ( is => 'rw', isa => 'Str', default => "s_2 s_4 za_2 v_4 mezi_4 z_2 před_4 o_4 po_4" );
 
-    # capture only prepositional groups ...
-    if ( $aparent->tag !~ m/[NAC]/ and $aparent->afun eq 'AuxP' and $anode->afun ne 'AuxP' ) {
+has '_skip_prep_tag' => ( is => 'rw', isa => 'HashRef', default => sub { ( {} ) } );
 
-        my ($case)     = ( $anode->tag   =~ m/^[NAPC]...([1-7])/ );
-        my ($prepcase) = ( $aparent->tag =~ m/....([^X])/ );
-
-        # where the case is not right ...
-        if ( $case and $prepcase and $prepcase ne $case ) {
-
-            # and try to correct it
-            $self->_try_correct_case( $anode, $aparent, $case, $prepcase );
-        }
+sub BUILD {
+    my $self = shift;
+    
+    my @skip = split / /, $self->skip_prep_tag;
+    foreach my $skip_pt (@skip) {
+        $self->_skip_prep_tag->{$skip_pt} = 1;
     }
+    
     return;
 }
 
-# Try to correct the case indication if it is not consistent with the preposition
-sub _try_correct_case {
+sub fix {
 
-    my ( $self, $word, $prep, $wordcase, $prepcase ) = @_;
+    # gov = governing preposition, dep = dependent of preposition
+    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
 
-    my ( $pos, $num, $gen ) = ( $word->tag =~ m/(.).(.)(.)/ );
-    my ( $tags_word, $lemmas_word ) = $self->_get_possible_cases( $word->form, $pos, $num, $gen, $word->lemma );
-    my ( $tags_prep, $lemmas_prep ) = $self->_get_possible_cases( $prep->form, 'R' );
+    # my %en_counterpart = %$en_hash;
 
-    # correct the tag: use the preposition's case if it's OK with the word form
-    if ( $tags_word->{$prepcase} ) {
-        $word->set_tag( $tags_word->{$prepcase} );
-        $word->set_lemma( $lemmas_word->{$prepcase} );
-        return;
+    # gov is prep, dep is not and they do not agree in case (which they should)
+    # (conditions adapted from W2A::CS::FixPrepositionalCase and A2A::CS::FixPrepositionNounAgreement)
+    if ($g->{afun}   eq 'AuxP'
+        && $g->{pos} eq 'R'
+        && $g->{case} =~ /[1-7]/
+        
+        && $d->{afun} ne 'AuxP'
+        && $d->{pos} =~ /[NAPC]/
+        && $d->{case} ne 'X'
+        
+        && $g->{case} ne $d->{case}
+        )
+    {
+
+        # set new cases and/or lemmas
+        my $do_correct = 0;
+
+        # the tags and lemmas to set (default: keep)
+        my $gov_tag   = $g->{tag};
+        my $gov_lemma = $gov->lemma;
+        my $dep_tag   = $d->{tag};
+        my $dep_lemma = $dep->lemma;
+
+        # possible tags and lemmas for the forms (hash refs where case is the key)
+        my ( $tags_dep, $lemmas_dep ) = $self->_get_possible_cases( $dep->form, $d, $dep->lemma );
+        my ( $tags_gov, $lemmas_gov ) = $self->_get_possible_cases( $gov->form, $g, $gov->lemma );
+
+        # try to find the least painful way to correct the pos tags and/or lemmas
+        if ( $tags_dep->{ $g->{case} } ) {
+
+            # correct the tag: use the preposition's case if it's OK with the dep form
+            $do_correct = 1;
+            $dep_tag    = $tags_dep->{ $g->{case} };
+            $dep_lemma  = $lemmas_dep->{ $g->{case} };
+            
+        } elsif ( any { substr( $_->tag, 4, 1 ) eq $g->{case} } $gov->get_echildren() ) {
+
+            # do not correct case of prepositions that have (other) children with a matching case
+            $do_correct = 0;
+            
+        } elsif ( $tags_gov->{ $d->{case} } ) {
+
+            # correct the tag: use the dep's case if it's OK with the preposition
+            $do_correct = 1;
+            $gov_tag    = $tags_gov->{ $d->{case} };
+            $gov_lemma  = $lemmas_gov->{ $d->{case} };
+            
+        } else {
+
+            # find common case for dep and gov (first matching)
+            # (order of cases probably should be from more probable cases
+            # to less probable cases; however, no effect has been observed)
+            my ($common_case) = grep { $tags_gov->{$_} and $tags_dep->{$_} } ( 7, 6, 4, 3, 2, 5, 1 );
+
+            # if there is a possible common case, fix both the dep and the preposition
+            if ($common_case) {
+                $do_correct = 1;
+                $dep_tag    = $tags_dep->{$common_case};
+                $dep_lemma  = $lemmas_dep->{$common_case};
+                $gov_tag    = $tags_gov->{$common_case};
+                $gov_lemma  = $lemmas_gov->{$common_case};
+            }
+        
+        }
+
+        if ($do_correct) {
+            
+            # skip unpreferred prep-tag combinations
+            my ($prep_lemma_coarse) = split /-/, $gov_lemma;
+            my $prep_case = substr ($dep_tag, 4, 1);
+            my $skip_pt = $prep_lemma_coarse . '_' . $prep_case;
+            if ( $self->_skip_prep_tag->{$skip_pt} ) {
+                return;
+            }
+
+            $self->logfix1( $dep, "PrepCase" );
+            $gov->set_tag($gov_tag);
+            $gov->set_lemma($gov_lemma);
+            $dep->set_tag($dep_tag);
+            $dep->set_lemma($dep_lemma);
+            $self->logfix2($dep);
+        }
+
     }
 
-    # do not correct anything if the form would be 's' with genitive/accusative
-    return if ( $prep->form =~ m/^se?$/ and $wordcase =~ m/[24]/ );
-
-    # do not correct case of prepositions that have (other) children with a matching case
-    my @echildren = $prep->get_echildren();
-    return if ( any { $_->tag =~ m/^....$prepcase/ } @echildren );
-
-    # correct the tag: use the word's case if it's OK with the preposition
-    if ( $tags_prep->{$wordcase} ) {
-        $prep->set_tag( $tags_prep->{$wordcase} );
-        $prep->set_lemma( $lemmas_prep->{$wordcase} );
-        return;
-    }
-
-    # find common case for word and preposition (first matching)
-    my ($common_case) = grep { $tags_prep->{$_} and $tags_word->{$_} } ( 1, 2, 3, 4, 5, 6, 7 );
-
-    # if there is a possible common case, fix both the word and the preposition
-    if ($common_case) {
-        $prep->set_tag( $tags_prep->{$common_case} );
-        $prep->set_lemma( $lemmas_prep->{$common_case} );
-        $word->set_tag( $tags_word->{$common_case} );
-        $word->set_lemma( $lemmas_word->{$common_case} );
-    }
     return;
 }
 
@@ -76,7 +123,7 @@ sub _try_correct_case {
 # values containg the corresponding tags
 sub _get_possible_cases {
 
-    my ( $self, $form, $orig_pos, $orig_num, $orig_gen, $orig_lemma ) = @_;
+    my ( $self, $form, $orig_cats, $orig_lemma ) = @_;
 
     my $dists  = {};
     my $tags   = {};
@@ -86,16 +133,17 @@ sub _get_possible_cases {
 
     foreach my $analysis (@analyses) {
 
-        if ( my ( $gen, $num, $case ) = ( $analysis->{tag} =~ m/^$orig_pos.(.)(.)([1-7X])/ ) ) {
+        my ( $pos, $gen, $num, $case ) = ( $analysis->{tag} =~ m/^(.).(.)(.)(.)/ );
+        if ($orig_cats->{pos} eq $pos && $case =~ /[1-7X]/) {
 
             # keep the distance from the current number and gender as small as possible
             my $dist = 0;
-            $dist++ if ( $orig_num and $orig_num ne $num );
+            $dist++ if ( $orig_cats->{num} ne $num );
 
             # changing gender/lemma is more than changing number
-            $dist += 2 if ( ( $orig_gen and $orig_gen ne $gen ) or ( $orig_lemma and $orig_lemma ne $analysis->{lemma} ) );
+            $dist += 2 if ( ( $orig_cats->{gen} ne $gen ) or ( $orig_lemma ne $analysis->{lemma} ) );
 
-            if ( ( not $tags->{$case} ) or $dist < $dists ) {
+            if ( ( not $tags->{$case} ) or $dist < $dists->{$case} ) {
                 $tags->{$case}   = $analysis->{tag};
                 $lemmas->{$case} = $analysis->{lemma};
                 $dists->{$case}  = $dist;
@@ -141,6 +189,6 @@ adapted by Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
