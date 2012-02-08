@@ -61,7 +61,7 @@ sub fix {
 	} elsif ($g->{tag} =~ /^V/) {
 	    # if ($g->{tag} =~ /^Vs/) {
 	    # if ($g->{tag} =~ /^V[fs]/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
-	    if ($g->{tag} =~ /^Vs/ || grep { $_->afun eq "AuxR" || $_->afun eq "AuxT" } $gov->get_children) {
+	    if ($g->{tag} =~ /^Vs/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
 		#set dependent case to instrumental
 		$new_case = 7;
 		# this is now NOT the subject
