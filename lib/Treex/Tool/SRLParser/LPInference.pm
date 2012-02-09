@@ -4,12 +4,24 @@ use Moose;
 use lib '/net/projects/tectomt_shared/external_libs/';
 use LPSolve;
 
+has 'empty_sign' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => '_',
+);
+
 sub lpsolve_srl() {
     my ( $self, $probs_ref ) = @_; 
    
     # prune too small probabilities
     foreach my $key (keys %{$probs_ref}) {
-        # TODO: Che et al. keep "NULL" even if it has small probability - try it out
+        my ($predicate_id, $depword_id, $functor) = split / /, $key;
+
+        # keep "NULL" even when has small probability
+        next if $functor eq $self->empty_sign;
+
+        # Che et al.: C2 condition: delete improbable labels
+        # TODO: find optimal threshold (Che has 0.3)
         delete $probs_ref->{$key} if $probs_ref->{$key} < 0.1;
     }
 
@@ -39,7 +51,8 @@ sub lpsolve_srl() {
     # set constraints
     my $constraint = LPSolve::DoubleArray->new($n_variables + 1);
 
-    ### C1: Each predicate-depword pair should be labeled with one and exactly one label ###
+    ### C1: Each predicate-depword pair should be labeled with one      ###
+    ### and exactly one label                                           ###
     # find out word pairs
     my %word_pairs;
     foreach my $var (@variables) {
@@ -57,6 +70,28 @@ sub lpsolve_srl() {
 
     ### C2: Roles with a small probability should never be labeled ###
     ### (except for the virtual role "NULL")                       ###
+    # pruned already at the beginning
+    
+    ### C3: Statistics show that some roles usually appear ###
+    ### once for a predicate.                              ###
+    # roles to appear once for predicate (TODO: only for Czech here)
+    my %no_dup_roles = ('ACT', 'ADDR', 'CRIT', 'LOC', 'PAT', 'DIR3', 'COND');
+    # find out predicates
+    my %predicates;
+    foreach my $var (@variables) {
+        my ($predicate_id, $depword_id, $functor) = split / /, $var;
+        $predicates{$predicate_id} = 1;
+    }
+    # make constraint for each predicate and each no dup role
+    foreach my $predicate (keys %predicates) {
+        foreach my $no_dup_role (keys %no_dup_roles) {
+            for (my $i = 0; $i < $n_variables; $i++) {
+                my ($predicate_id, $depword_id, $functor) = split / /, $variables[$i];
+                $constraint->setitem($i+1, (($predicate_id eq $predicate) and ($no_dup_role eq $functor)) ? 1 : 0); 
+            }
+        }
+        LPSolve::add_constraint($lp, $constraint, $LPSolve::LE, 1);
+    }
    
     # turn off rowmode
     LPSolve::set_add_rowmode($lp, 0);
