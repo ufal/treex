@@ -33,7 +33,7 @@ BLOCK:      TBNAME                              {$return = [{
                                                 }
 INCLUDE:    /\/\S+\.scen/                       {$return = $item[1]}
 INCLUDE:    /[^\/#]\S+\.scen/                    {   my $from_file = $arg[0];
-                                                    if ($from_file =~ /./) {
+                                                    if (length $from_file) {
                                                         $return = dirname($from_file) . "/$item[1]";
                                                     } else {
                                                         $return = "./$item[1]";
