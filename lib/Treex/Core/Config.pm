@@ -6,7 +6,7 @@ use 5.010;    # operator //
 use File::HomeDir 0.97;
 use File::ShareDir;
 use File::Spec;
-use File::Slurp 9999;    # prior versions has different interface
+use File::Slurp 9999;    # prior versions had different interface
 use Cwd qw(realpath);
 use Treex::Core::Log;
 use YAML 0.72 qw(LoadFile DumpFile);
@@ -135,17 +135,19 @@ sub tred_dir {
 sub pml_schema_dir {
     my $self = shift;
     if ( !defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} ) ) {
+        $config->{pml_schema_dir} = undef; #write empty line to config, so it can be possibly changed in the future
         if ( $self->_devel_version() ) {
-            $config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
+            #$config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
+            return realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
         }
         else {
-            $config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
+            #$config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
+            return realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
         }
     }
     return $config->{pml_schema_dir};
 }
 
-# tenhle adresar ted vubec v balicku neni!
 sub tred_extension_dir {
     my $self = shift;
     if ( !defined $config->{tred_extension_dir} || !defined realpath( $config->{tred_extension_dir} ) ) {
