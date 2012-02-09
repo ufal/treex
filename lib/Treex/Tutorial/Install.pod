@@ -6,89 +6,32 @@ package Treex::Tutorial::Install;
 
 Treex::Tutorial::Install - Installing the Treex NLP framework
 
+=head1 SYNOPSIS
 
-=head1 TWO WAYS TO GET TREEX
+    # 1. Prepare local Perl enviroment, so Perl modules will be installed to ~/perl5.
+    # If you have a root access and want to install to system paths, skip this step.
+    wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
+    eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
+    echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
 
-You can download Treex from CPAN L<http://www.cpan.org> or from the SVN repository.
-However, so far only the latter is usable, because  
-only the core modules (C<Treex::Core>) were released on CPAN
-and to do something interesting with Treex you need also some other modules.
+    # 2. Install Treex::Core and its dependencies from CPAN.
+    # Instead of "cpanm" tool, you can use "cpan" if you wish.
+    cpanm Treex::Core
+    treex -h # just to check if it was installed
 
-=head2 Downloading and Installing Treex from CPAN
+    # 3. Install Treex modules for processing English
+    cpanm Treex::EN
 
-You can install Treex and its dependencies from shell using the C<cpan> tool:
-
-    cpan Treex::Core
-
-In future, there will be also distributions for the analysis (and synthesis)
-of several languages: C<Treex::EN> for English, C<Treex::DE> for German,
-C<Treex::CS> for Czech etc. 
-
-=head2 Downloading and Installing Treex from SVN
-
-Treex is being developed in TectoMT subversion repository.
-For read-only access you can use:
-
+    # 4. (optional) Download the newest version of whole Treex from SVN repository.
     cd ~
-    svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk tectomt
+    svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk/treex treex
     # password is "public"
+    # Add the following line to your ~/.bashrc
+    export PATH="$HOME/treex/bin:$PATH"
+    export PERL5LIB="$HOME/treex/lib:$PERL5LIB"
 
-Install the needed Perl modules dependencies: 
-
-    cpan Moose MooseX::Getopt MooseX::NonMoose MooseX::Params::Validate\
-         MooseX::SemiAffordanceAccessor Readonly Treex::PML\
-         File::Slurp File::HomeDir File::Path File::ShareDir\
-         LWP::Simple Data::Dumper Module::Reload Locale::Language\
-         Parse::RecDescent Cwd Scalar::Util autodie String::Util
-
-Add Treex modules to your C<$PERLLIB> so perl can find them,
-and the C<treex> script to your C<$PATH> so you can execute it from shell.  
-Add the following lines to your C<~/.bashrc>:
-
-    export TMT_ROOT=${HOME}/tectomt/
-    export PATH="${TMT_ROOT%/}/treex/bin:$PATH"
-    export PERL5LIB="${TMT_ROOT%/}/treex/lib:${TMT_ROOT%/}/libs/other:$PERL5LIB"
-    export PERLLIB=$PERL5LIB   
-
-And C<source ~/.bashrc> or open a new terminal. Check that it works by running:
-
-    treex -h 
-
-Some Treex applications use huge pre-trained models, dictionaries etc.
-These resources are stored in an unversioned directory C<$TMT_ROOT/share>
-and they should be automatically downloaded when running the respective application.
-You should create the empty directory or symlink.
-
-    mkdir $TMT_ROOT/share
-    #ln -s /mnt/my_big_disk/tectomt_share $TMT_ROOT/share
-
-Similarly, some applications need a directory for temporary files.
-
-    ln -s /tmp $TMT_ROOT/tmp
-    #mkdir $TMT_ROOT/tmp
-
-=head2 Installing other tools
-
-=head3 TrEd
-
-For visualization of trees it is beneficial to install TrEd from
-L<http://ufal.mff.cuni.cz/~pajas/tred>.
-Install it to the C<$TMT_ROOT/share/tred> directory (or symlink).
-Now you can check if you can run the Treex-modified version of TrEd:
-
-    ttred
-
-=head3 XS-based perl modules
-
-Morce is a high-quality part-of-speech tagger for English.
-You can install it by: 
-
-    cd $TMT_ROOT/libs/packaged/Morce-English
-    less INSTALL
-    # follow the instruction in INSTALL
-
-In the same way, you can install C<CzechMorpho> and C<Morce-Czech> (in this order).
-
+    # 5. (optional) Install TrEd (tree viewer and editor)
+    # see http://ufal.mff.cuni.cz/tred/
 
 =head1 AUTHOR
 
