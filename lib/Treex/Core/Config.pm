@@ -21,7 +21,7 @@ our %service;                   ## no critic (ProhibitPackageVars)
 our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 
 my $config = __PACKAGE__->_load_config();
-my $running_in_tred; ## no critic (ProhibitUnusedVariables)
+my $running_in_tred;            ## no critic (ProhibitUnusedVariables)
 
 sub _load_config {
     my $self     = shift;
@@ -45,7 +45,7 @@ END {
 
 sub config_dir {
     my $self = shift;
-    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' ); # if evironment variable not set defaults to ~/.treex
+    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' );    # if evironment variable not set defaults to ~/.treex
     if ( !-e $dirname ) {
         mkdir $dirname;
     }
@@ -53,7 +53,7 @@ sub config_dir {
         return $dirname;
     }
     else {
-        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } ); #last fallback, hidden somwhere under ~/.local directory
+        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );    #last fallback, hidden somwhere under ~/.local directory
     }
 }
 
@@ -68,7 +68,7 @@ sub _default_resource_path {
     push @path, File::Spec->catdir( $self->config_dir(), 'share' );
     push @path, File::HomeDir->my_dist_data( 'Treex-Core', { create => 0 } );
     if ( defined $ENV{TMT_ROOT} ) {
-        push @path, realpath( $ENV{TMT_ROOT} . '/share' );
+        push @path, File::Spec->catdir( $ENV{TMT_ROOT}, 'share' );
     }
     return @path if wantarray;
     return \@path;
@@ -111,6 +111,7 @@ sub share_dir {
         else {
             $share_dir = File::Spec->catdir( $self->config_dir(), 'share' );           # by default take ~/.treex/share
         }
+
         #$config->{share_dir} = $share_dir;
         return $share_dir;
 
@@ -129,7 +130,7 @@ sub tred_dir {
     my $self = shift;
     if ( !defined $config->{tred_dir} || !defined realpath( $config->{tred_dir} ) ) {
         delete $config->{tred_dir};
-        return realpath( $self->share_dir() . '/tred/' );
+        return realpath( File::Spec->catdir( $self->share_dir(), 'tred' ) );
     }
     return $config->{tred_dir};
 }
@@ -139,12 +140,14 @@ sub pml_schema_dir {
     if ( !defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} ) ) {
         delete $config->{pml_schema_dir};
         if ( $self->_devel_version() ) {
+
             #$config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
             return realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
         }
         else {
+
             #$config->{pml_schema_dir} = realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
-            return realpath( File::ShareDir::dist_dir('Treex-Core') . "/tred_extension/treex/resources/" );    #that's different share than former TMT_SHARE
+            return realpath( File::Spec->catdir( File::ShareDir::dist_dir('Treex-Core'), qw(tred_extension treex resources) ) );    #that's different share than former TMT_SHARE
         }
     }
     return $config->{pml_schema_dir};
@@ -154,7 +157,7 @@ sub tred_extension_dir {
     my $self = shift;
     if ( !defined $config->{tred_extension_dir} || !defined realpath( $config->{tred_extension_dir} ) ) {
         delete $config->{tred_extension_dir};
-        return realpath( $self->pml_schema_dir() . "/../../" );
+        return realpath( File::Spec->catdir( $self->pml_schema_dir(), q(..), q(..) ) );
     }
     return $config->{tred_extension_dir};
 }
@@ -177,7 +180,7 @@ sub _default_tmp_dir {
     my $self      = shift;
     my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );
     my $suffix    = 'tmp';
-    my $tmp_dir   = realpath("$dot_treex/$suffix");
+    my $tmp_dir   = File::Spec->catdir( $dot_treex, $suffix );
     if ( !-e $tmp_dir ) {
         mkdir $tmp_dir or log_fatal("Cannot create temporary directory");
     }

@@ -6,8 +6,9 @@ use 5.010;
 
 #use Moose;
 #use Treex::Core::Common;
-use LWP::Simple; #TODO rewrite using LWP:UserAgent to show progress
-use File::Path;
+use LWP::Simple;    #TODO rewrite using LWP:UserAgent to show progress
+use File::Path qw(make_path);
+use File::Spec;
 use Treex::Core::Log;
 use Treex::Core::Config;
 
@@ -20,23 +21,27 @@ sub require_file_from_share {
     my $writable;    #will store first writable directory found
     SEARCH:
     foreach my $resource_dir ( Treex::Core::Config->resource_path() ) {
-        my $file = "$resource_dir/$rel_path_to_file";
+        my $file = File::Spec->catfile( $resource_dir, $rel_path_to_file );
         log_debug("Trying $file\n");
         if ( -e $file ) {
             log_debug("Found $file\n");
             return $file;
         }
-
-        if ( !defined $writable && -w $resource_dir ) {
-            $writable = $resource_dir;
-            log_debug("Found writable directory: $writable");
+        if ( !defined $writable ) {
+            if ( !-e $resource_dir ) {
+                make_path($resource_dir);
+            }
+            if ( -d $resource_dir && -w $resource_dir ) {
+                $writable = $resource_dir;
+                log_debug("Found writable directory: $writable");
+            }
         }
     }
     $who_wants_it = " by $who_wants_it" // '';
     log_info("Shared file '$rel_path_to_file' is missing$who_wants_it.");
     log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
-    my $url = Treex::Core::Config->share_url(). "/$rel_path_to_file";
+    my $url = Treex::Core::Config->share_url() . "/$rel_path_to_file";
     log_info("Trying to download $url");
 
     my $file = "$writable/$rel_path_to_file";

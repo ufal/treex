@@ -59,10 +59,7 @@ sub BUILD {
 sub require_files_from_share {
     my ( $self, @rel_paths ) = @_;
     my $my_name = 'the block ' . $self->get_block_name();
-    foreach my $rel_path (@rel_paths) {
-        Treex::Core::Resource::require_file_from_share( $rel_path, $my_name );
-    }
-    return;
+    return map { Treex::Core::Resource::require_file_from_share( $_, $my_name ) } @rel_paths;
 }
 
 sub get_required_share_files {
@@ -156,6 +153,7 @@ sub process_zone {
 
 sub process_end {
     my ($self) = @_;
+
     # default implementation is empty, but can be overriden
     return;
 }
