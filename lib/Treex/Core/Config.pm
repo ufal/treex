@@ -45,7 +45,7 @@ END {
 
 sub config_dir {
     my $self = shift;
-    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' );
+    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' ); # if evironment variable not set defaults to ~/.treex
     if ( !-e $dirname ) {
         mkdir $dirname;
     }
@@ -53,7 +53,7 @@ sub config_dir {
         return $dirname;
     }
     else {
-        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );
+        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } ); #last fallback, hidden somwhere under ~/.local directory
     }
 }
 
@@ -101,6 +101,7 @@ sub share_dir {
         return $config->{share_dir};
     }
     else {
+        delete $config->{share_dir};
         my $share_dir;
 
         # return File::HomeDir->my_home."/.treex/share"; # future solution, probably symlink
@@ -110,7 +111,7 @@ sub share_dir {
         else {
             $share_dir = File::Spec->catdir( $self->config_dir(), 'share' );           # by default take ~/.treex/share
         }
-        $config->{share_dir} = $share_dir;
+        #$config->{share_dir} = $share_dir;
         return $share_dir;
 
     }
@@ -127,7 +128,8 @@ sub share_url {
 sub tred_dir {
     my $self = shift;
     if ( !defined $config->{tred_dir} || !defined realpath( $config->{tred_dir} ) ) {
-        $config->{tred_dir} = realpath( $self->share_dir() . '/tred/' );
+        delete $config->{tred_dir};
+        return realpath( $self->share_dir() . '/tred/' );
     }
     return $config->{tred_dir};
 }
@@ -135,7 +137,7 @@ sub tred_dir {
 sub pml_schema_dir {
     my $self = shift;
     if ( !defined $config->{pml_schema_dir} || !defined realpath( $config->{pml_schema_dir} ) ) {
-        $config->{pml_schema_dir} = undef; #write empty line to config, so it can be possibly changed in the future
+        delete $config->{pml_schema_dir};
         if ( $self->_devel_version() ) {
             #$config->{pml_schema_dir} = realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
             return realpath( $self->lib_core_dir() . "/share/tred_extension/treex/resources/" );
@@ -151,7 +153,8 @@ sub pml_schema_dir {
 sub tred_extension_dir {
     my $self = shift;
     if ( !defined $config->{tred_extension_dir} || !defined realpath( $config->{tred_extension_dir} ) ) {
-        $config->{tred_extension_dir} = realpath( $self->pml_schema_dir() . "/../../" );
+        delete $config->{tred_extension_dir};
+        return realpath( $self->pml_schema_dir() . "/../../" );
     }
     return $config->{tred_extension_dir};
 }
@@ -164,7 +167,8 @@ sub lib_core_dir {
 sub tmp_dir {
     my $self = shift;
     if ( !defined $config->{tmp_dir} || !defined realpath( $config->{tmp_dir} ) ) {
-        $config->{tmp_dir} = $self->_default_tmp_dir();
+        delete $config->{tmp_dir};
+        return $self->_default_tmp_dir();
     }
     return $config->{tmp_dir};
 }
