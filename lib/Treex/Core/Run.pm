@@ -70,13 +70,6 @@ has 'selector' => (
     documentation => q{shortcut for adding "Util::SetGlobal selector=xy" at the beginning of the scenario},
 );
 
-has 'filelist' => (
-    traits        => ['Getopt'],
-    cmd_aliases   => 'l',
-    is            => 'rw', isa => 'Str',
-    documentation => 'TODO load a list of treex files from a file',
-);
-
 # treex -h should not print "Unknown option: h" before the usage.
 #has 'help' => (
 #    traits        => ['Getopt'],
@@ -242,9 +235,6 @@ sub BUILD {
     }
 
     my @file_sources;
-    if ( $self->filelist ) {
-        push @file_sources, "filelist option";
-    }
     if ( $self->filenames ) {
         push @file_sources, "files after --";
     }
@@ -395,18 +385,6 @@ sub _execute_locally {
         $mask =~ s/^['"](.+)['"]$/$1/;
         my @files = glob $mask;
         log_fatal "No files matching mask $mask" if @files == 0;
-        $self->set_filenames( \@files );
-    }
-    elsif ( $self->filelist ) {
-        open my $FL, "<:encoding(utf8)", $self->filelist
-            or log_fatal "Cannot open file list " . $self->filelist;
-        my @files;
-        while (<$FL>) {
-            chomp;
-            push @files, $_;
-        }
-        close $FL or log_fatal "Cannot close file list " . $self->filelist;
-        log_fatal q(No files matching mask ') . $self->glob . q('\n) if @files == 0;
         $self->set_filenames( \@files );
     }
 
