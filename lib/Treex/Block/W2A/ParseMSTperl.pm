@@ -73,6 +73,15 @@ sub _build_parser {
     return $parser;
 }
 
+sub BUILD {
+    my $self = shift;
+    
+    # enforce parser initialization
+    $self->parser;
+    
+    return;
+}
+
 sub parse_chunk {
     my ( $self, @a_nodes ) = @_;
 

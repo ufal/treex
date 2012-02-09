@@ -73,6 +73,15 @@ sub _build_labeller {
     return $labeller;
 }
 
+sub BUILD {
+    my $self = shift;
+
+    # enforce labeller initialization
+    $self->labeller;
+
+    return;
+}
+
 sub process_zone {
     my ( $self, $zone ) = @_;
 
