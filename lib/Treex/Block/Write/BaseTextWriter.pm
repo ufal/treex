@@ -125,12 +125,12 @@ L<Treex::Block::Write::BaseWriter>:
 
 =over
 
-=item C<$self->print_header($document)>
+=item C<<$self->print_header($document)>>
 
 Print a document header. Called before the standard C<process_document> is launched. Will not be
 called if C<process_document> is overridden (and C<super> not called)!
 
-=item C<$self->print_footer($document)>
+=item C<<$self->print_footer($document)>>
 
 Print a document footer. Called after the standard C<process_document> is launched. Will not be
 called if C<process_document> is overridden (and C<super> not called)!
