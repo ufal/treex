@@ -8,30 +8,156 @@ Treex::Tutorial::Install - Installing the Treex NLP framework
 
 =head1 SYNOPSIS
 
-    # 1. Prepare local Perl enviroment, so Perl modules will be installed to ~/perl5.
+    # 1. Prepare local Perl enviroment, so Perl modules will be installed to ~/perl5
     # If you have a root access and want to install to system paths, skip this step.
     wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
     eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
     echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
+    echo 'source ~/.bashrc' >> ~/.bash_profile
 
-    # 2. Install Treex::Core and its dependencies from CPAN.
-    # Instead of "cpanm" tool, you can use "cpan" if you wish.
+    # 2. Install Treex::Core and its dependencies from CPAN
+    # Note: Instead of "cpanm" tool, you can use "cpan" if you wish.
+    # First, try to install XML::LibXML
+    cpanm XML::LibXML
+    # If it fails and the build.log contains "looking for -lxml2... no",
+    # you are probably missing libxml2 header files (or the whole libxml2).
+    # On Ubuntu/Debian you can install it with
+    sudo apt-get install libxml2-dev
+    # The very instalation of Treex::Core is simple but it may take some time
     cpanm Treex::Core
-    treex -h # just to check if it was installed
+    treex -h # just to check if it was installed correctly
 
     # 3. Install Treex modules for processing English
     cpanm Treex::EN
 
-    # 4. (optional) Download the newest version of whole Treex from SVN repository.
-    cd ~
-    svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk/treex treex
+    # 4. Install TrEd tree viewer and editor (optional)
+    # See http://ufal.mff.cuni.cz/tred
+    # To install Perl Tk module, you may need to install some header file. On Ubuntu/Debian:
+    sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev zlib1g-dev
+    # Get a small installation script which automatically downloads and builds everything else.
+    wget http://ufal.mff.cuni.cz/tred/install_tred.bash
+    bash install_tred.bash --tred-dir ~/tred
+    # Instruct Treex where to find TrEd
+    echo "tred_dir: $HOME/tred" >> ~/.treex/config.yaml
+
+    # 5. Download the newest version of the whole Treex from SVN repository (optional)
+    svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk/treex ~/treex
     # password is "public"
-    # Add the following line to your ~/.bashrc
+    # Add the following lines to your ~/.bashrc
     export PATH="$HOME/treex/bin:$PATH"
     export PERL5LIB="$HOME/treex/lib:$PERL5LIB"
 
-    # 5. (optional) Install TrEd (tree viewer and editor)
-    # see http://ufal.mff.cuni.cz/tred/
+=head1 0. Prerequisites
+
+In this tutorial, we expect Linux OS with Bash shell and Perl 5.10 or higher.
+Also basic development tools, such as C<make>, C<patch>, and a C compiler (C<gcc>), are required.
+You can easily use different shell (e.g. C<csh>), just modify accordingly the shell commands.
+It is possible to install Treex also on MacOS and Windows+L<StrawberryPerl|http://strawberryperl.com>,
+but it is less tested so far.
+If you have Perl older than 5.10 (or if you just want to try the newest Perl),
+you can install your own Perl using L<perlbrew|http://perlbrew.pl> -- it is really simple.
+
+Note that if you have Windows and I<only> want to browse C<*.treex> files,
+you can install L<TrEd|http://ufal.mff.cuni.cz/tred>
+and (in menu Setup - Manage Extensions - Get New Extension) select EasyTreex extension.
+
+=head1 1. Prepare local Perl enviroment
+
+In order to install Treex, you must be able to install Perl modules from L<CPAN|http://cpan.org>.
+However, this step is not specific to Treex, it is a basic Perl skill.
+There are several way how to achieve the goal, but I consider this the easiest one.
+If you have already set up your local directory for Perl modules (e.g. using L<local::lib> or C<perlbrew>),
+you can just install C<cpanm> by C<cpan App::cpanminus> and skip this step.
+If you have a root access and want to install Treex and its dependencies I<for all users to system paths> (C</usr/lib> etc.),
+just skip this step (and type C<sudo cpan App::cpanminus>).
+
+    wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
+
+This command downloads and installs two useful tools (Perl modules):
+L<App::cpanminus> provides L<cpanm> script which is a fast, dependency free, zero-configuration substitute for the standard L<cpan>.
+L<local::lib> takes care of setting all the enviroment variables needed to install modules without administrative privileges.
+
+Instead of C<wget -0->, you can use C<curl -L> or simply download C<http://cpanmin.us>, save it as C<cpanm> and run
+C<perl cpanm -l ~/perl5 App::cpanminus local::lib>.
+Instead of C<~/perl5>, you can use any path you like, but C<~/perl5> is a common standard.
+
+In the following steps, you can use C<cpan> instead of C<cpanm>.
+The advantage is that you can start an interactive C<cpan> shell which provides more features
+(I recommend to install first L<Bundle::CPAN> and L<Term::ReadLine::Perl>, so you can browse the history using up/down keys).
+The disadvantage is that you cannot use it for installing C<local::lib> locally before C<local::lib> is installed :-).
+Also, you will need to go through a configuration dialogue when C<cpan> is executed for the first time.
+
+    eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
+    echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
+    echo 'source ~/.bashrc' >> ~/.bash_profile
+
+The first line sets up the enviroment variables C<$PERL5LIB>, C<$PATH>, C<$PERL_MB_OPT> etc. for the current shell session.
+So you can use the modules installed in C<~/perl5> (without specifying this path using C<perl -I>)
+and also it ensures that new modules will be installed (using C<cpanm> or C<cpan>) to C<~/perl5> (not to the system paths).
+The second line ensures that this setting will be applied also in other (non-login) shell sessions.
+The third line ensures that this setting will be applied also in "login" shell sessions (e.g. when you log in via C<ssh>).
+
+=head1 2. Install Treex::Core and its dependencies from CPAN
+
+Treex is divided into several CPAN distributions.
+L<Treex::Core> contains the main ("core") functionality and almost all other Treex modules depend on it.
+C<Treex::Core> itself has many dependencies, most notably L<Moose> and L<Treex::PML> (which have many dependencies and so on),
+so the installation takes several minutes.
+One of the most frequent problems in installation is that the Perl module L<XML::LibXML>,
+which is a binding for C<libxml2> library, needs apart from the library also its header files (*.h).
+So let's check first, whether you can install C<XML::LibXML>:
+
+    cpanm XML::LibXML
+
+If it fails and C<~/.cpanm/build.log> contains "looking for -lxml2... no",
+you are probably missing the header files or the whole library.
+On Ubuntu/Debian you can install it with:
+
+    sudo apt-get install libxml2-dev zlib1g-dev
+
+If you know a simple way how to do this without admin privilegies, let me know.
+On other systems (e.g. RPM based), try to find similarly named packages (libxml2-devel),
+or look at L<http://xmlsoft.org>.
+After succesfully installing C<XML::LibXML>,
+the installation of L<Treex::Core> should be smooth (but it takes more than 8 minutes if no dependecies are installed):
+
+    cpanm Treex::Core
+
+Rarely, you may encounter problems with installing some modules.
+In that case, you should find the first module where the something went wrong.
+You can read the documentation of the module, check its L<bug tracker|https://rt.cpan.org>, try to install it manually etc.
+If you cannot diagnose and fix the failure, you may try to install it with C<--prompt>, C<--force> or C<--notest> options,
+but this may cause troubles later on.
+
+    treex -h
+
+C<treex> is the main Treex script. C<treex -h> should just print the usage info and exit.
+The usage will be described in later on in this tutorial (L<Treex::Tutorial::FirstSteps>),
+running the command serves here only as a check that C<treex> was installed and can be found in the C<$PATH>.
+
+=head1 3. Install Treex modules for processing English
+
+Treex Core itself has no modules for any particular NLP task.
+There is a separate distribution C<Treex-Unilang> for such modules that are language independent.
+In this tutorial, we will mainly work with English, so you need to install a distribution C<Treex-EN>,
+which contains only modules specific to English. It is dependent on C<Treex-Unilang>,
+so both the distributions can be installed by:
+
+    cpanm Treex::EN
+
+=head1 4. Install TrEd
+
+<TrEd|http://ufal.mff.cuni.cz/tred> is a fully customizable and programmable graphical editor and viewer for tree-like structures.
+Although TrEd visualization of the linguistic trees produced by Treex can be very helpful, it is not required,
+i.e. Treex is fully functional even without installing TrEd.
+
+    # To install Perl Tk module, you may need to install some header file. On Ubuntu/Debian:
+    sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev zlib1g-dev
+    # Get a small installation script which automatically downloads and builds everything else.
+    wget http://ufal.mff.cuni.cz/tred/install_tred.bash
+    bash install_tred.bash --tred-dir ~/tred
+    # Instruct Treex where to find TrEd
+    echo "tred_dir: $HOME/tred" >> ~/.treex/config.yaml
 
 =head1 AUTHOR
 
