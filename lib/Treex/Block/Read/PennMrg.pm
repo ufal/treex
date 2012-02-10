@@ -15,8 +15,7 @@ sub next_document {
         my $zone   = $bundle->create_zone( $self->language, $self->selector );
         my $proot  = $zone->create_ptree();
         $proot->create_from_mrg("( (S $tree_text");
-
-        #TODO $zone->set_sentence( $sentence );
+        $zone->set_sentence( $proot->stringify_as_text() );
     }
     return $document;
 }

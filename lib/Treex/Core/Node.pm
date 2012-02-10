@@ -985,11 +985,11 @@ The removed node cannot be further used.
 
 Returns the root of the node's tree.
 
-=item my $root_node = $node->is_root();
+=item $node->is_root();
 
 Returns C<true> if the node has no parent.
 
-=item my $root_node = $node->is_leaf();
+=item $node->is_leaf();
 
 Returns C<true> if the node has no children.
 
