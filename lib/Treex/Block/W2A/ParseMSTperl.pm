@@ -23,7 +23,7 @@ has 'model_from_share' => (
 has 'model_name' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'conll_2007',
+    default => 'conll_2007_small',
 );
 
 has 'model_dir' => (
