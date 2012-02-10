@@ -37,8 +37,11 @@ Treex::Tutorial::Install - Installing the Treex NLP framework
     # Get a small installation script which automatically downloads and builds everything else.
     wget http://ufal.mff.cuni.cz/tred/install_tred.bash
     bash install_tred.bash --tred-dir ~/tred
-    # Instruct Treex where to find TrEd
+    # Instruct Treex where to find TrEd and its dependencies
     echo "tred_dir: $HOME/tred" >> ~/.treex/config.yaml
+    echo "source ~/tred/bin/init_tred_environment" >> ~/.bashrc
+    source ~/tred/bin/init_tred_environment
+    ttred # run TrEd with Treex extension
 
     # 5. Download the newest version of the whole Treex from SVN repository (optional)
     svn --username public co https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk/treex ~/treex
@@ -134,6 +137,7 @@ but this may cause troubles later on.
 C<treex> is the main Treex script. C<treex -h> should just print the usage info and exit.
 The usage will be described in later on in this tutorial (L<Treex::Tutorial::FirstSteps>),
 running the command serves here only as a check that C<treex> was installed and can be found in the C<$PATH>.
+The installation created a configuration file C<~/.treex/config.yaml> which will be described in L<Treex::Tutorial::Config>.
 
 =head1 3. Install Treex modules for processing English
 
@@ -151,13 +155,37 @@ so both the distributions can be installed by:
 Although TrEd visualization of the linguistic trees produced by Treex can be very helpful, it is not required,
 i.e. Treex is fully functional even without installing TrEd.
 
-    # To install Perl Tk module, you may need to install some header file. On Ubuntu/Debian:
-    sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev zlib1g-dev
-    # Get a small installation script which automatically downloads and builds everything else.
+To install Perl Tk module, you may need to install some header files and TrEd needs also the C<patch> tool.
+On Ubuntu/Debian you can install these prerequisites using:
+
+    sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev patch
+
+Now, download a small installation script
     wget http://ufal.mff.cuni.cz/tred/install_tred.bash
+
+You can type C<bash install_tred.bash -h> to see the installation options. 
+To automatically download and build the latest TrEd and its dependencies to C<~/tred>, use:
+
     bash install_tred.bash --tred-dir ~/tred
-    # Instruct Treex where to find TrEd
+
+You can run C<~/tred/bin/start_tred> to check the GUI.
+Treex Core contains an L<extension|Treex::Core::TredView> for TrEd,
+so it can open C<*.treex>, C<*.treex.gz> and C<*.streex> files and use the Treex stylesheet.
+Treex Core also contains a simple wrapper script C<ttred>
+which runs TrEd with this extension enabled (I<pre-installed>).
+We must instruct Treex where to find TrEd:
+
     echo "tred_dir: $HOME/tred" >> ~/.treex/config.yaml
+
+TrEd installed several its dependencies to C<~/tred/dependencies>,
+but we want make them permanently available for Treex (and all Perl modules):
+
+    echo "source ~/tred/bin/init_tred_environment" >> ~/.bashrc
+    source ~/tred/bin/init_tred_environment
+
+Finally, you can run TrEd with the Treex extension enabled:
+
+    ttred
 
 =head1 AUTHOR
 

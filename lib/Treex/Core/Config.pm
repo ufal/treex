@@ -217,6 +217,10 @@ Treex::Core::Config - centralized info about Treex configuration
 
 This module provides information about the current installed Treex framework,
 for instance paths to its components.
+By default the configuration is stored in C<$HOME/.treex/config.yaml>.
+You can specify an alternative directory for C<config.yaml>
+by setting the C<$TREEX_CONFIG> environment variable.
+You can edit C<config.yaml>, so it suits your needs.
 
 =head1 FUNCTIONS
 
