@@ -28,14 +28,6 @@ sub get_pml_type_name {
     }
 }
 
-# Nodes on the p-layer have no ordering attribute.
-# (It is not needed, trees are projective,
-#  the order is implied by the ordering of siblings.)
-override 'get_ordering_value' => sub {
-    my ($self) = @_;
-    return;
-};
-
 sub is_terminal {
   my $self = shift @_;
   return $self->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;

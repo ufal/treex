@@ -632,40 +632,6 @@ sub get_depth {
 sub _normalize_node_ordering {
 }
 
-# Empty DESTROY method is a hack to get rid of the "Deep recursion warning"
-# in Treex::PML::Node::DESTROY and MooseX::NonMoose::Meta::Role::Class::_check_superclass_destructor.
-# Without this hack, you get the warning after creating a node with 99 or more children.
-# Deep recursion on subroutine "Class::MOP::Method::execute" at .../5.12.2/MooseX/NonMoose/Meta/Role/Class.pm line 183.
-sub DESTROY {
-}
-
-#*************************************
-#---- DEPRECATED & QUESTIONABLE ------
-
-sub disconnect {
-    my $self = shift;
-    log_warn( '$node->disconnect is deprecated, use $node->remove', 1 );
-    return $self->remove();
-}
-
-sub get_ordering_value {
-    my $self = shift;
-    log_warn( '$node->get_ordering_value is deprecated, use $node->ord', 1 );
-    return $self->ord;
-}
-
-sub set_ordering_value {
-    my $self = shift;
-    log_warn( '$node->set_ordering_value($ord) is deprecated, it should be private $node->_set_ord($n)', 1 );
-    my ($val) = pos_validated_list(
-        \@_,
-        { isa => 'Num' },    #or isa => 'Int' ??, or Positive Int?
-    );
-    $self->_set_ord($val);
-    return;
-}
-
-# proposal
 sub get_address {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self     = shift;
@@ -679,12 +645,15 @@ sub get_address {
     return "$file##$position.$id";
 }
 
-# deprecated
-sub get_fposition {
-    my $self = shift;
-    log_warn("Method get_fposition is deprecated use get_address() instead");
-    return $self->get_address();
+# Empty DESTROY method is a hack to get rid of the "Deep recursion warning"
+# in Treex::PML::Node::DESTROY and MooseX::NonMoose::Meta::Role::Class::_check_superclass_destructor.
+# Without this hack, you get the warning after creating a node with 99 or more children.
+# Deep recursion on subroutine "Class::MOP::Method::execute" at .../5.12.2/MooseX/NonMoose/Meta/Role/Class.pm line 183.
+sub DESTROY {
 }
+
+#*************************************
+#---- DEPRECATED & QUESTIONABLE ------
 
 sub generate_new_id {    #TODO move to Core::Document?
     log_fatal 'Incorrect number of arguments' if @_ != 1;
@@ -859,7 +828,7 @@ sub set_r_attr {
 # ---------------------
 
 
-=for Pod::Coverage BUILD disconnect get_ordering_value set_ordering_value get_fposition
+=for Pod::Coverage BUILD
 
 
 =encoding utf-8

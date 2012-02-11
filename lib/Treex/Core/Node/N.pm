@@ -10,14 +10,6 @@ sub get_pml_type_name {
     return $self->is_root() ? 'n-root.type' : 'n-node.type';
 }
 
-# Nodes on the n-layer have no ordering attribute.
-# (It is not needed, trees are projective,
-#  the order is implied by the ordering of siblings.)
-override 'get_ordering_value' => sub {
-    my ($self) = @_;
-    return;
-};
-
 override '_get_reference_attrs' => sub {
     my ($self) = @_;
     return ('a.rf');
