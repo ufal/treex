@@ -9,8 +9,6 @@
    <structure role="#NODE" name="p-nonterminal">
     <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
     <member name="is_head" ><cdata format="any"/></member>
-    <member name="head_selection_rule" ><cdata format="any"/></member>
-    <member name="is_collins_head" ><cdata format="any"/></member>
     <!-- label of the incoming edge, as defined in the TIGER-XML and similar formats -->
     <member name="edgelabel"><cdata format="any"/></member>
     <member name="phrase"><cdata format="any"/></member>
@@ -33,8 +31,6 @@
      <structure role="#NODE" name="p-terminal">
         <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
         <member name="is_head" ><cdata format="any"/></member>
-        <member name="head_selection_rule" ><cdata format="any"/></member>
-        <member name="is_collins_head" ><cdata format="any"/></member>
         <member name="index"><cdata format="any"/></member>
         <member name="coindex"><cdata format="any"/></member>
         <!-- label of the incoming edge, as defined in the TIGER-XML and similar formats -->
