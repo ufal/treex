@@ -5,6 +5,10 @@ use autodie;
 use Moose;
 use Carp;
 
+require File::Temp;
+use File::Temp ();
+use File::Temp qw/ :seekable /;
+
 has 'config' => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
@@ -110,6 +114,13 @@ sub load {
 
     if ( $self->config->DEBUG >= 1 ) {
         print "Loading model from '$filename'...\n";
+    }
+
+    my $tmpfile;
+    if ($filename =~ /\.gz$/) {
+	$tmpfile = File::Temp->new( UNLINK => 1 );
+	system "gunzip -c $filename > $tmpfile";
+	$filename = $tmpfile->filename;
     }
 
     my $data   = do $filename;
