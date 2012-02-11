@@ -58,17 +58,6 @@
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
       <member name="afun" type="afun.type" />
       <member name="is_member" type="bool.type"/>
-      
-      <!-- attribute conll_deprel is now deprecated, you should use the new structured conll/deprel instead
-          which is accessible through
-          my $deprel = $node->conll_deprel;
-          $node->set_conll_deprel($deprel);
-          (i.e. the getter and setter are the same as for the old attribute, so no code changes are needed).
-          The old unstructured attribute is left here as optional because of backward compatibility
-          (so you can open older treex files without warnings.)
-          It will be deleted in future.
-      -->
-      <member name="conll_deprel" required="0"><cdata format="any"/></member>
 
       <!-- CoNLL shared task attributes (deprel, pos, cpos, feat) are grouped in one structure -->
       <member name="conll" type="a-conll.type"/>
@@ -81,6 +70,9 @@
       <!-- attributes for conversion to t-tree -->
       <member name="edge_to_collapse" type="bool.type"/>
       <member name="is_auxiliary" type="bool.type"/>
+
+      <!-- ??? -->
+      <member name="is_parenthesis_root" type="bool.type" />
 
       <!-- clause segmentation -->
       <member name="clause_number"><cdata format="any"/></member>
@@ -95,15 +87,11 @@
       <!-- link to p-layer -->
       <member name="p_terminal.rf"><cdata format="PMLREF"/></member>
 
-      <!-- ??? -->
-      <member name="is_parenthesis_root" type="bool.type" />
-
       <member name="alignment">
           <list ordered="0" type="align-links.type"/>
       </member>
 
       <!-- tentative -->
-      <member name="align"><cdata format="PMLREF"/></member>
       <member name="chunks"><list ordered="0"><cdata format="any"/></list>
       </member>  
 
