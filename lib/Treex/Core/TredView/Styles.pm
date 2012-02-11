@@ -163,7 +163,10 @@ sub _pnode_style {
     }
     else {
         $style .= '#{Line-dash:.}';
-        $style .= '#{Oval-fill:' . ( $node->{tag} eq '-NONE-' ? $self->_colors->get('trace') : $self->_colors->get('terminal') ) . '}';
+        my $ctype = $node->tag eq '-NONE-' ? 'trace'
+                  : $node->is_head         ? 'terminal_head'
+                  :                          'terminal';
+        $style .= '#{Oval-fill:' . $self->_colors->get($ctype) . '}';
     }
 
     return $style;

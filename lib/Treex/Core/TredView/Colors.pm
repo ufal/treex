@@ -22,6 +22,7 @@ sub _build_colors {
         'tnode'            => '#4488ff',
         'tnode_coord'      => '#ccddff',
         'terminal'         => '#ffff66',
+        'terminal_head'    => '#90ee90',
         'nonterminal_head' => '#90ee90',
         'nonterminal'      => '#ffffe0',
         'trace'            => '#aaaaaa',
