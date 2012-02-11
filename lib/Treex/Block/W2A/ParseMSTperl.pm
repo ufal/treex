@@ -32,6 +32,12 @@ has 'model_dir' => (
     default => 'data/models/mst_perl_parser/en',
 );
 
+has 'model_gz' => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => '0',
+);
+
 has parser => (
     is       => 'ro',
     isa      => 'Treex::Tool::Parser::MSTperl::Parser',
@@ -61,12 +67,20 @@ sub _build_parser {
     my $parser = Treex::Tool::Parser::MSTperl::Parser->new(
         config => $config
     );
+    my $model_file_name = (
+	$self->model_gz
+	?
+	"$base_name.model.gz"
+	:
+	"$base_name.model"
+	);
+
     my $model_file = (
         $self->model_from_share
         ?
-            require_file_from_share( "$base_name.model", ref($self) )
+            require_file_from_share( $model_file_name, ref($self) )
         :
-            "$base_name.model"
+            $model_file_name
     );
     $parser->load_model($model_file);
 
