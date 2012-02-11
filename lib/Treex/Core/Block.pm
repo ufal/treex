@@ -125,7 +125,9 @@ sub _try_process_layer {
     }
 
     if ( my $m = $meta->find_method_by_name("process_${layer}node") ) {
-        foreach my $node ( $tree->get_descendants() ) {
+        ## process_ptree should be executed also on the root node (usually the S phrase)
+        my @opts = $layer eq 'p' ? ({add_self => 1}) : ();
+        foreach my $node ( $tree->get_descendants(@opts) ) {
             ##$self->process_anode($node);
             $m->execute( $self, $node, $bundleNo );
         }
@@ -238,7 +240,23 @@ Applies the block instance on the given bundle zone
 C<process_document> and C<process_bundle>, C<process_zone> requires block 
 attribute C<language> (and possibly also C<selector>) to be specified.
 
-=item $block->process_end();
+=item $block->process_I<X>tree($tree);
+
+Here I<X> stands for a,t,n or p.
+This method is executed on the root node of a tree on a given layer (a,t,n,p).
+
+=item $block->process_I<X>node($node);
+
+Here I<X> stands for a,t,n or p.
+This method is executed on the every node of a tree on a given layer (a,t,n,p).
+Note that for layers a, t, and n, this method is not executed on the root node
+(because the root node is just a "technical" root without the attributes of regular nodes).
+However, C<process_pnode> is executed also on the root node
+(because its a regular non-terminal node with a phrase attribute, usually C<S>).
+
+=back
+
+=head2 $block->process_end();
 
 This method is called after all documents are processed.
 The default implementation is empty, but derived classes can override it
@@ -247,7 +265,7 @@ Overriding this method is preferable to both
 standard Perl END blocks (where you cannot access C<$self> and instance attributes),
 and DEMOLISH (which is not called in some cases, e.g. C<treex --watch>).
 
-=back
+
 
 =head1 BLOCK PARAMETRIZATION
 
