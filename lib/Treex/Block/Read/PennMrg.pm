@@ -9,12 +9,13 @@ sub next_document {
     return if !defined $text;
     my $document = $self->new_document();
 
+    # Root non-terminal must start with S (usually, it is S, rarely SINV).
     foreach my $tree_text ( split /\n\(\s*\(S/ms, $text ) {
         next if $tree_text =~ /^\s*$/;
         my $bundle = $document->create_bundle();
         my $zone   = $bundle->create_zone( $self->language, $self->selector );
         my $proot  = $zone->create_ptree();
-        $proot->create_from_mrg("( (S $tree_text");
+        $proot->create_from_mrg("( (S$tree_text");
         $zone->set_sentence( $proot->stringify_as_text() );
     }
     return $document;
