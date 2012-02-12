@@ -3,10 +3,24 @@ use Moose;
 use MooseX::NonMoose;
 use Treex::Core::Common;
 use Cwd;
+use Scalar::Util qw(refaddr);
 use Treex::PML;
 
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
+
+use overload
+    '""' => 'to_string',
+    '==' => 'equals',
+    '!=' => '_not_equals',
+    'eq' => 'equals',
+    'ne' => '_not_equals',
+    'bool' => sub{1},
+    '!'  => sub{0},
+    fallback => 0
+;
+# TODO: '<' => 'precedes' (or better '<=>' => ...)
+# 'eq' => sub {log_warn 'You should use ==' && return $_[0]==$_[1]}
 
 Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
 my $CHECK_FOR_CYCLES = 1;
@@ -35,6 +49,24 @@ sub BUILD {
             . 'instead of Treex::Core::Node...->new().';
     }
     return;
+}
+
+sub to_string {
+    my ($self) = @_;
+    return $self->id // 'node_without_id(addr=' . refaddr($self) . ')';
+}
+
+# Since we have overloaded stringification, we must overload == as well,
+# so you can use "if ($nodeA ==  $nodeB){...}".
+sub equals {
+    my ($self, $node) = @_;
+    #return ref($node) && $node->id eq $self->id;
+    return ref($node) && refaddr($node) == refaddr($self);
+}
+
+sub _not_equals {
+    my ($self, $node) = @_;
+    return !$self->equals($node);
 }
 
 sub _index_my_id {
@@ -1109,7 +1141,6 @@ nodes). The new identifier is derived from the identifier of the root
 (C<< $node->root >>), by adding suffix C<x1> (or C<x2>, if C<...x1> has already
 been indexed, etc.) to the root's C<id>.
 
-
 =item my $levels = $node->get_depth();
 
 Return the depth of the node. The root has depth = 0, its children have depth = 1 etc.
@@ -1118,6 +1149,18 @@ Return the depth of the node. The root has depth = 0, its children have depth = 
 
 Return the node address, i.e. file name and node's position within the file,
 similarly to TrEd's C<FPosition()> (but the value is only returned, not  printed).
+
+=item $node->equals($another_node)
+
+This is the internal implementation of overloaded C<==> operator,
+which checks whether C<$node == $another_node> (the object instance must be identical).
+
+=item my $string = $node->to_string()
+
+This is the internal implementation of overloaded stringification,
+so you can use e.g. C<print "There is a node $node.">.
+It returns the id (C<$node->id>), but the behavior may be overridden in subclasses.
+See L<overload> pragma for details about overloading operators in Perl.
 
 =back
 

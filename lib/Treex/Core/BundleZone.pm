@@ -7,6 +7,7 @@ use MooseX::NonMoose;
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;
 use Treex::Core::Node::N;
+use Treex::Core::Node::P;
 
 extends 'Treex::Core::Zone';
 
@@ -58,6 +59,7 @@ sub create_tree {
         { isa => 'Treex::Type::Layer' },
         { isa => 'Ref' },
     );
+    $layer = lc $layer;
 
     if ($self->has_tree($layer)) {
         if (defined $params_rf and $params_rf->{overwrite}) {
@@ -68,13 +70,19 @@ sub create_tree {
         }
     }
 
-    my $class = "Treex::Core::Node::" . uc($layer);
-    my $tree_root = eval { $class->new( { _called_from_core_ => 1 } ) } or log_fatal $!;    #layer subclasses not available yet
+    #my $class = "Treex::Core::Node::" . uc($layer);
+    #my $tree_root = eval { $class->new( { _called_from_core_ => 1 } ) } or log_fatal $!;    #layer subclasses not available yet
+    my $opts = { _called_from_core_ => 1 };
+    my $tree_root = $layer eq 'a' ? Treex::Core::Node::A->new($opts)
+                  : $layer eq 't' ? Treex::Core::Node::T->new($opts)
+                  : $layer eq 'n' ? Treex::Core::Node::N->new($opts)
+                  : $layer eq 'p' ? Treex::Core::Node::P->new($opts)
+                  : log_fatal "Cannot create tree for unknown layer $layer";
 
     my $bundle = $self->get_bundle;
     $tree_root->_set_zone($self);
 
-    my $new_tree_name = lc($layer) . "_tree";
+    my $new_tree_name = $layer . "_tree";
     $self->{trees}->{$new_tree_name} = $tree_root;
 
     my $new_id = "$new_tree_name-" . $self->get_label . "-" . $bundle->get_id . "-root";
