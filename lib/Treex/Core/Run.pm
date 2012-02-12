@@ -328,6 +328,8 @@ my %READER_FOR = (
     'txt'   => 'Text',
     'txt.gz'   => 'Text',
     'streex'   => 'Treex',
+    'mrg'      => 'PennMrg',
+    'mrg.gz'   => 'PennMrg',
 
     # TODO:
     # conll  => 'Conll',
