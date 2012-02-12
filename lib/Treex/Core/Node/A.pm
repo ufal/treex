@@ -225,26 +225,25 @@ sub copy_attributes {
 
 sub get_terminal_pnode {
     my ($self) = @_;
-    my $document = $self->get_document();
-    if ( $self->get_attr('p_terminal.rf') ) {
-        return $document->get_node_by_id( $self->get_attr('p_terminal.rf') );
-    }
-    else {
-        # TODO: shouldn't this just return undef and keep going? This is not consistent with other references.
-        log_fatal('SEnglishA node pointing to no SEnglishP node');
-    }
+    my $p_rf = $self->get_attr('p_terminal.rf') or return; 
+    my $doc  = $self->get_document();
+    return $doc->get_node_by_id($p_rf);
+}
+
+sub set_terminal_pnode {
+    my ($self, $pnode) = @_;
+    my $new_id = defined $pnode ? $pnode->id : undef;
+    $self->set_attr( 'p_terminal.rf', $new_id );
+    return;
 }
 
 sub get_nonterminal_pnodes {
-    my ($self)       = @_;
-    my $document     = $self->get_document();
+    my ($self) = @_;
+    my $pnode = $self->get_terminal_pnode() or return;
     my @nonterminals = ();
-    if ( $self->get_attr('p_terminal.rf') ) {
-        my $node = $document->get_node_by_id( $self->get_attr('p_terminal.rf') );
-        while ( $node->get_attr('is_head') ) {
-            $node = $node->get_parent();
-            push @nonterminals, $node
-        }
+    while ( $pnode->is_head ) {
+        $pnode = $pnode->get_parent();
+        push @nonterminals, $pnode;
     }
     return @nonterminals;
 }
@@ -412,6 +411,11 @@ and a setter method (C<< $anode->set_tag('NN'); >>).
 
 Returns a terminal node from the phrase-structure tree
 that corresponds to the a-node.
+
+=item $node->set_terminal_pnode($pnode)
+
+Set the given terminal node from the phrase-structure tree
+as corresponding to the a-node.
 
 =item $node->get_nonterminal_pnodes
 
