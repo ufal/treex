@@ -13,23 +13,25 @@ sub process_ttree {
         # Skip verbs with subject (i.e. child in nominative)
         #        next RELCLAUSE if any { $_->formeme =~ /1/ } $rc_head->get_echildren();
 
-        # !!! pozor: klauze, ktere byly relativni uz predtim, akorat
-        # nemely zajmeno ('the man I saw'), by se mely zpracovavat stejne
         # Skipping clauses which were relative also on the source side
+        # and the relative pronoun was present (!defined wild->{rc_no_relpron})
         my $src_tnode = $rc_head->src_tnode;
         next RELCLAUSE if !$src_tnode;
-        next RELCLAUSE if $src_tnode->formeme =~ /rc/;
+        next RELCLAUSE 
+            if (($src_tnode->formeme =~ /rc/) && !$src_tnode->wild->{rc_no_relpron});
 
         # Grammatical antecedent is typically the nominal parent of the clause
         my ($gram_antec) = $rc_head->get_eparents( { ordered => 1 } );
         next RELCLAUSE if !$gram_antec;
         next RELCLAUSE if $gram_antec->formeme !~ /^n/;
 
+        my $formeme = $src_tnode->wild->{rc_no_relpron} ? 'n:4' : 'n:1';
+
         # Create new t-node
         my $relpron = $rc_head->create_child(
             {   nodetype         => 'complex',
                 functor          => '???',
-                formeme          => 'n:1',
+                formeme          => $formeme,
                 t_lemma          => 'který',
                 t_lemma_origin   => 'Add_relpron_below_rc',
                 'gram/sempos'    => 'n.pron.indef',
