@@ -9,6 +9,7 @@ sub process_tnode {
     if (($t_node->formeme || '' ) =~ /v:fin/ 
         && $t_node->parent->precedes($t_node)
         && ( $t_node->get_parent->formeme || '' ) =~ /^n/
+        && $t_node->is_clause_head
         && _clause_starts_with_subject($t_node)) {
         #_debug_print($t_node, "VFIN " . $t_node->t_lemma . ", " . $t_node->parent->t_lemma);
     
@@ -33,11 +34,14 @@ sub _clause_starts_with_subject {
     if (!defined $a_parent || !defined $a_subject) {
         return 0;
     }
+    if ($a_subject->precedes($a_parent)) {
+        return 0;
+    }
     my @a_in_betw = grep {$_->precedes($a_subject) && $a_parent->precedes($_) } 
         $a_subject->get_root->get_descendants;
     # no punctuation mark can appear between subject of the relative clause
     # and the parent of this clause
-    my @punct_in_betw = grep {$_->afun =~ /Aux(G|X)/} @a_in_betw;
+    my @punct_in_betw = grep {$_->afun =~ /^Aux[GX]$/} @a_in_betw;
 
     return (@punct_in_betw == 0);
 }
