@@ -30,6 +30,8 @@ sub process_pnode {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Treex::Block::Tutorial::MarkHeads - find heads of constituents
@@ -68,42 +70,42 @@ L<http://www.df.lth.se/~richardj/pdf/nodalida2007.pdf>
 
 =head1 HINT 3
 
-If you decided to follow HINT 2, you can use this code snippet: 
+If you decided to follow HINT 2, you can use this code snippet:
 
-  my $RULES = <<'END_OF_RULES';
-  ADJP    r NNS QP NN $ ADVP JJ VBN VBG ADJP JJR NP JJS DT FW RBR RBS SBAR RB
-  ADVP    l RB RBR RBS FW ADVP TO CD JJR JJ IN NP JJS NN
-  CONJP   l CC RB IN
-  FRAG    l (NN.*|NP) W* SBAR (PP|IN) (ADJP|JJ) ADVP RB
-  INTJ    r .*
-  LST     l LS :
-  NAC     r NN.* NP NAC EX \$ CD QP PRP VBG JJ JJS JJR ADJP FW
-  NP      r (NN.*|NX) JJR CD JJ JJS RB QP NP- NP
-  NX      r (NN.*|NX) JJR CD JJ JJS RB QP NP- NP
-  PRT     l RP
-  QP      r $ IN NNS NN JJ RB DT CD NCD QP JJR JJS
-  RRC     l VP NP ADVP ADJP PP
-  S       r VP .*-PRD S SBAR ADJP UCP NP
-  SBAR    r S SQ SINV SBAR FRAG IN DT
-  SBARQ   r SQ S SINV SBARQ FRAG
-  SINV    r VBZ VBD VBP VB MD VP .*-PRD S SINV ADJP NP
-  SQ      r VBZ VBD VBP VB MD .*-PRD VP SQ
-  UCP     l .*
-  VP      l VBD VBN MD VBZ VB VBG VBP VP .*-PRD ADJP NN NNS NP
-  WHADJP  r CC WRB JJ ADJP
-  WHADVP  l CC WRB
-  WHNP    r NN.* WDT WP WP\$ WHADJP WHPP WHNP
-  X       l .*
-  PP      l TO IN (VBG|VBN) RP PP NN.* JJ RB
-  WHPP    l IN|TO
-  PRN     r .* 
-  END_OF_RULES
+ my $RULES = <<'END_OF_RULES';
+ADJP    r NNS QP NN $ ADVP JJ VBN VBG ADJP JJR NP JJS DT FW RBR RBS SBAR RB
+ADVP    l RB RBR RBS FW ADVP TO CD JJR JJ IN NP JJS NN
+CONJP   l CC RB IN
+FRAG    l (NN.*|NP) W* SBAR (PP|IN) (ADJP|JJ) ADVP RB
+INTJ    r .*
+LST     l LS :
+NAC     r NN.* NP NAC EX \$ CD QP PRP VBG JJ JJS JJR ADJP FW
+NP      r (NN.*|NX) JJR CD JJ JJS RB QP NP- NP
+NX      r (NN.*|NX) JJR CD JJ JJS RB QP NP- NP
+PRT     l RP
+QP      r $ IN NNS NN JJ RB DT CD NCD QP JJR JJS
+RRC     l VP NP ADVP ADJP PP
+S       r VP .*-PRD S SBAR ADJP UCP NP
+SBAR    r S SQ SINV SBAR FRAG IN DT
+SBARQ   r SQ S SINV SBARQ FRAG
+SINV    r VBZ VBD VBP VB MD VP .*-PRD S SINV ADJP NP
+SQ      r VBZ VBD VBP VB MD .*-PRD VP SQ
+UCP     l .*
+VP      l VBD VBN MD VBZ VB VBG VBP VP .*-PRD ADJP NN NNS NP
+WHADJP  r CC WRB JJ ADJP
+WHADVP  l CC WRB
+WHNP    r NN.* WDT WP WP\$ WHADJP WHPP WHNP
+X       l .*
+PP      l TO IN (VBG|VBN) RP PP NN.* JJ RB
+WHPP    l IN|TO
+PRN     r .* 
+END_OF_RULES
   
-  my %rules_for;
-  for my $line (split /\n/, $RULES){
-      my ($phrase, $dir, @patterns) = split /\s+/, $line;
-      $rules_for{$phrase} = [$dir, \@patterns];
-  }
+ my %rules_for;
+ for my $line (split /\n/, $RULES){
+     my ($phrase, $dir, @patterns) = split /\s+/, $line;
+     $rules_for{$phrase} = [$dir, \@patterns];
+ }
 
 
 
