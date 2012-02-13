@@ -41,6 +41,14 @@ has '_feature_to_code' => (
                             'ConstituentPOSPattern+DepRelation' => 'P4',
                             'ConstituentPOSPattern+DepwordLemma' => 'P5',
                             'ConstituentPOSPattern+HeadwordLemma' => 'P6',
+                            'PredicateConstituentPOSPattern' => 'P3a',
+                            'PredicateConstituentPOSPattern+DepRelation' => 'P4a',
+                            'PredicateConstituentPOSPattern+DepwordLemma' => 'P5a',
+                            'PredicateConstituentPOSPattern+HeadwordLemma' => 'P6a',
+                            'DepwordConstituentPOSPattern' => 'P3b',
+                            'DepwordConstituentPOSPattern+DepRelation' => 'P4b',
+                            'DepwordConstituentPOSPattern+DepwordLemma' => 'P5b',
+                            'DepwordConstituentPOSPattern+HeadwordLemma' => 'P6b',
                             'DepRelation' => 'P7',
                             'DepRelation+DepwordLemma' => 'P8',
                             'DepRelation+HeadwordLemma' => 'P9',
@@ -98,6 +106,8 @@ has '_feature_to_code' => (
                             'DepwordConstituentLastLemma' => 'P58',
                             'IsInFrame' => 'P59',
                             'Frame' => 'P60',
+                            'DepwordAfun' => 'P61',
+                            'PredicateAfun' => 'P62',
                         } },
 );
 
@@ -106,7 +116,10 @@ sub extract_features() {
 
     # Preprocessing: find out some information about predicate and depword candidates
     # to use in classification features 
-    my $deprel = $depword->get_parent->id eq $predicate->id ? $depword->afun : $self->empty_sign;
+    my $headword = $depword->get_parent;
+    my $predicate_headword = $predicate->get_parent;
+    # deprel = dependency relationship between predicate and depword candidate in a-tree
+    my $deprel = (($headword) and ($headword->id eq $predicate->id)) ? $depword->afun : $self->empty_sign;
     my @predicate_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
     my @depword_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
     my @path = $self->_find_path($a_root, $predicate, $depword);
@@ -115,6 +128,48 @@ sub extract_features() {
     my @rel_path = map { $_->afun } @path;
     my $distance = abs($predicate->ord - $depword->ord);
     my $ord_diff = $predicate->ord - $depword->ord;
+    my $depword_pos = substr($depword->tag, 0, 1);
+    my $predicate_pos = substr($predicate->tag, 0, 0);
+    my $depword_lemma = $self->_get_short_lemma($depword);
+    my $predicate_lemma = $self->_get_short_lemma($predicate);
+    # Headword features
+    my $headword_pos = $self->empty_sign;
+    my $headword_lemma = $self->empty_sign;
+    if ($headword) {
+        $headword_pos = substr($headword->tag, 0, 1) if $headword->tag;
+        $headword_lemma = $self->_get_short_lemma($headword);
+    }
+    # Predicate headword features
+    my $predicate_headword_pos = $self->empty_sign;
+    my $predicate_headword_form = $self->empty_sign;
+    my $predicate_headword_lemma = $self->empty_sign;
+    if ($predicate_headword) {
+        $predicate_headword_pos = substr($predicate_headword->tag, 0, 1) if $predicate_headword->tag;
+        $predicate_headword_lemma = $self->_get_short_lemma($predicate_headword);
+        $predicate_headword_form = $predicate_headword->form if $predicate_headword->form;
+    }
+    # First = predicate leftmost descendant
+    my $predicate_first = $predicate->get_descendants({ first_only => 1 });
+    my $predicate_first_pos = $predicate_first ? substr($predicate_first, 0, 1) : $self->empty_sign;
+    my $predicate_first_lemma = $predicate_first ? $self->_get_short_lemma($predicate_first) : $self->empty_sign;
+    # Last = predicate rightmost descendant
+    my $predicate_last = $predicate->get_descendants({ last_only => 1 });
+    my $predicate_last_pos = $predicate_last ? substr($predicate_last->tag, 0, 1) : $self->empty_sign;
+    my $predicate_last_lemma = $predicate_last ? $self->_get_short_lemma($predicate_last) : $self->empty_sign;
+    # DepwordFirst = depword leftmost descendant
+    my $depword_first = $depword->get_descendants({ first_only => 1 });
+    my $depword_first_pos = $depword_first ? substr($depword_first, 0, 1) : $self->empty_sign;
+    my $depword_first_lemma = $depword_first ? $self->_get_short_lemma($depword_first) : $self->empty_sign;
+    my $depword_first_form = $depword_first ? $depword_first->form : $self->empty_sign;
+    # DepwordLast = depword rightmost descendant
+    my $depword_last = $depword->get_descendants({ last_only => 1 });
+    my $depword_last_pos = $depword_last ? substr($depword_last->tag, 0, 1) : $self->empty_sign;
+    my $depword_last_lemma = $depword_last ? $self->_get_short_lemma($depword_last) : $self->empty_sign;
+    my $depword_last_form = $depword_last ? $depword_last->form : $self->empty_sign;
+    # Predicate constituent POS pattern
+    my @predicate_constituent_pos_pattern = $self->_get_constituent_pos_pattern($predicate);
+    # Depword constituent POS pattern
+    my @depword_constituent_pos_pattern = $self->_get_constituent_pos_pattern($depword);
  
     my @features;
 
@@ -129,34 +184,66 @@ sub extract_features() {
     # ChildrenPOSNoDup
     push @features, $self->_make_feature('PredicateChildrenPOSNoDup', uniq @predicate_children_pos);
     push @features, $self->_make_feature('DepwordChildrenPOSNoDup', uniq @depword_children_pos);
-    # ConstituentPOSPattern
-    # ConstituentPOSPattern+DepRelation
-    # ConstituentPOSPattern+DepwordLemma
-    # ConstituentPOSPattern+HeadwordLemma
+    # PredicateConstituentPOSPattern
+    push @features, $self->_make_feature('PredicateConstituentPOSPattern',
+        @predicate_constituent_pos_pattern);
+    # PredicateConstituentPOSPattern+DepRelation
+    push @features, $self->_make_feature('PredicateConstituentPOSPattern+DepRelation',
+        (@predicate_constituent_pos_pattern, $deprel) );
+    # PredicateConstituentPOSPattern+DepwordLemma
+    push @features, $self->_make_feature('PredicateConstituentPOSPattern+DepwordLemma',
+        (@predicate_constituent_pos_pattern, $depword_lemma ) );
+    # PredicateConstituentPOSPattern+HeadwordLemma
+    push @features, $self->_make_feature('PredicateConstituentPOSPattern+HeadwordLemma',
+        (@predicate_constituent_pos_pattern, $headword_lemma) );
+    # DepwordConstituentPOSPattern
+    push @features, $self->_make_feature('DepwordConstituentPOSPattern',
+        @depword_constituent_pos_pattern);
+    # DepwordConstituentPOSPattern+DepRelation
+    push @features, $self->_make_feature('DepwordConstituentPOSPattern+DepRelation',
+        (@depword_constituent_pos_pattern, $deprel) );
+    # DepwordConstituentPOSPattern+DepwordLemma
+    push @features, $self->_make_feature('DepwordConstituentPOSPattern+DepwordLemma',
+        (@depword_constituent_pos_pattern, $depword_lemma ) );
+    # DepwordConstituentPOSPattern+HeadwordLemma
+    push @features, $self->_make_feature('DepwordConstituentPOSPattern+HeadwordLemma',
+        (@depword_constituent_pos_pattern, $headword_lemma) );
     # DepRelation
     push @features, $self->_make_feature('DepRelation', $deprel);
     # DepRelation+DepwordLemma
-    push @features, $self->_make_feature('DepRelation+DepwordLemma', ( $deprel, $depword->lemma )); 
+    push @features, $self->_make_feature('DepRelation+DepwordLemma', ( $deprel, $depword_lemma )); 
     # DepRelation+HeadwordLemma
+    push @features, $self->_make_feature('DepRelation+HeadwordLemma', ( $deprel, $headword_lemma ));
     # DepRelation+HeadwordLemma+DepwordLemma
+    push @features, $self->_make_feature('DepRelation+HeadwordLemma+DepwordLemma',
+        ( $deprel, $headword_lemma, $depword_lemma));
     # Depword
     push @features, $self->_make_feature('Depword', $depword->form);
     # DepwordLemma
-    push @features, $self->_make_feature('DepwordLemma', $depword->lemma);
+    push @features, $self->_make_feature('DepwordLemma', $depword_lemma);
     # DepwordLemma+RelationPath
-    push @features, $self->_make_feature('DepwordLemma+RelationPath', ($depword->lemma, @rel_path));
+    push @features, $self->_make_feature('DepwordLemma+RelationPath', ($depword_lemma, @rel_path));
     # DepwordPOS
-    push @features, $self->_make_feature('DepwordPOS', substr($depword->tag, 0, 1));
+    push @features, $self->_make_feature('DepwordPOS', $depword_pos);
     # DepwordPOS+HeadwordPOS
+    push @features, $self->_make_feature('DepwordPOS+HeadwordPOS', ( $depword_pos, $headword_pos) ); 
     # DownPathLength
     # FirstLemma
+    push @features, $self->_make_feature('FirstLemma', $predicate_first_lemma);
     # FirstPOS
+    push @features, $self->_make_feature('FirstPOS', $predicate_first_pos);
     # FirstPOS+DepwordPOS
+    push @features, $self->_make_feature('FirstPOS+DepwordPOS', ($predicate_first_pos, $depword_pos));
     # HeadwordLemma
+    push @features, $self->_make_feature('HeadwordLemma', $headword_lemma);
     # HeadwordLemma+RelationPath
+    push @features, $self->_make_feature('HeadwordLemma+RelationPath', ( $headword_lemma, @rel_path ));
     # HeadwordPOS
+    push @features, $self->_make_feature('HeadwordPOS', $headword_pos);
     # LastLemma
+    push @features, $self->_make_feature('LastLemma', $predicate_last_lemma);
     # LastPOS
+    push @features, $self->_make_feature('LastPOS', $predicate_last_pos);
     # Path
     push @features, $self->_make_feature('Path', @pos_path);
     # Path+RelationPath
@@ -169,7 +256,7 @@ sub extract_features() {
     push @features, $self->_make_feature('Predicate', $predicate->form);
     # Predicate+PredicateFamilyship
     # PredicateLemma
-    push @features, $self->_make_feature('PredicateLemma', $predicate->lemma);
+    push @features, $self->_make_feature('PredicateLemma', $predicate_lemma);
     # PredicateLemma+PredicateFamilyship
     # PredicateSense
     # PredicateSense+DepRelation
@@ -185,7 +272,7 @@ sub extract_features() {
     ### My features ###
 
     # PredicatePOS
-    push @features, $self->_make_feature('PredicatePOS', substr($predicate->tag, 0, 1));
+    push @features, $self->_make_feature('PredicatePOS', $predicate_pos);
     # DepwordFeat
     push @features, $self->_make_feature('DepwordFeat', $depword->tag);
     # PredicateFeat
@@ -199,17 +286,29 @@ sub extract_features() {
     # DepwordPosition
     push @features, $self->_make_feature('DepwordPosition', $depword->ord);
     # PredicateHeadword
-    # PredicateHeadword
+    push @features, $self->_make_feature('PredicateHeadword', $predicate_headword_form);
     # PredicateHeadwordPOS
+    push @features, $self->_make_feature('PredicateHeadwordPOS', $predicate_headword_pos);
     # PredicateHeadwordLemma
+    push @features, $self->_make_feature('PredicateHeadwordLemma', $predicate_headword_lemma);
     # DepwordConstituentFirstWord
+    push @features, $self->_make_feature('DepwordConstituentFirstWord', $depword_first_form);
     # DepwordConstituentFirstPOS
+    push @features, $self->_make_feature('DepwordConstituentFirstPOS', $depword_first_pos);
     # DepwordConstituentFirstLemma
+    push @features, $self->_make_feature('DepwordConstituentFirstLemma', $depword_first_lemma);
     # DepwordConstituentLastWord
+    push @features, $self->_make_feature('DepwordConstituentLastWord', $depword_last_form);
     # DepwordConstituentLastPOS
+    push @features, $self->_make_feature('DepwordConstituentLastPOS', $depword_last_pos);
     # DepwordConstituentLastLemma
+    push @features, $self->_make_feature('DepwordConstituentLastLemma', $depword_last_lemma);
     # IsInFrame
     # Frame
+    # DepwordAfun
+    push @features, $self->_make_feature('DepwordAfun', $depword->afun);
+    # PredicateAfun
+    push @features, $self->_make_feature('PredicateAfun', $predicate->afun);
    
     return join($self->feature_delim, @features);
 }
@@ -218,6 +317,39 @@ sub _make_feature() {
     my ( $self, $name, @values ) = @_;
 
     return $self->_feature_to_code->{$name} . $self->value_delim . (@values ? join($self->value_delim, @values) : $self->empty_sign);
+}
+
+sub _get_short_lemma {
+    my ( $self, $a_node ) = @_;
+
+    return $self->empty_sign if not $a_node->lemma;
+
+    $a_node->lemma =~ m/^([^_\-`]*)/; 
+    return $1;
+}
+
+sub _get_constituent_pos_pattern {
+    my ( $self, $a_node ) = @_;
+
+    my @descendants = $a_node->get_descendants({ordered => 1});
+    
+    my $n_descendants = @descendants;
+    if ($n_descendants == 0) {  # no descendants
+        return ('_');
+    }
+    if ($n_descendants > 0 and $n_descendants <= 2) {   # only first or only first and last
+        return map { substr($_->tag, 0, 1) } @descendants;
+    }
+
+    my $first = shift(@descendants);
+    my $last = pop(@descendants);
+
+    my $first_pos = substr($first->tag, 0, 1);
+    my $last_pos = substr($last->tag, 0, 1);
+
+    my @descendants_pos = sort(uniq( map { substr($_->tag, 0, 1) } @descendants));
+
+    return ($first_pos, @descendants_pos, $last_pos);
 }
 
 # Find path from start a-node to end a-node 
