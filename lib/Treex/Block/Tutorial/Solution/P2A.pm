@@ -74,6 +74,8 @@ sub convert_p2a {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Treex::Block::Tutorial::Solution::P2A - constituency to dependency conversion

@@ -90,6 +90,8 @@ sub is_matching {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Treex::Block::Tutorial::Solution::MarkHeads - find heads of constituents
