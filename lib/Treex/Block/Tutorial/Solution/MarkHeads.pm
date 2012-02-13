@@ -99,7 +99,7 @@ Treex::Block::Tutorial::Solution::MarkHeads - find heads of constituents
 =head1 DESCRIPTION
 
 This block marks for each constituent in p-trees exactly one of its children
-(terminal or nonterminal) as the head (using C<$head->set_is_head(1)>).
+(terminal or nonterminal) as the head (using C<< $head->set_is_head(1) >>).
 The block expects PennTB-like annotation (tagset, phrase labels, function labels).
 
 This solution uses the rules adapted from Table 1 of:

@@ -45,7 +45,7 @@ The solution can be found in L<Treex::Block::Tutorial::Solution::MarkHeads>.
 =head1 DESCRIPTION
 
 This block should mark for each constituent in p-trees exactly one of its children
-(terminal or nonterminal) as the head (using C<$head->set_is_head(1)>).
+(terminal or nonterminal) as the head (using C<< $head->set_is_head(1) >>).
 The block should work for PennTB-like annotation (tagset, phrase labels, function labels).
 
 =head1 HINT 1

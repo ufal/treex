@@ -9,7 +9,7 @@ __END__
 #TODO this is module just to keep synchronized Unilang with Core
 =pod
 
-=encoding utf-8
+=encoding utf8
 
 =head1 NAME
 
