@@ -83,6 +83,9 @@ sub process_tnode {
         elsif ( $formeme eq 'drop' ){
             $a_node->set_attr( 'morphcat/case', '1' );
         }
+        elsif ( $formeme =~ /adj:za\+X/ ) {
+            $a_node->set_attr( 'morphcat/case', '4' );
+        }
     }
 
     # == Degree of comparison ==
