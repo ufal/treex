@@ -62,7 +62,7 @@ sub tag_sentence {
     }
 
     # tagging
-    my ( $tags_rf, $lemmas_rf ) = _tag( $self, $wordforms_rf, $analyses_rf );
+    my ( $tags_rf, $lemmas_rf ) = $self->_tag( $wordforms_rf, $analyses_rf );
 
     return ( $tags_rf, $lemmas_rf );
 }
@@ -91,10 +91,7 @@ sub _tag {
     # extract features
     foreach my $i ( 0 .. $#{$forms} ) {    #go through word forms and analyses
     
-        my $form     = $forms->[$i];
-        my $analysis = $analyses->[$i];
-
-        my @word = $self->_get_features( $form, $analysis );    #load features
+        my @word = $self->_get_features( $forms, $analyses, $i );    #load features
         push( @sent, \@word );
     }
 
@@ -164,15 +161,20 @@ Perl wrapper for Featurama implementation of Collins' perceptron algorithm.
 
 =item _analyze($wordform)
 
-This method should provide all possible morphological analyses for given wordform
+This method should provide all possible morphological analyses for the given wordform.
 
 =item _get_feature_names()
 
-This method should return array of feature names
+This method should return an array of feature names.
 
-=item _get_features($wordform, $analyses_rf)
+=item _get_features($wordforms_rf, $analyses_rf_rf, $index)
 
-This method should return array of features given wordform and all possible analyses
+This method should return array of features, given a position in the sentence, an array of 
+all wordforms in the sentence and an array of arrays -- all possible morphological analyses for each
+of the wordforms.
+
+Since the features may include parts of the context, it is necessary to provide the whole
+sentence to this function.
 
 =item _extract_tag_and_lemma($index, $wordform)
 
@@ -186,9 +188,11 @@ TODO this will probably change
 
 Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
