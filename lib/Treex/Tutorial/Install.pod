@@ -66,6 +66,7 @@ C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev pat
  # Add the following lines to your ~/.bashrc
  export PATH="$HOME/treex/bin:$PATH"
  export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
+ export TMT_ROOT=$HOME/.treex
 
 =back
 
@@ -278,6 +279,7 @@ Add the following lines I<to the end> of your F<~/.bashrc>:
 
  export PATH="$HOME/treex/bin:$PATH"
  export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
+ export TMT_ROOT=$HOME/.treex
 
 It is important that these lines follow C<eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`> in your F<~/.bashrc>,
 so a SVN module is preferred over a CPAN modules of the same name.
@@ -304,7 +306,7 @@ but they are XS-based (involve compiling C code), so you cannot just download th
  perl Build.PL
  ./Build
  ./Build test
- ./Build install --install_base ~/perl5
+ ./Build install --prefix $HOME/perl5/lib/perl5
 
 In the same way, you can install C<CzechMorpho> and C<Morce-Czech>
 (in this order because the latter depends on the former).
@@ -315,6 +317,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
