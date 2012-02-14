@@ -1,7 +1,6 @@
 package Treex::Block::W2A::TagTreeTagger;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Config;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Tagger::TreeTagger;
@@ -13,8 +12,8 @@ sub build_language { log_fatal "Language is required"; }
 sub _build_model {
     my ($self) = @_;
     my $model = 'data/models/tagger/tree_tagger/' . $self->language . '.par';
-    $self->require_files_from_share($model);
-    return Treex::Core::Config->share_dir() . "/$model";
+    my ($filename) = $self->require_files_from_share($model);
+    return $filename;
 
     #return "$ENV{TMT_ROOT}/share/$model";
 }
