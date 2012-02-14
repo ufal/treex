@@ -176,6 +176,8 @@ So let's check first, whether you can install C<XML::LibXML>:
 
  cpanm XML::LibXML
 
+If it fails and F<~/.cpanm/build.log> contains "Cannot write to /usr/lib/ ... XML/SAX.pm line 191",
+try to run it again and it should show that it was L<actually installed|https://rt.cpan.org/Ticket/Display.html?id=75007>.
 If it fails and F<~/.cpanm/build.log> contains "looking for -lxml2... no",
 you are probably missing the header files or the whole library.
 On Ubuntu/Debian you can install it with:
