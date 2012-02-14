@@ -15,8 +15,8 @@ Treex::Tutorial::Install - Installing the Treex NLP framework
 =item 1. Prepare your local Perl environment, so Perl modules will be installed to F<~/perl5>.
 
 We expect no admin rights and no previous local Perl environment.
-If C<env | grep PERL> prints something,
-there is a risk that your previously installed local Perl environment is not set up properly.
+If C<env | grep PERL> prints something or directory F<~/.cpan> exists,
+there is a risk that your previously installed local Perl environment will be in conflict with the new one.
 See L<step 1|/1. Prepare local Perl environment> for details.
 
  wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
@@ -96,26 +96,36 @@ There are two things you should be aware of:
 
 =item *
 
-If you have already B<properly> set up your local directory for Perl modules
-(e.g. using L<local::lib> or L<perlbrew|http://perlbrew.pl>),
-you can just skip this step (and possibly install C<cpanm> by C<cpan App::cpanminus>).
-However, there is a possibility that your previously installed local Perl environment
-is set up only partially and the procedure described here may fail
-(e.g. with "I<WHOA THERE! It looks like you've got INSTALL_BASE=...>" in F<~/.cpanm/build.log>).
-Command C<env | grep PERL> should print all Perl-related environment variables.
-If nothing is printed you can start with the installation procedure.
-Otherwise, if you do not need/want your previous local Perl environment,
-you can delete (comment out) the listed variables in your shell profile (F<~/.bashrc>, F<~/.profile> etc).
-Otherwise, make sure that you have set up I<all> the needed variables,
-so you have in your F<~/.bashrc> something like:
+If C<env | grep PERL> prints something or directory F<~/.cpan> exists (C<ls -l ~/.cpan>),
+it is probable that you have already configured a local Perl environment.
+In such a case B<it is important> to
 
- export PERL5LIB=$HOME/perl5/lib/perl5/i386-linux:$HOME/perl5
- export PERL_MB_OPT="--install_base $HOME/perl5"
- export PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"
- export PATH="$HOME/perl5/bin:$PATH"
+=over
 
-You should substitute I<i386-linux> with your actual architecture,
-which can be detected with C<perl -MConfig -E 'say $Config{archname}'>.
+=item either reuse the environment and B<skip this step>
+
+If you used L<local::lib> or L<perlbrew|http://perlbrew.pl> to set the environment,
+it should be configured properly and you can continue with L<step 2|/2. Install Treex::Core from CPAN>
+(if you want to use C<cpanm>, install it by C<cpan App::cpanminus>).
+If you used another method, such as modifying C<$PERL5LIB> in your F<~/.bashrc>
+or setting PREFIX or INSTALL_BASE options in C<cpan> configuration,
+there is a possibility that your previously installed local Perl environment
+is configured only partially and the procedure described here may fail.
+If you decide to reuse your previous local Perl environment,
+the modules will be installed to whatever path you had chosen (instead of F<~/perl5>)
+and you should skip this step 1
+(otherwise the installation fails with "I<WHOA THERE! It looks like you've got ...>" in F<~/.cpanm/build.log>).
+
+=item or deactivate completely the environment before doing this step.
+
+If you do not need/want to use your previous local Perl environment,
+you should delete (rename) the F<~/.cpan> directory
+and edit your shell profile (F<~/.bashrc>, F<~/.profile> etc),
+so no Perl-related variables (such as PERL5LIB, PERL_MB_OPT, PERL_MM_OPT)
+are exported. After running a new shell (new ssh session),
+C<env | grep PERL> should print nothing.
+
+=back
 
 =item *
 
