@@ -43,9 +43,9 @@ override '_get_feature_names' => sub {
 
 override '_get_features' => sub {
 
-    my ( $self, $forms, $analyses, $i ) = @_;
-    my $wordform = $forms->[$i];
-    my $analysis = $analyses->[$i];
+    my ( $self, $forms, $analyses, $index ) = @_;
+    my $wordform = $forms->[$index];
+    my $analysis = $analyses->[$index];
 
     my @features;
 
@@ -74,13 +74,13 @@ override '_get_features' => sub {
     push( @features, $wordform =~ /[–—-]/ ? 1 : 0 );
 
     # FollowingVerbTag + FollowingVerbLemma
-    push( @features, $self->_find_following_verb( $analyses, $i ) );
+    push( @features, $self->_find_following_verb( $analyses, $index ) );
 
     # Tag
     push( @features, "NULL" );
 
     # Analyses (add lemmas as "additional tags")
-    push @features, map { $_->{'tag'} . ' ' . $_->{'lemma'} } @{$analysis};
+    push @features, map { $_->{tag} . ' ' . $_->{lemma} } @{$analysis};
     return @features;
 };
 

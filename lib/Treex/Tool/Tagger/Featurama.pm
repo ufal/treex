@@ -169,12 +169,19 @@ This method should return an array of feature names.
 
 =item _get_features($wordforms_rf, $analyses_rf_rf, $index)
 
-This method should return array of features, given a position in the sentence, an array of 
-all wordforms in the sentence and an array of arrays -- all possible morphological analyses for each
-of the wordforms.
-
+This method should return an array of features, given 
+all wordforms in the sentence,
+all possible morphological analyses for each of the wordforms,
+and a position in the sentence.
 Since the features may include parts of the context, it is necessary to provide the whole
 sentence to this function.
+For example:
+
+ $featurama->_get_features(
+     [qw(Time flies)],
+     [[qw(NN NNP VB JJ)], [qw(VBZ NNS)]],
+     0
+ );
 
 =item _extract_tag_and_lemma($index, $wordform)
 

@@ -20,7 +20,9 @@ override '_get_feature_names' => sub {
 };
 
 override '_get_features' => sub {
-    my ( $self, $wordform, $analyses_rf ) = @_;
+    my ( $self, $wordforms, $analyses, $index ) = @_;
+    my $wordform = $wordforms->[$index];
+    my $analysis_rf = $analyses->[$index];
     my @features;
 
     #Form
@@ -61,7 +63,7 @@ override '_get_features' => sub {
     push( @features, "NULL" );
 
     # Analyses
-    push @features, map { $_->{'tag'} } @{$analyses_rf};
+    push @features, map { $_->{'tag'} } @{$analysis_rf};
     return @features;
 };
 
