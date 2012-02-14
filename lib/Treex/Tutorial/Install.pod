@@ -22,7 +22,7 @@ See L<step 1|/1. Prepare local Perl environment> for details.
  wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
  eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
  echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
- echo 'source ~/.bashrc' >> ~/.bash_profile
+ grep bashrc ~/.bash_profile || echo 'source ~/.bashrc' >> ~/.bash_profile
 
 =item 2. Install Treex::Core and its dependencies from CPAN
 
@@ -156,7 +156,7 @@ Also, you will need to go through a configuration dialogue when C<cpan> is execu
 
  eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
  echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
- echo 'source ~/.bashrc' >> ~/.bash_profile
+ grep bashrc ~/.bash_profile || echo 'source ~/.bashrc' >> ~/.bash_profile
 
 The first line sets up the environment variables C<$PERL5LIB>, C<$PATH>, C<$PERL_MB_OPT> etc. for the current shell session.
 So you can use the modules installed in F<~/perl5> (without specifying this path using C<perl -I>)
