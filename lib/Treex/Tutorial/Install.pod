@@ -10,6 +10,9 @@ Treex::Tutorial::Install - Installing the Treex NLP framework
 
 =head1 SYNOPSIS
 
+This synopsis is B<just an overview> of the five steps,
+which are described L<below|/1. Prepare local Perl environment> in more detail.
+
 =over
 
 =item 1. Prepare your local Perl environment, so Perl modules will be installed to F<~/perl5>.
@@ -17,7 +20,6 @@ Treex::Tutorial::Install - Installing the Treex NLP framework
 We expect no admin rights and no previous local Perl environment.
 If C<env | grep PERL> prints something or directory F<~/.cpan> exists,
 there is a risk that your previously installed local Perl environment will be in conflict with the new one.
-See L<step 1|/1. Prepare local Perl environment> for details.
 
  wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
  eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
@@ -25,8 +27,6 @@ See L<step 1|/1. Prepare local Perl environment> for details.
  grep bashrc ~/.bash_profile || echo 'source ~/.bashrc' >> ~/.bash_profile
 
 =item 2. Install Treex::Core and its dependencies from CPAN
-
-See L<step 2|/2. Install Treex::Core from CPAN> for details.
 
  # First, try to install XML::LibXML
  cpanm XML::LibXML
