@@ -231,15 +231,39 @@ sub _anode_labels {
     #     so that Czech tags don't get crippled in the former.
     # if ( $node->language eq 'cs' ) {
     if ( $node->language eq 'cs' && !$node->conll_cpos ) {
-        $line3_1 = substr( $line3_1, 0, 2 );
+        $line3_1 =  $self->_shorten_czech_tag( $line3_1 );
         $line3_2 =~ s/(.)(?:-[1-9][0-9]*)?(?:(?:`|_[:;,^]).*)?$/$1/;
     }
+
+    $line3_1 = $self->_colors->get( 'tag', 1 ) . $line3_1;
 
     return [
         [$line1],
         [$line2],
         [ $line3_1, $line3_2 ]
     ];
+}
+
+sub _shorten_czech_tag {
+    my ($self, $tag) = @_;
+     
+    # nouns, adjectives, pronouns, declinable numerals: gender, number, case
+    if ($tag =~ m/^(N|C[adhjklnrwyz\?]|P|A)/){ 
+        $tag = substr( $tag, 0, 2 ) . $self->_colors->get( 'tag_feat', 1 ) . substr( $tag, 2, 3 );
+    }
+    # prepositions: just case
+    elsif ($tag =~ m/^R/ ){
+        $tag = substr( $tag, 0, 2 ) . $self->_colors->get( 'tag_feat', 1 ) . substr( $tag, 4, 1 );
+    }
+    # verbs (except infinitives, conditionals): gender, number, person, tense, voice
+    elsif ($tag =~ m/^V[^cf]/ ){
+        $tag = substr( $tag, 0, 2)  . $self->_colors->get( 'tag_feat', 1 ) 
+            . substr( $tag, 2, 2 ) . substr( $tag, 7, 2 ) . substr( $tag, 11, 1 );
+    }
+    else {
+        $tag = substr( $tag, 0, 2 );
+    }
+    return $tag;
 }
 
 sub _tnode_labels {

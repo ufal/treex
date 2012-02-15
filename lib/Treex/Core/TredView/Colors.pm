@@ -45,6 +45,8 @@ sub _build_colors {
         'sempos'      => '#8b008b',
         'phrase'      => '#00008b',
         'formeme'     => '#b000b0',
+        'tag'         => '#004048',
+        'tag_feat'    => '#7098A0',
 
         'clause0' => '#ff00ff',         #magenta
         'clause1' => '#ffa500',         #orange
