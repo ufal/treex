@@ -8,6 +8,17 @@ package Treex::Tutorial::Install;
 
 Treex::Tutorial::Install - Installing the Treex NLP framework
 
+=head1 FOR CLARA 2012 TUTORIAL
+
+If you are logged in SU2 lab,
+you do not need to follow this installation guide.
+Instead, you can just run
+
+ source ~popem3am/preinstall/treex.sh
+
+and use a preinstalled version of Treex (F<~/preinstalled_treex>)
+and its Perl dependencies (F<~/preinstalled_perl5>).
+
 =head1 SYNOPSIS
 
 This synopsis is B<just an overview> of the five steps,
