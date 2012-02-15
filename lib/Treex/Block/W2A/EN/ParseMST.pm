@@ -1,81 +1,40 @@
 package Treex::Block::W2A::EN::ParseMST;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::W2A::BaseChunkParser';
+extends 'Treex::Block::W2A::ParseMST';
 
 use Treex::Tool::Parser::MST;
 
-has 'model' => ( is => 'rw', isa => 'Str', default => 'conll_mcd_order2_0.01.model' );
-has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
-has _parser => (is=>'rw');
-my %loaded_models;
+has model => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'conll_mcd_order2_0.01.model'
+);
+
+# All English models trained so far are projective
+has '+decodetype' => ( default => 'proj' );
+
+# English deprels do not encode is_member using $deprel =~ /_M$/
+has '+detect_attributes_from_deprel' => ( default=>0);
+
+has '+model_dir' => ( default => 'data/models/parser/mst/en' );
 
 #TODO: loading each model only once should be handled in different way
+has _parser => ( is => 'rw' );
+my %loaded_models;
 
-sub BUILD {
+my %MEMORY_FOR_MODEL = (
+    'conll_mcd_order2.model'      => '2600m',
+    'conll_mcd_order2_0.01.model' => '750m',
+    'conll_mcd_order2_0.03.model' => '540m',
+    'conll_mcd_order2_0.1.model'  => '540m',
+    'default'                     => '2600m',
+);
+
+# override
+sub _build_memory {
     my ($self) = @_;
-
-    my %model_memory_consumption = (
-        'conll_mcd_order2.model'      => '2600m',    # tested on sol1, sol2 (64bit)
-        'conll_mcd_order2_0.01.model' => '750m',     # tested on sol2 (64bit) , cygwin (32bit win), java-1.6.0(64bit)
-        'conll_mcd_order2_0.03.model' => '540m',     # load block tested on cygwin notebook (32bit win), java-1.6.0(64bit)
-        'conll_mcd_order2_0.1.model'  => '540m',     # load block tested on cygwin notebook (32bit win), java-1.6.0(64bit)
-    );
-
-    my $DEFAULT_MODEL_MEMORY = '2600m';
-    my $model_dir            = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
-
-    my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;
-
-    my $model_path = $model_dir . '/' . $self->model;
-
-    if (!$loaded_models{$model_path}){
-         my $parser = Treex::Tool::Parser::MST->new(
-            {   model      => $model_path,
-                memory     => $model_memory,
-                order      => 2,
-                decodetype => 'proj',
-                robust     => $self->robust,
-            }
-        );
-        $loaded_models{$model_path} = $parser;
-    }
-    $self->_set_parser($loaded_models{$model_path});
-
-    return;
-}
-
-sub parse_chunk {
-    my ( $self, @a_nodes ) = @_;
-
-    # We deliberately approximate e.g. curly quotes with plain ones
-    my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
-    my @tags  = map { $_->tag } @a_nodes;
-
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
-
-    my @roots = ();
-    foreach my $a_node (@a_nodes) {
-        my $deprel = shift @$deprel_rf;
-        $a_node->set_conll_deprel($deprel);
-
-        if ($matrix_rf) {
-            my $scores = shift @$matrix_rf;
-            if ($scores) {
-                $a_node->set_attr( 'mst_scores', join( ' ', @$scores ) );
-            }
-        }
-
-        my $parent_index = shift @$parents_rf;
-        if ($parent_index) {
-            my $parent = $a_nodes[ $parent_index - 1 ];
-            $a_node->set_parent($parent);
-        }
-        else {
-            push @roots, $a_node;
-        }
-    }
-    return @roots;
+    return $MEMORY_FOR_MODEL{ $self->model } || $MEMORY_FOR_MODEL{default};
 }
 
 1;

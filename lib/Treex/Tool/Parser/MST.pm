@@ -1,9 +1,8 @@
 package Treex::Tool::Parser::MST;
 use Moose;
 use Treex::Core::Common;
-
+use Treex::Core::Resource;
 use ProcessUtils;
-use File::Java;
 use DowngradeUTF8forISO2;
 
 has model      => ( isa => 'Str',  is => 'rw', required => 1 );
@@ -16,38 +15,30 @@ my @all_javas;    # PIDs of java processes
 
 sub BUILD {
     my ($self) = @_;
-
-    #to be changed
-    my $bindir = "$ENV{TMT_ROOT}/libs/other/Parser/MST/mstparser-0.4.3b";
-    die "Missing $bindir\n" if !-d $bindir;
+    my $tool_path  = 'installed_tools/parser/mst/0.4.3b';
+    my $jar_path   = require_file_from_share("$tool_path/mstparser.jar");
+    my $trove_path = require_file_from_share("$tool_path/lib/trove.jar");
 
     #TODO this should be done better
     my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
 
+    my $cp = join($^O =~ /Win32|OS2/ ? ';' : ':', $jar_path, $trove_path );
+    my $model = $self->model;
+    log_fatal "$model model for MST does not exist." if !-f $model;
+
+    # TODO all paths/dirs have to be formatted according to platform
+    # $model = File::Java->path_arg( $model );
+    my $command    = 'java'
+        . " -Xmx" . $self->memory
+        . " -cp $cp mstparser.DependencyParser test"
+        . " order:" . $self->order
+        . " decode-type:" . $self->decodetype
+        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";
+
+
     # We communicate with the parser in ISO-8859-2. In principle, any encoding is
     # fine (e.g. utf8, as long as the binmode of bipipe corresponds to the
     # encoding given as arg 2 to server.PerlParser.
-
-    # portable invocation of java vm
-    my $javabin = File::Java->javabin();
-    my $cp = File::Java->cp( "$bindir/output/mstparser.jar", "$bindir/lib/trove.jar" );
-
-    my $share_path = $self->model;
-    my $share_dir  = "$ENV{TMT_ROOT}/share/";
-    if ( $share_path =~ s/^$share_dir// ) {
-        $share_path = Treex::Core::Resource::require_file_from_share( $share_path, 'Treex::Tool::Parser::MST' );
-    }
-    log_fatal $share_path . ' model for MTS does not exist.' if !-f $share_path;
-
-    # all paths/dirs have to be formatted according to platform
-    my $model_name = File::Java->path_arg( $share_path );
-    my $command    = 'java'                                  #$javabin
-        . " -Xmx" . $self->{memory}
-        . " -cp $cp mstparser.DependencyParser test"
-        . " order:" . $self->{order}
-        . " decode-type:" . $self->{decodetype}
-        . " server-mode:true print-scores:true model-name:$model_name 2>/dev/null";
-
     $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
         = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
@@ -239,22 +230,18 @@ END {
 
 __END__
 
-
-=pod
-
 =head1 NAME
 
 Treex::Tool::Parser::MST
 
 =head1 SYNOPSIS
 
-
  use Treex::Tool::Parser::MST
 
- my @wordforms = qw(A       group   of      investors       recently        bought  the     remaining       assets  .);
- my @tags = qw(D       N       I       N               R               V       D       V               N   .);
+ my @wordforms = qw(A group of investors recently bought the remaining assets .);
+ my @tags      = qw(D N     I  N         R        V      D   V         N      .);
 
- my $parser = Treex::Tool::Parser::MST->new({model => 'conll_mcd_order2_0.01.model',
+ my $parser = Treex::Tool::Parser::MST->new({model => $path_to . 'conll_mcd_order2_0.01.model',
                                               memory => '1000m', 
                                               order => 2,
                                               decodetype => 'non-proj'});
@@ -268,7 +255,7 @@ Treex::Tool::Parser::MST
 
 =head1 DESCRIPTION
 
-Perl wrapper for Ryan McDonnald's Maximum Spanning Tree parser 0.4.3b.
+Perl wrapper for Ryan McDonald's Maximum Spanning Tree parser 0.4.3b.
 When being used, it executes a Java Server and loads the parser model.
 
 =head2 CONSTRUCTOR
@@ -297,13 +284,12 @@ and analytical functions are returned.
 =back
 
 
-=head1 TODOs
+=head1 SEE ALSO
 
-
-
+L<Treex::Block::W2A::ParseMST>
 
 =head1 AUTHORS
 
-Vaclav Novak, Zdenek Zabokrtsky, Ondrej Bojar, David Marecek
+Vaclav Novak, Zdenek Zabokrtsky, Ondrej Bojar, David Marecek, Martin Popel
 
-# Copyright 2008-2010 Vaclav Novak, Zdenek Zabokrtsky, Ondrej Bojar, David Marecek
+# Copyright 2008-2012 UFAL

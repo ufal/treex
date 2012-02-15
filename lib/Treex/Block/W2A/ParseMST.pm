@@ -5,51 +5,71 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 
 use Treex::Tool::Parser::MST;
 
-has 'model' => ( is => 'rw', isa => 'Str', required => 1 );
-has 'order' => ( is => 'rw', isa => 'Str', default => '2' );
-has 'decodetype' => ( is => 'rw', isa => 'Str', default => 'non-proj' );
-has 'pos_attribute' => ( is => 'rw', isa => 'Str', default => 'tag' );
-has 'deprel_attribute' => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
-has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
-has _parser => (is=>'rw');
-my %loaded_models;
+has model => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => 'filename of the model to be used relative to model_dir',
+);
 
+has model_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/parser/mst',
+    documentation => 'path to the model relative to Treex resource_path',
+);
 
-#my $parser;
+has memory => (
+    is            => 'ro',
+    isa           => 'Str',
+    lazy_build    => 1,
+    documentation => 'How much memory should be alocated for the Java, e.g. 4000m',
+);
+
+sub _build_memory {
+    return '4000m';
+}
+
+has detect_attributes_from_deprel => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'fill is_member, is_shared_modifier and is_coord_conjunction according to deprel =~ /_[MSC]$/',
+);
+
+has order            => ( is => 'ro', isa => 'Str', default => '2' );
+has decodetype       => ( is => 'ro', isa => 'Str', default => 'non-proj' );
+has pos_attribute    => ( is => 'ro', isa => 'Str', default => 'tag' );
+has deprel_attribute => ( is => 'ro', isa => 'Str', default => 'conll/deprel' );
+
+has robust => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'try to recover from MST failures by paring 2 more times and returning flat tree at least'
+);
 
 #TODO: loading each model only once should be handled in different way
-# !!! copied from EN::ParseMST
+has _parser => ( is => 'rw' );
+my %loaded_models;
 
 sub BUILD {
-    my ($self) = @_;
+    my ($self)  = @_;
+    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
 
-    my %model_memory_consumption = (
-        'conll_mcd_order2.model'      => '2600m',    # tested on sol1, sol2 (64bit)
-        'conll_mcd_order2_0.01.model' => '750m',     # tested on sol2 (64bit) , cygwin (32bit win), java-1.6.0(64bit)
-        'conll_mcd_order2_0.03.model' => '540m',     # load block tested on cygwin notebook (32bit win), java-1.6.0(64bit)
-        'conll_mcd_order2_0.1.model'  => '540m',     # load block tested on cygwin notebook (32bit win), java-1.6.0(64bit)
-    );
-
-    my $DEFAULT_MODEL_MEMORY = '4000m';
-    my $model_dir            = "$ENV{TMT_ROOT}/share/data/models/mst_parser/en";
-   
-    my $model_memory = $model_memory_consumption{ $self->model } || $DEFAULT_MODEL_MEMORY;
-   
-    my $model_path = $model_dir . '/' . $self->model;
-    
-    if (!$loaded_models{$model_path}){
-       my $parser = Treex::Tool::Parser::MST->new(
-       {   	model      => $model_path,
-                memory     => $model_memory,
+    if ( !$loaded_models{$model} ) {
+        my $parser = Treex::Tool::Parser::MST->new(
+            {   model      => $model,
+                memory     => $self->memory,
                 order      => $self->order,
                 decodetype => $self->decodetype,
                 robust     => $self->robust,
             }
-            
-            );
-	    $loaded_models{$model_path} = $parser;
-}
-$self->_set_parser($loaded_models{$model_path});
+
+        );
+        $loaded_models{$model} = $parser;
+    }
+    $self->_set_parser( $loaded_models{$model} );
 
     return;
 }
@@ -57,25 +77,28 @@ $self->_set_parser($loaded_models{$model_path});
 sub parse_chunk {
     my ( $self, @a_nodes ) = @_;
 
-    # We deliberately approximate e.g. curly quotes with plain ones
-    my @words = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
-    my @tags  = map { $_->get_attr($self->pos_attribute) } @a_nodes;
+    my @words = map { $_->form } @a_nodes;
+    my @tags  = map { $_->get_attr( $self->pos_attribute ) } @a_nodes;
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
-        $a_node->set_is_member(0);
-        $a_node->set_is_shared_modifier(0);
         my $deprel = shift @$deprel_rf;
-        if ($deprel =~ /_(M?S?C?)$/) {
-            my $suffix = $1;
-            $a_node->set_is_member($suffix =~ /M/ ? 1 : 0);
-            $a_node->set_is_shared_modifier($suffix =~ /S/ ? 1 : 0);
-            $a_node->wild->{is_coord_conjunction} = $suffix =~ /C/ ? 1 : 0;
-            $deprel =~ s/_M?S?C?$//;
+
+        if ( $self->detect_attributes_from_deprel ) {
+            $a_node->set_is_member(0);
+            $a_node->set_is_shared_modifier(0);
+            if ( $deprel =~ /_(M?S?C?)$/ ) {
+                my $suffix = $1;
+                $a_node->set_is_member( $suffix          =~ /M/ ? 1 : 0 );
+                $a_node->set_is_shared_modifier( $suffix =~ /S/ ? 1 : 0 );
+                $a_node->wild->{is_coord_conjunction} = $suffix =~ /C/ ? 1 : 0;
+                $deprel =~ s/_M?S?C?$//;
+            }
         }
-        $a_node->set_attr($self->deprel_attribute, $deprel);
+
+        $a_node->set_attr( $self->deprel_attribute, $deprel );
 
         if ($matrix_rf) {
             my $scores = shift @$matrix_rf;
