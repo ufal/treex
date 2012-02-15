@@ -53,7 +53,7 @@ sub config_dir {
         return $dirname;
     }
     else {
-        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );    #last fallback, hidden somwhere under ~/.local directory
+        return File::HomeDir->my_dist_config( 'Treex-Core', { create => 1 } );    #last fallback, hidden somewhere under ~/.local directory
     }
 }
 

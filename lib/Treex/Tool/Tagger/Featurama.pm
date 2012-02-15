@@ -6,8 +6,6 @@ Moose::Exporter->setup_import_methods(
     as_is => ['tag_sentence'],
 );
 
-#works when installed (http://sourceforge.net/projects/featurama/)
-use Featurama::Perc;    #when featurama will be on CPAN, it will be probably in different namespace
 use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Core::Common;
 has path => (
@@ -30,6 +28,10 @@ has perc => (
 sub _build_perc {
     my $self   = shift;
     my $path   = $self->path;
+    eval {    
+        require Featurama::Perc;    #when featurama will be on CPAN, it will be probably in different namespace
+        1;
+    } or log_fatal('Cannot load Featurama::Perc. Please check whether it is installed');
     my $perc   = Featurama::Perc->new();
     my $header = join "\t", $self->_get_feature_names();
     my $f      = require_file_from_share( $self->path . '.f' );
