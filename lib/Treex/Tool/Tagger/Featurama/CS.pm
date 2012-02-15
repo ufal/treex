@@ -14,13 +14,13 @@ has _analyzer => (
 );
 
 sub BUILDARGS {
-    return { path => 'data/models/featurama/cs/default' };
+    return { path => 'data/models/tagger/featurama/cs/default' };
 }
 
 # TODO: make this more portable, e.g. requiring all the files from share
 sub _build_analyzer {
     my $self = shift;
-    return CzechMorpho::Analyzer->new('/net/projects/tectomt_shared/data/models/morpho_analysis/cs_060406a');
+    return CzechMorpho::Analyzer->new($ENV{TMT_ROOT}.'/share/data/models/morpho_analysis/cs_060406a');
 }
 
 override '_analyze' => sub {

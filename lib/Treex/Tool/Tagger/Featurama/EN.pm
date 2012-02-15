@@ -13,7 +13,7 @@ has _analyzer => (
 );
 
 sub BUILDARGS {
-    return { path => 'data/models/featurama/en/default' };
+    return { path => 'data/models/tagger/featurama/en/default' };
 }
 
 sub _build_analyzer {

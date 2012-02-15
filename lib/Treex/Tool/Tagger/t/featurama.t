@@ -14,7 +14,7 @@ plan tests => 4;
 
 use_ok('Treex::Tool::Tagger::Featurama::Dummy');
 
-my $tagger = Treex::Tool::Tagger::Featurama::Dummy->new( path => 'data/models/featurama/en/default' );
+my $tagger = Treex::Tool::Tagger::Featurama::Dummy->new( path => 'data/models/tagger/featurama/en/default' );
 isa_ok( $tagger, 'Treex::Tool::Tagger::Featurama' );
 
 my ( $tags_rf, $lemmas_rf ) = $tagger->tag_sentence( [qw(How are you ?)] );
