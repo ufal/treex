@@ -23,7 +23,8 @@ there is a risk that your previously installed local Perl environment will be in
 
  wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
  eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
- echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
+ echo '## Treex installation ##'                        >> ~/.bashrc
+ echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`'   >> ~/.bashrc
  grep bashrc ~/.bash_profile || echo 'source ~/.bashrc' >> ~/.bash_profile
 
 =item 2. Install Treex::Core and its dependencies from CPAN
@@ -156,14 +157,16 @@ The disadvantage is that you cannot use it for installing C<local::lib> locally 
 Also, you will need to go through a configuration dialogue when C<cpan> is executed for the first time.
 
  eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
- echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`' >> ~/.bashrc
+ echo '## Treex installation ##'                        >> ~/.bashrc
+ echo 'eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`'   >> ~/.bashrc
  grep bashrc ~/.bash_profile || echo 'source ~/.bashrc' >> ~/.bash_profile
 
 The first line sets up the environment variables C<$PERL5LIB>, C<$PATH>, C<$PERL_MB_OPT> etc. for the current shell session.
 So you can use the modules installed in F<~/perl5> (without specifying this path using C<perl -I>)
 and also it ensures that new modules will be installed (using C<cpanm> or C<cpan>) to F<~/perl5> (not to the system paths).
-The second line ensures that this setting will be applied also in other (non-login) shell sessions.
-The third line ensures that this setting will be applied also in "login" shell sessions (e.g. when you log in via C<ssh>).
+The third line ensures that this setting will be applied also in other (non-login) shell sessions.
+The fourth line ensures that this setting will be applied also in "login" shell sessions (e.g. when you log in via C<ssh>).
+If you prefer to use F<~/.profile> instead of F<~/.bash_profile>, adapt so the fourth line.
 
 =head1 2. Install Treex::Core from CPAN
 
@@ -240,6 +243,8 @@ To automatically download and build the latest TrEd and its dependencies to F<~/
  bash install_tred.bash --tred-dir ~/tred
 
 You can run C<~/tred/bin/start_tred> to check the GUI.
+When a dialog box "Manage extensions" appears, you can ignore it (click on "Later").
+
 Treex Core contains an L<extension|Treex::Core::TredView> for TrEd,
 so it can open F<*.treex>, F<*.treex.gz> and F<*.streex> files and use the Treex stylesheet.
 Treex Core also contains a simple wrapper script C<ttred>
@@ -283,6 +288,7 @@ Add the following lines I<to the end> of your F<~/.bashrc>:
 
 It is important that these lines follow C<eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`> in your F<~/.bashrc>,
 so a SVN module is preferred over a CPAN modules of the same name.
+To apply the setting for the current bash session type the three export commands, or start a new session.
 You can check it with:
 
  echo $PERL5LIB  # ~/treex/lib should precede ~/perl5/...
@@ -310,6 +316,18 @@ but they are XS-based (involve compiling C code), so you cannot just download th
 
 In the same way, you can install C<CzechMorpho> and C<Morce-Czech>
 (in this order because the latter depends on the former).
+
+=head1 Uninstall
+
+Although there is no standardized way to uninstall Perl modules,
+in most cases it is enough to delete the respective files and directories.
+If you followed this installation guide
+and you want to remove all the installed stuff
+and B<if you had nothing in F<~/perl5> before>,
+you can delete directories
+F<~/perl5>, F<~/treex>, F<~/.treex>, F<~/.tred> and F<~/.cpanm>.
+You can also delete the added lines from F<~/.bashrc>
+(starting with I<## Treex installation ##>) and F<~/.bash_profile>.
 
 =head1 AUTHOR
 
