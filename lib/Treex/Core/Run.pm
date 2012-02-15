@@ -156,7 +156,6 @@ has 'priority' => (
     documentation => 'Priority for qsub (an integer in the range -1023 to 1024, default=0). Requires -p.',
 );
 
-
 has 'watch' => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -323,9 +322,9 @@ sub _execute {
 }
 
 my %READER_FOR = (
-    'treex' => 'Treex',
+    'treex'    => 'Treex',
     'treex.gz' => 'Treex',
-    'txt'   => 'Text',
+    'txt'      => 'Text',
     'txt.gz'   => 'Text',
     'streex'   => 'Treex',
     'mrg'      => 'PennMrg',
@@ -338,10 +337,10 @@ my %READER_FOR = (
 );
 
 sub _get_reader_name_for {
-    my $self  = shift;
-    my @names = @_;
-    my $base_re = join('|', keys %READER_FOR);
-    my $re    = qr{\.($base_re)$};
+    my $self    = shift;
+    my @names   = @_;
+    my $base_re = join( '|', keys %READER_FOR );
+    my $re      = qr{\.($base_re)$};
     my @extensions;
     my $first;
 
@@ -349,10 +348,10 @@ sub _get_reader_name_for {
         if ( $name =~ /$re/ ) {
             my $current = $1;
             $current =~ s/\.gz$//;
-            if (!defined $first) {
+            if ( !defined $first ) {
                 $first = $current;
             }
-            log_fatal 'All files (' . join( ',', @names ) . ') must have the same extension' if ($current ne $first);
+            log_fatal 'All files (' . join( ',', @names ) . ') must have the same extension' if ( $current ne $first );
             push @extensions, $current;
         }
         else {
@@ -501,7 +500,7 @@ sub _create_job_scripts {
     # You cannot use interactive input from terminal to "treex -p".
     # (If you really need it, use perl -npe 1 | treex -p ...)
     my $input = '';
-    if ( ! IO::Interactive::is_interactive(*STDIN) ) {
+    if ( !IO::Interactive::is_interactive(*STDIN) ) {
         my $stdin_file = "$workdir/input";
         $input = "cat $stdin_file | ";
         ## no critic (ProhibitExplicitStdin)
@@ -549,7 +548,7 @@ sub _run_job_scripts {
         }
         else {
             my $qsub_opts = '-cwd -e output/ -S /bin/bash ' . $self->qsub;
-            if ($self->priority){
+            if ( $self->priority ) {
                 $qsub_opts .= ' -p ' . $self->priority;
             }
             open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
@@ -732,7 +731,7 @@ sub _check_job_errors {
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
         log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
-        if ($self->survive){
+        if ( $self->survive ) {
             log_warn("fatal error ignored due to the --survive option, be careful");
             return;
         }
@@ -785,7 +784,7 @@ sub _execute_on_cluster {
     }
 
     foreach my $subdir (qw(output scripts)) {
-        mkdir $self->workdir . "/$subdir" or log_fatal $!;
+        mkdir $self->workdir . "/$subdir" or log_fatal 'Could not create directory ' . $self->workdir . "/$subdir : " . $!;
     }
 
     # catching Ctrl-C interruption

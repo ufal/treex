@@ -18,7 +18,7 @@ requires 'process_bundle';
 sub process_end {
 
     my ($self) = @_;
-    if ( $self->overall ) {
+    if ( $self->overall && !$self->dump_to_file ) {
         $self->_print_stats();
     }
     return;
@@ -108,12 +108,20 @@ or overall for all documents processed.
 If this is set to 1, an overall statistics for all the processed documents is printed instead of a score for each single
 document.
 
+=item C<dump_to_file>
+
+Set this variable to a file name prefix if you wish a statistics hash to be dumped into a .pls file for each processed 
+document.
+
+This is useful in parallel processing; the dumped hashes may be later retrieved and examined using the C<merge_hashes> 
+method. 
+
 =head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
