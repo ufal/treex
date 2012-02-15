@@ -33,6 +33,12 @@ has 'attributes' => (
     required => 1
 );
 
+has 'log_sent' => (
+    isa     => 'Bool',
+    is      => 'ro',
+    default => 0
+);
+
 has '_attr_arrays' => ( isa => 'Object', is => 'rw', lazy_build => 1 );
 
 # Total number of all tested values
@@ -79,6 +85,12 @@ sub process_bundle {
         }
     }
 
+    if ( $self->log_sent ) {
+        print { $self->_file_handle } $tst->get_tree( $self->layer )->get_address(), ' = '; 
+        printf { $self->_file_handle } "%.5f", ( $good / @tst_vals );
+        print { $self->_file_handle } ' (', $good, '/', scalar(@tst_vals), ')', "\n";
+    }
+
     $self->_set_good( $self->_good + $good );
 
     return;
@@ -111,10 +123,13 @@ sub _print_stats {
     my ($self) = @_;
     my $accuracy = sprintf( "%.5f", $self->_good / $self->_total );
 
-    print "Accuracy for " . $self->attributes . " = " . $accuracy . "\n";
-    print "\tTotal: " . $self->_total . ", Good: " . $self->_good . "\n";
-    print "Most common errors:\n";
-    printf "%-35s %-35s %6s\n", 'TST', 'REF', 'COUNT';
+    print { $self->_file_handle } "Accuracy for " . $self->attributes . " = " . $accuracy . "\n";
+    print { $self->_file_handle } "\tTotal: " . $self->_total . ", Good: " . $self->_good . "\n";
+
+    if ( $self->print_limit > 0 ) {
+        print { $self->_file_handle } "Most common errors:\n";
+        printf { $self->_file_handle } "%-35s %-35s %6s\n", 'TST', 'REF', 'COUNT';
+    }
 
     my @sorted_errs = sort { $self->_errors->{$b} <=> $self->_errors->{$a} } keys %{ $self->_errors };
     if ( $self->print_limit < @sorted_errs ) {
@@ -123,7 +138,7 @@ sub _print_stats {
 
     foreach my $err (@sorted_errs) {
         my ( $tst, $ref ) = split /\t/, $err;
-        printf "%-35.35s %-35.35s %6d\n", $tst, $ref, $self->_errors->{$err};
+        printf { $self->_file_handle } "%-35.35s %-35.35s %6d\n", $tst, $ref, $self->_errors->{$err};
     }
 
     return;
@@ -177,12 +192,16 @@ How many of the most common errors should be printed (default: 10).
 If this is set to 1, an overall score for all the processed documents is printed instead of a score for each single
 document.
 
+=item C<log_sent>
+
+Toogle accuracy logging for each sentence (default: 0).
+
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

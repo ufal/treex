@@ -32,7 +32,7 @@ sub _build_tagger {
 sub process_atree {
     
     my ( $self, $atree ) = @_;
-    my @anodes = $atree->get_descendants();
+    my @anodes = $atree->get_descendants( { ordered => 1 } );
     my @forms = map { $_->form } @anodes;
 
     # get tags and lemmas
