@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use List::MoreUtils qw/ uniq /;
+
 has 'print_types' => (
     is => 'ro',
     isa => 'Bool',
@@ -10,20 +12,22 @@ has 'print_types' => (
     default => 0,
 );
 
-has 'segmref_as_pleo' => (
+has 'exo_as_pleo' => (
     is => 'ro',
     isa => 'Bool',
     required => 1,
     default => 0,
 );
 
+# confusion matrix indexed with {real_value}{predicted_value}
+has '_confusion_matrix' => (
+    is  => 'rw',
+    isa => 'HashRef[HashRef[Int]]',
+    default => sub {{}},
+);
 
 my $noprint_stack = 1;
 log_set_error_level('DEBUG');
-
-my $tp_count  = 0;
-my $src_count = 0;
-my $ref_count = 0;
 
 sub _is_it {
     my ($str) = @_;
@@ -34,6 +38,9 @@ sub _get_src_tnode_for_lex {
     my ($self, $ref_tnode) = @_;
 
     my @src_tnodes = $ref_tnode->get_aligned_nodes_of_type('monolingual');
+    if (@src_tnodes == 0) {
+        log_debug "Ref-node " . $ref_tnode->id . " aligned with no src-node", $noprint_stack;
+    }
     if (@src_tnodes > 1) {
         log_debug "Ref-node " . $ref_tnode->id . " aligned with several src-nodes", $noprint_stack;
     }
@@ -74,8 +81,36 @@ sub _is_referential {
     return $refer;
 }
 
+sub _print_confusion_matrix {
+    my ($self, $size) = @_;
+
+    my $conf_mat = $self->_confusion_matrix;
+
+    my @true_values = keys %$conf_mat;
+    my @pred_values = uniq( map {keys %{$conf_mat->{$_}}} @true_values);
+
+    # print the top header
+    printf STDERR "%*s", $size, ""; 
+    foreach my $pred (@pred_values) {
+        printf STDERR "%*s", $size, $pred; 
+    }
+    print STDERR "\n"; 
+
+    # print the rest of the table
+    foreach my $true (@true_values) {
+        # print the left header
+        printf STDERR "%*s", $size, $true;
+        foreach my $pred (@pred_values) {
+            # print the body of the table
+            printf STDERR "%*s", $size, $conf_mat->{$true}{$pred}; 
+        }
+        print STDERR "\n";
+    }
+}
+
 sub process_anode {
     my ($self, $ref_anode) = @_;
+    my $conf_mat = $self->_confusion_matrix;
 
     # skip everything that is not "it"
     # TODO what about "It's" etc.
@@ -89,53 +124,47 @@ sub process_anode {
             log_debug "T-nodes " . (join ", ", (map {$_->id} @lex_tnodes)) . " point lexically to the same a-node", $noprint_stack;
         }
         my $lex_tnode = shift @lex_tnodes;
-
-        if ($self->print_types) {
-            my @coref_tnodes = $lex_tnode->get_coref_nodes;
-            if (@coref_tnodes > 0) {
-                print "LEX WITH COREF\n"
-            }
-            else {
-                print "LEX WITHOUT COREF\n";
-            }
-            return;
-        }
             
         my $src_tnode = $self->_get_src_tnode_for_lex($lex_tnode);
+        if (!defined $src_tnode) {
+            log_debug "LEX TNODE UNDEF", $noprint_stack;
+        }
         # node was incorrectly labeled as pleonastic (or correctly as reffering to a segment)
-        my $is_pleo =  !$self->_is_referential($src_tnode);
+        my $is_ref_pred =  $self->_is_referential($src_tnode);
+        my @antes_ref = $lex_tnode->get_coref_nodes;
+
         
-        if ($self->segmref_as_pleo) {
-            my @antes_ref = $lex_tnode->get_coref_nodes;
-            # it really refers to a larger segment
-            if (@antes_ref == 0) {
-                # correctly marked as pleonastic
-                if ($is_pleo) {
-                    $tp_count++;    # true positive
-                }
-                $ref_count++;   # true
+        if (@antes_ref == 0) {
+            if ($is_ref_pred) {
+                $conf_mat->{'exo'}{'ref'}++;
+            }
+            else {
+                $conf_mat->{'exo'}{'pleo'}++;
             }
         }
-        # marked as pleonastic
-        if ($is_pleo) {
-            $src_count++;   # positive
+        else {
+            if ($is_ref_pred) {
+                $conf_mat->{'ref'}{'ref'}++;
+            }
+            else {
+                $conf_mat->{'ref'}{'pleo'}++;
+            }
         }
     }
     
     # pleonastic it
     else {
-        if ($self->print_types) {
-            print "AUX\n";
-            return;
-        }
-
         my $src_tnode = $self->_get_src_tnode_for_aux($ref_anode);
-        # node was correctly labeled as pleonastic
-        if (!$self->_is_referential($src_tnode)) {
-            $tp_count++;    # true positive
-            $src_count++;   # positive
+        if (!defined $src_tnode) {
+            log_debug "AUX TNODE UNDEF", $noprint_stack;
         }
-        $ref_count++;   # true
+        # node was correctly labeled as pleonastic
+        if ($self->_is_referential($src_tnode)) {
+            $conf_mat->{'pleo'}{'ref'}++;
+        }
+        else {
+            $conf_mat->{'pleo'}{'pleo'}++;
+        }
     }
 }
 
@@ -144,7 +173,22 @@ sub process_end {
 
     return if ($self->print_types);
 
-    print join "\t", ($tp_count, $src_count, $ref_count);
+    my $conf_mat = $self->_confusion_matrix;
+    my $tp_count = $conf_mat->{'pleo'}{'pleo'} || 0;
+    my $tn_count = $conf_mat->{'ref'}{'ref'} || 0;
+    my $fp_count = $conf_mat->{'ref'}{'pleo'} || 0;
+    my $fn_count = $conf_mat->{'pleo'}{'ref'} || 0;
+
+    if ($self->exo_as_pleo) {
+        $tp_count += $conf_mat->{'exo'}{'pleo'} || 0;
+        $fn_count += $conf_mat->{'exo'}{'ref'} || 0;
+    }
+    else {
+        $fp_count += $conf_mat->{'exo'}{'pleo'} || 0;
+        $tn_count += $conf_mat->{'exo'}{'ref'} || 0;
+    }
+
+    print join "\t", ($tp_count, $tn_count, $fp_count, $fn_count);
     print "\n";
 }
 
@@ -155,8 +199,9 @@ sub process_end {
 =item Treex::Block::Eval::ReferentialIt
 
 Evaluation of "it" resolution - determining whether "it" is referential
-or pleonastic. It returns three columns of aggregated counts - true positive,
-positive and true, which must be then post-processed to compute P, R and F.
+or pleonastic. It returns four columns of aggregated counts - true positive,
+true negatie, false positive and false negative, which must be then 
+post-processed to compute accuracy, precision, recall and f-score.
 
 =back
 
