@@ -37,7 +37,7 @@ sub require_file_from_share {
             }
         }
     }
-    $who_wants_it = " by $who_wants_it" // '';
+    $who_wants_it = defined $who_wants_it ? " by $who_wants_it" : '';
     log_info("Shared file '$rel_path_to_file' is missing$who_wants_it.");
     log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
