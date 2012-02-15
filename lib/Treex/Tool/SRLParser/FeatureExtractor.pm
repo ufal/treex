@@ -376,56 +376,60 @@ sub extract_features() {
     push @features, $self->_make_feature('DepwordAfun', $depword->afun);
     # PredicateAfun
     push @features, $self->_make_feature('PredicateAfun', $predicate->afun);
-    # PredicateTagPos
-    # TODO
-    # PredicateTagSubpos
-    # TODO
-    # PredicateTagGender
-    # TODO
-    # PredicateTagNumber
-    # TODO
-    # PredicateTagCase
-    # TODO
-    # PredicateTagPossgender
-    # TODO
-    # PredicateTagPossnumber
-    # TODO
-    # PredicateTagPerson
-    # TODO
-    # PredicateTagTense
-    # TODO
-    # PredicateTagGrade
-    # TODO
-    # PredicateTagNegation
-    # TODO
-    # PredicateTagVoice
-    # TODO
-    # DepwordTagPos
-    # TODO
-    # DepwordTagSubpos
-    # TODO
-    # DepwordTagGender
-    # TODO
-    # DepwordTagNumber
-    # TODO
-    # DepwordTagCase
-    # TODO
-    # DepwordTagPossgender
-    # TODO
-    # DepwordTagPossnumber
-    # TODO
-    # DepwordTagPerson
-    # TODO
-    # DepwordTagTense
-    # TODO
-    # DepwordTagGrade
-    # TODO
-    # DepwordTagNegation
-    # TODO
-    # DepwordTagVoice
-    # TODO
     # PredicateFamilyship
     # TODO
+   
+    # The following features are not helping, maybe they are too detailed.
+
+    # PredicateTagPos
+    # this feature is already included in feature PredicatePOS
+    # PredicateTagSubpos
+    #push @features, $self->_make_feature('PredicateTagSubpos', substr($predicate->tag, 2, 1));
+    # PredicateTagGender
+    #push @features, $self->_make_feature('PredicateTagGender', substr($predicate->tag, 3, 1));
+    # PredicateTagNumber
+    #push @features, $self->_make_feature('PredicateTagNumber', substr($predicate->tag, 4, 1));
+    # PredicateTagCase
+    #push @features, $self->_make_feature('PredicateTagCase', substr($predicate->tag, 5, 1));
+    # PredicateTagPossgender
+    #push @features, $self->_make_feature('PredicateTagPossgender', substr($predicate->tag, 6, 1));
+    # PredicateTagPossnumber
+    #push @features, $self->_make_feature('PredicateTagPossnumber', substr($predicate->tag, 7, 1));
+    # PredicateTagPerson
+    #push @features, $self->_make_feature('PredicateTagPerson', substr($predicate->tag, 8, 1));
+    # PredicateTagTense
+    #push @features, $self->_make_feature('PredicateTagTense', substr($predicate->tag, 9, 1));
+    # PredicateTagGrade
+    #push @features, $self->_make_feature('PredicateTagGrade', substr($predicate->tag, 10, 1));
+    # PredicateTagNegation
+    #push @features, $self->_make_feature('PredicateTagNegation', substr($predicate->tag, 11, 1));
+    # PredicateTagVoice
+    #push @features, $self->_make_feature('PredicateTagVoice', substr($predicate->tag, 12, 1));
+   
+    # DepwordTagPos
+    # this feature is already included in feature DepwordPOS 
+    # DepwordTagSubpos
+    #push @features, $self->_make_feature('DepwordTagSubpos', substr($depword->tag, 2, 1));
+    # DepwordTagGender
+    #push @features, $self->_make_feature('DepwordTagGender', substr($depword->tag, 3, 1));
+    # DepwordTagNumber
+    #push @features, $self->_make_feature('DepwordTagNumber', substr($depword->tag, 4, 1));
+    # DepwordTagCase
+    #push @features, $self->_make_feature('DepwordTagCase', substr($depword->tag, 5, 1));
+    # DepwordTagPossgender
+    #push @features, $self->_make_feature('DepwordTagPossgender', substr($depword->tag, 6, 1));
+    # DepwordTagPossnumber
+    #push @features, $self->_make_feature('DepwordTagPossnumber', substr($depword->tag, 7, 1));
+    # DepwordTagPerson
+    #push @features, $self->_make_feature('DepwordTagPerson', substr($depword->tag, 8, 1));
+    # DepwordTagTense
+    #push @features, $self->_make_feature('DepwordTagTense', substr($depword->tag, 9, 1));
+    # DepwordTagGrade
+    #push @features, $self->_make_feature('DepwordTagGrade', substr($depword->tag, 10, 1));
+    # DepwordTagNegation
+    #push @features, $self->_make_feature('DepwordTagNegation', substr($depword->tag, 11, 1));
+    # DepwordTagVoice
+    #push @features, $self->_make_feature('DepwordTagVoice', substr($depword->tag, 12, 1));
    
     return join($self->feature_delim, @features);
 }
