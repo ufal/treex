@@ -129,8 +129,6 @@ __END__
 
 Treex::Block::W2W::NormalizeCzechSentence - Modifies Czech sentence in place
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Modify english_source_sentence in place for a better normalization.

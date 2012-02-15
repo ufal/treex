@@ -52,8 +52,6 @@ __END__
 
 Treex::Block::W2A::TokenizeOnWhitespace - Base tokenizer, splits on whitespaces, fills no_space_after
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Each sentence is split into a sequence of tokens.

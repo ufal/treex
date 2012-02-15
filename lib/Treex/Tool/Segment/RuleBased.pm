@@ -100,8 +100,6 @@ __END__
 
 Treex::Tool::Segment::RuleBased - Rule based pseudo language-independent sentence segmenter
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules

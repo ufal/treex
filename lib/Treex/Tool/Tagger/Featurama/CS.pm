@@ -119,8 +119,6 @@ __END__
 
 Treex::Tool::Tagger::Featurama::CS
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Featurama feature set and analysis for Czech

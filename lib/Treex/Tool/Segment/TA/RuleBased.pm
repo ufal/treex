@@ -52,8 +52,6 @@ __END__
 
 Treex::Tool::Segment::TA::RuleBased - rule based sentence segmenter for Tamil
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules

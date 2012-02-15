@@ -87,8 +87,6 @@ __END__
 
 Treex::Tool::Tagger::Featurama::Dummy
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Dummy language for Featurama

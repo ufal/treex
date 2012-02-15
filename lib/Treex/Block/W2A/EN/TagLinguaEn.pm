@@ -160,8 +160,6 @@ __END__
 
 Treex::Block::W2A::EN::TagLinguaEn
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Each node in analytical tree is tagged using C<Lingua::EN::Tagger> (Penn Treebank POS tags).

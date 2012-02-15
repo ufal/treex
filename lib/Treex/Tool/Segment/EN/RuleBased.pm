@@ -30,8 +30,6 @@ __END__
 
 Treex::Tool::Segment::EN::RuleBased - rule based sentence segmenter for English
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules

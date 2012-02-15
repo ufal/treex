@@ -83,8 +83,6 @@ __END__
 
 Treex::Block::W2A::Tokenize - language independent rule based tokenizer
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Each sentence is split into a sequence of tokens using a series of regexs.

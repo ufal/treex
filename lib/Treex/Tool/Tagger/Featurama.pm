@@ -125,8 +125,6 @@ __END__
 
 Treex::Tool::Tagger::Featurama
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Perl wrapper for Featurama implementation of Collins' perceptron algorithm.

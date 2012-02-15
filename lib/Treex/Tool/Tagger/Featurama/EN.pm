@@ -107,8 +107,6 @@ __END__
 
 Treex::Tool::Tagger::Featurama::EN
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 Featurama feature set and analysis for English

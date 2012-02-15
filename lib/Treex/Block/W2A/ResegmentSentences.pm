@@ -106,8 +106,6 @@ TODO POD
 
 Treex::Block::W2A::ResegmentSentences
 
-=head1 VERSION
-
 =head1 DESCRIPTION
 
 If the sentence segmenter says that the current sentence is
