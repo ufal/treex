@@ -214,10 +214,16 @@ sub _usage_format {
 
 #gets info about version of treex and perl
 sub get_version {
-    my $perl_v         = $^V;
-    my $perl_x         = $^X;
-    my $treex_v        = $Treex::Core::Run::VERSION || 'DEV';
-    my $treex_x        = which('treex');
+    my $perl_v  = $^V;
+    my $perl_x  = $^X;
+    my $treex_v = $Treex::Core::Run::VERSION || 'DEV';
+    my $treex_x = which('treex');
+
+    # File::Which::which sometimes fails to found treex.
+    if ( !defined $treex_x ) {
+        chomp( $treex_x = `which treex 2> /dev/null` );
+        $treex_x ||= '<treex not found in $PATH>';
+    }
     my $version_string = <<"VERSIONS";
 Treex version: $treex_v from $treex_x
 Perl version: $perl_v from $perl_x
