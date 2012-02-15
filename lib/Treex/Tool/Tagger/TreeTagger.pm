@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;
 use Treex::Tool::ProcessUtils;
+use Treex::Core::Resource;
 
 has model => ( isa => 'Str', is => 'rw', required => 1 );
 has [qw( _reader _writer _pid )] => ( is => 'rw' );
@@ -10,19 +11,16 @@ has [qw( _reader _writer _pid )] => ( is => 'rw' );
 sub BUILD {
     my ($self) = @_;
 
-    #to be changed
-    use Treex::Core::Resource;
-    Treex::Core::Resource::require_file_from_share(
+    # TODO find architecture independent solution
+    my $executable = require_file_from_share(
         'installed_tools/tagger/tree_tagger/bin/tree-tagger',
         ref($self)
     );
-    my $bindir = Treex::Core::Config->share_dir() . '/installed_tools/tagger/tree_tagger/bin';
-    log_fatal("Missing $bindir\n") if !-d $bindir;
 
-    my $command = "$bindir/tree-tagger -token -lemma -no-unknown " . $self->model . ' 2>/dev/null';
+    my $command = "$executable -token -lemma -no-unknown " . $self->model . ' 2>/dev/null';
 
     # start TreeTagger and load the model
-    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command, ":encoding(utf-8)" );
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command, ':encoding(utf-8)' );
     $self->_set_reader($reader);
     $self->_set_writer($writer);
     $self->_set_pid($pid);

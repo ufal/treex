@@ -14,8 +14,6 @@ sub _build_model {
     my $model = 'data/models/tagger/tree_tagger/' . $self->language . '.par';
     my ($filename) = $self->require_files_from_share($model);
     return $filename;
-
-    #return "$ENV{TMT_ROOT}/share/$model";
 }
 
 sub _build__tagger {
