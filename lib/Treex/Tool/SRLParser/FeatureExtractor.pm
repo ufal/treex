@@ -84,30 +84,63 @@ has '_feature_to_code' => (
                             'PredicateSense+DepwordPOS' => 'P36',
                             'RelationPath' => 'P37',
                             'SiblingsRELNoDup' => 'P38',
+                            'PredicateSiblingsRELNoDup' => 'P38a',
+                            'DepwordSiblingsRELNoDup' => 'P38b',
                             'UpPath' => 'P39',
+                            'PredicateUpPath' => 'P39a',
+                            'DepwordUpPath' => 'P39b',
                             'UpPathLength' => 'P40',
-                            'UpRelationPath+HeadwordLemma' => 'P41',
-                            'PredicatePOS' => 'P42',
-                            'DepwordFeat' => 'P43',
-                            'PredicateFeat' => 'P44',
-                            'Distance' => 'P45',
-                            'PositionToPredicate' => 'P46',
-                            'PredicatePosition' => 'P47',
-                            'DepwordPosition' => 'P48',
-                            'PredicateHeadword' => 'P49',
+                            'PredicateUpPathLength' => 'P41a',
+                            'DepwordUpPathLength' => 'P41b',
+                            'UpRelationPath+HeadwordLemma' => 'P42',
+                            'PredicateUpRelationPath+HeadwordLemma' => 'P42a',
+                            'DepwordUpRelationPath+HeadwordLemma' => 'P42b',
+                            'PredicatePOS' => 'P43',
+                            'DepwordFeat' => 'P44',
+                            'PredicateFeat' => 'P45',
+                            'Distance' => 'P46',
+                            'PositionToPredicate' => 'P47',
+                            'PredicatePosition' => 'P48',
+                            'DepwordPosition' => 'P49',
                             'PredicateHeadword' => 'P50',
-                            'PredicateHeadwordPOS' => 'P51',
-                            'PredicateHeadwordLemma' => 'P52',
-                            'DepwordConstituentFirstWord' => 'P53',
-                            'DepwordConstituentFirstPOS' => 'P54',
-                            'DepwordConstituentFirstLemma' => 'P55',
-                            'DepwordConstituentLastWord' => 'P56',
-                            'DepwordConstituentLastPOS' => 'P57',
-                            'DepwordConstituentLastLemma' => 'P58',
-                            'IsInFrame' => 'P59',
-                            'Frame' => 'P60',
-                            'DepwordAfun' => 'P61',
-                            'PredicateAfun' => 'P62',
+                            'PredicateHeadword' => 'P51',
+                            'PredicateHeadwordPOS' => 'P52',
+                            'PredicateHeadwordLemma' => 'P53',
+                            'DepwordConstituentFirstWord' => 'P54',
+                            'DepwordConstituentFirstPOS' => 'P55',
+                            'DepwordConstituentFirstLemma' => 'P56',
+                            'DepwordConstituentLastWord' => 'P57',
+                            'DepwordConstituentLastPOS' => 'P58',
+                            'DepwordConstituentLastLemma' => 'P59',
+                            'IsInFrame' => 'P60',
+                            'Frame' => 'P61',
+                            'DepwordAfun' => 'P62',
+                            'PredicateAfun' => 'P63',
+                            'PredicateTagPos' => 'P64',
+                            'PredicateTagSubpos' => 'P65',
+                            'PredicateTagGender' => 'P66',
+                            'PredicateTagNumber' => 'P67',
+                            'PredicateTagCase' => 'P68',
+                            'PredicateTagPossgender' => 'P69',
+                            'PredicateTagPossnumber' => 'P70',
+                            'PredicateTagPerson' => 'P71',
+                            'PredicateTagTense' => 'P72',
+                            'PredicateTagGrade' => 'P73',
+                            'PredicateTagNegation' => 'P74',
+                            'PredicateTagVoice' => 'P75',
+                            'DepwordTagPos' => 'P76',
+                            'DepwordTagSubpos' => 'P77',
+                            'DepwordTagGender' => 'P78',
+                            'DepwordTagNumber' => 'P79',
+                            'DepwordTagCase' => 'P80',
+                            'DepwordTagPossgender' => 'P81',
+                            'DepwordTagPossnumber' => 'P82',
+                            'DepwordTagPerson' => 'P83',
+                            'DepwordTagTense' => 'P84',
+                            'DepwordTagGrade' => 'P85',
+                            'DepwordTagNegation' => 'P86',
+                            'DepwordTagVoice' => 'P87',
+                            'PredicateFamilyship' => 'P88',
                         } },
 );
 
@@ -122,16 +155,25 @@ sub extract_features() {
     my $deprel = (($headword) and ($headword->id eq $predicate->id)) ? $depword->afun : $self->empty_sign;
     my @predicate_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
     my @depword_children_pos = map { substr($_->tag, 0, 1) } $predicate->get_children( { ordered => 1, add_self => 0 } );
-    my @path = $self->_find_path($a_root, $predicate, $depword);
+    my @path = $self->_find_path($a_root, $predicate, $depword, 'start_to_end');
+    my @predicate_up_path = $self->_find_path($a_root, $predicate, $depword, 'start_up_path');
+    my @depword_up_path = $self->_find_path($a_root, $predicate, $depword, 'end_up_path');
+    my @predicate_up_pos_path = map { $_->tag ? substr($_->tag, 0, 1) : $self->empty_sign } @predicate_up_path;
+    my @depword_up_pos_path = map { $_->tag ? substr($_->tag, 0, 1) : $self->empty_sign } @depword_up_path;
+
     my $path_length = @path;
     my @pos_path = map { $_->tag ? substr($_->tag, 0, 1) : $self->empty_sign } @path;
     my @rel_path = map { $_->afun } @path;
+    my @predicate_up_rel_path = map { $_->afun } @predicate_up_path;
+    my @depword_up_rel_path = map { $_->afun } @depword_up_path;
     my $distance = abs($predicate->ord - $depword->ord);
     my $ord_diff = $predicate->ord - $depword->ord;
     my $depword_pos = substr($depword->tag, 0, 1);
     my $predicate_pos = substr($predicate->tag, 0, 0);
     my $depword_lemma = $self->_get_short_lemma($depword);
     my $predicate_lemma = $self->_get_short_lemma($predicate);
+    my $predicate_sense = $predicate->lemma;
+    my $familyship = $self->_get_familyship($predicate, $depword);
     # Headword features
     my $headword_pos = $self->empty_sign;
     my $headword_lemma = $self->empty_sign;
@@ -228,6 +270,7 @@ sub extract_features() {
     # DepwordPOS+HeadwordPOS
     push @features, $self->_make_feature('DepwordPOS+HeadwordPOS', ( $depword_pos, $headword_pos) ); 
     # DownPathLength
+    # is actually contained in either PredicateUpPathLength or DepwordUpPathLength
     # FirstLemma
     push @features, $self->_make_feature('FirstLemma', $predicate_first_lemma);
     # FirstPOS
@@ -251,23 +294,45 @@ sub extract_features() {
     # PathLength
     push @features, $self->_make_feature('PathLength', $path_length);
     # PFEATSplit
+    # see features P64 to P87
     # PositionWithPredicate
+    # see feature PositionToPredicate
     # Predicate
     push @features, $self->_make_feature('Predicate', $predicate->form);
     # Predicate+PredicateFamilyship
+    push @features, $self->_make_feature('Predicate+PredicateFamilyship',
+        ( $predicate->form, $familyship ));
     # PredicateLemma
     push @features, $self->_make_feature('PredicateLemma', $predicate_lemma);
     # PredicateLemma+PredicateFamilyship
+    push @features, $self->_make_feature('PredicateLemma+PredicateFamilyship',
+        ( $predicate_lemma, $familyship ));
     # PredicateSense
+    push @features, $self->_make_feature('PredicateSense', $predicate_sense);
     # PredicateSense+DepRelation
+    push @features, $self->_make_feature('PredicateSense+DepRelation', ( $predicate_sense, $deprel ));
     # PredicateSense+DepwordLemma
+    push @features, $self->_make_feature('PredicateSense+DepwordLemma', ($predicate_sense, $depword_lemma));
     # PredicateSense+DepwordPOS
+    push @features, $self->_make_feature('PredicateSense+DepwordPOS', ($predicate_sense, $depword_pos));
     # RelationPath
     push @features, $self->_make_feature('RelationPath', @rel_path);
     # SiblingsRELNoDup
+    push @features, $self->_make_feature('PredicateSiblingsRELNoDup', uniq map { $_->afun } $predicate->get_siblings);
+    push @features, $self->_make_feature('DepwordSiblingsRELNoDup', uniq map { $_->afun } $depword->get_siblings);
     # UpPath
+    push @features, $self->_make_feature('PredicateUpPath', @predicate_up_pos_path);
+    push @features, $self->_make_feature('DepwordUpPath', @depword_up_pos_path);
     # UpPathLength
+    my $predicate_up_path_length = @predicate_up_path;
+    push @features, $self->_make_feature('PredicateUpPathLength', $predicate_up_path_length);
+    my $depword_up_path_length = @depword_up_path;
+    push @features, $self->_make_feature('DepwordUpPathLength', $depword_up_path_length);
     # UpRelationPath+HeadwordLemma
+    push @features, $self->_make_feature('PredicateUpRelationPath+HeadwordLemma',
+        ( @predicate_up_rel_path, $headword_lemma));
+    push @features, $self->_make_feature('DepwordUpRelationPath+HeadwordLemma',
+        ( @depword_up_rel_path, $headword_lemma));
     
     ### My features ###
 
@@ -304,11 +369,63 @@ sub extract_features() {
     # DepwordConstituentLastLemma
     push @features, $self->_make_feature('DepwordConstituentLastLemma', $depword_last_lemma);
     # IsInFrame
+    # TODO
     # Frame
+    # TODO
     # DepwordAfun
     push @features, $self->_make_feature('DepwordAfun', $depword->afun);
     # PredicateAfun
     push @features, $self->_make_feature('PredicateAfun', $predicate->afun);
+    # PredicateTagPos
+    # TODO
+    # PredicateTagSubpos
+    # TODO
+    # PredicateTagGender
+    # TODO
+    # PredicateTagNumber
+    # TODO
+    # PredicateTagCase
+    # TODO
+    # PredicateTagPossgender
+    # TODO
+    # PredicateTagPossnumber
+    # TODO
+    # PredicateTagPerson
+    # TODO
+    # PredicateTagTense
+    # TODO
+    # PredicateTagGrade
+    # TODO
+    # PredicateTagNegation
+    # TODO
+    # PredicateTagVoice
+    # TODO
+    # DepwordTagPos
+    # TODO
+    # DepwordTagSubpos
+    # TODO
+    # DepwordTagGender
+    # TODO
+    # DepwordTagNumber
+    # TODO
+    # DepwordTagCase
+    # TODO
+    # DepwordTagPossgender
+    # TODO
+    # DepwordTagPossnumber
+    # TODO
+    # DepwordTagPerson
+    # TODO
+    # DepwordTagTense
+    # TODO
+    # DepwordTagGrade
+    # TODO
+    # DepwordTagNegation
+    # TODO
+    # DepwordTagVoice
+    # TODO
+    # PredicateFamilyship
+    # TODO
    
     return join($self->feature_delim, @features);
 }
@@ -317,6 +434,18 @@ sub _make_feature() {
     my ( $self, $name, @values ) = @_;
 
     return $self->_feature_to_code->{$name} . $self->value_delim . (@values ? join($self->value_delim, @values) : $self->empty_sign);
+}
+
+sub _get_familyship() {
+    my ( $self, $predicate, $depword ) = @_;
+
+    return 'self' if $predicate->id eq $depword->id;
+    return 'child' if grep { $depword->id eq $_->id } $predicate->get_children;
+    return 'descendant' if grep { $depword->id eq $_->id } $predicate->get_descendants;
+    return 'parent' if grep { $predicate->id eq $_->id } $depword->get_children;
+    return 'ancestor' if grep { $predicate->id eq $_->id } $depword->get_descendants;
+    return 'sibling' if $predicate->get_parent->id eq $depword->get_parent->id;
+    return 'none'
 }
 
 sub _get_short_lemma {
@@ -357,7 +486,7 @@ sub _get_constituent_pos_pattern {
 # The algorithm depends on each a-node having at most one parent
 # and the a-tree having no loops.
 sub _find_path() {
-    my ( $self, $a_root, $start, $end ) = @_;
+    my ( $self, $a_root, $start, $end, $path_type ) = @_;
    
     return ($start) if ($start->id eq $end->id);
 
@@ -388,8 +517,21 @@ sub _find_path() {
     while ((pop @start_up_path)->id ne $common_parent->id) {
     }
 
-    # concatenate paths
-    my @path = (@start_up_path, $common_parent, reverse(@end_up_path)); 
+    my @path;
+    if ($path_type eq 'start_to_end') {
+        # concatenate paths
+        @path = (@start_up_path, $common_parent, reverse(@end_up_path)); 
+    }
+    elsif ($path_type eq 'start_up_path') {
+        @path = @start_up_path;
+    }
+    elsif ($path_type eq 'end_up_path') {
+        @path = @end_up_path;
+    }
+    else {
+        log_fatal('Unknown path type.');
+    }
+
     return @path;
 }
 
