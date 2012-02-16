@@ -68,7 +68,16 @@ The solution can be found in L<Treex::Block::Tutorial::Solution::P2A>.
 
 =head1 DESCRIPTION
 
+This block should convert constituency trees (p-trees) to dependency ones (a-trees).
 Attribute C<is_head> in p-trees must be filled before applying this block.
+You can test the block with
+
+ treex -s -Len Tutorial::MarkHeads Tutorial::P2A -- data/penntb*.mrg
+ ttred data/penntb*.treex.gz
+
+As an additional task you can compare the trees with the PCEDT annotation.
+
+ ttred data/pcedt*.treex.gz
 
 =head1 AUTHOR
 

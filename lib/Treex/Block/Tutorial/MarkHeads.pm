@@ -47,6 +47,10 @@ The solution can be found in L<Treex::Block::Tutorial::Solution::MarkHeads>.
 This block should mark for each constituent in p-trees exactly one of its children
 (terminal or nonterminal) as the head (using C<< $head->set_is_head(1) >>).
 The block should work for PennTB-like annotation (tagset, phrase labels, function labels).
+You can test it with
+
+ treex -s -Len Tutorial::MarkHeads -- data/penntb*.mrg
+ ttred data/penntb*.treex.gz
 
 =head1 HINT 1
 
