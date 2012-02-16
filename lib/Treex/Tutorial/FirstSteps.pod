@@ -106,17 +106,22 @@ C<W2A::EN::Segment> is a descendant of the C<W2A::Segment> base class.
 
 =item Where can I find blocks' source code?
 
-All Treex blocks are stored in C<$TMT_ROOT/treex/lib/Treex/Block/>.
+The blocks are actually Perl modules and if you followed L<Tutorial::Install>
+you can find them in F<~/perl5/lib/perl5/Treex/Block/>.
+Generally, you can find the real location of perl module with C<perldoc -l>.
 The full name of the C<W2A::EN::Segment> module is actually
 C<Treex::Block::W2A::EN::Segment>, but since the prefix C<Treex::Block::>
 is common to all blocks, it is not written in the scenario description.
+So the location of C<W2A::EN::Segment> can be found with
+
+ perldoc -l Treex::Block::W2A::EN::Segment
 
 =item What does the name C<W2A::EN::Segment> mean?
 
 All Treex blocks that do shallow linguistic analysis
 (segmentation, tokenization, lemmatization, PoS tagging, dependency parsing)
 are grouped in a directory C<W2A> (W and A are names of the two layers of
-language description, but this will be explained L<later|TODO>). 
+language description). 
 Language specific blocks are stored in a subdirectory with a uppercase ISO code
 of the given language (C<EN>) in this case.
 

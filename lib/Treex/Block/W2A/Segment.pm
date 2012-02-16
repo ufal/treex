@@ -43,23 +43,53 @@ sub _build_segmenter {
 
 __END__
 
-=over
+=encoding utf8
 
-=item Treex::Block::W2A::Segment
+=head1 NAME
+
+Treex::Block::W2A::Segment - rule based segmentation to sentences
+
+=head1 SYNOPSIS
+
+ # in scenario
+ W2A::Segment use_paragraphs=1 use_lines=0
+
+=head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules
-that detect end-sentence punctuation ([.?!]) followed by a uppercase letter.
+that detect end-sentence punctuation ([.?!]) followed by an uppercase letter.
 This class is implemented in a pseudo language-independent way,
-but it can be used as an ancestor for language-specific segmentation
-by overriding the method C<segment_text>
-(using C<around> see L<Moose::Manual::MethodModifiers>)
-or just by overriding methods C<unbrekers>, C<openings> and C<closings>.
+but it can be used as a base class for language-specific segmentation
+by overriding the method C<get_segments>
+(using C<around> see L<Moose::Manual::MethodModifiers>).
+The actual implementation is delegated to L<Treex::Tool::Segment::RuleBased>.
 
-See L<Treex::Block::W2A::EN::Segment>
+=head1 ATTRIBUTES
 
-=back
+=head2 use_paragraphs
 
-=cut
+Should paragraph boundaries be preserved as sentence boundaries?
+Paragraph boundary is defined as two or more consecutive newlines.
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head2 use_lines
+
+Should newlines in the text be preserved as sentence boundaries?
+However, if you want to detect sentence boundaries just based on newlines
+and nothing else, use rather
+L<W2A::SegmentOnNewlines|Treex::Block::W2A::SegmentOnNewlines>.
+
+=head1 SEE ALSO
+
+L<Treex::Tool::Segment::RuleBased>
+
+L<Treex::Block::W2A::EN::Segment>
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

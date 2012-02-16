@@ -113,7 +113,7 @@ This means that this block (or its derivatives) can be used in this way:
 
 This class detects sentences based on the newlines in the source text,
 but it can be used as an ancestor for more apropriate segmentations
-by overriding the method C<segment_text>.
+by overriding the method C<get_segments>.
 
 =head1 ATTRIBUTES
 
@@ -135,13 +135,15 @@ If none of the previous attributes is set and empty sentence found, fatal is rai
 
 =over 4
 
-=item get_segments()
+=item my @sentences = $self->get_segments($text)
 
-This method produces segments from text given as parameter, can be overriden.
+This method produces a list of segments (sentences) from the given text string.
+This implementation only splits on newlines.
+It is supposed to be overriden in subclasses.
 
-=item normalize_sentence()
+=item my $norm_sentence = $self->normalize_sentence($raw_sentence)
 
-This method does sentence normalization e.g. trims initial and terminal whitespaces.
+This method does sentence normalization, e.g. trims initial and terminal whitespaces.
 
 =back
 
