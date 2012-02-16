@@ -234,8 +234,57 @@ You can also try to use different parsers:
 C<W2A::EN::ParseMST> (the original R. McDonald's implementation),
 or C<W2A::EN::ParseMalt> (use parameter C<memory=1g>),
 but those blocks (and wrappers for the Java implementation) are not released on CPAN yet,
-so if you are not using the preinstalled Treex in SU2, you may need to install the tools first.
+so if you are not using the preinstalled Treex in SU2, you may need to install the parsers first.
 
+=head2 Task 4
+
+Treex native format F<*.treex.gz> is a actually a gzipped XML.
+During the following section on readers and writers,
+look inside the files (C<zless my.treex.gz>.
+Check what happends when lemmatization is added.
+Try to continue in the analysis and add tagging and parsing.
+Visualize the individual steps using TrEd with
+
+ ttred my.treex.gz
+
+=head1 READERS, WRITERS AND TREEX NATIVE FORMAT
+
+So far, we have printed all the results to STDOUT in CoNLLX format.
+You can easily forward the output to a file using a standard redirection,
+but you can also specify the output file with a writer's parameter C<to>.
+
+ echo "John loves Mary" | treex -Len Read::Sentences W2A::EN::TagLinguaEn\
+      Write::CoNLLX to=my.conll
+
+There is a safety check against accidental overwriting files,
+so if you want to overwrite F<my.conll>, you must use C<Write::CoNLLX to=my.conll clobber=1>.
+
+Similarly, you can specify the input files with a reader's parameter C<from>.
+
+ treex -Len Read::CoNLLX from=my.conll Write::Sentences
+
+The parameter C<from> can contain a list of comma or space separated files.
+If a file starts with I<@> character, it is interpreted as a file list
+with one file name per line.
+So you can do e.g.:
+
+ ls data/pcedt*.treex.gz > my.list
+ treex -Len Read::Treex from=@my.list Write::Sentences to=out.txt
+
+For Treex file format (F<*.treex> or F<*.treex.gz>) there is a shortcut,
+which automatically adds the reader to the beginning of the scenario.
+
+ treex -Len Write::Sentences -- data/pcedt*.treex.gz
+
+You can use treex CLI as an format convertor.
+
+ treex -Len Read::CoNLLX from=my.conll Write::Treex to=my.treex.gz
+
+Finally, there is another shortcut, that allows you to modify treex files in situ.
+
+ treex -s -Len W2A::EN::Lemmatize -- my.treex.gz
+ # check that lemmas were added
+ treex -Len -q Write::CoNLLX -- my.treex.gz
 
 =head1 AUTHOR
 
