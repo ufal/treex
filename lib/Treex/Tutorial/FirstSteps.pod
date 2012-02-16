@@ -227,6 +227,15 @@ and change the implementation of C<tokenize_sentence> method.
              W2A::EN::ParseMSTperl\
              Write::CoNLLX
 
+=head2 Task 3
+
+Try to use different taggers and find sentences where different tagging leads to different parsing.
+You can also try to use different parsers:
+C<W2A::EN::ParseMST> (the original R. McDonald's implementation),
+or C<W2A::EN::ParseMalt> (use parameter C<memory=1g>),
+but those blocks (and wrappers for the Java implementation) are not released on CPAN yet,
+so if you are not using the preinstalled Treex in SU2, you may need to install the tools first.
+
 
 =head1 AUTHOR
 
