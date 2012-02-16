@@ -1,6 +1,8 @@
 package Treex::Block::Eval::AddPersPronIt;
 use Moose;
+use utf8;
 use Treex::Core::Common;
+use Treex::Block::Eval::AddPersPronSb;
 extends 'Treex::Core::Block';
 
 my $anaph_path = 'it_anaph.ls';
@@ -43,6 +45,11 @@ sub is_active_present_3_sg {
     }
     return 0;
 }
+
+# MarkClauseHead
+#     if ( $t_node->get_lex_anode && grep { $_->tag =~ /^V[Bpi]/ } $t_node->get_anodes ) {
+#         $t_node->set_is_clause_head(1);
+#     }
 
 sub is_3_sg_neut {
     my ( $t_node ) = @_;
@@ -152,48 +159,96 @@ sub analyze_en {
     close(PLEON);
 }
 
+sub get_en_it_total_sum {
+    my ( $en_tree ) = @_;
+    my $total_sum = 0;
+    foreach my $t_node ( $en_tree->get_descendants ) {
+        if ( grep { $_->form =~ /^[iI][tT]$/ } $t_node->get_anodes
+            and $t_node->t_lemma ne "#PersPron"
+        ) {
+            $total_sum++;
+        }
+    }
+    return $total_sum;
+}
+
+sub en_has_ACT {
+    my ($verb, $t_node, $it) = @_;
+    return (
+        ($verb->gram_sempos || "") eq "v"
+#         $verb->get_lex_anode and $verb->get_lex_anode->tag =~ /^V/
+        and grep { $_->functor eq "ACT"
+            and $_ ne $t_node
+            and not $_->is_generated
+        } $verb->get_echildren( { or_topological => 1} )
+        and $it->afun eq "Sb"
+    ) ? 1 : 0;
+}
+
+sub en_has_PAT {
+    my ($verb, $t_node, $it) = @_;
+    return (
+        $verb->get_lex_anode and $verb->get_lex_anode->tag eq "VBN"
+        and grep { $_->functor eq "PAT"
+            and $_ ne $t_node
+            and not $_->is_generated
+        } $verb->get_echildren( { or_topological => 1} )
+        and $it->afun eq "Sb"
+    ) ? 1 : 0;
+}
+
+sub make_it_to {
+    my ($verb, $t_node, $it) = @_;
+    return (
+        $verb->t_lemma eq "make"
+        and grep { $_->functor eq "PAT"
+            and $_ ne $t_node
+            and not $_->is_generated
+        } $verb->get_echildren( { or_topological => 1} )
+    ) ? 1 : 0;
+}
+
 sub test_it_en {
     my ( $en_tree ) = @_;
     foreach my $t_node ( $en_tree->get_descendants ) {
         my ($it) = grep { $_->form =~ /^[iI][tT]$/ } $t_node->get_anodes;
+        my ($b_total, $b_eval) = (0, 0);
         if ( $it ) {
             my $verb;
             if ( $t_node->t_lemma ne "#PersPron" ) {
                 $verb = $t_node;
                 $total_sum++;
+                $b_total = 1;
             }
             else {
                 ($verb) = $t_node->get_eparents( { or_topological => 1} );
             }
-            if ( $verb
-                and grep { $_->functor eq "ACT"
-                    and $_ ne $t_node
-                    and not $_->is_generated
-                } $verb->get_echildren( { or_topological => 1} )
-                and $it->afun eq "Sb"
+            if ( $verb 
+                and ( en_has_ACT($verb, $t_node, $it)
+                    or en_has_PAT($verb, $t_node, $it)
+                    or make_it_to($verb, $t_node, $it) )
+#                 and grep { $_->functor eq "ACT"
+#                     and $_ ne $t_node
+#                     and not $_->is_generated
+#                 } $verb->get_echildren( { or_topological => 1} )
+#                 and $it->afun eq "Sb"
             ) {
-#                 if ( grep { $_->functor eq "ACT" and $_ ne $t_node and not $_->is_generated} @verb_echildren
-#                 and grep { $_->functor eq "PAT" and $_ ne $t_node } @verb_echildren ) {
 # #                     There is a pleonastic "it"
                 $eval_sum++;
+                $b_eval = 1;
                 if ( $t_node->t_lemma ne "#PersPron" ) {
                     $correct_sum++;
                 }
                 else {
-                    print $t_node->get_address . "\n";
+#                     print $t_node->get_address . "\n";
                 }
+            }
+            if ( $b_total and not $b_eval ) {
+#                 print $t_node->get_address . "\n";
             }
         }
     }
-}
-
-# returns 1 if the given node is a reflexive passivum
-sub is_refl_pass {
-    my ($t_node) = @_;
-    foreach my $anode ( $t_node->get_anodes ) {
-        return 1 if ( grep { $_->afun eq "AuxR" and $_->form eq "se" } $anode->children );
-    }
-    return 0;
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
 
 # returns 1 if the given node is a passive verb
@@ -235,12 +290,11 @@ sub analyze_cs {
         grep { 
             ($_->gram_sempos || "") eq "v"
             and is_3_sg_neut($_)
+            and not $_->is_generated
         } $cs_tree->get_descendants
     ) {
 #         pleonastic it
-        if ( not is_passive_having_PAT($cand_verb)
-            and not is_active_having_ACT($cand_verb)
-        ) {
+        if ( not Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
             print PLEON_CS $cand_verb->get_address . "\n";
         }
         else {
@@ -253,6 +307,22 @@ sub analyze_cs {
             }
         }
     }
+# #         pleonastic it
+#         if ( not is_passive_having_PAT($cand_verb)
+#             and not is_active_having_ACT($cand_verb)
+#         ) {
+#             print PLEON_CS $cand_verb->get_address . "\n";
+#         }
+#         else {
+#             my ( $perspron ) = grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $cand_verb->get_echildren( { or_topological => 1 } );
+#             if ( $perspron and $perspron->get_coref_nodes > 0 ) {
+#                 print ANAPH_CS $perspron->get_address . "\n";
+#             }
+#             elsif ( $perspron ){
+#                 print NON_ANAPH_CS $perspron->get_address . "\n";
+#             }
+#         }
+#     }
 #     foreach my $cand_verb ( 
 #         grep { 
 #             ($_->gram_sempos || "") eq "v"
@@ -281,64 +351,152 @@ sub analyze_cs {
     close(PLEON_CS);
 }
 
-sub process_bundle {
-    my ( $self, $bundle ) = @_;
-    my $en_tree = $bundle->get_zone('en')->get_ttree;
-    my $cs_tree = $bundle->get_zone('cs')->get_ttree;
-#     analyze_en($en_tree);
-    analyze_cs($cs_tree);
-#     test_it_en($en_tree);
-# #     my %autom2gold_node;
-# #     my $gold_tree = $bundle->get_zone('cs', 'ref')->get_ttree;
-# #     my $autom_tree = $bundle->get_zone('cs', 'src')->get_ttree;
-# #     foreach my $gold_node ( $gold_tree->get_descendants ) {
-# #         my $autom_node = get_aligned_node($gold_node);
-# #         $autom2gold_node{$autom_node} = $gold_node if ( $autom_node );
-# #     }
-#     my @predicted_verbs;
-#     $total_sum += get_total_sum($gold_tree);
-#     foreach my $cand_verb ( grep {
-#             $_->is_clause_head
-#             and not is_passive_having_PAT($_)
-#             and not is_active_having_ACT($_)
-#             and not is_GEN($_)
-#             and not is_IMPERS($_)
-#             and not has_subject($_)
-#         } $autom_tree->get_descendants )
-#     {
-#         $eval_sum++;
-#         push @predicted_verbs, $cand_verb;
-#         my $gold_verb = get_aligned_node($cand_verb);
-# #         my $gold_verb = $autom2gold_node{$cand_verb};
-#         if ( $gold_verb ) {
-# #             in golden data are constructions "jsem presvedcen" annotated as "byt"->"presvedceny"; in automatic data as "presvedcit"
-#             if ( $gold_verb->gram_sempos =~ /^adj\.denot/ ) {
-#                 my ($epar) = $gold_verb->get_eparents( { or_topological => 1 } );
-#                 $gold_verb = $epar if ( $epar and $epar->t_lemma eq "být" );
+sub test_it_cs {
+    my ( $cs_tree ) = @_;
+
+    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
+#     $total_sum += Treex::Block::Eval::AddPersPronSb::get_total_sum($cs_tree);
+    
+    foreach my $cand_verb (
+        grep { 
+            ($_->gram_sempos || "") eq "v"
+            and is_3_sg_neut($_)
+            and not $_->is_generated
+        } $cs_tree->get_descendants
+    ) {
+        if ( Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb) ) {
+            $eval_sum++;
+            if ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $cand_verb->get_echildren ( { or_topological => 1 } ) ) {
+                $correct_sum++;
+            }
+            else {
+#                 print $cand_verb->get_address . "\n";
+            }
+        }
+        elsif ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+#             print $cand_verb->get_address . "\n";
+        }
+    }
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
+}
+
+sub get_aligned_node {
+    my ( $t_node ) = @_;
+    my ($aligned, $types) = $t_node->get_aligned_nodes;
+    if ( $types ) {
+        my $i;
+        for ( $i = 0; $i < @{$types}; $i++ ) {
+            last if ( $types->[$i] eq "monolingual" );
+        }
+        return $aligned->[$i];
+    }
+    return undef;
+}
+
+sub get_opposite_links {
+    my ( $src_tree, $ref_tree ) = @_;
+    my %ref2src_node;
+    foreach my $src_node ( $src_tree->get_descendants ) {
+        my $ref_node = get_aligned_node($src_node);
+        $ref2src_node{$ref_node} = $src_node if ( $ref_node );
+    }
+    return %ref2src_node;
+}
+
+sub test_en_it_linked {
+    my ( $gold_tree, $autom_tree ) = @_;
+    my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
+    
+    $total_sum += get_en_it_total_sum($gold_tree);
+#     foreach my $t_node ( $gold_tree->get_descendants ) {
+#         my ($a_it) = grep { $_->form =~ /^[iI][tT]$/ } $t_node->get_anodes;
+#         if ( $a_it and $t_node->t_lemma ne "#PersPron" ) {
+#             my $cs_node = get_aligned_node($t_node);
+#             my $verb;
+#             if ( $cs_node and $cs_node->t_lemma ne "#PersPron" ) {
+#                 $verb = $cs_node;
+# #                 $total_sum++;
 #             }
-#             if ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $gold_verb->get_echildren ( { or_topological => 1 } ) ) {
-#                 $correct_sum++;
-#             }
-#             elsif ( is_in_coord($gold_verb) ) {
-#             }
-#     #         DEBUG TODO Pr. Formed hradi, kdezto nehradi: v gold plati Formed pro oba hradit, v autom jen jednou, podruhe bude PersPron a je to spravne!
 #             else {
-# #                 print $cand_verb->get_address . "\n";
-# #                 print $cand_verb->t_lemma . "\n";
-# #                 print "GEN: " . is_GEN($cand_verb) . "\n";
+#                 ($verb) = $cs_node->get_eparents( { or_topological => 1} );
 #             }
+#             if ( $verb
+#                 and grep { $_->functor eq "ACT"
+#                     and $_ ne $cs_node
+#                     and not $_->is_generated
+#                     } $verb->get_echildren( { or_topological => 1} )
+#                 and $a_it->afun eq "Sb"
+#             ) {
+#                 print $cs_node->get_address . "\n";
+#             }
+#             
+# #             print $t_node->get_address . "\n";
 #         }
 #     }
-# # #     DEBUG
-# #     foreach my $gold_verb ( grep { $_->is_clause_head } $gold_tree->get_descendants ) {
-# #         if ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $gold_verb->get_echildren( { or_topological => 1 } ) ) {
-# #             my $autom_verb = get_aligned_node($gold_verb);
-# #             if ( not grep { $_ eq $autom_verb } @predicted_verbs ) {
-# #                 print $gold_verb->get_address . "\n";
-# #             }
-# #         }
-# #     }
-#     print "$correct_sum\t$eval_sum\t$total_sum\n";
+    foreach my $t_node ( $autom_tree->get_descendants ) {
+        my ($a_it) = grep { $_->form =~ /^[iI][tT]$/ } $t_node->get_anodes;
+        if ( $a_it ) {
+            my $verb;
+            if ( $t_node->t_lemma ne "#PersPron" ) {
+                $verb = $t_node;
+#                 $total_sum++;
+            }
+            else {
+                ($verb) = $t_node->get_eparents( { or_topological => 1} );
+            }
+            if ( $verb
+                and grep { $_->functor eq "ACT"
+                    and $_ ne $t_node
+                    and not $_->is_generated
+                    } $verb->get_echildren( { or_topological => 1} )
+                and $a_it->afun eq "Sb"
+            ) {
+# #                     There is a pleonastic "it"
+                $eval_sum++;
+#                 print $verb->get_address . "\n";
+#                 print $verb->t_lemma . "\n";
+#                 print join "\t", map { $_->form } $verb->get_anodes;
+#                 print "\n";
+#                 print joing "\t", map { $_->t_lemma } $verb->get_echildren;
+#                 print "\n";
+                my $gold_verb = $autom2gold_node{$verb};
+                if ( $gold_verb and grep { $_->form =~ /^[iI][tT]$/ } $gold_verb->get_anodes ) {
+                    $correct_sum++;
+#                     print $verb->get_address . "\n";
+                }
+                else {
+#                     print $t_node->get_address . "\n";
+                }
+            }
+        }
+    }
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
+}
+
+# process PCEDT 2.0 linked manually and automatically annotated data
+sub process_bundle_linked {
+    my ( $self, $bundle ) = @_;
+
+    my $gold_cs_tree = $bundle->get_zone('cs', 'ref')->get_ttree;
+    my $autom_cs_tree = $bundle->get_zone('cs', 'src')->get_ttree;
+    my $gold_en_tree = $bundle->get_zone('en', 'ref')->get_ttree;
+    my $autom_en_tree = $bundle->get_zone('en', 'src')->get_ttree;
+
+#     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
+    test_en_it_linked($gold_en_tree, $autom_en_tree);
+}
+
+# process PCEDT 2.0 manually annotated data
+sub process_bundle {
+    my ( $self, $bundle ) = @_;
+
+    my $en_tree = $bundle->get_zone('en')->get_ttree;
+    my $cs_tree = $bundle->get_zone('cs')->get_ttree;
+
+#     analyze_en($en_tree);
+#     analyze_cs($cs_tree);
+    test_it_en($en_tree);
+#     test_it_cs($cs_tree);
 }
 
 1;

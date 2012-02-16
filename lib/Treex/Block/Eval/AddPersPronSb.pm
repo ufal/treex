@@ -1,5 +1,6 @@
 package Treex::Block::Eval::AddPersPronSb;
 use Moose;
+use utf8;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
@@ -9,7 +10,10 @@ my $impersonal_verbs = 'jednat_se|pršet|zdát_se|dařit_se|oteplovat_se|ochladi
 sub is_refl_pass {
     my ($t_node) = @_;
     foreach my $anode ( $t_node->get_anodes ) {
-        return 1 if ( grep { $_->afun eq "AuxR" and $_->form eq "se" } $anode->children );
+        if ( grep { $_->afun =~ /^Aux[RT]$/ and $_->form eq "se" } $anode->children
+            and $t_node->t_lemma !~ /[_]se$/ ) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -41,10 +45,18 @@ sub is_active_having_ACT {
 }
 
 sub is_byt_videt {
-    my ($t_node) = @_;
-    my ($epar) = $t_node->get_eparents( { or_topological => 1 } ) if ( $t_node );
+    my ( $t_node ) = @_;
     return ( $t_node->t_lemma eq "být"
         and grep { $_->t_lemma =~ /^(vidět|slyšet|cítit)$/ } $t_node->get_echildren( { or_topological => 1 } )
+    ) ? 1 : 0;
+}
+
+# returns 1 if the given node is lze/byt mozny/byt nutny
+sub is_byt_mozny {
+    my ( $t_node ) = @_;
+    return ( $t_node->t_lemma eq "lze"
+        or ( $t_node->t_lemma eq "být"
+            and grep { $_->t_lemma =~ /^(možný|nutný)$/ } $t_node->get_echildren( { or_topological => 1 } ) )
     ) ? 1 : 0;
 }
 
@@ -73,6 +85,7 @@ sub is_active_present_3_sg {
 sub is_GEN {
     my ( $t_node ) = @_;
     return ( is_byt_videt($t_node)
+        or is_byt_mozny($t_node)
         or has_o_ending($t_node)
         or (is_refl_pass($t_node) and is_active_present_3_sg($t_node))
     ) ? 1 : 0;
@@ -110,10 +123,17 @@ sub has_asubject {
         return 1 if ( grep { $_->afun eq "Sb" } $averb->children );
         my ($acoord) = grep { $_->afun eq "Coord" } $averb->children;
         if ( $acoord ) {
-            return 1 if ( grep { $_->afun eq "Sb" } $acoord->children );
+            return 1 if ( grep { $_->afun =~ /^Sb/ } $acoord->children );
         }
     }
     return 0;
+}
+
+sub is_clause_head {
+    my ( $t_node ) = @_;
+    return ( $t_node->get_lex_anode 
+        and grep { $_->tag =~ /^V[Bpi]/ } $t_node->get_anodes
+    ) ? 1 : 0;
 }
 
 # error in adding functor, the predicate of the subject subordinate clause has PAT functor
@@ -122,7 +142,7 @@ sub has_sb_clause {
     return ( grep { $_->functor eq "PAT"
             and ($_->gram_sempos || "") eq "v"
             and not $_->is_generated
-            and $_->get_lex_anode->tag =~ /^Vs/
+            and is_clause_head($_)
         } $t_node->get_echildren ( { or_topological => 1 } )
     ) ? 1 : 0;
 }
@@ -159,13 +179,47 @@ sub get_total_sum {
     foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $gold_tree->get_descendants ) {
         my @eparents = grep { ($_->gram_sempos || "" ) eq "v" } $perspron->get_eparents ( { or_topological => 1 } );
         if ( @eparents > 0 ) {
-            if ( ( is_passive($eparents[0]) and $perspron->functor eq "PAT" )
-                or not is_passive($eparents[0]) and $perspron->functor eq "ACT" ) {
+            my $epar = $eparents[0];
+            if ( ( $epar->is_clause_head or is_clause_head($epar) )
+                and not $epar->is_generated
+                and not has_subject($epar)
+                and ( ( is_passive($epar) and $perspron->functor eq "PAT" )
+                    or ( not is_passive($epar) and $perspron->functor eq "ACT" ) )
+                and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } $epar->get_echildren ( { or_topological => 1 } )
+            ) {
                 $total_sum += @eparents;
             }
         }
     }
     return $total_sum;
+}
+
+sub has_unexpressed_sb {
+    my ( $t_node ) = @_;
+    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $t_node->get_echildren ( { or_topological => 1 } ) ) {
+        if ( ( $t_node->is_clause_head or is_clause_head($t_node) )
+            and not $t_node->is_generated
+            and not has_subject($t_node)
+            and ( ( is_passive($t_node) and $perspron->functor eq "PAT" )
+                or ( not is_passive($t_node) and $perspron->functor eq "ACT" ) )
+            and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } $t_node->get_echildren ( { or_topological => 1 } ) 
+        ) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+# returns 1 if the given candidate verb - clause head will be given a generated #PersPron node as an unexpressed subject
+sub will_have_perspron {
+    my ( $cand_verb ) = @_;
+    return (
+        not is_passive_having_PAT($cand_verb)
+        and not is_active_having_ACT($cand_verb)
+        and not is_GEN($cand_verb)
+        and not is_IMPERS($cand_verb)
+        and not has_subject($cand_verb)
+    ) ? 1 : 0;
 }
 
 sub process_bundle {
