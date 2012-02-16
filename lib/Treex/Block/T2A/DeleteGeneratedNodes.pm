@@ -379,7 +379,7 @@ sub _mark_for_removal {
             if ( !$aux_backup || $anode->is_root ) {
                 log_warn( 'Losing aux-rf: ' . $to_remove->id . ' and ' . $anode->id . ( $anode->is_root ? ' (ROOT!)' : '' ) );
             }
-            else {                
+            else {
                 $aux_backup->add_aux_anodes($anode);
             }
         }
@@ -555,7 +555,8 @@ sub _merge_coord_members {
                 $non_gen[0]->set_parent( $tnode->get_parent()->get_parent() );
 
                 # rehang non-member siblings to the one non-generated member
-                map { $_->set_parent( $non_gen[0] ) } grep { !$_->is_member } $tnode->get_siblings();
+                # (skip atomic -- CM and RHEM -- nodes that belong to the coordination)
+                map { $_->set_parent( $non_gen[0] ) } grep { !$_->is_member && $_->nodetype ne 'atom' } $tnode->get_siblings();
 
                 # move the coordination under the non-generated member
                 $tnode->get_parent->set_is_member();
