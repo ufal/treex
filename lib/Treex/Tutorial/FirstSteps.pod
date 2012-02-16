@@ -17,7 +17,7 @@ A sequence of blocks is called C<scenario> and it can describe end-to-end NLP
 application, e.g. machine translation or preprocessing of a parallel treebank. 
 
 Treex applications can be executed from Perl.
-However, in this tutorial we'll start with the command line interface C<treex>.
+However, usually they are executed using the command line interface C<treex>.
 
 =head1 HELLO WORLD
 
@@ -138,7 +138,20 @@ L<Treex::Block::W2A::Segment>,
 L<Treex::Block::W2A::SegmentOnNewlines>, and
 L<Treex::Block::W2A::ResegmentSentences>.
 
+=head2 Task 1:
+
+You have an input plain text (e.g. F<data/news.txt>)
+where each paragraph (including headlines)
+is on a separate line. Load this file into Treex and print one sentence per line.
+Note that headlines do not end with a fullstop,
+but they should be treated as separated sentences
+
+HINT: See documentation of L<Treex::Block::W2A::Segment>.
+
+
 =head1 TOKENIZATION, LEMMATIZATION, TAGGING
+
+Try these scenarios and check the differences:
 
  echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences W2A::TokenizeOnWhitespace Write::CoNLLX
@@ -150,16 +163,36 @@ L<Treex::Block::W2A::ResegmentSentences>.
   treex -Len Read::Sentences W2A::EN::Tokenize Write::CoNLLX
 
  echo "Mr. Brown, we'll start tagging." |\
+  treex -Len Read::Sentences W2A::EN::TagLinguaEn Write::CoNLLX
+
+Now, the fourth column in CoNLLX format contains PoS (part-of-speech) tags,
+but the tokenization is different than with C<W2A::EN::Tokenize>.
+The reason is that L<W2A::EN::TagLinguaEn|Treex::Block::W2A::EN::TagLinguaEn>
+is actually a thin wrapper for a popular Perl module L<Lingua::EN::Tagger>,
+which does tokenization and tagging in one step.
+
+We can try another tagger which is better suited for the modularity idea.
+Note that C<W2A::TagTreeTagger> was not released on CPAN yet
+(it is a wrapper for a binary of L<TreeTagger|http://www.ims.uni-stuttgart.de/projekte/corplex/TreeTagger>),
+and to use Featurama tagger you must first install it as described in L<the Installation Guide|Treex::Tutorial::Install/6. Install Featurama tagger>.
+
+ echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences\
              W2A::EN::Tokenize\
              W2A::TagTreeTagger\
              W2A::EN::Lemmatize\
              Write::CoNLLX
 
+Now, the third column contains lemmas, but the tags are not from the standard PennTB tagset.
+As a result, also the lemmas for proper nouns are lowercased
+(because L<W2A::EN::Lemmatize|Treex::Block::W2A::EN::Lemmatize> expect I<NNP> tag for proper nouns).
+For English and Czech, Treex offers a pre-trained model for a high-quality L<Featurama|http://featurama.sourceforge.net/> tagger.
+For many other languages, there are pre-trained TreeTagger models.
+
  echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences\
              W2A::EN::Tokenize\
-             W2A::EN::TagMorce\
+             W2A::TagFeaturama\
              W2A::EN::Lemmatize\
              Write::CoNLLX
 
@@ -172,19 +205,13 @@ L<Treex::Block::W2A::ResegmentSentences>.
  echo "Je suis desolée" |\
   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
  echo "Bohužel jsem tento tutorial nedokončil." |\
-  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorce Write::CoNLLX
+  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::TagFeaturama Write::CoNLLX
+
+If you suceeded to install Morče tagger, you can substitute C<W2A::TagFeaturama>
+with C<W2A::EN::TagMorce> or C<W2A::CS:TagMorce>.
 
 =head1 TASKS
 
-=head2 Task1:
-
-You have an input plain text (TODO: add paragraphs_sample.txt)
-where each paragraph (including headlines)
-is on a separate line. Load this file into Treex and print one sentence per line.
-Note that headlines do not end with a fullstop,
-but they should be treated as separated sentences
-
-HINT: See documentation of L<Treex::Block::W2A::Segment>.
 
 =head1 AUTHOR
 
@@ -192,6 +219,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

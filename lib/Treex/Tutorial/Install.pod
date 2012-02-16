@@ -6,7 +6,7 @@ package Treex::Tutorial::Install;
 
 =head1 NAME
 
-Treex::Tutorial::Install - Installing the Treex NLP framework
+Treex::Tutorial::Install - Installation Guide for the Treex NLP framework
 
 =head1 FOR CLARA 2012 TUTORIAL
 
@@ -80,7 +80,7 @@ C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev pat
  export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
  export TMT_ROOT=$HOME/.treex
 
-=item 6. Install Featurama tagger
+=item 6. Install Featurama tagger (optional)
 
  wget http://www.ms.mff.cuni.cz/~kraut6am/featurama/featurama-1.0.tar.gz
  tar -zxf featurama-1.0.tar.gz

@@ -76,7 +76,7 @@ Treex::Block::W2A::EN::FixTokenization - fix some issues in output of tokenizer
 
 Some abbreviations (with periods) are merged into one token.
 For example I<"e. g."> is in Penn Treebank one token (with tag FW).
-Using only L<SEnglishW_to_SEnglishM::Penn_style_tokenization>
+Using only L<Treex::Block::W2A::EN::Tokenize>
 we get four tokens: I<e . g .> which may be distributed by the parser
 into different clauses. And this is hard to fix afterwards.
 
