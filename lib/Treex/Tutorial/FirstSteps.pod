@@ -138,7 +138,7 @@ L<Treex::Block::W2A::Segment>,
 L<Treex::Block::W2A::SegmentOnNewlines>, and
 L<Treex::Block::W2A::ResegmentSentences>.
 
-=head2 Task 1:
+=head2 Task 1
 
 You have an input plain text (e.g. F<data/news.txt>)
 where each paragraph (including headlines)
@@ -147,7 +147,6 @@ Note that headlines do not end with a fullstop,
 but they should be treated as separated sentences
 
 HINT: See documentation of L<Treex::Block::W2A::Segment>.
-
 
 =head1 TOKENIZATION, LEMMATIZATION, TAGGING
 
@@ -210,7 +209,23 @@ For many other languages, there are pre-trained TreeTagger models.
 If you suceeded to install Morče tagger, you can substitute C<W2A::TagFeaturama>
 with C<W2A::EN::TagMorce> or C<W2A::CS:TagMorce>.
 
-=head1 TASKS
+=head2 Bonus Task 2
+
+Implement a rule-based (or statistical if you dare) tokenizer for a language of your choice.
+We will be happy to give you write permission to Treex SVN, so you can commit the block.
+
+HINT: Find the source code of L<W2A::EN::Tokenize|Treex::Block::W2A::EN::Tokenize>,
+copy it to F<W2A/XY/Tokenize.pm> (substitute XY for the uppercased ISO code of your language),
+and change the implementation of C<tokenize_sentence> method.
+
+=head1 DEPENDENCY PARSING
+
+ echo "John loves Mary" |\
+  treex -Len Read::Sentences\
+             W2A::EN::TagLinguaEn\
+             W2A::EN::Lemmatize\
+             W2A::EN::ParseMSTperl\
+             Write::CoNLLX
 
 
 =head1 AUTHOR
