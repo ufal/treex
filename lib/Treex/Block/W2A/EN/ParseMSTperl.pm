@@ -2,8 +2,8 @@ package Treex::Block::W2A::EN::ParseMSTperl;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'conll_2007_small' );
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/en" );
+has '+model_name' => ( default => 'conll_2007_small' );
+has '+model_dir' => ( default => 'data/models/parser/mst_perl/en' );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
@@ -28,7 +28,16 @@ Treex::Block::W2A::EN::ParseMSTperl
 
 MST parser adjusted to parsing English sentences.
 Just a lightweight wrapper for
-L<Treex::Block::W2A::ParseMSTperl> which is the parser itself.
+L<Treex::Block::W2A::ParseMSTperl> which is base clase.
+This class just sets the English model C<conll_2007_small> as the default
+and defines a method for obtaining coarse-grained PoS tags
+(first two characters of PennTB-like tags).
+
+=head1 SEE ALSO
+
+L<Treex::Block::W2A::ParseMSTperl>
+
+L<Treex::Tool::Parser::MSTperl::Parser>
 
 =head1 COPYRIGHT
 

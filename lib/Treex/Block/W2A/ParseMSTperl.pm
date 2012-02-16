@@ -23,13 +23,13 @@ has 'model_from_share' => (
 has 'model_name' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'conll_2007_small',
+    required => 1,
 );
 
 has 'model_dir' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'data/models/parser/mst_perl/en',
+    default => 'data/models/parser/mst_perl',
 );
 
 has 'model_gz' => (

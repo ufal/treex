@@ -41,18 +41,27 @@ override 'tokenize_sentence' => sub {
 
 __END__
 
-=over
+=encoding utf8
 
-=item Treex::Block::W2A::EN::Tokenize
+=head1 NAME
+
+Treex::Block::W2A::EN::Tokenize - rule-based tokenization
+
+=head1 DESCRIPTION
 
 Each sentence is split into a sequence of tokens using a series of regexs.
 Flat a-tree is built and attributes C<no_space_after> are filled.
-This class uses English specific regex rules for tokenization
+This class uses English specific regex rules (insipred by PennTB) for tokenization
 of contractions like I<He's, we'll, they've, don't> etc.
 
-=back
+=head1 AUTHORS
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# Copyright 2011 David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

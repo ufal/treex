@@ -33,19 +33,28 @@ override 'tokenize_sentence' => sub {
 
 __END__
 
-=over
+=encoding utf8
 
-=item Treex::Block::W2A::FR::Tokenize
+=head1 NAME
 
+Treex::Block::W2A::FR::Tokenize - rule-based tokenization
+
+=head1 DESCRIPTION
+
+Each sentence is split into a sequence of tokens using a series of regexs.
+Flat a-tree is built and attributes C<no_space_after> are filled.
 This class uses French specific regex rules for tokenization
-of contractions like <l'homme, d'un, they've, don't, etc> and 
-constructions with hyphen-minus/dash like <ai-je, a-t-elle, aime-moi, etc> 
+of contractions like <l'homme, d'un> etc. and 
+constructions with hyphen-minus/dash like <ai-je, a-t-elle, aime-moi> etc.
 
 The output is suitable for TreeTagger. 
 
-=back
+=head1 AUTHOR
 
-=cut
+Ivan Šmilauer
 
-# Copyright 2011 David Marecek, Martin Popel, Ivan Šmilauer
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
