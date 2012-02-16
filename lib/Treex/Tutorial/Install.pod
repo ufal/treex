@@ -361,12 +361,6 @@ After you downloaded and unpacked the package, compile it and install.
  ./configure --prefix=$HOME/perl5 --enable-perl && make && make install
  popd
 
-You may optionally remove the downloaded package and installation directory.
-
- rm -rf featurama-1.0.tar.gz featurama-1.0
-
-
-
 =head1 Uninstall
 
 Although there is no standardized way to uninstall Perl modules,
