@@ -1,26 +1,25 @@
 package Treex::Tool::Stemmer::TA::Simple;
-use Moose;
-use Treex::Core::Common;
 use utf8;
+use Moose;
+use autodie;
+use Treex::Core::Common;
+use Treex::Core::Resource;
 
-my $verb_suffixes_file =
-  "$ENV{'TMT_ROOT'}/share/data/models/simple_stemmer/ta/verb_suffixes.txt";
-my $noun_suffixes_file =
-  "$ENV{'TMT_ROOT'}/share/data/models/simple_stemmer/ta/noun_suffixes.txt";
+my $data_dir = 'data/models/simple_stemmer/ta';
+my $verb_suffixes_file = require_file_from_share("$data_dir/verb_suffixes.txt");
+my $noun_suffixes_file = require_file_from_share("$data_dir/noun_suffixes.txt");
 
 # load verb suffixes
-print STDERR "Loading Tamil verb suffixes:\t\t";
+log_info 'Loading Tamil verb suffixes...';
 our %verb_suffixes = load_suffixes($verb_suffixes_file);
 my @suff = keys %verb_suffixes;
 our @verb_suffixes_sorted = sort_hash_keys_by_length( \@suff );
-print STDERR "Done\n";
 
 # load noun suffixes
-print STDERR "Loading Tamil noun suffixes:\t\t";
+log_info "Loading Tamil noun suffixes...";
 our %noun_suffixes = load_suffixes($noun_suffixes_file);
 @suff = keys %noun_suffixes;
 our @noun_suffixes_sorted = sort_hash_keys_by_length( \@suff );
-print STDERR "Done\n";
 
 # clitics {TAn, E, O, A, um}
 our $clitics = q{TAn};
@@ -37,9 +36,9 @@ munpu|munpE|muTal|paRRi|pOnRa|varai|Akac|Akak|Akap|anRu|aRRa|inRi|itam|kIzE|mElE
 sub load_suffixes {
     my $file = shift;
     my %suffix_hash;
-    open( RHANDLE, "<", $file ) or die "Error: cannot open file $file\n";
-    my @data = <RHANDLE>;
-    close RHANDLE;
+    open( my $RHANDLE, '<', $file );
+    my @data = <$RHANDLE>;
+    close $RHANDLE;
     foreach my $line (@data) {
         chomp $line;
         $line =~ s/(^\s+|\s+$)//;
@@ -173,56 +172,11 @@ sub restore_sentence {
     return $restored_sentence;
 }
 
-sub stem_document {
-    my ( $infile, $outfile ) = @_;
-    open( RHANDLE, "<", $infile ) or die "Error: cannot open file $infile\n";
-    my @data = <RHANDLE>;
-    my $size = scalar(@data);
-    close RHANDLE;
-    print "\n\n";
-
-    $| = 1;
-    open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
-    foreach my $i ( 0 .. $#data ) {
-        my $out = sprintf(
-            "Morph splitting progress = [%08d / %08d] sentences completed",
-            ( $i + 1 ), $size );
-        print $out;
-        print WHANDLE Treex::Tool::Stemmer::TA::Simple::stem_sentence(
-            $data[$i] )
-          . "\n";
-        print "\r";
-    }
-    close WHANDLE;
-}
-
-sub restore_document {
-    my ( $infile, $outfile ) = @_;
-    open( RHANDLE, "<", $infile ) or die "Error: cannot open file $infile\n";
-    my @data = <RHANDLE>;
-    my $size = scalar(@data);
-    close RHANDLE;
-
-    $| = 1;
-    open( WHANDLE, ">", $outfile ) or die "Error: cannot open file $outfile\n";
-    foreach my $i ( 0 .. $#data ) {
-        my $out = sprintf(
-            "Restoring document progress = [%08d / %08d] sentences completed",
-            ( $i + 1 ), $size );
-        print $out;
-        print WHANDLE Treex::Tool::Stemmer::TA::Simple::restore_sentence(
-            $data[$i] )
-          . "\n";
-        print "\r";
-    }
-    close WHANDLE;
-}
-
 1;
 
 __END__
 
-=pod
+=encoding utf8
 
 =head1 NAME
 
@@ -230,44 +184,34 @@ Treex::Tool::Stemmer::TA::Simple - rule based stemmer for Tamil
 
 =head1 SYNOPSIS
 
+ use Treex::Tool::Stemmer::TA::Simple;
+ my $sentence = "enakku patikkiRa pazakkam irukkiRaTu.";
+ print Treex::Tool::Stemmer::TA::Simple::stem_sentence($sentence);
+ #ena +kku pati +kkiR +a pazakkam iru +kkiR +aTu .
 
-=head2 Stem a sentence
+=head1 SUBROUTINES
 
+=head2 C<my $stemmed = stem_sentence($raw_plain_text)>
 
- use Treex::Tool::Stemmer::TA::Simple
- my $sentence = "enakku patikkiRa pazakkam irukkiRaTu."
- my $stemmed_sentence = Treex::Tool::Stemmer::TA::Simple::stem_sentence($sentence);
+Returns a string where stems are separated from the suffixes.
+A plus sign is added to the beginning of each suffix,
+so it is possible to revert it.
+One token can have zero, one or more suffixes.
+Plus sign in the raw text is encoded as C<< <<\+>>> >>.
 
-=head2 Stem a document
+=head2 C<my $raw_plain_text = stem_sentence($stemmed)>
 
+The inverse operation to C<stem_sentence>.
 
-use Treex::Tool::Stemmer::TA::Simple
-Treex::Tool::Stemmer::TA::Simple::stem_document($infile, $outfile);
+=head1 REQUIRED SHARED FILES
 
-=head1 METHODS
-
-=over 10
-
-=item C<stem_sentence>
-
-Returns a stemmed sentence
-
-=item C<stem_document>
-
-Performs stemming on the entire document and writes the stemmed output to a file.
-
-=item C<restore_document>
-
-Given a stemmed document, this function restores the original document, meaning it concatenates all the 
-separated suffixes to the word form. It will restore only upto the point where the stemming started. That means,
-any preprocessing done for the aid of stemming a sentence will be lost. This will not impact the quality of the original document seriously. 
-
-=back
- 
+C<data/models/simple_stemmer/ta/{verb,noun}_suffixes.txt>
 
 =head1 AUTHOR
 
 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT
 
