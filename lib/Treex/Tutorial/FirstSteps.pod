@@ -286,6 +286,15 @@ Finally, there is another shortcut, that allows you to modify treex files in sit
  # check that lemmas were added
  treex -Len -q Write::CoNLLX -- my.treex.gz
 
+=head1 NEXT TASKS
+
+Now, you can try to do some programming task,
+both templates (containing specifications) and solutions are provided in C<Treex::Block::Tutorial>.
+In SU2 lab, please update your local copy:
+
+ cp -r ~popem3am/treex_tutorial/Treex ~/treex_tutorial/
+
+
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
