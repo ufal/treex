@@ -7,7 +7,7 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     my $lex_a_node = $t_node->get_lex_anode();
-    next if !defined $lex_a_node;    # gracefully handle e.g. generated nodes
+    return if !defined $lex_a_node;    # gracefully handle e.g. generated nodes
     my @aux_a_nodes = $t_node->get_aux_anodes();
 
     if ($lex_a_node->tag =~ /^VB[ND]/

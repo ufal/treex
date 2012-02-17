@@ -15,6 +15,7 @@ sub process_tnode {
 sub get_coap_functor {
     my ($t_node) = @_;
     my $lemma = $t_node->t_lemma;
+    
     return 'DISJ' if $lemma eq 'or';
     return 'ADVS' if $lemma eq 'but';
     return 'ADVS' if $lemma eq 'yet' && grep { $_->is_member } $t_node->get_children();
