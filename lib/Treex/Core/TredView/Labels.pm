@@ -224,8 +224,8 @@ sub _anode_labels {
         }
     }
 
-    my $line3_1 = $node->tag ? $node->tag : "";
-    my $line3_2 = $node->lemma;
+    my $line3_1 = $node->tag ? $node->tag : '';
+    my $line3_2 = $node->lemma ? $node->lemma : '';
 
     # DZ: This hack tries to distinguish Dan's CoNLL trees from Pepa's PEDT trees
     #     so that Czech tags don't get crippled in the former.
