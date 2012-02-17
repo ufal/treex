@@ -101,9 +101,13 @@ sub parse_chunk {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::BaseChunkParser
+=head1 NAME 
+
+Treex::Block::W2A::BaseChunkParser
+
+=head1 DESCRIPTION
 
 This class serves as a base class for dependency parsers
 that just need to override the C<parse_chunk> method.
@@ -111,8 +115,13 @@ that just need to override the C<parse_chunk> method.
 The goal of segmenting a sentence into chunks is to guarantee that each chunk
 will be parsed into its own subtree.
 
-PARAMETERS:
-reparse - process only bundles where the root node has the attribute C<reparse> set
+=head1 PARAMETERS
+
+=over 
+   
+=item reparse
+
+Process only bundles where the root node has the attribute C<reparse> set.
 
 =back
 
@@ -131,5 +140,12 @@ but the method can be overriden if needed to set.
 
 =cut
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

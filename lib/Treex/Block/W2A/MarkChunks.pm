@@ -20,7 +20,7 @@ has min_parenthesis => (
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @a_nodes = $atree->get_children;
+    my @a_nodes = $atree->get_children( {ordered => 1} );
 
     my @buffer = ( { type => 'dummy' } );
     for my $i ( 0 .. $#a_nodes ) {
@@ -66,19 +66,27 @@ sub mark_chunk {
 
 __END__
 
-=pod
+=encoding utf-8
 
-=over
+=head1 NAME 
 
 =item Treex::Block::W2A::MarkChunks
 
+=head1 DESCRIPTION
+
 Mark chunks (phrases) that are supposed to form a (dependency) subtree
 which could be parsed independently on the rest of the sentence.
-So far only parentheses chunks are marked.
 
-=back
+So far parenthesis and quotation chunks are marked.
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2010-2011 Martin Popel, David Mareček
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
