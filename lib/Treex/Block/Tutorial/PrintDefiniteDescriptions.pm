@@ -68,17 +68,6 @@ It should print:
  DESC: the group
  data/pcedt_wsj1.treex.gz##2.EnglishA-wsj_0001-s2-t12
  
-You can also browse the result in TrEd using
-C<ttred -l data/pcedt_wsj1.treex.gz##1.EnglishA-wsj_0001-s1-t11>.
-To see all the results in TrEd (using a filelist generated on the fly):
-
-  treex -Len Tutorial::PrintDefiniteDescriptions -- data/pcedt_wsj1.treex.gz\
-   | grep '^data' | ttred -l -
-
-The node in question is highlighted in TrEd.
-To see the next node, click on the button (before "printer" icon)
-with tooltip "visit the next file in the file-list".
-
 =head1 TASK A
 
 Print the whole definite description
@@ -106,8 +95,24 @@ You should print only the definite descriptions,
 which are missing one ore more nested phrases
 (without those phrases, as in B).
 You should find three such differences in F<data/pcedt_wsj3.treex.gz>.
+I recommend to use Hint 1 to have a better picture
+how the sentences are annotated on the p-layer and a-layer.
 
-=head1 HINTS
+=head1 HINT 1
+
+You can browse the result in TrEd using
+C<ttred -l data/pcedt_wsj1.treex.gz##1.EnglishA-wsj_0001-s1-t11>.
+To see all the results in TrEd (using a filelist generated on the fly):
+
+  treex -Len Tutorial::PrintDefiniteDescriptions -- data/pcedt_wsj1.treex.gz\
+   | grep '^data' > file.list
+  ttred -l file.list
+
+The node in question is highlighted in TrEd.
+To see the next node, click on the button (before "printer" icon)
+with tooltip "visit the next file in the file-list".
+
+=head1 HINT 2
 
 Read the following documentation:
 
@@ -123,6 +128,7 @@ C<get_subtree_string()> (described in L<Treex::Core::Node::A>).
 
 You can use standard Perl functions C<grep> (see C<perldoc -f grep>)
 and C<any> (see L<List::MoreUtils>). 
+
 
 =head1 AUTHORS
 
