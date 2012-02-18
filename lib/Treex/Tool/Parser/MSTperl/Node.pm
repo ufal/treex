@@ -82,15 +82,16 @@ sub BUILD {
     my $parentOrd      = $self->fields->[$parentOrdIndex];
 
     # if parent is set (i.e. not filled with dummy value)
-    if ( $parentOrd != -2 ) {
+    if ( defined $parentOrd && $parentOrd != -2 ) {
 
         # set the parentOrd field
         $self->parentOrd($parentOrd);
 
-        # fill with dummy value as this must not be used
-        # (use node->parentOrd instead)
-        $self->fields->[$parentOrdIndex] = -2;
     }
+
+    # fill with dummy value as this must not be used
+    # (use node->parentOrd instead)
+    $self->fields->[$parentOrdIndex] = -2;
 
     # handle label
 

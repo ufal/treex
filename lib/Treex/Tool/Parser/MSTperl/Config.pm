@@ -637,14 +637,123 @@ training data, as it uses a lot of memory but speeds up the training greatly
 
 =head3 Features Settings
 
+Features to be computed on data.
+
+Features for the unlabelled parser are set under C<features>,
+the labeller features under C<labeller_features>.
+
+Use the (lowercase) input file field names (e.g. C<pos>) to use the field of the (child) node,
+uppercase them (e.g. C<POS>) to use the field of the parent,
+joined together by the C<|> sign to form the features (e.g. C<POS|LEMMA>).
+
+Prefix the field names by C<1.> or C<2.>
+to use the field on the first or second node in the sentence - based on
+their order in the sentence, regardless of which is parent and which is child
+(e.g. C<1.pos> for pos of first of the nodes).
+
+There are also several predefined functions that you can make use of.
+Usually you can write the function name in lowercase to invoke them on the child
+field, uppercase for parent, or prefixed by C<1.> or C<2.> for first or second
+node (e.g. C<CHILDNO()> to get the number of parent node's children). The 
+parameter of a function must be a (child) field name, or an integer (as the 
+C<index> in C<equalspcat>).
+
 =over 4
 
-=item features, labeller_features
+=item distance()
 
-Features codes to use in the unlabelled/labelled parser.
-See L<Treex::Tool::Parser::MSTperl::FeaturesControl> for details.
+bucketed ord-wise distance of child and parent: C<ORD> minus C<ord>
+
+=item attdir()
+
+parent - child attachement direction: C<signum(ORD minus ord)>
+
+=item preceding(field)
+
+value of the specified field on the ord-wise preceding node
+(use C<PRECEDING(field)> to get field on node preceding the PARENT)
+
+=item following(field)
+
+value of the specified field on the ord-wise following node
+
+=item between(field)
+
+value of the specified field for each node which is ord-wise between the child 
+node and the parent node
+
+=item equals(field1,field2)
+
+Returns C<1> if the value of C<field1> is the same as
+the value of C<field2>. For fields with multiple values,
+it has the meaning of an "exists" operator: it returns
+C<1> if there is at least one pair of values of each field that are
+the same.
+
+Returns C<0> if the values don't match.
+
+Returns C<-1> if (at least) one of the vaues is
+C<undef> (may be also represented by an empty string)
+
+=item equalspc(field1,field2)
+
+like C<equals> but C<field1> is taken from parent node
+and C<field2> from child node
+
+=item equalspcat(field,position)
+
+like C<equalspc> but looks at the given position (1 character)
+in the given field
+
+=item substr(field,start,length)
+
+substring of field value beginning at given
+start position (0-based) of given length; standard substr behaviour,
+i.e. both start and length can be negative and length can be omitted,
+feature function to be then written as C<substr(field,start)>
+
+=item arrayat(array_field,index_field)
+
+array_field's value is an array of values
+separated by single spaces (' '), index_field's value is a zero-based
+index of a value in the array to be returned (used e.g. for tree distance)
+
+=item isfirst()
+
+returns 1 if node is the first in the sentence, 0 otherwise
+
+=item islast()
+
+returns C<1> if node is the last in the sentence, C<0> otherwise
+
+=item isfirstchild()
+
+returns C<1> if node is the first child of its parent, C<0> otherwise
+
+=item islastchild()
+
+returns C<1> if node is the last child of its parent, C<0> otherwise
+
+=item childno()
+
+returns number of node's children
+
+=item islastleftchild()
+
+is the rightmost of all left children of its parent
+
+=item isfirstrightchild()
+
+is the leftmost of all right children of its parent
+
+=item LABEL()
+
+label of parent (to be used only in labeller features);
+label is somewhat special, it cannot be used as C<label>, C<LABEL> or C<label()>
 
 =back
+
+See also L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =head3 Internal technical settings
 
