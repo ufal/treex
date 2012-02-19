@@ -102,15 +102,16 @@ sub BUILD {
         my $label = $self->fields->[$labelIndex];
 
         # if label is set (i.e. not filled with dummy value)
-        if ( $label ne '_' ) {
+        if ( defined $label && $label ne '_' ) {
 
             # set the label field
             $self->label($label);
 
-            # fill with dummy value as this must not be used
-            # (use node->label instead)
-            $self->fields->[$labelIndex] = '_';
         }
+    
+        # fill with dummy value as this must not be used
+        # (use node->label instead)
+        $self->fields->[$labelIndex] = '_';
     }
 
     #     my $debug = join ',', @{$self->fields};
@@ -209,12 +210,12 @@ is copied here, as it is used more often than the C<parent> field itself.
 
 =item my $node = my $node = Treex::Tool::Parser::MSTperl::Node->new(
     fields => [@fields],
-    featuresControl => $featuresControl,
+    config => $config,
 );
 
 Creates a new node with the given field values (C<fields>)
 and using the given L<Treex::Tool::Parser::MSTperl::Config> instance
-(C<featuresControl>).
+(C<config>).
 
 =item my $node_copy = $node->copy_nonparsed()
 

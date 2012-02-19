@@ -647,7 +647,8 @@ Features to be computed on data.
 Features for the unlabelled parser are set under C<features>,
 the labeller features under C<labeller_features>.
 
-Use the (lowercase) input file field names (e.g. C<pos>) to use the field of the (child) node,
+Use the (lowercase) input file field names (e.g. C<pos>)
+to use the field of the (child) node,
 uppercase them (e.g. C<POS>) to use the field of the parent,
 joined together by the C<|> sign to form the features (e.g. C<POS|LEMMA>).
 
