@@ -13,6 +13,8 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
     my @anodes = $a_root->get_descendants( { ordered => 1 } );
 
+    my %unproc_as_idxs_hash = ();
+
     my $starts_at;
     for ( $starts_at = 0; $starts_at <= $#anodes - 3; $starts_at++ ) {
 
@@ -26,7 +28,12 @@ sub process_atree {
             last LENGTH_LOOP if $anodes[$starts_at]->tag eq 'RP';
             my ($conj) = $string =~ $MULTI_CONJ;
             my ($prep) = $string =~ $MULTI_PREP;
-            next LENGTH_LOOP if !$conj && !$prep;
+            if (!$conj && !$prep) {
+                if ($anodes[$starts_at]->form eq 'as') {
+                    $unproc_as_idxs_hash{$starts_at}++;
+                }
+                next LENGTH_LOOP;
+            }
             $conj ||= '';
             my $first = $anodes[$starts_at];
             my @others = map { $anodes[$_] } ( $starts_at + 1 .. $starts_at + $length - 1 );
@@ -78,14 +85,112 @@ sub process_atree {
             last LENGTH_LOOP;
         }
     }
+    
+    my @unproc_as_idxs = sort {$a <=> $b} keys %unproc_as_idxs_hash;
+    $self->as_X_as_Y(\@anodes, \@unproc_as_idxs);
+    
     return 1;
 }
 
+sub as_X_as_Y {
+    my ($self, $a_nodes, $unproc_as_idxs) = @_;
+    
+    return if (@$unproc_as_idxs < 2);
+
+    my $as1_idx = shift @$unproc_as_idxs;
+    while (my $as2_idx = shift @$unproc_as_idxs) {
+        my @a_nodes_inbetw = @$a_nodes[ $as1_idx+1 .. $as2_idx-1 ];
+
+        # no already processed 'as' in between
+        if (grep {$_->form eq 'as'} @a_nodes_inbetw) {
+            $as1_idx = $as2_idx;
+            next;
+        }
+
+        # no verb can be in between
+        if (grep {$_->tag =~ /^V/} @a_nodes_inbetw) {
+            $as1_idx = $as2_idx;
+            next;
+        }
+
+        # the first as must be succeeded by an adjective or adverb
+        if ($a_nodes_inbetw[0]->tag !~ /^(RD)|(JJ)$/) {
+            $as1_idx = $as2_idx;
+            next;
+        }
+
+        # select the head of the X part
+        my ($X_head) = sort {$a->get_depth <=> $b->get_depth} @a_nodes_inbetw;
+        my %phrase_ids_map = map {$_->id => 1} $X_head->get_descendants({add_self => 1});
+
+        # all nodes in between must belong to the same phrase
+        my @in_phrase = grep {$phrase_ids_map{$_->id}} @a_nodes_inbetw;
+        if (@in_phrase != @a_nodes_inbetw) {
+            $as1_idx = $as2_idx;
+            next;
+        }
+        
+        # select all necessary members
+        # as' involved
+        my $as1 = $a_nodes->[$as1_idx];
+        my $as2 = $a_nodes->[$as2_idx];
+        # first word of Y
+        my $Y_first = $a_nodes->[$as2_idx+1];
+        # super parent that governs as', X and Y
+        my $super_parent = $Y_first;
+        while (!all {$_->is_descendant_of($super_parent)} ($as1, $as2, $X_head)) {
+            $super_parent = $super_parent->get_parent;
+        }
+        my %indicator = map {$_->id => 1} ($as1, $as2, $super_parent, $X_head);
+        # the head of Y is guessed
+        my $Y_head = $Y_first;
+        while (!$indicator{$Y_head->get_parent->id}) {
+            $Y_head = $Y_head->get_parent;
+        }
+
+        # rehang all involved members to their common ancestor
+        # just to prevent from making a cycle
+        $as1->set_parent($super_parent);
+        $as2->set_parent($super_parent);
+        $X_head->set_parent($super_parent);
+        $Y_head->set_parent($super_parent);
+        
+        
+        # final rehanging
+        $X_head->set_parent($as1);
+        $as2->set_parent($as1);
+        $Y_head->set_parent($as2);
+
+        # update coordination membership after rehanging
+        foreach my $node ($as1, $as2, $super_parent, $X_head) {
+            $node->set_is_member(0);
+        }
+        if (any {$_->is_member} $as1->get_siblings) {
+            $as1->set_is_member(1);
+        }
+        
+        # TODO temporary solution: the configuration that achieves 
+        # the best translation score
+        # in fact, both should be aux and obtain a special formeme
+        # on the t-layer
+        $as1->set_afun('Adv');
+        $as2->set_afun('AuxC');
+        
+        # we've found as+X+as+Y, so we have to skip processing of the span after the second "as"
+        $as1_idx = shift @$unproc_as_idxs;
+    }
+}
+
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::W2A::EN::FixMultiwordPrepAndConj
+=head1 NAME 
+
+Treex::Block::W2A::EN::FixMultiwordPrepAndConj
+
+=head1 DESCRIPTION
 
 Normalizes the way how multiword prepositions (such as
 'because of') and subordinating conjunctions (such as
@@ -95,10 +200,21 @@ children, all marked with AuxC afun. Illusory overlapping
 of multiword conjunctions (such as in 'as well as if') is
 prevented.
 
-=back
+In addition to 'as well/long/soon/far as', other spans 
+that match the patter 'as X as Y' are being resolved here.
+The involved nodes are reorganized as follows: as1<X as2<Y>>.
+Afuns for both 'as' are set.
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
