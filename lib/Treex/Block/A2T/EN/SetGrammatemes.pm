@@ -237,7 +237,7 @@ sub _verb {
     my %is_aux_form  = map { ( lc( $_->form ) => 1 ) } @aux_anodes;
     my %is_aux_lemma = map { ( $_->lemma => 1 ) } @aux_anodes;
 
-    my ($deontmod) = map { $DEONTMOD_FOR_LEMMA{ $_->lemma } } @aux_anodes;
+    my ($deontmod) = grep {defined $_} (map { $DEONTMOD_FOR_LEMMA{ $_->lemma } }  @aux_anodes);
     my $negated = any { $is_aux_form{$_} } qw(not n't cannot);
 
     $tnode->set_gram_sempos('v');
