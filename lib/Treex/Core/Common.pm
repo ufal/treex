@@ -1,7 +1,7 @@
 package Treex::Core::Common;
 use strict;
 use warnings;
-use 5.008;
+use 5.010;
 
 use utf8;
 use Moose::Exporter;
@@ -71,6 +71,7 @@ my ( $import, $unimport, $init_meta ) =
     );
 
 sub import {
+    feature->import(':5.10');
     utf8::import();
     goto &$import;
 }
