@@ -107,20 +107,6 @@ sub is_plural_tantum {
     return $IS_PLURAL_TANTUM{$lemma};
 }
 
-my %personal_role;
-my $persrole_filename = $ENV{TMT_ROOT}."/treex/lib/Treex/Tool/Lexicon/czech_personal_roles.txt"; # !!! detekci adresare udelat poradne
-open my $P, '<:utf8', $persrole_filename;
-while (<$P>) {
-    chomp;
-    $personal_role{$_} = 1;
-}
-close $P;
-
-sub is_personal_role {
-    my ($lemma) = @_;
-    return $personal_role{$lemma};
-}
-
 my %noun2possadjective;
 open my $A, '<:utf8', $possadj_filename;
 while (<$A>) {

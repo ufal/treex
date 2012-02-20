@@ -44,20 +44,6 @@ sub number_of_month {
     return $NUMBER_OF_MONTH{$lemma};
 }
 
-my %personal_role;
-my $persrole_filename = $ENV{TMT_ROOT} . "/treex/lib/Treex/Tool/Lexicon/english_personal_roles.txt";    # !!! detekci adresare udelat poradne
-open my $P, "<:utf8", $persrole_filename;
-while (<$P>) {
-    chomp;
-    $personal_role{$_} = 1;
-}
-close($P);
-
-sub is_personal_role {
-    my ($lemma) = @_;
-    return $personal_role{$lemma};
-}
-
 sub truncate_lemma {
     return @_;
 }

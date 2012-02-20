@@ -76,7 +76,7 @@ sub formeme_for_tnode {
                 or ( $en_tnode->gram_number || "" ) eq "pl"
             );
 
-    #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Treex::Tool::Lexicon::EN::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
+    #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Treex::Tool::Lexicon::EN::PersonalRoles::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
 
     if ( my $n_node = $en_tnode->get_n_node ) {
         return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
