@@ -42,6 +42,10 @@ sub process_tnode {
     if ( ( $t_node->formeme || '' ) =~ /^v/ ) {
         $a_node->set_attr( 'morphcat/pos', 'V' );    # !!! hack to surpress some inconsistencies during transfer
     }
+    
+    if ($t_node->t_lemma eq ':'){
+        $a_node->set_attr( 'morphcat/pos', 'Z' );
+    }
 
     # == Person ==
     my $person = $t_node->gram_person || '.';

@@ -4,8 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::CS::PersonalRoles;
-
-#TODO: We should detect also other appostions, not only personal roles (though those are the most frequent ones).
+use Treex::Tool::Lexicon::CS::NamedEntityLabels;
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -16,7 +15,10 @@ sub process_tnode {
         and $parent->precedes($tnode) and !$parent->is_root
         and $parent->formeme =~ /^n/
         and ( $tnode->gram_sempos || '' ) eq 'n.denot'    # not numerals etc.
-        and (Treex::Tool::Lexicon::CS::PersonalRoles::is_personal_role( $tnode->t_lemma ) || $tnode->t_lemma eq 'firma')
+        and (
+            Treex::Tool::Lexicon::CS::PersonalRoles::is_personal_role( $tnode->t_lemma )
+            || Treex::Tool::Lexicon::CS::NamedEntityLabels::is_label( $tnode->t_lemma )
+        )
         )
     {
 
