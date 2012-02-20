@@ -13,7 +13,7 @@ my $svm;
 
 sub BUILD {
   my ( $self, $params ) = @_;
-  $svm = new Algorithm::SVM(Model => '/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/tuned.model');
+  $svm = new Algorithm::SVM(Model => '/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/new.model');
   
 }
 
