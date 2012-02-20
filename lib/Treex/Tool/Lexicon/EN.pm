@@ -4,10 +4,19 @@ use autodie;
 use utf8;
 
 my @DICENDI_VERBS =
-    qw(add admit affirm announce appear ask assure believe claim clarify
-    comment conclude declare describe estimate explain explicate justify know mean note recognize
-    reply rumble say seem specify state stress tell think utter write);
+    qw(accuse acknowledge add admit affirm agree allege announce answer
+    anticipate argue appear ask assert assure beg believe bet boast brag
+    burst_out certify claim clarify comment conclude confess confide contend
+    convey cry declare deny describe disclose doubt elaborate enlarge estimate
+    exclaim explain explicate falter fear feel forecast foretell guarantee hint
+    hope imagine insist justify know maintain mean mention mumble murmur mutter
+    note object observe order phone pray predict proclaim promise pronounce
+    prophesy protest purr realize recall recognize regret reject remark repeat
+    reply report retort rumble say seem shout snap sneer sob specify state
+    stress submit suggest suppose swear tell testify think urge utter vow warn
+    whisper wonder write yell);
 my %IS_DICENDI_VERB;
+
 foreach my $lemma (@DICENDI_VERBS) {
     $IS_DICENDI_VERB{$lemma} = 1;
 }
@@ -58,20 +67,19 @@ sub is_modal_verb {
 Readonly my $BARE_INFIN_VERBS => "hear|see|watch|feel|sense|make|bid|let|have|help|dare";
 
 sub takes_bare_infin {
-    my ($lemma) = @_; 
-    return $lemma =~ m/^($BARE_INFIN_VERBS)$/;       
+    my ($lemma) = @_;
+    return $lemma =~ m/^($BARE_INFIN_VERBS)$/;
 }
-
 
 # verbs with object control type, copied from page 286
 # in Pollard & Sag's Head-driven phrase structure grammar
 my @OBJECT_CONTROL_VERBS =
- qw(order persuade bid charge command direct enjoin
- instruct advise authorize mandate convince impel induce influence inspire
- motivate move pressure prompt sway stir compel press propel push spur
- encourage exhort goad incite urge bring lead signal ask empower appeal
- dare defy beg prevent forbid allow permit enable cause force consider);
-my %IS_OBJECT_CONTROL_VERB = map {$_ => 1} @OBJECT_CONTROL_VERBS;
+    qw(order persuade bid charge command direct enjoin
+    instruct advise authorize mandate convince impel induce influence inspire
+    motivate move pressure prompt sway stir compel press propel push spur
+    encourage exhort goad incite urge bring lead signal ask empower appeal
+    dare defy beg prevent forbid allow permit enable cause force consider);
+my %IS_OBJECT_CONTROL_VERB = map { $_ => 1 } @OBJECT_CONTROL_VERBS;
 
 sub is_object_control_verb {
     my ($t_lemma) = @_;
