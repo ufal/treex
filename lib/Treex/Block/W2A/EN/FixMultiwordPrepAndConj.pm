@@ -114,7 +114,7 @@ sub as_X_as_Y {
         }
 
         # the first as must be succeeded by an adjective or adverb
-        if ($a_nodes_inbetw[0]->tag !~ /^(RD)|(JJ)$/) {
+        if ($a_nodes_inbetw[0]->tag !~ /^(RB)|(JJ)$/) {
             $as1_idx = $as2_idx;
             next;
         }
