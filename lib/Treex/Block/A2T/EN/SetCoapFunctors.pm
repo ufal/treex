@@ -29,21 +29,30 @@ sub get_coap_functor {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::EN::SetCoapFunctors
+=head1 NAME
 
-Functors (attribute C<functor>) in SEnglishT trees
+Treex::Block::A2T::EN::SetCoapFunctors
+
+=head1 DESCRIPTION
+
+Functors (attribute C<functor>) in English t-trees
 have to be assigned in (at least) two phases. This block
 corresponds to the first phase, in which only coordination and apposition functors
 are filled (which makes it possible to use the notions of effective parents and effective
 children in the following phase).
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2009 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

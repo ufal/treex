@@ -209,8 +209,8 @@ sub _build_syntpos {
     my ($self) = @_;
 
     # skip technical root, conjunctions, prepositions, punctuation etc.
-    return '' if ( $self->t->is_root or $self->tag =~ m/^.[%#^,FRVXc:]/ );
-
+    return '' if ( $self->t->is_root or $self->tag =~ m/^.[%#,FRVXc:]/ );
+    
     # adjectives, adjectival numerals and pronouns
     return 'adj' if ( $self->tag =~ m/^.[\}=\?148ACDGLOSUadhklnrwyz]/ );
 

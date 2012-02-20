@@ -72,18 +72,20 @@ sub process_atree {
 
 __END__
  
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::CS::ParseMST
+Treex::Block::W2A::CS::ParseMST
+
+=head1 DESCRIPTION
 
 Reparse Czech analytical trees using McDonald's MST parser.
 
-=back
+=head1 AUTHOR
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by David Marecek
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
-This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

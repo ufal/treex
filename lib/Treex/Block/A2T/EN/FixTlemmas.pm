@@ -40,18 +40,25 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::EN::FixTlemmas
+=head1 NAME
+
+Treex::Block::A2T::EN::FixTlemmas
+
+=head1 DESCRIPTION
 
 The attribute C<t_lemma> is corrected in specific cases: personal pronouns are represented
 by #PersPron, particle is joined with the base verb in the case of phrasal verbs, etc.
 
-=back
+=head1 AUTHOR
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008 Zdenek Zabokrtsky
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2008 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

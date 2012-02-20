@@ -58,7 +58,14 @@ L<Treex::Block::W2A::MarkChunks> this block can be used before parsing
 to improve the performance by marking chunks (phrases)
 that are supposed to form a (dependency) subtree
 
-=head1 COPYRIGHT
+=head1 AUTHORS
 
-Copyright 2011 Martin Popel, David Mareček
-This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

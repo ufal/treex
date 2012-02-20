@@ -17,17 +17,27 @@ sub process_tnode {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::CS::RehangUnaryCoordConj
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::A2T::CS::RehangUnaryCoordConj
+
+=head1 DESCRIPTION 
 
 'Coordination conjunctions' with only one coordination member (such as 'vsak')
-are moved below its child (PREC).
+are moved below their children, to be treated as PREC atomic nodes.
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

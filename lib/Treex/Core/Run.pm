@@ -521,7 +521,8 @@ sub _create_job_scripts {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
         print $J "#!/bin/bash\n\n";
-        print $J "echo \$HOSTNAME > $current_dir/$workdir/output/job$jobnumber.started\n";
+        print $J 'echo \$HOSTNAME > ' . ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" ) 
+            . "/output/job$jobnumber.started\n";
         print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config->lib_core_dir()

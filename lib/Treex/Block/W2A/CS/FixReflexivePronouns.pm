@@ -19,7 +19,6 @@ sub process_anode {
 
     # fix parser output if the afun is impossible in the given case (not a reflexive pronoun, but reflexive-pronoun-only afuns)
     if ( ( $anode->form !~ m/^se$/i && $anode->afun eq 'AuxR' ) || ( $anode->form !~ m/^s[ei]$/i && $anode->afun eq 'AuxT' ) ) {
-        log_warn( 'Fixed: ' . $anode->get_address() );
         $anode->set_afun('Obj');
     }
 
