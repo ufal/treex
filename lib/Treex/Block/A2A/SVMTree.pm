@@ -24,6 +24,7 @@ sub BUILD {
     open POS, "$POSKEY" or die $!;
     my @lines = <POS>;
     foreach my $line (@lines){
+      chomp($line);
     my @tokens = split ("\t",$line);
     $poshash{$tokens[0]}=$tokens[1];
     }
@@ -33,6 +34,7 @@ sub BUILD {
     open MODEL, "$MODELKEY" or die $!;
     @lines = <MODEL>;
     foreach my $line (@lines){
+      chomp($line);
       my @tokens = split ("\t",$line);
       $modelhash{$tokens[0]}=$tokens[1];
     }
@@ -87,14 +89,17 @@ sub process_bundle {
 					   Data  => [$pos,$quartile,$sentence_length]);
 
  my $predictedModel=  $SVM->predict($dstest);
- 
- my $tree_root = $bundle->get_tree( $self->language, 'a', $modelhash{chomp($predictedModel)} );  
+ my @chars = split '', $predictedModel;
+ #print $predictedModel."\n";
+ for my $m (@chars){
+ my $tree_root = $bundle->get_tree( $self->language, 'a', $modelhash{$m} );  
  my @modelNodes = $tree_root->get_descendants( { ordered => 1 } );  
 #  print $modelNodes[$i]->parent->ord ;
 #  print "\t ". $node->ord;
 #  print "\n";
+#print $modelhash{$m}."\t".$modelNodes[$i]->parent->ord."->".$node->ord."\n";
  $ENSEMBLE->add_edge( $modelNodes[$i]->parent->ord, $node->ord, 1 );
-
+ }
   $i++;
   }
  # $ENSEMBLE->print_edge_matrix();
