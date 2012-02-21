@@ -391,6 +391,10 @@ sub precompute_visualization {
                 $root->{_precomputed_node_style} = $self->_styles->node_style($root);
                 $root->{_precomputed_hint}       = '';
 
+                if ( $root->get_zone->sentence ) {
+                    $root->{_precomputed_hint} = 'sentence: ' . $root->get_zone->sentence;
+                }
+
                 foreach my $node ( $root->get_descendants ) {
                     $node->{_precomputed_node_style} = $self->_styles->node_style($node);
                     $node->{_precomputed_hint}       = $self->node_hint( $node, $layer );
