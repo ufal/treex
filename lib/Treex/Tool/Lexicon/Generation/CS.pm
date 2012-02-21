@@ -95,7 +95,11 @@ sub forms_of_lemma {
         push @forms, $fi;
         last if $limit and ( ++$found >= $limit );
     }
-    return @forms;
+
+    return (
+        grep { $_->get_tag =~ /-$/ } @forms,
+        grep { $_->get_tag !~ /-$/ } @forms,
+    );
 }
 
 sub _guess_forms {
