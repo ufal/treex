@@ -153,7 +153,7 @@ has 'priority' => (
     is            => 'ro',
     isa           => 'Int',
     default       => -100,
-    documentation => 'Priority for qsub (an integer in the range -1023 to 1024, default=-100). Requires -p.',
+    documentation => 'Priority for qsub, an integer in the range -1023 to 0 (or 1024 for admins), default=-100. Requires -p.',
 );
 
 has 'watch' => (
