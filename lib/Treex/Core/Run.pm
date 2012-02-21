@@ -152,8 +152,8 @@ has 'priority' => (
     traits        => ['Getopt'],
     is            => 'ro',
     isa           => 'Int',
-    default       => 0,
-    documentation => 'Priority for qsub (an integer in the range -1023 to 1024, default=0). Requires -p.',
+    default       => -100,
+    documentation => 'Priority for qsub (an integer in the range -1023 to 1024, default=-100). Requires -p.',
 );
 
 has 'watch' => (
