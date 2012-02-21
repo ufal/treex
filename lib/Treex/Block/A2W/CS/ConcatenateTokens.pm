@@ -18,7 +18,6 @@ sub process_zone {
     $sentence =~ s/ “/“/g;
     $sentence =~ s/„ /„/g;
 
-    $sentence =~ s/([\-\"„;:,]),/$1/g;          # !!! tohle by chtelo udelat poradne a umazavat uz a-uzly
     $sentence =~ s/ ?([\.,]) ?([“"])/$1$2/g;    # mazani mezer kolem interpunkce
     $sentence =~ s/ se by / by se /g;             # !!! na prerovnani klitik bude potreba samostatny blok
     $sentence =~ s/ by že / že by /g;           # !!! na prerovnani klitik bude potreba samostatny blok

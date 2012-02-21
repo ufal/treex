@@ -32,14 +32,14 @@ sub process_zone {
         #next if any { $_ eq 'Coord' } @afuns[$i, $i + 1]; #!!! tohle by bylo lepsi reseni, ale na afuny zatim neni spoleh
         next if any { $_ =~ /^(a|ale|nebo|buď)$/ } @lemmas[ $i, $i + 1 ];    # deleted "i" because of "i kdyz"
 
-        # c) left token is an opening quote
-        next if $lemmas[$i] eq '„';
+        # c) left token is an opening quote or bracket
+        next if _opening($lemmas[$i]);
 
-        # d) right token is an closing quote followed by period (end of sentence)
-        next if $lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.';
+        # d) right token is an closing quote or bracket followed by period (end of sentence)
+        next if _closing($lemmas[ $i + 1 ]) && $lemmas[ $i + 2 ] eq '.';
 
-        # e) left token is a closing quote preceeded by a comma (inserted in the last iteration)
-        next if $lemmas[$i] eq '“' && $i && $anodes[$i]->get_prev_node->lemma eq ',';
+        # e) left token is a closing quote or bracket preceeded by a comma (inserted in the last iteration)
+        next if _closing($lemmas[$i]) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
 
         # Comma's parent should be the highest of left/right clause roots
         my $left_clause_root  = $anodes[$i]->get_clause_root();
@@ -102,6 +102,14 @@ sub process_zone {
     }
 
     return;
+}
+
+sub _opening {
+    return $_[0] eq '„' || $_[0] eq '(';
+}
+
+sub _closing {
+    return $_[0] eq '“' || $_[0] eq ')';
 }
 
 1;
