@@ -521,7 +521,7 @@ sub _create_job_scripts {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
         print $J "#!/bin/bash\n\n";
-        print $J 'echo \$HOSTNAME > ' . ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" ) 
+        print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
             . "/output/job$jobnumber.started\n";
         print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
         print $J "cd $current_dir\n\n";
@@ -534,7 +534,7 @@ sub _create_job_scripts {
         }
         print $J $input . "treex --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
             . " 2>> $workdir/output/job$jobnumber.started\n\n";
-        print $J "touch $workdir/output/job$jobnumber.finished\n";
+        print $J "date +'%s' > $workdir/output/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
     }
@@ -722,6 +722,66 @@ sub _wait_for_jobs {
     return;
 }
 
+sub _print_execution_time {
+    my ($self)              = @_;
+
+    my $time_total = 0;
+
+    my %hosts = ();
+
+    # read job log files
+    for my $file_finished (glob $self->workdir . "/output/job???.finished") {
+
+        # derivate file name
+        my $file_started = $file_finished;
+        $file_started =~ s/finished/started/;
+
+        # retrieve start time
+        open(my $fh_started, "<", $file_started) or log_fatal $!;
+        my $hostname = <$fh_started>;
+        chomp $hostname;
+        my $time_start = <$fh_started>;
+        close($fh_started);
+
+        # retrieve finish time
+        open(my $fh_finished, "<", $file_finished) or log_fatal $!;
+        my $time_finish = <$fh_finished>;
+        close($fh_finished);
+
+        # increase total time
+        $time_total += ( $time_finish - $time_start );
+        $hosts{$hostname}{'time'} += ( $time_finish - $time_start );
+        $hosts{$hostname}{'c'}++;
+    }
+
+    # find the slowest and the fastest machine
+    my $min_time = $time_total;
+    my $min_host = "";
+    my $max_time = 0;
+    my $max_host = 0;
+
+    for my $host (keys %hosts) {
+        my $avg = $hosts{$host}{'time'} / $hosts{$host}{'c'};
+        if ( $avg < $min_time ) {
+            $min_time = $avg;
+            $min_host = $host;
+        }
+
+        if ( $avg > $max_time ) {
+            $max_time = $avg;
+            $max_host = $host;
+        }
+    }
+
+    # print out statistics
+    log_info "Total execution time: $time_total";
+    log_info "Execution time per job: " . sprintf("%0.3f", $time_total / $self->jobs);
+    log_info "Slowest machine: $max_host = $max_time";
+    log_info "Fastest machine: $min_host = $min_time";
+
+    return;
+}
+
 # To get utf8 encoding also when using qx (aka backticks):
 # my $command_output = qw($command);
 # we need to
@@ -808,6 +868,8 @@ sub _execute_on_cluster {
     STDERR->autoflush(1);
 
     $self->_wait_for_jobs();
+
+    $self->_print_execution_time();
 
     log_info "All jobs finished.";
 
