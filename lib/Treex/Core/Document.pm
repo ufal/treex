@@ -531,6 +531,12 @@ sub retrieve_storable {
     }
     #    my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
     my $retrieved_doc = Storable::thaw( $serialized ) or log_fatal $!;
+
+    if ( not ref($file) ) {
+        $retrieved_doc->set_loaded_from($file);
+        # $retrieved_doc->changeFilename($file); # why this doesn't affect the name displayed in TrEd?
+    }
+
     return $retrieved_doc;
 }
 
