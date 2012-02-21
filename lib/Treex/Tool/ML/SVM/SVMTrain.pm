@@ -14,7 +14,7 @@ my @tokens=split ("\t",$_);
 
 #right now hard coded for 3 features. Should change to accept as variable
 my $ds = new Algorithm::SVM::DataSet(Label => $tokens[0],
-				     Data  => [$tokens[1],$tokens[2],$tokens[3]]);
+				     Data  => [$tokens[1],$tokens[2],$tokens[3],$tokens[4],$tokens[5],$tokens[6],$tokens[7],$tokens[8],$tokens[9],$tokens[10]]);
 push (@tset,$ds);
 }
 
@@ -23,7 +23,7 @@ $svm->train(@tset);
 print $svm;
 
 # Save the model to a file.
-$svm->save('new.model');
+$svm->save('new-2.model');
 
 
 

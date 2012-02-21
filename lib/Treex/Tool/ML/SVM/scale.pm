@@ -32,6 +32,25 @@ while (<>){
     $posIndex++;
   }
   
+  if(exists $pos{$tokens[2]}){
+    $tokens[2]=$pos{$tokens[2]};
+  }
+  else{
+    $pos{$tokens[2]}=$posIndex;
+    print MYPOSKEY $tokens[2] ."\t".$posIndex ."\n";
+    $tokens[2]=$pos{$tokens[2]};
+    $posIndex++;
+  }
+  
+  if(exists $pos{$tokens[3]}){
+    $tokens[3]=$pos{$tokens[3]};
+  }
+  else{
+    $pos{$tokens[3]}=$posIndex;
+    print MYPOSKEY $tokens[3] ."\t".$posIndex ."\n";
+    $tokens[3]=$pos{$tokens[3]};
+    $posIndex++;
+  }
   
  #write to file
  print MYFILE join ("\t",@tokens);
