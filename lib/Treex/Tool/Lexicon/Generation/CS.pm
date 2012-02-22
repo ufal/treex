@@ -102,6 +102,14 @@ sub forms_of_lemma {
     );
 }
 
+# Note that this actually returns a random form (because the forms are not sorted).
+# This method makes it just easy to fallback from LanguageModel::MorphoLM to this class.
+sub best_form_of_lemma {
+    my ( $self, $lemma, $tag_regex ) = @_;
+    my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex, limit => 1 } );
+    return $form_info ?  $form_info : undef;
+}
+
 sub _guess_forms {
     my ( $self, $lemma ) = @_;
     my $ft;
