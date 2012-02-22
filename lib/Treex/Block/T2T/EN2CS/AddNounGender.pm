@@ -3,10 +3,19 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+use Treex::Tool::Lexicon::Generation::CS;
+use LanguageModel::MorphoLM;
+use LanguageModel::FormInfo;
 
-#TODO: load in BUILD
-use CzechMorpho;
-my $analyzer = CzechMorpho::Analyzer->new();
+has morphoLM  => ( is => 'rw' );
+has generator => ( is => 'rw' );
+
+sub BUILD {
+    my ($self) = @_;
+    $self->set_morphoLM( LanguageModel::MorphoLM->new() );
+    $self->set_generator( Treex::Tool::Lexicon::Generation::CS->new() );
+    return;
+}
 
 my %gender_tag2grammateme = (
     'M' => 'anim',
@@ -15,16 +24,19 @@ my %gender_tag2grammateme = (
     'N' => 'neut',
 );
 
-# existuji slova s jinym rodem v sg a v pl: dite, knize, hrabe oko ucho oblak  # str. 40, Mluvnice II
-#!!!! doresit knize, hrabe, oko, ucho
-my %gender_in_plural = (
-    'dítě' => 'F'
+# Several Czech nouns have different gender in singular and plural.
+# For kníže, hrabě,... the regular (M) gender is more common now (Mluvnice II, str. 40).
+my %SG_PL_GENDER_FOR = (
+    'dítě' => 'NF',
+    'oblak'  => 'IN',
+    'oko'    => 'NF',
+    'ucho'   => 'NF',
 );
 
 my %GENDER_FOR = (sto=>'N', tisíc=>'I', milion=>'I', milión=>'I', miliarda=>'F',
                   # !!! hack, nez se to vyresi obecneji pro vsechny mistni pojmenovane entity:
                   york=>'I',
- );
+);
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -32,7 +44,7 @@ sub process_tnode {
     # For all t-nodes with no gender ...
     # (named entities have gender already filled)
     return if defined $tnode->gram_gender;
-    my $gender  = get_noun_gender( $tnode );
+    my $gender  = $self->get_noun_gender( $tnode );
     if ( defined $gender ) {
         $tnode->set_gram_gender( $gender_tag2grammateme{$gender} );
     }
@@ -40,7 +52,7 @@ sub process_tnode {
 }
 
 sub get_noun_gender {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
     my $t_lemma = $t_node->t_lemma;
 
     # Some numerals (sempos = n.quant.def) should have gender 
@@ -51,22 +63,33 @@ sub get_noun_gender {
     return undef if ($t_node->formeme || '') !~ /^n/;
 
     # Some nouns have different gender in plural
-    my $number = $t_node->gram_number;
-    if ( defined $number && $number eq 'pl') {
-        $gender = $gender_in_plural{$t_lemma};
-        return $gender if $gender;
+    if ( my $sg_pl_gender = $SG_PL_GENDER_FOR{$t_lemma}) {
+        if (($t_node->gram_number|| '') eq 'pl'){
+            $sg_pl_gender =~ s/^.//;
+        } else {
+            $sg_pl_gender =~ s/.$//;
+        }
+        return $sg_pl_gender;
     }
 
-    # For most cases use CzechMorpho::Analyze
-    ($gender) = map { /^..(.)/; $1 } grep {/^NN..1/} map { $_->{tag} } $analyzer->analyze($t_lemma);
+    # If the source lemma was uppercase, MorphoLM should look also for uppercase
+    my $en_tnode = $t_node->src_tnode;
+    my $args = {};
+    if ($en_tnode && $en_tnode->t_lemma =~ /^\p{IsUpper}/){
+        $args = {lowercased_lemma=>1};
+    }
 
-    # if t_lemma was incorrectly lowercased
-    if (not $gender) {
-	($gender) = map { /^..(.)/; $1 } grep {/^NN..1/} map { $_->{tag} } $analyzer->analyze(ucfirst($t_lemma));
+    # Try MorphoLM, fallback to Jan Hajic's morphology (hack incorrectly lowercased lemmas)
+    my $form_info =    
+        $self->morphoLM->best_form_of_lemma( $t_lemma, '^NN..[1X]', $args )
+     || $self->generator->best_form_of_lemma( $t_lemma, '^NN..[1X]' )
+     || $self->generator->best_form_of_lemma( ucfirst $t_lemma, '^NN..[1X]' );
+
+    if ($form_info) {
+        ($gender) = $form_info->get_tag =~ /^..(.)/;
     }
 
     return $gender if $gender && $gender =~ /[MIFN]/;
-
     return undef;
 }
 
@@ -87,6 +110,6 @@ of word with different gender in singular and plural (such as dite, knize, hrabe
 
 =cut
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+# Copyright 2008-2012 Zdenek Zabokrtsky, Martin Popel
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
