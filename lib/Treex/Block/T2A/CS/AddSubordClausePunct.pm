@@ -35,8 +35,8 @@ sub process_zone {
         # c) left token is an opening quote or bracket
         next if _opening($lemmas[$i]);
 
-        # d) right token is an closing quote or bracket followed by period (end of sentence)
-        next if _closing($lemmas[ $i + 1 ]) && $lemmas[ $i + 2 ] eq '.';
+        # d) right token is a closing bracket or quote followed by period (end of sentence)
+        next if $lemmas[ $i + 1 ] eq ')' || ($lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.');
 
         # e) left token is a closing quote or bracket preceeded by a comma (inserted in the last iteration)
         next if _closing($lemmas[$i]) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
