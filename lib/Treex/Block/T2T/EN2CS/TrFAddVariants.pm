@@ -12,8 +12,8 @@ use TranslationModel::Combined::Interpolated;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 
-my $MODEL_MAXENT = 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.gz';
-my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng09.static.pls.gz';
+my $MODEL_MAXENT = 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.slurp.gz';
+my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng09.static.pls.slurp.gz';
 
 sub get_required_share_files {
     return ( $MODEL_MAXENT, $MODEL_STATIC );

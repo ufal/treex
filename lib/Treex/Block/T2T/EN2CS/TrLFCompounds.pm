@@ -16,7 +16,7 @@ use TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
 use TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
 use ProbUtils::Normalize;
 
-my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.gz';
+my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
 my ( $static_model, $deverbadj_model, $deadjadv_model, $noun2adj_model );
 
 sub get_required_share_files { return $MODEL_STATIC; }

@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 use TranslationModel::Static::Model;
 
-my $MODEL_STATIC = 'data/models/translation/en2cs/jointLF_czeng09.static.pls.gz';
+my $MODEL_STATIC = 'data/models/translation/en2cs/jointLF_czeng09.static.pls.slurp.gz';
 
 sub get_required_share_files {
     return ($MODEL_STATIC);
