@@ -1,7 +1,7 @@
 SHELL=bash
 # ParseLM example
 LANGUAGE=en
-INPUT=tune-2a
+INPUT=tune2
 OUTPUT=input
 TRAIN_ME=training_data
 
@@ -9,8 +9,8 @@ all: clean make_data train
 
 make_data: 
 	perl scale.pm $(INPUT)
-	perl combine-labels.pl $(OUTPUT) > $(TRAIN_ME)
-
+	perl combine-labels.pl $(OUTPUT) >temp
+	perl remove.pl temp > $(TRAIN_ME)
 train: 
 	perl SVMTrain.pm $(TRAIN_ME)
 	#perl SVMTrain.pm $(OUTPUT)
