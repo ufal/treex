@@ -336,7 +336,7 @@ sub _fix_negation {
         or ( $en_tlemma =~ /^need/       and $cs_tlemma =~ /^zbyt/ )
         or ( $en_tlemma =~ /^ignor/      and $cs_tlemma =~ /^vším/ )
         or ( $en_tlemma =~ /^hostil/     and $cs_tlemma =~ /^přát/ )
-        or ( $en_tlemma =~ /^fail/       and $cs_tlemma =~ /^usp/ )
+        or ( $en_tlemma =~ /^fail/       and $cs_tlemma =~ /^[úu]spě/ )
         or ( $en_tlemma =~ /^void/       and $cs_tlemma =~ /^platn/ )
         or ( $en_tlemma =~ /^tremend/    and $cs_tlemma =~ /^uvěř/ )
         or ( $en_tlemma =~ /^forget/     and $cs_tlemma =~ /^pamat/ )
