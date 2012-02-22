@@ -126,8 +126,9 @@ sub print_variants {
     my $variants_rf = $tnode->get_attr('translation_model/formeme_variants') || [];
     foreach my $variant (@$variants_rf) {
         print "\t" . $variant->{formeme} . "\t" . exp( $variant->{logprob} ) . "\n";
-
     }
+
+    return;
 }
 
 sub can_be_translated_as {

@@ -158,6 +158,8 @@ sub process_tnode {
             );
         }
     }
+
+    return;
 }
 
 1;
