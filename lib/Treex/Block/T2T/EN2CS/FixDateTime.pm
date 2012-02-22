@@ -18,8 +18,14 @@ sub process_tnode {
 sub process_year {
     my ($t_node) = @_;
     my $en_t_node = $t_node->src_tnode or return;
+    my $t_parent  = $t_node->get_parent();
+    return if $t_parent->is_root();
+    
+    # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
+    return if Treex::Tool::Lexicon::CS::number_of_month($t_parent->t_lemma);
+
     my $year      = $t_node->t_lemma;
-    my $new_node  = $t_node->get_parent()->create_child(
+    my $new_node  = $t_parent->create_child(
         {   't_lemma'        => 'rok',
             'nodetype'       => 'complex',
             'functor'        => '???',
