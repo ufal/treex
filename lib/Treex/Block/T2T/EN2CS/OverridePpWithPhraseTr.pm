@@ -5,18 +5,23 @@ extends 'Treex::Core::Block';
 
 my $input_file = 'resource_data/translation_dictionaries/manually_selected_prob_Wt_given_Ws.tsv';
 
-sub get_required_share_files { return $input_file; }
-
 my %enphrase2csphrase;
+my $loaded;
 
 sub BUILD {
-    open my $I, "<:encoding(utf-8)", "$ENV{TMT_ROOT}/share/$input_file" or log_fatal "Can't open '$input_file' : $!";
-    while (<$I>) {
-        chomp;
-        my ( $en_phrase, $cs_phrase ) = split /\t/;
-        $enphrase2csphrase{$en_phrase} = $cs_phrase;
+    my ($self) = @_;
+    if ( !$loaded ) {
+        my ($filename) = $self->require_files_from_share($input_file);
+        open my $I, '<:encoding(utf-8)', $filename;
+        while (<$I>) {
+            chomp;
+            my ( $en_phrase, $cs_phrase ) = split /\t/;
+            $enphrase2csphrase{$en_phrase} = $cs_phrase;
+        }
+        close($I);
+        $loaded = 1;
     }
-    close($I);
+    return;
 }
 
 sub process_ttree {
@@ -55,12 +60,8 @@ sub process_node {
     $cs_tnode->set_formeme('x');
     $cs_tnode->set_t_lemma_origin('rule-Override_pp_with_phrase_translation');
     $cs_tnode->set_formeme_origin('rule-Override_pp_with_phrase_translation');
-    foreach my $descendant ( $cs_tnode->get_descendants() ) {
+    foreach my $descendant ( $cs_tnode->get_children() ) {
         $descendant->remove();
-        ## NOTE: we don't delete links (e.g. coref) to the deleted nodes
-        ## so this block must be executed before T2T::EN2CS::FindGramCorefForReflPron
-        ## and other block that could create links to t-nodes.
-        ## In future, the links should be deleted automatically and this note deleted.
     }
 
     # Don't try to inflect this node in the synthesis

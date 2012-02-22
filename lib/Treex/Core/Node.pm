@@ -228,7 +228,8 @@ sub remove {
     my $document = $self->get_document();
 
     # Remove the subtree from the document's indexing table
-    foreach my $node ( $self, $self->get_descendants ) {
+    my @to_remove = ( $self, $self->get_descendants );
+    foreach my $node ( @to_remove) {
         if ( defined $node->id ) {
             $document->_remove_references_to_node( $node );
             $document->index_node_by_id( $node->id, undef );
@@ -245,7 +246,9 @@ sub remove {
 
     # By reblessing we make sure that
     # all methods called on removed nodes will result in fatal errors.
-    bless $self, 'Treex::Core::Node::Deleted';
+    foreach my $node (@to_remove){
+        bless $node, 'Treex::Core::Node::Deleted';
+    }
     return;
 }
 
