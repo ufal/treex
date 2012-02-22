@@ -76,7 +76,7 @@ sub ttree2phrase {
     my @anodes =
         sort { $a->ord <=> $b->ord }
         map { $_->get_anodes } $tnode->get_descendants( { add_self => 1 } );
-    return ( join ' ', grep {/[a-z]/i} map { $_->form } @anodes );
+    return ( join ' ', grep {/[a-z0-9]/i} map { $_->form } @anodes );
 }
 
 1;
