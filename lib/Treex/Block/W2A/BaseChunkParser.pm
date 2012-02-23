@@ -44,7 +44,7 @@ sub process_atree {
         # leave the brackets aside to be hanged on the root of the chunk later.
         # (Parsers would mostly guess this right, but not always.)
         my ( $lrb, $rrb ) = @ch_nodes[ 0, -1 ];
-        if ( $lrb->form eq '(' && $rrb->form eq ')' ) {
+        if ( $lrb && $rrb && $lrb->form eq '(' && $rrb->form eq ')' ) {
             shift @ch_nodes;
             pop @ch_nodes;
         }
