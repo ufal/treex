@@ -83,7 +83,7 @@ sub process_tnode {
 
     # fix verbal grammatemes if verbal form has changed  
     $self->_fix_tense_verbmod( $cs_t_node, $en_t_node ) if ( $cs_formeme =~ /^v/ );
-    
+
     return;
 }
 
@@ -96,7 +96,7 @@ sub _fix_number {
     my $en_formeme = $en_t_node->formeme;
     my $en_tlemma  = $en_t_node->t_lemma;
     my $cs_tlemma  = $cs_t_node->t_lemma;
-   
+
     # default: you --> plural
     if ( ( $cs_t_node->gram_person || '' ) eq '2' ) {
         $cs_t_node->set_gram_number('pl')
@@ -241,7 +241,7 @@ sub _fix_number {
     {
         $cs_t_node->set_gram_number('pl');
     }
-    
+
     return;
 }
 
@@ -264,7 +264,7 @@ sub _more_frequent_number_for_genitive_noun_below_gov_noun {
 
 
 sub _fix_gender {
-    
+
     my ($self, $cs_t_node, $en_t_node) = @_;
 
     my $cs_formeme = $cs_t_node->formeme;
@@ -285,7 +285,7 @@ sub _fix_gender {
     {
         $cs_t_node->set_gram_gender('anim');
     }
-    
+
     # "něco"
     if ( $en_tlemma =~ /^(this|that|what)$/ and $cs_formeme =~ /^n/ ) {
         $cs_t_node->set_gram_gender('neut');    # should be shifted rather to synthesis???
@@ -345,6 +345,8 @@ sub _fix_negation {
         or ( $en_tlemma =~ /^merciless/  and $cs_tlemma =~ /^(milosr|úpros)/ )
         or ( $en_tlemma =~ /^slopp/      and $cs_tlemma =~ /^(dbal|pořád)/ )
         or ( $en_tlemma =~ /^discontent/ and $cs_tlemma =~ /^(spokoj)/ )
+        or ( $en_tlemma =~ /^volat/      and $cs_tlemma =~ /^(stál)/ )
+        or ( $en_tlemma =~ /^minor/      and $cs_tlemma =~ /^(zletil)/ )
         )
     {
         $cs_t_node->set_gram_negation('neg1');

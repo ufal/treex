@@ -93,8 +93,8 @@ sub number_of_month {
 }
 
 my %IS_PLURAL_TANTUM;
-my @PL_TANTUM_NOUNS = qw(alpy brýle čechy doksy drážďany dveře finance hodinky 
- housle hrábě hradčany jatka jatky játra kalhoty kleště křtiny kvasnice námluvy
+my @PL_TANTUM_NOUNS = qw(alpy brýle čechy doksy drážďany dveře finance hodinky
+ housle hrábě hradčany jatka jatky játra kalhoty kleště křtiny kvasnice lázně námluvy
  narozeniny nebesa noviny nůžky pardubice peníze plavky povidla příušnice sáně
  sáňky spalničky tatry tepláky teplice trenýrky ústa vánoce velikonoce vidle
  záda zarděnky zásnuby žně);
