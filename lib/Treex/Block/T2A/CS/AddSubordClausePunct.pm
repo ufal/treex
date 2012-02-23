@@ -33,13 +33,13 @@ sub process_zone {
         next if any { $_ =~ /^(a|ale|nebo|buď)$/ } @lemmas[ $i, $i + 1 ];    # deleted "i" because of "i kdyz"
 
         # c) left token is an opening quote or bracket
-        next if _opening($lemmas[$i]);
+        next if _opening( $lemmas[$i] );
 
         # d) right token is a closing bracket or quote followed by period (end of sentence)
-        next if $lemmas[ $i + 1 ] eq ')' || ($lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.');
+        next if $lemmas[ $i + 1 ] eq ')' || ( $lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.' );
 
         # e) left token is a closing quote or bracket preceeded by a comma (inserted in the last iteration)
-        next if _closing($lemmas[$i]) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
+        next if _closing( $lemmas[$i] ) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
 
         # Comma's parent should be the highest of left/right clause roots
         my $left_clause_root  = $anodes[$i]->get_clause_root();
@@ -68,24 +68,22 @@ sub process_zone {
         # According to ÚJČ (http://prirucka.ujc.cas.cz/?id=162):
         # Pepa říkal: „Pavel je kanón.“
         # Můj děd říkával, že „konec všechno napraví“.
+        if ( $lemmas[$i] eq '“' ) {
+            
+            # However, most reference translations follow the source sentence wording, not ÚJČ.
+            my $src_zone = $zone->get_bundle()->get_zone( 'en', 'src' );
+            if ( !$src_zone || $src_zone->sentence !~ /[»"'”],/ ) {
 
-        # However, most reference translations do not follow ÚJČ.
-        #if ( $forms[$i] eq '“' ) {
-        #    for my $j ( 1 .. $i ) {
-        #        last if $forms[ $i - $j ] eq '„';
-        #        if ( $anodes[ $i - $j ]->get_attr('morphcat/pos') eq 'V' ) {
-        #            $comma->shift_before_node( $anodes[$i] );
-        #            last;
-        #        }
-        #    }
-        #}
-
-        #if ( $lemmas[$i] eq '“'){
-        #    my $quot_root = $anodes[$i]->get_parent(); 
-        #    if ($quot_root->get_attr('morphcat/pos') eq 'V' && $quot_root->precedes($comma) ) {
-        #        $comma->shift_before_node( $anodes[$i] );
-        #    }
-        #}
+                # Filter out cases as "Hilton", by looking for a verb inside the quotes
+                for my $j ( 1 .. $i ) {
+                    last if $lemmas[ $i - $j ] eq '„';
+                    if ( $anodes[ $i - $j ]->get_attr('morphcat/pos') eq 'V' ) {
+                        $comma->shift_before_node( $anodes[$i] );
+                        last;
+                    }
+                }
+            }
+        }
     }
 
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';
