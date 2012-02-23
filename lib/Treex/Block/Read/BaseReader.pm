@@ -98,7 +98,7 @@ sub new_document {
     $self->_set_doc_number( $self->doc_number + 1 );
 
     my $document;
-    if ( defined $load_from and $load_from =~ /\.streex/ ) {
+    if ( defined $load_from and $load_from =~ /\.streex$/ ) {
         $document = Treex::Core::Document->retrieve_storable($load_from);
         $document->set_storable(1);
     }
