@@ -22,7 +22,7 @@ sub copy_subtree {
 
     foreach my $t_node ( $t_root->get_children( { ordered => 1 } ) ) {
 
-        my $lemma   = $t_node->t_lemma || '';
+        my $lemma   = $t_node->t_lemma // '';
         my $functor = $t_node->functor || '???';
 
         if ( $t_node->t_lemma ne '#Cor' ) {
