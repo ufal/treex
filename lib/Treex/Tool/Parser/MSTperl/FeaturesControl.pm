@@ -1454,23 +1454,6 @@ L<Treex::Tool::Parser::MSTperl::Edge/signature>), the value is
 
 =back
 
-=head2 Feature functions
-
-In the C<features> field of the config file all features to be used by the model
-are set. Use the input file field names to use the field of the (child) node,
-uppercase them to use the field of the parent, prefix them by C<1.> or C<2.>
-to use the field on the first or second node in the sentence (i.e. based on
-order in sentence, regardless of which is parent and which is child).
-
-You can also make use of several functions. Again, you can usually (i.e. when
-it makes sense) write their names in lowercase to invoke them on the child
-field, uppercase for parent, or prefixed by C<1.> or C<2.> for first or second
-node. The argument of a function must always be a (child) field name.
-
-=over 4
-
-=back
-
 =head1 METHODS
 
 =head2 Settings

@@ -816,7 +816,7 @@ file (you can comment out setting it with '#').
 
 Used if the value is not set in runtime, in constructor or in the config file.
 
-=back 4
+=back
 
 Please note that setting some of the values at runtime might not be a good idea.
 

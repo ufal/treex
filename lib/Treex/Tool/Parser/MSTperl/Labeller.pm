@@ -216,8 +216,6 @@ sub label_edge {
 
     my ( $self, $edge, $states ) = @_;
 
-    my $ALGORITHM = $self->config->labeller_algorithm;
-
     my $new_states = {};
     foreach my $last_state ( keys %$states ) {
 
