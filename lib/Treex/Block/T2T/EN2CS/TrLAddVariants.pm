@@ -6,9 +6,11 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 
 use TranslationModel::MaxEnt::Model;
+use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
 
 use TranslationModel::Derivative::EN2CS::Numbers;
 use TranslationModel::Derivative::EN2CS::Hyphen_compounds;
@@ -28,23 +30,52 @@ use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich
 my $MODEL_MAXENT = 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz';
 my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
 my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
+my $MODEL_NB = 'data/models/translation/en2cs/lemma_czeng10.nb.pls.slurp.gz';
+
+has maxent_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 1.0,
+    documentation => 'Weight for MaxEnt model.'
+);
+
+has nb_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0,
+    documentation => 'Weight for Naive Bayes model.'
+);
+
 
 sub get_required_share_files {
-    return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_HUMAN );
+    return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_HUMAN, $MODEL_NB );
 }
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
 
 sub BUILD {
-    my $maxent_model = TranslationModel::MaxEnt::Model->new();
-    $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
+    my $self         = shift;
+
+    my @interpolated_sequence = ();
+
+    if ( $self->maxent_weight > 0 ) {
+        my $maxent_model = TranslationModel::MaxEnt::Model->new();
+        $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
+        push(@interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight });
+    }
 
     my $static_model = TranslationModel::Static::Model->new();
     $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
 
     my $humanlex_model = TranslationModel::Static::Model->new;
     $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
+
+    if ( $self->nb_weight > 0 ) {
+        my $nb_model = TranslationModel::NaiveBayes::Model->new();
+        $nb_model->load("$ENV{TMT_ROOT}/share/$MODEL_NB");
+        push(@interpolated_sequence, { model => $nb_model, weight => $self->nb_weight });
+   }
 
     my $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
     my $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
@@ -58,8 +89,7 @@ sub BUILD {
     my $static_translit = TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
 
     # make interpolated model
-    my @interpolated_sequence = (
-        { model => $maxent_model,    weight => 1 },
+    push(@interpolated_sequence,
         { model => $static_translit, weight => 0.5 },
         { model => $humanlex_model,  weight => 0.1 },
         { model => $deverbadj_model, weight => 0.1 },
@@ -71,6 +101,7 @@ sub BUILD {
         { model => $prefixes_model,  weight => 0.1 },
         { model => $suffixes_model,  weight => 0.1 },
     );
+
     my $interpolated_model = TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } );
 
     #my @backoff_sequence = ( $interpolated_model, @derivative_models );
@@ -90,6 +121,7 @@ sub process_tnode {
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
         my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
+        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 
         my $features_array_rf = [
             map           {"$_=$features_hash_rf->{$_}"}
@@ -98,7 +130,7 @@ sub process_tnode {
         ];
 
         my $en_tlemma = $en_tnode->t_lemma;
-        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
+        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf, $features_hash_rf2 );
 
         # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
         # kvuli chybne extrakci trenovacich vektoru z CzEngu u posesivnich adjektiv,

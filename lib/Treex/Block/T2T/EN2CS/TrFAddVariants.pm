@@ -6,17 +6,20 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 
 use TranslationModel::MaxEnt::Model;
+use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
 use TranslationModel::Combined::Backoff;
 use TranslationModel::Combined::Interpolated;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
 
 my $MODEL_MAXENT = 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.slurp.gz';
 my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng09.static.pls.slurp.gz';
+my $MODEL_NB = 'data/models/translation/en2cs/formeme_czeng10.nb.pls.slurp.gz';
 
 sub get_required_share_files {
-    return ( $MODEL_MAXENT, $MODEL_STATIC );
+    return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_NB );
 }
 
 has max_variants => (
@@ -33,27 +36,51 @@ has allow_fake_formemes => (
     documentation => 'Allow formemes like "???".',
 );
 
+has maxent_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight for MaxEnt model.'
+);
+
+has nb_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0,
+    documentation => 'Weight for Naive Bayes model.'
+);
+
 has _model => ( is => 'rw' );
 
 sub BUILD {
     my $self         = shift;
-    my $maxent_model = TranslationModel::MaxEnt::Model->new();
-    $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
+
+    my @interpolated_sequence = ();
+
+   if ( $self->maxent_weight > 0 ) {
+        my $maxent_model = TranslationModel::MaxEnt::Model->new();
+        $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
+        push(@interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight });
+   }
 
     my $static_model = TranslationModel::Static::Model->new();
     $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
+    push(@interpolated_sequence, { model => $static_model, weight => 1 });
+
+    if ( $self->nb_weight > 0 ) {
+        my $nb_model = TranslationModel::NaiveBayes::Model->new();
+        $nb_model->load("$ENV{TMT_ROOT}/share/$MODEL_NB");
+        push(@interpolated_sequence, { model => $nb_model, weight => $self->nb_weight });
+    }
 
     $self->_set_model(
         TranslationModel::Combined::Interpolated->new(
-            {   models => [
-                    { model => $maxent_model, weight => 0.5 },
-                    { model => $static_model, weight => 1 },
-                    ]
-            }
+            {   models => \@interpolated_sequence }
             )
     );
     return;
 }
+
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
@@ -66,6 +93,7 @@ sub process_tnode {
     return if !$en_tnode;
 
     my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
+    my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
 
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
@@ -77,7 +105,7 @@ sub process_tnode {
 
     my @translations =
         grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-        $self->_model->get_translations( $en_formeme, $features_array_rf );
+        $self->_model->get_translations( $en_formeme, $features_array_rf, $features_hash_rf2 );
 
     # If the formeme is not translated and contains some function word,
     # try to translate it with only one (or no) function word.
@@ -88,12 +116,12 @@ sub process_tnode {
         foreach my $fword (@fwords) {
             push @translations,
                 grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-                $self->_model->get_translations( "$sempos:$fword+$rest", $features_array_rf );
+                $self->_model->get_translations( "$sempos:$fword+$rest", $features_array_rf, $features_hash_rf2 );
         }
         if ( !@translations ) {
             push @translations,
                 grep { $self->can_be_translated_as( $en_tnode, $cs_tnode, $_->{label} ) }
-                $self->_model->get_translations( "$sempos:$rest", $features_array_rf );
+                $self->_model->get_translations( "$sempos:$rest", $features_array_rf, $features_hash_rf2 );
         }
     }
 
