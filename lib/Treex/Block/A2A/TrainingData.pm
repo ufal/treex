@@ -8,7 +8,7 @@ has 'trees'    => ( is => 'rw', isa => 'Str', required => 1 );
 has 'language' => ( is => 'rw', isa => 'Str', default  => 'en' );
 
 my @reference_nodes;
-
+my %edges=();
 sub BUILD {
   my ($self) = @_;
   
@@ -20,13 +20,95 @@ sub process_tree {
   my ($root) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   my $i = 0;
+  my $prev_pos="null";
+  my $prev_prev_pos="null";
+  my $agree_1="";
+
+  
   foreach my $node (@todo) {
     if ( $node->parent->ord == $reference_nodes[$i]->parent->ord ) {
+      if($edges{"charniak"}{$node->ord}==$edges{"stanford"}{$node->ord}){
+      $agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"charniak"}{$node->ord}==$edges{"mst"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"charniak"}{$node->ord}==$edges{"malt"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"charniak"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"stanford"}{$node->ord}==$edges{"mst"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"stanford"}{$node->ord}==$edges{"malt"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"stanford"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"mst"}{$node->ord}==$edges{"malt"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"mst"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
+      if($edges{"malt"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+	$agree_1=$agree_1."1\t";
+      }
+      else{
+	$agree_1=$agree_1."0\t";
+      }
+      
       print $node->selector . "\t"
       . $node->tag . "\t"
+      . $prev_pos . "\t"
+      . $prev_prev_pos . "\t"
       . find_bucket( $i, scalar @todo ) . "\t"
-      . scalar @todo . "\n";
+      . scalar @todo . "\t"
+      . $agree_1 . "\n"
+      ;
     }
+    $prev_pos=$node->tag;
+    $prev_prev_pos=$prev_pos;
+    $agree_1="";
     $i++;
   }
 }
@@ -62,6 +144,21 @@ sub process_bundle {
   
   my $reference_root = $bundle->get_tree( $self->language, "a", "ref" );
   @reference_nodes = $reference_root->get_descendants( { ordered => 1 } );
+  
+  
+  #make edge matrix to see where they agree
+   %edges=();
+  foreach my $zone (@zones) {
+    if ( $zone->get_atree()->language eq $self->language ) {
+      if ( exists $use_tree{ $zone->get_atree()->selector } ) {
+	my @todo = $zone->get_atree()->get_descendants( { ordered => 1 } );
+	foreach my $node (@todo) {
+	  $edges{$zone->get_atree()->selector}{$node->ord}=$node->parent->ord;
+	}
+      }
+    }
+    
+  }
   
   foreach my $zone (@zones) {
     if ( $zone->get_atree()->language eq $self->language ) {
