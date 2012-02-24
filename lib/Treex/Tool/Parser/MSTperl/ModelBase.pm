@@ -117,10 +117,10 @@ sub load {
     }
 
     my $tmpfile;
-    if ($filename =~ /\.gz$/) {
-	$tmpfile = File::Temp->new( UNLINK => 1 );
-	system "gunzip -c $filename > $tmpfile";
-	$filename = $tmpfile->filename;
+    if ( $filename =~ /\.gz$/ ) {
+        $tmpfile = File::Temp->new( UNLINK => 1 );
+        system "gunzip -c $filename > $tmpfile";
+        $filename = $tmpfile->filename;
     }
 
     my $data   = do $filename;

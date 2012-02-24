@@ -108,7 +108,7 @@ sub BUILD {
             $self->label($label);
 
         }
-    
+
         # fill with dummy value as this must not be used
         # (use node->label instead)
         $self->fields->[$labelIndex] = '_';

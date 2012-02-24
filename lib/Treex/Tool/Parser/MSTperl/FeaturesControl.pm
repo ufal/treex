@@ -535,7 +535,7 @@ sub feature_distance {
 sub feature_attachement_direction {
     my ( $self, $edge ) = @_;
 
-    if ($edge->parent->ord < $edge->child->ord) {
+    if ( $edge->parent->ord < $edge->child->ord ) {
         return -1;
     } else {
         return 1;

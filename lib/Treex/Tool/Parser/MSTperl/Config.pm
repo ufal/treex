@@ -154,18 +154,18 @@ has 'label_field_index' => (
 # sets ismember_field_index
 # sub _ismember_set {
 #     my ( $self, $ismember ) = @_;
-# 
+#
 #     # set index of ismember field
 #     my $ismember_index = $self->field_name2index($ismember);
 #     $self->ismember_field_index($ismember_index);
-# 
+#
 #     return;
 # }
 
 # has 'ismember_field_index' => (
 #     is  => 'rw',
 #     isa => 'Maybe[Int]',
-# 
+#
 #     #    default => 'undef',
 # );
 
@@ -408,10 +408,12 @@ sub BUILD {
             'label',
             'use_edge_features_cache',
             'labeller_use_edge_features_cache',
-#            'imlabeller_use_edge_features_cache',
+
+            #            'imlabeller_use_edge_features_cache',
             'number_of_iterations',
             'labeller_number_of_iterations',
-#            'imlabeller_number_of_iterations',
+
+            #            'imlabeller_number_of_iterations',
             'labeller_algorithm',
             'DEBUG',
             'SEQUENCE_BOUNDARY_LABEL',
@@ -477,24 +479,25 @@ sub BUILD {
         }
 
         # imlabeller features
-#         if ($config->[0]->{imlabeller_features}
-#             && @{ $config->[0]->{imlabeller_features} }
-#             )
-#         {
-#             $self->imlabelledFeaturesControl(
-#                 Treex::Tool::Parser::MSTperl::FeaturesControl->new(
-#                     'config' => $self,
-#                     'feature_codes_from_config'
-#                         => $config->[0]->{imlabeller_features},
-#                     'use_edge_features_cache'
-#                         => $self->imlabeller_use_edge_features_cache,
-#                     )
-#             );
-#         }
+        #         if ($config->[0]->{imlabeller_features}
+        #             && @{ $config->[0]->{imlabeller_features} }
+        #             )
+        #         {
+        #             $self->imlabelledFeaturesControl(
+        #                 Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+        #                     'config' => $self,
+        #                     'feature_codes_from_config'
+        #                         => $config->[0]->{imlabeller_features},
+        #                     'use_edge_features_cache'
+        #                         => $self->imlabeller_use_edge_features_cache,
+        #                     )
+        #             );
+        #         }
 
         if (!$self->unlabelledFeaturesControl
             && !$self->labelledFeaturesControl
-#             && !$self->imlabelledFeaturesControl
+
+            #             && !$self->imlabelledFeaturesControl
             )
         {
             croak "MSTperl config file error: No features set!";
@@ -660,8 +663,8 @@ their order in the sentence, regardless of which is parent and which is child
 There are also several predefined functions that you can make use of.
 Usually you can write the function name in lowercase to invoke them on the child
 field, uppercase for parent, or prefixed by C<1.> or C<2.> for first or second
-node (e.g. C<CHILDNO()> to get the number of parent node's children). The 
-parameter of a function must be a (child) field name, or an integer (as the 
+node (e.g. C<CHILDNO()> to get the number of parent node's children). The
+parameter of a function must be a (child) field name, or an integer (as the
 C<index> in C<equalspcat>).
 
 =over 4
@@ -685,7 +688,7 @@ value of the specified field on the ord-wise following node
 
 =item between(field)
 
-value of the specified field for each node which is ord-wise between the child 
+value of the specified field for each node which is ord-wise between the child
 node and the parent node
 
 =item equals(field1,field2)
@@ -763,8 +766,8 @@ See also L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
 
 =head3 Internal technical settings
 
-These settings are probably better left as they are, but it might be 
-advantageous to have the ability of changing them sometimes, especially when 
+These settings are probably better left as they are, but it might be
+advantageous to have the ability of changing them sometimes, especially when
 experimenting.
 
 You can set the values in various ways. The order of priorities is:
@@ -860,7 +863,7 @@ training data, as it uses a lot of memory but speeds up the training greatly
 Algorithm used for Viterbi labelling as well as for training. Several
 possibilities are being tried out
 (especially regarding the emission probabilities used in the Viterbi algorithm).
-Variant 16 significantly outperforms the other variants, so this is probably 
+Variant 16 significantly outperforms the other variants, so this is probably
 obsolete and will probably get deleted.
 
 =over
