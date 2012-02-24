@@ -255,8 +255,8 @@ B<Treex::Tool::Parser::MSTperl> contains an unlabelled parser
 labeller (L<Treex::Tool::Parser::MSTperl::Labeller>), which, if chained
 together, provide a labelled dependency parser.
 
-The B<Treex::Tool::Parser::MSTperl> package serves as a wrapper for the 
-underlying packages and should be sufficient for the basic tasks. For any 
+The B<Treex::Tool::Parser::MSTperl> package serves as a wrapper for the
+underlying packages and should be sufficient for the basic tasks. For any
 special needs, feel free to use the underlying packages directly.
 
 Please note that the parser does B<non-projective> parsing and is therefore
@@ -270,21 +270,21 @@ Please note that the parser does B<dependency> parsing,
 producing a dependency tree as its output. The parser cannot be used to
 produce phrase-structure trees.
 
-Models necessary for these tools can be downloaded from 
-L<http://ufallab.ms.mff.cuni.cz/tectomt/share/data/models/mst_perl_parser/>. 
-The C<.model> files are unlabelled parsing models and C<.lmodel> are labelling 
+Models necessary for these tools can be downloaded from
+L<http://ufallab.ms.mff.cuni.cz/tectomt/share/data/models/mst_perl_parser/>.
+The C<.model> files are unlabelled parsing models and C<.lmodel> are labelling
 models. Many models for Czech and a few models for English are provided.
 
-If you have a dependency treebank, you can train your own model - see 
-L<Treex::Tool::Parser::MSTperl::TrainerLabelling> and 
-L<Treex::Tool::Parser::MSTperl::TrainerUnlabelled>. The parameters and the 
-feature set in the C<.config> files are tuned for parsing of Czech language, 
-so doing a little tuning might be helpful when parsing other languages (all of 
-the necessary settings can be done in the config file - see 
+If you have a dependency treebank, you can train your own model - see
+L<Treex::Tool::Parser::MSTperl::TrainerLabelling> and
+L<Treex::Tool::Parser::MSTperl::TrainerUnlabelled>. The parameters and the
+feature set in the C<.config> files are tuned for parsing of Czech language,
+so doing a little tuning might be helpful when parsing other languages (all of
+the necessary settings can be done in the config file - see
 L<Treex::Tool::Parser::MSTperl::Config>).
 
-No models are currently provided for languages other than Czech or English. If 
-you want to use the parser for another language, you have to train your own 
+No models are currently provided for languages other than Czech or English. If
+you want to use the parser for another language, you have to train your own
 model.
 
 =head1 METHODS
@@ -293,24 +293,24 @@ model.
 
 =item my $mstperl = Treex::Tool::Parser::MSTperl->new( model_dir => '.', model_name => 'pdt_form' );
 
-Creates an instance of MSTperl, capable of parsing sentences, using the config 
-file C<model_dir/model_name.config> (required), the unlabelled parsing model 
-file C<model_dir/model_name.model> (required) and the labelling model file 
-C<model_dir/model_name.lmodel> (required only for labelled parsing). The 
-required files can be downloaded from 
-L<http://ufallab.ms.mff.cuni.cz/tectomt/share/data/models/mst_perl_parser/>; 
-or, you can create your own config file, train your own model(s) following 
+Creates an instance of MSTperl, capable of parsing sentences, using the config
+file C<model_dir/model_name.config> (required), the unlabelled parsing model
+file C<model_dir/model_name.model> (required) and the labelling model file
+C<model_dir/model_name.lmodel> (required only for labelled parsing). The
+required files can be downloaded from
+L<http://ufallab.ms.mff.cuni.cz/tectomt/share/data/models/mst_perl_parser/>;
+or, you can create your own config file, train your own model(s) following
 your config and use these files for parsing.
 
-The C<model_dir> parameter is optional and defaults to C<.> (i.e. the current 
+The C<model_dir> parameter is optional and defaults to C<.> (i.e. the current
 directory). The C<model_name> parameter is required.
 
 =item my ($parents, $deprels) = $mstperl->parse_labelled($sentence);
 
 Performs labelled parsing of the sentence.
 
-The sentence is represented as (a reference to) an array of words of the 
-sentence. A word is represented as (a reference to) an array of I<fields>, 
+The sentence is represented as (a reference to) an array of words of the
+sentence. A word is represented as (a reference to) an array of I<fields>,
 required by the config. I.e. if you look into the config, you will find e.g.:
 
  field_names:
@@ -320,21 +320,21 @@ required by the config. I.e. if you look into the config, you will find e.g.:
   - parent_ord
   - afun
 
-These are the fields used by the models. Their meaning depends on the treebank 
-used for training the models. We typically used PDT for Czech models and CoNLL 
-for English models. (The coarse tag often stands for the first two characters 
+These are the fields used by the models. Their meaning depends on the treebank
+used for training the models. We typically used PDT for Czech models and CoNLL
+for English models. (The coarse tag often stands for the first two characters
 of the full POS tag. For Czech, the coarse tag devised by Collins is used.)
 
-The fields specified in the config file as the C<parent_ord> and the C<label>, 
+The fields specified in the config file as the C<parent_ord> and the C<label>,
 e.g.:
 
  parent_ord: parent_ord
  label: afun
 
-are the fields computed by the unlabelled parser (C<parent_ord>) and the 
+are the fields computed by the unlabelled parser (C<parent_ord>) and the
 labeller (C<label>). Obviously these are not to be specified on the input.
 
-A sentence I<"The sheep eat grass."> to be parsed by using such a config would 
+A sentence I<"The sheep eat grass."> to be parsed by using such a config would
 be then represented e.g. as:
 
  $sentence = [
@@ -345,16 +345,16 @@ be then represented e.g. as:
     [".", ".", "."],
  ];
 
-MSTperl returns two array refs. The first one describes the dependency tree 
-structure by listing a parent node for each word of the sentence, represented 
-by an integer. The numbering of the parents is 1-based, C<0> standing for the 
-artificial root node. The second one contains deprels assigned to the words 
-(or, to be more accurate, to the edges between each word and its parent), as 
+MSTperl returns two array refs. The first one describes the dependency tree
+structure by listing a parent node for each word of the sentence, represented
+by an integer. The numbering of the parents is 1-based, C<0> standing for the
+artificial root node. The second one contains deprels assigned to the words
+(or, to be more accurate, to the edges between each word and its parent), as
 strings.
 
 =item my $parents = $mstperl->parse_unlabelled($sentence);
 
-Similar to C<parse_labelled()>, but only unlabelled parsing is performed (a 
+Similar to C<parse_labelled()>, but only unlabelled parsing is performed (a
 labelling model is not used) and only the parents are returned.
 
 =back
