@@ -35,8 +35,8 @@ has _eval => (
     }
 );
 
-sub BUILD {
-    my $self = shift;  
+override 'print_header' => sub {
+    my $self = shift;
 
     my @colors = map { $self->_colors->get_clause_color($_) } (0 .. 9);
 
@@ -59,7 +59,7 @@ p { margin:0px; padding-top: 0px; }
 </style></head><body>
 STYLE
     ;
-}
+};
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -158,10 +158,10 @@ sub _get_clauses_html {
     return join '', @html;
 }
 
-sub process_end {
-    my $self = shift;  
+override 'print_footer' => sub {
+    my $self = shift;
     print { $self->_file_handle } '</body></html>';
-}
+};
 
 1;
 
