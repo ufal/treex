@@ -7,41 +7,69 @@ has 'language'     => ( is => 'rw', isa => 'Str', default  => 'en' );
 has 'test_percentage'     => ( is => 'rw', isa => 'Int', default  => 10 );
 has 'tune_percentage'     => ( is => 'rw', isa => 'Int', default  => 10 );
 has 'train_percentage'     => ( is => 'rw', isa => 'Int', default  => 80 );
+
+my $train_size=0;
+my $test_size=0;
+my $tune_size=0;
+my $train_count=0;
+my $test_count=0;
+my $tune_count=0;
+my $test_range;
+my $tune_range;
+my $total_size;
+my $main_zone;
 sub BUILD {
   my ($self) = @_;
-  
+  $test_range=$self->test_percentage;
+  $tune_range=$test_range+$self->tune_percentage;
   return;
 }
 
 sub process_bundle {
   my ( $self, $bundle ) = @_;
   
-  my $test_range=$self->test_percentage;
-  my $tune_range=$test_range+$self->tune_percentage;
+
   
   my $tree_root = $bundle->get_tree( $self->language, 'a');
-  my $main_zone=$bundle->get_zone($self->language);
-  my $total_size= scalar ($bundle->get_document()->get_bundles());
-  my $random_number = int(rand($total_size));
+  $main_zone=$bundle->get_zone($self->language);
+  $total_size= scalar ($bundle->get_document()->get_bundles());
+  $train_size=$total_size*$self->train_percentage/100;
+  $test_size=$total_size*$self->test_percentage/100;
+  $tune_size=$total_size*$self->tune_percentage/100;
+
+ write_sentence($self,$bundle);
     
-  if($random_number<$test_range){
-  my $zone = $main_zone->copy("test");
-  $bundle->create_tree($self->language ,'a', "tune" );
-  $bundle->create_tree($self->language ,'a', "train" );
+ 
+}
+
+sub write_sentence{
+  my ( $self, $bundle ) = @_;
+  my $random_number = int(rand($total_size));
+  
+  if($random_number<$test_range and $test_count<$test_size){
+    my $zone = $main_zone->copy("test");
+    $bundle->create_tree($self->language ,'a', "tune" );
+    $bundle->create_tree($self->language ,'a', "train" );
+    $test_count++;
   }
-  elsif($random_number<$tune_range){
+  elsif($random_number<$tune_range and $tune_count<$tune_size){
     my $zone = $main_zone->copy("tune");
     $bundle->create_tree($self->language ,'a', "test" );
     $bundle->create_tree($self->language ,'a', "train" );
+    $tune_count++;
   }
-  else{
+  elsif ($train_count<$train_size){
     my $zone = $main_zone->copy("train");
     $bundle->create_tree($self->language ,'a', "tune" );
     $bundle->create_tree($self->language ,'a', "test" );
-    }
+    $train_count++;
+  }
+  else{
+  write_sentence($self,$bundle);
+  }
+  
+  
 }
-
-
 1;
 
 =head1 NAME
