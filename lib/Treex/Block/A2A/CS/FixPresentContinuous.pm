@@ -23,8 +23,8 @@ sub fix {
 		  && $en_counterpart{$dep}->get_parent()->form =~ /ing$/
 		  && $en_counterpart{$dep}->ord < $en_counterpart{$dep}->get_parent()->ord
 	      ) || (
-		  $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be'
-		  && $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/
+		  $en_counterpart{$gov}
+		 && $en_counterpart{$gov}->form =~ /ing$/
 		  && $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
 	      )
 	 )
