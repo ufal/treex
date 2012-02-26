@@ -30,7 +30,7 @@ use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich
 my $MODEL_MAXENT = 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz';
 my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
 my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
-my $MODEL_NB = 'data/models/translation/en2cs/lemma_czeng10.nb.pls.slurp.gz';
+my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.pls.slurp.gz';
 
 has maxent_weight => (
     is            => 'ro',
