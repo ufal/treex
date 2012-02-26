@@ -8,28 +8,47 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $gov->afun eq 'Pred' && $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/ && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} ) ) {
-        my $new_gn = $g->{gen} . $g->{num};
-        $d->{tag} =~ s/^(..)../$1$new_gn/;
+    if ( $g->{afun} eq 'Pred' && $d->{afun} eq 'AuxV' # tuhle lajnu pryč?
+        && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/
+        && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} )
+    ) {
+        my $tag = $g->{tag};
+        my $new_gn = $d->{gen} . $d->{num};
+        $tag =~ s/^(..)../$1$new_gn/;
 
         $self->logfix1( $dep, "PassiveAuxBeAgreement" );
-        $self->regenerate_node( $dep, $d->{tag} );
+        $self->regenerate_node( $gov, $tag );
         $self->logfix2($dep);
     }
 }
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2A::CS::FixPassiveAuxBeAgreement
+=pod
 
-Fixing agreement between pasive and auxiliary verb 'to be'.
+=encoding utf-8
 
-=back
+=head1 NAME
 
-=cut
+Treex::Block::A2A::CS::FixPassiveAuxBeAgreement - Fixing agreement between
+passive and auxiliary verb 'to be'.
 
-# Copyright 2011 David Marecek, Rudolf Rosa
+=head1 DESCRIPTION
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+If passive participle and dependent auxiliary 'be' do not agree in gender
+and/or number, the parent verb takes the categories from the child verb.
+
+=head1 AUTHORS
+
+David Marecek <marecek@ufal.mff.cuni.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
