@@ -8,8 +8,8 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $g->{afun} eq 'Pred' && $d->{afun} eq 'AuxV' # tuhle lajnu pryč?
-        && $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/
+    if ( $g->{tag} =~ /^Vs/ && $d->{tag} =~ /^Vp/
+        && $gov->ord > $dep->ord
         && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} )
     ) {
         my $tag = $g->{tag};
