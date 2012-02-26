@@ -12,12 +12,19 @@ sub fix {
         && $gov->ord > $dep->ord
         && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} )
     ) {
-        my $tag = $g->{tag};
-        my $new_gn = $d->{gen} . $d->{num};
-        $tag =~ s/^(..)../$1$new_gn/;
+#         my $tag = $g->{tag};
+#         my $new_gn = $d->{gen} . $d->{num};
+#         $tag =~ s/^(..)../$1$new_gn/;
+# 
+#         $self->logfix1( $dep, "PassiveAuxBeAgreement" );
+#         $self->regenerate_node( $gov, $tag );
+#         $self->logfix2($dep);
 
         $self->logfix1( $dep, "PassiveAuxBeAgreement" );
-        $self->regenerate_node( $gov, $tag );
+        # dependent's tag gets gender and number substituted
+        # for governor's gender and number
+        substr ( $d->{tag}, 2, 2, $g->{gen} . $g->{num} );
+        $self->regenerate_node( $dep, $d->{tag} );
         $self->logfix2($dep);
     }
 }
