@@ -8,35 +8,62 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vf/ && $d->{tag} =~ /^VB/ ) {
+    if ( $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vf/ ) {
         my $subject;
         foreach my $child ( $gov->get_children() ) {
             $subject = $child if $child->afun eq 'Sb';
         }
         return if !$subject;
-        my $sub_num = substr( $subject->tag, 3, 1 );
-        if ( $sub_num ne $d->{num} ) {
-            $d->{tag} =~ s/^(...)./$1$sub_num/;
 
-            $self->logfix1( $dep, "VerbAuxBeAgreement" );
-            $self->regenerate_node( $dep, $d->{tag} );
-            $self->logfix2($dep);
+        $self->logfix1( $dep, "VerbAuxBeAgreement" );
+
+        if ($d->{tag} =~ /^Vp/) {
+            # past participle active (byl, byli...)
+            # dependent's tag gets gender and number substituted
+            # for subject's gender and number
+            my $sub_gen_num = substr( $subject->tag, 2, 2 );
+            substr ( $d->{tag}, 2, 2, $sub_gen_num );
+        } else {
+            # probably VB
+            # AuxV's tag gets number substituted for subject's number
+            my $sub_num = substr( $subject->tag, 3, 1 );
+            substr ( $d->{tag}, 3, 1, $sub_num );
         }
+
+        $self->regenerate_node( $dep, $d->{tag} );
+        $self->logfix2($dep);
     }
 }
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2A::CS::FixVerbAuxBeAgreement
+=pod
 
-Fixing agreement between verb and auxiliary 'to be'.
+=encoding utf-8
 
-=back
+=head1 NAME
 
-=cut
+Treex::Block::A2A::CS::FixVerbAuxBeAgreement - Fixing agreement between verb
+and auxiliary 'to be'.
 
-# Copyright 2011 David Marecek, Rudolf Rosa
+=head1 DESCRIPTION
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+
+
+
+
+
+=head1 AUTHORS
+
+David Marecek <marecek@ufal.mff.cuni.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
