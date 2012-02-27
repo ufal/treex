@@ -20,16 +20,25 @@ sub fix {
 
 1;
 
-=over
+=pod
 
-=item Treex::Block::A2A::CS::FixFIXNAME
+=encoding utf-8
 
-Fixing FIXNAME.
+=head1 NAME
 
-=back
+Treex::Block::A2A::CS::FixFIXNAME
 
-=cut
+=head1 DESCRIPTION
 
-# Copyright 2011 David Marecek, Rudolf Rosa
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 AUTHORS
+
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
