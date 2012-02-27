@@ -6,9 +6,15 @@ use utf8;
 extends 'Treex::Core::Block';
 
 sub process_anode {
-    # foreach $node
-    # $self->identify_coap_members($node)
-    # (if $node is not coap root, the method returns immediately)
+    
+    my ($self, $anode) = @_;
+    
+    # the identify_coap_members method is called on each coap root node
+    if ($anode->afun =~ m/^(Coord|Apos)$/) {
+        $self->identify_coap_members($anode);
+    }
+    
+    return;
 }
 
 
@@ -19,11 +25,10 @@ sub process_anode {
 # the information was lost in conversion to CoNLL). It estimates, based on
 # afuns, which children are members and which are shared modifiers.
 #------------------------------------------------------------------------------
-sub identify_coap_members
-{
-    my $self = shift;
-    my $coap = shift;
-    return unless($coap->afun() =~ m/^(Coord|Apos)$/);
+sub identify_coap_members {
+
+    my ($self, $coap) = @_;
+    
     # We should not estimate coap membership if it is already known!
     foreach my $child ($coap->children())
     {
@@ -32,6 +37,7 @@ sub identify_coap_members
             log_warn('Trying to estimate CoAp membership of a node that is already marked as member.');
         }
     }
+
     # Get the list of nodes involved in the structure.
     my @involved = $coap->get_children({'ordered' => 1, 'add_self' => 1});
     # Get the list of potential members and modifiers, i.e. drop delimiters.
