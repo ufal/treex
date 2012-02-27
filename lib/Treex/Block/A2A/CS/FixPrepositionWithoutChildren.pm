@@ -20,10 +20,7 @@ sub fix {
             my @cs_children = $$nodes[0];
             my $cs_child    = $cs_children[0];
             if ( !$cs_child ) { return; }
-            open my $file, '>>:utf8', 'prescont.txt' or die("Cannot open file!");
-            print $file $node->form . ' ';
-            print $file $cs_child->form . ' ' . $cs_child->afun . "\n";
-            close $file;
+        
             $self->logfix1( $cs_child, "PrepositionWithoutChildren" );
 
             if ( $node->is_descendant_of($cs_child) ) {
