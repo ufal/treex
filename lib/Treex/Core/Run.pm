@@ -562,8 +562,8 @@ sub _run_job_scripts {
 
             my $firstline = <$QSUB>;
             close $QSUB;
-            chomp $firstline;
-            if ( $firstline =~ /job (\d+)/ ) {
+            chomp $firstline if ( defined $firstline );
+            if ( defined $firstline && $firstline =~ /job (\d+)/ ) {
                 push @{ $self->sge_job_numbers }, $1;
             }
             else {
@@ -723,28 +723,28 @@ sub _wait_for_jobs {
 }
 
 sub _print_execution_time {
-    my ($self)              = @_;
+    my ($self) = @_;
 
     my $time_total = 0;
 
     my %hosts = ();
 
     # read job log files
-    for my $file_finished (glob $self->workdir . "/output/job???.finished") {
+    for my $file_finished ( glob $self->workdir . "/output/job???.finished" ) {
 
         # derivate file name
         my $file_started = $file_finished;
         $file_started =~ s/finished/started/;
 
         # retrieve start time
-        open(my $fh_started, "<", $file_started) or log_fatal $!;
+        open( my $fh_started, "<", $file_started ) or log_fatal $!;
         my $hostname = <$fh_started>;
         chomp $hostname;
         my $time_start = <$fh_started>;
         close($fh_started);
 
         # retrieve finish time
-        open(my $fh_finished, "<", $file_finished) or log_fatal $!;
+        open( my $fh_finished, "<", $file_finished ) or log_fatal $!;
         my $time_finish = <$fh_finished>;
         close($fh_finished);
 
@@ -760,7 +760,7 @@ sub _print_execution_time {
     my $max_time = 0;
     my $max_host = 0;
 
-    for my $host (keys %hosts) {
+    for my $host ( keys %hosts ) {
         my $avg = $hosts{$host}{'time'} / $hosts{$host}{'c'};
         if ( $avg < $min_time ) {
             $min_time = $avg;
@@ -775,7 +775,7 @@ sub _print_execution_time {
 
     # print out statistics
     log_info "Total execution time: $time_total";
-    log_info "Execution time per job: " . sprintf("%0.3f", $time_total / $self->jobs);
+    log_info "Execution time per job: " . sprintf( "%0.3f", $time_total / $self->jobs );
     log_info "Slowest machine: $max_host = $max_time";
     log_info "Fastest machine: $min_host = $min_time";
 

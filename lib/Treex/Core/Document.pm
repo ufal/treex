@@ -529,11 +529,13 @@ sub retrieve_storable {
     while (<$FILEHANDLE>) {
         $serialized .= $_;
     }
-    #    my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
+    # my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
     my $retrieved_doc = Storable::thaw( $serialized ) or log_fatal $!;
 
     if ( not ref($file) ) {
         $retrieved_doc->set_loaded_from($file);
+        my ( $volume, $dirs, $file ) = File::Spec->splitpath($file);
+        $retrieved_doc->set_path($volume . $dirs);
         # $retrieved_doc->changeFilename($file); # why this doesn't affect the name displayed in TrEd?
     }
 
