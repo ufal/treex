@@ -7,11 +7,12 @@ extends 'Treex::Core::Block';
 has 'trees'    => ( is => 'rw', isa => 'Str', required => 1 );
 has 'language' => ( is => 'rw', isa => 'Str', default  => 'en' );
 
+my @trees;
 my @reference_nodes;
 my %edges=();
 sub BUILD {
   my ($self) = @_;
-  
+ @trees= split(",",$self->trees);
   return;
 }
 
@@ -23,79 +24,91 @@ sub process_tree {
   my $prev_pos="null";
   my $prev_prev_pos="null";
   my $agree_1="";
-
+  
+  
   
   foreach my $node (@todo) {
     if ( $node->parent->ord == $reference_nodes[$i]->parent->ord ) {
-      if($edges{"charniak"}{$node->ord}==$edges{"stanford"}{$node->ord}){
-      $agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"charniak"}{$node->ord}==$edges{"mst"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"charniak"}{$node->ord}==$edges{"malt"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"charniak"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"stanford"}{$node->ord}==$edges{"mst"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"stanford"}{$node->ord}==$edges{"malt"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"stanford"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"mst"}{$node->ord}==$edges{"malt"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"mst"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
-      
-      if($edges{"malt"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-	$agree_1=$agree_1."1\t";
-      }
-      else{
-	$agree_1=$agree_1."0\t";
-      }
+     my $i=0;
+     my $j=0;
+     
+     while ($i<scalar @trees){
+	while ($j<scalar @trees){
+	  if($edges{$trees[$i]}{$node->ord}==$edges{$trees[$j]}{$node->ord}){
+	    $agree_1=$agree_1."1\t";
+	  }
+	  else{
+	    $agree_1=$agree_1."0\t";
+	  }
+	  $j++;
+	}
+	$j=0;
+     $i++;
+     }
+     
+     
+#       if($edges{"charniak"}{$node->ord}==$edges{"mst"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"charniak"}{$node->ord}==$edges{"malt"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"charniak"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"stanford"}{$node->ord}==$edges{"mst"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"stanford"}{$node->ord}==$edges{"malt"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"stanford"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"mst"}{$node->ord}==$edges{"malt"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"mst"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
+#       
+#       if($edges{"malt"}{$node->ord}==$edges{"zpar"}{$node->ord}){
+# 	$agree_1=$agree_1."1\t";
+#       }
+#       else{
+# 	$agree_1=$agree_1."0\t";
+#       }
       
       print $node->selector . "\t"
       . $node->tag . "\t"

@@ -86,7 +86,7 @@ sub process_tree_pos {
     
     #exponential $w= $w ** exp
     
-     $w= $w**10;
+     $w= $w ** 10;
     $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $w );
     
     #$ENSEMBLE->multiply_edge( $node->parent->ord, $node->ord, $w );
@@ -99,13 +99,13 @@ sub process_tree {
   my ( $root, $weight_tree ) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
   $ENSEMBLE->set_n( scalar @todo );
-  $weight_tree = $weight_tree ** 10;
+ # $weight_tree = $weight_tree ** 10;
   
   #$weight_tree= 2 ** $weight_tree;
   
   #$weight_tree= (-1* log ($weight_tree));
   #$weight_tree=1;
-  #print "WEIGHT=$weight_tree\n";
+ # print "WEIGHT=$weight_tree\n";
   foreach my $node (@todo) {
     
     $ENSEMBLE->add_edge( $node->parent->ord, $node->ord, $weight_tree );
