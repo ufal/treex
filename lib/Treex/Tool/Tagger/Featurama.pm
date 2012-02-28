@@ -21,7 +21,7 @@ has perc => (
     builder       => '_build_perc',
     lazy          => 1,
     init_arg      => undef,
-    predicate     => '_perc_builded',
+    predicate     => '_perc_built',
     documentation => q{Wrapped C object},
 );
 
@@ -45,7 +45,7 @@ sub _build_perc {
 
 sub DEMOLISH {
     my $self = shift;
-    if ( $self->_perc_builded ) {
+    if ( $self->_perc_built ) {
         $self->perc->testFinish();
     }
 }

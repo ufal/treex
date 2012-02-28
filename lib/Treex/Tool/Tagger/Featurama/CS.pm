@@ -4,6 +4,8 @@ extends 'Treex::Tool::Tagger::Featurama';
 
 use CzechMorpho;
 use List::Util qw(first);
+use Readonly;
+use Treex::Core::Resource qw(require_file_from_share);
 
 has _analyzer => (
     is       => 'ro',
@@ -17,19 +19,60 @@ sub BUILDARGS {
     return { path => 'data/models/tagger/featurama/cs/default' };
 }
 
-# TODO: make this more portable, e.g. requiring all the files from share
+
+has analyzer_version => ( is => 'ro', isa => 'Str', default => '060406a' );
+
+has analyzer_dir => ( is => 'ro', isa => 'Str', default => 'data/models/morpho_analysis/cs_060406a' ); 
+
+# This will only try to download the morphological dictionary README automatically (and assume the files are 
+# in the correct directory), so that we are not giving the morphological dictionary out for free, but allow the users
+# to have their own shared directory and copy the files there by themselves.
+#
+# TODO: create an intelligible warning if the files are not where they're supposed to be.
+Readonly my $ANALYZER_DATA => [
+    'x.README'    
+];
+
+# Maximum word length we let the analyzer take so that it won't fail (use suffixes otherwise)
+Readonly my $ANALYZER_MAX_WORD_LENGTH => 45;
+
+
+# TODO: this will only try to
 sub _build_analyzer {
+
     my $self = shift;
-    return CzechMorpho::Analyzer->new($ENV{TMT_ROOT}.'/share/data/models/morpho_analysis/cs_060406a');
+    my $share_dir;
+    
+    # assume all shared files will be in the same directory (or else CzechMorpho won't work)
+    foreach my $data_file (@{$ANALYZER_DATA}){
+        $share_dir = require_file_from_share( $self->analyzer_dir . '/CZ' . $self->analyzer_version . $data_file );     
+    }
+    $share_dir =~ s/\/[^\/]*$/\//; # just take the directory from the last file
+    
+    return CzechMorpho::Analyzer->new($share_dir);
 }
 
 override '_analyze' => sub {
     my ( $self, $wordform ) = @_;
     my @analyses;
+    
+    # Some simple heuristics 
+    
+    # avoid words that contain dashes, take just what's after the dash (with a few exceptions)
+    my $prefix = '';
+    if ( $wordform !~ /^on-line/i 
+        && ($wordform =~ m/[^\p{Upper}-]/ || $wordform =~ m/^\p{Upper}{7,}/ || $wordform =~ m/\p{Upper}{7,}$/) 
+        && $wordform =~ m/^(.*)-([^-]{3,})$/ ){     
+        
+        $prefix = $1 . '-';
+        $wordform = $2;
+    }      
 
+    # The analysis itself
+    
     foreach ( $self->_analyzer->analyze($wordform) ) {
         my $analysis_rf = {};
-        $analysis_rf->{'lemma'} = $_->{'lemma'};
+        $analysis_rf->{'lemma'} = $prefix . $_->{'lemma'};
         $analysis_rf->{'tag'}   = $_->{'tag'};
         push( @analyses, $analysis_rf );
     }
@@ -144,6 +187,13 @@ Returns features for Czech
 Returns proposed tag and wordform
 
 =back
+
+=head1 TODO
+
+Fix the following warning that appeared during the reparsing of the CzEng corpus:
+
+  (in cleanup) Can't call method "testFinish" on an undefined value at treex/lib/Treex/Tool/Tagger/Featurama.pm line 49 during global destruction.
+
 
 =head1 AUTHORS
 
