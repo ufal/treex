@@ -7,7 +7,7 @@ use 5.010;
 #use Moose;
 #use Treex::Core::Common;
 use LWP::Simple;    #TODO rewrite using LWP:UserAgent to show progress
-use File::Path qw(make_path);
+use File::Path 2.08 qw(make_path);
 use File::Spec;
 use Treex::Core::Log;
 use Treex::Core::Config;
