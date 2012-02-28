@@ -41,9 +41,9 @@ sub process_tree {
 	    $agree_1=$agree_1."0\t";
 	  }
 	  $j++;
-	}
-	$j=0;
+	}	
      $i++;
+     $j=$i+1;
      }
      
      
