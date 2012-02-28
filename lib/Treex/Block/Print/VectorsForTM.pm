@@ -18,7 +18,7 @@ sub process_tnode {
     return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
 
     my $features_rf =
-        Treex::Tool::TranslationModel::Features::EN::features_from_src_tnode($en_tnode) or return;
+        Treex::Tool::TranslationModel::Features::EN::features_from_src_tnode( $en_tnode, { encode => 1 } ) or return;
     my ($cs_mlayer_pos) = ( $cs_anode->tag =~ /^(.)/ );
 
     print join "\t", (

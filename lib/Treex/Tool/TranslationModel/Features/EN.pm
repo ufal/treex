@@ -78,7 +78,7 @@ sub _prev_and_next {
 }
 
 sub features_from_src_tnode {
-    my ($node) = @_;
+    my ( $node, $arg_ref ) = @_;
     my ($parent) = $node->get_eparents( { or_topological => 1 } );
 
     my %features = (
@@ -109,8 +109,35 @@ sub features_from_src_tnode {
             $features{determiner} = 'a';
         }
     }
-
+    if ( $arg_ref && $arg_ref->{encode} ) {
+        encode_features_for_tsv( \%features );
+    }
     return \%features;
+}
+
+sub encode_features_for_tsv {
+    my ($feats_ref) = @_;
+    my @keys = keys %{$feats_ref};
+    foreach my $key (@keys) {
+        my $new_key   = encode_string_for_tsv($key);
+        my $value     = $feats_ref->{$key};
+        my $new_value = encode_string_for_tsv($value);
+        if ( $new_key ne $key ) {
+            delete $feats_ref->{$key};
+        }
+        $feats_ref->{$new_key} = $new_value;
+    }
+    return;
+}
+
+# We need to escape spaces and equal signs,
+# so features can be stored in name=value format (space-separated).
+sub encode_string_for_tsv {
+    my ($string) = @_;
+    $string =~ s/%/%25/g;
+    $string =~ s/ /%20/g;
+    $string =~ s/=/%3D/g;
+    return $string;
 }
 
 1;
