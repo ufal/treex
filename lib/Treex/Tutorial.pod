@@ -27,34 +27,6 @@ How to download and install Treex and related tools.
 
 running your first Treex applications using the commnad line interface C<treex>
 
-=item TODO L<Treex::Tutorial::Visualization>
-
-Using C<ttred> (Treex-modified TrEd tree editor).
-
-=item TODO L<Treex::Tutorial::Config>
-
-How to configure Treex.
-
-=item TODO L<Treex::Tutorial::ReadersAndWriters>
-
-=item TODO L<Treex::Tutorial::Zones>
-
-=item TODO L<Treex::Tutorial::Blocks>
-
-Writing your own blocks.
-
-=item TODO L<Treex::Tutorial::WritingNewReaders>
-
-Writing a reader (input converter) for a new format.
-
-=item TODO L<Treex::Tutorial::Shortcuts>
-
-Eval block etc.
-
-=item TODO L<Treex::Tutorial::Parallel>
-
-Parallelization using SGE cluster.
-
 =back
 
 =head1 AUTHOR
