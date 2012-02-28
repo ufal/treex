@@ -20,7 +20,7 @@ sub fix {
             my @cs_children = $$nodes[0];
             my $cs_child    = $cs_children[0];
             if ( !$cs_child ) { return; }
-        
+
             $self->logfix1( $cs_child, "PrepositionWithoutChildren" );
 
             if ( $node->is_descendant_of($cs_child) ) {

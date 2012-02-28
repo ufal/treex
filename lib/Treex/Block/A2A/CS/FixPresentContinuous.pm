@@ -8,48 +8,56 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-#    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/ ) {
-#    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && $en_counterpart{$dep}->get_parent() && $en_counterpart{$dep}->get_parent()->form =~ /ing$/ ) {
-#    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^V.......[^F]/
-#	&& $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be'
-#	&& $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/
-#	&& $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
-# ) {
-    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^V[^f]......[^F]/ && $g->{tag} =~ /^V/
-	 && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' &&
-	 (
-	     (
-		  $en_counterpart{$dep}->get_parent()
-		  && $en_counterpart{$dep}->get_parent()->form =~ /ing$/
-		  && $en_counterpart{$dep}->ord < $en_counterpart{$dep}->get_parent()->ord
-	      ) || (
-		  $en_counterpart{$gov}
-		 && $en_counterpart{$gov}->form =~ /ing$/
-		  && $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
-	      )
-	 )
-    ) {
+    #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/ ) {
+    #    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && $en_counterpart{$dep}->get_parent() && $en_counterpart{$dep}->get_parent()->form =~ /ing$/ ) {
+    #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^V.......[^F]/
+    #	&& $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be'
+    #	&& $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/
+    #	&& $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
+    # ) {
+    if ($dep->lemma eq 'být'
+        && $d->{tag} =~ /^V[^f]......[^F]/
+        && $g->{tag} =~ /^V/
+        && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' &&
+        (
+            (
+                $en_counterpart{$dep}->get_parent()
+                && $en_counterpart{$dep}->get_parent()->form =~ /ing$/
+                && $en_counterpart{$dep}->ord
+                < $en_counterpart{$dep}->get_parent()->ord
+            )
+            || (
+                $en_counterpart{$gov}
+                && $en_counterpart{$gov}->form =~ /ing$/
+                && $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
+            )
+        )
+        )
+    {
 
-	#log1
-	$self->logfix1( $dep, "PresentContinuous" );
+        #log1
+        $self->logfix1( $dep, "PresentContinuous" );
 
-	#set gov's tag to dep's tag (preserve negation)
-	my $negation;
-	if ( substr( $g->{tag}, 10, 1 ) eq 'N' or substr( $d->{tag}, 10, 1 ) eq 'N' ) {
-	    $negation = 'N';
-	}
-	else {
-	    $negation = 'A';
-	}
-	my $tag = $d->{tag};
-	substr( $tag, 10, 1, $negation );
-	$self->regenerate_node( $gov, $tag );
+        #set gov's tag to dep's tag (preserve negation)
+        my $negation;
+        if (substr( $g->{tag}, 10, 1 ) eq 'N'
+            || substr( $d->{tag}, 10, 1 ) eq 'N'
+            )
+        {
+            $negation = 'N';
+        }
+        else {
+            $negation = 'A';
+        }
+        my $tag = $d->{tag};
+        substr( $tag, 10, 1, $negation );
+        $self->regenerate_node( $gov, $tag );
 
-	#remove
-	$self->remove_node($dep, $en_hash);
+        #remove
+        $self->remove_node( $dep, $en_hash );
 
-	#log2
-	$self->logfix2( undef );
+        #log2
+        $self->logfix2(undef);
     }
 }
 

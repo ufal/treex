@@ -59,7 +59,9 @@ sub fix {
 
 =item Treex::Block::A2A::CS::FixNounNumber
 
-Fixing Noun number (and sometimes case as well) according to en_aligned_node number. Assumes that the form is correct and only the tag is incorrect (error of tagger), and so it does only such fixes, where the form is preserved.
+Fixing Noun number (and sometimes case as well) according to en_aligned_node
+number. Assumes that the form is correct and only the tag is incorrect (error
+of tagger), and so it does only such fixes, where the form is preserved.
 
 =back
 

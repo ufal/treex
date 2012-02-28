@@ -16,7 +16,7 @@ sub fix {
         $self->logfix1( $dep, "AuxT" );
 
         #remove
-	$self->remove_node($dep, $en_hash);
+        $self->remove_node( $dep, $en_hash );
 
         #log2
         $self->logfix2(undef);

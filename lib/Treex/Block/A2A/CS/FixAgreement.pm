@@ -36,7 +36,9 @@ sub fix {
 sub process_zone {
     my ( $self, $zone ) = @_;
 
-    my $en_root = $zone->get_bundle->get_tree( $self->source_language, 'a', $self->source_selector );
+    my $en_root = $zone->get_bundle->get_tree(
+        $self->source_language, 'a', $self->source_selector
+    );
     my $a_root = $zone->get_atree;
 
     # get alignment mapping
@@ -50,7 +52,7 @@ sub process_zone {
 
     #do the fix for each node
     foreach my $node ( $a_root->get_descendants() ) {
-	next if $node =~ 'Treex::Core::Node::Deleted';
+        next if $node =~ 'Treex::Core::Node::Deleted';
         my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
         next if !$dep;
         $self->fix( $dep, $gov, $d, $g, \%en_counterpart );
@@ -75,8 +77,8 @@ sub logfix1 {
 
     if ( $gov && $dep ) {
 
-#	my $distance = abs($gov->ord - $dep->ord);
-#	warn "FIXDISTANCE: $distance\n";
+        #	my $distance = abs($gov->ord - $dep->ord);
+        #	warn "FIXDISTANCE: $distance\n";
 
         #original words pair
         if ( $gov->ord < $dep->ord ) {
@@ -151,6 +153,7 @@ sub logfix2 {
 }
 
 my %byt_forms = (
+
     # correct forms
     'VB-S---3P-AA---' => 'je',
     'VB-S---3P-NA---' => 'není',
@@ -170,17 +173,20 @@ my %byt_forms = (
     'VpMP---XR-NA---' => 'nebyli',
     'VpTP---XR-AA---' => 'byly',
     'VpTP---XR-NA---' => 'nebyly',
+
     # heuristics for incomplete or overcomplete tags
     # present
     'VB-----3P-AA---' => 'je',
     'VB-----3P-NA---' => 'není',
     'VB-X---3P-AA---' => 'je',
     'VB-X---3P-NA---' => 'není',
+
     # future
     'VB-----3F-AA---' => 'bude',
     'VB-----3F-NA---' => 'nebude',
     'VB-X---3F-AA---' => 'bude',
     'VB-X---3F-NA---' => 'nebude',
+
     # past
     'VpM----XR-AA---' => 'byl',
     'VpM----XR-NA---' => 'nebyl',
@@ -194,7 +200,7 @@ my %byt_forms = (
     'VpF----XR-NA---' => 'nebyla',
     'VpFX---XR-AA---' => 'byla',
     'VpFX---XR-NA---' => 'nebyla',
-    
+
 );
 
 sub get_form {
@@ -224,22 +230,24 @@ sub get_form {
     $form = $form_info->get_form() if $form_info;
 
     if ( !$form ) {
-        ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag" } );
+        ($form_info) = $generator->forms_of_lemma(
+            $lemma, { tag_regex => "^$tag" }
+        );
         $form = $form_info->get_form() if $form_info;
     }
 
     # the "1" variant can be safely ignored
     if ( !$form && $tag =~ /1$/ ) {
-	$tag =~ s/1$/-/;
-	return $self->get_form($lemma, $tag);
+        $tag =~ s/1$/-/;
+        return $self->get_form( $lemma, $tag );
     }
 
-# reasonable but does not bring any improvement:
-# if the tag is corrupt, it is usually a good idea not to try to
-# generate any form and to keep the current form unchanged
-#    if ( !$form && $lemma eq 'být' && $byt_forms{$tag} ) {
-#	return $byt_forms{$tag};
-#    }
+    # reasonable but does not bring any improvement:
+    # if the tag is corrupt, it is usually a good idea not to try to
+    # generate any form and to keep the current form unchanged
+    #    if ( !$form && $lemma eq 'být' && $byt_forms{$tag} ) {
+    #	return $byt_forms{$tag};
+    #    }
 
     if ( !$form ) {
         print STDERR "Can't find a word for lemma '$lemma' and tag '$tag'.\n";
@@ -268,7 +276,12 @@ sub get_pair {
 
     # "old"
     my $parent = $node->get_parent;
-    while ( $node->is_member && !$parent->is_root() && $parent->afun =~ /^(Coord|Apos)$/ ) {
+    while (
+        $node->is_member
+        && !$parent->is_root()
+        && $parent->afun =~ /^(Coord|Apos)$/
+        )
+    {
         $parent = $parent->get_parent();
     }
 
@@ -276,7 +289,7 @@ sub get_pair {
     # my $parent = $node->get_eparents({first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1});
     # or probably better:
     # my ($parent) = $node->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
-    
+
     return undef if $parent->is_root;
 
     my $d_tag = $node->tag;
@@ -284,11 +297,15 @@ sub get_pair {
     $d_tag =~ /^(.)(.)(.)(.)(.)/;
     my %d_categories = (
         pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
-        tag => $d_tag, afun => $node->afun );
+        tag => $d_tag,
+        afun => $node->afun
+    );
     $g_tag =~ /^(.)(.)(.)(.)(.)/;
     my %g_categories = (
         pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
-        tag => $g_tag, afun => $parent->afun );
+        tag => $g_tag,
+        afun => $parent->afun
+    );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
 }
@@ -298,36 +315,39 @@ sub get_pair {
 # and keep the form intact
 # Returns the best tag to be used
 sub try_switch_num {
-    my ($self, $old_form, $lemma, $tag) = @_;
+    my ( $self, $old_form, $lemma, $tag ) = @_;
 
     my $new_form = $self->get_form( $lemma, $tag );
 
     # form is about to change
     if ( !$new_form || lc($old_form) ne lc($new_form) ) {
-	# try to switch the number
-	my $switched_tag = $self->switch_num($tag);
-	$new_form = $self->get_form( $lemma, $switched_tag );
-	if ( $new_form && lc($old_form) eq lc($new_form) ) {
-	    # form does not change if number is switched
-	    return $switched_tag;
-	} else {
-	    return $tag;
-	}
+
+        # try to switch the number
+        my $switched_tag = $self->switch_num($tag);
+        $new_form = $self->get_form( $lemma, $switched_tag );
+        if ( $new_form && lc($old_form) eq lc($new_form) ) {
+
+            # form does not change if number is switched
+            return $switched_tag;
+        } else {
+            return $tag;
+        }
     } else {
-	# form doesn't change, no need to change the number
-	return $tag;
+
+        # form doesn't change, no need to change the number
+        return $tag;
     }
 }
 
 # returns the same tag with the opposite morphological number
 sub switch_num {
     my ( $self, $tag ) = @_;
-    
+
     if ( $tag =~ /^(...)S(.+)$/ ) {
-	return $1.'P'.$2;
+        return $1 . 'P' . $2;
     } else {
-	$tag =~ /^(...).(.+)$/;
-	return $1.'S'.$2;
+        $tag =~ /^(...).(.+)$/;
+        return $1 . 'S' . $2;
     }
 }
 
@@ -336,71 +356,72 @@ sub switch_num {
 # use a proper named entity recognizer instead
 sub isName {
     my ( $self, $node ) = @_;
-    
-    if ( $node->form && lc($node->form) eq $node->form ) {
-	# with very high probability not a name
-	return 0;
+
+    if ( $node->form && lc( $node->form ) eq $node->form ) {
+
+        # with very high probability not a name
+        return 0;
     } else {
-	# can be a name, the start of a sentence, ...
-	return 1;
+
+        # can be a name, the start of a sentence, ...
+        return 1;
     }
 }
 
-
 my %time_expr = (
-    'Monday' => 1,
-    'Tuesday' => 1,
+    'Monday'    => 1,
+    'Tuesday'   => 1,
     'Wednesday' => 1,
-    'Thursday' => 1,
-    'Friday' => 1,
-    'Saturday' => 1,
-    'Sunday' => 1,
-    'January' => 1,
-    'February' => 1,
-    'March' => 1,
-    'April' => 1,
-    'May' => 1,
-    'June' => 1,
-    'July' => 1,
-    'August' => 1,
+    'Thursday'  => 1,
+    'Friday'    => 1,
+    'Saturday'  => 1,
+    'Sunday'    => 1,
+    'January'   => 1,
+    'February'  => 1,
+    'March'     => 1,
+    'April'     => 1,
+    'May'       => 1,
+    'June'      => 1,
+    'July'      => 1,
+    'August'    => 1,
     'September' => 1,
-    'October' => 1,
-    'November' => 1,
-    'December' => 1,
-    'second' => 1,
-    'minute' => 1,
-    'hour' => 1,
-    'day' => 1,
-    'week' => 1,
-    'month' => 1,
-    'year' => 1,
-    'decade' => 1,
-    'century' => 1,
+    'October'   => 1,
+    'November'  => 1,
+    'December'  => 1,
+    'second'    => 1,
+    'minute'    => 1,
+    'hour'      => 1,
+    'day'       => 1,
+    'week'      => 1,
+    'month'     => 1,
+    'year'      => 1,
+    'decade'    => 1,
+    'century'   => 1,
     'beginning' => 1,
-    'end' => 1,
+    'end'       => 1,
 );
 
 sub isTimeExpr {
     my ( $self, $lemma ) = @_;
-    
-    if ($time_expr{$lemma}) {
-	return 1;
+
+    if ( $time_expr{$lemma} ) {
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
 sub isNumber {
     my ( $self, $node ) = @_;
-    
-    if (!defined $node) {
-	return 0;
+
+    if ( !defined $node ) {
+        return 0;
     }
 
-    if ($node->tag =~ /^C/ || $node->form =~ /^[0-9%]/ ) {
- 	return 1;
+    if ( $node->tag =~ /^C/ || $node->form =~ /^[0-9%]/ ) {
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -413,24 +434,27 @@ sub gn2pp {
 }
 
 sub remove_node {
-    my ($self, $node, $en_hash, $rehang_under_en_eparent) = @_;
+    my ( $self, $node, $en_hash, $rehang_under_en_eparent ) = @_;
 
     #move children under parent
     my $parent = $node->get_parent;
-    if ($rehang_under_en_eparent && $en_hash->{$node}) {
-	my $en_parent = $en_hash->{$node}->get_eparents({first_only=>1, or_topological => 1});
-        my ( $nodes ) = $en_parent->get_aligned_nodes();
+    if ( $rehang_under_en_eparent && $en_hash->{$node} ) {
+        my $en_parent = $en_hash->{$node}->get_eparents(
+            { first_only => 1, or_topological => 1 }
+        );
+        my ($nodes) = $en_parent->get_aligned_nodes();
         if ( $nodes->[0] && !$nodes->[0]->is_descendant_of($node) ) {
             $parent = $nodes->[0];
         }
     }
     foreach my $child ( $node->get_children ) {
-	$child->set_parent($parent);
+        $child->set_parent($parent);
     }
 
     #remove alignment
     if ( $en_hash->{$node} ) {
-	$en_hash->{$node}->set_attr( 'alignment', undef );
+        $en_hash->{$node}->set_attr( 'alignment', undef );
+
         # delete $en_hash->{$node};
     }
 
@@ -446,19 +470,21 @@ sub remove_node {
 
 =item Treex::Block::A2A::CS::FixAgreement
 
-Base class for grammatical errors fixing (common ancestor of all A2A::CS::Fix* modules).
+Base class for grammatical errors fixing (common ancestor of all A2A::CS::Fix*
+modules).
 
-A loop goes through all nodes in the analytical tree, gets their effective parent
- and their morphological categories and passes this data to the fix() sub.
-In this module, the fix() has an empty implementation - it is to be redefined in children modules.
+A loop goes through all nodes in the analytical tree, gets their effective
+parent and their morphological categories and passes this data to the fix()
+sub. In this module, the fix() has an empty implementation - it is to be
+redefined in children modules.
 
 The fix() sub can make use of subs defined in this module.
 
 If you find an error, you probably want to call the regenerate_node() sub.
 The tag is changed, then the word form is regenerated.
 
-To log changes that were made into the tree that was changed
-(into the sentence in a zone cs_FIXLOG), call logfix1() before calling regenerate_node()
+To log changes that were made into the tree that was changed (into the
+sentence in a zone cs_FIXLOG), call logfix1() before calling regenerate_node()
 and logfix2() after calling regenerate_node().
 
 =back

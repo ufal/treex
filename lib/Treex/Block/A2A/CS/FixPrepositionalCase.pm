@@ -15,12 +15,12 @@ has '_skip_prep_tag' => ( is => 'rw', isa => 'HashRef', default => sub { ( {} ) 
 
 sub BUILD {
     my $self = shift;
-    
+
     my @skip = split / /, $self->skip_prep_tag;
     foreach my $skip_pt (@skip) {
         $self->_skip_prep_tag->{$skip_pt} = 1;
     }
-    
+
     return;
 }
 
@@ -36,11 +36,11 @@ sub fix {
     if ($g->{afun}   eq 'AuxP'
         && $g->{pos} eq 'R'
         && $g->{case} =~ /[1-7]/
-        
+
         && $d->{afun} ne 'AuxP'
         && $d->{pos} =~ /[NAPC]/
         && $d->{case} ne 'X'
-        
+
         && $g->{case} ne $d->{case}
         )
     {
@@ -65,19 +65,25 @@ sub fix {
             $do_correct = 1;
             $dep_tag    = $tags_dep->{ $g->{case} };
             $dep_lemma  = $lemmas_dep->{ $g->{case} };
-            
-        } elsif ( any { substr( $_->tag, 4, 1 ) eq $g->{case} } $gov->get_echildren() ) {
+
+        } elsif (
+            any {
+                substr( $_->tag, 4, 1 ) eq $g->{case};
+            }
+            $gov->get_echildren()
+            )
+        {
 
             # do not correct case of prepositions that have (other) children with a matching case
             $do_correct = 0;
-            
+
         } elsif ( $tags_gov->{ $d->{case} } ) {
 
             # correct the tag: use the dep's case if it's OK with the preposition
             $do_correct = 1;
             $gov_tag    = $tags_gov->{ $d->{case} };
             $gov_lemma  = $lemmas_gov->{ $d->{case} };
-            
+
         } else {
 
             # find common case for dep and gov (first matching)
@@ -93,14 +99,14 @@ sub fix {
                 $gov_tag    = $tags_gov->{$common_case};
                 $gov_lemma  = $lemmas_gov->{$common_case};
             }
-        
+
         }
 
         if ($do_correct) {
-            
+
             # skip unpreferred prep-tag combinations
             my ($prep_lemma_coarse) = split /-/, $gov_lemma;
-            my $prep_case = substr ($dep_tag, 4, 1);
+            my $prep_case = substr( $dep_tag, 4, 1 );
             my $skip_pt = $prep_lemma_coarse . '_' . $prep_case;
             if ( $self->_skip_prep_tag->{$skip_pt} ) {
                 return;
@@ -134,7 +140,7 @@ sub _get_possible_cases {
     foreach my $analysis (@analyses) {
 
         my ( $pos, $gen, $num, $case ) = ( $analysis->{tag} =~ m/^(.).(.)(.)(.)/ );
-        if ($orig_cats->{pos} eq $pos && $case =~ /[1-7X]/) {
+        if ( $orig_cats->{pos} eq $pos && $case =~ /[1-7X]/ ) {
 
             # keep the distance from the current number and gender as small as possible
             my $dist = 0;
@@ -158,7 +164,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::A2A::CS::FixPrepositionalCase
 
@@ -179,7 +185,7 @@ Some unfrequent preposition-case combinations are not used.
 =TODO
 
 A better testing / evaluation is required. Possibly this should be done the other way round -- looking at prepositions
-and examining their children. 
+and examining their children.
 
 =head1 AUTHORS
 

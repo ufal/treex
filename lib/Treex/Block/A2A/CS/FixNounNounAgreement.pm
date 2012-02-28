@@ -12,26 +12,27 @@ sub fix {
     my %en_counterpart = %$en_hash;
 
     # 'by' preposition being a head of an inflected word
-    
+
     if (
-	$d->{tag} =~ /^N/
-	&& $g->{tag} =~ /^N/
-	&& $dep->ord < $gov->ord
-	) {
+        $d->{tag} =~ /^N/
+        && $g->{tag} =~ /^N/
+        && $dep->ord < $gov->ord
+        )
+    {
 
-	# assuming the case of the parent is correct
-	# now find the correct case for this situation
-	my $original_case = $d->{case};
-	my $case = $g->{case};
+        # assuming the case of the parent is correct
+        # now find the correct case for this situation
+        my $original_case = $d->{case};
+        my $case          = $g->{case};
 
-	if ($case != $original_case) {
+        if ( $case != $original_case ) {
 
-	    $d->{tag} =~ s/^(....)./$1$case/;
-	    
-	    $self->logfix1( $dep, "NounNoun (case $case)" );
-	    $self->regenerate_node( $dep, $d->{tag} );
-	    $self->logfix2($dep);
-	}
+            $d->{tag} =~ s/^(....)./$1$case/;
+
+            $self->logfix1( $dep, "NounNoun (case $case)" );
+            $self->regenerate_node( $dep, $d->{tag} );
+            $self->logfix2($dep);
+        }
 
     }
 }

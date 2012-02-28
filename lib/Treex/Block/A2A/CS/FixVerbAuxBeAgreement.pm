@@ -17,17 +17,19 @@ sub fix {
 
         $self->logfix1( $dep, "VerbAuxBeAgreement" );
 
-        if ($d->{tag} =~ /^Vp/) {
+        if ( $d->{tag} =~ /^Vp/ ) {
+
             # past participle active (byl, byli...)
             # dependent's tag gets gender and number substituted
             # for subject's gender and number
             my $sub_gen_num = substr( $subject->tag, 2, 2 );
-            substr ( $d->{tag}, 2, 2, $sub_gen_num );
+            substr( $d->{tag}, 2, 2, $sub_gen_num );
         } else {
+
             # probably VB
             # AuxV's tag gets number substituted for subject's number
             my $sub_num = substr( $subject->tag, 3, 1 );
-            substr ( $d->{tag}, 3, 1, $sub_num );
+            substr( $d->{tag}, 3, 1, $sub_num );
         }
 
         $self->regenerate_node( $dep, $d->{tag} );

@@ -15,7 +15,9 @@ sub fix {
     if ( !$en_counterpart{$dep} ) {
         return;
     }
-    my $aligned_parent = $en_counterpart{$dep}->get_eparents( { first_only => 1, or_topological => 1 } );
+    my $aligned_parent = $en_counterpart{$dep}->get_eparents(
+        { first_only => 1, or_topological => 1 }
+    );
 
     if (
         $d->{tag} =~ /^....[1-7]/
@@ -24,8 +26,13 @@ sub fix {
         && $aligned_parent->form eq 'by'
         && !$self->isName($dep)
 
-        # ord-wise following node approximation (I do not know how to do this better)
-        && !$self->isNumber( $aligned_parent->get_descendants( { following_only => 1, first_only => 1 } ) )
+        # ord-wise following node approximation
+        # (I do not know how to do this better)
+        && !$self->isNumber(
+            $aligned_parent->get_descendants(
+                { following_only => 1, first_only => 1 }
+            )
+        )
         && !$self->isTimeExpr( $en_counterpart{$dep}->lemma )
         )
     {
@@ -39,7 +46,8 @@ sub fix {
                 $self->remove_node( $node_aligned_to_by, $en_hash, 1 );
                 $self->logfix2(undef);
 
-                # now have to regenerate these as they might have been invalidated
+                # now have to regenerate these
+                # as they might have been invalidated
                 ( $dep, $gov, $d, $g ) = $self->get_pair($dep);
 
                 # it might happen that $dep has no effective parent any more
@@ -68,7 +76,10 @@ sub fix {
 
             # if ($g->{tag} =~ /^Vs/) {
             # if ($g->{tag} =~ /^V[fs]/ || grep { $_->afun eq "AuxR" } $gov->get_children) {
-            if ( $g->{tag} =~ /^Vs/ || grep { $_->afun eq "AuxR" } $gov->get_children ) {
+            if ($g->{tag} =~ /^Vs/
+                || grep { $_->afun eq "AuxR" } $gov->get_children
+                )
+            {
 
                 #set dependent case to instrumental
                 $new_case = 7;
@@ -80,8 +91,16 @@ sub fix {
             } else {
 
                 # check whether there is passive in EN
-                my $en_by_parent = $aligned_parent->get_eparents( { first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1 } );
-                if ( $en_by_parent->tag =~ /^VB[ND]/ && grep { $_->lemma eq "be" } $en_by_parent->get_children ) {
+                my $en_by_parent = $aligned_parent->get_eparents(
+                    {   first_only                      => 1,
+                        or_topological                  => 1,
+                        ignore_incorrect_tree_structure => 1
+                    }
+                );
+                if ($en_by_parent->tag =~ /^VB[ND]/
+                    && grep { $_->lemma eq "be" } $en_by_parent->get_children
+                    )
+                {
 
                     # passive transformed into active => this IS now the subject
                     $dep->set_afun('Sb');
@@ -92,7 +111,9 @@ sub fix {
         if ( $new_case != $original_case ) {
 
             $d->{tag} =~ s/^(....)./$1$new_case/;
-            $d->{tag} = $self->try_switch_num( $dep->form, $dep->lemma, $d->{tag} );
+            $d->{tag} = $self->try_switch_num(
+                $dep->form, $dep->lemma, $d->{tag}
+            );
 
             $self->logfix1( $dep, "By" );
             $self->regenerate_node( $dep, $d->{tag} );

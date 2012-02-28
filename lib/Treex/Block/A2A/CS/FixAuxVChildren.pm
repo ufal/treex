@@ -14,9 +14,9 @@ sub fix {
         foreach my $child (@auxv_children) {
             $self->logfix1( $child, "AuxVChildren" );
             $child->set_parent($gov);
-            $self->logfix2( $child );
+            $self->logfix2($child);
         }
-         
+
     }
 }
 
@@ -33,7 +33,7 @@ verb.
 
 =head1 DESCRIPTION
 
-AuxV should have no children, so let's move them where they most probably 
+AuxV should have no children, so let's move them where they most probably
 belong - under AuxV's parent.
 
 =head1 AUTHORS

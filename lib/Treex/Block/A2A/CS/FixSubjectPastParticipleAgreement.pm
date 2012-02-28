@@ -8,7 +8,7 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if (   $en_counterpart{$dep}
+    if ($en_counterpart{$dep}
         && $en_counterpart{$dep}->afun eq 'Sb'
         && $g->{tag} =~ /^V[sp]/ && $d->{tag} =~ /^[NP]/
         && $dep->form !~ /^[Tt]o/

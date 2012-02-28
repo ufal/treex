@@ -8,20 +8,25 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $g->{tag} =~ /^Vs/ && $dep->lemma eq 'být'
+    if ($g->{tag} =~ /^Vs/
+        && $dep->lemma eq 'být'
         && $gov->ord > $dep->ord
         && ( $g->{gen} . $g->{num} ne $d->{gen} . $d->{num} )
-    ) {
+        )
+    {
         $self->logfix1( $dep, "PassiveAuxBeAgreement" );
-        if ($d->{tag} =~ /^Vp/) {
+        if ( $d->{tag} =~ /^Vp/ ) {
+
             # past participle active (byl, byli...)
             # dependent's tag gets gender and number substituted
             # for governor's gender and number
-            substr ( $d->{tag}, 2, 2, $g->{gen} . $g->{num} );
+            substr( $d->{tag}, 2, 2, $g->{gen} . $g->{num} );
         } else {
-            # not past participle = present or future (jsem, jste... / bude, budou...)
+
+            # not past participle = present or future
+            # (jsem, jste... / bude, budou...)
             # dependent's tag gets number substituted for governor's number
-            substr ( $d->{tag}, 3, 1, $g->{num} );
+            substr( $d->{tag}, 3, 1, $g->{num} );
         }
         $self->regenerate_node( $dep, $d->{tag} );
         $self->logfix2($dep);
