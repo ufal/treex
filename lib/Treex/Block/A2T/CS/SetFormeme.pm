@@ -120,7 +120,7 @@ sub _detect_formeme2 {
         }
         # adjectives hanging directly under the root -- nominal usage
         elsif ( $parent->t->is_root ){
-            $formeme = 'n:' . $node->case;
+            $formeme = 'n:' . ( $node->case || 'X' );
         }
         # distinguish verbal complements (selected verbs which require adjectives only) and adjectives in substantival position 
         # TODO -- fix "hodně prodavaček je levých" (genitive!)

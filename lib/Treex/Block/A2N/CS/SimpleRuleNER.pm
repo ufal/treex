@@ -113,6 +113,7 @@ sub _prev_type {
 sub _is_ucfirst {
     my ($form) = @_;
 
+    return 0 if ( $form !~ m/^\p{Alpha}/ );
     return ( $form eq uc( substr( $form, 0, 1 ) ) . lc( substr( $form, 1 ) ) );
 }
 
