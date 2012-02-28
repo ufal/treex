@@ -133,14 +133,6 @@ has 'outdir' => (
     documentation => 'Not to be used manually. Dictory for collecting standard and error outputs in parallelized processing.',
 );
 
-has 'qsub' => (
-    traits        => ['Getopt'],
-    is            => 'ro',
-    isa           => 'Str',
-    default       => '',
-    documentation => 'Additional parameters passed to qsub. Requires -p.',
-);
-
 has 'local' => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -154,6 +146,24 @@ has 'priority' => (
     isa           => 'Int',
     default       => -100,
     documentation => 'Priority for qsub, an integer in the range -1023 to 0 (or 1024 for admins), default=-100. Requires -p.',
+);
+
+has 'mem' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => [ 'm', 'memory' ],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => '2G',
+    documentation => 'How much memory should be allocated for cluster jobs, default=2G. Requires -p. '
+        . 'Translates to "qsub -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem".',
+);
+
+has 'qsub' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => '',
+    documentation => 'Additional parameters passed to qsub. Requires -p. See --priority and --mem.',
 );
 
 has 'watch' => (
@@ -554,10 +564,12 @@ sub _run_job_scripts {
             system "$workdir/$script_filename &";
         }
         else {
-            my $qsub_opts = '-cwd -e output/ -S /bin/bash ' . $self->qsub;
-            if ( $self->priority ) {
-                $qsub_opts .= ' -p ' . $self->priority;
-            }
+            my $mem       = $self->mem;
+            my $qsub_opts = '-cwd -e output/ -S /bin/bash';
+            $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
+            $qsub_opts .= ' -p ' . $self->priority;
+            $qsub_opts .= ' ' . $self->qsub;
+
             open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
             my $firstline = <$QSUB>;
