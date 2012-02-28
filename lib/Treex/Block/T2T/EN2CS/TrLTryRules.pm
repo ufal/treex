@@ -45,8 +45,8 @@ sub get_lemma_and_pos {
     # PersProns like "that" should be translated as "ten"
     if ($en_tlemma eq '#PersPron'
         && $en_formeme !~ /poss/    #"its" is excluded
-        && $cs_tnode->gram_number eq 'sg'
-        && $cs_tnode->gram_gender eq 'neut'
+        && ( $cs_tnode->gram_number || '' ) eq 'sg'
+        && ( $cs_tnode->gram_gender || '' ) eq 'neut'
         && $en_tnode->get_lex_anode()->lemma ne 'itself'
         )
     {

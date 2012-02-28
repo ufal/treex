@@ -141,6 +141,7 @@ sub prealign_same {
     my %r_forms;
     foreach my $r ( @{ $args->{free_r} } ) {
         my $r_form = $args->{"r$attr"}[$r];
+        next if !defined $r_form;    # TODO should be checked earlier
         if ( defined $r_forms{$r_form} ) {
             $r_forms{$r_form} = -2;
         }

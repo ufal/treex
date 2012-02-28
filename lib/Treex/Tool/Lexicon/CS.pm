@@ -67,6 +67,7 @@ sub number_for {
 # 5 -> pěti, 19 -> devatenácti, 65 -> pětašedesáti
 sub numeral_prefix_for_number {
     my $number = shift;
+    return $number if $number =~ /^0/;
     return 'jedno' if $number == 1;
     return 'dvou' if $number == 2;
     return 'tří' if $number == 3;
