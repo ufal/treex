@@ -143,7 +143,12 @@ Treex::Block::Util::Eval - Special block for evaluating code given by parameters
 
 =head1 DESCRIPTION
 
+Evaluate an arbitrary Perl code for each document/block/tree/node on the specified layer (according to which parameter 
+is given). The corresponding object is accessible through a variable of the same name. 
 
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
