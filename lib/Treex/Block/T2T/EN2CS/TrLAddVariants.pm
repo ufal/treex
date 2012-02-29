@@ -171,7 +171,7 @@ sub process_tnode {
 
             if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
                 $cs_tnode->set_t_lemma($1);
-                $cs_tnode->set_attr( 'mlayer_pos', $2 );
+                $cs_tnode->set_attr( 'mlayer_pos', uc($2) );
             }
             else {
                 log_fatal "Unexpected form of label: " . $translations[0]->{label};
