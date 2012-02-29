@@ -19,6 +19,13 @@ has target_features => (
     documentation => 'Print also features from the target language parent node',
 );
 
+has czeng_domain => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'Print also CzEng domain (eu, fiction, subtitles, paraweb, techdoc, news, navajo)',
+);
+
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
 
@@ -32,15 +39,15 @@ sub process_tnode {
     }
 
     #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
-    my $en_tlemma = $en_tnode->t_lemma;
-    my $cs_tlemma = $cs_tnode->t_lemma;
+    my $en_tlemma = $en_tnode->t_lemma // '';
+    my $cs_tlemma = $cs_tnode->t_lemma // '';
     return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
 
     my $features_rf =
         Treex::Tool::TranslationModel::Features::EN::features_from_src_tnode( $en_tnode, { encode => 1 } ) or return;
     my ($cs_mlayer_pos) = ( $cs_anode->tag =~ /^(.)/ );
 
-    my @cs_features = ();
+    my @add_features = ();
     if ( $self->target_features ) {
         my ($cs_parent) = $cs_tnode->get_eparents( { or_topological => 1 } );
         my ($en_parent) = $en_tnode->get_eparents( { or_topological => 1 } );
@@ -49,11 +56,17 @@ sub process_tnode {
             || ( $en_parent2 && $en_parent2 == $en_parent );
 
         if ( $edge_aligned && $cs_parent->is_root() ) {
-            @cs_features = qw(TRG_parent_lemma=_ROOT TRG_parent_formeme=_ROOT);
+            @add_features = qw(TRG_parent_lemma=_ROOT TRG_parent_formeme=_ROOT);
         }
         elsif ($edge_aligned) {
-            push @cs_features, 'TRG_parent_lemma=' . $cs_parent->t_lemma;
-            push @cs_features, 'TRG_parent_formeme=' . $cs_parent->formeme;
+            push @add_features, 'TRG_parent_lemma=' . $cs_parent->t_lemma;
+            push @add_features, 'TRG_parent_formeme=' . $cs_parent->formeme;
+        }
+    }
+
+    if ( $self->czeng_domain ) {
+        if ( my $domain = $cs_tnode->get_bundle()->attr('czeng/domain') ) {
+            push @add_features, "domain=$domain";
         }
     }
 
@@ -62,7 +75,7 @@ sub process_tnode {
         $cs_tlemma . "#" . $cs_mlayer_pos,
         $en_tnode->formeme,
         $cs_tnode->formeme,
-        join ' ', @cs_features, map {"$_=$features_rf->{$_}"} keys %{$features_rf}
+        join ' ', @add_features, map {"$_=$features_rf->{$_}"} keys %{$features_rf}
     );
     print "\n";
     return;
