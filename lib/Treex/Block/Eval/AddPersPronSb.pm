@@ -86,7 +86,7 @@ sub is_GEN {
     my ( $t_node ) = @_;
     return ( is_byt_videt($t_node)
         or is_byt_mozny($t_node)
-        or has_o_ending($t_node)
+        or ( has_o_ending($t_node) and not has_neutrum_sibling($t_node) )
         or (is_refl_pass($t_node) and is_active_present_3_sg($t_node))
     ) ? 1 : 0;
 }
@@ -115,12 +115,12 @@ sub is_IMPERS {
 # returns 1 if the node has a subject among t-children and a-children of all anodes; otherwise 0
 sub has_asubject {
     my ( $t_node ) = @_;
-    return 1 if ( grep { not $_->is_generated and $_->get_lex_anode->afun eq "Sb" } $t_node->get_echildren( { or_topological => 1 } ) );
+    return 1 if ( grep { not $_->is_generated and $_->get_lex_anode->afun =~ /^Sb/ } $t_node->get_echildren( { or_topological => 1 } ) );
 #     foreach my $child ( grep { not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) ) {
 #         return 1 if ( $child->get_lex_anode->afun eq "Sb" );
 #     }
     foreach my $averb ( grep { $_->tag =~ /^V/ } $t_node->get_anodes ) {
-        return 1 if ( grep { $_->afun eq "Sb" } $averb->children );
+        return 1 if ( grep { $_->afun =~ /^Sb/ } $averb->children );
         my ($acoord) = grep { $_->afun eq "Coord" } $averb->children;
         if ( $acoord ) {
             return 1 if ( grep { $_->afun =~ /^Sb/ } $acoord->children );
@@ -139,7 +139,19 @@ sub is_clause_head {
 # error in adding functor, the predicate of the subject subordinate clause has PAT functor
 sub has_sb_clause {
     my ( $t_node ) = @_;
-    return ( grep { $_->functor eq "PAT"
+    return ( 
+        grep { 
+#             $_->functor =~ /^(ACT|PAT)$/
+            ($_->gram_sempos || "") eq "v"
+            and not $_->is_generated
+            and is_clause_head($_)
+        } $t_node->get_echildren ( { or_topological => 1 } )
+    ) ? 1 : 0;
+}
+
+sub has_sb_clause_gold {
+    my ( $t_node ) = @_;
+    return ( grep { $_->functor eq "ACT"
             and ($_->gram_sempos || "") eq "v"
             and not $_->is_generated
             and is_clause_head($_)
@@ -147,11 +159,26 @@ sub has_sb_clause {
     ) ? 1 : 0;
 }
 
+# for automatic data
 sub has_subject {
     my ( $t_node ) = @_;
-    return ( grep { ( $_->formeme || "" ) eq "n:1" } $t_node->get_echildren( { or_topological => 1 } )
-        or has_asubject($t_node)
+#     if ( $t_node->id eq "T-wsj1100-001-p1s0a9" ) {
+#         if ( has_subject($cand_verb) ) {
+#             print "halo\n";
+#         }
+#     }
+    return ( 
+#         grep { ( $_->formeme || "" ) eq "n:1" } $t_node->get_echildren( { or_topological => 1 } )
+        has_asubject($t_node)
         or has_sb_clause($t_node)
+    ) ? 1 : 0;
+}
+
+sub has_subject_gold {
+    my ( $t_node ) = @_;
+    return (
+        has_asubject($t_node)
+        or has_sb_clause_gold($t_node)
     ) ? 1 : 0;
 }
 
@@ -194,12 +221,21 @@ sub get_total_sum {
     return $total_sum;
 }
 
+sub has_pleon_sb {
+    my ( $t_node ) = @_;
+    return ( ( $t_node->is_clause_head or is_clause_head($t_node) )
+        and not $t_node->is_generated
+        and not grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $t_node->get_echildren( { or_topological => 1 } )
+        and not has_asubject($t_node)
+    ) ? 1 : 0;
+}
+
 sub has_unexpressed_sb {
     my ( $t_node ) = @_;
     foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $t_node->get_echildren ( { or_topological => 1 } ) ) {
         if ( ( $t_node->is_clause_head or is_clause_head($t_node) )
             and not $t_node->is_generated
-            and not has_subject($t_node)
+            and not has_subject_gold($t_node)
             and ( ( is_passive($t_node) and $perspron->functor eq "PAT" )
                 or ( not is_passive($t_node) and $perspron->functor eq "ACT" ) )
             and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } $t_node->get_echildren ( { or_topological => 1 } ) 
@@ -210,15 +246,63 @@ sub has_unexpressed_sb {
     return 0;
 }
 
+# the given verb has o-ending and there is a neutrum n.denot in the main clause
+sub has_neutrum_sibling {
+    my ( $verb ) = @_;
+    my ($epar) = $verb->get_eparents ( { or_topological => 1 } );
+    if ( $epar and ($epar->formeme || "") =~ /^v:.*fin$/ ) {
+#     if ( $epar and ($epar->functor || "") eq "PRED" ) {
+        my @echildren_anodes = map { $_->get_anodes } $epar->get_echildren( { or_topological => 1 } );
+        if ( grep { $_->tag =~ /^..N/ } @echildren_anodes ) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub has_o_having_neutrum {
+    my ( $verb ) = @_;
+    if ( has_o_ending($verb) ) {
+        my ($epar) = $verb->get_eparents ( { or_topological => 1 } );
+        if ( $epar and ($epar->functor || "") eq "PRED" ) {
+            my @echildren_anodes = map { $_->get_anodes } $epar->get_echildren( { or_topological => 1 } );
+            if ( grep { $_->tag =~ /^..N/ } @echildren_anodes ) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+# returns 1 if the given candidate verb - clause head will be given a generated #PersPron node as an unexpressed subject
+sub will_have_perspron_gold {
+    my ( $cand_verb ) = @_;
+#     if ( has_o_having_neutrum($cand_verb) ) {
+#         print $cand_verb->get_address . "\n";
+#     }
+    return (
+        not is_passive_having_PAT($cand_verb)
+        and not is_active_having_ACT($cand_verb)
+        and not is_GEN($cand_verb)
+        and not is_IMPERS($cand_verb)
+        and not has_subject_gold($cand_verb)
+#         and not has_o_having_neutrum($cand_verb)
+    ) ? 1 : 0;
+}
+
 # returns 1 if the given candidate verb - clause head will be given a generated #PersPron node as an unexpressed subject
 sub will_have_perspron {
     my ( $cand_verb ) = @_;
+#     if ( has_o_having_neutrum($cand_verb) ) {
+#         print $cand_verb->get_address . "\n";
+#     }
     return (
         not is_passive_having_PAT($cand_verb)
         and not is_active_having_ACT($cand_verb)
         and not is_GEN($cand_verb)
         and not is_IMPERS($cand_verb)
         and not has_subject($cand_verb)
+#         and not has_o_having_neutrum($cand_verb)
     ) ? 1 : 0;
 }
 
