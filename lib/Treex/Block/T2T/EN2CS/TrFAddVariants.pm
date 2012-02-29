@@ -15,7 +15,8 @@ use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
 
 my $MODEL_MAXENT = 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.slurp.gz';
-my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng10.static.zp-10.pls.gz';
+#my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng10.static.zp-10.pls.gz';
+my $MODEL_STATIC = 'data/models/translation/en2cs/formeme_czeng09.static.pls.slurp.gz';
 
 
 my $DATA_VERSION = "1.0";
@@ -24,7 +25,7 @@ my $MODEL_NB = 'data/models/translation/en2cs/formeme_czeng10.nb.lowercased.pls.
 #my $MODEL_NB = 'data/models/translation/en2cs/formeme_czeng10.nb.pls.slurp.gz';
 
 if ( $DATA_VERSION eq "0.9" ) {
-    my $MODEL_NB = 'data/models/translation/en2cs/formeme_czeng09.nb.pls.slurp.gz';
+    $MODEL_NB = 'data/models/translation/en2cs/formeme_czeng09.nb.pls.slurp.gz';
 }
 
 
