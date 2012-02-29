@@ -132,7 +132,7 @@ sub BUILD {
                 $pmldoc = eval {
                     $factory->createDocumentFromFile( $params_rf->{filename} );
                 };
-                log_fatal "Error while loading " . $params_rf->{filename}
+                log_fatal "Error while loading " . $params_rf->{filename} . ($@ ? "\n$@" : '')
                     if !defined $pmldoc;
             }
         }
