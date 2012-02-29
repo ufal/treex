@@ -18,14 +18,14 @@ sub process_tnode {
 sub process_year {
     my ($t_node) = @_;
     my $en_t_node = $t_node->src_tnode or return;
-    my $t_parent  = $t_node->get_parent();
+    my $t_parent = $t_node->get_parent();
     return if $t_parent->is_root();
-    
-    # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
-    return if Treex::Tool::Lexicon::CS::number_of_month($t_parent->t_lemma);
 
-    my $year      = $t_node->t_lemma;
-    my $new_node  = $t_parent->create_child(
+    # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
+    return if Treex::Tool::Lexicon::CS::number_of_month( $t_parent->t_lemma );
+
+    my $year     = $t_node->t_lemma;
+    my $new_node = $t_parent->create_child(
         {   't_lemma'        => 'rok',
             'nodetype'       => 'complex',
             'functor'        => '???',
@@ -34,8 +34,8 @@ sub process_year {
             'gram/number'    => 'sg',
             'gram/gender'    => 'inan',
             'mlayer_pos'     => 'N',
-            'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
-            't_lemma_origin' => 'rule-Fix_date_time',
+            'formeme_origin' => 'rule-FixDateTime(' . $t_node->formeme_origin . ')',
+            't_lemma_origin' => 'rule-FixDateTime',
         }
     );
 
@@ -53,7 +53,7 @@ sub process_year {
     {
         $year =~ /(..)s?$/;
         $t_node->set_t_lemma("$1.");
-        $t_node->set_t_lemma_origin('rule-Fix_date_time');
+        $t_node->set_t_lemma_origin('rule-FixDateTime');
         $new_node->shift_after_node( $t_node, { without_children => 1 } );
         $new_node->set_gram_number('pl');
         $new_node->set_gram_gender('neut');    # to distinguish "v rocích" and "v letech"
@@ -66,7 +66,7 @@ sub process_year {
     }
 
     $t_node->set_formeme('x');
-    $t_node->set_formeme_origin('rule-Fix_date_time');
+    $t_node->set_formeme_origin('rule-FixDateTime');
     $t_node->set_parent($new_node);
     foreach my $child ( $t_node->get_children() ) {
         $child->set_parent($new_node);
@@ -94,10 +94,10 @@ sub process_range_of_years {
             'functor'        => '???',
             'gram/sempos'    => 'n.denot',
             'gram/number'    => 'pl',
-            'gram/gender'    => 'neut',                                                  # 'v letech...', not 'v rocich...'
+            'gram/gender'    => 'neut',                                                # 'v letech...', not 'v rocich...'
             'mlayer_pos'     => 'N',
             'formeme'        => $t_node->formeme,
-            'formeme_origin' => 'rule-Fix_date_time(' . $t_node->formeme_origin . ')',
+            'formeme_origin' => 'rule-FixDateTime(' . $t_node->formeme_origin . ')',
         }
     );
     $rok_node->shift_before_node( $t_node, { without_children => 1 } );
@@ -106,7 +106,7 @@ sub process_range_of_years {
     # first year node
     $t_node->set_t_lemma($first);
     $t_node->set_formeme('x');
-    $t_node->set_formeme_origin('rule-Fix_date_time');
+    $t_node->set_formeme_origin('rule-FixDateTime');
     $t_node->set_parent($rok_node);
     foreach my $child ( $t_node->get_children() ) {
         $child->set_parent($rok_node);
@@ -119,7 +119,7 @@ sub process_range_of_years {
             'functor'        => '???',
             'gram/sempos'    => 'n.denot',
             'formeme'        => 'n:až+X',
-            'formeme_origin' => 'rule-Fix_date_time',
+            'formeme_origin' => 'rule-FixDateTime',
         }
     );
     $second_node->shift_after_node( $t_node, { without_children => 1 } );
@@ -150,16 +150,30 @@ sub process_month {
     my $t_lemma = $t_node->t_lemma;
     if ( $t_lemma !~ /\.$/ ) {
         $t_node->set_t_lemma( $t_lemma . '.' );
-        $t_node->set_t_lemma_origin('rule-Fix_date_time');
+        $t_node->set_t_lemma_origin('rule-FixDateTime');
     }
 
     # Change word order
     $t_node->shift_before_node( $month, { without_children => 1 } );
 
-    # "on January 9" -> "9. ledna"
-    if ( $month->formeme =~ /^n:(na|v)/ ) {
+    # "sobota 9. leden" -> "sobota 9. ledna"
+    if ( $month->formeme eq 'n:1' ) {
+        if ( any { Treex::Tool::Lexicon::CS::number_of_day($_->t_lemma) } $month->get_children() ) {
+            $month->set_formeme('n:2');
+            $month->set_formeme_origin('rule-FixDateTime');
+        }
+    }
+
+    # "z 9. ledna" -> "od 9. ledna"
+    elsif ( $month->formeme eq 'n:z+2' ) {
+        $month->set_formeme('n:od+2');
+        $month->set_formeme_origin('rule-FixDateTime');
+    }
+
+    # "9. leden" -> "9. ledna"
+    elsif ( $month->formeme !~ /^n:(od|do|během)/ ) {
         $month->set_formeme('n:2');
-        $month->set_formeme_origin('rule-Fix_date_time');
+        $month->set_formeme_origin('rule-FixDateTime');
     }
     return;
 }

@@ -93,6 +93,16 @@ sub number_of_month {
     return $NUMBER_OF_MONTH{$lemma};
 }
 
+my %NUMBER_OF_DAY = (
+    pondělí => 1, úterý => 2, středa => 3, čtvrtek => 4,
+    pátek => 5, sobota => 6, neděle => 7,
+);
+
+sub number_of_day {
+    my ($lemma) = @_;
+    return $NUMBER_OF_DAY{$lemma};
+}
+
 my %IS_PLURAL_TANTUM;
 my @PL_TANTUM_NOUNS = qw(alpy brýle čechy doksy drážďany dveře finance hodinky
  housle hrábě hradčany jatka jatky játra kalhoty kleště křtiny kvasnice lázně námluvy
@@ -105,7 +115,7 @@ foreach my $lemma (@PL_TANTUM_NOUNS ) {
 
 sub is_plural_tantum {
     my ($lemma) = @_;
-    return $IS_PLURAL_TANTUM{$lemma};
+    return $IS_PLURAL_TANTUM{lc $lemma};
 }
 
 my %noun2possadjective;
