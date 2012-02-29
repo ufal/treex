@@ -78,7 +78,8 @@ my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slu
 
 my $MODEL_MAXENT = {
     '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.pls.gz'
+    #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.lowercased.para.pls.gz'
 };
 
 my $MODEL_STATIC = {
@@ -171,7 +172,7 @@ sub process_tnode {
 
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
-        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
+        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $self->{maxent_version});
         my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $self->{nb_version});
 
         my $features_array_rf = [
