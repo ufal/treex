@@ -6,7 +6,7 @@ use 5.010;
 use utf8;
 use Moose::Exporter;
 use Moose::Util::TypeConstraints;
-use MooseX::SemiAffordanceAccessor::Role::Attribute;
+use MooseX::SemiAffordanceAccessor::Role::Attribute 0.09;
 use Treex::Core::Log;
 use Treex::Core::Config;
 use Treex::Core::Resource;

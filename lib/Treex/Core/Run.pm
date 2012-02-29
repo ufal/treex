@@ -3,7 +3,7 @@ use 5.008;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core;
-use MooseX::SemiAffordanceAccessor;
+use MooseX::SemiAffordanceAccessor 0.09;
 with 'MooseX::Getopt';
 
 use Cwd;

@@ -1,6 +1,6 @@
 package Treex::Core::Files;
 use Moose;
-use MooseX::SemiAffordanceAccessor;
+use MooseX::SemiAffordanceAccessor 0.09;
 use Treex::Core::Log;
 use autodie;
 use File::Slurp 9999.19;
