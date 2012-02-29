@@ -27,12 +27,12 @@ sub process_tnode {
     # Skip nodes that were already translated by other rules
     return if $cs_tnode->t_lemma_origin !~ /^clone/;
 
-    my $en_tnode = $cs_tnode->src_tnode or next;
+    my $en_tnode = $cs_tnode->src_tnode or return;
     my $lemma_and_pos = $self->get_lemma_and_pos( $en_tnode, $cs_tnode );
     if ( defined $lemma_and_pos ) {
         my ( $cs_tlemma, $m_pos ) = split /\|/, $lemma_and_pos;
         $cs_tnode->set_t_lemma($cs_tlemma);
-        $cs_tnode->set_t_lemma_origin('rule-Translate_L_try_rules');
+        $cs_tnode->set_t_lemma_origin('rule-TrLTryRules');
         $cs_tnode->set_attr( 'mlayer_pos', $m_pos )
     }
     return;
