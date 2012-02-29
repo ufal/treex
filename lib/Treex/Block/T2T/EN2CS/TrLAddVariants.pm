@@ -30,7 +30,18 @@ use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich
 my $MODEL_MAXENT = 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz';
 my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
 my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
-my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.pls.slurp.gz';
+
+
+my $DATA_VERSION = "1.0";
+
+#my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.pls.slurp.gz';
+my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.pls.slurp.gz';
+#my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.morefeatures.pls.slurp.gz';
+
+if ( $DATA_VERSION eq "0.9") {
+    my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng09.nb.pls.slurp.gz';
+}
+
 
 has maxent_weight => (
     is            => 'ro',
@@ -45,7 +56,6 @@ has nb_weight => (
     default       => 0,
     documentation => 'Weight for Naive Bayes model.'
 );
-
 
 sub get_required_share_files {
     return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_HUMAN, $MODEL_NB );
@@ -121,7 +131,7 @@ sub process_tnode {
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
         my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
-        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
+        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $DATA_VERSION);
 
         my $features_array_rf = [
             map           {"$_=$features_hash_rf->{$_}"}
