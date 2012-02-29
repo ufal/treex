@@ -141,6 +141,14 @@ sub process_tnode {
 
         my $en_tlemma = $en_tnode->t_lemma;
         my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf, $features_hash_rf2 );
+        
+        # when lowercased models are used, then PoS tags should be uppercased
+        @translations = map {
+            if ( $_->{label} =~ /(.+)#(.)$/ ) {
+                $_->{label} = $1 . '#' . uc($2);
+            }
+            $_;
+        } @translations;
 
         # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
         # kvuli chybne extrakci trenovacich vektoru z CzEngu u posesivnich adjektiv,
@@ -171,7 +179,7 @@ sub process_tnode {
 
             if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
                 $cs_tnode->set_t_lemma($1);
-                $cs_tnode->set_attr( 'mlayer_pos', uc($2) );
+                $cs_tnode->set_attr( 'mlayer_pos', $2 );
             }
             else {
                 log_fatal "Unexpected form of label: " . $translations[0]->{label};
