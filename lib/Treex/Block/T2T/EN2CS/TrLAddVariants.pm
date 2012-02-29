@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use ProbUtils::Normalize;
+use Moose::Util::TypeConstraints;
 
 use TranslationModel::MaxEnt::Model;
 use TranslationModel::NaiveBayes::Model;
@@ -27,27 +28,23 @@ use TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
-my $MODEL_MAXENT = 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz';
-my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
-my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
-
-
-my $DATA_VERSION = "1.0";
-
-#my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.pls.slurp.gz';
-my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.pls.slurp.gz';
-#my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.morefeatures.pls.slurp.gz';
-
-if ( $DATA_VERSION eq "0.9") {
-    my $MODEL_NB = 'data/models/translation/en2cs/tlemma_czeng09.nb.pls.slurp.gz';
-}
-
+subtype 'DataVersion',
+      as 'Str',
+      where { $_ eq "0.9" or $_ eq "1.0" },
+      message { 'Valid version is 0.9 or 1.0' };
 
 has maxent_weight => (
     is            => 'ro',
     isa           => 'Num',
     default       => 1.0,
     documentation => 'Weight for MaxEnt model.'
+);
+
+
+has maxent_version => (
+    is            => 'ro',
+    isa           => 'DataVersion',
+    default       => "0.9"
 );
 
 has nb_weight => (
@@ -57,8 +54,52 @@ has nb_weight => (
     documentation => 'Weight for Naive Bayes model.'
 );
 
+has nb_version => (
+    is            => 'ro',
+    isa           => 'DataVersion',
+    default       => "1.0"
+);
+
+#has static_weight => (
+#    is            => 'ro',
+#    isa           => 'Num',
+#    default       => 0.5,
+#    documentation => 'Weight for Static model.'
+#);
+
+
+has static_version => (
+    is            => 'ro',
+    isa           => 'DataVersion',
+    default       => "0.9"
+);
+
+my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
+
+my $MODEL_MAXENT = {
+    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.pls.gz'
+};
+
+my $MODEL_STATIC = {
+    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz',
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.static.zp-3.pls.gz'
+};
+
+
+my $MODEL_NB = {
+    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.nb.pls.slurp.gz',
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.pls.slurp.gz'
+};
+
 sub get_required_share_files {
-    return ( $MODEL_MAXENT, $MODEL_STATIC, $MODEL_HUMAN, $MODEL_NB );
+    my $self = shift;
+    return (
+        $MODEL_MAXENT->{$self->{maxent_version}},
+        $MODEL_STATIC->{$self->{static_version}},
+        $MODEL_HUMAN,
+        $MODEL_NB->{$self->{nb_version}}
+    );
 }
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
@@ -71,19 +112,19 @@ sub BUILD {
 
     if ( $self->maxent_weight > 0 ) {
         my $maxent_model = TranslationModel::MaxEnt::Model->new();
-        $maxent_model->load("$ENV{TMT_ROOT}/share/$MODEL_MAXENT");
+        $maxent_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{$self->{maxent_version}});
         push(@interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight });
     }
 
     my $static_model = TranslationModel::Static::Model->new();
-    $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
+    $static_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{$self->{static_version}});
 
     my $humanlex_model = TranslationModel::Static::Model->new;
     $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
 
     if ( $self->nb_weight > 0 ) {
         my $nb_model = TranslationModel::NaiveBayes::Model->new();
-        $nb_model->load("$ENV{TMT_ROOT}/share/$MODEL_NB");
+        $nb_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_NB->{$self->{nb_version}});
         push(@interpolated_sequence, { model => $nb_model, weight => $self->nb_weight });
    }
 
@@ -131,7 +172,7 @@ sub process_tnode {
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
         my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode);
-        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $DATA_VERSION);
+        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $self->{nb_version});
 
         my $features_array_rf = [
             map           {"$_=$features_hash_rf->{$_}"}
@@ -141,7 +182,7 @@ sub process_tnode {
 
         my $en_tlemma = $en_tnode->t_lemma;
         my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf, $features_hash_rf2 );
-        
+
         # when lowercased models are used, then PoS tags should be uppercased
         @translations = map {
             if ( $_->{label} =~ /(.+)#(.)$/ ) {
