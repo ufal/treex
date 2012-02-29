@@ -202,17 +202,6 @@ sub process_tnode {
                 )
         } @translations;
 
-        # POZOR, HACK, nutno resit jinak a jinde !!!
-        # tokeny obsahujici pouze velka pismena a cisla se casto neprekladaji, pridaji se tedy mezi prekladove varianty
-        if ($en_tlemma =~ /^[\p{isUpper}\d]+$/
-            and $en_tlemma !~ /^(UN|VAT)$/
-            and $en_tnode->get_lex_anode
-            and $en_tnode->get_lex_anode->tag =~ /^NNP/
-            )
-        {
-            unshift @translations, { 'label' => "$en_tlemma#N", 'source' => 'NNPs', 'prob' => 0.5 };
-        }
-
         if ( $max_variants && @translations > $max_variants ) {
             splice @translations, $max_variants;
         }
