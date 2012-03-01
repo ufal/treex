@@ -29,13 +29,23 @@ has 'backward_weight' => (
         . ' is set to 1 - BACKWARD_WEIGHT.',
 );
 
+has lm_dir => (
+    is => 'ro',
+    isa => 'Str',
+    default => 'cs',
+);
+
 use Treex::Tool::Algorithm::TreeViterbi;
 use Treex::Tool::Lexicon::CS;
 use LanguageModel::TreeLM;
 
 sub BUILD {
     my ($self) = @_;
-    MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new() );
+    my $lm_rel_path = 'data/models/language/' . $self->lm_dir;
+    my ($lm_fn1, $lm_fn2) = $self->require_files_from_share( "$lm_rel_path/c_LgFdLd.pls.gz", "$lm_rel_path/c_PgFdLd.pls.gz" );
+    my $lm_abs_path = $lm_fn1;
+    $lm_abs_path =~ s/c_LgFdLd.pls.gz//;
+    MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new( {dir => $lm_abs_path} ) );
     MyTreeViterbiState->set_lm_weight( $self->lm_weight );
     MyTreeViterbiState->set_formeme_weight( $self->formeme_weight );
     MyTreeViterbiState->set_backward_weight( $self->backward_weight );
