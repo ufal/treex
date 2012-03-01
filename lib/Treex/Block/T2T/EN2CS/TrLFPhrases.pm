@@ -129,17 +129,17 @@ sub process_tnode {
     }
 
     # "based on" -> "na základě"
-    if ( $lemma eq 'base' && $en_tnode->is_passive) {
-        my $child = first {$_->src_tnode->formeme eq 'n:on+X'} $cs_tnode->get_children();
+    if ( $lemma eq 'base' && $en_tnode->is_passive && $p_formeme =~ /^v/ ) {
+        my $child = first { $_->src_tnode->formeme eq 'n:on+X' } $cs_tnode->get_echildren();
         return if !$child;
-                
+
         $cs_tnode->set_t_lemma('základ');
         $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
         $cs_tnode->set_formeme('n:na+6');
         $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
         $cs_tnode->set_attr( 'mlayer_pos', 'N' );
         $cs_tnode->set_is_passive(undef);
-        
+
         $child->set_formeme('n:2');
         $child->set_formeme_origin('rule-TrLFPhrases');
     }
