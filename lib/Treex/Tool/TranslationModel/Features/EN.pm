@@ -32,8 +32,7 @@ sub _node_and_parent {
     }
 
     # features from a-layer
-    my $anode = $tnode->get_lex_anode;
-    if ($anode) {
+    if (my $anode = $tnode->get_lex_anode) {
         $feats{tag} = $anode->tag;
         $feats{capitalized} = 1 if $anode->form =~ /^\p{IsUpper}/;
     }
@@ -58,7 +57,13 @@ sub _child {
         lemma   => $tnode->t_lemma,
         formeme => $tnode->formeme,
     );
-
+    if ( my $n_node = $tnode->get_n_node() ) {
+        $feats{ne_type} = $n_node->ne_type;
+    }
+    if (my $anode = $tnode->get_lex_anode) {
+        $feats{tag} = $anode->tag;
+        $feats{capitalized} = 1 if $anode->form =~ /^\p{IsUpper}/;
+    }
     my %f;
     while ( my ( $key, $value ) = each %feats ) {
         if ( defined $value ) {
