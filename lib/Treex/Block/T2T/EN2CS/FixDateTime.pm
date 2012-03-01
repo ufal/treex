@@ -23,6 +23,9 @@ sub process_year {
 
     # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
     return if Treex::Tool::Lexicon::CS::number_of_month( $t_parent->t_lemma );
+    
+    # "(2005)" should not be translated as "(rok 2005)" or even "rok (2005)"
+    return if $t_node->is_parenthesis;
 
     my $year     = $t_node->t_lemma;
     my $new_node = $t_parent->create_child(
