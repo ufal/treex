@@ -7,7 +7,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 sub process_tnode {
 
     my ( $self, $t_node ) = @_;
-    my $t_parent = $t_node->get_parent();
+    my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } ); # use effective parents
 
     my $a_node   = $t_node->get_lex_anode();
     my $a_parent = $t_parent->get_lex_anode();
@@ -18,7 +18,7 @@ sub process_tnode {
         ( $t_node->t_lemma // '' ),
 
         # parent t-lemma
-        ( $t_parent->is_root ? '_ROOT' : $t_parent->t_lemma // '_UNDEF' ),
+        ( $t_parent->is_root ? '_ROOT' : $t_parent->t_lemma // '' ),
 
         # formeme
         ( $t_node->formeme // '???' ),
