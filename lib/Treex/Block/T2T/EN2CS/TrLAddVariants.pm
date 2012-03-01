@@ -77,8 +77,8 @@ has static_version => (
 my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
 
 my $MODEL_MAXENT = {
-    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
-    #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
+    #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
+    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
     '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.lowercased.para.pls.gz'
 };
 
