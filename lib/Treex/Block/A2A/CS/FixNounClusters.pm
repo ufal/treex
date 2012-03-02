@@ -1,6 +1,7 @@
 package Treex::Block::A2A::CS::FixNounClusters;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Node::A;
 use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
@@ -37,8 +38,45 @@ sub fix {
                 return;
             }
             
+            # coordination (the whole coordination has to be moved)
+            if ( $dep->is_member ) {
+                # if is member
+                # TODO: maybe move whole coordination, maybe only sometimes...
+                return;
+            }
+            
+            # get important nodes
+            my @dep_descendants = $dep->get_descendants( { ordered => 1, add_self => 1} );
+            my ($dep_leftmost_descendant) = @dep_descendants;
+            my $dep_subtree_precedent = $dep_leftmost_descendant->get_prev_node();
+            my $dep_rightmost_descendant = pop @dep_descendants;
+
+            # beginning of sentence capitalization
+            if ( $dep_leftmost_descendant->ord == 1 ) {
+                # if is at beginning of sentence
+                # TODO: (maybe) guess correct capitalization using a NER
+                # BETTER: guess using EN
+                return;
+            }
+            
+            # space normalization
+            # move no_space_after values
+            my $nsa_dep_rightmost_descendant = $cs_gov->no_space_after;
+            my $nsa_dep_subtree_precedent = $dep_rightmost_descendant->no_space_after;
+            my $nsa_cs_gov = 0;
+            if (defined $dep_subtree_precedent) {
+                $nsa_cs_gov = $dep_subtree_precedent->no_space_after;
+            }
+            # assign no_space_after values
+            $dep_rightmost_descendant->{'no_space_after'} = $nsa_dep_rightmost_descendant;
+            $dep_subtree_precedent->{'no_space_after'} = $nsa_dep_subtree_precedent;
+            if (defined $dep_subtree_precedent) {
+                $cs_gov->{'no_space_after'} = $nsa_cs_gov;
+            }
+            
             $self->logfix1( $dep, "NounClusters" );
             
+            # rehanging
             $dep->set_parent($cs_gov);
             
             # change ords
@@ -73,6 +111,12 @@ modifier nouns into adjectives (which is hard to do in depfix), or you have to
 form a genitival structure, e.g. "project of State Treasury" or "budget of
 next year", which is exactly what this block does (the case is set to '2',
 which stands for genitive).
+
+TODO:
+The block now does reasonably well in detecting noun clusters.
+However, they should be preferably corrected not by forming a genitival
+construction, but by converting the dependent noun into an adjective.
+Sadly, I am now not able to do that...
 
 =head1 AUTHORS
 
