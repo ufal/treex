@@ -89,7 +89,7 @@ my $MODEL_MAXENT = {
 
     #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
     '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.lowercased.para.pls.gz',
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.10k.para.pls.gz'
     '1.2' => 'data/models/translation/en2cs/tlemma_czeng12.maxent.10000.100.2_1.pls.gz',
 };
 

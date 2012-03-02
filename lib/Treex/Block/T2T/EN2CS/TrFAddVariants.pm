@@ -21,11 +21,13 @@ has [ 'maxent_version', 'nb_version', 'static_version' ] => ( is => 'ro', isa =>
 
 my $MODEL_MAXENT = {
     '0.9' => 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.slurp.gz',
+    '1.2' => 'data/models/translation/en2cs/formeme_czeng12.maxent.10000.50.2_1.pls.gz'
 };
 
 my $MODEL_STATIC = {
     '0.9' => 'data/models/translation/en2cs/formeme_czeng09.static.pls.slurp.gz',
     '1.0' => 'data/models/translation/en2cs/formeme_czeng10.static.zp-10.pls.gz',
+    '1.2' => 'data/models/translation/en2cs/formeme_czeng12.static.p-10.pls.gz',
 };
 
 my $MODEL_NB = {
