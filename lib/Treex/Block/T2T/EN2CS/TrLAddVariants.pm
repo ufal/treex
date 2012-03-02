@@ -69,6 +69,13 @@ has static_version => (
     default => '0.9'
 );
 
+has [qw(trg_lemmas trg_formemes)] => (
+    is => 'ro',
+    isa => 'Int',
+    default => 0,
+    documentation => 'How many (t_lemma/formeme) variants from the target-side parent should be used as features', 
+);
+
 my $MODEL_HUMAN = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
 
 my $MODEL_MAXENT = {
@@ -93,10 +100,10 @@ my $MODEL_NB = {
 sub get_required_share_files {
     my $self = shift;
     return (
-        $MODEL_MAXENT->{ $self->{maxent_version} },
-        $MODEL_STATIC->{ $self->{static_version} },
+        $MODEL_MAXENT->{ $self->maxent_version },
+        $MODEL_STATIC->{ $self->static_version },
         $MODEL_HUMAN,
-        $MODEL_NB->{ $self->{nb_version} }
+        $MODEL_NB->{ $self->nb_version }
     );
 }
 
@@ -178,6 +185,34 @@ sub process_tnode {
                 sort grep { defined $features_hash_rf->{$_} }
                 keys %{$features_hash_rf}
         ];
+
+        if ($self->trg_lemmas) {
+            my $parent = $cs_tnode->get_parent();
+            if ($parent->is_root()){
+                push @$features_array_rf, 'TRG_parent_lemma=_ROOT';
+            } else {
+                my $p_variants_rf = $parent->get_attr('translation_model/t_lemma_variants');
+                my $added = 1;
+                foreach my $p_variant (@{$p_variants_rf}){
+                    push @$features_array_rf, 'TRG_parent_lemma=' . $p_variant->t_lemma;
+                    last if $added++ >= $self->trg_lemmas;
+                }
+            }
+        }
+
+        if ($self->trg_formemes) {
+            my $parent = $cs_tnode->get_parent();
+            if ($parent->is_root()){
+                push @$features_array_rf, 'TRG_parent_formeme=_ROOT';
+            } else {
+                my $p_variants_rf = $parent->get_attr('translation_model/formeme_variants');
+                my $added = 1;
+                foreach my $p_variant (@{$p_variants_rf}){
+                    push @$features_array_rf, 'TRG_parent_formeme=' . $p_variant->formeme;
+                    last if $added++ >= $self->trg_formemes;
+                }
+            }
+        }
 
         my $en_tlemma = $en_tnode->t_lemma;
         my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf, $features_hash_rf2 );
