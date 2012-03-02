@@ -13,7 +13,10 @@ sub fix {
         foreach my $child ( $gov->get_children() ) {
             $subject = $child if $child->afun eq 'Sb';
         }
-        return if !$subject;
+
+        if (!$subject) {
+	    return;
+	}
 
         $self->logfix1( $dep, "VerbAuxBeAgreement" );
 
