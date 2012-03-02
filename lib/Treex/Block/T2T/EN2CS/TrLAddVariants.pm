@@ -28,7 +28,7 @@ use TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
-enum 'DataVersion', [ '0.9', '1.0', '1.1', '1.2' ];
+enum 'DataVersion' => [ '0.9', '1.0', '1.1', '1.2' ];
 
 has maxent_weight => (
     is            => 'ro',
@@ -37,11 +37,10 @@ has maxent_weight => (
     documentation => 'Weight for MaxEnt model.'
 );
 
-
 has maxent_version => (
-    is            => 'ro',
-    isa           => 'DataVersion',
-    default       => "0.9"
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '0.9'
 );
 
 has nb_weight => (
@@ -52,9 +51,9 @@ has nb_weight => (
 );
 
 has nb_version => (
-    is            => 'ro',
-    isa           => 'DataVersion',
-    default       => "1.0"
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '1.0'
 );
 
 #has static_weight => (
@@ -64,16 +63,16 @@ has nb_version => (
 #    documentation => 'Weight for Static model.'
 #);
 
-
 has static_version => (
-    is            => 'ro',
-    isa           => 'DataVersion',
-    default       => "0.9"
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '0.9'
 );
 
-my $MODEL_HUMAN  = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
+my $MODEL_HUMAN = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
 
 my $MODEL_MAXENT = {
+
     #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
     '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
     '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.1k.lowercased.para.pls.gz'
@@ -81,9 +80,10 @@ my $MODEL_MAXENT = {
 
 my $MODEL_STATIC = {
     '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.static.zp-3.pls.gz'
+    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.static.zp-3.pls.gz',
+    '1.1' => 'data/models/translation/en2cs/tlemma_czeng11.static.p-3.pls.gz',
+    '1.2' => 'data/models/translation/en2cs/tlemma_czeng12.static.p-3.pls.gz',
 };
-
 
 my $MODEL_NB = {
     '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.nb.pls.slurp.gz',
@@ -93,10 +93,10 @@ my $MODEL_NB = {
 sub get_required_share_files {
     my $self = shift;
     return (
-        $MODEL_MAXENT->{$self->{maxent_version}},
-        $MODEL_STATIC->{$self->{static_version}},
+        $MODEL_MAXENT->{ $self->{maxent_version} },
+        $MODEL_STATIC->{ $self->{static_version} },
         $MODEL_HUMAN,
-        $MODEL_NB->{$self->{nb_version}}
+        $MODEL_NB->{ $self->{nb_version} }
     );
 }
 
@@ -104,27 +104,27 @@ sub get_required_share_files {
 my ( $combined_model, $max_variants );
 
 sub BUILD {
-    my $self         = shift;
+    my $self = shift;
 
     my @interpolated_sequence = ();
 
     if ( $self->maxent_weight > 0 ) {
         my $maxent_model = TranslationModel::MaxEnt::Model->new();
-        $maxent_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{$self->{maxent_version}});
-        push(@interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight });
+        $maxent_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
+        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
 
     my $static_model = TranslationModel::Static::Model->new();
-    $static_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{$self->{static_version}});
+    $static_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} } );
 
     my $humanlex_model = TranslationModel::Static::Model->new;
     $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
 
     if ( $self->nb_weight > 0 ) {
         my $nb_model = TranslationModel::NaiveBayes::Model->new();
-        $nb_model->load("$ENV{TMT_ROOT}/share/" . $MODEL_NB->{$self->{nb_version}});
-        push(@interpolated_sequence, { model => $nb_model, weight => $self->nb_weight });
-   }
+        $nb_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} } );
+        push( @interpolated_sequence, { model => $nb_model, weight => $self->nb_weight } );
+    }
 
     my $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
     my $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
@@ -138,7 +138,8 @@ sub BUILD {
     my $static_translit = TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
 
     # make interpolated model
-    push(@interpolated_sequence,
+    push(
+        @interpolated_sequence,
         { model => $static_translit, weight => 0.5 },
         { model => $humanlex_model,  weight => 0.1 },
         { model => $deverbadj_model, weight => 0.1 },
@@ -169,8 +170,8 @@ sub process_tnode {
 
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
-        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $self->{maxent_version});
-        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode($en_tnode, $self->{nb_version});
+        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{maxent_version} );
+        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{nb_version} );
 
         my $features_array_rf = [
             map           {"$_=$features_hash_rf->{$_}"}
