@@ -11,7 +11,7 @@ sub fix {
     if ($en_counterpart{$dep}
         && $en_counterpart{$dep}->afun eq 'Sb'
         && $g->{tag} =~ /^V[sp]/ && $d->{tag} =~ /^[NP]/
-        && $dep->form !~ /^[Tt]o/
+        && $dep->form !~ /^[Tt]o$/
         && ( $g->{gen} . $g->{num} ne $self->gn2pp( $d->{gen} . $d->{num} ) )
         )
     {

@@ -8,17 +8,21 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP][^D]/ && ( $d->{case} eq '1' ) && $g->{num} ne $d->{num} ) {
+    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb'
+	 && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP]/
+	 && $dep->form !~ /^[Tt]o$/
+	 && ( $d->{case} eq '1' )
+	 && $g->{num} ne $d->{num} ) {
         my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $en_counterpart{$dep} );
         if ( $en_counterpart{$gov} && $enGov && $en_counterpart{$gov}->id ne $enGov->id ) {
             return;
         }
 
-        my $num = $d->{num};
-        $g->{tag} =~ s/^(...)./$1$num/;
-        if ( $d->{tag} =~ /^.......([123])/ ) {
-            my $person = $1;
-            $g->{tag} =~ s/^(.......)./$1$person/;
+	# g num <- d num
+        substr $g->{tag}, 3, 1, $d->{num};
+        if ( $d->{pers} =~ /[123]/ ) {
+	    # g pers <- d pers
+            substr $g->{tag}, 7, 1, $d->{pers};
         }
         $self->logfix1( $dep, "SubjectPredicateAgreement" );
         $self->regenerate_node( $gov, $g->{tag} );
