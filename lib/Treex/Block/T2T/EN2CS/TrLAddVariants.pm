@@ -28,10 +28,7 @@ use TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
-subtype 'DataVersion',
-      as 'Str',
-      where { $_ eq "0.9" or $_ eq "1.0" },
-      message { 'Valid version is 0.9 or 1.0' };
+enum 'DataVersion', [ '0.9', '1.0', '1.1', '1.2' ];
 
 has maxent_weight => (
     is            => 'ro',
