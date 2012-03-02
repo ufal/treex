@@ -30,8 +30,8 @@ has 'backward_weight' => (
 );
 
 has lm_dir => (
-    is => 'ro',
-    isa => 'Str',
+    is      => 'ro',
+    isa     => 'Str',
     default => 'cs',
 );
 
@@ -42,13 +42,14 @@ use LanguageModel::TreeLM;
 sub BUILD {
     my ($self) = @_;
     my $lm_rel_path = 'data/models/language/' . $self->lm_dir;
-    my ($lm_fn1, $lm_fn2) = $self->require_files_from_share( "$lm_rel_path/c_LgFdLd.pls.gz", "$lm_rel_path/c_PgFdLd.pls.gz" );
+    my ( $lm_fn1, $lm_fn2, $lm_ids ) = $self->require_files_from_share( "$lm_rel_path/c_LgFdLd.pls.gz", "$lm_rel_path/c_PgFdLd.pls.gz", "$lm_rel_path/lemma_id.pls.gz" );
     my $lm_abs_path = $lm_fn1;
     $lm_abs_path =~ s/c_LgFdLd.pls.gz//;
-    MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new( {dir => $lm_abs_path} ) );
+    MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new( { dir => $lm_abs_path } ) );
     MyTreeViterbiState->set_lm_weight( $self->lm_weight );
     MyTreeViterbiState->set_formeme_weight( $self->formeme_weight );
     MyTreeViterbiState->set_backward_weight( $self->backward_weight );
+    MyTreeViterbiState->set_lemma_id_file( $lm_ids );
 }
 
 sub process_ttree {
@@ -187,6 +188,7 @@ sub set_lm_weight       { return $lm_weight       = $_[1]; }
 sub set_formeme_weight  { return $formeme_weight  = $_[1]; }
 sub set_backward_weight { return $backward_weight = $_[1]; }
 sub set_tree_model      { return $tree_model      = $_[1]; }
+sub set_lemma_id_file { LanguageModel::Lemma::init( $_[1] ); }
 
 sub lemma {
     my ($self) = @_;
