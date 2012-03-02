@@ -76,6 +76,13 @@ has [qw(trg_lemmas trg_formemes)] => (
     documentation => 'How many (t_lemma/formeme) variants from the target-side parent should be used as features', 
 );
 
+has domain => (
+    is => 'ro',
+    isa => 'Str',
+    default => 'news',
+    documentation => 'add the (CzEng) domain feature (default=news). Set to 0 to deactivate.',
+);
+
 my $MODEL_HUMAN = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
 
 my $MODEL_MAXENT = {
@@ -180,6 +187,8 @@ sub process_tnode {
 
         my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{maxent_version} );
         my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{nb_version} );
+
+        $features_hash_rf->{domain} = $self->domain if $self->domain;
 
         my $features_array_rf = [
             map           {"$_=$features_hash_rf->{$_}"}
