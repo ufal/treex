@@ -40,6 +40,8 @@ sub fix {
             $self->logfix2($dep);
         }    #else do not correct
     }
+
+    return;
 }
 
 1;

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::CS::FixP4_temp;
+package Treex::Block::A2A::CS::FixP4;
 use Moose;
 use Treex::Core::Common;
 use utf8;
