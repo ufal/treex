@@ -194,7 +194,7 @@ sub process_tnode {
                 my $p_variants_rf = $parent->get_attr('translation_model/t_lemma_variants');
                 my $added = 1;
                 foreach my $p_variant (@{$p_variants_rf}){
-                    push @$features_array_rf, 'TRG_parent_lemma=' . $p_variant->t_lemma;
+                    push @$features_array_rf, 'TRG_parent_lemma=' . $p_variant->{t_lemma};
                     last if $added++ >= $self->trg_lemmas;
                 }
             }
@@ -208,7 +208,7 @@ sub process_tnode {
                 my $p_variants_rf = $parent->get_attr('translation_model/formeme_variants');
                 my $added = 1;
                 foreach my $p_variant (@{$p_variants_rf}){
-                    push @$features_array_rf, 'TRG_parent_formeme=' . $p_variant->formeme;
+                    push @$features_array_rf, 'TRG_parent_formeme=' . $p_variant->{formeme};
                     last if $added++ >= $self->trg_formemes;
                 }
             }
