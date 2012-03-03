@@ -8,6 +8,11 @@ use File::Basename;
 use Treex::Core::Config;
 use Cwd qw(realpath);
 
+if ( $^O =~ /^MSWin/ ) { # system calls of treex must be treated differently under MSWin
+    done_testing();
+    exit;
+}
+
 my $my_dir = dirname($0);
 my @tasks  = (
     [ q(treex -q -- dummy.treex),                                        '' ],     # reading an empty file
@@ -95,7 +100,9 @@ SKIP: {
 
 #done_testing;
 END {
-    unlink $combined_file;
-    unlink glob "*dummy.treex*";
-    unlink "confuse.scen";
+    if ( $^O !~ /^MSWin/ ) {
+        unlink $combined_file;
+        unlink glob "*dummy.treex*";
+        unlink "confuse.scen";
+    }
 }

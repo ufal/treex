@@ -8,8 +8,13 @@ use Treex::Core::Document;
 use Treex::Core::Config;
 use Cwd qw(realpath);
 
-use Test::More tests => 6;
+use Test::More;
 use Test::Output;
+
+if ( $^O =~ /^MSWin/ ) { # system calls of treex must be treated differently under MSWin
+    done_testing();
+    exit;
+}
 
 my $test_data_file   = 'dummy.treex';
 my $test_output_file = 'dummy.tmp';
@@ -63,6 +68,10 @@ SKIP: {
     stdout_is( sub { open I, $test_output_file or die $!; print $_ while (<I>) }, "a=b", "running treex by system, checking equal signs in arguments" );
 }
 
+done_testing();
+
 END {
-    unlink $test_output_file, $test_data_file;
+    if ( $^O !~ /^MSWin/ ) {
+        unlink $test_output_file, $test_data_file;
+    }
 }
