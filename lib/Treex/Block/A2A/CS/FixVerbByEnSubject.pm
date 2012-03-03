@@ -16,6 +16,15 @@ sub fix {
             return;
         }
 
+        my $dep_children = $dep->get_children();
+        foreach my $child ($dep_children) {
+            if ( $dep->form eq 'se' && $d->{tag} =~ /^P/ ) {
+
+                # might be passive
+                return;
+            }
+        }
+
         # try to find the English subject and use it
         # TODO: handle auxiliaries, infinitives etc.
         my $en_verb = $en_counterpart{$dep};
@@ -40,8 +49,7 @@ sub fix {
         # number
         my $num = $d->{num};
 
-        # TODO: W
-        if ( $num =~ /[SP]/ ) {
+        if ( $num =~ /[SPW]/ ) {
             if ( $lemma =~ /^(I|he|she|it)$/ ) {
                 $num = 'S';
             } elsif ( $lemma =~ /^(we|they)$/ ) {
@@ -56,15 +64,14 @@ sub fix {
         # gender
         my $gen = $d->{gen};
 
-        # TODO: YHQTZ
-        if ( $gen =~ /[MIFN]/ ) {
+        if ( $gen =~ /[MIFNTYQ]/ ) {
             if ( $lemma eq 'he' ) {
                 $gen = 'M';
             } elsif ( $lemma eq 'she' ) {
-                $gen = 'N';
+                $gen = 'F';
             }
 
-            # it omitted on purpose (but to be tested)
+            # 'it' omitted on purpose (but to be tested)
             if ( $gen ne $d->{gen} ) {
                 $fixed = 1;
                 substr( $d->{tag}, 2, 1, $gen );
@@ -88,6 +95,9 @@ sub fix {
         }
 
         if ($fixed) {
+            if ( $d->{tag} =~ /^V[sp]/ ) {
+                substr( $d->{tag}, 2, 2, $self->gn2pp( $gen . $num ) );
+            }
             $self->regenerate_node( $dep, $d->{tag} );
             $self->logfix2($dep);
         }
