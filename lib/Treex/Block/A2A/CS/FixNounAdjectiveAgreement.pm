@@ -8,9 +8,15 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
-    if ( $dep->afun eq 'Atr' && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A/ && $gov->ord > $dep->ord && ( $g->{gen} . $g->{num} . $g->{case} ne $d->{gen} . $d->{num} . $d->{case} ) ) {
+    if ($dep->afun eq 'Atr'
+        && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A|(P[8LSWZ])/
+        && $gov->ord > $dep->ord
+        && ( $g->{gen} . $g->{num} . $g->{case} ne $d->{gen} . $d->{num} . $d->{case} )
+        )
+    {
+
         my $new_gnc = $g->{gen} . $g->{num} . $g->{case};
-        $d->{tag} =~ s/^(..).../$1$new_gnc/;
+        substr $d->{tag}, 2, 3, $new_gnc;
         $self->logfix1( $dep, "NounAdjectiveAgreement" );
         $self->regenerate_node( $dep, $d->{tag} );
         $self->logfix2($dep);
