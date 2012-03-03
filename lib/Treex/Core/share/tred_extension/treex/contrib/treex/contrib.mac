@@ -21,7 +21,13 @@ use Treex::Core::TredView;
 my $tredview = Treex::Core::TredView->new({grp=>$grp});
 
 sub is_treex_doc {
-    return (((PML::SchemaName()||'') eq 'treex_document') ? 1 : 0);
+    if (defined $grp
+            and defined $grp->{FSFile}
+                and defined $grp->{FSFile}->metaData('schema')
+                    and $grp->{FSFile}->metaData('schema')->get_root_name() eq 'treex_document') {
+        return 1;
+    }
+    return 0;
 }
 
 push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
@@ -31,7 +37,6 @@ push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
     }
     return;
 };
-
 
 sub allow_switch_context_hook {
     return 'stop' unless is_treex_doc();
