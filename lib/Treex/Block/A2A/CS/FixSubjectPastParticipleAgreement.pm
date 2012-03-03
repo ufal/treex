@@ -15,10 +15,27 @@ sub fix {
         && ( $g->{gen} . $g->{num} ne $self->gn2pp( $d->{gen} . $d->{num} ) )
         )
     {
-        my $new_gn = $self->gn2pp( $d->{gen} . $d->{num} );
-        $g->{tag} =~ s/^(..)../$1$new_gn/;
+        my $num = $d->{num};
+        my $gen = $d->{gen};
+        if ( $dep->is_member && $en_counterpart{$dep}->is_member ) {
+            $num = 'P';
+            $gen = 'T';
+
+            # masculine animate if there is at least one such subject
+            my $coap    = $dep->get_parent();
+            my @members = $coap->get_children();
+            foreach my $subject (@members) {
+                if ( $subject->tag =~ /^..M/ ) {
+                    $gen = 'M';
+                }
+            }
+        }
+
+        my $new_gn = $self->gn2pp( $gen . $num );
 
         $self->logfix1( $dep, "SubjectPastParticipleAgreement" );
+        substr $g->{tag}, 2, 2, $new_gn;
+
         $self->regenerate_node( $gov, $g->{tag} );
         $self->logfix2($dep);
     }
