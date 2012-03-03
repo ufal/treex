@@ -16,12 +16,15 @@ sub fix {
             return;
         }
 
-        my $dep_children = $dep->get_children();
-        foreach my $child ($dep_children) {
-            if ( $dep->form eq 'se' && $d->{tag} =~ /^P/ ) {
+        if ( $d->{gen} =~ /[N-]/ && $d->{num} eq 'S' && $d->{pers} =~ /[3-]/ ) {
+            my @dep_children = $dep->get_children();
+            foreach my $child (@dep_children) {
+                if ( $child->form eq 'se' && $child->tag =~ /^P/ ) {
 
-                # might be passive
-                return;
+                    # might be passival construction
+                    # ("ono se to udělalo" style)
+                    return;
+                }
             }
         }
 
