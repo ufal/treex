@@ -31,6 +31,7 @@ SKIP: {
     #TODO no temp.txt
     open my $F, '>:utf8', 'temp.txt';
     print $F 'dummy text';
+    close $F;
     use Treex::Core::Log;
     Treex::Core::Log::log_set_error_level('WARN');
     my $scen = Treex::Core::Scenario->new( from_string => 'Util::SetGlobal language=en Read::Text from=temp.txt Write::Text' );
