@@ -11,9 +11,10 @@ use Cwd qw(realpath);
 use Test::More;
 use Test::Output;
 
-if ( $^O =~ /^MSWin/ ) { # system calls of treex must be treated differently under MSWin
-    done_testing();
-    exit;
+BEGIN {
+    if ( $^O =~ /^MSWin/ ) {
+        Test::More::plan( skip_all => 'this test is not applicable under MS Windows' );
+    }
 }
 
 my $test_data_file   = 'dummy.treex';
