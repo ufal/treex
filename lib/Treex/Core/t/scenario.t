@@ -30,7 +30,7 @@ SKIP: {
 
     #TODO no temp.txt
     open my $F, '>:utf8', 'temp.txt';
-    print $F 'dummy text';
+    print $F ''; # things printed to STDOUT spoil testing under MSWin
     close $F;
     use Treex::Core::Log;
     Treex::Core::Log::log_set_error_level('WARN');
