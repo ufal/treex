@@ -155,13 +155,14 @@ sub process_tnode {
     if (@translations) {
 
         $cs_tnode->set_formeme( $translations[0]->{label} );
-        $cs_tnode->set_formeme_origin( @translations == 1 ? 'dict-only' : 'dict-first' );
+        $cs_tnode->set_formeme_origin( (@translations == 1 ? 'dict-only' : 'dict-first') . '|' . $translations[0]->{source} );
 
         $cs_tnode->set_attr(
             'translation_model/formeme_variants',
             [   map {
                     {   'formeme' => $_->{label},
                         'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                        'origin' => $_->{source},
                     }
                     }
                     @translations

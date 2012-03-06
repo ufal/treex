@@ -38,7 +38,7 @@ sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
 
     # We want to process only nodes with more than one formeme variant
-    return if $cs_tnode->formeme_origin ne 'dict-first';
+    return if $cs_tnode->formeme_origin !~ /^dict-first/;
 
     my $en_tnode   = $cs_tnode->src_tnode;
     my $en_formeme = $en_tnode->formeme;
@@ -70,6 +70,7 @@ sub _rerank_formeme_variant {
     my ( $self, $variant, $en_formeme, $en_parent_lemma ) = @_;
     my $cs_formeme = $variant->{formeme};
     my $new_logprob = $self->_val_dict->logprob_of( $cs_formeme, $en_formeme, { Lsg => $en_parent_lemma } );
+    $variant->{source} .= '|TrFRerank (orig logprob=' . $variant->{logprob} . ')';
     if ( !defined $new_logprob ) {
         ## (zaokrouhleni jen jako znacka)
         $variant->{logprob} = sprintf( "%.3f", $variant->{logprob} - $self->discount_old_logprobs );
