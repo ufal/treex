@@ -53,7 +53,7 @@ sub get_segments {
     # Pre-processing
     my $unbreakers = $self->unbreakers;
     $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
-
+    
     # two newlines usually separate paragraphs
     if ( $self->use_paragraphs ) {
         $text =~ s/([^.!?])\n\n+/$1<<<SEP>>>/gsm;
@@ -138,7 +138,7 @@ Adds newlines after terminal punctuation followed by an uppercase letter.
 
 Returns regex that should match tokens that usually do not end a sentence even if they are followed by a period and a capital letter:
 * single uppercase letters serve usually as first name initials
-* in langauge-specific descendants consider adding
+* in language-specific descendants consider adding:
   * period-ending items that never indicate sentence breaks
   * titles before names of persons etc.
 
