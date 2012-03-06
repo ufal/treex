@@ -8,7 +8,7 @@ extends 'Treex::Core::Block';
 sub possadj_to_noun {
     my $adj_mlemma = shift;
 
-    $adj_mlemma =~ /\^(\([^\*][^\)]*\)_)?\(\*(\d+)(.+)?\)/;
+    $adj_mlemma =~ /\^(\([^\*][^\)]*\)_)?\([^\*]*\*(\d+)(.+)?\)/;
     if ( !$2 ) {    # unfortunately, some lemmas do not contain the derivation information (TODO fix this somehow)
         log_warn( 'Cannot find base lemma for a possesive adjective: ' . $adj_mlemma );
         return $adj_mlemma;
