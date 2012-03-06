@@ -54,7 +54,8 @@ sub process_tnode {
     }
     $first_auxCP_node->set_parent($above);
     $first_auxCP_node->set_is_member( $coord_node->is_member );
-    $first_auxCP_node->set_clause_number( $coord_node->clause_number ); 
+    $first_auxCP_node->set_clause_number( $coord_node->clause_number );
+    $first_auxCP_node->shift_before_subtree( $coord_node ); 
     $coord_node->set_is_member();
     $coord_node->set_parent($first_auxCP_node);
 

@@ -8,7 +8,7 @@ use Treex::Tool::Lexicon::CS;
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    if (( $t_node->formeme || "" ) eq 'n:poss'
+    if (( $t_node->formeme || "" ) =~ /^(adj|n):poss$/
         and ( $t_node->get_attr('mlayer_pos') || "" ) ne 'P'
         and ( $t_node->t_lemma || "" ) ne '#PersPron'
         )

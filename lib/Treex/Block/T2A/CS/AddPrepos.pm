@@ -36,6 +36,16 @@ sub process_tnode {
     # $anode is now under $last_prep, so attribute is_member
     # moves also to the upper node. (We are in TectoMT, not PDT.)
     $last_prep->set_is_member( $anode->is_member );
+
+    ######
+#    my $parent = $anode->get_parent();
+#    foreach my $prep (@prep_nodes){
+#        $prep->set_parent($parent);
+#        $parent = $prep;
+#    }
+#    $anode->set_parent($prep_nodes[-1]);
+#    $prep_nodes[0]->set_is_member($anode->is_member);
+    ######
     $anode->set_is_member(undef);
 
     # Add all prepositions to a/aux.rf of the tnode

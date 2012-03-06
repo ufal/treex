@@ -105,7 +105,7 @@ sub is_neutrum_lemma {
 
     # Few pronouns (and numerals) behave like neutrum
     # (but the morphological tag has no gender marked).
-    return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/;
+    return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/; # TODO doplnit další
 
     # Numerals with subpos "n" or "s" behave like neutrum,
     # e.g. "osm z deseti stacilo", "malo stacilo".
