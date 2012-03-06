@@ -40,7 +40,7 @@ sub _build_tag_properties {
         PDT => { pos => 'Det', subpos => undef, number => undef, gender => undef},     # Predeterminer
         POS => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Possessive ending
         PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Personal pronoun
-        PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},    # Possessive pronoun
+        'PRP' => { pos => 'P', subpos => undef, number => undef, gender => undef},    # Possessive pronoun
         RB => { pos => 'D', subpos => undef, number => undef, gender => undef},  # Adverb
         RBR => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, comparative
         RBS => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, superlative
@@ -131,6 +131,60 @@ sub _get_atag {
 		return $anode->tag;
 	}
     return;
+}
+
+sub _ante_synt_type {
+    my ($self, $cand) = @_;
+    my @anodes_prep = grep {$self->_get_pos($cand) eq 'R'} $cand->get_aux_anodes;
+
+    if (@anodes_prep > 0) {
+        return 'prep';
+    }
+    my $anode = $cand->get_lex_anode;
+    if ($anode->afun eq 'Sb') {
+        return 'sb';
+    }
+    if ($anode->afun eq 'Obj') {
+        return 'obj';
+    }
+    return 'oth';
+}
+
+sub _ante_type {
+    my ($self, $cand) = @_;
+
+    if (defined $cand->get_n_node) {
+        return 'ne';
+    }
+    my $anode = $cand->get_lex_anode;
+    if ($self->_get_pos($anode) eq 'N') {
+        return 'noun';
+    }
+    if ($self->_get_pos($anode) eq 'P') {
+        return 'pronoun';
+    }
+    return 'oth';
+}
+
+sub _anaph_type {
+    my ($self, $anaph) = @_;
+
+    my $anode = $anaph->get_lex_anode;
+    if ($anode->tag eq 'PRP$') {
+        return 'poss';
+    }
+    if ($anode->tag eq 'PRP') {
+        if ($anode->form =~ /.+sel(f|ves)$/) {
+            return 'refl';
+        }
+        if ($anode->afun eq 'Obj') {
+            return 'obj';
+        }
+        if ($anode->afun eq 'Sb') {
+            return 'sb';
+        }
+    }
+    return 'oth';
 }
 
 override '_binary_features' => sub {

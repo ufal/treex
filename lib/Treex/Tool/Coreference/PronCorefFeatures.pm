@@ -15,6 +15,21 @@ sub _build_feature_names {
     return log_fatal "method _build_feature_names must be overriden in " . ref($self);
 }
 
+sub _ante_pos_buck {
+    my ($anaph, $cand, $sent_dist) = @_;
+
+    my $pos = $cand->ord;
+    if ($sent_dist == 0) {
+        $pos = $anaph->ord - $cand->ord;
+    }
+    return _categorize( $pos, [0, 3, 5, 9, 17, 33] );
+}
+
+sub _anaph_pos_buck {
+    my ($anaph, $cand, $sent_dist) = @_;
+    return _categorize( $anaph->ord, [0, 3, 5, 9] );
+}
+
 sub _binary_features {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
