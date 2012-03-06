@@ -15,8 +15,8 @@ sub _build_feature_names {
     return log_fatal "method _build_feature_names must be overriden in " . ref($self);
 }
 
-sub _ante_pos_buck {
-    my ($anaph, $cand, $sent_dist) = @_;
+sub _ante_loc_buck {
+    my ($self, $anaph, $cand, $sent_dist) = @_;
 
     my $pos = $cand->ord;
     if ($sent_dist == 0) {
@@ -25,8 +25,8 @@ sub _ante_pos_buck {
     return _categorize( $pos, [0, 3, 5, 9, 17, 33] );
 }
 
-sub _anaph_pos_buck {
-    my ($anaph, $cand, $sent_dist) = @_;
+sub _anaph_loc_buck {
+    my ($self, $anaph) = @_;
     return _categorize( $anaph->ord, [0, 3, 5, 9] );
 }
 
@@ -53,6 +53,10 @@ sub _binary_features {
         [1, 2, 3, 5, 8, 11, 17, 22]
     );
     #$coref_features->{c_cand_ord} = $candord;
+
+    # a feature from (Charniak and Elsner, 2009)
+    # this antecedent position depends on the location of antecedent, thus placed among binary features
+    $coref_features->{c_cand_loc_buck} = $self->_ante_loc_buck($anaph, $cand, $coref_features->{c_sent_dist});
 
     #   24: 8 x tag($inode, $jnode), joined
     
@@ -134,6 +138,9 @@ sub _unary_features {
             $node->get_root->wild->{czeng_sentord},
             [0, 1, 2, 3]
         );
+        
+        # a feature from (Charniak and Elsner, 2009)
+        $coref_features->{c_anaph_loc_buck} = $self->_anaph_loc_buck($node);
     }
 
 ###########################

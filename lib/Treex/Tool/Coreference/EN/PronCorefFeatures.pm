@@ -95,6 +95,10 @@ sub _build_feature_names {
        r_cand_freq                            
        b_cand_pers
 
+       c_cand_loc_buck    c_anaph_loc_buck
+       c_cand_type        c_anaph_type
+       c_cand_synttype    
+
     );
     
     return \@feat_names;
@@ -208,6 +212,15 @@ override '_unary_features' => sub {
     $coref_features->{'c_'.$type.'_atag'} = $self->_get_atag( $node );
     $coref_features->{'c_'.$type.'_apos'} = $self->_get_pos( $node );
     $coref_features->{'c_'.$type.'_anum'} = $self->_get_number( $node );
+
+    # features from (Charniak and Elsner, 2009)
+    if ($type eq 'anaph') {
+        $coref_features->{'c_'.$type.'_type'} = $self->_anaph_type( $node );
+    }
+    elsif ($type eq 'cand') {
+        $coref_features->{'c_'.$type.'_type'} = $self->_ante_type( $node );
+        $coref_features->{'c_'.$type.'_synttype'} = $self->_ante_synt_type( $node );
+    }
     
     return $coref_features;
 };
