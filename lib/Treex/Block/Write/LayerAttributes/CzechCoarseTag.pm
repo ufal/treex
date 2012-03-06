@@ -6,6 +6,8 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
 has '+return_values_names' => ( builder => '_build_retval_names', lazy_build => 1 );
 
+has 'very_coarse' => ( isa => 'Bool', is => 'ro', default => 0 );
+
 has 'use_case' => ( isa => 'Bool', is => 'ro', default => 1 );
 
 has 'split' => ( isa => 'Bool', is => 'ro', default => 0 );
@@ -23,16 +25,17 @@ sub BUILDARGS {
 
     @params = @{ $params[0] } if ( @params == 1 && ref $params[0] eq 'ARRAY' );
 
-    if ( @params > 4 ) {
+    if ( @params > 5 ) {
         log_fatal('CzechCoarseTag:There must be up to 4 binary parameters to new().');
     }
 
     my $ret = {};
 
-    $ret->{no_voc}   = $params[3] if ( @params >= 4 );
-    $ret->{no_tense} = $params[2] if ( @params >= 3 );
-    $ret->{split}    = $params[1] if ( @params >= 2 );
-    $ret->{use_case} = $params[0] if ( @params >= 1 );
+    $ret->{no_voc}      = $params[4] if ( @params >= 5 );
+    $ret->{no_tense}    = $params[3] if ( @params >= 4 );
+    $ret->{split}       = $params[2] if ( @params >= 3 );
+    $ret->{use_case}    = $params[1] if ( @params >= 2 );
+    $ret->{very_coarse} = $params[0] if ( @params >= 1 );
 
     return $ret;
 }
@@ -45,6 +48,8 @@ sub modify_single {
     return ( $self->split ? ( undef, undef ) : undef ) if ( !defined($tag) );
     return ( $self->split ? ( '',    '' )    : '' )    if ( length($tag) < 5 );
 
+    return substr( $tag, 0, 1 ) if ( $self->very_coarse );
+
     my $ctag;
 
     # no case or set not to use it -> Pos + Subpos
@@ -56,9 +61,9 @@ sub modify_single {
     else {
         $ctag = substr( $tag, 0, 1 ) . substr( $tag, 4, 1 );
     }
-    
+
     $ctag = 'VB' if ( $self->no_tense && $ctag =~ m/^V/ );
-    $ctag = 'RR' if ( $self->no_voc && $ctag =~ m/^R/ );
+    $ctag = 'RR' if ( $self->no_voc   && $ctag =~ m/^R/ );
 
     return $self->split ? split //, $ctag : $ctag;
 }

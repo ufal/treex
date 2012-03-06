@@ -145,11 +145,10 @@ sub _split_csv_with_brackets {
 # the main method
 sub process_zone {
 
-    my $self = shift;
-    my ($zone) = @_;    # pos_validated_list won't work here
+    my ($self, $zone) = @_;    # pos_validated_list won't work here
 
     if ( !$zone->has_tree( $self->layer ) ) {
-        log_fatal( 'No tree for ' . $self->layer . ' found.' );
+        log_fatal( 'No tree for ' . $self->layer . '-layer found.' );
     }
     my $tree = $zone->get_tree( $self->layer );
 
@@ -220,7 +219,7 @@ sub _get_info_hash {
 sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
-
+    
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
     # references
@@ -230,13 +229,12 @@ sub _get_data {
         my $nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
         # use only the first referenced node
-        if ($first_only) {
+        if ($first_only || $ref_attr eq 'node' ) { # TODO using only first 'node' is not correct
             my $reffed_node = $nodes->[0];
             return $self->_get_data( $reffed_node, $ref_attr, $alignment_hash );
         } 
         # call myself recursively on all the referenced nodes
-        else {
-
+        else {            
             return join(
                 ' ',
                 grep { defined($_) && $_ =~ m/[^\s]/ }
