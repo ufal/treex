@@ -40,7 +40,7 @@ sub _build_tag_properties {
         PDT => { pos => 'Det', subpos => undef, number => undef, gender => undef},     # Predeterminer
         POS => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Possessive ending
         PRP => { pos => 'P', subpos => undef, number => undef, gender => undef},     # Personal pronoun
-        'PRP' => { pos => 'P', subpos => undef, number => undef, gender => undef},    # Possessive pronoun
+        'PRP$' => { pos => 'P', subpos => undef, number => undef, gender => undef},    # Possessive pronoun
         RB => { pos => 'D', subpos => undef, number => undef, gender => undef},  # Adverb
         RBR => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, comparative
         RBS => { pos => 'D', subpos => undef, number => undef, gender => undef},     # Adverb, superlative
