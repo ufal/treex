@@ -139,7 +139,7 @@ sub _get_atag {
 
 sub _ante_synt_type {
     my ($self, $cand) = @_;
-    my @anodes_prep = grep {$self->_get_pos($cand) eq 'R'} $cand->get_aux_anodes;
+    my @anodes_prep = grep {my $tag = $self->_get_pos($cand); defined $tag && ($tag eq 'R')} $cand->get_aux_anodes;
 
     if (@anodes_prep > 0) {
         return 'prep';
@@ -160,11 +160,11 @@ sub _ante_type {
     if (defined $cand->get_n_node) {
         return 'ne';
     }
-    my $anode = $cand->get_lex_anode;
-    if ($self->_get_pos($anode) eq 'N') {
+    my $pos = $self->_get_pos($cand);
+    if (defined $pos && ($pos eq 'N')) {
         return 'noun';
     }
-    if ($self->_get_pos($anode) eq 'P') {
+    if (defined $pos && ($pos eq 'P')) {
         return 'pronoun';
     }
     return 'oth';
