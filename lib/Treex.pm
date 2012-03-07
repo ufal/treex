@@ -131,6 +131,8 @@ distributions are hoped to appear soon too.
 
 =head1 REFERENCES
 
+L<Treex website|http://ufal.mff.cuni.cz/treex>
+
 Selected TectoMT/Treex-related publications:
 
 - Žabokrtský Zdeněk, Ptáček Jan, Pajas Petr:

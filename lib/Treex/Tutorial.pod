@@ -15,6 +15,8 @@ If you don't like this approach, try the documentation
 referenced from L<Treex::Core> and the presentation
 L<http://ufal.mff.cuni.cz/~popel/treex.pdf>. 
 
+More info can be found at the L<Treex website|http://ufal.mff.cuni.cz/treex>.
+
 =head1 CONTENTS
 
 =over
