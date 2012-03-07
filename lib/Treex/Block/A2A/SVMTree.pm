@@ -9,6 +9,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 has 'language'     => ( is => 'rw', isa => 'Str', default  => 'en' );
 has 'treename' => ( is => 'rw', isa => 'Str', default  => 'svm' );
+has 'trees'    => ( is => 'rw', isa => 'Str', required => 1 );
 my $SVM;
 my $POSKEY="/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/poskey";
 my $MODELKEY="/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/modelkey";
@@ -17,9 +18,10 @@ my %poshash;
 my %modelhash;
 my %weighthash;
 my $root_deprel = "ROOT";
-#must pass into this class a string 'trees' with the format parser#weight~parser#weight  for as many parsers as you want used out of the a-trees
+my @trees=();
 sub BUILD {
   my ($self) = @_;
+  @trees= split(",",$self->trees);
     $SVM = Treex::Tool::ML::SVM::SVM->new();
     $ENSEMBLE = Treex::Tool::Parser::Ensemble::Ensemble->new();
     
@@ -73,16 +75,7 @@ sub process_bundle {
   my ( $self, $bundle ) = @_;
   my $tree_root = $bundle->get_tree( $self->language, 'a', $self->treename );  
   my @reference_nodes = $tree_root->get_descendants( { ordered => 1 } ); 
-  my $charniak_root = $bundle->get_tree( $self->language, 'a', "charniak" ); 
-  my @charniak_nodes = $charniak_root->get_descendants( { ordered => 1 } );  
-  my $stanford_root = $bundle->get_tree( $self->language, 'a', "stanford" ); 
-  my @stanford_nodes = $stanford_root->get_descendants( { ordered => 1 } );  
-  my $mst_root = $bundle->get_tree( $self->language, 'a', "mst" ); 
-  my @mst_nodes = $mst_root->get_descendants( { ordered => 1 } );  
-  my $malt_root = $bundle->get_tree( $self->language, 'a', "malt" ); 
-  my @malt_nodes = $malt_root->get_descendants( { ordered => 1 } );  
-  my $zpar_root = $bundle->get_tree( $self->language, 'a', "zpar" ); 
-  my @zpar_nodes = $zpar_root->get_descendants( { ordered => 1 } );  
+ 
   
   my @todo = $tree_root->get_descendants( { ordered => 1 } );    
   
@@ -105,71 +98,57 @@ sub process_bundle {
     }
 
   $quartile=find_bucket($i,$sentence_length);
+  my $agreement="";
 
-  my $agree_1=0;
-  my $agree_2=0;
-  my $agree_3=0;
-  my $agree_4=0;
-  my $agree_5=0;
-  my $agree_6=0;
-  my $agree_7=0;
-  my $agree_8=0;
-  my $agree_9=0;
-  my $agree_10=0;
-  
-  if ( $node->parent->ord == $reference_nodes[$i]->parent->ord ) {
-    if($charniak_nodes[$i]->parent->ord==$stanford_nodes[$i]->parent->ord){
-      $agree_1=1;
+   
+    my $j=0;
+    my $k=$j;
+    
+    while ($j<(scalar @trees-1)){
+      while ($k<scalar @trees){
+	#print $trees[$j]."\t".$trees[$k]."\n";
+	my $j_root=$bundle->get_tree( $self->language, 'a', $trees[$j] );
+	my @j_nodes=$j_root->get_descendants( { ordered => 1 } );
+	my $k_root=$bundle->get_tree( $self->language, 'a', $trees[$k] );
+	my @k_nodes=$k_root->get_descendants( { ordered => 1 } );
+	
+	
+	if($j_nodes[$i]->parent->ord==$k_nodes[$i]->parent->ord){
+	  $agreement=$agreement."1\t";
+	}
+	else{
+	  $agreement=$agreement."0\t";
+	}
+	
+#	print "j=$j\tk=$k\n";
+	$k++;
+      }	
+      $j++;
+      $k=$j;
     }
-    if($charniak_nodes[$i]->parent->ord==$mst_nodes[$i]->parent->ord){
-      $agree_2=1;
-    }
-    if($charniak_nodes[$i]->parent->ord==$malt_nodes[$i]->parent->ord){
-      $agree_3=1;
-    }
-    if($charniak_nodes[$i]->parent->ord==$zpar_nodes[$i]->parent->ord){
-      $agree_4=1;
-    }
-    if($stanford_nodes[$i]->parent->ord==$mst_nodes[$i]->parent->ord){
-      $agree_5=1;
-    }
-    if($stanford_nodes[$i]->parent->ord==$malt_nodes[$i]->parent->ord){
-      $agree_6=1;
-    }
-    if($stanford_nodes[$i]->parent->ord==$zpar_nodes[$i]->parent->ord){
-      $agree_7=1;
-    }
-    if($mst_nodes[$i]->parent->ord==$malt_nodes[$i]->parent->ord){
-      $agree_8=1;
-    }
-    if($mst_nodes[$i]->parent->ord==$zpar_nodes[$i]->parent->ord){
-      $agree_9=1;
-    }
-    if($malt_nodes[$i]->parent->ord==$zpar_nodes[$i]->parent->ord){
-      $agree_10=1;
-    }
+   # print "j=$j\tk=$k\n";
+    #add last model agreement
+    $agreement=$agreement."1";;
     
   
 #   my $dstest = new Algorithm::SVM::DataSet(Label => "predict",
 # 					   Data  => [$pos,$prev_pos,$prev_prev_pos,$quartile,$sentence_length,$agree_1,$agree_2,$agree_3,$agree_4,$agree_5,$agree_6,$agree_7,$agree_8,$agree_9,$agree_10]);
 
-  my $dstest = new Algorithm::SVM::DataSet(Label => "predict",  Data  => [$agree_1,$agree_2,$agree_3,$agree_4,$agree_5,$agree_6,$agree_7,$agree_8,$agree_9,$agree_10]);
-										    
+my @features= split ("\t",$agreement);
+#print "# of feature=". scalar @features;
+#print "\n";
+#foreach (@features){
+#print $_."\t";
+#}
+#print "\n";
+  my $dstest = new Algorithm::SVM::DataSet(Label => "predict", Data  => [@features]);
+ #my $dstest = new Algorithm::SVM::DataSet(Label => "predict",  Data  => [$features[0],$features[1],$features[2],$features[3],$features[4],$features[5],$features[6],$features[7],$features[8],$features[9],$features[10],$features[11],$features[12],$features[13],$features[14],$features[15],$features[16],$features[17],$features[18],$features[19],$features[20],$features[21],$features[22],$features[23],$features[24],$features[25],$features[26],$features[27],$features[28]]);
+ 									    
    #print "$pos,$prev_pos,$prev_prev_pos,$quartile,$sentence_length,$agree_1,$agree_2,$agree_3,$agree_4,$agree_5\n";					   
  my $predictedModel=  $SVM->predict($dstest);
  $prev_pos=$pos;
  $prev_prev_pos=$prev_pos;
- $agree_1=0;
- $agree_2=0;
- $agree_3=0;
- $agree_4=0;
- $agree_5=0;
- $agree_6=0;
- $agree_7=0;
- $agree_8=0;
- $agree_9=0;
- $agree_10=0;
- 
+
  my @chars = split '', $predictedModel;
  #print $predictedModel."\n";
  for my $m (@chars){
@@ -179,7 +158,7 @@ sub process_bundle {
 #print $modelhash{$m}."\t".$modelNodes[$i]->parent->ord."->".$node->ord."\n";
 $ENSEMBLE->add_edge( $modelNodes[$i]->parent->ord, $node->ord,$weighthash{$m} );
  }
-  }
+  
   $i++;
   }
  # $ENSEMBLE->print_edge_matrix();

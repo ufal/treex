@@ -1,5 +1,9 @@
-1	charniak
-2	malt
-3	zpar
-4	mst
-5	stanford
+1	mstnonproj
+2	mstproj
+3	stackproj
+4	stackeager
+5	2planar
+6	planar
+7	nivrestandard
+8	stacklazy
+9	nivreeager

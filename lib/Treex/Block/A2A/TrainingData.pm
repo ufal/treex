@@ -6,13 +6,15 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 has 'trees'    => ( is => 'rw', isa => 'Str', required => 1 );
 has 'language' => ( is => 'rw', isa => 'Str', default  => 'en' );
-
+has 'output_file' => ( is => 'rw', isa => 'Str', default  => '/home/green/tectomt/treex/lib/Treex/Tool/ML/SVM/tune' );
 my @trees;
 my @reference_nodes;
 my %edges=();
+my $file="";
 sub BUILD {
   my ($self) = @_;
  @trees= split(",",$self->trees);
+$file=$self->output_file;
   return;
 }
 
@@ -20,19 +22,19 @@ sub BUILD {
 sub process_tree {
   my ($root) = @_;
   my @todo = $root->get_descendants( { ordered => 1 } );
-  my $i = 0;
+  my $b = 0;
   my $prev_pos="null";
   my $prev_prev_pos="null";
   my $agree_1="";
   
-  
+  open (MYFILE, ">>$file"); 
   
   foreach my $node (@todo) {
-    if ( $node->parent->ord == $reference_nodes[$i]->parent->ord ) {
+    if ( $node->parent->ord == $reference_nodes[$b]->parent->ord ) {
      my $i=0;
-     my $j=0;
+     my $j=$i;
      
-     while ($i<scalar @trees){
+     while ($i<(scalar @trees-1)){
 	while ($j<scalar @trees){
 	  if($edges{$trees[$i]}{$node->ord}==$edges{$trees[$j]}{$node->ord}){
 	    $agree_1=$agree_1."1\t";
@@ -40,81 +42,23 @@ sub process_tree {
 	  else{
 	    $agree_1=$agree_1."0\t";
 	  }
+	#  print "$i\t$j\n";
 	  $j++;
 	}	
      $i++;
-     $j=$i+1;
+     $j=$i;
      }
-     
-     
-#       if($edges{"charniak"}{$node->ord}==$edges{"mst"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"charniak"}{$node->ord}==$edges{"malt"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"charniak"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"stanford"}{$node->ord}==$edges{"mst"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"stanford"}{$node->ord}==$edges{"malt"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"stanford"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"mst"}{$node->ord}==$edges{"malt"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"mst"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
-#       
-#       if($edges{"malt"}{$node->ord}==$edges{"zpar"}{$node->ord}){
-# 	$agree_1=$agree_1."1\t";
-#       }
-#       else{
-# 	$agree_1=$agree_1."0\t";
-#       }
+     #print "$i\t$j\n";
+     #add last model agreement
+     $agree_1=$agree_1."1\t";
+
       
-      print $node->selector . "\t"
+      print MYFILE $node->selector . "\t"
+     # print $node->selector . "\t"
       . $node->tag . "\t"
       . $prev_pos . "\t"
       . $prev_prev_pos . "\t"
-      . find_bucket( $i, scalar @todo ) . "\t"
+      . find_bucket( $b, scalar @todo ) . "\t"
       . scalar @todo . "\t"
       . $agree_1 . "\n"
       ;
@@ -122,8 +66,9 @@ sub process_tree {
     $prev_pos=$node->tag;
     $prev_prev_pos=$prev_pos;
     $agree_1="";
-    $i++;
+    $b++;
   }
+  close(MYFILE);
 }
 
 #return quartile (1=0.. .25    2 = .25 ... .5)
