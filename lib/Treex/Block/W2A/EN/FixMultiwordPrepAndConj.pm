@@ -138,7 +138,7 @@ sub as_X_as_Y {
         my $Y_first = $a_nodes->[$as2_idx+1];
         # super parent that governs as', X and Y
         my $super_parent = $Y_first;
-        while (!all {$_->is_descendant_of($super_parent)} ($as1, $as2, $X_head)) {
+        while (!all {$_->is_descendant_of($super_parent)} ($as1, $as2, $X_head, $Y_first)) {
             $super_parent = $super_parent->get_parent;
         }
         my %indicator = map {$_->id => 1} ($as1, $as2, $super_parent, $X_head);
@@ -146,7 +146,14 @@ sub as_X_as_Y {
         my $Y_head = $Y_first;
         while (!$indicator{$Y_head->get_parent->id}) {
             $Y_head = $Y_head->get_parent;
+            if (!defined $Y_head->get_parent) {
+                print STDERR "ID: $Y_head->id\n";
+            }
         }
+        #my ($sp_equal) = grep {$_ == $super_parent} ($as1, $as2, $X_head, $Y_head);
+        #if (defined $sp_equal) {
+        #    $super_parent = $sp_equal->parent;
+        #}
 
         # rehang all involved members to their common ancestor
         # just to prevent from making a cycle
