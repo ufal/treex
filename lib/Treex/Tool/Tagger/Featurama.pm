@@ -1,18 +1,67 @@
 package Treex::Tool::Tagger::Featurama;
 use Moose;
 use Moose::Exporter;
+use Carp;
 
 Moose::Exporter->setup_import_methods(
     as_is => ['tag_sentence'],
 );
 
-use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Core::Common;
 has path => (
     is            => 'ro',
-    isa           => 'Str',               #or isa=> 'Path' ?
-    required      => 1,
-    documentation => q{Path to models},
+    isa           => 'Str',                                  #or isa=> 'Path' ?
+    predicate     => '_path_given',
+    documentation => q{Path to models relative to share.},
+);
+
+has local_path => (
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => '_local_path_given',
+    documentation => q{Local path to models.},
+);
+
+has alpha => (
+    is      => 'ro',
+    isa     => 'Str',
+    builder => '_build_alpha_file',
+    lazy    => 1,
+);
+
+has dict => (
+    is      => 'ro',
+    isa     => 'Str',
+    builder => '_build_dict_file',
+    lazy    => 1,
+);
+
+has feature => (
+    is      => 'ro',
+    isa     => 'Str',
+    builder => '_build_feature_file',
+    lazy    => 1,
+);
+
+has prune => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 0,
+    documentation => q{Indicates whether we will be pruning Viterbi states},
+);
+
+has n_best => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 1,
+    documentation => q{How many n-best results to use},
+);
+
+has order => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 3,
+    documentation => q{Order ot the N-grams},
 );
 
 has perc => (
@@ -25,19 +74,49 @@ has perc => (
     documentation => q{Wrapped C object},
 );
 
-sub _build_perc {
+sub _get_model_file {
     my $self   = shift;
-    my $path   = $self->path;
-    eval {    
+    my $suffix = shift;
+    if ( $self->_local_path_given ) {
+        return $self->local_path . '.' . $suffix;
+    }
+    elsif ( $self->_path_given ) {
+        eval {
+            require Treex::Core::Resource;
+            1;
+        } or confess q(Treex share not available. Consider providing 'local_path' parameter);
+        return Treex::Core::Resource::require_file_from_share( $self->path . '.' . $suffix );
+    }
+    else {
+        confess q(You have to provide at least one of the 'path' and 'local_path' parameters);
+    }
+}
+
+sub _build_alpha_file {
+    my $self = shift;
+    return $self->_get_model_file('alpha');
+}
+
+sub _build_dict_file {
+    my $self = shift;
+    return $self->_get_model_file('dict');
+}
+
+sub _build_feature_file {
+    my $self = shift;
+    return $self->_get_model_file('f');
+}
+
+sub _build_perc {
+    my $self = shift;
+    eval {
         require Featurama::Perc;    #when featurama will be on CPAN, it will be probably in different namespace
         1;
     } or log_fatal('Cannot load Featurama::Perc. Please check whether it is installed');
-    my $perc   = Featurama::Perc->new();
+    my $perc = Featurama::Perc->new();
     my $header = join "\t", $self->_get_feature_names();
-    my $f      = require_file_from_share( $self->path . '.f' );
-    my $dict   = require_file_from_share( $self->path . '.dict' );
-    my $alpha  = require_file_from_share( $self->path . '.alpha' );
-    if ( not $perc->testInit( $f, $dict, $alpha, $header, 0, 1, 3 ) ) {    # TODO zjistit, co ty cislicka znamenaji
+
+    if ( not $perc->testInit( $self->feature, $self->dict, $self->alpha, $header, $self->prune, $self->n_best, $self->order ) ) {
         log_fatal("Cannot initialize Featurama::Perc");
     }
     return $perc;
@@ -92,7 +171,7 @@ sub _tag {
 
     # extract features
     foreach my $i ( 0 .. $#{$forms} ) {    #go through word forms and analyses
-    
+
         my @word = $self->_get_features( $forms, $analyses, $i );    #load features
         push( @sent, \@word );
     }
