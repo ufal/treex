@@ -20,7 +20,7 @@ sub process_bundle {
 
 
                 my $parent_count;
-                foreach my $edge_description (grep {!/coref|assoc|other|[\[\{]/} split /\|/,$in) {
+                foreach my $edge_description (grep {!/coref|assoc|[\[\{\*\/]/} split /\|/,$in) { # avoid 'other' too?
 
                     if ($edge_description !~ /(.+?):(.+)/) {
                         log_warn "Unexpected value of 'in' attribute: $in";
@@ -40,12 +40,23 @@ sub process_bundle {
                             }
 
                             my $new_parent_index = $node_index+$offset;
+
                             if ($new_parent_index < 0 or $new_parent_index > $#nodes ) {
                                 log_warn "parent index outside the array of nodes: $new_parent_index";
                             }
+
+# this must be solved correctly, but there are wrong offsets in the data, probably shifted by one or two!!!!!!!!
+#                            elsif ($node->wild->{para_number} != $nodes[$new_parent_index]->wild->{para_number}
+#                                       or $node->wild->{sent_number} != $nodes[$new_parent_index]->wild->{sent_number}) {
+#                                log_warn "edge leading to a different sentence or paragraph: $edge_description";
+#                            }
+
                             else {
                                 print ".";
                                 $node->set_parent($nodes[$new_parent_index]);
+                                $node->set_conll_deprel($afun);
+                                $node->set_tag($node->wild->{tag});
+                                $node->set_lemma($node->wild->{lemma});
                             }
                         }
                     }
@@ -73,5 +84,5 @@ This block assigns hangs nodes below their parents according to these indices.
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky
+# Copyright 2012 Zdenek Zabokrtsky
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
