@@ -20,11 +20,11 @@ sub process_bundle {
         foreach my $align (@{$bundle->wild->{$language}}) {
             my $danish_line_numbers = $align->{out};
             my $other_lang_line_numbers = $align->{in};
-            print "$danish_line_numbers $other_lang_line_numbers\n";
+#            print "$danish_line_numbers $other_lang_line_numbers\n";
 
             if ($danish_line_numbers =~ s/a//g
                     and $other_lang_line_numbers =~ s/b//g) {
-                print "Danish: $danish_line_numbers  $language: $other_lang_line_numbers\n";
+#                print "Danish: $danish_line_numbers  $language: $other_lang_line_numbers\n";
 
               DANISH_NODE:
                 foreach my $danish_line_number ( split / /,$danish_line_numbers ) {
@@ -42,8 +42,8 @@ sub process_bundle {
                             next OTHER_LANG_NODE;
                         }
 
-                        print $danish_node->form."\t".$other_lang_node->form."\n";
-                        $other_lang_node->add_aligned_node($danish_node,"whatever");
+#                        print $danish_node->form."\t".$other_lang_node->form."\n";
+                        $other_lang_node->add_aligned_node($danish_node);
                     }
                 }
             }
