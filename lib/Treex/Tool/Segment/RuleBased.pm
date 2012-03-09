@@ -47,10 +47,18 @@ sub openings {
     return '"“«(';
 }
 
+# Contextual rules for "un-breaking" (to be overridden)
+sub apply_contextual_rules {
+    my ($self) = shift;
+    return @_;
+}
+
 sub get_segments {
     my ( $self, $text ) = @_;
 
     # Pre-processing
+    $text = $self->apply_contextual_rules($text);
+    
     my $unbreakers = $self->unbreakers;
     $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
     
@@ -133,6 +141,11 @@ Do the segmentation (handling C<use_paragraphs> and C<use_lines>)
 =item $text = split_at_terminal_punctuation($text)
 
 Adds newlines after terminal punctuation followed by an uppercase letter. 
+
+=item $text = apply_contextual_rules($text)
+
+Add unbreakers (C<E<lt>E<lt>E<lt>DOTE<gt>E<gt>E<gt>>) and hard breaks (C<\n>) using the whole context, not
+just a single word. 
 
 =item unbreakers
 
