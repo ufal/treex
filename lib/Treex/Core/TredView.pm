@@ -67,6 +67,8 @@ has _ptb_coindex_map => (
 has 'clause_collapsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'show_alignment'    => ( is => 'rw', isa => 'Bool', default => 1 );
 
+has 'tree_type_to_wrap'    => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+
 sub _spread_nodes {
     my ( $self, $node ) = @_;
 
@@ -121,6 +123,11 @@ sub get_nodelist_hook {
                 $self->{'_ptb_coindex_map'}->{ $node->{'coindex'} } = $node if defined $node->{'coindex'};
             }
         }
+
+        elsif ( $self->tree_type_to_wrap->{$self->_tree_type_signature($tree)} ) {
+            @nodes = $tree;
+        }
+
         elsif ( $tree->does('Treex::Core::Node::Ordered') ) {
             @nodes = $tree->get_descendants( { add_self => 1, ordered => 1 } );
         }
@@ -744,6 +751,20 @@ sub toggle_alignment {
     my $self = shift;
     $self->show_alignment( not $self->show_alignment );
     return;
+}
+
+sub toggle_tree_wrapping {
+    my ( $self, $node ) = @_;
+    my $signature = $self->_tree_type_signature($node);
+    $self->tree_type_to_wrap->{$signature} = not $self->tree_type_to_wrap->{$signature};
+    print "Toggle wrapping of trees of type: $signature\n";
+
+}
+
+sub _tree_type_signature {
+    my ( $self, $node) = @_;
+    my $zone = $node->get_root->get_zone;
+    return join "-", ( ref($node), $zone->language, $zone->selector()||'');
 }
 
 1;

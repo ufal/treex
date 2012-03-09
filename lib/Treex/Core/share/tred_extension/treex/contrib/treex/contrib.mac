@@ -132,6 +132,10 @@ sub toggle_alignment {
     $tredview->toggle_alignment();
 }
 
+sub toggle_tree_wrapping {
+    $tredview->toggle_tree_wrapping($this);
+}
+
 sub OpenValLexicon {
     $tredview->vallex->OpenValLexicon();
 }
@@ -170,6 +174,7 @@ sub after_edit_node_hook {
 #bind reset_labels_tree to Ctrl+r menu Reset label settings of all nodes in current tree
 #bind toggle_clause_collapsing to l
 #bind toggle_alignment to a menu Toggle alignment arrows
+#bind toggle_tree_wrapping to w menu Wrap tree
 
 #bind OpenValLexicon to Ctrl+Shift+Return menu Browse valency frame lexicon
 #bind ChooseValFrame to Ctrl+Return menu Select and assign valency frame
