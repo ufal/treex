@@ -54,7 +54,7 @@ my $NON_NAME_BEG = '(?:\s*\b.+){,4}(\.|$)';
 # Indication of a cardinal numeral, even with a dot behind it
 my $CARDINAL_INDIC = qr{
     \b(
-        (tel|fax|č|č\.\h*p|str|čís|odst)\.|                            # abbreviations indicating cardinal number
+        (tel|fax|č|č\.\h*p|str|čís|čl|odst)\.|                         # abbreviations indicating cardinal number
         čísl.{1,2}|str[aá]n.{1,4}|                                     # words indicating cardinal number
         (l[ée]t|ro[kc]|jar|podzim|zim).{0,3}|                          # time periods
         (lede?n|únor|březe?n|dube?n|květe?n|červe?n|červene?c|srpe?n|září|říje?n|listopad|prosine?c).{0,2}|
@@ -62,7 +62,7 @@ my $CARDINAL_INDIC = qr{
         praha|ostrava|olomouc|pardubice|brno|budějovice|plzeň|králové| # "Praha 1"
         než|také|rovněž|z                                              # comparatives
     )\h*
-    |[-'`]                                                             # unary minus, years ('91) (no spaces)
+    |[-'`´]                                                            # unary minus, years ('91) (no spaces)
 }xi;
 
 # Various monetary unit names (to be used in an ingore-case context)
@@ -126,11 +126,11 @@ sub apply_contextual_rules {
     # str. III., čl. II.
     $text =~ s/\b(str|čl|č)\.(\s*[IVXLCMD]+)/$1<<<DOT>>>$2/g;
 
-    # no break for 3 words in a parenthesis at most
-    $text =~ s/\.(\s*[\(\[](?:\s*\b.+){1,3}[\)\]])/<<<DOT>>>$1/g;
+    # no break for 3 words in a parenthesis at most, if there's no capital letter after the parenthesis
+    $text =~ s/\.(\s*[\(\[](?:\s*\b\S+){1,3}[\)\]]\s*\P{Upper})/<<<DOT>>>$1/g;
 
-    # use spaced '-' and '*' as segment breaks between sentences (used in dialogs)
-    $text =~ s/\.\h+([\*\-–]\h+\p{Upper})/\.\n$1/g;
+    # use spaced '-' and '*' as segment breaks between sentences (used in dialogs) # TODO -- actually, there should be another abbrev. list
+    $text =~ s/([!?]|\w{4,}\.)\h+([\*\-–]\h+\p{Upper})/$1\n$2/g;
 
     return $text;
 }
