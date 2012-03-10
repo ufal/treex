@@ -52,8 +52,15 @@ sub process_bundle {
 #                            }
 
                             else {
-                                print ".";
-                                $node->set_parent($nodes[$new_parent_index]);
+
+                                if (grep {$nodes[$new_parent_index] eq $_} $node->get_descendants) {
+                                    log_warn "Not creating an edge that would lead to a cycle: form=" .
+                                        $node->form . "  id=" . $node->id;
+                                }
+                                else {
+                                    $node->set_parent($nodes[$new_parent_index]);
+                                }
+
                                 $node->set_conll_deprel($afun);
                                 $node->set_tag($node->wild->{tag});
                                 $node->set_lemma($node->wild->{lemma});
