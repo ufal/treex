@@ -212,7 +212,11 @@ sub get_zone {
         $zone = $self->get_root->_get_zone;    ## no critic (ProtectPrivateSubs)
     }
 
-    log_fatal "a node can't reveal its zone" if !$zone;
+    if (!$zone) {
+#        $self->get_document->save("pokus2.treex.gz");
+    }
+
+    log_fatal "a node (" . $self->id . ") can't reveal its zone" if !$zone;
     return $zone;
 
 }
@@ -803,6 +807,53 @@ sub _get_referenced_ids {
     return $ret;
 }
 
+
+# ---------------------
+
+# changing the functionality of Treex::PML::Node's following() so that it traverses all
+# nodes in all trees in all zones (needed for search in TrEd)
+
+sub following {
+    my ( $self ) = @_;
+
+    my $pml_following =  Treex::PML::Node::following(@_);
+
+    if ( $pml_following ) {
+        return $pml_following;
+    }
+
+    else {
+        my $bundle =  ( ref($self) eq 'Treex::Core::Bundle' ) ? $self : $self->get_bundle;
+
+        my @all_trees = map { $_->get_all_trees } $bundle->get_all_zones;
+
+        if ( ref($self) eq 'Treex::Core::Bundle' ) {
+            return $all_trees[0];
+        }
+
+        else {
+            my $my_root = $self->get_root;
+            foreach my $index ( 0..$#all_trees ) {
+                if ( $all_trees[$index] eq $my_root ) {
+                    return $all_trees[$index+1];
+                }
+            }
+            log_fatal "Node belongs to no tree: this should never happen";
+        }
+    }
+}
+
+sub descendants {
+    my ( $self ) = @_;
+    return ( map { $_->_descendants_and_self() } $self->children );
+}
+
+sub _descendants_and_self {
+    my ( $self ) = @_;
+    return ( $self, map { $_->_descendants_and_self() } $self->children );
+}
+
+
 # TODO: How to do this in an elegant way?
 # Unless we find a better way, we must disable two perlcritics
 package Treex::Core::Node::Removed;    ## no critic (ProhibitMultiplePackages)
@@ -868,7 +919,6 @@ sub set_r_attr {
     return $fs->set_attr( $attr_name, $attr_values[0]->id );
 }
 
-# ---------------------
 
 
 =for Pod::Coverage BUILD

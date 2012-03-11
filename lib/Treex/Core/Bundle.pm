@@ -264,6 +264,13 @@ sub get_attr {
     return $self->{$attr_name};
 }
 
+# ------- other -------------
+
+sub following {
+    Treex::Core::Node::following(@_);
+}
+
+
 
 __PACKAGE__->meta->make_immutable;
 
