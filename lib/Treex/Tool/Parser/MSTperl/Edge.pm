@@ -4,6 +4,11 @@ use Moose;
 
 use Treex::Tool::Parser::MSTperl::Node;
 
+has config => (
+    isa      => 'Treex::Tool::Parser::MSTperl::Config',
+    is       => 'rw',
+);
+
 has parent => (
     isa      => 'Treex::Tool::Parser::MSTperl::Node',
     is       => 'ro',
@@ -54,6 +59,8 @@ sub BUILD {
         $self->second( $self->parent );
     }
 
+    $self->config( $self->parent->config );
+
     return;
 }
 
@@ -64,6 +71,27 @@ sub signature {
         '#' . $self->parent->ord .
         '#' . $self->child->ord .
         '#' . $self->child->label;
+}
+
+# all features, including dynamic if applicable, for labelling only
+sub features_all_labeller {
+    my ($self) = @_;
+    
+    my $ALGORITHM = $self->config->labeller_algorithm;
+
+    if ($ALGORITHM < 20) {
+        return $self->features;
+    } else {
+        if (keys %{$self->config->labelledFeaturesControl->dynamic_features}) {
+            my @features = @{$self->features};
+            push @features,
+                @{$self->config->labelledFeaturesControl->get_all_features(
+                    $self, 1)};
+            return \@features;
+        } else {
+            return $self->features;
+        }
+    }
 }
 
 1;

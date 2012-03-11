@@ -4,6 +4,8 @@ use Moose;
 use autodie;
 use Carp;
 
+# TODO dynamic features
+
 has 'config' => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',
     is       => 'ro',
@@ -11,7 +13,7 @@ has 'config' => (
     weak_ref => '1',
 );
 
-# FEATURES for unlabelled parsing
+# FEATURES
 
 has 'feature_count' => (
     is  => 'rw',
@@ -57,7 +59,14 @@ has 'array_features' => (
     default => sub { {} },
 );
 
-# SIMPLE FEATURES for unlabelled parser
+# features containing dynamic simple features
+has 'dynamic_features' => (
+    is      => 'rw',
+    isa     => 'HashRef[Int]',
+    default => sub { {} },
+);
+
+# SIMPLE FEATURES
 
 has 'simple_feature_count' => (
     is  => 'rw',
@@ -96,6 +105,15 @@ has 'simple_feature_sub_arguments' => (
 
 # simple features that return an array of values
 has 'array_simple_features' => (
+    is      => 'rw',
+    isa     => 'HashRef[Int]',
+    default => sub { {} },
+);
+
+# simple features that must be always recomputed
+# because their value cannot be always computed from input data
+# (for labeller - parent's label, brother's label etc.)
+has 'dynamic_simple_features' => (
     is      => 'rw',
     isa     => 'HashRef[Int]',
     default => sub { {} },
@@ -155,6 +173,7 @@ sub set_feature {
 
         # get simple features
         my $isArrayFeature = 0;
+        my $isDynamicFeature = 0;
         my @simple_features_indexes;
         my %simple_features_hash;
         foreach my $simple_feature_code ( split( /\|/, $feature_code ) ) {
@@ -179,6 +198,9 @@ sub set_feature {
             if ( $self->array_simple_features->{$simple_feature_index} ) {
                 $isArrayFeature = 1;
             }
+            if ( $self->dynamic_simple_features->{$simple_feature_index} ) {
+                $isDynamicFeature = 1;
+            }
             push @simple_features_indexes, $simple_feature_index;
         }
 
@@ -191,6 +213,9 @@ sub set_feature {
             [@simple_features_indexes];
         if ($isArrayFeature) {
             $self->array_features->{$feature_index} = 1;
+        }
+        if ($isDynamicFeature) {
+            $self->dynamic_features->{$feature_index} = 1;
         }
     }
 
@@ -258,6 +283,12 @@ sub set_simple_feature {
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
 
+        if ( $function_name eq 'LABEL' || $function_name eq 'prevlabel' ) {
+
+            # dynamic feature
+            $self->dynamic_simple_features->{$simple_feature_index} = 1;
+        }
+
         # set $simple_feature_field
         if ( $simple_feature_code =~ /$function_name\(\)$/ ) {
 
@@ -316,8 +347,10 @@ sub set_simple_feature {
 # is not present)
 # TODO maybe not returning a value is still a valuable information -> include?
 sub get_all_features {
-    my ( $self, $edge ) = @_;
-
+    # Edge; 0: all features, 1: only dynamic, -1: only non-dynamic
+    # either get only dynamic features or get all but dynamic features
+    my ( $self, $edge, $only_dynamic_features ) = @_;
+    
     # try to get features from cache
     # TODO: cache not used now and probably does not even work:
     # check&fix or remove
@@ -341,19 +374,29 @@ sub get_all_features {
         $feature_index++
         )
     {
-        my $feature_value =
-            $self->get_feature_value( $feature_index, $simple_feature_values );
-        if ( $self->array_features->{$feature_index} ) {
-
-            #it is an array feature, the returned value is an array reference
-            foreach my $value ( @{$feature_value} ) {
-                push @features, "$feature_index:$value";
-            }
+        if ( $only_dynamic_features && $only_dynamic_features == 1
+            && !$self->dynamic_features->{$feature_index}
+        ) {
+            next;
+        } elsif ( $only_dynamic_features && $only_dynamic_features == -1
+            && $self->dynamic_features->{$feature_index}
+        ) {
+            next;
         } else {
-
-            #it is not an array feature, the returned value is a string
-            if ( $feature_value ne '' ) {
-                push @features, "$feature_index:$feature_value";
+            my $feature_value =
+                $self->get_feature_value( $feature_index, $simple_feature_values );
+            if ( $self->array_features->{$feature_index} ) {
+    
+                #it is an array feature, the returned value is an array reference
+                foreach my $value ( @{$feature_value} ) {
+                    push @features, "$feature_index:$value";
+                }
+            } else {
+    
+                #it is not an array feature, the returned value is a string
+                if ( $feature_value ne '' ) {
+                    push @features, "$feature_index:$feature_value";
+                }
             }
         }
     }
@@ -473,6 +516,7 @@ sub get_simple_feature_values_array {
 
 my %simple_feature_sub_references = (
     'LABEL'             => \&{feature_parent_label},
+    'prevlabel'         => \&{feature_previous_label},
     'distance'          => \&{feature_distance},
     'attdir'            => \&{feature_attachement_direction},
     'preceding'         => \&{feature_preceding_child},
@@ -555,6 +599,25 @@ sub feature_parent {
 sub feature_parent_label {
     my ( $self, $edge ) = @_;
     return ( $edge->parent->label );
+}
+
+sub feature_previous_label {
+    my ( $self, $edge ) = @_;
+    
+    # in case there is not a previous edge
+    my $prev_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
+    
+    my $children = $edge->parent->children;
+    foreach my $child_edge (@$children) {
+        if ($child_edge->child->ord == $edge->child->ord) {
+            # $prev_label now contains label of edge preceding $edge
+            return $prev_label;
+        } else {
+            $prev_label = $child_edge->child->label;
+        }
+    }
+    
+    die ("The child node not found among the children of its parent!");
 }
 
 sub feature_first {

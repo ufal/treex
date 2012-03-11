@@ -163,7 +163,13 @@ sub compute_features {
 
     my @features;
     foreach my $edge ( @{ $self->edges } ) {
-        my $edge_features = $featuresControl->get_all_features($edge);
+        my $edge_features;
+        my $ALGORITHM = $self->config->labeller_algorithm;
+        if ($ALGORITHM < 20) {
+            $edge_features = $featuresControl->get_all_features($edge);
+        } else {
+            $edge_features = $featuresControl->get_all_features($edge, -1);
+        }
         $edge->features($edge_features);
         push @features, @{$edge_features};
     }

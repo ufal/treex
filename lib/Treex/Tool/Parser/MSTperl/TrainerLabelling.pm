@@ -196,6 +196,7 @@ sub compute_transition_counts {
     return;
 }
 
+# algs 4, 5, 9
 sub compute_emission_counts {
 
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
@@ -279,6 +280,7 @@ sub mira_update {
         || $ALGORITHM == 9
         || $ALGORITHM == 14 || $ALGORITHM == 15
         || $ALGORITHM == 16 || $ALGORITHM == 17
+        || $ALGORITHM >= 20
         )
     {
         $self->mira_tree_update(
@@ -287,6 +289,7 @@ sub mira_update {
             $sumUpdateWeight,
         );
     } else {
+        # alg in 1 2 3 4 5 6 7 10 11 12 13
         my @correct_labels =
             map { $_->label } @{ $sentence_correct_labelling->nodes_with_root };
         my @best_labels =
@@ -319,6 +322,7 @@ sub mira_update {
 
 # makes an update on the sequence of parent's children
 # and recurses on their children
+# alg in 8 9 14 15 16 17 >=20
 sub mira_tree_update {
 
     # (Treex::Tool::Parser::MSTperl::Node $correct_parent,
@@ -343,7 +347,7 @@ sub mira_tree_update {
     my $label_prev_best    = $self->config->SEQUENCE_BOUNDARY_LABEL;
     foreach my $correct_edge (@correct_edges) {
 
-        my $features      = $correct_edge->features;
+        my $features      = $correct_edge->features_all_labeller();
         my $label_correct = $correct_edge->child->label;
         my $label_best    = (
             $sentence_best_labelling->getNodeByOrd(
@@ -447,6 +451,7 @@ sub mira_tree_update {
                 || $ALGORITHM == 15
                 || $ALGORITHM == 16
                 || $ALGORITHM == 17
+                || $ALGORITHM >= 20
                 )
             {
 
@@ -502,6 +507,7 @@ sub mira_tree_update {
     return;
 }
 
+# alg in 1 2 3 4 5 6 7 10 11 12 13
 sub mira_edge_update {
 
     my ( $self, $edge, $correct_label, $best_label, $sumUpdateWeight ) = @_;

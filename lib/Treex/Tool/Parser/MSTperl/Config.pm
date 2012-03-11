@@ -760,6 +760,18 @@ is the leftmost of all right children of its parent
 label of parent (to be used only in labeller features);
 label is somewhat special, it cannot be used as C<label>, C<LABEL> or C<label()>
 
+Features containing the C<LABEL()> function are dynamic, i.e. they cannot be
+precomputed and are always computed just at the time they are needed.
+
+=item prevlabel()
+
+label of previous sibling (to be used only in labeller features);
+prevlabel is somewhat special, it cannot be used as
+C<prevlabel>, C<PREVLABEL> or C<PREVLABEL()>
+
+Features containing the C<prevlabel()> function are dynamic, i.e. they cannot be
+precomputed and are always computed just at the time they are needed.
+
 =back
 
 See also L<Treex::Tool::Parser::MSTperl::FeaturesControl>.

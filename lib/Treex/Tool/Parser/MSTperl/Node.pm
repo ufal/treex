@@ -46,23 +46,27 @@ has label => (
 # label updated => need to update features of children
 # which contain LABEL
 # (i.e. FeaturesControl->feature_parent on config->label_field_index)
+# probably obsolete, now handled by dynamic features notion
 sub _label_set {
 
     my ($self) = @_;
 
     # my ( $self, $parent_label ) = @_;
 
-    if ( $self->_fully_built ) {
+    my $ALGORITHM = $self->config->labeller_algorithm;
 
-        # TODO: not necessary to update ALL of the features!
-        foreach my $child_edge ( @{ $self->children } ) {
-            my $edge_features = $self->config->
-                labelledFeaturesControl->get_all_features($child_edge);
-            $child_edge->features($edge_features);
+    if ($ALGORITHM < 20) {
+        if ( $self->_fully_built ) {
+    
+            # TODO: not necessary to update ALL of the features!
+            foreach my $child_edge ( @{ $self->children } ) {
+                my $edge_features = $self->config->
+                    labelledFeaturesControl->get_all_features($child_edge);
+                $child_edge->features($edge_features);
+            }
         }
+        # else only just building -> no updating yet!
     }
-
-    # else only just building -> no updating yet!
 
     return;
 }

@@ -155,6 +155,13 @@ sub load_data {
         $smooth_ok = 1;
     }
 
+    if ($ALGORITHM >= 20) {
+
+        # these algorithms do not use separate transitions
+        # (transitions are included in emissions)
+        $transitions_ok = 1;
+    }
+
     if ( $unigrams_ok && $transitions_ok && $emissions_ok && $smooth_ok ) {
         return 1;
     } else {
@@ -257,7 +264,7 @@ sub prepare_for_mira {
             }
         }
 
-    } elsif ( $ALGORITHM == 1 || $ALGORITHM == 8 ) {
+    } elsif ( $ALGORITHM == 1 || $ALGORITHM == 8 || $ALGORITHM >= 20 ) {
 
         # no recomputing taking place
 
@@ -569,6 +576,21 @@ sub get_label_score {
 
         return $result;
 
+    } elsif ( $ALGORITHM >= 20 ) {
+
+        my $result = 0;
+
+        # sum of emission scores
+        foreach my $feature (@$features) {
+            $result += $self->get_emission_score( $label, $feature );
+        }
+        
+        # TODO: could also compute using $label_prev,
+        # using transitions to store these;
+        # would allow to use full Viterbi
+
+        return $result;
+
     } else {
         croak "ModelLabelling->get_label_score not implemented"
             . " for algorithm no. $ALGORITHM!";
@@ -589,6 +611,7 @@ sub get_emission_score {
         || $ALGORITHM == 9
         || $ALGORITHM == 16
         || $ALGORITHM == 17
+        || $ALGORITHM >= 20
         )
     {
 
