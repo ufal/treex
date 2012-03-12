@@ -48,7 +48,7 @@ sub _build_model {
     log_fatal 'File ' . $model_file . 
         ' with a model for pronominal textual coreference resolution does not exist.' 
         if !-f $model_file;
-    open MODEL, "<:utf8", $model_file;
+    open MODEL, "<:gzip:utf8", $model_file;
 
 # DEBUG
 #    print STDERR "FILE: $model_file\n";

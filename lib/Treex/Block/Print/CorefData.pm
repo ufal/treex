@@ -130,7 +130,7 @@ sub _create_instance_string {
     #}
 
     my @cols = map {
-        if ($_ =~ /id$/) {
+        if ($_ =~ /_id$/) {
             (($self->format ne 'unsup') ? "$_=" : "") . $instance->{$_};
         } else {
             $_=~ /^[br]_/ 
