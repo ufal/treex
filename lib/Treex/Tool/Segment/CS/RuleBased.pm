@@ -187,12 +187,13 @@ Segmenting too much at:
   vš. SKP Plzeň (what's that?)
   three dots in parentheses, at the beginning of a sentence
   "min." in parentheses
+  ul., tř., blvd., av., ave.
 
 Not segmenting at:
 
   abbreviations like S.P.Z., S.M.A.R.T. at the end of sentence
-  units of measure, such as 220, 380 V, 10 A
   Ph. D. at the end of sentence
+  units of measure, such as 220, 380 V, 10 A at the end of the sentence
 
 =head1 SEE ALSO
 
