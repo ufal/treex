@@ -1,5 +1,7 @@
 package Treex::Core::Bundle;
 
+use namespace::autoclean;
+
 use Moose;
 use Treex::Core::Common;
 use MooseX::NonMoose;
@@ -269,8 +271,6 @@ sub get_attr {
 sub following {
     Treex::Core::Node::following(@_);
 }
-
-
 
 __PACKAGE__->meta->make_immutable;
 

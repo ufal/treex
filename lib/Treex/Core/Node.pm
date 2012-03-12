@@ -1,4 +1,7 @@
 package Treex::Core::Node;
+
+use namespace::autoclean;
+
 use Moose;
 use MooseX::NonMoose;
 use Treex::Core::Common;
@@ -9,13 +12,13 @@ use Treex::PML;
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
 
-use overload
-    '""' => 'to_string',
-    '==' => 'equals',
-    '!=' => '_not_equals',
-    'eq' => 'equals',      # deprecated
-    'ne' => '_not_equals', # deprecated
-    'bool' => sub{1},
+# use overload
+#     '""' => 'to_string',
+#     '==' => 'equals',
+#     '!=' => '_not_equals',
+#     'eq' => 'equals',      # deprecated
+#     'ne' => '_not_equals', # deprecated
+#     'bool' => sub{1},
 
     # We can A) let Magic Autogeneration to build "derived" overloadings,
     # or B) we can disable this feature (via fallback=>0)

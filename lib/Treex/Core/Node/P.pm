@@ -1,4 +1,7 @@
 package Treex::Core::Node::P;
+
+use namespace::autoclean;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Node';
