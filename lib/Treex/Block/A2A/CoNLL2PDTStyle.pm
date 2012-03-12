@@ -99,6 +99,7 @@ sub convert_tag
         en::conll en::conll2009
         es::conll2009
         eu::conll
+        fa::conll
         fi::conll
         grc::conll
         hi::conll
