@@ -367,7 +367,12 @@ sub _get_reader_name_for {
             if ( !defined $first ) {
                 $first = $current;
             }
-            log_fatal 'All files (' . join( ',', @names ) . ') must have the same extension' if ( $current ne $first );
+            if ( $current ne $first ) {
+                log_fatal 'All files (' . join( ',', @names ) . ') must have the same extension' . "\n" .
+                    "    current = $current\n" .
+                    "    first   = $first\n" .
+                    "    curname = $name";
+            }
             push @extensions, $current;
         }
         else {
