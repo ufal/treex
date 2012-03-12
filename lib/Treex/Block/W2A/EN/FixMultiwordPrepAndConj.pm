@@ -101,6 +101,12 @@ sub as_X_as_Y {
     while (my $as2_idx = shift @$unproc_as_idxs) {
         my @a_nodes_inbetw = @$a_nodes[ $as1_idx+1 .. $as2_idx-1 ];
 
+        # also such obvious mistakes as 'as as' appear
+        if (@a_nodes_inbetw == 0) {
+            $as1_idx = $as2_idx;
+            next;
+        }
+
         # no already processed 'as' in between
         if (grep {$_->form eq 'as'} @a_nodes_inbetw) {
             $as1_idx = $as2_idx;
