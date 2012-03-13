@@ -932,6 +932,14 @@ multiplied with emission score in Viterbi and added to last state score
 
 =item (17)  dtto, different transition computation for negative scores
 
+=item (18) 16 + no Viterbi summing
+
+=item (19) 18, better formula for combining emissions and transitions
+
+=item (20) MIRA for all
+
+=item (21) MIRA for all, with Viterbi
+
 =back
 
 =item SEQUENCE_BOUNDARY_LABEL: '###'

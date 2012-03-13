@@ -123,8 +123,8 @@ sub label_subtree {
         # 0    1  2  3      4      5       6   7  8  9
         1e300, 1, 1, 1e300, 1e300, 1e300, -1, -1, 0, 0,
 
-        # 10     11     12     13     14     15   16 17 18 19 20
-        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0, 0, 0, 0,
+        # 10     11     12     13     14     15   16 17 18 19 20 21
+        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0, 0, 0, 0, 0,
     );
 
     # path could be constructed by backpointers
@@ -138,6 +138,7 @@ sub label_subtree {
     # In each cycle generates %new_states and sets them as %states,
     # so at the end it suffices to find the state with the best score in %states
     # and use its path as the result.
+    my $prev_edge = undef;
     foreach my $edge (@edges) {
 
         # only progress and/or debug info
@@ -150,20 +151,21 @@ sub label_subtree {
 
         # do one Viterbi step - assign possible labels to $edge
         # (including appropriate scores of course)
-        $states = $self->label_edge( $edge, $states );
+        $states = $self->label_edge( $edge, $states, $prev_edge );
         
-        if ( $ALGORITHM >= 20 ) {
+        if ( $ALGORITHM == 20 ) {
             # set the best label
             my $best_state_label = $self->find_best_state_label( $states );
             $edge->child->label($best_state_label);
         }
         
+        $prev_edge = $edge;
     }
 
     # TODO: foreach last state multiply its score
     # by the label->sequence_boundary probability
 
-    if ( $ALGORITHM < 20 ) {
+    if ( $ALGORITHM != 20 ) {
         # End - find the state with the best score - this is the result
         my $best_state_label = $self->find_best_state_label( $states );
     
@@ -239,11 +241,18 @@ sub find_best_state_label {
 # i.e. make one step of the Viterbi algorithm
 sub label_edge {
 
-    my ( $self, $edge, $states ) = @_;
+    my ( $self, $edge, $states, $prev_edge ) = @_;
 
+    my $ALGORITHM = $self->config->labeller_algorithm;
     my $new_states = {};
     foreach my $last_state ( keys %$states ) {
 
+        if ( $ALGORITHM == 21 && defined $prev_edge ) {
+            # set last label
+            my $best_prev_state_label = $self->find_best_state_label( $states );
+            $prev_edge->child->label($best_prev_state_label);
+        }
+    
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 4 ) {
             print "    Processing state $last_state (score "
