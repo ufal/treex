@@ -10,7 +10,7 @@ use Treex::Core::Common;
 use Treex::Tool::Parser::MSTperl::Node;
 
 # use features from aligned tree
-has 'use_aligned_tree' => ( isa => 'Bool', is => 'ro', default => '1' );
+has 'use_aligned_tree' => ( isa => 'Bool', is => 'ro', default => '0' );
 
 # the language of the tree which is already parsed and is accessed via the
 # 'aligned_' prefix, eg. en
