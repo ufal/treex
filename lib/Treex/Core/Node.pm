@@ -12,26 +12,30 @@ use Treex::PML;
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
 
-use overload
-    '""' => 'to_string',
-    '==' => 'equals',
-    '!=' => '_not_equals',
-    'eq' => 'equals',      # deprecated
-    'ne' => '_not_equals', # deprecated
-    'bool' => sub{1},
-
-    # We can A) let Magic Autogeneration to build "derived" overloadings,
-    # or B) we can disable this feature (via fallback=>0)
-    # and define only the needed overloadings
-    # (so all other overloadings will result in fatal errors).
-    # See perldoc overload.
-    # I decided for A, but uncommenting the following lines can catch some misuses.
-    #'!'  => sub{0},
-    #'.' => sub{$_[2] ? $_[1] . $_[0]->to_string : $_[0]->to_string . $_[1]},
-    #fallback => 0,
-;
-# TODO: '<' => 'precedes' (or better '<=>' => ...)
-# 'eq' => sub {log_warn 'You should use ==' && return $_[0]==$_[1]} # similarly for 'ne'
+# overloading does not work with namespace::autoclean
+# see https://rt.cpan.org/Public/Bug/Display.html?id=50938
+# We may want to use https://metacpan.org/module/namespace::sweep instead.
+#
+# use overload
+#     '""' => 'to_string',
+#     '==' => 'equals',
+#     '!=' => '_not_equals',
+#     'eq' => 'equals',      # deprecated
+#     'ne' => '_not_equals', # deprecated
+#     'bool' => sub{1},
+# 
+#     # We can A) let Magic Autogeneration to build "derived" overloadings,
+#     # or B) we can disable this feature (via fallback=>0)
+#     # and define only the needed overloadings
+#     # (so all other overloadings will result in fatal errors).
+#     # See perldoc overload.
+#     # I decided for A, but uncommenting the following lines can catch some misuses.
+#     #'!'  => sub{0},
+#     #'.' => sub{$_[2] ? $_[1] . $_[0]->to_string : $_[0]->to_string . $_[1]},
+#     #fallback => 0,
+# ;
+# # TODO: '<' => 'precedes' (or better '<=>' => ...)
+# # 'eq' => sub {log_warn 'You should use ==' && return $_[0]==$_[1]} # similarly for 'ne'
 
 Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
 my $CHECK_FOR_CYCLES = 1;
