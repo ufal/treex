@@ -69,6 +69,7 @@ sub deprel_to_afun
         # VPRT: Sometimes preposition-noun-verb is considered a compound verb. Then the preposition is VPRT: be däst avärd = to hand brought = gained.
         # LVP:  Light verb particle. Only the compound light verb "pejda kärdän" (to find) (pejda is LVP).
         # VCL:  Complement clause of verb: midanäm ke miajäd = I know that he comes.
+        # NPRT: Particle (preposition) of infinitive (infinitives behave as nouns in Persian).
         elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|VCL)$/ )
         {
             $afun = 'Obj';
@@ -78,7 +79,8 @@ sub deprel_to_afun
         # MOS: Mosnad. A property ascribed to the subject using verbs such as šodän (to become), budän (to be), ästän (to be) etc.
         #      Example: u  doktor äst
         #      Gloss:   he doctor is
-        elsif ( $deprel =~ m/^(NVE|ENC|MOS)$/ )
+        # NE: Non-verbal element of compound infinitive (Persian infinitives behave (and are tagged?) as nouns).
+        elsif ( $deprel =~ m/^(NVE|ENC|MOS|NE)$/ )
         {
             $afun = 'Pnom';
         }
@@ -100,7 +102,8 @@ sub deprel_to_afun
         #    the first verb can be changed into the past participle form. In such a case, the transformed verb
         #    depends on the verb with normal inflection and the relation is labeled PARCL.
         #    Example: be xane räfte xabidäm = to home gone I slept = I went home and slept (or: Having gone home, I slept)
-        elsif ( $deprel =~ m/^(ADVC|ADV|AJUCL|PARCL)$/ )
+        # NADV: Adverbial modifier of compound predicate, attached to its non-verb component.
+        elsif ( $deprel =~ m/^(ADVC|ADV|AJUCL|PARCL|NADV)$/ )
         {
             $afun = 'Adv';
         }
@@ -122,13 +125,31 @@ sub deprel_to_afun
             # There might be something in the Arabic PADT: AuxM?
             $afun = 'AuxV';
         }
+        # NPREMOD: Pre-modifier of noun (superlative adjective, numeral, title).
+        # NPOSTMOD: Post-modifier of noun (positive and comparative adjective, numeral).
+        # NPP: Prepositional phrase modifying a noun, e.g.: jedal dar tasuki = battle in Tasooki
+        # NCL: Clause modifying a noun, e.g.: märd -i ke didi = man a that you-saw = the man you saw
+        # MOZ: Ezafe dependent.
+        #    Ezafe is the suffix "-e" pronounced after a Persian noun, usually not visible in the Perso-Arabic script.
+        #    It signifies an ezafe construction that connects the head noun to the following modifier noun (cf. with pre/postpositions).
+        #    Its possible meanings are:
+        #        - possession: ketab -e häsän = book of Hassan = Hassan's book
+        #        - first name - last name
+        #        - etc.
+        #    Ezafe dependent is the noun after ezafe.
+        # MESU: Measure (a measurement unit between numeral and counted noun): do dželd ketab = two volume book
+        elsif ( $deprel =~ m/^(NPREMOD|NPOSTMOD|NPP|NCL|MOZ)$/ )
+        {
+            $afun = 'Atr';
+        }
         # VCONJ: Coordinating conjunction between two verbs (the one appearing earlier is dependent, the one appearing later is the head)
         # or the dependent verb conjunct if there is no coordinating conjunction.
-        elsif ( $deprel eq 'VCONJ' )
+        # NCONJ: Same for nouns.
+        elsif ( $deprel =~ m/^(VCONJ|NCONJ)$/ )
         {
             $afun = 'Coord';
         }
-        # Second member of apposition.
+        # Second member of apposition: sädi šaer -e irani = Saadi poet EZAFE Iranian = Saadi, the Iranian poet
         elsif ( $deprel eq 'APP' )
         {
             $afun = 'Apos';
