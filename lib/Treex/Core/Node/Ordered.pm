@@ -215,7 +215,11 @@ sub _shift_to_node {
     return;
 }
 
-sub is_nonprojective {
+###!!! DZ: reverting to 7183, 2011-11-03.
+# This function by Martin is faster than the my own below but it does not always return correct results.
+# The key problem could be that it relies on ord values forming a contiguous sequence which might not always be true.
+# Go to devel/normalize_treebanks/nonprojectivity and test that make yields the same numbers for the old and the new method.
+sub is_nonprojective_does_not_work {
     my ($self) = @_;
 
     # Root and its children are always projective
@@ -236,6 +240,50 @@ sub is_nonprojective {
 
     # For projective edges @span must include all the nodes between $parent and $self.
     return @span != $distance - 1;
+}
+
+#------------------------------------------------------------------------------
+# Tells whether the node is attached to its parent nonprojectively, i.e. there
+# is at least one node between this node and its parent that is not dominated
+# by the parent.
+#------------------------------------------------------------------------------
+sub is_nonprojective
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_)!=1);
+    my $self = shift;
+    my $parent = $self->parent();
+    # A node that does not have a parent cannot be nonprojective.
+    return 0 if(!$parent);
+    # Get a hash of all descendants of the parent.
+    my @pdesc = $parent->get_descendants({add_self=>1});
+    my %pdesc; map {$pdesc{$_}++} (@pdesc);
+    # Figure out whether the node is to the left or to the right from its parent.
+    my $nord = $self->ord();
+    my $pord = $parent->ord();
+    my ($x, $y);
+    if($pord>$nord)
+    {
+        $x = $self;
+        $y = $parent;
+    }
+    else
+    {
+        $x = $parent;
+        $y = $self;
+    }
+    # Get the ordered list of all nodes between $x and $y.
+    my $xord = $x->ord();
+    my $yord = $y->ord();
+    my @between = grep {$_->ord()>$xord && $_->ord()<$yord} ($parent->root()->get_descendants({ordered=>1}));
+    # This node is nonprojective if @between contains anything that is not in %pdesc.
+    foreach my $b (@between)
+    {
+        if(!$pdesc{$b})
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 1;
