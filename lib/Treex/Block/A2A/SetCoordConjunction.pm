@@ -6,10 +6,12 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ( $self, $node ) = @_;
     delete $node->wild->{is_coord_conjunction};
-    if ( $node->afun eq 'Coord' && $node->form !~ /^[,;]$/) {
+    # If the tree is a result of annotation style conversion from a foreign scheme, it is possible that there is no afun at all!
+    my $afun = $node->afun() or '';
+    if ( $afun eq 'Coord' && $node->form !~ /^[,;]$/) {
         $node->wild->{is_coord_conjunction} = 1;
     }
-    elsif ( $node->afun eq 'AuxY' ) {
+    elsif ( $afun eq 'AuxY' ) {
         my $parent = $node->get_parent();
         return if $parent->is_root();
         return if $parent->afun ne 'Coord';
@@ -41,12 +43,12 @@ Treex::Block::A2A::SetCoordConjunction - fill C<is_coord_conjunction> wild attri
 
 In the PDT style, most coordination conjunctions have afun=Coord.
 However, in case of more conjunctions in one coordination, they can have also
-afun=AuxY, which can be assigned also to other words (which are not conjunction).
+afun=AuxY, which can be assigned also to other words (which are not conjunctions).
 The attribute C<is_coord_conjunction> is a I<wild> one and you can access it by
 
   if ($node->wild->{is_coord_conjunction}) {...}
 
-In other styles (e.g. Stanford) this attribute might be useful. 
+In other styles (e.g. Stanford) this attribute might be useful.
 
 =head1 SEE ALSO
 
