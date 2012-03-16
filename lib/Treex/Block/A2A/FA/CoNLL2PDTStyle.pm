@@ -59,6 +59,12 @@ sub deprel_to_afun
                 $afun = 'ExD';
             }
         }
+        # PRD: Predicate of a subordinate or relative clause, attached to the subordinating conjunction.
+        #     Example: amädäm ta bebinäm = I-came to I-see = I came to see (bebinäm is PRD of ta).
+        elsif ( $deprel eq 'PRD' )
+        {
+            $afun = 'Pred';
+        }
         # Subject.
         elsif ( $deprel eq 'SBJ' )
         {
@@ -70,7 +76,10 @@ sub deprel_to_afun
         # LVP:  Light verb particle. Only the compound light verb "pejda kärdän" (to find) (pejda is LVP).
         # VCL:  Complement clause of verb: midanäm ke miajäd = I know that he comes.
         # NPRT: Particle (preposition) of infinitive (infinitives behave as nouns in Persian).
-        elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|VCL)$/ )
+        # ACL:  Complement clause of adjective: agah hästäm ke miaji = aware am that he-comes = I am aware that he will come.
+        # AJPP: Prepositional complement of adjective: ašna ba äkkasi = familiar with photography.
+        # NEZ:  Ezafe complement of adjective (see MOZ below for ezafe explanation): negäran-e u = anxious-EZAFE him = anxious about him.
+        elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|VCL|ACL|AJPP|NEZ)$/ )
         {
             $afun = 'Obj';
         }
@@ -103,7 +112,10 @@ sub deprel_to_afun
         #    depends on the verb with normal inflection and the relation is labeled PARCL.
         #    Example: be xane räfte xabidäm = to home gone I slept = I went home and slept (or: Having gone home, I slept)
         # NADV: Adverbial modifier of compound predicate, attached to its non-verb component.
-        elsif ( $deprel =~ m/^(ADVC|ADV|AJUCL|PARCL|NADV)$/ )
+        # ADJADV: Adverbial complement of adjective: taksi sävar šodäm = taxi riding I-became (taksi is ADJADV of sävar).
+        # APREMOD: Adjective pre-modifier by an adverb: besjar šad = very happy.
+        # APOSTMOD: Adjective post-modifier by another adjective: pirahän-e abi-je asemani = shirt-EZAFE blue-EZAFE sky = a sky blue shirt.
+        elsif ( $deprel =~ m/^(ADVC|ADV|AJUCL|PARCL|NADV|ADJADV|APREMOD|APOSTMOD)$/ )
         {
             $afun = 'Adv';
         }
@@ -130,10 +142,10 @@ sub deprel_to_afun
         # NPP: Prepositional phrase modifying a noun, e.g.: jedal dar tasuki = battle in Tasooki
         # NCL: Clause modifying a noun, e.g.: märd -i ke didi = man a that you-saw = the man you saw
         # MOZ: Ezafe dependent.
-        #    Ezafe is the suffix "-e" pronounced after a Persian noun, usually not visible in the Perso-Arabic script.
+        #    Ezafe is the suffix "-e" pronounced after a Persian noun, usually not visible in the Perso-Arabic script (=> it has no node in the tree).
         #    It signifies an ezafe construction that connects the head noun to the following modifier noun (cf. with pre/postpositions).
         #    Its possible meanings are:
-        #        - possession: ketab -e häsän = book of Hassan = Hassan's book
+        #        - possession: ketab-e häsän = book of Hassan = Hassan's book
         #        - first name - last name
         #        - etc.
         #    Ezafe dependent is the noun after ezafe.
@@ -142,10 +154,31 @@ sub deprel_to_afun
         {
             $afun = 'Atr';
         }
+        # COMPPP: Comparative preposition: behtär äz servät = better than wealth; äz is COMPPP of behtär.
+        #     http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s07s09s02.html
+        #     In PDT, comparative constructions "better than something" are analyzed as ellipsis for "better than something is".
+        #     They are thus tagged 'ExD', which does not say much (many other very different cases are tagged 'ExD', too).
+        #     We may want to consider introducing special afun for comparative constructions instead.
+        elsif ( $deprel eq 'COMPPP' )
+        {
+            $afun = 'ExD';
+        }
+        # PREDEP: Pre-dependent in cases that do not have their own specific tag.
+        #     Most common: relation between a noun and its accusative postposition "-ra": äli -ra didäm = Ali ACC I-saw = I saw Ali (äli is PREDEP of -ra).
+        #     Also common: between coordinating conjunction and the preceding (non-head): xandäm vä neveštäm = I-read and I-wrote (xandäm is PREDEP of vä).
+        # POSDEP: Post-dependent in cases that do not have their own specific tag.
+        #     Common use: relation between a preposition and its noun: be äli = to Ali (äli is POSDEP of be).
+        elsif ( $deprel =~ m/^(PREDEP|POSDEP)$/ )
+        {
+            $afun = 'PrepArg';
+        }
         # VCONJ: Coordinating conjunction between two verbs (the one appearing earlier is dependent, the one appearing later is the head)
         # or the dependent verb conjunct if there is no coordinating conjunction.
         # NCONJ: Same for nouns.
-        elsif ( $deprel =~ m/^(VCONJ|NCONJ)$/ )
+        # AJCONJ: Same for adjectives.
+        # PCONJ: Same for prepositions: där tehran vä ba ma bud = in Tehran and with us was = he was in Tehran and with us (där is PCONJ of vä).
+        # AVCONJ: Same for adverbs.
+        elsif ( $deprel =~ m/^(VCONJ|NCONJ|AJCONJ|PCONJ|AVCONJ)$/ )
         {
             $afun = 'Coord';
         }
