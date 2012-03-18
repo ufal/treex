@@ -250,8 +250,9 @@ sub set_simple_feature {
                 ") for parent node.\n";
         }
 
-        # first/second node feature
-    } elsif ( $simple_feature_code =~ /^([12])\.([a-z0-9_]+)$/ ) {
+        # first/second/(left sibling)/(right sibling)/Grandparent/grandchildren
+        # node feature
+    } elsif ( $simple_feature_code =~ /^([12gGlr])\.([a-z0-9_]+)$/ ) {
 
         $simple_feature_field = $2;
 
@@ -263,6 +264,22 @@ sub set_simple_feature {
 
             # second node feature
             $simple_feature_sub = \&{feature_second};
+        } elsif ( $1 eq 'g' ) {
+
+            # grandchildren node feature
+            $simple_feature_sub = \&{feature_grandchildren};
+        } elsif ( $1 eq 'G' ) {
+
+            # grandparent node feature
+            $simple_feature_sub = \&{feature_grandparent};
+        } elsif ( $1 eq 'l' ) {
+
+            # left sibling edge child feature
+            $simple_feature_sub = \&{feature_left_sibling};
+        } elsif ( $1 eq 'r' ) {
+
+            # right sibling edge child feature
+            $simple_feature_sub = \&{feature_right_sibling};
         } else {
             croak "Assertion failed!";
         }
@@ -270,20 +287,23 @@ sub set_simple_feature {
         # function feature
     } elsif (
         $simple_feature_code
-        =~ /^([12\.a-z]+|[A-Z]+)\([-a-z0-9_,]*\)$/
+        =~ /^([12gGlr\.a-z]+|[A-Z]+)\([-a-z0-9_,]*\)$/
         )
     {
         my $function_name = $1;
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
 
-        if ( $function_name eq 'between' || $function_name eq 'foreach' ) {
+        if ( $function_name eq 'between' || $function_name eq 'foreach'
+            || substr ($function_name, 0, 2) eq 'g.' ) {
 
             # array function
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
 
-        if ( $function_name eq 'LABEL' || $function_name eq 'prevlabel' ) {
+        if ( $function_name eq 'LABEL'
+            || $function_name eq 'l.label' || $function_name eq 'prevlabel'
+            || $function_name eq 'G.label' || $function_name eq 'g.label' ) {
 
             # dynamic feature
             $self->dynamic_simple_features->{$simple_feature_index} = 1;
@@ -517,8 +537,13 @@ sub get_simple_feature_values_array {
 my %simple_feature_sub_references = (
     'LABEL'             => \&{feature_parent_label},
     'prevlabel'         => \&{feature_previous_label},
+    'l.label'           => \&{feature_previous_label},
+    'G.label'           => \&{feature_grandparent_label},
+    'g.label'           => \&{feature_grandchildren_label},
     'distance'          => \&{feature_distance},
+    'G.distance'        => \&{feature_grandparent_distance},
     'attdir'            => \&{feature_attachement_direction},
+    'G.attdir'          => \&{feature_grandparent_attachement_direction}, # grandparent to child
     'preceding'         => \&{feature_preceding_child},
     'PRECEDING'         => \&{feature_preceding_parent},
     '1.preceding'       => \&{feature_preceding_first},
@@ -559,10 +584,34 @@ sub get_simple_feature_sub_reference {
     }
 }
 
+# returns undef if there is no grandparent, i.e. the parent is the root
+sub get_grandparent {
+    my ( $self, $edge ) = @_;
+    
+    return ($edge->parent)->parent;
+}
+
 sub feature_distance {
     my ( $self, $edge ) = @_;
+    
+    return $self->feature_distance_generic($edge->parent, $edge->child);
+}
 
-    my $distance = $edge->parent->ord - $edge->child->ord;
+sub feature_grandparent_distance {
+    my ( $self, $edge ) = @_;
+    
+    my $grandparent = $self->get_grandparent($edge);
+    if (defined $grandparent) {
+        return $self->feature_distance_generic($edge->parent, $edge->child);
+    } else {
+        return '';
+    }
+}
+
+sub feature_distance_generic {
+    my ( $self, $node1, $node2 ) = @_;
+
+    my $distance = $node1->ord - $node2->ord;
 
     my $bucket = $self->config->distance2bucket->{$distance};
     if ($bucket) {
@@ -579,7 +628,26 @@ sub feature_distance {
 sub feature_attachement_direction {
     my ( $self, $edge ) = @_;
 
-    if ( $edge->parent->ord < $edge->child->ord ) {
+    return $self->feature_attachement_direction_generic(
+        $edge->parent, $edge->child );
+}
+
+sub feature_grandparent_attachement_direction {
+    my ( $self, $edge ) = @_;
+    
+    my $grandparent = $self->get_grandparent($edge);
+    if (defined $grandparent) {
+    return $self->feature_attachement_direction_generic(
+        $edge->parent, $edge->child );
+    } else {
+        return '';
+    }
+}
+
+sub feature_attachement_direction_generic {
+    my ( $self, $node1, $node2 ) = @_;
+
+    if ( $node1->ord < $node2->ord ) {
         return -1;
     } else {
         return 1;
@@ -596,6 +664,17 @@ sub feature_parent {
     return ( $edge->parent->fields->[$field_index] );
 }
 
+sub feature_grandparent {
+    my ( $self, $edge, $field_index ) = @_;
+    
+    my $grandparent = $self->get_grandparent($edge);
+    if (defined $grandparent) {
+        return ( $grandparent->fields->[$field_index] );
+    } else {
+        return '';
+    }
+}
+
 sub feature_parent_label {
     my ( $self, $edge ) = @_;
     return ( $edge->parent->label );
@@ -604,20 +683,23 @@ sub feature_parent_label {
 sub feature_previous_label {
     my ( $self, $edge ) = @_;
     
-    # in case there is not a previous edge
-    my $prev_label = $self->config->SEQUENCE_BOUNDARY_LABEL;
-    
-    my $children = $edge->parent->children;
-    foreach my $child_edge (@$children) {
-        if ($child_edge->child->ord == $edge->child->ord) {
-            # $prev_label now contains label of edge preceding $edge
-            return $prev_label;
-        } else {
-            $prev_label = $child_edge->child->label;
-        }
+    my $left_sibling = $self->get_left_sibling($edge);
+    if (defined $left_sibling) {
+        return ( $left_sibling->child->label );
+    } else {
+        return $self->config->SEQUENCE_BOUNDARY_LABEL;
     }
+}
+
+sub feature_grandparent_label {
+    my ( $self, $edge ) = @_;
     
-    die ("The child node not found among the children of its parent!");
+    my $grandparent = $self->get_grandparent($edge);
+    if (defined $grandparent) {
+        return ( $grandparent->label );
+    } else {
+        return '';
+    }
 }
 
 sub feature_first {
@@ -633,12 +715,34 @@ sub feature_second {
 sub feature_left_sibling {
     my ( $self, $edge, $field_index ) = @_;
 
+    my $left_sibling = $self->get_left_sibling($edge);
+    if (defined $left_sibling) {
+        return ( $left_sibling->child->fields->[$field_index] );
+    } else {
+        return '#start#';
+    }
+}
+
+sub feature_right_sibling {
+    my ( $self, $edge, $field_index ) = @_;
+    
+    my $right_sibling = $self->get_right_sibling($edge);
+    if (defined $right_sibling) {
+        return ( $right_sibling->child->fields->[$field_index] );
+    } else {
+        return '#end#';
+    }
+}
+
+sub get_left_sibling {
+    my ( $self, $edge ) = @_;
+
     my $siblings = $edge->parent->children;
     my $is_first = ( $siblings->[0]->child->ord == $edge->child->ord );
     if ($is_first) {
 
         # there is no left sibling to the leftmost node
-        return '#start#';
+        return undef;
     } else {
 
         # find my position among parent's children (is at least 1)
@@ -648,12 +752,12 @@ sub feature_left_sibling {
         }
 
         # now ($my_index-1) is the index of my (closest) left sibling
-        return ( $siblings->[ $my_index - 1 ]->child->fields->[$field_index] );
+        return ( $siblings->[ $my_index - 1 ] );
     }
 }
 
-sub feature_right_sibling {
-    my ( $self, $edge, $field_index ) = @_;
+sub get_right_sibling {
+    my ( $self, $edge ) = @_;
 
     my $siblings           = $edge->parent->children;
     my $last_sibling_index = scalar(@$siblings) - 1;
@@ -664,7 +768,7 @@ sub feature_right_sibling {
     if ($is_last) {
 
         # there is no right sibling to the rightmost node
-        return '#end#';
+        return undef;
     } else {
 
         # find my position among parent's children
@@ -675,7 +779,7 @@ sub feature_right_sibling {
         }
 
         # now ($my_index+1) is the index of my (closest) right sibling
-        return ( $siblings->[ $my_index + 1 ]->child->fields->[$field_index] );
+        return $siblings->[ $my_index + 1 ];
     }
 }
 
