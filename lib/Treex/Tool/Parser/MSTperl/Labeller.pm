@@ -459,9 +459,26 @@ sub get_possible_labels {
 
             # score = previous score + new score
             
-            if ($ALGORITHM >= 20) {
+            if ($ALGORITHM == 20) {
+                if ( $self->config->DEBUG >= 4 ) {
+                    print "    Score for label $label: $previous_label_score + "
+                        . ( $self->model->get_label_score(
+                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                }
                 $result->{$label} =
                     $self->model->get_label_score(
+                    $label, $previous_label, $edge->features_all_labeller()
+                    )
+                    ;
+            } elsif ($ALGORITHM == 21) {
+                if ( $self->config->DEBUG >= 4 ) {
+                    print "    Score for label $label: $previous_label_score + "
+                        . ( $self->model->get_label_score(
+                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                }
+                $result->{$label} =
+                    $previous_label_score
+                    + $self->model->get_label_score(
                     $label, $previous_label, $edge->features_all_labeller()
                     )
                     ;
@@ -472,6 +489,11 @@ sub get_possible_labels {
                     )
                     ;
             } else {
+                if ( $self->config->DEBUG >= 4 ) {
+                    print "    Score for label $label: $previous_label_score + "
+                        . ( $self->model->get_label_score(
+                    $label, $previous_label, $edge->features ) ) . "\n";
+                }
                 $result->{$label} =
                     $previous_label_score
                     + $self->model->get_label_score(

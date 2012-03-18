@@ -940,6 +940,8 @@ multiplied with emission score in Viterbi and added to last state score
 
 =item (21) MIRA for all, with Viterbi
 
+=item (22) MIRA for all, sentence = one sequence (disregarding tree structure)
+
 =back
 
 =item SEQUENCE_BOUNDARY_LABEL: '###'
