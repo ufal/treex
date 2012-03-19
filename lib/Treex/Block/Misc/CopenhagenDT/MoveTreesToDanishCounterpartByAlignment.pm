@@ -1,4 +1,4 @@
-package Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpart;
+package Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpartByAlignment;
 
 use utf8;
 use Moose;
@@ -57,7 +57,7 @@ sub process_document {
 
 =over
 
-=item Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpart
+=item Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpartByAlignment
 
 Trees in languages other than Danish are moved to bundles
 with their Danish counterpart (to the bundle with which it
