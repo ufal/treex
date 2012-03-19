@@ -14,6 +14,12 @@ print "Initializing Treex extension\n";
 
 BEGIN { import TredMacro; }
 
+# the following line is used to avoid memory leaks caused
+# by keeping history for undo in tred (only with treex files);
+# ideally it should be done only when switching to this mode,
+# and reverted when exiting it
+$TrEd::Config::maxUndo = 0;
+
 use strict;
 our ($grp, $root);
 
