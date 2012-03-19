@@ -18,8 +18,7 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
-    $self->process_prepositional_phrases($a_root);
-    $self->restructure_coordination($a_root);
+    $self->restructure_coordination($a_root, 1);
     $self->check_afuns($a_root);
 }
 
@@ -48,7 +47,8 @@ sub deprel_to_afun
         my $ppos   = $parent->get_iset('pos');
         my $afun;
         # Dependency of the main verb on the artificial root node.
-        if ( $deprel eq 'ROOT' )
+        # An error? There is also a 'PRD' (instead of 'ROOT') that depends directly on the root.
+        if ( $deprel eq 'ROOT' || $deprel eq 'PRD' && $parent==$root )
         {
             if ( $pos eq 'verb' )
             {
@@ -63,7 +63,7 @@ sub deprel_to_afun
         #     Example: amädäm ta bebinäm = I-came to I-see = I came to see (bebinäm is PRD of ta).
         elsif ( $deprel eq 'PRD' )
         {
-            $afun = 'Pred';
+            $afun = 'SubArg';
         }
         # Subject.
         elsif ( $deprel eq 'SBJ' )
@@ -79,7 +79,7 @@ sub deprel_to_afun
         # ACL:  Complement clause of adjective: agah hästäm ke miaji = aware am that he-comes = I am aware that he will come.
         # AJPP: Prepositional complement of adjective: ašna ba äkkasi = familiar with photography.
         # NEZ:  Ezafe complement of adjective (see MOZ below for ezafe explanation): negäran-e u = anxious-EZAFE him = anxious about him.
-        elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|VCL|ACL|AJPP|NEZ)$/ )
+        elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|LVP|VCL|NPRT|ACL|AJPP|NEZ)$/ )
         {
             $afun = 'Obj';
         }
@@ -150,7 +150,7 @@ sub deprel_to_afun
         #        - etc.
         #    Ezafe dependent is the noun after ezafe.
         # MESU: Measure (a measurement unit between numeral and counted noun): do dželd ketab = two volume book
-        elsif ( $deprel =~ m/^(NPREMOD|NPOSTMOD|NPP|NCL|MOZ)$/ )
+        elsif ( $deprel =~ m/^(NPREMOD|NPOSTMOD|NPP|NCL|MOZ|MESU)$/ )
         {
             $afun = 'Atr';
         }
@@ -166,11 +166,25 @@ sub deprel_to_afun
         # PREDEP: Pre-dependent in cases that do not have their own specific tag.
         #     Most common: relation between a noun and its accusative postposition "-ra": äli -ra didäm = Ali ACC I-saw = I saw Ali (äli is PREDEP of -ra).
         #     Also common: between coordinating conjunction and the preceding (non-head): xandäm vä neveštäm = I-read and I-wrote (xandäm is PREDEP of vä).
+        #     All pre-dependents (other than NPRT and NE) of infinitives used as nouns are PREDEP.
+        #     Words like hätta ("even"), häm, nä are PREDEP if they modify a non-verb: hätta äli fähmid = even Ali learnt.
         # POSDEP: Post-dependent in cases that do not have their own specific tag.
         #     Common use: relation between a preposition and its noun: be äli = to Ali (äli is POSDEP of be).
+        #     Common use: relation between coordinating conjunction and the following (non-head) word (noun, adjective, adverb or preposition).
         elsif ( $deprel =~ m/^(PREDEP|POSDEP)$/ )
         {
-            $afun = 'PrepArg';
+            if($ppos eq 'prep')
+            {
+                $afun = 'PrepArg';
+            }
+            elsif($ppos eq 'conj' && $parent->get_iset('subpos') eq 'coor')
+            {
+                $afun = 'CoordArg';
+            }
+            else
+            {
+                $afun = 'AuxZ';
+            }
         }
         # VCONJ: Coordinating conjunction between two verbs (the one appearing earlier is dependent, the one appearing later is the head)
         # or the dependent verb conjunct if there is no coordinating conjunction.
@@ -190,7 +204,8 @@ sub deprel_to_afun
         # Punctuation.
         elsif ( $deprel eq 'PUNC' )
         {
-            if ( $node->form() eq ',' )
+            my $arabic_comma = "\x{60C}";
+            if($node->form() =~ m/^[,$arabic_comma]$/)
             {
                 $afun = 'AuxX';
             }
@@ -202,79 +217,17 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# In Tiger prepositional phrases, not only the noun is attached to the
-# preposition, but also all adjectives (that in fact modify the noun).
-# Nested prepositional phrases post-modifying the nouns behave similarly.
-# Adverbs work as rhematizers and they are also attached to the noun in PDT,
-# albeit it creates nonprojectivities.
-# There can also be phrases with multiple nouns, one in any prepositional case
-# and one in genitive, as:
-#     nach einer Umfrage des Fortune Wirtschaftsmagazins unter den Bossen
-#     nach < (einer > Umfrage < (des Fortune > Wirtschaftsmagazins) (unter < (den > Bossen)))
-# The preposition does not have the 'AuxP' afun.
-#------------------------------------------------------------------------------
-sub process_prepositional_phrases
-{
-    my $self = shift;
-    my $root = shift;
-    foreach my $node ( $root->get_descendants( { 'ordered' => 1 } ) )
+    # Prepositions now have the afun of the whole prepositional phrase and nouns below prepositions have the pseudo-afun PrepArg.
+    # In the whole tree, move the afun of the PPs to the nouns, and give the prepositions new afun AuxP.
+    $self->process_prep_sub_arg($root);
+    # Sentence test/001.treex.gz#41: conjunction 'va' m-tagged 'CONJ' (correct) but s-tagged 'PUNC' instead of *CONJ.
+    # Thus it is not coordination, thus the 'PREDEP' verb attached to it should not get the 'CoordArg' pseudo-afun.
+    foreach my $node (@nodes)
     {
-        if ( $node->get_iset('pos') eq 'prep' )
+        if($node->afun() eq 'CoordArg' && $node->parent()->afun() ne 'Coord')
         {
-            my @prepchildren = $node->children();
-            my $preparg;
-
-            # If there are no children this preposition cannot get the AuxP afun.
-            if ( scalar(@prepchildren) == 0 )
-            {
-                next;
-            }
-
-            # If there is just one child it is the PrepArg.
-            elsif ( scalar(@prepchildren) == 1 )
-            {
-                $preparg = $prepchildren[0];
-            }
-
-            # If there are two or more children we have to estimate which one is the PrepArg.
-            # We will assume that the other are in fact modifiers of the PrepArg, not of the preposition.
-            else
-            {
-
-                # If there are nouns among the children we will pick a noun.
-                my @nouns = grep { $_->get_iset('pos') eq 'noun' } (@prepchildren);
-                if ( scalar(@nouns) > 0 )
-                {
-
-                    # If there are more than one noun we will pick the first one.
-                    # This corresponds well to the pattern noun/anyCase + noun/genitive.
-                    # However, we must also do something for other sequences of nouns.
-                    $preparg = $nouns[0];
-                }
-
-                # Otherwise we will just pick the first child.
-                else
-                {
-                    $preparg = $prepchildren[0];
-                }
-            }
-
-            # Keep PrepArg as the only child of the AuxP node.
-            # Reattach all other children to PrepArg.
-            $preparg->set_afun( $node->afun() );
-            $node->set_afun('AuxP');
-            foreach my $child (@prepchildren)
-            {
-                unless ( $child == $preparg )
-                {
-                    $child->set_parent($preparg);
-                }
-            }
+            # I do not know what the sentence means and what we should do in this strange case.
+            $node->set_afun('ExD');
         }
     }
 }
@@ -282,119 +235,190 @@ sub process_prepositional_phrases
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in German trees.
-# - The first member is the root.
-# - Any non-first member is attached to the previous member with afun CoordArg.
-#   If prepositional phrases have already been processed and there is
-#   coordination of prepositional phrases, the prepositins are tagged AuxP and
-#   the CoordArg afun is found at the only child of the preposition.
+# Detects coordination in Persian trees.
+# - The first member (last if coordination of verbs) is the root.
 # - Coordinating conjunction is attached to the previous member with afun Coord.
-# - Comma is attached to the previous member with afun AuxX.
+# - The other member is attached to the conjunction with afun CoordArg.
+# - More than two members: "verb1 verb2 conjunction verb3" (no comma between the first two verbs):
+#   verb3 ( conjunction/Coord ( verb1/CoordArg, verb2/CoordArg ) )
+# - More than two nouns, with commas. Example sentence id 39356 (test/001.treex.gz#8):
+#   rúd , kúh , džánúr va ghíre (rivers, mountains, animals etc.; for some reason (error?), rúd is not analyzed as conjunct)
+#   kúh/Atr ( ,/AuxX, džánúr/Coord ( va/Coord ghíre/CoordArg ) )
+#   => The original s-tag NCONJ, now converted to Coord, is not restricted to coordinating conjunctions.
+#   It can also appear at the second conjunct when there is no conjunction before it.
 # - Shared modifiers are attached to the first member. Private modifiers are
 #   attached to the member they modify.
 # Note that under this approach:
 # - Shared modifiers cannot be distinguished from private modifiers of the
 #   first member.
 # - Nested coordinations ("apples, oranges and [blackberries or strawberries]")
-#   cannot be distinguished from one large coordination.
-# Special cases:
-# - Coordination lacks any conjunctions or punctuation with the CD deprel tag.
-#   Example:
-#   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
-#   In this example, the second 'spürst' is attached as a CoordArg to the first
-#   'Spürst'. All punctuation is attached to 'fragt', so we don't see the
-#   second comma as the potential coordinating node.
-#   Possible solutions:
-#   Ideally, there'd be a separate function that would reattach punctuation
-#   first. Commas before and after nested clauses, including direct speech,
-#   would be part of the clause and not of the surrounding main clause. Same
-#   for quotation marks around direct speech. And then we would have to
-#   find out that there is a comma before the second 'spürst' that can be used
-#   as coordinator.
-#   In reality we will be less ambitious and develop a robust fallback for
-#   coordination without coordinators.
+#   cannot be always distinguished from one large coordination.
 #------------------------------------------------------------------------------
-# Collects members, delimiters and modifiers of one coordination. Recursive.
-# Leaves the arrays empty if called on a node that is not a coordination
-# member.
+# Collects members, delimiters and modifiers of one coordination. Recursive,
+# but only within the one coordination. Leaves the arrays empty if called on a
+# node that is not a coordination member.
 #------------------------------------------------------------------------------
 sub collect_coordination_members
 {
     my $self       = shift;
-    my $croot      = shift;    # the first node and root of the coordination
-    my $members    = shift;    # reference to array where the members are collected
-    my $delimiters = shift;    # reference to array where the delimiters are collected
-    my $sharedmod  = shift;    # reference to array where the shared modifiers are collected
-    my $privatemod = shift;    # reference to array where the private modifiers are collected
+    my $node       = shift; # the node to examine (no recursion if this is not a coordination-related node)
+    my $members    = shift; # reference to array where the members are collected
+    my $delimiters = shift; # reference to array where the delimiters are collected
+    my $sharedmod  = shift; # reference to array where the shared modifiers are collected
+    my $privatemod = shift; # reference to array where the private modifiers are collected
     my $debug      = shift;
-
-    # Is this the top-level call in the recursion?
-    my $toplevel = scalar( @{$members} ) == 0;
-    my @children = $croot->children();
-    log_info( 'DEBUG ON ' . scalar(@children) ) if ($debug);
-
-    # No children to search? Nothing to do!
-    return if ( scalar(@children) == 0 );
-
-    # AuxP occurs only if prepositional phrases have already been processed.
-    # AuxP node cannot be the first member of coordination ($toplevel).
-    # However, AuxP can be non-first member. In that case, its only child bears the CoordArg afun.
-    if ( $croot->afun() eq 'AuxP' )
+    my @children = $node->children();
+    my $cntype = $self->get_cnode_type($node);
+    # Non-coordination node: nothing to do.
+    return if(!defined($cntype));
+    # Sanity check: Normally, when we find a non-head conjunct we have already found the head conjunct.
+    # However there is a counter-example in the data:
+    # $TMT_ROOT/share/data/resources/normalized_treebanks/fa/treex/000_orig/train/022.treex.gz##483.a_tree-fa-s483-n7508
+    # It is a deficient sentence containing no verb but a long coordination of nouns.
+    # It begins with a conjunction followed by the first (but non-head) conjunct.
+    # Let's solve this by pretending the first conjunct was the head. It means that
+    # we will collect the modifiers at this level and not the level up at the conjunction...
+    # which should not do any harm.
+    if($cntype eq 'nhmember' && scalar(@{$members})==0)
     {
-        if ($toplevel)
+        $cntype = 'hmember';
+    }
+    # Head conjunct.
+    if($cntype eq 'hmember')
+    {
+        # Sanity check: The artificial root node cannot be coordinated.
+        # However, due to annotation errors (e.g. sentence id 31239, i.e. train/009.treex.gz#285),
+        # we may encounter a child of the root s-tagged VCONJ (instead of ROOT).
+        # When this happens we cannot report fatal error because the error is not ours and we need to go on.
+        if(!$node->parent())
+        {
+            my @deprels;
+            # Try to correct the s-tags. (But beware: we may have already re-attached the final punctuation
+            # thus there might be children of the root that rightfully are not deprel-labeled ROOT!)
+            foreach my $child (@children)
+            {
+                my $deprel = $child->conll_deprel();
+                if($deprel =~ m/CONJ$/)
+                {
+                    if($child->get_iset('pos') eq 'verb')
+                    {
+                        $child->set_afun('Pred');
+                    }
+                    else
+                    {
+                        $child->set_afun('ExD');
+                    }
+                    push(@deprels, $deprel);
+                }
+            }
+            my $warn_deprels = '';
+            $warn_deprels = ' Its children should have the deprel ROOT, not '.join('|', @deprels).'.' if(@deprels);
+            log_warn($node->get_address());
+            log_warn('The root node cannot be coordinated.'.$warn_deprels);
+            return;
+        }
+        # The head member is always the first member we find. If we already found other members,
+        # then this one does not belong to the same coordination. Instead, it is a (coordinated)
+        # modifier of one of the conjuncts. We shall stop the recursion here. Whoever called
+        # this function from outside will have to detect the modifying coordination separately.
+        if(scalar(@{$members})!=0)
         {
             return;
         }
-        else
+        # Report myself as a member.
+        push(@{$members}, $node);
+        # Scan my children for punctuation (AuxX), conjunctions (Coord) and/or conjuncts (Coord).
+        foreach my $child (@children)
         {
-
-            # We know that there is at least one child (see above) and for AuxP, there should not be more than one child.
-            # Make the PrepArg child the member instead of the preposition.
-            $croot    = $children[0];
-            @children = $croot->children();
+            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
         }
+        # We now have the complete list of coordination members and we can collect and sort out their modifiers.
+        $self->collect_coordination_modifiers($members, $sharedmod, $privatemod);
     }
-    my @members0;
-    my @delimiters0;
-    my @sharedmod0;
-    my @privatemod0;
-    @members0 = grep {
-        my $x = $_;
-        $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { $_->afun() eq 'CoordArg' } ( $x->children() )
-    } (@children);
-    if (@members0)
+    # Non-head conjunct.
+    elsif($cntype eq 'nhmember')
     {
-
-        # If $croot is the real root of the whole coordination we must include it in the members, too.
-        # However, if we have been called recursively on existing members, these are already present in the list.
-        if ($toplevel)
+        # Report myself as a member.
+        push(@{$members}, $node);
+        # Scan my children for punctuation (AuxX), conjunctions (Coord) and/or conjuncts (Coord).
+        foreach my $child (@children)
         {
-            push( @{$members}, $croot );
-        }
-        push( @{$members}, @members0 );
-
-        # All children with the 'Coord' afun are delimiters (coordinating conjunctions).
-        # Punctuation children are usually delimiters, too.
-        # They should appear between two members, which would normally mean between $croot and its (only) CoordArg.
-        # However, the method is recursive and "before $croot" could mean between $croot and the preceding member. Same for the other end.
-        # So we take all punctuation children and hope that other punctuation (such as delimiting modifier relative clauses) would be descendant but not child.
-        my @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
-        push( @{$delimiters}, @delimiters0 );
-
-        # Recursion: If any of the member children (i.e. any members except $croot)
-        # have their own CoordArg children, these are also members of the same coordination.
-        foreach my $member (@members0)
-        {
-            $self->collect_coordination_members( $member, $members, $delimiters );
-        }
-
-        # If this is the top-level call in the recursion, we now have the complete list of coordination members
-        # and we can call the method that collects and sorts out coordination modifiers.
-        if ($toplevel)
-        {
-            $self->collect_coordination_modifiers( $members, $sharedmod, $privatemod );
+            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
         }
     }
+    # Conjunction.
+    elsif($cntype eq 'conjunction')
+    {
+        # Report myself as a delimiter.
+        push(@{$delimiters}, $node);
+        # Scan my children for conjuncts (CoordArg).
+        foreach my $child (@children)
+        {
+            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
+        }
+    }
+    # Punctuation.
+    elsif($cntype eq 'punctuation')
+    {
+        # Report myself as a delimiter.
+        push(@{$delimiters}, $node);
+        # No children are expected (though not forbidden either). No recursion.
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells about a node its type with respect to coordinations.
+# A node s-tagged CoordArg is a non-head conjunct. (Note that the first
+# conjunct is usually the head but in verb coordinations the last conjunct is
+# the head.)
+# A node s-tagged Coord is either a non-head conjunct or a conjunction.
+# We do not rely on the m-tag of the node. Instead:
+# If the node has at least one child s-tagged CoordArg, it is a conjunction.
+# Otherwise, it is a conjunct.
+# A node that has an s-tag other than Coord and CoordArg is the head conjunct
+# if it has at least one child s-tagged Coord.
+# A node s-tagged AuxX is a coordination delimiter if it has a sibling s-tagged
+# Coord (its parent need not necessarily be s-tagged Coord; it could be the
+# head conjunct).
+# Note that the function does not care about modifiers of coordinations.
+#------------------------------------------------------------------------------
+sub get_cnode_type
+{
+    my $self = shift;
+    my $node = shift;
+    my $result; # hmember | nhmember | conjunction | punctuation | undef
+    my $afun = $node->afun();
+    if($afun eq 'CoordArg')
+    {
+        $result = 'nhmember';
+    }
+    elsif($afun eq 'AuxX')
+    {
+        my @siblings = grep {$_!=$node} ($node->parent()->children());
+        $result = 'punctuation' if(grep {$_->afun() eq 'Coord'} (@siblings));
+    }
+    else
+    {
+        my @children = $node->children();
+        if($afun eq 'Coord')
+        {
+            if(grep {$_->afun() eq 'CoordArg'} (@children))
+            {
+                $result = 'conjunction';
+            }
+            else
+            {
+                $result = 'nhmember';
+            }
+        }
+        elsif(grep {$_->afun() eq 'Coord'} (@children))
+        {
+            $result = 'hmember';
+        }
+    }
+    return $result;
 }
 
 

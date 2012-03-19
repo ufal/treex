@@ -185,6 +185,7 @@ sub check_afuns
         my $afun = $node->afun();
         if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|AuxA|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/ )
         {
+            log_warn($node->get_address());
             $self->log_sentence($root);
             my $ord    = $node->ord();
             my $form   = $node->form();
@@ -230,6 +231,7 @@ sub process_prep_sub_arg
     my $parent_current_afun = shift;
     my $parent_new_afun     = $parent_current_afun;
     my $current_afun        = $node->afun();
+    $current_afun = '' if(!defined($current_afun));
 
     # If I am currently a prep/sub argument, let's steal the parent's afun.
     if ( $current_afun eq 'PrepArg' )
@@ -435,7 +437,7 @@ sub restructure_coordination
 {
     my $self  = shift;
     my $root  = shift;
-    my $debug = 0;
+    my $debug = shift;
 
     #my $debug = $self->sentence_contains($root, 'Spürst du das');
     log_info('DEBUG ON') if ($debug);
@@ -580,16 +582,19 @@ sub shape_coordination
         log_fatal('Coordination has fewer than two members and no delimiters.') if ( scalar( @{ $c->{members} } ) < 2 );
         push( @{ $c->{delimiters} }, shift( @{ $c->{members} } ) );
     }
+    # There is no guarantee that we obtained ordered lists of members and delimiters.
+    # They may have been added during tree traversal, which is not ordered linearly.
+    my @ordered_members  = sort {$a->ord() <=> $b->ord()} (@{$c->{members}});
+    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@{$c->{delimiters}});
 
     # If the last delimiter is punctuation and it occurs after the last member
     # and there is at least one delimiter before the last member, choose this other delimiter.
     # We try to avoid non-coordinating punctuation such as quotation marks after the sentence.
     # However, some non-punctuation delimiters can occur after the last member. Example: "etc".
-    my @ordered_members  = sort { $a->ord() <=> $b->ord() } ( @{ $c->{members} } );
     my $first_member_ord = $ordered_members[0]->ord();
     my $last_member_ord  = $ordered_members[$#ordered_members]->ord();
-    my @inner_delimiters = grep { $_->ord() > $first_member_ord && $_->ord() < $last_member_ord } ( @{ $c->{delimiters} } );
-    my $croot            = scalar(@inner_delimiters) ? pop(@inner_delimiters) : pop( @{ $c->{delimiters} } );
+    my @inner_delimiters = grep { $_->ord() > $first_member_ord && $_->ord() < $last_member_ord } (@ordered_delimiters);
+    my $croot            = scalar(@inner_delimiters) ? pop(@inner_delimiters) : pop(@ordered_delimiters);
 
     # Attach the new root to the parent of the coordination.
     $croot->set_parent($parent);

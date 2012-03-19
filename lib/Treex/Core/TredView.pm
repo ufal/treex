@@ -112,7 +112,7 @@ sub get_nodelist_hook {
     $self->{'_ptb_coindex_map'} = {};
     my %nodes;
 
-    foreach my $tree ( map { $_->get_all_trees } $bundle->get_all_zones ) {
+    foreach my $tree ( map { ref($_) eq 'Treex::Core::BundleZone' ? $_->get_all_trees : () } $bundle->get_all_zones ) {
         my $label = $self->tree_layout->get_tree_label($tree);
         my @nodes;
         if ( $tree->get_layer eq 'p' ) {
@@ -325,7 +325,7 @@ sub precompute_tree_depths {
     my ( $self, $bundle ) = @_;
 
     foreach my $zone ( $bundle->get_all_zones ) {
-        foreach my $tree ( $zone->get_all_trees ) {
+        foreach my $tree ( ref($zone) eq 'Treex::Core::BundleZone' ? $zone->get_all_trees : () ) {
             my $max_depth = 1;
             my @front = ( 1, $tree );
 
@@ -353,7 +353,7 @@ sub precompute_tree_shifts {
     my %forest = ();
 
     foreach my $zone ( $bundle->get_all_zones ) {
-        foreach my $tree ( $zone->get_all_trees ) {
+        foreach my $tree ( ref($zone) eq 'Treex::Core::BundleZone' ? $zone->get_all_trees : () ) {
             $forest{ $self->tree_layout->get_tree_label($tree) } = $tree;
         }
     }
@@ -390,7 +390,7 @@ sub precompute_visualization {
 
     foreach my $zone ( $bundle->get_all_zones ) {
         foreach my $layer (@layers) {
-            if ( $zone->has_tree($layer) ) {
+            if ( ref($zone) eq 'Treex::Core::BundleZone' && $zone->has_tree($layer) ) {
                 my $root   = $zone->get_tree($layer);
                 my $limits = $self->labels->get_limits($layer);
 

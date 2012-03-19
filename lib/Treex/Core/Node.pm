@@ -23,7 +23,7 @@ with 'Treex::Core::WildAttr';
 #     'eq' => 'equals',      # deprecated
 #     'ne' => '_not_equals', # deprecated
 #     'bool' => sub{1},
-# 
+#
 #     # We can A) let Magic Autogeneration to build "derived" overloadings,
 #     # or B) we can disable this feature (via fallback=>0)
 #     # and define only the needed overloadings
@@ -832,7 +832,11 @@ sub following {
     else {
         my $bundle =  ( ref($self) eq 'Treex::Core::Bundle' ) ? $self : $self->get_bundle;
 
-        my @all_trees = map { $_->get_all_trees } $bundle->get_all_zones;
+        my @all_trees = map {
+            ref($_) ne 'Treex::PML::Struct'
+            ? $_->get_all_trees
+            : ()
+        } $bundle->get_all_zones;
 
         if ( ref($self) eq 'Treex::Core::Bundle' ) {
             return $all_trees[0];
@@ -1196,7 +1200,7 @@ Removes all alignment links leading to nodes which have been deleted.
 
 Returns an array of nodes referencing this node with the given reference type (e.g. 'alignment', 'a/lex.rf' etc.).
 
-=back 
+=back
 
 =head2 Other methods
 

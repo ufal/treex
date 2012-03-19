@@ -7,7 +7,8 @@ sub process_anode {
     my ( $self, $node ) = @_;
     delete $node->wild->{is_coord_conjunction};
     # If the tree is a result of annotation style conversion from a foreign scheme, it is possible that there is no afun at all!
-    my $afun = $node->afun() or '';
+    my $afun = $node->afun();
+    $afun = '' if(!defined($afun));
     if ( $afun eq 'Coord' && $node->form !~ /^[,;]$/) {
         $node->wild->{is_coord_conjunction} = 1;
     }
