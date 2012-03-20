@@ -124,7 +124,7 @@ sub label_subtree {
         1e300, 1, 1, 1e300, 1e300, 1e300, -1, -1, 0, 0,
 
         # 10     11     12     13     14     15   16 17 18 19 20 21
-        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0, 0, 0, 0, 0,
+        1e300, 1e300, 1e300, 1e300, 1e300, 1e300, 0, 0, 0, 1, 0, 0,
     );
 
     # path could be constructed by backpointers
@@ -447,6 +447,7 @@ sub get_possible_labels {
         || $ALGORITHM == 16
         || $ALGORITHM == 17
         || $ALGORITHM == 18
+        || $ALGORITHM == 19
         || $ALGORITHM >= 20
         )
     {
@@ -461,13 +462,25 @@ sub get_possible_labels {
             
             if ($ALGORITHM == 20) {
                 if ( $self->config->DEBUG >= 4 ) {
-                    print "    Score for label $label: $previous_label_score + "
+                    print "    Score for label $label: "
                         . ( $self->model->get_label_score(
                     $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
                 }
                 $result->{$label} =
                     $self->model->get_label_score(
                     $label, $previous_label, $edge->features_all_labeller()
+                    )
+                    ;
+            } elsif ($ALGORITHM == 19) {
+                if ( $self->config->DEBUG >= 4 ) {
+                    print "    Score for label $label: $previous_label_score + "
+                        . ( $self->model->get_label_score(
+                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                }
+                $result->{$label} =
+                    $previous_label_score
+                    * $self->model->get_label_score(
+                    $label, $previous_label, $edge->features
                     )
                     ;
             } elsif ($ALGORITHM == 21) {
@@ -609,6 +622,8 @@ sub get_possible_labels_internal {
         || $ALGORITHM == 9
         || $ALGORITHM == 16
         || $ALGORITHM == 17
+        || $ALGORITHM == 18
+        || $ALGORITHM == 19
         )
     {
 

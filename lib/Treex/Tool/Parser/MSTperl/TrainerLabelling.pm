@@ -81,6 +81,8 @@ sub preprocess_sentence {
         || $ALGORITHM == 15
         || $ALGORITHM == 16
         || $ALGORITHM == 17
+        || $ALGORITHM == 18
+        || $ALGORITHM == 19
         )
     {
 
@@ -280,6 +282,7 @@ sub mira_update {
         || $ALGORITHM == 9
         || $ALGORITHM == 14 || $ALGORITHM == 15
         || $ALGORITHM == 16 || $ALGORITHM == 17
+        || $ALGORITHM == 18 || $ALGORITHM == 19
         || $ALGORITHM >= 20
         )
     {
@@ -322,7 +325,7 @@ sub mira_update {
 
 # makes an update on the sequence of parent's children
 # and recurses on their children
-# alg in 8 9 14 15 16 17 >=20
+# alg in 8 9 14 15 16 17 18 19 >=20
 sub mira_tree_update {
 
     # (Treex::Tool::Parser::MSTperl::Node $correct_parent,
@@ -368,94 +371,20 @@ sub mira_tree_update {
             my $score_best = $self->model->get_label_score(
                 $label_best, $label_prev_best, $features
             );
-
-            # this is actually a simple accuracy loss function (number of wrong
-            # labels in the sequence, here for one edge only) as described in
-            # Kevin Gimpel and Shay Cohen (2007):
-            # Discriminative Online Algorithms for
-            # Sequence Labeling - A Comparative Study
-            # which they show gave the best performance from all loss functions
-            # that they had tried
-            my $margin = 1;
-
-            my $error = $score_best - $score_correct + $margin;
-
-            if ( $error < 0 ) {
-                if ( $self->config->DEBUG >= 3 ) {
-                    print "correct label $label_correct on "
-                        . ( $correct_edge->child->ord )
-                        . "has higher score than incorrect $label_best "
-                        . "but transition scores preferred "
-                        . "the incorrect one\n";
-                }
-                next;
-            }
-
-            my $features_count = scalar( @{$features} );
-
-            if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
-
-                # the same update is done four times with each feature
-                my $update = $error / $features_count / 4;
-
-                foreach my $feature ( @{$features} ) {
-
-                    # TODO: which labels to use in transitions updates?
-                    # none of the articles I have read
-                    # mentions that specifically
-                    # but according to their definitions they use
-                    # $label_prev_correct for positive updates
-                    # and $label_prev_best for negative updates
-                    # (which makes some sense but
-                    # several other combinations would
-                    # make some sense as well -> let's try them, later)
-
-                    # positive emission update
-                    $self->update_feature_score(
-                        $feature,
-                        $update,
-                        $sumUpdateWeight,
-                        $label_correct,
-                    );
-
-                    # positive transition update
-                    $self->update_feature_score(
-                        $feature,
-                        $update,
-                        $sumUpdateWeight,
-                        $label_correct,
-                        $label_prev_correct,
-                    );
-
-                    # negative emission update
-                    $self->update_feature_score(
-                        $feature,
-                        -$update,
-                        $sumUpdateWeight,
-                        $label_best,
-                    );
-
-                    # negative transition update
-                    $self->update_feature_score(
-                        $feature,
-                        -$update,
-                        $sumUpdateWeight,
-                        $label_best,
-                        $label_prev_best,
-                    );
-                }
-
-                # end if $ALGORITHM == 8|9
-            } elsif (
-                $ALGORITHM == 14
-                || $ALGORITHM == 15
-                || $ALGORITHM == 16
-                || $ALGORITHM == 17
-                || $ALGORITHM >= 20
-                )
-            {
-
+            
+            if ($ALGORITHM == 19) {
+                
+                # inverse sigmoid
+                my $em_correct = - log (1 / $score_correct - 1)
+                    / $self->config->SIGM_LAMBDA;
+                my $em_best = - log (1 / $score_best - 1)
+                    / $self->config->SIGM_LAMBDA;
+                # error to be distributed among features
+                my $margin = 1;
+                my $error = $em_best - $em_correct + $margin;
+                
                 # the same update is done twice with each feature
+                my $features_count = scalar( @{$features} );
                 my $update = $error / $features_count / 2;
 
                 foreach my $feature ( @{$features} ) {
@@ -475,13 +404,125 @@ sub mira_tree_update {
                         $sumUpdateWeight,
                         $label_best,
                     );
-
                 }
-
-                # end if $ALGORITHM == 16|17
+                    
             } else {
-                croak "TrainerLabelling->mira_tree_update not implemented"
-                    . " for algorithm no. $ALGORITHM!";
+                
+                # this is actually a simple accuracy loss function (number of wrong
+                # labels in the sequence, here for one edge only) as described in
+                # Kevin Gimpel and Shay Cohen (2007):
+                # Discriminative Online Algorithms for
+                # Sequence Labeling - A Comparative Study
+                # which they show gave the best performance from all loss functions
+                # that they had tried
+                my $margin = 1;
+    
+                my $error = $score_best - $score_correct + $margin;
+    
+                if ( $error < 0 ) {
+                    if ( $self->config->DEBUG >= 3 ) {
+                        print "correct label $label_correct on "
+                            . ( $correct_edge->child->ord )
+                            . "has higher score than incorrect $label_best "
+                            . "but transition scores preferred "
+                            . "the incorrect one\n";
+                    }
+                    next;
+                }
+    
+                my $features_count = scalar( @{$features} );
+    
+                if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
+    
+                    # the same update is done four times with each feature
+                    my $update = $error / $features_count / 4;
+    
+                    foreach my $feature ( @{$features} ) {
+    
+                        # TODO: which labels to use in transitions updates?
+                        # none of the articles I have read
+                        # mentions that specifically
+                        # but according to their definitions they use
+                        # $label_prev_correct for positive updates
+                        # and $label_prev_best for negative updates
+                        # (which makes some sense but
+                        # several other combinations would
+                        # make some sense as well -> let's try them, later)
+    
+                        # positive emission update
+                        $self->update_feature_score(
+                            $feature,
+                            $update,
+                            $sumUpdateWeight,
+                            $label_correct,
+                        );
+    
+                        # positive transition update
+                        $self->update_feature_score(
+                            $feature,
+                            $update,
+                            $sumUpdateWeight,
+                            $label_correct,
+                            $label_prev_correct,
+                        );
+    
+                        # negative emission update
+                        $self->update_feature_score(
+                            $feature,
+                            -$update,
+                            $sumUpdateWeight,
+                            $label_best,
+                        );
+    
+                        # negative transition update
+                        $self->update_feature_score(
+                            $feature,
+                            -$update,
+                            $sumUpdateWeight,
+                            $label_best,
+                            $label_prev_best,
+                        );
+                    }
+    
+                    # end if $ALGORITHM == 8|9
+                } elsif (
+                    $ALGORITHM == 14
+                    || $ALGORITHM == 15
+                    || $ALGORITHM == 16
+                    || $ALGORITHM == 17
+                    || $ALGORITHM == 18
+                    || $ALGORITHM >= 20
+                    )
+                {
+    
+                    # the same update is done twice with each feature
+                    my $update = $error / $features_count / 2;
+    
+                    foreach my $feature ( @{$features} ) {
+    
+                        # positive emission update
+                        $self->update_feature_score(
+                            $feature,
+                            $update,
+                            $sumUpdateWeight,
+                            $label_correct,
+                        );
+    
+                        # negative emission update
+                        $self->update_feature_score(
+                            $feature,
+                            -$update,
+                            $sumUpdateWeight,
+                            $label_best,
+                        );
+    
+                    }
+    
+                    # end if $ALGORITHM == 16|17
+                } else {
+                    croak "TrainerLabelling->mira_tree_update not implemented"
+                        . " for algorithm no. $ALGORITHM!";
+                }
             }
         }
 

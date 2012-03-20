@@ -38,6 +38,21 @@ has 'EM_EPSILON' => (
     default => 0.00001,
 );
 
+# strmost sigmoidy
+has 'SIGM_LAMBDA' => (
+    is      => 'rw',
+    isa     => 'Num',
+#    default => 0.0015, probably good for data as they used to be :-)
+    default => 1,
+);
+
+# added to emission probs to make them non-negative
+# has 'EMISSIONS_SHIFT' => (
+#     is      => 'rw',
+#     isa     => 'Int',
+#     default => 500,
+# );
+
 # where in training data do heldout data for EM algorithm start
 # (a number between 0 and 1, eg. 0.75 means that first 75% of sentences
 #  are training data and the last 25% are heldout data)
@@ -875,8 +890,6 @@ training data, as it uses a lot of memory but speeds up the training greatly
 Algorithm used for Viterbi labelling as well as for training. Several
 possibilities are being tried out
 (especially regarding the emission probabilities used in the Viterbi algorithm).
-Variant 16 significantly outperforms the other variants, so this is probably
-obsolete and will probably get deleted.
 
 =over
 
@@ -934,7 +947,7 @@ multiplied with emission score in Viterbi and added to last state score
 
 =item (18) 16 + no Viterbi summing
 
-=item (19) 18, better formula for combining emissions and transitions
+=item (19) 16, better formula for combining emissions and transitions
 
 =item (20) MIRA for all
 
