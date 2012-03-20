@@ -42,6 +42,7 @@ sub process_zone {
         if (defined $it_id) {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
+            $t_node->wild->{'referential_prob'} = $it_ref_probs{$it_id};
             $t_node->wild->{'referential'} = $it_ref_probs{$it_id} > $self->threshold ? 1 : 0;
         }
     }
