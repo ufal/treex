@@ -229,17 +229,11 @@ You can specify an alternative directory for C<config.yaml>
 by setting the C<$TREEX_CONFIG> environment variable.
 You can edit C<config.yaml>, so it suits your needs.
 
-=head1 FUNCTIONS
+=head1 METHODS
+
+=head2 Following methods returns values which are present in config file
 
 =over 4
-
-=item config_dir()
-
-returns directory where configuration of Treex will reside (currently just F<path> file)
-
-=item default_resource_dir()
-
-returns default path for resources, it uses dist data for C<Treex-Core> and if $TMT_ROOT variable set also $TMT_ROOT/share
 
 =item resource_path()
 
@@ -248,16 +242,6 @@ return list of directories where resources will be searched
 =item tmp_dir()
 
 return temporary directory, should be used instead of /tmp or similar
-
-=item _devel_version()
-
-returns C<true> iff the current Treex instance is running from the svn working copy
-(which means that it is the development version, not installed from CPAN)
-
-=item lib_core_dir()
-
-returns the directory in which this module is located (and where
-the other L<Treex::Core> modules are expected too)
 
 =item share_dir()
 
@@ -275,13 +259,35 @@ return the directory in which the PML schemata for .treex files are located
 
 the directory in which the tree editor TrEd is installed
 
-
 =item tred_extension_dir()
 
 the directory in which the TrEd extension for Treex files is stored
 
 =back
 
+=head2 Rest of methods is not configurable by config file
+
+=over 4
+
+=item config_dir()
+
+returns directory where configuration of Treex will reside (currently just F<path> file)
+
+=item default_resource_dir()
+
+returns default path for resources, it uses dist data for C<Treex-Core> and if $TMT_ROOT variable set also $TMT_ROOT/share
+
+=item _devel_version()
+
+returns C<true> iff the current Treex instance is running from the svn working copy
+(which means that it is the development version, not installed from CPAN)
+
+=item lib_core_dir()
+
+returns the directory in which this module is located (and where
+the other L<Treex::Core> modules are expected too)
+
+=back
 
 =head1 AUTHOR
 
