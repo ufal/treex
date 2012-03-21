@@ -12,6 +12,13 @@ has '_resolver' => (
     builder => '_build_resolver',
 );
 
+has 'use_rules' => (
+    is => 'ro',
+    isa => 'Bool',
+    required => 1,
+    default => 0,
+);
+
 has 'threshold' => (
     is => 'ro',
     isa => 'Num',
@@ -43,9 +50,26 @@ sub process_zone {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
             $t_node->wild->{'referential_prob'} = $it_ref_probs{$it_id};
-            $t_node->wild->{'referential'} = $it_ref_probs{$it_id} > $self->threshold ? 1 : 0;
+            $t_node->wild->{'referential'} = $self->_is_refer($t_node, $it_ref_probs{$it_id}) ? 1 : 0;
         }
     }
+}
+
+sub _is_refer {
+    my ($self, $tnode, $nada_prob) = @_;
+
+    return (($self->use_rules && $self->_is_refer_by_rules($tnode))
+        || ($nada_prob > $self->threshold));
+}
+
+sub _is_refer_by_rules {
+    my ($self, $tnode) = @_;
+
+    my $alex = $tnode->get_lex_anode();
+
+    log_warn("PersPron does not have its own t-node") if ($alex->form !~ /^[iI]t$/);
+
+    return ($alex->afun ne 'Sb');
 }
 
 1;
