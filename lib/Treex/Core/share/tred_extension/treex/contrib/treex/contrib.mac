@@ -162,6 +162,24 @@ sub after_edit_node_hook {
     $tredview->recompute_visualization($root);
 }
 
+
+my $command;
+
+sub annotation_command {
+
+    if (defined $command) {
+        ($command) = split ' ',$command;
+        $command .= ' ';
+    }
+
+    $command=QueryString("Enter annotation command:","command",$command);
+    if (defined($command)) {
+        $tredview->run_annotation_command($command,$this);
+    }
+}
+
+
+#bind annotation_command to space
 #bind recompute_visualization to q
 #bind ConfDialog to c menu Configuration
 #bind shift_labels1_layer to 1 menu Change content of label no.1 for current layer

@@ -767,6 +767,14 @@ sub _tree_type_signature {
     return join "-", ( ref($node), $zone->language, $zone->selector()||'');
 }
 
+use Treex::Core::TredView::AnnotationCommand;
+sub run_annotation_command {
+    my ( $self, $command, $node ) = @_;
+    Treex::Core::TredView::AnnotationCommand::run( $command, $node );
+    $self->recompute_visualization($node->get_bundle);
+}
+
+
 1;
 
 __END__
