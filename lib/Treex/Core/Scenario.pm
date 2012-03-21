@@ -207,6 +207,22 @@ sub construct_scenario_string {
     return join $delim, @block_strings;
 }
 
+
+# reverse of parse_scenario_string, used in Treex::Core::Run for treex --dump
+sub get_required_files {
+    my $self        = shift;
+    my @block_items = @{ $self->block_items };
+    my @required_files;
+    foreach my $block_item (@block_items) {
+        my $block = $self->_load_block($block_item);
+        push @required_files,
+            map {
+                $block_item->{block_name} . "\t" . $_;
+            } $block->get_required_share_files();
+    }
+    return @required_files;
+}
+
 sub _add_quotes {    # adding quotes only if param. value contains a space
     my ($block_parameter) = @_;
     my ( $name, $value ) = split /=/, $block_parameter, 2;
