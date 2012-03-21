@@ -21,7 +21,8 @@ our %service;                   ## no critic (ProhibitPackageVars)
 our $params_validate = 0;       ## no critic (ProhibitPackageVars)
 
 my $config = __PACKAGE__->_load_config();
-my $running_in_tred;            ## no critic (ProhibitUnusedVariables)
+my $dirty  = 0;                             #indicates that configuration has changed. N/A yet, no method changes config to something else than default
+my $running_in_tred;                        ## no critic (ProhibitUnusedVariables)
 
 sub _load_config {
     my $self     = shift;
@@ -29,13 +30,15 @@ sub _load_config {
     my $from     = $args{from} // $self->config_file();
     my $yaml     = read_file( $from, { err_mode => 'silent' } );
     my $toReturn = YAML::Load($yaml);
-    return $toReturn // {};     #rather than undef return empty hashref
+    return $toReturn // {};                 #rather than undef return empty hashref
 }
 
 sub _save_config {
     my $self = shift;
     my %args = @_;
     my $to   = $args{to} // $self->config_file();
+    return if ( -e $to && !$dirty );        #skip when config file already exists and no changes made from this run of treex so we won't overwrite existing configuration
+    return if ( !scalar %{$config} );       #skip when config is empty
     return DumpFile( $to, $config );
 }
 
