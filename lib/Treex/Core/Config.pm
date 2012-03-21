@@ -39,7 +39,11 @@ sub _save_config {
     my $to   = $args{to} // $self->config_file();
     return if ( -e $to && !$dirty );        #skip when config file already exists and no changes made from this run of treex so we won't overwrite existing configuration
     return if ( !scalar %{$config} );       #skip when config is empty
-    return DumpFile( $to, $config );
+    eval {
+        DumpFile( $to, $config );
+        1;
+    } or log_warn(qq(Couldn't save config file $to));
+    return;
 }
 
 END {
