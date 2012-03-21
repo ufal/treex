@@ -604,7 +604,7 @@ sub feature_grandparent_distance {
     if (defined $grandparent) {
         return $self->feature_distance_generic($edge->parent, $edge->child);
     } else {
-        return '';
+        return '#novalue#';
     }
 }
 
@@ -640,7 +640,7 @@ sub feature_grandparent_attachement_direction {
     return $self->feature_attachement_direction_generic(
         $edge->parent, $edge->child );
     } else {
-        return '';
+        return '#novalue#';
     }
 }
 
@@ -671,7 +671,7 @@ sub feature_grandparent {
     if (defined $grandparent) {
         return ( $grandparent->fields->[$field_index] );
     } else {
-        return '';
+        return '#novalue#';
     }
 }
 
@@ -698,7 +698,7 @@ sub feature_grandparent_label {
     if (defined $grandparent) {
         return ( $grandparent->label );
     } else {
-        return '';
+        return '#novalue#';
     }
 }
 
