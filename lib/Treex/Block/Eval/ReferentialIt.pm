@@ -17,6 +17,15 @@ has 'exo_as_pleo' => (
     isa => 'Bool',
     required => 1,
     default => 0,
+    documentation => "Treat non-anaphoric (e.g. exophoric) 'it' as pleonastic",
+);
+
+has 'verb_child' => (
+    is => 'ro',
+    isa => 'Bool',
+    required => 1,
+    default => 0,
+    documentation => "Examination is conducted just for those 'it' that are governed by a verb",
 );
 
 # confusion matrix indexed with {real_value}{predicted_value}
@@ -32,6 +41,26 @@ log_set_error_level('DEBUG');
 sub _is_it {
     my ($str) = @_;
     return ($str =~ /^[Ii]t$/);
+}
+
+sub _is_verb_child {
+    my ($anode) = @_;
+    
+    # get tnode for anode
+    my ($tnode) = grep {defined $_} (map {$anode->get_referencing_nodes($_)} ('a/lex.rf', 'a/aux.rf'));
+    my $verb;
+
+    if (!defined $tnode) {
+        print STDERR "TNODE UNDEF: " . $anode->id . "\n";
+    }
+
+    if ( $tnode->t_lemma ne "#PersPron" ) {
+        $verb = $tnode;
+    }
+    else {
+        ($verb) = $tnode->get_eparents( { or_topological => 1} );
+    }
+    return (($verb->gram_sempos || "") eq "v");
 }
 
 sub _get_src_tnode_for_lex {
@@ -52,6 +81,10 @@ sub _get_src_tnode_for_aux {
     my ($self, $ref_anode) = @_;
 
     my @src_anodes = $ref_anode->get_aligned_nodes_of_type('monolingual');
+    if (@src_anodes == 0) {
+        log_debug "Ref-node " . $ref_anode->id . " aligned with no src-node", $noprint_stack;
+        return undef;
+    }
     if (@src_anodes > 1) {
         log_debug "Ref-node " . $ref_anode->id . " aligned with several src-nodes", $noprint_stack;
     }
@@ -72,6 +105,11 @@ sub _get_src_tnode_for_aux {
 
 sub _is_referential {
     my ($self, $src_tnode) = @_;
+
+    if (!defined $src_tnode) {
+        print STDERR "NO COUNTERPART IN SRC\n";
+        return 0;
+    }
 
     my $refer = $src_tnode->wild->{referential};
     if (!defined $refer) {
@@ -115,6 +153,9 @@ sub process_anode {
     # skip everything that is not "it"
     # TODO what about "It's" etc.
     return if (!_is_it($ref_anode->form));
+
+    # evaluate just those geverned by a verb
+    return if ($self->verb_child && !_is_verb_child($ref_anode));
 
     my @lex_tnodes = $ref_anode->get_referencing_nodes('a/lex.rf');
     
