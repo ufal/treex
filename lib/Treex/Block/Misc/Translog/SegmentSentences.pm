@@ -18,6 +18,7 @@ sub process_document {
         $prev_sent_end_index{$language} = -1;
     }
 
+  INDEX:
     foreach my $da_index (0..$#{$nodes{da}}) {
 
         my $before_newline;
@@ -32,9 +33,31 @@ sub process_document {
             ) {
 
             my $da_sentence_end_node = $nodes{da}[$da_index];
+            my $en_sentence_end_node;
 
-            my ($nodes_rf, $types_rf) = $da_sentence_end_node->get_aligned_nodes;
-            my ($en_sentence_end_node) = @$nodes_rf;
+            if ( $da_index == $#{$nodes{da}} ) { # if it's the last token in Danish, let's go to the last English token too
+                $en_sentence_end_node = $nodes{en}[-1];
+            }
+
+            else { # otherwise we search for the English boundary by alignment
+                my ($nodes_rf, $types_rf) = $da_sentence_end_node->get_aligned_nodes;
+                if ($nodes_rf) {
+                    ($en_sentence_end_node) = @$nodes_rf;
+                }
+
+                else { # last resort: try to find the sentence end in English completely independently of alignment
+                    ($en_sentence_end_node) = map {$nodes{en}[$_]} grep {
+                        $nodes{en}[$_]->form eq '.'
+                            or ( $_ < $#{$nodes{en}} and ($nodes{en}[$_+1]->wild->{space}||'') =~ /000a/)
+                    } ($prev_sent_end_index{en}+1..$#{$nodes{en}});
+                }
+            }
+
+            if (not defined $en_sentence_end_node) {
+                log_warn "Detected sentence-end token was not aligned: ".
+                    $da_sentence_end_node->form . ' '. $da_sentence_end_node->id." . Sentence boundary not made here.";
+                next INDEX;
+            }
 
             my $new_bundle= $document->create_bundle;
             foreach my $language (qw(da en)) {
@@ -60,14 +83,16 @@ sub process_document {
                     ($end_index) = grep {$nodes{en}[$_] eq $en_sentence_end_node} ($prev_sent_end_index{en}..$#{$nodes{en}});
                 }
 
+                if ($end_index eq $prev_sent_end_index{en}) {
+                    log_warn "Sentence end index not found, language=$language,  start_index $start_index  English end node: ".$en_sentence_end_node->id."\n";
+                }
+
 #                print "lang=$language start=$start_index end=$end_index\n";
 
                 my $new_zone = $new_bundle->create_zone($language);
                 my $new_atree =  $new_zone->create_atree;
 
-                my $ord;
                 foreach my $index ($start_index..$end_index) {
-                    $ord++;
                     $nodes{$language}[$index]->set_parent($new_atree);
 
                 }
@@ -76,6 +101,14 @@ sub process_document {
             }
         }
     }
+
+    if (grep {$_->get_atree->get_descendants} $bundle->get_all_zones) {
+        log_warn "All nodes should have been distributed into new bundles, nothing can remain in the first bundle";
+    }
+    else {
+        $bundle->remove();
+    }
+
     return;
 }
 
@@ -86,6 +119,8 @@ sub process_document {
 =item Treex::Block::Misc::Translog::SegmentSentences
 
 Sentence segmentation specific for Translog data.
+TODO: now hardwired for English and Danish, should be universal
+(but how to detect which language is the central one?)
 
 =back
 
