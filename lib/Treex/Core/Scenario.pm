@@ -259,6 +259,11 @@ sub run {
     my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
+    log_info "Applying process_start";
+    foreach my $block ( @{ $self->loaded_blocks } ) {
+        $block->process_start();
+    }
+
     while ( my $document = $reader->next_document_for_this_job() ) {
         $document_number++;
         my $doc_name = $document->full_filename;

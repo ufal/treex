@@ -52,14 +52,17 @@ sub zone_label {
 
 sub BUILD {
     my $self = shift;
-    $self->require_files_from_share( $self->get_required_share_files() );
+
     return;
 }
 
 sub require_files_from_share {
     my ( $self, @rel_paths ) = @_;
     my $my_name = 'the block ' . $self->get_block_name();
-    return map { Treex::Core::Resource::require_file_from_share( $_, $my_name ) } @rel_paths;
+    return map {
+        log_info $self->get_block_name() . " requires file " . $_;
+        Treex::Core::Resource::require_file_from_share( $_, $my_name )
+    } @rel_paths;
 }
 
 sub get_required_share_files {
@@ -150,6 +153,14 @@ sub process_zone {
         . "The zone '" . $zone->get_label() . "' contains trees ( "
         . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
         if !$overriden;
+    return;
+}
+
+sub process_start {
+    my ($self) = @_;
+
+    $self->require_files_from_share( $self->get_required_share_files() );
+
     return;
 }
 
@@ -255,6 +266,11 @@ However, C<process_pnode> is executed also on the root node
 (because its a regular non-terminal node with a phrase attribute, usually C<S>).
 
 =back
+
+=head2 $block->process_start();
+
+This method is called before all documents are processed.
+This method is responsible for loading required models.
 
 =head2 $block->process_end();
 
