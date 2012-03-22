@@ -28,6 +28,14 @@ has 'verb_child' => (
     documentation => "Examination is conducted just for those 'it' that are governed by a verb",
 );
 
+has 'attr_name' => (
+    is => 'ro',
+    isa => 'Str',
+    required => 1,
+    default => 'referential',
+    documentation => "The name of the wild attribute that contains referential info",
+);
+
 # confusion matrix indexed with {real_value}{predicted_value}
 has '_confusion_matrix' => (
     is  => 'rw',
@@ -39,8 +47,9 @@ my $noprint_stack = 1;
 log_set_error_level('DEBUG');
 
 sub _is_it {
-    my ($str) = @_;
-    return ($str =~ /^[Ii]t$/);
+    my ($anode) = @_;
+    #return ($anode->form =~ /^[Ii]t$/);
+    return ($anode->lemma eq 'it');
 }
 
 sub _is_verb_child {
@@ -60,7 +69,7 @@ sub _is_verb_child {
     else {
         ($verb) = $tnode->get_eparents( { or_topological => 1} );
     }
-    return (($verb->gram_sempos || "") eq "v");
+    return (($verb->gram_sempos || "") eq "v") && (!$tnode->is_generated);
 }
 
 sub _get_src_tnode_for_lex {
@@ -111,7 +120,7 @@ sub _is_referential {
         return 0;
     }
 
-    my $refer = $src_tnode->wild->{referential};
+    my $refer = $src_tnode->wild->{$self->attr_name};
     if (!defined $refer) {
         log_debug "Src-node " . $src_tnode->id . 
             " is aligned with ref-'it' but 'referential' flag is not assigned", $noprint_stack;
@@ -152,7 +161,7 @@ sub process_anode {
 
     # skip everything that is not "it"
     # TODO what about "It's" etc.
-    return if (!_is_it($ref_anode->form));
+    return if (!_is_it($ref_anode));
 
     # evaluate just those geverned by a verb
     return if ($self->verb_child && !_is_verb_child($ref_anode));
@@ -181,6 +190,7 @@ sub process_anode {
             }
             else {
                 $conf_mat->{'exo'}{'pleo'}++;
+                #print STDERR "ID: " . $src_tnode->id . "\n";
             }
         }
         else {
@@ -205,6 +215,7 @@ sub process_anode {
         }
         else {
             $conf_mat->{'pleo'}{'pleo'}++;
+                #print STDERR "ID: " . $src_tnode->id . "\n";
         }
     }
 }
