@@ -10,6 +10,7 @@ use File::Basename;
 
 use TranslationModel::MaxEnt::Model;
 use TranslationModel::NaiveBayes::Model;
+use TranslationModel::Static::Model;
 
 my $FLAG_MODEL_LOADED="__MODEL_LOADED__";
 
@@ -101,6 +102,8 @@ sub load_model
 {
     my ($model_class, $file) = @_;
 
+    log_info "Loading $model_class from file $file";
+
     my $namespace = basename($file);
 
     my $memd = get_connection(basename($file));
@@ -109,7 +112,7 @@ sub load_model
         return 0;
     }
 
-    log_info "Loading file $$file";
+    log_info "Loading file $file";
 
     if ( ! $memd->get($FLAG_MODEL_LOADED) ) {
 
@@ -128,6 +131,20 @@ sub load_model
     }
 
     return 1;
+}
+
+
+sub contains
+{
+    my ($file) = @_;
+
+    my $memd = get_connection(basename($file));
+
+    if ( ! $memd ) {
+        return 0;
+    }
+
+    return $memd->get($FLAG_MODEL_LOADED);
 }
 
 sub get_connection
