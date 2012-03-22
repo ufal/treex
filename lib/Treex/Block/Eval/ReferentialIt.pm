@@ -190,6 +190,7 @@ sub process_anode {
             }
             else {
                 $conf_mat->{'exo'}{'pleo'}++;
+                #print STDERR "PROB: " . $src_tnode->wild->{referential_prob} . "\n";
                 #print STDERR "ID: " . $src_tnode->id . "\n";
             }
         }
@@ -215,7 +216,7 @@ sub process_anode {
         }
         else {
             $conf_mat->{'pleo'}{'pleo'}++;
-                #print STDERR "ID: " . $src_tnode->id . "\n";
+                #print STDERR "PROB: " . $src_tnode->wild->{referential_prob} . "\n";
         }
     }
 }

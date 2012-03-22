@@ -26,6 +26,13 @@ has 'threshold' => (
     default => 0.5,
 );
 
+has 'threshold_bottom' => (
+    is => 'ro',
+    isa => 'Num',
+    required => 1,
+    default => 0.7,
+);
+
 sub _build_resolver {
     my ($self) = @_;
     return Treex::Tool::Coreference::NADA->new();
@@ -58,18 +65,74 @@ sub process_zone {
 sub _is_refer {
     my ($self, $tnode, $nada_prob) = @_;
 
-    return (($self->use_rules && $self->_is_refer_by_rules($tnode))
-        || ($nada_prob > $self->threshold));
+    return (
+        ($nada_prob > $self->threshold) ||
+        ( $self->use_rules 
+          && !( $nada_prob < $self->threshold_bottom || 
+                $self->_is_nonrefer_by_rules($tnode)
+              )
+        ));
 }
 
-sub _is_refer_by_rules {
+sub _is_nonrefer_by_rules {
     my ($self, $tnode) = @_;
 
     my $alex = $tnode->get_lex_anode();
 
     log_warn("PersPron does not have its own t-node") if ($alex->form !~ /^[iI]t$/);
+    
+    my ($verb) = grep { ($_->gram_sempos || "") eq "v" } $tnode->get_eparents( { or_topological => 1} );
 
-    return ($alex->afun ne 'Sb');
+    return (defined $verb && 
+        (_has_v_to_inf($verb)
+        || _is_be_adj($verb)
+        || _is_cog_verb($verb) )
+    );
+    #return ($alex->afun ne 'Sb');
+}
+
+my $to_clause_verbs = 'be|s|take|make';
+# has an echild with formeme v:.*to+inf, or an echild with functor PAT and its echild has to+inf
+sub _has_v_to_inf {
+    my ( $verb ) = @_;
+    if ( $verb->t_lemma =~ /^($to_clause_verbs)$/ ) {
+        my @echildren = $verb->get_echildren( { or_topological => 1 } );
+#         my @pats = grep { $_->functor eq "PAT" } @echildren;
+#         foreach my $pat ( @pats ) {
+#             push @echildren, $pat->get_echildren( { or_topological => 1 } );
+#         }
+        return 1 if ( grep { $_->formeme =~ /^v:.*to\+inf$/ } @echildren);
+    }
+    return 0;
+}
+
+sub _is_be_adj {
+    my ( $verb ) = @_;
+    if ( $verb->t_lemma =~ /^(be|s)$/ ) {
+        my @echildren = $verb->get_echildren( { or_topological => 1 } );
+        my @pats = grep { $_->functor eq "PAT" and $_->formeme eq "adj:compl" } @echildren;
+        foreach my $pat ( @pats ) {
+            push @echildren, $pat->get_echildren( { or_topological => 1 } );
+        }
+        if ( @pats and grep { $_->formeme =~ /^v:.*fin$/ } @echildren) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+my $cog_ed_verbs = 'think|believe|recommend|say|note';
+my $cog_verbs = 'seem|appear|mean|follow|matter';
+
+sub _is_cog_verb {
+    my ( $verb ) = @_;
+    return ( 
+        ( $verb->t_lemma =~ /^($cog_ed_verbs)$/
+            and $verb->get_lex_anode 
+            and $verb->get_lex_anode->tag eq "VBN" 
+        )
+        or $verb->t_lemma =~ /^($cog_verbs)$/
+    ) ? 1 : 0;
 }
 
 1;
