@@ -6,6 +6,8 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
+use Treex::Tool::Memcached::Memcached;
+
 use TranslationModel::MaxEnt::Model;
 use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
@@ -130,40 +132,57 @@ sub process_start {
 
     my @interpolated_sequence = ();
 
+    my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
+
     if ( $self->maxent_weight > 0 ) {
 
         my $maxent_model = TranslationModel::MaxEnt::Model->new();
 
-        my $memcached_model = TranslationModel::Memcached::Model->new( {
-            'model' => $maxent_model,
-            'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} }
-        });
+        my $model = $maxent_model;
 
-        push( @interpolated_sequence, { model => $memcached_model, weight => $self->maxent_weight } );
+        if ( $use_memcached ) {
+            $model = TranslationModel::Memcached::Model->new( {
+                'model' => $maxent_model,
+                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} }
+            });
+        } else {
+            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
+        }
 
-        #$maxent_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
-        #push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
+        push( @interpolated_sequence, { model => $model, weight => $self->maxent_weight } );
 
     }
 
-    my $static_model09 = TranslationModel::Static::Model->new();
-    $static_model09->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ "0.9" } );
-
-    my $static_model12 = TranslationModel::Static::Model->new();
-    $static_model12->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ "1.2" } );
-
-    my $static_model = TranslationModel::Combined::Interpolated->new( { models => [
-        { model => $static_model09, weight => 1 },
-        { model => $static_model12, weight => 1 }
-        ] } );
+    my $static_model_tmp = TranslationModel::Static::Model->new();
+    my $static_model = undef;
+    if ( $use_memcached ) {
+        my $memcached_model = TranslationModel::Memcached::Model->new( {
+            'model' => $static_model_tmp,
+            'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} }
+        });
+        $static_model = $memcached_model;
+    } else {
+        $static_model_tmp->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} } );
+        $static_model = $static_model_tmp;
+    }
 
     my $humanlex_model = TranslationModel::Static::Model->new;
     $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
 
     if ( $self->nb_weight > 0 ) {
         my $nb_model = TranslationModel::NaiveBayes::Model->new();
-        $nb_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} } );
-        push( @interpolated_sequence, { model => $nb_model, weight => $self->nb_weight } );
+        my $model = $nb_model;
+
+        if ( $use_memcached ) {
+            $model = TranslationModel::Memcached::Model->new( {
+                'model' => $nb_model,
+                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} }
+            });
+        } else {
+            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} } );
+        }
+
+        push( @interpolated_sequence, { model => $model, weight => $self->nb_weight } );
     }
 
     my $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
