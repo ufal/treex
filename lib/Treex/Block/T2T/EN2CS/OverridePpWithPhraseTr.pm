@@ -10,9 +10,15 @@ my $loaded;
 
 sub BUILD {
     my ($self) = @_;
+
+    return;
+}
+
+sub process_start {
+    my ($self) = @_;
     if ( !$loaded ) {
         my ($filename) = $self->require_files_from_share($input_file);
-        open my $I, '<:encoding(utf-8)', $filename;
+        open my $I, '<:encoding(utf-8)', $filename or log_fatal $!;
         while (<$I>) {
             chomp;
             my ( $en_phrase, $cs_phrase ) = split /\t/;
@@ -21,6 +27,9 @@ sub BUILD {
         close($I);
         $loaded = 1;
     }
+
+    $self->SUPER::process_start();
+
     return;
 }
 

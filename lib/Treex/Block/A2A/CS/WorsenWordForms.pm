@@ -11,21 +11,29 @@ my $changed = 0;
 my $total = 0;
 
 use LanguageModel::MorphoLM;
-my $morphoLM = LanguageModel::MorphoLM->new();
-
 use Treex::Tool::Lexicon::Generation::CS;
-my $generator = Treex::Tool::Lexicon::Generation::CS->new();
+
+my ($generator, $morphoLM);
+
+sub process_start {
+    my $self  = shift;
+    $generator = Treex::Tool::Lexicon::Generation::CS->new();
+    $morphoLM = LanguageModel::MorphoLM->new();
+
+    return;
+}
 
 
 sub _get_err_distr {
     my ($self) = @_;
-    open (ERR_DISTR, "<:utf8", $self->err_distr_from) or die;
+    open (my $ERR_DISTR, "<:encoding(utf8)", $self->err_distr_from) or log_fatal $!;
     my %err_distr;
-    while (<ERR_DISTR>) {
+    while (<$ERR_DISTR>) {
         chomp;
         my ($tag_before, $tag_after, $prob) = split /\t/;
         $err_distr{$tag_before}{$tag_after} = $prob;
     }
+    close($ERR_DISTR);
     return \%err_distr;
 }
 
@@ -43,6 +51,8 @@ sub process_anode {
             last;
         }
     }
+
+    return;
 }
 
 sub get_form {
@@ -102,6 +112,8 @@ sub regenerate_node {
 
 sub process_end {
     log_info "$changed wordforms (out of $total) have been changed.";
+
+    return;
 }
 
 

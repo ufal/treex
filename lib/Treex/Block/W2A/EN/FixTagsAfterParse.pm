@@ -14,8 +14,14 @@ my %CAN_BE;
 
 sub BUILD {
     my $self = shift;
+
+    return;
+}
+
+sub process_start {
+    my $self = shift;
     my $file_path = require_file_from_share($TAGS_FILE);
-    open my $IN, '<:encoding(utf8)', $file_path;
+    open my $IN, '<:encoding(utf8)', $file_path or log_fatal $!;
     while (<$IN>) {
         chomp;
         my ( $form, @tags ) = split /\t/, $_;
@@ -24,6 +30,10 @@ sub BUILD {
         }
     }
     close $IN;
+
+    $self->SUPER::process_start();
+
+    return;
 }
 
 # TODO: Should we change m-node's tag?
@@ -106,7 +116,7 @@ sub can_be_child_and_parent {
         return any { $_->tag =~ /^V/ } get_pseudo_echildren($eparent);
     }
     return 1;
-
+=item
     if ( $c_tag eq 'JJ' ) {
         return 1 if $p_tag =~ /^(N|CD|IN)/;
         return 1 if $p_lemma eq 'be' && $p_tag =~ /^V/;
@@ -115,6 +125,7 @@ sub can_be_child_and_parent {
 
     #return 0 if $c_tag eq 'NN' && $p_tag eq 'MD';
     return 1;
+=cut
 }
 
 # Next 2 methods need no afun filled (unlike $node->get_echildren())

@@ -11,6 +11,12 @@ has morphoLM  => ( is => 'rw' );
 has generator => ( is => 'rw' );
 
 sub BUILD {
+    my $self = shift;
+
+    return;
+}
+
+sub process_start {
     my ($self) = @_;
     $self->set_morphoLM( LanguageModel::MorphoLM->new() );
     $self->set_generator( Treex::Tool::Lexicon::Generation::CS->new() );

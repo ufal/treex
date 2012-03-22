@@ -21,8 +21,20 @@ use LanguageModel::MorphoLM;
 my ( $morphoLM, $generator );
 
 sub BUILD {
+    my $self = shift;
+
+    return;
+}
+
+sub process_start {
+    my $self = shift;
+
     $morphoLM  = LanguageModel::MorphoLM->new();
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
+
+    $self->SUPER::process_start();
+
+    return;
 }
 
 my $DEBUG = 0;
@@ -36,7 +48,7 @@ sub process_anode {
     my ( $self, $a_node ) = @_;
     if ( _should_generate($a_node) ) {
         my $form = _generate_word_form($a_node);
-        
+
         $a_node->set_form( $form->get_form() );
         $a_node->set_tag( $form->get_tag() );
     }
@@ -61,13 +73,13 @@ sub _generate_word_form {
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
-    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } ) 
+    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } )
         if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
-    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------'} ) 
+    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------'} )
         if $lemma eq '#Neg';
 
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
-    return LanguageModel::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } ) 
+    return LanguageModel::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } )
     if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
                 my $number = Treex::Tool::Lexicon::CS::number_for( $_->lemma );

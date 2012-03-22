@@ -7,17 +7,18 @@ use TranslationModel::Static::Model;
 
 my $MODEL_STATIC = 'data/models/translation/en2cs/jointLF_czeng09.static.pls.slurp.gz';
 
+my $model;
+
 sub get_required_share_files {
     return ($MODEL_STATIC);
 }
 
-has model => ( is => 'rw', builder => 'build_model' );
-
-sub build_model {
+sub process_start {
     my $self  = shift;
-    my $model = TranslationModel::Static::Model->new();
+    $model = TranslationModel::Static::Model->new();
     $model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
-    return $model;
+
+    return;
 }
 
 sub process_tnode {
@@ -35,7 +36,7 @@ sub process_tnode {
     my $input_label = $en_tnode->t_lemma . "|" . $en_tnode->formeme;
     return if $input_label =~ /\?/;
 
-    my ($translation) = $self->model->get_translations($input_label) or return;
+    my ($translation) = $model->get_translations($input_label) or return;
 
     my ( $output_label, $formeme ) = split /\|/, $translation->{label};
 

@@ -9,6 +9,7 @@ use Moose::Util::TypeConstraints;
 use TranslationModel::MaxEnt::Model;
 use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
+use TranslationModel::Memcached::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
@@ -73,7 +74,7 @@ has [qw(trg_lemmas trg_formemes)] => (
     is => 'ro',
     isa => 'Int',
     default => 0,
-    documentation => 'How many (t_lemma/formeme) variants from the target-side parent should be used as features', 
+    documentation => 'How many (t_lemma/formeme) variants from the target-side parent should be used as features',
 );
 
 has domain => (
@@ -121,16 +122,40 @@ my ( $combined_model, $max_variants );
 sub BUILD {
     my $self = shift;
 
+    return;
+}
+
+sub process_start {
+    my $self = shift;
+
     my @interpolated_sequence = ();
 
     if ( $self->maxent_weight > 0 ) {
+
         my $maxent_model = TranslationModel::MaxEnt::Model->new();
-        $maxent_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
-        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
+
+        my $memcached_model = TranslationModel::Memcached::Model->new( {
+            'model' => $maxent_model,
+            'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} }
+        });
+
+        push( @interpolated_sequence, { model => $memcached_model, weight => $self->maxent_weight } );
+
+        #$maxent_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
+        #push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
+
     }
 
-    my $static_model = TranslationModel::Static::Model->new();
-    $static_model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} } );
+    my $static_model09 = TranslationModel::Static::Model->new();
+    $static_model09->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ "0.9" } );
+
+    my $static_model12 = TranslationModel::Static::Model->new();
+    $static_model12->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ "1.2" } );
+
+    my $static_model = TranslationModel::Combined::Interpolated->new( { models => [
+        { model => $static_model09, weight => 1 },
+        { model => $static_model12, weight => 1 }
+        ] } );
 
     my $humanlex_model = TranslationModel::Static::Model->new;
     $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
@@ -172,6 +197,9 @@ sub BUILD {
     #my @backoff_sequence = ( $interpolated_model, @derivative_models );
     #my $combined_model = TranslationModel::Combined::Backoff->new( { models => \@backoff_sequence } );
     $combined_model = $interpolated_model;
+
+    $self->SUPER::process_start();
+
     return;
 }
 
@@ -195,6 +223,10 @@ sub process_tnode {
                 sort grep { defined $features_hash_rf->{$_} }
                 keys %{$features_hash_rf}
         ];
+        #push @{$features_array_rf}, "domain=paraweb";
+        #push @{$features_array_rf}, "domain=techdoc";
+        #push @{$features_array_rf}, "domain=subtitles";
+
 
         if ($self->trg_lemmas) {
             my $parent = $cs_tnode->get_parent();

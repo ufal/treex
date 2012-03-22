@@ -55,6 +55,13 @@ my %loaded_models;
 
 sub BUILD {
     my ($self)  = @_;
+
+    return;
+}
+
+sub process_start {
+    my ($self)  = @_;
+
     my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
 
     if ( !$loaded_models{$model} ) {
@@ -70,6 +77,8 @@ sub BUILD {
         $loaded_models{$model} = $parser;
     }
     $self->_set_parser( $loaded_models{$model} );
+
+    $self->SUPER::process_start();
 
     return;
 }

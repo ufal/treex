@@ -79,6 +79,13 @@ has _model => ( is => 'rw' );
 sub BUILD {
     my $self = shift;
 
+    return;
+}
+
+sub process_start
+{
+    my $self = shift;
+
     my @interpolated_sequence = ();
 
     if ( $self->maxent_weight > 0 ) {
@@ -102,6 +109,9 @@ sub BUILD {
             { models => \@interpolated_sequence }
             )
     );
+
+    $self->SUPER::process_start();
+
     return;
 }
 

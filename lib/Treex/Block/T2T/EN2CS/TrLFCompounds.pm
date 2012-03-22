@@ -8,7 +8,7 @@ use Treex::Tool::Lexicon::CS;
 use EnglishMorpho::Lemmatizer;
 use Tagger::TnT;
 
-my $tagger = Tagger::TnT->new;
+my $tagger;
 
 use TranslationModel::Static::Model;
 use TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
@@ -22,12 +22,18 @@ my ( $static_model, $deverbadj_model, $deadjadv_model, $noun2adj_model );
 sub get_required_share_files { return $MODEL_STATIC; }
 
 sub BUILD {
+
+    return;
+}
+
+sub process_start {
     $static_model = TranslationModel::Static::Model->new();
     $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
     $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
     $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
     $noun2adj_model = TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
 
+    $tagger = Tagger::TnT->new;
     return;
 }
 

@@ -11,7 +11,15 @@ use DowngradeUTF8forISO2;
 sub BUILD {
     my ($self) = @_;
 
+    return;
+}
+
+sub process_start {
+    my ($self) = @_;
+
     $self->_set_tagger( Morce::English->new() );
+
+    $self->SUPER::process_start();
 
     return;
 }

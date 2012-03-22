@@ -7,7 +7,19 @@ use LanguageModel::MorphoLM;
 my $morphoLM;
 
 sub BUILD {
-    $morphoLM = LanguageModel::MorphoLM->new() if !$morphoLM;
+    my $self = shift;
+
+    return;
+}
+
+sub process_start {
+    my $self = shift;
+
+    $morphoLM = LanguageModel::MorphoLM->new();
+
+    $self->SUPER::process_start();
+
+    return;
 }
 
 sub process_tnode {
@@ -32,6 +44,8 @@ sub process_tnode {
         }
         $cs_tnode->set_attr( 'translation_model/t_lemma_variants', \@compatible );
     }
+
+    return;
 }
 
 sub _is_passivizable {

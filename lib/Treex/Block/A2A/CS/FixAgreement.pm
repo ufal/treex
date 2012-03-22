@@ -8,16 +8,25 @@ has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 
+use Carp;
 use LanguageModel::MorphoLM;
-my $morphoLM = LanguageModel::MorphoLM->new();
-
 use Treex::Tool::Lexicon::Generation::CS;
-my $generator = Treex::Tool::Lexicon::Generation::CS->new();
+
+my ($generator, $morphoLM);
+
+sub process_start {
+    my $self  = shift;
+    $generator = Treex::Tool::Lexicon::Generation::CS->new();
+    $morphoLM = LanguageModel::MorphoLM->new();
+
+    return;
+}
 
 # this sub is to be to be redefined in child module
 sub fix {
-    die 'abstract sub fix() called';
+    croak 'abstract sub fix() called';
 
+=item
     #sample of body of sub fix:
 
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
@@ -31,6 +40,7 @@ sub fix {
         $self->regenerate_node( $gov, $g->{tag} );
         $self->logfix2($dep);
     }
+=cut
 }
 
 sub process_zone {
@@ -77,8 +87,8 @@ sub logfix1 {
 
     if ( $gov && $dep ) {
 
-        #	my $distance = abs($gov->ord - $dep->ord);
-        #	warn "FIXDISTANCE: $distance\n";
+        # my $distance = abs($gov->ord - $dep->ord);
+        # warn "FIXDISTANCE: $distance\n";
 
         #original words pair
         if ( $gov->ord < $dep->ord ) {
@@ -105,6 +115,8 @@ sub logfix1 {
     else {
         $logfixold = '(undefined node)';
     }
+
+    return;
 }
 
 sub logfix2 {
@@ -150,6 +162,8 @@ sub logfix2 {
             $logfixbundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
     }
+
+    return;
 }
 
 my %byt_forms = (
@@ -246,7 +260,7 @@ sub get_form {
     # if the tag is corrupt, it is usually a good idea not to try to
     # generate any form and to keep the current form unchanged
     #    if ( !$form && $lemma eq 'být' && $byt_forms{$tag} ) {
-    #	return $byt_forms{$tag};
+    #        return $byt_forms{$tag};
     #    }
 
     if ( !$form ) {
@@ -290,7 +304,7 @@ sub get_pair {
     # or probably better:
     # my ($parent) = $node->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
 
-    return undef if $parent->is_root;
+    return if $parent->is_root;
 
     my $d_tag = $node->tag;
     my $g_tag = $parent->tag;

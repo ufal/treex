@@ -10,8 +10,16 @@ sub get_required_share_files { return $MODEL; }
 my %pair_count;
 
 sub BUILD {
+    my $self = shift;
+
+    return;
+}
+
+sub process_start {
+    my $self = shift;
+
     my $filename = $ENV{TMT_ROOT} . '/share/' . $MODEL;
-    open my $F, '<:utf8', $filename or log_fatal "Can't open $filename: $!";
+    open my $F, '<:encoding(UTF8)', $filename or log_fatal "Can't open $filename: $!";
     my $skip_header = <$F>;    #skip header
     while (<$F>) {
 
@@ -20,6 +28,11 @@ sub BUILD {
         my ( $lemma1, $lemma2, $count ) = split /\t/, ( lc $_ );
         $pair_count{$lemma1}{$lemma2} += $count;    # summing up all lower/upper case combinations
     }
+    close $F;
+
+    $self->SUPER::process_start();
+
+    return;
 }
 
 sub process_atree {
@@ -45,8 +58,6 @@ sub process_atree {
 
             my ( $A_lemma, $B_lemma, $C_lemma ) =
                 map { lc( $_->lemma ) } ( $A, $B, $C );
-
-            my $predicted_parent;
 
             my $seen_first_pair  = $pair_count{$A_lemma}{$B_lemma} || 0;
             my $seen_second_pair = $pair_count{$A_lemma}{$C_lemma} || 0;
