@@ -38,7 +38,7 @@ sub process
         log_fatal "Memcached is not running";
     }
 
-    open(my $fh, "<", $file) or log_fatal $!;
+    open(my $fh, "<", $file) or log_fatal $! . " ($file)";
     while (<$fh>) {
         chomp;
 
@@ -46,11 +46,11 @@ sub process
             my @parts = split(/\t/);
             my $required_file = $ENV{TMT_ROOT} . "/share/" . $parts[1];
             my $class = "";
-            if ( $file =~ /\.maxent\./ ) {
+            if ( $required_file =~ /\.maxent\./ ) {
                 $class = 'TranslationModel::MaxEnt::Model';
-            } elsif ( $file =~ /\.nb\./ ) {
+            } elsif ( $required_file =~ /\.nb\./ ) {
                 $class = 'TranslationModel::NaiveBayes::Model';
-            } elsif ( $file =~ /\.static\./ ) {
+            } elsif ( $required_file =~ /\.static\./ ) {
                 $class = 'TranslationModel::Static::Model';
             } else {
                 log_warn "Unknown model file for $file\n";
@@ -72,7 +72,7 @@ sub missing
         log_fatal "Memcached is not running";
     }
 
-    open(my $fh, "<", $file) or log_fatal $!;
+    open(my $fh, "<", $file) or log_fatal $! . " ($file)";
     while (<$fh>) {
         chomp;
 

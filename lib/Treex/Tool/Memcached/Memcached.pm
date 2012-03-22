@@ -14,7 +14,7 @@ use TranslationModel::Static::Model;
 
 my $FLAG_MODEL_LOADED="__MODEL_LOADED__";
 
-my $MEMCACHED_DIR = $ENV{TMT_ROOT} . "/share/installed_tools/memcached/memcached-1.4.1";
+my $MEMCACHED_DIR = $ENV{TMT_ROOT} . "/share/installed_tools/memcached/memcached-1.4.13";
 my $DEFAULT_MEMORY = 10;
 
 =head2 start_memcached(memory = $DEFAULT_MEMORY)
@@ -35,7 +35,8 @@ sub start_memcached {
     my $server = get_memcached_hostname();
     if ( ! $server ) {
         log_info "Memached will be executed.\n";
-        system("qsubmit --jobname='memcached' --mem=${memory}G 'cd $MEMCACHED_DIR; ./memcached -m $memcached_memory");
+        `qsubmit --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
+        sleep 5;
         return 1;
     } else {
         log_info "Memached is already executed at $server.\n";
@@ -59,7 +60,7 @@ sub stop_memcached {
             return 0;
         }
         $lines[0] =~ /^([0-9]+)/;
-        system("qdel -j $1");
+        `qdel -j $1`;
         print STDERR "Memcached will be stopped.\n";
         return 1;
     }
