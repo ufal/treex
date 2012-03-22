@@ -79,8 +79,8 @@ sub missing
         if ( /(TrFAddVariants|TrLAddVariants)/ ) {
             my @parts = split(/\t/);
             my $required_file = $ENV{TMT_ROOT} . "/share/" . $parts[1];
-            if ( Treex::Tool::Memcached::Memcached::contains($required_file) ) {
-                print $file, "\n";
+            if ( ! Treex::Tool::Memcached::Memcached::contains($required_file) ) {
+                print $required_file, "\n";
             }
         }
     }
