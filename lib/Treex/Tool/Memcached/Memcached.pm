@@ -36,7 +36,7 @@ sub start_memcached {
     if ( ! $server ) {
         log_info "Memached will be executed.\n";
         `qsubmit --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
-        sleep 5;
+        sleep 2;
         return 1;
     } else {
         log_info "Memached is already executed at $server.\n";
