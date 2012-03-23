@@ -15,9 +15,11 @@ my $pleon_path_cs = 'it_pleon_cs.ls';
 
 my $impersonal_verbs = 'jednat_se|pršet|zdát_se|dařit_se|oteplovat_se|ochladit_se|stát_se|záležet';
 my $modal_adjs = 'possible|clear|certain|definite|probable|important|imperative|necessary|useful|easy|hard';
-my $to_clause_verbs = 'be|s|take|make';
+my $to_clause_verbs = 'be|s|become|make|take';
+my $to_clause_verbs_pat = 'make|take';
+my $be_verbs = 'be|s|become';
 my $cog_ed_verbs = 'think|believe|recommend|say|note';
-my $cog_verbs = 'seem|appear|mean|follow';
+my $cog_verbs = 'seem|appear|mean|follow|matter';
 
 my ($correct_sum, $eval_sum, $total_sum) = (0, 0 ,0);
 
@@ -212,22 +214,6 @@ sub analyze_en {
 #     close(PLEON);
     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
     print "\n";
-}
-
-sub get_en_it_total_sum {
-    my ( $en_tree ) = @_;
-    my $total_sum = 0;
-    foreach my $t_node ( $en_tree->get_descendants ) {
-        if ( grep { $_->lemma eq "it"
-                and $_->afun =~ /^Sb/
-            } $t_node->get_aux_anodes
-            and ($t_node->gram_sempos || "") eq "v"
-            and not $t_node->is_generated
-        ) {
-            $total_sum++;
-        }
-    }
-    return $total_sum;
 }
 
 sub en_has_ACT {
@@ -557,20 +543,53 @@ sub has_v_to_inf {
 #         foreach my $pat ( @pats ) {
 #             push @echildren, $pat->get_echildren( { or_topological => 1 } );
 #         }
-        return 1 if ( grep { $_->formeme =~ /^v:.*to\+inf$/ } @echildren);
+        return 1 if ( grep { $_->formeme =~ /^v:.*to\+inf$/ } @echildren );
+    }
+    return 0;
+}
+
+# error case: make it <adj/noun> + <inf>: it is a child of <adj/noun> or <inf>
+# looks for the word that precede it in the surface sentence, if it's make/take and has inf among children
+sub has_v_to_inf_err {
+    my ( $t_it, $t_tree ) = @_;
+    my $a_it = $t_it->get_lex_anode;
+    if ( $a_it ) {
+        my $a_ord = $a_it->ord - 1;
+        my ($precendant) = grep { $_->get_lex_anode and $_->get_lex_anode->ord == $a_ord } $t_tree->get_descendants;
+        if ( $precendant 
+            and $precendant->t_lemma =~ /^($to_clause_verbs_pat)$/
+            and grep { $_->formeme =~ /^v:.*to\+inf$/ } $precendant->get_echildren( { or_topological => 1 } )
+        ) {
+            return 1;
+        }
     }
     return 0;
 }
 
 sub is_be_adj {
     my ( $verb ) = @_;
-    if ( $verb->t_lemma =~ /^(be|s)$/ ) {
+    if ( $verb->t_lemma =~ /^($be_verbs)$/ ) {
         my @echildren = $verb->get_echildren( { or_topological => 1 } );
         my @pats = grep { $_->functor eq "PAT" and $_->formeme eq "adj:compl" } @echildren;
         foreach my $pat ( @pats ) {
             push @echildren, $pat->get_echildren( { or_topological => 1 } );
         }
         if ( @pats and grep { $_->formeme =~ /^v:.*fin$/ } @echildren) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub is_be_adj_err {
+    my ( $verb ) = @_;
+    if ( $verb->t_lemma =~ /^($be_verbs)$/ ) {
+        my @echildren = $verb->get_echildren( { or_topological => 1 } );
+        my @pats = grep { $_->functor eq "PAT" and $_->formeme =~ /^(adj:compl|n:obj)$/ } @echildren;
+        foreach my $pat ( @pats ) {
+            push @echildren, $pat->get_echildren( { or_topological => 1 } );
+        }
+        if ( @pats and grep { $_->formeme =~ /^v:/ } @echildren) {
             return 1;
         }
     }
@@ -597,15 +616,10 @@ sub is_seem {
     ) ? 1 : 0;
 }
 
-sub has_cs_to {
-    my ( $cs_node ) = @_;
-    return ( $cs_node->t_lemma eq "to" ) ? 1 : 0;
-}
-
 sub has_cs_ACT_clause {
     my ( $en_verb, $cs_verb ) = @_;
     return (
-        $en_verb->t_lemma =~ /^(be|s)$/
+        $en_verb->t_lemma =~ /^($be_verbs)$/
         and grep { $_->formeme =~ /^v:.*fin$/
             and $_->functor eq "ACT"
         } $cs_verb->get_echildren( { or_topological => 1 } )
@@ -635,14 +649,334 @@ sub find_short_sentences {
 sub is_cog_verb {
     my ( $verb ) = @_;
     return ( 
-        ($verb->get_lex_anode 
+        ( $verb->t_lemma =~ /^($cog_ed_verbs)$/
+            and $verb->get_lex_anode 
             and $verb->get_lex_anode->tag eq "VBN" 
-            and $verb->t_lemma =~ /^($cog_ed_verbs)$/)
+        )
         or $verb->t_lemma =~ /^($cog_verbs)$/
     ) ? 1 : 0;
 }
 
+# error case: it can be said: be -> {it, say}
+sub is_cog_ed_verb_err {
+    my ( $verb ) = @_;
+    return ( 
+        $verb->t_lemma =~ /^(be|s)$/
+        and grep { $_->t_lemma =~ /^($cog_ed_verbs)$/ } $verb->get_echildren( { or_topological => 1 } )
+    ) ? 1 : 0;
+}
+
+# English "it's" has a Czech equivalent "to"
+sub has_cs_to {
+    my ( $verb, $t_to ) = @_;
+    return ( 
+        $verb->t_lemma =~ /^($be_verbs)$/ 
+        and $t_to 
+        and $t_to->t_lemma eq "ten" 
+        and $t_to->get_lex_anode 
+        and $t_to->get_lex_anode->lemma eq "to"  
+    ) ? 1 : 0;
+}
+
+
+sub get_en_it_total_sum {
+    my ( $en_tree ) = @_;
+    my $total_sum = 0;
+    foreach my $t_node ( $en_tree->get_descendants ) {
+        my $is_pleon = ( grep { $_->lemma eq "it"
+                and $_->afun =~ /^Sb/
+            } $t_node->get_aux_anodes
+            and ($t_node->gram_sempos || "") eq "v"
+            and not $t_node->is_generated 
+        );
+        my $is_non_anaph = ( $t_node->get_lex_anode 
+            and $t_node->get_lex_anode->lemma eq "it" 
+            and not $t_node->get_coref_nodes 
+            and $t_node->get_lex_anode->afun =~ /^Sb/
+        );
+        if ( $is_non_anaph ) {
+            my ($verb) = $t_node->get_eparents( { or_topological => 1 } );
+            if ( not ( ($verb->gram_sempos || "") eq "v"
+                    and not $verb->is_generated ) 
+            ) {
+                $is_non_anaph = 0;
+            }
+        }
+#         if ( $is_pleon ) {
+        if ( $is_pleon or $is_non_anaph ) {
+            $total_sum++;
+        }
+    }
+    return $total_sum;
+}
+
+sub get_non_ref_it_total {
+    my ( $en_tree ) = @_;
+    my $total_sum = 0;
+    foreach my $t_node ( $en_tree->get_descendants ) {
+        my $is_pleon = ( grep { $_->lemma eq "it"
+            } $t_node->get_aux_anodes
+        );
+        my $is_non_anaph = ( $t_node->get_lex_anode 
+            and $t_node->get_lex_anode->lemma eq "it" 
+            and not $t_node->get_coref_nodes 
+        );
+        if ( $is_pleon or $is_non_anaph ) {
+            $total_sum++;
+        }
+    }
+    return $total_sum;
+}
+
+# NADA + rule-based postprocessing
+# tests NADA, error analysis
 sub test_en_it_linked {
+    my ( $gold_tree, $autom_tree, $autom_cs_tree ) = @_;
+    my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
+    my %en2cs_node = get_en2cs_links($autom_cs_tree);
+    my @eval_verbs;
+
+    $total_sum += get_non_ref_it_total($gold_tree);
+    foreach my $t_node ( $autom_tree->get_descendants ) {
+        my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_lex_anode;
+        if ( $a_it ) {
+            my ($verb) = grep { ($_->gram_sempos || "") eq "v" } $t_node->get_eparents( { or_topological => 1} );
+            if ( $verb
+                and (
+                    not $t_node->wild->{"referential"}
+                    or ( 
+                        has_v_to_inf($verb)
+                        or is_be_adj($verb)
+                        or is_cog_verb($verb)
+#                         or has_v_to_inf_err($t_node, $autom_tree)
+#                         or is_be_adj_err($verb)
+#                         or is_cog_ed_verb_err($verb)
+#                         or has_cs_to($verb, $en2cs_node{$t_node})
+                    ) 
+                )
+            ) {
+                $eval_sum++;
+                push @eval_verbs, $verb;
+                my $gold_verb = $autom2gold_node{$verb};
+                if ( $gold_verb ) {
+                    my @echildren = $gold_verb->get_echildren( { or_topological => 1 } );
+                    my $has_non_anaph = grep { $_->get_lex_anode and $_->get_lex_anode->lemma eq "it" and not $_->get_coref_nodes } @echildren;
+                    my $has_pleon = grep { $_->lemma eq "it" } ($gold_verb->get_aux_anodes, map { $_->get_aux_anodes } @echildren);
+                    if ( $has_non_anaph or $has_pleon ) {
+                        $correct_sum++;
+                    }
+                    else {
+    #                         print $verb->get_address . "\n";
+                    }
+                }
+            }
+            elsif ( not $t_node->wild->{"referential"} ) {
+                $eval_sum++;
+                my ($epar) = $t_node->get_eparents( { or_topological => 1 } );
+                my $gold_epar = $autom2gold_node{$epar} if ( $epar );
+                if ( $gold_epar ) {
+                    my @echildren = $gold_epar->get_echildren( { or_topological => 1 } );
+                    my $has_non_anaph = grep { $_->get_lex_anode and $_->get_lex_anode->lemma eq "it" and not $_->get_coref_nodes } @echildren;
+                    my $has_pleon = grep { $_->lemma eq "it" } ($gold_epar->get_aux_anodes, map { $_->get_aux_anodes } @echildren);
+                    if ( $has_non_anaph or $has_pleon ) {
+                        $correct_sum++;
+                    }
+                }
+            }
+        }
+    }
+# #     debug
+#     foreach my $t_node ( $gold_tree->get_descendants ) {
+#         my $is_pleon = ( grep { $_->lemma eq "it"
+#             } $t_node->get_aux_anodes
+#         );
+#         my $is_non_anaph = ( $t_node->get_lex_anode 
+#             and $t_node->get_lex_anode->lemma eq "it" 
+#             and not $t_node->get_coref_nodes 
+#         );
+#         if ( $is_pleon or $is_non_anaph ) {
+#             my ($autom_verb, $autom_parent_verb);
+#             if ( $is_non_anaph ) {
+#                 my $autom_it = get_aligned_node($t_node);
+#                 ($autom_verb) = $autom_it->get_eparents( { or_topological => 1 } ) if ( $autom_it );
+#                 ($autom_parent_verb) = $autom_verb->get_eparents( { or_topological => 1 } ) if ( $autom_verb );
+#             }
+#             else {
+#                 $autom_verb = get_aligned_node($t_node);
+#                 my ($par) = $t_node->get_eparents( { or_topological => 1 } );
+#                 $autom_parent_verb = get_aligned_node($par) if ( $par );
+#                 
+#             }
+#             if ( $is_non_anaph ) {
+#                 if ( $autom_verb and not grep { $_ eq $autom_verb} @eval_verbs ) {
+#                     if ( $autom_parent_verb and not grep { $_ eq $autom_parent_verb } @eval_verbs ) {
+#                         print $autom_verb->get_address . "\n";
+#                     }
+#                 }
+#             }
+#         }
+#     }
+}
+
+# tests NADA
+sub test_en_it_linked_NADA {
+    my ( $gold_tree, $autom_tree, $autom_cs_tree ) = @_;
+    my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
+    my %en2cs_node = get_en2cs_links($autom_cs_tree);
+    my @eval_verbs;
+
+    $total_sum += get_non_ref_it_total($gold_tree);
+    foreach my $t_node ( $autom_tree->get_descendants ) {
+        my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_lex_anode;
+        if ( $a_it and not $t_node->wild->{referential} ) {
+            my ($verb) = grep { ($_->gram_sempos || "") eq "v" } $t_node->get_eparents( { or_topological => 1} );
+            if ( $verb ) {
+                $eval_sum++;
+                push @eval_verbs, $verb;
+                my $gold_verb = $autom2gold_node{$verb};
+                if ( $gold_verb ) {
+                    my @echildren = $gold_verb->get_echildren( { or_topological => 1 } );
+                    my $has_non_anaph = grep { $_->get_lex_anode and $_->get_lex_anode->lemma eq "it" and not $_->get_coref_nodes } @echildren;
+                    my $has_pleon = grep { $_->lemma eq "it" } ($gold_verb->get_aux_anodes, map { $_->get_aux_anodes } @echildren);
+                    my @anodes = ($gold_verb->get_aux_anodes, map { $_->get_aux_anodes } @echildren);
+                    if ( $has_non_anaph or $has_pleon ) {
+                        $correct_sum++;
+                    }
+                    else {
+    #                         print $verb->get_address . "\n";
+                    }
+                }
+            }
+        }
+    }
+#     debug
+#     foreach my $t_node ( $gold_tree->get_descendants ) {
+#         my $is_pleon = ( grep { $_->lemma eq "it"
+#             } $t_node->get_aux_anodes
+#         );
+#         my $is_non_anaph = ( $t_node->get_lex_anode 
+#             and $t_node->get_lex_anode->lemma eq "it" 
+#             and not $t_node->get_coref_nodes 
+#         );
+#         if ( $is_pleon or $is_non_anaph ) {
+#             my ($autom_verb, $autom_parent_verb);
+#             if ( $is_non_anaph ) {
+#                 my $autom_it = get_aligned_node($t_node);
+#                 ($autom_verb) = $autom_it->get_eparents( { or_topological => 1 } ) if ( $autom_it );
+#                 ($autom_parent_verb) = $autom_verb->get_eparents( { or_topological => 1 } ) if ( $autom_verb );
+#             }
+#             else {
+#                 $autom_verb = get_aligned_node($t_node);
+#                 my ($par) = $t_node->get_eparents( { or_topological => 1 } );
+#                 $autom_parent_verb = get_aligned_node($par) if ( $par );
+#                 
+#             }
+#             if ( $autom_verb and not grep { $_ eq $autom_verb} @eval_verbs ) {
+#                 if ( $autom_parent_verb and not grep { $_ eq $autom_parent_verb } @eval_verbs ) {
+#                     print $autom_verb->get_address . "\n";
+#                 }
+#             }
+#         }
+#     }
+}
+
+sub test_en_it_linked_nada_specialized {
+    my ( $gold_tree, $autom_tree, $autom_cs_tree ) = @_;
+    my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
+    my %en2cs_node = get_en2cs_links($autom_cs_tree);
+    my @eval_verbs;
+    $total_sum += get_en_it_total_sum($gold_tree);
+    foreach my $t_node ( $autom_tree->get_descendants ) {
+        my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_lex_anode;
+#         na automatickych datech maji vsechna it uzel #PersPron, nejsou nikama schovana!
+#         my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_anodes;
+        if ( $a_it 
+            and $a_it->afun =~ /^Sb/
+        ) {
+#             print $t_node->get_address . "\n";
+            my $verb;
+            if ( $t_node->t_lemma ne "#PersPron" ) {
+                $verb = $t_node;
+#                 $total_sum++;
+            }
+            else {
+                ($verb) = $t_node->get_eparents( { or_topological => 1} );
+            }
+            if ( $verb
+                and ($verb->gram_sempos || "") eq "v" 
+                and (
+                    not $t_node->wild->{"referential"}
+                    or ( 
+                        has_v_to_inf($verb)
+                        or is_be_adj($verb)
+                    ) 
+#                     or ( grep { ($_->gram_sempos || "") eq "v" } $verb->get_echildren( { or_topological => 1} ) ) 
+                )
+            ) {
+#                 print $t_node->get_address . "\n";
+                push @eval_verbs, $verb;
+                $eval_sum++;
+                my $gold_verb = $autom2gold_node{$verb};
+                if ( $gold_verb ) {
+#                     if ( $gold_verb->id eq "EnglishT-wsj_1102-s17-t10" ) {
+#                         print "tady jsme\n";
+#                     }
+                    my @echildren = $gold_verb->get_echildren( { or_topological => 1 } );
+                    my ($non_pleon_it) = grep { $_->t_lemma eq "#PersPron" and $_->get_lex_anode and $_->get_lex_anode->lemma eq "it" } @echildren;
+                    my @anodes = ($gold_verb->get_aux_anodes, map { $_->get_aux_anodes } @echildren);
+#                     print join "\t", map { $_->form } @anodes;
+#                     print "\n";
+                    if ( grep { $_->lemma eq "it" } @anodes 
+                        or ( $non_pleon_it and not $non_pleon_it->get_coref_nodes ) 
+                    ) {
+                        $correct_sum++;
+                    }
+                    else {
+#                         print $verb->get_address . "\n";
+                    }
+                }
+            }
+        }
+    }
+
+    foreach my $t_node ( $gold_tree->get_descendants ) {
+        my $is_pleon = ( grep { $_->lemma eq "it"
+                and $_->afun =~ /^Sb/
+            } $t_node->get_aux_anodes
+            and ($t_node->gram_sempos || "") eq "v"
+            and not $t_node->is_generated );
+        my $is_non_anaph = ( $t_node->get_lex_anode 
+            and $t_node->get_lex_anode->lemma eq "it" 
+            and not $t_node->get_coref_nodes 
+            and $t_node->get_lex_anode->afun =~ /^Sb/ 
+            and ($t_node->gram_sempos || "") eq "v"
+            and not $t_node->is_generated );
+        if ( $is_non_anaph ) {
+            my ($verb) = $t_node->get_eparents( { or_topological => 1 } );
+            if ( not ( ($verb->gram_sempos || "") eq "v"
+                    and not $verb->is_generated ) 
+            ) {
+                $is_non_anaph = 0;
+            }
+        }
+        if ( $is_pleon or $is_non_anaph ) {
+            my ($verb) = $t_node->get_eparents( { or_topological => 1 } );
+            $verb = $t_node if ( $is_pleon );
+            my $autom_verb = get_aligned_node($verb);
+            if ( $autom_verb and not grep { $_ eq $autom_verb} @eval_verbs ) {
+                my ($parent) = $autom_verb->get_eparents( { or_topological => 1 } );
+                if ( $parent and not grep { $_ eq $parent } @eval_verbs ) {
+                    print $autom_verb->get_address . "\n";
+                }
+            }
+        }
+    }
+
+#     print "$correct_sum\t$eval_sum\t$total_sum\n";
+}
+
+
+sub test_en_it_linked_without_nada {
     my ( $gold_tree, $autom_tree, $autom_cs_tree ) = @_;
     my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
     my %en2cs_node = get_en2cs_links($autom_cs_tree);
@@ -730,7 +1064,7 @@ sub test_en_it_linked {
 #                 print "\n";
                 my $gold_verb = $autom2gold_node{$verb};
                 if ( $gold_verb ) {
-                    my @anodes = $gold_verb->get_aux_anodes, map { $_->get_aux_anodes } $gold_verb->get_echildren( { or_topological => 1 } );
+                    my @anodes = ($gold_verb->get_aux_anodes, map { $_->get_aux_anodes } $gold_verb->get_echildren( { or_topological => 1 } ));
                     if ( grep { $_->lemma eq "it" } @anodes ) {
                         $correct_sum++;
 #                         if ( $verb->t_lemma =~ /^(be|s)$/ and grep { $_->formeme =~ /^v:.*fin/ } $verb->get_echildren( { or_topological => 1 } ) ) {
@@ -946,13 +1280,13 @@ sub test_cs_it_linked {
             }
         }
     }
-    foreach my $gold_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $gold_tree->get_descendants ) {
-        my $autom_verb = get_aligned_node($gold_verb);
-        if ( $autom_verb and not grep { $_ eq $autom_verb } @eval_verbs ) {
-            print $autom_verb->get_address . "\n";
-        }
-    }
-#     print "$correct_sum\t$eval_sum\t$total_sum\n";
+#     foreach my $gold_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $gold_tree->get_descendants ) {
+#         my $autom_verb = get_aligned_node($gold_verb);
+#         if ( $autom_verb and not grep { $_ eq $autom_verb } @eval_verbs ) {
+#             print $autom_verb->get_address . "\n";
+#         }
+#     }
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
 
 # process PCEDT 2.0 linked manually and automatically annotated data
@@ -967,8 +1301,8 @@ sub process_bundle {
 
 #     test_it_en($gold_en_tree);
 #     test_it_cs($gold_cs_tree);
-    test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
-#     test_en_it_linked($gold_en_tree, $autom_en_tree, $autom_cs_tree);
+#     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
+    test_en_it_linked($gold_en_tree, $autom_en_tree, $autom_cs_tree);
 #     find_short_sentences($gold_en_tree);
 #     analyze_cs($gold_cs_tree, $gold_en_tree);
 #     analyze_en($gold_en_tree);
@@ -986,6 +1320,10 @@ sub process_bundle_manual {
     analyze_cs($cs_tree, $en_tree);
 #     test_it_en($en_tree);
 #     test_it_cs($cs_tree);
+}
+
+sub process_end {
+    print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
 
 1;
