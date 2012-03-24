@@ -20,6 +20,14 @@ has 'exo_as_pleo' => (
     documentation => "Treat non-anaphoric (e.g. exophoric) 'it' as pleonastic",
 );
 
+has 'ref_np_only' => (
+    is => 'ro',
+    isa => 'Bool',
+    required => 1,
+    default => 0,
+    documentation => "If enabled, 'it' is considere referential only if its antecedent is a semantic noun, otherwise all antecedents are permitted",
+);
+
 has 'verb_child' => (
     is => 'ro',
     isa => 'Bool',
@@ -155,6 +163,12 @@ sub _print_confusion_matrix {
     }
 }
 
+sub _is_ante_np {
+    my (@antes) = @_;
+    my @nouns = grep {defined $_->gram_sempos && ($_->gram_sempos =~ /^n/)} @antes;
+    return (@nouns > 0);
+}
+
 sub process_anode {
     my ($self, $ref_anode) = @_;
     my $conf_mat = $self->_confusion_matrix;
@@ -184,7 +198,7 @@ sub process_anode {
         my @antes_ref = $lex_tnode->get_coref_nodes;
 
         
-        if (@antes_ref == 0) {
+        if ((@antes_ref == 0) || ($self->ref_np_only && !_is_ante_np(@antes_ref))) {
             if ($is_ref_pred) {
                 $conf_mat->{'exo'}{'ref'}++;
             }

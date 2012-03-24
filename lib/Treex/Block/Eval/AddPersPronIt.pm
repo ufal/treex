@@ -768,7 +768,6 @@ sub is_non_ref {
                 }
             }
             $is_pleon = grep { $_ eq $gold_a_it } $t_node->get_aux_anodes;
-            my 
             return 1 if ( $is_non_anaph or $is_pleon );
         }
     }
