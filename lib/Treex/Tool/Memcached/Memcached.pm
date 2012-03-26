@@ -80,11 +80,13 @@ sub get_memcached_hostname {
     if (@lines) {
         my $server = "";
         while ( $server eq "" ) {
+            chomp $lines[0];
+            log_info $lines[0];
             $lines[0] =~ /all.q\@([^.]+)\..*/;
             $server = $1;
             if ( ! $server ) {
                 log_info "Waiting in queue...\n";
-                log_info $lines[0];
+                @lines = grep { /memcached/ } `qstat`;
                 sleep 5;
             }
         }
