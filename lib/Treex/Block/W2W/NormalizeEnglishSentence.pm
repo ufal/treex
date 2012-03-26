@@ -72,7 +72,7 @@ sub normalize_sentence {
       }
     }
 
-    print STDERR "FOO: $s\n";
+    # print STDERR "FOO: $s\n";
     $s =~ s/ n't / not /g;
 
     return $s;
