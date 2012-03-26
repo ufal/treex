@@ -2,13 +2,10 @@ package Treex::Block::Write::Arff;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::IO::Arff;
-use YAML::Tiny;
-use autodie;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::ArffWriting';
 
 #
 # DATA
@@ -18,162 +15,45 @@ has '+extension' => ( default => '.arff' );
 
 has '+language' => ( required => 1 );
 
-# ARFF data file structure as it's set in Treex::Tool::IO::Arff
-has '_arff' => ( is => 'ro', builder => '_init_arff', lazy_build => 1 );
-
-# Were the ARFF file headers already printed ?
-has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
-
-# Override the default data type settings
-has 'force_types' => ( is => 'ro', isa => 'HashRef' );
-
-# Override output attribute names
-has 'output_attrib_names' => ( is => 'ro', isa => 'HashRef' );
-
-# Read configuration from a file
-has 'config_file' => ( is => 'ro', isa => 'Str' );
-
 #
 # METHODS
 #
 
-override 'process_document' => sub {
+# Store node data from one tree as ARFF in a file
+sub _process_tree {
 
-    my $self = shift;
-    my ($document) = pos_validated_list(
-        \@_,
-        { isa => 'Treex::Core::Document' },
-    );
+    my ( $self, $tree ) = @_;
 
-    # _process_tree called here: store data
-    super;
+    # Get all needed informations for each node and save it to the ARFF storage
+    my @nodes   = $tree->get_descendants( { ordered => 1 } );
+    my $word_id = 1;
+    my $sent_id = $tree->get_document->file_stem . $tree->get_document->file_number . '##' . $tree->id;
 
+    foreach my $node (@nodes) {
+        $self->_push_node_to_output( $node, $sent_id, $word_id++ );
+    }
+
+    # prepare the headers for printing, if not done
     if ( !$self->_headers_printed ) {
-        $self->_arff->prepare_headers( $self->_arff->relation, 0, 1 );
+        $self->_arff_writer->prepare_headers( $self->_arff_writer->relation, 0, 1 );
     }
 
     # print out the data
-    $self->_arff->save_arff( $self->_arff->relation, $self->_file_handle, !$self->_headers_printed );
+    $self->_arff_writer->save_arff( $self->_arff_writer->relation, $self->_file_handle, !$self->_headers_printed );
 
     if ( !$self->_headers_printed ) {
         $self->_set_headers_printed(1);
     }
 
     # clear the data in memory
-    $self->_arff->relation->{records}           = [];
-    $self->_arff->relation->{data_record_count} = 0;
-};
-
-sub BUILDARGS {
-
-    my ( $class, $args ) = @_;
-
-    # try to read the configuration file, if applicable, and set the returned values
-    if ( $args->{config_file} ) {
-        ( $args->{attributes}, $args->{output_attrib_names}, $args->{force_types}, $args->{modifier_config} )
-            = _read_config_file( $args->{config_file} );
-    }
-
-    # build some values if they are not set as hash references in the configuration file
-    $args->{force_types}         = _parse_hashref( 'force_types',         $args->{force_types} );
-    $args->{output_attrib_names} = _parse_hashref( 'output_attrib_names', $args->{output_attrib_names} );
-
-    return $args;
-}
-
-# YAML configuration file reader
-sub _read_config_file {
-
-    my ($file_name) = @_;
-
-    my $cfg = YAML::Tiny->read($file_name);
-    log_fatal( 'Cannot read configuration file ' . $file_name ) if ( !$cfg );
-
-    $cfg = $cfg->[0];
-    my @sources = map { $_->{source} } @{ $cfg->{attributes} };
-    my %labels  = map { $_->{source} => $_->{label} ? [ split( /[\s,]+/, $_->{label} ) ] : undef } @{ $cfg->{attributes} };
-    my %types   = map { $_->{source} => $_->{type} ? [ split( /[\s,]+/, $_->{type} ) ] : undef } @{ $cfg->{attributes} };
-
-    return ( \@sources, \%labels, \%types, $cfg->{modifier_config} );
-}
-
-
-# Apply all attribute name overrides as specified in output_attrib_names
-around '_set_output_attrib' => sub {
-
-    my ( $set, $self, $output_attrib ) = @_;
-
-    my $over = $self->output_attrib_names;
-    my $orig = $self->_attrib_io;
-    my %ot   = ();
-
-    # build an override table: original name => overridden name
-    foreach my $in_attr ( keys %{$orig} ) {
-        foreach my $i ( 0 .. @{ $orig->{$in_attr} } - 1 ) {
-            $ot{ $orig->{$in_attr}->[$i] } = $over->{$in_attr} ? $over->{$in_attr}->[$i] : $orig->{$in_attr}->[$i];
-        }
-    }
-
-    # apply the override table
-    $output_attrib = [ map { $ot{$_} } @{$output_attrib} ];
-
-    $self->$set($output_attrib);
-    return;
-};
-
-
-# Store node data from one tree as ARFF
-sub _process_tree {
-
-    my ( $self, $tree ) = @_;
-
-    # Get all needed informations for each node and save it to the ARFF storage
-    my @nodes = $tree->get_descendants( { ordered => 1 } );
-    my $word_id = 1;
-    foreach my $node (@nodes) {
-
-        my $info = $self->_get_info_hash($node);
-
-        $info->{sent_id} = $tree->get_document->file_stem . $tree->get_document->file_number . '##' . $tree->id;
-        $info->{sent_id} =~ s/[-_]root$//;
-        $info->{word_id} = $word_id;
-
-        push( @{ $self->_arff->relation->{records} }, $info );
-        $word_id++;
-    }
+    $self->_arff_writer->relation->{records}           = [];
+    $self->_arff_writer->relation->{data_record_count} = 0;
 
     return 1;
 }
 
-# Initialize the ARFF I/O module
-sub _init_arff {
-
-    my ($self) = @_;
-    my $arff = Treex::Tool::IO::Arff->new();
-
-    $arff->relation->{relation_name} = $self->to ? $self->to : 'RELATION'; # TODO update this to use with new Writers
-    push( @{ $arff->relation->{attributes} }, { attribute_name => 'sent_id', attribute_type => 'STRING' } );
-    push( @{ $arff->relation->{attributes} }, { attribute_name => 'word_id', attribute_type => 'NUMERIC' } );
-
-    my $j = 0;
-
-    foreach my $attr ( @{ $self->attributes } ) {
-
-        foreach my $i ( 0 .. @{ $self->_attrib_io->{$attr} } - 1 ) {
-
-            my $attr_entry = {
-                'attribute_name' => $self->_output_attrib->[ $j++ ],
-                'attribute_type' => ( $self->force_types->{$attr} ? $self->force_types->{$attr}->[$i] : undef )
-            };
-
-            push @{ $arff->relation->{attributes} }, $attr_entry;
-        }
-    }
-
-    return $arff;
-}
-
 1;
+
 __END__
 
 =encoding utf-8
@@ -269,15 +149,12 @@ Optional: the output encoding, C<utf8> by default.
 
 =back
 
-=head1 TODO
-
-
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -114,17 +114,17 @@ has debug_mode => (
 
 =head1 FUNCTIONS
 
-=head2 load_arff
+=head2 load_arff( $arff_file )
 
-Get arff file path and load it in buffer
+Load ARFF data from a file or an open input handle (will not close the handle). 
 
 =cut
 
 sub load_arff {
-    my ( $self, $arff_file ) = @_;
-    my $status = q/normal/;
 
-    my $record_count    = 0;
+    my ( $self, $arff_file ) = @_;
+    my $status = 'header';
+
     my $attribute_count = 0;
     my $line_counter    = 1;
     my $relation        = $self->relation;
@@ -146,42 +146,29 @@ sub load_arff {
         $current_line =~ s/^\s+//;
         $current_line =~ s/\s*\r?\n?$//;
 
-        #Check for comments
-        if ( $current_line =~ /^\s*%/i )
-        {
-            $status = q/comment/;
+        # comments (skip)
+        if ( $current_line =~ /^\s*%/i ) { 
         }
-        elsif ( $current_line =~ /^\s*\@RELATION\s+(\S*)/i )
-        {
+        # relation name
+        elsif ( $current_line =~ /^\s*\@RELATION\s+(\S*)/i ) {
             $relation->{relation_name} = $1;
         }
-        elsif ( $current_line =~ /^\s*\@ATTRIBUTE\s+(\S*)\s+(\S.*)\s*$/i )
-        {
+        # attribute definitions 
+        elsif ( $current_line =~ /^\s*\@ATTRIBUTE\s+(\S*)\s+(\S.*)\s*$/i ) {
+            
             if ( !$relation->{attributes} ) {
                 $relation->{attributes} = [];
             }
-
-            #log_msg(Dumper $attribute);
-
             push @{ $relation->{"attributes"} }, { "attribute_name" => $1, "attribute_type" => $2 };
             $attribute_count++;
         }
-        elsif ( $current_line =~ /^\s*\@DATA(\.*)/i )
-        {
-            $status = q/data/;
+        # data start
+        elsif ( $current_line =~ /^\s*\@DATA(\.*)/i ) {
+            $status = 'data';
         }
-        elsif ( $status eq q/data/ && $current_line ne q// ) {
-            if ( !$relation->{"records"} ) {
-                $relation->{"records"} = [];
-            }
-
-            #log_msg("extracting data $current_line");
-            my ($cur_record) = $self->_parse_line( $line_counter, $current_line );
-
-            if ($cur_record) {
-                push @{ $relation->{"records"} }, $cur_record;
-                $record_count++;
-            }
+        # data lines
+        elsif ( $status eq 'data' && $current_line ne '' ) {
+            $self->add_data_line( $line_counter, $current_line );
         }
         $line_counter++;
     }
@@ -189,7 +176,6 @@ sub load_arff {
         close($io);
     }
 
-    $relation->{"data_record_count"} = $record_count;
     $relation->{"attribute_count"}   = $attribute_count;
 
     if ( $self->debug_mode ) { 
@@ -199,9 +185,45 @@ sub load_arff {
         print STDERR "$arff_file loaded with " . $self->error_count . " error(s).\n";
         print STDERR "Buffer size: " . total_size($relation) . " bytes\n";
     }
-    $self->relation($relation);
     return $relation;
 }
+
+=head2 add_data_line( $line_counter, $line_text )
+
+Add one data line in ARFF format to the current relation (must conform to the header format).
+
+=cut
+
+sub add_data_line {
+
+    my ( $self, $line_counter, $line ) = @_;
+    my $relation = $self->relation;
+            
+    if ( !$relation->{'records'} ) {
+        $relation->{'records'} = [];
+        $relation->{'data_record_count'} = 0;
+    }
+    
+    #log_msg("extracting data $current_line");
+    my ($cur_record) = $self->_parse_line( $line_counter, $line );
+
+    if ($cur_record) {
+        push @{ $relation->{"records"} }, $cur_record;
+        $relation->{'data_record_count'}++;
+    }
+}
+
+
+# Clear all records 
+sub clear_data {
+    
+    my ( $self ) = @_;
+    my $relation = $self->relation;
+    
+    $relation->{'data_record_count'} = 0;
+    $relation->{'records'} = [];
+}
+
 
 # Parse an ARFF data line, return all fields it contains. Both single and double quotes
 # are allowed, unquoted quotation marks are treated as missing values.
@@ -303,6 +325,104 @@ sub _zero_fill {
     return;
 }
 
+=head2 save_arff( $arff_relation, $file, $print_headers = 1 )
+
+Save the given buffer into an ARFF file (or an open file handle).
+
+=cut
+
+sub save_arff {
+
+    my ( $self, $buffer, $arff_file, $print_headers ) = @_;
+    my $io;
+
+    if ( !defined($print_headers) ) {
+        $print_headers = 1;
+    }
+
+    if ( !ref($arff_file) ) {
+        open( $io, '>utf8', $arff_file );
+    }
+    else {
+        $io        = $arff_file;
+        $arff_file = '<HANDLE>';
+    }
+
+    my $record_count = 0;
+
+    if ( $self->debug_mode ) {
+        print STDERR "Writing buffer ...\n";
+    }
+
+    if ($print_headers) {
+        if ( $buffer->{relation_name} ) {
+            print {$io} q/@RELATION / . $buffer->{relation_name} . "\n";
+        }
+        print {$io} "\n\n";
+    }
+
+    if ( $buffer->{attributes} ) {
+
+        if ($print_headers) {
+            foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
+                print {$io} q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
+            }
+            print {$io} "\n\n";
+            print {$io} "\@DATA\n\n";
+        }
+
+        if ( $buffer->{records} ) {
+            
+            my @lines = $self->get_data_lines($buffer);
+            
+            foreach my $line (@lines){
+                print {$io} $line, "\n";
+                $record_count++;
+            }
+        }
+    }
+    if ( $arff_file ne '<HANDLE>' ) {
+        close($io);
+    }
+
+    if ( $self->debug_mode ) {
+        eval("use Devel::Size qw(size total_size)");
+
+        print STDERR "Buffer saved to $arff_file with " . $self->error_count . " error(s).\n";
+        print STDERR "Buffer size: " . total_size($buffer) . " bytes\n";
+        print STDERR "Data rows count: " . $record_count . "\n";
+    }
+
+    return 1;
+}
+
+=head2 save_arff( $arff_relation )
+
+Return an array of ARFF format data lines, given a relation object.
+
+=cut
+sub get_data_lines {
+    
+    my ($self, $buffer) = @_;
+    my @lines;
+
+    foreach my $record ( @{ $buffer->{"records"} } ) {
+        my @record_fields = ();
+        foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
+
+            if ( defined( $record->{ $attribute->{attribute_name} } ) ) {
+                push @record_fields, $record->{ $attribute->{attribute_name} };
+            }
+            else {
+                push @record_fields, undef;
+            }
+        }
+
+        push @lines, $self->_compose_line(@record_fields);
+    }
+    return @lines;    
+}
+
 # Compose an ARFF data line out of given fields. Quote any fields that might need it,
 # save undefined fields as unquoted quotation marks.
 sub _compose_line {
@@ -328,85 +448,6 @@ sub _compose_line {
     return substr( $line, 0, length($line) - 1 );                      # leave last comma out
 }
 
-=head2 save_arff
-
-Save given buffer into the .arff formatted file. 
-
-=cut
-
-sub save_arff {
-    my ( $self, $buffer, $arff_file, $print_headers ) = @_;
-    my $io;
-
-    if ( !defined($print_headers) ) {
-        $print_headers = 1;
-    }
-
-    if ( !ref($arff_file) ) {
-        open( $io, '>utf8', $arff_file );
-    }
-    else {
-        $io        = $arff_file;
-        $arff_file = '<HANDLE>';
-    }
-
-    my $record_count = 0;
-
-    if ( $self->debug_mode ) {
-        print STDERR "Writing buffer ...\n";
-    }
-
-    if ($print_headers) {
-        if ( $buffer->{relation_name} )
-        {
-            print {$io} q/@RELATION / . $buffer->{relation_name} . "\n";
-        }
-        print {$io} "\n\n";
-    }
-
-    if ( $buffer->{attributes} ) {
-
-        if ($print_headers) {
-            foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
-                print {$io} q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
-            }
-            print {$io} "\n\n";
-            print {$io} "\@DATA\n\n";
-        }
-
-        if ( $buffer->{records} ) {
-
-            foreach my $record ( @{ $buffer->{"records"} } ) {
-                my @record_fields = ();
-                foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
-
-                    if ( defined( $record->{ $attribute->{attribute_name} } ) ) {
-                        push @record_fields, $record->{ $attribute->{attribute_name} };
-                    }
-                    else {
-                        push @record_fields, undef;
-                    }
-                }
-
-                print {$io} $self->_compose_line(@record_fields) . "\n";
-                $record_count++;
-            }
-        }
-    }
-    if ( $arff_file ne '<HANDLE>' ) {
-        close($io);
-    }
-
-    if ( $self->debug_mode ) {
-        eval("use Devel::Size qw(size total_size)");
-
-        print STDERR "Buffer saved to $arff_file with " . $self->error_count . " error(s).\n";
-        print STDERR "Buffer size: " . total_size($buffer) . " bytes\n";
-        print STDERR "Data rows count: " . $record_count . "\n";
-    }
-
-    return 1;
-}
 
 =head2 prepare_headers
 

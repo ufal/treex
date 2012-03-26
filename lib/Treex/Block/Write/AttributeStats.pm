@@ -6,7 +6,8 @@ use autodie;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::AttributeParameterized';
 with 'Treex::Block::Print::Overall';
 
 has '+extension' => ( default => '.tsv' );

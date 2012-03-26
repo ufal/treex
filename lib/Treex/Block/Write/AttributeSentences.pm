@@ -5,7 +5,8 @@ use Treex::Core::Common;
 use autodie;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::AttributeParameterized';
 
 has '+language' => ( required => 1 );
 
@@ -61,7 +62,8 @@ Treex::Block::Write::AttributeSentences
 
 This prints the values of the selected attributes for all nodes in a tree, one sentence per line. 
 
-For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
+For multiple-valued attributes (lists) and dereferencing attributes, please see 
+L<Treex::Block::Write::AttributeParameterized>. 
 
 =head1 ATTRIBUTES
 

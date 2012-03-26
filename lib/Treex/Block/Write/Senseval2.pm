@@ -5,7 +5,8 @@ use Treex::Core::Common;
 use autodie;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::AttributeParameterized';
 
 has '+language' => ( required => 1 );
 
@@ -78,7 +79,8 @@ The selected language. This parameter is required.
 
 A space-separated list of attributes whose values should be printed for the individual nodes. This parameter is required.
 
-For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
+For multiple-valued attributes (lists) and dereferencing attributes, please see 
+L<Treex::Block::Write::AttributeParameterized>. 
 
 =item C<layer>
 

@@ -6,7 +6,8 @@ use autodie;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::AttributeParameterized';
 
 has '+language' => ( required => 1 );
 
@@ -114,7 +115,8 @@ and is basically very similar.
 The main distinction is that this writer also provides
 access to attributes of nodes aligned to the nodes being processed.
 
-For multiple-valued attributes (lists) and dereferencing attributes, please see L<Treex::Block::Write::LayerAttributes>. 
+For multiple-valued attributes (lists) and dereferencing attributes, please 
+see L<Treex::Block::Write::AttributeParameterized>. 
 
 =head1 ATTRIBUTES
 

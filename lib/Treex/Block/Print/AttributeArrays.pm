@@ -4,7 +4,8 @@ use Moose;
 use Treex::Core::Common;
 use autodie;
 
-with 'Treex::Block::Write::LayerAttributes';
+with 'Treex::Block::Write::LayerParameterized';
+with 'Treex::Block::Write::AttributeParameterized';
 
 
 has 'attr_sep' => ( isa => 'Str', is => 'ro', default => ' ' );
@@ -49,8 +50,9 @@ Treex::Block::Write::AttributeArrays
 
 =head1 DESCRIPTION
 
-This is a simple wrapper for L<Treex::Block::Write::LayerAttributes> which allows other blocks to gather arrays of 
-given attributes out of different zones and 
+This is a simple wrapper for the L<Treex::Block::Write::AttributeParameterized> and 
+L<Treex::Block::Write::LayerParameterized> roles which allow other blocks to gather arrays of 
+given attributes out of different zones and use them in some other way than printing alone. 
 
 =head1 ATTRIBUTES
 

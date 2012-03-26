@@ -176,8 +176,8 @@ The layer at which this block should be applied, e.g. C<t> or C<a>.
 
 The attributes to be measured (e.g. C<"tag lemma"> on the a-layer will measure tagging and lemmatizing accuracy).
 
-The list of attributes should be separated with commas or spaces. The L<Treex::Block::Write::LayerAttributes> role
-is used to gather the attribute values.
+The list of attributes should be separated with commas or spaces. The L<Treex::Block::Write::AttributeParameterized> 
+and L<Treex::Block::Write::LayerParameterized> roles are used to gather the attribute values.
 
 =item C<reference_selector>
 

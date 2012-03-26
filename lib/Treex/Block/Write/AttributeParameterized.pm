@@ -1,22 +1,38 @@
-package Treex::Block::Write::LayerAttributes;
+package Treex::Block::Write::AttributeParameterized;
 
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Log;
-use Treex::PML::Instance;
 use Readonly;
-
-requires '_process_tree';
 
 #
 # DATA
 #
 
-has 'layer' => ( isa => enum( [ 'a', 't', 'p', 'n' ] ), is => 'ro', required => 1 );
+# The list of attributes (including references etc.) to be processed
+subtype 'Treex::Block::Write::AttributeParameterized::AttributesList' => as 'ArrayRef';
+coerce 'Treex::Block::Write::AttributeParameterized::AttributesList' =>
+    from 'Str' => via { _split_csv_with_brackets($_) };
 
-has 'attributes' => ( isa => 'ArrayRef', is => 'ro', required => 1, builder => '_build_attributes', lazy_build => 1 );
+has 'attributes' => (
+    isa      => 'Treex::Block::Write::AttributeParameterized::AttributesList',
+    is       => 'ro',
+    required => 1,
+    coerce   => 1
+);
 
-has 'modifier_config' => ( isa => 'HashRef', is => 'ro' );
+# Configuration for attribute modifiers
+subtype 'Treex::Block::Write::AttributeParameterized::ModifierConfig' => as 'HashRef';
+coerce 'Treex::Block::Write::AttributeParameterized::ModifierConfig' =>
+    from 'Undef' => via { return {} },
+    from 'Str' => via { _parse_modifier_config($_) },
+    from 'HashRef' => via { _parse_modifier_config($_) };
+
+has 'modifier_config' => (
+    isa    => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
+    is     => 'ro',
+    coerce => 1
+);
 
 # A list of output attributes, given all the modifiers are applied
 has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
@@ -33,22 +49,11 @@ has '_cache' => ( isa => 'HashRef', is => 'ro', writer => '_set_cache' );
 # METHODS
 #
 
-# Parse the attribute list given in parameters.
-sub _parse_attributes {
-
-    my ($value) = @_;
-
-    if ( ref $value eq 'ARRAY' ) {
-        return $value;
-    }
-    return _split_csv_with_brackets($value);
-}
-
 # Parse the text modifier settings (Perl code given in a parameter that must return a hashref)
 sub _parse_modifier_config {
 
     my ($value) = @_;
-    $value = _parse_hashref( 'modifier_config', $value );
+    $value = _parse_hashref( $value );
 
     foreach my $key ( keys %{$value} ) {
 
@@ -60,18 +65,6 @@ sub _parse_modifier_config {
     return $value;
 }
 
-around 'BUILDARGS' => sub {
-    my ( $set, $self, $args ) = @_;
-
-    $self->$set($args);            # call the original BUILDARGS method
-
-    # parse the attributes list, attribute modifiers
-    $args->{modifier_config} = _parse_modifier_config( $args->{modifier_config} );
-    $args->{attributes}      = _parse_attributes( $args->{attributes} );
-
-    return $args;
-};
-
 # Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
 sub _parse_hashref {
 
@@ -80,10 +73,10 @@ sub _parse_hashref {
     return {} if ( !$hashref );
 
     if ( ref $hashref ne 'HASH' ) {
-        $hashref = eval $hashref || log_fatal('Cannot parse modifier configuration!');
+        $hashref = eval $hashref || log_fatal( 'Cannot parse the given hash reference: ' . $hashref );
 
         if ( ref $hashref ne 'HASH' ) {
-            log_fatal('Modifier configuration must be a hash reference!');
+            log_fatal( 'The given value must be a hash reference: ' + $hashref );
         }
     }
 
@@ -91,7 +84,7 @@ sub _parse_hashref {
 }
 
 # Build the output attributes
-sub BUILD {
+before 'BUILD' => sub {
 
     my ( $self, $args ) = @_;
     my @output_attr = ();
@@ -126,7 +119,7 @@ sub BUILD {
     $self->_set_output_attrib( \@output_attr );
 
     return;
-}
+};
 
 # Split space-or-comma separated values that may contain brackets with enclosed commas or spaces
 sub _split_csv_with_brackets {
@@ -142,20 +135,13 @@ sub _split_csv_with_brackets {
     return \@arr;
 }
 
-# the main method
-sub process_zone {
-
-    my ($self, $zone) = @_;    # pos_validated_list won't work here
-
-    if ( !$zone->has_tree( $self->layer ) ) {
-        log_fatal( 'No tree for ' . $self->layer . '-layer found.' );
-    }
-    my $tree = $zone->get_tree( $self->layer );
-
+# Clearing cache for each processed tree
+# Because of this modifier, LayerParameterized must be applied before AttributeParameterized
+before 'process_zone' => sub {
+    my ($self) = @_;
     $self->_set_cache( {} );
-    $self->_process_tree($tree);
-    return 1;
-}
+    return;
+};
 
 sub _get_function_pckg_args {
 
@@ -192,6 +178,7 @@ sub _get_modified {
         return \@vals;
     }
     else {
+
         # just obtain the attribute
         return [ $self->_get_data( $node, $attrib, $alignment_hash ) ];
     }
@@ -203,7 +190,7 @@ sub _get_info_hash {
     my ( $self, $node, $alignment_hash ) = @_;
     my %info;
     my $out_att_pos = 0;
-    my $out_att = $self->_output_attrib;
+    my $out_att     = $self->_output_attrib;
 
     foreach my $attrib ( @{ $self->attributes } ) {
 
@@ -219,22 +206,23 @@ sub _get_info_hash {
 sub _get_data {
 
     my ( $self, $node, $attrib, $alignment_hash ) = @_;
-    
+
     my ( $ref, $ref_attr ) = split( /->/, $attrib, 2 );
 
     # references
     if ($ref_attr) {
 
-        my $first_only = ( $ref =~ s/^(.+):first$/$1/ ); # will be 1 if the name ends with 'first'        
+        my $first_only = ( $ref =~ s/^(.+):first$/$1/ );    # will be 1 if the name ends with 'first'
         my $nodes = $self->_get_referenced_nodes( $node, $ref, $alignment_hash );
 
         # use only the first referenced node
-        if ($first_only || $ref_attr eq 'node' ) { # TODO using only first 'node' is not correct
+        if ( $first_only || $ref_attr eq 'node' ) {         # TODO using only first 'node' is not correct
             my $reffed_node = $nodes->[0];
             return $self->_get_data( $reffed_node, $ref_attr, $alignment_hash );
-        } 
+        }
+
         # call myself recursively on all the referenced nodes
-        else {            
+        else {
             return join(
                 ' ',
                 grep { defined($_) && $_ =~ m/[^\s]/ }
@@ -250,13 +238,15 @@ sub _get_data {
         if ( $attrib eq 'address' ) {
             return $node->get_address();
         }
+
         # return the actual node (for attribute modifiers)
-        elsif ( $attrib eq 'node' ){
+        elsif ( $attrib eq 'node' ) {
             return $node;
         }
-        elsif ( $attrib eq 'alignment_hash' ){
+        elsif ( $attrib eq 'alignment_hash' ) {
             return $alignment_hash;
         }
+
         # plain attributes
         else {
             return $node->get_attr($attrib);
@@ -280,19 +270,19 @@ Readonly my $GET_REF_NODES => {
     'nearest_rsibling' => sub { return _get_nearest( $_[1], $_[1]->get_siblings( { following_only => 1 } ) ) },
     'elsiblings'       => sub {
         my ( $self, $node ) = @_;
-        return grep { $_->ord < $node->ord } @{ $self->_get_esiblings( $node ) };
+        return grep { $_->ord < $node->ord } @{ $self->_get_esiblings($node) };
     },
     'ersiblings' => sub {
         my ( $self, $node ) = @_;
-        return grep { $_->ord > $node->ord } @{ $self->_get_esiblings( $node ) };
+        return grep { $_->ord > $node->ord } @{ $self->_get_esiblings($node) };
     },
     'nearest_elsibling' => sub {
         my ( $self, $node ) = @_;
-        return _get_nearest( $node, grep { $_->ord < $node->ord } @{ $self->_get_esiblings( $node ) } );
+        return _get_nearest( $node, grep { $_->ord < $node->ord } @{ $self->_get_esiblings($node) } );
     },
     'nearest_ersibling' => sub {
         my ( $self, $node ) = @_;
-        return _get_nearest( $node, grep { $_->ord > $node->ord } @{ $self->_get_esiblings( $node ) } );
+        return _get_nearest( $node, grep { $_->ord > $node->ord } @{ $self->_get_esiblings($node) } );
     },
 };
 
@@ -305,7 +295,7 @@ sub _get_referenced_nodes {
 
         # any usual neighboring relation (see $GET_REF_NODES for possibilities)
         if ( $GET_REF_NODES->{$ref} ) {
-            $self->_cache->{$ref}->{$node} = [ $GET_REF_NODES->{$ref}->($self, $node) ];
+            $self->_cache->{$ref}->{$node} = [ $GET_REF_NODES->{$ref}->( $self, $node ) ];
         }
 
         # topological neighbors
@@ -367,11 +357,11 @@ sub _get_nearest {
 
 # Returns the 'effective siblings' of a node (effective children of its effective parent)
 sub _get_esiblings {
-    
-    my ($self, $node) = @_;
-    
-    if ( !defined( $self->_cache->{esiblings}->{$node} ) ){
-        if (!defined( $self->_cache->{nearest_eparent}->{$node})){
+
+    my ( $self, $node ) = @_;
+
+    if ( !defined( $self->_cache->{esiblings}->{$node} ) ) {
+        if ( !defined( $self->_cache->{nearest_eparent}->{$node} ) ) {
             $self->_cache->{nearest_eparent}->{$node} = [ _get_nearest( $node, $node->get_eparents( { or_topological => 1, ordered => 1 } ) ) ];
         }
         my $eparent = $self->_cache->{nearest_eparent}->{$node}->[0];
@@ -380,10 +370,9 @@ sub _get_esiblings {
     return $self->_cache->{esiblings}->{$node};
 }
 
-
 sub _get_topol_neighbors {
-    my ($self, $node, $dir, $from, $to) = @_;
-    
+    my ( $self, $node, $dir, $from, $to ) = @_;
+
     my $start = $node->ord;
     $to = $from if ( !$to );
 
@@ -391,13 +380,13 @@ sub _get_topol_neighbors {
     $to   = $dir eq 'left' ? $start - $to   : $start + $to;
     ( $from, $to ) = ( $to, $from ) if ( $dir eq 'left' );
 
-    if ( !defined( $self->_cache->{sent} ) ){
+    if ( !defined( $self->_cache->{sent} ) ) {
         $self->_cache->{sent} = [ $node->get_root->get_descendants( { ordered => 1 } ) ];
     }
     my $sent = $self->_cache->{sent};
     $from = List::Util::max( $from - 1, 0 );
-    $to = List::Util::min( $to - 1, scalar(@{$sent}) - 1 );
-    return [ @{$sent}[ $from .. $to ] ]; 
+    $to = List::Util::min( $to - 1, scalar( @{$sent} ) - 1 );
+    return [ @{$sent}[ $from .. $to ] ];
 }
 
 # Return all the required information for a node as an array
@@ -416,12 +405,11 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Write::LayerAttributes
+Treex::Block::Write::AttributeParameterized
 
 =head1 DESCRIPTION
 
-A Moose role for Write blocks that may be configured to use different layers and different attributes. All blocks with this
-role must override the C<_process_tree()> method.
+A Moose role for Write blocks that may be configured to use different attributes. 
 
 An arbitrary number of attribute references may be dereferenced using a C<-&gt;> character sequence, e.g. 
 C<a/aux.rf-&gt;parent-&gt;tag>. 
@@ -467,14 +455,14 @@ call on the current node.
 
 Furthermore, text modifying functions may be applied to the retrieved attribute values, e.g. 
 C<CzechCoarseTag(a/aux.rf-&gt;tag)>. Such functions may take more arguments and return more values. Nesting
-the modifiing functions is also allowed. 
+the modifying functions is also allowed. 
 
 The text modifying function must be a package that implements the L<Treex::Block::Write::LayerAttributes::AttributeModifier>
 role. All packages in the L<Treex::Block::Write::LayerAttributes> directory role are supported implicitly, 
 without the need for full package specification; packages in other locations need to have their full package
 name included.
 
-If the attributge modifiers allow or require configuration, it may be passed to them via the C<modifier_config>
+If the attribute modifiers allow or require configuration, it may be passed to them via the C<modifier_config>
 parameter. 
 
 =head1 PARAMETERS
@@ -513,6 +501,19 @@ This returns a configuration setting for the L<Treex::Block::Write::LayerAttribu
 =item * 
 
 Make the separator for multiple-valued attributes configurable.
+
+=back
+
+=head1 SEE ALSO
+
+=over 
+
+=item L<Treex::Block::Write::LayerParameterized>
+
+It is possible to combine this role with the C<LayerParameterized> role to 
+support also the work with different layers of annotation; please note that the C<with>
+clause for this role must go AFTER the C<with> clause of the C<LayerParameterized> 
+role. 
 
 =back
 
