@@ -42,7 +42,6 @@ sub set_verbform {
     return if ( $value eq '' );
 
     $tnode->wild->{verbform} = $value;
-    log_info('RETURNED: ' . $value);
 
     my $anode = $tnode->get_lex_anode();
     return if ( !$anode );
