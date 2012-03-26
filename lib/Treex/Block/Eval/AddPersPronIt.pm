@@ -21,7 +21,7 @@ my $be_verbs = 'be|s|become';
 my $cog_ed_verbs = 'think|believe|recommend|say|note|expect';
 my $cog_verbs = 'seem|appear|mean|follow|matter';
 
-my ($correct_sum, $eval_sum, $total_sum) = (0, 0 ,0);
+my ($correct_sum, $eval_sum, $total_sum, $allcands_sum) = (0, 0 ,0);
 
 my ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $pleon_en_sum, $segm_sum, $to_sum, $pp_sum) = (0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -535,7 +535,7 @@ sub test_it_en {
             }
         }
     }
-    print "$correct_sum\t$eval_sum\t$total_sum\n";
+    #print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
 
 sub has_cs_sb {
@@ -848,7 +848,7 @@ sub test_en_it_linked {
         if ( $a_it ) {
             my $gold_a_it = $autom2gold_anode{$a_it};
             if ( has_cs_ten($en2cs_node{$t_node}) ) {
-                print $t_node->get_address . "\n";
+                #print $t_node->get_address . "\n";
             }
             if ( not $t_node->wild->{"referential"}
                 and not has_cs_noun($en2cs_node{$t_node})
@@ -1490,8 +1490,9 @@ sub test_cs_it_linked {
             and not $_->is_generated
         } $autom_tree->get_descendants
     ) {
-        if ( ( Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
-            or has_en_perspron($cand_verb) )
+        $allcands_sum++;
+        if ( (Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
+            or has_en_perspron($cand_verb))
             and not has_en_sb($cand_verb)
             ) {
             $eval_sum++;
@@ -1555,10 +1556,10 @@ sub process_bundle {
 #     test_it_en($gold_en_tree);
 #     test_it_cs($gold_cs_tree);
 #     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
-#     test_en_it_linked($bundle);
+#    test_en_it_linked($bundle);
 #     find_short_sentences($gold_en_tree);
-#     analyze_cs($gold_cs_tree, $gold_en_tree);
-    analyze_en($gold_en_tree);
+     analyze_cs($gold_cs_tree, $gold_en_tree);
+#     analyze_en($gold_en_tree);
 }
 
 # process PCEDT 2.0 manually annotated data
@@ -1576,10 +1577,16 @@ sub process_bundle_manual {
 }
 
 sub process_end {
+#    my $tp = $correct_sum;
+#    my $fp = $eval_sum - $tp;
+#    my $fn = $total_sum - $tp;
+#    my $tn = $allcands_sum - ($tp + $fp + $fn); 
+#    print join "\t", ($tp, $tn, $fp, $fn);
+#    print "\n";
 #     print "$correct_sum\t$eval_sum\t$total_sum\n";
-    print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
-#     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
-    print "\n";
+#    print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
+     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
+     print "\n";
 }
 
 1;
