@@ -27,6 +27,8 @@ sub process_start {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
+    log_fatal("Tagger got lost!") if !defined $self->_tagger;
+
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
     my @forms =
       map { substr($_, -45, 45) } # avoid words > 45 chars; Morce segfaults
