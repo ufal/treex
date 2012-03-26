@@ -4,35 +4,13 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Block::Write::Arff;
 
-extends 'Treex::Tool::ML::MLProcessBlock';
+extends 'Treex::Tool::ML::MLProcessBlockPiped';
 
-has '+model_dir'     => ( default => 'data/models/generation/cs_verbforms/' );
-has '+plan_template' => ( default => 'plan.template' );
+has '+model' => ( default => 'data/models/generation/cs_verbforms/model-pack.dat.gz' );
 
-has 'features_config' => ( isa => 'Str', is => 'ro', default => 'features.yml' );
+has '+features_config' => ( default => 'data/models/generation/cs_verbforms/features.yml' );
 
-has '+model_files' => ( builder => '_build_model_files', lazy_build => 1 );
-
-has '+plan_vars' => (
-    default => sub {
-        return {
-            'MODEL'   => 'model.dat',
-            'FF-INFO' => 'ff.dat',
-        };
-        }
-);
-
-sub _build_model_files {
-    my ($self) = @_;
-    return [
-        'ff.dat',
-        'model.dat',
-        $self->plan_template,
-        $self->features_config,
-    ];
-}
-
-has '+class_name' => ( default => 'verbform' );
+has '+input_attrib_names' => ( default => sub { ['verbform'] } );
 
 # Conversion table from deontmod grammateme values to modal verb lemmas
 Readonly my %DEONTMOD_TO_MODAL_VERB => (
@@ -44,34 +22,27 @@ Readonly my %DEONTMOD_TO_MODAL_VERB => (
     'perm' => 'moci',     # translation of 'might'
 );
 
-override '_write_input_data' => sub {
+sub process_ttree {
 
-    my ( $self, $document, $file ) = @_;
+    my ( $self, $troot ) = @_;
 
-    # print out data in ARFF format for the ML-Process program
-    log_info( "Writing the ARFF data to " . $file );
-    my $arff_writer = Treex::Block::Write::Arff->new(
-        {
-            to          => $file->filename,
-            language    => $self->language,
-            selector    => $self->selector,
-            config_file => $self->model_dir . $self->features_config,
-            layer       => 't',
-            clobber     => 1
-        }
-    );
+    my @tnodes = $troot->get_descendants( { ordered => 1 } );
+    my @classified = $self->classify_nodes(@tnodes);
 
-    $arff_writer->process_document($document);
+    for ( my $i = 0; $i < @tnodes; ++$i ) {
+        $self->set_verbform( $tnodes[$i], $classified[$i]->{verbform} );
+    }
     return;
-};
+}
 
-override '_set_class_value' => sub {
+sub set_verbform {
 
     my ( $self, $tnode, $value ) = @_;
 
     return if ( $value eq '' );
 
     $tnode->wild->{verbform} = $value;
+    log_info('RETURNED: ' . $value);
 
     my $anode = $tnode->get_lex_anode();
     return if ( !$anode );
@@ -209,7 +180,7 @@ Treex::Block::T2A::CS::GenerateCompoundVerbforms
 =head1 DESCRIPTION
 
 This block generates whole Czech compound verb form subtrees from the verbal t-node and its
-grammatemes, according to a machine learning model using L<Treex::Tool::ML::MLProcess>.
+grammatemes, according to a machine learning model using L<Treex::Tool::ML::MLProcessPiped>.
 
 Some values, such as modal verb and main verb lemmas, person, number and gender, are filled-in
 directly from the t-node attributes.   

@@ -46,9 +46,9 @@ has 'model' => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model'
 has 'caching' => ( is => 'ro', isa => 'Str', default => '1' );
 
 # ML-Process slave application controls (bipipe handles, application PID)
-has 'read_handle'  => ( is => 'rw', isa => 'FileHandle' );
-has 'write_handle' => ( is => 'rw', isa => 'FileHandle' );
-has 'java_pid'     => ( is => 'rw', isa => 'Int' );
+has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
+has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
+has '_java_pid'     => ( is => 'rw', isa => 'Int' );
 
 sub BUILD {
 
@@ -76,9 +76,9 @@ sub BUILD {
     $SIG{PIPE} = 'IGNORE';    # don't die if ML-Process gets killed
     my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
 
-    $self->set_read_handle($read);
-    $self->set_write_handle($write);
-    $self->set_java_pid($pid);
+    $self->_set_read_handle($read);
+    $self->_set_write_handle($write);
+    $self->_set_java_pid($pid);
 
     my $status = <$read>;     # wait for loading of all models
     log_fatal('ML-Process not loaded correctly') if ( $status !~ /^READY/ );
@@ -91,8 +91,8 @@ sub DEMOLISH {
     my ($self) = @_;
 
     # Close the ML-Process application
-    close( $self->write_handle );
-    close( $self->read_handle );
+    close( $self->_write_handle );
+    close( $self->_read_handle );
     ProcessUtils::safewaitpid( $self->java_pid );
     return;
 }
@@ -105,16 +105,19 @@ sub classify {
     # write the input ARFF lines
     foreach my $data_line (@data_lines) {
         $data_line .= "\n" if ( $data_line !~ /\n$/ );
-        print { $self->write_handle } $data_line;
+        print { $self->_write_handle } $data_line;
     }
 
     # this will force ML-Process to flush the output (even if caching is set differently)
-    print { $self->write_handle } "\n";
+    print { $self->_write_handle } "\n";
 
     # read the results (same number of lines as the input -- will not block forever)
-    my $read = $self->read_handle;
+    my $read = $self->_read_handle;
     foreach my $i ( 1 .. @data_lines ) {
         my $result = <$read>;
+        # die if ML-Process ends prematurely, without producing the desired number of outputs
+        log_fatal "Not enough results from ML-Process." if ( !defined($result) );
+        $result =~ s/\r?\n$//; # remove end-of-line characters
         push @results, $result;
     }
 
@@ -138,11 +141,78 @@ __END__
 
 =head1 NAME
 
-Treex::Block::ML::MLProcess
+Treex::Block::ML::MLProcessPiped
+
+=head1 SYNOPSIS
+
+  # model.dat.gz contains a model for classifying the standard "Iris" data set
+  my $mlprocess = Treex::Tool::ML::MLProcessPiped->new( { model => 'model.dat.gz' } );
+ 
+  # prepare input data
+  my @arff_data = <<END;
+  5.1,3.5,1.4,0.2,?
+  4.9,3.0,1.4,0.2,?
+  4.7,3.2,1.3,0.2,?
+  7.0,3.2,4.7,1.4,?
+  6.4,3.2,4.5,1.5,?
+  5.9,3.0,5.1,1.8,?
+  END 
+  
+  my @results = $mlprocess->classify(@arff_data);
+  
+  # prints 'Iris-setosa Iris-setosa Iris-setosa Iris-versicolor Iris-versicolor Iris-virginica' 
+  # if the classifier is sane
+  print join " ", @results;
+  
 
 =head1 DESCRIPTION
 
+A wrapper for the ML-Process "Simple" WEKA wrapper, which provides various machine learning
+classifiers. 
 
+It uses L<ProcessUtils::Bipipe> to establish a piped connection (all models are loaded on startup), 
+then feeds given ARFF data lines to the ML-Process executable and retrieves its output.
+
+The ML-Process JAR file, along with all needed dependencies, must be installed in the Treex shared
+directory (will be downloaded via L<Treex::Core::Resource::require_file_from_share()> if not available). 
+
+=head1 PARAMETERS
+
+=over
+
+=item memory
+
+Amount of memory for the Java VM running the ML-Process executable (default: 1g).
+
+=item model
+
+Path to the packed model file.
+
+=item verbosity
+
+Verbosity of the ML-Process library (on the error output). Set using the Treex error level by default.
+
+=item caching
+
+Instances caching settings for the ML-Process library. Should be either a number (1 = no caching, 10 = default),
+or a name of a feature whose change should trigger flushing the ML-Process output.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item @arff_output = classify(@arff_input);
+
+Given ARFF input data lines, this passes them to the ML-Process executable and returns the results
+(as ARFF data lines to be parsed, excluding the final "\n" characters). 
+
+=back
+
+=head1 SEE ALSO
+
+L<Treex::Tool::ML::MLProcessBlockPiped>
 
 =head1 AUTHOR
 

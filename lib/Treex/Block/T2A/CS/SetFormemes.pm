@@ -1,4 +1,4 @@
-package Treex::Block::T2A::CS::SetFormemes2;
+package Treex::Block::T2A::CS::SetFormemes;
 
 use Moose;
 use Treex::Core::Common;
