@@ -7,15 +7,18 @@ has '+language' => ( required => 1 );
 
 has '+extension' => ( default => '.txt' );
 
-sub process_document {
+override 'process_document' => sub {
+  
     my ( $self, $doc ) = @_;
 
     $self->_prepare_file_handle($doc);    # open the output file handle
 
     my $doczone = $doc->get_zone( $self->language, $self->selector );
-    print $doczone->text;
+  
+    print { $self->_file_handle } $doczone->text;
+  
     return;
-}
+};
 
 1;
 
@@ -56,10 +59,10 @@ Saves the document.
 
 =head1 AUTHOR
 
-Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
