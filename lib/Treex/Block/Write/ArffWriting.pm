@@ -127,7 +127,7 @@ sub _build_attributes {
 # Take the attribute modifier configuration from the config file, if none is given explicitly
 sub _build_modifier_config {
     my ($self) = @_;
-    return $self->_config_file_data->{modifier_config};
+    return _parse_modifier_config( $self->_config_file_data->{modifier_config} );
 }
 
 # Initialize the ARFF output module
