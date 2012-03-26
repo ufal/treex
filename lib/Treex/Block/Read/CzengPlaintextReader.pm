@@ -3,6 +3,9 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+
+enum 'DataVersion' => [ '0.9', '1.0' ];
+
 has '+language' => ( required => 0 );
 
 has [qw(lang1 lang2)] => (
@@ -17,6 +20,12 @@ has [qw(selector1 selector2)] => (
     default => '',
 );
 
+has 'format' => (
+    isa     => 'DataVersion',
+    is      => 'ro',
+    default => '1.0',
+);
+
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
@@ -25,8 +34,15 @@ sub next_document {
 
     LINE:
     foreach my $line ( split /\n/, $text ) {
-        my ( $sentid, $align_score,
-             $sent1, $sent2 ) = split /\t/, $line;
+        my @parts = split /\t/, $line;
+        my ( $sentid, $align_score, $sent1, $sent2 );
+        if ( $self->format eq "1.0" ) {
+            ( $sentid, $align_score, $sent1, $sent2 ) = @parts;
+        } elsif ( $self->format eq "0.9" ) {
+            ( $sentid, $sent1, $sent2 ) = @parts;
+            $align_score = 1;
+        }
+
         my $bundle = $document->create_bundle();
         $bundle->set_attr( 'czeng/id',                   $sentid );
         $bundle->set_attr( 'czeng/align_score',          $align_score );
@@ -53,7 +69,7 @@ sentence_id, align_score,
 sentence_in_language1, sentence_in_language2.
 
 E.g.
-  
+
   ted1.txt.seg-1  1.433   A ono je.   And it is.
   ted1.txt.seg-1  -0.3    A přitom nám to dnes připadá normální.  And yet, it feels natural to us now.
 
