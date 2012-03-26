@@ -21,7 +21,7 @@ sub is_refl_pass {
 # returns 1 if the given node is a passive verb
 sub is_passive {
     my ($t_node) = @_;
-    return (  ( $t_node->get_lex_anode and $t_node->get_lex_anode->tag =~ /^Vs/ )
+    return (  grep { $_->tag =~ /^Vs/ } $t_node->get_anodes
         or is_refl_pass($t_node)
     ) ? 1 : 0;
 }
@@ -179,6 +179,8 @@ sub has_subject_gold {
     return (
         has_asubject($t_node)
         or has_sb_clause_gold($t_node)
+        or is_active_having_ACT($t_node)
+        or is_passive_having_PAT($t_node)
     ) ? 1 : 0;
 }
 
@@ -223,22 +225,34 @@ sub get_total_sum {
 
 sub has_pleon_sb {
     my ( $t_node ) = @_;
+    my @echildren = $t_node->get_echildren( { or_topological => 1 } );
     return ( ( $t_node->is_clause_head or is_clause_head($t_node) )
         and not $t_node->is_generated
-        and not grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $t_node->get_echildren( { or_topological => 1 } )
-        and not has_asubject($t_node)
+        and not has_subject_gold($t_node)
+        and (
+            not grep { $_->t_lemma eq "#PersPron" and $_->is_generated } @echildren
+            or (
+                grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } @echildren
+                and not ( is_passive($t_node) and grep { $_->t_lemma eq "#PersPron" and $_->is_generated and $_->functor eq "PAT" } @echildren )
+            )
+        )
     ) ? 1 : 0;
 }
 
 sub has_unexpressed_sb {
     my ( $t_node ) = @_;
-    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } $t_node->get_echildren ( { or_topological => 1 } ) ) {
+    my @echildren = $t_node->get_echildren( { or_topological => 1 } );
+    foreach my $perspron ( grep { $_->t_lemma eq "#PersPron" and $_->is_generated } @echildren ) {
         if ( ( $t_node->is_clause_head or is_clause_head($t_node) )
             and not $t_node->is_generated
             and not has_subject_gold($t_node)
-            and ( ( is_passive($t_node) and $perspron->functor eq "PAT" )
-                or ( not is_passive($t_node) and $perspron->functor eq "ACT" ) )
-            and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } $t_node->get_echildren ( { or_topological => 1 } ) 
+            and (
+                ( is_passive($t_node) and $perspron->functor eq "PAT" )
+                or ( not is_passive($t_node) and $perspron->functor eq "ACT" ) 
+#                 or not has_subject_gold($t_node)
+#                 or not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } @echildren
+            )
+#             and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } @echildren
         ) {
             return 1;
         }

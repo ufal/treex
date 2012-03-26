@@ -67,15 +67,25 @@ sub is_3_sg_neut {
 
 sub is_3_sg {
     my ( $t_node ) = @_;
+#     my ( $t_node, $t_en_node ) = @_;
     my @anodes = $t_node->get_anodes;
     if ( @anodes > 0 ) {
         if ( grep { $_->tag =~ /^V/ } @anodes 
-            and grep { $_->tag =~ /^.......3/ } @anodes 
-            and grep { $_->tag =~ /^...S/ } @anodes 
+            and not grep { $_->tag =~ /^.......(1|2)/ } @anodes 
+#             and grep { $_->tag =~ /^.......3/ } @anodes 
+            and grep { $_->tag =~ /^...(S|W)/ } @anodes 
         ) {
             return 1;
         }
     }
+#     if ( $t_en_node
+#         and $t_en_node->get_lex_anode
+#         and grep { $_->lemma =~ /^(he|she|it)$/
+#             and $_->afun eq "Sb"
+#         } $t_en_node->get_lex_anode->children
+#     ) {
+#         return 1;
+#     }
     return 0;
 }
 
@@ -272,7 +282,7 @@ sub make_it_to {
 # returns 1 if the given node is a passive verb
 sub is_passive {
     my ($t_node) = @_;
-    return (  ( $t_node->get_lex_anode and $t_node->get_lex_anode->tag =~ /^Vs/ )
+    return (  grep { $_->tag =~ /^Vs/ } $t_node->get_anodes
         or is_refl_pass($t_node)
     ) ? 1 : 0;
 }
@@ -308,11 +318,22 @@ sub analyze_cs {
         grep { 
             ($_->gram_sempos || "") eq "v"
             and is_3_sg($_)
+#             and is_3_sg($_, $cs2en_node{$_})
 #             and is_3_sg_neut($_)
             and not $_->is_generated
         } $cs_tree->get_descendants
     ) {
-        if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+        $to_sum++;
+        my $en_verb = $cs2en_node{$cand_verb};
+        if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
+            print $cand_verb->get_address . "\n";
+            $pleon_sum++;
+            if ( $en_verb and grep { $_->lemma eq "it" } $en_verb->get_aux_anodes ) {
+                $pleon_en_sum++;
+            }
+        }
+        elsif ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+#             print $cand_verb->get_address . "\n";
             my $perspron;
             my @echildren = $cand_verb->get_echildren( { or_topological => 1 } );
             if ( is_passive($cand_verb) ) {
@@ -331,13 +352,12 @@ sub analyze_cs {
             elsif ( $perspron ){
                 $non_anaph_sum++;
             }
-        }
-        else {
-            $pleon_sum++;
-            my $en_verb = $cs2en_node{$cand_verb};
             if ( $en_verb and grep { $_->lemma eq "it" } $en_verb->get_aux_anodes ) {
                 $pleon_en_sum++;
             }
+        }
+        else {
+#             print $cand_verb->get_address . "\n";
         }
 #         if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
 #             $pleon_sum++;
@@ -1558,7 +1578,7 @@ sub process_bundle {
 #     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
 #    test_en_it_linked($bundle);
 #     find_short_sentences($gold_en_tree);
-     analyze_cs($gold_cs_tree, $gold_en_tree);
+    analyze_cs($gold_cs_tree, $gold_en_tree);
 #     analyze_en($gold_en_tree);
 }
 
@@ -1584,9 +1604,9 @@ sub process_end {
 #    print join "\t", ($tp, $tn, $fp, $fn);
 #    print "\n";
 #     print "$correct_sum\t$eval_sum\t$total_sum\n";
-#    print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
-     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
-     print "\n";
+#     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
+    print STDERR join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
+    print STDERR "\n";
 }
 
 1;
