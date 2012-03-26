@@ -141,8 +141,8 @@ sub has_sb_clause {
     my ( $t_node ) = @_;
     return ( 
         grep { 
-#             $_->functor =~ /^(ACT|PAT)$/
-            ($_->gram_sempos || "") eq "v"
+            $_->functor =~ /^(ACT|PAT)$/
+            and ($_->gram_sempos || "") eq "v"
             and not $_->is_generated
             and is_clause_head($_)
         } $t_node->get_echildren ( { or_topological => 1 } )
