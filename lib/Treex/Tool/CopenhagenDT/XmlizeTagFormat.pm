@@ -3,13 +3,12 @@ package Treex::Tool::CopenhagenDT::XmlizeTagFormat;
 use strict;
 use warnings;
 
-use File::Slurp;
-
-
 sub read_and_xmlize {
     my $tag_filename = shift;
 
-    my $content = File::Slurp::read($tag_filename) or die $!;
+    open my $INPUT,'<:utf8',$tag_filename or die $!;
+    my $content;
+    $content .= $_ while (<$INPUT>);
 
     return
         _add_closing_tags(

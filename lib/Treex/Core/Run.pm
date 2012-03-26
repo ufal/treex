@@ -370,6 +370,7 @@ my %READER_FOR = (
     'streex'   => 'Treex',
     'mrg'      => 'PennMrg',
     'mrg.gz'   => 'PennMrg',
+    'tag'      => 'CdtTag',
 
     # TODO:
     # conll  => 'Conll',

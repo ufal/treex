@@ -5,6 +5,8 @@ extends 'Treex::Block::Read::BaseReader';
 
 use XML::Twig;
 
+use Treex::Tool::CopenhagenDT::XmlizeTagFormat;
+
 sub next_document {
     my ($self) = @_;
 
@@ -12,14 +14,94 @@ sub next_document {
 
     return if not defined $filename;
 
+    my $language;
+    if ($filename =~ /-([a-z]{2})[.-]/) {
+        $language = $1;
+    }
+    else {
+        log_fatal "Can't detect language code in the file name: $filename";
+    }
+
     my $document = Treex::Core::Document->new;
+    my $bundle = $document->create_bundle;
+    my $zone = $bundle->create_zone($language);
+    my $atree = $zone->create_atree;
+
+    my $content = Treex::Tool::CopenhagenDT::XmlizeTagFormat::read_and_xmlize($filename);
+    insert_nodes_from_tag( $atree, $content );
 
     return $document;
 }
 
+sub insert_nodes_from_tag {
+    my ( $atree, $xml_content ) = @_;
+
+    # add token numbering first, as it is used for references
+    my $numbered_xml_content;
+    my $line_number = 0;
+    foreach my $line (split /\n/,$xml_content) {
+        $line =~ s/<W /<W linenumber="$line_number" /;
+        $numbered_xml_content .= $line;
+        $line_number++;
+    }
+
+#    open my $TEST,">:utf8","test.xml";
+#    print $TEST $numbered_xml_content;
+#    close $TEST;
+
+
+    # read the XML structure
+    my $tag_document = XML::Twig->new(); # create the twig
+    $tag_document->parse( $numbered_xml_content );
+
+
+    # remember which tokens belonged to which sentence or paragraph (<s> and <p> tags, if present)
+    my %sent_number;
+    my %para_number;
+
+    my $para_counter = 0;
+    foreach my $para ($tag_document->descendants('p')) {
+        $para_counter++;
+        foreach my $tag_token ($para->descendants('W')) {
+            $para_number{$tag_token} = $para_counter;
+        }
+    }
+
+    my $sent_counter = 0;
+    foreach my $sent ($tag_document->descendants('s')) {
+        $sent_counter++;
+        foreach my $tag_token ($sent->descendants('W')) {
+            $sent_number{$tag_token} = $sent_counter;
+        }
+    }
+
+    # build a flat tree from the tokens
+    my $ord = 0;
+    foreach my $tag_token ($tag_document->descendants('W')) {
+        $ord++;
+        my $anode = $atree->create_child(
+            {
+                form => $tag_token->text,
+                ord => $ord,
+            }
+        );
+        foreach my $attr_name (keys %{$tag_token->{'att'}||{}}) {
+            $anode->wild->{$attr_name} = $tag_token->{'att'}->{$attr_name};
+        }
+        $anode->wild->{para_number} = $para_number{$tag_token} || 0;
+        $anode->wild->{sent_number} = $sent_number{$tag_token} || 0;
+    }
+}
+
 1;
 
+
+
+
+
 __END__
+
+
 
 =head1 NAME
 
