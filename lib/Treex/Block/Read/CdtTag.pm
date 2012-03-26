@@ -22,19 +22,21 @@ sub next_document {
         log_fatal "Can't detect language code in the file name: $filename";
     }
 
-    my $document = Treex::Core::Document->new;
+    my $document = $self->new_document;
     my $bundle = $document->create_bundle;
     my $zone = $bundle->create_zone($language);
     my $atree = $zone->create_atree;
 
-    my $content = Treex::Tool::CopenhagenDT::XmlizeTagFormat::read_and_xmlize($filename);
-    insert_nodes_from_tag( $atree, $content );
+    insert_nodes_from_tag( $self, $atree, $filename );
 
     return $document;
 }
 
+
 sub insert_nodes_from_tag {
-    my ( $atree, $xml_content ) = @_;
+    my ( $self, $atree, $filename ) = @_;
+
+    my $xml_content = Treex::Tool::CopenhagenDT::XmlizeTagFormat::read_and_xmlize($filename);
 
     # add token numbering first, as it is used for references
     my $numbered_xml_content;
@@ -118,6 +120,6 @@ Zdeněk Žabokrtský
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
