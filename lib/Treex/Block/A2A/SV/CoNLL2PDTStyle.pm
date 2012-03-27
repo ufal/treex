@@ -544,7 +544,8 @@ sub deprel_to_afun
             # 'från' (train/004.treex#64):
             # Fr&#229n denna fria värld
             # From this free world
-            # DZ: anyway this particular node ended up tagged correctly as 'AuxP' governing an 'Adv', so do nothing.
+            # HV: Can have virtually any function, hard to guess (maybe from tag?)
+            $afun = 'ExD';
         }
 
         # Expressions like "så kallad" (so called)
