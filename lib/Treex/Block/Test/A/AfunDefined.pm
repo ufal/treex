@@ -23,6 +23,6 @@ Each node should have its afun defined.
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky & Jan Vacl
+# Copyright 2011 Honza Vacl
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
 
