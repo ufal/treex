@@ -320,6 +320,32 @@ sub will_have_perspron {
     ) ? 1 : 0;
 }
 
+sub will_have_pleon_gold {
+    my ( $cand_verb ) = @_;
+    return (
+        not has_subject_gold($cand_verb)
+        and not is_passive_having_PAT($cand_verb)
+        and not is_active_having_ACT($cand_verb)
+        and (
+            is_GEN($cand_verb)
+            or is_IMPERS($cand_verb)
+        )
+    ) ? 1 : 0;
+}
+
+sub will_have_pleon {
+    my ( $cand_verb ) = @_;
+    return (
+        not has_subject($cand_verb)
+        and not is_passive_having_PAT($cand_verb)
+        and not is_active_having_ACT($cand_verb)
+        and (
+            is_GEN($cand_verb)
+            or is_IMPERS($cand_verb)
+        )
+    ) ? 1 : 0;
+}
+
 sub process_bundle {
     my ( $self, $bundle ) = @_;
     my %autom2gold_node;

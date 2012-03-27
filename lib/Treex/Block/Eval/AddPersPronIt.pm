@@ -1381,7 +1381,8 @@ sub test_it_cs {
     my ( $cs_tree ) = @_;
 
 #     $total_sum += grep { has_perspron($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
-    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
+    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
+#     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
 #     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
 #     $total_sum += Treex::Block::Eval::AddPersPronSb::get_total_sum($cs_tree);
     
@@ -1394,10 +1395,12 @@ sub test_it_cs {
             and not $_->is_generated
         } $cs_tree->get_descendants
     ) {
-        if ( Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb) ) {
+        if ( Treex::Block::Eval::AddPersPronSb::will_have_pleon_gold($cand_verb) ) {
+#         if ( Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb) ) {
             $eval_sum++;
             push @eval_verbs, $cand_verb;
-            if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+            if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
+#             if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
 #             if ( has_perspron($cand_verb) ) {
                 $correct_sum++;
             }
@@ -1499,7 +1502,8 @@ sub test_cs_it_linked {
     my %autom2gold_node = get_opposite_links($gold_tree, $autom_tree);
     
 #     $total_sum += get_cs_total($gold_tree);
-    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $gold_tree->get_descendants;
+    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $gold_tree->get_descendants;
+#     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $gold_tree->get_descendants;
 #     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $gold_tree->get_descendants;
     my @eval_verbs;
     foreach my $cand_verb (
@@ -1511,10 +1515,14 @@ sub test_cs_it_linked {
         } $autom_tree->get_descendants
     ) {
         $allcands_sum++;
-        if ( (Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
-            or has_en_perspron($cand_verb))
+        if ( (Treex::Block::Eval::AddPersPronSb::will_have_pleon($cand_verb)
+            and not has_en_perspron($cand_verb))
             and not has_en_sb($cand_verb)
             ) {
+#         if ( (Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
+#             or has_en_perspron($cand_verb))
+#             and not has_en_sb($cand_verb)
+#             ) {
             $eval_sum++;
             push @eval_verbs, $cand_verb;
             my $gold_verb = $autom2gold_node{$cand_verb};
@@ -1523,7 +1531,8 @@ sub test_cs_it_linked {
                     my ($epar) = $gold_verb->get_eparents( { or_topological => 1 } );
                     $gold_verb = $epar if ( $epar and $epar->t_lemma eq "být" );
                 }
-                if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($gold_verb) ) {
+                if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($gold_verb) ) {
+#                 if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($gold_verb) ) {
                     $correct_sum++;
         #             find short sentences
                     my @descendants = $autom_tree->get_descendants;
@@ -1574,11 +1583,11 @@ sub process_bundle {
     my $autom_en_tree = $bundle->get_zone('en', 'src')->get_ttree;
 
 #     test_it_en($gold_en_tree);
-#     test_it_cs($gold_cs_tree);
-#     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
+    test_it_cs($gold_cs_tree);
+    test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
 #    test_en_it_linked($bundle);
 #     find_short_sentences($gold_en_tree);
-    analyze_cs($gold_cs_tree, $gold_en_tree);
+#     analyze_cs($gold_cs_tree, $gold_en_tree);
 #     analyze_en($gold_en_tree);
 }
 
@@ -1605,8 +1614,8 @@ sub process_end {
 #    print "\n";
 #     print "$correct_sum\t$eval_sum\t$total_sum\n";
 #     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
-    print STDERR join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
-    print STDERR "\n";
+#     print STDERR join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
+#     print STDERR "\n";
 }
 
 1;
