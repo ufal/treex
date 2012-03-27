@@ -299,7 +299,7 @@ sub will_have_perspron_gold {
         and not is_active_having_ACT($cand_verb)
         and not is_GEN($cand_verb)
         and not is_IMPERS($cand_verb)
-        and not has_subject_gold($cand_verb)
+#        and not has_subject_gold($cand_verb)
 #         and not has_o_having_neutrum($cand_verb)
     ) ? 1 : 0;
 }

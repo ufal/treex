@@ -1380,46 +1380,79 @@ sub has_perspron {
 sub test_it_cs {
     my ( $cs_tree ) = @_;
 
-#     $total_sum += grep { has_perspron($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
-    $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
-#     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
-#     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
-#     $total_sum += Treex::Block::Eval::AddPersPronSb::get_total_sum($cs_tree);
-    
-    my @eval_verbs;
-    foreach my $cand_verb (
-        grep { 
-            ($_->gram_sempos || "") eq "v"
-            and is_3_sg($_)
-#             and is_3_sg_neut($_)
-            and not $_->is_generated
-        } $cs_tree->get_descendants
-    ) {
-        if ( Treex::Block::Eval::AddPersPronSb::will_have_pleon_gold($cand_verb) ) {
-#         if ( Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb) ) {
+    my @all_cands = grep {
+        ($_->gram_sempos || "") eq "v"
+        and is_3_sg($_)
+        and not $_->is_generated
+        and not Treex::Block::Eval::AddPersPronSb::has_subject_gold($_)
+    } $cs_tree->get_descendants;
+
+    foreach my $cand_verb (@all_cands) {
+        $allcands_sum++;
+        
+        my $is_true =
+           Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) or
+            Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb);
+        my $is_selected =
+            not Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb);
+
+        if ($is_selected && $is_true) {
+            $correct_sum++;
+        }
+        if ($is_selected) {
             $eval_sum++;
-            push @eval_verbs, $cand_verb;
-            if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
-#             if ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
-#             if ( has_perspron($cand_verb) ) {
-                $correct_sum++;
-            }
-            else {
-#                 print $cand_verb->get_address . "\n";
-            }
         }
-        elsif ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
-#             print $cand_verb->get_address . "\n";
+        if ($is_true) {
+            $total_sum++;
         }
     }
-    foreach my $correct_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants ) {
-#     foreach my $correct_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants ) {
-        if ( not grep { $_ eq $correct_verb } @eval_verbs ) {
-            print $correct_verb->get_address . "\n";
-        }
-    }
-    print "$correct_sum\t$eval_sum\t$total_sum\n";
 }
+
+
+##     $total_sum += grep { has_perspron($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
+#      $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
+#      $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
+##     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants;
+##     $total_sum += Treex::Block::Eval::AddPersPronSb::get_total_sum($cs_tree);
+#    
+#    my @eval_verbs;
+#    foreach my $cand_verb (
+#        grep { 
+#            ($_->gram_sempos || "") eq "v"
+#            and is_3_sg($_)
+##             and is_3_sg_neut($_)
+#            and not $_->is_generated
+#            and not Treex::Block::Eval::AddPersPronSb::has_subject_gold($_)
+#        } $cs_tree->get_descendants
+#    ) {
+#        $allcands_sum++;
+#        if ( 
+##             not Treex::Block::Eval::AddPersPronSb::has_subject_gold($cand_verb) and
+#             not Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb) ) {
+##        if ( Treex::Block::Eval::AddPersPronSb::will_have_pleon_gold($cand_verb) ) {
+#            $eval_sum++;
+#            push @eval_verbs, $cand_verb;
+#            if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) || 
+#                 Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+##             if ( has_perspron($cand_verb) ) {
+#                $correct_sum++;
+#            }
+#            else {
+##                 print $cand_verb->get_address . "\n";
+#            }
+#        }
+#        elsif ( Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) ) {
+##             print $cand_verb->get_address . "\n";
+#        }
+#    }
+#    foreach my $correct_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants ) {
+##     foreach my $correct_verb ( grep { Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($_) and is_3_sg_neut($_) and not $_->is_generated } $cs_tree->get_descendants ) {
+#        if ( not grep { $_ eq $correct_verb } @eval_verbs ) {
+#            print $correct_verb->get_address . "\n";
+#        }
+#    }
+#    #print "$correct_sum\t$eval_sum\t$total_sum\n";
+#}
 
 sub has_en_perspron {
     my ( $cs_verb ) = @_;
@@ -1515,9 +1548,11 @@ sub test_cs_it_linked {
         } $autom_tree->get_descendants
     ) {
         $allcands_sum++;
-        if ( (Treex::Block::Eval::AddPersPronSb::will_have_pleon($cand_verb)
-            and not has_en_perspron($cand_verb))
-            and not has_en_sb($cand_verb)
+        if ( (Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
+#        if ( (Treex::Block::Eval::AddPersPronSb::will_have_pleon($cand_verb)
+#            or has_en_perspron($cand_verb)
+            )
+    #        and not has_en_sb($cand_verb)
             ) {
 #         if ( (Treex::Block::Eval::AddPersPronSb::will_have_perspron($cand_verb)
 #             or has_en_perspron($cand_verb))
@@ -1584,7 +1619,8 @@ sub process_bundle {
 
 #     test_it_en($gold_en_tree);
     test_it_cs($gold_cs_tree);
-    test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
+#    test_it_cs($autom_cs_tree);
+    #test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
 #    test_en_it_linked($bundle);
 #     find_short_sentences($gold_en_tree);
 #     analyze_cs($gold_cs_tree, $gold_en_tree);
@@ -1606,12 +1642,12 @@ sub process_bundle_manual {
 }
 
 sub process_end {
-#    my $tp = $correct_sum;
-#    my $fp = $eval_sum - $tp;
-#    my $fn = $total_sum - $tp;
-#    my $tn = $allcands_sum - ($tp + $fp + $fn); 
-#    print join "\t", ($tp, $tn, $fp, $fn);
-#    print "\n";
+    my $tp = $correct_sum;
+    my $fp = $eval_sum - $tp;
+    my $fn = $total_sum - $tp;
+    my $tn = $allcands_sum - ($tp + $fp + $fn); 
+    print join "\t", ($tp, $tn, $fp, $fn);
+    print "\n";
 #     print "$correct_sum\t$eval_sum\t$total_sum\n";
 #     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
 #     print STDERR join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
