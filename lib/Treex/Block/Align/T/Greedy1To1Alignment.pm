@@ -143,9 +143,9 @@ sub process_bundle {
             }
   
             # identical t_lemmas
-            #   if (lc($en_tlemma) eq lc($cs_tlemma) or lc($en_tlemma) eq lc($cs_tlemma).".") {
-            #       $feature_value{'r_identical_tlemmas'} = 1;
-            #   }
+            if (lc($en_tlemma) eq lc($cs_tlemma) or lc($en_tlemma) eq lc($cs_tlemma).".") {
+                $feature_value{'r_identical_tlemmas'} = 1;
+            }
   
             # equal number prefix of t_lemmas
             if ( $en_tlemma =~ /^(\d+)\D/ and $cs_tlemma =~ /^$1/ ) {
@@ -160,9 +160,9 @@ sub process_bundle {
                 $feature_value{'r_4letter_match'} = 1;
             }
   
-            #   if (substr($en_tlemma, 0, 5) eq substr($cs_tlemma, 0, 5)) {
-            #       $feature_value{'r_5letter_match'} = 1;
-            #   }
+            if (substr($en_tlemma, 0, 5) eq substr($cs_tlemma, 0, 5)) {
+                $feature_value{'r_5letter_match'} = 1;
+            }
   
             #   if ($en_anode && $cs_anode) {
             #       $feature_value{'c_shortened_tags§'.substr($en_anode->get_attr('m/tag'), 0, 2).'-'.substr($cs_anode->get_attr('m/tag'), 0, 2)} = 1;
@@ -225,18 +225,18 @@ sub process_bundle {
                 }
   
                 # parent tlemmas in the translation dictionary
-                #   if ($pair_in_dictionary{$en_parent->get_attr('t_lemma')}{$cs_parent->get_attr('t_lemma')}) {
-                #       $feature_value{'r_parent_tlemmas_in_dict'} = 1;
-                #   }
+                if ($pair_in_dictionary{$en_parent->t_lemma}{$cs_parent->t_lemma}) {
+                    $feature_value{'r_parent_tlemmas_in_dict'} = 1;
+                }
   
                 # parent_translation_probability
                 my $ptp = $pair_in_dictionary{ $en_parent->t_lemma }{ $cs_parent->t_lemma };
                 $feature_value{'r_parent_translation_probability'} = $ptp if $ptp;
   
                 # parent similarity in linear position
-                #    $relative_difference = abs ($cs_parent->get_attr('deepord') / $cs_max_deepord
-                #                              - $en_parent->get_attr('deepord') / $en_max_deepord);
-                #    $feature_value{'r_parent_similarity_in_linear_position'} = 1 - $relative_difference;
+                $relative_difference = abs ($cs_parent->ord / $cs_max_deepord
+                                     - $en_parent->ord / $en_max_deepord);
+                $feature_value{'r_parent_similarity_in_linear_position'} = 1 - $relative_difference;
             }
 
 
