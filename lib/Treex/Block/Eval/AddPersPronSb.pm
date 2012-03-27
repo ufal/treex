@@ -11,7 +11,7 @@ sub is_refl_pass {
     my ($t_node) = @_;
     foreach my $anode ( $t_node->get_anodes ) {
         if ( grep { $_->afun =~ /^Aux[RT]$/ and $_->form eq "se" } $anode->children
-            and $t_node->t_lemma !~ /[_]se$/ ) {
+            and $t_node->t_lemma !~ /\_se$/ ) {
             return 1;
         }
     }
@@ -29,19 +29,51 @@ sub is_passive {
 # returns 1 if the given node is an passive verb and has an echild with PAT => possibly has an overt subject
 sub is_passive_having_PAT {
     my ( $t_node ) = @_;
-    return ( is_passive($t_node)
-#         and grep { ( ( $_->functor || "" ) eq "PAT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } $t_node->get_echildren( { or_topological => 1 } ))
-        and grep { ($_->functor || "" ) eq "PAT" and not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) 
-    ) ? 1 : 0;
+#     return ( is_passive($t_node)
+# #         and grep { ( ( $_->functor || "" ) eq "PAT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } $t_node->get_echildren( { or_topological => 1 } ))
+#         and grep { ($_->functor || "" ) eq "PAT" and not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) 
+#     ) ? 1 : 0;
+    if ( is_passive($t_node) ) {
+        my ($pat) = grep { ($_->functor || "" ) eq "PAT" } $t_node->get_echildren( { or_topological => 1 } );
+        if ( $pat and ($pat->formeme || "") =~ /^n\:(1|4)/ ) {
+#             if ( $pat->get_lex_anode 
+#                 and $pat->get_lex_anode->tag =~ /^....1/
+#             ) {
+                return 1;
+#             }
+        } 
+        elsif ( $pat and ( not $pat->is_generated or $pat->t_lemma eq "#EmpNoun" ) ) {
+            return 1;
+        }
+    }
 }
 
 # returns 1 if the given node is an active verb and has an echild with ACT => possibly has an overt subject
 sub is_active_having_ACT {
     my ( $t_node ) = @_;
-    return ( not is_passive($t_node)
-#         and grep { ( ( $_->functor || "" ) eq "ACT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } $t_node->get_echildren( { or_topological => 1 } ))
-        and grep { ($_->functor || "" ) eq "ACT" and not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) 
-    ) ? 1 : 0;
+#     return ( not is_passive($t_node)
+# #         and grep { ( ( $_->functor || "" ) eq "ACT" ) || ( ( $_->formeme || "" ) eq "n:1" ) } $t_node->get_echildren( { or_topological => 1 } ))
+#         and grep { ($_->functor || "" ) eq "ACT" 
+#         and not $_->is_generated } $t_node->get_echildren( { or_topological => 1 } ) 
+#     ) ? 1 : 0;
+    if ( not is_passive($t_node) ) {
+#         if ( $t_node->id eq "T-wsj0041-001-p1s20a1" ) {
+#             print "a tady\n";
+#         }
+        my ($act) = grep { ($_->functor || "" ) eq "ACT" } $t_node->get_echildren( { or_topological => 1 } );
+        if ( $act and ($act->formeme || "") =~ /^n\:(1|4)/ ) {
+            return 1;
+#             ($act->gram_sempos || "") =~ /^n\.denot/ ) {
+#             if ( $act->get_lex_anode 
+#                 and $act->get_lex_anode->tag =~ /^....1/
+#             ) {
+#                 return 1;
+#             }
+        } 
+        elsif ( $act and ( not $act->is_generated or $act->t_lemma eq "#EmpNoun" ) ) {
+            return 1;
+        }
+    }
 }
 
 sub is_byt_videt {
@@ -247,8 +279,15 @@ sub has_unexpressed_sb {
             and not $t_node->is_generated
             and not has_subject_gold($t_node)
             and (
-                ( is_passive($t_node) and $perspron->functor eq "PAT" )
-                or ( not is_passive($t_node) and $perspron->functor eq "ACT" ) 
+                ( 
+                    is_passive($t_node) 
+                    and $perspron->functor eq "PAT" 
+                    and not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } @echildren 
+                )
+                or ( 
+                    not is_passive($t_node) 
+                    and $perspron->functor eq "ACT" 
+                ) 
 #                 or not has_subject_gold($t_node)
 #                 or not grep { $_->t_lemma eq "#Gen" and $_->functor eq "ACT" } @echildren
             )

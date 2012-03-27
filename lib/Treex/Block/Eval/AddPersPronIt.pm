@@ -293,7 +293,9 @@ sub is_passive_having_PAT {
     my ( $t_node ) = @_;
     return ( is_passive($t_node)
         and grep { ($_->functor || "" ) eq "PAT" 
-            and ( not $_->is_generated or $_->t_lemma eq "#PersPron" ) } $t_node->get_echildren( { or_topological => 1 } ) 
+            and ( not $_->is_generated or $_->t_lemma eq "#EmpNoun" )
+#             and ( not $_->is_generated or $_->t_lemma eq "#PersPron" ) } $t_node->get_echildren( { or_topological => 1 } ) 
+        } $t_node->get_echildren( { or_topological => 1 } ) 
     ) ? 1 : 0;
 }
 
@@ -301,9 +303,12 @@ sub is_passive_having_PAT {
 # ACT can be an expressed word or a #PersPron drop
 sub is_active_having_ACT {
     my ( $t_node ) = @_;
-    return ( not is_passive($t_node)
+    return ( 
+        not is_passive($t_node)
         and grep { ($_->functor || "" ) eq "ACT" 
-            and ( not $_->is_generated or $_->t_lemma eq "#PersPron" ) } $t_node->get_echildren( { or_topological => 1 } ) 
+            and ( not $_->is_generated or $_->t_lemma eq "#EmpNoun" )
+#             and not ( $_->is_generated and $_->t_lemma eq "#PersPron" )
+        } $t_node->get_echildren( { or_topological => 1 } ) 
     ) ? 1 : 0;
 }
 
@@ -323,10 +328,16 @@ sub analyze_cs {
             and not $_->is_generated
         } $cs_tree->get_descendants
     ) {
-        $to_sum++;
+#         $to_sum++;
+#         if ( $cand_verb->id eq "T-wsj0041-001-p1s20a1" ) {
+# #             print "a tady\n";
+#             if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
+# #                 print "tady jsme\n";
+#             }
+#         }
         my $en_verb = $cs2en_node{$cand_verb};
         if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb) ) {
-            print $cand_verb->get_address . "\n";
+#             print $cand_verb->get_address . "\n";
             $pleon_sum++;
             if ( $en_verb and grep { $_->lemma eq "it" } $en_verb->get_aux_anodes ) {
                 $pleon_en_sum++;
@@ -696,7 +707,7 @@ sub find_short_sentences {
     my @descendants = $en_tree->get_descendants;
     if ( @descendants < 15 ) {
         foreach my $t_node ( @descendants ) {
-            my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_aux_anodes;
+            my ($a_it) = grep { $_->lemma eq "it" } $t_node->get_anodes;
             if ( $a_it ) {
                 my $verb = $t_node;
                 my $cs_it = get_aligned_node($t_node);
@@ -712,7 +723,7 @@ sub find_short_sentences {
 #                 elsif ( $verb->t_lemma =~ /^($cog_verbs|$cog_ed_verbs)$/ ) {
 #                     print $t_node->get_address . "\n";
 #                 }
-                elsif ( has_cs_to($verb, $cs_it) ) {
+                elsif ( has_cs_pp($cs_it) ) {
                     print $t_node->get_address . "\n";
                 }
             }
@@ -749,6 +760,17 @@ sub has_cs_to {
         and $t_to->t_lemma eq "ten" 
         and $t_to->get_lex_anode 
         and $t_to->get_lex_anode->lemma eq "to"  
+    ) ? 1 : 0;
+}
+
+sub has_cs_pp {
+    my ( $t_node ) = @_;
+    return (
+        $t_node->t_lemma eq "#PersPron"
+        or grep {
+            $_->t_lemma eq "#PersPron"
+        } $t_node->get_echildren( { or_topological => 1 } )
+        
     ) ? 1 : 0;
 }
 
@@ -1380,30 +1402,42 @@ sub has_perspron {
 sub test_it_cs {
     my ( $cs_tree ) = @_;
 
-    my @all_cands = grep {
+     $total_sum += grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants;
+    
+     my @all_cands = grep {
         ($_->gram_sempos || "") eq "v"
         and is_3_sg($_)
         and not $_->is_generated
+#         and not Treex::Block::Eval::AddPersPronSb::has_subject($_)
         and not Treex::Block::Eval::AddPersPronSb::has_subject_gold($_)
     } $cs_tree->get_descendants;
-
+    
+    my @eval_verbs;
     foreach my $cand_verb (@all_cands) {
         $allcands_sum++;
         
-        my $is_true =
-           Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) or
+        my $is_true = 
+#             Treex::Block::Eval::AddPersPronSb::has_unexpressed_sb($cand_verb) or
             Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cand_verb);
         my $is_selected =
-            not Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb);
+            Treex::Block::Eval::AddPersPronSb::will_have_pleon_gold($cand_verb);
+#             not Treex::Block::Eval::AddPersPronSb::will_have_perspron_gold($cand_verb);
 
         if ($is_selected && $is_true) {
             $correct_sum++;
+            push @eval_verbs, $cand_verb;
         }
         if ($is_selected) {
             $eval_sum++;
         }
-        if ($is_true) {
-            $total_sum++;
+#         if ($is_true) {
+#             $total_sum++;
+#         }
+    }
+    
+    foreach my $verb ( grep { Treex::Block::Eval::AddPersPronSb::has_pleon_sb($_) and is_3_sg($_) and not $_->is_generated } $cs_tree->get_descendants ) {
+        if ( not grep { $_ eq $verb } @eval_verbs ) {
+            print $verb->get_address . "\n";
         }
     }
 }
@@ -1618,12 +1652,11 @@ sub process_bundle {
     my $autom_en_tree = $bundle->get_zone('en', 'src')->get_ttree;
 
 #     test_it_en($gold_en_tree);
-    test_it_cs($gold_cs_tree);
-#    test_it_cs($autom_cs_tree);
-    #test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
+#     test_it_cs($gold_cs_tree);
+#     test_cs_it_linked($gold_cs_tree, $autom_cs_tree);
 #    test_en_it_linked($bundle);
-#     find_short_sentences($gold_en_tree);
-#     analyze_cs($gold_cs_tree, $gold_en_tree);
+#     find_short_sentences($gold_en_tree, $gold_cs_tree);
+    analyze_cs($gold_cs_tree, $gold_en_tree);
 #     analyze_en($gold_en_tree);
 }
 
@@ -1642,16 +1675,16 @@ sub process_bundle_manual {
 }
 
 sub process_end {
-    my $tp = $correct_sum;
-    my $fp = $eval_sum - $tp;
-    my $fn = $total_sum - $tp;
-    my $tn = $allcands_sum - ($tp + $fp + $fn); 
-    print join "\t", ($tp, $tn, $fp, $fn);
-    print "\n";
-#     print "$correct_sum\t$eval_sum\t$total_sum\n";
+#     my $tp = $correct_sum;
+#     my $fp = $eval_sum - $tp;
+#     my $fn = $total_sum - $tp;
+#     my $tn = $allcands_sum - ($tp + $fp + $fn); 
+#     print join "\t", ($tp, $tn, $fp, $fn);
+#     print "\n";
+#     print STDERR "$correct_sum\t$eval_sum\t$total_sum\n";
 #     print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_cs_sum, $segm_sum, $to_sum, $pp_sum);
-#     print STDERR join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
-#     print STDERR "\n";
+    print join "\t", ($anaph_sum, $non_anaph_sum, $pleon_sum, $pleon_en_sum, $segm_sum);
+    print "\n";
 }
 
 1;
