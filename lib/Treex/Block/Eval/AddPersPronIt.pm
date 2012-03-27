@@ -187,6 +187,17 @@ sub analyze_en {
                 else {
                     $non_anaph_sum++;
                 }
+                my ($aligned, $types) = $t_node->get_aligned_nodes;
+                if ( $aligned and $types->[0] ne "monolingual" ) {
+    #                     $cs_node = $aligned->[0];
+    #                         $cs_node->t_lemma eq "ten" ) {
+                    if ( grep { $_->t_lemma eq "ten" } @$aligned ) {
+                        $to_sum++;
+                    }
+                    elsif ( grep { $_->t_lemma eq "#PersPron" } @$aligned ) {
+                        $pp_sum++;
+                    }
+                }
             }
             else {
                 $pleon_sum++;
@@ -197,17 +208,6 @@ sub analyze_en {
                         $pleon_cs_sum++;
 #                         print $cs_node->get_address . "\n";
                     }
-                }
-            }
-            my ($aligned, $types) = $t_node->get_aligned_nodes;
-            if ( $aligned and $types->[0] ne "monolingual" ) {
-#                     $cs_node = $aligned->[0];
-#                         $cs_node->t_lemma eq "ten" ) {
-                if ( grep { $_->t_lemma eq "ten" } @$aligned ) {
-                    $to_sum++;
-                }
-                elsif ( grep { $_->t_lemma eq "#PersPron" } @$aligned ) {
-                    $pp_sum++;
                 }
             }
         }
@@ -363,9 +363,9 @@ sub analyze_cs {
             elsif ( $perspron ){
                 $non_anaph_sum++;
             }
-            if ( $en_verb and grep { $_->lemma eq "it" } $en_verb->get_aux_anodes ) {
-                $pleon_en_sum++;
-            }
+#             if ( $en_verb and grep { $_->lemma eq "it" } $en_verb->get_aux_anodes ) {
+#                 $pleon_en_sum++;
+#             }
         }
         else {
 #             print $cand_verb->get_address . "\n";
