@@ -43,19 +43,15 @@ sub insert_nodes_from_tag {
     my $line_number = 0;
     foreach my $line (split /\n/,$xml_content) {
         $line =~ s/<W /<W linenumber="$line_number" /;
-        $numbered_xml_content .= $line;
+        $numbered_xml_content .= $line."\n";
         $line_number++;
     }
 
-#    open my $TEST,">:utf8","test.xml";
-#    print $TEST $numbered_xml_content;
-#    close $TEST;
-
-
     # read the XML structure
-    my $tag_document = XML::Twig->new(); # create the twig
-    $tag_document->parse( $numbered_xml_content );
-
+    my $tag_document = XML::Twig->new();
+    if (not eval { $tag_document->parse( $numbered_xml_content ) } ) {
+        $self->dump_xmlized_file($filename,$numbered_xml_content);
+    }
 
     # remember which tokens belonged to which sentence or paragraph (<s> and <p> tags, if present)
     my %sent_number;
@@ -95,15 +91,23 @@ sub insert_nodes_from_tag {
     }
 }
 
+sub dump_xmlized_file {
+    my ( $self, $filename, $xml_content ) = @_;
+
+    my $dump_filename = $filename;
+    $dump_filename =~ s/.*\///;
+    $dump_filename = "dump-$dump_filename.xml";
+
+    open my $WRONG_XML,">:utf8",$dump_filename;
+    print $WRONG_XML $xml_content;
+    close $WRONG_XML;
+
+    log_warn "Partially fixed, but still unparsable XML content stored to $dump_filename\n";
+}
+
 1;
 
-
-
-
-
 __END__
-
-
 
 =head1 NAME
 

@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::CdtTag'; # just to inherit insert_nodes_from_tag()
 
+use Treex::Tool::CopenhagenDT::XmlizeTagFormat;
+
 has _file_list => ( # 4-level hash $_file_lists->{$number}{$format}{$language}{$filename}
     is => 'rw',
     isa => 'HashRef',
@@ -37,7 +39,7 @@ sub _initialize_file_lists {
                 log_fatal "Language code cannot be detected from file name: $file_to_process";
             }
             my $language = $1;
-            $self->_file_list->{$number}{tag}{$language}{$file_to_process} = 1;
+            $self->_file_list->{$number}{tag}{$language} = $file_to_process;
         }
 
         elsif ($file_to_process =~ /\.atag$/ ) {
@@ -45,7 +47,7 @@ sub _initialize_file_lists {
                 log_fatal "Language code cannot be detected from file name: $file_to_process";
             }
             my $language = $1;
-            $self->_file_list->{$number}{atag}{$file_to_process} = 1;
+            $self->_file_list->{$number}{atag}{$language} = $file_to_process;
         }
 
         else {
@@ -56,8 +58,9 @@ sub _initialize_file_lists {
     foreach my $number (reverse sort keys %{$self->_file_list}) {
         push @{$self->_unprocessed_numbers}, $number;
     }
-
 }
+
+
 
 
 sub next_document {
@@ -70,6 +73,7 @@ sub next_document {
     my $number = pop @{$self->_unprocessed_numbers};
 
     return if not defined $number;
+#    print "NUMBER: $number\n";
 
     my $document = Treex::Core::Document->new;
     my $bundle = $document->create_bundle;
@@ -77,11 +81,58 @@ sub next_document {
     foreach my $language (sort keys %{$self->_file_list->{$number}{tag}}) {
         my $zone = $bundle->create_zone($language);
         my $atree = $zone->create_atree;
-        my ($filename) = keys %{$self->_file_list->{$number}{tag}{$language}};
+        my $filename = $self->_file_list->{$number}{tag}{$language};
         $self->insert_nodes_from_tag( $atree, $filename );
     }
 
-    $document->set_file_stem("cdt$number");
+    foreach my $aligned_language ( keys %{$self->_file_list->{$number}{atag}}) {
+
+        $bundle->wild->{$aligned_language} = [];
+
+        my $atag_document = XML::Twig->new();
+
+        my $filename = $self->_file_list->{$number}{atag}{$aligned_language};
+        my $xml_content = Treex::Tool::CopenhagenDT::XmlizeTagFormat::read_and_xmlize($filename);
+
+        if (not eval { $atag_document->parse( $xml_content ) }) {
+            $self->dump_xmlized_file($filename,$xml_content);
+        }
+
+        foreach my $align_element ($atag_document->descendants('align')) {
+            my %attr_hash = ();
+            foreach my $attr_name (keys %{$align_element->{'att'}||{}}) {
+                $attr_hash{$attr_name} = $align_element->{'att'}->{$attr_name};
+            }
+            push @{$bundle->wild->{$aligned_language}}, \%attr_hash;
+        }
+    }
+
+    # determine file name according to available annotations
+    my $code;
+    foreach my $language (qw(de es it)) {
+        $code .= "-$language";
+        if (defined $self->_file_list->{$number}{tag}{$language}) {
+            if ($self->_file_list->{$number}{tag}{$language} =~ /tagged/) {
+                $code .= 1; # only automatically tokenized
+            }
+            else {
+                $code .= 2; # manually annotated
+            }
+
+            if (defined $self->_file_list->{$number}{atag}{$language}) {
+                $code .= 1; # alignment available
+            }
+            else {
+                $code .= 0; # alignment unavailable
+            }
+        }
+        else {
+            $code .= '00'; #language not present at all
+        }
+    }
+
+
+    $document->set_file_stem("cdt$number$code");
     $document->set_file_number("");
 
     return $document;

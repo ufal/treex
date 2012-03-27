@@ -2,11 +2,14 @@ package Treex::Tool::CopenhagenDT::XmlizeTagFormat;
 
 use strict;
 use warnings;
+use Treex::Core::Log;
 
 sub read_and_xmlize {
     my $tag_filename = shift;
 
-    open my $INPUT,'<:utf8',$tag_filename or die $!;
+#    log_info "Reading $tag_filename";
+
+    open my $INPUT,'<:utf8',$tag_filename or log_fatal("Can't read $tag_filename");
     my $content;
     $content .= $_ while (<$INPUT>);
 
@@ -76,7 +79,17 @@ my %embeding = (
     W => 1,
     s => 2,
     p => 3,
-    root => 4,
+
+    div1 => 400,
+    body => 500,
+    text => 700,
+    'tei.2' => 900,
+
+
+    align => 2,
+    DTAGalign => 3,
+
+    root => 1000,
 );
 
 sub _add_closing_tags {
@@ -91,7 +104,7 @@ sub _add_closing_tags {
 
     foreach my $segment (grep {/./} @segments) {
 
-        $segment =~ /^(\/?)([^\s\/\>]+)((\s+\S+=\"[^"]*\")*)\s*(\/?)/
+        $segment =~ /^(\/?)([^\s\/\>]+)((\s+\w+=\"[^"]*\")*)\s*(\/?)/
             or die "Error: segment not matching the expected pattern: $segment\n";
 
         my ($slash_before, $tag, $attribs, $slash_after) = ($1,$2,$3,$5);
@@ -118,6 +131,14 @@ sub _add_closing_tags {
         elsif ($slash_before) {
             if ($stack[-1] eq $tag) {
                 pop @stack;
+            }
+
+            elsif ( not defined $embeding{$tag} ) {
+                log_warn("Embeding level of <$tag> is needed");
+            }
+
+            elsif ( not defined $embeding{$stacktop}) {
+                log_warn("Embeding level of <$stacktop> is needed");
             }
 
             # fixing unexpected closing tag
