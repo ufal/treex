@@ -11,7 +11,8 @@ has 'to_selector' => ( isa => 'Str',      is => 'ro', default => '' );
 has 'del_prev_align' => ( isa => 'Bool', is => 'ro', default => 1, required => 1 );
 has 'using_walign' => ( isa => 'Bool', is => 'rw', default => 0 );
 has 'feature_weight' => ( isa => 'HashRef', is => 'rw', lazy_build => 1 );
-has 'threshold' => ( isa => 'Num', is => 'rw', default => 0 );
+has 'type_name' => ( isa => 'Str', is => 'rw', default => 'greedy');
+has 'threshold' => ( isa => 'Num', is => 'rw' );
 has 'dict' => ( isa => 'Ref', is => 'rw', default => sub { TranslationDict::EN2CS->new });
 
 sub _build_to_language {
@@ -41,7 +42,7 @@ sub _build_feature_weight {
     while (<MODEL>) {
         next if ( $_ =~ /^[^A-Za-z0-9]/ );
         my ($feature, $value) = split( /\s/, $_ );
-        if ( $feature eq 'threshold' ) {
+        if ( $feature eq 'threshold' && !defined $self->threshold) {
             $self->set_threshold($value);
         }
         else {
@@ -276,7 +277,7 @@ sub process_bundle {
 
             # align
             $aligned_pair{$max_en_tnode}{$max_cs_tnode} = 1;
-            $max_cs_tnode->add_aligned_node( $max_en_tnode, 'greedy' );
+            $max_cs_tnode->add_aligned_node( $max_en_tnode, $self->type_name );
         }
         else {
             last;
