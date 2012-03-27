@@ -51,6 +51,7 @@ sub is_next_document_for_this_job {
 }
 
 sub next_filename {
+    
     my ($self) = @_;
 
     # In parallel processing and one_doc_per_file setting,
@@ -60,6 +61,9 @@ sub next_filename {
         $self->_set_file_number( $self->file_number + 1 );
         $self->_set_doc_number( $self->doc_number + 1 );
     }
+    # return undef, but do not move further if we are at the end of document list (we might need the current file name) 
+    return if ( $self->file_number >= $self->from->number_of_files );
+    
     $self->_set_file_number( $self->file_number + 1 );
     return $self->current_filename();
 }
@@ -67,6 +71,7 @@ sub next_filename {
 use File::Spec;
 
 sub new_document {
+    
     my ( $self, $load_from ) = @_;
     my $path = $self->current_filename();
     log_fatal "next_filename() must be called before new_document()" if !defined $path;

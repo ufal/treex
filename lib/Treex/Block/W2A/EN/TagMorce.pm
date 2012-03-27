@@ -15,9 +15,13 @@ sub BUILD {
 }
 
 sub process_start {
+
     my ($self) = @_;
 
-    $self->_set_tagger( Morce::English->new() );
+    my $tagger = Morce::English->new();
+
+    log_fatal("Cannot initialize Morce") if ( !defined($tagger) );
+    $self->_set_tagger($tagger);
 
     $self->SUPER::process_start();
 
@@ -27,13 +31,11 @@ sub process_start {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    log_fatal("Tagger got lost!") if !defined $self->_tagger;
-
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
     my @forms =
-      map { substr($_, -45, 45) } # avoid words > 45 chars; Morce segfaults
-      map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
-      @a_nodes;
+        map { substr( $_, -45, 45 ) }                                       # avoid words > 45 chars; Morce segfaults
+        map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
+        @a_nodes;
 
     # get tags
     my ($tags_rf) = $self->_tagger->tag_sentence( \@forms );
@@ -42,7 +44,7 @@ sub process_atree {
     }
 
     # fill tags
-    foreach my $a_node ( @a_nodes ) {
+    foreach my $a_node (@a_nodes) {
         $a_node->set_tag( shift @$tags_rf );
     }
 
