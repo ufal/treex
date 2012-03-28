@@ -10,14 +10,14 @@ has '+language' => ( required => 0 );
 
 has [qw(lang1 lang2)] => (
     isa      => 'Treex::Type::LangCode',
-    is       => 'ro',
-    required => 1,
+    is       => 'rw',
+    required => 0,
 );
 
 has [qw(selector1 selector2)] => (
     isa     => 'Treex::Type::Selector',
     is      => 'ro',
-    default => '',
+    default => 'src',
 );
 
 has 'format' => (
@@ -25,6 +25,22 @@ has 'format' => (
     is      => 'ro',
     default => '1.0',
 );
+
+sub BUILD
+{
+    my ($self) = @_;
+    if ( ! defined($self->lang1) || ! defined($self->lang2) ) {
+        if ( $self->format eq "0.9" ) {
+            $self->set_lang1("en");
+            $self->set_lang2("cs");
+        } elsif ( $self->format eq "1.0" ) {
+            $self->set_lang1("cs");
+            $self->set_lang2("en");
+        }
+    }
+
+    return;
+}
 
 sub next_document {
     my ($self) = @_;
@@ -43,6 +59,8 @@ sub next_document {
             $align_score = 1;
         }
 
+#        print STDERR "Lang1: " . $self->lang1 . "; " . "Sentence: " . $sent1 . "\n";
+#        print STDERR "Lang2: " . $self->lang2 . "; " . "Sentence: " . $sent2 . "\n";
         my $bundle = $document->create_bundle();
         $bundle->set_attr( 'czeng/id',                   $sentid );
         $bundle->set_attr( 'czeng/align_score',          $align_score );
