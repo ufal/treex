@@ -5,13 +5,6 @@ extends 'Treex::Core::Block';
 use Treex::Tool::TranslationModel::Features::EN;
 binmode STDOUT, ':utf8';
 
-has alignment => (
-    is            => 'ro',
-    isa           => enum( [qw(int int-gdfa)] ),
-    default       => 'int-gdfa',
-    documentation => 'int=Intersection, int-gdfa=Intersection only if just 1-1 grow-diag-final-and',
-);
-
 has target_features => (
     is            => 'ro',
     isa           => 'Bool',
@@ -28,15 +21,19 @@ has czeng_domain => (
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
-
-    my ($en_tnode) = $cs_tnode->get_aligned_nodes_of_type('int');
-    return if !$en_tnode;
-    my $cs_anode = $cs_tnode->get_lex_anode or return;
-
-    if ( $self->alignment eq 'int-gdfa' ) {
-        my @gdfa_nodes = $cs_tnode->get_aligned_nodes_of_type('gdfa');
-        return if @gdfa_nodes > 1;
+    my ($en_tnodes_rf, $ali_types_rf) = $cs_tnode->get_aligned_nodes();
+    for my $i (0 .. $#{$en_tnodes_rf}) {
+        my $types = $ali_types_rf->[$i];
+        if ($types =~ /int|tali/){
+            $self->print_tnode_features($cs_tnode, $en_tnodes_rf->[$i], $types);
+        }
     }
+    return;
+}
+
+sub print_tnode_features {
+    my ( $self, $cs_tnode, $en_tnode, $ali_types ) = @_;
+    my $cs_anode = $cs_tnode->get_lex_anode or return;
 
     #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
     my $en_tlemma = $en_tnode->t_lemma // '';
@@ -48,6 +45,8 @@ sub process_tnode {
     my ($cs_mlayer_pos) = ( $cs_anode->tag =~ /^(.)/ );
 
     my @add_features = ();
+
+    # target-language features
     if ( $self->target_features ) {
         my ($cs_parent) = $cs_tnode->get_eparents( { or_topological => 1 } );
         my ($en_parent) = $en_tnode->get_eparents( { or_topological => 1 } );
@@ -64,6 +63,18 @@ sub process_tnode {
         }
     }
 
+    # alignment features
+    my @gdfa_nodes = $cs_tnode->get_aligned_nodes_of_type('gdfa');
+    if (@gdfa_nodes == 1){
+        push @add_features, 'ali_int-gdfa=1';
+    }
+    foreach my $type (split /\./, $ali_types){
+        if ($type =~ /int|tali/){
+            push @add_features, "ali_$type=1";
+        }
+    }
+
+    # domain feature
     if ( $self->czeng_domain ) {
         if ( my $domain = $cs_tnode->get_bundle()->attr('czeng/domain') ) {
             push @add_features, "domain=$domain";
