@@ -17,7 +17,12 @@ sub process_bundle {
 
     foreach my $language (keys %{$bundle->wild}) {
 
+      ALIGN:
         foreach my $align (@{$bundle->wild->{$language}}) {
+
+            next ALIGN if $align->{outsign} =~ /\/s>/
+                or $align->{insign} =~ /\/s>/; # sentence boundaries were aligned too
+
             my $danish_line_numbers = $align->{out};
             my $other_lang_line_numbers = $align->{in};
 #            print "$danish_line_numbers $other_lang_line_numbers\n";
