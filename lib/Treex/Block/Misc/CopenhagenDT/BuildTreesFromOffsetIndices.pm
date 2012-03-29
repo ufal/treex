@@ -28,8 +28,10 @@ sub process_bundle {
             my $in_edges_description = $node->wild->{in};
 
             if ( defined $in_edges_description ) {
+                my $first = 1;
                 foreach my $edge_description ( split /\|/,$in_edges_description) {
-                    $dependencies += ( $self->_create_edge( $node, $edge_description, \%linenumber2node ) || 0 );
+                    $dependencies += ( $self->_create_edge( $node, $edge_description, \%linenumber2node ) || 0 ,$first);
+                    $first = 0;
                 }
             }
         }
@@ -46,7 +48,7 @@ sub process_bundle {
 }
 
 sub _create_edge {
-    my ( $self, $node, $edge_description, $linenumber2node_rf,  ) = @_;
+    my ( $self, $node, $edge_description, $linenumber2node_rf,  $first) = @_;
 
     if ( $edge_description =~ /^[^1-9\-]/ ) { # this includes things like 'CONJ:add/(e)'
         # what should be done?
@@ -67,6 +69,7 @@ sub _create_edge {
         return;
     }
 
+#    elsif ($first) {
     elsif ( $edge_label =~ /SCENE|ref|rel|coref|cored|asso|[\[\{\*\/¹²³#]/ ) {
 #        log_info "Non-tree edge: $edge_description";
 
