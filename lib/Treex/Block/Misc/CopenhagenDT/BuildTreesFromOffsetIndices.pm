@@ -28,10 +28,28 @@ sub process_bundle {
             my $in_edges_description = $node->wild->{in};
 
             if ( defined $in_edges_description ) {
-                my $first = 1;
-                foreach my $edge_description ( split /\|/,$in_edges_description) {
-                    $dependencies += ( $self->_create_edge( $node, $edge_description, \%linenumber2node ) || 0 ,$first);
-                    $first = 0;
+
+                my @edge_descriptions = split /\|/,$in_edges_description;
+
+                # choose the most-likely dependency edge for creating a new tree edge
+                my $max_score = 0;
+                my $dependency_edge_description;
+                foreach my $edge_description (@edge_descriptions) {
+                    my $score = _dependency_score($edge_description);
+                    if ($score > $max_score) {
+                        $dependency_edge_description = $edge_description;
+                        $max_score = $score;
+                    }
+                }
+
+                if ( $max_score > 0 ) {
+                    $self->_create_edge( $node, $dependency_edge_description, \%linenumber2node, 1 );
+                    @edge_descriptions = grep {$_ ne $dependency_edge_description} @edge_descriptions;
+                    $dependencies++;
+                }
+
+                foreach my $edge_description ( @edge_descriptions ) {
+                    $self->_create_edge( $node, $edge_description, \%linenumber2node, 0 );
                 }
             }
         }
@@ -47,8 +65,31 @@ sub process_bundle {
     return;
 }
 
+sub _dependency_score {
+    my ($edge_description) = @_;
+
+    if ($edge_description !~ /(.+?):(.+)/) {
+        log_warn "Unexpected value of 'in' attribute: $edge_description";
+        return;
+    }
+
+    my ( $offset, $edge_label ) = ( $1, $2 );
+
+    my $score = 100;
+
+    if ( $edge_label =~ /[A-Z]|ref|coref|cored|asso|[\[\{\*\/¹²³]/ ) { # relr seems to be valid dependency
+        $score = -1000;
+    }
+    elsif ( $edge_label =~ /#|relr/ ) {
+        $score = 50;
+    }
+
+    return $score;
+
+}
+
 sub _create_edge {
-    my ( $self, $node, $edge_description, $linenumber2node_rf,  $first) = @_;
+    my ( $self, $node, $edge_description, $linenumber2node_rf,  $dependency) = @_;
 
     if ( $edge_description =~ /^[^1-9\-]/ ) { # this includes things like 'CONJ:add/(e)'
         # what should be done?
@@ -69,8 +110,8 @@ sub _create_edge {
         return;
     }
 
-#    elsif ($first) {
-    elsif ( $edge_label =~ /SCENE|ref|rel|coref|cored|asso|[\[\{\*\/¹²³#]/ ) {
+    elsif ( not $dependency ) {
+#    elsif ( $edge_label =~ /SCENE|ref|rel|coref|cored|asso|[\[\{\*\/¹²³#]/ ) {
 #        log_info "Non-tree edge: $edge_description";
 
     }
