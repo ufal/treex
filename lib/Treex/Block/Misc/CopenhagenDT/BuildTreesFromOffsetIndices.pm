@@ -10,6 +10,8 @@ sub process_bundle {
 
     foreach my $zone ($bundle->get_all_zones) {
 
+        my $dependencies;
+
         my $a_root = $zone->get_atree();
 
         my @nodes = $a_root->get_descendants;
@@ -27,22 +29,24 @@ sub process_bundle {
 
             if ( defined $in_edges_description ) {
                 foreach my $edge_description ( split /\|/,$in_edges_description) {
-                    $self->_create_edge( $node, $edge_description, \%linenumber2node );
+                    $dependencies += ( $self->_create_edge( $node, $edge_description, \%linenumber2node ) || 0 );
                 }
             }
+        }
+
+        if ($dependencies) {
+            $bundle->get_document->wild->{annotation}{$zone->language}{syntax} = 1;
         }
 
         my $sentence = join ' ', grep { !/#[A-Z]/ }
             map { $_->form } $a_root->get_descendants( { ordered => 1 } );
         $zone->set_sentence( $sentence );
-
     }
     return;
 }
 
 sub _create_edge {
     my ( $self, $node, $edge_description, $linenumber2node_rf,  ) = @_;
-
 
     if ( $edge_description =~ /^[^1-9\-]/ ) { # this includes things like 'CONJ:add/(e)'
         # what should be done?
@@ -71,11 +75,7 @@ sub _create_edge {
     else {
 #        log_info "Tree edge: $edge_description";
 
-        if ( $second_node eq $node ) {
-            log_warn "Problem1\tCan't hang node below itself: $edge_description";
-        }
-
-        elsif (grep {$second_node eq $_} $node->get_descendants) {
+        if (grep {$second_node eq $_} $node->get_descendants) {
             log_warn "Problem2\tCreating an edge that would lead to a dependency cycle: $edge_description form=" .
                 $node->form . "  id=" . $node->id." . No edge created. Instead, the node is hanged below nearest left neighbor.";
             $self->_hang_below_substitute_parent($node,$linenumber2node_rf);
@@ -89,8 +89,10 @@ sub _create_edge {
         else { # everything ok
             $node->set_parent( $second_node );
             $node->set_conll_deprel( $edge_label );
+            return 1;
         }
     }
+    return;
 }
 
 sub _hang_below_substitute_parent {

@@ -16,6 +16,7 @@ sub process_bundle {
     }
 
     foreach my $language (keys %{$bundle->wild}) {
+        my $aligned;
 
       ALIGN:
         foreach my $align (@{$bundle->wild->{$language}}) {
@@ -49,10 +50,16 @@ sub process_bundle {
 
 #                        print $danish_node->form."\t".$other_lang_node->form."\n";
                         $other_lang_node->add_aligned_node($danish_node);
+                        $aligned++;
                     }
                 }
             }
         }
+
+        if ($aligned) {
+            $bundle->get_document->wild->{annotation}{$language}{alignment} = 1;
+        }
+
     }
 
     return;
