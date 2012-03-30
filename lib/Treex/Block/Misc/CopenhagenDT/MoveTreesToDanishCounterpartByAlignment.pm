@@ -42,15 +42,19 @@ sub process_document {
 
                 my $winner_bundle = $document->get_node_by_id($most_strongly_aligned_tree)->get_bundle;
 
-                if ($winner_bundle->get_zone($zone->language)) {
-                    log_warn "Zone for lang ".$zone->language." already exists in bundle ".$winner_bundle->id;
+                my $new_zone = $winner_bundle->get_zone($zone->language);
+
+                if ( defined $new_zone ) {
+                    my $aroot = $new_zone->get_atree;
+                    my ($rightmost) = reverse $aroot->get_descendants({add_self=>1,ordered=>1});
+                    $tree->set_parent($aroot);
+                    $tree->shift_after_node($rightmost);
                 }
 
                 else {
-                    my $new_zone = $winner_bundle->create_zone($zone->language);
+                    $new_zone = $winner_bundle->create_zone($zone->language);
                     my $new_aroot = $new_zone->create_atree;
                     $tree->set_parent($new_aroot);
-                    log_info "Rehanging $tree to bundle $winner_bundle";
                 }
             }
 
