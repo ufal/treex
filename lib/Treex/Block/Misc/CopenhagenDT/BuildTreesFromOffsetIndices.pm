@@ -70,7 +70,7 @@ sub _dependency_score {
 
     if ($edge_description !~ /(.+?):(.+)/) {
         log_warn "Unexpected value of 'in' attribute: $edge_description";
-        return;
+        return -1000;
     }
 
     my ( $offset, $edge_label ) = ( $1, $2 );
