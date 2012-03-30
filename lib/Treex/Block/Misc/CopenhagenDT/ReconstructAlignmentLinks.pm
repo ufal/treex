@@ -49,7 +49,7 @@ sub process_bundle {
                         }
 
 #                        print $danish_node->form."\t".$other_lang_node->form."\n";
-                        $other_lang_node->add_aligned_node($danish_node);
+                        $other_lang_node->add_aligned_node($danish_node,'alignment');
                         $aligned++;
                     }
                 }

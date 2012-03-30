@@ -24,8 +24,15 @@ sub process_document {
 
                 my ($nodes_rf, $types_rf) = $node->get_aligned_nodes;
 
-                foreach my $da_node (@{$nodes_rf || []}) {
-                    $alignments_per_da_tree{$da_node->get_root->id}++;
+                if (defined $nodes_rf and scalar @{$nodes_rf} > 0) {
+
+                    foreach my $index (0..$#{$nodes_rf}) {
+                        my $da_node = $nodes_rf->[$index];
+                        my $type = $types_rf->[$index];
+                        if ( $type eq 'alignment' ) {
+                            $alignments_per_da_tree{$da_node->get_root->id}++;
+                        }
+                    }
                 }
             }
 

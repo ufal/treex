@@ -111,6 +111,7 @@ sub _create_edge {
     }
 
     elsif ( not $dependency ) {
+        $node->add_aligned_node($second_node,$edge_label)
 #    elsif ( $edge_label =~ /SCENE|ref|rel|coref|cored|asso|[\[\{\*\/¹²³#]/ ) {
 #        log_info "Non-tree edge: $edge_description";
 
