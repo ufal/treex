@@ -21,7 +21,7 @@ sub process_bundle {
       ALIGN:
         foreach my $align (@{$bundle->wild->{$language}}) {
 
-            next ALIGN if $align->{outsign} =~ /\/s>/
+            next ALIGN if $align->{outsign} =~ /[sp]>/
                 or $align->{insign} =~ /\/s>/; # sentence boundaries were aligned too
 
             my $danish_line_numbers = $align->{out};
@@ -36,7 +36,8 @@ sub process_bundle {
                 foreach my $danish_line_number ( split / /,$danish_line_numbers ) {
                     my $danish_node = $linenumber2node{da}{$danish_line_number};
                     if (not defined $danish_node) {
-                        log_warn "No node defined for language 'da' (in alignment da-$language) and line number $danish_line_number";
+                        log_warn "No node defined for language 'da' (in alignment da-$language) and line number $danish_line_number".
+                            " out: ". $align->{outsign} . " in: ".$align->{insign};
                         next DANISH_NODE;
                     }
 
