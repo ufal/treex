@@ -39,30 +39,34 @@ sub process_document {
             my ($most_strongly_aligned_tree) = sort {$alignments_per_da_tree{$b} <=> $alignments_per_da_tree{$a}} keys %alignments_per_da_tree;
 
             if (defined $most_strongly_aligned_tree) {
-
                 my $winner_bundle = $document->get_node_by_id($most_strongly_aligned_tree)->get_bundle;
-
-                my $new_zone = $winner_bundle->get_zone($zone->language);
-
-                if ( defined $new_zone ) {
-                    my $aroot = $new_zone->get_atree;
-                    my ($rightmost) = reverse $aroot->get_descendants({add_self=>1,ordered=>1});
-                    $tree->set_parent($aroot);
-                    $tree->shift_after_node($rightmost);
-                }
-
-                else {
-                    $new_zone = $winner_bundle->create_zone($zone->language);
-                    my $new_aroot = $new_zone->create_atree;
-                    $tree->set_parent($new_aroot);
-                }
+                $self->move_tree_to_bundle($tree,$winner_bundle);
             }
-
         }
     }
-
     return;
 }
+
+
+sub move_tree_to_bundle {
+    my ($self,$tree,$winner_bundle) = @_;
+
+    my $new_zone = $winner_bundle->get_zone($tree->get_zone->language);
+
+    if ( defined $new_zone ) {
+        my $aroot = $new_zone->get_atree;
+        my ($rightmost) = reverse $aroot->get_descendants({add_self=>1,ordered=>1});
+        $tree->set_parent($aroot);
+        $tree->shift_after_node($rightmost);
+    }
+
+    else {
+        $new_zone = $winner_bundle->create_zone($tree->get_zone->language);
+        my $new_aroot = $new_zone->create_atree;
+        $tree->set_parent($new_aroot);
+    }
+}
+
 
 1;
 
