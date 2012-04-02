@@ -66,9 +66,13 @@ sub process_bundle {
                         $first_node_in_sentence = undef;
                     }
                 }
+                elsif ( $letter eq '_' ) { # hack because of wrong entities such as '&amp ;'
+
+                }
                 else {
-#                    log_warn "Sentences do not match!\n   Expected tokens from tag:  ".
-#                        (join ' ',map{_normalize($nodes[$_]->form)} ($node_index..$node_index+5))."\n  Unprocessed sentence tail:  $current_sentence\n";
+                    log_info "Sentence from external file does not match (other type of segmentation will have to be used).\n".
+                        "  Expected letter from tag: '$letter' Expected tokens from tag:  ".
+                        (join ' ',map{_normalize($nodes[$_]->form)} ($node_index..$node_index+5))."\n  Unprocessed sentence tail:  $current_sentence\n";
                     next ZONE;
                 }
             }

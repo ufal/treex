@@ -19,8 +19,8 @@ sub process_bundle {
 
         my $language = $zone->language;
         next ZONE if $language =~ /(da|en)/;
-        next ZONE if $bundle->get_document->wild->{annotation}{$language}{syntax}
-            or $bundle->get_document->wild->{annotation}{$language}{segmented};
+        next ZONE if $bundle->get_document->wild->{annotation}{$language}{syntax};
+        next ZONE if $bundle->get_document->wild->{annotation}{$language}{segmented};
 
         $bundle->get_document->wild->{annotation}{$language}{segmented} = 'tag_s';
 

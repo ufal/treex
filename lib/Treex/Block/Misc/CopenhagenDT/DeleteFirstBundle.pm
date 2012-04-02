@@ -14,6 +14,7 @@ sub process_document {
         if ($zone->get_atree->get_descendants) {
             log_warn "First bundle cannot be deleted as it is not empty (language "
                 . $zone->language . ")";
+            return;
         }
     }
 

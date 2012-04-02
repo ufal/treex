@@ -15,12 +15,15 @@ sub process_document {
 
   ZONE:
     foreach my $unaligned_zone (grep {$_->get_atree->descendants} $first_bundle->get_all_zones) {
+
+        next ZONE if $document->wild->{annotation}{$unaligned_zone->language}{alignment};
+
         my @xx_trees = $unaligned_zone->get_atree->get_children;
 
-        if (@da_trees > 2*@xx_trees or @xx_trees > 2*@da_trees) {
+        if (@da_trees > 4*@xx_trees or @xx_trees > 4*@da_trees) {
             log_warn "Too different numbers of trees, given up: da:". 
                 scalar(@da_trees). "  ".$unaligned_zone->language.":".scalar(@xx_trees);
-            return;
+            next ZONE;
         }
 
         $self->_align_tree_sequences(\@da_trees, \@xx_trees);
@@ -125,7 +128,8 @@ sub _align_tree_sequences {
 =item Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpartBySizeSimilarity
 
 Greedy recursive alignment of sentence boundaries based on similarity of
-sentence lenghts.
+sentence lenghts. This block applies only on languages for which annotated alignment
+is available in the file.
 
 =back
 

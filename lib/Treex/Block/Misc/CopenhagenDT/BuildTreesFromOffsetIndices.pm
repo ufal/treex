@@ -10,8 +10,6 @@ sub process_bundle {
 
     foreach my $zone ($bundle->get_all_zones) {
 
-        my $dependencies;
-
         my $a_root = $zone->get_atree();
 
         my @nodes = $a_root->get_descendants;
@@ -45,17 +43,12 @@ sub process_bundle {
                 if ( $max_score > 0 ) {
                     $self->_create_edge( $node, $dependency_edge_description, \%linenumber2node, 1 );
                     @edge_descriptions = grep {$_ ne $dependency_edge_description} @edge_descriptions;
-                    $dependencies++;
                 }
 
                 foreach my $edge_description ( @edge_descriptions ) {
                     $self->_create_edge( $node, $edge_description, \%linenumber2node, 0 );
                 }
             }
-        }
-
-        if ($dependencies) {
-            $bundle->get_document->wild->{annotation}{$zone->language}{syntax} = 1;
         }
 
         my $sentence = join ' ', grep { !/#[A-Z]/ }
@@ -77,10 +70,10 @@ sub _dependency_score {
 
     my $score = 100;
 
-    if ( $edge_label =~ /[A-Z]|ref|coref|cored|asso|[\[\{\*\/¹²³]/ ) { # relr seems to be valid dependency
+    if ( $edge_label =~ /[A-Z]|ref|coref|cored|asso|[\[\{\*\/]/ ) { # relr seems to be valid dependency
         $score = -1000;
     }
-    elsif ( $edge_label =~ /#|relr/ ) {
+    elsif ( $edge_label =~ /#|relr|[¹²³]/ ) {
         $score = 50;
     }
 
