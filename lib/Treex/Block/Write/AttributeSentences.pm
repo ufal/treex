@@ -27,7 +27,7 @@ sub BUILDARGS {
     if (defined $args->{attr_sep} && $args->{attr_sep} =~ /^\\([nrt])$/){
         $args->{attr_sep} = eval "return \"\\$1\"";
     }
-    return;
+    return $args;
 }
 
 
