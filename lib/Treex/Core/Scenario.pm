@@ -73,7 +73,7 @@ has _global_params => (
 
 has parser => (
     is            => 'ro',
-    isa           => 'Parse::RecDescent',
+    isa           => 'Parse::RecDescent::_Runtime',
     init_arg      => undef,
     builder       => '_build_parser',
     documentation => q{Parses treex scenarios}

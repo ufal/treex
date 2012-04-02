@@ -22,7 +22,7 @@ BEGIN { use_ok('Treex::Core::ScenarioParser'); }
 
 my $parser = new Treex::Core::ScenarioParser;
 
-isa_ok( $parser, 'Parse::RecDescent' );
+isa_ok( $parser, 'Parse::RecDescent::_Runtime' );
 
 #$::RD_TRACE = 1;
 #$::RD_HINT  = 1;
