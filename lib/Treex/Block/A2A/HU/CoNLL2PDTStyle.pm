@@ -109,6 +109,11 @@ sub deprel_to_afun {
                     $parentpos2afun{$ppos} ||
                         'NR'; # !!!!!!!!!!!!!!! temporary filler
 
+	# AuxX should be used for commas, AuxG for other graphic symbols
+	if($deprel eq q(PUNCT) && $node->form ne q(,)) {
+	    $afun = q(AuxG);
+	}
+
         $node->set_afun($afun);
     }
 }
