@@ -170,6 +170,19 @@ sub restructure_coordination {
             }
 
         }
+
+        # take all punctuations that conflicts with the coordination and rehang them to the coord node
+	if($coord->afun eq 'Coord') {
+	    my $leftmost = $coord->get_descendants({first_only=>1});
+	    my $rightmost = $coord->get_descendants({last_only=>1});
+
+	    my (@puncts) = grep {$_->ord > $leftmost->ord && $_->ord < $rightmost->ord && $_->conll_deprel eq 'PUNCT'} $coord->get_siblings;
+
+	    for my $punct (@puncts) {
+		$punct->set_parent($coord);
+	    }
+	}
+
     }
 }
 
