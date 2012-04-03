@@ -16,6 +16,8 @@ sub process_zone {
     $self->resolve_coordinations($a_root);
 #    $self->check_afuns($a_root);
     $self->deprel_to_afun($a_root);
+    $self->fix_AuxK($a_root);
+
 }
 
 
@@ -40,6 +42,14 @@ my %deprel2afun = (
 #    'ROOT' => 'Pred',
 );
 
+
+sub fix_AuxK {
+    my ( $self, $root ) = @_;
+    my $lastSubtree = ($root->get_descendants({ordered=>1}))[-1];
+    if ($lastSubtree->afun ~= /AuxX/) {
+        $lastSubtree->afun = "AuxK";
+    }
+}
 
 sub deprel_to_afun {
     my ( $self, $root ) = @_;
