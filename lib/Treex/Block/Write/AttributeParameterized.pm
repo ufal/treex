@@ -52,8 +52,8 @@ has '_cache' => ( isa => 'HashRef', is => 'ro', writer => '_set_cache' );
 # Parse the text modifier settings (Perl code given in a parameter that must return a hashref)
 sub _parse_modifier_config {
 
-    my ($value) = @_;    
-    $value = _parse_hashref( $value ) if ( ref $value ne 'HASH' );
+    my ($value) = @_;
+    $value = _parse_hashref($value) if ( ref $value ne 'HASH' );
 
     foreach my $key ( keys %{$value} ) {
 
@@ -90,7 +90,7 @@ before 'BUILD' => sub {
     my @output_attr = ();
     my %modifiers   = ();
     my %attr_io     = ();
-    
+
     foreach my $attr ( @{ $self->attributes } ) {
         if ( my ( $pckg, $func_args ) = _get_function_pckg_args($attr) ) {
 
@@ -259,6 +259,7 @@ Readonly my $GET_REF_NODES => {
     'lex_a_node'  => sub { return $_[1]->get_lex_anode() },
     'aux_a_nodes' => sub { return $_[1]->get_aux_anodes( { ordered => 1 } ) },
     'parent'      => sub { return ( $_[1]->get_parent() ) },
+    'src_tnode'   => sub { return ( $_[1]->src_tnode() ) },
     'children'    => sub { return $_[1]->get_children( { ordered => 1 } ) },
     'echildren'   => sub { return $_[1]->get_echildren( { or_topological => 1, ordered => 1 } ) },
     'eparents'    => sub { return $_[1]->get_eparents( { or_topological => 1, ordered => 1 } ) },
