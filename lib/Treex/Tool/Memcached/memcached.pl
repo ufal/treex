@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Treex::Core::Common;
+use Treex::Core::Resource;
 use Treex::Tool::Memcached::Memcached;
 
 my $action = shift @ARGV;
@@ -44,7 +45,7 @@ sub process
 
         if ( /(TrFAddVariants|TrLAddVariants)/ ) {
             my @parts = split(/\t/);
-            my $required_file = $ENV{TMT_ROOT} . "/share/" . $parts[1];
+            my $required_file = Treex::Core::Resource::require_file_from_share($parts[1], 'Memcached' );
             my $class = "";
             if ( $required_file =~ /\.maxent\./ ) {
                 $class = 'TranslationModel::MaxEnt::Model';
@@ -57,6 +58,7 @@ sub process
                 next;
             }
             Treex::Tool::Memcached::Memcached::load_model($class, $required_file);
+            
         }
     }
     close($fh);

@@ -1,6 +1,7 @@
 package Treex::Block::T2T::EN2CS::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource;
 extends 'Treex::Core::Block';
 
 use ProbUtils::Normalize;
@@ -31,159 +32,86 @@ use TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
-enum 'DataVersion' => [ '0.9', '1.0', '1.1', '1.2' ];
+enum 'DataVersion' => [ '0.9', '1.0' ];
 
 has maxent_weight => (
     is            => 'ro',
     isa           => 'Num',
     default       => 1.0,
-    documentation => 'Weight for MaxEnt model.'
+    documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
 );
 
-has maxent_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '0.9'
-);
-
-has nb_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0,
-    documentation => 'Weight for Naive Bayes model.'
-);
-
-has nb_version => (
+has maxent_features_version => (
     is      => 'ro',
     isa     => 'DataVersion',
     default => '1.0'
 );
 
-#has static_weight => (
-#    is            => 'ro',
-#    isa           => 'Num',
-#    default       => 0.5,
-#    documentation => 'Weight for Static model.'
-#);
-
-has static_version => (
+has maxent_model => (
     is      => 'ro',
-    isa     => 'DataVersion',
-    default => '0.9'
+    isa     => 'Str',
+    default => 'tlemma_czeng12.maxent.10000.100.2_1.pls.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+);
+
+has static_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
+);
+
+has static_model => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'tlemma_czeng09.static.pls.slurp.gz',
+);
+
+has human_model => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'tlemma_humanlex.static.pls.slurp.gz',
+);
+
+has model_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/translation/en2cs',
+    documentation => 'Base directory for all models'
 );
 
 has [qw(trg_lemmas trg_formemes)] => (
-    is => 'ro',
-    isa => 'Int',
-    default => 0,
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 0,
     documentation => 'How many (t_lemma/formeme) variants from the target-side parent should be used as features',
 );
 
 has domain => (
-    is => 'ro',
-    isa => 'Str',
-    default => 'news',
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'news',
     documentation => 'add the (CzEng) domain feature (default=news). Set to 0 to deactivate.',
 );
-
-my $MODEL_HUMAN = 'data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz';
-
-my $MODEL_MAXENT = {
-
-    #'0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.pls.slurp.gz',
-    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.maxent.10k.para.pls.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.maxent.10k.para.pls.gz',
-    '1.2' => 'data/models/translation/en2cs/tlemma_czeng12.maxent.10000.100.2_1.pls.gz',
-};
-
-my $MODEL_STATIC = {
-    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.static.zp-3.pls.gz',
-    '1.1' => 'data/models/translation/en2cs/tlemma_czeng11.static.p-3.pls.gz',
-    '1.2' => 'data/models/translation/en2cs/tlemma_czeng12.static.p-3.pls.gz',
-};
-
-my $MODEL_NB = {
-    '0.9' => 'data/models/translation/en2cs/tlemma_czeng09.nb.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/tlemma_czeng10.nb.lowercased.pls.slurp.gz'
-};
-
-sub get_required_share_files {
-    my $self = shift;
-    return (
-        $MODEL_MAXENT->{ $self->maxent_version },
-        $MODEL_STATIC->{ $self->static_version },
-        $MODEL_HUMAN,
-        $MODEL_NB->{ $self->nb_version }
-    );
-}
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
 
-sub BUILD {
-    my $self = shift;
-
-    return;
-}
-
 sub process_start {
+
     my $self = shift;
+
+    $self->SUPER::process_start();
 
     my @interpolated_sequence = ();
 
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->maxent_weight > 0 ) {
-
-        my $maxent_model = TranslationModel::MaxEnt::Model->new();
-
-        my $model = $maxent_model;
-
-        if ( $use_memcached ) {
-            $model = TranslationModel::Memcached::Model->new( {
-                'model' => $maxent_model,
-                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} }
-            });
-        } else {
-            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
-        }
-
-        push( @interpolated_sequence, { model => $model, weight => $self->maxent_weight } );
-
+        my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
+        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
-
-    my $static_model_tmp = TranslationModel::Static::Model->new();
-    my $static_model = undef;
-    if ( $use_memcached ) {
-        my $memcached_model = TranslationModel::Memcached::Model->new( {
-            'model' => $static_model_tmp,
-            'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} }
-        });
-        $static_model = $memcached_model;
-    } else {
-        $static_model_tmp->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} } );
-        $static_model = $static_model_tmp;
-    }
-
-    my $humanlex_model = TranslationModel::Static::Model->new;
-    $humanlex_model->load("$ENV{TMT_ROOT}/share/$MODEL_HUMAN");
-
-    if ( $self->nb_weight > 0 ) {
-        my $nb_model = TranslationModel::NaiveBayes::Model->new();
-        my $model = $nb_model;
-
-        if ( $use_memcached ) {
-            $model = TranslationModel::Memcached::Model->new( {
-                'model' => $nb_model,
-                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} }
-            });
-        } else {
-            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} } );
-        }
-
-        push( @interpolated_sequence, { model => $model, weight => $self->nb_weight } );
-    }
+    my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    my $humanlex_model = $self->load_model( TranslationModel::Static::Model->new(), $self->human_model,  0 );
 
     my $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
     my $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
@@ -199,7 +127,7 @@ sub process_start {
     # make interpolated model
     push(
         @interpolated_sequence,
-        { model => $static_translit, weight => 0.5 },
+        { model => $static_translit, weight => $self->static_weight },
         { model => $humanlex_model,  weight => 0.1 },
         { model => $deverbadj_model, weight => 0.1 },
         { model => $deadjadv_model,  weight => 0.1 },
@@ -217,9 +145,60 @@ sub process_start {
     #my $combined_model = TranslationModel::Combined::Backoff->new( { models => \@backoff_sequence } );
     $combined_model = $interpolated_model;
 
-    $self->SUPER::process_start();
-
     return;
+}
+
+# Require the needed models and set the absolute paths to the respective attributes
+sub get_required_share_files {
+
+    my ($self) = @_;
+    my @files;
+
+    if ( $self->maxent_weight > 0 ) {
+        push @files, $self->model_dir . '/' . $self->maxent_model;
+    }
+    push @files, $self->model_dir . '/' . $self->human_model;
+    push @files, $self->model_dir . '/' . $self->static_model;
+
+    return @files;
+}
+
+# Load the model or create a memcached model over it
+sub load_model {
+
+    my ( $self, $model, $path, $memcached ) = @_;
+
+    $path = $self->model_dir . '/' . $path;
+
+    if ($memcached) {
+        $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
+    }
+    else {
+        $model->load( Treex::Core::Resource::require_file_from_share($path) );
+    }
+    return $model;
+}
+
+# Retrieve the target language formeme or lemma and return them as additional features
+sub get_parent_trg_features {
+
+    my ( $self, $cs_tnode, $feature_name, $node_attr, $limit ) = @_;
+    my $parent = $cs_tnode->get_parent();
+
+    if ( $parent->is_root() ) {
+        return ( 'TRG_parent_' . $feature_name . '=_ROOT' );
+    }
+    else {
+        my $p_variants_rf = $parent->get_attr($node_attr);
+        my @feats;
+
+        foreach my $p_variant ( @{$p_variants_rf} ) {
+            push @feats, 'TRG_parent_' . $feature_name . '=' . $p_variant->{t_lemma};
+            last if @feats >= $limit;
+        }
+        return @feats;
+    }
+
 }
 
 sub process_tnode {
@@ -232,8 +211,7 @@ sub process_tnode {
 
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
 
-        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{maxent_version} );
-        my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->{nb_version} );
+        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_features_version );
 
         $features_hash_rf->{domain} = $self->domain if $self->domain;
 
@@ -242,41 +220,22 @@ sub process_tnode {
                 sort grep { defined $features_hash_rf->{$_} }
                 keys %{$features_hash_rf}
         ];
+
         #push @{$features_array_rf}, "domain=paraweb";
         #push @{$features_array_rf}, "domain=techdoc";
         #push @{$features_array_rf}, "domain=subtitles";
 
-
-        if ($self->trg_lemmas) {
-            my $parent = $cs_tnode->get_parent();
-            if ($parent->is_root()){
-                push @$features_array_rf, 'TRG_parent_lemma=_ROOT';
-            } else {
-                my $p_variants_rf = $parent->get_attr('translation_model/t_lemma_variants');
-                my $added = 1;
-                foreach my $p_variant (@{$p_variants_rf}){
-                    push @$features_array_rf, 'TRG_parent_lemma=' . $p_variant->{t_lemma};
-                    last if $added++ >= $self->trg_lemmas;
-                }
-            }
+        if ( $self->trg_lemmas ) {
+            push @$features_array_rf,
+                $self->get_parent_trg_features( $cs_tnode, 'lemma', 'translation_model/t_lemma_variants', $self->trg_lemmas );
         }
-
-        if ($self->trg_formemes) {
-            my $parent = $cs_tnode->get_parent();
-            if ($parent->is_root()){
-                push @$features_array_rf, 'TRG_parent_formeme=_ROOT';
-            } else {
-                my $p_variants_rf = $parent->get_attr('translation_model/formeme_variants');
-                my $added = 1;
-                foreach my $p_variant (@{$p_variants_rf}){
-                    push @$features_array_rf, 'TRG_parent_formeme=' . $p_variant->{formeme};
-                    last if $added++ >= $self->trg_formemes;
-                }
-            }
+        if ( $self->trg_formemes ) {
+            push @$features_array_rf,
+                $self->get_parent_trg_features( $cs_tnode, 'formeme', 'translation_model/formeme_variants', $self->trg_formemes );
         }
 
         my $en_tlemma = $en_tnode->t_lemma;
-        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf, $features_hash_rf2 );
+        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
 
         # when lowercased models are used, then PoS tags should be uppercased
         @translations = map {

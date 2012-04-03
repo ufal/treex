@@ -121,7 +121,6 @@ sub load_model
 
         my $model = $model_class->new();
         $model->load($file);
-
         log_info "Storing to memcached";
 
         for my $label ($model->get_input_labels() ) {
@@ -129,8 +128,10 @@ sub load_model
         }
 
         $memd->set($FLAG_MODEL_LOADED, 1);
-    } else {
-        log_info "Already loaded";
+        log_info "Model loaded";
+    } 
+    else {
+        log_info "Model already loaded";
     }
 
     return 1;
@@ -141,13 +142,18 @@ sub contains
 {
     my ($file) = @_;
 
+    log_warn('Checking: ' . $file);
     my $memd = get_connection(basename($file));
-
+    
     if ( ! $memd ) {
         return 0;
     }
 
-    return $memd->get($FLAG_MODEL_LOADED);
+    my $ret = $memd->get($FLAG_MODEL_LOADED);
+    if ($ret){
+        log_warn('Positive');
+    }
+    return $ret;
 }
 
 sub get_connection
