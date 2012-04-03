@@ -7,7 +7,8 @@ sub process_anode {
     my ($self, $anode) = @_;
 
     if (! defined $anode->afun) {
-        $self->complain($anode, $anode->id);
+        $self->complain($anode,
+                        $anode->id.' : '.$anode->tag.' : '.$anode->form);
     }
 }
 
@@ -23,6 +24,5 @@ Each node should have its afun defined.
 
 =cut
 
-# Copyright 2011 Honza Vacl
+# Copyright 2012 Honza Vacl
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-
