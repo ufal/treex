@@ -133,6 +133,17 @@ sub rehang_subconj {
         if ($right_neighbor and ($right_neighbor->get_iset('pos')||'') eq 'verb') {
             $right_neighbor->set_parent($auxc);
         }
+
+
+	#re-hang even if the right neighbor is coordination of verbs
+	if($right_neighbor and ($right_neighbor->afun eq 'Coord')) {
+
+	    my $verbs = grep {($_->get_iset('pos')||'') eq 'verb' and $_->is_member == 1} $right_neighbor->get_children();
+	    if( $verbs > 0) {
+		$right_neighbor->set_parent($auxc);
+	    }
+	}
+
     }
 
 }
