@@ -111,6 +111,12 @@ sub deprel_to_afun {
         if ($pos eq 'prep' and $ppos eq 'verb') {
             $afun = 'AuxV'; # vamos a estar
         }
+        
+        # AuxX should be used for commas, AuxG for other graphic symbols
+        if($deprel eq q(f) && $node->form ne q(,)) {
+            $afun = q(AuxG);
+        }
+
 
         $node->set_afun($afun);
     }

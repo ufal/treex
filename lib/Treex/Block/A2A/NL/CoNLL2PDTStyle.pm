@@ -82,6 +82,10 @@ sub deprel_to_afun {
             $afun = 'AuxY';
         }
 
+        # AuxX should be used for commas, AuxG for other graphic symbols
+        if($afun eq q(AuxX) && $node->form ne q(,)) {
+            $afun = q(AuxG);
+        }
 
         $node->set_afun($afun);
     }
