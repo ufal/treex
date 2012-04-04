@@ -17,7 +17,6 @@ sub process_zone {
     $self->resolve_coordinations($a_root);
 #    $self->check_afuns($a_root);
     $self->deprel_to_afun($a_root);
-    $self->fix_AuxK($a_root);
 
 }
 
@@ -43,20 +42,13 @@ my %deprel2afun = (
 #    'ROOT' => 'Pred',
 );
 
-
-sub fix_AuxK {
-    my ( $self, $root ) = @_;
-    my $lastSubtree = ($root->get_descendants({ordered=>1}))[-1];
-    if ($lastSubtree->afun ~= /AuxX/) {
-        $lastSubtree->afun = "AuxK";
-    }
-}
-
 sub deprel_to_afun {
     my ( $self, $root ) = @_;
 
     foreach my $node (grep {not $_->is_coap_root} $root->get_descendants)  {
-
+        
+        #If AuxK is set then skip this node.
+        next if(defined $node->afun and $node->afun eq 'AuxK');
 
 
         my ($parent) = $node->get_eparents();
