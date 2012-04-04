@@ -77,12 +77,26 @@ sub next_document {
 
     my $document = Treex::Core::Document->new;
     my $bundle = $document->create_bundle;
+    my %edges_available;
 
     foreach my $language (sort keys %{$self->_file_list->{$number}{tag}}) {
+
         my $zone = $bundle->create_zone($language);
         my $atree = $zone->create_atree;
         my $filename = $self->_file_list->{$number}{tag}{$language};
         $self->insert_nodes_from_tag( $atree, $filename );
+
+        $document->wild->{source_files}{tag}{$language} = $filename;
+
+        # presence of edges must be checked, even files with human names sometimes contain none
+        my $number_of_nodes = scalar ( $atree->get_descendants );
+        my $number_of_edges = scalar ( grep {$_->wild->{in}=~/./} $atree->get_descendants );
+
+#        print "nodes: $number_of_nodes  edges: $number_of_edges\n";
+
+        if ( $number_of_edges > 0.5 * $number_of_nodes){
+            $edges_available{$language} = 1;
+        }
     }
 
     foreach my $aligned_language ( keys %{$self->_file_list->{$number}{atag}}) {
@@ -93,6 +107,8 @@ sub next_document {
 
         my $filename = $self->_file_list->{$number}{atag}{$aligned_language};
         my $xml_content = Treex::Tool::CopenhagenDT::XmlizeTagFormat::read_and_xmlize($filename);
+
+        $document->wild->{source_files}{atag}{$aligned_language} = $filename;
 
         if (not eval { $atag_document->parse( $xml_content ) }) {
             $self->dump_xmlized_file($filename,$xml_content);
@@ -112,15 +128,18 @@ sub next_document {
     foreach my $language (qw(de es it)) {
         $code .= "-$language";
         if (defined $self->_file_list->{$number}{tag}{$language}) {
-            if ($self->_file_list->{$number}{tag}{$language} =~ /tagged/) {
-                $code .= 1; # only automatically tokenized
+            if ($edges_available{$language}) {
+                $code .= 2; # manually annotated
+                $document->wild->{annotation}{$language}{syntax} = 'YES';
             }
             else {
-                $code .= 2; # manually annotated
+                $code .= 1; # only automatically tokenized
+                $document->wild->{annotation}{$language}{translation} = 'YES';
             }
 
             if (defined $self->_file_list->{$number}{atag}{$language}) {
                 $code .= 1; # alignment available
+                $document->wild->{annotation}{$language}{alignment} = 'YES';
             }
             else {
                 $code .= 0; # alignment unavailable
@@ -132,7 +151,7 @@ sub next_document {
     }
 
 
-    $document->set_file_stem("cdt$number$code");
+    $document->set_file_stem("$number$code");
     $document->set_file_number("");
 
     return $document;

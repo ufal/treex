@@ -42,6 +42,7 @@ sub _remove_weird_xml_entities {
 
 sub _quote_xml_attributes_in_dag {
     my $content = shift;
+    $content =~ s/\/>\n/ \/>\n/g;
     $content =~ s/ (\w+)=([^"'\s\>]+)/ $1="$2"/g;
     $content =~ s/type="-=""/type=""/g;
     return $content;
@@ -50,9 +51,9 @@ sub _quote_xml_attributes_in_dag {
 sub _replace_unescaped_special_chars_by_entities {
     my $content = shift;
     $content =~ s/(="[^"]*?)<([^"]*?")/$1&lt;$2/g;
-    $content =~ s/(="[^"]*?)>([^"]*?")/$1&gt;$2/g;
+    $content =~ s/([^"]="[^"]*?)>([^"]*?")/$1&gt;$2/g;
     $content =~ s/(="[^"]*?)<([^"]*?")/$1&lt;$2/g;
-    $content =~ s/(="[^"]*?)>([^"]*?")/$1&gt;$2/g;
+    $content =~ s/([^"]="[^"]*?)>([^"]*?")/$1&gt;$2/g;
     $content =~ s/"&"/"&amp;"/g;
     $content =~ s/>&</>&amp;</g;
     return $content;

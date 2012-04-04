@@ -23,7 +23,7 @@ sub process_atree {
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
         my ( $lemma, $pos, $cpos, $deprel ) =
             map { $self->get_attribute( $anode, $_ ) }
-            qw(lemma pos cpos deprel);
+            (qw(lemma pos cpos), 'conll/deprel');
 
         #my $ctag  = $self->get_coarse_grained_tag($tag);
 
