@@ -35,7 +35,7 @@ sub start_memcached {
     my $server = get_memcached_hostname();
     if ( ! $server ) {
         log_info "Memached will be executed.\n";
-        `qsubmit --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
+        `qsubmit --priority=-1 --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
         sleep 2;
         return 1;
     } else {
@@ -109,27 +109,29 @@ sub load_model
 
     my $namespace = basename($file);
 
-    my $memd = get_connection(basename($file));
+    my $memd = get_connection($namespace);
 
     if ( ! $memd ) {
         return 0;
     }
 
-    log_info "Loading file $file";
+    log_info "Loading file $file (Namespace: $namespace)";
 
     if ( ! $memd->get($FLAG_MODEL_LOADED) ) {
 
-        my $model = $model_class->new();
-        $model->load($file);
-        log_info "Storing to memcached";
-
-        for my $label ($model->get_input_labels() ) {
-            my $status = $memd->set($label, $model->get_submodel($label));
+        if ( -d $file ) {
+            for my $submodel (glob "$file/*") {
+                _load_model($memd, $model_class, $submodel);
+            }
+        } elsif ( -f $file ) {
+            _load_model($memd, $model_class, $file)
+        } else {
+            log_fatal "File $file does not exist.";
         }
 
         $memd->set($FLAG_MODEL_LOADED, 1);
         log_info "Model loaded";
-    } 
+    }
     else {
         log_info "Model already loaded";
     }
@@ -137,23 +139,39 @@ sub load_model
     return 1;
 }
 
+sub _load_model
+{
+    my ($memd, $model_class, $file) = @_;
+    my $model = $model_class->new();
+    $model->load($file);
+
+    log_info "\tStoring to memcached";
+    for my $label ($model->get_input_labels() ) {
+        my $status = $memd->set($label, $model->get_submodel($label));
+    }
+
+    return;
+}
+
 
 sub contains
 {
     my ($file) = @_;
 
-    log_warn('Checking: ' . $file);
+    log_info('Checking: ' . $file);
     my $memd = get_connection(basename($file));
-    
+
     if ( ! $memd ) {
         return 0;
     }
 
-    my $ret = $memd->get($FLAG_MODEL_LOADED);
-    if ($ret){
-        log_warn('Positive');
+    my $loaded = $memd->get($FLAG_MODEL_LOADED);
+    if ( $loaded ){
+        log_info "\tAlready loaded."
+    } else {
+        log_info "\tMissing.";
     }
-    return $ret;
+    return $loaded;
 }
 
 sub get_connection
