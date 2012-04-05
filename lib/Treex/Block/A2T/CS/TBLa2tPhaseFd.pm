@@ -16,9 +16,9 @@ my ( $lexf1, $lexf2, $outf );    # numbers of 2 features from the lexicon file a
 BEGIN
 {
 
-    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/T-func.lex", 'user' );    # list of possible functors for a given afun
-    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/feat",       'user' );    # list of used features
-    TectoMT::Block::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/R",          'user' );    # transformation-based learning rules
+    Treex::Core::Resource::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/T-func.lex", 'user' );    # list of possible functors for a given afun
+    Treex::Core::Resource::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/feat",       'user' );    # list of used features
+    Treex::Core::Resource::require_file_from_share( "data/models/TBLa2t/cs_pdt/F/R",          'user' );    # transformation-based learning rules
 
     my $f;                                                                                          # the handle for all the files
 
@@ -87,7 +87,7 @@ sub feature_string
         morph_real($t_node);
 
     # features of its parent
-    my $t_par = ( $t_node->get_eparents )[0];
+    my $t_par = ( $t_node->get_eparents({or_topological => 1}) )[0];
     my $a_par = get_anode($t_par);
     $ch = $t_par->get_children - 1;
     $outstr .= sprintf "%s %s %s%d ",       # lemma, afun, tag, children
