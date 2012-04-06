@@ -183,7 +183,7 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|AuxA|AuxP|AuxC|AuxV|AuxT|AuxO|AuxY|AuxX|AuxZ|AuxG|AuxK)$/ )
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Aux[APCVTOYXZGKR])$/ )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
