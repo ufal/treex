@@ -18,6 +18,7 @@ sub process_zone {
 #    $self->rehang_coordconj($a_root);
 #    $self->check_afuns($a_root);
     $self->rehang_subconj($a_root);
+    $self->correct_nr($a_root);
 }
 
 
@@ -194,6 +195,21 @@ sub restructure_coordination {
 	    }
 	}
 
+    }
+}
+
+sub correct_nr {
+    my ( $self, $root) = @_;
+
+    foreach my $nr_node (grep {($_->afun eq 'NR') } $root->get_descendants ) {
+        my ($parent) = $nr_node->get_eparent;
+        if ( $parent->get_iset('pos') eq 'verb' ) { 
+            my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_echildren ;
+            if ( !@subjects ) {
+                $nr_node->set_afun('Sb') 
+            }
+            else { $nr_node->set_afun('Obj') }
+        }   # corrects NRs created from NPs or INFs depending on verbs, some NRs still remain
     }
 }
 
