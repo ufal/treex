@@ -25,18 +25,9 @@ sub fix {
         my $case = '1';
         $d->{tag} =~ s/^(....)./$1$case/;
 
-        if ( $d->{num} eq 'S' ) {    # maybe correct form, only incorrectly tagged
-            my $num     = 'P';
-            my $new_tag = $d->{tag};    #do not change $d->{tag}
-            $new_tag =~ s/^(...)./$1$num/;
-            my $old_form = $dep->form;
-            my $new_form_plural = $self->get_form( $dep->lemma, $new_tag );
-            if ( $new_form_plural && lc($old_form) eq lc($new_form_plural) ) {    #it just might be a plural instead of singular
-                my $new_form_singular = $self->get_form( $dep->lemma, $d->{tag} );
-                if ( !$new_form_singular || lc($old_form) ne lc($new_form_singular) ) {    #the singular would have a different form, the plural wouldn't
-                    $d->{tag} =~ s/^(...)./$1$num/;                                        #error in number, not in form
-                }
-            }
+        if ( $d->{num} eq 'S' ) {
+	    # maybe correct form, only incorrectly tagged
+            $d->{tag} = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag});
         }
 
         $self->logfix1( $dep, "Subject" );
