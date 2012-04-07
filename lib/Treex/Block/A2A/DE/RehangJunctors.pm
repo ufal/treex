@@ -15,6 +15,8 @@ sub process_anode {
     # Rehang $junctor above $main
     $junctor->set_parent( $main->get_parent() );
     $main->set_parent($junctor);
+	# $main becomes a member of CoAp
+	$main->set_is_member(1);
     
     return;
 }
@@ -23,7 +25,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::DE::RehangJunctors - junctors should govern main verbs
+Treex::Block::A2A::DE::RehangJunctors - junctors should govern the sentence
 
 =head1 DESCRIPTION
 
