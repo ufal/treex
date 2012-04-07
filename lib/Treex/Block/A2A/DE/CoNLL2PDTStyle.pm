@@ -273,9 +273,12 @@ sub deprel_to_afun
         # Morphological particle: infinitival marker 'zu' with some verb infinitives.
         # The particle is attached to the verb in Tiger treebank.
         # In Danish DT we dealt with infinitive markers 'at' as with subordinating conjunctions. Should we do the same here?
+		# BUT: In English, the particle 'to' gets the 'AuxV' afun which is more intuitive (- or is it?), it
+		# also avoids leaving 'AuxC' nodes with no children.
         elsif ( $deprel eq 'PM' )
         {
-            $afun = 'AuxC';
+        #    $afun = 'AuxC';
+		     $afun = 'AuxV';
         }
 
         # SVP = Separable verb prefix.
