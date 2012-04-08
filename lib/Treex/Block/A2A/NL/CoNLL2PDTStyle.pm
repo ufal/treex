@@ -39,6 +39,10 @@ my %parentcpos2afun = (
 my %deprel2afun = (
     'su' => 'Sb',
     'obj1' => 'Obj',
+    # "vc" = verbal complement
+    'vc' => 'Obj',
+    # "se" = obligatory reflexive object
+    'se' => 'Obj',
 #    'ROOT' => 'Pred',
 );
 
@@ -77,6 +81,14 @@ sub deprel_to_afun {
             $afun = 'Pred';
         }
 
+	# Change deprel "body" to afun "Pred" if its parent is not "Pred" and is directly under the root.
+	if ($deprel eq 'body' and defined $parent->get_parent and $parent->get_parent->is_root and $parent->afun ne 'Pred' and not $parent->tag =~ /J,.*/) {
+		$afun = 'Pred';
+		$node->set_parent($root);
+		$parent->set_parent($node);
+	}
+
+
         if ($node->get_parent->afun eq 'Coord' and not $node->is_member
                 and ($node->get_iset('pos')||'') eq 'conj') {
             $afun = 'AuxY';
@@ -100,8 +112,6 @@ sub resolve_coordinations {
         $conjunct->get_parent->set_afun('Coord');
     }
 }
-
-
 
 
 1;
