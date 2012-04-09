@@ -201,15 +201,16 @@ sub restructure_coordination {
 sub correct_nr {
     my ( $self, $root) = @_;
 
+    # corrects NRs created from NPs or INFs depending on verbs
     foreach my $nr_node (grep {($_->afun eq 'NR') } $root->get_descendants ) {
-        my ($parent) = $nr_node->get_eparents;
+        my $parent = $nr_node->get_parent;
         if ( $parent->get_iset('pos') eq 'verb' ) { 
-            my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_echildren ;
+            my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_children ;
             if ( !@subjects ) {
                 $nr_node->set_afun('Sb') 
             }
             else { $nr_node->set_afun('Obj') }
-        }   # corrects NRs created from NPs or INFs depending on verbs, some NRs still remain
+        }
     }
 }
 
