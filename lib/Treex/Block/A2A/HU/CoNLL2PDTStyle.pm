@@ -202,7 +202,7 @@ sub correct_nr {
     my ( $self, $root) = @_;
 
     foreach my $nr_node (grep {($_->afun eq 'NR') } $root->get_descendants ) {
-        my ($parent) = $nr_node->get_eparent;
+        my ($parent) = $nr_node->get_eparents;
         if ( $parent->get_iset('pos') eq 'verb' ) { 
             my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_echildren ;
             if ( !@subjects ) {
