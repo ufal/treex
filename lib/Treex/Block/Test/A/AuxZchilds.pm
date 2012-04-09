@@ -7,14 +7,15 @@ sub process_anode {
     my ($self, $anode) = @_;
 
     if ($anode->afun eq 'AuxZ') {
-     $self->complain($anode);
-     foreach ($anode->get_children) {
-     my $childNode = $_;
-     if (!(($childNode->afun eq 'AuxZ') || ($childNode->afun='AuxY')))
-     {   
-        $self->complain($anode);
+
+	foreach ($anode->get_children) {
+
+	    if ($_->afun ne 'AuxZ' && $_->afun ne 'AuxY') {
+		$self->complain($anode);
+		last;
+	    }
+	}
     }
-   }
 }
 
 1;

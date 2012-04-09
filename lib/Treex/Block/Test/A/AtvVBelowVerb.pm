@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AtvVBelow;
+package Treex::Block::Test::A::AtvVBelowVerb;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -16,8 +16,6 @@ sub process_anode {
         }
     }
     return;
-}
-
 }
 
 1;

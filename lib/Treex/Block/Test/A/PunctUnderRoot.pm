@@ -6,12 +6,16 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if (!(($anode->afun eq 'AuxK') && ($anode->get_parent->afun eq 'AuxS'))) { # end punctiation must be directly under root
+    return unless $anode->afun eq 'AuxK';
 
-	my $leftmost = $anode->get_descendants({first_only=>1});
-	my $rightmost = $anode->get_descendants({last_only=>1});
+    my $parent = $anode->get_parent;
 
-    if (!($leftmost->afun eq 'AuxG') && ($rightmost->afun eq 'AuxG')) { # if not can be direct speak 
+    if ($parent->afun ne 'AuxS') {
+
+	my $left = $parent->get_descendants({first_only=>1});
+	my $right = $parent->get_descendants({last_only=>1});
+
+	if ($left->afun ne 'AuxG' || $right->afun ne 'AuxG') { # if not can be direct speak
 	    $self->complain($anode);
 	}
     }

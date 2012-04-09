@@ -5,10 +5,12 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ($self, $anode) = @_;
-    if ($anode->afun eq 'AuxA'
-            and $anode->get_attr('iset/pos') ne 'noun'
-        ) {
-        $self->complain($anode);
+    if ($anode->afun eq 'AuxA') {
+
+	if(defined($anode->get_parent->get_attr('iset/pos')) && $anode->get_parent->get_attr('iset/pos') ne 'noun') {
+	    $self->complain($anode);
+	}
+
     }
 }
 

@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AuxP;
+package Treex::Block::Test::A::AuxPNotMember;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -6,7 +6,7 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if ($anode->afun eq 'AuxP' && ($anode->is_member == 1 or  $anode->is_parenthesis_root==1) {
+    if ($anode->afun eq 'AuxP' && ($anode->is_member or $anode->is_parenthesis_root)) {
         $self->complain($anode);
     }
 }
