@@ -8,7 +8,7 @@ sub process_anode {
 
     if (($anode->afun || '') eq 'Pred') {
         foreach my $parent ($anode->get_eparents({ dive => 'AuxCP' })) {
-            if ($parent->afun ne 'AuxS') {
+            if ($parent->afun ne 'AuxS' && !$anode->is_member && !$anode->is_parenthesis_root) {
                 $self->complain($anode, $parent->afun);
             }
         }
