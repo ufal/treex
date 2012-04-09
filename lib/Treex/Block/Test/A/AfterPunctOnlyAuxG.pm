@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PunctUnderRoot;
+package Treex::Block::Test::A::AfterPunctOnlyAuxG;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -12,11 +12,13 @@ sub process_anode {
 
     if ($parent->afun ne 'AuxS') {
 
-	my $left = $parent->get_children({first_only=>1});
-	my $right = $parent->get_children({last_only=>1});
-
-    unless ($left->afun eq 'AuxG' || $right->afun eq 'AuxG') { 
-	    $self->complain($anode);
+	my @children = $parent->get_children();
+	foreach (@children)
+	{
+	 if (($_->ord > $anode->ord) && ($_->afun ne "" and $_->afun ne "AuxG"))
+	 {
+	     $self->complain($anode);
+	 }
 	}
 	
 	
