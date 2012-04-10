@@ -111,7 +111,7 @@ sub process_start
     }
 
     my $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
-    push( @interpolated_sequence, { model => $static_model, weight => 1 } );
+    push( @interpolated_sequence, { model => $static_model, weight => $self->static_weight } );
 
     $self->_set_model( TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
 
