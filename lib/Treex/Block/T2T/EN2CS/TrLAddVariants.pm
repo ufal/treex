@@ -285,17 +285,41 @@ sub process_tnode {
 
 __END__
 
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::T2T::EN2CS::TrLAddVariants
+Treex::Block::T2T::EN2CS::TrLAddVariants -- add t-lemma translation variants from translation models
 
-Adding t_lemma translation variants using the maxent
-translation dictionary.
+=head1 DESCRIPTION
+
+This block uses a combination of translation models to predict log-probabilities of t-lemma translation
+variants.
+
+The available models are Maximum Entropy (using L<AI::MaxEnt>), Static (based on simple corpus counts)
+and various backoff models for special cases (e.g. transcription of non-latin alphabets).
+
+Using L<Treex::Tool::Memcached::Memcached> models is enabled via the 
+L<Treex::Block::T2T::TrUseMemcachedModel> role.  
+
+See the 'documentation' parameter of the individual attributes for details on various options.
 
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2010 Zdenek Zabokrtsky, David Marecek, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Martin Majliš <majlis@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

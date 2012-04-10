@@ -211,17 +211,42 @@ sub can_be_translated_as {
 
 __END__
 
+=encoding utf-8
 
-=over
+=head1 NAME
 
-=item Treex::Block::T2T::EN2CS::TrFAddVariants
+Treex::Block::T2T::EN2CS::TrLAddVariants -- add formeme translation variants from translation models
 
-Adding formeme translation variants using the maxent
-translation dictionary.
+=head1 DESCRIPTION
+
+This block uses a combination of translation models to predict log-probabilities of formeme translation
+variants.
+
+The available models are Maximum Entropy (using L<AI::MaxEnt>) and Static (based on simple corpus counts).
+The block tries to translate an unknown formeme 'partially' (without one or more function words), since unknown
+formemes appear usually due to analysis errors. 
+
+Using L<Treex::Tool::Memcached::Memcached> models is enabled via the 
+L<Treex::Block::T2T::TrUseMemcachedModel> role.  
+
+See the 'documentation' parameter of the individual attributes for details on various options.
 
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2009-2010 Zdenek Zabokrtsky, Martin Popel, David Marecek
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Martin Majliš <majlis@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
