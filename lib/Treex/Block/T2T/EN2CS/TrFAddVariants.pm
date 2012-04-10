@@ -14,37 +14,46 @@ use TranslationModel::Combined::Interpolated;
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
 
-enum 'DataVersion' => [ '0.9', '1.0', '1.1', '1.2' ];
+enum 'DataVersion' => [ '0.9', '1.0' ];
 
-# Default version: 0.9
-has [ 'maxent_version', 'nb_version', 'static_version' ] => ( is => 'ro', isa => 'DataVersion', default => '0.9' );
+has maxent_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
+);
 
-my $MODEL_MAXENT = {
-    '0.9' => 'data/models/translation/en2cs/formeme_czeng09.maxent.pls.slurp.gz',
-    '1.2' => 'data/models/translation/en2cs/formeme_czeng12.maxent.10000.50.2_1.pls.gz'
-};
+has maxent_features_version => (
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '0.9'
+);
 
-my $MODEL_STATIC = {
-    '0.9' => 'data/models/translation/en2cs/formeme_czeng09.static.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/formeme_czeng10.static.zp-10.pls.gz',
-    '1.2' => 'data/models/translation/en2cs/formeme_czeng12.static.p-10.pls.gz',
-};
+has maxent_model => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'formeme_czeng09.maxent.pls.slurp.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+);
 
-my $MODEL_NB = {
-    '0.9' => 'data/models/translation/en2cs/formeme_czeng09.nb.pls.slurp.gz',
-    '1.0' => 'data/models/translation/en2cs/formeme_czeng10.nb.lowercased.pls.slurp.gz',
+has static_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
+);
 
-    #'1.0' => 'data/models/translation/en2cs/formeme_czeng10.nb.pls.slurp.gz',
-};
+has static_model => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'formeme_czeng09.static.pls.slurp.gz',
+);
 
-sub get_required_share_files {
-    my $self = shift;
-    return (
-        $MODEL_MAXENT->{ $self->{maxent_version} },
-        $MODEL_STATIC->{ $self->{static_version} },
-        $MODEL_NB->{ $self->{nb_version} }
-    );
-}
+has model_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/translation/en2cs',
+    documentation => 'Base directory for all models'
+);
 
 has max_variants => (
     is            => 'ro',
@@ -82,6 +91,20 @@ sub BUILD {
     return;
 }
 
+# Require the needed models and set the absolute paths to the respective attributes
+sub get_required_share_files {
+
+    my ($self) = @_;
+    my @files;
+
+    if ( $self->maxent_weight > 0 ) {
+        push @files, $self->model_dir . '/' . $self->maxent_model;
+    }
+    push @files, $self->model_dir . '/' . $self->static_model;
+
+    return @files;
+}
+
 sub process_start
 {
     my $self = shift;
@@ -91,54 +114,12 @@ sub process_start
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->maxent_weight > 0 ) {
-
-        my $maxent_model = TranslationModel::MaxEnt::Model->new();
-
-        my $model = $maxent_model;
-
-        if ( $use_memcached ) {
-            $model = TranslationModel::Memcached::Model->new( {
-                'model' => $maxent_model,
-                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} }
-            });
-        } else {
-            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_MAXENT->{ $self->{maxent_version} } );
-        }
-
-        push( @interpolated_sequence, { model => $model, weight => $self->maxent_weight } );
-
+        my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
+        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
 
-    my $static_model_tmp = TranslationModel::Static::Model->new();
-    my $static_model = undef;
-    if ( $use_memcached ) {
-        my $memcached_model = TranslationModel::Memcached::Model->new( {
-            'model' => $static_model_tmp,
-            'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} }
-        });
-        $static_model = $memcached_model;
-    } else {
-        $static_model_tmp->load( "$ENV{TMT_ROOT}/share/" . $MODEL_STATIC->{ $self->{static_version} } );
-        $static_model = $static_model_tmp;
-    }
-
+    my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     push( @interpolated_sequence, { model => $static_model, weight => 1 } );
-
-    if ( $self->nb_weight > 0 ) {
-        my $nb_model = TranslationModel::NaiveBayes::Model->new();
-        my $model = $nb_model;
-
-        if ( $use_memcached ) {
-            $model = TranslationModel::Memcached::Model->new( {
-                'model' => $nb_model,
-                'file' => "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} }
-            });
-        } else {
-            $model->load( "$ENV{TMT_ROOT}/share/" . $MODEL_NB->{ $self->{nb_version} } );
-        }
-
-        push( @interpolated_sequence, { model => $model, weight => $self->nb_weight } );
-    }
 
     $self->_set_model(
         TranslationModel::Combined::Interpolated->new(
@@ -151,6 +132,22 @@ sub process_start
     return;
 }
 
+# Load the model or create a memcached model over it
+sub load_model {
+
+    my ( $self, $model, $path, $memcached ) = @_;
+
+    $path = $self->model_dir . '/' . $path;
+
+    if ($memcached) {
+        $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
+    }
+    else {
+        $model->load( Treex::Core::Resource::require_file_from_share($path) );
+    }
+    return $model;
+}
+
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
 
@@ -161,8 +158,8 @@ sub process_tnode {
     my $en_tnode = $cs_tnode->src_tnode;
     return if !$en_tnode;
 
-    my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_version );
-    my $features_hash_rf2 = TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
+    my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_features_version );
+    my $features_hash_rf2 = undef; #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
 
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
