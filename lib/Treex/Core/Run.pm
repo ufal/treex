@@ -159,6 +159,16 @@ has 'mem' => (
         . 'Translates to "qsub -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem".',
 );
 
+has 'name' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => [ 'name' ],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => '',
+    documentation => 'Prefix of submitted jobs. Requires -p. '
+        . 'Translates to "qsub -N $name-jobname".',
+);
+
 has 'qsub' => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -601,6 +611,7 @@ sub _run_job_scripts {
             $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
             $qsub_opts .= ' -p ' . $self->priority;
             $qsub_opts .= ' ' . $self->qsub;
+            $qsub_opts .= ' -N '.$self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
 
             open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
@@ -785,13 +796,14 @@ sub _wait_for_jobs {
             $print_time += (Time::HiRes::time() - $print_start);
             $current_doc_number++;
             $current_doc_started = 0;
-            $wait_time = 1 + $total_doc_number / $current_doc_number;
+            $wait_time = 1 + $total_doc_number / (1 + $current_doc_number );
             if ( $wait_time > 120 ) {
                 $wait_time = 120;
             }
         }
         else {
             my $sleep_start = Time::HiRes::time();
+            #log_warn "Waiting time: $wait_time";
             sleep $wait_time;
             $sleep_time += (Time::HiRes::time() - $sleep_start);
         }
