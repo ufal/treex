@@ -2,20 +2,16 @@ package Treex::Block::T2T::EN2CS::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
+
 extends 'Treex::Core::Block';
 
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
-use Treex::Tool::Memcached::Memcached;
-
 use TranslationModel::MaxEnt::Model;
-use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
-use TranslationModel::Memcached::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
-use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
 
 use TranslationModel::Derivative::EN2CS::Numbers;
 use TranslationModel::Derivative::EN2CS::Hyphen_compounds;
@@ -31,6 +27,17 @@ use TranslationModel::Combined::Backoff;
 use TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
+
+has model_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/translation/en2cs',
+    documentation => 'Base directory for all models'
+);
+
+# This role supports loading models to Memcached. 
+# It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
+with 'Treex::Block::T2T::TrUseMemcachedModel';
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
 
@@ -70,13 +77,6 @@ has human_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'tlemma_humanlex.static.pls.slurp.gz',
-);
-
-has model_dir => (
-    is            => 'ro',
-    isa           => 'Str',
-    default       => 'data/models/translation/en2cs',
-    documentation => 'Base directory for all models'
 );
 
 has [qw(trg_lemmas trg_formemes)] => (
@@ -163,21 +163,6 @@ sub get_required_share_files {
     return @files;
 }
 
-# Load the model or create a memcached model over it
-sub load_model {
-
-    my ( $self, $model, $path, $memcached ) = @_;
-
-    $path = $self->model_dir . '/' . $path;
-
-    if ($memcached) {
-        $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
-    }
-    else {
-        $model->load( Treex::Core::Resource::require_file_from_share($path) );
-    }
-    return $model;
-}
 
 # Retrieve the target language formeme or lemma and return them as additional features
 sub get_parent_trg_features {

@@ -4,15 +4,26 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use ProbUtils::Normalize;
+use Moose::Util::TypeConstraints;
 
 use TranslationModel::MaxEnt::Model;
-use TranslationModel::NaiveBayes::Model;
 use TranslationModel::Static::Model;
-use TranslationModel::Combined::Backoff;
+
 use TranslationModel::Combined::Interpolated;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 use TranslationModel::NaiveBayes::FeatureExt::EN2CS;
+
+has model_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/translation/en2cs',
+    documentation => 'Base directory for all models'
+);
+
+# This role supports loading models to Memcached. 
+# It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
+with 'Treex::Block::T2T::TrUseMemcachedModel';
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
 
@@ -32,13 +43,13 @@ has maxent_features_version => (
 has maxent_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'formeme_czeng09.maxent.pls.slurp.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+    default => 'formeme_czeng09.maxent.pls.slurp.gz',    # 'tlemma_czeng09.maxent.10k.para.pls.gz'
 );
 
 has static_weight => (
     is            => 'ro',
     isa           => 'Num',
-    default       => 0.5,
+    default       => 1.0,
     documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
@@ -46,13 +57,6 @@ has static_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'formeme_czeng09.static.pls.slurp.gz',
-);
-
-has model_dir => (
-    is            => 'ro',
-    isa           => 'Str',
-    default       => 'data/models/translation/en2cs',
-    documentation => 'Base directory for all models'
 );
 
 has max_variants => (
@@ -67,20 +71,6 @@ has allow_fake_formemes => (
     isa           => 'Bool',
     default       => 0,
     documentation => 'Allow formemes like "???".',
-);
-
-has maxent_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0.5,
-    documentation => 'Weight for MaxEnt model.'
-);
-
-has nb_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0,
-    documentation => 'Weight for Naive Bayes model.'
 );
 
 has _model => ( is => 'rw' );
@@ -109,6 +99,8 @@ sub process_start
 {
     my $self = shift;
 
+    $self->SUPER::process_start();
+
     my @interpolated_sequence = ();
 
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
@@ -118,34 +110,12 @@ sub process_start
         push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
 
-    my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    my $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     push( @interpolated_sequence, { model => $static_model, weight => 1 } );
 
-    $self->_set_model(
-        TranslationModel::Combined::Interpolated->new(
-            { models => \@interpolated_sequence }
-            )
-    );
-
-    $self->SUPER::process_start();
+    $self->_set_model( TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
 
     return;
-}
-
-# Load the model or create a memcached model over it
-sub load_model {
-
-    my ( $self, $model, $path, $memcached ) = @_;
-
-    $path = $self->model_dir . '/' . $path;
-
-    if ($memcached) {
-        $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
-    }
-    else {
-        $model->load( Treex::Core::Resource::require_file_from_share($path) );
-    }
-    return $model;
 }
 
 sub process_tnode {
@@ -159,7 +129,7 @@ sub process_tnode {
     return if !$en_tnode;
 
     my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_features_version );
-    my $features_hash_rf2 = undef; #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
+    my $features_hash_rf2 = undef;    #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
 
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
@@ -198,14 +168,14 @@ sub process_tnode {
     if (@translations) {
 
         $cs_tnode->set_formeme( $translations[0]->{label} );
-        $cs_tnode->set_formeme_origin( (@translations == 1 ? 'dict-only' : 'dict-first') . '|' . $translations[0]->{source} );
+        $cs_tnode->set_formeme_origin( ( @translations == 1 ? 'dict-only' : 'dict-first' ) . '|' . $translations[0]->{source} );
 
         $cs_tnode->set_attr(
             'translation_model/formeme_variants',
             [   map {
                     {   'formeme' => $_->{label},
                         'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
-                        'origin' => $_->{source},
+                        'origin'  => $_->{source},
                     }
                     }
                     @translations
