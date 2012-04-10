@@ -89,8 +89,8 @@ has [qw(trg_lemmas trg_formemes)] => (
 has domain => (
     is            => 'ro',
     isa           => 'Str',
-    default       => 'news',
-    documentation => 'add the (CzEng) domain feature (default=news). Set to 0 to deactivate.',
+    default       => '0',
+    documentation => 'add the (CzEng) domain feature (default=0). Set to 0 to deactivate.',
 );
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
