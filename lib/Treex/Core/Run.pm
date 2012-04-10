@@ -674,6 +674,11 @@ sub _run_job_scripts {
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
 
+    # To get utf8 encoding also when using qx (aka backticks):
+    # my $command_output = qw($command);
+    # we need to    
+    use open qw{ :std IO :encoding(UTF-8) };
+
     foreach my $stream (qw(stderr stdout)) {
         my $job_number = $self->_get_job_number_from_doc_number($doc_number);
 
@@ -710,9 +715,10 @@ sub _print_output_files {
 
         open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
         if ( $stream eq "stdout" ) {
-            while (<$FILE>) {
-                print;
-            }
+            # real cat is 12-times faster than cat implemented in perl
+            # it is useful when large dataset is processed
+
+            print `cat $filename`;
         }
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
