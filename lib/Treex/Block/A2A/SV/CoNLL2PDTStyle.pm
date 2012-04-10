@@ -544,8 +544,8 @@ sub deprel_to_afun
             # 'från' (train/004.treex#64):
             # Fr&#229n denna fria värld
             # From this free world
-            # HV: Can have virtually any function, hard to guess (maybe from tag?)
-            $afun = 'ExD';
+            # HV: Can have virtually any grammatical function, hard to guess (maybe heuristics from tag?)
+            $afun = 'NR';
         }
 
         # Expressions like "så kallad" (so called)
@@ -557,6 +557,7 @@ sub deprel_to_afun
         # Unclassifiable grammatical function
         elsif ( $deprel eq 'XX' )
         {
+            # HV: should this really be an ellipsis?
             $afun = 'ExD';
         }
 
@@ -600,7 +601,7 @@ sub collect_coordination_members
     @members0 = grep { $_->afun() eq 'CoordArg' } (@children);
     if (@members0)
     {
-        # If $croot is the real root of the whole coordination we must include it in the members, too.
+        # If $croot is the real root of the whole coordination, we must include it in the members, too.
         # However, if we have been called recursively on existing members, these are already present in the list.
         if ( !@{$members} )
         {
