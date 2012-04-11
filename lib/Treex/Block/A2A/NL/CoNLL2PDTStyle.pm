@@ -17,7 +17,10 @@ sub process_zone {
     $self->resolve_coordinations($a_root);
 #    $self->check_afuns($a_root);
     $self->deprel_to_afun($a_root);
-
+    $self->fix_AuxK($a_root);
+    $self->fix_questionAdverbs($a_root);
+    $self->fix_InfinitivesNotBeingObjects($a_root);
+    $self->fix_SubordinatingConj($a_root);
 }
 
 
@@ -113,6 +116,117 @@ sub resolve_coordinations {
     }
 }
 
+sub fix_AuxK {
+    my ( $self, $root ) = @_;
+    my $lastSubtree = ($root->get_descendants({ordered=>1}))[-1];
+
+    # change to final punctuation
+    if ($lastSubtree->afun eq "AuxX") {
+        $lastSubtree->set_afun("AuxK");
+
+        if ($lastSubtree->get_parent() != $root) {
+            $lastSubtree->set_parent($root);
+        }
+    }
+}
+
+sub fix_questionAdverbs {
+    my ( $self, $root ) = @_;
+
+    # first find all question adverbs depending directly on the root
+    my @adv_root_children = ();
+    foreach my $anode ($root->get_children()) {
+        if ($anode->afun eq "NR" &&
+            $anode->tag =~ /^P4/) {
+            
+            push @adv_root_children, $anode;
+            
+        }
+    }
+
+    # if such adverb is followed 
+    foreach my $adv (@adv_root_children) {
+        if (scalar $adv->get_children() == 1 &&
+              ($adv->get_children())[0]->tag =~ /^VB/) {
+            my $verb = ($adv->get_children())[0];
+
+            $verb->set_afun("Pred");
+            $verb->set_parent($root);
+
+            $adv->set_afun("Adv");
+            $adv->set_parent($verb);
+
+        }
+    }
+}
+
+sub fix_InfinitivesNotBeingObjects {
+    my ( $self, $root ) = @_;
+
+    my @standalonePreds = ();
+    my @standaloneInfinitives = ();
+
+
+    foreach my $anode ($root->get_children()) {
+        if ($anode->afun eq "Pred") { 
+            push @standalonePreds, $anode;
+        }
+        elsif ($anode->tag =~ /^Vf/) {
+            push @standaloneInfinitives, $anode;
+        }
+    }
+
+    # fix the simpliest case...
+    if (scalar @standalonePreds == 1 && scalar @standaloneInfinitives == 1) {
+        my $pred = $standalonePreds[0];
+        my $infinitive = $standaloneInfinitives[0];
+
+        $infinitive->set_parent($pred);
+        $infinitive->set_afun("Obj");
+    }
+}
+
+sub fix_SubordinatingConj {
+    my ( $self, $root ) = @_;
+    
+    # take sentences with two predicates on the root
+    my @predicates = ();
+    foreach my $anode ($root->get_children()) {
+        if ($anode->afun eq "Pred") { push @predicates, $anode; }
+    }
+    
+    # just two clauses, it should be obvious how they should look like
+    if (scalar @predicates == 2) {
+        my @subordConj = ("omdat", "doordat", "aangezien", "daar", "dan", 
+            "zodat", "opdat", "als", "zoals", "tenzij", "voordat", "nadat", 
+            "terwijl", "dat", "hoezeer", "indien");
+        my $mainClause;
+        my $depedentClause;
+        my $conj;
+        
+        my @firstNodes = $predicates[0]->get_descendants({ordered=>1});
+        my @secondNodes = $predicates[1]->get_descendants({ordered=>1});
+        
+        if ( @firstNodes && $firstNodes[0]->lemma =~ (join '|', @subordConj) ) {
+            $depedentClause = $predicates[0];
+            $mainClause = $predicates[1];
+            $conj = $firstNodes[0];
+        }
+        elsif ( @secondNodes && $secondNodes[0]->lemma =~ (join '|', @subordConj) ) {
+            $depedentClause = $predicates[1];
+            $mainClause = $predicates[0];
+            $conj = $secondNodes[1];
+        }
+        else { return; }
+        
+       
+        $conj->set_parent($mainClause);
+        $depedentClause->set_parent($conj);
+        $depedentClause->set_afun("NR");
+    }
+}
+
+
 
 1;
 
@@ -128,4 +242,5 @@ the Prague Dependency Treebank.
 =cut
 
 # Copyright 2011 Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+# + 2012 Jindrich Libovicky <jlibovicky@gmail.com> and Ondrej Kosarko
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
