@@ -160,6 +160,7 @@ sub mark_sentord_within_blocks {
     }
 }
 
+# TODO shouldn't be partitioning into CzEng blocks taken into account here?
 sub mark_doc_clause_nums {
     my ($self, $trees) = @_;
 
@@ -229,7 +230,144 @@ sub _agree_feats {
     return ($f1 eq $f2) ? $b_true : $b_false;
 }
 
-
-
-# TODO doc
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Tool::Coreference::CorefFeatures
+
+=head1 DESCRIPTION
+
+A role for coreference features, encapsulating unary features related to 
+the anaphor (candidate), antecedent candidates' as well as binary features
+related to both participants of the coreference relation. If generalized more,
+this role might serve as an interface to features of any binary (or binarized) 
+relation.
+
+=head1 PARAMETERS
+
+=over
+
+=item feature_names
+
+Names of features that should be used for training/resolution. This list is, 
+however, not obeyed inside this class. Method C<create_instances> returns all 
+features that are extracted here, providing no filtering. It is a job of the 
+calling method to decide whether to check the returned instances if they comply 
+with the required list of features and possibly filter them.
+
+=item format
+
+Temporary parameter. Being assigned to one of the values C<percep> or C<unsup>, it
+determines the format of a hash returned by method C<create_instances>. 
+
+If set to C<percep> (default), the returned hash of instances is indexed by ids 
+of antecedent candidates and every instance besides binary and candidate
+unary features contains also anaphor unary features.
+
+If set to C<unsup>, the returned hash of instances is on the first level divided
+into  two sections, indexed by labels C<cands> and C<anaph>. The structure of the 
+C<cands> section is almost the same as in the C<percep> format, just with no anaphor 
+unary features included. These are stored just once in the C<anaph> section.
+
+=back
+
+=head1 METHODS
+
+=head2 To be implemented
+
+These methods must be implemented in classes that consume this role.
+
+=over
+
+=item _build_feature_names 
+
+A list of features required for training/resolution.
+
+=item _unary_features
+
+It returns a hash of unary features that relate either to the anaphor or the
+antecedent candidate.
+
+=item _binary_features 
+
+It returns a hash of binary features that combine both the anaphor and the
+antecedent candidate.
+
+=back
+
+=head2 Already implemented
+
+=over
+
+=item anaph_feature_names
+
+Names of features describing the anaphor (anaphor unary features).
+
+=item nonanaph_feature_names
+
+Names of features describing the antecedent candidate and both
+the antecedent candidate and the anaphor (the union of binary and
+anaphor unary features).
+
+=item extract_anaph_features
+
+Extracts the features describing the anaphor (anaphor unary features).
+
+=item extract_nonanaph_features
+
+Extracts the features describing the antecedent candidate and both
+the antecedent candidate and the anaphor (the union of binary and
+anaphor unary features).
+
+=item create_instances
+
+Returns a list of instances corresponding to antecedent candidates,
+where the structure of extracted features is determined by parameter
+C<format>.
+
+
+=item init_doc_features
+
+Some features require the scope of the whole document, not just the
+current anaphor - antecedent candidate couple. This method provides
+a place to initialize and precompute the data necessary for 
+document-scope features.
+
+Currently, method C<init_doc_features_from_trees> for language-selector
+corresponding tectogrammatical trees is called.
+
+=item init_doc_features_from_trees
+
+The same as C<init_doc_features> method, just differs in the scope
+- in this case the list of tectogrammatical trees.
+
+Currently, in this init stage, the clause and sentence numbers 
+within the whole document (or CzEng block) are set.
+
+=item _categorize
+
+Quantization of continuous variables into intervals.
+
+=item _join_feats 
+
+Produces a feature, which is a concatenation of two features.
+
+=item _agree_feats 
+
+Produces a feature, which is an indicator of equality of two features.
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

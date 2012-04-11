@@ -448,7 +448,79 @@ sub count_np_freq {
 }
 
 1;
+__END__
 
-# Copyright 2008-2011 Nguy Giang Linh, Michal Novak
+=encoding utf-8
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 NAME 
+
+Treex::Tool::Coreference::CS::PronCorefFeatures
+
+=head1 DESCRIPTION
+
+Features needed in Czech personal pronoun coreference resolution.
+
+=head1 PARAMETERS
+
+=over
+
+=item feature_names
+
+Names of features that should be used for training/resolution.
+See L<Treex::Tool::Coreference::CorefFeatures> for more info.
+
+=item cnk_freqs_path
+
+Path to frequencies of noun-verb bindings extracted from Czech National
+Corpus (CNK).
+
+=item ewn_classes_path
+
+Path to ontology of nouns extracted from Euro WordNet (EWN).
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item _build_feature_names 
+
+Builds a list of features required for training/resolution.
+
+=item _unary_features
+
+It returns a hash of unary features that relate either to the anaphor or the
+antecedent candidate.
+
+Enriched with language-specific features.
+
+=item _binary_features 
+
+It returns a hash of binary features that combine both the anaphor and the
+antecedent candidate.
+
+Enriched with language-specific features.
+
+=item init_doc_features_from_trees
+
+A place to initialize and precompute the data necessary for 
+document-scope (actually having just the scope of all t-trees from
+a correpsonding zone) features.
+
+Prepares collocations and frequencies within the whole document.
+# TODO this almost certainly isn't a language-specific feature
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+Nguy Giang Linh <linh@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
