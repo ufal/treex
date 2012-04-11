@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::MoreRootChildren;
+package Treex::Block::Test::A::SingleEffectiveRootChild;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -25,6 +25,6 @@ sub process_atree {
     $self->complain($a_root);       
 }
 
-#(C) 2012 Jindřich Libovický
+#(C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
 
 1;
