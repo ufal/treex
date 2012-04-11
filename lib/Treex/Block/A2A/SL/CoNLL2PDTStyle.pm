@@ -14,8 +14,15 @@ sub process_zone
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
 
-    # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
+    
+	# I have no idea why this is run in this place.
+	$self->attach_final_punctuation_to_root($a_root);
+
+    $self->change_ending_colon_to_AuxK($a_root);
+    $self->change_wrong_puctuation_root($a_root);
+    $self->conflate_elipsis($a_root);
+	$self->change_quotation_predicate_into_obj($a_root);
+
 }
 
 #------------------------------------------------------------------------------
@@ -55,11 +62,18 @@ sub deprel_to_afun
 # before the final quotation mark is also attached to the main verb. Unlike
 # PDT, where the quotes would be attached to the main verb and the full stop
 # would be attached non-projectively to the root.
+#
+# However, this should be run ONLY when root has no AuxK child already.
 #------------------------------------------------------------------------------
 sub attach_final_punctuation_to_root
 {
     my $self  = shift;
     my $root  = shift;
+    my @root_children = $root->get_children();
+    if ($root_children[-1]->afun() eq 'AuxK') {
+        return;
+    }
+
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
@@ -69,6 +83,114 @@ sub attach_final_punctuation_to_root
         }
     }
 }
+
+#------------------------------------------------------------------------------
+# Some sentences ends with ":", which is (logically) set as AuxG;
+# however, sentences should end with AuxK.
+# There is no winning solution here, since the sentences are wrong in the 
+# first place; I am changing the last ":" to AuxK anyway.
+#------------------------------------------------------------------------------
+sub change_ending_colon_to_AuxK {
+	my $self = shift;
+	my $root = shift;
+	my @nodes = $root->get_descendants();
+	my $last_node = $nodes[-1];
+	if ($last_node->form() eq ':') {
+		$last_node->set_afun('AuxK');
+	}
+}
+
+#------------------------------------------------------------------------------
+# For some reason, punctuation right before coordinations are not dependent
+# on the conjunction, but on the very root of the tree. I will make sure they
+# are dependent correctly on the following word, which is the conjunction.
+#------------------------------------------------------------------------------
+
+sub change_wrong_puctuation_root {
+	my $self = shift;
+	my $root = shift;
+	my @children = $root->get_children();
+	if (scalar @children>2) {
+		
+								#I am not taking the last one
+		for my $child (@children[0..$#children-1]) {
+			if ($child->afun() =~ /^Aux[XG]$/) {
+				my $conjunction = $child->get_next_node();
+				if (scalar ($child->get_children())==0 and $conjunction->tag() =~ /^J/) {
+					$child->set_parent($conjunction);
+				}
+			}
+		}
+	} 
+}
+
+#------------------------------------------------------------------------------
+# If there are more roots, but none of them has any children that has any verb,
+# I chose first root that has elipsis (ExD) and make everything children of 
+# that root.
+# If nothing has elipsis, I just take the first one.
+# It may produce something less correct, but it will always have one root node.
+#------------------------------------------------------------------------------
+
+sub conflate_elipsis {
+	my $self = shift;
+	my $root = shift;
+	my @children = $root->get_children();
+	if (scalar @children>2) {
+		my @descendants = $root->descendants;
+		my @verbs = grep {$_->tag() =~ /^V/} @descendants;
+		if (scalar @verbs == 0) {
+			#It has no verb whatsoever => can conflate
+			my $elipsis_index = undef;
+			for my $index (0..$#children) {
+				if ($children[$index]->afun() eq "ExD") {
+					$elipsis_index = $index if (!defined $elipsis_index);
+				}
+			}
+			
+			if (!defined $elipsis_index) {
+				#Oh well, taking the first one
+				$elipsis_index = 0;
+			}
+			
+			#conflating!
+			CONF:
+			for my $index (0..$#children) {
+				if ($index != $elipsis_index) {
+					if ($index == $#children) {
+						#the last only if incorrect
+						next CONF if ($children[$index]->tag() =~ /^Aux[XK]/);
+					}
+					$children[$index]->set_parent($children[$elipsis_index]);
+				}
+			}
+		}
+	}
+}
+
+
+#------------------------------------------------------------------------------
+# Quotations should have Obj as predicate, but here, they have Adj. I have to
+# switch them.
+#------------------------------------------------------------------------------
+sub change_quotation_predicate_into_obj {
+	my $self = shift;
+	my $root = shift;
+	my @nodes = $root->get_descendants();
+	for my $node (@nodes) {
+		my @children = $node->get_children();
+		my $has_quotation_dependent = 0;
+		for my $child (@children) {
+			if ($child->form eq q{"}) {
+				if ($node->afun() eq "Adv") {
+					$node->set_afun("Obj");
+				}
+			}
+		}
+	}
+}
+
+
 
 1;
 
@@ -89,4 +211,5 @@ of PDT.
 =cut
 
 # Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2012 Karel Bilek <kb@karelbilek.com>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
