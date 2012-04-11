@@ -109,14 +109,27 @@ sub process_zone {
 sub _is_refer {
     my ($self, $tnode, $nada_prob, $en2cs_node) = @_;
 
-    return (
-        ( $self->use_nada && $self->_use_rules
-            && ( $nada_prob > $self->threshold ||
-               ( $nada_prob >= $self->threshold_bottom && !$self->_is_nonrefer_by_rules($tnode, $en2cs_node) ))) ||
-        ( $self->use_nada 
-            && ( $nada_prob > $self->threshold )) ||
-        ( $self->_use_rules 
-            && !$self->_is_nonrefer_by_rules($tnode, $en2cs_node)));
+    my $result = 0;
+    if ( $self->use_nada && $self->_use_rules ) {
+        if ( $nada_prob >= 0.52 && $nada_prob < 0.64 ) {
+            $result = $self->_is_nonrefer_by_rules($tnode, $en2cs_node);
+        }
+        elsif ( $nada_prob >= 0.64 && $nada_prob < 0.76 ) {
+            $result = !$self->_is_nonrefer_by_rules($tnode, $en2cs_node);
+        }
+        else {
+            $result = ( $nada_prob >= $self->threshold );
+        }
+        #$result = ( $nada_prob > $self->threshold ||
+        #       ( $nada_prob >= $self->threshold_bottom && !$self->_is_nonrefer_by_rules($tnode, $en2cs_node) ));
+    }
+    elsif ( $self->use_nada ) {
+        $result = ( $nada_prob > $self->threshold );
+    }
+    elsif ( $self->_use_rules ) {
+        $result = !$self->_is_nonrefer_by_rules($tnode, $en2cs_node);
+    }
+    return $result;
 }
 
 sub _is_nonrefer_by_rules {
@@ -124,19 +137,48 @@ sub _is_nonrefer_by_rules {
 
     my $alex = $tnode->get_lex_anode();
 
-    log_warn("PersPron does not have its own t-node") if ($alex->form !~ /^[iI]t$/);
+    #log_warn("PersPron does not have its own t-node") if ($alex->form !~ /^[iI]t$/);
    
-    my ($verb) = grep { ($_->gram_sempos || "") eq "v" } $tnode->get_eparents( { or_topological => 1} );
+    my $verb;
+    if ( ($tnode->gram_sempos || "") eq "v" ) {
+        $verb = $tnode;
+    }
+    else {
+        ($verb) = grep { ($_->gram_sempos || "") eq "v" } $tnode->get_eparents( { or_topological => 1} );
+    }
     return 0 if (!defined $verb);
+    
+    my $feat_has_v_to_inf = Treex::Block::Eval::AddPersPronIt::has_v_to_inf($verb);
+    my $feat_is_be_adj = Treex::Block::Eval::AddPersPronIt::is_be_adj($verb);
+    my $feat_is_cog_verb = Treex::Block::Eval::AddPersPronIt::is_cog_verb($verb);
+    my $feat_is_be_adj_err = Treex::Block::Eval::AddPersPronIt::is_be_adj_err($verb);
+    my $feat_is_cog_ed_verb_err = Treex::Block::Eval::AddPersPronIt::is_cog_ed_verb_err($verb);
+    my $feat_has_cs_to = Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $en2cs_node->{$tnode});
+
+    my ($it) = grep { $_->lemma eq "it" } $tnode->get_anodes;
+    my $feat_en_has_ACT = Treex::Block::Eval::AddPersPronIt::en_has_ACT($verb, $tnode, $it);
+    my $feat_en_has_PAT = Treex::Block::Eval::AddPersPronIt::en_has_PAT($verb, $tnode, $it);
+    my $feat_make_it_to = Treex::Block::Eval::AddPersPronIt::make_it_to($verb, $tnode);
+
+    $tnode->wild->{has_v_to_inf} = $feat_has_v_to_inf;
+    $tnode->wild->{is_be_adj} = $feat_is_be_adj;
+    $tnode->wild->{is_cog_verb} = $feat_is_cog_verb;
+    $tnode->wild->{is_be_adj_err} = $feat_is_be_adj_err;
+    $tnode->wild->{is_cog_ed_verb_err} = $feat_is_cog_ed_verb_err;
+    $tnode->wild->{has_cs_to} = $feat_has_cs_to;
 
     my @rules_results = grep {defined $_} (
-        $self->_rules_hash->{has_v_to_inf} && Treex::Block::Eval::AddPersPronIt::has_v_to_inf($verb),
-        $self->_rules_hash->{is_be_adj} && Treex::Block::Eval::AddPersPronIt::is_be_adj($verb),
-        $self->_rules_hash->{is_cog_verb} && Treex::Block::Eval::AddPersPronIt::is_cog_verb($verb),
-        $self->_rules_hash->{is_be_adj_err} && Treex::Block::Eval::AddPersPronIt::is_be_adj_err($verb),
-        $self->_rules_hash->{is_cog_ed_verb_err} && Treex::Block::Eval::AddPersPronIt::is_cog_ed_verb_err($verb),
-        $self->_rules_hash->{has_cs_to} && Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $en2cs_node->{$tnode}),
+        $self->_rules_hash->{has_v_to_inf} && $feat_has_v_to_inf,
+        $self->_rules_hash->{is_be_adj} && $feat_is_be_adj,
+        $self->_rules_hash->{is_cog_verb} && $feat_is_cog_verb,
+        $self->_rules_hash->{is_be_adj_err} && $feat_is_be_adj_err,
+        $self->_rules_hash->{is_cog_ed_verb_err} && $feat_is_cog_ed_verb_err,
+        $self->_rules_hash->{has_cs_to} && $feat_has_cs_to,
+        $self->_rules_hash->{en_has_ACT} && $feat_en_has_ACT,
+        $self->_rules_hash->{en_has_PAT} && $feat_en_has_PAT,
+        $self->_rules_hash->{make_it_to} && $feat_make_it_to,
     );
+    
 #                         or has_v_to_inf_err($t_node, $autom_tree)
     return any {$_} @rules_results;
 
@@ -146,106 +188,6 @@ sub _is_nonrefer_by_rules {
     #    || is_cog_verb($verb) )
     #);
     #return ($alex->afun ne 'Sb');
-}
-
-my $to_clause_verbs = 'be|s|take|make';
-# has an echild with formeme v:.*to+inf, or an echild with functor PAT and its echild has to+inf
-sub has_v_to_inf {
-    my ( $verb ) = @_;
-    if ( $verb->t_lemma =~ /^($to_clause_verbs)$/ ) {
-        my @echildren = $verb->get_echildren( { or_topological => 1 } );
-#         my @pats = grep { $_->functor eq "PAT" } @echildren;
-#         foreach my $pat ( @pats ) {
-#             push @echildren, $pat->get_echildren( { or_topological => 1 } );
-#         }
-        return 1 if ( grep { $_->formeme =~ /^v:.*to\+inf$/ } @echildren );
-    }
-    return 0;
-}
-
-my $be_verbs = 'be|s|become';
-sub is_be_adj {
-    my ( $verb ) = @_;
-    if ( $verb->t_lemma =~ /^($be_verbs)$/ ) {
-        my @echildren = $verb->get_echildren( { or_topological => 1 } );
-        my @pats = grep { $_->functor eq "PAT" and $_->formeme eq "adj:compl" } @echildren;
-        foreach my $pat ( @pats ) {
-            push @echildren, $pat->get_echildren( { or_topological => 1 } );
-        }
-        if ( @pats and grep { $_->formeme =~ /^v:.*fin$/ } @echildren) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-my $cog_ed_verbs = 'think|believe|recommend|say|note';
-my $cog_verbs = 'seem|appear|mean|follow|matter';
-
-sub is_cog_verb {
-    my ( $verb ) = @_;
-    return ( 
-        ( $verb->t_lemma =~ /^($cog_ed_verbs)$/
-            and $verb->get_lex_anode 
-            and $verb->get_lex_anode->tag eq "VBN" 
-        )
-        or $verb->t_lemma =~ /^($cog_verbs)$/
-    ) ? 1 : 0;
-}
-
-my $to_clause_verbs_pat = 'make|take';
-# error case: make it <adj/noun> + <inf>: it is a child of <adj/noun> or <inf>
-# looks for the word that precede it in the surface sentence, if it's make/take and has inf among children
-sub has_v_to_inf_err {
-    my ( $t_it, $t_tree ) = @_;
-    my $a_it = $t_it->get_lex_anode;
-    if ( $a_it ) {
-        my $a_ord = $a_it->ord - 1;
-        my ($precendant) = grep { $_->get_lex_anode and $_->get_lex_anode->ord == $a_ord } $t_tree->get_descendants;
-        if ( $precendant 
-            and $precendant->t_lemma =~ /^($to_clause_verbs_pat)$/
-            and grep { $_->formeme =~ /^v:.*to\+inf$/ } $precendant->get_echildren( { or_topological => 1 } )
-        ) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-sub is_be_adj_err {
-    my ( $verb ) = @_;
-    if ( $verb->t_lemma =~ /^($be_verbs)$/ ) {
-        my @echildren = $verb->get_echildren( { or_topological => 1 } );
-        my @pats = grep { $_->functor eq "PAT" and $_->formeme =~ /^(adj:compl|n:obj)$/ } @echildren;
-        foreach my $pat ( @pats ) {
-            push @echildren, $pat->get_echildren( { or_topological => 1 } );
-        }
-        if ( @pats and grep { $_->formeme =~ /^v:/ } @echildren) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-# error case: it can be said: be -> {it, say}
-sub is_cog_ed_verb_err {
-    my ( $verb ) = @_;
-    return ( 
-        $verb->t_lemma =~ /^(be|s)$/
-        and grep { $_->t_lemma =~ /^($cog_ed_verbs)$/ } $verb->get_echildren( { or_topological => 1 } )
-    ) ? 1 : 0;
-}
-
-# English "it's" has a Czech equivalent "to"
-sub has_cs_to {
-    my ( $verb, $t_to ) = @_;
-    return ( 
-        $verb->t_lemma =~ /^($be_verbs)$/ 
-        and $t_to 
-        and $t_to->t_lemma eq "ten" 
-        and $t_to->get_lex_anode 
-        and $t_to->get_lex_anode->lemma eq "to"  
-    ) ? 1 : 0;
 }
 
 1;

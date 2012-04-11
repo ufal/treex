@@ -5,6 +5,13 @@ extends 'Treex::Core::Block';
 
 use List::MoreUtils qw/ uniq /;
 
+has 'source_selector' => (
+    is => 'ro',
+    isa => 'Str',
+    required => 1,
+    default => 'src',
+);
+
 has 'print_types' => (
     is => 'ro',
     isa => 'Bool',
@@ -83,6 +90,10 @@ sub _is_verb_child {
 sub _get_src_tnode_for_lex {
     my ($self, $ref_tnode) = @_;
 
+    if ($self->source_selector eq 'ref') {
+        return $ref_tnode;
+    }
+
     my @src_tnodes = $ref_tnode->get_aligned_nodes_of_type('monolingual');
     if (@src_tnodes == 0) {
         log_debug "Ref-node " . $ref_tnode->id . " aligned with no src-node", $noprint_stack;
@@ -96,6 +107,11 @@ sub _get_src_tnode_for_lex {
 
 sub _get_src_tnode_for_aux {
     my ($self, $ref_anode) = @_;
+
+    if ($self->source_selector eq 'ref') {
+        my ($tnode) = $ref_anode->get_referencing_nodes('a/aux.rf');
+        return $tnode;
+    }
 
     my @src_anodes = $ref_anode->get_aligned_nodes_of_type('monolingual');
     if (@src_anodes == 0) {
@@ -181,6 +197,11 @@ sub process_anode {
     return if ($self->verb_child && !_is_verb_child($ref_anode));
 
     my @lex_tnodes = $ref_anode->get_referencing_nodes('a/lex.rf');
+
+    my $true_class;
+    my $pred_class;
+
+    my $src_tnode;
     
     # referential it
     if (@lex_tnodes > 0) {
@@ -189,7 +210,7 @@ sub process_anode {
         }
         my $lex_tnode = shift @lex_tnodes;
             
-        my $src_tnode = $self->_get_src_tnode_for_lex($lex_tnode);
+        $src_tnode = $self->_get_src_tnode_for_lex($lex_tnode);
         if (!defined $src_tnode) {
             log_debug "LEX TNODE UNDEF", $noprint_stack;
         }
@@ -200,38 +221,54 @@ sub process_anode {
         
         if ((@antes_ref == 0) || ($self->ref_np_only && !_is_ante_np(@antes_ref))) {
             if ($is_ref_pred) {
-                $conf_mat->{'exo'}{'ref'}++;
+                ($true_class, $pred_class) = ('exo','ref');
             }
             else {
-                $conf_mat->{'exo'}{'pleo'}++;
-                #print STDERR "PROB: " . $src_tnode->wild->{referential_prob} . "\n";
-                #print STDERR "ID: " . $src_tnode->id . "\n";
+                ($true_class, $pred_class) = ('exo','pleo');
             }
         }
         else {
             if ($is_ref_pred) {
-                $conf_mat->{'ref'}{'ref'}++;
+                ($true_class, $pred_class) = ('ref','ref');
             }
             else {
-                $conf_mat->{'ref'}{'pleo'}++;
+                ($true_class, $pred_class) = ('ref','pleo');
             }
         }
     }
     
     # pleonastic it
     else {
-        my $src_tnode = $self->_get_src_tnode_for_aux($ref_anode);
+        $src_tnode = $self->_get_src_tnode_for_aux($ref_anode);
         if (!defined $src_tnode) {
             log_debug "AUX TNODE UNDEF", $noprint_stack;
         }
         # node was correctly labeled as pleonastic
         if ($self->_is_referential($src_tnode)) {
-            $conf_mat->{'pleo'}{'ref'}++;
+            ($true_class, $pred_class) = ('pleo','ref');
         }
         else {
-            $conf_mat->{'pleo'}{'pleo'}++;
-                #print STDERR "PROB: " . $src_tnode->wild->{referential_prob} . "\n";
+            ($true_class, $pred_class) = ('pleo','pleo');
         }
+    }
+    #print STDERR "FREQ: $true_class\n";
+    if (defined $src_tnode) {
+        $conf_mat->{$true_class}{$pred_class}++;
+        #my $true = $true_class eq 'ref' ? 1 : 0;
+        #my $pred = $pred_class eq 'ref' ? 1 : 0;
+
+        #my @rule_feats = (
+        #    $src_tnode->wild->{has_v_to_inf},
+            #$src_tnode->wild->{is_be_adj},
+        #    $src_tnode->wild->{is_cog_verb},
+        #    $src_tnode->wild->{is_be_adj_err},
+        #    $src_tnode->wild->{is_cog_ed_verb_err},
+            #$src_tnode->wild->{has_cs_to},
+        #);
+
+
+        #my $prob_buck = sprintf("%.2f", $src_tnode->wild->{referential_prob} / 4) * 4;
+        #print STDERR "RULE_STATS\t$true\t$prob_buck\t" . join("\t", @rule_feats) . "\t$pred\n";
     }
 }
 
