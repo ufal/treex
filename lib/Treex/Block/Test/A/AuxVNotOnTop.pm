@@ -17,6 +17,6 @@ sub process_atree {
     }
 }
 
-#(C) 2012 Karel Bílek, Jindřich Libovický
+#(C) 2012 Karel Bílek <kb@karelbilek.com>, Jindřich Libovický <jlibovicky@gmail.com>
 
 1;

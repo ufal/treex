@@ -26,6 +26,6 @@ sub process_atree {
     $self->complain($a_root);             
 }
 
-# (C) 2012 Jindřich Libovický
+# (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
 
 1;

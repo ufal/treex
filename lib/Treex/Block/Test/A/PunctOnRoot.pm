@@ -23,6 +23,6 @@ sub process_atree {
            
 }
 
-# (C) 2012 Jindřich Libovický
+# (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
 
 1;
