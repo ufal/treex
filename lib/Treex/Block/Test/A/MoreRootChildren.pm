@@ -1,4 +1,4 @@
-package Treex::Block::Test::MoreRootChildren;
+package Treex::Block::Test::A::MoreRootChildren;
 use utf8;
 use Moose;
 use Treex::Core::Common;

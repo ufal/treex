@@ -1,4 +1,4 @@
-package Treex::Block::Test::AuxKAtEnd;
+package Treex::Block::Test::A::AuxKAtEnd;
 use utf8;
 use Moose;
 use Treex::Core::Common;

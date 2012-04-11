@@ -1,4 +1,4 @@
-package Treex::Block::Test::PunctOnRoot;
+package Treex::Block::Test::A::PunctOnRoot;
 use utf8;
 use Moose;
 use Treex::Core::Common;
