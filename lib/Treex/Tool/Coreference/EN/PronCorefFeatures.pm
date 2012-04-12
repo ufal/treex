@@ -65,6 +65,7 @@ sub _build_tag_properties {
 sub _build_feature_names {
     my ($self) = @_;
 
+    # TODO filter out the features not used here
     my @feat_names = qw(
        c_sent_dist        c_clause_dist         c_file_deepord_dist
        c_cand_ord         c_anaph_sentord
@@ -95,9 +96,9 @@ sub _build_feature_names {
        r_cand_freq                            
        b_cand_pers
 
-       c_cand_loc_buck    c_anaph_loc_buck
-       c_cand_type        c_anaph_type
-       c_cand_synttype    
+       #c_cand_loc_buck    #c_anaph_loc_buck
+       #c_cand_type        #c_anaph_type
+       #c_cand_synttype    
 
     );
     
@@ -226,7 +227,59 @@ override '_unary_features' => sub {
 };
 
 1;
+__END__
 
-# Copyright 2008-2011 Nguy Giang Linh, Michal Novak
+=encoding utf-8
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 NAME 
+
+Treex::Tool::Coreference::EN::PronCorefFeatures
+
+=head1 DESCRIPTION
+
+Features needed in English personal pronoun coreference resolution.
+
+=head1 PARAMETERS
+
+=over
+
+=item feature_names
+
+Names of features that should be used for training/resolution.
+See L<Treex::Tool::Coreference::CorefFeatures> for more info.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item _build_feature_names 
+
+Builds a list of features required for training/resolution.
+
+=item _unary_features
+
+It returns a hash of unary features that relate either to the anaphor or the
+antecedent candidate.
+
+Enriched with language-specific features.
+
+=item _binary_features 
+
+It returns a hash of binary features that combine both the anaphor and the
+antecedent candidate.
+
+Enriched with language-specific features.
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
