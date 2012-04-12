@@ -202,5 +202,95 @@ sub _jump_to_non_gram_ante {
     return $ante;
 }
 
-# TODO doc
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Tool::Coreference::AnteCandsGetter
+
+=head1 DESCRIPTION
+
+A role for antecedent candidates selector. It provides several methods
+to obtain a list of positive and negative candidates (for training) or 
+all candidates (for resolution) from the previous context. Previous 
+context must be specified by the parameter C<prev_sents_num>. The filter,
+which determines nodes to be included in the list of antecedent
+candidates, must be specified in a sublclass.
+
+=head1 PARAMETERS
+
+=over
+
+=item prev_sents_num
+
+Previous context to select the candidates from. If it is set to C<n>,
+it means that nodes from the same sentence prior to the anaphor and
+nodes from C<n> preceding sentences are taken into consideration.
+If the number of preceding sentences is lower, all of them are processed.
+Default value is 1.
+
+=item anaphor_as_candidate
+
+If enabled, the anaphor is included in the antecedent candidates list.
+This is necessary, if the resolver tries to recognize whether the 
+anaphor (candidate) is really an anaphor (so called joint anaphor
+identification and antecedent selection). It is disabled by default.
+
+=item cands_within_czeng_blocks
+
+Special parameter for CzEng documents. One CzEng document commonly
+consists of several non-contiguous blocks. If this parameter is enabled,
+a CzEng block (identified by the same value of the bundle's wild attribute
+C<czeng/blockid>) is considered to be the largest discourse-coherent segment,
+otherwise it is the whole document. Disabled by default.
+
+=back
+
+=head1 METHODS
+
+=head2 To be implemented
+
+These methods must be implemented in classes that consume this role.
+
+=over
+
+=item _build_cand_filter
+
+A builder for a node filter which consumes the role 
+L<Treex::Tool::Coreference::NodeFilter>. This filter is then used
+to select the candidates from the context defined by the parameter
+C<prev_sents_num>.
+
+=back
+
+=head2 Already implemented
+
+=over
+
+=item get_candidates
+
+It select appropriate antecedent candidates from the previous context. 
+Reasonable for resolving, since it does not require information about 
+the true antecedent.
+
+=item get_pos_neg_candidates 
+
+It returns positive (the true antecendent) and negative (not an antecedent
+for the actual anaphor) antecedent candidates. It requires the information
+about the true antecedent to be present. Suitable for creating the training
+instances.
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
