@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use Treex::Tool::Coreference::InterSentLinks;
+use Treex::Tool::CorefSegments::InterSentLinks;
 
 my $MAX_BLOCK_SIZE = 30;
 my $MAX_MISS_SENTS = 3;
@@ -76,7 +76,7 @@ sub process_document {
     }
 
     my @trees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
-    my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({
+    my $interlinks = Treex::Tool::CorefSegments::InterSentLinks->new({
         trees => \@trees,
     });
     $interlinks->remove_selected( \@break_list );

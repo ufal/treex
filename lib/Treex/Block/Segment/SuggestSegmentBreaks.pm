@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 use List::Util qw/sum/;
 
-use Treex::Tool::Coreference::InterSentLinks;
+use Treex::Tool::CorefSegments::InterSentLinks;
 
 has 'max_size' => (
     is  => 'ro',
@@ -242,7 +242,7 @@ sub process_document {
             #next if (!defined $bundles[0]->get_zone($lang, $self->selector));
             my @trees = map {$_->get_tree($lang, 't', $self->selector)} @bundles;
             
-            my $interlinks = Treex::Tool::Coreference::InterSentLinks->new({ 
+            my $interlinks = Treex::Tool::CorefSegments::InterSentLinks->new({ 
                 trees => \@trees
             });
             $interlinks->remove_selected( \@break_idxs );

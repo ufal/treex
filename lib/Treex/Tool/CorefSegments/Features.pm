@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::CorefSegmentsFeatures;
+package Treex::Tool::CorefSegments::Features;
 
 use Moose::Role;
 

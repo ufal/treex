@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 
 use AI::MaxEntropy;
-use Treex::Tool::Coreference::CS::CorefSegmentsFeatures;
+use Treex::Tool::CorefSegments::CS::Features;
 
 extends 'Treex::Core::Block';
 
@@ -28,7 +28,7 @@ has '_feature_extractor' => (
     required    => 1,
 # TODO this should be a role, not a concrete class
     lazy        => 1,
-    isa         => 'Treex::Tool::Coreference::CorefSegmentsFeatures',
+    isa         => 'Treex::Tool::CorefSegments::Features',
     builder     => '_build_feature_extractor',
 );
 
@@ -49,7 +49,7 @@ sub _build_feature_names {
 sub _build_feature_extractor {
     my ($self) = @_;
 
-    my $fe = Treex::Tool::Coreference::CS::CorefSegmentsFeatures->new();
+    my $fe = Treex::Tool::CorefSegments::CS::Features->new();
     return $fe;
 }
 

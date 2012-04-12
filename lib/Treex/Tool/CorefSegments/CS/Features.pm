@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::CS::CorefSegmentsFeatures;
+package Treex::Tool::CorefSegments::CS::Features;
 
 use Moose;
 use Treex::Core::Common;
@@ -6,7 +6,7 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
 use Treex::Tool::Coreference::SynonTranslDictModel;
 
-with 'Treex::Tool::Coreference::CorefSegmentsFeatures';
+with 'Treex::Tool::CorefSegments::Features';
 
 has 'feature_names' => (
     is          => 'ro',

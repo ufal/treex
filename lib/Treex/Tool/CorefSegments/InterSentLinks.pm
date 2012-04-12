@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::InterSentLinks;
+package Treex::Tool::CorefSegments::InterSentLinks;
 
 use Moose;
 use Treex::Core::Common;
