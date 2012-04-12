@@ -17,7 +17,7 @@ my $UNBREAKERS = qr{\p{Upper}|fr|vl|ch| # first name abbrevs.
     gen|p?plk|[np]?por|š?kpt|mjr|sgt|   # military titles
     např|srov|tzv|mj|zn|tj|resp|popř|   # listing, references
     a\.d|                               # foreign "an der"
-    sev|již                             # "Severní Irsko", "Jižní Karolína"    
+    sev|již|záp|vých                    # "Severní Irsko", "Jižní Karolína"    
 }xi;
 
 override unbreakers => sub {
@@ -97,7 +97,7 @@ sub apply_contextual_rules {
 
         my ( $num, $precontext ) = _get_context( $text, ( pos $text ), $1 );
 
-        if ( $precontext !~ m/($CARDINAL_INDIC)$/i ) {
+        if ( $precontext !~ m/(?:$CARDINAL_INDIC)$/i ) {
             $text = _unbreak_at( $text, ( pos $text ) );
         }
     }
@@ -128,8 +128,9 @@ sub apply_contextual_rules {
 
     # no break for 3 words in a parenthesis at most, if there's no capital letter after the parenthesis
     $text =~ s/\.(\s*[\(\[](?:\s*\b\S+){1,3}[\)\]]\s*\P{Upper})/<<<DOT>>>$1/g;
-
-    # use spaced '-' and '*' as segment breaks between sentences (used in dialogs) # TODO -- actually, there should be another abbrev. list
+    
+    # use spaced '-' and '*' as segment breaks between sentences (used in dialogs) 
+    # TODO -- make this a list type (!)
     $text =~ s/([!?]|\w{4,}\.)\h+([\*\-–]\h+\p{Upper})/$1\n$2/g;
 
     return $text;
@@ -154,6 +155,118 @@ sub _unbreak_at {
     $text = substr( $text, 0, $pos - 1 ) . '<<<DOT>>>' . substr( $text, $pos );
     return $text;
 }
+
+my $DAYS_OF_WEEK = qr{
+    pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|
+    po|út|st|čt|pá|so|ne
+}xi;
+
+my $TV_CHANNELS = qr{
+    čt[1234](?: sport)?|čt24|nova(?: cinema| sport)?|prima(?: cool| love)?|premiéra|čtv|
+    f1|ok3|hbo|stv[12]|markíza|joj(?: plus)?|barrandov|óčko|public tv|(?:tv )?noe|
+    mdr|ndr|3sat|ard|br(?:-alpha)?|(?:super[ -])?rtl2?|zdf|wdr|orf[12]|
+    bbc|cnn|eurosport|euronews
+}xi;
+
+my $MONTHS = qr{
+    lede?na?|února?|březe?na?|dube?na?|květe?na?|červe?na?|
+    červene?ce?|srpe?na?|září|říje?na?|listopadu?|prosine?ce?    
+}xi;
+
+my $SPORTS = qr{
+    konečné|celkové|průběžné|absolutní|výsledky|pořadí|stav|tabulka|přehled|
+    velká\h+cena|ms|me|sp|(?:mezinárodní\h+)?mistrovství|
+    (?:(?:první|druhý|třetí|čtvrtý)\h+)?závod|k1|c1|grand\h+prix|   
+    finále|semifinále|čtvrtfinále|skupina|kategorie|odveta|kvalifikace|
+    (?:třída\h+)?do\h+[0-9]+\h+ccm|superbik\w*|supersport\w*|rallye|
+    muži|ženy|marat[oó]n\w*|volejbal|basketbal|halové|
+    počet\h+startů|brankáři|útočníci|obránci|záložníci|
+    lyžování|slalom|sjezd\w*|skoky|biatlon|atletika|fotbal|motorismus|formule|
+    (?:stolní\h+)?tenis|atletika|(?:pozemní\h+)?hokej|střelba|házená|veslování|krasobruslení|
+    disk|oštěp|koule|běh|plavání|kladivo|tyč|dálka|výška|štafeta|trojskok|
+    (?:(?:10|5)\h+)?[0-9]{1,2}0{1,2}\h+m(?:etrů)?\b|míle|
+    (?:okresní\h+|oblastní\h+|krajský\h+)?přebor|extraliga|liga
+}xi;
+
+my $SPORT_NUMBERED = qr{
+    kolo|místo|liga|jízda|rozběh
+}xi;
+
+# Czech list types
+my $LIST_TYPES = [
+    {   name => 'Elections -- Volební obvod č. XY',
+        sep  => 'Volební\h+(?:obvod|okrsek)\h+č.\h*[0-9]+',
+        type => 's',
+    },
+    {   name => 'Sport -- 1. kolo, 1. místo, disk:, oštěp:, tabulka po...',
+        sep  => '\b(?:(?:[0-9]+|[IVXLC]+)\h*[a-h]?\.\h*(?:' . $SPORT_NUMBERED . ')'
+            . '|(?:' . $SPORTS . ')(?:[\h\.,<>]+\w+){0,8}\.?)\h*[-–—:\(]',
+        neg_pre => '(?:(?:-\h*|^)[0-9]+\h*[\+\.]|[0-9]+[\.:][0-9]+|\b(?:ve?|až|'. $SPORTS .')[\h,]?|[-–—:])\h*',
+        type    => 's',
+    },
+    {   name => 'Sport -- Sparta - Slavia 1:2 (...)',
+        sep  => '\b\h*\p{Upper}(?:[\p{Alnum}\.\']+\h+){0,5}\h*(?:\((?:\h*[\p{Alnum}\.\'–—-]+\h+){0,3}[\p{Alnum}\.\'–—-]+\h*\))?\h*'
+            . '[-–—]\h*\p{Upper}(?:[\p{Alnum}\.\']+\h+){0,5}\h*(?:\((?:\h*[\p{Alnum}\.\'–—-]+\h+){0,3}[\p{Alnum}\.\'–—-]+\h*\))?\h*'
+            . '[0-9]{1,3}:[0-9]{1,3}',
+        type => 's',
+    },
+    {   name => 'Date/Time in parentheses -- cultural programs',
+        sep  => '(?:[0-9]{1,2}\h*[\.:]\h*(?:[0-9]{1,2}\.?|' . $MONTHS . ')\h*[-–—]\h*)?'
+            . '[0-9]{1,2}\h*[\.:]\h*(?:[0-9]{1,2}\.?|' . $MONTHS . ')\)[,\.;]?',
+        type => 'e',
+    },
+    {    # possibly should be merged with the previous one
+        name => 'Cinema programs -- "Begins at"',
+        sep  => 'zač(?:\.|íná|átek)(?:\h*[\(\)/–—+-]?\h*(?:[0-9]{1,2}(?:\h*[:\.])?|h(?:od\.|odin)?|'
+            . $DAYS_OF_WEEK . '|ve?|mimo|kromě|také|též|[ai,]))+\b(?:\h*[\(\)/])?',
+        type => 'e',
+    },
+    {   name => 'TV/Cinema programs -- Date/time (range)',
+        sep  => '\b(?:(?:' . $TV_CHANNELS . ')\h*)?(?:(?:' . $DAYS_OF_WEEK . ')\h*)?'
+            . '(?:(?:[0-9]{1,2}\h*[\.:]\h*)?[0-9]{1,2}\.?\h*[-–—]\h*)?[0-9]{1,2}\h*[\.:]\h*[0-9]{1,2}'
+            . '\b(?!\h*(?:[,:]?\h*[0-9]|h(?:\.?|od\.?|odin)\b\h*(?:[^:]|$)|min(?:\.|ut)))',
+        type    => 's',
+        neg_pre => '(?:(?:[\(:]|\b[0-9]+\h*,?|od)\h*)',
+        min => 20, # Some TV program names are very short
+    },
+    {   name => 'Product lists -- Typ: XY',
+        sep  => 'typ:',
+        type => 's',
+    },
+    {   name    => 'Generic lists -- (a), (b), c), 4b), 4 a), 1. a)',
+        sel_sep => '\b\(?(\h*[0-9]+\.?)?\h*(?!(?:kg|ks|l|h|lb)\b)[a-z]{1,2}\h*\)\h+',    # kg, ks, l, h left out
+        sep     => '\b\(?(\h*[0-9]+\.?)?\h*[a-z]{1,2}\h*\)\h+',
+        type    => 's',
+    },
+    {   name => 'Generic lists -- (1.1.1), (1), 1)',
+        sep  => '\(?\h*\b[0-9]{1,3}(\.[0-9]{1,3})*\.?\h*\)\h+',
+        type => 's',
+    },
+    {   name => 'Generic lists -- 1.1., 1.1, 1. 2. 3.',
+        sep  => '\b(?:[0-9]{1,3}\h*\.(?:\h*[0-9]{1,3}\h*\.?)*\h*[-–—]\h*)?[0-9]{1,3}\h*\.(?:\h*[0-9]{1,3}\h*\.?)*'
+            . '(?!\h*(?:' . $MONTHS . '|ročníku))', # dates excluded (TODO check if this is sane)
+        type    => 's',
+        neg_pre => '(?:[\(:]\h*|[0-9]+\h*(?:[-–—,.]\h*)?|\b(?:od|do|o|před|dn[ei]|ke?|po|ve?)\h+)',
+        sel_sep => '\b(?:[0-9]{1,3}\h*\.(?:\h*[0-9]{1,3}\h*\.?)*\h*[-–—]\h*)?[0-9]{1,3}\h*\.(?:\h*[0-9]{1,3}\h*\.?)*'
+            . '(?!\h*(?:' . $MONTHS . '|kolo|závod|ročníku))', # "kolo" excluded from selection
+        min     => 40, # too short list items are quite suspicious
+    },
+];
+
+override 'list_types' => sub {
+    my ($self) = @_;
+
+    # add Czech-specific list types after the universal ones (i.e. semicolon lists)
+    return $self->SUPER::list_types, @{$LIST_TYPES};
+};
+
+override 'split_at_any_punctuation' => sub {
+    my ( $self, $text ) = @_;
+
+    $text =~ s/([a-z]\s*)-(\s*li\b)/$1<<<DASH>>>$2/g;
+
+    return map { $_ =~ s/<<<DASH>>>/-/g; $_ } $self->SUPER::split_at_any_punctuation($text);
+};
 
 1;
 
@@ -187,7 +300,7 @@ Segmenting too much at:
   vš. SKP Plzeň (what's that?)
   three dots in parentheses, at the beginning of a sentence
   "min." in parentheses
-  ul., tř., blvd., av., ave.
+  ul., tř., blvd., av., ave., nám. (beware before numbers!)
 
 Not segmenting at:
 

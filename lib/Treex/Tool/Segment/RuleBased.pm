@@ -22,6 +22,24 @@ has use_lines => (
         . ' and nothing else, use rather W2A::SegmentOnNewlines.)',
 );
 
+has limit_words => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 250,
+    documentation =>
+        'Should very long segments (longer than the given number of words) be split?'
+        . 'The number of words is only approximate; detected by counting whitespace only,'
+        . 'not by full tokenization. Set to zero to disable this function completely.',
+);
+
+has detect_lists => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 100,
+    documentation =>
+        'Minimum (approx.) number of words to toggle list detection, 0 = never, 1 = always.'
+);
+
 # Tokens that usually do not end a sentence even if they are followed by a period and a capital letter:
 # * single uppercase letters serve usually as first name initials
 # * in langauge-specific descendants consider adding
@@ -58,10 +76,10 @@ sub get_segments {
 
     # Pre-processing
     $text = $self->apply_contextual_rules($text);
-    
+
     my $unbreakers = $self->unbreakers;
     $text =~ s/\b($unbreakers)\./$1<<<DOT>>>/g;
-    
+
     # two newlines usually separate paragraphs
     if ( $self->use_paragraphs ) {
         $text =~ s/([^.!?])\n\n+/$1<<<SEP>>>/gsm;
@@ -83,7 +101,11 @@ sub get_segments {
     $text =~ s/\s+$//gsxm;
     $text =~ s/^\s+//gsxm;
 
-    return split /\n/, $text;
+    # try to separate various list items (e.g. TV programmes, calendars)
+    my @segs = map { $self->split_at_list_items($_) } split /\n/, $text;
+
+    # handle segments that are too long
+    return map { $self->segment_too_long($_) ? $self->handle_long_segment($_) : $_ } @segs;
 }
 
 sub split_at_terminal_punctuation {
@@ -96,6 +118,187 @@ sub split_at_terminal_punctuation {
         ([$openings]?\p{Upper}) # $3 = uppercase letter (optionally preceded by opening quote)
     }{$1$2\n$3}gsxm;
     return $text;
+}
+
+sub handle_long_segment {
+    my ( $self, $seg ) = @_;
+
+    # split at some other dividing punctuation characters (poems, unending speech)
+    my @split = map { $self->segment_too_long($_) ? $self->split_at_dividing_punctuation($_) : $_ } $seg;
+
+    # split at any punctuation
+    @split = map { $self->segment_too_long($_) ? $self->split_at_any_punctuation($_) : $_ } @split;
+
+    # split hard if still too long
+    return map { $self->segment_too_long($_) ? $self->split_hard($_) : $_ } @split;
+}
+
+# Return 1 if the segment is too long
+sub segment_too_long {
+    my ( $self, $seg ) = @_;
+
+    # skip everything if the limit is infinity
+    return 0 if ( $self->limit_words == 0 );
+
+    # return 1 if the number of space-separated segments exceeds the limit
+    my $wc = () = $seg =~ m/\s+/g;
+    return 1 if ( $wc >= $self->limit_words );
+    return 0;
+}
+
+# "Non-final" punctuation that could divide segments (NB: single dot excluded due to abbreviations)
+my $DIV_PUNCT = qr{(!|\.\.+|\?|\*|[–—-](\s*[–—-])+|;)};
+
+sub split_at_dividing_punctuation {
+    my ( $self, $text ) = @_;
+
+    my $closings = $self->closings;
+    $text =~ s/($DIV_PUNCT\s*[$closings]?,?)/$1\n/g;
+
+    return split /\n/, $self->_join_too_short_segments($text);
+}
+
+# Universal list types (currently only semicolon-separated lists, to be overridden in language-specific blocks)
+my $LIST_TYPES = [
+    {
+        name    => ';',       # a label for the list type (just for debugging)
+        sep     => ';\h+',    # separator regexp
+        sel_sep => undef,     # separator regexp used only for the selection of this list (sep used if not set)
+        type    => 'e',       # type of separator (ending: e / staring: s)
+        max     => 400,       # maximum average list-item length (overrides the default)
+        min     => 30,        # minimum average list-item length (overrides the default)
+        # negative pre-context, not used if not set (here: skip semicolons separating just numbers)
+        neg_pre => '[0-9]\h*(?=;\h*[0-9]+(?:[^\.0-9]|\.[0-9]|$))',     
+    },
+];
+
+# Language-specific blocks should override this method and provide usual list types for the given language
+sub list_types {
+    return @{$LIST_TYPES};
+}
+
+my $MAX_AVG_ITEM_LEN = 400;    # default maximum average list item length, in characters
+my $MIN_AVG_ITEM_LEN = 30;     # default minimum average list item length, in characters
+my $MIN_LIST_ITEMS   = 3;      # minimum number of items in a list
+my $PRIORITY         = 2.5;    # multiple of list items a lower-rank list type must have over a higher-rank type
+
+sub split_at_list_items {
+
+    my ( $self, $text ) = @_;
+
+    # skip this if list detection is turned off
+    return $text if ( $self->detect_lists == 0 );
+
+    # skip too short lines
+    my $wc = () = $text =~ m/\s+/g;
+    return $text if ( $self->detect_lists > $wc );
+
+    my @list_types = $self->list_types;
+    my $sel_list_type;
+    my $sel_len;
+
+    # find out which list type is the best for the given text
+    for ( my $i = 0; $i < @list_types; ++$i ) {
+
+        my $cur_list_type = $list_types[$i];
+        my $sep           = $cur_list_type->{sel_sep} || $cur_list_type->{sep};
+        my $neg           = $cur_list_type->{neg_pre};
+        my $min           = $cur_list_type->{min} || $MIN_AVG_ITEM_LEN;
+        my $max           = $cur_list_type->{max} || $MAX_AVG_ITEM_LEN;
+
+        my $items = () = $text =~ m/$sep/gi;
+
+        # count number of items; exclude negative pre-context matches, if negative pre-context is specified
+        my $false = 0;
+        $false = () = $text =~ m/$neg(?=$sep)/gi if ($neg);
+        $items -= $false;
+
+        my $len = $items > 0 ? ( length($text) / $items ) : 'NaN';
+        log_warn( 'LIST TYPE: ' . $cur_list_type->{name} . ' : ' . $items . ' items, avg len : ' . $len );
+
+        # test if this type overrides the previously set one
+        if ( $items >= $MIN_LIST_ITEMS && $len < $max && $len > $min && ( !$sel_len || $len * $PRIORITY < $sel_len ) ) {
+            $sel_list_type = $cur_list_type;
+            $sel_len       = $len;
+        }
+    }
+
+    # return if no list type found
+    return $text if ( !$sel_list_type );
+
+    # list type detected, split by the given list type
+    my $sep  = $sel_list_type->{sep};
+    my $neg  = $sel_list_type->{neg_pre};
+    my $name = $sel_list_type->{name};
+
+    # protect negative pre-context, if any is specified
+    $text =~ s/($neg)(?=$sep)/$1<<<NEG>>>/gi if ($neg);
+
+    # split at the given list type
+    if ( $sel_list_type->{type} eq 'e' ) {
+        $text =~ s/(?<!<<<NEG>>>)($sep)/$1\n/gi;
+    }
+    else {
+        $text =~ s/(?<!<<<NEG>>>)($sep)/\n$1/gi;
+    }
+
+    my $br = $text;
+    $br =~ s/\n/<BR>/g;
+    log_warn( 'Selected list type: ' . $name . "\n" . $br );
+
+    # remove negative pre-context protection
+    $text =~ s/<<<NEG>>>//g;
+
+    # delete too short splits
+    $text = $self->_join_too_short_segments($text);
+
+    # return the split result
+    return split /\n/, $text;
+}
+
+sub _join_too_short_segments {
+    my ( $self, $text ) = @_;
+
+    $text =~ s/^\n//;
+    $text =~ s/\n$//;
+    $text =~ s/\n(?=\h*(\S+(\h+\S+){0,2})?\h*(\n|$))/ /g;
+    return $text;
+}
+
+sub split_at_any_punctuation {
+    my ( $self, $text ) = @_;
+
+    my $closings = $self->closings;
+
+    # prefer punctuation followed by a letter
+    $text =~ s/([,;!?–—-]+\s*[$closings]?)\s+(\p{Alpha})/$1\n$2/g;
+
+    # delete too short splits
+    $text = $self->_join_too_short_segments($text);
+
+    my @split = split /\n/, $text;
+
+    # split at any punctuation if the text is still too long
+    return map {
+        $_ =~ s/([,;!?–—-]+\s*[$closings]?)/$1\n/g if ( $self->segment_too_long($_) );
+        split /\n/, $self->_join_too_short_segments($_)
+    } @split;
+}
+
+sub split_hard {
+    my ( $self, $text ) = @_;
+
+    my @tokens = split /(\s+)/, $text;
+    my @result;
+    my $pos = 0;
+
+    while ( $pos < @tokens ) {
+        my $limit = $pos + $self->limit_words * 2 - 1;
+        $limit = @tokens - 1 if ( $limit > @tokens - 1 );
+        push @result, join( '', @tokens[ $pos .. $limit ] );
+        $pos = $limit + 1;
+    }
+    return @result;
 }
 
 1;
