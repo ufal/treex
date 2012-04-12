@@ -168,6 +168,8 @@
       <value>AdjAtr</value>
       <value>CC</value>
       <value>Comp</value>
+      <!-- values added because of Ancient Greek Dependency Treebank -->
+      <value>OComp</value> <!--object complement-->
       <!-- afun for unrecognized value -->
       <value>NR</value>
     </choice>
