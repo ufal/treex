@@ -23,7 +23,7 @@ has '_ranker' => (
     is          => 'ro',
     required    => 1,
 
-    isa         => 'Treex::Tool::Coreference::Ranker',
+    isa         => 'Treex::Tool::ML::Ranker',
     lazy        => 1,
     builder     => '_build_ranker'
 );

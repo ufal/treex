@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::RuleBasedRanker;
 use Moose;
 use Treex::Core::Common;
 
-with 'Treex::Tool::Coreference::Ranker';
+with 'Treex::Tool::ML::Ranker';
 
 sub rank {
     my ($self, $instances, $debug) = @_;

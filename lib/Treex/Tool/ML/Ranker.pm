@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::Ranker;
+package Treex::Tool::ML::Ranker;
 
 use Moose::Role;
 
@@ -29,7 +29,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Coreference::Ranker
+Treex::Tool::ML::Ranker
 
 =head1 DESCRIPTION
 

@@ -6,7 +6,7 @@ use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Tool::Coreference::ValueTransformer;
 use Treex::Tool::Coreference::CombinedDistrModel;
 
-with 'Treex::Tool::Coreference::Ranker';
+with 'Treex::Tool::ML::Ranker';
 
 has 'model_path' => (
     is          => 'ro',

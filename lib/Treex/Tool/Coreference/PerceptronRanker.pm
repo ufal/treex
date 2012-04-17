@@ -6,7 +6,7 @@ use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Tool::Coreference::ValueTransformer;
 
 with 'Treex::Tool::ML::Model', 
-     'Treex::Tool::Coreference::Ranker';
+     'Treex::Tool::ML::Ranker';
 
 
 # TODO this should be a separate class and a feature transformer should be a part of it
