@@ -35,7 +35,7 @@ sub start_memcached {
     my $server = get_memcached_hostname();
     if ( ! $server ) {
         log_info "Memached will be executed.\n";
-        `qsubmit --priority=-1 --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
+        `/home/bojar/tools/shell/qsubmit --priority=-1 --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
         sleep 2;
         return 1;
     } else {
