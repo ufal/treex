@@ -308,11 +308,11 @@ sub _tnode_labels {
     }
     if (@a_nodes) {
         @a_nodes = sort { $a->{ord} <=> $b->{ord} } @a_nodes;
-        @a_nodes = map { ( $_->{type} eq 'lex' ? $self->_colors->get( 'lex', 1 ) : $self->_colors->get( 'aux', 1 ) ) . ( $_->{form} // '' ) } @a_nodes;
+        @a_nodes = map { ( $_->{type} eq 'lex' ? $self->_colors->get( 'lex', 1 ) : $self->_colors->get( 'aux', 1 ) ) . ( $_->{form} // '' ) } @a_nodes; #/
         $line3_1 = join " ", @a_nodes;
     }
 
-    my $line3_2 = $self->_colors->get( 'nodetype', 1 ) . $node->{nodetype};
+    my $line3_2 = $self->_colors->get( 'nodetype', 1 ) . ($node->{nodetype} || '');
     $line3_2 .= $self->_colors->get( 'sempos', 1 ) . '.' . $node->attr('gram/sempos') if $node->attr('gram/sempos');
 
     return [
