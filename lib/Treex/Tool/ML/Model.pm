@@ -45,3 +45,64 @@ sub _build_model {
 }
 
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Tool::ML::Model
+
+=head1 DESCRIPTION
+
+A role for models, most commonly trained by some of the ML methods.
+It provides loading of the model from the Treex share.
+
+=head1 PARAMETERS
+
+=over
+
+=item model_path
+
+A path to the model, relative to the Treex shared directory.
+
+=back
+
+=head1 ATTRIBUTES
+
+=over
+
+=item _model
+
+A protected attribute that should not be accessed from outside of 
+this role or classes that consume this role. However, its isa type
+ought to be adjusted to the type the consuming class actually works with.
+
+=back
+
+=head1 METHODS
+
+=head2 To be implemented
+
+These methods must be implemented in classes that consume this role.
+
+=over
+
+=item load_model
+
+Loads a model and returns it as a single object. The isa type of 
+the object representing the model (in attribute C<_model>) 
+should be overloaded in a consuming class.
+
+=back
+
+=head1 AUTHORS
+
+Michal Novák <mnovak@ufal.mff.cuni.cz> 
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
