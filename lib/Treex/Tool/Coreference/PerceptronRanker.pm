@@ -5,23 +5,13 @@ use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Tool::Coreference::ValueTransformer;
 
-with 'Treex::Tool::Coreference::Ranker';
+with 'Treex::Tool::ML::Model', 
+     'Treex::Tool::Coreference::Ranker';
 
-has 'model_path' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Str',
-
-    documentation => 'path to the trained model',
-);
 
 # TODO this should be a separate class and a feature transformer should be a part of it
-has '_model' => (
-    is          => 'ro',
-    required    => 1,
+has '+_model' => (
     isa         => 'HashRef[HashRef[Num]]',
-    lazy        => 1,
-    builder      => '_build_model',
 );
 
 has '_feature_transformer' => (
@@ -31,23 +21,9 @@ has '_feature_transformer' => (
     default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
 );
 
-# Attribute _model depends on the attribute model_path, whose value do not
-# have to be accessible when building other attributes. Thus, _model is
-# defined as lazy, i.e. it is built during its first access. However, we wish all
-# models to be loaded while initializing a block. Following hack ensures it.
-sub BUILD {
-    my ($self) = @_;
+sub load_model {
+    my ($self, $model_file) = @_;
 
-    $self->_model;
-}
-
-sub _build_model {
-    my ($self) = @_;
-
-    my $model_file = require_file_from_share($self->model_path, ref($self));
-    log_fatal 'File ' . $model_file . 
-        ' with a model for pronominal textual coreference resolution does not exist.' 
-        if !-f $model_file;
     open MODEL, "<:gzip:utf8", $model_file;
 
 # DEBUG
