@@ -76,7 +76,7 @@ sub should_switch_with_parent {
 
     # "It did not solve(tag=VB/VBP, orig_parent=did) anything".
     # "The people he does know(tag=VB/VBP, orig_parent=does) are rich.
-    return 1 if $ep_lemma eq 'do' && $tag =~ /VBP?$/;
+    return 1 if $ep_lemma eq 'do' && $tag =~ /VBP?$/ && $eparent->tag !~ /VB[NG]/;
 
     # "to go(tag=VB)" Only in rare cases is "to" hanged above the infinitive
     return 1 if $ep_lemma eq 'to' && $tag eq 'VB';
