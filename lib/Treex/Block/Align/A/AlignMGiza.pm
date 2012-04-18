@@ -37,7 +37,7 @@ sub process_document {
 
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
-        chomp(my $cores = `cat /proc/cpuinfo | grep CPU | wc -l`);
+        chomp(my $cores = `cat /proc/cpuinfo | grep '\(CPU\|processor\)' | wc -l`);
         $self->{cpu_cores} = $cores;
     }
     log_info "Using " . $self->cpu_cores . " cores";
