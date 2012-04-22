@@ -1,4 +1,4 @@
-package Treex::Block::Align::A::AlignMGiza;
+package Treex::Block::Align::A::TrainAndAlignMGiza;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -13,8 +13,6 @@ has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
 has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' );
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
-has model => ( isa => 'Str', is => 'ro', default =>
-    '/mnt/h/tmp/alignmgiza1rth0a' );
 
 # XXX replace with path in tectomt_shared
 my $mgizadir = "/home/tamchyna/tectomt_devel/trunk/treex/lib/Treex/Block/Align/A/mgizapp/";
@@ -39,7 +37,7 @@ sub process_document {
 
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
-        chomp(my $cores = `cat /proc/cpuinfo | grep -E '(CPU|processor)' | wc -l`);
+        chomp(my $cores = `cat /proc/cpuinfo | grep '\(CPU\|processor\)' | wc -l`);
         $self->{cpu_cores} = $cores;
     }
     log_info "Using " . $self->cpu_cores . " cores";
@@ -50,15 +48,17 @@ sub process_document {
     _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
     _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
 
-    # symlink word classes
-    symlink( $self->model . "/vcb-a.classes", "$mytmpdir/vcb-a.classes" );
-    symlink( $self->model . "/vcb-b.classes", "$mytmpdir/vcb-b.classes" );
+    log_info "Running mkcls";
+
+    # create word classes
+    _make_cls( "$mytmpdir/txt-a", "$mytmpdir/vcb-a.classes" );
+    _make_cls( "$mytmpdir/txt-b", "$mytmpdir/vcb-b.classes" );
 
     log_info "Creating vocabulary files";
 
     # create vocabulary lists
-    my $src_vcb = _update_vocabulary( "$mytmpdir/txt-a", $self->model . "/vcb-a", "$mytmpdir/vcb-a" );
-    my $tgt_vcb = _update_vocabulary( "$mytmpdir/txt-b", $self->model . "/vcb-b", "$mytmpdir/vcb-b" );
+    my $src_vcb = _collect_vocabulary( "$mytmpdir/txt-a", "$mytmpdir/vcb-a" );
+    my $tgt_vcb = _collect_vocabulary( "$mytmpdir/txt-b", "$mytmpdir/vcb-b" );
 
     log_info "Running MGiza";
 
@@ -92,43 +92,35 @@ sub _write_plain {
     close $hdl;
 }
 
-# given existing vocabulary file, add unknown words from txt_file
-# and store the new vocabulary in newvcb_file
-# return the new vocabulary 
-sub _update_vocabulary {
-    my ( $txt_file, $oldvcb_file, $newvcb_file ) = @_;
-    my $oldvcb_hdl = _my_open( $oldvcb_file );
-    my $newvcb_hdl = _my_save( $newvcb_file );
+sub _make_cls {
+    my ( $src_file, $tgt_file ) = @_;
+    _safesystem( "$mkcls -c50 -n2 -p$src_file -V$tgt_file opt" );
+}
+
+sub _collect_vocabulary {
+    my ( $src_file, $tgt_file ) = @_;
+    log_info "Collecting vocabulary for $src_file";
+  
+    my %count;
+    my $src_hdl = _my_open( $src_file );
+    while(<$src_hdl>) {
+        chomp;
+        foreach (split) { $count{$_}++; }
+    }
+    close $src_hdl;
+  
     my %vcb;
-    my @unk;
-    my $lastid = 0;
-
-    # read existing vcb
-    while ( <$oldvcb_hdl> ) {
-        chomp;
-        my ( $id, $word, $count ) = split;
+    my $tgt_hdl = _my_save( $tgt_file );
+    print $tgt_hdl "1\tUNK\t0\n";
+    my $id = 2;
+    foreach my $word (sort {$count{$b}<=>$count{$a}} keys %count) {
+        my $count = $count{$word};
+        printf $tgt_hdl "%d\t%s\t%d\n",$id,$word,$count;
         $vcb{$word} = $id;
-        $lastid = $id;
-        print $newvcb_hdl join("\t", $id, $word, $count), "\n";
+        $id++;
     }
-    close $oldvcb_hdl;
-
-    # get unknown words and update the new vcb
-    my $txt_hdl = _my_open( $txt_file );
-    while ( <$txt_hdl> ) {
-        chomp;
-        my @words = split;
-        for my $word ( @words ) {
-            if ( ! defined $vcb{$word} ) {
-                $vcb{$word} = ++$lastid;
-                push @unk, $word;
-                print $newvcb_hdl "$lastid\t$word\t1\n";
-            }
-        }
-    }
-    close $txt_hdl;
-    close $newvcb_hdl;
-
+    close $tgt_hdl;
+    
     return \%vcb;
 }
 
@@ -201,23 +193,21 @@ sub _run_mgiza {
 
     # generate options for MGiza
     my %mgiza_options = ( 
-        previoust => $self->model . "/$a-$b.t3.final" ,
-        previousa => $self->model . "/$a-$b.a3.final" ,
-        previousd => $self->model . "/$a-$b.d3.final" ,
-        previousn => $self->model . "/$a-$b.n3.final" ,
-        previousd4 => $self->model . "/$a-$b.d4.final" ,
-        previousd42 => $self->model . "/$a-$b.D4.final" ,
-        m1 => 0 , 
+        p0 => .999 ,
+        m1 => 5 , 
         m2 => 0 , 
-        mh => 0 , 
-        m3 => 0 , 
-        m4 => 1 , 
-        restart => 11 ,
+        m3 => 3 , 
+        m4 => 3 , 
+        nodumps => 0 , 
+        onlyaldumps => 0 , 
+        nsmooth => 4 , 
+        model1dumpfrequency => 1,
+        model4smoothfactor => 0.4 ,
         s => "$mytmpdir/vcb-$b",
         t => "$mytmpdir/vcb-$a",
         c => $corpus,
         ncpu => $self->cpu_cores,
-        coocurrence => $cooc_file,
+        CoocurrenceFile => $cooc_file,
         o => "$mytmpdir/$a-$b"
     );
 
@@ -225,7 +215,7 @@ sub _run_mgiza {
     map { $options_str .= " -$_ $mgiza_options{$_}" } sort keys %mgiza_options;
 
     # run mgiza
-    _safesystem( "$mgiza " . $self->model . "/a-b.gizacfg $options_str" );
+    _safesystem( "$mgiza $options_str" );
 
     # merge alignment parts
     _safesystem( "$merge $mytmpdir/$a-$b.A3.final.part* > $mytmpdir/$a-$b.A3.final" );
@@ -546,14 +536,13 @@ sub _my_save {
 
 =over
 
-=item Treex::Block::Align::A::AlignMGiza
+=item Treex::Block::Align::A::TrainAndAlignMGiza
 
 =back 
 
 =head1 DESCRIPTION
 
 Compute alignment of analytical trees using MGIZA++.
-Optionally, train incrementally using a previous model, or store the newly computed model.
 
 This module is based on gizawrapper.pl.
 
