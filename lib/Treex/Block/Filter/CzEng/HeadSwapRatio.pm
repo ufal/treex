@@ -12,7 +12,7 @@ sub process_bundle {
 
     my ( $pairs, $swaps ) = ( 0, 0 );
 
-    my @parents = $bundle->get_zone('cs')->get_ttree->get_descendants;
+    my @parents = $bundle->get_zone('cs')->get_ttree->get_descendants( { ordered => 1 } );
 
     for my $parent ( @parents ) {
         next if ! $parent->get_attr( 'alignment' );

@@ -5,7 +5,6 @@ extends 'Treex::Core::Block';
 
 use FileUtils;
 use File::Temp;
-use threads;
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
@@ -14,7 +13,9 @@ has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' )
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 has model => ( isa => 'Str', is => 'ro', default =>
-    '/mnt/h/tmp/alignmgiza1rth0a' );
+    '/mnt/h/tmp/gizawrapuLtE' );
+#    '/mnt/h/tmp/gizawrapqz3K/' );
+#    '/mnt/h/tmp/alignmgiza1rth0a' );
 
 # XXX replace with path in tectomt_shared
 my $mgizadir = "/home/tamchyna/tectomt_devel/trunk/treex/lib/Treex/Block/Align/A/mgizapp/";
@@ -39,7 +40,7 @@ sub process_document {
 
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
-        chomp(my $cores = `cat /proc/cpuinfo | grep -E '(CPU|processor)' | wc -l`);
+        chomp(my $cores = `cat /proc/cpuinfo | grep -E '^(CPU|processor)' | wc -l`);
         $self->{cpu_cores} = $cores;
     }
     log_info "Using " . $self->cpu_cores . " cores";
@@ -86,7 +87,7 @@ sub _write_plain {
     my ( $document, $language, $attr, $file ) = @_;
     my $hdl = _my_save( $file );
     for my $bundle( $document->get_bundles ) {
-        my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants();
+        my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants( { ordered => 1 } );
         print $hdl join( " ", map { s/ /_/g; $_ } map { $_->get_attr( $attr ) } @nodes ), "\n";    
     }
     close $hdl;

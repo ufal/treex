@@ -10,7 +10,7 @@ my @bounds = ( 0, 0.1, 0.2, 0.35, 0.5, 0.75, 1 );
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my @cs = $bundle->get_zone('cs')->get_atree->get_descendants;
+    my @cs = $bundle->get_zone('cs')->get_atree->get_descendants( { ordered => 1 } );
 
     my %cs2en;
     my %en2cs;

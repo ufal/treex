@@ -37,7 +37,7 @@ sub process_document {
 
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
-        chomp(my $cores = `cat /proc/cpuinfo | grep '\(CPU\|processor\)' | wc -l`);
+        chomp(my $cores = `cat /proc/cpuinfo | grep -E '^(CPU|processor)' | wc -l`);
         $self->{cpu_cores} = $cores;
     }
     log_info "Using " . $self->cpu_cores . " cores";
@@ -86,7 +86,7 @@ sub _write_plain {
     my ( $document, $language, $attr, $file ) = @_;
     my $hdl = _my_save( $file );
     for my $bundle( $document->get_bundles ) {
-        my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants();
+        my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants( { ordered => 1 } );
         print $hdl join( " ", map { s/ /_/g; $_ } map { $_->get_attr( $attr ) } @nodes ), "\n";    
     }
     close $hdl;
