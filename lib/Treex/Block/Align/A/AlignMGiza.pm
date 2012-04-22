@@ -550,8 +550,7 @@ sub _my_save {
 
 =head1 DESCRIPTION
 
-Compute alignment of analytical trees using MGIZA++.
-Optionally, train incrementally using a previous model, or store the newly computed model.
+Compute alignment of analytical trees using MGIZA++ using an existing model.
 
 This module is based on gizawrapper.pl.
 
