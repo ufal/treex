@@ -15,7 +15,7 @@ has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 
 # XXX replace with path in tectomt_shared
-my $mgizadir = "/home/tamchyna/tectomt_devel/trunk/treex/lib/Treex/Block/Align/A/mgizapp/";
+my $mgizadir = "/home/tamchyna/mgizapp2";
 
 my $mkcls = "$mgizadir/bin/mkcls";
 my $mgiza = "$mgizadir/bin/mgiza";
