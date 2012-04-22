@@ -581,6 +581,10 @@ The node attribute, over which to compute the alignment. Default is "lemma".
 
 How many CPU cores should be used. Default is -1 (autodetect).
 
+=item C<model>
+
+Path to model files for MGiza++.
+
 =back 
 
 =head1 AUTHOR
