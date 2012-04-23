@@ -5,7 +5,6 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 use File::Java;
 use Treex::Tool::IO::Arff;
-use autodie;
 use ProcessUtils;
 
 # The base directory for the ML-Process tool
@@ -53,7 +52,7 @@ has '_java_pid'     => ( is => 'rw', isa => 'Int' );
 sub BUILD {
 
     my ( $self, $params ) = @_;
-
+    
     # try to download the ML-Process JAR file + other libraries and set their real absolute path
     # (assuming everything is downloaded into one subtree)
     foreach my $shared_file ( @{$ML_PROCESS_LIBRARIES} ) {
@@ -61,7 +60,7 @@ sub BUILD {
     }
     $self->_set_ml_process_jar( Treex::Core::Resource::require_file_from_share( $self->ml_process_jar ) );
     $self->_set_model( Treex::Core::Resource::require_file_from_share( $self->model ) );
-
+    
     # run ML-Process, loading the model
     my $mlprocess = File::Java->path_arg( $self->ml_process_jar );
     my $command   = 'java ' . ' -Xmx' . $self->memory
@@ -93,7 +92,7 @@ sub DEMOLISH {
     # Close the ML-Process application
     close( $self->_write_handle );
     close( $self->_read_handle );
-    ProcessUtils::safewaitpid( $self->java_pid );
+    ProcessUtils::safewaitpid( $self->_java_pid );
     return;
 }
 

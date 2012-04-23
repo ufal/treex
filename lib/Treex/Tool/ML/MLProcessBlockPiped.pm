@@ -29,7 +29,7 @@ has '_mlprocess' => ( is => 'rw', isa => 'Maybe[Treex::Tool::ML::MLProcessPiped]
 # The names of the ML-Process results attributes
 has 'input_attrib_names' => ( is => 'ro', isa => 'ArrayRef' );
 
-# Config file handling for output features 
+# Config file handling for output features
 has '+config_file' => ( builder => '_build_config_file', lazy_build => 1 );
 
 has 'features_config' => ( is => 'ro', isa => 'Str' );
@@ -62,20 +62,20 @@ sub BUILD {
 
     my ($self) = @_;
 
-    my $mlprocess = Treex::Tool::ML::MLProcessPiped->new(
-        {
-            verbosity => $self->verbosity,
-            model     => $self->model,
-            memory    => $self->memory,
-            caching   => $self->caching,
-        }
-    );
+    my $params = {
+        model   => $self->model,
+        memory  => $self->memory,
+        caching => $self->caching,
+    };
+    $params->{verbosity} = $self->verbosity if ( $self->verbosity );
+
+    my $mlprocess = Treex::Tool::ML::MLProcessPiped->new($params);
     $self->_set_mlprocess($mlprocess);
 
     return;
 }
 
-# Build ARFF output config file name from the features_config parameter 
+# Build ARFF output config file name from the features_config parameter
 sub _build_config_file {
 
     my ($self) = @_;
@@ -83,14 +83,13 @@ sub _build_config_file {
     return Treex::Core::Resource::require_file_from_share( $self->features_config );
 }
 
-# Build ARFF input config file name from the features_config parameter 
+# Build ARFF input config file name from the features_config parameter
 sub _build_results_config_file {
 
     my ($self) = @_;
     return if ( !$self->results_config );
     return Treex::Core::Resource::require_file_from_share( $self->results_config );
 }
-
 
 # Read config file with names of the input (result) attributes
 sub _read_input_config_file {
