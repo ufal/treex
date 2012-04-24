@@ -14,9 +14,8 @@ Treex::Tool::Coreference::NodeFilter
 
 =head1 DESCRIPTION
 
-A role for node filtering. The only method that must be implemented
-in a subclass is C<is_candidate>, which returns a boolean value
-saying whether the node is accepted as a candidate or not.
+The purpose of classes consuming this role is simple. To filter out
+nodes on a given condition.
 
 =head1 METHODS
 
@@ -28,8 +27,7 @@ These methods must be implemented in classes that consume this role.
 
 =item is_candidate
 
-Must return a boolean value saying whether the node is accepted as a candidate 
-or not.
+Returns true/false depending on whether the input node fulfils the given condition.
 
 =back
 
