@@ -33,12 +33,14 @@ sub _build_feature_names {
     my ($self) = @_;
 
     my @feat = qw/
+        nada_prob_quant
         has_v_to_inf
         is_be_adj_err
         is_cog_verb
         is_cog_ed_verb_err
-        nada_prob
+        rules_disj
     /;
+    return \@feat;
 }
 
 sub _build_nada_resolver {
@@ -75,10 +77,24 @@ sub create_instance {
     $instance->{en_has_PAT} = Treex::Block::Eval::AddPersPronIt::en_has_PAT($verb, $tnode, $it);
     $instance->{make_it_to} = Treex::Block::Eval::AddPersPronIt::make_it_to($verb, $tnode);
 
-    # TODO must be quantized
+    # TODO watch out! this is an error-prone implementation
+    $instance->{rules_disj} = any {$instance->{$_}}
+        qw/has_v_to_inf is_be_adj_err is_cog_verb is_cog_ed_verb_err/
+        ? 1 : 0;
+
     $instance->{nada_prob} = $self->_nada_probs->{$alex->id};
+    
+    $instance->{nada_prob_quant} = _quantize( $instance->{nada_prob}, 0.04 );
 
     return $instance;
+}
+
+# TODO all quantizations should be handled at one place
+sub _quantize {
+    my ($value, $buck_size) = @_;
+    
+    # this strange thing with sprintf is a simulation of round() in Perl
+    return sprintf "%.0f", $value / $buck_size;
 }
 
 sub init_zone_features {
@@ -114,15 +130,11 @@ __END__
 
 =head1 NAME 
 
-Treex::Tool::Coreference::CorefFeatures
+Treex::Tool::ReferentialIt::Features
 
 =head1 DESCRIPTION
 
-A role for coreference features, encapsulating unary features related to 
-the anaphor (candidate), antecedent candidates' as well as binary features
-related to both participants of the coreference relation. If generalized more,
-this role might serve as an interface to features of any binary (or binarized) 
-relation.
+# TODO
 
 =head1 PARAMETERS
 

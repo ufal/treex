@@ -1,14 +1,33 @@
 package Treex::Block::A2T::EN::MarkReferentialIt;
 
 use Moose;
+use Moose::Util::TypeConstraints;
+
+use Treex::Tool::ReferentialIt::Utils;
+use Treex::Tool::ReferentialIt::Features;
 
 extends 'Treex::Core::Block';
 
-has 'use_nada' => (
+subtype 'FeatArrayRef'
+    => as 'ArrayRef[Str]';
+
+coerce 'FeatArrayRef'
+    => from 'Str'
+        => via {my @arr = split /,/, $_; return \@arr;};
+
+has 'resolver_type' => (
     is => 'ro',
-    isa => 'Bool',
+    isa => enum( [qw/rules nada nada+rules/] ),
     required => 1,
-    default => 1,
+    default => 'nada+rules',
+);
+
+has 'model_path' => (
+    is       => 'ro',
+    required => 1,
+    isa      => 'Str',
+    default  => 'data/models/refer_it/pcedt.sec00-10.nada+rules.model',
+    documentation => 'path to a trained model',
 );
 
 has 'threshold' => (
@@ -18,26 +37,13 @@ has 'threshold' => (
     default => 0.5,
 );
 
-has '_use_rules' => (
-    is => 'rw',
-    isa => 'Bool',
-    default => 0,
-);
-
-has 'rules' => (
-    is => 'ro',
-    isa => 'Str',
-    required => 1,
-    default => '',
-);
-
-has '_rules_hash' => (
-    is => 'ro',
-    isa => 'HashRef[Bool]',
-    required => 1,
-    lazy => 1,
-    builder => '_build_rules_hash',
-);
+# features not supported for the time being
+#has 'features' => (
+#    is => 'ro',
+#    isa => 'FeatArrayRef',
+#    coerce => 1,
+#    default => '',
+#);
 
 # TODO this should be written against an interface (not an implementation)
 has '_feat_extractor' => (
@@ -56,44 +62,32 @@ has '_classifier' => (
 
 sub BUILD {
     my ($self) = @_;
-    $self->_rules_hash;
     $self->_feat_extractor;
     $self->_classifier;
     use Data::Dumper;
     print Dumper($self->_rules_hash);
 }
 
-sub _build_rules_hash {
-    my ($self) = @_;
-
-    my %rules = map {$_ => 1} (split /,/, $self->rules);
-    $self->_set_use_rules(1) if (keys %rules > 0);
-    return \%rules;
-}
-
 sub _build_feat_extractor {
     my ($self) = @_;
-    
-    my @feats = ();
-    if ($self->use_nada && $self->_use_rules) {
-        @feats = (keys %{$self->_rules_hash}, 'nada_prob');
-    }
-    elsif ($self->_use_rules) {
-        @feats = keys %{$self->_rules_hash};
-    }
-    elsif ($self->use_nada) {
-        @feats = ('nada_prob');
-    }
 
-    return Treex::Tool::ReferentialIt::Features->new(
-        {feature_names => \@feats});
+#    my $params = {};
+#    if ($self->resolver_type eq 'nada') {
+#        $params{feature_names} = ['nada_prob'];
+#    }
+#    else {
+#        if (@{$self->features}) {
+#            $params{feature_names} = $self->features;
+#        }
+#    }
+#    return Treex::Tool::ReferentialIt::Features->new($params);
+    return Treex::Tool::ReferentialIt::Features->new();
 }
 
 sub _build_classifier {
     my ($self) = @_;
-    if ($self->_use_rules && $self->use_nada) {
-        return Treex::Tool::ML::Classifier::MaxEnt->new({model_path => #TODO
-        });
+    if ($self->resolver_type eq 'nada+rules') {
+        return Treex::Tool::ML::Classifier::MaxEnt->new({ model_path => $self->model_path });
     }
     return Treex::Tool::ML::Classifier::RuleBased->new();
 }
@@ -107,8 +101,7 @@ before 'process_zone' => sub {
 sub process_tnode {
     my ($self, $t_node) = @_;
 
-    my $is_it = grep {$_->lemma eq 'it'} $t_node->get_anodes;
-    if ($is_it) {
+    if (Treex::Tool::ReferentialIt::Utils::is_it($t_node)) {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
         $t_node->wild->{'referential'} = !$self->_is_non_refer($t_node) ? 1 : 0;
@@ -121,7 +114,7 @@ sub _is_non_refer {
     my $instance = $self->_feat_extractor->create_instance( $tnode );
 
     # TODO temporary solution
-    if (!$self->_use_rules && $self->use_nada) {
+    if ($self->resolver_type eq 'nada') {
         $t_node->wild->{'referential_prob'} = $instance->{nada_prob};
         return $instance->{nada_prob} <= $self->threshold;
     }
