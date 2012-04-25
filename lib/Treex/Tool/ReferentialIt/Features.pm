@@ -1,6 +1,7 @@
 package Treex::Tool::ReferentialIt::Features;
 
 use Moose;
+use Treex::Core::Common;
 use Treex::Tool::Coreference::NADA;
 use Treex::Block::Eval::AddPersPronIt;
 
@@ -38,7 +39,7 @@ sub _build_feature_names {
         is_be_adj_err
         is_cog_verb
         is_cog_ed_verb_err
-        rules_disj
+        rules_not_disj
     /;
     return \@feat;
 }
@@ -63,24 +64,22 @@ sub create_instance {
     else {
         ($verb) = grep { ($_->gram_sempos || "") eq "v" } $tnode->get_eparents( { or_topological => 1} );
     }
-    return 0 if (!defined $verb);
     
-    $instance->{has_v_to_inf} = Treex::Block::Eval::AddPersPronIt::has_v_to_inf($verb);
-    $instance->{is_be_adj} = Treex::Block::Eval::AddPersPronIt::is_be_adj($verb);
-    $instance->{is_cog_verb} = Treex::Block::Eval::AddPersPronIt::is_cog_verb($verb);
-    $instance->{is_be_adj_err} = Treex::Block::Eval::AddPersPronIt::is_be_adj_err($verb);
-    $instance->{is_cog_ed_verb_err} = Treex::Block::Eval::AddPersPronIt::is_cog_ed_verb_err($verb);
-    $instance->{has_cs_to} = Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $self->_en2cs_links->{$tnode});
+    $instance->{has_v_to_inf} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::has_v_to_inf($verb);
+    $instance->{is_be_adj} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_be_adj($verb);
+    $instance->{is_cog_verb} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_cog_verb($verb);
+    $instance->{is_be_adj_err} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_be_adj_err($verb);
+    $instance->{is_cog_ed_verb_err} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_cog_ed_verb_err($verb);
+    $instance->{has_cs_to} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $self->_en2cs_links->{$tnode});
 
     my ($it) = grep { $_->lemma eq "it" } $tnode->get_anodes;
-    $instance->{en_has_ACT} = Treex::Block::Eval::AddPersPronIt::en_has_ACT($verb, $tnode, $it);
-    $instance->{en_has_PAT} = Treex::Block::Eval::AddPersPronIt::en_has_PAT($verb, $tnode, $it);
-    $instance->{make_it_to} = Treex::Block::Eval::AddPersPronIt::make_it_to($verb, $tnode);
+    $instance->{en_has_ACT} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::en_has_ACT($verb, $tnode, $it);
+    $instance->{en_has_PAT} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::en_has_PAT($verb, $tnode, $it);
+    $instance->{make_it_to} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::make_it_to($verb, $tnode);
 
     # TODO watch out! this is an error-prone implementation
-    $instance->{rules_disj} = any {$instance->{$_}}
-        qw/has_v_to_inf is_be_adj_err is_cog_verb is_cog_ed_verb_err/
-        ? 1 : 0;
+    $instance->{rules_not_disj} =
+        !(any {$instance->{$_}} qw/has_v_to_inf is_be_adj_err is_cog_verb is_cog_ed_verb_err/) ? 1 : 0;
 
     $instance->{nada_prob} = $self->_nada_probs->{$alex->id};
     
@@ -94,7 +93,7 @@ sub _quantize {
     my ($value, $buck_size) = @_;
     
     # this strange thing with sprintf is a simulation of round() in Perl
-    return sprintf "%.0f", $value / $buck_size;
+    return $buck_size * (sprintf "%.0f", $value / $buck_size);
 }
 
 sub init_zone_features {
@@ -115,7 +114,7 @@ sub _process_sentence_with_NADA {
     my @ids = map {$_->id} $atree->get_descendants({ordered => 1});
     my @words = map {$_->form} $atree->get_descendants({ordered => 1});
     
-    my $result = $self->_resolver->process_sentence(@words);
+    my $result = $self->_nada_resolver->process_sentence(@words);
     my %it_ref_probs = map {$ids[$_] => $result->{$_}} keys %$result;
     
     return \%it_ref_probs;

@@ -10,12 +10,12 @@ my $PLEO_TYPE = 'pleo';
 sub is_it {
     my ($node) = @_;
 
-    if ($node->blessed eq 'Treex::Core::Node::T') {
-        my $it_num = grep {_is_it_anode($_)} $t_node->get_anodes;
+    if (blessed $node eq 'Treex::Core::Node::T') {
+        my $it_num = grep {_is_it_anode($_)} $node->get_anodes;
         return $it_num;
     }
-    elsif ($node->blessed eq 'Treex::Core::Node::A') {
-        return _is_it_anode($anode);
+    elsif (blessed $node eq 'Treex::Core::Node::A') {
+        return _is_it_anode($node);
     }
     return 0;
 }
@@ -34,8 +34,8 @@ sub _is_ante_np {
 sub get_it_type {
     my ($tnode_ref, $ref_np_only) = @_;
 
-    my $lex_anode = $tnode_ref->get_lex_anode();
-    if (defined $lex_tnode) {
+    my $lex_anode = $tnode_ref->get_lex_anode;
+    if (defined $lex_anode && _is_it_anode($lex_anode)) {
         my @antes_ref = $tnode_ref->get_coref_nodes;
         if ((@antes_ref == 0) || ($ref_np_only && !_is_ante_np(@antes_ref))) {
             return $EXO_TYPE;
