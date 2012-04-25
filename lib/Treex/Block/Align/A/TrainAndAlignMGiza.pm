@@ -5,7 +5,6 @@ extends 'Treex::Core::Block';
 
 use FileUtils;
 use File::Temp;
-use threads;
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
@@ -14,8 +13,7 @@ has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' )
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 
-# XXX replace with path in tectomt_shared
-my $mgizadir = "/home/tamchyna/mgizapp2";
+my $mgizadir = "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install";
 
 my $mkcls = "$mgizadir/bin/mkcls";
 my $mgiza = "$mgizadir/bin/mgiza";
