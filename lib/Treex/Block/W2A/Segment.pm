@@ -23,6 +23,24 @@ has use_lines => (
         . ' and nothing else, use rather W2A::SegmentOnNewlines.)',
 );
 
+has limit_words => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 250,
+    documentation =>
+        'Should very long segments (longer than the given number of words) be split?'
+        . 'The number of words is only approximate; detected by counting whitespace only,'
+        . 'not by full tokenization. Set to zero to disable this function completely.',
+);
+
+has detect_lists => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 100,
+    documentation =>
+        'Minimum (approx.) number of words to toggle list detection, 0 = never, 1 = always.'
+);
+
 has segmenter => (
     is         => 'ro',
     handles    => [qw(get_segments)],
@@ -35,7 +53,9 @@ sub _build_segmenter {
     my $self = shift;
     return Treex::Tool::Segment::RuleBased->new(
         use_paragraphs => $self->use_paragraphs,
-        use_lines      => $self->use_lines
+        use_lines      => $self->use_lines,
+        limit_words    => $self->limit_words,
+        detect_lists   => $self->detect_lists,
     );
 }
 
@@ -78,6 +98,18 @@ However, if you want to detect sentence boundaries just based on newlines
 and nothing else, use rather
 L<W2A::SegmentOnNewlines|Treex::Block::W2A::SegmentOnNewlines>.
 
+=head2 limit_words
+
+Should very long segments (longer than the given number of words) be split?
+The number of words is only approximate; detected by counting whitespace only,
+not by full tokenization. Set to zero to disable this function completely (default 
+is 250 as longer sentences often cause the parser to fail).
+
+=head2 detect_lists
+
+Minimum number of words on a line to toggle list detection rules, 0 = never, 1 = always
+(default: 100). The number of words is detected by counting whitespace only.
+
 =head1 SEE ALSO
 
 L<Treex::Tool::Segment::RuleBased>
@@ -90,6 +122,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -17,7 +17,8 @@ my $UNBREAKERS = qr{\p{Upper}|fr|vl|ch| # first name abbrevs.
     gen|p?plk|[np]?por|š?kpt|mjr|sgt|   # military titles
     např|srov|tzv|mj|zn|tj|resp|popř|   # listing, references
     a\.d|                               # foreign "an der"
-    sev|již|záp|vých                    # "Severní Irsko", "Jižní Karolína"    
+    sev|již|záp|vých|                   # "Severní Irsko", "Jižní Karolína"
+    k\.\h*ú                             # katastrální území
 }xi;
 
 override unbreakers => sub {
@@ -129,9 +130,13 @@ sub apply_contextual_rules {
     # no break for 3 words in a parenthesis at most, if there's no capital letter after the parenthesis
     $text =~ s/\.(\s*[\(\[](?:\s*\b\S+){1,3}[\)\]]\s*\P{Upper})/<<<DOT>>>$1/g;
     
+    # ul., tř., blvd., av., ave., nám. (after uncapitalized or capitalized abbreviation; "nám" collides with dative of "my"/"we" -- stricter)
+    $text =~ s/((?:\p{Punct}|\b\p{Upper}{2,}|metro|na)\s*)(nám)\.(\s*\P{Upper})/$1$2<<<DOT>>>$3/;
+    $text =~ s/((?:\b\p{Lower}+|\p{Punct}|\b\p{Upper}{2,})\s*)(ul|tř|blvd|av|ave)\.(\s*\P{Upper})/$1$2<<<DOT>>>$3/;
+    
     # use spaced '-' and '*' as segment breaks between sentences (used in dialogs) 
     # TODO -- make this a list type (!)
-    $text =~ s/([!?]|\w{4,}\.)\h+([\*\-–]\h+\p{Upper})/$1\n$2/g;
+    $text =~ s/([!?]|\w{4,}\.)\h+([\*\-–]\h+\p{Upper})/$1\n$2/g;       
 
     return $text;
 }
@@ -299,8 +304,7 @@ Segmenting too much at:
   kap. <chapter name>
   vš. SKP Plzeň (what's that?)
   three dots in parentheses, at the beginning of a sentence
-  "min." in parentheses
-  ul., tř., blvd., av., ave., nám. (beware before numbers!)
+  "min." in parentheses  
 
 Not segmenting at:
 
