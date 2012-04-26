@@ -214,7 +214,6 @@ sub split_at_list_items {
         $items -= $false;
 
         my $len = $items > 0 ? ( length($text) / $items ) : 'NaN';
-        log_warn( 'LIST TYPE: ' . $cur_list_type->{name} . ' : ' . $items . ' items, avg len : ' . $len );
 
         # test if this type overrides the previously set one
         if ( $items >= $MIN_LIST_ITEMS && $len < $max && $len > $min && ( !$sel_len || $len * $PRIORITY < $sel_len ) ) {
@@ -241,10 +240,6 @@ sub split_at_list_items {
     else {
         $text =~ s/(?<!<<<NEG>>>)($sep)/\n$1/gi;
     }
-
-    my $br = $text;
-    $br =~ s/\n/<BR>/g;
-    log_warn( 'Selected list type: ' . $name . "\n" . $br );
 
     # remove negative pre-context protection
     $text =~ s/<<<NEG>>>//g;
