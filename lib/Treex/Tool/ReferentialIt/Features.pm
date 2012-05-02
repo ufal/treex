@@ -36,8 +36,8 @@ sub _build_feature_names {
     my @feat = qw/
         nada_prob_quant
         has_v_to_inf
-        is_be_adj_err
         is_cog_verb
+        is_be_adj_err
         is_cog_ed_verb_err
         rules_not_disj
     /;
