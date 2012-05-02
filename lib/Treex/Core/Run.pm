@@ -718,7 +718,7 @@ sub _print_output_files {
             # real cat is 12-times faster than cat implemented in perl
             # it is useful when large dataset is processed
 
-            print `cat $filename`;
+            system("cat $filename");
         }
         else {
             my ($jobnumber) = ( $filename =~ /job(...)/ );
