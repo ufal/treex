@@ -48,7 +48,7 @@ sub _build_feat_extractor {
 sub _print_instance {
     my ($self, $class, $instance, $feat_names) = @_;
 
-    my @feat_values = map {$instance->{$_}} @{$feat_names};
+    my @feat_values = map {$_ . '=' . $instance->{$_}} @{$feat_names};
     
     print STDOUT join $self->feature_sep, ($class, @feat_values);
     print STDOUT "\n";

@@ -15,6 +15,7 @@ sub score {
 }
 
 sub all_classes {
+    my ($self) = @_;
     return $self->_model->all_labels;
 }
 

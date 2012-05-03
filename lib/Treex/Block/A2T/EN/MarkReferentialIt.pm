@@ -5,6 +5,7 @@ use Moose::Util::TypeConstraints;
 
 use Treex::Tool::ReferentialIt::Utils;
 use Treex::Tool::ReferentialIt::Features;
+use Treex::Tool::ML::Classifier::MaxEnt;
 
 extends 'Treex::Core::Block';
 
@@ -64,8 +65,6 @@ sub BUILD {
     my ($self) = @_;
     $self->_feat_extractor;
     $self->_classifier;
-    use Data::Dumper;
-    print Dumper($self->_rules_hash);
 }
 
 sub _build_feat_extractor {
@@ -115,7 +114,7 @@ sub _is_non_refer {
 
     # TODO temporary solution
     if ($self->resolver_type eq 'nada') {
-        $t_node->wild->{'referential_prob'} = $instance->{nada_prob};
+        $tnode->wild->{'referential_prob'} = $instance->{nada_prob};
         return $instance->{nada_prob} <= $self->threshold;
     }
     else {

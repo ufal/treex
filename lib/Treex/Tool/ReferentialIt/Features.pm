@@ -13,6 +13,13 @@ has 'feature_names' => (
     builder     => '_build_feature_names',
 );
 
+has 'all_features' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Bool',
+    default     => 1,
+);
+
 has '_nada_resolver' => (
     is => 'ro',
     isa => 'Treex::Tool::Coreference::NADA',
@@ -85,7 +92,23 @@ sub create_instance {
     
     $instance->{nada_prob_quant} = _quantize( $instance->{nada_prob}, 0.04 );
 
+    if (!$self->all_features) {
+        $instance = $self->filter_feats($instance);
+    }
+
     return $instance;
+}
+
+sub filter_feats {
+    my ($self, $instance) = @_;
+
+    my $feat_names = $self->feature_names;
+
+    my $new_instance = {};
+    foreach my $feat_name (@$feat_names) {
+        $new_instance->{$feat_name} = $instance->{$feat_name};
+    }
+    return $new_instance;
 }
 
 # TODO all quantizations should be handled at one place
