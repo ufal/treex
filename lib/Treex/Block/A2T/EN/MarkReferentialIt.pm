@@ -6,6 +6,7 @@ use Moose::Util::TypeConstraints;
 use Treex::Tool::ReferentialIt::Utils;
 use Treex::Tool::ReferentialIt::Features;
 use Treex::Tool::ML::Classifier::MaxEnt;
+use Treex::Tool::ML::Classifier::RuleBased;
 
 extends 'Treex::Core::Block';
 
@@ -80,7 +81,7 @@ sub _build_feat_extractor {
 #        }
 #    }
 #    return Treex::Tool::ReferentialIt::Features->new($params);
-    return Treex::Tool::ReferentialIt::Features->new();
+    return Treex::Tool::ReferentialIt::Features->new({all_features => 0});
 }
 
 sub _build_classifier {
@@ -117,8 +118,11 @@ sub _is_non_refer {
         $tnode->wild->{'referential_prob'} = $instance->{nada_prob};
         return $instance->{nada_prob} <= $self->threshold;
     }
-    else {
+    elsif ($self->resolver_type eq 'rules') {
         return $self->_classifier->predict( $instance );
+    }
+    else {
+        return !$self->_classifier->predict( $instance );
     }
 }
 

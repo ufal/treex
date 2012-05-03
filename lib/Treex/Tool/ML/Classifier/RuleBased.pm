@@ -8,7 +8,9 @@ with 'Treex::Tool::ML::Classifier';
 sub score {
     my ($self, $instance, $class) = @_;
     # supports just disjunction so far
-    return any {$instance->{$_}} %{$instance} ? 1 : 0;
+
+    my $pred_class = (any {$instance->{$_}} (keys %{$instance})) ? 1 : 0;
+    return ($class == $pred_class);
 }
 
 sub all_classes {
