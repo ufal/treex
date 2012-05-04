@@ -27,7 +27,8 @@ elsif ( $action eq "stats" ) {
 }
 elsif ( $action eq "stop" ) {
     Treex::Tool::Memcached::Memcached::stop_memcached();
-} else {
+}
+else {
     help();
 }
 
@@ -35,30 +36,33 @@ sub process
 {
     my ($file) = @_;
 
-    if ( ! Treex::Tool::Memcached::Memcached::get_memcached_hostname() ) {
+    if ( !Treex::Tool::Memcached::Memcached::get_memcached_hostname() ) {
         log_fatal "Memcached is not running";
     }
 
-    open(my $fh, "<", $file) or log_fatal $! . " ($file)";
+    open( my $fh, "<", $file ) or log_fatal $! . " ($file)";
     while (<$fh>) {
         chomp;
 
-        if ( /(TrFAddVariants|TrLAddVariants)/ ) {
-            my @parts = split(/\t/);
-            my $required_file = Treex::Core::Resource::require_file_from_share($parts[1], 'Memcached' );
-            my $class = "";
+        if (/(TrFAddVariants|TrLAddVariants|TrFRerank2)/) {
+            my @parts         = split(/\t/);
+            my $required_file = Treex::Core::Resource::require_file_from_share( $parts[1], 'Memcached' );
+            my $class         = "";
             if ( $required_file =~ /\.maxent\./ ) {
                 $class = 'TranslationModel::MaxEnt::Model';
-            } elsif ( $required_file =~ /\.nb\./ ) {
+            }
+            elsif ( $required_file =~ /\.nb\./ ) {
                 $class = 'TranslationModel::NaiveBayes::Model';
-            } elsif ( $required_file =~ /\.static\./ ) {
+            }
+            elsif ( $required_file =~ /\.static\./ ) {
                 $class = 'TranslationModel::Static::Model';
-            } else {
+            }
+            else {
                 log_warn "Unknown model file for $file\n";
                 next;
             }
-            Treex::Tool::Memcached::Memcached::load_model($class, $required_file);
-            
+            Treex::Tool::Memcached::Memcached::load_model( $class, $required_file );
+
         }
     }
     close($fh);
@@ -70,18 +74,18 @@ sub missing
 {
     my ($file) = @_;
 
-    if ( ! Treex::Tool::Memcached::Memcached::get_memcached_hostname() ) {
+    if ( !Treex::Tool::Memcached::Memcached::get_memcached_hostname() ) {
         log_fatal "Memcached is not running";
     }
 
-    open(my $fh, "<", $file) or log_fatal $! . " ($file)";
+    open( my $fh, "<", $file ) or log_fatal $! . " ($file)";
     while (<$fh>) {
         chomp;
 
-        if ( /(TrFAddVariants|TrLAddVariants)/ ) {
-            my @parts = split(/\t/);
+        if (/(TrFAddVariants|TrLAddVariants|TrFRerank2)/) {
+            my @parts         = split(/\t/);
             my $required_file = $ENV{TMT_ROOT} . "/share/" . $parts[1];
-            if ( ! Treex::Tool::Memcached::Memcached::contains($required_file) ) {
+            if ( !Treex::Tool::Memcached::Memcached::contains($required_file) ) {
                 print $required_file, "\n";
             }
         }
@@ -90,7 +94,6 @@ sub missing
 
     return;
 }
-
 
 sub help
 {

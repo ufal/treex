@@ -75,13 +75,8 @@ has allow_fake_formemes => (
 
 has _model => ( is => 'rw' );
 
-sub BUILD {
-    my $self = shift;
 
-    return;
-}
-
-# Require the needed models and set the absolute paths to the respective attributes
+# Require the needed models
 sub get_required_share_files {
 
     my ($self) = @_;
