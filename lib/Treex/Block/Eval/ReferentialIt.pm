@@ -251,24 +251,8 @@ sub process_anode {
             ($true_class, $pred_class) = ('pleo','pleo');
         }
     }
-    #print STDERR "FREQ: $true_class\n";
     if (defined $src_tnode) {
         $conf_mat->{$true_class}{$pred_class}++;
-        #my $true = $true_class eq 'ref' ? 1 : 0;
-        #my $pred = $pred_class eq 'ref' ? 1 : 0;
-
-        #my @rule_feats = (
-        #    $src_tnode->wild->{has_v_to_inf},
-            #$src_tnode->wild->{is_be_adj},
-        #    $src_tnode->wild->{is_cog_verb},
-        #    $src_tnode->wild->{is_be_adj_err},
-        #    $src_tnode->wild->{is_cog_ed_verb_err},
-            #$src_tnode->wild->{has_cs_to},
-        #);
-
-
-        #my $prob_buck = sprintf("%.2f", $src_tnode->wild->{referential_prob} / 4) * 4;
-        #print STDERR "RULE_STATS\t$true\t$prob_buck\t" . join("\t", @rule_feats) . "\t$pred\n";
     }
 }
 
