@@ -67,8 +67,8 @@ sub openings {
 
 # Contextual rules for "un-breaking" (to be overridden)
 sub apply_contextual_rules {
-    my ($self) = shift;
-    return @_;
+    my ($self, $text) = @_;
+    return $text;
 }
 
 sub get_segments {
