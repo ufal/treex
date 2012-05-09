@@ -80,7 +80,7 @@ sub BUILD {
     $self->_set_java_pid($pid);
 
     my $status = <$read>;     # wait for loading of all models
-    log_fatal('ML-Process not loaded correctly') if ( $status !~ /^READY/ );
+    log_fatal('ML-Process not loaded correctly') if ( ($status || '') !~ /^READY/ );
 
     return;
 }
@@ -140,7 +140,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::ML::MLProcessPiped
+Treex::Tool::ML::MLProcessPiped
 
 =head1 SYNOPSIS
 
