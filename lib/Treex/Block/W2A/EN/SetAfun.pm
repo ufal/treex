@@ -148,7 +148,10 @@ sub is_aux_verb {
     return 1 if $lemma eq 'do' && $ep_tag =~ /^VBP?$/;
 
     # "It was(parent=incr.) increasing(tag=VBG)/increased(tag=VBN)."
-    return 1 if $lemma eq 'be' && $ep_tag =~ /VB[NG]/;
+    if ( $lemma eq 'be' && $ep_tag =~ /VB[NG]/ ) {
+        # Avoid 'be' as a main verb of a dependent clause or an attributive gerund (i.e. having an object)
+        return !any { $_->tag =~ /^(JJ|NN)/ } $node->get_echildren( { following_only => 1 } );
+    }
     return 0;
 }
 
