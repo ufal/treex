@@ -147,7 +147,7 @@ sub is_parent_aux_to_me {
         # For conjunctions the 'real' child is a verb or a noun
         # Why nouns? "In case of errors..." No matter whether you call
         # in_case_of a phrasal conjunction or conjunctional preposition.
-        my $wanted_regex = $p_afun eq 'AuxP' ? 'NN|CD|\$' : 'V|NN|CD|\$';
+        my $wanted_regex = $p_afun eq 'AuxP' ? 'NN|PRP|CD|\$' : 'V|PRP|NN|CD|\$';
 
         # Let @siblings be all my sibling-rivals now and $rival the first one
         if ( $parent->precedes($node) ) { @siblings = @siblings_after_prep; }
