@@ -38,6 +38,8 @@ is( $retrieved_anode->lemma, $testlemma, q(IDs work correctly in the retrieved d
 
 is( $retrieved_anode->wild->{my_attr}, $testlemma, 'wild attributes are retrieved' );
 
+ok( $retrieved_anode->type, 'node type retrieved');
+
 unlink $fname;
 
 done_testing();
