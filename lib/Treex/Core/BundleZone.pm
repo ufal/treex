@@ -90,7 +90,9 @@ sub create_tree {
 
     # pml-typing
     #$tree_root->set_type_by_name( $self->get_document->metaData('schema'), lc($layer) . '-root.type' );
-    $tree_root->set_type_by_name( $self->get_document->metaData('schema'), $tree_root->get_pml_type_name() );
+#    $tree_root->set_type_by_name( $self->get_document->metaData('schema'), $tree_root->get_pml_type_name() );
+
+    $tree_root->fix_pml_type();
 
     # vyresit usporadavaci atribut!
     # TODO: if $tree_root->does('Treex::Core::Role::OrderedTree')

@@ -303,6 +303,21 @@ sub remove_reference {
     return;
 }
 
+
+sub fix_pml_type {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
+    my $self = shift;
+    if ( not $self->type() ) {
+        my $type = $self->get_pml_type_name();
+        if ( not $type ) {
+            log_warn "No PML type recognized for node $self";
+            return;
+        }
+        my $fs_file = $self->get_document()->_pmldoc;
+        $self->set_type_by_name( $fs_file->metaData('schema'), $type );
+    }
+}
+
 sub get_pml_type_name {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
@@ -376,10 +391,13 @@ sub create_child {
         $new_node->set_attr( $attr, $structured_attrs{$attr} );
     }
 
-    my $type = $new_node->get_pml_type_name();
-    return $new_node if !defined $type;
-    my $fs_file = $self->get_bundle->get_document()->_pmldoc;
-    $self->set_type_by_name( $fs_file->metaData('schema'), $type );
+#    my $type = $new_node->get_pml_type_name();
+#    return $new_node if !defined $type;
+#    my $fs_file = $self->get_bundle->get_document()->_pmldoc;
+#    $self->set_type_by_name( $fs_file->metaData('schema'), $type );
+
+    $new_node->fix_pml_type();
+
     return $new_node;
 }
 
@@ -1166,6 +1184,11 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 =over
 
 =item my $type = $node->get_pml_type_name;
+
+=item $node->fix_pml_type();
+
+If a node has no PML type, then its type is detected (according
+to the node's location) and filled by the PML interface.
 
 =back
 
