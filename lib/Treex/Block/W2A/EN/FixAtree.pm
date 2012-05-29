@@ -42,6 +42,20 @@ sub process_atree {
         fix_node($a_node);
     }
 
+    # Modal verbs should govern their main verbs, but sometimes it's the other way around.
+    # This rule must be applied after several rules from fix_node.
+    foreach my $node (@all_nodes) {
+        if (( $node->parent->tag || 'root' ) =~ /^V/
+            && is_modal( $node->lemma )
+            && none { $_->tag =~ /^V/ } $node->get_echildren()
+            )
+        {
+            my $parent = $node->get_parent();
+            $node->set_parent( $parent->get_parent() );
+            $parent->set_parent($node);
+        }
+    }
+
     # Check some frequent phrases which are not always parsed correctly
     foreach my $i ( 0 .. $#all_nodes - 2 ) {
 
@@ -112,28 +126,27 @@ sub fix_node {
         $parent->set_parent($node);
     }
 
-    # other WH-pronouns should not have children, except for "how + adjective" 
+    # other WH-pronouns should not have children, except for "how + adjective"
     elsif ( $tag =~ /^W/ && @children ) {
-        
+
         my $adj_child;
 
         # find an adjective under 'how', rehang its children
-        # TODO: 'how much of a boost the economy will have' and similar (rare), 'how American firms ... etc.' 
-        if ( $lemma eq 'how' && ($adj_child = first { $_->tag eq 'JJ' || $_->lemma eq 'about' } @children) ){
-            
-            foreach my $grandchild ($adj_child->get_children()){
+        # TODO: 'how much of a boost the economy will have' and similar (rare), 'how American firms ... etc.'
+        if ( $lemma eq 'how' && ( $adj_child = first { $_->tag eq 'JJ' || $_->lemma eq 'about' } @children ) ) {
+
+            foreach my $grandchild ( $adj_child->get_children() ) {
                 $grandchild->set_parent($parent);
             }
         }
-        
+
         foreach my $child (@children) {
-            if (!$adj_child || $child != $adj_child){
+            if ( !$adj_child || $child != $adj_child ) {
                 $child->set_parent($parent);
             }
         }
     }
-    
-  
+
     # Article "a" serving as a preposition "per" or "for"
     # "eight days a week" "$5 a day"
     if ($lemma eq 'a'
@@ -292,6 +305,11 @@ sub fix_node {
     }
 
     return;
+}
+
+sub is_modal {
+    my ($lemma) = @_;
+    return $lemma =~ /^(can|cannot|must|may|might|should|would|could|shall)$/;
 }
 
 sub switch_with_first_child {
