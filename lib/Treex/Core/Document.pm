@@ -550,7 +550,8 @@ sub retrieve_storable {
             foreach my $node ( map { $_->get_descendants() } $bundlezone->get_all_trees() ) {
 
                 # skip this hack if we are dealing with a new streex file
-                return $retrieved_doc if $node->type;
+                #return $retrieved_doc if $node->type;
+                # This shortcut does not work since old files have only *some* nodes without types
                 $node->fix_pml_type();
             }
         }

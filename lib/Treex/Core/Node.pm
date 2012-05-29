@@ -316,6 +316,7 @@ sub fix_pml_type {
         my $fs_file = $self->get_document()->_pmldoc;
         $self->set_type_by_name( $fs_file->metaData('schema'), $type );
     }
+    return;
 }
 
 sub get_pml_type_name {
