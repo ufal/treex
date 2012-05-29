@@ -132,7 +132,7 @@ sub BUILD {
                 $pmldoc = eval {
                     $factory->createDocumentFromFile( $params_rf->{filename} );
                 };
-                log_fatal "Error while loading " . $params_rf->{filename} . ($@ ? "\n$@" : '')
+                log_fatal "Error while loading " . $params_rf->{filename} . ( $@ ? "\n$@" : '' )
                     if !defined $pmldoc;
             }
         }
@@ -480,8 +480,9 @@ sub save {
 
     if ( $filename =~ /\.streex$/ ) {
         open( my $F, ">:via(gzip)", $filename ) or log_fatal $!;
-        print $F Storable::nfreeze( $self );
+        print $F Storable::nfreeze($self);
         close $F;
+
         # using  Storable::nstore_fd($self,*$F) emits 'Inappropriate ioctl for device'
     }
 
@@ -524,19 +525,35 @@ sub retrieve_storable {
     }
 
     my $serialized;
+
     # reading it this way is silly, but both slurping the file or
     #  using Storable::retrieve_fd lead to errors when used with via(gzip)
     while (<$FILEHANDLE>) {
         $serialized .= $_;
     }
+
     # my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
-    my $retrieved_doc = Storable::thaw( $serialized ) or log_fatal $!;
+    my $retrieved_doc = Storable::thaw($serialized) or log_fatal $!;
 
     if ( not ref($file) ) {
         $retrieved_doc->set_loaded_from($file);
         my ( $volume, $dirs, $file ) = File::Spec->splitpath($file);
-        $retrieved_doc->set_path($volume . $dirs);
+        $retrieved_doc->set_path( $volume . $dirs );
+
         # $retrieved_doc->changeFilename($file); # why this doesn't affect the name displayed in TrEd?
+    }
+
+    # *.streex files saved before r8789 (2012-05-29) have no PML types with nodes, let's fix it
+    # TODO: delete this hack as soon as no such old streex files are needed.
+    foreach my $bundle ( $retrieved_doc->get_bundles() ) {
+        foreach my $bundlezone ( $bundle->get_all_zones() ) {
+            foreach my $node ( map { $_->get_descendants() } $bundlezone->get_all_trees() ) {
+
+                # skip this hack if we are dealing with a new streex file
+                return $retrieved_doc if $node->type;
+                $node->fix_pml_type();
+            }
+        }
     }
 
     return $retrieved_doc;

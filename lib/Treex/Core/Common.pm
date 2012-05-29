@@ -61,6 +61,7 @@ my ( $import, $unimport, $init_meta ) =
         \&List::MoreUtils::first_index,
         \&List::MoreUtils::all,
         \&List::MoreUtils::any,
+        \&List::MoreUtils::none,
         \&List::Util::first,
         \&Readonly::Readonly,
         \&Scalar::Util::weaken,
@@ -105,7 +106,7 @@ Instead of
  use Treex::Core::Resource;
  use Treex::Core::Types;
  use Treex::Core::Files;
- use List::MoreUtils qw(all any first_index);
+ use List::MoreUtils qw(all any none first_index);
  use List::Util qw(first);
  use Scalar::Util qw(weaken);
  use Readonly qw(Readonly);
