@@ -86,7 +86,7 @@ sub fix_node {
     my ($node) = @_;
     my ( $lemma, $tag, $is_member ) = $node->get_attrs(qw(lemma tag is_member));
     my $form      = lc $node->form;
-    my @children  = $node->get_children();
+    my @children  = $node->get_children( { ordered => 1 } );
     my $parent    = $node->get_parent();
     my $p_tag     = $parent->tag || '_root';
     my $p_lemma   = $parent->lemma || '_root';
@@ -301,6 +301,16 @@ sub fix_node {
 
         foreach my $child ( $node->get_children ) {
             $child->set_parent($parent);
+        }
+    }
+
+    # Change "at least(parent=at) five(parent=at)"
+    # to     "at(parent=five) least(parent=at) five"
+    if ( $lemma eq 'at' && @children == 2 ) {
+        my ( $least, $five ) = @children;
+        if ( $least->lemma =~ /^(least|most)$/ ) {
+            $five->set_parent($parent);
+            $node->set_parent($five);
         }
     }
 
