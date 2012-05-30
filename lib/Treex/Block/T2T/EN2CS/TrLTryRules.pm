@@ -8,6 +8,7 @@ extends 'Treex::Core::Block';
 Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{as_well_as} => 'i|J',
     q{as_well}    => 'také|D',
+    q{than}       => 'než|J',
     q{``}         => '„|Z',
     q{''}         => '“|Z',
     q{a. m.}      => 'hodin ráno|X',
