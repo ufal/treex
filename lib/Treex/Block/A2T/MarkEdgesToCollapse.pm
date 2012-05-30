@@ -80,8 +80,11 @@ sub is_aux_to_parent {
 
 sub is_parent_aux_to_me {
     my ( $self, $node ) = @_;
+    
+    # Overriden classes may want e.g. some prepositions ("than") or modals
+    # to be represented by a t-node. Also, the root cannot collapse to parent.
     my $parent = $node->get_parent();
-    return 0 if !$parent;
+    return 0 if !$parent || $self->tnode_although_aux($parent);
 
     # AuxP = preposition, AuxC = subord. conjunction
     # Aux[CP] node usually has just one child (noun under AuxP, verb under AuxC).
