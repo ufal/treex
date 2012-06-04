@@ -18,11 +18,12 @@ override tnode_although_aux => sub {
     # TODO: this leads to "Mr." being translated as "pan."
     # Round brackets are excepted from this rule.
     return 1 if $node->afun eq 'AuxG' && $node->tag !~ /-LRB-|-RRB-/;
-    
-    # "than" is a preposition but it can be combined with various other preps
+
+    # "than" and "as" are preps which can be combined with various other preps
     # e.g. "denser than on Earth" would result in formeme n:than_on+X.
-    # For the current translation it is easier to treat such "than" as t-node. 
-    return 1 if $node->lemma eq 'than' && any {$_->afun eq 'AuxP'} $node->get_children();
+    # For the current translation it is easier to treat such "than" as t-node.
+    return 1 if $node->lemma =~ /^(than|as)$/
+            && any { $_->afun eq 'AuxP' } $node->get_children();
 
     # The current translation expects quotes as self-standing t-nodes.
     return 1 if !$self->quotes && $node->tag =~ /^(''|``)$/;
