@@ -86,7 +86,6 @@ sub _not_equals {
 
 sub _index_my_id {
     my $self = shift;
-    pos_validated_list( \@_, { isa => 'Any', optional => 1 } );    #TODO
     $self->get_document->index_node_by_id( $self->id, $self );
     return;
 }
