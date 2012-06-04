@@ -3,39 +3,56 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 
+sub _is_infinitive {
+    my ( $self, $modal, $infinitive ) = @_;
 
-# Return 1 if $node is a modal verb with regards to its $infinitive child
-override is_modal => sub {
-    my ( $self, $node, $infinitive ) = @_;
-
-    # Check if $infinitive is the lexical verb with which the modal should merge.
-    # Note that $infinitive does not need to be infinitive in sense tag=VB.
-    # "It could(tag=MD) be(tag=VB,parent=done) done(tag=VBN,parent=could)."
-    return 0 if $infinitive->precedes($node) || $infinitive->tag !~ /^V/;
+    # In English, infinitives cannot precede modals
+    #return 0 if $infinitive->precedes($modal);
 
     # "To serve(tag=VB,afun=Sb,parent=should) as subject infinitive clause
     #  should not be considered being part of modal construction."
     return 0 if $infinitive->afun eq 'Sb';
 
+    # $infinitive (or one of its descendants) must have infinitive tag (5th position of AGDT tag is n)
+    # "You can(tag=MD) go(tag=VB,parent=can)."
+    # "It could(tag=MD) be(tag=VB,parent=done) done(tag=VBN,parent=could)."
+    # "It could(tag=MD) have(tag=VB,parent=been) been(tag=VBN,parent=done) done(tag=VBN,parent=could)."
+    return 1 if $infinitive->tag =~ /^....n/;
+    return 1 if $infinitive->tag =~ /^VB[NG]/
+            && any { $self->_is_infinitive( $modal, $_ ) }
+               grep { $_->edge_to_collapse } $infinitive->get_children();
+
+    # "be able(tag=JJ,parent=be) to" for simplicity, "able" is treated as infinitive
+    return 1 if $infinitive->lemma eq 'able';
+    return 0;
+}
+
+# Return 1 if $modal is a modal verb with regards to its $infinitive child
+override is_modal => sub {
+    my ( $self, $modal, $infinitive ) = @_;
+
+    # Check if $infinitive is the lexical verb with which the modal should merge.
+    return 0 if !$self->_is_infinitive( $modal, $infinitive );
+
     # "Standard" modals
     # (no inflection -s in the 3rd pers, cannot form participles)
     # Note that "will" is marked as AuxV (and not considered a modal), so it is
     # under the main verb and it is marked as auxiliary in is_aux_to_parent.
-    return 1 if $node->lemma =~ /^(can|cannot|could|may|might|must|shall|should|would)$/;
+    return 1 if $modal->lemma =~ /^(can|cannot|could|may|might|must|shall|should|would)$/;
 
     # "Semi-modals"
     # (not stricly modal in the sense of English grammar, but expressing modality)
     # These take a long infinitive form with the particle "to".
     # "You have to(tag=TO, parent=go) go(parent=have)."
-    if ( $node->lemma =~ /^(have|ought|want)$/ || lc( $node->form ) eq 'going' ) {
+    if ( $modal->lemma =~ /^(have|ought|want)$/ || lc( $modal->form ) eq 'going' ) {
         my $first_child = $infinitive->get_children( { first_only => 1 } );
         return 1 if $first_child && $first_child->lemma eq 'to';
     }
 
     # "be able to VB" (border-case semi-modal)
     # multi word, so both the edges must be collapsed to parent
-    return 1 if $node->lemma eq 'be'   && $infinitive->lemma eq 'able';
-    return 1 if $node->lemma eq 'able' && $infinitive->tag   eq 'VB';
+    return 1 if $modal->lemma eq 'be' && $infinitive->lemma eq 'able';
+    return 1 if $modal->lemma eq 'able';
 
     return 0;
 };
@@ -79,7 +96,7 @@ collapse to one of their children.
 Other auxiliary nodes (aux verbs, determiners, commas,...) collapse to their parent.
 Before applying this block, afun values must be filled (especially Aux* and Coord).
 
-This block contains language specific rules for English
+This block contains language specific rules for Ancient Greek
 and it is derived from L<Treex::Block::A2T::MarkEdgesToCollapse>.
 
 =head1 AUTHORS
