@@ -1,106 +1,62 @@
 package Treex::Block::A2T::GRC::MarkEdgesToCollapse;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-use utf8;
+extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 
-sub process_anode {
-    my ( $self, $a_node ) = @_;
 
-    my $parent = $a_node->get_parent();
+# Return 1 if $node is a modal verb with regards to its $infinitive child
+override is_modal => sub {
+    my ( $self, $node, $infinitive ) = @_;
 
-    # default values
-    $a_node->set_edge_to_collapse(0);
-    $a_node->set_is_auxiliary(0);
+    # Check if $infinitive is the lexical verb with which the modal should merge.
+    # Note that $infinitive does not need to be infinitive in sense tag=VB.
+    # "It could(tag=MD) be(tag=VB,parent=done) done(tag=VBN,parent=could)."
+    return 0 if $infinitive->precedes($node) || $infinitive->tag !~ /^V/;
 
-    # No node (except AuxK = terminal punctuation: ".?!")
-    # can collapse to a technical root.
-    if ( $parent->is_root() ) {
-        if ( $a_node->afun eq 'AuxK' ) {
-            $a_node->set_edge_to_collapse(1);
-            $a_node->set_is_auxiliary(1);
-        }
+    # "To serve(tag=VB,afun=Sb,parent=should) as subject infinitive clause
+    #  should not be considered being part of modal construction."
+    return 0 if $infinitive->afun eq 'Sb';
+
+    # "Standard" modals
+    # (no inflection -s in the 3rd pers, cannot form participles)
+    # Note that "will" is marked as AuxV (and not considered a modal), so it is
+    # under the main verb and it is marked as auxiliary in is_aux_to_parent.
+    return 1 if $node->lemma =~ /^(can|cannot|could|may|might|must|shall|should|would)$/;
+
+    # "Semi-modals"
+    # (not stricly modal in the sense of English grammar, but expressing modality)
+    # These take a long infinitive form with the particle "to".
+    # "You have to(tag=TO, parent=go) go(parent=have)."
+    if ( $node->lemma =~ /^(have|ought|want)$/ || lc( $node->form ) eq 'going' ) {
+        my $first_child = $infinitive->get_children( { first_only => 1 } );
+        return 1 if $first_child && $first_child->lemma eq 'to';
     }
 
-    # Should collapse to parent because the $node is auxiliary?
-    elsif ( is_aux_to_parent($a_node) ) {
-        $a_node->set_edge_to_collapse(1);
-        $a_node->set_is_auxiliary(1);
-    }
-
-    # Should collapse to node because the $parent is auxiliary?
-    elsif ( is_parent_aux_to_me($a_node) ) {
-        $a_node->set_edge_to_collapse(1);
-        $parent->set_is_auxiliary(1);
-    }
-
-    # Some a-nodes don't belong to any of the t-nodes, but are auxiliary
-    if ( is_aux_to_nothing($a_node) ) {
-        $a_node->set_edge_to_collapse(0);
-        $a_node->set_is_auxiliary(1);
-    }
-    return;
-}
-
-sub is_aux_to_parent {
-    my ($a_node) = shift;
-    return 1 if $a_node->afun =~ /Aux[VT]/;
-    return 1 if $a_node->afun eq 'AuxP' && $a_node->get_parent->afun eq 'AuxP';
-    return 0;
-}
-
-sub is_parent_aux_to_me {
-    my ($a_node) = shift;
-
-    my $a_parent = $a_node->get_parent();
-    return 0 if !$a_parent;
-
-    # modal verbs
-    return 1 if ( $a_node->afun ne 'Sb' && _is_infin($a_node) && _is_modal($a_parent) );
-
-    # coordinated modal verbs    
-    return 1 if ( $a_node->is_coap_root && _is_modal($a_parent) && any { _is_infin($_) && $_->afun ne 'Sb' } $a_node->get_children() );
-
-    # state passive
-    return 1 if ( $a_node->tag =~ /^Vs/ && $a_parent->lemma eq 'be' );
-
-    # prepositions + particles, decayed parenthesis, emphasis
-    return 1 if ( $a_parent->afun =~ /Aux[PC]/ && $a_node->afun !~ /^Aux[YZ]$/ );
-    
-    return 0;
-}
-
-sub is_aux_to_nothing {
-    my ($a_node) = shift;
-    return ( ( !$a_node->get_children() ) && ( $a_node->afun eq 'AuxX' ) );
-}
-
-# Return 1 if the given node is an infinitive verb (in active or passive voice) 
-sub _is_infin {
-    my ($a_node) = shift;
-
-    # active voice 'dělat'
-    return 1 if ( $a_node->tag =~ /^Vf/ );
-
-    # passive voice 'být dělán'
-    return 1
-        if (
-        $a_node->tag =~ /^Vs/
-        && any { $_->lemma eq 'být' && $_->tag =~ m/^Vf/ } $a_node->get_echildren( { or_topological => 1 } )
-        );
+    # "be able to VB" (border-case semi-modal)
+    # multi word, so both the edges must be collapsed to parent
+    return 1 if $node->lemma eq 'be'   && $infinitive->lemma eq 'able';
+    return 1 if $node->lemma eq 'able' && $infinitive->tag   eq 'VB';
 
     return 0;
-}
+};
 
-# Return 1 if the given node is a modal verb
-sub _is_modal {
-    my ($a_node) = shift;
+override is_aux_to_parent => sub {
+    my ( $self, $node ) = @_;
 
-    # usual Czech modal verbs -- lemma is sufficient
-    return 1 if ( $a_node->lemma =~ /^(muset|mít|chtít|hodlat|moci|dovést|umět|smět)(\_.*)?$/ );
+    # Reuse base-class language independent rules
+    my $base_result = super();
+    return $base_result if defined $base_result;
+
+    # TODO: mark cases when a node does not have afun=Aux*,
+    # but still should collapse to parent.
+    # This is language specific, e.g. in English:
+    # RP  = adverb particle ("up, off, out,...")
+    # EX  = existential "there"
+    # POS = possessive "'s"
+    #return 1 if $node->tag =~ /^(RP|EX|POS)$/;
 
     return 0;
-}
+};
 
 1;
 
@@ -114,10 +70,17 @@ Treex::Block::A2T::GRC::MarkEdgesToCollapse
 
 =head1 DESCRIPTION
 
-This prepares the a-tree for transformation into a t-tree by filling in the C<is_auxiliary> and C<edge_to_collapse>
-attributes for auxiliary nodes that will not be present at the t-layer.
+This block prepares a-trees for transformation into t-trees by filling in
+two attributes: C<is_auxiliary> and C<edge_to_collapse>.
+Each node marked as I<auxiliary> will not be present at the t-layer as a t-node.
+It will collapse to its I<lexical> node according to C<edge_to_collapse>.
+Generally, prepositions, subordinating conjunctions, and modal verbs
+collapse to one of their children.
+Other auxiliary nodes (aux verbs, determiners, commas,...) collapse to their parent.
+Before applying this block, afun values must be filled (especially Aux* and Coord).
 
-Before applying this block, afun values Aux[ACKPVX] and Coord must be filled.
+This block contains language specific rules for English
+and it is derived from L<Treex::Block::A2T::MarkEdgesToCollapse>.
 
 =head1 AUTHORS
 
