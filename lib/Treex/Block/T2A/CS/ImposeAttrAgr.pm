@@ -4,6 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Lexicon::CS;
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     return if $tnode->formeme !~ /attr|poss/;
@@ -25,7 +27,6 @@ sub process_tnode {
     }
 
     # overriding case agreement in constructions like 'nic noveho','neco zajimaveho'
-
     my $a_parent;
     if ($tnode->formeme =~ /^adj/
         && ( ($a_parent) = $a_attr->get_eparents() )
@@ -37,6 +38,12 @@ sub process_tnode {
         }
         $a_attr->set_attr( 'morphcat/gender', 'N' );
         $a_attr->set_attr( 'morphcat/number', 'S' );
+    }
+
+    # "mezi nejlepšími třemi" - třemi has no gram/number, but nejlepší must be plural
+    # "mezi nejlepšími pěti" - pěti has no gram/number and singular morphcat/number, but nejlepší must be plural
+    if ( !$t_noun->gram_number && ( Treex::Tool::Lexicon::CS::number_for( $t_noun->t_lemma ) || 0 ) > 1 ) {
+        $a_attr->set_attr( 'morphcat/number', 'P' );
     }
 
     return;
