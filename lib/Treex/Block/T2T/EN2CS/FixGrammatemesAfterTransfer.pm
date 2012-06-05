@@ -200,7 +200,7 @@ sub _fix_number {
             or ( $en_tlemma =~ /^sales/      and $cs_tlemma =~ /^prodej/ )
             or ( $en_tlemma =~ /^efforts/    and $cs_tlemma =~ /^úsilí/ )
             or ( $en_tlemma =~ /^contents/   and $cs_tlemma =~ /^obsah/ )
-            or ( $en_tlemma =~ /politics/    and $cs_tlemma =~ /ika$/ )             # mozna i dalsi
+            or ( $en_tlemma =~ /politics/    and $cs_tlemma =~ /ika$/ )          # mozna i dalsi
             or ( $en_tlemma =~ /^policy/     and $cs_tlemma =~ /^politika/ )
             or ( $en_tlemma =~ /^vegetables/ and $cs_tlemma =~ /^zelenina/ )
             or ( $en_tlemma =~ /^wood/       and $cs_tlemma =~ /^les/ )
@@ -300,7 +300,7 @@ sub _fix_negation {
 
     # !!! tohle by chtelo premistit spis do Fix_negation
     # regexpy jsou tu kvuli tomu, aby byly pokryty ruzne derivaty tehoz korenu
-    if (( $en_tlemma    =~ /^absen/    and $cs_tlemma =~ /^pří/ )    # v angl. negace lexikalizovana, v cestine tvaroslovna
+    if (( $en_tlemma    =~ /^absen/    and $cs_tlemma =~ /^pří/ )     # v angl. negace lexikalizovana, v cestine tvaroslovna
         or ( $en_tlemma =~ /^recent/   and $cs_tlemma =~ /^dáv/ )
         or ( $en_tlemma =~ /^necess/   and $cs_tlemma =~ /^zbytn/ )
         or ( $en_tlemma =~ /^ill/      and $cs_tlemma =~ /^moc/ )
@@ -415,7 +415,10 @@ sub _fix_degcmp {
         $cs_t_node->set_gram_degcmp('comp');
     }
 
-    if ( ( $en_tlemma eq 'first' and $cs_tlemma eq 'brzy' ) ) {
+    if (( $en_tlemma eq 'first' && $cs_tlemma eq 'brzy' )
+        || ( $en_tlemma eq 'top' && $cs_tlemma eq 'dobrý' )
+        )
+    {
         $cs_t_node->set_gram_degcmp('sup');
     }
     return;
