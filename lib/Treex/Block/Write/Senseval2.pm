@@ -24,7 +24,7 @@ sub _process_tree() {
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
 
-    print { $self->_file_handle } '<intance id="' . $self->_sent_ctr . '">\n<answer instance="' . $self->_sent_ctr
+    print { $self->_file_handle } '<instance id="' . $self->_sent_ctr . '">\n<answer instance="' . $self->_sent_ctr
         . '" senseid="NOTAG" />' . "\n<context>\n";
 
     my $sent_data = join $self->separator, map { join $self->connector, @{ $self->_get_info_list($_) } } @nodes;
