@@ -52,6 +52,13 @@ has punctuation => (
     documentation => 'punctuation parents (previous, following, between)',
 );
 
+has prefer_conjunction => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'In Prague family, if possible prefer conjunction as head instead of commas',
+);
+
 # Input style
 has from_family => (
     is            => 'ro',
@@ -63,7 +70,7 @@ has from_family => (
 
 has from_head => (
     is            => 'ro',
-    isa           => enum( [qw(left right nearest autodetect)] ),
+    isa           => enum( [qw(left right mixed autodetect)] ),
     default       => 'autodetect',
     writer        => '_set_from_head',
     documentation => 'input style head',
@@ -93,6 +100,22 @@ has from_punctuation => (
     documentation => 'input style punctuation parents',
 );
 
+# Other options
+
+has guess_nested => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'try to distinguish nested coordinations from multi-conjunct coordinations',
+);
+
+has try_projective_commas => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'try to not introduce new non-projectivities for commas that are not separating conjuncts (but are in CS)',
+);
+
 sub BUILD {
     my ( $self, $args ) = @_;
 
@@ -117,7 +140,7 @@ sub BUILD {
         log_fatal "Parameter 'from_style' cannot be combined with other parameters"
             if any { $args->{ 'from_' . $_ } } @pars;
         log_fatal "Prameter 'from_style' must be in form $from_style_regex"
-            if $self->style !~ /^$from_style_regex$/;
+            if $self->from_style !~ /^$from_style_regex$/;
         $self->_fill_style_from_shortcut( 1, $self->from_style );
     }
 
@@ -179,69 +202,224 @@ sub _fill_style_from_shortcut {
     return;
 }
 
+# function similar to grep, but it deletes the selected items from the array
+# So instead of
+#   my @picked = grep {/a/} @rest;
+#   @rest = grep {!/a/} @rest;
+# you can write just
+#   my @picked = pick {/a/} @rest;
+sub pick(&\@) {
+    my ( $code, $array_ref ) = @_;
+    my ( @picked, @notpicked );
+    foreach (@$array_ref) {
+        if ( $code->($_) ) {
+            push @picked, $_;
+        }
+        else {
+            push @notpicked, $_;
+        }
+    }
+    @$array_ref = @notpicked;
+    return @picked;
+}
+
+my %entered;
+
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position > 5;
-    $self->process_subtree($atree);
+    #return if $atree->get_bundle->get_position != 11;    # note that 13th sentence has position 12, DEBUG
+    my $from_f = $self->from_family;
+    if ( $from_f eq 'Prague' ) {
+        $self->detect_prague($atree);
+    }
+    elsif ( $from_f eq 'Moscow' ) {
+        $self->detect_moscow($atree);
+    }
+    elsif ( $from_f eq 'Stanford' ) {
+        $self->detect_stanford($atree);
+    }
+    else {
+        log_fatal "$from_f not implemented";
+
+        #TODO
+    }
+
+    # clean temporary variables, so we save some memory
+    %entered = ();
+    return;
 }
 
-sub _empty_res {
-    return ( members => [], shared => [], commas => [], ands => [] );
+sub detect_prague {
+    my ( $self, $node ) = @_;
+    my @children = $node->get_children( { ordered => 1 } );
+
+    # If $node is not a head of coordination,
+    # just skip it and recursively process its children.
+    if ( ( $node->afun || '' ) ne 'Coord' ) {
+        foreach my $child (@children) {
+            $self->detect_prague($child);
+        }
+        return $node;
+    }
+
+    # So $node is a head of coordination.
+    # Detect all coordination participants.
+    my @members = grep { $_->is_member } @children;
+    my ( @shared, @commas );
+    if ( $self->from_shared eq 'nearest' ) {
+        @shared = grep { $_->is_shared_modifier } map { $_->get_children } @members;
+    }
+    else {
+        @shared = grep { $_->is_shared_modifier } @children;
+    }
+    my @todo = grep { !$_->is_member && !$_->is_shared_modifier } @children;
+    my @ands = pick { $_->wild->{is_coord_conjunction} } @todo;
+    if ( $self->from_punctuation =~ /previous|following/ ) {
+        @commas = grep { $self->is_comma($_) } map { $_->get_children } @members;
+    }
+    else {
+        @commas = pick { $self->is_comma($_) } @todo;
+    }
+
+    # Recursion
+    @members = map { $self->detect_prague($_); } @members;
+    @shared  = map { $self->detect_prague($_); } @shared;
+
+    #TODO? @commas, @ands (these should be mostly leaves)
+
+    # Finally add the head (afun=Coord) as either conjunction or comma
+    if ( $node->wild->{is_coord_conjunction} ) {
+        push @ands, $node;
+    }
+    else {
+        push @commas, $node;
+    }
+
+    # Transform the detected coordination
+    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head => $node };
+    my $new_head = $self->transform_coord( $node, $res );
+    return $new_head;
 }
 
-sub _merge_res {
-    my ( $self, @results ) = @_;
-    my $merged_res = { $self->_empty_res };
-    foreach my $res ( grep {$_} @results ) {
-        foreach my $type ( keys %{$merged_res} ) {
-            push @{ $merged_res->{$type} }, @{ $res->{$type} };
+sub detect_stanford {
+    my ( $self, $node ) = @_;
+
+    # Don't go twice thru one node
+    return $node if $entered{$node};
+    $entered{$node} = 1;
+
+    #warn "dive [" . $node->form . "]\n"; #DEBUG
+
+    my @children = $node->get_children( { ordered => 1 } );
+    my @members = grep { $_->is_member } @children;
+
+    # If $node is not a head of coordination,
+    # just skip it and recursively process its children.
+    # In Stanford style, the head of coordination is recognized iff
+    #  - there are conjuncts (marked by is_member=1) among its children
+    #  - or there are coordinating conjunctions among its children.
+    # For CSs with only one conjunct (the head) only the latter holds.
+    # E.g. "And I love her." is in some annotation styles considered as a CS
+    # with only one conjunct ("love") and one conjunction ("And").
+    if ( !@members && !grep { $_->wild->{is_coord_conjunction} } @children ) {
+        foreach my $child (@children) {
+            $self->detect_stanford($child);
+        }
+        return $node;
+    }
+
+    # Add the head as a member
+    push @members, $node;
+    @members = sort { $a->ord <=> $b->ord } @members;
+
+    # So $node is a head of coordination.
+    # Detect all coordination participants.
+    my ( @shared, @commas, @ands );
+    if ( $self->from_shared eq 'nearest' ) {
+        @shared = grep { $_->is_shared_modifier } map { $_->get_children } @members;
+    }
+    else {
+        @shared = grep { $_->is_shared_modifier } @children;
+    }
+    my @todo = grep { !$_->is_member && !$_->is_shared_modifier } @children;
+
+    if ( $self->from_conjunction =~ /previous|following/ ) {
+        @ands = grep { $_->wild->{is_coord_conjunction} } map { $_->get_children } @members;
+    }
+    else {
+        @ands = pick { $_->wild->{is_coord_conjunction} } @todo;
+    }
+    @ands = sort { $a->ord <=> $b->ord } @ands;
+
+    my @andmembers = sort { $a->ord <=> $b->ord } ( @ands, @members );
+    if ( $self->from_punctuation =~ /previous|following/ ) {
+        @commas = grep { $self->is_comma($_) } map { $_->get_children } @andmembers;
+    }
+    else {
+        @commas = pick { $self->is_comma($_) } @todo;
+    }
+
+    # Try to distinguish nested coordinations from multi-conjunct coordinations.
+    # This is just a heuristics!
+    my $new_nested_head;
+    if ( $self->guess_nested && @members > 2 && @ands ) {
+
+        # The nested interpretation may be more probable if
+        # a) the last conjunction precedes penultimate conjunct, e.g. (C1 and C2) , (C3)
+        # if ($ands[-1]->precedes( $members[-2] ))
+        # but there are counter-examples like C1 and C2(afun=ExD) C3(afun=ExD).
+
+        # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
+        if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
+            ## Suppose the first two members are in the nested coordination
+            #  TODO: it might be three or more (but that's very rare)
+            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
+            my @nested_members = splice @members, ( $head_right ? -2 : 0 ), 2;
+            my $border = $nested_members[ $head_right ? 0 : -1 ];
+
+            # Suppose $border is the borderline between the nested and the outer coordination
+            my ( @nested_shared, @nested_ands, @nested_commas );
+            if ($head_right) {
+                @nested_shared = pick { $border->precedes($_) } @shared;
+                @nested_ands   = pick { $border->precedes($_) } @ands;
+                @nested_commas = pick { $border->precedes($_) } @commas;
+            }
+            else {
+                @nested_shared = pick { $_->precedes($border) } @shared;
+                @nested_ands   = pick { $_->precedes($border) } @ands;
+                @nested_commas = pick { $_->precedes($border) } @commas;
+            }
+
+            # Process the nested coord. in the same way as the outer coord.
+            @nested_members = map { $self->detect_stanford($_); } @nested_members;
+            @nested_shared  = map { $self->detect_stanford($_); } @nested_shared;
+            my $nested_res = {
+                members => \@nested_members,
+                ands    => \@nested_ands,
+                shared  => \@nested_shared,
+                commas  => \@nested_commas,
+                head    => $node
+            };
+            $new_nested_head = $self->transform_coord( $node, $nested_res );
+            $node = $new_nested_head;
         }
     }
-    return $merged_res;
-}
 
-# returns $res
-sub process_subtree {
-    my ( $self, $node ) = @_;
-    my @children = $node->get_children();
+    @members = map { $self->detect_stanford($_); } @members;
+    @shared  = map { $self->detect_stanford($_); } @shared;
+    @todo    = map { $self->detect_stanford($_); } @todo;      # private modifiers of the head
 
-    # Leaves are simple (end of recursion).
-    if ( !@children ) {
-        my $type = $self->type_of_node($node) or return 0;
-        return { $self->_empty_res, $type => [$node], head => $node };
+    if ($new_nested_head) {
+        push @members, $new_nested_head;
     }
 
-    # Recursively process children subtrees.
-    my @child_res = grep {$_} map { $self->process_subtree($_) } @children;
+    #TODO? @commas, @ands (these should be mostly leaves)
 
-    # If $node is not part of CS, we are finished.
-    # (@child_res should be empty, but even if not, we can't do anything about that.)
-    my $my_type = $self->type_of_node($node);
-    return 0 if !$my_type;
-
-    # So $node is a CS participant (it has non-empty $my_type).
-    my $parent      = $node->get_parent();
-    my $parent_type = $self->type_of_node($parent);
-    my $merged_res  = $self->_merge_res(@child_res);
-    my @child_types = map { $self->type_of_node( $_->{head} ) } @child_res;
-    $merged_res->{head} = $node;
-    push @{ $merged_res->{$my_type} }, $node;
-
-    # TODO merged_res may represent more CSs in case of nested CSs and Moscow or Stanford
-    #my $from_f      = $self->from_family;
-
-    # If $node is the top node of a CS, let's transform the CS now and we are finished
-    if ( !$parent_type ) {
-        my $new_head = $self->transform_coord( $node, $merged_res );
-        return 0;
-    }
-
-    # TODO in case of nested CSs, we might still need to transform the CS and return some $res
-    #if ( $from_f eq 'Prague' && $my_type eq 'ands' ) {
-    #}
-
-    return $merged_res;
+    # Transform the detected coordination
+    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head => $node };
+    my $new_head = $self->transform_coord( $node, $res );
+    return $new_head;
 }
 
 # Find the nearest previous/following member.
@@ -253,25 +431,19 @@ sub _nearest {
         return $prev_mem if $prev_mem;
         return first { $node->precedes($_) } @members;
     }
-    else {    # 'following'
+    elsif ( $direction eq 'following' ) {
         my $foll_mem = first { $node->precedes($_) } @members;
         return $foll_mem if $foll_mem;
         return first { $_->precedes($node) } reverse @members;
     }
-}
-
-# Note that (in nested CSs) a node can be both member and a conjunction (ands) or shared,
-# but for this purpose we treat it as a member.
-sub type_of_node {
-    my ( $self, $node ) = @_;
-    return 0 if $node->is_root();
-
-    # We ignore appositions, we want only coordination members
-    return 'members' if $node->is_member;
-    return 'shared'  if $node->is_shared_modifier;
-    return 'ands'    if $node->wild->{is_coord_conjunction};
-    return 'commas'  if $self->is_comma($node);
-    return 0;
+    elsif ( $direction eq 'any' ) {
+        my $my_ord = $node->ord;
+        my @sorted = sort { abs( $a->ord - $my_ord ) <=> abs( $b->ord - $my_ord ) } @members;
+        return $sorted[0];
+    }
+    else {
+        log_fatal "unknown direction '$direction'";
+    }
 }
 
 sub _dump_res {
@@ -289,12 +461,17 @@ sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
 
-    #$self->_dump_res($res);
-    my $parent  = $old_head->get_parent();
+    #$self->_dump_res($res);    #DEBUG
+    my $parent = $old_head->get_parent() or return $old_head;
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
-    my @shared  = @{ $res->{shared} };
-    my @commas  = @{ $res->{commas} };
-    my @ands    = @{ $res->{ands} };
+
+    # @members, @shared, @commas and @ands should be disjunct sets
+    # However, some members may be incorrectly included in @commas etc.
+    # (because of rare nested cases), so let's filter them out.
+    my %is_done = map { $_ => 1 } @members;
+    my @shared = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{shared} };
+    my @commas = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{commas} };
+    my @ands   = map { $is_done{$_} = 1; $_ } grep { !$is_done{$_} } @{ $res->{ands} };
 
     # Skip if no members
     if ( !@members ) {
@@ -305,31 +482,45 @@ sub transform_coord {
         #log_warn "No conjuncts in coordination under " . $parent->get_address;
         return $old_head;
     }
+
+    # Filter incorrectly detected commas: commas should be between members.
+    my @noncommas = pick { $_->precedes( $members[0] ) || $members[-1]->precedes($_) } @commas;
+
     my $new_head;
     my $parent_left = $parent->precedes( $members[0] );
     my $is_left_top = $self->head eq 'left' ? 1 : $self->head eq 'right' ? 0 : $parent_left;
 
-    # Commas should have afun AuxX, conjunctions Coord.
+    # Commas should have afun AuxX, conjunctions Coord. They are not is_member.
     # (Except for Prague family, where the head conjunction has always Coord,
     # but that will be solved later.)
     foreach my $sep ( @commas, @ands ) {
         $sep->set_afun( $self->is_comma($sep) ? 'AuxX' : 'Coord' );
+        $sep->set_is_member(0);
     }
 
     # PRAGUE
     if ( $self->family eq 'Prague' ) {
-        my @separators = sort { $a->ord <=> $b->ord } ( @ands, @commas );
-        if ( !@separators ) {
+
+        # Possible heads are @ands (conjunctions), but if missing
+        # or if we don't want to distinguish them from @commas (i.e. not $self->prefer_conjunction)
+        # then we should include commas as "eligible" for the head.
+        if ( !@ands || !$self->prefer_conjunction ) {
+            push @ands, @commas;
+            @commas = ();
+        }
+        if ( !@ands ) {
             log_warn "No separators in coordination under " . $parent->get_address;
             return $old_head;
         }
+        @ands = sort { $a->ord <=> $b->ord } @ands;
 
-        # $new_head will be the leftmost (resp. rightmost) separator (depending on $self->head)
-        # The rest of separators will be treated as commas.
-        $new_head = $is_left_top ? shift @separators : pop @separators;
-        @commas = @separators;
+        # Choose one of the possible heads as $new_head,
+        # the rest will be treated as commas.
+        $new_head = $is_left_top ? shift @ands : pop @ands;
+        push @commas, @ands;
+        for (@commas) { $_->set_afun('AuxY'); }
 
-        # Rehang the conjunction and members
+        # Rehang the new_head and members
         $self->rehang( $new_head, $parent );
         $new_head->set_afun('Coord');
         foreach my $member (@members) {
@@ -337,10 +528,10 @@ sub transform_coord {
         }
 
         # In Prague family, punctuation=between means that
-        # commas are hanged on the head conjunction.
+        # commas (and remaining conjunctions) are hanged on the head.
         if ( $self->punctuation eq 'between' ) {
-            foreach my $sep (@separators) {
-                $self->rehang( $sep, $new_head );
+            foreach my $comma (@commas) {
+                $self->rehang( $comma, $new_head );
             }
         }
     }
@@ -367,11 +558,49 @@ sub transform_coord {
         }
     }
 
+    # SET is_member LABELS
+    # Generally, is_member=1 iff a given word is a conjunct ("a member of a coordination").
+    # However, there are exceptions for each style family:
+    # * Prague:   In nested coordinations, also coordination head
+    #             (conjunction or comma) can have is_member=1.
+    # * Stanford: The coordination head (the first/last conjunct) is NOT marked
+    #             as is_member (unless it is also a non-head conjunct of a nested coordination).
+    # * Moscow:   Same as Stanford (but may be changed because of problematic
+    #             distinguishing of nested coordinations from multi-conjunct coordinations).
+    foreach my $member (@members) {
+        $member->set_is_member( $member != $new_head );
+    }
+
     # COMMAS (except "between" which is already solved)
     if ( $self->punctuation =~ /previous|following/ ) {
         my @andmembers = sort { $a->ord <=> $b->ord } @members, @ands;
         foreach my $comma (@commas) {
             $self->rehang( $comma, $self->_nearest( $self->punctuation, $comma, @andmembers ) );
+        }
+    }
+
+    # Commas that were not separating conjunct should remain on the same position
+    # (which means if they were below (old) head they should be below (new) head)
+    # if they would otherwise result in non-projectivities.
+    if ( $self->try_projective_commas ) {
+        foreach my $noncomma (@noncommas) {
+            my @would_be_nonproj;
+
+            # If it is now non-projective
+            if ( $noncomma->parent == $old_head && $noncomma->is_nonprojective() ) {
+
+                # try to rehang it
+                $noncomma->set_parent($new_head);
+
+                # and if it is non-projective, then log the change, otherwise revert it
+                if ( $noncomma->is_nonprojective() ) {
+                    $noncomma->set_parent($old_head);
+                    $self->rehang( $noncomma, $new_head );
+                }
+                else {
+                    $noncomma->set_parent($old_head);
+                }
+            }
         }
     }
 
@@ -387,7 +616,7 @@ sub transform_coord {
 
         # Note that if there is no following member, nearest previous will be chosen.
         if ( $self->shared eq 'nearest' ) {
-            $self->rehang( $sm, $self->_nearest( 'following', $sm, @members ) );
+            $self->rehang( $sm, $self->_nearest( 'any', $sm, @members ) );
         }
         elsif ( $self->shared eq 'head' ) {
             $self->rehang( $sm, $new_head );
@@ -400,26 +629,12 @@ sub transform_coord {
 # Is the given node a coordination separator such as comma or semicolon?
 sub is_comma {
     my ( $self, $node ) = @_;
-
-    #return $node->afun =~ /Aux[XYG]/;
-    return $node->form =~ /^[,;]$/;
+    return $node->form =~ /^[,;]$/ && !$node->is_shared_modifier && ( !$node->is_member || $self->from_family eq 'Prague' );
 }
 
 1;
 
 __END__
-
-    #    if ( $from_f eq 'detect' ) {
-    #        if ( $my_type eq 'ands' ) {
-    #            if ( $parent_type ne 'members' && !$self->is_conjunction($parent) ) {
-    #                $from_f = 'Prague';
-    #            }
-    #        }
-    #        elsif (1) {
-    #
-    #        }
-    #    }
-
 
 =head1 NAME
 
@@ -435,8 +650,8 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
     conjunction=between
     punctuation=previous
 
-  TODO the same using a shortcut
-  A2A::Transform::CoordStyle style=fMhLsNcBpP
+  #TODO the same using a shortcut
+  #A2A::Transform::CoordStyle style=fMhLsNcBpP
   
 =head1 DESCRIPTION
 
