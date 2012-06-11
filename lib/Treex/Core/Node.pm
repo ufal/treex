@@ -643,7 +643,7 @@ sub get_aligned_nodes_of_type {
 sub is_aligned_to {
     my ( $self, $node, $type ) = @_;
     log_fatal 'Incorrect number of parameters' if @_ != 3;
-    return any { $_ eq $node } $self->get_aligned_nodes_of_type( $node, $type ) ? 1 : 0;
+    return ((any { $_ eq $node } $self->get_aligned_nodes_of_type( $type )) ? 1 : 0);
 }
 
 sub delete_aligned_node {
