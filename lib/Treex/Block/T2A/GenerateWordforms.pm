@@ -37,13 +37,13 @@ sub process_anode {
         if ( $form_info ) {
             $anode->set_form( $form_info->get_form() );
             $anode->set_tag( $form_info->get_tag() );
-            print $anode->lemma." + ".$anode->tag." --> ".$anode->form."\n";
+#            print $anode->lemma." + ".$anode->tag." --> ".$anode->form."\n";
         }
 
         else {
-            print "possible fallbacks for lemma=".$anode->lemma." tag=".$anode->tag."\n";
+#            print "possible fallbacks for lemma=".$anode->lemma." tag=".$anode->tag."\n";
             foreach my $form_info ( $self->generator->forms_of_lemma($anode->lemma) ) {
-                print "   ".$form_info->get_form." ".$form_info->get_tag."\n";
+#                print "   ".$form_info->get_form." ".$form_info->get_tag."\n";
             }
         }
     }
