@@ -1118,6 +1118,7 @@ sub assign_sentmod {
             $sentmod = 'imper';
         }
 
+        # TODO: this is not reliable (better to check the very last a-node), let's use A2T::SetSentmod instead
         #    elsif ($aroot and grep {$_->attr('form') eq "?"} $aroot->children) { # opraveno dle M.Janicka
         elsif ( $aroot and grep { $_->form eq "?" } $aroot->get_parent->get_children ) {
             $sentmod = "inter";

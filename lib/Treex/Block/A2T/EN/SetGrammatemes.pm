@@ -66,27 +66,16 @@ sub _get_tecto_info {
 }
 
 #------ Main loop --------
-sub process_zone {
-    my ( $self, $zone ) = @_;
+sub process_tnode {
+    my ( $self, $t_node ) = @_;
+    return if $t_node->nodetype ne 'complex';
 
-    my $t_root = $zone->get_ttree;
+    # Sempos of all complex nodes should be defined,
+    # so initialize it with a default value.
+    $t_node->set_gram_sempos('???');
 
-    # Fill grammatemes of complex nodes
-    foreach my $t_node ( $t_root->get_descendants() ) {
-        next if $t_node->nodetype ne 'complex';
-
-        # Sempos of all complex nodes should be defined,
-        # so initialize it with a default value.
-        $t_node->set_gram_sempos('???');
-
-        assign_grammatemes_to_tnode($t_node);
-    }
-
-    # Fill sentence modality
-    my $t_sent_root = $t_root->get_children( { first_only => 1 } ) or return;
-    $t_sent_root->set_attr( 'sentmod', _get_sentmod($zone) );
-
-    return 1;
+    assign_grammatemes_to_tnode($t_node);
+    return;
 }
 
 sub assign_grammatemes_to_tnode {
@@ -237,7 +226,7 @@ sub _verb {
     my %is_aux_form  = map { ( lc( $_->form ) => 1 ) } @aux_anodes;
     my %is_aux_lemma = map { ( $_->lemma => 1 ) } @aux_anodes;
 
-    my ($deontmod) = grep {defined $_} (map { $DEONTMOD_FOR_LEMMA{ $_->lemma } }  @aux_anodes);
+    my ($deontmod) = grep { defined $_ } ( map { $DEONTMOD_FOR_LEMMA{ $_->lemma } } @aux_anodes );
     my $negated = any { $is_aux_form{$_} } qw(not n't cannot);
 
     $tnode->set_gram_sempos('v');
@@ -343,41 +332,16 @@ sub _is_negated {
     return 0;
 }
 
-sub _get_sentmod {
-    my ($zone) = @_;
-    my $a_root = $zone->get_atree;
-
-    # Questions must have a questionmark as the $last_token
-    # (but the $last_token may be followed by quotation marks or brackets).
-    my ($last_token, @toks) = reverse $a_root->get_descendants( { ordered => 1 } );
-    if (@toks && $last_token->afun eq 'AuxG'){
-        $last_token = shift @toks;
-    }
-    return 'inter' if $last_token && $last_token->form eq '?';
-
-    # In imperative sentences, the head of the main clause
-    # is infinitive verb (VB) with no left children.
-    my $a_head = $a_root->get_children( { first_only => 1 } ) or return;
-    my $head_tag = $a_head->tag;
-    return 'imper' if $head_tag eq 'VB' && !$a_head->get_children( { preceding_only => 1 } );
-
-    # Otherwise suppose it's normal indicative mood
-    return 'enunc';
-}
-
 1;
 
 =over
 
 =item Treex::Block::A2T::EN::SetGrammatemes
 
-Grammatemes of SEnglishT complex nodes are filled by this block, using
+Grammatemes of English complex nodes are filled by this block, using
 POS tags, info about auxiliary words, list of pronouns etc. Besides
 the genuine grammatemes such as C<gram/number> or C<gram/tense>, also
 the classification attribute C<gram/sempos> is filled.
-Attribute C<sentmod> (sentence modality) is filled with C<inter>
-(for questions), C<imper> (for imperative sentences) or left
-undefined (all other cases).
 
 =back
 
