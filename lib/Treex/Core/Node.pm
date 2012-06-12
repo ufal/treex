@@ -1197,19 +1197,27 @@ to the node's location) and filled by the PML interface.
 
 =over
 
-=item add_aligned_node
+=item $node->add_aligned_node($target, $type)
 
-=item my ($nodes_rf, $types_rf) = $node->get_aligned_nodes();
+Aligns $target node to $node. The prior existence of the link is not checked.
+
+=item my ($nodes_rf, $types_rf) = $node->get_aligned_nodes()
 
 Returns an array containing two array references. The first array contains the nodes aligned to this node, the second array contains types of the links.
 
-=item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type);
+=item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type)
 
-=item delete_aligned_node
+Returns a list of nodes aligned to the $node by the specified alignment type.
 
-=item is_aligned_to
+=item $node->delete_aligned_node($target, $type)
 
-=item update_aligned_nodes()
+All alignments of the $target to $node are deleted, if their types equal $type.
+
+=item my $is_aligned = $node->is_aligned_to($target, $regex_constraint_on_type)
+
+Returns 1 if the nodes are aligned, 0 otherwise.
+
+=item $node->update_aligned_nodes()
 
 Removes all alignment links leading to nodes which have been deleted.
 
