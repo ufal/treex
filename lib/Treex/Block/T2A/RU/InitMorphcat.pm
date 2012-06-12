@@ -41,9 +41,12 @@ sub process_tnode {
 
     # == Number, Gender ==
     my $number = $t_node->gram_number || '';
-    my $gender = $t_node->gram_gender || '';
     $a_node->set_attr( 'morphcat/number', $M_NUMBER_FOR{$number} || '.' );
-    $a_node->set_attr( 'morphcat/gender', $M_GENDER_FOR{$gender} || '.' );
+
+    if ($number ne 'pl') {
+        my $gender = $t_node->gram_gender || '';
+        $a_node->set_attr( 'morphcat/gender', $M_GENDER_FOR{$gender} || '.' );
+    }
 
     # == Case ==
     if ( $a_node->get_attr('morphcat/case') eq '.' ){
