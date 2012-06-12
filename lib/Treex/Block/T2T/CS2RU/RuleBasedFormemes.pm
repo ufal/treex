@@ -5,13 +5,7 @@ extends 'Treex::Core::Block';
 
 use utf8;
 
-sub process_tnode {
-    my ( $self, $cs_tnode ) = @_;
-
-
-}
-
-# kam назад ради вроде возле
+# nezarazeno назад вроде
 
 my %cs2ru = (
     # qw(adj:attr) => qw(), # 33981
@@ -35,45 +29,45 @@ my %cs2ru = (
     qw(n:z+2) => qw(n:из+2), # 1781
     qw(n:pro+4) => qw(n:про+2), # 1714
     qw(n:s+7) => qw(n:с+7), # 1569
-    # qw(v:že+fin) => qw(), # 1511
+    qw(v:že+fin) => qw(v:что+fin), # 1511
     qw(n:k+3) => qw(n:к+3), # 1390
     qw(n:o+6) => qw(n:о+6), # 1382 # nebo об ?
     qw(n:na+6) => qw(n:на+6), # 1179
     qw(n:do+2) => qw(n:до+2), # 1067
-    # qw(v:aby+fin) => qw(), # 718
+    qw(v:aby+fin) => qw(v:чтобы+fin), # 718
     qw(n:za+4) => qw(n:за+4), # 624
     qw(n:o+4) => qw(n:о+4), # 597
     qw(n:po+6) => qw(n:по+6), # 483 # nebo после ?
     qw(n:podle+2) => qw(n:для+2), # 469
     # qw(n:6) => qw(), # 458
-    # qw(v:pokud+fin) => qw(), # 454
+    qw(v:pokud+fin) => qw(v:если+fin), # 454
     qw(n:od+2) => qw(n:от+2), # 417
     qw(n:mezi+7) => qw(n:между+7), # 409
     # qw(n:5) => qw(), # 403
     qw(n:u+2) => qw(n:у+2), # 383
     qw(n:při+6) => qw(n:при+6), # 380
-    # qw(v:když+fin) => qw(), # 354
+    qw(v:když+fin) => qw(v:когда+fin), # 354
     qw(n:před+7) => qw(n:перед+7), # 274
     qw(n:v+4) => qw(n:в+4), # 196
     # qw(n:v_souladu_s+7) => qw(), # 185
     qw(n:proti+3) => qw(n:против+3), # 172
     qw(n:bez+2) => qw(n:без+2), # 166
-    # qw(v:li+fin) => qw(), # 161
+    qw(v:li+fin) => qw(v:если+fin), # 161
     # qw(n:s_ohledem_na+4) => qw(), # 157
     # qw(n:na_základě+2) => qw(), # 156
     # qw(n:v_rámci+2) => qw(), # 149
-    # qw(v:protože+fin) => qw(), # 131
+    qw(v:protože+fin) => qw(v:потому_что+fin), # 131
     qw(n:nad+7) => qw(n:над+7), # 112
     # qw(n:včetně+2) => qw(), # 111
-    # qw(v:zda+fin) => qw(), # 108
-    # qw(v:jestliže+fin) => qw(), # 106
-    # qw(n:za+7) => qw(), # 103
+    qw(v:zda+fin) => qw(v:если+fin), # 108
+    qw(v:jestliže+fin) => qw(v:если+fin), # 106
+    qw(n:za+7) => qw(n:за+7), # 103
     # qw(n:za+2) => qw(), # 98
-    # qw(v:kdyby+fin) => qw(), # 97
+    qw(v:kdyby+fin) => qw(v:если+fin), # 97
     # qw(n:vzhledem_k+3) => qw(), # 97
     # qw(n:v_případě+2) => qw(), # 90
-    # qw(v:jestli+fin) => qw(), # 89
-    # qw(n:během+2) => qw(), # 88
+    qw(v:jestli+fin) => qw(v:если+fin), # 89
+    qw(n:během+2) => qw(n:в_течение+2), # 88
     qw(n:pod+7) => qw(n:под+7), # 87
     # qw(v:než+fin) => qw(), # 84
     # qw(n:než+1) => qw(), # 84
@@ -81,15 +75,15 @@ my %cs2ru = (
     qw(n:kromě+2) => qw(n:кроме+2), # 76
     # qw(v:takže+fin) => qw(), # 74
     # qw(n:než+X) => qw(), # 70
-    # qw(n:po+4) => qw(), # 67
+    qw(n:po+4) => qw(n:по+4), # 67
     qw(n:přes+4) => qw(n:через+4), # 65
-    # qw(n:jako+1) => qw(), # 62
+    qw(n:jako+1) => qw(n:как+1), # 62
     qw(n:mimo+4) => qw(n:мимо+4), # 60
     # qw(v:aniž+fin) => qw(), # 53
     # qw(n:v_oblasti+2) => qw(), # 50
     # qw(n:vůči+3) => qw(), # 47
-    # qw(n:spolu_s+7) => qw(), # 47
-    # qw(n:kvůli+3) => qw(), # 45
+    qw(n:spolu_s+7) => qw(n:с+7), # 47
+    qw(n:kvůli+3) => qw(n:ради+3), # 45
     qw(n:kolem+2) => qw(n:вокруг+2), # 45
     # qw(n:v_souvislosti_s+7) => qw(), # 43
     # qw(n:ohledně+2) => qw(), # 43
@@ -109,9 +103,9 @@ my %cs2ru = (
     # qw(v:jako+fin) => qw(), # 25
     # qw(v:zatímco+fin) => qw(), # 24
     # qw(n:bez_ohledu_na+4) => qw(), # 24
-    # qw(n:vedle+2) => qw(), # 23
+    qw(n:vedle+2) => qw(n:возле+2), # 23
     # qw(n:na+X) => qw(), # 23
-    # qw(v:ačkoli+fin) => qw(), # 22
+    qw(v:ačkoli+fin) => qw(v:хотя+fin), # 22
     # qw(n:ve_formě+2) => qw(), # 22
     # qw(v:jakmile+fin) => qw(), # 21
     # qw(n:v_průběhu+2) => qw(), # 20
@@ -216,6 +210,16 @@ my %cs2ru = (
     # qw(v:takže_jestli+fin) => qw(), # 2
 
 );
+
+
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
+
+    if (defined $cs2ru{$tnode->formeme}) {
+        $tnode->set_formeme($cs2ru{$tnode->formeme})
+    }
+}
+
 
 
 1;
