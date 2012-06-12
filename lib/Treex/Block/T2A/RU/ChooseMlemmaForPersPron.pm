@@ -59,6 +59,7 @@ sub process_tnode {
             my $anode =  $tnode->get_lex_anode();
             $anode->set_lemma($mlemma);
             $anode->set_form($mlemma);
+            $anode->set_attr('morphcat/person','.');
         }
 
     }
