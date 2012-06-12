@@ -29,6 +29,11 @@ sub process_anode {
         }
     }
 
+    if ( ($anode->get_attr('morphcat/number')||'') eq 'P') {
+        $anode->set_attr('morphcat/gender','.');
+        return;
+    }
+
     return if not $gender;
 
     #my $old_value = $anode->attr('morphcat/gender');
@@ -53,8 +58,10 @@ Treex::Block::T2A::FixNounGender
 
 =head1 DESCRIPTION
 
-Fill noun gender according to target-language morphology, regardless
+1) Fill noun gender according to target-language morphology, regardless
 the gender value resulting from the source language.
+
+2) Disregard noun gender in plural.
 
 =head1 AUTHOR
 
