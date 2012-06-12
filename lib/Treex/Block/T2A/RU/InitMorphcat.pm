@@ -1,4 +1,4 @@
-package Treex::Block::T2A::CS::InitMorphcat;
+package Treex::Block::T2A::RU::InitMorphcat;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -78,7 +78,7 @@ __END__
 
 =over
 
-=item Treex::Block::T2A::CS::InitMorphcat
+=item Treex::Block::T2A::RU::InitMorphcat
 
 Fill morphological categories (members of structure morphcat) with
 values simply derived from values of grammatemes, formeme, sempos etc.
