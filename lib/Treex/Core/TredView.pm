@@ -345,6 +345,28 @@ sub precompute_tree_depths {
     return;
 }
 
+sub node_release_hook {
+    my ($self, $node, $target, $mod) = @_;
+    my @roots = map $_->get_root, $node, $target;
+    my @zones = map $_->get_zone, $node, $target;
+
+    if ($self->show_alignment
+        and
+        $roots[0] != $roots[1] and $zones[0] != $zones[1]) {
+
+        if ($node->is_aligned_to($target, 'alignment')) {
+            $node->delete_aligned_node($target, 'alignment');
+        } else {
+            $node->add_aligned_node($target, 'alignment');
+        }
+
+        # TODO: Is there more treexy way to do it?
+        TredMacro::Redraw();
+
+        return 'stop';
+    }
+}
+
 # Has to be run whenever the tree layout changes.
 sub precompute_tree_shifts {
     my ( $self, $bundle ) = @_;

@@ -162,6 +162,9 @@ sub after_edit_node_hook {
     $tredview->recompute_visualization($root);
 }
 
+sub node_release_hook {
+    return $tredview->node_release_hook(@_);
+}
 
 my $command;
 
