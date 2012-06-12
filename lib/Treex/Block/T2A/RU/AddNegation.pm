@@ -14,6 +14,7 @@ sub process_tnode {
         $new_node->reset_morphcat();
         $new_node->set_lemma('не');
         $new_node->set_form('не');
+        $tnode->add_aux_anodes($new_node);
     }
 
     return;
