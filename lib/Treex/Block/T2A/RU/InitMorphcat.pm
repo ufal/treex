@@ -36,7 +36,10 @@ sub process_tnode {
     }
 
     # == Person ==
-    my $person = $t_node->gram_person || '.';
+    my $person = $t_node->gram_person;
+    if (not defined $person or $person eq 'inher') {
+        $person = '.';
+    }
     $a_node->set_attr( 'morphcat/person', $person );
 
     # == Number, Gender ==
