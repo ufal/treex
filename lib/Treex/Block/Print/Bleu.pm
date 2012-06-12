@@ -52,17 +52,23 @@ sub _print_stats {
     for my $ngram ( 1 .. $self->print_ngrams ) {
         $self->_print_ngram_diff( $ngram, $self->print_limit );
     }
+    $self->_print_individual_ngram_prec();
 
     my $bleu = Treex::Tool::Eval::Bleu::get_bleu();
-    if ( $bleu == 0 ) {
-        print "BLEU = 0\n";
-    }
-    else {
-        my $bp = Treex::Tool::Eval::Bleu::get_brevity_penalty();
-        printf "BLEU = %2.4f  (brevity penalty = %1.5f)\n", $bleu, $bp;
-    }
+    my $bp = Treex::Tool::Eval::Bleu::get_brevity_penalty();
+    printf "BLEU = %2.4f  (brevity penalty = %1.5f)\n", $bleu, $bp;
+
     return;
 }
+
+sub _print_individual_ngram_prec {
+    my ($self) = @_;
+    print "\nIndividual n-gram precisions:\n";
+    print "1    2    3    4\n";
+    printf "%1.2f %1.2f %1.2f %1.2f\n\n", Treex::Tool::Eval::Bleu::get_individual_ngram_prec();
+    return;
+}
+
 
 sub _reset_stats {
     Treex::Tool::Eval::Bleu::reset();

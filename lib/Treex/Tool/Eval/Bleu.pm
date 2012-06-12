@@ -30,7 +30,6 @@ sub reset {
     @ngram_diff       = ();
 }
 
-
 sub add_segment {
     my ( $tst_text, $ref_text ) = @_;
 
@@ -109,6 +108,11 @@ sub get_diff {
     @miss  = map { [ $_, $ngram_diff[$n]{$_} ] } @miss;
     @extra = map { [ $_, $ngram_diff[$n]{$_} ] } @extra;
     return ( \@miss, \@extra );
+}
+
+sub get_individual_ngram_prec {
+    my ($self) = @_;
+    return map { ( $ngram_matching[$_] || 0 ) / ( $ngram_all[$_] || 1 ) } ( 1 .. $NGRAM_BLEU );
 }
 
 sub get_ngrams {
