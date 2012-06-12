@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    if ( $tnode->gram_negation eq 'neg1' && $tnode->gram_sempos eq 'v' ) {
+    if ( ( $tnode->gram_negation || '' ) eq 'neg1' && $tnode->gram_sempos eq 'v' ) {
         my $anode    = $tnode->get_lex_anode();
         my $new_node = $anode->create_child();
         $new_node->shift_before_node($anode);

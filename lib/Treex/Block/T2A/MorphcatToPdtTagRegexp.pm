@@ -11,17 +11,18 @@ my @CATEGORIES = qw(pos subpos gender number case possgender possnumber
 sub process_anode {
     my ( $self, $anode ) = @_;
 
-    my $gender = $anode->get_attr('morphcat/gender');
+    my $gender = $anode->get_attr('morphcat/gender') || '';
     $gender =~ s/I/\[ITXYZ\-\]/;
-    $gender =~  s/M/\[MXYZ\-\]/;
+    $gender =~ s/M/\[MXYZ\-\]/;
     $gender =~ s/P/\[DPWX\-\]/;
     $gender =~ s/S/\[SWX\-\]/;
-    $anode->set_attr('morphcat/gender',$gender);
-
+    $anode->set_attr( 'morphcat/gender', $gender );
 
     if ( $anode->get_attr(qw(morphcat)) ) {
-        $anode->set_tag( join '',
-                        map {$anode->get_attr("morphcat/$_")||'.'} @CATEGORIES);
+        $anode->set_tag(
+            join '',
+            map { $anode->get_attr("morphcat/$_") || '.' } @CATEGORIES
+        );
     }
 }
 
