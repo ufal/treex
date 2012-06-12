@@ -12,7 +12,7 @@ sub process_anode {
     my ( $self, $anode ) = @_;
     if ( $anode->get_attr(qw(morphcat)) ) {
         $anode->set_tag( join '',
-                        map {$anode->get_attr("morphcat/$_")} @CATEGORIES);
+                        map {$anode->get_attr("morphcat/$_")||'.'} @CATEGORIES);
     }
 }
 
