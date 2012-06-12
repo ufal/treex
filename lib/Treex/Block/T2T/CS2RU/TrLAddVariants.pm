@@ -1,6 +1,7 @@
 package Treex::Block::T2T::CS2RU::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource;
 extends 'Treex::Core::Block';
 
 use TranslationModel::Static::Model;
@@ -13,10 +14,6 @@ has model_dir => (
     documentation => 'Base directory for all models'
 );
 
-# This role supports loading models to Memcached. 
-# It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
-with 'Treex::Block::T2T::TrUseMemcachedModel';
-
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
@@ -25,20 +22,18 @@ has static_model => (
 
 my $combined_model;
 
+sub load_model {
+    my ( $self, $model, $filename ) = @_;
+    my $path = $self->model_dir . '/' . $filename;
+    $model->load( Treex::Core::Resource::require_file_from_share($path) );
+    return $model;
+}
+
 sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
-    my $use_memcached  = 0;
-    $combined_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    $combined_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
     return;
-}
-
-# Require the needed models and set the absolute paths to the respective attributes
-sub get_required_share_files {
-    my ($self) = @_;
-    my @files;
-    push @files, $self->model_dir . '/' . $self->static_model;
-    return @files;
 }
 
 sub process_tnode {
@@ -54,10 +49,11 @@ sub process_tnode {
         # TODO features not needed for static_model
         my $features_array_rf = undef;
 
-        my $en_tlemma = $src_tnode->t_lemma;
-        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
+        my $src_tlemma = $src_tnode->t_lemma;
+        my @translations = $combined_model->get_translations( lc($src_tlemma), $features_array_rf );
 
         if (@translations) {
+            $tnode->set_t_lemma( $translations[0]->{label} );
 
             $tnode->set_attr(
                 't_lemma_origin',
