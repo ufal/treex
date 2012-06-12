@@ -66,7 +66,8 @@ sub is_aux_to_parent {
 
     # Auxiliary nodes with no (lex) children must collapse to parent.
     # Note that even Aux[CP] may have no children in multiword preps/conjs.
-    if ( $node->afun =~ /^Aux/ ) {
+    # AuxY is usually used for rhematizers (which should have their own t-nodes).
+    if ( $node->afun =~ /^Aux[^Y]/ ) {
         my @children = $node->get_children( { ordered => 1 } );
         return 1 if !@children;
 
