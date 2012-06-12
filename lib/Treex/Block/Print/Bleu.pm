@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Eval::Bleu;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Print::Overall'; 
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
@@ -47,8 +47,11 @@ sub _print_ngram_diff {
 }
 
 sub _print_stats {
-
     my ($self) = @_;
+
+    for my $ngram ( 1 .. $self->print_ngrams ) {
+        $self->_print_ngram_diff( $ngram, $self->print_limit );
+    }
 
     my $bleu = Treex::Tool::Eval::Bleu::get_bleu();
     if ( $bleu == 0 ) {
@@ -56,9 +59,6 @@ sub _print_stats {
     }
     else {
         my $bp = Treex::Tool::Eval::Bleu::get_brevity_penalty();
-        for my $ngram ( 1 .. $self->print_ngrams ) {
-            $self->_print_ngram_diff( $ngram, $self->print_limit );
-        }
         printf "BLEU = %2.4f  (brevity penalty = %1.5f)\n", $bleu, $bp;
     }
     return;
