@@ -5,6 +5,8 @@ use Treex::Core::Resource;
 extends 'Treex::Core::Block';
 
 use TranslationModel::Static::Model;
+use TranslationModel::Combined::Backoff;
+use TranslationModel::Derivative::CS2RU::Transliterate;
 use ProbUtils::Normalize;
 
 has model_dir => (
@@ -32,7 +34,9 @@ sub load_model {
 sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
-    $combined_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
+    my $static = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
+    my $translit = TranslationModel::Derivative::CS2RU::Transliterate->new( { base_model => 'not needed' } );
+    $combined_model = TranslationModel::Combined::Backoff->new( { models => [ $static, $translit ] } );
     return;
 }
 
