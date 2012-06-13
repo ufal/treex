@@ -58,13 +58,16 @@ sub _build_colors {
         'clause7' => '#006400',         #DarkGreen
         'clause8' => '#8b0000',         #DarkRed
         'clause9' => '#008b8b',         #DarkCyan
+
+        '_default' => 'cyan',
     };
 }
 
 sub get {
     my ( $self, $code, $markup ) = @_;
     if ( not exists $self->_colors->{$code} ) {
-        log_fatal "Unknown color code '$code'\n";
+        log_warn "Unknown color code '$code'\n";
+        $code = '_default';
     }
     $code = $self->_colors->{$code};
     return $markup ? '#{' . $code . '}' : $code;

@@ -669,7 +669,7 @@ sub node_style_hook {
         foreach my $link (@$links) {
             if ( exists $self->_displayed_nodes->{ $link->{'counterpart.rf'} } ) {
                 push @target_ids,  $link->{'counterpart.rf'};
-                push @arrow_types, 'alignment';
+                push @arrow_types, $link->{type};
             }
         }
     }
