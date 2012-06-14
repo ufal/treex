@@ -58,6 +58,11 @@ sub pre_switch_context_hook {
     $tredview->tree_layout->save_layouts();
 }
 
+sub pre_switch_stylesheet_hook {
+    Carp::cluck('pre_switch_context_hook');
+    return 'stop' if $_[1] eq STYLESHEET_FROM_FILE();
+}
+
 sub file_opened_hook {
     $tredview->file_opened_hook(@_);
 }
