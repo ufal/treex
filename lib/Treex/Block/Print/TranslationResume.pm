@@ -2,14 +2,14 @@ package Treex::Block::Print::TranslationResume;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Eval::Bleu;
-
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 
 sub process_document {
     my ( $self, $document ) = @_;
+    $self->_prepare_file_handle($document);
     my $doc_name = $document->full_filename();
     $doc_name =~ s{^.*/}{};
     my ( @src, @ref, @tst );
@@ -29,7 +29,7 @@ sub process_document {
             $src_joined =~ s/\s+$//;    #TODO why is this needed?
             $ref_joined =~ s/\s+$//;
             my @matchings = Treex::Tool::Eval::Bleu::add_segment( $tst_joined, $ref_joined );
-            print join(
+            print { $self->_file_handle } join(
                 "\n",
                 (
                     "ID\t" . $bundle->id . " ($doc_name.streex##$position)",
