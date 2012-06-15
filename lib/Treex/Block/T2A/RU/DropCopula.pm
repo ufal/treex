@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     
-    if ($t_node->t_lemma eq 'быть' && $t_node->gram_tense eq 'sim'){
+    if ($t_node->t_lemma eq 'быть' && ($t_node->gram_tense||'') eq 'sim'){
         my $a_node = $t_node->get_lex_anode() or return;
         $a_node->set_lemma('');
     }

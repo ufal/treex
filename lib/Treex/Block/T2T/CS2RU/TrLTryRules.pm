@@ -4,10 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-#TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
-    q{„}         => '"',
-    q{“}         => '"',
+    q{cs_lemma} => 'ru_lemma',
 );
 
 sub process_tnode {
@@ -17,8 +15,8 @@ sub process_tnode {
     return if $tnode->t_lemma_origin !~ /^clone/;
 
     my $src_tnode = $tnode->src_tnode or return;
-    
-    if (my $lemma = $self->get_lemma( $src_tnode, $tnode )){
+
+    if ( my $lemma = $self->get_lemma( $src_tnode, $tnode ) ) {
         $tnode->set_t_lemma($lemma);
         $tnode->set_t_lemma_origin('rule-TrLTryRules');
     }
@@ -31,6 +29,11 @@ sub get_lemma {
 
     # Don't translate t-lemma substitutes (like #PersPron, #Cor, #QCor, #Rcp)
     return $src_tlemma if $src_tlemma =~ /^#/;
+
+    # Both left and right quotes are lemmatized to "
+    if ( $src_tlemma eq q{"} ) {
+        return $src_tnode->get_lex_anode()->form eq q{„} ? q{«} : q{»};
+    }
 
     # Prevent some errors/misses in dictionaries
     return $QUICKFIX_TRANSLATION_OF{$src_tlemma};
@@ -53,4 +56,3 @@ If succeeded, t-lemma is filled and atributte C<t_lemma_origin> is set to I<rule
 
 # Copyright 2012 Martin Popel
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
-
