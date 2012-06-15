@@ -70,20 +70,21 @@ Readonly my $POS_MAP => {
 };
 
 sub process_tnode {
-
     my ( $self, $tnode ) = @_;
 
-    return if ( $tnode->functor ne '???' );
+    if ( !defined $tnode->functor || $tnode->functor eq '???' ) {
 
-    my $anode = $tnode->get_lex_anode();
-    return if ( !$anode || !$anode->tag );
+        my $anode = $tnode->get_lex_anode();
+        return if ( !$anode || !$anode->tag );
 
-    my $functor = $POS_MAP->{ substr( $anode->tag, 0, 2 ) };
+        my $functor = $POS_MAP->{ substr( $anode->tag, 0, 2 ) };
 
-    if ( any { $_->is_member } $tnode->get_children() ) {
-        $functor = 'CONJ';
+        if ( any { $_->is_member } $tnode->get_children() ) {
+            $functor = 'CONJ';
+        }
+        $tnode->set_functor($functor || '???');
     }
-    $tnode->set_functor($functor) if ($functor);
+    return;
 }
 
 1;
@@ -98,9 +99,12 @@ Treex::Block::A2T::CS::SetMissingFunctors
 
 =head1 DESCRIPTION
 
-Set all functors that weren't recognized (their value is '???') to the most common functor for the POS
-of the corresponding lex-anode. If the unrecognized node actually has coordination/apposition members,
+Set all functors that weren't recognized (their value is '???' or undef)
+to the most common functor for the POS of the corresponding lex-anode.
+If the unrecognized node actually has coordination/apposition members,
 its functors is hard-set to 'CONJ'.
+If no functor is found in the POS mapping and no co/ap members are found,
+the functor is assigned a special '???' value.
 
 =head1 AUTHOR
 
