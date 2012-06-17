@@ -180,7 +180,7 @@ sub draw_arrows {
     my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
 
     foreach my $target_id (@$target_ids) {
-        my $arrow_type = shift @$arrow_types;
+        my $arrow_type = shift @$arrow_types // '_default';        
 
         my $target_node = $self->_treex_doc->get_node_by_id($target_id);
 
