@@ -182,62 +182,62 @@ sub draw_arrows {
     foreach my $target_id (@$target_ids) {
         my $arrow_type = shift @$arrow_types // '_default';
 
-        my $target_node = $self->_treex_doc->get_node_by_id($target_id);
+        my $target_node
+            = eval { $self->_treex_doc->get_node_by_id($target_id) };
+        if ($target_node) {
+            if ( $node->get_bundle eq $target_node->get_bundle ) {    # same sentence
 
-        if ( $node->get_bundle eq $target_node->get_bundle ) {    # same sentence
+                my $T  = "[?\$node->{id} eq '$target_id'?]";
+                my $X  = "(x$T-xn)";
+                my $Y  = "(y$T-yn)";
+                my $D  = "sqrt($X**2+$Y**2)";
+                my $BX = 'n';
+                my $BY = 'n';
+                my $MX = "((x$T+xn)/2 - $Y*(25/$D+0.12))";
+                my $MY = "((y$T+yn)/2 + $X*(25/$D+0.12))";
+                my $EX = "x$T";
+                my $EY = "y$T";
+                my $K1 = "20 / sqrt(($MX-xn)**2 + ($MY-yn)**2)";
+                my $K2 = "20 / sqrt((x$T-$MX)**2 + (y$T-$MY)**2)";
 
-            my $T  = "[?\$node->{id} eq '$target_id'?]";
-            my $X  = "(x$T-xn)";
-            my $Y  = "(y$T-yn)";
-            my $D  = "sqrt($X**2+$Y**2)";
-            my $BX = 'n';
-            my $BY = 'n';
-            my $MX = "((x$T+xn)/2 - $Y*(25/$D+0.12))";
-            my $MY = "((y$T+yn)/2 + $X*(25/$D+0.12))";
-            my $EX = "x$T";
-            my $EY = "y$T";
-            my $K1 = "20 / sqrt(($MX-xn)**2 + ($MY-yn)**2)";
-            my $K2 = "20 / sqrt((x$T-$MX)**2 + (y$T-$MY)**2)";
+                if ( $self->_is_coord($node) ) {
+                    $BX = "xn-(xn-$MX)*$K1";
+                    $BY = "yn-(yn-$MY)*$K1";
+                }
+                if ( $self->_is_coord($target_node) ) {
+                    $EX = "x$T+($MX-x$T)*$K2";
+                    $EY = "y$T+($MY-y$T)*$K2";
+                }
+                if ( $arrow_type eq 'coindex' ) {
+                    $MX = "((x$T+xn)/2 + $Y*(25/$D+0.12))";
+                    $MY = "((y$T+6+yn)/2 - $X*(25/$D+0.12))";
+                    $EY = "y$T+6";
+                }
 
-            if ( $self->_is_coord($node) ) {
-                $BX = "xn-(xn-$MX)*$K1";
-                $BY = "yn-(yn-$MY)*$K1";
+                push @coords, "$BX,$BY,$MX,$MY,$EX,$EY";
             }
-            if ( $self->_is_coord($target_node) ) {
-                $EX = "x$T+($MX-x$T)*$K2";
-                $EY = "y$T+($MY-y$T)*$K2";
-            }
-            if ( $arrow_type eq 'coindex' ) {
-                $MX = "((x$T+xn)/2 + $Y*(25/$D+0.12))";
-                $MY = "((y$T+6+yn)/2 - $X*(25/$D+0.12))";
-                $EY = "y$T+6";
-            }
+            else {    # should be always the same document, if it exists at all
 
-            push @coords, "$BX,$BY,$MX,$MY,$EX,$EY";
+                my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position;
+                $orientation = $orientation > 0 ? 'right' : 'left';
+                if ( $orientation =~ /left|right/ ) {
+                    if ( $orientation eq 'left' ) {
+                        log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
+                        push @coords, "n,n,n-30,n+$rotate_prv_snt";
+                        $rotate_prv_snt += 10;
+                    }
+                    else {    #right
+                        log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
+                        push @coords, "n,n,n+30,n+$rotate_nxt_snt";
+                        $rotate_nxt_snt += 10;
+                    }
+                }
+            }
         }
-        else {    # should be always the same document, if it exists at all
-
-            my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position;
-            $orientation = $orientation > 0 ? 'right'
-                         : $orientation < 0 ? 'left'
-                         :                    0;
-            if ( $orientation =~ /left|right/ ) {
-                if ( $orientation eq 'left' ) {
-                    log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;
-                    push @coords, "n,n,n-30,n+$rotate_prv_snt";
-                    $rotate_prv_snt += 10;
-                }
-                else {    #right
-                    log_info "ref-arrows: Following sentence\n" if $main::macroDebug;
-                    push @coords, "n,n,n+30,n+$rotate_nxt_snt";
-                    $rotate_nxt_snt += 10;
-                }
-            }
-            else {
-                log_info "ref-arrows: Not found!\n" if $main::macroDebug;
-                push @coords, "n,n,n+$rotate_dfr_doc,n-25";
-                $rotate_dfr_doc += 10;
-            }
+        else {
+            log_info "ref-arrows: Not found!\n" if $main::macroDebug;
+            push @coords, "n,n,n+$rotate_dfr_doc,n-25";
+            $rotate_dfr_doc += 10;
         }
 
         push @tags, $arrow_type;
