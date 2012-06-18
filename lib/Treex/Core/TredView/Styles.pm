@@ -180,7 +180,7 @@ sub draw_arrows {
     my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
 
     foreach my $target_id (@$target_ids) {
-        my $arrow_type = shift @$arrow_types // '_default';        
+        my $arrow_type = shift @$arrow_types // '_default';
 
         my $target_node = $self->_treex_doc->get_node_by_id($target_id);
 
@@ -217,8 +217,10 @@ sub draw_arrows {
         }
         else {    # should be always the same document, if it exists at all
 
-            my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position - 1;
-            $orientation = $orientation > 0 ? 'right' : ( $orientation < 0 ? 'left' : 0 );
+            my $orientation = $target_node->get_bundle->get_position - $node->get_bundle->get_position;
+            $orientation = $orientation > 0 ? 'right'
+                         : $orientation < 0 ? 'left'
+                         :                    0;
             if ( $orientation =~ /left|right/ ) {
                 if ( $orientation eq 'left' ) {
                     log_info "ref-arrows: Preceding sentence\n" if $main::macroDebug;

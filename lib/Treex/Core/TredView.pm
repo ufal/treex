@@ -667,10 +667,8 @@ sub node_style_hook {
     # alignment
     if ( $self->show_alignment and my $links = $node->attr('alignment') ) {
         foreach my $link (@$links) {
-            if ( exists $self->_displayed_nodes->{ $link->{'counterpart.rf'} } ) {
-                push @target_ids,  $link->{'counterpart.rf'};
-                push @arrow_types, $link->{type};
-            }
+            push @target_ids, $link->{'counterpart.rf'};
+            push @arrow_types, $link->{type};
         }
     }
 
