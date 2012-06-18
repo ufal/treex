@@ -161,7 +161,7 @@ has 'mem' => (
 
 has 'name' => (
     traits        => ['Getopt'],
-    cmd_aliases   => [ 'name' ],
+    cmd_aliases   => ['name'],
     is            => 'ro',
     isa           => 'Str',
     default       => '',
@@ -611,7 +611,7 @@ sub _run_job_scripts {
             $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
             $qsub_opts .= ' -p ' . $self->priority;
             $qsub_opts .= ' ' . $self->qsub;
-            $qsub_opts .= ' -N '.$self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
+            $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
 
             open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
@@ -676,18 +676,18 @@ sub _print_output_files {
 
     # To get utf8 encoding also when using qx (aka backticks):
     # my $command_output = qw($command);
-    # we need to    
+    # we need to
     use open qw{ :std IO :encoding(UTF-8) };
 
     foreach my $stream (qw(stderr stdout)) {
         my $job_number = $self->_get_job_number_from_doc_number($doc_number);
 
-        my $filename = $self->workdir . "/output/job" . sprintf("%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
+        my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         log_info "Processing output file: " . $filename;
 
-        if ( ! -f $filename ) {
+        if ( !-f $filename ) {
             my $message = "Document $doc_number finished without producing $filename. " .
-                " It might be useful to inspect " . $self->workdir . "/output/job" . sprintf("%03d", $job_number ) . "-loading.stderr";
+                " It might be useful to inspect " . $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-loading.stderr";
             if ( $self->survive ) {
                 log_warn("$message (fatal error ignored due to survival mode, be careful)");
                 return;
@@ -702,19 +702,21 @@ sub _print_output_files {
         if ( -s $filename == 0 ) {
             `touch $filename`;
         }
+
         #while ( -s $filename == 0 && $wait_it < 1 ) {
         #
-            # print STDERR "Size: " . ( -s $filename) . "\n";
-            #open my $FILE, '<:encoding(utf8)', $filename;
-            #my $line = <$FILE>;
-            #close $FILE;
-            #log_info "File is still empty. " . $filename;
+        # print STDERR "Size: " . ( -s $filename) . "\n";
+        #open my $FILE, '<:encoding(utf8)', $filename;
+        #my $line = <$FILE>;
+        #close $FILE;
+        #log_info "File is still empty. " . $filename;
         #    Time::HiRes::usleep(300000);
         #    $wait_it++;
         #}
 
         open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
         if ( $stream eq "stdout" ) {
+
             # real cat is 12-times faster than cat implemented in perl
             # it is useful when large dataset is processed
 
@@ -769,27 +771,27 @@ sub _wait_for_jobs {
     my $done                = 0;
     my $jobs_finished       = 1;
 
-    my $glob_time = 0;
+    my $glob_time  = 0;
     my $sleep_time = 0;
     my $print_time = 0;
 
     my $wait_time = 1;
 
     while ( !$done ) {
-        $total_doc_number    ||= $self->_read_total_doc_number();
+        $total_doc_number ||= $self->_read_total_doc_number();
 
-#        print STDERR "Fin: $all_jobs_finished; JobsFin: $jobs_finished; CurrD: $current_doc_number; TotD: $total_doc_number\n";
+        #        print STDERR "Fin: $all_jobs_finished; JobsFin: $jobs_finished; CurrD: $current_doc_number; TotD: $total_doc_number\n";
         my $glob_start = Time::HiRes::time();
 
-        if ( ! $all_jobs_finished ) {
-            while ( -f $self->workdir . sprintf("/output/job%03d.finished", $jobs_finished) ) {
+        if ( !$all_jobs_finished ) {
+            while ( -f $self->workdir . sprintf( "/output/job%03d.finished", $jobs_finished ) ) {
                 $jobs_finished++;
             }
             $all_jobs_finished = ( $jobs_finished > $self->jobs );
         }
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
-        $glob_time += (Time::HiRes::time() - $glob_start);
+        $glob_time += ( Time::HiRes::time() - $glob_start );
 
         # If a job starts processing another doc,
         # it means it has finished the current doc.
@@ -799,22 +801,23 @@ sub _wait_for_jobs {
         if ($current_doc_finished) {
             my $print_start = Time::HiRes::time();
             $self->_print_output_files($current_doc_number);
-            $print_time += (Time::HiRes::time() - $print_start);
+            $print_time += ( Time::HiRes::time() - $print_start );
             $current_doc_number++;
             $current_doc_started = 0;
-            $wait_time = 1 + $total_doc_number / (1 + $current_doc_number );
+            $wait_time = 1 + $total_doc_number / ( 1 + $current_doc_number );
             if ( $wait_time > 120 ) {
                 $wait_time = 120;
             }
         }
         else {
             my $sleep_start = Time::HiRes::time();
+
             #log_warn "Waiting time: $wait_time";
             sleep $wait_time;
-            $sleep_time += (Time::HiRes::time() - $sleep_start);
+            $sleep_time += ( Time::HiRes::time() - $sleep_start );
         }
 
-        $self->_check_job_errors;
+        $self->_check_job_errors($current_doc_number);
 
         # Both of the conditions below are necessary.
         # - $total_doc_number might be unknown (i.e. 0) before all_jobs_finished
@@ -891,12 +894,12 @@ sub _print_execution_time {
 }
 
 # To get utf8 encoding also when using qx (aka backticks):
-# my $command_output = qw($command);
+# my $command_output = qx($command);
 # we need to
 use open qw{ :std IO :encoding(UTF-8) };
 
 sub _check_job_errors {
-    my ($self) = @_;
+    my ( $self, $from_job_number ) = @_;
     my $workdir = $self->workdir;
     if ( defined( my $fatal_name = glob "$workdir/output/*fatalerror" ) ) {
         log_info "At least one job crashed with fatal error ($fatal_name).";
@@ -913,6 +916,34 @@ sub _check_job_errors {
         else {
             log_info "All remaining jobs will be interrupted now.";
             $self->_delete_jobs_and_exit;
+        }
+    }
+    $self->_check_epilog_before_finish($from_job_number);
+    return;
+}
+
+sub _check_epilog_before_finish {
+    my ( $self, $from_job_number ) = @_;
+    my $workdir = $self->workdir;
+    $from_job_number ||= 1;
+    for my $job_num ( $from_job_number .. $self->jobs ) {
+        my $job_str = sprintf "%.3d", $job_num;
+        my $epilog_name = glob "$workdir/output/job$job_str.sh.e*";
+        my $epilog = $epilog_name ? qx(grep EPILOG $epilog_name) : 0;
+        if ( $epilog && !-f "$workdir/output/job$job_str.finished" ) {
+            log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************\n";
+            system "cat $epilog_name";
+            log_info "********************** LAST STDERR OF JOB $job_str: ******************\n";
+            system "tail $workdir/output/job$job_str-doc*.stderr";
+            log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
+            if ( $self->survive ) {
+                log_warn("fatal error ignored due to the --survive option, be careful");
+                return;
+            }
+            else {
+                log_info "All remaining jobs will be interrupted now.";
+                $self->_delete_jobs_and_exit;
+            }
         }
     }
     return;
@@ -1011,10 +1042,9 @@ sub _redirect_output {
 
 sub _get_job_number_from_doc_number
 {
-    my ($self, $doc_number) = @_;
-    return ( $doc_number - 1 ) % ($self->jobs) + 1;
+    my ( $self, $doc_number ) = @_;
+    return ( $doc_number - 1 ) % ( $self->jobs ) + 1;
 }
-
 
 # not a method !
 sub treex {
