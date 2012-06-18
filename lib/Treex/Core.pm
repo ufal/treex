@@ -100,6 +100,7 @@ sequence of bundles.
 
 A document can contain one ore more zone 
 (L<Treex::Core::DocZone>), each of them containing a text.
+
 =head3 Bundle
 
 A bundle (L<Treex::Core::Bundle>) corresponds to a 
