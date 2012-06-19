@@ -77,6 +77,10 @@ my $logfixmsg    = '';
 my $logfixold    = '';
 my $logfixnew    = '';
 my $logfixbundle = undef;
+my $logfixold_flt_gov = undef;
+my $logfixold_flt_dep = undef;
+my $logfix_aligned_gov = undef;
+my $logfix_aligned_dep = undef;
 
 sub logfix1 {
     my ( $self, $node, $mess ) = @_;
@@ -87,6 +91,32 @@ sub logfix1 {
 
     if ( $gov && $dep ) {
 
+        $logfixold_flt_gov = $g->{flt};
+        $logfixold_flt_dep = $d->{flt};
+        
+        # mark with alignment arrow
+        
+        my $cs_root = $node->get_bundle->get_tree(
+            $self->language, 'a'
+        );
+        my @cs_nodes = $cs_root->get_descendants( { add_self => 1, ordered => 1 } );
+
+        my $cs_gov = $cs_nodes[ $gov->ord ];
+        if (defined $cs_gov && $cs_gov->lemma eq $gov->lemma ) {
+            $logfix_aligned_gov = $cs_gov;
+        } else {
+            $logfix_aligned_gov = undef;
+        }
+
+        my $cs_dep = $cs_nodes[ $dep->ord ];
+        if (defined $cs_dep && $cs_dep->lemma eq $dep->lemma ) {
+            $logfix_aligned_dep = $cs_dep;
+        } else {
+            $logfix_aligned_dep = undef;
+        }
+    
+        # mark in fixlog
+    
         # my $distance = abs($gov->ord - $dep->ord);
         # warn "FIXDISTANCE: $distance\n";
 
@@ -114,6 +144,8 @@ sub logfix1 {
     }
     else {
         $logfixold = '(undefined node)';
+        $logfixold_flt_gov = undef;
+        $logfixold_flt_dep = undef;
     }
 
     return;
@@ -121,8 +153,14 @@ sub logfix1 {
 
 sub logfix2 {
     my ( $self, $node ) = @_;
+    
+    my $dep = undef;
+    my $gov = undef;
+    my $d = undef;
+    my $g = undef;
+    
     if ($node) {
-        my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
+        ( $dep, $gov, $d, $g ) = $self->get_pair($node);
         return if !$dep;
 
         #new words pair
@@ -153,6 +191,21 @@ sub logfix2 {
 
     #output
     if ( $logfixold ne $logfixnew ) {
+        # alignment link
+        if (
+            defined $gov && defined $logfix_aligned_gov
+            && defined $logfixold_flt_gov && $logfixold_flt_gov ne $g->{flt}
+        ) {
+            $logfix_aligned_gov->add_aligned_node($gov, "depfix_$logfixmsg");
+        }
+        if (
+            defined $dep && defined $logfix_aligned_dep
+            && defined $logfixold_flt_dep && $logfixold_flt_dep ne $d->{flt}
+        ) {
+            $logfix_aligned_dep->add_aligned_node($dep, "depfix_$logfixmsg");
+        }
+    
+        # FIXLOG
         if ( $logfixbundle->get_zone( 'cs', 'FIXLOG' ) ) {
             my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
             $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
@@ -312,13 +365,15 @@ sub get_pair {
     my %d_categories = (
         pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6,
         tag => $d_tag,
-        afun => $node->afun
+        afun => $node->afun,
+        flt => $node->form . '#' . $node->lemma . '#' . $node->tag,
     );
     $g_tag =~ /^(.)(.)(.)(.)(.)..(.)/;
     my %g_categories = (
         pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6,
         tag => $g_tag,
-        afun => $parent->afun
+        afun => $parent->afun,
+        flt => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
