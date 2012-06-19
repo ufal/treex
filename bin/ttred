@@ -15,8 +15,8 @@ log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
 my $tred_extension_dir = Treex::Core::Config->tred_extension_dir();
 log_fatal('TrEd extension dir not set') if !defined $tred_extension_dir;
 
-my $command =  $tred_dir
-    . '/tred -O PreInstalledExtensionsDir='
+my $command =  '"' . $tred_dir
+    . '/tred" -O PreInstalledExtensionsDir='
     . $tred_extension_dir
 #    . ' -O MaxUndo=0 '
     . ' -B Treex::Core::TredView::BackendStorable ' # extra backends
