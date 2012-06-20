@@ -200,7 +200,7 @@ sub get_afun {
 
     # Articles a, an, the
     my $lemma = $node->lemma;
-    return 'AuxA' if $lemma =~ /^(an?|the)$/;
+    return 'AuxA' if $lemma =~ /^(an?|the)$/ && $tag eq 'DT';
 
     # Negation
     return 'Neg' if $lemma eq 'not';
