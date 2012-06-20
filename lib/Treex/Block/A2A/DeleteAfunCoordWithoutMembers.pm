@@ -22,7 +22,7 @@ Treex::Block::A2A::DeleteAfunCoordWithoutMembers - fix inconsistent coordination
 
 =head1 DESCRIPTION
 
-If a node is marked with afun=C<Coord>, but there are no conjuncst (is_member=1)
+If a node is marked with afun=C<Coord>, but there are no conjuncts (is_member=1)
 among its children, then the afun is changed to C<NR> (not recognized).
 This approximation is useful for situations when
 the is_member attribute is more reliable than afun.

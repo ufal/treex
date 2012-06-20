@@ -228,7 +228,6 @@ my %entered;
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    #return if $atree->get_bundle->get_position != 11;    # note that 13th sentence has position 12, DEBUG
     my $from_f = $self->from_family;
     if ( $from_f eq 'Prague' ) {
         $self->detect_prague($atree);
@@ -242,7 +241,7 @@ sub process_atree {
     else {
         log_fatal "$from_f not implemented";
 
-        #TODO
+        #TODO autodetect
     }
 
     # clean temporary variables, so we save some memory
@@ -644,6 +643,11 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
 
   # in scenario:
   A2A::Transform::CoordStyle
+         from_family=Stanford
+           from_head=right
+         from_shared=head
+    from_conjunction=following
+    from_punctuation=following
          family=Moscow
            head=left
          shared=nearest
@@ -651,7 +655,7 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
     punctuation=previous
 
   #TODO the same using a shortcut
-  #A2A::Transform::CoordStyle style=fMhLsNcBpP
+  #A2A::Transform::CoordStyle from_style=fShRsHcFpF style=fMhLsNcBpP
   
 =head1 DESCRIPTION
 

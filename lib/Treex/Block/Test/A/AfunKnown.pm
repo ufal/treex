@@ -3,13 +3,27 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-my @knownAfuns = qw(Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR AuxP AuxC AuxO AuxZ AuxX AuxG AuxY AuxS AuxK ExD AtrAtr AtrAdv AdvAtr AtrObj ObjAtr AuxA);
-sub process_anode {
-    my ($self, $anode) = @_;
+has reportNR => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => 1,
+);
 
-    if (! grep {$anode->afun eq $_} @knownAfuns) {
-        $self->complain($anode);
+my @known_afuns = qw(Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
+    AuxP AuxC AuxO AuxZ AuxX AuxG AuxY AuxS AuxK ExD AtrAtr AtrAdv AdvAtr AtrObj
+    ObjAtr AuxA NR);
+
+sub process_anode {
+    my ( $self, $anode ) = @_;
+    my $afun = $anode->afun;
+    if (( !defined $afun )
+        || ( $afun eq 'NR' && $self->reportNR )
+        || ( !any { $afun eq $_ } @known_afuns )
+        )
+    {
+        $self->complain( $anode, defined $afun ? $afun : 'undef' );
     }
+    return;
 }
 
 1;
@@ -18,9 +32,10 @@ sub process_anode {
 
 =item Treex::Block::Test::A::AfunKnown
 
-Each node should have only these afuns. This should detect mainly the temporary filler 'NR'
+Each node should have only these afuns.
+The parameter C<reportNR> chooses whether to report
+also the special afun value "NR" (intentionally marked as not recognized).
 
 =back
 
 =cut
-
