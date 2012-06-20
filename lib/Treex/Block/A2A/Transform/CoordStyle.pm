@@ -421,6 +421,136 @@ sub detect_stanford {
     return $new_head;
 }
 
+sub detect_moscow {
+    my ( $self, $node ) = @_;
+
+    # Don't go twice thru one node
+    return $node if $entered{$node};
+    $entered{$node} = 1;
+
+    #warn "dive [" . $node->form . "]\n"; #DEBUG
+
+    my @andmembers = ();
+    my $in_chain   = sub {
+        $_[0]->is_member || (
+            $_[0]->wild->{is_coord_conjunction}
+            && $self->from_conjunction =~ /between|autodetect/
+            )
+    };
+
+    my @queue = ($node);
+    while (@queue) {
+        my $iter_node = shift @queue;
+        my @new_andmembers = grep { $in_chain->($_) } @$iter_node->get_children();
+        log_warn "TODO: solve nested CS under " . $iter_node->get_address() if @new_andmembers > 1;
+        push @andmembers, @new_andmembers;
+        push @queue,      @new_andmembers;
+    }
+
+    # If $node is not a head of coordination,
+    # just skip it and recursively process its children.
+    # In Moscow style, the head of coordination is recognized iff
+    #  - there are conjuncts (marked by is_member=1) among its children
+    #  - or there are coordinating conjunctions among its children.
+    if ( !@andmembers ) {
+        foreach my $child ( $node->get_children() ) {
+            $self->detect_moscow($child);
+        }
+        return $node;
+    }
+
+    # Add the head as a member and sort
+    push @andmembers, $node;
+    @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
+
+    my @ands    = grep { $_->wild->{is_coord_conjunction} } @andmembers;
+    my @members = grep { $_->is_member } @andmembers;
+    if ( $self->from_conjunction eq 'previous' ) {
+        push @ands, grep { $_->wild->{is_coord_conjunction} } map { $_->get_children( { following_only => 1 } ) } @members;
+    }
+    elsif ( $self->from_conjunction eq 'following' ) {
+        push @ands, grep { $_->wild->{is_coord_conjunction} } map { $_->get_children( { previous_only => 1 } ) } @members;
+    }
+    elsif ( $self->from_conjunction eq 'autodetect' ) {
+        push @ands, grep { $_->wild->{is_coord_conjunction} } map { $_->get_children() } @members;
+    }
+    @ands = sort { $a->ord <=> $b->ord } @ands;
+    
+    my ( @shared, @commas );
+    if ( $self->from_shared eq 'head' ) {
+        @shared = grep { $_->is_shared_modifier } $node->get_children();
+    }
+    else {
+        @shared = grep { $_->is_shared_modifier } map { $_->get_children } @members;
+    }
+    my @todo =
+        grep { !$_->is_member && !$_->is_shared_modifier && !$_->wild->{is_coord_conjunction} }
+        map { $_->get_children() }
+        @andmembers;
+    @commas = pick { $self->is_comma($_) } @todo;
+
+    # Try to distinguish nested coordinations from multi-conjunct coordinations.
+    # This is just a heuristics!
+    my $new_nested_head;
+    if ( $self->guess_nested && @members > 2 && @ands ) {
+
+        # The nested interpretation may be more probable if
+        # a) the last conjunction precedes penultimate conjunct, e.g. (C1 and C2) , (C3)
+        # if ($ands[-1]->precedes( $members[-2] ))
+        # but there are counter-examples like C1 and C2(afun=ExD) C3(afun=ExD).
+
+        # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
+        if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
+            ## Suppose the first two members are in the nested coordination
+            #  TODO: it might be three or more (but that's very rare)
+            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
+            my @nested_members = splice @members, ( $head_right ? -2 : 0 ), 2;
+            my $border = $nested_members[ $head_right ? 0 : -1 ];
+
+            # Suppose $border is the borderline between the nested and the outer coordination
+            my ( @nested_shared, @nested_ands, @nested_commas );
+            if ($head_right) {
+                @nested_shared = pick { $border->precedes($_) } @shared;
+                @nested_ands   = pick { $border->precedes($_) } @ands;
+                @nested_commas = pick { $border->precedes($_) } @commas;
+            }
+            else {
+                @nested_shared = pick { $_->precedes($border) } @shared;
+                @nested_ands   = pick { $_->precedes($border) } @ands;
+                @nested_commas = pick { $_->precedes($border) } @commas;
+            }
+
+            # Process the nested coord. in the same way as the outer coord.
+            @nested_members = map { $self->detect_moscow($_); } @nested_members;
+            @nested_shared  = map { $self->detect_moscow($_); } @nested_shared;
+            my $nested_res = {
+                members => \@nested_members,
+                ands    => \@nested_ands,
+                shared  => \@nested_shared,
+                commas  => \@nested_commas,
+                head    => $node
+            };
+            $new_nested_head = $self->transform_coord( $node, $nested_res );
+            $node = $new_nested_head;
+        }
+    }
+
+    @members = map { $self->detect_moscow($_); } @members;
+    @shared  = map { $self->detect_moscow($_); } @shared;
+    @todo    = map { $self->detect_moscow($_); } @todo;      # private modifiers of the head
+
+    if ($new_nested_head) {
+        push @members, $new_nested_head;
+    }
+
+    #TODO? @commas, @ands (these should be mostly leaves)
+
+    # Transform the detected coordination
+    my $res = { members => \@members, ands => \@ands, shared => \@shared, commas => \@commas, head => $node };
+    my $new_head = $self->transform_coord( $node, $res );
+    return $new_head;
+}
+
 # Find the nearest previous/following member.
 # "Previous/following" is set by $direction, but if no such is found, the other direction is tried.
 sub _nearest {
