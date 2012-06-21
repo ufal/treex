@@ -361,16 +361,16 @@ sub get_pair {
 
     my $d_tag = $node->tag;
     my $g_tag = $parent->tag;
-    $d_tag =~ /^(.)(.)(.)(.)(.)..(.)/;
+    $d_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
     my %d_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6,
+        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6, neg => $7,
         tag => $d_tag,
         afun => $node->afun,
         flt => $node->form . '#' . $node->lemma . '#' . $node->tag,
     );
-    $g_tag =~ /^(.)(.)(.)(.)(.)..(.)/;
+    $g_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
     my %g_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6,
+        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6, neg => $7,
         tag => $g_tag,
         afun => $parent->afun,
         flt => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
