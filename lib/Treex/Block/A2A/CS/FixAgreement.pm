@@ -317,7 +317,7 @@ sub get_form {
     #    }
 
     if ( !$form ) {
-        print STDERR "Can't find a word for lemma '$lemma' and tag '$tag'.\n";
+        log_info ("Can't find a word for lemma '$lemma' and tag '$tag'.");
     }
 
     return $form;

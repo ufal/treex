@@ -98,7 +98,7 @@ sub fix {
                     }
                 );
                 if ($en_by_parent->tag =~ /^VB[ND]/
-                    && grep { $_->lemma eq "be" } $en_by_parent->get_children
+                    && grep { $_->lemma eq "be" && $_->afun eq "AuxV" } $en_by_parent->get_children
                     )
                 {
 
