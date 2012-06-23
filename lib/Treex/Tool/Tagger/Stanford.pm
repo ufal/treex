@@ -70,7 +70,7 @@ sub DEMOLISH {
     return;
 }
 
-sub tag {
+sub tag_sentence {
     my ( $self, @tokens ) = @_;
 
     # write the tokens to be tagged
