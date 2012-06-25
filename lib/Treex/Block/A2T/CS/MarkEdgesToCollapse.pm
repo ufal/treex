@@ -42,6 +42,11 @@ sub _is_infinitive {
 # Return 1 if $modal is a modal verb with regards to its $infinitive child
 override is_modal => sub {
     my ( $self, $modal, $infinitive ) = @_;
+    
+    # state passive "je(lemma=být) připraven(parent=je,tag=Vs,afun=Pnom)"
+    # This is definitely not a modal construction,
+    # but technicaly it's easiest to solve it here.
+    return 1 if $infinitive->tag =~ /^Vs/ && $modal->lemma eq 'být';
 
     # Check if $infinitive is the lexical verb with which the modal should merge.
     return 0 if !$self->_is_infinitive( $modal, $infinitive );
@@ -64,11 +69,8 @@ override is_aux_to_parent => sub {
     my $base_result = super();
     return $base_result if defined $base_result;
 
-    # state passive
-    my $parent = $node->get_parent();
-    return 1 if ( $node->tag =~ /^Vs/ && $parent->lemma eq 'být' );
-
     # ???
+    my $parent = $node->get_parent();
     return 1 if lc( $parent->form ) eq 'jako' && $parent->afun eq 'AuxY';
 
     return 0;
