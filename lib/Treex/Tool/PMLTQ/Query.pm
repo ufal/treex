@@ -6,6 +6,8 @@ use strict;
 use warnings;
 use autodie;
 use Carp;
+use Readonly;
+
 require Exporter;
 
 our @ISA     = qw(Exporter);
@@ -14,46 +16,48 @@ our $VERSION = '0.01';
 our $DEBUG   = 0;
 our $cachedFsfile = 0;
 
+#####################
+# Initialization: @INC, needed libraries, Treex resource path
+#####################
+
 # Use the same TrEd library directories as Treex 
 use Treex::Core::Config;
+
 my $tred_dir = Treex::Core::Config->tred_dir();
 log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
 push @INC, $tred_dir . '/tredlib'; 
 
 use Treex::PML;
 
-BEGIN {
+# Settings for downloading from the UFAL SVN server
+Readonly my $SVN_CO => 'svn --username public --password public export';
+Readonly my $SVN_SERVER => 'https://svn.ms.mff.cuni.cz/svn/';
 
-    # Settings for downloading from the UFAL SVN server
-    my $SVN_CO = 'svn --username public --password public export';
-    my $SVN_SERVER = 'https://svn.ms.mff.cuni.cz/svn/';
+# Subdirectory settings
+Readonly my $RES => 'resources/';
+Readonly my $LIB => 'lib/';
 
-    # Subdirectory settings
-    my $RES = 'resources/';
-    my $LIB = 'lib/';
-
-    # Determine the current path
-    my $path = $INC{'Treex/Tool/PMLTQ/Query.pm'};
-    $path =~ s/Query.pm$//;
+# Determine the current path
+my $path = $INC{'Treex/Tool/PMLTQ/Query.pm'};
+$path =~ s/Query.pm$//;
    
-    # Add resource path to PML-TQ schemas (download them from SVN if needed)
-    if ( !-e $path . $RES . 'tree_query_schema.xml' ) {
-        print STDERR "\nPML-TQ init: Exporting needed resources from SVN to $path$RES\n\n";
-        system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/resources/ ' . $path . $RES );
-    } 
-    Treex::PML::AddResourcePath( $path . 'resources/' );
+# Add resource path to PML-TQ schemas (download them from SVN if needed)
+if ( !-e $path . $RES . 'tree_query_schema.xml' ) {
+    print STDERR "\nPML-TQ init: Exporting needed resources from SVN to $path$RES\n\n";
+    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/resources/ ' . $path . $RES );
+} 
+Treex::PML::AddResourcePath( $path . 'resources/' );
 
-    # Add needed libraries to INC (download them from SVN if needed)
-    if ( !-e $path . $LIB . 'Tree_Query' || !-e $path . $LIB . 'PMLTQ' ){
-        print STDERR "\nPML-TQ init: Exporting needed libraries from SVN to $path$LIB\n\n";
-        mkdir( $path . $LIB );
-        system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/Tree_Query ' . $path . $LIB . '/Tree_Query' );
-        system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/PMLTQ ' . $path . $LIB . '/PMLTQ' );
-        system( $SVN_CO . ' ' . $SVN_SERVER . 'TrEd/extensions/pdt20/libs/PMLTQ/Relation ' . $path . $LIB . '/PMLTQ/Relation' );        
-    }
-    push @INC, $path . $LIB;
-
+# Add needed libraries to INC (download them from SVN if needed)
+if ( !-e $path . $LIB . 'Tree_Query' || !-e $path . $LIB . 'PMLTQ' ){
+    print STDERR "\nPML-TQ init: Exporting needed libraries from SVN to $path$LIB\n\n";
+    mkdir( $path . $LIB );
+    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/Tree_Query ' . $path . $LIB . '/Tree_Query' );
+    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/PMLTQ ' . $path . $LIB . '/PMLTQ' );
+    system( $SVN_CO . ' ' . $SVN_SERVER . 'TrEd/extensions/pdt20/libs/PMLTQ/Relation ' . $path . $LIB . '/PMLTQ/Relation' );        
 }
+push @INC, $path . $LIB;
+
 
 #####################
 # Code to provide stuff required from btred
@@ -63,7 +67,7 @@ BEGIN {
 
 	package TredMacro;
 	require TrEd::Basics;
-	require 'tred-no_fslib.def'; 
+	# require 'tred-no_fslib.def'; 
 	no warnings qw(redefine);
 
 	sub DetermineNodeType {
@@ -79,7 +83,8 @@ BEGIN {
 	package PML;
 
 	sub Schema {
-		&TrEd::Basics::fileSchema;
+		my ($pmldoc) = @_;  	 	 
+        return $pmldoc->schema(); 
 	}
 
 	sub GetNodeByID {
@@ -205,6 +210,9 @@ i.e. running inside C<btred>.
 
 Stuff needed for C<Treex::PML::Document> loading is commented out: we expect that the 
 end user of this module provides an already created document/tree.
+
+This module requires TrEd 2.0 and higher; the required C<Tree_Query> and C<PMLTQ>
+libraries are downloaded automatically from their SVN directories. 
 
 =head1 AUTHORS
 
