@@ -9,7 +9,7 @@ sub process_tnode {
 
     if ( $tnode->t_lemma eq '#PersPron' ) {
         my $mlemma;
-        my ($gender,$number,$person) = map {$tnode->get_attr("gram/$_")} qw(number gender person);
+        my ($gender,$number,$person) = map {$tnode->get_attr("gram/$_")} qw(gender number person);
 
         if ( $tnode->formeme =~ /^adj/ ) { # in adjectival positions
 
