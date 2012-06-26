@@ -18,6 +18,7 @@ has 'stanford_tagger_jar' => (
 
 # Path to the model data file
 has 'model' => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );
+
 # Memory allowed to the tagger
 has 'memory' => ( is => 'ro', isa => 'Str', default => '512m' );
 
@@ -39,11 +40,11 @@ sub BUILD {
         . ' -model ' . $self->model
         . ' -textFile  STDIN '
         . ' -tokenize false '
-        . ' 2> /dev/null '; # suppress the rather verbose Stanford tagger output
+        . ' 2> /dev/null ';    # suppress the rather verbose Stanford tagger output
 
     log_info( "Running " . $command );
 
-    $SIG{PIPE} = 'IGNORE';    # don't die if tagger gets killed
+    $SIG{PIPE} = 'IGNORE';     # don't die if tagger gets killed
     my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
 
     $self->_set_read_handle($read);
@@ -54,7 +55,7 @@ sub BUILD {
     print $write "A\n";
     my $status = <$read>;
     log_fatal('Stanford tagger not loaded correctly') if ( ( $status || '' ) !~ /^A/ );
-    $status = <$read>; # read empty line left by Stanford tagger
+    $status = <$read>;         # read empty line left by Stanford tagger
 
     return;
 }
@@ -77,24 +78,30 @@ sub tag_sentence {
     print { $self->_write_handle } join( " ", @tokens ), "\n";
 
     # read the result
-    my $read   = $self->_read_handle;
-    my $result = <$read>;
-    $result =~ s/\r?\n$//;    
+    my $read = $self->_read_handle;
 
-    my (@tagged) = split /\s+/, $result;
-    $result = <$read>; # read empty line left by Stanford tagger
-    
+    my @tagged;
+    # unfortunately, if Stanford tagger reads from STDIN (which it does, in our case), it tries to
+    # detect sentence boundaries even if the input is tokenized and splits the output into multiple
+    # lines according to these sentence boundaries
+    while ( @tagged < @tokens ) {
+        my $result = <$read>;
+        $result =~ s/\r?\n$//;    # read tagged data line
+        push @tagged, split( /\s+/, $result );
+        $result = <$read>;        # read empty line left by Stanford tagger
+    }
+
     # extract tags
     log_fatal( 'Invalid result: ' . scalar(@tokens) . ' sent, ' . scalar(@tagged) . ' received.' ) if ( @tagged != @tokens );
+
     for ( my $i = 0; $i < @tokens; ++$i ) {
-        $tagged[$i] = substr( $tagged[$i], length($tokens[$i]) + 1 );
+        $tagged[$i] = substr( $tagged[$i], length( $tokens[$i] ) + 1 );
     }
-    
+
     return @tagged;
 }
 
 1;
-
 
 =head1 NAME
 
