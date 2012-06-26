@@ -6,6 +6,21 @@ extends 'Treex::Block::W2A::TagStanford';
 
 has '+model' => ( default => 'data/models/tagger/stanford/wsj-0-18-bidirectional-distsim.tagger' );
 
+override 'normalize' => sub {
+
+    my ( $self, $forms_rf ) = @_;
+
+    map {
+        s/\(/-LRB-/;
+        s/\)/-RRB-/;
+        s/’/'/g;
+        s/[«“]/``/g;
+        s/["»”]/''/g;
+        s/—/--/g;
+    } @$forms_rf;
+
+};
+
 1;
 
 __END__
@@ -21,7 +36,7 @@ Treex::Block::W2A::EN::TagStanford
 =head1 DESCRIPTION
 
 This is just a small modification of L<Treex::Block::W2A::TagStanford> which adds the path to the
-default model for English.
+default model for English + expected brackets and quotes normalization.
 
 =head1 AUTHORS
 

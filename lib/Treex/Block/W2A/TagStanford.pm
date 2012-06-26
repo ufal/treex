@@ -12,7 +12,7 @@ has 'model' => ( is => 'ro', isa => 'Str', required => 1 );
 
 has '_tagger' => ( is => 'ro', isa => 'Treex::Tool::Tagger::Stanford', writer => '_set_tagger' );
 
-sub BUILD {
+sub process_start {
     my ($self) = @_;
     $self->_set_tagger( Treex::Tool::Tagger::Stanford->new( { model => $self->model } ) );
 }
@@ -22,9 +22,11 @@ sub process_atree {
     my ( $self, $atree ) = @_;
     my @anodes = $atree->get_descendants( { ordered => 1 } );
     my @forms = map { $_->form } @anodes;
+    
+    $self->normalize(\@forms);
 
     # get tags
-    my @tags = $self->_tagger->tag_sentence( @forms );
+    my @tags = $self->_tagger->tag_sentence(@forms);
 
     if ( scalar @tags != scalar @forms ) {
         log_fatal("Different number of tokens and tags. TOKENS: @forms, TAGS: @tags");
@@ -36,6 +38,11 @@ sub process_atree {
     }
 
     return 1;
+}
+
+# This is left to be overridden by child blocks
+sub normalize {
+    my ( $self, $forms_rf ) = @_;
 }
 
 1;
