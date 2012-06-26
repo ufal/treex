@@ -8,6 +8,9 @@ use ProcessUtils;
 
 Readonly my $INST_DIR => 'installed_tools/tagger/stanford/';
 
+# Handle all kinds of Unicode spaces (non-breaking etc.)
+Readonly my $SPACE => '[\s\N{U+00A0}\N{U+200b}\N{U+2007}\N{U+202F}\N{U+2060}\N{U+FEFF}]';
+
 # Stanford tagger main JAR
 has 'stanford_tagger_jar' => (
     is      => 'ro',
@@ -20,7 +23,7 @@ has 'stanford_tagger_jar' => (
 has 'model' => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );
 
 # Memory allowed to the tagger
-has 'memory' => ( is => 'ro', isa => 'Str', default => '512m' );
+has 'memory' => ( is => 'ro', isa => 'Str', default => '1g' );
 
 # Stanford tagger slave application controls (bipipe handles, application PID)
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
@@ -72,26 +75,38 @@ sub DEMOLISH {
 }
 
 sub tag_sentence {
+
     my ( $self, @tokens ) = @_;
 
-    # write the tokens to be tagged
-    print { $self->_write_handle } join( " ", @tokens ), "\n";
+    # write the tokens to be tagged (trim tokens first)
+    print { $self->_write_handle } join( " ", map { s/^$SPACE+//; s/$SPACE+$//; $_ } @tokens ), "\n";
 
     # read the result
     my $read = $self->_read_handle;
 
     my @tagged;
+
     # unfortunately, if Stanford tagger reads from STDIN (which it does, in our case), it tries to
     # detect sentence boundaries even if the input is tokenized and splits the output into multiple
     # lines according to these sentence boundaries
     while ( @tagged < @tokens ) {
+        
         my $result = <$read>;
+        log_fatal( 'Premature EOF: needed ' . scalar(@tokens) . ', got ' . scalar(@tagged) . '. Tagger died?' ) if ( !$result );
+
         $result =~ s/\r?\n$//;    # read tagged data line
-        push @tagged, split( /\s+/, $result );
+        push @tagged, split( /$SPACE+/, $result );
         $result = <$read>;        # read empty line left by Stanford tagger
     }
 
-    # extract tags
+    # discard some tags if tokens contained whitespace (i.e. take only the first tag for such token)
+    for ( my $i = 0; $i < @tokens; ++$i ) {
+        my $num_spaces = () = $tokens[$i] =~ /\s+/g;    # TODO nesmí být na kraji
+        splice( @tagged, $i + 1, $num_spaces ) if ($num_spaces);
+        $tokens[$i] =~ s/\s.*$//;
+    }
+
+    # extract tags from the tagger output
     log_fatal( 'Invalid result: ' . scalar(@tokens) . ' sent, ' . scalar(@tagged) . ' received.' ) if ( @tagged != @tokens );
 
     for ( my $i = 0; $i < @tokens; ++$i ) {
@@ -135,6 +150,7 @@ Path to the packed model file.
 
 =item @tags = $tagger->tag(@tokens);
 
+Returns a list of tags for tokenized input.
 
 =back
 
