@@ -216,8 +216,10 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     if (defined $cs2ru{$tnode->formeme}) {
-        $tnode->set_formeme($cs2ru{$tnode->formeme})
+        $tnode->set_formeme($cs2ru{$tnode->formeme});
+        $tnode->set_formeme_origin('rule-CS2RU::RuleBasedFormemes');
     }
+    return;
 }
 
 
