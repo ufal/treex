@@ -49,7 +49,7 @@ sub process_document {
     if ( $self->_args->{_bundle} ) {
         my $bundleNo = 1;
         foreach my $bundle ( $document->get_bundles() ) {
-            if ( !$self->grep_bundle || $self->grep_bundle == $bundleNo ) {
+            if ( !$self->select_bundles || $self->_is_bundle_selected->{$bundleNo} ) {
                 $self->process_bundle($bundle, $bundleNo);
             }
             $bundleNo++;
