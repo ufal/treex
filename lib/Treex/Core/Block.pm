@@ -12,13 +12,14 @@ has scenario => (
     weak_ref => 1,
 );
 
-has grep_bundle => (
+has select_bundles => (
     is            => 'ro',
-    isa           => 'Int',                                            # or regex in future?
     default       => 0,
-    documentation => 'apply process_bundle only on the n-th bundle,'
-        . ' 0 (default) means apply to all bundles. Useful for debugging.',
+    documentation => 'apply process_bundle only on the specified bundles,'
+        . ' e.g. "1-4,6,8-12". The default is 0 which means all bundles. Useful for debugging.',
 );
+
+has _is_bundle_selected => (is=>'rw');
 
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
 # or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),
@@ -52,7 +53,19 @@ sub zone_label {
 
 sub BUILD {
     my $self = shift;
-
+    if ($self->select_bundles){
+      log_fatal 'select_bundles='.$self->select_bundles.' does not match /^\d+(-\d+)?(,\d+(-\d+)?)*$/'
+          if $self->select_bundles !~ /^\d+(-\d+)?(,\d+(-\d+)?)*$/;
+      my %selected;
+      foreach my $span (split /,/, $self->select_bundles){
+          if ($span =~ /(\d+)-(\d+)/){
+              @selected{$1..$2} = ($1..$2);
+          } else {
+              $selected{$span} = 1;
+          }
+      }
+      $self->_set_is_bundle_selected(\%selected);
+    }
     return;
 }
 
@@ -87,7 +100,7 @@ sub process_document {
 
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
-        if ( !$self->grep_bundle || $self->grep_bundle == $bundleNo ) {
+        if ( !$self->select_bundles || $self->_is_bundle_selected->{$bundleNo} ) {
             $self->process_bundle( $bundle, $bundleNo );
         }
         $bundleNo++;
