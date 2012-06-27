@@ -74,6 +74,14 @@ sub process_tnode {
         }
     }
 
+    # == Tense ==
+    my $tense = $t_node->gram_tense || '';
+    if ( $tense eq 'sim' ){
+       $a_node->set_attr( 'morphcat/tense', '[PH]');
+    } elsif ($tense eq 'ant') {
+       $a_node->set_attr( 'morphcat/tense', '[R]');
+    }
+
     return;
 }
 

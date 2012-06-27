@@ -18,6 +18,10 @@ sub process_anode {
     $gender =~ s/S/\[SWX\-\]/;
     $anode->set_attr( 'morphcat/gender', $gender );
 
+    my $person = $anode->get_attr('morphcat/person') || '';
+    $person =~ s/3/\[3X\-\]/;
+    $anode->set_attr( 'morphcat/person', $person );
+
     if ( $anode->get_attr(qw(morphcat)) ) {
         $anode->set_tag(
             join '',
