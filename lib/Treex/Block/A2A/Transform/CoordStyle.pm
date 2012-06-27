@@ -428,7 +428,7 @@ sub detect_moscow {
     return $node if $entered{$node};
     $entered{$node} = 1;
 
-    #warn "dive [" . $node->form . "]\n"; #DEBUG
+    warn "dive [" . ( $node->form // '' ) . "]\n";    #DEBUG
 
     my @andmembers = ();
     my $in_chain   = sub {
@@ -439,10 +439,14 @@ sub detect_moscow {
     };
 
     my @queue = ($node);
+    my (@todo, @commas);
     while (@queue) {
         my $iter_node = shift @queue;
-        my @new_andmembers = grep { $in_chain->($_) } @$iter_node->get_children();
+        my @children = $iter_node->get_children();
+        my @new_andmembers = pick { $in_chain->($_) } @children;
         log_warn "TODO: solve nested CS under " . $iter_node->get_address() if @new_andmembers > 1;
+        push @commas, pick {$self->is_comma($_)} @children;
+        push @todo, @children;
         push @andmembers, @new_andmembers;
         push @queue,      @new_andmembers;
     }
@@ -458,8 +462,9 @@ sub detect_moscow {
         }
         return $node;
     }
-
+warn join(", ", map {$_->form} @andmembers)."\n";
     # Add the head as a member and sort
+    $node->set_is_member(1);
     push @andmembers, $node;
     @andmembers = sort { $a->ord <=> $b->ord } @andmembers;
 
@@ -475,19 +480,14 @@ sub detect_moscow {
         push @ands, grep { $_->wild->{is_coord_conjunction} } map { $_->get_children() } @members;
     }
     @ands = sort { $a->ord <=> $b->ord } @ands;
-    
-    my ( @shared, @commas );
+
+    my @shared;
     if ( $self->from_shared eq 'head' ) {
         @shared = grep { $_->is_shared_modifier } $node->get_children();
     }
     else {
         @shared = grep { $_->is_shared_modifier } map { $_->get_children } @members;
     }
-    my @todo =
-        grep { !$_->is_member && !$_->is_shared_modifier && !$_->wild->{is_coord_conjunction} }
-        map { $_->get_children() }
-        @andmembers;
-    @commas = pick { $self->is_comma($_) } @todo;
 
     # Try to distinguish nested coordinations from multi-conjunct coordinations.
     # This is just a heuristics!
@@ -535,7 +535,7 @@ sub detect_moscow {
         }
     }
 
-    @members = map { $self->detect_moscow($_); } @members;
+    #@members = map { $self->detect_moscow($_); } @members;
     @shared  = map { $self->detect_moscow($_); } @shared;
     @todo    = map { $self->detect_moscow($_); } @todo;      # private modifiers of the head
 
@@ -590,7 +590,7 @@ sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
 
-    #$self->_dump_res($res);    #DEBUG
+    $self->_dump_res($res);    #DEBUG
     my $parent = $old_head->get_parent() or return $old_head;
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
 
