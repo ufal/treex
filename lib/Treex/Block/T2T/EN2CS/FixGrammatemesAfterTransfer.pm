@@ -344,6 +344,7 @@ sub _fix_negation {
         or ( $en_tlemma =~ /^discontent/ and $cs_tlemma =~ /^(spokoj)/ )
         or ( $en_tlemma =~ /^volat/      and $cs_tlemma =~ /^(stál)/ )
         or ( $en_tlemma =~ /^minor/      and $cs_tlemma =~ /^(zletil)/ )
+       # or ( $en_tlemma =~ /^irritat/      and $cs_tlemma =~ /^z?příjem/ )
         )
     {
         $cs_t_node->set_gram_negation('neg1');

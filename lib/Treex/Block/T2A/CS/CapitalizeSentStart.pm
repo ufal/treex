@@ -4,6 +4,9 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+my $OPENING_PUNCT = '({[‚„«‹|*"\'';
+
+
 sub process_zone {
     my ( $self, $zone ) = @_;
 
@@ -19,15 +22,16 @@ sub process_zone {
 
     foreach my $a_sent_root ( grep {defined} ( $first_root, @dsp_aroots ) ) {
         my ($first_word) =
-            grep { $_->get_attr('morphcat/pos') ne 'Z' and ( $_->form || '' ) ne '„' }
-            $a_sent_root->get_descendants( { ordered => 1, add_self => 1 } );
+            first { $_->get_attr('morphcat/pos') ne 'Z' and ( $_->form // $_->lemma // '' ) !~ /^[$OPENING_PUNCT]+$/ }
+        $a_sent_root->get_descendants( { ordered => 1, add_self => 1 } );
 
         # skip empty sentences and first words with no form
         next if !$first_word || !defined $first_word->form;
 
         # in direct speech, capitalization is allowed only after the opening quote
         my $prev_node = $first_word->get_prev_node;
-        next if $prev_node and ( $prev_node->get_attr('morphcat/pos') || '' ) ne "Z";
+        next if $prev_node and ( $prev_node->get_attr('morphcat/pos') || '' ) ne "Z"
+                and ( $prev_node->form // $prev_node->lemma // '' ) !~ /^[$OPENING_PUNCT]+$/;
 
         $first_word->set_attr( 'form', ucfirst( $first_word->form ) );
 

@@ -99,7 +99,7 @@ sub _rerank_formeme_variant {
     my $cs_formeme = $variant->{formeme};
     my $prob = $self->_model->get_prob( $en_formeme . "\t" . $en_parent_lemma, $cs_formeme );
     
-    log_info( "Prob for: " . $en_formeme . "\t" . $en_parent_lemma . ", " . $cs_formeme . ": " . $prob );
+    # log_info( "Prob for: " . $en_formeme . "\t" . $en_parent_lemma . ", " . $cs_formeme . ": " . $prob );
     
     my $new_logprob;
     if ($prob){

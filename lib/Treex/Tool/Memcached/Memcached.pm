@@ -83,7 +83,7 @@ sub get_memcached_hostname {
             chomp $lines[0];
             log_info $lines[0];
             $lines[0] =~ /all.q\@([^.]+)\..*/;
-            $server = $1;
+            $server = $1 // "";
             if ( ! $server ) {
                 log_info "Waiting in queue...\n";
                 @lines = grep { /memcached/ } `qstat`;
