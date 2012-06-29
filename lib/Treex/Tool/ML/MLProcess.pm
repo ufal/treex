@@ -101,6 +101,7 @@ sub run {
         . ' -jar ' . $mlprocess
         . ' -d ' . $self->_temp_dir()
         . ( $self->cleanup_temp ? ' -l ' : '' )
+        . ' -s UTF-8 '
         . ' ' . $plan_file
         . ' -v ' . $self->verbosity . ' ';
 

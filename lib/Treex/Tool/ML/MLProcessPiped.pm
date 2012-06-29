@@ -66,6 +66,7 @@ sub BUILD {
     my $command   = 'java ' . ' -Xmx' . $self->memory
         . ' -cp ' . $mlprocess . ' en_deep.mlprocess.simple.Simple '
         . ' -v ' . $self->verbosity
+        . ' -c UTF-8 '
         . ( $self->caching =~ m/^[0-9]+$/ ? ' -s ' : ' -a ' ) . $self->caching
         . ' -r '
         . ' ' . $self->model;
