@@ -428,7 +428,7 @@ sub detect_moscow {
     return $node if $entered{$node};
     $entered{$node} = 1;
 
-    warn "dive [" . ( $node->form // '' ) . "]\n";    #DEBUG
+    #warn "dive [" . ( $node->form // '' ) . "]\n";    #DEBUG
 
     my @andmembers = ();
     my $in_chain   = sub {
@@ -462,7 +462,7 @@ sub detect_moscow {
         }
         return $node;
     }
-warn join(", ", map {$_->form} @andmembers)."\n";
+
     # Add the head as a member and sort
     $node->set_is_member(1);
     push @andmembers, $node;
@@ -590,7 +590,7 @@ sub transform_coord {
     my ( $self, $old_head, $res ) = @_;
     return $old_head if !$res;
 
-    $self->_dump_res($res);    #DEBUG
+    #$self->_dump_res($res);    #DEBUG
     my $parent = $old_head->get_parent() or return $old_head;
     my @members = sort { $a->ord <=> $b->ord } @{ $res->{members} };
 
@@ -639,6 +639,12 @@ sub transform_coord {
         }
         if ( !@ands ) {
             log_warn "No separators in coordination under " . $parent->get_address;
+            
+            # We are not able to convert this coordination to Prague family,
+            # but we must produce a valid structure, so unmark all members.
+            for my $member (@members){
+                $member->set_is_member(0);
+            }
             return $old_head;
         }
         @ands = sort { $a->ord <=> $b->ord } @ands;
