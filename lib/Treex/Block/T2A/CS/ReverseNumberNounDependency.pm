@@ -132,7 +132,7 @@ sub _should_be_governing {
     $t_lemma =~ s/ //g;
     return 1 if _is_bigger_than_four_or_fraction($t_lemma);
     return 1 if $t_lemma =~ /^\d+[,.]\d+$/;
-    return 1 if $t_lemma =~ /^(mnoho|několik|méně|více|málo|hodně|většina|menšina)$/;
+    return 1 if $t_lemma =~ /^(mnoho|(ně)?kolik|méně|více|málo|hodně|většina|menšina)$/;
     return 0;
 }
 
