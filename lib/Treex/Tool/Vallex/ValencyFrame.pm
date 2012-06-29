@@ -30,6 +30,8 @@ has 'lexicon' => ( isa => 'Str', is => 'ro' );
 
 # A hash map of all the frame elements, according to their functor
 has '_element_map' => ( isa => 'HashRef', is => 'ro', builder => '_build_element_map', lazy_build => 1 );
+# A hash map of all the frame elements, according to their possible formemes
+has '_form_map' => ( isa => 'HashRef', is => 'ro', builder => '_build_form_map', lazy_build => 1 );
 
 # Loaded valency dictionaires cache
 class_has '_loaded_dicts' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
@@ -54,7 +56,8 @@ around 'BUILDARGS' => sub {
         if ( !$frame_xml ) {
             log_warn( "The specified valency frame ID was not found: " . ( $params->{id} ? $params->{id} : $params->{ord} ) );
         }
-        # Fill the valency frame from dictionary XML 
+
+        # Fill the valency frame from dictionary XML
         _fill_params_from_xml( $frame_xml, $params );
     }
     else {
@@ -67,7 +70,6 @@ around 'BUILDARGS' => sub {
     # Otherwise keep the user-set members and die if some of them are missing
     return $params;
 };
-
 
 # Fill valency frame parameters from a XML context in the dictionary
 sub _fill_params_from_xml {
@@ -112,17 +114,23 @@ sub get_frames_for_lemma {
     my ( $lexicon_name, $language, $lemma, $pos ) = @_;
     my $xc = _get_xpath_context($lexicon_name);
     my @frames;
-    
-    $pos =~ s/^adj$/a/;
-    $pos =~ s/^adv$/d/;
-    $pos = uc $pos;
-    
-    my @found = $xc->findnodes( "//word[\@lemma=\"$lemma\" and \@POS=\"$pos\"]//frame" );
+    my @found; 
 
-    foreach my $frame_xml (@found){       
-    
+    if ($pos){
+        $pos =~ s/^adj$/a/;
+        $pos =~ s/^adv$/d/;
+        $pos = uc $pos;
+        
+        @found = $xc->findnodes("//word[\@lemma=\"$lemma\" and \@POS=\"$pos\"]//frame");
+    }
+    else {
+        @found = $xc->findnodes("//word[\@lemma=\"$lemma\"]//frame");
+    }
+
+    foreach my $frame_xml (@found) {
+
         my $params = { language => $language, lexicon => $lexicon_name, id => $frame_xml->getAttribute('id') };
-        _fill_params_from_xml($frame_xml, $params);
+        _fill_params_from_xml( $frame_xml, $params );
         push @frames, Treex::Tool::Vallex::ValencyFrame->new($params);
     }
     return @frames;
@@ -140,11 +148,34 @@ sub _build_element_map {
     return \%map;
 }
 
+# This constructs the hashmap of frame elements by their possible forms
+sub _build_form_map {
+
+    my ($self) = @_;
+    my %map;
+
+    foreach my $element ( @{ $self->elements } ) {
+        foreach my $form ( @{ $element->forms_list } ) {
+            $map{$form} = [] if ( !$map{$form} );
+            push @{ $map{$form} }, $element;
+        }
+    }
+    return \%map;
+}
+
 # Return the frame element with the specified functor, or undef
 sub functor {
     my ( $self, $functor ) = @_;
 
     return $self->_element_map->{$functor};
+}
+
+# Return all frame elements that can have the given formeme, or undef
+sub elements_have_form {
+    my ( $self, $formeme ) = @_;
+
+    return $self->_form_map->{$formeme} if (defined $self->_form_map->{$formeme});
+    return [];
 }
 
 # Convert the frame to a string

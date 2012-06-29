@@ -109,13 +109,13 @@ sub _build_config_file_data {
 # Take the output attribute names from the config file, if none are given explicitly
 sub _build_output_attrib_names {
     my ($self) = @_;
-    return $self->_config_file_data->{labels};
+    return $self->_config_file_data->{labels} // {};
 }
 
 # Take the attribute type overrides from the config file, if none are given explicitly
 sub _build_force_types {
     my ($self) = @_;
-    return $self->_config_file_data->{types};
+    return $self->_config_file_data->{types} // {};
 }
 
 # Take the attribute list from the config file, if none are given explicitly

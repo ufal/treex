@@ -87,7 +87,7 @@ Treex::Block::Write::LayerAttributes::BracketedVerbform
 
 =head1 DESCRIPTION
 
-For a given verbal t-node, output the corresponding compound verbform on the a-layer (as bracketed tree,
+For a given Czech verbal t-node, output the corresponding compound verbform on the a-layer (as bracketed tree,
 auxiliary verb lemmas (except the modal verb) and partial tags of all forms, thus marking POS, 
 SubPOS, Tense, Voice, and Negation)
 
