@@ -3,12 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-has reportNR => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-);
-
 my @known_afuns = qw(Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
     AuxP AuxC AuxO AuxZ AuxX AuxG AuxY AuxS AuxK ExD AtrAtr AtrAdv AdvAtr AtrObj
     ObjAtr AuxA Neg NR);
@@ -16,12 +10,8 @@ my @known_afuns = qw(Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
 sub process_anode {
     my ( $self, $anode ) = @_;
     my $afun = $anode->afun;
-    if (( !defined $afun )
-        || ( $afun eq 'NR' && $self->reportNR )
-        || ( !any { $afun eq $_ } @known_afuns )
-        )
-    {
-        $self->complain( $anode, defined $afun ? $afun : 'undef' );
+    if ( defined $afun && ( !any { $afun eq $_ } @known_afuns ) ) {
+        $self->complain( $anode, $afun );
     }
     return;
 }
@@ -32,9 +22,17 @@ sub process_anode {
 
 =item Treex::Block::Test::A::AfunKnown
 
-Each node should have only these afuns.
+Each node should have only these afun values:
+Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
+AuxP AuxC AuxO AuxZ AuxX AuxG AuxY AuxS AuxK ExD AtrAtr AtrAdv AdvAtr AtrObj
+ObjAtr AuxA Neg NR.
 The parameter C<reportNR> (default=false) chooses whether to report
 also the special afun value "NR" (intentionally marked as not recognized).
+
+See also
+
+L<Treex::Block::Test::A::AfunDefined>
+L<Treex::Block::Test::A::AfunNotNR>
 
 =back
 
