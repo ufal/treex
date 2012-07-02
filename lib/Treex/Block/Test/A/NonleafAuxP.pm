@@ -4,13 +4,15 @@ use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
-    my ($self, $anode) = @_;
-    if ($anode->afun eq 'AuxP'
-            and not $anode->get_children
-                and ($anode->get_parent->afun||'') ne 'AuxP'
-        ) {
+    my ( $self, $anode ) = @_;
+    if (( $anode->afun || '' ) eq 'AuxP'
+        && !$anode->get_children
+        && ( $anode->get_parent->afun || '' ) ne 'AuxP'
+        )
+    {
         $self->complain($anode);
     }
+    return;
 }
 
 1;
@@ -28,4 +30,3 @@ within a complex preposition).
 
 # Copyright 2011 Zdenek Zabokrtsky
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-

@@ -5,7 +5,6 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    my $afun = ;
     if (($anode->afun || '') eq 'NR') {
         $self->complain($anode);
     }
