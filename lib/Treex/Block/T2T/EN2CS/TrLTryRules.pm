@@ -11,6 +11,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{than}       => 'než|J',
     q{``}         => '„|Z',
     q{''}         => '“|Z',
+    q{'}          => q{'|Z},
     q{a. m.}      => 'hodin ráno|X',
     q{p. m.}      => 'hodin odpoledne|X',
     q{e. g.}      => 'například|D',
