@@ -38,9 +38,37 @@ sub process_atree {
         @a_nodes;
 
     # get tags
-    my ($tags_rf) = $self->_tagger->tag_sentence( \@forms );
-    if ( @$tags_rf != @forms ) {
-        log_fatal "Different number of tokens and tags. TOKENS: @forms, TAGS: " . @$tags_rf;
+    # Morče still fails occasionally. Output all sentences in order to identify the one that causes the failure.
+    # (But the process could also die because of lack of memory. Be default, treex -p asks for 2G, which may not be enough.)
+#    log_info('Tagging sentence: '.join(' ', @forms).' ('.scalar(@forms).' tokens)');
+    # Morče works with sentences of limited size. Avoid submitting long sentences.
+    my $max_sentence_size = 500;
+    my ($tags_rf, $lemmas_rf);
+    my @tags;
+    if ( scalar(@forms) > $max_sentence_size ) {
+        my $n_parts = scalar(@forms) / $max_sentence_size + 1;
+        for ( my $i = 0; $i < $n_parts; $i++ ) {
+            my $j0 = $i * $max_sentence_size;
+            my $j1 = ($i + 1) * $max_sentence_size - 1;
+            $j1 = $#forms if($j1>$#forms);
+            my @forms_part = @forms[$j0..$j1];
+            my ($tags_rf_part, $lemmas_rf_part) = $self->_tagger->tag_sentence( \@forms_part );
+            my $nf = scalar(@forms_part);
+            my $nt = scalar(@{$tags_rf_part});
+            if($nt != $nf) {
+                log_fatal("Number of tags in tagged part differs from number of tokens. TOKENS: $nf; TAGS: $nt.");
+            }
+            push( @tags, @{$tags_rf_part} );
+        }
+        $tags_rf = \@tags;
+    }
+    else {
+        ($tags_rf, $lemmas_rf) = $self->_tagger->tag_sentence( \@forms );
+    }
+    if ( @$tags_rf != scalar(@forms) ) {
+        my $nf = scalar(@forms);
+        my $nt = scalar(@{$tags_rf});
+        log_fatal "Different number of tokens and tags. TOKENS: $nf, TAGS: $nt";
     }
 
     # fill tags
@@ -68,5 +96,5 @@ This block does NOT do lemmatization.
 
 =cut
 
-# Copyright 2011 David Marecek
+# Copyright 2011, 2012 David Mareček, Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
