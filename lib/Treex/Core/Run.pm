@@ -1081,13 +1081,14 @@ sub treex {
     return;
 }
 
+#TODO: BEGIN/END block is perhaps a wrong place for this. (redirections, treex --watch, etc.)
 BEGIN {
     # $Treex::Core::Log::init_time = Time::HiRes::time ();
-    log_info("Exection begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+    log_info("Execution begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 }
 
 END {
-    log_info("Exection finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+    log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 }
 
 1;
