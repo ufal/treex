@@ -646,14 +646,13 @@ sub _run_job_scripts {
     log_info "All " . $self->jobs . " jobs started. Waiting for loading scenarios...";
 
     log_info( "Number of jobs loaded so far:", { same_line => 1 } );
-    my ( $loaded_now, $loaded_1s_ago ) = ( 0, 0 );
+    my $loaded_now = 0;
     while ( $loaded_now != $self->jobs ) {
-        $loaded_now = () = glob $self->workdir . "/output/*.loaded";
-        if ( $loaded_now != $loaded_1s_ago ) {
+        # check whether job was loaded
+        if ( -f $self->workdir . "/output/job" . sprintf( "%03d", $loaded_now + 1 ) . ".loaded" ) {
+            $loaded_now++;
             log_info( " $loaded_now", { same_line => 1 } );
-            $loaded_1s_ago = $loaded_now;
-        }
-        else {
+        } else {
             sleep(1);
         }
         $self->_check_job_errors;
