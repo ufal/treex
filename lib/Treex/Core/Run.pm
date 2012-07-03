@@ -161,7 +161,6 @@ has 'mem' => (
 
 has 'name' => (
     traits        => ['Getopt'],
-    cmd_aliases   => ['name'],
     is            => 'ro',
     isa           => 'Str',
     default       => '',
