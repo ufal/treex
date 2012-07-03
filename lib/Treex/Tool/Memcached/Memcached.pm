@@ -16,11 +16,12 @@ my $FLAG_MODEL_LOADED="__MODEL_LOADED__";
 
 my $MEMCACHED_DIR = $ENV{TMT_ROOT} . "/share/installed_tools/memcached/memcached-1.4.13";
 my $DEFAULT_MEMORY = 10;
+my $DEFAULT_THREADS = 4;
 
 =head2 start_memcached(memory = $DEFAULT_MEMORY)
 
-Executes memcached server with requested memory (in gigabytes). 
-If the server is already executed it does nothing. 
+Executes memcached server with requested memory (in gigabytes).
+If the server is already executed it does nothing.
 
 =cut
 
@@ -46,8 +47,8 @@ sub start_memcached {
 
 =head2 start_memcached(memory = $DEFAULT_MEMORY)
 
-Executes memcached server with requested memory (in gigabytes). 
-If the server is already executed it does nothing. 
+Executes memcached server with requested memory (in gigabytes).
+If the server is already executed it does nothing.
 
 =cut
 
@@ -120,8 +121,31 @@ sub load_model
     if ( ! $memd->get($FLAG_MODEL_LOADED) ) {
 
         if ( -d $file ) {
-            for my $submodel (glob "$file/*") {
-                _load_model($memd, $model_class, $submodel);
+            my @files = (glob "$file/*");
+            my $partSize = int( ( $#files + 1) / $DEFAULT_THREADS + 1 );
+            my @childs = ();
+            for (my $i = 0; $i < $DEFAULT_THREADS; ++$i ) {
+                my $pid = fork();
+                if ($pid) {
+                    push(@childs, $pid);
+                } elsif ($pid == 0) {
+                    my $from = $i * $partSize;
+                    my $to = ($i + 1) * $partSize - 1;
+                    if ( $to > $#files ) {
+                        $to = $#files;
+                    }
+                    for my $j ( $from .. $to ) {
+                        _load_model($memd, $model_class, $files[$j]);
+                    }
+
+                    log_info "Block $i was processed - from $from to $to.";
+                    exit(0);
+                } else {
+                    die "couldn’t fork: $!\n";
+                }
+            }
+            foreach (@childs) {
+                waitpid($_,0);
             }
         } elsif ( -f $file ) {
             _load_model($memd, $model_class, $file)
@@ -145,7 +169,7 @@ sub _load_model
     my $model = $model_class->new();
     $model->load($file);
 
-    log_info "\tStoring to memcached";
+#    log_info "\tStoring to memcached";
     for my $label ($model->get_input_labels() ) {
         my $status = $memd->set($label, $model->get_submodel($label));
     }
