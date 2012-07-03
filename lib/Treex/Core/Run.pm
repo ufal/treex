@@ -631,22 +631,14 @@ sub _run_job_scripts {
         . ( $self->local ? 'executed locally.' : 'submitted to the cluster.' )
         . ' Waiting for confirmation that they started...';
     log_info( "Number of jobs started so far:", { same_line => 1 } );
-    my ( $started_now, $started_1s_ago ) = ( 0, 0 );
-    while ( $started_now != $self->jobs ) {
 
-        # $count = () = some_function();
-        # This is a Perl idiom (see e.g. page 32 of Modern Perl)
-        # for counting the number of elements returned by some_function()
-        # without using a temporary variable. It's useful when the function
-        # called in scalar context does not return the number of elements
-        # that would be returned when called in list context.
-        # And this is the case of glob which iterates in scalar context.
-        $started_now = () = glob $self->workdir . "/output/*.started";
-        if ( $started_now != $started_1s_ago ) {
+    my $started_now  = 0;
+    while ( $started_now != $self->jobs ) {
+        # check whether job was started
+        if ( -f $self->workdir . "/output/job" . sprintf( "%03d", $started_now + 1 ) . ".started" ) {
+            $started_now++;
             log_info( " $started_now", { same_line => 1 } );
-            $started_1s_ago = $started_now;
-        }
-        else {
+        } else {
             sleep(1);
         }
         $self->_check_job_errors;
