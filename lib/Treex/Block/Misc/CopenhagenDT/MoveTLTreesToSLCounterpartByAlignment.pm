@@ -1,4 +1,4 @@
-package Treex::Block::Misc::CopenhagenDT::MoveTreesToDanishCounterpartByAlignment;
+package Treex::Block::Misc::CopenhagenDT::MoveTLTreesToSLCounterpartByAlignment;
 
 use utf8;
 use Moose;
@@ -12,11 +12,10 @@ sub process_document {
 
     my $first_bundle = shift @bundles;
     my $SourceLanguage = $first_bundle->wild->{SourceLanguage};
-print STDERR "XXXX $SourceLanguage\n";
 
-    my @da_trees = map {my $zone = $_->get_zone('da'); $zone->get_atree;} @bundles;
+    my @da_trees = map {my $zone = $_->get_zone($SourceLanguage); $zone->get_atree;} @bundles;
 
-    foreach my $zone (grep {$_->language ne 'da'} $first_bundle->get_all_zones) {
+    foreach my $zone (grep {$_->language ne $SourceLanguage} $first_bundle->get_all_zones) {
         my @trees = $zone->get_atree->get_children;
 
       TREE:
