@@ -13,6 +13,7 @@ use File::Which;
 use List::MoreUtils qw(first_index);
 use IO::Interactive;
 use Time::HiRes;
+use POSIX;
 use Exporter;
 use base 'Exporter';
 our @EXPORT_OK = q(treex);
@@ -323,7 +324,6 @@ sub _execute {
         print join "\n", $self->scenario->get_required_files(), "\n";
         exit;
     }
-
     my $done = 0;
     my $time;
     my $watch = $self->watch;
@@ -816,6 +816,10 @@ sub _wait_for_jobs {
             $sleep_time += ( Time::HiRes::time() - $sleep_start );
         }
 
+        if ( ! $self->survive ) {
+            $self->_check_job_errors;
+        }
+
         $self->_check_job_errors($current_doc_number);
 
         # Both of the conditions below are necessary.
@@ -1074,6 +1078,15 @@ sub treex {
         #log_fatal 'Unspecified arguments for running treex.';
     }
     return;
+}
+
+BEGIN {
+    # $Treex::Core::Log::init_time = Time::HiRes::time ();
+    log_info("Exection begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+}
+
+END {
+    log_info("Exection finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 }
 
 1;

@@ -10,6 +10,7 @@ use Carp qw(cluck);
 
 use IO::Handle;
 use Readonly;
+use Time::HiRes qw(time);
 
 use Exporter;
 use base 'Exporter';
@@ -53,6 +54,15 @@ my $unfinished_line;
 # By default report only messages with INFO or higher level
 my $current_error_level_value = $ERROR_LEVEL_VALUE{'INFO'};
 
+# Time when treex was executed.
+our $init_time = time ();
+
+# returns time elapsed from $init_time.
+sub running_time
+{
+    return sprintf('%10.3f', time() - $init_time);
+}
+
 # allows to suppress messages with lower than given importance
 sub log_set_error_level {
     my $new_error_level = uc(shift);
@@ -74,7 +84,7 @@ sub log_fatal {
         print STDERR "\n";
         $unfinished_line = 0;
     }
-    my $line = "TREEX-FATAL:\t$message\n\n";
+    my $line = "TREEX-FATAL:" . running_time() . ":\t$message\n\n";
     if ( $current_error_level_value <= $ERROR_LEVEL_VALUE{'DEBUG'} ) {
         if ($OS_ERROR) {
             $line .= "PERL ERROR MESSAGE: $OS_ERROR\n";
@@ -99,7 +109,7 @@ sub log_warn {
             $line            = "\n";
             $unfinished_line = 0;
         }
-        $line .= "TREEX-WARN:\t$message\n";
+        $line .= "TREEX-WARN:" . running_time() . ":\t$message\n";
 
         if ($carp) {
             Carp::carp $line;
@@ -120,7 +130,7 @@ sub log_debug {
             $line            = "\n";
             $unfinished_line = 0;
         }
-        $line .= "TREEX-DEBUG:\t$message\n";
+        $line .= "TREEX-DEBUG:" . running_time() . ":\t$message\n";
 
         if ($no_print_stack) {
             print STDERR $line;
@@ -143,7 +153,7 @@ sub log_info {
             $unfinished_line = 0;
         }
         if ( !$same_line || !$unfinished_line ) {
-            $line .= "TREEX-INFO:\t";
+            $line .= "TREEX-INFO:" . running_time() . ":\t";
         }
         $line .= $message;
 
@@ -166,7 +176,7 @@ sub log_info {
 sub progress {    # progress se pres ntred neposila, protoze by se stejne neflushoval
     return if $current_error_level_value > $ERROR_LEVEL_VALUE{'INFO'};
     if ( not $unfinished_line ) {
-        print STDERR "TREEX-PROGRESS:\t";
+        print STDERR "TREEX-PROGRESS:" . running_time() . ":\t";
     }
     print STDERR "*";
     STDERR->flush;
