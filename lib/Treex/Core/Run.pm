@@ -933,11 +933,13 @@ sub _check_epilog_before_finish {
         my $epilog_name = glob "$workdir/output/job$job_str.sh.e*";
         my $epilog = $epilog_name ? qx(grep EPILOG $epilog_name) : 0;
         if ($epilog) {
-            log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************\n";
+            log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
+            log_info "**** cat $epilog_name\n";
             system "cat $epilog_name";
-            log_info "********************** LAST STDERR OF JOB $job_str: ******************\n";
+            log_info "********************** LAST STDERR OF JOB $job_str: ******************";
+            log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
             system "tail $workdir/output/job$job_str-doc*.stderr";
-            log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
+            log_info "\n********************** END OF JOB $job_str ERRORS LOGS ****************\n";
             if ( $self->survive ) {
                 log_warn("fatal error ignored due to the --survive option, be careful");
                 return;
