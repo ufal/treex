@@ -929,8 +929,13 @@ sub _check_epilog_before_finish {
     $from_job_number ||= 1;
     for my $job_num ( $from_job_number .. $self->jobs ) {
         my $job_str = sprintf "%.3d", $job_num;
+
+        # -f is much faster than grep, so let's check it first.
+        next if -f "$workdir/output/job$job_str.finished";
         my $epilog_name = glob "$workdir/output/job$job_str.sh.e*";
         my $epilog = $epilog_name ? qx(grep EPILOG $epilog_name) : 0;
+        
+        # However, now we must check -f again, because the file could be created meanwhile.
         if ($epilog && !-f "$workdir/output/job$job_str.finished") {
             log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
             log_info "**** cat $epilog_name\n";
