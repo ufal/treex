@@ -56,12 +56,12 @@ sub process_zone {
 
 sub _ends_with_clause_in_quotes {
     my ($last_token) = @_;
-    return 0 if $last_token->t_lemma ne q{“};
+    return 0 if $last_token->t_lemma !~ /[“‘']/;
     my @toks = $last_token->get_root->get_descendants( { ordered => 1 } );
     pop @toks;
     while (@toks) {
         my $tok = pop @toks;
-        return 0 if $tok->t_lemma eq '„';
+        return 0 if $tok->t_lemma =~ /[„‚']/;
         return 1 if $tok->is_clause_head();
     }
     return 0;

@@ -20,7 +20,7 @@ sub process_atree {
     $last_form = $last_node->form;
 
     # Terminal fullstop or question-mark can be followed by parenthesis or quotes
-    if ( any { $_ eq $last_form } ( q{"}, q{''}, q{)} ) ) {
+    if ( any { $_ eq $last_form } ( q{"}, q{''}, q{)}, q{'} ) ) {
         if ( @all_nodes == 1 ) {
             my $message = $last_node->get_address() . "\t Strange one-token sentence.";
             log_warn($message);
