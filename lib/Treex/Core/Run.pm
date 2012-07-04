@@ -3,6 +3,7 @@ use 5.008;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core;
+use Treex::Tool::Probe;
 use MooseX::SemiAffordanceAccessor 0.09;
 with 'MooseX::Getopt';
 
@@ -237,6 +238,9 @@ has version => (
         exit();
     },
 );
+
+
+my $error_time = 0;
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -665,12 +669,15 @@ sub _run_job_scripts {
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
 
+
     # To get utf8 encoding also when using qx (aka backticks):
     # my $command_output = qw($command);
     # we need to
     use open qw{ :std IO :encoding(UTF-8) };
 
     foreach my $stream (qw(stderr stdout)) {
+        Treex::Tool::Probe::begin("_print_output_files.".$stream);
+
         my $job_number = $self->_get_job_number_from_doc_number($doc_number);
 
         my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
@@ -740,6 +747,7 @@ sub _print_output_files {
                 log_fatal "Document $doc_number has not finished successfully (see $filename)";
             }
         }
+        Treex::Tool::Probe::end("_print_output_files.".$stream);
         close $FILE;
     }
     return;
@@ -762,17 +770,13 @@ sub _wait_for_jobs {
     my $done                = 0;
     my $jobs_finished       = 1;
 
-    my $glob_time  = 0;
-    my $sleep_time = 0;
-    my $print_time = 0;
-
     my $wait_time = 1;
 
     while ( !$done ) {
         $total_doc_number ||= $self->_read_total_doc_number();
 
         #        print STDERR "Fin: $all_jobs_finished; JobsFin: $jobs_finished; CurrD: $current_doc_number; TotD: $total_doc_number\n";
-        my $glob_start = Time::HiRes::time();
+        Treex::Tool::Probe::begin("_wait_for_jobs.glob");
 
         if ( !$all_jobs_finished ) {
             while ( -f $self->workdir . sprintf( "/output/job%03d.finished", $jobs_finished ) ) {
@@ -782,7 +786,7 @@ sub _wait_for_jobs {
         }
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
-        $glob_time += ( Time::HiRes::time() - $glob_start );
+        Treex::Tool::Probe::end("_wait_for_jobs.glob");
 
         # If a job starts processing another doc,
         # it means it has finished the current doc.
@@ -790,9 +794,7 @@ sub _wait_for_jobs {
         $current_doc_finished ||= $self->_doc_started( $current_doc_number + $self->jobs );
 
         if ($current_doc_finished) {
-            my $print_start = Time::HiRes::time();
             $self->_print_output_files($current_doc_number);
-            $print_time += ( Time::HiRes::time() - $print_start );
             $current_doc_number++;
             $current_doc_started = 0;
             $wait_time = 1 + $total_doc_number / ( 1 + $current_doc_number );
@@ -801,11 +803,11 @@ sub _wait_for_jobs {
             }
         }
         else {
-            my $sleep_start = Time::HiRes::time();
+            Treex::Tool::Probe::begin("_wait_for_jobs.sleep");
 
             #log_warn "Waiting time: $wait_time";
             sleep $wait_time;
-            $sleep_time += ( Time::HiRes::time() - $sleep_start );
+            Treex::Tool::Probe::end("_wait_for_jobs.sleep");
         }
 
         if ( ! $self->survive ) {
@@ -822,9 +824,7 @@ sub _wait_for_jobs {
         $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
     }
 
-    log_info "Glob Time: $glob_time";
-    log_info "Print Time: $print_time";
-    log_info "Sleep Time: $sleep_time";
+    Treex::Tool::Probe::print_stats();
     return;
 }
 
@@ -895,6 +895,9 @@ use open qw{ :std IO :encoding(UTF-8) };
 
 sub _check_job_errors {
     my ( $self, $from_job_number ) = @_;
+
+    Treex::Tool::Probe::begin("_check_job_errors");
+
     my $workdir = $self->workdir;
     if ( defined( my $fatal_name = glob "$workdir/output/*fatalerror" ) ) {
         log_info "At least one job crashed with fatal error ($fatal_name).";
@@ -914,6 +917,9 @@ sub _check_job_errors {
         }
     }
     $self->_check_epilog_before_finish($from_job_number);
+
+    Treex::Tool::Probe::end("_check_job_errors");
+
     return;
 }
 
