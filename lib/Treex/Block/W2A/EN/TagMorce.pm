@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has _tagger => ( is => 'rw' );
+has _n_tagged => ( is => 'rw' );
 
 use Morce::English;
 use DowngradeUTF8forISO2;
@@ -14,22 +15,36 @@ sub BUILD {
     return;
 }
 
-sub process_start {
-
+sub construct_tagger {
     my ($self) = @_;
-
     my $tagger = Morce::English->new();
-
-    log_fatal("Cannot initialize Morce") if ( !defined($tagger) );
+    log_fatal("Cannot initialize Morče") if(!defined($tagger));
     $self->_set_tagger($tagger);
+    $self->_set_n_tagged(0);
+    return $tagger;
+}
 
+sub process_start {
+    my ($self) = @_;
+    $self->construct_tagger();
     $self->SUPER::process_start();
-
     return;
 }
 
 sub process_atree {
     my ( $self, $atree ) = @_;
+
+    # The more sentences tagged, the more memory Morče consumes (a memory leak in Morče?)
+    # Kill the tagger process every N sentences to prevent us from dying on memory shortage.
+    if ( $self->{_n_tagged} > 10000 ) {
+        ###!!! BEWARE: This does not work! After loading the new Morče, Treex throws "Segmentation fault".
+        ###!!! Currently the only workaround is not to ask Treex to tag too many documents at once
+        ###!!! (i.e., call Treex repeatedly).
+        ###!!! Also consider using Featurama instead. It ought to be a cleaner reimplementation of Morče.
+        #log_info("Reached 10000 tagged sentences, restarting Morče to save memory.");
+        #delete($self->{_tagger});
+        #$self->construct_tagger();
+    }
 
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
     my @forms =
@@ -76,6 +91,8 @@ sub process_atree {
         $a_node->set_tag( shift @$tags_rf );
     }
 
+    # Update number of sentences tagged with the current instance of the tagger.
+    $self->{_n_tagged}++;
     return 1;
 }
 
