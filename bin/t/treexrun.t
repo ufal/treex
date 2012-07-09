@@ -15,7 +15,6 @@ BEGIN {
     }
 }
 
-my $my_dir = dirname($0);
 my @tasks  = (
     [ q(treex -q -- dummy.treex),                                        '', 0 ],     # reading an empty file
     [ q(treex -q -s -- dummy.treex),                                     '', 0 ],     # reading and saving an empty file
@@ -36,8 +35,8 @@ my @tasks  = (
     [   q(echo | treex -q -Len Read::Text Util::Eval document='my $code_with_newlines;
                                                           print 2;'), '2', 0
     ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/print3.scen),       '3', 0 ],
-    [ qq(echo | treex -q -Len Read::Text $my_dir/scenarios/scen_in_scen.scen), '4', 0 ],    # scenario file in scenario file
+    [ qq(echo | treex -q -Len Read::Text ./scenarios/print3.scen),       '3', 0 ],
+    [ qq(echo | treex -q -Len Read::Text ./scenarios/scen_in_scen.scen), '4', 0 ],    # scenario file in scenario file
 
     # try to confuse the scenario parser with a parameter which looks like scenario
     [ q(echo | treex -q -Len Read::Treex from=confuse.scen), '', 0 ],
@@ -60,18 +59,21 @@ plan tests => 2 * scalar @tasks;
 my $combined_file = 'combined.out';
 
 SKIP: {
-    my $cmd_base = $^X . " " . dirname(__FILE__) . "/../treex";
-
+    
+    chdir(dirname(__FILE__));
+     
+    my $cmd_base = $^X . " ./../treex";
     my $TREEX = "$cmd_base";
-
+    
     # prepare dummy input files
-    my $test_data_file    = 'dummy.treex';
-    my $confuse_data_file = 'confuse.scen';
+    my $test_data_file1    = './dummy.treex';
+    my $test_data_file2    = './dummy2.treex';
+    my $confuse_data_file = './confuse.scen';
     my $doc               = Treex::Core::Document->new();
-    $doc->save($test_data_file);
-    $doc->save( '2' . $test_data_file );
+    $doc->save($test_data_file1);
+    $doc->save($test_data_file2 );
     $doc->save($confuse_data_file);
-
+    
 #    skip 'We run different versions of treex binary', scalar @tasks if $perl_v ne $sys_v;
     foreach my $task_rf (@tasks) {
         my ( $command, $expected_output, $exit_code ) = @$task_rf;
@@ -92,7 +94,7 @@ SKIP: {
 END {
     if ( $^O !~ /^MSWin/ ) {
         unlink $combined_file;
-        unlink glob "*dummy.treex*";
-        unlink "confuse.scen";
+        unlink glob "./dummy*.treex*";
+        unlink "./confuse.scen";
     }
 }

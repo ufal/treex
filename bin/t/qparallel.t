@@ -23,8 +23,10 @@ SKIP: {
     skip "because not running on an SGE cluster", 1
         if !`which qsub`;    # if !defined $ENV{SGE_CLUSTER_NAME};
 
-    my $cmd_base = $^X . " " . dirname(__FILE__) . "/../treex";
-    my $cmd_rm = "rm -rf " . dirname(__FILE__) . "/*-cluster-run-* " . dirname(__FILE__) . "/paratest*treex";
+    chdir(dirname(__FILE__));        
+
+    my $cmd_base = $^X . " ./../treex";
+    my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";
 
     my $number_of_files = 110;
     my $number_of_jobs  = 30;
@@ -34,12 +36,12 @@ SKIP: {
     foreach my $i ( map { sprintf "%03d", $_ } ( 1 .. $number_of_files ) ) {
         my $doc = Treex::Core::Document->new();
         $doc->set_description($i);
-        $doc->save("paratest$i.treex");
+        $doc->save("./paratest$i.treex");
     }
 
     my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
         . " Util::Eval document='print \$document->description()'"
-        . " -g '" . dirname(__FILE__) . "/paratest*.treex'";
+        . " -g './paratest*.treex'";
 
 
     my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
@@ -48,5 +50,7 @@ SKIP: {
     $cmd_test->stdout_is_eq(join '', map { sprintf "%03d", $_ } ( 1 .. $number_of_files ));
     $cmd_test->run;
 
-    qx($cmd_rm);
+    END {
+        qx($cmd_rm);
+    }
 }
