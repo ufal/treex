@@ -9,31 +9,35 @@ BEGIN {
 use strict;
 use warnings;
 
-use Treex::Core::Config;
-
-use Treex::Core::Run qw(treex);
-
+use File::Basename;
 use Test::More;
 
+use Treex::Core::Document;
+
 #plan skip_all => 'Takes too much time, maybe infinite loop';
-eval { use Test::Output; 1 } or plan skip_all => 'Test::Output required to test parallelism';
-plan tests => 1;
+eval { use Test::Command; 1 } or plan skip_all => 'Test::Command required to test parallelism';
+plan tests => 2;
+
+my $cmd_base = $^X . " " . dirname(__FILE__) . "/../treex";
+my $cmd_rm = "rm -rf " . dirname(__FILE__) . "/*-cluster-run-* " . dirname(__FILE__) . "/paratest*treex";
 
 my $number_of_files = 5;
 my $number_of_jobs  = 2;
+
+qx($cmd_rm);
 
 foreach my $i ( 1 .. $number_of_files ) {
     my $doc = Treex::Core::Document->new();
     $doc->save("paratest$i.treex");
 }
 
-my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local " .
-    "Util::Eval document='print \"1\";' -g 'paratest*.treex'";
+my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local  --cleanup " .
+    "Util::Eval document='print \"1\";' -g '" . dirname(__FILE__) . "/paratest*.treex'";
 
-stdout_is(
-    sub { treex $cmdline_arguments },
-    '1' x $number_of_files,
-    "running parallelized treex locally"
-);
+my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
 
-unlink glob "paratest*";
+$cmd_test->exit_is_num(0);
+$cmd_test->stdout_is_eq('1' x $number_of_files);
+$cmd_test->run;
+
+qx($cmd_rm);
