@@ -30,7 +30,31 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @forms = map { $_->form } $atree->get_descendants();
-    my ( $tags, $lemmas ) = @{ $self->_tagger->analyze( \@forms ) };
+    my ( $tags, $lemmas );
+
+    # Turns out that the TreeTagger feels uneasy about a sentence of 53,000 tokens...
+    my $max_sentence_size = 1000;
+    my $sentence_size = scalar(@forms);
+    my @tags;
+    my @lemmas;
+    if ( $sentence_size > $max_sentence_size ) {
+        log_info("Sentence contains $sentence_size tokens, applying the TreeTagger per partes.");
+        my $n_parts = $sentence_size / $max_sentence_size + 1;
+        for ( my $i = 0; $i < $n_parts; $i++ ) {
+            my $j0 = $i * $max_sentence_size;
+            my $j1 = ($i + 1) * $max_sentence_size - 1;
+            $j1 = $#forms if($j1>$#forms);
+            my @forms_part = @forms[$j0..$j1];
+            my ( $tags_part, $lemmas_part ) = @{ $self->_tagger->analyze( \@forms_part ) };
+            push( @tags, @{$tags_part} ) if(defined($tags_part));
+            push( @lemmas, @{$lemmas_part} ) if(defined($lemmas_part));
+        }
+        $tags = \@tags;
+        $lemmas = \@lemmas;
+    }
+    else {
+        ( $tags, $lemmas ) = @{ $self->_tagger->analyze( \@forms ) };
+    }
 
     # fill tags and lemmas
     foreach my $a_node ( $atree->get_descendants() ) {
@@ -66,5 +90,5 @@ __END__
 
 =cut
 
-# Copyright 2010-2011 David Mareček, Martin Popel
+# Copyright 2010-2011 David Mareček, Martin Popel, Dan Zeman
 This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

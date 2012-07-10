@@ -701,7 +701,7 @@ sub _print_output_files {
         if ( $stream eq 'stderr' && -s $filename == 0 ) {
             `touch $filename`;
             # Definitely not the ideal solution but it helps at the moment (and it fails without it):
-            sleep(60);
+            sleep(10);
         }
 
         #while ( -s $filename == 0 && $wait_it < 1 ) {
