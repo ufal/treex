@@ -973,6 +973,8 @@ sub _delete_jobs_and_exit {
 sub _execute_on_cluster {
     my ($self) = @_;
 
+    log_info("Execution begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+
     # create working directory, if not specified as a command line option
     if ( not defined $self->workdir ) {
         my $counter;
@@ -1026,6 +1028,9 @@ sub _execute_on_cluster {
         log_info "Deleting the directory with temporary files " . $self->workdir;
         rmtree $self->workdir or log_fatal $!;
     }
+
+    log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+    
     return;
 }
 
@@ -1084,16 +1089,6 @@ sub treex {
         #log_fatal 'Unspecified arguments for running treex.';
     }
     return;
-}
-
-#TODO: BEGIN/END block is perhaps a wrong place for this. (redirections, treex --watch, etc.)
-BEGIN {
-    # $Treex::Core::Log::init_time = Time::HiRes::time ();
-    log_info("Execution begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
-}
-
-END {
-    log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 }
 
 1;
