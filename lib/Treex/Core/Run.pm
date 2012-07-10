@@ -696,8 +696,9 @@ sub _print_output_files {
         }
 
         # we have to wait until file is really written
+        # However, stdout is quite often empty.
         my $wait_it = 0;
-        if ( -s $filename == 0 ) {
+        if ( $stream eq 'stderr' && -s $filename == 0 ) {
             `touch $filename`;
             # Definitely not the ideal solution but it helps at the moment (and it fails without it):
             sleep(60);
