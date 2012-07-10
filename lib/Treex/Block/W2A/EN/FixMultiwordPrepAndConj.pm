@@ -40,8 +40,10 @@ sub process_atree {
 
             #  nejdriv se prvni clen prevesi tam, kde byl z nich nejvyssi
             my ($highest) = sort { $a->get_depth <=> $b->get_depth } ( $first, @others );
-            if ( $highest ne $first ) {
+            if ( $highest != $first ) {
                 $first->set_parent( $highest->get_parent );
+                $first->set_is_member( $highest->is_member );
+                $highest->set_is_member(0);
             }
 
             # a pak se ostatni casti viceslovne spojky prevesi pod prvni
