@@ -23,6 +23,9 @@ sub process_atree {
         )
     {
         my $dicendi = $a_nodes[$i_dicendi];
+        
+        # Skip words which are not verbs (e.g "claim") in this context
+        next DICENDI if $dicendi->tag !~ /^V/;
 
         # Skip dicendi verbs that are not preceded by a quote
         # TODO: This is too restrictive ("I know," Jim said.)
