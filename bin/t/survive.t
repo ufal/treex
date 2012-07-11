@@ -16,11 +16,11 @@ use Treex::Core::Document;
 
 my @crashes = ('build_undef', 'build_die', 'build_fatal',
                'start_undef', 'start_die', 'start_fatal',
-               'process_undef', 'process_die', 'process_fatal');
+               'document_undef', 'document_die', 'document_fatal');
 
 #plan skip_all => 'Takes too much time, maybe infinite loop';
 eval { use Test::Command; 1 } or plan skip_all => 'Test::Command required to test parallelism';
-plan tests => 2 * scalar @crashes;
+plan tests => 3 * scalar @crashes;
 
 chdir(dirname(__FILE__));
 
@@ -37,21 +37,32 @@ foreach my $i ( 1 .. $number_of_files ) {
     $doc->save("./paratest$i.treex");
 }
 
-my $cmd_prefix = "-q -p --jobs=$number_of_jobs --cleanup --survive Misc::Sleep start=2 ";
-my $cmd_suffix = "Util::Eval document='print \"1\";' -g './paratest*.treex'";
+my $cmd_prefix = "-q -p --jobs=$number_of_jobs --cleanup Misc::Sleep start=2 ";
+my $cmd_suffix = "Print::Garbage size=1' -g './paratest*.treex'";
+
+
 
 
 for my $crash (@crashes) {
 
     my $cmdline_arguments = $cmd_prefix . " Misc::Crash ".$crash."=0.1 " . $cmd_suffix;
 
-    print STDERR "\n\n" . $cmd_base . " " . $cmdline_arguments . "\n\n";
+    print STDERR "\n\n" . $cmd_base . " " . $cmdline_arguments . " --survive\n\n";
 
-    my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
+    my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments  . " --survive");
 
     $cmd_test->exit_is_num(0);
     $cmd_test->stdout_like('/1/');
     $cmd_test->run;
+    
+    print STDERR "\n\n" . $cmd_base . " " . $cmdline_arguments . "\n\n";
+
+    my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments);
+
+    $cmd_test->exit_is_num(255);
+    $cmd_test->stdout_like();
+    $cmd_test->run;    
+    
 }
 
 #END {
