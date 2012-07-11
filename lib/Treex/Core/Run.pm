@@ -14,6 +14,7 @@ use File::Which;
 use List::MoreUtils qw(first_index);
 use IO::Interactive;
 use Time::HiRes;
+use Readonly::XS;
 use POSIX;
 use Exporter;
 use base 'Exporter';
@@ -239,8 +240,15 @@ has version => (
     },
 );
 
+has '_max_started' => (is => 'rw', isa => 'Int', default => 0);
+has '_max_loaded' => (is => 'rw', isa => 'Int', default => 0);
+has '_max_finished' => (is => 'rw', isa => 'Int', default => 0);
+has '_jobs_status' => (is => 'rw', isa => 'HashRef', default => sub { {} });
 
-my $error_time = 0;
+Readonly my $sleep_min_time => 5;
+Readonly my $sleep_max_time => 120;
+Readonly my $sleep_multiplier => 1.1;
+Readonly my $slice_size => 0.2;
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -485,7 +493,7 @@ sub _execute_locally {
 
     my $number_of_docs;
     if ( $self->jobindex ) {
-        my $fn = $self->outdir . sprintf( "/job%03d.loaded", $self->jobindex );
+        my $fn = $self->outdir . sprintf( "/../status/job%03d.loaded", $self->jobindex );
         open my $F, '>', $fn or log_fatal "Cannot open file $fn";
         close $F;
         my $reader = $scenario->document_reader;
@@ -521,7 +529,7 @@ sub _execute_locally {
 # This is called by distributed jobs (they don't have $self->workdir)
 sub _write_total_doc_number {
     my ( $self, $number ) = @_;
-    my $filename = $self->outdir . '/total_number_of_documents';
+    my $filename = $self->outdir . '/../total_number_of_documents';
     open my $F, '>', $filename or log_fatal $!;
     print $F $number;
     close $F;
@@ -531,7 +539,7 @@ sub _write_total_doc_number {
 # This is called by the main treex (it doesn't have $self->outdir)
 sub _read_total_doc_number {
     my ($self) = @_;
-    my $total_doc_number_file = $self->workdir . "/output/total_number_of_documents";
+    my $total_doc_number_file = $self->workdir . "/total_number_of_documents";
     if ( -f $total_doc_number_file ) {
         open( my $N, '<', $total_doc_number_file ) or log_fatal $!;
         my $total_file_number = <$N>;
@@ -542,7 +550,7 @@ sub _read_total_doc_number {
         return $total_file_number;
     }
     else {
-        return;
+        return 0;
     }
 }
 
@@ -578,7 +586,7 @@ sub _create_job_scripts {
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
         print $J "#!/bin/bash\n\n";
         print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
-            . "/output/job$jobnumber.started\n";
+            . "/status/job$jobnumber.started\n";
         print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config->lib_core_dir()
@@ -589,8 +597,8 @@ sub _create_job_scripts {
             $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
         }
         print $J $input . "treex --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
-            . " 2>> $workdir/output/job$jobnumber.started\n\n";
-        print $J "date +'%s' > $workdir/output/job$jobnumber.finished\n";
+            . " 2>> $workdir/status/job$jobnumber.started\n\n";
+        print $J "date +'%s' > $workdir/status/job$jobnumber.finished\n";
         close $J;
         chmod 0777, "$workdir/$script_filename";
     }
@@ -604,6 +612,8 @@ sub _run_job_scripts {
         $workdir = "./$workdir";
     }
     foreach my $jobnumber ( 1 .. $self->jobs ) {
+        $self->{_jobs_finished}->{$jobnumber} = 0;
+
         my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
 
         if ( $self->local ) {
@@ -611,7 +621,7 @@ sub _run_job_scripts {
         }
         else {
             my $mem       = $self->mem;
-            my $qsub_opts = '-cwd -e output/ -S /bin/bash';
+            my $qsub_opts = '-cwd -e error/ -S /bin/bash';
             $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
             $qsub_opts .= ' -p ' . $self->priority;
             $qsub_opts .= ' ' . $self->qsub;
@@ -634,36 +644,90 @@ sub _run_job_scripts {
     log_info $self->jobs . ' jobs '
         . ( $self->local ? 'executed locally.' : 'submitted to the cluster.' )
         . ' Waiting for confirmation that they started...';
-    log_info( "Number of jobs started so far:", { same_line => 1 } );
 
-    my $started_now  = 0;
-    while ( $started_now != $self->jobs ) {
-        # check whether job was started
-        if ( -f $self->workdir . "/output/job" . sprintf( "%03d", $started_now + 1 ) . ".started" ) {
-            $started_now++;
-            log_info( " $started_now", { same_line => 1 } );
-        } else {
-            sleep(1);
-        }
-        $self->_check_job_errors;
-    }
-    log_info "All " . $self->jobs . " jobs started. Waiting for loading scenarios...";
 
-    log_info( "Number of jobs loaded so far:", { same_line => 1 } );
-    my $loaded_now = 0;
-    while ( $loaded_now != $self->jobs ) {
-        # check whether job was loaded
-        if ( -f $self->workdir . "/output/job" . sprintf( "%03d", $loaded_now + 1 ) . ".loaded" ) {
-            $loaded_now++;
-            log_info( " $loaded_now", { same_line => 1 } );
-        } else {
-            sleep(1);
-        }
-        $self->_check_job_errors;
-    }
-    log_info "All " . $self->jobs . " jobs loaded. Waiting for them to be finished...";
     return;
 }
+
+=head2 _is_job_started
+
+    _is_job_started($jobid)
+
+Returns 1 if job C<$jobid> already started, false otherwise.
+
+=cut
+
+sub _is_job_started {
+    my ($self, $jobid) = @_;
+    return $self->_is_job_status($jobid, "started");
+}
+
+=head2 _is_job_loaded
+
+    _is_job_loaded($jobid)
+
+Returns 1 if job C<$jobid> is already loaded, false otherwise.
+
+=cut
+
+sub _is_job_loaded {
+    my ($self, $jobid) = @_;
+    return $self->_is_job_status($jobid, "loaded");
+}
+
+=head2 _is_job_finished
+
+    _is_job_finished($jobid)
+
+Returns 1 if job C<$jobid> is already finished, false otherwise.
+
+=cut
+
+sub _is_job_finished {
+    my ($self, $jobid) = @_;
+    return $self->_is_job_status($jobid, "finished");
+}
+
+=head2 _is_job_status
+
+    _is_job_status($jobid, $status)
+
+Returns 1 if job C<$jobid> has status C<$status>, false otherwise.
+
+=cut
+
+sub _is_job_status
+{
+    my ($self, $jobid, $status) = @_;
+
+    Treex::Tool::Probe::begin("_is_job_status.call");
+
+    # avoid redundant disc accesses
+    if ( ! $self->{_job_status}->{$jobid}->{$status} ) {
+        Treex::Tool::Probe::begin("_is_job_status.disk");
+
+        $self->{_job_status}->{$jobid}->{$status} = (-f $self->workdir . "/status/job" . sprintf( "%03d", $jobid ) . "." . $status ? 1 : 0);
+
+        Treex::Tool::Probe::end("_is_job_status.disk");
+    }
+
+    Treex::Tool::Probe::end("_is_job_status.call");
+
+    return $self->{_job_status}->{$jobid}->{$status};
+}
+
+sub _get_slice
+{
+    my ($self, $total) = @_;
+
+    my $slice = int( $total * $slice_size);
+    if ( $slice == 0 ) {
+        $slice = 1;
+    }
+
+    return $slice;
+}
+
 
 # Prints error messages from the output of the current document processing.
 sub _print_output_files {
@@ -681,7 +745,7 @@ sub _print_output_files {
         my $job_number = $self->_get_job_number_from_doc_number($doc_number);
 
         my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
-        log_info "Processing output file: " . $filename;
+        #log_info "Processing output file: " . $filename;
 
         if ( !-f $filename ) {
             my $message = "Document $doc_number finished without producing $filename. " .
@@ -699,9 +763,10 @@ sub _print_output_files {
         # However, stdout is quite often empty.
         my $wait_it = 0;
         if ( $stream eq 'stderr' && -s $filename == 0 ) {
-            `touch $filename`;
+            # Jan Stepanek advice
+            `stat $filename`;
             # Definitely not the ideal solution but it helps at the moment (and it fails without it):
-            sleep(10);
+            #sleep(10);
         }
 
         #while ( -s $filename == 0 && $wait_it < 1 ) {
@@ -773,23 +838,54 @@ sub _wait_for_jobs {
     my $done                = 0;
     my $jobs_finished       = 1;
 
-    my $wait_time = 1;
+    my $sleep_time = $sleep_min_time;
+
+    log_info("\n");
+
+    my $job_slice = $self->_get_slice($self->jobs);
+
+    my $document_slice = 0;
+    my $check_errors = 0;
 
     while ( !$done ) {
-        $total_doc_number ||= $self->_read_total_doc_number();
 
-        #        print STDERR "Fin: $all_jobs_finished; JobsFin: $jobs_finished; CurrD: $current_doc_number; TotD: $total_doc_number\n";
-        Treex::Tool::Probe::begin("_wait_for_jobs.glob");
-
-        if ( !$all_jobs_finished ) {
-            while ( -f $self->workdir . sprintf( "/output/job%03d.finished", $jobs_finished ) ) {
-                $jobs_finished++;
-            }
-            $all_jobs_finished = ( $jobs_finished > $self->jobs );
+        # count already started jobs
+        if (
+            $self->{_max_started} != $self->jobs &&
+            $self->_is_job_started($self->{_max_started} + 1)
+           ) {
+            $self->{_max_started} += 1;
+            $check_errors ||= int( $self->{_max_started} % $job_slice == 1);
+            next;
         }
+
+        # count already laoded jobs
+        if (
+            $self->{_max_loaded} < $self->{_max_started} &&
+            $self->{_max_loaded} != $self->jobs &&
+            $self->_is_job_loaded($self->{_max_loaded} + 1)
+           ) {
+            $self->{_max_loaded} += 1;
+            $check_errors ||= int( $self->{_max_loaded} % $job_slice == 1);
+            next;
+        }
+
+        # count already finished jobs
+        if (
+            $self->{_max_finished} < $self->{_max_loaded} &&
+            $self->{_max_finished} != $self->jobs &&
+            $self->_is_job_finished($self->{_max_finished} + 1)
+           ) {
+            $self->{_max_finished} += 1;
+            $check_errors ||= int( $self->{_max_finished} % $job_slice == 1);
+
+            $all_jobs_finished = ( $self->{_max_finished} == $self->jobs );
+            next;
+        }
+
+        $total_doc_number ||= $self->_read_total_doc_number();
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
-        Treex::Tool::Probe::end("_wait_for_jobs.glob");
 
         # If a job starts processing another doc,
         # it means it has finished the current doc.
@@ -800,24 +896,45 @@ sub _wait_for_jobs {
             $self->_print_output_files($current_doc_number);
             $current_doc_number++;
             $current_doc_started = 0;
-            $wait_time = 1 + $total_doc_number / ( 1 + $current_doc_number );
-            if ( $wait_time > 120 ) {
-                $wait_time = 120;
+            
+            # decrease sleeping time if we are printing out documents
+            $sleep_time /= $sleep_multiplier;
+            if ( $sleep_time < $sleep_min_time ) {
+                $sleep_time = $sleep_min_time;
             }
+
+            $document_slice ||= $self->_get_slice($total_doc_number);
+            $check_errors ||= int( $current_doc_number % $document_slice == 1);
         }
         else {
+
+            log_info( sprintf("Jobs: %5d started, %5d loaded, %5d finished | Docs: %5d/%5d",
+                $self->{_max_started},
+                $self->{_max_loaded},
+                $self->{_max_finished},
+                $current_doc_number - 1,
+                $total_doc_number
+                ));
+
             Treex::Tool::Probe::begin("_wait_for_jobs.sleep");
-
-            #log_warn "Waiting time: $wait_time";
-            sleep $wait_time;
+            sleep $sleep_time;
             Treex::Tool::Probe::end("_wait_for_jobs.sleep");
+
+            # increase sleeping time if nothing happened
+            $sleep_time *= $sleep_multiplier;
+            if ( $sleep_time > $sleep_max_time ) {                
+                $sleep_time = $sleep_max_time / 2;
+
+                # maybe there is an error
+                $check_errors = 1;
+            }
         }
 
-        if ( ! $self->survive ) {
-            $self->_check_job_errors;
+        # check errors if necessary
+        if ( $check_errors && ! $self->survive ) {
+            $self->_check_job_errors($self->{_max_finished});
+            $check_errors = 0;
         }
-
-        $self->_check_job_errors($current_doc_number);
 
         # Both of the conditions below are necessary.
         # - $total_doc_number might be unknown (i.e. 0) before all_jobs_finished
@@ -825,6 +942,7 @@ sub _wait_for_jobs {
         # Note that if $current_doc_number == $total_doc_number,
         # the output of the last doc was not forwarded yet.
         $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
+
     }
 
     Treex::Tool::Probe::print_stats();
@@ -839,7 +957,7 @@ sub _print_execution_time {
     my %hosts = ();
 
     # read job log files
-    for my $file_finished ( glob $self->workdir . "/output/job???.finished" ) {
+    for my $file_finished ( glob $self->workdir . "/status/job???.finished" ) {
 
         # derivate file name
         my $file_started = $file_finished;
@@ -902,10 +1020,10 @@ sub _check_job_errors {
     Treex::Tool::Probe::begin("_check_job_errors");
 
     my $workdir = $self->workdir;
-    if ( defined( my $fatal_name = glob "$workdir/output/*fatalerror" ) ) {
+    if ( defined( my $fatal_name = glob "$workdir/status/*fatalerror" ) ) {
         log_info "At least one job crashed with fatal error ($fatal_name).";
         my ($fatal_job) = $fatal_name =~ /job(\d+)/;
-        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/output/job$fatal_job*.stderr";
+        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/status/job$fatal_job*.stderr";
         my $fatal_lines = qx($command);
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
@@ -928,35 +1046,45 @@ sub _check_job_errors {
 
 sub _check_epilog_before_finish {
     my ( $self, $from_job_number ) = @_;
+
+    Treex::Tool::Probe::begin("_check_epilog_before_finish");
+
     my $workdir = $self->workdir;
     $from_job_number ||= 1;
-    for my $job_num ( $from_job_number .. $self->jobs ) {
+#    log_info("_check_epilog_before_finish - $from_job_number");
+    for my $job_num ( $from_job_number .. $self->{_max_started} ) {
         my $job_str = sprintf "%.3d", $job_num;
 
-        # -f is much faster than grep, so let's check it first.
-        next if -f "$workdir/output/job$job_str.finished";
-        my $epilog_name = glob "$workdir/output/job$job_str.sh.e*";
-        my $epilog = $epilog_name ? qx(grep EPILOG $epilog_name) : 0;
-        
-        # However, now we must check -f again, because the file could be created meanwhile.
-        if ($epilog && !-f "$workdir/output/job$job_str.finished") {
-            log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
-            log_info "**** cat $epilog_name\n";
-            system "cat $epilog_name";
-            log_info "********************** LAST STDERR OF JOB $job_str: ******************";
-            log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
-            system "tail $workdir/output/job$job_str-doc*.stderr";
-            log_info "\n********************** END OF JOB $job_str ERRORS LOGS ****************\n";
-            if ( $self->survive ) {
-                log_warn("fatal error ignored due to the --survive option, be careful");
-                return;
-            }
-            else {
-                log_info "All remaining jobs will be interrupted now.";
-                $self->_delete_jobs_and_exit;
+        next if $self->_is_job_finished($job_num);
+        my $epilog_name = glob "$workdir/error/job$job_str.sh.e*";
+
+        if ( $epilog_name ) {
+            qx(stat $epilog_name);
+            my $epilog = qx(grep EPILOG $epilog_name);
+
+            # However, now we must check -f again, because the file could be created meanwhile.
+            if ($epilog ) {
+                log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
+                log_info "**** cat $epilog_name\n";
+                system "cat $epilog_name";
+                log_info "********************** LAST STDERR OF JOB $job_str: ******************";
+                log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
+                system "tail $workdir/output/job$job_str-doc*.stderr";
+                log_info "\n********************** END OF JOB $job_str ERRORS LOGS ****************\n";
+                if ( $self->survive ) {
+                    log_warn("fatal error ignored due to the --survive option, be careful");
+                    return;
+                }
+                else {
+                    log_info "All remaining jobs will be interrupted now.";
+                    $self->_delete_jobs_and_exit;
+                }
             }
         }
     }
+
+    Treex::Tool::Probe::end("_check_epilog_before_finish");
+
     return;
 }
 
@@ -1002,9 +1130,13 @@ sub _execute_on_cluster {
         #        mkdir $directory or log_fatal $!;
     }
 
-    foreach my $subdir (qw(output scripts)) {
-        mkdir $self->workdir . "/$subdir" or log_fatal 'Could not create directory ' . $self->workdir . "/$subdir : " . $!;
+    foreach my $subdir (qw(output scripts status error)) {
+        my $dir = $self->workdir . "/$subdir";
+        mkdir $dir or log_fatal 'Could not create directory ' . $dir . " : " . $!;
+        qx(stat $dir);
     }
+    sleep(1);
+
 
     # catching Ctrl-C interruption
     local $SIG{INT} =
@@ -1031,7 +1163,7 @@ sub _execute_on_cluster {
     }
 
     log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
-    
+
     return;
 }
 
@@ -1047,10 +1179,11 @@ sub _redirect_output {
     STDOUT->autoflush(1);
 
     # special file is touched if log_fatal is called
+    my $file_fatalerror = $outdir . "/../status/$job-$doc.fatalerror";
     Treex::Core::Log::add_hook(
         'FATAL',
         sub {
-            eval { system qq(touch $stem.fatalerror) };      ## no critic (RequireCheckingReturnValueOfEval)
+            eval { system qq(touch $file_fatalerror) };      ## no critic (RequireCheckingReturnValueOfEval)
             }
     );
     return;
