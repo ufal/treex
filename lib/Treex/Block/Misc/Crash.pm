@@ -20,9 +20,9 @@ has 'start_undef'     => ( is => 'ro', isa => 'Prob', default  => 0 );
 has 'start_die'     => ( is => 'ro', isa => 'Prob', default  => 0 );
 has 'start_fatal'     => ( is => 'ro', isa => 'Prob', default  => 0 );
 
-has 'process_undef'     => ( is => 'ro', isa => 'Prob', default  => 0 );
-has 'process_die'     => ( is => 'ro', isa => 'Prob', default  => 0 );
-has 'process_fatal'     => ( is => 'ro', isa => 'Prob', default  => 0 );
+has 'document_undef'     => ( is => 'ro', isa => 'Prob', default  => 0 );
+has 'document_die'     => ( is => 'ro', isa => 'Prob', default  => 0 );
+has 'document_fatal'     => ( is => 'ro', isa => 'Prob', default  => 0 );
 
 
 sub BUILD {
@@ -43,7 +43,7 @@ sub process_start {
 sub process_document{
     my ($self, $document ) = @_;
 
-    $self->crash("process");
+    $self->crash("document");
 
     return;
 }
