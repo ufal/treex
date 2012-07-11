@@ -27,7 +27,7 @@ sub fix_node {
 sub is_coord {
     my ($node) = @_;
     my $lemma = $node->form;
-    return any { $_ eq $lemma } qw(and or nor but);
+    return any { $_ eq $lemma } qw(and or nor but), ",";
 }
 
 1;

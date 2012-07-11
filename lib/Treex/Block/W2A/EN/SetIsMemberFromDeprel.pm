@@ -7,7 +7,7 @@ sub process_anode {
     my ( $self, $anode ) = @_;
 
     if ($anode->is_member
-        || ( $anode->conll_deprel eq 'COORD' && $anode->get_parent->tag eq 'CC' )
+        || ( $anode->conll_deprel eq 'COORD' && $anode->get_parent->tag =~ /^(CC|P)$/ )
         )
     {
         $anode->set_is_member(1);
@@ -26,7 +26,7 @@ sub process_anode {
 =item Treex::Block::W2A::EN::SetIsMemberFromDeprel
 
 Nodes with C<conll_deprel> attribute C<COORD>
-under coordinating conjunction (tag=CC)
+under coordinating conjunction (tag=C) or coordinating comma (tag=P)
 are marked with the C<is_member> attribute (i.e. as conjuncts).
 
 CoNLL2007 English data marks several other constructions with COORD.
