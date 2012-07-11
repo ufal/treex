@@ -5,11 +5,14 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    
+
     if ($anode->is_member
-    || ($anode->conll_deprel eq 'COORD' && $anode->get_parent->lemma ne 'rather')){
+        || ( $anode->conll_deprel eq 'COORD' && $anode->get_parent->tag eq 'CC' )
+        )
+    {
         $anode->set_is_member(1);
-    } else {
+    }
+    else {
         $anode->set_is_member(0);
     }
 
@@ -22,11 +25,26 @@ sub process_anode {
 
 =item Treex::Block::W2A::EN::SetIsMemberFromDeprel
 
-The nodes with C<conll_deprel> attribute C<COORD>
-are marked with the C<is_member> attribute. No C<afun> is filled yet.
-The only exception is the "rather than" construction,
-which is sometimes marked with COORD in CoNLL2007 data,
-but it is quite different from coordinations, so we don't mark with C<is_member>. 
+Nodes with C<conll_deprel> attribute C<COORD>
+under coordinating conjunction (tag=CC)
+are marked with the C<is_member> attribute (i.e. as conjuncts).
+
+CoNLL2007 English data marks several other constructions with COORD.
+We don't consider these coordinations and therefore we don't mark these with C<is_member>.
+For example:
+
+=over
+
+=item A rather then B
+
+=item A along with B
+
+=item A instead of B
+
+=item A as much as B
+
+=back
+
 If C<is_member> is set before, it is preserved.
 
 =back
