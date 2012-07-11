@@ -29,7 +29,7 @@ sub process_atree {
 
         # Skip dicendi verbs that are not preceded by a quote
         # TODO: This is too restrictive ("I know," Jim said.)
-        next DICENDI if $a_nodes[ $i_dicendi - 1 ]->lemma !~ /["'»]/;
+        next DICENDI if $a_nodes[ $i_dicendi - 1 ]->lemma !~ /^["'»]$/;
 
         # Find the root of direct speech, i.e. the highest node between the quotes
         my $dsp_root = $a_nodes[ $i_dicendi - 2 ];
