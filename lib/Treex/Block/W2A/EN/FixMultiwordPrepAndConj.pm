@@ -50,6 +50,7 @@ sub process_atree {
             foreach my $other (@others) {
                 $other->set_afun( $conj ? 'AuxC' : 'AuxP' );
                 $other->set_parent($first);
+                $other->set_is_member(0);
             }
 
             # a jejich deti se prevesi taky rovnou pod prvni
@@ -177,7 +178,7 @@ sub as_X_as_Y {
         $Y_head->set_parent($as2);
 
         # update coordination membership after rehanging
-        foreach my $node ($as1, $as2, $super_parent, $X_head) {
+        foreach my $node ($as1, $as2, $super_parent, $X_head, $Y_head) {
             $node->set_is_member(0);
         }
         if (any {$_->is_member} $as1->get_siblings) {
