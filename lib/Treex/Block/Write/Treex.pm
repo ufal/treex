@@ -1,6 +1,8 @@
 package Treex::Block::Write::Treex;
 use Moose;
 use Treex::Core::Common;
+use File::Path;
+use File::Basename;
 
 extends 'Treex::Block::Write::BaseWriter';
 
@@ -28,6 +30,10 @@ override '_get_filename' => sub {
 
 # If a gzipped file is opened first, the header won't be correct
 override '_open_file_handle' => sub {
+    my ( $self, $filename ) = @_;
+    
+    # This line is the only one needed from super() implementation
+    mkpath( dirname($filename) );
     return;
 };
 
