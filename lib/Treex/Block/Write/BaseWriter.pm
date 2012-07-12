@@ -47,6 +47,15 @@ has to => (
         . 'use "." for the filename inherited from upstream blocks).',
 );
 
+# Experimental feature. TODO: reconsider the design and add tests
+has substitute => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'A file loaded from dir1 can be saved to dir2 by substitute={dir1}{dir2}. '
+        . 'You can use regex substituions, e.g. substitute={dir(\d+)/file(\d+).treex}{f\1-\2.streex}i',
+);
+
+
 has _filenames => (
     isa           => 'ArrayRef[Str]',
     is            => 'rw',
@@ -145,13 +154,17 @@ sub _get_filename {
             $filename = ( defined $self->path ? $self->path : '' ) . $next_filename;
         }
     }
+    
+    if (defined $self->substitute){
+        my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
+        eval $eval_string or log_fatal "Failed to eval $eval_string";
+    }
 
     return $filename;
 }
 
 # Default process_document method for all Writer blocks. 
 override 'process_document' => sub {
-
     my ( $self, $document ) = @_;
 
     # set _file_handle properly (this MUST be called if process_document is overridden)
@@ -165,7 +178,6 @@ override 'process_document' => sub {
 # Prepare the file handle for the next file to be processed.
 # This MUST be called in all process_document overrides.
 sub _prepare_file_handle {
-
     my ( $self, $document ) = @_;
 
     my $filename = $self->_get_filename($document);
@@ -175,7 +187,6 @@ sub _prepare_file_handle {
         # nothing to do, keep writing to the old filename
     }
     else {
-
         #  need to switch output stream
 
         # close the previous one (except if it's stdout)
@@ -197,7 +208,6 @@ sub _prepare_file_handle {
 
 # Open the given file handle (including compressed variants and standard output).
 sub _open_file_handle {
-
     my ( $self, $filename ) = @_;
 
     if ( $filename eq "-" ) {
