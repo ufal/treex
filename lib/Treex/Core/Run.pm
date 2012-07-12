@@ -746,6 +746,16 @@ sub _print_output_files {
 
         my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         #log_info "Processing output file: " . $filename;
+        
+        # we have to wait until file is really creates the file
+        if ( ! -f $filename ) {
+            Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep1");
+            sleep(10);
+            if ( $doc_number == 1 ) {
+                sleep(10);
+            }
+            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep1");
+        }
 
         if ( !-f $filename ) {
             my $message = "Document $doc_number finished without producing $filename. " .
@@ -765,8 +775,10 @@ sub _print_output_files {
         if ( $stream eq 'stderr' && -s $filename == 0 ) {
             # Jan Stepanek advice
             `stat $filename`;
+            Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep2");
             # Definitely not the ideal solution but it helps at the moment (and it fails without it):
-            #sleep(10);
+            sleep(3);
+            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep2");
         }
 
         #while ( -s $filename == 0 && $wait_it < 1 ) {
