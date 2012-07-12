@@ -89,14 +89,6 @@ has 'filenames' => (
     documentation => 'treex file names',
 );
 
-has 'glob' => (
-    traits        => ['Getopt'],
-    cmd_aliases   => 'g',
-    is            => 'rw',
-    isa           => 'Str',
-    documentation => q{Input file mask whose expansion is to Perl, e.g. --glob '*.treex'},
-);
-
 has 'scenario' => (
     traits        => ['NoGetopt'],
     is            => 'rw',
@@ -281,18 +273,6 @@ sub BUILD {
         _redirect_output( $self->outdir, 0, $self->jobindex );
     }
 
-    my @file_sources;
-    if ( $self->filenames ) {
-        push @file_sources, "files after --";
-    }
-    if ( $self->glob ) {
-        push @file_sources, "glob option";
-    }
-    if ( @file_sources > 1 ) {
-        log_fatal "At most one way to specify input files can be used. You combined "
-            . ( join " and ", @file_sources ) . ".";
-    }
-
     # 'require' can't be changed to 'imply', since the number of jobs has a default value
     if ( ( $self->qsub || $self->jobindex ) && !$self->parallel ) {
         log_fatal "Options --qsub and --jobindex require --parallel";
@@ -449,15 +429,6 @@ sub _execute_locally {
         }
     }
     my $scen_str = join ' ', @arguments;
-
-    # input data files can be specified in different ways
-    if ( $self->glob ) {
-        my $mask = $self->glob;
-        $mask =~ s/^['"](.+)['"]$/$1/;
-        my @files = glob $mask;
-        log_fatal "No files matching mask $mask" if @files == 0;
-        $self->set_filenames( \@files );
-    }
 
     # some command line options are just shortcuts for blocks; the blocks are added to the scenario now
     if ( $self->filenames ) {

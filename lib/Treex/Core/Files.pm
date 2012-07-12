@@ -22,9 +22,13 @@ has file_number => (
 
 sub BUILD {
     my ( $self, $args ) = @_;
-    return if $args->{filenames};
-    log_fatal 'parameter "string" is required' if !defined $args->{string};
-    $self->_set_filenames( $self->string_to_filenames( $args->{string} ) );
+    if ($args->{filenames}){
+        ## Nothing to do, $args->{filenames} are ArrayRef[Str] checked by Moose
+    } elsif(defined $args->{string}){
+        $self->_set_filenames( $self->string_to_filenames( $args->{string} ) );
+    } else {
+        log_fatal 'One of the parameters (filenames, string)  is required';
+    }
     return;
 }
 
@@ -35,6 +39,10 @@ sub string_to_filenames {
 
 sub _token_to_filenames {
     my ( $self, $token ) = @_;
+    if ($token =~ /^!(.+)/) {
+        my @filenames = glob $1;
+        return @filenames;
+    }
     return $token if $token !~ s/^@(.*)/$1/;
     if ( $token eq '-' ) {
         $token = \*STDIN;
@@ -97,13 +105,17 @@ Treex::Core::Files - helper class for iterating over filenames
   #or
   while (my $filehandle = $c->next_filehandle){ ... }
   
+  # You can use also wildcard expansion
+  my $c = My::Class(from=>'!dir??/file*.txt');
+  
+  
 =head1 DESCRIPTION
 
-TODO
-
-I<@filelist> convention is used in several tools, e.g. javac or 7z.
-For a large number of files, list the the file names in a file - one per line.
+The I<@filelist> and I<!wildcard> conventions are used in several tools, e.g. 7z or javac.
+For a large number of files, list the file names in a file - one per line.
 Then use the list file name preceded by an @ character. 
+
+TODO more doc
 
 =head1 AUTHOR
 

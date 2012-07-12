@@ -41,7 +41,7 @@ SKIP: {
 
     my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
         . " Util::Eval document='print \$document->description()'"
-        . " -g './paratest*.treex'";
+        . " -- !./paratest*.treex";
 
 
     my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );

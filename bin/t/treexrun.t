@@ -18,7 +18,7 @@ BEGIN {
 my @tasks  = (
     [ q(treex -q -- dummy.treex),                                        '', 0 ],     # reading an empty file
     [ q(treex -q -s -- dummy.treex),                                     '', 0 ],     # reading and saving an empty file
-    [ q(treex -q -g '*dummy.treex'),                                     '', 0 ],     # postponed wildcard expansion
+    [ q(treex -q -- '!*dummy.treex'),                                    '', 0 ],     # postponed wildcard expansion
     [ q(echo | treex -q -Len Read::Text Util::Eval document='print 0;'), '0', 0 ],    # @ARGV contains q{document=print 0;}
 
     # It is questionable whether we want to allow the following four constructions

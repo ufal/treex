@@ -34,7 +34,7 @@ foreach my $i ( 1 .. $number_of_files ) {
 }
 
 my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local  --cleanup " .
-    "Util::Eval document='print \"1\";' -g './paratest*.treex'";
+    "Util::Eval document='print \"1\";' -- !./paratest*.treex";
 
 my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
 

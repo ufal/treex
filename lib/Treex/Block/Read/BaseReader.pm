@@ -157,7 +157,15 @@ space or comma separated list of filenames, or C<-> for STDIN
 An '@' directly in front of a file name causes this file to be interpreted as a file
 list, with one file name per line, e.g. '@filelist.txt' causes the reader to open
 'filelist.txt' and read a list of files from it. File lists may be arbitrarily 
-mixed with regular files in the parameter. 
+mixed with regular files in the parameter.
+
+Similarly, you can use I<!> for wildcard expansion, e.g.
+C<treex -Len Read::Treex from='!dir??/file*.txt'>.
+The single quotes are needed for two reasons.
+First, to prevent bash from interpreting the wildcard characters.
+Second, to prevent bash from interpreting the exclamation mark as history expansion.
+
+The I<@filelist> and I<!wildcard> conventions are used in several tools, e.g. 7z or javac.
 
 (If you use this method via API you can specify a string array reference or a
 L<Treex::Core::Files> object.)
