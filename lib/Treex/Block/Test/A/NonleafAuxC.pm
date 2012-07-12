@@ -5,7 +5,7 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    if ( ( $anode->afun || '' ) eq 'AuxC' && !$anode->get_children ) {
+    if ( ( $anode->afun || '' ) eq 'AuxC' && !$anode->get_echildren ) {
         $self->complain($anode);
     }
     return;
