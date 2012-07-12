@@ -45,7 +45,7 @@ SKIP: {
     
         my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
             . " Util::Eval document='print \$document->description()'"
-            . " -- !./paratest*.treex";
+            . " -- ./paratest*.treex";
 
         my $start_time = time();
     
