@@ -3,6 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Util::Eval';
 
+has on_error => (
+    is            => 'ro',
+    isa           => enum( [qw(fatal warn ignore)] ),
+    default       => 'fatal',
+    documentation => 'what to do on errors in the code for eval',
+);
+
 ## no critic (ProhibitStringyEval) This block needs string evals
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -19,15 +26,26 @@ sub process_zone {
             if ( eval "my \$${layer}tree = \$tree; $code" ) {
                 say $tree->get_address();
             }
+            $self->_check_errors($code);
         }
         if ( my $code = $self->_args->{"${layer}node"} ) {
             foreach my $node ( $tree->get_descendants() ) {
                 if ( eval "my \$${layer}node = \$node; $code" ) {
                     say $node->get_address();
                 }
+                $self->_check_errors($code);
             }
         }
     }
+    return;
+}
+
+sub _check_errors {
+    my ($self, $code) = @_;
+    return if !$@ or $self->on_error eq 'ignore';
+    my $msg = "While evaluating '$code' got error: $@";
+    log_fatal $msg if $self->on_error eq 'fatal';
+    log_warn $msg;
     return;
 }
 
