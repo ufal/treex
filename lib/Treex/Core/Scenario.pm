@@ -1,6 +1,7 @@
 package Treex::Core::Scenario;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::CacheBlock;
 use File::Basename;
 use File::Slurp;
 use File::chdir;
@@ -269,6 +270,10 @@ sub _load_block {
         $new_block = $block_name->new( \%params );
         1;
     } or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name\n\nEVAL ERROR:\t$@";
+
+    if ( $params{'use_cache'} ) {
+        $new_block = Treex::Core::CacheBlock->new( {block=> $new_block, params => \%params} );
+    }
 
     return $new_block;
 }
