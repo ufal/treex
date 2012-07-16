@@ -258,11 +258,8 @@ sub get_afun {
     # Nouns under verbs (but subjects are already solved)
     if ( $i_am_noun && $ep_tag =~ /^(V|MD)/ ) {
 
-        # Adverbials are usually expressed by prepositional phrases
-        # with a few exceptions - namely temporal modifiers expressed by nouns.
-        # This is just a heuristics - we guess wrong cases like
-        # "Do you remember that year?", but there's no English Vallex to help.
-        return 'Adv' if $lemma =~ /^(year|month|week|spring|summer|autumn|winter)$/;    #&& $node->get_siblings();
+        # "This month(afun=Adv), we are happy."
+        return 'Adv' if _is_adverbial_noun($lemma);
 
         # "It is a dog(afun=Pnom)"
         return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
@@ -284,6 +281,17 @@ sub get_afun {
 
     # And the rest - we don't know
     return 'NR';
+}
+
+# Adverbials are usually expressed by prepositional phrases
+# with a few exceptions - namely temporal modifiers expressed by nouns.
+# This is just a heuristics - we guess wrong cases like
+# "Do you remember that year?", but there's no English Vallex to help.
+sub _is_adverbial_noun {
+    my ($lemma) = @_;
+    return 1 if $lemma =~ /^(year|month|week|spring|summer|autumn|winter)$/;
+    return 1 if Treex::Tool::Lexicon::EN::number_of_month($lemma);
+    return 0;
 }
 
 1;
