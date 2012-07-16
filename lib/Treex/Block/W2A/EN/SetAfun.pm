@@ -247,10 +247,10 @@ sub get_afun {
         return 'Atr' if $ep_is_noun;
     }
 
-    # Nouns/determiners/verbs under preposition
+    # Nouns/determiners/verbs under preposition/subord. conjunction
     my $grandpa = $eparent->get_parent();
     my $i_am_noun = $tag =~ $NOUN_REGEX;
-    if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_afun eq 'AuxP' && $grandpa ) {
+    if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_afun =~ /Aux[PC]/ && $grandpa ) {
         my $grandpa_tag   = $grandpa->tag   || '_root';
         my $grandpa_lemma = $grandpa->lemma || '_root';
 
