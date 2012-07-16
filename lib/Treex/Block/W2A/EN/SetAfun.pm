@@ -119,11 +119,17 @@ sub _select_subjects {
     if ( @nouns > 1 ) {
 
         # It can be a coordination "Peter and Paul went there."
-        my @coordinated = grep { $_->get_parent()->is_coap_root() } @nouns;
+        my @coordinated = grep { $_->is_member } @nouns;
         return @coordinated if @coordinated;
 
-        # Otherwise try the nearest noun before verb "This summer, it was ..."
-        return $nouns[-1];
+        # Try to filter out adverbial nouns, e.g.
+        # "This summer, he sold a car."
+        # "The luxury auto maker last year sold 1,214 cars" (real sentence, PennTB)
+        my @non_adv = grep {!_is_adverbial_noun($_->lemma)} @nouns;
+
+        # Try the the last noun (just a uncorroborated heuristics).
+        return $nouns[-1] if !@non_adv;
+        return $non_adv[-1];
     }
     return;
 }
