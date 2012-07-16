@@ -214,7 +214,7 @@ sub get_afun {
 
     # Precompute some values (eparent can be the root, so let's use undefs => '')
     my ($eparent) = $node->get_eparents();
-    my ( $ep_tag, $ep_lemma ) = $eparent->get_attrs( 'tag', 'lemma', { undefs => '' } );
+    my ( $ep_tag, $ep_lemma, $ep_afun ) = $eparent->get_attrs(qw(tag lemma afun), { undefs => '' } );
     my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
     my $precedes_ep = $node->precedes($eparent);
 
@@ -250,7 +250,7 @@ sub get_afun {
     # Nouns/determiners/verbs under preposition
     my $grandpa = $eparent->get_parent();
     my $i_am_noun = $tag =~ $NOUN_REGEX;
-    if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_tag =~ /^(IN|TO)/ && $grandpa ) {
+    if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_afun eq 'AuxP' && $grandpa ) {
         my $grandpa_tag   = $grandpa->tag   || '_root';
         my $grandpa_lemma = $grandpa->lemma || '_root';
 
