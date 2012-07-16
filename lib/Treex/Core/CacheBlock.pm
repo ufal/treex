@@ -37,6 +37,8 @@ sub process_document {
 
     my $full_hash = $self->get_hash . $document_hash;
     my $cached_document = $self->_memcached->get($full_hash);
+    
+    my $return_code = $Block::DOCUMENT_PROCESSED;
 
     if ( ! $cached_document ) {
         if ( ! $self->_loaded() ) {
@@ -49,11 +51,12 @@ sub process_document {
     } else {
         log_info("CACHE: loading from cache " . $self->block->get_block_name());
         $_[0] = $cached_document;
+        $return_code = $Block::DOCUMENT_FROM_CACHE;
     }
 
     $Storable::canonical = 0;
 
-    return 1;
+    return $return_code;
 }
 
 sub get_required_share_files {
