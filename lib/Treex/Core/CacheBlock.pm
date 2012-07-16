@@ -14,7 +14,7 @@ extends 'Treex::Core::Block';
 
 has block => ( is => 'ro', isa => 'Treex::Core::Block' );
 
-has _memcached => (is => 'rw', isa => 'Cache::Memcached');
+has cache => (is => 'ro', isa => 'Cache::Memcached');
 has _loaded => (is => 'rw', isa => 'Bool', default => 0);
 
 override 'get_hash' => sub {
@@ -36,8 +36,8 @@ sub process_document {
     log_info("CACHE: document_hash\t$document_hash");
 
     my $full_hash = $self->get_hash . $document_hash;
-    my $cached_document = $self->_memcached->get($full_hash);
-    
+    my $cached_document = $self->cache->get($full_hash);
+
     my $return_code = $Block::DOCUMENT_PROCESSED;
 
     if ( ! $cached_document ) {
@@ -47,7 +47,7 @@ sub process_document {
         }
         log_info("CACHE: calling process_document " . $self->block->get_block_name());
         $self->block->process_document($document);
-        $self->_memcached->set($full_hash, $document);
+        $self->cache->set($full_hash, $document);
     } else {
         log_info("CACHE: loading from cache " . $self->block->get_block_name());
         $_[0] = $cached_document;
@@ -63,18 +63,6 @@ sub get_required_share_files {
     my ($self) = @_;
 
     return $self->block->get_required_share_files();
-}
-
-
-sub process_start {
-    my $self = shift;
-    $self->_set_memcached(
-        Treex::Tool::Memcached::Memcached::get_connection(
-            $self->block->get_block_name()
-        )
-    );
-
-    return;
 }
 
 sub process_end {

@@ -219,6 +219,14 @@ has 'survive' => (
     documentation => 'Continue collecting jobs\' outputs even if some of them crashed (risky, use with care!).',
 );
 
+has 'cache' => (
+    traits        => ['Getopt'],
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Use cache.',
+);
+
 has version => (
     traits        => ['Getopt'],
     is            => 'ro',

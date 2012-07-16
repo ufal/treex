@@ -88,6 +88,12 @@ has runner => (
     documentation => 'Treex::Core::Run instance in which the scenario is running',
 );
 
+has cache => (
+    is            => 'ro',
+    isa           => 'Maybe[Cache::Memcached]',
+    builder       => '_build_cache',
+);
+
 sub _build_scenario_string {
     my $self = shift;
     if ( $self->_has_from_file ) {
@@ -170,6 +176,18 @@ sub _build_parser {
         1;
     } or log_fatal("Cannot create Scenario parser");
     return $parser;
+}
+
+sub _build_cache {
+    my $self = shift;
+
+    if ( $self->runner->cache ) {
+        return Treex::Tool::Memcached::Memcached::get_connection(
+            "documents-cache"
+            );
+    }
+
+    return;
 }
 
 sub _load_scenario_file {
@@ -271,8 +289,8 @@ sub _load_block {
         1;
     } or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name\n\nEVAL ERROR:\t$@";
 
-    if ( $params{'use_cache'} ) {
-        $new_block = Treex::Core::CacheBlock->new( {block=> $new_block, params => \%params} );
+    if ( $self->runner->cache && $params{'use_cache'} ) {
+        $new_block = Treex::Core::CacheBlock->new( {block=> $new_block, cache => $self->cache} );
     }
 
     return $new_block;
@@ -350,9 +368,9 @@ Treex::Core::Scenario - a larger Treex processing unit, composed of blocks
 =head1 SYNOPSIS
 
  use Treex::Core;
- 
+
  my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
- 
+
  $scenario->run;
 
 
@@ -401,8 +419,8 @@ Scenario example:
 
 =item my $scenario = Treex::Core::Scenario->new(from_string => 'W2A::Tokenize language=en  W2A::Lemmatize' );
 
-Constructor parameter C<from_string> specifies the names of blocks which are 
-to be executed (in the specified order) when the scenario is applied on a 
+Constructor parameter C<from_string> specifies the names of blocks which are
+to be executed (in the specified order) when the scenario is applied on a
 L<Treex::Core::Document> object.
 
 =item my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
