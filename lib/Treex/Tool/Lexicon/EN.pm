@@ -46,6 +46,10 @@ sub number_for {
 my %NUMBER_OF_MONTH = (
     January => 1, February => 2, March     => 3, April   => 4,  May      => 5,  June     => 6,
     July    => 7, August   => 8, September => 9, October => 10, November => 11, December => 12,
+
+    # Abbreviations (June and July are abbreviated only rarely)
+    'Jan.' => 1, 'Feb.' => 2, 'Mar.'  => 3, 'Apr.' => 4,  'Jun.' => 6,  'Jul.' => 7,
+    'Aug.' => 8, 'Sep.' => 9, 'Sept.' => 9, 'Oct.' => 10, 'Nov.' => 11, 'Dec.' => 12,
 );
 
 sub number_of_month {
@@ -60,9 +64,8 @@ my %NUMBER_OF_DAY = (
 
 sub number_of_day {
     my ($lemma) = @_;
-    return $NUMBER_OF_DAY{lc $lemma};
+    return $NUMBER_OF_DAY{ lc $lemma };
 }
-
 
 sub truncate_lemma {
     return @_;
