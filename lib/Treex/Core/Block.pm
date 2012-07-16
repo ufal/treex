@@ -2,6 +2,11 @@ package Treex::Core::Block;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
+use Digest::MD5 qw(md5_hex);
+use Storable;
+use Time::HiRes;
+use App::whichpm 'which_pm';
+
 
 has selector => ( is => 'ro', isa => 'Treex::Type::Selector',        default => '', );
 has language => ( is => 'ro', isa => 'Maybe[Treex::Type::LangCode]', builder => 'build_language' );
@@ -21,6 +26,8 @@ has select_bundles => (
 
 has _is_bundle_selected => (is=>'rw');
 
+has _hash => ( is => 'rw', isa => 'Str' );
+
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
 # or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),
 # it is returned as a default value of the attribute $self->language
@@ -38,6 +45,7 @@ sub build_language {
     }
 }
 
+
 sub zone_label {
     my ($self) = @_;
     my $label = $self->language or return;
@@ -53,6 +61,7 @@ sub zone_label {
 
 sub BUILD {
     my $self = shift;
+
     if ($self->select_bundles){
       log_fatal 'select_bundles='.$self->select_bundles.' does not match /^\d+(-\d+)?(,\d+(-\d+)?)*$/'
           if $self->select_bundles !~ /^\d+(-\d+)?(,\d+(-\d+)?)*$/;
@@ -66,7 +75,46 @@ sub BUILD {
       }
       $self->_set_is_bundle_selected(\%selected);
     }
+
+    $self->_compute_hash();
     return;
+}
+
+sub _compute_hash {
+    my $self = shift;
+
+    my $md5 = Digest::MD5->new();
+
+    # compute block parameters hash
+    my $params_str = "";
+    map {
+            $params_str .= $_ ."=".$self->{$_};
+            # log_warn("\t\t" . $_ . "=" . $self->{$_} . " - " . ref($self->{$_}));
+        }
+        sort                            # in canonical form
+        grep { ! ref($self->{$_}) }     # no references
+        grep { defined($self->{$_}) }   # value has to be defined
+        grep { !/(scenario|block)/ }
+        keys %{$self};
+    $md5->add($params_str);
+
+    # compute block source code hash
+    my ($block_filename, $block_version) = which_pm($self->get_block_name());
+    open(my $block_fh, "<", $block_filename) or log_fatal("Can't open '$block_filename': $!");
+    binmode($block_fh);
+    $md5->addfile($block_fh);
+    close($block_fh);
+
+    $self->_set_hash($md5->hexdigest);
+
+#    log_warn("Block hash: " . $self->get_block_name() . " - " . $self->get_hash());
+
+    return;
+}
+
+sub get_hash {
+    my $self = shift;
+    return $self->_hash;
 }
 
 sub require_files_from_share {
@@ -97,6 +145,12 @@ sub process_document {
         log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
             " doesn't override the method process_document";
     }
+
+#    my $start = Time::HiRes::time();
+#    my $str = Storable::freeze($document);
+#    my $hash = md5_hex($str);
+#    my $end = Time::HiRes::time();
+#    log_info("\tMD5\t$hash\t" . ($end - $start) . "\t" . length($str));
 
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
@@ -207,12 +261,12 @@ Treex::Core::Block - the basic data-processing unit in the Treex framework
  use Moose;
  use Treex::Core::Common;
  extends 'Treex::Core::Block';
- 
+
  sub process_bundle {
     my ( $self, $bundle) = @_;
- 
+
     # bundle processing
- 
+
  }
 
 =head1 DESCRIPTION
@@ -247,21 +301,21 @@ You must override one of the following methods:
 
 =item $block->process_document($document);
 
-Applies the block instance on the given instance of 
-L<Treex::Core::Document>. The default implementation 
-iterates over all bundles in a document and calls C<process_bundle()>. So in 
+Applies the block instance on the given instance of
+L<Treex::Core::Document>. The default implementation
+iterates over all bundles in a document and calls C<process_bundle()>. So in
 most cases you don't need to override this method.
 
 =item $block->process_bundle($bundle);
 
-Applies the block instance on the given bundle 
+Applies the block instance on the given bundle
 (L<Treex::Core::Bundle>).
 
 =item $block->process_zone($zone);
 
-Applies the block instance on the given bundle zone 
-(L<Treex::Core::BundleZone>). Unlike 
-C<process_document> and C<process_bundle>, C<process_zone> requires block 
+Applies the block instance on the given bundle zone
+(L<Treex::Core::BundleZone>). Unlike
+C<process_document> and C<process_bundle>, C<process_zone> requires block
 attribute C<language> (and possibly also C<selector>) to be specified.
 
 =item $block->process_I<X>tree($tree);
@@ -324,12 +378,12 @@ It returns the name of the block module.
 
 =item my @needed_files = $block->get_required_share_files();
 
-If a block requires some files to be present in the shared part of Treex, 
-their list (with relative paths starting in 
-L<Treex::Core::Config->share_dir|Treex::Core::Config/share_dir>) can be 
-specified by redefining by this method. By default, an empty list is returned. 
-Presence of the files is automatically checked in the block constructor. If 
-some of the required file is missing, the constructor tries to download it 
+If a block requires some files to be present in the shared part of Treex,
+their list (with relative paths starting in
+L<Treex::Core::Config->share_dir|Treex::Core::Config/share_dir>) can be
+specified by redefining by this method. By default, an empty list is returned.
+Presence of the files is automatically checked in the block constructor. If
+some of the required file is missing, the constructor tries to download it
 from L<http://ufallab.ms.mff.cuni.cz>.
 
 This method should be used especially for downloading statistical models,
