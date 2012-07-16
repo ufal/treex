@@ -35,16 +35,9 @@ sub get_candidates {
     my ($self, $anaph) = @_;
 
     my $cands = $self->_select_all_cands($anaph);
+    
     if ($self->anaphor_as_candidate) {
         unshift @$cands, $anaph;
-    }
-    if ($self->cands_within_czeng_blocks) {
-        my $block_id = $anaph->get_bundle->attr('czeng/blockid');
-        if (defined $block_id) {
-            my @cands_in_block = grep { 
-                defined $_ && ($_->get_bundle->attr('czeng/blockid') eq $block_id)} @$cands;
-            $cands = \@cands_in_block;
-        }
     }
     return $cands;
 }
@@ -54,6 +47,7 @@ sub get_pos_neg_candidates {
 
     my $cands  = $self->_select_all_cands($anaph);
     my $antecs = $self->_get_antecedents($anaph);
+    
     return $self->_split_pos_neg_cands($anaph, $cands, $antecs);
 }
 
@@ -61,23 +55,24 @@ sub _select_all_cands {
     my ($self, $anaph) = @_;
 
     my @all_cands = $self->_select_cands_in_range($anaph, $self->prev_sents_num);
-    my @filtered_cands = grep {$self->_cand_filter->is_candidate( $_)} @all_cands; 
+    my @filtered_cands = grep {$self->_cand_filter->is_candidate( $_)} @all_cands;
 
-    # reverse to ensure the closer candidates to be indexed with lower numbers
-    my @reversed_cands = reverse @filtered_cands;
-    return \@reversed_cands;
+    return \@filtered_cands;
 }
 
 # according to rule presented in Nguy et al. (2009)
 # semantic nouns from previous context of the current sentence and from
 # the previous sentence
 # TODO think about preparing of all candidates in advance
+# 'reverse' is used to ensure the ordering keeping the lowest indeces for the nearest candidates
 sub _select_cands_in_range {
     my ($self, $anaph, $range) = @_;
     
     # current sentence
-    my @sent_preceding = grep { $_->precedes($anaph) }
-        $anaph->get_root->get_descendants( { ordered => 1 } );
+    my @sent_preceding = reverse ( 
+        grep { $_->precedes($anaph) }
+            $anaph->get_root->get_descendants( { ordered => 1 } ) 
+    );
 
     # previous sentences
     my $sent_num = $anaph->get_bundle->get_position;
@@ -87,11 +82,20 @@ sub _select_cands_in_range {
 
     my @all_bundles = $anaph->get_document->get_bundles;
     my @prev_bundles = @all_bundles[ $bottom_idx .. $top_idx ];
+
+    # remove bundles which are in a block different to the anphor's one
+    if ($self->cands_within_czeng_blocks) {
+        my $block_id = $anaph->get_bundle->attr('czeng/blockid');
+        if (defined $block_id) {
+            @prev_bundles = grep {$_->attr('czeng/blockid') eq $block_id} @prev_bundles;
+        }
+    }
+
     my @prev_trees   = map {
         $_->get_tree( $anaph->language, $anaph->get_layer, $anaph->selector )
     } @prev_bundles;
-    foreach my $tree (@prev_trees) {
-        unshift @sent_preceding, $tree->get_descendants( { ordered => 1 } );
+    foreach my $tree (reverse @prev_trees) {
+        push @sent_preceding, reverse( $tree->get_descendants({ ordered => 1 }) );
     }
 
     return @sent_preceding;

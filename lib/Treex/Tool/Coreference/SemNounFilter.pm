@@ -18,8 +18,6 @@ sub is_candidate {
     return ($is_sem_noun && $not_first_second_pers && $not_certain_pos);
 }
 
-# TODO doc
-
 1;
 __END__
 
