@@ -1,6 +1,7 @@
 package Treex::Block::W2A::EN::SetAfun;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::EN;
 extends 'Treex::Core::Block';
 
 sub process_atree {
@@ -219,10 +220,14 @@ sub get_afun {
     }
 
     # Adjectives and possesive pronouns ("your", "mine")
+    # Most adjectives are Atr ($ep_is_noun) except for:
+    # "It is red(parent=is, afun=Pnom)." ... copula verb (to be)
+    # "It remains red(parent=remains, afun=Atr)." ... not considered a copula
+    # according to http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s03.html#predsljm
+    # "V našem pojetí za sponu pokládáme pouze sloveso být, ačkoli v běžných mluvnicích to bývá i stát se apod."
     if ( $tag =~ /^(JJ|PRP\$)/ ) {
         return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
-        return 'Atr' if $ep_is_noun;
-        return 'NR';
+        return 'Atr';
     }
 
     # Adverbs
