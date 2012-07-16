@@ -717,7 +717,7 @@ sub _print_output_files {
 
         my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         #log_info "Processing output file: " . $filename;
-        
+
         # we have to wait until file is really creates the file
         if ( ! -f $filename ) {
             Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep1");
@@ -879,7 +879,7 @@ sub _wait_for_jobs {
             $self->_print_output_files($current_doc_number);
             $current_doc_number++;
             $current_doc_started = 0;
-            
+
             # decrease sleeping time if we are printing out documents
             $sleep_time /= $sleep_multiplier;
             if ( $sleep_time < $sleep_min_time ) {
@@ -905,7 +905,7 @@ sub _wait_for_jobs {
 
             # increase sleeping time if nothing happened
             $sleep_time *= $sleep_multiplier;
-            if ( $sleep_time > $sleep_max_time ) {                
+            if ( $sleep_time > $sleep_max_time ) {
                 $sleep_time = $sleep_max_time / 2;
 
                 # maybe there is an error
@@ -938,9 +938,13 @@ sub _print_execution_time {
     my $time_total = 0;
 
     my %hosts = ();
+    my @times = ();
 
     # read job log files
     for my $file_finished ( glob $self->workdir . "/status/job???.finished" ) {
+        my $jobid = $file_finished;
+        $jobid =~ s/.*job0+//;
+        $jobid =~ s/\.finished//;
 
         # derivate file name
         my $file_started = $file_finished;
@@ -962,6 +966,8 @@ sub _print_execution_time {
         $time_total += ( $time_finish - $time_start );
         $hosts{$hostname}{'time'} += ( $time_finish - $time_start );
         $hosts{$hostname}{'c'}++;
+
+        push(@times, ($time_finish - $time_start).".".$jobid);
     }
 
     # find the slowest and the fastest machine
@@ -988,6 +994,7 @@ sub _print_execution_time {
     log_info "Execution time per job: " . sprintf( "%0.3f", $time_total / $self->jobs );
     log_info "Slowest machine: $max_host = $max_time";
     log_info "Fastest machine: $min_host = $min_time";
+    log_info "Times: " . join(", ", sort { $b <=> $a }@times);
 
     return;
 }
@@ -1006,7 +1013,7 @@ sub _check_job_errors {
     if ( defined( my $fatal_name = glob "$workdir/status/*fatalerror" ) ) {
         log_info "At least one job crashed with fatal error ($fatal_name).";
         my ($fatal_job) = $fatal_name =~ /job(\d+)/;
-        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/status/job$fatal_job*.stderr";
+        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/output/job$fatal_job*doc*.stderr";
         my $fatal_lines = qx($command);
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
