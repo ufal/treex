@@ -210,7 +210,7 @@ sub _build_parser {
 sub _build_cache {
     my $self = shift;
 
-    if ( $self->runner->cache ) {
+    if ( $self->runner && $self->runner->cache ) {
         return Treex::Tool::Memcached::Memcached::get_connection(
             "documents-cache"
             );
@@ -318,7 +318,7 @@ sub _load_block {
         1;
     } or log_fatal "Treex::Core::Scenario->new: error when initializing block $block_name\n\nEVAL ERROR:\t$@";
 
-    if ( $self->runner->cache && $params{'use_cache'} ) {
+    if ( $self->cache && $params{'use_cache'} ) {
         $new_block = Treex::Core::CacheBlock->new( {block=> $new_block, cache => $self->cache} );
     }
 
@@ -333,7 +333,7 @@ sub run {
     my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
-    if ( $self->runner->cache ) {
+    if ( $self->cache ) {
         $document_number = $self->_run_with_cache($reader, $number_of_blocks, $number_of_documents);
     } else {
         $document_number = $self->_run_without_cache($reader, $number_of_blocks, $number_of_documents);
@@ -478,7 +478,7 @@ sub _set_known_sequence {
 }
 
 
-sub run_without_cache {
+sub _run_without_cache {
     my ($self, $reader, $number_of_blocks, $number_of_documents) = @_;
 
     my $document_number     = 0;
