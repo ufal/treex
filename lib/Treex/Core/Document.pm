@@ -16,6 +16,7 @@ use Scalar::Util qw( weaken reftype );
 
 use PerlIO::via::gzip;
 use Storable;
+use Digest::MD5 qw(md5_hex);
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
@@ -28,6 +29,24 @@ has storable => (
     default       => undef,
     documentation => 'using Storable with gz compression instead of Treex::PML'
 );
+
+has _hash => ( is => 'rw', isa => 'Str' );
+
+sub get_hash {
+    my $self = shift;
+    if ( ! defined($self->_hash) ) {
+        $Storable::canonical = 1;
+        $self->_set_hash(md5_hex(Storable::freeze($self)));
+    }
+    return $self->_hash;
+}
+
+sub set_hash {
+    my ($self, $hash) = @_;
+
+    $self->_set_hash($hash);
+
+}
 
 has _pmldoc => (
     isa      => 'Treex::PML::Document',
