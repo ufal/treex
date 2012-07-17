@@ -10,6 +10,11 @@ use DowngradeUTF8forISO2;
 
 sub BUILD {
     my ($self) = @_;
+    return;
+}
+
+sub process_start {
+    my $self = shift;
 
     $self->_set_tagger( Morce::Czech->new() );
 
@@ -50,7 +55,7 @@ sub process_atree {
     }
 
     # get tags and lemmas
-    # Morèe works with sentences of limited size. Avoid submitting long sentences.
+    # Morï¿½e works with sentences of limited size. Avoid submitting long sentences.
     my $max_sentence_size = 500;
     my ($tags_rf, $lemmas_rf);
     my @tags;
@@ -114,5 +119,5 @@ Lemmata are also assigned.
 
 =cut
 
-# Copyright 2011, 2012 David Mareèek, Dan Zeman
+# Copyright 2011, 2012 David Mareï¿½ek, Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
