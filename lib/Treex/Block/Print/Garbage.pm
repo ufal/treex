@@ -5,7 +5,7 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has 'size' => ( isa => 'Int', is => 'ro', required => 1 );
+has 'size' => ( isa => 'Num', is => 'ro', required => 1 );
 
 
 sub process_document {
