@@ -5,6 +5,21 @@ use Treex::Core::Common;
 
 with 'Treex::Tool::Coreference::NodeFilter';
 
+my %en_nocontent_pos = map {$_ => 1} (
+    'CC', 'CD', 'DT', 'EX', 'IN', 'LS', 'MD', 'PDT', 'POS',
+    'PRP', 'PRP$', 'RP', 'SYM', 'TO', 'WDT', 'WP', 'WP$', 'WRB'
+);
+
+sub en_pos_filter {
+    my ($anode) = @_;
+    return defined $en_nocontent_pos{$anode->tag};
+}
+
+sub cs_pos_filter {
+    my ($anode) = @_;
+    return $anode->tag =~ /^[CJPRTZX]/;
+}
+
 # content word filtering
 sub is_candidate {
     my ($self, $tnode) = @_;
@@ -13,9 +28,11 @@ sub is_candidate {
     my $is_gener = $tnode->is_generated;
     
     my $anode = $tnode->get_lex_anode;
-    my $certain_pos = (defined $anode) && ($anode->tag =~ /^[CJPRTIZX]/);
+    my $noncontent_pos = (defined $anode) && (
+        $tnode->language eq 'en' ? en_pos_filter($anode) :
+        $tnode->language eq 'cs' ? cs_pos_filter($anode) : 0);
     
-    return (!$starts_with_hash && !$is_gener && !$certain_pos);
+    return (!$starts_with_hash && !$is_gener && !$noncontent_pos);
 }
 
 1;
