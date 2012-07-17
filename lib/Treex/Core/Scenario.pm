@@ -135,20 +135,17 @@ sub _build_loaded_blocks {
         }
         else {
             if ( ref($new_block) eq "Treex::Core::CacheBlock" ) {
-                log_info("Cache - blocks - from $sequence_from to $i");
                 $sequence{$sequence_from}{'from'} = $sequence_from;
                 $sequence{$sequence_from}{'to'} = $i;
                 $sequence{$sequence_from}{'hash'} = $sequence_hash;
 
                 $sequence{$i}{'_from'} = $sequence_from;
-
                 $sequence_from = $i;
+                push (@{$sequence{$sequence_from}{block}}, $new_block->get_hash());
                 $sequence_hash = $new_block->get_hash();
             } else {
                 $sequence_hash = md5_hex($sequence_hash . $new_block->get_hash());
-                log_info("From $sequence_from");
                 if ( defined($sequence{$sequence_from}) ) {
-                    log_info("AAAAAAAAAA");
                     push (@{$sequence{$sequence_from}{block}}, $new_block->get_hash());
                 }
             }
@@ -382,22 +379,20 @@ sub _run_with_cache {
                 $process = 0;
             } elsif ( $block_number == $skip_to ) {
                 # this is border Cache block -> we have to check, whether next sequence is also same
-                log_info("Block number: " . $block_number);
                 $skip_from = $block_number + 1;
 
                 # following sequence is same => we can continue with skipping
                 if ( $sequence{$skip_from}{'to'} &&
                     $self->_is_known_sequence($sequence{$skip_from}{'hash'}, $document->get_hash())
                 ) {
-                    log_warn("XXXWe can skip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to} . ' - ' . $block_number);
+                    #log_warn("\tskip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to});
                     $skip_to = $sequence{$skip_from}{to} - 1;
                     $from_hash = $document->get_hash();
                     $process = 0;
                 } else {
                     $document_last_hash = $document->get_hash();
-                    $document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
+                    #$document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
                     my $full_hash = $document->get_hash();
-                    log_info("CACHE: Loading - $full_hash");
                     $document = $self->cache->get($full_hash);
 
                     if ( ! $document ) {
@@ -423,18 +418,15 @@ sub _run_with_cache {
                     $sequence{$skip_from}{'to'} &&
                     $self->_is_known_sequence($sequence{$skip_from}{'hash'}, $document->get_hash())
                     ) {
-                    log_warn("We can skip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to} . ' - ' . $block_number);
+                    #log_warn("\tskip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to});
                     $skip_to = $sequence{$skip_from}{to} - 1;
                     $skip_from = $block_number + 1;
                     $from_hash = $document->get_hash();
                 }
             }
 
-            if ( ref($block) ne "Treex::Core::CacheBlock" || $process == 0) {
-                $document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
-            } else {
-                $document_last_hash = $document->get_hash();
-            }
+            $document_last_hash = $document->get_hash();
+            $document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
 
             if ( ref($block) eq "Treex::Core::CacheBlock" ) {
                 # cache block => mark this path as known
@@ -443,15 +435,11 @@ sub _run_with_cache {
 
                 # the first sequence has no document
                 if ( defined($sequence{$from}{'document'})) {
-                    log_info("FROM: " . $from . ' - DOC: ' . $sequence{$from}{'document'} . ' - SEQ: ' . $sequence{$from}{'hash'});
                     $self->_set_known_sequence($sequence{$from}{'hash'}, $sequence{$from}{'document'});
                 }
 
                 $sequence{$id}{'document'} = $document_last_hash;
             }
-
-            log_info("XXXX\t".$block_number."\t".$document->get_hash());
-
         }
 
         # this actually marks the document as successfully done in parallel processing (if this line

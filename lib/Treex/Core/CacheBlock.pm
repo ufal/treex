@@ -32,7 +32,7 @@ sub process_document {
 
     $Storable::canonical = 1;
 
-    $document->set_hash(md5_hex($document->get_hash() . $self->block->get_hash()));
+#    $document->set_hash(md5_hex($document->get_hash() . $self->block->get_hash()));
 
 #    my $document_hash = md5_hex(Storable::freeze($document));
 #    log_info("CACHE: document_hash\t$document_hash");
@@ -53,7 +53,7 @@ sub process_document {
         #log_info("CACHE: Storing - $full_hash - $document - " . length($str) . "b");
         log_info("CACHE: Storing - $full_hash - $document");
         $self->cache->set($full_hash, $document);
-#           
+#
 #        my $tmp_doc = $self->cache->get($full_hash);
 #        if ( ! $tmp_doc ) {
 #            sleep(1);
