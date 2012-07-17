@@ -12,7 +12,10 @@ sub is_candidate {
     my $starts_with_hash = ($tnode->t_lemma =~ /^#/);
     my $is_gener = $tnode->is_generated;
     
-    return (!$starts_with_hash && !$is_gener);
+    my $anode = $tnode->get_lex_anode;
+    my $certain_pos = (defined $anode) && ($anode->tag =~ /^[CJPRTIZX]/);
+    
+    return (!$starts_with_hash && !$is_gener && !$certain_pos);
 }
 
 1;
