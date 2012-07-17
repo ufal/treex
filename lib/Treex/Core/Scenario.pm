@@ -5,6 +5,8 @@ use Treex::Core::CacheBlock;
 use File::Basename;
 use File::Slurp;
 use File::chdir;
+use Digest::MD5 qw(md5_hex);
+
 #use Parse::RecDescent 1.967003; now using standalone version
 
 has from_file => (
@@ -105,12 +107,17 @@ sub _build_scenario_string {
     log_fatal("You have to provide from_file or from_string attribute");
 }
 
+my %sequence = ();
+
 sub _build_loaded_blocks {
     my $self        = shift;
     my @block_items = @{ $self->block_items };
     my $block_count = scalar @block_items;
     my $i           = 0;
     my @loaded_blocks;
+
+    my $sequence_from = 0;
+    my $sequence_hash = "";
     foreach my $block_item (@block_items) {
         $i++;
         my $params = '';
@@ -127,9 +134,34 @@ sub _build_loaded_blocks {
             $self->_set_document_reader($new_block);
         }
         else {
+            if ( ref($new_block) eq "Treex::Core::CacheBlock" ) {
+                log_info("Cache - blocks - from $sequence_from to $i");
+                $sequence{$sequence_from}{'from'} = $sequence_from;
+                $sequence{$sequence_from}{'to'} = $i;
+                $sequence{$sequence_from}{'hash'} = $sequence_hash;
+
+                $sequence{$i}{'_from'} = $sequence_from;
+
+                $sequence_from = $i;
+                $sequence_hash = $new_block->get_hash();
+            } else {
+                $sequence_hash = md5_hex($sequence_hash . $new_block->get_hash());
+                log_info("From $sequence_from");
+                if ( defined($sequence{$sequence_from}) ) {
+                    log_info("AAAAAAAAAA");
+                    push (@{$sequence{$sequence_from}{block}}, $new_block->get_hash());
+                }
+            }
+
+            log_info(ref($new_block));
+
             push @loaded_blocks, $new_block;
         }
     }
+
+    use Data::Dumper;
+    log_info(Data::Dumper->Dump([\%sequence]));
+
     log_info('');
     log_info('   ALL BLOCKS SUCCESSFULLY LOADED.');
     log_info('');
@@ -304,6 +336,165 @@ sub run {
     my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
+    if ( $self->runner->cache ) {
+        $document_number = $self->_run_with_cache($reader, $number_of_blocks, $number_of_documents);
+    } else {
+        $document_number = $self->_run_without_cache($reader, $number_of_blocks, $number_of_documents);
+    }
+
+    log_info "Processed $document_number document"
+        . ( $document_number == 1 ? '' : 's' );
+    return 1;
+}
+
+
+sub _run_with_cache {
+    my ($self, $reader, $number_of_blocks, $number_of_documents) = @_;
+
+    my $document_number     = 0;
+
+    my %loaded_blocks = ();
+#    log_info "Applying process_start";
+#    foreach my $block ( @{ $self->loaded_blocks } ) {
+#        $block->process_start();
+#    }
+
+    while ( my $document = $reader->next_document_for_this_job() ) {
+        $document_number++;
+        my $doc_name = $document->full_filename;
+        my $doc_from = $document->loaded_from;
+        log_info "Document $document_number/$number_of_documents $doc_name loaded from $doc_from";
+        my $block_number = 0;
+        my $skip_to = 0;
+        my $process = 0;
+        my $skip_from = 0;
+        my $skip_from_last = 0;
+        my $from_hash = "";
+        my $from_hash_last = "";
+        my $initial_hash = $document->get_hash();
+        my $document_last_hash = "";
+        foreach my $block ( @{ $self->loaded_blocks } ) {
+            $block_number++;
+            $process = 1;
+            if ( $block_number < $skip_to ) {
+                # we now, that there are same => so we can skip them
+                log_info "Skipping block $block_number/$number_of_blocks " . ref($block);
+                $process = 0;
+            } elsif ( $block_number == $skip_to ) {
+                # this is border Cache block -> we have to check, whether next sequence is also same
+                log_info("Block number: " . $block_number);
+                $skip_from = $block_number + 1;
+
+                # following sequence is same => we can continue with skipping
+                if ( $sequence{$skip_from}{'to'} &&
+                    $self->_is_known_sequence($sequence{$skip_from}{'hash'}, $document->get_hash())
+                ) {
+                    log_warn("XXXWe can skip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to} . ' - ' . $block_number);
+                    $skip_to = $sequence{$skip_from}{to} - 1;
+                    $from_hash = $document->get_hash();
+                    $process = 0;
+                } else {
+                    $document_last_hash = $document->get_hash();
+                    $document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
+                    my $full_hash = $document->get_hash();
+                    log_info("CACHE: Loading - $full_hash");
+                    $document = $self->cache->get($full_hash);
+
+                    if ( ! $document ) {
+                        log_fatal("Document - $full_hash is missing!!!");
+                    }
+                    $process = 2;
+                }
+            }
+
+            if ( $process == 1 ) {
+                log_info "Applying block $block_number/$number_of_blocks " . ref($block);
+
+                if ( ! defined($loaded_blocks{$block_number}) ) {
+                    $block->process_start();
+                    $loaded_blocks{$block_number} = 1;
+                }
+
+                #log_info("Document-hash: " . $document->get_hash());
+                $skip_from = $block_number + 1;
+                my $status = $block->process_document($document);
+                if ( defined($status) &&
+                    $status == $Treex::Core::Block::DOCUMENT_FROM_CACHE &&
+                    $sequence{$skip_from}{'to'} &&
+                    $self->_is_known_sequence($sequence{$skip_from}{'hash'}, $document->get_hash())
+                    ) {
+                    log_warn("We can skip from " . $sequence{$skip_from}{from} . ' to ' . $sequence{$skip_from}{to} . ' - ' . $block_number);
+                    $skip_to = $sequence{$skip_from}{to} - 1;
+                    $skip_from = $block_number + 1;
+                    $from_hash = $document->get_hash();
+                }
+            }
+
+            if ( ref($block) ne "Treex::Core::CacheBlock" || $process == 0) {
+                $document->set_hash(md5_hex($document->get_hash() . $block->get_hash()));
+            } else {
+                $document_last_hash = $document->get_hash();
+            }
+
+            if ( ref($block) eq "Treex::Core::CacheBlock" ) {
+                # cache block => mark this path as known
+                my $id = $block_number + 1;
+                my $from = $sequence{$id}{'_from'};
+
+                # the first sequence has no document
+                if ( defined($sequence{$from}{'document'})) {
+                    log_info("FROM: " . $from . ' - DOC: ' . $sequence{$from}{'document'} . ' - SEQ: ' . $sequence{$from}{'hash'});
+                    $self->_set_known_sequence($sequence{$from}{'hash'}, $sequence{$from}{'document'});
+                }
+
+                $sequence{$id}{'document'} = $document_last_hash;
+            }
+
+            log_info("XXXX\t".$block_number."\t".$document->get_hash());
+
+        }
+
+        # this actually marks the document as successfully done in parallel processing (if this line
+        # does not appear in the output, the parallel process will fail -- it must appear at any errorlevel,
+        # therefore not using log_info or similiar)
+        if ( $self->document_reader->jobindex ) {
+            print STDERR "Document $document_number/$number_of_documents $doc_name: [success].\n";
+        }
+    }
+
+    log_info "Applying process_end";
+    my $block_number = 0;
+    foreach my $block ( @{ $self->loaded_blocks } ) {
+        $block_number++;
+        if ( ! defined($loaded_blocks{$block_number}) ) {
+            $block->process_end();
+        }
+    }
+
+    return $document_number;
+}
+
+sub _is_known_sequence {
+    my ($self, $sequence_hash, $document_hash) = @_;
+    my $hash = md5_hex($sequence_hash, $document_hash);
+    return $self->cache->get($hash);
+}
+
+
+sub _set_known_sequence {
+    my ($self, $sequence_hash, $document_hash) = @_;
+    my $hash = md5_hex($sequence_hash, $document_hash);
+    $self->cache->set($hash, 1);
+
+    return;
+}
+
+
+sub run_without_cache {
+    my ($self, $reader, $number_of_blocks, $number_of_documents) = @_;
+
+    my $document_number     = 0;
+
     log_info "Applying process_start";
     foreach my $block ( @{ $self->loaded_blocks } ) {
         $block->process_start();
@@ -336,7 +527,8 @@ sub run {
 
     log_info "Processed $document_number document"
         . ( $document_number == 1 ? '' : 's' );
-    return 1;
+
+    return $document_number;
 }
 
 use Module::Reload;

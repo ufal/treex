@@ -32,13 +32,15 @@ sub process_document {
 
     $Storable::canonical = 1;
 
-    my $document_hash = md5_hex(Storable::freeze($document));
-    log_info("CACHE: document_hash\t$document_hash");
+    $document->set_hash(md5_hex($document->get_hash() . $self->block->get_hash()));
 
-    my $full_hash = $self->get_hash . $document_hash;
+#    my $document_hash = md5_hex(Storable::freeze($document));
+#    log_info("CACHE: document_hash\t$document_hash");
+
+    my $full_hash = $document->get_hash();
     my $cached_document = $self->cache->get($full_hash);
 
-    my $return_code = $Block::DOCUMENT_PROCESSED;
+    my $return_code = $Treex::Core::Block::DOCUMENT_PROCESSED;
 
     if ( ! $cached_document ) {
         if ( ! $self->_loaded() ) {
@@ -47,11 +49,28 @@ sub process_document {
         }
         log_info("CACHE: calling process_document " . $self->block->get_block_name());
         $self->block->process_document($document);
+        #my $str = Storable::nfreeze($document);
+        #log_info("CACHE: Storing - $full_hash - $document - " . length($str) . "b");
+        log_info("CACHE: Storing - $full_hash - $document");
         $self->cache->set($full_hash, $document);
+#           
+#        my $tmp_doc = $self->cache->get($full_hash);
+#        if ( ! $tmp_doc ) {
+#            sleep(1);
+#            log_info("CACHE: Storing - $full_hash - again!!");
+#            log_info("SET: " . $self->cache->set($full_hash, $document));
+#            log_info("ADD: " . $self->cache->add($full_hash, $document));
+#            my $tmp_doc = $self->cache->get($full_hash);
+#            if ( ! defined($tmp_doc) ) {
+#                my $str = Storable::nfreeze($document);
+#                log_warn("Document size: " . length($str));
+#            }
+#        }
+#        log_fatal("AAAAAAAAAAAAA") if ! $tmp_doc;
     } else {
         log_info("CACHE: loading from cache " . $self->block->get_block_name());
         $_[0] = $cached_document;
-        $return_code = $Block::DOCUMENT_FROM_CACHE;
+        $return_code = $Treex::Core::Block::DOCUMENT_FROM_CACHE;
     }
 
     $Storable::canonical = 0;

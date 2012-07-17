@@ -29,8 +29,8 @@ has _is_bundle_selected => (is=>'rw');
 
 has _hash => ( is => 'rw', isa => 'Str' );
 
-Readonly my $DOCUMENT_PROCESSED => 1;
-Readonly my $DOCUMENT_FROM_CACHE => 2;
+Readonly our $DOCUMENT_PROCESSED => 1;
+Readonly our $DOCUMENT_FROM_CACHE => 2;
 
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
 # or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),

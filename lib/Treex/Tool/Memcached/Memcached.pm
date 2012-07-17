@@ -36,7 +36,7 @@ sub start_memcached {
     my $server = get_memcached_hostname();
     if ( ! $server ) {
         log_info "Memached will be executed.\n";
-        `/home/bojar/tools/shell/qsubmit --priority=-1 --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory"`;
+        `/home/bojar/tools/shell/qsubmit --priority=-1 --jobname='memcached' --mem=${memory}G "cd $MEMCACHED_DIR; ./memcached -m $memcached_memory -I 64000000"`;
         sleep 2;
         return 1;
     } else {
@@ -210,6 +210,7 @@ sub get_connection
     my $memd = Cache::Memcached->new({
         'servers' => [ "$server:11211" ],
         'debug' => 0,
+        'no_rehash' => 1,
         'compress_threshold' => 10_000,
         'namespace' => $namespace
     });
