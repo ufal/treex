@@ -847,6 +847,7 @@ sub _wait_for_jobs {
            ) {
             $self->{_max_started} += 1;
             $check_errors ||= int( $self->{_max_started} % $job_slice == 1);
+            $sleep_time = $self->_sleep_time_dec($sleep_time);
             next;
         }
 
@@ -858,6 +859,7 @@ sub _wait_for_jobs {
            ) {
             $self->{_max_loaded} += 1;
             $check_errors ||= int( $self->{_max_loaded} % $job_slice == 1);
+            $sleep_time = $self->_sleep_time_dec($sleep_time);
             next;
         }
 
@@ -869,8 +871,8 @@ sub _wait_for_jobs {
            ) {
             $self->{_max_finished} += 1;
             $check_errors ||= int( $self->{_max_finished} % $job_slice == 1);
-
             $all_jobs_finished = ( $self->{_max_finished} == $self->jobs );
+            $sleep_time = $self->_sleep_time_dec($sleep_time);
             next;
         }
 
@@ -889,10 +891,7 @@ sub _wait_for_jobs {
             $current_doc_started = 0;
 
             # decrease sleeping time if we are printing out documents
-            $sleep_time /= $sleep_multiplier;
-            if ( $sleep_time < $sleep_min_time ) {
-                $sleep_time = $sleep_min_time;
-            }
+            $sleep_time = $self->_sleep_time_dec($sleep_time);
 
             $document_slice ||= $self->_get_slice($total_doc_number);
             $check_errors ||= int( $current_doc_number % $document_slice == 1);
@@ -938,6 +937,17 @@ sub _wait_for_jobs {
 
     Treex::Tool::Probe::print_stats();
     return;
+}
+
+sub _sleep_time_dec
+{
+    my ($self, $time) = @_;
+    $time /= $sleep_multiplier;
+    if ( $time < $sleep_min_time ) {
+        $time = $sleep_min_time;
+    }
+
+    return $time;
 }
 
 sub _print_execution_time {
