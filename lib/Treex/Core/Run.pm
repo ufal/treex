@@ -244,6 +244,9 @@ has '_max_started' => (is => 'rw', isa => 'Int', default => 0);
 has '_max_loaded' => (is => 'rw', isa => 'Int', default => 0);
 has '_max_finished' => (is => 'rw', isa => 'Int', default => 0);
 has '_jobs_status' => (is => 'rw', isa => 'HashRef', default => sub { {} });
+has '_fatalerror_ts' => (is => 'rw', isa => 'Int', default => 0);
+has '_fatalerror_job' => (is => 'rw', isa => 'Str', default => "");
+has '_fatalerror_doc' => (is => 'rw', isa => 'Str', default => "");
 
 Readonly my $sleep_min_time => 5;
 Readonly my $sleep_max_time => 120;
@@ -685,7 +688,14 @@ sub _is_job_status
     if ( ! $self->{_job_status}->{$jobid}->{$status} ) {
         Treex::Tool::Probe::begin("_is_job_status.disk");
 
-        $self->{_job_status}->{$jobid}->{$status} = (-f $self->workdir . "/status/job" . sprintf( "%03d", $jobid ) . "." . $status ? 1 : 0);
+        $self->{_job_status}->{$jobid}->{$status} = (-f $self->_get_job_status_filename($jobid, $status) ? 1 : 0);
+
+        # check whether the job is broken
+        if ( $self->survive &&
+            ! $self->{_job_status}->{$jobid}->{$status} &&
+            $status ne "fatalerror" ) {
+            $self->{_job_status}->{$jobid}->{$status} = $self->_is_job_status($jobid, "fatalerror");
+        }
 
         Treex::Tool::Probe::end("_is_job_status.disk");
     }
@@ -693,6 +703,47 @@ sub _is_job_status
     Treex::Tool::Probe::end("_is_job_status.call");
 
     return $self->{_job_status}->{$jobid}->{$status};
+}
+
+sub _get_job_status_filename
+{
+    my ($self, $jobid, $status) = @_;
+    return $self->workdir . "/status/job" . sprintf( "%03d", $jobid ) . "." . $status;
+}
+
+sub _is_in_fatalerror
+{
+    my $self = shift;
+
+    my $fatal_file = $self->workdir . "/status/fatalerror";
+
+    if ( ! -f $fatal_file ) {
+        return;
+    }
+
+    my $ts = (stat($fatal_file))[9];
+
+    if ( $ts > $self->_fatalerror_ts ) {
+        my $last_line = undef;
+        open(my $fh, "<", $fatal_file) or log_fatal($!);
+        while ( <$fh> ) {
+            chomp;
+            $last_line = $_;
+            log_info($last_line);
+            my @parts = split(/ /, $last_line);
+            $self->_set_fatalerror_job($parts[1]);
+            $self->_set_fatalerror_doc($parts[3]);
+            my $fatal_file = $self->_get_job_status_filename($self->_fatalerror_job, "fatalerror");
+            qx(touch $fatal_file);
+        }
+        close($fh);
+
+        my @p = split(/ /, $last_line);
+        $self->_set_fatalerror_ts($ts);
+
+    }
+
+    return ($self->_fatalerror_job, $self->_fatalerror_doc);
 }
 
 sub _get_slice
@@ -729,9 +780,9 @@ sub _print_output_files {
         # we have to wait until file is really creates the file
         if ( ! -f $filename ) {
             Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep1");
-            sleep(10);
+            sleep(3);
             if ( $doc_number == 1 ) {
-                sleep(10);
+                sleep(3);
             }
             Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep1");
         }
@@ -803,7 +854,12 @@ sub _print_output_files {
 
             # test for the [success] indication on the last line of STDERR
             if ( !$success ) {
-                log_fatal "Document $doc_number has not finished successfully (see $filename)";
+                my $msg = "Document $doc_number has not finished successfully (see $filename)";
+                if ( $self->survive ) {
+                    log_warn($msg);
+                } else {
+                    log_fatal($msg);
+                }
             }
         }
         Treex::Tool::Probe::end("_print_output_files.".$stream);
@@ -921,7 +977,7 @@ sub _wait_for_jobs {
         }
 
         # check errors if necessary
-        if ( $check_errors && ! $self->survive ) {
+        if ( $check_errors ) {
             $self->_check_job_errors($self->{_max_finished});
             $check_errors = 0;
         }
@@ -1017,6 +1073,38 @@ sub _print_execution_time {
     return;
 }
 
+sub _print_finish_status
+{
+    my $self = shift;
+
+    my $fatal_file = $self->workdir . "/status/fatalerror";
+
+    if ( ! $self->survive || ! -f $fatal_file ) {
+        log_info "All jobs finished.";
+        return;
+    }
+
+    my %broken_jobs = ();
+    open(my $fh, "<", $fatal_file) or log_fatal($!);
+    while (<$fh>) {
+        chomp;
+        my @p = split(/ /, $_);
+        $broken_jobs{$p[1]} = 1;
+    }
+    close($fh);
+
+    my @jobs = sort { $a <=> $b } keys %broken_jobs;
+
+    if ( scalar @jobs == 0 ) {
+        log_info "All jobs finished.";
+    } else {
+        log_info "In " . (scalar @jobs) . " out of " . $self->jobs . " some fatal errors occured.";
+        log_info "These jobs are: " . join(" ", @jobs);
+    }
+
+    return;
+}
+
 # To get utf8 encoding also when using qx (aka backticks):
 # my $command_output = qx($command);
 # we need to
@@ -1028,19 +1116,28 @@ sub _check_job_errors {
     Treex::Tool::Probe::begin("_check_job_errors");
 
     my $workdir = $self->workdir;
-    if ( defined( my $fatal_name = glob "$workdir/status/*fatalerror" ) ) {
-        log_info "At least one job crashed with fatal error ($fatal_name).";
-        my ($fatal_job) = $fatal_name =~ /job(\d+)/;
-        my $command     = "grep -h -A 10 -B 25 FATAL $workdir/output/job$fatal_job*doc*.stderr";
-        my $fatal_lines = qx($command);
-        log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
-        log_info "$fatal_lines\n";
-        log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
-        if ( $self->survive ) {
-            log_warn("fatal error ignored due to the --survive option, be careful");
-            return;
+
+    my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
+
+    if ( $fatal_job ) {
+        if ( ! $self->_is_job_status($fatal_job, "fatalerror") ) {
+            my $doc_str = $fatal_doc ? sprintf( "doc%07d", $fatal_doc ) : 'loading';
+            my $command     = sprintf("grep -h -A 10 -B 25 FATAL $workdir/output/job%03d-%s.stderr", $fatal_job, $doc_str);
+            my $fatal_lines = qx($command);
+            log_info "********************** $command  ******************\n";
+            log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
+            log_info "$fatal_lines\n";
+            log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
+
+            # create fatal error file for particular job
+            my $fatal_file = $self->_get_job_status_filename($fatal_job, "fatalerror");
+            qx($command >> $fatal_file);
+
+            # mark job as in fatal error state
+            $self->_is_job_status($fatal_job, "fatalerror");
         }
-        else {
+
+        if ( ! $self->survive ) {
             log_info "All remaining jobs will be interrupted now.";
             $self->_delete_jobs_and_exit;
         }
@@ -1065,7 +1162,7 @@ sub _check_epilog_before_finish {
 
         next if $self->_is_job_finished($job_num);
         my $epilog_name = glob "$workdir/error/job$job_str.sh.e*";
-
+        next if $self->_is_job_finished($job_num);
         if ( $epilog_name ) {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
@@ -1104,7 +1201,7 @@ sub _delete_jobs_and_exit {
         system "qdel $job";
     }
     log_info 'You may want to inspect generated files in ' . $self->workdir . '/output/';
-    exit;
+    exit(1);
 }
 
 sub _execute_on_cluster {
@@ -1163,7 +1260,7 @@ sub _execute_on_cluster {
 
     $self->_print_execution_time();
 
-    log_info "All jobs finished.";
+    $self->_print_finish_status();
 
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files " . $self->workdir;
@@ -1178,6 +1275,11 @@ sub _execute_on_cluster {
 sub _redirect_output {
     my ( $outdir, $docnumber, $jobindex ) = @_;
     my $job = sprintf( 'job%03d', $jobindex + 0 );
+    #my $stem = $outdir . "/../status/$job.loading";
+    #if ( $docnumber ) {
+    #    $stem = "$outdir/$job-" . sprintf( "doc%07d", $docnumber );
+    #}
+
     my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
     my $stem = "$outdir/$job-$doc";
     open my $OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
@@ -1187,12 +1289,16 @@ sub _redirect_output {
     STDOUT->autoflush(1);
 
     # special file is touched if log_fatal is called
-    my $file_fatalerror = $outdir . "/../status/$job-$doc.fatalerror";
+    my $common_file_fatalerror = $outdir . "/../status/fatalerror";
+    my $job_file_fatalerror = $outdir . "/../status/" . $job . ".fatalerror";
     Treex::Core::Log::add_hook(
         'FATAL',
         sub {
-            eval { system qq(touch $file_fatalerror) };      ## no critic (RequireCheckingReturnValueOfEval)
-            }
+            eval {
+                system qq(echo JOB: $jobindex DOC: $docnumber >> $common_file_fatalerror);
+                system qq(touch $job_file_fatalerror);
+            };      ## no critic (RequireCheckingReturnValueOfEval)
+        }
     );
     return;
 }

@@ -14,21 +14,23 @@ use Test::More;
 
 use Treex::Core::Document;
 
-my @crashes = ('build_undef', 'build_die', 'build_fatal',
-               'start_undef', 'start_die', 'start_fatal',
-               'document_undef', 'document_die', 'document_fatal');
+my @crashes_build = ('build_fatal', 'build_undef', 'build_die'),
+my @crashes_start = ('start_undef', 'start_die', 'start_fatal');
+my @crashes_document = ('document_undef', 'document_die', 'document_fatal');
+
+my @crashes = (@crashes_document, @crashes_start, @crashes_build);
 
 #plan skip_all => 'Takes too much time, maybe infinite loop';
 eval { use Test::Command; 1 } or plan skip_all => 'Test::Command required to test parallelism';
-plan tests => 3 * scalar @crashes;
+plan tests => 5 * scalar @crashes;
 
 chdir(dirname(__FILE__));
 
 my $cmd_base = $^X . " ./../treex";
 my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";
 
-my $number_of_jobs  = 30;
-my $number_of_files = 2 * $number_of_jobs;
+my $number_of_jobs  = 60;
+my $number_of_files = 1 * $number_of_jobs;
 
 qx($cmd_rm);
 
@@ -37,32 +39,35 @@ foreach my $i ( 1 .. $number_of_files ) {
     $doc->save("./paratest$i.treex");
 }
 
-my $cmd_prefix = "-q -p --jobs=$number_of_jobs --cleanup Misc::Sleep start=2 ";
-my $cmd_suffix = "Print::Garbage size=1' -g './paratest*.treex'";
-
-
-
+my $cmd_prefix = " -p --jobs=$number_of_jobs --cleanup Misc::Sleep start=1 ";
+my $cmd_suffix = "Print::Garbage size=0.00001 -- !./paratest*.treex";
 
 for my $crash (@crashes) {
 
-    my $cmdline_arguments = $cmd_prefix . " Misc::Crash ".$crash."=0.1 " . $cmd_suffix;
+    my $cmdline_arguments = $cmd_prefix . " Misc::Crash ".$crash."=0.25 " . $cmd_suffix;
 
-    print STDERR "\n\n" . $cmd_base . " " . $cmdline_arguments . " --survive\n\n";
+    my $complete_cmd = $cmd_base . " --survive " . $cmdline_arguments;
+    my $printable_cmd = $complete_cmd;
+    $printable_cmd =~ s/!//;
+    print STDERR "\nCMD: " . $printable_cmd . "\n";
 
-    my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments  . " --survive");
+    my $cmd_test = Test::Command->new( cmd => $complete_cmd);
 
-    $cmd_test->exit_is_num(0);
-    $cmd_test->stdout_like('/1/');
+    $cmd_test->exit_is_num(0, "exit  - $crash --survive");
+    $cmd_test->stdout_like("/aaa/", "stdout - $crash - --survive");
+    $cmd_test->stderr_like("/Execution finished/", "stderr - $crash - --survive");
     $cmd_test->run;
-    
-    print STDERR "\n\n" . $cmd_base . " " . $cmdline_arguments . "\n\n";
 
-    my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments);
+    $complete_cmd = $cmd_base . " " . $cmdline_arguments;
+    $printable_cmd = $complete_cmd;
+    $printable_cmd =~ s/!//;
+    print STDERR "\nCMD: " . $printable_cmd . "\n";
 
-    $cmd_test->exit_is_num(255);
-    $cmd_test->stdout_like();
-    $cmd_test->run;    
-    
+    $cmd_test = Test::Command->new( cmd => $complete_cmd);
+
+    $cmd_test->exit_isnt_num(0, "exit - $crash - --no-survive");
+    $cmd_test->stderr_unlike("/Execution finished/", "stderr - $crash - --no-survive");
+    $cmd_test->run;
 }
 
 #END {
