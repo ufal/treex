@@ -55,7 +55,7 @@ sub process_atree {
     }
 
     # get tags and lemmas
-    # Mor�e works with sentences of limited size. Avoid submitting long sentences.
+    # Morče works with sentences of limited size. Avoid submitting long sentences.
     my $max_sentence_size = 500;
     my ($tags_rf, $lemmas_rf);
     my @tags;
@@ -119,5 +119,5 @@ Lemmata are also assigned.
 
 =cut
 
-# Copyright 2011, 2012 David Mare�ek, Dan Zeman
+# Copyright 2011, 2012 David Mareček, Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README
