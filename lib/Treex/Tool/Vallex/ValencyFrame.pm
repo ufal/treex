@@ -30,6 +30,7 @@ has 'lexicon' => ( isa => 'Str', is => 'ro' );
 
 # A hash map of all the frame elements, according to their functor
 has '_element_map' => ( isa => 'HashRef', is => 'ro', builder => '_build_element_map', lazy_build => 1 );
+
 # A hash map of all the frame elements, according to their possible formemes
 has '_form_map' => ( isa => 'HashRef', is => 'ro', builder => '_build_form_map', lazy_build => 1 );
 
@@ -108,23 +109,43 @@ sub _get_xpath_context {
     return Treex::Tool::Vallex::ValencyFrame->_loaded_dicts->{$lexicon_name};
 }
 
+# Stupid escaping function needed since there's no other way to escape quotes in XPath
+sub _xpath_escape_quotes {
+    my ($str) = @_;
+
+    # solve simple cases (actually, most of the cases) where one type of quotes is used at most
+    return '"' . $str . '"' if ( $str !~ /"/ );
+    return "'" . $str . "'" if ( $str !~ /'/ );
+
+    # solve strings with both types of quotes using the 'concat' function 
+    my @sp = split /(["'])/, $str;
+    $str = 'concat(';
+    for ( my $i = 0; $i < @sp - 1; $i += 2 ) {
+        $str .= ',' if ( $i > 0 );
+        $str .= ( $sp[ $i + 1 ] eq '"' ? "'" : '"' ) . $sp[$i] . $sp[ $i + 1 ] . ( $sp[ $i + 1 ] eq '"' ? "'" : '"' );
+    }
+    $str .= ',"' . $sp[-1] . '")';
+    return $str;
+}
+
 # Retrieve all frames for the given lemma
 sub get_frames_for_lemma {
 
     my ( $lexicon_name, $language, $lemma, $pos ) = @_;
     my $xc = _get_xpath_context($lexicon_name);
     my @frames;
-    my @found; 
+    my @found;
 
-    if ($pos){
-        $pos =~ s/^adj$/a/;
-        $pos =~ s/^adv$/d/;
-        $pos = uc $pos;
-        
-        @found = $xc->findnodes("//word[\@lemma=\"$lemma\" and \@POS=\"$pos\"]//frame");
+    $lemma = _xpath_escape_quotes($lemma);
+    if ($pos) {
+        $pos =~ s/^adj$/a/i;
+        $pos =~ s/^adv$/d/i;
+        $pos = _xpath_escape_quotes(uc $pos);
+
+        @found = $xc->findnodes("//word[\@lemma=$lemma and \@POS=$pos]//frame");
     }
     else {
-        @found = $xc->findnodes("//word[\@lemma=\"$lemma\"]//frame");
+        @found = $xc->findnodes("//word[\@lemma=$lemma]//frame");
     }
 
     foreach my $frame_xml (@found) {
@@ -174,7 +195,7 @@ sub functor {
 sub elements_have_form {
     my ( $self, $formeme ) = @_;
 
-    return $self->_form_map->{$formeme} if (defined $self->_form_map->{$formeme});
+    return $self->_form_map->{$formeme} if ( defined $self->_form_map->{$formeme} );
     return [];
 }
 
