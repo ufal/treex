@@ -218,10 +218,6 @@ sub get_zone {
         $zone = $self->get_root->_get_zone;    ## no critic (ProtectPrivateSubs)
     }
 
-    if (!$zone) {
-#        $self->get_document->save("pokus2.treex.gz");
-    }
-
     log_fatal "a node (" . $self->id . ") can't reveal its zone" if !$zone;
     return $zone;
 

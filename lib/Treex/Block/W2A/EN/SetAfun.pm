@@ -268,6 +268,7 @@ sub get_afun {
         return 'Adv' if _is_adverbial_noun($lemma);
 
         # "It is a dog(afun=Pnom)"
+        # TODO: questions -- "Is immigration a burden for the economy?"
         return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
 
         return 'Obj' if !$precedes_ep || $tag =~ /^W/;
