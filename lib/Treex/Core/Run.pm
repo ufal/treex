@@ -490,6 +490,8 @@ sub _execute_locally {
             #log_info "There will be $number_of_docs documents";
             $self->_write_total_doc_number($number_of_docs);
         }
+
+        # TODO - nastavit logovani
     }
 
     $scenario->run();
@@ -769,12 +771,12 @@ sub _print_output_files {
     # we need to
     use open qw{ :std IO :encoding(UTF-8) };
 
+    my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number));
+
     foreach my $stream (qw(stderr stdout)) {
         Treex::Tool::Probe::begin("_print_output_files.".$stream);
 
-        my $job_number = $self->_get_job_number_from_doc_number($doc_number);
-
-        my $filename = $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-doc" . sprintf( "%07d", $doc_number ) . ".$stream";
+        my $filename = $self->workdir . "/output/doc" . sprintf( "%07d", $doc_number ) . ".$stream";
         #log_info "Processing output file: " . $filename;
 
         # we have to wait until file is really creates the file
@@ -789,7 +791,7 @@ sub _print_output_files {
 
         if ( !-f $filename ) {
             my $message = "Document $doc_number finished without producing $filename. " .
-                " It might be useful to inspect " . $self->workdir . "/output/job" . sprintf( "%03d", $job_number ) . "-loading.stderr";
+                " It might be useful to inspect " . $self->workdir . "/status/job" . sprintf( "%03d", $job_number ) . ".loading.stderr";
             if ( $self->survive ) {
                 log_warn("$message (fatal error ignored due to survival mode, be careful)");
                 return;
@@ -831,7 +833,6 @@ sub _print_output_files {
             system("cat $filename");
         }
         else {
-            my ($jobnumber) = ( $filename =~ /job(...)/ );
             my $report      = $self->forward_error_level;
             my $success     = 0;
             while (<$FILE>) {
@@ -849,7 +850,7 @@ sub _print_output_files {
                 next if $level =~ /^D/ && $report !~ /^[AD]/;
                 next if $level =~ /^I/ && $report !~ /^[ADI]/;
                 next if $level =~ /^W/ && $report !~ /^[ADIW]/;
-                print STDERR "job$jobnumber: $_";
+                print STDERR "job$job_number: $_";
             }
 
             # test for the [success] indication on the last line of STDERR
@@ -870,8 +871,7 @@ sub _print_output_files {
 
 sub _doc_started {
     my ( $self, $doc_number ) = @_;
-    my $job_number = $self->_get_job_number_from_doc_number($doc_number);
-    my $filename = $self->workdir . sprintf( '/output/job%03d-doc%07d.stderr', $job_number, $doc_number );
+    my $filename = $self->workdir . sprintf( '/output/doc%07d.stderr', $doc_number );
 
     return -f $filename;
 }
@@ -1121,8 +1121,13 @@ sub _check_job_errors {
 
     if ( $fatal_job ) {
         if ( ! $self->_is_job_status($fatal_job, "fatalerror") ) {
-            my $doc_str = $fatal_doc ? sprintf( "doc%07d", $fatal_doc ) : 'loading';
-            my $command     = sprintf("grep -h -A 10 -B 25 FATAL $workdir/output/job%03d-%s.stderr", $fatal_job, $doc_str);
+            my $error_file = $workdir;
+            if ($fatal_doc) {
+                $error_file .= "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
+            } else {
+                $error_file .= "/status/" . sprintf( "job%03d", $fatal_job ) . ".stderr";
+            }
+            my $command     = "grep -h -A 10 -B 25 FATAL $error_file";
             my $fatal_lines = qx($command);
             log_info "********************** $command  ******************\n";
             log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
@@ -1275,13 +1280,13 @@ sub _execute_on_cluster {
 sub _redirect_output {
     my ( $outdir, $docnumber, $jobindex ) = @_;
     my $job = sprintf( 'job%03d', $jobindex + 0 );
-    #my $stem = $outdir . "/../status/$job.loading";
-    #if ( $docnumber ) {
-    #    $stem = "$outdir/$job-" . sprintf( "doc%07d", $docnumber );
-    #}
+    my $stem = $outdir . "/../status/$job.loading";
+    if ( $docnumber ) {
+        $stem = "$outdir/" . sprintf( "doc%07d", $docnumber );
+    } else {
+        $docnumber = "loading";
+    }
 
-    my $doc = $docnumber ? sprintf( "doc%07d", $docnumber ) : 'loading';
-    my $stem = "$outdir/$job-$doc";
     open my $OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
     open my $ERROR,  '>', "$stem.stderr" or log_fatal $!;
     STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
@@ -1295,7 +1300,12 @@ sub _redirect_output {
         'FATAL',
         sub {
             eval {
-                system qq(echo JOB: $jobindex DOC: $docnumber >> $common_file_fatalerror);
+                use Fcntl qw(:flock);
+                open(my $fh, ">>", $common_file_fatalerror);
+                flock($fh, LOCK_EX);
+                print $fh "JOB: $jobindex DOC: $docnumber\n";
+                flock($fh, LOCK_UN);
+                close($fh);
                 system qq(touch $job_file_fatalerror);
             };      ## no critic (RequireCheckingReturnValueOfEval)
         }
