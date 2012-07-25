@@ -34,16 +34,15 @@ sub _build_colors {
         'coindex'    => '#ffa500',    #orange
 
         # various alignment link types
-        'alignment'  => '#bebebe',
-        'left'       => '#bebebe',
-        'right'      => '#bebebe',
-        'int'        => '#bebebe',
-        'gdfa'       => '#bebebe',
-        'revgdfa'    => '#bebebe',
-        'rule-based' => '#bebebe',
-
-        # 'monolingual' => '#bebebe',
-        'copy' => '#bebebe',
+        'alignment'   => '#bebebe',
+        'left'        => '#bebebe',
+        'right'       => '#bebebe',
+        'int'         => '#bebebe',
+        'gdfa'        => '#bebebe',
+        'revgdfa'     => '#bebebe',
+        'rule-based'  => '#bebebe',
+        'monolingual' => '#bebebe',
+        'copy'        => '#bebebe',
 
         'lex'         => '#006400',
         'aux'         => '#ff8c00',
