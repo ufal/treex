@@ -1098,7 +1098,7 @@ sub _print_finish_status
     if ( scalar @jobs == 0 ) {
         log_info "All jobs finished.";
     } else {
-        log_info "In " . (scalar @jobs) . " out of " . $self->jobs . " some fatal errors occured.";
+        log_info "Fatal errors occurred in " . (scalar @jobs) . " out of " . $self->jobs . " jobs.";
         log_info "These jobs are: " . join(" ", @jobs);
     }
 
@@ -1143,7 +1143,7 @@ sub _check_job_errors {
         }
 
         if ( ! $self->survive ) {
-            log_info "All remaining jobs will be interrupted now.";
+            log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
             $self->_delete_jobs_and_exit;
         }
     }
@@ -1303,7 +1303,7 @@ sub _redirect_output {
                 use Fcntl qw(:flock);
                 open(my $fh, ">>", $common_file_fatalerror);
                 flock($fh, LOCK_EX);
-                print $fh "JOB: $jobindex DOC: $docnumber\n";
+                print $fh, "Fatal error in job $jobindex", ($docnumber ne 'loading' ? ', document ' : ' '), $docnumber, "!\n";
                 flock($fh, LOCK_UN);
                 close($fh);
                 system qq(touch $job_file_fatalerror);
