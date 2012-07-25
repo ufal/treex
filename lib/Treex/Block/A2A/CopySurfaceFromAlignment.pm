@@ -13,12 +13,8 @@ sub process_atree {
     my %aligned = map { $_ => _get_aligned_node($_) } @anodes;
 
     map { $_->set_form( $aligned{$_}->form ) if ( $aligned{$_} ) } @anodes;
-    map { $_->set_lemma( $aligned{$_}->lemma ) if ( $aligned{$_} ) } @anodes; # ???
-
-    @anodes = sort { return ( $aligned{$a}->ord <=> $aligned{$b}->ord ) if ( $aligned{$a} && $aligned{$b} ); return $a->ord <=> $b->ord } @anodes;
-    for ( my $i = 0; $i < @anodes; ++$i ) {
-        $anodes[$i]->_set_ord( $i + 1 );
-    }
+    map { $_->set_lemma( $aligned{$_}->lemma ) if ( $aligned{$_} ) } @anodes; # ??? do this ???
+    map { $_->set_no_space_after( $aligned{$_}->no_space_after ) if ( $aligned{$_} ) } @anodes;
 
 }
 
@@ -54,6 +50,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

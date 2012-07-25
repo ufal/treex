@@ -31,7 +31,7 @@ sub process_zone {
     log_fatal("The two zones do not have a corresponding number of nodes.") if ( @ref_nodes != @tst_nodes );
 
     for ( my $i = 0; $i < @ref_nodes; ++$i ) {
-        $tst_nodes[$i]->add_aligned_node( $ref_nodes[$i] );
+        $tst_nodes[$i]->add_aligned_node( $ref_nodes[$i], 'copy' );
     }
 }
 

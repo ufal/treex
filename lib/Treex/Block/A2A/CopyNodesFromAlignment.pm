@@ -65,7 +65,8 @@ sub _add_if_no_aligned {
 
     my ( $self, $al_node ) = @_;
 
-    if ( !$self->_back_align->{$al_node} ) {    # add subtrees that are in the aligned tree, but not here
+    # add subtrees that are in the aligned tree, but not here
+    if ( !$self->_back_align->{$al_node} ) {
 
         my $al_parent = $al_node->get_parent();
         my $parent    = $self->_back_align->{$al_parent};
@@ -86,7 +87,7 @@ sub _add_if_no_aligned {
         # Fix coordination settings
         if ( $parent->is_coap_root ) {
             my ($child) = $node->get_children();
-            
+
             if ($child) {
                 $node->set_is_member( $child->is_member );
                 map { $_->set_is_member(0) } $node->get_children();
@@ -95,6 +96,12 @@ sub _add_if_no_aligned {
 
         # save the new node into the back-alignment hash
         $self->_back_align->{$al_node} = $node;
+    }
+
+    # even if the node is present, we need to update its order according to the original tree
+    # (since the new nodes would mess this up)
+    else {
+        $self->_back_align->{$al_node}->_set_ord( $al_node->ord );
     }
 
     # Recurse into children
