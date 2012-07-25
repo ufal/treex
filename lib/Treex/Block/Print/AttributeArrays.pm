@@ -12,6 +12,10 @@ has 'attr_sep' => ( isa => 'Str', is => 'ro', default => ' ' );
 
 has '_data' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] }  );
 
+# A dummy build method so that the 'before' modifier of AttributeParameterized can be used
+sub BUILD {
+}
+
 sub _process_tree() {
 
     my ( $self, $tree ) = @_;
