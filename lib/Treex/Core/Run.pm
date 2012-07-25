@@ -1180,13 +1180,13 @@ sub _check_epilog_before_finish {
                 log_info "********************** LAST STDERR OF JOB $job_str: ******************";
                 log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
                 system "tail $workdir/output/job$job_str-doc*.stderr";
-                log_info "\n********************** END OF JOB $job_str ERRORS LOGS ****************\n";
+                log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
                 if ( $self->survive ) {
-                    log_warn("fatal error ignored due to the --survive option, be careful");
+                    log_warn("Fatal error ignored due to the --survive option, be careful.");
                     return;
                 }
                 else {
-                    log_info "All remaining jobs will be interrupted now.";
+                    log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
                     $self->_delete_jobs_and_exit;
                 }
             }
