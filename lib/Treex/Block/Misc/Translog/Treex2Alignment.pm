@@ -24,7 +24,8 @@ sub process_document {
 	my $document_path = $document->path;
 	
 	#Determine Source Language
-	my $source_language = $document->wild->{annotation}{sourceLanguage};
+	if(!defined($document->wild->{annotation}{sourceLanguage}{language})) { print STDERR "ERROR no sourcelanguage defined\n"; exit;}
+	my $source_language = $document->wild->{annotation}{sourceLanguage}{language};
 	my %folder_set;
 	my $source_document_info = "";
 	
@@ -51,10 +52,10 @@ sub process_document {
 			}
 			else{
 				($filename,$foldername) = format_file_name($self,$zone_selector,"tgt");
-				$output_path = "$document_path../$foldername/Alignment-II";
+				$output_path = $document_path."../".$foldername."/Alignment-II";
 			
 				#maintaining a list of folders.
-				%folder_set{$output_path} = 1;
+				$folder_set{$output_path} = 1;
 			
 				unless(-d $output_path){
 	    			
