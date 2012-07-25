@@ -3,6 +3,8 @@ package Treex::Core::TredView::Styles;
 use Moose;
 use Treex::Core::Log;
 use Treex::Core::TredView::Colors;
+use Treex::Core::TredView::LineStyles;
+
 
 has '_treex_doc' => (
     is       => 'ro',
@@ -14,6 +16,12 @@ has '_colors' => (
     is      => 'ro',
     isa     => 'Treex::Core::TredView::Colors',
     default => sub { Treex::Core::TredView::Colors->new() }
+);
+
+has '_line_styles' => (
+    is      => 'ro',
+    isa     => 'Treex::Core::TredView::LineStyles',
+    default => sub { Treex::Core::TredView::LineStyles->new() }
 );
 
 sub _is_coord {
@@ -180,7 +188,8 @@ sub draw_arrows {
     my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
 
     foreach my $target_id (@$target_ids) {
-        my $arrow_type = shift @$arrow_types // '_default';
+        # some alignment links do not have their type filled, default to generic alignment
+        my $arrow_type = shift @$arrow_types // 'alignment';         
 
         my $target_node
             = eval { $self->_treex_doc->get_node_by_id($target_id) };
@@ -242,7 +251,7 @@ sub draw_arrows {
 
         push @tags, $arrow_type;
         push @colors, ( $self->_colors->get($arrow_type) );
-        push @dash, ( $arrow_type eq 'alignment' ? '5,3' : '' );
+        push @dash, ( $self->_line_styles->dash_style($arrow_type) );
     }
 
     $line->{-coords} ||= 'n,n,p,p';
@@ -309,7 +318,7 @@ Josef Toman <toman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
