@@ -74,6 +74,10 @@ sub process_atree {
                 $child->set_parent($adv);
             }
             $much->set_parent($more);
+            if ($much->is_member){
+                $much->set_is_member(0);
+                $adv->set_is_member(1);
+            }
         }
 
         # 2. #TODO: for instance
