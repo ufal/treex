@@ -171,8 +171,8 @@ sub load_model
 #                    push( @childs, $pid );
 #                }
 #                elsif ( $pid == 0 ) {
-#                    my $from = $i * $partSize + 1;
-#                    my $to   = ( $i + 1 ) * $partSize;
+#                    my $from = $i * $partSize;
+#                    my $to   = ( $i + 1 ) * $partSize - 1;
 #                    if ( $to > $#files ) {
 #                        $to = $#files;
 #                    }
@@ -180,7 +180,7 @@ sub load_model
 #                        _load_model( $memd, $model_class, $files[$j] );
 #                    }
 #
-#                    log_info "Block $i processed - from $from to $to.";
+#                    log_info "Block $i processed - from " . ( $from + 1 ) . " to " . ( $to + 1 ) . ".";
 #                    exit(0);
 #                }
 #                else {
