@@ -63,9 +63,8 @@ sub process
             else {
                 log_warn "Unknown model file for $file\n";
                 next;
-            }
+            }   
             Treex::Tool::Memcached::Memcached::load_model( $class, $required_file );
-
         }
     }
     close($fh);
@@ -87,7 +86,7 @@ sub missing
 
         if (/(TrFAddVariants|TrLAddVariants|TrFRerank2)/) {
             my @parts         = split(/\t/);
-            my $required_file = $ENV{TMT_ROOT} . "/share/" . $parts[1];
+            my $required_file = Treex::Core::Resource::require_file_from_share( $parts[1], 'Memcached' );;
             if ( !Treex::Tool::Memcached::Memcached::contains($required_file) ) {
                 print $required_file, "\n";
             }
@@ -139,3 +138,35 @@ DOC
 
     return;
 }
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+memcached.pl
+
+=head1 SYNOPSIS
+
+    ./memcached.pl start memory-size-in-gb   
+    ./memcached.pl load model-class data-file
+    ./memcached.pl process required-files-scenario-dump
+    ./memcached.pl missing data-file
+    ./memcached.pl check data-file key
+    ./memcached.pl stats
+    ./memcached.pl stop
+
+=head1 DESCRIPTION
+
+A command-line interface to the L<Treex::Tool::Memcached::Memcached> wrapper to L<Cache::Memcached>.
+Running the script with no parameters prints a more detailed help.
+
+=head1 AUTHORS
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
