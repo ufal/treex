@@ -5,22 +5,22 @@ use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
 requires 'load_model';
+requires 'create_model';
 
 has 'model_path' => (
     is          => 'ro',
-    required    => 1,
     isa         => 'Str',
 
     documentation => 'path to the trained model',
 );
 
-has '_model' => (
+has 'model' => (
     is          => 'ro',
     required    => 1,
 # isa type should be overloaded in a subclass
     isa         => 'Any',
     lazy        => 1,
-    builder      => '_build_model',
+    builder      => 'build_model',
 );
 
 
@@ -30,17 +30,24 @@ has '_model' => (
 # models to be loaded while initializing a block. Following hack ensures it.
 sub BUILD {
     my ($self) = @_;
-    $self->_model;
+    $self->model;
 }
 
-sub _build_model {
+sub build_model {
     my ($self) = @_;
 
-    my $model_file = require_file_from_share($self->model_path, ref($self));
+    my $model = $self->create_model;
+    return $model if defined $model;
+
+    my $model_file = $self->model_path;
+
+    if (!-f $model_file) {
+        my $model_file = require_file_from_share($self->model_path, ref($self));
+    }
     log_fatal 'File ' . $model_file . ' does not exist.' 
         if !-f $model_file;
 
-    my $model = $self->load_model( $model_file );
+    $model = $self->load_model( $model_file );
     return $model;
 }
 
