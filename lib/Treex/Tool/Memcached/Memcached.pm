@@ -122,30 +122,33 @@ sub load_model
 
         if ( -d $file ) {
             my @files = (glob "$file/*");
-            my $partSize = int( ( $#files + 1) / $DEFAULT_THREADS + 1 );
-            my @childs = ();
-            for (my $i = 0; $i < $DEFAULT_THREADS; ++$i ) {
-                my $pid = fork();
-                if ($pid) {
-                    push(@childs, $pid);
-                } elsif ($pid == 0) {
-                    my $from = $i * $partSize;
-                    my $to = ($i + 1) * $partSize - 1;
-                    if ( $to > $#files ) {
-                        $to = $#files;
-                    }
-                    for my $j ( $from .. $to ) {
-                        _load_model($memd, $model_class, $files[$j]);
-                    }
-
-                    log_info "Block $i was processed - from $from to $to.";
-                    exit(0);
-                } else {
-                    die "couldn’t fork: $!\n";
-                }
-            }
-            foreach (@childs) {
-                waitpid($_,0);
+#            my $partSize = int( ( $#files + 1) / $DEFAULT_THREADS + 1 );
+#            my @childs = ();
+#            for (my $i = 0; $i < $DEFAULT_THREADS; ++$i ) {
+#                my $pid = fork();
+#                if ($pid) {
+#                    push(@childs, $pid);
+#                } elsif ($pid == 0) {
+#                    my $from = $i * $partSize;
+#                    my $to = ($i + 1) * $partSize - 1;
+#                    if ( $to > $#files ) {
+#                        $to = $#files;
+#                    }
+#                    for my $j ( $from .. $to ) {
+#                        _load_model($memd, $model_class, $files[$j]);
+#                    }
+#
+#                    log_info "Block $i was processed - from $from to $to.";
+#                    exit(0);
+#                } else {
+#                    die "couldn’t fork: $!\n";
+#                }
+#            }
+#            foreach (@childs) {
+#                waitpid($_,0);
+#            }
+            foreach my $part ( @files ) {
+                _load_model($memd, $model_class, $part);
             }
         } elsif ( -f $file ) {
             _load_model($memd, $model_class, $file)
@@ -180,7 +183,7 @@ sub _load_model
 
 sub contains
 {
-    my ($file) = @_;
+    my ($file, @keys) = @_;
 
     log_info('Checking: ' . $file);
     my $memd = get_connection(basename($file));
@@ -188,14 +191,25 @@ sub contains
     if ( ! $memd ) {
         return 0;
     }
-
-    my $loaded = $memd->get($FLAG_MODEL_LOADED);
-    if ( $loaded ){
-        log_info "\tAlready loaded."
-    } else {
-        log_info "\tMissing.";
+    if (!@keys){
+        my $loaded = $memd->get($FLAG_MODEL_LOADED);
+        if ( $loaded ){
+            log_info "\tAlready loaded."
+        } else {
+            log_info "\tMissing.";
+        }
+        return $loaded;        
     }
-    return $loaded;
+    else {
+        foreach my $key (@keys){
+            my $loaded = $memd->get($key);
+            if ( $loaded ){
+                log_info "\t$key: loaded."
+            } else {
+                log_info "\t$key: missing.";
+            }
+        }        
+    }
 }
 
 sub get_connection
