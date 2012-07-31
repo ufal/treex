@@ -163,6 +163,8 @@ Running the script with no parameters prints a more detailed help.
 
 =head1 AUTHORS
 
+Martin Majliš <majlis@ufal.mff.cuni.cz>
+
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
