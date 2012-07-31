@@ -8,7 +8,7 @@ has 'model' => ( is => 'rw', isa => 'Str', default => 'ner-eng-ie.crf-3-all2008.
 
 use NER::Stanford::English;
 
-sub BUILD {
+sub process_start {
     my ($self) = @_;
     $self->_set_ner( NER::Stanford::English->new( $self->model ) );
     return;

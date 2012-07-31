@@ -2,23 +2,32 @@ package Treex::Block::T2A::CS::ImposeSubjpredAgr;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use LanguageModel::MorphoLM;
+
 extends 'Treex::Core::Block';
+
+has '_morpho_lm' => ( is => 'rw' );
+
+sub process_start {
+    my ($self) = @_;
+    $self->_set_morpho_lm( LanguageModel::MorphoLM->new() );
+}
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     foreach my $t_node ( $t_root->get_descendants() ) {
         if ( $t_node->formeme =~ /^v.+(fin|rc|act|apass|rpass)/ ) {
-            process_finite_verb($t_node);
+            $self->process_finite_verb($t_node);
         }
     }
     return;
 }
 
 sub process_finite_verb {
-    my ($t_vfin) = @_;
-    my $a_vfin   = $t_vfin->get_lex_anode();
-    my $a_subj   = find_a_subject_of($a_vfin);
+    my ( $self, $t_vfin ) = @_;
+    my $a_vfin = $t_vfin->get_lex_anode();
+    my $a_subj = find_a_subject_of($a_vfin);
 
     if ( not $a_subj ) {
 
@@ -42,7 +51,7 @@ sub process_finite_verb {
 
     # 1. numeral subjects
     # 10 deti prislo ...., 1,1 litru benzinu bylo
-    if ( is_neutrum_lemma($subj_lemma) ) {
+    if ( $self->is_neutrum_lemma($subj_lemma) ) {
         $a_vfin->set_attr( 'morphcat/gender', 'N' );
         $a_vfin->set_attr( 'morphcat/number', 'S' );
         $a_vfin->set_attr( 'morphcat/person', '3' );
@@ -93,11 +102,8 @@ sub find_a_subject_of {
     return;
 }
 
-use LanguageModel::MorphoLM;
-my $morphoLM = LanguageModel::MorphoLM->new();
-
 sub is_neutrum_lemma {
-    my ($subj_lemma) = @_;
+    my ( $self, $subj_lemma ) = @_;
 
     # Numbers higher than 4 and decimals behave like neutrum.
     return 1 if $subj_lemma =~ /^\d+$/ && $subj_lemma > 4;
@@ -105,11 +111,11 @@ sub is_neutrum_lemma {
 
     # Few pronouns (and numerals) behave like neutrum
     # (but the morphological tag has no gender marked).
-    return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/; # TODO doplnit další
+    return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/;    # TODO doplnit další
 
     # Numerals with subpos "n" or "s" behave like neutrum,
     # e.g. "osm z deseti stacilo", "malo stacilo".
-    return 1 if defined $morphoLM->best_form_of_lemma( $subj_lemma, '^C[na]' );
+    return 1 if defined $self->_morpho_lm->best_form_of_lemma( $subj_lemma, '^C[na]' );
 
     # Otherwise, not neutrum
     return 0;
