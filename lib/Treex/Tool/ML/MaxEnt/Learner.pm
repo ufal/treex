@@ -26,6 +26,7 @@ override '_create_model' => sub {
     my $probs = $self->_make_compact_hash();
     my $model = Treex::Tool::ML::MaxEnt::Model->new({
         model => $probs,
+        y_num => $self->{y_num},
     });
     return $model;
 };

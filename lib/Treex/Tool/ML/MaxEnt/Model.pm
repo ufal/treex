@@ -20,6 +20,18 @@ has '+model' => (
     isa => 'HashRef[HashRef[Num]]',
 );
 
+has 'y_num' => (
+    isa => 'Int',
+    is => 'ro',
+    builder => '_build_y_num',
+    lazy => 1,
+);
+
+sub _build_y_num {
+    my ($self) = @_;
+    return scalar (keys %{$self->model});
+}
+
 sub score {
     my ($self, $x, $y) = @_;
 
