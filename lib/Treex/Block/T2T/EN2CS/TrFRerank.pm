@@ -27,11 +27,14 @@ Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_
 use TranslationDict::Universal;
 has _val_dict => ( is => 'rw' );
 
-sub get_required_share_files { return $MODEL_FILE; }
+sub get_required_share_files { 
+    return $MODEL_FILE; 
+}
 
 sub BUILD {
     my $self = shift;
-    $self->_set_val_dict( TranslationDict::Universal->new( { file => "$ENV{TMT_ROOT}/share/$MODEL_FILE" } ) );
+    my $model_file = Treex::Core::Resource::require_file_from_share( $MODEL_FILE, 'TrFRerank' );
+    $self->_set_val_dict( TranslationDict::Universal->new( { file => $model_file } ) );
 }
 
 sub process_tnode {
