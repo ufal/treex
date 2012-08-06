@@ -141,8 +141,8 @@ push @INC, $path . $LIB;
 # and Scenario will be unable to instantiate this block
 require Tree_Query::TypeMapper;
 require Tree_Query::BtredEvaluator;
-use PMLTQ::Relation;
-use PMLTQ::Relation::PDT20;
+require PMLTQ::Relation;
+require PMLTQ::Relation::PDT20;
 
 #################################################
 #
