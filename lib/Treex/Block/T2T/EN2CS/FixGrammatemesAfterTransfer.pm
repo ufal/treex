@@ -28,21 +28,24 @@ sub BUILD {
 
     # treatment of nouns in genitive positions with unclear gram/number (created from non-nouns or from n:attr)
     log_debug('Loading more probable genitive noun number below other noun');
-    open my $F1, "<:utf8", "$ENV{TMT_ROOT}/share/$F1_FN" or log_fatal $!;
+    my $file_loc = Treex::Core::Resource::require_file_from_share($F1_FN); 
+    open my $F1, "<:utf8", $file_loc or log_fatal $!;
     while (<$F1>) {
         chomp;
         my ( $gov_lemma, $number ) = split /\t/;
         $gov_lemma_to_number{$gov_lemma} = $number;
     }
 
-    open my $F2, "<:utf8", "$ENV{TMT_ROOT}/share/$F2_FN" or log_fatal $!;
+    $file_loc = Treex::Core::Resource::require_file_from_share($F2_FN);
+    open my $F2, "<:utf8", $file_loc or log_fatal $!;
     while (<$F2>) {
         chomp;
         my ( $gov_lemma, $dep_lemma, $number ) = split /\t/;
         $gov_lemma_dep_lemma_to_number{$gov_lemma}{$dep_lemma} = $number;
     }
 
-    open my $F3, '<:utf8', "$ENV{TMT_ROOT}/share/$F3_FN" or log_fatal $!;
+    $file_loc = Treex::Core::Resource::require_file_from_share($F3_FN);
+    open my $F3, '<:utf8', $file_loc or log_fatal $!;
     while (<$F3>) {
         chomp;
         my ( $lemma, $prob ) = split /\t/;
