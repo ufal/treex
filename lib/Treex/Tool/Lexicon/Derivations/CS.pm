@@ -5,7 +5,7 @@ use utf8;
 binmode STDOUT, ":utf8";
 use LanguageModel::MorphoLM;
 
-my $morphoLM; # will be loaded upon first use (see adj2adv and verb2adj)
+my $morphoLM;    # will be loaded upon first use (see adj2adv and verb2adj)
 
 # too much of code multiplication, should be rewritten in a more elegant fashion
 
@@ -18,20 +18,14 @@ my $PERF2IMPERF_FN    = 'generated_data/cs_lexical_derivations/extracted_perf2im
 my $IMPERF2PERF_FN    = 'generated_data/cs_lexical_derivations/extracted_imperf2perf_utf8.lex';
 
 use Treex::Core::Resource;
-Treex::Core::Resource::require_file_from_share( $NOUN2ADJ_FN,       'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $VERB2NOUN_FN,      'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $VERB2ACTIVEADJ_FN, 'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $VERB2ADJ_FN,       'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $PERF2IMPERF_FN,    'Lexicon::Derivations::CS' );
-Treex::Core::Resource::require_file_from_share( $IMPERF2PERF_FN,    'Lexicon::Derivations::CS' );
 
 my %pregenerated_pairs_filename = (
-    noun2adj       => "$ENV{TMT_ROOT}/share/$NOUN2ADJ_FN",
-    verb2noun      => "$ENV{TMT_ROOT}/share/$VERB2NOUN_FN",
-    verb2activeadj => "$ENV{TMT_ROOT}/share/$VERB2ACTIVEADJ_FN",
-    verb2adj       => "$ENV{TMT_ROOT}/share/$VERB2ADJ_FN",
-    perf2imperf    => "$ENV{TMT_ROOT}/share/$PERF2IMPERF_FN",
-    imperf2perf    => "$ENV{TMT_ROOT}/share/$IMPERF2PERF_FN",
+    noun2adj       => Treex::Core::Resource::require_file_from_share( $NOUN2ADJ_FN,       'Lexicon::Derivations::CS' ),
+    verb2noun      => Treex::Core::Resource::require_file_from_share( $VERB2NOUN_FN,      'Lexicon::Derivations::CS' ),
+    verb2activeadj => Treex::Core::Resource::require_file_from_share( $VERB2ACTIVEADJ_FN, 'Lexicon::Derivations::CS' ),
+    verb2adj       => Treex::Core::Resource::require_file_from_share( $VERB2ADJ_FN,       'Lexicon::Derivations::CS' ),
+    perf2imperf    => Treex::Core::Resource::require_file_from_share( $PERF2IMPERF_FN,    'Lexicon::Derivations::CS' ),
+    imperf2perf    => Treex::Core::Resource::require_file_from_share( $IMPERF2PERF_FN,    'Lexicon::Derivations::CS' ),
 );
 
 my %derivation;
@@ -47,7 +41,7 @@ foreach my $type ( keys %pregenerated_pairs_filename ) {
 
 sub adj2adv {
     my $adj_tlemma = shift;
-    $morphoLM = LanguageModel::MorphoLM->new() if (!$morphoLM);
+    $morphoLM = LanguageModel::MorphoLM->new() if ( !$morphoLM );
 
     if ((   $adj_tlemma    =~ s/([sc]k)ý$/$1y/
             or $adj_tlemma =~ s/([ntv])[íý]$/$1ě/
@@ -68,7 +62,7 @@ sub adj2adv {
 
 sub verb2adj {
     my $verb_tlemma = shift;
-    $morphoLM = LanguageModel::MorphoLM->new() if (!$morphoLM);
+    $morphoLM = LanguageModel::MorphoLM->new() if ( !$morphoLM );
 
     my @seen_adj = keys %{ $derivation{verb2adj}{$verb_tlemma} };
 
