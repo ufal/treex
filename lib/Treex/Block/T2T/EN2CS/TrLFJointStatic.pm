@@ -14,9 +14,9 @@ sub get_required_share_files {
 }
 
 sub process_start {
-    my $self  = shift;
+    my $self = shift;
     $model = TranslationModel::Static::Model->new();
-    $model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
+    $model->load( Treex::Core::Resource::require_file_from_share($MODEL_STATIC) );
 
     return;
 }

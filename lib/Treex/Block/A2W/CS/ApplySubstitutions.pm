@@ -12,8 +12,12 @@ sub get_required_share_files { return $DEFAULT_TSV; }
 has file => (
     is      => 'rw',
     isa     => 'Str',
-    default => "$ENV{TMT_ROOT}/share/$DEFAULT_TSV",    #TODO: change to Treex::Core::Config
+    builder => '_build_file',
 );
+
+sub _build_file {
+    return Treex::Core::Resource::require_file_from_share($DEFAULT_TSV);
+}
 
 my %change;
 use autodie;

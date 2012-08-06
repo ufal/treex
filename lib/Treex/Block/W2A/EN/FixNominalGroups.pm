@@ -18,7 +18,7 @@ sub BUILD {
 sub process_start {
     my $self = shift;
 
-    my $filename = $ENV{TMT_ROOT} . '/share/' . $MODEL;
+    my $filename = Treex::Core::Resource::require_file_from_share($MODEL);
     open my $F, '<:encoding(UTF8)', $filename or log_fatal "Can't open $filename: $!";
     my $skip_header = <$F>;    #skip header
     while (<$F>) {

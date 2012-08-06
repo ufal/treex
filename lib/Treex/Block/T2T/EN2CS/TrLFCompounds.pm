@@ -28,7 +28,7 @@ sub BUILD {
 
 sub process_start {
     $static_model = TranslationModel::Static::Model->new();
-    $static_model->load("$ENV{TMT_ROOT}/share/$MODEL_STATIC");
+    $static_model->load( Treex::Core::Resource::require_file_from_share($MODEL_STATIC) );
     $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
     $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
     $noun2adj_model = TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
