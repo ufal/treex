@@ -150,7 +150,7 @@ sub _build_loaded_blocks {
                 }
             }
 
-            log_info(ref($new_block));
+            # log_info(ref($new_block));
 
             push @loaded_blocks, $new_block;
         }
