@@ -12,6 +12,7 @@ use Cwd 'abs_path';
 
 extends 'Treex::Core::Block';
 
+
 sub process_document {
 	
 	my ($self, $document) = @_;
@@ -153,9 +154,9 @@ sub write_atag_files{
 					my $outsign = $align_node->form;
 					my $align_xml_node = $atag_writable_document->createElement("align");
 					$align_xml_node->addChild ($atag_writable_document->createAttribute (in => $in));
-					$align_xml_node->addChild ($atag_writable_document->createAttribute (insign => $insign));
+#					$align_xml_node->addChild ($atag_writable_document->createAttribute (insign => $insign));
 					$align_xml_node->addChild ($atag_writable_document->createAttribute (out => $out));
-					$align_xml_node->addChild ($atag_writable_document->createAttribute (outsign => $outsign));
+#					$align_xml_node->addChild ($atag_writable_document->createAttribute (outsign => $outsign));
 					$root->addChild($align_xml_node);
 				}
 			}	
@@ -197,13 +198,14 @@ sub write_to_file{
 			while ((my $key,my $value) = each %attribs)
 			{
   				unless ($key eq "tok" or $key eq "linenumber" or $key eq "sent_number" or $key eq "cur" or $key eq "id"){
-  					$word->addChild ($writable_document->createAttribute ( $key => $value) );
+  					$word->addChild ($writable_document->createAttribute ( $key => escape($value)) );
   					
   				}
 			}
 			
 			#Create the textnode
 			my $text = $node->form; 
+			if ($text ne "\"") {$text=escape($text);}
 			$word->addChild($writable_document->createTextNode($text));
 			$root->addChild($word);
 			
@@ -258,6 +260,15 @@ sub format_file_name{
         $filename = $2."_".$3.$type;
        ($filename,$folder_name);
 }
+
+my $map = { map { $_ => 1 } split( //o, "\\<> \t\n\r\f\"" ) };
+
+sub escape {
+  my ($in) = @_;
+  $in =~ s/(.)/exists($map->{$1})?sprintf('\\%04x',ord($1)):$1/egos;
+  return $in;
+}
+
 1;
 
 '
