@@ -8,7 +8,6 @@ use Time::HiRes;
 use App::whichpm 'which_pm';
 use Readonly::XS;
 
-
 has selector => ( is => 'ro', isa => 'Treex::Type::Selector',        default => '', );
 has language => ( is => 'ro', isa => 'Maybe[Treex::Type::LangCode]', builder => 'build_language' );
 has scenario => (
@@ -25,11 +24,13 @@ has select_bundles => (
         . ' e.g. "1-4,6,8-12". The default is 0 which means all bundles. Useful for debugging.',
 );
 
-has _is_bundle_selected => (is=>'rw');
+has _is_bundle_selected => ( is => 'rw' );
 
 has _hash => ( is => 'rw', isa => 'Str' );
 
-Readonly our $DOCUMENT_PROCESSED => 1;
+has is_started => ( is => 'ro', isa => 'Bool', writer => '_set_is_started', default => 0 );
+
+Readonly our $DOCUMENT_PROCESSED  => 1;
 Readonly our $DOCUMENT_FROM_CACHE => 2;
 
 # If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
@@ -49,7 +50,6 @@ sub build_language {
     }
 }
 
-
 sub zone_label {
     my ($self) = @_;
     my $label = $self->language or return;
@@ -66,18 +66,19 @@ sub zone_label {
 sub BUILD {
     my $self = shift;
 
-    if ($self->select_bundles){
-      log_fatal 'select_bundles='.$self->select_bundles.' does not match /^\d+(-\d+)?(,\d+(-\d+)?)*$/'
-          if $self->select_bundles !~ /^\d+(-\d+)?(,\d+(-\d+)?)*$/;
-      my %selected;
-      foreach my $span (split /,/, $self->select_bundles){
-          if ($span =~ /(\d+)-(\d+)/){
-              @selected{$1..$2} = ($1..$2);
-          } else {
-              $selected{$span} = 1;
-          }
-      }
-      $self->_set_is_bundle_selected(\%selected);
+    if ( $self->select_bundles ) {
+        log_fatal 'select_bundles=' . $self->select_bundles . ' does not match /^\d+(-\d+)?(,\d+(-\d+)?)*$/'
+            if $self->select_bundles !~ /^\d+(-\d+)?(,\d+(-\d+)?)*$/;
+        my %selected;
+        foreach my $span ( split /,/, $self->select_bundles ) {
+            if ( $span =~ /(\d+)-(\d+)/ ) {
+                @selected{ $1 .. $2 } = ( $1 .. $2 );
+            }
+            else {
+                $selected{$span} = 1;
+            }
+        }
+        $self->_set_is_bundle_selected( \%selected );
     }
 
     $self->_compute_hash();
@@ -92,26 +93,27 @@ sub _compute_hash {
     # compute block parameters hash
     my $params_str = "";
     map {
-            $params_str .= $_ ."=".$self->{$_};
-            # log_warn("\t\t" . $_ . "=" . $self->{$_} . " - " . ref($self->{$_}));
+        $params_str .= $_ . "=" . $self->{$_};
+
+        # log_warn("\t\t" . $_ . "=" . $self->{$_} . " - " . ref($self->{$_}));
         }
-        sort                            # in canonical form
-        grep { ! ref($self->{$_}) }     # no references
-        grep { defined($self->{$_}) }   # value has to be defined
+        sort    # in canonical form
+        grep { !ref( $self->{$_} ) }       # no references
+        grep { defined( $self->{$_} ) }    # value has to be defined
         grep { !/(scenario|block)/ }
         keys %{$self};
     $md5->add($params_str);
 
     # compute block source code hash
-    my ($block_filename, $block_version) = which_pm($self->get_block_name());
-    open(my $block_fh, "<", $block_filename) or log_fatal("Can't open '$block_filename': $!");
+    my ( $block_filename, $block_version ) = which_pm( $self->get_block_name() );
+    open( my $block_fh, "<", $block_filename ) or log_fatal("Can't open '$block_filename': $!");
     binmode($block_fh);
     $md5->addfile($block_fh);
     close($block_fh);
 
-    $self->_set_hash($md5->hexdigest);
+    $self->_set_hash( $md5->hexdigest );
 
-#    log_warn("Block hash: " . $self->get_block_name() . " - " . $self->get_hash());
+    #    log_warn("Block hash: " . $self->get_block_name() . " - " . $self->get_hash());
 
     return;
 }
@@ -150,11 +152,11 @@ sub process_document {
             " doesn't override the method process_document";
     }
 
-#    my $start = Time::HiRes::time();
-#    my $str = Storable::freeze($document);
-#    my $hash = md5_hex($str);
-#    my $end = Time::HiRes::time();
-#    log_info("\tMD5\t$hash\t" . ($end - $start) . "\t" . length($str));
+    #    my $start = Time::HiRes::time();
+    #    my $str = Storable::freeze($document);
+    #    my $hash = md5_hex($str);
+    #    my $end = Time::HiRes::time();
+    #    log_info("\tMD5\t$hash\t" . ($end - $start) . "\t" . length($str));
 
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
@@ -200,7 +202,7 @@ sub _try_process_layer {
 
     if ( my $m = $meta->find_method_by_name("process_${layer}node") ) {
         ## process_ptree should be executed also on the root node (usually the S phrase)
-        my @opts = $layer eq 'p' ? ({add_self => 1}) : ();
+        my @opts = $layer eq 'p' ? ( { add_self => 1 } ) : ();
         foreach my $node ( $tree->get_descendants(@opts) ) {
             ##$self->process_anode($node);
             $m->execute( $self, $node, $bundleNo );
@@ -235,12 +237,23 @@ sub process_start {
     return;
 }
 
+after 'process_start' => sub {
+    my ($self) = @_;
+    $self->_set_is_started(1);
+};
+
 sub process_end {
     my ($self) = @_;
 
     # default implementation is empty, but can be overriden
     return;
 }
+
+after 'process_end' => sub {
+    my ($self) = @_;
+    $self->_set_is_started(0);
+};
+
 
 sub get_block_name {
     my $self = shift;
@@ -422,6 +435,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
