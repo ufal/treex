@@ -77,16 +77,16 @@ sub stem_sentence {
     $sentence =~ s/\+/<<+>>/g;
 
     # take out the sandhis (ex: patikkac => patikka +c)
-    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
+    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 $2 /g;
 
     # split the clitics from word forms
-    $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 +$2 /g;
+    $sentence =~ s/([a-zA-Z])($clitics)(\s|\t)/$1 $2 /g;
 
     # split the postpositions from word forms
-    $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 +$2 /g;
+    $sentence =~ s/([a-zA-Z])($postpositions)(\s|\t)/$1 $2 /g;
 
     # take out the sandhis (ex: patikkac => patikka +c)
-    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 +$2 /g;
+    $sentence =~ s/(a|u)(k|c|T|p)(\s|\t)/$1 $2 /g;
 
     # get word tokens
     my @words = split /\s+/, $sentence;
