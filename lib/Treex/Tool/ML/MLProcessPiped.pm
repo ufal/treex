@@ -14,14 +14,16 @@ Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process/';
 Readonly my $ML_PROCESS_LIBRARIES => [
     'lib/google-collect-1.0.jar',
     'lib/java-getopt-1.0.13.jar',
-    'lib/liblinear-1.51.jar',
-    'lib/libsvm-2.91.jar',
+    'lib/liblinear-1.8.jar',
     'lib/lpsolve55j.jar',
-    'lib/weka-3.7.1.jar',
     'dll_32/liblpsolve55.so',
     'dll_32/liblpsolve55j.so',
     'dll_64/liblpsolve55.so',
-    'dll_64/liblpsolve55.so',
+    'dll_64/liblpsolve55j.so',
+    'lib/weka-3.7.6.jar',
+    'lib/weka-liblinear-1.8.jar',
+    'lib/chisquared-attr-eval-1.0.2.jar',
+    'lib/significance-attr-eval-1.0.1.jar',
 ];
 
 # ML-Process executable

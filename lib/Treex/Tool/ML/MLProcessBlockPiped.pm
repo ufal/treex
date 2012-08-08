@@ -58,7 +58,7 @@ sub BUILDARGS {
 }
 
 # Get the ML-Process executable up and running, load the models
-sub BUILD {
+sub process_start {
 
     my ($self) = @_;
 

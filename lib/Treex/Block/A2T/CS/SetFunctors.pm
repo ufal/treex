@@ -5,38 +5,11 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::A2T::SetFunctors';
 
+has '+model' => ( default => 'data/models/functors/cs/model-pack.dat.gz' );
 
-has '+model_dir' => ( default => 'data/models/functors/cs/' );
-
-has '+plan_template'  => ( default => 'plan.template' );
-
-has '+features_config' => ( default => 'features.yml' );
-
-has '+model_files' => ( builder => '_build_model_files', lazy_build => 1 );
-
-has '+plan_vars' => ( builder => '_build_plan_vars', lazy_build => 1 );
-
-
-sub _build_model_files {
-    my ($self) = @_;
-    return [
-        'ff.dat',
-        $self->plan_template,
-        $self->features_config,
-        map { 'model-' . $_ . '.dat' } ( '', 'n', 'adj', 'adv', 'v', '[3f][3f][3f]', 'x', 'coap' ), 
-    ];
-}
-
-sub _build_plan_vars {
-    my ($self) = @_;    
-    return {
-        'FF-INFO' => 'ff.dat',
-        'MODELS' => 'model-**.dat',
-    };    
-}
+has '+features_config' => ( default => 'data/models/functors/cs/features.yml' );
 
 1;
-
 
 __END__
 
@@ -57,6 +30,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
