@@ -5,20 +5,21 @@ extends 'Treex::Core::Block';
 
 use Parser::MST::Czech;
 
-has 'model' => ( is => 'rw', isa => 'Str' );
+has 'model'        => ( is => 'rw', isa => 'Str' );
 has 'model_memory' => ( is => 'rw', isa => 'Str' );
 
 my $parser;
 
-sub BUILD {
+sub process_start {
+
     my ($self) = @_;
 
     my $arg_ref = {};
-    if ($self->model) {
-	$arg_ref->{'model'} = $self->model;
+    if ( $self->model ) {
+        $arg_ref->{'model'} = $self->model;
     }
-    if ($self->model_memory) {
-	$arg_ref->{'model_memory'} = $self->model_memory;
+    if ( $self->model_memory ) {
+        $arg_ref->{'model_memory'} = $self->model_memory;
     }
     $parser = Parser::MST::Czech->new($arg_ref) if !$parser;
     return;
