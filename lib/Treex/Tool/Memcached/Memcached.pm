@@ -6,6 +6,7 @@ use warnings;
 
 use Cache::Memcached;
 use Data::Dumper;
+use Storable;
 use File::Basename;
 use File::Temp;
 
@@ -148,7 +149,7 @@ sub get_memcached_hostname {
 
 sub load_model
 {
-    my ( $model_class, $file ) = @_;
+    my ( $model_class, $file, $debug ) = @_;
 
     log_info "Loading $model_class from file $file";
 
@@ -166,40 +167,12 @@ sub load_model
 
         if ( -d $file ) {
             my @files = ( glob "$file/*" );
-
-            #            my $partSize = int( ( $#files + 1 ) / $DEFAULT_THREADS + 1 );
-            #            my @childs   = ();
-            #            for ( my $i = 0; $i < $DEFAULT_THREADS; ++$i ) {
-            #                my $pid = fork();
-            #                if ($pid) {
-            #                    push( @childs, $pid );
-            #                }
-            #                elsif ( $pid == 0 ) {
-            #                    my $from = $i * $partSize;
-            #                    my $to   = ( $i + 1 ) * $partSize - 1;
-            #                    if ( $to > $#files ) {
-            #                        $to = $#files;
-            #                    }
-            #                    for my $j ( $from .. $to ) {
-            #                        _load_model( $memd, $model_class, $files[$j] );
-            #                    }
-            #
-            #                    log_info "Block $i processed - from " . ( $from + 1 ) . " to " . ( $to + 1 ) . ".";
-            #                    exit(0);
-            #                }
-            #                else {
-            #                    die "couldn’t fork: $!\n";
-            #                }
-            #            }
-            #            foreach (@childs) {
-            #                waitpid( $_, 0 );
-            #            }
             foreach my $part (@files) {
-                _load_model( $memd, $model_class, $part );
+                _load_model( $memd, $model_class, $part, $debug );
             }
         }
         elsif ( -f $file ) {
-            _load_model( $memd, $model_class, $file )
+            _load_model( $memd, $model_class, $file, $debug )
         }
         else {
             log_fatal "File $file does not exist.";
@@ -217,14 +190,19 @@ sub load_model
 
 sub _load_model
 {
-    my ( $memd, $model_class, $file ) = @_;
+    my ( $memd, $model_class, $file, $debug ) = @_;
     eval "require $model_class" || croak("Cannot load $model_class.");
     my $model = $model_class->new();
     $model->load($file);
 
     #    log_info "\tStoring to memcached";
     for my $label ( $model->get_input_labels() ) {
-        my $status = $memd->set( $label, $model->get_submodel($label) );
+        my $stored_label = $label;
+
+        if ( $debug ) {
+            print STDERR "LABEL\t$label\n";
+        }
+        my $status = $memd->set( fix_key($label), $model->get_submodel($label) );
     }
 
     return;
@@ -252,7 +230,7 @@ sub contains
     }
     else {
         foreach my $key (@keys) {
-            my $loaded = $memd->get($key);
+            my $loaded = $memd->get(fix_key($key));
             if ($loaded) {
                 log_info "\t$key: loaded."
             }
@@ -295,6 +273,13 @@ sub print_stats
     }
 
     return;
+}
+
+sub fix_key
+{
+    my $key = shift;
+    $key =~ s/\s/__/g;
+    return $key;
 }
 
 1;
