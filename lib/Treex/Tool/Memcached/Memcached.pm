@@ -21,16 +21,16 @@ Readonly my $MEMCACHED_SHARE_PATH => 'installed_tools/memcached/memcached-1.4.13
 #
 
 # Test if Memcached server is installed and can be executed
-my $MEMCACHED_DIR = dirname( `which memcached` // '' );
-if ( !$MEMCACHED_DIR ) {
+my $MEMCACHED = `which memcached`;
+if ( !$MEMCACHED ) {
 
     # no system-wide installation, try to find in treex shared directories
-    $MEMCACHED_DIR = dirname( Treex::Core::Resource::require_file_from_share($MEMCACHED_SHARE_PATH) );
+    $MEMCACHED = Treex::Core::Resource::require_file_from_share($MEMCACHED_SHARE_PATH);
 
     # test if it is can be executed, will fail upon first use if not
     # TODO: any ideas for a better/faster check ?
     # TODO: Shouldn't this fail right here (and not crash Treex if don't want to use cache)?
-    $MEMCACHED_DIR = '' if ( system( $MEMCACHED_DIR . '/memcached -h > /dev/null 2>&1' ) != 0 );
+    $MEMCACHED = '' if ( system( $MEMCACHED . ' -h > /dev/null 2>&1' ) != 0 );
 }
 
 #  detect if we are running/want to run on cluster
@@ -46,7 +46,7 @@ sub start_memcached {
     $memory //= $DEFAULT_MEMORY;
 
     # die with an error message if we can't run memcached properly
-    if ( !$MEMCACHED_DIR ) {
+    if ( !$MEMCACHED ) {
         log_fatal "The Memcached server must be installed manually (system-wide or "
             . "in the $MEMCACHED_SHARE_PATH Treex shared directory)";
     }
@@ -60,7 +60,7 @@ sub start_memcached {
         my $memcached_memory = $memory * 1000;
         my $script = File::Temp->new( UNLINK => 0, TEMPLATE => 'memcached-qsub-XXXX', SUFFIX => '.sh' );
         print $script "#!bin/bash\n";
-        print $script "$MEMCACHED_DIR/memcached -m $memcached_memory -I 64000000\n";
+        print $script "$MEMCACHED -m $memcached_memory -I 64000000\n";
         print $script "rm $script\n";
         close $script;
 
