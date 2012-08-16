@@ -733,16 +733,13 @@ sub _is_in_fatalerror
             $last_line = $_;
             log_info($last_line);
             my @parts = split(/ /, $last_line);
-            $self->_set_fatalerror_job($parts[1]);
-            $self->_set_fatalerror_doc($parts[3]);
+            $self->_set_fatalerror_job($parts[0]);
+            $self->_set_fatalerror_doc($parts[1]);
             my $fatal_file = $self->_get_job_status_filename($self->_fatalerror_job, "fatalerror");
             qx(touch $fatal_file);
         }
         close($fh);
-
-        my @p = split(/ /, $last_line);
         $self->_set_fatalerror_ts($ts);
-
     }
 
     return ($self->_fatalerror_job, $self->_fatalerror_doc);
@@ -1089,7 +1086,7 @@ sub _print_finish_status
     while (<$fh>) {
         chomp;
         my @p = split(/ /, $_);
-        $broken_jobs{$p[1]} = 1;
+        $broken_jobs{$p[0]} = 1;
     }
     close($fh);
 
@@ -1118,29 +1115,26 @@ sub _check_job_errors {
     my $workdir = $self->workdir;
 
     my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
-
     if ( $fatal_job ) {
-        if ( ! $self->_is_job_status($fatal_job, "fatalerror") ) {
-            my $error_file = $workdir;
-            if ($fatal_doc) {
-                $error_file .= "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
-            } else {
-                $error_file .= "/status/" . sprintf( "job%03d", $fatal_job ) . ".stderr";
-            }
-            my $command     = "grep -h -A 10 -B 25 FATAL $error_file";
-            my $fatal_lines = qx($command);
-            log_info "********************** $command  ******************\n";
-            log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
-            log_info "$fatal_lines\n";
-            log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
-
-            # create fatal error file for particular job
-            my $fatal_file = $self->_get_job_status_filename($fatal_job, "fatalerror");
-            qx($command >> $fatal_file);
-
-            # mark job as in fatal error state
-            $self->_is_job_status($fatal_job, "fatalerror");
+        my $error_file = $workdir;
+        if ($fatal_doc =~ /[0-9]+/) {
+            $error_file .= "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
+        } else {
+            $error_file .= "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         }
+        my $command     = "grep -h -A 10 -B 25 FATAL $error_file";
+        my $fatal_lines = qx($command);
+        log_info "********************** $command  ******************\n";
+        log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
+        log_info "$fatal_lines\n";
+        log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
+
+        # create fatal error file for particular job
+        my $fatal_file = $self->_get_job_status_filename($fatal_job, "fatalerror");
+        qx($command >> $fatal_file);
+
+        # mark job as in fatal error state
+        $self->_is_job_status($fatal_job, "fatalerror");
 
         if ( ! $self->survive ) {
             log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
@@ -1300,12 +1294,7 @@ sub _redirect_output {
         'FATAL',
         sub {
             eval {
-                use Fcntl qw(:flock);
-                open(my $fh, ">>", $common_file_fatalerror);
-                flock($fh, LOCK_EX);
-                print $fh, "Fatal error in job $jobindex", ($docnumber ne 'loading' ? ', document ' : ' '), $docnumber, "!\n";
-                flock($fh, LOCK_UN);
-                close($fh);
+                system qq(echo $jobindex $docnumber >> $common_file_fatalerror);
                 system qq(touch $job_file_fatalerror);
             };      ## no critic (RequireCheckingReturnValueOfEval)
         }
