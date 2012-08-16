@@ -723,23 +723,21 @@ sub _is_in_fatalerror
         return;
     }
 
-    my $ts = (stat($fatal_file))[9];
+    my $timestamp = (stat($fatal_file))[9];
 
-    if ( $ts > $self->_fatalerror_ts ) {
-        my $last_line = undef;
+    if ( $timestamp > $self->_fatalerror_ts ) {
         open(my $fh, "<", $fatal_file) or log_fatal($!);
-        while ( <$fh> ) {
-            chomp;
-            $last_line = $_;
-            log_info($last_line);
-            my @parts = split(/ /, $last_line);
-            $self->_set_fatalerror_job($parts[0]);
-            $self->_set_fatalerror_doc($parts[1]);
+        while ( my $line = <$fh> ) {
+            chomp $line;
+            my ( $job, $doc ) = split( / /, $line );
+            $self->_set_fatalerror_job($job);
+            $self->_set_fatalerror_doc($doc);
+            log_info( 'Fatal error found in job ' . $job . ( $doc !~ /loading/ ? ', document ' : ' ' ) . $doc );
             my $fatal_file = $self->_get_job_status_filename($self->_fatalerror_job, "fatalerror");
             qx(touch $fatal_file);
         }
         close($fh);
-        $self->_set_fatalerror_ts($ts);
+        $self->_set_fatalerror_ts($timestamp);
     }
 
     return ($self->_fatalerror_job, $self->_fatalerror_doc);
