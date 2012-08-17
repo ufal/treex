@@ -37,8 +37,6 @@ sub process_start {
     return;
 }
 
-my $DEBUG = 0;
-
 # TODO (MP): $DEBUG => 1; a zjistit proc je tolik slov nepokrytych slovnikem: vetsinou jsou spatne zadany tagy
 
 my @CATEGORIES = qw(pos subpos gender number case possgender possnumber
@@ -75,12 +73,12 @@ sub _generate_word_form {
     # digits, abbreviations etc. are not attempted to be inflected
     return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } )
         if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
-    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------'} )
+    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------' } )
         if $lemma eq '#Neg';
 
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
     return LanguageModel::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } )
-    if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
+        if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
                 my $number = Treex::Tool::Lexicon::CS::number_for( $_->lemma );
                 defined $number && $number > 2;
@@ -111,7 +109,7 @@ sub _generate_word_form {
         my $prefix       = $1;
         my $lemma_suffix = $2;
         my $form_suffix  = $morphoLM->best_form_of_lemma( $lemma_suffix, $tag_regex );
-        if ($form_suffix){
+        if ($form_suffix) {
             $form_suffix->set_lemma( $prefix . $form_suffix->get_lemma() );
             $form_suffix->set_form( $prefix . $form_suffix->get_form() );
             return $form_suffix;
@@ -120,11 +118,8 @@ sub _generate_word_form {
 
     # If there are no compatible forms in LM, try Hajic's morphology generator
     my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag_regex" } );
-    if ( $DEBUG && $form_info ) {
-        log_warn(
-            "MORF: $lemma\t$tag_regex\t" . $form_info->get_form()
-                . "\tttred " . $a_node->get_address() . " &"
-        );
+    if ($form_info) {
+        log_debug( "MORF: $lemma\t$tag_regex\t" . $form_info->get_form() . "\tttred " . $a_node->get_address() . " &", 1 );
     }
     return $form_info if $form_info;
 
@@ -140,12 +135,7 @@ sub _generate_word_form {
     return $form if $form;
 
     # If there are no compatible forms from morphology analysis, return the lemma at least
-    if ($DEBUG) {
-        log_warn(
-            "LEMM: $lemma\t$tag_regex\t$lemma\t"
-                . "\ttmttred " . $a_node->get_address() . "&\n"
-        );
-    }
+    log_debug( "LEMM: $lemma\t$tag_regex\t$lemma\tttred " . $a_node->get_address() . " &", 1 );
 
     $lemma =~ s/(..t)-\d$/$1/;    # removing suffices distinguishing homonymous lemmas (stat-2)
     return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
@@ -196,15 +186,15 @@ sub _form_after_tag_relaxing {
             $tag_regex = ( join q{}, map { $partial_regexps_ref->{$_} } @CATEGORIES ) . "[-1]";
             my $form = $morphoLM->best_form_of_lemma( $lemma, $tag_regex );
             if ($form) {
-                if ($DEBUG) {
-                    print "lemma=$lemma\t"
+                log_debug(
+                    "RELAXED\tid=" . $a_node->get_address() . "\t"
+                        . "lemma=$lemma\t"
                         . "relaxed=" . join( "+", @relaxed_cats ) . "\t"
                         . "old_mask=$old_regex\t"
                         . "new_mask=$tag_regex\t"
                         . "new_form=$form\t"
-                        . "en_sent=" . $a_node->get_bundle->get_attr('english_source_sentence') . "\t"
-                        . "cs_sent=" . $a_node->get_bundle->get_attr('czech_target_sentence') . "\n";
-                }
+                    , 1
+                );
                 return $form;
             }
         }
@@ -222,7 +212,7 @@ sub _get_tag_regex {
     foreach my $category (@CATEGORIES) {
         $morphcat{$category} = $a_node->get_attr("morphcat/$category");
         if ( !defined $morphcat{$category} ) {
-            log_warn("Morphcat '$category' undef with lemma=$lemma id=$id");    #if $DEBUG;
+            log_warn("Morphcat '$category' undef with lemma=$lemma id=$id");
             $morphcat{$category} = '.';
         }
     }
