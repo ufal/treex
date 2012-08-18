@@ -21,7 +21,7 @@ for my $test (@{$MemcachedTest::TESTS}) {
         my $out_file = $test->[1] . ".out." . $j;
         `rm -f $out_file`;
         push(@out_files, $out_file);
-        my $cmd = $MemcachedTest::CHECK_CMD . " " . $test->[0] . " " . $test->[1] . " > " . $out_file; 
+        my $cmd = $MemcachedTest::CHECK_CMD . " 50 " . $test->[0] . " " . $test->[1] . " > " . $out_file; 
 
         `qsubmit --mem=5G "$cmd"`;
     }
@@ -74,5 +74,5 @@ sub init {
     `rm -f $MemcachedTest::LEMMAS_SMALL $MemcachedTest::LEMMAS_BIG`;
 
     MemcachedTest::stop_memcached();
-    MemcachedTest::start_memcached(30);
+    MemcachedTest::start_memcached(10);
 }

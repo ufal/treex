@@ -7,7 +7,7 @@ use File::Basename;
 use Carp;
 use List::Util qw(shuffle);
 
-my ($model_file, $lemmas_file) = @ARGV;
+my ($checks, $model_file, $lemmas_file) = @ARGV;
 
 my @lemmas = ();
 open(my $fh, "<:encoding(utf-8)", $lemmas_file) or croak($! . ": " . $lemmas_file);
@@ -22,7 +22,7 @@ my $lemma_count = scalar @lemmas;
 my $memd = Treex::Tool::Memcached::Memcached::get_connection(basename($model_file));
 my $hit = 0;
 my $total = 0;
-for my $it (0 .. 50) {
+for my $it (0 .. $checks) {
     for my $i (shuffle (0 .. $lemma_count - 1)) {
 
         my $lemma = $lemmas[$i];
