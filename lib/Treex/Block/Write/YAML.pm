@@ -6,6 +6,8 @@ use YAML::Any;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
+has '+extension' => ( default => '.yaml' );
+
 # Default process_document method for all Writer blocks.
 override 'process_document' => sub {
 
@@ -24,7 +26,7 @@ override 'process_document' => sub {
     # convert Treex::PML::whatever arrays/hashes to plain ones)
     utf8::decode($yaml_text);
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
-
+    $yaml_text =~ s{(:\s*)([0-9_]+)(\s*(,|\r|\n))}{$1'$2'$3}g; # quote numbers with underscores
     print { $self->_file_handle } $yaml_text;
     return;
 };
