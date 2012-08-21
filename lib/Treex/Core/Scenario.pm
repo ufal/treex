@@ -135,11 +135,11 @@ sub _build_loaded_blocks {
         }
         else {
             if ( ref($new_block) eq "Treex::Core::CacheBlock" ) {
-                $sequence{$sequence_from}{'from'} = $sequence_from;
-                $sequence{$sequence_from}{'to'}   = $i;
-                $sequence{$sequence_from}{'hash'} = $sequence_hash;
+                $sequence{$sequence_from}{from} = $sequence_from;
+                $sequence{$sequence_from}{to}   = $i;
+                $sequence{$sequence_from}{hash} = $sequence_hash;
 
-                $sequence{$i}{'_from'} = $sequence_from;
+                $sequence{$i}{_from} = $sequence_from;
                 $sequence_from = $i;
                 push( @{ $sequence{$sequence_from}{block} }, $new_block->get_hash() );
                 $sequence_hash = $new_block->get_hash();
@@ -151,17 +151,11 @@ sub _build_loaded_blocks {
                 }
             }
 
-            # log_info(ref($new_block));
-
             push @loaded_blocks, $new_block;
         }
     }
 
-    #    use Data::Dumper;
-    #    log_info(Data::Dumper->Dump([\%sequence]));
-    #    log_info('');
-    #    log_info('   ALL BLOCKS SUCCESSFULLY LOADED.');
-    #    log_info('');
+    log_info('ALL BLOCKS SUCCESSFULLY LOADED.');
     return \@loaded_blocks;
 }
 
