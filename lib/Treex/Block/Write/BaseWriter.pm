@@ -21,13 +21,6 @@ has compress => (
     documentation => 'Compression to .gz. Defaults to document->compress, or 0.'
 );
 
-has clobber => (
-    isa           => 'Bool',
-    is            => 'ro',
-    default       => 0,
-    documentation => 'Allow overwriting output files.',
-);
-
 has [qw(file_stem path)] => (
     isa           => 'Str',
     is            => 'ro',
@@ -196,8 +189,6 @@ sub _prepare_file_handle {
 
         # open the new output stream
         log_info "Saving to $filename";
-        log_fatal "Won't overwrite $filename (use clobber=1 to force)."
-            if ( !$self->clobber && -e $filename && $filename !~ m/^\/dev\/std/ );
         $self->_set_file_handle( $self->_open_file_handle($filename) );
     }
 
