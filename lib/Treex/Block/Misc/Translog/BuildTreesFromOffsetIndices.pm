@@ -1,4 +1,4 @@
-package Treex::Block::Misc::CopenhagenDT::BuildTreesFromOffsetIndices;
+package Treex::Block::Misc::Translog::BuildTreesFromOffsetIndices;
 
 use utf8;
 use Moose;
@@ -11,7 +11,12 @@ sub d { print STDERR Data::Dumper->Dump([ @_ ]); }
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
+    my $doc = $bundle->get_document;
+
     foreach my $zone ($bundle->get_all_zones) {
+
+#printf STDERR "Zone: %s %s\n", $zone->language, $zone->selector;
+        if(!defined($doc->wild->{annotation}{$zone->selector}{dep_parser})) {next;}
 
         my $a_root = $zone->get_atree();
 
@@ -23,11 +28,8 @@ sub process_bundle {
         }
 
 #printf STDERR "Zone: %s %s\n", $zone->language, $zone->selector;
-        my $syntax = 0;
         foreach my $node ( @nodes ) {
 
-            $node->set_tag($node->wild->{tag});
-            $node->set_lemma($node->wild->{lemma});
             my $in_edges_description = $node->wild->{in};
 
             if ( defined $in_edges_description ) {
@@ -52,22 +54,12 @@ sub process_bundle {
 
                 foreach my $edge_description ( @edge_descriptions ) {
                     $self->_create_edge( $node, $edge_description, \%linenumber2node, 0 );
-                    $syntax ++;
                 }
             }
         }
 
-printf STDERR "XXXX: $_\n";
-
-        my $sentence = join ' ', grep { !/#[A-Z]/ }
-            map { $_->form } $a_root->get_descendants( { ordered => 1 } );
+        my $sentence = join ' ', grep { !/#[A-Z]/ } map { $_->form } $a_root->get_descendants( { ordered => 1 } );
         $zone->set_sentence( $sentence );
-        if($syntax > 0) {
-          my $doc = $bundle->get_document;
-          my $language = $zone->language;
-          $doc->wild->{annotation}{$language}{syntax} = 'YES';
-#print STDERR "***BUILD YES\n";
-        }
     }
     return;
 }

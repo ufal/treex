@@ -15,7 +15,10 @@ sub process_bundle {
 
     foreach my $tree (@danish_trees) {
         my $new_bundle = $doc->create_bundle();
+        $new_bundle->{wild} = $bundle->{wild};
+
         my $new_zone = $new_bundle->create_zone($SourceLanguage);
+
         my $new_atree_root = $new_zone->create_atree;
         $tree->set_parent($new_atree_root);
     }

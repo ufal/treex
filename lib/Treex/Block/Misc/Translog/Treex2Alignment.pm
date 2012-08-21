@@ -51,7 +51,7 @@ sub process_document {
 			
 			#sort the atrees according to the sentence number.
 			my ($filename,$foldername) = format_file_name($self,$selector,".tgt");
-			my $output_folder = $document_path."../".$foldername."/Alignment-II";
+			my $output_folder = "data/".$foldername."/Alignment-II";
 			
 			unless(-d $output_folder){
 	    			
@@ -144,13 +144,13 @@ sub write_atag_files{
 		my @ordered_nodes = $a_tree->get_descendants({ordered=>1});
 		
 		for my $node (@ordered_nodes){
-			my $in = "b".$node->ord;
+			my $in = "b".$node->wild->{id};
 			my $insign = $node->form;
 			#get alignment information
 			my @align_nodes = $node->get_aligned_nodes_of_type("alignment");
 			if (@align_nodes){
 				foreach my $align_node(@align_nodes){
-					my $out = "a".$align_node->ord;
+					my $out = "a".$align_node->wild->{id};
 					my $outsign = $align_node->form;
 					my $align_xml_node = $atag_writable_document->createElement("align");
 					$align_xml_node->addChild ($atag_writable_document->createAttribute (in => $in));
@@ -198,14 +198,14 @@ sub write_to_file{
 			while ((my $key,my $value) = each %attribs)
 			{
   				unless ($key eq "tok" or $key eq "linenumber" or $key eq "sent_number" or $key eq "cur" or $key eq "id"){
-  					$word->addChild ($writable_document->createAttribute ( $key => escape($value)) );
+  					$word->addChild ($writable_document->createAttribute ( $key => MSescapeAttr($value)) );
   					
   				}
 			}
 			
 			#Create the textnode
 			my $text = $node->form; 
-			if ($text ne "\"") {$text=escape($text);}
+			if ($text ne "\"") {$text=MSescapeText($text);}
 			$word->addChild($writable_document->createTextNode($text));
 			$root->addChild($word);
 			
@@ -215,6 +215,7 @@ sub write_to_file{
 	} 
 	$writable_document->setDocumentElement($root);
 	my $writable_string = $writable_document->toString(1);
+	$writable_string =~ s/\&amp;/\&/g;
 	open FILE,">", $full_path or die $!; 
 	print FILE $writable_string; 
 	close FILE;
@@ -228,7 +229,7 @@ sub copy_src_files{
 	my $src_path = $output_path."/source.src";
 	while (my $file = readdir(DIR)) {
         unless (-d $file){
-                my $path= abs_path($file);
+                my $path= $output_path."/".$file;
                 my @ext = (fileparse($path, qr/\.[^.]*$/));
                 if($ext[2] eq ".tgt"){
                 	
@@ -261,13 +262,34 @@ sub format_file_name{
        ($filename,$folder_name);
 }
 
-my $map = { map { $_ => 1 } split( //o, "\\<> \t\n\r\f\"" ) };
-
-sub escape {
+sub MSescapeText {
   my ($in) = @_;
-  $in =~ s/(.)/exists($map->{$1})?sprintf('\\%04x',ord($1)):$1/egos;
+
+#  $in =~ s/\&/&amp;/g;
+  $in =~ s/\>/&gt;/g;
+#  $in =~ s/\</&lt;/g;
+#  $in =~ s/\n/&#xA;/g;
+#  $in =~ s/\r/&#xD;/g;
+#  $in =~ s/\t/&#x9;/g;
+#  $in =~ s/"/&quot;/g;
+#  $in =~ s/ /&nbsp;/g;
   return $in;
 }
+
+sub MSescapeAttr {
+  my ($in) = @_;
+
+#  $in =~ s/\&/&amp;/g;
+  $in =~ s/\>/&gt;/g;
+  $in =~ s/\</&lt;/g;
+  $in =~ s/\n/&#xA;/g;
+  $in =~ s/\r/&#xD;/g;
+  $in =~ s/\t/&#x9;/g;
+  $in =~ s/"/&quot;/g;
+#  $in =~ s/ /&nbsp;/g;
+  return $in;
+}
+
 
 1;
 

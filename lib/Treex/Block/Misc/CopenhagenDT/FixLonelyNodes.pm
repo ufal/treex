@@ -5,6 +5,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Data::Dumper; $Data::Dumper::Indent = 1;
+sub d { print STDERR Data::Dumper->Dump([ @_ ]); }
+
+
 sub process_document {
     my ( $self, $document ) = @_;
 

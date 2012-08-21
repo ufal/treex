@@ -6,10 +6,14 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Data::Dumper; $Data::Dumper::Indent = 1;
+sub d { print STDERR Data::Dumper->Dump([ @_ ]); }
+
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
     for my $zone ($bundle->get_all_zones) {
+        my $atree = $zone->get_atree;
         for my $node ($zone->get_atree->get_descendants) {
             my ($nodes, $types) = $node->get_aligned_nodes;
             next unless $nodes;
@@ -18,6 +22,9 @@ sub process_bundle {
             my ($f_nodes, $f_types) = $following->get_aligned_nodes;
             next unless $f_nodes;
 
+            my ($align1, $align2);
+            my $id1 =100000;
+            my $id2 =0;
             my $ok;
           TEST:
             for my $aligned_next (@$f_nodes) {
@@ -27,11 +34,22 @@ sub process_bundle {
                         $ok = 1;
                         last TEST;
                     }
+                    else {
+                      if($id1>$aligned->{wild}{id}) {$id1=$aligned->{wild}{id}; $align1 = $aligned,}
+                      if($id2<$aligned_next->{wild}{id}) {$id2=$aligned_next->{wild}{id}; $align2=$aligned_next;}
+                   }
                 }
             }
             if (! $ok) {
-                print $node->get_address, "\n";
-                # print $node->tag, ' ', $following->tag, "\n";
+                #print $node->get_address, "\n";
+#                if(defined($node->tag) && defined($following->tag)) { print $node->tag, ' ', $following->tag, "\n";}
+#                if(defined($node->form) && defined($following->form)) { 
+#                   printf "%s_%s\t%s_%s\t%s\n", $node->form, $following->form, $align2->form, $align1->form, $id1-$id2;
+#                }
+                $atree->{wild}{searchFeatures}{$id1}{discont}{n1} = $node;
+                $atree->{wild}{searchFeatures}{$id1}{discont}{n2} = $following;
+                $atree->{wild}{searchFeatures}{$id1}{discont}{a1} = $align1;
+                $atree->{wild}{searchFeatures}{$id1}{discont}{a2} = $align2;
             }
         }
     }
