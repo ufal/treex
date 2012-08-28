@@ -34,7 +34,7 @@ sub BUILD {
 
 sub string_to_filenames {
     my ( $self, $string ) = @_;
-    return [ map { $self->_token_to_filenames($_) } split /[ ,]+/, $string ];
+    return [ map { $self->_token_to_filenames($_) } grep {/./} split /[ ,]+/, $string ];
 }
 
 sub _token_to_filenames {
