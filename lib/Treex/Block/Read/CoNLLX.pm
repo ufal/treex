@@ -7,7 +7,9 @@ extends 'Treex::Block::Read::BaseTextReader';
 sub next_document_text {
     my ($self) = @_;
     my $FH = $self->_current_fh;
-    if ( !$FH ) {
+    my $text;
+
+    if ( !$FH || ! ( $text = <$FH>) ) {
         $FH = $self->next_filehandle() or return;
         $self->_set_current_fh($FH);
     }
@@ -17,7 +19,6 @@ sub next_document_text {
         return read_file($FH);
     }
 
-    my $text;
     my $empty_lines;
 
     LINE:
