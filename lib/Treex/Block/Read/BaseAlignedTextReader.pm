@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseAlignedReader';
 use File::Slurp;
+use Data::Dumper;
 
 #has lines_per_doc => ( isa => 'Int',  is => 'ro', default => 0 );
 #has merge_files   => ( isa => 'Bool', is => 'ro', default => 0 );
@@ -18,7 +19,13 @@ use File::Slurp;
 sub next_document_texts {
     my ($self) = @_;
 
-    my %mapping = $self->next_filenames() or return;
+    #print STDERR __PACKAGE__ . ":" . __LINE__ . "\n";
+
+    my $filenames = $self->next_filenames();
+    return if ! $filenames;
+
+    my %mapping = %{$filenames};
+
     my %texts;
 #    if ( $self->lines_per_doc ) {    # TODO: option lines_per_document not implemented
 #        log_fatal "option lines_per_document not implemented for aligned readers yet";

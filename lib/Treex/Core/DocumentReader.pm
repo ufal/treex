@@ -38,10 +38,16 @@ has doc_number => (
         . ' the ordinal number of the current (most recently loaded) document.',
 );
 
+has consumer => (
+    isa => 'Treex::Block::Read::ConsumerReader',
+    is => 'rw'
+);
+
 sub is_current_document_for_this_job {
     my ($self) = @_;
-    return 1 if !$self->jobindex;
-    return ( $self->doc_number - 1 ) % $self->jobs == ( $self->jobindex - 1 );
+    return 1;
+    #return 1 if !$self->jobindex;
+    #return ( $self->doc_number - 1 ) % $self->jobs == ( $self->jobindex - 1 );
 }
 
 sub next_document_for_this_job {
@@ -57,6 +63,8 @@ sub next_document_for_this_job {
     # However, I don't know how to get the correct doc_number before executing next_document.
     # Regarding  perlcritic ProtectPrivateSubs:
     # I consider _redirect_output as internal for Treex::Core modules.
+    # print STDERR "DOC: " . $doc . " : " . $self->doc_number . ", JOB: " . $self->jobindex . "\n";
+
     if ( $doc && $self->jobindex ) {
         Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );    ## no critic (ProtectPrivateSubs)
     }

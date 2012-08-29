@@ -1,5 +1,7 @@
 package Treex::Core::Run;
 use 5.008;
+use forks;
+use forks::shared;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core;
@@ -17,7 +19,10 @@ use Time::HiRes;
 use Readonly::XS;
 use POSIX;
 use Exporter;
+use Sys::Hostname;
 use base 'Exporter';
+
+
 our @EXPORT_OK = q(treex);
 
 has 'save' => (
@@ -227,6 +232,15 @@ has 'cache' => (
     documentation => 'Use cache.',
 );
 
+has 'server' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => '',
+    documentation => 'Additional parameters passed to qsub. Requires -p. '
+        . 'See --priority and --mem. You can use e.g. --qsub="-q *@p*,*@s*" to use just machines p* and s*.',
+);
+
 has version => (
     traits        => ['Getopt'],
     is            => 'ro',
@@ -240,6 +254,18 @@ has version => (
     },
 );
 
+
+#has '_fh_OUTPUT' => ( is => 'rw', isa => 'FileHandle');
+#has '_fh_ERROR' => ( is => 'rw', isa => 'FileHandle');
+
+our $_fh_OUTPUT;
+our $_fh_ERROR;
+
+
+our $OFFIC_STDOUT;
+our $OFFIC_STDERR;
+
+has '_number_of_docs' => (is => 'rw', isa => 'Int', default=> 0);
 has '_max_started' => (is => 'rw', isa => 'Int', default => 0);
 has '_max_loaded' => (is => 'rw', isa => 'Int', default => 0);
 has '_max_finished' => (is => 'rw', isa => 'Int', default => 0);
@@ -248,10 +274,27 @@ has '_fatalerror_ts' => (is => 'rw', isa => 'Int', default => 0);
 has '_fatalerror_job' => (is => 'rw', isa => 'Str', default => "");
 has '_fatalerror_doc' => (is => 'rw', isa => 'Str', default => "");
 
+has '_tmp_scenario_file' => (is => 'rw', isa => 'Str', default => "");
+has '_tmp_input_dir' => (is => 'rw', isa => 'Str', default => "");
+
+my $consumer = undef;
+
 Readonly my $sleep_min_time => 5;
 Readonly my $sleep_max_time => 120;
 Readonly my $sleep_multiplier => 1.1;
 Readonly my $slice_size => 0.2;
+
+Readonly my $SERVER_HOST => hostname;
+Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
+
+our %sh_job_status : shared;
+%sh_job_status = ();
+
+our $PORT : shared;
+$PORT = $SERVER_PORT;
+
+our $PORT_SET : shared;
+$PORT_SET = 0;
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -280,8 +323,12 @@ sub BUILD {
 
     # more complicated tests on consistency of options will be place here
     my ($self) = @_;
+
+    open( $OFFIC_STDERR, ">&STDERR" );
+    open( $OFFIC_STDOUT, ">&STDOUT" );
+
     if ( $self->jobindex ) {
-        _redirect_output( $self->outdir, 0, $self->jobindex );
+        _redirect_output( $self->outdir, "loading", $self->jobindex );
     }
 
     # 'require' can't be changed to 'imply', since the number of jobs has a default value
@@ -289,6 +336,14 @@ sub BUILD {
         log_fatal "Options --qsub and --jobindex require --parallel";
     }
     return;
+}
+
+sub DESTROY {
+    my $self = shift;
+
+    if ( $self->jobindex ) {
+        _redirect_output( $self->outdir, "terminating", $self->jobindex );
+    }
 }
 
 sub _execute {
@@ -423,10 +478,171 @@ sub _get_reader_name_for {
     log_fatal "There is no DocumentReader implemented for extension '$first'" if !$r;
     return "Read::$r";
 }
-
 sub _execute_locally {
     my ($self) = @_;
 
+    $self->_init_scenario();
+
+    close_handles();
+
+    my $scenario      = $self->scenario;
+
+    if ( $self->jobindex ) {
+        my $fn = $self->outdir . sprintf( "/../status/job%03d.loaded", $self->jobindex );
+        open my $F, '>', $fn or log_fatal "Cannot open file $fn";
+        close $F;
+        my $reader = $scenario->document_reader;
+
+        log_warn("AAAAAAAAAAAAAAAAAAAAAAAAA");
+        use Treex::Block::Read::ConsumerReader;
+        my ($hostname, $port) = split(/:/, $self->server);
+        $consumer = Treex::Block::Read::ConsumerReader->new({
+            host => $hostname,
+            port => $port,
+            from=>'-'}
+        );
+
+        $consumer->set_jobindex( $self->jobindex );
+        $consumer->set_jobs( $self->jobs );
+
+        $consumer->started();
+
+        $reader->set_jobs( $self->jobs );
+        $reader->set_jobindex( $self->jobindex );
+
+        $SIG{'TERM'} = \&term;
+
+        mkdir $self->outdir;
+        my $outdir = $self->_get_tmp_outdir($self->outdir, $self->jobindex );
+        mkdir $outdir;
+        $reader->set_outdir( $outdir );
+
+        for my $writer (@{$scenario->writers}) {
+            my $new_path =  $self->_get_tmp_outdir($writer->path, $self->jobindex);
+
+            if ( $writer->path ) {
+                mkdir $writer->path;
+            }
+            mkdir $new_path;
+
+            $writer->set_path($new_path);
+
+            if ( $writer->to && $writer->to eq "-" ) {
+                $writer->set_to("__FAKE_OUTPUT__");
+            }
+
+        }
+
+        $reader->set_consumer ( $consumer );
+
+        # If we know the number of documents in advance, inform the cluster head now
+        if ( $self->jobindex == 1 ) {
+            $self->_set_number_of_docs($reader->number_of_documents);
+
+            #log_info "There will be $number_of_docs documents";
+            $self->_write_total_doc_number($self->_number_of_docs);
+        }
+
+        # TODO - nastavit logovani
+    }
+
+    my $runnin_started = time;
+    $scenario->run();
+
+    if ( $consumer ) {
+        close_handles();
+        close(STDOUT);
+        $consumer->finished();
+    }
+
+    log_info "Running the scenario took " . ( time - $runnin_started ) . " seconds";
+
+    if ( $self->jobindex && $self->jobindex == 1 && !$self->_number_of_docs ) {
+        $self->_set_number_of_docs($scenario->document_reader->number_of_documents);
+
+        # This branch is executed only
+        # when the reader does not know number_of_documents in advance.
+        # TODO: Why is document_reader->doc_number is one higher than it should be?
+
+        #log_info "There were $number_of_docs documents";
+        $self->_write_total_doc_number($self->_number_of_docs);
+    }
+
+    return;
+}
+
+END {
+    term();
+}
+
+sub term {
+    use Carp;
+    if ( $consumer && ! $consumer->is_finished ) {
+        $consumer->fatalerror();
+    }
+}
+
+sub _get_tmp_outdir {
+    my ($self, $path, $jobindex) = @_;
+
+    if ( $path ) {
+        $path =~ s/\/+$//;
+    }
+
+    my ($hostname, $port) = split(/:/, $self->server);
+    if ( ! $hostname ) {
+        ($hostname, $port) = ($SERVER_HOST, $PORT);
+    }
+    return construct_output_dir_name($path, $jobindex, $hostname, $port);
+}
+
+sub construct_output_dir_name {
+    my ($path, $jobindex, $host, $port) = @_;
+    if ( ! $path ) {
+        $path = "";
+    }
+
+    my $new_path = $path . '__H.' . $host . '.P.' . $port . '__JOB__' . $jobindex;
+    #log_warn("NEW: $new_path");
+
+    return $new_path;
+}
+
+
+sub close_handles
+{
+    STDOUT->flush();
+    STDOUT->sync();
+    STDERR->flush();
+    STDERR->sync();
+
+#    close(STDOUT);
+#    close(STDERR);
+
+    STDOUT->fdopen( fileno($OFFIC_STDOUT), 'w' ) or die $!;
+    STDERR->fdopen( fileno($OFFIC_STDERR), 'w' ) or die $!;
+
+    if ( $_fh_ERROR ) {
+        $_fh_ERROR->flush();
+        $_fh_ERROR->sync();
+        close($_fh_ERROR);
+    }
+    if ( $_fh_OUTPUT ) {
+        $_fh_OUTPUT->flush();
+        $_fh_OUTPUT->sync();
+        close($_fh_OUTPUT);
+    }
+
+    STDOUT->flush();
+    STDOUT->sync();
+    STDERR->flush();
+    STDERR->sync();
+
+}
+
+sub _init_scenario
+{
+    my $self = shift;
     # Parameters can contain whitespaces that should be preserved
     my @arguments;
     foreach my $arg ( @{ $self->extra_argv } ) {
@@ -469,51 +685,17 @@ sub _execute_locally {
         $self->set_scenario( Treex::Core::Scenario->new( from_string => $scen_str, runner => $self ) );
         $self->scenario->load_blocks;
     }
-    my $scenario      = $self->scenario;
+
     my $loading_ended = time;
     log_info "Loading the scenario took " . ( $loading_ended - $loading_started ) . " seconds";
 
-    my $number_of_docs;
-    if ( $self->jobindex ) {
-        my $fn = $self->outdir . sprintf( "/../status/job%03d.loaded", $self->jobindex );
-        open my $F, '>', $fn or log_fatal "Cannot open file $fn";
-        close $F;
-        my $reader = $scenario->document_reader;
-        $reader->set_jobs( $self->jobs );
-        $reader->set_jobindex( $self->jobindex );
-        $reader->set_outdir( $self->outdir );
-
-        # If we know the number of documents in advance, inform the cluster head now
-        if ( $self->jobindex == 1 ) {
-            $number_of_docs = $reader->number_of_documents;
-
-            #log_info "There will be $number_of_docs documents";
-            $self->_write_total_doc_number($number_of_docs);
-        }
-
-        # TODO - nastavit logovani
-    }
-
-    $scenario->run();
-    log_info "Running the scenario took " . ( time - $loading_ended ) . " seconds";
-
-    if ( $self->jobindex && $self->jobindex == 1 && !$number_of_docs ) {
-        $number_of_docs = $scenario->document_reader->doc_number;
-
-        # This branch is executed only
-        # when the reader does not know number_of_documents in advance.
-        # TODO: Why is document_reader->doc_number is one higher than it should be?
-
-        #log_info "There were $number_of_docs documents";
-        $self->_write_total_doc_number($number_of_docs);
-    }
     return;
 }
 
 # This is called by distributed jobs (they don't have $self->workdir)
 sub _write_total_doc_number {
     my ( $self, $number ) = @_;
-    my $filename = $self->outdir . '/../total_number_of_documents';
+    my $filename = $self->_file_total_doc_number();
     open my $F, '>', $filename or log_fatal $!;
     print $F $number;
     close $F;
@@ -523,7 +705,7 @@ sub _write_total_doc_number {
 # This is called by the main treex (it doesn't have $self->outdir)
 sub _read_total_doc_number {
     my ($self) = @_;
-    my $total_doc_number_file = $self->workdir . "/total_number_of_documents";
+    my $total_doc_number_file = $self->_file_total_doc_number();
     if ( -f $total_doc_number_file ) {
         open( my $N, '<', $total_doc_number_file ) or log_fatal $!;
         my $total_file_number = <$N>;
@@ -535,6 +717,18 @@ sub _read_total_doc_number {
     }
     else {
         return 0;
+    }
+}
+
+sub _file_total_doc_number
+{
+    my $self = shift;
+    if ( $self->workdir ) {
+        return $self->workdir . "/total_number_of_documents";
+    } elsif ( $self->outdir ) {
+        return $self->outdir . '/../total_number_of_documents';
+    } else {
+        log_fatal("Unknown setting.")
     }
 }
 
@@ -569,18 +763,35 @@ sub _create_job_scripts {
         my $script_filename = "scripts/job$jobnumber.sh";
         open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
         print $J "#!/bin/bash\n\n";
-        print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
-            . "/status/job$jobnumber.started\n";
+        my $started_file = ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
+            . "/status/job$jobnumber.started";
+
+        print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . $started_file . ";\n";
+        print $J "stat $started_file;\n";
         print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
         print $J "cd $current_dir\n\n";
         print $J "source " . Treex::Core::Config->lib_core_dir()
             . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
 
-        my $opts_and_scen = join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+
+        my $opts_and_scen = "";
+        if ( $self->_tmp_scenario_file ) {
+            my %extra = ();
+            map { $extra{$_} = 1 } @{$self->extra_argv};
+            for my $arg (@{$self->ARGV}) {
+                if ( ! $extra{$arg}) {
+                    $opts_and_scen .= " " . _quote_argument($arg);
+                }
+            }
+            $opts_and_scen .= " " . _quote_argument($self->_tmp_scenario_file);
+        } else {
+            $opts_and_scen .= join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+        }
+
         if ( $self->filenames ) {
             $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
         }
-        print $J $input . "treex --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
+        print $J $input . "treex --server=".$SERVER_HOST.":".$SERVER_PORT." --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
             . " 2>> $workdir/status/job$jobnumber.started\n\n";
         print $J "date +'%s' > $workdir/status/job$jobnumber.finished\n";
         close $J;
@@ -686,6 +897,13 @@ sub _is_job_status
 
     Treex::Tool::Probe::begin("_is_job_status.call");
 
+#    log_info("JOB: $jobid\tSTATUS: $status");
+
+    # use information from shared variable
+    if ( $sh_job_status{'job_' . $jobid . '_' . $status} ) {
+        $self->{_job_status}->{$jobid}->{$status} = $sh_job_status{'job_' . $jobid . '_' . $status};
+    }
+
     # avoid redundant disc accesses
     if ( ! $self->{_job_status}->{$jobid}->{$status} ) {
         Treex::Tool::Probe::begin("_is_job_status.disk");
@@ -760,6 +978,10 @@ sub _get_slice
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
 
+    if ( $sh_job_status{"doc_" . $doc_number . "_skipped"} ) {
+        return;
+    }
+
 
     # To get utf8 encoding also when using qx (aka backticks):
     # my $command_output = qw($command);
@@ -771,17 +993,24 @@ sub _print_output_files {
     foreach my $stream (qw(stderr stdout)) {
         Treex::Tool::Probe::begin("_print_output_files.".$stream);
 
+
         my $filename = $self->workdir . "/output/doc" . sprintf( "%07d", $doc_number ) . ".$stream";
-        #log_info "Processing output file: " . $filename;
+
+        # log_info "Processing output file: " . $filename . " ( -f " . int(defined(-f $filename)) . ", -s " . int(-s $filename) . ")";
 
         # we have to wait until file is really creates the file
         if ( ! -f $filename ) {
-            Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep1");
-            sleep(3);
-            if ( $doc_number == 1 ) {
-                sleep(3);
+            my $TRIES = 7;
+            my $try = 0;
+            while ( $try < $TRIES && -f $filename ) {
+                Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep-first-file-check");
+                sleep(1);
             }
-            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep1");
+
+        #    if ( $doc_number == 1 && $stream eq "stdout" && $sh_job_status{"doc_" . $doc_number . "_finished"} ) {
+        #        sleep(15);
+        #    }
+            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep-first-file-check");
         }
 
         if ( !-f $filename ) {
@@ -799,6 +1028,7 @@ sub _print_output_files {
         # we have to wait until file is really written
         # However, stdout is quite often empty.
         my $wait_it = 0;
+        `stat $filename`;
         if ( $stream eq 'stderr' && -s $filename == 0 ) {
             # Jan Stepanek advice
             `stat $filename`;
@@ -819,7 +1049,6 @@ sub _print_output_files {
         #    $wait_it++;
         #}
 
-        open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
         if ( $stream eq "stdout" ) {
 
             # real cat is 12-times faster than cat implemented in perl
@@ -828,24 +1057,38 @@ sub _print_output_files {
             system("cat $filename");
         }
         else {
-            my $report      = $self->forward_error_level;
             my $success     = 0;
-            while (<$FILE>) {
+            my $try = 0;
+            my $TRIES = 5;
+            while ( $try < $TRIES && ! $success ) {
+                if ( $try > 0 ) { sleep(2); }
 
-                # skip [success] indicatory lines, but set the success flag to 1
-                if ( $_ =~ /^Document [0-9]+\/[0-9\?]+ .*: \[success\]\.\r?\n?$/ ) {
-                    $success = 1;
-                    next;
+                open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
+                my $report      = $self->forward_error_level;
+
+                while (<$FILE>) {
+                    # skip [success] indicatory lines, but set the success flag to 1
+                    if ( $_ =~ /^Document [0-9]+\/[0-9\?]+ .*: \[success\]\.\r?\n?$/ ) {
+                        $success = 1;
+                        next;
+                    }
+
+                    #TODO: better implementation
+                    # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
+                    my ($level) = /^TREEX-(DEBUG|INFO|WARN|FATAL)/;
+                    $level ||= '';
+                    next if $level =~ /^D/ && $report !~ /^[AD]/;
+                    next if $level =~ /^I/ && $report !~ /^[ADI]/;
+                    next if $level =~ /^W/ && $report !~ /^[ADIW]/;
+                    print STDERR "job$job_number: $_";
+
                 }
-
-                #TODO: better implementation
-                # $Treex::Core::Log::ERROR_LEVEL_VALUE{$report} doesn't work
-                my ($level) = /^TREEX-(DEBUG|INFO|WARN|FATAL)/;
-                $level ||= '';
-                next if $level =~ /^D/ && $report !~ /^[AD]/;
-                next if $level =~ /^I/ && $report !~ /^[ADI]/;
-                next if $level =~ /^W/ && $report !~ /^[ADIW]/;
-                print STDERR "job$job_number: $_";
+                close $FILE;
+                #if ( ! $sh_job_status{"doc_" . $doc_number . "_finished"} ) {
+                #    $try += $TRIES;
+                #} else {
+                    $try++;
+                #}
             }
 
             # test for the [success] indication on the last line of STDERR
@@ -859,15 +1102,23 @@ sub _print_output_files {
             }
         }
         Treex::Tool::Probe::end("_print_output_files.".$stream);
-        close $FILE;
+
     }
     return;
 }
 
+sub _doc_submitted {
+     my ( $self, $doc_number ) = @_;
+     return ( $sh_job_status{"doc_" . $doc_number . "_started"} );
+}
+
 sub _doc_started {
     my ( $self, $doc_number ) = @_;
-    my $filename = $self->workdir . sprintf( '/output/doc%07d.stderr', $doc_number );
 
+    #log_warn("DOC: $doc_number; FIN: " . int(defined($sh_job_status{"doc_" . $doc_number . "_finished"})) . "; FATAL: " . int(defined($sh_job_status{"doc_" . $doc_number . "_fatalerror"})));
+    #return ( $sh_job_status{"doc_" . $doc_number . "_finished"} || $sh_job_status{"doc_" . $doc_number . "_fatalerror"} );
+    my $filename = $self->workdir . sprintf( '/output/doc%07d.stderr', $doc_number );
+    #log_info("DOC Started: " . $filename);
     return -f $filename;
 }
 
@@ -875,12 +1126,15 @@ sub _wait_for_jobs {
     my ($self)              = @_;
     my $current_doc_number  = 1;
     my $current_doc_started = 0;
-    my $total_doc_number    = 0;
+    my $total_doc_number    = $self->_number_of_docs;
     my $all_jobs_finished   = 0;
     my $done                = 0;
     my $jobs_finished       = 1;
+    my $docs_submitted      = 1;
 
     my $sleep_time = $sleep_min_time;
+    my $last_status_msg = "";
+    my $last_status_skipped = 0;
 
     log_info("\n");
 
@@ -888,6 +1142,8 @@ sub _wait_for_jobs {
 
     my $document_slice = 0;
     my $check_errors = 0;
+
+    my $finished_sleep = 0;
 
     while ( !$done ) {
 
@@ -930,13 +1186,17 @@ sub _wait_for_jobs {
         $total_doc_number ||= $self->_read_total_doc_number();
         $current_doc_started ||= $self->_doc_started($current_doc_number);
 
+        while ( $self->_doc_submitted($docs_submitted) ) {
+            $docs_submitted++;
+        }
+
 
         # If a job starts processing another doc,
         # it means it has finished the current doc.
         my $current_doc_finished = $all_jobs_finished;
-        $current_doc_finished ||= $self->_doc_started( $current_doc_number + $self->jobs );
+        $current_doc_finished ||= $self->_doc_started( $current_doc_number + 1 );
 
-        if ($current_doc_finished) {
+        if ($current_doc_started && $current_doc_finished) {
             $self->_print_output_files($current_doc_number);
             $current_doc_number++;
             $current_doc_started = 0;
@@ -949,13 +1209,29 @@ sub _wait_for_jobs {
         }
         else {
 
-            log_info( sprintf("Jobs: %5d started, %5d loaded, %5d finished | Docs: %5d/%5d",
+            my $act_status_msg = sprintf("Jobs: %3d started, %3d loaded | Docs: %5d/%5d/%5d",
                 $self->{_max_started},
                 $self->{_max_loaded},
-                $self->{_max_finished},
                 $current_doc_number - 1,
+                $docs_submitted -1,
                 $total_doc_number
-                ));
+                );
+
+            if ( $act_status_msg eq $last_status_msg ) {
+                $last_status_skipped++;
+                if ( $last_status_skipped > 5 ) {
+                    $last_status_skipped = 0;
+                    $last_status_msg = "";
+                }
+            }
+
+            if ( $last_status_msg ne $act_status_msg ) {
+                log_info($act_status_msg);
+            }
+            $last_status_msg = $act_status_msg;
+
+            #use Data::Dumper;
+            #log_info(Data::Dumper->Dump([\%sh_job_status]));
 
             Treex::Tool::Probe::begin("_wait_for_jobs.sleep");
             sleep $sleep_time;
@@ -982,7 +1258,14 @@ sub _wait_for_jobs {
         # - even if all_jobs_finished, we must wait for forwarding all output files
         # Note that if $current_doc_number == $total_doc_number,
         # the output of the last doc was not forwarded yet.
-        $done = $all_jobs_finished && $current_doc_number > $total_doc_number;
+        $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
+
+        if ( defined($sh_job_status{'___FINISHED___'}) ) {
+            if ( ! $finished_sleep ) {
+            #    sleep(10);
+            }
+            $finished_sleep++;
+        }
 
     }
 
@@ -1136,6 +1419,7 @@ sub _check_job_errors {
 
         if ( ! $self->survive ) {
             log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
+            $self->_delete_tmp_dirs();
             $self->_delete_jobs_and_exit;
         }
     }
@@ -1169,9 +1453,10 @@ sub _check_epilog_before_finish {
                 log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
                 log_info "**** cat $epilog_name\n";
                 system "cat $epilog_name";
-                log_info "********************** LAST STDERR OF JOB $job_str: ******************";
-                log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
-                system "tail $workdir/output/job$job_str-doc*.stderr";
+#TODO - FIX
+#                log_info "********************** LAST STDERR OF JOB $job_str: ******************";
+#                log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
+#                system "tail $workdir/output/job$job_str-doc*.stderr";
                 log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
                 if ( $self->survive ) {
                     log_warn("Fatal error ignored due to the --survive option, be careful.");
@@ -1179,6 +1464,7 @@ sub _check_epilog_before_finish {
                 }
                 else {
                     log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
+                    $self->_delete_tmp_dirs();
                     $self->_delete_jobs_and_exit;
                 }
             }
@@ -1193,16 +1479,51 @@ sub _check_epilog_before_finish {
 sub _delete_jobs_and_exit {
     my ($self) = @_;
 
-    log_info "Deleting jobs: " . join( ', ', @{ $self->sge_job_numbers } );
-    foreach my $job ( @{ $self->sge_job_numbers } ) {
-        system "qdel $job";
-    }
+    $self->_delete_jobs();
+
     log_info 'You may want to inspect generated files in ' . $self->workdir . '/output/';
     exit(1);
 }
 
+sub _delete_jobs {
+    my $self = shift;
+
+    log_info "Deleting jobs: " . join( ', ', @{ $self->sge_job_numbers } );
+    foreach my $job ( @{ $self->sge_job_numbers } ) {
+        qx(qdel $job);
+    }
+}
+
+sub _delete_tmp_dirs {
+    my $self = shift;
+
+    for my $j ( 1 .. $self->jobs ) {
+
+        my $outdir = $self->_get_tmp_outdir($self->outdir, $j );
+        #log_warn("DEL: $outdir");
+        rmtree $outdir;
+
+        my $workdir = $self->_get_tmp_outdir($self->workdir . "/output", $j );
+        #log_warn("DEL: $workdir");
+        rmtree $workdir;
+
+        for my $writer (@{$self->scenario->writers}) {
+            my $new_path =  $self->_get_tmp_outdir($writer->path, $j);
+            #log_warn("DEL: $new_path");
+            rmtree $new_path;
+        }
+    }
+
+    if ( $self->_tmp_input_dir && $self->_tmp_input_dir =~ /STDIN/ ) {
+        rmtree $self->_tmp_input_dir;
+    }
+
+}
+
 sub _execute_on_cluster {
     my ($self) = @_;
+
+    $self->_init_scenario();
 
     log_info("Execution begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 
@@ -1239,13 +1560,98 @@ sub _execute_on_cluster {
     }
     sleep(1);
 
+    if ( $self->scenario->document_reader->isa("Treex::Block::Read::BaseTextReader") &&
+         $self->scenario->document_reader->lines_per_doc
+        ) {
+        log_info("Input file splitting - BEGIN");
+
+        # construct scenario
+        my @scenario_lines = split(/\n/, $self->scenario->construct_scenario_string( multiline => 1 ));
+
+        # retrieve line with reader
+        my $reader_name = ref($self->scenario->document_reader);
+        $reader_name =~ s/Treex::Block:://;
+
+        # TODO: iterovat + a je nutne doplnit i vsechny nad tim
+        my $reader_line_num = 0;
+        my @preserved_lines = ();
+        for my $line (@scenario_lines) {
+            push(@preserved_lines, $line);
+            if ( $line =~ /\Q$reader_name\E/ ) {
+                last;
+            }
+            $reader_line_num++;
+        }
+        my $reader_line = $scenario_lines[$reader_line_num];
+
+        # create directory for splitted files
+        my $first_from = $self->scenario->document_reader->from->filenames->[0];
+        my $hash = sprintf("STDIN_%09d", rand(1e9));
+        if ( $first_from ne "-" && $first_from ne "/dev/stdin" ) {
+            $hash = $self->scenario->document_reader->from->get_hash();
+        }
+        $self->_set_tmp_input_dir("__INPUT__" . $hash);
+
+        # split files if they does not exist
+        if ( ! -d $self->_tmp_input_dir ) {
+            mkdir $self->_tmp_input_dir;
+
+            # split files and convert them to streex format
+            my $tmp_scenario = Treex::Core::Scenario->new(from_string =>
+                join("\n", @preserved_lines) . "\n" .
+                "Write::Treex storable=1 path=" . _quote_argument($self->_tmp_input_dir)."\n"
+            );
+            $tmp_scenario->run();
+        } else {
+            log_info("Already splitted");
+        }
+
+        # construct new scenario
+        my $new_reader_line = "Read::Treex from='!".$self->_tmp_input_dir."\/*.streex'";
+        my @new_scenario_lines = map { s/\Q$reader_line\E/$new_reader_line/; $_; } @scenario_lines;
+
+        # save scenario into new file
+        $self->_set_tmp_scenario_file($self->_tmp_input_dir . "/scenario.scen");
+        open(my $fh, ">:encoding(utf-8)", $self->_tmp_scenario_file) or log_fatal($!);
+        print $fh join("\n", @new_scenario_lines);
+        close($fh);
+
+        # construct new reader
+        my $reader_scenario = Treex::Core::Scenario->new(from_string => $new_reader_line);
+        $reader_scenario->load_blocks();
+        $self->scenario->_set_document_reader($reader_scenario->document_reader);
+
+        log_info("Input file splitting - END");
+    }
 
     # catching Ctrl-C interruption
     local $SIG{INT} =
         sub {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
+        $self->_delete_jobs();
+        $self->_delete_tmp_dirs();
         $self->_delete_jobs_and_exit();
         };
+
+    $self->_set_number_of_docs($self->scenario->document_reader->number_of_documents);
+    $self->_write_total_doc_number($self->_number_of_docs);
+
+    my $server_thread = threads->create( sub {
+        use Treex::Block::Read::ProducerReader;
+        my $producer = Treex::Block::Read::ProducerReader->new({
+            reader => $self->scenario->document_reader,
+            host => $SERVER_HOST,
+            port => $SERVER_PORT,
+            from=>'-',
+            status=> \%Treex::Core::Run::sh_job_status,
+            workdir => $self->workdir,
+            writers => $self->scenario->writers,
+            jobs => $self->jobs
+        });
+
+    });
+    $server_thread->detach();
+    sleep(2);
 
     $self->_create_job_scripts();
     $self->_run_job_scripts();
@@ -1259,10 +1665,20 @@ sub _execute_on_cluster {
 
     $self->_print_finish_status();
 
+    log_warn("Killing server thread - B");
+    #$server_thread->exit();
+    $server_thread->kill(9);
+    log_warn("Killing server thread - E");
+
+    # delete jobs
+    $self->_delete_jobs();
+    $self->_delete_tmp_dirs();
+
     if ( $self->cleanup ) {
         log_info "Deleting the directory with temporary files " . $self->workdir;
         rmtree $self->workdir or log_fatal $!;
     }
+
 
     log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
 
@@ -1272,17 +1688,28 @@ sub _execute_on_cluster {
 sub _redirect_output {
     my ( $outdir, $docnumber, $jobindex ) = @_;
     my $job = sprintf( 'job%03d', $jobindex + 0 );
-    my $stem = $outdir . "/../status/$job.loading";
-    if ( $docnumber ) {
+    my $stem = $outdir . "/../status/$job.$docnumber";
+    if ( $docnumber =~ /[0-9]+/ ) {
         $stem = "$outdir/" . sprintf( "doc%07d", $docnumber );
-    } else {
-        $docnumber = "loading";
     }
+
+    close_handles();
 
     open my $OUTPUT, '>', "$stem.stdout" or log_fatal $!;    # where will these messages go to, before redirection?
     open my $ERROR,  '>', "$stem.stderr" or log_fatal $!;
+
+    $OUTPUT->autoflush(1);
+    $ERROR->autoflush(1);
+
+    $_fh_OUTPUT = $OUTPUT;
+    $_fh_ERROR = $ERROR;
+
+    log_warn("OUT: " . fileno($OUTPUT) . "; ERROR: " . fileno($ERROR));
+
     STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
     STDERR->fdopen( $ERROR,  'w' ) or log_fatal $!;
+
+    STDERR->autoflush(1);
     STDOUT->autoflush(1);
 
     # special file is touched if log_fatal is called

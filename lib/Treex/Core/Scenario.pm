@@ -48,12 +48,18 @@ has loaded_blocks => (
 );
 
 has document_reader => (
-    is            => 'ro',
+    is            => 'rw',
     does          => 'Treex::Core::DocumentReader',
     predicate     => '_has_document_reader',
     writer        => '_set_document_reader',
     init_arg      => undef,
     documentation => 'DocumentReader starts every scenario and reads a stream of documents.'
+);
+
+has writers => (
+    is      => 'rw',
+    does    => 'ArrayRef[Treex::Block::Treex::Block::Write::BaseWriter]',
+    default => sub { [] }
 );
 
 has _global_params => (
@@ -132,6 +138,10 @@ sub _build_loaded_blocks {
             log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->_has_document_reader;
             $self->_set_document_reader($new_block);
+        }
+        elsif ( $new_block->isa('Treex::Block::Write::BaseWriter') ) {
+            push( @{ $self->writers }, $new_block );
+            push @loaded_blocks, $new_block;    # duplicity
         }
         else {
             if ( ref($new_block) eq "Treex::Core::CacheBlock" ) {

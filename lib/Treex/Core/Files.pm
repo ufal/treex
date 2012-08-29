@@ -4,6 +4,7 @@ use MooseX::SemiAffordanceAccessor 0.09;
 use Treex::Core::Log;
 use autodie;
 use File::Slurp 9999.19;
+use Digest::MD5 qw(md5_hex);
 
 has filenames => (
     is     => 'ro',
@@ -66,6 +67,19 @@ sub next_filename {
     my ($self) = @_;
     $self->_set_file_number( $self->file_number + 1 );
     return $self->current_filename();
+}
+
+sub get_hash {
+    my $self = shift;
+    
+    my $md5 = Digest::MD5->new();
+    for my $filename (@{$self->filenames}) {
+        if ( -f $filename ) {
+            $md5->add($filename);
+            $md5->add((stat($filename))[9]);
+        }
+    }
+    return $md5->hexdigest;
 }
 
 #<<<

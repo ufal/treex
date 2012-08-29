@@ -36,7 +36,8 @@ sub get_hash {
     my $self = shift;
     if ( ! defined($self->_hash) ) {
         $Storable::canonical = 1;
-        $self->_set_hash(md5_hex(Storable::freeze($self)));
+        $self->_set_hash(md5_hex(Storable::nfreeze($self)));
+        $Storable::canonical = 0;
     }
     return $self->_hash;
 }

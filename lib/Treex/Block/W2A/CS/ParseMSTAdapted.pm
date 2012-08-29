@@ -56,10 +56,10 @@ sub process_atree {
 1;
 
 __END__
- 
+
 =over
 
-=item Treex::Block::W2A::CS::ParseMSTAdapted 
+=item Treex::Block::W2A::CS::ParseMSTAdapted
 
 Parses analytical trees using McDonald's MST parser adapted by Zdenek Zabokrtsky and Vaclav Novak.
 

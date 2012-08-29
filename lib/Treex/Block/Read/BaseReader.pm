@@ -21,7 +21,7 @@ has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
 
 has from => (
     isa           => 'Treex::Core::Files',
-    is            => 'ro',
+    is            => 'rw',
     coerce        => 1,
     required      => 1,
     handles       => [qw(current_filename file_number _set_file_number)],
@@ -46,13 +46,24 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 
 sub is_next_document_for_this_job {
     my ($self) = @_;
-    return 1 if !$self->jobindex;
-    return $self->doc_number % $self->jobs == ( $self->jobindex - 1 );
+    return 1;
+    #return 1 if !$self->jobindex;
+    #return $self->doc_number % $self->jobs == ( $self->jobindex - 1 );
 }
 
 sub next_filename {
     
     my ($self) = @_;
+    
+    if ( $self->consumer ) {
+        my $res = $self->consumer->call("next_filename");
+        if ( ! $res ) {
+            return;
+        }
+        #$self->set_from(Treex::Core::Files->new({string => $res->{result}}));
+        $self->_set_file_number($res->{file_number} - 1);
+        $self->_set_doc_number($res->{file_number} - 1);
+    }
 
     # In parallel processing and one_doc_per_file setting,
     # we can skip files that are not supposed to be loaded by this job/reader,

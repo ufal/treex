@@ -7,11 +7,9 @@ has '+language' => ( required => 1 );
 
 has '+extension' => ( default => '.txt' );
 
-override 'process_document' => sub {
+override '_do_process_document' => sub {
   
     my ( $self, $doc ) = @_;
-
-    $self->_prepare_file_handle($doc);    # open the output file handle
 
     my $doczone = $doc->get_zone( $self->language, $self->selector );
   

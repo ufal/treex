@@ -23,7 +23,7 @@ has compress => (
 
 has [qw(file_stem path)] => (
     isa           => 'Str',
-    is            => 'ro',
+    is            => 'rw',
     documentation => 'These provide a possibility of creating output file names from input file names.',
 );
 
@@ -35,7 +35,7 @@ has stem_suffix => (
 
 has to => (
     isa           => 'Str',
-    is            => 'ro',
+    is            => 'rw',
     documentation => 'The destination filename (default is "-" meaning standard output; '
         . 'use "." for the filename inherited from upstream blocks).',
 );
@@ -162,11 +162,62 @@ override 'process_document' => sub {
 
     # set _file_handle properly (this MUST be called if process_document is overridden)
     $self->_prepare_file_handle($document);
+    
+    $self->_do_before_process($document);
 
     # call the original process_document with _file_handle set
-    super();
+    $self->_do_process_document($document);
+
+    $self->_do_after_process($document);
+    
+    $self->_close_file_handle();
+
     return;
 };
+
+sub _do_process_document
+{
+    my ($self, $document) = @_;
+
+     $self->Treex::Core::Block::process_document($document);
+}
+
+sub _do_before_process {
+    my ($self, $document) = @_;
+
+    return;
+}
+
+sub _do_after_process {
+    my ($self, $document) = @_;
+
+    return;
+}
+
+override 'process_end' => sub {
+    my $self = shift;
+
+    $self->_close_file_handle();
+
+    return;
+};
+
+sub _close_file_handle
+{
+    my $self = shift;
+
+    #log_warn("CLOSE FH: " . $self->_file_handle . "; LAST: " . $self->_last_filename);
+
+    # close the previous one (except if it's stdout)
+    if ( defined $self->_file_handle
+         && ( !defined $self->_last_filename || $self->_last_filename ne "-" ) ) {
+             #log_warn("CLOSE - file handle - REAL");
+            close $self->_file_handle;
+            $self->_set_file_handle(undef);
+         }
+
+    return;
+}
 
 # Prepare the file handle for the next file to be processed.
 # This MUST be called in all process_document overrides.
@@ -174,18 +225,18 @@ sub _prepare_file_handle {
     my ( $self, $document ) = @_;
 
     my $filename = $self->_get_filename($document);
+    
+    #log_warn("PREPARE FILENAME: $filename; LAST: " . $self->_last_filename);
+    #log_warn(int(defined $self->_last_filename) . " + " . int($filename eq $self->_last_filename) . " + " . $filename ne "__FAKE_OUTPUT__");
 
-    if ( defined $self->_last_filename && $filename eq $self->_last_filename ) {
+    if ( defined $self->_last_filename && $filename eq $self->_last_filename && $filename !~ "__FAKE_OUTPUT__") {
 
         # nothing to do, keep writing to the old filename
     }
     else {
         #  need to switch output stream
 
-        # close the previous one (except if it's stdout)
-        close $self->_file_handle
-            if defined $self->_file_handle
-                && ( !defined $self->_last_filename || $self->_last_filename ne "-" );
+        $self->_close_file_handle();
 
         # open the new output stream
         log_info "Saving to $filename";

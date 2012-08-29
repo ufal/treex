@@ -4,7 +4,7 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-sub process_document {
+override '_do_process_document' => sub {
 
     my ( $self, $document ) = @_;
 
@@ -26,7 +26,7 @@ sub process_document {
     }
     print "\n";
     return;
-}
+};
 
 1;
 

@@ -8,14 +8,16 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has 'size' => ( isa => 'Num', is => 'ro', required => 1 );
 
 
-sub process_document {
+override '_do_process_document' => sub {
 
     my ( $self, $doc ) = @_;
 
-    print 'a' x ( $self->{size} * 1e6) . "\n";
+    print { $self->_file_handle } 'a' x ( $self->{size} * 1e6) . "\n";
+    log_warn(__PACKAGE__);
+    log_warn(__PACKAGE__);
 
     return;
-}
+};
 
 1;
 

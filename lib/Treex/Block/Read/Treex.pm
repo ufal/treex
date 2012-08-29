@@ -4,8 +4,15 @@ use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
 
 sub next_document {
-    my ($self) = @_;
-    my $filename = $self->next_filename() or return;
+    my ($self, $filename) = @_;
+    if ( ! $filename ) {
+        $filename = $self->next_filename();
+    }
+
+    if ( ! $filename ) { 
+        return;
+    }
+
     return $self->new_document($filename);
 }
 

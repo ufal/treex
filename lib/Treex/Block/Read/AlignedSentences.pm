@@ -5,7 +5,9 @@ extends 'Treex::Block::Read::BaseAlignedTextReader';
 
 sub next_document {
     my ($self) = @_;
+
     my $texts_ref = $self->next_document_texts();
+
     return if !defined $texts_ref;
 
     my %sentences =

@@ -56,25 +56,23 @@ override '_get_next_filename' => sub {
     return super();
 };
 
-# Default process_document method for all Writer blocks.
-override 'process_document' => sub {
-
-    my ( $self, $document ) = @_;
-
-    # set _file_handle properly (this MUST be called if process_document is overridden)
-    $self->_prepare_file_handle($document);
-
+sub _do_before_process {
+    my ($self, $document) = @_;
     # allow header printing (in overrides)
     $self->print_header($document);
 
-    # call the original process_document with _file_handle set
-    $self->Treex::Core::Block::process_document($document);
+    return;
+}
+
+sub _do_after_process {
+    my ($self, $document) = @_;
 
     # allow footer printing (in overrides)
     $self->print_footer($document);
 
     return;
-};
+}
+
 
 sub print_header {
     my ( $self, $document ) = @_;

@@ -53,18 +53,15 @@ override '_document_extension' => sub {
     }
 };
 
-sub process_document {
+override '_do_process_document' => sub {
 
     my ( $self, $document ) = @_;
-
-    # prepare the correct file name
-    $self->_prepare_file_handle( $document );
 
     my $filename = $self->_last_filename;
     $document->set_filename($filename);
     $document->save($filename);
     return 1;
-}
+};
 
 1;
 

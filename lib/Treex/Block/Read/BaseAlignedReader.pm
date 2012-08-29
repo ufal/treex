@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';
 use Treex::Core::Document;
+use Data::Dumper;
 
 sub next_document {
     my ($self) = @_;
@@ -20,7 +21,7 @@ has file_stem => (
 # private attributes
 has _filenames => (
     isa           => 'HashRef[Str]',
-    is            => 'ro',
+    is            => 'rw',
     init_arg      => undef,
     default       => sub { {} },
     documentation => 'mapping zone_label->filenames to be loaded;'
@@ -66,19 +67,41 @@ sub BUILD {
 sub current_filenames {
     my ($self) = @_;
     my $n = $self->_file_number;
+    #print STDERR __PACKAGE__ . ":" . __LINE__ . " n = $n; FPZ: " . $self->_files_per_zone . "\n";
     return if $n == 0 || $n > $self->_files_per_zone;
-    return map { $_ => $self->_filenames->{$_}[ $n - 1 ] } keys %{ $self->_filenames };
+    my %result = map { $_ => $self->_filenames->{$_}[ $n - 1 ] } keys %{ $self->_filenames };
+    return \%result;
 }
 
 sub next_filenames {
     my ($self) = @_;
+    if ( $self->consumer ) {
+        my $res = $self->consumer->call("next_filenames");
+
+        if ( ! $res ) {
+            $self->_set_file_number($self->_files_per_zone + 2);
+        } else {
+    
+    #       print STDERR Data::Dumper->Dump([$res]);
+
+            $self->_set_file_number($res->{file_number} - 1);
+    #        print STDERR __PACKAGE__ . "\n" . Data::Dumper->Dump([$res]) . "\n";        
+    #        print STDERR "RESULT: " . Data::Dumper->Dump([$res->{result}]) . "\n";
+    #        my $files = {};
+    #        map { $files->{$_} = [$res->{result}->{$_}] } keys %{$res->{result}};
+    #        print STDERR "FILES: " . Data::Dumper->Dump([$files]) . "\n";
+    #        $self->_set_filenames($files);
+    
+            $self->_set_doc_number($res->{doc_number} - 1);
+        }
+    }
     $self->_set_file_number( $self->_file_number + 1 );
     return $self->current_filenames;
 }
 
 sub new_document {
     my ( $self, $load_from ) = @_;
-    my %filenames = $self->current_filenames();
+    my %filenames = %{$self->current_filenames()};
     log_fatal "next_filenames() must be called before new_document()" if !%filenames;
 
     my ( $stem, $file_number ) = ( '', '' );

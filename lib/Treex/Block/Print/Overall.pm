@@ -24,11 +24,9 @@ sub process_end {
     return;
 }
 
-sub process_document {
+override '_do_process_document' => sub {
 
     my ( $self, $document ) = @_;
-
-    $self->_prepare_file_handle( $document );  # prepare the output file handle first
 
     if ( !$self->overall ) {
         $self->_reset_stats();
@@ -46,7 +44,7 @@ sub process_document {
     }
 
     return;
-}
+};
 
 sub load_and_print {
     

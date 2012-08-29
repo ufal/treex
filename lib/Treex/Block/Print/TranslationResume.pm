@@ -7,9 +7,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 
-sub process_document {
+override '_do_process_document' => sub {
     my ( $self, $document ) = @_;
-    $self->_prepare_file_handle($document);
+
     my $doc_name = $document->full_filename();
     $doc_name =~ s{^.*/}{};
     my ( @src, @ref, @tst );
@@ -45,8 +45,9 @@ sub process_document {
             @tst = ();
         }
     }
+
     return;
-}
+};
 
 1;
 
