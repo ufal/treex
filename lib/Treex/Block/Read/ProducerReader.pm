@@ -1,6 +1,7 @@
 package Treex::Block::Read::ProducerReader;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Log;
 with 'Treex::Core::DocumentReader';
 
 use POE;
@@ -10,6 +11,7 @@ use POE qw(Component::Server::TCP Filter::Reference);
 use Data::Dumper;
 use Time::HiRes;
 use Readonly;
+use Carp;
 
 has reader => (
     isa      => 'Treex::Core::DocumentReader',
@@ -103,6 +105,11 @@ has _finished_jobs => (
     default => 0
 );
 
+has log_file => (
+    isa => 'Str',
+    is => 'ro',
+);
+
 
 sub BUILD {
     my $self = shift;
@@ -110,6 +117,8 @@ sub BUILD {
 
     my $result    = 1;
     my $reconnect = 0;
+
+    open(my $fh_log, ">:encoding(UTF-8)", $self->log_file) or croak $! . " - " . $self->log_file;
 
     do {
         POE::Session->create(
@@ -161,7 +170,7 @@ sub BUILD {
                     my $finished_str = "__finished__";
                     $result = $finished_str;
 
-                    if ( $function =~ /cmd_(.*)/ ) {
+                    if ( $function =~ /cmd_(.*)(\t(.*))?/ ) {
                         my $act_cmd = $1;
 
                         if ( $act_cmd eq "fatalerror" ) {
@@ -197,7 +206,6 @@ sub BUILD {
                             if ( $remaining_jobs == 0 ) {
                                 $self->_mark_as_finished();
                             }
-
                         }
 
                         # delete auxiliary created files
@@ -310,6 +318,7 @@ sub BUILD {
 
                     $_[HEAP]{client}{$wheel_id}->put( \$result );
                     #log_info($msg);
+                    print $fh_log running_time() . "\t" . $msg . "\n";
 
                 },
                 on_client_error => sub {
@@ -395,7 +404,7 @@ sub _process_created_files {
         if ( $path ne "./" ) {
             $path =~ s/\/+$//;
         }
-        
+
         $path = Treex::Core::Run::construct_output_dir_name($path, $jobid, $self->host, $self->port);
 
         #log_warn("BEFORE: " . join(", ", glob $path . "/*"));

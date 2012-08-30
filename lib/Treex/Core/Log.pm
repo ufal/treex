@@ -14,7 +14,7 @@ use Time::HiRes qw(time);
 
 use Exporter;
 use base 'Exporter';
-our @EXPORT = qw(log_fatal log_warn log_info log_debug log_memory);    ## no critic (ProhibitAutomaticExportation)
+our @EXPORT = qw(log_fatal log_warn log_info log_debug log_memory running_time);    ## no critic (ProhibitAutomaticExportation)
 
 $Carp::CarpLevel = 1;
 

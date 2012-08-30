@@ -6,6 +6,7 @@ with 'Treex::Core::DocumentReader';
   use POE qw(Wheel::SocketFactory Wheel::ReadWrite);
   use POE qw(Component::Server::TCP Filter::Reference);
 use Data::Dumper;
+use Sys::Hostname;
 
 has port => ( is => 'rw', isa => 'Int', required => 1 );
 has host => ( is => 'rw', isa => 'Str', required => 1 );
@@ -92,7 +93,7 @@ sub call {
 
 sub started {
     my $self = shift;
-    return $self->call("cmd_started");
+    return $self->call("cmd_started" . "\t" . hostname);
 }
 
 sub finished {

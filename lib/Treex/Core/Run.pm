@@ -988,8 +988,6 @@ sub _print_output_files {
     # we need to
     use open qw{ :std IO :encoding(UTF-8) };
 
-    my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number));
-
     foreach my $stream (qw(stderr stdout)) {
         Treex::Tool::Probe::begin("_print_output_files.".$stream);
 
@@ -1014,6 +1012,7 @@ sub _print_output_files {
         }
 
         if ( !-f $filename ) {
+            my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number, "fatalerror"));
             my $message = "Document $doc_number finished without producing $filename. " .
                 " It might be useful to inspect " . $self->workdir . "/status/job" . sprintf( "%03d", $job_number ) . ".loading.stderr";
             if ( $self->survive ) {
@@ -1057,6 +1056,8 @@ sub _print_output_files {
             system("cat $filename");
         }
         else {
+            my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number, "finished"));
+            my $doc_number_str = sprintf( "%07d", $doc_number );
             my $success     = 0;
             my $try = 0;
             my $TRIES = 5;
@@ -1080,7 +1081,7 @@ sub _print_output_files {
                     next if $level =~ /^D/ && $report !~ /^[AD]/;
                     next if $level =~ /^I/ && $report !~ /^[ADI]/;
                     next if $level =~ /^W/ && $report !~ /^[ADIW]/;
-                    print STDERR "job$job_number: $_";
+                    print STDERR "doc${doc_number_str}_job${job_number}: $_";
 
                 }
                 close $FILE;
@@ -1646,7 +1647,8 @@ sub _execute_on_cluster {
             status=> \%Treex::Core::Run::sh_job_status,
             workdir => $self->workdir,
             writers => $self->scenario->writers,
-            jobs => $self->jobs
+            jobs => $self->jobs,
+            log_file => $self->workdir . "/processing_info.log",
         });
 
     });
@@ -1729,8 +1731,11 @@ sub _redirect_output {
 
 sub _get_job_number_from_doc_number
 {
-    my ( $self, $doc_number ) = @_;
-    return ( $doc_number - 1 ) % ( $self->jobs ) + 1;
+    my ( $self, $doc_number, $status ) = @_;
+    if ( ! $status ) {
+        $status = "finished";
+    }
+    return $sh_job_status{'doc_' . $doc_number . '_' . $status};
 }
 
 # not a method !
