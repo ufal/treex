@@ -1309,7 +1309,7 @@ sub _print_execution_time {
     # read job log files
     for my $file_finished ( glob $self->workdir . "/status/job???.finished" ) {
         my $jobid = $file_finished;
-        $jobid =~ s/.*job0+//;
+        $jobid =~ s/.*job0*//;
         $jobid =~ s/\.finished//;
 
         # derivate file name
