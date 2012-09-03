@@ -110,6 +110,12 @@ has log_file => (
     is => 'ro',
 );
 
+has 'survive' => (
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+);
+
 
 sub BUILD {
     my $self = shift;
@@ -169,153 +175,164 @@ sub BUILD {
                     my $msg = "Client $jobid: $function";
                     my $finished_str = "__finished__";
                     $result = $finished_str;
+                    
+                    if ( ($self->survive == 0 && $self->_crashed_jobs == 0) ||
+                         ($self->survive == 1 && $self->_crashed_jobs < $self->jobs )
+                    ) {
+                        if ( $function =~ /cmd_(.*)(\t(.*))?/ ) {
+                            my $act_cmd = $1;
+                            if ( $act_cmd eq "started" ) {
+                                $result = "started";
+                            } elsif ( $act_cmd eq "fatalerror" ) {
+                                $result = "fatalerror";
 
-                    if ( $function =~ /cmd_(.*)(\t(.*))?/ ) {
-                        my $act_cmd = $1;
-
-                        if ( $act_cmd eq "fatalerror" ) {
-
-                            # zjisti, ktery to je
-                            my $finished_file = $self->_jobs->{$jobid};
-
-                            if ($finished_file) {
-
-                                # error during document processing
-
-                                $msg .= "; Crashed $finished_file";
-                                if ( $self->_files->{$finished_file}->{'finished'} ) {
-                                    $msg .= "; Already finished!!!";
-                                } else {
-                                    $self->_process_created_files($jobid);
-                                    $self->_files->{$finished_file}->{'crashed'}++;
-                                    $msg .= "; Crashed " . $self->_files->{$finished_file}->{'crashed'} . " times";
-                                    if ( $self->_files->{$finished_file}->{'crashed'} > $self->_submitted_limit - 1 ) {
-                                        $self->status->{ "doc_" . $finished_file . "_fatalerror" } = $jobid;
-                                        $self->_set_finished_count( $self->_finished_count + 1 );
-                                    }
-                                }
-                            } else {
-                                $msg .= "; Crashed during loading";
-                            }
-
-                            # increase number of crashed jobs
-                            $self->_set_crashed_jobs( $self->_crashed_jobs + 1 );
-                            my $remaining_jobs = $self->jobs - $self->_finished_jobs - $self->_crashed_jobs;
-                            log_info( "Remains " . $remaining_jobs . " jobs out of " . $self->jobs );
-
-                            if ( $remaining_jobs == 0 ) {
-                                $self->_mark_as_finished();
-                            }
-                        }
-
-                        # delete auxiliary created files
-                        if ( $act_cmd eq "finished" ) {
-
-                            my $orig_dir =
-                              $self->workdir . '/output__JOB__' . $jobid . '/';
-
-                            #qx(rm -rf $orig_dir);
-
-                            for my $writer ( @{ $self->writers } ) {
-                                my $path = $writer->path;
-                                if ($path) {
-                                    $path =~ s/\/+$//;
-                                    $path .= "__JOB__" . $jobid;
-
-                                    #log_info("Client $jobid: DELETING $path");
-                                    #qx(rm -rf $path);
-                                }
-                            }
-
-                            $self->_set_finished_jobs( $self->_finished_jobs + 1 );
-                        }
-
-                        $self->status->{ "job_" . $jobid . "_" . $act_cmd } = 1;
-                    }
-                    else {
-                        my $received = $self->reader->$function();
-
-                        # mark job as finished
-                        my $finished_file = $self->_jobs->{$jobid};
-
-                        if ($finished_file) {
-                            $msg .= "; Finished $finished_file";
-                            if ( $self->_files->{$finished_file}->{'finished'} ) {
-                                $msg .= "; Already finished!!!";
-                                $self->_process_created_files($jobid, 1);
-                            } else {
-                                $self->_process_created_files($jobid, 0);
-
-                                $self->_files->{$finished_file}->{'finished'} = time();
-
-                                $self->status->{ "doc_" . $finished_file . "_finished" } = $jobid;
-
-                                $self->_set_finished_count( $self->_finished_count + 1 );
-                            }
-                        }
-
-                        if ($received) {
-                            $result = { 'result' => $received };
-                            $self->_set_doc_number( $self->doc_number + 1 );
-
-                            if ( $self->reader->isa('Treex::Block::Read::BaseReader') ) {
-                                $result->{file_number} = $self->reader->file_number;
-                            } elsif ( $self->reader->isa('Treex::Block::Read::BaseAlignedReader') ) {
-                                $result->{doc_number} = $self->doc_number;
-                                $result->{file_number} = $self->reader->_file_number;
-                            }
-
-                            # mark job as started
-                            $self->status->{ "doc_" . $self->doc_number . "_started" } = $jobid;
-
-                            $self->_files->{ $result->{file_number} } = {
-                                'started'   => time(),
-                                'job'       => $jobid,
-                                'result'    => $result,
-                                'submitted' => 1
-                            };
-
-                            $msg .= "; Assigned: " . $result->{file_number};
-
-                            $self->_set_file_count( $result->{file_number} );
-                        }
-                        else {
-                            $self->_set_total_file_count( $self->_file_count );
-
-                            my $not_finished = 0;
-
-                          SUBMITS:
-                            for ( my $submitted = $self->_max_submitted; $submitted < $self->_submitted_limit; $submitted++ ) {
-
-                                #$not_finished = 0;
-                                for ( my $i = $self->_file_count; $i > 1; $i-- ) {
-                                    if ( !$self->_files->{$i}->{finished} ) {
-                                        #        $not_finished++;
-                                        if ( $self->_files->{$i}->{submitted} < $submitted )  {
-                                            $self->_files->{$i}->{submitted} += 1;
-                                            $result = $self->_files->{$i}->{result};
-                                            $msg .= "; Assigned: " . $result->{file_number} . "; AGAIN: " . $self->_files->{$i}->{submitted};
-                                            last SUBMITS;
+                                # zjisti, ktery to je
+                                my $finished_file = $self->_jobs->{$jobid};
+    
+                                if ($finished_file) {
+    
+                                    # error during document processing
+    
+                                    $msg .= "; Crashed $finished_file";
+                                    if ( $self->_files->{$finished_file}->{'finished'} ) {
+                                        $msg .= "; Already finished!!!";
+                                    } else {
+                                        $self->_process_created_files($jobid);
+                                        $self->_files->{$finished_file}->{'crashed'}++;
+                                        $msg .= "; Crashed " . $self->_files->{$finished_file}->{'crashed'} . " times";
+                                        if ( $self->_files->{$finished_file}->{'crashed'} > $self->_submitted_limit - 1 ) {
+                                            $self->status->{ "doc_" . $finished_file . "_fatalerror" } = $jobid;
+                                            $self->_set_finished_count( $self->_finished_count + 1 );
                                         }
                                     }
-                                    $self->_set_max_submitted($submitted);
+                                } else {
+                                    $msg .= "; Crashed during loading";
+                                }
+    
+                                # increase number of crashed jobs
+                                $self->status->{'info_fatalerror'} = $self->status->{'info_fatalerror'} + 1;
+                                $self->_set_crashed_jobs( $self->_crashed_jobs + 1 );
+                                my $remaining_jobs = $self->jobs - $self->_finished_jobs - $self->_crashed_jobs;
+                                #TODO: hack
+                                if ( $remaining_jobs < 0 ) {
+                                    $remaining_jobs = 0;
+                                }
+                                log_info( "Remains " . $remaining_jobs . " jobs out of " . $self->jobs );
+    
+                                $self->status->{'info_remaining_jobs'} = $remaining_jobs;
+                                if ( $remaining_jobs == 0 ) {
+                                    $self->_mark_as_finished();
                                 }
                             }
-
-                            if ( $self->_finished_count == $self->_file_count )
-                            {
-                                $self->_mark_as_finished();
-                                delete $_[HEAP]{server};
-                                $_[KERNEL]->stop();
+    
+                            # delete auxiliary created files
+                            if ( $act_cmd eq "finished" ) {
+    
+                                my $orig_dir =
+                                  $self->workdir . '/output__JOB__' . $jobid . '/';
+    
+                                #qx(rm -rf $orig_dir);
+    
+                                for my $writer ( @{ $self->writers } ) {
+                                    my $path = $writer->path;
+                                    if ($path) {
+                                        $path =~ s/\/+$//;
+                                        $path .= "__JOB__" . $jobid;
+    
+                                        #log_info("Client $jobid: DELETING $path");
+                                        #qx(rm -rf $path);
+                                    }
+                                }
+    
+                                $self->_set_finished_jobs( $self->_finished_jobs + 1 );
+                            }
+    
+                            $self->status->{ "job_" . $jobid . "_" . $act_cmd } = 1;
+                        }
+                        else {
+                            my $received = $self->reader->$function();
+    
+                            # mark job as finished
+                            my $finished_file = $self->_jobs->{$jobid};
+    
+                            if ($finished_file) {
+                                $msg .= "; Finished $finished_file";
+                                if ( $self->_files->{$finished_file}->{'finished'} ) {
+                                    $msg .= "; Already finished!!!";
+                                    $self->_process_created_files($jobid, 1);
+                                } else {
+                                    $self->_process_created_files($jobid, 0);
+    
+                                    $self->_files->{$finished_file}->{'finished'} = time();
+    
+                                    $self->status->{ "doc_" . $finished_file . "_finished" } = $jobid;
+    
+                                    $self->_set_finished_count( $self->_finished_count + 1 );
+                                }
+                            }
+    
+                            if ($received) {
+                                $result = { 'result' => $received };
+                                $self->_set_doc_number( $self->doc_number + 1 );
+    
+                                if ( $self->reader->isa('Treex::Block::Read::BaseReader') ) {
+                                    $result->{file_number} = $self->reader->file_number;
+                                } elsif ( $self->reader->isa('Treex::Block::Read::BaseAlignedReader') ) {
+                                    $result->{doc_number} = $self->doc_number;
+                                    $result->{file_number} = $self->reader->_file_number;
+                                }
+    
+                                # mark job as started
+                                $self->status->{ "doc_" . $self->doc_number . "_started" } = $jobid;
+    
+                                $self->_files->{ $result->{file_number} } = {
+                                    'started'   => time(),
+                                    'job'       => $jobid,
+                                    'result'    => $result,
+                                    'submitted' => 1
+                                };
+    
+                                $msg .= "; Assigned: " . $result->{file_number};
+    
+                                $self->_set_file_count( $result->{file_number} );
+                            }
+                            else {
+                                $self->_set_total_file_count( $self->_file_count );
+    
+                                my $not_finished = 0;
+    
+                              SUBMITS:
+                                for ( my $submitted = $self->_max_submitted; $submitted < $self->_submitted_limit; $submitted++ ) {
+    
+                                    #$not_finished = 0;
+                                    for ( my $i = $self->_file_count; $i > 1; $i-- ) {
+                                        if ( !$self->_files->{$i}->{finished} ) {
+                                            #        $not_finished++;
+                                            if ( $self->_files->{$i}->{submitted} < $submitted )  {
+                                                $self->_files->{$i}->{submitted} += 1;
+                                                $result = $self->_files->{$i}->{result};
+                                                $msg .= "; Assigned: " . $result->{file_number} . "; AGAIN: " . $self->_files->{$i}->{submitted};
+                                                last SUBMITS;
+                                            }
+                                        }
+                                        $self->_set_max_submitted($submitted);
+                                    }
+                                }
+    
+                                if ( $self->_finished_count == $self->_file_count )
+                                {
+                                    $self->_mark_as_finished();
+                                    delete $_[HEAP]{server};
+                                    $_[KERNEL]->stop();
+                                }
+                            }
+    
+                            # remember wich job is working on which file
+                            if ( ref($result) ) {
+                                $self->_jobs->{$jobid} = $result->{file_number};
                             }
                         }
-
-                        # remember wich job is working on which file
-                        if ( ref($result) ) {
-                            $self->_jobs->{$jobid} = $result->{file_number};
-                        }
                     }
-
                     $_[HEAP]{client}{$wheel_id}->put( \$result );
                     #log_info($msg);
                     print $fh_log running_time() . "\t" . $msg . "\n";
@@ -427,9 +444,9 @@ sub _process_created_files {
 
             #log_info("Client $jobid: mv $path/* $target_path/");
             if ( $delete ) {
-                qx(rm $path/*);
+                qx(rm $path/* 2>/dev/null);
             } else {
-                qx(mv $path/* $target_path/);
+                qx(mv $path/* $target_path/ 2>/dev/null);
             }
         }
 
@@ -441,9 +458,9 @@ sub _process_created_files {
     #log_warn("GLOBAL BEFORE: " . join(", ", glob $global_orig_dir . "/*"));
     #log_warn("mv $global_orig_dir/* $global_target_dir");
     if ( $delete ) {
-        qx(rm -f $global_orig_dir/*);
+        qx(rm -f $global_orig_dir/* 2>/dev/null);
     } else {
-        qx(mv $global_orig_dir/* $global_target_dir);
+        qx(mv $global_orig_dir/* $global_target_dir 2>/dev/null);
     }
 
     #log_warn("GLOBAL AFTER: " . join(", ", glob $global_orig_dir . "/*"));

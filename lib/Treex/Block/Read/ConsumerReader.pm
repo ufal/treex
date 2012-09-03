@@ -67,7 +67,7 @@ sub call {
 
         #log_warn(__PACKAGE__ . ": received $input");
         if ( $$input eq "__finished__" ) {
-            $output = undef;
+            $self->_set_finished(1);
         } else {
             $output = $$input;
         }

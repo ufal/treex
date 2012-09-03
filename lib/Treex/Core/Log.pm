@@ -192,7 +192,16 @@ sub add_hook {
     my ( $level, $subroutine ) = @_;
     $hooks{$level} ||= [];
     push @{ $hooks{$level} }, $subroutine;
-    return;
+    return scalar(@{$hooks{$level}}) - 1;
+}
+
+sub del_hook {
+    my ( $level, $pos ) = @_;
+    $hooks{$level} ||= [];
+    if ( $pos < 0 || $pos >= scalar(@{$hooks{$level}}) ) {
+        return;
+    }
+    splice(@{$hooks{$level}}, $pos, 1);
 }
 
 sub run_hooks {

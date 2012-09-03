@@ -288,13 +288,15 @@ Readonly my $SERVER_HOST => hostname;
 Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
 
 our %sh_job_status : shared;
-%sh_job_status = ();
+%sh_job_status = ('info_fatalerror' => 0);
 
 our $PORT : shared;
 $PORT = $SERVER_PORT;
 
 our $PORT_SET : shared;
 $PORT_SET = 0;
+
+our $fatal_hook_index = -1;
 
 sub _usage_format {
     return "usage: %c %o scenario [-- treex_files]\nscenario is a sequence of blocks or *.scen files\noptions:";
@@ -483,8 +485,6 @@ sub _execute_locally {
 
     $self->_init_scenario();
 
-    close_handles();
-
     my $scenario      = $self->scenario;
 
     if ( $self->jobindex ) {
@@ -493,7 +493,6 @@ sub _execute_locally {
         close $F;
         my $reader = $scenario->document_reader;
 
-        log_warn("AAAAAAAAAAAAAAAAAAAAAAAAA");
         use Treex::Block::Read::ConsumerReader;
         my ($hostname, $port) = split(/:/, $self->server);
         $consumer = Treex::Block::Read::ConsumerReader->new({
@@ -511,6 +510,7 @@ sub _execute_locally {
         $reader->set_jobindex( $self->jobindex );
 
         $SIG{'TERM'} = \&term;
+        $SIG{__DIE__} = sub { term(); log_fatal($_[0]); die($_[0]); };
 
         mkdir $self->outdir;
         my $outdir = $self->_get_tmp_outdir($self->outdir, $self->jobindex );
@@ -550,8 +550,7 @@ sub _execute_locally {
     $scenario->run();
 
     if ( $consumer ) {
-        close_handles();
-        close(STDOUT);
+        _redirect_output( $self->outdir, "terminating", $self->jobindex );
         $consumer->finished();
     }
 
@@ -572,12 +571,15 @@ sub _execute_locally {
 }
 
 END {
+    log_warn("In function END");
     term();
 }
 
 sub term {
     use Carp;
+    log_warn("In function term");
     if ( $consumer && ! $consumer->is_finished ) {
+        log_warn("Calling consumer->fatalerror");
         $consumer->fatalerror();
     }
 }
@@ -947,6 +949,12 @@ sub _is_in_fatalerror
         open(my $fh, "<", $fatal_file) or log_fatal($!);
         while ( my $line = <$fh> ) {
             chomp $line;
+
+            # TODO: quick fix - should not happen
+            if ( ! $line ) {
+                next;
+            }
+
             my ( $job, $doc ) = split( / /, $line );
             $self->_set_fatalerror_job($job);
             $self->_set_fatalerror_doc($doc);
@@ -1136,10 +1144,12 @@ sub _wait_for_jobs {
     my $sleep_time = $sleep_min_time;
     my $last_status_msg = "";
     my $last_status_skipped = 0;
+    my $last_fatalerror_count = 0;
 
     log_info("\n");
 
     my $job_slice = $self->_get_slice($self->jobs);
+    $sh_job_status{'info_remaining_jobs'} = $self->jobs;
 
     my $document_slice = 0;
     my $check_errors = 0;
@@ -1248,6 +1258,11 @@ sub _wait_for_jobs {
             }
         }
 
+        if ( $last_fatalerror_count != $sh_job_status{"info_fatalerror"} ) {
+            $check_errors = 1;
+            $last_fatalerror_count = $sh_job_status{"info_fatalerror"};
+        }
+
         # check errors if necessary
         if ( $check_errors ) {
             $self->_check_job_errors($self->{_max_finished});
@@ -1261,11 +1276,10 @@ sub _wait_for_jobs {
         # the output of the last doc was not forwarded yet.
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
 
-        if ( defined($sh_job_status{'___FINISHED___'}) ) {
-            if ( ! $finished_sleep ) {
-            #    sleep(10);
-            }
-            $finished_sleep++;
+        if ( $sh_job_status{'info_remaining_jobs'} == 0 ) {
+            log_warn("All workers are dead.");
+            $self->_delete_tmp_dirs();
+            $self->_delete_jobs_and_exit;
         }
 
     }
@@ -1493,6 +1507,8 @@ sub _delete_jobs {
     foreach my $job ( @{ $self->sge_job_numbers } ) {
         qx(qdel $job);
     }
+
+    return;
 }
 
 sub _delete_tmp_dirs {
@@ -1518,6 +1534,8 @@ sub _delete_tmp_dirs {
     if ( $self->_tmp_input_dir && $self->_tmp_input_dir =~ /STDIN/ ) {
         rmtree $self->_tmp_input_dir;
     }
+
+    return;
 
 }
 
@@ -1649,6 +1667,7 @@ sub _execute_on_cluster {
             writers => $self->scenario->writers,
             jobs => $self->jobs,
             log_file => $self->workdir . "/processing_info.log",
+            survive => $self->survive
         });
 
     });
@@ -1706,8 +1725,6 @@ sub _redirect_output {
     $_fh_OUTPUT = $OUTPUT;
     $_fh_ERROR = $ERROR;
 
-    log_warn("OUT: " . fileno($OUTPUT) . "; ERROR: " . fileno($ERROR));
-
     STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
     STDERR->fdopen( $ERROR,  'w' ) or log_fatal $!;
 
@@ -1717,7 +1734,8 @@ sub _redirect_output {
     # special file is touched if log_fatal is called
     my $common_file_fatalerror = $outdir . "/../status/fatalerror";
     my $job_file_fatalerror = $outdir . "/../status/" . $job . ".fatalerror";
-    Treex::Core::Log::add_hook(
+    Treex::Core::Log::del_hook('FATAL', $fatal_hook_index);
+    $fatal_hook_index = Treex::Core::Log::add_hook(
         'FATAL',
         sub {
             eval {
