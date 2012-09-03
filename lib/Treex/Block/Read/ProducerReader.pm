@@ -392,8 +392,6 @@ sub number_of_documents {
 
 sub DESTROY {
     my $self = shift;
-
-    log_warn("!!!!DESTROY!!!!");
 }
 
 sub _process_created_files {

@@ -571,15 +571,14 @@ sub _execute_locally {
 }
 
 END {
-    log_warn("In function END");
+#    log_warn("In function END");
     term();
 }
 
 sub term {
     use Carp;
-    log_warn("In function term");
     if ( $consumer && ! $consumer->is_finished ) {
-        log_warn("Calling consumer->fatalerror");
+#        log_warn("Calling consumer->fatalerror");
         $consumer->fatalerror();
     }
 }
@@ -1686,10 +1685,7 @@ sub _execute_on_cluster {
 
     $self->_print_finish_status();
 
-    log_warn("Killing server thread - B");
-    #$server_thread->exit();
     $server_thread->kill(9);
-    log_warn("Killing server thread - E");
 
     # delete jobs
     $self->_delete_jobs();
