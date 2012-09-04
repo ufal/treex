@@ -510,10 +510,14 @@ sub _execute_locally {
         $reader->set_jobindex( $self->jobindex );
 
         $SIG{'TERM'} = \&term;
+        $SIG{'ABRT'} = \&term;
+        $SIG{'SEGV'} = \&term;
+        $SIG{'KILL'} = \&term;
         $SIG{__DIE__} = sub { term(); log_fatal($_[0]); die($_[0]); };
 
         mkdir $self->outdir;
         my $outdir = $self->_get_tmp_outdir($self->outdir, $self->jobindex );
+        _rm_dir($outdir);
         mkdir $outdir;
         $reader->set_outdir( $outdir );
 
@@ -523,6 +527,7 @@ sub _execute_locally {
             if ( $writer->path ) {
                 mkdir $writer->path;
             }
+            _rm_dir($new_path);
             mkdir $new_path;
 
             $writer->set_path($new_path);
@@ -1513,29 +1518,44 @@ sub _delete_jobs {
 sub _delete_tmp_dirs {
     my $self = shift;
 
+    qx(sync);
+
     for my $j ( 1 .. $self->jobs ) {
 
         my $outdir = $self->_get_tmp_outdir($self->outdir, $j );
         #log_warn("DEL: $outdir");
-        rmtree $outdir;
+        _rm_dir($outdir);
 
         my $workdir = $self->_get_tmp_outdir($self->workdir . "/output", $j );
         #log_warn("DEL: $workdir");
-        rmtree $workdir;
+        _rm_dir($workdir);
 
         for my $writer (@{$self->scenario->writers}) {
             my $new_path =  $self->_get_tmp_outdir($writer->path, $j);
             #log_warn("DEL: $new_path");
-            rmtree $new_path;
+            _rm_dir($new_path);
         }
     }
 
     if ( $self->_tmp_input_dir && $self->_tmp_input_dir =~ /STDIN/ ) {
-        rmtree $self->_tmp_input_dir;
+        _rm_dir($self->_tmp_input_dir);
     }
 
     return;
 
+}
+
+sub _rm_dir {
+    my $dir = shift;
+    #log_info("rmtree - $dir");
+    rmtree $dir;
+    while ( -d $dir ) {
+        sleep 1;
+        log_info("Sleep before next rm");
+        rmtree $dir;
+    }
+    rmtree $dir;
+    return;
 }
 
 sub _execute_on_cluster {
