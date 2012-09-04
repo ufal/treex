@@ -119,7 +119,7 @@ sub _generate_word_form {
     # If there are no compatible forms in LM, try Hajic's morphology generator
     my ($form_info) = $generator->forms_of_lemma( $lemma, { tag_regex => "^$tag_regex" } );
     if ($form_info) {
-        log_debug( "MORF: $lemma\t$tag_regex\t" . $form_info->get_form() . "\tttred " . $a_node->get_address() . " &", 1 );
+        log_debug( "MORF: $lemma\t$tag_regex\t" . $form_info->get_form() . "\t" . $form_info->get_tag() . "\tttred " . $a_node->get_address() . " &", 1 );
     }
     return $form_info if $form_info;
 

@@ -86,6 +86,7 @@ sub get_noun_gender {
     }
 
     # Try MorphoLM, fallback to Jan Hajic's morphology (hack incorrectly lowercased lemmas)
+    log_debug('CALLING ' . $t_node->get_address() . ' / ' . $t_lemma, 1);
     my $form_info =    
         $self->morphoLM->best_form_of_lemma( $t_lemma, '^NN..[1X]', $args )
      || $self->generator->best_form_of_lemma( $t_lemma, '^NN..[1X]' )

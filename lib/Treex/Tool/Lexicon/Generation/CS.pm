@@ -24,7 +24,6 @@ use Treex::Tool::Lexicon::CS::Prefixes;
 my $MAXBYTES = 200;
 my $MAXCHARS = 120;
 
-
 sub _split_tags {
     my $lemma_and_tags = shift;
     my ( $pdt_lemma, $tags ) = split /\t/, $lemma_and_tags, 2;
@@ -38,11 +37,18 @@ sub _split_tags {
 }
 
 sub forms_of_lemma {
-    
+
     my ( $self, $lemma, $arg_ref ) = @_;
-    
+
+    log_debug(
+        'FORMS_OF_LEMMA' . "\t" . join(
+            "\t", $lemma, $arg_ref->{tag_regex} // '', $arg_ref->{limit} // '', $arg_ref->{guess} // '',
+            $arg_ref->{no_capitalization} // ''
+        ), 1
+    );
+
     log_fatal('No lemma given to forms_of_lemma()') if !defined $lemma;
-    
+
     return if length $lemma > $MAXCHARS;
     my $tag_regex = $arg_ref->{'tag_regex'} || '.*';
     my $limit     = $arg_ref->{'limit'}     || 0;
@@ -85,7 +91,7 @@ sub forms_of_lemma {
             push @all_forms, $form_info;
         }
     }
-    
+
     # prune @all_forms
     $tag_regex = qr{$tag_regex};    #compile regex
     my $found = 0;
@@ -98,7 +104,7 @@ sub forms_of_lemma {
         push @forms, $fi;
         last if $limit and ( ++$found >= $limit );
     }
-
+    log_debug( "FORMS_OF_LEMMA RETURN\t" . join( "\t", @forms ), 1 );
     return (
         grep { $_->get_tag =~ /-$/ } @forms,
         grep { $_->get_tag !~ /-$/ } @forms,
@@ -109,8 +115,8 @@ sub forms_of_lemma {
 # This method makes it just easy to fallback from LanguageModel::MorphoLM to this class.
 sub best_form_of_lemma {
     my ( $self, $lemma, $tag_regex ) = @_;
-    my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex, limit => 1 } );
-    return $form_info ?  $form_info : undef;
+    my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex } );
+    return $form_info ? $form_info : undef;
 }
 
 sub _guess_forms {
@@ -157,61 +163,61 @@ sub _to_utf8 {
 sub pdt_lemmata_for_plain_lemma {
     my ( $self, $plain_lemma ) = @_;
 
-	# There is a bug in CzechMorpho --
+    # There is a bug in CzechMorpho --
     # it uses pipe symbol (|) as a delimiter, but it does not escape it.
     # (It expects, it cannot appear in other tokens than "|", but that's a matter of tokenization.)
     # Since CzechMorpho is not at CPAN (but needs installation), we must hack it here.
     $plain_lemma =~ s{\|}{%7C}g;
-    
-    return map { $_->{lemma} } grep { $self->can_be_tag_of_lemma($_->{tag}) } $analyzer->analyze($plain_lemma);
 
-#   this version crashed for the following lemmas: 'slovák', 'británie'
-#    
-#    # We analyze the plain lemma as if it was a word form.
-#    # Unfortunatelly, morpho_analyze_swig uses Latin2 encoding,
-#    # so we convert it from and to utf8 on the fly.
-#    #<<<
-#    my @lemmata_and_tags =
-#        split /\|/,                            # 4. string -> array
-#        _to_utf8(                              # 3. latin2 -> utf8
-#            CzechMorpho::morpho_analyze_swig(  # 2. analyze to string
-#                _from_utf8($plain_lemma)       # 1. utf8 -> latin2
-#            )
-#        );
-#    #>>>
-#
-#    if ( !@lemmata_and_tags ) {
-#        return $plain_lemma;
-#    }
-#
-#    # We return all the pdt-lemmata with "lemma-compatible" tags.
-#    # E.g. $plain_lemma == 'pes';
-#    # @lemmata_and_tags == (
-#    #   "pes_^(zvíře)\tNNMS1-----A----",
-#    #   "peso_^(měna_někt._jihoamer._zemí)\tNNNP2-----A----" );
-#    # @pdt_lemmata == ('pes_^(zvíře)');
-#    # ("peso" is not a good lemma because it has genitive in its tag.)
-#    my @pdt_lemmata;
-#    foreach my $lemma_and_tags (@lemmata_and_tags) {
-#        my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
-#        if ( any { $self->can_be_tag_of_lemma($_) } split /\//, $tags ) {
-#            $pdt_lemma =~ s{%7C}{|}g;
-#            push( @pdt_lemmata, $pdt_lemma );
-#        }
-#    }
-#
-#    # If the compatibility check was too strict, try another heuristic:
-#    # Is $plain_lemma a prefix of $pdt_lemma?
-#    if ( !@pdt_lemmata ) {
-#        foreach my $lemma_and_tags (@lemmata_and_tags) {
-#            my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
-#            if ( $pdt_lemma =~ /^$plain_lemma($|[_-])/ ) {
-#                push( @pdt_lemmata, $pdt_lemma );
-#            }
-#        }
-#    }
-#
-#    return @pdt_lemmata;
+    return map { $_->{lemma} } grep { $self->can_be_tag_of_lemma( $_->{tag} ) } $analyzer->analyze($plain_lemma);
+
+    #   this version crashed for the following lemmas: 'slovák', 'británie'
+    #
+    #    # We analyze the plain lemma as if it was a word form.
+    #    # Unfortunatelly, morpho_analyze_swig uses Latin2 encoding,
+    #    # so we convert it from and to utf8 on the fly.
+    #    #<<<
+    #    my @lemmata_and_tags =
+    #        split /\|/,                            # 4. string -> array
+    #        _to_utf8(                              # 3. latin2 -> utf8
+    #            CzechMorpho::morpho_analyze_swig(  # 2. analyze to string
+    #                _from_utf8($plain_lemma)       # 1. utf8 -> latin2
+    #            )
+    #        );
+    #    #>>>
+    #
+    #    if ( !@lemmata_and_tags ) {
+    #        return $plain_lemma;
+    #    }
+    #
+    #    # We return all the pdt-lemmata with "lemma-compatible" tags.
+    #    # E.g. $plain_lemma == 'pes';
+    #    # @lemmata_and_tags == (
+    #    #   "pes_^(zvíře)\tNNMS1-----A----",
+    #    #   "peso_^(měna_někt._jihoamer._zemí)\tNNNP2-----A----" );
+    #    # @pdt_lemmata == ('pes_^(zvíře)');
+    #    # ("peso" is not a good lemma because it has genitive in its tag.)
+    #    my @pdt_lemmata;
+    #    foreach my $lemma_and_tags (@lemmata_and_tags) {
+    #        my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
+    #        if ( any { $self->can_be_tag_of_lemma($_) } split /\//, $tags ) {
+    #            $pdt_lemma =~ s{%7C}{|}g;
+    #            push( @pdt_lemmata, $pdt_lemma );
+    #        }
+    #    }
+    #
+    #    # If the compatibility check was too strict, try another heuristic:
+    #    # Is $plain_lemma a prefix of $pdt_lemma?
+    #    if ( !@pdt_lemmata ) {
+    #        foreach my $lemma_and_tags (@lemmata_and_tags) {
+    #            my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
+    #            if ( $pdt_lemma =~ /^$plain_lemma($|[_-])/ ) {
+    #                push( @pdt_lemmata, $pdt_lemma );
+    #            }
+    #        }
+    #    }
+    #
+    #    return @pdt_lemmata;
 }
 
 sub can_be_tag_of_lemma {
