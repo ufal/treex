@@ -9,12 +9,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has '+extension' => ( default => '.yaml' );
 
 # Default process_document method for all Writer blocks.
-override 'process_document' => sub {
+override '_do_process_document' => sub {
 
     my ( $self, $document ) = @_;
-
-    # set _file_handle properly (this MUST be called if process_document is overridden)
-    $self->_prepare_file_handle($document);
 
     my @bundles;
     foreach my $bundle ( $document->get_bundles() ) {
