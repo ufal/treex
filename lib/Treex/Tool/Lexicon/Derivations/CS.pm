@@ -10,12 +10,12 @@ my $morphoLM;    # will be loaded upon first use (see adj2adv and verb2adj)
 # too much of code multiplication, should be rewritten in a more elegant fashion
 
 #TODO: Better way how to make it automatically download.
-my $NOUN2ADJ_FN       = 'generated_data/cs_lexical_derivations/extracted_noun2ajd_lowercased_utf8.lex';
-my $VERB2NOUN_FN      = 'generated_data/cs_lexical_derivations/extracted_verb2deverbalnoun_lowercased_utf8.lex';
-my $VERB2ACTIVEADJ_FN = 'generated_data/cs_lexical_derivations/extracted_verb2activeadj_utf8.lex';
-my $VERB2ADJ_FN       = 'generated_data/cs_lexical_derivations/extracted_verb2adj_utf8.lex';
-my $PERF2IMPERF_FN    = 'generated_data/cs_lexical_derivations/extracted_perf2imperf_utf8.lex';
-my $IMPERF2PERF_FN    = 'generated_data/cs_lexical_derivations/extracted_imperf2perf_utf8.lex';
+my $NOUN2ADJ_FN       = 'data/models/lexicon/derivations/extracted_noun2ajd_lowercased_utf8.lex';
+my $VERB2NOUN_FN      = 'data/models/lexicon/derivations/extracted_verb2deverbalnoun_lowercased_utf8.lex';
+my $VERB2ACTIVEADJ_FN = 'data/models/lexicon/derivations/extracted_verb2activeadj_utf8.lex';
+my $VERB2ADJ_FN       = 'data/models/lexicon/derivations/extracted_verb2adj_utf8.lex';
+my $PERF2IMPERF_FN    = 'data/models/lexicon/derivations/extracted_perf2imperf_utf8.lex';
+my $IMPERF2PERF_FN    = 'data/models/lexicon/derivations/extracted_imperf2perf_utf8.lex';
 
 use Treex::Core::Resource;
 
