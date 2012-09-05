@@ -196,8 +196,9 @@ sub BUILD {
                                     $msg .= "; Crashed $finished_file";
                                     if ( $self->_files->{$finished_file}->{'finished'} ) {
                                         $msg .= "; Already finished!!!";
+                                        $self->_process_created_files($jobid, 0, 1);
                                     } else {
-                                        $self->_process_created_files($jobid);
+                                        $self->_process_created_files($jobid, 0, 1);
                                         $self->_files->{$finished_file}->{'crashed'}++;
                                         $msg .= "; Crashed " . $self->_files->{$finished_file}->{'crashed'} . " times";
                                         if ( $self->_files->{$finished_file}->{'crashed'} > $self->_submitted_limit - 1 ) {
@@ -259,9 +260,9 @@ sub BUILD {
                                 $msg .= "; Finished $finished_file";
                                 if ( $self->_files->{$finished_file}->{'finished'} ) {
                                     $msg .= "; Already finished!!!";
-                                    $self->_process_created_files($jobid, 1);
+                                    $self->_process_created_files($jobid, 1, 0);
                                 } else {
-                                    $self->_process_created_files($jobid, 0);
+                                    $self->_process_created_files($jobid, 0, 0);
     
                                     $self->_files->{$finished_file}->{'finished'} = time();
     
@@ -395,13 +396,18 @@ sub DESTROY {
 }
 
 sub _process_created_files {
-    my ( $self, $jobid, $delete ) = @_;
+    my ( $self, $jobid, $delete, $error ) = @_;
 
     my $finished_file = $self->_jobs->{$jobid};
+    
+    my $output_dir = "output";
+    if ( $error ) {
+        $output_dir = "error";
+    }
 
     my $global_orig_dir   = Treex::Core::Run::construct_output_dir_name(
         $self->workdir . '/output', $jobid, $self->host, $self->port);
-    my $global_target_dir = $self->workdir . '/output/';
+    my $global_target_dir = $self->workdir . "/$output_dir/";
 
     my @cmds = ();
 

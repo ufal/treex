@@ -1416,15 +1416,16 @@ sub _check_job_errors {
 
     my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
     if ( $fatal_job ) {
-        my $error_file = $workdir;
+        my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         if ($fatal_doc =~ /[0-9]+/) {
-            $error_file .= "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
-        } else {
-            $error_file .= "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
+            $error_file = $workdir . "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
+            if ( ! -d $error_file ) {
+                $error_file = $workdir . "/error/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
+            }
         }
         my $command     = "grep -h -A 10 -B 25 FATAL $error_file";
         my $fatal_lines = qx($command);
-        log_info "********************** $command  ******************\n";
+        log_info "********************** $command  ******************";
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
         log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
