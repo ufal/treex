@@ -44,7 +44,8 @@ sub forms_of_lemma {
         'FORMS_OF_LEMMA' . "\t" . join(
             "\t", $lemma, $arg_ref->{tag_regex} // '', $arg_ref->{limit} // '', $arg_ref->{guess} // '',
             $arg_ref->{no_capitalization} // ''
-        ), 1
+        ),
+        1
     );
 
     log_fatal('No lemma given to forms_of_lemma()') if !defined $lemma;
@@ -104,11 +105,12 @@ sub forms_of_lemma {
         push @forms, $fi;
         last if $limit and ( ++$found >= $limit );
     }
-    log_debug( "FORMS_OF_LEMMA RETURN\t" . join( "\t", @forms ), 1 );
-    return (
-        grep { $_->get_tag =~ /-$/ } @forms,
-        grep { $_->get_tag !~ /-$/ } @forms,
+    my @ret = (
+        ( grep { $_->get_tag =~ /-$/ } @forms ),
+        ( grep { $_->get_tag !~ /-$/ } @forms ),
     );
+    log_debug( "FORMS_OF_LEMMA RETURN\t" . join( "\t", @ret ), 1 );
+    return @ret;
 }
 
 # Note that this actually returns a random form (because the forms are not sorted).
