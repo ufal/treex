@@ -1433,7 +1433,6 @@ sub _check_job_errors {
     my $workdir = $self->workdir;
 
     my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
-    log_warn("FATAL Error: $fatal_job + $fatal_doc");
     if ( $fatal_job ) {
         my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         if ($fatal_doc =~ /[0-9]+/) {
