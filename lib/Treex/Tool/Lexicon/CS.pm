@@ -4,7 +4,7 @@ use utf8;
 use autodie;
 
 #TODO: Better way how to make it automatically download.
-my $POSSADJ_FN = 'generated_data/extracted_from_CNK/possessive_adjectives.tsv';
+my $POSSADJ_FN = 'data/models/lexicon/cs/possessive_adjectives.tsv';
 use Treex::Core::Resource qw(require_file_from_share);
 my $possadj_filename = require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
 
