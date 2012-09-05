@@ -284,7 +284,14 @@ sub _add_quotes {    # adding quotes only if param. value contains a space
     my ($block_parameter) = @_;
     my ( $name, $value ) = split /=/, $block_parameter, 2;
     if ( $value =~ /\s/ ) {
-        return "$name=\"$value\"";
+        my $res_string = "$name=";
+        $value =~ s/\\/X/g;
+        if ( $value !~ /'/ ) {
+            $res_string .= "'" . $value . "'";
+        } else {
+            $res_string .= '"' . $value . '"';
+        }
+        return $res_string;
     }
     return $block_parameter;
 }
