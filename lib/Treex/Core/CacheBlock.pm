@@ -5,9 +5,6 @@ use Treex::Core::Resource;
 use Digest::MD5 qw(md5_hex);
 use Storable;
 use Time::HiRes;
-use App::whichpm 'which_pm';
-use Treex::Tool::Memcached::Memcached;
-
 extends 'Treex::Core::Block';
 
 #TODO: params could be obtained directly from block
@@ -16,6 +13,13 @@ has block => ( is => 'ro', isa => 'Treex::Core::Block' );
 
 has cache => (is => 'ro', isa => 'Cache::Memcached');
 has _loaded => (is => 'rw', isa => 'Bool', default => 0);
+
+sub BUILD {
+    my $self = shift;
+    require Treex::Tool::Memcached::Memcached;
+
+    return;
+}
 
 override 'get_hash' => sub {
     my $self = shift;

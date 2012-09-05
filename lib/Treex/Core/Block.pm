@@ -6,7 +6,7 @@ use Digest::MD5 qw(md5_hex);
 use Storable;
 use Time::HiRes;
 use App::whichpm 'which_pm';
-use Readonly::XS;
+use Readonly;
 
 has selector => ( is => 'ro', isa => 'Treex::Type::Selector',        default => '', );
 has language => ( is => 'ro', isa => 'Maybe[Treex::Type::LangCode]', builder => 'build_language' );

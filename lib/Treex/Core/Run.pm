@@ -16,7 +16,7 @@ use File::Which;
 use List::MoreUtils qw(first_index);
 use IO::Interactive;
 use Time::HiRes;
-use Readonly::XS;
+use Readonly;
 use POSIX;
 use Exporter;
 use Sys::Hostname;

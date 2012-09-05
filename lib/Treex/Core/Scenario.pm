@@ -1,7 +1,6 @@
 package Treex::Core::Scenario;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::CacheBlock;
 use File::Basename;
 use File::Slurp;
 use File::chdir;
@@ -213,6 +212,9 @@ sub _build_parser {
 
 sub _build_cache {
     my $self = shift;
+
+
+    require Treex::Core::CacheBlock;
 
     if ( $self->runner && $self->runner->cache ) {
         return Treex::Tool::Memcached::Memcached::get_connection(
@@ -529,6 +531,8 @@ sub start {
     foreach my $block ( @{ $self->loaded_blocks } ) {
         $block->process_start() if ( !$block->is_started );
     }
+
+    return;
 }
 
 # Apply the scenario to documents given in parameter
@@ -538,16 +542,18 @@ sub apply_to_documents {
 
     my $number_of_blocks = @{ $self->loaded_blocks };
     my $block_number = 0;
-    
+
     foreach my $document (@documents){
         log_info "Processing document" . $document->full_filename;
-    
+
         foreach my $block ( @{ $self->loaded_blocks } ) {
             $block_number++;
             log_info "Applying block $block_number/$number_of_blocks " . ref($block);
             $block->process_document($document);
         }
     }
+
+    return;
 }
 
 # Apply process_end to all blocks for which this has not yet been applied
@@ -558,6 +564,8 @@ sub end {
     foreach my $block ( @{ $self->loaded_blocks } ) {
         $block->process_end() if ( $block->is_started );
     }
+
+    return;
 }
 
 use Module::Reload;
@@ -592,8 +600,8 @@ Treex::Core::Scenario - a larger Treex processing unit, composed of blocks
 
  my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
  $scenario->run;
- 
- 
+
+
  $scenario = Treex::Core::Scenario->new(from_string => 'W2A::EN::Segment language=en');
  $scenario->start();
  $scenario->apply_to_documents($doc1, $doc2);
@@ -674,16 +682,16 @@ Please note that C<start()> must be called before the first call to this method 
 after the last call to this method.
 
 The scenario does not need to contain a document reader if documents are given
-explicitly. 
+explicitly.
 
 =item $scenario->start();
 
-Apply C<process_start()> to all blocks in the scenario. 
+Apply C<process_start()> to all blocks in the scenario.
 This is called automatically by C<run()>, but must be called before C<apply_to_document()>.
 
 =item $scenario->end();
 
-Apply C<process_end()> to all blocks in the scenario. 
+Apply C<process_end()> to all blocks in the scenario.
 This is called automatically by C<run()>, but must be called after calls to C<apply_to_document()>.
 
 
