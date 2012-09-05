@@ -209,6 +209,8 @@ sub BUILD {
                                 } else {
                                     $msg .= "; Crashed during loading";
                                 }
+                                $self->status->{"info_fatal_job"} = $jobid;
+                                $self->status->{"info_fatal_doc"} = $finished_file;
     
                                 # increase number of crashed jobs
                                 $self->status->{'info_fatalerror'} = $self->status->{'info_fatalerror'} + 1;

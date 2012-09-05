@@ -943,11 +943,18 @@ sub _is_in_fatalerror
 
     my $fatal_file = $self->workdir . "/status/fatalerror";
 
-    if ( ! -f $fatal_file ) {
-        return;
+    my $timestamp = 0;
+    if ( -f $fatal_file ) {
+        $timestamp = (stat($fatal_file))[9];
     }
 
-    my $timestamp = (stat($fatal_file))[9];
+    # first use information stored in shared variable
+    # sometimes fatal_file is not presented yet
+    my ( $job, $doc ) = ( $sh_job_status{'info_fatal_job'}, $sh_job_status{'info_fatal_doc'} );
+    if ( $job && $doc ) {
+        $self->_set_fatalerror_job($job);
+        $self->_set_fatalerror_doc($doc);
+    }
 
     if ( $timestamp > $self->_fatalerror_ts ) {
         open(my $fh, "<", $fatal_file) or log_fatal($!);
@@ -960,9 +967,20 @@ sub _is_in_fatalerror
             }
 
             my ( $job, $doc ) = split( / /, $line );
-            $self->_set_fatalerror_job($job);
-            $self->_set_fatalerror_doc($doc);
-            log_info( 'Fatal error found in job ' . $job . ( $doc !~ /loading/ ? ', document ' : ' ' ) . $doc );
+            if ( $doc =~ /[0-9]+/ ) {
+                my $error_file = $self->workdir . "/error/doc" . sprintf( "%07d", $doc ) . ".stderr";
+                # sometimes error file is not stored yet
+                # so keep older values
+                if ( -f $error_file ) {
+                    $self->_set_fatalerror_job($job);
+                    $self->_set_fatalerror_doc($doc);
+                }
+            } else {
+                $self->_set_fatalerror_job($job);
+                $self->_set_fatalerror_doc($doc);
+            }
+
+            log_info( 'Fatal error found in job ' . $job . ( $doc =~ /[0-9]+/ ? ', document ' : ' ' ) . $doc );
             my $fatal_file = $self->_get_job_status_filename($self->_fatalerror_job, "fatalerror");
             qx(touch $fatal_file);
         }
@@ -1415,6 +1433,7 @@ sub _check_job_errors {
     my $workdir = $self->workdir;
 
     my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
+    log_warn("FATAL Error: $fatal_job + $fatal_doc");
     if ( $fatal_job ) {
         my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         if ($fatal_doc =~ /[0-9]+/) {
