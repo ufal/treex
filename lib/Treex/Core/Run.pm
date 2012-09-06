@@ -1685,7 +1685,7 @@ sub _execute_on_cluster {
         my @new_scenario_lines = map {
             my $line = $_;
             $line =~ s/\Q$reader_line\E/$new_reader_line/;
-            return $line; } @scenario_lines;
+        } @scenario_lines;
 
         # save scenario into new file
         $self->_set_tmp_scenario_file($self->_tmp_input_dir . "/scenario.scen");
