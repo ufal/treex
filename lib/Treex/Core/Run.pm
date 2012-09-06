@@ -749,7 +749,7 @@ sub _quote_argument {
     return '"' . $arg . '"';
 }
 
-sub _create_job_scripts {
+sub _execute_jobs {
     my ($self)      = @_;
     my $current_dir = Cwd::cwd;
     my $workdir     = $self->workdir;
@@ -770,87 +770,99 @@ sub _create_job_scripts {
         close $TEMP;
     }
 
-    foreach my $jobnumber ( map { sprintf( "%03d", $_ ) } 1 .. $self->jobs ) {
-        my $script_filename = "scripts/job$jobnumber.sh";
-        open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
-        print $J "#!/bin/bash\n\n";
-        my $started_file = ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
-            . "/status/job$jobnumber.started";
-
-        print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . $started_file . ";\n";
-        print $J "stat $started_file;\n";
-        print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
-        print $J "cd $current_dir\n\n";
-        print $J "source " . Treex::Core::Config->lib_core_dir()
-            . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
-
-
-        my $opts_and_scen = "";
-        if ( $self->_tmp_scenario_file ) {
-            my %extra = ();
-            map { $extra{$_} = 1 } @{$self->extra_argv};
-            for my $arg (@{$self->ARGV}) {
-                if ( ! $extra{$arg}) {
-                    $opts_and_scen .= " " . _quote_argument($arg);
-                }
-            }
-            $opts_and_scen .= " " . _quote_argument($self->_tmp_scenario_file);
-        } else {
-            $opts_and_scen .= join ' ', map { _quote_argument($_) } @{ $self->ARGV };
-        }
-
-        if ( $self->filenames ) {
-            $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
-        }
-        print $J $input . "treex --server=".$SERVER_HOST.":".$SERVER_PORT." --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
-            . " 2>> $workdir/status/job$jobnumber.started\n\n";
-        print $J "date +'%s' > $workdir/status/job$jobnumber.finished\n";
-        close $J;
-        chmod 0777, "$workdir/$script_filename";
-    }
-    return;
-}
-
-sub _run_job_scripts {
-    my ($self) = @_;
-    my $workdir = $self->workdir;
-    if ( substr( $workdir, 0, 1 ) ne '/' ) {
-        $workdir = "./$workdir";
-    }
     foreach my $jobnumber ( 1 .. $self->jobs ) {
-        $self->{_jobs_finished}->{$jobnumber} = 0;
-
-        my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
-
-        if ( $self->local ) {
-            system "$workdir/$script_filename &";
-        }
-        else {
-            my $mem       = $self->mem;
-            my $qsub_opts = '-cwd -e error/ -S /bin/bash';
-            $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
-            $qsub_opts .= ' -p ' . $self->priority;
-            $qsub_opts .= ' ' . $self->qsub;
-            $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
-
-            open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
-
-            my $firstline = <$QSUB>;
-            close $QSUB;
-            chomp $firstline if ( defined $firstline );
-            if ( defined $firstline && $firstline =~ /job (\d+)/ ) {
-                push @{ $self->sge_job_numbers }, $1;
-            }
-            else {
-                log_fatal 'Job number not detected after the attempt at submitting the job. ' .
-                    "Perhaps it was not possible to submit the job. See files in $workdir/output";
-            }
-        }
+        $self->_create_job_script(sprintf( "%03d", $jobnumber), $input );
+        $self->_run_job_script($jobnumber);
     }
+
     log_info $self->jobs . ' jobs '
         . ( $self->local ? 'executed locally.' : 'submitted to the cluster.' )
         . ' Waiting for confirmation that they started...';
 
+    return;
+}
+
+sub _create_job_script {
+    my ($self, $jobnumber, $input) = @_;
+
+    my $workdir     = $self->workdir;
+    my $current_dir = Cwd::cwd;
+
+    my $script_filename = "scripts/job$jobnumber.sh";
+    open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
+    print $J "#!/bin/bash\n\n";
+    my $started_file = ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
+        . "/status/job$jobnumber.started";
+
+    print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . $started_file . ";\n";
+    print $J "stat $started_file;\n";
+    print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
+    print $J "cd $current_dir\n\n";
+    print $J "source " . Treex::Core::Config->lib_core_dir()
+        . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
+
+
+    my $opts_and_scen = "";
+    if ( $self->_tmp_scenario_file ) {
+        my %extra = ();
+        map { $extra{$_} = 1 } @{$self->extra_argv};
+        for my $arg (@{$self->ARGV}) {
+            if ( ! $extra{$arg}) {
+                $opts_and_scen .= " " . _quote_argument($arg);
+            }
+        }
+        $opts_and_scen .= " " . _quote_argument($self->_tmp_scenario_file);
+    } else {
+        $opts_and_scen .= join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+    }
+
+    if ( $self->filenames ) {
+        $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
+    }
+    print $J $input . "treex --server=".$SERVER_HOST.":".$SERVER_PORT." --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
+        . " 2>> $workdir/status/job$jobnumber.started\n\n";
+    print $J "date +'%s' > $workdir/status/job$jobnumber.finished\n";
+    close $J;
+    chmod 0777, "$workdir/$script_filename";
+
+    return;
+}
+
+sub _run_job_script {
+    my ($self, $jobnumber) = @_;
+
+    my $workdir = $self->workdir;
+    if ( substr( $workdir, 0, 1 ) ne '/' ) {
+        $workdir = "./$workdir";
+    }
+    $self->{_jobs_finished}->{$jobnumber} = 0;
+
+    my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
+
+    if ( $self->local ) {
+        system "$workdir/$script_filename &";
+    }
+    else {
+        my $mem       = $self->mem;
+        my $qsub_opts = '-cwd -e error/ -S /bin/bash';
+        $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
+        $qsub_opts .= ' -p ' . $self->priority;
+        $qsub_opts .= ' ' . $self->qsub;
+        $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
+
+        open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+
+        my $firstline = <$QSUB>;
+        close $QSUB;
+        chomp $firstline if ( defined $firstline );
+        if ( defined $firstline && $firstline =~ /job (\d+)/ ) {
+            push @{ $self->sge_job_numbers }, $1;
+        }
+        else {
+            log_fatal 'Job number not detected after the attempt at submitting the job. ' .
+                "Perhaps it was not possible to submit the job. See files in $workdir/output";
+        }
+    }
 
     return;
 }
@@ -1670,9 +1682,9 @@ sub _execute_on_cluster {
 
         # construct new scenario
         my $new_reader_line = "Read::Treex from='!".$self->_tmp_input_dir."\/*.streex'";
-        my @new_scenario_lines = map { 
+        my @new_scenario_lines = map {
             my $line = $_;
-            $line =~ s/\Q$reader_line\E/$new_reader_line/; 
+            $line =~ s/\Q$reader_line\E/$new_reader_line/;
             return $line; } @scenario_lines;
 
         # save scenario into new file
@@ -1785,8 +1797,7 @@ sub _execute_on_cluster {
     $server_thread->detach();
     sleep(2);
 
-    $self->_create_job_scripts();
-    $self->_run_job_scripts();
+    $self->_execute_jobs();
 
     STDOUT->autoflush(1);
     STDERR->autoflush(1);
