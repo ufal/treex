@@ -1,0 +1,31 @@
+# -*- cperl -*-
+
+#ifndef TREEX_UTILS
+#define TREEX_UTILS
+
+#include <contrib/pml/PML.mak>
+
+package TreexUtils;
+
+use Treex::Core::Node::A;
+use Treex::Core::Node::T;
+
+sub AGetEParents {
+    return shift->get_eparents({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1});
+}
+
+sub AGetEChildren {
+    return shift->get_echildren({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1});
+}
+
+sub TGetEChildren {
+    return shift->get_echildren({or_topological => 1, ignore_incorrect_tree_structure => 1});
+}
+
+sub TGetEParents {
+    return shift->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
+}
+
+1;
+
+#endif TREEX_UTILS

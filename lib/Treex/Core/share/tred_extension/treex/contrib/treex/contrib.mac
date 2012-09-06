@@ -4,6 +4,8 @@
 #ifinclude <contrib/eng-vallex/contrib.mac>
 #ifinclude <contrib/vallex/contrib.mac>
 
+#include "utils.mac"
+
 package Treex_mode;
 #binding-context Treex_mode
 
