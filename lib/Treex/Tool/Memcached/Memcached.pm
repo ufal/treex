@@ -65,23 +65,44 @@ sub start_memcached {
         print $script "rm $script\n";
         close $script;
 
-        # run on cluster
-        if ($CLUSTER) {
-            my $qsub_memory = "-hard -l mem_free=${memory}G -l act_mem_free=${memory}G -l h_vmem=${memory}G";
-            system("qsub -j y -cwd -S /bin/bash -N memcached $qsub_memory $script");
-            sleep 2;
-        }
+        execute_script($script, $memory, "memcached");
 
-        # run locally
-        else {
-            system("bash $script &") == 0 || log_fatal 'Cannot execute memcached locally';
-        }
         return 1;
     }
     else {
         log_info "Memcached is already executed at $server.\n";
         return 0;
     }
+}
+
+sub execute_script {
+    my ($script, $memory, $name, $wait) = @_;
+
+    # run on cluster
+    if ($CLUSTER) {
+        my $qsub_memory = "-hard -l mem_free=${memory}G -l act_mem_free=${memory}G -l h_vmem=${memory}G";
+        system("qsub -j y -cwd -S /bin/bash -N $name $qsub_memory $script");
+        sleep 2;
+        if ( $wait ) {
+            do {
+                sleep 5;
+                Treex::Core::Log::progress();
+            } while (scalar grep {/\Q$name\E/} `qstat -r`);
+        }
+    }
+
+    # run locally
+    else {
+        system("bash $script &") == 0 || log_fatal 'Cannot execute memcached locally';
+        if ( $wait ) {
+            do {
+                sleep 5;
+                progress();
+            } while (scalar grep {/\Q$name\E/} `ps ax`);
+        }
+    }
+
+    return;
 }
 
 sub stop_memcached {
@@ -280,6 +301,32 @@ sub fix_key
     my $key = shift;
     $key =~ s/\s/__/g;
     return $key;
+}
+
+sub is_running {
+    return get_memcached_hostname() ? 1 : 0;
+}
+
+sub get_class_from_filename {
+    my $required_file = shift;
+
+    if ( $required_file =~ /\.maxent\./ ) {
+        return 'TranslationModel::MaxEnt::Model';
+    }
+    elsif ( $required_file =~ /\.nb\./ ) {
+        return 'TranslationModel::NaiveBayes::Model';
+    }
+    elsif ( $required_file =~ /\.static\./ ) {
+        return 'TranslationModel::Static::Model';
+    }
+
+    return;
+}
+
+sub is_supported_package {
+    my $package = shift;
+
+    return $package =~ /(TrFAddVariants|TrLAddVariants|TrFRerank2)/;
 }
 
 1;

@@ -227,9 +227,9 @@ has 'survive' => (
 has 'cache' => (
     traits        => ['Getopt'],
     is            => 'rw',
-    isa           => 'Bool',
-    default       => 0,
-    documentation => 'Use cache.',
+    isa           => 'Str',
+    default       => "",
+    documentation => 'Use cache. Required memory is specified in format memcached,loading. Numbers are in GB.',
 );
 
 has 'server' => (
@@ -346,6 +346,8 @@ sub DESTROY {
     if ( $self->jobindex ) {
         _redirect_output( $self->outdir, "terminating", $self->jobindex );
     }
+
+    return;
 }
 
 sub _execute {
@@ -509,11 +511,11 @@ sub _execute_locally {
         $reader->set_jobs( $self->jobs );
         $reader->set_jobindex( $self->jobindex );
 
-        $SIG{'TERM'} = \&term;
-        $SIG{'ABRT'} = \&term;
-        $SIG{'SEGV'} = \&term;
-        $SIG{'KILL'} = \&term;
-        $SIG{__DIE__} = sub { term(); log_fatal($_[0]); die($_[0]); };
+        local $SIG{'TERM'} = \&term;
+        local $SIG{'ABRT'} = \&term;
+        local $SIG{'SEGV'} = \&term;
+        local $SIG{'KILL'} = \&term;
+        local $SIG{'__DIE__'} = sub { term(); log_fatal($_[0]); die($_[0]); };
 
         mkdir $self->outdir;
         my $outdir = $self->_get_tmp_outdir($self->outdir, $self->jobindex );
@@ -586,6 +588,8 @@ sub term {
 #        log_warn("Calling consumer->fatalerror");
         $consumer->fatalerror();
     }
+
+    return;
 }
 
 sub _get_tmp_outdir {
@@ -644,6 +648,7 @@ sub close_handles
     STDERR->flush();
     STDERR->sync();
 
+    return;
 }
 
 sub _init_scenario
@@ -1665,7 +1670,10 @@ sub _execute_on_cluster {
 
         # construct new scenario
         my $new_reader_line = "Read::Treex from='!".$self->_tmp_input_dir."\/*.streex'";
-        my @new_scenario_lines = map { s/\Q$reader_line\E/$new_reader_line/; $_; } @scenario_lines;
+        my @new_scenario_lines = map { 
+            my $line = $_;
+            $line =~ s/\Q$reader_line\E/$new_reader_line/; 
+            return $line; } @scenario_lines;
 
         # save scenario into new file
         $self->_set_tmp_scenario_file($self->_tmp_input_dir . "/scenario.scen");
@@ -1689,6 +1697,71 @@ sub _execute_on_cluster {
         $self->_delete_tmp_dirs();
         $self->_delete_jobs_and_exit();
         };
+
+    # load models
+    if ( $self->cache ) {
+
+        require Treex::Tool::Memcached::Memcached;
+
+        # determine required memory
+        my ($memcached_memory, $loading_memory) = split(",", $self->cache);
+        if ( ! $memcached_memory ) {
+            $memcached_memory = 5; # TODO: magic number
+        }
+        if ( ! $loading_memory ) {
+            $loading_memory = $memcached_memory;
+        }
+
+
+        # start memcached
+        if ( ! Treex::Tool::Memcached::Memcached::is_running() ) {
+            Treex::Tool::Memcached::Memcached::start_memcached($memcached_memory);
+            sleep 2;
+        }
+
+        # set cache for scenario
+        $self->scenario->set_cache(
+            Treex::Tool::Memcached::Memcached::get_connection("documents-cache")
+        );
+
+
+        # check missing models
+        my @missing_files = ();
+        for my $line ($self->scenario->get_required_files()) {
+            chomp $line;
+            my ($package, $file) = split(/\t/, $line);
+            my $required_file = Treex::Core::Resource::require_file_from_share( $file, 'Memcached' );
+            if ( Treex::Tool::Memcached::Memcached::is_supported_package($package) &&
+                ! Treex::Tool::Memcached::Memcached::contains($required_file)) {
+                my $class = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
+                if ( ! $class ) {
+                    log_warn "Unknown model file for $file\n";
+                    next;
+                }
+
+                push(@missing_files, [$class, $required_file]);
+            }
+        }
+
+        # some files are missing => load
+        if ( @missing_files ) {
+            log_info("Models will be loaded - BEGIN");
+            # create file with required files
+            my $script = File::Temp->new( UNLINK => 0, TEMPLATE => 'loading-qsub-XXXX', SUFFIX => '.sh' );
+            print $script "#!/bin/bash\n";
+            print $script "perl -e 'use Treex::Tool::Memcached::Memcached;";
+            for my $item ( @missing_files ) {
+                my ($class, $required_file) = ($item->[0], $item->[1]);
+                print $script "Treex::Tool::Memcached::Memcached::load_model(\"$class\", \"$required_file\" );";
+            }
+            print $script ";'\n";
+            close $script;
+
+            Treex::Tool::Memcached::Memcached::execute_script($script, $loading_memory, $script, 1);
+            log_info("Models will be loaded - END");
+        }
+
+    }
 
     $self->_set_number_of_docs($self->scenario->document_reader->number_of_documents);
     $self->_write_total_doc_number($self->_number_of_docs);

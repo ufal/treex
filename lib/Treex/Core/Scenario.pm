@@ -96,7 +96,7 @@ has runner => (
 );
 
 has cache => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Maybe[Cache::Memcached]',
     builder => '_build_cache',
 );
@@ -213,8 +213,8 @@ sub _build_parser {
 sub _build_cache {
     my $self = shift;
 
-
     require Treex::Core::CacheBlock;
+    require Treex::Tool::Memcached::Memcached;
 
     if ( $self->runner && $self->runner->cache ) {
         return Treex::Tool::Memcached::Memcached::get_connection(
@@ -274,10 +274,13 @@ sub get_required_files {
     my @required_files;
     foreach my $block_item (@block_items) {
         my $block = $self->_load_block($block_item);
-        push @required_files,
-            map {
-            $block_item->{block_name} . "\t" . $_;
-            } $block->get_required_share_files();
+        # TODO: probably HACK
+        if ( $block->meta->has_method("get_required_share_files") ) {
+            push @required_files,
+                map {
+                $block_item->{block_name} . "\t" . $_;
+                } $block->get_required_share_files();
+        }
     }
     return @required_files;
 }
@@ -345,12 +348,12 @@ sub run {
     my $number_of_documents = $reader->number_of_documents_per_this_job() || '?';
     my $document_number     = 0;
 
-    if ( $self->cache ) {
-        $document_number = $self->_run_with_cache( $reader, $number_of_blocks, $number_of_documents );
-    }
-    else {
+    #if ( $self->cache ) {
+    #    $document_number = $self->_run_with_cache( $reader, $number_of_blocks, $number_of_documents );
+    #}
+    #else {
         $document_number = $self->_run_without_cache( $reader, $number_of_blocks, $number_of_documents );
-    }
+    #}
 
     log_info "Processed $document_number document"
         . ( $document_number == 1 ? '' : 's' );
