@@ -1272,6 +1272,9 @@ sub _wait_for_jobs {
                 if ( $last_status_skipped > 5 ) {
                     $last_status_skipped = 0;
                     $last_status_msg = "";
+
+                    # maybe there is an error
+                    $check_errors = 1;
                 }
             }
 
@@ -1314,7 +1317,8 @@ sub _wait_for_jobs {
         # Note that if $current_doc_number == $total_doc_number,
         # the output of the last doc was not forwarded yet.
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
-
+        
+        log_warn("Remaining jobs: " . $sh_job_status{'info_remaining_jobs'});
         if ( $sh_job_status{'info_remaining_jobs'} == 0 ) {
             log_warn("All workers are dead.");
             $self->_delete_tmp_dirs();
@@ -1492,13 +1496,15 @@ sub _check_epilog_before_finish {
 
     my $workdir = $self->workdir;
     $from_job_number ||= 1;
-#    log_info("_check_epilog_before_finish - $from_job_number");
-    for my $job_num ( $from_job_number .. $self->{_max_started} ) {
-        my $job_str = sprintf "%.3d", $job_num;
-
+    for my $job_num ( $from_job_number .. $self->jobs ) {
+        my $job_str = sprintf("job%03d", $job_num);
+        if ( $self->name) {
+            $job_str = $self->name . "-" . $job_str;
+        }
         next if $self->_is_job_finished($job_num);
-        my $epilog_name = glob "$workdir/error/job$job_str.sh.e*";
-        next if $self->_is_job_finished($job_num);
+        log_info("Checking: $workdir/error/$job_str.sh.e*");
+        my $epilog_name = glob "$workdir/error/$job_str.sh.e*";
+        log_warn("Epilog name: " . ($epilog_name ? $epilog_name : "missing!!!") );
         if ( $epilog_name ) {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
@@ -1514,8 +1520,15 @@ sub _check_epilog_before_finish {
 #                system "tail $workdir/output/job$job_str-doc*.stderr";
                 log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
                 if ( $self->survive ) {
+                    $sh_job_status{'job_' . $job_num . '_' . "fatalerror"} = 1;
                     log_warn("Fatal error ignored due to the --survive option, be careful.");
-                    return;
+                    my $act_rem = $sh_job_status{'info_remaining_jobs'};
+                    $act_rem--;
+                    if ( $act_rem >= 0 ) {
+                        $sh_job_status{'info_remaining_jobs'} = $act_rem;
+                    }
+                    log_warn("_check: REM: " . $sh_job_status{'info_remaining_jobs'});
+                    #return;
                 }
                 else {
                     log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
@@ -1685,6 +1698,7 @@ sub _execute_on_cluster {
         my @new_scenario_lines = map {
             my $line = $_;
             $line =~ s/\Q$reader_line\E/$new_reader_line/;
+            $line;
         } @scenario_lines;
 
         # save scenario into new file
