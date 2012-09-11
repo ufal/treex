@@ -269,7 +269,7 @@ sub get_connection
 
     my $server = get_memcached_hostname();
     if ( !$server ) {
-        return 0;
+        return;
     }
 
     my $memd = Cache::Memcached->new(
