@@ -41,7 +41,7 @@ sub _create_n_node($$$@) {
     return if @m_nodes == 0;    # empty entity
 
     # Check if this entity already exists
-    my @m_ids = sort map($_->get_attr('id'), @m_nodes);
+    my @m_ids = sort map{ $_->id } @m_nodes;
     my $m_ids_label = join $MRF_DELIM, @m_ids;
     return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
 
@@ -57,7 +57,7 @@ sub _create_n_node($$$@) {
     # Set normalized name
     my $normalized_name;
     foreach my $m_node (@m_nodes) {
-        my $act_normalized_name = $m_node->get_attr('lemma');
+        my $act_normalized_name = $m_node->lemma;
         $act_normalized_name =~ s/[-_].*//;
         $normalized_name .= " " . $act_normalized_name;
     }
@@ -117,7 +117,7 @@ sub _read_named_entities($$) {
     if (! $n_node->get_children) {
         my $m_nodes_ref = $n_node->get_deref_attr('m.rf');
         if ($m_nodes_ref) {
-            my @m_ids = sort map $_->get_attr('id'), @{$m_nodes_ref};
+            my @m_ids = sort map $_->id, @{$m_nodes_ref};
             $entities{join $MRF_DELIM, @m_ids} = $n_node if $n_node->get_attr("ne_type");
             return @m_ids;
         }
@@ -137,29 +137,27 @@ sub process_document {
     %entities = ();
 
     # Recognize named entities from SCzechM and save results to SCzechN tree
-    my $svm = new Algorithm::SVM( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
-    my $twoword_svm = new Algorithm::SVM( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
-    my $threeword_svm = new Algorithm::SVM( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
+    my $svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
+    my $twoword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
+    my $threeword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
 
     foreach my $bundle ( $document->get_bundles() ) {
 
         # Try to retrieve N-tree from file or create a new tree
         my $n_root;
 
-        if ($bundle->contains_ntree()) {    # tree exists
-            $n_root = $bundle->get_tree('SCzechN');
+        if ($bundle->has_ntree()) {    # n-tree exists
+            $n_root = $bundle->get_ntree();
             %entities = ();
             _read_named_entities($document, $n_root);
         }
         else {                                      # no tree
             # Create new SCzechN tree
-            $n_root = $bundle->create_tree( 'SCzechN' );
-            $n_root->set_attr( 'id', 'SCzechN' . $bundle->get_attr('id') );
-#            $n_nodes_ids_count = 2;
+            $n_root = $bundle->create_ntree();
         }
 
         # Get SCzechM (morphologic) tree
-        my $m_root  = $bundle->get_tree('SCzechM');
+        my $m_root  = $bundle->get_ntree;
         my @m_nodes = $m_root->get_children;
 
         # Iterate through SCzechM (morphologic) tree
@@ -174,17 +172,17 @@ sub process_document {
 
                 # Extract classification features for threeword entities
                 my %threeword_args;
-                $threeword_args{'first_form'} = $pprev_m_node->get_attr('form');
-                $threeword_args{'first_lemma'} = $pprev_m_node->get_attr('lemma');
-                $threeword_args{'first_tag'} = $pprev_m_node->get_attr('tag');
+                $threeword_args{'first_form'} = $pprev_m_node->form();
+                $threeword_args{'first_lemma'} = $pprev_m_node->lemma();
+                $threeword_args{'first_tag'} = $pprev_m_node->tag();
 
-                $threeword_args{'second_form'} = $prev_m_node->get_attr('form');
-                $threeword_args{'second_lemma'} = $prev_m_node->get_attr('lemma');
-                $threeword_args{'second_tag'} = $prev_m_node->get_attr('tag');
+                $threeword_args{'second_form'} = $prev_m_node->form;
+                $threeword_args{'second_lemma'} = $prev_m_node->lemma;
+                $threeword_args{'second_tag'} = $prev_m_node->tag;
 
-                $threeword_args{'third_form'} = $m_node->get_attr('form');
-                $threeword_args{'third_lemma'} = $m_node->get_attr('lemma');
-                $threeword_args{'third_tag'} = $m_node->get_attr('tag');
+                $threeword_args{'third_form'} = $m_node->form;
+                $threeword_args{'third_lemma'} = $m_node->lemma;
+                $threeword_args{'third_tag'} = $m_node->tag;
 
                 my @threeword_features = extract_threeword_features(%threeword_args);
 
@@ -209,25 +207,25 @@ sub process_document {
                 # Extract classification features for twoword entities
                 my %twoword_args;
 
-                $twoword_args{'prev_form'}      = defined $pprev_m_node ? $pprev_m_node->get_attr('form') : $FALLBACK_LEMMA;
-                $twoword_args{'prev_lemma'}     = defined $pprev_m_node ? $pprev_m_node->get_attr('lemma') : $FALLBACK_LEMMA;
-                $twoword_args{'prev_tag'}       = defined $pprev_m_node ? $pprev_m_node->get_attr('tag') : $FALLBACK_TAG;
+                $twoword_args{'prev_form'}      = defined $pprev_m_node ? $pprev_m_node->form : $FALLBACK_LEMMA;
+                $twoword_args{'prev_lemma'}     = defined $pprev_m_node ? $pprev_m_node->lemma : $FALLBACK_LEMMA;
+                $twoword_args{'prev_tag'}       = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
 
-                $twoword_args{'first_form'}     = $prev_m_node->get_attr('form');
-                $twoword_args{'first_lemma'}    = $prev_m_node->get_attr('lemma');
-                $twoword_args{'first_tag'}      = $prev_m_node->get_attr('tag');
+                $twoword_args{'first_form'}     = $prev_m_node->form;
+                $twoword_args{'first_lemma'}    = $prev_m_node->lemma;
+                $twoword_args{'first_tag'}      = $prev_m_node->tag;
 
-                $twoword_args{'second_form'}    = $m_node->get_attr('form');
-                $twoword_args{'second_lemma'}   = $m_node->get_attr('lemma');
-                $twoword_args{'second_tag'}     = $m_node->get_attr('tag');
+                $twoword_args{'second_form'}    = $m_node->form;
+                $twoword_args{'second_lemma'}   = $m_node->lemma;
+                $twoword_args{'second_tag'}     = $m_node->tag;
 
-                $twoword_args{'next_lemma'}     = defined $next_m_node ? $next_m_node->get_attr('lemma') : $FALLBACK_LEMMA;
+                $twoword_args{'next_lemma'}     = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
 
                 my @twoword_features = extract_twoword_features(%twoword_args);
 
                 # Classify twoword entity using SVM classifier
                 my $data = new Algorithm::SVM::DataSet( Label => 0, Data => \@twoword_features );
-                my $classification = int2str( $twoword_svm->predict($data) ); 
+                my $classification = int2str( $twoword_svm->predict($data) );
 
                 # Save twoword named entity to CzechN tree
                 if ($classification ne 'x') {   # twoword entity found
@@ -243,13 +241,13 @@ sub process_document {
 
             # Extract features for oneword entities
             my %args;
-            $args{'act_form'}   = $m_node->get_attr('form');
-            $args{'act_lemma'}  = $m_node->get_attr('lemma');
-            $args{'act_tag'}    = $m_node->get_attr('tag');
-            $args{'prev_lemma'} = defined $prev_m_node ? $prev_m_node->get_attr('lemma') : $FALLBACK_LEMMA;
-            $args{'prev_tag'} = defined $prev_m_node ? $prev_m_node->get_attr('tag') : $FALLBACK_TAG;
-            $args{'pprev_tag'} = defined $pprev_m_node ? $pprev_m_node->get_attr('tag') : $FALLBACK_TAG;
-            $args{'next_lemma'} = defined $next_m_node ? $next_m_node->get_attr('lemma') : $FALLBACK_LEMMA;
+            $args{'act_form'}   = $m_node->form;
+            $args{'act_lemma'}  = $m_node->lemma;
+            $args{'act_tag'}    = $m_node->tag;
+            $args{'prev_lemma'} = defined $prev_m_node ? $prev_m_node->lemma : $FALLBACK_LEMMA;
+            $args{'prev_tag'} = defined $prev_m_node ? $prev_m_node->tag : $FALLBACK_TAG;
+            $args{'pprev_tag'} = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
+            $args{'next_lemma'} = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
             my @features = extract_oneword_features(%args);
 
             # Classify oneword entity using SVM classifier
@@ -272,15 +270,15 @@ sub process_document {
 
             # Threeword containers
             if ($i > 1) {
-                my ($ppid, $pid, $id) = ( $m_nodes[$i - 2]->get_attr('id'), $m_nodes[$i-1]->get_attr('id'), $m_nodes[$i]->get_attr('id') );
+                my ($ppid, $pid, $id) = ( $m_nodes[$i - 2]->id, $m_nodes[$i-1]->id, $m_nodes[$i]->id );
 
                 # pf-pm-ps => P
                 if (   exists $entities{$ppid} && $entities{$ppid}->get_attr('ne_type') eq 'pf'
                     && exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pm'
                     && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
                    ) {
-                    _create_n_container( $document, $n_root, 'P', 
-                                         [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]], 
+                    _create_n_container( $document, $n_root, 'P',
+                                         [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
                                          [$ppid, $pid, $i] );
                 }
 
@@ -288,7 +286,7 @@ sub process_document {
                 if (   exists $entities{$ppid.$MRF_DELIM.$pid} && $entities{$ppid.$MRF_DELIM.$pid}->get_attr('ne_type') eq 'td'
                     && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'tm'
                    ) {
-                    _create_n_container( $document, $n_root, 'T', 
+                    _create_n_container( $document, $n_root, 'T',
                                          [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
                                          [$ppid.$MRF_DELIM.$pid, $id] );
                 }
@@ -296,11 +294,11 @@ sub process_document {
 
             # Twoword containers
             if ($i > 0) {
-                my ($pid, $id) = ( $m_nodes[$i-1]->get_attr('id'), $m_nodes[$i]->get_attr('id') );
+                my ($pid, $id) = ( $m_nodes[$i-1]->id, $m_nodes[$i]->id );
 
                 # pf-ps => P
                 if (   exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pf'
-                    && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps' 
+                    && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
                    ) {
                     _create_n_container( $document, $n_root, 'P', [$m_nodes[$i-1], $m_nodes[$i]], [$pid, $id] );
                 }
