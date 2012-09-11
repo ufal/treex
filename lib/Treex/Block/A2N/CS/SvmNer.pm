@@ -8,8 +8,16 @@ use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 use NER::SVM_Czech::CzechNamedEntitiesCommon;
 
+my ($svm, $twoword_svm,  $threeword_svm);
+
+# load the models
+sub BUILD {
+    my $svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
+    my $twoword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
+    my $threeword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
+}
+
 # Global data structures
-#our $n_nodes_ids_count = 1;     # ids count to ensure unique ids
 our %entities = ();             # already existing named entities
 our $MRF_DELIM = '.';
 
@@ -98,7 +106,7 @@ sub _create_n_container($$$$$) {
     }
     $n_node->set_attr('normalized_name', $normalized_name);
 
-    # Remember this container 
+    # Remember this container
     $entities{$m_ids_label} = $n_node;
 
 #    print STDERR ( "Named entity container \"$classification\" found: ". $n_node->get_attr('normalized_name')."\n");
@@ -129,183 +137,157 @@ sub _read_named_entities($$) {
     return @m_ids;
 }
 
-# Main entry point
-sub process_document {
-    my ( $self, $document ) = @_;
 
-    # do not remember entities across documents
-    %entities = ();
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    %entities = (); # no need to remember entities across sentences
+    my $n_root = $zone->create_ntree();
+    my @m_nodes = $zone->get_atree->get_descendants({sorted=>1});
 
-    # Recognize named entities from SCzechM and save results to SCzechN tree
-    my $svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
-    my $twoword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
-    my $threeword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
+    # Iterate through SCzechM (morphologic) tree
+  MNODE:
+    for ( my $i = 0; $i <= $#m_nodes; $i++ ) {
+        my ( $pprev_m_node, $prev_m_node, $m_node, $next_m_node, $nnext_m_node ) =
+            ( $m_nodes[ $i - 2 ], $m_nodes[ $i - 1 ], $m_nodes[$i], $m_nodes[ $i + 1 ], $m_nodes[ $i + 2 ] );
 
-    foreach my $bundle ( $document->get_bundles() ) {
+        ### Threeword named entities ###
 
-        # Try to retrieve N-tree from file or create a new tree
-        my $n_root;
+        if ( $i >= 2 ) {
 
-        if ($bundle->has_ntree()) {    # n-tree exists
-            $n_root = $bundle->get_ntree();
-            %entities = ();
-            _read_named_entities($document, $n_root);
-        }
-        else {                                      # no tree
-            # Create new SCzechN tree
-            $n_root = $bundle->create_ntree();
-        }
+            # Extract classification features for threeword entities
+            my %threeword_args;
+            $threeword_args{'first_form'} = $pprev_m_node->form();
+            $threeword_args{'first_lemma'} = $pprev_m_node->lemma();
+            $threeword_args{'first_tag'} = $pprev_m_node->tag();
 
-        # Get SCzechM (morphologic) tree
-        my $m_root  = $bundle->get_ntree;
-        my @m_nodes = $m_root->get_children;
+            $threeword_args{'second_form'} = $prev_m_node->form;
+            $threeword_args{'second_lemma'} = $prev_m_node->lemma;
+            $threeword_args{'second_tag'} = $prev_m_node->tag;
 
-        # Iterate through SCzechM (morphologic) tree
-        MNODE:
-        for ( my $i = 0; $i <= $#m_nodes; $i++ ) {
-            my ( $pprev_m_node, $prev_m_node, $m_node, $next_m_node, $nnext_m_node ) =
-                ( $m_nodes[ $i - 2 ], $m_nodes[ $i - 1 ], $m_nodes[$i], $m_nodes[ $i + 1 ], $m_nodes[ $i + 2 ] );
+            $threeword_args{'third_form'} = $m_node->form;
+            $threeword_args{'third_lemma'} = $m_node->lemma;
+            $threeword_args{'third_tag'} = $m_node->tag;
 
-            ### Threeword named entities ###
+            my @threeword_features = extract_threeword_features(%threeword_args);
 
-            if ( $i >= 2 ) {
+            # Classify threeword entity using SVM classifier
+            my $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@threeword_features );
+            my $classification = int2str( $threeword_svm->predict($data) );
 
-                # Extract classification features for threeword entities
-                my %threeword_args;
-                $threeword_args{'first_form'} = $pprev_m_node->form();
-                $threeword_args{'first_lemma'} = $pprev_m_node->lemma();
-                $threeword_args{'first_tag'} = $pprev_m_node->tag();
-
-                $threeword_args{'second_form'} = $prev_m_node->form;
-                $threeword_args{'second_lemma'} = $prev_m_node->lemma;
-                $threeword_args{'second_tag'} = $prev_m_node->tag;
-
-                $threeword_args{'third_form'} = $m_node->form;
-                $threeword_args{'third_lemma'} = $m_node->lemma;
-                $threeword_args{'third_tag'} = $m_node->tag;
-
-                my @threeword_features = extract_threeword_features(%threeword_args);
-
-                # Classify threeword entity using SVM classifier
-                my $data = new Algorithm::SVM::DataSet( Label => 0, Data => \@threeword_features );
-                my $classification = int2str( $threeword_svm->predict($data) );
-
-                # Save threeword named entity to CzechN three
-                if ($classification ne 'x') {
-                   my $n_node = _create_n_node( $document, $n_root, $classification, $pprev_m_node, $prev_m_node, $m_node);
-                    if ( $classification eq 'gu' ) {
-                        $i += 2;
-                        next MNODE;
-                    }
-                }
-            }
-
-            ### Twoword named entities ###
-
-            if ( $i >= 1 ) {   # only makes sense when we have already two nodes
-
-                # Extract classification features for twoword entities
-                my %twoword_args;
-
-                $twoword_args{'prev_form'}      = defined $pprev_m_node ? $pprev_m_node->form : $FALLBACK_LEMMA;
-                $twoword_args{'prev_lemma'}     = defined $pprev_m_node ? $pprev_m_node->lemma : $FALLBACK_LEMMA;
-                $twoword_args{'prev_tag'}       = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
-
-                $twoword_args{'first_form'}     = $prev_m_node->form;
-                $twoword_args{'first_lemma'}    = $prev_m_node->lemma;
-                $twoword_args{'first_tag'}      = $prev_m_node->tag;
-
-                $twoword_args{'second_form'}    = $m_node->form;
-                $twoword_args{'second_lemma'}   = $m_node->lemma;
-                $twoword_args{'second_tag'}     = $m_node->tag;
-
-                $twoword_args{'next_lemma'}     = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
-
-                my @twoword_features = extract_twoword_features(%twoword_args);
-
-                # Classify twoword entity using SVM classifier
-                my $data = new Algorithm::SVM::DataSet( Label => 0, Data => \@twoword_features );
-                my $classification = int2str( $twoword_svm->predict($data) );
-
-                # Save twoword named entity to CzechN tree
-                if ($classification ne 'x') {   # twoword entity found
-                    _create_n_node( $document, $n_root, $classification, $prev_m_node, $m_node);
-                    if ( $classification eq 'gu' ) {
-                        $i += 1;
-                        next MNODE;
-                    }
-                }
-            }
-
-            ### Oneword named entitites
-
-            # Extract features for oneword entities
-            my %args;
-            $args{'act_form'}   = $m_node->form;
-            $args{'act_lemma'}  = $m_node->lemma;
-            $args{'act_tag'}    = $m_node->tag;
-            $args{'prev_lemma'} = defined $prev_m_node ? $prev_m_node->lemma : $FALLBACK_LEMMA;
-            $args{'prev_tag'} = defined $prev_m_node ? $prev_m_node->tag : $FALLBACK_TAG;
-            $args{'pprev_tag'} = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
-            $args{'next_lemma'} = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
-            my @features = extract_oneword_features(%args);
-
-            # Classify oneword entity using SVM classifier
-            my $data = new Algorithm::SVM::DataSet( Label => 0, Data => \@features );
-            my $classification = int2str( $svm->predict($data) );
-
-            # Post classification using simple rule based classifier
-            if ( $classification eq 'x' ) {
-                $classification = _rule_classifier($m_node);
-            }
-
-            # Save oneword named entity to CzechN tree
-            if ( $classification ne 'x' ) {
-                _create_n_node( $document, $n_root, $classification, $m_node );
-            }
-        } #MNODE
-
-        # Second iteration - recognize containers
-        for my $i (0..$#m_nodes) {
-
-            # Threeword containers
-            if ($i > 1) {
-                my ($ppid, $pid, $id) = ( $m_nodes[$i - 2]->id, $m_nodes[$i-1]->id, $m_nodes[$i]->id );
-
-                # pf-pm-ps => P
-                if (   exists $entities{$ppid} && $entities{$ppid}->get_attr('ne_type') eq 'pf'
-                    && exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pm'
-                    && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
-                   ) {
-                    _create_n_container( $document, $n_root, 'P',
-                                         [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
-                                         [$ppid, $pid, $i] );
-                }
-
-                # td-tm => T
-                if (   exists $entities{$ppid.$MRF_DELIM.$pid} && $entities{$ppid.$MRF_DELIM.$pid}->get_attr('ne_type') eq 'td'
-                    && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'tm'
-                   ) {
-                    _create_n_container( $document, $n_root, 'T',
-                                         [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
-                                         [$ppid.$MRF_DELIM.$pid, $id] );
-                }
-            }
-
-            # Twoword containers
-            if ($i > 0) {
-                my ($pid, $id) = ( $m_nodes[$i-1]->id, $m_nodes[$i]->id );
-
-                # pf-ps => P
-                if (   exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pf'
-                    && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
-                   ) {
-                    _create_n_container( $document, $n_root, 'P', [$m_nodes[$i-1], $m_nodes[$i]], [$pid, $id] );
+            # Save threeword named entity to CzechN three
+            if ($classification ne 'x') {
+                my $n_node = _create_n_node( $document, $n_root, $classification, $pprev_m_node, $prev_m_node, $m_node);
+                if ( $classification eq 'gu' ) {
+                    $i += 2;
+                    next MNODE;
                 }
             }
         }
-    } # bundle
 
+        ### Twoword named entities ###
+
+        if ( $i >= 1 ) { # only makes sense when we have already two nodes
+
+            # Extract classification features for twoword entities
+            my %twoword_args;
+
+            $twoword_args{'prev_form'}      = defined $pprev_m_node ? $pprev_m_node->form : $FALLBACK_LEMMA;
+            $twoword_args{'prev_lemma'}     = defined $pprev_m_node ? $pprev_m_node->lemma : $FALLBACK_LEMMA;
+            $twoword_args{'prev_tag'}       = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
+
+            $twoword_args{'first_form'}     = $prev_m_node->form;
+            $twoword_args{'first_lemma'}    = $prev_m_node->lemma;
+            $twoword_args{'first_tag'}      = $prev_m_node->tag;
+
+            $twoword_args{'second_form'}    = $m_node->form;
+            $twoword_args{'second_lemma'}   = $m_node->lemma;
+            $twoword_args{'second_tag'}     = $m_node->tag;
+
+            $twoword_args{'next_lemma'}     = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
+
+            my @twoword_features = extract_twoword_features(%twoword_args);
+
+            # Classify twoword entity using SVM classifier
+            my $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@twoword_features );
+            my $classification = int2str( $twoword_svm->predict($data) );
+
+            # Save twoword named entity to CzechN tree
+            if ($classification ne 'x') { # twoword entity found
+                _create_n_node( $document, $n_root, $classification, $prev_m_node, $m_node);
+                if ( $classification eq 'gu' ) {
+                    $i += 1;
+                    next MNODE;
+                }
+            }
+        }
+
+        ### Oneword named entitites
+
+        # Extract features for oneword entities
+        my %args;
+        $args{'act_form'}   = $m_node->form;
+        $args{'act_lemma'}  = $m_node->lemma;
+        $args{'act_tag'}    = $m_node->tag;
+        $args{'prev_lemma'} = defined $prev_m_node ? $prev_m_node->lemma : $FALLBACK_LEMMA;
+        $args{'prev_tag'} = defined $prev_m_node ? $prev_m_node->tag : $FALLBACK_TAG;
+        $args{'pprev_tag'} = defined $pprev_m_node ? $pprev_m_node->tag : $FALLBACK_TAG;
+        $args{'next_lemma'} = defined $next_m_node ? $next_m_node->lemma : $FALLBACK_LEMMA;
+        my @features = extract_oneword_features(%args);
+
+        # Classify oneword entity using SVM classifier
+        my $data =  Algorithm::SVM::DataSet->new( Label => 0, Data => \@features );
+        my $classification = int2str( $svm->predict($data) );
+
+        # Post classification using simple rule based classifier
+        if ( $classification eq 'x' ) {
+            $classification = _rule_classifier($m_node);
+        }
+
+        # Save oneword named entity to CzechN tree
+        if ( $classification ne 'x' ) {
+            _create_n_node( $document, $n_root, $classification, $m_node );
+        }
+    }                           #MNODE
+
+    # Second iteration - recognize containers
+    for my $i (0..$#m_nodes) {
+
+        # Threeword containers
+        if ($i > 1) {
+            my ($ppid, $pid, $id) = ( $m_nodes[$i - 2]->id, $m_nodes[$i-1]->id, $m_nodes[$i]->id );
+
+            # pf-pm-ps => P
+            if (   exists $entities{$ppid} && $entities{$ppid}->get_attr('ne_type') eq 'pf'
+                       && exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pm'
+                           && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
+                       ) {
+                _create_n_container( $document, $n_root, 'P',
+                                     [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
+                                     [$ppid, $pid, $i] );
+            }
+
+            # td-tm => T
+            if (   exists $entities{$ppid.$MRF_DELIM.$pid} && $entities{$ppid.$MRF_DELIM.$pid}->get_attr('ne_type') eq 'td'
+                       && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'tm'
+                   ) {
+                _create_n_container( $document, $n_root, 'T',
+                                     [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
+                                     [$ppid.$MRF_DELIM.$pid, $id] );
+            }
+        }
+
+        # Twoword containers
+        if ($i > 0) {
+            my ($pid, $id) = ( $m_nodes[$i-1]->id, $m_nodes[$i]->id );
+
+            # pf-ps => P
+            if (   exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pf'
+                       && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
+                   ) {
+                _create_n_container( $document, $n_root, 'P', [$m_nodes[$i-1], $m_nodes[$i]], [$pid, $id] );
+            }
+        }
+    }
 
     return;
 }
