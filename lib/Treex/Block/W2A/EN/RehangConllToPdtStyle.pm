@@ -123,9 +123,9 @@ __END__
 
 Modifies the topology of trees parsed by a CoNLL-trained parser
 (e.g. by the McDonald's MST parser or by the MaltParser),
-so it is more like PDT a-level: 
+so it is more like PDT a-level:
 Auxiliary verbs (I<be, have, will, do>) should depend on the main verb, not vice versa.
-Also I<to> as infinitive marker depends on the infinitive, but that is CoNLL default.  
+Also I<to> as infinitive marker depends on the infinitive, but that is CoNLL default.
 
 Attributes C<is_member> and C<conll_deprel> must be filled before applying this block.
 

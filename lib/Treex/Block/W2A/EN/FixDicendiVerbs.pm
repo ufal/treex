@@ -23,7 +23,7 @@ sub process_atree {
         )
     {
         my $dicendi = $a_nodes[$i_dicendi];
-        
+
         # Skip words which are not verbs (e.g "claim") in this context
         next DICENDI if $dicendi->tag !~ /^V/;
 
@@ -61,7 +61,7 @@ sub process_atree {
 
 In sentences like I<"It was good," said Mr. Brown.>,
 the dicendi verb (I<said>) should govern the direct speech subtree
-(i.e. its root I<was>). 
+(i.e. its root I<was>).
 
 =back
 

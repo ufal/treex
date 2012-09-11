@@ -31,7 +31,7 @@ sub process_anode {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::EN::FixSharedSubjects - find subjects that should be shared modifiers of a coordination

@@ -67,7 +67,7 @@ sub parse_chunk {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::EN::ParseMalt

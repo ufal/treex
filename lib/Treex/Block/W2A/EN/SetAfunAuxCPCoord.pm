@@ -97,7 +97,7 @@ serving as an infinitive marker.
 
 Only primary prepositions are marked in this block,
 for multiword prepositions (secondary) you can use
-L<SEnglishM_to_SEnglishA::Fix_multiword_prep_and_conj>. 
+L<SEnglishM_to_SEnglishA::Fix_multiword_prep_and_conj>.
 This block doesn't change already filled afun values.
 
 =back

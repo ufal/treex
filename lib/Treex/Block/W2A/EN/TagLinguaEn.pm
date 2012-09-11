@@ -43,7 +43,7 @@ sub _revert_form {    #because Lingua::EN::Tagger changes some forms to another,
 
 # Substitutions according to http://search.cpan.org/src/ACOBURN/Lingua-EN-Tagger-0.13/README
 # The PennTB tagset is described e.g. at http://www.computing.dcu.ie/~acahill/tagset.html
-sub _correct_lingua_tag {                     
+sub _correct_lingua_tag {
     my ( $self, $linguatag, $wordform ) = @_;
     $linguatag = uc $linguatag; # newer versions of Lingua::EN::Tagger use lowercased tags
     given ($linguatag) {

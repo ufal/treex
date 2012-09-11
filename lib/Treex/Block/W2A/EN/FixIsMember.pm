@@ -36,7 +36,7 @@ sub is_coord {
 
 =item Treex::Block::W2A::EN::FixIsMember
 
-The attribute C<is_member> is set to 0 if no sibling-node is member. 
+The attribute C<is_member> is set to 0 if no sibling-node is member.
 
 =back
 

@@ -80,7 +80,7 @@ __END__
 Modifies the way of annotating coordinations
 from the Stanford style to the PDT a-level style.
 
-The difference is what is the head of a coordination:  
+The difference is what is the head of a coordination:
 Stanford style uses one of the members of the coordination,
 while PDT style uses the conjunction.
 

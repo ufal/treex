@@ -40,7 +40,7 @@ sub _build_memory {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::EN::ParseMST

@@ -10,7 +10,7 @@ has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );
 
 sub get_coarse_grained_tag {
     my ( $self, $tag ) = @_;
-    
+
     my $ctag = substr( $tag, 0, 2 );
 
     return $ctag;
@@ -19,7 +19,7 @@ sub get_coarse_grained_tag {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::EN::ParseMSTperl

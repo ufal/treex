@@ -88,16 +88,16 @@ sub process_atree {
             last LENGTH_LOOP;
         }
     }
-    
+
     my @unproc_as_idxs = sort {$a <=> $b} keys %unproc_as_idxs_hash;
     $self->as_X_as_Y(\@anodes, \@unproc_as_idxs);
-    
+
     return 1;
 }
 
 sub as_X_as_Y {
     my ($self, $a_nodes, $unproc_as_idxs) = @_;
-    
+
     return if (@$unproc_as_idxs < 2);
 
     my $as1_idx = shift @$unproc_as_idxs;
@@ -138,7 +138,7 @@ sub as_X_as_Y {
             $as1_idx = $as2_idx;
             next;
         }
-        
+
         # select all necessary members
         # as' involved
         my $as1 = $a_nodes->[$as1_idx];
@@ -170,8 +170,8 @@ sub as_X_as_Y {
         $as2->set_parent($super_parent);
         $X_head->set_parent($super_parent);
         $Y_head->set_parent($super_parent);
-        
-        
+
+
         # final rehanging
         $X_head->set_parent($as1);
         $as2->set_parent($as1);
@@ -184,14 +184,14 @@ sub as_X_as_Y {
         if (any {$_->is_member} $as1->get_siblings) {
             $as1->set_is_member(1);
         }
-        
-        # TODO temporary solution: the configuration that achieves 
+
+        # TODO temporary solution: the configuration that achieves
         # the best translation score
         # in fact, both should be aux and obtain a special formeme
         # on the t-layer
         $as1->set_afun('Adv');
         $as2->set_afun('AuxC');
-        
+
         # we've found as+X+as+Y, so we have to skip processing of the span after the second "as"
         $as1_idx = shift @$unproc_as_idxs;
     }
@@ -202,7 +202,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::EN::FixMultiwordPrepAndConj
 
@@ -216,7 +216,7 @@ children, all marked with AuxC afun. Illusory overlapping
 of multiword conjunctions (such as in 'as well as if') is
 prevented.
 
-In addition to 'as well/long/soon/far as', other spans 
+In addition to 'as well/long/soon/far as', other spans
 that match the patter 'as X as Y' are being resolved here.
 The involved nodes are reorganized as follows: as1<X as2<Y>>.
 Afuns for both 'as' are set.

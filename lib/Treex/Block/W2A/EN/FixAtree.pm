@@ -331,13 +331,13 @@ sub switch_with_first_child {
     my ( $first_child, @other_children ) = $node->get_children() or return;
     my $parent = $node->get_parent();
     $first_child->set_parent($parent);
-    
+
     # Determiners must be leaves (and $node will go under $first_child)
     if ($first_child->tag eq 'DT'){
         $first_child = $parent;
     }
-    
-    
+
+
     foreach my $child (@other_children) {
         if ( $child->lemma eq 'of' ) {
             $child->set_parent($first_child);
