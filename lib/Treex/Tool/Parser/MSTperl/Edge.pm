@@ -76,7 +76,7 @@ sub signature {
 # all features, including dynamic if applicable, for labelling only
 sub features_all_labeller {
     my ($self) = @_;
-    
+
     my $ALGORITHM = $self->config->labeller_algorithm;
 
     if ($ALGORITHM < 20) {

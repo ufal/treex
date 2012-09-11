@@ -370,7 +370,7 @@ sub get_all_features {
     # Edge; 0: all features, 1: only dynamic, -1: only non-dynamic
     # either get only dynamic features or get all but dynamic features
     my ( $self, $edge, $only_dynamic_features ) = @_;
-    
+
     # try to get features from cache
     # TODO: cache not used now and probably does not even work:
     # check&fix or remove
@@ -406,13 +406,13 @@ sub get_all_features {
             my $feature_value =
                 $self->get_feature_value( $feature_index, $simple_feature_values );
             if ( $self->array_features->{$feature_index} ) {
-    
+
                 #it is an array feature, the returned value is an array reference
                 foreach my $value ( @{$feature_value} ) {
                     push @features, "$feature_index:$value";
                 }
             } else {
-    
+
                 #it is not an array feature, the returned value is a string
                 if ( $feature_value ne '' ) {
                     push @features, "$feature_index:$feature_value";
@@ -587,19 +587,19 @@ sub get_simple_feature_sub_reference {
 # returns undef if there is no grandparent, i.e. the parent is the root
 sub get_grandparent {
     my ( $self, $edge ) = @_;
-    
+
     return ($edge->parent)->parent;
 }
 
 sub feature_distance {
     my ( $self, $edge ) = @_;
-    
+
     return $self->feature_distance_generic($edge->parent, $edge->child);
 }
 
 sub feature_grandparent_distance {
     my ( $self, $edge ) = @_;
-    
+
     my $grandparent = $self->get_grandparent($edge);
     if (defined $grandparent) {
         return $self->feature_distance_generic($edge->parent, $edge->child);
@@ -634,7 +634,7 @@ sub feature_attachement_direction {
 
 sub feature_grandparent_attachement_direction {
     my ( $self, $edge ) = @_;
-    
+
     my $grandparent = $self->get_grandparent($edge);
     if (defined $grandparent) {
     return $self->feature_attachement_direction_generic(
@@ -666,7 +666,7 @@ sub feature_parent {
 
 sub feature_grandparent {
     my ( $self, $edge, $field_index ) = @_;
-    
+
     my $grandparent = $self->get_grandparent($edge);
     if (defined $grandparent) {
         return ( $grandparent->fields->[$field_index] );
@@ -682,7 +682,7 @@ sub feature_parent_label {
 
 sub feature_previous_label {
     my ( $self, $edge ) = @_;
-    
+
     my $left_sibling = $self->get_left_sibling($edge);
     if (defined $left_sibling) {
         return ( $left_sibling->child->label );
@@ -693,7 +693,7 @@ sub feature_previous_label {
 
 sub feature_grandparent_label {
     my ( $self, $edge ) = @_;
-    
+
     my $grandparent = $self->get_grandparent($edge);
     if (defined $grandparent) {
         return ( $grandparent->label );
@@ -725,7 +725,7 @@ sub feature_left_sibling {
 
 sub feature_right_sibling {
     my ( $self, $edge, $field_index ) = @_;
-    
+
     my $right_sibling = $self->get_right_sibling($edge);
     if (defined $right_sibling) {
         return ( $right_sibling->child->fields->[$field_index] );

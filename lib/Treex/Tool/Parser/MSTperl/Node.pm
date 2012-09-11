@@ -57,7 +57,7 @@ sub _label_set {
 
     if ($ALGORITHM < 20) {
         if ( $self->_fully_built ) {
-    
+
             # TODO: not necessary to update ALL of the features!
             foreach my $child_edge ( @{ $self->children } ) {
                 my $edge_features = $self->config->

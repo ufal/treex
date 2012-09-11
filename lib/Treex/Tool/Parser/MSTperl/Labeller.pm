@@ -152,13 +152,13 @@ sub label_subtree {
         # do one Viterbi step - assign possible labels to $edge
         # (including appropriate scores of course)
         $states = $self->label_edge( $edge, $states, $prev_edge );
-        
+
         if ( $ALGORITHM == 20 ) {
             # set the best label
             my $best_state_label = $self->find_best_state_label( $states );
             $edge->child->label($best_state_label);
         }
-        
+
         $prev_edge = $edge;
     }
 
@@ -168,14 +168,14 @@ sub label_subtree {
     if ( $ALGORITHM != 20 ) {
         # End - find the state with the best score - this is the result
         my $best_state_label = $self->find_best_state_label( $states );
-    
+
         if ($best_state_label) {
-    
+
             my @labels = @{ $states->{$best_state_label}->{'path'} };
-    
+
             # get rid of SEQUENCE_BOUNDARY_LABEL
             shift @labels;
-    
+
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 2 ) {
                 print "best state $best_state_label score: " . "\n";
@@ -183,14 +183,14 @@ sub label_subtree {
                     . ( join ' ', @labels )
                     . "\n";
             }
-    
+
             foreach my $edge (@edges) {
                 my $label = shift @labels;
                 $edge->child->label($label)
             }
-            
+
         } else {
-    
+
             # TODO do not die, provide some backoff instead
             # (do some smoothing, at least when no states are generated)
             print "No best state generated, cannot label the sentence!"
@@ -209,13 +209,13 @@ sub label_subtree {
 }
 
 sub find_best_state_label {
-    
+
     my ( $self, $states ) = @_;
-    
+
     # "negative infinity" (works both with real probs and with their logs)
     my $best_state_score = -999999999;
     my $best_state_label = undef;
-    
+
     foreach my $state_label ( keys %$states ) {
         if ( $self->config->DEBUG >= 4 ) {
             print "state $state_label score: "
@@ -252,7 +252,7 @@ sub label_edge {
             my $best_prev_state_label = $self->find_best_state_label( $states );
             $prev_edge->child->label($best_prev_state_label);
         }
-    
+
         # only progress and/or debug info
         if ( $self->config->DEBUG >= 4 ) {
             print "    Processing state $last_state (score "
@@ -459,7 +459,7 @@ sub get_possible_labels {
         foreach my $label ( @{$all_labels} ) {
 
             # score = previous score + new score
-            
+
             if ($ALGORITHM == 20) {
                 if ( $self->config->DEBUG >= 4 ) {
                     print "    Score for label $label: "

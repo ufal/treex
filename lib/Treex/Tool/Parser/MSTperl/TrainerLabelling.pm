@@ -371,9 +371,9 @@ sub mira_tree_update {
             my $score_best = $self->model->get_label_score(
                 $label_best, $label_prev_best, $features
             );
-            
+
             if ($ALGORITHM == 19) {
-                
+
                 # inverse sigmoid
                 my $em_correct = - log (1 / $score_correct - 1)
                     / $self->config->SIGM_LAMBDA;
@@ -382,7 +382,7 @@ sub mira_tree_update {
                 # error to be distributed among features
                 my $margin = 1;
                 my $error = $em_best - $em_correct + $margin;
-                
+
                 # the same update is done twice with each feature
                 my $features_count = scalar( @{$features} );
                 my $update = $error / $features_count / 2;
@@ -405,9 +405,9 @@ sub mira_tree_update {
                         $label_best,
                     );
                 }
-                    
+
             } else {
-                
+
                 # this is actually a simple accuracy loss function (number of wrong
                 # labels in the sequence, here for one edge only) as described in
                 # Kevin Gimpel and Shay Cohen (2007):
@@ -416,9 +416,9 @@ sub mira_tree_update {
                 # which they show gave the best performance from all loss functions
                 # that they had tried
                 my $margin = 1;
-    
+
                 my $error = $score_best - $score_correct + $margin;
-    
+
                 if ( $error < 0 ) {
                     if ( $self->config->DEBUG >= 3 ) {
                         print "correct label $label_correct on "
@@ -429,16 +429,16 @@ sub mira_tree_update {
                     }
                     next;
                 }
-    
+
                 my $features_count = scalar( @{$features} );
-    
+
                 if ( $ALGORITHM == 8 || $ALGORITHM == 9 ) {
-    
+
                     # the same update is done four times with each feature
                     my $update = $error / $features_count / 4;
-    
+
                     foreach my $feature ( @{$features} ) {
-    
+
                         # TODO: which labels to use in transitions updates?
                         # none of the articles I have read
                         # mentions that specifically
@@ -448,7 +448,7 @@ sub mira_tree_update {
                         # (which makes some sense but
                         # several other combinations would
                         # make some sense as well -> let's try them, later)
-    
+
                         # positive emission update
                         $self->update_feature_score(
                             $feature,
@@ -456,7 +456,7 @@ sub mira_tree_update {
                             $sumUpdateWeight,
                             $label_correct,
                         );
-    
+
                         # positive transition update
                         $self->update_feature_score(
                             $feature,
@@ -465,7 +465,7 @@ sub mira_tree_update {
                             $label_correct,
                             $label_prev_correct,
                         );
-    
+
                         # negative emission update
                         $self->update_feature_score(
                             $feature,
@@ -473,7 +473,7 @@ sub mira_tree_update {
                             $sumUpdateWeight,
                             $label_best,
                         );
-    
+
                         # negative transition update
                         $self->update_feature_score(
                             $feature,
@@ -483,7 +483,7 @@ sub mira_tree_update {
                             $label_prev_best,
                         );
                     }
-    
+
                     # end if $ALGORITHM == 8|9
                 } elsif (
                     $ALGORITHM == 14
@@ -494,12 +494,12 @@ sub mira_tree_update {
                     || $ALGORITHM >= 20
                     )
                 {
-    
+
                     # the same update is done twice with each feature
                     my $update = $error / $features_count / 2;
-    
+
                     foreach my $feature ( @{$features} ) {
-    
+
                         # positive emission update
                         $self->update_feature_score(
                             $feature,
@@ -507,7 +507,7 @@ sub mira_tree_update {
                             $sumUpdateWeight,
                             $label_correct,
                         );
-    
+
                         # negative emission update
                         $self->update_feature_score(
                             $feature,
@@ -515,9 +515,9 @@ sub mira_tree_update {
                             $sumUpdateWeight,
                             $label_best,
                         );
-    
+
                     }
-    
+
                     # end if $ALGORITHM == 16|17
                 } else {
                     croak "TrainerLabelling->mira_tree_update not implemented"

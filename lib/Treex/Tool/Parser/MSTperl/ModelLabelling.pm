@@ -540,7 +540,7 @@ sub get_label_score {
         foreach my $feature (@$features) {
             $result += $self->get_emission_score( $label, $feature );
         }
-        
+
         # multiply by transitions score
         $result *= $self->get_transition_score( $label, $label_prev );
 
@@ -557,7 +557,7 @@ sub get_label_score {
 
         # sigmoid transformation
         $result = 1 / ( 1 + exp(- $result * $self->config->SIGM_LAMBDA) );
-        
+
         # multiply by transitions score
         $result *= $self->get_transition_score( $label, $label_prev );
 
@@ -608,7 +608,7 @@ sub get_label_score {
         foreach my $feature (@$features) {
             $result += $self->get_emission_score( $label, $feature );
         }
-        
+
         # TODO: could also compute using $label_prev,
         # using transitions to store these;
         # would allow to use full Viterbi
