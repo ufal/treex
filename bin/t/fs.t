@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
 BEGIN {
-    unless ( $ENV{AUTHOR_TESTING} and $ENV{EXPENSIVE_TESTING} ) {
+    unless ( $ENV{AUTHOR_TESTING} and $ENV{EXTREMELY_EXPENSIVE_TESTING} ) {
         require Test::More;
-        Test::More::plan( skip_all => 'these tests are expensive and only for testing by the author' );
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING and EXTREMELY_EXPENSIVE_TESTING' );
     }
 }
 
