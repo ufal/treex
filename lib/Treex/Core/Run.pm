@@ -1184,11 +1184,13 @@ sub _wait_for_jobs {
     my $last_status_msg = "";
     my $last_status_skipped = 0;
     my $last_fatalerror_count = 0;
+    
+    my $missing_docs = 0;
 
     log_info("\n");
 
     my $job_slice = $self->_get_slice($self->jobs);
-    $sh_job_status{'info_remaining_jobs'} = $self->jobs;
+    $sh_job_status{'info_crashed_jobs'} = 0;
 
     my $document_slice = 0;
     my $check_errors = 0;
@@ -1256,6 +1258,7 @@ sub _wait_for_jobs {
 
             $document_slice ||= $self->_get_slice($total_doc_number);
             $check_errors ||= int( $current_doc_number % $document_slice == 1);
+            $missing_docs = 0;
             next;
         }
         else {
@@ -1322,11 +1325,14 @@ sub _wait_for_jobs {
         # Note that if $current_doc_number == $total_doc_number,
         # the output of the last doc was not forwarded yet.
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
-        
-        log_warn("Remaining jobs: " . $sh_job_status{'info_remaining_jobs'});
-        if ( $sh_job_status{'info_remaining_jobs'} == 0 || 
-            ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number )
-        ) {
+
+        log_warn("Crashed jobs: " . $sh_job_status{'info_crashed_jobs'});
+
+        if ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number ) {
+            $missing_docs++;
+        }
+
+        if ( $sh_job_status{'info_crashed_jobs'} == $self->jobs || $missing_docs > 5 ) {
             log_warn("$current_doc_number < $total_doc_number");
             log_warn("All workers are dead.");
             $self->_delete_tmp_dirs();
@@ -1530,12 +1536,12 @@ sub _check_epilog_before_finish {
                 if ( $self->survive ) {
                     $sh_job_status{'job_' . $job_num . '_' . "fatalerror"} = 1;
                     log_warn("Fatal error ignored due to the --survive option, be careful.");
-                    my $act_rem = $sh_job_status{'info_remaining_jobs'};
+                    my $act_rem = $sh_job_status{'info_crashed_jobs'};
                     $act_rem--;
                     if ( $act_rem >= 0 ) {
-                        $sh_job_status{'info_remaining_jobs'} = $act_rem;
+                        $sh_job_status{'info_crashed_jobs'} = $act_rem;
                     }
-                    log_warn("_check: REM: " . $sh_job_status{'info_remaining_jobs'});
+                    log_warn("_check: REM: " . $sh_job_status{'info_crashed_jobs'});
                     #return;
                 }
                 else {

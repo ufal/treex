@@ -220,9 +220,9 @@ sub BUILD {
                                 if ( $remaining_jobs < 0 ) {
                                     $remaining_jobs = 0;
                                 }
-                                log_info( "Remains " . $remaining_jobs . " jobs out of " . $self->jobs );
+                                log_info( "Remains " . $remaining_jobs . " jobs (" . $self->_crashed_jobs . " crashed) out of " . $self->jobs );
     
-                                $self->status->{'info_remaining_jobs'} = $remaining_jobs;
+                                $self->status->{'info_crashed_jobs'} = $self->_crashed_jobs;
                                 if ( $remaining_jobs == 0 ) {
                                     $self->_mark_as_finished();
                                 }
