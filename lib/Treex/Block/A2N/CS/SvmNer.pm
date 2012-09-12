@@ -12,9 +12,9 @@ my ($svm, $twoword_svm,  $threeword_svm);
 
 # load the models
 sub BUILD {
-    my $svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
-    my $twoword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
-    my $threeword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
+    $svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$ONEWORD_MODEL_FILENAME );
+    $twoword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$TWOWORD_MODEL_FILENAME );
+    $threeword_svm = Algorithm::SVM->new( Model => $SVM_MODEL_DIR.$THREEWORD_MODEL_FILENAME );
 }
 
 # Global data structures
@@ -44,8 +44,8 @@ sub _rule_classifier($) {
 # with given classification
 # Third parameter is an array of SCzechM tree nodes,
 # whose m.rf's correspond to named entity.
-sub _create_n_node($$$@) {
-    my ( $document, $n_root, $classification, @m_nodes ) = @_;
+sub _create_n_node($$@) {
+    my ( $n_root, $classification, @m_nodes ) = @_;
     return if @m_nodes == 0;    # empty entity
 
     # Check if this entity already exists
@@ -79,8 +79,8 @@ sub _create_n_node($$$@) {
     return $n_node;
 }
 
-sub _create_n_container($$$$$) {
-    my ( $document, $n_root, $classification, $m_nodes_ref, $m_ids_ref ) = @_;
+sub _create_n_container($$$$) {
+    my ( $n_root, $classification, $m_nodes_ref, $m_ids_ref ) = @_;
     return if @{$m_ids_ref} == 0 || @{$m_nodes_ref} == 0; # empty container
 
     # Check if this container already exists
@@ -116,9 +116,9 @@ sub _create_n_container($$$$$) {
 # Reads already existing named entities in SCzechN tree into memory
 # to prevent overwriting them
 # Adding a function prototype to suppress warning
-sub _read_named_entities($$);
-sub _read_named_entities($$) {
-    my ($document, $n_node) = @_;
+sub _read_named_entities($);
+sub _read_named_entities($) {
+    my ($n_node) = @_;
     return if not $n_node;
 
     # leaf
@@ -132,7 +132,7 @@ sub _read_named_entities($$) {
     }
 
     # internal node
-    my @m_ids = sort map(_read_named_entities($document, $_), $n_node->get_children);
+    my @m_ids = sort map(_read_named_entities($_), $n_node->get_children);
     $entities{join '.', @m_ids} = $n_node if $n_node->get_attr('ne_type');
     return @m_ids;
 }
@@ -142,7 +142,7 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     %entities = (); # no need to remember entities across sentences
     my $n_root = $zone->create_ntree();
-    my @m_nodes = $zone->get_atree->get_descendants({sorted=>1});
+    my @m_nodes = $zone->get_atree->get_descendants({ordered=>1});
 
     # Iterate through SCzechM (morphologic) tree
   MNODE:
@@ -176,7 +176,7 @@ sub process_zone {
 
             # Save threeword named entity to CzechN three
             if ($classification ne 'x') {
-                my $n_node = _create_n_node( $document, $n_root, $classification, $pprev_m_node, $prev_m_node, $m_node);
+                my $n_node = _create_n_node( $n_root, $classification, $pprev_m_node, $prev_m_node, $m_node);
                 if ( $classification eq 'gu' ) {
                     $i += 2;
                     next MNODE;
@@ -213,7 +213,7 @@ sub process_zone {
 
             # Save twoword named entity to CzechN tree
             if ($classification ne 'x') { # twoword entity found
-                _create_n_node( $document, $n_root, $classification, $prev_m_node, $m_node);
+                _create_n_node( $n_root, $classification, $prev_m_node, $m_node);
                 if ( $classification eq 'gu' ) {
                     $i += 1;
                     next MNODE;
@@ -245,7 +245,7 @@ sub process_zone {
 
         # Save oneword named entity to CzechN tree
         if ( $classification ne 'x' ) {
-            _create_n_node( $document, $n_root, $classification, $m_node );
+            _create_n_node( $n_root, $classification, $m_node );
         }
     }                           #MNODE
 
@@ -261,7 +261,7 @@ sub process_zone {
                        && exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pm'
                            && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
                        ) {
-                _create_n_container( $document, $n_root, 'P',
+                _create_n_container( $n_root, 'P',
                                      [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
                                      [$ppid, $pid, $i] );
             }
@@ -270,7 +270,7 @@ sub process_zone {
             if (   exists $entities{$ppid.$MRF_DELIM.$pid} && $entities{$ppid.$MRF_DELIM.$pid}->get_attr('ne_type') eq 'td'
                        && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'tm'
                    ) {
-                _create_n_container( $document, $n_root, 'T',
+                _create_n_container( $n_root, 'T',
                                      [$m_nodes[$i-2], $m_nodes[$i-1], $m_nodes[$i]],
                                      [$ppid.$MRF_DELIM.$pid, $id] );
             }
@@ -284,7 +284,7 @@ sub process_zone {
             if (   exists $entities{$pid} && $entities{$pid}->get_attr('ne_type') eq 'pf'
                        && exists $entities{$id} && $entities{$id}->get_attr('ne_type') eq 'ps'
                    ) {
-                _create_n_container( $document, $n_root, 'P', [$m_nodes[$i-1], $m_nodes[$i]], [$pid, $id] );
+                _create_n_container( $n_root, 'P', [$m_nodes[$i-1], $m_nodes[$i]], [$pid, $id] );
             }
         }
     }
