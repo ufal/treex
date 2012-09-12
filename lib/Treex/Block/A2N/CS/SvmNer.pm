@@ -18,7 +18,7 @@ sub BUILD {
 }
 
 # Global data structures
-our %entities = ();             # already existing named entities
+our %entities = ();             # already existing named entities, nasty global variable
 our $MRF_DELIM = '.';
 
 # Simple rule based classifier
@@ -137,14 +137,21 @@ sub _read_named_entities($) {
     return @m_ids;
 }
 
-
 sub process_zone {
     my ( $self, $zone ) = @_;
     %entities = (); # no need to remember entities across sentences
-    my $n_root = $zone->create_ntree();
+    my $n_root = $zone;
     my @m_nodes = $zone->get_atree->get_descendants({ordered=>1});
 
-    # Iterate through SCzechM (morphologic) tree
+    if ($zone->has_ntree) {
+        $n_root = $zone->get_ntree;
+        _read_named_entities($n_root);
+    }
+    else {
+        $n_root = $zone->create_ntree;
+    }
+
+    # Iterate through a-nodes
   MNODE:
     for ( my $i = 0; $i <= $#m_nodes; $i++ ) {
         my ( $pprev_m_node, $prev_m_node, $m_node, $next_m_node, $nnext_m_node ) =
