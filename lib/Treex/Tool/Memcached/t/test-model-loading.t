@@ -2,7 +2,12 @@
 use strict;
 use warnings;
 
+# MemcachedTest.pm is in the same directory as this test file 
+# The test can be executed from any directory, so we must add this dir to @INC;
+use FindBin;
+use lib $FindBin::Bin;
 use MemcachedTest;
+
 use Treex::Tool::Memcached::Memcached;
 use Test::More;
 use File::Basename;
