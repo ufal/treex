@@ -60,7 +60,6 @@ sub call {
         # 111 connection refused
         $process = 0;
         delete $_[HEAP]{server};
-        log_fatal("Server $operation error $errnum: $errstr");
       },
       on_client_input => sub {
         # Handle client input.
