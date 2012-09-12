@@ -1107,10 +1107,12 @@ sub _print_output_files {
             my $doc_number_str = sprintf( "%07d", $doc_number );
             my $success     = 0;
             my $try = 0;
-            my $TRIES = 5;
+            my $TRIES = 10;
             while ( $try < $TRIES && ! $success ) {
-                if ( $try > 0 ) { sleep(2); }
-
+                if ( $try > 0 ) { 
+                    sleep(4);
+                    #log_info("$filename - $try"); 
+                }
                 open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
                 my $report      = $self->forward_error_level;
 
