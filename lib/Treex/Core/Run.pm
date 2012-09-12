@@ -1328,14 +1328,13 @@ sub _wait_for_jobs {
         # the output of the last doc was not forwarded yet.
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
 
-        log_warn("Crashed jobs: " . $sh_job_status{'info_crashed_jobs'});
+        #log_warn("Crashed jobs: " . $sh_job_status{'info_crashed_jobs'});
 
         if ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number ) {
             $missing_docs++;
         }
 
         if ( $sh_job_status{'info_crashed_jobs'} == $self->jobs || $missing_docs > 5 ) {
-            log_warn("$current_doc_number < $total_doc_number");
             log_warn("All workers are dead.");
             $self->_delete_tmp_dirs();
             $self->_delete_jobs_and_exit;
@@ -1509,7 +1508,6 @@ sub _check_epilog_before_finish {
     my ( $self, $from_job_number ) = @_;
 
     Treex::Tool::Probe::begin("_check_epilog_before_finish");
-    log_warn("Check epilog - $from_job_number");
     my $workdir = $self->workdir;
     $from_job_number ||= 1;
     for my $job_num ( $from_job_number .. $self->jobs ) {
@@ -1518,9 +1516,7 @@ sub _check_epilog_before_finish {
             $job_str = $self->name . "-" . $job_str;
         }
         next if $self->_is_job_finished($job_num);
-        log_info("Checking: $workdir/error/$job_str.sh.e*");
         my $epilog_name = glob "$workdir/error/$job_str.sh.e*";
-        log_warn("Epilog name: " . ($epilog_name ? $epilog_name : "missing!!!") );
         if ( $epilog_name ) {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
@@ -1543,7 +1539,6 @@ sub _check_epilog_before_finish {
                     if ( $act_rem >= 0 ) {
                         $sh_job_status{'info_crashed_jobs'} = $act_rem;
                     }
-                    log_warn("_check: REM: " . $sh_job_status{'info_crashed_jobs'});
                     #return;
                 }
                 else {
