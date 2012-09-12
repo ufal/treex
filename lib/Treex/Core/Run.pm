@@ -1256,6 +1256,7 @@ sub _wait_for_jobs {
 
             $document_slice ||= $self->_get_slice($total_doc_number);
             $check_errors ||= int( $current_doc_number % $document_slice == 1);
+            next;
         }
         else {
 
@@ -1304,6 +1305,10 @@ sub _wait_for_jobs {
             $check_errors = 1;
             $last_fatalerror_count = $sh_job_status{"info_fatalerror"};
         }
+        
+        if ( $current_doc_number == 0 ) {
+            $check_errors = 1;
+        }
 
         # check errors if necessary
         if ( $check_errors ) {
@@ -1319,7 +1324,10 @@ sub _wait_for_jobs {
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
         
         log_warn("Remaining jobs: " . $sh_job_status{'info_remaining_jobs'});
-        if ( $sh_job_status{'info_remaining_jobs'} == 0 ) {
+        if ( $sh_job_status{'info_remaining_jobs'} == 0 || 
+            ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number )
+        ) {
+            log_warn("$current_doc_number < $total_doc_number");
             log_warn("All workers are dead.");
             $self->_delete_tmp_dirs();
             $self->_delete_jobs_and_exit;
@@ -1493,7 +1501,7 @@ sub _check_epilog_before_finish {
     my ( $self, $from_job_number ) = @_;
 
     Treex::Tool::Probe::begin("_check_epilog_before_finish");
-
+    log_warn("Check epilog - $from_job_number");
     my $workdir = $self->workdir;
     $from_job_number ||= 1;
     for my $job_num ( $from_job_number .. $self->jobs ) {
