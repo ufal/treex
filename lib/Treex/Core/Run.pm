@@ -795,7 +795,7 @@ sub _create_job_script {
         . "/status/job$jobnumber.started";
 
     print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . $started_file . ";\n";
-    print $J "stat $started_file;\n";
+    print $J "stat $started_file 1>&2 > /dev/null;\n";
     print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
     print $J "cd $current_dir\n\n";
     print $J "source " . Treex::Core::Config->lib_core_dir()
