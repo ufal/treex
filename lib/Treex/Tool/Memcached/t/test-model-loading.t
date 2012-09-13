@@ -2,6 +2,13 @@
 use strict;
 use warnings;
 
+BEGIN {
+      unless ( $ENV{TESTING_MEMCACHED} ) {
+          require Test::More;
+          Test::More::plan( skip_all => 'these tests requires export TESTING_MEMCACHED=1; ' );
+      }
+}
+
 # MemcachedTest.pm is in the same directory as this test file 
 # The test can be executed from any directory, so we must add this dir to @INC;
 use FindBin;
