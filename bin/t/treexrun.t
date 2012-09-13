@@ -5,7 +5,8 @@ use Test::More;
 use File::Slurp;
 use File::Basename;
 use Treex::Core::Document;
-
+my $PMFile = dirname(__FILE__) . "/TestsCommon.pm";
+require $PMFile;
 
 eval { use Test::Command; 1 } or plan skip_all => 'Test::Command required.' if $@;
 
@@ -66,7 +67,7 @@ SKIP: {
     
     chdir(dirname(__FILE__));
      
-    my $cmd_base = $^X . " ./../treex";
+    my $cmd_base = $TestsCommon::TREEX_CMD;;
     my $TREEX = "$cmd_base";
     
     # prepare dummy input files

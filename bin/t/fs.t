@@ -16,6 +16,9 @@ use Time::HiRes;
 
 use Treex::Core::Document;
 
+my $PMFile = dirname(__FILE__) . "/TestsCommon.pm";
+require $PMFile;
+
 my $test_count = 15;
 my $number_of_jobs  = 30;
 my $number_of_files = $number_of_jobs * 2;
@@ -29,7 +32,7 @@ SKIP: {
 
     chdir(dirname(__FILE__));
 
-    my $cmd_base = $^X . " ./../treex";
+    my $cmd_base = $TestsCommon::TREEX_CMD;
     my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";
 
 

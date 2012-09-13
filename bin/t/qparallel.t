@@ -12,6 +12,8 @@ use warnings;
 
 use Treex::Core::Config;
 use File::Basename;
+my $PMFile = dirname(__FILE__) . "/TestsCommon.pm";
+require $PMFile;
 
 use Treex::Core::Run qw(treex);
 
@@ -25,7 +27,7 @@ SKIP: {
 
     chdir(dirname(__FILE__));        
 
-    my $cmd_base = $^X . " ./../treex";
+    my $cmd_base = $TestsCommon::TREEX_CMD;
     my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";
 
     my $number_of_files = 110;

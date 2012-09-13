@@ -11,6 +11,8 @@ use warnings;
 
 use File::Basename;
 use Test::More;
+my $PMFile = dirname(__FILE__) . "/TestsCommon.pm";
+require $PMFile;
 
 use Treex::Core::Document;
 
@@ -20,7 +22,9 @@ plan tests => 2;
 
 chdir(dirname(__FILE__));  
 
-my $cmd_base = $^X . " ./../treex";
+print STDERR "DIRNAME: " . dirname(__FILE__) . "\n";
+
+my $cmd_base = $TestsCommon::TREEX_CMD;
 my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";
 
 my $number_of_files = 5;
@@ -36,6 +40,7 @@ foreach my $i ( 1 .. $number_of_files ) {
 my $cmdline_arguments = "-q -p --jobs=$number_of_jobs --local  --cleanup " .
     "Util::Eval document='print \"1\";' -- !./paratest*.treex";
 
+print STDERR $cmd_base . " " . $cmdline_arguments . "\n";
 my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
 
 $cmd_test->exit_is_num(0);
