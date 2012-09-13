@@ -290,9 +290,7 @@ sub _add_quotes {    # adding quotes only if param. value contains a space
     my ( $name, $value ) = split /=/, $block_parameter, 2;
     if ( $value =~ /\s/ ) {
         my $res_string = "$name=";
-        log_info($value);
 
-        $value =~ s/\\/X/g;
         if ( $value =~ /'/ && $value !~ /"/ ) {
             $res_string .= '"' . $value . '"';
         } else {
