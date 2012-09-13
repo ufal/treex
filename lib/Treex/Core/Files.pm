@@ -71,7 +71,7 @@ sub next_filename {
 
 sub get_hash {
     my $self = shift;
-    
+
     my $md5 = Digest::MD5->new();
     for my $filename (@{$self->filenames}) {
         if ( -f $filename ) {
@@ -104,7 +104,7 @@ Treex::Core::Files - helper class for iterating over filenames
 
   package My::Class;
   use Moose;
-  
+
   has from => (
       is => 'ro',
       isa => 'Treex::Core::Files',
@@ -118,16 +118,16 @@ Treex::Core::Files - helper class for iterating over filenames
   while (defined (my $filename = $c->next_filename)){ ... }
   #or
   while (my $filehandle = $c->next_filehandle){ ... }
-  
+
   # You can use also wildcard expansion
   my $c = My::Class(from=>'!dir??/file*.txt');
-  
-  
+
+
 =head1 DESCRIPTION
 
 The I<@filelist> and I<!wildcard> conventions are used in several tools, e.g. 7z or javac.
 For a large number of files, list the file names in a file - one per line.
-Then use the list file name preceded by an @ character. 
+Then use the list file name preceded by an @ character.
 
 TODO more doc
 

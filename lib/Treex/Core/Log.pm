@@ -202,6 +202,8 @@ sub del_hook {
         return;
     }
     splice(@{$hooks{$level}}, $pos, 1);
+
+    return;
 }
 
 sub run_hooks {

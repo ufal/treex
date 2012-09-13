@@ -47,6 +47,7 @@ sub set_hash {
 
     $self->_set_hash($hash);
 
+    return;
 }
 
 has _pmldoc => (
@@ -532,8 +533,7 @@ sub retrieve_storable {
     my ( $class, $file ) = @_;    # $file stands for a file name, but it can be also file handle (needed by the TrEd backend for .streex)
 
     my $FILEHANDLE;
-
-    my $stringified_doc;
+    my $opened = 0;
 
     if ( ref($file) and reftype($file) eq 'GLOB' ) {
         $FILEHANDLE = $file;
@@ -542,6 +542,7 @@ sub retrieve_storable {
         log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
             unless $file =~ /\.streex$/;
         open $FILEHANDLE, "<:via(gzip)", $file or log_fatal($!);
+        $opened = 1;
     }
 
     my $serialized;
@@ -552,12 +553,16 @@ sub retrieve_storable {
         $serialized .= $_;
     }
 
+    if ( $opened ) {
+        close($FILEHANDLE);
+    }
+
     # my $retrieved_doc = Storable::retrieve_fd(*$FILEHANDLE) or log_fatal($!);
     my $retrieved_doc = Storable::thaw($serialized) or log_fatal $!;
 
     if ( not ref($file) ) {
         $retrieved_doc->set_loaded_from($file);
-        my ( $volume, $dirs, $file ) = File::Spec->splitpath($file);
+        my ( $volume, $dirs, $file_name ) = File::Spec->splitpath($file);
         $retrieved_doc->set_path( $volume . $dirs );
 
         # $retrieved_doc->changeFilename($file); # why this doesn't affect the name displayed in TrEd?
