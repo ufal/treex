@@ -22,6 +22,8 @@ use Exporter;
 use Sys::Hostname;
 use base 'Exporter';
 
+use File::Glob 'bsd_glob';
+
 
 our @EXPORT_OK = q(treex);
 
@@ -1328,8 +1330,6 @@ sub _wait_for_jobs {
         # the output of the last doc was not forwarded yet.
         $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
 
-        #log_warn("Crashed jobs: " . $sh_job_status{'info_crashed_jobs'});
-
         if ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number ) {
             $missing_docs++;
         }
@@ -1366,7 +1366,7 @@ sub _print_execution_time {
     my @times = ();
 
     # read job log files
-    for my $file_finished ( glob $self->workdir . "/status/job???.finished" ) {
+    for my $file_finished ( bsd_glob $self->workdir . "/status/job???.finished" ) {
         my $jobid = $file_finished;
         $jobid =~ s/.*job0*//;
         $jobid =~ s/\.finished//;
@@ -1516,7 +1516,7 @@ sub _check_epilog_before_finish {
             $job_str = $self->name . "-" . $job_str;
         }
         next if $self->_is_job_finished($job_num);
-        my $epilog_name = glob "$workdir/error/$job_str.sh.e*";
+        my $epilog_name = bsd_glob "$workdir/error/$job_str.sh.e*";
         if ( $epilog_name ) {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
@@ -1534,10 +1534,10 @@ sub _check_epilog_before_finish {
                 if ( $self->survive ) {
                     $sh_job_status{'job_' . $job_num . '_' . "fatalerror"} = 1;
                     log_warn("Fatal error ignored due to the --survive option, be careful.");
-                    my $act_rem = $sh_job_status{'info_crashed_jobs'};
-                    $act_rem--;
-                    if ( $act_rem >= 0 ) {
-                        $sh_job_status{'info_crashed_jobs'} = $act_rem;
+                    my $act_crashed = $sh_job_status{'info_crashed_jobs'};
+                    $act_crashed++;
+                    if ( $act_crashed <= $self->jobs ) {
+                        $sh_job_status{'info_crashed_jobs'} = $act_crashed;
                     }
                     #return;
                 }
@@ -1641,7 +1641,7 @@ sub _execute_on_cluster {
             # you can omit --cleanup or uncomment next line
             # $directory .= sprintf "%03d-cluster-run", rand 1000;
             #            print STDERR "XXXX tested prefix $directory_prefix:".(join ' ', glob("$directory_prefix*"))."\n";
-            @existing_dirs = glob "$directory_prefix*";    # separate var because of troubles with glob context
+            @existing_dirs = bsd_glob "$directory_prefix*";    # separate var because of troubles with glob context
             }
             while (@existing_dirs);
         my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
