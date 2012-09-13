@@ -1111,9 +1111,9 @@ sub _print_output_files {
             my $try = 0;
             my $TRIES = 10;
             while ( $try < $TRIES && ! $success ) {
-                if ( $try > 0 ) { 
+                if ( $try > 0 ) {
                     sleep(4);
-                    #log_info("$filename - $try"); 
+                    #log_info("$filename - $try");
                 }
                 open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
                 my $report      = $self->forward_error_level;
@@ -1188,7 +1188,7 @@ sub _wait_for_jobs {
     my $last_status_msg = "";
     my $last_status_skipped = 0;
     my $last_fatalerror_count = 0;
-    
+
     my $missing_docs = 0;
 
     log_info("\n");
@@ -1312,7 +1312,7 @@ sub _wait_for_jobs {
             $check_errors = 1;
             $last_fatalerror_count = $sh_job_status{"info_fatalerror"};
         }
-        
+
         if ( $current_doc_number == 0 ) {
             $check_errors = 1;
         }
@@ -1336,8 +1336,10 @@ sub _wait_for_jobs {
 
         if ( $sh_job_status{'info_crashed_jobs'} == $self->jobs || $missing_docs > 5 ) {
             log_warn("All workers are dead.");
+            $self->_delete_jobs();
             $self->_delete_tmp_dirs();
-            $self->_delete_jobs_and_exit;
+            $self->_exit();
+
         }
 
     }
@@ -1493,8 +1495,10 @@ sub _check_job_errors {
 
         if ( ! $self->survive ) {
             log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
+            $self->_delete_jobs();
             $self->_delete_tmp_dirs();
-            $self->_delete_jobs_and_exit;
+            $self->_exit();
+
         }
     }
     $self->_check_epilog_before_finish($from_job_number);
@@ -1543,8 +1547,9 @@ sub _check_epilog_before_finish {
                 }
                 else {
                     log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
+                    $self->_delete_jobs();
                     $self->_delete_tmp_dirs();
-                    $self->_delete_jobs_and_exit;
+                    $self->_exit();
                 }
             }
         }
@@ -1555,11 +1560,8 @@ sub _check_epilog_before_finish {
     return;
 }
 
-sub _delete_jobs_and_exit {
-    my ($self) = @_;
-
-    $self->_delete_jobs();
-
+sub _exit {
+    my $self = shift;
     log_info 'You may want to inspect generated files in ' . $self->workdir . '/output/';
     exit(1);
 }
@@ -1568,9 +1570,27 @@ sub _delete_jobs {
     my $self = shift;
 
     log_info "Deleting jobs: " . join( ', ', @{ $self->sge_job_numbers } );
+    my %jobs = ();
     foreach my $job ( @{ $self->sge_job_numbers } ) {
         qx(qdel $job);
+        $jobs{$job} = 1;
     }
+
+    my $continue = 0;
+    do {
+        $continue = 0;
+
+        my $id_string = `qstat | tail -n +3 | cut -f1 -d" " | tr "\n" ,`;
+        my @ids = split(/,/, $id_string);
+        for my $id (@ids) {
+            if ( defined($jobs{$id}) ) {
+                $continue = 1;
+                # log_warn("Job - $id - is still running.");
+                sleep 2;
+                last;
+            }
+        }
+    } while ( $continue);
 
     return;
 }
@@ -1607,7 +1627,6 @@ sub _delete_tmp_dirs {
 
 sub _rm_dir {
     my $dir = shift;
-    #log_info("rmtree - $dir");
     rmtree $dir;
     while ( -d $dir ) {
         sleep 1;
@@ -1732,7 +1751,7 @@ sub _execute_on_cluster {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
         $self->_delete_jobs();
         $self->_delete_tmp_dirs();
-        $self->_delete_jobs_and_exit();
+        $self->_exit();
         };
 
     # load models
