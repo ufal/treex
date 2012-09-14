@@ -7,18 +7,18 @@ use Test::More;
 use Treex::Core::Document;
 
 my $mrg_sample = '
-( (S 
-    (NP-SBJ 
+( (S
+    (NP-SBJ
       (NP (NNP Pierre) (NNP Vinken) )
-      (, ,) 
-      (ADJP 
+      (, ,)
+      (ADJP
         (NP (CD 61) (NNS years) )
         (JJ old) )
       (, ,) )
-    (VP (MD will) 
-      (VP (VB join) 
+    (VP (MD will)
+      (VP (VB join)
         (NP (DT the) (NN board) )
-        (PP-CLR (IN as) 
+        (PP-CLR (IN as)
           (NP (DT a) (JJ nonexecutive) (NN director) ))
         (NP-TMP (NNP Nov.) (CD 29) )))
     (. .) ))

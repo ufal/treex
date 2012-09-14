@@ -45,24 +45,24 @@ SKIP: {
             $doc->set_description($i);
             $doc->save("./paratest$i.treex");
         }
-    
+
         my $cmdline_arguments = "-p --jobs=$number_of_jobs --cleanup"
             . " Util::Eval document='print \$document->description()'"
             . " -- ./paratest*.treex";
 
         my $start_time = time();
-    
+
         my $cmd_test = Test::Command->new( cmd => $cmd_base . " " . $cmdline_arguments );
-    
+
         $cmd_test->exit_is_num(0);
         $cmd_test->stdout_is_eq(join '', map { sprintf "%03d", $_ } ( 1 .. $number_of_files ));
         $cmd_test->stderr_like('/Execution finished/');
         $cmd_test->run;
-        
+
         my $total_time = time() - $start_time;
-        
+
         ok( $total_time < 90, "it must be faster than 90 second but it was " . $total_time );
-        
+
         qx($cmd_rm);
     }
 

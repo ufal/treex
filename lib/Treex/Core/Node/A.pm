@@ -31,7 +31,7 @@ sub is_coap_root {
 
 sub n_node {
     my ($self) = @_;
-    my ($first_n_node) = $self->get_referencing_nodes('a.rf'); 
+    my ($first_n_node) = $self->get_referencing_nodes('a.rf');
     return $first_n_node;
 }
 
@@ -227,7 +227,7 @@ sub copy_attributes {
 
 sub get_terminal_pnode {
     my ($self) = @_;
-    my $p_rf = $self->get_attr('p_terminal.rf') or return; 
+    my $p_rf = $self->get_attr('p_terminal.rf') or return;
     my $doc  = $self->get_document();
     return $doc->get_node_by_id($p_rf);
 }

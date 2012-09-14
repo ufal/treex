@@ -743,7 +743,7 @@ Remove all references to the given node id (calls remove_reference() on each ref
 
 =head2 Serializing
 
-=over 4 
+=over 4
 
 =item my $document = load($filename, \%opts)
 

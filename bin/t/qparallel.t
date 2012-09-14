@@ -25,7 +25,7 @@ SKIP: {
     skip "because not running on an SGE cluster", 1
         if !`which qsub`;    # if !defined $ENV{SGE_CLUSTER_NAME};
 
-    chdir(dirname(__FILE__));        
+    chdir(dirname(__FILE__));
 
     my $cmd_base = $TestsCommon::TREEX_CMD;
     my $cmd_rm = "rm -rf ./*-cluster-run-* ./paratest*treex";

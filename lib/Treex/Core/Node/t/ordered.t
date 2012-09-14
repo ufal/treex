@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More;                      
+use Test::More;
 use Test::Moose;
 use Treex::Core::Document;
 

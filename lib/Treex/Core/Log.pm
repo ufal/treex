@@ -228,14 +228,14 @@ Treex::Core::Log - logger tailored for the needs of Treex
 =head1 SYNOPSIS
 
  use Treex::Core::Log;
- 
+
  Treex::Core::Log::log_set_error_level('DEBUG');
- 
+
  sub epilog {
      print STDERR "I'm going to cease!";
  }
  Treex::Core::Log::add_hook('FATAL',&epilog());
- 
+
  sub test_value {
      my $value = shift;
      log_fatal "Negative values are unacceptable" if $ARGV < 0;

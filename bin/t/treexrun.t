@@ -64,26 +64,26 @@ plan tests => 2 * scalar @tasks;
 my $combined_file = 'combined.out';
 
 SKIP: {
-    
+
     chdir(dirname(__FILE__));
-     
+
     my $cmd_base = $TestsCommon::TREEX_CMD;;
     my $TREEX = "$cmd_base";
-    
+
     # prepare dummy input files
     my $test_data_file1    = './dummy.treex';
     my $test_data_file2    = './dummy2.treex';
     my $test_data_file3    = './descr.treex';
     my $confuse_data_file = './confuse.scen';
-    
+
     my $doc               = Treex::Core::Document->new();
     $doc->save($test_data_file1);
     $doc->save($test_data_file2 );
     $doc->save($confuse_data_file);
-    
+
     $doc->set_description("aaaa");
     $doc->save($test_data_file3 );
-    
+
 #    skip 'We run different versions of treex binary', scalar @tasks if $perl_v ne $sys_v;
     foreach my $task_rf (@tasks) {
         my ( $command, $expected_output, $exit_code ) = @$task_rf;

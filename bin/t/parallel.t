@@ -20,7 +20,7 @@ use Treex::Core::Document;
 eval { use Test::Command; 1 } or plan skip_all => 'Test::Command required to test parallelism';
 plan tests => 2;
 
-chdir(dirname(__FILE__));  
+chdir(dirname(__FILE__));
 
 print STDERR "DIRNAME: " . dirname(__FILE__) . "\n";
 

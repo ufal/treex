@@ -9,7 +9,7 @@ BEGIN {
     }
 }
 
-# MemcachedTest.pm is in the same directory as this test file 
+# MemcachedTest.pm is in the same directory as this test file
 # The test can be executed from any directory, so we must add this dir to @INC;
 use FindBin;
 use lib $FindBin::Bin;
@@ -32,7 +32,7 @@ for my $test (@{$MemcachedTest::TESTS}) {
         my $out_file = $test->[1] . ".out." . $j;
         `rm -f $out_file`;
         push(@out_files, $out_file);
-        my $cmd = $MemcachedTest::CHECK_CMD . " 50 " . $test->[0] . " " . $test->[1] . " > " . $out_file; 
+        my $cmd = $MemcachedTest::CHECK_CMD . " 50 " . $test->[0] . " " . $test->[1] . " > " . $out_file;
 
         `qsubmit --mem=5G "$cmd"`;
     }
@@ -58,7 +58,7 @@ for my $test (@{$MemcachedTest::TESTS}) {
             print STDERR "Waiting already for $total_wait seconds, $finished / $JOBS.\n";
         }
     }
-    
+
     my $total_hits = 0;
     my $total_total = 0;
     for my $f (@out_files) {
@@ -67,7 +67,7 @@ for my $test (@{$MemcachedTest::TESTS}) {
         chomp $line;
         my ($hits, $total) = split(/\t/, $line);
         close($fh);
-        
+
         is($hits, $total, "checking hits and totals for $f - total=" . $total);
         $total_hits += $hits;
         $total_total += $total;

@@ -23,7 +23,7 @@ my $RAND_MAX = 1000;
 
 sub train_test {
     my ($f, $n, $poly_degree) = @_;
-    
+
     ################# initialize linear regression module #################
     my $lr = Treex::Tool::ML::LinearRegression->new(
         algorithm => {
@@ -61,7 +61,7 @@ sub train_test {
         $error_rate += ($y_pred - $y) ** 2;
     }
     $error_rate /= (2 * @y_test_pred);
-    
+
     return $error_rate;
 }
 
