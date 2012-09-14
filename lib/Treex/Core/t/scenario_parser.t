@@ -19,6 +19,11 @@ my %contents = (
     '\\'      => CANNOT,
     'aaa aaa' => CANNOT,
     'XXX XXX' => q{Can't use block Treex::Block::XXX},    #Scenario will be Treex::Block::XXX Treex::Block::XXX
+
+    # escaping
+    q(Util::SetGlobal language=en Read::Text Util::Eval document='say "single\'quote";') => OK,
+    q(Util::SetGlobal language=en Read::Text Util::Eval document="say 'double\"quote';") => OK,
+    
 );
 my %create = (
     'cs_synthesis_pdt.scen' => <<'EOF',
