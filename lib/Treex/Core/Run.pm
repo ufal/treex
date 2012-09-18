@@ -1501,7 +1501,7 @@ sub _check_job_errors {
 
         }
     }
-    #$self->_check_epilog_before_finish($from_job_number);
+    $self->_check_epilog_before_finish($from_job_number);
 
     Treex::Tool::Probe::end("_check_job_errors");
 
