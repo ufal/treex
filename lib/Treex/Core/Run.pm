@@ -1338,7 +1338,7 @@ sub _wait_for_jobs {
             log_warn("All workers are dead.");
             $self->_delete_jobs();
             $self->_delete_tmp_dirs();
-            $self->_exit();
+            $self->_exit_program();
 
         }
 
@@ -1497,11 +1497,11 @@ sub _check_job_errors {
             log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
             $self->_delete_jobs();
             $self->_delete_tmp_dirs();
-            $self->_exit();
+            $self->_exit_program();
 
         }
     }
-    $self->_check_epilog_before_finish($from_job_number);
+    #$self->_check_epilog_before_finish($from_job_number);
 
     Treex::Tool::Probe::end("_check_job_errors");
 
@@ -1549,7 +1549,7 @@ sub _check_epilog_before_finish {
                     log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
                     $self->_delete_jobs();
                     $self->_delete_tmp_dirs();
-                    $self->_exit();
+                    $self->_exit_program();
                 }
             }
         }
@@ -1560,7 +1560,7 @@ sub _check_epilog_before_finish {
     return;
 }
 
-sub _exit {
+sub _exit_program {
     my $self = shift;
     log_info 'You may want to inspect generated files in ' . $self->workdir . '/output/';
     exit(1);
@@ -1751,7 +1751,7 @@ sub _execute_on_cluster {
         log_info "Caught Ctrl-C, all jobs will be interrupted";
         $self->_delete_jobs();
         $self->_delete_tmp_dirs();
-        $self->_exit();
+        $self->_exit_program();
         };
 
     # load models
