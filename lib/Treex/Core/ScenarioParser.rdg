@@ -55,7 +55,11 @@ PSQUOTE:    NOTSQUOTE SLASHEDSQUOTE PSQUOTE     {$return = $item{NOTSQUOTE}.$ite
 PSQUOTE:    NOTSQUOTE
 NOTSQUOTE:  /[^']*[^'\\]/
 SLASHEDSQUOTE: /\\'/                            {$return = "'"}
-PDQUOTE:    /[^"]*/                             {$return = $item[1]}
+PDQUOTE:    NOTDQUOTE SLASHEDDQUOTE PDQUOTE     {$return = $item{NOTDQUOTE}.$item{SLASHEDDQUOTE}.$item{PDQUOTE}}
+PDQUOTE:    NOTDQUOTE
+NOTDQUOTE:  /[^"]*[^"\\]/
+SLASHEDDQUOTE: /\\"/                            {$return = '"'}
+
 PNOTQUOTED: /\S+/                               {$return = $item[1]}
 PNOTQUOTED: EMPTY                               {$return = ''}
 PTICKED:    /[^`]+/                             {$return = $item[1]}

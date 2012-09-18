@@ -14,5 +14,6 @@ Parse::RecDescent->Precompile(
     , "Treex::Core::ScenarioParser"
 );
 
+# The old way did not generate *standalone* parser
 ##!/bin/bash
 #perl -MParse::RecDescent - ScenarioParser.rdg Treex::Core::ScenarioParser
