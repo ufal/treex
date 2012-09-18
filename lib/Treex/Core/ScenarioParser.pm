@@ -1,3 +1,5 @@
+## no critic (Miscellanea::ProhibitUnrestrictedNoCritic)
+## no critic Generated code follows
 {
 # GENERATE RECURSIVE DESCENT PARSER OBJECTS FROM A GRAMMAR
 
