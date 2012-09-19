@@ -23,7 +23,7 @@ sub process_atree {
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
         my ( $lemma, $pos, $cpos, $deprel ) =
             map { $self->get_attribute( $anode, $_ ) }
-            (qw(lemma pos cpos), 'conll/deprel');
+            (qw(lemma pos cpos deprel)); # "conll/" will be prefixed if needed; see get_attribute()
 
         #my $ctag  = $self->get_coarse_grained_tag($tag);
 
@@ -64,9 +64,9 @@ sub get_attribute {
     if ( $from eq 'autodetect' ) {
         my $before = $self->_was->{$name};
         if ( !defined $before ) {
-            $value = $anode->get_attr("conll/$from");
+            $value = $anode->get_attr("conll/$name");
             if ( defined $value ) {
-                $self->_was->{$name} = "conll/$from";
+                $self->_was->{$name} = "conll/$name";
             }
             else {
                 my $fallback = $FALLBACK_FOR{$name}
