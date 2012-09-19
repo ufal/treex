@@ -22,8 +22,8 @@ sub make_pdt_coordination {
     my $root = shift;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes - 2; $i++) {
-        my $node = $nodes[$i];        
-        my $deprel = $node->afun();        
+        my $node = $nodes[$i];
+        my $deprel = $node->afun();
         my $n_node = $nodes[$i+1];
         if ($n_node->afun() eq 'Coord') {
             my $par = $node->get_parent();
@@ -37,7 +37,7 @@ sub make_pdt_coordination {
                         $n_node->set_parent($nn_node->get_parent());
                         $nn_node->set_parent($n_node);
                         $node->set_is_member(1);
-                        $nn_node->set_is_member(1);                        
+                        $nn_node->set_is_member(1);
                     }
                 }
             }
@@ -54,12 +54,12 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    
+
     #foreach my $node (@nodes)
-    for(my $i = 0; $i <= $#nodes; $i++) 
+    for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
-        
+
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
@@ -71,46 +71,43 @@ sub deprel_to_afun
         #my $afun = $deprel;
         # just to avoid in case some of the labels are not to PDT style
         my $afun = 'Atr';
-        
-        # Subject 
-        if ( $deprel eq 'SBJ' ) {   
+
+        # Subject
+        if ( $deprel eq 'SBJ' ) {
             $afun = 'Sb';
         }
 
         # Verbs
-        if (($deprel eq 'ROOT') && ($node->get_iset('pos') eq 'verb')) {
+        elsif (($deprel eq 'ROOT') && ($node->get_iset('pos') eq 'verb')) {
             $afun = 'Pred';
         }
-        elsif (($deprel eq 'ROOT') && ($node->get_iset('pos') eq 'noun')) {
-            $afun = 'Pnom';
-        }
-        elsif (($deprel eq 'ROOT') && !(($node->get_iset('pos') eq 'noun') || ($node->get_iset('pos') eq 'verb'))) {
+        elsif ($deprel eq 'ROOT') {
             $afun = 'ExD';
         }
 
         # Auxiliary verbs
-        if ((!$deprel eq 'ROOT') && ($node->get_iset('subpos') eq 'mod')) {
+        elsif ($node->get_iset('subpos') eq 'mod') {
             $afun = 'AuxV';
         }
 
 
         # Adjunct
         # Everything labeled as adjunct will be given afun 'Adv'
-        if ($deprel eq 'ADJ') {
+        elsif ($deprel eq 'ADJ') {
             $afun = 'Adv';
         }
 
         # Complement
-        if ($deprel eq 'COMP' ) {
-            $afun = 'Atv';
+        elsif ($deprel eq 'COMP' ) {
+            $afun = 'Atv'; ###!!! DZ: really???
         }
-        
-        if ($deprel eq 'MRK') {
+
+        elsif ($deprel eq 'MRK') {
             $afun = 'Atr';
         }
 
         # punctuations
-        if ($deprel eq 'PUNCT') {
+        elsif ($deprel eq 'PUNCT') {
             if ($form eq ',') {
                 $afun = 'AuxX';
             }
@@ -123,7 +120,7 @@ sub deprel_to_afun
         }
 
         # Co Head
-        if ( $deprel eq 'HD' && $node->get_iset('pos') eq 'prep' ) {
+        elsif ( $deprel eq 'HD' && $node->get_iset('pos') eq 'prep' ) {
             $afun = 'AuxP';
         }
         elsif ( $deprel eq 'HD' && $node->get_iset('pos') eq 'num') {
@@ -135,13 +132,13 @@ sub deprel_to_afun
         elsif ( $deprel eq 'HD' && $pos eq 'Pacc') {
             $afun = 'Obj';
         }
-        elsif ( $deprel eq 'HD' && $pos eq 'P') { 
+        elsif ( $deprel eq 'HD' && $pos eq 'P') {
             $afun = 'AuxP';
         }
-        
+
         # relative clause ('rc')
         # 'rc' has the form 'Vfin' followed by 'NN'
-        if ($deprel eq 'HD' && $pos eq 'Vfin') {
+        elsif ($deprel eq 'HD' && $pos eq 'Vfin') {
             if ($i+1 <= $#nodes) {
                 my $nnode = $nodes[$i+1];
                 my $ndeprel = $nnode->conll_deprel();
@@ -150,12 +147,12 @@ sub deprel_to_afun
                     $afun = 'Atr';
                 }
             }
-        }        
-        
+        }
+
         # Some of the afuns can be derived directly from
-        # POS values         
-        
-       
+        # POS values
+
+
         # adjectives and numerals
         if ( $node->get_iset('pos') eq 'adj' ) {
             $afun = 'Atr';
@@ -171,17 +168,17 @@ sub deprel_to_afun
         if ( $pos eq 'Pcnj') {
             $afun = 'Coord';
         }
-        
+
         # Sentence initial conjunction
-        if ($pos eq 'CNJ') {
+        elsif ($pos eq 'CNJ') {
             $afun = 'Adv';
         }
-        
+
         # if some of the labels are overgeneralized, list down the very
         # specific labels
-        
+
         # Obj
-        if ($pos eq 'Pacc') {
+        elsif ($pos eq 'Pacc') {
             $afun = 'Obj';
         }
 
@@ -189,27 +186,27 @@ sub deprel_to_afun
         if ($node->get_iset('subpos') eq 'sub') {
             $afun = 'AuxC';
         }
-        
+
         # AuxZ
         if ($pos eq 'PSE') {
             $afun = 'AuxZ';
         }
-        
+
         # general postposition
         if ($pos eq 'P') {
             $afun = 'AuxP';
-        }        
+        }
 
         # possessives
         if ($pos eq 'Pgen') {
             $afun = 'Atr';
         }
-        
+
         # focus postpositions
         if ($pos eq 'Pfoc') {
             $afun = 'AuxZ';
         }
-        
+
         $node->set_afun($afun);
     }
 }
