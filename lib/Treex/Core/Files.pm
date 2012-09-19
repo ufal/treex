@@ -35,6 +35,15 @@ sub BUILD {
 
 sub string_to_filenames {
     my ( $self, $string ) = @_;
+    
+    # "!" means glob pattern which can contain {dir1,dir2}
+    # so it cannot be combined with separating tokens with comma.
+    if ($string =~ /^!(.+)/) {
+        my @filenames = glob $1;
+        log_warn "No filenames matched '$1' pattern" if !@filenames;
+        return \@filenames;
+    }
+    
     return [ map { $self->_token_to_filenames($_) } grep {/./} split /[ ,]+/, $string ];
 }
 
@@ -42,6 +51,7 @@ sub _token_to_filenames {
     my ( $self, $token ) = @_;
     if ($token =~ /^!(.+)/) {
         my @filenames = glob $1;
+        log_warn "No filenames matched '$1' pattern" if !@filenames;
         return @filenames;
     }
     return $token if $token !~ s/^@(.*)/$1/;
