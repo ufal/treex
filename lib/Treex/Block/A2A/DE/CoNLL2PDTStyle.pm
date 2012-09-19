@@ -104,7 +104,6 @@ sub deprel_to_afun
         # NK = Noun Kernel (?) = modifiers of nouns?
         # AG = Genitive attribute.
         # PG = Phrasal genitive (a von-PP used instead of a genitive).
-        # MO = Modifier.
         # MNR = Postnominal modifier.
         # PNC = Proper noun component (e.g. first name attached to last name).
         # ADC = Adjective component (e.g. Bad/ADC Homburger, New/ADC Yorker).
