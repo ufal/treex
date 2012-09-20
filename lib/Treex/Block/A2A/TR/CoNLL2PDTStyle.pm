@@ -5,17 +5,17 @@ use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 #------------------------------------------------------------------------------
-# Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Turkish CoNLL trees, converts morphosyntactic tags to the universal
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    
+
     my $a_root = $self->SUPER::process_zone($zone);
     $self->hang_everything_under_pred($a_root);
-    $self->attach_final_punctuation_to_root($a_root);      
+    $self->attach_final_punctuation_to_root($a_root);
     $self->make_pdt_coordination($a_root);
     $self->check_apos_coord_membership($a_root);
     $self->check_afuns($a_root);
@@ -31,7 +31,7 @@ sub check_apos_coord_membership {
         if ($afun =~ /^(Apos|Coord)$/) {
             $self->identify_coap_members($node);
         }
-    }    
+    }
 }
 
 # In the original treebank, some of the nodes might be attached to technical root
@@ -57,11 +57,11 @@ sub hang_everything_under_pred {
                     }
                     else {
                         $prednode = $node;
-                    }                           
-                }         
+                    }
+                }
             }
         }
-    }    
+    }
     #
     if (scalar(@dnodes) > 0) {
         if (defined $prednode) {
@@ -96,9 +96,9 @@ sub make_pdt_coordination {
                 $node->set_parent($parparnode);
                 $parnode->set_parent($node);
                 $parnode->set_is_member(1);
-            }            
+            }
         }
-    }    
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -115,12 +115,12 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
-        
+
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-        
+
         # default assignment
         my $afun = $deprel;
-        
+
         $afun = 'Adv' if ($deprel eq 'ABLATIVE.ADJUNCT');
         $afun = 'Apos' if ($deprel eq 'APPOSITION');
         $afun = 'Atr' if ($deprel eq 'CLASSIFIER');
@@ -130,7 +130,7 @@ sub deprel_to_afun
         $afun = 'AuxA' if ($deprel eq 'DETERMINER');
         $afun = 'Atr' if ($deprel eq 'EQU.ADJUNCT');
         $afun = 'Atr' if ($deprel eq 'ETOL');
-        $afun = 'Atr' if ($deprel eq 'DERIV');        
+        $afun = 'Atr' if ($deprel eq 'DERIV');
         $afun = 'AuxZ' if ($deprel eq 'FOCUS.PARTICLE');
         $afun = 'Adv' if ($deprel eq 'INSTRUMENTAL.ADJUNCT');
         $afun = 'AuxZ' if ($deprel eq 'INTENSIFIER');
@@ -157,21 +157,21 @@ sub deprel_to_afun
                     $afun = 'Atr';
                 }
                 else {
-                    $afun = 'Obj'; 
+                    $afun = 'Obj';
                 }
             }
             else {
                 $afun = 'Obj';
-            }            
+            }
         }
-        
+
         $afun = 'Atr' if ($deprel eq 'POSSESSOR');
         $afun = 'Atr' if ($deprel eq 'QUESTION.PARTICLE');
         $afun = 'Atr' if ($deprel eq 'RELATIVIZER');
-        
+
 
         # punctuations
-        if ( $deprel eq 'ROOT' ) {            
+        if ( $deprel eq 'ROOT' ) {
             if (($node->get_iset('pos') eq 'punc')) {
                 if ( $form eq ',' ) {
                     $afun = 'AuxX';
@@ -181,7 +181,7 @@ sub deprel_to_afun
                 }
                 else {
                     $afun = 'AuxG';
-                }                      
+                }
             }
             elsif (($node->get_iset('pos') eq 'verb')) {
                 $afun = 'Pred';
@@ -196,9 +196,6 @@ sub deprel_to_afun
             if (($node->get_iset('pos') eq 'verb')) {
                 $afun = 'Pred';
             }
-            elsif (($node->get_iset('pos') eq 'verb')) {
-                $afun = 'AuxP';
-            }
             elsif (($node->get_iset('pos') eq 'punc')) {
                 if ( $form eq ',' ) {
                     $afun = 'AuxX';
@@ -208,26 +205,26 @@ sub deprel_to_afun
                 }
                 else {
                     $afun = 'AuxG';
-                }                
-                
+                }
+
             }
             else {
                 $afun = 'Atr';
-            }            
+            }
         }
-        
+
         $afun = 'Atr' if ($deprel eq 'S.MODIFIER');
         $afun = 'Sb' if ($deprel eq 'SUBJECT');
-        $afun = 'Atr' if ($deprel eq 'VOCATIVE');        
+        $afun = 'Atr' if ($deprel eq 'VOCATIVE');
 
         if (($node->get_iset('pos') eq 'prep')) {
             $afun = 'AuxP';
         }
-        
+
         # subordinating conjunctions
         if (($node->get_iset('subpos') eq 'sub')) {
             $afun = 'AuxC';
-        }        
+        }
 
         $node->set_afun($afun);
     }
