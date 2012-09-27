@@ -46,7 +46,7 @@ sub copy_subtree {
             copy_subtree( $t_node, $a_node );
         }
         else {
-            log_warn("#Cor node is not a leave.") if $t_node->get_children();
+            log_warn("#Cor node is not a leaf.") if $t_node->get_children();
             copy_subtree( $t_node, $a_root );
         }
     }
