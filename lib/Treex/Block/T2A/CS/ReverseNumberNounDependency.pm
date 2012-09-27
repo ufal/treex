@@ -111,15 +111,17 @@ sub _update_formemes {
         : $noun_prep   ? $noun_prep . '+'
         :                '';
 
-    # Change formemes:
-    # The number ($t_node) gets the formeme of the noun (with merged preps)
-    # The noun gets formeme with genitive case.
-    $t_number->set_formeme("n:$preps$noun_case");
-    $t_noun->set_formeme('n:2');
-
     # For info/debuging purposes let's update formeme_origin too
     $t_number->set_formeme_origin( 'rule-number_from_parent(' . $t_noun->formeme_origin . ':' . $t_noun->formeme . ')' );
     $t_noun->set_formeme_origin('rule-number_genitive');
+
+    # Change formemes:
+    # The number ($t_node) gets the formeme of the noun (with merged preps)
+    # The noun gets formeme with genitive case.
+    # NOTE: this change to t-trees makes a rerun of the generation different from the original results; in the re-run,
+    # the ReverseNumberNounDependency block will not execute, which introduces grammar errors
+    $t_number->set_formeme("n:$preps$noun_case");
+    $t_noun->set_formeme('n:2');
 
     return;
 }
@@ -147,7 +149,7 @@ sub _is_bigger_than_four_or_fraction {
 sub _get_noun_prepcase {
     my ($t_noun) = @_;
     my ( $noun_prep, $noun_case ) = $t_noun->formeme =~ /^n:(?:(.*)\+)?([14X])$/;
-
+    
     return ( $noun_prep, $noun_case );
 }
 

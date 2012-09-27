@@ -10,12 +10,12 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     foreach my $subconj_ze ( grep { ( $_->form || '' ) eq 'že' } $a_root->get_descendants() ) {
-        my $parent    = $subconj_ze->get_parent;
+        my $parent    = $subconj_ze->get_parent; # TODO possibly should handle coordinations ? 
         my $refl_part = first { ( $_->afun || '' ) eq 'AuxT' } $parent->get_echildren( { or_topological => 1 } );
         my $lemma     = ( $parent->lemma || '' ) . ( $refl_part ? ( $refl_part->lemma || '' ) : '' );
         my $expletive = $verb2expletive{$lemma};
 
-        if ( $expletive and !$refl_part and $parent->precedes($subconj_ze) ) {
+        if ( $expletive and $parent->precedes($subconj_ze) ) { # and !$refl_part -- was in the condition, probably nonsense
 
             foreach my $form ( split /_/, $expletive ) {
                 my $new_node = $parent->create_child(

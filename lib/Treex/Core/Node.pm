@@ -270,7 +270,7 @@ sub get_referencing_nodes {
 }
 
 # Remove a reference of the given type to the given node. This will not remove a reverse reference from document
-# index, since it is itself called from when removing reverse references; use the API methods for the individual
+# index, since it is itself called when removing reverse references; use the API methods for the individual
 # references if you want to keep reverse references up-to-date.
 sub remove_reference {
     my ( $self, $type, $id ) = @_;

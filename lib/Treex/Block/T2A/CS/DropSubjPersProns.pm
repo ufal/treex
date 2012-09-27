@@ -24,7 +24,7 @@ sub process_tnode {
     # Now we are interested only in personal pronouns
     return if $lemma ne '#PersPron';
 
-    # In some copula constructions there is needed word "to" instead of perspron
+    # In some copula constructions, the word "to" is needed instead of a personal pronoun
     # "He was a man who..." = "Byl to muž, který..."
     if ( $p_lemma eq 'být' ) {
         my $real_subj = first { $_->formeme =~ /:1$/ } $parent->get_children( { following_only => 1 } );

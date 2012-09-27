@@ -113,7 +113,7 @@ sub is_neutrum_lemma {
     # (but the morphological tag has no gender marked).
     return 1 if $subj_lemma =~ /^(nic|mnoho|něco|několik|co|cokoliv)$/;    # TODO doplnit další
 
-    # Numerals with subpos "n" or "s" behave like neutrum,
+    # Numerals with subpos "n" or "a" behave like neutrum,
     # e.g. "osm z deseti stacilo", "malo stacilo".
     return 1 if defined $self->_morpho_lm->best_form_of_lemma( $subj_lemma, '^C[na]' );
 

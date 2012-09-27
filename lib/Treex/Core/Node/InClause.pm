@@ -22,7 +22,7 @@ sub get_clause_root {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self      = shift;
     my $my_number = $self->get_attr('clause_number');
-    log_warn( 'Attribut clause_number not defined in ' . $self->get_attr('id') )
+    log_warn( 'Attribute clause_number not defined in ' . $self->get_attr('id') )
         if !defined $my_number;
     return $self if !$my_number;
 
