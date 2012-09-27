@@ -23,7 +23,7 @@ override '_do_process_document' => sub {
     # convert Treex::PML::whatever arrays/hashes to plain ones)
     utf8::decode($yaml_text);
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
-    $yaml_text =~ s{(:\s*)([0-9_]+)(\s*(,|\r|\n))}{$1'$2'$3}g; # quote numbers with underscores
+    $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg; # quote numbers with underscores
     print { $self->_file_handle } $yaml_text;
     return;
 };
@@ -59,12 +59,13 @@ Readonly my $ATTR => {
             is_dsp_root gram a compl.rf coref_gram.rf coref_text.rf
             sentmod is_parenthesis is_passive is_generated
             is_relclause_head is_name_of_person voice
-            t_lemma_origin formeme_origin is_infin is_member)
+            t_lemma_origin formeme_origin is_infin is_member
+            clause_number is_clause_head is_reflexive mlayer_pos)
     ],
     a => [
         qw(id ord form lemma tag afun no_space_after
             s_parenthesis_root edge_to_collapse is_auxiliary
-            p_terminal.rf is_member)
+            p_terminal.rf is_member clause_number is_clause_head)
     ],
     n => [qw(id ne_type normalized_name a.rf)],
     p => [
@@ -84,7 +85,7 @@ sub serialize_node {
     }
 
     # recurse to children
-    $data{children} = [ map { $self->serialize_node( $layer, $_ ) } $node->get_children( { ordered => 1 } ) ];
+    $data{children} = [ map { $self->serialize_node( $layer, $_ ) } $node->get_children() ];
     return \%data;
 }
 
