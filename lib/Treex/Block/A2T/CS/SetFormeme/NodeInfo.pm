@@ -37,7 +37,7 @@ has 'prep' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->_pr
 
 has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::truncate_lemma( $_[0]->lemma, 1 ) } );
 
-has 'is_term_label' => ( is => 'ro', isa => enum(['', 'congr', 'incon']), lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_label( $_[0]->lemma ) } );
+has 'is_term_label' => ( is => 'ro', isa => enum( [ '', 'congr', 'incon' ] ), lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_label( $_[0]->lemma ) } );
 
 has 'is_geo_congr_label' => ( is => 'ro', isa => 'Bool', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_geo_congr_label( $_[0]->lemma ) } );
 
@@ -58,10 +58,10 @@ sub _build_case {
     my $prep;
 
     # use only prepositions for generated nodes (their case is not reliable in case of ellipsis)
-    if ( $self->t->is_generated && $self->sempos =~ m/^(n|adj)/ ){
+    if ( $self->t->is_generated && $self->sempos =~ m/^(n|adj)/ ) {
         return $self->_prep_case->{case};
     }
-    
+
     # infer the case from preposition with non-declinable numerals and unknown words, if possible
     if ( $self->tag =~ m/^[XC]...-/ and $self->_prep_case->{case} ) {
         return $self->_prep_case->{case};
@@ -111,12 +111,13 @@ sub _get_fix_numer_case {
     elsif ( $self->_prep_case->{case} ne 'X' ) {
         return $self->_prep_case->{case};
     }
-    
+
     # a heuristics: try to infer the case from the syntactic function (Sb, Pnom, ExD is nominative,
     # Atr tends to be something between nominative and genitive "v hodnotě 6 mil. korun", Adv and Obj is usually accusative)
-    elsif ( $numeral->afun =~ m/^(ExD|Pnom|Sb|Obj|Atr|Adv)$/ ){
+    elsif ( $numeral->afun =~ m/^(ExD|Pnom|Sb|Obj|Atr|Adv)$/ ) {
         return $numeral->afun =~ /^(ExD|Pnom|Sb|Atr)$/ ? 1 : 4;
     }
+
     # now we're screwed (we don't know 1 or 4); this happens with numbers, since they don't have case markings in tags
     else {
         return 'X';
@@ -144,6 +145,32 @@ sub _find_noncongruent_numeral {
     return;
 }
 
+sub _get_prep_nodes {
+
+    my ($self) = @_;
+
+    # filter punctuation, reflexive pronouns and auxiliary verbs always, prepositions only for verbs
+    my $pos_filter = $self->syntpos eq 'v' ? '([RVZ]|P7)' : '([VZ]|P7)';
+    my @prep_nodes;
+
+    for ( my $i = 0; $i < @{ $self->aux }; ++$i ) {
+        my $cand = $self->aux->[$i];
+        my $cand_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $cand->lemma, 1 );
+
+        # filter out punctuation, auxiliary / modal verbs and everything that's already contained in the lemma
+        # keep prepositions for verbs if followed by an expletive pronoun   
+        if ((   $cand->tag !~ /^$pos_filter/
+                || ( $cand->tag =~ /^R/ && @{ $self->aux } > $i + 1 && $self->aux->[ $i + 1 ]->tag =~ /^PD/ )
+            )
+            and $self->t_lemma !~ /(^|_)\Q$cand_lemma\E(_|$)/
+            )
+        {
+            push @prep_nodes, $cand;
+        }
+    }
+    return @prep_nodes;
+}
+
 # Detects preposition + governed case / subjunction
 sub _build__prep_case {
 
@@ -152,15 +179,7 @@ sub _build__prep_case {
     # default values for no prepositions
     my $ret = { 'prep' => '', 'case' => 'X' };
 
-    # filter punctuation, reflexive pronouns and auxiliary verbs always, prepositions only for verbs
-    my $pos_filter = $self->syntpos eq 'v' ? '([RVZ]|P7)' : '([VZ]|P7)';
-
-    # filter out punctuation, auxiliary / modal verbs and everything what's already contained in the lemma
-    my @prep_nodes = grep {
-        my $lemma = $_->lemma;
-        $lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 );
-        $_->tag !~ /^$pos_filter/ and $self->t_lemma !~ /(^|_)\Q$lemma\E(_|$)/
-    } @{ $self->aux };
+    my @prep_nodes = $self->_get_prep_nodes();
 
     if (@prep_nodes) {
 
@@ -177,7 +196,7 @@ sub _build__prep_case {
         my @prep_forms =
             map { $_->tag =~ m/^J,/ ? Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 ) : lc( $_->form ) }
             @prep_nodes;
-            
+
         if ( $gov_prep >= 0 and $gov_prep < @prep_forms and $prep_nodes[$gov_prep]->tag =~ m/^R/ ) {
             $prep_forms[$gov_prep] = Treex::Tool::Lexicon::CS::truncate_lemma( $prep_nodes[$gov_prep]->lemma, 1 );
         }
@@ -191,18 +210,19 @@ sub _build__prep_case {
 
 sub _build_verbform {
     my ($self) = @_;
-    
+
     return '' if ( $self->syntpos ne 'v' );
-    
+
     return 'rc' if ( $self->t->is_relclause_head );
-    
+
     # finite aux -> finite form
-    return 'fin' if ( any { $_->tag =~ /^V[Bp]/ } @{ $self->aux } );    
+    return 'fin' if ( any { $_->tag =~ /^V[Bp]/ } @{ $self->aux } );
+
     # active infinitive / transgressive || passive infinitive
     return 'inf' if ( $self->tag =~ /^V[fme]/ || ( $self->tag =~ /^Vs/ && grep { $_->lemma eq 'být' } @{ $self->aux } ) );
-    
+
     # default: finite
-    return 'fin';   
+    return 'fin';
 }
 
 sub _build_syntpos {
@@ -210,9 +230,9 @@ sub _build_syntpos {
 
     # skip technical root, conjunctions, prepositions, punctuation etc.
     return '' if ( $self->t->is_root or $self->tag =~ m/^.[%#,FRVXc:]/ );
-    
+
     return 'x' if ( $self->tag =~ m/^J\^/ );
-    
+
     # adjectives, adjectival numerals and pronouns
     return 'adj' if ( $self->tag =~ m/^.[\}=\?148ACDGLOSUadhklnrwyz]/ );
 
@@ -233,8 +253,8 @@ sub _build_syntpos {
 sub _build_ne_type {
     my ($self) = @_;
     my $n_node = $self->a->n_node;
-    
-    return '' if (!$n_node);
+
+    return '' if ( !$n_node );
     return $n_node->ne_type;
 }
 

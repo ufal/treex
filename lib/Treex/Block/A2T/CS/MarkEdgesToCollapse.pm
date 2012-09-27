@@ -97,6 +97,19 @@ override solve_multi_lex => sub {
     return;
 };
 
+override is_parent_aux_to_me => sub {
+    my ( $self, $node ) = @_;
+
+    # Reuse base-class language independent rules
+    my $base_result = super();
+    return $base_result if defined $base_result;
+    
+    # collapse expletive 'to' above the conjunction 'že'/'aby'
+    my $parent = $node->get_parent();   
+    return 1 if ($node->form =~ /^(že|aby)$/ and $parent->lemma eq 'ten' and $parent->tag =~ /^PD[ZNH]S.*/);
+    return 0;
+};
+
 1;
 
 __END__
