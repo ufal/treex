@@ -81,7 +81,11 @@ sub execute_script {
     # run on cluster
     if ($CLUSTER) {
         my $qsub_memory = "-hard -l mem_free=${memory}G -l act_mem_free=${memory}G -l h_vmem=${memory}G";
-        system("qsub -j y -cwd -S /bin/bash -N $name $qsub_memory $script");
+
+        # The stdout of qsub is something like: Your job 6041617 ("memcached") has been submitted
+        # However, when using treex as Unix filter, this should not clutter stdout.
+        # Let's redirect it to stderr using 1>&2.
+        system("qsub -j y -cwd -S /bin/bash -N $name $qsub_memory $script 1>&2");
         sleep 2;
         if ( $wait ) {
             do {
