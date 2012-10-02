@@ -5,6 +5,8 @@ use Treex::Core::Common;
 use autodie;    # die if the output file cannot be opened
 use File::Path;
 use File::Basename;
+use IO::Handle;
+
 
 extends 'Treex::Core::Block';
 
@@ -253,6 +255,7 @@ sub _open_file_handle {
     my ( $self, $filename ) = @_;
 
     if ( $filename eq "-" ) {
+        STDOUT->autoflush(1);
         return \*STDOUT;
     }
 
@@ -271,6 +274,7 @@ sub _open_file_handle {
     }
     mkpath( dirname($filename) );
     open $hdl, $opn;    # we use autodie here
+    $hdl->autoflush(1);
     return $hdl;
 }
 
