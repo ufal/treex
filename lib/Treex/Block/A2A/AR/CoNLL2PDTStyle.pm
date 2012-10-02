@@ -60,7 +60,7 @@ sub deprel_to_afun
 
         # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.
         $afun =~ s/\|.*//;
-        $node->set_afun($afun);
+        $node->set_afun($afun || 'NR');
     }
     # The '_M' suffix has been used in the CoNLL version of the Czech Prague Dependency Treebank to mark coordination membership.
     # Unfortunately it turns out that it was not used for Arabic.

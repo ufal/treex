@@ -183,7 +183,7 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Aux[APCVTOYXZGKR])$/ )
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Aux[APCVTOYXZGKR]|NR)$/ )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
@@ -199,7 +199,7 @@ sub check_afuns
 
                 # Erase the pseudo-afun to avoid further complaints of Treex and Tred.
                 log_info("Removing the pseudo-afun...");
-                $node->set_afun('');
+                $node->set_afun('NR');
             }
             else
             {
