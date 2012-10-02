@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';
 use Treex::Core::Document;
-use Data::Dumper;
 
 sub next_document {
     my ($self) = @_;
@@ -47,16 +46,14 @@ sub BUILD {
             ( $lang, $sele ) = split /_/, $arg;
         }
         if ( is_lang_code($lang) ) {
-            my $files_string = $args->{$arg};
-            $files_string =~ s/^\s+|\s+$//g;
-            my @files = split( /[ ,]+/, $files_string );
+            my $files = Treex::Core::Files->new({string => $args->{$arg}});
             if ( !$self->_files_per_zone ) {
-                $self->_set_files_per_zone( scalar @files );
+                $self->_set_files_per_zone( $files->number_of_files );
             }
-            elsif ( @files != $self->_files_per_zone ) {
-                log_fatal("All zones must have the same number of files");
+            elsif ( $files->number_of_files != $self->_files_per_zone ) {
+                log_fatal('All zones must have the same number of files: ' . $files->number_of_files . ' != ' . $self->_files_per_zone);
             }
-            $self->_filenames->{$arg} = \@files;
+            $self->_filenames->{$arg} = $files;
         }
         elsif ( $arg =~ /selector|language|scenario/ ) { }
         else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
@@ -67,9 +64,8 @@ sub BUILD {
 sub current_filenames {
     my ($self) = @_;
     my $n = $self->_file_number;
-    #print STDERR __PACKAGE__ . ":" . __LINE__ . " n = $n; FPZ: " . $self->_files_per_zone . "\n";
     return if $n == 0 || $n > $self->_files_per_zone;
-    my %result = map { $_ => $self->_filenames->{$_}[ $n - 1 ] } keys %{ $self->_filenames };
+    my %result = map { $_ => $self->_filenames->{$_}->filenames->[ $n - 1 ] } keys %{ $self->_filenames };
     return \%result;
 }
 
@@ -81,17 +77,7 @@ sub next_filenames {
         if ( ! $res ) {
             $self->_set_file_number($self->_files_per_zone + 2);
         } else {
-    
-    #       print STDERR Data::Dumper->Dump([$res]);
-
-            $self->_set_file_number($res->{file_number} - 1);
-    #        print STDERR __PACKAGE__ . "\n" . Data::Dumper->Dump([$res]) . "\n";        
-    #        print STDERR "RESULT: " . Data::Dumper->Dump([$res->{result}]) . "\n";
-    #        my $files = {};
-    #        map { $files->{$_} = [$res->{result}->{$_}] } keys %{$res->{result}};
-    #        print STDERR "FILES: " . Data::Dumper->Dump([$files]) . "\n";
-    #        $self->_set_filenames($files);
-    
+            $self->_set_file_number($res->{file_number} - 1);    
             $self->_set_doc_number($res->{doc_number} - 1);
         }
     }

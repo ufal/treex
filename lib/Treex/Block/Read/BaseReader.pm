@@ -47,6 +47,9 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 sub is_next_document_for_this_job {
     my ($self) = @_;
     return 1;
+
+    # The new client-server paralelization does not need jobindex
+    # TODO delete this method and the whole mechanism of skipping files
     #return 1 if !$self->jobindex;
     #return $self->doc_number % $self->jobs == ( $self->jobindex - 1 );
 }
