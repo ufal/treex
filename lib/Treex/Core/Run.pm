@@ -24,7 +24,6 @@ use base 'Exporter';
 
 use File::Glob 'bsd_glob';
 
-
 our @EXPORT_OK = q(treex);
 
 has 'save' => (
@@ -256,41 +255,39 @@ has version => (
     },
 );
 
-
 #has '_fh_OUTPUT' => ( is => 'rw', isa => 'FileHandle');
 #has '_fh_ERROR' => ( is => 'rw', isa => 'FileHandle');
 
 our $_fh_OUTPUT;
 our $_fh_ERROR;
 
-
 our $OFFIC_STDOUT;
 our $OFFIC_STDERR;
 
-has '_number_of_docs' => (is => 'rw', isa => 'Int', default=> 0);
-has '_max_started' => (is => 'rw', isa => 'Int', default => 0);
-has '_max_loaded' => (is => 'rw', isa => 'Int', default => 0);
-has '_max_finished' => (is => 'rw', isa => 'Int', default => 0);
-has '_jobs_status' => (is => 'rw', isa => 'HashRef', default => sub { {} });
-has '_fatalerror_ts' => (is => 'rw', isa => 'Int', default => 0);
-has '_fatalerror_job' => (is => 'rw', isa => 'Str', default => "");
-has '_fatalerror_doc' => (is => 'rw', isa => 'Str', default => "");
+has '_number_of_docs' => ( is => 'rw', isa => 'Int',     default => 0 );
+has '_max_started'    => ( is => 'rw', isa => 'Int',     default => 0 );
+has '_max_loaded'     => ( is => 'rw', isa => 'Int',     default => 0 );
+has '_max_finished'   => ( is => 'rw', isa => 'Int',     default => 0 );
+has '_jobs_status'    => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has '_fatalerror_ts'  => ( is => 'rw', isa => 'Int',     default => 0 );
+has '_fatalerror_job' => ( is => 'rw', isa => 'Str',     default => "" );
+has '_fatalerror_doc' => ( is => 'rw', isa => 'Str',     default => "" );
 
-has '_tmp_scenario_file' => (is => 'rw', isa => 'Str', default => "");
-has '_tmp_input_dir' => (is => 'rw', isa => 'Str', default => "");
+has '_tmp_scenario_file' => ( is => 'rw', isa => 'Str', default => "" );
+has '_tmp_input_dir'     => ( is => 'rw', isa => 'Str', default => "" );
 
 my $consumer = undef;
 
-Readonly my $sleep_min_time => 5;
-Readonly my $sleep_max_time => 120;
+Readonly my $sleep_min_time   => 5;
+Readonly my $sleep_max_time   => 120;
 Readonly my $sleep_multiplier => 1.1;
-Readonly my $slice_size => 0.2;
+Readonly my $slice_size       => 0.2;
 
 Readonly my $SERVER_HOST => hostname;
 Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
 
 our %sh_job_status : shared;
-%sh_job_status = ('info_fatalerror' => 0);
+%sh_job_status = ( 'info_fatalerror' => 0 );
 
 our $PORT : shared;
 $PORT = $SERVER_PORT;
@@ -484,12 +481,13 @@ sub _get_reader_name_for {
     log_fatal "There is no DocumentReader implemented for extension '$first'" if !$r;
     return "Read::$r";
 }
+
 sub _execute_locally {
     my ($self) = @_;
 
     $self->_init_scenario();
 
-    my $scenario      = $self->scenario;
+    my $scenario = $self->scenario;
 
     if ( $self->jobindex ) {
         my $fn = $self->outdir . sprintf( "/../status/job%03d.loaded", $self->jobindex );
@@ -498,11 +496,13 @@ sub _execute_locally {
         my $reader = $scenario->document_reader;
 
         use Treex::Block::Read::ConsumerReader;
-        my ($hostname, $port) = split(/:/, $self->server);
-        $consumer = Treex::Block::Read::ConsumerReader->new({
-            host => $hostname,
-            port => $port,
-            from=>'-'}
+        my ( $hostname, $port ) = split( /:/, $self->server );
+        $consumer = Treex::Block::Read::ConsumerReader->new(
+            {
+                host => $hostname,
+                port => $port,
+                from => '-'
+            }
         );
 
         $consumer->set_jobindex( $self->jobindex );
@@ -513,20 +513,20 @@ sub _execute_locally {
         $reader->set_jobs( $self->jobs );
         $reader->set_jobindex( $self->jobindex );
 
-        local $SIG{'TERM'} = \&term;
-        local $SIG{'ABRT'} = \&term;
-        local $SIG{'SEGV'} = \&term;
-        local $SIG{'KILL'} = \&term;
-        local $SIG{'__DIE__'} = sub { term(); log_fatal($_[0]); die($_[0]); };
+        local $SIG{'TERM'}    = \&term;
+        local $SIG{'ABRT'}    = \&term;
+        local $SIG{'SEGV'}    = \&term;
+        local $SIG{'KILL'}    = \&term;
+        local $SIG{'__DIE__'} = sub { term(); log_fatal( $_[0] ); die( $_[0] ); };
 
         mkdir $self->outdir;
-        my $outdir = $self->_get_tmp_outdir($self->outdir, $self->jobindex );
+        my $outdir = $self->_get_tmp_outdir( $self->outdir, $self->jobindex );
         _rm_dir($outdir);
         mkdir $outdir;
-        $reader->set_outdir( $outdir );
+        $reader->set_outdir($outdir);
 
-        for my $writer (@{$scenario->writers}) {
-            my $new_path =  $self->_get_tmp_outdir($writer->path, $self->jobindex);
+        for my $writer ( @{ $scenario->writers } ) {
+            my $new_path = $self->_get_tmp_outdir( $writer->path, $self->jobindex );
 
             if ( $writer->path ) {
                 mkdir $writer->path;
@@ -542,14 +542,14 @@ sub _execute_locally {
 
         }
 
-        $reader->set_consumer ( $consumer );
+        $reader->set_consumer($consumer);
 
         # If we know the number of documents in advance, inform the cluster head now
         if ( $self->jobindex == 1 ) {
-            $self->_set_number_of_docs($reader->number_of_documents);
+            $self->_set_number_of_docs( $reader->number_of_documents );
 
             #log_info "There will be $number_of_docs documents";
-            $self->_write_total_doc_number($self->_number_of_docs);
+            $self->_write_total_doc_number( $self->_number_of_docs );
         }
 
         # TODO - nastavit logovani
@@ -558,7 +558,7 @@ sub _execute_locally {
     my $runnin_started = time;
     $scenario->run();
 
-    if ( $consumer ) {
+    if ($consumer) {
         _redirect_output( $self->outdir, "terminating", $self->jobindex );
         $consumer->finished();
     }
@@ -566,28 +566,30 @@ sub _execute_locally {
     log_info "Running the scenario took " . ( time - $runnin_started ) . " seconds";
 
     if ( $self->jobindex && $self->jobindex == 1 && !$self->_number_of_docs ) {
-        $self->_set_number_of_docs($scenario->document_reader->number_of_documents);
+        $self->_set_number_of_docs( $scenario->document_reader->number_of_documents );
 
         # This branch is executed only
         # when the reader does not know number_of_documents in advance.
         # TODO: Why is document_reader->doc_number is one higher than it should be?
 
         #log_info "There were $number_of_docs documents";
-        $self->_write_total_doc_number($self->_number_of_docs);
+        $self->_write_total_doc_number( $self->_number_of_docs );
     }
 
     return;
 }
 
 END {
-#    log_warn("In function END");
+
+    #    log_warn("In function END");
     term();
 }
 
 sub term {
     use Carp;
-    if ( $consumer && ! $consumer->is_finished ) {
-#        log_warn("Calling consumer->fatalerror");
+    if ( $consumer && !$consumer->is_finished ) {
+
+        #        log_warn("Calling consumer->fatalerror");
         $consumer->fatalerror();
     }
 
@@ -595,31 +597,31 @@ sub term {
 }
 
 sub _get_tmp_outdir {
-    my ($self, $path, $jobindex) = @_;
+    my ( $self, $path, $jobindex ) = @_;
 
-    if ( $path ) {
+    if ($path) {
         $path =~ s/\/+$//;
     }
 
-    my ($hostname, $port) = split(/:/, $self->server);
-    if ( ! $hostname ) {
-        ($hostname, $port) = ($SERVER_HOST, $PORT);
+    my ( $hostname, $port ) = split( /:/, $self->server );
+    if ( !$hostname ) {
+        ( $hostname, $port ) = ( $SERVER_HOST, $PORT );
     }
-    return construct_output_dir_name($path, $jobindex, $hostname, $port);
+    return construct_output_dir_name( $path, $jobindex, $hostname, $port );
 }
 
 sub construct_output_dir_name {
-    my ($path, $jobindex, $host, $port) = @_;
-    if ( ! $path ) {
+    my ( $path, $jobindex, $host, $port ) = @_;
+    if ( !$path ) {
         $path = "";
     }
 
     my $new_path = $path . '__H.' . $host . '.P.' . $port . '__JOB__' . $jobindex;
+
     #log_warn("NEW: $new_path");
 
     return $new_path;
 }
-
 
 sub close_handles
 {
@@ -628,18 +630,18 @@ sub close_handles
     STDERR->flush();
     STDERR->sync();
 
-#    close(STDOUT);
-#    close(STDERR);
+    #    close(STDOUT);
+    #    close(STDERR);
 
     STDOUT->fdopen( fileno($OFFIC_STDOUT), 'w' ) or die $!;
     STDERR->fdopen( fileno($OFFIC_STDERR), 'w' ) or die $!;
 
-    if ( $_fh_ERROR ) {
+    if ($_fh_ERROR) {
         $_fh_ERROR->flush();
         $_fh_ERROR->sync();
         close($_fh_ERROR);
     }
-    if ( $_fh_OUTPUT ) {
+    if ($_fh_OUTPUT) {
         $_fh_OUTPUT->flush();
         $_fh_OUTPUT->sync();
         close($_fh_OUTPUT);
@@ -656,6 +658,7 @@ sub close_handles
 sub _init_scenario
 {
     my $self = shift;
+
     # Parameters can contain whitespaces that should be preserved
     my @arguments;
     foreach my $arg ( @{ $self->extra_argv } ) {
@@ -738,9 +741,11 @@ sub _file_total_doc_number
     my $self = shift;
     if ( $self->workdir ) {
         return $self->workdir . "/total_number_of_documents";
-    } elsif ( $self->outdir ) {
+    }
+    elsif ( $self->outdir ) {
         return $self->outdir . '/../total_number_of_documents';
-    } else {
+    }
+    else {
         log_fatal("Unknown setting.")
     }
 }
@@ -773,7 +778,7 @@ sub _execute_jobs {
     }
 
     foreach my $jobnumber ( 1 .. $self->jobs ) {
-        $self->_create_job_script(sprintf( "%03d", $jobnumber), $input );
+        $self->_create_job_script( sprintf( "%03d", $jobnumber ), $input );
         $self->_run_job_script($jobnumber);
     }
 
@@ -785,7 +790,7 @@ sub _execute_jobs {
 }
 
 sub _create_job_script {
-    my ($self, $jobnumber, $input) = @_;
+    my ( $self, $jobnumber, $input ) = @_;
 
     my $workdir     = $self->workdir;
     my $current_dir = Cwd::cwd;
@@ -803,25 +808,25 @@ sub _create_job_script {
     print $J "source " . Treex::Core::Config->lib_core_dir()
         . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
 
-
     my $opts_and_scen = "";
     if ( $self->_tmp_scenario_file ) {
         my %extra = ();
-        map { $extra{$_} = 1 } @{$self->extra_argv};
-        for my $arg (@{$self->ARGV}) {
-            if ( ! $extra{$arg}) {
+        map { $extra{$_} = 1 } @{ $self->extra_argv };
+        for my $arg ( @{ $self->ARGV } ) {
+            if ( !$extra{$arg} ) {
                 $opts_and_scen .= " " . _quote_argument($arg);
             }
         }
-        $opts_and_scen .= " " . _quote_argument($self->_tmp_scenario_file);
-    } else {
+        $opts_and_scen .= " " . _quote_argument( $self->_tmp_scenario_file );
+    }
+    else {
         $opts_and_scen .= join ' ', map { _quote_argument($_) } @{ $self->ARGV };
     }
 
     if ( $self->filenames ) {
         $opts_and_scen .= ' -- ' . join ' ', map { _quote_argument($_) } @{ $self->filenames };
     }
-    print $J $input . "treex --server=".$SERVER_HOST.":".$SERVER_PORT." --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
+    print $J $input . "treex --server=" . $SERVER_HOST . ":" . $SERVER_PORT . " --jobindex=$jobnumber --workdir=$workdir --outdir=$workdir/output $opts_and_scen"
         . " 2>> $workdir/status/job$jobnumber.started\n\n";
     print $J "date +'%s' > $workdir/status/job$jobnumber.finished\n";
     close $J;
@@ -831,7 +836,7 @@ sub _create_job_script {
 }
 
 sub _run_job_script {
-    my ($self, $jobnumber) = @_;
+    my ( $self, $jobnumber ) = @_;
 
     my $workdir = $self->workdir;
     if ( substr( $workdir, 0, 1 ) ne '/' ) {
@@ -878,8 +883,8 @@ Returns 1 if job C<$jobid> already started, false otherwise.
 =cut
 
 sub _is_job_started {
-    my ($self, $jobid) = @_;
-    return $self->_is_job_status($jobid, "started");
+    my ( $self, $jobid ) = @_;
+    return $self->_is_job_status( $jobid, "started" );
 }
 
 =head2 _is_job_loaded
@@ -891,8 +896,8 @@ Returns 1 if job C<$jobid> is already loaded, false otherwise.
 =cut
 
 sub _is_job_loaded {
-    my ($self, $jobid) = @_;
-    return $self->_is_job_status($jobid, "loaded");
+    my ( $self, $jobid ) = @_;
+    return $self->_is_job_status( $jobid, "loaded" );
 }
 
 =head2 _is_job_finished
@@ -904,8 +909,8 @@ Returns 1 if job C<$jobid> is already finished, false otherwise.
 =cut
 
 sub _is_job_finished {
-    my ($self, $jobid) = @_;
-    return $self->_is_job_status($jobid, "finished");
+    my ( $self, $jobid ) = @_;
+    return $self->_is_job_status( $jobid, "finished" );
 }
 
 =head2 _is_job_status
@@ -918,28 +923,31 @@ Returns 1 if job C<$jobid> has status C<$status>, false otherwise.
 
 sub _is_job_status
 {
-    my ($self, $jobid, $status) = @_;
+    my ( $self, $jobid, $status ) = @_;
 
     Treex::Tool::Probe::begin("_is_job_status.call");
 
-#    log_info("JOB: $jobid\tSTATUS: $status");
+    #    log_info("JOB: $jobid\tSTATUS: $status");
 
     # use information from shared variable
-    if ( $sh_job_status{'job_' . $jobid . '_' . $status} ) {
-        $self->{_job_status}->{$jobid}->{$status} = $sh_job_status{'job_' . $jobid . '_' . $status};
+    if ( $sh_job_status{ 'job_' . $jobid . '_' . $status } ) {
+        $self->{_job_status}->{$jobid}->{$status} = $sh_job_status{ 'job_' . $jobid . '_' . $status };
     }
 
     # avoid redundant disc accesses
-    if ( ! $self->{_job_status}->{$jobid}->{$status} ) {
+    if ( !$self->{_job_status}->{$jobid}->{$status} ) {
         Treex::Tool::Probe::begin("_is_job_status.disk");
 
-        $self->{_job_status}->{$jobid}->{$status} = (-f $self->_get_job_status_filename($jobid, $status) ? 1 : 0);
+        $self->{_job_status}->{$jobid}->{$status} = ( -f $self->_get_job_status_filename( $jobid, $status ) ? 1 : 0 );
 
         # check whether the job is broken
-        if ( $self->survive &&
-            ! $self->{_job_status}->{$jobid}->{$status} &&
-            $status ne "fatalerror" ) {
-            $self->{_job_status}->{$jobid}->{$status} = $self->_is_job_status($jobid, "fatalerror");
+        if ($self->survive
+            &&
+            !$self->{_job_status}->{$jobid}->{$status} &&
+            $status ne "fatalerror"
+            )
+        {
+            $self->{_job_status}->{$jobid}->{$status} = $self->_is_job_status( $jobid, "fatalerror" );
         }
 
         Treex::Tool::Probe::end("_is_job_status.disk");
@@ -952,7 +960,7 @@ sub _is_job_status
 
 sub _get_job_status_filename
 {
-    my ($self, $jobid, $status) = @_;
+    my ( $self, $jobid, $status ) = @_;
     return $self->workdir . "/status/job" . sprintf( "%03d", $jobid ) . "." . $status;
 }
 
@@ -964,7 +972,7 @@ sub _is_in_fatalerror
 
     my $timestamp = 0;
     if ( -f $fatal_file ) {
-        $timestamp = (stat($fatal_file))[9];
+        $timestamp = ( stat($fatal_file) )[9];
     }
 
     # first use information stored in shared variable
@@ -976,45 +984,47 @@ sub _is_in_fatalerror
     }
 
     if ( $timestamp > $self->_fatalerror_ts ) {
-        open(my $fh, "<", $fatal_file) or log_fatal($!);
+        open( my $fh, "<", $fatal_file ) or log_fatal($!);
         while ( my $line = <$fh> ) {
             chomp $line;
 
             # TODO: quick fix - should not happen
-            if ( ! $line ) {
+            if ( !$line ) {
                 next;
             }
 
             my ( $job, $doc ) = split( / /, $line );
             if ( $doc =~ /[0-9]+/ ) {
                 my $error_file = $self->workdir . "/error/doc" . sprintf( "%07d", $doc ) . ".stderr";
+
                 # sometimes error file is not stored yet
                 # so keep older values
                 if ( -f $error_file ) {
                     $self->_set_fatalerror_job($job);
                     $self->_set_fatalerror_doc($doc);
                 }
-            } else {
+            }
+            else {
                 $self->_set_fatalerror_job($job);
                 $self->_set_fatalerror_doc($doc);
             }
 
             log_info( 'Fatal error found in job ' . $job . ( $doc =~ /[0-9]+/ ? ', document ' : ' ' ) . $doc );
-            my $fatal_file = $self->_get_job_status_filename($self->_fatalerror_job, "fatalerror");
+            my $fatal_file = $self->_get_job_status_filename( $self->_fatalerror_job, "fatalerror" );
             qx(touch $fatal_file);
         }
         close($fh);
         $self->_set_fatalerror_ts($timestamp);
     }
 
-    return ($self->_fatalerror_job, $self->_fatalerror_doc);
+    return ( $self->_fatalerror_job, $self->_fatalerror_doc );
 }
 
 sub _get_slice
 {
-    my ($self, $total) = @_;
+    my ( $self, $total ) = @_;
 
-    my $slice = int( $total * $slice_size);
+    my $slice = int( $total * $slice_size );
     if ( $slice == 0 ) {
         $slice = 1;
     }
@@ -1022,15 +1032,13 @@ sub _get_slice
     return $slice;
 }
 
-
 # Prints error messages from the output of the current document processing.
 sub _print_output_files {
     my ( $self, $doc_number ) = @_;
 
-    if ( $sh_job_status{"doc_" . $doc_number . "_skipped"} ) {
+    if ( $sh_job_status{ "doc_" . $doc_number . "_skipped" } ) {
         return;
     }
-
 
     # To get utf8 encoding also when using qx (aka backticks):
     # my $command_output = qw($command);
@@ -1038,30 +1046,29 @@ sub _print_output_files {
     use open qw{ :std IO :encoding(UTF-8) };
 
     foreach my $stream (qw(stderr stdout)) {
-        Treex::Tool::Probe::begin("_print_output_files.".$stream);
-
+        Treex::Tool::Probe::begin( "_print_output_files." . $stream );
 
         my $filename = $self->workdir . "/output/doc" . sprintf( "%07d", $doc_number ) . ".$stream";
 
         # log_info "Processing output file: " . $filename . " ( -f " . int(defined(-f $filename)) . ", -s " . int(-s $filename) . ")";
 
         # we have to wait until file is really creates the file
-        if ( ! -f $filename ) {
+        if ( !-f $filename ) {
             my $TRIES = 7;
-            my $try = 0;
+            my $try   = 0;
             while ( $try < $TRIES && -f $filename ) {
-                Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep-first-file-check");
+                Treex::Tool::Probe::begin( "_print_output_files." . $stream . ".sleep-first-file-check" );
                 sleep(1);
             }
 
-        #    if ( $doc_number == 1 && $stream eq "stdout" && $sh_job_status{"doc_" . $doc_number . "_finished"} ) {
-        #        sleep(15);
-        #    }
-            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep-first-file-check");
+            #    if ( $doc_number == 1 && $stream eq "stdout" && $sh_job_status{"doc_" . $doc_number . "_finished"} ) {
+            #        sleep(15);
+            #    }
+            Treex::Tool::Probe::end( "_print_output_files." . $stream . ".sleep-first-file-check" );
         }
 
         if ( !-f $filename ) {
-            my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number, "fatalerror"));
+            my $job_number = sprintf( "%03d", $self->_get_job_number_from_doc_number( $doc_number, "fatalerror" ) );
             my $message = "Document $doc_number finished without producing $filename. " .
                 " It might be useful to inspect " . $self->workdir . "/status/job" . sprintf( "%03d", $job_number ) . ".loading.stderr";
             if ( $self->survive ) {
@@ -1078,12 +1085,14 @@ sub _print_output_files {
         my $wait_it = 0;
         `stat $filename`;
         if ( $stream eq 'stderr' && -s $filename == 0 ) {
+
             # Jan Stepanek advice
             `stat $filename`;
-            Treex::Tool::Probe::begin("_print_output_files.".$stream.".sleep2");
+            Treex::Tool::Probe::begin( "_print_output_files." . $stream . ".sleep2" );
+
             # Definitely not the ideal solution but it helps at the moment (and it fails without it):
             sleep(3);
-            Treex::Tool::Probe::end("_print_output_files.".$stream.".sleep2");
+            Treex::Tool::Probe::end( "_print_output_files." . $stream . ".sleep2" );
         }
 
         #while ( -s $filename == 0 && $wait_it < 1 ) {
@@ -1105,20 +1114,22 @@ sub _print_output_files {
             system("cat $filename");
         }
         else {
-            my $job_number = sprintf("%03d", $self->_get_job_number_from_doc_number($doc_number, "finished"));
+            my $job_number     = sprintf( "%03d", $self->_get_job_number_from_doc_number( $doc_number, "finished" ) );
             my $doc_number_str = sprintf( "%07d", $doc_number );
-            my $success     = 0;
-            my $try = 0;
-            my $TRIES = 10;
-            while ( $try < $TRIES && ! $success ) {
+            my $success        = 0;
+            my $try            = 0;
+            my $TRIES          = 10;
+            while ( $try < $TRIES && !$success ) {
                 if ( $try > 0 ) {
                     sleep(4);
+
                     #log_info("$filename - $try");
                 }
                 open my $FILE, '<:encoding(utf8)', $filename or log_fatal $!;
-                my $report      = $self->forward_error_level;
+                my $report = $self->forward_error_level;
 
                 while (<$FILE>) {
+
                     # skip [success] indicatory lines, but set the success flag to 1
                     if ( $_ =~ /^Document [0-9]+\/[0-9\?]+ .*: \[success\]\.\r?\n?$/ ) {
                         $success = 1;
@@ -1136,10 +1147,12 @@ sub _print_output_files {
 
                 }
                 close $FILE;
+
                 #if ( ! $sh_job_status{"doc_" . $doc_number . "_finished"} ) {
                 #    $try += $TRIES;
                 #} else {
-                    $try++;
+                $try++;
+
                 #}
             }
 
@@ -1148,20 +1161,21 @@ sub _print_output_files {
                 my $msg = "Document $doc_number has not finished successfully (see $filename)";
                 if ( $self->survive ) {
                     log_warn($msg);
-                } else {
+                }
+                else {
                     log_fatal($msg);
                 }
             }
         }
-        Treex::Tool::Probe::end("_print_output_files.".$stream);
+        Treex::Tool::Probe::end( "_print_output_files." . $stream );
 
     }
     return;
 }
 
 sub _doc_submitted {
-     my ( $self, $doc_number ) = @_;
-     return ( $sh_job_status{"doc_" . $doc_number . "_started"} );
+    my ( $self, $doc_number ) = @_;
+    return ( $sh_job_status{ "doc_" . $doc_number . "_started" } );
 }
 
 sub _doc_started {
@@ -1170,6 +1184,7 @@ sub _doc_started {
     #log_warn("DOC: $doc_number; FIN: " . int(defined($sh_job_status{"doc_" . $doc_number . "_finished"})) . "; FATAL: " . int(defined($sh_job_status{"doc_" . $doc_number . "_fatalerror"})));
     #return ( $sh_job_status{"doc_" . $doc_number . "_finished"} || $sh_job_status{"doc_" . $doc_number . "_fatalerror"} );
     my $filename = $self->workdir . sprintf( '/output/doc%07d.stderr', $doc_number );
+
     #log_info("DOC Started: " . $filename);
     return -f $filename;
 }
@@ -1184,20 +1199,20 @@ sub _wait_for_jobs {
     my $jobs_finished       = 1;
     my $docs_submitted      = 1;
 
-    my $sleep_time = $sleep_min_time;
-    my $last_status_msg = "";
-    my $last_status_skipped = 0;
+    my $sleep_time            = $sleep_min_time;
+    my $last_status_msg       = "";
+    my $last_status_skipped   = 0;
     my $last_fatalerror_count = 0;
 
     my $missing_docs = 0;
 
     log_info("\n");
 
-    my $job_slice = $self->_get_slice($self->jobs);
+    my $job_slice = $self->_get_slice( $self->jobs );
     $sh_job_status{'info_crashed_jobs'} = 0;
 
     my $document_slice = 0;
-    my $check_errors = 0;
+    my $check_errors   = 0;
 
     my $finished_sleep = 0;
 
@@ -1206,10 +1221,11 @@ sub _wait_for_jobs {
         # count already started jobs
         if (
             $self->{_max_started} != $self->jobs &&
-            $self->_is_job_started($self->{_max_started} + 1)
-           ) {
+            $self->_is_job_started( $self->{_max_started} + 1 )
+            )
+        {
             $self->{_max_started} += 1;
-            $check_errors ||= int( $self->{_max_started} % $job_slice == 1);
+            $check_errors ||= int( $self->{_max_started} % $job_slice == 1 );
             $sleep_time = $self->_sleep_time_dec($sleep_time);
             next;
         }
@@ -1218,10 +1234,11 @@ sub _wait_for_jobs {
         if (
             $self->{_max_loaded} < $self->{_max_started} &&
             $self->{_max_loaded} != $self->jobs &&
-            $self->_is_job_loaded($self->{_max_loaded} + 1)
-           ) {
+            $self->_is_job_loaded( $self->{_max_loaded} + 1 )
+            )
+        {
             $self->{_max_loaded} += 1;
-            $check_errors ||= int( $self->{_max_loaded} % $job_slice == 1);
+            $check_errors ||= int( $self->{_max_loaded} % $job_slice == 1 );
             $sleep_time = $self->_sleep_time_dec($sleep_time);
             next;
         }
@@ -1230,12 +1247,13 @@ sub _wait_for_jobs {
         if (
             $self->{_max_finished} < $self->{_max_loaded} &&
             $self->{_max_finished} != $self->jobs &&
-            $self->_is_job_finished($self->{_max_finished} + 1)
-           ) {
+            $self->_is_job_finished( $self->{_max_finished} + 1 )
+            )
+        {
             $self->{_max_finished} += 1;
-            $check_errors ||= int( $self->{_max_finished} % $job_slice == 1);
+            $check_errors ||= int( $self->{_max_finished} % $job_slice == 1 );
             $all_jobs_finished = ( $self->{_max_finished} == $self->jobs );
-            $sleep_time = $self->_sleep_time_dec($sleep_time);
+            $sleep_time        = $self->_sleep_time_dec($sleep_time);
             next;
         }
 
@@ -1246,13 +1264,12 @@ sub _wait_for_jobs {
             $docs_submitted++;
         }
 
-
         # If a job starts processing another doc,
         # it means it has finished the current doc.
         my $current_doc_finished = $all_jobs_finished;
         $current_doc_finished ||= $self->_doc_started( $current_doc_number + 1 );
 
-        if ($current_doc_started && $current_doc_finished) {
+        if ( $current_doc_started && $current_doc_finished ) {
             $self->_print_output_files($current_doc_number);
             $current_doc_number++;
             $current_doc_started = 0;
@@ -1261,25 +1278,26 @@ sub _wait_for_jobs {
             $sleep_time = $self->_sleep_time_dec($sleep_time);
 
             $document_slice ||= $self->_get_slice($total_doc_number);
-            $check_errors ||= int( $current_doc_number % $document_slice == 1);
+            $check_errors   ||= int( $current_doc_number % $document_slice == 1 );
             $missing_docs = 0;
             next;
         }
         else {
 
-            my $act_status_msg = sprintf("Jobs: %3d started, %3d loaded | Docs: %5d/%5d/%5d",
+            my $act_status_msg = sprintf(
+                "Jobs: %3d started, %3d loaded | Docs: %5d/%5d/%5d",
                 $self->{_max_started},
                 $self->{_max_loaded},
                 $current_doc_number - 1,
-                $docs_submitted -1,
+                $docs_submitted - 1,
                 $total_doc_number
-                );
+            );
 
             if ( $act_status_msg eq $last_status_msg ) {
                 $last_status_skipped++;
                 if ( $last_status_skipped > 5 ) {
                     $last_status_skipped = 0;
-                    $last_status_msg = "";
+                    $last_status_msg     = "";
 
                     # maybe there is an error
                     $check_errors = 1;
@@ -1309,7 +1327,7 @@ sub _wait_for_jobs {
         }
 
         if ( $last_fatalerror_count != $sh_job_status{"info_fatalerror"} ) {
-            $check_errors = 1;
+            $check_errors          = 1;
             $last_fatalerror_count = $sh_job_status{"info_fatalerror"};
         }
 
@@ -1318,8 +1336,8 @@ sub _wait_for_jobs {
         }
 
         # check errors if necessary
-        if ( $check_errors ) {
-            $self->_check_job_errors($self->{_max_finished});
+        if ($check_errors) {
+            $self->_check_job_errors( $self->{_max_finished} );
             $check_errors = 0;
         }
 
@@ -1328,7 +1346,7 @@ sub _wait_for_jobs {
         # - even if all_jobs_finished, we must wait for forwarding all output files
         # Note that if $current_doc_number == $total_doc_number,
         # the output of the last doc was not forwarded yet.
-        $done = ($all_jobs_finished && $current_doc_number > $total_doc_number);
+        $done = ( $all_jobs_finished && $current_doc_number > $total_doc_number );
 
         if ( $self->{_max_finished} == $self->jobs && $current_doc_number < $total_doc_number ) {
             $missing_docs++;
@@ -1350,7 +1368,7 @@ sub _wait_for_jobs {
 
 sub _sleep_time_dec
 {
-    my ($self, $time) = @_;
+    my ( $self, $time ) = @_;
     $time /= $sleep_multiplier;
     if ( $time < $sleep_min_time ) {
         $time = $sleep_min_time;
@@ -1394,7 +1412,7 @@ sub _print_execution_time {
         $hosts{$hostname}{'time'} += ( $time_finish - $time_start );
         $hosts{$hostname}{'c'}++;
 
-        push(@times, ($time_finish - $time_start).".".$jobid);
+        push( @times, ( $time_finish - $time_start ) . "." . $jobid );
     }
 
     # find the slowest and the fastest machine
@@ -1421,7 +1439,7 @@ sub _print_execution_time {
     log_info "Execution time per job: " . sprintf( "%0.3f", $time_total / $self->jobs );
     log_info "Slowest machine: $max_host = $max_time";
     log_info "Fastest machine: $min_host = $min_time";
-    log_info "Times: " . join(", ", sort { $b <=> $a }@times);
+    log_info "Times: " . join( ", ", sort { $b <=> $a } @times );
 
     return;
 }
@@ -1432,17 +1450,17 @@ sub _print_finish_status
 
     my $fatal_file = $self->workdir . "/status/fatalerror";
 
-    if ( ! $self->survive || ! -f $fatal_file ) {
+    if ( !$self->survive || !-f $fatal_file ) {
         log_info "All jobs finished.";
         return;
     }
 
     my %broken_jobs = ();
-    open(my $fh, "<", $fatal_file) or log_fatal($!);
+    open( my $fh, "<", $fatal_file ) or log_fatal($!);
     while (<$fh>) {
         chomp;
-        my @p = split(/ /, $_);
-        $broken_jobs{$p[0]} = 1;
+        my @p = split( / /, $_ );
+        $broken_jobs{ $p[0] } = 1;
     }
     close($fh);
 
@@ -1450,9 +1468,10 @@ sub _print_finish_status
 
     if ( scalar @jobs == 0 ) {
         log_info "All jobs finished.";
-    } else {
-        log_info "Fatal errors occurred in " . (scalar @jobs) . " out of " . $self->jobs . " jobs.";
-        log_info "These jobs are: " . join(" ", @jobs);
+    }
+    else {
+        log_info "Fatal errors occurred in " . ( scalar @jobs ) . " out of " . $self->jobs . " jobs.";
+        log_info "These jobs are: " . join( " ", @jobs );
     }
 
     return;
@@ -1470,12 +1489,12 @@ sub _check_job_errors {
 
     my $workdir = $self->workdir;
 
-    my ($fatal_job, $fatal_doc) = $self->_is_in_fatalerror();
-    if ( $fatal_job ) {
+    my ( $fatal_job, $fatal_doc ) = $self->_is_in_fatalerror();
+    if ($fatal_job) {
         my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
-        if ($fatal_doc =~ /[0-9]+/) {
+        if ( $fatal_doc =~ /[0-9]+/ ) {
             $error_file = $workdir . "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
-            if ( ! -d $error_file ) {
+            if ( !-d $error_file ) {
                 $error_file = $workdir . "/error/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
             }
         }
@@ -1487,13 +1506,13 @@ sub _check_job_errors {
         log_info "********************** END OF JOB $fatal_job FATAL ERRORS LOG ****************\n";
 
         # create fatal error file for particular job
-        my $fatal_file = $self->_get_job_status_filename($fatal_job, "fatalerror");
+        my $fatal_file = $self->_get_job_status_filename( $fatal_job, "fatalerror" );
         qx($command >> $fatal_file);
 
         # mark job as in fatal error state
-        $self->_is_job_status($fatal_job, "fatalerror");
+        $self->_is_job_status( $fatal_job, "fatalerror" );
 
-        if ( ! $self->survive ) {
+        if ( !$self->survive ) {
             log_info "Fatal error(s) found in one or more jobs. All remaining jobs will be interrupted now.";
             $self->_delete_jobs();
             $self->_delete_tmp_dirs();
@@ -1515,34 +1534,36 @@ sub _check_epilog_before_finish {
     my $workdir = $self->workdir;
     $from_job_number ||= 1;
     for my $job_num ( $from_job_number .. $self->jobs ) {
-        my $job_str = sprintf("job%03d", $job_num);
-        if ( $self->name) {
+        my $job_str = sprintf( "job%03d", $job_num );
+        if ( $self->name ) {
             $job_str = $self->name . "-" . $job_str;
         }
         next if $self->_is_job_finished($job_num);
         my $epilog_name = bsd_glob "$workdir/error/$job_str.sh.e*";
-        if ( $epilog_name ) {
+        if ($epilog_name) {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
 
             # However, now we must check -f again, because the file could be created meanwhile.
-            if ($epilog ) {
+            if ($epilog) {
                 log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
                 log_info "**** cat $epilog_name\n";
                 system "cat $epilog_name";
-#TODO - FIX
-#                log_info "********************** LAST STDERR OF JOB $job_str: ******************";
-#                log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
-#                system "tail $workdir/output/job$job_str-doc*.stderr";
+
+                #TODO - FIX
+                #                log_info "********************** LAST STDERR OF JOB $job_str: ******************";
+                #                log_info "**** tail $workdir/output/job$job_str-doc*.stderr\n";
+                #                system "tail $workdir/output/job$job_str-doc*.stderr";
                 log_info "********************** END OF JOB $job_str ERRORS LOGS ****************\n";
                 if ( $self->survive ) {
-                    $sh_job_status{'job_' . $job_num . '_' . "fatalerror"} = 1;
+                    $sh_job_status{ 'job_' . $job_num . '_' . "fatalerror" } = 1;
                     log_warn("Fatal error ignored due to the --survive option, be careful.");
                     my $act_crashed = $sh_job_status{'info_crashed_jobs'};
                     $act_crashed++;
                     if ( $act_crashed <= $self->jobs ) {
                         $sh_job_status{'info_crashed_jobs'} = $act_crashed;
                     }
+
                     #return;
                 }
                 else {
@@ -1581,16 +1602,17 @@ sub _delete_jobs {
         $continue = 0;
 
         my $id_string = `qstat | tail -n +3 | cut -f1 -d" " | tr "\n" ,`;
-        my @ids = split(/,/, $id_string);
+        my @ids = split( /,/, $id_string );
         for my $id (@ids) {
-            if ( defined($jobs{$id}) ) {
+            if ( defined( $jobs{$id} ) ) {
                 $continue = 1;
+
                 # log_warn("Job - $id - is still running.");
                 sleep 2;
                 last;
             }
         }
-    } while ( $continue);
+    } while ($continue);
 
     return;
 }
@@ -1602,23 +1624,26 @@ sub _delete_tmp_dirs {
 
     for my $j ( 1 .. $self->jobs ) {
 
-        my $outdir = $self->_get_tmp_outdir($self->outdir, $j );
+        my $outdir = $self->_get_tmp_outdir( $self->outdir, $j );
+
         #log_warn("DEL: $outdir");
         _rm_dir($outdir);
 
-        my $workdir = $self->_get_tmp_outdir($self->workdir . "/output", $j );
+        my $workdir = $self->_get_tmp_outdir( $self->workdir . "/output", $j );
+
         #log_warn("DEL: $workdir");
         _rm_dir($workdir);
 
-        for my $writer (@{$self->scenario->writers}) {
-            my $new_path =  $self->_get_tmp_outdir($writer->path, $j);
+        for my $writer ( @{ $self->scenario->writers } ) {
+            my $new_path = $self->_get_tmp_outdir( $writer->path, $j );
+
             #log_warn("DEL: $new_path");
             _rm_dir($new_path);
         }
     }
 
     if ( $self->_tmp_input_dir && $self->_tmp_input_dir =~ /STDIN/ ) {
-        _rm_dir($self->_tmp_input_dir);
+        _rm_dir( $self->_tmp_input_dir );
     }
 
     return;
@@ -1642,7 +1667,7 @@ sub _execute_on_cluster {
 
     $self->_init_scenario();
 
-    log_info("Execution begin at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+    log_info( "Execution begin at " . POSIX::strftime( '%Y-%m-%d %H:%M:%S', localtime ) );
 
     # create working directory, if not specified as a command line option
     if ( not defined $self->workdir ) {
@@ -1677,23 +1702,25 @@ sub _execute_on_cluster {
     }
     sleep(1);
 
-    if ( $self->scenario->document_reader->isa("Treex::Block::Read::BaseTextReader") &&
-         $self->scenario->document_reader->lines_per_doc
-        ) {
+    if ($self->scenario->document_reader->isa("Treex::Block::Read::BaseTextReader")
+        &&
+        $self->scenario->document_reader->lines_per_doc
+        )
+    {
         log_info("Input file splitting - BEGIN");
 
         # construct scenario
-        my @scenario_lines = split(/\n/, $self->scenario->construct_scenario_string( multiline => 1 ));
+        my @scenario_lines = split( /\n/, $self->scenario->construct_scenario_string( multiline => 1 ) );
 
         # retrieve line with reader
-        my $reader_name = ref($self->scenario->document_reader);
+        my $reader_name = ref( $self->scenario->document_reader );
         $reader_name =~ s/Treex::Block:://;
 
         # TODO: iterovat + a je nutne doplnit i vsechny nad tim
         my $reader_line_num = 0;
         my @preserved_lines = ();
         for my $line (@scenario_lines) {
-            push(@preserved_lines, $line);
+            push( @preserved_lines, $line );
             if ( $line =~ /\Q$reader_name\E/ ) {
                 last;
             }
@@ -1703,28 +1730,30 @@ sub _execute_on_cluster {
 
         # create directory for splitted files
         my $first_from = $self->scenario->document_reader->from->filenames->[0];
-        my $hash = sprintf("STDIN_%09d", rand(1e9));
+        my $hash = sprintf( "STDIN_%09d", rand(1e9) );
         if ( $first_from ne "-" && $first_from ne "/dev/stdin" ) {
             $hash = $self->scenario->document_reader->from->get_hash();
         }
-        $self->_set_tmp_input_dir("__INPUT__" . $hash);
+        $self->_set_tmp_input_dir( "__INPUT__" . $hash );
 
         # split files if they does not exist
-        if ( ! -d $self->_tmp_input_dir ) {
+        if ( !-d $self->_tmp_input_dir ) {
             mkdir $self->_tmp_input_dir;
 
             # split files and convert them to streex format
-            my $tmp_scenario = Treex::Core::Scenario->new(from_string =>
-                join("\n", @preserved_lines) . "\n" .
-                "Write::Treex storable=1 path=" . _quote_argument($self->_tmp_input_dir)."\n"
+            my $tmp_scenario = Treex::Core::Scenario->new(
+                from_string =>
+                    join( "\n", @preserved_lines ) . "\n" .
+                    "Write::Treex storable=1 path=" . _quote_argument( $self->_tmp_input_dir ) . "\n"
             );
             $tmp_scenario->run();
-        } else {
+        }
+        else {
             log_info("Already splitted");
         }
 
         # construct new scenario
-        my $new_reader_line = "Read::Treex from='!".$self->_tmp_input_dir."\/*.streex'";
+        my $new_reader_line    = "Read::Treex from='!" . $self->_tmp_input_dir . "\/*.streex'";
         my @new_scenario_lines = map {
             my $line = $_;
             $line =~ s/\Q$reader_line\E/$new_reader_line/;
@@ -1732,15 +1761,15 @@ sub _execute_on_cluster {
         } @scenario_lines;
 
         # save scenario into new file
-        $self->_set_tmp_scenario_file($self->_tmp_input_dir . "/scenario.scen");
-        open(my $fh, ">:encoding(utf-8)", $self->_tmp_scenario_file) or log_fatal($!);
-        print $fh join("\n", @new_scenario_lines);
+        $self->_set_tmp_scenario_file( $self->_tmp_input_dir . "/scenario.scen" );
+        open( my $fh, ">:encoding(utf-8)", $self->_tmp_scenario_file ) or log_fatal($!);
+        print $fh join( "\n", @new_scenario_lines );
         close($fh);
 
         # construct new reader
-        my $reader_scenario = Treex::Core::Scenario->new(from_string => $new_reader_line);
+        my $reader_scenario = Treex::Core::Scenario->new( from_string => $new_reader_line );
         $reader_scenario->load_blocks();
-        $self->scenario->_set_document_reader($reader_scenario->document_reader);
+        $self->scenario->_set_document_reader( $reader_scenario->document_reader );
 
         log_info("Input file splitting - END");
     }
@@ -1760,17 +1789,16 @@ sub _execute_on_cluster {
         require Treex::Tool::Memcached::Memcached;
 
         # determine required memory
-        my ($memcached_memory, $loading_memory) = split(",", $self->cache);
-        if ( ! $memcached_memory ) {
-            $memcached_memory = 5; # TODO: magic number
+        my ( $memcached_memory, $loading_memory ) = split( ",", $self->cache );
+        if ( !$memcached_memory ) {
+            $memcached_memory = 5;    # TODO: magic number
         }
-        if ( ! $loading_memory ) {
+        if ( !$loading_memory ) {
             $loading_memory = $memcached_memory;
         }
 
-
         # start memcached
-        if ( ! Treex::Tool::Memcached::Memcached::is_running() ) {
+        if ( !Treex::Tool::Memcached::Memcached::is_running() ) {
             Treex::Tool::Memcached::Memcached::start_memcached($memcached_memory);
             sleep 2;
         }
@@ -1780,64 +1808,71 @@ sub _execute_on_cluster {
             Treex::Tool::Memcached::Memcached::get_connection("documents-cache")
         );
 
-
         # check missing models
         my @missing_files = ();
-        for my $line ($self->scenario->get_required_files()) {
+        for my $line ( $self->scenario->get_required_files() ) {
             chomp $line;
-            my ($package, $file) = split(/\t/, $line);
+            my ( $package, $file ) = split( /\t/, $line );
             my $required_file = Treex::Core::Resource::require_file_from_share( $file, 'Memcached' );
-            if ( Treex::Tool::Memcached::Memcached::is_supported_package($package) &&
-                ! Treex::Tool::Memcached::Memcached::contains($required_file)) {
+            if (Treex::Tool::Memcached::Memcached::is_supported_package($package)
+                &&
+                !Treex::Tool::Memcached::Memcached::contains($required_file)
+                )
+            {
                 my $class = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
-                if ( ! $class ) {
+                if ( !$class ) {
                     log_warn "Unknown model file for $file\n";
                     next;
                 }
 
-                push(@missing_files, [$class, $required_file]);
+                push( @missing_files, [ $class, $required_file ] );
             }
         }
 
         # some files are missing => load
-        if ( @missing_files ) {
+        if (@missing_files) {
             log_info("Models will be loaded - BEGIN");
+
             # create file with required files
             my $script = File::Temp->new( UNLINK => 0, TEMPLATE => 'loading-qsub-XXXX', SUFFIX => '.sh' );
             print $script "#!/bin/bash\n";
             print $script "perl -e 'use Treex::Tool::Memcached::Memcached;";
-            for my $item ( @missing_files ) {
-                my ($class, $required_file) = ($item->[0], $item->[1]);
+            for my $item (@missing_files) {
+                my ( $class, $required_file ) = ( $item->[0], $item->[1] );
                 print $script "Treex::Tool::Memcached::Memcached::load_model(\"$class\", \"$required_file\" );";
             }
             print $script ";'\n";
             close $script;
 
-            Treex::Tool::Memcached::Memcached::execute_script($script, $loading_memory, $script, 1);
+            Treex::Tool::Memcached::Memcached::execute_script( $script, $loading_memory, $script, 1 );
             log_info("Models will be loaded - END");
         }
 
     }
 
-    $self->_set_number_of_docs($self->scenario->document_reader->number_of_documents);
-    $self->_write_total_doc_number($self->_number_of_docs);
+    $self->_set_number_of_docs( $self->scenario->document_reader->number_of_documents );
+    $self->_write_total_doc_number( $self->_number_of_docs );
 
-    my $server_thread = threads->create( sub {
-        use Treex::Block::Read::ProducerReader;
-        my $producer = Treex::Block::Read::ProducerReader->new({
-            reader => $self->scenario->document_reader,
-            host => $SERVER_HOST,
-            port => $SERVER_PORT,
-            from=>'-',
-            status=> \%Treex::Core::Run::sh_job_status,
-            workdir => $self->workdir,
-            writers => $self->scenario->writers,
-            jobs => $self->jobs,
-            log_file => $self->workdir . "/processing_info.log",
-            survive => $self->survive
-        });
+    my $server_thread = threads->create(
+        sub {
+            use Treex::Block::Read::ProducerReader;
+            my $producer = Treex::Block::Read::ProducerReader->new(
+                {
+                    reader   => $self->scenario->document_reader,
+                    host     => $SERVER_HOST,
+                    port     => $SERVER_PORT,
+                    from     => '-',
+                    status   => \%Treex::Core::Run::sh_job_status,
+                    workdir  => $self->workdir,
+                    writers  => $self->scenario->writers,
+                    jobs     => $self->jobs,
+                    log_file => $self->workdir . "/processing_info.log",
+                    survive  => $self->survive
+                }
+            );
 
-    });
+        }
+    );
     $server_thread->detach();
     sleep(2);
 
@@ -1863,8 +1898,7 @@ sub _execute_on_cluster {
         rmtree $self->workdir or log_fatal $!;
     }
 
-
-    log_info("Execution finished at " . POSIX::strftime('%Y-%m-%d %H:%M:%S',localtime));
+    log_info( "Execution finished at " . POSIX::strftime( '%Y-%m-%d %H:%M:%S', localtime ) );
 
     return;
 }
@@ -1886,7 +1920,7 @@ sub _redirect_output {
     $ERROR->autoflush(1);
 
     $_fh_OUTPUT = $OUTPUT;
-    $_fh_ERROR = $ERROR;
+    $_fh_ERROR  = $ERROR;
 
     STDOUT->fdopen( $OUTPUT, 'w' ) or log_fatal $!;
     STDERR->fdopen( $ERROR,  'w' ) or log_fatal $!;
@@ -1896,16 +1930,16 @@ sub _redirect_output {
 
     # special file is touched if log_fatal is called
     my $common_file_fatalerror = $outdir . "/../status/fatalerror";
-    my $job_file_fatalerror = $outdir . "/../status/" . $job . ".fatalerror";
-    Treex::Core::Log::del_hook('FATAL', $fatal_hook_index);
+    my $job_file_fatalerror    = $outdir . "/../status/" . $job . ".fatalerror";
+    Treex::Core::Log::del_hook( 'FATAL', $fatal_hook_index );
     $fatal_hook_index = Treex::Core::Log::add_hook(
         'FATAL',
         sub {
             eval {
                 system qq(echo $jobindex $docnumber >> $common_file_fatalerror);
                 system qq(touch $job_file_fatalerror);
-            };      ## no critic (RequireCheckingReturnValueOfEval)
-        }
+            };    ## no critic (RequireCheckingReturnValueOfEval)
+            }
     );
     return;
 }
@@ -1913,10 +1947,10 @@ sub _redirect_output {
 sub _get_job_number_from_doc_number
 {
     my ( $self, $doc_number, $status ) = @_;
-    if ( ! $status ) {
+    if ( !$status ) {
         $status = "finished";
     }
-    return $sh_job_status{'doc_' . $doc_number . '_' . $status};
+    return $sh_job_status{ 'doc_' . $doc_number . '_' . $status };
 }
 
 # not a method !

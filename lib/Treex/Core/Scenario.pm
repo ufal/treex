@@ -57,7 +57,7 @@ has document_reader => (
 
 has writers => (
     is      => 'rw',
-    does    => 'ArrayRef[Treex::Block::Treex::Block::Write::BaseWriter]',
+    does    => 'ArrayRef[Treex::Block::Write::BaseWriter]',
     default => sub { [] }
 );
 
@@ -267,7 +267,6 @@ sub construct_scenario_string {
     return join $delim, @block_strings;
 }
 
-# reverse of parse_scenario_string, used in Treex::Core::Run for treex --dump
 sub get_required_files {
     my $self        = shift;
     my @block_items = @{ $self->block_items };
