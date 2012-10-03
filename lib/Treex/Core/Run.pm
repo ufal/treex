@@ -286,6 +286,15 @@ Readonly my $slice_size       => 0.2;
 Readonly my $SERVER_HOST => hostname;
 Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
 
+# For speculative execution, writers cannot use the final output filenames.
+# They must use temporary files instead and only the first successful jobs
+# will move its files to the final location.
+# However, there is a bug in the renaming code (see Treex/Core/t/writers.t)
+# so let's disable it. TODO: fix it properly.
+# TODO: this constant does not turn on/off the speculative execution (but it should),
+# just the renamig code.
+our $SPECULATIVE_EXECUTION = 0;
+
 our %sh_job_status : shared;
 %sh_job_status = ( 'info_fatalerror' => 0 );
 
@@ -525,21 +534,22 @@ sub _execute_locally {
         mkdir $outdir;
         $reader->set_outdir($outdir);
 
-        for my $writer ( @{ $scenario->writers } ) {
-            my $new_path = $self->_get_tmp_outdir( $writer->path, $self->jobindex );
+        if ($SPECULATIVE_EXECUTION) {
+            for my $writer ( @{ $scenario->writers } ) {
+                my $new_path = $self->_get_tmp_outdir( $writer->path, $self->jobindex );
 
-            if ( $writer->path ) {
-                mkdir $writer->path;
+                if ( $writer->path ) {
+                    mkdir $writer->path;
+                }
+                _rm_dir($new_path);
+                mkdir $new_path;
+
+                $writer->set_path($new_path);
+
+                if ( $writer->to && $writer->to eq "-" ) {
+                    $writer->set_to("__FAKE_OUTPUT__");
+                }
             }
-            _rm_dir($new_path);
-            mkdir $new_path;
-
-            $writer->set_path($new_path);
-
-            if ( $writer->to && $writer->to eq "-" ) {
-                $writer->set_to("__FAKE_OUTPUT__");
-            }
-
         }
 
         $reader->set_consumer($consumer);
@@ -1871,7 +1881,7 @@ sub _execute_on_cluster {
                 }
             );
 
-        }
+            }
     );
     $server_thread->detach();
     sleep(2);
@@ -1944,8 +1954,7 @@ sub _redirect_output {
     return;
 }
 
-sub _get_job_number_from_doc_number
-{
+sub _get_job_number_from_doc_number {
     my ( $self, $doc_number, $status ) = @_;
     if ( !$status ) {
         $status = "finished";

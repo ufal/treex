@@ -20,7 +20,7 @@ is(`cat dir/noname002.txt`, "2\n", 'local execution');
 is(`cat dir/noname002.txt`, "2\n", 'treex -p execution');
 # A bug causes the files are created in the current directory instead of "dir"
 # Let's delete also these files
-`rm noname00?.txt`;
+`rm -f noname00?.txt`;
 
 `rm -rf dir *-cluster-run-*`;
 done_testing();
