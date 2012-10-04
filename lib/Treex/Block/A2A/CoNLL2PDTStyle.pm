@@ -204,6 +204,7 @@ sub check_afuns
             else
             {
                 log_warn("Node $ord:$form/$tag/$deprel still has no afun.");
+                $node->set_afun('NR');
             }
         }
     }

@@ -45,7 +45,7 @@ sub deprel_to_afun
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
-        my $afun;
+        my $afun   = 'NR';
         # Dependency of the main verb on the artificial root node.
         # An error? There is also a 'PRD' (instead of 'ROOT') that depends directly on the root.
         if ( $deprel eq 'ROOT' || $deprel eq 'PRD' && $parent==$root )
