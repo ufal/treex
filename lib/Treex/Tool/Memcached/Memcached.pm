@@ -144,6 +144,10 @@ sub get_memcached_hostname {
     # return machine name if running on the cluster
     if ($CLUSTER) {
         my @lines = grep {/memcached/} `qstat`;
+
+        # Jobs where fifth column (state) contains "d" (deletion) should not be considered as running memcached servers
+        @lines = grep {!/([^ ]+ +){4}d/} @lines;
+
         if (@lines) {
             my $server = "";
             while ( $server eq "" ) {
