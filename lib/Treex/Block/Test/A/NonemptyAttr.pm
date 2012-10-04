@@ -6,7 +6,8 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
     foreach my $attr_name (qw(form lemma tag)) {
-        if ( $anode->get_attr($attr_name) eq '' ) {
+        my $attr_value = $anode->get_attr($attr_name);
+        if ( !defined $attr_value || $attr_value eq '' ) {
             $self->complain($anode, $attr_name);
         }
     }
@@ -18,7 +19,7 @@ sub process_anode {
 
 =item Treex::Block::Test::A::NonemptyAttr
 
-Attributes form, lemma, and tag must be filled with non-empty value.
+Report attributes form, lemma, or tag with empty string or undefined value.
 
 =back
 
