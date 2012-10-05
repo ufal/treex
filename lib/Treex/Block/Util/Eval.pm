@@ -7,7 +7,6 @@ has [
     qw(document bundle zone
         atree ttree ntree ptree
         anode tnode nnode pnode
-        languages selectors
         _args)
     ]
     => ( is => 'rw' );
@@ -25,13 +24,6 @@ sub BUILD {
         log_fatal "At least one of the following parameters must be non-empty:"
             . " document, bundle, zone, [atnp]tree, [atnp]node.";
     }
-
-    if ( $arg_ref->{_zone} && !any { $arg_ref->{$_} } qw(languages language) ) {
-        log_fatal "You must specify at least one of the parameters:"
-            . " languages, language (or just document or bundle).";
-    }
-    if ( !$self->languages ) { $self->set_languages( $self->language ); }
-    if ( !$self->selectors ) { $self->set_selectors( $self->selector ); }
 
     $self->_set_args($arg_ref);
     return;
@@ -72,22 +64,10 @@ sub process_bundle {
 
     # quit if no parameters zone|?tree|?node
     return if !$self->_args->{_zone};
-
-    my %do_lang = map { $_ => 1 } split /,/, $self->languages;
-    my %do_sele = map { $_ => 1 } split /,/, $self->selectors;
-
-    # split /,/, ''; #returns empty list
-    if ( $self->selectors eq '' ) {
-        $do_sele{''} = 1;
+   
+    foreach my $zone ( $self->get_selected_zones($bundle->get_all_zones()) ) {
+        $self->process_zone($zone);
     }
-
-    foreach my $zone ( $bundle->get_all_zones() ) {
-        if ( ( $do_lang{ $zone->language } || $self->language eq 'mul' )
-                 && $do_sele{ $zone->selector } ) {
-            $self->process_zone($zone);
-        }
-    }
-
     return;
 }
 
@@ -138,8 +118,8 @@ Treex::Block::Util::Eval - Special block for evaluating code given by parameters
   treex Util::Eval language=en anode='print $anode->lemma' -- *.treex
 
   # other examples of parameters
-  languages=en,cs zone='print $zone->language, "\t", $zone->sentence'
-  languages=all ttree='print $ttree->language, "\t", scalar $ttree->get_children'
+  language=en,cs zone='print $zone->language, "\t", $zone->sentence'
+  language=all ttree='print $ttree->language, "\t", scalar $ttree->get_children'
 
 =head1 DESCRIPTION
 
