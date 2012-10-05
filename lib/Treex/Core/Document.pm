@@ -451,6 +451,15 @@ sub create_zone {
     return $new_zone;
 }
 
+sub get_all_zones {
+    my $self = shift;
+    my $meta = $self->metaData('pml_root')->{meta};
+    return if !$meta->{zones};
+    
+    # Each element is a pair [$name, $value]. We need just the values.
+    return map {$_->[1]}  $meta->{zones}->elements;
+}
+
 sub get_zone {
     my $self = shift;
     my ( $language, $selector ) = pos_validated_list(
@@ -459,14 +468,8 @@ sub get_zone {
         { isa => 'Treex::Type::Selector', default => '' },
     );
 
-    my $meta = $self->metaData('pml_root')->{meta};
-    if ( defined $meta->{zones} ) {
-        foreach my $element ( $meta->{zones}->elements ) {
-            my ( undef, $value ) = @$element;    # $name is not needed
-            if ( $value->{language} eq $language and ( $value->{selector} || '' ) eq ( $selector || '' ) ) {
-                return $value;
-            }
-        }
+    foreach my $zone ($self->get_all_zones()) {
+        return $zone if $zone->language eq $language && $zone->selector eq $selector;
     }
     return;
 }
