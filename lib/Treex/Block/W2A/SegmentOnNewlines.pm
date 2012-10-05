@@ -3,8 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has '+language' => ( required => 1 );
-
 has [qw(allow_empty_sentences delete_empty_sentences )] => (
     is      => 'ro',
     isa     => 'Bool',
@@ -13,10 +11,17 @@ has [qw(allow_empty_sentences delete_empty_sentences )] => (
 
 sub process_document {
     my ( $self, $document ) = @_;
-    my $doczone = $document->get_zone( $self->language, $self->selector );
-    log_fatal 'The document does not contain a ' . $self->_doczone_name if !$doczone;
+    foreach my $doczone ($self->get_selected_zones($document->get_all_zones())){
+        $self->process_doc_zone($doczone, $document);
+    }
+    return;
+}
+
+sub process_doc_zone {    
+    my ( $self, $doczone, $document ) = @_;
+
     my $text = $doczone->text;
-    log_fatal $self->_doczone_name . ' contains no "text" attribute' if !defined $text;
+    log_fatal 'DocZone ' . $doczone->get_label() . ' contains no "text" attribute' if !defined $text;
 
     my @sentences;
     foreach my $sentence ( map { $self->normalize_sentence($_) } $self->get_segments($text) ) {
@@ -24,7 +29,7 @@ sub process_document {
             if ( $self->delete_empty_sentences ) {
             }
             elsif ( !$self->allow_empty_sentences ) {
-                log_fatal 'text in ' . $self->_doczone_name
+                log_fatal 'text in DocZone ' . $doczone->get_label()
                     . ' contains empty sentences. Consider using'
                     . ' the (allow|delete)_empty_sentences option.';
             }
@@ -48,21 +53,14 @@ sub process_document {
     elsif ( @bundles != @sentences ) {
         log_fatal 'The document already contained bundles, but the number'
             . ' of bundles is different than the number of sentences segmented'
-            . ' from the' . $self->_doczone_name;
+            . ' from the DocZone ' . $doczone->get_label;
     }
     while (@bundles) {
         my $bundle = shift @bundles;
-        my $zone = $bundle->create_zone( $self->language, $self->selector );
+        my $zone = $bundle->create_zone( $doczone->language, $doczone->selector );
         $zone->set_sentence( shift @sentences );
     }
     return 1;
-}
-
-sub _doczone_name {
-    my ($self) = @_;
-    return 'DocZone for language='
-        . $self->language
-        . ( $self->selector ne '' ? ' selector=' . $self->selector : '' );
 }
 
 sub get_segments {

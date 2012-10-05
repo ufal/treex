@@ -10,13 +10,9 @@ sub next_document {
     return log_fatal "method next_document must be overridden in " . ref($self);
 }
 
+# Default language is und (undetermined/unknown) and selector empty.
 has selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
-
-# Note that "language" is intentionally not required here,
-# because some derived classes (e.g. Read::Treex) do not need it.
-# However, if a derived class reads a format where the language is not specified,
-# it must add the parameter language using:
-#has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
+has language => ( isa => 'Treex::Type::LangCode', is => 'ro', default => 'und' );
 
 
 has from => (

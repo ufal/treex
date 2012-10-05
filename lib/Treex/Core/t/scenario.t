@@ -1,15 +1,7 @@
 #!/usr/bin/env perl
-
 use strict;
 use warnings;
 use autodie;
-
-#BEGIN {
-#    if (!$ENV{AUTHOR_TESTING}) {
-#        require Test::More;
-#        Test::More::plan(skip_all => 'these tests are for testing by the author');
-#    }
-#}
 
 use Test::More;    # tests => 1;
 BEGIN { use_ok('Treex::Core::Scenario'); }

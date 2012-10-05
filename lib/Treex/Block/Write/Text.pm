@@ -3,18 +3,14 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has '+language' => ( required => 1 );
-
 has '+extension' => ( default => '.txt' );
 
-override '_do_process_document' => sub {
-  
+override '_do_process_document' => sub { 
     my ( $self, $doc ) = @_;
 
-    my $doczone = $doc->get_zone( $self->language, $self->selector );
-  
-    print { $self->_file_handle } $doczone->text;
-  
+    foreach my $doczone ($self->get_selected_zones($doc->get_all_zones())){
+        print { $self->_file_handle } $doczone->text;
+    }  
     return;
 };
 

@@ -8,8 +8,9 @@ use Time::HiRes;
 use App::whichpm 'which_pm';
 use Readonly;
 
-has selector => ( is => 'ro', isa => 'Treex::Type::Selector',        default => '', );
-has language => ( is => 'ro', isa => 'Maybe[Treex::Type::LangCode]', builder => 'build_language' );
+has selector => ( is => 'ro', isa => 'Str', default => 'all' );
+has language => ( is => 'ro', isa => 'Str', default => 'all' );
+
 has scenario => (
     is       => 'ro',
     isa      => 'Treex::Core::Scenario',
@@ -24,7 +25,7 @@ has select_bundles => (
         . ' e.g. "1-4,6,8-12". The default is 0 which means all bundles. Useful for debugging.',
 );
 
-has _is_bundle_selected => ( is => 'rw' );
+has [qw(_is_bundle_selected _is_language_selected _is_selector_selected)] => ( is => 'rw' );
 
 has _hash => ( is => 'rw', isa => 'Str' );
 
@@ -32,23 +33,6 @@ has is_started => ( is => 'ro', isa => 'Bool', writer => '_set_is_started', defa
 
 Readonly our $DOCUMENT_PROCESSED  => 1;
 Readonly our $DOCUMENT_FROM_CACHE => 2;
-
-# If the block name contains language (e.g. W2A::EN::Tokenize contains "en")
-# or target-language (e.g. T2T::CS2EN::FixNegation contains "en"),
-# it is returned as a default value of the attribute $self->language
-# so it is not necessary to write the line
-#   has '+language' => ( default => 'en' );
-# in all *::EN::* blocks and all *::??2EN::* blocks.
-sub build_language {
-    my $self = shift;
-    my ($lang) = $self->get_block_name() =~ /::(?:[A-Z][A-Z]2)?([A-Z][A-Z])::/;
-    if ( $lang && Treex::Core::Types::is_lang_code( lc $lang ) ) {
-        return lc $lang;
-    }
-    else {
-        return;
-    }
-}
 
 sub zone_label {
     my ($self) = @_;
@@ -79,6 +63,33 @@ sub BUILD {
             }
         }
         $self->_set_is_bundle_selected( \%selected );
+    }
+
+    if ( $self->language ne 'all' ) {
+        my @codes = split /,/, $self->language;
+        my %selected;
+        for my $code (@codes) {
+            log_fatal "'$code' is not a valid ISO 639-1 language code"
+                if !Treex::Core::Types::is_lang_code($code);
+            $selected{$code} = 1;
+        }
+        $self->_set_is_language_selected( \%selected );
+    }
+
+    if ( $self->selector ne 'all' ) {
+        if ( $self->selector eq '' ) {
+            $self->_set_is_selector_selected( { q{} => 1 } );
+        }
+        else {
+            my @selectors = split /,/, $self->selector;
+            my %selected;
+            for my $selector (@selectors) {
+                log_fatal "'$selector' is not a valid selector name"
+                    if $selector !~ /^[a-z\d]*$/i;
+                $selected{$selector} = 1;
+            }
+            $self->_set_is_selector_selected( \%selected );
+        }
     }
 
     $self->_compute_hash();
@@ -152,12 +163,6 @@ sub process_document {
             " doesn't override the method process_document";
     }
 
-    #    my $start = Time::HiRes::time();
-    #    my $str = Storable::freeze($document);
-    #    my $hash = md5_hex($str);
-    #    my $end = Time::HiRes::time();
-    #    log_info("\tMD5\t$hash\t" . ($end - $start) . "\t" . length($str));
-
     my $bundleNo = 1;
     foreach my $bundle ( $document->get_bundles() ) {
         if ( !$self->select_bundles || $self->_is_bundle_selected->{$bundleNo} ) {
@@ -171,19 +176,33 @@ sub process_document {
 sub process_bundle {
     my ( $self, $bundle, $bundleNo ) = @_;
 
-    log_fatal "Parameter language was not set and block " . $self->get_block_name()
-        . " doesn't override the method process_bundle" if !$self->language;
-    my $zone = $bundle->get_zone( $self->language, $self->selector );
+    my @zones = $self->get_selected_zones($bundle->get_all_zones());
     log_fatal(
-        "Zone (lang="
+        "No zone (language="
             . $self->language
             . ", selector="
             . $self->selector
-            . ") was not found in a bundle and block " . $self->get_block_name()
+            . ") was found in a bundle and block " . $self->get_block_name()
             . " doesn't override the method process_bundle"
         )
-        if !$zone;
-    return $self->process_zone( $zone, $bundleNo );
+        if !@zones;
+
+    foreach my $zone (@zones) {
+        $self->process_zone( $zone, $bundleNo );
+    }
+    return
+}
+
+sub get_selected_zones {
+    my ( $self, @zones ) = @_;
+    if ( $self->language ne 'all') {
+        @zones = grep { $self->_is_language_selected->{ $_->language } } @zones;
+    }
+    if ( $self->selector ne 'all') {
+        @zones = grep { $self->_is_selector_selected->{ $_->selector } } @zones;
+    }
+
+    return @zones;
 }
 
 sub _try_process_layer {
@@ -253,7 +272,6 @@ after 'process_end' => sub {
     my ($self) = @_;
     $self->_set_is_started(0);
 };
-
 
 sub get_block_name {
     my $self = shift;
