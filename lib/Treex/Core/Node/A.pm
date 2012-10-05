@@ -3,6 +3,7 @@ package Treex::Core::Node::A;
 use namespace::autoclean;
 use Moose;
 use Treex::Core::Common;
+use Storable;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';
@@ -179,10 +180,8 @@ sub copy_atree
     my $self      = shift;
     my $target    = shift;
 
-    # TODO probably we should do deepcopy
     # Why is this here ? the attributes of the root node are NOT copied, are they ??
-    my %copy_of_wild = %{$self->wild};
-    $target->set_wild(\%copy_of_wild);
+    $target->set_wild(Storable::dclone($self->wild));
 
     my @children0 = $self->get_children( { ordered => 1 } );
     foreach my $child0 (@children0)
@@ -216,9 +215,8 @@ sub copy_attributes {
         $other->set_attr( $attribute, $value );
     }
 
-    # TODO probably we should do deepcopy
-    my %copy_of_wild = %{$self->wild};
-    $other->set_wild(\%copy_of_wild);
+    # deep copy of wild attributes
+    $other->set_wild(Storable::dclone($self->wild));
 
     return;
 }
