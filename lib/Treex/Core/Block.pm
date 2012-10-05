@@ -8,7 +8,7 @@ use Time::HiRes;
 use App::whichpm 'which_pm';
 use Readonly;
 
-has selector => ( is => 'ro', isa => 'Str', default => 'all' );
+has selector => ( is => 'ro', isa => 'Str', default => '' );
 has language => ( is => 'ro', isa => 'Str', default => 'all' );
 
 has scenario => (
