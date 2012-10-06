@@ -6,13 +6,16 @@ extends 'Treex::Core::Block';
 use FileUtils;
 use File::Temp;
 
+use Treex::Core::Resource qw(require_file_from_share);
+
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
 has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' );
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
-has model => ( isa => 'Str', is => 'ro', default => "$ENV{TMT_ROOT}/share/data/models/mgiza/en-cs" );
+has model => ( isa => 'Str', is => 'rw', default => "$ENV{TMT_ROOT}/share/data/models/mgiza/en-cs" );
+has model_from_share => ( isa => 'Str', is => 'ro', default => undef );
 
 my $mgizadir = "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install";
 
@@ -37,7 +40,7 @@ sub process_document {
     # set number of cores
     if ( $self->cpu_cores == -1 ) {
         chomp(my $cores = `cat /proc/cpuinfo | grep -E '^(CPU|processor)' | wc -l`);
-        $self->{cpu_cores} = $cores;
+        $self->set_cpu_cores( $cores );
     }
     log_info "Using " . $self->cpu_cores . " cores";
 
@@ -46,6 +49,47 @@ sub process_document {
     # output sentences into plain text
     _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
     _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
+
+    # acquire model from share if required
+    if ( defined $self->model_from_share ) {
+        
+        # list of necessary files
+        my @mgiza_model_files = (
+            'a-b.D4.final',
+            'a-b.a3.final',
+            'a-b.d3.final',
+            'a-b.d4.final',
+            'a-b.gizacfg',
+            'a-b.n3.final',
+            'a-b.t3.final',
+            'b-a.D4.final',
+            'b-a.a3.final',
+            'b-a.d3.final',
+            'b-a.d4.final',
+            'b-a.gizacfg',
+            'b-a.n3.final',
+            'b-a.t3.final',
+            'vcb-a',
+            'vcb-a.classes',
+            'vcb-b',
+            'vcb-b.classes',
+        );
+        
+        # get path to files
+        my $basepath = 'data/models/mgiza/' . $self->model_from_share . '/';
+        # require the first file - returns path to the file
+        my $path = require_file_from_share( $basepath . $mgiza_model_files[0] , ref($self) );
+        # remove the last slash and the file name
+        $path =~ s/\/[^\/]+$//;
+        # set the model path
+        $self->set_model( $path );
+        
+        # acquire files
+        foreach my $file (@mgiza_model_files) {
+            require_file_from_share( $basepath . $file , ref($self) );
+        }
+        
+    }
 
     # symlink word classes
     symlink( $self->model . "/vcb-a.classes", "$mytmpdir/vcb-a.classes" );
@@ -581,7 +625,15 @@ How many CPU cores should be used. Default is -1 (autodetect).
 
 =item C<model>
 
-Path to model files for MGiza++.
+Absolute path to model files for MGiza++.
+Can be overridden by C<model_from_share>.
+
+=item C<model_from_share>
+
+Path to model files for MGiza++, relative to C<share/data/models/mgiza/>.
+The model files are automatically downloaded if missing locally but available online.
+Overrides C<model>.
+Default is undef.
 
 =back 
 
