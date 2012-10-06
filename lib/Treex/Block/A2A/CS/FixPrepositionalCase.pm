@@ -9,14 +9,15 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 
 has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
 
-has 'skip_prep_tag' => ( is => 'rw', isa => 'Str', default => "s_2 s_4 za_2 v_4 mezi_4 z_2 před_4 o_4 po_4" );
+#has 'skip_prep_tag' => ( is => 'rw', isa => 'Str', default => "s_2 s_4 za_2 v_4 mezi_4 z_2 před_4 o_4 po_4" );
 
 has '_skip_prep_tag' => ( is => 'rw', isa => 'HashRef', default => sub { ( {} ) } );
 
 sub BUILD {
     my $self = shift;
 
-    my @skip = split / /, $self->skip_prep_tag;
+    # my @skip = split / /, $self->skip_prep_tag;
+    my @skip = ( 's_2', 's_4', 'za_2', 'v_4', 'mezi_4', 'z_2', 'před_4', 'o_4', 'po_4' );
     foreach my $skip_pt (@skip) {
         $self->_skip_prep_tag->{$skip_pt} = 1;
     }
