@@ -92,7 +92,6 @@ sub BUILD {
         }
     }
 
-    $self->_compute_hash();
     return;
 }
 
@@ -127,13 +126,14 @@ sub _compute_hash {
 
     $self->_set_hash( $md5->hexdigest );
 
-    #    log_warn("Block hash: " . $self->get_block_name() . " - " . $self->get_hash());
-
     return;
 }
 
 sub get_hash {
     my $self = shift;
+    if (!$self->_hash){
+        $self->_compute_hash();
+    }
     return $self->_hash;
 }
 

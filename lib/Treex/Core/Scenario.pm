@@ -153,7 +153,7 @@ sub _build_loaded_blocks {
                 push( @{ $sequence{$sequence_from}{block} }, $new_block->get_hash() );
                 $sequence_hash = $new_block->get_hash();
             }
-            else {
+            elsif ($self->cache) {
                 $sequence_hash = md5_hex( $sequence_hash . $new_block->get_hash() );
                 if ( defined( $sequence{$sequence_from} ) ) {
                     push( @{ $sequence{$sequence_from}{block} }, $new_block->get_hash() );
