@@ -113,7 +113,10 @@ sub _compute_hash {
         grep { defined( $self->{$_} ) }    # value has to be defined
         grep { !/(scenario|block)/ }
         keys %{$self};
-    $md5->add($params_str);
+        
+    # Digest::MD5 cannot handle Unicode strings (it dies with "Wide character in subroutine entry")
+    use Encode;
+    $md5->add(Encode::encode_utf8($params_str));
 
     # compute block source code hash
     my ( $block_filename, $block_version ) = which_pm( $self->get_block_name() );
