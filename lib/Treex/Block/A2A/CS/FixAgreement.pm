@@ -341,6 +341,8 @@ sub regenerate_node {
 sub get_pair {
     my ( $self, $node ) = @_;
 
+    return if $node =~ 'Treex::Core::Node::Deleted';
+
     # "old"
     my $parent = $node->get_parent;
     while (
