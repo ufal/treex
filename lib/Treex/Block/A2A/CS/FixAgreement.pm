@@ -5,8 +5,9 @@ use utf8;
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
-has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
-has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'source_language' => ( is       => 'rw', isa => 'Str',  required => 1 );
+has 'source_selector' => ( is       => 'rw', isa => 'Str',  default => '' );
+has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 
 use Carp;
 use LanguageModel::MorphoLM;
@@ -214,6 +215,10 @@ sub logfix2 {
             my $sentence = "{$logfixmsg: $logfixold -> $logfixnew} ";
             $logfixbundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
+    }
+
+    if ($self->log_to_console) {
+        log_info("$logfixmsg: $logfixold -> $logfixnew");
     }
 
     return;
