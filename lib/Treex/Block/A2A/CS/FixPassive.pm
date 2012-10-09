@@ -40,6 +40,8 @@ Treex::Block::A2A::CS::FixPassive
 English passive's Czech counterpart should be passive if it has AuxV být (be)
 among its children.
 
+TODO: maybe check whether the original subject/object roles have been kept
+
 =head1 AUTHORS
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>

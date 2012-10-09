@@ -62,7 +62,7 @@ sub process_zone {
 
     #do the fix for each node
     foreach my $node ( $a_root->get_descendants() ) {
-        next if $node =~ 'Treex::Core::Node::Deleted';
+        next if $node->isa('Treex::Core::Node::Deleted');
         my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
         next if !$dep;
         $self->fix( $dep, $gov, $d, $g, \%en_counterpart );
@@ -341,7 +341,8 @@ sub regenerate_node {
 sub get_pair {
     my ( $self, $node ) = @_;
 
-    return if $node =~ 'Treex::Core::Node::Deleted';
+    return if $node->isa('Treex::Core::Node::Deleted');
+
 
     # "old"
     my $parent = $node->get_parent;
