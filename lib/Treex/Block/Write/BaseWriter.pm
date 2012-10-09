@@ -153,6 +153,10 @@ sub _get_filename {
     if (defined $self->substitute){
         my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
         eval $eval_string or log_fatal "Failed to eval $eval_string";
+        my ($fn, $directories) = fileparse($filename, $self->_document_extension($document));
+        $directories =~ s{/$}{};
+        $document->set_path($directories);
+        $document->set_file_stem($fn);
     }
 
     return $filename;
