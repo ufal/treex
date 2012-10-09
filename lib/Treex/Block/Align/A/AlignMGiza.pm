@@ -204,7 +204,7 @@ sub _parse_dirsym {
 
     if ($dirsym eq "left" || $dirsym eq "right") {
         # ok
-    } elsif ($dirsym eq "int" || $dirsym eq "intersect") {
+    } elsif ($dirsym eq "int" || $dirsym eq "intersect" || $dirsym eq "intersection") {
         $alitype = "intersect";
     } elsif ($dirsym eq "uni" || $dirsym eq "union") {
         $alitype = "union";
