@@ -124,7 +124,7 @@ sub full_filename {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
     my $path = '';
-    if (defined $self->path){
+    if (defined $self->path && $self->path ne ''){
         $path = $self->path;
         $path .= '/' if $path !~ m{/$};
     }
