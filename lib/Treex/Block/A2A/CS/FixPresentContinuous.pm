@@ -15,6 +15,7 @@ sub fix {
     #	&& $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/
     #	&& $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
     # ) {
+    # TODO: I am occasionally getting: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPresentContinuous.pm line 19.
     if ($dep->lemma eq 'být'
         && $d->{tag} =~ /^V[^f]......[^F]/
         && $g->{tag} =~ /^V/
