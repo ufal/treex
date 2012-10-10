@@ -130,7 +130,7 @@ sub logfix1 {
             $logfixold .= $dep->form;
             $logfixold .= "[";
             $logfixold .= $dep->tag;
-            $logfixold .= "] ";
+            $logfixold .= "]";
         }
         else {
             $logfixold = $dep->form;
@@ -140,7 +140,7 @@ sub logfix1 {
             $logfixold .= $gov->form;
             $logfixold .= "[";
             $logfixold .= $gov->tag;
-            $logfixold .= "] ";
+            $logfixold .= "]";
         }
     }
     else {
@@ -218,7 +218,7 @@ sub logfix2 {
     }
 
     if ($self->log_to_console) {
-        log_info("$logfixmsg: $logfixold -> $logfixnew");
+        log_info("Fixing $logfixmsg: $logfixold -> $logfixnew");
     }
 
     return;
