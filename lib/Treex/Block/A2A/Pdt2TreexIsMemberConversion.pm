@@ -7,7 +7,7 @@ sub process_atree {
     my ( $self, $root ) = @_;
     foreach my $old_member (grep {$_->is_member} $root->get_descendants) {
         my $new_member = _climb_up_below_coap($old_member);
-        if (defined $new_member and $new_member ne $old_member) {
+        if ($new_member && $new_member != $old_member) {
             $new_member->set_is_member(1);
             $old_member->set_is_member(undef);
         }
@@ -24,7 +24,7 @@ sub _climb_up_below_coap {
         return $node;
     }
     else {
-        _climb_up_below_coap($node->parent);
+        return _climb_up_below_coap($node->parent);
     }
 }
 
