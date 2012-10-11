@@ -170,6 +170,11 @@
       <value>Comp</value>
       <!-- values added because of Ancient Greek Dependency Treebank -->
       <value>OComp</value> <!--object complement-->
+      <!-- values added because of other annotation styles -->
+      <!-- In PDT, apposition is treated as a paratactic structure (similarly to coordinations) governed by a comma with afun=Apos.
+           In HamleDT, the first member of apposition governs the (optional) comma and the second member which has afun=Apposition.
+	   We cannot reuse afun=Apos for HamleDT because it would break several tests and assumptions. Martin Popel 11.10.2012 -->
+      <value>Apposition</value> 
       <!-- afun for unrecognized value -->
       <value>NR</value>
     </choice>
