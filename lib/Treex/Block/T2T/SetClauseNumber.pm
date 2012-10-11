@@ -67,12 +67,13 @@ sub is_clause_coord {
     return 0 if !defined $t_node->nodetype;
     return 0 if $t_node->nodetype ne 'coap';
 
-    # In theory, either all members of a coordination are heads of clauses or none.
+    # In theory, either all members of a coordination are heads of clauses or none 
+    # (or nested coordinations, which are checked by recursion).
     # However, this doesn't hold when parsing went wrong.
     # In practice, when using the second variant (with 'all' instead of 'any'),
     # there are less superfluous commas in the output.
     #return any { is_clause_head($_) } $t_node->get_children();
-    return all { $_->is_clause_head } grep { $_->is_member } $t_node->get_children();
+    return all { $_->is_clause_head or is_clause_coord($_) } grep { $_->is_member } $t_node->get_children();
 }
 
 1;
