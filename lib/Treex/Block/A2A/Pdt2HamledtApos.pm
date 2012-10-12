@@ -34,15 +34,13 @@ sub process_anode {
         }
     }
     
-    # Rehang the comma (or semicolon or dash) under the new head.
-    # Rehang left bracket (serving as a head of apposition in PDT) under the second member of apposition.
-    if ($old_head->form eq '(' && @other_ap){
+    # Rehang the comma (or semicolon or dash or bracket) under the second member of apposition.
+    if (@other_ap){
         $old_head->set_parent($other_ap[0]);
-        $old_head->set_afun('AuxG');
     } else {
         $old_head->set_parent($first_ap);
-        $old_head->set_afun('AuxX');
     }
+    $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : 'AuxG');
 
     # Rehang possible AuxG (dashes or right brackets) under the last member of apposition.
     my @auxg = grep {!$_->is_member && $_->afun eq 'AuxG'} @children;
@@ -75,8 +73,8 @@ Treex::Block::A2A::Pdt2HamledtApos - convert appositions
 
 In PDT, apposition is treated as a paratactic structure
 (similarly to coordinations) governed by a comma with afun=Apos.
-In HamleDT, the first member of apposition governs the (optional) comma
-and the second member which has afun=Apposition.
+In HamleDT, the first member of apposition governs the second member
+which has afun=Apposition and governs the (optional) comma.
 This block converts the former style to the latter style.
 
  Sample sentence:
@@ -87,7 +85,7 @@ This block converts the former style to the latter style.
  an English poet(parent=,;afun=Sb;is_member=1), was famous.
 
  HamleDT:
- W. Shakespeare(parent=was;afun=Sb;is_member=0) ,(parent=Shakespeare;afun=AuxX)
+ W. Shakespeare(parent=was;afun=Sb;is_member=0) ,(parent=poet;afun=AuxX)
  an English poet(parent=Shakespeare;afun=Apposition;is_member=0), was famous.
 
 HamleDT style treats apposition as a normal dependency relation,
@@ -99,7 +97,7 @@ except for cases when one of the members is actually a coordination, e.g.:
  W. Shakespeare, an English poet and playwrighter, was famous.
 
  HamleDT:
- W. Shakespeare(parent=was;afun=Sb;is_member=0) ,(parent=Shakespeare;afun=AuxX)
+ W. Shakespeare(parent=was;afun=Sb;is_member=0) ,(parent=and;afun=AuxX)
  an English poet(parent=and;afun=Apposition;is_member=1)
  and(parent=Shakespeare;afun=Coord;is_member=0) playwrighter(parent=and;afun=Apposition;is_member=1), was famous.
  
