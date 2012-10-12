@@ -5,7 +5,7 @@ extends 'Treex::Block::Test::BaseTester';
 
 my @known_afuns = qw(Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
     AuxP AuxC AuxO AuxZ AuxX AuxG AuxY AuxS AuxK ExD AtrAtr AtrAdv AdvAtr AtrObj
-    ObjAtr AuxA Neg NR);
+    ObjAtr AuxA Neg Apposition NR);
 
 sub process_anode {
     my ( $self, $anode ) = @_;

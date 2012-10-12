@@ -51,7 +51,12 @@ sub process_anode {
             $bracket->set_parent($other_ap[-1]);
         }
     }
-
+    
+    # If the whole apposition was a conjunct of some outer coordination, is_member must stay with the head
+    if ($old_head->is_member){
+        $first_ap->set_is_member(1);
+        $old_head->set_is_member(0);
+    }
     
     return;
 }
