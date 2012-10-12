@@ -12,6 +12,13 @@ has 'tag_properties' => (
     required => 1,
 );
 
+has 'ne_properties' => (
+    is => 'ro',
+    isa => 'HashRef[HashRef[Maybe[Str]]]',
+    builder => '_build_ne_properties',
+    required => 1,
+);
+
 sub BUILD {
     my ($self) = @_;
 
@@ -62,14 +69,30 @@ sub _build_tag_properties {
     return $tag_properties;
 }
 
+sub _build_ne_properties {
+    my ($self) = @_;
+
+    my $ne_properties = {
+        i_ => { cat => 'i_', subcat => undef},  # 
+        g_ => { cat => 'g_', subcat => undef},  # 
+        P => { cat => 'P', subcat => undef},  # 
+        PM => { cat => 'P', subcat => 'M'},  # 
+        PF => { cat => 'P', subcat => 'F'},  # 
+        pf => { cat => 'p', subcat => 'f'},  # 
+        ps => { cat => 'p', subcat => 's'},  # 
+    };
+    return $ne_properties;
+}
+
 sub _build_feature_names {
     my ($self) = @_;
 
     # TODO filter out the features not used here
     my @feat_names = qw(
-       c_sent_dist        c_clause_dist         c_file_deepord_dist
-       c_cand_ord         c_anaph_sentord
+       r_sent_dist        r_clause_dist         r_file_deepord_dist
+       r_cand_ord         r_anaph_sentord
        
+       c_cand_frmm        c_anaph_frmm          b_frmm_agree              c_join_frmm
        c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
        c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
        b_cand_akt         b_anaph_akt           b_akt_agree 
@@ -77,7 +100,8 @@ sub _build_feature_names {
        
        c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
        c_cand_num         c_anaph_num           b_num_agree               c_join_num
-       c_cand_apos        c_anaph_apos                                    c_join_apos
+       c_cand_apos        c_anaph_apos          b_apos_agree              c_join_apos
+       c_cand_atag        c_anaph_atag          b_atag_agree              c_join_atag
        c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
        c_cand_agen        c_anaph_agen                                    c_join_agen
        c_cand_anum        c_anaph_anum                                    c_join_anum
@@ -96,9 +120,9 @@ sub _build_feature_names {
        r_cand_freq                            
        b_cand_pers
 
-       #c_cand_loc_buck    #c_anaph_loc_buck
-       #c_cand_type        #c_anaph_type
-       #c_cand_synttype    
+       c_cand_loc_buck    c_anaph_loc_buck
+       c_cand_type        c_anaph_type
+       c_cand_synttype    
 
     );
     
@@ -115,6 +139,7 @@ sub _get_pos {
 
     return $prop->{pos};
 }
+
 sub _get_number {
     my ($self, $node) = @_;
     my $tag = $self->_get_atag( $node );
@@ -125,6 +150,7 @@ sub _get_number {
 
     return $prop->{number};
 }
+
 sub _get_gender {
     my ($tag) = @_;
 }
@@ -135,6 +161,15 @@ sub _get_atag {
     if ($anode) {
 		return $anode->tag;
 	}
+    return;
+}
+
+sub _get_afunctor {
+    my ($self, $node) = @_;
+    my $anode = $node->get_lex_anode;
+    if ($anode) {
+        return $anode->afun;
+    }
     return;
 }
 
@@ -196,13 +231,46 @@ override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
     my $coref_features = super();
 
+    $coref_features->{b_atag_agree} 
+        = $self->_agree_feats($set_features->{c_cand_atag}, $set_features->{c_anaph_atag});
     $coref_features->{c_join_atag}  
         = $self->_join_feats($set_features->{c_cand_atag}, $set_features->{c_anaph_atag});
+
+    $coref_features->{b_apos_agree} 
+        = $self->_agree_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
     $coref_features->{c_join_apos}  
         = $self->_join_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
+
+    $coref_features->{b_anum_agree} 
+        = $self->_agree_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
     $coref_features->{c_join_anum}  
         = $self->_join_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
-    
+
+#     $coref_features->{b_afun_agree} 
+#         = $self->_agree_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
+#     $coref_features->{c_join_afun}  
+#         = $self->_join_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
+# 
+#     $coref_features->{b_gen_agree} 
+#         = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+#     $coref_features->{c_join_gen} 
+#         = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+# 
+#     $coref_features->{b_num_agree} 
+#         = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+#     $coref_features->{c_join_num} 
+#         = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+# 
+#     $coref_features->{b_frmm_agree} 
+#         = $self->_agree_feats($set_features->{c_cand_frmm}, $set_features->{c_anaph_frmm});
+#     $coref_features->{c_join_frmm} 
+#         = $self->_join_feats($set_features->{c_cand_frmm}, $set_features->{c_anaph_frmm});
+# 
+#     $coref_features->{b_fun_agree} 
+#         = $self->_agree_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
+#     $coref_features->{c_join_fun} 
+#         = $self->_join_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
+
     return $coref_features;
 };
 
@@ -213,6 +281,13 @@ override '_unary_features' => sub {
     $coref_features->{'c_'.$type.'_atag'} = $self->_get_atag( $node );
     $coref_features->{'c_'.$type.'_apos'} = $self->_get_pos( $node );
     $coref_features->{'c_'.$type.'_anum'} = $self->_get_number( $node );
+#     $coref_features->{'c_'.$type.'_afun'} = $self->_get_afunctor( $node );
+
+#     $coref_features->{'c_'.$type.'_gen'} = $node->gram_gender;
+#     $coref_features->{'c_'.$type.'_num'} = $node->gram_number;
+#     $coref_features->{'c_'.$type.'_frmm'} = $node->formeme;
+#     $coref_features->{'c_'.$type.'_fun'} = $node->functor;
+    
 
     # features from (Charniak and Elsner, 2009)
     if ($type eq 'anaph') {
@@ -277,6 +352,8 @@ Enriched with language-specific features.
 =head1 AUTHORS
 
 Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+Nguy Giang Linh <linh@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
