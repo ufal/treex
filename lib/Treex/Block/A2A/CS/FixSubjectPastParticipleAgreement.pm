@@ -15,29 +15,57 @@ sub fix {
         && ( $g->{gen} . $g->{num} ne $self->gn2pp( $d->{gen} . $d->{num} ) )
         )
     {
-        my $num = $d->{num};
-        my $gen = $d->{gen};
-        if ( $dep->is_member && $en_counterpart{$dep}->is_member ) {
-            $num = 'P';
-            $gen = 'T';
 
-            # masculine animate if there is at least one such subject
-            my $coap    = $dep->get_parent();
-            my @members = $coap->get_children();
-            foreach my $subject (@members) {
-                if ( $subject->tag =~ /^..M/ ) {
-                    $gen = 'M';
-                }
-            }
-        }
+	my $do_fix = 1;
+	if ( $dep->ord < $gov->ord ) {
+	    # subject before verb
+	    $do_fix = 1;
+	}
+	else {
+	    # subject after verb: this is a little suspicious
+	    my @preceding_children = $gov->get_children( {preceding_only => 1} );
+	    foreach my $child (@preceding_children) {
+		if (
+		    (
+		     $child->afun eq 'Sb'
+		     ||
+		     ($en_counterpart{$child}
+		      && $en_counterpart{$child}->afun eq 'Sb')
+		    )
+		    && $child->tag =~ /^[NP]/
+		    && $child->form !~ /^[Tt]o$/
+		    ) {
+		    # there probably already is another subject BEFORE the verb -- which is more reliable
+		    $do_fix = 0;
+		}
+	    }
+	}
 
-        my $new_gn = $self->gn2pp( $gen . $num );
-
-        $self->logfix1( $dep, "SubjectPastParticipleAgreement" );
-        substr $g->{tag}, 2, 2, $new_gn;
-
-        $self->regenerate_node( $gov, $g->{tag} );
-        $self->logfix2($dep);
+	if ($do_fix) {
+	    my $num = $d->{num};
+	    my $gen = $d->{gen};
+	    if ( $dep->is_member && $en_counterpart{$dep}->is_member ) {
+		$num = 'P';
+		$gen = 'T';
+		
+		# masculine animate if there is at least one such subject
+		my $coap    = $dep->get_parent();
+		my @members = $coap->get_children();
+		foreach my $subject (@members) {
+		    if ( $subject->tag =~ /^..M/ ) {
+			$gen = 'M';
+		    }
+		}
+	    }
+	    
+	    my $new_gn = $self->gn2pp( $gen . $num );
+	    
+	    $self->logfix1( $dep, "SubjectPastParticipleAgreement" );
+	    substr $g->{tag}, 2, 2, $new_gn;
+	    
+	    $self->regenerate_node( $gov, $g->{tag} );
+	    $self->logfix2($dep);
+	}
     }
 }
 
