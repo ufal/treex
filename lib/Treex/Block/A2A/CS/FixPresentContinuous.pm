@@ -19,7 +19,7 @@ sub fix {
     if ($dep->lemma eq 'být'
         && $d->{tag} =~ /^V[^f]......[^F]/
         && $g->{tag} =~ /^V/
-        && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' &&
+        && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && # TODO: is this condition necessary?
         (
             (
                 $en_counterpart{$dep}->get_parent()

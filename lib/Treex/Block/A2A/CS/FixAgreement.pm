@@ -15,6 +15,8 @@ use Treex::Tool::Lexicon::Generation::CS;
 
 my ($generator, $morphoLM);
 
+# TODO my %isName...
+
 sub process_start {
     my $self  = shift;
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
@@ -60,6 +62,9 @@ sub process_zone {
             $en_counterpart{ $$nodes[0] } = $en_node;
         }
     }
+
+    # hash NER results
+    # TODO %isName...
 
     #do the fix for each node
     foreach my $node ( $a_root->get_descendants() ) {
@@ -429,20 +434,26 @@ sub switch_num {
 }
 
 # tries to guess whether the given node is a name
-# TODO: the roughest possible implementation,
-# use a proper named entity recognizer instead
 sub isName {
     my ( $self, $node ) = @_;
-
-    if ( $node->form && lc( $node->form ) eq $node->form ) {
-
-        # with very high probability not a name
-        return 0;
-    } else {
-
-        # can be a name, the start of a sentence, ...
-        return 1;
+    
+    # TODO: now very unefficient implementation, should be computed and hashed at the beginning
+    # and then use something like return $isName{$node->id}
+    
+    my $n_root = $node->get_bundle->get_tree( $self->language, 'n', 'T' );
+    # all n nodes
+    my @n_nodes = $n_root->get_descendants();
+    foreach my $n_node (@n_nodes) {
+        # all a nodes that are named entities
+        my @a_nodes = $n_node->get_anodes();
+        foreach my $a_node (@a_nodes) {
+            if ($node->id eq $a_node->id) {
+                # this node is a named entity
+                return 1;
+            }
+        }
     }
+    return 0;
 }
 
 my %time_expr = (
