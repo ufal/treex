@@ -9,7 +9,12 @@ sub fix {
     my %en_counterpart = %$en_hash;
 
     #    if ( $gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case} ) {
-    if ( $gov->afun eq 'AuxP' && $g->{tag} =~ /^R/ && $d->{tag} =~ /^[NA]/ && $g->{case} ne $d->{case} ) {
+    if ( $gov->afun eq 'AuxP'
+	 && $g->{tag} =~ /^R/
+	 && $d->{tag} =~ /^[NA]/
+	 && $gov->ord < $dep->ord
+	 && $g->{case} ne $d->{case}
+	) {
 
         #    if ( $gov->afun eq 'AuxP' && $g->{tag} =~ /^R/ && $g->{case} ne $d->{case} ) {
         my $doCorrect;
