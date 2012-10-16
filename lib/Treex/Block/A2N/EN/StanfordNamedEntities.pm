@@ -26,8 +26,8 @@ Readonly my %type_for => {
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    my $aroot  = $zone->get_atree();
-    my @anodes = $aroot->get_children();
+    my $aroot = $zone->get_atree();
+    my @anodes = $aroot->get_descendants( { ordered => 1 } );
 
     # skip empty sentence
     return if !@anodes;
@@ -60,7 +60,7 @@ sub process_zone {
         }
 
         # convert from Standford to Prague NE typology
-        $type = $type_for{$type} || '0'; # conceal some warnings caused by wrong handling of numbers like "8 1/2" in Stanford NER
+        $type = $type_for{$type} || '0';    # conceal some warnings caused by wrong handling of numbers like "8 1/2" in Stanford NER
 
         # Subsequent words with the same type are treated as one named entity.
         if ( @actual_ids && $last_type ne $type ) {
@@ -91,22 +91,22 @@ sub process_zone {
 
 =over
 
-=item Treex::Block::A2N::EN::StanfordNamedEntities
+=head1 NAME
+
+Treex::Block::A2N::EN::StanfordNamedEntities - Named Entity recognition
+
+=head1 DESCRIPTION
 
 This block finds I<named entities> with types: person, organization, or location.
-The entities are stored in C<SEnglishN> trees
-and can be viewd with C<tmttred>, where they are projected
-to m-layer, a-layer and t-layer.
-
-Specify the model by setting the environment
-variable TMT_PARAM_NER_EN_MODEL to the model file name (not the whole path).
-If undefined, the default model is used and a warning is issued.
+The entities are stored in n-trees.
 
 See module L<NER::Stanford::English> for more details.
 
-=back
+=head1 PARAMETERS
 
-=cut
+=head2 model
+
+Filename of the model passed to L<NER::Stanford::English>
 
 # Copyright 2009-2011 Martin Popel, David Marecek
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
