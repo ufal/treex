@@ -73,7 +73,15 @@ sub is_clause_coord {
     # In practice, when using the second variant (with 'all' instead of 'any'),
     # there are less superfluous commas in the output.
     #return any { is_clause_head($_) } $t_node->get_children();
-    return all { $_->is_clause_head or is_clause_coord($_) } grep { $_->is_member } $t_node->get_children();
+    #return all { $_->is_clause_head or is_clause_coord($_) } grep { $_->is_member } $t_node->get_children();
+    # Unfortunately, XS version of List::MoreUtils::all has an error
+    # which leads to "Not a subroutine reference" error (https://rt.cpan.org/Public/Bug/Display.html?id=80226)
+    # when three or more nested coordinations appear (en2cs/runs_news-dev2009/*/treexfiles/dev2009_06.streex##48).
+    # So let's reimplement it
+    foreach my $n (grep { $_->is_member } $t_node->get_children()){
+        return 0 if !$n->is_clause_head && !is_clause_coord($n);
+    }
+    return 1;
 }
 
 1;
