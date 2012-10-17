@@ -1,4 +1,4 @@
-use Treex::Core;
+use Treex::Core; # -*- cperl -*-
 #use Treex::Core::TredView::BackendStorable;
 
 
@@ -26,7 +26,7 @@ sub is_treex_doc {
 
 push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
     if (is_treex_doc()) {
-        SetCurrentStylesheet('Treex_stylesheet');
+        SetCurrentStylesheet(STYLESHEET_FROM_FILE());
         return 'Treex_mode';
     }
     return;
@@ -197,4 +197,3 @@ sub annotation_command {
 
 #bind OpenValLexicon to Ctrl+Shift+Return menu Browse valency frame lexicon
 #bind ChooseValFrame to Ctrl+Return menu Select and assign valency frame
-
