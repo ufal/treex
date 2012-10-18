@@ -22,25 +22,31 @@ sub set_aclause_num {
     }
 }
 
-### looks for finite verbs, sorts them by doc_ord and marks their clausenum with their ord; returns the number of finite verbs
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    foreach my $subroot ( $zone->get_ttree->get_children( { ordered => 1 } ) ) {
-        set_aclause_num_root( $subroot );
-    }
-    return;
-}
-
 sub set_aclause_num_root {
     my ( $root ) = @_;
 
-    my @vlist = grep { $_->gram_tense =~ /^(sim|ant|post)/ or $_->functor =~ /^(PRED|DENOM)$/ } $root->get_descendants();
+#     my @vlist = grep { $_->gram_tense =~ /^(sim|ant|post)/ or $_->functor =~ /^(PRED|DENOM)$/ } $root->get_descendants();
+    my @vlist = grep { $_->is_clause_head } $root->get_descendants();
+    if ( not @vlist ) {
+        @vlist = $root->get_children( { ordered => 1 } );
+    }
+    print join "\t", map { $_->t_lemma } @vlist;
+    print "\n";
     @vlist = sort { $a->wild->{doc_ord} <=> $b->wild->{doc_ord} } @vlist;
     for ( my $i = 0; $i < @vlist; $i++ ) {
         $vlist[$i]->set_clause_number($i+1);
     }
     set_aclause_num($root, 0, \@vlist);
     return $#vlist + 1;
+}
+
+### looks for finite verbs, sorts them by doc_ord and marks their clausenum with their ord; returns the number of finite verbs
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    foreach my $root ( $zone->get_ttree ) {
+        set_aclause_num_root( $root );
+    }
+    return;
 }
 
 1;
