@@ -66,13 +66,13 @@ sub process_bundle {
     return if !$self->_args->{_zone};
    
     foreach my $zone ( $self->get_selected_zones($bundle->get_all_zones()) ) {
-        $self->process_zone($zone);
+        $self->process_zone($zone, $bundleNo);
     }
     return;
 }
 
 sub process_zone {
-    my ( $self, $zone ) = @_;
+    my ( $self, $zone, $bundleNo ) = @_;
 
     # Extract variables $bundle, $document ($doc), so they can be used in eval code
     my $bundle   = $zone->get_bundle();
