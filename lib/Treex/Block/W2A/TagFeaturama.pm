@@ -75,7 +75,7 @@ for the current language. Lemmatization is performed as well if the C<lemmatize>
 tagger model for the current language supports it. 
 
 Currently, L<Treex::Tool::Tagger::Featurama::CS|Czech> (including lemmatization) and 
-L<Treex::Tool::Tagger::Featurama::CS|English> (tagging only) are supported.
+L<Treex::Tool::Tagger::Featurama::EN|English> (tagging only) are supported.
 
 =head1 PARAMETERS
 

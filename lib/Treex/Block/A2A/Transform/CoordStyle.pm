@@ -253,6 +253,8 @@ sub detect_prague {
     my ( $self, $node ) = @_;
     my @children = $node->get_children( { ordered => 1 } );
 
+     #warn "dive [" . ($node->form // 'ROOT') . "]\n"; #DEBUG
+    
     # If $node is not a head of coordination,
     # just skip it and recursively process its children.
     if ( ( $node->afun || '' ) ne 'Coord' ) {
