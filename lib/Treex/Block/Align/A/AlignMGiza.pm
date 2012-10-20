@@ -623,6 +623,12 @@ The node attribute, over which to compute the alignment. Default is "lemma".
 
 How many CPU cores should be used. Default is -1 (autodetect).
 
+B<Caveats>: If more than one core is used, the results are not stable,
+i.e. repeated runs can yield slightly different results
+(presumably slightly worse than if running on one core only
+but this has not yet been inspected thoroughly enough).
+If this is an issue for you, make sure to always set C<cpu_cores=1>!
+
 =item C<model>
 
 Absolute path to model files for MGiza++.
