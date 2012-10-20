@@ -14,8 +14,8 @@ has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
 
 # exclusive thresholds
-has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.5 );
-has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.5 );
+has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
+has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.9 );
 
 my $model_data;
 
@@ -56,85 +56,178 @@ sub process_tnode {
     my ( $self, $node ) = @_;
 
     # get info about current node
-    # TODO: cut the rubbish from the lemma since CzEng has simpler lemmas
-    my $tlemma  = $node->t_lemma();
-    my $ptlemma = $node->get_eparents( { first_only => 1, or_topological => 1 } )->t_lemma() || '';
-    my $formeme = $node->formeme();
+    my $node_info = { 'node' => $node };
+    $self->fill_info_from_tree($node_info);
+    $self->fill_info_from_model($node_info);
 
-    # get info from model
-    my $original_frequency = get_formeme_frequency(
-        $model_data->{tlemma_ptlemma_formeme}->{$tlemma}->{$ptlemma}->{$formeme},
-        $model_data->{tlemma_ptlemma}->{$tlemma}->{$ptlemma},
-    );
-    my $best_formeme = get_most_frequent_formeme(
-        $model_data->{tlemma_ptlemma_formeme}->{$tlemma}->{$ptlemma},
-    );
-    my $best_frequency = get_formeme_frequency(
-        $model_data->{tlemma_ptlemma_formeme}->{$tlemma}->{$ptlemma}->{$best_formeme},
-        $model_data->{tlemma_ptlemma}->{$tlemma}->{$ptlemma},
-    );
+    # decide whether to change the formeme
+    $self->decide_on_change($node_info);
 
     # change the current formeme if it seems to be a good idea
-    my $change = ( $original_frequency < $self->lower_threshold ) && ( $best_frequency > $self->upper_threshold );
-    if ($change) {
-        $node->set_formeme($best_formeme);
+    if ( $node_info->{'change'} ) {
+        $node->set_formeme( $node_info->{'best_formeme'} );
 
         # TODO: somehow regenerate the releant part of the a-tree
         # (at this stage probably only mark this node somehow and do the regeneration only after all t-layer fixes have been applied)
     }
 
     # log
-    $self->logfix(
-        $node,
-        "current formeme: $formeme ($original_frequency); " .
-            "best formeme: $best_formeme ($best_frequency): " .
-            ( $change ? 'changing' : 'keeping' )
-    );
+    $self->logfix($node_info);
 
     return;
 }
 
-sub get_formeme_frequency {
-    my ( $formeme_count, $all_count ) = @_;
+# fills in info that is stored in the tree
+sub fill_info_from_tree {
+    my ( $self, $node_info ) = @_;
 
-    if ($formeme_count) {
-        return $formeme_count / $all_count;
+    # TODO: cut the rubbish from the lemma since CzEng has simpler lemmas
+
+    $node_info->{'id'} = $node_info->{'node'}->id;
+    {
+        my $lang = $self->language;
+        my $sel  = $self->selector;
+        $node_info->{'id'} =~ s/t_tree-${lang}_${sel}-//;
+    }
+    $node_info->{'tlemma'}   = $node_info->{'node'}->t_lemma();
+    $node_info->{'formeme'}  = $node_info->{'node'}->formeme();
+    $node_info->{'parent'}   = $node_info->{'node'}->get_eparents( { first_only => 1, or_topological => 1 } );
+    $node_info->{'ptlemma'}  = $node_info->{'parent'}->t_lemma() || '';
+    $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
+
+    # attdir
+    if ( defined $node_info->{'parent'} ) {
+        if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
+            $node_info->{'attdir'} = '/';
+        }
+        else {
+            $node_info->{'attdir'} = '\\';
+        }
     }
     else {
-        return 0;
+        $node_info->{'attdir'} = '|';
     }
 
+    return $node_info;
 }
 
-sub get_most_frequent_formeme {
-    my ($candidates) = @_;
+# fills in info that is provided by the model
+sub fill_info_from_model {
+    my ( $self, $node_info ) = @_;
 
-    my $top_count   = 0;
+    # get info from model
+    $node_info->{'original_score'} =
+        $self->get_formeme_score($node_info);
+    ( $node_info->{'best_formeme'}, $node_info->{'best_score'} ) =
+        $self->get_best_formeme($node_info);
+
+    return $node_info;
+}
+
+# uses the model to compute the score of the given formeme
+# (or the original formeme if no formeme is given)
+# NB: this is *it*, this is what actually decides the fix
+# Now this is simply MLE with +1 smoothing, but backoff could be provided
+# and eventually there should be some "real" machine learning here
+sub get_formeme_score {
+    my ( $self, $node_info, $formeme ) = @_;
+    if ( !defined $formeme ) {
+        $formeme = $node_info->{'formeme'};
+    }
+
+    my $formeme_count = $model_data->{tlemma_ptlemma_formeme}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{$formeme}
+        || 0;
+    my $all_count = $model_data->{tlemma_ptlemma}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }
+        || 0;
+
+    my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
+
+    return $score;
+}
+
+# find highest scoring formeme
+# (assumes that the upper threshold is > 0.5
+# and therefore it is not necessary to handle cases
+# where there are two top scoring formemes --
+# a random one is chosen in such case)
+sub get_best_formeme {
+    my ( $self, $node_info ) = @_;
+
+    my @candidates = keys %{
+        $model_data->{tlemma_ptlemma_formeme}->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }
+        };
+
+    my $top_score   = 0;
     my $top_formeme = '';    # returned if no usable formemes in model
-    foreach my $candidate ( keys %$candidates ) {
-        my $count = $candidates->{$candidate};
-        if ( $count > $top_count ) {
-            $top_count   = $count;
+
+    foreach my $candidate (@candidates) {
+        my $score = $self->get_formeme_score( $node_info, $candidate );
+        if ( $score > $top_score ) {
+            $top_score   = $score;
             $top_formeme = $candidate;
         }
     }
 
-    return $top_formeme;
+    return ( $top_formeme, $top_score );
+}
+
+# decide whether to change the formeme,
+# based on the scores and the thresholds
+sub decide_on_change {
+    my ( $self, $node_info ) = @_;
+
+    $node_info->{'change'} = (
+        ( $node_info->{'original_score'} < $self->lower_threshold )
+            &&
+            ( $node_info->{'best_score'} > $self->upper_threshold )
+    );
+
+    return $node_info->{'change'};
 }
 
 sub logfix {
-    my ( $self, $node, $msg ) = @_;
+    my ( $self, $node_info ) = @_;
 
-    # log to treex file
-    my $fixzone = $node->get_bundle()->get_or_create_zone( $self->language, 'deepfix' );
-    my $sentence = $fixzone->sentence;
-    if ($sentence) {
-        $sentence .= " [$msg]";
+    my $msg    = $node_info->{'id'};
+    my $parent = $node_info->{'ptlemma'}
+        ?
+        "$node_info->{'ptlemma'} ($node_info->{'pformeme'})"
+        :
+        "#root#";
+    if ( $node_info->{'attdir'} eq '\\' ) {
+        $msg .= " $parent $node_info->{'attdir'} $node_info->{'tlemma'}: ";
     }
     else {
-        $sentence = "[$msg]";
+        $msg .= " $node_info->{'tlemma'} $node_info->{'attdir'} $parent: ";
     }
-    $fixzone->set_sentence($sentence);
+    $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";
+    if ( $node_info->{'best_formeme'} && $node_info->{'formeme'} ne $node_info->{'best_formeme'} ) {
+        if ( $node_info->{'change'} ) {
+            $msg .= "CHANGE TO $node_info->{'best_formeme'} ($node_info->{'best_score'})";
+        }
+        else {
+            $msg .= "KEEP over $node_info->{'best_formeme'} ($node_info->{'best_score'})";
+        }
+    }
+    else {
+        $msg .= "KEEP";
+    }
+
+    if ( $node_info->{'change'} ) {
+
+        # log to treex file
+        my $fixzone = $node_info->{'node'}->get_bundle()->get_or_create_zone( $self->language, 'deepfix' );
+        my $sentence = $fixzone->sentence;
+        if ($sentence) {
+            $sentence .= " [$msg]";
+        }
+        else {
+            $sentence = "[$msg]";
+        }
+        $fixzone->set_sentence($sentence);
+    }
 
     # log to console
     if ( $self->log_to_console ) {
