@@ -1510,6 +1510,10 @@ sub _check_job_errors {
         }
         my $command     = "grep -h -A 10 -B 25 FATAL $error_file";
         my $fatal_lines = qx($command);
+        if (!$fatal_lines) {
+            $command = "tail -n 35 $error_file";
+            $fatal_lines = qx($command);
+        }
         log_info "********************** $command  ******************";
         log_info "********************** FATAL ERRORS FOUND IN JOB $fatal_job ******************\n";
         log_info "$fatal_lines\n";
