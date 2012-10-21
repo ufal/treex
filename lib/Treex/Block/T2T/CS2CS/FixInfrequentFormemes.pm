@@ -81,19 +81,32 @@ sub process_tnode {
 sub fill_info_from_tree {
     my ( $self, $node_info ) = @_;
 
-    # TODO: cut the rubbish from the lemma since CzEng has simpler lemmas
-
+    # id
     $node_info->{'id'} = $node_info->{'node'}->id;
     {
         my $lang = $self->language;
         my $sel  = $self->selector;
         $node_info->{'id'} =~ s/t_tree-${lang}_${sel}-//;
     }
-    $node_info->{'tlemma'}   = $node_info->{'node'}->t_lemma();
-    $node_info->{'formeme'}  = $node_info->{'node'}->formeme();
-    $node_info->{'parent'}   = $node_info->{'node'}->get_eparents( { first_only => 1, or_topological => 1 } );
-    $node_info->{'ptlemma'}  = $node_info->{'parent'}->t_lemma() || '';
+
+    # parent
+    $node_info->{'parent'} = $node_info->{'node'}->get_eparents( { first_only => 1, or_topological => 1 } );
+
+    # lemmas (cut the rubbish from the lemma since CzEng has simpler lemmas)
+    $node_info->{'tlemma'} = $node_info->{'node'}->t_lemma();
+    $node_info->{'tlemma'} =~ s/-[0-9].*$//;
+    $node_info->{'tlemma'} =~ s/_[,;\^].*$//;
+    $node_info->{'ptlemma'} = $node_info->{'parent'}->t_lemma() || '';
+    $node_info->{'ptlemma'} =~ s/-[0-9].*$//;
+    $node_info->{'ptlemma'} =~ s/_[,;\^].*$//;
+
+    # formemes
+    $node_info->{'formeme'} = $node_info->{'node'}->formeme();
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
+
+    # POSes
+    $node_info->{'pos'}  = $self->formeme2pos( $node_info->{'formeme'} );
+    $node_info->{'ppos'} = $self->formeme2pos( $node_info->{'pformeme'} );
 
     # attdir
     if ( defined $node_info->{'parent'} ) {
@@ -109,6 +122,17 @@ sub fill_info_from_tree {
     }
 
     return $node_info;
+}
+
+sub formeme2pos {
+    my ( $self, $formeme ) = @_;
+
+    my $pos = $formeme;    # default
+    if ( $formeme =~ /^([a-z]+)(:.*)?$/ ) {
+        $pos = $1;
+    }
+
+    return $pos;
 }
 
 # fills in info that is provided by the model
@@ -135,11 +159,11 @@ sub get_formeme_score {
         $formeme = $node_info->{'formeme'};
     }
 
-    my $formeme_count = $model_data->{tlemma_ptlemma_formeme}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{$formeme}
+    my $formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }->{$formeme}
         || 0;
-    my $all_count = $model_data->{tlemma_ptlemma}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }
+    my $all_count = $model_data->{'tlemma_ptlemma_pos'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
         || 0;
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
