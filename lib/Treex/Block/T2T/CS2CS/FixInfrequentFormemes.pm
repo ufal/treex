@@ -180,7 +180,8 @@ sub get_best_formeme {
     my ( $self, $node_info ) = @_;
 
     my @candidates = keys %{
-        $model_data->{tlemma_ptlemma_formeme}->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }
+        $model_data->{'tlemma_ptlemma_pos_formeme'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
         };
 
     my $top_score   = 0;
