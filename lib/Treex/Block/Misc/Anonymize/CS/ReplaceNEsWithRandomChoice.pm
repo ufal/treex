@@ -4,60 +4,106 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'language'     => ( is => 'rw', isa => 'Str', default  => 'en' );
-
 use Treex::Tool::Lexicon::Generation::CS;
 my $generator = Treex::Tool::Lexicon::Generation::CS->new();
 
 use utf8;
 
+my $limit=20; # number of annonymization equivalents per a type-gender-number combination
+
 # most frequent PDT named entities, given technical suffix, gender and number
 my %frequent_names = (
-    YFS => [qw( Hanna Marie Magdalena Jana Marta Hana Zuzana Martina Diana Věra Zora Anna Maryša Eva Ivana Helena Milada Vilma Jitka Petra)],
-    YMS => [qw( Jan Karel Milan Václav Pavel Petr Zdeněk Vladimír Mike Luděk Ivan John Boris Rudolf Tomáš David Marián Michal Martin Bill)],
-    SFS => [qw( Novotná Suková Navrátilová Habšudová Petrová Sanchezová Grafová Chadimová Nasrínová Pierceová Benešová Albrightová Vicariová Bhuttová Wiesnerová Čisťakovová Herrmannová Schmögnerová Kabanová Marvanová)],
-    SMP => [qw( Němec Škvorecký Hood Jensen Dunka Forman Kuč Frankenstein Jíra Nedbálek Mrštík Kinský Lounský Nedvěd Hamádí Hersant Bokš Kapulet Mitrovský Gogh)],
-    SMS => [qw( Novotný Clinton Chalupa Ježek Stráský Havel Mečiar Stalin Gorbačov Hlinka Vaculík Miloševič Dvořák Mandela Kuka Blažek Kohl Kovář Kotrba Rubáš)],
-    GFP => [qw( Budějovice Pardubice Čechy Vítkovice Neratovice Drnovice Teplice Benátky Popovice Přešovice Košice Krkonoše Meadows Brémy Filipíny Domažlice Prachatice Malacky Alpy Slušovice)],
-    GFS => [qw( Francie Kuba Afrika Libye Abcházie Asie Rwanda Čína Plzeň Británie Bratislava Bosna Praha Moskva Korea Arménie Itálie Evropa Amerika Hercegovina)],
-    GIP => [qw( Vary Drážďany Bazaly Vodochody Kralupy Blšany Košťany Vysočany Golany Vinohrady Dukovany Lány Poděbrady Rokycany Klatovy Louny Špicberky Švýcary Paar Flandry)],
-    GIS => [qw( Bělehrad Afghánistán Izrael Bohumín Vatikán Brod Zlín Temelín Irák Cheb Ázerbájdžán Frankfurt Kazachstán Detroit Mnichov Frýdek Vietnam Jablonec Vancouver Hradec)],
-    GMS => [qw( Wallis Neumann Gyula Petrov Butrus Pavlov Warren Lom Powell Otomar Charlton Čihák Breda Murray Amos Mannheim Čabala Lubina Gilbert Jánský)],
-    GNS => [qw( Německo Sarajevo Kladno Rusko Rumunsko Japonsko Norsko Československo Čečensko Brno Rakousko Irsko Řecko Polsko Finsko Slovensko Chorvatsko Španělsko Mexiko Turecko)],
+    YFS => [qw( Hanna Marie Magdalena Jana Marta Hana Zuzana
+                Martina Diana Věra Zora Anna Maryša Eva Ivana Helena Milada Vilma Jitka Petra)],
+    YMS => [qw( Jan Karel Milan Václav Pavel Petr Zdeněk Vladimír
+                Mike Luděk Ivan John Boris Rudolf Tomáš David Marián Michal Martin Bill)],
+    SFS => [qw( Novotná Suková Navrátilová Habšudová Petrová Sanchezová Grafová
+                Chadimová Nasrínová Pierceová Benešová Albrightová Vicariová Bhuttová
+                Wiesnerová Čisťakovová Herrmannová Schmögnerová Kabanová Marvanová)],
+    SMP => [qw( Němec Škvorecký Hood Jensen Dunka Forman Kuč Frankenstein Jíra Nedbálek
+                Mrštík Kinský Lounský Nedvěd Hamádí Hersant Bokš Kapulet Mitrovský Gogh)],
+    SMS => [qw( Novotný Clinton Chalupa Ježek Stráský Havel Mečiar Stalin Gorbačov Hlinka
+                Vaculík Miloševič Dvořák Mandela Kuka Blažek Kohl Kovář Kotrba Rubáš)],
+    GFP => [qw( Budějovice Pardubice Čechy Vítkovice Neratovice Drnovice Teplice Benátky Popovice
+                Přešovice Košice Krkonoše Meadows Brémy Filipíny Domažlice Prachatice Malacky Alpy Slušovice)],
+    GFS => [qw( Francie Kuba Afrika Libye Abcházie Asie Rwanda Čína Plzeň Británie Bratislava
+                Bosna Praha Moskva Korea Arménie Itálie Evropa Amerika Hercegovina)],
+    GIP => [qw( Vary Drážďany Bazaly Vodochody Kralupy Blšany Košťany Vysočany Golany Vinohrady
+                Dukovany Lány Poděbrady Rokycany Klatovy Louny Špicberky Švýcary Paar Flandry)],
+    GIS => [qw( Bělehrad Afghánistán Izrael Bohumín Vatikán Brod Zlín Temelín Irák Cheb Ázerbájdžán
+                Frankfurt Kazachstán Detroit Mnichov Frýdek Vietnam Jablonec Vancouver Hradec)],
+    GMS => [qw( Wallis Neumann Gyula Petrov Butrus Pavlov Warren Lom Powell Otomar Charlton Čihák
+                Breda Murray Amos Mannheim Čabala Lubina Gilbert Jánský)],
+    GNS => [qw( Německo Sarajevo Kladno Rusko Rumunsko Japonsko Norsko Československo Čečensko Brno
+                Rakousko Irsko Řecko Polsko Finsko Slovensko Chorvatsko Španělsko Mexiko Turecko)],
 );
 
 
-my %mapping;
+my %cached_mapping;
 
-sub process_anode {
-    my ( $self, $anode ) = @_;
 
-    return if $anode->is_root;
+sub _randomly_chosen_name {
+    my ( $lemma_suffix, $gender, $number ) = @_;
+}
 
-    if ($anode->lemma =~ /;([YS])/) {
-        my $lemma = $anode->lemma;
-        my $type = $1;
+sub process_nnode {
+    my ( $self, $nnode ) = @_;
 
-        my $new_lemma = $mapping{$type}{$lemma};
+    return if $nnode->is_root;
 
-        if (not defined $new_lemma) {
-            my $rand_index = rand(scalar(@{$frequent_names{$type}}));
-            $new_lemma = $frequent_names{$type}[$rand_index];
-            $mapping{$type}{$lemma} = $new_lemma;
+    my $ne_type = $nnode->get_attr('ne_type');
+
+    my $lemma_suffix;
+
+    if ( $ne_type eq 'pf' ) {
+        $lemma_suffix = 'Y';
+    }
+    elsif ( $ne_type eq 'ps' ) {
+        $lemma_suffix = 'S';
+    }
+    elsif ( $ne_type =~ /^g/ ) {
+        $lemma_suffix = 'G';
+    }
+
+
+    if ( $lemma_suffix ) {
+        my @anodes = $nnode->get_anodes();
+        if (@anodes != 1) {
+            log_warn "exactly one corresponding node expected";
         }
+        else {
+            my $equiv_class = $lemma_suffix.substr($anodes[0]->tag,2,2);
+            my $lemma = $anodes[0]->lemma;
+            my $new_lemma;
 
-        $anode->set_lemma($new_lemma);
-        my ($new_form) = map {$_->get_form}
-            $generator->forms_of_lemma( $new_lemma, { tag_regex => $anode->tag } );
-        $anode->set_form($new_form);
+            if ( $cached_mapping{$lemma}{$equiv_class} ) {
+                $new_lemma = $cached_mapping{$lemma}{$equiv_class}
+            }
+            elsif (exists $frequent_names{$equiv_class}) {
+                $new_lemma = $frequent_names{$equiv_class}->[int(rand($limit))];
+                $cached_mapping{$lemma}{$equiv_class} = $new_lemma;
+            }
 
+            if ( $new_lemma ) {
+
+                my ($new_form) = map { $_->get_form }
+                    $generator->forms_of_lemma( $new_lemma, { tag_regex => $anodes[0]->tag } );
+
+                if ( $new_form ) {
+                    $anodes[0]->wild->{anonymized} = 1;
+                    $anodes[0]->wild->{origform} = $anodes[0]->form;
+                    $anodes[0]->set_lemma($new_lemma);
+                    $anodes[0]->set_form($new_form);
+                }
+            }
+        }
     }
 }
 
 binmode STDOUT,":utf8";
 binmode STDIN,":utf8";
 my %examples;
-my $limit=20;
+
 sub _extract_frequent_examples {
     while (<STDIN>) {
         chomp;
