@@ -11,7 +11,7 @@ sub possadj_to_noun {
     $adj_mlemma =~ /\^(\([^\*][^\)]*\)_)?\([^\*]*\*(\d+)(.+)?\)/;
     if ( !$2 ) {    # unfortunately, some lemmas do not contain the derivation information (TODO fix this somehow)
         log_warn( 'Cannot find base lemma for a possesive adjective: ' . $adj_mlemma );
-        return $adj_mlemma;
+        return Treex::Tool::Lexicon::CS::truncate_lemma( $adj_mlemma, 1 );
     }
     my $cnt    = $2 ? $2 : 0;
     my $suffix = $3 ? $3 : "";    # no suffix if not defined (Nobelův -> Nobel)
@@ -26,7 +26,8 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     my $t_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $t_node->t_lemma, 1 );
-
+    my $first_t = $t_lemma;
+    
     my $a_lex_node = $t_node->get_lex_anode();
     if ($a_lex_node) {
         if ( $a_lex_node->tag =~ /^P[PS5678H]/ ) {    # personal pronouns
