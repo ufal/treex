@@ -15,7 +15,7 @@ has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
 
 # exclusive thresholds
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
-has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.9 );
+has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.85 );
 
 my $model_data;
 
@@ -203,11 +203,17 @@ sub get_best_formeme {
 sub decide_on_change {
     my ( $self, $node_info ) = @_;
 
-    $node_info->{'change'} = (
-        ( $node_info->{'original_score'} < $self->lower_threshold )
+    # quick tweak to fix only Ns - to be tuned and eventually made more efficient
+    if ($node_info->{'pos'} eq 'n') {
+	$node_info->{'change'} = (
+	    ( $node_info->{'original_score'} < $self->lower_threshold )
             &&
             ( $node_info->{'best_score'} > $self->upper_threshold )
-    );
+	    );
+    }
+    else {
+	$node_info->{'change'} = 0;
+    }
 
     return $node_info->{'change'};
 }
