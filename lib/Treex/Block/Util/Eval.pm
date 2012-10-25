@@ -93,7 +93,7 @@ sub process_zone {
             }
         }
         if ( my $code = $self->_args->{"${layer}node"} ) {
-            foreach my $node ( $tree->get_descendants() ) {
+            foreach my $node ( $tree->get_descendants({ordered => 1}) ) {
                 if ( !eval "my \$${layer}node = \$node; $code;1;" ) {
                     log_fatal "Eval error: $@";
                 }
