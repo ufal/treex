@@ -11,6 +11,35 @@ has 'alignment_type' => ( default  => 'copy', is => 'ro', isa => 'Str' );
 
 use Carp;
 
+# use Treex::Block::T2T::CS2CS::FixInfrequentFormemes qw(splitFormeme);
+# returns ($pos, \@preps, $case)
+sub splitFormeme {
+    my ($formeme) = @_;
+
+    # n:
+    # n:2
+    # n:attr
+    # n:v+6
+
+    # defaults
+    my $pos  = $formeme;
+    my $prep = '';
+    my $case = '';         # 1-7, X, attr, poss
+
+    if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
+        $pos  = $1;
+        $case = $2;
+        if ( $case =~ /^(.*)\+(.*)$/ ) {
+            $prep = $1;
+            $case = $2;
+        }
+    }
+
+    my @preps = split /_/, $prep;
+
+    return ( $pos, \@preps, $case );
+}
+
 sub process_tnode {
     my ( $self, $fixed_tnode ) = @_;
 
@@ -19,7 +48,7 @@ sub process_tnode {
     );
     if ( !defined $orig_tnode ) {
         log_fatal(
-                  'The t-node '
+            'The t-node '
                 . $fixed_tnode->id
                 . ' has no aligned t-node in '
                 .
@@ -28,11 +57,175 @@ sub process_tnode {
     }
 
     if ( $fixed_tnode->formeme ne $orig_tnode->formeme ) {
-        $self->project_lex_nodes( $fixed_tnode, $orig_tnode );
-        $self->project_aux_nodes( $fixed_tnode, $orig_tnode );
+        $self->logfix(
+            $orig_tnode->id
+                . ' trying to change formeme ' . $orig_tnode->formeme
+                . ' to formeme ' . $fixed_tnode->formeme
+        );
+        my $aux_fixed = $self->project_aux_nodes( $fixed_tnode, $orig_tnode );
+        if ($aux_fixed) {
+            $self->project_lex_nodes( $fixed_tnode, $orig_tnode );
+        }
     }
 
     return;
+}
+
+# returns 1 if the projection was successfully completed
+# returns 0 if the nodes cannot be projected reliably
+sub project_aux_nodes {
+    my ( $self, $fixed_tnode, $orig_tnode ) = @_;
+
+    my ( undef, $fixed_preps, undef ) = splitFormeme( $fixed_tnode->formeme );
+    my $fixed_preps_count = scalar(@$fixed_preps);
+    my ( undef, $orig_preps, undef ) = splitFormeme( $orig_tnode->formeme );
+    my $orig_preps_count = scalar(@$orig_preps);
+
+    if ( $fixed_preps_count == 0 && $orig_preps_count == 0 ) {
+
+        # there are no prepositions contained in the formeme,
+        # therefore there are no aux nodes to be fixed
+        $self->logfix("There are no aux nodes to be fixed.");
+        return 1;
+    }
+    elsif ( $fixed_preps_count > 1 || $orig_preps_count > 1 ) {
+
+        # there is more than one part to the preposition,
+        # do not fix (maybe only temporary)
+        $self->logfix("Skipping the fix, found a multipart preposition formeme.");
+        return 0;
+    }
+    else {
+
+        # there are some prepositions but not more than 1 for each node
+        # => we will try to do the aux projection
+
+        my $fixed_prep_anode =
+            find_preposition_node( $fixed_tnode, $fixed_preps->[0] );
+        my $orig_prep_anode =
+            find_preposition_node( $orig_tnode, $orig_preps->[0] );
+
+        if ( $fixed_preps_count == 0 ) {
+
+            # there shouldn't be a prepositon in the tree
+            # try to delete the original prep
+            if ( defined $orig_prep_anode ) {
+                $self->logfix( "AUX: removing preposition " . $orig_prep_anode->form );
+                remove_node($orig_prep_anode);
+
+                # TODO remove from aux nodes
+            }
+            else {
+                log_warn("The original preposition was not found in the T tree.");
+                return 0;
+            }
+        }
+        else {
+
+            # there should be a prepositon in the tree
+            if ( defined $fixed_prep_anode ) {
+
+                # insert a new preposition node if there is none yet
+                my $msg = "AUX: ";
+                if ( !defined $orig_prep_anode ) {
+                    $orig_prep_anode =
+                        new_parent_to_node( $orig_tnode->get_lex_anode() );
+                    $orig_prep_anode->shift_before_subtree(
+                        $orig_tnode->get_lex_anode(), { without_children => 1 }
+                    );
+
+                    # TODO add to aux nodes
+                    $msg .= "adding a new preposition ";
+                }
+                else {
+                    $msg .= "changing preposition ";
+                    $msg .= $orig_prep_anode->form;
+                    $msg .= " to preposition ";
+                }
+                $msg .= $fixed_prep_anode->form;
+                $self->logfix($msg);
+
+                # copy morphological information from fixed to orig
+                $orig_prep_anode->set_form( $fixed_prep_anode->form );
+                $orig_prep_anode->set_lemma( $fixed_prep_anode->lemma );
+                $orig_prep_anode->set_tag( $fixed_prep_anode->tag );
+
+            }
+            else {
+                log_warn("The fixed preposition was not found in the T tree.");
+                return 0;
+            }
+        }
+
+    }
+
+    return 0;
+}
+
+sub find_preposition_node {
+    my ( $tnode, $prep_form ) = @_;
+
+    my $prep_node = undef;
+
+    if ( defined $prep_form ) {
+        my $lex_anode = $tnode->get_lex_anode();
+        if ( defined $lex_anode ) {
+            my @matching_aux_nodes = grep {
+                lc( $_->form ) =~ /^${prep_form}e?$/
+            } $tnode->get_aux_anodes();
+
+            #            # searching in eparents and egrandparents
+            #            my @matching_eparents = grep {$_->form eq $prep_form} ($lex_anode->get_eparents(), $lex_anode->get_parent()->get_eparents());
+
+            if ( @matching_aux_nodes == 1 ) {
+                $prep_node = $matching_aux_nodes[0];
+            }
+            else {
+                if ( @matching_aux_nodes == 0 ) {
+                    log_warn("There is no matching aux node!");
+                }
+                else {
+                    log_warn("There are more than one matching aux nodes!");
+                }
+            }
+        }
+        else {
+            log_warn( "There is no lex node to the t-node " . $tnode->t_lemma . "!" );
+        }
+    }
+
+    # else no prep can be found, which this is often a valid result
+
+    return $prep_node;
+}
+
+# remove only the given node, moving its children under its parent
+sub remove_node {
+    my ($node) = @_;
+
+    my $parent   = $node->get_parent();
+    my @children = $node->get_children();
+    foreach my $child (@children) {
+        $child->set_parent($parent);
+
+        # TODO: copy is_member?
+    }
+    $node->remove();
+
+    return;
+}
+
+# create a new node between the given node and its parent
+sub new_parent_to_node {
+    my ($child) = @_;
+
+    my $parent   = $child->get_parent();
+    my $new_node = $parent->create_child();
+    $child->set_parent($new_node);
+
+    # TODO: do something about is_member etc.?
+
+    return $new_node;
 }
 
 sub project_lex_nodes {
@@ -41,6 +234,11 @@ sub project_lex_nodes {
     # get anodes
     my $fixed_anode = $fixed_tnode->get_lex_anode();
     my $orig_anode  = $orig_tnode->get_lex_anode();
+
+    if ( !defined $orig_anode ) {
+        log_warn( "T-node " . $orig_tnode->t_lemma . " has no lex node!" );
+        return;
+    }
 
     # log
     my $logmsg = 'LEX: ' .
@@ -51,24 +249,6 @@ sub project_lex_nodes {
     # fix
     $orig_anode->set_tag( $fixed_anode->tag );
     $orig_anode->set_form( $fixed_anode->form );
-
-    return;
-}
-
-sub project_aux_nodes {
-    my ( $self, $fixed_tnode, $orig_tnode ) = @_;
-
-    #     remove old aux nodes
-    #     $node->remove_aux_anodes(@to_remove)
-
-    #     @aux_anodes = $node->get_aux_anodes()
-    #     iteratively create aux nodes that are ancestors of the lex node (i.e. just go up until you stop)
-    #     iteratively create aux nodes that are descendants of the lex node (i.e. DFS)
-    #     for now, ignore aux nodes that are neither this nor that
-    #     my $new_node = $existing_node->create_child({lemma=>'house', tag=>'NN' });
-
-    #     set new nodes to be aux nodes of the tnode
-    #     $node->set_aux_anodes(@aux_anodes)
 
     return;
 }

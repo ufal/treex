@@ -105,8 +105,10 @@ sub fill_info_from_tree {
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
 
     # POSes
-    $node_info->{'pos'}  = $self->formeme2pos( $node_info->{'formeme'} );
-    $node_info->{'ppos'} = $self->formeme2pos( $node_info->{'pformeme'} );
+    ( $node_info->{'pos'}, $node_info->{'preps'}, $node_info->{'case'} )
+        = splitFormeme( $node_info->{'formeme'} );
+    ( $node_info->{'ppos'}, $node_info->{'ppreps'}, $node_info->{'pcase'} )
+        = splitFormeme( $node_info->{'pformeme'} );
 
     # attdir
     if ( defined $node_info->{'parent'} ) {
@@ -124,15 +126,32 @@ sub fill_info_from_tree {
     return $node_info;
 }
 
-sub formeme2pos {
-    my ( $self, $formeme ) = @_;
+# returns ($pos, \@preps, $case)
+sub splitFormeme {
+    my ($formeme) = @_;
 
-    my $pos = $formeme;    # default
-    if ( $formeme =~ /^([a-z]+)(:.*)?$/ ) {
-        $pos = $1;
+    # n:
+    # n:2
+    # n:attr
+    # n:v+6
+
+    # defaults
+    my $pos  = $formeme;
+    my $prep = '';
+    my $case = '';         # 1-7, X, attr, poss
+
+    if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
+        $pos  = $1;
+        $case = $2;
+        if ( $case =~ /^(.*)\+(.*)$/ ) {
+            $prep = $1;
+            $case = $2;
+        }
     }
 
-    return $pos;
+    my @preps = split /_/, $prep;
+
+    return ( $pos, \@preps, $case );
 }
 
 # fills in info that is provided by the model
@@ -181,7 +200,7 @@ sub get_best_formeme {
 
     my @candidates = keys %{
         $model_data->{'tlemma_ptlemma_pos_formeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
         };
 
     my $top_score   = 0;
@@ -203,16 +222,18 @@ sub get_best_formeme {
 sub decide_on_change {
     my ( $self, $node_info ) = @_;
 
-    # quick tweak to fix only Ns - to be tuned and eventually made more efficient
-    if ($node_info->{'pos'} eq 'n') {
-	$node_info->{'change'} = (
-	    ( $node_info->{'original_score'} < $self->lower_threshold )
-            &&
-            ( $node_info->{'best_score'} > $self->upper_threshold )
-	    );
+    # fix only Ns with no or one aux node
+    # (to be tuned and eventually made more efficient)
+    # TODO: this should be also respected in the model!
+    if ( $node_info->{'pos'} eq 'n' && @{ $node_info->{'preps'} } <= 1 ) {
+        $node_info->{'change'} = (
+            ( $node_info->{'original_score'} < $self->lower_threshold )
+                &&
+                ( $node_info->{'best_score'} > $self->upper_threshold )
+        );
     }
     else {
-	$node_info->{'change'} = 0;
+        $node_info->{'change'} = 0;
     }
 
     return $node_info->{'change'};
@@ -280,6 +301,7 @@ __END__
 
 Treex::Block::T2T::CS2CS::FixInfrequentFormemes -
 An attempt to replace infrequent formemes by some mopre frequent ones.
+(A Deepfix block.)
 
 =head1 DESCRIPTION
 
