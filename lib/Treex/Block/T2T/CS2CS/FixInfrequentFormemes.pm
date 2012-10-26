@@ -110,16 +110,11 @@ sub fill_info_from_tree {
         = splitFormeme( $node_info->{'pformeme'} );
 
     # attdir
-    if ( defined $node_info->{'parent'} ) {
-        if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
-            $node_info->{'attdir'} = '/';
-        }
-        else {
-            $node_info->{'attdir'} = '\\';
-        }
+    if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
+	$node_info->{'attdir'} = '/';
     }
     else {
-        $node_info->{'attdir'} = '|';
+	$node_info->{'attdir'} = '\\';
     }
 
     return $node_info;
