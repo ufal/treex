@@ -237,13 +237,14 @@ sub _try_process_layer {
 
 sub process_zone {
     my ( $self, $zone, $bundleNo ) = @_;
-
-    my $overriden;
+    my $overriden = 0;
 
     for my $layer (qw(a t n p)) {
-        $overriden ||= $self->_try_process_layer( $zone, $layer, $bundleNo );
+        if ($self->_try_process_layer( $zone, $layer, $bundleNo )){
+            $overriden++;
+        }
     }
-    log_fatal "One of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
+    log_fatal "At least one of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
         . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"
         . "The zone '" . $zone->get_label() . "' contains trees ( "
         . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
