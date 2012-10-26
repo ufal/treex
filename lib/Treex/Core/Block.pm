@@ -7,6 +7,7 @@ use Storable;
 use Time::HiRes;
 use App::whichpm 'which_pm';
 use Readonly;
+use List::MoreUtils qw(uniq);
 
 has selector => ( is => 'ro', isa => 'Str', default => '' );
 has language => ( is => 'ro', isa => 'Str', default => 'all' );
@@ -24,6 +25,23 @@ has select_bundles => (
     documentation => 'apply process_bundle only on the specified bundles,'
         . ' e.g. "1-4,6,8-12". The default is 0 which means all bundles. Useful for debugging.',
 );
+
+has if_missing_zone => (
+    is            => 'ro',
+    isa           => enum( [qw(fatal warn ignore create)] ),
+    default       => 'fatal',
+    documentation => 'What to do if process_zone is to be called on a zone'
+        . ' (specified by parameters language and selector) that is missing in a given bundle?',
+);
+
+has if_missing_tree => (
+    is            => 'ro',
+    isa           => enum( [qw(fatal warn ignore create)] ),
+    default       => 'fatal',
+    documentation => 'What to do if process_[atnp]tree is to be called on a tree'
+        . ' that is missing in a given zone?',
+);
+
 
 has [qw(_is_bundle_selected _is_language_selected _is_selector_selected)] => ( is => 'rw' );
 
@@ -178,22 +196,42 @@ sub process_document {
 
 sub process_bundle {
     my ( $self, $bundle, $bundleNo ) = @_;
+    my @zones = $bundle->get_all_zones();
 
-    my @zones = $self->get_selected_zones($bundle->get_all_zones());
-    log_fatal(
-        "No zone (language="
+    if ($self->if_missing_zone eq 'create') {
+        my (@langs, @sels);
+        if ($self->language eq 'all') {
+            @langs = uniq map{$_->language} @zones;
+        } else {
+            @langs = keys %{$self->_is_language_selected};
+        }
+        if ($self->selector eq 'all') {
+            @sels = uniq map{$_->selector} @zones;
+        } else {
+            @sels = keys %{$self->_is_selector_selected};
+        }
+        
+        # Cartesian product of lang(uage)s and sel(ector)s
+        @zones = map {my $l = $_; map{$bundle->get_or_create_zone($l, $_)} @sels} @langs;
+    } else {
+        @zones = $self->get_selected_zones(@zones);
+    }
+    
+    if (!@zones && $self->if_missing_zone =~ /fatal|warn/) {
+        my $message = "No zone (language="
             . $self->language
             . ", selector="
             . $self->selector
             . ") was found in a bundle and block " . $self->get_block_name()
-            . " doesn't override the method process_bundle"
-        )
-        if !@zones;
+            . " doesn't override the method process_bundle";
+        log_fatal($message) if $self->if_missing_zone eq 'fatal';
+        log_warn($message);
+    }
 
     foreach my $zone (@zones) {
         $self->process_zone( $zone, $bundleNo );
     }
-    return
+    return;
 }
 
 sub get_selected_zones {
@@ -209,24 +247,37 @@ sub get_selected_zones {
 }
 
 sub _try_process_layer {
-    my $self = shift;
-    my ( $zone, $layer, $bundleNo ) = @_;
-
-    return 0 if !$zone->has_tree($layer);
-    my $tree = $zone->get_tree($layer);
+    my ( $self, $zone, $layer, $bundleNo ) = @_;
     my $meta = $self->meta;
 
     if ( my $m = $meta->find_method_by_name("process_${layer}tree") ) {
-        ##$self->process_atree($tree);
-        $m->execute( $self, $tree, $bundleNo );
+        if (!$zone->has_tree($layer)){
+            if ($self->if_missing_tree eq 'create'){
+                $zone->create_tree($layer);
+            } else {
+                return 0;
+            }
+        }
+        
+        #$self->process_atree($tree, $bundleNo);
+        $m->execute( $self, $zone->get_tree($layer), $bundleNo );
         return 1;
     }
 
     if ( my $m = $meta->find_method_by_name("process_${layer}node") ) {
-        ## process_ptree should be executed also on the root node (usually the S phrase)
+        if (!$zone->has_tree($layer)){
+            if ($self->if_missing_tree eq 'create'){
+                $zone->create_tree($layer);
+            } else {
+                return 0;
+            }
+        }
+        my $tree = $zone->get_tree($layer);
+    
+        # process_ptree should be executed also on the root node (usually the S phrase)
         my @opts = $layer eq 'p' ? ( { add_self => 1 } ) : ();
         foreach my $node ( $tree->get_descendants(@opts) ) {
-            ##$self->process_anode($node);
+            ##$self->process_anode($node, $bundleNo);
             $m->execute( $self, $node, $bundleNo );
         }
         return 1;
@@ -244,11 +295,16 @@ sub process_zone {
             $overriden++;
         }
     }
-    log_fatal "At least one of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
-        . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"
-        . "The zone '" . $zone->get_label() . "' contains trees ( "
-        . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ")."
-        if !$overriden;
+    
+    if (!$overriden && $self->if_missing_tree =~ /fatal|warn/){
+        my $message = "At least one of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
+            . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"
+            . "The zone '" . $zone->get_label() . "' contains trees ( "
+            . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ").";
+        log_fatal($message) if $self->if_missing_tree eq 'fatal';
+        log_warn($message);
+    }
+
     return;
 }
 
