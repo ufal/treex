@@ -43,25 +43,27 @@ sub splitFormeme {
 sub process_tnode {
     my ( $self, $fixed_tnode ) = @_;
 
-    my ($orig_tnode) = $fixed_tnode->get_aligned_nodes_of_type(
-        $self->alignment_type
-    );
-    if ( !defined $orig_tnode ) {
-        log_fatal(
-            'The t-node '
+    if ( $fixed_tnode->wild->{'change_by_deepfix'} ) {
+
+	my ($orig_tnode) = $fixed_tnode->get_aligned_nodes_of_type(
+	    $self->alignment_type
+	    );
+	if ( !defined $orig_tnode ) {
+	    log_fatal(
+		'The t-node '
                 . $fixed_tnode->id
                 . ' has no aligned t-node in '
                 .
                 $self->language . '_' . $self->to_selector
-        );
-    }
-
-    if ( $fixed_tnode->formeme ne $orig_tnode->formeme ) {
+		);
+	}
+	
+	# if ( $fixed_tnode->formeme ne $orig_tnode->formeme ) {
         $self->logfix(
             $orig_tnode->id
-                . ' trying to change formeme ' . $orig_tnode->formeme
-                . ' to formeme ' . $fixed_tnode->formeme
-        );
+	    . ' trying to change formeme ' . $orig_tnode->formeme
+	    . ' to formeme ' . $fixed_tnode->formeme
+	    );
         my $aux_fixed = $self->project_aux_nodes( $fixed_tnode, $orig_tnode );
         if ($aux_fixed) {
             $self->project_lex_nodes( $fixed_tnode, $orig_tnode );
@@ -113,6 +115,7 @@ sub project_aux_nodes {
                 $self->logfix( "AUX: removing preposition " . $orig_prep_anode->form );
                 remove_node($orig_prep_anode);
 
+		return 1;
                 # TODO remove from aux nodes
             }
             else {
@@ -150,6 +153,7 @@ sub project_aux_nodes {
                 $orig_prep_anode->set_lemma( $fixed_prep_anode->lemma );
                 $orig_prep_anode->set_tag( $fixed_prep_anode->tag );
 
+		return 1;
             }
             else {
                 log_warn("The fixed preposition was not found in the T tree.");
@@ -159,7 +163,7 @@ sub project_aux_nodes {
 
     }
 
-    return 0;
+    log_fatal("this line of code should be unreachable");
 }
 
 sub find_preposition_node {

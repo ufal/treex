@@ -66,9 +66,8 @@ sub process_tnode {
     # change the current formeme if it seems to be a good idea
     if ( $node_info->{'change'} ) {
         $node->set_formeme( $node_info->{'best_formeme'} );
-
-        # TODO: somehow regenerate the releant part of the a-tree
-        # (at this stage probably only mark this node somehow and do the regeneration only after all t-layer fixes have been applied)
+        # mark this node to apply the change in later stages
+	$node->wild->{'change_by_deepfix'} = 1;
     }
 
     # log
