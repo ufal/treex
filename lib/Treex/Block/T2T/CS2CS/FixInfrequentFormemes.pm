@@ -7,6 +7,7 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 0 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'copy' );
 has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 
 # model
@@ -104,10 +105,24 @@ sub fill_info_from_tree {
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
 
     # POSes
-    ( $node_info->{'pos'}, $node_info->{'preps'}, $node_info->{'case'} )
+    ( $node_info->{'syntpos'}, $node_info->{'preps'}, $node_info->{'case'} )
         = splitFormeme( $node_info->{'formeme'} );
-    ( $node_info->{'ppos'}, $node_info->{'ppreps'}, $node_info->{'pcase'} )
+    ( $node_info->{'psyntpos'}, $node_info->{'ppreps'}, $node_info->{'pcase'} )
         = splitFormeme( $node_info->{'pformeme'} );
+
+    $node_info->{'mpos'} = '?';
+    my ($orig_node) = $node_info->{'node'}->get_aligned_nodes_of_type(
+	$self->alignment_type
+	);
+    if (defined $orig_node) {
+	my $lex_anode = $orig_node->get_lex_anode();
+	if (defined $lex_anode) {
+	    $node_info->{'mpos'} = substr ($lex_anode->tag, 0, 1);
+	}
+	else {
+	    log_warn ("T-node " . $orig_node->id . " has no lex node!");
+	}
+    }
 
     # attdir
     if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
@@ -120,7 +135,7 @@ sub fill_info_from_tree {
     return $node_info;
 }
 
-# returns ($pos, \@preps, $case)
+# returns ($syntpos, \@preps, $case)
 sub splitFormeme {
     my ($formeme) = @_;
 
@@ -130,12 +145,12 @@ sub splitFormeme {
     # n:v+6
 
     # defaults
-    my $pos  = $formeme;
+    my $syntpos  = $formeme;
     my $prep = '';
     my $case = '';         # 1-7, X, attr, poss
 
     if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
-        $pos  = $1;
+        $syntpos  = $1;
         $case = $2;
         if ( $case =~ /^(.*)\+(.*)$/ ) {
             $prep = $1;
@@ -145,7 +160,7 @@ sub splitFormeme {
 
     my @preps = split /_/, $prep;
 
-    return ( $pos, \@preps, $case );
+    return ( $syntpos, \@preps, $case );
 }
 
 # fills in info that is provided by the model
@@ -157,6 +172,8 @@ sub fill_info_from_model {
         $self->get_formeme_score($node_info);
     ( $node_info->{'best_formeme'}, $node_info->{'best_score'} ) =
         $self->get_best_formeme($node_info);
+    ( $node_info->{'bpos'}, $node_info->{'bpreps'}, $node_info->{'bcase'} )
+	= splitFormeme( $node_info->{'best_formeme'} );
 
     return $node_info;
 }
@@ -173,10 +190,10 @@ sub get_formeme_score {
     }
 
     my $formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }->{$formeme}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{$formeme}
         || 0;
     my $all_count = $model_data->{'tlemma_ptlemma_pos'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
         || 0;
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
@@ -194,7 +211,7 @@ sub get_best_formeme {
 
     my @candidates = keys %{
         $model_data->{'tlemma_ptlemma_pos_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'pos'} }
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
         };
 
     my $top_score   = 0;
@@ -219,7 +236,12 @@ sub decide_on_change {
     # fix only Ns with no or one aux node
     # (to be tuned and eventually made more efficient)
     # TODO: this should be also respected in the model!
-    if ( $node_info->{'pos'} eq 'n' && @{ $node_info->{'preps'} } <= 1 ) {
+    if (
+	$node_info->{'syntpos'} eq 'n' # fix only syntactical nouns
+	&& @{ $node_info->{'preps'} } <= 1 # do not fix multiword prepositions
+	&& @{ $node_info->{'preps'} } == @{ $node_info->{'bpreps'} } # do not add or remove nodes
+	&& $node_info->{'mpos'} ne 'P' # do not fox morphological pronouns
+	) {
         $node_info->{'change'} = (
             ( $node_info->{'original_score'} < $self->lower_threshold )
                 &&
