@@ -8,6 +8,7 @@ sub fix {
     my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
     my %en_counterpart = %$en_hash;
 
+    # TODO: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPrepositionNounAgreement.pm line 13.
     #    if ( $gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case} ) {
     if ( $gov->afun eq 'AuxP'
 	 && $g->{tag} =~ /^R/

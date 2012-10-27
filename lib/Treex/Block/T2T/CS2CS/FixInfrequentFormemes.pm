@@ -20,14 +20,15 @@ has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.85 );
 
 my $model_data;
 
-use Carp;
+use Treex::Tool::Lexicon::CS;
 
 sub process_start {
     my $self = shift;
 
     # find the model file
     if ( defined $self->model_from_share ) {
-        my $model = require_file_from_share( $self->model_from_share );
+        my $model = require_file_from_share(
+	    'data/models/deepfix/' . $self->model_from_share );
         $self->set_model($model);
     }
     if ( !defined $self->model ) {
@@ -92,13 +93,11 @@ sub fill_info_from_tree {
     # parent
     $node_info->{'parent'} = $node_info->{'node'}->get_eparents( { first_only => 1, or_topological => 1 } );
 
-    # lemmas (cut the rubbish from the lemma since CzEng has simpler lemmas)
-    $node_info->{'tlemma'} = $node_info->{'node'}->t_lemma();
-    $node_info->{'tlemma'} =~ s/-[0-9].*$//;
-    $node_info->{'tlemma'} =~ s/_[,;\^].*$//;
-    $node_info->{'ptlemma'} = $node_info->{'parent'}->t_lemma() || '';
-    $node_info->{'ptlemma'} =~ s/-[0-9].*$//;
-    $node_info->{'ptlemma'} =~ s/_[,;\^].*$//;
+    # lemmas (cut the rubbish from the lemma)
+    $node_info->{'tlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
+	$node_info->{'node'}->t_lemma(), 1);
+    $node_info->{'ptlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
+	$node_info->{'parent'}->t_lemma() || '', 1);
 
     # formemes
     $node_info->{'formeme'} = $node_info->{'node'}->formeme();
@@ -240,12 +239,12 @@ sub decide_on_change {
 	$node_info->{'syntpos'} eq 'n' # fix only syntactical nouns
 	&& @{ $node_info->{'preps'} } <= 1 # do not fix multiword prepositions
 	&& @{ $node_info->{'preps'} } == @{ $node_info->{'bpreps'} } # do not add or remove nodes
-	&& $node_info->{'mpos'} ne 'P' # do not fox morphological pronouns
+	&& $node_info->{'mpos'} ne 'P' # do not fix morphological pronouns
 	) {
         $node_info->{'change'} = (
             ( $node_info->{'original_score'} < $self->lower_threshold )
-                &&
-                ( $node_info->{'best_score'} > $self->upper_threshold )
+	    &&
+	    ( $node_info->{'best_score'} > $self->upper_threshold )
         );
     }
     else {
@@ -265,10 +264,11 @@ sub logfix {
         :
         "#root#";
     if ( $node_info->{'attdir'} eq '\\' ) {
-        $msg .= " $parent $node_info->{'attdir'} $node_info->{'tlemma'}: ";
+        $msg .= " $parent \\ $node_info->{'tlemma'}: ";
     }
     else {
-        $msg .= " $node_info->{'tlemma'} $node_info->{'attdir'} $parent: ";
+	# assert $node_info->{'attdir'} eq '/'
+        $msg .= " $node_info->{'tlemma'} / $parent: ";
     }
     $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";
     if ( $node_info->{'best_formeme'} && $node_info->{'formeme'} ne $node_info->{'best_formeme'} ) {
@@ -316,12 +316,63 @@ __END__
 =head1 NAME
 
 Treex::Block::T2T::CS2CS::FixInfrequentFormemes -
-An attempt to replace infrequent formemes by some mopre frequent ones.
+An attempt to replace infrequent formemes by some more frequent ones.
 (A Deepfix block.)
 
 =head1 DESCRIPTION
 
-An attempt to replace infrequent formemes by some mopre frequent ones.
+An attempt to replace infrequent formemes by some more frequent ones.
+
+Each node's formeme is checked against certain conditions --
+currently, we attempt to fix only formemes of syntactical nouns
+that are not morphological pronouns and that have no or one preposition.
+Each such formeme is scored against the C<model> -- currently this is
+a +1 smoothed MLE on CzEng data; the node's formeme is conditioned by
+the t-lemma of the node and the t-lemma of its effective parent.
+If the score of the current formeme is below C<lower_threshold>
+and the score of the best scoring alternative formeme
+is above C<upper_threshold>, the change is performed.
+
+=head1 PARAMETERS
+
+=over
+
+=item C<lower_threshold>
+
+Only formemes with a score below C<lower_threshold> are fixed.
+Default is 0.2.
+
+=item C<upper_threshold>
+
+Formemes are only changed to formemes with a score above C<upper_threshold>.
+Default is 0.85.
+
+=item C<model>
+
+Absolute path to the model file.
+Can be overridden by C<model_from_share>.
+
+=item C<model_from_share>
+
+Path to the model file, relative to C<share/data/models/deepfix/>.
+The model file is automatically downloaded if missing locally but available online.
+Overrides C<model>.
+Default is undef.
+
+=item C<alignment_type>
+
+Type of alignment between the t-trees.
+Default is C<copy>.
+The alignemt must lead from this zone to the other zone.
+(This all is true by default if the t-tree in this zone was created with
+L<T2T::CopyTtree>.)
+
+=item C<log_to_console>
+
+Set to C<1> to log details about the changes performed, using C<log_info()>.
+Default is C<0>.
+
+=back
 
 =head1 AUTHORS
 

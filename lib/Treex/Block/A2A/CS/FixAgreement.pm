@@ -390,6 +390,12 @@ sub get_pair {
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
+    
+# TODO:
+#Use of uninitialized value $d_tag in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 377.
+#Use of uninitialized value in concatenation (.) or string at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 378.
+#Use of uninitialized value $g_tag in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 384.
+#Use of uninitialized value in concatenation (.) or string at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 385.
 }
 
 # if the form is about to change, it might be reasonable

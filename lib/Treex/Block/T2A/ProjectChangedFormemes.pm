@@ -9,40 +9,12 @@ has 'to_selector'    => ( required => 1, is => 'ro', isa => 'Str' );
 has 'log_to_console' => ( default  => 0, is => 'ro', isa => 'Bool' );
 has 'alignment_type' => ( default  => 'copy', is => 'ro', isa => 'Str' );
 
-use Carp;
-
-# use Treex::Block::T2T::CS2CS::FixInfrequentFormemes qw(splitFormeme);
-# returns ($pos, \@preps, $case)
-sub splitFormeme {
-    my ($formeme) = @_;
-
-    # n:
-    # n:2
-    # n:attr
-    # n:v+6
-
-    # defaults
-    my $pos  = $formeme;
-    my $prep = '';
-    my $case = '';         # 1-7, X, attr, poss
-
-    if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
-        $pos  = $1;
-        $case = $2;
-        if ( $case =~ /^(.*)\+(.*)$/ ) {
-            $prep = $1;
-            $case = $2;
-        }
-    }
-
-    my @preps = split /_/, $prep;
-
-    return ( $pos, \@preps, $case );
-}
+use Treex::Block::T2T::CS2CS::FixInfrequentFormemes;
 
 sub process_tnode {
     my ( $self, $fixed_tnode ) = @_;
 
+    # check whether to fix the node
     if ( $fixed_tnode->wild->{'change_by_deepfix'} ) {
 
 	my ($orig_tnode) = $fixed_tnode->get_aligned_nodes_of_type(
@@ -58,7 +30,6 @@ sub process_tnode {
 		);
 	}
 	
-	# if ( $fixed_tnode->formeme ne $orig_tnode->formeme ) {
         $self->logfix(
             $orig_tnode->id
 	    . ' trying to change formeme ' . $orig_tnode->formeme
@@ -78,9 +49,9 @@ sub process_tnode {
 sub project_aux_nodes {
     my ( $self, $fixed_tnode, $orig_tnode ) = @_;
 
-    my ( undef, $fixed_preps, undef ) = splitFormeme( $fixed_tnode->formeme );
+    my ( undef, $fixed_preps, undef ) = Treex::Block::T2T::CS2CS::FixInfrequentFormemes::splitFormeme( $fixed_tnode->formeme );
     my $fixed_preps_count = scalar(@$fixed_preps);
-    my ( undef, $orig_preps, undef ) = splitFormeme( $orig_tnode->formeme );
+    my ( undef, $orig_preps, undef ) = Treex::Block::T2T::CS2CS::FixInfrequentFormemes::splitFormeme( $orig_tnode->formeme );
     my $orig_preps_count = scalar(@$orig_preps);
 
     if ( $fixed_preps_count == 0 && $orig_preps_count == 0 ) {
@@ -111,6 +82,7 @@ sub project_aux_nodes {
 
             # there shouldn't be a prepositon in the tree
             # try to delete the original prep
+	    # NOTE: currently not used
             if ( defined $orig_prep_anode ) {
                 $self->logfix( "AUX: removing preposition " . $orig_prep_anode->form );
                 remove_node($orig_prep_anode);
@@ -130,6 +102,7 @@ sub project_aux_nodes {
 
                 # insert a new preposition node if there is none yet
                 my $msg = "AUX: ";
+		# NOTE: currently not used
                 if ( !defined $orig_prep_anode ) {
                     $orig_prep_anode =
                         new_parent_to_node( $orig_tnode->get_lex_anode() );
@@ -152,6 +125,7 @@ sub project_aux_nodes {
                 $orig_prep_anode->set_form( $fixed_prep_anode->form );
                 $orig_prep_anode->set_lemma( $fixed_prep_anode->lemma );
                 $orig_prep_anode->set_tag( $fixed_prep_anode->tag );
+                # $orig_prep_anode->set_afun( $fixed_prep_anode->afun );
 
 		return 1;
             }
@@ -253,6 +227,7 @@ sub project_lex_nodes {
     # fix
     $orig_anode->set_tag( $fixed_anode->tag );
     $orig_anode->set_form( $fixed_anode->form );
+    # $orig_anode->set_afun( $fixed_anode->afun );
 
     return;
 }
