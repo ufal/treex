@@ -6,13 +6,14 @@ extends 'Treex::Block::Read::BaseReader';
 use PerlIO::via::gzip;
 
 # By default read from STDIN
-has '+from' => ( default => '-' );
+has '+from' => (
+    default => '-',
+    handles => [qw(current_filename file_number _set_file_number next_filehandle)],
+);
 
 has lines_per_doc => ( isa => 'Int',                   is => 'ro', default  => 0 );
 has merge_files   => ( isa => 'Bool',                  is => 'ro', default  => 0 );
 has encoding      => ( isa => 'Str',                   is => 'ro', default  => 'utf8' );
-
-has _current_fh => ( is => 'rw' );
 
 sub BUILD {
     my ($self) = @_;
@@ -22,50 +23,22 @@ sub BUILD {
     return;
 }
 
-sub next_filehandle {
-
+sub next_document_text {   
     my ($self) = @_;
-    my $filename = $self->next_filename();
-    return if !defined $filename;
-    if ( $filename eq '-' ) {
-        binmode STDIN, $self->encoding;
-        return \*STDIN;
-    }
-    my $mode = $filename =~ /[.]gz$/ ? '<:via(gzip):' : '<:';
-    $mode .= $self->encoding;
-    open my $FH, $mode, $filename or log_fatal "Can't open $filename: $!";
-    return $FH;
-}
-
-sub next_document_text {
-    
-    my ($self) = @_;
-    my $FH = $self->_current_fh;
-    if ( !$FH ) {
-        $FH = $self->next_filehandle() or return;
-        $self->_set_current_fh($FH);
-    }
-
     if ( $self->is_one_doc_per_file ) {
-        $self->_set_current_fh(undef);
-        local $/ = undef;
-        return <$FH>;
+        return $self->from->next_file_text();
     }
 
     my $text = '';
     LINE:
     for my $line ( 1 .. $self->lines_per_doc ) {
-        while ( eof($FH) ) {
-            $FH = $self->next_filehandle();
-            if ( !$FH ) {
-                return if $text eq '';
-                return $text;
-            }
-            $self->_set_current_fh($FH);
-            last LINE if !$self->merge_files;
+        $line = $self->from->next_line();
+        if (!defined $line){
+            return if $text eq '' && !$self->from->has_next_file();
+            last LINE;
         }
         
-        $text .= <$FH>;
+        $text .= $line;
     }
     return $text;
 }
