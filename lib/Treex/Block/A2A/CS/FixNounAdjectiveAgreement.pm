@@ -10,7 +10,7 @@ sub fix {
 
     if ($dep->afun eq 'Atr'
         && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A|(P[8DLSWZ])|(C[dhkrwz])/ # syntactical adjectives
-        && lc($d->{form}) ne 'to' # do not fix 'to' ('it')
+        && lc($dep->form) ne 'to' # do not fix 'to' ('it')
         && $gov->ord > $dep->ord
         && ( $g->{gen} . $g->{num} . $g->{case}
 	     ne $d->{gen} . $d->{num} . $d->{case} )
