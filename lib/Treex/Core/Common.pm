@@ -63,6 +63,8 @@ my ( $import, $unimport, $init_meta ) =
         \&List::MoreUtils::any,
         \&List::MoreUtils::none,
         \&List::Util::first,
+        \&List::Util::min,
+        \&List::Util::max,
         \&Readonly::Readonly,
         \&Scalar::Util::weaken,
         \&Data::Dumper::Dumper,
@@ -107,7 +109,7 @@ Instead of
  use Treex::Core::Types;
  use Treex::Core::Files;
  use List::MoreUtils qw(all any none first_index);
- use List::Util qw(first);
+ use List::Util qw(first min max);
  use Scalar::Util qw(weaken);
  use Readonly qw(Readonly);
  use Data::Dumper qw(Dumper);

@@ -134,7 +134,7 @@ sub get_tree {
     my $tree      = $self->{trees}->{$tree_name};
 
     if ( not defined $tree ) {
-        log_fatal( "No $tree_name available in the bundle, bundle id=" . $self->get_attr('id') );
+        log_fatal( "No $tree_name available in bundle ".$self->get_bundle->get_attr('id')." in zone " . $self->get_label() );
     }
     return $tree;
 }
