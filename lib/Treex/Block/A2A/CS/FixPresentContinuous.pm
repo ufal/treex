@@ -16,8 +16,8 @@ sub fix {
     #	&& $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
     # ) {
     # TODO: I am occasionally getting: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPresentContinuous.pm line 19.
-    if ($dep->lemma eq 'být'
-        && $d->{tag} =~ /^V[^f]......[^F]/
+    if ($dep->lemma eq 'být' # but can also be 'on-1_^(oni/ono)'
+        && $d->{tag} =~ /^V[^f]......[^F]/ # but can also be PP...
         && $g->{tag} =~ /^V/
         && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && # TODO: is this condition necessary?
         (

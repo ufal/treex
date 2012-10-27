@@ -19,7 +19,7 @@ sub fix {
 
     if (
         $g->{tag} =~ /^N/
-        && $d->{tag} =~ /^....[1-7]/
+        && $d->{tag} =~ /^[^R]...[1-7]/
         && $aligned_parent
         && $aligned_parent->form
         && $aligned_parent->form eq 'of'
