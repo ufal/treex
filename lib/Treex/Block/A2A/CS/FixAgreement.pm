@@ -284,6 +284,7 @@ sub get_form {
 
     my ( $self, $lemma, $tag ) = @_;
 
+    # TODO: use the proper way :-)
     $lemma =~ s/[-_].+$//;    # ???
 
     $tag =~ s/^V([ps])[IF]P/V$1TP/;
