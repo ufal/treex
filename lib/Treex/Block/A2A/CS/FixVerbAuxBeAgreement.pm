@@ -7,16 +7,15 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vf/ ) {
         my $subject;
         foreach my $child ( $gov->get_children() ) {
             $subject = $child if $child->afun eq 'Sb';
         }
 
-        if (!$subject) {
-	    return;
-	}
+        if ( !$subject ) {
+            return;
+        }
 
         $self->logfix1( $dep, "VerbAuxBeAgreement" );
 

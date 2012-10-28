@@ -10,7 +10,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     # 'by' preposition being a head of an inflected word
 
     if (

@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( $d->{pos} eq 'V' ) {
 
         if ( $dep->lemma =~ /podařit/ ) {

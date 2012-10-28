@@ -12,7 +12,9 @@ sub process_atree {
     # we consider bigrams
     foreach my $i ( 0 .. $#anodes - 1 ) {
         if ( $anodes[$i]->tag =~ /^R/ ) {
-            my $vocalized = Treex::Block::T2A::CS::VocalizePrepos::vocalize( $anodes[$i]->form, $anodes[ $i + 1 ]->form );
+            my $vocalized = Treex::Block::T2A::CS::VocalizePrepos::vocalize(
+                $anodes[$i]->form, $anodes[ $i + 1 ]->form
+            );
             $anodes[$i]->set_form($vocalized);
         }
     }

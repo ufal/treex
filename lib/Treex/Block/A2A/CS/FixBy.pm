@@ -9,7 +9,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     # 'by' preposition being a head of an inflected word
 
     if ( !$self->en($dep) ) {
@@ -31,7 +30,7 @@ sub fix {
         && !$self->isNumber(
             $aligned_parent->get_descendants(
                 { following_only => 1, first_only => 1 }
-            )
+                )
         )
         && !$self->isTimeExpr( $self->en($dep)->lemma )
         )
@@ -98,7 +97,9 @@ sub fix {
                     }
                 );
                 if ($en_by_parent->tag =~ /^VB[ND]/
-                    && grep { $_->lemma eq "be" && $_->afun eq "AuxV" } $en_by_parent->get_children
+                    && grep {
+                        $_->lemma eq "be" && $_->afun eq "AuxV"
+                    } $en_by_parent->get_children
                     )
                 {
 
@@ -129,10 +130,10 @@ sub fix {
 
 =item Treex::Block::A2A::CS::FixBy
 
-The English preposition 'by' is usually translated into Czech not by a preposition
-but by using a specific case (genitive or instrumental:
-genitive if the parent is a noun, instrumental if the parent is
-a passive verb or an adjective).
+The English preposition 'by' is usually translated into Czech not by a 
+preposition but by using a specific case (genitive or instrumental: genitive 
+if the parent is a noun, instrumental if the parent is a passive verb or an 
+adjective).
 
 =back
 

@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( $dep->afun eq 'AuxV' && $g->{pos} eq 'V' ) {
 
         my @auxv_children = $dep->get_children();

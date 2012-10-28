@@ -7,13 +7,12 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
-    if ( $self->en($dep)
+    if ($self->en($dep)
         && $self->en($dep)->afun && $self->en($dep)->afun eq 'Sb'
-	    && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP]/
-	    && $dep->form !~ /^[Tt]o$/
-	    && ( $d->{case} eq '1' )
-	    && $g->{num} ne $d->{num}
+        && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP]/
+        && $dep->form !~ /^[Tt]o$/
+        && ( $d->{case} eq '1' )
+        && $g->{num} ne $d->{num}
         )
     {
         my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $self->en($dep) );
@@ -21,10 +20,11 @@ sub fix {
             return;
         }
 
-	# g num <- d num
+        # g num <- d num
         substr $g->{tag}, 3, 1, $d->{num};
         if ( $d->{pers} =~ /[123]/ ) {
-	    # g pers <- d pers
+
+            # g pers <- d pers
             substr $g->{tag}, 7, 1, $d->{pers};
         }
         $self->logfix1( $dep, "SubjectPredicateAgreement" );

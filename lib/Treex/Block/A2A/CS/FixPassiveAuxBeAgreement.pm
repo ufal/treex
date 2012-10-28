@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ($g->{tag} =~ /^Vs/
         && $dep->lemma eq 'být'
         && $gov->ord > $dep->ord

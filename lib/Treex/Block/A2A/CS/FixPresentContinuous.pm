@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $self->en($gov) && $self->en($gov)->form =~ /ing$/ ) {
     #    if ( $self->en($dep) && $self->en($dep)->lemma eq 'be' && $self->en($dep)->get_parent() && $self->en($dep)->get_parent()->form =~ /ing$/ ) {
     #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^V.......[^F]/
@@ -15,14 +14,13 @@ sub fix {
     #	&& $self->en($gov) && $self->en($gov)->form =~ /ing$/
     #	&& $self->en($dep)->ord < $self->en($gov)->ord
     # ) {
-    # TODO: I am occasionally getting: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPresentContinuous.pm line 19.
-    if ($dep->lemma eq 'být' # but can also be 'on-1_^(oni/ono)'
-        && $d->{tag} =~ /^V[^f]......[^F]/ # but can also be PP...
+    if ($dep->lemma eq 'být'    # but can also be 'on-1_^(oni/ono)'
+        && $d->{tag} =~ /^V[^f]......[^F]/    # but can also be PP...
         && $g->{tag} =~ /^V/
         && $self->en($dep)
         && $self->en($dep)->lemma
-        && $self->en($dep)->lemma eq 'be' # TODO: is this condition necessary?
-        && 
+        && $self->en($dep)->lemma eq 'be'     # TODO: is this condition necessary?
+        &&
         (
             (
                 $self->en($dep)->get_parent()
@@ -60,7 +58,7 @@ sub fix {
         $self->regenerate_node( $gov, $tag );
 
         #remove
-        $self->remove_node( $dep );
+        $self->remove_node($dep);
 
         #log2
         $self->logfix2(undef);

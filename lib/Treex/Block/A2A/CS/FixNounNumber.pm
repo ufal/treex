@@ -7,13 +7,12 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( $d->{tag} =~ /^N/ && $self->en($dep) ) {
 
         $self->logfix1( $dep, "NounNumber" );
 
         my $fixed = 0;
-        if ( $d->{num} eq 'S'
+        if ($d->{num} eq 'S'
             && $self->en($dep)
             && $self->en($dep)->tag
             && $self->en($dep)->tag eq 'NNS'

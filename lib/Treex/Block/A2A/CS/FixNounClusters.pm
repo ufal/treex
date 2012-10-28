@@ -8,86 +8,111 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     my $en_dep = $self->en($dep);
     my $en_gov;
     if ($en_dep) {
-        $en_gov = $en_dep->get_eparents( { first_only => 1, or_topological => 1 } );
+        $en_gov = $en_dep->get_eparents(
+            {
+                first_only     => 1,
+                or_topological => 1
+            }
+        );
     }
-#        && !$self->isName($gov)
-    if (   $d->{pos} eq 'N'
+
+    #        && !$self->isName($gov)
+    if ($d->{pos} eq 'N'
         && !$self->isName($dep)
         && $dep->form ne '%'
-        && $g->{pos} ne 'C'
+        && $g->{pos}  ne 'C'
         && $en_dep
         && $en_dep->tag =~ /^N/
         && $en_gov
         && $en_gov->tag =~ /^N/
-    ) {
-            
-        my ( $nodes ) = $en_gov->get_aligned_nodes();
-        if (!$nodes || !@$nodes) { return; }
-    
+        )
+    {
+
+        my ($nodes) = $en_gov->get_aligned_nodes();
+        if ( !$nodes || !@$nodes ) { return; }
+
         my $cs_gov = $nodes->[0];
-        if ( $dep->ord < $cs_gov->ord
-            && $cs_gov->tag =~ /^N/ && !$self->isName($cs_gov) ) {
+        if ($dep->ord < $cs_gov->ord
+            && $cs_gov->tag =~ /^N/
+            && !$self->isName($cs_gov)
+            )
+        {
+
             # this is probably a noun cluster
-            
+
             # avoid a cycle in the tree
             if ( $cs_gov->is_descendant_of($dep) ) {
                 return;
             }
-            
+
             # coordination (the whole coordination has to be moved)
             if ( $dep->is_member ) {
+
                 # if is member
                 # TODO: maybe move whole coordination, maybe only sometimes...
                 return;
             }
-            
+
             # get important nodes
-            my @dep_descendants = $dep->get_descendants( { ordered => 1, add_self => 1} );
+            my @dep_descendants = $dep->get_descendants(
+                {
+                    ordered  => 1,
+                    add_self => 1
+                }
+            );
             my ($dep_leftmost_descendant) = @dep_descendants;
-            my $dep_subtree_precedent = $dep_leftmost_descendant->get_prev_node();
+            my $dep_subtree_precedent = $dep_leftmost_descendant
+                ->get_prev_node();
             my $dep_rightmost_descendant = pop @dep_descendants;
 
             # beginning of sentence capitalization
             if ( $dep_leftmost_descendant->ord == 1 ) {
+
                 # if is at beginning of sentence
                 # TODO: (maybe) guess correct capitalization using a NER
                 # BETTER: guess using EN
                 return;
             }
-            
+
             # space normalization
             # move no_space_after values
-            my $nsa_dep_rightmost_descendant = $cs_gov->no_space_after;
-            my $nsa_dep_subtree_precedent = $dep_rightmost_descendant->no_space_after;
-            my $nsa_cs_gov = 0;
-            if (defined $dep_subtree_precedent) {
+            my $nsa_dep_rightmost_descendant
+                = $cs_gov->no_space_after;
+            my $nsa_dep_subtree_precedent
+                = $dep_rightmost_descendant->no_space_after;
+            my $nsa_cs_gov
+                = 0;
+            if ( defined $dep_subtree_precedent ) {
                 $nsa_cs_gov = $dep_subtree_precedent->no_space_after;
             }
+
             # assign no_space_after values
-            $dep_rightmost_descendant->{'no_space_after'} = $nsa_dep_rightmost_descendant;
-            $dep_subtree_precedent->{'no_space_after'} = $nsa_dep_subtree_precedent;
-            if (defined $dep_subtree_precedent) {
+            $dep_rightmost_descendant->{'no_space_after'}
+                = $nsa_dep_rightmost_descendant;
+            $dep_subtree_precedent->{'no_space_after'}
+                = $nsa_dep_subtree_precedent;
+            if ( defined $dep_subtree_precedent ) {
                 $cs_gov->{'no_space_after'} = $nsa_cs_gov;
             }
-            
+
             $self->logfix1( $dep, "NounClusters" );
-            
+
             # rehanging
             $dep->set_parent($cs_gov);
-            
+
             # change ords
             $dep->shift_after_node($cs_gov);
-            
+
             # change case to genitive
             substr $d->{tag}, 4, 1, '2';
+
             # my $tag = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag} );
             $self->regenerate_node( $dep, $d->{tag} );
-            
-            $self->logfix2( $dep );
+
+            $self->logfix2($dep);
         }
     }
 }

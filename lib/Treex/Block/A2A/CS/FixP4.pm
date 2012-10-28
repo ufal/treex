@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( $dep->lemma eq 'který' ) {
 
         # find closest preceding N (or PL or PD)

@@ -7,9 +7,14 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     my $node = $dep;
-    if ( $node->afun eq 'AuxP' && !$node->get_children && $self->en($node) && $self->en($node)->get_children ) {
+    if (
+        $node->afun eq 'AuxP'
+        && !$node->get_children
+        && $self->en($node)
+        && $self->en($node)->get_children
+        )
+    {
         if ( $node->get_parent && ( $node->get_parent )->afun eq 'AuxP' ) {
             return;
         }

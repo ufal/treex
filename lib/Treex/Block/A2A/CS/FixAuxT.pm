@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ( ( $dep->form eq 'se' || $dep->form eq 'si' ) && $d->{tag} =~ /^P/ ) {
         if ( $g->{tag} =~ /^V/ || $g->{tag} =~ /^A[GC]/ ) {
             return;
@@ -16,7 +15,7 @@ sub fix {
         $self->logfix1( $dep, "AuxT" );
 
         #remove
-        $self->remove_node( $dep );
+        $self->remove_node($dep);
 
         #log2
         $self->logfix2(undef);

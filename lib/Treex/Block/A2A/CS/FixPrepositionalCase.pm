@@ -7,17 +7,29 @@ use CzechMorpho;
 
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
-has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
+has '_analyzer' => (
+    is      => 'rw',
+    isa     => 'Object',
+    lazy    => 1,
+    default => sub { CzechMorpho::Analyzer->new() }
+);
 
 #has 'skip_prep_tag' => ( is => 'rw', isa => 'Str', default => "s_2 s_4 za_2 v_4 mezi_4 z_2 před_4 o_4 po_4" );
 
-has '_skip_prep_tag' => ( is => 'rw', isa => 'HashRef', default => sub { ( {} ) } );
+has '_skip_prep_tag' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { ( {} ) }
+);
 
 sub BUILD {
     my $self = shift;
 
     # my @skip = split / /, $self->skip_prep_tag;
-    my @skip = ( 's_2', 's_4', 'za_2', 'v_4', 'mezi_4', 'z_2', 'před_4', 'o_4', 'po_4' );
+    my @skip = (
+        's_2', 's_4', 'za_2', 'v_4', 'mezi_4', 'z_2',
+        'před_4', 'o_4', 'po_4'
+    );
     foreach my $skip_pt (@skip) {
         $self->_skip_prep_tag->{$skip_pt} = 1;
     }
@@ -30,9 +42,9 @@ sub fix {
     # gov = governing preposition, dep = dependent of preposition
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     # gov is prep, dep is not and they do not agree in case (which they should)
-    # (conditions adapted from W2A::CS::FixPrepositionalCase and A2A::CS::FixPrepositionNounAgreement)
+    # (conditions adapted from
+    # W2A::CS::FixPrepositionalCase and A2A::CS::FixPrepositionNounAgreement)
     if ($g->{afun}   eq 'AuxP'
         && $g->{pos} eq 'R'
         && $g->{case} =~ /[1-7]/
@@ -54,14 +66,21 @@ sub fix {
         my $dep_tag   = $d->{tag};
         my $dep_lemma = $dep->lemma;
 
-        # possible tags and lemmas for the forms (hash refs where case is the key)
-        my ( $tags_dep, $lemmas_dep ) = $self->_get_possible_cases( $dep->form, $d, $dep->lemma );
-        my ( $tags_gov, $lemmas_gov ) = $self->_get_possible_cases( $gov->form, $g, $gov->lemma );
+        # possible tags and lemmas for the forms
+        # (hash refs where case is the key)
+        my ( $tags_dep, $lemmas_dep ) = $self->_get_possible_cases(
+            $dep->form, $d, $dep->lemma
+        );
+        my ( $tags_gov, $lemmas_gov ) = $self->_get_possible_cases(
+            $gov->form, $g, $gov->lemma
+        );
 
-        # try to find the least painful way to correct the pos tags and/or lemmas
+        # try to find the least painful way
+        # to correct the pos tags and/or lemmas
         if ( $tags_dep->{ $g->{case} } ) {
 
-            # correct the tag: use the preposition's case if it's OK with the dep form
+            # correct the tag:
+            # use the preposition's case if it's OK with the dep form
             $do_correct = 1;
             $dep_tag    = $tags_dep->{ $g->{case} };
             $dep_lemma  = $lemmas_dep->{ $g->{case} };
@@ -74,12 +93,14 @@ sub fix {
             )
         {
 
-            # do not correct case of prepositions that have (other) children with a matching case
+            # do not correct case of prepositions
+            # that have (other) children with a matching case
             $do_correct = 0;
 
         } elsif ( $tags_gov->{ $d->{case} } ) {
 
-            # correct the tag: use the dep's case if it's OK with the preposition
+            # correct the tag:
+            # use the dep's case if it's OK with the preposition
             $do_correct = 1;
             $gov_tag    = $tags_gov->{ $d->{case} };
             $gov_lemma  = $lemmas_gov->{ $d->{case} };
@@ -89,9 +110,12 @@ sub fix {
             # find common case for dep and gov (first matching)
             # (order of cases probably should be from more probable cases
             # to less probable cases; however, no effect has been observed)
-            my ($common_case) = grep { $tags_gov->{$_} and $tags_dep->{$_} } ( 7, 6, 4, 3, 2, 5, 1 );
+            my ($common_case) = grep {
+                $tags_gov->{$_} and $tags_dep->{$_}
+            } ( 7, 6, 4, 3, 2, 5, 1 );
 
-            # if there is a possible common case, fix both the dep and the preposition
+            # if there is a possible common case,
+            # fix both the dep and the preposition
             if ($common_case) {
                 $do_correct = 1;
                 $dep_tag    = $tags_dep->{$common_case};
@@ -125,8 +149,9 @@ sub fix {
     return;
 }
 
-# Return a hash with keys set for cases this word form might be in (limit to the given POS) and
-# values containg the corresponding tags
+# Return a hash with keys set for cases this word form might be in
+# (limit to the given POS)
+# and values containg the corresponding tags
 sub _get_possible_cases {
 
     my ( $self, $form, $orig_cats, $orig_lemma ) = @_;
@@ -139,15 +164,23 @@ sub _get_possible_cases {
 
     foreach my $analysis (@analyses) {
 
-        my ( $pos, $gen, $num, $case ) = ( $analysis->{tag} =~ m/^(.).(.)(.)(.)/ );
+        my ( $pos, $gen, $num, $case ) = (
+            $analysis->{tag} =~ m/^(.).(.)(.)(.)/
+        );
         if ( $orig_cats->{pos} eq $pos && $case =~ /[1-7X]/ ) {
 
-            # keep the distance from the current number and gender as small as possible
+            # keep the distance from the current number and gender
+            # as small as possible
             my $dist = 0;
             $dist++ if ( $orig_cats->{num} ne $num );
 
             # changing gender/lemma is more than changing number
-            $dist += 2 if ( ( $orig_cats->{gen} ne $gen ) or ( $orig_lemma ne $analysis->{lemma} ) );
+            $dist += 2
+                if (
+                ( $orig_cats->{gen} ne $gen )
+                or
+                ( $orig_lemma ne $analysis->{lemma} )
+                );
 
             if ( ( not $tags->{$case} ) or $dist < $dists->{$case} ) {
                 $tags->{$case}   = $analysis->{tag};
@@ -174,9 +207,10 @@ Adapted from Treex::Block::W2A::CS::FixPrepositionalCase for needs of depfix.
 
 Correction of wrong POS in prepositional phrases.
 
-This block looks for all nodes that depend on a preposition and do not match its case. If their form can match the preposition's
-case with a different tag or the preposition can have a different case so that the two are congruent, the case of the
-node and/or its preposition is changed.
+This block looks for all nodes that depend on a preposition and do not match 
+its case. If their form can match the preposition's case with a different tag 
+or the preposition can have a different case so that the two are congruent, 
+the case of the node and/or its preposition is changed.
 
 Some unfrequent preposition-case combinations are not used.
 
@@ -184,8 +218,8 @@ Some unfrequent preposition-case combinations are not used.
 
 =TODO
 
-A better testing / evaluation is required. Possibly this should be done the other way round -- looking at prepositions
-and examining their children.
+A better testing / evaluation is required. Possibly this should be done the 
+other way round -- looking at prepositions and examining their children.
 
 =head1 AUTHORS
 
@@ -195,6 +229,8 @@ adapted by Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles 
+University in Prague
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.

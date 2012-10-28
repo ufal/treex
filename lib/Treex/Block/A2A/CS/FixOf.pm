@@ -7,7 +7,6 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     # 'of' preposition being a head of an inflected word
 
     if ( !$self->en($dep) ) {

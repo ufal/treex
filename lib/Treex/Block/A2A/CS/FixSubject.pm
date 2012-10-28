@@ -7,17 +7,21 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
-    #    if ($self->en($dep) && $self->en($dep)->afun eq 'Sb' && $d->{case} ne '1') {
-    #    if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
-    #    if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
-    # TODO: I am getting "Use of uninitialized value in string eq" here for some reason
+    # if ($self->en($dep) && $self->en($dep)->afun eq 'Sb' && $d->{case} ne '1') {
+    # if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
+    # if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
     if ($dep->afun eq 'Sb'
         && $d->{case} ne '1'
         && $d->{case} ne '-'
         && $self->en($dep)
-        && ($self->en($dep)->afun eq 'Sb'
-            || $self->en($dep)->get_eparents( { first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1 } )->form eq 'by'
+        && (( $self->en($dep)->afun && $self->en($dep)->afun eq 'Sb' )
+            || $self->en($dep)->get_eparents(
+                {
+                    first_only                      => 1,
+                    or_topological                  => 1,
+                    ignore_incorrect_tree_structure => 1
+                }
+            )->form eq 'by'
         )
         )
     {
@@ -26,8 +30,11 @@ sub fix {
         $d->{tag} =~ s/^(....)./$1$case/;
 
         if ( $d->{num} eq 'S' ) {
-	    # maybe correct form, only incorrectly tagged
-            $d->{tag} = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag});
+
+            # maybe correct form, only incorrectly tagged
+            $d->{tag} = $self->try_switch_num(
+                $dep->form, $dep->lemma, $d->{tag}
+            );
         }
 
         $self->logfix1( $dep, "Subject" );

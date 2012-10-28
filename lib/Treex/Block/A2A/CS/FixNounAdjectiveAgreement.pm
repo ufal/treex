@@ -7,13 +7,15 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
-
     if ($dep->afun eq 'Atr'
-        && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A|(P[8DLSWZ])|(C[dhkrwz])/ # syntactical adjectives
-        && lc($dep->form) ne 'to' # do not fix 'to' ('it')
+        && $g->{tag} =~ /^N/ && $d->{tag} =~ /^A|(P[8DLSWZ])|(C[dhkrwz])/    # syntactical adjectives
+        && lc( $dep->form ) ne 'to'                                          # do not fix 'to' ('it')
         && $gov->ord > $dep->ord
-        && ( $g->{gen} . $g->{num} . $g->{case}
-	     ne $d->{gen} . $d->{num} . $d->{case} )
+        && ($g->{gen}
+            . $g->{num}
+            . $g->{case}
+            ne $d->{gen} . $d->{num} . $d->{case}
+        )
         )
     {
 

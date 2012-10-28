@@ -148,10 +148,17 @@ sub get_pair {
         $parent = $parent->get_parent();
     }
 
-    # "new"
-    # my $parent = $node->get_eparents({first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1});
-    # or probably better:
-    # my ($parent) = $node->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
+    #     # "new"
+    #     my $parent = $node->get_eparents({
+    #         first_only => 1,
+    #         or_topological => 1,
+    #         ignore_incorrect_tree_structure => 1
+    #     });
+    #     # or probably better:
+    #     my ($parent) = $node->get_eparents({
+    #         or_topological => 1,
+    #         ignore_incorrect_tree_structure => 1
+    #     });
 
     return if ( !defined $parent || $parent->is_root );
 
@@ -159,33 +166,30 @@ sub get_pair {
     my $g_tag = $parent->tag || '';
     $d_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
     my %d_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6, neg => $7,
-        tag => $d_tag,
+        pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
+        pers => $6, neg => $7,
+        tag  => $d_tag,
         afun => $node->afun,
         flt  => $node->form . '#' . $node->lemma . '#' . $node->tag,
     );
     $g_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
     my %g_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5, pers => $6, neg => $7,
-        tag => $g_tag,
+        pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
+        pers => $6, neg => $7,
+        tag  => $g_tag,
         afun => $parent->afun,
         flt  => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
-
-    # TODO:
-    #Use of uninitialized value $d_tag in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 377.
-    #Use of uninitialized value in concatenation (.) or string at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 378.
-    #Use of uninitialized value $g_tag in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 384.
-    #Use of uninitialized value in concatenation (.) or string at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixAgreement.pm line 385.
 }
 
 # tries to guess whether the given node is a name
 sub isName {
     my ( $self, $node ) = @_;
 
-    # TODO: now very unefficient implementation, should be computed and hashed at the beginning
+    # TODO: now very unefficient implementation,
+    # should be computed and hashed at the beginning
     # and then use something like return $is_named_entity{$node->id}
 
     my $n_root = $node->get_bundle->get_tree( $self->language, 'n', 'T' );
@@ -333,7 +337,12 @@ sub logfix1 {
         my $cs_root = $node->get_bundle->get_tree(
             $self->language, 'a'
         );
-        my @cs_nodes = $cs_root->get_descendants( { add_self => 1, ordered => 1 } );
+        my @cs_nodes = $cs_root->get_descendants(
+            {
+                add_self => 1,
+                ordered  => 1
+            }
+        );
 
         my $cs_gov = $cs_nodes[ $gov->ord ];
         if ( defined $cs_gov && $cs_gov->lemma eq $gov->lemma ) {
@@ -444,12 +453,14 @@ sub logfix2 {
 
         # FIXLOG
         if ( $logfixbundle->get_zone( 'cs', 'FIXLOG' ) ) {
-            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
+            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )
+                ->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
             $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
         }
         else {
             my $sentence = "{$logfixmsg: $logfixold -> $logfixnew} ";
-            $logfixbundle->create_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
+            $logfixbundle->create_zone( 'cs', 'FIXLOG' )
+                ->set_sentence($sentence);
         }
     }
 
