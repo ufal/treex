@@ -5,8 +5,8 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     if ( $dep->afun eq 'AuxV' && $g->{tag} =~ /^Vf/ ) {
         my $subject;

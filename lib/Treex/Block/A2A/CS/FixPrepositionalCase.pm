@@ -28,9 +28,8 @@ sub BUILD {
 sub fix {
 
     # gov = governing preposition, dep = dependent of preposition
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    # my %en_counterpart = %$en_hash;
 
     # gov is prep, dep is not and they do not agree in case (which they should)
     # (conditions adapted from W2A::CS::FixPrepositionalCase and A2A::CS::FixPrepositionNounAgreement)

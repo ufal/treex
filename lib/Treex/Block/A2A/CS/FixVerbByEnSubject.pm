@@ -5,8 +5,8 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     if ( $d->{pos} eq 'V' ) {
 
@@ -30,7 +30,7 @@ sub fix {
 
         # try to find the English subject and use it
         # TODO: handle auxiliaries, infinitives etc.
-        my $en_verb = $en_counterpart{$dep};
+        my $en_verb = $self->en($dep);
         if ( !defined $en_verb ) {
             return;
         }

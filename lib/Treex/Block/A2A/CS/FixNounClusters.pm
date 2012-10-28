@@ -6,10 +6,10 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    my $en_dep = $en_counterpart{$dep};
+
+    my $en_dep = $self->en($dep);
     my $en_gov;
     if ($en_dep) {
         $en_gov = $en_dep->get_eparents( { first_only => 1, or_topological => 1 } );

@@ -5,11 +5,11 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    if ($en_counterpart{$dep}
-        && $en_counterpart{$dep}->afun eq 'Sb'
+
+    if ($self->en($dep)
+        && $self->en($dep)->afun && $self->en($dep)->afun eq 'Sb'
         && $g->{tag} =~ /^V[sp]/ && $d->{tag} =~ /^[NP]/
         && $dep->form !~ /^[Tt]o$/
         && ( $g->{gen} . $g->{num} ne $self->gn2pp( $d->{gen} . $d->{num} ) )
@@ -29,8 +29,8 @@ sub fix {
 		    (
 		     $child->afun eq 'Sb'
 		     ||
-		     ($en_counterpart{$child}
-		      && $en_counterpart{$child}->afun eq 'Sb')
+		     ($self->en($child)
+		      && $self->en($child)->afun eq 'Sb')
 		    )
 		    && $child->tag =~ /^[NP]/
 		    && $child->form !~ /^[Tt]o$/
@@ -44,7 +44,7 @@ sub fix {
 	if ($do_fix) {
 	    my $num = $d->{num};
 	    my $gen = $d->{gen};
-	    if ( $dep->is_member && $en_counterpart{$dep}->is_member ) {
+	    if ( $dep->is_member && $self->en($dep)->is_member ) {
 		$num = 'P';
 		$gen = 'T';
 		

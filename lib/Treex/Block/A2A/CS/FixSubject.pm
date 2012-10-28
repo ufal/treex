@@ -5,19 +5,19 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    #    if ($en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb' && $d->{case} ne '1') {
+
+    #    if ($self->en($dep) && $self->en($dep)->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
     #    if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
     # TODO: I am getting "Use of uninitialized value in string eq" here for some reason
     if ($dep->afun eq 'Sb'
         && $d->{case} ne '1'
         && $d->{case} ne '-'
-        && $en_counterpart{$dep}
-        && ($en_counterpart{$dep}->afun eq 'Sb'
-            || $en_counterpart{$dep}->get_eparents( { first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1 } )->form eq 'by'
+        && $self->en($dep)
+        && ($self->en($dep)->afun eq 'Sb'
+            || $self->en($dep)->get_eparents( { first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1 } )->form eq 'by'
         )
         )
     {

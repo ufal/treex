@@ -7,15 +7,15 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 # worsens BLEU but performs really well
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     # 'by' preposition being a head of an inflected word
 
-    if ( !$en_counterpart{$dep} ) {
+    if ( !$self->en($dep) ) {
         return;
     }
-    my $aligned_parent = $en_counterpart{$dep}->get_eparents(
+    my $aligned_parent = $self->en($dep)->get_eparents(
         { first_only => 1, or_topological => 1 }
     );
 
@@ -33,7 +33,7 @@ sub fix {
                 { following_only => 1, first_only => 1 }
             )
         )
-        && !$self->isTimeExpr( $en_counterpart{$dep}->lemma )
+        && !$self->isTimeExpr( $self->en($dep)->lemma )
         )
     {
 
@@ -43,7 +43,7 @@ sub fix {
         if ( my $node_aligned_to_by = $$nodes[0] ) {
             if ( $node_aligned_to_by->tag =~ /^R/ ) {
                 $self->logfix1( $node_aligned_to_by, "By (aligned prep)" );
-                $self->remove_node( $node_aligned_to_by, $en_hash, 1 );
+                $self->remove_node( $node_aligned_to_by, 1 );
                 $self->logfix2(undef);
 
                 # now have to regenerate these

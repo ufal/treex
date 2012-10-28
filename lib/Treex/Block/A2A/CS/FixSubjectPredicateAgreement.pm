@@ -5,16 +5,19 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->afun eq 'Sb'
-	 && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP]/
-	 && $dep->form !~ /^[Tt]o$/
-	 && ( $d->{case} eq '1' )
-	 && $g->{num} ne $d->{num} ) {
-        my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $en_counterpart{$dep} );
-        if ( $en_counterpart{$gov} && $enGov && $en_counterpart{$gov}->id ne $enGov->id ) {
+
+    if ( $self->en($dep)
+        && $self->en($dep)->afun && $self->en($dep)->afun eq 'Sb'
+	    && $g->{tag} =~ /^VB/ && $d->{tag} =~ /^[NP]/
+	    && $dep->form !~ /^[Tt]o$/
+	    && ( $d->{case} eq '1' )
+	    && $g->{num} ne $d->{num}
+        )
+    {
+        my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $self->en($dep) );
+        if ( $self->en($gov) && $enGov && $self->en($gov)->id ne $enGov->id ) {
             return;
         }
 

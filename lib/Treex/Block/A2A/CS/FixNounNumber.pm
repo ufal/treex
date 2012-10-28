@@ -5,15 +5,20 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    if ( $d->{tag} =~ /^N/ && $en_counterpart{$dep} ) {
+
+    if ( $d->{tag} =~ /^N/ && $self->en($dep) ) {
 
         $self->logfix1( $dep, "NounNumber" );
 
         my $fixed = 0;
-        if ( $d->{num} eq 'S' && $en_counterpart{$dep}->tag eq 'NNS' ) {    #cs singular, en plural
+        if ( $d->{num} eq 'S'
+            && $self->en($dep)
+            && $self->en($dep)->tag
+            && $self->en($dep)->tag eq 'NNS'
+            )
+        {    #cs singular, en plural
             my $setnum = 'P';
             $d->{tag} =~ s/^(...)./$1$setnum/;
             my $old_form = $dep->form;
@@ -38,7 +43,7 @@ sub fix {
 
         # change from plural to singular does not work properly because of uncountables and similar EN-CS discrepancies
         #
-        #         elsif ($d->{num} eq 'P' && $en_counterpart{$dep}->tag eq 'NN') { #cs plural, en singular
+        #         elsif ($d->{num} eq 'P' && $self->en($dep)->tag eq 'NN') { #cs plural, en singular
         #             my $setnum = 'S';
         #             $d->{tag} =~ s/^(...)./$1$setnum/;
         #             $fixed = 1;

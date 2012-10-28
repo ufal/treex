@@ -5,15 +5,15 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     if ($g->{tag} =~ /^V[^s]/
         && ! ( grep { $_->form =~ /^s[ei]$/ } $gov->get_children )
         && ( grep { $_->lemma eq "být" && $_->afun eq "AuxV" } $gov->get_children )
-        && $en_counterpart{$gov}
-        && $en_counterpart{$gov}->tag =~ /^VB[ND]/
-        && grep { $_->lemma eq "be" && $_->afun eq "AuxV" } $en_counterpart{$gov}->get_children
+        && $self->en($gov)
+        && $self->en($gov)->tag =~ /^VB[ND]/
+        && grep { $_->lemma eq "be" && $_->afun eq "AuxV" } $self->en($gov)->get_children
         )
     {
         $self->logfix1( $gov, "Passive" );

@@ -5,15 +5,15 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     # 'of' preposition being a head of an inflected word
 
-    if ( !$en_counterpart{$dep} ) {
+    if ( !$self->en($dep) ) {
         return;
     }
-    my $aligned_parent = $en_counterpart{$dep}->get_eparents(
+    my $aligned_parent = $self->en($dep)->get_eparents(
         { first_only => 1, or_topological => 1 }
     );
 
@@ -24,7 +24,7 @@ sub fix {
         && $aligned_parent->form
         && $aligned_parent->form eq 'of'
         && !$self->isName($dep)
-        && !$self->isTimeExpr( $en_counterpart{$dep}->lemma )
+        && !$self->isTimeExpr( $self->en($dep)->lemma )
         )
     {
 

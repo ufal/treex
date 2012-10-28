@@ -8,8 +8,8 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 # (even though often it is due to incorrect parse tree)
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     # 'by' preposition being a head of an inflected word
 

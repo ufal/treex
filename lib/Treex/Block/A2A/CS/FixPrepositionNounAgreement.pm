@@ -5,8 +5,8 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
+
 
     # TODO: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPrepositionNounAgreement.pm line 13.
     #    if ( $gov->afun eq 'AuxP' && $dep->afun =~ /^(Atr)$/ && $g->{tag} =~ /^R/ && $d->{tag} =~ /^N/ && $g->{case} ne $d->{case} ) {
@@ -25,17 +25,17 @@ sub fix {
 	    #if there is an EN counterpart for $dep but its eparent is not a preposition,
 	    #it means that the CS tree is probably incorrect
 	    #and the $gov prep does not belong to this $dep at all
-	    if ( $en_counterpart{$dep} ) {
-		my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $en_counterpart{$dep} );
-		if ( $enGov and $enDep and $enGov->afun eq 'AuxP' ) {
-		    $doCorrect = 1;    #en_counterpart's parent is also a prep
-		}
-		else {
-		    $doCorrect = 0;    #en_counterpart's parent is not a prep
-		}
+	    if ( $self->en($dep) ) {
+    		my ( $enDep, $enGov, $enD, $enG ) = $self->get_pair( $self->en($dep) );
+    		if ( $enGov and $enDep and $enGov->afun eq 'AuxP' ) {
+    		    $doCorrect = 1;    #en counterpart's parent is also a prep
+    		}
+    		else {
+    		    $doCorrect = 0;    #en counterpart's parent is not a prep
+    		}
 	    }
 	    else {
-		$doCorrect = 1;        #no en_counterpart
+    		$doCorrect = 1;        #no en counterpart
 	    }
 	    if ($doCorrect) {
 		

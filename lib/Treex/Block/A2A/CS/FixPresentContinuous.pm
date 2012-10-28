@@ -5,32 +5,37 @@ use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
 sub fix {
-    my ( $self, $dep, $gov, $d, $g, $en_hash ) = @_;
-    my %en_counterpart = %$en_hash;
+    my ( $self, $dep, $gov, $d, $g ) = @_;
 
-    #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/ ) {
-    #    if ( $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && $en_counterpart{$dep}->get_parent() && $en_counterpart{$dep}->get_parent()->form =~ /ing$/ ) {
+
+    #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^VB/ && $g->{tag} =~ /^VB/ && $self->en($gov) && $self->en($gov)->form =~ /ing$/ ) {
+    #    if ( $self->en($dep) && $self->en($dep)->lemma eq 'be' && $self->en($dep)->get_parent() && $self->en($dep)->get_parent()->form =~ /ing$/ ) {
     #    if ( $dep->lemma eq 'být' && $d->{tag} =~ /^V.......[^F]/
-    #	&& $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be'
-    #	&& $en_counterpart{$gov} && $en_counterpart{$gov}->form =~ /ing$/
-    #	&& $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
+    #	&& $self->en($dep) && $self->en($dep)->lemma eq 'be'
+    #	&& $self->en($gov) && $self->en($gov)->form =~ /ing$/
+    #	&& $self->en($dep)->ord < $self->en($gov)->ord
     # ) {
     # TODO: I am occasionally getting: Use of uninitialized value in pattern match (m//) at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixPresentContinuous.pm line 19.
     if ($dep->lemma eq 'být' # but can also be 'on-1_^(oni/ono)'
         && $d->{tag} =~ /^V[^f]......[^F]/ # but can also be PP...
         && $g->{tag} =~ /^V/
-        && $en_counterpart{$dep} && $en_counterpart{$dep}->lemma eq 'be' && # TODO: is this condition necessary?
+        && $self->en($dep)
+        && $self->en($dep)->lemma
+        && $self->en($dep)->lemma eq 'be' # TODO: is this condition necessary?
+        && 
         (
             (
-                $en_counterpart{$dep}->get_parent()
-                && $en_counterpart{$dep}->get_parent()->form =~ /ing$/
-                && $en_counterpart{$dep}->ord
-                < $en_counterpart{$dep}->get_parent()->ord
+                $self->en($dep)->get_parent()
+                && $self->en($dep)->get_parent()->form
+                && $self->en($dep)->get_parent()->form =~ /ing$/
+                && $self->en($dep)->ord
+                < $self->en($dep)->get_parent()->ord
             )
             || (
-                $en_counterpart{$gov}
-                && $en_counterpart{$gov}->form =~ /ing$/
-                && $en_counterpart{$dep}->ord < $en_counterpart{$gov}->ord
+                $self->en($gov)
+                && $self->en($gov)->form
+                && $self->en($gov)->form =~ /ing$/
+                && $self->en($dep)->ord < $self->en($gov)->ord
             )
         )
         )
@@ -55,7 +60,7 @@ sub fix {
         $self->regenerate_node( $gov, $tag );
 
         #remove
-        $self->remove_node( $dep, $en_hash );
+        $self->remove_node( $dep );
 
         #log2
         $self->logfix2(undef);
