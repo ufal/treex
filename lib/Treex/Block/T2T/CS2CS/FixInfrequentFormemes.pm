@@ -7,7 +7,8 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 0 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'copy' );
+has 'orig_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'orig' );
+has 'src_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'src' );
 has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 
 # model
@@ -111,7 +112,7 @@ sub fill_info_from_tree {
 
     $node_info->{'mpos'} = '?';
     my ($orig_node) = $node_info->{'node'}->get_aligned_nodes_of_type(
-	$self->alignment_type
+	$self->orig_alignment_type
 	);
     if (defined $orig_node) {
 	my $lex_anode = $orig_node->get_lex_anode();
@@ -359,13 +360,17 @@ The model file is automatically downloaded if missing locally but available onli
 Overrides C<model>.
 Default is undef.
 
-=item C<alignment_type>
+=item C<orig_alignment_type>
 
-Type of alignment between the t-trees.
-Default is C<copy>.
-The alignemt must lead from this zone to the other zone.
-(This all is true by default if the t-tree in this zone was created with
-L<T2T::CopyTtree>.)
+Type of alignment between the CS t-trees.
+Default is C<orig>.
+The alignment must lead from this zone to the other zone.
+
+=item C<src_alignment_type>
+
+Type of alignment between the cs_Tfix t-tree and the en t-tree.
+Default is C<src>.
+The alignemt must lead from cs_Tfix to en.
 
 =item C<log_to_console>
 
