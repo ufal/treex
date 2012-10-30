@@ -9,15 +9,17 @@ use AI::MaxEntropy::Model;
 use Storable;
 use PerlIO::gzip;
 
-with 'Treex::Tool::ML::Classifier', 'Treex::Tool::ML::Model';
+with 'Treex::Tool::ML::Classifier', 'Treex::Tool::Storage::Storable';
 
 has 'old_model' => (
     isa => 'AI::MaxEntropy::Model',
     is => 'ro',
 );
 
-has '+model' => (
+has 'model' => (
+    is          => 'ro',
     isa => 'HashRef[HashRef[Num]]',
+    writer => '_set_model',
 );
 
 has 'y_num' => (
@@ -25,6 +27,7 @@ has 'y_num' => (
     is => 'ro',
     builder => '_build_y_num',
     lazy => 1,
+    writer => '_set_y_num',
 );
 
 sub _build_y_num {
@@ -87,23 +90,42 @@ sub create_model {
     return $self->_make_compact_hash( $self->old_model );
 }
 
-sub load_model {
+############# implementing Treex::Tool::Storage::Storable role #################
+
+before 'save' => sub {
     my ($self, $filename) = @_;
+    log_info "Storing MaxEnt model into $filename...";
+};
 
-    open my $fh, "<:gzip", $filename or log_fatal($!);
-    my $model = Storable::retrieve_fd($fh) or log_fatal($!);
-    close($fh);
+before 'load' => sub {
+    my ($self, $filename) = @_;
+    log_info "Loading MaxEnt model from $filename...";
+};
 
-    return $model;
-    #return AI::MaxEntropy::Model->new($model_file);
+sub freeze {
+    my ($self) = @_;
+    return [ $self->model, $self->y_num ]
 }
 
-sub save_model {
-    my ($self, $filename) = @_;
-    
-    open (my $fh, ">:gzip", $filename) or log_fatal $!;
-    Storable::nstore_fd($self->model, $fh) or log_fatal $!;;
-    close($fh);
+sub thaw {
+    my ($self, $buffer) = @_;
+    $self->_set_model( $buffer->[0] );
+    $self->_set_y_num( $buffer->[1] );
+}
+
+#############################################################################
+
+sub cut_weights {
+    my ($self, $threshold) = @_;
+
+    foreach my $class ($self->all_classes) {
+        my $feat_hash = $self->model->{$class};
+        foreach my $feat (keys %$feat_hash) {
+            if (abs($feat_hash->{$feat}) < $threshold) {
+                delete $feat_hash->{$feat};
+            }
+        }
+    }
 }
 
 1;
