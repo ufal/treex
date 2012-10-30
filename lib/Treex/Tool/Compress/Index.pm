@@ -4,7 +4,7 @@ use Moose;
 
 use Treex::Core::Common;
 
-with 'Treex::Tool::Store::Storable';
+with 'Treex::Tool::Storage::Storable';
 
 has 'str2idx' => (
     is => 'rw',
@@ -55,7 +55,7 @@ sub get_str_for_idx {
     return $self->_idx2str->{$idx};
 }
 
-############# implementing Treex::Tool::Store::Storable role #################
+############# implementing Treex::Tool::Storage::Storable role #################
 
 before 'save' => sub {
     my ($self, $filename) = @_;
