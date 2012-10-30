@@ -305,7 +305,7 @@ sub fix_pml_type {
     if ( not $self->type() ) {
         my $type = $self->get_pml_type_name();
         if ( not $type ) {
-            log_fatal "No PML type recognized for node $self";
+            log_warn "No PML type recognized for node $self";
             return;
         }
         my $fs_file = $self->get_document()->_pmldoc;
