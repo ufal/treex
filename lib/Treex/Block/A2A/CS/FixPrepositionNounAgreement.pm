@@ -42,9 +42,7 @@ sub fix {
 
                 my $case = $g->{case};
                 $d->{tag} =~ s/^(....)./$1$case/;
-                $d->{tag} = $self->try_switch_num(
-                    $dep->form, $dep->lemma, $d->{tag}
-                );
+                $d->{tag} = $self->try_switch_num($dep, $d->{tag});
 
                 $self->logfix1( $dep, "PrepositionNounAgreement" );
                 $self->regenerate_node( $dep, $d->{tag} );

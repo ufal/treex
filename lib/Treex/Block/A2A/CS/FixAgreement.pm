@@ -8,6 +8,7 @@ has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'magic'  => ( is       => 'rw', isa => 'Str', default => '' );
 
 use Carp;
 
@@ -106,10 +107,20 @@ sub get_form {
 
 # only a wrapper, for backward compatibility
 sub try_switch_num {
-    my ( $self, $form, $lemma, $tag ) = @_;
-    my ( $new_tag, $new_number ) = $numberSwitcher->try_switch_number(
-        { lemma => $lemma, old_form => $form, new_tag => $tag }
-    );
+    my ( $self, $node, $tag ) = @_;
+    
+    my ($en_form, $en_tag) =
+        ($self->en($node))
+        ?
+        ($self->en($node)->form, $self->en($node)->tag)
+        :
+        (undef, undef)
+    ;
+    my ( $new_tag, $new_number ) = $numberSwitcher->try_switch_number( {
+            lemma => $node->lemma, old_form => $node->form, new_tag => $tag,
+            en_form => $en_form, en_tag => $en_tag,
+        } );
+        
     return $new_tag;
 }
 
@@ -122,6 +133,9 @@ sub regenerate_node {
     my $old_form = $node->form;
 
     # TODO: always use try_switch_number?
+    if ($self->magic eq 'always_en_num') {
+	$new_tag = $self->try_switch_num($node, $new_tag);
+    }
     my $new_form = $formGenerator->get_form( $node->lemma, $new_tag );
     return if !defined $new_form;
     $new_form = ucfirst $new_form if $old_form =~ /^(\p{isUpper})/;

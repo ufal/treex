@@ -35,9 +35,7 @@ sub fix {
 
             # change old case to new case
             substr $d->{tag}, 4, 1, $new_case;
-            $d->{tag} = $self->try_switch_num(
-                $dep->form, $dep->lemma, $d->{tag}
-            );
+            $d->{tag} = $self->try_switch_num($dep, $d->{tag});
 
             $self->logfix1( $dep, "Of" );
             $self->regenerate_node( $dep, $d->{tag} );

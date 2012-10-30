@@ -109,7 +109,7 @@ sub fix {
             # change case to genitive
             substr $d->{tag}, 4, 1, '2';
 
-            # my $tag = $self->try_switch_num($dep->form, $dep->lemma, $d->{tag} );
+            # my $tag = $self->try_switch_num($dep, $d->{tag});
             $self->regenerate_node( $dep, $d->{tag} );
 
             $self->logfix2($dep);

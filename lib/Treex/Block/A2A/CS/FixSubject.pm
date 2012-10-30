@@ -32,9 +32,7 @@ sub fix {
         if ( $d->{num} eq 'S' ) {
 
             # maybe correct form, only incorrectly tagged
-            $d->{tag} = $self->try_switch_num(
-                $dep->form, $dep->lemma, $d->{tag}
-            );
+            $d->{tag} = $self->try_switch_num($dep, $d->{tag});
         }
 
         $self->logfix1( $dep, "Subject" );

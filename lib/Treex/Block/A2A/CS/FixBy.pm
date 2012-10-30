@@ -112,9 +112,7 @@ sub fix {
         if ( $new_case != $original_case ) {
 
             $d->{tag} =~ s/^(....)./$1$new_case/;
-            $d->{tag} = $self->try_switch_num(
-                $dep->form, $dep->lemma, $d->{tag}
-            );
+            $d->{tag} = $self->try_switch_num($dep, $d->{tag});
 
             $self->logfix1( $dep, "By" );
             $self->regenerate_node( $dep, $d->{tag} );
