@@ -25,7 +25,7 @@ foreach my $layer (qw( A T N P )) {
         'lemma' => 'house',
         'tag'   => 'NN',
     };
-    my $node = $root->create_child($attributes);
+    my $node = $layer eq 'P' ? $root->create_nonterminal_child($attributes) : $root->create_child($attributes);
     isa_ok( $node, 'Treex::Core::Node' );
 
     isa_ok( $node->get_bundle(),   'Treex::Core::Bundle' );
@@ -64,10 +64,12 @@ foreach my $layer (qw( A T N P )) {
     ok( !$root->get_siblings(), '$root has no siblings' );
     ok( !$node->get_siblings(), '$node has no siblings' );
 
-    my $c1 = $root->create_child();
-    my $c2 = $root->create_child();
-    my $c3 = $root->create_child();
-    my $c4 = $root->create_child();
+    my ($c1, $c2, $c3, $c4);
+    if ($layer eq 'P'){
+        ($c1, $c2, $c3, $c4) = map {$root->create_nonterminal_child()} (1..4);
+    } else {
+        ($c1, $c2, $c3, $c4) = map {$root->create_child()} (1..4);
+    }
     if ($ordered) {
         $c1->shift_before_node($root);
         $c2->shift_after_node($node);
@@ -76,12 +78,12 @@ foreach my $layer (qw( A T N P )) {
     }
     foreach ( $root->get_children() ) {
         if ( $_ != $node ) {
-            my $tmp = $_->create_child();
+            my $tmp = $layer eq 'P' ? $_->create_terminal_child() : $_->create_child();
             $tmp->shift_after_node($_) if $ordered;
         }
     }
-    my $cc1 = $node->create_child();
-    my $cc2 = $node->create_child();
+    my $cc1 = $layer eq 'P' ? $node->create_terminal_child() : $node->create_child();
+    my $cc2 = $layer eq 'P' ? $node->create_terminal_child() : $node->create_child();
     if ($ordered) {
         $cc1->shift_before_node($node);
         $cc2->shift_after_node($node);
@@ -121,9 +123,6 @@ foreach my $layer (qw( A T N P )) {
         }
 
         ok( $root->precedes($node), 'Preceding predicate works' );
-
-        #$root->set_attr( $root->ordering_attribute(), $node->get_ordering_value() + 1 ); #set_attr won't be supported
-        #ok( $root->precedes($node), 'Preceding predicate still works, so it is immune to direct changes' );
     }
 
     #Reordering nodes

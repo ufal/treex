@@ -146,7 +146,7 @@ sub set_attr {
     }
 
     #simple attributes can be accessed directly
-    return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/;
+    return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/ || $attr_name eq '#name';
     log_fatal "Attribute '$attr_name' contains strange symbols."
         . " No XPath like constructs (e.g. 'a/aux.rf[3]') are allowed."
         if $attr_name =~ /[^-\w\/.]/;
@@ -305,7 +305,7 @@ sub fix_pml_type {
     if ( not $self->type() ) {
         my $type = $self->get_pml_type_name();
         if ( not $type ) {
-            log_warn "No PML type recognized for node $self";
+            log_fatal "No PML type recognized for node $self";
             return;
         }
         my $fs_file = $self->get_document()->_pmldoc;
@@ -371,7 +371,7 @@ sub create_child {
     # against the "tectogrammatical ideology" and we use it as a temporary hack.
     my %structured_attrs;
     foreach my $attr ( keys %{$arg_ref} ) {
-        if ( $attr =~ m{/} || $attr eq 'mlayer_pos' ) {
+        if ( $attr =~ m{/} || $attr eq 'mlayer_pos' || $attr eq '#name') {
             $structured_attrs{$attr} = delete $arg_ref->{$attr};
         }
     }

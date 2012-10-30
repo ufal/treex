@@ -20,10 +20,10 @@ has [qw( phrase functions )] => ( is => 'rw' );
 sub get_pml_type_name {
     my ($self) = @_;
 
-    if ( $self->is_root() or $self->phrase ) {
+    if ( $self->is_root() or $self->phrase or ($self->{'#name'} || '') eq 'nonterminal') {
         return 'p-nonterminal.type';
     }
-    elsif ( $self->tag ) {
+    elsif ( $self->tag or ($self->{'#name'} || '') eq 'terminal') {
         return 'p-terminal.type';
     }
     else {
@@ -36,21 +36,49 @@ sub is_terminal {
   return $self->get_pml_type_name eq 'p-terminal.type' ? 1 : 0;
 }
 
+sub create_child {
+    my $self = shift;
+    log_warn 'With Treex::Core::Node::P you should you either create_terminal_child() or create_nonterminal_child() instead of create_child()';
+    return $self->SUPER::create_child(@_);
+}
+
 sub create_nonterminal_child {
     my $self    = shift @_;
+    log_warn 'Adding a child to a terminal p-node ' . $self->id if $self->is_terminal();
+    my $arg_ref;
+    if ( scalar @_ == 1 && ref $_[0] eq 'HASH' ) {
+        $arg_ref = $_[0];
+    }
+    elsif ( @_ % 2 ) {
+        log_fatal "Odd number of elements for create_nonterminal_child";
+    }
+    else {
+        $arg_ref = {@_};
+    }
+    $arg_ref->{'#name'} = 'nonterminal';
     my $fs_file = $self->get_bundle->get_document()->_pmldoc;
-    my $child   = $self->create_child(@_);
+    my $child   = $self->SUPER::create_child($arg_ref);
     $child->set_type_by_name( $fs_file->metaData('schema'), 'p-nonterminal.type' );
-    $child->{'#name'} = 'nonterminal';
     return $child;
 }
 
 sub create_terminal_child {
     my $self    = shift @_;
+    log_warn 'Adding a child to a terminal p-node ' . $self->id if $self->is_terminal();
+    my $arg_ref;
+    if ( scalar @_ == 1 && ref $_[0] eq 'HASH' ) {
+        $arg_ref = $_[0];
+    }
+    elsif ( @_ % 2 ) {
+        log_fatal "Odd number of elements for create_terminal_child";
+    }
+    else {
+        $arg_ref = {@_};
+    }
+    $arg_ref->{'#name'} = 'terminal';
     my $fs_file = $self->get_bundle->get_document()->_pmldoc;
-    my $child   = $self->create_child(@_);
+    my $child   = $self->SUPER::create_child($arg_ref);
     $child->set_type_by_name( $fs_file->metaData('schema'), 'p-terminal.type' );
-    $child->{'#name'} = 'terminal';
     return $child;
 }
 
