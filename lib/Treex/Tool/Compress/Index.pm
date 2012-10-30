@@ -4,11 +4,10 @@ use Moose;
 
 use Treex::Core::Common;
 
-use IO::Zlib;
-use File::Slurp;
+with 'Treex::Tool::Store::Storable';
 
-has '_str2idx' => (
-    is => 'ro',
+has 'str2idx' => (
+    is => 'rw',
     isa => 'HashRef[Int]',
     default => sub {{}},
 );
@@ -19,28 +18,34 @@ has '_idx2str' => (
     default => sub {{}},
 );
 
-has '_last_idx' => (
-    is => 'rw',
+has 'last_idx' => (
+    is => 'ro',
     isa => 'Int',
+    writer => '_set_last_idx',
     default => 0,
 );
 
 sub get_index {
     my ($self, $str) = @_;
-    my $idx = $self->_str2idx->{$str};
+    my $idx = $self->str2idx->{$str};
     if (!defined $idx) {
-        $idx = $self->_last_idx + 1;
+        $idx = $self->last_idx + 1;
         $self->_set_last_idx($idx);
-        $self->_str2idx->{$str} = $idx;
+        $self->str2idx->{$str} = $idx;
     }
     return $idx;
+}
+
+sub all_labels {
+    my ($self) = @_;
+    return keys %{$self->str2idx};
 }
 
 sub build_inverted_index {
     my ($self) = @_;
 
-    foreach my $str (keys %{$self->_str2idx}) {
-        my $idx = $self->_str2idx->{$str};
+    foreach my $str (keys %{$self->str2idx}) {
+        my $idx = $self->str2idx->{$str};
         $self->_idx2str->{$idx} = $str;
     }
 }
@@ -50,12 +55,27 @@ sub get_str_for_idx {
     return $self->_idx2str->{$idx};
 }
 
-sub save {
+############# implementing Treex::Tool::Store::Storable role #################
+
+before 'save' => sub {
     my ($self, $filename) = @_;
     log_info "Storing index file into $filename...";
-    write_file( $filename, {binmode => ':raw'},
-        Compress::Zlib::memGzip(Storable::freeze($self->_str2idx)) )
-    or log_fatal $!;
+};
+
+before 'load' => sub {
+    my ($self, $filename) = @_;
+    log_info "Loading index file from $filename...";
+};
+
+sub freeze {
+    my ($self) = @_;
+    return [$self->str2idx, $self->last_idx];
+}
+
+sub thaw {
+    my ($self, $buffer) = @_;
+    $self->set_str2idx( $buffer->[0] );
+    $self->_set_last_idx( $buffer->[1] );
 }
 
 1;
