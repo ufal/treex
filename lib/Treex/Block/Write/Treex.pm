@@ -12,7 +12,7 @@ has '+compress' => ( default => 1 );
 has storable => (
     is            => 'rw',
     isa           => 'Bool',
-    documentation => 'Use the Storable module (instead of Treex::PML) for storing into .streex files. Defaults to document->compress, or 0.'
+    documentation => 'Use the Storable module (instead of Treex::PML) for storing into .streex files. Defaults to document->storable.'
 );
 
 # HACKS: Treex::PML::Document->save() cannot take filehandle
