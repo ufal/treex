@@ -41,9 +41,32 @@ my %frequent_names = (
 
 my %cached_mapping;
 
+sub process_zone {
+    my ($self,$zone) = @_;
 
-sub _randomly_chosen_name {
-    my ( $lemma_suffix, $gender, $number ) = @_;
+    foreach my $nnode ($zone->get_ntree->get_descendants) {
+        $self->process_nnode($nnode);
+    }
+
+    foreach my $anode ($zone->get_atree->get_descendants) {
+        $self->process_anode($anode);
+    }
+}
+
+sub process_anode { # only for numbers expressed by digits
+    my ( $self, $anode ) = @_;
+
+    if ( $anode->form =~ /(.*)(\d)/ ) {
+        my $new_number = join '',
+            map { $_ =~ /\d/ ? int(rand(10)) : $_ }
+                split //,$anode->form;
+        _replace_form($anode,$new_number,$new_number);
+    }
+
+    elsif ( $anode->form =~ /^\p{IsUpper}{2,}$/ ) {
+        my $new_lemma = $frequent_names{YMS}->[int(rand(20))];
+        _replace_form($anode,$new_lemma,$new_lemma);
+    }
 }
 
 sub process_nnode {
@@ -80,25 +103,39 @@ sub process_nnode {
                 $new_lemma = $cached_mapping{$lemma}{$equiv_class}
             }
             elsif (exists $frequent_names{$equiv_class}) {
-                $new_lemma = $frequent_names{$equiv_class}->[int(rand($limit))];
+                $new_lemma = $lemma;
+                while ( $new_lemma eq $lemma ) { # some change required
+                    $new_lemma = $frequent_names{$equiv_class}->[int(rand($limit))];
+                }
                 $cached_mapping{$lemma}{$equiv_class} = $new_lemma;
             }
 
             if ( $new_lemma ) {
 
+                my $tag_regex = $anodes[0]->tag;
+                $tag_regex =~ s/^././; # surnames can easily change POS (nouns <--> adjectives)
                 my ($new_form) = map { $_->get_form }
-                    $generator->forms_of_lemma( $new_lemma, { tag_regex => $anodes[0]->tag } );
+                    $generator->forms_of_lemma( $new_lemma, { tag_regex => $tag_regex } );
 
-                if ( $new_form ) {
-                    $anodes[0]->wild->{anonymized} = 1;
-                    $anodes[0]->wild->{origform} = $anodes[0]->form;
-                    $anodes[0]->set_lemma($new_lemma);
-                    $anodes[0]->set_form($new_form);
+                if ( not $new_form ) {
+                    $new_form = $new_lemma;
                 }
+
+                _replace_form($anodes[0],$new_lemma,$new_form);
             }
         }
     }
 }
+
+sub _replace_form {
+    my ($anode,$new_lemma, $new_form) = @_;
+    $anode->wild->{anonymized} = 1;
+    $anode->wild->{origform} = $anode->form;
+    $anode->set_lemma($new_lemma);
+    $anode->set_form($new_form);
+    return 1;
+}
+
 
 binmode STDOUT,":utf8";
 binmode STDIN,":utf8";
