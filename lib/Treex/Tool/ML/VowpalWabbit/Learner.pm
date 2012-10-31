@@ -17,6 +17,17 @@ has 'passes' => (
     default => 5,
 );
 
+# the level of verbosity
+# 0 = no info prints
+# 1 = just info prints of Perl wrapper
+# 2 = all info prints including those from the C++ library 
+has 'verbose' => (
+    is => 'ro',
+    isa => enum([0, 1, 2]),
+    default => 0,
+    required => 1,
+);
+
 has '_unprocessed_instances' => (
     is  => 'ro',
     isa => 'ArrayRef[Str]',
@@ -45,16 +56,20 @@ sub see {
 sub learn {
     my ($self) = @_;
     
-    log_info("Vowpal Wabbit (VW) online learning:");
+    
+    $self->_log_info_verbose("Vowpal Wabbit (VW) online learning:");
     
     my $num_classes = $self->_current_index->last_idx;
-    my $vw = VowpalWabbit::initialize("--sequence_max_length 1024 --noconstant --oaa $num_classes");
+    my $quiet = $self->verbose < 2 ? "--quiet" : "";
+    my $init_str = "$quiet --sequence_max_length 1024 --noconstant --oaa $num_classes";
+    
+    my $vw = VowpalWabbit::initialize($init_str);
 
-    log_info("VW: classes = " . $num_classes);
-    log_info("VW: passes = " . $self->passes);
+    $self->_log_info_verbose("VW: classes = " . $num_classes);
+    $self->_log_info_verbose("VW: passes = " . $self->passes);
     
     foreach my $pass (1 .. $self->passes) {
-        log_info("VW: pass no. $pass");
+        $self->_log_info_verbose("VW: pass no. $pass");
         foreach my $example_line (@{$self->_unprocessed_instances}) {
             my $example = VowpalWabbit::read_example($vw, $example_line);
             $vw->learn($vw, $example);
@@ -77,6 +92,13 @@ sub forget_all {
     my ($self) = @_;
     $self->_set_index( Treex::Tool::Compress::Index->new() );
     $self->_set_instances( [] );
+}
+
+sub _log_info_verbose {
+    my ($self, $message) = @_;
+    if ($self->verbose > 0) {
+        log_info($message);
+    }
 }
 
 1;
