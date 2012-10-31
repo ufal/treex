@@ -8,7 +8,7 @@ has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
-has 'magic'  => ( is       => 'rw', isa => 'Str', default => '' );
+has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
 
 use Carp;
 
@@ -108,19 +108,21 @@ sub get_form {
 # only a wrapper, for backward compatibility
 sub try_switch_num {
     my ( $self, $node, $tag ) = @_;
-    
-    my ($en_form, $en_tag) =
-        ($self->en($node))
+
+    my ( $en_form, $en_tag ) =
+        ( $self->en($node) )
         ?
-        ($self->en($node)->form, $self->en($node)->tag)
+        ( $self->en($node)->form, $self->en($node)->tag )
         :
-        (undef, undef)
-    ;
-    my ( $new_tag, $new_number ) = $numberSwitcher->try_switch_number( {
+        ( undef, undef )
+        ;
+    my ( $new_tag, $new_number ) = $numberSwitcher->try_switch_number(
+        {
             lemma => $node->lemma, old_form => $node->form, new_tag => $tag,
             en_form => $en_form, en_tag => $en_tag,
-        } );
-        
+        }
+    );
+
     return $new_tag;
 }
 
@@ -133,8 +135,8 @@ sub regenerate_node {
     my $old_form = $node->form;
 
     # TODO: always use try_switch_number?
-    if ($self->magic eq 'always_en_num') {
-	$new_tag = $self->try_switch_num($node, $new_tag);
+    if ( $self->magic eq 'always_en_num' ) {
+        $new_tag = $self->try_switch_num( $node, $new_tag );
     }
     my $new_form = $formGenerator->get_form( $node->lemma, $new_tag );
     return if !defined $new_form;
@@ -176,23 +178,43 @@ sub get_pair {
 
     return if ( !defined $parent || $parent->is_root );
 
-    my $d_tag = $node->tag   || '';
-    my $g_tag = $parent->tag || '';
-    $d_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
+    my $d_tag = $node->tag || '';
     my %d_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
-        pers => $6, neg => $7,
-        tag  => $d_tag,
-        afun => $node->afun,
-        flt  => $node->form . '#' . $node->lemma . '#' . $node->tag,
+        pos    => substr( $d_tag, 0,  1 ),
+        subpos => substr( $d_tag, 1,  1 ),
+        gen    => substr( $d_tag, 2,  1 ),
+        num    => substr( $d_tag, 3,  1 ),
+        case   => substr( $d_tag, 4,  1 ),
+        pgen   => substr( $d_tag, 5,  1 ),
+        pnum   => substr( $d_tag, 6,  1 ),
+        pers   => substr( $d_tag, 7,  1 ),
+        tense  => substr( $d_tag, 8,  1 ),
+        grade  => substr( $d_tag, 9,  1 ),
+        neg    => substr( $d_tag, 10, 1 ),
+        voice  => substr( $d_tag, 11, 1 ),
+        var    => substr( $d_tag, 14, 1 ),
+        tag    => $d_tag,
+        afun   => $node->afun,
+        flt    => $node->form . '#' . $node->lemma . '#' . $node->tag,
     );
-    $g_tag =~ /^(.)(.)(.)(.)(.)..(.)..(.)/;
+    my $g_tag = $parent->tag || '';
     my %g_categories = (
-        pos => $1, subpos => $2, gen => $3, num => $4, case => $5,
-        pers => $6, neg => $7,
-        tag  => $g_tag,
-        afun => $parent->afun,
-        flt  => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
+        pos    => substr( $g_tag, 0,  1 ),
+        subpos => substr( $g_tag, 1,  1 ),
+        gen    => substr( $g_tag, 2,  1 ),
+        num    => substr( $g_tag, 3,  1 ),
+        case   => substr( $g_tag, 4,  1 ),
+        pgen   => substr( $g_tag, 5,  1 ),
+        pnum   => substr( $g_tag, 6,  1 ),
+        pers   => substr( $g_tag, 7,  1 ),
+        tense  => substr( $g_tag, 8,  1 ),
+        grade  => substr( $g_tag, 9,  1 ),
+        neg    => substr( $g_tag, 10, 1 ),
+        voice  => substr( $g_tag, 11, 1 ),
+        var    => substr( $g_tag, 14, 1 ),
+        tag    => $g_tag,
+        afun   => $parent->afun,
+        flt    => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
