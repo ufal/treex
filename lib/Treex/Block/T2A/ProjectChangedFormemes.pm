@@ -7,7 +7,8 @@ extends 'Treex::Core::Block';
 has '+language'      => ( required => 1 );
 has 'to_selector'    => ( required => 1, is => 'ro', isa => 'Str' );
 has 'log_to_console' => ( default  => 0, is => 'ro', isa => 'Bool' );
-has 'alignment_type' => ( default  => 'copy', is => 'ro', isa => 'Str' );
+has 'orig_alignment_type' => ( default  => 'orig', is => 'ro', isa => 'Str' );
+has 'src_alignment_type' => ( default  => 'src', is => 'ro', isa => 'Str' );
 
 use Treex::Block::T2T::CS2CS::FixInfrequentFormemes;
 
@@ -18,7 +19,7 @@ sub process_tnode {
     if ( $fixed_tnode->wild->{'change_by_deepfix'} ) {
 
 	my ($orig_tnode) = $fixed_tnode->get_aligned_nodes_of_type(
-	    $self->alignment_type
+	    $self->orig_alignment_type
 	    );
 	if ( !defined $orig_tnode ) {
 	    log_fatal(
@@ -293,13 +294,17 @@ inserted into the C<cs_T> a-tree.
 Selector of zone into which the changes should be projected.
 This parameter is required.
 
-=item C<alignment_type>
+=item C<orig_alignment_type>
 
-Type of alignment between the t-trees.
-Default is C<copy>.
-The alignemt must lead from this zone to the zone set by C<to_selector>.
-(This all is true by default if the t-tree in this zone was created with 
-L<T2T::CopyTtree>.)
+Type of alignment between the CS t-trees.
+Default is C<orig>.
+The alignment must lead from this zone to the zone set by C<to_selector>.
+
+=item C<src_alignment_type>
+
+Type of alignment between the cs_Tfix t-tree and the en t-tree.
+Default is C<src>.
+The alignemt must lead from cs_Tfix to en.
 
 =item C<log_to_console>
 
