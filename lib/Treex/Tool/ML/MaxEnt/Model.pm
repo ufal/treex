@@ -104,7 +104,7 @@ before 'load' => sub {
 
 sub freeze {
     my ($self) = @_;
-    return [ $self->model, $self->y_num ]
+    return [ $self->model, $self->y_num ];
 }
 
 sub thaw {

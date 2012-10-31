@@ -75,7 +75,7 @@ sub learn {
 
 sub forget_all {
     my ($self) = @_;
-    $self->_set_index( undef );
+    $self->_set_index( Treex::Tool::Compress::Index->new() );
     $self->_set_instances( [] );
 }
 
