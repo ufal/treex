@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 5;
+use Test::More;
 use Test::Deep;
 
 BEGIN {
@@ -53,3 +53,5 @@ my $new_score = $new_model->score(['f1','f2'], 'cs1');
 
 print STDERR "Old score: $score, New score: $new_score\n";
 is($score, $new_score, "the same score");
+
+done_testing();
