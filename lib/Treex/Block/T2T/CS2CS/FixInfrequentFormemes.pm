@@ -14,6 +14,7 @@ has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 # model
 has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
+has 'model_format'     => ( is => 'ro', isa => 'Str', default => 'tlemma_ptlemma_pos_formeme' );
 
 # exclusive thresholds
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
@@ -188,13 +189,43 @@ sub get_formeme_score {
     if ( !defined $formeme ) {
         $formeme = $node_info->{'formeme'};
     }
+    
+    # default values (used if the model does not tell us anything)
+    my $formeme_count = 0;
+    my $all_count = 0;
 
-    my $formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
+    # get the numbers from the model
+    # (depends on the format of the model)
+    if ($self->model_format eq 'tlemma_ptlemma_pos_formeme') {
+
+	$formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
         ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{$formeme}
         || 0;
-    my $all_count = $model_data->{'tlemma_ptlemma_pos'}
+
+	$all_count = $model_data->{'tlemma_ptlemma_pos'}
         ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
         || 0;
+    }
+    elsif ($self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme') {
+
+	$formeme_count = $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }->{$formeme}
+        || 0;
+
+	$all_count = $model_data->{'tlemma_ptlemma_pos_attdir'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
+        || 0;
+    }
+    elsif ($self->model_format eq 'tlemma_ptlemma_pos_enformeme_formeme') {
+
+	$formeme_count = $model_data->{'tlemma_ptlemma_pos_enformeme_formeme'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }->{$formeme}
+        || 0;
+
+	$all_count = $model_data->{'tlemma_ptlemma_pos_enformeme'}
+        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
+        || 0;
+    }
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
 
@@ -209,10 +240,25 @@ sub get_formeme_score {
 sub get_best_formeme {
     my ( $self, $node_info ) = @_;
 
-    my @candidates = keys %{
-        $model_data->{'tlemma_ptlemma_pos_formeme'}
+    my @candidates = ();
+    if ($self->model_format eq 'tlemma_ptlemma_pos_formeme') {
+	@candidates = keys %{
+	    $model_data->{'tlemma_ptlemma_pos_formeme'}
             ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
-        };
+	    };
+    }
+    elsif ($self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme') {
+	@candidates = keys %{
+	    $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
+	    };
+    }
+    elsif ($self->model_format eq 'tlemma_ptlemma_pos_enformeme_formeme') {
+	@candidates = keys %{
+	    $model_data->{'tlemma_ptlemma_pos_enformeme_formeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
+	    };
+    }
 
     my $top_score   = 0;
     my $top_formeme = '';    # returned if no usable formemes in model
