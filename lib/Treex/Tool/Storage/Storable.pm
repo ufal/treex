@@ -25,6 +25,11 @@ sub load {
     my ($self, $filename) = @_;
 
     $filename = $self->_locate_model_file($filename);
+    $self->load_specified($filename);
+}
+
+sub load_specified {
+    my ($self, $filename) = @_;
 
     my $buffer = Compress::Zlib::memGunzip(read_file( $filename )) ;
     $buffer = Storable::thaw($buffer) or log_fatal $!;
