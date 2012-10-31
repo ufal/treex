@@ -41,6 +41,13 @@ my %frequent_names = (
 
 my %cached_mapping;
 
+END {
+    print "\n\n-------------- SUBSTITUČNÍ TABULKA ----------------\n";
+    foreach my $original (sort keys %cached_mapping) {
+        print "  $original --> $cached_mapping{$original}\n";
+    }
+}
+
 sub process_zone {
     my ($self,$zone) = @_;
 
@@ -56,15 +63,60 @@ sub process_zone {
 sub process_anode { # only for numbers expressed by digits
     my ( $self, $anode ) = @_;
 
-    if ( $anode->form =~ /(.*)(\d)/ ) {
-        my $new_number = join '',
-            map { $_ =~ /\d/ ? int(rand(10)) : $_ }
-                split //,$anode->form;
-        _replace_form($anode,$new_number,$new_number);
+    my $new_lemma;
+
+    if ( $anode->form =~ /@/) {
+        my @email_anodes = $anode;
+
+        my $left_neighbor = $anode->get_left_neighbor;
+        while ($left_neighbor) {
+            last if not $left_neighbor->no_space_after;
+            push @email_anodes, $left_neighbor;
+            $left_neighbor = $left_neighbor->get_left_neighbor;
+        }
+
+        my $right_neighbor = $anode;
+        while ($right_neighbor) {
+            push @email_anodes, $right_neighbor;
+            last if not $right_neighbor->no_space_after;
+            $right_neighbor = $right_neighbor->get_right_neighbor;
+        }
+
+        foreach my $email_anode (@email_anodes) {
+            my $form = $email_anode->form;
+            my $new_form;
+            if ( $cached_mapping{$form} ) {
+                $new_form = $cached_mapping{$form};
+            }
+            else {
+                $new_form = join '',
+                    map {/\w/ ? chr(97+int(rand(25))) : $_}
+                    split //, $form;
+            }
+            _replace_form( $email_anode, $new_form, $new_form );
+        }
     }
 
+    # all digits are replaced by randomly chosen digits
+    elsif ( $anode->form =~ /(.*)(\d)/ ) {
+        $new_lemma = join '',
+            map { $_ =~ /\d/ ? int(rand(10)) : $_ }
+                split //,$anode->form;
+    }
+
+    # all remaining capitalized verbs are replaced by randomly chosen first names
     elsif ( $anode->form =~ /^\p{IsUpper}{2,}$/ ) {
-        my $new_lemma = $frequent_names{YMS}->[int(rand(20))];
+        $new_lemma = $frequent_names{YMS}->[int(rand(20))];
+    }
+
+    if ( $new_lemma ) {
+        my $old_lemma = _short_lemma($anode->lemma);
+        if (exists $cached_mapping{$old_lemma}) {
+            $new_lemma = $cached_mapping{$old_lemma}
+        }
+        else {
+            $cached_mapping{$old_lemma} = $new_lemma;
+        }
         _replace_form($anode,$new_lemma,$new_lemma);
     }
 }
@@ -96,18 +148,18 @@ sub process_nnode {
         }
         else {
             my $equiv_class = $lemma_suffix.substr($anodes[0]->tag,2,2);
-            my $lemma = $anodes[0]->lemma;
+            my $lemma = _short_lemma($anodes[0]->lemma);
             my $new_lemma;
 
-            if ( $cached_mapping{$lemma}{$equiv_class} ) {
-                $new_lemma = $cached_mapping{$lemma}{$equiv_class}
+            if ( $cached_mapping{$lemma} ) {
+                $new_lemma = $cached_mapping{$lemma}
             }
             elsif (exists $frequent_names{$equiv_class}) {
                 $new_lemma = $lemma;
                 while ( $new_lemma eq $lemma ) { # some change required
                     $new_lemma = $frequent_names{$equiv_class}->[int(rand($limit))];
                 }
-                $cached_mapping{$lemma}{$equiv_class} = $new_lemma;
+                $cached_mapping{$lemma} = $new_lemma;
             }
 
             if ( $new_lemma ) {
@@ -128,12 +180,18 @@ sub process_nnode {
 }
 
 sub _replace_form {
-    my ($anode,$new_lemma, $new_form) = @_;
+    my ($anode, $new_lemma, $new_form) = @_;
     $anode->wild->{anonymized} = 1;
     $anode->wild->{origform} = $anode->form;
     $anode->set_lemma($new_lemma);
     $anode->set_form($new_form);
     return 1;
+}
+
+sub _short_lemma {
+    my $lemma = shift;
+    $lemma =~ s/(..)[_\-`].+$/$1/;
+    return $lemma;
 }
 
 
