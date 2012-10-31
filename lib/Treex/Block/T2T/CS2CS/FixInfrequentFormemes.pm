@@ -104,6 +104,16 @@ sub fill_info_from_tree {
     # formemes
     $node_info->{'formeme'} = $node_info->{'node'}->formeme();
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
+    ($node_info->{'ennode'}) = $node_info->{'node'}->get_aligned_nodes_of_type(
+	$self->src_alignment_type
+	);
+    $node_info->{'enformeme'} = (
+	defined $node_info->{'ennode'} && $node_info->{'ennode'}->formeme()
+	?
+	$node_info->{'ennode'}->formeme()
+	:
+	''
+	);
 
     # POSes
     ( $node_info->{'syntpos'}, $node_info->{'preps'}, $node_info->{'case'} )
