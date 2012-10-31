@@ -6,6 +6,9 @@ use Test::More tests => 5;
 use Test::Deep;
 
 BEGIN {
+    Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' ) if !$ENV{AUTHOR_TESTING};
+    Test::More::plan( skip_all => 'these tests require x86_64 architecture' ) if (`arch` ne 'x86_64');
+
     use_ok('Treex::Tool::ML::VowpalWabbit::Learner');
     use_ok('Treex::Tool::ML::VowpalWabbit::Model');
 }
@@ -39,13 +42,14 @@ foreach my $instance (@data) {
 my $model = $learner->learn();
 ok($model, 'model learn');
 
-my $score = $model->score(['f1','f2'], 'en1');
+my $score = $model->score(['f1','f2'], 'cs1');
 
 my $model_path = 't/toy.model';
 $model->save($model_path);
 my $new_model = Treex::Tool::ML::VowpalWabbit::Model->new();
 $new_model->load($model_path);
 
-my $new_score = $new_model->score(['f1','f2'], 'en1');
+my $new_score = $new_model->score(['f1','f2'], 'cs1');
 
+print STDERR "Old score: $score, New score: $new_score\n";
 is($score, $new_score, "the same score");
