@@ -7,7 +7,7 @@ use Test::Deep;
 
 BEGIN {
     Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' ) if !$ENV{AUTHOR_TESTING};
-    Test::More::plan( skip_all => 'these tests require x86_64 architecture' ) if (`arch` ne 'x86_64');
+    Test::More::plan( skip_all => 'these tests require x86_64 architecture' ) if (`arch` !~ /x86_64/);
 
     use_ok('Treex::Tool::ML::VowpalWabbit::Learner');
     use_ok('Treex::Tool::ML::VowpalWabbit::Model');
