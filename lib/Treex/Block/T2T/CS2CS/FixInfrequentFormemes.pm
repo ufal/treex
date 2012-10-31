@@ -226,13 +226,13 @@ sub get_formeme_score {
         ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
         || 0;
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_pos_enformeme_formeme') {
+    elsif ($self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
 
-	$formeme_count = $model_data->{'tlemma_ptlemma_pos_enformeme_formeme'}
+	$formeme_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
         ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }->{$formeme}
         || 0;
 
-	$all_count = $model_data->{'tlemma_ptlemma_pos_enformeme'}
+	$all_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme'}
         ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
         || 0;
     }
@@ -263,9 +263,9 @@ sub get_best_formeme {
             ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
 	    };
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_pos_enformeme_formeme') {
+    elsif ($self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
 	@candidates = keys %{
-	    $model_data->{'tlemma_ptlemma_pos_enformeme_formeme'}
+	    $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
             ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
 	    };
     }
@@ -320,12 +320,18 @@ sub logfix {
         "$node_info->{'ptlemma'} ($node_info->{'pformeme'})"
         :
         "#root#";
+    my $child  = $node_info->{'enformeme'}
+        ?
+        "$node_info->{'tlemma'} (EN $node_info->{'enformeme'})"
+        :
+        $node_info->{'tlemma'};
+
     if ( $node_info->{'attdir'} eq '\\' ) {
-        $msg .= " $parent \\ $node_info->{'tlemma'}: ";
+        $msg .= " $parent \\ $child: ";
     }
     else {
 	# assert $node_info->{'attdir'} eq '/'
-        $msg .= " $node_info->{'tlemma'} / $parent: ";
+        $msg .= " $child / $parent: ";
     }
     $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";
     if ( $node_info->{'best_formeme'} && $node_info->{'formeme'} ne $node_info->{'best_formeme'} ) {
