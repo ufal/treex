@@ -80,6 +80,14 @@ has 'selector' => (
     documentation => q{shortcut for adding "Util::SetGlobal selector=xy" at the beginning of the scenario},
 );
 
+has 'tokenize' => (
+    traits        => ['Getopt'],
+    cmd_aliases   => 't',
+    is            => 'rw', isa => 'Bool',
+    documentation => q{shortcut for adding "Read::Sentences W2A::Tokenize" at the beginning of the scenario (or W2A::XY::Tokenize if used with --lang=xy)},
+);
+
+
 # treex -h should not print "Unknown option: h" before the usage.
 #has 'help' => (
 #    traits        => ['Getopt'],
@@ -693,6 +701,18 @@ sub _init_scenario
     if ( $self->save ) {
         log_info "Block Write::Treex clobber=1 added to the end of the scenario.";
         $scen_str .= ' Write::Treex clobber=1';
+    }
+
+    if ( $self->tokenize ) {
+        my $tokenizer = 'W2A::Tokenize';
+        my $lang = $self->lang;
+        if ($lang && $lang ne 'all'){
+            my $module = 'Treex::Block::W2A::' . uc($lang) . '::Tokenize';
+            if (eval "use $module;1"){
+                $tokenizer = 'W2A::' . uc($lang) . '::Tokenize';
+            }
+        }
+        $scen_str = "Read::Sentences $tokenizer $scen_str";
     }
 
     if ( $self->lang ) {
