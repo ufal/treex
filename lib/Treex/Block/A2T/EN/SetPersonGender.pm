@@ -5,45 +5,51 @@ extends 'Treex::Core::Block';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    foreach my $t_node ( $zone->get_ttree->get_descendants() ) {
+    my %person_gender;
+    my @ttree_descendants = $zone->get_ttree->get_descendants();
+    foreach my $t_node ( @ttree_descendants ) {
         my $gender = get_person_gender( $t_node );
         if ( $gender ) {
             $t_node->set_gram_gender($gender);
-            print $t_node->t_lemma . ":\t";
+            $person_gender{$t_node->t_lemma} = $gender;
+#             print $t_node->t_lemma . ":\t";
             foreach my $echild ( $t_node->get_echildren ) {
                 if ( ($echild->formeme || "") eq "n:attr" and not $echild->gram_gender ) {
                     $echild->set_gram_gender($gender);
-                    print $echild->t_lemma . "\t";
+#                     $person_gender{$echild->t_lemma} = $gender;
+#                     print $echild->t_lemma . "\t";
                 }
             }
             my $parent = $t_node->get_parent;
-#             my $eparent = $t_node->get_eparents[0];
+# #             my $eparent = $t_node->get_eparents[0];
             if ( ($t_node->formeme || "") eq "n:attr" ) {
                 if ( not $parent->gram_gender ) {
                     $parent->set_gram_gender($gender);
-                    print $parent->t_lemma . "\t";
+#                     $person_gender{$parent->t_lemma} = $gender;
+#                     print $parent->t_lemma . "\t";
                     foreach my $echild ( $parent->get_echildren ) {
                         if ( ($echild->formeme || "") eq "n:attr" and not $echild->gram_gender ) {
                             $echild->set_gram_gender($gender);
-                            print $echild->t_lemma . "\t";
+#                             $person_gender{$echild->t_lemma} = $gender;
+#                             print $echild->t_lemma . "\t";
                         }
                     }
                 }
             }
-            print "\n";
+#             print "\n";
+        }
+    }
+    my @persons = keys %person_gender;
+    foreach my $t_node ( @ttree_descendants ) {
+        if ( grep { $_ eq $t_node->t_lemma } @persons
+            and not $t_node->gram_gender ) {
+            $t_node->set_gram_gender($person_gender{$t_node->t_lemma});
+            print $t_node->get_zone->sentence . "\n";
+            print $t_node->t_lemma . "\t" . $t_node->gram_gender . "\n";
         }
     }
     return;
 }
-
-# sub process_tnode {
-#     my ( $self, $t_node ) = @_;
-#     return 1 if $t_node->gram_gender;
-#     if ( my $gender = gender_of_tnode_person($t_node) ) {
-#         $t_node->set_gram_gender($gender);
-#     }
-#     return 1;
-# }
 
 sub get_person_gender {
     my ($t_node) = @_;
@@ -75,5 +81,5 @@ Tries to fill gender (C<gram/gender> attribute) of all nodes in the document ref
 
 =cut
 
-# Copyright 2010 Martin Popel, Nguy Giang Linh
+# Copyright 2010-2012 Martin Popel, Nguy Giang Linh
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -143,7 +143,7 @@ sub _build_ewn_classes {
 
     my $ewn_file = require_file_from_share( $self->ewn_classes_path, ref($self) );
     log_fatal 'File ' . $ewn_file . 
-        ' with a EuroWordNet onthology for Czech used' .
+        ' with an EuroWordNet onthology for Czech used' .
         ' in pronominal textual coreference resolution does not exist.' 
         if !-f $ewn_file;
     open EWN, "<:utf8", $ewn_file;

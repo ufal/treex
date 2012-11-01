@@ -2,8 +2,25 @@ package Treex::Tool::Coreference::EN::PronCorefFeatures;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Resource qw(require_file_from_share);
 
 extends 'Treex::Tool::Coreference::PronCorefFeatures';
+
+has 'ewn_classes_path' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'Str',
+    default     => 
+        'data/models/coreference/EN/features/noun_to_ewn_top_ontology.tsv',
+);
+
+has '_ewn_classes' => (
+    is          => 'ro',
+    required    => 1,
+    isa         => 'HashRef',
+    lazy        => 1,
+    builder     => '_build_ewn_classes',
+);
 
 has 'tag_properties' => (
     is => 'ro',
@@ -225,6 +242,36 @@ sub _anaph_type {
         }
     }
     return 'oth';
+}
+
+sub _build_ewn_classes {
+    my ($self) = @_;
+
+    my $ewn_file = require_file_from_share( $self->ewn_classes_path, ref($self) );
+    log_fatal 'File ' . $ewn_file . 
+        ' with an EuroWordNet onthology for English used' .
+        ' in pronominal textual coreference resolution does not exist.' 
+        if !-f $ewn_file;
+    open EWN, "<:utf8", $ewn_file;
+    
+    my $ewn_noun;
+    my %ewn_all_classes;
+    while (my $line = <EWN>) {
+        chomp $line;
+        
+        my ($noun, $classes_string) = split /\t/, $line;
+        my (@classes) = split / /, $classes_string;
+        for my $class (@classes) {
+            $ewn_noun->{$noun}{$class} = 1;
+            $ewn_all_classes{$class} = 1;
+        }
+    }
+    close EWN;
+
+    my @class_list = keys %ewn_all_classes;
+    my $ewn_classes = { nouns => $ewn_noun, all => \@class_list };
+
+    return $ewn_classes;
 }
 
 override '_binary_features' => sub {
