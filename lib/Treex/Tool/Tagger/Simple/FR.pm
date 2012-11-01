@@ -23,11 +23,10 @@ use Treex::Core::Resource qw(require_file_from_share);
 my $dictionary = _build_dictionary();
 my $common_words = _build_common_words();
 
-sub tag_and_lemmatize_sentence {
-    my ( $self, @words ) = @_;
-   
-    my @tags   = map { $self->tag_word($_) } @words;
-    my @lemmas = map { $self->lemmatize_word($_) } @words;
+sub tag_sentence {
+    my ( $self, $words_rf ) = @_;
+    my @tags   = map { $self->tag_word($_) } @$words_rf;
+    my @lemmas = map { $self->lemmatize_word($_) } @$words_rf;
     return ( \@tags, \@lemmas );
 }
 
@@ -947,10 +946,11 @@ Treex::Tool::Tagger::Simple::FR - Perl module for POS tagging French
 
 =head1 SYNOPSIS
 
+  use utf8;
   use Treex::Tool::Tagger::Simple::FR;
   my $tagger = Treex::Tool::Tagger::Simple::FR->new();
   my @words = qw(Alors la Sagesse changea de méthode et parla d'enquête et d'espionnage.);
-  my ($tags_rf, $lemmas_rf) = $tagger->tag_and_lemmatize_sentence(@words);
+  my ($tags_rf, $lemmas_rf) = $tagger->tag_sentence(\@words);
   while (@words) {
       print shift @words, "\t", shift @{$lemmas_rf}, "\t", shift @{$tags_rf}, "\n";
   }
