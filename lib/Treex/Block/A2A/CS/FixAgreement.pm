@@ -313,6 +313,31 @@ sub gn2pp {
     return $gn;
 }
 
+sub shift_subtree_after_node {
+    my ($self, $subtree_root, $node) = @_;
+    
+    # do the shift
+    $subtree_root->shift_after_node($node);
+    
+    # try to normalize spaces
+    # TODO: I am sure I am reinventing America here -> find a block for that!
+    # important nodes
+    my $subtree_rightmost = $subtree_root->get_descendants(
+        {add_self => 1, last_only => 1});
+    my $subtree_preceding = $subtree_root->get_descendants(
+        {add_self => 1, last_only => 1})->get_prev_node();
+    # remember the no_space_after ("nsa") values
+    my $node_nsa = $node->no_space_after;
+    my $subtree_rightmost_nsa = $subtree_rightmost->no_space_after;
+    my $subtree_preceding_nsa = eval '$subtree_preceding->no_space_after' // 0;
+    # set the nsa values
+    $node->set_no_space_after($subtree_preceding_nsa);
+    $subtree_rightmost->set_no_space_after($node_nsa);
+    $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
+        
+    return;
+}
+
 # removes a node, moving its children under its parent
 sub remove_node {
     my ( $self, $node, $rehang_under_en_eparent ) = @_;
