@@ -1,10 +1,10 @@
 package Treex::Tool::Tagger::Stanford;
-
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 use File::Java;
 use ProcessUtils;
+with 'Treex::Tool::Tagger::Role';
 
 Readonly my $INST_DIR => 'installed_tools/tagger/stanford/';
 
@@ -31,9 +31,9 @@ has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
 has '_java_pid'     => ( is => 'rw', isa => 'Int' );
 
 sub BUILD {
-
-    my ( $self, $params ) = @_;
-
+    my ( $self, $arg_ref ) = @_;
+    log_fatal __PACKAGE__ . ' does not support lemmatization' if $arg_ref->{lemmatize};
+    
     $self->_set_stanford_tagger_jar( Treex::Core::Resource::require_file_from_share( $self->stanford_tagger_jar ) );
     $self->_set_model( Treex::Core::Resource::require_file_from_share( $self->model ) );
 
@@ -64,20 +64,19 @@ sub BUILD {
 }
 
 sub DEMOLISH {
-
     my ($self) = @_;
-
+        
     # Close the tagger application
-    close( $self->_write_handle );
-    close( $self->_read_handle );
+    close( $self->_write_handle ) if $self->_write_handle;
+    close( $self->_read_handle ) if $self->_read_handle;
     ProcessUtils::safewaitpid( $self->_java_pid );
     return;
 }
 
 sub tag_sentence {
-
-    my ( $self, @tokens ) = @_;
-
+    my ( $self, $tokens_rf ) = @_;
+    my @tokens = @$tokens_rf;
+    
     # write the tokens to be tagged (trim tokens first)
     print { $self->_write_handle } join( " ", map { s/^$SPACE+//; s/$SPACE+$//; $_ } @tokens ), "\n";
 
@@ -113,7 +112,7 @@ sub tag_sentence {
         $tagged[$i] = substr( $tagged[$i], length( $tokens[$i] ) + 1 );
     }
 
-    return @tagged;
+    return \@tagged;
 }
 
 1;
@@ -148,7 +147,7 @@ Path to the packed model file.
 
 =over
 
-=item @tags = $tagger->tag(@tokens);
+=item $tags_rf = $tagger->tag_sentence(\@tokens);
 
 Returns a list of tags for tokenized input.
 
@@ -157,6 +156,8 @@ Returns a list of tags for tokenized input.
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

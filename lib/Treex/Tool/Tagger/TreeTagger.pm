@@ -4,6 +4,7 @@ use Treex::Core::Common;
 use Treex::Core::Config;
 use Treex::Tool::ProcessUtils;
 use Treex::Core::Resource;
+with 'Treex::Tool::Tagger::Role';
 
 has model => ( isa => 'Str', is => 'rw', required => 1 );
 has [qw( _reader _writer _pid )] => ( is => 'rw' );
@@ -31,10 +32,10 @@ sub BUILD {
     return;
 }
 
-sub analyze {
+sub tag_sentence {
     my $self = shift;
     my $toks = shift;
-    return [] if scalar @$toks == 0;
+    return if scalar @$toks == 0;
 
     my $ttwr = $self->_writer;
     my $ttrd = $self->_reader;
@@ -69,8 +70,7 @@ sub analyze {
         push @lemmas, $items[2];
     }
 
-    my @output = ( \@tags, \@lemmas );
-    return \@output;
+    return \@tags, \@lemmas;
 }
 
 sub DEMOLISH {
@@ -85,7 +85,6 @@ sub DEMOLISH {
 
 __END__
 
-
 =head1 NAME
 
 Treex::Tool::Tagger::TreeTagger
@@ -95,12 +94,12 @@ and list of lemmas.
 
 =head1 SYNOPSIS
 
-  my $tagger = Treex::Tool::Tagger::TreeTagger->new();
-  my ($tags, $lemmas) = @{ $tagger->analyze(["How","are","you","?"]) };
+  my $tagger = Treex::Tool::Tagger::TreeTagger->new(model=>'path/to/the/model.par');
+  my ($tags, $lemmas) = $tagger->analyze(["How","are","you","?"]);
   print join(" ", @$tags);
   print join(" ", @$lemmas);
 
 =cut
 
-Copyright 2009-2011 David Marecek, Martin Popel
+Copyright 2009-2012 David Marecek, Martin Popel
 This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README

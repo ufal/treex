@@ -2,6 +2,7 @@ package Treex::Tool::Tagger::Featurama;
 use Moose;
 use Moose::Exporter;
 use Carp;
+with 'Treex::Tool::Tagger::Role';
 
 Moose::Exporter->setup_import_methods(
     as_is => ['tag_sentence'],
@@ -130,7 +131,6 @@ sub DEMOLISH {
 
 sub tag_sentence {
     my ( $self, $wordforms_rf, $analyses_rf ) = @_;
-    my $count = scalar @{$wordforms_rf};
 
     if ( !$analyses_rf ) {
 
@@ -142,9 +142,7 @@ sub tag_sentence {
     }
 
     # tagging
-    my ( $tags_rf, $lemmas_rf ) = $self->_tag( $wordforms_rf, $analyses_rf );
-
-    return ( $tags_rf, $lemmas_rf );
+    return $self->_tag( $wordforms_rf, $analyses_rf );
 }
 
 sub _get_feature_names {
@@ -201,19 +199,22 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Tagger::Featurama
+Treex::Tool::Tagger::Featurama - base class for Featurama PoS taggers
 
 =head1 DESCRIPTION
 
 Perl wrapper for Featurama implementation of Collins' perceptron algorithm.
+This class cannot be instantiated directly,
+you must use derived classes which override methods C<_get_features()>,
+C<_get_feature_names()> and probably also C<_analyze>.
 
 =head1 SYNOPSIS
 
- use Treex::Tool::Tagger::Featurama;
+ use Treex::Tool::Tagger::Featurama::SomeDerivedClass;
 
  my @wordforms = qw(John loves Jack);
 
- my $tagger = Treex::Tool::Tagger::Featurama->new(path => '/path/to/model');
+ my $tagger = Treex::Tool::Tagger::Featurama::SomeDerivedClass->new(path => '/path/to/model');
 
  my ($tags_rf, $lemmas_rf) = $tagger->tag_sentence(\@wordforms);
 
@@ -268,6 +269,11 @@ It will probably want to use $self->perc
 TODO this will probably change
 
 =back
+
+=head1 SEE ALSO
+
+L<Treex::Tool::Tagger::Featurama::EN>
+L<Treex::Tool::Tagger::Featurama::CS>
 
 =head1 AUTHORS
 

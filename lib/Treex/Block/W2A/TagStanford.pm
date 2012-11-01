@@ -1,48 +1,15 @@
 package Treex::Block::W2A::TagStanford;
-
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-
 use Treex::Tool::Tagger::Stanford;
+extends 'Treex::Block::W2A::Tag';
 
-has '+language' => ( required => 1 );
+has model => ( is => 'ro', isa => 'Str', required => 1 );
 
-has 'model' => ( is => 'ro', isa => 'Str', required => 1 );
-
-has '_tagger' => ( is => 'ro', isa => 'Treex::Tool::Tagger::Stanford', writer => '_set_tagger' );
-
-sub process_start {
+sub _build_tagger{
     my ($self) = @_;
-    $self->_set_tagger( Treex::Tool::Tagger::Stanford->new( { model => $self->model } ) );
-}
-
-sub process_atree {
-
-    my ( $self, $atree ) = @_;
-    my @anodes = $atree->get_descendants( { ordered => 1 } );
-    my @forms = map { $_->form } @anodes;
-    
-    $self->normalize(\@forms);
-
-    # get tags
-    my @tags = $self->_tagger->tag_sentence(@forms);
-
-    if ( scalar @tags != scalar @forms ) {
-        log_fatal("Different number of tokens and tags. TOKENS: @forms, TAGS: @tags");
-    }
-
-    # fill tags
-    foreach my $anode (@anodes) {
-        $anode->set_tag( shift @tags );
-    }
-
-    return 1;
-}
-
-# This is left to be overridden by child blocks
-sub normalize {
-    my ( $self, $forms_rf ) = @_;
+    $self->_args->{model} = $self->model;
+    return Treex::Tool::Tagger::Stanford->new($self->_args);
 }
 
 1;
@@ -75,7 +42,7 @@ The path to the tagger model within the shared directory. This parameter is requ
 
 =head1 SEE ALSO
 
-L<Treex::Block::W2A::EN::TagStanford>, L<Treex::Block::W2A::DE::TagStanford>
+L<Treex::Block::W2A::EN::TagStanford>, L<Treex::Block::W2A::DE::TagStanford>, L<Treex::Block::W2A::FR::TagStanford>
 
 =head1 AUTHORS
 
