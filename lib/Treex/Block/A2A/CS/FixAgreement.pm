@@ -178,7 +178,8 @@ sub get_pair {
 
     return if ( !defined $parent || $parent->is_root );
 
-    my $d_tag = $node->tag || '';
+    my $d_tag = ($node->tag && length ($node->tag) >= 15) ?
+        $node->tag : '---------------';
     my %d_categories = (
         pos    => substr( $d_tag, 0,  1 ),
         subpos => substr( $d_tag, 1,  1 ),
@@ -197,7 +198,8 @@ sub get_pair {
         afun   => $node->afun,
         flt    => $node->form . '#' . $node->lemma . '#' . $node->tag,
     );
-    my $g_tag = $parent->tag || '';
+    my $g_tag = ($parent->tag && length ($parent->tag) >= 15) ?
+        $parent->tag : '---------------';
     my %g_categories = (
         pos    => substr( $g_tag, 0,  1 ),
         subpos => substr( $g_tag, 1,  1 ),

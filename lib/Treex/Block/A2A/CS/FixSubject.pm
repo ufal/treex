@@ -10,7 +10,8 @@ sub fix {
     # if ($self->en($dep) && $self->en($dep)->afun eq 'Sb' && $d->{case} ne '1') {
     # if ($dep->afun eq 'Sb' && $d->{case} ne '1') {
     # if ($dep->afun eq 'Sb' && $d->{case} ne '1' && $dep->ord < $gov->ord) {
-    if ($dep->afun eq 'Sb'
+    if ($dep->afun
+        && $dep->afun eq 'Sb'
         && $d->{case} ne '1'
         && $d->{case} ne '-'
         && $self->en($dep)
