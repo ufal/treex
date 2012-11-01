@@ -52,7 +52,6 @@ sub fix {
             # try to switch the case of the last left child to genitive
             # to simulate possessivity
             # (TODO maybe use info from EN tree to do that more accurately)
-            # my $left_child  = $dep->get_children( { preceding_only => 1, last_only  => 1 } );
             my $left_child = $dep->get_prev_node();
             if ( defined $left_child && defined $left_child->tag ) {
                 my $tag = $left_child->tag;
@@ -65,31 +64,49 @@ sub fix {
                     $tag = $self->try_switch_num( $left_child, $tag );
 
                     # do the fix
-                    $self->logfix1( $left_child, "POSgen" );
+                    $self->logfix1( $left_child, "POSgenitive" );
                     $self->regenerate_node( $left_child, $tag );
                     $self->logfix2($left_child);
+
+                    # TODO: also swicth cases of dependent n:attr
                 }
             }
 
             # move last left child under first right child
             # (the possessor should be a left attribute of the possessee)
             # (TODO maybe use info from EN tree to do that more accurately)
-            my $right_child = $dep->get_children( { following_only => 1, first_only => 1 } );
-            if (   defined $left_child
+            my $right_child = $dep->get_children(
+                { following_only => 1, first_only => 1 }
+            );
+            if (defined $left_child
                 && defined $right_child
-                && !$right_child->is_descendant_of($left_child)
                 )
             {
 
-                # TODO if is descendant, switch somehow...?
-                $self->logfix1( $left_child, "POSmov" );
-                $left_child->set_parent($right_child);
-                # $left_child->shift_after_node($right_child);
-                $self->logfix2($left_child);
+                if (
+                    $left_child->parent->id ne $right_child->id
+                    && !$left_child->parent->is_descendant_of($right_child)
+                    )
+                {
+                    $self->logfix1( $right_child, "POSrehang" );
+                    $right_child->set_parent( $left_child->parent );
+                    $self->logfix2($right_child);
+                }
+
+                # TODO: if $left_child is n:attr and is a right child,
+                # use its parent!
+                if ( !$right_child->is_descendant_of($left_child) ) {
+                    $self->logfix1( $left_child, "POSmove" );
+                    $left_child->set_parent($right_child);
+                    $self->shift_subtree_after_node(
+                        $left_child, $right_child
+                    );
+                    $self->logfix2($left_child);
+                }
             }
 
             # remove the node
-            $self->logfix1( $dep, "POSrem" );
+            $self->logfix1( $dep, "POSremove" );
             $self->remove_node($dep);
             $self->logfix2(undef);
         }
@@ -134,9 +151,12 @@ the extra word "být" is deleted
 
 =back
 
+TODO: update by adding other fixes performed now
+
 TODO: check if there is a TectoMT block doing that in a more clever way...
 
 TODO: probably do this on t-layer to be able to also fix n:attr
+(this is mainly because of people names)
 
 =head1 AUTHORS
 
