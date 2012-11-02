@@ -139,10 +139,7 @@ sub next_filehandle {
 
 sub next_file_text {    
     my ($self) = @_;
-    my $FH = $self->current_filehandle;
-    if ( !$FH ) {
-        $FH = $self->next_filehandle() or return;
-    }
+    my $FH = $self->next_filehandle() or return;
 
     # Slurp that is compatible with Perl::IO::via::gzip.
     local $/ = undef;
