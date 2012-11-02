@@ -90,13 +90,13 @@ sub _build_ne_properties {
     my ($self) = @_;
 
     my $ne_properties = {
-        i_ => { cat => 'i_', subcat => undef},  # 
-        g_ => { cat => 'g_', subcat => undef},  # 
-        P => { cat => 'P', subcat => undef},  # 
-        PM => { cat => 'P', subcat => 'M'},  # 
-        PF => { cat => 'P', subcat => 'F'},  # 
-        pf => { cat => 'p', subcat => 'f'},  # 
-        ps => { cat => 'p', subcat => 's'},  # 
+        i_ => { cat => 'i_', subcat => undef},  # Organization
+        g_ => { cat => 'g_', subcat => undef},  # Location
+        P  => { cat => 'P', subcat => undef},  # Person
+        PM => { cat => 'P', subcat => 'M'},  # Person masculinum
+        PF => { cat => 'P', subcat => 'F'},  # Person femininum
+        pf => { cat => 'p', subcat => 'f'},  # Person's first name
+        ps => { cat => 'p', subcat => 's'},  # Person's surname
     };
     return $ne_properties;
 }
@@ -106,10 +106,10 @@ sub _build_feature_names {
 
     # TODO filter out the features not used here
     my @feat_names = qw(
-       r_sent_dist        r_clause_dist         r_file_deepord_dist
-       r_cand_ord         r_anaph_sentord
+       c_sent_dist        c_clause_dist         c_file_deepord_dist
+       c_cand_ord         c_anaph_sentord
        
-       c_cand_frmm        c_anaph_frmm          b_frmm_agree              c_join_frmm
+       c_cand_fmm         c_anaph_fmm           b_fmm_agree               c_join_fmm
        c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
        c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
        b_cand_akt         b_anaph_akt           b_akt_agree 
@@ -117,31 +117,34 @@ sub _build_feature_names {
        
        c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
        c_cand_num         c_anaph_num           b_num_agree               c_join_num
-       c_cand_apos        c_anaph_apos          b_apos_agree              c_join_apos
        c_cand_atag        c_anaph_atag          b_atag_agree              c_join_atag
-       c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
-       c_cand_agen        c_anaph_agen                                    c_join_agen
-       c_cand_anum        c_anaph_anum                                    c_join_anum
-       c_cand_acase       c_anaph_acase                                   c_join_acase
-       c_cand_apossgen    c_anaph_apossgen                                c_join_apossgen
-       c_cand_apossnum    c_anaph_apossnum                                c_join_apossnum
-       c_cand_apers       c_anaph_apers                                   c_join_apers
+       c_cand_apos        c_anaph_apos          b_apos_agree              c_join_apos
+       c_cand_anum        c_anaph_anum          b_anum_agree              c_join_anum
        
        b_cand_coord       b_app_in_coord
        c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
+       c_cand_epar_fmm    c_anaph_epar_fmm      b_epar_fmm_agree          c_join_epar_fmm
        c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
                                                 b_epar_lemma_agree        c_join_epar_lemma
                                                                           c_join_clemma_aeparlemma
-       c_cand_tfa         c_anaph_tfa           b_tfa_agree               c_join_tfa
-       b_sibl             b_coll                r_cnk_coll
+
+       b_sibl             b_coll                
        r_cand_freq                            
        b_cand_pers
 
        c_cand_loc_buck    c_anaph_loc_buck
        c_cand_type        c_anaph_type
        c_cand_synttype    
+       
+       c_cand_ne_cat      c_cand_ne_subcat
 
     );
+
+    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
+    foreach my $class (sort @{$all_c}) {
+        my $coref_class = "b_" . $class;
+        push @feat_names, $coref_class;
+    }
     
     return \@feat_names;
 }
@@ -157,6 +160,19 @@ sub _get_pos {
     return $prop->{pos};
 }
 
+sub _get_ne {
+    my ($self, $t_node) = @_;
+    my $n_node = $t_node->get_n_node();
+
+    if ( $n_node ) {
+        my $type = $n_node->get_attr('ne_type');
+        my $prop = $self->ne_properties->{$type};
+        return ($prop->{"cat"}, $prop->{"subcat"});
+    }
+    
+    return ("", "");
+}
+
 sub _get_number {
     my ($self, $node) = @_;
     my $tag = $self->_get_atag( $node );
@@ -168,25 +184,12 @@ sub _get_number {
     return $prop->{number};
 }
 
-sub _get_gender {
-    my ($tag) = @_;
-}
-
 sub _get_atag {
 	my ($self, $node) = @_;
 	my $anode = $node->get_lex_anode;
     if ($anode) {
 		return $anode->tag;
 	}
-    return;
-}
-
-sub _get_afunctor {
-    my ($self, $node) = @_;
-    my $anode = $node->get_lex_anode;
-    if ($anode) {
-        return $anode->afun;
-    }
     return;
 }
 
@@ -278,6 +281,16 @@ override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
     my $coref_features = super();
 
+    $coref_features->{b_gen_agree} 
+        = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+    $coref_features->{c_join_gen} 
+        = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+
+    $coref_features->{b_num_agree} 
+        = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+    $coref_features->{c_join_num} 
+        = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+
     $coref_features->{b_atag_agree} 
         = $self->_agree_feats($set_features->{c_cand_atag}, $set_features->{c_anaph_atag});
     $coref_features->{c_join_atag}  
@@ -293,31 +306,6 @@ override '_binary_features' => sub {
     $coref_features->{c_join_anum}  
         = $self->_join_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
 
-#     $coref_features->{b_afun_agree} 
-#         = $self->_agree_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
-#     $coref_features->{c_join_afun}  
-#         = $self->_join_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
-# 
-#     $coref_features->{b_gen_agree} 
-#         = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
-#     $coref_features->{c_join_gen} 
-#         = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
-# 
-#     $coref_features->{b_num_agree} 
-#         = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
-#     $coref_features->{c_join_num} 
-#         = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
-# 
-#     $coref_features->{b_frmm_agree} 
-#         = $self->_agree_feats($set_features->{c_cand_frmm}, $set_features->{c_anaph_frmm});
-#     $coref_features->{c_join_frmm} 
-#         = $self->_join_feats($set_features->{c_cand_frmm}, $set_features->{c_anaph_frmm});
-# 
-#     $coref_features->{b_fun_agree} 
-#         = $self->_agree_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
-#     $coref_features->{c_join_fun} 
-#         = $self->_join_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
-
     return $coref_features;
 };
 
@@ -325,17 +313,18 @@ override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     my $coref_features = super();
 
+    $coref_features->{'c_'.$type.'_gen'} = $node->gram_gender;
+    $coref_features->{'c_'.$type.'_num'} = $node->gram_number;
+    
     $coref_features->{'c_'.$type.'_atag'} = $self->_get_atag( $node );
     $coref_features->{'c_'.$type.'_apos'} = $self->_get_pos( $node );
     $coref_features->{'c_'.$type.'_anum'} = $self->_get_number( $node );
-#     $coref_features->{'c_'.$type.'_afun'} = $self->_get_afunctor( $node );
 
-#     $coref_features->{'c_'.$type.'_gen'} = $node->gram_gender;
-#     $coref_features->{'c_'.$type.'_num'} = $node->gram_number;
-#     $coref_features->{'c_'.$type.'_frmm'} = $node->formeme;
-#     $coref_features->{'c_'.$type.'_fun'} = $node->functor;
+    if ( $type eq 'cand' ) {
+        ( $coref_features->{'c_'.$type.'_ne_cat'}, $coref_features->{'c_'.$type.'_ne_subcat'} )
+            = $self->_get_ne($node);
+    }
     
-
     # features from (Charniak and Elsner, 2009)
     if ($type eq 'anaph') {
         $coref_features->{'c_'.$type.'_type'} = $self->_anaph_type( $node );
