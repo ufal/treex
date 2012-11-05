@@ -310,24 +310,26 @@ sub BUILD {
                             else {
                                 $self->_set_total_file_count( $self->_file_count );
 
-                                my $not_finished = 0;
+                                if ( $Treex::Core::Run::SPECULATIVE_EXECUTION ) {
 
-                                SUBMITS:
-                                for ( my $submitted = $self->_max_submitted; $submitted < $self->_submitted_limit; $submitted++ ) {
+                                    my $not_finished = 0;
+                                    SUBMITS:
+                                    for ( my $submitted = $self->_max_submitted; $submitted < $self->_submitted_limit; $submitted++ ) {
 
-                                    #$not_finished = 0;
-                                    for ( my $i = $self->_file_count; $i > 1; $i-- ) {
-                                        if ( !$self->_files->{$i}->{finished} ) {
+                                        #$not_finished = 0;
+                                        for ( my $i = $self->_file_count; $i > 1; $i-- ) {
+                                            if ( !$self->_files->{$i}->{finished} ) {
 
-                                            #        $not_finished++;
-                                            if ( $self->_files->{$i}->{submitted} < $submitted ) {
-                                                $self->_files->{$i}->{submitted} += 1;
-                                                $result = $self->_files->{$i}->{result};
-                                                $msg .= "; Assigned: " . $result->{file_number} . "; AGAIN: " . $self->_files->{$i}->{submitted};
-                                                last SUBMITS;
+                                                #        $not_finished++;
+                                                if ( $self->_files->{$i}->{submitted} < $submitted ) {
+                                                    $self->_files->{$i}->{submitted} += 1;
+                                                    $result = $self->_files->{$i}->{result};
+                                                    $msg .= "; Assigned: " . $result->{file_number} . "; AGAIN: " . $self->_files->{$i}->{submitted};
+                                                    last SUBMITS;
+                                                }
                                             }
+                                            $self->_set_max_submitted($submitted);
                                         }
-                                        $self->_set_max_submitted($submitted);
                                     }
                                 }
 
