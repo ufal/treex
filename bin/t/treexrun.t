@@ -48,10 +48,6 @@ my @tasks  = (
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param='' document='print $self->_args->{param};'), '', 0 ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param=" " document='print $self->_args->{param};'), ' ', 0 ],
     [ q(echo | treex -q -Len Read::Sentences Util::Eval param=' ' document='print $self->_args->{param};'), ' ', 0 ],
-    # caching block
-#    [ q(treex -q -g 'descr.treex' Util::Eval document='print $document->description()'), 'aaaa', 0 ],
-#    [ q(treex -q -g 'descr.treex' Util::Eval document='$document->set_description("BBBB")' Util::Eval document='print $document->description()'), 'BBBB', 0 ],
-#    [ q(treex -q -g 'descr.treex' Util::Eval document='$document->set_description("BBBB")' use_cache=1 Util::Eval document='print $document->description()'), 'BBBB', 0 ],
 );
 
 plan tests => 2 * scalar @tasks;
@@ -73,7 +69,6 @@ SKIP: {
     # prepare dummy input files
     my $test_data_file1    = './dummy.treex';
     my $test_data_file2    = './dummy2.treex';
-    my $test_data_file3    = './descr.treex';
     my $confuse_data_file = './confuse.scen';
 
     my $doc               = Treex::Core::Document->new();
@@ -82,7 +77,6 @@ SKIP: {
     $doc->save($confuse_data_file);
 
     $doc->set_description("aaaa");
-    $doc->save($test_data_file3 );
 
 #    skip 'We run different versions of treex binary', scalar @tasks if $perl_v ne $sys_v;
     foreach my $task_rf (@tasks) {
