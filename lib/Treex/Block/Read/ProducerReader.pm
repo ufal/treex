@@ -259,6 +259,10 @@ sub BUILD {
                             $self->status->{ "job_" . $jobid . "_" . $act_cmd } = 1;
                         }
                         else {
+                            if ( $self->reader->isa('Treex::Block::Read::BaseAlignedReader') && $function eq 'next_filename') {
+                                $function = 'next_filenames';
+                            }
+
                             my $received = $self->reader->$function();
 
                             # mark job as finished

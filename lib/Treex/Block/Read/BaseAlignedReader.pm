@@ -71,16 +71,6 @@ sub current_filenames {
 
 sub next_filenames {
     my ($self) = @_;
-    if ( $self->consumer ) {
-        my $res = $self->consumer->call("next_filenames");
-
-        if ( ! $res ) {
-            $self->_set_file_number($self->_files_per_zone + 2);
-        } else {
-            $self->_set_file_number($res->{file_number} - 1);    
-            $self->_set_doc_number($res->{doc_number} - 1);
-        }
-    }
     $self->_set_file_number( $self->_file_number + 1 );
     return $self->current_filenames;
 }

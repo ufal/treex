@@ -51,19 +51,8 @@ sub is_next_document_for_this_job {
 }
 
 sub next_filename {
-    
     my ($self) = @_;
     
-    if ( $self->consumer ) {
-        my $res = $self->consumer->call("next_filename");
-        if ( ! $res ) {
-            return;
-        }
-        #$self->set_from(Treex::Core::Files->new({string => $res->{result}}));
-        $self->_set_file_number($res->{file_number} - 1);
-        $self->_set_doc_number($res->{file_number} - 1);
-    }
-
     # In parallel processing and one_doc_per_file setting,
     # we can skip files that are not supposed to be loaded by this job/reader,
     # in order to make loading faster.
@@ -81,7 +70,6 @@ sub next_filename {
 use File::Spec;
 
 sub new_document {
-    
     my ( $self, $load_from ) = @_;
     my $path = $self->current_filename();
     log_fatal "next_filename() must be called before new_document()" if !defined $path;

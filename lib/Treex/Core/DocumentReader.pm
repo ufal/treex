@@ -52,6 +52,29 @@ sub is_current_document_for_this_job {
 
 sub next_document_for_this_job {
     my ($self) = @_;
+
+    # TODO this is very ugly hack (next_filename _set_file_number is defined only in BaseReader and BaseAlignedReader)
+    # In parallel execution, the file_number is sent from the head to the workers via TCP
+    # and only one doc per file is allowed, so we can update $self->file_number and $self->doc_number
+    # before each call of next_document.
+    # However the implementation of next_document will increase the numbers, so we must set it -1.
+    # This code must be specified here in next_document_for_this_job because method next_filename may be overriden
+    # or it may not be used at all (e.g. BaseTextReader delegas its functionality to Treex::Core::Files).
+    if ( $self->consumer ) {
+        my $res = $self->consumer->call("next_filename");
+        if ($res) {
+            $self->_set_file_number($res->{file_number} - 1);
+            $self->_set_doc_number($res->{file_number} - 1);
+        }
+        # Martin Majliš had the following for BaseAlignedReader but I see no reason for it.
+        # elsif ($self->_files_per_zone){
+        #    $self->_set_file_number($self->_files_per_zone + 2);
+        #}
+        else {
+            return;
+        }
+    }
+
     my $doc = $self->next_document();
     while ( $doc && !$self->is_current_document_for_this_job ) {
         $doc = $self->next_document();
