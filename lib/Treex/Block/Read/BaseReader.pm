@@ -40,26 +40,9 @@ has is_one_doc_per_file => (
 
 has _file_numbers => ( is => 'rw', default => sub { {} } );
 
-sub is_next_document_for_this_job {
-    my ($self) = @_;
-    return 1;
-
-    # The new client-server paralelization does not need jobindex
-    # TODO delete this method and the whole mechanism of skipping files
-    #return 1 if !$self->jobindex;
-    #return $self->doc_number % $self->jobs == ( $self->jobindex - 1 );
-}
-
 sub next_filename {
     my ($self) = @_;
     
-    # In parallel processing and one_doc_per_file setting,
-    # we can skip files that are not supposed to be loaded by this job/reader,
-    # in order to make loading faster.
-    while ( $self->is_one_doc_per_file && !$self->is_next_document_for_this_job ) {
-        $self->_set_file_number( $self->file_number + 1 );
-        $self->_set_doc_number( $self->doc_number + 1 );
-    }
     # return undef, but do not move further if we are at the end of document list (we might need the current file name) 
     return if ( $self->file_number >= $self->from->number_of_files );
     

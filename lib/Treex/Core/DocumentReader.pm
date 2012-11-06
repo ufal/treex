@@ -43,13 +43,6 @@ has consumer => (
     is => 'rw'
 );
 
-sub is_current_document_for_this_job {
-    my ($self) = @_;
-    return 1;
-    #return 1 if !$self->jobindex;
-    #return ( $self->doc_number - 1 ) % $self->jobs == ( $self->jobindex - 1 );
-}
-
 sub next_document_for_this_job {
     my ($self) = @_;
 
@@ -76,9 +69,6 @@ sub next_document_for_this_job {
     }
 
     my $doc = $self->next_document();
-    while ( $doc && !$self->is_current_document_for_this_job ) {
-        $doc = $self->next_document();
-    }
 
     # TODO this is not very elegant
     # and it is also wrong, because if next_document issues some warnings,

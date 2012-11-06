@@ -8,7 +8,7 @@ use PerlIO::via::gzip;
 # By default read from STDIN
 has '+from' => (
     default => '-',
-    handles => [qw(current_filename file_number _set_file_number next_filehandle)],
+    handles => [qw(current_filename current_filehandle file_number _set_file_number next_filehandle)],
 );
 
 has lines_per_doc => ( isa => 'Int',                   is => 'ro', default  => 0 );
@@ -113,6 +113,6 @@ Martin Popel
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
