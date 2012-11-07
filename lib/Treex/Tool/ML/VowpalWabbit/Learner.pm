@@ -61,7 +61,7 @@ sub learn {
     
     my $num_classes = $self->_current_index->last_idx;
     my $quiet = $self->verbose < 2 ? "--quiet" : "";
-    my $init_str = "$quiet --sequence_max_length 1024 --noconstant --oaa $num_classes";
+    my $init_str = "-d /dev/null $quiet --sequence_max_length 1024 --noconstant --oaa $num_classes";
     
     my $vw = VowpalWabbit::initialize($init_str);
 
