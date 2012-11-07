@@ -9,7 +9,7 @@ sub fix {
 
     # 'of' preposition being a head of an inflected word
 
-    if ( !$self->en($dep) ) {
+    if ( !$self->en($dep) || !$self->en($dep)->parent() ) {
         return;
     }
     my $aligned_parent = $self->en($dep)->get_eparents(

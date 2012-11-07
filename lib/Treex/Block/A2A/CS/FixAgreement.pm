@@ -195,8 +195,8 @@ sub get_pair {
         voice  => substr( $d_tag, 11, 1 ),
         var    => substr( $d_tag, 14, 1 ),
         tag    => $d_tag,
-        afun   => $node->afun,
-        flt    => $node->form . '#' . $node->lemma . '#' . $node->tag,
+        afun   => ( $node->afun || '' ),
+        flt    => ( $node->form || '' ) . '#' . ( $node->lemma || '' ) . '#' . ( $node->tag || '' ),
     );
     my $g_tag = ($parent->tag && length ($parent->tag) >= 15) ?
         $parent->tag : '---------------';
@@ -215,8 +215,8 @@ sub get_pair {
         voice  => substr( $g_tag, 11, 1 ),
         var    => substr( $g_tag, 14, 1 ),
         tag    => $g_tag,
-        afun   => $parent->afun,
-        flt    => $parent->form . '#' . $parent->lemma . '#' . $parent->tag,
+        afun   => ( $parent->afun || '' ),
+        flt    => ( $parent->form || '' ) . '#' . ( $parent->lemma || '' ) . '#' . ( $parent->tag || '' ),
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );

@@ -16,15 +16,17 @@ sub fix {
         && $d->{case} ne '-'
         && $self->en($dep)
         && (( $self->en($dep)->afun && $self->en($dep)->afun eq 'Sb' )
-            || $self->en($dep)->get_eparents(
+            || ($self->en($dep)->parent() && eval { $self->en($dep)->get_eparents(
                 {
                     first_only                      => 1,
                     or_topological                  => 1,
                     ignore_incorrect_tree_structure => 1
                 }
-            )->form eq 'by'
+            )->form eq 'by' } ) # eval used to catch errors in case that ->form is undef
         )
         )
+# TODO: very rarely I am getting:
+# Use of uninitialized value in string eq at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixSubject.pm line 19.
     {
 
         my $case = '1';
