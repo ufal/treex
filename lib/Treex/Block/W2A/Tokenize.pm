@@ -2,7 +2,9 @@ package Treex::Block::W2A::Tokenize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+no warnings 'utf8';
 extends 'Treex::Block::W2A::TokenizeOnWhitespace';
+
 
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
