@@ -2,9 +2,11 @@ package Treex::Block::W2A::Tokenize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-no warnings 'utf8';
 extends 'Treex::Block::W2A::TokenizeOnWhitespace';
 
+# On some inputs we get "Malformed utf8 character" warnings, but only with Perl 5.12, not with 5.14.
+# Let's suppress all utf8 warnings. TODO: find the real cause.
+no warnings 'utf8';
 
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
