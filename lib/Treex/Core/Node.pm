@@ -868,16 +868,19 @@ sub following {
     }
 }
 
+# This is copied from Treex::PML::Node.
+# Using Treex::PML::Node::following is faster than recursion
+# and it does not cause "deep recursion" warnings.
 sub descendants {
-    my ( $self ) = @_;
-    return ( map { $_->_descendants_and_self() } $self->children );
+  my $self = $_[0];
+  my @kin = ();
+  my $desc = $self->Treex::PML::Node::following($self);
+  while ($desc) {
+    push @kin, $desc;
+    $desc = $desc->Treex::PML::Node::following($self);
+  }
+  return @kin;
 }
-
-sub _descendants_and_self {
-    my ( $self ) = @_;
-    return ( $self, map { $_->_descendants_and_self() } $self->children );
-}
-
 
 # TODO: How to do this in an elegant way?
 # Unless we find a better way, we must disable two perlcritics
