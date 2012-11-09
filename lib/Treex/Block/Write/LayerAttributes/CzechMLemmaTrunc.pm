@@ -19,7 +19,7 @@ sub BUILDARGS {
     return $params[0] if ( @params == 1 && ref $params[0] eq 'HASH' );
 
     if ( @params > 1 ) {
-        log_fatal('CzechMLemmaTrunc:There must be one binary parameters to new().');
+        log_fatal('CzechMLemmaTrunc: There must be one binary parameter to new().');
     }
     
     if ( @params == 1 ) {
