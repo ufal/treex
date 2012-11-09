@@ -10,6 +10,12 @@ sub process_ttree {
 
     my @root_descendants = $t_root->get_descendants();
 
+    # 0. Fill syntpos (avoid using sempos)
+    foreach my $t_node (@root_descendants) {
+        my $syntpos = detect_syntpos($t_node);
+        $t_node->set_attr('syntpos', $syntpos); # no need to store it in the wild attributes (used only in this block)
+    }
+
     # 1. Fill formemes (but use just n:obj instead of n:obj1 and n:obj2)
     foreach my $t_node (@root_descendants) {
         my $formeme = detect_formeme($t_node);
@@ -24,12 +30,49 @@ sub process_ttree {
     return 1;
 }
 
-Readonly my %SUB_FOR_SEMPOS => (
+Readonly my %SUB_FOR_SYNTPOS => (
     n   => \&_noun,
     adj => \&_adj,
-    adv => sub {'adv:'},
+    adv => sub {'adv'},
     v   => \&_verb,
 );
+
+Readonly my %SYNTPOS_FOR_TAG => (
+    NN => 'n', NNS => 'n', NNP => 'n', NNPS => 'n', '$' => 'n',
+    JJ => 'adj', JJR => 'adj', JJS => 'adj',
+    PDT => 'adj',
+    PRP => 'n', 'PRP$' => 'n',
+    VB => 'v', VBP => 'v', VBZ => 'v', VBG => 'v', VBD => 'v', VBN => 'v',
+    RB => 'adv', RBR => 'adv', RBS => 'adv',
+);
+
+sub detect_syntpos {
+
+    my ( $t_node ) = @_;
+    my $a_node = $t_node->get_lex_anode();
+    
+     # coap nodes must have empty syntpos
+    return '' if ($t_node->nodetype ne 'complex') && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))/;;
+    # let's assume generated nodes are (pro)nouns    
+    return 'n' if (!$a_node);
+    
+    my $tag = $a_node->tag;
+
+    return $SYNTPOS_FOR_TAG{$tag} if ( $SYNTPOS_FOR_TAG{$tag} );
+
+    my $form = lc $a_node->form;
+
+    # 'other pronouns'
+    if ( $tag =~ m/^(WP|WRB|WDT|DT|WP\$)$/ ) {
+        return ( $form =~ m/^(when|where|why|how)$/ ) ? 'adv' : 'n';
+    }
+
+    # numerals
+    my ($t_parent) = $t_node->get_eparents({or_topological => 1});
+    return 'adj' if ( $tag eq 'CD' && $t_parent && ($t_parent->ord > $t_node->ord ) ); 
+    
+    return 'n';    # default to noun    
+}
 
 sub detect_formeme {
     my ($t_node) = @_;
@@ -37,21 +80,17 @@ sub detect_formeme {
     # Non-complex type nodes (coordinations, rhematizers etc.)
     # have special formeme value instead of undef,
     # so tedious undef checking (||'') is no more needed.
-    return 'x' if ($t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))$/);
-    
+    return 'x' if $t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))/;
+
     # Punctuation in most cases should not remain on t-layer, but anyway
-    # it makes no sense detecting formemes. (These are not unrecognized ???.)    
+    # it makes no sense detecting formemes. (These are not unrecognized ???.)
     return 'x' if $t_node->t_lemma =~ /^([.;:-]|''|``)$/;
 
     # If no lex_anode is found, the formeme is unrecognized
     my $a_node = $t_node->get_lex_anode() or return '???';
 
-    my $sempos = $t_node->gram_sempos;
-    $sempos = 'n' if ($t_node->nodetype ne 'complex'); 
-    $sempos =~ s{\..*}{};
-
-    # Choose the appropriate subroutine according to the sempos
-    my $sub_ref = $SUB_FOR_SEMPOS{$sempos};
+    # Choose the appropriate subroutine according to the syntpos
+    my $sub_ref = $SUB_FOR_SYNTPOS{$t_node->get_attr('syntpos')};
     return $sub_ref->( $t_node, $a_node ) if $sub_ref;
 
     # If no such subroutine found, the formeme is unrecognized
@@ -63,14 +102,9 @@ sub _noun {
     my ( $t_node, $a_node ) = @_;
     return 'n:poss' if $a_node->tag eq 'PRP$';
 
-    #TODO: my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    # When  aux_anodes are not ordered, we have formemes like
-    # v:to_order_in (instead of v:in_order_to), n:to_up+X (instead of n:up_to+X) etc.
-    # On the target side there is the same error, so we have Czech formemes like n:v_než+X.
-    # However, formemes dictionaries are saved with this wrong mapping,
-    # so they must be repaired first.
-    # TODO: Also postpositons are not handled: n:ago+X instead of n:X+ago
-    my @aux_a_nodes = $t_node->get_aux_anodes();
+    my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    # TODO: Postpositons are not handled: n:ago+X instead of n:X+ago
+    # my @aux_a_nodes = $t_node->get_aux_anodes();
 
     my $prep = get_aux_string(@aux_a_nodes);
     return "n:$prep+X" if $prep;
@@ -113,12 +147,16 @@ sub _noun {
 sub _adj {
     my ( $t_node, $a_node ) = @_;
 
-    #TODO: my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    my @aux_a_nodes = $t_node->get_aux_anodes();
+    my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    # my @aux_a_nodes = $t_node->get_aux_anodes();
     my $prep        = get_aux_string(@aux_a_nodes);
-    return "adj:$prep+X" if $prep;
-    return 'adj:attr'    if below_noun($t_node) || below_adj($t_node);
-    return 'adj:compl'   if below_verb($t_node);
+    my $afun        = $a_node->afun;
+    
+    return "n:$prep+X" if $prep; # adjectives with prepositions are treated as a nominal usage
+    return 'adj:attr'  if below_noun($t_node) || below_adj($t_node);
+    return 'n:subj'    if $afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
+    return 'adj:compl' if below_verb($t_node);
+    
     return 'adj:';
 }
 
@@ -126,20 +164,17 @@ sub _adj {
 sub _verb {
     my ( $t_node, $a_node ) = @_;
 
-    #TODO: my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    my @aux_a_nodes = $t_node->get_aux_anodes();
-    my $tag         = $a_node->tag;
+    my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    my $first_verbform = ( first { $_->tag =~ m/^[VM]/ && $_->afun !~ /^Aux[CP]$/ } $t_node->get_anodes( { ordered => 1 } ) ) || $a_node;
+    
+    my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
 
-    if ( $t_node->get_attr('is_infin') ) {
-        ## TODO: !!! vyresit jeste 'in order to'
-        return 'v:to+inf' if any { $_->lemma eq 'to' } @aux_a_nodes;
+    if ( $t_node->get_attr('is_infin') ) {        
+        return "v:$subconj+inf" if ($subconj); # this includes the particle 'to'
         return 'v:inf';
     }
 
-    my $subconj = get_subconj_string(@aux_a_nodes);
-    my $has_non_VBG_verb_aux = any { $_->tag =~ /^VB[^G]?$/ } @aux_a_nodes;
-
-    if ( $tag eq 'VBG' && !$has_non_VBG_verb_aux ) {
+    if ( $first_verbform->tag eq 'VBG' ) {        
         return "v:$subconj+ger" if $subconj;
         return 'v:attr' if below_noun($t_node);
         return 'v:ger';
@@ -151,24 +186,18 @@ sub _verb {
         return 'v:fin';
     }
 
-    if ( $tag =~ /VB[DN]/ && !$has_non_VBG_verb_aux ) {
-        return 'v:attr' if below_noun($t_node);
+    if ( $first_verbform->tag =~ /VB[DN]/ ) {
+        # if there is a subjunction, it mostly is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
+        return "v:$subconj+fin" if $subconj;  
+        return 'v:attr' if below_noun($t_node); # TODO -- what about adjectives ?
         return 'v:fin';
     }
 
-    if (any { $_->form =~ /^[Hh]aving$/ }
-        @aux_a_nodes
-        and
-        any { $_->tag eq 'TO' } @aux_a_nodes
-        )
-    {    # having to + infinitive
-        return "v:$subconj+ger" if $subconj;
-        return 'v:ger';
-    }
-
-    return "v:$subconj+???" if $subconj;
+    # now we don't know if it's infinitive or not (mostly parsing errors) -- assume finite forms
+    return "v:$subconj+fin" if $subconj;
 
     # TODO:tady jeste muze byt vztazna !!!
+    # direct speech, imperatives, parsing errors (which in fact mostly are finite forms, if they're verbs at all)
     return 'v:fin';
 }
 
@@ -190,28 +219,32 @@ sub is_prep_or_conj {
 }
 
 sub get_subconj_string {
-    my @aux_a_nodes = @_;
+
+    my ($first_verbform, @aux_a_nodes) = @_;
+    
+    @aux_a_nodes = grep { $_->ord < $first_verbform->ord } @aux_a_nodes; 
+
     return join '_', map { $_->lemma }
-        grep { $_->tag eq 'IN' || $_->afun eq 'AuxC' }
+        grep { $_->tag =~ /^(IN|TO)$/ || $_->afun =~ /Aux[CP]/ }
         @aux_a_nodes;
 }
 
 sub below_noun {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->gram_sempos || '' ) =~ /^n/;    #/^[n|adj]/;
+    return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^n/;    #/^[n|adj]/;
 }
 
 sub below_adj {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->gram_sempos || '' ) =~ /^adj/;
+    return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^adj/;
 }
 
 sub below_verb {
     my $tnode = shift;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
-    return ( $eff_parent->gram_sempos || '' ) =~ /^v/;
+    return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^v/;
 }
 
 sub distinguish_objects {
@@ -246,18 +279,29 @@ sub distinguish_objects {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::A2T::EN::SetFormeme
+=head1 NAME 
 
-The attribute C<formeme> of SEnglishT nodes is filled with
+Treex::Block::A2T::EN::SetFormeme
+
+=head1 DESCRIPTION
+
+The attribute C<formeme> of English t-nodes is filled with
 a value which describes the morphosyntactic form of the given
 node in the original sentence. Values such as C<v:fin> (finite verb),
 C<n:for+X> (prepositional group), or C<n:subj> are used.
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008 - 2009 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
