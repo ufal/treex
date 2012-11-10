@@ -378,9 +378,10 @@ sub _fix_valid_grammatemes {
     }
 
     # Target nouns
+    # TODO: new formemes use syntpos instead of sempos, so this should be adapted
     if ( $cs_formeme =~ /^n/ and $en_formeme !~ /^n/ ) {
         $cs_t_node->set_gram_sempos('n.denot');
-        $cs_t_node->set_gram_number('sg');
+        $cs_t_node->set_gram_number('sg') if ($cs_t_node->gram_number || '') ne 'pl';
         foreach my $gram (qw(degcmp diathesis verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
             $cs_t_node->set_attr( "gram/$gram", undef );
         }

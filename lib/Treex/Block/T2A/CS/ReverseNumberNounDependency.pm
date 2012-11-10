@@ -36,7 +36,7 @@ sub _process_subtree {
     return;
 }
 
-# Process a non-coordination node (and trigger the change if it is a non-congrunet numeral)
+# Process a non-coordination node (and trigger the change if it is a non-congruent numeral)
 sub _process_t_node {
 
     my ($t_node) = @_;
