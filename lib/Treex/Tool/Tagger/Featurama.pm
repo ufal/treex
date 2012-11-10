@@ -124,7 +124,11 @@ sub _build_perc {
 
 sub DEMOLISH {
     my $self = shift;
-    if ( $self->perc ) {
+
+    # We must prevent lazy building of $self->perc during DEMOLISH
+    # because in that case "require Featurama::Perc" fails (we are in cleanup).
+    # Therefore, we cannot use $self->perc in the condition below.
+    if ( $self->{perc} ) {
         $self->perc->testFinish();
     }
 }
