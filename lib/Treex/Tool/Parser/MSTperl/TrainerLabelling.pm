@@ -374,6 +374,27 @@ sub mira_tree_update {
 
             if ($ALGORITHM == 19) {
 
+                if ( $score_correct > $score_best ) {
+                    if ( $self->config->DEBUG >= 2 ) {
+                        print "correct label $label_correct on "
+                            . ( $correct_edge->child->ord )
+                            . "has higher score than incorrect $label_best "
+                            . "but transition scores preferred "
+                            . "the incorrect one\n";
+                    }
+                    next;
+                }
+    
+                if ( $score_correct == 0 || $score_best == 0 ) {
+                    if ( $self->config->DEBUG >= 2 ) {
+                        print "correct label $label_correct on "
+                            . ( $correct_edge->child->ord )
+			    . "score correct: $score_correct\n"
+			    . "score best: $score_best\n";
+                    }
+                    next;
+                }
+
                 # inverse sigmoid
                 my $em_correct = - log (1 / $score_correct - 1)
                     / $self->config->SIGM_LAMBDA;
