@@ -2,14 +2,7 @@ package Treex::Block::T2T::CS2CS::FixInfrequentFormemes;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Core::Block';
-
-has '+language'       => ( required => 1 );
-has 'source_language' => ( is       => 'rw', isa => 'Str', required => 0 );
-has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'orig_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'orig' );
-has 'src_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
+extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
 # model
 has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
@@ -20,9 +13,12 @@ has 'model_format'     => ( is => 'ro', isa => 'Str', default => 'tlemma_ptlemma
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
 has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.85 );
 
-my $model_data;
+has 'lower_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.1 );
+has 'upper_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.6 );
 
-use Treex::Tool::Lexicon::CS;
+has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
+
+my $model_data;
 
 sub process_start {
     my $self = shift;
@@ -56,122 +52,13 @@ sub process_start {
     return;
 }
 
-sub process_tnode {
-    my ( $self, $node ) = @_;
-
-    # get info about current node
-    my $node_info = { 'node' => $node };
+sub fill_node_info {
+    my ( $self, $node_info ) = @_;
+    
     $self->fill_info_from_tree($node_info);
     $self->fill_info_from_model($node_info);
 
-    # decide whether to change the formeme
-    $self->decide_on_change($node_info);
-
-    # change the current formeme if it seems to be a good idea
-    if ( $node_info->{'change'} ) {
-        $node->set_formeme( $node_info->{'best_formeme'} );
-        # mark this node to apply the change in later stages
-	$node->wild->{'change_by_deepfix'} = 1;
-    }
-
-    # log
-    $self->logfix($node_info);
-
     return;
-}
-
-# fills in info that is stored in the tree
-sub fill_info_from_tree {
-    my ( $self, $node_info ) = @_;
-
-    # id
-    $node_info->{'id'} = $node_info->{'node'}->id;
-    {
-        my $lang = $self->language;
-        my $sel  = $self->selector;
-        $node_info->{'id'} =~ s/t_tree-${lang}_${sel}-//;
-    }
-
-    # parent
-    $node_info->{'parent'} = $node_info->{'node'}->get_eparents( { first_only => 1, or_topological => 1 } );
-
-    # lemmas (cut the rubbish from the lemma)
-    $node_info->{'tlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-	$node_info->{'node'}->t_lemma(), 1);
-    $node_info->{'ptlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-	$node_info->{'parent'}->t_lemma() || '', 1);
-
-    # formemes
-    $node_info->{'formeme'} = $node_info->{'node'}->formeme();
-    $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
-    ($node_info->{'ennode'}) = $node_info->{'node'}->get_aligned_nodes_of_type(
-	$self->src_alignment_type
-	);
-    $node_info->{'enformeme'} = (
-	defined $node_info->{'ennode'} && $node_info->{'ennode'}->formeme()
-	?
-	$node_info->{'ennode'}->formeme()
-	:
-	''
-	);
-
-    # POSes
-    ( $node_info->{'syntpos'}, $node_info->{'preps'}, $node_info->{'case'} )
-        = splitFormeme( $node_info->{'formeme'} );
-    ( $node_info->{'psyntpos'}, $node_info->{'ppreps'}, $node_info->{'pcase'} )
-        = splitFormeme( $node_info->{'pformeme'} );
-
-    $node_info->{'mpos'} = '?';
-    my ($orig_node) = $node_info->{'node'}->get_aligned_nodes_of_type(
-	$self->orig_alignment_type
-	);
-    if (defined $orig_node) {
-	my $lex_anode = $orig_node->get_lex_anode();
-	if (defined $lex_anode) {
-	    $node_info->{'mpos'} = substr ($lex_anode->tag, 0, 1);
-	}
-	else {
-	    log_warn ("T-node " . $orig_node->id . " has no lex node!");
-	}
-    }
-
-    # attdir
-    if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
-	$node_info->{'attdir'} = '/';
-    }
-    else {
-	$node_info->{'attdir'} = '\\';
-    }
-
-    return $node_info;
-}
-
-# returns ($syntpos, \@preps, $case)
-sub splitFormeme {
-    my ($formeme) = @_;
-
-    # n:
-    # n:2
-    # n:attr
-    # n:v+6
-
-    # defaults
-    my $syntpos  = $formeme;
-    my $prep = '';
-    my $case = '';         # 1-7, X, attr, poss
-
-    if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
-        $syntpos  = $1;
-        $case = $2;
-        if ( $case =~ /^(.*)\+(.*)$/ ) {
-            $prep = $1;
-            $case = $2;
-        }
-    }
-
-    my @preps = split /_/, $prep;
-
-    return ( $syntpos, \@preps, $case );
 }
 
 # fills in info that is provided by the model
@@ -184,7 +71,8 @@ sub fill_info_from_model {
     ( $node_info->{'best_formeme'}, $node_info->{'best_score'} ) =
         $self->get_best_formeme($node_info);
     ( $node_info->{'bpos'}, $node_info->{'bpreps'}, $node_info->{'bcase'} )
-	= splitFormeme( $node_info->{'best_formeme'} );
+	= Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
+        $node_info->{'best_formeme'} );
 
     return $node_info;
 }
@@ -282,90 +170,6 @@ sub get_best_formeme {
     }
 
     return ( $top_formeme, $top_score );
-}
-
-# decide whether to change the formeme,
-# based on the scores and the thresholds
-sub decide_on_change {
-    my ( $self, $node_info ) = @_;
-
-    # fix only Ns with no or one aux node
-    # (to be tuned and eventually made more efficient)
-    # TODO: this should be also respected in the model!
-    if (
-	$node_info->{'syntpos'} eq 'n' # fix only syntactical nouns
-	&& @{ $node_info->{'preps'} } <= 1 # do not fix multiword prepositions
-	&& @{ $node_info->{'preps'} } == @{ $node_info->{'bpreps'} } # do not add or remove nodes
-	&& $node_info->{'mpos'} ne 'P' # do not fix morphological pronouns
-	) {
-        $node_info->{'change'} = (
-            ( $node_info->{'original_score'} < $self->lower_threshold )
-	    &&
-	    ( $node_info->{'best_score'} > $self->upper_threshold )
-        );
-    }
-    else {
-        $node_info->{'change'} = 0;
-    }
-
-    return $node_info->{'change'};
-}
-
-sub logfix {
-    my ( $self, $node_info ) = @_;
-
-    my $msg    = $node_info->{'id'};
-    my $parent = $node_info->{'ptlemma'}
-        ?
-        "$node_info->{'ptlemma'} ($node_info->{'pformeme'})"
-        :
-        "#root#";
-    my $child  = $node_info->{'enformeme'}
-        ?
-        "$node_info->{'tlemma'} (EN $node_info->{'enformeme'})"
-        :
-        $node_info->{'tlemma'};
-
-    if ( $node_info->{'attdir'} eq '\\' ) {
-        $msg .= " $parent \\ $child: ";
-    }
-    else {
-	# assert $node_info->{'attdir'} eq '/'
-        $msg .= " $child / $parent: ";
-    }
-    $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";
-    if ( $node_info->{'best_formeme'} && $node_info->{'formeme'} ne $node_info->{'best_formeme'} ) {
-        if ( $node_info->{'change'} ) {
-            $msg .= "CHANGE TO $node_info->{'best_formeme'} ($node_info->{'best_score'})";
-        }
-        else {
-            $msg .= "KEEP over $node_info->{'best_formeme'} ($node_info->{'best_score'})";
-        }
-    }
-    else {
-        $msg .= "KEEP";
-    }
-
-    if ( $node_info->{'change'} ) {
-
-        # log to treex file
-        my $fixzone = $node_info->{'node'}->get_bundle()->get_or_create_zone( $self->language, 'deepfix' );
-        my $sentence = $fixzone->sentence;
-        if ($sentence) {
-            $sentence .= " [$msg]";
-        }
-        else {
-            $sentence = "[$msg]";
-        }
-        $fixzone->set_sentence($sentence);
-    }
-
-    # log to console
-    if ( $self->log_to_console ) {
-        log_info($msg);
-    }
-
-    return;
 }
 
 1;

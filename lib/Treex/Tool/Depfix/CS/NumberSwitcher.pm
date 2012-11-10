@@ -71,7 +71,7 @@ sub try_switch_number {
         # whether the switched number is consistent with it
         if ( $use_switched && $params->{en_tag} ) {
             $use_switched = $self->en_word_can_be_num(
-                $switched_num, $params->{en_tag}, $params->{en_word}
+                $switched_num, $params->{en_tag}, $params->{en_form}
             );
         }
     }

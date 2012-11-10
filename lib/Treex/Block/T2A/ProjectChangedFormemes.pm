@@ -10,7 +10,7 @@ has 'log_to_console' => ( default  => 0, is => 'ro', isa => 'Bool' );
 has 'orig_alignment_type' => ( default  => 'orig', is => 'ro', isa => 'Str' );
 has 'src_alignment_type' => ( default  => 'src', is => 'ro', isa => 'Str' );
 
-use Treex::Block::T2T::CS2CS::FixInfrequentFormemes;
+use Treex::Tool::Depfix::CS::FormemeSplitter;
 
 sub process_tnode {
     my ( $self, $fixed_tnode ) = @_;
@@ -50,9 +50,13 @@ sub process_tnode {
 sub project_aux_nodes {
     my ( $self, $fixed_tnode, $orig_tnode ) = @_;
 
-    my ( undef, $fixed_preps, undef ) = Treex::Block::T2T::CS2CS::FixInfrequentFormemes::splitFormeme( $fixed_tnode->formeme );
+    my ( undef, $fixed_preps, undef ) =
+        Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
+            $fixed_tnode->formeme );
     my $fixed_preps_count = scalar(@$fixed_preps);
-    my ( undef, $orig_preps, undef ) = Treex::Block::T2T::CS2CS::FixInfrequentFormemes::splitFormeme( $orig_tnode->formeme );
+    my ( undef, $orig_preps, undef ) =
+        Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
+            $orig_tnode->formeme );
     my $orig_preps_count = scalar(@$orig_preps);
 
     if ( $fixed_preps_count == 0 && $orig_preps_count == 0 ) {
@@ -215,7 +219,11 @@ sub project_lex_nodes {
     my $orig_anode  = $orig_tnode->get_lex_anode();
 
     if ( !defined $orig_anode ) {
-        log_warn( "T-node " . $orig_tnode->t_lemma . " has no lex node!" );
+        log_warn( "T-node " . $orig_tnode->t_lemma  .  " (orig) has no lex node!" );
+        return;
+    }
+    if ( !defined $fixed_anode ) {
+        log_warn( "T-node " . $fixed_tnode->t_lemma . " (fixed) has no lex node!" );
         return;
     }
 
