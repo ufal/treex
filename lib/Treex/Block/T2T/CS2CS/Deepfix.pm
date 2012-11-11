@@ -4,13 +4,12 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
-has '+language'       => ( required => 1 );
-has 'source_language' => ( is       => 'rw', isa => 'Str', required => 0 );
-has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'orig_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'orig' );
+has '+language'           => ( required => 1 );
+has 'source_language'     => ( is       => 'rw', isa => 'Str', required => 0 );
+has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
+has 'orig_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'orig' );
 has 'src_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
-
+has 'log_to_console'      => ( is       => 'rw', isa => 'Bool', default => 0 );
 
 has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
 
@@ -30,8 +29,9 @@ sub process_tnode {
     # change the current formeme if it seems to be a good idea
     if ( $node_info->{'change'} ) {
         $node->set_formeme( $node_info->{'best_formeme'} );
+
         # mark this node to apply the change in later stages
-	$node->wild->{'change_by_deepfix'} = 1;
+        $node->wild->{'change_by_deepfix'} = 1;
     }
 
     # log
@@ -42,7 +42,7 @@ sub process_tnode {
 
 sub fill_node_info {
     my ( $self, $node_info ) = @_;
-    
+
     $self->fill_info_from_tree($node_info);
 
     return;
@@ -65,57 +65,60 @@ sub fill_info_from_tree {
 
     # lemmas (cut the rubbish from the lemma)
     $node_info->{'tlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-	$node_info->{'node'}->t_lemma(), 1);
+        $node_info->{'node'}->t_lemma(), 1
+    );
     $node_info->{'ptlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-	$node_info->{'parent'}->t_lemma() || '', 1);
+        $node_info->{'parent'}->t_lemma() || '', 1
+    );
 
     # formemes
     $node_info->{'formeme'} = $node_info->{'node'}->formeme();
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
-    ($node_info->{'ennode'}) = $node_info->{'node'}->get_aligned_nodes_of_type(
-	$self->src_alignment_type
-	);
+    ( $node_info->{'ennode'} ) = $node_info->{'node'}->get_aligned_nodes_of_type(
+        $self->src_alignment_type
+    );
     $node_info->{'enformeme'} = (
-	defined $node_info->{'ennode'} && $node_info->{'ennode'}->formeme()
-	?
-	$node_info->{'ennode'}->formeme()
-	:
-	''
-	);
+        defined $node_info->{'ennode'} && $node_info->{'ennode'}->formeme()
+        ?
+            $node_info->{'ennode'}->formeme()
+        :
+            ''
+    );
 
     # POSes
     ( $node_info->{'syntpos'}, $node_info->{'preps'}, $node_info->{'case'} )
         = Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
-            $node_info->{'formeme'} );
+        $node_info->{'formeme'}
+        );
     ( $node_info->{'psyntpos'}, $node_info->{'ppreps'}, $node_info->{'pcase'} )
         = Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
-            $node_info->{'pformeme'} );
+        $node_info->{'pformeme'}
+        );
 
     $node_info->{'mpos'} = '?';
     my ($orig_node) = $node_info->{'node'}->get_aligned_nodes_of_type(
-	$self->orig_alignment_type
-	);
-    if (defined $orig_node) {
-	my $lex_anode = $orig_node->get_lex_anode();
-	if (defined $lex_anode) {
-	    $node_info->{'mpos'} = substr ($lex_anode->tag, 0, 1);
-	}
-	else {
-	    log_warn ("T-node " . $orig_node->id . " has no lex node!");
-	}
+        $self->orig_alignment_type
+    );
+    if ( defined $orig_node ) {
+        my $lex_anode = $orig_node->get_lex_anode();
+        if ( defined $lex_anode ) {
+            $node_info->{'mpos'} = substr( $lex_anode->tag, 0, 1 );
+        }
+        else {
+            log_warn( "T-node " . $orig_node->id . " has no lex node!" );
+        }
     }
 
     # attdir
     if ( $node_info->{'node'}->ord < $node_info->{'parent'}->ord ) {
-	$node_info->{'attdir'} = '/';
+        $node_info->{'attdir'} = '/';
     }
     else {
-	$node_info->{'attdir'} = '\\';
+        $node_info->{'attdir'} = '\\';
     }
 
     return $node_info;
 }
-
 
 # decide whether to change the formeme,
 sub decide_on_change {
@@ -135,7 +138,7 @@ sub logfix {
         "$node_info->{'ptlemma'} ($node_info->{'pformeme'})"
         :
         "#root#";
-    my $child  = $node_info->{'enformeme'}
+    my $child = $node_info->{'enformeme'}
         ?
         "$node_info->{'tlemma'} (EN $node_info->{'enformeme'})"
         :
@@ -145,7 +148,8 @@ sub logfix {
         $msg .= " $parent \\ $child: ";
     }
     else {
-	# assert $node_info->{'attdir'} eq '/'
+
+        # assert $node_info->{'attdir'} eq '/'
         $msg .= " $child / $parent: ";
     }
     $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";

@@ -15,31 +15,32 @@ sub decide_on_change {
     # (to be tuned and eventually made more efficient)
     # TODO: this should be also respected in the model!
     if (
-	($node_info->{'syntpos'} eq 'n' || $m =~ /a/) # fix only syntactical nouns
-	&& (@{ $node_info->{'preps'} } <= 1 || $m =~ /m/) # do not fix multiword prepositions
-	&& ( $node_info->{'ptlemma'} ne 'být' || $m !~ /b/) # do not fix if parent is "být"
-	&& ( # adding or removing nodes
-	     (@{ $node_info->{'preps'} } == @{ $node_info->{'bpreps'} }) # keep number of preps
-	     || ($m =~ /r/) # add/remove
-	     || (@{ $node_info->{'preps'} } < @{ $node_info->{'bpreps'} } && $m =~ /\+/) # add
-	     || (@{ $node_info->{'preps'} } > @{ $node_info->{'bpreps'} } && $m =~ /-/) # remove
-	)
-	&& ($node_info->{'mpos'} ne 'P' || $m =~ /p/) # do not fix morphological pronouns
-	) {
-	if ($m =~ /e/ && $node_info->{'enformeme'}) {
-	    $node_info->{'change'} = (
-		( $node_info->{'original_score'} < $self->lower_threshold_en )
-		&&
-		( $node_info->{'best_score'} > $self->upper_threshold_en )
-		);
-	}
-	else {
-	    $node_info->{'change'} = (
-		( $node_info->{'original_score'} < $self->lower_threshold )
-		&&
-		( $node_info->{'best_score'} > $self->upper_threshold )
-		);
-	}
+        ( $node_info->{'syntpos'} eq 'n' || $m =~ /a/ )    # fix only syntactical nouns
+        && ( @{ $node_info->{'preps'} } <= 1 || $m =~ /m/ )    # do not fix multiword prepositions
+        && ( $node_info->{'ptlemma'} ne 'být' || $m !~ /b/ )  # do not fix if parent is "být"
+        && (                                                   # adding or removing nodes
+            ( @{ $node_info->{'preps'} } == @{ $node_info->{'bpreps'} } )    # keep number of preps
+            || ( $m =~ /r/ )                                                 # add/remove
+            || ( @{ $node_info->{'preps'} } < @{ $node_info->{'bpreps'} } && $m =~ /\+/ )    # add
+            || ( @{ $node_info->{'preps'} } > @{ $node_info->{'bpreps'} } && $m =~ /-/ )     # remove
+        )
+        && ( $node_info->{'mpos'} ne 'P' || $m =~ /p/ )                                      # do not fix morphological pronouns
+        )
+    {
+        if ( $m =~ /e/ && $node_info->{'enformeme'} ) {
+            $node_info->{'change'} = (
+                ( $node_info->{'original_score'} < $self->lower_threshold_en )
+                    &&
+                    ( $node_info->{'best_score'} > $self->upper_threshold_en )
+            );
+        }
+        else {
+            $node_info->{'change'} = (
+                ( $node_info->{'original_score'} < $self->lower_threshold )
+                    &&
+                    ( $node_info->{'best_score'} > $self->upper_threshold )
+            );
+        }
     }
     else {
         $node_info->{'change'} = 0;

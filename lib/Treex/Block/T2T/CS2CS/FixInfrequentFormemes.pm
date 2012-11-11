@@ -7,7 +7,7 @@ extends 'Treex::Block::T2T::CS2CS::Deepfix';
 # model
 has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
-has 'model_format'     => ( is => 'ro', isa => 'Str', default => 'tlemma_ptlemma_pos_formeme' );
+has 'model_format'     => ( is => 'ro', isa => 'Str',        default => 'tlemma_ptlemma_pos_formeme' );
 
 # exclusive thresholds
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
@@ -26,7 +26,8 @@ sub process_start {
     # find the model file
     if ( defined $self->model_from_share ) {
         my $model = require_file_from_share(
-	    'data/models/deepfix/' . $self->model_from_share );
+            'data/models/deepfix/' . $self->model_from_share
+        );
         $self->set_model($model);
     }
     if ( !defined $self->model ) {
@@ -54,7 +55,7 @@ sub process_start {
 
 sub fill_node_info {
     my ( $self, $node_info ) = @_;
-    
+
     $self->fill_info_from_tree($node_info);
     $self->fill_info_from_model($node_info);
 
@@ -71,8 +72,9 @@ sub fill_info_from_model {
     ( $node_info->{'best_formeme'}, $node_info->{'best_score'} ) =
         $self->get_best_formeme($node_info);
     ( $node_info->{'bpos'}, $node_info->{'bpreps'}, $node_info->{'bcase'} )
-	= Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
-        $node_info->{'best_formeme'} );
+        = Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
+        $node_info->{'best_formeme'}
+        );
 
     return $node_info;
 }
@@ -87,42 +89,42 @@ sub get_formeme_score {
     if ( !defined $formeme ) {
         $formeme = $node_info->{'formeme'};
     }
-    
+
     # default values (used if the model does not tell us anything)
     my $formeme_count = 0;
-    my $all_count = 0;
+    my $all_count     = 0;
 
     # get the numbers from the model
     # (depends on the format of the model)
-    if ($self->model_format eq 'tlemma_ptlemma_pos_formeme') {
+    if ( $self->model_format eq 'tlemma_ptlemma_pos_formeme' ) {
 
-	$formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{$formeme}
-        || 0;
+        $formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{$formeme}
+            || 0;
 
-	$all_count = $model_data->{'tlemma_ptlemma_pos'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
-        || 0;
+        $all_count = $model_data->{'tlemma_ptlemma_pos'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
+            || 0;
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme') {
+    elsif ( $self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme' ) {
 
-	$formeme_count = $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }->{$formeme}
-        || 0;
+        $formeme_count = $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }->{$formeme}
+            || 0;
 
-	$all_count = $model_data->{'tlemma_ptlemma_pos_attdir'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
-        || 0;
+        $all_count = $model_data->{'tlemma_ptlemma_pos_attdir'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
+            || 0;
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
+    elsif ( $self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme' ) {
 
-	$formeme_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }->{$formeme}
-        || 0;
+        $formeme_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }->{$formeme}
+            || 0;
 
-	$all_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme'}
-        ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
-        || 0;
+        $all_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme'}
+            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
+            || 0;
     }
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
@@ -139,23 +141,23 @@ sub get_best_formeme {
     my ( $self, $node_info ) = @_;
 
     my @candidates = ();
-    if ($self->model_format eq 'tlemma_ptlemma_pos_formeme') {
-	@candidates = keys %{
-	    $model_data->{'tlemma_ptlemma_pos_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
-	    };
+    if ( $self->model_format eq 'tlemma_ptlemma_pos_formeme' ) {
+        @candidates = keys %{
+            $model_data->{'tlemma_ptlemma_pos_formeme'}
+                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
+            };
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme') {
-	@candidates = keys %{
-	    $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
-	    };
+    elsif ( $self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme' ) {
+        @candidates = keys %{
+            $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
+                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
+            };
     }
-    elsif ($self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
-	@candidates = keys %{
-	    $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
-	    };
+    elsif ( $self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme' ) {
+        @candidates = keys %{
+            $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
+            };
     }
 
     my $top_score   = 0;
