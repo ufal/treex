@@ -26,12 +26,15 @@ sub process_tnode {
     # decide whether to change the formeme
     $self->decide_on_change($node_info);
 
-    # change the current formeme if it seems to be a good idea
+    # change the current node if it seems to be a good idea
     if ( $node_info->{'change'} ) {
-        $node->set_formeme( $node_info->{'best_formeme'} );
-
+        if (!defined $node_info->{node}) {
+            warn "changing an undef!";
+        }
+        # do the change
+        $self->do_the_change($node_info);
         # mark this node to apply the change in later stages
-        $node->wild->{'change_by_deepfix'} = 1;
+        $node_info->{'node'}->wild->{'change_by_deepfix'} = 1;
     }
 
     # log
@@ -74,17 +77,20 @@ sub fill_info_from_tree {
     # formemes
     $node_info->{'formeme'} = $node_info->{'node'}->formeme();
     $node_info->{'pformeme'} = $node_info->{'parent'}->formeme() || '';
+    
+    # english
     ( $node_info->{'ennode'} ) = $node_info->{'node'}->get_aligned_nodes_of_type(
         $self->src_alignment_type
     );
-    $node_info->{'enformeme'} = (
-        defined $node_info->{'ennode'} && $node_info->{'ennode'}->formeme()
-        ?
-            $node_info->{'ennode'}->formeme()
-        :
-            ''
-    );
-
+    if (defined $node_info->{'ennode'}) {
+        $node_info->{'enformeme'} = $node_info->{'ennode'}->formeme() // '';
+        $node_info->{'entlemma'} = $node_info->{'ennode'}->t_lemma() // '';
+    }
+    else {
+        $node_info->{'enformeme'} = '';
+        $node_info->{'entlemma'} = '';
+    }
+    
     # POSes
     ( $node_info->{'syntpos'}, $node_info->{'preps'}, $node_info->{'case'} )
         = Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
@@ -129,6 +135,14 @@ sub decide_on_change {
     return $node_info->{'change'};
 }
 
+sub do_the_change {
+    my ($self, $node_info) = @_;
+
+    $node_info->{'node'}->set_formeme( $node_info->{'best_formeme'} );
+
+    return;
+}
+
 sub logfix {
     my ( $self, $node_info ) = @_;
 
@@ -152,6 +166,8 @@ sub logfix {
         # assert $node_info->{'attdir'} eq '/'
         $msg .= " $child / $parent: ";
     }
+
+    # TODO: accept there it does not have to be formeme which is changed
     $msg .= "$node_info->{'formeme'} ($node_info->{'original_score'}) ";
     if ( $node_info->{'best_formeme'} && $node_info->{'formeme'} ne $node_info->{'best_formeme'} ) {
         if ( $node_info->{'change'} ) {
