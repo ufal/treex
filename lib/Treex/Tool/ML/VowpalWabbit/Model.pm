@@ -22,13 +22,6 @@ has 'index' => (
     writer => '_set_index',
 );
 
-has '_vw' => (
-    is          => 'ro',
-    isa => 'VowpalWabbit::vw',
-    builder => '_build_vw',
-    lazy => 1,
-);
-
 has '_last_instance' => (
     is => 'rw',
     isa => 'ArrayRef|HashRef',
@@ -39,23 +32,20 @@ has '_last_prediction' => (
     isa => 'ArrayRef[Num]',
 );
 
-sub _build_vw {
-    my ($self) = @_;
-    
-    my $vw = VowpalWabbit::create_vw();
-    VowpalWabbit::add_buffered_regressor($vw, $self->model);
-    VowpalWabbit::initialize_empty_vw($vw, "-t");
-    return $vw;
-}
-
 sub _vw_predict {
     my ($self, $example_str) = @_;
     
-    my $vw = $self->_vw;
+    my $vw = VowpalWabbit::create_vw();
+    VowpalWabbit::add_buffered_regressor($vw, $self->model);
+    VowpalWabbit::initialize_empty_vw($vw, "-t /dev/null --quiet");
+    
+    #my $vw = $self->_vw;
     my $example = VowpalWabbit::read_example($vw, $example_str);
     $vw->learn($vw, $example);
     my $results = VowpalWabbit::get_predictions($example);
     VowpalWabbit::finish_example($vw, $example);
+
+    VowpalWabbit::finish($vw);
 
     return $results;
 }
@@ -70,7 +60,7 @@ sub score {
     else {
         my $x_str = Treex::Tool::ML::VowpalWabbit::Util::instance_to_vw_str( $x );
         $pred = $self->_vw_predict( $x_str );
-        
+
         $self->_set_last_instance( $x );
         $self->_set_last_prediction( $pred );
     }

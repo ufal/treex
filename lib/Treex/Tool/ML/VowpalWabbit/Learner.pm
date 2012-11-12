@@ -7,6 +7,8 @@ use Treex::Core::Common;
 use VowpalWabbit;
 use Treex::Tool::Compress::Index;
 
+use List::Util qw(shuffle);
+
 use IO::Zlib;
 use File::Slurp;
 
@@ -30,7 +32,7 @@ has 'verbose' => (
 
 has '_unprocessed_instances' => (
     is  => 'ro',
-    isa => 'ArrayRef[Str]',
+    isa => 'ArrayRef[HashRef]',
     default => sub {[]},
     writer => '_set_instances',
 );
@@ -41,25 +43,59 @@ has '_current_index' => (
     writer => '_set_index',
 );
 
+has '_feat_count' => (
+    is => 'ro',
+    isa => 'HashRef[Int]',
+    default => sub {{}},
+    writer => '_set_feat_count',
+);
+
 sub see {
     my ($self, $x, $y) = @_;
 
+    # TODO $x can possibly be also a hash
+    foreach my $feat (@$x) {
+        $self->_feat_count->{$feat . "_" . $y}++;
+    }
+
+    push @{$self->_unprocessed_instances}, { x => $x, y_str => $y };
+}
+
+sub _assign_idx {
+    my ($self, $instances) = @_;
+    
     if (!defined $self->_current_index) {
         $self->_set_index( Treex::Tool::Compress::Index->new() );
     }
-    my $y_idx = $self->_current_index->get_index( $y );
-    my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::instance_to_vw_str( $x, $y_idx );
 
-    push @{$self->_unprocessed_instances}, $instance_str;
+    foreach my $inst (@$instances) {
+        my $y_idx = $self->_current_index->get_index( $inst->{y_str} );
+        $inst->{y} = $y_idx;
+    }
 }
 
 sub learn {
-    my ($self) = @_;
-    
+    my ($self, $print_line) = @_;
     
     $self->_log_info_verbose("Vowpal Wabbit (VW) online learning:");
+
+    my @shuffled_ex = shuffle @{$self->_unprocessed_instances};
+
+    $self->_assign_idx( \@shuffled_ex );
+
+    my @vw_examples = map { Treex::Tool::ML::VowpalWabbit::Util::instance_to_vw_str( $_->{x}, $_->{y}, $_->{y_str} ) }
+        @shuffled_ex;
+
+    #if ($print_line) {
+    #    my @all_classes = (1 .. $self->_current_index->last_idx);
+    #    my @multiline = map { Treex::Tool::ML::VowpalWabbit::Util::instance_to_multiline( $_->{x}, $_->{y}, \@all_classes, 0 ) }
+    #        @{$self->_unprocessed_instances};
+    #    #print join "\n", @vw_examples;
+    #    print join "\n", @multiline;
+    #}
     
     my $num_classes = $self->_current_index->last_idx;
+
     my $quiet = $self->verbose < 2 ? "--quiet" : "";
     my $init_str = "-d /dev/null $quiet --sequence_max_length 1024 --noconstant --oaa $num_classes";
     
@@ -70,7 +106,7 @@ sub learn {
     
     foreach my $pass (1 .. $self->passes) {
         $self->_log_info_verbose("VW: pass no. $pass");
-        foreach my $example_line (@{$self->_unprocessed_instances}) {
+        foreach my $example_line (@vw_examples) {
             my $example = VowpalWabbit::read_example($vw, $example_line);
             $vw->learn($vw, $example);
             VowpalWabbit::finish_example($vw, $example);
@@ -92,6 +128,22 @@ sub forget_all {
     my ($self) = @_;
     $self->_set_index( Treex::Tool::Compress::Index->new() );
     $self->_set_instances( [] );
+    $self->_set_feat_count( {} );
+}
+
+sub cut_features {
+    my ($self, $min_count) = @_;
+
+    my @f_unproc = ();
+    foreach my $ex (@{$self->_unprocessed_instances}) {
+        my @f_feats = grep {$self->_feat_count->{$_ . "_" . $ex->{y_str}} >= $min_count} 
+            @{$ex->{x}};
+        if (scalar @f_feats > 0) {
+            push @f_unproc, { x => \@f_feats, y_str => $ex->{y_str} };
+           # log_info "AFTER: " . scalar @{$ex->{x}};
+        }
+    }
+    $self->_set_instances( \@f_unproc );
 }
 
 sub _log_info_verbose {
