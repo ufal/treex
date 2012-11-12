@@ -30,6 +30,20 @@ sub BUILDARGS {
     return $args;
 }
 
+has [qw(_node_regex _attr_regex _node_esc _attr_esc)] => (is => 'rw');
+
+sub BUILD {
+    my ($self) = @_;
+    my $node_sep = substr($self->separator, 0, 1);
+    my $node_esc = '&#' . ord($node_sep) . ';';
+    $self->_set_node_regex(qr/\Q$node_sep\E/);
+    $self->_set_node_esc('&#' . ord($node_sep) . ';');
+    my $attr_sep = substr($self->attr_sep, 0, 1);
+    my $attr_esc = '&#' . ord($attr_sep) . ';';
+    $self->_set_attr_regex(qr/\Q$attr_sep\E/);
+    $self->_set_attr_esc('&#' . ord($attr_sep) . ';');
+    return;
+}
 
 sub _process_tree() {
 
@@ -37,9 +51,20 @@ sub _process_tree() {
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
 
-    print { $self->_file_handle } join $self->separator, map { join $self->attr_sep, @{ $self->_get_info_list($_) } } @nodes;
+    print { $self->_file_handle } 
+        join $self->separator,
+        map { join $self->attr_sep, map {$self->escape($_)} @{ $self->_get_info_list($_) } } @nodes;
 
     print { $self->_file_handle } "\n";
+}
+
+sub escape {
+    my ($self, $string) = @_;
+    my ($aa, $bb) = ($self->_attr_regex, $self->_attr_esc);
+    $string =~ s/$aa/$bb/g;
+    ($aa, $bb) = ($self->_node_regex, $self->_node_esc);
+    $string =~ s/$aa/$bb/g;
+    return $string;
 }
 
 1;
@@ -63,7 +88,13 @@ Treex::Block::Write::AttributeSentences
 This prints the values of the selected attributes for all nodes in a tree, one sentence per line. 
 
 For multiple-valued attributes (lists) and dereferencing attributes, please see 
-L<Treex::Block::Write::AttributeParameterized>. 
+L<Treex::Block::Write::AttributeParameterized>.
+
+Default separator of tokens (see L<separator>) is space.
+Default separator of attributes (see L<attr_sep>) is vertical bar ("|").
+If the attributes to be printed contain any of those separator symbols,
+they will be escaped like HTML entities, i.e. space will be converted to I<&#32;> and bar to I<&#124;>.
+However, it is recommended to selecet such separator symbols that do not appear in your data.
 
 =head1 ATTRIBUTES
 
