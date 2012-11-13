@@ -267,7 +267,7 @@ sub _parse_line {
     }
     else {                                                           # dense instance
         my $values_num = 0;
-        $line .= ',';
+        $line .= ',';     
         while ( $line =~ m/([^"'][^,]*|'[^']*(\\'[^']*)*'|"[^"]*(\\"[^"]*)*"),/g ) {
 
             my $field = $1;
@@ -307,7 +307,7 @@ sub _zero_fill {
     foreach my $attrib ( @{ $self->relation->{"attributes"} } ) {
 
         # numeric attribute
-        if ( $attrib->{'attribute_type'} =~ m/^(numeric|real|integer)$/ ) {
+        if ( $attrib->{'attribute_type'} =~ m/^(numeric|real|integer)$/i ) {
             $values->{ $attrib->{'attribute_name'} } = 0;
         }
 

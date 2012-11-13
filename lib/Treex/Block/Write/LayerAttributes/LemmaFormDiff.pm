@@ -85,21 +85,26 @@ sub modify_single {
     $diff =~ s/^\{n\}e\{([^\}]?)e\}/{ne$1}e/;      # neexistuje, nejefektivnější
     $diff =~ s/^\{ne\}j\{([^\}]*)j\}/{nej$1}j/;    # nejjistější, nejnejistější
     $diff =~ s/^n\{(ej?)n\}/{n$1}n/;               # nenáročný
+    $diff =~ s/^ne\{(j?)ne\}/{ne$1}ne/;            # nejnestoudnější, nenechat
 
-    # infinitive
+    # 'o'
     $diff =~ s/\]\{([^\}]+)\}o\[([^\]]+)\]/o$2]{$1o}/;    # vzniklo, vyššího
-    $diff =~ s/\]\{([^\}]+)\}t\{/t]{$1t/;                 # víte, máte
-    $diff =~ s/([^\]])\{([^\}]+)\}t\{/${1}[t]{$2t/;       # pojedete, zůstanete
+
+    # 't' infinitive -> imperative / 2nd pl.
+    $diff =~ s/\]\{([^\}]+)\}t\{/t]{$1t/;                            # víte, máte
+    $diff =~ s/([^\]])\{([^\}]+)\}t\{/${1}[t]{$2t/;                  # pojedete, zůstanete
+    $diff =~ s/([^\]])\{([^\}]+)\}t\[([^\}]+)\]\{/${1}[t$3]{$2t/;    # chcete
+    $diff =~ s/([^\]\}])\[([^\}]+)\]t\{/${1}[$2t]{t/;                # berte
 
     # 'í'
-    $diff =~ s/\{([^\}]+)\}í\[([^\]]+)\]/[í$2]{$1í}/;    # mají, nižší
-    $diff =~ s/\{(ějš)\}í$/[í]{ější}/;               # modernější
-    $diff =~ s/\{(ějš)\}í\{(.+)\}$/[í]{ější$1}/;     # modernějších, modernějším
+    $diff =~ s/\{([^\}]+)\}í\[([^\]]+)\]/[í$2]{$1í}/;             # mají, nižší
+    $diff =~ s/\{(ějš)\}í$/[í]{ější}/;                        # modernější
+    $diff =~ s/\{(ějš)\}í\{(.+)\}$/[í]{ější$1}/;              # modernějších, modernějším
 
     # infinitive 't'
-    $diff =~ s/\{(..)\}([aei])\[t\]$/[$2t]{$1$2}/;               # musíme, zaměstnána, umístěni
-    $diff =~ s/\[(.)\]\{(...?)\}([aei])\[t\]$/[$1$3t]{$2$3}/;    # odsouzeni, vyhozeni
-    $diff =~ s/\[o\]u\[t\]\{(.+)\}$/[out]{u$1}/;                 # vyplynulo
+    $diff =~ s/\{(..)\}([aei])\[t\]$/[$2t]{$1$2}/;                   # musíme, zaměstnána, umístěni
+    $diff =~ s/\[(.)\]\{(...?)\}([aei])\[t\]$/[$1$3t]{$2$3}/;        # odsouzeni, vyhozeni
+    $diff =~ s/\[o\]u\[t\]\{(.+)\}$/[out]{u$1}/;                     # vyplynulo
 
     # find the changes in the diff
     my ( $front, $mid, $back ) = ( '', '', '' );
@@ -188,18 +193,7 @@ TODO
 =head1 NOTES
 
 Problems found so far:
-
-    chcete
-    neberte
-    nedivte
-    nenuťte
-    žeňte
-    
-    nejnestoudnější
-    nenervovat
-    nenechat
-    
-    déle
+  
     hlouběji
     dražších
     
