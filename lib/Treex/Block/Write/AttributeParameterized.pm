@@ -34,6 +34,9 @@ has 'modifier_config' => (
     coerce => 1
 );
 
+has instead_undef => (is=>'ro', isa=>'Str', default=>'undef', documentation=>'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.');
+has instead_empty => (is=>'ro', isa=>'Str', default=>'', documentation=>'What to return instead of empty (string) attributes. Default is the empty string.');
+
 # A list of output attributes, given all the modifiers are applied
 has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
 
@@ -197,7 +200,13 @@ sub _get_info_hash {
         my $vals = $self->_get_modified( $node, $attrib, $alignment_hash );
 
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
-            $info{ $out_att->[ $out_att_pos++ ] } = $vals->[$i];
+            my $val = $vals->[$i];
+            if (!defined $val && $self->instead_undef ne 'undef'){
+                $val = $self->instead_undef;
+            } elsif ($val eq ''){
+                $val = $self->instead_empty;
+            }
+            $info{ $out_att->[ $out_att_pos++ ] } = $val;
         }
     }
     return \%info;
