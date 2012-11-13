@@ -201,8 +201,8 @@ sub _get_info_hash {
 
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
             my $val = $vals->[$i];
-            if (!defined $val && $self->instead_undef ne 'undef'){
-                $val = $self->instead_undef;
+            if (!defined $val){
+                $val = $self->instead_undef if $self->instead_undef ne 'undef';
             } elsif ($val eq ''){
                 $val = $self->instead_empty;
             }
