@@ -156,6 +156,11 @@ sub truncate_lemma {
     my ($lemma, $strip_numbers) = @_;    
     
     $lemma =~ s/((?:(`|_;|_:|_,|_\^|))+)(`|_;|_:|_,|_\^).+$/$1/;
+
+    # Lemma cannot be empty (e.g. "`a la" instead of "à la" in ČNK)
+    if ($lemma eq ''){
+        $lemma = $_[0];
+    }
     if ($strip_numbers){
         $lemma =~ s/(.+)-[0-9].*$/$1/;
     }
