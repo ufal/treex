@@ -6,6 +6,7 @@ use autodie;
 use File::Slurp 9999.19;
 use Digest::MD5 qw(md5_hex);
 use PerlIO::via::gzip;
+use File::Basename;
 
 has filenames => (
     is     => 'ro',
@@ -74,11 +75,13 @@ sub _token_to_filenames {
         return @filenames;
     }
     return $token if $token !~ s/^@(.*)/$1/;
-    if ( $token eq '-' ) {
-        $token = \*STDIN;
-    }
-    my @filenames = read_file( $token, chomp => 1 );
-    return @filenames;
+    my $filelist = $token eq '-' ? \*STDIN : $token;
+    my @filenames = read_file( $filelist, chomp => 1 );
+
+    # Filnames in a filelist can be relative to the filelist directory.
+    my $dir = dirname($token);
+    return @filenames if $dir eq '.';
+    return map {!m{^/} ? "$dir/$_" : $_} @filenames;
 }
 
 sub number_of_files {
