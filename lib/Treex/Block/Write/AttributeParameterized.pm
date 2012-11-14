@@ -32,7 +32,7 @@ has 'modifier_config' => (
     isa    => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
     is     => 'ro',
     coerce => 1,
-    default => sub { {} },
+    default => undef
 );
 
 has instead_undef => (is=>'ro', isa=>'Str', default=>'undef', documentation=>'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.');
@@ -72,7 +72,7 @@ sub _parse_modifier_config {
 # Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
 sub _parse_hashref {
 
-    my ( $name, $hashref ) = @_;
+    my ( $hashref ) = @_;
 
     return {} if ( !$hashref );
 

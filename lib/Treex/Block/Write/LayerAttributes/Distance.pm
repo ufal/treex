@@ -18,7 +18,7 @@ sub BUILDARGS {
     return $params[0] if ( @params == 1 && ref $params[0] eq 'HASH' );
 
     if ( @params != 1 ) {
-        log_fatal('Distance:There must be just one parameter to new(), allowed values: "numeric", "3level", "binary".');
+        log_fatal('Distance:There must be just one parameter to new(), allowed values: "numeric", "3level", "binary", "numericSigned".');
     }
     return { mode => $params[0] };
 }
