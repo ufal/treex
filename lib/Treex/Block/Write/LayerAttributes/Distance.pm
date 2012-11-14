@@ -7,7 +7,7 @@ with 'Treex::Block::Write::LayerAttributes::AttributeModifier';
 
 has '+return_values_names' => ( default => sub { [''] } );
 
-has 'mode' => ( isa => enum( [ 'numeric', '3level', 'binary' ] ), is => 'ro', default => 'numeric' );
+has 'mode' => ( isa => enum( [ 'numeric', 'numericSigned', '3level', 'binary' ] ), is => 'ro', default => 'numeric' );
 
 
 # Create the mode parameter out of the given parameter to new
@@ -44,6 +44,9 @@ sub modify_single {
     elsif ( $self->mode eq 'binary' ) {
         return abs( $ord1 - $ord2 ) <= 1 ? 1 : 0;
     }
+    elsif ( $self->mode eq 'numericSigned' ) {
+        return $ord1 - $ord2;
+    }
     else {
         return abs( $ord1 - $ord2 );
     }
@@ -68,7 +71,7 @@ Treex::Block::Write::LayerAttributes::Distance
 =head1 DESCRIPTION
 
 A text modifier for blocks using L<Treex::Block::Write::LayerAttributes> which takes two numeric arguments 
-and returns their distance (in three C<mode>s, see PARAMETERS). This is useful for node distances (e.g. the 
+and returns their distance (in four C<mode>s, see PARAMETERS). This is useful for node distances (e.g. the 
 distance of a node to its parent etc.).
 
 The constructor can take either the C<mode> value directly or enclosed in a hash reference.
@@ -85,9 +88,13 @@ The mode this text modifier should be working in. The allowed values are:
 
 =item C<numeric>: the actual numeric distance (absolute value)
 
+=item C<numericSigned>: the actual numeric distance, signed (first - second)
+
 =item C<3level>: a three-level resolution -- a direct neighbor ('near') / max. 4 nodes away ('close') / farther ('far')
 
 =item C<binary>: just tells if the first node is a direct neighbor of the second one
+
+=back
 
 =back
 
