@@ -31,7 +31,8 @@ coerce 'Treex::Block::Write::AttributeParameterized::ModifierConfig' =>
 has 'modifier_config' => (
     isa    => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
     is     => 'ro',
-    coerce => 1
+    coerce => 1,
+    default => sub { {} },
 );
 
 has instead_undef => (is=>'ro', isa=>'Str', default=>'undef', documentation=>'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.');
