@@ -26,6 +26,8 @@ has 'split_parts' => (
 Readonly my $ESCAPE_SRC => [ '[',     ']',     '{',     '}' ];
 Readonly my $ESCAPE_TGT => [ '-LBR-', '-RBR-', '-LBC-', '-RBC-' ];
 
+Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on|.*[oý]koliv?';
+
 # Build default return values' suffixes for different settings of
 # output_diff and split_parts
 sub _build_return_values_names {
@@ -87,8 +89,9 @@ sub modify_single {
     $diff =~ s/^n\{(ej?)n\}/{n$1}n/;               # nenáročný
     $diff =~ s/^ne\{(j?)ne\}/{ne$1}ne/;            # nejnestoudnější, nenechat
 
-    # 'o'
+    # 'o', 'ou'
     $diff =~ s/\]\{([^\}]+)\}o\[([^\]]+)\]/o$2]{$1o}/;    # vzniklo, vyššího
+    $diff =~ s/(?<=[^\]]){o}u(?=.)/[u]{ou}/;              # hlouběji
 
     # 't' infinitive -> imperative / 2nd pl.
     $diff =~ s/\]\{([^\}]+)\}t\{/t]{$1t/;                            # víte, máte
@@ -106,6 +109,9 @@ sub modify_single {
     $diff =~ s/\[(.)\]\{(...?)\}([aei])\[t\]$/[$1$3t]{$2$3}/;        # odsouzeni, vyhozeni
     $diff =~ s/\[o\]u\[t\]\{(.+)\}$/[out]{u$1}/;                     # vyplynulo
 
+    # 'h'/'ch'
+    $diff =~ s/\{(.*)c\}h\[(.*)\]$/[h$2]{$1ch}/;                     # dražších
+
     # find the changes in the diff
     my ( $front, $mid, $back ) = ( '', '', '' );
 
@@ -115,7 +121,7 @@ sub modify_single {
     }
 
     # everything changed
-    elsif ( $diff =~ m/^\[[^\]]*\]/ || $lemma =~ /^(tentýž)$/ ) {
+    elsif ( $diff =~ m/^\[[^\]]*\]/ || $lemma =~ /^($IRREGULAR_LEMMAS)$/ ) {
         $back = '*' . $form;
     }
 
@@ -192,14 +198,7 @@ TODO
 
 =head1 NOTES
 
-Problems found so far:
-  
-    hlouběji
-    dražších
-    
-    komukoliv
-    tentýž
-    všichni
+Some words had to be hard-set as irregular.
 
 Only "legal" prefixes should be: nejne, ne, nej, po, pů
 

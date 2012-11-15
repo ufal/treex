@@ -60,6 +60,7 @@ sub _process_tree() {
 
 sub escape {
     my ($self, $string) = @_;
+    $string = '' if (!defined($string));
     my ($aa, $bb) = ($self->_attr_regex, $self->_attr_esc);
     $string =~ s/$aa/$bb/g;
     ($aa, $bb) = ($self->_node_regex, $self->_node_esc);

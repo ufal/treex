@@ -29,14 +29,14 @@ coerce 'Treex::Block::Write::AttributeParameterized::ModifierConfig' =>
     from 'HashRef' => via { _parse_modifier_config($_) };
 
 has 'modifier_config' => (
-    isa    => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
-    is     => 'ro',
-    coerce => 1,
+    isa     => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
+    is      => 'ro',
+    coerce  => 1,
     default => undef
 );
 
-has instead_undef => (is=>'ro', isa=>'Str', default=>'undef', documentation=>'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.');
-has instead_empty => (is=>'ro', isa=>'Str', default=>'', documentation=>'What to return instead of empty (string) attributes. Default is the empty string.');
+has instead_undef => ( is => 'ro', isa => 'Str', default => 'undef', documentation => 'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.' );
+has instead_empty => ( is => 'ro', isa => 'Str', default => '',      documentation => 'What to return instead of empty (string) attributes. Default is the empty string.' );
 
 # A list of output attributes, given all the modifiers are applied
 has '_output_attrib' => ( isa => 'ArrayRef', is => 'ro', writer => '_set_output_attrib' );
@@ -72,7 +72,7 @@ sub _parse_modifier_config {
 # Parse a hash reference: given a hash reference, do nothing, given a string, try to eval it.
 sub _parse_hashref {
 
-    my ( $hashref ) = @_;
+    my ($hashref) = @_;
 
     return {} if ( !$hashref );
 
@@ -129,13 +129,26 @@ before 'BUILD' => sub {
 sub _split_csv_with_brackets {
 
     my ($str) = @_;
+
     $str =~ s/^[\s,]*//;
     $str .= ' ';
-    my @arr = ();
-    while ( $str =~ m/([a-zA-Z0-9_:-]+\([^\)]*\)+|[^\(\s,]*)[\s,]+/g ) {
-        push @arr, $1;
+    my @arr   = ();
+    my $last  = 0;
+    my $depth = 0;
+    while ( $str =~ m/([\s,]+|[\(\)])/g ) {
+        if ( $1 eq ')' ) {
+            $depth--;
+            log_fatal('Cannot parse attributes list: too many closing brackets') if ( $depth < 0 );
+        }
+        elsif ( $1 eq '(' ) {
+            $depth++;
+        }
+        elsif ( $depth == 0 ) {
+            push @arr, substr( $str, $last, pos($str) - $last - 1 );
+            $last = pos $str;
+        }        
     }
-
+    log_fatal('Cannot parse attributes list: not enough closing brackets') if ($depth > 0);
     return \@arr;
 }
 
@@ -202,9 +215,10 @@ sub _get_info_hash {
 
         foreach my $i ( 0 .. ( @{$vals} - 1 ) ) {
             my $val = $vals->[$i];
-            if (!defined $val){
+            if ( !defined $val ) {
                 $val = $self->instead_undef if $self->instead_undef ne 'undef';
-            } elsif ($val eq ''){
+            }
+            elsif ( $val eq '' ) {
                 $val = $self->instead_empty;
             }
             $info{ $out_att->[ $out_att_pos++ ] } = $val;
