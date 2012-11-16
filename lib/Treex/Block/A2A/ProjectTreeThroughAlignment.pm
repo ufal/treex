@@ -13,7 +13,7 @@ sub process_bundle {
     my $source_root = $bundle->get_zone( $self->language,    $self->selector )->get_atree;
     my $target_root = $bundle->get_zone( $self->to_language, $self->to_selector )->get_atree;
 
-    foreach my $node ( $target_root->get_descengants ) {
+    foreach my $node ( $target_root->get_descendants ) {
         $node->set_parent($target_root);
     }
     foreach my $node ( $target_root->get_descendants ) {
