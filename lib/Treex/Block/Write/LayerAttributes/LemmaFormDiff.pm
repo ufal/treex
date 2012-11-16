@@ -26,7 +26,7 @@ has 'split_parts' => (
 Readonly my $ESCAPE_SRC => [ '[',     ']',     '{',     '}' ];
 Readonly my $ESCAPE_TGT => [ '-LBR-', '-RBR-', '-LBC-', '-RBC-' ];
 
-Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on|.*[oý]koliv?';
+Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on|';
 
 # Build default return values' suffixes for different settings of
 # output_diff and split_parts
@@ -100,18 +100,28 @@ sub modify_single {
     $diff =~ s/([^\]\}])\[([^\}]+)\]t\{/${1}[$2t]{t/;                # berte
 
     # 'í'
-    $diff =~ s/\{([^\}]+)\}í\[([^\]]+)\]/[í$2]{$1í}/;             # mají, nižší
-    $diff =~ s/\{(ějš)\}í$/[í]{ější}/;                        # modernější
-    $diff =~ s/\{(ějš)\}í\{(.+)\}$/[í]{ější$1}/;              # modernějších, modernějším
+    $diff =~ s/\{([^\}]+)\}í\[([^\]]+)\]\{([^\}]+)\}$/[í$2]{$1í$3}/;    # nižšího
+    $diff =~ s/\{([^\}]+)\}í\[([^\]]+)\]$/[í$2]{$1í}/;                  # mají, nižší
+    $diff =~ s/(?<=[^\]])\{(ějš)\}í$/[í]{ější}/;                    # modernější
+    $diff =~ s/\[([^\]]+)\]\{(ějš)\}í$/[$1í]{ější}/;                # pozdější
+    $diff =~ s/(?<=[^\]])\{ějš\}í\{(.+)\}$/[í]{ější$1}/;            # modernějších, modernějším
+    $diff =~ s/\[([^\]]+)\]\{ějš\}í\{(.+)\}$/[$1í]{ější$2}/;        # pozdějších
 
     # infinitive 't'
-    $diff =~ s/\{(..)\}([aei])\[t\]$/[$2t]{$1$2}/;                   # musíme, zaměstnána, umístěni
-    $diff =~ s/\[(.)\]\{(...?)\}([aei])\[t\]$/[$1$3t]{$2$3}/;        # odsouzeni, vyhozeni
-    $diff =~ s/\[o\]u\[t\]\{(.+)\}$/[out]{u$1}/;                     # vyplynulo
+    $diff =~ s/\{(..)\}([aei])\[t\]$/[$2t]{$1$2}/;                         # musíme, zaměstnána, umístěni
+    $diff =~ s/\[(.)\]\{(...?)\}([aei])\[t\]$/[$1$3t]{$2$3}/;              # odsouzeni, vyhozeni
+    $diff =~ s/\[o\]u\[t\]\{(.+)\}$/[out]{u$1}/;                           # vyplynulo
 
     # 'h'/'ch'
-    $diff =~ s/\{(.*)c\}h\[(.*)\]$/[h$2]{$1ch}/;                     # dražších
+    $diff =~ s/\{(.*)c\}h\[(.*)\]$/[h$2]{$1ch}/;                           # dražších
 
+    # 'um', 'em' -> '-em'
+    $diff =~ s/\{m\}em$/[e]m{em}/;                                         # pojmem
+    $diff =~ s/\[u\]\{e\}m$/[um]{em}/;                                     # kritériem
+
+    # kdokoliv - komukoliv
+    $diff =~ s/k\[d\]o\{mu\}(?=.+)/k[do]{omu}/;    
+    
     # find the changes in the diff
     my ( $front, $mid, $back ) = ( '', '', '' );
 
@@ -136,8 +146,14 @@ sub modify_single {
         }
 
         # changing the last vowel
-        if ( $diff =~ m/[^\]\[\{\}]+(?:\[([^\]]+)\]|\{([^\}]+)\}){1,2}[^\]\[\{\}]+/ && ( $1 // $2 ) ) {
-            $mid = ( $1 // '' ) . '-' . ( $2 // '' );
+        if ( $diff =~ m/([^\]\[\{\}])(?:\[([^\]]+)\]|\{([^\}]+)\}){1,2}[^\]\[\{\}]+/ && ( $2 // $3 ) ) {
+            my $orig = $2 // '';
+            my $new = $3 // '';
+            if (!defined($2)){
+                $orig = $1;
+                $new = $1 . $3;
+            }
+            $mid = $orig . '-' . $new;
         }
 
         # something added to the beginning

@@ -144,7 +144,7 @@ sub _split_csv_with_brackets {
             $depth++;
         }
         elsif ( $depth == 0 ) {
-            push @arr, substr( $str, $last, pos($str) - $last - 1 );
+            push @arr, substr( $str, $last, pos($str) - $last - length($1) );
             $last = pos $str;
         }        
     }
