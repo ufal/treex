@@ -4,6 +4,8 @@ use Moose;
 use autodie;
 use Carp;
 
+use Treex::Tool::Parser::MSTperl::ModelPMI;
+
 # TODO dynamic features
 
 has 'config' => (
@@ -142,6 +144,12 @@ has 'edge_features_cache' => (
     is      => 'rw',
     isa     => 'HashRef[ArrayRef[Str]]',
     default => sub { {} },
+);
+
+has pmi_model => (
+    is => 'rw',
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelPMI]',
+    default => undef,
 );
 
 sub BUILD {
@@ -572,6 +580,8 @@ my %simple_feature_sub_references = (
     'CHILDNO'           => \&{feature_number_of_parents_children},
     'substr'            => \&{feature_substr_child},
     'SUBSTR'            => \&{feature_substr_parent},
+    'pmi'               => \&{feature_pmi},
+    'pmibucketed'       => \&{feature_pmi_bucketed},
 );
 
 sub get_simple_feature_sub_reference {
@@ -614,7 +624,7 @@ sub feature_distance_generic {
     my $distance = $node1->ord - $node2->ord;
 
     my $bucket = $self->config->distance2bucket->{$distance};
-    if ($bucket) {
+    if (defined $bucket) {
         return $bucket;
     } else {
         if ( $distance <= $self->config->minBucket ) {
@@ -1369,6 +1379,37 @@ sub feature_number_of_parents_children {
         return 0;
     }
 }
+
+# now on lemmas, maybe TODO have pmi_form, pmi_lemma
+# uses rounded bucketing
+sub feature_pmi {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $child = $edge->child->fields->[$field_index];
+    my $parent = $edge->parent->fields->[$field_index];
+
+    if ( defined $child && defined $parent) {
+        return $self->pmi_model->get_rounded_pmi($child, $parent);
+    } else {
+        croak "Either child or parent is undefined in PMI, this should not happen!";
+    }
+}
+
+# now on lemmas, maybe TODO have pmi_form, pmi_lemma
+sub feature_pmi_bucketed {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my $child = $edge->child->fields->[$field_index];
+    my $parent = $edge->parent->fields->[$field_index];
+
+    if ( defined $child && defined $parent) {
+        return $self->pmi_model->get_bucketed_pmi($child, $parent);
+    } else {
+        croak "Either child or parent is undefined in PMI, this should not happen!";
+    }
+}
+
+
 
 1;
 

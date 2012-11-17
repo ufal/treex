@@ -5,6 +5,7 @@ use autodie;
 use Carp;
 
 use Treex::Tool::Parser::MSTperl::FeaturesControl;
+use Treex::Tool::Parser::MSTperl::ModelPMI;
 
 # varied levels of debug info,
 # ranging from 0 (no debug info)
@@ -397,6 +398,30 @@ has 'field_indexes' => (
     default => sub { {} },
 );
 
+has use_pmi => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 0
+);
+
+has pmi_model_file => (
+    is => 'rw',
+    isa => 'Str',
+    default => ''
+);
+
+has pmi_model_format => (
+    is => 'rw',
+    isa => 'Str',
+    default => 'tsv'
+);
+
+has 'pmi_buckets' => (
+    is      => 'rw',
+    isa     => 'Maybe[ArrayRef[Int]]',
+    default => undef,
+);
+
 # METHODS
 
 sub BUILD {
@@ -421,14 +446,14 @@ sub BUILD {
             'parent_ord',
             'distance_buckets',
             'label',
+            'use_pmi',
+            'pmi_model_file',
+            'pmi_model_format',
+            'pmi_buckets',
             'use_edge_features_cache',
             'labeller_use_edge_features_cache',
-
-            #            'imlabeller_use_edge_features_cache',
             'number_of_iterations',
             'labeller_number_of_iterations',
-
-            #            'imlabeller_number_of_iterations',
             'labeller_algorithm',
             'DEBUG',
             'SEQUENCE_BOUNDARY_LABEL',
@@ -475,6 +500,19 @@ sub BUILD {
                         => $self->use_edge_features_cache,
                     )
             );
+
+            if ($self->use_pmi) {
+                my $pmi_model = Treex::Tool::Parser::MSTperl::ModelPMI->new(
+                    config       => $self,
+                    model_file   => $self->pmi_model_file,
+                    model_format => $self->pmi_model_format,
+                    buckets      => $self->pmi_buckets,
+                );
+                my $result = $pmi_model->load();
+                if ($result) {
+                    $self->unlabelledFeaturesControl->pmi_model($pmi_model);
+                }
+            }
         }
 
         # labeller features
