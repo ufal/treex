@@ -26,7 +26,7 @@ has 'split_parts' => (
 Readonly my $ESCAPE_SRC => [ '[',     ']',     '{',     '}' ];
 Readonly my $ESCAPE_TGT => [ '-LBR-', '-RBR-', '-LBC-', '-RBC-' ];
 
-Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on|';
+Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on';
 
 # Build default return values' suffixes for different settings of
 # output_diff and split_parts
