@@ -55,7 +55,7 @@ Treex::Block::Align::AlignForward
 Replaces two steps of alignment with one (e.g.: X -> Y -> Z to X -> Z). Uses all aligned nodes and all
 their aligned nodes for each source node. 
 
-The alignment type cat be either changed to "align_forward", or left as the original type of first
+The alignment type can be either changed to "align_forward", or left as the original type of first
 link going from the source node. 
 
 =head1 PARAMETERS
