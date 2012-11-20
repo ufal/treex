@@ -8,7 +8,7 @@ use Treex::Block::Read::WordAlignmentXML;
 use File::Basename;
 my $my_dir = dirname($0);
 
-my $reader = Treex::Block::Read::CdtTag->new(
+my $reader = Treex::Block::Read::WordAlignmentXML->new(
     from => "$my_dir/word_alignment_xml_sample.wa",
 );
 
