@@ -40,12 +40,15 @@ my %frequent_names = (
 
 
 my %cached_mapping;
+my @replacements;
 
 END {
     print "\n\n-------------- SUBSTITUČNÍ TABULKA ----------------\n";
-    foreach my $original (sort keys %cached_mapping) {
-        print "  $original --> $cached_mapping{$original}\n";
-    }
+    print join "\n",@replacements;
+    print "\n";
+#    foreach my $original (sort keys %cached_mapping) {
+#        print "  $original --> $cached_mapping{$original}\n";
+#    }
 }
 
 sub process_zone {
@@ -181,6 +184,7 @@ sub process_nnode {
 
 sub _replace_form {
     my ($anode, $new_lemma, $new_form) = @_;
+    push @replacements, $anode->form." --> $new_form";
     $anode->wild->{anonymized} = 1;
     $anode->wild->{origform} = $anode->form;
     $anode->set_lemma($new_lemma);
