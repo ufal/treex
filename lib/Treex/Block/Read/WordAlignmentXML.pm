@@ -9,6 +9,7 @@ sub next_document {
     my ($self) = @_;
 
     my $text = $self->next_document_text();
+    $text =~ s/& /&amp; /g;
 
     my $twig = XML::Twig->new();
     $twig->xparse( $text );
