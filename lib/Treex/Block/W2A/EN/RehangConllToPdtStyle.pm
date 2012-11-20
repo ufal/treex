@@ -89,6 +89,10 @@ sub switch_with_parent {
         my $coord_head = $a_node->get_parent();
         my $eff_parent = $coord_head->get_parent();
         my $ggg        = $eff_parent->get_parent();
+        if ( !$ggg ) {
+            log_warn "Cannot switch a node with its parent, since the parent is the root";
+            return;
+        }
         $coord_head->set_parent($ggg);
         $eff_parent->set_parent($coord_head);
         my @eff_par_children = $eff_parent->get_children();

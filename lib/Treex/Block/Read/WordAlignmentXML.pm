@@ -9,7 +9,9 @@ sub next_document {
     my ($self) = @_;
 
     my $text = $self->next_document_text();
-    $text =~ s/& /&amp; /g;
+    return if !defined $text;
+
+    $text =~ s/& /&amp; /gxsm;
 
     my $twig = XML::Twig->new();
     $twig->xparse( $text );
@@ -31,7 +33,7 @@ sub next_document {
 	    my $atree = $zone->create_atree;
 	    my $ord;
 	    foreach my $word ( split / /, $sentence_string{$language} ) {
-	        my $ord++;
+	        $ord++;
 	        push @{$nodes{$language}}, $atree->create_child( { form => $word, ord => $ord } );
 	    }
 	}
