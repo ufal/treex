@@ -52,7 +52,7 @@ sub project_subtree {
         @trg_nodes = grep {!$done{$_}} @trg_nodes;
         
         if (@trg_nodes){
-            my $head_trg_node = @trg_nodes==1 ? $trg_nodes[0] : $self->choode_head(@trg_nodes);
+            my $head_trg_node = @trg_nodes==1 ? $trg_nodes[0] : $self->choose_head(@trg_nodes);
             $head_trg_node->set_parent($trg_root);
             $done{$head_trg_node} = 1;
             foreach my $another_trg_node (grep {$_ != $head_trg_node} @trg_nodes){

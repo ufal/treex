@@ -144,6 +144,17 @@ sub set_attr {
         my $ids = ref($attr_value) eq 'Treex::PML::List' ? $attr_value : [$attr_value];
         $document->index_backref( $attr_name, $self->id, $ids );
     }
+    elsif ($attr_name eq 'alignment'){
+        my $document = $self->get_document();
+        if ($self->{alignment}){
+            my @old_ids = map { $_->{'counterpart.rf'} } @{$self->{alignment}};
+            $document->remove_backref( 'alignment', $self->id, \@old_ids );
+        }
+        if ($attr_value && @$attr_value){
+            my @new_ids = map { $_->{'counterpart.rf'} } @$attr_value;
+            $document->index_backref( $attr_name, $self->id, \@new_ids );
+        }
+    }
 
     #simple attributes can be accessed directly
     return $self->{$attr_name} = $attr_value if $attr_name =~ /^[\w\.]+$/ || $attr_name eq '#name';
@@ -660,7 +671,7 @@ sub delete_aligned_node {
 sub add_aligned_node {
     my ( $self, $node, $type ) = @_;
     my $links_rf = $self->get_attr('alignment');
-    my %new_link = ( 'counterpart.rf' => $node->id, 'type' => $type );
+    my %new_link = ( 'counterpart.rf' => $node->id, 'type' => $type // ''); #/ so we have no undefs
     push( @$links_rf, \%new_link );
     $self->set_attr( 'alignment', $links_rf );
     return;
@@ -668,7 +679,6 @@ sub add_aligned_node {
 
 # remove invalid alignment links (leading to unindexed nodes)
 sub update_aligned_nodes {
-
     my ($self)   = @_;
     my $doc      = $self->get_document();
     my $links_rf = $self->get_attr('alignment');
