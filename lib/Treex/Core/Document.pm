@@ -547,7 +547,7 @@ sub retrieve_storable {
         $FILEHANDLE = $file;
     }
     else {
-        log_fatal "filename=$file, but Treex::Core::Document->retrieve(\$filename) can be used only for .streex files"
+        log_fatal "filename=$file, but Treex::Core::Document->retrieve_storable(\$filename) can be used only for .streex files"
             unless $file =~ /\.streex$/;
         open $FILEHANDLE, "<:via(gzip)", $file or log_fatal($!);
         $opened = 1;

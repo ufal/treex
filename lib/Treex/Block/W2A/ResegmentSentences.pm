@@ -128,7 +128,19 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::ResegmentSentences
+Treex::Block::W2A::ResegmentSentences - split bundles which contain more sentences
+
+=head1 MOTIVATION
+
+Some resources (most notably WMT newstest) are segmented to chunks of text
+which mostly correspond to sentences, but sometimes contain more than one sentence.
+Sometimes we want to process such documents in Treex and output (Write::*)
+the result in a format where one output segement correspond to one input segement.
+(So e.g. for "one-sentence-per-line writers", we have the same number of input and output lines.)
+
+However, most Treex blocks expect exactly one (linguistic) sentence in each bundle.
+The solution is to use block C<W2A::ResegmentSentences> after the reader
+and C<Misc::JoinBundles> before the writer.
 
 =head1 DESCRIPTION
 
@@ -136,6 +148,10 @@ If the sentence segmenter says that the current sentence is
 actually composed of two or more sentences, then new bundles
 are inserted after the current bundle, each containing just
 one piece of the resegmented original sentence.
+
+This block should be executed before tokenization (and tagging etc).
+It deals only with the (string) attribute C<sentence> in each zone,
+it does not process any trees.
 
 All zones are processed.
 The number of bundles created is determined by the number of subsegments
@@ -159,6 +175,10 @@ By setting parameter C<remove> you can delete some bundles.
 Default is remove=no.
 Setting remove=all will delete all bundles with more than one subsegments in the current zone.
 Setting remove=diff will delete all bundles that have (at least) two zones with different number of subsegments.
+
+=head1 SEE ALSO
+
+L<Treex::Block::Misc::JoinBundles>
 
 =head1 AUTHOR
 
