@@ -32,7 +32,7 @@ has 'modifier_config' => (
     isa     => 'Treex::Block::Write::AttributeParameterized::ModifierConfig',
     is      => 'ro',
     coerce  => 1,
-    default => undef
+    builder => '_return_undef_modifier_config'
 );
 
 has instead_undef => ( is => 'ro', isa => 'Str', default => 'undef', documentation => 'What to return instead undefined attributes. Default is "undef" which returns real Perl undef.' );
@@ -52,6 +52,11 @@ has '_cache' => ( isa => 'HashRef', is => 'ro', writer => '_set_cache' );
 #
 # METHODS
 #
+
+# A dummy builder for modifier_config to allow it to be overridden in ArffWriting.
+sub _return_undef_modifier_config {
+    return undef;
+}
 
 # Parse the text modifier settings (Perl code given in a parameter that must return a hashref)
 sub _parse_modifier_config {
@@ -86,6 +91,7 @@ sub _parse_hashref {
 
     return $hashref;
 }
+
 
 # Build the output attributes
 before 'BUILD' => sub {
