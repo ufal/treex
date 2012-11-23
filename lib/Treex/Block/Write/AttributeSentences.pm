@@ -18,6 +18,9 @@ has '+extension' => ( default => '.txt' );
 
 has '+instead_undef' => ( default => "" );
 
+has instead_empty_tree => ( is => 'ro', isa => 'Str', default => '', documentation => 'What line to write instead of empty tree. Default is the empty string.' );
+
+
 # Change '\n', '\r', '\t'
 sub BUILDARGS {
     my ( $self, $args ) = @_;
@@ -47,16 +50,18 @@ sub BUILD {
 }
 
 sub _process_tree() {
-
     my ( $self, $tree ) = @_;
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
-
-    print { $self->_file_handle }
-        join $self->separator,
-        map {
-        join $self->attr_sep, map { $self->escape($_) } @{ $self->_get_info_list($_) }
-        } @nodes;
+    if (!@nodes) {
+      print { $self->_file_handle } $self->instead_empty_tree;
+    } else {
+        print { $self->_file_handle }
+            join $self->separator,
+            map {
+                join $self->attr_sep, map { $self->escape($_) } @{ $self->_get_info_list($_) }
+            } @nodes;
+    }
 
     print { $self->_file_handle } "\n";
 }
