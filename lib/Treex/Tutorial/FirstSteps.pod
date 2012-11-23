@@ -144,7 +144,7 @@ You have an input plain text (e.g. F<data/news.txt>)
 where each paragraph (including headlines)
 is on a separate line. Load this file into Treex and print one sentence per line.
 Note that headlines do not end with a fullstop,
-but they should be treated as separated sentences
+but they should be treated as separate sentences
 
 HINT: See documentation of L<Treex::Block::W2A::Segment>.
 
@@ -191,7 +191,7 @@ For many other languages, there are pre-trained TreeTagger models.
  echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences\
              W2A::EN::Tokenize\
-             W2A::TagFeaturama\
+             W2A::EN::TagFeaturama\
              W2A::EN::Lemmatize\
              Write::CoNLLX
 
@@ -204,10 +204,10 @@ For many other languages, there are pre-trained TreeTagger models.
  echo "Je suis desolée" |\
   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
  echo "Bohužel jsem tento tutorial nedokončil." |\
-  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::TagFeaturama Write::CoNLLX
+  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagFeaturama Write::CoNLLX
 
-If you suceeded to install Morče tagger, you can substitute C<W2A::TagFeaturama>
-with C<W2A::EN::TagMorce> or C<W2A::CS:TagMorce>.
+If you suceeded to install Morče tagger, you can substitute C<W2A::EN::TagFeaturama>
+with C<W2A::EN::TagMorce>.
 
 =head2 Bonus Task 2
 
@@ -255,9 +255,6 @@ but you can also specify the output file with a writer's parameter C<to>.
 
  echo "John loves Mary" | treex -Len Read::Sentences W2A::EN::TagLinguaEn\
       Write::CoNLLX to=my.conll
-
-There is a safety check against accidental overwriting files,
-so if you want to overwrite F<my.conll>, you must use C<Write::CoNLLX to=my.conll clobber=1>.
 
 Similarly, you can specify the input files with a reader's parameter C<from>.
 
