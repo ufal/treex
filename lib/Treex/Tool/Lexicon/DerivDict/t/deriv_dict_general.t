@@ -39,4 +39,6 @@ is(scalar($lexeme1->get_derived_lexemes), 2, "derived lexemes correctly linked")
 
 is($lexeme3->source_lexeme, $lexeme1, "source lexeme correctly linked");
 
+$dict->save('testdict.tsv');
+
 done_testing();
