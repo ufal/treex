@@ -54,29 +54,29 @@ sub process_start {
 }
 
 sub fill_node_info {
-    my ( $self, $node_info ) = @_;
+    my ( $self, $node ) = @_;
 
-    $self->fill_info_from_tree($node_info);
-    $self->fill_info_from_model($node_info);
+    $self->fill_info_basic($node);
+    $self->fill_info_alayer($node);
+    $self->fill_info_formemes($node);
+    $self->fill_info_aligned($node);
+    $self->fill_info_model($node);
 
     return;
 }
 
 # fills in info that is provided by the model
-sub fill_info_from_model {
-    my ( $self, $node_info ) = @_;
+sub fill_info_model {
+    my ( $self, $node ) = @_;
 
     # get info from model
-    $node_info->{'original_score'} =
-        $self->get_formeme_score($node_info);
-    ( $node_info->{'best_formeme'}, $node_info->{'best_score'} ) =
-        $self->get_best_formeme($node_info);
-    ( $node_info->{'bpos'}, $node_info->{'bpreps'}, $node_info->{'bcase'} )
-        = Treex::Tool::Depfix::CS::FormemeSplitter::splitFormeme(
-        $node_info->{'best_formeme'}
-        );
+    $node->wild->{'deepfix_info'}->{'original_score'} =
+        $self->get_formeme_score($node);
+    ( $node->wild->{'deepfix_info'}->{'best_formeme'},
+        $node->wild->{'deepfix_info'}->{'best_score'}
+    ) = $self->get_best_formeme($node);
 
-    return $node_info;
+    return $node;
 }
 
 # uses the model to compute the score of the given formeme
@@ -85,47 +85,13 @@ sub fill_info_from_model {
 # Now this is simply MLE with +1 smoothing, but backoff could be provided
 # and eventually there should be some "real" machine learning here
 sub get_formeme_score {
-    my ( $self, $node_info, $formeme ) = @_;
+    my ( $self, $node, $formeme ) = @_;
     if ( !defined $formeme ) {
-        $formeme = $node_info->{'formeme'};
+        $formeme = $node->wild->{'deepfix_info'}->{'formeme'}->{'formeme'};
     }
 
-    # default values (used if the model does not tell us anything)
-    my $formeme_count = 0;
-    my $all_count     = 0;
-
-    # get the numbers from the model
-    # (depends on the format of the model)
-    if ( $self->model_format eq 'tlemma_ptlemma_pos_formeme' ) {
-
-        $formeme_count = $model_data->{'tlemma_ptlemma_pos_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{$formeme}
-            || 0;
-
-        $all_count = $model_data->{'tlemma_ptlemma_pos'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
-            || 0;
-    }
-    elsif ( $self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme' ) {
-
-        $formeme_count = $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }->{$formeme}
-            || 0;
-
-        $all_count = $model_data->{'tlemma_ptlemma_pos_attdir'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
-            || 0;
-    }
-    elsif ( $self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme' ) {
-
-        $formeme_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }->{$formeme}
-            || 0;
-
-        $all_count = $model_data->{'tlemma_ptlemma_syntpos_enformeme'}
-            ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
-            || 0;
-    }
+    my $formeme_count = $self->get_formeme_count($node, $formeme);
+    my $all_count     = $self->get_all_count($node);
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
 
@@ -138,41 +104,121 @@ sub get_formeme_score {
 # where there are two top scoring formemes --
 # a random one is chosen in such case)
 sub get_best_formeme {
-    my ( $self, $node_info ) = @_;
-
-    my @candidates = ();
-    if ( $self->model_format eq 'tlemma_ptlemma_pos_formeme' ) {
-        @candidates = keys %{
-            $model_data->{'tlemma_ptlemma_pos_formeme'}
-                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }
-            };
-    }
-    elsif ( $self->model_format eq 'tlemma_ptlemma_pos_attdir_formeme' ) {
-        @candidates = keys %{
-            $model_data->{'tlemma_ptlemma_pos_attdir_formeme'}
-                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'attdir'} }
-            };
-    }
-    elsif ( $self->model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme' ) {
-        @candidates = keys %{
-            $model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
-                ->{ $node_info->{'tlemma'} }->{ $node_info->{'ptlemma'} }->{ $node_info->{'syntpos'} }->{ $node_info->{'enformeme'} }
-            };
-    }
+    my ( $self, $node ) = @_;
 
     my $top_score   = 0;
     my $top_formeme = '';    # returned if no usable formemes in model
-
+    my @candidates = $self->get_candidates($node);
     foreach my $candidate (@candidates) {
-        my $score = $self->get_formeme_score( $node_info, $candidate );
+        my $score = $self->get_formeme_score( $node, $candidate );
         if ( $score > $top_score ) {
             $top_score   = $score;
             $top_formeme = $candidate;
         }
     }
 
-    return ( $top_formeme, $top_score );
+    my $top_formeme_analyzed =
+        Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
+            $top_formeme);
+    return ( $top_formeme_analyzed, $top_score );
 }
+
+sub fix {
+    my ($self, $node) = @_;
+
+    if ($self->decide_on_change($node)) {
+        $self->do_the_change($node);
+    }
+
+    return ;
+}
+
+sub do_the_change {
+    my ($self, $node) = @_;
+
+    my $original_formeme = $node->wild->{'deepfix_info'}->{'formeme'};
+    my $new_formeme = $node->wild->{'deepfix_info'}->{'best_formeme'};
+
+    return ;
+}
+
+# SUBS TO BE OVERRIDDEN IN EXTENDED CLASSES
+
+sub decide_on_change {
+    my ($self, $node) = @_;
+
+    return (
+        $node->wild->{'deepfix_info'}->{'best_score'} > $self->upper_threshold
+        && $node->wild->{'deepfix_info'}->{'original_score'} < $self->lower_threshold
+    );
+}
+
+sub get_formeme_count {
+    my ($self, $node, $formeme) = @_;
+
+    croak "FixInfrequentFormemes::get_formeme_count is an abstract method!\n";
+    # return $model->{formeme_counts}->{some_info_about_node}->{$formeme}
+}
+
+sub get_all_count {
+    my ($self, $node) = @_;
+
+    croak "FixInfrequentFormemes::get_all_count is an abstract method!\n";
+    # return $model->{all_counts}->{some_info_about_node}
+}
+
+sub get_candidates {
+    my ($self, $node) = @_;
+
+    croak "FixInfrequentFormemes::get_candidates is an abstract method!\n";
+    # return keys $model->{formeme_counts}->{some_info_about_node}
+}
+
+# LOGGING
+
+sub logfix_formeme {
+    my ( $self, $msg ) = @_;
+
+    my $log_to_treex = 0;
+    my $msg    = $node->wild->{'deepfix_info'}->{'id'};
+    my $parent = $node->wild->{'deepfix_info'}->{'ptlemma'}
+        ?
+        "$node->wild->{'deepfix_info'}->{'ptlemma'} ($node->wild->{'deepfix_info'}->{'pformeme'})"
+        :
+        "#root#";
+    my $child = $node->wild->{'deepfix_info'}->{'enformeme'}
+        ?
+        "$node->wild->{'deepfix_info'}->{'tlemma'} (EN $node->wild->{'deepfix_info'}->{'enformeme'})"
+        :
+        $node->wild->{'deepfix_info'}->{'tlemma'};
+
+    if ( $node->wild->{'deepfix_info'}->{'attdir'} eq '\\' ) {
+        $msg .= " $parent \\ $child: ";
+    }
+    else {
+
+        # assert $node->wild->{'deepfix_info'}->{'attdir'} eq '/'
+        $msg .= " $child / $parent: ";
+    }
+
+    # TODO: accept there it does not have to be formeme which is changed
+    $msg .= "$node->wild->{'deepfix_info'}->{'formeme'} ($node->wild->{'deepfix_info'}->{'original_score'}) ";
+    if ( $node->wild->{'deepfix_info'}->{'best_formeme'} && $node->wild->{'deepfix_info'}->{'formeme'} ne $node->wild->{'deepfix_info'}->{'best_formeme'} ) {
+        if ( $node->wild->{'deepfix_info'}->{'change'} ) {
+            $msg .= "CHANGE TO $node->wild->{'deepfix_info'}->{'best_formeme'} ($node->wild->{'deepfix_info'}->{'best_score'})";
+            $log_to_treex = 1;
+        }
+        else {
+            $msg .= "KEEP over $node->wild->{'deepfix_info'}->{'best_formeme'} ($node->wild->{'deepfix_info'}->{'best_score'})";
+        }
+    }
+    else {
+        $msg .= "KEEP";
+    }
+
+    $self->logfix($msg, $log_to_treex);
+}
+
 
 1;
 
@@ -227,18 +273,6 @@ Path to the model file, relative to C<share/data/models/deepfix/>.
 The model file is automatically downloaded if missing locally but available online.
 Overrides C<model>.
 Default is undef.
-
-=item C<orig_alignment_type>
-
-Type of alignment between the CS t-trees.
-Default is C<orig>.
-The alignment must lead from this zone to the other zone.
-
-=item C<src_alignment_type>
-
-Type of alignment between the cs_Tfix t-tree and the en t-tree.
-Default is C<src>.
-The alignemt must lead from cs_Tfix to en.
 
 =item C<log_to_console>
 

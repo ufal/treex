@@ -78,6 +78,7 @@ sub do_the_change {
     my ($self, $node_info) = @_;
 
     $node_info->{node}->set_gram_negation('neg1');
+    $node_info->{'node'}->wild->{'deepfix'}->{'change_node'}->{'tag:neg'}->{'value'} = 1;
 
     return;
 }
