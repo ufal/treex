@@ -76,7 +76,7 @@ sub _token_to_filenames {
     }
     return $token if $token !~ s/^@(.*)/$1/;
     my $filelist = $token eq '-' ? \*STDIN : $token;
-    my @filenames = read_file( $filelist, chomp => 1 );
+    my @filenames = grep { $_ ne '' } read_file( $filelist, chomp => 1 );
 
     # Filnames in a filelist can be relative to the filelist directory.
     my $dir = dirname($token);
