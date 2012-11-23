@@ -102,7 +102,7 @@ sub _build_feature_names {
 
     );
     
-    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
+    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
     foreach my $class (sort @{$all_c}) {
         my $coref_class = "b_" . $class;
         push @feat_names, $coref_class;

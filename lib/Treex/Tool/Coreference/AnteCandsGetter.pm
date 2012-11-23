@@ -55,7 +55,7 @@ sub _select_all_cands {
     my ($self, $anaph) = @_;
 
     my @all_cands = $self->_select_cands_in_range($anaph, $self->prev_sents_num);
-    my @filtered_cands = grep {$self->_cand_filter->is_candidate( $_)} @all_cands;
+    my @filtered_cands = grep {$self->_cand_filter->is_candidate($_)} @all_cands;
 
     return \@filtered_cands;
 }
@@ -104,11 +104,14 @@ sub _select_cands_in_range {
 sub _get_antecedents {
     my ($self, $anaph) = @_;
 
-    my $antecs = [];
-    my @antes = $anaph->get_coref_chain;
+#     my $antecs = [];
+    my @antecs = $anaph->get_coref_chain;
+    print STDERR $anaph->id . "\t" . "\n";
+    print STDERR join "\t", map { $_->t_lemma } @antecs;
+    print STDERR "\n";
     my @membs = map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ?
-                        $_->children : () } @antes;
-    return [ @antes, @membs ];
+                        $_->children : () } @antecs;
+    return [ @antecs, @membs ];
 }
 
 # This method splits all candidates to positive and negative ones
@@ -148,11 +151,11 @@ sub _split_pos_neg_cands {
 }
 
 sub _find_positive_cands {
-    my ($self, $jnode, $cands) = @_;
+    my ($self, $anaph, $cands) = @_;
     my $non_gram_ante;
 
     my %cands_hash = map {$_->id => $_} @$cands;
-    my @antes = $jnode->get_coref_text_nodes;
+    my @antes = $anaph->get_coref_text_nodes;
 
 # TODO to comply with the results of Linh et al. (2009), this do not handle a
 # case when an anphor points to more than ones antecedents, e.g.

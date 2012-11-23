@@ -6,6 +6,11 @@ use Treex::Core::Resource qw(require_file_from_share);
 
 extends 'Treex::Tool::Coreference::PronCorefFeatures';
 
+my $b_true = '1';
+my $b_false = '-1';
+
+my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
+
 has 'ewn_classes_path' => (
     is          => 'ro',
     required    => 1,
@@ -39,6 +44,7 @@ has 'ne_properties' => (
 sub BUILD {
     my ($self) = @_;
 
+    $self->_ewn_classes;
     $self->_build_feature_names;
 }
 
@@ -139,12 +145,13 @@ sub _build_feature_names {
        c_cand_ne_cat      c_cand_ne_subcat
 
     );
-
-    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/noun all/;
-    foreach my $class (sort @{$all_c}) {
-        my $coref_class = "b_" . $class;
-        push @feat_names, $coref_class;
-    }
+    
+    # EuroWordNet nouns
+#     my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
+#     foreach my $class (sort @{$all_c}) {
+#         my $coref_class = "b_" . $class;
+#         push @feat_names, $coref_class;
+#     }
     
     return \@feat_names;
 }
@@ -264,6 +271,8 @@ sub _build_ewn_classes {
         
         my ($noun, $classes_string) = split /\t/, $line;
         my (@classes) = split / /, $classes_string;
+#         print STDERR join " ", @classes;
+#         print STDERR "\n";
         for my $class (@classes) {
             $ewn_noun->{$noun}{$class} = 1;
             $ewn_all_classes{$class} = 1;
@@ -272,6 +281,8 @@ sub _build_ewn_classes {
     close EWN;
 
     my @class_list = keys %ewn_all_classes;
+#     print STDERR join " ", @class_list;
+#     print STDERR "\n";
     my $ewn_classes = { nouns => $ewn_noun, all => \@class_list };
 
     return $ewn_classes;
@@ -312,7 +323,7 @@ override '_binary_features' => sub {
 override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     my $coref_features = super();
-
+    
     $coref_features->{'c_'.$type.'_gen'} = $node->gram_gender;
     $coref_features->{'c_'.$type.'_num'} = $node->gram_number;
     
@@ -332,6 +343,46 @@ override '_unary_features' => sub {
     elsif ($type eq 'cand') {
         $coref_features->{'c_'.$type.'_type'} = $self->_ante_type( $node );
         $coref_features->{'c_'.$type.'_synttype'} = $self->_ante_synt_type( $node );
+    }
+
+    if ( $type eq "anaph" ) {
+#     if ( $node->id eq "#t_tree-en_src-s2-n815" ) {
+#         print STDERR $node->get_address . "\n";
+#         print STDERR $node->t_lemma. "\t" . $node->id . "\n";
+    }
+    
+###########################
+    #   Semantic:
+    #   1:  is_name_of_person
+    if ($type eq 'cand') {
+        $coref_features->{b_cand_pers} =  $node->is_name_of_person ? $b_true : $b_false;
+
+        #   EuroWordNet nouns
+        my $cand_lemma      = $node->t_lemma;
+        my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
+        my $cand_c = $noun_c->{$cand_lemma};
+
+#         debug
+#         if ( not $cand_c ) {
+#             my $tmp = ( defined $cand_c->{"young_bird"} ) ? $b_true : $b_false;
+# #             print STDERR $node->t_lemma . "\n";
+# #             print STDERR $node->t_lemma . " a class: $tmp\n";
+#         }
+#         end debug
+
+#         #1   EuroWordNet nouns: print all classes (full matrix)
+#         for my $class ( @{$all_c} ) {
+#             my $coref_class = "b_" . $class;
+#             $coref_features->{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
+#         }
+        
+        #2   EuroWordNet nouns: print only classes to which $cand belongs (sparse matrix)
+        for my $class ( @{$all_c} ) {
+            my $coref_class = "b_" . $class;
+            if ( defined $cand_c->{$class} ) {
+                $coref_features->{$coref_class} =  $b_true;
+            }
+        }
     }
     
     return $coref_features;

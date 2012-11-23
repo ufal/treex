@@ -139,7 +139,7 @@ sub _create_instance_string {
                 : (($self->format ne 'unsup') ? "c_$_=" : "") 
                     . $self->_feature_transformer->special_chars_off( $instance->{$_} )
         }
-        } @{$names};
+    } @{$names};
     $line .= join $self->feature_sep, @cols;
     return $line;
 }
@@ -188,6 +188,27 @@ sub _create_lines_percep_format {
     return @lines;
 }
 
+sub _create_lines_reranker_format {
+    my ($self, $anaph, $cands, $y_value, $ords) = @_;
+
+    my $fe = $self->_feature_extractor;
+    my $insts = $fe->create_instances( $anaph, $cands, $ords );
+
+    my @lines = ();
+    my $cand_insts = $self->_sort_instances( $insts, $cands );
+    foreach my $cand_inst ( @$cand_insts ) {
+        my @fe_names = @{$fe->feature_names};
+        foreach my $name ( keys %{$cand_inst} ) {
+            if ( not grep { $_ eq $name } @fe_names ) {
+                push @fe_names, $name;
+            }
+        }
+        push @lines, $self->_create_instance_string( $cand_inst, \@fe_names, $y_value );
+    }
+    
+    return @lines;
+}
+
 before 'process_document' => sub {
     my ($self, $doc) = @_;
 
@@ -217,7 +238,8 @@ sub process_tnode {
                     @lines = $self->_create_lines_unsup_format( $t_node, $cands );
                 }
                 else {
-                    @lines = $self->_create_lines_percep_format( $t_node, $cands );
+                    @lines = $self->_create_lines_reranker_format( $t_node, $cands );
+#                     @lines = $self->_create_lines_percep_format( $t_node, $cands );
                 }
                 $self->_print_bundle( $t_node->id, @lines );
             }
@@ -228,14 +250,21 @@ sub process_tnode {
             # each other
             my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
                 = $acs->get_pos_neg_candidates( $t_node );
+                
+            if ( @{$pos_cands} > 0 and defined $pos_cands->[0] ) {
+                my @defined_neg_cands = grep { defined $_ } @{$neg_cands};
+                my @pos_lines = $self->_create_lines_reranker_format( $t_node, $pos_cands, 1, $pos_ords );
+                my @neg_lines = $self->_create_lines_reranker_format( $t_node, \@defined_neg_cands, 0, $neg_ords );
+#                 my @neg_lines = $self->_create_lines_reranker_format( $t_node, $neg_cands, 0, $neg_ords );
+    #             my @pos_lines = $self->_create_lines_percep_format( $t_node, $pos_cands, 1, $pos_ords );
+    #             my @neg_lines = $self->_create_lines_percep_format( $t_node, $neg_cands, 0, $neg_ords );
 
-            my @pos_lines = $self->_create_lines_percep_format( $t_node, $pos_cands, 1, $pos_ords );
-            my @neg_lines = $self->_create_lines_percep_format( $t_node, $neg_cands, 0, $neg_ords );
-
-# TODO negative instances appeared to be of 0 size, why?
-            if (@pos_lines > 0) {
-                $self->_print_bundle( $t_node->id, (@pos_lines, @neg_lines) );
+    # TODO negative instances appeared to be of 0 size, why?
+                if (@pos_lines > 0) {
+                    $self->_print_bundle( $t_node->id, (@pos_lines, @neg_lines) );
+                }
             }
+
         }
     }
 }

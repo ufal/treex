@@ -30,8 +30,6 @@ sub set_aclause_num_root {
     if ( not @vlist ) {
         @vlist = $root->get_children( { ordered => 1 } );
     }
-    print join "\t", map { $_->t_lemma } @vlist;
-    print "\n";
     @vlist = sort { $a->wild->{doc_ord} <=> $b->wild->{doc_ord} } @vlist;
     for ( my $i = 0; $i < @vlist; $i++ ) {
         $vlist[$i]->set_clause_number($i+1);
