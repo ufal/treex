@@ -64,6 +64,11 @@ sub process_start {
 sub process_atree {
     my ( $self, $atree ) = @_;
     my @nodes = $atree->get_descendants({ordered=>1});
+
+    # It is legal to have a tree with no nodes (e.g. for non 1-1 aligned sentences),
+    # so just skip such sentences (and do not log_fatal if no lemmas are found).
+    return if !@nodes;
+
     my $forms_rf = [map { $_->form } @nodes];
     $self->normalize($forms_rf);
     
