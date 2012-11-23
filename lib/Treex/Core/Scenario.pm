@@ -212,11 +212,12 @@ sub _build_parser {
 
 sub _build_cache {
     my $self = shift;
-
-    require Treex::Core::CacheBlock;
-    require Treex::Tool::Memcached::Memcached;
-
+    
     if ( $self->runner && $self->runner->cache ) {
+        
+        require Treex::Core::CacheBlock;
+        require Treex::Tool::Memcached::Memcached;
+        
         return Treex::Tool::Memcached::Memcached::get_connection(
             "documents-cache"
         );
