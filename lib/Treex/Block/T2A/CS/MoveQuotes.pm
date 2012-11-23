@@ -22,7 +22,7 @@ sub process_tnode {
     my ($a_gparent) = $a_parent->get_eparents( { or_topological => 1 } );
     return if $a_parent->is_root();
     my @lefties =
-        sort { $_->ord <=> $b->ord }
+        sort { $a->ord <=> $b->ord }
         grep { ( $_->afun || '' ) =~ /^Aux/ && $_->precedes($a_quote) }
         ( $a_quote->get_siblings(), ( $a_gparent->afun || '' ) =~ /^Aux[CP]/ ? $a_gparent : () );
 
