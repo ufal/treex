@@ -4,7 +4,7 @@ use Moose;
 use autodie;
 use Carp;
 
-use Treex::Tool::Parser::MSTperl::ModelPMI;
+use Treex::Tool::Parser::MSTperl::ModelAdditional;
 
 # TODO dynamic features
 
@@ -148,7 +148,13 @@ has 'edge_features_cache' => (
 
 has pmi_model => (
     is => 'rw',
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelPMI]',
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
+    default => undef,
+);
+
+has cprob_model => (
+    is => 'rw',
+    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
     default => undef,
 );
 
@@ -582,6 +588,15 @@ my %simple_feature_sub_references = (
     'SUBSTR'            => \&{feature_substr_parent},
     'pmi'               => \&{feature_pmi},
     'pmibucketed'       => \&{feature_pmi_bucketed},
+    'pmirounded'        => \&{feature_pmi_rounded},
+    'cprob'             => \&{feature_cprob},
+    'cprobbucketed'     => \&{feature_cprob_bucketed},
+    'cprobrounded'      => \&{feature_cprob_rounded},
+    # obsolete
+    'pmitworounded'     => \&{feature_pmi_2_rounded},
+    'pmithreerounded'   => \&{feature_pmi_3_rounded},
+    'cprobtworounded'   => \&{feature_cprob_2_rounded},
+    'cprobthreerounded' => \&{feature_cprob_3_rounded},
 );
 
 sub get_simple_feature_sub_reference {
@@ -1380,36 +1395,112 @@ sub feature_number_of_parents_children {
     }
 }
 
-# now on lemmas, maybe TODO have pmi_form, pmi_lemma
-# uses rounded bucketing
+sub feature_additional_model {
+    my ( $self, $edge, $field_index, $model ) = @_;
+
+    my $child = $edge->child->fields->[$field_index];
+    my $parent = $edge->parent->fields->[$field_index];
+
+    if ( defined $child && defined $parent) {
+        return $model->get_value($child, $parent);
+    } else {
+        croak "Either child or parent is undefined in additional model feature, ".
+            "this should not happen!";
+    }
+}
+
+sub feature_additional_model_bucketed {
+    my ( $self, $edge, $field_index, $model ) = @_;
+
+    my $child = $edge->child->fields->[$field_index];
+    my $parent = $edge->parent->fields->[$field_index];
+
+    if ( defined $child && defined $parent) {
+        return $model->get_value_bucketed($child, $parent);
+    } else {
+        croak "Either child or parent is undefined in additional model feature, ".
+            "this should not happen!";
+    }
+}
+
+sub feature_additional_model_rounded {
+    my ( $self, $edge, $parameters, $model ) = @_;
+
+    my ($field_index, $rounding) = @$parameters;
+    my $child = $edge->child->fields->[$field_index];
+    my $parent = $edge->parent->fields->[$field_index];
+
+    if ( defined $child && defined $parent) {
+        return $model->get_value_rounded($child, $parent, $rounding);
+    } else {
+        croak "Either child or parent is undefined in additional model feature, ".
+            "this should not happen!";
+    }
+}
+
 sub feature_pmi {
     my ( $self, $edge, $field_index ) = @_;
 
-    my $child = $edge->child->fields->[$field_index];
-    my $parent = $edge->parent->fields->[$field_index];
-
-    if ( defined $child && defined $parent) {
-        return $self->pmi_model->get_rounded_pmi($child, $parent);
-    } else {
-        croak "Either child or parent is undefined in PMI, this should not happen!";
-    }
+    return $self->feature_additional_model($edge, $field_index, $self->pmi_model);
 }
 
-# now on lemmas, maybe TODO have pmi_form, pmi_lemma
 sub feature_pmi_bucketed {
     my ( $self, $edge, $field_index ) = @_;
 
-    my $child = $edge->child->fields->[$field_index];
-    my $parent = $edge->parent->fields->[$field_index];
-
-    if ( defined $child && defined $parent) {
-        return $self->pmi_model->get_bucketed_pmi($child, $parent);
-    } else {
-        croak "Either child or parent is undefined in PMI, this should not happen!";
-    }
+    return $self->feature_additional_model_bucketed($edge, $field_index, $self->pmi_model);
 }
 
+sub feature_pmi_rounded {
+    my ( $self, $edge, $parameters ) = @_;
 
+    return $self->feature_additional_model_rounded($edge, $parameters, $self->pmi_model);
+}
+
+sub feature_pmi_2_rounded {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my @params = ($field_index, 1);
+    return $self->feature_pmi_rounded($edge, \@params);
+}
+
+sub feature_pmi_3_rounded {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my @params = ($field_index, 2);
+    return $self->feature_pmi_rounded($edge, \@params);
+}
+
+sub feature_cprob {
+    my ( $self, $edge, $field_index ) = @_;
+
+    return $self->feature_additional_model($edge, $field_index, $self->cprob_model);
+}
+
+sub feature_cprob_bucketed {
+    my ( $self, $edge, $field_index ) = @_;
+
+    return $self->feature_additional_model_bucketed($edge, $field_index, $self->cprob_model);
+}
+
+sub feature_cprob_rounded {
+    my ( $self, $edge, $parameters ) = @_;
+
+    return $self->feature_additional_model_rounded($edge, $parameters, $self->cprob_model);
+}
+
+sub feature_cprob_2_rounded {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my @params = ($field_index, 1);
+    return $self->feature_cprob_rounded($edge, \@params);
+}
+
+sub feature_cprob_3_rounded {
+    my ( $self, $edge, $field_index ) = @_;
+
+    my @params = ($field_index, 2);
+    return $self->feature_cprob_rounded($edge, \@params);
+}
 
 1;
 

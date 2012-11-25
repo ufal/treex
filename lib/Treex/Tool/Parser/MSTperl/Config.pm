@@ -5,7 +5,7 @@ use autodie;
 use Carp;
 
 use Treex::Tool::Parser::MSTperl::FeaturesControl;
-use Treex::Tool::Parser::MSTperl::ModelPMI;
+use Treex::Tool::Parser::MSTperl::ModelAdditional;
 
 # varied levels of debug info,
 # ranging from 0 (no debug info)
@@ -422,6 +422,30 @@ has 'pmi_buckets' => (
     default => undef,
 );
 
+has use_cprob => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 0
+);
+
+has cprob_model_file => (
+    is => 'rw',
+    isa => 'Str',
+    default => ''
+);
+
+has cprob_model_format => (
+    is => 'rw',
+    isa => 'Str',
+    default => 'tsv'
+);
+
+has 'cprob_buckets' => (
+    is      => 'rw',
+    isa     => 'Maybe[ArrayRef[Int]]',
+    default => undef,
+);
+
 # METHODS
 
 sub BUILD {
@@ -450,6 +474,10 @@ sub BUILD {
             'pmi_model_file',
             'pmi_model_format',
             'pmi_buckets',
+            'use_cprob',
+            'cprob_model_file',
+            'cprob_model_format',
+            'cprob_buckets',
             'use_edge_features_cache',
             'labeller_use_edge_features_cache',
             'number_of_iterations',
@@ -502,7 +530,7 @@ sub BUILD {
             );
 
             if ($self->use_pmi) {
-                my $pmi_model = Treex::Tool::Parser::MSTperl::ModelPMI->new(
+                my $pmi_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
                     config       => $self,
                     model_file   => $self->pmi_model_file,
                     model_format => $self->pmi_model_format,
@@ -511,6 +539,19 @@ sub BUILD {
                 my $result = $pmi_model->load();
                 if ($result) {
                     $self->unlabelledFeaturesControl->pmi_model($pmi_model);
+                }
+            }
+            
+            if ($self->use_cprob) {
+                my $cprob_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
+                    config       => $self,
+                    model_file   => $self->cprob_model_file,
+                    model_format => $self->cprob_model_format,
+                    buckets      => $self->cprob_buckets,
+                );
+                my $result = $cprob_model->load();
+                if ($result) {
+                    $self->unlabelledFeaturesControl->cprob_model($cprob_model);
                 }
             }
         }

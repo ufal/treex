@@ -1,4 +1,4 @@
-package Treex::Tool::Parser::MSTperl::ModelPMI;
+package Treex::Tool::Parser::MSTperl::ModelAdditional;
 
 use Data::Dumper;
 use autodie;
@@ -40,7 +40,7 @@ has 'buckets' => (
     trigger => \&_buckets_set,
 );
 
-# sets pmi2bucket, maxBucket and minBucket
+# sets value2bucket, maxBucket and minBucket
 sub _buckets_set {
     my ( $self, $buckets ) = @_;
 
@@ -48,14 +48,14 @@ sub _buckets_set {
         return;
     }
 
-    my %pmi2bucket;
-    $pmi2bucket{'?'} = '?';
+    my %value2bucket;
+    $value2bucket{'?'} = '?';
 
-    # find maximal and minimal bucket & partly fill %pmi2bucket
+    # find maximal and minimal bucket & partly fill %value2bucket
     my $minBucket = -1000;
     my $maxBucket = 1000;
     foreach my $bucket ( @{$buckets} ) {
-        if ( $pmi2bucket{$bucket} ) {
+        if ( $value2bucket{$bucket} ) {
             warn "Bucket '$bucket' is defined more than once; "
               . "disregarding its later definitions.\n";
         }
@@ -65,7 +65,7 @@ sub _buckets_set {
               . "buckets must be negative integers.";
         }
         else {
-            $pmi2bucket{$bucket} = $bucket;
+            $value2bucket{$bucket} = $bucket;
             if ( $bucket > $maxBucket ) {
                 $maxBucket = $bucket;
             }
@@ -79,26 +79,26 @@ sub _buckets_set {
     $self->maxBucket($maxBucket);
     $self->minBucket($minBucket);
 
-    # fill %pmi2bucket from minBucket to maxBucket
+    # fill %value2bucket from minBucket to maxBucket
     my $lastBucket = $minBucket;
-    for ( my $pmi = $minBucket + 1 ; $pmi < $maxBucket ; $pmi++ ) {
-        if ( defined $pmi2bucket{$pmi} ) {
+    for ( my $value = $minBucket + 1 ; $value < $maxBucket ; $value++ ) {
+        if ( defined $value2bucket{$value} ) {
 
-            # the pmi defines a bucket
-            $lastBucket = $pmi2bucket{$pmi};
+            # the value defines a bucket
+            $lastBucket = $value2bucket{$value};
         }
         else {
 
-            # the pmi falls into the highest lower bucket
-            $pmi2bucket{$pmi} = $lastBucket;
+            # the value falls into the highest lower bucket
+            $value2bucket{$value} = $lastBucket;
         }
     }
-    $self->pmi2bucket( \%pmi2bucket );
+    $self->value2bucket( \%value2bucket );
 
     return;
 }
 
-has 'pmi2bucket' => (
+has 'value2bucket' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub { { '?' => '?' } },
@@ -108,14 +108,14 @@ has 'pmi2bucket' => (
 # -17 is the default as it seems to be the most frequent value
 # (if no buckets are set. always -17 or '?' are returned)
 
-# any higher pmi falls into this bucket
+# any higher value falls into this bucket
 has 'maxBucket' => (
     isa     => 'Int',
     is      => 'rw',
     default => '-17',
 );
 
-# any lower pmi falls into this bucket
+# any lower value falls into this bucket
 has 'minBucket' => (
     isa     => 'Int',
     is      => 'rw',
@@ -127,7 +127,7 @@ sub load {
     my ($self) = @_;
 
     if ( $self->config->DEBUG >= 1 ) {
-        print "Loading PMI model from '" . $self->model_file . "...\n";
+        print "Loading additional model from '" . $self->model_file . "...\n";
     }
 
     my $result = undef;
@@ -147,12 +147,12 @@ sub load {
 
     if ($result) {
         if ( $self->config->DEBUG >= 1 ) {
-            print "PMI model loaded.\n";
+            print "Additional model loaded.\n";
         }
         return 1;
     }
     else {
-        croak "MSTperl parser error: PMI model file data error!";
+        croak "MSTperl parser error: additional model file data error!";
     }
 }
 
@@ -166,8 +166,8 @@ sub load_tsv {
         my $line;
         while ( $line = <$file> ) {
             chomp $line;
-            my ( $child, $parent, $pmi ) = split /\t/, $line;
-            $self->model->{$child}->{$parent} = $pmi;
+            my ( $child, $parent, $value ) = split /\t/, $line;
+            $self->model->{$child}->{$parent} = $value;
         }
         close $file;
     }
@@ -175,40 +175,49 @@ sub load_tsv {
     return 1;
 }
 
-sub get_pmi {
+sub get_value {
     my ( $self, $child, $parent ) = @_;
 
-    my $pmi = $self->model->{$child}->{$parent} // '?';
+    my $value = $self->model->{$child}->{$parent} // '?';
 
-    return $pmi;
+    return $value;
 }
 
-sub get_rounded_pmi {
-    my ( $self, $child, $parent ) = @_;
+sub get_rounded_value {
+    my ( $self, $child, $parent, $rounding ) = @_;
 
-    my $pmi = $self->model->{$child}->{$parent};
-    if ( defined $pmi ) {
-        $pmi = int($pmi);
+    my $value = $self->model->{$child}->{$parent};
+    if ( defined $value ) {
+        # get the rounding coefficient
+        if (!defined $rounding) {
+            $rounding = 0;
+        }
+        my $coef = 1;
+        for (my $i = 0; $i < $rounding; $i++) {
+            $coef *= 10;
+        }
+        # get the value
+        $value = int($value*$coef) / $coef;
     }
     else {
-        $pmi = '?';
+        $value = '?';
     }
 
-    return $pmi;
+    return $value;
 }
 
-sub get_bucketed_pmi {
+sub get_bucketed_value {
     my ( $self, $child, $parent ) = @_;
 
-    my $pmi = $self->get_rounded_pmi( $child, $parent );
-    my $bucket = $self->pmi2bucket->{$pmi};
+    my $value = $self->get_rounded_value( $child, $parent );
+    my $bucket = $self->value2bucket->{$value};
     if ( !defined $bucket ) {
-        if ( $pmi <= $self->minBucket ) {
+        if ( $value <= $self->minBucket ) {
             $bucket = $self->minBucket;
         }
         else {
 
-            # assert $pmi > $self->maxBucket
+            # assert $value > $self->maxBucket
             $bucket = $self->maxBucket;
         }
     }
@@ -226,7 +235,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::ModelPMI
+Treex::Tool::Parser::MSTperl::ModelAdditional
 
 =head1 DESCRIPTION
 
@@ -278,7 +287,7 @@ The lowest bucket (a bin for all PMIs lower than that).
 
 The highest bucket (a bin for all PMIs higher than that).
 
-=item pmi2bucket
+=item value2bucket
 
 Provides fast conversion of ceiled PMIs
 that are between minBucket and maxBucket
@@ -292,21 +301,21 @@ to buckets.
 
 =item load
 
-=item get_pmi($child, $parent) 
+=item get_value($child, $parent) 
 
 Returns the real PMI, i.e. a negative float
 (there are hundreds of thousands of possible values).
 
 Returns '?' if PMI is unknown.
 
-=item get_rounded_pmi($child, $parent) 
+=item get_rounded_value($child, $parent) 
 
 Returns ceiled PMI, i.e. the integer part of the real PMI
 (there are about 30 possible values).
 
 Returns '?' if PMI is unknown.
 
-=item get_bucketed_pmi($child, $parent) 
+=item get_bucketed_value($child, $parent) 
 
 Returns the nearest bucket that is lower or equal
 to the ceiled value of the PMI,
