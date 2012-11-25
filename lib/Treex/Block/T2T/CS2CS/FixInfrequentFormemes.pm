@@ -18,6 +18,8 @@ has 'upper_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.6 );
 
 has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
 
+use Treex::Tool::Depfix::CS::TagHandler;
+
 my $model_data;
 
 sub process_start {
@@ -57,7 +59,7 @@ sub fill_node_info {
     my ( $self, $node ) = @_;
 
     $self->fill_info_basic($node);
-    $self->fill_info_alayer($node);
+    $self->fill_info_lexnode($node);
     $self->fill_info_formemes($node);
     $self->fill_info_aligned($node);
     $self->fill_info_model($node);
@@ -138,8 +140,127 @@ sub do_the_change {
 
     my $original_formeme = $node->wild->{'deepfix_info'}->{'formeme'};
     my $new_formeme = $node->wild->{'deepfix_info'}->{'best_formeme'};
+    
+    my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
+    if (!defined $lexnode) {
+        log_warn( "No lex node for " . tnode_sgn($node) .
+            ", cannot perform the fix!" );
+        return;
+    }
+
+    if ($original_formeme->{formeme} ne $new_formeme->{formeme}) {
+        if ($original_formeme->{syntpos} ne $new_formeme->{syntpos}) {
+            log_warn "Changing syntpos is currently not supported.";
+        }
+        if ($original_formeme->{case} ne $new_formeme->{case}
+            && $new_formeme->{case} =~ /^[1-7]$/) {
+            # change node case
+            {
+                my $msg = $self->change_anode_attribute (
+                    'tag:case', $new_formeme->{case}, $lexnode);
+                # TODO logfix
+            }
+            # change prep case if relevant
+            if ($original_formeme->{prep} eq $new_formeme->{prep}) {
+                # (otherwise it will be changed anyway)
+                my $prepnode = $self->find_preposition_node(
+                    $node, $original_formeme->{prep});
+                if (defined $prepnode) {
+                    my $msg = $self->change_anode_attribute (
+                        'tag:case', $new_formeme->{case}, $prepnode, 1);
+                    # TODO logfix
+                }
+            }
+        }
+        if ($original_formeme->{prep} ne $new_formeme->{prep}) {
+            if ($new_formeme->{prep} eq '') {
+                # remove each original prep
+                foreach my $prep (@{$original_formeme->{preps}}) {
+                    my $prepnode = $self->find_preposition_node(
+                        $node, $original_formeme->{prep});
+                    if (defined $prepnode) {
+                        my $msg = $self->remove_anode($prepnode);
+                        # TODO logfix
+                    }
+                }
+            }
+            elsif ($original_formeme->{prep} eq '') {
+                
+                # add each new prep
+                foreach my $prep (@{$new_formeme->{preps}}) {
+                    my $case = Treex::Tool::Depfix::CS::TagHandler->
+                        get_tag_cat($child_node->tag, 'case');
+                    my $prep_atts = $self->new_preposition_attributes($prep, $lexnode);
+                    my $msg = $self->add_parent($prep_atts, $lexnode);
+                    # TODO logfix
+                }
+            }
+            elsif (
+                scalar( @{$original_formeme->{preps}} ) == 1
+                && scalar( @{$new_formeme->{preps}} ) == 1
+            ) {
+                # change preps 1 for 1
+                # find original prep
+                my $prepnode = $self->find_preposition_node(
+                    $node, $original_formeme->{prep});
+                if (defined $prepnode) {
+                    my $msg = $self->change_anode_attribute (
+                        'tag:case', $new_formeme->{case}, $prepnode, 1);
+                    # TODO logfix
+                }
+                # change it to new prep
+
+            }
+            else {
+                log_warn "Exchanging multiword preps is currently not supported."; 
+            }
+        }
+    }
+
 
     return ;
+}
+
+sub find_preposition_node {
+    my ( $self, $tnode, $prep_form ) = @_;
+
+    my $prep_node = undef;
+
+    my @matching_aux_nodes = grep {
+        $_->form =~ /^${prep_form}e?$/i
+    } $tnode->get_aux_anodes();
+    if ( @matching_aux_nodes == 1 ) {
+        $prep_node = $matching_aux_nodes[0];
+    }
+    else {
+        # else no prep can be found, which is often a valid result
+        if ( @matching_aux_nodes == 0 ) {
+            log_warn("There is no matching aux node!");
+        }
+        else {
+            log_warn("There are more than one matching aux nodes!");
+        }
+    }
+
+    return $prep_node;
+}
+
+sub new_preposition_attributes {
+    my ($self, $prep_form, $case) = @_;
+
+    # TODO find and use the code from TectoMT
+    my $prep_info = {};
+    $prep_info->{form} = $prep_form;
+    $prep_info->{lemma} = $prep_form; # TODO: not the best thing to do
+    my $tag = Treex::Tool::Depfix::CS::TagHandler->get_empty_tag();
+    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'pos', 'R');
+    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'subpos', 'R');
+    if (defined $case && $case =~ /^[1-7]$/) {
+        $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'case', $case);
+    }
+    $prep_info->{tag} = $tag;
+    
+    return $prep_info;
 }
 
 # SUBS TO BE OVERRIDDEN IN EXTENDED CLASSES
@@ -178,6 +299,11 @@ sub get_candidates {
 
 sub logfix_formeme {
     my ( $self, $msg ) = @_;
+
+    my $node = undef;
+
+
+    # THIS IS ONE BIG TODO :-) 
 
     my $log_to_treex = 0;
     my $msg    = $node->wild->{'deepfix_info'}->{'id'};

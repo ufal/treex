@@ -55,7 +55,7 @@ sub fill_node_info {
     }
     
     $self->fill_info_basic($node);
-    $self->fill_info_alayer($node);
+    $self->fill_info_lexnode($node);
     # $self->fill_info_formemes($node);
     # $self->fill_info_aligned($node);
 
@@ -140,24 +140,27 @@ sub fill_info_aligned {
     return $node;
 }
     
-sub fill_info_alayer {
+sub fill_info_lexnode {
     my ( $self, $node ) = @_;
     
+    my $result = 0;
+
     if (!defined $node) {
         $node = $tnode_being_processed;
     }
     
-    my $lexnode = $node->get_lex_anode();
     $node->wild->{'deepfix_info'}->{'lexnode'} = $lexnode;
     if ( defined $lexnode ) {
         $node->wild->{'deepfix_info'}->{'mpos'} = substr( $lexnode->tag, 0, 1 );
+        $result = 1;
     }
     else {
         # $node->wild->{'deepfix_info'}->{'mpos'} = '?';
         log_warn( "T-node " . $orig_node->id . " has no lex node!" );
+        $result = 0;
     }
 
-    return $node;
+    return $result;
 }
 
 # change the nde if necessary
@@ -173,11 +176,7 @@ sub fix {
 # returns log message on success
 # or undef on failure
 sub change_anode_attribute {
-    my ($self, $attribute, $value, $anode) = @_;
-
-    if (!defined $anode) {
-        $anode = $tnode_being_processed->wild->{'deepfix_info'}->{'lexnode'};
-    }
+    my ($self, $attribute, $value, $anode, $do_not_regenerate) = @_;
 
     my $msg = $attribute . ':';
 
@@ -195,7 +194,9 @@ sub change_anode_attribute {
     }
 
     # regenerate node
-    $self->regenerate_node($anode);
+    if (!$do_not_regenerate) {
+        $self->regenerate_node($anode);
+    }
     
     return $msg;
 }
@@ -204,13 +205,7 @@ sub change_anode_attribute {
 sub remove_anode {
     my ($self, $anode) = @_;
 
-    # TODO add lemma check?
-
-    if (!defined $anode) {
-        $anode = $tnode_being_processed->wild->{'deepfix_info'}->{'lexnode'};
-    }
-
-    my $parent   = $anode->get_parent();
+    my $parent = $anode->get_parent();
     my $msg = anode_sgn($parent);
     my @children = $anode->get_children();
     foreach my $child (@children) {
@@ -224,20 +219,12 @@ sub remove_anode {
 sub add_parent {
     my ($self, $parent_info, $anode) = @_;
 
-    if (!defined $anode) {
-        $anode = $tnode_being_processed->wild->{'deepfix_info'}->{'lexnode'};
-    }
-    
     my $old_parent = $anode->get_parent();
-    $new_parent = $old_parent->create_child();
+    $new_parent = $old_parent->create_child($parent_info);
     $new_parent->set_parent($old_parent);
     $new_parent->shift_before_subtree(
         $anode, { without_children => 1 }
     );
-    foreach my $attribute (keys %$parent_info) {
-        $new_parent->set_attr($attribute, $parent_info->{$attribute});
-    }
-    # TODO regenerate?
 
     return anode_sgn($new_parent);
 }
