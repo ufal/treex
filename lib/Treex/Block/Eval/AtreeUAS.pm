@@ -12,10 +12,10 @@ has sample_size => (
     default => 0,
     documentation => 'How many sentences should be in a sample (default is 0=all)',
 );
+has number_of_nodes => (is => 'rw', isa => 'Int', default => 0 );
+has same_as_ref => (is => 'rw', isa => 'HashRef', default => sub { my %h = (); return \%h } );
 
 my $sentences_in_current_sample = 0;
-my $number_of_nodes;
-my %same_as_ref;
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -26,7 +26,7 @@ sub process_bundle {
     my @ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
     my @compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();
 
-    $number_of_nodes += @ref_parents;
+    $self->set_number_of_nodes($self->number_of_nodes + @ref_parents);
 
     foreach my $compared_zone (@compared_zones) {
         my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
@@ -42,40 +42,43 @@ sub process_bundle {
             my $eqp = $parents[$i] == $ref_parents[$i];
             my $eqm = $is_member[$i] == $ref_is_member[$i];
             my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
-            $same_as_ref{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
-            $same_as_ref{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
-            $same_as_ref{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
-            $same_as_ref{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
+            $self->same_as_ref->{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
+            $self->same_as_ref->{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
+            $self->same_as_ref->{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
+            $self->same_as_ref->{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
             # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
             # For the sake of compatibility, we will output it only with the label, without extras.
             if ( $eqp &&
                  ( !$self->eval_is_member || $eqm ) &&
                  ( !$self->eval_is_shared_modifier || $eqs )
                ) {
-                $same_as_ref{$label}++;
+                $self->same_as_ref->{$label}++;
             }
         }
     }
 
     $sentences_in_current_sample++;
     if ($self->sample_size && $sentences_in_current_sample >= $self->sample_size){
-        print_stats();
+        $self->print_stats();
     }
     return;
 }
 
 sub print_stats {
-    foreach my $zone_label ( sort keys %same_as_ref ) {
-        print "$zone_label\t$same_as_ref{$zone_label}/$number_of_nodes\t" . ( $same_as_ref{$zone_label} / $number_of_nodes ) . "\n";
+    my ($self) = @_;
+    foreach my $zone_label ( sort keys %{$self->same_as_ref} ) {
+        print "$zone_label\t".$self->same_as_ref->{$zone_label}."/".$self->number_of_nodes."\t" . ( $self->same_as_ref->{$zone_label} / $self->number_of_nodes ) . "\n";
+        $self->same_as_ref->{$zone_label} = 0;
     }
-    ($sentences_in_current_sample, $number_of_nodes) = (0,0);
-    %same_as_ref = ();
+    $sentences_in_current_sample = 0;
+    $self->set_number_of_nodes(0);
     return;
 }
 
-END {
+sub process_end {
+    my ($self) = @_;
     if ($sentences_in_current_sample){
-        print_stats();
+        $self->print_stats();
     }
 }
 
