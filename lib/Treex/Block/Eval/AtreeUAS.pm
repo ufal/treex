@@ -37,15 +37,15 @@ sub process_bundle {
             log_fatal 'There must be the same number of nodes in compared trees';
         }
         my $label = $compared_zone->get_label;
-        my $label1 = $label.'-regardless-is_member';
+        my $ref_label = $ref_zone->get_label;
         foreach my $i ( 0 .. $#parents ) {
             my $eqp = $parents[$i] == $ref_parents[$i];
             my $eqm = $is_member[$i] == $ref_is_member[$i];
             my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
-            $same_as_ref{'UASp('.$label.')'}++ if($eqp);
-            $same_as_ref{'UASpm('.$label.')'}++ if($eqp && $eqm);
-            $same_as_ref{'UASps('.$label.')'}++ if($eqp && $eqs);
-            $same_as_ref{'UASpms('.$label.')'}++ if($eqp && $eqm && $eqs);
+            $same_as_ref{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
+            $same_as_ref{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
+            $same_as_ref{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
+            $same_as_ref{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
             # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
             # For the sake of compatibility, we will output it only with the label, without extras.
             if ( $eqp &&
