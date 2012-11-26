@@ -22,23 +22,34 @@ sub analyzeFormeme {
     # n:attr
     # n:v+6
 
-    # defaults
-    $splitFormeme->{formeme}  = $formeme;
-    $splitFormeme->{syntpos}  = $formeme;
-    $splitFormeme->{prep} = '';
-    $splitFormeme->{case} = '';         # 1-7, X, attr, poss
+    if (defined $formeme) {
 
-    if ( $formeme =~ /^([a-z]+):(.*)$/ ) {
-        $splitFormeme->{syntpos}  = $1;
-        $splitFormeme->{case} = $2;
-        if ( $splitFormeme->{case} =~ /^(.*)\+(.*)$/ ) {
-            $splitFormeme->{prep} = $1;
+        # defaults
+        $splitFormeme->{formeme}  = $formeme;
+        $splitFormeme->{syntpos}  = $formeme;
+        $splitFormeme->{prep} = '';
+        $splitFormeme->{case} = '';         # 1-7, X, attr, poss
+    
+        if ( $formeme =~ /^(.*):(.*)$/ ) {
+            $splitFormeme->{syntpos}  = $1;
             $splitFormeme->{case} = $2;
+            if ( $splitFormeme->{case} =~ /^([^\+]*)\+(.*)$/ ) {
+                $splitFormeme->{prep} = $1;
+                $splitFormeme->{case} = $2;
+            }
         }
+    
+        my @preps = split /_/, $splitFormeme->{prep};
+        $splitFormeme->{preps} = \@preps;
     }
-
-    my @preps = split /_/, $splitFormeme->{prep};
-    $splitFormeme->{preps} = \@preps;
+    else {
+        $splitFormeme->{formeme}  = '';
+        $splitFormeme->{syntpos}  = '';
+        $splitFormeme->{prep} = '';
+        $splitFormeme->{case} = '';
+        my @preps = ();
+        $splitFormeme->{preps} = \@preps;
+    }
 
     return $splitFormeme;
 }
@@ -52,6 +63,8 @@ Treex::Tool::Depfix::CS::FormemeSplitter
 =head1 DESCRIPTION
 
 Splits the formeme into parts...
+The same rules as in Treex::Block::Write::LayerAttributes::AttributeModifier,
+but a little different return values and has some extra functionality.
 
 =head1 AUTHOR
 

@@ -50,7 +50,7 @@ my %tag_cats = (
 );
 
 sub set_tag_cat {
-    my ($self, $tag, $cat, $value) = @_;
+    my ($tag, $cat, $value) = @_;
 
     if (defined $tag_cats{$cat}) {
         $cat = $tag_cats{$cat};
@@ -62,7 +62,7 @@ sub set_tag_cat {
 }
 
 sub get_tag_cat {
-    my ($self, $tag, $cat) = @_;
+    my ($tag, $cat) = @_;
 
     if (defined $tag_cats{$cat}) {
         $cat = $tag_cats{$cat};
@@ -71,6 +71,10 @@ sub get_tag_cat {
     my $value = substr $tag, $cat, 1;
 
     return $value;
+}
+
+sub get_empty_tag {
+    return 'X@-------------';
 }
 
 

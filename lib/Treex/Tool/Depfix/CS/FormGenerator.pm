@@ -71,6 +71,28 @@ sub get_form {
     return $form;
 }
 
+# changes the tag in the node and regebnerates the form correspondingly
+sub regenerate_node {
+    my ( $self, $node, $dont_try_switch_number ) = @_;
+
+    my $old_form = $node->form;
+    my $new_tag = $node->tag;
+
+    if ( !$dont_try_switch_number ) {
+        $new_tag = $self->try_switch_num( $node, $new_tag );
+    }
+    
+    my $new_form = $self->get_form( $node->lemma, $new_tag );
+    return if !defined $new_form;
+    
+    $new_form = ucfirst $new_form if $old_form =~ /^(\p{isUpper})/;
+    $new_form = uc $new_form      if $old_form =~ /^(\p{isUpper}*)$/;
+    $node->set_form($new_form);
+
+    return $new_form;
+}
+
+
 # my %byt_forms = (
 #
 #     # correct forms

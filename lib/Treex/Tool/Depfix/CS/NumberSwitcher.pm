@@ -5,17 +5,12 @@ use utf8;
 
 use Treex::Tool::Depfix::CS::FormGenerator;
 
-has 'formGenerator' => (
-    is  => 'ro',
-    isa => 'Treex::Tool::Depfix::CS::FormGenerator',
-);
+my $generator;
 
 sub BUILD {
     my $self = shift;
 
-    if ( !defined $self->formGenerator ) {
-        $self->formGenerator( Treex::Tool::Depfix::CS::FormGenerator->new() );
-    }
+    $generator = Treex::Tool::Lexicon::Generation::CS->new();
 
     return;
 }
@@ -38,7 +33,7 @@ sub try_switch_number {
 
     # generate new form if not provided in parameters
     if ( !defined $params->{new_form} ) {
-        $params->{new_form} = $self->formGenerator->get_form(
+        $params->{new_form} = $generator->get_form(
             $params->{lemma}, $params->{new_tag}
         );
     }
@@ -57,7 +52,7 @@ sub try_switch_number {
         ( $switched_tag, $switched_num ) = $self->switch_num(
             $params->{new_tag}
         );
-        $switched_form = $self->formGenerator->get_form(
+        $switched_form = $generator->get_form(
             $params->{lemma}, $switched_tag
         );
 
@@ -239,18 +234,6 @@ Examples of usage:
  # returns ('NNFS1-----A----', 'S')
 
 =back
-
-=head1 PARAMETERS
-
-=over
-
-=item C<formGenerator>
-
-An instance of L<Treex::Tool::Depfix::CS::FormGenerator>.
-Provide one on creation if you already have one,
-otherwise a new one will be instantiated.
-
-=back 
 
 =head1 AUTHOR
 
