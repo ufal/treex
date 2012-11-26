@@ -1,4 +1,4 @@
-package Treex::Block::T2T::CS2CS::FixInfrequentNouns;
+package Treex::Block::T2T::CS2CS::RemoveInfrequentPrepositions;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -22,8 +22,10 @@ sub decide_on_change {
         # do not fix morphological pronouns
         && ( $node->wild->{'deepfix_info'}->{'mpos'} ne 'P' || $m =~ /p/ )
 
-        # without prepositions
-        && ( $node->wild->{'deepfix_info'}->{'formeme'}->{'prep'}      eq '' )
+        # originally with preposition(s)
+        && ( $node->wild->{'deepfix_info'}->{'formeme'}->{'prep'} ne '' )
+        
+        # now without prepositions
         && ( $node->wild->{'deepfix_info'}->{'best_formeme'}->{'prep'} eq '' )
 
         # do not fix if parent is "být"
@@ -49,7 +51,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::T2T::CS2CS::FixInfrequentNouns -
+Treex::Block::T2T::CS2CS::RemoveInfrequentPrepositions -
 An attempt to replace infrequent formemes by some more frequent ones.
 (A Deepfix block.)
 

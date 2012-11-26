@@ -2,12 +2,13 @@ package Treex::Block::T2T::CS2CS::FixInfrequentFormemes;
 use Moose;
 use Treex::Core::Common;
 use utf8;
+use Carp;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
 # model
 has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
+has 'model_data'       => ( is => 'rw', isa => 'Maybe[HashRef]', default => undef );
 has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
-has 'model_format'     => ( is => 'ro', isa => 'Str',        default => 'tlemma_ptlemma_pos_formeme' );
 
 # exclusive thresholds
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
@@ -16,11 +17,10 @@ has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.85 );
 has 'lower_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.1 );
 has 'upper_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.6 );
 
-has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
-
 use Treex::Tool::Depfix::CS::TagHandler;
 
-my $model_data;
+# already loaded models (not to be loaded multiple times)
+my $loaded_models = {};
 
 sub process_start {
     my $self = shift;
@@ -36,19 +36,29 @@ sub process_start {
         log_fatal("Either model or model_from_share parameter must be set!");
     }
 
-    # load the model file
-    $model_data = do $self->model;
-
-    # handle errors
-    if ( !$model_data ) {
-        if ($@) {
-            log_fatal "Cannot parse file " . $self->model . ": $@";
-        }
-        elsif ( !defined $model_data ) {
-            log_fatal "Cannot read file " . $self->model . ": $!";
+    if (defined $loaded_models->{$self->model}) {
+        # this model is already loaded, just set it
+        $self->set_model_data($loaded_models->{$self->model});
+    }
+    else {
+        # load the model file
+        my $model_data = do $self->model;
+    
+        # handle errors
+        if ( !$model_data ) {
+            if ($@) {
+                log_fatal "Cannot parse file " . $self->model . ": $@";
+            }
+            elsif ( !defined $model_data ) {
+                log_fatal "Cannot read file " . $self->model . ": $!";
+            }
+            else {
+                log_fatal "Cannot load data from file " . $self->model;
+            }
         }
         else {
-            log_fatal "Cannot load data from file " . $self->model;
+            $self->set_model_data($model_data);
+            $loaded_models->{$self->model} = $model_data; 
         }
     }
 
@@ -74,7 +84,7 @@ sub fill_info_model {
     # get info from model
     $node->wild->{'deepfix_info'}->{'original_score'} =
         $self->get_formeme_score($node);
-    ( $node->wild->{'deepfix_info'}->{'best_formeme'},
+    (   $node->wild->{'deepfix_info'}->{'best_formeme'},
         $node->wild->{'deepfix_info'}->{'best_score'}
     ) = $self->get_best_formeme($node);
 
@@ -92,8 +102,8 @@ sub get_formeme_score {
         $formeme = $node->wild->{'deepfix_info'}->{'formeme'}->{'formeme'};
     }
 
-    my $formeme_count = $self->get_formeme_count($node, $formeme);
-    my $all_count     = $self->get_all_count($node);
+    my $formeme_count = $self->get_formeme_count( $node, $formeme );
+    my $all_count = $self->get_all_count($node);
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
 
@@ -108,10 +118,12 @@ sub get_formeme_score {
 sub get_best_formeme {
     my ( $self, $node ) = @_;
 
-    my $top_score   = 0;
-    my $top_formeme = '';    # returned if no usable formemes in model
-    my @candidates = $self->get_candidates($node);
+    my $original_formeme = $node->formeme;
+    my $top_score        = 0;
+    my $top_formeme      = undef;
+    my @candidates       = $self->get_candidates($node);
     foreach my $candidate (@candidates) {
+        next if ( $candidate eq $original_formeme );
         my $score = $self->get_formeme_score( $node, $candidate );
         if ( $score > $top_score ) {
             $top_score   = $score;
@@ -121,104 +133,184 @@ sub get_best_formeme {
 
     my $top_formeme_analyzed =
         Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
-            $top_formeme);
+        $top_formeme
+        );
     return ( $top_formeme_analyzed, $top_score );
 }
 
 sub fix {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
 
-    if ($self->decide_on_change($node)) {
-        $self->do_the_change($node);
+    # do the change
+    my $decide_on_change_result = $self->decide_on_change($node);
+    if ( $decide_on_change_result == 1 ) {
+
+        # log the intention
+        $self->logfix(
+            $self->tnode_sgn($node) . ': '
+                . 'trying to change ' . $node->formeme
+                . ' (' . $node->wild->{'deepfix_info'}->{'original_score'} . ') '
+                . 'to '
+                . $node->wild->{'deepfix_info'}->{'best_formeme'}->{'formeme'}
+                . ' (' . $node->wild->{'deepfix_info'}->{'best_score'} . ')'
+        );
+
+        # try to do the change
+        my $msg = $self->do_the_change($node);
+
+        # log the result
+        if ($msg) {
+            $self->logfix( $msg, 1 );
+        }
     }
 
-    return ;
+    # or do not do the change
+    elsif ($decide_on_change_result == 0) {
+
+        # keep original formeme
+        my $msg =
+            $self->tnode_sgn($node) . ': '
+            . 'keep ' . $node->formeme
+            . ' (' . $node->wild->{'deepfix_info'}->{'original_score'} . ') ';
+
+        # over best alternative formeme
+        if ( $node->wild->{'deepfix_info'}->{'best_formeme'}->{'formeme'} ) {
+            $msg .=
+                'over '
+                . $node->wild->{'deepfix_info'}->{'best_formeme'}->{'formeme'}
+                . ' (' . $node->wild->{'deepfix_info'}->{'best_score'} . ')'
+        }
+
+        $self->logfix($msg);
+    }
+    
+    # otherwise the change was not even considered
+    # because the node does not fit the block constraints
+
+    return;
 }
 
 sub do_the_change {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
+
+    # fix log message
+    # is additively constructed during the fixing
+    # and returned at the end
+    # if premature return is not invoked
+    my $msg = '';
 
     my $original_formeme = $node->wild->{'deepfix_info'}->{'formeme'};
-    my $new_formeme = $node->wild->{'deepfix_info'}->{'best_formeme'};
-    
+    my $new_formeme      = $node->wild->{'deepfix_info'}->{'best_formeme'};
+
     my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
-    if (!defined $lexnode) {
-        log_warn( "No lex node for " . tnode_sgn($node) .
-            ", cannot perform the fix!" );
+    if ( !defined $lexnode ) {
+        log_warn(
+            "No lex node for "
+                . $self->tnode_sgn($node)
+                .
+                ", cannot perform the fix!"
+        );
         return;
     }
 
-    if ($original_formeme->{formeme} ne $new_formeme->{formeme}) {
-        if ($original_formeme->{syntpos} ne $new_formeme->{syntpos}) {
+    if ( $original_formeme->{formeme} ne $new_formeme->{formeme} ) {
+
+        # fix syntpos
+        if ( $original_formeme->{syntpos} ne $new_formeme->{syntpos} ) {
             log_warn "Changing syntpos is currently not supported.";
+            return;
         }
-        if ($original_formeme->{case} ne $new_formeme->{case}
-            && $new_formeme->{case} =~ /^[1-7]$/) {
-            # change node case
-            {
-                my $msg = $self->change_anode_attribute (
-                    'tag:case', $new_formeme->{case}, $lexnode);
-                # TODO logfix
-            }
-            # change prep case if relevant
-            if ($original_formeme->{prep} eq $new_formeme->{prep}) {
-                # (otherwise it will be changed anyway)
-                my $prepnode = $self->find_preposition_node(
-                    $node, $original_formeme->{prep});
-                if (defined $prepnode) {
-                    my $msg = $self->change_anode_attribute (
-                        'tag:case', $new_formeme->{case}, $prepnode, 1);
-                    # TODO logfix
-                }
-            }
-        }
-        if ($original_formeme->{prep} ne $new_formeme->{prep}) {
-            if ($new_formeme->{prep} eq '') {
+
+        # fix preposition
+        if ( $original_formeme->{prep} ne $new_formeme->{prep} ) {
+
+            # deleting prep(s)
+            if ( $new_formeme->{prep} eq '' ) {
+
                 # remove each original prep
-                foreach my $prep (@{$original_formeme->{preps}}) {
+                foreach my $prep ( @{ $original_formeme->{preps} } ) {
                     my $prepnode = $self->find_preposition_node(
-                        $node, $original_formeme->{prep});
-                    if (defined $prepnode) {
-                        my $msg = $self->remove_anode($prepnode);
-                        # TODO logfix
+                        $node, $original_formeme->{prep}
+                    );
+                    if ( defined $prepnode ) {
+                        $msg .= $self->remove_anode($prepnode);
                     }
                 }
             }
-            elsif ($original_formeme->{prep} eq '') {
-                
+
+            # adding new prep(s)
+            elsif ( $original_formeme->{prep} eq '' ) {
+
                 # add each new prep
-                foreach my $prep (@{$new_formeme->{preps}}) {
-                    my $case = Treex::Tool::Depfix::CS::TagHandler->
-                        get_tag_cat($child_node->tag, 'case');
-                    my $prep_atts = $self->new_preposition_attributes($prep, $lexnode);
-                    my $msg = $self->add_parent($prep_atts, $lexnode);
-                    # TODO logfix
+                foreach my $prep ( @{ $new_formeme->{preps} } ) {
+                    my $prep_atts = $self->new_preposition_attributes(
+                        $prep, $new_formeme->{case}
+                    );
+                    $msg .= $self->add_parent( $prep_atts, $lexnode );
                 }
             }
+
+            # changing preps 1 for 1
             elsif (
-                scalar( @{$original_formeme->{preps}} ) == 1
-                && scalar( @{$new_formeme->{preps}} ) == 1
-            ) {
-                # change preps 1 for 1
+                scalar( @{ $original_formeme->{preps} } ) == 1
+                && scalar( @{ $new_formeme->{preps} } ) == 1
+                )
+            {
+
                 # find original prep
                 my $prepnode = $self->find_preposition_node(
-                    $node, $original_formeme->{prep});
-                if (defined $prepnode) {
-                    my $msg = $self->change_anode_attribute (
-                        'tag:case', $new_formeme->{case}, $prepnode, 1);
-                    # TODO logfix
-                }
+                    $node, $original_formeme->{prep}
+                );
+
                 # change it to new prep
+                if ( defined $prepnode ) {
+                    my $prep_atts = $self->new_preposition_attributes(
+                        $new_formeme->{prep}, $new_formeme->{case}
+                    );
+                    $msg .= $self->change_anode_attributes(
+                        $prep_atts, $prepnode, 1
+                    );
+                }
 
             }
             else {
-                log_warn "Exchanging multiword preps is currently not supported."; 
+                log_warn "Exchanging multiword preps is currently not supported.";
+                return;
             }
         }
+
+        # fix case
+        if ($original_formeme->{case} ne $new_formeme->{case}
+            && $new_formeme->{case} =~ /^[1-7]$/
+            )
+        {
+
+            # change node case
+            $msg .= $self->change_anode_attribute(
+                'tag:case', $new_formeme->{case}, $lexnode
+            );
+
+            # change prep case if relevant
+            if ( $original_formeme->{prep} eq $new_formeme->{prep} ) {
+
+                # (otherwise it has already been changed anyway)
+                my $prepnode = $self->find_preposition_node(
+                    $node, $original_formeme->{prep}
+                );
+                if ( defined $prepnode ) {
+                    $msg .= $self->change_anode_attribute(
+                        'tag:case', $new_formeme->{case}, $prepnode, 1
+                    );
+                }
+            }
+        }
+
+        return $msg;
     }
-
-
-    return ;
+    else {
+        log_warn "No change to be done, the formemes are the same!";
+        return;
+    }
 }
 
 sub find_preposition_node {
@@ -233,6 +325,7 @@ sub find_preposition_node {
         $prep_node = $matching_aux_nodes[0];
     }
     else {
+
         # else no prep can be found, which is often a valid result
         if ( @matching_aux_nodes == 0 ) {
             log_warn("There is no matching aux node!");
@@ -246,105 +339,118 @@ sub find_preposition_node {
 }
 
 sub new_preposition_attributes {
-    my ($self, $prep_form, $case) = @_;
+    my ( $self, $prep_form, $case ) = @_;
 
     # TODO find and use the code from TectoMT
     my $prep_info = {};
-    $prep_info->{form} = $prep_form;
-    $prep_info->{lemma} = $prep_form; # TODO: not the best thing to do
+    $prep_info->{form}  = $prep_form;
+    $prep_info->{lemma} = $prep_form;    # TODO: not the best thing to do
     my $tag = Treex::Tool::Depfix::CS::TagHandler->get_empty_tag();
-    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'pos', 'R');
-    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'subpos', 'R');
-    if (defined $case && $case =~ /^[1-7]$/) {
-        $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat($tag, 'case', $case);
+    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'pos',    'R' );
+    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'subpos', 'R' );
+    if ( defined $case && $case =~ /^[1-7]$/ ) {
+        $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'case', $case );
     }
     $prep_info->{tag} = $tag;
-    
+
     return $prep_info;
 }
 
 # SUBS TO BE OVERRIDDEN IN EXTENDED CLASSES
 
 sub decide_on_change {
+    my ( $self, $node ) = @_;
+
+    return $self->decide_on_change_en_model($node);
+}
+
+sub decide_on_change_base_model {
     my ($self, $node) = @_;
 
-    return (
-        $node->wild->{'deepfix_info'}->{'best_score'} > $self->upper_threshold
-        && $node->wild->{'deepfix_info'}->{'original_score'} < $self->lower_threshold
-    );
+    return
+        ( $node->wild->{'deepfix_info'}->{'best_score'} > $self->upper_threshold )
+        &&
+        ( $node->wild->{'deepfix_info'}->{'original_score'} < $self->lower_threshold )
+    ;
+}
+
+sub decide_on_change_en_model {
+    my ($self, $node) = @_;
+
+    if ( $node->wild->{'deepfix_info'}->{'enformeme'} ) {
+        return
+            ( $node->wild->{'deepfix_info'}->{'best_score'} > $self->upper_threshold_en )
+            &&
+            ( $node->wild->{'deepfix_info'}->{'original_score'} < $self->lower_threshold_en )
+        ;
+    }
+    else {
+        return
+            ( $node->wild->{'deepfix_info'}->{'best_score'} > $self->upper_threshold )
+            &&
+            ( $node->wild->{'deepfix_info'}->{'original_score'} < $self->lower_threshold )
+        ;
+    }
 }
 
 sub get_formeme_count {
-    my ($self, $node, $formeme) = @_;
+    my ( $self, $node, $formeme ) = @_;
 
-    croak "FixInfrequentFormemes::get_formeme_count is an abstract method!\n";
-    # return $model->{formeme_counts}->{some_info_about_node}->{$formeme}
+    return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+        ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        ->{$formeme}
+        || 0;
 }
 
 sub get_all_count {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
 
-    croak "FixInfrequentFormemes::get_all_count is an abstract method!\n";
-    # return $model->{all_counts}->{some_info_about_node}
+    return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme'}
+        ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        || 0;
 }
 
 sub get_candidates {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
 
-    croak "FixInfrequentFormemes::get_candidates is an abstract method!\n";
-    # return keys $model->{formeme_counts}->{some_info_about_node}
+    return keys %{
+        $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+            ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+            ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+            ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+            ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        };
 }
 
-# LOGGING
-
-sub logfix_formeme {
-    my ( $self, $msg ) = @_;
-
-    my $node = undef;
-
-
-    # THIS IS ONE BIG TODO :-) 
-
-    my $log_to_treex = 0;
-    my $msg    = $node->wild->{'deepfix_info'}->{'id'};
-    my $parent = $node->wild->{'deepfix_info'}->{'ptlemma'}
-        ?
-        "$node->wild->{'deepfix_info'}->{'ptlemma'} ($node->wild->{'deepfix_info'}->{'pformeme'})"
-        :
-        "#root#";
-    my $child = $node->wild->{'deepfix_info'}->{'enformeme'}
-        ?
-        "$node->wild->{'deepfix_info'}->{'tlemma'} (EN $node->wild->{'deepfix_info'}->{'enformeme'})"
-        :
-        $node->wild->{'deepfix_info'}->{'tlemma'};
-
-    if ( $node->wild->{'deepfix_info'}->{'attdir'} eq '\\' ) {
-        $msg .= " $parent \\ $child: ";
-    }
-    else {
-
-        # assert $node->wild->{'deepfix_info'}->{'attdir'} eq '/'
-        $msg .= " $child / $parent: ";
-    }
-
-    # TODO: accept there it does not have to be formeme which is changed
-    $msg .= "$node->wild->{'deepfix_info'}->{'formeme'} ($node->wild->{'deepfix_info'}->{'original_score'}) ";
-    if ( $node->wild->{'deepfix_info'}->{'best_formeme'} && $node->wild->{'deepfix_info'}->{'formeme'} ne $node->wild->{'deepfix_info'}->{'best_formeme'} ) {
-        if ( $node->wild->{'deepfix_info'}->{'change'} ) {
-            $msg .= "CHANGE TO $node->wild->{'deepfix_info'}->{'best_formeme'} ($node->wild->{'deepfix_info'}->{'best_score'})";
-            $log_to_treex = 1;
-        }
-        else {
-            $msg .= "KEEP over $node->wild->{'deepfix_info'}->{'best_formeme'} ($node->wild->{'deepfix_info'}->{'best_score'})";
-        }
-    }
-    else {
-        $msg .= "KEEP";
-    }
-
-    $self->logfix($msg, $log_to_treex);
-}
-
+# sub get_formeme_count {
+#     my ( $self, $node, $formeme ) = @_;
+# 
+#     croak "FixInfrequentFormemes::get_formeme_count is an abstract method!\n";
+# 
+#     # return $model->{formeme_counts}->{some_info_about_node}->{$formeme}
+# }
+# 
+# sub get_all_count {
+#     my ( $self, $node ) = @_;
+# 
+#     croak "FixInfrequentFormemes::get_all_count is an abstract method!\n";
+# 
+#     # return $model->{all_counts}->{some_info_about_node}
+# }
+# 
+# sub get_candidates {
+#     my ( $self, $node ) = @_;
+# 
+#     croak "FixInfrequentFormemes::get_candidates is an abstract method!\n";
+# 
+#     # return keys $model->{formeme_counts}->{some_info_about_node}
+# }
 
 1;
 
@@ -387,6 +493,16 @@ Default is 0.2.
 
 Formemes are only changed to formemes with a score above C<upper_threshold>.
 Default is 0.85.
+
+=item C<lower_threshold_en>
+
+If there is an aligned formeme,
+only a formeme with a score below C<lower_threshold_en> is fixed.
+
+=item C<upper_threshold_en>
+
+If there is an aligned formeme,
+a formeme is only changed to a formeme with a score above C<upper_threshold_en>.
 
 =item C<model>
 

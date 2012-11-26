@@ -68,6 +68,8 @@ This projects the tree alignment on a-layer to the corresponding t-layer trees.
 
 =head1 PARAMETERS
 
+=over
+
 =item C<language>
 
 The current language. This parameter is required.
@@ -81,6 +83,8 @@ The C<to_language> and C<to_selector> must differ from C<language> and C<selecto
 
 The target (reference) selector for the alignment. Defaults to current C<selector> setting.
 The C<to_language> and C<to_selector> must differ from C<language> and C<selector>.
+
+=back
 
 =head1 AUTHOR
 

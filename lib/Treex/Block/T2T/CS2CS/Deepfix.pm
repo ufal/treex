@@ -2,16 +2,17 @@ package Treex::Block::T2T::CS2CS::Deepfix;
 use Moose;
 use Treex::Core::Common;
 use utf8;
+use Carp;
 extends 'Treex::Core::Block';
 
-has '+language'           => ( required => 1 );
-has 'src_alignment_type'  => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'      => ( is       => 'rw', isa => 'Bool', default => 0 );
+has '+language'          => ( required => 1 );
+has 'src_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'src' );
+has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 0 );
+
 # has 'source_language'     => ( is       => 'rw', isa => 'Str', required => 0 );
 # has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
 # has 'orig_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'orig' );
-# TODO has reference to $formGenerator->regenerate_node()
-
+#
 # has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
 
 use Treex::Tool::Lexicon::CS;
@@ -23,7 +24,7 @@ my $formGenerator;
 sub process_start {
     my $self = shift;
 
-    $formGenerator  = Treex::Tool::Depfix::CS::FormGenerator->new();
+    $formGenerator = Treex::Tool::Depfix::CS::FormGenerator->new();
 
     return;
 }
@@ -50,12 +51,13 @@ sub process_tnode {
 sub fill_node_info {
     my ( $self, $node ) = @_;
 
-    if (!defined $node) {
+    if ( !defined $node ) {
         $node = $tnode_being_processed;
     }
-    
+
     $self->fill_info_basic($node);
     $self->fill_info_lexnode($node);
+
     # $self->fill_info_formemes($node);
     # $self->fill_info_aligned($node);
 
@@ -65,7 +67,7 @@ sub fill_node_info {
 sub fill_info_basic {
     my ( $self, $node ) = @_;
 
-    if (!defined $node) {
+    if ( !defined $node ) {
         $node = $tnode_being_processed;
     }
 
@@ -82,12 +84,10 @@ sub fill_info_basic {
     $node->wild->{'deepfix_info'}->{'parent'} = $parent;
 
     # lemmas (cut the rubbish from the lemma)
-    $node->wild->{'deepfix_info'}->{'tlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-        $node->t_lemma(), 1
-    );
-    $node->wild->{'deepfix_info'}->{'ptlemma'} = Treex::Tool::Lexicon::CS::truncate_lemma(
-        $parent->t_lemma() || '', 1
-    );
+    $node->wild->{'deepfix_info'}->{'tlemma'} =
+        Treex::Tool::Lexicon::CS::truncate_lemma( $node->t_lemma(), 1);
+    $node->wild->{'deepfix_info'}->{'ptlemma'} =
+        Treex::Tool::Lexicon::CS::truncate_lemma( $parent->t_lemma() || '', 1);
 
     # attdir
     if ( $node->ord < $parent->ord ) {
@@ -103,61 +103,65 @@ sub fill_info_basic {
 # (p)formeme->[formeme|syntpos|case|prep|preps]
 sub fill_info_formemes {
     my ( $self, $node ) = @_;
-    
-    if (!defined $node) {
+
+    if ( !defined $node ) {
         $node = $tnode_being_processed;
     }
 
     $node->wild->{'deepfix_info'}->{'formeme'} =
         Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
-            $node->formeme );
+        $node->formeme
+        );
     $node->wild->{'deepfix_info'}->{'pformeme'} =
         Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
-            $node->wild->{'deepfix_info'}->{'parent'}->formeme );
+        $node->wild->{'deepfix_info'}->{'parent'}->formeme
+        );
 
     return $node;
 }
-    
+
 sub fill_info_aligned {
     my ( $self, $node ) = @_;
-    
-    if (!defined $node) {
+
+    if ( !defined $node ) {
         $node = $tnode_being_processed;
     }
-    
+
     ( $node->wild->{'deepfix_info'}->{'ennode'} ) = $node->get_aligned_nodes_of_type(
         $self->src_alignment_type
     );
-    if (defined $node->wild->{'deepfix_info'}->{'ennode'}) {
+    if ( defined $node->wild->{'deepfix_info'}->{'ennode'} ) {
         $node->wild->{'deepfix_info'}->{'enformeme'} = $node->wild->{'deepfix_info'}->{'ennode'}->formeme() // '';
-        $node->wild->{'deepfix_info'}->{'entlemma'} = $node->wild->{'deepfix_info'}->{'ennode'}->t_lemma() // '';
+        $node->wild->{'deepfix_info'}->{'entlemma'}  = $node->wild->{'deepfix_info'}->{'ennode'}->t_lemma() // '';
     }
     else {
         $node->wild->{'deepfix_info'}->{'enformeme'} = '';
-        $node->wild->{'deepfix_info'}->{'entlemma'} = '';
+        $node->wild->{'deepfix_info'}->{'entlemma'}  = '';
     }
 
     return $node;
 }
-    
+
 sub fill_info_lexnode {
     my ( $self, $node ) = @_;
-    
+
     my $result = 0;
 
-    if (!defined $node) {
+    if ( !defined $node ) {
         $node = $tnode_being_processed;
     }
-    
+
+    my $lexnode = $node->get_lex_anode();
     $node->wild->{'deepfix_info'}->{'lexnode'} = $lexnode;
     if ( defined $lexnode ) {
         $node->wild->{'deepfix_info'}->{'mpos'} = substr( $lexnode->tag, 0, 1 );
         $result = 1;
     }
     else {
-        # $node->wild->{'deepfix_info'}->{'mpos'} = '?';
-        log_warn( "T-node " . $orig_node->id . " has no lex node!" );
-        $result = 0;
+        if (!defined $node->formeme | $node->formeme ne 'drop') {
+            # $node->wild->{'deepfix_info'}->{'mpos'} = '?';
+            log_warn( "T-node " . $self->tnode_sgn($node) . " has no lex node!" );
+        }
     }
 
     return $result;
@@ -170,43 +174,78 @@ sub fix {
     croak "Deepfix::fix is an abstract method!\n";
 }
 
-
 # NODE CHANGE METHODS
 
-# returns log message on success
-# or undef on failure
+# returns log message
 sub change_anode_attribute {
-    my ($self, $attribute, $value, $anode, $do_not_regenerate) = @_;
+    my ( $self, $attribute, $value, $anode, $do_not_regenerate ) = @_;
 
-    my $msg = $attribute . ':';
+    if (!defined $anode) {
+        log_warn("Cannot change undefined lex node!");
+        return;
+    }
+
+    my $msg = 'CHANGE ATTR on ' . $self->anode_sgn($anode) . ': ' . $attribute;
 
     # change attribute
-    if ($attribute =~ /^tag:(.+)$/) {
+    if ( $attribute =~ /^tag:(.+)$/ ) {
         my $cat = $1;
-        my $tag = $node->tag;
-        $msg .= get_tag_cat($tag, $cat) . '->' . $value;
-        my $new_tag = set_tag_cat($tag, $cat, $value);
-        $node->set_tag($new_tag);
+        my $tag = $anode->tag;
+        $msg .= get_tag_cat( $tag, $cat ) . '->' . $value;
+        my $new_tag = set_tag_cat( $tag, $cat, $value );
+        $anode->set_tag($new_tag);
     }
     else {
-        $msg .= $node->get_attr($attribute) . '->' . $value;
-        $node->set_attr($attribute, $value);
+        $msg .= $anode->get_attr($attribute) . '->' . $value;
+        $anode->set_attr( $attribute, $value );
     }
 
     # regenerate node
-    if (!$do_not_regenerate) {
+    if ( !$do_not_regenerate ) {
         $self->regenerate_node($anode);
     }
-    
+
+    $msg .= ' ';
+    return $msg;
+}
+
+# changes multiple attributes,
+# regenerate only at the last attribute (if not forbidden)
+# returns log message
+sub change_anode_attributes {
+    my ( $self, $attributes_info, $anode, $do_not_regenerate ) = @_;
+
+    if (!defined $anode) {
+        log_warn("Cannot change undefined lex node!");
+        return;
+    }
+
+    my $msg = '';
+
+    my @attributes = keys %$attributes_info;
+    for ( my $i = 0; $i < @attributes; $i++ ) {
+        my $attribute = $attributes[$i];
+        my $value     = $attributes_info->{$attribute};
+        my $dnr       = ( $i + 1 == @attributes ) ? $do_not_regenerate : 1;
+        $msg .= $self->change_anode_attribute( $attribute, $value, $dnr );
+    }
+
     return $msg;
 }
 
 # remove only the given node, moving its children under its parent
+# returns log message
 sub remove_anode {
-    my ($self, $anode) = @_;
+    my ( $self, $anode ) = @_;
 
-    my $parent = $anode->get_parent();
-    my $msg = anode_sgn($parent);
+    if (!defined $anode) {
+        log_warn("Cannot remove undefined lex node!");
+        return;
+    }
+
+    my $msg = 'REMOVE ' . $self->anode_sgn($anode) . ' ';
+
+    my $parent   = $anode->get_parent();
     my @children = $anode->get_children();
     foreach my $child (@children) {
         $child->set_parent($parent);
@@ -216,45 +255,51 @@ sub remove_anode {
     return $msg;
 }
 
+# returns log message
 sub add_parent {
-    my ($self, $parent_info, $anode) = @_;
+    my ( $self, $parent_info, $anode ) = @_;
 
+    if (!defined $anode) {
+        log_warn("Cannot add parent to undefined lex node!");
+        return;
+    }
+    
     my $old_parent = $anode->get_parent();
-    $new_parent = $old_parent->create_child($parent_info);
+    my $new_parent = $old_parent->create_child($parent_info);
     $new_parent->set_parent($old_parent);
     $new_parent->shift_before_subtree(
         $anode, { without_children => 1 }
     );
 
-    return anode_sgn($new_parent);
+    my $msg = 'ADD PARENT to ' . $self->anode_sgn($anode) . ': ' . $self->anode_sgn($new_parent) . ' ';
+    return $msg;
 }
-
-
 
 # SUPPORT METHODS
 
 sub regenerate_node {
-    my ($self, $anode, $dont_try_switch_number) = @_;
+    my ( $self, $anode, $dont_try_switch_number ) = @_;
 
-    $formGenerator->regenerate_node($node, $dont_try_switch_number);
+    $formGenerator->regenerate_node( $anode, $dont_try_switch_number );
 
     return;
 }
 
 sub anode_sgn {
-    my ($anode) = @_;
+    my ($self, $anode) = @_;
 
-    my $sgn = $anode->id . '(' . $anode->form . ')'
+    my $sgn = $anode->id . '(' . $anode->form . ')';
 
-    return $sqn;
+    return $sgn;
 }
 
 sub tnode_sgn {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
 
-    my $sgn = $tnode->id . '(' . $tnode->t_lemma . ')';
+    my $sgn = ($tnode->wild->{'deepfix_info'}->{'id'} // $tnode->id)
+        . '(' . $tnode->t_lemma . ')';
 
-    return $sqn;
+    return $sgn;
 }
 
 sub get_tag_cat {
@@ -268,8 +313,12 @@ sub set_tag_cat {
 sub logfix {
     my ( $self, $msg, $log_to_treex ) = @_;
 
+    if (!$msg) {
+        return;
+    }
+
     # log to treex file
-    if ( $log_to_treex ) {
+    if ($log_to_treex) {
 
         my $fixzone = $tnode_being_processed->get_bundle()
             ->get_or_create_zone( $self->language, 'deepfix' );

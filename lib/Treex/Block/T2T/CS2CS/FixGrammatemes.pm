@@ -19,32 +19,25 @@ sub process_start {
 }
 
 sub fill_node_info {
-    my ( $self, $node_info ) = @_;
+    my ( $self, $node ) = @_;
     
-    $self->fill_info_from_tree($node_info);
+    $self->fill_info_basic($node);
+    $self->fill_info_aligned($node);
     
-    # remember old grammatemes
-    $node_info->{grammatemes_orig} =
-        hashref2string ($node_info->{node}->get_attr('gram'));
-
     return;
 }
 
-sub hashref2string {
-    my ($hashref) = @_;
-    
-    # TODO: handle undefs
-    return join ' ', map { "$_:$hashref->{$_}" } sort keys %$hashref; 
-}
+sub fix {
+    my ($self, $node) = @_;
 
-sub decide_on_change {
-    my ($self, $node_info) = @_;
+    # remember old grammatemes
+    my $old_gram = ($node->get_attr('gram')) ? { %{$node->get_attr('gram')} } : undef;
 
     # try to fix grammatemes
-    my $cs_t_node  = $node_info->{node}; 
-    my $en_t_node  = $node_info->{ennode} or return;
-    my $cs_formeme = $node_info->{formeme};
-    my $en_formeme = $node_info->{enformeme};
+    my $cs_t_node  = $node; 
+    my $en_t_node  = $node->wild->{'deepfix_info'}->{ennode} or return;
+    my $cs_formeme = $node->formeme;
+    my $en_formeme = $node->wild->{'deepfix_info'}->{enformeme};
 
     # Some English clause heads may become non-heads and vice versa
     $cs_t_node->set_is_clause_head( $cs_formeme =~ /n:pokud_jde_o.4|v.+(fin|rc)/ ? 1 : 0 );
@@ -65,24 +58,31 @@ sub decide_on_change {
     $tectoFixBlock->_fix_tense_verbmod( $cs_t_node, $en_t_node ) if ( $cs_formeme =~ /^v/ );
     
 
-
     # check whether anything changed
-    $node_info->{grammatemes_new} =
-        hashref2string ($node_info->{node}->get_attr('gram'));
+    my $new_gram = ($node->get_attr('gram')) ? { %{$node->get_attr('gram')} } : undef;
 
-    $node_info->{change} = (
-        $node_info->{grammatemes_new} ne $node_info->{grammatemes_orig});
+    my $old_gram_string = hashref2string($old_gram);
+    my $new_gram_string = hashref2string($new_gram);
+    if ($old_gram_string ne $new_gram_string) {
+        log_info("gramatemes changed: $old_gram_string -> $new_gram_string");
+        # TODO compare gramatemes and make changes where applicable
+        # (use some TectoMT block to do this)
+        # for...
+    }
 
     return;
 }
 
-
-sub do_the_change {
-    my ($self, $node_info) = @_;
-
-    # change already done 
-
-    return;
+sub hashref2string {
+    my ($hashref) = @_;
+    
+    if (defined $hashref) {
+        # TODO: handle undefs
+        return join ' ', map { "$_:$hashref->{$_}" } sort keys %$hashref;
+    }
+    else {
+        return '';
+    }
 }
 
 1;

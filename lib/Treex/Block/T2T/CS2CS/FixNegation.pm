@@ -4,83 +4,109 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
-has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
+has 'magic'              => ( is => 'ro', isa => 'Str', default => '' );
 
-sub decide_on_change {
-    my ($self, $node_info) = @_;
+sub fill_node_info {
+    my ( $self, $node ) = @_;
 
-    if ( $node_info->{formeme} =~ /fin|rc/ ) {
+    $self->fill_info_basic($node);
+    $self->fill_info_lexnode($node);
+    $self->fill_info_aligned($node);
+
+    return;
+}
+
+sub fix {
+    my ( $self, $node ) = @_;
+
+    if ( $node->formeme =~ /fin|rc/ ) {
 
         # double negation
-        my @descendants_in_same_clause =
-            $node_info->{node}->get_clause_descendants();
-        if ( any { $_->t_lemma =~ /^(nikdo|nic|žádný|ničí|nikdy|nikde)$/ }
+        my @descendants_in_same_clause = $node->get_clause_descendants();
+        if (any { $_->t_lemma =~ /^(nikdo|nic|žádný|ničí|nikdy|nikde)$/ }
             @descendants_in_same_clause
-        ) {
-            $node_info->{change} = 1;
+            )
+        {
+            $self->set_node_neg($node);
         }
 
         # until
-        if ( $node_info->{enformeme} =~ /(until|unless)/ ) {
-            $node_info->{change} = 1;
+        if ( $node->wild->{'deepfix_info'}->{enformeme} =~ /(until|unless)/ ) {
+            $self->set_node_neg($node);
         }
 
         # "Ani neprisel, ani nezavolal.", "Nepotkal Pepu ani Frantu."
-#        if (
-#            grep { $self->_is_ani_neither_nor($_) }
-#                $node_info->{node}->get_children()
-#            || ( $node_info->{node}->is_member
-#                && $self->_is_ani_neither_nor( $node_info->{parent} ) )
-#            )
-#        {
-#            $node_info->{change} = 1;
-#        }
+        if (grep { $self->_is_ani_neither_nor($_) }
+            $node->get_children
+            or ($node->is_member
+                and $self->_is_ani_neither_nor( $node->get_parent )
+            )
+            )
+        {
+            $self->set_node_neg($node);
+        }
     }
 
     # 'no longer'
     if (
-        $node_info->{tlemma} =~ /^(už|již)$/
-        && !$node_info->{node}->get_children()
-        && !$node_info->{parent}->is_root
-        && $node_info->{ptlemma} =~ /^(už|již)$/
-    )
+        $node->wild->{'deepfix_info'}->{tlemma} =~ /^(už|již)$/
+        && !$node->get_children()
+        && !$node->wild->{'deepfix_info'}->{parent}->is_root
+        && $node->wild->{'deepfix_info'}->{ptlemma} =~ /^(už|již)$/
+        )
     {
-        my $grandpa = $node_info->{parent}->get_parent;
+        my $grandpa = $node->wild->{'deepfix_info'}->{parent}->get_parent;
         if ( ( $grandpa->gram_sempos || '' ) eq 'v' ) {
-            $node_info->{node}->remove; # TODO reflect ina wild attr
+
+            # remove the node
+            my $msg = $self->remove_anode(
+                $node->wild->{'deepfix_info'}->{'lexnode'}
+            );
+            $self->logfix( $msg, 1 );
+
             # change the grandpa
-            $node_info->{node} = $grandpa;
-            $node_info->{change} = 1;
+            $self->set_node_neg($grandpa);
         }
     }
 
     return;
 }
 
+sub set_node_neg {
+    my ( $self, $node ) = @_;
+
+    my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
+    if ( defined $lexnode ) {
+        $node->set_gram_negation('neg1');
+        my $msg = $self->change_anode_attribute( 'tag:neg', 1, $lexnode );
+        $self->logfix($msg);
+    }
+    else {
+        log_warn(
+            "No lex node for "
+                . $self->tnode_sgn($node)
+                .
+                ", cannot perform the fix!"
+        );
+    }
+
+    return;
+}
 
 sub _is_ani_neither_nor {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
     my $result = 0;
 
-    if ($node->t_lemma eq 'ani' ) {
+    if ( $node->t_lemma eq 'ani' ) {
         my ($ennode) = $node->get_aligned_nodes_of_type(
             $self->src_alignment_type
         );
-        if (defined $ennode && $ennode->t_lemma =~ /(neither|nor)/) {
+        if ( defined $ennode && $ennode->t_lemma =~ /(neither|nor)/ ) {
             $result = 1;
-        }    
+        }
     }
-    
-    return $result; 
-}
 
-sub do_the_change {
-    my ($self, $node_info) = @_;
-
-    $node_info->{node}->set_gram_negation('neg1');
-    $node_info->{'node'}->wild->{'deepfix'}->{'change_node'}->{'tag:neg'}->{'value'} = 1;
-
-    return;
+    return $result;
 }
 
 1;
