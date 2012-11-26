@@ -21,9 +21,7 @@ sub process_start {
     my $self = shift;
 
     $formGenerator  = Treex::Tool::Depfix::CS::FormGenerator->new();
-    $numberSwitcher = Treex::Tool::Depfix::CS::NumberSwitcher->new(
-        { formGenerator => $formGenerator }
-    );
+    $numberSwitcher = Treex::Tool::Depfix::CS::NumberSwitcher->new();
 
     return;
 }
@@ -127,24 +125,19 @@ sub try_switch_num {
 }
 
 # changes the tag in the node and regebnerates the form correspondingly
+# only a wrapper
 sub regenerate_node {
-    my ( $self, $node, $new_tag ) = @_;
+    my ( $self, $node, $new_tag, $dont_try_switch_number ) = @_;
 
-    $node->set_tag($new_tag);    #set even if !defined $new_form
+    # if ( $self->magic eq 'always_en_num' ) {
+    # $new_tag = $self->try_switch_num( $node, $new_tag );
+    # }
+    
+    # TODO: do this before calling the method
+    # to reduce interface complexity
+    $node->set_tag($new_tag);
 
-    my $old_form = $node->form;
-
-    # TODO: always use try_switch_number?
-    if ( $self->magic eq 'always_en_num' ) {
-        $new_tag = $self->try_switch_num( $node, $new_tag );
-    }
-    my $new_form = $formGenerator->get_form( $node->lemma, $new_tag );
-    return if !defined $new_form;
-    $new_form = ucfirst $new_form if $old_form =~ /^(\p{isUpper})/;
-    $new_form = uc $new_form      if $old_form =~ /^(\p{isUpper}*)$/;
-    $node->set_form($new_form);
-
-    return $new_form;
+    return $formGenerator->regenerate_node($node, $new_tag, $dont_try_switch_number);
 }
 
 # prefetches useful information into hashes
