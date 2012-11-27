@@ -57,13 +57,21 @@ sub new_document {
     my $path = $self->current_filename();
     log_fatal "next_filename() must be called before new_document()" if !defined $path;
     my ( $volume, $dirs, $file ) = File::Spec->splitpath($path);
-    my ( $stem, $extension ) = $file =~ /([^.]+)(\..+)?/;
-    $stem =~ s/^-$/noname/;
-    my %args = ( file_stem => $stem, loaded_from => $path );
+    
+    # Delete file extension, e.g.
+    # file.01.conll -> file.01
+    # cs42.treex.gz -> cs42
+    $file =~ s/\.[^.]+(\.gz)?$//;
+
+    # Substitute standard input for noname.
+    $file =~ s/^-$/noname/;
+
+    my %args = ( file_stem => $file, loaded_from => $path );
     if ( defined $dirs ) {
         $args{path} = $volume . $dirs;
     }
 
+    # Override the naming heuristics above, if file_stem was specified.
     if ( $self->file_stem ) {
         $args{file_stem} = $self->file_stem;
     }
@@ -72,8 +80,8 @@ sub new_document {
         $args{file_number} = q{};
     }
     else {
-        my $num = $self->_file_numbers->{$stem};
-        $self->_file_numbers->{$stem} = ++$num;
+        my $num = $self->_file_numbers->{$file};
+        $self->_file_numbers->{$file} = ++$num;
         $args{file_number} = sprintf "%03d", $num;
     }
 

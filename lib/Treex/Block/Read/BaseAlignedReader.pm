@@ -89,21 +89,30 @@ sub new_document {
         foreach my $zone_label ( keys %filenames ) {
             my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
-            my ($name) = $file =~ /([^.]+)(?:\..+)?/;    #we gracefully throw away extension, because it is not used
+
+            # Delete file extension, e.g.
+            # file.01.conll -> file.01
+            # cs42.treex.gz -> cs42
+            $file =~ s/\.[^.]+(\.gz)?$//;
+
+            # Substitute standard input for noname.
+            $file =~ s/^-$/noname/;
+
+            # Heuristically delete indication of language&selector from the filename.
             my ( $lang, $sele ) = ( $zone_label, '' );
             if ( $zone_label =~ /_/ ) {
                 ( $lang, $sele ) = split /_/, $zone_label;
             }
-            $name =~ s/[_-]?($lang|$sele|$zone_label)[_-]?//gi;
-            if ( !$name && !$stem ) {
-                $name        = 'noname';
+            $file =~ s/[_-]?($lang|$sele|$zone_label)[_-]?//gi;
+            if ( !$file && !$stem ) {
+                $file        = 'noname';
                 $file_number = undef;
             }
-            if ( $stem !~ /$name/ ) {
+            if ( $stem !~ /$file/ ) {
                 if ( $stem ne '' ) {
                     $stem .= '_';
                 }
-                $stem .= $name;
+                $stem .= $file;
             }
         }
     }
