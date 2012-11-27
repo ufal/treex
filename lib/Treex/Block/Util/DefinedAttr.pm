@@ -10,9 +10,9 @@ has [qw(tnode anode nnode pnode)] => (
 
 has 'on_error' => (
     is            => 'ro',
-    isa           => enum( [qw(warn die)] ),
+    isa           => enum( [qw(warn die ignore)] ),
     default       => 'warn',
-    documentation => 'What to do if undefined attributes are found: warn or die',
+    documentation => 'What to do if undefined attributes are found: warn (default), die, ignore',
 );
 
 has 'message' => (
@@ -21,6 +21,14 @@ has 'message' => (
     default       => '',
     documentation => 'What to print',
 );
+
+has fill => (
+    isa => 'Str',
+    is => 'ro',
+    default => 'undef',
+    documentation => 'Comma separated list of attribute values to be filled instead of undef. The default is "undef" which means Perl undef. If this list is shorter than ?node list, the last value is used for the rest. '
+);
+
 
 sub BUILD {
     my ($self) = @_;
@@ -48,14 +56,24 @@ sub check_tree {
     }
 
     foreach my $node ( $tree->get_descendants() ) {
+        my @fill_values = split /,/, $self->fill;
+
+        # If $self->fill is an empty string, @fill_values will contain no items.
+        @fill_values = ('') if !@fill_values;
+
+        my $fill_value = shift @fill_values;
         foreach my $name ( split /,/, $attrs ) {
-            my $value = $node->get_attr($name);
-            if ( !defined $value ) {
-                my $address = $node->get_address();
-                my $msg     = "${layer}node\t$address\tundefined attr_name=$name\t" . $self->message;
-                log_fatal($msg) if $self->on_error eq 'die';
-                log_warn($msg);
+            my $orig_value = $node->get_attr($name);
+            if ( !defined $orig_value ) {
+                if ($self->on_error =~ /die|warn/){
+                    my $address = $node->get_address();
+                    my $msg     = "${layer}node\t$address\tundefined attr_name=$name\t" . $self->message;
+                    log_fatal($msg) if $self->on_error eq 'die';
+                    log_warn($msg);
+                }
+                $node->set_attr($name, $fill_value) if $fill_value ne 'undef';
             }
+            $fill_value = shift @fill_values if @fill_values;
         }
     }
     return;
