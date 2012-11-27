@@ -1416,7 +1416,7 @@ sub feature_additional_model_bucketed {
     my $parent = $edge->parent->fields->[$field_index];
 
     if ( defined $child && defined $parent) {
-        return $model->get_value_bucketed($child, $parent);
+        return $model->get_bucketed_value($child, $parent);
     } else {
         croak "Either child or parent is undefined in additional model feature, ".
             "this should not happen!";
@@ -1431,7 +1431,7 @@ sub feature_additional_model_rounded {
     my $parent = $edge->parent->fields->[$field_index];
 
     if ( defined $child && defined $parent) {
-        return $model->get_value_rounded($child, $parent, $rounding);
+        return $model->get_rounded_value($child, $parent, $rounding);
     } else {
         croak "Either child or parent is undefined in additional model feature, ".
             "this should not happen!";
