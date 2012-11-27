@@ -9,6 +9,7 @@ has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
+has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 
 use Carp;
 
@@ -354,7 +355,7 @@ sub remove_node {
 
     #remove alignment
     if ( $self->en($node) ) {
-        $self->en($node)->set_attr( 'alignment', undef );
+        # $self->en($node)->set_attr( 'alignment', undef );
 
         # delete $self->en($node);
     }

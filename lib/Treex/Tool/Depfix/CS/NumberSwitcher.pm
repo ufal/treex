@@ -10,7 +10,7 @@ my $generator;
 sub BUILD {
     my $self = shift;
 
-    $generator = Treex::Tool::Lexicon::Generation::CS->new();
+    $generator = Treex::Tool::Depfix::CS::FormGenerator->new();
 
     return;
 }
