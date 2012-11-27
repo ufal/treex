@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     return if ( $t_node->voice || $t_node->gram_diathesis || '' ) !~ /^pas/;
-    my $a_node = $t_node->get_lex_anode();
+    my $a_node = $t_node->get_lex_anode() or return;
 
     # $a_node is now the passive autosemantic verb,
     # but we will "move" that word to $new_node (its child) and
