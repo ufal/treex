@@ -4,6 +4,10 @@ use strict;
 use warnings;
 use Test::More;
 
+BEGIN {
+    Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' ) if !$ENV{AUTHOR_TESTING};
+}
+
 use_ok 'Treex::Tool::Lexicon::DerivDict::Dictionary';
 
 my $dict = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
