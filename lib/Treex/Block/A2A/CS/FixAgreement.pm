@@ -236,7 +236,14 @@ sub isName {
     # should be computed and hashed at the beginning
     # and then use something like return $is_named_entity{$node->id}
 
-    my $n_root = $node->get_bundle->get_tree( $self->language, 'n', 'T' );
+    if (!$node->get_bundle->has_tree(
+            $self->language, 'n', $self->selector )
+    ) {
+        log_warn "n tree is missing!";
+        return 0;
+    }
+
+    my $n_root = $node->get_bundle->get_tree( $self->language, 'n', $self->selector );
 
     # all n nodes
     my @n_nodes = $n_root->get_descendants();
