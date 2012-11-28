@@ -9,9 +9,11 @@ use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
 use TranslationModel::MaxEnt::Model;
+use TranslationModel::VowpalWabbit::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use Treex::Tool::Triggers::Features;
 
 use TranslationModel::Derivative::EN2CS::Numbers;
 use TranslationModel::Derivative::EN2CS::Hyphen_compounds;
@@ -39,8 +41,6 @@ has model_dir => (
 # It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
 with 'Treex::Block::T2T::TrUseMemcachedModel';
 
-enum 'DataVersion' => [ '0.9', '1.0' ];
-
 has maxent_weight => (
     is            => 'ro',
     isa           => 'Num',
@@ -48,23 +48,17 @@ has maxent_weight => (
     documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
 );
 
-has maxent_features_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '1.0'
+has static_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
 has maxent_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'tlemma_czeng12.maxent.10000.100.2_1.pls.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
-);
-
-has static_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0.5,
-    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
 has static_model => (
@@ -77,6 +71,14 @@ has human_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'tlemma_humanlex.static.pls.slurp.gz',
+);
+
+enum 'DataVersion' => [ '0.9', '1.0' ];
+
+has maxent_features_version => (
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '1.0'
 );
 
 has [qw(trg_lemmas trg_formemes)] => (
@@ -93,6 +95,12 @@ has domain => (
     documentation => 'add the (CzEng) domain feature (default=0). Set to 0 to deactivate.',
 );
 
+has '_trigger_feature_extractor' => (
+    is => 'ro',
+    isa => 'Treex::Tool::Triggers::Features',
+    default => sub { return Treex::Tool::Triggers::Features->new({prev_sents_num => 2}) },
+);
+
 # TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
 
@@ -107,6 +115,7 @@ sub process_start {
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->maxent_weight > 0 ) {
+        #my $maxent_model = $self->load_model( TranslationModel::VowpalWabbit::Model->new(), $self->maxent_model, $use_memcached );
         my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
         push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
@@ -219,8 +228,13 @@ sub process_tnode {
                 $self->get_parent_trg_features( $cs_tnode, 'formeme', 'translation_model/formeme_variants', $self->trg_formemes );
         }
 
+        my $trig_feats_hash = $self->_trigger_feature_extractor->create_lemma_instance($en_tnode);
+        #my $esa_feats_hash = $self->_trigger_feature_extractor->create_esa_instance($en_tnode);
+
+        my $all_feats = [ keys %$trig_feats_hash, @$features_array_rf ];
+
         my $en_tlemma = $en_tnode->t_lemma;
-        my @translations = $combined_model->get_translations( lc($en_tlemma), $features_array_rf );
+        my @translations = $combined_model->get_translations( lc($en_tlemma), $all_feats);
 
         # when lowercased models are used, then PoS tags should be uppercased
         @translations = map {
