@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::ContentCandsGetter;
+use Treex::Tool::IR::ESA;
 
 has 'prev_sents_num' => (
     isa => 'Num',
@@ -18,6 +19,13 @@ has '_trigger_words_getter' => (
     required => 1,
     lazy => 1,
     builder => '_build_trigger_words_getter',
+);
+
+has '_esa_provider' => (
+    isa => 'Treex::Tool::IR::ESA',
+    is => 'ro',
+    lazy => 1,
+    builder => '_build_esa',
 );
 
 sub BUILD {
@@ -36,17 +44,39 @@ sub _build_trigger_words_getter {
     return $acs;
 }
 
+sub _build_esa {
+    my ($self) = @_;
+    return Treex::Tool::IR::ESA->new();
+}
 
-sub create_instance {
+sub create_lemma_instance {
     my ($self, $tnode) = @_;
         
     my $trigger_nodes = $self->_trigger_words_getter->get_candidates( $tnode );
     return $self->_extract_lemmas($trigger_nodes)
 }
 
+sub create_esa_instance {
+    my ($self, $tnode, $n) = @_;
+        
+    my $trigger_nodes = $self->_trigger_words_getter->get_candidates( $tnode );
+    if (@$trigger_nodes == 0) {
+        return {};
+    }
+    return $self->_extract_esa_vector($trigger_nodes, $n)
+}
+
+sub _extract_esa_vector {
+    my ($self, $nodes, $n) = @_;
+    my $text = join " ", map {$_->t_lemma} @$nodes;
+    my %vector = $self->_esa_provider->esa_vector_n_best($text, $n);
+    my %feats = map {"esa_" . $_ => $vector{$_}} keys %vector;
+    return \%feats;
+}
+
 sub _extract_lemmas {
     my ($self, $nodes) = @_;
-    my %lemmas = map {$_->t_lemma => 1} @$nodes;
+    my %lemmas = map {'trig=' . lc($_->t_lemma) => 1} @$nodes;
     return \%lemmas;
     #return sort keys %lemmas;
 }
