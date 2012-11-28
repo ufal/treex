@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 use Treex::Tool::TranslationModel::Features::EN;
+use Treex::Tool::Triggers::Features;
+use Treex::Tool::Coreference::ContentWordFilter;
 binmode STDOUT, ':utf8';
 
 has target_features => (
@@ -18,6 +20,45 @@ has czeng_domain => (
     default       => 1,
     documentation => 'Print also CzEng domain (eu, fiction, subtitles, paraweb, techdoc, news, navajo)',
 );
+
+has trigger_features => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Print trigger features',
+);
+
+has esa_features => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Print ESA features',
+);
+
+has '_content_word_filter' => (
+    isa => 'Treex::Tool::Coreference::ContentWordFilter',
+    is => 'ro',
+    required => 1,
+    builder => '_build_content_word_getter',
+
+);
+has '_feature_extractor' => (
+    isa => 'Treex::Tool::Triggers::Features',
+    is => 'ro',
+    required => 1,
+    builder => '_build_feature_extractor',
+);
+
+sub _build_content_word_getter {
+    my ($self) = @_;
+    return Treex::Tool::Coreference::ContentWordFilter->new();
+}
+sub _build_feature_extractor {
+    my ($self) = @_;
+    return Treex::Tool::Triggers::Features->new({
+        prev_sents_num => 2,
+    });
+}
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
@@ -39,6 +80,8 @@ sub print_tnode_features {
     my $en_tlemma = $en_tnode->t_lemma // '';
     my $cs_tlemma = $cs_tnode->t_lemma // '';
     return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
+    
+    #return if (!$self->_content_word_filter->is_candidate($en_tnode));
 
     my $features_rf =
         Treex::Tool::TranslationModel::Features::EN::features_from_src_tnode( $en_tnode, { encode => 1 } ) or return;
@@ -79,6 +122,18 @@ sub print_tnode_features {
         if ( my $domain = $cs_tnode->get_bundle()->attr('czeng/domain') ) {
             push @add_features, "domain=$domain";
         }
+    }
+
+    # triggers
+    if ($self->trigger_features && $self->_content_word_filter->is_candidate($en_tnode)) {
+        my $trig_feats_hash = $self->_feature_extractor->create_lemma_instance($en_tnode);
+        unshift @add_features, keys %$trig_feats_hash;
+    }
+    
+    # ESA
+    if ($self->esa_features && $self->_content_word_filter->is_candidate($en_tnode)) {
+        my $esa_feats_hash = $self->_feature_extractor->create_esa_instance($en_tnode);
+        unshift @add_features, keys %$esa_feats_hash;
     }
 
     print join "\t", (
