@@ -5,14 +5,32 @@ use utf8;
 
 use Treex::Tool::Depfix::CS::FormGenerator;
 
-my $generator;
+has generator => (
+    is => 'rw',
+    isa => 'Treex::Tool::Depfix::CS::FormGenerator',
+    required => 1
+);
 
-sub BUILD {
-    my $self = shift;
+sub try_switch_node_number {
+    my ( $self, $node, $ennode ) = @_;
+    
+    my ( $en_form, $en_tag ) = (undef, undef);
+    if ( defined $ennode ) {
+        $en_form = $ennode->form;
+        $en_tag = $ennode->tag;
+    }
 
-    $generator = Treex::Tool::Depfix::CS::FormGenerator->new();
+    my ( $new_tag, $new_number ) = $self->try_switch_number(
+        {
+            lemma => $node->lemma,
+            old_form => $node->form,
+            new_tag => $node->tag,
+            en_form => $en_form,
+            en_tag => $en_tag,
+        }
+    );
 
-    return;
+    return $new_tag;
 }
 
 # if the form is about to change, it might be reasonable
@@ -33,7 +51,7 @@ sub try_switch_number {
 
     # generate new form if not provided in parameters
     if ( !defined $params->{new_form} ) {
-        $params->{new_form} = $generator->get_form(
+        $params->{new_form} = $self->generator->get_form(
             $params->{lemma}, $params->{new_tag}
         );
     }
@@ -52,7 +70,7 @@ sub try_switch_number {
         ( $switched_tag, $switched_num ) = $self->switch_num(
             $params->{new_tag}
         );
-        $switched_form = $generator->get_form(
+        $switched_form = $self->generator->get_form(
             $params->{lemma}, $switched_tag
         );
 

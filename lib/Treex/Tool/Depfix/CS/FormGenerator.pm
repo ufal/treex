@@ -5,14 +5,18 @@ use utf8;
 
 use LanguageModel::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
+use Treex::Tool::Depfix::CS::NumberSwitcher;
 
-my ( $generator, $morphoLM );
+my ( $generator, $morphoLM, $numberSwitcher );
 
 sub BUILD {
     my $self = shift;
 
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
     $morphoLM  = LanguageModel::MorphoLM->new();
+    $numberSwitcher = Treex::Tool::Depfix::CS::NumberSwitcher->new(
+        generator => $self
+    );
 
     return;
 }
@@ -73,13 +77,14 @@ sub get_form {
 
 # changes the tag in the node and regebnerates the form correspondingly
 sub regenerate_node {
-    my ( $self, $node, $dont_try_switch_number ) = @_;
+    my ( $self, $node, $dont_try_switch_number, $ennode ) = @_;
 
     my $old_form = $node->form;
     my $new_tag = $node->tag;
 
     if ( !$dont_try_switch_number ) {
-        $new_tag = $self->try_switch_num( $node, $new_tag );
+        $new_tag =
+            $numberSwitcher->try_switch_node_number( $node, $ennode );
     }
     
     my $new_form = $self->get_form( $node->lemma, $new_tag );

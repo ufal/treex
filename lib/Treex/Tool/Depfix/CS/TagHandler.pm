@@ -61,6 +61,15 @@ sub set_tag_cat {
     return $tag;
 }
 
+sub set_node_tag_cat {
+    my ($node, $cat, $value) = @_;
+
+    my $new_tag = set_tag_cat($node->tag, $cat, $value);
+    $node->set_tag($new_tag);
+
+    return $new_tag;
+}
+
 sub get_tag_cat {
     my ($tag, $cat) = @_;
 
@@ -71,6 +80,12 @@ sub get_tag_cat {
     my $value = substr $tag, $cat, 1;
 
     return $value;
+}
+
+sub get_node_tag_cat {
+    my ($node, $cat) = @_;
+
+    return get_tag_cat($node->tag, $cat);
 }
 
 sub get_empty_tag {
