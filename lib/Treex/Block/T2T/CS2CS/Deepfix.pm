@@ -280,7 +280,8 @@ sub add_parent {
 sub regenerate_node {
     my ( $self, $anode, $dont_try_switch_number ) = @_;
 
-    $formGenerator->regenerate_node( $anode, $dont_try_switch_number );
+    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'};
+    $formGenerator->regenerate_node( $anode, $dont_try_switch_number, $ennode);
 
     return;
 }
