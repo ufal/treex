@@ -40,12 +40,14 @@ sub fix {
             }
             if ($doCorrect) {
 
-                my $case = $g->{case};
-                $d->{tag} =~ s/^(....)./$1$case/;
-                $d->{tag} = $self->try_switch_num($dep, $d->{tag});
+                #my $case = $g->{case};
+                #$d->{tag} =~ s/^(....)./$1$case/;
+                #$d->{tag} = $self->try_switch_num($dep, $d->{tag});
 
                 $self->logfix1( $dep, "PrepositionNounAgreement" );
-                $self->regenerate_node( $dep, $d->{tag} );
+                my $case = $self->get_node_tag_cat($gov, 'case');
+                $self->set_node_tag_cat($dep, 'case', $case);
+                $self->regenerate_node($dep);
                 $self->logfix2($dep);
             }    #else do not correct
         }

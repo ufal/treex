@@ -60,12 +60,13 @@ sub fix {
                 if ( substr( $tag, 4, 1 ) ne '2' ) {
 
                     # set the case to 2
-                    substr $tag, 4, 1, 2;
-                    $tag = $self->try_switch_num( $left_child, $tag );
+                    #substr $tag, 4, 1, 2;
+                    #$tag = $self->try_switch_num( $left_child, $tag );
 
                     # do the fix
                     $self->logfix1( $left_child, "POSgenitive" );
-                    $self->regenerate_node( $left_child, $tag );
+                    $self->set_node_tag_cat($left_child, 'case', 2);
+                    $self->regenerate_node($left_child);
                     $self->logfix2($left_child);
 
                     # TODO: also swicth cases of dependent n:attr

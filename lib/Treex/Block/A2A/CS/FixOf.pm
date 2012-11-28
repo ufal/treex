@@ -34,11 +34,11 @@ sub fix {
         if ( $new_case != $original_case ) {
 
             # change old case to new case
-            substr $d->{tag}, 4, 1, $new_case;
-            $d->{tag} = $self->try_switch_num($dep, $d->{tag});
+            # $d->{tag} = $self->try_switch_num($dep, $d->{tag});
 
             $self->logfix1( $dep, "Of" );
-            $self->regenerate_node( $dep, $d->{tag} );
+            $self->set_node_tag_cat($dep, 'case', $new_case);
+            $self->regenerate_node($dep);
             $self->logfix2($dep);
         }
 

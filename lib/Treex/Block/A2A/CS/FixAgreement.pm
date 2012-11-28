@@ -14,15 +14,14 @@ has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 use Carp;
 
 use Treex::Tool::Depfix::CS::FormGenerator;
-use Treex::Tool::Depfix::CS::NumberSwitcher;
+use Treex::Tool::Depfix::CS::TagHandler;
 
-my ( $formGenerator, $numberSwitcher );
+my $formGenerator;
 
 sub process_start {
     my $self = shift;
 
     $formGenerator  = Treex::Tool::Depfix::CS::FormGenerator->new();
-    $numberSwitcher = Treex::Tool::Depfix::CS::NumberSwitcher->new();
 
     return;
 }
@@ -95,7 +94,12 @@ sub get_en_counterpart {
 # quick-to-write name
 sub en {
     my ( $self, $node ) = @_;
-    return $en_counterpart{ $node->id };
+    if ( defined $node ) {
+        return $en_counterpart{ $node->id };
+    }
+    else {
+        return undef;
+    }
 }
 
 # only a wrapper, for backward compatibility
@@ -104,41 +108,25 @@ sub get_form {
     return $formGenerator->get_form( $lemma, $tag );
 }
 
-# only a wrapper, for backward compatibility
-sub try_switch_num {
-    my ( $self, $node, $tag ) = @_;
-
-    my ( $en_form, $en_tag ) =
-        ( $self->en($node) )
-        ?
-        ( $self->en($node)->form, $self->en($node)->tag )
-        :
-        ( undef, undef )
-        ;
-    my ( $new_tag, $new_number ) = $numberSwitcher->try_switch_number(
-        {
-            lemma => $node->lemma, old_form => $node->form, new_tag => $tag,
-            en_form => $en_form, en_tag => $en_tag,
-        }
-    );
-
-    return $new_tag;
-}
-
 # changes the tag in the node and regebnerates the form correspondingly
 # only a wrapper
 sub regenerate_node {
     my ( $self, $node, $new_tag, $dont_try_switch_number ) = @_;
 
-    # if ( $self->magic eq 'always_en_num' ) {
-    # $new_tag = $self->try_switch_num( $node, $new_tag );
-    # }
-    
-    # TODO: do this before calling the method
-    # to reduce interface complexity
-    $node->set_tag($new_tag);
+    if (defined $new_tag) {
+        $node->set_tag($new_tag);
+    }
 
-    return $formGenerator->regenerate_node($node, $new_tag, $dont_try_switch_number);
+    if (!defined $dont_try_switch_number) {
+        $dont_try_switch_number = $self->dont_try_switch_number;
+    }
+
+    if ($self->magic =~ /switch_num_only_if_ennode/ && !defined $self->en($node)) {
+        $dont_try_switch_number = 1;
+    }
+
+    return $formGenerator->regenerate_node(
+        $node, $dont_try_switch_number, $self->en($node) );
 }
 
 # prefetches useful information into hashes
@@ -214,6 +202,30 @@ sub get_pair {
     );
 
     return ( $node, $parent, \%d_categories, \%g_categories );
+}
+
+sub get_tag_cat {
+    my ($self, $tag, $cat) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::get_tag_cat($tag, $cat);
+}
+
+sub set_tag_cat {
+    my ($self, $tag, $cat, $value) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::set_tag_cat($tag, $cat, $value);
+}
+
+sub get_node_tag_cat {
+    my ($self, $node, $cat) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::get_node_tag_cat($node, $cat);
+}
+
+sub set_node_tag_cat {
+    my ($self, $node, $cat, $value) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::set_node_tag_cat($node, $cat, $value);
 }
 
 # tries to guess whether the given node is a name
@@ -364,6 +376,24 @@ sub remove_node {
     $node->remove();
 
     return;
+}
+
+sub add_parent {
+    my ( $self, $parent_info, $node ) = @_;
+
+    if (!defined $node) {
+        log_warn("Cannot add parent to undefined node!");
+        return;
+    }
+    
+    my $old_parent = $node->get_parent();
+    my $new_parent = $old_parent->create_child($parent_info);
+    $new_parent->set_parent($old_parent);
+    $new_parent->shift_before_subtree(
+        $node, { without_children => 1 }
+    );
+
+    return $new_parent;
 }
 
 # logging

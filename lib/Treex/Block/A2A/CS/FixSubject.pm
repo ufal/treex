@@ -29,17 +29,25 @@ sub fix {
 # Use of uninitialized value in string eq at /ha/work/people/rosa/tectomt/treex/lib/Treex/Block/A2A/CS/FixSubject.pm line 19.
     {
 
-        my $case = '1';
-        $d->{tag} =~ s/^(....)./$1$case/;
+        #my $case = '1';
+        #$d->{tag} =~ s/^(....)./$1$case/;
 
-        if ( $d->{num} eq 'S' ) {
+        # if ( $d->{num} eq 'S' ) {
 
             # maybe correct form, only incorrectly tagged
-            $d->{tag} = $self->try_switch_num($dep, $d->{tag});
+            # $d->{tag} = $self->try_switch_num($dep, $d->{tag});
+        # }
+
+        # TODO
+        my $dont_try_switch_number = $self->dont_try_switch_number;
+        if ($dont_try_switch_number == 0 && $self->magic !~ /always_switch/) {
+            $dont_try_switch_number = ( $self->get_node_tag_cat($dep, 'num') ne 'S' );
+            log_info( $self->get_node_tag_cat($dep, 'num') . ': ' . $dont_try_switch_number );
         }
 
         $self->logfix1( $dep, "Subject" );
-        $self->regenerate_node( $dep, $d->{tag} );
+        $self->set_node_tag_cat($dep, 'case', 1);
+        $self->regenerate_node( $dep, $dep->tag, $dont_try_switch_number );
         $self->logfix2($dep);
     }
 }
