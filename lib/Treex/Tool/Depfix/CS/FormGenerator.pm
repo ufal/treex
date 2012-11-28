@@ -85,6 +85,7 @@ sub regenerate_node {
     if ( !$dont_try_switch_number ) {
         $new_tag =
             $numberSwitcher->try_switch_node_number( $node, $ennode );
+        $node->set_tag($new_tag);
     }
     
     my $new_form = $self->get_form( $node->lemma, $new_tag );
