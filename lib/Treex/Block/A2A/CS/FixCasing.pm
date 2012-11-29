@@ -85,6 +85,30 @@ Treex::Block::A2A::CS::FixCasing
 
 =head1 DESCRIPTION
 
+known problems:
+Finance Minister
+ord != 1 is not enough, there might be non-words at the beginning of the sentence...
+
+en: Muslim -> muslim (all of them) / Muslim (Bosňák)
+Protestant
+
+unlear cases:
+Hotel
+Internet
+Lord, Sir, Miss
+Management, Manager
+zoo/ZOO
+
+TODO:
+
+Relax matching not only by lcing but also by removing diacritics.
+
+Go further: just try to match the case even if the lemma does not match, or maybe if at least the first character matches :-)
+
+When lowercasing, it is often the case that the system failed to translate a word, believing it to be a named entity when in fact it is not. --> try to retranslate in such case?
+(Director, ZOO, 'S, Unleashed, Going Under, Euro)
+
+Maybe uppercasing the whole word is not the best thing to do (HRK -> HRKu).
 
 =head1 AUTHORS
 
