@@ -7,12 +7,13 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
+    my $endep = $self->en($dep);
+
     if (SOMETHING_HOLDS) {
 
-        #DO_SOMETHING
-
         $self->logfix1( $dep, "FIXNAME" );
-        $self->regenerate_node( $gov, $g->{tag} );
+        $self->set_node_tag_cat( $gov, 'case', 4 );
+        $self->regenerate_node($gov);
         $self->logfix2($dep);
     }
 }
