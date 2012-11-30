@@ -4,6 +4,8 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
+use Treex::Tool::Depfix::CS::SimpleTranslator;
+
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
@@ -15,24 +17,36 @@ sub fix {
         else {
             # parent is not a verb, "se" is incorrect here
             my $ennode = $self->en($dep);
-            if ($self->magic =~ /auxt_missc/ && defined $ennode) {
+            if ($self->magic =~ /auxt_missc/
+                && defined $ennode && $ennode->tag =~ /^V/
+            ) {
+
                 # try to reconstruct the missing node 
-                # TODO try to translate the node ;-)
                 $self->logfix1( $dep, "AuxT+" );
-                # tag: at least we know it should be a verb (but maybe copy that from EN?)
+                
+                # try to translate the node
+                my $translator = Treex::Tool::Depfix::CS::SimpleTranslator->new();
+                my ($translation) = $translator->translate_lemma($ennode->lemma);
+                $translation =~ s/_.*$//;
+
+                # tag: at least we know it should be a verb
+                # (but maybe copy that from EN?)
                 my $new_tag =
                     Treex::Tool::Depfix::CS::TagHandler->get_empty_tag();
                 $new_tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat(
                     $new_tag, 'pos', 'V' );
+                
                 # the new node is to be a parent of "se"
                 my $new_node = $self->add_parent(
                     {
-                        form => $ennode->form,
-                        lemma => $ennode->lemma,
+                        form => $translation,
+                        lemma => $translation,
                         tag => $new_tag, 
                     },
                     $dep,
                 );
+                $new_node->shift_after_node($dep, {without_children=>1});
+                
                 $self->logfix2($new_node);
             }
             else {
