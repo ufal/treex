@@ -78,7 +78,7 @@ sub set_node_neg {
     my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
     if ( defined $lexnode ) {
         $node->set_gram_negation('neg1');
-        my $msg = $self->change_anode_attribute( 'tag:neg', 'A', $lexnode );
+        my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $lexnode );
         $self->logfix($msg);
     }
     else {
