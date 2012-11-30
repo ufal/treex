@@ -30,9 +30,11 @@ sub translate_lemma {
     if (defined $translation && $translation =~ /^([^#]+)#(.+)$/) {
         my $tr_lemma = $1;
         my $tag = $2;
+        log_info "SimpleTranslator: $lemma -> $tr_lemma";
         return ($tr_lemma, $tag);
     }
     else {
+        log_info "SimpleTranslator: Cannot translate $lemma!";
         return $lemma;
     }
 }
