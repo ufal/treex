@@ -345,11 +345,11 @@ sub new_preposition_attributes {
     my $prep_info = {};
     $prep_info->{form}  = $prep_form;
     $prep_info->{lemma} = $prep_form;    # TODO: not the best thing to do
-    my $tag = Treex::Tool::Depfix::CS::TagHandler->get_empty_tag();
-    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'pos',    'R' );
-    $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'subpos', 'R' );
+    my $tag = Treex::Tool::Depfix::CS::TagHandler::get_empty_tag();
+    $tag = Treex::Tool::Depfix::CS::TagHandler::set_tag_cat( $tag, 'pos',    'R' );
+    $tag = Treex::Tool::Depfix::CS::TagHandler::set_tag_cat( $tag, 'subpos', 'R' );
     if ( defined $case && $case =~ /^[1-7]$/ ) {
-        $tag = Treex::Tool::Depfix::CS::TagHandler->set_tag_cat( $tag, 'case', $case );
+        $tag = Treex::Tool::Depfix::CS::TagHandler::set_tag_cat( $tag, 'case', $case );
     }
     $prep_info->{tag} = $tag;
 
