@@ -154,7 +154,23 @@ sub fill_info_lexnode {
     my $lexnode = $node->get_lex_anode();
     $node->wild->{'deepfix_info'}->{'lexnode'} = $lexnode;
     if ( defined $lexnode ) {
+        
+        # mpos
         $node->wild->{'deepfix_info'}->{'mpos'} = substr( $lexnode->tag, 0, 1 );
+        
+        # id
+        my $lexnode_id = $lexnode->id;
+        {
+            my $lang = $self->language;
+            my $sel  = $self->selector;
+            $lexnode_id =~ s/a_tree-${lang}_${sel}-//;
+        }
+        $lexnode->wild->{'deepfix_info'}->{'id'} = $lexnode_id;
+
+        # ennode
+        ( $lexnode->wild->{'deepfix_info'}->{'ennode'} ) =
+            $node->get_aligned_nodes_of_type( $self->src_alignment_type);
+
         $result = 1;
     }
     else {
@@ -185,7 +201,7 @@ sub change_anode_attribute {
         return;
     }
 
-    my $msg = 'CHANGE ATTR on ' . $self->anode_sgn($anode) . ': ' . $attribute;
+    my $msg = 'CHANGE ATTR on ' . $self->anode_sgn($anode) . ': ' . $attribute . ' ';
 
     # change attribute
     if ( $attribute =~ /^tag:(.+)$/ ) {
@@ -227,7 +243,7 @@ sub change_anode_attributes {
         my $attribute = $attributes[$i];
         my $value     = $attributes_info->{$attribute};
         my $dnr       = ( $i + 1 == @attributes ) ? $do_not_regenerate : 1;
-        $msg .= $self->change_anode_attribute( $attribute, $value, $dnr );
+        $msg .= $self->change_anode_attribute( $attribute, $value, $anode, $dnr );
     }
 
     return $msg;
@@ -280,7 +296,8 @@ sub add_parent {
 sub regenerate_node {
     my ( $self, $anode, $dont_try_switch_number ) = @_;
 
-    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'};
+    # now works only for lexnodes that have been processed by fill_info_lexnode
+    my $ennode = $anode->wild->{'deepfix_info'}->{'ennode'};
     $formGenerator->regenerate_node( $anode, $dont_try_switch_number, $ennode);
 
     return;
@@ -289,7 +306,9 @@ sub regenerate_node {
 sub anode_sgn {
     my ($self, $anode) = @_;
 
-    my $sgn = $anode->id . '(' . $anode->form . ')';
+    # now works only for lexnodes that have been processed by fill_info_lexnode
+    my $sgn = ($anode->wild->{'deepfix_info'}->{'id'} // $anode->id)
+        . '(' . $anode->form . ')';
 
     return $sgn;
 }
