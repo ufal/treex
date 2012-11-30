@@ -15,6 +15,8 @@ sub process_start {
 
     $tectoFixBlock = Treex::Block::T2T::EN2CS::FixGrammatemesAfterTransfer->new();
 
+    $self->SUPER::process_start;
+
     return ;
 }
 

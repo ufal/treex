@@ -62,6 +62,8 @@ sub process_start {
         }
     }
 
+    $self->SUPER::process_start;
+
     return;
 }
 
