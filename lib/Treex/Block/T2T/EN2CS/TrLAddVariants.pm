@@ -9,7 +9,7 @@ use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
 use TranslationModel::MaxEnt::Model;
-use TranslationModel::VowpalWabbit::Model;
+#use TranslationModel::VowpalWabbit::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
