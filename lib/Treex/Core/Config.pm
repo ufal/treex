@@ -28,7 +28,8 @@ sub _load_config {
     my $self     = shift;
     my %args     = @_;
     my $from     = $args{from} // $self->config_file();
-    my $yaml     = read_file( $from, { err_mode => 'silent' } );
+    return {} if !-e $from;
+    my $yaml     = read_file( $from, { err_mode => 'quiet' } );
     my $toReturn = YAML::Load($yaml);
     return $toReturn // {};                 #rather than undef return empty hashref
 }
