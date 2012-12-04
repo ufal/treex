@@ -40,6 +40,12 @@ has 'alignment_type_new' => (
     default => undef
 );
 
+has 'match_passes' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 3
+);
+
 has 'log_to_console' => (
     is      => 'ro',
     isa     => 'Bool',
@@ -84,35 +90,48 @@ sub process_bundle {
     }
 
     # add new links
-    my @source_nodes_ordered   = $self->sort_descendants_hash($source_nodes);
-    my @target_nodes_ordered   = $self->sort_descendants_hash($target_nodes);
-    my $unaligned_target_nodes = @target_nodes_ordered;
-  OUTER: foreach my $source_node (@source_nodes_ordered) {
-        foreach my $target_node (@target_nodes_ordered) {
-            if ( $self->nodes_match( $source_node, $target_node ) ) {
+    my $unaligned_target_nodes_orig = keys %$target_nodes;
+    my $unaligned_target_nodes_new = keys %$target_nodes;
+    for (
+        my $match_type = 1;
+        $match_type <= $self->match_passes;
+        $match_type++
+    ) {
+        my @source_nodes_ordered   = $self->sort_descendants_hash(
+            $source_nodes);
+        my @target_nodes_ordered   = $self->sort_descendants_hash(
+            $target_nodes);
+        OUTER: foreach my $source_node (@source_nodes_ordered) {
+            foreach my $target_node (@target_nodes_ordered) {
+                if ( $self->nodes_match(
+                        $source_node, $target_node, $match_type )
+                ) {
 
-                # add link
-                $source_node->add_aligned_node( $target_node,
-                    $self->alignment_type_new );
-                $self->logfix( "New link: "
-                      . $source_node->form . " --> "
-                      . $target_node->form );
+                    # add link
+                    $source_node->add_aligned_node( $target_node,
+                        $self->alignment_type_new );
+                    $self->logfix( "New link type $match_type: "
+                        . $source_node->form . " --> "
+                        . $target_node->form );
 
-                # update structures
-                delete $source_nodes->{ $source_node->id };
-                delete $target_nodes->{ $target_node->id };
-                @target_nodes_ordered =
-                  $self->sort_descendants_hash($target_nodes);
+                    # update structures
+                    delete $source_nodes->{ $source_node->id };
+                    delete $target_nodes->{ $target_node->id };
+                    @target_nodes_ordered =
+                    $self->sort_descendants_hash($target_nodes);
 
-                # go to next source node
-                next OUTER;
+                    # go to next source node
+                    next OUTER;
+                }
             }
         }
+        $unaligned_target_nodes_new = keys %$target_nodes;
     }
-    if ( $unaligned_target_nodes != @target_nodes_ordered ) {
+    
+    if ( $unaligned_target_nodes_orig != $unaligned_target_nodes_new ) {
         $self->logfix( "Reduced number of unaligned target nodes from "
-              . $unaligned_target_nodes . " to "
-              . @target_nodes_ordered );
+              . $unaligned_target_nodes_orig . " to "
+              . $unaligned_target_nodes_new );
     }
 
     return;
@@ -140,7 +159,7 @@ sub sort_descendants_hash {
 }
 
 sub nodes_match {
-    my ( $self, $node1, $node2 ) = @_;
+    my ( $self, $node1, $node2, $match_type ) = @_;
 
     my $lemma1 =
       Treex::Tool::Depfix::CS::DiacriticsStripper::strip_diacritics(
@@ -153,11 +172,46 @@ sub nodes_match {
     my $form2 = Treex::Tool::Depfix::CS::DiacriticsStripper::strip_diacritics(
         lc( $node2->form ) );
 
-    my $nodes_match =
-         ( $lemma1 eq $lemma2 )
-      || ( $form1  eq $form2 )
-      || ( $form1  eq $lemma2 )
-      || ( $lemma1 eq $form2 );
+    my $nodes_match = 0;
+
+    if ($match_type == 1) {
+        $nodes_match =
+        ( $lemma1 eq $lemma2 )
+        || ( $form1  eq $form2 )
+        || ( $form1  eq $lemma2 )
+        || ( $lemma1 eq $form2 );
+    }
+    elsif ($match_type == 2) {
+        
+        # match if one is substring of the other
+        if ( (length $lemma1 >= 3) && (length $lemma2 >= 3 ) ) {
+            $nodes_match =
+            ( $lemma1 =~ /$lemma2/ )
+            || ( $form1  =~ /$form2/ )
+            || ( $form1  =~ /$lemma2/ )
+            || ( $lemma1 =~ /$form2/)
+            || ( $lemma2 =~ /$lemma1/ )
+            || ( $form2  =~ /$form1/ )
+            || ( $form2  =~ /$lemma1/ )
+            || ( $lemma2 =~ /$form1/ );
+        }
+    }
+    elsif ($match_type == 3) {
+        if ( (length $lemma1 >= 4) && (length $lemma2 >= 4 ) ) {
+
+            # match if the first 4 characters are identical
+            $lemma1 = substr $lemma1, 0, 4;
+            $lemma2 = substr $lemma2, 0, 4;
+            $form1 = substr $form1, 0, 4;
+            $form2 = substr $form2, 0, 4;
+
+            $nodes_match =
+            ( $lemma1 eq $lemma2 )
+            || ( $form1  eq $form2 )
+            || ( $form1  eq $lemma2 )
+            || ( $lemma1 eq $form2 );
+        }
+    }
 
     return $nodes_match;
 }
@@ -190,6 +244,8 @@ and both forms and lemmas are lowercased
 and their diacritics are stripped.
 If then a match is found among the forms and lemmas,
 a new alignment link is created between these nodes.
+In a second step, substring matches are tried.
+In a third step, matches on the first four characters are tried.
 
 Assumes the links go from C<language>_C<selector>
 to C<target_language>_C<target_selector>
@@ -242,6 +298,15 @@ The default value is C<intersection>.
 =item alignment_type_new
 
 The type of alignment to set for new links. Defaults to C<alignment_type>.
+
+=item match_passes
+
+How many levels of matching are to be tried out.
+The higher levels of matching are less accurate,
+but still get it right most of the time,
+and thus further slightly increase the recall of this block
+with little or no decerase in its precision.
+The default is 3 (all levels).
 
 =back
 
