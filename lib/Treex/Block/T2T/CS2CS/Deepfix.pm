@@ -8,7 +8,7 @@ extends 'Treex::Core::Block';
 has '+language'          => ( required => 1 );
 has 'src_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'src' );
 has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 0 );
-
+has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 # has 'source_language'     => ( is       => 'rw', isa => 'Str', required => 0 );
 # has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
 # has 'orig_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'orig' );
@@ -169,7 +169,7 @@ sub fill_info_lexnode {
 
         # ennode
         ( $lexnode->wild->{'deepfix_info'}->{'ennode'} ) =
-            $node->get_aligned_nodes_of_type( $self->src_alignment_type);
+            $lexnode->get_aligned_nodes_of_type( $self->src_alignment_type);
 
         $result = 1;
     }
@@ -296,6 +296,9 @@ sub add_parent {
 sub regenerate_node {
     my ( $self, $anode, $dont_try_switch_number ) = @_;
 
+    if (!defined $dont_try_switch_number) {
+        $dont_try_switch_number = $self->dont_try_switch_number;
+    }
     # now works only for lexnodes that have been processed by fill_info_lexnode
     my $ennode = $anode->wild->{'deepfix_info'}->{'ennode'};
     $formGenerator->regenerate_node( $anode, $dont_try_switch_number, $ennode);
