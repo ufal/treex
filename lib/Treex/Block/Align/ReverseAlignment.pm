@@ -11,6 +11,8 @@ has '+language'   => ( required => 1 );
 
 has 'overwrite' => ( is => 'ro', isa => 'Bool', default => 1 );
 
+has 'align_type' => ( is => 'ro', isa => 'Str', default => 'reverse_alignment' );
+
 sub process_zone {
     my ( $self, $zone ) = @_;
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
@@ -19,7 +21,7 @@ sub process_zone {
 
         my ($ys) = $x->get_aligned_nodes();
         foreach my $y (@{$ys}){
-            $y->add_aligned_node($x, 'reverse_alignment');
+            $y->add_aligned_node($x, $self->align_type);
         } 
     }
 }
