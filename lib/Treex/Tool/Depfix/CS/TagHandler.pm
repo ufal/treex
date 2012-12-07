@@ -5,6 +5,7 @@ use utf8;
 
 my %tag_cats = (
     'pos' => 0,
+    'POS' => 0,
     
     subpos => 1,
     'sub' => 1,
