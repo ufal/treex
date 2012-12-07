@@ -271,8 +271,6 @@ sub _build_ewn_classes {
         
         my ($noun, $classes_string) = split /\t/, $line;
         my (@classes) = split / /, $classes_string;
-#         print STDERR join " ", @classes;
-#         print STDERR "\n";
         for my $class (@classes) {
             $ewn_noun->{$noun}{$class} = 1;
             $ewn_all_classes{$class} = 1;
@@ -281,8 +279,6 @@ sub _build_ewn_classes {
     close EWN;
 
     my @class_list = keys %ewn_all_classes;
-#     print STDERR join " ", @class_list;
-#     print STDERR "\n";
     my $ewn_classes = { nouns => $ewn_noun, all => \@class_list };
 
     return $ewn_classes;
@@ -345,12 +341,6 @@ override '_unary_features' => sub {
         $coref_features->{'c_'.$type.'_synttype'} = $self->_ante_synt_type( $node );
     }
 
-    if ( $type eq "anaph" ) {
-#     if ( $node->id eq "#t_tree-en_src-s2-n815" ) {
-#         print STDERR $node->get_address . "\n";
-#         print STDERR $node->t_lemma. "\t" . $node->id . "\n";
-    }
-    
 ###########################
     #   Semantic:
     #   1:  is_name_of_person
@@ -361,14 +351,6 @@ override '_unary_features' => sub {
         my $cand_lemma      = $node->t_lemma;
         my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
         my $cand_c = $noun_c->{$cand_lemma};
-
-#         debug
-#         if ( not $cand_c ) {
-#             my $tmp = ( defined $cand_c->{"young_bird"} ) ? $b_true : $b_false;
-# #             print STDERR $node->t_lemma . "\n";
-# #             print STDERR $node->t_lemma . " a class: $tmp\n";
-#         }
-#         end debug
 
 #         #1   EuroWordNet nouns: print all classes (full matrix)
 #         for my $class ( @{$all_c} ) {

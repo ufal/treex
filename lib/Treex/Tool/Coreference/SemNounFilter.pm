@@ -14,12 +14,6 @@ sub is_candidate {
     my $not_first_second_pers = !$node->gram_person || ($node->gram_person !~ /1|2/);
     # if the node is not generated, leave just nouns, pronouns, adjectives and foreign words
     my $not_certain_pos = !$anode || ($anode->tag !~ /^[CJRTDIZV]/);
-#     debug
-#     if ($is_sem_noun && $not_first_second_pers && $not_certain_pos) {
-#         if ( $node->functor eq "CONJ" ) {
-#             print STDERR "nojono\n";
-#         }
-#     }
 
     return ($is_sem_noun && $not_first_second_pers && $not_certain_pos);
 }

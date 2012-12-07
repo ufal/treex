@@ -106,9 +106,6 @@ sub _get_antecedents {
 
 #     my $antecs = [];
     my @antecs = $anaph->get_coref_chain;
-    print STDERR $anaph->id . "\t" . "\n";
-    print STDERR join "\t", map { $_->t_lemma } @antecs;
-    print STDERR "\n";
     my @membs = map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ?
                         $_->children : () } @antecs;
     return [ @antecs, @membs ];

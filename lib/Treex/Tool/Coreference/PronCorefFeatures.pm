@@ -32,12 +32,6 @@ sub _anaph_loc_buck {
 
 sub _binary_features {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
-#     if ( $cand->id eq 't_tree-en_src-s2-n810' ) {
-# #     if ( $anaph->id eq 't_tree-en_src-s2-n815' ) {
-# #         print STDERR $anaph->get_address . "\n";
-#         print STDERR $cand->parent->t_lemma . "\n";
-#         print STDERR $cand->id . "\t" . $cand->functor . "\t" . $cand->t_lemma . "\n";
-#     }
 
     my $coref_features = {};
 
@@ -163,10 +157,6 @@ sub _unary_features {
     #   Functional:
     #   2:  formeme
     $coref_features->{'c_'.$type.'_fmm'}  = $node->formeme;
-#     if ( not $node->formeme ) {
-#         print STDERR $node->get_address;
-#         print STDERR $node->t_lemma . "\t" . $node->functor . "\t" . $node->id;
-#     }
 
     #   3:  functor($inode, $jnode);
     $coref_features->{'c_'.$type.'_fun'}  = $node->functor;

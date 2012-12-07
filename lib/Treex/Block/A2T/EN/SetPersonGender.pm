@@ -44,8 +44,8 @@ sub process_zone {
         if ( grep { $_ eq $t_node->t_lemma } @persons
             and not $t_node->gram_gender ) {
             $t_node->set_gram_gender($person_gender{$t_node->t_lemma});
-            print $t_node->get_zone->sentence . "\n";
-            print $t_node->t_lemma . "\t" . $t_node->gram_gender . "\n";
+#             print $t_node->get_zone->sentence . "\n";
+#             print $t_node->t_lemma . "\t" . $t_node->gram_gender . "\n";
         }
     }
     return;

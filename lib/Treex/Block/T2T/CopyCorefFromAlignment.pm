@@ -32,18 +32,40 @@ sub _add_coref_nodes {
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    my @antec = $self->_get_coref_nodes($tnode);
+    my @antecs = $self->_get_coref_nodes($tnode);
     # nothing to do if no antecedent
-    return if (@antec == 0);
+    return if (@antecs == 0);
     
     my @aligned_anaphs = $tnode->get_aligned_nodes_of_type('monolingual');
-    my @aligned_antec = map {$_->get_aligned_nodes_of_type('monolingual')} @antec;
+    my @aligned_antecs = map {$_->get_aligned_nodes_of_type('monolingual')} @antecs;
 
     foreach my $source ( @aligned_anaphs ) {
         if (!defined $source) {
             print STDERR Dumper(\@aligned_anaphs);
         }
-        $self->_add_coref_nodes( $source, @aligned_antec );
+        if ( @aligned_antecs == 0 ) {
+            my $antec = $antecs[0];
+            if ( $antec->functor =~ /APPS|CONJ/ ) {
+                my @antec_children = $antec->children;
+                push @aligned_antecs, $antec_children[0]->get_aligned_nodes_of_type('monolingual');
+#                 print $aligned_antecs[0]->get_address . "\n";
+            }
+            else {
+#             elsif ( defined $antec->is_generated ) {
+                foreach my $prev_antec ( $antec->get_coref_chain ) {
+                    my @aligned_nodes = $prev_antec->get_aligned_nodes_of_type('monolingual');
+                    if ( @aligned_nodes != 0 ) {
+                        push @aligned_antecs, @aligned_nodes;
+#                         print $aligned_antecs[0]->get_address . "\n";
+                        last;
+                    }
+                }
+            }
+#             else {
+#                 print $source->get_address . "\n";
+#             }
+        }
+        $self->_add_coref_nodes( $source, @aligned_antecs );
     }
 }
 
