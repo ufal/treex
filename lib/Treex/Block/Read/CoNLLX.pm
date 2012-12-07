@@ -4,33 +4,25 @@ use Treex::Core::Common;
 use File::Slurp;
 extends 'Treex::Block::Read::BaseTextReader';
 
-sub next_document_text {
+sub next_document_text {   
     my ($self) = @_;
-    my $FH = $self->_current_fh;
-    my $text;
-
-    if ( !$FH || ! ( $text = <$FH>) ) {
-        $FH = $self->next_filehandle() or return;
-        $self->_set_current_fh($FH);
-    }
-
-    if ( $self->is_one_doc_per_file ) {
-        $self->_set_current_fh(undef);
-        return read_file($FH);
-    }
-
-    my $empty_lines;
-
+    return $self->from->next_file_text() if $self->is_one_doc_per_file;
+ 
+    my $text = '';
+    my $empty_lines = 0;
     LINE:
-
-    while (<$FH>) {
-        if ( $_ =~ m/^\s*$/ ) {
+    while(1){
+        my $line = $self->from->next_line();
+        if (!defined $line){
+            return if $text eq '' && !$self->from->has_next_file();
+            last LINE;
+        }
+        if ( $line =~ m/^\s*$/ ) {
             $empty_lines++;
             return $text if $empty_lines == $self->lines_per_doc;
         }
-        $text .= $_;
+        $text .= $line;
     }
-
     return $text;
 }
 
