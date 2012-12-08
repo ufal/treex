@@ -4,8 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
-has 'magic'              => ( is => 'ro', isa => 'Str', default => '' );
-
 sub fill_node_info {
     my ( $self, $node ) = @_;
 
@@ -19,53 +17,32 @@ sub fill_node_info {
 sub fix {
     my ( $self, $node ) = @_;
 
-    if ( $node->formeme =~ /fin|rc/ ) {
+    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'}; 
+    if (defined $ennode
+        && defined $ennode->gram_negation
+        && $ennode->gram_negation eq 'neg1'
+        && defined $node->gram_negation
+        && $node->gram_negation eq 'neg0'
+    ) {
+        my $dofix = 1;
 
-        # double negation
-        my @descendants_in_same_clause = $node->get_clause_descendants();
-        if (any { $_->t_lemma =~ /^(nikdo|nic|žádný|ničí|nikdy|nikde)$/ }
-            @descendants_in_same_clause
-            )
-        {
-            $self->set_node_neg($node);
+        # bez-, mimo-, proti-, in-...
+        if ( $self->cs_lexical_negation($node) ) {
+            $dofix = 0;
+        }
+
+        # ne, nelze, ne[verb] (nebyl nemá...)
+        if ( $self->cs_tree_negation($node) ) {
+            $dofix = 0;
         }
 
         # until
-        if ( $node->wild->{'deepfix_info'}->{enformeme} =~ /(until|unless)/ ) {
-            $self->set_node_neg($node);
+        if ( $self->en_pseudo_negation($ennode) ) {
+            $dofix = 0;
         }
 
-        # "Ani neprisel, ani nezavolal.", "Nepotkal Pepu ani Frantu."
-        if (grep { $self->_is_ani_neither_nor($_) }
-            $node->get_children
-            or ($node->is_member
-                and $self->_is_ani_neither_nor( $node->get_parent )
-            )
-            )
-        {
-            $self->set_node_neg($node);
-        }
-    }
-
-    # 'no longer'
-    if (
-        $node->wild->{'deepfix_info'}->{tlemma} =~ /^(už|již)$/
-        && !$node->get_children()
-        && !$node->wild->{'deepfix_info'}->{parent}->is_root
-        && $node->wild->{'deepfix_info'}->{ptlemma} =~ /^(už|již)$/
-        )
-    {
-        my $grandpa = $node->wild->{'deepfix_info'}->{parent}->get_parent;
-        if ( ( $grandpa->gram_sempos || '' ) eq 'v' ) {
-
-            # remove the node
-            my $msg = $self->remove_anode(
-                $node->wild->{'deepfix_info'}->{'lexnode'}
-            );
-            $self->logfix( $msg, 1 );
-
-            # change the grandpa
-            $self->set_node_neg($grandpa);
+        if ($dofix) {
+           $self->set_node_neg($node);
         }
     }
 
@@ -78,6 +55,8 @@ sub set_node_neg {
     my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
     if ( defined $lexnode ) {
         $node->set_gram_negation('neg1');
+
+        # TODO sometimes do not set the neg on the lex node but on its active verb
         my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $lexnode );
         $self->logfix($msg);
     }
@@ -93,17 +72,39 @@ sub set_node_neg {
     return;
 }
 
-sub _is_ani_neither_nor {
-    my ( $self, $node ) = @_;
+sub cs_lexical_negation {
+    my ($self, $node) = @_;
+
     my $result = 0;
 
-    if ( $node->t_lemma eq 'ani' ) {
-        my ($ennode) = $node->get_aligned_nodes_of_type(
-            $self->src_alignment_type
-        );
-        if ( defined $ennode && $ennode->t_lemma =~ /(neither|nor)/ ) {
-            $result = 1;
-        }
+    if ( $node->wild->{'deepfix_info'}->{'tlemma'} =~ /^(ne|bez|mimo|proti|in|dis|dys)/ ) {
+        $result = 1;
+    }
+
+    return $result;
+}
+
+sub cs_tree_negation {
+    my ($self, $node) = @_;
+
+    my $result = 0;
+
+    my $has_negated_child = any { $_->gram_negation eq 'neg1' } $node->get_children();
+    if ( $has_negated_child ) {
+        $result = 1;
+    }
+
+    return $result;
+}
+
+sub en_pseudo_negation {
+    my ($self, $ennode) = @_;
+
+    my $result = 0;
+
+    my $has_until_child = any { $_->t_lemma eq 'until' } $ennode->get_children();
+    if ( $has_until_child ) {
+        $result = 1;
     }
 
     return $result;
