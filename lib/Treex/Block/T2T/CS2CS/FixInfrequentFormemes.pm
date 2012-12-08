@@ -67,18 +67,6 @@ sub process_start {
     return;
 }
 
-sub fill_node_info {
-    my ( $self, $node ) = @_;
-
-    $self->fill_info_basic($node);
-    $self->fill_info_lexnode($node);
-    $self->fill_info_formemes($node);
-    $self->fill_info_aligned($node);
-    $self->fill_info_model($node);
-
-    return;
-}
-
 # fills in info that is provided by the model
 sub fill_info_model {
     my ( $self, $node ) = @_;
@@ -142,6 +130,9 @@ sub get_best_formeme {
 
 sub fix {
     my ( $self, $node ) = @_;
+
+    # precompute information from model
+    $self->fill_info_model($node);
 
     # do the change
     my $decide_on_change_result = $self->decide_on_change($node);

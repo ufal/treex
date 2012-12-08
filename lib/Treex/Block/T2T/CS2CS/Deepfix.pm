@@ -30,158 +30,22 @@ sub process_start {
     return;
 }
 
-# used as the default in metohds
 my $tnode_being_processed;
 
 sub process_tnode {
     my ( $self, $node ) = @_;
 
+    if (!defined $node->wild->{'deepfix_info'}) {
+        log_fatal "deepfix_info must be precomputed for Deepfix to operate!!";
+    }
+
+    # remember the node being processed
     $tnode_being_processed = $node;
 
-    # get info about current node
-    $self->fill_node_info($node);
-
-    # do the change
+    # try to fix the node
     $self->fix($node);
 
     return;
-}
-
-# fills necessary information into $node->wild->{'deepfix_info'};
-# to be overridden in extending classes if neccessary
-sub fill_node_info {
-    my ( $self, $node ) = @_;
-
-    if ( !defined $node ) {
-        $node = $tnode_being_processed;
-    }
-
-    $self->fill_info_basic($node);
-    $self->fill_info_lexnode($node);
-
-    # $self->fill_info_formemes($node);
-    # $self->fill_info_aligned($node);
-
-    return;
-}
-
-sub fill_info_basic {
-    my ( $self, $node ) = @_;
-
-    if ( !defined $node ) {
-        $node = $tnode_being_processed;
-    }
-
-    # id
-    $node->wild->{'deepfix_info'}->{'id'} = $node->id;
-    {
-        my $lang = $self->language;
-        my $sel  = $self->selector;
-        $node->wild->{'deepfix_info'}->{'id'} =~ s/t_tree-${lang}_${sel}-//;
-    }
-
-    # parent
-    my $parent = $node->get_eparents( { first_only => 1, or_topological => 1 } );
-    $node->wild->{'deepfix_info'}->{'parent'} = $parent;
-
-    # lemmas (cut the rubbish from the lemma)
-    $node->wild->{'deepfix_info'}->{'tlemma'} =
-        Treex::Tool::Lexicon::CS::truncate_lemma( $node->t_lemma(), 1);
-    $node->wild->{'deepfix_info'}->{'ptlemma'} =
-        Treex::Tool::Lexicon::CS::truncate_lemma( $parent->t_lemma() || '', 1);
-
-    # attdir
-    if ( $node->ord < $parent->ord ) {
-        $node->wild->{'deepfix_info'}->{'attdir'} = '/';
-    }
-    else {
-        $node->wild->{'deepfix_info'}->{'attdir'} = '\\';
-    }
-
-    return $node;
-}
-
-# (p)formeme->[formeme|syntpos|case|prep|preps]
-sub fill_info_formemes {
-    my ( $self, $node ) = @_;
-
-    if ( !defined $node ) {
-        $node = $tnode_being_processed;
-    }
-
-    $node->wild->{'deepfix_info'}->{'formeme'} =
-        Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
-        $node->formeme
-        );
-    $node->wild->{'deepfix_info'}->{'pformeme'} =
-        Treex::Tool::Depfix::CS::FormemeSplitter::analyzeFormeme(
-        $node->wild->{'deepfix_info'}->{'parent'}->formeme
-        );
-
-    return $node;
-}
-
-sub fill_info_aligned {
-    my ( $self, $node ) = @_;
-
-    if ( !defined $node ) {
-        $node = $tnode_being_processed;
-    }
-
-    ( $node->wild->{'deepfix_info'}->{'ennode'} ) = $node->get_aligned_nodes_of_type(
-        $self->src_alignment_type
-    );
-    if ( defined $node->wild->{'deepfix_info'}->{'ennode'} ) {
-        $node->wild->{'deepfix_info'}->{'enformeme'} = $node->wild->{'deepfix_info'}->{'ennode'}->formeme() // '';
-        $node->wild->{'deepfix_info'}->{'entlemma'}  = $node->wild->{'deepfix_info'}->{'ennode'}->t_lemma() // '';
-    }
-    else {
-        $node->wild->{'deepfix_info'}->{'enformeme'} = '';
-        $node->wild->{'deepfix_info'}->{'entlemma'}  = '';
-    }
-
-    return $node;
-}
-
-sub fill_info_lexnode {
-    my ( $self, $node ) = @_;
-
-    my $result = 0;
-
-    if ( !defined $node ) {
-        $node = $tnode_being_processed;
-    }
-
-    my $lexnode = $node->get_lex_anode();
-    $node->wild->{'deepfix_info'}->{'lexnode'} = $lexnode;
-    if ( defined $lexnode ) {
-        
-        # mpos
-        $node->wild->{'deepfix_info'}->{'mpos'} = substr( $lexnode->tag, 0, 1 );
-        
-        # id
-        my $lexnode_id = $lexnode->id;
-        {
-            my $lang = $self->language;
-            my $sel  = $self->selector;
-            $lexnode_id =~ s/a_tree-${lang}_${sel}-//;
-        }
-        $lexnode->wild->{'deepfix_info'}->{'id'} = $lexnode_id;
-
-        # ennode
-        ( $lexnode->wild->{'deepfix_info'}->{'ennode'} ) =
-            $lexnode->get_aligned_nodes_of_type( $self->src_alignment_type);
-
-        $result = 1;
-    }
-    else {
-        if (!defined $node->formeme | $node->formeme ne 'drop') {
-            # $node->wild->{'deepfix_info'}->{'mpos'} = '?';
-            log_warn( "T-node " . $self->tnode_sgn($node) . " has no lex node!" );
-        }
-    }
-
-    return $result;
 }
 
 # change the nde if necessary

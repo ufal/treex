@@ -18,15 +18,6 @@ sub process_start {
     return ;
 }
 
-sub fill_node_info {
-    my ( $self, $node ) = @_;
-    
-    $self->fill_info_basic($node);
-    $self->fill_info_aligned($node);
-    
-    return;
-}
-
 sub fix {
     my ($self, $node) = @_;
 
