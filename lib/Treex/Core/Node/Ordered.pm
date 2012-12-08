@@ -59,6 +59,27 @@ sub get_prev_node {
     return $prev_node;
 }
 
+sub get_nodes_until {
+    log_fatal 'Incorrect number of arguments' if @_ != 2;
+    my ($self, $other) = @_;
+
+    # want $self preceding $other
+    if ( $self->ord() > $other->ord() ) {
+        my $temp = $other;
+        $other = $self;
+        $self = $temp;
+    }
+
+    my @nodes_between = ();
+    my $current_node = $self->get_next_node();
+    while ( $current_node->ord() < $other->ord() ) {
+        push @nodes_between, $current_node;
+        $current_node = $current_node->get_next_node();
+    }
+
+    return @nodes_between;
+}
+
 sub _normalize_node_ordering {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
@@ -335,6 +356,14 @@ or C<undef> if C<$node> is the last one in the tree.
 
 Return the closest preceding node (according to the ordering attribute)
 or C<undef> if C<$node> is the first one in the tree.
+
+=item my @nodes_in_between = $node->get_nodes_until($other_node);
+
+Return nodes that lie between C<$node> and C<$other_node>, ordered, exclusive.
+(The returned array may be empty.)
+C<$node> and C<$other_node> can be given in any order,
+i.e. the result of C<$node-&gt;get_nodes_until($other_node)>
+is the same as the result of C<$other_node-&gt;get_nodes_until($node)>.
 
 =back
 
