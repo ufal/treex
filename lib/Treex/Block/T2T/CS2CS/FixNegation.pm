@@ -4,26 +4,14 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
-sub fill_node_info {
-    my ( $self, $node ) = @_;
-
-    $self->fill_info_basic($node);
-    $self->fill_info_lexnode($node);
-    $self->fill_info_aligned($node);
-
-    return;
-}
-
 sub fix {
     my ( $self, $node ) = @_;
 
-    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'}; 
-    if (defined $ennode
-        && defined $ennode->gram_negation
-        && $ennode->gram_negation eq 'neg1'
-        && defined $node->gram_negation
-        && $node->gram_negation eq 'neg0'
-    ) {
+    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'};
+    if (   defined $ennode
+        && node_is_negated($ennode, 1)
+        && !node_is_negated($node) )
+    {
         my $dofix = 1;
 
         # bez-, mimo-, proti-, in-...
@@ -42,42 +30,122 @@ sub fix {
         }
 
         if ($dofix) {
-           $self->set_node_neg($node);
+            $self->set_node_neg($node);
         }
     }
 
     return;
 }
 
+# whether the node seems to be negated
+# for cs nodes by default,
+# for en nodes when $en is set
+sub node_is_negated {
+    my ($node, $en) = @_;
+
+    if ( !defined $en ) {
+        $en = 0;
+    }
+
+    my $neg = 0;
+
+    # negation in grammatemes
+    if ( defined $node->gram_negation && $node->gram_negation eq 'neg1' ) {
+        $neg = 1;
+    }
+
+    if (!$en) {
+        # negation in Czech formeme
+        if ( defined $node->formeme && $node->formeme =~ /[:_]ne/ ) {
+            $neg = 1;
+        }
+    }
+    else {
+        # negation in English tree
+        if ( any { defined $_->t_lemma && $_->t_lemma =~ '^not?$' }
+            $node->get_children() )
+        {
+            $neg = 1;
+        }
+    }
+
+    return $neg;
+}
+
 sub set_node_neg {
     my ( $self, $node ) = @_;
 
-    my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
-    if ( defined $lexnode ) {
-        $node->set_gram_negation('neg1');
+    # do not negate the infinitive but its finite parent
+    while (
+           $node->formeme !~ /v:.*fin/
+        && defined $node->wild->{'deepfix_info'}->{'parent'}
+        && $node->wild->{'deepfix_info'}->{'parent'}->formeme =~ /v:.*fin/
 
-        # TODO sometimes do not set the neg on the lex node but on its active verb
-        my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $lexnode );
+        # && !$node->is_clause_head
+      )
+    {
+
+        # do not cross clause boundaries;
+        # to be sure, do not cross any commas
+        my $old_lex = $node->wild->{'deepfix_info'}->{'lexnode'};
+        my $new_lex = $node->wild->{'deepfix_info'}->{'parent'}->wild->{'deepfix_info'}->{'lexnode'};
+        if ( defined $old_lex && defined $new_lex ) {
+            if (
+                any {
+                    defined $_->form && $_->form =~ /[,;-]/;
+                }
+                $old_lex->get_nodes_until($new_lex)
+              )
+            {
+                last;
+            }
+        }
+
+        # if everything OK, move on to the parent
+        $node = $node->wild->{'deepfix_info'}->{'parent'};
+    }
+
+    if ( node_is_negated($node) ) {
+
+        # node is alreay negate, do not negate it again
+        return;
+    }
+
+    # negate the first verb anode belonging to this node
+    # (except Vc which cannot be negated)
+    # or the lex node if there is no such anode
+    my $anode =
+      ( first { $_->tag =~ /^V[^c]/ } $node->get_anodes( { ordered => 1 } ) )
+      // $node->wild->{'deepfix_info'}->{'lexnode'};
+
+    if ( defined $anode ) {
+        $node->set_gram_negation('neg1');
+        my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $anode );
+        if ( $anode->lemma =~ /^muset/ ) {
+            $msg .= $self->change_anode_attribute( 'lemma', 'smět', $anode );
+        }
         $self->logfix($msg);
     }
     else {
-        log_warn(
-            "No lex node for "
-                . $self->tnode_sgn($node)
-                .
-                ", cannot perform the fix!"
-        );
+        log_warn( "No lex node for "
+              . $self->tnode_sgn($node)
+              . ", cannot perform the fix!" );
     }
 
     return;
 }
 
 sub cs_lexical_negation {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
 
     my $result = 0;
 
-    if ( $node->wild->{'deepfix_info'}->{'tlemma'} =~ /^(ne|bez|mimo|proti|in|dis|dys)/ ) {
+    if ( $node->t_lemma =~ /^(ne|bez|mimo|proti|in|dis|dys|zbyt)/ ) {
+        $result = 1;
+    }
+
+    # TODO: use the parsed formeme structure?
+    if ( $node->formeme =~ /[:_](ne|bez|mimo|proti)/ ) {
         $result = 1;
     }
 
@@ -85,12 +153,12 @@ sub cs_lexical_negation {
 }
 
 sub cs_tree_negation {
-    my ($self, $node) = @_;
+    my ( $self, $node ) = @_;
 
     my $result = 0;
 
-    my $has_negated_child = any { $_->gram_negation eq 'neg1' } $node->get_children();
-    if ( $has_negated_child ) {
+    my $has_negated_child = any { node_is_negated($_) } $node->get_children();
+    if ($has_negated_child) {
         $result = 1;
     }
 
@@ -98,12 +166,13 @@ sub cs_tree_negation {
 }
 
 sub en_pseudo_negation {
-    my ($self, $ennode) = @_;
+    my ( $self, $ennode ) = @_;
 
     my $result = 0;
 
-    my $has_until_child = any { $_->t_lemma eq 'until' } $ennode->get_children();
-    if ( $has_until_child ) {
+    my $has_until_child =
+      any { $_->formeme =~ 'until' } $ennode->get_children();
+    if ($has_until_child) {
         $result = 1;
     }
 
@@ -128,9 +197,23 @@ An attempt to fix missing negation.
 
 Partly based on Treex::Block::T2T::EN2CS::FixNegation.
 
-=head1 PARAMETERS
+If the English t-node is negated but the Czech one is not,
+it negates it (changing the corresponding a-node as well).
+It does not perform the fix if the node seems to be negated indirectly.
+It tries to find the best node to negate,
+which is typically the closest finite verb parent.
+
+Known issues:
 
 =over
+
+=item does not handle double negation in English
+
+=item cannot handle 'until' correctly (thus does not try to fix such cases)
+
+=item only adds negation, does not remove it
+
+=item if the negation marker is misplaced in English, it has a false positive...
 
 =back
 
