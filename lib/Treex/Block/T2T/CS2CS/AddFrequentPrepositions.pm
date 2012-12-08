@@ -4,8 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::T2T::CS2CS::FixInfrequentFormemes';
 
-has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
-
 # decide whether to change the formeme,
 # based on the scores and the thresholds
 sub decide_on_change {

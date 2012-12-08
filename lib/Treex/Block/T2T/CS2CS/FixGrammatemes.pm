@@ -4,8 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
-has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
-
 use Treex::Block::T2T::EN2CS::FixGrammatemesAfterTransfer;
 
 my $tectoFixBlock;

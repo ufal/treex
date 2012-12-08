@@ -13,11 +13,12 @@ has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 # has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
 # has 'orig_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'orig' );
 #
-# has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
+has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
 
 use Treex::Tool::Lexicon::CS;
 use Treex::Tool::Depfix::CS::FormemeSplitter;
 use Treex::Tool::Depfix::CS::FormGenerator;
+use Treex::Tool::Depfix::CS::TagHandler;
 
 my $formGenerator;
 
@@ -331,6 +332,18 @@ sub get_tag_cat {
 
 sub set_tag_cat {
     return Treex::Tool::Depfix::CS::TagHandler::set_tag_cat(@_);
+}
+
+sub get_node_tag_cat {
+    my ($self, $node, $cat) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::get_node_tag_cat($node, $cat);
+}
+
+sub set_node_tag_cat {
+    my ($self, $node, $cat, $value) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::set_node_tag_cat($node, $cat, $value);
 }
 
 sub logfix {
