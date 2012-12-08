@@ -20,11 +20,13 @@ my %tag_cats = (
     cas => 4,
     
     possgender => 5,
+    possgen => 5,
     posgen => 5,
     pgen => 5,
     
     possnumber => 6,
     possnum => 6,
+    posnum => 6,
     pnum => 6,
     
     person => 7,
