@@ -7,6 +7,7 @@ use Treex::Tool::Depfix::CS::SimpleTranslator;
 use Treex::Tool::Depfix::CS::DiacriticsStripper;
 
 my %do_not_uc = (
+    eur => 1,
     euro => 1,
     muslim => 1,
     islam => 1,

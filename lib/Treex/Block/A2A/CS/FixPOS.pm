@@ -4,6 +4,8 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
+use Treex::Tool::Lexicon::CS;
+
 sub fix {
     my ( $self, $dep, $gov, $d, $g ) = @_;
 
@@ -49,41 +51,41 @@ sub fix {
             )
         {
 
-            # try to switch the case of the last left child to genitive
-            # to simulate possessivity
-            # (TODO maybe use info from EN tree to do that more accurately)
+            # "Rossum's robot" mistranslated as "Rossum je robot" (lit. "Rossum is robot")
+
+            # "left child" is the most probable possessor (Rossum)
             my $left_child = $dep->get_prev_node();
-            if ( defined $left_child && defined $left_child->tag ) {
-                my $tag = $left_child->tag;
 
-                # if case (4th position, 1 char) is not 2
-                if ( substr( $tag, 4, 1 ) ne '2' ) {
-
-                    # set the case to 2
-                    #substr $tag, 4, 1, 2;
-                    #$tag = $self->try_switch_num( $left_child, $tag );
-
-                    # do the fix
-                    $self->logfix1( $left_child, "POSgenitive" );
-                    $self->set_node_tag_cat($left_child, 'case', 2);
-                    $self->regenerate_node($left_child);
-                    $self->logfix2($left_child);
-
-                    # TODO: also swicth cases of dependent n:attr
-                }
-            }
-
-            # move last left child under first right child
-            # (the possessor should be a left attribute of the possessee)
-            # (TODO maybe use info from EN tree to do that more accurately)
+            # "right_child" is the most probable possessee (robot)
             my $right_child = $dep->get_children(
                 { following_only => 1, first_only => 1 }
             );
-            if (defined $left_child
-                && defined $right_child
-                )
-            {
+            
+            # set possessor's case to genitive (2)
+            # to simulate possessivity
+            # (Rossum -> Rossuma)
+            # (TODO maybe use info from EN tree to do that more accurately)
+            if ( defined $left_child
+                && $self->get_node_tag_cat( $left_child, 'case' ) ne '2'
+            ) {
 
+                $self->logfix1( $left_child, "POSgenitive" );
+                $self->set_node_tag_cat($left_child, 'case', 2);
+                $self->regenerate_node($left_child);
+                $self->logfix2($left_child);
+
+                # TODO: also swicth cases of dependent n:attr
+            }
+
+            # if we know both the possessor and the possessee
+            # (Rossum. robot)
+            # we can perform the fix in full
+            if (defined $left_child && defined $right_child) {
+
+                # the original parent to the possessor will soon be lost
+                # but it might be a good parent for the possessee
+                # ( X \ Rossum => X \ robot)
+                # (TODO maybe use info from EN tree to do that more accurately)
                 if (
                     $left_child->parent->id ne $right_child->id
                     && !$left_child->parent->is_descendant_of($right_child)
@@ -96,23 +98,98 @@ sub fix {
 
                 # TODO: if $left_child is n:attr and is a right child,
                 # use its parent!
+                
                 if ( !$right_child->is_descendant_of($left_child) ) {
-                    $self->logfix1( $left_child, "POSmove" );
+
+                    # move last left child under first right child
+                    # (the possessor should be a left attribute of the possessee)
+                    # Rossum / X -> Rossum / robot
+                    $self->logfix1( $left_child, "POSparent" );
                     $left_child->set_parent($right_child);
-                    $self->shift_subtree_after_node(
-                        $left_child, $right_child
-                    );
                     $self->logfix2($left_child);
+                    
+                    if ( $self->magic =~ /POSadj/) {
+
+                        my $adj_lemma = Treex::Tool::Lexicon::CS::get_poss_adj($left_child->lemma);
+                        if ( defined $adj_lemma ) {
+                            # Rossuma robot -> Rossumův robot
+                            my $pos_adj_result = $self->pos_adj(
+                                $left_child, $right_child, $adj_lemma);
+                            if (!$pos_adj_result) {
+                                $self->pos_move($left_child, $right_child);
+                            }
+                        }
+                        else {
+                            # Rossuma robot -> robot Rossuma
+                            $self->pos_move($left_child, $right_child);
+                        }
+                        
+
+                    } else {
+                        # Rossuma robot -> robot Rossuma
+                        $self->pos_move($left_child, $right_child);
+                    }
                 }
             }
 
             # remove the node
+            # je -> x
             $self->logfix1( $dep, "POSremove" );
             $self->remove_node($dep);
             $self->logfix2(undef);
         }
     }
 }
+
+# Rossuma robot -> robot Rossuma
+sub pos_move {
+    my ($self, $left_child, $right_child) = @_;
+
+    $self->logfix1( $left_child, "POSmove" );
+    $left_child->set_parent($right_child);
+    $self->shift_subtree_after_node(
+        $left_child, $right_child
+    );
+    $self->logfix2($left_child);
+
+    return ;
+}
+
+# Rossuma robot -> Rossumův robot
+sub pos_adj {
+    my ($self, $left_child, $right_child, $adj_lemma) = @_;
+
+    log_info "POSlemma: $adj_lemma";
+    $self->logfix1( $left_child, "POSadj" );
+    $left_child->set_lemma($adj_lemma);
+
+    # possessive adjective
+    $self->set_node_tag_cat($left_child, 'POS', 'A');
+    $self->set_node_tag_cat($left_child, 'subpos', 'U');
+    $self->set_node_tag_cat($left_child, 'neg', '-');
+
+    # gender kept in possessive gender (TODO do properly)
+    $self->set_node_tag_cat($left_child, 'posgen',
+        $self->get_node_tag_cat($left_child, 'gen'));
+
+    # agreement with possessee
+    $self->set_node_tag_cat($left_child, 'gender',
+        $self->get_node_tag_cat($right_child, 'gender'));
+    $self->set_node_tag_cat($left_child, 'number',
+        $self->get_node_tag_cat($right_child, 'number'));
+    $self->set_node_tag_cat($left_child, 'case',
+        $self->get_node_tag_cat($right_child, 'case'));
+
+    my $new_form = $self->regenerate_node($left_child);
+    if ( defined $new_form ) {
+        $self->logfix2($left_child);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 
 1;
 
@@ -127,6 +204,10 @@ Treex::Block::A2A::CS::FixPOS
 =head1 DESCRIPTION
 
 English possessive "'s" is sometimes mistranslated as if it were "is" ("být"). 
+E.g. "Rossum's robot" might be incorrectly translated as "Rossum je robot"
+(lit. "Rossum is robot") instead of the correct "Rossumův robot",
+or "robot Rossuma" (lit. "robot of Rossum").
+
 This block attempts to detect that -- by checking that either "být" is aligned 
 to an English possessive ending, or that the word preceding "být" is aligned 
 to a node whose first right child is a possessive ending.
@@ -140,15 +221,29 @@ The fix itself consists of several steps:
 =item possessiveness
 
 the probable possessor (the word preceding "být")'s case is changed to genitive
+("Rossum" -> "Rossuma")
 
 =item possessor rehanging
 
 the probably possessor is rehung under the probable possessee
 (the first right child of "být")
+("Rossuma" / "je"; "je" \ "robot" -> "Rossuma" / "robot"; "je" \ "robot")
 
 =item "být" deletion
 
 the extra word "být" is deleted
+("Rossuma je robot" -> "Rossuma robot")
+
+=item possessive adjective
+
+an attempt to change the possessor into an possessive adjective is made
+("Rossuma robot" -> "Rossumův robot")
+
+=item or move
+
+if the possessive adjective cannot be generated,
+the possessor is moved after the possessee
+("Rossuma robot" -> "robot Rossuma")
 
 =back
 
