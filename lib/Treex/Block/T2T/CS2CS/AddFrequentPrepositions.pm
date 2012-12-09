@@ -15,14 +15,17 @@ sub decide_on_change {
     if (
 
         # fix only syntactical nouns
-        ( $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} eq 'n' || $m =~ /a/ )
+        (
+               $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} eq 'n'
+            || $m =~ /a/
+        )
 
         # do not fix morphological pronouns
         && ( $node->wild->{'deepfix_info'}->{'mpos'} ne 'P' || $m =~ /p/ )
 
         # originally without prepositions
         && ( $node->wild->{'deepfix_info'}->{'formeme'}->{'prep'} eq '' )
-        
+
         # now with preposition(s)
         && ( $node->wild->{'deepfix_info'}->{'best_formeme'}->{'prep'} ne '' )
 
@@ -32,9 +35,58 @@ sub decide_on_change {
         # do not fix if there are numerals around
         # because they behave in a speacial way
         && ( !$self->numerals_are_around($node) )
-        )
+      )
     {
         $change = $self->decide_on_change_en_model($node);
+
+        if ( $change == 1 ) {
+
+            # seems good, but let's ensure
+            # that there won't be two adjacent preps in the sentence
+            # since this is very uncommon
+
+            my $lexnode = $node->wild->{'deepfix_info'}->{'lexnode'};
+            if ( defined $lexnode ) {
+                my @should_not_be_prep = ();
+
+                my $prev_node = $lexnode->get_prev_node();
+                if ( defined $prev_node ) {
+                    push @should_not_be_prep, $prev_node;
+                }
+
+                # the prep will be placed to the left of this node
+                my $leftmost_desc = $lexnode->get_descendants(
+                    {
+                        preceding_only => 1,
+                        first_only     => 1,
+                    }
+                );
+                if ( defined $leftmost_desc ) {
+                    push @should_not_be_prep, $leftmost_desc;
+
+                    # the prep will be placed to the right of this node
+                    my $lmd_prev_node = $leftmost_desc->get_prev_node();
+                    if ( defined $lmd_prev_node ) {
+                        push @should_not_be_prep, $lmd_prev_node;
+                    }
+                }
+
+                if (
+                    any {
+                        $self->get_node_tag_cat( $_, 'POS' ) eq 'R'
+                          || $_->lemma eq
+                          $node->wild->{'deepfix_info'}->{'best_formeme'}
+                          ->{'prep'};
+                    }
+                    @should_not_be_prep
+                  )
+                {
+                    $change = -1;
+                }
+            }
+
+        }
+
     }
     else {
         $change = -1;
