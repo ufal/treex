@@ -72,6 +72,22 @@ sub node_is_negated {
     return $neg;
 }
 
+# 1 if yes, 0 if same clause, -1 if cannot be decided (missing lex node)
+sub nodes_in_different_clauses {
+    my ($node1, $node2) = @_;
+
+    my $anode1 = $node1->wild->{'deepfix_info'}->{'lexnode'};
+    my $anode2 = $node2->wild->{'deepfix_info'}->{'lexnode'};
+
+    if ( defined $anode1 && defined $anode2 ) {
+        return any { defined $_->form && $_->form =~ /[,;:\-]/ }
+            $anode1->get_nodes_until($anode2);
+    }
+    else {
+        return -1;
+    }
+}
+
 sub set_node_neg {
     my ( $self, $node ) = @_;
 
@@ -80,35 +96,50 @@ sub set_node_neg {
            $node->formeme !~ /v:.*fin/
         && defined $node->wild->{'deepfix_info'}->{'parent'}
         && $node->wild->{'deepfix_info'}->{'parent'}->formeme =~ /v:.*fin/
-
-        # && !$node->is_clause_head
       )
     {
 
-        # do not cross clause boundaries;
-        # to be sure, do not cross any commas
-        my $old_lex = $node->wild->{'deepfix_info'}->{'lexnode'};
-        my $new_lex = $node->wild->{'deepfix_info'}->{'parent'}->wild->{'deepfix_info'}->{'lexnode'};
-        if ( defined $old_lex && defined $new_lex ) {
-            if (
-                any {
-                    defined $_->form && $_->form =~ /[,;-]/;
-                }
-                $old_lex->get_nodes_until($new_lex)
-              )
-            {
-                last;
-            }
+        my $parent = $node->wild->{'deepfix_info'}->{'parent'};
+        
+        if ( nodes_in_different_clauses($node, $parent) == 1 ) {
+            # do not cross clause boundaries
+            last;
         }
-
-        # if everything OK, move on to the parent
-        $node = $node->wild->{'deepfix_info'}->{'parent'};
+        else {
+            # move up to the parent
+            $node = $parent;
+        }
     }
 
     if ( node_is_negated($node) ) {
 
-        # node is alreay negate, do not negate it again
+        # node is already negated, do not negate it again
         return;
+    }
+
+    # do not negate if the node has a negated parent or grandparent
+    # in the same clause
+    # (leads to lower recall but higher prescision)
+    {
+        # check parent
+        my $parent = $node->wild->{'deepfix_info'}->{'parent'};
+        if ( defined $parent
+            && nodes_in_different_clauses($node, $parent) != 1
+        ) {
+            if ( node_is_negated($parent) ) {
+                return;
+            }
+            
+            # check grandparent
+            my $grandparent = $parent->wild->{'deepfix_info'}->{'parent'};
+            if ( defined $grandparent
+                && nodes_in_different_clauses($node, $grandparent) != 1
+            ) {
+                if ( node_is_negated($grandparent) ) {
+                    return;
+                }
+            }
+        }
     }
 
     # negate the first verb anode belonging to this node
@@ -140,7 +171,9 @@ sub cs_lexical_negation {
 
     my $result = 0;
 
-    if ( $node->t_lemma =~ /^(ne|bez|mimo|proti|in|dis|dys|zbyt)/ ) {
+    if ( $node->t_lemma
+        =~ /^(ne|bez|mimo|proti|in|il|ir|im|mis|anti|dis|dys|zbyt)/
+    ) {
         $result = 1;
     }
 
