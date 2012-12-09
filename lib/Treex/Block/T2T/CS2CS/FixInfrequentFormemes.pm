@@ -349,6 +349,24 @@ sub new_preposition_attributes {
     return $prep_info;
 }
 
+sub numerals_are_around {
+    my ($self, $node) = @_;
+
+    my $result = 0;
+
+    # checked on EN tree as the CS tree structure cannot be believed much;
+    # were the CS tree better, it would be better to check the CS tree
+    my $ennode = $node->wild->{'deepfix_info'}->{'ennode'};
+    if ( defined $ennode ) {
+        $result = any { $_->t_lemma =~ /[0-9]/
+                || $_->t_lemma
+                    =~ /^(much|many|more|most|few|little|less|least)$/
+            } $ennode->get_echildren( {or_topological => 1} );
+    }
+
+    return $result;
+}
+
 # SUBS TO BE OVERRIDDEN IN EXTENDED CLASSES
 
 sub decide_on_change {

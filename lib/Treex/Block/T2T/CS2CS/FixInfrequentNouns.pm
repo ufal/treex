@@ -26,6 +26,10 @@ sub decide_on_change {
 
         # do not fix if parent is "být"
         && ( $node->wild->{'deepfix_info'}->{'ptlemma'} ne 'být' || $m !~ /b/ )
+
+        # do not fix if there are numerals around
+        # because they behave in a speacial way
+        && ( !$self->numerals_are_around($node) )
         )
     {
         $change = $self->decide_on_change_en_model($node);
