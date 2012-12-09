@@ -190,9 +190,11 @@ sub nodes_in_different_clauses {
 sub anode_sgn {
     my ($self, $anode) = @_;
 
-    # now works only for lexnodes that have been processed by fill_info_lexnode
+    my $parent = $anode->get_eparents( {first_only => 1, only_topological => 1} );
+    my $plemma = (defined $parent && defined $parent->t_lemma) ?
+        '->'.$parent->lemma : '';
     my $sgn = ($anode->wild->{'deepfix_info'}->{'id'} // $anode->id)
-        . '(' . $anode->form . ')';
+        . '(' . $anode->form . $plemma . ')';
 
     return $sgn;
 }
@@ -200,8 +202,11 @@ sub anode_sgn {
 sub tnode_sgn {
     my ($self, $tnode) = @_;
 
+    my $parent = $tnode->wild->{'deepfix_info'}->{'parent'};
+    my $plemma = (defined $parent && defined $parent->t_lemma) ?
+        '->'.$parent->t_lemma : '';
     my $sgn = ($tnode->wild->{'deepfix_info'}->{'id'} // $tnode->id)
-        . '(' . $tnode->t_lemma . ')';
+        . '(' . $tnode->t_lemma . $plemma . ')';
 
     return $sgn;
 }
