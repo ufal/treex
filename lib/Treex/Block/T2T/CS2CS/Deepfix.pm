@@ -171,6 +171,22 @@ sub regenerate_node {
     return;
 }
 
+# 1 if yes, 0 if same clause, -1 if cannot be decided (missing lex node)
+sub nodes_in_different_clauses {
+    my ($self, $node1, $node2) = @_;
+
+    my $anode1 = $node1->wild->{'deepfix_info'}->{'lexnode'};
+    my $anode2 = $node2->wild->{'deepfix_info'}->{'lexnode'};
+
+    if ( defined $anode1 && defined $anode2 ) {
+        return any { defined $_->form && $_->form =~ /[,;:\-]/ }
+            $anode1->get_nodes_until($anode2);
+    }
+    else {
+        return -1;
+    }
+}
+
 sub anode_sgn {
     my ($self, $anode) = @_;
 

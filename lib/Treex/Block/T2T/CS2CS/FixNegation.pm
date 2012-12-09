@@ -72,22 +72,6 @@ sub node_is_negated {
     return $neg;
 }
 
-# 1 if yes, 0 if same clause, -1 if cannot be decided (missing lex node)
-sub nodes_in_different_clauses {
-    my ($node1, $node2) = @_;
-
-    my $anode1 = $node1->wild->{'deepfix_info'}->{'lexnode'};
-    my $anode2 = $node2->wild->{'deepfix_info'}->{'lexnode'};
-
-    if ( defined $anode1 && defined $anode2 ) {
-        return any { defined $_->form && $_->form =~ /[,;:\-]/ }
-            $anode1->get_nodes_until($anode2);
-    }
-    else {
-        return -1;
-    }
-}
-
 sub set_node_neg {
     my ( $self, $node ) = @_;
 
@@ -101,7 +85,7 @@ sub set_node_neg {
 
         my $parent = $node->wild->{'deepfix_info'}->{'parent'};
         
-        if ( nodes_in_different_clauses($node, $parent) == 1 ) {
+        if ( $self->nodes_in_different_clauses($node, $parent) == 1 ) {
             # do not cross clause boundaries
             last;
         }
@@ -124,7 +108,7 @@ sub set_node_neg {
         # check parent
         my $parent = $node->wild->{'deepfix_info'}->{'parent'};
         if ( defined $parent
-            && nodes_in_different_clauses($node, $parent) != 1
+            && $self->nodes_in_different_clauses($node, $parent) != 1
         ) {
             if ( node_is_negated($parent) ) {
                 return;
@@ -133,7 +117,7 @@ sub set_node_neg {
             # check grandparent
             my $grandparent = $parent->wild->{'deepfix_info'}->{'parent'};
             if ( defined $grandparent
-                && nodes_in_different_clauses($node, $grandparent) != 1
+                && $self->nodes_in_different_clauses($node, $grandparent) != 1
             ) {
                 if ( node_is_negated($grandparent) ) {
                     return;
