@@ -191,7 +191,7 @@ sub anode_sgn {
     my ($self, $anode) = @_;
 
     my $parent = $anode->get_eparents({first_only => 1, or_topological => 1});
-    my $plemma = (defined $parent && defined $parent->t_lemma) ?
+    my $plemma = (defined $parent && defined $parent->lemma) ?
         '->'.$parent->lemma : '';
     my $sgn = ($anode->wild->{'deepfix_info'}->{'id'} // $anode->id)
         . '(' . $anode->form . $plemma . ')';
