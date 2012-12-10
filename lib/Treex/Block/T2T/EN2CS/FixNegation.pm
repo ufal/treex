@@ -25,7 +25,7 @@ sub process_tnode {
         if (grep { _is_ani_neither_nor($_) }
             $tnode->get_children
             or ($tnode->is_member
-                and _is_ani_neither_nor( $tnode->get_parent )
+                and _is_ani_neither_nor( $tnode->get_eparents() )
             )
             )
         {
@@ -34,9 +34,9 @@ sub process_tnode {
     }
 
     if ( $tnode->t_lemma =~ /^(už|již)$/ and not $tnode->get_children ) {    # 'no longer'
-        my $parent = $tnode->get_parent;
+        my ($parent) = $tnode->get_eparents();
         if ( !$parent->is_root && $parent->t_lemma =~ /^(už|již)$/ ) {
-            my $grandpa = $parent->get_parent;
+            my ($grandpa) = $parent->get_eparents();
             if ( ( $grandpa->gram_sempos || '' ) eq 'v' ) {
                 $grandpa->set_gram_negation('neg1');
                 $tnode->remove;
@@ -48,7 +48,8 @@ sub process_tnode {
 
 sub _is_ani_neither_nor {
     my $tnode = shift;
-    if ( $tnode->t_lemma eq "ani" ) {
+
+    if ( defined($tnode) && ( $tnode->t_lemma // '' ) eq "ani" ) {
         my $en_tnode = $tnode->src_tnode;
         if ( $en_tnode and $en_tnode->t_lemma =~ /(neither|nor)/ ) {
             return 1;
