@@ -340,7 +340,7 @@ t-layer (tectogrammatical) node
 
 Add auxiliary a-nodes (to C<a/aux.rf>)
 
-=item $anodes = $node->get_anodes()
+=item @anodes = $node->get_anodes()
 
 Return a-nodes (both auxiliary and lexical, ie. C<a/aux.rf> and C<a/lex.rf>)
 

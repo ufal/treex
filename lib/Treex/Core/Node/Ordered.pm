@@ -59,23 +59,21 @@ sub get_prev_node {
     return $prev_node;
 }
 
-sub get_nodes_until {
+sub get_nodes_between {
     log_fatal 'Incorrect number of arguments' if @_ != 2;
     my ($self, $other) = @_;
 
     # want $self preceding $other
-    if ( $self->ord() > $other->ord() ) {
+    if ( $self->ord > $other->ord ) {
         my $temp = $other;
         $other = $self;
         $self = $temp;
     }
 
-    my @nodes_between = ();
-    my $current_node = $self->get_next_node();
-    while ( $current_node->ord() < $other->ord() ) {
-        push @nodes_between, $current_node;
-        $current_node = $current_node->get_next_node();
-    }
+    my @all_nodes = $self->get_root->get_descendants({ordered => 1});
+    my @nodes_between = grep {
+        $_->ord > $self->ord && $_->ord < $other->ord
+    } @all_nodes;
 
     return @nodes_between;
 }
@@ -357,13 +355,13 @@ or C<undef> if C<$node> is the last one in the tree.
 Return the closest preceding node (according to the ordering attribute)
 or C<undef> if C<$node> is the first one in the tree.
 
-=item my @nodes_in_between = $node->get_nodes_until($other_node);
+=item my @nodes_in_between = $node->get_nodes_between($other_node);
 
 Return nodes that lie between C<$node> and C<$other_node>, ordered, exclusive.
 (The returned array may be empty.)
 C<$node> and C<$other_node> can be given in any order,
-i.e. the result of C<$node-&gt;get_nodes_until($other_node)>
-is the same as the result of C<$other_node-&gt;get_nodes_until($node)>.
+i.e. the result of C<$node-&gt;get_nodes_between($other_node)>
+is the same as the result of C<$other_node-&gt;get_nodes_between($node)>.
 
 =back
 

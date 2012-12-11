@@ -123,6 +123,14 @@ foreach my $layer (qw( A T N P )) {
         }
 
         ok( $root->precedes($node), 'Preceding predicate works' );
+
+        my @nodes_between_node_and_c4 = $c4->get_nodes_between($node);
+        cmp_ok( scalar @nodes_between_node_and_c4, '==', 4, 'get_nodes_between on $node and $c4 returns 4 nodes' );
+        cmp_ok( (join ' ', map { $_->ord } @nodes_between_node_and_c4), 'eq', '3 4 5 6', 'and their ords are 3 4 5 6' );
+        
+        my @nodes_between_c4_and_node = $node->get_nodes_between($c4);
+        cmp_ok( scalar @nodes_between_c4_and_node, '==', 4, 'get_nodes_between on $c4 and $node returns 4 nodes' );
+        cmp_ok( (join ' ', map { $_->ord } @nodes_between_c4_and_node), 'eq', '3 4 5 6', 'and their ords are 3 4 5 6' );
     }
 
     #Reordering nodes
