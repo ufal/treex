@@ -24,7 +24,7 @@ sub process_tnode {
     return if $verbmod eq 'cdn' or $formeme =~ /(aby|kdyby)/;
 
     # Generate a form of the new auxverb
-    my $anode  = $tnode->get_lex_anode();
+    my $anode  = $tnode->get_lex_anode() or return;
     my $number = $anode->get_attr('morphcat/number') || 'S';
     my $person = $anode->get_attr('morphcat/person') || '';
     my $form   = $auxpast_numberperson2form{ $number . $person };

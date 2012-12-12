@@ -22,7 +22,7 @@ sub process_tnode {
     return if !$modalverb;
 
     # Create new a-node
-    my $anode    = $tnode->get_lex_anode();
+    my $anode    = $tnode->get_lex_anode() or return;
     my $new_node = $anode->create_child();
     $new_node->shift_after_node($anode);
 

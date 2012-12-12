@@ -20,7 +20,7 @@ sub process_tnode {
 
     # with the exception of few imperfective verbs which form futurum without
     # using auxiliary verbs (they use prefix "po" instead).
-    my $anode = $tnode->get_lex_anode();
+    my $anode = $tnode->get_lex_anode() or return;
     my $lemma = $anode->lemma;
     return if $lemma =~ /^(být|jít|jet|nést|běžet|letět|téci|vézt|hrnout|lézt)$/;
 
