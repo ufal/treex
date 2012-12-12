@@ -25,7 +25,7 @@ sub process_tnode {
         if (grep { _is_ani_neither_nor($_) }
             $tnode->get_children
             or ($tnode->is_member
-                and _is_ani_neither_nor( $tnode->get_eparents() )
+                and _is_ani_neither_nor( $tnode->get_parent() )
             )
             )
         {
@@ -48,8 +48,7 @@ sub process_tnode {
 
 sub _is_ani_neither_nor {
     my $tnode = shift;
-
-    if ( defined($tnode) && ( $tnode->t_lemma // '' ) eq "ani" ) {
+    if ( $tnode->t_lemma eq 'ani' ) { 
         my $en_tnode = $tnode->src_tnode;
         if ( $en_tnode and $en_tnode->t_lemma =~ /(neither|nor)/ ) {
             return 1;
