@@ -5,7 +5,8 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' ) if !$ENV{AUTHOR_TESTING};
+    Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' )
+          if !$ENV{AUTHOR_TESTING};
 }
 
 use_ok 'Treex::Tool::Lexicon::DerivDict::Dictionary';
@@ -34,8 +35,8 @@ my $lexeme3 = $dict->create_lexeme({
 
 $dict->add_derivation({
     source_lexeme => $lexeme1,
-    target_lexeme => $lexeme3,
-    deriv_type => 'adj2noun'
+    derived_lexeme => $lexeme3,
+    deriv_type => 'adj2noun',
 });
 
 my @derived_lexemes = $lexeme1->get_derived_lexemes;
