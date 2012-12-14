@@ -11,9 +11,19 @@ sub fix {
     my $parent = $t_node->wild->{'deepfix_info'}->{'parent'};
     my $lemma = $t_node->wild->{'deepfix_info'}->{'tlemma'};
     my $p_lemma = $t_node->wild->{'deepfix_info'}->{'ptlemma'};
+    my $lexnode = $t_node->wild->{'deepfix_info'}->{'lexnode'};
     
     return if $t_node->formeme !~ /(:1|^drop)$/;
-    
+    return if !defined $lexnode;
+
+    {
+        my $next_node = $lexnode->get_next_node();
+        if ( defined $next_node && $next_node->lemma eq ',') {
+            return;
+        }
+
+    }
+
     if ( $self->magic !~ /DropCoord/ ) {
         # We want to drop only subjects that are not coordinated ("he or she")
         return if $t_node->is_member;
@@ -23,9 +33,40 @@ sub fix {
         return if $parent->is_root();
     }
 
+    if ( $self->magic =~ /noto/ ) {
+        return if $lexnode->form =~ /to/i;
+    }
+
+    if ( $lexnode->form =~ /^to$/i ) {
+        my $ennode = $t_node->wild->{'deepfix_info'}->{'ennode'};
+        my $enlex = defined $ennode ? $ennode->get_lex_anode() : undef;
+
+        # this/that should usually be kept
+        if ( defined $enlex && $enlex->form =~ /this|that|these|those/i ) {
+            return;
+            # TODO and probably make this/that the subject
+        }
+
+        if ( $self->magic =~ /no_aligned_to/ ) {
+            if ( !defined $enlex ) {
+                return;
+            }
+        }
+        if ( $self->magic =~ /no_it_aligned_to/ ) {
+            if ( !defined $enlex || $enlex->form !~ /it/i ) {
+                return;
+            }
+        }
+        if ( $self->magic =~ /no_this_aligned_to/ ) {
+            if ( !defined $enlex || $enlex->form =~ /this/i ) {
+                return;
+            }
+        }
+    }
+
     # As a special case we want to drop word "to" (lemma=ten)
     # when it is a subject of some verb other than "být|znamenat".
-    if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ ) {
+    if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ && $self->magic !~ /noten/ ) {
         my $result = $self->drop($t_node);
         if ( $result ) {
             $self->logfix( "DropSubjPersPron: drop 'to' $result" );
@@ -40,6 +81,7 @@ sub fix {
                 $parent_lex->get_echildren( { ordered => 1 } );
             if ( defined $first_noun_object ) {
                 log_info "1st obj: " . $first_noun_object->form;
+                # TODO this has no effect, why? Maybe depfix ignores the Sb/Obj afun distinction?
                 $self->logfix(
                     "DropSubjPersPron: Obj->Sb "
                     . $self->change_anode_attribute(
@@ -87,25 +129,67 @@ sub drop {
 
     return if (!defined $pronoun);
 
-    if ( $self->magic =~ /DropMove/ ) {
-        my $parent_verb = $pronoun->get_eparents(
-            {first_only => 1, or_topological => 1} );
-        if ( $self->get_node_tag_cat($parent_verb, 'POS') eq 'V'
-            && $parent_verb->ord != ($pronoun->ord + 1)
-        ) {
-            # try to shift the verb into the position of the pronoun
-            # (loosely obeying the Wackernagel rule)
-            my $parent_verb_orig_preceding = $parent_verb->get_prev_node();
-            $parent_verb->shift_after_node( $pronoun, { without_children => 1 } );
-            # try to fix the spaces
-            if (defined $parent_verb_orig_preceding) {
-                $parent_verb_orig_preceding->set_no_space_after($parent_verb->no_space_after);
-            }
-            $parent_verb->set_no_space_after($pronoun->no_space_after);
+    my $parent_verb = $self->find_verb($t_pronoun);
+    if ( defined $parent_verb
+        && $self->get_node_tag_cat($parent_verb, 'POS') eq 'V'
+        && $parent_verb->ord > ($pronoun->ord + 1)
+    ) {
+        # try to shift the verb into the position of the pronoun
+        # (loosely obeying the Wackernagel rule)
+        my $parent_verb_orig_preceding = $parent_verb->get_prev_node();
+        $parent_verb->shift_after_node( $pronoun, { without_children => 1 } );
+        # try to fix the spaces
+        if (defined $parent_verb_orig_preceding) {
+            $parent_verb_orig_preceding->set_no_space_after($parent_verb->no_space_after);
         }
+        $parent_verb->set_no_space_after($pronoun->no_space_after);
     }
 
     return $self->remove_anode($pronoun);
+}
+
+sub find_verb {
+    my ($self, $t_pronoun) = @_;
+
+    my $result = undef;
+    
+    # first try to find a parenting verb
+    if ( defined $t_pronoun->wild->{'deepfix_info'}->{'parent'} ) {
+        my $node = $t_pronoun;
+        while ( defined $node->wild->{'deepfix_info'}->{'parent'}) {
+
+            my $parent = $node->wild->{'deepfix_info'}->{'parent'};
+            if ( $self->nodes_in_different_clauses($node, $parent) == 1 ) {
+                # do not cross clause boundaries
+                last;
+            }
+            elsif ( $parent->formeme =~ /v:.*fin/ ) {
+                # we found a (hopefully the) verb
+                $result = $parent;
+                # $result = $parent->wild->{'deepfix_info'}->{'lexnode'};
+                last;
+            }
+            else {
+                # move up to the parent
+                $node = $parent;
+            }
+        }
+    }
+
+    # if not successful, try to find a preceding verb
+    #if ( !defined $result ) {
+    #}
+
+    if ( defined $result ) {
+        # find the first verb that is not 'by'
+        $result =
+        ( first {
+                $_->tag =~ /^V[^c]/ && $_->form !~ /^js[emti]*$/i }
+            $result->get_anodes( { ordered => 1 } ) )
+        // $result->wild->{'deepfix_info'}->{'lexnode'};
+    }
+
+    return $result;
 }
 
 

@@ -175,8 +175,10 @@ sub regenerate_node {
 sub nodes_in_different_clauses {
     my ($self, $node1, $node2) = @_;
 
-    my $anode1 = $node1->wild->{'deepfix_info'}->{'lexnode'};
-    my $anode2 = $node2->wild->{'deepfix_info'}->{'lexnode'};
+    my $anode1 = ( $node1->isa('Treex::Core::Node::T') )
+        ? $node1->wild->{'deepfix_info'}->{'lexnode'} : $node1;
+    my $anode2 = ( $node2->isa('Treex::Core::Node::T') )
+        ? $node2->wild->{'deepfix_info'}->{'lexnode'} : $node2;
 
     if ( defined $anode1 && defined $anode2 ) {
         return any { defined $_->form && $_->form =~ /[,;:\-]/ }
