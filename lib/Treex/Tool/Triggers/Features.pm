@@ -5,11 +5,19 @@ use Treex::Core::Common;
 
 use Treex::Tool::Coreference::ContentCandsGetter;
 use Treex::Tool::IR::ESA;
+use Treex::Tool::Clustering::GoogleNGrams;
 
 has 'prev_sents_num' => (
     isa => 'Num',
     is => 'ro',
     default => 2,
+    required => 1,
+);
+
+has 'phrase_clusters_storable_path' => (
+    is => 'ro',
+    isa => 'Str',
+    default => '/net/cluster/TMP/mnovak/phrase_clusters/data/singleWordClusters.storable.gz',
     required => 1,
 );
 
@@ -28,9 +36,17 @@ has '_esa_provider' => (
     builder => '_build_esa',
 );
 
+has '_phrase_clustering' => (
+    isa => 'Treex::Tool::Clustering::GoogleNGrams',
+    is => 'ro',
+    lazy => 1,
+    builder => '_build_clusters',
+);
+
 sub BUILD {
     my ($self) = @_;
     $self->_trigger_words_getter;
+    #$self->_phrase_clustering;
 }
 
 sub _build_trigger_words_getter {
@@ -49,11 +65,31 @@ sub _build_esa {
     return Treex::Tool::IR::ESA->new();
 }
 
+sub _build_clusters {
+    my ($self) = @_;
+    my $clusters = Treex::Tool::Clustering::GoogleNGrams->new();
+    $clusters->load($self->phrase_clusters_storable_path);
+    return $clusters;
+}
+
+sub _weighted_feats {
+    my ($self, $feat_weight, $weighted) = @_;
+    my @feats = ();
+    if ($weighted) {
+        @feats = map {$_ . "::" . $feat_weight->{$_}} keys %$feat_weight;
+    }
+    else {
+        @feats = keys %$feat_weight;
+    }
+    return \@feats;
+}
+
 sub create_lemma_instance {
-    my ($self, $tnode) = @_;
+    my ($self, $tnode, $weights) = @_;
         
     my $trigger_nodes = $self->_trigger_words_getter->get_candidates( $tnode );
-    return $self->_extract_lemmas($trigger_nodes)
+    my $feat_weight = $self->_extract_lemmas($tnode, $trigger_nodes);
+    return $self->_weighted_feats($feat_weight, $weights);
 }
 
 sub create_esa_instance {
@@ -66,6 +102,41 @@ sub create_esa_instance {
     return $self->_extract_esa_vector($trigger_nodes, $n)
 }
 
+sub create_phrase_cluster_instance {
+    my ($self, $tnode) = @_;
+
+    my %feats = ();
+    
+    my %tnode_feats = $self->_extract_cluster_feats($tnode, 'node');
+    @feats{keys %tnode_feats} = values %tnode_feats;
+    
+    #my ($parent) = $tnode->get_eparents( { or_topological => 1 } );
+    #if (!$parent->is_root) {
+    #    my %par_feats = $self->_extract_cluster_feats($parent, 'parent');
+    #    @feats{keys %par_feats} = values %par_feats;
+    #}
+
+    return \%feats;
+}
+
+sub _extract_cluster_feats {
+    my ($self, $tnode, $prefix) = @_;
+    
+    my %feats = ();
+    if (!defined $tnode->t_lemma) {
+        print STDERR "UNDEF_ADDR: " . $tnode->get_address() . "\n";
+    }
+    my $clusters = $self->_phrase_clustering->clusters_for_phrase($tnode->t_lemma);
+    
+    my @sorted_clus = sort {$clusters->{$b} <=> $clusters->{$a}} keys %$clusters;
+    foreach my $i (1 .. scalar @sorted_clus) {
+        #my $feat_str = sprintf "cluster-%s-%02d=%s", $prefix, $i, $sorted_clus[$i-1];
+        my $feat_str = sprintf "cluster-%s=%s", $prefix, $sorted_clus[$i-1];
+        $feats{$feat_str} = $clusters->{$sorted_clus[$i-1]};
+    }
+    return %feats;
+}
+
 sub _extract_esa_vector {
     my ($self, $nodes, $n) = @_;
     my $text = join " ", map {$_->t_lemma} @$nodes;
@@ -75,8 +146,16 @@ sub _extract_esa_vector {
 }
 
 sub _extract_lemmas {
-    my ($self, $nodes) = @_;
-    my %lemmas = map {'trig=' . lc($_->t_lemma) => 1} @$nodes;
+    my ($self, $tnode, $nodes) = @_;
+
+    my $tnode_sentpos = $tnode->get_bundle->get_position();
+
+    my %lemmas = map {
+        my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
+        my $key = sprintf "bow_%d=%s", $sent_dist, lc($_->t_lemma); 
+        $key => 1
+    } @$nodes;
+    
     return \%lemmas;
     #return sort keys %lemmas;
 }
