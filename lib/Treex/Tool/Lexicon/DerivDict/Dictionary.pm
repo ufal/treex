@@ -61,16 +61,20 @@ sub save {
         $lexeme_number++;
     }
 
+    open my $F, '>:utf8', $filename or die $!;
+
     $lexeme_number = 0;
     foreach my $lexeme ($self->get_lexemes) {
         my $source_lexeme_number = $lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : '';
-        print join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
-                         ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : '-'),
-                         $lexeme->deriv_type || '-',
+        print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
+                         ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : ''),
+                         $lexeme->deriv_type || '',
                      );
-        print "\n";
+        print $F "\n";
         $lexeme_number++;
     }
+
+    close $F;
 }
 
 sub _number2id {
@@ -80,6 +84,34 @@ sub _number2id {
 sub load {
     my ( $self, $filename ) = @_;
 
+    $self->_set_lexemes([]);
+    $self->_set_lemma2lexemes({});
+    $self->_set_mlemma2lexeme({});
+
+    my %derived_number_to_source_number;
+
+    open my $F,'<:utf8',$filename or die $!;
+    while (<$F>) {
+        chomp;
+        my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type) = split;
+        my $new_lexeme = $self->create_lexeme({lemma => $lemma, mlemma=>$mlemma, pos=>$pos});
+        if ($source_lexeme_number) {
+            if ($deriv_type) {
+                $new_lexeme->set_deriv_type($deriv_type);
+            }
+            $derived_number_to_source_number{$number} = $source_lexeme_number;
+        }
+
+        push @{$self->_lexemes}, $new_lexeme;
+    }
+
+    foreach my $derived_number (keys %derived_number_to_source_number) {
+        my $source_lexeme =  $self->_lexemes->[$derived_number];
+        my $derived_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
+        $derived_lexeme->set_source_lexeme($source_lexeme);
+    }
+
+    return $self;
 }
 
 sub add_derivation {
@@ -92,6 +124,5 @@ sub add_derivation {
     $derived_lexeme->set_source_lexeme($source_lexeme);
     $derived_lexeme->set_deriv_type($deriv_type);
 }
-
 
 1;

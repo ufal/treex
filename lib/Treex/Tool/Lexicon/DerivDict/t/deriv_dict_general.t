@@ -44,6 +44,14 @@ is(scalar($lexeme1->get_derived_lexemes), 2, "derived lexemes correctly linked")
 
 is($lexeme3->source_lexeme, $lexeme1, "source lexeme correctly linked");
 
-$dict->save('testdict.tsv');
+my $test_file = 'testdict.tsv';
+$dict->save($test_file);
+
+my $dict2 = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
+$dict2->load($test_file);
+
+is(scalar($lexeme1->get_derived_lexemes), 2, "dictionary correctly stored and loaded");
+
+unlink $test_file;
 
 done_testing();
