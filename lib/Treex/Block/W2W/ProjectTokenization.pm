@@ -4,6 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Depfix::CS::DiacriticsStripper;
+
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is => 'rw', isa => 'Str', default  => '' );
 
@@ -16,6 +18,10 @@ sub process_zone {
       $zone->get_bundle->get_zone( $self->source_language,
         $self->source_selector )->sentence;
 
+    my $al_lc_strip =
+        Treex::Tool::Depfix::CS::DiacriticsStripper::strip_diacritics(
+            lc $aligned_sentence);
+
     my @tokens =
       split
       /[ \.\/:,;!\?<>\{\}\[\]\(\)\#\$£\%\&`\'‘"“”«»„\*\^\|\+]+/,
@@ -27,11 +33,23 @@ sub process_zone {
         if ( $tokens[$i] eq '-' ) {
             my $orig_tok = $tokens[ $i - 1 ] . ' - ' . $tokens[ $i + 1 ];
             my $new_tok  = $tokens[ $i - 1 ] . '-' . $tokens[ $i + 1 ];
-            if (   $outsentence =~ /$orig_tok/
-                && $aligned_sentence =~ /$new_tok/ )
-            {
-                $outsentence =~ s/$orig_tok/$new_tok/;
-                log_info "Retokenizing '$orig_tok' -> '$new_tok'";
+            my $n_lc_strip = 
+                Treex::Tool::Depfix::CS::DiacriticsStripper::strip_diacritics(
+                    lc $new_tok);
+            if ( $outsentence =~ /$orig_tok/i ) {
+                if ($aligned_sentence =~ /$new_tok/ ) {
+                    $outsentence =~ s/$orig_tok/$new_tok/i;
+                    log_info "Retokenizing '$orig_tok' -> '$new_tok'";
+                }
+                elsif ( $aligned_sentence =~ /($new_tok)/i ) {
+                    my $new = $1;
+                    $outsentence =~ s/$orig_tok/$new/i;
+                    log_info "Retokenizing '$orig_tok' -> '$new'";                    
+                }
+                elsif ( $al_lc_strip =~ /$n_lc_strip/ ) {
+                    $outsentence =~ s/$orig_tok/$new_tok/i;
+                    log_info "Retokenizing '$orig_tok' -> '$new_tok' ($n_lc_strip)";
+                }
             }
         }
     }
@@ -59,8 +77,10 @@ Intended to be used on Bojar's Moses output to fix stuff such as
 "al - Somali" -> "al-Somali",
 "Jean - Marie" -> "Jean-Marie"
 
-In the current version only removes superfluous whitespace around a dash
-if the forms otherwise match exactly.
+Removes superfluous whitespace around a dash
+if the forms otherwise match
+-- at least case-insensitively and at least without diacritics.
+The casing is also fixed if this is straight-forward.
 (There can be special characters around (brackets, quotes etc.),
 but it is assumed that there are no special characters inside,
 i.e. around the hyphen.)
