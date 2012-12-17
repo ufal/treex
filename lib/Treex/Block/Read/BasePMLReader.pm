@@ -58,7 +58,7 @@ sub _convert_ttree {
         );
         my @gram_attribs = (
             'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'tense', 'aspect', 'resultative',
-            'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation'
+            'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
         );
         my @list_attribs = (
             'compl.rf', 'coref_gram.rf', 'a/aux.rf'
@@ -116,10 +116,10 @@ sub _convert_atree {
 
     if ( not $treex_node->is_root ) {
         $self->_copy_attr( $pml_node, $treex_node, 'm/w/no_space_after', 'no_space_after' );
-        foreach my $attr_name ( 'form', 'lemma', 'tag' ) {
+        foreach my $attr_name (qw(form lemma tag)) {
             $self->_copy_attr( $pml_node, $treex_node, "m/$attr_name", $attr_name );
         }
-        foreach my $attr_name ( 'is_member', 'is_parenthesis_root' ) {
+        foreach my $attr_name (qw(is_member is_parenthesis_root clause_number)) {
             $self->_copy_attr( $pml_node, $treex_node, "$attr_name", $attr_name );
         }
 

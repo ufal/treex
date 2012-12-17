@@ -237,6 +237,7 @@
       <member name="sempos"  type="t-sempos.type"/>
       <member name="gender" type="t-gender.type"/>
       <member name="number" type="t-number.type"/>
+      <member name="typgroup" type="t-typgroup.type"/>
       <member name="degcmp" type="t-degcmp.type"/>
       <member name="verbmod" type="t-verbmod.type"/>
       <member name="deontmod" type="t-deontmod.type"/>
@@ -465,6 +466,14 @@
       <value>du</value>
       <value>pl</value>
       <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-typgroup.type">
+    <choice>
+      <value>single</value>
+      <value>group</value>
       <value>nr</value>
     </choice>
   </type>
