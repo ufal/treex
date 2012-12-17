@@ -31,10 +31,12 @@ sub reset {
 }
 
 sub add_segment {
-    my ( $tst_text, $ref_text ) = @_;
+    my ( $tst_text, $ref_text, $is_already_tokenized ) = @_;
 
     # Normalize (i.e. tokenize and possibly lowercase) test and reference sentences
-    ( $tst_text, $ref_text ) = map { normalize_text($_) } ( $tst_text, $ref_text );
+    if (!$is_already_tokenized){
+        ( $tst_text, $ref_text ) = map { normalize_text($_) } ( $tst_text, $ref_text );
+    }
 
     # Reference n-grams
     my %ref_count_of;
