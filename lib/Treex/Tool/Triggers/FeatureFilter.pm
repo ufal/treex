@@ -29,19 +29,19 @@ sub _build_config {
 }
 
 sub filter_feature {
-    my ($feat) = @_;
+    my ($self, $feat) = @_;
 
     # blacklist
-    return undef if (_is_blacklisted($feat));
+    return undef if ($self->_is_blacklisted($feat));
    
     # feat transformations
-    $feat = _remove_bow_dist($feat);
-    $feat = _remove_weights($feat);
+    $feat = $self->_remove_bow_dist($feat);
+    $feat = $self->_remove_weights($feat);
     return $feat;
 }
 
 sub _is_blacklisted {
-    my ($feat) = @_;
+    my ($self, $feat) = @_;
 
     my $blacklist = $self->_config->{blacklist};
     my @passed_patterns = grep {$feat =~ /$_/} @$blacklist;
@@ -50,7 +50,7 @@ sub _is_blacklisted {
 }
 
 sub _remove_bow_dist {
-    my ($feat) = @_;
+    my ($self, $feat) = @_;
     if ($self->_config->{no_bow_dist}) {
         $feat =~ s/^bow_[^=]+=/bow=/;
     }
@@ -58,7 +58,7 @@ sub _remove_bow_dist {
 }
 
 sub _remove_weights {
-    my ($feat) = @_;
+    my ($self, $feat) = @_;
 
     my $patterns = $self->_config->{no_weight};
     my @passed_patterns = grep {$feat =~ /$_/} @$patterns;

@@ -6,12 +6,25 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::ContentCandsGetter;
 use Treex::Tool::IR::ESA;
 use Treex::Tool::Clustering::GoogleNGrams;
+use Treex::Tool::Triggers::FeatureFilter;
 
 has 'prev_sents_num' => (
     isa => 'Num',
     is => 'ro',
     default => 2,
     required => 1,
+);
+
+has 'filter_config' => (
+    isa => 'Str',
+    is => 'ro',
+);
+
+has '_filter' => (
+    isa => 'Treex::Tool::Triggers::FeatureFilter',
+    is => 'ro',
+    lazy => 1,
+    builder => '_build_filter',
 );
 
 has 'phrase_clusters_storable_path' => (
@@ -47,6 +60,18 @@ sub BUILD {
     my ($self) = @_;
     $self->_trigger_words_getter;
     #$self->_phrase_clustering;
+
+    if (defined $self->filter_config) {
+        $self->_filter;
+    }
+}
+
+sub _build_filter {
+    my ($self) = @_;
+    my $filter = Treex::Tool::Triggers::FeatureFilter->new({
+        config_file_path => $self->filter_config
+    });
+    return $filter;
 }
 
 sub _build_trigger_words_getter {
@@ -84,6 +109,26 @@ sub _weighted_feats {
     return \@feats;
 }
 
+sub create_instance {
+    my ($self, $tnode, $types, $weights) = @_;
+    my %types_hash = map {$_ => 1} @$types;
+
+    my @instance = ();
+    if ($types_hash{bow}) {
+        push @instance, @{$self->create_lemma_instance($tnode, $weights)};
+    }
+    if ($types_hash{esa}) {
+        push @instance, @{$self->create_esa_instance($tnode, $weights)};
+    }
+    if ($types_hash{cluster}) {
+        push @instance, @{$self->create_phrase_cluster_instance($tnode, $weights)};
+    }
+    if (defined $self->filter_config) {
+        @instance = grep {defined $_} (map {$self->_filter->filter_feature($_)} @instance);
+    }
+    return \@instance;
+}
+
 sub create_lemma_instance {
     my ($self, $tnode, $weights) = @_;
         
@@ -103,7 +148,7 @@ sub create_esa_instance {
 }
 
 sub create_phrase_cluster_instance {
-    my ($self, $tnode) = @_;
+    my ($self, $tnode, $weights) = @_;
 
     my %feats = ();
     
@@ -116,7 +161,7 @@ sub create_phrase_cluster_instance {
     #    @feats{keys %par_feats} = values %par_feats;
     #}
 
-    return \%feats;
+    return $self->_weighted_feats(\%feats, $weights);;
 }
 
 sub _extract_cluster_feats {
@@ -152,7 +197,11 @@ sub _extract_lemmas {
 
     my %lemmas = map {
         my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
-        my $key = sprintf "bow_%d=%s", $sent_dist, lc($_->t_lemma); 
+        my $lemma = $_->t_lemma;
+        $lemma =~ s/ /_/g;
+        $lemma =~ s/\t/__/g;
+        $lemma =~ s/##/__/g;
+        my $key = sprintf "bow_%d=%s", $sent_dist, lc($lemma); 
         $key => 1
     } @$nodes;
     
