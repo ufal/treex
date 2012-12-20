@@ -24,12 +24,30 @@ has 'cands_within_czeng_blocks' => (
     default => 0,
 );
 
+has '_node_selector' => (
+    isa => 'Treex::Tool::Context::Sentences',
+    is => 'ro',
+    builder => '_build_node_selector',
+);
+
 has '_cand_filter' => (
     isa => 'Treex::Tool::Coreference::NodeFilter',
     is  => 'ro',
     required => 1,
     builder => '_build_cand_filter',
 );
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_node_selector;
+}
+
+sub _build_node_selector {
+    my ($self) = @_;
+    return Treex::Tool::Context::Sentences->new({
+        nodes_within_czeng_blocks => $self->cands_within_czeng_blocks,
+    }); 
+}
 
 sub get_candidates {
     my ($self, $anaph) = @_;
@@ -54,51 +72,14 @@ sub get_pos_neg_candidates {
 sub _select_all_cands {
     my ($self, $anaph) = @_;
 
-    my @all_cands = $self->_select_cands_in_range($anaph, $self->prev_sents_num);
-    my @filtered_cands = grep {$self->_cand_filter->is_candidate($_)} @all_cands;
-
-    return \@filtered_cands;
-}
-
-# according to rule presented in Nguy et al. (2009)
-# semantic nouns from previous context of the current sentence and from
-# the previous sentence
-# TODO think about preparing of all candidates in advance
-# 'reverse' is used to ensure the ordering keeping the lowest indeces for the nearest candidates
-sub _select_cands_in_range {
-    my ($self, $anaph, $range) = @_;
-    
-    # current sentence
-    my @sent_preceding = reverse ( 
-        grep { $_->precedes($anaph) }
-            $anaph->get_root->get_descendants( { ordered => 1 } ) 
+    my @cands = $self->_node_selector->nodes_in_surroundings(
+        $anaph, -$self->prev_sents_num, 0, {preceding_only => 1}
     );
+    @cands = grep {$self->_cand_filter->is_candidate( $_)} @cands;
+    # nearest candidates to be the first
+    @cands = reverse @cands;
 
-    # previous sentences
-    my $sent_num = $anaph->get_bundle->get_position;
-    my $bottom_idx = $sent_num - $range;
-    $bottom_idx = 0 if ($bottom_idx < 0);
-    my $top_idx = $sent_num - 1;
-
-    my @all_bundles = $anaph->get_document->get_bundles;
-    my @prev_bundles = @all_bundles[ $bottom_idx .. $top_idx ];
-
-    # remove bundles which are in a block different to the anphor's one
-    if ($self->cands_within_czeng_blocks) {
-        my $block_id = $anaph->get_bundle->attr('czeng/blockid');
-        if (defined $block_id) {
-            @prev_bundles = grep {$_->attr('czeng/blockid') eq $block_id} @prev_bundles;
-        }
-    }
-
-    my @prev_trees   = map {
-        $_->get_tree( $anaph->language, $anaph->get_layer, $anaph->selector )
-    } @prev_bundles;
-    foreach my $tree (reverse @prev_trees) {
-        push @sent_preceding, reverse( $tree->get_descendants({ ordered => 1 }) );
-    }
-
-    return @sent_preceding;
+    return \@cands;
 }
 
 sub _get_antecedents {
