@@ -5,6 +5,30 @@ extends 'Treex::Core::Block';
 
 has 'reparse' => ( is => 'rw', isa => 'Bool', default => 0 );
 
+has max_chunk_size => (
+    is => 'ro',
+    isa => 'Int',
+    default => 150,
+    documentation => 'If a chunk contains more tokens, it is split and each into shorter chunks (each except for the last has max_chunk_size tokens), '
+                   . 'so these chunks are parsed separately. '
+                   . 'This parameter serves as a safety check for extremely long sentences and parsers that may fail on such sentences. 0 means do not split.',
+);
+
+sub split_long_chunks {
+    my ($self, $chunk) = @_;
+    my $max_size = $self->max_chunk_size;
+    return $chunk if !$max_size;
+    return $chunk if @$chunk < $max_size;
+
+    use List::MoreUtils qw(natatime);
+    my $iterator = natatime($max_size, @$chunk);
+    my @result;
+    while (my @words = $iterator->()){
+        push @result, \@words;
+    }
+    return @result;
+}
+
 sub process_atree {
     my ( $self, $a_root ) = @_;
     my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
@@ -27,12 +51,19 @@ sub process_atree {
     }
 
     # Sort the chunks from the shortest to the longest one,
-    # delete possible full-sentence chunks
-    my @sorted_chunks = sort { @$a <=> @$b } grep { @$_ < @a_nodes } values %chunks;
+    # (delete possible full-sentence chunks if they were marked),
+    # split too long chunks.
+    # and add the full sentence as the last chunk (or more chunks if too long).
+    my @sorted_chunks =
+        sort { @$a <=> @$b } 
+        map {$self->split_long_chunks($_)}
+        grep { @$_ < @a_nodes }
+        values %chunks;
+    push @sorted_chunks, $self->split_long_chunks(\@a_nodes);
 
     # Parse each chunk independently (plus the whole sentence)
     CHUNK:
-    foreach my $chunk ( @sorted_chunks, \@a_nodes ) {
+    foreach my $chunk (@sorted_chunks) {
 
         # There can be a nested chunk inside $chunk,
         # which is shorter and therefore already parsed.
