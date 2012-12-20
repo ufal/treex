@@ -42,13 +42,15 @@ my %frequent_names = (
 my %cached_mapping;
 my @replacements;
 
-END {
+sub print_substitution_table {
     print "\n\n-------------- SUBSTITUČNÍ TABULKA ----------------\n";
     print join "\n",@replacements;
-    print "\n";
-#    foreach my $original (sort keys %cached_mapping) {
-#        print "  $original --> $cached_mapping{$original}\n";
-#    }
+    print "\n-------------- KONEC TABULKY ---------------\n";
+    @replacements = ();
+}
+
+END {
+    print_substitution_table();
 }
 
 sub process_zone {
