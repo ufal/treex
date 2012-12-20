@@ -70,6 +70,9 @@ sub process_document {
 
 sub process_bundle {
     my ( $self, $bundle, $bundleNo ) = @_;
+    if ($self->report_progress){
+        log_info "Processing bundle $bundleNo";
+    }
 
     # Extract variables $document ($doc), so they can be used in eval code
     my $document = $bundle->get_document();

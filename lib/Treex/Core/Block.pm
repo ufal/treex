@@ -42,6 +42,12 @@ has if_missing_tree => (
         . ' that is missing in a given zone?',
 );
 
+has report_progress => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 0,
+    documentation => 'Report which bundle (TODO: zone,tree,node) is being processed via log_info. Useful for debugging.',
+);
 
 has [qw(_is_bundle_selected _is_language_selected _is_selector_selected)] => ( is => 'rw' );
 
@@ -196,6 +202,10 @@ sub process_document {
 
 sub process_bundle {
     my ( $self, $bundle, $bundleNo ) = @_;
+    if ($self->report_progress){
+        log_info "Processing bundle $bundleNo";
+    }
+
     my @zones = $bundle->get_all_zones();
 
     if ($self->if_missing_zone eq 'create') {
