@@ -230,6 +230,17 @@ sub process_tnode {
 
         my $trig_feats_hash = $self->_trigger_feature_extractor->create_lemma_instance($en_tnode);
         #my $esa_feats_hash = $self->_trigger_feature_extractor->create_esa_instance($en_tnode);
+        
+        # TODO: broken probably since some revision of Michal Novák (r9826-r9833)
+        # Without this hack I got fatal error:
+        # Not a HASH reference at ... TrLAddVariants.pm
+        if (ref $trig_feats_hash ne 'HASH'){
+            #use Data::Dumper;
+            #warn Dumper $trig_feats_hash;
+            #warn $cs_tnode->t_lemma; 
+            #log_fatal $cs_tnode->get_address . " no feats";
+            $trig_feats_hash = {};
+        }
 
         my $all_feats = [ keys %$trig_feats_hash, @$features_array_rf ];
 
