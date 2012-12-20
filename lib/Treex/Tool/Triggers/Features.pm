@@ -3,7 +3,8 @@ package Treex::Tool::Triggers::Features;
 use Moose;
 use Treex::Core::Common;
 
-use Treex::Tool::Coreference::ContentCandsGetter;
+use Treex::Tool::Context::Sentences;
+use Treex::Tool::Coreference::ContentWordFilter;
 use Treex::Tool::IR::ESA;
 use Treex::Tool::Clustering::GoogleNGrams;
 use Treex::Tool::Triggers::FeatureFilter;
@@ -34,12 +35,17 @@ has 'phrase_clusters_storable_path' => (
     required => 1,
 );
 
-has '_trigger_words_getter' => (
-    isa => 'Treex::Tool::Coreference::AnteCandsGetter',
+has '_context_nodes_getter' => (
+    isa => 'Treex::Tool::Context::Sentences',
     is => 'ro',
     required => 1,
-    lazy => 1,
-    builder => '_build_trigger_words_getter',
+    builder => '_build_context_nodes_getter',
+);
+
+has '_content_word_filter' => (
+    isa => 'Treex::Tool::Coreference::ContentWordFilter',
+    is => 'ro',
+    builder => '_build_content_word_filter',
 );
 
 has '_esa_provider' => (
@@ -58,7 +64,6 @@ has '_phrase_clustering' => (
 
 sub BUILD {
     my ($self) = @_;
-    $self->_trigger_words_getter;
     #$self->_phrase_clustering;
 
     if (defined $self->filter_config) {
@@ -74,15 +79,16 @@ sub _build_filter {
     return $filter;
 }
 
-sub _build_trigger_words_getter {
+sub _build_content_word_filter {
+    my ($self) = @_;
+    return Treex::Tool::Coreference::ContentWordFilter->new();
+}
+
+sub _build_context_nodes_getter {
     my ($self) = @_;
 
-    my $acs = Treex::Tool::Coreference::ContentCandsGetter->new({
-        prev_sents_num => $self->prev_sents_num,
-        anaphor_as_candidate => 0,
-        cands_within_czeng_blocks => 1,
-    });
-    return $acs;
+    my $cng = Treex::Tool::Context::Sentences->new({nodes_within_czeng_blocks => 1});
+    return $cng;
 }
 
 sub _build_esa {
@@ -132,7 +138,7 @@ sub create_instance {
 sub create_lemma_instance {
     my ($self, $tnode, $weights) = @_;
         
-    my $trigger_nodes = $self->_trigger_words_getter->get_candidates( $tnode );
+    my $trigger_nodes = $self->_get_context_nodes( $tnode );
     my $feat_weight = $self->_extract_lemmas($tnode, $trigger_nodes);
     return $self->_weighted_feats($feat_weight, $weights);
 }
@@ -140,11 +146,21 @@ sub create_lemma_instance {
 sub create_esa_instance {
     my ($self, $tnode, $n) = @_;
         
-    my $trigger_nodes = $self->_trigger_words_getter->get_candidates( $tnode );
+    my $trigger_nodes = $self->_get_context_nodes( $tnode );
     if (@$trigger_nodes == 0) {
         return {};
     }
     return $self->_extract_esa_vector($trigger_nodes, $n)
+}
+
+sub _get_context_nodes {
+    my ($self, $node) = @_;
+
+    my @nodes = $self->_context_nodes_getter->nodes_in_surroundings(
+        $node, -$self->prev_sents_num, 0, {preceding_only => 1}
+    );
+    @nodes = grep {$self->_content_word_filter->is_candidate($_)} @nodes;
+    return @nodes;
 }
 
 sub create_phrase_cluster_instance {

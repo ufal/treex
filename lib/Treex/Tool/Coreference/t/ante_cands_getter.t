@@ -31,14 +31,4 @@ my $noun_ante_getter = new_ok('Treex::Tool::Coreference::NounAnteCandsGetter',
 my $cands = $noun_ante_getter->get_candidates($node);
 is(scalar @$cands, 19, 'previous context noun candidates ok');
 
-my $content_ante_getter = new_ok('Treex::Tool::Coreference::ContentCandsGetter',
-[{
-    prev_sents_num => 2,
-    anaphor_as_candidate => 0,
-    cands_within_czeng_blocks => 1,
-}]);
-
-$cands = $content_ante_getter->get_candidates($node);
-is(scalar @$cands, 27, 'previous context content-word candidates ok');
-
 done_testing();
