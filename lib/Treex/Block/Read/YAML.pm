@@ -17,8 +17,16 @@ sub next_document_text {
     if ( $filename eq '-' ) {
         $text = read_file( \*STDIN );
     }
+
+    # TODO: support encodings other than UTF-8?
+    # reading from a gzipped file
+    elsif ( $filename =~ /.gz$/ ) {
+        open my $fh, "gunzip -c $filename |";
+        $text = read_file( $fh, binmode => 'encoding(utf8)', err_mode => 'log_fatal' );
+        utf8::decode($text);  # this is weird, but must be done
+        close $fh;
+    }
     else {
-        # TODO support other encodings ?
         $text = read_file( $filename, binmode => 'encoding(utf8)', err_mode => 'log_fatal' );
     }
     return $text;
@@ -30,20 +38,20 @@ sub next_document {
     my $text = $self->next_document_text();
     return if !defined $text;
 
-    utf8::encode($text); # encoding hack (so that the file is human-readable)
+    utf8::encode($text);    # encoding hack (so that the file is human-readable)
     my $yaml_bundles = Load($text);
 
     my $document = $self->new_document();
     foreach my $yaml_bundle ( @{$yaml_bundles} ) {
-        
+
         my $bundle = $document->create_bundle();
-        
+
         foreach my $yaml_zone ( @{$yaml_bundle} ) {
-        
+
             my $zone = $bundle->create_zone( $yaml_zone->{language}, $yaml_zone->{selector} );
-        
+
             $zone->set_sentence( $yaml_zone->{sentence} ) if ( defined( $yaml_zone->{sentence} ) );
-        
+
             foreach my $layer (qw(a t n p)) {
                 if ( defined( $yaml_zone->{ $layer . 'tree' } ) ) {
                     my $root = $zone->create_tree($layer);
@@ -57,17 +65,40 @@ sub next_document {
 
 # Deserialize a node and, recursively, its children
 sub deserialize_tree {
-    my ( $self, $node, $layer, $yaml_data ) = @_;
+    my ( $self, $root, $layer, $yaml_data ) = @_;
 
     foreach my $attr ( keys %{$yaml_data} ) {
-        if ( $attr eq 'children' ) {
-            foreach my $yaml_child ( @{ $yaml_data->{children} } ) {
-                my ($child) = $node->create_child();
-                $self->deserialize_tree( $child, $layer, $yaml_child );
+
+        # deserialize all nodes
+        if ( $attr eq 'nodes' ) {
+
+            # hang them all under root for now
+            foreach my $yaml_node ( @{ $yaml_data->{nodes} } ) {
+                my ($node) = $root->create_child();
+                $self->deserialize_node( $node, $layer, $yaml_node );
             }
             next;
         }
-        # this will actually work even for IDs and Treex::PML arrays, which makes it simpler
+
+        # this works even for IDs and Treex::PML arrays, which makes it simpler
+        $root->set_attr( $attr, $yaml_data->{$attr} );
+    }
+
+    # now find the right parents for the roots
+    my $doc = $root->get_document();
+    foreach my $node ( $root->get_descendants() ) {
+        $node->set_parent( $doc->get_node_by_id( $node->get_attr('parent_id') ) );
+    }
+    return;
+}
+
+sub deserialize_node {
+    my ( $self, $node, $layer, $yaml_data ) = @_;
+
+    foreach my $attr ( keys %{$yaml_data} ) {
+
+        # assign the 'parent_id' attribute as well
+        # this works even for IDs and Treex::PML arrays, which makes it simpler
         $node->set_attr( $attr, $yaml_data->{$attr} );
     }
     return;

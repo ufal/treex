@@ -17,13 +17,13 @@ override '_do_process_document' => sub {
     foreach my $bundle ( $document->get_bundles() ) {
         push @bundles, $self->serialize_bundle($bundle);
     }
-    my $yaml_text = Dump(\@bundles);
+    my $yaml_text = Dump( \@bundles );
 
     # hacks with the produced YAML here (avoid double UTF8 for human readability,
     # convert Treex::PML::whatever arrays/hashes to plain ones)
     utf8::decode($yaml_text);
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
-    $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg; # quote numbers with underscores
+    $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg;    # quote numbers with underscores
     print { $self->_file_handle } $yaml_text;
     return;
 };
@@ -46,7 +46,7 @@ sub serialize_zone {
     $data{sentence} = $zone->sentence;
 
     foreach my $tree ( $zone->get_all_trees() ) {
-        $data{ $tree->get_layer() . 'tree' } = $self->serialize_node( $tree->get_layer(), $tree );
+        $data{ $tree->get_layer() . 'tree' } = $self->serialize_tree( $tree->get_layer(), $tree );
     }
     return \%data;
 }
@@ -74,6 +74,25 @@ Readonly my $ATTR => {
     ],
 };
 
+sub serialize_tree {
+    my ( $self, $layer, $root ) = @_;
+    my %data;
+
+    # root attributes
+    foreach my $attr ( @{ $ATTR->{$layer} } ) {
+        my $value = $root->get_attr($attr);
+        $data{$attr} = $value if ( defined($value) );
+    }
+
+    # all descendants
+    $data{nodes} = [
+        map { $self->serialize_node( $layer, $_ ) }
+            $root->get_descendants( { ordered => 1 } )
+    ];
+
+    return \%data;
+}
+
 sub serialize_node {
     my ( $self, $layer, $node ) = @_;
     my %data;
@@ -83,9 +102,7 @@ sub serialize_node {
         my $value = $node->get_attr($attr);
         $data{$attr} = $value if ( defined($value) );
     }
-
-    # recurse to children
-    $data{children} = [ map { $self->serialize_node( $layer, $_ ) } $node->get_children() ];
+    $data{parent_id} = $node->get_parent()->id;
     return \%data;
 }
 
