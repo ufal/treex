@@ -182,7 +182,7 @@ sub nodes_in_different_clauses {
 
     if ( defined $anode1 && defined $anode2 ) {
         return any { defined $_->form && $_->form =~ /[,;:\-]/ }
-            $anode1->get_nodes_until($anode2);
+            $anode1->get_nodes_between($anode2);
     }
     else {
         return -1;
