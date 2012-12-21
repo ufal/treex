@@ -9,12 +9,12 @@ use Treex::Tool::IR::ESA;
 use Treex::Tool::Clustering::GoogleNGrams;
 use Treex::Tool::Triggers::FeatureFilter;
 
-has 'prev_sents_num' => (
-    isa => 'Num',
-    is => 'ro',
-    default => 2,
-    required => 1,
-);
+# TODO it should be coordinated by a config fil
+has 'prev_sents_num' => ( isa => 'Num', is => 'ro', default => 2, required => 1 );
+has 'next_sents_num' => ( isa => 'Num', is => 'ro', default => 0, required => 1 );
+has 'preceding_only' => ( isa => 'Bool', is => 'ro', default => 0, required => 1 );
+has 'following_only' => ( isa => 'Bool', is => 'ro', default => 0, required => 1 );
+has 'add_self'       => ( isa => 'Bool', is => 'ro', default => 0, required => 1 );
 
 has 'filter_config' => (
     isa => 'Str',
@@ -157,7 +157,11 @@ sub _get_context_nodes {
     my ($self, $node) = @_;
 
     my @nodes = $self->_context_nodes_getter->nodes_in_surroundings(
-        $node, -$self->prev_sents_num, 0, {preceding_only => 1}
+        $node, -$self->prev_sents_num, $self->next_sents_num, { 
+            preceding_only => $self->preceding_only,
+            following_only => $self->following_only,
+            add_self => $self->add_self,
+        }
     );
     @nodes = grep {$self->_content_word_filter->is_candidate($_)} @nodes;
     return \@nodes;
@@ -210,14 +214,16 @@ sub _extract_lemmas {
     my ($self, $tnode, $nodes) = @_;
 
     my $tnode_sentpos = $tnode->get_bundle->get_position();
+    my $tnode_wordpos = $tnode->wild->{doc_ord};
 
     my %lemmas = map {
         my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
+        my $word_dist = $_->wild->{doc_ord} - $tnode_wordpos;
         my $lemma = $_->t_lemma;
         $lemma =~ s/ /_/g;
         $lemma =~ s/\t/__/g;
         $lemma =~ s/##/__/g;
-        my $key = sprintf "bow_%d=%s", $sent_dist, lc($lemma); 
+        my $key = sprintf "bow_s%d_w%d=%s", $sent_dist, $word_dist, lc($lemma); 
         $key => 1
     } @$nodes;
     

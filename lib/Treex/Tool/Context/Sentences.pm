@@ -105,7 +105,7 @@ sub bundles_in_range {
     my $last_idx = (scalar @all_bundles) - 1;
 
     $start = 0 if ($start < 0);
-    $end = $last_idx if ($start > $last_idx);
+    $end = $last_idx if ($end > $last_idx);
 
     my @bundles = @all_bundles[ $start .. $end ];
     return @bundles;
