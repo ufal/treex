@@ -291,9 +291,10 @@ sub _guess_verb_tense {
         $tnode->get_anodes( { ordered => 1 } );
 
     my @forms = map { lc( $_->form ) } @anodes;
+    my @lemmas = map { lc( $_->lemma ) } @anodes;
     my @tags  = map { $_->tag } @anodes;
 
-    return 'post' if any {/^(will|shall|wo)$/} @forms;
+    return 'post' if any {/^(will|shall)$/} @lemmas;
 
     return 'post' if any { $_ eq "going" } @forms[ 0 .. $#forms - 1 ];    # 'to be going to ...'
 
