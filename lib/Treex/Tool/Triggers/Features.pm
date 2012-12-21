@@ -160,7 +160,7 @@ sub _get_context_nodes {
         $node, -$self->prev_sents_num, 0, {preceding_only => 1}
     );
     @nodes = grep {$self->_content_word_filter->is_candidate($_)} @nodes;
-    return @nodes;
+    return \@nodes;
 }
 
 sub create_phrase_cluster_instance {
