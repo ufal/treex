@@ -64,7 +64,7 @@ sub find_subjects_of {
     # Mark all auxiliary verbs
     my @echildren = $node->get_echildren( { ordered => 1 } );
     my @left_echildren = grep { $_->precedes($node) } @echildren;
-    foreach my $auxV ( grep { is_aux_verb( $_, $tag ) } @left_echildren ) {
+    foreach my $auxV ( grep { is_aux_verb( $_, $node ) } @left_echildren ) {
         $auxV->set_afun('AuxV');
     }
 
@@ -137,8 +137,9 @@ sub _select_subjects {
 # Is $node one of auxiliary verbs: be, do, will, have?
 # This subroutine is called only on nodes that precede their eff. parent.
 sub is_aux_verb {
-    my ( $node, $ep_tag ) = @_;
+    my ( $node, $eparent ) = @_;
     my $lemma = $node->lemma;
+    my $ep_tag = $eparent->tag;
 
     # "It has(parent=been) been(tag=VBN) 2 percent."
     return 1 if $lemma eq 'have' && $ep_tag eq 'VBN';
@@ -156,8 +157,30 @@ sub is_aux_verb {
 
     # "It was(parent=incr.) increasing(tag=VBG)/increased(tag=VBN)."
     if ( $lemma eq 'be' && $ep_tag =~ /VB[NG]/ ) {
-        # Avoid 'be' as a main verb of a dependent clause or an attributive gerund (i.e. having an object)
-        return !any { $_->tag =~ /^(JJ|NN)/ } $node->get_echildren( { following_only => 1 } );
+        my $result = 1;
+        # Avoid 'be' as a main verb of a dependent clause
+        # or an attributive gerund (i.e. having an object)
+        if ( any { $_->tag =~ /^(JJ|NN)/ }
+            $node->get_echildren( { following_only => 1 } )
+        ) {
+            $result = 0;
+        }
+        # or if there is a subordinate clause with a WRB (wh- adverb)
+        if ( any { $_->tag eq 'WRB' }
+            $node->get_nodes_between($eparent)
+        ) {
+            $result = 0;
+        }
+        # or if there is one comma
+        # (two commas might mark a non-defining clause)
+        # TODO: probably any of Aux[XGK]
+        if ( 1 == grep { $_->form eq ',' }
+            $node->get_nodes_between($eparent)
+        ) {
+            $result = 0;
+        }
+        # TODO: the last two options might indicate incorrect tree structure!
+        return $result;
     }
     return 0;
 }
