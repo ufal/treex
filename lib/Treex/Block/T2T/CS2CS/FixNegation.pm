@@ -12,26 +12,7 @@ sub fix {
         && node_is_negated($ennode, 1)
         && !node_is_negated($node) )
     {
-        my $dofix = 1;
-
-        # bez-, mimo-, proti-, in-...
-        if ( $self->cs_lexical_negation($node) ) {
-            $dofix = 0;
-        }
-
-        # ne, nelze, ne[verb] (nebyl nemá...)
-        if ( $self->cs_tree_negation($node) ) {
-            $dofix = 0;
-        }
-
-        # until
-        if ( $self->en_pseudo_negation($ennode) ) {
-            $dofix = 0;
-        }
-
-        if ($dofix) {
-            $self->set_node_neg($node);
-        }
+        $self->set_node_neg($node);
     }
 
     return;
@@ -39,12 +20,16 @@ sub fix {
 
 # whether the node seems to be negated
 # for cs nodes by default,
-# for en nodes when $en is set
+# for en nodes when $is_en is set
+# TODO probably inline all
 sub node_is_negated {
-    my ($node, $en) = @_;
+    my ($node, $is_en, $no_tree_neg) = @_;
 
-    if ( !defined $en ) {
-        $en = 0;
+    if ( !defined $is_en ) {
+        $is_en = 0;
+    }
+    if ( !defined $no_tree_neg ) {
+        $no_tree_neg = 0;
     }
 
     my $neg = 0;
@@ -54,11 +39,25 @@ sub node_is_negated {
         $neg = 1;
     }
 
-    if ($en) {
-        # negation in English tree
+    if ($is_en) {
+        # negation in English tree (no, not)
         if ( any { defined $_->t_lemma && $_->t_lemma =~ '^not?$' }
             $node->get_children() )
         {
+            $neg = 1;
+        }
+        # until
+        if ( en_pseudo_negation($node) ) {
+            $neg = 0;
+        }
+    }
+    else {
+        # bez-, mimo-, proti-, in-...
+        if ( cs_lexical_negation($node) ) {
+            $neg = 1;
+        }
+        # ne, nelze, ne[verb] (nebyl nemá...)
+        if ( !$no_tree_neg && cs_tree_negation($node) ) {
             $neg = 1;
         }
     }
@@ -145,18 +144,25 @@ sub set_node_neg {
 }
 
 sub cs_lexical_negation {
-    my ( $self, $node ) = @_;
+    my ( $node ) = @_;
 
     my $result = 0;
 
     if ( $node->t_lemma
-        =~ /^(ne|bez|mimo|proti|in|il|ir|im|mis|anti|dis|dys|zbyt)/
+        =~ /^(ne|bez|mimo|proti|il|mis|anti|dis|dys|zbyt)/
+        # =~ /^(ne|bez|mimo|proti|in|il|ir|im|mis|anti|dis|dys|zbyt)/
     ) {
         $result = 1;
+        # there are exceptions (quickly manually devised list based on PCEDT
+        # train data)
+        if ( $node->wild->{'deepfix_info'}->{'tlemma'} =~ /^nechť|nebo|neboli|neboť|nechat|nechávat|nemovitost|nemoc.*|nerv.*|neur.*|neděle|než|new.*|neutr.*|nerost|neustál.*|nebe|nebes.*|nedávno|nedaleko|nerez.*|nemálo|nevěsta|netopýr$/
+        ) {
+            $result = 0;
+        }
     }
 
     # TODO: use the parsed formeme structure?
-    if ( $node->formeme =~ /[:_](ne|bez|mimo|proti)/ ) {
+    if ( $node->formeme =~ /[:_](bez|mimo|proti)/ ) {
         $result = 1;
     }
 
@@ -164,11 +170,11 @@ sub cs_lexical_negation {
 }
 
 sub cs_tree_negation {
-    my ( $self, $node ) = @_;
+    my ( $node ) = @_;
 
     my $result = 0;
 
-    my $has_negated_child = any { node_is_negated($_) } $node->get_children();
+    my $has_negated_child = any { node_is_negated($_, 0, 1) } $node->get_children();
     if ($has_negated_child) {
         $result = 1;
     }
@@ -177,7 +183,7 @@ sub cs_tree_negation {
 }
 
 sub en_pseudo_negation {
-    my ( $self, $ennode ) = @_;
+    my ( $ennode ) = @_;
 
     my $result = 0;
 
