@@ -58,6 +58,7 @@ sub fix {
 # NODE CHANGE METHODS
 
 # returns log message
+# or '' if the node regeneration was not successful
 sub change_anode_attribute {
     my ( $self, $attribute, $value, $anode, $do_not_regenerate ) = @_;
 
@@ -83,7 +84,10 @@ sub change_anode_attribute {
 
     # regenerate node
     if ( !$do_not_regenerate ) {
-        $self->regenerate_node($anode);
+        my $regen_result = $self->regenerate_node($anode);
+        if ( !$regen_result ) {
+            return '';
+        }
     }
 
     $msg .= ' ';
@@ -166,9 +170,7 @@ sub regenerate_node {
     }
     # now works only for lexnodes that have been processed by fill_info_lexnode
     my $ennode = $anode->wild->{'deepfix_info'}->{'ennode'};
-    $formGenerator->regenerate_node( $anode, $dont_try_switch_number, $ennode);
-
-    return;
+    return $formGenerator->regenerate_node( $anode, $dont_try_switch_number, $ennode);
 }
 
 # 1 if yes, 0 if same clause, -1 if cannot be decided (missing lex node)

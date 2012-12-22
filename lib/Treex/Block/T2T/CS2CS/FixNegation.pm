@@ -129,6 +129,14 @@ sub set_node_neg {
     if ( defined $anode ) {
         $node->set_gram_negation('neg1');
         my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $anode );
+        if ( !$msg
+            && $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} eq 'v'
+        ) {
+            $msg = $self->change_anode_attributes( {
+                    form  => ('ne' . $anode->form),
+                    lemma => ('ne' . $anode->lemma),
+                }, $anode, 1);
+        }
         if ( $anode->lemma =~ /^muset/ ) {
             $msg .= $self->change_anode_attribute( 'lemma', 'smět', $anode );
         }
@@ -148,7 +156,7 @@ sub cs_lexical_negation {
 
     my $result = 0;
 
-    if ( $node->t_lemma
+    if ( $node->wild->{'deepfix_info'}->{'tlemma'}
         =~ /^(ne|bez|mimo|proti|il|mis|anti|dis|dys|zbyt)/
         # =~ /^(ne|bez|mimo|proti|in|il|ir|im|mis|anti|dis|dys|zbyt)/
     ) {
@@ -161,8 +169,9 @@ sub cs_lexical_negation {
         }
     }
 
-    # TODO: use the parsed formeme structure?
-    if ( $node->formeme =~ /[:_](bez|mimo|proti)/ ) {
+    if ( $node->wild->{'deepfix_info'}->{'formeme'}->{'prep'}
+        =~ /bez|mimo|proti/
+    ) {
         $result = 1;
     }
 
