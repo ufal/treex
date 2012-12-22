@@ -181,8 +181,11 @@ sub nodes_in_different_clauses {
         ? $node2->wild->{'deepfix_info'}->{'lexnode'} : $node2;
 
     if ( defined $anode1 && defined $anode2 ) {
-        return any { defined $_->form && $_->form =~ /[,;:\-]/ }
+        my $comma = any { defined $_->form && $_->form =~ /[,;:\-]/ }
             $anode1->get_nodes_between($anode2);
+        my $conjunction = any { defined $_->tag && $_->tag =~ /^J/ }
+            $anode1->get_nodes_between($anode2);
+        return ($comma || $conjunction);
     }
     else {
         return -1;
