@@ -54,13 +54,7 @@ sub node_is_negated {
         $neg = 1;
     }
 
-    if (!$en) {
-        # negation in Czech formeme
-        if ( defined $node->formeme && $node->formeme =~ /[:_]ne/ ) {
-            $neg = 1;
-        }
-    }
-    else {
+    if ($en) {
         # negation in English tree
         if ( any { defined $_->t_lemma && $_->t_lemma =~ '^not?$' }
             $node->get_children() )
