@@ -71,6 +71,18 @@ sub fix {
         return;
     }
 
+    # don't fix 'X said (ant)' (danger of reported speech tense shifting)
+    if ( ( any { defined $_->t_lemma
+            && $_->t_lemma eq 'say'
+            && $_->gram_tense eq 'ant' }
+        $ennode->get_eparents )
+        && $entense eq 'ant'
+    ) {
+        # TODO but fix if entense is past perfect!
+        # (now we do not detect this)
+        return;
+    }
+
     # don't fix 'if'/'when' (conditionals are quite complicated)
     if (
         ( any { $_->lemma =~ /^if|when$/ } $ennode->get_aux_anodes )
