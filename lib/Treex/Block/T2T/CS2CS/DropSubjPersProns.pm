@@ -8,144 +8,144 @@ sub fix {
     my ( $self, $t_node ) = @_;
 
     # some shotcuts (the values are precomputed anyway)
-    my $parent = $t_node->wild->{'deepfix_info'}->{'parent'};
     my $lemma = $t_node->wild->{'deepfix_info'}->{'tlemma'};
-    my $p_lemma = $t_node->wild->{'deepfix_info'}->{'ptlemma'};
     my $lexnode = $t_node->wild->{'deepfix_info'}->{'lexnode'};
-    
-    return if $t_node->formeme !~ /(:1|^drop)$/;
+    my $parent = $t_node->wild->{'deepfix_info'}->{'parent'};
+    if ( !defined $parent ) {
+        return;
+    }
+    my $p_lemma = $t_node->wild->{'deepfix_info'}->{'ptlemma'};
+    my $ennode = $t_node->wild->{'deepfix_info'}->{'ennode'};
+    my $enlex = defined $ennode ? $ennode->get_lex_anode() : undef;
+
+    # we must have a real node to delete
     return if !defined $lexnode;
+    
+    # drop only subject pronouns
+    return if $t_node->formeme !~ /(:1|^drop)$/;
 
+    # check neighbouring nodes - do not drop if...
     {
+        # if the next word is a comma or sám/nic/vše
         my $next_node = $lexnode->get_next_node();
-        if ( defined $next_node && $next_node->lemma eq ',') {
+        if ( defined $next_node && $next_node->lemma =~ /^,|nic|vše|sám/) {
             return;
         }
-
-    }
-
-    if ( $self->magic !~ /DropCoord/ ) {
-        # We want to drop only subjects that are not coordinated ("he or she")
-        return if $t_node->is_member;
-    }
-
-    if ( $self->magic !~ /DropRoot/ ) {
-        return if $parent->is_root();
-    }
-
-    if ( $self->magic =~ /noto/ ) {
-        return if $lexnode->form =~ /to/i;
-    }
-
-    if ( $lexnode->form =~ /^to$/i ) {
-        my $ennode = $t_node->wild->{'deepfix_info'}->{'ennode'};
-        my $enlex = defined $ennode ? $ennode->get_lex_anode() : undef;
-
-        # this/that should usually be kept
-        if ( defined $enlex && $enlex->form =~ /this|that|these|those/i ) {
+        # if the previous node is nic/vše
+        my $prev_node = $lexnode->get_prev_node();
+        if ( defined $prev_node && $prev_node->lemma =~ /^nic|vše/) {
             return;
-            # TODO and probably make this/that the subject
         }
-
-        if ( $self->magic =~ /no_aligned_to/ ) {
-            if ( !defined $enlex ) {
-                return;
-            }
-        }
-        if ( $self->magic =~ /no_it_aligned_to/ ) {
-            if ( !defined $enlex || $enlex->form !~ /it/i ) {
-                return;
-            }
-        }
-        if ( $self->magic =~ /no_this_aligned_to/ ) {
-            if ( !defined $enlex || $enlex->form =~ /this/i ) {
-                return;
-            }
-        }
-    }
-
-    # As a special case we want to drop word "to" (lemma=ten)
-    # when it is a subject of some verb other than "být|znamenat".
-    if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ && $self->magic !~ /noten/ ) {
-        my $result = $self->drop($t_node);
-        if ( $result ) {
-            $self->logfix( "DropSubjPersPron: drop 'to' $result" );
-        }
-        # find the Object and make it the Subject
-        log_info "t parent: " . $parent->t_lemma;
-        my $parent_lex = $parent->get_lex_anode();
-        if ( defined $parent_lex ) {
-            log_info "a parent: " . $parent_lex->form;
-            my $first_noun_object =
-                first { $_->afun eq 'Obj' && $self->get_node_tag_cat($_, 'POS') eq 'N' }
-                $parent_lex->get_echildren( { ordered => 1 } );
-            if ( defined $first_noun_object ) {
-                log_info "1st obj: " . $first_noun_object->form;
-                # TODO this has no effect, why? Maybe depfix ignores the Sb/Obj afun distinction?
-                $self->logfix(
-                    "DropSubjPersPron: Obj->Sb "
-                    . $self->change_anode_attribute(
-                        'afun', 'Sb', $first_noun_object));
-            }
-        }
-    }
-
-    # Now we are interested only in personal pronouns
-    return if $lemma ne '#PersPron';
-
-    # In some copula constructions, the word "to" is needed instead of a personal pronoun
-    # "He was a man who..." = "Byl to muž, který..."
-    if ( $p_lemma eq 'být' ) {
-        my $real_subj = first { $_->formeme =~ /:1$/ } $parent->get_children( { following_only => 1 } );
-        if ( $real_subj && any { $_->formeme eq 'v:rc' } $real_subj->get_children() ) {
-            my $a_node = $t_node->get_lex_anode();
-            return if !defined $a_node;
-            $a_node->shift_after_node( $a_node->get_parent() );
-            $self->logfix(
-                $self->change_anode_attributes( {
-                    'lemma' => 'ten',
-                    'tag:subpos' => 'D',
-                    'tag:gender' => 'N',
-                    'tag:person' => '-',
-                    }, $a_node,
-                ));
+        # if the previous node is a verb (most probably the parent verb)
+        if ( defined $prev_node && $prev_node->tag =~ /^V/) {
             return;
         }
     }
 
-    # Oherwise drop the perspron
-    my $result = $self->drop($t_node);
-    if ( $result ) {
-        $self->logfix( "DropSubjPersPron: drop pers pron $result" );
+    # drop only subjects that are not coordinated ("he or she")
+    return if $t_node->is_member;
+
+    return if $parent->is_root();
+
+    # major branching: 'to' or other pronoun?
+    if ( $lexnode->form !~ /^to$/i ) {
+        
+        # some other pronoun than 'to', this is quite easy
+        
+        # we are interested only in personal pronouns
+        if ($lemma ne '#PersPron') {
+            return;
+        }
+
+        # passed all checks, drop the pronoun!
+        # (also ensuring verb-pronoun agreement)
+        $self->drop($t_node, 1);
+    }
+    else {
+        
+        # the most common and also complicated case is the 'to' (it) pronoun
+        
+        # this should mean that the 'to' was generated probably thanks to LM;
+        # sadly, it is usually only bad alignment,
+        # but it still safer to keep such cases as they are
+        if ( !defined $enlex ) {
+            return;
+        }
+
+        # words other than 'it' (this, that...) should usually be kept
+        if ( $enlex->form !~ /^it$/i ) {
+            return;
+        }
+
+        # keep 'To' but shift it
+        if ( $lexnode->form ne 'to' ) {
+            $self->move($t_node);
+            return;
+        }
+
+        # set magic=noto to skip dropping 'to'
+        if ( $self->magic =~ /noto/ ) {
+            return;
+        }
+
+        # 'být' and 'znamenat' are often used with 'to'
+        if ( $p_lemma =~ /^(být|znamenat)$/ ) {
+            return;
+        }
+
+        # passed all checks, drop the pronoun!
+        $self->drop($t_node);
     }
 
     return;
 }
 
 sub drop {
-    my ($self, $t_pronoun) = @_;
+    my ($self, $t_pronoun, $verb_should_agree ) = @_;
 
     my $pronoun = $t_pronoun->wild->{'deepfix_info'}->{'lexnode'};
-
-    return if (!defined $pronoun);
-
     my $parent_verb = $self->find_verb($t_pronoun);
-    if ( defined $parent_verb
-        && $self->get_node_tag_cat($parent_verb, 'POS') eq 'V'
-        && $parent_verb->ord > ($pronoun->ord + 1)
-    ) {
-        # try to shift the verb into the position of the pronoun
-        # (loosely obeying the Wackernagel rule)
-        my $parent_verb_orig_preceding = $parent_verb->get_prev_node();
-        $parent_verb->shift_after_node( $pronoun, { without_children => 1 } );
-        # try to fix the spaces
-        if (defined $parent_verb_orig_preceding) {
-            $parent_verb_orig_preceding->set_no_space_after($parent_verb->no_space_after);
+    
+    if ( defined $parent_verb ) {
+        if ( $parent_verb->ord > ($pronoun->ord + 1)) {
+            # try to shift the verb into the position of the pronoun
+            # (loosely obeying the Wackernagel rule)
+            my $parent_verb_orig_preceding = $parent_verb->get_prev_node();
+            $parent_verb->shift_after_node( $pronoun, { without_children => 1 } );
+            # try to fix the spaces
+            if (defined $parent_verb_orig_preceding) {
+                $parent_verb_orig_preceding->set_no_space_after($parent_verb->no_space_after);
+            }
+            $parent_verb->set_no_space_after($pronoun->no_space_after);
         }
-        $parent_verb->set_no_space_after($pronoun->no_space_after);
+
+        # enforce agreement before deleting the pronoun
+        if ($verb_should_agree) {
+            my ($person, $number, $gender) = $self->pronoun2png( $pronoun );
+            if ( defined $person ) {
+                if ( defined $number ) {
+                    $self->change_anode_attribute($parent_verb, 'tag:number',
+                        $number, 1);
+                }
+                if ( defined $gender ) {
+                    $self->change_anode_attribute($parent_verb, 'tag:gender',
+                        $gender, 1);
+                }
+                $self->change_anode_attribute($parent_verb, 'tag:person',
+                    $person);
+            }
+        }
+
+        my $result = $self->remove_anode($pronoun);
+        if ($result) {
+            $self->logfix( "DropSubjPersPron: $result" );
+        }
+        return $result;
+    }
+    else {
+        return;
     }
 
-    return $self->remove_anode($pronoun);
 }
 
 sub find_verb {
@@ -166,7 +166,6 @@ sub find_verb {
             elsif ( $parent->formeme =~ /v:.*fin/ ) {
                 # we found a (hopefully the) verb
                 $result = $parent;
-                # $result = $parent->wild->{'deepfix_info'}->{'lexnode'};
                 last;
             }
             else {
@@ -176,7 +175,7 @@ sub find_verb {
         }
     }
 
-    # if not successful, try to find a preceding verb
+    # TODO if not successful, try to find a preceding verb
     #if ( !defined $result ) {
     #}
 
@@ -192,22 +191,84 @@ sub find_verb {
     return $result;
 }
 
+sub move {
+    my ($self, $t_pronoun) = @_;
+
+    my $pronoun = $t_pronoun->wild->{'deepfix_info'}->{'lexnode'};
+    my $parent_verb = $self->find_verb($t_pronoun);
+
+    if ( defined $parent_verb) {
+        # switch the verb and the pronoun
+        # (loosely obeying the Wackernagel rule)
+        my $msg = 'verb and pronoun swap';
+        if ( $parent_verb->ord >= ($pronoun->ord + 2) ) {
+            # there is a node between -> swap
+            my $parent_verb_orig_preceding = $parent_verb->get_prev_node();
+            $parent_verb->shift_before_node(
+                $pronoun, { without_children => 1 } );
+            $pronoun->shift_after_node(
+                $parent_verb_orig_preceding, { without_children => 1 } );
+        }
+        else {
+            # they are next to each other -> 1 shift is enough
+            $parent_verb->shift_before_node(
+                $pronoun, { without_children => 1 } );
+        }
+        # fix casing
+        $self->change_anode_attribute(
+            $pronoun, 'form', lc($pronoun->form), 1 );
+        # fix the spaces
+        my $swap_temp = $parent_verb->no_space_after;
+        $parent_verb->set_no_space_after($pronoun->no_space_after);
+        $pronoun->set_no_space_after($swap_temp);
+        $self->logfix($msg);
+        return $msg;
+    }
+    else {
+        return;
+    }
+}
+
+sub pronoun2png {
+    my ($self, $pronoun) = @_;
+
+    my $person = $self->get_node_tag_cat($pronoun, 'person');
+    $person = undef if $person !~ /^[123]$/;
+    
+    my $number = $self->get_node_tag_cat($pronoun, 'number');
+    $number = undef if $number !~ /^[SPW]$/;
+    
+    my $gender = $self->get_node_tag_cat($pronoun, 'gender');
+    $gender = undef if $gender =~ /^[X-]$/;
+
+    return ($person, $number, $gender);
+}
+
 
 1;
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::DropSubjPersProns
+=head1 NAME
+
+Treex::Block::T2A::CS::DropSubjPersProns
+
+=head1 DESCRIPTION
 
 Applying pro-drop - deletion of personal pronouns (and "to") in subject positions.
-In some copula constructions the personal pronoun subject is replaced with the word "to".
 
-=back
+=head1 AUTHOR
 
-=cut
+Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
-# Copyright 2008-2012 Zdenek Zabokrtsky, Martin Popel, Rudolf Rosa
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2008-2012 by Institute of Formal and Applied Linguistics,
+Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
