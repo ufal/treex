@@ -39,35 +39,23 @@ sub process_zone {
                 lc $new_tok
             );
 
-        # boundary before and after $new_tok
-        # (if there already is a "natural" boundary,
-        #  do not require another one)
-        my $b1 = $boundary;
-        if ( $i == 0 || $tokens[$i] !~ /\w/ ) {
-            $b1 = '';
-        }
-        my $b2 = $boundary;
-        if ( ( $i + 1 == @tokens ) || $tokens[ $i + 1 ] !~ /\w/ ) {
-            $b2 = '';
-        }
-
         if ( $outsentence =~ /$orig_tok/i ) {
 
             # exact match has highest priority
-            if ( $aligned_sentence =~ /$b1($new_tok)$b2/ ) {
+            if ( $aligned_sentence =~ /\b($new_tok)\b/ ) {
                 $outsentence =~ s/$orig_tok/$new_tok/i;
                 log_info "Retokenizing '$orig_tok' -> '$new_tok'";
             }
 
             # case-insensitive match: also adopt the casing
-            elsif ( $aligned_sentence =~ /$b1($new_tok)$b2/i ) {
+            elsif ( $aligned_sentence =~ /\b($new_tok)\b/i ) {
                 my $new = $1;
                 $outsentence =~ s/$orig_tok/$new/i;
                 log_info "Retokenizing '$orig_tok' -> '$new'";
             }
 
             # diacritics-insensitive match
-            elsif ( $al_lc_strip =~ /$b1($n_lc_strip)$b2/ ) {
+            elsif ( $al_lc_strip =~ /\b($n_lc_strip)\b/ ) {
                 $outsentence =~ s/$orig_tok/$new_tok/i;
                 log_info "Retokenizing '$orig_tok' -> '$new_tok' ($n_lc_strip)";
             }
@@ -117,6 +105,15 @@ such as "don't fix if both tokens consist only of letters").
 Also, it "fixes" things that actually should be tokenized differently,
 such as units (en: "300m" but cs: "300 m").
 A clever language-specific detokenizer should be used to fix that.
+
+Also, it is stricter when searching than when replacing and thus can replace a
+different, earlier match than the intended one. This is clearly a bug,
+but it is very rare so I haven't looked into that yet...
+Example of the bug:
+cs: "Mám 2 m 2 látky.",
+en: "I have 2 m2 of cloth.",
+tries to replace "m 2 -> m2",
+but the result is "Mám2 m2 látky."
 
 =head1 AUTHOR
 
