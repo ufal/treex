@@ -261,7 +261,7 @@ sub do_the_change {
                         $new_formeme->{prep}, $new_formeme->{case}
                     );
                     $msg .= $self->change_anode_attributes(
-                        $prep_atts, $prepnode, 1
+                        $prepnode, $prep_atts, 1
                     );
                 }
 
@@ -280,7 +280,7 @@ sub do_the_change {
 
             # change node case
             $msg .= $self->change_anode_attribute(
-                'tag:case', $new_formeme->{case}, $lexnode
+                $lexnode, 'tag:case', $new_formeme->{case}
             );
 
             # change prep case if relevant
@@ -292,7 +292,7 @@ sub do_the_change {
                 );
                 if ( defined $prepnode ) {
                     $msg .= $self->change_anode_attribute(
-                        'tag:case', $new_formeme->{case}, $prepnode, 1
+                        $prepnode, 'tag:case', $new_formeme->{case}, 1
                     );
                 }
             }

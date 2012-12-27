@@ -128,17 +128,17 @@ sub set_node_neg {
 
     if ( defined $anode ) {
         $node->set_gram_negation('neg1');
-        my $msg = $self->change_anode_attribute( 'tag:neg', 'N', $anode );
+        my $msg = $self->change_anode_attribute( $anode, 'tag:neg', 'N' );
         if ( !$msg
             && $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} eq 'v'
         ) {
-            $msg = $self->change_anode_attributes( {
+            $msg = $self->change_anode_attributes( $anode, {
                     form  => ('ne' . $anode->form),
                     lemma => ('ne' . $anode->lemma),
-                }, $anode, 1);
+                }, 1);
         }
         if ( $anode->lemma =~ /^muset/ ) {
-            $msg .= $self->change_anode_attribute( 'lemma', 'smět', $anode );
+            $msg .= $self->change_anode_attribute( $anode, 'lemma', 'smět' );
         }
         $self->logfix($msg);
     }

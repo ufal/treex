@@ -121,7 +121,7 @@ sub fill_info_lexnode {
     else {
         if (!defined $node->formeme | $node->formeme ne 'drop') {
             # $node->wild->{'deepfix_info'}->{'mpos'} = '?';
-            log_warn( "T-node " . $self->tnode_sgn($node) . " has no lex node!" );
+            # log_warn( "T-node " . $self->tnode_sgn($node) . " has no lex node!" );
         }
     }
 

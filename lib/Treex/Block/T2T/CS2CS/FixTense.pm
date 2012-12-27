@@ -40,7 +40,7 @@ sub fix {
         my $info_before = $tense . '(' . $t_node->gram_verbmod . ',' . $t_node->gram_diathesis . ')';
         my $info_after = $entense . '(' . $ennode->gram_verbmod . ',' . $ennode->gram_diathesis . ')';
         if ( $info_before ne $info_after ) {
-            $self->change_anode_attribute('form', $lexnode->form . '_' . $info_before . '->' . $info_after, $lexnode, 1);
+            $self->change_anode_attribute($lexnode, 'form', $lexnode->form . '_' . $info_before . '->' . $info_after, 1);
         }
         return;
     }
@@ -184,8 +184,8 @@ sub remove_tense_post {
     if ( defined $budu ) {
         my $number = $self->get_node_tag_cat($budu, 'num');
         my $person = $self->get_node_tag_cat($budu, 'pers');
-        $self->change_anode_attribute('tag:num',  $number, $verb, 1);
-        $self->change_anode_attribute('tag:pers', $person, $verb, 1);
+        $self->change_anode_attribute($verb, 'tag:num',  $number, 1);
+        $self->change_anode_attribute($verb, 'tag:pers', $person, 1);
         $msg = $self->remove_anode( $budu );
     }
 
@@ -204,8 +204,8 @@ sub remove_tense_ant {
     if ( defined $jsem ) {
         my $number = $self->get_node_tag_cat($jsem, 'num');
         my $person = $self->get_node_tag_cat($jsem, 'pers');
-        $self->change_anode_attribute('tag:num',  $number, $verb, 1);
-        $self->change_anode_attribute('tag:pers', $person, $verb, 1);
+        $self->change_anode_attribute($verb, 'tag:num',  $number, 1);
+        $self->change_anode_attribute($verb, 'tag:pers', $person, 1);
         $msg = $self->remove_anode( $jsem );
     }
 
@@ -242,10 +242,9 @@ sub set_tense_post {
     # TODO: full generation according to AddAuxVerbCompoundFuture
     # set the main verb to infinitive
 
-    $self->change_anode_attribute('form',
-        Treex::Tool::Lexicon::CS::truncate_lemma($verb->lemma, 1),
-        $verb, 1);
-    $msg .= $self->change_anode_attribute( 'tag', 'Vf--------A----', $verb);
+    $self->change_anode_attribute( $verb, 'form',
+        Treex::Tool::Lexicon::CS::truncate_lemma($verb->lemma, 1), 1);
+    $msg .= $self->change_anode_attribute( $verb, 'tag', 'Vf--------A----' );
     # and add auxiliary 'být'
     my $form = $auxfuture_numberperson2form{ $number.$person };
     my $tag = 'VB-' . $number . '---' . $person . 'F-' . $negation . 'A---';
@@ -289,14 +288,14 @@ sub set_tense_ant {
     if ( $voice !~ /^[AP]$/ ) {
         $voice = 'A';
     }
-    $msg .= $self->change_anode_attributes( {
+    $msg .= $self->change_anode_attributes( $verb, {
             'tag:tense' => 'R',
             'tag:subpos' => 'p',
             'tag:gender' => $gender,
             'tag:person' => 'X',
             'tag:number' => $number,
             'tag:voice'  => $voice,
-        }, $verb);
+        });
     if ( $person ne '3' ) {
         my $form = $auxpast_numberperson2form{ $number.$person };
         my $tag = 'VB-' . $number . '---' . $person . 'P-AA---';
@@ -332,14 +331,14 @@ sub set_tense_sim {
     }
     # TODO: switch lemma from dokonavý to nedokonavý
     # regenerate the node
-    my $msg = $self->change_anode_attributes( {
+    my $msg = $self->change_anode_attributes( $verb, {
             'tag:tense' => 'P',
             'tag:subpos' => 'B',
             'tag:gender' => '-',
             'tag:person' => $person,
             'tag:number' => $number,
             'tag:voice'  => $voice,
-        }, $verb);
+        });
 
     return $msg;
 }

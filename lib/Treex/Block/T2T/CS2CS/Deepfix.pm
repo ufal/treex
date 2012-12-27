@@ -60,7 +60,7 @@ sub fix {
 # returns log message
 # or '' if the node regeneration was not successful
 sub change_anode_attribute {
-    my ( $self, $attribute, $value, $anode, $do_not_regenerate ) = @_;
+    my ( $self, $anode, $attribute, $value, $do_not_regenerate ) = @_;
 
     if (!defined $anode) {
         log_warn("Cannot change undefined lex node!");
@@ -98,7 +98,7 @@ sub change_anode_attribute {
 # regenerate only at the last attribute (if not forbidden)
 # returns log message
 sub change_anode_attributes {
-    my ( $self, $attributes_info, $anode, $do_not_regenerate ) = @_;
+    my ( $self, $anode, $attributes_info, $do_not_regenerate ) = @_;
 
     if (!defined $anode) {
         log_warn("Cannot change undefined lex node!");
@@ -112,7 +112,7 @@ sub change_anode_attributes {
         my $attribute = $attributes[$i];
         my $value     = $attributes_info->{$attribute};
         my $dnr       = ( $i + 1 == @attributes ) ? $do_not_regenerate : 1;
-        $msg .= $self->change_anode_attribute( $attribute, $value, $anode, $dnr );
+        $msg .= $self->change_anode_attribute( $anode, $attribute, $value, $dnr );
     }
 
     return $msg;
