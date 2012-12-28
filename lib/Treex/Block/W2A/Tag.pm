@@ -101,7 +101,12 @@ sub process_atree {
         log_fatal "Tagger did not return any lemmas" if !$lemmas_rf || !@$lemmas_rf;
         log_fatal "Different number of tokens and lemmas. TOKENS: @$forms_rf, LEMMAS: @$lemmas_rf" if @$lemmas_rf != @nodes;
         foreach my $a_node (@nodes) {
-            $a_node->set_lemma( shift @$lemmas_rf );
+            my $lemma = shift @$lemmas_rf;
+            if (!defined $lemma || $lemma eq ''){
+                log_warn sprintf 'Tagger %s produced an empty lemma for form "%s". Using lc form. %s', ref $self, $a_node->form, $a_node->get_address;
+                $lemma = lc $a_node->form;
+            }
+            $a_node->set_lemma($lemma);
         }
     }
 

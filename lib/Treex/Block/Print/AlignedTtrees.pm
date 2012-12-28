@@ -11,8 +11,6 @@ has selector2 => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
 sub process_ttree {
     my ( $self, $ttree1 ) = @_;
     my $ttree2 = $ttree1->get_bundle()->get_zone( $self->language2, $self->selector2)->get_ttree();
-    #$ttree1->_normalize_node_ordering();
-    #$ttree2->_normalize_node_ordering();
     $self->print_tree($ttree1);
     $self->print_tree($ttree2);
     $self->print_alignment($ttree2);
@@ -22,7 +20,7 @@ sub process_ttree {
 sub print_tree {
     my ( $self, $ttree ) = @_;
     my @nodes = $ttree->get_descendants({ordered=>1});
-    print { $self->_file_handle } '_ROOT ', join ' ', map {$_->formeme . ' ' . $_->t_lemma} @nodes;
+    print { $self->_file_handle } '_ROOT ', join ' ', map {($_->formeme // '_') . ' ' . ($_->t_lemma // '_')} @nodes;
     say { $self->_file_handle } "\t0 ", join ' ', map {my $p=$_->get_parent->ord*2 - 1; $p=0 if $p == -1; $p . ' ' . ($_->ord*2) } @nodes;
     return;
 }
