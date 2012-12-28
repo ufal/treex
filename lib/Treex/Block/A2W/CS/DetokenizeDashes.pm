@@ -22,9 +22,16 @@ sub process_zone {
         # UN -based -> UN based
         $sentence =~ s/ -([\w]{3,})\b/ $1/g;
 
-        $zone->set_sentence($sentence);
     }
     
+    if ( $sentence =~ /[0-9]/ ) {
+        
+        # 18m -> 18 m
+        $sentence =~ s/\b([0-9\.,\-]+)([mcdhkMG]?[mglsbBVA]|h|min)\b/$1 $2/ig;
+    }
+
+    $zone->set_sentence($sentence);
+
     return;
 }
 
