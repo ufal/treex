@@ -129,7 +129,6 @@ sub transcribe_aux {
                     push @flags, $modal_flag;
                     if ( defined $cnd_flag ) {
                         push @flags, 'cnd';
-                        push @flags, $cnd_flag;
                     }
 
                     if ( $tag =~ /^VB[DN]$/) {
@@ -143,7 +142,6 @@ sub transcribe_aux {
                 # conditional
                 elsif ( defined $cnd_flag ) {
                     push @flags, 'cnd';
-                    push @flags, $cnd_flag;
                 }
                 
                 # do
