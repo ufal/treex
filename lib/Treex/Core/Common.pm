@@ -29,7 +29,7 @@ sub pos_validated_list {
     while ( ref $_[0] eq 'HASH' ) {
         my $spec = shift;
         if ( defined $spec->{default} ) {
-            $args_ref->[$i] ||= $spec->{default};
+            $args_ref->[$i] //= $spec->{default};
         }
         $i++;
     }
