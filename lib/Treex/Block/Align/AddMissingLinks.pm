@@ -52,6 +52,16 @@ has 'log_to_console' => (
     default => 1
 );
 
+# TODO: this is only good for EN-CS
+my %stoplist = (
+    a => 1,
+    to => 1,
+    by => 1,
+    'do' => 1,
+    on => 1,
+    take => 1,
+);
+
 sub process_start {
     my ($self) = @_;
 
@@ -173,6 +183,10 @@ sub nodes_match {
         lc( $node2->form ) );
 
     my $nodes_match = 0;
+
+    if ( $stoplist{$form1} || $stoplist{$form2} ) {
+        return 0;
+    }
 
     if ($match_type == 1) {
         $nodes_match =
