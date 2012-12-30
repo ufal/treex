@@ -66,6 +66,7 @@ my %lemma_tag_transcriptions = (
     have_VBD => 'had',
     have_VBN => 'had',
     have_VBG => 'having',
+    go_VBG   => 'gonna', # TODO following 'to' should be checked!
 );
 
 my %modal_flags = (
@@ -108,6 +109,7 @@ sub transcribe_aux {
             # have to handle "have to" explicitly
             # because "have" itself is recognized as an auxiliary verb
             if ( $lemma eq 'have' && $node->get_next_node()->lemma eq 'to' ) {
+                push @flags, 'modal';
                 push @flags, 'deb';
             }
 
@@ -167,15 +169,10 @@ sub transcribe_aux {
                     push @flags, 'fut';
                 }
                 
-                # going to
-                elsif ( $lemma eq 'go' && $tag eq 'VBG') {
-                    push @flags, 'gonna';
-                }
-                
                 else {
                     push @flags, 'ERR';                
                     log_warn "SetTense: Cannot resolve '$form'!"; 
-                    }
+                }
             }
         }
         else {
@@ -207,6 +204,9 @@ sub transcribe_full {
     return $result;
 }
 
+# all signatures are written for the 1st person pl,
+# only 'be' is used instead of 'are'
+# e.g. "we love", "we be being loved"...
 my %signature2flags = (
     'love' => [ ],
     'loved' => [ 'past' ],
@@ -225,6 +225,23 @@ my %signature2flags = (
     'have been being loved' => [ 'perf', 'cont', 'pass' ],
     'had been being loved' => [ 'past', 'perf', 'cont', 'pass' ],
     
+    'be gonna love' => [ 'fut', 'gonna' ],
+    'be gonna be loving' => [ 'fut', 'cont', 'gonna' ],
+    'be gonna be loved' => [ 'fut', 'pass', 'gonna' ],
+    'be gonna be being loved' => [ 'fut', 'cont', 'pass', 'gonna' ],
+    'were gonna love' => [ 'past', 'gonna' ],
+    'were gonna be loving' => [ 'past', 'cont', 'gonna' ],
+    'were gonna be loved' => [ 'past', 'pass', 'gonna' ],
+    'were gonna be being loved' => [ 'past', 'cont', 'pass', 'gonna' ],
+    'have been gonna love' => [ 'pres', 'perf', 'gonna' ],
+    'have been gonna be loving' => [ 'pres', 'perf', 'cont', 'gonna' ],
+    'have been gonna be loved' => [ 'pres', 'perf', 'pass', 'gonna' ],
+    'have been gonna be being loved' => [ 'pres', 'perf', 'cont', 'pass', 'gonna' ],
+    'had been gonna love' => [ 'past', 'perf', 'gonna' ],
+    'had been gonna be loving' => [ 'past', 'perf', 'cont', 'gonna' ],
+    'had been gonna be loved' => [ 'past', 'perf', 'pass', 'gonna' ],
+    'had been gonna be being loved' => [ 'past', 'perf', 'cont', 'pass', 'gonna' ],
+    
     # some infinitives (I am not very sure about the flags)
     'loving' => [ 'cont', 'inf' ],
     'being loved' => [ 'cont', 'pass', 'inf' ],
@@ -235,6 +252,15 @@ my %signature2flags = (
     'having been loved' => [ 'past', 'cont', 'pass', 'inf' ],
     'been being loved' => [ 'past', 'cont', 'pass', 'inf' ],
     'having been being loved' => [ 'past', 'cont', 'pass', 'inf' ],
+    
+    'gonna love' => [ 'gonna', 'inf' ],
+    'gonna be loving' => [ 'cont', 'gonna', 'inf' ],
+    'gonna be loved' => [ 'pass', 'gonna', 'inf' ],
+    'gonna be being loved' => [ 'cont', 'pass', 'gonna', 'inf' ],
+    'been gonna love' => [ 'perf', 'gonna', 'inf' ],
+    'been gonna be loving' => [ 'perf', 'cont', 'gonna', 'inf' ],
+    'been gonna be loved' => [ 'perf', 'pass', 'gonna', 'inf' ],
+    'been gonna be being loved' => [ 'perf', 'cont', 'pass', 'gonna', 'inf' ],
 );
 
 sub analyze_tense {
@@ -274,10 +300,10 @@ sub finalize {
         $tense{past} = 1;
         delete $tense{perf};
     }
-    if ( $tense{gonna} && !$tense{past} ) {
+    #if ( $tense{gonna} && !$tense{past} ) {
         # are going to love (but not were going to love)
-        $tense{fut} = 1;
-    }
+        #    $tense{fut} = 1;
+        #}
     if ( !$tense{past} && !$tense{fut} ) {
         # TODO or infinitive (check whether there is a child pronoun)
         $tense{pres} = 1;
