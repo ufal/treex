@@ -62,6 +62,8 @@ sub process_zone {
         }
 
     }
+    
+    $outsentence =~ s/([0-9])(st|nd|rd|th)\b/$1./ig;
 
     $zone->set_sentence($outsentence);
     return 1;
@@ -114,6 +116,9 @@ cs: "Mám 2 m 2 látky.",
 en: "I have 2 m2 of cloth.",
 tries to replace "m 2 -> m2",
 but the result is "Mám2 m2 látky."
+
+As a "bonus", the block also fixes ordinal numerals (which probably should be
+moved to a separate block): 1st -> 1., 456th -> 456. etc.
 
 =head1 AUTHOR
 
