@@ -194,6 +194,11 @@ Reverse the dependency orientation between numeric expressions and counted nouns
 in the case that the former is bigger than four and the latter
 should have been expressed in nominative or accusative.
 
+=head1 TODO
+
+Distinguish 'Nejméně o třetinu' somehow so that it doesn't end up as 
+'O málo třetiny'.
+
 =head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>

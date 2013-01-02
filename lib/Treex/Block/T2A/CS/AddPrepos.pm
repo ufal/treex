@@ -52,11 +52,13 @@ sub process_tnode {
     $tnode->add_aux_anodes(@prep_nodes);
 
     # moving leading adverbs in front of the prepositional group ('v zejmena USA' --> 'zejmena v USA')
+    # but keeping some adverbs that relate to numerals ('na téměř XXX milionů dolarů' etc.)
     my $t_first = $tnode->get_children( { preceding_only => 1, first_only => 1 } );
     if ($formeme =~ /^n/
         && defined $t_first
         && ($t_first->functor eq 'RHEM' || $t_first->formeme =~ /^adv/)
         && $t_first->get_lex_anode
+        && !($prep_forms_string eq 'na' && $t_first->t_lemma =~ /^(téměř|kolem|okolo|zhruba)$/)
         )
     {
         $t_first->get_lex_anode->shift_before_node( $prep_nodes[0] );
