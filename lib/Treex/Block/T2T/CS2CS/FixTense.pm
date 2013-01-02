@@ -5,6 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::T2T::CS2CS::Deepfix';
 
 use Treex::Tool::Lexicon::CS;
+use Treex::Tool::Lexicon::EN;
 
 sub fix {
     my ( $self, $t_node ) = @_;
@@ -73,7 +74,7 @@ sub fix {
 
     # don't fix 'X said (ant)' (danger of reported speech tense shifting)
     if ( ( any { defined $_->t_lemma
-            && $_->t_lemma eq 'say'
+            && Treex::Tool::Lexicon::EN::is_dicendi_verb($_->t_lemma)
             && $_->gram_tense eq 'ant' }
         $ennode->get_eparents )
         && $entense eq 'ant'
