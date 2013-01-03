@@ -218,7 +218,14 @@ sub _extract_lemmas {
 
     my %lemmas = map {
         my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
-        my $word_dist = $_->wild->{doc_ord} - $tnode_wordpos;
+        my $word_dist;
+
+        # TODO why is wild->{doc_ord} undefined?
+        {
+            no warnings 'uninitialized';
+            $word_dist = $_->wild->{doc_ord} - $tnode_wordpos;
+        }
+
         my $lemma = $_->t_lemma;
         $lemma =~ s/ /_/g;
         $lemma =~ s/\t/__/g;
