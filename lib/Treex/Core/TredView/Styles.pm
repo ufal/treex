@@ -133,11 +133,11 @@ sub _tnode_style {
     } else {
         $line_coords .= ',p,p';
     }
-
+    
     $style .= $coord_circle if $self->_is_coord($node);
     $style .= "#{Line-width:$line_width}#{Line-fill:$line_color}#{Line-coords:$line_coords}";
     $style .= "#{Line-dash:$line_dash}" if $line_dash;
-
+    $style .= '#{Oval-fill:#00ff00}' if $node->wild->{ali_root};
     return $style;
 }
 

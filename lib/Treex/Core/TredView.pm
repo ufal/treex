@@ -215,6 +215,7 @@ sub recompute_visualization {
     $self->precompute_tree_depths($bundle);
     $self->precompute_tree_shifts($bundle);
     $self->precompute_visualization($bundle);
+    $self->precompute_value_line($bundle);
     return;
 }
 
@@ -694,6 +695,10 @@ sub node_style_hook {
 
 sub root_style_hook {
     my ( $self, $bundle, $styles ) = @_;
+
+    # Sometimes TrEd calls this on e.g. t-nodes (after node_click_hook)
+    return if !$bundle->isa('Treex::Core::Bundle');
+
     return if $bundle->{_precomputed};
     $self->precompute_tree_depths($bundle);
     $self->precompute_tree_shifts($bundle);
@@ -794,6 +799,42 @@ sub run_annotation_command {
     $self->recompute_visualization($node->get_bundle);
 }
 
+
+
+my $HIGHLIGHT_STYLE = '#{Line-decoration:shape=oval;coords=-20,-10,20,10;outline=#ff0000;width=3;dash=5,5 }';
+my $HIGHLIGHT_TEXT = '-background => #ffbbaa';
+my @highlighted = ();
+sub node_click_hook {
+    my ( $self, $node, $modifier, $xevent ) = @_;
+    my $ali_id = eval {$node->wild->{ali_root}};
+    if ($ali_id){
+        # remove all highlighting
+        foreach my $n (@highlighted){
+            $n->{_precomputed_node_style} =~ s/\Q$HIGHLIGHT_STYLE\E//;
+        }
+        @highlighted = ();
+        # add new highlighted nodes (a minimal treelet consistent with alignment)
+        my $al_node = $self->treex_doc->get_node_by_id($ali_id);
+        my @queue = ($node, $al_node);
+        while (@queue){
+            my $n = shift @queue;
+            push @highlighted, $n;
+            push @queue, grep {!$_->wild->{ali_root}} $n->get_children();
+        }
+        foreach my $n (@highlighted){
+            $n->{_precomputed_node_style} .= $HIGHLIGHT_STYLE;
+        }
+        # highlight also the relevant words in the text window above trees
+        my $bundle = $node->get_bundle();
+        my %h; $h{$_}=1 for (@highlighted);
+        foreach my $token (@{$bundle->{_precomputed_value_line}}){
+            pop @$token if $token->[-1] eq $HIGHLIGHT_TEXT;
+            push @$token, $HIGHLIGHT_TEXT if $h{$token->[1]};
+        }
+        TredMacro::Redraw();
+    }
+    return;
+}
 
 1;
 

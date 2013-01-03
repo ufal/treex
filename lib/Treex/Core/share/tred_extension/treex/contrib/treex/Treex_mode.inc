@@ -158,6 +158,11 @@ sub node_release_hook {
     return $tredview->node_release_hook(@_);
 }
 
+sub node_click_hook {
+    return $tredview->node_click_hook(@_);
+}
+
+
 my $command;
 
 sub annotation_command {
@@ -172,7 +177,6 @@ sub annotation_command {
         $tredview->run_annotation_command($command,$this);
     }
 }
-
 
 #bind annotation_command to space
 #bind recompute_visualization to q
