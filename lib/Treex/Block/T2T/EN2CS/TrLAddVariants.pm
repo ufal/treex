@@ -13,7 +13,7 @@ use TranslationModel::MaxEnt::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
-use Treex::Tool::Triggers::Features;
+#use Treex::Tool::Triggers::Features;
 
 use TranslationModel::Derivative::EN2CS::Numbers;
 use TranslationModel::Derivative::EN2CS::Hyphen_compounds;
@@ -95,11 +95,11 @@ has domain => (
     documentation => 'add the (CzEng) domain feature (default=0). Set to 0 to deactivate.',
 );
 
-has '_trigger_feature_extractor' => (
-    is => 'ro',
-    isa => 'Treex::Tool::Triggers::Features',
-    default => sub { return Treex::Tool::Triggers::Features->new({prev_sents_num => 2}) },
-);
+#has '_trigger_feature_extractor' => (
+#    is => 'ro',
+#    isa => 'Treex::Tool::Triggers::Features',
+#    default => sub { return Treex::Tool::Triggers::Features->new({prev_sents_num => 2}) },
+#);
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
@@ -228,21 +228,11 @@ sub process_tnode {
                 $self->get_parent_trg_features( $cs_tnode, 'formeme', 'translation_model/formeme_variants', $self->trg_formemes );
         }
 
-        my $trig_feats_hash = $self->_trigger_feature_extractor->create_lemma_instance($en_tnode);
+        #my $trig_feats_hash = $self->_trigger_feature_extractor->create_lemma_instance($en_tnode);
         #my $esa_feats_hash = $self->_trigger_feature_extractor->create_esa_instance($en_tnode);
         
-        # TODO: broken probably since some revision of Michal Novák (r9826-r9833)
-        # Without this hack I got fatal error:
-        # Not a HASH reference at ... TrLAddVariants.pm
-        if (ref $trig_feats_hash ne 'HASH'){
-            #use Data::Dumper;
-            #warn Dumper $trig_feats_hash;
-            #warn $cs_tnode->t_lemma; 
-            #log_fatal $cs_tnode->get_address . " no feats";
-            $trig_feats_hash = {};
-        }
-
-        my $all_feats = [ keys %$trig_feats_hash, @$features_array_rf ];
+        #my $all_feats = [ keys %$trig_feats_hash, @$features_array_rf ];
+        my $all_feats = [ @$features_array_rf ];
 
         my $en_tlemma = $en_tnode->t_lemma;
         my @translations = $combined_model->get_translations( lc($en_tlemma), $all_feats);
