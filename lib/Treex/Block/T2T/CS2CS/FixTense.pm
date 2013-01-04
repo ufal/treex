@@ -30,6 +30,7 @@ sub fix {
     # get the tenses
     my $tense = $t_node->gram_tense;
     my $entense = $ennode->gram_tense;
+    my $entensehash = $ennode->wild->{tense};
 
     # there is no point switching to 'nil'
     if ( !$entense || $entense eq 'nil' ) {
@@ -68,19 +69,24 @@ sub fix {
     }
 
     # don't fix 'that' (danger of reported speech tense shifting)
-    if ( any { $_->lemma eq 'that' } $ennode->get_aux_anodes ) {
+    if ( (any { $_->lemma eq 'that' } $ennode->get_aux_anodes)
+        && $entense eq 'ant'
+        && !$entensehash->{perf}    
+    ) {
         return;
     }
 
     # don't fix 'X said (ant)' (danger of reported speech tense shifting)
-    if ( ( any { defined $_->t_lemma
-            && Treex::Tool::Lexicon::EN::is_dicendi_verb($_->t_lemma)
-            && $_->gram_tense eq 'ant' }
-        $ennode->get_eparents )
+    # but do fix if tense is Present Perfect or Past Perfect
+    my $parent_is_past_dicendi = any {
+        defined $_->t_lemma
+        && Treex::Tool::Lexicon::EN::is_dicendi_verb($_->t_lemma)
+        && $_->gram_tense eq 'ant'
+    } $ennode->get_eparents;
+    if ( $parent_is_past_dicendi
         && $entense eq 'ant'
+        && !$entensehash->{perf}
     ) {
-        # TODO but fix if entense is past perfect!
-        # (now we do not detect this)
         return;
     }
 
@@ -180,17 +186,37 @@ sub remove_tense_post {
     my $msg = '';
 
     my $verb = $t_node->wild->{'deepfix_info'}->{'lexnode'};
-    my $budu = first { $_->lemma eq 'být' && $_->form =~ /^bud/ }
+    my $budu = first { $_->lemma eq 'být' && $_->form =~ /^(ne)?bud/ }
     $t_node->get_aux_anodes( {ordered => 1} );
     if ( defined $budu ) {
         my $number = $self->get_node_tag_cat($budu, 'num');
         my $person = $self->get_node_tag_cat($budu, 'pers');
+        my $negation = $self->negation_xor (
+            $self->get_node_tag_cat($budu, 'neg'),
+            $self->get_node_tag_cat($verb, 'neg')
+        );
         $self->change_anode_attribute($verb, 'tag:num',  $number, 1);
         $self->change_anode_attribute($verb, 'tag:pers', $person, 1);
+        $self->change_anode_attribute($verb, 'tag:neg', $negation, 1);
         $msg = $self->remove_anode( $budu );
     }
 
     return $msg;
+}
+
+# used to merge negation on two nodes into one
+sub negation_xor {
+    my ($self, $neg1, $neg2) = @_;
+
+    my $num_of_negated = scalar( grep { $_ eq 'N' } ($neg1, $neg2) );
+    if ( $num_of_negated == 1 ) {
+        # one negation
+        return 'N';
+    }
+    else {
+        # no negation or double negation
+        return 'A';
+    }
 }
 
 # delete "jsem" if it is present...
@@ -213,13 +239,19 @@ sub remove_tense_ant {
     return $msg;
 }
 
-my %auxfuture_numberperson2form = (
-    'S1' => 'budu',
-    'S2' => 'budeš',
-    'S3' => 'bude',
-    'P1' => 'budeme',
-    'P2' => 'budete',
-    'P3' => 'budou',
+my %auxfuture_numpersneg2form = (
+    'S1A' => 'budu',
+    'S2A' => 'budeš',
+    'S3A' => 'bude',
+    'P1A' => 'budeme',
+    'P2A' => 'budete',
+    'P3A' => 'budou',
+    'S1N' => 'nebudu',
+    'S2N' => 'nebudeš',
+    'S3N' => 'nebude',
+    'P1N' => 'nebudeme',
+    'P2N' => 'nebudete',
+    'P3N' => 'nebudou',
 );
 
 # change the verb tense to future
@@ -247,7 +279,7 @@ sub set_tense_post {
         Treex::Tool::Lexicon::CS::truncate_lemma($verb->lemma, 1), 1);
     $msg .= $self->change_anode_attribute( $verb, 'tag', 'Vf--------A----' );
     # and add auxiliary 'být'
-    my $form = $auxfuture_numberperson2form{ $number.$person };
+    my $form = $auxfuture_numpersneg2form{ $number.$person.$negation };
     my $tag = 'VB-' . $number . '---' . $person . 'F-' . $negation . 'A---';
     my $budu = $verb->create_child( {
             'lemma' => 'být',
