@@ -21,19 +21,19 @@ Readonly my %SUB_FOR_TAG => (
     RB => \&_adv, RBR => \&_adv, RBS => \&_adv,
 );
 
-# Some modal verb -> gramm/deontmod mapping
-# ("have to" and "be able to" is handled separately,
-#  "shall" is not handled at all.)
+# modal verb -> gramm/deontmod mapping
 Readonly my %DEONTMOD_FOR_LEMMA => (
     'must'   => 'deb',
     'should' => 'hrt',
     'ought'  => 'hrt',
     'want'   => 'vol',
     'can'    => 'poss',
-    'cannot' => 'poss',
+    'cannot' => 'poss', # TODO can this still appear?
     'could'  => 'poss',
     'may'    => 'perm',
     'might'  => 'perm',
+    'be_able_to' => 'fac',
+    'have_to' => 'deb',
 );
 
 # $form => $gender . $number . $person
@@ -220,88 +220,95 @@ sub _number {
     return;
 }
 
+# verbs are fully analyzed in SetTense:
+# here, the grammatemes get filled based on tnode->wild->{tense}
 sub _verb {
     my ( $tnode, $tag, $form ) = @_;
-    my @aux_anodes   = $tnode->get_aux_anodes();
-    my %is_aux_form  = map { ( lc( $_->form ) => 1 ) } @aux_anodes;
-    my %is_aux_lemma = map { ( $_->lemma => 1 ) } @aux_anodes;
 
-    my ($deontmod) = grep { defined $_ } ( map { $DEONTMOD_FOR_LEMMA{ $_->lemma } } @aux_anodes );
-    my $negated = any { $is_aux_form{$_} } qw(not n't cannot);
+    my $tense_hash = $tnode->wild->{tense};
 
+    # constants
     $tnode->set_gram_sempos('v');
     $tnode->set_gram_iterativeness('it0');
     $tnode->set_gram_resultative('res0');
-    $tnode->set_attr( 'gram/negation', $negated ? 'neg1' : 'neg0' );
 
-    # First guess deontic modality...
-    $tnode->set_attr( 'gram/deontmod', $deontmod || 'decl' );
-
-    # ...and then correct "have to"...
-    if ( all { $is_aux_lemma{$_} } qw(have to) ) {
-        ## but filter our e.g. "It appears to have grown."
-        my $a_have = first { $_->lemma eq 'have' } @aux_anodes;
-        my $a_to   = first { $_->lemma eq 'to' } @aux_anodes;
-        if ( $a_have->ord + 1 == $a_to->ord ) {
-            $tnode->set_gram_deontmod('deb');
-        }
+    # negation
+    if ( $tense_hash->{neg} ) {
+        $tnode->set_gram_negation('neg1');
+    }
+    else {
+        $tnode->set_gram_negation('neg0');
     }
 
-    # ...and "be able to".
-    if ( all { $is_aux_lemma{$_} } qw(be able to) ) {
-        $tnode->set_gram_deontmod('fac');
-        if ( $is_aux_form{unable} ) {
-            ##TODO: negace významových sloves vs. modálních není v TectoMT (ale ani ve FGD) dořešena
-            $tnode->set_gram_negation('neg1');
-        }
+    # gram_deontmod
+    if ( $tense_hash->{modal} ) {
+        # TODO use DEONTMOD_FOR_LEMMA
+        $tnode->set_gram_deontmod($tense_hash->{modal});
+    }
+    else {
+        $tnode->set_gram_deontmod('decl'); 
     }
 
-    # First, we will process infinitives...
-    if ( !$tnode->is_clause_head ) {
+    # gram_diathesis
+    if ( $tense_hash->{pass} ) {
+        $tnode->set_gram_diathesis('pas');
+        $tnode->set_is_passive(1); # TODO ?
+    }
+    else {
+        $tnode->set_gram_diathesis('act');
+        $tnode->set_is_passive(undef); # TODO ?
+    }
 
-        $tnode->set_gram_tense('nil');
-        $tnode->set_gram_verbmod('nil');
+    if ( $tense_hash->{inf} ) {
+
+        # infinitives have no dispmod and verbmod
         $tnode->set_gram_dispmod('nil');
+        $tnode->set_gram_verbmod('nil');
 
-        # ...because it's easy and we are quickly finished :-)
-        return;
+        # but the infinitive can also be past or future
+        # TODO there are many possibilities here...
+        if ( $tense_hash->{past} ) {
+            # $tnode->set_gram_tense('nil');
+            $tnode->set_gram_tense('ant');
+        }
+        elsif ( $tense_hash->{fut} ) {
+            # $tnode->set_gram_tense('nil');
+            $tnode->set_gram_tense('post');
+        }
+        else {
+            $tnode->set_gram_tense('nil');
+        }
     }
+    else {
 
-    # So now we deal with a finite verb
-    $tnode->set_gram_dispmod('disp0');
+        # gram_dispmod
+        $tnode->set_gram_dispmod('disp0');
 
-    # Verbal modality is quite straightforward...
-    my $is_conditional = any { $is_aux_lemma{$_} } qw(would could should might);
+        # gram_verbmod
+        if ( $tense_hash->{cdn} ) {
+            $tnode->set_gram_verbmod('cdn');
+        }
+        else {
+            # ignores imp - which is now set later in FixImperatives
+            $tnode->set_gram_verbmod('ind');
+        }
 
-    # There is also an imperative modality, but see sub _add_sentmod().
-    $tnode->set_attr( 'gram/verbmod', $is_conditional ? 'cdn' : 'ind' );
-
-    # ... but gram/tense is more intricate
-    #    my $tense = _guess_verb_tense( $tnode, $tag, \%is_aux_form, \%is_aux_lemma );
-    my $tense = _guess_verb_tense($tnode);
-    $tnode->set_gram_tense($tense);
+        # gram_tense
+        if ( $tense_hash->{fut} ) {
+            $tnode->set_gram_tense('post');
+        }
+        elsif ( $tense_hash->{past} ) {
+            $tnode->set_gram_tense('ant');
+        }
+        elsif ( $tense_hash->{pres} && $tense_hash->{perf} ) {
+            $tnode->set_gram_tense('ant');
+        }
+        else {
+            $tnode->set_gram_tense('sim'); 
+        }
+    }
 
     return;
-}
-
-sub _guess_verb_tense {
-    my ($tnode) = @_;
-
-    my @anodes = grep { $_->tag =~ /^(V|MD)/ }
-        $tnode->get_anodes( { ordered => 1 } );
-
-    my @forms = map { lc( $_->form ) } @anodes;
-    my @lemmas = map { lc( $_->lemma ) } @anodes;
-    my @tags  = map { $_->tag } @anodes;
-
-    return 'post' if any {/^(will|shall)$/} @lemmas;
-
-    return 'post' if any { $_ eq "going" } @forms[ 0 .. $#forms - 1 ];    # 'to be going to ...'
-
-    return 'ant' if $tags[0] =~ /VB[DN]/                                  # VBN allowed only because of frequent tagging errors VBD->VBN
-            or ( any { $_ =~ /^(have|has|'ve|having)$/ } @forms[ 0 .. $#forms - 1 ] and any { $_ =~ /VB[ND]/ } @tags );
-
-    return 'sim';
 }
 
 #------ Other subs --------
@@ -348,6 +355,6 @@ the classification attribute C<gram/sempos> is filled.
 
 =cut
 
-# Copyright 2008 Zdenek Zabokrtsky, Martin Popel
+# Copyright 2008-2013 Zdenek Zabokrtsky, Martin Popel, Rudolf Rosa
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

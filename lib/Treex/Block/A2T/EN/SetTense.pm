@@ -3,31 +3,46 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-# TODO: 'inf' is sometimes assigned but full fin/inf processing is TODO
-
-# debug only
-my $forms;
+has 'log_to_console' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    if (defined $tnode->gram_sempos && $tnode->gram_sempos eq 'v') {
+    # analyze only verbs
+    if ( defined $tnode->get_lex_anode
+        && $tnode->get_lex_anode->tag =~ /^VB/
+    ) {
         
-        # debug only
-        $forms = join ' ', (
-            map { $_->form } $tnode->get_anodes( { ordered => 1 } ) );
-        
+        # analyze the tense 
         my @anodes = $self->get_anodes($tnode);
-        my ($transcribed, $flags1) = $self->transcribe_nodes(\@anodes);
-        my $flags2 = $self->analyze_tense($transcribed);
-        my $tense = $self->finalize($flags1, $flags2);
-        $tnode->wild->{tense} = $tense;
-        $self->set_tense($tnode);
-        
-        # TODO negation
+        my $tense = undef;
+        my $err = 0;
+        do {
+            my ($transcribed, $flags1) = $self->transcribe_nodes(\@anodes);
+            my $flags2 = $self->analyze_tense($transcribed);
+            my $flags3 = $self->add_inf_and_neg($tnode);
+            $tense = $self->finalize($flags1, $flags2, $flags3);
 
+            # if there has been an error,
+            # remove the first anode and try again
+        } while ( $tense->{ERR} && ($err = 1) && (shift @anodes) );
+
+        # add 'WARN' if there has been an error
+        if ( $err ) {
+            # there has been an error - note that with a WARN
+            $tense->{WARN} = 1;
+        }
+
+        # set the tense
+        $tnode->wild->{tense} = $tense;
+        
         # debug only
-        log_info $forms . ': ' . (join ',', keys %$tense);
+        if ($self->log_to_console) {
+            my $forms_string = join ' ', (
+                map { $_->form } $tnode->get_anodes( { ordered => 1 } ) );
+            my $tense_string = join ',', keys %$tense;
+            log_info "$forms_string: $tense_string";
+        }
     }
     
     return;
@@ -70,6 +85,8 @@ my %tag_transcriptions = (
     VBG => 'loving',
 );
 
+# TODO: only flag the modal lemma,
+# SetGrammateme will set the appropriate deontmod
 my %modal_flags = (
     must   => 'deb',
     should => 'hrt',
@@ -114,8 +131,8 @@ sub transcribe_nodes {
         my $tag = $node->tag;
         if ( defined $carry ) {
             if ( $tag !~ /^VBP?/ ) {
-                push @flags, 'ERR';
-                log_warn "SetTense: should not carry $carry onto $tag!";
+                push @flags, 'ERR'; # TODO or only WARN?
+                log_warn "SetTense: cannot carry $carry onto $tag!";
             }
             $tag = $carry;
             $carry = undef;
@@ -130,7 +147,7 @@ sub transcribe_nodes {
                     push @transcribed, $transcription;
                 }
                 else {
-                    push @flags, 'ERR';
+                    push @flags, 'WARN';
                     push @transcribed, 'love';
                     log_warn "SetTense: cannot process full verb '" . $form . "'!";
                 }
@@ -186,22 +203,24 @@ sub transcribe_nodes {
                             $carry = $tag;
                         }
                         else {
+                            push @flags, 'WARN';
                             log_warn "SetTense: Cannot resolve aux '$form'!"; 
                         }
                     }
 
-                    # will
-                    elsif ( $lemma eq 'will' && $tag ne 'VBG') {
-                        push @flags, 'fut';
-                    }
-
-                    # shall TODO what exactly is shall? :-)
-                    elsif ( $lemma eq 'shall' && $tag ne 'VBG') {
+                    # will and shall;
+                    # 'shall' is treated simply as a variant of 'will',
+                    # which is probably the most common case,
+                    # although 'hrt' modality might also be flagged
+                    elsif ( $lemma =~ /^will|shall$/ && $tag ne 'VBG') {
                         push @flags, 'fut';
                     }
 
                     # [be] going to
-                    elsif ( $lemma eq 'go' && $tag eq 'VBG' && next_is_to($node) ){
+                    elsif ( $lemma eq 'go'
+                        && $tag eq 'VBG'
+                        && next_is_to($node)
+                    ){
                         push @flags, 'gonna';
 
                         # handle preceding [be]
@@ -214,7 +233,7 @@ sub transcribe_nodes {
                             else {
                                 # not [be] - put it back and signal error
                                 push @transcribed, $be;
-                                push @flags, 'ERR';
+                                push @flags, 'WARN';
                                 log_warn "SetTense: expecting BE before GOING TO!"; 
                             }
                         }
@@ -228,9 +247,10 @@ sub transcribe_nodes {
                     elsif ( $lemma eq 'able' && next_is_to($node) ) {
                         push @flags, 'fac';
 
-                        #    if ( $is_aux_form{unable} ) {
-                        #        $tnode->set_gram_negation('neg1');
-                        #    }
+                        # 'unable' handled extra
+                        if ( $form eq 'unable' ) {
+                            push @flags, 'neg';
+                        }
 
                         # handle preceding [be]
                         my $be = pop @transcribed;
@@ -242,21 +262,20 @@ sub transcribe_nodes {
                             else {
                                 # not [be] - put it back and signal error
                                 push @transcribed, $be;
-                                push @flags, 'ERR';
+                                push @flags, 'WARN';
                                 log_warn "SetTense: expecting BE before ABLE TO!"; 
                             }
                         }
                         else {
                             # missing [be]
-                            push @flags, 'inf';
-                            # TODO: inf or ERR?
-                            # log_warn "SetTense: expecting BE before ABLE TO!"; 
+                            push @flags, 'WARN';
+                            log_warn "SetTense: expecting BE before ABLE TO!"; 
                         }
                     }
 
                     else {
                         push @flags, 'ERR';                
-                        log_warn "SetTense: Cannot resolve '$form'!"; 
+                        log_warn "SetTense: Cannot resolve form '$form'!"; 
                     }
                 }
             }
@@ -324,19 +343,37 @@ sub analyze_tense {
         return $flags;
     }
     else {
-        log_warn "SetTense: Cannot resolve '$signature'!";
+        log_warn "SetTense: Cannot resolve signature '$signature'!";
         return [ 'ERR' ];
     }
 
 }
 
+sub add_inf_and_neg {
+    my ($self, $tnode) = @_;
+
+    my @flags = ();
+
+    # add 'neg' if negated
+    if ( any { $_->lemma eq 'not' } $tnode->get_anodes ) {
+        push @flags, 'neg';
+    }
+
+    # add 'inf' if not head of clause
+    if ( !$tnode->is_clause_head ) {
+        push @flags, 'inf';
+    }
+
+    return \@flags;
+}
+
 sub finalize {
-    my ($self, $flags1, $flags2) = @_;
+    my ($self, $flags1, $flags2, $flags3) = @_;
 
     my %tense = ();
 
     # merge flags
-    my @flags = (@$flags1, @$flags2);
+    my @flags = (@$flags1, @$flags2, @$flags3);
     foreach my $flag (@flags) {
         $tense{$flag} = 1;
     }
@@ -363,72 +400,55 @@ sub finalize {
         $tense{fut} = 1;
     }
     if ( !$tense{past} && !$tense{fut} ) {
-        # TODO or infinitive (check whether there is a child pronoun)
         $tense{pres} = 1;
     }
 
     return \%tense;
 }
 
-sub set_tense {
-    my ($self, $tnode) = @_;
-
-    # set the tense into gram_tense
-    # (do not set anything if tense had been set to 'nil',
-    # believing there was a good reason for that)
-    if ( $tnode->gram_tense ne 'nil' ) {
-        my $tense_hash = $tnode->wild->{tense};
-        
-        if ( $tense_hash->{fut} ) {
-            $tnode->set_gram_tense('post');
-        }
-        elsif ( $tense_hash->{past} ) {
-            $tnode->set_gram_tense('ant');
-        }
-        elsif ( $tense_hash->{pres} && $tense_hash->{perf} ) {
-            $tnode->set_gram_tense('ant');
-        }
-        else {
-            $tnode->set_gram_tense('sim'); 
-        }
-
-        if ( $tense_hash->{cdn} ) {
-            $tnode->set_gram_verbmod('cdn');
-        }
-        else {
-            if ( $tnode->gram_verbmod eq 'cdn' ) {
-                $tnode->set_gram_verbmod('act');
-            }
-        }
-
-        if ( $tense_hash->{modal} ) {
-            $tnode->set_gram_deontmod($tense_hash->{modal});
-        }
-
-        if ( $tense_hash->{pass} ) {
-            $tnode->set_gram_diathesis('pas');
-        }
-        else {
-            $tnode->set_gram_diathesis('act');
-        }
-
-    }
-
-    return;
-}
-
 1;
 
 =head1 NAME 
 
-Treex::Block::A2T::EN::SetTense
+Treex::Block::A2T::EN::SetTense - detect the English tense
 
 =head1 DESCRIPTION
 
-Work in progress! Has to be tested and TODOs have to be filled.
-
-Creates a wild->{tense} hash reference for each verb.
+Creates a C<wild-&gt;{tense}> hash reference for each verb.
 The hash contains flags, such as pres, perf, cdn, vol...
+Infitiveness and negation are also included.
+All of the flags (except for C<modal>) are binary - 
+either the flag is present (and has the value of C<1>),
+or it is not present (which is the "default").
+
+=over
+
+=item past, pres, fut
+
+Exactly one of these is always set -
+even for infinitives, where C<pres> is the default.
+
+=item perf
+
+=item cont
+
+=item pass
+
+=item gonna
+
+=item cdn
+
+=item modal
+
+=item neg
+
+=item inf
+
+=back
+
+Partly based on L<Treex::Block::A2T::EN::SetGrammateme>.
+
+=head1 FUTURE WORK
 
 Completely ignores the VBD/VBN distinction, except for the verb 'to be'.
 In most cases, the VB/VBP/VBZ distinction is also ignored.
@@ -439,20 +459,28 @@ identical for different tags).
 However, in practice it leads to the fact that many erroneous forms are
 thought to be correct -- which can be seen both as an advantage an an
 disadvantage.
-Also, it makes infinitives detection harder (but this is not done properly at
-the moment anyway).
+Also, it makes infinitives detection harder.
 
-Partly based on A2T::EN::SetGrammateme and A2T::EN::MarkClauseHeads.
+Some other ideas for "deeper" tenses (and probably for a separate block):
 
-TODO: present continuous can express future if
-- there is a future expression, such as 'tomorrow', 'next week',
+=over
+
+=item present continuous can express future
+
+if there is a future expression, such as 'tomorrow', 'next week',
 'on Monday', 'today', 'at 12:34'
 (except for 'now', 'at the moment')
 
-TODO: reported speech (but not sure what the output should be)
+=item reported speech
 
-TODO: conditionals (it should be possible to detect 0th/1st/2nd/3rd/mixed
-conditional - at least in unambiguous cases)
+but not sure what the output should be
+
+=item conditionals
+
+it should be possible to detect 0th/1st/2nd/3rd/mixed
+conditional - at least in unambiguous cases
+
+=back
 
 =head1 AUTHOR
 
@@ -460,7 +488,7 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics,
+Copyright © 2012-2013 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it
