@@ -2,8 +2,8 @@ package Treex::Block::W2A::CS::ParseMSTperl;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_dz_wf_3' );
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/cs" );
+has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt' ); #pdt_dz_wf_3 was here, but I cannot find such a model in share
+has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/parser/mst_perl/cs" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '1' );
