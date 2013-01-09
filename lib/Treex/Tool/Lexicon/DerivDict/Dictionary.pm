@@ -106,8 +106,6 @@ sub load {
             }
             $derived_number_to_source_number{$number} = $source_lexeme_number;
         }
-
-        push @{$self->_lexemes}, $new_lexeme;
     }
 
     foreach my $derived_number (keys %derived_number_to_source_number) {
