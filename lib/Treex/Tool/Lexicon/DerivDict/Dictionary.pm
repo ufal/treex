@@ -128,4 +128,43 @@ sub add_derivation {
     $derived_lexeme->set_deriv_type($deriv_type);
 }
 
+sub print_statistics {
+    my ($self) = @_;
+
+    my %pos_cnt;
+    my %pos2pos_cnt;
+    my $relations_cnt;
+    my %derived_lexemes_cnt;
+
+    foreach my $lexeme ($self->get_lexemes) {
+        $pos_cnt{$lexeme->pos}++;
+        if ($lexeme->source_lexeme) {
+            $relations_cnt++;
+            $pos2pos_cnt{$lexeme->source_lexeme->pos."2".$lexeme->pos}++
+        }
+
+        $derived_lexemes_cnt{scalar($lexeme->get_derived_lexemes)}++;
+    }
+
+    print "Number of lexemes: ".scalar(@{$self->_lexemes})."\n";
+    print "Number of lexemes by part of speech:\n";
+    foreach my $pos (sort {$pos_cnt{$b}<=>$pos_cnt{$a}} keys %pos_cnt) {
+        print "    $pos $pos_cnt{$pos}\n";
+    }
+
+    print"Number of derivative relations:\n";
+    print "Number of relations by POS-to-POS:\n";
+    foreach my $pos2pos (sort {$pos2pos_cnt{$b}<=>$pos2pos_cnt{$a}} keys %pos2pos_cnt) {
+        print "    $pos2pos $pos2pos_cnt{$pos2pos}\n";
+    }
+
+    print "Number of lexemes derived from a lexeme:\n";
+    foreach my $derived (sort {$derived_lexemes_cnt{$b}<=>$derived_lexemes_cnt{$a}} keys %derived_lexemes_cnt) {
+        print "    $derived $derived_lexemes_cnt{$derived}\n";
+    }
+
+}
+
+
+
 1;
