@@ -13,6 +13,13 @@ use_ok 'Treex::Tool::Lexicon::DerivDict::Dictionary';
 
 my $dict = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
 
+my $lexeme0 = $dict->create_lexeme({
+    lemma  => "prvnislovo",
+    mlemma => "prvnislovo",
+    pos => 'N',
+});
+
+
 my $lexeme1 = $dict->create_lexeme({
     lemma  => "ucho",
     mlemma => "ucho",
@@ -51,6 +58,7 @@ $dict->save($test_file);
 
 my $dict2 = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
 $dict2->load($test_file);
+#$dict2->save($test_file."bak");
 
 my ($lexeme1_loaded) = $dict2->get_lexemes_by_lemma('ucho');
 is(scalar($lexeme1_loaded->get_derived_lexemes), 2, "dictionary correctly stored and loaded");

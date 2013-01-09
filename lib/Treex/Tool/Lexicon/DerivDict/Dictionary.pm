@@ -100,7 +100,7 @@ sub load {
         chomp;
         my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type) = split;
         my $new_lexeme = $self->create_lexeme({lemma => $lemma, mlemma=>$mlemma, pos=>$pos});
-        if ($source_lexeme_number) {
+        if ($source_lexeme_number ne "") {
             if ($deriv_type) {
                 $new_lexeme->set_deriv_type($deriv_type);
             }
@@ -109,8 +109,8 @@ sub load {
     }
 
     foreach my $derived_number (keys %derived_number_to_source_number) {
-        my $source_lexeme =  $self->_lexemes->[$derived_number];
-        my $derived_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
+        my $derived_lexeme =  $self->_lexemes->[$derived_number];
+        my $source_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
         $derived_lexeme->set_source_lexeme($source_lexeme);
     }
 
