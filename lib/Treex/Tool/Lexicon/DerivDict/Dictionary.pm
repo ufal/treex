@@ -51,6 +51,11 @@ sub create_lexeme {
     return $new_lexeme;
 }
 
+sub get_lexemes_by_lemma {
+    my ( $self, $lemma ) = @_;
+    return @{$self->_lemma2lexemes->{$lemma} || []};
+}
+
 sub save {
     my ( $self, $filename ) = @_;
     $self->_set_lexemes( [ sort {$a->lemma cmp $b->lemma} $self->get_lexemes ] );

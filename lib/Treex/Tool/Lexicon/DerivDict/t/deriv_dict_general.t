@@ -44,6 +44,8 @@ is(scalar($lexeme1->get_derived_lexemes), 2, "derived lexemes correctly linked")
 
 is($lexeme3->source_lexeme, $lexeme1, "source lexeme correctly linked");
 
+is_deeply([$lexeme1], [$dict->get_lexemes_by_lemma('ucho')], 'lexemes correctly indexed by lemmas');
+
 my $test_file = 'testdict.tsv';
 $dict->save($test_file);
 
