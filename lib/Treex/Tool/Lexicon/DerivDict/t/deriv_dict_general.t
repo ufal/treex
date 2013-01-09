@@ -52,7 +52,8 @@ $dict->save($test_file);
 my $dict2 = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
 $dict2->load($test_file);
 
-is(scalar($lexeme1->get_derived_lexemes), 2, "dictionary correctly stored and loaded");
+my ($lexeme1_loaded) = $dict2->get_lexemes_by_lemma('ucho');
+is(scalar($lexeme1_loaded->get_derived_lexemes), 2, "dictionary correctly stored and loaded");
 
 unlink $test_file;
 
