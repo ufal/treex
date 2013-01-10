@@ -298,6 +298,9 @@ sub do_the_change {
             }
         }
 
+        # set the new formeme
+        $node->set_formeme($new_formeme->{formeme});
+
         return $msg;
     }
     else {

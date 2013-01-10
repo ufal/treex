@@ -121,7 +121,7 @@ sub change_anode_attributes {
 # remove only the given node, moving its children under its parent
 # returns log message
 sub remove_anode {
-    my ( $self, $anode ) = @_;
+    my ( $self, $anode, $tnode ) = @_;
 
     if (!defined $anode) {
         log_warn("Cannot remove undefined lex node!");
@@ -135,6 +135,12 @@ sub remove_anode {
     foreach my $child (@children) {
         $child->set_parent($parent);
     }
+
+    if ( !defined $tnode ) {
+        $tnode = $tnode_being_processed;
+    }
+    $tnode->remove_aux_anodes($anode);
+
     $anode->remove();
 
     return $msg;
@@ -142,7 +148,7 @@ sub remove_anode {
 
 # returns log message
 sub add_parent {
-    my ( $self, $parent_info, $anode ) = @_;
+    my ( $self, $parent_info, $anode, $tnode ) = @_;
 
     if (!defined $anode) {
         log_warn("Cannot add parent to undefined lex node!");
@@ -155,6 +161,11 @@ sub add_parent {
     $new_parent->shift_before_subtree(
         $anode, { without_children => 1 }
     );
+
+    if ( !defined $tnode ) {
+        $tnode = $tnode_being_processed;
+    }
+    $tnode->add_aux_anodes($new_parent);
 
     my $msg = 'ADD PARENT to ' . $self->anode_sgn($anode) . ': ' . $self->anode_sgn($new_parent) . ' ';
     return $msg;
