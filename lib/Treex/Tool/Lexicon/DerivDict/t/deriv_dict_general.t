@@ -40,6 +40,15 @@ my $lexeme3 = $dict->create_lexeme({
     pos => 'N',
 });
 
+my $lexeme4 = $dict->create_lexeme({
+    lemma  => "megaušní",
+    mlemma => "megaušní",
+    pos => 'N',
+    source_lexeme => $lexeme2,
+    deriv_type => 'adj2adj'
+});
+
+
 $dict->add_derivation({
     source_lexeme => $lexeme1,
     derived_lexeme => $lexeme3,
@@ -50,6 +59,8 @@ my @derived_lexemes = $lexeme1->get_derived_lexemes;
 is(scalar($lexeme1->get_derived_lexemes), 2, "derived lexemes correctly linked");
 
 is($lexeme3->source_lexeme, $lexeme1, "source lexeme correctly linked");
+
+is($lexeme4->get_root_lexeme, $lexeme1, "correct climbing towards the beginning of the derivation chain");
 
 is_deeply([$lexeme1], [$dict->get_lexemes_by_lemma('ucho')], 'lexemes correctly indexed by lemmas');
 

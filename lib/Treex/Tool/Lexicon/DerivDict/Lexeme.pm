@@ -65,4 +65,13 @@ sub get_derived_lexemes {
 
 }
 
+sub get_root_lexeme {
+    my ( $self ) = shift;
+    my $root_lexeme = $self;
+    while ( $root_lexeme->source_lexeme ) {
+        $root_lexeme = $root_lexeme->source_lexeme;
+    }
+    return $root_lexeme;
+}
+
 1;
