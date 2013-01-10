@@ -146,25 +146,59 @@ sub print_statistics {
         $derived_lexemes_cnt{scalar($lexeme->get_derived_lexemes)}++;
     }
 
-    print "Number of lexemes: ".scalar(@{$self->_lexemes})."\n";
-    print "Number of lexemes by part of speech:\n";
+    print "LEXEMES\n";
+    print "  Number of lexemes: ".scalar(@{$self->_lexemes})."\n";
+    print "  Number of lexemes by part of speech:\n";
     foreach my $pos (sort {$pos_cnt{$b}<=>$pos_cnt{$a}} keys %pos_cnt) {
         print "    $pos $pos_cnt{$pos}\n";
     }
 
-    print"Number of derivative relations:\n";
-    print "Number of relations by POS-to-POS:\n";
+    print "\nDERIVATIVE RELATIONS BETWEEN LEXEMES\n";
+    print "  Total number of derivative relations: $relations_cnt\n";
+    print "  Types of derivative relations (POS-to-POS):\n";
     foreach my $pos2pos (sort {$pos2pos_cnt{$b}<=>$pos2pos_cnt{$a}} keys %pos2pos_cnt) {
         print "    $pos2pos $pos2pos_cnt{$pos2pos}\n";
     }
 
-    print "Number of lexemes derived from a lexeme:\n";
+    print "  Number of lexemes derived from a lexeme:\n";
     foreach my $derived (sort {$derived_lexemes_cnt{$b}<=>$derived_lexemes_cnt{$a}} keys %derived_lexemes_cnt) {
         print "    $derived $derived_lexemes_cnt{$derived}\n";
     }
 
+    print "\nDERIVATIONAL CLUSTERS\n";
+
+    my %signature_cnt;
+    my %touched;
+    my $i;
+
+    foreach my $lexeme ($self->get_lexemes) {
+        if (not $touched{$lexeme}) {
+            my $root = $lexeme->get_root_lexeme;
+            my $signature = $self->_get_subtree_pos_signature($root,\%touched);
+            $signature_cnt{$signature}++;
+        }
+    }
+
+    print "Types of derivational clusters:\n";
+    my @signatures = sort {$signature_cnt{$b}<=>$signature_cnt{$a}} keys %signature_cnt;
+    foreach my $signature (@signatures) {
+        print "    $signature_cnt{$signature} $signature\n";
+    }
+
 }
 
+sub _get_subtree_pos_signature {
+    my ($self, $lexeme, $touched_rf) = @_;
+    $touched_rf->{$lexeme} = 1;
 
+    my $signature = $lexeme->pos;
+
+    my @derived_lexemes = $lexeme->get_derived_lexemes;
+    if (grep {not $touched_rf->{$_}} @derived_lexemes) { # prevent cycles
+        my $child_signatures = join ',', sort map {$self->_get_subtree_pos_signature($_,$touched_rf)} @derived_lexemes;
+        $signature .="->($child_signatures)"
+    }
+    return $signature;
+}
 
 1;
