@@ -10,6 +10,14 @@ has quotes => (
     documentation => 'mark quotation marks as auxiliary?',
 );
 
+has expletives => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'mark expletives (e.g. "v *tom*, že") as auxiliary?',
+);
+
+
 override tnode_although_aux => sub {
     my ( $self, $node ) = @_;
 
@@ -106,7 +114,7 @@ override is_parent_aux_to_me => sub {
     
     # collapse expletive 'to' above the conjunction 'že'/'aby'
     my $parent = $node->get_parent();   
-    return 1 if ($node->form =~ /^(že|aby)$/ and $parent->lemma eq 'ten' and $parent->tag =~ /^PD[ZNH]S.*/);
+    return 1 if $self->expletives && $node->form =~ /^(že|aby)$/ && $parent->lemma eq 'ten' && $parent->tag =~ /^PD[ZNH]S.*/;
     return 0;
 };
 
