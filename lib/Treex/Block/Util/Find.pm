@@ -10,6 +10,21 @@ has on_error => (
     documentation => 'what to do on errors in the code for eval',
 );
 
+has expand_code => (
+    is=> 'ro',
+    isa => 'Bool',
+    default => 1,
+    documentation => 'Should "$." be expanded to "$this->" in all eval codes?',
+);
+
+has max_nodes_per_tree => (
+    is=> 'ro',
+    isa => 'Int',
+    default => 0,
+    documentation => 'Print at most N trees for each tree. Default 0 means unlimited.',
+);
+
+
 ## no critic (ProhibitStringyEval) This block needs string evals
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -22,16 +37,26 @@ sub process_zone {
     foreach my $layer (qw(a t n p)) {
         next if !$zone->has_tree($layer);
         my $tree = $zone->get_tree($layer);
+        my $this = $tree;
         if ( my $code = $self->_args->{"${layer}tree"} ) {
+            $code =~ s/\$\./\$this->/g if $self->expand_code;
             if ( eval "my \$${layer}tree = \$tree; $code" ) {
                 say $tree->get_address();
             }
             $self->_check_errors($code);
         }
         if ( my $code = $self->_args->{"${layer}node"} ) {
+            my $nodes_found = 0;
+            $code =~ s/\$\./\$this->/g if $self->expand_code;
+            NODE:
             foreach my $node ( $tree->get_descendants() ) {
+                $this = $node;
                 if ( eval "my \$${layer}node = \$node; $code" ) {
-                    say $node->get_address();
+                    say $node->get_address();                    
+                    if ($self->max_nodes_per_tree){
+                        $nodes_found++;
+                        last NODE if $nodes_found >= $self->max_nodes_per_tree;
+                    }
                 }
                 $self->_check_errors($code);
             }
@@ -60,15 +85,23 @@ Treex::Block::Util::Find - Finding nodes based on criteria specified by paramete
 =head1 SYNOPSIS
 
   # on the command line
-  treex Util::Find anode='$anode->lemma eq "dog"' -- *.treex
-  treex Util::Find language=en tnode='$tnode->gram_gender eq "fem"' -- *.treex
+  treex Util::Find anode='$anode->lemma eq "dog"' -- *.treex.gz
+  treex Util::Find language=en tnode='$tnode->gram_gender eq "fem"' -- *.treex.gz
 
+  # The same two commands even shorter
+  treex Util::Find anode='$.lemma eq "dog"' -- *.treex.gz
+  treex -Len Util::Find tnode='$.gram_gender eq "fem"' -- *.treex.gz
+
+  # View a-trees with at least one coordination in ttred
+  treex Util::Find anode='$.is_member' max_nodes_per_tree=1 -- *.treex.gz | ttred -l-
 
 =head1 DESCRIPTION
 
 The criteria specified in [atnp](node|tree) is an arbitrary Perl code.
 If the code evaluates to a true value, the address of the node is printed
 (in a format suitable for piping into C<ttred>).
+
+You can use "$." instead of "$this->" where $this is the current tree/node.
 
 =head1 AUTHOR
 
