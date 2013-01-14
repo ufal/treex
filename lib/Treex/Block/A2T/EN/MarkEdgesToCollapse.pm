@@ -13,6 +13,9 @@ has quotes => (
 override tnode_although_aux => sub {
     my ( $self, $node ) = @_;
 
+    # AuxY and AuxZ are usually used for rhematizers (which should have their own t-nodes).
+    return 1 if $node->afun =~ /^Aux[YZ]/;
+
     # AuxG = graphic symbols (dot not serving as terminal punct, colon etc.)
     # These are quite hard to translate unless left as t-nodes.
     # TODO: this leads to "Mr." being translated as "pan."
