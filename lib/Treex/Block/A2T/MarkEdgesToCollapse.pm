@@ -60,20 +60,16 @@ sub process_atree {
 sub is_aux_to_parent {
     my ( $self, $node ) = @_;
 
-    # Overriden classes may want e.g. quotation marks to be represented
+    # Rhematizers (Aux[YZ]) should have their own t-nodes.
+    # Also, overriden classes may want e.g. quotation marks to be represented
     # by a t-node although the a-node has afun=AuxG.
     return 0 if $self->tnode_although_aux($node);
 
-    # Auxiliary nodes with no (lex) children must collapse to parent.
-    # Note that even Aux[CP] may have no children in multiword preps/conjs.
-    if ( $node->afun =~ /^Aux/ ) {
-        my @children = $node->get_children( { ordered => 1 } );
-        return 1 if !@children;
-
-        # If there is no child (marked by is_parent_aux_to_me) to which $node
-        # could collapse, let's collapse it to parent anyway.
-        return 1 if none { $_->wild->{lex_adepts} } @children;
-    }
+    # Auxiliary nodes should collapse either to parent or to a child.
+    # The latter case means that $node is already marked as auxiliary
+    # (by is_parent_aux_to_me called on some of its children).
+    # So all remaining aux nodes will be marked to collapse to parent.
+    return 1 if !$node->is_auxiliary && $node->afun =~ /^Aux/;
 
     return undef;
 }
