@@ -20,7 +20,7 @@ sub process_tnode {
 
     my $a_node = $t_node->get_lex_anode();
 
-    my $first_subconj_node;
+    my ($first_subconj_node, $prev_subconj_node);
 
     foreach my $subconj_form (@subconj_forms) {
 
@@ -44,6 +44,8 @@ sub process_tnode {
             $subconj_node->shift_before_subtree($a_node);
             $a_node->set_parent($subconj_node);
             $first_subconj_node = $subconj_node;
+            $prev_subconj_node = $subconj_node;
+
             # move the is_member attribute to the conjunction
             $subconj_node->set_is_member( $a_node->is_member ); 
             $a_node->set_is_member();
@@ -51,7 +53,8 @@ sub process_tnode {
         # hang all other parts of a compound subconj under the first part
         else {
             $subconj_node->set_parent($first_subconj_node);
-            $subconj_node->shift_after_node($first_subconj_node);
+            $subconj_node->shift_after_node($prev_subconj_node);
+            $prev_subconj_node = $subconj_node;
         }
 
         $t_node->add_aux_anodes($subconj_node);
