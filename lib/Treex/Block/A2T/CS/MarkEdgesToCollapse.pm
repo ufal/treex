@@ -27,7 +27,7 @@ override tnode_although_aux => sub {
     return 1 if $node->afun eq 'AuxG' && $node->form !~ /^[()]$/;
 
     # The current translation expects quotes as self-standing t-nodes.
-    return 1 if !$self->quotes && $node->tag =~ /^(''|``|[„“"])$/;
+    return 1 if !$self->quotes && $node->form =~ /^(''|``|[„“"])$/;
     return 0;
 };
 
