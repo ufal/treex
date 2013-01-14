@@ -60,8 +60,8 @@ Treex::Block::Util::Find - Finding nodes based on criteria specified by paramete
 =head1 SYNOPSIS
 
   # on the command line
-  treex Util::Eval anode='$anode->lemma eq "dog"' -- *.treex
-  treex Util::Eval language=en tnode='$tnode->gram_gender eq "fem"' -- *.treex
+  treex Util::Find anode='$anode->lemma eq "dog"' -- *.treex
+  treex Util::Find language=en tnode='$tnode->gram_gender eq "fem"' -- *.treex
 
 
 =head1 DESCRIPTION
