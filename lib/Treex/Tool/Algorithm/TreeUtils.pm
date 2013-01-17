@@ -60,6 +60,39 @@ sub find_minimal_common_treelet{
 
 __END__
 
+sub find_closest_common_ancestor{
+    my ($self, $nodeA, $nodeB) = @_;
+    my %governingA = ($nodeA => 1);
+    while (!$nodeA->is_root){
+        $nodeA = $nodeA->get_parent();
+        $governingA{$nodeA} = 1;
+    }
+    while(1){
+        return $nodeB if $governingA{$nodeB};
+        $nodeB = $nodeB->get_parent();
+    }
+    return; #unreachable code
+}
+
+sub OLDfind_closest_common_ancestor{
+    my ($self, $nodeA, $nodeB) = @_;
+    my @lineA = ($nodeA)
+    my @lineB = ($nodeB);
+    while (1){
+        return $nodeA if any {$nodeA == $_} @lineB;
+        return $nodeB if any {$nodeB == $_} @lineA;
+        if (!$nodeA->is_root){
+            $nodeA = $nodeA->get_parent();
+            push @lineA, $nodeA;
+        }
+        if (!$nodeB->is_root){
+            $nodeB = $nodeB->get_parent();
+            push @lineB, $nodeB;
+        }
+    }
+    return; #unreachable code
+}
+
 =head1 NAME
 
 Treex::Tool::Algorithm::TreeUtils - algorithms for trees
