@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+has 'skip_empty' => (is => 'ro', isa => 'Bool');
+
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
@@ -10,6 +12,7 @@ sub next_document {
 
     my $document = $self->new_document();
     foreach my $sentence ( split /\n/, $text ) {
+        next if ($sentence eq '' and $self->skip_empty);
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone( $self->language, $self->selector );
         $zone->set_sentence($sentence);
@@ -39,6 +42,10 @@ L<document|Treex::Core::Document>.
 =item from
 
 space or comma separated list of filenames
+
+=item skip_empty
+
+If set to 1, ignore empty lines (don't create empty sentences). 
 
 =back
 
