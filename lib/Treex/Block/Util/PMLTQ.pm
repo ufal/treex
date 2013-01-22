@@ -81,6 +81,12 @@ If set to C<1>, print only one node address per match, even if the match spans m
 In the default setting (C<0>), multiple nodes from the same match are printed on the same line,
 separated with tab characters.
 
+=item action
+
+This may contain Perl code to be executed on matching nodes instead of printing out their addresses. 
+The nodes of each match are accessible through the @nodes array. If one_per_match is set, 
+the first matching node is accessible through the $node variable.
+
 =back
 
 =head1 AUTHOR
