@@ -12,20 +12,34 @@ has 'query' => ( isa => 'Str', is => 'ro', required => 1 );
 # Print just one address per match
 has 'one_per_match' => ( isa => 'Bool', is => 'ro', default => 0 );
 
+# Evaluate code on matched nodes
+has 'action' => ( isa => 'Str', is => 'ro', default => '' );
+
 sub process_document {
 
     my ( $self, $document ) = @_;
 
     my $evaluator = Treex::Tool::PMLTQ::Query->new( $self->query, { treex_document => $document } );
-    
+    my $code;
+
+    if ( $self->action ne '' ){
+        $code = $self->one_per_match ? 'my $node = $res->[0]; ' : 'my @nodes = @{$res}; ';
+        $code .= $self->action . '; 1;';
+    }
+
     while ( my $res = $evaluator->find_next_match() ) {
 
-        if ( $self->one_per_match ){
-            print $res->[0]->get_address(), "\n";
+        if ( $self->action eq '' ) {
+            if ( $self->one_per_match ) {
+                print $res->[0]->get_address(), "\n";
+            }
+            else {
+                print join "\t", map { $_->get_address(); } @{$res};
+                print "\n";
+            }
         }
         else {
-            print join "\t", map { $_->get_address(); } @{$res};
-            print "\n";
+            eval($code) or log_fatal "Eval error: $@";
         }
     }
 }
