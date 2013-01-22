@@ -130,7 +130,7 @@ sub create_instance {
         push @instance, @{$self->create_phrase_cluster_instance($tnode, $weights)};
     }
     if (defined $self->filter_config) {
-        @instance = grep {defined $_} (map {$self->_filter->filter_feature($_)} @instance);
+        @instance = $self->_filter->filter_features(\@instance, $tnode->t_lemma);
     }
     return \@instance;
 }
@@ -163,7 +163,7 @@ sub _get_context_nodes {
             add_self => $self->add_self,
         }
     );
-    @nodes = grep {$self->_content_word_filter->is_candidate($_)} @nodes;
+    @nodes = grep {($_ == $node) || $self->_content_word_filter->is_candidate($_)} @nodes;
     return \@nodes;
 }
 
@@ -216,23 +216,29 @@ sub _extract_lemmas {
     my $tnode_sentpos = $tnode->get_bundle->get_position();
     my $tnode_wordpos = $tnode->wild->{doc_ord};
 
+    my ($tnode_ord) = grep {$nodes->[$_] == $tnode} (0 .. scalar @$nodes - 1);
+    #print STDERR "ORD: $tnode_ord\n";
+    my $i = 0;
+
     my %lemmas = map {
         my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
         my $word_dist;
 
         # TODO why is wild->{doc_ord} undefined?
-        {
-            no warnings 'uninitialized';
-            $word_dist = $_->wild->{doc_ord} - $tnode_wordpos;
-        }
+        #{
+        #   no warnings 'uninitialized';
+        $word_dist = $_->wild->{doc_ord} - $tnode_wordpos;
+        #}
 
+        my $n_dist = $i - $tnode_ord;
+        $i++;
         my $lemma = $_->t_lemma;
         $lemma =~ s/ /_/g;
         $lemma =~ s/\t/__/g;
         $lemma =~ s/##/__/g;
-        my $key = sprintf "bow_s%d_w%d=%s", $sent_dist, $word_dist, lc($lemma); 
+        my $key = sprintf "bow_s%d_w%d_n%d=%s", $sent_dist, $word_dist, $n_dist, lc($lemma); 
         $key => 1
-    } @$nodes;
+    } grep {$_ != $tnode} @$nodes;
     
     return \%lemmas;
     #return sort keys %lemmas;
