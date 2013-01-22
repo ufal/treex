@@ -11,7 +11,7 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/^(.*)$/ $1 /;
 
 	# separate "clitics"
-	# "um", "TAn"
+	# "um", "TAn" including single letter clitics "E" and "O"
 	my $clitics = qr{\N{U+0BC1}ம்|தான்};
 	$sentence =~ s/(\S+)($clitics)\s+/$1 $2 /g;
 		
@@ -23,7 +23,13 @@ override 'tokenize_sentence' => sub {
 	# separate "enRu"
 	my $enru = qr{\N{U+0BC6}(ன்றார்கள்|ன்றீர்கள்|ன்றால்|ன்றேன்|ன்றாய்|
 		ன்றீர்|ன்றான்|ன்றாள்|ன்றது|ன்றன|ன்று|ன்ற)};
-	$sentence =~ s/(\S+)($enru)/$1 $2/g;	
+	$sentence =~ s/(\S+)($enru)/$1 $2/g;
+	
+	# separate "koL - koLLum, koNta etc"
+	
+	# separate "patu"
+	
+		
 	
 	
 	# negative word "illai"
@@ -65,6 +71,23 @@ This module specifically targets on different word combinations that can be sepa
 The word combinations include B<"noun+postpositions">, B<"...+clitics">, 
 B<"...+auxiliaries">, B<"...+negatives"> etc. The regular expressions process I<UTF-8>
 data directly instead of I<transliterated> text.  
+
+The tokenization adheres to the following guidelines:
+
+=over 4
+
+=item * All functional words (postpositions and clitics) should be separated.
+
+=item * All auxiliaries must be separated. 
+
+=item * When it comes to clitics, try separating only: (தான் - 'TAn' and உம் - 'um'). Caution should be exercised when 
+separating one letter clitics automatically.
+
+=item * Separate ஆக - 'Aka' and ஆன - 'Ana' when they occur as a separate functional words. Do not separate 
+when they occur as suffixes in adjectives (kind of 'ful' in 'wonderful') and adverbs (kind of 'ly' in 'quickly').
+  
+
+=back 
 
 
 =head1 AUTHOR
