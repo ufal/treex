@@ -23,7 +23,7 @@ has '_config' => (
 
 has '_mi_bi' => (
     is => 'ro',
-    isa => 'Maybe[HashRef[ArrayRef]]',
+    isa => 'Maybe[HashRef[HashRef[ArrayRef]]]',
     lazy => 1,
     builder => '_build_mi_bi',
 );
@@ -128,6 +128,8 @@ sub _filter_bow_by_pwmi {
 sub _filter_bow_by_mi_bi {
     my ($self, $feat, $en_lemma, $cs_lemma) = @_;
 
+    return 0 if ($feat !~ /^bow_/);
+
     my $mi_bi = $self->_mi_bi;
     return 0 if (!defined $mi_bi);
     
@@ -136,6 +138,8 @@ sub _filter_bow_by_mi_bi {
     my $feat_clear = $feat;
     $feat_clear =~ s/^bow_[^=]+=(.*)::.*$/$1/;
 
+    return 0 if (!defined $mi_bi->{$en_lemma});
+    return 1 if (!defined $mi_bi->{$en_lemma}{$feat_clear});
     return ($mi_bi->{$en_lemma}{$feat_clear}->[1] <= $mi_bi_ratio);
 }
 
