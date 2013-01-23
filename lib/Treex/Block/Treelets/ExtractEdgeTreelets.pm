@@ -33,6 +33,12 @@ sub process_ttree{
     return if !$root2;
     $aligned{$root1} = $root2;
     $aligned{$root2} = $root1;
+
+    for my $root ($root1, $root2){
+        $root->set_t_lemma('_ROOT');
+        $root->set_formeme('_ROOT');
+    }
+    
     
     # Recursively (top-down DFS) extract all rules.
     my $root = $self->alignment_direction eq 'trg2src' ? $root2 : $root1;
@@ -45,17 +51,14 @@ sub process_ttree{
 sub process_subtree{
     my ($self, $node1) = @_;
     my $node2 = $aligned{$node1};
-    $self->print_rule([$node1], [$node2]) if $node2;
+    $self->extract_node($node1, $node2) if $node2;
 
     foreach my $child1 ($node1->get_children()){
         my $child2 = $aligned{$child1};
         if ($child2){
             my @nodes1 = ($node1, $child1);
             my @nodes2 = ($node2||(), $child2);
-#say "in: ".join(" ,", map {$_->t_lemma//'ROOT'} @nodes2);
             my ($root2, $added_nodes2_rf) = Treex::Tool::Algorithm::TreeUtils::find_minimal_common_treelet(@nodes2);
-#say "root=".($root2->t_lemma//'ROOT');
-#say 'added='.join(",", map {$_->t_lemma//'ROOT'} @$added_nodes2_rf);
             my @added1 = map {$aligned{$_}||()} @$added_nodes2_rf;
 
             # TODO we should extract bigger treelet with @nodes1 = ($node1, $child1, @added1)
@@ -65,7 +68,7 @@ sub process_subtree{
             # In this draft version, let's just forbid source treelets with more than two nodes.
             next if @added1;
             push @nodes2, @$added_nodes2_rf;
-            $self->print_rule(\@nodes1, \@nodes2);
+            $self->extract_edge($node1, $child1, \@nodes2);
         }
         
         $self->process_subtree($child1);
@@ -73,10 +76,42 @@ sub process_subtree{
     return;
 }
 
-sub extract_rule {
-    my ($self, $nodes1_rf, $nodes2_rf) = @_;
-    my @nodes1 = sort {$a->ord <=> $b->ord} @$nodes1_rf;
+sub extract_node {
+    my ($self, $node1, $node2) = @_;
+    print { $self->_file_handle } $node1->t_lemma.'|'.$node1->formeme."\t".$node2->t_lemma.'|'.$node2->formeme."\n";
+    print { $self->_file_handle } $node1->t_lemma.'|*'."\t".$node2->t_lemma."|*\n";
+    print { $self->_file_handle } '*|'.$node1->formeme."\t*|".$node2->formeme."\n";
+    return;
+}
+
+sub extract_edge {
+    my ($self, $node1, $child1, $nodes2_rf) = @_;
     my @nodes2 = sort {$a->ord <=> $b->ord} @$nodes2_rf;
+    my $i = 1;
+    my %node2ord = map {$_, $i++} @nodes2;
+    @node2ord{($node1,$child1)} = (1,2);
+    my $trg_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes2;
+    my $alignment = join ' ', map {my $al = $aligned{$_}; $al ? $node2ord{$al}.'-'.$node2ord{$_} : ()} @nodes2;
+    my ($node2,$child2) = map {$aligned{$_}||0} ($node1, $child1);
+
+    for my $n1 ((0,1)){
+        my $str_n1 = $node1->t_lemma;
+        if ($n1) {$str_n1 .= '|' .$node1->formeme;}
+        else { $str_n1 .= '|*';}
+        for my $ch1 ((0,1)){
+            my $str_ch1 = $ch1 ? ($child1->t_lemma) : '*';
+            $str_ch1 .= '|' . $child1->formeme;
+            my $trg_nodes = join ' ', map {
+                my $str;
+                if (!$n1 && $_==$node2){ $str = $_->t_lemma . '|*';}
+                elsif (!$ch1 && $_==$child2){ $str = '*|' . $_->formeme;}
+                else {$str = $_->t_lemma . '|' . $_->formeme;}
+                $str;
+            } @nodes2;
+            print { $self->_file_handle } "$str_n1 $str_ch1\t$trg_nodes\t$trg_deps\t$alignment\n";
+        }
+    }
+    return;
 }
 
 sub print_rule {
@@ -89,20 +124,14 @@ sub print_rule {
     my %node2ord = map {$_, $i++} @nodes1;
     $i = 1;
     $node2ord{$_} = $i++ for @nodes2;
-    my $src_nodes = join ' ', map {$_->t_lemma//'ROOT'} @nodes1;#/
+    my $src_nodes = join ' ', map {$_->t_lemma} @nodes1;
     my $src_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes1;
-    my $trg_nodes = join ' ', map {$_->t_lemma//'ROOT'} @nodes2;#/
+    my $trg_nodes = join ' ', map {$_->t_lemma} @nodes2;
     my $trg_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes2;
     my $alignment = join ' ', map {my $al = $aligned{$_}; $al ? $node2ord{$al}.'-'.$node2ord{$_} : ()} @nodes2;
     print { $self->_file_handle } "$src_nodes\t$src_deps\t$trg_nodes\t$trg_deps\t$alignment\n";
     return;
 }
-
-#sub process_end {
-#    my $rep = "src treelet sizes:\n". join '', map {"$_=".($size1{$_}||0)."\n"} (1..5);
-#    $rep .= "trg treelet sizes:\n". join '', map {"$_=".($size2{$_}||0)."\n"} (1..5);
-#    warn $rep;
-#}
 
 1;
 
@@ -115,6 +144,8 @@ __END__
 Treex::Block::Treelets::ExtractEdgeTreelets - extract translation rules
 
 =head1 DESCRIPTION
+
+extract translation rules where the source side is one node or one edge
 
 =head1 AUTHOR
 
