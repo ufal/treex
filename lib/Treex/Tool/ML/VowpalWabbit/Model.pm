@@ -68,6 +68,12 @@ sub score {
     return $pred->[ $y_idx - 1 ];
 }
 
+sub log_feat_weights {
+    my ($self, $x, $y) = @_;
+    # TODO not implemented
+    return ();
+}
+
 sub all_classes {
     my ($self) = @_;
     return $self->index->all_labels;

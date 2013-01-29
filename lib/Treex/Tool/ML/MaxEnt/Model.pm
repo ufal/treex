@@ -35,17 +35,25 @@ sub _build_y_num {
     return scalar (keys %{$self->model});
 }
 
-sub score {
-    my ($self, $x, $y) = @_;
-
-    # preprocess if $x is hashref
-    $x = [
+# preprocess if $x is hashref
+sub _to_array {
+    my ($x) = @_;
+    
+    return [
         map {
         my $attr = $_;
         ref($x->{$attr}) eq 'ARRAY' ? 
             map { "$attr:$_" } @{$x->{$attr}} : "$_:$x->{$_}" 
         } keys %$x
     ] if ref($x) eq 'HASH';
+    return $x;
+}
+
+sub score {
+    my ($self, $x, $y) = @_;
+
+    $x = _to_array($x);
+
     # calculate score
     
     my $lambda_f = 0;
@@ -56,6 +64,23 @@ sub score {
         }
     }
     return $lambda_f; 
+}
+
+sub log_feat_weights {
+    my ($self, $x, $y) = @_;
+    
+    $x = _to_array($x);
+        
+    my %feat_weights;
+    my $model_for_y = $self->model->{$y};
+    if (defined $model_for_y) {
+        foreach my $feat (@$x) {
+            $feat_weights{$feat} += $model_for_y->{$feat} || 0;
+        }
+    }
+    my @sorted = map {$_ . "=" . $feat_weights{$_}} 
+        (sort {$feat_weights{$b} <=> $feat_weights{$a}} keys %feat_weights);
+    return \@sorted; 
 }
 
 sub all_classes {

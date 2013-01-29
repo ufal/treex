@@ -5,6 +5,8 @@ use Moose::Role;
 requires 'score';
 requires 'all_classes';
 
+requires 'log_feat_weights';
+
 sub predict {
     my ($self, $instance) = @_;
 
