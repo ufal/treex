@@ -5,10 +5,21 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
+
     my $clause_number = $t_node->clause_number;
+    my $parent_clause_number = $t_node->get_parent->clause_number // $clause_number;
+
     if ( defined $clause_number ) {
         foreach my $a_node ( $t_node->get_anodes ) {
-            $a_node->set_clause_number($clause_number);
+
+            # check if AddSubconjs has marked this node as an expletive
+            # to be moved to the parent clause.
+            if ( $a_node->wild->{upper_clause} ) {
+                $a_node->set_clause_number($parent_clause_number);
+            }
+            else {
+                $a_node->set_clause_number($clause_number);
+            }
         }
     }
     return;
