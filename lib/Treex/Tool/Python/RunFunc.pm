@@ -1,0 +1,61 @@
+package Treex::Tool::Python::RunFunc;
+
+use Moose;
+use Treex::Core::Common;
+use ProcessUtils;
+use IO::Handle;
+
+
+# Python slave application controls (bipipe handles, application PID)
+has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
+has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
+has '_python_pid'     => ( is => 'rw', isa => 'Int' );
+
+
+# Launch the slave Python process
+sub BUILD {
+
+    my ( $self, $params ) = @_;
+      
+    my $file = __FILE__;
+    $file =~ s/\/[^\/]*$//;
+    $file .= '/execute.py';
+            
+    log_info('Running Python slave process');
+    $SIG{PIPE} = 'IGNORE';    # don't die if Python gets killed       
+    my ( $read, $write, $pid ) = ProcessUtils::bipipe('python ' . $file);
+
+    $read->autoflush();
+    $write->autoflush();    
+    $self->_set_read_handle($read);
+    $self->_set_write_handle($write);
+    $self->_set_python_pid($pid);
+
+    my $res = $self->command("print 'Hello'");
+    log_info('Python slave process started: ' . $res);
+    return;
+}
+
+
+# Run Python commands and capture their output
+sub command {
+    
+    my ( $self, $cmd ) = @_;
+    my $output = '';
+
+    print { $self->_write_handle } $cmd . "\nprint '<<<<END>>>>'\n";
+    $self->_write_handle->flush();
+    
+    my $fh = $self->_read_handle;
+    while (my $line = <$fh>) {
+        $line =~ s/\r?\n$/\n/;
+        last if ($line eq "<<<<END>>>>\n");
+        $output .= $line;
+    }
+
+    $output =~ s/\n$// if ($output =~ /^[^\n]*\n$/);
+    return $output;
+}
+
+
+1;
