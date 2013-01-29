@@ -24,6 +24,8 @@ override '_do_process_document' => sub {
     utf8::decode($yaml_text);
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
     $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg;    # quote numbers with underscores
+    $yaml_text =~ s{: =$}{: '='}mg;                                           # enquote equal signs or PyYAML won't read them
+    $yaml_text =~ s{: ''$}{: ""}mg;                                           # always put empty strings in double quotes
     print { $self->_file_handle } $yaml_text;
     return;
 };
@@ -77,7 +79,9 @@ Readonly my $ATTR => {
 sub serialize_tree {
     my ( $self, $layer, $root ) = @_;
     my %data;
-
+    # ordered for A, T nodes, otherwise unordered
+    my $args = $layer =~ /[at]/ ? { ordered => 1 } : {};
+    
     # root attributes
     foreach my $attr ( @{ $ATTR->{$layer} } ) {
         my $value = $root->get_attr($attr);
@@ -87,7 +91,7 @@ sub serialize_tree {
     # all descendants
     $data{nodes} = [
         map { $self->serialize_node( $layer, $_ ) }
-            $root->get_descendants( { ordered => 1 } )
+            $root->get_descendants( $args )
     ];
 
     return \%data;
