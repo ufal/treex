@@ -1,6 +1,8 @@
-package Treex::Block::Write::LayerAttributes::LemmaFormDiff;
+package Treex::Block::Write::LayerAttributes::LemmaFormDist;
+
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Python::RunFunc;
 
 use String::Diff;
 
@@ -23,10 +25,18 @@ has 'split_parts' => (
     default => 'no'
 );
 
+has '_cache' => (
+    is => 'rw',
+    default => sub { {} },
+);
+
+has '_dist' => (
+    is      => 'rw',
+    builder => '_build_dist',
+);
+
 Readonly my $ESCAPE_SRC => [ '[',     ']',     '{',     '}' ];
 Readonly my $ESCAPE_TGT => [ '-LBR-', '-RBR-', '-LBC-', '-RBC-' ];
-
-Readonly my $IRREGULAR_LEMMAS => 'tentýž|všechen|on';
 
 # Build default return values' suffixes for different settings of
 # output_diff and split_parts
@@ -47,6 +57,34 @@ sub _build_return_values_names {
         push @retvals, '_diff';
     }
     return \@retvals;
+}
+
+sub _build_dist {
+    my ($self) = @_;
+
+    my $dir = __FILE__;
+    $dir =~ s/\/[^\/]*$//;
+
+    my $python = Treex::Tool::Python::RunFunc->new();
+    $python->command(
+        "import os\n" .
+            "os.chdir('$dir')\n" .
+            "sys.path.append('.')\n" .
+            "import string_distances\n" .
+            "match = string_distances.match_cstest\n" .
+            "gap = string_distances.gap_cstest\n"
+    );
+    return $python;
+}
+
+sub _get_diff {
+    my ( $self, $s, $t ) = @_;
+    return $self->_cache->{ $s . ' ' . $t } if ( defined( $self->_cache->{ $s . ' ' . $t } ) );
+    $s =~ s/'/\\'/g;
+    $t =~ s/'/\\'/g;
+    my $diff = $self->_dist->command("print string_distances.merged_diff('$s','$t', match, gap)\n");
+    $self->_cache->{ $s . ' ' . $t } = $diff;
+    return $diff;
 }
 
 # Escape brackets before diffing
@@ -80,66 +118,7 @@ sub modify_single {
     $lemma = escape( lc $lemma );
     $form  = escape( lc $form );
 
-    my $diff = String::Diff::diff_merge(
-        $lemma, $form,
-        remove_open  => '`',
-        remove_close => '\'',
-        append_open  => '<',
-        append_close => '>'
-    );
-
-    # fix diff problems
-    # nej-, ne- at the beginning
-    $diff =~ s/^<n>e<([^>]?)e>/<ne$1>e/;      # neexistuje, nejefektivnější
-    $diff =~ s/^<ne>j<([^>]*)j>/<nej$1>j/;    # nejjistější, nejnejistější
-    $diff =~ s/^n<(ej?)n>/<n$1>n/;            # nenáročný
-    $diff =~ s/^ne<(j?)ne>/<ne$1>ne/;         # nejnestoudnější, nenechat
-
-    # 'o', 'ou'
-    $diff =~ s/'<([^>]+)>o`([^']+)'/o$2'<$1o>/;    # vzniklo, vyššího
-    $diff =~ s/(?<=[^']){o}u(?=.)/`u'<ou>/;        # hlouběji
-    $diff =~ s/<([^>]+)>o`ut'$/`out'<$1o>/;        # zapomněl
-
-    # 't' infinitive -> imperative / 2nd pl.
-    $diff =~ s/'<([^>]+)>t</t'<$1t/;                       # víte, máte
-    $diff =~ s/([^'])<([^>]+)>t</$1`t'<$2t/;               # pojedete, zůstanete
-    $diff =~ s/([^'])<([^>]+)>t`([^>]+)'</$1`t$3'<$2t/;    # chcete
-    $diff =~ s/([^'>])`([^>]+)'t</$1`$2t'<t/;              # berte
-
-    # 'í'
-    $diff =~ s/<([^>]+)>í`([^']+)'<([^>]+)>$/`í$2'<$1í$3>/;    # nižšího
-    $diff =~ s/<([^>]+)>í`([^']+)'$/`í$2'<$1í>/;               # mají, nižší
-    $diff =~ s/(?<=[^'])<(ějš)>í$/`í'<ější>/;              # modernější
-    $diff =~ s/`([^']+)'<(ějš)>í$/`$1í'<ější}/;            # pozdější
-    $diff =~ s/(?<=[^'])<ějš>í<(.+)>$/`í'<ější$1>/;        # modernějších, modernějším
-    $diff =~ s/`([^']+)'<ějš>í<(.+)>$/`$1í'<ější$2>/;      # pozdějších
-
-    # infinitive 't'
-    $diff =~ s/<(..)>([aei])`t'$/`$2t'<$1$2>/;                    # musíme, zaměstnána, umístěni
-    $diff =~ s/`(.)'<(...?)>([aei])`t'$/`$1$3t'<$2$3>/;           # odsouzeni, vyhozeni
-    $diff =~ s/`o'u`t'<(.+)>$/`out'<u$1>/;                        # vyplynulo
-
-    # 'h'/'ch'
-    $diff =~ s/<([^>]+)c>h`(.*)'$/`h$2'<$1ch>/;                           # dražších
-    $diff =~ s/`([^']+)'<([^>]+)>h`([^']+)'<([^>]+)>$/`$1h$3'<$2h$4>/;    # delšího
-    $diff =~ s/<([^>]+)>h`([^']+)'<([^>]+)>$/`h$2'<$1h$3>/;               # dražšího
-
-    # 'um', 'em' -> '-em'
-    $diff =~ s/<m>em$/`e'm<em>/;                                          # pojmem
-    $diff =~ s/`u'<e>m$/`um'<em>/;                                        # kritériem
-
-    # kdokoliv - komukoliv/kohokoliv
-    $diff =~ s/k`d'o<(mu|ho)>(?=.+)/k`do'<o$1>/;
-
-    # švec - ševce, vejce - vajec, žábry - žaber
-    $diff =~ s/(?<=[^>'])`v'e<v>(?<=[^`<])/`ve'<ev>/;
-    $diff =~ s/(?<=[^>'])`c'e<c>$/`ce'<ec>/;
-    $diff =~ s/(?<=[^>'])<e>r`y'$/`ry'<er>/;
-
-    #  TODO possibly allow more changes in the middle ?
-    #    if ( $diff =~ m/[^><'`](<[^>]+>|`[^']+'){1,2}[^><'`]+(<[^>]+>|`[^']+'){1,2}[^><'`]/ ) {
-    #        log_warn join " ", ( "PROBLEM: ", $lemma, $form, $diff, "\n" );
-    #    }
+    my $diff = $self->_get_diff( $lemma, $form );
 
     # find the changes in the diff
     my ( $front, $mid, $back ) = ( '', '', '' );
@@ -150,7 +129,7 @@ sub modify_single {
     }
 
     # everything changed
-    elsif ( $diff =~ m/^`[^']*'/ || $lemma =~ /^($IRREGULAR_LEMMAS)$/ ) {
+    elsif ( $diff =~ m/^`[^']*'/ ) {
         $back = '*' . $form;
     }
 
@@ -208,20 +187,12 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Write::LayerAttributes::LemmaFormDiff
+Treex::Block::Write::LayerAttributes::LemmaFormDist
 
 =head1 SYNOPSIS
 
-    my $modif = Treex::Block::Write::LayerAttributes::LemmaFormDiff->new();
-    
-    print $modif->modify_all('starosta', 'starosty');  # '>1y'
-    print $modif->modify_all('stůl', 'stolu');  # '>u,ů-o'    
-    print $modif->modify_all('stolek', 'stolku'); # '>u,e-'
-    print $modif->modify_all('matka', 'matek'); # '>1,-e'    
-    print $modif->modify_all('hezký', 'nejhezčí'); # '<nej,>2čí'
-    print $modif->modify_all('být', 'je'); # '*je'
-    print $modif->modify_all('slovo', 'slovo'); # ''
-    
+    my $modif = Treex::Block::Write::LayerAttributes::LemmaFormDist->new();
+        
 
 =head1 DESCRIPTION
 
@@ -237,7 +208,6 @@ TODO
 Some words had to be hard-set as irregular.
 
 Only "legal" prefixes should be: nejne, ne, nej, po, pů
-
 
 =head1 AUTHOR
 
