@@ -775,6 +775,7 @@
                <member name="backward_logprob"> <cdata format="any"/> </member> <!-- if logprob is (cs|en) then backward means (en|cs). -->
                <member name="origin"> <cdata format="any"/> </member>  <!-- Changed from source, because we use term source in source/head.rf -->
                <member name="pos"> <cdata format="any"/> </member>
+               <member name="feat_weights"> <list ordered="0"> <cdata format="any"/> </list> </member>
              </structure>
            </list>
          </member>

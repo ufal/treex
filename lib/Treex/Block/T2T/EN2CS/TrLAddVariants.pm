@@ -48,6 +48,13 @@ has maxent_weight => (
     documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
 );
 
+#has vw_weight => (
+#    is            => 'ro',
+#    isa           => 'Num',
+#    default       => 0,
+#    documentation => 'Weight of the VW model (the model won\'t be loaded if the weight is zero).'
+#);
+
 has static_weight => (
     is            => 'ro',
     isa           => 'Num',
@@ -60,6 +67,11 @@ has maxent_model => (
     isa     => 'Str',
     default => 'tlemma_czeng12.maxent.10000.100.2_1.pls.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
 );
+
+#has vw_model => (
+#    is      => 'ro',
+#    isa     => 'Str',
+#);
 
 has static_model => (
     is      => 'ro',
@@ -98,8 +110,65 @@ has domain => (
 #has '_trigger_feature_extractor' => (
 #    is => 'ro',
 #    isa => 'Treex::Tool::Triggers::Features',
-#    default => sub { return Treex::Tool::Triggers::Features->new({prev_sents_num => 2}) },
+#    lazy => 1, 
+#    builder => '_build_feature_extractor', 
 #);
+
+#has 'feature_filter_config' => (
+#    is => 'ro',
+#    isa => 'Str',
+#    lazy => 1,
+#    builder => '_build_feature_filter_config',
+#);
+
+#has 'feature_filter_config_path' => (
+#    is => 'ro',
+#    isa => 'Str',
+#    required => 1,
+#    default => '/home/mnovak/projects/mt_trigger_models/config',
+#);
+
+#sub BUILD {
+#    my ($self) = @_;
+#    $self->feature_filter_config;
+#}
+
+#sub _build_feature_extractor {
+#    my ($self) = @_;
+#    return Treex::Tool::Triggers::Features->new({
+#        prev_sents_num => 2,
+#        preceding_only => 1,
+#        add_self => 1,
+#        filter_config => $self->feature_filter_config,
+#    });
+#}
+
+#sub _build_feature_filter_config {
+#    my ($self) = @_;
+#
+#    my $model_path = "";
+#    if ($self->maxent_weight) {
+#        $model_path = $self->maxent_model;
+#    }
+#    elsif ($self->vw_weight) {
+#        $model_path = $self->vw_model;
+#    }
+#
+#    # derive the feature filter config file from the model file
+#    my $conf_name = $model_path;
+#    $conf_name =~ s/^.*model\.[^.]*?\.(.*)(\.[^.]*?){3}$/$1/;
+#    if ($conf_name eq $model_path) {
+#        $conf_name = 'transl.conf';
+#    }
+#    else {
+#        $conf_name .= '.conf';
+#    }
+#    
+#    my $conf_path = $self->feature_filter_config_path . "/" . $conf_name;
+#
+#    log_info "Feature filter confi path: $conf_path";
+#    return $conf_path;
+#}
 
 # TODO: change to instance attributes, but share the big model using Resources/Services
 my ( $combined_model, $max_variants );
@@ -119,6 +188,10 @@ sub process_start {
         my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
         push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
+#    elsif ( $self->vw_weight > 0 ) {
+#        my $vw_model = $self->load_model( TranslationModel::VowpalWabbit::Model->new(), $self->vw_model, $use_memcached );
+#        push( @interpolated_sequence, { model => $vw_model, weight => $self->vw_weight } );
+#    }
     my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     my $humanlex_model = $self->load_model( TranslationModel::Static::Model->new(), $self->human_model,  0 );
 
@@ -166,6 +239,9 @@ sub get_required_share_files {
     if ( $self->maxent_weight > 0 ) {
         push @files, $self->model_dir . '/' . $self->maxent_model;
     }
+#    if ( $self->vw_weight > 0 ) {
+#        push @files, $self->model_dir . '/' . $self->vw_model;
+#    }
     push @files, $self->model_dir . '/' . $self->human_model;
     push @files, $self->model_dir . '/' . $self->static_model;
 
@@ -228,10 +304,10 @@ sub process_tnode {
                 $self->get_parent_trg_features( $cs_tnode, 'formeme', 'translation_model/formeme_variants', $self->trg_formemes );
         }
 
-        #my $trig_feats_hash = $self->_trigger_feature_extractor->create_lemma_instance($en_tnode);
+        #my $trig_feats_hash = $self->_trigger_feature_extractor->create_instance($en_tnode, ['bow'], 1);
         #my $esa_feats_hash = $self->_trigger_feature_extractor->create_esa_instance($en_tnode);
         
-        #my $all_feats = [ keys %$trig_feats_hash, @$features_array_rf ];
+        #my $all_feats = [ @$trig_feats_hash, @$features_array_rf ];
         my $all_feats = [ @$features_array_rf ];
 
         my $en_tlemma = $en_tnode->t_lemma;
@@ -284,6 +360,7 @@ sub process_tnode {
                             'pos'     => $2,
                             'origin'  => $_->{source},
                             'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                            'feat_weights' => $_->{feat_weights},
 
                             # 'backward_logprob' => _logprob( $_->{en_given_cs}, ),
                         }
