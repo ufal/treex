@@ -2,7 +2,14 @@
 # coding=utf-8
 
 """
-Execute commands given on STDIN, print their output to STDOUT
+Execute commands given on STDIN, print their output to STDOUT.
+
+Waits for "print '<<<<END>>>>'\n" on a single line to execute the
+commands read from STDIN. If this occurs, the commands are executed
+and their output, including "<<<<END>>>>", is returned immediately.
+
+This is designed to work with the Treex::Tool::Python::RunFunc
+module.
 """
 
 from __future__ import unicode_literals
