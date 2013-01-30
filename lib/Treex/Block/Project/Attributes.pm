@@ -5,8 +5,6 @@ extends 'Treex::Core::Block';
 
 has attributes => ( isa=>'Str', is=>'ro', required=>1, documentation => 'Space or comma separated list of attributes to be copied' );
 has layer => ( isa=>'Treex::Type::Layer', is=>'ro', default=> 'a');
-has source_language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1 );
-has source_selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{} );
 has alignment_type => (isa=>'Str', is=>'ro', default=>'.*', documentation=>'Use only alignments whose type is matching this regex. Default is ".*".');
 has alignment_direction => (
     is=>'ro',
