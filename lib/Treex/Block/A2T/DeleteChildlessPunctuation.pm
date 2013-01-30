@@ -11,12 +11,13 @@ sub process_tnode {
 
     if ( $tnode->t_lemma =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $tnode->t_lemma ne '%' && !$tnode->get_children() ) {
 
-        my $anode = $tnode->get_lex_anode();
+        my @anodes = ( $tnode->get_lex_anode(), $tnode->get_aux_anodes() );
         my ($parent) = $tnode->get_eparents( { or_topological => 1 } );
 
-        if ( $anode && $parent && !$parent->is_root ) {
-            $parent->add_aux_anodes($anode);
+        if ( @anodes && $parent && !$parent->is_root ) {
+            $parent->add_aux_anodes(@anodes);
         }
+        
 
         $tnode->remove();
     }

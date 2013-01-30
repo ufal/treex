@@ -158,9 +158,9 @@ sub _get_prep_nodes {
         my $cand_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $cand->lemma, 1 );
 
         # filter out punctuation, auxiliary / modal verbs and everything that's already contained in the lemma
-        # keep prepositions for verbs if followed by an expletive pronoun   
+        # keep prepositions for verbs if followed by an expletive pronoun
         if ((   $cand->tag !~ /^$pos_filter/
-                || ( $cand->tag =~ /^R/ && @{ $self->aux } > $i + 1 && $self->aux->[ $i + 1 ]->tag =~ /^PD/ )
+                || ( $cand->tag =~ /^R/ && any { $_->tag =~ /^PD/ } @{ $self->aux }[ $i .. $#{ $self->aux } ] )
             )
             and $self->t_lemma !~ /(^|_)\Q$cand_lemma\E(_|$)/
             )
