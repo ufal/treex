@@ -40,7 +40,7 @@ sub save {
     my ($self, $filename) = @_;
     
     my $buffer = $self->freeze();
-    $buffer = Storable::freeze($buffer) or log_fatal $!;
+    $buffer = Storable::nfreeze($buffer) or log_fatal $!;
     write_file( $filename, {binmode => ':raw'},
         Compress::Zlib::memGzip($buffer) )
     or log_fatal $!;
