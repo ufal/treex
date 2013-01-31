@@ -48,6 +48,14 @@ __END__
 
 Treex::Block::Filter::SentenceNumber
 
+=head1 SYNOPSIS
+
+ # Leave only first three bundles in the document
+ Filter::SentenceNumber nums=1,2,3
+ 
+ # Delete the first and the third bundle
+ Filter::SentenceNumber nums=1,3 invert=1
+ 
 =head1 DESCRIPTION
 
 Filters out only specified sentences (useful for creating example files and similar).
