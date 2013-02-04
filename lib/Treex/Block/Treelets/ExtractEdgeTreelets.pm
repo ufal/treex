@@ -11,7 +11,6 @@ has alignment_direction => (
     documentation=>'Default trg2src means that alignment goes *from* <language,selector> tree (which is the target language) to the source tree. src2trg means the opposite direction.',
 );
 
-
 my (%aligned, %size1, %size2);
 
 sub process_ttree{
@@ -38,7 +37,6 @@ sub process_ttree{
         $root->set_t_lemma('_ROOT');
         $root->set_formeme('_ROOT');
     }
-    
     
     # Recursively (top-down DFS) extract all rules.
     my $root = $self->alignment_direction eq 'trg2src' ? $root2 : $root1;
@@ -103,9 +101,9 @@ sub extract_edge {
             $str_ch1 .= '|' . $child1->formeme;
             my $trg_nodes = join ' ', map {
                 my $str;
-                if (!$n1 && $_==$node2){ $str = $_->t_lemma . '|*';}
+                if (!$n1 && $_==$node2){ $str = $self->lemma($_) . '|*';}
                 elsif (!$ch1 && $_==$child2){ $str = '*|' . $_->formeme;}
-                else {$str = $_->t_lemma . '|' . $_->formeme;}
+                else {$str = $self->lemma($_) . '|' . $_->formeme;}
                 $str;
             } @nodes2;
             print { $self->_file_handle } "$str_n1 $str_ch1\t$trg_nodes\t$trg_deps\t$alignment\n";
@@ -114,23 +112,15 @@ sub extract_edge {
     return;
 }
 
-sub print_rule {
-    my ($self, $nodes1_rf, $nodes2_rf) = @_;
-    my @nodes1 = sort {$a->ord <=> $b->ord} @$nodes1_rf;
-    my @nodes2 = sort {$a->ord <=> $b->ord} @$nodes2_rf;
-    $size1{scalar @nodes1}++;
-    $size2{scalar @nodes2}++;
-    my $i = 1;
-    my %node2ord = map {$_, $i++} @nodes1;
-    $i = 1;
-    $node2ord{$_} = $i++ for @nodes2;
-    my $src_nodes = join ' ', map {$_->t_lemma} @nodes1;
-    my $src_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes1;
-    my $trg_nodes = join ' ', map {$_->t_lemma} @nodes2;
-    my $trg_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes2;
-    my $alignment = join ' ', map {my $al = $aligned{$_}; $al ? $node2ord{$al}.'-'.$node2ord{$_} : ()} @nodes2;
-    print { $self->_file_handle } "$src_nodes\t$src_deps\t$trg_nodes\t$trg_deps\t$alignment\n";
-    return;
+# Hack to include coarse-grained PoS tag for Czech lemma.
+# $tnode->get_attr('mlayer_pos') is not filled in CzEng
+sub lemma {
+    my ($self, $tnode) = @_;
+    my $lemma = $tnode->t_lemma;
+    my $anode = $tnode->get_lex_anode or return $lemma;
+    my ($pos) = ( $anode->tag =~ /^(.)/ );
+    return $lemma if !defined $pos;
+    return "$lemma#$pos";
 }
 
 1;
