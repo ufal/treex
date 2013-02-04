@@ -47,12 +47,12 @@ sub train_and_save_svm($$) {
     }
 
     # Train SVM model
-    print("Training SVM model...\n";
+    print "Training SVM model...\n";
     my $svm = new Algorithm::SVM();
     $svm->train(@dataset);
 
     # Save SVM model
-    print"Saving SVM model to file $output\n";
+    print "Saving SVM model to file $output\n";
     $svm->save($output) or die "Could not save model to \"$output\".\n";
 }
 
