@@ -29,9 +29,7 @@ override 'tokenize_sentence' => sub {
 	
 	# separate "patu"
 	
-		
-	
-	
+
 	# negative word "illai"
 	$sentence =~ s/(\S+)(\N{U+0BBF}ல்லை)/$1 $2/g;
 
@@ -46,9 +44,7 @@ override 'tokenize_sentence' => sub {
 நடுவே|பற்றி|பிறகு|மீதான|மூலம்|கீழே|கீழ்|தவிர|பின்|போல்|மீது|
 முன்|மேலே|மேல்|\N{U+0BCA}ழிய|\N{U+0BC1}ள்|படி|போல|வரை|விட
 	};	
-	$sentence =~ s/(\S+)($postpositions)\s+/$1 $2 /g;
-	
-	
+	$sentence =~ s/(\S+)($postpositions)\s+/$1 $2 /g;	
 
     return $sentence;
 };
