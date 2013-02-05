@@ -6,10 +6,16 @@ use warnings;
 use AI::MaxEntropy;
 use Text::Table;
 
+use Getopt::Long;
+
+my $separator;
+
+GetOptions('separator=s' => \$separator);
+
 my $modelFile = shift;
 my $testFile = shift;
 
-die "Usage: ./TrainMaxEnt.pl modelFile testFile_file" if !defined $modelFile or !defined $testFile;
+die "Usage: ./TrainMaxEnt.pl MODEL_FILE TEST_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile;
 warn 'Suspicious number of parameters' if defined shift;
 
 
@@ -20,6 +26,7 @@ my $model = AI::MaxEntropy::Model->new($modelFile);
 
 print "Predicting...\n";
 open TEST, $testFile or die "Cannot open test file";
+binmode TEST, ":utf8";
 
 my @predictions;
 
@@ -28,7 +35,7 @@ my %results;
 while (<TEST>) {
     chomp;
 
-    my @line = split /,/;
+    my @line = split /$separator/;
     my @features;
 
     for my $i ( 0 .. $#line - 1 ) {

@@ -4,14 +4,20 @@ use strict;
 use warnings;
 
 use AI::MaxEntropy;
+use Getopt::Long;
+
+my $separator;
+
+GetOptions('separator=s' => \$separator);
 
 my $input = shift;
 my $output = shift;
 
-die "Usage: ./TrainMaxEnt.pl features.tsv output.model" if !defined $input or !defined $output;
+die "Usage: ./TrainMaxEnt.pl FEATURE_FILE MODEL_FILE [-s SEPARATOR]" if !defined $input or !defined $output;
 warn 'Suspicious number of parameters' if defined shift;
 
 open TRAIN,"<$input" or die "Cannot open training data file $input\n";
+binmode TRAIN, ":utf8";
 
 print "Reading...\n";
 my $me = AI::MaxEntropy->new;
@@ -19,7 +25,7 @@ my $me = AI::MaxEntropy->new;
 while (<TRAIN>) {
     chomp;
 
-    my @line = split /,/;
+    my @line = split /$separator/;
     my @features;
 
     for my $i ( 0 .. $#line - 1 ) {
