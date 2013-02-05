@@ -33,6 +33,7 @@ sub process_tnode {
         # change t_lemma and formeme of the currency node
         $t_node->set_t_lemma( $CURRENCY{ $t_node->t_lemma } );
         $t_node->set_t_lemma_origin('rule-FixMoney');
+        $t_node->set_attr('mlayer_pos', 'N');
         $t_node->set_formeme('n:2');
         $t_node->set_formeme_origin('rule-FixMoney');
         $t_node->set_gram_number('pl');

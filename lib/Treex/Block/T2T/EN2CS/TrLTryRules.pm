@@ -21,6 +21,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Mr.}        => 'pan|N',
     q{Ms.}        => 'slečna|N',
     q{Obama}      => 'Obama|N',
+    q{von}        => 'von|X',
 );
 
 sub process_tnode {
