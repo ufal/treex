@@ -3,25 +3,28 @@
 use strict;
 use warnings;
 
-use AI::MaxEntropy;
+use Algorithm::NaiveBayes;
+use Algorithm::NaiveBayes::Model::Frequency;
+use Algorithm::NaiveBayes::Model::Gaussian;
+
 use Text::Table;
 
 use Getopt::Long;
 
-my $separator;
+my $separator = ",";
 
 GetOptions('separator=s' => \$separator);
 
 my $modelFile = shift;
 my $testFile = shift;
 
-die "Usage: ./TrainMaxEnt.pl MODEL_FILE TEST_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile;
+die "Usage: ./TestNaiveBayes.pl MODEL_FILE TEST_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile;
 warn 'Suspicious number of parameters' if defined shift;
 
 
 print "Loading modelFile...\n";
 
-my $model = AI::MaxEntropy::Model->new($modelFile);
+my $model = Algorithm::NaiveBayes->restore_state($modelFile);
 
 
 print "Predicting...\n";
@@ -36,15 +39,28 @@ while (<TEST>) {
     chomp;
 
     my @line = split /$separator/;
-    my @features;
+    my %features;
 
     for my $i ( 0 .. $#line - 1 ) {
-        push @features, $line[$i];
+        $features{'kat'.$i} = $line[$i];
     }
 
     my $classification = $line[$#line];
 
-    my $prediction = $model->predict(\@features);
+    my $valRef = $model->predict(attributes => \%features);
+
+    my $predictionProb = 0;
+    my $prediction = "N/A";
+
+    for my $key (keys %$valRef) {
+	if ($predictionProb < $valRef->{$key}) {
+	    $predictionProb = $valRef->{$key};
+	    $prediction = $key;
+	}
+
+    }
+
+
 
     if (!defined $results{$classification}{$classification}) {
 	$results{$classification}{$classification} = 0;
