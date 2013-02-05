@@ -76,8 +76,8 @@ sub process_subtree{
 
 sub extract_node {
     my ($self, $node1, $node2) = @_;
-    print { $self->_file_handle } $node1->t_lemma.'|'.$node1->formeme."\t".$node2->t_lemma.'|'.$node2->formeme."\n";
-    print { $self->_file_handle } $node1->t_lemma.'|*'."\t".$node2->t_lemma."|*\n";
+    print { $self->_file_handle } $node1->t_lemma.'|'.$node1->formeme."\t".$self->lemma($node2).'|'.$node2->formeme."\n";
+    print { $self->_file_handle } $node1->t_lemma.'|*'."\t".$self->lemma($node2)."|*\n";
     print { $self->_file_handle } '*|'.$node1->formeme."\t*|".$node2->formeme."\n";
     return;
 }
