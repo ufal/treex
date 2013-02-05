@@ -1,4 +1,4 @@
-package Treex::Block::T2T::TrTwoNode;
+package Treex::Block::Treelets::TrOneNode;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::TranslationModel::TwoNode;
@@ -66,10 +66,11 @@ sub translate_node {
     if ($trans){
         my $first_label = $trans->[0];
         my ($lemma, $formeme) = split /\|/, $first_label;
+        $node->set_attr('mlayer_pos', $1) if $lemma =~ s/#(.)$//;
         $node->set_t_lemma($lemma);
-        $node->set_t_lemma_origin('two-node-LF');
+        $node->set_t_lemma_origin('one-node-LF');
         $node->set_formeme($formeme);
-        $node->set_formeme_origin('two-node-LF');
+        $node->set_formeme_origin('one-node-LF');
     } else {
     
         # lemma
@@ -77,8 +78,9 @@ sub translate_node {
         if ($trans){
             my $first_label = $trans->[0];
             my ($lemma, $formeme) = split /\|/, $first_label;
+            $node->set_attr('mlayer_pos', $1) if $lemma =~ s/#(.)$//;
             $node->set_t_lemma($lemma);
-            $node->set_t_lemma_origin('two-node');
+            $node->set_t_lemma_origin('one-node');
         } else {
             $node->set_t_lemma($src_node->t_lemma);
             $node->set_t_lemma_origin('clone');
@@ -90,7 +92,7 @@ sub translate_node {
             my $first_label = $trans->[0];
             my ($lemma, $formeme) = split /\|/, $first_label;
             $node->set_formeme($formeme);
-            $node->set_formeme_origin('two-node');
+            $node->set_formeme_origin('one-node');
         } else {
             $node->set_formeme($src_node->formeme);
             $node->set_formeme_origin('clone');
