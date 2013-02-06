@@ -49,12 +49,12 @@ sub process
         my ($package, $model_file) = split(/\t/);
         if ( Treex::Tool::Memcached::Memcached::is_supported_package($package) ) {
             my $required_file = Treex::Core::Resource::require_file_from_share( $model_file, 'Memcached' );
-            my $class         = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
+            my ($class, $constr_params) = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
             if ( ! $class ) {
                 log_warn "Unknown model file for $model_file\n";
                 next;
             }
-            Treex::Tool::Memcached::Memcached::load_model( $class, $required_file );
+            Treex::Tool::Memcached::Memcached::load_model( $class, $constr_params, $required_file );
         }
     }
     close($fh);
@@ -108,7 +108,7 @@ USAGE
     Loads model [file] to memcached.
     If file is already loaded, it does nothing.
     ./memcached.pl load \
-        TranslationModel::MaxEnt::Model \
+        TranslationModel::ML::Model 'model_type maxent' \
         ...../tlemma_czeng12.maxent.10000.100.2_1.pls.gz
 
 ./memcached.pl process file
@@ -138,7 +138,7 @@ memcached.pl
 =head1 SYNOPSIS
 
     ./memcached.pl start memory-size-in-gb
-    ./memcached.pl load model-class data-file
+    ./memcached.pl load model-class model-class-params data-file
     ./memcached.pl process required-files-scenario-dump
     ./memcached.pl missing data-file
     ./memcached.pl check data-file key

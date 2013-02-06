@@ -178,9 +178,14 @@ sub get_memcached_hostname {
 
 sub load_model
 {
-    my ( $model_class, $file, $debug ) = @_;
+    my ( $model_class, $constr_params_str, $file, $debug ) = @_;
 
     log_info "Loading $model_class from file $file";
+    
+    my $constr_params = {};
+    if (defined $constr_params_str && $constr_params_str !~ /^\s*$/) {
+        $constr_params = { split / /, $constr_params_str };
+    }
 
     my $namespace = basename($file);
 
@@ -197,11 +202,11 @@ sub load_model
         if ( -d $file ) {
             my @files = ( glob "$file/*" );
             foreach my $part (@files) {
-                _load_model( $memd, $model_class, $part, $debug );
+                _load_model( $memd, $model_class, $constr_params, $part, $debug );
             }
         }
         elsif ( -f $file ) {
-            _load_model( $memd, $model_class, $file, $debug )
+            _load_model( $memd, $model_class, $constr_params, $file, $debug )
         }
         else {
             log_fatal "File $file does not exist.";
@@ -219,9 +224,10 @@ sub load_model
 
 sub _load_model
 {
-    my ( $memd, $model_class, $file, $debug ) = @_;
+    my ( $memd, $model_class, $constr_params, $file, $debug ) = @_;
+
     eval "require $model_class" || croak("Cannot load $model_class.");
-    my $model = $model_class->new();
+    my $model = $model_class->new($constr_params);
     $model->load($file);
 
     #    log_info "\tStoring to memcached";
@@ -318,14 +324,17 @@ sub is_running {
 sub get_class_from_filename {
     my $required_file = shift;
 
-    if ( $required_file =~ /\.maxent\./ ) {
-        return 'TranslationModel::MaxEnt::Model';
+    if ( $required_file =~ /maxent/ ) {
+        return ('TranslationModel::ML::Model', 'model_type maxent' );
+    }
+    elsif ( $required_file =~ /vw/ ) {
+        return ('TranslationModel::ML::Model', 'model_type vw' );
     }
     elsif ( $required_file =~ /\.nb\./ ) {
-        return 'TranslationModel::NaiveBayes::Model';
+        return ('TranslationModel::NaiveBayes::Model', '');
     }
     elsif ( $required_file =~ /\.static\./ ) {
-        return 'TranslationModel::Static::Model';
+        return ('TranslationModel::Static::Model', '');
     }
 
     return;
@@ -375,10 +384,11 @@ If the server is already executed it does nothing.
 Executes memcached server with requested memory (in gigabytes).
 If the server is already executed it does nothing.
 
-=head2 load_model($model_class, $data_file)
+=head2 load_model($model_class, $constr_params_str, $data_file)
 
 Loads a translation model (i.e. all of its submodels) from the given file. The file name
-serves as the namespace for Memcached.
+serves as the namespace for Memcached. Model classes having a parametric constructor are
+initialized with parameters extracted from a space-separated $constr_params_str.
 
 =head2 contains($file, @keys)
 

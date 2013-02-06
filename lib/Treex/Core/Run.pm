@@ -1853,13 +1853,13 @@ sub _execute_on_cluster {
                 !Treex::Tool::Memcached::Memcached::contains($required_file)
                 )
             {
-                my $class = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
+                my ($class, $constr_params) = Treex::Tool::Memcached::Memcached::get_class_from_filename($required_file);
                 if ( !$class ) {
                     log_warn "Unknown model file for $file\n";
                     next;
                 }
 
-                push( @missing_files, [ $class, $required_file ] );
+                push( @missing_files, [ $class, $constr_params, $required_file ] );
             }
         }
 
@@ -1872,8 +1872,8 @@ sub _execute_on_cluster {
             print $script "#!/bin/bash\n";
             print $script "perl -e 'use Treex::Tool::Memcached::Memcached;";
             for my $item (@missing_files) {
-                my ( $class, $required_file ) = ( $item->[0], $item->[1] );
-                print $script "Treex::Tool::Memcached::Memcached::load_model(\"$class\", \"$required_file\" );";
+                my ( $class, $constr_params, $required_file ) = @$item;
+                print $script "Treex::Tool::Memcached::Memcached::load_model(\"$class\", \"$constr_params\", \"$required_file\" );";
             }
             print $script ";'\n";
             close $script;

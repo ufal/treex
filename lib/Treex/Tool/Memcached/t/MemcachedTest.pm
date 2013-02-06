@@ -5,7 +5,8 @@ use warnings;
 
 use File::Basename;
 
-our $MODEL_PACKAGE = 'TranslationModel::MaxEnt::Model';
+our $MODEL_PACKAGE = 'TranslationModel::ML::Model';
+our $MODEL_PARAMS = '"model_type maxent"';
 our $MODEL_DIR = $ENV{'TMT_ROOT'} . '/share/data/models/translation/en2cs/';
 our $MODEL_BIG = $MODEL_DIR . 'tlemma_czeng12.maxent.10000.100.2_1/';
 our $MODEL_SMALL = $MODEL_DIR . 'czeng09.lemmas.taliG-4_3.maxent.10000.100.2.1.pls.gz';
@@ -21,8 +22,8 @@ our $TESTS = [
 
 our $MEMCACHED = dirname(__FILE__) . "/../memcached.pl";
 
-our $LOAD_SMALL_CMD = "$MEMCACHED load $MODEL_PACKAGE $MODEL_SMALL";
-our $LOAD_BIG_CMD = "$MEMCACHED load $MODEL_PACKAGE $MODEL_BIG";
+our $LOAD_SMALL_CMD = "$MEMCACHED load $MODEL_PACKAGE $MODEL_PARAMS $MODEL_SMALL";
+our $LOAD_BIG_CMD = "$MEMCACHED load $MODEL_PACKAGE $MODEL_PARAMS $MODEL_BIG";
 
 our $EXTRACT_CMD = dirname(__FILE__) . "/extract-lemmas.pl";
 our $CHECK_CMD = dirname(__FILE__) . "/check-lemmas.pl";
