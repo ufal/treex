@@ -8,8 +8,7 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::MaxEnt::Model;
-#use TranslationModel::VowpalWabbit::Model;
+use TranslationModel::ML::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
@@ -41,19 +40,18 @@ has model_dir => (
 # It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
 with 'Treex::Block::T2T::TrUseMemcachedModel';
 
-has maxent_weight => (
+has discr_type => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'maxent',
+);
+
+has discr_weight => (
     is            => 'ro',
     isa           => 'Num',
     default       => 1.0,
-    documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
+    documentation => 'Weight of the discriminative model (the model won\'t be loaded if the weight is zero).'
 );
-
-#has vw_weight => (
-#    is            => 'ro',
-#    isa           => 'Num',
-#    default       => 0,
-#    documentation => 'Weight of the VW model (the model won\'t be loaded if the weight is zero).'
-#);
 
 has static_weight => (
     is            => 'ro',
@@ -62,16 +60,11 @@ has static_weight => (
     documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
-has maxent_model => (
+has discr_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'tlemma_czeng12.maxent.10000.100.2_1.pls.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
 );
-
-#has vw_model => (
-#    is      => 'ro',
-#    isa     => 'Str',
-#);
 
 has static_model => (
     is      => 'ro',
@@ -147,11 +140,8 @@ has domain => (
 #    my ($self) = @_;
 #
 #    my $model_path = "";
-#    if ($self->maxent_weight) {
-#        $model_path = $self->maxent_model;
-#    }
-#    elsif ($self->vw_weight) {
-#        $model_path = $self->vw_model;
+#    if ($self->discr_weight) {
+#        $model_path = $self->discr_model;
 #    }
 #
 #    # derive the feature filter config file from the model file
@@ -183,15 +173,11 @@ sub process_start {
 
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
-    if ( $self->maxent_weight > 0 ) {
+    if ( $self->discr_weight > 0 ) {
         #my $maxent_model = $self->load_model( TranslationModel::VowpalWabbit::Model->new(), $self->maxent_model, $use_memcached );
-        my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
-        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
+        my $discr_model = $self->load_model( TranslationModel::ML::Model->new({ model_type => $self->discr_type }), $self->discr_model, $use_memcached );
+        push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
-#    elsif ( $self->vw_weight > 0 ) {
-#        my $vw_model = $self->load_model( TranslationModel::VowpalWabbit::Model->new(), $self->vw_model, $use_memcached );
-#        push( @interpolated_sequence, { model => $vw_model, weight => $self->vw_weight } );
-#    }
     my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     my $humanlex_model = $self->load_model( TranslationModel::Static::Model->new(), $self->human_model,  0 );
 
@@ -236,12 +222,9 @@ sub get_required_share_files {
     my ($self) = @_;
     my @files;
 
-    if ( $self->maxent_weight > 0 ) {
-        push @files, $self->model_dir . '/' . $self->maxent_model;
+    if ( $self->discr_weight > 0 ) {
+        push @files, $self->model_dir . '/' . $self->discr_model;
     }
-#    if ( $self->vw_weight > 0 ) {
-#        push @files, $self->model_dir . '/' . $self->vw_model;
-#    }
     push @files, $self->model_dir . '/' . $self->human_model;
     push @files, $self->model_dir . '/' . $self->static_model;
 

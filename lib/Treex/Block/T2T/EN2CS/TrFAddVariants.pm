@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::MaxEnt::Model;
+use TranslationModel::ML::Model;
 use TranslationModel::Static::Model;
 
 use TranslationModel::Combined::Interpolated;
@@ -101,7 +101,7 @@ sub process_start
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->maxent_weight > 0 ) {
-        my $maxent_model = $self->load_model( TranslationModel::MaxEnt::Model->new(), $self->maxent_model, $use_memcached );
+        my $maxent_model = $self->load_model( TranslationModel::ML::Model->new({ model_type => 'maxent' }), $self->maxent_model, $use_memcached );
         push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
     }
 
