@@ -174,7 +174,6 @@ sub process_start {
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->discr_weight > 0 ) {
-        #my $maxent_model = $self->load_model( TranslationModel::VowpalWabbit::Model->new(), $self->maxent_model, $use_memcached );
         my $discr_model = $self->load_model( TranslationModel::ML::Model->new({ model_type => $self->discr_type }), $self->discr_model, $use_memcached );
         push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
