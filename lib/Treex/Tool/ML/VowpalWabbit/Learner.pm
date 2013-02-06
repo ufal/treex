@@ -5,12 +5,16 @@ use Moose;
 use Treex::Core::Common;
 
 use VowpalWabbit;
+use Treex::Tool::ML::VowpalWabbit::Util;
+use Treex::Tool::ML::VowpalWabbit::Model;
 use Treex::Tool::Compress::Index;
 
 use List::Util qw(shuffle);
 
 use IO::Zlib;
 use File::Slurp;
+
+with 'Treex::Tool::ML::Learner';
 
 has 'passes' => (
     is => 'ro',

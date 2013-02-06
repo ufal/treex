@@ -6,6 +6,8 @@ use Treex::Tool::ML::MaxEnt::Model;
 
 extends 'AI::MaxEntropy';
 
+with 'Treex::Tool::ML::Learner';
+
 sub _make_compact_hash {
     my ($self) = @_;
 
@@ -30,6 +32,11 @@ override '_create_model' => sub {
     });
     return $model;
 };
+
+sub cut_features {
+    my $self = shift;
+    $self->cut(@_);
+}
 
 1;
 __END__
