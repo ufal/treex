@@ -1,41 +1,85 @@
 package Treex::Tool::ML::MaxEnt::Learner;
 
 use Moose;
-#use AI::MaxEntropy::Model;
+use AI::MaxEntropy;
 use Treex::Tool::ML::MaxEnt::Model;
 
-extends 'AI::MaxEntropy';
+use Data::Dumper;
 
 with 'Treex::Tool::ML::Learner';
 
-sub _make_compact_hash {
-    my ($self) = @_;
+has 'smooth_type' => (
+    isa => 'Str',
+    is => 'ro',
+    default => 'gaussian',
+);
+has 'smooth_sigma' => (
+    isa => 'Num',
+    is => 'ro',
+    default => 0.99,
+);
 
-    my $probs = {};
-    for my $y (0 .. @{$self->{y_list}}-1) {
-        for my $x (0 .. @{$self->{x_list}}-1) {
-            my $idx = $self->{f_map}->[$y]->[$x];
-            if ($idx > -1) {
-                $probs->{$self->{y_list}->[$y]}->{$self->{x_list}->[$x]} = $self->{lambda}->[$idx];
-            }
-        }
-    }
-    return $probs;
+has '_ai_learner' => (
+    isa => 'AI::MaxEntropy',
+    is => 'ro',
+    builder => '_build_ai_learner',
+    lazy => 1,
+);
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_ai_learner;
 }
 
-override '_create_model' => sub {
+sub _build_ai_learner {
     my ($self) = @_;
-    my $probs = $self->_make_compact_hash();
-    my $model = Treex::Tool::ML::MaxEnt::Model->new({
-        model => $probs,
-        y_num => $self->{y_num},
-    });
-    return $model;
-};
+    my $ai_params = {
+        smoother => { type => $self->smooth_type, sigma => $self->smooth_sigma },
+    };
+    return AI::MaxEntropy->new(%$ai_params);
+}
+
+sub see {
+    my $self = shift;
+    $self->_ai_learner->see(@_);
+}
+
+sub learn {
+    my $self = shift;
+    my $ai_model = $self->_ai_learner->learn(@_);
+    my $compact_hash = $self->_make_compact_hash($ai_model);
+    return Treex::Tool::ML::MaxEnt::Model->new($compact_hash);
+}
 
 sub cut_features {
     my $self = shift;
-    $self->cut(@_);
+    $self->_ai_learner->cut(@_);
+}
+
+sub forget_all {
+    my $self = shift;
+    $self->_ai_learner->forget_all(@_);
+}
+
+sub _make_compact_hash {
+    my ($self, $ai_model) = @_;
+
+    my $probs = {};
+    for my $y (0 .. @{$ai_model->{y_list}}-1) {
+        for my $x (0 .. @{$ai_model->{x_list}}-1) {
+            my $idx = $ai_model->{f_map}->[$y]->[$x];
+            if ($idx > -1) {
+                $probs->{$ai_model->{y_list}->[$y]}->{$ai_model->{x_list}->[$x]} = $ai_model->{lambda}->[$idx];
+            }
+        }
+    }
+
+    my $compact_hash = {
+        model => $probs,
+        y_num => $ai_model->{y_num},
+    };
+
+    return $compact_hash;
 }
 
 1;
