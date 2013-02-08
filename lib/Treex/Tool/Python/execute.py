@@ -33,13 +33,16 @@ decode = codecs.getdecoder('utf-8')
 # output utf-8 encoding
 output = codecs.getwriter('utf-8')(sys.stdout)
 
-while 1:
+while True:
     try:
         data = os.read(fd, 1024)
+        if data == '':
+            break
         line = unicode(data, 'utf-8')
         # print >> sys.stderr, 'Read line:' + data
         cmd += line
-    except (KeyboardInterrupt, EOFError):
+    except Exception, e:
+        print >> sys.stderr, e
         break
     # execute each command when it's fully read
     if "print '<<<<END>>>>'\n" in line:
