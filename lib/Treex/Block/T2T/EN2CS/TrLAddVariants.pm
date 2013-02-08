@@ -8,7 +8,7 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::ML::Model;
+use TranslationModel::Factory;
 use TranslationModel::Static::Model;
 
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
@@ -100,6 +100,12 @@ has domain => (
     documentation => 'add the (CzEng) domain feature (default=0). Set to 0 to deactivate.',
 );
 
+has '_model_factory' => (
+    is => 'ro',
+    isa => 'TranslationModel::Factory',
+    default => sub { return TranslationModel::Factory->new(); },
+);
+
 #has '_trigger_feature_extractor' => (
 #    is => 'ro',
 #    isa => 'Treex::Tool::Triggers::Features',
@@ -174,7 +180,7 @@ sub process_start {
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     if ( $self->discr_weight > 0 ) {
-        my $discr_model = $self->load_model( TranslationModel::ML::Model->new({ model_type => $self->discr_type }), $self->discr_model, $use_memcached );
+        my $discr_model = $self->load_model( $self->_model_factory->create_model($self->discr_type), $self->discr_model, $use_memcached );
         push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
     my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );

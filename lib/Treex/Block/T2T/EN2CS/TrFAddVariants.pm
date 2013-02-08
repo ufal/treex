@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 use ProbUtils::Normalize;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::ML::Model;
+use TranslationModel::Factory;
 use TranslationModel::Static::Model;
 
 use TranslationModel::Combined::Interpolated;
@@ -27,20 +27,26 @@ with 'Treex::Block::T2T::TrUseMemcachedModel';
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
 
-has maxent_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0.5,
-    documentation => 'Weight of the MaxEnt model (the model won\'t be loaded if the weight is zero).'
-);
-
 has maxent_features_version => (
     is      => 'ro',
     isa     => 'DataVersion',
     default => '0.9'
 );
 
-has maxent_model => (
+has discr_type => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'maxent',
+);
+
+has discr_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the discriminative model (the model won\'t be loaded if the weight is zero).'
+);
+
+has discr_model => (
     is      => 'ro',
     isa     => 'Str',
     default => 'formeme_czeng09.maxent.compact.pls.slurp.gz',    # 'tlemma_czeng09.maxent.10k.para.pls.gz'
@@ -75,6 +81,12 @@ has allow_fake_formemes => (
 
 has _model => ( is => 'rw' );
 
+has '_model_factory' => (
+    is => 'ro',
+    isa => 'TranslationModel::Factory',
+    default => sub { return TranslationModel::Factory->new(); },
+);
+
 
 # Require the needed models
 sub get_required_share_files {
@@ -82,8 +94,8 @@ sub get_required_share_files {
     my ($self) = @_;
     my @files;
 
-    if ( $self->maxent_weight > 0 ) {
-        push @files, $self->model_dir . '/' . $self->maxent_model;
+    if ( $self->discr_weight > 0 ) {
+        push @files, $self->model_dir . '/' . $self->discr_model;
     }
     push @files, $self->model_dir . '/' . $self->static_model;
 
@@ -100,9 +112,9 @@ sub process_start
 
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
-    if ( $self->maxent_weight > 0 ) {
-        my $maxent_model = $self->load_model( TranslationModel::ML::Model->new({ model_type => 'maxent' }), $self->maxent_model, $use_memcached );
-        push( @interpolated_sequence, { model => $maxent_model, weight => $self->maxent_weight } );
+    if ( $self->discr_weight > 0 ) {
+        my $discr_model = $self->load_model( $self->_model_factory->create_model($self->discr_type), $self->discr_model, $use_memcached );
+        push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
 
     my $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
