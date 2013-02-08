@@ -43,7 +43,7 @@ has maxent_features_version => (
 has maxent_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'formeme_czeng09.maxent.pls.slurp.gz',    # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+    default => 'formeme_czeng09.maxent.compact.pls.slurp.gz',    # 'tlemma_czeng09.maxent.10k.para.pls.gz'
 );
 
 has static_weight => (

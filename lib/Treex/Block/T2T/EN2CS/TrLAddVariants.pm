@@ -63,7 +63,7 @@ has static_weight => (
 has discr_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'tlemma_czeng12.maxent.10000.100.2_1.pls.gz', # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+    default => 'tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz',
 );
 
 has static_model => (
