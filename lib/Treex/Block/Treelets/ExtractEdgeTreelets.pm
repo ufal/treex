@@ -2,7 +2,6 @@ package Treex::Block::Treelets::ExtractEdgeTreelets;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
-use Treex::Tool::Algorithm::TreeUtils;
 
 has alignment_direction => (
     is=>'ro',
@@ -10,6 +9,17 @@ has alignment_direction => (
     default=>'trg2src',
     documentation=>'Default trg2src means that alignment goes *from* <language,selector> tree (which is the target language) to the source tree. src2trg means the opposite direction.',
 );
+
+my @MASKS = (
+    [1,2,3], # L***
+    [0,2,3], # *F**
+    [2,3],   # LF**
+    [0,3],   # *FL*
+    [3],     # LFL*
+    [0],     # *FLF
+    [],      # LFLF
+);
+my @STARS = ('*') x 3;
 
 my (%aligned, %size1, %size2);
 
@@ -38,90 +48,69 @@ sub process_ttree{
         $root->set_formeme('_ROOT');
     }
     
-    # Recursively (top-down DFS) extract all rules.
     my $root = $self->alignment_direction eq 'trg2src' ? $root2 : $root1;
-    $self->process_subtree($root);
-
-    return;
-}
-
-
-sub process_subtree{
-    my ($self, $node1) = @_;
-    my $node2 = $aligned{$node1};
-    $self->extract_node($node1, $node2) if $node2;
-
-    foreach my $child1 ($node1->get_children()){
-        my $child2 = $aligned{$child1};
-        if ($child2){
-            my @nodes1 = ($node1, $child1);
-            my @nodes2 = ($node2||(), $child2);
-            my ($root2, $added_nodes2_rf) = Treex::Tool::Algorithm::TreeUtils::find_minimal_common_treelet(@nodes2);
-            my @added1 = map {$aligned{$_}||()} @$added_nodes2_rf;
-
-            # TODO we should extract bigger treelet with @nodes1 = ($node1, $child1, @added1)
-            # but that would mean checking (recursively) if we reached idempotent sets of @nodes1 and @nodes2
-            # @nodes1 ...= find_minimal_common_treelet(@nodes1);
-            # @nodes2 ...= find_minimal_common_treelet(@aligned{@nodes1});
-            # In this draft version, let's just forbid source treelets with more than two nodes.
-            next if @added1;
-            push @nodes2, @$added_nodes2_rf;
-            $self->extract_edge($node1, $child1, \@nodes2);
+    my @queue = $root->get_children();
+    while (@queue){
+        my $node1 = shift @queue;
+        push @queue, $node1->get_children();
+        my @rule = $self->extract($node1);
+        for my $mask (@MASKS){
+            my @src = @rule[0..3];
+            my @trg = @rule[4..7];
+            @src[@$mask] = @STARS;
+            @trg[@$mask] = @STARS;
+            @trg = ('_') if any {$_ eq '_'} @trg;
+            $self->print_rule(\@src, \@trg);
         }
         
-        $self->process_subtree($child1);
     }
+
     return;
 }
 
-sub extract_node {
-    my ($self, $node1, $node2) = @_;
-    print { $self->_file_handle } $node1->t_lemma.'|'.$node1->formeme."\t".$self->lemma($node2).'|'.$node2->formeme."\n";
-    print { $self->_file_handle } $node1->t_lemma.'|*'."\t".$self->lemma($node2)."|*\n";
-    print { $self->_file_handle } '*|'.$node1->formeme."\t*|".$node2->formeme."\n";
+sub print_rule {
+    my ($self, $src, $trg) = @_;
+    say join ' ', @$src, @$trg;
     return;
 }
 
-sub extract_edge {
-    my ($self, $node1, $child1, $nodes2_rf) = @_;
-    my @nodes2 = sort {$a->ord <=> $b->ord} @$nodes2_rf;
-    my $i = 1;
-    my %node2ord = map {$_, $i++} @nodes2;
-    @node2ord{($node1,$child1)} = (1,2);
-    my $trg_deps  = join ' ', map {$node2ord{$_->get_parent||0}||0} @nodes2;
-    my $alignment = join ' ', map {my $al = $aligned{$_}; $al ? $node2ord{$al}.'-'.$node2ord{$_} : ()} @nodes2;
-    my ($node2,$child2) = map {$aligned{$_}||0} ($node1, $child1);
-
-    for my $n1 ((0,1)){
-        my $str_n1 = $node1->t_lemma;
-        if ($n1) {$str_n1 .= '|' .$node1->formeme;}
-        else { $str_n1 .= '|*';}
-        for my $ch1 ((0,1)){
-            my $str_ch1 = $ch1 ? ($child1->t_lemma) : '*';
-            $str_ch1 .= '|' . $child1->formeme;
-            my $trg_nodes = join ' ', map {
-                my $str;
-                if (!$n1 && $_==$node2){ $str = $self->lemma($_) . '|*';}
-                elsif (!$ch1 && $_==$child2){ $str = '*|' . $_->formeme;}
-                else {$str = $self->lemma($_) . '|' . $_->formeme;}
-                $str;
-            } @nodes2;
-            print { $self->_file_handle } "$str_n1 $str_ch1\t$trg_nodes\t$trg_deps\t$alignment\n";
-        }
-    }
-    return;
+sub extract {
+    my ($self, $node1) = @_;
+    my $parent1 = $node1->get_parent();
+    my ($node2, $parent2) = @aligned{$node1, $parent1};
+    my $n1L = $self->lemma($node1);
+    my $n1F = $node1->formeme;
+    my $p1L = $self->lemma($parent1);
+    my $p1F = $parent1->formeme;
+    my @src = ($n1L, $n1F, $p1L, $p1F);
+    return (@src, '_', '_', '_', '_') if !$node2;
+    my $n2L = $self->lemmapos($node2);
+    my $n2F = $node2->formeme;
+    return (@src, $n2L, $n2F, '_', '_') if !$parent2 || $node2->get_parent != $parent2;
+    my $p2L = $self->lemmapos($parent2);
+    my $p2F = $parent2->formeme;
+    return (@src, $n2L, $n2F, $p2L, $p2F);
 }
 
 # Hack to include coarse-grained PoS tag for Czech lemma.
 # $tnode->get_attr('mlayer_pos') is not filled in CzEng
-sub lemma {
+sub lemmapos {
     my ($self, $tnode) = @_;
     my $lemma = $tnode->t_lemma;
+    $lemma =~ s/ /&#32;/;
     my $anode = $tnode->get_lex_anode or return $lemma;
     my ($pos) = ( $anode->tag =~ /^(.)/ );
     return $lemma if !defined $pos;
     return "$lemma#$pos";
 }
+
+sub lemma {
+    my ($self, $tnode) = @_;
+    my $lemma = $tnode->t_lemma;
+    $lemma =~ s/ /&#32;/;
+    return $lemma;
+}
+
 
 1;
 

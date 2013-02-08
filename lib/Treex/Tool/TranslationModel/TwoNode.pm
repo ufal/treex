@@ -9,6 +9,22 @@ has model => (
     default => sub { {} },
 );
 
+my @MASKS = (
+    [1,2,3], # L***
+    [0,2,3], # *F**
+    [2,3],   # LF** 
+    [0,3],   # *FL*
+    [3],     # LFL*
+    [0],     # *FLF
+    [],      # LFLF
+);
+my @STARS = ('*') x 3;
+
+sub translate {
+    my ($self, $nL, $nF, $pL, $pF) = @_;
+    #my %
+}
+
 sub load_hadoop_output{
     my ($self, $file_name) = @_;
     open my $FH, '<:encoding(UTF-8)', $file_name;
@@ -17,23 +33,20 @@ sub load_hadoop_output{
     
     while(<$FH>){
         chomp;
-        my ($count, $src, $trg) = split /\t/, $_, 3;
-        #say "ncount=$count\tsrc=$src\ttrg=$trg";
+        my ($prob, $src, $trg, $count) = split /\t/, $_, 4;
         
         if ($src ne $last_src){
-            my ($node, $child) = split / /, $src;
-            $child ||= '_NO';
+            my ($node, $parent) = ($src =~ /^([^ ]+ [^ ]+) ([^ ]+ [^ ]+)$/);
             $translations = [];
-            $self->model->{$node}{$child} = $translations;
+            $self->model->{$node}{$parent} = $translations;
+            #$self->model->{$src} = $translations;
             $last_src = $src;
         }
 
-        push @$translations, $trg => $count;
+        push @$translations, $trg => $prob;
         
     }
     close $FH;
-    
-    #print Dumper $self->model->{'value|*'};
     return;
 }
 
