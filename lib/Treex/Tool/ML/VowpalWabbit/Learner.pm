@@ -54,12 +54,20 @@ has '_feat_count' => (
     writer => '_set_feat_count',
 );
 
+has '_feat_class_count' => (
+    is => 'ro',
+    isa => 'HashRef[Int]',
+    default => sub {{}},
+    writer => '_set_feat_class_count',
+);
+
 sub see {
     my ($self, $x, $y) = @_;
 
     # TODO $x can possibly be also a hash
     foreach my $feat (@$x) {
-        $self->_feat_count->{$feat . "_" . $y}++;
+        $self->_feat_class_count->{$feat . "_" . $y}++;
+        $self->_feat_count->{$feat}++;
     }
 
     push @{$self->_unprocessed_instances}, { x => $x, y_str => $y };
@@ -120,6 +128,28 @@ sub learn {
     #print STDERR "Total size: " . total_size($buff) . "\n";
     VowpalWabbit::finish($vw);
 
+    
+    # A SLIGHTLY WEIRD WAY HOW TO GET THE LEARNT PARAMETERS FROM VW
+    # 1. load the trained model again, this time just for testing and the --audit parameter on
+    # 2. create an instance that consists of all the features seen in the training data
+    # 3. predict a class for the instance
+    # 4. retrieve the parameters assigned to each of the features
+
+    $vw = VowpalWabbit::initialize("-t --audit --quiet");
+
+    my $all_example_str = Treex::Tool::ML::VowpalWabbit::Util::instance_to_vw_str( [keys %{$self->_feat_count}] );
+    my $all_example = VowpalWabbit::read_example($vw, $all_example_str);
+
+    open STDERR, '>/dev/null';
+    $vw->learn($vw, $all_example);
+    close STDERR;
+
+    my $feats = VowpalWabbit::get_feats($example);
+    my $weights = VowpalWabbit::get_weights($vw, $example);
+
+    my $model_hash = $self->_convert_to_hash($feats, $weights);
+
+    # TODO what should we return???
     my $model = Treex::Tool::ML::VowpalWabbit::Model->new({
         model => $buff,
         index => $self->_current_index,
@@ -133,6 +163,7 @@ sub forget_all {
     $self->_set_index( Treex::Tool::Compress::Index->new() );
     $self->_set_instances( [] );
     $self->_set_feat_count( {} );
+    $self->_set_feat_class_count( {} );
 }
 
 sub cut_features {
@@ -140,7 +171,7 @@ sub cut_features {
 
     my @f_unproc = ();
     foreach my $ex (@{$self->_unprocessed_instances}) {
-        my @f_feats = grep {$self->_feat_count->{$_ . "_" . $ex->{y_str}} >= $min_count} 
+        my @f_feats = grep {$self->_feat_class_count->{$_ . "_" . $ex->{y_str}} >= $min_count} 
             @{$ex->{x}};
         if (scalar @f_feats > 0) {
             push @f_unproc, { x => \@f_feats, y_str => $ex->{y_str} };
@@ -155,6 +186,23 @@ sub _log_info_verbose {
     if ($self->verbose > 0) {
         log_info($message);
     }
+}
+
+sub _convert_to_hash {
+    my ($self, $feats, $weights) = @_;
+
+    my $k = $self->_current_index->last_idx;
+    my $feat_num = scalar @$feats;
+
+    my $model_hash = {};
+
+    for (my $class_idx = 1; $class_idx <= $k; $class_idx++) {
+        for (my $j = 0; $j < $feat_num; $j++) {
+            $weights_idx = $j + ($class_idx - 1)*$feat_num;
+            $model_hash->{$class_idx}{$feats->[$j]} = $weights->[$weights_idx];
+        }
+    }
+    return $model_hash;
 }
 
 1;
