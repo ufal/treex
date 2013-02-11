@@ -17,12 +17,19 @@ sub decide_on_change {
         # fix only syntactical nouns
         ( $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} eq 'n' || $m =~ /a/ )
 
+        # fix only verb children
+        && ( $node->wild->{'deepfix_info'}->{'pformeme'}->{'syntpos'} eq 'v'
+            || $m !~ /v/ )
+
         # do not fix morphological pronouns
         && ( $node->wild->{'deepfix_info'}->{'mpos'} ne 'P' || $m =~ /p/ )
 
         # without prepositions
         && ( $node->wild->{'deepfix_info'}->{'formeme'}->{'prep'}      eq '' )
         && ( $node->wild->{'deepfix_info'}->{'best_formeme'}->{'prep'} eq '' )
+
+        # do not switch to nominative
+        && ( $node->wild->{'deepfix_info'}->{'best_formeme'}->{'case'} ne '1' || $m !~ /no1/ )
 
         # do not fix if parent is "být"
         && ( $node->wild->{'deepfix_info'}->{'ptlemma'} ne 'být' || $m !~ /b/ )
