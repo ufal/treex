@@ -36,7 +36,7 @@ output = codecs.getwriter('utf-8')(sys.stdout)
 while True:
     try:
         data = os.read(fd, 1024)
-        if data == '':
+        if data == b'':
             break
         line = unicode(data, 'utf-8')
         # print >> sys.stderr, 'Read line:' + data

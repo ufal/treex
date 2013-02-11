@@ -25,6 +25,12 @@ has 'split_parts' => (
     default => 'no'
 );
 
+has 'dist_func' => (
+    isa => 'Str',
+    is => 'ro',
+    default => 'cstest' # other: levenshtein
+);
+
 has '_cache' => (
     is => 'rw',
     default => sub { {} },
@@ -33,6 +39,13 @@ has '_cache' => (
 has '_dist' => (
     is      => 'rw',
     builder => '_build_dist',
+    lazy_build => 1
+);
+
+has 'mid_numbers' => (
+    isa     => 'Bool',
+    is      => 'ro',
+    default => 0    
 );
 
 Readonly my $ESCAPE_SRC => [ '[',     ']',     '{',     '}' ];
@@ -64,6 +77,8 @@ sub _build_dist {
 
     my $dir = __FILE__;
     $dir =~ s/\/[^\/]*$//;
+    
+    my $dist = $self->dist_func;    
 
     my $python = Treex::Tool::Python::RunFunc->new();
     $python->command(
@@ -71,8 +86,8 @@ sub _build_dist {
             "os.chdir('$dir')\n" .
             "sys.path.append('.')\n" .
             "import string_distances\n" .
-            "match = string_distances.match_cstest\n" .
-            "gap = string_distances.gap_cstest\n"
+            "match = string_distances.match_$dist\n" .
+            "gap = string_distances.gap_$dist\n"
     );
     return $python;
 }
@@ -120,6 +135,9 @@ sub modify_single {
 
     my $diff = $self->_get_diff( $lemma, $form );
 
+    # fix: špatný -> horšímu, horšího
+    # $diff =~ s/^<hor>š`([^']+)'</`š$1'<horš/;
+
     # find the changes in the diff
     my ( $front, $mid, $back ) = ( '', '', '' );
 
@@ -143,15 +161,23 @@ sub modify_single {
             $back = '>' . $len . $add;
         }
 
-        # changing the last vowel
-        if ( $diff =~ m/([^'`<>])(?:`([^']+)'|<([^>]+)>){1,2}[^'`<>]+/ && ( $2 // $3 ) ) {
+        # changes in the middle
+        while ( $diff =~ m/([^'`<>])(?:`([^']+)'|<([^>]+)>){1,2}(?=[^'`<>])/g && ( $2 // $3 ) ) {
             my $orig = $2 // '';
             my $new  = $3 // '';
-            if ( !defined($2) ) {
-                $orig = $1;
-                $new  = $1 . $3;
+            if ( !$self->mid_numbers ){
+                if ( !defined($2) ) {
+                    $orig = $1;
+                    $new  = $1 . $3;
+                }
             }
-            $mid = $orig . '-' . $new;
+            else {
+                my $tail = substr( $diff, pos $diff );
+                $tail =~ s/([`']|<[^>]*>)//g;
+                my $posnum = length($tail) + length($orig);
+                $orig = $posnum . $orig;                                
+            }
+            $mid = !$mid ? ( $orig . '-' . $new ) : ( $orig . '-' . $new . ' ' . $mid );
         }
 
         # something added to the beginning

@@ -117,13 +117,22 @@ def levenshtein_dist(s, t):
 # TODO possibly make á-a + s-z (ismus), t-th etc. match
 def match_cstest(s, t, i, j):
     if s[i] == t[j] and (i == 0 or j == 0 or s[i - 1] == t[j - 1]):
+        # penalize matching ending of one word and beginning of the other
+        if (float(i) / len(s) >= 0.6 and j == 0) or \
+                (float(j) / len(t) >= 0.6 and i == 0):
+            return -3
+        # reward a continuing match
         return 2
     elif s[i] == t[j]:
-        if i >= len(s) - 2:
+        # penalize random matching in endings more
+        if i >= len(s) - 2 or j >= len(t) - 2:
             return -3
+        # penalize for start of a match
         return -1
+    # penalize for start of a non-match
     elif s[i] != t[j] and (i == 0 or j == 0 or s[i - 1] == t[j - 1]):
         return -1
+    # continuing a non-match -- neither penalize nor reward
     return 0
 
 

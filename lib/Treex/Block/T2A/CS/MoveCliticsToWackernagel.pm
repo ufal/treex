@@ -198,7 +198,7 @@ sub _order {
 
     # All other clitics have rank 5:
     # tag=.[7Hc] ses sis bysme
-    # tag=PP..3  mně tobě jemu jí nám vám jim
+    # tag=PP..3  mně tobě jemu
     return 5;
 }
 
