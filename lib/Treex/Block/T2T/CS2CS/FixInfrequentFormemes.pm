@@ -9,6 +9,7 @@ extends 'Treex::Block::T2T::CS2CS::Deepfix';
 has 'model'            => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has 'model_data'       => ( is => 'rw', isa => 'Maybe[HashRef]', default => undef );
 has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
+has 'model_format'     => ( is => 'rw', isa => 'Str', default => 'tlemma_ptlemma_syntpos_enformeme_formeme' );
 
 # exclusive thresholds
 has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
@@ -410,36 +411,106 @@ sub decide_on_change_en_model {
 sub get_formeme_count {
     my ( $self, $node, $formeme ) = @_;
 
-    return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+    my $model_format = $self->model_format;
+    if ( $model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
+        return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
         ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
         ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
         ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
         ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
         ->{$formeme}
         || 0;
+    }
+    elsif ( $model_format eq 'ptlemma_syntpos_enformeme_formeme') {
+        return $self->model_data->{'ptlemma_syntpos_enformeme_formeme'}
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        ->{$formeme}
+        || 0;
+    }
+    elsif ( $model_format eq 'tlemma_ptlemma_syntpos_enfunctor_formeme') {
+        return $self->model_data->{'tlemma_ptlemma_syntpos_enfunctor_formeme'}
+        ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enfunctor'} }
+        ->{$formeme}
+        || 0;
+    }
+    else {
+        log_fatal "Unknown model format: $model_format";
+        return;
+    }
 }
 
 sub get_all_count {
     my ( $self, $node ) = @_;
 
-    return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme'}
+    my $model_format = $self->model_format;
+    if ( $model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
+        return $self->model_data->{'tlemma_ptlemma_syntpos_enformeme'}
         ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
         ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
         ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
         ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
         || 0;
+    }
+    elsif ( $model_format eq 'ptlemma_syntpos_enformeme_formeme') {
+        return $self->model_data->{'ptlemma_syntpos_enformeme'}
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        || 0;
+    }
+    elsif ( $model_format eq 'tlemma_ptlemma_syntpos_enfunctor_formeme') {
+        return $self->model_data->{'tlemma_ptlemma_syntpos_enfunctor'}
+        ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+        ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+        ->{ $node->wild->{'deepfix_info'}->{'enfunctor'} }
+        || 0;
+    }
+    else {
+        log_fatal "Unknown model format: $model_format";
+        return;
+    }
 }
 
 sub get_candidates {
     my ( $self, $node ) = @_;
 
-    return keys %{
-        $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
+    my $model_format = $self->model_format;
+    if ( $model_format eq 'tlemma_ptlemma_syntpos_enformeme_formeme') {
+        return keys %{
+            $self->model_data->{'tlemma_ptlemma_syntpos_enformeme_formeme'}
             ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
             ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
             ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
             ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
         };
+    }
+    elsif ( $model_format eq 'ptlemma_syntpos_enformeme_formeme') {
+        return keys %{
+            $self->model_data->{'ptlemma_syntpos_enformeme_formeme'}
+            ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+            ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+            ->{ $node->wild->{'deepfix_info'}->{'enformeme'} }
+        };
+    }
+    elsif ( $model_format eq 'tlemma_ptlemma_syntpos_enfunctor_formeme') {
+        return keys %{
+            $self->model_data->{'tlemma_ptlemma_syntpos_enfunctor_formeme'}
+            ->{ $node->wild->{'deepfix_info'}->{'tlemma'} }
+            ->{ $node->wild->{'deepfix_info'}->{'ptlemma'} }
+            ->{ $node->wild->{'deepfix_info'}->{'formeme'}->{'syntpos'} }
+            ->{ $node->wild->{'deepfix_info'}->{'enfunctor'} }
+        };
+    }
+    else {
+        log_fatal "Unknown model format: $model_format";
+        return;
+    }
 }
 
 # sub get_formeme_count {

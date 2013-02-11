@@ -82,10 +82,13 @@ sub fill_info_aligned {
     if ( defined $node->wild->{'deepfix_info'}->{'ennode'} ) {
         $node->wild->{'deepfix_info'}->{'enformeme'} = $node->wild->{'deepfix_info'}->{'ennode'}->formeme() // '';
         $node->wild->{'deepfix_info'}->{'entlemma'}  = $node->wild->{'deepfix_info'}->{'ennode'}->t_lemma() // '';
+        $node->wild->{'deepfix_info'}->{'enfunctor'} =
+            $node->wild->{'deepfix_info'}->{'ennode'}->functor() // '';
     }
     else {
         $node->wild->{'deepfix_info'}->{'enformeme'} = '';
         $node->wild->{'deepfix_info'}->{'entlemma'}  = '';
+        $node->wild->{'deepfix_info'}->{'enfunctor'} = '';
     }
 
     return $node;
