@@ -10,7 +10,7 @@ BEGIN {
     Test::More::plan( skip_all => 'these tests require x86_64 architecture' ) if (`arch` !~ /x86_64/);
 
     use_ok('Treex::Tool::ML::VowpalWabbit::Learner');
-    use_ok('Treex::Tool::ML::VowpalWabbit::Model');
+    use_ok('Treex::Tool::ML::Factory');
 }
 
 my @data = (
@@ -46,7 +46,8 @@ my $score = $model->score(['f1','f2'], 'cs1');
 
 my $model_path = 't/toy.model';
 $model->save($model_path);
-my $new_model = Treex::Tool::ML::VowpalWabbit::Model->new();
+my $factory = Treex::Tool::ML::Factory->new();
+my $new_model = $factory->create_classifier_model('vw');
 $new_model->load($model_path);
 
 my $new_score = $new_model->score(['f1','f2'], 'cs1');

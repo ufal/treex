@@ -5,8 +5,9 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::ML::MaxEnt::Model;
 #use Treex::Tool::ML::VowpalWabbit::Model;
+#use Treex::Tool::ML::Classifier::Linear;
 use Treex::Tool::ML::MaxEnt::Learner;
-#use Treex::Tool::ML::VowpalWabbit::Learner;
+use Treex::Tool::ML::VowpalWabbit::Learner;
 
 sub create_classifier_model {
     my ($self, $model_type) = @_;
@@ -16,7 +17,8 @@ sub create_classifier_model {
         $model = Treex::Tool::ML::MaxEnt::Model->new();
     }
 #    elsif ($model_type eq 'vw') {
-#        $model = Treex::Tool::ML::VowpalWabbit::Model->new();
+#        #$model = Treex::Tool::ML::VowpalWabbit::Model->new();
+#        $model = Treex::Tool::ML::Classifier::Linear->new();
 #    }
     else {
         log_fatal "Unsupported classifier type: $model_type";

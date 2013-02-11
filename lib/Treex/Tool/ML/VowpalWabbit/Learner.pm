@@ -6,7 +6,8 @@ use Treex::Core::Common;
 
 use VowpalWabbit;
 use Treex::Tool::ML::VowpalWabbit::Util;
-use Treex::Tool::ML::VowpalWabbit::Model;
+#use Treex::Tool::ML::VowpalWabbit::Model;
+use Treex::Tool::ML::Classifier::Linear;
 use Treex::Tool::Compress::Index;
 
 use List::Util qw(shuffle);
@@ -135,25 +136,38 @@ sub learn {
     # 3. predict a class for the instance
     # 4. retrieve the parameters assigned to each of the features
 
-    $vw = VowpalWabbit::initialize("-t --audit --quiet");
+    $vw = VowpalWabbit::create_vw();
+    VowpalWabbit::add_buffered_regressor($vw, $buff);
+    VowpalWabbit::initialize_empty_vw($vw, "-t /dev/null --audit --quiet");
 
     my $all_example_str = Treex::Tool::ML::VowpalWabbit::Util::instance_to_vw_str( [keys %{$self->_feat_count}] );
     my $all_example = VowpalWabbit::read_example($vw, $all_example_str);
 
-    open STDERR, '>/dev/null';
+    # suppress the audit info being printed on STDOUT by VW
+    open my $saveout, ">&STDOUT";
+    open STDOUT, '>', "/dev/null";
     $vw->learn($vw, $all_example);
-    close STDERR;
+    open STDOUT, ">&", $saveout;
 
-    my $feats = VowpalWabbit::get_feats($example);
-    my $weights = VowpalWabbit::get_weights($vw, $example);
+    my $feats = VowpalWabbit::get_feats($all_example);
+    my $weights = $vw->get_weights($vw, $all_example);
+    VowpalWabbit::finish_example($vw, $all_example);
+    VowpalWabbit::finish($vw);
 
-    my $model_hash = $self->_convert_to_hash($feats, $weights);
+    # remove namespace from feat names
+    my @feats_no_ns = map {$_ =~ s/^[^^]*\^(.*)$/$1/; $_} @$feats;
+    my $model_hash = $self->_convert_to_hash(\@feats_no_ns, $weights);
 
-    # TODO what should we return???
-    my $model = Treex::Tool::ML::VowpalWabbit::Model->new({
-        model => $buff,
-        index => $self->_current_index,
+    print STDERR Dumper($model_hash);
+
+    my $model = Treex::Tool::ML::Classifier::Linear->new({
+        model => $model_hash,
     });
+    
+    #my $model = Treex::Tool::ML::VowpalWabbit::Model->new({
+    #    model => $buff,
+    #    index => $self->_current_index,
+    #});
     
     return $model;
 }
@@ -194,12 +208,18 @@ sub _convert_to_hash {
     my $k = $self->_current_index->last_idx;
     my $feat_num = scalar @$feats;
 
+    $self->_current_index->build_inverted_index();
+
     my $model_hash = {};
 
     for (my $class_idx = 1; $class_idx <= $k; $class_idx++) {
         for (my $j = 0; $j < $feat_num; $j++) {
-            $weights_idx = $j + ($class_idx - 1)*$feat_num;
-            $model_hash->{$class_idx}{$feats->[$j]} = $weights->[$weights_idx];
+            my $weights_idx = $j + ($class_idx - 1)*$feat_num;
+            # do not store 0 weights
+            if ($weights->[$weights_idx]) {
+                my $class_name = $self->_current_index->get_str_for_idx($class_idx);
+                $model_hash->{$class_name}{$feats->[$j]} = $weights->[$weights_idx];
+            }
         }
     }
     return $model_hash;
