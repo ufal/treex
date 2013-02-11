@@ -14,24 +14,23 @@ has 'known_models' => (
 	is        => 'rw',
 	isa       => 'HashRef',
 	default	=> sub {{
-      	'bn'	=> "installed_tools/tagger/stanford/models/bengali-icon10-pdtstyle.model",
-      	'cs'	=> "installed_tools/tagger/stanford/models/czech-conll2007.model",
-      	'de'	=> "installed_tools/tagger/stanford/models/german-fast.tagger",
-      	'en'	=> "installed_tools/tagger/stanford/models/english-left3words-distsim.tagger",
-      	'fr'	=> "installed_tools/tagger/stanford/models/french.tagger",
-      	'hi'	=> "installed_tools/tagger/stanford/models/hindi-icon10-pdtstyle.model",
-      	'mr'	=> "installed_tools/tagger/stanford/models/marathi-kumaran.model",	
-      	'ta'	=> "installed_tools/tagger/stanford/models/tamil-TamilTB-pdtstyle.model",
-      	'te'	=> "installed_tools/tagger/stanford/models/telugu-icon10-pdtstyle.model",
+      	'bn'	=> "data/models/tagger/stanford/bengali-icon10-pdtstyle.model",
+      	'cs'	=> "data/models/tagger/stanford/czech-conll2007.model",
+      	'de'	=> "data/models/tagger/stanford/german-fast.tagger",
+      	'en'	=> "data/models/tagger/stanford/english-left3words-distsim.tagger",
+      	'fr'	=> "data/models/tagger/stanford/french.tagger",
+      	'hi'	=> "data/models/tagger/stanford/hindi-icon10-pdtstyle.model",
+      	'mr'	=> "data/models/tagger/stanford/marathi-kumaran.model",	
+      	'ta'	=> "data/models/tagger/stanford/tamil-TamilTB-pdtstyle.model",
+      	'te'	=> "data/models/tagger/stanford/telugu-icon10-pdtstyle.model",
   	}}
 ); 
-	
+
 has 'using_lang_model' => (
 	is => 'ro',
 	isa => 'Str',
 	lazy_build => 1
 );	
-
 
 sub _build_tagger{
     my ($self) = @_;
