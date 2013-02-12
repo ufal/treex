@@ -155,10 +155,8 @@ sub learn {
     VowpalWabbit::finish($vw);
 
     # remove namespace from feat names
-    my @feats_no_ns = map {$_ =~ s/^[^^]*\^(.*)$/$1/; $_} @$feats;
-    my $model_hash = $self->_convert_to_hash(\@feats_no_ns, $weights);
-
-    print STDERR Dumper($model_hash);
+    my @feats_processed = Treex::Tool::ML::VowpalWabbit::Util::feats_vw_to_perl(@$feats);
+    my $model_hash = $self->_convert_to_hash(\@feats_processed, $weights);
 
     my $model = Treex::Tool::ML::Classifier::Linear->new({
         model => $model_hash,

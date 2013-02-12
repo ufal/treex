@@ -28,7 +28,8 @@ sub _x_to_str {
     if (ref($x) eq 'HASH') {
         $x = [ map {$_ . '=' . $x->{$_}} keys %$x ];
     }
-    my $x_str = join ' ', @$x;
+
+    my $x_str = join ' ', feats_perl_to_vw(@$x);
 
     # ":" and "|" is a special char in VW
     $x_str =~ s/:/__COL__/g;
@@ -54,6 +55,23 @@ sub instance_to_multiline {
     }
     $instance_str .= "\n";
     return $instance_str;
+}
+
+sub feats_perl_to_vw {
+    my (@feats) = @_;
+    foreach (@feats) {
+        utf8::encode($_);
+    }
+    return @feats;
+}
+
+sub feats_vw_to_perl {
+    my (@feats) = @_;
+    my @feats_no_ns = map {$_ =~ s/^[^^]*\^(.*)$/$1/; $_} @feats;
+    foreach (@feats_no_ns) {
+        utf8::decode($_);
+    }
+    return @feats_no_ns;
 }
 
 1;

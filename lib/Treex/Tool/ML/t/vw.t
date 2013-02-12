@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use utf8;
 
 use Test::More;
 use Test::Deep;
@@ -14,7 +15,7 @@ BEGIN {
 }
 
 my @data = (
-    {class => 'cs1', feats => ['f1', 'f2', 'f3']},
+    {class => 'cs1', feats => ['ščářů', 'f1', 'f2', 'f3']},
     {class => 'cs1', feats => ['f4', 'f2', 'f8']},
     {class => 'cs1', feats => ['f1', 'f2', 'f3', 'f5']},
     {class => 'cs1', feats => ['f5', 'f2', 'f3']},
@@ -42,7 +43,7 @@ foreach my $instance (@data) {
 my $model = $learner->learn();
 ok($model, 'model learn');
 
-my $score = $model->score(['f1','f2'], 'cs1');
+my $score = $model->score(['ščářů','f1','f2'], 'cs1');
 
 my $model_path = 't/toy.model';
 $model->save($model_path);
@@ -50,9 +51,9 @@ my $factory = Treex::Tool::ML::Factory->new();
 my $new_model = $factory->create_classifier_model('vw');
 $new_model->load($model_path);
 
-my $new_score = $new_model->score(['f1','f2'], 'cs1');
+my $new_score = $new_model->score(['ščářů','f1','f2'], 'cs1');
 
 print STDERR "Old score: $score, New score: $new_score\n";
-is($score, $new_score, "the same score");
+cmp_deeply($score, num($new_score, 0.0001), "the same score");
 
 done_testing();
