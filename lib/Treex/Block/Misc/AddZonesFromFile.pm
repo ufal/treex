@@ -27,7 +27,7 @@ sub process_document {
 	my $destination = $self->from_selector;
 	$destination = $self->to_selector if $self->has_destination;
 	foreach my $i (0..$#bundles) {
-		my $zone_to_copy = $from_bundles[$i]->get_zone($self->from_zone);
+		my $zone_to_copy = $from_bundles[$i]->get_zone($self->from_zone, $self->from_selector);
 		my $new_zone = $bundles[$i]->create_zone($self->from_zone, $destination);
 		if ( $zone_to_copy->has_atree() ) {
 			my $new_zone_atree = $new_zone->create_atree();
