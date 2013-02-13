@@ -5,9 +5,9 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::ML::MaxEnt::Model;
 #use Treex::Tool::ML::VowpalWabbit::Model;
-#use Treex::Tool::ML::Classifier::Linear;
+use Treex::Tool::ML::Classifier::Linear;
 use Treex::Tool::ML::MaxEnt::Learner;
-use Treex::Tool::ML::VowpalWabbit::Learner;
+#use Treex::Tool::ML::VowpalWabbit::Learner;
 
 sub create_classifier_model {
     my ($self, $model_type) = @_;
