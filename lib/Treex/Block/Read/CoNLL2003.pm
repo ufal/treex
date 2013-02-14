@@ -38,15 +38,17 @@ sub _process_sentence {
     
     my ($form, $lemma, $tag, $chunk, $ne_type);
     ($form, $lemma, $tag, $chunk, $ne_type) = @cols if $ncols == 5;
-    ($form, $lemma, $chunk, $ne_type) = @cols if $ncols == 4; 
+    ($form, $tag, $chunk, $ne_type) = @cols if $ncols == 4; 
 
     my $newnode = $a_root->create_child();
     $newnode->shift_after_subtree($a_root);
     $newnode->set_form($form);
-    $newnode->set_lemma($lemma);
-    $newnode->set_tag($tag) if $ncols == 5;
-    $sentence_text .= "$form ";
+    $newnode->set_lemma($lemma) if $ncols == 5;
+    $newnode->set_tag($tag);
+    $newnode->wild->{conll_chunk} = $chunk;
     $newnode->set_parent($a_root);
+    
+    $sentence_text .= "$form ";
 
     if ($docstart) { # mark beginning of new document (e.g. news article)
       $newnode->wild->{docstart} = 1;
@@ -54,7 +56,7 @@ sub _process_sentence {
     }
 
     # skip creating n-tree if not interested in NE labels
-    next if not $self->read_gold;
+    next if $self->read_gold == 0;
 
     if ($ne_type eq 'O') {      # no entity here
       if ($prev_type ne 'O') {  # previous was entity => flush
@@ -120,7 +122,7 @@ Document reader for CoNLL 2003 format.
 CoNLL 2003 shared task was named entity recognition.
 
 Each token is on separated line in either of the two following formats:
-form<tab>lemma<tab>chunk<tab>named_entity (English data)
+form<tab>pos_tag<tab>chunk<tab>named_entity (English data)
 form<tab>lemma<tab>pos_tag<tab>chunk<tab>named_entity (German data)
 
 Sentences are separated with blank line.

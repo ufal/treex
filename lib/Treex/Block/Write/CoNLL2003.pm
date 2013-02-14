@@ -30,9 +30,13 @@ sub process_atree {
         print { $self->_file_handle } "-DOCSTART- -X- ". ($self->cols == 5 ? "-X- " : "") . "O O\n\n";
       }
 
-      my $str = $a_node->form." ".$a_node->lemma." ";
-      $str .= ($self->cols == 5 ? $a_node->tag." " : "");
-      $str .= "_ "; # TODO: parametrized "dummy" string
+      my $str = $a_node->form." ";
+      $str .= ($self->cols == 5 ? $a_node->lemma." " : "");
+      $str .= $a_node->tag." ";
+
+      # TODO: parametrized "dummy" string when conll chunk is not present
+      $str .= $a_node->wild->{conll_chunk} ? $a_node->wild->{conll_chunk} : "_";
+      $str .= " ";
       
       my $n_node = $a_node->n_node();
       
@@ -83,7 +87,7 @@ http://www.cnts.ua.ac.be/conll2003/ner/
 
 =item cols
 
-Number of columns, either 4 (form, lemma, chunk, ne_type => e.g. CoNLL2003
+Number of columns, either 4 (form, tag, chunk, ne_type => e.g. CoNLL2003
 English data) or 5 (form, lemma, tag, chunk, ne_type => e.g. CoNLL2003 German
 data). Default is 4.
 
