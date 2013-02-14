@@ -4,7 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has 'cols'              => ( is => 'rw', 'isa' => 'Int', default => 4 );
-has 'conll_labels'      => ( is => 'rw', 'isa' => 'Bool', default => 1 );
+has 'conll_labels'      => ( is => 'rw', 'isa' => 'Bool', default => 0 );
 
 sub _guess_conll_label {
   my ( $label ) = @_;
@@ -90,7 +90,7 @@ data). Default is 4.
 =item conll_labels
 
 If 1, the system prints CoNLL2003 NE type labels, one of PER, LOC, ORG, MISC.
-Default is 1.
+Default is 0, that is, original labels are printed.
 
 =head1 METHODS
 
