@@ -29,6 +29,7 @@ has 'tag_features' => (
 	handles => {
 		get_fpositions => 'keys',
 		get_fname => 'get',	
+		clear_map => 'clear',
 		has_no_mapping => 'is_empty',
 		has_fposition => 'exists'	
 	},	
@@ -42,7 +43,7 @@ has 'use_index_for_feat_name' => (
 
 sub BUILD {
 	my ($self) = @_;
-	$self->tag_features = sub{{}} if $self->use_index_for_feat_name;
+	$self->clear_map() if $self->use_index_for_feat_name;
 }
 
 sub process_atree {
@@ -60,7 +61,7 @@ sub process_atree {
 		foreach my $i (2..(length($n->tag)-1)) {
 			my $fval = substr $n->tag, $i, 1;
 			if ($fval ne '-') {
-				my $fname = $i; 
+				my $fname = $i+1; 
 				$fname = $self->get_fname($i+1) if ($self->has_fposition($i+1));
 				push @f, $fname . "=" . $fval;				
 			}
