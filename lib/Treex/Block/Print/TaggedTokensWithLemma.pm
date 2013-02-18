@@ -15,6 +15,12 @@ has 'format' => (
 	default => 'flt'
 );
 
+has 'pos_attribute' => (
+	is => 'ro',
+	isa => 'Str',
+	default => 'tag'
+);
+
 sub process_atree
 {
     my $self = shift;
@@ -25,15 +31,22 @@ sub process_atree
     if ($self->format eq 'flt') {
 	    print(join('', map
 	    {
-	        $_->form()."\t".$_->lemma()."\t".$_->tag()."\n";
+	    	my $n = $_;
+    		my $complex_tag = q();
+    		map{$complex_tag .= $n->get_attr($_)}split /\+/, $self->pos_attribute;
+	        $n->form() . "\t" . $n->lemma() ."\t". $complex_tag . "\n";
 	    }
-	    (@nodes)), "\n");    	
+	    (@nodes)), "\n");
+	        	
     }
 	# 'ftl' - form \t tag \t lemma    
     elsif ($self->format eq 'ftl') {
 	    print(join('', map
 	    {
-	        $_->form()."\t".$_->tag()."\t".$_->lemma()."\n";
+	    	my $n = $_;
+    		my $complex_tag = q();
+    		map{$complex_tag .= $n->get_attr($_)}split /\+/, $self->pos_attribute;	
+	        $n->form() . "\t" . $complex_tag . "\t" . $n->lemma() . "\n";
 	    }
 	    (@nodes)), "\n");       	
     }
@@ -64,10 +77,15 @@ The C<format> parameter allows the data to be printed in different formats often
 of Speech taggers. The C<format> paramter can take 2 possible values: (i) 'flt' - which is the default value and the prints
 the data in 'form \t lemma \t tag' and (ii) 'ftl' - prints the data in 'form \t tag \t lemma'.      
 
+=item C<pos_attribute>
+Allows the user to combine various tags into a single complex tag. For example, one may want to combine I<coarse grained> and I<fine grained>
+POS into a single tag, in that case, specifying C<pos_attribute> as 'conll/cpos+conll/pos' would concatenate them into a single tag. The default value
+is 'tag'.   
 
 =head1 AUTHOR
 
 Dan Zeman <zeman@ufal.mff.cuni.cz>
+
 
 =head1 COPYRIGHT AND LICENSE
 
