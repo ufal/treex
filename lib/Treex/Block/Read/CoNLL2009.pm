@@ -1,36 +1,7 @@
 package Treex::Block::Read::CoNLL2009;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::Read::BaseTextReader';
-
-sub next_document_text {
-    my ($self) = @_;
-    my $FH = $self->_current_fh;
-    if ( !$FH ) {
-        $FH = $self->next_filehandle() or return;
-        $self->_set_current_fh($FH);
-    }
-
-    if ( $self->is_one_doc_per_file ) {
-        $self->_set_current_fh(undef);
-        return read_file($FH);
-    }
-
-    my $text;
-    my $empty_lines;
-
-    LINE:
-
-    while (<$FH>) {
-        if ( $_ =~ m/^\s*$/ ) {
-            $empty_lines++;
-            return $text if $empty_lines == $self->lines_per_doc;
-        }
-        $text .= $_;
-    }
-
-    return $text;
-}
+extends 'Treex::Block::Read::BaseCoNLLReader';
 
 sub next_document {
     my ($self) = @_;
@@ -132,6 +103,6 @@ David Mareček and Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
