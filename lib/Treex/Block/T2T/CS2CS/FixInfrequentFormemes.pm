@@ -297,6 +297,12 @@ sub do_the_change {
                     );
                 }
             }
+
+            # change *:attr children cases (recursively)
+            if ( $self->magic !~ /nottr/ ) {
+                $msg .= $self->change_attr_echildren($node, $new_formeme->{case});
+            }
+
         }
 
         # set the new formeme
@@ -308,6 +314,27 @@ sub do_the_change {
         log_warn "No change to be done, the formemes are the same!";
         return;
     }
+}
+
+sub change_attr_echildren {
+    my ($self, $node, $newcase) = @_;
+
+    my $msg = '';
+
+    my @attr_children = grep { $_->formeme =~ /:attr$/ }
+        $node->get_echildren();
+    foreach my $child (@attr_children) {
+        my $child_lexnode =
+            $child->wild->{'deepfix_info'}->{'lexnode'};
+        # change node case
+        $msg .= ' [*:attr] ';
+        $msg .= $self->change_anode_attribute(
+            $child_lexnode, 'tag:case', $newcase
+        );
+        $self->change_attr_echildren($node, $newcase);
+    }
+
+    return $msg;
 }
 
 sub find_preposition_node {
