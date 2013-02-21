@@ -31,9 +31,6 @@ sub _x_to_str {
 
     my $x_str = join ' ', feats_perl_to_vw(@$x);
 
-    # ":" and "|" is a special char in VW
-    $x_str =~ s/:/__COL__/g;
-    $x_str =~ s/\|/__PIPE__/g;
     return $x_str;
 }
 
@@ -59,8 +56,11 @@ sub instance_to_multiline {
 
 sub feats_perl_to_vw {
     my (@feats) = @_;
-    foreach (@feats) {
-        utf8::encode($_);
+    foreach my $feat (@feats) {
+        # ":" and "|" is a special char in VW
+        $feat =~ s/:/__COL__/g;
+        $feat =~ s/\|/__PIPE__/g;
+        utf8::encode($feat);
     }
     return @feats;
 }
@@ -68,8 +68,10 @@ sub feats_perl_to_vw {
 sub feats_vw_to_perl {
     my (@feats) = @_;
     my @feats_no_ns = map {$_ =~ s/^[^^]*\^(.*)$/$1/; $_} @feats;
-    foreach (@feats_no_ns) {
-        utf8::decode($_);
+    foreach my $feat (@feats_no_ns) {
+        utf8::decode($feat);
+        $feat =~ s/__PIPE__/|/g;
+        $feat =~ s/__COL__/:/g;
     }
     return @feats_no_ns;
 }
