@@ -24,6 +24,12 @@ has 'passes' => (
     default => 5,
 );
 
+has 'l2' => (
+    is => 'ro',
+    isa => 'Num',
+    default => 0,
+);
+
 # the level of verbosity
 # 0 = no info prints
 # 1 = just info prints of Perl wrapper
@@ -110,7 +116,7 @@ sub learn {
     my $num_classes = $self->_current_index->last_idx;
 
     my $quiet = $self->verbose < 2 ? "--quiet" : "";
-    my $init_str = "-d /dev/null $quiet --sequence_max_length 1024 --noconstant --oaa $num_classes";
+    my $init_str = "-d /dev/null $quiet --sequence_max_length 1024 --noconstant --l2 ".$self->l2." --oaa $num_classes";
     
     my $vw = VowpalWabbit::initialize($init_str);
 
