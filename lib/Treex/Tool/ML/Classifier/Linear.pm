@@ -40,7 +40,9 @@ sub score {
     my $model_for_y = $self->model->{$y};
     if (defined $model_for_y) {
         foreach my $feat (@$x) {
-            $lambda_f += $model_for_y->{$feat} || 0;
+            my $weight = $model_for_y->{$feat} || 0;
+            $lambda_f += $weight;
+            #print STDERR "CLASS: $y\tFEAT:$feat\tWEIGHT:$weight\n";
         }
     }
     return $lambda_f; 
@@ -55,7 +57,9 @@ sub log_feat_weights {
     my $model_for_y = $self->model->{$y};
     if (defined $model_for_y) {
         foreach my $feat (@$x) {
-            $feat_weights{$feat} += $model_for_y->{$feat} || 0;
+            my $weight = $model_for_y->{$feat} || 0;
+            $feat_weights{$feat} += $weight;
+            #print STDERR "CLASS: $y\tFEAT:$feat\tWEIGHT:$weight\n";
         }
     }
     my @sorted = map {$_ . "=" . $feat_weights{$_}} 
@@ -101,6 +105,23 @@ sub cut_weights {
             if (abs($feat_hash->{$feat}) < $threshold) {
                 delete $feat_hash->{$feat};
             }
+        }
+    }
+}
+
+sub dump {
+    my ($self, $sort_by_weights) = @_;
+
+    foreach my $class (sort $self->all_classes) {
+        
+        print STDOUT "$class\n";
+        
+        my $feat_hash = $self->model->{$class};
+        my @sorted_feats = $sort_by_weights 
+            ? sort {$feat_hash->{$b} <=> $feat_hash->{$a}} keys %$feat_hash
+            : sort keys %$feat_hash;
+        foreach my $feat (@sorted_feats) {
+            print STDOUT "\t$feat = " . $feat_hash->{$feat} . "\n";
         }
     }
 }
