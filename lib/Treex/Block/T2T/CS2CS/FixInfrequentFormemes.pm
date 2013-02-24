@@ -12,11 +12,13 @@ has 'model_from_share' => ( is => 'ro', isa => 'Maybe[Str]', default => undef );
 has 'model_format'     => ( is => 'rw', isa => 'Str', default => 'tlemma_ptlemma_syntpos_enformeme_formeme' );
 
 # exclusive thresholds
-has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 0.2 );
-has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 0.85 );
+has 'lower_threshold' => ( is => 'ro', isa => 'Num', default => 1 );
+has 'upper_threshold' => ( is => 'ro', isa => 'Num', default => 1 );
 
-has 'lower_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.1 );
+has 'lower_threshold_en' => ( is => 'ro', isa => 'Num', default => 1 );
 has 'upper_threshold_en' => ( is => 'ro', isa => 'Num', default => 0.6 );
+
+has 'min_count_to_keep' => ( is => 'rw', isa => 'Num', default => 2 );
 
 use Treex::Tool::Depfix::CS::TagHandler;
 
@@ -97,6 +99,13 @@ sub get_formeme_score {
     my $all_count = $self->get_all_count($node);
 
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
+
+    # ignore low counts
+    if ( $all_count < $self->min_count_to_keep) {
+        # 0.5 is returned if we have no data whatsoever
+        # (all formemes get a uniform prob of 0.5)
+        $score = 0.5;
+    }
 
     return $score;
 }
@@ -316,6 +325,7 @@ sub do_the_change {
     }
 }
 
+my $max_recursion = 5;
 sub change_attr_echildren {
     my ($self, $node, $newcase) = @_;
 
@@ -331,7 +341,11 @@ sub change_attr_echildren {
         $msg .= $self->change_anode_attribute(
             $child_lexnode, 'tag:case', $newcase
         );
-        $self->change_attr_echildren($node, $newcase);
+        if ( $max_recursion > 0 ) {
+            $max_recursion--;
+            $self->change_attr_echildren($node, $newcase);
+            $max_recursion++;
+        }
     }
 
     return $msg;

@@ -37,6 +37,19 @@ sub decide_on_change {
         # do not fix if there are numerals around
         # because they behave in a speacial way
         && ( !$self->numerals_are_around($node) )
+
+        # TODO do not fix named entities
+        && ( $node->wild->{'deepfix_info'}->{'tlemma'}
+            eq lc($node->wild->{'deepfix_info'}->{'tlemma'}) )
+
+        # TODO do not fix named entities' children
+        && ( $node->wild->{'deepfix_info'}->{'ptlemma'}
+            eq lc($node->wild->{'deepfix_info'}->{'ptlemma'}) )
+
+        # do not fix if crosses clause boundary
+        # && ( $self->nodes_in_different_clauses(
+        #         $node, $node->wild->{'deepfix_info'}->{'parent'}) != 1 )
+
         )
     {
         $change = $self->decide_on_change_en_model($node);
