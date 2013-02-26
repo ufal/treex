@@ -76,4 +76,20 @@ sub feats_vw_to_perl {
     return @feats_no_ns;
 }
 
+sub split_to_classes {
+    my ($array, $k) = @_;
+    
+    if (@$array % $k != 0) {
+        log_fatal "Length of the array must be a multiple of the number of classes.";
+    }
+
+    my $feat_num = scalar @$array / $k;
+    
+    my $classed_array = {};
+    for (my $i = 1; $i <= $k; $i++) {
+        $classed_array->{$i} = [ @$array[$feat_num*($i-1) .. $feat_num*$i-1] ];
+    }
+    return $classed_array;
+}
+
 1;

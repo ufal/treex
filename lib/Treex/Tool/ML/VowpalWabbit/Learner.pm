@@ -157,6 +157,7 @@ sub learn {
 
     my $feats = VowpalWabbit::get_feats($all_example);
     my $weights = $vw->get_weights($vw, $all_example);
+    my $feats_idx = $vw->get_feats_idx($vw, $all_example);
     VowpalWabbit::finish_example($vw, $all_example);
     VowpalWabbit::finish($vw);
 
@@ -171,6 +172,7 @@ sub learn {
     #my $model = Treex::Tool::ML::VowpalWabbit::Model->new({
     #    model => $buff,
     #    index => $self->_current_index,
+    #    feat_map => $self->_feature_mapping($feats, $feats_idx), 
     #});
     
     return $model;
@@ -227,6 +229,23 @@ sub _convert_to_hash {
         }
     }
     return $model_hash;
+}
+
+sub _feature_mapping {
+    my ($self, $feats, $feats_idx) = @_;
+    
+    my $k = $self->_current_index->last_idx;
+
+    my $classed_feats_idx = Treex::Tool::ML::VowpalWabbit::Util::split_to_classes($feats_idx, $k);
+
+    my $feat_map = {};
+    foreach my $class_idx (keys %$classed_feats_idx) {
+        my %idx_to_name;
+        @idx_to_name{@{$classed_feats_idx->{$class_idx}}} = @$feats;
+        $feat_map->{$class_idx} = \%idx_to_name;
+    }
+
+    return $feat_map;
 }
 
 1;
