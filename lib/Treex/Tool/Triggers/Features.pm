@@ -103,54 +103,60 @@ sub _build_clusters {
     return $clusters;
 }
 
-sub _weighted_feats {
-    my ($self, $feat_weight, $weighted) = @_;
-    my @feats = ();
-    if ($weighted) {
-        @feats = map {$_ . "::" . $feat_weight->{$_}} keys %$feat_weight;
-    }
-    else {
-        @feats = keys %$feat_weight;
-    }
-    return \@feats;
-}
-
 sub create_instance {
     my ($self, $tnode, $types, $weights) = @_;
     my %types_hash = map {$_ => 1} @$types;
+    
+    my $context_nodes = $self->_get_context_nodes( $tnode );
 
-    my @instance = ();
+    my %feats;
     if ($types_hash{bow}) {
-        push @instance, @{$self->create_lemma_instance($tnode, $weights)};
+        %feats = (%feats, $self->_extract_bow_feats($tnode, $context_nodes, $weights));
     }
     if ($types_hash{esa}) {
-        push @instance, @{$self->create_esa_instance($tnode, $weights)};
+        %feats = (%feats, $self->_extract_esa_feats($tnode, $weights));
     }
     if ($types_hash{cluster}) {
-        push @instance, @{$self->create_phrase_cluster_instance($tnode, $weights)};
+        %feats = (%feats, $self->_extract_cluster_feats($tnode, $context_nodes, $weights));
     }
+    my @instance = $self->_weighted_feats(\%feats, $weights);
     if (defined $self->filter_config) {
         @instance = $self->_filter->filter_features(\@instance, $tnode->t_lemma);
     }
     return \@instance;
 }
 
-sub create_lemma_instance {
-    my ($self, $tnode, $weights) = @_;
+sub _extract_bow_feats {
+    my ($self, $tnode, $context_nodes, $weights) = @_;
         
-    my $trigger_nodes = $self->_get_context_nodes( $tnode );
-    my $feat_weight = $self->_extract_lemmas($tnode, $trigger_nodes);
-    return $self->_weighted_feats($feat_weight, $weights);
+    return $self->_extract_context_features($tnode, $context_nodes, 'bow', \&_bow_for_lemma);
 }
 
-sub create_esa_instance {
-    my ($self, $tnode, $n) = @_;
-        
-    my $trigger_nodes = $self->_get_context_nodes( $tnode );
-    if (@$trigger_nodes == 0) {
-        return {};
+#sub _extract_esa_feats {
+#    my ($self, $tnode, $n) = @_;
+#        
+#    my $trigger_nodes = $self->_get_context_nodes( $tnode );
+#    if (@$trigger_nodes == 0) {
+#        return {};
+#    }
+#    return $self->_extract_esa_vector($trigger_nodes, $n)
+#}
+
+
+sub _extract_cluster_feats {
+    my ($self, $tnode, $context_nodes, $weights) = @_;
+
+    my %self_feats = $self->_extract_cluster_feats_of_node($tnode, 'node');
+    
+    my %parent_feats = ();
+    my ($parent) = $tnode->get_eparents( { or_topological => 1 } );
+    if (!$parent->is_root) {
+        %parent_feats = $self->_extract_cluster_feats_of_node($parent, 'parent');
     }
-    return $self->_extract_esa_vector($trigger_nodes, $n)
+    
+    my %context_feats = $self->_extract_context_features($tnode, $context_nodes, 'cluster', \&_ngram_cluster_for_lemma);
+
+    return (%self_feats, %parent_feats, %context_feats);
 }
 
 sub _get_context_nodes {
@@ -167,60 +173,49 @@ sub _get_context_nodes {
     return \@nodes;
 }
 
-sub create_phrase_cluster_instance {
-    my ($self, $tnode, $weights) = @_;
-
-    my %feats = ();
-    
-    my %tnode_feats = $self->_extract_cluster_feats($tnode, 'node');
-    @feats{keys %tnode_feats} = values %tnode_feats;
-    
-    #my ($parent) = $tnode->get_eparents( { or_topological => 1 } );
-    #if (!$parent->is_root) {
-    #    my %par_feats = $self->_extract_cluster_feats($parent, 'parent');
-    #    @feats{keys %par_feats} = values %par_feats;
-    #}
-
-    return $self->_weighted_feats(\%feats, $weights);;
-}
-
-sub _extract_cluster_feats {
+sub _extract_cluster_feats_of_node {
     my ($self, $tnode, $prefix) = @_;
-    
-    my %feats = ();
-    if (!defined $tnode->t_lemma) {
-        print STDERR "UNDEF_ADDR: " . $tnode->get_address() . "\n";
-    }
-    my $clusters = $self->_phrase_clustering->clusters_for_phrase($tnode->t_lemma);
-    
-    my @sorted_clus = sort {$clusters->{$b} <=> $clusters->{$a}} keys %$clusters;
-    foreach my $i (1 .. scalar @sorted_clus) {
-        #my $feat_str = sprintf "cluster-%s-%02d=%s", $prefix, $i, $sorted_clus[$i-1];
-        my $feat_str = sprintf "cluster-%s=%s", $prefix, $sorted_clus[$i-1];
-        $feats{$feat_str} = $clusters->{$sorted_clus[$i-1]};
-    }
-    return %feats;
+
+    my $clusters = $self->_ngram_cluster_for_lemma($tnode->t_lemma);
+    my %feats_for_lemma = map {
+        (sprintf "cluster-%s=%s", $prefix, $_) => $clusters->{$_}
+    } keys %$clusters;
+    return %feats_for_lemma;
 }
 
-sub _extract_esa_vector {
-    my ($self, $nodes, $n) = @_;
-    my $text = join " ", map {$_->t_lemma} @$nodes;
-    my %vector = $self->_esa_provider->esa_vector_n_best($text, $n);
-    my %feats = map {"esa_" . $_ => $vector{$_}} keys %vector;
-    return \%feats;
+#sub _extract_esa_vector {
+#    my ($self, $nodes, $n) = @_;
+#    my $text = join " ", map {$_->t_lemma} @$nodes;
+#    my %vector = $self->_esa_provider->esa_vector_n_best($text, $n);
+#    my %feats = map {"esa_" . $_ => $vector{$_}} keys %vector;
+#    return \%feats;
+#}
+
+sub _bow_for_lemma {
+    my ($self, $lemma) = @_;
+    $lemma =~ s/ /_/g;
+    $lemma =~ s/\t/__/g;
+    $lemma =~ s/##/__/g;
+    return {lc($lemma) => 1};
 }
 
-sub _extract_lemmas {
-    my ($self, $tnode, $nodes) = @_;
+sub _ngram_cluster_for_lemma {
+    my ($self, $lemma) = @_;
+    my $clusters = $self->_phrase_clustering->clusters_for_phrase($lemma);
+    return $clusters;
+}
 
+sub _extract_context_features {
+    my ($self, $tnode, $context_nodes, $feat_name, $get_info_hash_for_lemma) = @_;
+    
     my $tnode_sentpos = $tnode->get_bundle->get_position();
     my $tnode_wordpos = $tnode->wild->{doc_ord};
 
-    my ($tnode_ord) = grep {$nodes->[$_] == $tnode} (0 .. scalar @$nodes - 1);
+    my ($tnode_ord) = grep {$context_nodes->[$_] == $tnode} (0 .. scalar @$context_nodes - 1);
     #print STDERR "ORD: $tnode_ord\n";
     my $i = 0;
 
-    my %lemmas = map {
+    my %feats = map {
         my $sent_dist = $_->get_bundle->get_position() - $tnode_sentpos;
         my $word_dist;
 
@@ -233,15 +228,33 @@ sub _extract_lemmas {
         my $n_dist = $i - $tnode_ord;
         $i++;
         my $lemma = $_->t_lemma;
-        $lemma =~ s/ /_/g;
-        $lemma =~ s/\t/__/g;
-        $lemma =~ s/##/__/g;
-        my $key = sprintf "bow_s%d_w%d_n%d=%s", $sent_dist, $word_dist, $n_dist, lc($lemma); 
-        $key => 1
-    } grep {$_ != $tnode} @$nodes;
+
+        if (!defined $lemma) {
+            print STDERR "UNDEF_ADDR: " . $_->get_address() . "\n";
+        }
+        
+        my $info_hash = $self->$get_info_hash_for_lemma($lemma);
+        my %feats_for_lemma = map {
+            (sprintf "%s_s%d_w%d_n%d=%s", $feat_name, $sent_dist, $word_dist, $n_dist, $_) => $info_hash->{$_}
+        } keys %$info_hash;
+
+        %feats_for_lemma;
+    } grep {$_ != $tnode} @$context_nodes;
     
-    return \%lemmas;
+    return %feats;
     #return sort keys %lemmas;
+}
+
+sub _weighted_feats {
+    my ($self, $feat_weight, $weighted) = @_;
+    my @feats = ();
+    if ($weighted) {
+        @feats = map {$_ . "::" . $feat_weight->{$_}} keys %$feat_weight;
+    }
+    else {
+        @feats = keys %$feat_weight;
+    }
+    return @feats;
 }
 
 1;
