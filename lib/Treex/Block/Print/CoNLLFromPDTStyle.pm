@@ -62,7 +62,12 @@ sub process_atree {
 		# 7. HEAD 
 		$conll_line[6] = $n->get_parent->ord;
 		# 8. DEPREL (afun)
-		$conll_line[7] = $n->afun;
+		if ( defined $n->afun ) {
+			$conll_line[7] = $n->afun;	
+		}
+		else {
+			$conll_line[7] = '_';
+		}
 		# 9. PHEAD
 		$conll_line[8] = '_';
 		# 10. PDEPREL
@@ -79,7 +84,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Print::CoNLLFromPDTStyle - Prints the a-tree in CoNLL format.
+Treex::Block::Print::CoNLLFromPDTStyle - Prints a-tree in CoNLL format.
 
 =head1 DESCRIPTION
 
