@@ -23,7 +23,8 @@ sub _guess_conll_label {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my $prev_n_node = undef;
+    my $prev_ne_type = "O";
+    my $prev_n_node_id = "";
     foreach my $a_node ( $atree->get_descendants( { ordered => 1 } ) ) {
       # Mark start of new document (news article)
       if ($a_node->wild->{docstart}) {
@@ -42,6 +43,8 @@ sub process_atree {
       
       if (not $n_node) {
         $str .= "O";
+        $prev_ne_type = "O";
+        $prev_n_node_id = "";
       }
       else {
         my $ne_type = $self->conll_labels ? _guess_conll_label($n_node->ne_type) : $n_node->ne_type;
@@ -49,19 +52,23 @@ sub process_atree {
           $str .= $ne_type;
         }
         else {
-          if ($prev_n_node
-              and $prev_n_node->id ne $n_node->id
-              and $prev_n_node->ne_type ne $n_node->ne_type) {
+          if ($prev_ne_type ne "O" 
+              and $prev_n_node_id ne $n_node->id
+              and $prev_ne_type eq $ne_type) {
             $str .= "B-" . $ne_type;
           }
           else {
             $str .= "I-" . $ne_type;
           }
         }
+        $prev_ne_type = $ne_type;
+        $prev_n_node_id = $n_node->id;
       }
       print { $self->_file_handle } $str."\n";
     }
     print { $self->_file_handle } "\n";
+    $prev_ne_type = "O";
+    $prev_n_node_id = "";
     return;
 }
 

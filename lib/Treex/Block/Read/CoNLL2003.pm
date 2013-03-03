@@ -11,7 +11,7 @@ sub _add_entity {
  
   my $n_root = $zone->has_ntree() ? $zone->get_ntree() : $zone->create_ntree();
 
-  my @names = map { $_->form} @{$a_nodes_ref};
+  my @names = map { $_->form } @{$a_nodes_ref};
   my $n_node = $n_root->create_child(
     ne_type => $type,
     normalized_name => join (" ", @names),
@@ -75,6 +75,9 @@ sub _process_sentence {
       push @entity_anodes, $newnode;
       $prev_type = $type;
     }
+  }
+  if (@entity_anodes) { # flush last entity
+    _add_entity($zone, \@entity_anodes, $prev_type);
   }
   $sentence =~ s/\s+$//;
   $zone->set_sentence($sentence_text);
