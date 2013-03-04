@@ -33,11 +33,8 @@ while (<TRAIN>) {
         push @features, $line[$i];
     }
 
-    print Dumper @features;
-
     my $classification = $line[$#line];
 
-    print Dumper $classification;
     my $data = new Algorithm::SVM::DataSet(Label => $classification, Data => \@features);
 
     push @dataset, $data;
@@ -49,8 +46,8 @@ print "Training SVM model...\n";
 #print Dumper @dataset;
 
 my $svm = new Algorithm::SVM();
-$svm->C(100);
-$svm->gamma(64);
+#$svm->C(100);
+#$svm->gamma(64);
 $svm->train(@dataset);
 
 # Save SVM model
