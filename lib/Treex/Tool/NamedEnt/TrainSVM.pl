@@ -6,35 +6,49 @@ use warnings;
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
-
+use Getopt::Long;
 use Data::Dumper;
 
-@ARGV == 2 or die "Usage: ./TrainSVM.pl oneword_features.tsv output.model";
+my $separator = ",";
+GetOptions('separator=s' => \$separator);
+
+@ARGV == 3 or die "Usage: ./TrainSVM.pl oneword_features output.model classes [-s separator]";
 
 my $input = shift;
 my $output = shift;
+my $classes = shift;
 
+die "Illegal arguments" if !defined $input or !defined $output or !defined $classes;
 
-die "Illegal arguments" if !defined $input or !defined $output;
+open CLASSES, "<$classes" or die "Cannot open classes list $classes";
+chomp(my @classes = <CLASSES>);
+close CLASSES;
 
-open TRAIN,"<$input" or die "Cannot open training data file $input\n";
+open TRAIN,"<$input" or die "Cannot open training data file $input";
 
 print "Reading training data into memory...\n";
 
 my @dataset;
 
+my %labelMap = map { $classes[$_] => $_ + 1 } 0 .. $#classes;
+
 while (<TRAIN>) {
     chomp;
 
-    my @line = split /,/;
+    my @line = split /$separator/;
     my @features;
 
     for my $i ( 0 .. $#line - 1 ) {
         push @features, $line[$i];
     }
 
-    my $classification = $line[$#line];
+    my $label = $line[$#line];
 
+    if (!defined $labelMap{$label}) {
+	die "Undefined label $label (was not found in classes list $classes)";
+    }
+
+    my $classification = $labelMap{$label};
     my $data = new Algorithm::SVM::DataSet(Label => $classification, Data => \@features);
 
     push @dataset, $data;
@@ -42,8 +56,6 @@ while (<TRAIN>) {
 
 # Train SVM model
 print "Training SVM model...\n";
-
-#print Dumper @dataset;
 
 my $svm = new Algorithm::SVM();
 #$svm->C(100);
@@ -54,4 +66,3 @@ $svm->train(@dataset);
 
 print "Saving SVM model to file $output\n";
 $svm->save($output) or die "Could not save model to \"$output\".\n";
-

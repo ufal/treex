@@ -15,15 +15,22 @@ GetOptions('separator=s' => \$separator);
 
 my $modelFile = shift;
 my $testFile = shift;
+my $classesFile = shift;
 
-die "Usage: ./TestSVM.pl MODEL_FILE TEST_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile;
+die "Usage: ./TestSVM.pl MODEL_FILE TEST_FILE CLASSES_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile or !defined $classesFile;
 warn 'Suspicious number of parameters' if defined shift;
 
+print "Loading classes list...\n";
+open CLASSES, "<$classesFile" or die "Cannot open classes list $classesFile";
+chomp(my @classes = <CLASSES>);
+close CLASSES;
+
+my %labelMap = map { $classes[$_] => $_ + 1 } 0 .. $#classes;
+my %labelMapInv = reverse %labelMap;
 
 print "Loading modelFile...\n";
 
 my $model = new Algorithm::SVM(Model => $modelFile);
-
 
 print "Predicting...\n";
 open TEST, $testFile or die "Cannot open test file";
@@ -43,23 +50,26 @@ while (<TEST>) {
         push @features, $line[$i];
     }
 
-    my $classification = $line[$#line];
+    my $label = $line[$#line];
+
+    die "Undefined label $label (was not found in classes list $classesFile)" if !defined $labelMap{$label};
+    my $classification = $labelMap{$label};
 
     my $dataset = new Algorithm::SVM::DataSet(Label=>$classification, Data=>\@features);
 
-    my $prediction = $model->predict($dataset);
+    my $prediction = $labelMapInv{$model->predict($dataset)};
 
-    if (!defined $results{$classification}{$classification}) {
-	$results{$classification}{$classification} = 0;
+    if (!defined $results{$label}{$label}) {
+	$results{$label}{$label} = 0;
     }
 
     if (!defined $results{$prediction}{$prediction}) {
 	$results{$prediction}{$prediction} = 0;
     }
 
-    $results{$classification}{$prediction}++;
+    $results{$label}{$prediction}++;
 
-    push @predictions, [$classification, $prediction];
+    push @predictions, [$label, $prediction];
 
 }
 
