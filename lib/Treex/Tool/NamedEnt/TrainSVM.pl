@@ -38,7 +38,7 @@ while (<TRAIN>) {
     my $classification = $line[$#line];
 
     print Dumper $classification;
-    my $data = Algorithm::SVM::DataSet->new( Label => $classification, Data => \@features );
+    my $data = new Algorithm::SVM::DataSet(Label => $classification, Data => \@features);
 
     push @dataset, $data;
 }
@@ -57,6 +57,4 @@ $svm->train(@dataset);
 
 print "Saving SVM model to file $output\n";
 $svm->save($output) or die "Could not save model to \"$output\".\n";
-
-
 
