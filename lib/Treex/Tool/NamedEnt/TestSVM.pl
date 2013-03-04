@@ -9,7 +9,7 @@ use Text::Table;
 
 use Getopt::Long;
 
-my $separator = "\t";
+my $separator = ",";
 
 GetOptions('separator=s' => \$separator);
 
