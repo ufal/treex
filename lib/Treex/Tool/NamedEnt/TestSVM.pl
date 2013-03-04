@@ -3,14 +3,13 @@
 use strict;
 use warnings;
 
-
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 use Text::Table;
 
 use Getopt::Long;
 
-my $separator;
+my $separator = "\t";
 
 GetOptions('separator=s' => \$separator);
 
@@ -23,7 +22,7 @@ warn 'Suspicious number of parameters' if defined shift;
 
 print "Loading modelFile...\n";
 
-my $model = Algorith::SVM->new(Model => $modelFile);
+my $model = new Algorithm::SVM(Model => $modelFile);
 
 
 print "Predicting...\n";
@@ -46,7 +45,7 @@ while (<TEST>) {
 
     my $classification = $line[$#line];
 
-    my $dataset = Algorithm::SVM::DataSet->new(Label=>$classification, Data=>\@features);
+    my $dataset = new Algorithm::SVM::DataSet(Label=>$classification, Data=>\@features);
 
     my $prediction = $model->predict($dataset);
 
