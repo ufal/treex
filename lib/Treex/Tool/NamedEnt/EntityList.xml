@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE entities SYSTEM "EntityList.dtd">
+<entities>
+  <entity name="months">
+    <value>leden</value>
+    <value>únor</value>
+    <value>březen</value>
+    <value>duben</value>
+    <value>květen</value>
+    <value>červen</value>
+    <value>červenec</value>
+    <value>srpen</value>
+    <value>září</value>
+    <value>říjen</value>
+    <value>listopad</value>
+    <value>prosinec</value>
+  </entity>
+  <entity name="objects">
+    <value>Kč</value>
+    <value>Sk</value>
+    <value>USD</value>
+    <value>zpráva</value>
+    <value>mm</value>
+    <value>ISDN</value>
+  </entity>
+  <entity name="institutions">
+    <value>ODS</value>
+    <value>EU</value>
+    <value>OSN</value>
+    <value>NATO</value>
+    <value>Sparta</value>
+    <value>Slavia</value>
+    <value>NHL</value>
+  </entity>
+</entities>
+

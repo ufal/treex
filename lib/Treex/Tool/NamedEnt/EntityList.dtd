@@ -1,0 +1,7 @@
+<!ELEMENT entities (entity+)>
+<!ELEMENT entity (value+)>
+
+<!ATTLIST entity name ID #REQUIRED>
+
+<!ELEMENT value (#PCDATA)>
+
