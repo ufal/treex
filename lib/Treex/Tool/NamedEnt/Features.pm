@@ -104,6 +104,32 @@ sub _get_bare_lemma($) {
     return $1;
 }
 
+# Returns true, if tokens in given array correspond to a name of city, after concatenation
+sub _is_city(@) {
+    my @tokens = @_;
+    return 0 if @tokens == 0;
+
+    my $city = _get_bare_lemma( $tokens[0] );
+    foreach my $i ( 1 .. $#tokens ) {
+        $city .= lc " " . _get_bare_lemma( $tokens[$i] );
+    }
+
+    return exists $CITIES{$city} ? 1 : 0;
+}
+
+# Returns true, if tokens in given array correspond to a name of country, after concatenation
+sub _is_country(@) {
+    my @tokens = @_;
+    return if @tokens == 0;
+
+    my $country = _get_bare_lemma( $tokens[0] );
+    foreach my $i ( 1 .. $#tokens ) {
+        $country .= " " . _get_bare_lemma( $tokens[$i] );
+    }
+
+    return exists $COUNTRIES{$country} ? 1 : 0;
+}
+
 sub _is_day_number($) {
     my $token = shift;
     return ($token =~ /^[1-9]$/ || $token =~ /^[12][[:digit:]]$/ || $token =~ /^3[01]$/ ) ? 1 : 0;
