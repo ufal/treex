@@ -55,7 +55,7 @@ while (<TEST>) {
     die "Undefined label $label (was not found in classes list $classesFile)" if !defined $labelMap{$label};
     my $classification = $labelMap{$label};
 
-    my $dataset = new Algorithm::SVM::DataSet(Label=>$classification, Data=>\@features);
+    my $dataset = new Algorithm::SVM::DataSet(Label=>0, Data=>\@features);
 
     my $prediction = $labelMapInv{$model->predict($dataset)};
 

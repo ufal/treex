@@ -5,6 +5,74 @@ use warnings;
 
 use Data::Dumper;
 
+use Exporter;
+use base 'Exporter';
+our @EXPORT = qw / extract_oneword_features str2int int2str /
+
+#str2int int2str extract_twoword_features 
+#                  extract_threeword_features 
+#                  $SVM_MODEL_DIR $FALLBACK_LEMMA $FALLBACK_TAG %CLASSES 
+#                  $ONEWORD_MODEL_FILENAME $TWOWORD_MODEL_FILENAME %TABU_TAGS
+#                  $THREEWORD_MODEL_FILENAME %CONTAINERS);
+
+
+#vezme file ve formatu tmt a naparsuje ho
+sub load_tmt {
+    my $file = shift;
+
+    my $doc = Treex::Core::Document->new( {filename => $file} );
+    my @bundles = $doc->getBundles();
+
+
+    for my $bundle (@bundles) {
+
+	
+
+    }
+
+
+}
+
+
+# vezme file ve formatu form/lemma/tag
+sub load_plain {
+
+
+
+
+}
+
+
+
+sub extract_features {
+
+
+}1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #####################
 # Private Constants #
