@@ -28,6 +28,12 @@ has '_filter' => (
     builder => '_build_filter',
 );
 
+has 'testing' => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 0,
+);
+
 has 'phrase_clusters_storable_path' => (
     is => 'ro',
     isa => 'Str',
@@ -74,7 +80,8 @@ sub BUILD {
 sub _build_filter {
     my ($self) = @_;
     my $filter = Treex::Tool::Triggers::FeatureFilter->new({
-        config_file_path => $self->filter_config
+        config_file_path => $self->filter_config,
+        testing => $self->testing,
     });
     return $filter;
 }

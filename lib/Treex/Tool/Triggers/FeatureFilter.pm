@@ -14,6 +14,12 @@ has 'config_file_path' => (
     required => 1,
 );
 
+has 'testing' => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 0,
+);
+
 has '_config' => (
     is => 'ro',
     isa => 'Any',
@@ -31,7 +37,9 @@ has '_mi_bi' => (
 sub BUILD {
     my ($self) = @_;
     $self->_config;
-    $self->_mi_bi;
+    if (!$self->testing) {
+        $self->_mi_bi;
+    }
 }
 
 sub _build_config {
@@ -66,13 +74,16 @@ sub filter_features {
 sub _process_single_feature {
     my ($self, $feat, $en_lemma, $cs_lemma) = @_;
 
-    # blacklist
-    return undef if ($self->_is_blacklisted($feat));
+    # feat filtering only during a training stage
+    if (!$self->testing) {
+        # blacklist
+        return undef if ($self->_is_blacklisted($feat));
 
-    # pwmi filtering
-    #return undef if ($self->_filter_bow_by_pwmi($feat, $en_lemma, $cs_lemma));
-    # mi filtering
-    return undef if ($self->_filter_by_mi_bi($feat, $en_lemma));
+        # pwmi filtering
+        #return undef if ($self->_filter_bow_by_pwmi($feat, $en_lemma, $cs_lemma));
+        # mi filtering
+        return undef if ($self->_filter_by_mi_bi($feat, $en_lemma));
+    }
    
     # feat transformations
     $feat = $self->_remove_bow_dist($feat);
