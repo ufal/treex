@@ -44,9 +44,11 @@ sub _build_mi_bi {
     
     my $mi_bi_path = $self->_config->{mi_bi}{path};
     return undef if (!defined $mi_bi_path);
-    
+   
+    log_info "Loading the mi_bi model from " . $mi_bi_path . "...";
     my $buffer = Compress::Zlib::memGunzip(read_file( $mi_bi_path )) ;
     my $mi_bi = Storable::thaw($buffer) or log_fatal $!;
+    log_info "mi_bi model loaded.";
     return $mi_bi;
 }
 
@@ -70,7 +72,7 @@ sub _process_single_feature {
     # pwmi filtering
     #return undef if ($self->_filter_bow_by_pwmi($feat, $en_lemma, $cs_lemma));
     # mi filtering
-    return undef if ($self->_filter_bow_by_mi_bi($feat, $en_lemma));
+    return undef if ($self->_filter_by_mi_bi($feat, $en_lemma));
    
     # feat transformations
     $feat = $self->_remove_bow_dist($feat);
@@ -125,20 +127,28 @@ sub _filter_bow_by_pwmi {
     return ($en_pwmi->{$en_lemma}{$feat_clear}->[1] <= $en_pwmi_ratio);
 }
 
-sub _filter_bow_by_mi_bi {
+sub _filter_by_mi_bi {
     my ($self, $feat, $en_lemma, $cs_lemma) = @_;
 
-    return 0 if ($feat !~ /^bow_/);
+    #return 0 if ($feat !~ /^bow_/);
 
     my $mi_bi = $self->_mi_bi;
     return 0 if (!defined $mi_bi);
+    return 0 if (!defined $mi_bi->{$en_lemma});
     
     my $mi_bi_ratio = $self->_config->{mi_bi}{ratio};
 
+    #my $aux_str = $feat;
     my $feat_clear = $feat;
-    $feat_clear =~ s/^bow_[^=]+=(.*)::.*$/$1/;
+    $feat_clear =~ s/^(.*)(::.+)?$/$1/;
+    #$aux_str .= " $feat_clear";
+    # bow features in mi_bi file are for the time being stripped off the additional info affixes
+    if (!defined $mi_bi->{$en_lemma}{$feat_clear}) {
+        $feat_clear =~ s/^bow_[^=]+=(.*)$/$1/;
+    #    $aux_str .= " $feat_clear";
+    #    print STDERR "VER: $aux_str\n";
+    }
 
-    return 0 if (!defined $mi_bi->{$en_lemma});
     return 1 if (!defined $mi_bi->{$en_lemma}{$feat_clear});
     return ($mi_bi->{$en_lemma}{$feat_clear}->[1] <= $mi_bi_ratio);
 }
