@@ -16,7 +16,7 @@ sub process_document{
     $w_fn = $self->_get_filename($doc);
     $w_fh = $self->_open_file_handle($w_fn);
     my $print_fn = $w_fn;
-    $print_fn =~ s/.w(.gz)?$/.[wamt]$1/;
+    $print_fn =~ s/.w(.gz|)$/.[wamt]$1/;
     log_info "Saving to $print_fn";
 
     $self->{extension} = '.m';
@@ -88,13 +88,23 @@ END
     return;
 }
 
+sub escape_xml {
+    my ($self, $string) = @_;
+    return if !defined $string;
+    $string =~ s/&/&amp;/;
+    $string =~ s/</&lt;/;
+    $string =~ s/>/&gt;/;
+    $string =~ s/'/&apos;/;
+    $string =~ s/"/&quot;/;
+    return $string;
+}
 
 sub process_atree {
     my ($self, $atree) = @_;
     my $s_id = $atree->id;
     print {$m_fh} "<s id='m-$s_id'>\n";
     foreach my $anode ($atree->get_descendants({ordered=>1})){
-        my ($id, $form, $lemma, $tag) = $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
+        my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
         print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
         print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
@@ -142,7 +152,7 @@ sub print_tsubtree {
     
     # simple attrs
     foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf compl.rf coref_gram.rf coref_text.rf)){
-        my $val = $tnode->get_attr($attr);
+        my $val = $self->escape_xml($tnode->get_attr($attr));
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
     }
     
