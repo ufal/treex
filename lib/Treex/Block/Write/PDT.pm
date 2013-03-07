@@ -136,7 +136,7 @@ sub process_ttree {
     my $s_id = $ttree->id;
     my $a_s_id = $s_id;
     $a_s_id =~ s/t_tree/a_tree/;
-    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
+    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
     foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
     print {$t_fh} "</children>\n</LM>\n";
     return;
