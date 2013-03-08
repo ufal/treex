@@ -3,11 +3,55 @@ package PMLTQ::Relation::Treex;
 #
 # This file implements the following user-defined relations for PML-TQ
 #
+# - eparentC, echildC - Slightly modified (skipping only coordinarion nodes) eparent/echild for a-layer
 # - eparent (both t-layer and a-layer)
 # - echild (both t-layer and a-layer)
 #
 #################################################
 
+{
+  package PMLTQ::Relation::Treex::AEParentCIterator;
+  use strict;
+  use base qw(PMLTQ::Relation::SimpleListIterator);
+  use PMLTQ::Relation {
+      name => 'eparentC',
+      reversed_relation => 'implementation:echildC',
+      start_node_type => 'a-node',
+      target_node_type => 'a-node',
+      iterator_class => __PACKAGE__,
+      test_code => q(grep($_ == $end, TreexUtils::AGetEParentsC($start)) ? 1 : 0),
+  };
+  sub get_node_list  {
+    my ($self,$node)=@_;
+    my $fsfile = $self->start_file;
+    return [
+        map [ $_,$fsfile ], TreexUtils::AGetEParentsC($node)
+    ];
+  }
+}
+#################################################
+{
+  package PMLTQ::Relation::Treex::AEChildCIterator;
+  use strict;
+  use base qw(PMLTQ::Relation::SimpleListIterator);
+  use PMLTQ::Relation {
+      name => 'echildC',
+      reversed_relation => 'implementation:eparentC',
+      start_node_type => 'a-node',
+      target_node_type => 'a-node',
+      iterator_class => __PACKAGE__,
+      iterator_weight => 5,
+      test_code => q( grep($_ == $start, TreexUtils::AGetEChildrenC($end)) ? 1 : 0 ),
+  };
+  sub get_node_list  {
+    my ($self,$node)=@_;
+    my $type = $node->type->get_base_type_name;
+    my $fsfile = $self->start_file;
+    return [
+        map [ $_,$fsfile ], TreexUtils::AGetEChildrenC($node)
+    ];
+  }
+}
 ##################################################
 {
   package PMLTQ::Relation::Treex::AEParentIterator;
@@ -114,7 +158,7 @@ Treex - Perl extension for blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Treex, 
+Stub documentation for Treex,
 
 Blah blah blah.
 
