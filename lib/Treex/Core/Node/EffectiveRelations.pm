@@ -57,6 +57,7 @@ sub get_echildren {
     #return @echildren if !$arg_ref; TODO this cannot happen now, see $arg_ref = {} if !defined $arg_ref;
     delete $arg_ref->{dive};
     delete $arg_ref->{or_topological};
+    delete $arg_ref->{ignore_incorrect_tree_structure};
     return $self->_process_switches( $arg_ref, @echildren );
 }
 
@@ -265,7 +266,7 @@ This notion is used both
 on the a-layer (L<Treex::Core::Node::A>) and
 on the t-layer (L<Treex::Core::Node::T>).
 
-TODO: explain it, some examples, reference to PDT manual 
+TODO: explain it, some examples, reference to PDT manual
 
 Eg. in the sentence "Martin and Rudolph came", the tree structure is
 
@@ -281,36 +282,36 @@ and C<get_eparents> return when called on various nodes
 
  "came"->get_children()
  # returns "and"
- 
+
  "came"->get_echildren()
  # returns ("Martin", "Rudolph")
- 
+
  "and"->get_children()
  # returns ("Martin", "Rudolph")
- 
+
  "and"->get_echildren()
  # returns ("Martin", "Rudolph") and issues a warning:
  # get_echildren called on coap root ([id_of_and]). Fallback to topological one.
- 
+
  "and"->get_echildren({or_topological => 1})
  # returns ("Martin", "Rudolph") with no warning
 
 
  # PARENTS AND EFFECTIVE PARENTS
- 
+
  "Rudolph"->get_parent()
  # returns "and"
- 
+
  "Rudolph"->get_eparents()
  # returns "came"
- 
+
  "and"->get_parent()
  # returns "came"
- 
+
  "and"->get_eparents()
  # returns "came" and issues a warning:
  # get_eparents called on coap root ([id_of_and]). Fallback to topological one.
- 
+
  "and"->get_eparents({or_topological => 1})
  # returns "came" with no warning
 
@@ -332,7 +333,7 @@ This warning can be supressed by option C<or_topological>.
 
 =item my @effective_children = $node->get_echildren($arg_ref?)
 
-Returns a list of effective children of the C<$node>. It means that 
+Returns a list of effective children of the C<$node>. It means that
 a) instead of coordination/aposition heads, their members are returned
 b) shared modifiers of a coord/apos (technically hanged on the head of coord/apos)
    count as effective children of the members.
@@ -348,7 +349,7 @@ C<dive> is a reference to a subroutine that decides
 whether the given node should be skipped or not.
 Typically this is used for prepositions and subord. conjunctions on a-layer.
 You can set C<dive> to the string C<AuxCP> which is a shortcut
-for C<sub {my $self=shift;return $self->afun =~ /^Aux[CP]$/;}>. 
+for C<sub {my $self=shift;return $self->afun =~ /^Aux[CP]$/;}>.
 
 =item or_topological
 
@@ -404,7 +405,7 @@ L<Treex::Core::Node::get_children()|Treex::Core::Node/get_children>.
 
 If the node is a coordination/apposition head (see
 L<Node::A::is_coap_root()|Node::A/is_coap_root> and
-L<Node::T::is_coap_root()|Node::T/is_coap_root>) a list of all coordinated 
+L<Node::T::is_coap_root()|Node::T/is_coap_root>) a list of all coordinated
 members is returned. Otherwise, the node itself is returned.
 
 OPTIONS
