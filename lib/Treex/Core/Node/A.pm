@@ -467,7 +467,7 @@ This method is specific to the A layer because it contains the list of
 attributes. If we could figure out the list automatically, the method would
 become general enough to reside directly in Node.pm.
 
-=item get_n_node()
+=item n_node()
 
 If this a-node is a part of a named entity,
 this method returns the corresponding n-node (L<Treex::Core::Node::N>).
@@ -475,7 +475,7 @@ If this node is a part of more than one named entities,
 only the most nested one is returned.
 For example: "Bank of China"
 
- $n_node_for_china = $a_node_china->get_n_node();
+ $n_node_for_china = $a_node_china->n_node();
  print $n_node_for_china->get_attr('normalized_name'); # China
  $n_node_for_bank_of_china = $n_node_for_china->get_parent();
  print $n_node_for_bank_of_china->get_attr('normalized_name'); # Bank of China
