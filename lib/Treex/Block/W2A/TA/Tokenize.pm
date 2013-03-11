@@ -71,8 +71,34 @@ override 'tokenize_sentence' => sub {
 		my $val = $exceptional_rules{$vs};
 		$sentence =~ s/$vs\s+/$val /g;
 	}		
+	
+	# separates "um/உம்" from the wordforms
+	$sentence = $self->separate_um($sentence);
+	
+	$sentence =~ s/(^\s+|\s+$)//;
+	
     return $sentence;    
 };
+
+
+sub separate_um {
+    my ( $self, $sentence ) = @_;
+	
+	# separate all "um"s in the sentence
+	$sentence =~ s/\N{U+0BC1}ம்/ \N{U+0BC1}ம்/g;	    
+    	
+	# avoid separating "um" at the finite verbs
+	# (a) don't separate "um/உம்" at the end of the sentence boundary
+	$sentence =~ s/\s+\N{U+0BC1}ம்\s+\./\N{U+0BC1}ம் /g; 
+	
+	# (b) avoid "um" at the auxiliary finite verb
+	$sentence =~ s/(பட|வர)\s+\N{U+0BC1}ம்\s+\./$1\N{U+0BC1}ம் /g;
+	
+	# (c) other places
+	$sentence =~ s/(மற்ற)\s+\N{U+0BC1}ம்\s+\./$1\N{U+0BC1}ம் /g;
+	
+	return $sentence;		
+}
 
 1;
 
