@@ -78,7 +78,7 @@ sub is_tabu_pos {
 sub is_listed_entity {
     my ($value, $list_name) = @_;
 
-    return defined $lists{$list_name} and $lists{$list_name}{$value} ? 1 : 0;
+    return (defined $lists{$list_name} and $lists{$list_name}{$value}) ? 1 : 0;
 }
 
 
