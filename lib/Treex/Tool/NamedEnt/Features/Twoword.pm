@@ -29,24 +29,24 @@ sub extract {
     push @features, is_tabu_pos($second_pos);
 
     # Build-in lists
-    push @features, ( _is_city($first_lemma, $second_lemma) )       ? 1 : 0;
-    push @features, ( _is_city($first_lemma) )                      ? 1 : 0;
-    push @features, ( _is_city($second_lemma) )                     ? 1 : 0;
-    push @features, ( exists $CITY_PARTS{$bare_lemma} )             ? 1 : 0;
-    push @features, ( exists $STREETS{$bare_lemma} )                ? 1 : 0;
-    push @features, ( exists $NAMES{$first_bare_lemma} )            ? 1 : 0;
-    push @features, ( exists $NAMES{$second_bare_lemma} )           ? 1 : 0;
-    push @features, ( exists $SURNAMES{$first_bare_lemma} )         ? 1 : 0;
-    push @features, ( exists $SURNAMES{$second_bare_lemma} )        ? 1 : 0;
-    push @features, ( exists $OBJECTS{$first_bare_lemma} )          ? 1 : 0;
-    push @features, ( exists $OBJECTS{$second_bare_lemma} )         ? 1 : 0;
-    push @features, ( exists $INSTITUTIONS{$first_bare_lemma} )     ? 1 : 0;
-    push @features, ( exists $INSTITUTIONS{$second_bare_lemma} )    ? 1 : 0;
-    push @features, ( exists $CLUBS{lc $first_bare_lemma} )         ? 1 : 0;
-    push @features, ( exists $CLUBS{lc $second_bare_lemma} )        ? 1 : 0;
-    push @features, ( exists $MONTHS{$first_bare_lemma} )           ? 1 : 0;
-    push @features, ( exists $SURNAMES{$second_bare_lemma} )        ? 1 : 0;
-    push @features, ( _is_country($first_lemma, $second_lemma) )    ? 1 : 0;
+#    push @features, ( _is_city($first_lemma, $second_lemma) )       ? 1 : 0;
+#    push @features, ( _is_city($first_lemma) )                      ? 1 : 0;
+#    push @features, ( _is_city($second_lemma) )                     ? 1 : 0;
+    push @features, ( is_listed_entity("city_parts", $bare_lemma) );
+    push @features, ( is_listed_entity("streets", $bare_lemma) );
+    push @features, ( is_listed_entity("names", $first_bare_lemma) );
+    push @features, ( is_listed_entity("names", $second_bare_lemma) );
+    push @features, ( is_listed_entity("surnames", $first_bare_lemma) );
+    push @features, ( is_listed_entity("surnames", $second_bare_lemma) );
+    push @features, ( is_listed_entity("objects", $first_bare_lemma) );
+    push @features, ( is_listed_entity("objects", $second_bare_lemma) );
+    push @features, ( is_listed_entity("institutions", $first_bare_lemma) );
+    push @features, ( is_listed_entity("institutions", $second_bare_lemma) );
+    push @features, ( is_listed_entity("clubs", lc $first_bare_lemma) );
+    push @features, ( is_listed_entity("clubs", lc $second_bare_lemma) );
+    push @features, ( is_listed_entity("months", $first_bare_lemma) );   
+    push @features, ( is_listed_entity("surnames", $second_bare_lemma) );
+#    push @features, ( _is_country($first_lemma, $second_lemma) )    ? 1 : 0;
 
     # Orthographic features
     push @features, ( $second_bare_lemma eq '.' )           ? 1 : 0;
@@ -56,15 +56,15 @@ sub extract {
     push @features, ( $second_bare_lemma eq '%' )           ? 1 : 0;
     push @features, ( $second_bare_lemma eq ':' )           ? 1 : 0;
     push @features, ( $second_bare_lemma eq ',' )           ? 1 : 0;
-    push @features, ( _is_day_number($first_form) )         ? 1 : 0;
-    push @features, ( _is_month_number($first_form) )       ? 1 : 0;
+#    push @features, ( _is_day_number($first_form) )         ? 1 : 0;
+#    push @features, ( _is_month_number($first_form) )       ? 1 : 0;
     push @features, ( $first_lemma =~ /^[[:upper:]]/ )      ? 1 : 0;
     push @features, ( $second_lemma =~ /^[[:upper:]]/ )     ? 1 : 0;
     push @features, ( $first_form =~ /^[[:upper:]]/ )       ? 1 : 0;
     push @features, ( $second_form =~ /^[[:upper:]]/ )      ? 1 : 0;
     push @features, ( $first_form =~ /^[[:upper:]]$/ && $second_form eq '.') ? 1 : 0;
 
-    foreach my $lemma ($first_lemma $second_lemma) {
+    foreach my $lemma ($first_lemma, $second_lemma) {
         push @features, map{Treex::Tool::Lexicon::CS::get_term_types($lemma) =~ /$_/ ? 1 : 0}
             qw/Y S E G K R m H U L j g c y b u w p z o/;
     }
@@ -78,7 +78,7 @@ sub extract {
     # Next lemma
     my $next_lemma = $args{'next_lemma'};
     my $next_bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($next_lemma);
-    push @features, ( _is_year_number($next_bare_lemma) ) ? 1 : 0;
+#    push @features, ( _is_year_number($next_bare_lemma) ) ? 1 : 0;
 
     return @features;
 }
