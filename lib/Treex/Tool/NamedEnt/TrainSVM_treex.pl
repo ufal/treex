@@ -6,7 +6,7 @@ use warnings;
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
-use Treex::Tool::NamedEnt::Features;
+use Treex::Tool::NamedEnt::Features_petr;
 
 use Getopt::Long;
 use Data::Dumper;
@@ -45,7 +45,7 @@ while (my $input = shift) {
         my $label = $inst->{label};
         my $features = $inst->{features};
 
-        my $data = new Algorithm::SVM::DataSet(Label => $label, Data => $features);
+        my $data = Algorithm::SVM::DataSet->new(Label => $label, Data => $features);
         push @dataset, $data;
     }
     
@@ -54,7 +54,7 @@ while (my $input = shift) {
 # Train SVM model
 print "Training SVM model...\n";
 
-my $svm = new Algorithm::SVM();
+my $svm = Algorithm::SVM->new();
 #$svm->C(100);
 #$svm->gamma(64);
 $svm->train(@dataset);
