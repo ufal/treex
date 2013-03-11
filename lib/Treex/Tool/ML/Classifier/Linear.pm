@@ -55,15 +55,18 @@ sub log_feat_weights {
         
     my %feat_weights;
     my $model_for_y = $self->model->{$y};
+    my $total = 0;
     if (defined $model_for_y) {
         foreach my $feat (@$x) {
             my $weight = $model_for_y->{$feat} || 0;
             $feat_weights{$feat} += $weight;
+            $total += $weight;
             #print STDERR "CLASS: $y\tFEAT:$feat\tWEIGHT:$weight\n";
         }
     }
     my @sorted = map {$_ . "=" . $feat_weights{$_}} 
         (sort {$feat_weights{$b} <=> $feat_weights{$a}} keys %feat_weights);
+    push @sorted, "TOTAL = $total";
     return \@sorted; 
 }
 
