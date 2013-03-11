@@ -5,12 +5,28 @@ use warnings;
 
 use Exporter qw/ import /;
 
-my $common = [qw/ tag_features is_tabu_pos /];
+my $common = [qw/ tag_features is_tabu_pos is_listed_entity/];
 our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common);
 
 Exporter::export_ok_tags('oneword');
 Exporter::export_ok_tags('twoword');
 Exporter::export_ok_tags('threeword');
+
+
+my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen červen
+					  červenec srpen září říjen listopad prosinec/ },
+              cities => {},
+              city_parts => {},
+              streets => {},
+              names => {},
+              surnames => {},
+              countries => {},
+              objects => {map {$_ => 1} qw/Kč Sk USD zpráva mm ISDN/},
+              institutions => {map {$_ => 1} qw/ODS EU OSN NATO Sparta Slavia Bohemians NHL/},
+              clubs => { map {$_ => 1} qw /galerie kino škola organizace univerzita universita divadlo svaz
+					   unie klub ministerstvo fakulta spolek sdružení orchestr organizace
+					   union organization/}
+	  );
 
 
 my %tabu = map {$_ => 1} qw/D I J P V R T Z/;
@@ -59,7 +75,11 @@ sub is_tabu_pos {
 }
 
 
+sub is_listed_entity {
+    my ($value, $list_name) = @_;
 
+    return defined $lists{$list_name} and $lists{$list_name}{$value} ? 1 : 0;
+}
 
 
 1;
