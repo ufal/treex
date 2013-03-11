@@ -6,12 +6,19 @@ use warnings;
 use Exporter qw/ import /;
 
 my $common = [qw/ tag_features is_tabu_pos is_listed_entity/];
+
 our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common);
+our @EXPORT_OK = qw/get_class_number get_class_from_number/;
 
 Exporter::export_ok_tags('oneword');
 Exporter::export_ok_tags('twoword');
 Exporter::export_ok_tags('threeword');
 
+my @classes = qw/ps pf p_ pc pp pm pd pb gu gc gr gs gq gh gl gt g_ gp ic if io ia i_ oa op om oe
+		 o_ or oc th ty tm td ti tf mn mt mr ah at az nw o i g p I P T A C lower segm upper/; # todo neco chybi
+
+
+my %classNumbers = map {$classes[$_] => $_} 0 .. $#classes;
 
 my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen červen
 					  červenec srpen září říjen listopad prosinec/ },
@@ -79,6 +86,17 @@ sub is_listed_entity {
     my ($value, $list_name) = @_;
 
     return (defined $lists{$list_name} and $lists{$list_name}{$value}) ? 1 : 0;
+}
+
+sub get_class_number {
+    my $class = shift;
+    return $classNumbers{$class};
+}
+
+
+sub get_class_from_number {
+    my $n = shift;
+    return $classes[$n];
 }
 
 
