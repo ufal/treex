@@ -51,6 +51,11 @@ sub parse_chunk {
              $a_node->wild->{is_coord_conjunction} = $suffix =~ /C/ ? 1 : 0;
              $deprel =~ s/_M?S?C?$//;
         }
+        else {
+             $a_node->set_is_member(0);
+             $a_node->set_is_shared_modifier(0);
+             $a_node->wild->{is_coord_conjunction} = 0;
+        }
         $a_node->set_attr($self->deprel_attribute, $deprel);
 
         my $parent_index = shift @$parents_rf;

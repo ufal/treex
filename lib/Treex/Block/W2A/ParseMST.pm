@@ -61,8 +61,8 @@ sub BUILD {
 
 sub process_start {
     my ($self)  = @_;
-
-    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
+#    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
+    my $model = $self->model_dir . '/' . $self->model;
 
     if ( !$loaded_models{$model} ) {
         my $parser = Treex::Tool::Parser::MST->new(
@@ -98,6 +98,7 @@ sub parse_chunk {
         if ( $self->detect_attributes_from_deprel ) {
             $a_node->set_is_member(0);
             $a_node->set_is_shared_modifier(0);
+            $a_node->wild->{is_coord_conjunction} = 0;
             if ( $deprel =~ /_(M?S?C?)$/ ) {
                 my $suffix = $1;
                 $a_node->set_is_member( $suffix          =~ /M/ ? 1 : 0 );
@@ -106,7 +107,6 @@ sub parse_chunk {
                 $deprel =~ s/_M?S?C?$//;
             }
         }
-
         $a_node->set_attr( $self->deprel_attribute, $deprel );
 
         if ($matrix_rf) {
