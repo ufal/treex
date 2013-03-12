@@ -13,12 +13,12 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
-
     $self->attach_final_punctuation_to_root($a_root);
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
+# http://ltrc.iiit.ac.in/nlptools2010/files/documents/dep-tagset.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
@@ -44,8 +44,34 @@ sub deprel_to_afun
         }
 
         # Subject
-        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|k1s|ras-k1)$/ ) {
+        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|ras-k1)$/ )
+        {
             $afun = "Sb";
+        }
+        # k1s ... vidheya karta (karta samanadhikarana) = noun complement of karta (according to documentation)
+        # Training sentence 70:
+        # फूकन भी पार्टी में अपनी उपेक्षा से आहत हैं ।
+        # phūkana bhī pārṭī meṁ apanī upekṣā     se   āhata haiṁ .
+        # Phukan  too party in  his   negligence with hurt  is   .
+        # n       avy n     psp pn    n          psp  adj   v    punc
+        # k1      lwg_rp k7 lwg_psp r6 adv       lwg_psp k1s main rsym
+        # Phukan too was hurt at the party due to his negligence.
+        elsif ( $deprel =~ m/^(k1s)$/ )
+        {
+            $afun = 'Pnom';
+        }
+        # k1u is not subject! One verb can have both k1 and k1u but it cannot have two subjects.
+        # k1u is missing from the documentation so I do not know what exactly it means.
+        # Training sentence 238:
+        # कई मामलों में उनकी राय राजनीतिक सत्ता की राय से अलग भी होती थी ।
+        # kaī māmaloṁ meṁ unakī rāya    rājanītika sattā kī rāya    se alaga     bhī hotī thī .
+        # many cases  in  their opinion political  power of opinion to different too been was .
+        # avy n       psp pn    n       adj        n     psp n      psp adj      avy v    v   punc
+        # nmod_adj k7 lwg_psp r6 k1     nmod_adj   r6    lwg_psp k1u lwg_psp pof lwg_rp main lwg_vaux rsym
+        # In many cases their opinion was different from the opinion of the political power.
+        elsif ( $deprel =~ m/^(k1u)$/ )
+        {
+            $afun = 'Atv'; # or Pnom?
         }
         elsif ( $deprel =~ /^(jk1|mk1)$/ ) {
             $afun = "Obj";
@@ -95,15 +121,27 @@ sub deprel_to_afun
         elsif ( $deprel eq "jjmod" ) {
             $afun = "Atr";    # modifiers of adjectives.
         }
-        elsif ( $deprel eq "pof" ) {
-            $afun = "Atr";    # modifiers of adjectives.
+        # "pof" means "part of relation" (according to documentation).
+        # It is often found at the content part of "compound verbs" (light verb plus noun or adjective, the noun/adjective is pof).
+        # Training sentence 236:
+        # निर्वाह किया
+        # nirvāha kiyā = performed
+        # nirvāha = sustenance (cs:obživa)
+        # kiyā = masculine singular perfect participle of karanā
+        # = light verb (to do)
+        elsif ( $deprel eq 'pof' )
+        {
+            # It would be useful to have a special tag for nominal parts of compound verbs.
+            # We do not have it now.
+            $afun = 'Obj';
         }
         elsif ( $deprel eq "ccof" ) {
             ###!!! The original treebank does not distinguish between subordinating conjunctions used as complementizers
             ###!!! (such as 'ki' = 'that') and coordinating conjunctions (such as 'aur' = 'and').
             ###!!! Ideally, we would identify all subordinating cases and handle them properly.
             ###!!! Currently we only identify the most frequent case and get away with the adverbial meaning of the relative clause.
-            if($node->parent()->get_iset('subpos') eq 'sub')
+            if($node->parent()->get_iset('subpos') eq 'sub' ||
+               $node->parent()->form() eq 'कि') # Interset also does not know it, the tag is "avy" for both types of conjunctions.
             {
                 $node->parent()->set_afun('AuxC');
                 $afun = 'Adv';
@@ -158,6 +196,27 @@ sub deprel_to_afun
 
         $node->set_afun($afun);
     }
+    # Now that all functions are converted, make sure that functions of coordinations are properly shifted.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $parent = $node->parent();
+            log_fatal("Parentless conjunct") if(!defined($parent));
+            $node->set_afun($parent->afun());
+            # We have to wait with setting parent's afun to Coord until all conjuncts have copied the parent's original afun.
+        }
+    }
+    # Tag coordination heads as Coord.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $parent = $node->parent();
+            # We have checked that all conjuncts actually have parents.
+            $parent->set_afun('Coord');
+        }
+    }
 }
 
 1;
@@ -179,5 +238,5 @@ Converts Hindi treebank into PDT style treebank.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2011, 2013 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
