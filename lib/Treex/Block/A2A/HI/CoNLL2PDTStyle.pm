@@ -14,6 +14,7 @@ sub process_zone
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($a_root);
+    $self->raise_postpositions($a_root);
 }
 
 #------------------------------------------------------------------------------
@@ -25,7 +26,7 @@ sub deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
@@ -44,9 +45,15 @@ sub deprel_to_afun
         }
 
         # Subject
-        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|ras-k1)$/ )
+        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1)$/ )
         {
             $afun = "Sb";
+        }
+        # ras-k1 ... associative karta. Not a subject. Someone secondary who assists the subject (asymmetric coordination).
+        # Example: लश्कर के साथ = laśkara ke sātha = with Lashkar
+        elsif($deprel eq 'ras-k1')
+        {
+            $afun = 'Adv';
         }
         # k1s ... vidheya karta (karta samanadhikarana) = noun complement of karta (according to documentation)
         # Training sentence 70:
@@ -184,14 +191,28 @@ sub deprel_to_afun
                 $afun = 'AuxG';
             }
         }
-        elsif ( $deprel =~ /^(jjmod_intf|pof__redup|pof__cn|pof__cv|lwg__cont|lwg__rest)$/ ) {
+        elsif ( $deprel =~ /^(jjmod_intf|pof__redup|pof__cn|pof__cv|lwg__rest)$/ ) {
             $afun = 'Atr';
         }
         elsif ( $deprel eq "lwg__neg" ) {
             $afun = 'Adv';
         }
-        elsif ( $deprel eq "lwg__psp" ) {
-            $afun = 'Adv';
+        # Postpositions are like prepositions in other languages.
+        elsif ( $deprel eq 'lwg__psp' )
+        {
+            $afun = 'AuxP';
+        }
+        # Non-first token of compound postposition (e.g. के बाद = ke bāda).
+        # Non-first token of compound auxiliary verb (e.g. हो चुके थे = ho cuke the, tagged main lwg__vaux lwg__cont).
+        elsif ( $deprel eq 'lwg__cont' )
+        {
+            # We assume that nodes are processed left-to-right (see get_descendants(ordered) above)
+            # and that the left neighbor already has got AuxP or AuxV.
+            my $pred = $node->get_left_neighbor();
+            if(defined($pred))
+            {
+                $afun = $pred->afun();
+            }
         }
 
         $node->set_afun($afun);
@@ -218,6 +239,62 @@ sub deprel_to_afun
         }
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Reattaches postpositions so that they govern their nouns.
+#------------------------------------------------------------------------------
+sub raise_postpositions
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Every postposition has the afun 'AuxP' and is attached to a syntactic noun.
+        if($node->afun() eq 'AuxP')
+        {
+            # Most frequent and safest case: only one postposition per noun phrase.
+            # If there are two or three it could be compound postposition (see below).
+            my @postpositions = grep {$_->afun() eq 'AuxP'} $node->get_siblings({'add_self' => 1, 'ordered' => 1});
+            # Also, we assume that the postpositions has no previous children. If it does, something went wrong in the data,
+            # or the postposition has been processed previously by this function (in which case it should not be touched again).
+            ###!!! But see the training sentence 27 where (in hi_orig) the particle ही depends on the second part of compound postposition से पहले! We currently do not get this right!
+            @postpositions = grep {scalar($_->children())==0} (@postpositions);
+            if(scalar(@postpositions)>0)
+            {
+                # We assume that the postposition has parent and grandparent nodes. If not then we cannot reattach it.
+                my $parent0 = $postpositions[0]->parent();
+                if(defined($parent0))
+                {
+                    my $gparent = $parent0->parent();
+                    if(defined($gparent))
+                    {
+                        # Simple postposition with one token.
+                        # Examples: में = meṁ = in; पर = para = on
+                        # Compound postposition with two tokens (there may be more, I know of at least one example with three).
+                        # Example: के बाद = ke bāda = after
+                        # Compound postposition with three tokens (I know no example with more but I cannot guarantee it does not exist).
+                        # Example: के बरे में = ke bare meṁ = about
+                        # The parts of the compound postposition form logically a left-branching chain.
+                        # The postposition should be the head of the postpositional phrase.
+                        # It should govern the noun phrase. All modifiers of the noun (previously siblings of the postposition)
+                        # remain under the noun.
+                        for(my $i = 0; $i<$#postpositions; $i++)
+                        {
+                            $postpositions[$i]->set_parent($postpositions[$i+1]);
+                        }
+                        $postpositions[-1]->set_parent($gparent);
+                        $parent0->set_parent($postpositions[0]);
+                    } # if defined $gparent
+                } # if defined $parent0
+            } # if scalar @postpositions > 0
+        } # if afun eq 'AuxP'
+    } # foreach $node
+}
+
+
 
 1;
 
