@@ -25,7 +25,7 @@ sub deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();

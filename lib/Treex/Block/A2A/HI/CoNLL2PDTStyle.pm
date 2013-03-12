@@ -45,7 +45,7 @@ sub deprel_to_afun
         }
 
         # Subject
-        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1)$/ )
+        if ( $deprel =~ /^(k1|pk1|k4a|r6-k1)$/ )
         {
             $afun = "Sb";
         }

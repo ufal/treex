@@ -5,7 +5,7 @@ use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 #------------------------------------------------------------------------------
-# Reads the Japanese CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Telugu CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
@@ -13,17 +13,19 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+    $self->attach_final_punctuation_to_root($a_root);
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
+# http://ltrc.iiit.ac.in/nlptools2010/files/documents/dep-tagset.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
@@ -42,8 +44,32 @@ sub deprel_to_afun
         }
 
         # Subject
-        if ( $deprel =~ /^(k1|pk1|k4a|k1u|r6-k1|k1s|ras-k1)$/ ) {
-            $afun = "Sb";
+        if ( $deprel =~ /^(k1|pk1|k4a|r6-k1)$/ )
+        {
+            $afun = 'Sb';
+        }
+        # ras-k1 ... associative karta. Not a subject. Someone secondary who assists the subject (asymmetric coordination).
+        # (It does not occur in the first training file and it might not occur in Telugu at all.)
+        elsif($deprel eq 'ras-k1')
+        {
+            $afun = 'Adv';
+        }
+        # k1s ... vidheya karta (karta samanadhikarana) = noun complement of karta (according to documentation)
+        # Training sentence 6:
+        # మగవాళ్లకంటే ఆడవాళ్లు ఎక్కువ చనిపొతున్నారు
+        # magavāḷlakaṁṭe      āḍavāḷlu  èkkuva canipòtunnāru
+        # NNplu+vAIYlu_kaMteV NNsingDat NN-adj Vplu3
+        # k1u                 k1        k1s    main
+        # males-than          women     more   die
+        # Women die more than males.
+        # (Google: :-)) Magavallakante women more canipotunnaru
+        elsif ( $deprel =~ m/^(k1s)$/ )
+        {
+            $afun = 'Pnom';
+        }
+        elsif ( $deprel =~ m/^(k1u)$/ )
+        {
+            $afun = 'Atv'; # or Pnom?
         }
         elsif ( $deprel =~ /^(jk1|mk1)$/ ) {
             $afun = "Obj";
@@ -93,8 +119,22 @@ sub deprel_to_afun
         elsif ( $deprel eq "jjmod" ) {
             $afun = "Atr";    # modifiers of adjectives.
         }
-        elsif ( $deprel eq "pof" ) {
-            $afun = "Atr";    # modifiers of adjectives.
+        # "pof" means "part of relation" (according to documentation).
+        # It is often found at the content part of "compound verbs" (light verb plus noun or adjective, the noun/adjective is pof).
+        # Training sentence 46:
+        # ఆడవాళ్లకు ఆపరేషన్లు చేయించాలి
+        # āḍavāḷlaku āpareṣanlu ceyiṁcāli
+        # k4         pof        main
+        # NN         NN         VM
+        # women-to   operations should-be-performed
+        # Ada      pn pl vib-vAIYlu_ki
+        # ApareRan n  pl case-d vib-0 (case-d je asi direct, ne dativ!)
+        # ceyiMcu  v  vib/tam-Ali
+        elsif ( $deprel eq 'pof' )
+        {
+            # It would be useful to have a special tag for nominal parts of compound verbs.
+            # We do not have it now.
+            $afun = 'Obj';
         }
         elsif ( $deprel eq "ccof" ) {
             $node->set_is_member(1);
@@ -140,6 +180,27 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
+    # Now that all functions are converted, make sure that functions of coordinations are properly shifted.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $parent = $node->parent();
+            log_fatal("Parentless conjunct") if(!defined($parent));
+            $node->set_afun($parent->afun());
+            # We have to wait with setting parent's afun to Coord until all conjuncts have copied the parent's original afun.
+        }
+    }
+    # Tag coordination heads as Coord.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $parent = $node->parent();
+            # We have checked that all conjuncts actually have parents.
+            $parent->set_afun('Coord');
+        }
+    }
 }
 
 1;
@@ -161,5 +222,5 @@ Converts Telugu treebank into PDT style treebank.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2011, 2013 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
