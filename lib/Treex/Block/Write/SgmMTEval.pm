@@ -13,9 +13,12 @@ override 'print_header' => sub {
     my $lang = "en";
     $lang = "cz" if ($self->language eq "cs");
 
-    print {$self->_file_handle} "<doc docid=\"". $doc->full_filename . "\" genre=\"news\" origlang=\"$lang\">\n";
+    my $sysid = "";
+    $sysid = ' sysid="ref"' if ($self->selector eq "ref");
+
+    print {$self->_file_handle} "<doc docid=\"". $doc->full_filename . "\" genre=\"news\" origlang=\"$lang\"$sysid>\n";
     print {$self->_file_handle} "<p>\n";
-};
+}; 
 
 override 'print_footer' => sub {
     my ($self, $doc) = @_;
