@@ -15,8 +15,8 @@ Exporter::export_ok_tags('twoword');
 Exporter::export_ok_tags('threeword');
 
 my @classes = qw/ps pf p_ pc pp pm pd pb gu gc gr gs gq gh gl gt g_ gp ic if io ia i_ oa op om oe
-		 o_ or oc th ty tm td ti tf mn mt mr ah at az nw o i g p I P T A C lower segm upper/; # todo neco chybi
-
+		 o_ or oc th ty tm td ti tf mn mt mr ah at az nw o i g p I P T A C lower segm upper
+                 s f qc cn cap na ni n_ cb cp cr nm nq ts cs nc tn nr tp np sf qo tc m_ qu gy mi ?/; # todo neco chybi
 
 my %classNumbers = map {$classes[$_] => $_} 0 .. $#classes;
 
