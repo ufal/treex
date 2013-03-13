@@ -14,9 +14,31 @@ Exporter::export_ok_tags('oneword');
 Exporter::export_ok_tags('twoword');
 Exporter::export_ok_tags('threeword');
 
-my @classes = qw/ps pf p_ pc pp pm pd pb gu gc gr gs gq gh gl gt g_ gp ic if io ia i_ oa op om oe
-		 o_ or oc th ty tm td ti tf mn mt mr ah at az nw o i g p I P T A C lower segm upper
-                 s f qc cn cap na ni n_ cb cp cr nm nq ts cs nc tn nr tp np sf qo tc m_ qu gy mi ?/; # todo neco chybi
+my @classes = qw/a ah at az
+                 c cb cn cp cr cs
+                 g gc gh gl gp gq gr gs gt gu g_
+                 i ia ic if io i_
+                 m mi mn mr mt
+                 n na nc ni nm np nq nr nw n_
+                 o oa oc oe om op or o_
+                 p pb pc pd pf pm pp ps p_
+                 q qc qo
+                 t tc td tf th tm tn tp ts ty
+                 P T A C
+
+                 lower segm upper cap s f ?
+
+                 I sf ti m_ qu gy/; # todo tenhle posledni radek jsou veci, ktery nejsou v techreportu. 
+
+#I jako slozena instituce je vicemene legalni, ale je tam jen jednou
+# sf na radce 4155 je spatne taglý (má tam bejt jen s)
+# ti je zřejmě použito pro interval: <ti 27 . 5 . - 3 . 6 .> ale "Od <ti 2.kvetna do 4.cervna>" je podivny
+# m_ je použito pro tiskový agentury - to by mělo bejt nahrazeno mn.
+# qu má bejt gu. (v Popradu)
+# gy má bejt ty. (roku 1922)
+
+# jednopísmenkový entity tam jsou jen chybou. - dá se taky vyčistit
+# otázkou zůstává, zda použít i ty rozšířený - neoznačují entity, ale lze je použít k trénování.
 
 my %classNumbers = map {$classes[$_] => $_} 0 .. $#classes;
 
