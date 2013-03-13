@@ -10,23 +10,31 @@ use Text::Table;
 use Getopt::Long;
 
 my $separator = ",";
+my $classesFile;
 
-GetOptions('separator=s' => \$separator);
+GetOptions('separator=s' => \$separator,
+           'classes=s' => \$classesFile);
 
 my $modelFile = shift;
 my $testFile = shift;
-my $classesFile = shift;
 
-die "Usage: ./TestSVM.pl MODEL_FILE TEST_FILE CLASSES_FILE [-s SEPARATOR]" if !defined $modelFile or !defined $testFile or !defined $classesFile;
+die "Usage: ./TestSVM.pl MODEL_FILE TEST_FILE [-c CLASSES_FILE] [-s SEPARATOR]" if !defined $modelFile or !defined $testFile;
 warn 'Suspicious number of parameters' if defined shift;
 
-print "Loading classes list...\n";
-open CLASSES, "<$classesFile" or die "Cannot open classes list $classesFile";
-chomp(my @classes = <CLASSES>);
-close CLASSES;
+my @classes;
+my %labelMap;
+my %labelMapInv;
 
-my %labelMap = map { $classes[$_] => $_ + 1 } 0 .. $#classes;
-my %labelMapInv = reverse %labelMap;
+if (defined $classesFile) {
+    print "Loading classes list...\n";
+    open CLASSES, "<$classesFile" or die "Cannot open classes list $classesFile";
+    chomp(@classes = <CLASSES>);
+    close CLASSES;
+
+    %labelMap = map { $classes[$_] => $_ + 1 } 0 .. $#classes;
+    %labelMapInv = reverse %labelMap;
+}
+
 
 print "Loading modelFile...\n";
 
@@ -52,12 +60,14 @@ while (<TEST>) {
 
     my $label = $line[$#line];
 
-    die "Undefined label $label (was not found in classes list $classesFile)" if !defined $labelMap{$label};
-    my $classification = $labelMap{$label};
+    die "Undefined label $label (was not found in classes list $classesFile)" if defined $classesFile and !defined $labelMap{$label};
+    my $classification = defined $classesFile ? $labelMap{$label} : $label;
 
     my $dataset = new Algorithm::SVM::DataSet(Label=>0, Data=>\@features);
 
-    my $prediction = $labelMapInv{$model->predict($dataset)};
+    my $predictionLabel = $model->predict($dataset);
+
+    my $prediction = defined $classesFile ? $labelMapInv{$predictionLabel} : $predictionLabel;
 
     if (!defined $results{$label}{$label}) {
 	$results{$label}{$label} = 0;
