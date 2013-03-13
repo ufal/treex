@@ -107,6 +107,10 @@ for my $sentence (@sentences) {
 	    for my $ne (@{$sentence->{namedents}}) {
 		if ($ne->{start} == $i+1 && $ne->{end} == $i+1) {
 		    $reference = get_class_number($ne->{type});
+                    if (!defined $reference) {
+                        warn ("Unknown class: ". $ne->{type});
+                        $reference = -1;
+                    }
 		}
 	    }
 	}
