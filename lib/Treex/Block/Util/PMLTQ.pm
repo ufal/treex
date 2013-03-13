@@ -3,17 +3,35 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::PMLTQ::Query;
+use File::Slurp;
 
 extends 'Treex::Core::Block';
 
 # The PML-TQ query string
-has 'query' => ( isa => 'Str', is => 'ro', required => 1 );
+has 'query' => ( isa => 'Str', is => 'ro', builder => '_load_query', lazy_build => 1 );
+
+has 'query_file' => ( isa => 'Maybe[Str]', is => 'ro' );
 
 # Print just one address per match
 has 'one_per_match' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 # Evaluate code on matched nodes
 has 'action' => ( isa => 'Str', is => 'ro', default => '' );
+
+
+sub _load_query {
+    
+    my ($self) = @_;
+    
+    if ( !defined($self->query_file) ){
+        log_fatal('One of \'query\' or \'query_file\' must be defined!');
+    }
+
+    my $query = read_file( $self->query_file, binmode => ':utf8' );
+    $query =~ s/\s+/ /g;    
+    return $query;
+}
+
 
 sub process_document {
 
@@ -64,6 +82,9 @@ Executes a PML-TQ query on the processed files and prints the addresses of all n
 (one match per line, tab-separated if more nodes belong to the same match and C<one_per_match>
 is turned off).
 
+The PML-TQ query may be specified either directly on the command line using
+the C<query> parameter, or in a text file using the C<query_file> parameter.
+
 This block uses the L<Treex::Tool::PMLTQ::Query> library which is a wrapper around
 L<Tree_Query::BtredEvaluator>, which simulates a C<btred> environment.
 
@@ -73,7 +94,11 @@ L<Tree_Query::BtredEvaluator>, which simulates a C<btred> environment.
 
 =item query
 
-The PML-TQ query. This parameter is required.
+The PML-TQ query.
+
+=item query
+
+A file containing the PML-TQ query.
 
 =item one_per_match
 
