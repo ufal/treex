@@ -197,7 +197,7 @@ sub _o_pron {
             $tnode->set_gram_number('sg');
         }
 
-        if ( $tnode->get_attr('coref_gram.rf') ) {
+        if ( $tnode->get_coref_gram_nodes() ) {
             $tnode->set_gram_indeftype('relat');
         }
     }

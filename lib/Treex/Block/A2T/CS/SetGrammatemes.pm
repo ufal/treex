@@ -1282,7 +1282,7 @@ sub evalpremise {
     my $func = $node->functor;
     my $tag  = $node->get_lex_anode->tag;
 
-    my $coref = defined $node->get_attr('coref_gram.rf');
+    my $coref = $node->get_coref_gram_nodes();
 
     # kandidati na vztazna zajmena/prislovce dostanou take $coref=1
     my ($lparent) = $node->get_eparents( { or_topological => 1 } );

@@ -16,11 +16,10 @@ sub process_zone {
         )
     {
 
-        my $antec_ids_rf = $perspron->get_attr('coref_text.rf');
+        my ($antec) = $perspron->get_coref_text_nodes();
 
         # !!! ruseni koreferencnich linku vedoucich na smazane uzly by chtelo zajistit nejak lip!
-        if ( $antec_ids_rf and $zone->get_document->id_is_indexed( $antec_ids_rf->[0] ) ) {
-            my $antec       = $zone->get_document->get_node_by_id( $antec_ids_rf->[0] );
+        if ( $antec ) {
             my $clause_head = _nearest_clause_head($perspron);
 
             if ($antec->formeme =~ /n:1/
@@ -30,7 +29,8 @@ sub process_zone {
                 )
             {
 
-                $perspron->set_attr( 'coref_gram.rf', $antec_ids_rf );
+                # TODO: this should be definitely unified under the standard getters and setter for coreference
+                $perspron->set_deref_attr( 'coref_gram.rf', [$antec] );
                 $perspron->set_attr( 'coref_text.rf', undef );
             }
         }

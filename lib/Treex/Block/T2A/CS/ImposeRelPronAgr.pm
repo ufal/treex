@@ -11,15 +11,15 @@ sub process_ttree {
             my $i = $_->gram_indeftype;
             defined $i
                 and $i eq 'relat'
-                and defined $_->get_attr('coref_gram.rf')
         } $t_root->get_descendants
         )
     {
 
-        my $a_relpron = $t_relpron->get_lex_anode;
-        my $t_antec   = @{ $t_relpron->get_deref_attr('coref_gram.rf') }[0];
+        my ($t_antec) = $t_relpron->get_coref_gram_nodes;
+        next if !defined $t_antec;
 
         my $a_antec = $t_antec->get_lex_anode or next;
+        my $a_relpron = $t_relpron->get_lex_anode;
 
         if ( $t_relpron->formeme =~ /poss|attr/ ) {    # possessive relative pronouns
             $a_relpron->set_attr( 'morphcat/possgender', $a_antec->get_attr('morphcat/gender') );

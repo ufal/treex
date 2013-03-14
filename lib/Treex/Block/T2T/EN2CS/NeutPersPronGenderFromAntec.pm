@@ -6,8 +6,8 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( ( $tnode->gram_gender || "" ) eq 'neut' && defined $tnode->get_attr('coref_text.rf') ) {
-        my $t_antec      = @{ $tnode->get_deref_attr('coref_text.rf') }[0];
+    my ($t_antec) = $tnode->get_coref_text_nodes();
+    if ( ( $tnode->gram_gender || "" ) eq 'neut' && defined $t_antec ) {
         my $gender_antec = $t_antec->gram_gender;
         if ( defined $gender_antec and $gender_antec ne 'neut' ) {
             $tnode->set_gram_gender($gender_antec);

@@ -16,21 +16,20 @@ sub process_ttree {
 
         if ( my ($perspron) = grep { $_->t_lemma eq "#Cor" } $vfin_tnode->get_children ) {
 
-            my $antec;
-            if ( defined $perspron->get_attr('coref_gram.rf') ) {
-                my $antec_id = @{ $perspron->get_attr('coref_gram.rf') }[0];
-                $antec = $document->get_node_by_id($antec_id);
+            my ($antec) = $perspron->get_coref_gram_nodes();
+            while ($antec and my ($next_antec) = $antec->get_coref_gram_nodes()) {
+                $antec = $next_antec;
             }
+
 
             # Skip verbs with subject (i.e. child in nominative)
             #            next VFIN
             #                if any { $_ ne $perspron and $_->formeme =~ /1/ } $vfin_tnode->get_echildren();
 
             # chained gram.coref. in the case of relative clauses
-            if ( $antec and $antec->get_attr('coref_gram.rf') ) {
-                my $antec_id = @{ $antec->get_attr('coref_gram.rf') }[0];
-                $antec = $document->get_node_by_id($antec_id);
-            }
+            #if ( $antec ) {
+            #    ($antec) = $antec->get_coref_gram_nodes();
+            #}
 
             # Find antecedent by heuristics: nearest noun left to the $vfin_tnode
             if ( not $antec ) {
@@ -55,7 +54,7 @@ sub process_ttree {
                     $perspron->set_gram_number('pl');
                 }
 
-                $perspron->set_attr( 'coref_text.rf', $perspron->get_attr('coref_gram.rf') );
+                $perspron->set_deref_attr( 'coref_text.rf', [$antec] );
                 $perspron->set_attr( 'coref_gram.rf', undef );
 
                 #                print "sentence:\t".$bundle->get_attr('english_source_sentence')."\n";

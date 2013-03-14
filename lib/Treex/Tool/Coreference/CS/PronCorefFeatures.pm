@@ -323,18 +323,16 @@ sub _get_relat_gennum {
 ### returns the gender and number of the candidate, which is reflexive, according to his antecedent's gender and number
 sub _get_refl_gennum {
 	my ($node) = @_;
-	my $antec = ($node->get_coref_gram_nodes)[0];
-	while ((!$antec->gram_gender || ($antec->gram_gender eq 'inher')) &&
-        $antec->attr('coref_gram.rf') ) {
-		$antec = ($antec->get_coref_gram_nodes)[0];
+	while ((!$node->gram_gender || ($node->gram_gender eq 'inher')) && (my ($antec) = $node->get_coref_gram_nodes)) {
+        $node = $antec;
 	}
-	return ($antec->gram_gender, $antec->gram_number);
+	return ($node->gram_gender, $node->gram_number);
 }
 
 ### returns the gender and number of the candidate, if cand = relative => get_relat_gennum(cand), if cand = refl => get_refl_gennum(cand)
 sub _get_cand_gennum {
 	my ($node) = @_;
-	if ($node->attr('coref_gram.rf')) {
+	if (my ($ante) = $node->get_coref_gram_nodes()) {
 		if (defined $node->gram_indeftype && 
                 ($node->gram_indeftype eq 'relat')) {
 
@@ -349,7 +347,7 @@ sub _get_cand_gennum {
 		}
 		elsif (($node->t_lemma eq '#PersPron') 
             && ($node->gram_person eq 'inher')) {
-			return _get_refl_gennum($node);
+			return _get_refl_gennum($ante);
 		}
 	}
 	return ($node->gram_gender, $node->gram_number);
