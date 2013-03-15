@@ -147,15 +147,15 @@ sub _test_stanford {
         }
 
         if ($anode->wild->{is_coord_conjunction} and $anode->get_parent->is_root) {
-            $self->_my_complaint($anode,'Conjunctions cannot be placed directly below the technical root');
+            $self->_my_complain($anode,'Conjunctions cannot be placed directly below the technical root');
         }
 
         if ($anode->is_member and $anode->get_parent->is_root) {
-            $self->_my_complaint($anode,'is_member=1 cannot be placed directly below the technical root');
+            $self->_my_complain($anode,'is_member=1 cannot be placed directly below the technical root');
         }
 
         if ($anode->wild->{is_coord_conjunction} and first {$_->is_member or $is_coord_root{$_}} $anode->get_children) {
-            $self->_my_complaint($anode,'Conjunction cannot have other CS participants among its children');
+            $self->_my_complain($anode,'Conjunction cannot have other CS participants among its children');
         }
     }
 } # end of _test_stanford
