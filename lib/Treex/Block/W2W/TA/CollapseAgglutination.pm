@@ -4,31 +4,41 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+my $aux_verb_rules_file = require_file_from_share("data/models/simple_tokenizer/ta/auxiliary_rules.txt");
 my $verb_rules_file = require_file_from_share("data/models/simple_tokenizer/ta/verb_rules.txt");
 my $noun_rules_file = require_file_from_share("data/models/simple_tokenizer/ta/noun_rules.txt");
 my $postpositions_rule_file = require_file_from_share("data/models/simple_tokenizer/ta/postpositional_rules.txt");
 my $compound_words_file = require_file_from_share("data/models/simple_tokenizer/ta/compound_words.txt");
 
-# load verb suffixes
-log_info 'Loading Tamil verb rules...';
-my %verb_rules = load_rules($verb_rules_file);
+# load auxiliary verb rules
+log_info 'Loading Tamil aux verb rules...';
+my %aux_verb_rules = load_rules($aux_verb_rules_file);
+print_rules(\%aux_verb_rules, 'ordered');
 
-# load noun suffixes
-log_info 'Loading Tamil noun rules...';
-my %noun_rules = load_rules($noun_rules_file);
-
-# load postpositional rules
-log_info 'Loading Tamil postpositions...';
-my %pp_rules = load_rules($postpositions_rule_file);
-
-# load compound words
-log_info 'Loading Tamil compound words...';
-my %compound_rules = load_rules($compound_words_file);
+## load verb suffixes
+#log_info 'Loading Tamil verb rules...';
+#my %verb_rules = load_rules($verb_rules_file);
+#
+## load noun suffixes
+#log_info 'Loading Tamil noun rules...';
+#my %noun_rules = load_rules($noun_rules_file);
+#
+## load postpositional rules
+#log_info 'Loading Tamil postpositions...';
+#my %pp_rules = load_rules($postpositions_rule_file);
+#
+## load compound words
+#log_info 'Loading Tamil compound words...';
+#my %compound_rules = load_rules($compound_words_file);
 
 
 sub load_rules {
-	my $f = shift;
-    my %rules_hash;
+	my ($f, $type) = @_;
+	my %variables;
+    my %rules_unordered;
+    my %rules_ordered;
+    my @rules_array;
+    my @vals_array;
     open( my $RHANDLE, '<:encoding(UTF-8)', $f );
     my @data = <$RHANDLE>;
     close $RHANDLE;	
@@ -37,13 +47,67 @@ sub load_rules {
         $line =~ s/(^\s+|\s+$)//;
         next if ( $line =~ /^$/ );
         next if ( $line =~ /^#/ );
-        my @suff_split = split /\t+:\t+/, $line;
-        next if ( scalar(@suff_split) != 2 );
-        $suff_split[0] =~ s/(^\s+|\s+$)//;
-        $suff_split[1] =~ s/(^\s+|\s+$)//;
-        $rules_hash{ $suff_split[0] } = $suff_split[1];
+        # 1. variables
+        if ($line =~ /=/) {
+        	my @var_val = split (/\s*=\s*/, $line);
+        	$variables{$var_val[0]} = $var_val[1];
+        }
+        # 2. rulues
+        elsif ($line =~ /:/) {
+	        my @suff_split = split(/\t+:\t+/, $line);
+	        next if ( scalar(@suff_split) != 2 );
+	        $suff_split[0] =~ s/(^\s+|\s+$)//;
+	        $suff_split[1] =~ s/(^\s+|\s+$)//;
+	        if ($type eq 'ordered') {
+	        	push @rules_array, $suff_split[0];
+	        	push @vals_array, $suff_split[1];
+	        }
+	        elsif ($type eq 'unordered') {
+	        	$rules_unordered{ $suff_split[0] } = $suff_split[1];	        	
+	        }        	
+        }
     }
-    return %rules_hash;
+    # replace variables found in the rules with variable values
+    my %rules_to_replace;
+    my @rules;
+	if ($type eq 'unordered') {
+	    foreach my $r (keys %rules_unordered) {
+			my $new_rule = $r;
+			my $change_rule = 0;
+	    	foreach my $v (keys %variables) {
+	    		if ($r =~ /$v/) {
+	    			my $val = $variables{$v};
+					$new_rule =~ s/[\%]$v/$val/g;
+					$change_rule = 1;
+	    		}
+	    	}
+	    	if ($change_rule) {
+	    		$rules_to_replace{$r} = $new_rule;    		
+	    	}
+	    }
+	    foreach my $rc (keys %rules_to_replace) {
+	    	if (exists $rules_unordered{$rc}) {
+	    		my $orval = $rules_unordered{$rc};
+	    		my $nr = $rules_to_replace{$rc};
+	    		$rules_unordered{$nr} = $orval;
+	    		delete $rules_unordered{$rc};
+	    	}
+	    }   		
+    	return %rules_unordered;
+	}
+	elsif ($type eq 'ordered') {
+	    foreach my $ri (0..$#rules_array) {
+			my $new_rule = $rules_array[$ri];
+	    	foreach my $v (keys %variables) {
+	    			my $val = $variables{$v};
+					$new_rule =~ s/[\%]$v/$val/g;
+	    	}
+	    	$rules_array[$ri] = $new_rule;
+	    }
+		$rules_ordered{'r'} = \@rules_array;
+		$rules_ordered{'v'} = \@vals_array;
+		return %rules_ordered;
+	}
 }
 
 sub process_zone {
@@ -51,9 +115,23 @@ sub process_zone {
     my $sentence = $zone->sentence;
 	$sentence =~ s/(^\s+|\s+$)//;
     log_fatal("No sentence found") if !defined $sentence;
-    my $outsentence = $self->reduce_agglutination($sentence);
-    $zone->set_sentence($outsentence);
+#    my $outsentence = $self->reduce_agglutination($sentence);
+#    $zone->set_sentence($outsentence);
     return 1;
+}
+
+sub print_rules {
+	my ($ref, $type) = @_;
+	if ($type eq 'ordered') {
+		my %rules = %$ref;
+		map {my $r = $_; print $r . "\t:\t" . $rules{$r} . "\n";}keys %rules;		
+	}
+	elsif ($type eq 'unordered') {
+		my @rules = @$ref;
+		map {my $r = $_; print $r . "\t:\t" . $rules{$r} . "\n";}@rules;
+	}
+
+	return;
 }
 
 sub reduce_agglutination {
@@ -61,30 +139,36 @@ sub reduce_agglutination {
 
 	# separate "comma" and the "period" at the end of the sentence
 	$sentence =~ s/(\,|\.$)/$1 /g;
+	
+	# apply auxiliary verb rules
+	foreach my $vs (keys %aux_verb_rules) {
+		my $val = $aux_verb_rules{$vs};
+		$sentence =~ s/$vs\s+/$val /g;
+	}	
 
-	# apply verb rules
-	foreach my $vs (keys %verb_rules) {
-		my $val = $verb_rules{$vs};
-		$sentence =~ s/$vs\s+/$val /g;
-	}
-	
-	# apply noun rules
-	foreach my $vs (keys %noun_rules) {
-		my $val = $noun_rules{$vs};
-		$sentence =~ s/$vs\s+/$val /g;
-	}	
-	
-	# apply postpositional rules
-	foreach my $vs (keys %pp_rules) {
-		my $val = $pp_rules{$vs};
-		$sentence =~ s/$vs\s+/$val /g;
-	}    
-	
-	# apply compound rules
-	foreach my $vs (keys %compound_rules) {
-		my $val = $compound_rules{$vs};
-		$sentence =~ s/$vs\s+/$val /g;
-	}	
+#	# apply verb rules
+#	foreach my $vs (keys %verb_rules) {
+#		my $val = $verb_rules{$vs};
+#		$sentence =~ s/$vs\s+/$val /g;
+#	}
+#	
+#	# apply noun rules
+#	foreach my $vs (keys %noun_rules) {
+#		my $val = $noun_rules{$vs};
+#		$sentence =~ s/$vs\s+/$val /g;
+#	}	
+#	
+#	# apply postpositional rules
+#	foreach my $vs (keys %pp_rules) {
+#		my $val = $pp_rules{$vs};
+#		$sentence =~ s/$vs\s+/$val /g;
+#	}    
+#	
+#	# apply compound rules
+#	foreach my $vs (keys %compound_rules) {
+#		my $val = $compound_rules{$vs};
+#		$sentence =~ s/$vs\s+/$val /g;
+#	}	
 	return $sentence;
 }
 
