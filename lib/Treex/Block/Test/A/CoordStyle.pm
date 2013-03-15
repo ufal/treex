@@ -4,16 +4,40 @@ use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
 has style => (
-    is            => 'ro',
+    is            => 'rw',
     isa           => 'Str',
     default       => 'fPhRsHcHpB',
     documentation => 'coord style - encoded in a single string as in HamleDT papers (e.g. fPhRsHcHpB)',
+);
+
+has stylefrompath => (
+    is => 'rw',
+    isa => 'Bool',
 );
 
 has fix => (
     is => 'ro',
     documentation => 'fix detected errors (even if the change might be only formal)'
 );
+
+sub process_document {
+    my ($self,$document) = @_;
+    if ($self->stylefrompath) {
+        if ( $document->full_filename() =~ /(f[PMS]([a-z][A-Z])+)/) {
+#            print "Style detected from filename: $1\n";
+            $self->set_style($1);
+        }
+        elsif ( $document->full_filename() =~ /001_pdtstyle/) {
+            $self->set_style('fPhRsHcHpB');
+        }
+        else {
+            log_fatal ("Coordination style code not found in the file name");
+        }
+    }
+
+    Treex::Core::Block::process_document(@_); # TODO: lepsi by bylo volat metodu primeho predka
+}
+
 
 sub process_atree {
     my ($self, $aroot) = @_;
