@@ -15,6 +15,7 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($a_root);
     $self->raise_postpositions($a_root);
+    $self->raise_children_of_commas($a_root);
 }
 
 #------------------------------------------------------------------------------
@@ -45,6 +46,16 @@ sub deprel_to_afun
         }
 
         # Subject
+        # r6-k1 ... documentation: karta of a conjunct verb (complex predicate)
+        # Example from documentation: [r6-k1]
+        # कल मंदिर का उदघाटन हुआ
+        # kala manxira kA uxGAtana huA
+        # kala maṁdira kā udaghāṭana huā
+        # kal  mandir  ká udghátan   huá
+        # yesterday temple of opening was
+        # the temple was opened yesterday
+        # r6-k1(manxira kA, uxGAtana)
+        # The r6-k1 node is attached to the nominal part of the compound predicate. But it is the agent, and typically subject.
         if ( $deprel =~ /^(k1|pk1|k4a|r6-k1)$/ )
         {
             $afun = "Sb";
@@ -86,6 +97,7 @@ sub deprel_to_afun
         elsif ( $deprel eq "k1s" ) {
             $afun = "Atv";    # noun complements
         }
+        # r6-k2 is analogical to r6-k1, see above.
         elsif ( $deprel =~ /^(k2|k2p|k2g|k2s|k2u|r6-k2|ras-k2)$/ ) {
             $afun = "Obj";
         }
@@ -268,6 +280,10 @@ sub raise_postpositions
                 my $parent0 = $postpositions[0]->parent();
                 if(defined($parent0))
                 {
+                    # If the parent is a conjunct, the is_member flag must be moved to the topmost postposition.
+                    # (It is the standard in Treex that the node directly under the conjunction bears the flag.
+                    # It is unlike in the PDT versions that are distributed to the users.)
+                    my $was_member = $parent0->is_member();
                     my $gparent = $parent0->parent();
                     if(defined($gparent))
                     {
@@ -287,11 +303,50 @@ sub raise_postpositions
                         }
                         $postpositions[-1]->set_parent($gparent);
                         $parent0->set_parent($postpositions[0]);
+                        if($was_member)
+                        {
+                            $postpositions[-1]->set_is_member(1);
+                            $parent0->set_is_member(0);
+                        }
                     } # if defined $gparent
                 } # if defined $parent0
             } # if scalar @postpositions > 0
         } # if afun eq 'AuxP'
     } # foreach $node
+}
+
+
+
+#------------------------------------------------------------------------------
+# Occasionally a comma is not leave. It happens in dates:
+# जनवरी, २००१ में
+# janavarī, 2001 meṁ
+# in January 2001
+# Here, "janavarī" is attached to "," ad "mod". This function will reattach it
+# to the parent of the comma.
+#------------------------------------------------------------------------------
+sub raise_children_of_commas
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Warning: Do not approach commas that govern coordinations. Only AuxX please!
+        if($node->afun() eq 'AuxX')
+        {
+            # Check that the comma has a parent (it should!), i.e. that there is somewhere to reattach the children.
+            my $parent = $node->parent();
+            my @children = $node->children();
+            if(defined($parent) && scalar(@children)>=1)
+            {
+                foreach my $child (@children)
+                {
+                    $child->set_parent($parent);
+                }
+            }
+        }
+    }
 }
 
 
