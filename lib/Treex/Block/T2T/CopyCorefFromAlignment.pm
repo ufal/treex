@@ -65,6 +65,9 @@ sub process_tnode {
 #                 print $source->get_address . "\n";
 #             }
         }
+
+        # remove a possibly inserted 'anaph' itself from the list of its antecedents
+        @aligned_antecs = grep {$_ != $source} @aligned_antecs;
         $self->_add_coref_nodes( $source, @aligned_antecs );
     }
 }
