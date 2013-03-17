@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'add_cor' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 sub process_tnode {
     my ( $self, $t_node ) = @_;
         
@@ -15,8 +17,28 @@ sub process_tnode {
     
     
         $t_node->set_is_relclause_head(1);
-        $t_node->set_formeme('v:rc');
-        $t_node->wild->{rc_no_relpron} = 1;
+
+        if ($self->add_cor) {
+            my $cor = $t_node->create_child(
+                {
+                    is_generated => 1,
+                    t_lemma      => '#Cor',
+                    functor      => 'PAT',
+                    formeme      => 'n:elided',
+                    nodetype     => 'qcomplex',
+                }
+            );
+            $cor->shift_after_node($t_node);
+            print STDERR "ADDING #COR PAT: " . $cor->get_address . "\n";
+            print STDERR "ADDING SENT: " . $cor->get_zone->sentence . "\n";
+        }
+        # TODO: remove this
+        else {
+            $t_node->set_formeme('v:rc');
+            $t_node->wild->{rc_no_relpron} = 1;
+
+        }
+
     }
 }
 
