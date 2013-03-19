@@ -4,14 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
-# Global counter over all documents.
-###!!! We only need it for investigation of the source data. Once done, we will adjust routines and stop collecting statistics.
-# How to access it in functions:
-# my $counter = $self->_counter();
-# $counter->{xxx}++;
-# How to print the final counts: use sub process_end();
-has _counter => ( is => 'ro', default => sub { {} } );
-
 #------------------------------------------------------------------------------
 # Reads the Danish tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -29,101 +21,6 @@ sub process_zone
     $self->restructure_coordination($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
     $self->check_afuns($a_root);
-}
-
-#------------------------------------------------------------------------------
-# Collects statistics of ways in which coordination is annotated.
-#------------------------------------------------------------------------------
-sub investigate_coordinations
-{
-    my $self = shift;
-    my $root = shift;
-    my $counter = $self->_counter();
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        # Nodes with afuns 'Coord' and 'CoordArg' participate in coordinations.
-        # Ignore additional conjunctions and punctuation at the moment.
-        my $afun = $node->afun();
-        if($afun =~ m/^Coord(Arg)?$/)
-        {
-            # Find the root node of the coordination.
-            # Do not recognize nested coordinations. Traverse ancestors until their afun is not coordinational.
-            # (Possibilities to annotate nested coordination under the Danish scheme are limited anyway.)
-            my $coordroot = $node;
-            while(1)
-            {
-                if($coordroot->afun() !~ m/^Coord(Arg)?$/)
-                {
-                    # The dependency relation of this node to its parent is not coordinational.
-                    # Thus this is the root (head) node of the coordination.
-                    last;
-                }
-                my $parent = $coordroot->parent();
-                if(!defined($parent))
-                {
-                    log_warn("A node that ought to participate in coordination has no parent.");
-                    ###!!! Co teď? Přeskočit ho? Nebo s ním naložit, jako kdyby to byl kořen koordinace?
-                    last;
-                }
-                $coordroot = $parent;
-            }
-            # The node participates in a coordination and we know the root of the coordination.
-            # Store links to all participating nodes at the coordination root.
-            # Note that the coordination root itself will not be part of this array because it does not have a coordinational afun.
-            push(@{$coordroot->{coordination_nodes}}, $node);
-        }
-    }
-    # All coordination roots now know that they govern coordinations and they know all participating nodes.
-    foreach my $node (@nodes)
-    {
-        if(exists($node->{coordination_nodes}))
-        {
-            my @conodes = @{$node->{coordination_nodes}};
-            if(scalar(@conodes)>=1)
-            {
-                # Include the coordination root in the nodes. Order them according to the sentence.
-                push(@conodes, $node);
-                @conodes = sort {$a->ord() <=> $b->ord()} (@conodes);
-                # A typical coordination will have three nodes: two conjuncts and a conjunction.
-                # Coordination signature: parents and afuns.
-                for(my $i = 0; $i<=$#conodes; $i++)
-                {
-                    $conodes[$i]{coindex} = $i+1;
-                }
-                $node->parent()->{coindex} = 0;
-                my $n = scalar(grep {$_->afun() ne 'Coord'} (@conodes));
-                my $signature = sprintf("%02d", $n).' '.join(' ', map {my $p = $_->parent()->{coindex}; my $a = $p>0 ? $_->afun() : 'XXX'; $p.':'.$a} (@conodes));
-                log_info($signature);
-                print($signature, "\t", $node->get_address(), "\n");
-                $counter->{$signature}++;
-            }
-        }
-    }
-}
-
-sub process_end
-{
-    my $self = shift;
-    my $counter = $self->_counter();
-    my @ns = sort {$a cmp $b} (keys(%{$counter}));
-    foreach my $n (@ns)
-    {
-        print("# Coord $n\t$counter->{$n}\n");
-    }
-#TREEX-INFO:   223.193:  Coord 2 708
-#TREEX-INFO:   223.194:  Coord 3 2330
-#TREEX-INFO:   223.194:  Coord 4 236
-#TREEX-INFO:   223.194:  Coord 5 141
-#TREEX-INFO:   223.194:  Coord 6 48
-#TREEX-INFO:   223.194:  Coord 7 13
-#TREEX-INFO:   223.194:  Coord 8 8
-#TREEX-INFO:   223.194:  Coord 9 1
-#TREEX-INFO:   223.193:  Coord 10        3
-#TREEX-INFO:   223.193:  Coord 11        2
-#TREEX-INFO:   223.193:  Coord 12        1
-#TREEX-INFO:   223.193:  Coord 14        1
-#TREEX-INFO:   223.193:  Coord 15        1
 }
 
 #------------------------------------------------------------------------------
