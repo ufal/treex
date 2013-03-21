@@ -45,11 +45,13 @@ has _smod => (
 has parent => (
     is       => 'rw',
     isa      => 'Treex::Core::Node',
+    writer   => 'set_parent',
     reader   => 'parent'
 );
 has afun => (
     is       => 'rw',
     isa      => 'Str',
+    writer   => 'set_afun',
     reader   => 'afun'
 );
 
@@ -88,7 +90,7 @@ sub check_that_node_is_new
     # So we cannot guarantee that changing the parent-child links will not introduce cycles!
     # If e.g. the registered parent is grandchild of a participant, we will not know about it.
     # Then the Node object will launch alarm when we attempt to shape the coordination.
-    if($node == $self->parent())
+    if(defined($self->parent()) && $node == $self->parent())
     {
         log_fatal("Node $node is already a parent of this coordination! ", $node->ord(), " ", $node->form());
     }
@@ -382,7 +384,7 @@ sub detect_mosford
     my $self = shift;
     my $node = shift; # suspected root node of coordination
     # This function is recursive. If we already have conjuncts then we know this is not the top level.
-    my $top = scalar($self->get_conjuncts())>0;
+    my $top = scalar($self->get_conjuncts())==0;
     my @children = $node->children();
     my @participants = grep {$_->afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
     my $bottom = scalar(@participants)==0;
