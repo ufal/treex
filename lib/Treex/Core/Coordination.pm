@@ -387,7 +387,21 @@ sub detect_mosford
         # No participants found. This $node is not a root of coordination.
         return;
     }
-    my @modifiers = grep {$_->afun() !~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
+    # Orphans are treated similarly to conjuncts but they can be only detected under Coord
+    # and there will be no recursion over them.
+    my $exdorphans = !$top && $node->parent()->afun() eq 'Coord';
+    if($exdorphans)
+    {
+        my @orphans = grep {$_->afun() eq 'ExD'} @children;
+        # Orphans can be added right away. There will be no recursion over them.
+        foreach my $orphan (@orphans)
+        {
+            $self->add_conjunct($orphan, 1, $orphan->children());
+        }
+    }
+    my $partregex = 'Coord(Arg)?|Aux[GXY]';
+    $partregex .= '|ExD' if($exdorphans);
+    my @modifiers = grep {$_->afun() !~ m/^($partregex)$/} @children;
     if($bottom)
     {
         # Return my modifiers to the upper level. They will need them when they add me as participant.
@@ -410,7 +424,7 @@ sub detect_mosford
         my $afun = $participant->afun();
         if($afun eq 'CoordArg')
         {
-            my $orphan = 0; ###!!! if afun eq 'ExD' and parent afun eq 'Coord' then $orphan = 1
+            my $orphan = 0;
             $self->add_conjunct($participant, $orphan, @partmodifiers);
         }
         else
