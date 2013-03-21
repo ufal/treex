@@ -387,7 +387,8 @@ sub detect_mosford
     my $top = scalar($self->get_conjuncts())==0;
     my @children = $node->children();
     my @participants = grep {$_->afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
-    my $bottom = scalar(@participants)==0;
+    my @recursive_participants = grep {$_->afun() =~ m/^Coord(Arg)?$/} @participants;
+    my $bottom = scalar(@recursive_participants)==0;
     if($top && $bottom)
     {
         # No participants found. This $node is not a root of coordination.
@@ -425,9 +426,10 @@ sub detect_mosford
     }
     foreach my $participant (@participants)
     {
-        # Recursion first. Someone must sort the grandchildren as participants vs. modifiers.
-        my @partmodifiers = $self->detect_mosford($participant);
         my $afun = $participant->afun();
+        # Recursion first. Someone must sort the grandchildren as participants vs. modifiers.
+        # Coord and CoordArg require recursion. Aux nodes terminate it even if they have children.
+        my @partmodifiers = $afun =~ m/^Coord(Arg)?$/ ? $self->detect_mosford($participant) : $participant->children();
         if($afun eq 'CoordArg')
         {
             my $orphan = 0;

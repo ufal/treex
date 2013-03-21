@@ -448,7 +448,8 @@ sub restructure_coordination
     # The former reshapes coordination immediately upon finding it.
     # The latter and older approach first collects all coord structures then reshapes them.
     # It could theoretically suffer from things changing during reshaping.
-    if (1)
+    my $implemented = $self->detect_coordination(new Treex::Core::Node, new Treex::Core::Coordination) ne 'not implemented';
+    if ($implemented)
     {
         $self->shape_coordination_recursively_object( $root, $debug );
     }
@@ -470,6 +471,25 @@ sub restructure_coordination
             $self->shape_coordination( $c, $debug );
         }
     }
+}
+
+#------------------------------------------------------------------------------
+###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###
+# Every descendant of this class should implement its own method
+# detect_coordination(). It may use the prepared detect_...() methods of
+# Coordination but it must select what annotation style is to be expected in
+# the data. During the transition phase, until all descendants have implemented
+# the method, we will keep here the functions that take the old approach. In
+# order to recognize when to use them, we need a bogus implementation of the
+# new function that just says 'not implemented'.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    return 'not implemented';
 }
 
 #------------------------------------------------------------------------------
@@ -559,21 +579,6 @@ sub shape_coordination_recursively_object
             $self->shape_coordination_recursively_object($child, $debug);
         }
     }
-}
-
-#------------------------------------------------------------------------------
-###!!! JUST FOR TESTING!
-# Detects coordination in the shape we expect to find it in the Danish
-# treebank. Once we verify that this approach works we will move the function
-# to the DA::CoNLL2PDTStyle block.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_mosford($node);
 }
 
 #------------------------------------------------------------------------------

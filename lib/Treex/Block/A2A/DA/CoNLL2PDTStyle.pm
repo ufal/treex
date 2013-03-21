@@ -531,6 +531,23 @@ sub lift_noun_phrases
 }
 
 #------------------------------------------------------------------------------
+###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###
+# Detects coordination in the shape we expect to find it in the Danish
+# treebank. Once we verify that this approach works we will remove the old
+# functions such as collect_coordination_members(),
+# collect_coordination_modifiers() and perhaps (check whether it works!)
+# mark_deficient_clausal_coordination().
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_mosford($node);
+}
+
+#------------------------------------------------------------------------------
 # Detects coordination in Danish trees.
 # - The first member is the root.
 # - The first conjunction is attached to the root and s-tagged 'coord'.
