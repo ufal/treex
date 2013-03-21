@@ -231,6 +231,10 @@ sub get_children
     my @pmod = map {@{$_->{pmod}}} @{$self->_get_participants()};
     return (@smod, @pmod);
 }
+sub children
+{
+    return get_children(@_);
+}
 
 
 

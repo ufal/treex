@@ -1,6 +1,7 @@
 package Treex::Block::A2A::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Coordination;
 use utf8;
 extends 'Treex::Core::Block';
 use tagset::common;
@@ -449,6 +450,10 @@ sub restructure_coordination
     # It could theoretically suffer from things changing during reshaping.
     if (1)
     {
+        $self->shape_coordination_recursively_object( $root, $debug );
+    }
+    elsif (1)
+    {
         $self->shape_coordination_recursively( $root, $debug );
     }
     else
@@ -519,6 +524,56 @@ sub shape_coordination_recursively
             $self->shape_coordination_recursively( $child, $debug );
         }
     }
+}
+
+#------------------------------------------------------------------------------
+# A different approach: recursively search for coordinations and solve them
+# immediately, i.e. don't collect all first.
+# Use the Coordination object.
+#------------------------------------------------------------------------------
+sub shape_coordination_recursively_object
+{
+    my $self  = shift;
+    my $root  = shift;
+    my $debug = shift;
+    my $coordination = new Treex::Core::Coordination;
+    $self->detect_coordination($root, $coordination, $debug);
+    if(scalar($coordination->get_conjuncts())>0)
+    {
+        log_info('COORDINATION FOUND') if ($debug);
+
+        # We have found coordination! Solve it right away.
+        $coordination->shape_prague();
+
+        # Call recursively on all modifier subtrees.
+        foreach my $node ($coordination->get_children())
+        {
+            $self->shape_coordination_recursively_object($node, $debug);
+        }
+    }
+    # Call recursively on all children if no coordination detected now.
+    else
+    {
+        foreach my $child ($root->children())
+        {
+            $self->shape_coordination_recursively_object($child, $debug);
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
+###!!! JUST FOR TESTING!
+# Detects coordination in the shape we expect to find it in the Danish
+# treebank. Once we verify that this approach works we will move the function
+# to the DA::CoNLL2PDTStyle block.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_mosford($node);
 }
 
 #------------------------------------------------------------------------------
