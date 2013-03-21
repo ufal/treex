@@ -125,6 +125,7 @@ sub add_participant
         $self->check_that_node_is_new($pm, $participants, $smod);
         push(@{$record{pmod}}, $pm);
     }
+    return \%record;
 }
 
 
@@ -138,7 +139,7 @@ sub add_conjunct
     my $node = shift;
     my $orphan = shift; # nonzero when this is a (ExD-like) dependent of a deleted conjunct
     my @pmod = @_; # list of dependent nodes (not participants of this coordination!)
-    $self->add_participant($node, 'conjunct', $orphan, 0, @pmod);
+    return $self->add_participant($node, 'conjunct', $orphan, 0, @pmod);
 }
 
 
@@ -152,7 +153,7 @@ sub add_delimiter
     my $node = shift;
     my $symbol = shift; # nonzero if this is a punctuation symbol
     my @pmod = @_; # list of dependent nodes (not participants of this coordination!)
-    $self->add_participant($node, 'delimiter', 0, $symbol, @pmod);
+    return $self->add_participant($node, 'delimiter', 0, $symbol, @pmod);
 }
 
 
@@ -363,6 +364,71 @@ sub shape_prague
 
 
 
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects Moscow or Stanford
+# style, without nested coordinations and without shared modifiers:
+# - the root of the coordination is not marked
+# - conjuncts have 'CoordArg', conjunctions have 'Coord'
+# - all such children are collected recursively
+# - all other children along the way are private modifiers
+#------------------------------------------------------------------------------
+sub detect_mosford
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    # This function is recursive. If we already have conjuncts then we know this is not the top level.
+    my $top = scalar($self->get_conjuncts())>0;
+    my @children = $node->children();
+    my @participants = grep {$_->afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
+    my $bottom = scalar(@participants)==0;
+    if($top && $bottom)
+    {
+        # No participants found. This $node is not a root of coordination.
+        return;
+    }
+    my @modifiers = grep {$_->afun() !~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
+    if($bottom)
+    {
+        # Return my modifiers to the upper level. They will need them when they add me as participant.
+        return @modifiers;
+    }
+    # If we are here we have participants: either conjuncts or delimiters or both.
+    if($top)
+    {
+        # Add the root conjunct before recursion. That's how the lower levels will know they're not the top level.
+        my $orphan = 0;
+        $self->add_conjunct($node, $orphan, @modifiers);
+        # Save the relation of the coordination to its parent.
+        $self->set_parent($node->parent());
+        $self->set_afun($node->afun());
+    }
+    foreach my $participant (@participants)
+    {
+        # Recursion first. Someone must sort the grandchildren as participants vs. modifiers.
+        my @partmodifiers = $self->detect_mosford($participant);
+        my $afun = $participant->afun();
+        if($afun eq 'CoordArg')
+        {
+            my $orphan = 0; ###!!! if afun eq 'ExD' and parent afun eq 'Coord' then $orphan = 1
+            $self->add_conjunct($participant, $orphan, @partmodifiers);
+        }
+        else
+        {
+            my $symbol = $afun =~ m/^Aux[GX]$/;
+            $self->add_delimiter($participant, $symbol, @partmodifiers);
+        }
+    }
+    # Return the list of modifiers to the upper level.
+    # They will need it when they add me as a participant.
+    unless($top)
+    {
+        return @modifiers;
+    }
+}
+
+
+
 =for Pod::Coverage BUILD
 
 =encoding utf-8
@@ -405,6 +471,36 @@ and labels to identify the nodes participating in coordination and to register
 them within this object.
 And there are other methods that can relink the current nodes using a
 particular annotation scheme.
+
+Important:
+
+Logically, participants and modifiers are subtrees.
+We store references to the current root nodes of the subtrees.
+If the inner topology of the subtree changes our references will no longer be valid.
+We may still be pointing into the subtree but we will not hold its local root.
+In particular, if the participant or modifier is a nested coordination,
+it is covered by a separate Coordination object,
+and a method of that object is invoked
+to reshape the coordination according to a particular annotation scheme,
+our reference will get broken.
+
+This issue requires special care when manipulating coordinations.
+We have to be aware what we are doing outside the Coordination object and that it is rather short-lived.
+
+A possible partial solution would be to setup a function that handles root changes.
+The node we refer to would get a reference to the handler as a wild attribute.
+Coordination-aware transformations could call it when they downgrade the node within its own subtree.
+We would still be vulnerable to other manipulations from the outer world.
+The handler would get references to the old and the new root of the subtree.
+Wherever it would find reference to the old root in the coordination, it would redirect it to the new root.
+It would also have to change the list of its private modifiers
+(which could be even conjuncts of the nested coordination;
+as long as they do not participate in our coordination, it is OK).
+
+Another partial solution would be to define an abstract object class that could be
+either Node or Coordination. Lists of participants and modifiers would refer to
+objects of this class instead of just Nodes. If a nested coordination was detected,
+the target object would be a Coordination.
 
 =head1 METHODS
 
