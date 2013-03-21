@@ -33,7 +33,7 @@ has _participants => (
 # This is a simple array of references to Node objects, without any wrapping information.
 has _smod => (
     is       => 'rw',
-    isa      => 'ArrayRef[Treex::Core::Node],
+    isa      => 'ArrayRef[Treex::Core::Node]',
     writer   => '_set_smod',
     reader   => '_get_smod',
     default  => sub { [] }
@@ -254,7 +254,7 @@ sub detect_prague
     my $symbol = $node->form() !~ m/^\pL+$/;
     $self->add_delimiter($node, $symbol);
     my @children = $node->children();
-    foreach $child (@children)
+    foreach my $child (@children)
     {
         if($child->is_member())
         {
@@ -444,6 +444,10 @@ sub detect_mosford
         return @modifiers;
     }
 }
+
+
+
+1;
 
 
 
