@@ -123,4 +123,66 @@ sub load_treex_file_content {
 }
 
 
-# do dok: warning: pracuje primo s xml, bez Treex::Core, takze muze byt citlive na zmeny formatu
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+fl2treex - extractor of Treex bundles specified in a .fl file (TrEd style file list)
+
+=head SYNOPSIS
+
+ fl2treex found_nodes.fl -n 100 -o ./extracted
+
+=head1 DESCRIPTION
+
+This extractor processes .fl files which contain references to nodes in .treex or .treex.gz files.
+It reads the referred files, gathers the bundles that contain referred nodes, and stores the bundles
+in new .treex.gz files. The file-list file is expected to conform the TrEd filelist format
+(one reference per line, reference example: annotation/sample1.treex.gz##29.a-s29-n475,
+see more at http://ufal.mff.cuni.cz/tred/documentation/ar01s12.html).
+If two lines point to a same bundle, the bundle is extracted only once, even if different nodes
+are referred to.
+
+Names of output files are derived from names of filelists, with additional numbering added.
+
+=head2 Options
+
+=over4
+
+=item -n [integer]
+
+Maximum number of bundles per output file (50 by default).
+
+=item -o [directory]
+
+Output directory (default: the directory the contains the file list).
+
+=back
+
+=head1 WARNINGS
+
+The current version processes treex files by a general (treex-uninformed) XML module,
+not by Treex::Core API as usually recommended in the Treex framework. Future changes
+on the topmost levels of the .treex format thus might lead to incompatibility.
+
+Bundles might contain links pointing to other bundles (especially coreference).
+Such links will get invalid in most cases after extracting a bundle out of the
+original document.
+
+=head1 BUGS
+
+Treex identifiers are guaranteed to be unique only in the scope of a treex document.
+Merging bundles that are extracted from different treex documents thus might lead
+to identifier collisions, which is not solved in the current version of fl2treex.
+
+=head1 AUTHOR
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
