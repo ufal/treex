@@ -54,6 +54,12 @@ has afun => (
     writer   => 'set_afun',
     reader   => 'afun'
 );
+has is_member => (
+    is       => 'rw',
+    isa      => 'Bool',
+    writer   => 'set_is_member',
+    reader   => 'is_member'
+);
 
 
 
@@ -262,6 +268,7 @@ sub detect_prague
     my $node = shift; # suspected root node of coordination
     return unless($node->afun() eq 'Coord');
     $self->set_parent($node->parent());
+    $self->set_is_member($node->is_member());
     $self->set_afun('ExD'); # for the case that all conjuncts are ExD
     # Note that $symbol is a guess only here.
     # Also, the current labeling scheme does not allow for private modifiers of this delimiter.
@@ -342,6 +349,7 @@ sub shape_prague
     # Attach the new root to the parent of the coordination.
     $croot->set_parent($self->parent());
     $croot->set_afun('Coord');
+    $croot->set_is_member($self->is_member());
     # Attach all coordination members to the new root.
     foreach my $conjunct ( @conjuncts )
     {
@@ -361,6 +369,7 @@ sub shape_prague
         my $delimiter = $delimrec->{node};
         my $symbol = $delimrec->{symbol};
         $delimiter->set_parent($croot);
+        $delimiter->set_is_member(0);
         if ( $delimiter->form() eq ',' )
         {
             $delimiter->set_afun('AuxX');
@@ -378,6 +387,7 @@ sub shape_prague
     foreach my $modifier ( @shared_modifiers )
     {
         $modifier->set_parent($croot);
+        $modifier->set_is_member(0);
     }
 }
 
@@ -455,6 +465,7 @@ sub detect_mosford
         # Save the relation of the coordination to its parent.
         $self->set_parent($node->parent());
         $self->set_afun($node->get_real_afun());
+        $self->set_is_member($node->is_member());
     }
     foreach my $participant (@participants)
     {

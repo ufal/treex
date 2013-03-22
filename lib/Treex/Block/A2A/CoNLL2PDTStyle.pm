@@ -184,7 +184,7 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Aux[APCVTOYXZGKR]|NR)$/ )
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
@@ -907,6 +907,10 @@ sub validate_coap
 # The lifted node gets the afun of the original parent while the original
 # parent gets a new afun. The conll_deprel attribute is changed, too, to
 # prevent possible coordination destruction.
+#
+# If the original parent had is_member set, the flag will be moved to the
+# lifted node. If the lifted node had is_member set, we must lift the whole
+# coordination!
 #------------------------------------------------------------------------------
 sub lift_node
 {
@@ -917,23 +921,54 @@ sub lift_node
     confess('Cannot lift a child of the root') if ( $parent->is_root() );
     my $grandparent = $parent->parent();
 
-    # Reattach myself to the grandparent.
-    $node->set_parent($grandparent);
-    $node->set_afun( $parent->afun() );
-    $node->set_conll_deprel( $parent->conll_deprel() );
-
-    # Reattach all previous siblings to myself.
-    foreach my $sibling ( $parent->children() )
+    # Lifting a conjunct means lifting the whole coordination!
+    unless($node->is_member())
     {
-
-        # No need to test whether $sibling==$node as we already reattached $node.
-        $sibling->set_parent($node);
+        # Reattach myself to the grandparent.
+        $node->set_parent($grandparent);
+        $node->set_afun( $parent->afun() );
+        $node->set_is_member( $parent->is_member() );
+        $node->set_conll_deprel( $parent->conll_deprel() );
+        # Reattach all previous siblings to myself.
+        foreach my $sibling ( $parent->children() )
+        {
+            # No need to test whether $sibling==$node as we already reattached $node.
+            $sibling->set_parent($node);
+        }
+        # Reattach the previous parent to myself.
+        $parent->set_parent($node);
+        $parent->set_afun($afun);
+        $parent->set_is_member(0);
+        $parent->set_conll_deprel('');
     }
-
-    # Reattach the previous parent to myself.
-    $parent->set_parent($node);
-    $parent->set_afun($afun);
-    $parent->set_conll_deprel('');
+    else # lift coordination
+    {
+        my $coordination = new Treex::Core::Coordination;
+        $coordination->detect_prague($parent);
+        # Now redefine parent and grandparent to those of the whole coordination.
+        my $coordroot = $parent;
+        $parent = $grandparent;
+        confess('Cannot lift a child of the root') if ( $parent->is_root() );
+        $grandparent = $parent->parent();
+        # Reattach coordination to the grandparent.
+        $coordination->set_parent($grandparent);
+        $coordination->set_afun($parent->afun());
+        $coordroot->set_is_member($parent->is_member());
+        # Reattach all previous siblings to myself.
+        foreach my $sibling ($parent->children())
+        {
+            unless($sibling==$coordroot)
+            {
+                $coordination->add_shared_modifier($sibling);
+            }
+        }
+        # Reattach the previous parent to myself.
+        $coordination->add_shared_modifier($parent);
+        $parent->set_afun($afun);
+        $parent->set_is_member(0);
+        $parent->set_conll_deprel('');
+        $coordination->shape_prague();
+    }
 }
 
 #------------------------------------------------------------------------------

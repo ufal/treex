@@ -15,10 +15,10 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->lift_noun_phrases($a_root);
     $self->restructure_coordination($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
+    $self->attach_final_punctuation_to_root($a_root);
+    $self->lift_noun_phrases($a_root);
     $self->check_afuns($a_root);
 }
 
@@ -384,7 +384,7 @@ sub deprel_to_afun
         elsif ( $deprel eq 'appa' )
         {
             ###!!! In PDT the left bracket would be the root of the apposition and both "Ungdom" and "DSU" would be members.
-            $node->set_afun('Apos');
+            $node->set_afun('Apposition');
         }
 
         # voc ... vocative specification
