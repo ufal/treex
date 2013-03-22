@@ -212,11 +212,13 @@ sub check_afuns
 }
 
 #------------------------------------------------------------------------------
-# Shifts afun from preposition to its argument and gives the preposition new
-# afun 'AuxP'. Useful for treebanks where prepositions bear the deprel of the
-# whole prepositional phrase. The subclass should not call this method before
-# it assigns afuns or pseudo-afuns to all nodes. Arguments of prepositions must
-# have the pseudo-afun 'PrepArg'.
+# Shifts afun from preposition (subordinating conjunction) to its argument and
+# gives the preposition (conjunction) new afun 'AuxP' ('AuxC'). Useful for
+# treebanks where prepositions and subordinating conjunctions bear the deprel
+# of their subtree. The subclass should not call this method before it assigns
+# or pseudo-afuns to all nodes. Arguments of prepositions (subordinating
+# conjunctions) must have the pseudo-afun 'PrepArg' ('SubArg'). There should
+# be just one child with such afun.
 #
 # Call from the end of deprel_to_afun() like this:
 # $self->process_prep_sub_arg($root);
@@ -224,7 +226,16 @@ sub check_afuns
 # Tells the parent node whether the child node wants to take the parent's afun
 # and return 'AuxP' or 'AuxC' instead. Called recursively. In some treebanks
 # there may be chains of both AuxP and AuxC such as in this Danish example:
-# parate/AA/pred til/RR/pobj at/TT/nobj gå/Vf/vobj => parate/AA/Pnom til/RR/AuxP at/TT/AuxC gå/Vf/Atr
+# parate/AA/pred til/RR/pobj at/TT/nobj gå/Vf/vobj =>
+# parate/AA/Pnom til/RR/AuxP at/TT/AuxC gå/Vf/Atr
+
+###!!!
+# Je tu ale problém. Jestliže ještě nemáme vyřešené koordinace, může nám tahle
+# operace znemožnit jejich identifikaci. (Ovšem asi platí i naopak, že při
+# zpracování koordinací bychom se rádi spolehli na definované chování AuxP a
+# AuxC.)
+###!!!
+
 #------------------------------------------------------------------------------
 sub process_prep_sub_arg
 {
@@ -448,7 +459,8 @@ sub restructure_coordination
     # The former reshapes coordination immediately upon finding it.
     # The latter and older approach first collects all coord structures then reshapes them.
     # It could theoretically suffer from things changing during reshaping.
-    my $implemented = $self->detect_coordination(new Treex::Core::Node, new Treex::Core::Coordination) ne 'not implemented';
+    my $test_result = $self->detect_coordination($root, new Treex::Core::Coordination);
+    my $implemented = !(defined($test_result) && $test_result eq 'not implemented');
     if ($implemented)
     {
         $self->shape_coordination_recursively_object( $root, $debug );

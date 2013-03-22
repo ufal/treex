@@ -212,6 +212,18 @@ sub get_delimiters
 
 
 #------------------------------------------------------------------------------
+# Returns the list of conjunctions, i.e. non-symbol delimiters.
+#------------------------------------------------------------------------------
+sub get_conjunctions
+{
+    my $self = shift;
+    my @list = map {$_->{node}} (grep {$_->{type} eq 'delimiter' && !$_->{symbol}} @{$self->_get_participants()});
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of shared modifiers.
 #------------------------------------------------------------------------------
 sub get_shared_modifiers
@@ -324,7 +336,8 @@ sub shape_prague
     }
     # There is no guarantee that we obtained ordered lists of members and delimiters.
     # They may have been added during tree traversal, which is not ordered linearly.
-    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@delimiters);
+    my @conjunctions = $self->get_conjunctions();
+    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@conjunctions ? @conjunctions : @delimiters);
     my $croot = pop(@ordered_delimiters);
     # Attach the new root to the parent of the coordination.
     $croot->set_parent($self->parent());
@@ -386,8 +399,8 @@ sub detect_mosford
     # This function is recursive. If we already have conjuncts then we know this is not the top level.
     my $top = scalar($self->get_conjuncts())==0;
     my @children = $node->children();
-    my @participants = grep {$_->afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
-    my @recursive_participants = grep {$_->afun() =~ m/^Coord(Arg)?$/} @participants;
+    my @participants = grep {$_->get_real_afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
+    my @recursive_participants = grep {$_->get_real_afun() =~ m/^Coord(Arg)?$/} @participants;
     my $bottom = scalar(@recursive_participants)==0;
     if($top && $bottom)
     {
@@ -408,7 +421,7 @@ sub detect_mosford
     }
     my $partregex = 'Coord(Arg)?|Aux[GXY]';
     $partregex .= '|ExD' if($exdorphans);
-    my @modifiers = grep {$_->afun() !~ m/^($partregex)$/} @children;
+    my @modifiers = grep {$_->get_real_afun() !~ m/^($partregex)$/} @children;
     if($bottom)
     {
         # Return my modifiers to the upper level. They will need them when they add me as participant.
@@ -426,7 +439,7 @@ sub detect_mosford
     }
     foreach my $participant (@participants)
     {
-        my $afun = $participant->afun();
+        my $afun = $participant->get_real_afun();
         # Recursion first. Someone must sort the grandchildren as participants vs. modifiers.
         # Coord and CoordArg require recursion. Aux nodes terminate it even if they have children.
         my @partmodifiers = $afun =~ m/^Coord(Arg)?$/ ? $self->detect_mosford($participant) : $participant->children();
@@ -511,7 +524,7 @@ to reshape the coordination according to a particular annotation scheme,
 our reference will get broken.
 
 This issue requires special care when manipulating coordinations.
-We have to be aware what we are doing outside the Coordination object and that it is rather short-lived.
+We have to be aware of what we are doing outside the Coordination object and that it is rather short-lived.
 
 A possible partial solution would be to setup a function that handles root changes.
 The node we refer to would get a reference to the handler as a wild attribute.
