@@ -1,0 +1,126 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Slurp;
+use XML::Twig;
+use Treex::Core::Log;
+use PerlIO::gzip;
+
+my ($max_number_of_bundles_per_file,$output_dir) = ('50');
+
+my $options =  GetOptions (
+    "n=i" => \$max_number_of_bundles_per_file,
+    "o=s" => \$output_dir
+);
+
+my @fl_files = @ARGV;
+
+my $TREEX_DOC_HEADER = '<?xml version="1.0" encoding="UTF-8"?>
+<treex_document xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
+  <head>
+    <schema href="treex_schema.xml" />
+  </head>
+  <meta/>
+  <bundles>
+';
+
+my $TREEX_DOC_FOOTER = '</bundles>
+</treex_document>
+';
+
+my $twig = XML::Twig->new();
+
+foreach my $fl_filename (@fl_files) {
+    log_info("Loading file list from $fl_filename");
+    open my $LIST,'<:utf8',$fl_filename or die $!;
+
+    my $output_file_stem = $fl_filename;
+    $output_file_stem =~ s/\.(fl|lst|txt)$//;
+    if ($output_dir) {
+        $output_file_stem =~ s/^.+\///;
+        $output_file_stem = $output_dir."/".$output_file_stem;
+    }
+
+    $fl_filename =~ /(.+\/)(.+?)$/;
+    my $fl_directory = $1 || './';
+
+    my $prev_treex_filename = '';
+    my $processed_bundles = 0;
+    my ($output_file_handle, $output_index_per_filelist);
+
+    my @bundle_roots;
+
+    while (<$LIST>) {
+        if ( !/(.+)##(\d+)/ ) {
+            die("Unparsable node address in $fl_filename: $_ ");
+        }
+
+        else {
+            my ($treex_filename, $bundle_number) = ($1,$2);
+            if ($fl_directory and $treex_filename !~ /^\//) {
+                $treex_filename =  $fl_directory.$treex_filename;
+            }
+
+            if ($treex_filename ne $prev_treex_filename) {
+                $twig->parse(load_treex_file_content($treex_filename));
+                @bundle_roots = $twig->get_xpath("/treex_document/bundles/LM");
+                $prev_treex_filename = $treex_filename;
+            }
+
+            if ($bundle_number > @bundle_roots) {
+                log_fatal("Reference to a node exceeds the number of bundles in the file: $bundle_number > ".scalar(@bundle_roots) );
+            }
+
+            if ($bundle_roots[$bundle_number-1]) {
+
+                if ( $processed_bundles == 0 ) {
+                    $output_index_per_filelist++;
+                    my $output_file_name = $output_file_stem."-".sprintf("%04d",$output_index_per_filelist).".treex.gz";
+                    log_info("Creating $output_file_name");
+                    open $output_file_handle, ">:gzip:utf8",$output_file_name;
+                    print $output_file_handle $TREEX_DOC_HEADER;
+                }
+
+                $bundle_roots[$bundle_number-1]->print($output_file_handle);
+                print $output_file_handle "\n<!-- end of inserted bundle -->\n";
+                $bundle_roots[$bundle_number-1] = undef; # avoid extracting the same bundle twice (TODO: a switch for this might be added later)
+                $processed_bundles++;
+
+                if ($processed_bundles == $max_number_of_bundles_per_file) {
+                    $processed_bundles = 0;
+                    print $output_file_handle $TREEX_DOC_FOOTER;
+                    close $output_file_handle;
+                }
+            }
+        }
+    }
+
+    if ($processed_bundles != $max_number_of_bundles_per_file) {
+        print $output_file_handle $TREEX_DOC_FOOTER;
+        close $output_file_handle;
+    }
+}
+
+
+sub load_treex_file_content {
+    my ($filename) = @_;
+    log_info("Loading $filename");
+    if ($filename =~ /\.gz/) {
+        open my $TREEX_DOC, "gunzip -c $filename|" or die $!;
+        my $content;
+        while (<$TREEX_DOC>){
+            $content .= $_;
+        }
+        return $content;
+    }
+    else {
+        print "xxx\n";
+        return File::Slurp::read_file($filename,  binmode => ':utf8') or die "$!";
+    }
+}
+
+
+# do dok: warning: pracuje primo s xml, bez Treex::Core, takze muze byt citlive na zmeny formatu
