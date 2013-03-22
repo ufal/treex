@@ -481,13 +481,20 @@ sub deprel_to_afun
         }
 
         # Pseudo-afuns for coordination nodes until coordination is processed properly.
+        # Warning: It would be dangerous for the coordination normalizer to rely just on these afuns.
+        # They may get damaged or moved by other normalizing functions such as AuxP/AuxC shifters.
+        # Thus we also save the information to a special temporary attribute.
+        # The attribute will survive afun modifications but it will not be found if tree topology changes.
+        # So we still have to solve coordinations as soon as possible (possibly right after AuxC/AuxP).
         elsif ( $deprel eq 'coord' )
         {
             $node->set_afun('Coord');
+            $node->wild()->{coordinator} = 1;
         }
         elsif ( $deprel eq 'conj' )
         {
             $node->set_afun('CoordArg');
+            $node->wild()->{conjunct} = 1;
         }
     }
 

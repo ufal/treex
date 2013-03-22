@@ -388,7 +388,10 @@ sub shape_prague
 # links between nodes and labels of the relations). Expects Moscow or Stanford
 # style, without nested coordinations and without shared modifiers:
 # - the root of the coordination is not marked
-# - conjuncts have 'CoordArg', conjunctions have 'Coord'
+# - conjuncts have wild->{conjunct}
+#   (the afun 'CoordArg' may have not survived Aux[CP] normalization)
+# - conjunctions have wild->{coordinator}
+#   (the afun 'Coord' may have not survived Aux[CP] normalization)
 # - all such children are collected recursively
 # - all other children along the way are private modifiers
 #------------------------------------------------------------------------------
@@ -399,8 +402,19 @@ sub detect_mosford
     # This function is recursive. If we already have conjuncts then we know this is not the top level.
     my $top = scalar($self->get_conjuncts())==0;
     my @children = $node->children();
-    my @participants = grep {$_->get_real_afun() =~ m/^(Coord(Arg)?|Aux[GXY])$/} @children;
-    my @recursive_participants = grep {$_->get_real_afun() =~ m/^Coord(Arg)?$/} @participants;
+    my @participants = grep
+    {
+        $_->wild()->{coordinator} ||
+        $_->wild()->{conjunct} ||
+        $_->get_real_afun() =~ m/^Aux[GXY]$/
+    }
+    @children;
+    my @recursive_participants = grep
+    {
+        $_->wild()->{coordinator} ||
+        $_->wild()->{conjunct}
+    }
+    @participants;
     my $bottom = scalar(@recursive_participants)==0;
     if($top && $bottom)
     {
@@ -409,7 +423,7 @@ sub detect_mosford
     }
     # Orphans are treated similarly to conjuncts but they can be only detected under Coord
     # and there will be no recursion over them.
-    my $exdorphans = !$top && $node->parent()->afun() eq 'Coord';
+    my $exdorphans = !$top && $node->parent()->wild()->{coordinator};
     if($exdorphans)
     {
         my @orphans = grep {$_->afun() eq 'ExD'} @children;
@@ -419,9 +433,14 @@ sub detect_mosford
             $self->add_conjunct($orphan, 1, $orphan->children());
         }
     }
-    my $partregex = 'Coord(Arg)?|Aux[GXY]';
-    $partregex .= '|ExD' if($exdorphans);
-    my @modifiers = grep {$_->get_real_afun() !~ m/^($partregex)$/} @children;
+    my @modifiers = grep
+    {
+        !$_->wild()->{coordinator} &&
+        !$_->wild()->{conjunct} &&
+        $_->get_real_afun() !~ m/^Aux[GXY]$/ &&
+        (!$exdorphans || $_->get_real_afun() ne 'ExD')
+    }
+    @children;
     if($bottom)
     {
         # Return my modifiers to the upper level. They will need them when they add me as participant.
@@ -435,21 +454,22 @@ sub detect_mosford
         $self->add_conjunct($node, $orphan, @modifiers);
         # Save the relation of the coordination to its parent.
         $self->set_parent($node->parent());
-        $self->set_afun($node->afun());
+        $self->set_afun($node->get_real_afun());
     }
     foreach my $participant (@participants)
     {
-        my $afun = $participant->get_real_afun();
+        my $recursive = $participant->wild()->{coordinator} || $participant->wild()->{conjunct};
         # Recursion first. Someone must sort the grandchildren as participants vs. modifiers.
-        # Coord and CoordArg require recursion. Aux nodes terminate it even if they have children.
-        my @partmodifiers = $afun =~ m/^Coord(Arg)?$/ ? $self->detect_mosford($participant) : $participant->children();
-        if($afun eq 'CoordArg')
+        # Conjunction and conjunct require recursion. Aux nodes terminate it even if they have children.
+        my @partmodifiers = $recursive ? $self->detect_mosford($participant) : $participant->children();
+        if($participant->wild()->{conjunct})
         {
             my $orphan = 0;
             $self->add_conjunct($participant, $orphan, @partmodifiers);
         }
         else
         {
+            my $afun = $participant->get_real_afun();
             my $symbol = $afun =~ m/^Aux[GX]$/;
             $self->add_delimiter($participant, $symbol, @partmodifiers);
         }
