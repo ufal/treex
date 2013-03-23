@@ -61,8 +61,7 @@ sub BUILD {
 
 sub process_start {
     my ($self)  = @_;
-#    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
-    my $model = $self->model_dir . '/' . $self->model;
+    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
 
     if ( !$loaded_models{$model} ) {
         my $parser = Treex::Tool::Parser::MST->new(
