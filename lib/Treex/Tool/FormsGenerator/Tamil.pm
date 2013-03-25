@@ -7,6 +7,7 @@ has 'use_template' => (
 	is      => 'rw',
 	isa     => 'Str',
 	trigger => \&load_template,
+	writer	=> 'set_template',
 );
 
 # prefixes are not supported at the moment
@@ -26,7 +27,8 @@ has 'suffix_list' => (
 		num_suffixes => 'count',
 		suffixes     => 'elements',
 		get_suffix  => 'get',
-		set_suffix	=> 'set',		
+		set_suffix	=> 'set',	
+		empty_suffix_list	=> 'clear',	
 	}
 );
 
@@ -34,7 +36,14 @@ has 'known_templates' => (
 	is      => 'rw',
 	isa     => 'HashRef',
 	default => sub {
-		{ 'verb_type1' => "data/models/forms/ta/verbs/type1.dat", };
+		{ 	'verb_type1' => "data/models/forms/ta/verbs/type1.dat", 
+			'verb_type2' => "data/models/forms/ta/verbs/type2.dat",
+			'verb_type3' => "data/models/forms/ta/verbs/type3.dat",
+ 			'verb_type4' => "data/models/forms/ta/verbs/type4.dat",
+ 			'verb_type5' => "data/models/forms/ta/verbs/type5.dat",
+ 			'verb_type6' => "data/models/forms/ta/verbs/type6.dat",
+ 			'verb_type7' => "data/models/forms/ta/verbs/type7.dat", 			
+		};		
 	}
 );
 
@@ -49,11 +58,24 @@ has 'rewrite_rules' => (
 		rules     => 'elements',
 		get_rule  => 'get',
 		set_rule	=> 'set',
+		empty_rules	=> 'clear',		
 	},
 );
 
+# Tamil alphabets
+my $VOWEL_SIGNS = qr/ா|ி|ீ|ு|ூ|ெ|ே|ை|ொ|ோ|ௌ/;
+my $VOWELS	= qr/அ|ஆ|இ|ஈ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
+my $CONSONANTS = qr/க்|ங்|ச்|ங்|ட்|ண்|த்|ந்|ப்|ம்|ய்|ர்|ல்|வ்|ள்|ழ்|ற்|ன்/;
+my $SHORT_VOWEL_SIGNS = qr/ி|ு|ெ|ை|ொ|ௌ/;
+my $LONG_VOWEL_SIGNS = qr/ா|ீ|ூ|ே|ோ/;
+
 sub load_template {
 	my ( $self, $new_type, $old_type ) = @_;
+	
+	# clear the previously loaded template
+	$self->empty_suffix_list();
+	$self->empty_rules();
+	
 	my $template_file = require_file_from_share(
 		$self->known_templates()->{ $self->use_template } );
 	open( RHANDLE, '<:encoding(utf8)', $template_file );
@@ -123,11 +145,18 @@ sub generate_forms {
 			#print $suff_pat . "\n";
 			# apply rewrite rules
 			if (($lcopy =~ /$stem_pat/) && ($su =~ /$suff_pat/)) {
-				print $stem_pat . "\t+\t" . $suff_pat . "\n"; 
-				$lcopy =~ s/$stem_pat/$stem_sub/ee;
-				$su =~ s/$suff_pat/$suff_sub/ee;
+				$lcopy =~ s/$stem_pat/"$stem_sub"/ee;
+				$su =~ s/$suff_pat/"$suff_sub"/ee;
 			}						
 		}
+
+		# if the suffix starts with "அ"
+		if ( $su =~ /^அ/) {
+			$lcopy =~ s/$VOWEL_SIGNS$//;
+			$lcopy =~ s/்$//;
+			$su =~ s/^அ//;
+		} 
+		 
 		push @forms,  $lcopy . $su;
 	}  
 	return @forms;
