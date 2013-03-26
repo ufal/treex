@@ -19,6 +19,7 @@ sub process_zone
     $self->mark_deficient_clausal_coordination($a_root);
     $self->attach_final_punctuation_to_root($a_root);
     $self->lift_noun_phrases($a_root);
+    $self->reattach_modifier_from_auxt_to_verb($a_root);
     $self->check_afuns($a_root);
 }
 
@@ -243,7 +244,7 @@ sub deprel_to_afun
             # så meget kludder ..., at man kan sende... (so [meget kludder] ..., that one can send...)
             # In this example, "at" is nobj of "så" (often non-projective).
             # In PDT, "at man kan sende" would be Adv clause of "kludder".
-            if ( $node->form() eq 'at' && $parent->form() eq 'så' )
+            elsif ( $node->form() eq 'at' && $parent->form() eq 'så' )
             {
                 $node->set_afun('Adv');
             }
@@ -399,6 +400,7 @@ sub deprel_to_afun
 
         # mod ... attribute of a noun
         # mod ... adverbial modifier of a verb
+        # mod ... adjective attached to determiner
         # xpl ... explication of an NP or VP
         # Example:
         # The title of the plan: "The Virtuous Circle".
@@ -408,7 +410,14 @@ sub deprel_to_afun
         # mods ... deprecated name for ??? modifier
         elsif ( $deprel =~ m/^(mod[oprs]?|xpl)$/ )
         {
-            if ( $ppos =~ m/^(noun|adj|num)$/ )
+            # If there are noun siblings then this adjective will not become the new head and thus it is not the DetArg.
+            if ( $node->get_iset('pos') eq 'adj' &&
+                 $parent->get_iset('prontype') ne '' && 
+                 !grep {$_->get_iset('pos') eq 'noun'} ($node->get_siblings()))
+            {
+                $node->set_afun('DetArg');
+            }
+            elsif ( $ppos =~ m/^(noun|adj|num)$/ )
             {
                 $node->set_afun('Atr');
             }
@@ -763,6 +772,30 @@ sub mark_deficient_clausal_coordination
             $node->set_afun( $node->parent()->afun() );
             $node->parent()->set_afun('Coord');
             $node->set_is_member(1);
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
+# Corrects attachment of adverbial modifier that is erroneously attached to
+# a verbal particle instead of the verb. (There is one occurrence of the error
+# in the treebank.)
+#------------------------------------------------------------------------------
+sub reattach_modifier_from_auxt_to_verb
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants( { ordered => 1 } );
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        if(defined($parent) && $parent->afun() eq 'AuxT')
+        {
+            my $grandparent = $parent->parent();
+            if(defined($grandparent) && $grandparent->match_iset('pos' => 'verb'))
+            {
+                $node->set_parent($grandparent);
+            }
         }
     }
 }
