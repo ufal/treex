@@ -36,14 +36,21 @@ has 'known_templates' => (
 	is      => 'rw',
 	isa     => 'HashRef',
 	default => sub {
-		{ 	'verb_type1' => "data/models/forms/ta/verbs/type1.dat", 
+		{ 	
+			# major types
+			'verb_type1' => "data/models/forms/ta/verbs/type1.dat", 
 			'verb_type2' => "data/models/forms/ta/verbs/type2.dat",
-			'verb_type2a' => "data/models/forms/ta/verbs/type2a.dat",			
 			'verb_type3' => "data/models/forms/ta/verbs/type3.dat",
  			'verb_type4' => "data/models/forms/ta/verbs/type4.dat",
  			'verb_type5' => "data/models/forms/ta/verbs/type5.dat",
  			'verb_type6' => "data/models/forms/ta/verbs/type6.dat",
- 			'verb_type7' => "data/models/forms/ta/verbs/type7.dat", 			
+ 			'verb_type7' => "data/models/forms/ta/verbs/type7.dat",
+ 			# specific types
+			'verb_type2a' => "data/models/forms/ta/verbs/type2a.dat",
+			'verb_type_cey' => "data/models/forms/ta/verbs/type_cey.dat",
+			'verb_type_cel' => "data/models/forms/ta/verbs/type_cel.dat",
+			'verb_type_varu' => "data/models/forms/ta/verbs/type_varu.dat",
+			'verb_type_po' => "data/models/forms/ta/verbs/type_po.dat",			
 		};		
 	}
 );
@@ -134,7 +141,8 @@ sub load_template {
 
 sub generate_forms {
 	my ($self, $lemma) = @_;
-	my @forms = ($lemma);	
+	#my @forms = ($lemma);	
+	my @forms = ();
 	foreach my $su ($self->suffixes) {
 		my $lcopy = $lemma;
 		foreach my $r ($self->rules) {
