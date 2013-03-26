@@ -38,6 +38,7 @@ has 'known_templates' => (
 	default => sub {
 		{ 	'verb_type1' => "data/models/forms/ta/verbs/type1.dat", 
 			'verb_type2' => "data/models/forms/ta/verbs/type2.dat",
+			'verb_type2a' => "data/models/forms/ta/verbs/type2a.dat",			
 			'verb_type3' => "data/models/forms/ta/verbs/type3.dat",
  			'verb_type4' => "data/models/forms/ta/verbs/type4.dat",
  			'verb_type5' => "data/models/forms/ta/verbs/type5.dat",
