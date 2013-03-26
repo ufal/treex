@@ -206,6 +206,18 @@ sub get_conjuncts
 
 
 #------------------------------------------------------------------------------
+# Returns the list of orphan conjuncts.
+#------------------------------------------------------------------------------
+sub get_orphans
+{
+    my $self = shift;
+    my @list = map {$_->{node}} (grep {$_->{type} eq 'conjunct' && $_->{orphan}} @{$self->_get_participants()});
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of delimiters.
 #------------------------------------------------------------------------------
 sub get_delimiters

@@ -578,7 +578,10 @@ sub shape_coordination_recursively_object
         $coordination->shape_prague();
 
         # Call recursively on all modifier subtrees.
-        foreach my $node ($coordination->get_children())
+        # Also call on orphan conjuncts, if any.
+        # Unlike normal conjuncts, these can head nested coordination.
+        my @recursion = ($coordination->get_orphans(), $coordination->get_children());
+        foreach my $node (@recursion)
         {
             $self->shape_coordination_recursively_object($node, $debug);
         }
