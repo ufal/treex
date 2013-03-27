@@ -91,6 +91,9 @@ $dict3->load($test_file.".slex");
 my ($lexeme1_loaded_from_slex) = $dict3->get_lexemes_by_lemma('ucho');
 is(scalar($lexeme1_loaded_from_slex->get_derived_lexemes), 2, "dictionary correctly stored and loaded in .slex format");
 
+
+ok($dict3->get_lexemes_by_lemma('ušní'), "store-load encoding processing looks good");
+
 done_testing();
 
 foreach my $tmp_file (glob "$test_file*") {
