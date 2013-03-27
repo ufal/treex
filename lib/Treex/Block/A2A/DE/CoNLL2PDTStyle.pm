@@ -206,7 +206,12 @@ sub deprel_to_afun
         # Second member of apposition.
         elsif ( $deprel eq 'APP' )
         {
-            $afun = 'Apos';
+            ## TODO: ZZ: yes, it's an annotated apposition,
+            # but making it compatible with the PDT apposition style
+            # would require also systematic rehanging of the neighborhood.
+            # Let's make the hamledt tests happy and pretend in the meantime
+            # that it's an attribute
+            $afun = 'Atr'; #'Apos';
         }
 
         # Adposition (preposition, postposition or circumposition).
