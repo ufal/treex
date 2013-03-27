@@ -63,20 +63,17 @@ is($lexeme3->source_lexeme, $lexeme1, "source lexeme correctly linked");
 
 is($lexeme4->get_root_lexeme, $lexeme1, "correct climbing towards the beginning of the derivation chain");
 
-is_deeply([$lexeme1], [$dict->get_lexemes_by_lemma('ucho')], 'lexemes correctly indexed by lemmas');
+is_deeply([$lexeme1], [$dict->get_lexemes_by_lemma('ucho')], 'lexemes correctly indexed by lemmas in .tsv format');
 
-my $test_file = 'testdict.tsv';
-$dict->save($test_file);
+my $test_file = 'testdict';
+$dict->save($test_file.".tsv");
 
 my $dict2 = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
-$dict2->load($test_file);
+$dict2->load($test_file.".tsv");
 #$dict2->save($test_file."bak");
 
 my ($lexeme1_loaded) = $dict2->get_lexemes_by_lemma('ucho');
 is(scalar($lexeme1_loaded->get_derived_lexemes), 2, "dictionary correctly stored and loaded");
-
-unlink $test_file;
-
 
 stderr_like (sub {
     $dict->add_derivation({
@@ -87,5 +84,15 @@ stderr_like (sub {
 },  qr/loop/, 'Loop in derivative relations was correctly detected');
 
 
+# testing the perl-storable-based .slex format
+$dict->save($test_file.".slex");
+my $dict3 = Treex::Tool::Lexicon::DerivDict::Dictionary->new();
+$dict3->load($test_file.".slex");
+my ($lexeme1_loaded_from_slex) = $dict3->get_lexemes_by_lemma('ucho');
+is(scalar($lexeme1_loaded_from_slex->get_derived_lexemes), 2, "dictionary correctly stored and loaded in .slex format");
 
 done_testing();
+
+foreach my $tmp_file (glob "$test_file*") {
+    unlink $tmp_file;
+}

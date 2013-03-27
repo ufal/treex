@@ -8,6 +8,10 @@ use Treex::Core::Log;
 
 use Scalar::Util qw(weaken);
 
+use PerlIO::via::gzip;
+use Storable;
+
+
 has '_lexemes' => (
     is      => 'rw',
     isa     => 'ArrayRef',
@@ -58,28 +62,43 @@ sub get_lexemes_by_lemma {
 
 sub save {
     my ( $self, $filename ) = @_;
-    $self->_set_lexemes( [ sort {$a->lemma cmp $b->lemma} $self->get_lexemes ] );
 
-    my $lexeme_number = 0;
-    foreach my $lexeme ($self->get_lexemes) {
-        $lexeme->{_lexeme_number} = $lexeme_number;
-        $lexeme_number++;
+    if ( $filename =~ /\.slex$/ ) { # derivational lexicon in perl storable format
+        open( my $F, ">:via(gzip)", $filename ) or log_fatal $!;
+        print $F Storable::nfreeze($self);
+        close $F;
+        return;
     }
 
-    open my $F, '>:utf8', $filename or die $!;
+    elsif ( $filename =~ /\.tsv$/ ) {
+        $self->_set_lexemes( [ sort {$a->lemma cmp $b->lemma} $self->get_lexemes ] );
 
-    $lexeme_number = 0;
-    foreach my $lexeme ($self->get_lexemes) {
-        my $source_lexeme_number = $lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : '';
-        print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
-                         ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : ''),
-                         $lexeme->deriv_type || '',
-                     );
-        print $F "\n";
-        $lexeme_number++;
+        my $lexeme_number = 0;
+        foreach my $lexeme ($self->get_lexemes) {
+            $lexeme->{_lexeme_number} = $lexeme_number;
+            $lexeme_number++;
+        }
+
+        open my $F, '>:utf8', $filename or die $!;
+
+        $lexeme_number = 0;
+        foreach my $lexeme ($self->get_lexemes) {
+            my $source_lexeme_number = $lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : '';
+            print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
+                                ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : ''),
+                                $lexeme->deriv_type || '',
+                            );
+            print $F "\n";
+            $lexeme_number++;
+        }
+
+        close $F;
     }
 
-    close $F;
+    else {
+        log_fatal("Unrecognized file ending: $filename\n");
+    }
+
 }
 
 sub _number2id {
@@ -89,32 +108,60 @@ sub _number2id {
 sub load {
     my ( $self, $filename ) = @_;
 
-    $self->_set_lexemes([]);
-    $self->_set_lemma2lexemes({});
-    $self->_set_mlemma2lexeme({});
+    if ( $filename =~ /\.slex$/ ) {
 
-    my %derived_number_to_source_number;
-
-    open my $F,'<:utf8',$filename or die $!;
-    while (<$F>) {
-        chomp;
-        my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type) = split;
-        my $new_lexeme = $self->create_lexeme({lemma => $lemma, mlemma=>$mlemma, pos=>$pos});
-        if ($source_lexeme_number ne "") {
-            if ($deriv_type) {
-                $new_lexeme->set_deriv_type($deriv_type);
-            }
-            $derived_number_to_source_number{$number} = $source_lexeme_number;
+        open my $FILEHANDLE, "<:via(gzip)", $filename or log_fatal($!);
+        my $serialized;
+        # reading it this way is silly, but both slurping the file or
+        #  using Storable::retrieve_fd lead to errors when used with via(gzip)
+        while (<$FILEHANDLE>) {
+            $serialized .= $_;
         }
+        my $retrieved_dictionary = Storable::thaw($serialized) or log_fatal $!;
+
+        # moving the content from the retrieved dictionary into the already existing instance
+        # (risky)
+        foreach my $key (%$retrieved_dictionary) {
+            $self->{$key} = $retrieved_dictionary->{$key}
+        }
+        return $self;
     }
 
-    foreach my $derived_number (keys %derived_number_to_source_number) {
-        my $derived_lexeme =  $self->_lexemes->[$derived_number];
-        my $source_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
-        $derived_lexeme->set_source_lexeme($source_lexeme);
+    elsif ( $filename =~ /\.tsv$/ ) {
+
+        $self->_set_lexemes([]);
+        $self->_set_lemma2lexemes({});
+        $self->_set_mlemma2lexeme({});
+
+        my %derived_number_to_source_number;
+
+        open my $F,'<:utf8',$filename or die $!;
+        while (<$F>) {
+            chomp;
+            my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type) = split;
+            my $new_lexeme = $self->create_lexeme({lemma => $lemma, mlemma=>$mlemma, pos=>$pos});
+            if ($source_lexeme_number ne "") {
+                if ($deriv_type) {
+                    $new_lexeme->set_deriv_type($deriv_type);
+                }
+                $derived_number_to_source_number{$number} = $source_lexeme_number;
+            }
+        }
+
+        foreach my $derived_number (keys %derived_number_to_source_number) {
+            my $derived_lexeme =  $self->_lexemes->[$derived_number];
+            my $source_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
+            $derived_lexeme->set_source_lexeme($source_lexeme);
+        }
+
+        return $self;
     }
 
-    return $self;
+    else {
+        log_fatal("Unrecognized file ending: $filename\n");
+    }
+
+
 }
 
 sub add_derivation {
@@ -133,7 +180,7 @@ sub add_derivation {
         push @derivation_path, $lexeme;
         if ($lexeme eq $derived_lexeme) {
             log_info("The new derivation would lead to a loop: "
-                 . join " -> ", reverse map {$_->lemma} @derivation_path)."   No derivation added.";
+                 . join (" -> ", reverse map {$_->lemma} @derivation_path)."   No derivation added.");
             return;
         }
         $lexeme = $lexeme->source_lexeme;
