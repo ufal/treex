@@ -3,6 +3,7 @@ use utf8;
 use strict;
 use warnings;
 use Test::More;
+use Test::Output;
 
 BEGIN {
     Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' )
@@ -75,5 +76,16 @@ my ($lexeme1_loaded) = $dict2->get_lexemes_by_lemma('ucho');
 is(scalar($lexeme1_loaded->get_derived_lexemes), 2, "dictionary correctly stored and loaded");
 
 unlink $test_file;
+
+
+stderr_like (sub {
+    $dict->add_derivation({
+        source_lexeme => $lexeme4,
+        derived_lexeme => $lexeme1,
+        deriv_type => 'loop',
+    });
+},  qr/loop/, 'Loop in derivative relations was correctly detected');
+
+
 
 done_testing();
