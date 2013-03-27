@@ -4,6 +4,8 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
+use Treex::Block::A2A::Pdt2TreexIsMemberConversion;
+
 #------------------------------------------------------------------------------
 # Reads the Latin CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
@@ -26,7 +28,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
         my $ppos   = $parent->tag();
-	   if ( $deprel =~ /_CO$/ ) {
+        if ( $deprel =~ /_CO$/ ) {
             $node->set_is_member(1);
         }
 
