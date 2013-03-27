@@ -4,6 +4,7 @@ use utf8;
 use namespace::autoclean;
 
 use Moose;
+use Treex::Core::Log;
 use Treex::Core::Node;
 
 
@@ -75,6 +76,7 @@ sub check_that_node_is_new
     my $node = shift;
     my $p = shift; my @participants = @{$p};
     my $s = shift; my @smod = @{$s};
+    log_fatal("Missing node") unless(defined($node));
     # Is it a participant?
     if(grep {$_->{node} == $node} @participants)
     {
@@ -115,6 +117,7 @@ sub add_participant
     my $type = shift;
     my $orphan = shift; # nonzero when this is a (ExD-like) dependent of a deleted conjunct
     my $symbol = shift; # nonzero if this is a punctuation symbol
+    log_fatal("Missing node") unless(defined($node));
     my @pmod = @_; # list of dependent nodes (not participants of this coordination!)
     my $participants = $self->_get_participants();
     my $smod = $self->_get_smod();
@@ -146,6 +149,7 @@ sub add_conjunct
     my $self = shift;
     my $node = shift;
     my $orphan = shift; # nonzero when this is a (ExD-like) dependent of a deleted conjunct
+    log_fatal("Missing node") unless(defined($node));
     my @pmod = @_; # list of dependent nodes (not participants of this coordination!)
     return $self->add_participant($node, 'conjunct', $orphan, 0, @pmod);
 }
@@ -160,6 +164,7 @@ sub add_delimiter
     my $self = shift;
     my $node = shift;
     my $symbol = shift; # nonzero if this is a punctuation symbol
+    log_fatal("Missing node") unless(defined($node));
     my @pmod = @_; # list of dependent nodes (not participants of this coordination!)
     return $self->add_participant($node, 'delimiter', 0, $symbol, @pmod);
 }
@@ -173,10 +178,81 @@ sub add_shared_modifier
 {
     my $self = shift;
     my $node = shift;
+    log_fatal("Missing node") unless(defined($node));
     my $participants = $self->_get_participants();
     my $smod = $self->_get_smod();
     $self->check_that_node_is_new($node, $participants, $smod);
     push(@{$smod}, $node);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a private modifier of a conjunct and makes it shared modifier.
+#------------------------------------------------------------------------------
+sub change_private_modifier_to_shared
+{
+    my $self = shift;
+    my $node = shift;
+    my $conjunct = shift; # helps find the modifier
+    log_fatal("Missing node") unless(defined($node));
+    my $participants = $self->_get_participants();
+    foreach my $p (@{$participants})
+    {
+        if($p->{node}==$conjunct)
+        {
+            for(my $i = 0; $i<=$#{$p->{pmod}}; $i++)
+            {
+                if($p->{pmod}[$i]==$node)
+                {
+                    # Remove it from the list of private modifiers.
+                    splice(@{$p->{pmod}}, $i, 1);
+                    # Add it to the list of shared modifiers.
+                    my $smod = $self->_get_smod();
+                    push(@{$smod}, $node);
+                    # Return success (if we get past the loops, it means we didn't find it).
+                    return 1;
+                }
+            }
+            log_fatal("Unknown private modifier of a conjunct");
+        }
+    }
+    log_fatal("Unknown conjunct");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a shared modifier and makes it private modifier of a conjunct.
+#------------------------------------------------------------------------------
+sub change_shared_modifier_to_private
+{
+    my $self = shift;
+    my $node = shift;
+    my $conjunct = shift;
+    log_fatal("Missing node") unless(defined($node));
+    my $smod = $self->_get_smod();
+    for(my $i = 0; $i<=$#{$smod}; $i++)
+    {
+        if($smod->[$i]==$node)
+        {
+            my $participants = $self->_get_participants();
+            foreach my $p (@{$participants})
+            {
+                if($p->{node}==$conjunct)
+                {
+                    # Remove it from the list of shared modifiers.
+                    splice(@{$smod}, $i, 1);
+                    # Add it to the list of private modifiers.
+                    push(@{$p->{pmod}}, $node);
+                    # Return success (if we get past the loops, it means we didn't find it).
+                    return 1;
+                }
+            }
+            log_fatal("Unknown conjunct");
+        }
+    }
+    log_fatal("Unknown shared modifier");
 }
 
 
@@ -187,7 +263,12 @@ sub add_shared_modifier
 sub get_participants
 {
     my $self = shift;
+    my %prm = @_;
     my @list = map {$_->{node}} (@{$self->_get_participants()});
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
     return @list;
 }
 
@@ -199,7 +280,12 @@ sub get_participants
 sub get_conjuncts
 {
     my $self = shift;
+    my %prm = @_;
     my @list = map {$_->{node}} (grep {$_->{type} eq 'conjunct'} @{$self->_get_participants()});
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
     return @list;
 }
 
@@ -211,7 +297,12 @@ sub get_conjuncts
 sub get_orphans
 {
     my $self = shift;
+    my %prm = @_;
     my @list = map {$_->{node}} (grep {$_->{type} eq 'conjunct' && $_->{orphan}} @{$self->_get_participants()});
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
     return @list;
 }
 
@@ -223,7 +314,12 @@ sub get_orphans
 sub get_delimiters
 {
     my $self = shift;
+    my %prm = @_;
     my @list = map {$_->{node}} (grep {$_->{type} eq 'delimiter'} @{$self->_get_participants()});
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
     return @list;
 }
 
@@ -235,7 +331,12 @@ sub get_delimiters
 sub get_conjunctions
 {
     my $self = shift;
+    my %prm = @_;
     my @list = map {$_->{node}} (grep {$_->{type} eq 'delimiter' && !$_->{symbol}} @{$self->_get_participants()});
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
     return @list;
 }
 
@@ -247,7 +348,41 @@ sub get_conjunctions
 sub get_shared_modifiers
 {
     my $self = shift;
-    return @{$self->_get_smod()};
+    my %prm = @_;
+    my @list = @{$self->_get_smod()};
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of private modifiers of a given conjunct.
+#------------------------------------------------------------------------------
+sub get_private_modifiers
+{
+    my $self = shift;
+    my $conjunct = shift; # Node
+    log_fatal("Unknown conjunct") unless(defined($conjunct));
+    my %prm = @_;
+    my $participants = $self->_get_participants();
+    my @list;
+    foreach my $participant (@{$participants})
+    {
+        if($participant->{node}==$conjunct)
+        {
+            @list = @{$participant->{pmod}};
+            last;
+        }
+    }
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
+    return @list;
 }
 
 
@@ -259,9 +394,15 @@ sub get_shared_modifiers
 sub get_children
 {
     my $self = shift;
+    my %prm = @_;
     my @smod = $self->get_shared_modifiers();
     my @pmod = map {@{$_->{pmod}}} @{$self->_get_participants()};
-    return (@smod, @pmod);
+    my @list = (@smod, @pmod);
+    if($prm{ordered})
+    {
+        @list = sort {$a->ord() <=> $b->ord()} (@list);
+    }
+    return @list;
 }
 sub children
 {
@@ -421,6 +562,7 @@ sub detect_mosford
 {
     my $self = shift;
     my $node = shift; # suspected root node of coordination
+    log_fatal("Missing node") unless(defined($node));
     # This function is recursive. If we already have conjuncts then we know this is not the top level.
     my $top = scalar($self->get_conjuncts())==0;
     my @children = $node->children();
@@ -497,11 +639,42 @@ sub detect_mosford
             $self->add_delimiter($participant, $symbol, @partmodifiers);
         }
     }
+    # If this is the top level, we now know all we can.
+    # It's time for a few more heuristics.
+    if($top)
+    {
+        $self->reconsider_distant_private_modifiers();
+    }
     # Return the list of modifiers to the upper level.
     # They will need it when they add me as a participant.
     unless($top)
     {
         return @modifiers;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines private modifiers of the first (word-order-wise) conjunct. If they
+# lie after the last conjunct, the function reclassifies them as shared
+# modifiers. This is a heuristic that should work well with coordinations that
+# were originally encoded in left-to-right Moscow or Stanford styles.
+#------------------------------------------------------------------------------
+sub reconsider_distant_private_modifiers
+{
+    my $self = shift;
+    my @conjuncts = $self->get_conjuncts('ordered' => 1);
+    return if(scalar(@conjuncts)<2);
+    # We will only compare the root nodes of the constituents, not the whole subtrees that could be interleaved.
+    my $maxord = $conjuncts[-1]->ord();
+    my @pord = $self->get_private_modifiers($conjuncts[0]);
+    foreach my $po (@pord)
+    {
+        if($po->ord() > $maxord)
+        {
+            $self->change_private_modifier_to_shared($po, $conjuncts[0]);
+        }
     }
 }
 

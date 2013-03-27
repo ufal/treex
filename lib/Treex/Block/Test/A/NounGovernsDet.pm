@@ -7,6 +7,13 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
+    my $afun = $node->afun();
+    $afun = '' if(!defined($afun));
+    # Exclude ExD nodes from the test. The node they should really depend on is not present in the tree.
+    return 1 if($afun eq 'ExD');
+    # Exclude apposition from the test. It is strange anyway if it depends on a determiner but then it is mainly problem of the main noun phrase that probably also depends on the same determiner.
+    # One example that I have seen in Danish is actually correct: "et af selskaber" = "one of companies". The numeral "et" is correctly the head in this case.
+    return 1 if($afun eq 'Apposition');
     my $parent = $node->parent();
     if(defined($parent))
     {
