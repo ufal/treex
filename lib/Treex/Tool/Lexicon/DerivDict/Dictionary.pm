@@ -124,8 +124,25 @@ sub add_derivation {
 
     log_fatal("Undefined source lexeme") if not defined $source_lexeme;
     log_fatal("Undefined derived lexeme") if not defined $derived_lexeme;
+
+    log_fatal("Source and derived lexemes must not be identical") if $source_lexeme eq $derived_lexeme;
+
+    my @derivation_path = ($derived_lexeme, $source_lexeme);
+    my $lexeme = $source_lexeme->source_lexeme;
+    while ($lexeme) {
+        push @derivation_path, $lexeme;
+        if ($lexeme eq $derived_lexeme) {
+            log_info("The new derivation would lead to a loop: "
+                 . join " -> ", reverse map {$_->lemma} @derivation_path)."   No derivation added.";
+            return;
+        }
+        $lexeme = $lexeme->source_lexeme;
+    }
+
     $derived_lexeme->set_source_lexeme($source_lexeme);
     $derived_lexeme->set_deriv_type($deriv_type);
+
+    return $source_lexeme;
 }
 
 sub print_statistics {
