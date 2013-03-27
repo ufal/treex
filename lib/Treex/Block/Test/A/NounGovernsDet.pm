@@ -49,6 +49,6 @@ Such cases are harder to detect because we cannot exclude that a noun really wil
 
 =cut
 
-# Copyright 2011 Dan Zeman
+# Copyright 2013 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
 

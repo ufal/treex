@@ -15,9 +15,10 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
+    # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
+    $self->attach_final_punctuation_to_root($a_root);
     $self->restructure_coordination($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
-    $self->attach_final_punctuation_to_root($a_root);
     $self->lift_noun_phrases($a_root);
     $self->reattach_modifier_from_auxt_to_verb($a_root);
     $self->check_afuns($a_root);
