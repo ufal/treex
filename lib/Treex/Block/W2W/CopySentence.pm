@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'target_selector' => (is => 'rw', isa => 'Str', predicate => 'has_target_selector');
 
 sub _build_source_selector {
     my ($self) = @_;
@@ -19,8 +20,10 @@ sub _build_source_language {
 
 sub BUILD {
     my ($self) = @_;
-    if ( $self->language eq $self->source_language && $self->selector eq $self->source_selector ) {
-        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+    if (!$self->has_target_selector) {
+	    if ( $self->language eq $self->source_language && $self->selector eq $self->source_selector ) {
+	        log_fatal("Can't create zone with the same 'language' and 'selector'.");
+	    }    	
     }
 }
 
@@ -31,11 +34,16 @@ sub process_document {
     foreach my $bundle ( $document->get_bundles() ) {
 
         my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
-        my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
-
+        my $target_zone;
+        if ($self->has_target_selector) {
+        	$target_zone = $bundle->get_or_create_zone( $self->language, $self->target_selector );
+        }
+        else
+        {
+        	$target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );	
+        }
         $target_zone->set_sentence( $source_zone->sentence() );
     }
-
 }
 
 1;
@@ -70,6 +78,11 @@ The C<source_language> and C<source_selector> must differ from C<language> and C
 
 The source selector from which the sentences should be copied. Defaults to current C<selector> setting.
 The C<source_language> and C<source_selector> must differ from C<language> and C<selector>.
+
+=item C<target_selector>
+
+The C<target_selector> option allows to create a new selector if it doesn't exist already.
+ 
 
 =back
 

@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 my $data_dir = "data/models/normalization/ta/agglutination";
 
 # auxiliary verbs
-my $aux_rules_file   = require_file_from_share("$data_dir/auxiliary_rules.txt");
+my $aux_rules_file   = require_file_from_share("$data_dir/aux_rules.dat");
 my @aux_forms_fnames = (
 	"azu_forms.dat",
 	"cey_forms.dat",
@@ -32,12 +32,11 @@ my %aux_rules;
 my @aux_forms;
 
 # postpositions
-my $pp_rules_file =
-  require_file_from_share("$data_dir/postpositional_rules.txt");
-
+my $pp_rules_file = require_file_from_share("$data_dir/pp_rules.dat");
+my %pp_rules;
 # compound words
-my $compound_words_file =
-  require_file_from_share("$data_dir/compound_words.txt");
+my $compound_words_file = require_file_from_share("$data_dir/compound_words.dat");
+my %compound_rules;
 
 # load auxiliary verb rules
 log_info 'Loading Tamil aux verb rules...';
@@ -45,6 +44,14 @@ log_info 'Loading Tamil aux verb rules...';
 
 # load auxiliary forms
 @aux_forms = load_aux_forms(\@aux_forms_fnames);
+
+# load postpositional rules
+log_info 'Loading Tamil postpositional rules...';
+%pp_rules =  load_rules($pp_rules_file);
+
+# load compound words
+log_info 'Loading compound words...';
+%compound_rules = load_rules($compound_words_file);
 
 sub load_rules {
 	my ( $f, $type ) = @_;
@@ -115,7 +122,6 @@ sub load_aux_forms {
 		push @auxf, @data;
 		close RHANDLE;
 	}
-	map{print $_ . "\n"}@auxf;
 	return @auxf;
 }
 
@@ -140,22 +146,46 @@ sub print_rules {
 
 sub reduce_agglutination {
 	my ( $self, $sentence ) = @_;
-
-	# separate "comma" and the "period" at the end of the sentence
-	$sentence =~ s/(\,|\.$)/$1 /g;
-
-	# separate auxiliary forms
-	foreach my $aform (@aux_forms) {
-		$sentence =~ s/$aform\s+/ $aform /g;
-	}
 	
-	# apply auxiliary verb rules for further separation
+	chomp $sentence;
+	
+	# add space at both sides of the sentence
+	$sentence = ' ' . $sentence . ' ';
+
+	# separate "comma" and the "period"
+	$sentence =~ s/([^\d])(\,|\.)\s+/$1 $2 /g;
+	$sentence =~ s/\.$/ ./;
+
+	# apply auxiliary verb rules
 	my @arules = @{ $aux_rules{'r'} };
 	my @avals  = @{ $aux_rules{'v'} };
 	foreach my $i ( 0 .. $#arules ) {
 		my $r = $arules[$i];
 		my $v = $avals[$i];
-		$sentence =~ s/$r\s+/"$v" /gee;
+		$sentence =~ s/$r\s+/"$v"/gee;
+	}
+
+	# separate auxiliary forms 
+	foreach my $aform (@aux_forms) {
+		$sentence =~ s/$aform\s+/ $aform /g;
+	}	
+	
+	# separate postpositions
+	my @prules = @{ $pp_rules{'r'} };
+	my @pvals  = @{ $pp_rules{'v'} };
+	foreach my $i ( 0 .. $#prules ) {
+		my $r = $prules[$i];
+		my $v = $pvals[$i];
+		$sentence =~ s/$r\s+/"$v"/gee;
+	}
+	
+	# separate compound words
+	my @crules = @{ $compound_rules{'r'} };
+	my @cvals  = @{ $compound_rules{'v'} };
+	foreach my $i ( 0 .. $#crules ) {
+		my $r = $crules[$i];
+		my $v = $cvals[$i];
+		$sentence =~ s/$r\s+/"$v"/eeg;
 	}
 	return $sentence;
 }
