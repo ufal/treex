@@ -121,7 +121,7 @@ sub load {
 
         # moving the content from the retrieved dictionary into the already existing instance
         # (risky)
-        foreach my $key (%$retrieved_dictionary) {
+        foreach my $key (keys %$retrieved_dictionary) {
             $self->{$key} = $retrieved_dictionary->{$key}
         }
         return $self;
@@ -197,7 +197,7 @@ sub print_statistics {
 
     my %pos_cnt;
     my %pos2pos_cnt;
-    my $relations_cnt;
+    my $relations_cnt = 0;
     my %derived_lexemes_cnt;
 
     foreach my $lexeme ($self->get_lexemes) {
