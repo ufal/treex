@@ -61,6 +61,10 @@ my @forms_type_varu = $generator->generate_forms('வரு');
 $generator->set_template('verb_type_po');
 my @forms_type_po = $generator->generate_forms('போ');
 
+# generate all verb forms of : முடி  ('to be able')
+$generator->set_template('verb_type2');
+my @muti_forms = $generator->generate_forms('முடி');
+
 
 print "# verb forms of : அழு ('to cry')\n";
 map{print $_ . "\n"}@forms_type1;
@@ -106,3 +110,6 @@ map{print $_ . "\n"}@forms_type_varu;
 
 print "# verb forms of : போ  ('to go')\n";
 map{print $_ . "\n"}@forms_type_po;
+
+print "# verb forms of : முடி  ('to be able')\n";
+map{print $_ . "\n"}@muti_forms;
