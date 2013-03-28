@@ -476,7 +476,7 @@ sub detect_prague
 
 #------------------------------------------------------------------------------
 # Sets and labels parent-child relations between nodes so that they reflect the
-# roles of the nodes in coordination. Uses Prague style.
+# roles of the nodes in coordination. Uses Prague style. Returns the head node.
 #------------------------------------------------------------------------------
 sub shape_prague
 {
@@ -552,6 +552,7 @@ sub shape_prague
         $modifier->set_parent($croot);
         $modifier->set_is_member(0);
     }
+    return $croot;
 }
 
 

@@ -6,6 +6,266 @@ use namespace::autoclean;
 use Moose;
 use Treex::Core::Log;
 use Treex::Core::Node;
+use Treex::Core::Coordination;
+
+
+
+# type = node: simple wrapper around a Node object
+# type = coordination: wrapper around a Coordination object
+# type = cloud: group of clouds of arbitrary types
+has type =>
+(
+    is       => 'rw',
+    isa      => 'Str',
+    writer   => '_set_type',
+    reader   => 'type'
+);
+
+has node =>
+(
+    is       => 'rw',
+    isa      => 'Treex::Core::Node',
+    writer   => '_set_node',
+    reader   => '_get_node'
+);
+
+has coordination =>
+(
+    is       => 'rw',
+    isa      => 'Treex::Core::Coordination',
+    writer   => '_set_coordination',
+    reader   => '_get_coordination'
+);
+
+# Shared modifiers are clouds that depend on the whole cloud, not just one of its participants.
+has _smod =>
+(
+    is       => 'ro',
+    isa      => 'ArrayRef[Treex::Core::Cloud]',
+    reader   => '_get_smod',
+    default  => sub { [] }
+);
+
+has parent =>
+(
+    is       => 'rw',
+    isa      => 'Treex::Core::Cloud',
+    writer   => '_set_parent',
+    reader   => 'parent'
+);
+
+
+
+#------------------------------------------------------------------------------
+# Wraps a Node object in this Cloud object, i.e. creates a node-type cloud.
+#------------------------------------------------------------------------------
+sub create_from_node
+{
+    my $self = shift;
+    my $node = shift;
+    # The node must not have afun Coord. If it does we must create the cloud differently!
+    my $afun = $node->afun();
+    $afun = '' if(!defined($afun));
+    if($afun eq 'Coord')
+    {
+        my $coordination = new Treex::Core::Coordination;
+        $coordination->detect_prague($node);
+        $self->create_from_coordination($coordination);
+    }
+    else
+    {
+        $self->_set_type('node');
+        $self->_set_node($node);
+        # Wrap all children as clouds.
+        my $smod = $self->_get_smod();
+        foreach my $child ($node->children())
+        {
+            my $ccloud = new Treex::Core::Cloud;
+            $ccloud->create_from_node($child);
+            push(@{$smod}, $ccloud);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Wraps a Coordination object in this Cloud object, i.e. creates a
+# coordination-type cloud.
+#------------------------------------------------------------------------------
+sub create_from_coordination
+{
+    my $self = shift;
+    my $coordination = shift;
+    $self->_set_type('coordination');
+    $self->_set_coordination($coordination);
+    # Wrap all shared modifiers as clouds.
+    my $smod = $self->_get_smod();
+    foreach my $modifier ($coordination->get_shared_modifiers())
+    {
+        my $ccloud = new Treex::Core::Cloud;
+        $ccloud->create_from_node($modifier);
+        push(@{$smod}, $ccloud);
+    }
+    # Wrap all participants as clouds.
+    # We do not need the conjunct-delimiter distinction but we do not want to lose it.
+    # We could copy all the information from the Coordination object and store it in a parallel array.
+    # That would mean a lot of copying back and forth and we would have to change it each time the implementation of Coordination changes.
+    # It will be better in future if the concept of Cloud proves viable and we make the Coordination class a derivative of Cloud.
+    # For the moment however, we just abuse the list of records about participants within Coordination, and store the link to the sub-Cloud there.
+    my $participants = $coordination->_get_participants();
+    foreach my $participant (@{$participants})
+    {
+        my $node = $participant->{node};
+        my $ccloud = new Treex::Core::Cloud;
+        $ccloud->create_from_node($node);
+        $participant->{cloud} = $ccloud;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets the parent cloud of this cloud. Makes sure to also appropriately
+# reattach the corresponding nodes. This node will become a shared modifier
+# (not participant) of the parent cloud.
+#------------------------------------------------------------------------------
+sub set_parent
+{
+    my $self = shift;
+    my $pcloud = shift;
+    log_fatal('Unknown new parent.') if(!defined($pcloud));
+    my $type = $self->type();
+    my $ptype = $pcloud->type();
+    my $node;
+    if($type eq 'node')
+    {
+        $node = $self->_get_node();
+    }
+    elsif($type eq 'coordination')
+    {
+        $node = $self->_get_coordination()->shape_prague();
+    }
+    my $opcloud = $self->parent();
+    # Cleanup: remove me from the list of modifiers of the old parent.
+    if(defined($opcloud))
+    {
+        my $opsmod = $opcloud->_get_smod();
+        my $found = 0;
+        for(my $i = 0; $i<=$#{$opsmod}; $i++)
+        {
+            if($opsmod->[$i]==$self)
+            {
+                splice(@{$opsmod}, $i, 1);
+                $found = 1;
+                last;
+            }
+        }
+        if(!$found)
+        {
+            log_fatal('Parent cloud does not know me as its shared modifier.');
+        }
+        # If it is a coordination we must do the same with the list of shared modifer nodes in the Coordination.
+        if($opcloud->type() eq 'coordination')
+        {
+            my $opcsmod = $opcloud->_get_coordination()->_get_smod();
+            my $found = 0;
+            for(my $i = 0; $i<=$#{$opcsmod}; $i++)
+            {
+                if($opcsmod->[$i]==$node)
+                {
+                    splice(@{$opcsmod}, $i, 1);
+                    $found = 1;
+                    last;
+                }
+            }
+            if(!$found)
+            {
+                log_fatal('Parent coordination does not know me as its shared modifier.');
+            }
+        }
+    }
+    $self->_set_parent($pcloud);
+    # Reattach the corresponding nodes.
+    if($type eq 'node' && $ptype eq 'node')
+    {
+        $node->set_parent($pcloud->_get_node());
+    }
+    elsif($type eq 'node' && $ptype eq 'coordination')
+    {
+        my $pcoordination = $pcloud->_get_coordination();
+        $pcoordination->add_shared_modifier($node);
+        $pcoordination->shape_prague();
+    }
+    elsif($type eq 'coordination' && $ptype eq 'coordination')
+    {
+        my $pcoordination = $pcloud->_get_coordination();
+        $pcoordination->add_shared_modifier($node);
+        $pcoordination->shape_prague();
+    }
+    elsif($type eq 'coordination' && $ptype eq 'node')
+    {
+        my $coordination = $self->_get_coordination();
+        $coordination->set_parent($pcloud->_get_node());
+        $coordination->shape_prague();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the afun of the cloud. It describes its relation to the parent cloud.
+#------------------------------------------------------------------------------
+sub afun
+{
+    my $self = shift;
+    if($self->type() eq 'node')
+    {
+        return $self->_get_node()->afun();
+    }
+    elsif($self->type() eq 'coordination')
+    {
+        return $self->_get_coordination()->afun();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all participants and shared modifiers (clouds). This is
+# useful for recursion, if we want to traverse all clouds in the tree.
+#------------------------------------------------------------------------------
+sub get_participants_and_modifiers
+{
+    my $self = shift;
+    my $smod = $self->_get_smod();
+    my @list = @{$smod};
+    if($self->type() eq 'coordination')
+    {
+        my $coordination = $self->_get_coordination();
+        my $participants = $coordination->_get_participants();
+        foreach my $participant (@{$participants})
+        {
+            push(@list, $participant->{cloud});
+        }
+    }
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Final cleanup. Erases all references to parent and child clouds to break
+# cyclic references that would prevent Perl garbage collection from working
+# properly.
+#------------------------------------------------------------------------------
+sub DESTROY
+{
+    my $self = shift;
+    $self->_set_parent(undef);
+    my $smod = $self->_get_smod();
+    splice(@{$smod});
+}
 
 
 
