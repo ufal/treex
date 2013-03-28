@@ -524,6 +524,11 @@ sub deprel_to_afun
 
     # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
     # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
+    ###!!! DZ 27.3.2013: Now I think that we should not do this here at all.
+    ###!!! We must normalize punctuation first. There are prepositions with two children: comma and the noun phrase.
+    ###!!! Will this function pick the comma as the representant then? How will the comma affect the result?
+    ###!!! Další: Nemůžeme to udělat, když ještě nejsou vyřešené koordinace. (A potom se zvláštní opatrností.)
+    ###!!! V trénovacím souboru 001 ve větě 292 je koordinace předložek, "i og omkring Palermo" = "in and around Palermo".
     $self->process_prep_sub_arg($root);
 }
 

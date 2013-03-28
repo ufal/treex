@@ -80,17 +80,23 @@ sub check_that_node_is_new
     # Is it a participant?
     if(grep {$_->{node} == $node} @participants)
     {
-        log_fatal("Node $node is already a participant of this coordination! ", $node->ord(), " ", $node->form());
+        my $form = $node->form(); $form = '' if(!defined($form));
+        my $address = $node->get_address();
+        log_fatal("Node $node ('$form') is already a participant of this coordination!\n$address");
     }
     # Is it private modifier of a participant?
     if(grep {$_ == $node} (map {@{$_->{pmod}}} @participants))
     {
-        log_fatal("Node $node is already a private modifier of a participant of this coordination! ", $node->ord(), " ", $node->form());
+        my $form = $node->form(); $form = '' if(!defined($form));
+        my $address = $node->get_address();
+        log_fatal("Node $node ('$form') is already a private modifier of a participant of this coordination!\n$address");
     }
     # Is it a shared modifier?
     if(grep {$_ == $node} @smod)
     {
-        log_fatal("Node $node is already a shared modifier of this coordination! ", $node->ord(), " ", $node->form());
+        my $form = $node->form(); $form = '' if(!defined($form));
+        my $address = $node->get_address();
+        log_fatal("Node $node ('$form') is already a shared modifier of this coordination!\n$address");
     }
     # Is it registered as parent of the whole coordination?
     # Note: We want the world consistent as far as our knowledge reaches.
@@ -100,7 +106,9 @@ sub check_that_node_is_new
     # Then the Node object will launch alarm when we attempt to shape the coordination.
     if(defined($self->parent()) && $node == $self->parent())
     {
-        log_fatal("Node $node is already a parent of this coordination! ", $node->ord(), " ", $node->form());
+        my $form = $node->form(); $form = '' if(!defined($form));
+        my $address = $node->get_address();
+        log_fatal("Node $node ('$form') is already a parent of this coordination!\n$address");
     }
     return 1;
 }
@@ -395,9 +403,11 @@ sub get_children
 {
     my $self = shift;
     my %prm = @_;
-    my @smod = $self->get_shared_modifiers();
-    my @pmod = map {@{$_->{pmod}}} @{$self->_get_participants()};
-    my @list = (@smod, @pmod);
+    my @list = $self->get_shared_modifiers();
+    foreach my $participant (@{$self->_get_participants()})
+    {
+        push(@list, @{$participant->{pmod}});
+    }
     if($prm{ordered})
     {
         @list = sort {$a->ord() <=> $b->ord()} (@list);
@@ -565,12 +575,34 @@ sub detect_mosford
     log_fatal("Missing node") unless(defined($node));
     # This function is recursive. If we already have conjuncts then we know this is not the top level.
     my $top = scalar($self->get_conjuncts())==0;
+    ###!!!DEBUG
+    my $debug = 0;
+    if($debug)
+    {
+        my $form = $node->form();
+        $form = '' if(!defined($form));
+        if($top)
+        {
+            $node->set_form("T:$form");
+        }
+        else
+        {
+            $node->set_form("X:$form");
+        }
+    }
+    ###!!!END
     my @children = $node->children();
     my @participants = grep
     {
         $_->wild()->{coordinator} ||
         $_->wild()->{conjunct} ||
-        $_->get_real_afun() =~ m/^Aux[GXY]$/
+        # We cannot use get_real_afun() because the foreign data is not yet fully normalized
+        # and there are things like AuxP with two children, first AuxX, second AuxC.
+        # get_real_afun() would return AuxX, then we would think it is a delimiter rather than modifier,
+        # even though the preposition governs a whole modifier subtree.
+        # Also, get_real_afun() processes coordinations, and our coordination is not yet valid.
+        #$_->get_real_afun() =~ m/^Aux[GXY]$/
+        $_->afun() =~ m/^Aux[GXY]$/
     }
     @children;
     my @recursive_participants = grep
@@ -599,10 +631,16 @@ sub detect_mosford
     }
     my @modifiers = grep
     {
+        # We cannot use get_real_afun() because the foreign data is not yet fully normalized (see above).
+        #my $afun = $_->get_real_afun();
+        my $afun = $_->afun();
         !$_->wild()->{coordinator} &&
         !$_->wild()->{conjunct} &&
-        $_->get_real_afun() !~ m/^Aux[GXY]$/ &&
-        (!$exdorphans || $_->get_real_afun() ne 'ExD')
+        $afun !~ m/^Aux[GXY]$/ &&
+        (
+          !$exdorphans ||
+          $afun ne 'ExD'
+        )
     }
     @children;
     if($bottom)
@@ -634,7 +672,9 @@ sub detect_mosford
         }
         else
         {
-            my $afun = $participant->get_real_afun();
+            # We cannot use get_real_afun() because the foreign data is not yet fully normalized (see above).
+            #my $afun = $participant->get_real_afun();
+            my $afun = $participant->afun();
             my $symbol = $afun =~ m/^Aux[GX]$/;
             $self->add_delimiter($participant, $symbol, @partmodifiers);
         }

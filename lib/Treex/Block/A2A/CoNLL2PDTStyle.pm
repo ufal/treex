@@ -261,31 +261,28 @@ sub process_prep_sub_arg
     # Now let's see whether my children want my afun.
     my $new_afun = $current_afun;
     my @children = $node->children();
+    my $argument_found = 0;
     foreach my $child (@children)
     {
 
         # Ask a child if it wants my afun and what afun it thinks I should get.
         # A preposition can have more than one child and some of the children may not be PrepArgs.
-        # So only set $new_afun if it really differs from $current_afun (otherwise the first child could propose a change and the second could revert it).
-        ###!!! We should check whether several children claim to be prep/sub arguments. Normally it should not happen.
+        # So only set $new_afun if it really differs from $current_afun
+        # (otherwise the first child could propose a change and the second could revert it).
         my $suggested_afun = $self->process_prep_sub_arg( $child, $current_afun );
-        $new_afun = $suggested_afun unless ( $suggested_afun eq $current_afun );
-    }
-    ###!!! DEBUG
-    if ( 0 && $node->get_bundle()->get_position() + 1 == 64 )
-    {
-        my $message;
-        if ( $new_afun ne $node->afun() )
+        if($suggested_afun ne $current_afun)
         {
-            $message = sprintf( "%d:%s changing afun from %s to $new_afun", $node->ord(), $node->form(), $node->afun() );
+            # Even if the preposition has several children, only one can be PrepArg.
+            # Otherwise it would not be clear what to do.
+            # (Note however that there is no warranty that the input data is clean.)
+            if($argument_found)
+            {
+                log_warn("Two or more Prep/SubArg children under one preposition/conjunction.\n".$node->get_address());
+            }
+            $new_afun = $suggested_afun;
+            $argument_found = 1;
         }
-        else
-        {
-            $message = sprintf( "%d:%s keeping afun $current_afun", $node->ord(), $node->form() );
-        }
-        log_info($message);
     }
-    ###!!! END OF DEBUG
     # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
     $node->set_afun($new_afun);
 
@@ -913,7 +910,9 @@ sub validate_coap
 #
 # If the original parent had is_member set, the flag will be moved to the
 # lifted node. If the lifted node had is_member set, we must lift the whole
-# coordination!
+# coordination! If the original parent is Coord and the lifted node is a shared
+# modifier of coordination, we must be careful with reattaching the original
+# siblings of the lifted node. Only other shared modifiers can be reattached.
 #------------------------------------------------------------------------------
 sub lift_node
 {
@@ -929,18 +928,24 @@ sub lift_node
     {
         # Reattach myself to the grandparent.
         $node->set_parent($grandparent);
-        $node->set_afun( $parent->afun() );
+        # If parent is coordination, we need the afun of the conjuncts.
+        $node->set_afun($parent->get_real_afun());
         $node->set_is_member( $parent->is_member() );
         $node->set_conll_deprel( $parent->conll_deprel() );
         # Reattach all previous siblings to myself.
         foreach my $sibling ( $parent->children() )
         {
             # No need to test whether $sibling==$node as we already reattached $node.
-            $sibling->set_parent($node);
+            # If parent is Coord, reattach modifiers but not conjuncts!
+            unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
+            {
+                $sibling->set_parent($node);
+            }
         }
         # Reattach the previous parent to myself.
         $parent->set_parent($node);
-        $parent->set_afun($afun);
+        # If parent is coordination, we must set afun of its conjuncts.
+        $parent->set_real_afun($afun);
         $parent->set_is_member(0);
         $parent->set_conll_deprel('');
     }
@@ -955,19 +960,25 @@ sub lift_node
         $grandparent = $parent->parent();
         # Reattach coordination to the grandparent.
         $coordination->set_parent($grandparent);
-        $coordination->set_afun($parent->afun());
+        # If parent is coordination, we need the afun of the conjuncts.
+        $coordination->set_afun($parent->get_real_afun());
         $coordroot->set_is_member($parent->is_member());
         # Reattach all previous siblings to myself.
         foreach my $sibling ($parent->children())
         {
             unless($sibling==$coordroot)
             {
-                $coordination->add_shared_modifier($sibling);
+                # If parent is Coord, reattach modifiers but not conjuncts!
+                unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
+                {
+                    $coordination->add_shared_modifier($sibling);
+                }
             }
         }
         # Reattach the previous parent to myself.
         $coordination->add_shared_modifier($parent);
-        $parent->set_afun($afun);
+        # If parent is coordination, we must set afun of its conjuncts.
+        $parent->set_real_afun($afun);
         $parent->set_is_member(0);
         $parent->set_conll_deprel('');
         $coordination->shape_prague();
