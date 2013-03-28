@@ -214,6 +214,27 @@ sub set_parent
 
 
 #------------------------------------------------------------------------------
+# Sets the afun of the cloud. It describes its relation to the parent cloud.
+#------------------------------------------------------------------------------
+sub set_afun
+{
+    my $self = shift;
+    my $afun = shift;
+    if($self->type() eq 'node')
+    {
+        $self->_get_node()->set_afun($afun);
+    }
+    elsif($self->type() eq 'coordination')
+    {
+        my $coordination = $self->_get_coordination();
+        $coordination->set_afun($afun);
+        $coordination->shape_prague();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the afun of the cloud. It describes its relation to the parent cloud.
 #------------------------------------------------------------------------------
 sub afun
