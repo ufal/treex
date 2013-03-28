@@ -265,6 +265,14 @@ sub DESTROY
     $self->_set_parent(undef);
     my $smod = $self->_get_smod();
     splice(@{$smod});
+    if($self->type() eq 'coordination')
+    {
+        my $participants = $self->_get_coordination()->_get_participants();
+        foreach my $participant (@{$participants})
+        {
+            delete($participant->{cloud});
+        }
+    }
 }
 
 
