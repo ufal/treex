@@ -37,6 +37,10 @@ sub deprel_to_afun
         {
             $node->set_afun('Pnom');
         }
+        elsif ( $deprel =~ 'COORD' ) # ordering is important because of mixed deprels such as COORD_ExD_OBJ
+        {
+            $node->set_afun('Coord');
+        }
         elsif ( $deprel =~ 'OBJ' )
         {
             $node->set_afun('Obj');
@@ -48,10 +52,6 @@ sub deprel_to_afun
         elsif ( $deprel =~ 'SBJ' )
         {
             $node->set_afun('Sb');
-        }
-        elsif ( $deprel =~ 'COORD' )
-        {
-            $node->set_afun('Coord');
         }
         elsif ( $deprel =~ 'AUXC' )
         {
