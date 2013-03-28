@@ -12,8 +12,8 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);    
-    $self->attach_final_punctuation_to_root($a_root);    
+    my $a_root = $self->SUPER::process_zone($zone);
+    $self->attach_final_punctuation_to_root($a_root);
     $self->check_apos_coord_membership($a_root);
     $self->check_afuns($a_root);
 }
@@ -28,7 +28,7 @@ sub check_apos_coord_membership {
         if ($afun =~ /^(Apos|Coord)$/) {
             $self->identify_coap_members($node);
         }
-    }    
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    
+
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
@@ -105,6 +105,20 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
+
+    foreach my $node (@nodes) {
+        # "and" and "but" have often deprel PRED
+        if ($node->form =~ /^(και|αλλ’|,)$/ and grep {$_->is_member} $node->get_children) {
+            $node->set_afun("Coord");
+        }
+
+        # no is_member allowed directly below root
+        if ($node->is_member and $node->get_parent->is_root) {
+            $node->set_is_member(0);
+        }
+
+    }
+
 }
 
 1;
