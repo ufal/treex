@@ -167,7 +167,7 @@ sub load {
 sub add_derivation {
     my ( $self, $arg_ref ) = @_;
     my ( $source_lexeme, $derived_lexeme, $deriv_type ) =
-        map { $arg_ref->{$_} } qw(source_lexeme derived_lexeme deriv_type);
+        map { $arg_ref->{$_} } qw(source_lexeme derived_lexeme deriv_type derivation_origin);
 
     log_fatal("Undefined source lexeme") if not defined $source_lexeme;
     log_fatal("Undefined derived lexeme") if not defined $derived_lexeme;
