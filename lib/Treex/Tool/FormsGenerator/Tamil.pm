@@ -92,6 +92,7 @@ my %VOWEL_VOWELSIGN   = (
 	'ஓ' => 'ோ',
 	'ஔ' => 'ௌ'
 );
+my $PULLI = '்';
 
 sub load_template {
 	my ( $self, $new_type, $old_type ) = @_;
@@ -195,11 +196,23 @@ sub generate_forms {
 sub generate_cliticized_forms {
 	my ( $self, $lemma ) = @_;
 
-	# 1. add உம்/um ('also', 'and', 'even', etc.)
+	my @cliticized_forms;
 
+	# 1. add உம்/um ('also', 'and', 'even', etc.)
+	my $form_um = $self->apply_general_spelling_rules($lemma, "உம்");
 	# 2. add ஆ/aa (interrogative)
+	my $form_aa = $self->apply_general_spelling_rules($lemma, "ஆ");
 	# 3. add ஏ/ee (emphasize)
+	my $form_ee = $self->apply_general_spelling_rules($lemma, "ஏ");
 	# 4. add ஆவது/aavathu	 ('at least')
+	my $form_aavathu = $self->apply_general_spelling_rules($lemma, "ஆவது");
+	
+	push @cliticized_forms, $form_um;
+	push @cliticized_forms, $form_aa;
+	push @cliticized_forms, $form_ee;
+	push @cliticized_forms, $form_aavathu;
+	
+	return @cliticized_forms;
 }
 
 # general spelling rules when stems and suffixes(or stems) combine
@@ -224,7 +237,7 @@ sub apply_general_spelling_rules {
 		$str2 =~ /^($VOWELS)/;
 		my $v = $1;
 		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^(VOWELS)/$vs/;
+		$str2 =~ s/^$v/$vs/;
 		return $str1 . 'ய' . $str2;		
 	}
 	elsif ( ( $str1 =~ /ை$/ ) && ($str2 =~ /^அ/ ) ) {
@@ -237,7 +250,7 @@ sub apply_general_spelling_rules {
 		$str2 =~ /^($VOWELS)/;
 		my $v = $1;
 		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^(VOWELS)/$vs/;		
+		$str2 =~ s/^$v/$vs/;		
 		return $str1 . $str2;
 	}
 
@@ -257,7 +270,7 @@ sub apply_general_spelling_rules {
 		$str2 =~ /^($VOWELS)/;
 		my $v = $1;
 		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^(VOWELS)/$vs/;		
+		$str2 =~ s/^$v/$vs/;		
 		return $str1 . $str2;
 	}
 
