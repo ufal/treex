@@ -63,26 +63,51 @@ sub create_from_node
 {
     my $self = shift;
     my $node = shift;
-    # The node must not have afun Coord. If it does we must create the cloud differently!
-    my $afun = $node->afun();
-    $afun = '' if(!defined($afun));
-    if($afun eq 'Coord')
-    {
-        my $coordination = new Treex::Core::Coordination;
-        $coordination->detect_prague($node);
-        $self->create_from_coordination($coordination);
-    }
-    else
+    log_fatal('Undefined node.') if(!defined($node) || ref($node) ne 'Treex::Core::Node::A');
+    # If the node is delimiter of Coordination and we already know it,
+    # i.e. we have been called through create_from_coordination(),
+    # then we do not mind whether its afun is Coord
+    # and we need the list of its private modifiers because we cannot process all its children.
+    # If it is conjunct then we check the afun normally, as it could be a nested Coordination.
+    my $coordination_delimiter = shift;
+    my $private_modifiers = shift;
+    if($coordination_delimiter)
     {
         $self->_set_type('node');
         $self->_set_node($node);
         # Wrap all children as clouds.
         my $smod = $self->_get_smod();
-        foreach my $child ($node->children())
+        foreach my $child (@{$private_modifiers})
         {
             my $ccloud = new Treex::Core::Cloud;
             $ccloud->create_from_node($child);
+            $ccloud->_set_parent($self);
             push(@{$smod}, $ccloud);
+        }
+    }
+    else
+    {
+        my $afun = $node->afun();
+        $afun = '' if(!defined($afun));
+        if($afun eq 'Coord')
+        {
+            my $coordination = new Treex::Core::Coordination;
+            $coordination->detect_prague($node);
+            $self->create_from_coordination($coordination);
+        }
+        else
+        {
+            $self->_set_type('node');
+            $self->_set_node($node);
+            # Wrap all children as clouds.
+            my $smod = $self->_get_smod();
+            foreach my $child ($node->children())
+            {
+                my $ccloud = new Treex::Core::Cloud;
+                $ccloud->create_from_node($child);
+                $ccloud->_set_parent($self);
+                push(@{$smod}, $ccloud);
+            }
         }
     }
 }
@@ -105,6 +130,7 @@ sub create_from_coordination
     {
         my $ccloud = new Treex::Core::Cloud;
         $ccloud->create_from_node($modifier);
+        $ccloud->_set_parent($self);
         push(@{$smod}, $ccloud);
     }
     # Wrap all participants as clouds.
@@ -118,8 +144,80 @@ sub create_from_coordination
     {
         my $node = $participant->{node};
         my $ccloud = new Treex::Core::Cloud;
-        $ccloud->create_from_node($node);
+        if($participant->{type} eq 'delimiter')
+        {
+            $ccloud->create_from_node($node, 1, $participant->{pmod});
+        }
+        else
+        {
+            $ccloud->create_from_node($node);
+        }
         $participant->{cloud} = $ccloud;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Disconnects a cloud from its parent cloud. Discards the link from child to
+# parent and removes the link to the child from the list of modifiers kept
+# with the parent. We must do this manually to prevent memory leaks. Perl
+# garbage collection will not work because of cyclic references.
+#------------------------------------------------------------------------------
+sub disconnect_from_parent
+{
+    my $self = shift;
+    my $parent = $self->parent();
+    if(defined($parent))
+    {
+        # Moose will not allow _set_parent(undef) because undef is not of class Treex::Core::Cloud.
+        # We will create a dummy object instead. Parent will have the only reference to it and Perl will be able to discard it.
+        # I am sure that there must be a better way to do this but I don't know how.
+        $self->_set_parent(new Treex::Core::Cloud);
+        my $opsmod = $parent->_get_smod();
+        my $found = 0;
+        for(my $i = 0; $i<=$#{$opsmod}; $i++)
+        {
+            if($opsmod->[$i]==$self)
+            {
+                splice(@{$opsmod}, $i, 1);
+                $found = 1;
+                last;
+            }
+        }
+        if(!$found)
+        {
+            log_fatal('Parent cloud does not know me as its shared modifier.');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Manual cleanup top-down: destroy my descendants. Disconnect them from me
+# manually (Perl garbage collector would not work with cyclic references).
+# (DZ: I tried to monitor memory usage with and without this cleanup and I did
+# not observe any difference. But I am leaving it here, just in case.)
+#------------------------------------------------------------------------------
+sub destroy_children
+{
+    my $self = shift;
+    my $smod = $self->_get_smod();
+    foreach my $child (@{$smod})
+    {
+        $child->destroy_children();
+        $child->_set_parent(new Treex::Core::Cloud); # disconnect from me
+    }
+    splice(@{$smod});
+    if($self->type() eq 'coordination')
+    {
+        my $participants = $self->_get_coordination()->_get_participants();
+        foreach my $participant (@{$participants})
+        {
+            $participant->{cloud}->destroy_children();
+            delete($participant->{cloud});
+        }
     }
 }
 
@@ -150,21 +248,6 @@ sub set_parent
     # Cleanup: remove me from the list of modifiers of the old parent.
     if(defined($opcloud))
     {
-        my $opsmod = $opcloud->_get_smod();
-        my $found = 0;
-        for(my $i = 0; $i<=$#{$opsmod}; $i++)
-        {
-            if($opsmod->[$i]==$self)
-            {
-                splice(@{$opsmod}, $i, 1);
-                $found = 1;
-                last;
-            }
-        }
-        if(!$found)
-        {
-            log_fatal('Parent cloud does not know me as its shared modifier.');
-        }
         # If it is a coordination we must do the same with the list of shared modifer nodes in the Coordination.
         if($opcloud->type() eq 'coordination')
         {
@@ -184,6 +267,7 @@ sub set_parent
                 log_fatal('Parent coordination does not know me as its shared modifier.');
             }
         }
+        $self->disconnect_from_parent();
     }
     $self->_set_parent($pcloud);
     # Reattach the corresponding nodes.
@@ -253,14 +337,26 @@ sub afun
 
 
 #------------------------------------------------------------------------------
-# Returns the list of all participants and shared modifiers (clouds). This is
-# useful for recursion, if we want to traverse all clouds in the tree.
+# Returns the list of clouds that function as shared modifiers of this cloud.
 #------------------------------------------------------------------------------
-sub get_participants_and_modifiers
+sub get_shared_modifiers
 {
     my $self = shift;
     my $smod = $self->_get_smod();
     my @list = @{$smod};
+    return @list;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of clouds that are participants of this cloud. This function
+# is used for recursion and it does not return anything for single-node clouds.
+#------------------------------------------------------------------------------
+sub get_participants
+{
+    my $self = shift;
+    my @list;
     if($self->type() eq 'coordination')
     {
         my $coordination = $self->_get_coordination();
@@ -276,24 +372,15 @@ sub get_participants_and_modifiers
 
 
 #------------------------------------------------------------------------------
-# Final cleanup. Erases all references to parent and child clouds to break
-# cyclic references that would prevent Perl garbage collection from working
-# properly.
+# Returns the list of all participants and shared modifiers (clouds). This is
+# useful for recursion, if we want to traverse all clouds in the tree.
 #------------------------------------------------------------------------------
-sub DESTROY
+sub get_participants_and_modifiers
 {
     my $self = shift;
-    $self->_set_parent(undef);
-    my $smod = $self->_get_smod();
-    splice(@{$smod});
-    if($self->type() eq 'coordination')
-    {
-        my $participants = $self->_get_coordination()->_get_participants();
-        foreach my $participant (@{$participants})
-        {
-            delete($participant->{cloud});
-        }
-    }
+    my @list = $self->get_shared_modifiers();
+    push(@list, $self->get_participants());
+    return @list;
 }
 
 

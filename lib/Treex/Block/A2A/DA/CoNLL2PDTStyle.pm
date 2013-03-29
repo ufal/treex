@@ -1,6 +1,7 @@
 package Treex::Block::A2A::DA::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Cloud;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
@@ -12,16 +13,20 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
+    my $root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
     # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root);
-    $self->mark_deficient_clausal_coordination($a_root);
-    $self->lift_noun_phrases($a_root);
-    $self->reattach_modifier_from_auxt_to_verb($a_root);
-    $self->check_afuns($a_root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
+    ###!!! remove this?
+    $self->mark_deficient_clausal_coordination($root);
+    $self->lift_noun_phrases($root);
+    $self->reattach_modifier_from_auxt_to_verb($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -413,7 +418,7 @@ sub deprel_to_afun
         {
             # If there are noun siblings then this adjective will not become the new head and thus it is not the DetArg.
             if ( $node->get_iset('pos') eq 'adj' &&
-                 $parent->get_iset('prontype') ne '' && 
+                 $parent->get_iset('prontype') ne '' &&
                  !grep {$_->get_iset('pos') eq 'noun'} ($node->get_siblings()))
             {
                 $node->set_afun('DetArg');
@@ -521,15 +526,6 @@ sub deprel_to_afun
             log_fatal( "Missing afun for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
         }
     }
-
-    # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
-    # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
-    ###!!! DZ 27.3.2013: Now I think that we should not do this here at all.
-    ###!!! We must normalize punctuation first. There are prepositions with two children: comma and the noun phrase.
-    ###!!! Will this function pick the comma as the representant then? How will the comma affect the result?
-    ###!!! Další: Nemůžeme to udělat, když ještě nejsou vyřešené koordinace. (A potom se zvláštní opatrností.)
-    ###!!! V trénovacím souboru 001 ve větě 292 je koordinace předložek, "i og omkring Palermo" = "in and around Palermo".
-    $self->process_prep_sub_arg($root);
 }
 
 #------------------------------------------------------------------------------

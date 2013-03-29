@@ -2,6 +2,7 @@ package Treex::Block::A2A::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Coordination;
+use Treex::Core::Cloud;
 use utf8;
 extends 'Treex::Core::Block';
 use tagset::common;
@@ -285,6 +286,83 @@ sub process_prep_sub_arg
     }
     # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
     $node->set_afun($new_afun);
+
+    # Let the parent know what I selected for him.
+    return $parent_new_afun;
+}
+
+sub process_prep_sub_arg_cloud
+{
+    my $self = shift;
+    my $root = shift;
+    # Convert the tree of nodes to tree of clouds, i.e. build the parallel structure.
+    my $cloud = new Treex::Core::Cloud;
+    $cloud->create_from_node($root);
+    # Traverse the tree of clouds.
+    $self->process_prep_sub_arg_cloud_recursive($cloud);
+    $cloud->destroy_children();
+}
+###!!! DOKONČIT
+sub process_prep_sub_arg_cloud_recursive
+{
+    my $self                = shift;
+    my $cloud               = shift;
+    my $parent_current_afun = shift;
+    my $parent_new_afun     = $parent_current_afun;
+    my $current_afun        = $cloud->afun();
+    $current_afun = '' if(!defined($current_afun));
+
+    # If I am currently a prep/sub argument, let's steal the parent's afun.
+    if ( $current_afun eq 'PrepArg' )
+    {
+        $current_afun    = $parent_current_afun;
+        $parent_new_afun = 'AuxP';
+    }
+    elsif ( $current_afun eq 'SubArg' )
+    {
+        $current_afun    = $parent_current_afun;
+        $parent_new_afun = 'AuxC';
+    }
+
+    # Now let's see whether my children want my afun.
+    my $new_afun = $current_afun;
+    # Recursion that traverses the whole tree means that we go to both participants and modifiers.
+    # But we cannot work with both the same way.
+    # We cannot compare participants' afun with the afun of the coordination cloud: they should be identical!
+    my @children = $cloud->get_shared_modifiers();
+    my @participants = $cloud->get_participants();
+    my $argument_found = 0;
+    foreach my $child (@children)
+    {
+
+        # Ask a child if it wants my afun and what afun it thinks I should get.
+        # A preposition can have more than one child and some of the children may not be PrepArgs.
+        # So only set $new_afun if it really differs from $current_afun
+        # (otherwise the first child could propose a change and the second could revert it).
+        my $suggested_afun = $self->process_prep_sub_arg_cloud_recursive( $child, $current_afun );
+        if($suggested_afun ne $current_afun)
+        {
+            # Even if the preposition has several children, only one can be PrepArg.
+            # Otherwise it would not be clear what to do.
+            # (Note however that there is no warranty that the input data is clean.)
+            if($argument_found)
+            {
+                log_warn("Two or more Prep/SubArg children under one preposition/conjunction.");
+            }
+            $new_afun = $suggested_afun;
+            $argument_found = 1;
+        }
+    }
+    foreach my $participant (@participants)
+    {
+        # A non-trivial cloud, e.g. coordination, cannot accept AuxP suggestions from its participants.
+        # In particular, coordination should have the same afun as most if not all its conjuncts.
+        # We will recurse to participants so that anything within their subtrees can be processed
+        # but we will ignore their suggestions going back up.
+        my $ignored_suggestion = $self->process_prep_sub_arg_cloud_recursive($participant, $parent_current_afun);
+    }
+    # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
+    $cloud->set_afun($new_afun);
 
     # Let the parent know what I selected for him.
     return $parent_new_afun;
