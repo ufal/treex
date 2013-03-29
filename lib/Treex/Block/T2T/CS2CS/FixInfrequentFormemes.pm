@@ -331,7 +331,7 @@ sub change_attr_echildren {
 
     my $msg = '';
 
-    my @attr_children = grep { $_->formeme =~ /:attr$/ }
+    my @attr_children = grep { $_->formeme =~ /:(attr|poss)$/ }
         $node->get_echildren();
     foreach my $child (@attr_children) {
         my $child_lexnode =
