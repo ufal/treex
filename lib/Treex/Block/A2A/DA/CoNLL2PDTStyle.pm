@@ -52,6 +52,89 @@ sub is_possible_subordinator
 }
 
 #------------------------------------------------------------------------------
+# The dependency tag 'nobj' (noun object) can correspond to many possible
+# analytical functions. In some cases it corresponds to pseudo-functions that
+# cannot be saved to disk but they will be used to restructure the tree later
+# (DetArg, NumArg, AdjArg, PrepArg, SubArg).
+#------------------------------------------------------------------------------
+sub nobj_to_afun
+{
+    my $self  = shift;
+    my $node = shift;
+    my $parent = $node->parent();
+    my $ppos = $parent->get_iset('pos');
+    $ppos = 'prondet' if($parent->get_iset('prontype') ne '');
+    my $afun;
+    # Most specific cases (looking at node->form) first!
+    # Infinitive can be 'nobj' of another node.
+    # så meget kludder ..., at man kan sende... (so much chaotic ..., that one can send...)
+    # In this example, "at" is nobj of "så" (often non-projective).
+    # In PDT, "at man kan sende" would be Adv clause of "kludder".
+    # In another example, the infinitive is 'nobj' of a personal pronoun:
+    # Det er ikke sundt at sidde med ... eller ...
+    # It is not healthy to sit with ... or ...
+    # Here, 'at' is 'nobj' of 'det' (nonprojective).
+    if ( $node->form() eq 'at' && $parent->form() eq 'så' )
+    {
+        $afun = 'Adv';
+    }
+    elsif ( $node->form() eq 'at' && $parent->form() =~ m/^det$/i )
+    {
+        $afun = 'Apposition';
+    }
+    # If there is a determiner it is the head of the noun phrase.
+    # The noun that depends on it is tagged 'nobj'. (Adjectives, if any, are tagged 'mod'.)
+    elsif($ppos eq 'prondet')
+    {
+        $afun = 'DetArg';
+    }
+    # If there is a numeral substituting the determiner then it is the head.
+    elsif ( $ppos eq 'num' )
+    {
+        $afun = 'NumArg';
+    }
+    # If the noun phrase does not contain determiner but it has an adjective, the adjective is the head.
+    elsif ( $ppos eq 'adj' )
+    {
+        $afun = 'AdjArg';
+    }
+    # The noun within a prepositional phrase is also tagged 'nobj'.
+    # "som" (as) tagged as particle may act as a preposition (Example: som/TT/pobj undskyldning/NN/nobj)
+    # "heriblandt" (including) tagged as adverb may act as a preposition (Example: heriblandt/Db/mod Lvov/NN/nobj)
+    elsif ($ppos eq 'prep' || lc( $parent->form() ) =~ m/^(.*som|heriblandt)$/)
+    {
+        $afun = 'PrepArg';
+    }
+    # If there is a noun under a subordinating conjunction, it is also tagged 'nobj'.
+    # "end" (than) can have noun arguments
+    elsif ( $self->is_possible_subordinator($parent) )
+    {
+        $afun = 'SubArg';
+    }
+    # parent is interjection
+    # Example: "/XP/pnct Åh/I/qobj snack/NC/nobj ,/XP/pnct "/XP/pnct sagde/VA/ROOT
+    elsif ( $ppos eq 'int' )
+    {
+        $afun = 'ExD';
+    }
+    # error in data: sentence-final punctuation, attached to the main verb, has nobj instead of pnct
+    elsif ( $node->get_iset('pos') eq 'punc' )
+    {
+        $node->set_conll_deprel('pnct');
+        $afun = 'AuxK';
+    }
+    # We need some default so that every nobj gets an afun even if its parent is another or unknown part of speech.
+    # Some examples:
+    # Klokken/NN/? 17.05/Cn/nobj
+    # §/XS/? 20/AC/nobj
+    else
+    {
+        $afun = 'Atr';
+    }
+    return $afun;
+}
+
+#------------------------------------------------------------------------------
 # Try to convert dependency relation tags to analytical functions.
 # http://copenhagen-dependency-treebank.googlecode.com/svn/trunk/manual/cdt-manual.pdf
 # (especially the part SYNCOMP in 3.1)
@@ -210,73 +293,10 @@ sub deprel_to_afun
             $node->set_afun('Pnom');
         }
 
-        # nobj ... argument of a preposition
-        # also argument of an indefinite pronoun/article (but we will want to swap the nodes)
+        # nobj ... noun argument of anything but verb?
         elsif ( $deprel eq 'nobj' )
         {
-
-            # The Danes often make the first token of a noun phrase the head of the noun phrase.
-            # So we have nouns attached to adjectives, determiners, numerals etc.
-            if ( $parent->get_iset('prontype') ne '' )
-            {
-                $node->set_afun('DetArg');
-            }
-            elsif ( $ppos eq 'adj' )
-            {
-                $node->set_afun('AdjArg');
-            }
-            elsif ( $ppos eq 'num' )
-            {
-                $node->set_afun('NumArg');
-            }
-
-            # "som" (as) tagged as particle may act as a preposition (Example: som/TT/pobj undskyldning/NN/nobj)
-            # "heriblandt" (including) tagged as adverb may act as a preposition (Example: heriblandt/Db/mod Lvov/NN/nobj)
-            elsif (
-                $ppos eq 'prep'
-                ||
-                lc( $parent->form() ) =~ m/^(.*som|heriblandt)$/
-                )
-            {
-                $node->set_afun('PrepArg');
-            }
-
-            # "end" (than) can have noun arguments
-            elsif ( $self->is_possible_subordinator($parent) )
-            {
-                $node->set_afun('SubArg');
-            }
-
-            # så meget kludder ..., at man kan sende... (so [meget kludder] ..., that one can send...)
-            # In this example, "at" is nobj of "så" (often non-projective).
-            # In PDT, "at man kan sende" would be Adv clause of "kludder".
-            elsif ( $node->form() eq 'at' && $parent->form() eq 'så' )
-            {
-                $node->set_afun('Adv');
-            }
-
-            # parent is interjection
-            # Example: "/XP/pnct Åh/I/qobj snack/NC/nobj ,/XP/pnct "/XP/pnct sagde/VA/ROOT
-            elsif ( $ppos eq 'int' )
-            {
-                $node->set_afun('ExD');
-            }
-
-            # error in data: sentence-final punctuation, attached to the main verb, has nobj instead of pnct
-            elsif ( $node->get_iset('pos') eq 'punc' )
-            {
-                $node->set_conll_deprel('pnct');
-                $node->set_afun('AuxK');
-            }
-
-            # We need some default so that every nobj gets an afun even if its parent is another or unknown part of speech.
-            # Some examples:
-            # Klokken/NN/? 17.05/Cn/nobj
-            # §/XS/? 20/AC/nobj
-            else
-            {
-                $node->set_afun('Atr');
-            }
+            $node->set_afun($self->nobj_to_afun($node));
         }
 
         # pobj ... prepositional object
@@ -496,11 +516,8 @@ sub deprel_to_afun
         }
 
         # Pseudo-afuns for coordination nodes until coordination is processed properly.
-        # Warning: It would be dangerous for the coordination normalizer to rely just on these afuns.
-        # They may get damaged or moved by other normalizing functions such as AuxP/AuxC shifters.
-        # Thus we also save the information to a special temporary attribute.
-        # The attribute will survive afun modifications but it will not be found if tree topology changes.
-        # So we still have to solve coordinations as soon as possible (possibly right after AuxC/AuxP).
+        # We also duplicate the information in separate temporary attributes that will survive possible afun modifications.
+        # However, the coordination may not be detected if tree topology changes, so we still have to process coordinations ASAP!
         elsif ( $deprel eq 'coord' )
         {
             $node->set_afun('Coord');

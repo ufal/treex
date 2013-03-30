@@ -449,7 +449,13 @@ sub detect_prague
             {
                 $orphan = 1;
             }
-            else
+            ###!!! WARNING! If there is a nested coordination the afun will be Coord!
+            ###!!! We should use $child->get_real_afun() here.
+            ###!!! Then we must be sure that the input tree is fully normalized including AuxP and AuxC, otherwise it may work strangely.
+            ###!!! This will make the function different from detect_mosford() below.
+            ###!!! We use detect_mosford() only once, at the beginning of normalization.
+            ###!!! We use detect_prague() and shape_prague() later repeatedly to convert Nodes to Coordination and back.
+            elsif($self->afun() eq 'ExD') # take the first non-ExD encountered
             {
                 $self->set_afun($child->afun());
             }
@@ -620,7 +626,7 @@ sub detect_mosford
     }
     # Orphans are treated similarly to conjuncts but they can be only detected under Coord
     # and there will be no recursion over them.
-    my $exdorphans = !$top && $node->parent()->wild()->{coordinator};
+    my $exdorphans = !$top && $node->wild()->{coordinator};
     if($exdorphans)
     {
         my @orphans = grep {$_->afun() eq 'ExD'} @children;
@@ -657,7 +663,9 @@ sub detect_mosford
         $self->add_conjunct($node, $orphan, @modifiers);
         # Save the relation of the coordination to its parent.
         $self->set_parent($node->parent());
-        $self->set_afun($node->get_real_afun());
+        # We cannot use get_real_afun() because the foreign data is not yet fully normalized (see above).
+        #$self->set_afun($node->get_real_afun());
+        $self->set_afun($node->afun());
         $self->set_is_member($node->is_member());
     }
     foreach my $participant (@participants)
