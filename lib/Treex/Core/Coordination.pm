@@ -423,7 +423,12 @@ sub children
 
 #------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
-# links between nodes and labels of the relations). Expects Prague style.
+# links between nodes and labels of the relations). Expects Prague style,
+# including normalization of AuxP/AuxC and nested coordinations. Thus it calls
+# $node->set/get_real_afun().
+# That makes the method suitable for repeated conversion between the tree (i.e.
+# dependency relations and afuns between Node objects) and the Coordination
+# object, during the later stages of normalization and after normalization.
 #------------------------------------------------------------------------------
 sub detect_prague
 {
@@ -445,22 +450,20 @@ sub detect_prague
             # Note that this is a guess only.
             # ExD could also mean that the whole coordination is in ExD (broken) relation to its parent.
             my $orphan = 0;
-            if($child->afun() eq 'ExD')
+            if($child->get_real_afun() eq 'ExD')
             {
                 $orphan = 1;
             }
-            ###!!! WARNING! If there is a nested coordination the afun will be Coord!
-            ###!!! We should use $child->get_real_afun() here.
-            ###!!! Then we must be sure that the input tree is fully normalized including AuxP and AuxC, otherwise it may work strangely.
-            ###!!! This will make the function different from detect_mosford() below.
-            ###!!! We use detect_mosford() only once, at the beginning of normalization.
-            ###!!! We use detect_prague() and shape_prague() later repeatedly to convert Nodes to Coordination and back.
             elsif($self->afun() eq 'ExD') # take the first non-ExD encountered
             {
-                $self->set_afun($child->afun());
+                # Coordination will never have afun AuxP or AuxC.
+                # Neither will it have Coord (it marks the head but it's not afun of the whole structure).
+                # If the first conjunct is a nested coordination, get_real_afun() will look for the afun among nested conjuncts.
+                $self->set_afun($child->get_real_afun());
             }
             $self->add_conjunct($child, $orphan, $child->children());
         }
+        # No need for get_real_afun() here: these three auxiliaries should never appear with preposition or as nested conjuncts!
         elsif($child->afun() =~ m/^Aux[GXY]$/)
         {
             # Note that the current labeling style does not allow to distinguish between:
@@ -574,6 +577,9 @@ sub shape_prague
 #   (the afun 'Coord' may have not survived Aux[CP] normalization)
 # - all such children are collected recursively
 # - all other children along the way are private modifiers
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
 #------------------------------------------------------------------------------
 sub detect_mosford
 {
