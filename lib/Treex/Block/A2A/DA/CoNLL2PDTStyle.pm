@@ -74,11 +74,11 @@ sub nobj_to_afun
     # Det er ikke sundt at sidde med ... eller ...
     # It is not healthy to sit with ... or ...
     # Here, 'at' is 'nobj' of 'det' (nonprojective).
-    if ( $node->form() eq 'at' && $parent->form() eq 'så' )
+    if ( $node->form() =~ m/^(at|om)$/i && $parent->form() =~ m/^så$/i )
     {
         $afun = 'Adv';
     }
-    elsif ( $node->form() eq 'at' && $parent->form() =~ m/^det$/i )
+    elsif ( $node->form() =~ m/^(at|om)$/i && $parent->form() =~ m/^det$/i )
     {
         $afun = 'Apposition';
     }
