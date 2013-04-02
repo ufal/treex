@@ -45,23 +45,31 @@ sub tag_to_pos {
     }
 }
 
+sub _coord_conj {
+    # TODO: syntagrus tags are not enough for recognizing subordinating and coordinating conjunctions,
+    # but anyway, this should be ideally resolved somewhere up the stream, not here
+    my $node = shift;
+    return ( $node->tag and $node->tag =~ /^J\^/ and $node->form !~ /^(что|когда|чтобы|если|потому, что)$/ );
+}
+
 sub restructure_coordination {
     my $self = shift;
     my $a_root = shift;
-    
+
     foreach my $a_node ( $a_root->get_descendants() ) {
         if ( $a_node->conll_deprel =~ /^(сент-соч|сочин|ком-сочин|соч-союзн)$/ ) {
             my $conjunction;
             my $parent = $a_node->get_parent->get_parent;
             next if !$parent;
             my @members = ($a_node->get_parent);
-            if ($members[0]->tag && $members[0]->tag =~ /^J\^/) {
+            if ( _coord_conj($members[0]) ) {
                 $conjunction = $members[0];
                 @members = ();
             }
+
             my $current_node = $a_node;
             while ($current_node) {
-                if ($current_node->tag =~ /^J\^/) {
+                if (_coord_conj($current_node)) {
                     $conjunction = $current_node;
                 }
                 else {
@@ -77,10 +85,12 @@ sub restructure_coordination {
                     }
                 }
             }
+
             if ($conjunction) {
                 $conjunction->set_conll_deprel('Coord');
                 $conjunction->set_parent($parent);
             }
+
             foreach my $member (@members) {
                 $member->set_parent($conjunction) if $conjunction;
                 $member->set_conll_deprel($members[0]->conll_deprel);
