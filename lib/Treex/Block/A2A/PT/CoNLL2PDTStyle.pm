@@ -109,16 +109,24 @@ sub rehang_coordconj {
         my $second_member = 1;
         foreach my $node ( grep { $coord->precedes($_) } $first_member->get_children( { ordered => 1 } ) ) {
             $node->set_parent($coord);
-            
+
+            my $pos      = $node->get_iset('pos');
+            my $subpos   = $node->get_iset('subpos');
+
             #TODO this should solve test.treex#4 but it does not work as intended
             if ( $node->conll_deprel =~ /CJT&(.*)/ && ( my $afun = $deprel2afun{$1} ) ) {
                 $node->set_afun($afun);
                 $node->set_is_member(1);
             }
+
             elsif ( $node->conll_deprel eq 'CJT' ) {
-                $node->set_afun( $first_member->afun );
+                $afun = $subpos2afun{$subpos} ||
+                    $pos2afun{$pos} ||
+                        $first_member->afun;
+                $node->set_afun( $afun );
                 $node->set_is_member(1);
             }
+
             elsif ($second_member) {
                 $node->set_is_member(1);
             }
