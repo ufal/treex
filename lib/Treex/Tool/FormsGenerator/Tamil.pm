@@ -1,4 +1,5 @@
 package Treex::Tool::FormsGenerator::Tamil;
+use Treex::Tool::SandhiHandler::Tamil 'combine';
 use Treex::Core::Common;
 
 use Moose;
@@ -37,7 +38,6 @@ has 'known_templates' => (
 	isa     => 'HashRef',
 	default => sub {
 		{
-
 			# major verb types
 			'verb_type1' => "data/models/forms/ta/verbs/type1.dat",
 			'verb_type2' => "data/models/forms/ta/verbs/type2.dat",
@@ -71,32 +71,7 @@ has 'rewrite_rules' => (
 	},
 );
 
-# Tamil Alphabets
-my $SHORT_VOWEL_SIGNS = qr/ி|ு|ெ|ொ/;
-my $LONG_VOWEL_SIGNS = qr/ா|ீ|ூ|ே|ோ/;
-my $DIPHTHONG = qr/ை|ௌ/;
-my $VOWELS_SIGNS       = qr/ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ/;
-my $VOWELS            = qr/அ|ஆ|இ|ஈ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
-my $VOWELS_I = qr/இ|ஈ|ஐ|ய்/;
-my $VOWELS_I_SIGNS = qr/ி|ீ|ை/;
-my $VOWELS_NO_I = qr/அ|ஆ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
-my $VOWELS_NO_I_SIGNS =  qr/ா|ு|ூ|ெ|ே|ொ|ோ|ௌ/;
-my $CONSONANTS = qr/க்|ங்|ச்|ங்|ட்|ண்|த்|ந்|ப்|ம்|ய்|ர்|ல்|வ்|ள்|ழ்|ற்|ன்/;
-my $CONSONANTS_PLUS_VOWEL_A = qr/க|ங|ச|ங|ட|ண|த|ந|ப|ம|ய|ர|ல|வ|ள|ழ|ற|ன/;
-my %VOWEL_VOWELSIGN   = (
-	'ஆ' => 'ா',
-	'இ' => 'ி',
-	'ஈ' => 'ீ',
-	'உ' => 'ு',
-	'ஊ' => 'ூ',
-	'எ' => 'ெ',
-	'ஏ' => 'ே',
-	'ஐ' => 'ை',
-	'ஒ' => 'ொ',
-	'ஓ' => 'ோ',
-	'ஔ' => 'ௌ'
-);
-my $PULLI = '்';
+
 sub load_template {
 	my ( $self, $new_type, $old_type ) = @_;
 
@@ -186,7 +161,8 @@ sub generate_forms {
 
 		# if the suffix starts with "அ"
 		if ( $su =~ /^அ/ ) {
-			$lcopy =~ s/$VOWELS_SIGNS$//;
+			#$lcopy =~ s/$VOWELS_SIGNS$//;
+			$lcopy =~ s/(ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ)$//;
 			$lcopy =~ s/்$//;
 			$su    =~ s/^அ//;
 		}
@@ -202,13 +178,13 @@ sub generate_cliticized_forms {
 	my @cliticized_forms;
 
 	# 1. add உம்/um ('also', 'and', 'even', etc.)
-	my $form_um = $self->apply_general_spelling_rules($lemma, "உம்");
+	my $form_um = combine($lemma, "உம்");
 	# 2. add ஆ/aa (interrogative)
-	my $form_aa = $self->apply_general_spelling_rules($lemma, "ஆ");
+	my $form_aa = combine($lemma, "ஆ");
 	# 3. add ஏ/ee (emphasize)
-	my $form_ee = $self->apply_general_spelling_rules($lemma, "ஏ");
+	my $form_ee = combine($lemma, "ஏ");
 	# 4. add ஆவது/aavathu	 ('at least')
-	my $form_aavathu = $self->apply_general_spelling_rules($lemma, "ஆவது");
+	my $form_aavathu = combine($lemma, "ஆவது");
 	
 	push @cliticized_forms, $form_um;
 	push @cliticized_forms, $form_aa;
@@ -216,155 +192,6 @@ sub generate_cliticized_forms {
 	push @cliticized_forms, $form_aavathu;
 	
 	return @cliticized_forms;
-}
-
-# general spelling rules when stems and suffixes(or stems) combine
-sub apply_general_spelling_rules {
-	my ( $self, $str1, $str2 ) = @_;
-
-	# 1. VOWEL + VOWEL
-	# ================
-	
-	# [SV1] + [SV2] =[SV1] + v +  [SV2]
-	#
-	# 
-	#
-	  
-	# "i" + v2
-	# "i" + v2_sign
-	# "i" + அ 	
-	# v1 + v2
-	# v1 + v2_sign
-	# v1 + அ 	
-	# v1_sign + v2
-	# v1_sign + v2_sign
-	# v1_sign + அ 
-	# அ +  v2 
-	# அ +  v2_sign
-	# அ +  அ
-	# cv1 + v2
-	# cv1 + v2_sign
-	# cv1 + அ 
-	
-	# the first word ends with "i"
-	if ($str1 =~ /($VOWELS_I|$VOWELS_I_SIGNS)$/) {
-		
-		# the second word starts with vowel but not அ 
-		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
-			$str2 =~ /^($VOWELS)/;
-			my $v = $1;
-			my $vs = $VOWEL_VOWELSIGN{$v};
-			$str2 =~ s/^$v/$vs/;
-			return $str1 . 'ய' . $str2;			
-		} 
-		# the second word starts with vowel signs 
-		if ($str2 =~ /^($VOWELS_SIGNS)/) {
-			return $str1 . 'ய' . $str2;
-		} 
-    	# the second word starts with vowel but not அ 
-		if ($str2 =~ /^அ/) {
-			$str2 =~ s/^அ//;
-			return $str1 . 'ய' . $str2;			
-		} 
-		
-	}	
-
-	# the first word ends with vowel (including அ) except "i" sounds
-	if ($str1 =~ /($VOWELS_NO_I|அ)$/) {
-
-		# the second word starts with vowel but not அ 
-		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
-			$str2 =~ /^($VOWELS)/;
-			my $v = $1;
-			my $vs = $VOWEL_VOWELSIGN{$v};
-			$str2 =~ s/^$v/$vs/;
-			return $str1 . 'வ' . $str2;						
-		} 
-		# the second word starts with vowel signs 
-		if ($str2 =~ /^($VOWELS_SIGNS)/) {
-			return $str1 . 'வ' . $str2;			
-		} 
-    	# the second word starts with vowel but not அ 
-		if ($str2 =~ /^அ/) {
-			$str2 =~ s/^அ//;
-			return $str1 . 'வ' . $str2;				
-		}
-	}
-	
-	# the first word ends with vowel signs
-	if ($str1 =~ /($VOWELS_NO_I_SIGNS)$/) {
-
-		# the second word starts with vowel but not அ 
-		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
-			$str2 =~ /^($VOWELS)/;
-			my $v = $1;
-			my $vs = $VOWEL_VOWELSIGN{$v};
-			$str2 =~ s/^$v/$vs/;
-			return $str1 . "வ" . $str2;					
-		} 
-		# the second word starts with vowel signs 
-		if ($str2 =~ /^($VOWELS_SIGNS)/) {
-			return $str1 . "வ" . $str2;			
-		} 
-    	# the second word starts with அ 
-		if ($str2 =~ /^அ/) {
-			$str1 =~ s/($VOWELS_NO_I_SIGNS)$//;
-			$str2 =~ s/^அ//;
-			return $str1 .  $str2;	
-		}
-		
-	}
-	
-	# the first word ends with consonant plus 'a' combination
-	if ($str1 =~ /($CONSONANTS_PLUS_VOWEL_A)$/) {
-
-		# the second word starts with vowel but not அ 
-		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
-			$str2 =~ /^($VOWELS)/;
-			my $v = $1;
-			my $vs = $VOWEL_VOWELSIGN{$v};
-			$str2 =~ s/^$v/$vs/;
-			return $str1 . 'வ' . $str2;		
-		} 
-		# the second word starts with vowel signs 
-		if ($str2 =~ /^($VOWELS_SIGNS)/) {
-			return $str1 . $str2;					
-		} 
-    	# the second word starts with அ 
-		if ($str2 =~ /^அ/) {
-			$str2 =~ s/^அ//;
-			return $str1 .  $str2;			
-		}		
-	}
-
-
-	# 2. VOWEL + CONSONANT
-	# ====================
-	
-	# no change	
-
-	# 3. CONSONANT + VOWEL
-	# ====================
-	
-	# [c1] + [v1] => [c1][v1]
-	# if the second suffix/stem starts with the vowel
-	# then change that into vowel sign.	
-	if ( ( $str1 =~ /$PULLI$/ ) && ( $str2 =~ /^($VOWELS)/ ) ) {
-		$str1 =~ s/$PULLI$//;
-		$str2 =~ /^($VOWELS)/;
-		my $v = $1;
-		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^$v/$vs/;		
-		return $str1 . $str2;
-	}
-
-	# 4. CONSONANT + CONSONANT
-	# ========================
-	
-	# no change
-	
-	# if nothing worked
-	#return $str1 . $str2; 
 }
 
 1;
