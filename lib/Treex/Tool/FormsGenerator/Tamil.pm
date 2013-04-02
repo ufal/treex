@@ -72,12 +72,15 @@ has 'rewrite_rules' => (
 );
 
 # Tamil Alphabets
-my $SHORT_VOWEL_SIGNS = qr/ி|ு|ெ|ொ|ௌ/;
+my $SHORT_VOWEL_SIGNS = qr/ி|ு|ெ|ொ/;
 my $LONG_VOWEL_SIGNS = qr/ா|ீ|ூ|ே|ோ/;
-my $DIPHTHONG = qr/ை/;
-my $VOWEL_SIGNS_NO_AI = qr/ா|ி|ீ|ு|ூ|ெ|ே|ொ|ோ|ௌ/;
-my $VOWEL_SIGNS       = qr/ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ/;
+my $DIPHTHONG = qr/ை|ௌ/;
+my $VOWELS_SIGNS       = qr/ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ/;
 my $VOWELS            = qr/அ|ஆ|இ|ஈ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
+my $VOWELS_I = qr/இ|ஈ|ஐ|ய்/;
+my $VOWELS_I_SIGNS = qr/ி|ீ|ை/;
+my $VOWELS_NO_I = qr/அ|ஆ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
+my $VOWELS_NO_I_SIGNS =  qr/ா|ு|ூ|ெ|ே|ொ|ோ|ௌ/;
 my $CONSONANTS = qr/க்|ங்|ச்|ங்|ட்|ண்|த்|ந்|ப்|ம்|ய்|ர்|ல்|வ்|ள்|ழ்|ற்|ன்/;
 my $CONSONANTS_PLUS_VOWEL_A = qr/க|ங|ச|ங|ட|ண|த|ந|ப|ம|ய|ர|ல|வ|ள|ழ|ற|ன/;
 my %VOWEL_VOWELSIGN   = (
@@ -94,7 +97,6 @@ my %VOWEL_VOWELSIGN   = (
 	'ஔ' => 'ௌ'
 );
 my $PULLI = '்';
-
 sub load_template {
 	my ( $self, $new_type, $old_type ) = @_;
 
@@ -184,7 +186,7 @@ sub generate_forms {
 
 		# if the suffix starts with "அ"
 		if ( $su =~ /^அ/ ) {
-			$lcopy =~ s/$VOWEL_SIGNS$//;
+			$lcopy =~ s/$VOWELS_SIGNS$//;
 			$lcopy =~ s/்$//;
 			$su    =~ s/^அ//;
 		}
@@ -223,48 +225,116 @@ sub apply_general_spelling_rules {
 	# 1. VOWEL + VOWEL
 	# ================
 	
-	# "ai" + [v2] => aiy[v2]   (where [v2] is a sign)
-	if ( ( $str1 =~ /ை$/ ) && ( $str2 =~ /^($VOWEL_SIGNS)/ ) ) {
-		return $str1 . 'ய' . $str2;
+	# [SV1] + [SV2] =[SV1] + v +  [SV2]
+	#
+	# 
+	#
+	  
+	# "i" + v2
+	# "i" + v2_sign
+	# "i" + அ 	
+	# v1 + v2
+	# v1 + v2_sign
+	# v1 + அ 	
+	# v1_sign + v2
+	# v1_sign + v2_sign
+	# v1_sign + அ 
+	# அ +  v2 
+	# அ +  v2_sign
+	# அ +  அ
+	# cv1 + v2
+	# cv1 + v2_sign
+	# cv1 + அ 
+	
+	# the first word ends with "i"
+	if ($str1 =~ /($VOWELS_I|$VOWELS_I_SIGNS)$/) {
+		
+		# the second word starts with vowel but not அ 
+		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
+			$str2 =~ /^($VOWELS)/;
+			my $v = $1;
+			my $vs = $VOWEL_VOWELSIGN{$v};
+			$str2 =~ s/^$v/$vs/;
+			return $str1 . 'ய' . $str2;			
+		} 
+		# the second word starts with vowel signs 
+		if ($str2 =~ /^($VOWELS_SIGNS)/) {
+			return $str1 . 'ய' . $str2;
+		} 
+    	# the second word starts with vowel but not அ 
+		if ($str2 =~ /^அ/) {
+			$str2 =~ s/^அ//;
+			return $str1 . 'ய' . $str2;			
+		} 
+		
+	}	
+
+	# the first word ends with vowel (including அ) except "i" sounds
+	if ($str1 =~ /($VOWELS_NO_I|அ)$/) {
+
+		# the second word starts with vowel but not அ 
+		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
+			$str2 =~ /^($VOWELS)/;
+			my $v = $1;
+			my $vs = $VOWEL_VOWELSIGN{$v};
+			$str2 =~ s/^$v/$vs/;
+			return $str1 . 'வ' . $str2;						
+		} 
+		# the second word starts with vowel signs 
+		if ($str2 =~ /^($VOWELS_SIGNS)/) {
+			return $str1 . 'வ' . $str2;			
+		} 
+    	# the second word starts with vowel but not அ 
+		if ($str2 =~ /^அ/) {
+			$str2 =~ s/^அ//;
+			return $str1 . 'வ' . $str2;				
+		}
 	}
-	# "ai" + [v2] => aiy[v2] (where [v2] is a vowel but not அ/a)
-	if ( ( $str1 =~ /ை$/ ) && ($str2 !~ /^அ/ ) && ($str2 =~ /^($VOWELS)/ ) ) {
-		$str2 =~ /^($VOWELS)/;
-		my $v = $1;
-		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^$v/$vs/;
-		return $str1 . 'ய' . $str2;		
+	
+	# the first word ends with vowel signs
+	if ($str1 =~ /($VOWELS_NO_I_SIGNS)$/) {
+
+		# the second word starts with vowel but not அ 
+		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
+			$str2 =~ /^($VOWELS)/;
+			my $v = $1;
+			my $vs = $VOWEL_VOWELSIGN{$v};
+			$str2 =~ s/^$v/$vs/;
+			return $str1 . "வ" . $str2;					
+		} 
+		# the second word starts with vowel signs 
+		if ($str2 =~ /^($VOWELS_SIGNS)/) {
+			return $str1 . "வ" . $str2;			
+		} 
+    	# the second word starts with அ 
+		if ($str2 =~ /^அ/) {
+			$str1 =~ s/($VOWELS_NO_I_SIGNS)$//;
+			$str2 =~ s/^அ//;
+			return $str1 .  $str2;	
+		}
+		
 	}
-	# "ai" + [v2] => aiyv2 (where [v2] is அ/a)
-	if ( ( $str1 =~ /ை$/ ) && ($str2 =~ /^அ/ ) ) {
-		$str2 =~ s/^அ//;
-		return $str1 . 'ய' . $str2;		
-	}		
-	# [v1] + [v2] => [v2] (where both [v1] and [v2] is a vowel sign)
-	if ( ( $str1 =~ /($VOWEL_SIGNS_NO_AI)$/ ) && ( $str2 =~ /^($VOWEL_SIGNS)/ ) ) {
-		$str1 =~ s/($VOWEL_SIGNS_NO_AI)$//;
-		return $str1 . $str2;
-	}
-	# [v1] + [v2] => [v2] (where [v1] 'consonant plus a' combination and [v2] is a vowel sign)
-	if ( ( $str1 =~ /($CONSONANTS_PLUS_VOWEL_A)$/ ) && ( $str2 =~ /^($VOWEL_SIGNS)/ ) ) {
-		return $str1 . "வ" . $str2;
-	}
-	# [v1] + [v2] => [v2] (where [v1] 'consonant plus a' combination and [v2] is a vowel )
-	if ( ( $str1 =~ /($CONSONANTS_PLUS_VOWEL_A)$/ ) && ( $str2 =~ /^($VOWELS)/ ) ) {
-		$str2 =~ /^($VOWELS)/;
-		my $v = $1;
-		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^$v/$vs/;		
-		return $str1 . "வ" . $str2;
-	}
-	# [v1] + [v2] => [v2] (where [v1] is a vowel sign and [v2] is a vowel)
-	if ( ( $str1 =~ /($VOWEL_SIGNS_NO_AI)$/ ) && ( $str2 =~ /^($VOWELS)/ ) ) {
-		$str1 =~ s/($VOWEL_SIGNS_NO_AI)$//;
-		$str2 =~ /^($VOWELS)/;
-		my $v = $1;
-		my $vs = $VOWEL_VOWELSIGN{$v};
-		$str2 =~ s/^$v/$vs/;		
-		return $str1 . $str2;
+	
+	# the first word ends with consonant plus 'a' combination
+	if ($str1 =~ /($CONSONANTS_PLUS_VOWEL_A)$/) {
+
+		# the second word starts with vowel but not அ 
+		if (($str2 =~ /^($VOWELS)/) && ($str2 !~ /^அ/)) {
+			$str2 =~ /^($VOWELS)/;
+			my $v = $1;
+			my $vs = $VOWEL_VOWELSIGN{$v};
+			$str2 =~ s/^$v/$vs/;
+			return $str1 . 'வ' . $str2;		
+		} 
+		# the second word starts with vowel signs 
+		if ($str2 =~ /^($VOWELS_SIGNS)/) {
+			return $str1 . $str2;					
+		} 
+    	# the second word starts with அ 
+		if ($str2 =~ /^அ/) {
+			$str2 =~ s/^அ//;
+			return $str1 .  $str2;			
+		}		
 	}
 
 
