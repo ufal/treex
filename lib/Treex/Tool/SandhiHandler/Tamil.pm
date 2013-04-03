@@ -5,34 +5,35 @@ use Treex::Core::Common;
 
 our @EXPORT_OK = ('combine');
 
-binmode STDIN, ":utf8";
+binmode STDIN,  ":utf8";
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 
 # Tamil alphabets
 
 # vowels
-my $VOWELS       = qr/அ|ஆ|இ|ஈ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
-my $VOWELS_I     = qr/இ|ஈ|ஐ|ய்/;
-my $VOWELS_NO_I  = qr/அ|ஆ|உ|ஊ|எ|ஏ|ஒ|ஓ|ஔ/;
-my $SHORT_VOWELS = qr/அ|இ|உ|எ|ஒ/;
+my $VOWELS            = qr/அ|ஆ|இ|ஈ|உ|ஊ|எ|ஏ|ஐ|ஒ|ஓ|ஔ/;
+my $VOWELS_I          = qr/இ|ஈ|ஐ|ய்/;
+my $VOWELS_NO_I       = qr/அ|ஆ|உ|ஊ|எ|ஏ|ஒ|ஓ|ஔ/;
+my $SHORT_VOWELS      = qr/அ|இ|உ|எ|ஒ/;
 my $SHORT_VOWELS_NO_I = qr/அ|உ|எ/;
 my $LONG_VOWELS       = qr/ஆ|ஈ|ஊ|ஏ|ஓ/;
 my $LONG_VOWELS_NO_I  = qr/ஆ|ஊ|ஏ/;
 
 # when consonant+vowel combination,
 # vowel is a sign (equivalent to diacritics in other languages)
-my $VOWELS_SIGNS      = qr/ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ/;
-my $VOWELS_I_SIGNS    = qr/ி|ீ|ை/;
-my $VOWELS_NO_I_SIGNS = qr/ா|ு|ூ|ெ|ே|ொ|ோ|ௌ/;
-my $SHORT_VOWEL_SIGNS = qr/ி|ு|ெ|ொ/;
+my $VOWELS_SIGNS =
+  qr/ா|ி|ீ|ு|ூ|ை|ெ|ே|ொ|ோ|ௌ/;
+my $VOWELS_I_SIGNS         = qr/ி|ீ|ை/;
+my $VOWELS_NO_I_SIGNS      = qr/ா|ு|ூ|ெ|ே|ொ|ோ|ௌ/;
+my $SHORT_VOWEL_SIGNS      = qr/ி|ு|ெ|ொ/;
 my $SHORT_VOWEL_SIGNS_NO_I = qr/ு|ெ|ொ/;
-my $LONG_VOWEL_SIGNS  = qr/ா|ீ|ூ|ே|ோ/;
+my $LONG_VOWEL_SIGNS       = qr/ா|ீ|ூ|ே|ோ/;
 my $LONG_VOWEL_SIGNS_NO_I  = qr/ா|ூ|ே|ோ/;
 
-# diphthongs 
-my $DIPHTHONGS        = qr/ஐ|ஔ/;
-my $DIPHTHONG_SIGNS   = qr/ை|ௌ/;
+# diphthongs
+my $DIPHTHONGS      = qr/ஐ|ஔ/;
+my $DIPHTHONG_SIGNS = qr/ை|ௌ/;
 
 # consonants
 my $CONSONANTS =
@@ -76,9 +77,9 @@ sub internal_sandhi {
 	# noun stems + case suffix (yet to be implemented)
 
 	# more general spelling rules
-	
-	# I. vowel + vowel 
-	# **************** 
+
+	# [I]. vowel + vowel
+	# ****************
 
 	# (i.e. the ending of the left string is a vowel and
 	# the starting of the right string is a vowel)
@@ -86,6 +87,7 @@ sub internal_sandhi {
 	# a. "i,ii,ai" + vowel => "i, ii, ai" . y . vowel
 	# a. "இ,ஈ,ஐ" + vowel => "இ, ஈ, ஐ" . ய் . vowel
 	if ( $l =~ /($VOWELS_I_SIGNS)$/ ) {
+
 		# the right string starts with a vowel but not அ/a
 		if ( ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
 			$r =~ /^($VOWELS)/;
@@ -94,18 +96,22 @@ sub internal_sandhi {
 			$r =~ s/^$v/$vs/;
 			return $l . 'ய' . $r;
 		}
+
 		# the right string starts with a vowel sign but not அ/a
 		if ( ( $r =~ /^($VOWELS_SIGNS)/ ) && ( $r !~ /^அ/ ) ) {
 			return $l . 'ய' . $r;
-		}		
+		}
+
 		# the right string starts with அ/a
 		if ( $r =~ /^அ/ ) {
 			$r =~ s/^அ//;
 			return $l . 'ய' . $r;
 		}
 	}
+
 	# b. "long vowel" + vowel => "long vowel" . v . vowel
 	if ( $l =~ /($LONG_VOWEL_SIGNS_NO_I)$/ ) {
+
 		# the right string starts with a vowel but not அ/a
 		if ( ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
 			$r =~ /^($VOWELS)/;
@@ -114,19 +120,23 @@ sub internal_sandhi {
 			$r =~ s/^$v/$vs/;
 			return $l . 'வ' . $r;
 		}
+
 		# the right string starts with a vowel sign but not அ/a
 		if ( ( $r =~ /^($VOWELS_SIGNS)/ ) && ( $r !~ /^அ/ ) ) {
 			return $l . 'வ' . $r;
-		}		
+		}
+
 		# the right string starts with அ/a
 		if ( $r =~ /^அ/ ) {
 			$r =~ s/^அ//;
 			return $l . 'வ' . $r;
 		}
 	}
+
 	# c. "u" + vowel => vowel  [aka vowel deletion]
 	# c. "உ/ு" + vowel => vowel  [aka vowel deletion]
-	if ($l =~ /ு$/) {
+	if ( $l =~ /ு$/ ) {
+
 		# the right string starts with a vowel but not அ/a
 		if ( ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
 			$l =~ s/ு$//;
@@ -136,81 +146,112 @@ sub internal_sandhi {
 			$r =~ s/^$v/$vs/;
 			return $l . $r;
 		}
+
 		# the right string starts with a vowel sign but not அ/a
 		if ( ( $r =~ /^($VOWELS_SIGNS)/ ) && ( $r !~ /^அ/ ) ) {
 			$l =~ s/ு$//;
 			return $l . $r;
-		}		
+		}
+
 		# the right string starts with அ/a
 		if ( $r =~ /^அ/ ) {
 			$l =~ s/ு$//;
 			$r =~ s/^அ//;
 			return $l . $r;
-		}		
+		}
 	}
 
-	# "அ/a" + vowel 			=> அ/a . v . vowel	 
-	# constant_vowel_a + vowel 	=> constant_vowel_a . v . vowel
-	# the first word ends with consonant plus 'a' combination
-	if ($l =~ /($CONSONANTS_PLUS_VOWEL_A)$/) {
 
-		# the second word starts with vowel but not அ 
-		if (($r =~ /^($VOWELS)/) && ($r !~ /^அ/)) {
+	# "அ/a" + vowel 			=> அ/a . v . vowel
+	# (1) constant_vowel_a + vowel 	=> constant_vowel_a . v . vowel
+	# the first word ends with consonant plus 'a' combination
+	if ( $l =~ /($CONSONANTS_PLUS_VOWEL_A)$/ ) {
+
+		# the second word starts with vowel but not அ
+		if ( ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
 			$r =~ /^($VOWELS)/;
-			my $v = $1;
+			my $v  = $1;
 			my $vs = $VOWEL_VOWELSIGN{$v};
 			$r =~ s/^$v/$vs/;
-			return $l . 'வ' . $r;		
-		} 
-		# the second word starts with vowel signs 
-		if ($r =~ /^($VOWELS_SIGNS)/) {
-			return $l . $r;					
-		} 
-    	# the second word starts with அ 
-		if ($r =~ /^அ/) {
-			$r =~ s/^அ//;
-			return $l .  $r;			
-		}		
-	}	
+			return $l . 'வ' . $r;
+		}
 
-	# II. vowel + consonant	
+		# the second word starts with vowel signs
+		if ( $r =~ /^($VOWELS_SIGNS)/ ) {
+			return $l . $r;
+		}
+
+		# the second word starts with அ
+		if ( $r =~ /^அ/ ) {
+			$r =~ s/^அ//;
+			return $l . $r;
+		}
+	}
+	
+	# (2) "அ/a" + vowel 			=> அ/a . v . vowel 
+	if ( $l =~ /அ$/ ) {
+
+		# the second word starts with vowel but not அ
+		if ( ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
+			$r =~ /^($VOWELS)/;
+			my $v  = $1;
+			my $vs = $VOWEL_VOWELSIGN{$v};
+			$r =~ s/^$v/$vs/;
+			return $l . 'வ' . $r;
+		}
+
+		# the second word starts with vowel signs
+		if ( $r =~ /^($VOWELS_SIGNS)/ ) {
+			return $l . $r;
+		}
+
+		# the second word starts with அ
+		if ( $r =~ /^அ/ ) {
+			$r =~ s/^அ//;
+			return $l . $r;
+		}
+	}
+	
+	# [II]. vowel + consonant
 	# *********************
 	# no rules needed here
-	
-	# III. consonant + vowel
-	# **********************	
-	# " ்" + vowel (except அ) 
+
+	# [III]. consonant + vowel
+	# **********************
+	# " ்" + vowel (except அ)
 	if ( ( $l =~ /$PULLI$/ ) && ( $r =~ /^($VOWELS)/ ) && ( $r !~ /^அ/ ) ) {
 		$l =~ s/$PULLI$//;
 		$r =~ /^($VOWELS)/;
-		my $v = $1;
+		my $v  = $1;
 		my $vs = $VOWEL_VOWELSIGN{$v};
-		$r =~ s/^$v/$vs/;		
+		$r =~ s/^$v/$vs/;
 		return $l . $r;
 	}
-	# " ்" + அ  
+
+	# " ்" + அ
 	if ( ( $l =~ /$PULLI$/ ) && ( $r =~ /^அ/ ) ) {
 		$l =~ s/$PULLI$//;
 		$r =~ s/^அ//;
 		return $l . $r;
-	}	
+	}
+
 	# " ்" + vowel signs
 	if ( ( $l =~ /$PULLI$/ ) && ( $r =~ /^($VOWELS_SIGNS)/ ) ) {
 		$l =~ s/$PULLI$//;
 		return $l . $r;
 	}
 
-	# IV. consonant + consonant
+	# [IV]. consonant + consonant
 	# *************************
 	# no rules needed here
-	 	
+
 	$c = $l . $r;
 	return $c;
 }
 
 # yet to be implemented
 sub external_sandhi {
-	
+
 }
 
 1;
@@ -234,7 +275,7 @@ my $combined = Treex::Tool::SandhiHandler::Tamil->combine($left, $right);
 =head1 DESCRIPTION
 
 This module handles morpho phonological rules for Tamil i.e. changes that occur when two morphemes or two different words are combined. 
-In Indian languages context, this phenomenon is widely known as 'Sandhi'. There are two types Sandhi,
+In Indian languages context, this phenomenon is widely known as 'Sandhi'. There are two types of Sandhi,
 
 =over 4
 
