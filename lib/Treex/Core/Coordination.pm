@@ -531,7 +531,7 @@ sub shape_prague
             log_warn($conjuncts[0]->get_address());
             # Since there seems to be no better solution, the first member of the coordination will become the root.
             # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
-            ###!!! Another possible solution would be to resort to Tesni&egra;re style and attach the conjuncts directly to the parent.
+            ###!!! Another possible solution would be to resort to Tesnière style and attach the conjuncts directly to the parent.
             push( @delimiters, shift( @conjuncts ) );
         }
     }
