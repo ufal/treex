@@ -183,15 +183,34 @@ sub generate_cliticized_forms {
 	my $form_aa = combine($lemma, "ஆ");
 	# 3. add ஏ/ee (emphasize)
 	my $form_ee = combine($lemma, "ஏ");
-	# 4. add ஆவது/aavathu	 ('at least')
+	# 4. add ஓ/oo (doubt)
+	my $form_oo = combine($lemma, "ஓ");	
+	# 5. add ஆவது/aavathu	 ('at least')
 	my $form_aavathu = combine($lemma, "ஆவது");
 	
 	push @cliticized_forms, $form_um;
 	push @cliticized_forms, $form_aa;
 	push @cliticized_forms, $form_ee;
+	push @cliticized_forms, $form_oo;
 	push @cliticized_forms, $form_aavathu;
 	
 	return @cliticized_forms;
+}
+
+# generates four additional wordforms for a given wordform
+# by adding க்/k, ச்/c, த்/t, ப்/p at the end of the form.
+sub add_kctp_to_forms {
+	my ( $self, $lemma ) = @_;	
+	my @forms_kctp;	
+	my $form_k = $lemma . "க்";
+	my $form_c = $lemma . "ச்";
+	my $form_t = $lemma . "த்";
+	my $form_p = $lemma . "ப்";
+	push @forms_kctp, $form_k;
+	push @forms_kctp, $form_c;
+	push @forms_kctp, $form_t;
+	push @forms_kctp, $form_p;	
+	return @forms_kctp;
 }
 
 1;
