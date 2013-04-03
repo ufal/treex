@@ -528,6 +528,9 @@ sub attach_final_punctuation_to_root
         {
             $nodes[$i]->set_parent($root);
             $nodes[$i]->set_afun('AuxG');
+            # Even though some treebanks think otherwise, final punctuation marks are neither conjunctions nor conjuncts.
+            delete($nodes[$i]->wild()->{conjunct});
+            delete($nodes[$i]->wild()->{coordinator});
         }
     }
     if($rule1)
@@ -543,6 +546,8 @@ sub attach_final_punctuation_to_root
             {
                 $nodes[$i]->set_afun('AuxK');
             }
+            delete($nodes[$i]->wild()->{conjunct});
+            delete($nodes[$i]->wild()->{coordinator});
         }
     }
 }

@@ -563,12 +563,8 @@ sub lift_noun_phrases
 }
 
 #------------------------------------------------------------------------------
-###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###
 # Detects coordination in the shape we expect to find it in the Danish
-# treebank. Once we verify that this approach works we will remove the old
-# functions such as collect_coordination_members(),
-# collect_coordination_modifiers() and perhaps (check whether it works!)
-# mark_deficient_clausal_coordination().
+# treebank.
 #------------------------------------------------------------------------------
 sub detect_coordination
 {

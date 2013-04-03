@@ -1,6 +1,7 @@
 package Treex::Block::A2A::SV::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Cloud;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
@@ -12,16 +13,15 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
+    my $root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->shape_apposition($a_root);
-    my $debug_coord = 0; # 0..2
-    $self->shape_coordination_recursively($a_root, $debug_coord);
-    $self->mark_deficient_clausal_coordination($a_root);
-    $self->check_afuns($a_root);
-    $self->validate_coap($a_root);
+    # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    ###!!!$self->shape_apposition($root); ###!!! Nerozbil jsem tohle, když jsem značku Apos nahradil značkou Apposition?
+    $self->check_afuns($root);
+    $self->validate_coap($root);
 }
 
 
@@ -70,9 +70,10 @@ sub deprel_to_afun
         # Coordinating conjunction
         elsif ( $deprel eq '++' )
         {
-            if($parent->conll_deprel() =~ m/^(CC|C\+|CJ|\+F)$/)
+            if($parent->conll_deprel() =~ m/^(CC|C\+|CJ|\+F|MS)$/)
             {
                 $afun = 'Coord';
+                $node->wild()->{coordinator} = 1;
             }
             # Occasionally the coordinating conjunction may not have strictly coordinating function.
             # Example (train/002.treex#185):
@@ -97,6 +98,7 @@ sub deprel_to_afun
         elsif ( $deprel eq '+F' )
         {
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Other adverbial
@@ -129,8 +131,7 @@ sub deprel_to_afun
             # several problems, for example sense of duty
             # Original tree: problem/OO ( flera/DT, pliktkänslan/AN ( t.+ex./CA ) )
             # PDT style:     t.+ex./Apos ( problem/Obj_Ap ( flera/Atr ), pliktkänslan/Obj_Ap )
-            ###!!! Use the temporary afun CoordArg?
-            $afun = 'Apos';
+            $afun = 'Apposition';
         }
 
         # Nominal (adjectival) pre-modifier
@@ -150,6 +151,7 @@ sub deprel_to_afun
         {
             # train/001.treex#120 ('hjälpsamhet' = 'helpfulness')
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Contrastive adverbial
@@ -163,6 +165,7 @@ sub deprel_to_afun
         elsif ( $deprel eq 'CC' )
         {
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Conjunct
@@ -173,7 +176,8 @@ sub deprel_to_afun
             # Stressen standardkraven, trångboddheten, den ekonomiska pressen och miljön skapar svårigheter för en familj.
             # Stress of the standard requirements, overcrowding, the financial press and the environment creates difficulties for a family.
             ###!!! The example is strange and I still don't understand it fully. The above translation is from Google so I may be missing something.
-            $afun = 'Atr';
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Doubled function
@@ -417,6 +421,7 @@ sub deprel_to_afun
             # Original tree: löser/ROOT ( kommer/MS ( men/++ ) )
             # PDT style:     men/Coord ( löser/Pred_Co, kommer/Pred_Co )
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Negation adverbial
@@ -545,7 +550,14 @@ sub deprel_to_afun
             # Fr&#229n denna fria värld
             # From this free world
             # HV: Can have virtually any grammatical function, hard to guess (maybe heuristics from tag?)
-            $afun = 'NR';
+            if ( $ppos eq 'verb' )
+            {
+                $afun = 'Adv';
+            }
+            else
+            {
+                $afun = 'Atr';
+            }
         }
 
         # Expressions like "så kallad" (so called)
@@ -567,69 +579,27 @@ sub deprel_to_afun
             # DZ: This tag has not occurred in the treebank.
         }
 
-#        $afun = $afun || $pos2afun{$pos} || 'NR';
         $node->set_afun($afun);
+        if ( $node->wild()->{conjunct} && $node->wild()->{coordinator} )
+        {
+            log_warn('We do not expect a node to be conjunct and coordination at the same time.');
+        }
     }
 }
 
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in Swedish trees.
-# - The first member is the root.
-# - The second member is attached to the root and s-tagged 'CC' (our afun CoordArg).
-# - The conjunction is attached to the following member and s-tagged '++'.
-# - More than two members: every member is attached to the previous member.
-#   Commas are tagged 'IK' and attached to the following member.
-# - Shared modifiers are attached to the first member. Private modifiers are
-#   attached to the member they modify.
+# Detects coordination in the shape we expect to find it in the Swedish
+# treebank.
 #------------------------------------------------------------------------------
-sub collect_coordination_members
+sub detect_coordination
 {
-    my $self       = shift;
-    my $croot      = shift; # the first node and root of the coordination
-    my $members    = shift; # reference to array where the members are collected
-    my $delimiters = shift; # reference to array where the delimiters are collected
-    # The caller wants a separate list of shared and private modifiers (the latter for debugging purposes only).
-    # Since the Swedish annotation scheme does not distinguish shared modifiers, we assume there are only private modifiers.
-    my $sharedmod = shift; # dummy reference, we will not use it
-    my $modifiers  = shift; # reference to array where the private modifiers are collected
-    my (@children, @members0, @delimiters0, @modifiers0);
-    # The technical root of the tree cannot be a coordination root in any style.
-    return if(!$croot->parent());
-    @children = $croot->children();
-    @members0 = grep { $_->afun() eq 'CoordArg' } (@children);
-    if (@members0)
-    {
-        # If $croot is the real root of the whole coordination, we must include it in the members, too.
-        # However, if we have been called recursively on existing members, these are already present in the list.
-        if ( !@{$members} )
-        {
-            push(@{$members}, $croot);
-        }
-        @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
-        @modifiers0 = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
-        # Add the found nodes to the caller's storage place.
-        push( @{$members},    @members0 );
-        push( @{$delimiters}, @delimiters0 );
-        push( @{$modifiers},  @modifiers0 );
-        # If any of the members have their own CoordArg children, these are also members of the same coordination.
-        foreach my $member (@members0)
-        {
-            $self->collect_coordination_members( $member, $members, $delimiters, $sharedmod, $modifiers );
-        }
-    }
-    # If some members have been found, this node is a coord member.
-    # If the node itself does not have any further member children, there still probably is a delimiter attached to it.
-    # Its other children are modifers of a coord member.
-    elsif ( @{$members} )
-    {
-        @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
-        @modifiers0 = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxG|AuxX)$/ } (@children);
-        # Add the found nodes to the caller's storage place.
-        push( @{$delimiters}, @delimiters0 );
-        push( @{$modifiers},  @modifiers0 );
-    }
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_moscow($node);
 }
 
 1;

@@ -496,20 +496,42 @@ sub shape_prague
     # Select the last delimiter as the new root.
     if ( scalar(@delimiters)==0 )
     {
-
+        log_warn('Coordination has no delimiters.');
         # It can happen, however rare, that there are no delimiters between the coordinated nodes.
-        # We have to be robust and to survive such cases.
-        # Since there seems to be no better solution, the first member of the coordination will become the root.
-        ###!!! Another possible solution would be to resort to Tesni&egra;re style and attach the conjuncts directly to the parent.
-        # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
-        # If it was already a deficient coordination, i.e. if it had no delimiters and only one member, then something went wrong
-        # (probably it is no coordination at all).
-        if ( scalar(@conjuncts)<2 )
+        # We have to be robust and to survive such cases if possible.
+        if ( scalar(@conjuncts)==0 )
         {
-            log_fatal('Coordination has fewer than two conjuncts and no delimiters.');
+            # Give the user at least some pointer to the tree.
+            log_warn($self->parent()) if(defined($self->parent()));
+            # Robustness has limits. Where would we attach shared modifiers?
+            log_fatal('Trying to shape an empty coordination (no conjuncts and no delimiters).');
+        }
+        elsif ( scalar(@conjuncts)==1 )
+        {
+            # Accompany the above warning by the address of the conjunct.
+            log_warn($conjuncts[0]->get_address());
+            # If there was one conjunct and one delimiter, it would be a deficient (typically clausal) coordination.
+            # The conjunct would depend on the delimiter.
+            # In this case however there is one "conjunct" and no delimiters.
+            # It is thus a normal node and we will act as if there was no coordination at all.
+            $conjuncts[0]->set_parent($self->parent());
+            $conjuncts[0]->set_real_afun($self->afun());
+            $conjuncts[0]->set_is_member($self->is_member());
+            # Attach all shared modifiers to the node.
+            foreach my $modifier ( @shared_modifiers )
+            {
+                $modifier->set_parent($conjuncts[0]);
+                $modifier->set_is_member(0);
+            }
+            return $conjuncts[0];
         }
         else
         {
+            # Accompany the above warning by the address of the conjunct.
+            log_warn($conjuncts[0]->get_address());
+            # Since there seems to be no better solution, the first member of the coordination will become the root.
+            # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
+            ###!!! Another possible solution would be to resort to Tesni&egra;re style and attach the conjuncts directly to the parent.
             push( @delimiters, shift( @conjuncts ) );
         }
     }
@@ -569,7 +591,8 @@ sub shape_prague
 #------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
 # links between nodes and labels of the relations). Expects Moscow or Stanford
-# style, without nested coordinations and without shared modifiers:
+# style, without nested coordinations and without shared modifiers (example
+# treebank is Danish):
 # - the root of the coordination is not marked
 # - conjuncts have wild->{conjunct}
 #   (the afun 'CoordArg' may have not survived Aux[CP] normalization)
@@ -693,6 +716,150 @@ sub detect_mosford
             my $symbol = $afun =~ m/^Aux[GX]$/;
             $self->add_delimiter($participant, $symbol, @partmodifiers);
         }
+    }
+    # If this is the top level, we now know all we can.
+    # It's time for a few more heuristics.
+    if($top)
+    {
+        $self->reconsider_distant_private_modifiers();
+    }
+    # Return the list of modifiers to the upper level.
+    # They will need it when they add me as a participant.
+    unless($top)
+    {
+        return @modifiers;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects left-to-right
+# Moscow style with conjunctions and commas attached to the following conjunct.
+# This style allows limited representation of nested coordination. It cannot
+# distinguish (A,(B,C)) from (A,B,C). Having nested coordination as the
+# last conjunct is a problem. Example treebank is Swedish. (Note however that
+# the Swedish treebank distinguishes conjunct labels CJ and CC. We do not
+# understand the difference and convert both to CoordArg. They may be able to
+# describe nested coordination in full!)
+# - the root of the coordination is not marked
+# - conjuncts have wild->{conjunct}
+#   (the afun 'CoordArg' may have not survived normalization)
+# - if a conjunct has two or more conjuncts as children, there is nested
+#   coordination. The parent conjunct first combines with the first child
+#   conjunct (and its descendants, if any). The resulting coordination is a
+#   conjunct that combines with the next child conjunct (and its descendants).
+#   The process goes on until all child conjuncts are processed.
+# - conjunctions have wild->{coordinator}
+#   (the afun 'Coord' may have not survived normalization)
+#   Any such child of a conjunct is collected; no conjuncts are expected under
+#   it.
+# - punctuation lying to the left of a conjunct and attached to it is
+#   considered delimiter
+# - all other children along the way are private modifiers
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
+#------------------------------------------------------------------------------
+sub detect_moscow
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    my $nontop = shift; # other than top level of recursion?
+    log_fatal("Missing node") unless(defined($node));
+    my $top = !$nontop;
+    ###!!!DEBUG
+    my $debug = 0;
+    if($debug)
+    {
+        my $form = $node->form();
+        $form = '' if(!defined($form));
+        if($top)
+        {
+            $node->set_form("T:$form");
+        }
+        else
+        {
+            $node->set_form("X:$form");
+        }
+    }
+    ###!!!END
+    my @children = $node->children();
+    my @conjuncts = grep {$_->wild()->{conjunct}} @children;
+    my $bottom = scalar(@conjuncts)==0;
+    if($top && $bottom)
+    {
+        # No participants found. This $node is not a root of coordination.
+        # (We do not expect delimiters under a node that is not a conjunct (first or not).)
+        return;
+    }
+    # Even if there are no conjuncts and no recursion ($bottom) there may be delimiters which we have to add.
+    my @delimiters = grep
+    {
+        ! $_->wild()->{conjunct} &&
+        # Very rarely (and probably erroneously) a conjunction is attached to the left.
+        # Ignoring it here would mean that it keeps the Coord afun without actually heading a coordination.
+        # The issue does not affect punctuation.
+        (
+            $_->wild()->{coordinator} ||
+            $_->afun() =~ m/^Aux[GXY]$/ &&
+            $_->ord() < $node->ord()
+        )
+    }
+    @children;
+    my @modifiers = grep
+    {
+        ! $_->wild()->{conjunct} &&
+        !(
+            $_->wild()->{coordinator} ||
+            $_->afun() =~ m/^Aux[GXY]$/ &&
+            $_->ord() < $node->ord()
+        )
+    }
+    @children;
+    # If we are here we have participants: either conjuncts or delimiters or both.
+    if($top)
+    {
+        # Add the root conjunct.
+        # Note: root of the tree is never a conjunct! If this is the tree root, we are dealing with a deficient (probably clausal) coordination.
+        unless($node->is_root())
+        {
+            my $orphan = 0;
+            $self->add_conjunct($node, $orphan, @modifiers);
+            # Save the relation of the coordination to its parent.
+            $self->set_parent($node->parent());
+            $self->set_afun($node->afun());
+            $self->set_is_member($node->is_member());
+        }
+        else
+        {
+            ###!!! The coordination still needs to know its parent (the root) and afun (which we are guessing here but we should find a real conjunct instead).
+            $self->set_parent($node);
+            $self->set_afun('Pred');
+            $self->set_is_member(0);
+        }
+    }
+    ###!!! POZOR! Když to zůstane takhle, budeme rozpouštět vnořené koordinace!
+    ###!!! Je potřeba zjistit, zda máme více než jedno dítě, které je členem koordinace.
+    ###!!! Dokud máme dvě nebo více takových dětí, je třeba se spojit s prvním z nich a vytvořit vnořenou koordinaci.
+    ###!!! To znamená nový objekt Coordination, kompletní běh detect_moscow(), potom asi už i shape_prague() a novým kořenem si nahradit náš člen.
+    ###!!! Další obtíž se skrývá v tom, že nás pravděpodobně zavolal někdo, kdo chce postupně rozpoznat všechny koordinace ve větě.
+    ###!!! Čili jednak je tu disproporce, protože pro nevnořené koordinace si shape_prague() volá ten někdo sám.
+    ###!!! A za druhé ten někdo chce pak detekci zavolat také na všechna rozvití (sdílená i soukromá) a všechny sirotky té koordinace, kterou mu vrátíme.
+    ###!!! OTÁZKA: Vnořená koordinace má svá sdílená i soukromá rozvití. Dostaneme opravdu všechna do seznamu soukromých rozvití člena, který je tvořen vnořenou koordinací?
+    foreach my $conjunct (@conjuncts)
+    {
+        my $orphan = 0;
+        my $nontop = 1;
+        my @partmodifiers = $self->detect_moscow($conjunct, $nontop);
+        $self->add_conjunct($conjunct, $orphan, @partmodifiers);
+    }
+    foreach my $delimiter (@delimiters)
+    {
+        my $symbol = $delimiter->afun() =~ m/^Aux[GX]$/;
+        my @partmodifiers = $delimiter->children();
+        $self->add_delimiter($delimiter, $symbol, @partmodifiers);
     }
     # If this is the top level, we now know all we can.
     # It's time for a few more heuristics.
