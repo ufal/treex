@@ -46,6 +46,10 @@ sub process_zone
             {
                 $self->complain($nodes[$i], 'afun is '.$nodes[$i]->afun().' instead of AuxG');
             }
+            elsif($nodes[$i]->children())
+            {
+                $self->complain($nodes[$i], 'punctuation is not leaf');
+            }
         }
     }
     if($rule1)
@@ -68,6 +72,10 @@ sub process_zone
             elsif(!defined($nodes[$i]->afun()) || $nodes[$i]->afun() ne $expected_afun)
             {
                 $self->complain($nodes[$i], 'afun is '.$nodes[$i]->afun().' instead of '.$expected_afun);
+            }
+            elsif($nodes[$i]->children())
+            {
+                $self->complain($nodes[$i], 'punctuation is not leaf');
             }
         }
     }

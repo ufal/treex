@@ -531,6 +531,21 @@ sub attach_final_punctuation_to_root
             # Even though some treebanks think otherwise, final punctuation marks are neither conjunctions nor conjuncts.
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
+            $nodes[$i]->set_is_member(0);
+            # Sentence-terminating punctuation should be a leaf node.
+            # If it governs anything it should be probably reattached to the root.
+            foreach my $child ($nodes[$i]->children())
+            {
+                $child->set_parent($root);
+                if($child->get_iset('pos') eq 'verb')
+                {
+                    $child->set_afun('Pred');
+                }
+                else
+                {
+                    $child->set_afun('ExD');
+                }
+            }
         }
     }
     if($rule1)
@@ -548,6 +563,21 @@ sub attach_final_punctuation_to_root
             }
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
+            $nodes[$i]->set_is_member(0);
+            # Sentence-terminating punctuation should be a leaf node.
+            # If it governs anything it should be probably reattached to the root.
+            foreach my $child ($nodes[$i]->children())
+            {
+                $child->set_parent($root);
+                if($child->get_iset('pos') eq 'verb')
+                {
+                    $child->set_afun('Pred');
+                }
+                else
+                {
+                    $child->set_afun('ExD');
+                }
+            }
         }
     }
 }
