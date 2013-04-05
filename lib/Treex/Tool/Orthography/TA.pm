@@ -24,7 +24,7 @@ Readonly our $TA_VOWELS_REG => qr/\N{TAMIL LETTER A}|
 \N{TAMIL LETTER AI}|
 \N{TAMIL LETTER O}|
 \N{TAMIL LETTER OO}|
-\N{TAMIL LETTER AU}/;
+\N{TAMIL LETTER AU}/x;
 
 # vowels with 'i' sound
 Readonly our $TA_VOWELS_I_REG => qr/\N{TAMIL LETTER I}|\N{TAMIL LETTER II}|\N{TAMIL LETTER AI}/;
@@ -35,14 +35,14 @@ Readonly our $TA_SHORT_VOWELS_REG => qr/\N{TAMIL LETTER A}|
 \N{TAMIL LETTER I}|
 \N{TAMIL LETTER U}|
 \N{TAMIL LETTER E}|
-\N{TAMIL LETTER O}/;
+\N{TAMIL LETTER O}/x;
 
 # long vowels
 Readonly our $TA_LONG_VOWELS_REG => qr/\N{TAMIL LETTER AA}|
 \N{TAMIL LETTER II}|
 \N{TAMIL LETTER UU}|
 \N{TAMIL LETTER EE}|
-\N{TAMIL LETTER OO}/;
+\N{TAMIL LETTER OO}/x;
 
 # consonants
 Readonly our $TA_CONSONANTS_REG => qr/\N{TAMIL LETTER KA}\N{TAMIL SIGN VIRAMA}|
@@ -67,7 +67,7 @@ Readonly our $TA_CONSONANTS_REG => qr/\N{TAMIL LETTER KA}\N{TAMIL SIGN VIRAMA}|
 \N{TAMIL LETTER SHA}\N{TAMIL SIGN VIRAMA}|
 \N{TAMIL LETTER SSA}\N{TAMIL SIGN VIRAMA}|
 \N{TAMIL LETTER SA}\N{TAMIL SIGN VIRAMA}|
-\N{TAMIL LETTER HA}\N{TAMIL SIGN VIRAMA}/;
+\N{TAMIL LETTER HA}\N{TAMIL SIGN VIRAMA}/x;
 
 
 # syllable type: consonants + 'a' (since they are separate code points)
@@ -93,7 +93,7 @@ Readonly our $TA_CONSONANTS_PLUS_VOWEL_A_REG => qr/\N{TAMIL LETTER KA}|
 \N{TAMIL LETTER SHA}|
 \N{TAMIL LETTER SSA}|
 \N{TAMIL LETTER SA}|
-\N{TAMIL LETTER HA}/;
+\N{TAMIL LETTER HA}/x;
 
 
 # combining characters/dependent vowel signs 
@@ -109,29 +109,29 @@ Readonly our $TA_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN AA}|
 \N{TAMIL VOWEL SIGN AI}|
 \N{TAMIL VOWEL SIGN O}|
 \N{TAMIL VOWEL SIGN OO}|
-\N{TAMIL VOWEL SIGN AU}/;
+\N{TAMIL VOWEL SIGN AU}/x;
 
 # vowel signs with 'i' sound
 Readonly our $TA_VOWEL_I_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN I}|
 \N{TAMIL VOWEL SIGN II}|
-\N{TAMIL VOWEL SIGN AI}/;
+\N{TAMIL VOWEL SIGN AI}/x;
 
 # short vowel signs
 Readonly our $TA_SHORT_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN I}|
 \N{TAMIL VOWEL SIGN U}|
 \N{TAMIL VOWEL SIGN E}|
-\N{TAMIL VOWEL SIGN O}/;
+\N{TAMIL VOWEL SIGN O}/x;
 
 # long vowel signs 
 Readonly our $TA_LONG_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN AA}|
 \N{TAMIL VOWEL SIGN II}|
 \N{TAMIL VOWEL SIGN UU}|
 \N{TAMIL VOWEL SIGN EE}|
-\N{TAMIL VOWEL SIGN OO}/;
+\N{TAMIL VOWEL SIGN OO}/x;
 
 # diphthongs
 Readonly our $TA_DIPHTHONGS      => qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
-my $TA_DIPHTHONG_SIGNS = qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
+Readonly our $TA_DIPHTHONG_SIGNS => qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
 
 # vowel to sign map
 Readonly our %TA_VOWEL_VOWELSIGN => (
@@ -149,6 +149,21 @@ Readonly our %TA_VOWEL_VOWELSIGN => (
 );
 
 Readonly our $TA_PULLI => '்';
+
+# 'vallinam' - hard consonants 
+# only those involved in spelling changes
+# namely - k, c, t, p
+Readonly our $TA_HARD_REG => qr/\N{TAMIL LETTER KA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER CA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER TA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER PA}\N{TAMIL SIGN VIRAMA}/x;
+
+# 'vallinam' - hard consonants  + 'a' 
+# namely - ka, ca, ta, pa
+Readonly our $TA_HARD_A_REG => qr/\N{TAMIL LETTER KA}|
+\N{TAMIL LETTER CA}|
+\N{TAMIL LETTER TA}|
+\N{TAMIL LETTER PA}/x;
 
 1;
 
