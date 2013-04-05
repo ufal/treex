@@ -1,0 +1,171 @@
+package Treex::Tool::Orthography::TA;
+
+require Exporter;
+
+our @ISA = qw(Exporter);
+our @EXPORT = do {
+	map{ '$' . $_ } grep { m/^TA/} keys %{__PACKAGE__ . '::'};	
+};
+
+use charnames ':full';
+use Readonly;
+
+# Tamil alphabets based on linguistic groupings
+
+# vowels
+Readonly our $TA_VOWELS_REG => qr/\N{TAMIL LETTER A}|
+\N{TAMIL LETTER AA}|
+\N{TAMIL LETTER I}|
+\N{TAMIL LETTER II}|
+\N{TAMIL LETTER U}|
+\N{TAMIL LETTER UU}|
+\N{TAMIL LETTER E}|
+\N{TAMIL LETTER EE}|
+\N{TAMIL LETTER AI}|
+\N{TAMIL LETTER O}|
+\N{TAMIL LETTER OO}|
+\N{TAMIL LETTER AU}/;
+
+# vowels with 'i' sound
+Readonly our $TA_VOWELS_I_REG => qr/\N{TAMIL LETTER I}|\N{TAMIL LETTER II}|\N{TAMIL LETTER AI}/;
+ 
+
+# short vowels
+Readonly our $TA_SHORT_VOWELS_REG => qr/\N{TAMIL LETTER A}|
+\N{TAMIL LETTER I}|
+\N{TAMIL LETTER U}|
+\N{TAMIL LETTER E}|
+\N{TAMIL LETTER O}/;
+
+# long vowels
+Readonly our $TA_LONG_VOWELS_REG => qr/\N{TAMIL LETTER AA}|
+\N{TAMIL LETTER II}|
+\N{TAMIL LETTER UU}|
+\N{TAMIL LETTER EE}|
+\N{TAMIL LETTER OO}/;
+
+# consonants
+Readonly our $TA_CONSONANTS_REG => qr/\N{TAMIL LETTER KA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER NGA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER CA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER JA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER NYA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER TTA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER NNA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER TA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER NA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER NNNA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER PA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER YA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER RA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER RRA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER LA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER LLA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER LLLA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER VA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER SHA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER SSA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER SA}\N{TAMIL SIGN VIRAMA}|
+\N{TAMIL LETTER HA}\N{TAMIL SIGN VIRAMA}/;
+
+
+# syllable type: consonants + 'a' (since they are separate code points)
+Readonly our $TA_CONSONANTS_PLUS_VOWEL_A_REG => qr/\N{TAMIL LETTER KA}|
+\N{TAMIL LETTER NGA}|
+\N{TAMIL LETTER CA}|
+\N{TAMIL LETTER JA}|
+\N{TAMIL LETTER NYA}|
+\N{TAMIL LETTER TTA}|
+\N{TAMIL LETTER NNA}|
+\N{TAMIL LETTER TA}|
+\N{TAMIL LETTER NA}|
+\N{TAMIL LETTER NNNA}|
+\N{TAMIL LETTER PA}|
+\N{TAMIL LETTER MA}|
+\N{TAMIL LETTER YA}|
+\N{TAMIL LETTER RA}|
+\N{TAMIL LETTER RRA}|
+\N{TAMIL LETTER LA}|
+\N{TAMIL LETTER LLA}|
+\N{TAMIL LETTER LLLA}|
+\N{TAMIL LETTER VA}|
+\N{TAMIL LETTER SHA}|
+\N{TAMIL LETTER SSA}|
+\N{TAMIL LETTER SA}|
+\N{TAMIL LETTER HA}/;
+
+
+# combining characters/dependent vowel signs 
+
+# vowel signs
+Readonly our $TA_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN AA}|
+\N{TAMIL VOWEL SIGN I}|
+\N{TAMIL VOWEL SIGN II}|
+\N{TAMIL VOWEL SIGN U}|
+\N{TAMIL VOWEL SIGN UU}|
+\N{TAMIL VOWEL SIGN E}|
+\N{TAMIL VOWEL SIGN EE}|
+\N{TAMIL VOWEL SIGN AI}|
+\N{TAMIL VOWEL SIGN O}|
+\N{TAMIL VOWEL SIGN OO}|
+\N{TAMIL VOWEL SIGN AU}/;
+
+# vowel signs with 'i' sound
+Readonly our $TA_VOWEL_I_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN I}|
+\N{TAMIL VOWEL SIGN II}|
+\N{TAMIL VOWEL SIGN AI}/;
+
+# short vowel signs
+Readonly our $TA_SHORT_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN I}|
+\N{TAMIL VOWEL SIGN U}|
+\N{TAMIL VOWEL SIGN E}|
+\N{TAMIL VOWEL SIGN O}/;
+
+# long vowel signs 
+Readonly our $TA_LONG_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN AA}|
+\N{TAMIL VOWEL SIGN II}|
+\N{TAMIL VOWEL SIGN UU}|
+\N{TAMIL VOWEL SIGN EE}|
+\N{TAMIL VOWEL SIGN OO}/;
+
+# diphthongs
+Readonly our $TA_DIPHTHONGS      => qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
+my $TA_DIPHTHONG_SIGNS = qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
+
+# vowel to sign map
+Readonly our %TA_VOWEL_VOWELSIGN => (
+	"\N{TAMIL LETTER AA}"	=>	"\N{TAMIL VOWEL SIGN AA}",
+	"\N{TAMIL LETTER I}"	=>	"\N{TAMIL VOWEL SIGN I}",
+	"\N{TAMIL LETTER II}"	=>	"\N{TAMIL VOWEL SIGN II}",
+	"\N{TAMIL LETTER U}"	=>	"\N{TAMIL VOWEL SIGN U}",
+	"\N{TAMIL LETTER UU}"	=>	"\N{TAMIL VOWEL SIGN UU}",
+	"\N{TAMIL LETTER E}"	=>	"\N{TAMIL VOWEL SIGN E}",
+	"\N{TAMIL LETTER EE}"	=>	"\N{TAMIL VOWEL SIGN EE}",
+	"\N{TAMIL LETTER AI}"	=>	"\N{TAMIL VOWEL SIGN AI}",
+	"\N{TAMIL LETTER O}"	=>	"\N{TAMIL VOWEL SIGN O}",
+	"\N{TAMIL LETTER OO}"	=>	"\N{TAMIL VOWEL SIGN OO}",
+	"\N{TAMIL LETTER AU}"	=>	"\N{TAMIL VOWEL SIGN AU}",
+);
+
+Readonly our $TA_PULLI => '்';
+
+1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Tool::Orthography::TA - Global Constant Definitions Based on Linguistic Groupings
+
+=AUTHOR
+
+Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself. 
