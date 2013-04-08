@@ -14,13 +14,15 @@ use Treex::Tool::NamedEnt::Features::Threeword;
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
-my %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model' );
-#                   twoword => 'data/models/sysnerv/cs/twoword.model',
-#                   threeword  => 'data/models/sysnerv/cs/threeword.model');
-
+my %modelFiles;
 my %models;
 
-sub process_start {
+BEGIN {
+
+    %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model' );
+    #                   twoword => 'data/models/sysnerv/cs/twoword.model',
+    #                   threeword  => 'data/models/sysnerv/cs/threeword.model');
+
 
     for my $model ( keys %modelFiles ) {
         my $modelName = require_file_from_share( $modelFiles{$model}, 'A2N::CS::SysNERV' );
@@ -28,8 +30,6 @@ sub process_start {
     }
 
 }
-
-
 
 
 sub process_zone {
@@ -115,7 +115,6 @@ sub process_zone {
         #     my $class = get_class_from_number($classification);
         #     create_entity_node( $n_root, $class, $pprev_anode, $prev_anode, $anode );
         # }
-
 
     }
 
