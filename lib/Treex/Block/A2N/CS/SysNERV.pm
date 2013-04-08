@@ -17,7 +17,12 @@ use Algorithm::SVM::DataSet;
 my %modelFiles;
 my %models;
 
+my %containers;
+my @entities;
+
 BEGIN {
+
+    log_info("Loading NER models");
 
     %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model' );
     #                   twoword => 'data/models/sysnerv/cs/twoword.model',
@@ -29,11 +34,32 @@ BEGIN {
         $models{$model} = Algorithm::SVM->new( Model => $modelName );
     }
 
+    my $containersFile = require_file_from_share( 'data/models/sysnerv/cs/containers.model', 'A2N::CS::SysNERV' );
+
+    open CONTAINERS, $containersFile or die "Cannot open input file $containersFile";
+
+    my %containerCount;
+
+    log_info("Loading container pattern classificator");
+
+    while (<CONTAINERS>) {
+        chomp;
+        my ($pattern, $label, $count) = split /\t/;
+
+        if (!defined $containers{$pattern} or $containerCount{$pattern} <= $count) {
+            $containers{$pattern} = $label;
+            $containerCount{$pattern} = $count;
+        }
+    }
+
+    close CONTAINERS;
+
 }
 
 
 sub process_zone {
     my ($self, $zone) = @_;
+my %entityRefMap;
 
     my $aroot = $zone->get_atree();
     my @anodes = $aroot->get_descendants({ordered => 1});
@@ -73,7 +99,7 @@ sub process_zone {
         $args{'nnext_tag'} = defined $nnext_anode ? $nnext_anode->tag : $FALLBACK_TAG;
 
 
-        my (@features, $data, $classification);
+        my (@features, $data, $classification, $label, $n_node);
 
         #### ONEWORD ####
 
@@ -82,39 +108,57 @@ sub process_zone {
         $data =  Algorithm::SVM::DataSet->new( Label => 0, Data => \@features );
         $classification =  $models{oneword}->predict($data);
 
-        unless ( $classification == -1 ) {
+        $label = $classification == -1 ? 0 : get_class_from_number($classification);
+        create_entity_node( $n_root, $label, $anode ) unless $classification == -1;
 
-            my $class = get_class_from_number($classification);
-            create_entity_node( $n_root, $class, $anode );
+        $entities[$i] = $label;
+
+        #### TWOWORD ####
+        if ($i > 1) {
+
+            @features = extract_twoword_features(%args);
+
+            $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
+            $classification = $models{twoword}->predict($data);
+
+            unless ($classification == -1) {
+                $label = get_class_from_number($classification);
+                create_entity_node( $n_root, $label, $prev_anode, $anode );
+
+                $entities[$i-1] = $label;
+                $entities[$i] = $label;
+            }
         }
 
-        next unless $i > 1;
-        #### TWOWORD ####
+        #### THREEWORD ####
+        if ($i > 2) {
 
-        # @features = extract_twoword_features(%args);
+            @features = extract_threeword_features(%args);
 
-        # $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
-        # $classification = $models{twoword}->predict($data);
+            $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
+            $classification = $models{threeword}->predict($data);
 
-        # unless ($classification == -1 ) {
+            unless ($classification == -1) {
+                $label = get_class_from_number($classification);
+                create_entity_node( $n_root, $label, $pprev_anode, $prev_anode, $anode );
 
-        #     my $class = get_class_from_number($classification);
-        #     create_entity_node( $n_root, $class, $prev_anode, $anode );
-        # }
+                $entities[$i-2] = $label;
+                $entities[$i-1] = $label;
+                $entities[$i] = $label;
+            }
+        }
 
-	# next unless $i > 2;
-	# #### THREEWORD ####
+	for my $j ( 0 .. $i-1) {
+	    my $pattern = @entities[$j..$i];
+	    my $container = $containers{$pattern};
 
-	# @features = extract_threeword_features(%args);
+	    if (defined $container and $container ne '0') {
 
-	# $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
-        # $classification = $models{threeword}->predict($data);
+		#TODO zed jsme skoncili
+	#	create_entity_container_node($n_root, $container, \@anodes[$j..$i]);
+	    }
 
-        # unless ($classification == -1 ) {
-
-        #     my $class = get_class_from_number($classification);
-        #     create_entity_node( $n_root, $class, $pprev_anode, $prev_anode, $anode );
-        # }
+	}
 
     }
 
@@ -161,6 +205,45 @@ sub create_entity_node {
     # print STDERR ( "Named entity \"$classification\" found: " . $n_node->get_attr('normalized_name') . "\n" );
 
 
+    return $n_node;
+}
+
+
+sub create_entity_container_node {
+    my ( $n_root, $classification, $anodesRef ) = @_;
+
+    my @anodes = @$anodesRef;
+
+    die "Not implemented yet";
+
+    # Check if this container already exists
+#    my $m_ids_label = join $MRF_DELIM, sort @{$m_ids_ref};
+#    return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
+
+
+    # Get corresponding n-nodes
+    my @n_nodes = map $entities{$_}, @{$m_ids_ref};
+
+    # Create new SCzechN node
+    my $n_node = $n_root->create_child;
+
+    # Set classification
+    $n_node->set_attr('ne_type', $classification);
+
+    # Set m.rf's
+    $n_node->set_deref_attr('m.rf', $m_nodes_ref );
+
+    # Set normalized name
+    my $normalized_name;
+    foreach my $n (@n_nodes) {
+        $normalized_name .= " ". $n->get_attr('normalized_name') if $n->get_attr('normalized_name');
+    }
+    $n_node->set_attr('normalized_name', $normalized_name);
+
+    # Remember this container
+    $entities{$m_ids_label} = $n_node;
+
+    #    print STDERR ( "Named entity container \"$classification\" found: ". $n_node->get_attr('normalized_name')."\n");
     return $n_node;
 }
 
