@@ -10,6 +10,8 @@ use Treex::Tool::NamedEnt::Features::Twoword;
 use Treex::Tool::NamedEnt::Features::Threeword;
 use Treex::Tool::NamedEnt::Features::Common qw/get_class_number $FALLBACK_TAG $FALLBACK_LEMMA/;
 
+use Getopt::Long;
+
 =pod
 
 =head1 NAME
@@ -28,6 +30,9 @@ s oanotovanymi pojmenovanymi entitami. Prvni soubor muze byt delsi, pak se predp
 datech nejsou (data od Honzy Maska)
 
 =cut
+
+my $model = "oneword";
+GetOptions('model=s' => \$model);
 
 my ( $data, $dataNer ) = @ARGV;
 
@@ -98,35 +103,57 @@ for my $sentence (@sentences) {
 
     for my $i (0 .. $#words) {
 
-        my $form = $words[$i];
-        my $lemma = $lemmas[$i];
-        my $tag = $tags[$i];
+        my %args;
+        $args{'act_form'} = $words[$i];
+        $args{'act_lemma'} = $lemmas[$i];
+        $args{'act_tag'} = $tags[$i];
 
-        my $plemma = $i > 0 ? $lemmas[$i - 1] : $FALLBACK_LEMMA;
-        my $ptag = $i > 0 ? $tags[$i - 1] : $FALLBACK_TAG;
-        my $pptag = $i > 1 ? $tags[$i - 2] : $FALLBACK_TAG;
-        my $nlemma = $i < $#words ? $lemmas[$i + 1] : $FALLBACK_LEMMA;
+        $args{'prev_lema'} = $i > 0 ? $lemmas[$i - 1] : $FALLBACK_LEMMA;
+        $args{'prev_tag'} = $i > 0 ? $tags[$i - 1] : $FALLBACK_TAG;
+        $args{'prev_form'} = $i > 0 ? $words[$i - 1] : $FALLBACK_LEMMA;
 
-        my @features = Treex::Tool::NamedEnt::Features::Oneword::extract(act_form => $form,
-                                                                         act_lemma => $lemma,
-                                                                         act_tag => $tag,
-                                                                         prev_lemma => $plemma,
-                                                                         prev_tag => $ptag,
-                                                                         pprev_tag => $pptag,
-                                                                         next_lemma => $nlemma);
+        $args{'pprev_tag'} = $i > 1 ? $tags[$i - 2] : $FALLBACK_TAG;
+        $args{'pprev_lemma'} = $i > 1 ? $lemmas[$i - 2] : $FALLBACK_LEMMA;
+        $args{'pprev_form'} = $i > 1 ? $words[$i - 2] : $FALLBACK_LEMMA;
 
-	my $reference = -1;
+        $args{'next_lemma'} = $i < $#words ? $lemmas[$i + 1] : $FALLBACK_LEMMA;
+        $args{'next_form'} = $i < $#words ? $words[$i + 1] : $FALLBACK_LEMMA;
+        $args{'next_tags'} = $i < $#words ? $tags[$i + 1] : $FALLBACK_TAG;
+
+
+        my @features;
+        
+        if ($model eq 'oneword') {
+            @features = Treex::Tool::NamedEnt::Features::Oneword::extract(act_form => $args{'act_form'},
+                                                                             act_lemma => $args{'act_lemma'},
+                                                                             act_tag => $args{'act_tag'},
+                                                                             prev_lemma => $args{'plemma'},
+                                                                             prev_tag => $args{'ptag'},
+                                                                             pprev_tag => $args{'pptag'},
+                                                                             next_lemma => $args{'nlemma'});
+	        my $reference = -1;
+        } elsif($model eq 'twoword') {
+
+        } elsif($model eq 'threeword') {
+
+        }
+
 
 	if (defined $sentence->{namedents}) {
 	    for my $ne (@{$sentence->{namedents}}) {
-		if ($ne->{start} == $i+1 && $ne->{end} == $i+1) {
+		if ($ne->{start} == $i+1 && $ne->{end} == $i+1 && $model eq 'oneword') {
 		    $reference = get_class_number($ne->{type});
                     if (!defined $reference) {
                         warn ("Unknown class: ". $ne->{type});
                         $reference = -1;
                     }
 		}
+        if ($ne->{start} == $i && $ne->{end} == $i+1 && $model  eq 'twoword') {
+
 	    }
+        if ($ne->{start} == $i && $ne->{end} == $i+2 && $model eq 'threeword') {
+
+        }
 	}
 
         print join ",", @features, $reference;
