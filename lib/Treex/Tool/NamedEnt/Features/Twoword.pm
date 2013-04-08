@@ -6,12 +6,19 @@ use warnings;
 use Treex::Tool::NamedEnt::Features::Common qw/:twoword/;
 use Treex::Tool::Lexicon::CS;
 
+use Exporter 'import';
+our @EXPORT = qw/ extract_twoword_features /;
+
+sub extract_twoword_features {
+    return extract(@_);
+}
+
 sub extract {
     my %args = @_;
 
-    my ($first_lemma, $first_form) = @args{qw/first_lemma first_form/};
-    my ($second_lemma, $second_form) = @args{qw/second_lemma second_form/};
-    my ($ptag, $first_tag, $second_tag) = @args{qw/prev_tag first_tag second_tag/};
+    my ($first_lemma, $first_form) = @args{qw/prev_lemma prev_form/};
+    my ($second_lemma, $second_form) = @args{qw/act_lemma act_form/};
+    my ($ptag, $first_tag, $second_tag) = @args{qw/pprev_tag prev_tag act_tag/};
 
     my $first_bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($first_lemma);
     my $second_bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($second_lemma);

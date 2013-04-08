@@ -6,13 +6,20 @@ use warnings;
 use Treex::Tool::NamedEnt::Features::Common qw/:threeword/;
 use Treex::Tool::Lexicon::CS;
 
+use Exporter 'import';
+our @EXPORT = qw/ extract_threeword_features /;
+
+sub extract_threeword_features {
+    return extract(@_);
+}
+
 sub extract {
     my %args = @_;
 
-    my ($first_lemma, $first_form) = @args{qw/first_lemma first_form/};
-    my ($second_lemma, $second_form) = @args{qw/second_lemma second_form/};
-    my ($third_lemma, $third_form) = @args{qw/third_lemma third_form/};
-    my ($ptag, $first_tag, $second_tag, $third_tag) = @args{qw/prev_tag first_tag second_tag third_tag/};
+    my ($first_lemma, $first_form) = @args{qw/pprev_lemma pprev_form/};
+    my ($second_lemma, $second_form) = @args{qw/prev_lemma prev_form/};
+    my ($third_lemma, $third_form) = @args{qw/act_lemma act_form/};
+    my ($first_tag, $second_tag, $third_tag) = @args{qw/pprev_tag prev_tag act_tag/};
 
     my $first_bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($first_lemma);
     my $second_bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($second_lemma);
