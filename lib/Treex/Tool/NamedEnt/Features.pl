@@ -2,13 +2,17 @@
 
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 Features.pl - Feature extraction for SysNERV SVM model
 
 =head1 SYNOPSIS
 
-B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> [--model=I<MODEL>]
+B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> [--model=<C<oneword>|C<twoword>|C<threeword>>]
+
+B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> --model=C<container> [threshold=I<THRESHOLD>]
 
 =head1 DESCRIPTION
 
@@ -23,10 +27,26 @@ are aligned.
 
 =over 4
 
-=item I<--model>
+=item B<--model>
 
 Specifies the model to be prepared. Valid values are so far:
-C<oneword>, C<twoword> and C<threeword>.
+C<oneword>, C<twoword>, C<threeword> and C<container>.
+
+=item B<--threshold>=I<THRESHOLD>
+
+The threshold for container pattern maximum length. Defaults to infinity.
+
+=back
+
+=head1 AUTHOR
+
+Jindra Helcl <jindra.helcl@gmail.com>, Petr Jankovský <jankovskyp@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
 
@@ -38,14 +58,17 @@ use Data::Dumper;
 use Treex::Tool::NamedEnt::Features::Oneword;
 use Treex::Tool::NamedEnt::Features::Twoword;
 use Treex::Tool::NamedEnt::Features::Threeword;
+use Treex::Tool::NamedEnt::Features::Containers;
 use Treex::Tool::NamedEnt::Features::Common qw/get_class_number $FALLBACK_TAG $FALLBACK_LEMMA/;
 
 use Getopt::Long;
 use Pod::Usage;
 
 my $model = "oneword";
+my $threshold = 0;
 
-GetOptions('model=s' => \$model);
+GetOptions('model=s' => \$model,
+	   'threshold=i' => \$threshold);
 
 my $data = shift;
 my $dataNer = shift;
@@ -109,6 +132,7 @@ while (<DATA>) {
 close DATA;
 close DATANER;
 
+my %patternCounts;
 
 for my $sentence (@sentences) {
 
@@ -116,6 +140,12 @@ for my $sentence (@sentences) {
     my @lemmas = @{$sentence->{lemmas}};
     my @tags = @{$sentence->{tags}};
     my @namedents = @{$sentence->{namedents}};
+
+    if ($model eq 'container') {
+	my @patterns = get_container_patterns($sentence, $threshold);
+	$patternCounts{$_->{pattern}}{$_->{label}}++ for @patterns;
+	next;
+    }
 
     for my $i (0 .. $#words) {
 
@@ -161,25 +191,31 @@ for my $sentence (@sentences) {
 
         if ($model eq 'oneword') {
             @features = extract_oneword_features( %args );
-	    push @features, $onewordRef;
+            push @features, $onewordRef;
 
         } elsif ($model eq 'twoword' && $i > 0) {
             @features = extract_twoword_features( %args );
-	    push @features, $twowordRef;
+            push @features, $twowordRef;
 
         } elsif ($model eq 'threeword' && $i > 1) {
             @features = extract_threeword_features( %args );
-	    push @features, $threewordRef;
-
+            push @features, $threewordRef;
         } else {
-	    next;
-	}
+            next;
+        }
 
         print join ",", @features;
         print "\n";
     }
 }
 
+if($model eq 'container') {
+    for my $pattern (keys %patternCounts) {
+	for my $label (keys %{$patternCounts{$pattern}} ) {
+	    print "$pattern\t$label\t" . $patternCounts{$pattern}{$label} . "\n";
+	}
+    }
+}
 
 sub parse_anot {
     my $text_unprocessed = shift;
