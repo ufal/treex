@@ -8,19 +8,28 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::NamedEnt::Features::Common qw /get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG/;
 use Treex::Tool::NamedEnt::Features::Oneword;
+use Treex::Tool::NamedEnt::Features::Twoword;
+use Treex::Tool::NamedEnt::Features::Threeword;
 
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
-my $svm;
-my $ONEWORD_MODEL = 'data/models/sysnerv/cs/oneword.model';
+my %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model' );
+#                   twoword => 'data/models/sysnerv/cs/twoword.model',
+#                   threeword  => 'data/models/sysnerv/cs/threeword.model');
 
-
+my %models;
 
 sub process_start {
-    my $modelName = require_file_from_share( $ONEWORD_MODEL, 'A2N::CS::SysNERV' );
-    $svm = Algorithm::SVM->new( Model => $modelName);
+
+    for my $model ( keys %modelFiles ) {
+        my $modelName = require_file_from_share( $modelFiles{$model}, 'A2N::CS::SysNERV' );
+        $models{$model} = Algorithm::SVM->new( Model => $modelName );
+    }
+
 }
+
+
 
 
 sub process_zone {
@@ -38,7 +47,6 @@ sub process_zone {
     }
 
 
-
     for my $i ( 0 .. $#anodes ) {
         my ( $pprev_anode, $prev_anode, $anode, $next_anode, $nnext_anode ) = @anodes[$i-2..$i+2];
 
@@ -47,43 +55,84 @@ sub process_zone {
         $args{'act_form'}   = $anode->form;
         $args{'act_lemma'}  = $anode->lemma;
         $args{'act_tag'}    = $anode->tag;
+
+        $args{'prev_form'} = defined $prev_anode ? $prev_anode->form : $FALLBACK_LEMMA;
         $args{'prev_lemma'} = defined $prev_anode ? $prev_anode->lemma : $FALLBACK_LEMMA;
         $args{'prev_tag'} = defined $prev_anode ? $prev_anode->tag : $FALLBACK_TAG;
+
+        $args{'pprev_form'} = defined $pprev_anode ? $pprev_anode->tag : $FALLBACK_LEMMA;
+        $args{'pprev_lemma'} = defined $pprev_anode ? $pprev_anode->tag : $FALLBACK_LEMMA;
         $args{'pprev_tag'} = defined $pprev_anode ? $pprev_anode->tag : $FALLBACK_TAG;
+
+        $args{'next_form'} = defined $next_anode ? $next_anode->form : $FALLBACK_LEMMA;
         $args{'next_lemma'} = defined $next_anode ? $next_anode->lemma : $FALLBACK_LEMMA;
+        $args{'next_tag'} = defined $next_anode ? $next_anode->tag : $FALLBACK_TAG;
 
-        my @features = extract_oneword_features(%args);
-
-        # Classify oneword entity using SVM classifier
-        my $data =  Algorithm::SVM::DataSet->new( Label => 0, Data => \@features );
-        my $classification =  $svm->predict($data);
-
-        next if $classification == -1;
-
-        my $class = get_class_from_number($classification);
+        $args{'nnext_form'} = defined $nnext_anode ? $nnext_anode->form : $FALLBACK_LEMMA;
+        $args{'nnext_lemma'} = defined $nnext_anode ? $nnext_anode->lemma : $FALLBACK_LEMMA;
+        $args{'nnext_tag'} = defined $nnext_anode ? $nnext_anode->tag : $FALLBACK_TAG;
 
 
-        # Save entity to tree
+        my (@features, $data, $classification);
 
-        create_entity_node( $n_root, $class, $anode );
+        #### ONEWORD ####
+
+        @features = extract_oneword_features(%args);
+
+        $data =  Algorithm::SVM::DataSet->new( Label => 0, Data => \@features );
+        $classification =  $models{oneword}->predict($data);
+
+        unless ( $classification == -1 ) {
+
+            my $class = get_class_from_number($classification);
+            create_entity_node( $n_root, $class, $anode );
+        }
+
+        next unless $i > 1;
+        #### TWOWORD ####
+
+        # @features = extract_twoword_features(%args);
+
+        # $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
+        # $classification = $models{twoword}->predict($data);
+
+        # unless ($classification == -1 ) {
+
+        #     my $class = get_class_from_number($classification);
+        #     create_entity_node( $n_root, $class, $prev_anode, $anode );
+        # }
+
+	# next unless $i > 2;
+	# #### THREEWORD ####
+
+	# @features = extract_threeword_features(%args);
+
+	# $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
+        # $classification = $models{threeword}->predict($data);
+
+        # unless ($classification == -1 ) {
+
+        #     my $class = get_class_from_number($classification);
+        #     create_entity_node( $n_root, $class, $pprev_anode, $prev_anode, $anode );
+        # }
 
 
     }
 
 
 
-    return;
 }
 
 sub create_entity_node {
-    my ( $n_root, $classification, @m_nodes ) = @_;
+    my ( $n_root, $classification, @a_nodes ) = @_;
 
-#    return if @m_nodes == 0;    # empty entity
+    #    return if @a_nodes == 0;    # empty entity
 
     # Check if this entity already exists
-#    my @m_ids = sort map{ $_->id } @m_nodes;
-#    my $m_ids_label = join $MRF_DELIM, @m_ids;
-#    return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
+    #    my @a_ids = sort map{ $_->id } @a_nodes;
+    #    my $a_ids_label = join $MRF_DELIM, @a_ids;
+    #    return if exists $entities{$a_ids_label} && $entities{$a_ids_label}->get_attr('ne_type') eq $classification;
+
 
 
     # Create new SCzechN node
@@ -93,13 +142,13 @@ sub create_entity_node {
     $n_node->set_attr( 'ne_type', $classification );
 
     # Set a.rf's
-    $n_node->set_deref_attr('a.rf', \@m_nodes);
+    $n_node->set_deref_attr('a.rf', \@a_nodes);
 
     # Set normalized name
     my $normalized_name;
 
-    foreach my $m_node (@m_nodes) {
-        my $act_normalized_name = $m_node->lemma;
+    foreach my $a_node (@a_nodes) {
+        my $act_normalized_name = $a_node->lemma;
         $act_normalized_name =~ s/[-_].*//;
         $normalized_name .= " " . $act_normalized_name;
     }
@@ -108,7 +157,7 @@ sub create_entity_node {
     $n_node->set_attr( 'normalized_name', $normalized_name );
 
     # Remember this named entity
-#    $entities{$m_ids_label} = $n_node;
+    #    $entities{$a_ids_label} = $n_node;
 
     # print STDERR ( "Named entity \"$classification\" found: " . $n_node->get_attr('normalized_name') . "\n" );
 
