@@ -1,5 +1,35 @@
 #!/usr/bin/env perl
 
+=pod
+
+=head1 NAME
+
+Features.pl - Feature extraction for SysNERV SVM model
+
+=head1 SYNOPSIS
+
+B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> [--model=I<MODEL>]
+
+=head1 DESCRIPTION
+
+This script generates feature vectors for SysNERV from two input
+files, C<DATA_PLAIN> and C<DATA_ANOT>. The first of them must be in
+format C<form/lemma/tag>, one sentence per line, tokens separated by
+spaces. The second file is in annotation format described in the
+technical report, also one sentence per line. The lines of those files
+are aligned.
+
+=head1 OPTIONS
+
+=over 4
+
+=item I<--model>
+
+Specifies the model to be prepared. Valid values are so far:
+C<oneword>, C<twoword> and C<threeword>.
+
+=cut
+
 use strict;
 use warnings;
 
@@ -11,33 +41,16 @@ use Treex::Tool::NamedEnt::Features::Threeword;
 use Treex::Tool::NamedEnt::Features::Common qw/get_class_number $FALLBACK_TAG $FALLBACK_LEMMA/;
 
 use Getopt::Long;
-
-=pod
-
-=head1 NAME
-
-Features.pl - Feature extraction for SysNERV SVM model
-
-=head1 SYNOPSIS
-
-./Features.pl <neco>
-
-=head1 DESCRIPTION
-
-tenle skript vygeneruje feature vektory za pouziti nejaky ty tovarnicky ze dvou souboru:
-2 soubory, jedna veta na radku, vety na stejnych radcich si odpovidaji. 1 soubor ve formatu form/lemma/tag, druhy ve formatu
-s oanotovanymi pojmenovanymi entitami. Prvni soubor muze byt delsi, pak se predpoklada, ze named entities v techto additional
-datech nejsou (data od Honzy Maska)
-
-=cut
+use Pod::Usage;
 
 my $model = "oneword";
+
 GetOptions('model=s' => \$model);
 
-my ( $data, $dataNer ) = @ARGV;
+my $data = shift;
+my $dataNer = shift;
 
-die "Usage ./Features.pl DATA DATA_NER" if !defined $data or !defined $dataNer;
-
+pod2usage if !defined $dataNer;
 
 # Struktura: seznam vet. veta={formy, lemmata, tagy, onewords, twowords, threewords}
 #            onewords, twowords, threewords=seznam: (index, typ)
@@ -61,7 +74,7 @@ while (<DATA>) {
         @namedents = parse_anot($anotated);
 
     } elsif (!defined $noanot) {
-#        print "No NER data after $.th line in the input\n";
+        #        print "No NER data after $.th line in the input\n";
         $noanot = 1;
     }
 
@@ -74,7 +87,7 @@ while (<DATA>) {
 
     for my $node (@nodes) {
         my ($form, $lemma, $tag) = split /\//, $node, 3;
-        die "Wrong format of tokens in plain format" if !defined $tag;
+        die "Wrong format of tokens in plain format ($node)" if !defined $tag;
 
         push @words, $form;
         push @lemmas, $lemma;
@@ -85,7 +98,9 @@ while (<DATA>) {
     $sentence{words} = \@words;
     $sentence{lemmas} = \@lemmas;
     $sentence{tags} = \@tags;
-    $sentence{namedents} = \@namedents unless $noanot;
+
+    $sentence{namedents} = [];
+    push @{$sentence{namedents}}, @namedents unless $noanot;
 
     push @sentences, \%sentence;
 }
@@ -100,15 +115,17 @@ for my $sentence (@sentences) {
     my @words = @{$sentence->{words}};
     my @lemmas = @{$sentence->{lemmas}};
     my @tags = @{$sentence->{tags}};
+    my @namedents = @{$sentence->{namedents}};
 
     for my $i (0 .. $#words) {
 
         my %args;
+
         $args{'act_form'} = $words[$i];
         $args{'act_lemma'} = $lemmas[$i];
         $args{'act_tag'} = $tags[$i];
 
-        $args{'prev_lema'} = $i > 0 ? $lemmas[$i - 1] : $FALLBACK_LEMMA;
+        $args{'prev_lemma'} = $i > 0 ? $lemmas[$i - 1] : $FALLBACK_LEMMA;
         $args{'prev_tag'} = $i > 0 ? $tags[$i - 1] : $FALLBACK_TAG;
         $args{'prev_form'} = $i > 0 ? $words[$i - 1] : $FALLBACK_LEMMA;
 
@@ -121,48 +138,47 @@ for my $sentence (@sentences) {
         $args{'next_tags'} = $i < $#words ? $tags[$i + 1] : $FALLBACK_TAG;
 
 
+        # Urceni labelu pro kazdy model
+        my ($onewordRef, $twowordRef, $threewordRef) = (-1,-1,-1);
+
+        for my $ne (@namedents) {
+            my $type = get_class_number($ne->{type});
+
+            warn("Unknown class: " . $ne->{type}) and next if !defined $type;
+
+            # Konci entita na teto pozici?
+            if ( $ne->{end} == $i+1 ) {
+
+                my $start = $ne->{start};
+
+                $onewordRef = $type if $start == $i+1;
+                $twowordRef = $type if $start == $i;
+                $threewordRef = $type if $start == $i-1;
+            }
+        }
+
         my @features;
-        
+
         if ($model eq 'oneword') {
-            @features = Treex::Tool::NamedEnt::Features::Oneword::extract(act_form => $args{'act_form'},
-                                                                             act_lemma => $args{'act_lemma'},
-                                                                             act_tag => $args{'act_tag'},
-                                                                             prev_lemma => $args{'plemma'},
-                                                                             prev_tag => $args{'ptag'},
-                                                                             pprev_tag => $args{'pptag'},
-                                                                             next_lemma => $args{'nlemma'});
-	        my $reference = -1;
-        } elsif($model eq 'twoword') {
+            @features = extract_oneword_features( %args );
+	    push @features, $onewordRef;
 
-        } elsif($model eq 'threeword') {
+        } elsif ($model eq 'twoword' && $i > 0) {
+            @features = extract_twoword_features( %args );
+	    push @features, $twowordRef;
 
-        }
+        } elsif ($model eq 'threeword' && $i > 1) {
+            @features = extract_threeword_features( %args );
+	    push @features, $threewordRef;
 
-
-	if (defined $sentence->{namedents}) {
-	    for my $ne (@{$sentence->{namedents}}) {
-		if ($ne->{start} == $i+1 && $ne->{end} == $i+1 && $model eq 'oneword') {
-		    $reference = get_class_number($ne->{type});
-                    if (!defined $reference) {
-                        warn ("Unknown class: ". $ne->{type});
-                        $reference = -1;
-                    }
-		}
-        if ($ne->{start} == $i && $ne->{end} == $i+1 && $model  eq 'twoword') {
-
-	    }
-        if ($ne->{start} == $i && $ne->{end} == $i+2 && $model eq 'threeword') {
-
-        }
+        } else {
+	    next;
 	}
 
-        print join ",", @features, $reference;
+        print join ",", @features;
         print "\n";
     }
-
 }
-
-
 
 
 sub parse_anot {
