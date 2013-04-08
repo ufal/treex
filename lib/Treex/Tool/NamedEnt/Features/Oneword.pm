@@ -6,6 +6,13 @@ use warnings;
 use Treex::Tool::NamedEnt::Features::Common qw/:oneword/;
 use Treex::Tool::Lexicon::CS;
 
+use Exporter 'import';
+our @EXPORT = qw/ extract_oneword_features /;
+
+sub extract_oneword_features {
+    return extract(@_);
+}
+
 sub extract {
     my %args = @_;
 

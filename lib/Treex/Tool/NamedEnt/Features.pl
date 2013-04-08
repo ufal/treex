@@ -8,12 +8,26 @@ use Data::Dumper;
 use Treex::Tool::NamedEnt::Features::Oneword;
 use Treex::Tool::NamedEnt::Features::Twoword;
 use Treex::Tool::NamedEnt::Features::Threeword;
-use Treex::Tool::NamedEnt::Features::Common qw/get_class_number/;
+use Treex::Tool::NamedEnt::Features::Common qw/get_class_number $FALLBACK_TAG $FALLBACK_LEMMA/;
 
-# tenle skript vygeneruje feature vektory za pouziti nejaky ty tovarnicky ze dvou souboru:
-# 2 soubory, jedna veta na radku, vety na stejnych radcich si odpovidaji. 1 soubor ve formatu form/lemma/tag, druhy ve formatu
-# s oanotovanymi pojmenovanymi entitami. Prvni soubor muze byt delsi, pak se predpoklada, ze named entities v techto additional
-# datech nejsou (data od Honzy Maska)
+=pod
+
+=head1 NAME
+
+Features.pl - Feature extraction for SysNERV SVM model
+
+=head1 SYNOPSIS
+
+./Features.pl <neco>
+
+=head1 DESCRIPTION
+
+tenle skript vygeneruje feature vektory za pouziti nejaky ty tovarnicky ze dvou souboru:
+2 soubory, jedna veta na radku, vety na stejnych radcich si odpovidaji. 1 soubor ve formatu form/lemma/tag, druhy ve formatu
+s oanotovanymi pojmenovanymi entitami. Prvni soubor muze byt delsi, pak se predpoklada, ze named entities v techto additional
+datech nejsou (data od Honzy Maska)
+
+=cut
 
 my ( $data, $dataNer ) = @ARGV;
 
@@ -88,10 +102,10 @@ for my $sentence (@sentences) {
         my $lemma = $lemmas[$i];
         my $tag = $tags[$i];
 
-        my $plemma = $i > 0 ? $lemmas[$i - 1] : "hovno";
-        my $ptag = $i > 0 ? $tags[$i - 1] : "Z_____----";
-        my $pptag = $i > 1 ? $tags[$i - 2] : "ZADSA";
-        my $nlemma = $i < $#words ? $lemmas[$i + 1] : "jhvno";
+        my $plemma = $i > 0 ? $lemmas[$i - 1] : $FALLBACK_LEMMA;
+        my $ptag = $i > 0 ? $tags[$i - 1] : $FALLBACK_TAG;
+        my $pptag = $i > 1 ? $tags[$i - 2] : $FALLBACK_TAG;
+        my $nlemma = $i < $#words ? $lemmas[$i + 1] : $FALLBACK_LEMMA;
 
         my @features = Treex::Tool::NamedEnt::Features::Oneword::extract(act_form => $form,
                                                                          act_lemma => $lemma,

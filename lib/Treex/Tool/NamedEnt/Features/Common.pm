@@ -8,7 +8,10 @@ use Exporter qw/ import /;
 my $common = [qw/ tag_features is_tabu_pos is_listed_entity/];
 
 our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common);
-our @EXPORT_OK = qw/get_class_number get_class_from_number/;
+our @EXPORT_OK = qw/get_class_number get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG/;
+
+our $FALLBACK_LEMMA = ".";
+our $FALLBACK_TAG   = "Z:-------------";
 
 Exporter::export_ok_tags('oneword');
 Exporter::export_ok_tags('twoword');
