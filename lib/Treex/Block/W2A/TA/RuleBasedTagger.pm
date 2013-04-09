@@ -112,6 +112,7 @@ sub first_pass {
 			my $f = $node->form;
 			$f =~ s/(^\s+|\s+$)//;
 			my $tagged = 0;
+			
 			# start from list with less items
 			$tagged = $self->tag_if_determiner($node, $tagged);
 			$tagged = $self->tag_if_conjunction($node, $tagged);
@@ -375,6 +376,41 @@ sub tag_if_punc {
 			}
 	return $tagged;		
 }
+
+# fills the following 
+# gender(3), number(4), case(5), person(8), clitics(13) 
+sub fill_noun_features {
+	my ($self, $node) = @_;
+ 
+	# gender(3)
+	# unfortunately the gender information cannot predicted
+	# accurately based on suffixes
+	if ($node->tag =~ /^N/) {
+			# Masculine (M)
+			if ($node->form =~ /($TA_CONSONANTS_PLUS_VOWEL_A_REG)\N{TAMIL LETTER NNNA}\N{TAMIL SIGN VIRAMA}/) {
+				
+			}
+	}
+	elsif ($node->tag =~ /^V/) {
+		
+	}	
+	elsif ($node->tag =~ /^R/) {
+		
+	}
+	# number(4)
+	
+	# case(5)
+	
+	# person(8)
+	
+	# clitics(13)
+
+}
+
+sub fill_verb_features {
+	my ($self, $nodes_ref, $i) = @_;	
+}
+
 
 1;
 
