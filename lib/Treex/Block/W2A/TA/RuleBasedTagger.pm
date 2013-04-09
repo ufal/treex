@@ -124,11 +124,13 @@ sub first_pass {
 			$tagged = $self->tag_if_noun($node, $tagged);
 			$tagged = $self->tag_if_verb($node, $tagged);			
 			# Default tag : NN
-			$node->set_attr('tag', 'NN-------------') if !$tagged;
+			$node->set_attr('tag', 'NNNS---3-------') if !$tagged;
 		}
 	}
 	
-	# change incorrectly tagged verbs
+	# postprocessing
+
+	# POS [N->V]
 	foreach my $i (0..($#nodes - 1)) {
 		# check if the compound verbs are tagged correctly
 		# (i) change incorrectly tagged main verbs		
@@ -137,7 +139,7 @@ sub first_pass {
 			$end_kctp =~ s/\N{TAMIL SIGN VIRAMA}$//;
 			my $curr_tag = $nodes[$i]->tag;
 			my $next_tag = $nodes[$i+1]->tag;
-			if (($nodes[$i+1]->form =~ /^$end_kctp/) && ($curr_tag ne 'V--------------') && ($next_tag eq 'V--------------')) {
+			if (($nodes[$i+1]->form =~ /^$end_kctp/) && ($curr_tag !~ /^V/) && ($next_tag =~ /^V/)) {
 				#print $nodes[$i]->form . "/" . $curr_tag . "\t" . $nodes[$i+1]->form . "/" . $next_tag . "\n";
 				$nodes[$i]->set_attr('tag', 'V--------------');				
 			}
@@ -148,11 +150,16 @@ sub first_pass {
 		if ($nodes[$i]->form =~ /($_VBP_END_REG)$/) {
 			my $curr_tag = $nodes[$i]->tag;
 			my $next_tag = $nodes[$i+1]->tag;
-			if (($curr_tag ne 'VB') && ($next_tag eq 'VB')) {
+			if (($curr_tag !~ /^V/) && ($next_tag =~ /^V/)) {
 				#print $nodes[$i]->form . "/" . $curr_tag . "\t" . $nodes[$i+1]->form . "/" . $next_tag . "\n";
 				$nodes[$i]->set_attr('tag', 'V--------------');				
 			}
 		}		
+	}
+	
+	# SUBPOS [: -> #] at sentence boundaries
+	if ($nodes[$#nodes]->form =~ /\.|\?|\!|\:|\;/) {
+		$nodes[$#nodes]->set_attr('tag', 'Z#-------------');
 	}	
 }
 
@@ -162,6 +169,14 @@ sub second_pass{
 
 	foreach my $node (@nodes) {
 		$node->set_attr('tag', 'NNNS---3-------') if (!defined $node->tag);
+	}
+	
+	# make sure the tag length is 15 for each tag
+	foreach my $node (@nodes) {
+		if (length $node->tag != 15) {
+			print "tag length error at : " . $node->form . "\t" . $node->tag . "\n";  
+			$node->set_attr('tag', 'NNNS---3-------') ;			
+		}
 	}
 }
 
@@ -239,6 +254,23 @@ sub tag_if_pronoun {
 						substr($tmptag, 1, 1) = 'G';
 						$node->set_attr('tag', $tmptag); 								
 						$subpos_found = 1; 
+					}
+					
+					if (!$subpos_found) {
+						# SUBPOS: 'i' [interrogative pronouns]						
+						if ($node->form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/) {
+							my $tmptag = $node->tag;
+							substr($tmptag, 1, 1) = 'i';
+							$node->set_attr('tag', $tmptag); 								
+							$subpos_found = 1; 							
+						}
+						# SUBPOS: 'p' [personal pronouns]
+						else {
+							my $tmptag = $node->tag;
+							substr($tmptag, 1, 1) = 'p';
+							$node->set_attr('tag', $tmptag); 								
+							$subpos_found = 1; 
+						}
 					}							
 				}
 			}
