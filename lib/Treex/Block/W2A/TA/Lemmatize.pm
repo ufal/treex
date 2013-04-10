@@ -20,8 +20,8 @@ my @nvals  = @{ $noun_rules{'v'} };
 # load noun rules
 log_info 'Loading Tamil verb morphotactics';
 %verb_rules = load_rules($verb_rules_file);
-my @vrules = @{ $noun_rules{'r'} };
-my @vvals  = @{ $noun_rules{'v'} };
+my @vrules = @{ $verb_rules{'r'} };
+my @vvals  = @{ $verb_rules{'v'} };
 
 
 sub process_atree {
@@ -85,15 +85,33 @@ sub load_rules {
 
 sub find_lemma {
 	my ($self, $node) = @_;	
-	# apply noun rules
-	foreach my $i ( 0 .. $#nrules ) {
-		my $r = $nrules[$i];
-		my $v = $nvals[$i];
+	my $lemma_found = 0;
+	
+	# apply verb morphotactics
+	foreach my $i ( 0 .. $#vrules ) {
+		my $r = $vrules[$i];
+		my $v = $vvals[$i];
 		if ($node->form =~ /$r$/) {
 			my $tmpform = $node->form;
-			$tmpform =~ s/$r/"$v"/ee;
+			$tmpform =~ s/$r$/"$v"/ee;
 			$node->set_attr('lemma', $tmpform);
+			$lemma_found = 1;
 			last;				
+		}
+	}
+	
+	# apply noun morphotactics
+	if (!$lemma_found) {
+		foreach my $i ( 0 .. $#nrules ) {
+			my $r = $nrules[$i];
+			my $v = $nvals[$i];
+			if ($node->form =~ /$r$/) {
+				my $tmpform = $node->form;
+				$tmpform =~ s/$r/"$v"/ee;
+				$node->set_attr('lemma', $tmpform);
+				$lemma_found = 1;
+				last;				
+			}
 		}
 	}	
 }
