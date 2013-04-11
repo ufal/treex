@@ -1,5 +1,5 @@
-package Treex::Tool::FormsGenerator::Tamil;
-use Treex::Tool::SandhiHandler::Tamil 'combine';
+package Treex::Tool::FormsGenerator::TA;
+use Treex::Tool::SandhiHandler::TA 'combine';
 use Treex::Core::Common;
 
 use Moose;
