@@ -23,12 +23,18 @@ log_info 'Loading Tamil verb morphotactics';
 my @vrules = @{ $verb_rules{'r'} };
 my @vvals  = @{ $verb_rules{'v'} };
 
+my $PUNC = qr/;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|–|—|„|\,|‘|\*|\^|\||\`|\.|\:|\'/;
 
 sub process_atree {
     my ( $self, $atree ) = @_;
     my @nodes = $atree->get_descendants({ordered=>1});
     foreach my $node (@nodes) {
-    	$self->find_lemma($node);
+    	# do not lemmatize if the form contains
+    	# 1. punctuations
+    	# 2. digits
+		if ($node->form !~ /(\d|$PUNC)/) {
+	    	$self->find_lemma($node);			
+		}
     	$node->set_attr('lemma', $node->form) if (!defined $node->lemma); 
     }    
     return;
@@ -107,13 +113,20 @@ sub find_lemma {
 			my $v = $nvals[$i];
 			if ($node->form =~ /$r$/) {
 				my $tmpform = $node->form;
-				$tmpform =~ s/$r/"$v"/ee;
+				$tmpform =~ s/$r$/"$v"/ee;
 				$node->set_attr('lemma', $tmpform);
 				$lemma_found = 1;
 				last;				
 			}
 		}
-	}	
+	}
+	
+	# postprocessing
+	
+	# 1. if there are 2 consonants in a row, change 
+	# the last one into a vowel (உ/u)
+	
+		
 }
 
 1;
