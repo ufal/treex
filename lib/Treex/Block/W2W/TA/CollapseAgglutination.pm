@@ -7,38 +7,17 @@ extends 'Treex::Core::Block';
 my $data_dir = "data/models/normalization/ta/agglutination";
 
 # auxiliary verbs
-my $aux_rules_file   = require_file_from_share("$data_dir/aux_rules.dat");
-my @aux_forms_fnames = (
-	#"azu_forms.dat",
-	"cey_forms.dat",
-	#"kita_forms.dat",
-	#"kizi_forms.dat",
-	"kol_forms.dat",
-	"kotu_forms.dat",
-	"maattu_forms.dat",
-	"muti_forms.dat",
-	"paar_forms.dat",
-	#"pannu_forms.dat",
-	"patu_forms.dat",
-	"po_forms.dat",
-	"pootu_forms.dat",
-	#"tallu_forms.dat",
-	#"theer_forms.dat",
-	#"tholai_forms.dat",
-	"vai_forms.dat",
-	"varu_forms.dat",
-	"vendu_forms.dat",
-	"vitu_forms.dat",
-);
+my $aux_rules_file   = require_file_from_share("$data_dir/aux_rules_short.dat");
 my %aux_rules;
-my @aux_forms;
 
 # postpositions
 my $pp_rules_file = require_file_from_share("$data_dir/pp_rules.dat");
 my %pp_rules;
+
 # compound words
 my $compound_words_file = require_file_from_share("$data_dir/compound_words.dat");
 my %compound_rules;
+
 # exceptions
 my $exceptions_file = require_file_from_share("$data_dir/exceptions.dat"); 
 my %exception_rules;
@@ -46,9 +25,6 @@ my %exception_rules;
 # load auxiliary verb rules
 log_info 'Loading Tamil aux verb rules...';
 %aux_rules = load_rules($aux_rules_file);
-
-# load auxiliary forms
-@aux_forms = load_aux_forms(\@aux_forms_fnames);
 
 # load postpositional rules
 log_info 'Loading Tamil postpositional rules...';
@@ -111,29 +87,6 @@ sub load_rules {
 	return %rules_ordered;
 }
 
-sub load_aux_forms {
-	my ( $fnames_ref ) = @_;
-	my @auxf = ();
-	my @fnames = @{$fnames_ref};
-	foreach my $fn (@fnames) {
-		my $f = require_file_from_share("$data_dir/$fn");
-		my @data = ();
-		print "Loading $fn\n";
-		open( RHANDLE, '<:encoding(UTF-8)', $f );
-		while (<RHANDLE>) {
-			my $l = $_;
-			chomp $l;
-			$l =~ s/(^\s+|\s+$)//;
-			next if ($l =~ /^$/);
-			next if ($l =~ /^#/);
-			push @data, $l;
-		}
-		push @auxf, @data;
-		close RHANDLE;
-	}
-	return @auxf;
-}
-
 sub process_zone {
 	my ( $self, $zone ) = @_;
 	my $sentence = $zone->sentence;
@@ -142,15 +95,6 @@ sub process_zone {
 	my $outsentence = $self->reduce_agglutination($sentence);
 	$zone->set_sentence($outsentence);
 	return 1;
-}
-
-sub print_rules {
-	my ( $ref, $type ) = @_;
-	my %rules = %$ref;
-	my @r     = @{ $rules{'r'} };
-	my @v     = @{ $rules{'v'} };
-	map { print $r[$_] . "\t:\t" . $v[$_] . "\n"; } 0 .. $#r;
-	return;
 }
 
 sub reduce_agglutination {
@@ -165,23 +109,13 @@ sub reduce_agglutination {
 	$sentence =~ s/([^\d])(\,|\.)\s+/$1 $2 /g;
 	$sentence =~ s/\.$/ ./;
 	
-	# some important words that need to be 
-	# separated in the beginning
-	# 'தான்', 'மட்டும்'
-	$sentence =~ s/(தான்|மட்டும்)\s+/ $1 /g;
-
-	# separate auxiliary forms 
-	foreach my $aform (@aux_forms) {
-		$sentence =~ s/$aform\s+/ $aform /g;
-	}	
-	
 	# apply auxiliary verb rules
 	my @arules = @{ $aux_rules{'r'} };
 	my @avals  = @{ $aux_rules{'v'} };
 	foreach my $i ( 0 .. $#arules ) {
 		my $r = $arules[$i];
 		my $v = $avals[$i];
-		$sentence =~ s/$r\s+/"$v"/gee;
+		$sentence =~ s/$r/"$v"/gee;
 	}
 	
 	# separate postpositions
