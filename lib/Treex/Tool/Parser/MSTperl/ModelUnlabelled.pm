@@ -148,6 +148,19 @@ sub get_feature_weight {
         return 0;
     }
 }
+    
+sub feature_is_unknown {
+
+    # (Str $feature)
+    my ( $self, $feature ) = @_;
+
+    my $weight = $self->weights->{$feature};
+    if ($weight) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
 
 sub set_feature_weight {
 

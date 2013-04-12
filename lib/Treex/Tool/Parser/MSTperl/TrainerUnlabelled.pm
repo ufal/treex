@@ -61,7 +61,8 @@ sub update {
     my (
         $self,
         $sentence_correct_parse,
-        $sumUpdateWeight
+        $sumUpdateWeight,
+        $forbid_new_features
     ) = @_;
 
     # reparse the sentence
@@ -89,7 +90,8 @@ sub update {
     $self->mira_update(
         $sentence_correct_parse,
         $sentence_best_parse,
-        $sumUpdateWeight
+        $sumUpdateWeight,
+        $forbid_new_features
     );
 
     return;
@@ -105,7 +107,8 @@ sub mira_update {
         $self,
         $sentence_correct_parse,
         $sentence_best_parse,
-        $sumUpdateWeight
+        $sumUpdateWeight,
+        $forbid_new_features
     ) = @_;
 
     # s(x_t, y_t)
@@ -131,7 +134,8 @@ sub mira_update {
         my ( $features_diff_correct, $features_diff_best, $features_diff_count )
             = $self->features_diff(
             $sentence_correct_parse->features,
-            $sentence_best_parse->features
+            $sentence_best_parse->features,
+            $forbid_new_features
             );
 
         if ( $features_diff_count == 0 ) {
@@ -180,7 +184,7 @@ sub mira_update {
 sub features_diff {
 
     # (ArrayRef[Str] $features_first, ArrayRef[Str] $features_second)
-    my ( $self, $features_first, $features_second ) = @_;
+    my ( $self, $features_first, $features_second, $forbid_new_features ) = @_;
 
     #get feature counts
     my %feature_counts;
@@ -197,7 +201,10 @@ sub features_diff {
     my @features_first;
     my @features_second;
     my $diff_count = 0;
-    foreach my $feature ( keys %feature_counts ) {
+    FF: foreach my $feature ( keys %feature_counts ) {
+        if ($forbid_new_features && $self->model->feature_is_unknown($feature)) {
+            next FF;
+        }
         if ( $feature_counts{$feature} ) {
             my $count = abs( $feature_counts{$feature} );
 

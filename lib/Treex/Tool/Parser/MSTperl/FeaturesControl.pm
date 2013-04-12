@@ -589,14 +589,15 @@ my %simple_feature_sub_references = (
     'pmi'               => \&{feature_pmi},
     'pmibucketed'       => \&{feature_pmi_bucketed},
     'pmirounded'        => \&{feature_pmi_rounded},
+    'pmid'              => \&{feature_pmi_d},
     'cprob'             => \&{feature_cprob},
     'cprobbucketed'     => \&{feature_cprob_bucketed},
     'cprobrounded'      => \&{feature_cprob_rounded},
     # obsolete
-    'pmitworounded'     => \&{feature_pmi_2_rounded},
-    'pmithreerounded'   => \&{feature_pmi_3_rounded},
-    'cprobtworounded'   => \&{feature_cprob_2_rounded},
-    'cprobthreerounded' => \&{feature_cprob_3_rounded},
+#    'pmitworounded'     => \&{feature_pmi_2_rounded},
+#    'pmithreerounded'   => \&{feature_pmi_3_rounded},
+#    'cprobtworounded'   => \&{feature_cprob_2_rounded},
+#    'cprobthreerounded' => \&{feature_cprob_3_rounded},
 );
 
 sub get_simple_feature_sub_reference {
@@ -1438,6 +1439,21 @@ sub feature_additional_model_rounded {
     }
 }
 
+sub feature_additional_model_d {
+    my ( $self, $edge, $parameters, $model ) = @_;
+
+    my ($field_index_c, $field_index_p) = @$parameters;
+    my $child = $edge->child->fields->[$field_index_c];
+    my $parent = $edge->parent->fields->[$field_index_p];
+
+    if ( defined $child && defined $parent) {
+        return $model->get_rounded_value($child, $parent);
+    } else {
+        croak "Either child or parent is undefined in additional model feature, ".
+            "this should not happen!";
+    }
+}
+
 sub feature_pmi {
     my ( $self, $edge, $field_index ) = @_;
 
@@ -1454,6 +1470,12 @@ sub feature_pmi_rounded {
     my ( $self, $edge, $parameters ) = @_;
 
     return $self->feature_additional_model_rounded($edge, $parameters, $self->pmi_model);
+}
+
+sub feature_pmi_d {
+    my ( $self, $edge, $parameters ) = @_;
+
+    return $self->feature_additional_model_d($edge, $parameters, $self->pmi_model);
 }
 
 sub feature_pmi_2_rounded {

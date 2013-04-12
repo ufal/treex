@@ -290,12 +290,106 @@ sub count_errors_attachement {
         my $correct_node   = $correct_sentence->getNodeByOrd( $my_node->ord );
         my $correct_parent = $correct_node->parentOrd;
         if ( $my_parent != $correct_parent ) {
-            $errors++;
+            if ( $self->config->lossFunction ) {
+                $errors +=
+                    $self->attachement_error(
+                        $my_node, $my_node->parent, $correct_node->parent);
+            }
+            else {
+                $errors++;
+            }
         }
     }
 
     return $errors;
 }
+
+sub attachement_error {
+    my ($self, $node, $assignedParent, $correctParent) = @_;
+
+    # TODO how do the undefines happen?
+    # they only seem to occur during testing, not during training
+    return 1 if (!defined $assignedParent || !defined $correctParent);
+
+    my $error = 1;
+
+    my $lossFunction = $self->config->lossFunction;
+
+    if ( $lossFunction eq 'J' ) {
+        if ( defined $correctParent ) {
+            if ( $correctParent->fields->[4] =~ /^J/ ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'A' ) {
+        if ( $node->fields->[4] =~ /^A/ ) {
+            $error = 10;
+        }
+    }
+    elsif ( $lossFunction eq 'NA' ) {
+        if ( defined $correctParent ) {
+            if ( $node->fields->[4] =~ /^A/
+                && $correctParent->fields->[4] =~ /^N/
+            ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'NA2' ) {
+
+        # if the child is A
+        if ( $node->fields->[4] =~ /^A/ ) {
+            # and the assigned or correct parent is N
+            if ( $correctParent->fields->[4] =~ /^N/ || $assignedParent->fields->[4] =~ /^N/ ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'JNA' ) {
+        if ( defined $correctParent ) {
+            if ( $node->fields->[4] =~ /^A/
+                &&
+                (
+                    $correctParent->fields->[4] =~ /^N/
+                    || $correctParent->fields->[4] =~ /^J/ 
+                )
+            ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'NR2' ) {
+
+        # if the child is N
+        if ( $node->fields->[4] =~ /^N/ ) {
+            # and the assigned or correct parent is R
+            if ( $correctParent->fields->[4] =~ /^R/ || $assignedParent->fields->[4] =~ /^R/ ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'JNR2' ) {
+
+        # if the child is N or J
+        if ( $node->fields->[4] =~ /^[NJ]/ ) {
+            # and the assigned or correct parent is R
+            if ( $correctParent->fields->[4] =~ /^R/ || $assignedParent->fields->[4] =~ /^R/ ) {
+                $error = 10;
+            }
+        }
+    }
+    elsif ( $lossFunction eq 'J2' ) {
+
+        # if the assigned or correct parent is J
+        if ( $correctParent->fields->[4] =~ /^J/ || $assignedParent->fields->[4] =~ /^J/ ) {
+            $error = 10;
+        }
+    }
+
+    return $error;
+}
+
 
 sub count_errors_labelling {
 

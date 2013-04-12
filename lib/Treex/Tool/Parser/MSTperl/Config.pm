@@ -398,6 +398,8 @@ has 'field_indexes' => (
     default => sub { {} },
 );
 
+has lossFunction => ( is => 'rw', isa => 'Str', default => '' );
+
 has use_pmi => (
     is => 'rw',
     isa => 'Bool',
@@ -470,6 +472,7 @@ sub BUILD {
             'parent_ord',
             'distance_buckets',
             'label',
+            'lossFunction',
             'use_pmi',
             'pmi_model_file',
             'pmi_model_format',

@@ -32,14 +32,38 @@ has number_of_inner_iterations => (
     is  => 'rw',
 );
 
+has skip_scores_averaging => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 0
+);
+
 # TRAINING COMMON SUBS
+
+sub train_dev {
+    my ($self, $training_data, $dev_data) = @_;
+
+    $self->train($training_data, 0);
+    my $feature_count = $self->train($dev_data, 1);
+
+    return $feature_count;
+}
+
+sub train_2parts {
+    my ($self, $training_data, $dev_data) = @_;
+
+    $self->train($training_data, 0);
+    my $feature_count = $self->train($dev_data, 0);
+
+    return $feature_count;
+}
 
 sub train {
 
     # (ArrayRef[Treex::Tool::Parser::MSTperl::Sentence] $training_data
     #  Bool $unlabelled)
     # Training data: T = {(x_t, y_t)} t=1..T
-    my ( $self, $training_data ) = @_;
+    my ( $self, $training_data, $forbid_new_features ) = @_;
 
     # number of sentences in training data
     my $sentence_count = scalar( @{$training_data} );
@@ -90,7 +114,7 @@ sub train {
                 $self->number_of_inner_iterations - $innerIteration;
 
             # update on this instance
-            $self->update( $sentence_correct, $sumUpdateWeight );
+            $self->update( $sentence_correct, $sumUpdateWeight, $forbid_new_features );
 
             # $innerIteration = ( $iteration - 1 ) * $sentence_count + $sentNo;
             $innerIteration++;
@@ -117,8 +141,10 @@ sub train {
         print "FINAL FEATURE WEIGTHS:\n";
     }
 
-    # average the model (is said to help overfitting)
-    $self->scores_averaging();
+    if (!$self->skip_scores_averaging) {
+        # average the model (is said to help overfitting)
+        $self->scores_averaging();
+    }
 
     # only progress and/or debug info
     my $feature_count = $self->model->get_feature_count();
