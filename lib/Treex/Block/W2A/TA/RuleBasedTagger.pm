@@ -7,9 +7,9 @@ extends 'Treex::Core::Block';
 use charnames ':full';
 
 my $verb_suffixes_file = require_file_from_share(
-	"data/models/simple_tagger/ta/dict/verb_suffixes.dat");
+	"data/models/simple_tagger/ta/dict/verb_suffixes_tagged.dat");
 my $noun_suffixes_file = require_file_from_share(
-	"data/models/simple_tagger/ta/dict/noun_suffixes.dat");
+	"data/models/simple_tagger/ta/dict/noun_suffixes_tagged.dat");
 my $pp_file = require_file_from_share(
 	"data/models/simple_tagger/ta/dict/postpositions.dat");
 my $adj_file =
@@ -52,15 +52,18 @@ my %aux_verbs = (
 	'இல்லை' => 'இல்'
 );
 
-my @noun_suffixes = load_suffixes($noun_suffixes_file);
-my @verb_suffixes = load_suffixes($verb_suffixes_file);
-my %postpositions = load_list($pp_file);
-my %adjectives    = load_list($adj_file);
-my %adverbs       = load_list($adv_file);
-my %quantifiers   = load_list($quantifiers_file);
-my %pronouns      = load_list($pronouns_file);
+my %noun_suffixes_tags = load_suffixes($noun_suffixes_file);
+my %verb_suffixes_tags = load_suffixes($verb_suffixes_file);
+my %postpositions      = load_list($pp_file);
+my %adjectives         = load_list($adj_file);
+my %adverbs            = load_list($adv_file);
+my %quantifiers        = load_list($quantifiers_file);
+my %pronouns           = load_list($pronouns_file);
 
-# some more consonants
+my @verb_suffixes = @{$verb_suffixes_tags{'s'}};
+my @verb_tags     = @{$verb_suffixes_tags{'t'}};
+my @noun_suffixes = @{$noun_suffixes_tags{'s'}};
+my @noun_tags     = @{$noun_suffixes_tags{'t'}};
 
 # verbal participle endings
 my $_VBP_END_REG = qr/\N{TAMIL VOWEL SIGN U}|\N{TAMIL VOWEL SIGN I}/;
@@ -82,8 +85,10 @@ sub load_list {
 }
 
 sub load_suffixes {
-	my $f = shift;
+	my $f             = shift;
+	my %suffixes_tags = ();
 	my @suffixes;
+	my @tags;
 	open( RHANDLE, '<:encoding(UTF-8)', $f );
 	my @data = <RHANDLE>;
 	close RHANDLE;
@@ -92,9 +97,14 @@ sub load_suffixes {
 		$line =~ s/(^\s+|\s+$)//;
 		next if ( $line =~ /^$/ );
 		next if ( $line =~ /^#/ );
-		push @suffixes, $line;
+		next if ( $line !~ /\t/ );
+		my @st = split( /\t/, $line );
+		push @suffixes, $st[0];
+		push @tags,     $st[1];
 	}
-	return @suffixes;
+	$suffixes_tags{'s'} = \@suffixes;
+	$suffixes_tags{'t'} = \@tags;
+	return %suffixes_tags;
 }
 
 sub process_atree {
@@ -126,7 +136,7 @@ sub first_pass {
 			$tagged = $self->tag_if_verb( $node, $tagged );
 
 			# Default tag : NN
-			$node->set_attr( 'tag', 'NNNS---3-------' ) if !$tagged;
+			$node->set_attr( 'tag', 'NNNSN----------' ) if !$tagged;
 		}
 	}
 
@@ -177,7 +187,7 @@ sub second_pass {
 	my @nodes = @{$nodes_ref};
 
 	foreach my $node (@nodes) {
-		$node->set_attr( 'tag', 'NNNS---3-------' ) if ( !defined $node->tag );
+		$node->set_attr( 'tag', 'NNNSN----------' ) if ( !defined $node->tag );
 	}
 
 	# make sure the tag length is 15 for each tag
@@ -186,7 +196,7 @@ sub second_pass {
 			print "tag length error at : "
 			  . $node->form . "\t"
 			  . $node->tag . "\n";
-			$node->set_attr( 'tag', 'NNNS---3-------' );
+			$node->set_attr( 'tag', 'NNNSN----------' );
 		}
 	}
 }
@@ -194,15 +204,11 @@ sub second_pass {
 sub tag_if_verb {
 	my ( $self, $node, $tagged ) = @_;
 	if ( !$tagged ) {
-
 		# a. suffix based matching
-		foreach my $vs (@verb_suffixes) {
+		foreach my $i ( 0 .. $#verb_suffixes ) {
+			my $vs = $verb_suffixes[$i];
 			if ( $node->form =~ /$vs$/ ) {
-				$node->set_attr( 'tag', 'V--------------' );				
-				# finite verb
-#				if ( $node->form =~ /(ற|த|ப|ட|ன|வ)ேன்$/ ) {
-#					$self->set_position($node, '')	
-#				}
+				$node->set_attr( 'tag', $verb_tags[$i] );
 				$tagged = 1;
 				last;
 			}
@@ -214,9 +220,16 @@ sub tag_if_verb {
 		# all possible forms of auxiliary verbs)
 		foreach my $ak ( keys %aux_verbs ) {
 			if ( $node->form =~ /^$ak/ ) {
-				$node->set_attr( 'tag', 'V--------------' );
-				$tagged = 1;
-				last;
+				if ( defined $node->tag ) {
+					my $t = $node->tag;
+					$t =~ s/^Vr/VR/;
+					$t =~ s/^Vt/VT/;
+					$t =~ s/^Vu/VU/;
+					$t =~ s/^Vw/VW/;
+					$node->set_attr( 'tag', $t );
+					$tagged = 1;
+					last;
+				}
 			}
 		}
 	}
@@ -226,9 +239,10 @@ sub tag_if_verb {
 sub tag_if_noun {
 	my ( $self, $node, $tagged ) = @_;
 	if ( !$tagged ) {
-		foreach my $ns (@noun_suffixes) {
+		foreach my $i ( 0 .. $#noun_suffixes ) {
+			my $ns = $noun_suffixes[$i];
 			if ( $node->form =~ /$ns$/ ) {
-				$node->set_attr( 'tag', 'NN-------------' );
+				$node->set_attr( 'tag', $noun_tags[$i] );
 				$tagged = 1;
 				last;
 			}
@@ -249,7 +263,7 @@ sub tag_if_pronoun {
 
 			# SUBPOS: 'B' [general referential pronouns]
 			# ends with உம்/um
-			if ( $node->form =~
+			if ( $node->form =~ 
 /\N{TAMIL VOWEL SIGN U}\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}$/
 			  )
 			{

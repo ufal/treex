@@ -9,20 +9,22 @@ my $data_dir = "data/models/normalization/ta/agglutination";
 # auxiliary verbs
 my $aux_rules_file   = require_file_from_share("$data_dir/aux_rules.dat");
 my @aux_forms_fnames = (
-	"azu_forms.dat",
+	#"azu_forms.dat",
 	"cey_forms.dat",
-	"kita_forms.dat",
-	"kizi_forms.dat",
+	#"kita_forms.dat",
+	#"kizi_forms.dat",
 	"kol_forms.dat",
 	"kotu_forms.dat",
+	"maattu_forms.dat",
+	"muti_forms.dat",
 	"paar_forms.dat",
-	"pannu_forms.dat",
+	#"pannu_forms.dat",
 	"patu_forms.dat",
 	"po_forms.dat",
 	"pootu_forms.dat",
-	"tallu_forms.dat",
-	"theer_forms.dat",
-	"tholai_forms.dat",
+	#"tallu_forms.dat",
+	#"theer_forms.dat",
+	#"tholai_forms.dat",
 	"vai_forms.dat",
 	"varu_forms.dat",
 	"vendu_forms.dat",
@@ -37,6 +39,9 @@ my %pp_rules;
 # compound words
 my $compound_words_file = require_file_from_share("$data_dir/compound_words.dat");
 my %compound_rules;
+# exceptions
+my $exceptions_file = require_file_from_share("$data_dir/exceptions.dat"); 
+my %exception_rules;
 
 # load auxiliary verb rules
 log_info 'Loading Tamil aux verb rules...';
@@ -52,6 +57,10 @@ log_info 'Loading Tamil postpositional rules...';
 # load compound words
 log_info 'Loading compound words...';
 %compound_rules = load_rules($compound_words_file);
+
+# load compound words
+log_info 'Loading exceptions';
+%exception_rules = load_rules($exceptions_file);
 
 sub load_rules {
 	my ( $f, $type ) = @_;
@@ -155,7 +164,17 @@ sub reduce_agglutination {
 	# separate "comma" and the "period"
 	$sentence =~ s/([^\d])(\,|\.)\s+/$1 $2 /g;
 	$sentence =~ s/\.$/ ./;
+	
+	# some important words that need to be 
+	# separated in the beginning
+	# 'தான்', 'மட்டும்'
+	$sentence =~ s/(தான்|மட்டும்)\s+/ $1 /g;
 
+	# separate auxiliary forms 
+	foreach my $aform (@aux_forms) {
+		$sentence =~ s/$aform\s+/ $aform /g;
+	}	
+	
 	# apply auxiliary verb rules
 	my @arules = @{ $aux_rules{'r'} };
 	my @avals  = @{ $aux_rules{'v'} };
@@ -164,11 +183,6 @@ sub reduce_agglutination {
 		my $v = $avals[$i];
 		$sentence =~ s/$r\s+/"$v"/gee;
 	}
-
-	# separate auxiliary forms 
-	foreach my $aform (@aux_forms) {
-		$sentence =~ s/$aform\s+/ $aform /g;
-	}	
 	
 	# separate postpositions
 	my @prules = @{ $pp_rules{'r'} };
@@ -187,6 +201,15 @@ sub reduce_agglutination {
 		my $v = $cvals[$i];
 		$sentence =~ s/$r\s+/"$v"/eeg;
 	}
+		
+	# exceptions to the separation
+	my @exrules = @{ $exception_rules{'r'} };
+	my @exvals  = @{ $exception_rules{'v'} };
+	foreach my $i ( 0 .. $#exrules ) {
+		my $r = $exrules[$i];
+		my $v = $exvals[$i];
+		$sentence =~ s/$r\s+/$v /g;
+	}		
 	return $sentence;
 }
 

@@ -4,7 +4,10 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = do {
-	map{ '$' . $_ } grep { m/^TA/} keys %{__PACKAGE__ . '::'};	
+	my @syms;
+	map{ push @syms, '$' . $_ } grep { m/^TA.+(?!MAP)/} keys %{__PACKAGE__ . '::'};	
+	map{ push @syms, '%' . $_ } grep { m/^TA.+(MAP)/} keys %{__PACKAGE__ . '::'};
+	map{$_}@syms;
 };
 
 use charnames ':full';
@@ -129,12 +132,30 @@ Readonly our $TA_LONG_VOWEL_SIGNS_REG => qr/\N{TAMIL VOWEL SIGN AA}|
 \N{TAMIL VOWEL SIGN EE}|
 \N{TAMIL VOWEL SIGN OO}/x;
 
+# long vowel signs no 'i'
+Readonly our $TA_LONG_VOWEL_SIGNS_NO_I_REG => qr/\N{TAMIL VOWEL SIGN AA}|
+\N{TAMIL VOWEL SIGN UU}|
+\N{TAMIL VOWEL SIGN EE}|
+\N{TAMIL VOWEL SIGN OO}/x;
+
+# vowel signs no 'u'
+Readonly our $TA_VOWEL_SIGNS_NO_U_REG => qr/\N{TAMIL VOWEL SIGN AA}|
+\N{TAMIL VOWEL SIGN I}|
+\N{TAMIL VOWEL SIGN II}|
+\N{TAMIL VOWEL SIGN E}|
+\N{TAMIL VOWEL SIGN EE}|
+\N{TAMIL VOWEL SIGN AI}|
+\N{TAMIL VOWEL SIGN O}|
+\N{TAMIL VOWEL SIGN OO}|
+\N{TAMIL VOWEL SIGN AU}/x;
+
+
 # diphthongs
 Readonly our $TA_DIPHTHONGS      => qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
 Readonly our $TA_DIPHTHONG_SIGNS => qr/\N{TAMIL VOWEL SIGN AI}|\N{TAMIL VOWEL SIGN AU}/;
 
 # vowel to sign map
-Readonly our %TA_VOWEL_VOWELSIGN => (
+Readonly our %TA_VOWEL_VOWELSIGN_MAP => (
 	"\N{TAMIL LETTER AA}"	=>	"\N{TAMIL VOWEL SIGN AA}",
 	"\N{TAMIL LETTER I}"	=>	"\N{TAMIL VOWEL SIGN I}",
 	"\N{TAMIL LETTER II}"	=>	"\N{TAMIL VOWEL SIGN II}",
@@ -148,7 +169,7 @@ Readonly our %TA_VOWEL_VOWELSIGN => (
 	"\N{TAMIL LETTER AU}"	=>	"\N{TAMIL VOWEL SIGN AU}",
 );
 
-Readonly our $TA_PULLI => '்';
+Readonly our $TA_PULLI => qr/\N{TAMIL SIGN VIRAMA}/x;
 
 # 'vallinam' - hard consonants 
 # only those involved in spelling changes
@@ -162,8 +183,10 @@ Readonly our $TA_HARD_REG => qr/\N{TAMIL LETTER KA}\N{TAMIL SIGN VIRAMA}|
 # namely - ka, ca, ta, pa
 Readonly our $TA_HARD_A_REG => qr/\N{TAMIL LETTER KA}|
 \N{TAMIL LETTER CA}|
+\N{TAMIL LETTER TTA}|
 \N{TAMIL LETTER TA}|
-\N{TAMIL LETTER PA}/x;
+\N{TAMIL LETTER PA}|
+\N{TAMIL LETTER RRA}/x;
 
 1;
 

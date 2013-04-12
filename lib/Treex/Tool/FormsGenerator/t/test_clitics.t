@@ -1,4 +1,4 @@
-use Treex::Tool::FormsGenerator::Tamil;
+use Treex::Tool::FormsGenerator::TA;
 use Test::More;
 use utf8;
 
