@@ -77,7 +77,7 @@ sub numeral_prefix_for_number {
     return $NUMERAL_FOR_NUMBER{$number}.'i' if $NUMERAL_FOR_NUMBER{$number};
     if ( $number =~ /^(\d)(\d)$/ ) {
         return $NUMERAL_FOR_NUMBER{$2}.'a'.$NUMERAL_FOR_NUMBER{$1.'0'}.'i' if $2 != 1;
-        return 'jedna'.$NUMERAL_FOR_NUMBER{$1.'0'};
+        return 'jedna'.$NUMERAL_FOR_NUMBER{$1.'0'}.'i';
     }
     return $number;
 }
