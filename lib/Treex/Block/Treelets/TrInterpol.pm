@@ -1,4 +1,4 @@
-package Treex::Block::Treelets::Tr7;
+package Treex::Block::Treelets::TrInterpol;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::TranslationModel::TwoNode;
@@ -31,6 +31,8 @@ sub process_start {
 
 use ProbUtils::Normalize;
 my $WEIGHT = 1;
+my $wL = 1;
+
 my ($LSCORE, $FSCORE, $LSUM, $FSUM, $LNOTE, $FNOTE) = (0..5);
 my %scores;
 
@@ -223,7 +225,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Treelets::TrOneNodeNeedsCopyTtree - translate lemmas and formemes using "OneNode" model
+Treex::Block::Treelets::TrInterpol - translate lemmas and formemes using interpolation of "TwoNode" models
 
 =head1 DESCRIPTION
 
