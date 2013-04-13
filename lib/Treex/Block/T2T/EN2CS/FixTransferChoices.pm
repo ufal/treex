@@ -108,8 +108,8 @@ sub fix_formeme {
     return 'n:1' if $en_formeme eq 'n:poss'
             && $cs_parent_formeme =~ /(fin|rc)/;
 
-    if ( $cs_formeme eq 'adj:attr' && $cs_pos eq 'N' ) {
-        return 'n:attr' if $cs_tnode->is_name_of_person;
+    if ( $cs_formeme eq 'adj:attr' && $cs_pos eq 'N' && !Treex::Tool::Lexicon::CS::number_for($cs_tlemma)) {
+        return 'n:attr' if $cs_tnode->is_name_of_person or $cs_parent->is_name_of_person;
         return 'n:2';
     }
 
