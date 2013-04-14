@@ -30,8 +30,13 @@ sub process_start {
 }
 
 use ProbUtils::Normalize;
-my $WEIGHT = 1;
-my $wL = 1;
+my $wL = 1;  # L***
+my $wF = 1;  # *F**
+my ($wLf,  $wlF)  = (1)x2; # LF** 
+my ($wxFl, $wxfL) = (1)x2; # *FL*
+my ($wLfl,  $wlFl,  $wlfL)  = (2)x3; # LFL*
+my ($wxFlf, $wxfLf, $wxflF) = (1)x3; # *FLF
+my ($wLflf,  $wlFlf,  $wlfLf, $wlflF)  = (1)x4; # LFLF
 
 my ($LSCORE, $FSCORE, $LSUM, $FSUM, $LNOTE, $FNOTE) = (0..5);
 my %scores;
@@ -105,38 +110,38 @@ sub process_tnode {
     
     # L
     $trans = $self->model->model->{$src_lemma.' *'}{'* *'};
-    $scores{$node}[$LSUM] += $WEIGHT;
+    $scores{$node}[$LSUM] += $wL;
     if ($trans){
         mapp {
             my ($lemma, $formeme) = split / /, $a;
-            $scores{$node}[$LSCORE]{$lemma}{_} += $WEIGHT*$b;
+            $scores{$node}[$LSCORE]{$lemma}{_} += $wL*$b;
             $scores{$node}[$LSCORE]{$lemma}{L} += $b;
         } @$trans;
     }
     
     # F
     $trans = $self->model->model->{'* '.$src_formeme}{'* *'};
-    $scores{$node}[$FSUM] += $WEIGHT;
+    $scores{$node}[$FSUM] += $wF;
     if ($trans){
         mapp {
             my ($lemma, $formeme) = split / /, $a;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wF*$b;
             $scores{$node}[$FSCORE]{$formeme}{F} += $b;
         } @$trans;
     }
 
     # LF
     $trans = $self->model->model->{$src_lemma.' '.$src_formeme}{'* *'};
-    $scores{$node}[$LSUM] += $WEIGHT;
-    $scores{$node}[$FSUM] += $WEIGHT;
+    $scores{$node}[$LSUM] += $wLf;
+    $scores{$node}[$FSUM] += $wlF;
     if ($trans){
         my $first_label = $trans->[0];
         my ($lemma, $formeme) = split / /, $first_label;
         mapp {
             my ($lemma, $formeme) = split / /, $a;
-            $scores{$node}[$LSCORE]{$lemma}{_} += $WEIGHT*$b;
+            $scores{$node}[$LSCORE]{$lemma}{_} += $wLf*$b;
             $scores{$node}[$LSCORE]{$lemma}{Lf} += $b;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wlF*$b;
             $scores{$node}[$FSCORE]{$formeme}{lF} += $b;
         } @$trans;
     }
@@ -148,68 +153,68 @@ sub process_tnode {
 
     # *FL
     $trans = $self->model->model->{'* '.$src_formeme}{$parent_lemma.' *'};
-    $scores{$node}[$FSUM] += $WEIGHT;
-    $scores{$parent}[$LSUM] += $WEIGHT;
+    $scores{$node}[$FSUM] += $wxFl;
+    $scores{$parent}[$LSUM] += $wxfL;
     if ($trans){
         mapp {
             my ($lemma, $formeme, $plemma, $pformeme) = split / /, $a;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wxFl*$b;
             $scores{$node}[$FSCORE]{$formeme}{'*Fl'} += $b;
-            $scores{$parent}[$LSCORE]{$plemma}{_} += $WEIGHT*$b;
+            $scores{$parent}[$LSCORE]{$plemma}{_} += $wxfL*$b;
             $scores{$parent}[$LSCORE]{$plemma}{"*fL($src_formeme)"} += $b;
         } @$trans;
     }
 
     # LFL
     $trans = $self->model->model->{$src_lemma.' '.$src_formeme}{$parent_lemma.' *'};
-    $scores{$node}[$LSUM] += $WEIGHT;
-    $scores{$node}[$FSUM] += $WEIGHT;
-    $scores{$parent}[$LSUM] += $WEIGHT;
+    $scores{$node}[$LSUM] += $wLfl;
+    $scores{$node}[$FSUM] += $wlFl;
+    $scores{$parent}[$LSUM] += $wlfL;
     if ($trans){
         mapp {
             my ($lemma, $formeme, $plemma, $pformeme) = split / /, $a;
-            $scores{$node}[$LSCORE]{$lemma}{_} += $WEIGHT*$b;
+            $scores{$node}[$LSCORE]{$lemma}{_} += $wLfl*$b;
             $scores{$node}[$LSCORE]{$lemma}{Lfl} += $b;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wlFl*$b;
             $scores{$node}[$FSCORE]{$formeme}{lFl} += $b;
-            $scores{$parent}[$LSCORE]{$plemma}{_} += $WEIGHT*$b;
+            $scores{$parent}[$LSCORE]{$plemma}{_} += $wlfL*$b;
             $scores{$parent}[$LSCORE]{$plemma}{"lfL($src_lemma,$src_formeme)"} += $b;
         } @$trans;
     }
 
     # *FLF
     $trans = $self->model->model->{'* '.$src_formeme}{$parent_lemma.' '.$parent_formeme};
-    $scores{$node}[$FSUM] += $WEIGHT;
-    $scores{$parent}[$LSUM] += $WEIGHT;
-    $scores{$parent}[$FSUM] += $WEIGHT;
+    $scores{$node}[$FSUM] += $wxFlf;
+    $scores{$parent}[$LSUM] += $wxfLf;
+    $scores{$parent}[$FSUM] += $wxflF;
     if ($trans){
         mapp {
             my ($lemma, $formeme, $plemma, $pformeme) = split / /, $a;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wxFlf*$b;
             $scores{$node}[$FSCORE]{$formeme}{'*Flf'} += $b;
-            $scores{$parent}[$LSCORE]{$plemma}{_} += $WEIGHT*$b;
+            $scores{$parent}[$LSCORE]{$plemma}{_} += $wxfLf*$b;
             $scores{$parent}[$LSCORE]{$plemma}{"*fLf($src_formeme)"} += $b;
-            $scores{$parent}[$FSCORE]{$pformeme}{_} += $WEIGHT*$b;
+            $scores{$parent}[$FSCORE]{$pformeme}{_} += $wxflF*$b;
             $scores{$parent}[$FSCORE]{$pformeme}{"*flF($src_formeme)"} += $b;
         } @$trans;
     }
 
     # LFLF
     $trans = $self->model->model->{$src_lemma.' '.$src_formeme}{$parent_lemma.' '.$parent_formeme};
-    $scores{$node}[$LSUM] += $WEIGHT;
-    $scores{$node}[$FSUM] += $WEIGHT;
-    $scores{$parent}[$LSUM] += $WEIGHT;
-    $scores{$parent}[$FSUM] += $WEIGHT;
+    $scores{$node}[$LSUM] += $wLflf;
+    $scores{$node}[$FSUM] += $wlFlf;
+    $scores{$parent}[$LSUM] += $wlfLf;
+    $scores{$parent}[$FSUM] += $wlflF;
     if ($trans){
         mapp {
             my ($lemma, $formeme, $plemma, $pformeme) = split / /, $a;
-            $scores{$node}[$LSCORE]{$lemma}{_} += $WEIGHT*$b;
+            $scores{$node}[$LSCORE]{$lemma}{_} += $wLflf*$b;
             $scores{$node}[$LSCORE]{$lemma}{Lflf} += $b;
-            $scores{$node}[$FSCORE]{$formeme}{_} += $WEIGHT*$b;
+            $scores{$node}[$FSCORE]{$formeme}{_} += $wlFlf*$b;
             $scores{$node}[$FSCORE]{$formeme}{lFlf} += $b;
-            $scores{$parent}[$LSCORE]{$plemma}{_} += $WEIGHT*$b;
+            $scores{$parent}[$LSCORE]{$plemma}{_} += $wlfLf*$b;
             $scores{$parent}[$LSCORE]{$plemma}{"lfLf($src_lemma,$src_formeme)"} += $b;
-            $scores{$parent}[$FSCORE]{$pformeme}{_} += $WEIGHT*$b;
+            $scores{$parent}[$FSCORE]{$pformeme}{_} += $wlflF*$b;
             $scores{$parent}[$FSCORE]{$pformeme}{"lflF($src_lemma,$src_formeme)"} += $b;
         } @$trans;
     }
