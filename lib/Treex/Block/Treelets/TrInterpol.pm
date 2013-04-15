@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::TranslationModel::TwoNode;
 use List::Pairwise qw(mapp);
+use ProbUtils::Normalize;
 extends 'Treex::Core::Block';
 
 has model_dir => (
@@ -20,6 +21,8 @@ has model_name => (
 
 has model => (is => 'rw');
 
+has [qw(wL wF wLF wxFL wLFL wxFLF wLFLF)] => (is=>'rw', default=>1);
+my ($wL, $wF,$wLf,  $wlF, $wxFl, $wxfL, $wLfl,  $wlFl,  $wlfL, $wxFlf, $wxfLf, $wxflF, $wLflf,  $wlFlf,  $wlfLf, $wlflF);
 
 sub process_start {
     my ($self) = @_;
@@ -29,20 +32,20 @@ sub process_start {
     return;
 }
 
-use ProbUtils::Normalize;
-my $wL = 1;  # L***
-my $wF = 1;  # *F**
-my ($wLf,  $wlF)  = (1)x2; # LF** 
-my ($wxFl, $wxfL) = (1)x2; # *FL*
-my ($wLfl,  $wlFl,  $wlfL)  = (2)x3; # LFL*
-my ($wxFlf, $wxfLf, $wxflF) = (1)x3; # *FLF
-my ($wLflf,  $wlFlf,  $wlfLf, $wlflF)  = (1)x4; # LFLF
-
 my ($LSCORE, $FSCORE, $LSUM, $FSUM, $LNOTE, $FNOTE) = (0..5);
 my %scores;
 
 sub process_ttree {
     my ( $self, $tree ) = @_;
+    
+    $wL = $self->wL;
+    $wF = $self->wF;
+    ($wLf,  $wlF)  = ($self->wLF)x2;
+    ($wxFl, $wxfL) = ($self->wxFL)x2;
+    ($wLfl,  $wlFl,  $wlfL)  = ($self->wLFL)x3;
+    ($wxFlf, $wxfLf, $wxflF) = ($self->wxFLF)x3;
+    ($wLflf,  $wlFlf,  $wlfLf, $wlflF)  = ($self->wLFLF)x4;
+    
     %scores = ();
     my @nodes = $tree->get_descendants();
     foreach my $node (@nodes){

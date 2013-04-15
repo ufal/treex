@@ -21,16 +21,6 @@ has model_name => (
 
 has model => (is => 'rw');
 
-my @MASKS = (
-    [1,2,3], # L***
-    [0,2,3], # *F**
-    [2,3],   # LF**
-    [0,3],   # *FL*
-    [3],     # LFL*
-    [0],     # *FLF
-    [],      # LFLF
-);
-
 my @WMASKS = (
     [1,2,3] => 0.6, # L***
     [0,2,3] => 1, # *F**
@@ -40,7 +30,6 @@ my @WMASKS = (
     [0],    => 1.6, # *FLF
     #[],     => 0, # LFLF
 );
-
 
 my @STARS = ('*') x 3;
 
@@ -136,37 +125,6 @@ sub get_rules {
             } @$trans; 
         }
     } @WMASKS;
-    return @rules;
-}
-
-
-sub OLDget_rules {
-    my ($self, $node) = @_;
-
-    # Skip nodes that were already translated by rules
-    return if $node->t_lemma_origin ne 'clone';
-    my $src_node = $node->src_tnode;
-    return if !$src_node;
-    
-    my $src_lemma      = $src_node->t_lemma;
-    my $src_formeme    = $src_node->formeme;
-    my $src_parent     = $src_node->get_parent();
-    my $parent_lemma   = $src_parent->t_lemma // '_ROOT'; #/
-    my $parent_formeme = $src_parent->formeme // '_ROOT'; #/
-    my @src = ($src_lemma, $src_formeme, $parent_lemma, $parent_formeme);
-    my @rules;
-    
-    for my $mask (@MASKS){
-        my @s = @src;
-        @s[@$mask] = @STARS;
-        my $s1 = $s[0].' '.$s[1]; my $s2 = $s[2].' '.$s[3];
-        my $trans = $self->model->model->{$s1}{$s2};
-        next if !$trans;
-        mapp {
-            # $a = trg_treelet, $b = P(trg|src)
-            push @rules, [$b,  $node, $a, "$s1 $s2"];
-        } @$trans; 
-    }
     return @rules;
 }
 
