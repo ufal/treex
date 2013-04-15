@@ -19,6 +19,9 @@ sub process_zone
     # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
     ###!!!$self->shape_apposition($root); ###!!! Nerozbil jsem tohle, když jsem značku Apos nahradil značkou Apposition?
     $self->check_afuns($root);
     $self->validate_coap($root);
@@ -445,7 +448,7 @@ sub deprel_to_afun
         # Complement of preposition
         elsif ( $deprel eq 'PA' )
         {
-            $afun = 'Adv';
+            $afun = 'PrepArg';
         }
 
         # Verb particle
