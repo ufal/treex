@@ -6,67 +6,141 @@ extends 'Treex::Core::Block';
 
 use charnames ':full';
 
-my $verb_suffixes_file = require_file_from_share(
-	"data/models/simple_tagger/ta/dict/verb_suffixes_tagged.dat");
-my $noun_suffixes_file = require_file_from_share(
-	"data/models/simple_tagger/ta/dict/noun_suffixes_tagged.dat");
-my $pp_file = require_file_from_share(
-	"data/models/simple_tagger/ta/dict/postpositions.dat");
-my $adj_file =
-  require_file_from_share("data/models/simple_tagger/ta/dict/adjectives.dat");
-my $adv_file =
-  require_file_from_share("data/models/simple_tagger/ta/dict/adverbs.dat");
-my $quantifiers_file =
-  require_file_from_share("data/models/simple_tagger/ta/dict/quantifiers.dat");
-my $pronouns_file =
-  require_file_from_share("data/models/simple_tagger/ta/dict/pronouns.dat");
+has 'data_dir' =>
+  ( isa => 'Str', is => 'ro', default => 'data/models/simple_tagger/ta/dict' );
+has 'verb_tags' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_verb_tags' );
+has 'noun_tags' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_noun_tags' );
+has 'pp_list' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_pp_list' );
+has 'adj_list' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_adj_list' );
+has 'adv_list' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_adv_list' );
+has 'aux_verbs' =>
+  ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_aux_verbs' );
 
-my %aux_verbs = (
-	'அழு'       => 'அழு',
-	'செய்'    => 'செய்',
-	'கிட'       => 'கிட',
-	'கிழி'    => 'கிழி',
-	'கொள்'    => 'கொள்',
-	'கொண்'    => 'கொள்',
-	'கொடு'    => 'கொடு',
-	'மாட்ட' => 'மாட்டு',
-	'முடி'    => 'முடி',
-	'பார்'    => 'பார்',
-	'பண்ணு' => 'பண்ணு',
-	'படு'       => 'படு',
-	'பட்ட'    => 'படு',
-	'போ'          => 'போ',
-	'போடு'    => 'போடு',
-	'போட்ட' => 'போடு',
-	'தள்ளு' => 'தள்ளு',
-	'தீர்'    => 'தீர்',
-	'தொலை'    => 'தொலை',
-	'வை'          => 'வை',
-	'வரு'       => 'வரு',
-	'வந்த'    => 'வரு',
-	'வேண்ட' => 'வேண்டு',
-	'விடு'    => 'விடு',
-	'விட்ட' => 'விடு',
-	'இரு'       => 'இரு',
-	'உள்ள'    => 'உள்',
-	'இல்லை' => 'இல்'
+has 'quantifiers_list' => (
+	isa     => 'HashRef',
+	is      => 'rw',
+	lazy    => 1,
+	builder => '_build_quantifiers_list'
 );
 
-my %noun_suffixes_tags = load_suffixes($noun_suffixes_file);
-my %verb_suffixes_tags = load_suffixes($verb_suffixes_file);
-my %postpositions      = load_list($pp_file);
-my %adjectives         = load_list($adj_file);
-my %adverbs            = load_list($adv_file);
-my %quantifiers        = load_list($quantifiers_file);
-my %pronouns           = load_list($pronouns_file);
+has 'pronouns_list' => (
+	isa     => 'HashRef',
+	is      => 'rw',
+	lazy    => 1,
+	builder => '_build_pronouns_list'
+);
 
-my @verb_suffixes = @{$verb_suffixes_tags{'s'}};
-my @verb_tags     = @{$verb_suffixes_tags{'t'}};
-my @noun_suffixes = @{$noun_suffixes_tags{'s'}};
-my @noun_tags     = @{$noun_suffixes_tags{'t'}};
+# global variables for easy access
+my @verb_suffixes;
+my @verb_tags;
+my @noun_suffixes;
+my @noun_tags;
 
 # verbal participle endings
 my $_VBP_END_REG = qr/\N{TAMIL VOWEL SIGN U}|\N{TAMIL VOWEL SIGN I}/;
+
+sub BUILD {
+	my ($self) = @_;
+	@verb_suffixes = @{ $self->verb_tags->{'s'} };
+	@verb_tags     = @{ $self->verb_tags->{'t'} };
+	@noun_suffixes = @{ $self->noun_tags->{'s'} };
+	@noun_tags     = @{ $self->noun_tags->{'t'} };
+}
+
+sub _build_verb_tags {
+	my ($self) = @_;
+	my $vs_file =
+	  require_file_from_share( $self->data_dir . "/verb_suffixes_tagged.dat" );
+	my %verb_suffixes_tags = load_suffixes($vs_file);
+	return \%verb_suffixes_tags;
+}
+
+sub _build_noun_tags {
+	my ($self) = @_;
+	my $ns_file =
+	  require_file_from_share( $self->data_dir . "/noun_suffixes_tagged.dat" );
+	my %noun_suffixes_tags = load_suffixes($ns_file);
+	return \%noun_suffixes_tags;
+}
+
+sub _build_pp_list {
+	my ($self) = @_;
+	my $pp_file =
+	  require_file_from_share( $self->data_dir . "/postpositions.dat" );
+	my %postpositions = load_list($pp_file);
+	return \%postpositions;
+}
+
+sub _build_adj_list {
+	my ($self) = @_;
+	my $adj_file =
+	  require_file_from_share( $self->data_dir . "/adjectives.dat" );
+	my %adjectives = load_list($adj_file);
+	return \%adjectives;
+}
+
+sub _build_adv_list {
+	my ($self)   = @_;
+	my $adv_file = require_file_from_share( $self->data_dir . "/adverbs.dat" );
+	my %adverbs  = load_list($adv_file);
+	return \%adverbs;
+}
+
+sub _build_pronouns_list {
+	my ($self) = @_;
+	my $pronouns_file =
+	  require_file_from_share( $self->data_dir . "/pronouns.dat" );
+	my %pronouns = load_list($pronouns_file);
+	return \%pronouns;
+}
+
+sub _build_quantifiers_list {
+	my ($self) = @_;
+	my $quantifiers_file =
+	  require_file_from_share( $self->data_dir . "/quantifiers.dat" );
+	my %quantifiers = load_list($quantifiers_file);
+	return \%quantifiers;
+}
+
+sub _build_aux_verbs {
+	my ($self) = @_;
+	my %aux_verbs = (
+		'அழு'       => 'அழு',
+		'செய்'    => 'செய்',
+		'கிட'       => 'கிட',
+		'கிழி'    => 'கிழி',
+		'கொள்'    => 'கொள்',
+		'கொண்'    => 'கொள்',
+		'கொடு'    => 'கொடு',
+		'மாட்ட' => 'மாட்டு',
+		'முடி'    => 'முடி',
+		'பார்'    => 'பார்',
+		'பண்ணு' => 'பண்ணு',
+		'படு'       => 'படு',
+		'பட்ட'    => 'படு',
+		'போ'          => 'போ',
+		'போடு'    => 'போடு',
+		'போட்ட' => 'போடு',
+		'தள்ளு' => 'தள்ளு',
+		'தீர்'    => 'தீர்',
+		'தொலை'    => 'தொலை',
+		'வை'          => 'வை',
+		'வரு'       => 'வரு',
+		'வந்த'    => 'வரு',
+		'வேண்ட' => 'வேண்டு',
+		'விடு'    => 'விடு',
+		'விட்ட' => 'விடு',
+		'இரு'       => 'இரு',
+		'உள்ள'    => 'உள்',
+		'இல்லை' => 'இல்'
+	);
+	return \%aux_verbs;
+}
 
 sub load_list {
 	my $f = shift;
@@ -107,109 +181,142 @@ sub load_suffixes {
 	return %suffixes_tags;
 }
 
-sub process_atree {
-	my ( $self, $root ) = @_;
-	my @nodes = $root->get_descendants( { ordered => 1 } );
-	$self->first_pass( \@nodes );
-	$self->second_pass( \@nodes );
+sub process_document {
+	my ( $self, $document ) = @_;
+	my @bundles = $document->get_bundles();
+	for ( my $i = 0 ; $i < @bundles ; ++$i ) {
+		my $atree =
+		  $bundles[$i]->get_zone( $self->language, $self->selector )
+		  ->get_atree();
+		my @nodes = $atree->get_descendants( { ordered => 1 } );
+		my @forms = map{$_->form}@nodes;
+		my @tags = $self->tag_sentence(\@forms);
+		map{$nodes[$_]->set_attr('tag', $tags[$_])}0..$#tags;
+	}
+}
+
+sub tag_sentence {
+	my ($self, $forms_ref) = @_;
+	my @forms = @{$forms_ref};
+	my @tags = ();
+	my @is_tagged  = 0 x scalar(@forms);
+	my %tagging_stat = ('forms' => \@forms, 'tags' => \@tags, 'tagged' => \@is_tagged);
+	%tagging_stat = $self->first_pass( \%tagging_stat );
+	%tagging_stat = $self->second_pass( \%tagging_stat );
+	@tags = @{$tagging_stat{'tags'}};
+	return @tags;
 }
 
 sub first_pass {
-	my ( $self, $nodes_ref ) = @_;
-	my @nodes = @{$nodes_ref};
-	foreach my $node (@nodes) {
-		if ( defined $node->form ) {
-			my $f = $node->form;
+	my ( $self, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @forms = @{$ts{'forms'}};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};
+		
+	foreach my $fid (0..$#forms) {
+		my $form = $forms[$fid];
+		if ( defined $form ) {
+			my $f = $form;
 			$f =~ s/(^\s+|\s+$)//;
-			my $tagged = 0;
-
 			# start from list with less items
-			$tagged = $self->tag_if_determiner( $node, $tagged );
-			$tagged = $self->tag_if_conjunction( $node, $tagged );
-			$tagged = $self->tag_if_punc( $node, $tagged );
-			$tagged = $self->tag_if_pp( $node, $tagged );
-			$tagged = $self->tag_if_adj( $node, $tagged );
-			$tagged = $self->tag_if_adv( $node, $tagged );
-			$tagged = $self->tag_if_quantifier( $node, $tagged );
-			$tagged = $self->tag_if_pronoun( $node, $tagged );
-			$tagged = $self->tag_if_noun( $node, $tagged );
-			$tagged = $self->tag_if_verb( $node, $tagged );
-
-			# Default tag : NN
-			$node->set_attr( 'tag', 'NNNSN----------' ) if !$tagged;
+			%ts = $self->tag_if_determiner( $fid, $form, \%ts );
+			%ts = $self->tag_if_conjunction( $fid, $form, \%ts );
+			%ts = $self->tag_if_punc( $fid, $form, \%ts );
+			%ts = $self->tag_if_pp( $fid, $form, \%ts );
+			%ts = $self->tag_if_adj( $fid, $form, \%ts );
+			%ts = $self->tag_if_adv( $fid, $form, \%ts );
+			%ts = $self->tag_if_quantifier( $fid, $form, \%ts );
+			%ts = $self->tag_if_pronoun( $fid, $form, \%ts );
+			%ts = $self->tag_if_noun( $fid, $form, \%ts );
+			%ts = $self->tag_if_verb( $fid, $form, \%ts );
 		}
 	}
-
+	
+	# assign default tags
+	@tags = @{$ts{'tags'}};
+	@is_tagged = @{$ts{'tagged'}};
+	foreach my $id (0..$#forms) {
+		$tags[$id] = 'NNNSN----------' if ( !defined $tags[$id] );
+	}	
+	
 	# postprocessing
 
 	# POS [N->V]
-	foreach my $i ( 0 .. ( $#nodes - 1 ) ) {
+	foreach my $i ( 0 .. ( $#forms - 1 ) ) {
 
 		# check if the compound verbs are tagged correctly
 		# (i) change incorrectly tagged main verbs
-		if ( $nodes[$i]->form =~ /($TA_HARD_REG)$/ ) {
+		if ( $forms[$i] =~ /($TA_HARD_REG)$/ ) {
 			my $end_kctp = $1;
 			$end_kctp =~ s/\N{TAMIL SIGN VIRAMA}$//;
-			my $curr_tag = $nodes[$i]->tag;
-			my $next_tag = $nodes[ $i + 1 ]->tag;
-			if (   ( $nodes[ $i + 1 ]->form =~ /^$end_kctp/ )
+			my $curr_tag = $tags[$i];
+			my $next_tag = $tags[ $i + 1 ];
+			if (   ( $forms[ $i + 1 ] =~ /^$end_kctp/ )
 				&& ( $curr_tag !~ /^V/ )
 				&& ( $next_tag =~ /^V/ ) )
 			{
-
-#print $nodes[$i]->form . "/" . $curr_tag . "\t" . $nodes[$i+1]->form . "/" . $next_tag . "\n";
-				$nodes[$i]->set_attr( 'tag', 'V--------------' );
+				$tags[$i] = 'V--------------';
 			}
 		}
 
 		# (ii) check if non-finite form (verbal participle and infinitive)
 		# is tagged correctly if it is followed by "iru" which has a
 		# correct tag
-		if ( $nodes[$i]->form =~ /($_VBP_END_REG)$/ ) {
-			my $curr_tag = $nodes[$i]->tag;
-			my $next_tag = $nodes[ $i + 1 ]->tag;
+		if ( $forms[$i] =~ /($_VBP_END_REG)$/ ) {
+			my $curr_tag = $tags[$i];
+			my $next_tag = $tags[ $i + 1 ];
 			if ( ( $curr_tag !~ /^V/ ) && ( $next_tag =~ /^V/ ) ) {
-
-#print $nodes[$i]->form . "/" . $curr_tag . "\t" . $nodes[$i+1]->form . "/" . $next_tag . "\n";
-				$nodes[$i]->set_attr( 'tag', 'V--------------' );
+				$tags[$i] = 'V--------------';
 			}
 		}
 	}
 
 	# SUBPOS [: -> #] at sentence boundaries
-	if ( $nodes[$#nodes]->form =~ /\.|\?|\!|\:|\;/ ) {
-		$nodes[$#nodes]->set_attr( 'tag', 'Z#-------------' );
+	if ( $forms[$#forms] =~ /\.|\?|\!|\:|\;/ ) {
+		$tags[$#tags] = 'Z#-------------';
 	}
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;		
 }
 
 sub second_pass {
-	my ( $self, $nodes_ref ) = @_;
-	my @nodes = @{$nodes_ref};
-
-	foreach my $node (@nodes) {
-		$node->set_attr( 'tag', 'NNNSN----------' ) if ( !defined $node->tag );
-	}
-
+	my ( $self, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @forms = @{$ts{'forms'}};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};
+	
 	# make sure the tag length is 15 for each tag
-	foreach my $node (@nodes) {
-		if ( length $node->tag != 15 ) {
+	foreach my $id (0..$#forms) {
+		if ( length $tags[$id] != 15 ) {
 			print "tag length error at : "
-			  . $node->form . "\t"
-			  . $node->tag . "\n";
-			$node->set_attr( 'tag', 'NNNSN----------' );
+			  . $forms[$id] . "\t"
+			  . $tags[$id] . "\n";
+			  $tags[$id] = 'NNNSN----------';
+
 		}
 	}
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;	
 }
 
 sub tag_if_verb {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};
+
+	if ( !$is_tagged[$fid] ) {
+
 		# a. suffix based matching
 		foreach my $i ( 0 .. $#verb_suffixes ) {
 			my $vs = $verb_suffixes[$i];
-			if ( $node->form =~ /$vs$/ ) {
-				$node->set_attr( 'tag', $verb_tags[$i] );
-				$tagged = 1;
+			if ( $form =~ /$vs$/ ) {
+				$tags[$fid] = $verb_tags[$i];
+				$is_tagged[$fid] = 1;
 				last;
 			}
 		}
@@ -218,193 +325,240 @@ sub tag_if_verb {
 		# tag is set if the wordform matches the beginning
 		# of the auxiliary verb (faster than comparing against
 		# all possible forms of auxiliary verbs)
-		foreach my $ak ( keys %aux_verbs ) {
-			if ( $node->form =~ /^$ak/ ) {
-				if ( defined $node->tag ) {
-					my $t = $node->tag;
+		foreach my $ak ( keys %{ $self->aux_verbs } ) {
+			if ( $form =~ /^$ak/ ) {
+				if ( defined $tags[$fid] ) {
+					my $t = $tags[$fid];
 					$t =~ s/^Vr/VR/;
 					$t =~ s/^Vt/VT/;
 					$t =~ s/^Vu/VU/;
 					$t =~ s/^Vw/VW/;
-					$node->set_attr( 'tag', $t );
-					$tagged = 1;
+					$tags[$fid] = $t;
+					$is_tagged[$fid] = 1;
 					last;
 				}
 			}
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_noun {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
 		foreach my $i ( 0 .. $#noun_suffixes ) {
 			my $ns = $noun_suffixes[$i];
-			if ( $node->form =~ /$ns$/ ) {
-				$node->set_attr( 'tag', $noun_tags[$i] );
-				$tagged = 1;
+			if ( $form =~ /$ns$/ ) {
+				$tags[$fid] = $noun_tags[$i];
+				$is_tagged[$fid] = 1;
 				last;
 			}
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_pronoun {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( exists $pronouns{ $node->form } ) {
-			$node->set_attr( 'tag', 'R--------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};
+	if ( $form =~ /^(அ|இ|எ|ய|த|ந)/ ) {
+		if ( !$is_tagged[$fid] ) {
+			if ( exists $self->pronouns_list->{ $form } ) {
+				$tags[$fid] = 'R--------------';
+				$is_tagged[$fid] = 1;
 
-			# determine SUBPOS
-			my $subpos_found = 0;
+				# determine SUBPOS
+				my $subpos_found = 0;
 
-			# SUBPOS: 'B' [general referential pronouns]
-			# ends with உம்/um
-			if ( $node->form =~ 
-/\N{TAMIL VOWEL SIGN U}\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}$/
-			  )
-			{
-				$self->set_position( $node, 'B', 2 );
-				$subpos_found = 1;
-			}
-
-			# SUBPOS: 'F' [Specific indefinite referential pronouns]
-			# ends with ஓ/oo
-			if ( $node->form =~ /\N{TAMIL VOWEL SIGN OO}$/ ) {
-				$self->set_position( $node, 'F', 2 );
-				$subpos_found = 1;
-			}
-
-			# SUBPOS: 'G' [Non specific indefinite pronouns]
-			# ends with ஆவது/aavathu
-			if ( $node->form =~
-/\N{TAMIL VOWEL SIGN AA}\N{TAMIL LETTER VA}\N{TAMIL LETTER TA}\N{TAMIL VOWEL SIGN U}$/
-			  )
-			{
-				$self->set_position( $node, 'G', 2 );
-				$subpos_found = 1;
-			}
-
-			if ( !$subpos_found ) {
-
-				# SUBPOS: 'i' [interrogative pronouns]
-				if (
-					$node->form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ )
+				# SUBPOS: 'B' [general referential pronouns]
+				# ends with உம்/um
+				if ( $form =~ /\N{TAMIL VOWEL SIGN U}\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}$/
+				  )
 				{
-					$self->set_position( $node, 'i', 2 );
+					$self->set_position( $tags[$fid], 'B', 2 );
+					$subpos_found = 1;
 				}
 
-				# SUBPOS: 'p' [personal pronouns]
-				else {
-					$self->set_position( $node, 'p', 2 );
+				# SUBPOS: 'F' [Specific indefinite referential pronouns]
+				# ends with ஓ/oo
+				if ( $form =~ /\N{TAMIL VOWEL SIGN OO}$/ ) {
+					$self->set_position( $tags[$fid], 'F', 2 );
+					$subpos_found = 1;
+				}
+
+				# SUBPOS: 'G' [Non specific indefinite pronouns]
+				# ends with ஆவது/aavathu
+				if ( $form =~
+/\N{TAMIL VOWEL SIGN AA}\N{TAMIL LETTER VA}\N{TAMIL LETTER TA}\N{TAMIL VOWEL SIGN U}$/
+				  )
+				{
+					$self->set_position( $tags[$fid], 'G', 2 );
+					$subpos_found = 1;
+				}
+
+				if ( !$subpos_found ) {
+
+					# SUBPOS: 'i' [interrogative pronouns]
+					if ( $form =~
+						/^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ )
+					{
+						$self->set_position( $tags[$fid], 'i', 2 );
+					}
+
+					# SUBPOS: 'p' [personal pronouns]
+					else {
+						$self->set_position( $tags[$fid], 'p', 2 );
+					}
 				}
 			}
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_pp {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( exists $postpositions{ $node->form } ) {
-			$node->set_attr( 'tag', 'PP-------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( exists $self->pp_list->{ $form } ) {
+			$tags[$fid] =  'PP-------------';
+			$is_tagged[$fid] = 1;
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_adj {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( exists $adjectives{ $node->form } ) {
-			$node->set_attr( 'tag', 'JJ-------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( exists $self->adj_list->{ $form } ) {
+			$tags[$fid] = 'JJ-------------';
+			$is_tagged[$fid] = 1;
 		}
 		else {
 
 			# test if the form ends with derived
 			# adjectival suffix ான/Ana
-			if ( $node->form =~ /ான$/ ) {
-				$node->set_attr( 'tag', 'JJ-------------' );
-				$tagged = 1;
+			if ( $form =~ /ான$/ ) {
+				$tags[$fid] = 'JJ-------------';
+				$is_tagged[$fid] = 1;
 			}
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_adv {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( exists $adverbs{ $node->form } ) {
-			$node->set_attr( 'tag', 'AA-------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( exists $self->adv_list->{ $form } ) {
+			$tags[$fid] = 'AA-------------';
+			$is_tagged[$fid] = 1;
 		}
 		else {
-
 			# test if the form ends with derived
 			# adverbial suffix "Aka" - ாக
-			if ( $node->form =~ /ாக(வும்|வே|வா|வோ)$/ ) {
-				$node->set_attr( 'tag', 'AA-------------' );
-				$tagged = 1;
+			if ( $form =~ /ாக(வும்|வே|வா|வோ)$/ ) {
+				$tags[$fid] = 'AA-------------';
+				$is_tagged[$fid] = 1;
 			}
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_quantifier {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( exists $quantifiers{ $node->form } ) {
-			$node->set_attr( 'tag', 'QQ-------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( exists $self->quantifiers_list->{ $form } ) {
+			$tags[$fid] = 'QQ-------------';
+			$is_tagged[$fid] = 1;
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_conjunction {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( $node->form =~ /^(அல்லது|மற்றும்)$/ ) {
-			$node->set_attr( 'tag', 'CC-------------' );
-			$tagged = 1;
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( $form =~ /^(அல்லது|மற்றும்)$/ ) {
+			$tags[$fid] = 'CC-------------';
+			$is_tagged[$fid] = 1;
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_determiner {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( $node->form =~
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( $form =~
 			/^(அ|இ|எ)ந்த(க்|ச்|த்|ப்)?$/ )
 		{
-			$node->set_attr( 'tag', 'DD-------------' );
-			$tagged = 1;
+			$tags[$fid] = 'DD-------------';
+			$is_tagged[$fid] = 1;
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub tag_if_punc {
-	my ( $self, $node, $tagged ) = @_;
-	if ( !$tagged ) {
-		if ( $node->form =~
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts = %{$ts_ref};
+	my @tags = @{$ts{'tags'}};
+	my @is_tagged = @{$ts{'tagged'}};	
+	if ( !$is_tagged[$fid] ) {
+		if ( $form =~
 /^(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|–|—|„|\,|‘|\*|\^|\||\`|\.|\:|\')$/
 		  )
 		{
-			$node->set_attr( 'tag', 'Z:-------------' );
-			$tagged = 1;
+			$tags[$fid] = 'Z:-------------';
+			$is_tagged[$fid] = 1;
 		}
 	}
-	return $tagged;
+	$ts{'tags'} = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
 }
 
 sub fill_png {
@@ -432,14 +586,12 @@ sub fill_png {
 	}
 }
 
-# set nth position of a node's tag
+# set nth position of a tag
 # note: The positon index 'n' starts from 1
 sub set_position {
-	my ( $self, $node, $c, $n ) = @_;
-	my $tmptag = $node->tag;
-	substr( $tmptag, $n - 1, 1 ) = $c;
-	$node->set_attr( 'tag', $tmptag );
-	return;
+	my ( $self, $tag, $c, $n ) = @_;
+	substr( $tag, $n - 1, 1 ) = $c;
+	return $tag;
 }
 
 1;
