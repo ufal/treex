@@ -204,18 +204,21 @@ sub process_document {
 		  ->get_atree();
 		my @nodes = $atree->get_descendants( { ordered => 1 } );
 		my @forms = map { $_->form } @nodes;
-		my @tags = $self->tag_sentence( \@forms );
+		my @lemmas = map { $_->lemma } @nodes;		
+		my @tags = $self->tag_sentence( \@forms, \@lemmas );
 		map { $nodes[$_]->set_attr( 'tag', $tags[$_] ) } 0 .. $#tags;
 	}
 }
 
 sub tag_sentence {
-	my ( $self, $forms_ref ) = @_;
+	my ( $self, $forms_ref, $lemmas_ref ) = @_;
 	my @forms     = @{$forms_ref};
+	my @lemmas = ();
 	my @tags      = ();
 	my @is_tagged = 0 x scalar(@forms);
+	@lemmas = @{$lemmas_ref} if (defined $lemmas_ref); 
 	my %tagging_stat =
-	  ( 'forms' => \@forms, 'tags' => \@tags, 'tagged' => \@is_tagged );
+	  ( 'forms' => \@forms, 'lemmas' => \@lemmas, 'tags' => \@tags, 'tagged' => \@is_tagged );
 	%tagging_stat = $self->first_pass( \%tagging_stat );
 	%tagging_stat = $self->second_pass( \%tagging_stat );
 	@tags         = @{ $tagging_stat{'tags'} };
@@ -226,6 +229,7 @@ sub first_pass {
 	my ( $self, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @forms     = @{ $ts{'forms'} };
+	my @lemmas = @{ $ts{'lemmas'} };
 	my @tags      = @{ $ts{'tags'} };
 	my @is_tagged = @{ $ts{'tagged'} };
 
@@ -249,50 +253,20 @@ sub first_pass {
 		}
 	}
 
-	# assign default tags
-	@tags      = @{ $ts{'tags'} };
-	@is_tagged = @{ $ts{'tagged'} };
-	foreach my $id ( 0 .. $#forms ) {
-		$tags[$id] = 'NNNSN----------' if ( !defined $tags[$id] );
-	}
-
-	# postprocessing
-
-	# POS [N->V]
-	foreach my $i ( 0 .. ( $#forms - 1 ) ) {
-
-		# check if the compound verbs are tagged correctly
-		# (i) change incorrectly tagged main verbs
-		if ( $forms[$i] =~ /($TA_HARD_REG)$/ ) {
-			my $end_kctp = $1;
-			$end_kctp =~ s/\N{TAMIL SIGN VIRAMA}$//;
-			my $curr_tag = $tags[$i];
-			my $next_tag = $tags[ $i + 1 ];
-			if (   ( $forms[ $i + 1 ] =~ /^$end_kctp/ )
-				&& ( $curr_tag !~ /^V/ )
-				&& ( $next_tag =~ /^V/ ) )
-			{
-				$tags[$i] = 'V--------------';
-			}
-		}
-
-		# (ii) check if non-finite form (verbal participle and infinitive)
-		# is tagged correctly if it is followed by "iru" which has a
-		# correct tag
-		if ( $forms[$i] =~ /($_VBP_END_REG)$/ ) {
-			my $curr_tag = $tags[$i];
-			my $next_tag = $tags[ $i + 1 ];
-			if ( ( $curr_tag !~ /^V/ ) && ( $next_tag =~ /^V/ ) ) {
-				$tags[$i] = 'V--------------';
-			}
-		}
-	}
-
 	# SUBPOS [: -> #] at sentence boundaries
 	if ( $forms[$#forms] =~ /\.|\?|\!|\:|\;/ ) {
 		$tags[$#tags] = 'Z#-------------';
 	}
-
+	
+	# assign default tags
+	@tags      = @{ $ts{'tags'} };
+	@is_tagged = @{ $ts{'tagged'} };
+	
+	foreach my $fid ( 0 .. $#forms ) {
+		$tags[$fid] = 'NNNSN----------' if ( !defined $tags[$fid] );
+		$is_tagged[$fid] = 1;
+	}
+	
 	$ts{'tags'}   = \@tags;
 	$ts{'tagged'} = \@is_tagged;
 	return %ts;
@@ -314,6 +288,7 @@ sub second_pass {
 			$tags[$id] = 'NNNSN----------';
 		}
 	}
+	
 	$ts{'tags'}   = \@tags;
 	$ts{'tagged'} = \@is_tagged;
 	return %ts;
@@ -403,14 +378,14 @@ sub tag_if_pronoun {
 /\N{TAMIL VOWEL SIGN U}\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}$/
 				  )
 				{
-					$self->set_position( $tags[$fid], 'B', 2 );
+					$tags[$fid] = $self->set_position( $tags[$fid], 'B', 2 );
 					$subpos_found = 1;
 				}
 
 				# SUBPOS: 'F' [Specific indefinite referential pronouns]
 				# ends with ஓ/oo
 				if ( $form =~ /\N{TAMIL VOWEL SIGN OO}$/ ) {
-					$self->set_position( $tags[$fid], 'F', 2 );
+					$tags[$fid] = $self->set_position( $tags[$fid], 'F', 2 );
 					$subpos_found = 1;
 				}
 
@@ -420,7 +395,7 @@ sub tag_if_pronoun {
 /\N{TAMIL VOWEL SIGN AA}\N{TAMIL LETTER VA}\N{TAMIL LETTER TA}\N{TAMIL VOWEL SIGN U}$/
 				  )
 				{
-					$self->set_position( $tags[$fid], 'G', 2 );
+					$tags[$fid] = $self->set_position( $tags[$fid], 'G', 2 );
 					$subpos_found = 1;
 				}
 
@@ -429,12 +404,12 @@ sub tag_if_pronoun {
 					# SUBPOS: 'i' [interrogative pronouns]
 					if ( $form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ )
 					{
-						$self->set_position( $tags[$fid], 'i', 2 );
+						$tags[$fid] = $self->set_position( $tags[$fid], 'i', 2 );
 					}
 
 					# SUBPOS: 'p' [personal pronouns]
 					else {
-						$self->set_position( $tags[$fid], 'p', 2 );
+						$tags[$fid] = $self->set_position( $tags[$fid], 'p', 2 );
 					}
 				}
 			}
@@ -579,24 +554,27 @@ sub tag_if_punc {
 	return %ts;
 }
 
-sub guess_gender_for_nouns {
-	my ( $self, $node ) = @_;
+sub guess_gender_for_noun {
+	my ( $self, $form, $lemma, $tag ) = @_;
 
 	# Masculine (M)
+	# gender: 'M'
 	# frequent endings : அன்/ANNN, ஆன்/AANNN, தி/TI
-	if ( $node->form =~ /(($TA_CONSONANTS_PLUS_VOWEL_A_REG)ன்|ான்)$/ )
-	{
-		$self->set_position( $node, 'M', 3 );
-	}
 
-# Feminine (F)
-# frequent endings : ஐ/AI, தா/TAA, அம்/AM, ரி/RI, தி/TI, கா/KAA
-	elsif ( $node->form =~
+	# Feminine (F)
+	# gender: 'F'	
+	# frequent endings : ஐ/AI, தா/TAA, அம்/AM, ரி/RI, தி/TI, கா/KAA
+	if ( $lemma =~ /(($TA_CONSONANTS_PLUS_VOWEL_A_REG)ன்|ான்)$/ )
+	{
+		$tag = $self->set_position( $tag, 'M', 3 );
+	}
+	elsif ( $lemma =~
 /(ை|தா|($TA_CONSONANTS_PLUS_VOWEL_A_REG)ம்|ரி|தி|கா)/
 	  )
 	{
-		$self->set_position( $node, 'F', 3 );
+		$tag = $self->set_position( $tag, 'F', 3 );
 	}
+	return $tag;	
 }
 
 # set nth position of a tag

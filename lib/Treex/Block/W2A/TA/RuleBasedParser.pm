@@ -34,7 +34,7 @@ sub parse_sentence {
 	my @parents      = (-1) x scalar( @{$forms_ref} );
 	my %parsing_stat = ();
 	$parsing_stat{'forms'}   = $forms_ref;
-	$parsing_stat{'lemma'}   = $lemma_ref;
+	$parsing_stat{'lemmas'}   = $lemma_ref;
 	$parsing_stat{'tags'}    = $tags_ref;
 	$parsing_stat{'parents'} = \@parents;
 	%parsing_stat            = $self->attach_cons_to_pred( \%parsing_stat );
@@ -47,7 +47,7 @@ sub attach_cons_to_pred {
 	my ( $self, $ps_ref ) = @_;
 	my %ps      = %{$ps_ref};
 	my @forms   = @{ $ps{'forms'} };
-	my @lemmas  = @{ $ps{'lemma'} };
+	my @lemmas  = @{ $ps{'lemmas'} };
 	my @tags    = @{ $ps{'tags'} };
 	my @parents = @{ $ps{'parents'} };
 
