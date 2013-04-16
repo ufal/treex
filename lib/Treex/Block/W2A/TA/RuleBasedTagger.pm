@@ -9,9 +9,9 @@ use charnames ':full';
 has 'data_dir' =>
   ( isa => 'Str', is => 'ro', default => 'data/models/simple_tagger/ta/dict' );
 has 'verb_tags_file' =>
-  ( isa => 'Str', is => 'ro', default => 'verb_suffixes_tagged.dat' );
+  ( isa => 'Str', is => 'ro', default => 'verb_suffixes_tagged_len.dat' );
 has 'noun_tags_file' =>
-  ( isa => 'Str', is => 'ro', default => 'noun_suffixes_tagged.dat' );
+  ( isa => 'Str', is => 'ro', default => 'noun_suffixes_tagged_len.dat' );
 has 'verb_tags' =>
   ( isa => 'HashRef', is => 'rw', lazy => 1, builder => '_build_verb_tags' );
 has 'noun_tags' =>
@@ -203,8 +203,8 @@ sub process_document {
 		  $bundles[$i]->get_zone( $self->language, $self->selector )
 		  ->get_atree();
 		my @nodes = $atree->get_descendants( { ordered => 1 } );
-		my @forms = map { $_->form } @nodes;
-		my @lemmas = map { $_->lemma } @nodes;		
+		my @forms  = map { $_->form } @nodes;
+		my @lemmas = map { $_->lemma } @nodes;
 		my @tags = $self->tag_sentence( \@forms, \@lemmas );
 		map { $nodes[$_]->set_attr( 'tag', $tags[$_] ) } 0 .. $#tags;
 	}
@@ -213,12 +213,16 @@ sub process_document {
 sub tag_sentence {
 	my ( $self, $forms_ref, $lemmas_ref ) = @_;
 	my @forms     = @{$forms_ref};
-	my @lemmas = ();
+	my @lemmas    = ();
 	my @tags      = ();
 	my @is_tagged = 0 x scalar(@forms);
-	@lemmas = @{$lemmas_ref} if (defined $lemmas_ref); 
-	my %tagging_stat =
-	  ( 'forms' => \@forms, 'lemmas' => \@lemmas, 'tags' => \@tags, 'tagged' => \@is_tagged );
+	@lemmas = @{$lemmas_ref} if ( defined $lemmas_ref );
+	my %tagging_stat = (
+		'forms'  => \@forms,
+		'lemmas' => \@lemmas,
+		'tags'   => \@tags,
+		'tagged' => \@is_tagged
+	);
 	%tagging_stat = $self->first_pass( \%tagging_stat );
 	%tagging_stat = $self->second_pass( \%tagging_stat );
 	@tags         = @{ $tagging_stat{'tags'} };
@@ -229,7 +233,7 @@ sub first_pass {
 	my ( $self, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @forms     = @{ $ts{'forms'} };
-	my @lemmas = @{ $ts{'lemmas'} };
+	my @lemmas    = @{ $ts{'lemmas'} };
 	my @tags      = @{ $ts{'tags'} };
 	my @is_tagged = @{ $ts{'tagged'} };
 
@@ -249,24 +253,26 @@ sub first_pass {
 			%ts = $self->tag_if_quantifier( $fid, $form, \%ts );
 			%ts = $self->tag_if_pronoun( $fid, $form, \%ts );
 			%ts = $self->tag_if_noun( $fid, $form, \%ts );
+			%ts = $self->tag_if_numeral($fid, $form, \%ts );
 			%ts = $self->tag_if_verb( $fid, $form, \%ts );
 		}
 	}
 
-	# SUBPOS [: -> #] at sentence boundaries
-	if ( $forms[$#forms] =~ /\.|\?|\!|\:|\;/ ) {
-		$tags[$#tags] = 'Z#-------------';
-	}
-	
 	# assign default tags
 	@tags      = @{ $ts{'tags'} };
 	@is_tagged = @{ $ts{'tagged'} };
-	
+
+	# SUBPOS [: -> #] at sentence boundaries
+	if ( $forms[$#forms] =~ /\.|\?|\!|\:|\;/ ) {
+		$tags[$#tags]      = 'Z#-------------';
+		$is_tagged[$#tags] = 1;
+	}
+
 	foreach my $fid ( 0 .. $#forms ) {
 		$tags[$fid] = 'NNNSN----------' if ( !defined $tags[$fid] );
 		$is_tagged[$fid] = 1;
 	}
-	
+
 	$ts{'tags'}   = \@tags;
 	$ts{'tagged'} = \@is_tagged;
 	return %ts;
@@ -288,7 +294,7 @@ sub second_pass {
 			$tags[$id] = 'NNNSN----------';
 		}
 	}
-	
+
 	$ts{'tags'}   = \@tags;
 	$ts{'tagged'} = \@is_tagged;
 	return %ts;
@@ -404,12 +410,14 @@ sub tag_if_pronoun {
 					# SUBPOS: 'i' [interrogative pronouns]
 					if ( $form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ )
 					{
-						$tags[$fid] = $self->set_position( $tags[$fid], 'i', 2 );
+						$tags[$fid] =
+						  $self->set_position( $tags[$fid], 'i', 2 );
 					}
 
 					# SUBPOS: 'p' [personal pronouns]
 					else {
-						$tags[$fid] = $self->set_position( $tags[$fid], 'p', 2 );
+						$tags[$fid] =
+						  $self->set_position( $tags[$fid], 'p', 2 );
 					}
 				}
 			}
@@ -518,6 +526,42 @@ sub tag_if_conjunction {
 	return %ts;
 }
 
+sub tag_if_numeral {
+	my ( $self, $fid, $form, $ts_ref ) = @_;
+	my %ts        = %{$ts_ref};
+	my @tags      = @{ $ts{'tags'} };
+	my @is_tagged = @{ $ts{'tagged'} };
+
+	# digits
+	if ( $form =~ /^(\d+(\.|\,)?\d+)$/ ) {
+		$tags[$fid]      = 'U=-------------';
+		$is_tagged[$fid] = 1;
+	}
+
+	# cardinal
+	if ( $form =~ /((ஒ|ியொ|ினொ)ன்ற|(இ|ியி)ரண்ட|மூன்ற|நான்க|(ஐ|ியை)ந்த|(ஆ|ியா)ற|(ஏ|ியே)ழ|(எ|ியெ)ட்ட|(ஒ|ியொ)ன்பத|பத்த|((இ|ியி)ரு|முப்|நாற்|(ஐ|ியை)ம்|(அ|ிய)று|(எ||ியெ)ழு|(எ||ியெ)ன்)பத|(ன்னூ|நூ)று|(ஆ|ா)யிர|லட்ச|மில்லியன|கோடி|பில்லியன)/)
+	{
+		if ( defined $tags[$fid] ) {
+			$tags[$fid] = $self->set_position( $tags[$fid], 'U', 1 );
+			$tags[$fid] = $self->set_position( $tags[$fid], 'c', 2 );
+		}
+		else {
+			$tags[$fid] = 'Uc-------------';
+			$is_tagged[$fid] = 1;			
+		}
+	}
+
+	# ordinal
+	if ( defined $tags[$fid] && $tags[$fid] =~ /^Uc/ ) {
+		if ( $form =~ /(ஆ|ா)(ம்|வது)$/ ) {
+			$tags[$fid] = $self->set_position( $tags[$fid], 'o', 2 );
+		}
+	}
+	$ts{'tags'}   = \@tags;
+	$ts{'tagged'} = \@is_tagged;
+	return %ts;
+}
+
 sub tag_if_determiner {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
@@ -561,11 +605,10 @@ sub guess_gender_for_noun {
 	# gender: 'M'
 	# frequent endings : அன்/ANNN, ஆன்/AANNN, தி/TI
 
-	# Feminine (F)
-	# gender: 'F'	
-	# frequent endings : ஐ/AI, தா/TAA, அம்/AM, ரி/RI, தி/TI, கா/KAA
-	if ( $lemma =~ /(($TA_CONSONANTS_PLUS_VOWEL_A_REG)ன்|ான்)$/ )
-	{
+# Feminine (F)
+# gender: 'F'
+# frequent endings : ஐ/AI, தா/TAA, அம்/AM, ரி/RI, தி/TI, கா/KAA
+	if ( $lemma =~ /(($TA_CONSONANTS_PLUS_VOWEL_A_REG)ன்|ான்)$/ ) {
 		$tag = $self->set_position( $tag, 'M', 3 );
 	}
 	elsif ( $lemma =~
@@ -574,7 +617,7 @@ sub guess_gender_for_noun {
 	{
 		$tag = $self->set_position( $tag, 'F', 3 );
 	}
-	return $tag;	
+	return $tag;
 }
 
 # set nth position of a tag
