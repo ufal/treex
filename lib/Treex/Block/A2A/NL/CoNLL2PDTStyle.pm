@@ -1,26 +1,29 @@
 package Treex::Block::A2A::NL::CoNLL2PDTStyle;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Cloud;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
+    my $root = $self->SUPER::process_zone( $zone, 'conll' );
 
 
 #    $self->deprel_to_afun($a_root)
-    $self->attach_final_punctuation_to_root($a_root);
+    $self->attach_final_punctuation_to_root($root);
 #    $self->process_prepositional_phrases($a_root);
 #    $self->restructure_coordination($a_root);
-    $self->resolve_coordinations($a_root);
-#    $self->check_afuns($a_root);
-    $self->deprel_to_afun($a_root);
-    $self->fix_AuxK($a_root);
-    $self->fix_questionAdverbs($a_root);
-    $self->fix_InfinitivesNotBeingObjects($a_root);
-    $self->fix_SubordinatingConj($a_root);
+    $self->resolve_coordinations($root);
+    $self->deprel_to_afun($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
+    $self->fix_AuxK($root);
+    $self->fix_questionAdverbs($root);
+    $self->fix_InfinitivesNotBeingObjects($root);
+    $self->fix_SubordinatingConj($root);
 }
 
 
@@ -84,13 +87,20 @@ sub deprel_to_afun {
             $afun = 'Pred';
         }
 
-	# Change deprel "body" to afun "Pred" if its parent is not "Pred" and is directly under the root.
-	if ($deprel eq 'body' and defined $parent->get_parent and $parent->get_parent->is_root and $parent->afun ne 'Pred' and not $parent->tag =~ /J,.*/) {
-		$afun = 'Pred';
-		$node->set_parent($root);
-		$parent->set_parent($node);
-	}
-
+        if ($deprel eq 'body') {
+            # Main predicate.
+            if (defined $parent->get_parent and $parent->get_parent->is_root and $parent->afun ne 'Pred' and not $parent->tag =~ /J,.*/) {
+                $afun = 'Pred';
+                ###!!! DZ: I would prefer to only translate labels in this function and move any structural changes to later steps.
+                $node->set_parent($root);
+                $parent->set_parent($node);
+            }
+            # Predicate of a subordinated clause.
+            elsif ($parent->match_iset('pos' => 'conj', 'subpos' => 'sub')) {
+                # This is a pseudo-afun that will not be saved. Its correct afun will be determined during later steps.
+                $afun = 'SubArg';
+            }
+        }
 
         if ($node->get_parent->afun eq 'Coord' and not $node->is_member
                 and ($node->get_iset('pos')||'') eq 'conj') {
@@ -255,4 +265,5 @@ the Prague Dependency Treebank.
 
 # Copyright 2011 Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
 # + 2012 Jindrich Libovicky <jlibovicky@gmail.com> and Ondrej Kosarko
+# + 2013 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
