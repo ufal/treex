@@ -23,6 +23,9 @@ has 'noun_rules' => (
 	builder => '_build_noun_rules'
 );
 
+# forms length < 'min_length' will not be lemmatized
+has 'min_len' => (isa => 'Int', is => 'ro', default => 4);
+
 # global variables for easy access
 my @nrules;
 my @nvals;
@@ -77,12 +80,12 @@ qr/;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--
 		my $form        = $forms[$idx];
 		my $lemma_found = 0;
 		
-		if ( $form =~ /(\d|$PUNC)/ ) {
+		if ( (length($form) < $self->min_len) || ($form =~ /(\d|$PUNC)/) ) {
 			$lemmas[$idx] = $form;
 			$lemma_found = 1;
 			next;
 		}
-		
+				
 		foreach my $i ( 0 .. $#nrules ) {
 			my $r = $nrules[$i];
 			my $v = $nvals[$i];
