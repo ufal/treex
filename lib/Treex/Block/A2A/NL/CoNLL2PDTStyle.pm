@@ -111,8 +111,20 @@ sub resolve_coordinations {
     my ( $self, $root ) = @_;
 
     foreach my $conjunct (grep {$_->conll_deprel eq 'cnj'} $root->get_descendants) {
+        my $coord_head = $conjunct->get_parent;
         $conjunct->set_is_member(1);
-        $conjunct->get_parent->set_afun('Coord');
+        $coord_head->set_afun('Coord');
+        # added by DM: commas should depend on conjunctions
+        foreach my $comma (grep {$_->form eq ',' && $_->ord > $conjunct->ord} $conjunct->get_children) {
+            $comma->set_parent($coord_head);
+        }
+        # added by DM: first-member children placed after the coordination may be shared modifiers
+        foreach my $child ($conjunct->get_children) {
+            if ($conjunct->ord < $coord_head->ord && $child->ord > $coord_head->ord) {
+                $child->set_parent($coord_head);
+                $child->set_is_shared_modifier(1);
+            }
+        }
     }
 }
 
