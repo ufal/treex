@@ -13,21 +13,17 @@ sub process_zone {
     my $self   = shift;
     my $zone   = shift;
     my $root = $self->SUPER::process_zone( $zone, 'conll' );
-
-
-#    $self->deprel_to_afun($a_root)
     $self->attach_final_punctuation_to_root($root);
-#    $self->process_prepositional_phrases($a_root);
-#    $self->restructure_coordination($a_root);
-    $self->resolve_coordinations($root);
-    $self->deprel_to_afun($root);
+    $self->restructure_coordination($root);
+#    $self->resolve_coordinations($root);
+#    $self->deprel_to_afun($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
-    $self->fix_AuxK($root);
-    $self->fix_questionAdverbs($root);
-    $self->fix_InfinitivesNotBeingObjects($root);
-    $self->fix_SubordinatingConj($root);
+    #$self->fix_AuxK($root);
+    #$self->fix_questionAdverbs($root);
+    #$self->fix_InfinitivesNotBeingObjects($root);
+    #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
 }
 
@@ -36,7 +32,7 @@ sub process_zone {
 # acroread /net/data/conll/2006/nl/doc/syn_prot.pdf &
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun_dz
+sub deprel_to_afun
 {
     my $self       = shift;
     my $root       = shift;
@@ -75,13 +71,20 @@ sub deprel_to_afun_dz
         # Predicate of subordinated clause.
         elsif ( $deprel eq 'body' )
         {
-            if ( $parent->match_iset('pos' => 'conj', 'subpos' => 'sub') )
+            # Instead of subordinating conjunction there may be a relative pronoun.
+            ###!!! But then we may want to reattach the pronoun instead of labeling it AuxC!
+            # It may also be an infinitive under a preposition (train/001#9: 'te raden' = 'to recommend').
+            # Sometimes the infinitival 'te' is not tagged as preposition but as adverb.
+            if ( $parent->match_iset('pos' => 'conj', 'subpos' => 'sub') ||
+                 $parent->get_iset('prontype') =~ m/^(rel|int)$/ ||
+                 $parent->form() =~ m/^te$/i )
             {
                 $afun = 'SubArg';
             }
             else
             {
-                log_warn('I do not know what to do with the label "body" when parent is not subordinating conjunction.');
+                $self->log_sentence($node);
+                log_warn('I do not know what to do with the label "body" when parent is neither subordinating conjunction nor relative pronoun.');
                 $afun = 'NR';
             }
         }
@@ -145,6 +148,13 @@ sub deprel_to_afun_dz
         # measure (length, weight...) complement
         # Example (test/001#85): 'vier dagen' = 'four days'
         elsif ( $deprel eq 'me' )
+        {
+            $afun = 'Adv';
+        }
+
+        # bijwoordelijke bepaling
+        # adverbial
+        elsif ( $deprel eq 'mod' )
         {
             $afun = 'Adv';
         }
@@ -266,8 +276,30 @@ sub deprel_to_afun_dz
         {
             $afun = 'NR';
         }
+
+        $node->set_afun($afun);
+        if ( $node->wild()->{conjunct} && $node->wild()->{coordinator} )
+        {
+            log_warn('We do not expect a node to be conjunct and coordination at the same time.');
+        }
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Dutch treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_alpino($node);
+}
+
+
 
 my %cpos2afun = (
     'Art' => 'AuxA',
@@ -294,7 +326,7 @@ my %deprel2afun = (
 #    'ROOT' => 'Pred',
 );
 
-sub deprel_to_afun {
+sub deprel_to_afun_zz {
     my ( $self, $root ) = @_;
 
     foreach my $node (grep {not $_->is_coap_root} $root->get_descendants)  {

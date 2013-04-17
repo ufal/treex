@@ -590,6 +590,59 @@ sub shape_prague
 
 #------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects the Alpino (Dutch)
+# variant of the Prague style, i.e. the head of the coordination bears the
+# label of the relation between the coordination and its parent. The afuns
+# (and wild attributes) of conjuncts just mark them as conjuncts.
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
+#------------------------------------------------------------------------------
+sub detect_alpino
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    # Are there any children that are conjuncts?
+    my @children = $node->children();
+    my @conjuncts = grep {$_->wild()->{conjunct}} (@children);
+    return unless(@conjuncts);
+    $self->set_parent($node->parent());
+    $self->set_is_member($node->is_member());
+    $self->set_afun($node->afun());
+    # Note that $symbol is a guess only here.
+    # Also, the current labeling scheme does not allow for private modifiers of this delimiter.
+    my $symbol = $node->form() !~ m/^\pL+$/;
+    $self->add_delimiter($node, $symbol);
+    foreach my $child (@children)
+    {
+        # The wild attribute conjunct should have been filled during deprel_to_afun().
+        if($child->wild()->{conjunct})
+        {
+            my $orphan = 0;
+            $self->add_conjunct($child, $orphan, $child->children());
+        }
+        # No need for get_real_afun() here: these three auxiliaries should never appear with preposition or as nested conjuncts!
+        elsif($child->afun() =~ m/^Aux[GXY]$/)
+        {
+            # Note that the current labeling style does not allow to distinguish between:
+            # - delimiters between conjuncts (commas, semicolons, dashes, conjunctions etc.)
+            # - dependents of the head delimiter (comma right before conjunction; other words of multiword conjunction)
+            # - dependents of the whole coordination if they are symbols (e.g. quotation marks around coordination)
+            ###!!! At least quotation marks and parentheses at the outer margin could be excluded?
+            my $symbol = $child->afun() =~ m/^Aux[GX]$/;
+            $self->add_delimiter($child, $symbol, $child->children());
+        }
+        else
+        {
+            $self->add_shared_modifier($child);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
 # links between nodes and labels of the relations). Expects Moscow or Stanford
 # style, without nested coordinations and without shared modifiers (example
 # treebank is Danish):
