@@ -5,6 +5,10 @@ use Treex::Core::Cloud;
 use utf8;
 extends 'Treex::Block::A2A::CoNLL2PDTStyle';
 
+#------------------------------------------------------------------------------
+# Reads the Dutch tree, converts morphosyntactic tags to Interset, converts
+# deprel tags to afuns, transforms tree to adhere to HamleDT guidelines.
+#------------------------------------------------------------------------------
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
@@ -27,6 +31,243 @@ sub process_zone {
     $self->check_afuns($root);
 }
 
+#------------------------------------------------------------------------------
+# Convert dependency relation tags to analytical functions.
+# acroread /net/data/conll/2006/nl/doc/syn_prot.pdf &
+# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+#------------------------------------------------------------------------------
+sub deprel_to_afun_dz
+{
+    my $self       = shift;
+    my $root       = shift;
+    my @nodes      = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # The corpus contains the following 26 dependency relation tags:
+        # ROOT app body cnj crd det dp hd hdf ld me mod obcomp obj1 obj2
+        # pc pobj1 predc predm punct sat se su sup svp vc
+        my $deprel = $node->conll_deprel();
+        my $parent = $node->parent();
+        my $pos    = $node->get_iset('pos');
+        my $ppos   = $parent->get_iset('pos');
+        my $afun;
+
+        # Dependency of the main verb on the artificial root node.
+        if ( $deprel eq 'ROOT' )
+        {
+            ###!!! If the root is conjunction we ought to check whether it conjoins verbs or something else!
+            if ( $pos eq 'verb' || $pos eq 'conj' )
+            {
+                $afun = 'Pred';
+            }
+            else
+            {
+                $afun = 'ExD';
+            }
+        }
+
+        # Apposition.
+        elsif ( $deprel eq 'app' )
+        {
+            $afun = 'Apposition';
+        }
+
+        # Predicate of subordinated clause.
+        elsif ( $deprel eq 'body' )
+        {
+            if ( $parent->match_iset('pos' => 'conj', 'subpos' => 'sub') )
+            {
+                $afun = 'SubArg';
+            }
+            else
+            {
+                log_warn('I do not know what to do with the label "body" when parent is not subordinating conjunction.');
+                $afun = 'NR';
+            }
+        }
+
+        # Conjunct.
+        elsif ( $deprel eq 'cnj' )
+        {
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
+        }
+
+        # Additional coordinating conjunction that does not govern coordination.
+        # Example (test/001#54):
+        # zowel in lengte als      gewicht
+        # as    in length as  [in] weight
+        # "zowel" is the head, its deprel is the relation to the parent of the coordination.
+        # Children of "zowel": in/cnj als/crd gewicht/cnj
+        elsif ( $deprel eq 'crd' )
+        {
+            $afun = 'AuxY';
+        }
+
+        # Determiner (article, number etc.)
+        elsif ( $deprel eq 'det' )
+        {
+            $afun = 'Atr';
+        }
+
+        # Sort of parenthesis? There is only one occurrence of this label in the whole treebank: train/025#330.
+        elsif ( $deprel eq 'dp' )
+        {
+            ###!!! How do we currently tag parenthesized insertions in PDT?
+            $afun = 'Adv';
+        }
+
+        # Unknown meaning, very infrequent (9 occurrences). Example train/001#232: one instance of verb 'moet' ('must') attached to another.
+        # Documentation page 8 Section 2.1.1: HD = werkwoordelijk hoofd finiet of niet-finiet (verbal head finite or non-finite).
+        elsif ( $deprel eq 'hd' )
+        {
+            ###!!! Are the other occurrences similar? Look at the other examples!
+            ###!!! Is there a better label?
+            $afun = 'AuxV';
+        }
+
+        # Non-head part of compound preposition? Example test/001#19: 'tot nu toe' = 'up to now' (lit. 'to now up')
+        ###!!! Look at the other examples, too!
+        elsif ( $deprel eq 'hdf' )
+        {
+            $afun = 'AuxP';
+        }
+
+        # locative or directional complement
+        # locatief of directioneel complement
+        # Example (test/001#6): 'om de tafel zitten' = 'to sit around the table'
+        elsif ( $deprel eq 'ld' )
+        {
+            $afun = 'Adv';
+        }
+
+        # maat (duur, gewicht...) complement
+        # measure (length, weight...) complement
+        # Example (test/001#85): 'vier dagen' = 'four days'
+        elsif ( $deprel eq 'me' )
+        {
+            $afun = 'Adv';
+        }
+
+        # obcomp
+        # Example (test/001#17): 'zo mogelijk veel' = lit. 'so possible much' = 'as much as possible'
+        # veel ( zo/mod ( mogelijk/obcomp ) )
+        elsif ( $deprel eq 'obcomp' )
+        {
+            $afun = 'Adv';
+        }
+
+        # lijdend voorwerp
+        # direct object
+        elsif ( $deprel eq 'obj1' )
+        {
+            $afun = 'Obj';
+        }
+
+        # secundair object (meewerkend, belanghebbend, ondervindend)
+        # secondary object (cooperative, interested, empirical)
+        elsif ( $deprel eq 'obj2' )
+        {
+            $afun = 'Obj';
+        }
+
+        # voorzetselvoorwerp
+        # prepositional object
+        # This is the relation of the prepositional phrase to its parent.
+        # The relation of the inner noun phrase to the preposition is obj1.
+        elsif ( $deprel eq 'pc' )
+        {
+            $afun = 'Obj';
+        }
+
+        # voorlopig direct object
+        # provisional direct object (???)
+        elsif ( $deprel eq 'pobj1' )
+        {
+            $afun = 'Obj';
+        }
+
+        # predicatief complement
+        # predicative complement
+        elsif ( $deprel eq 'predc' )
+        {
+            $afun = 'Pnom';
+        }
+
+        # bepaling van gesteldheid 'tijdens de handeling'
+        # provision of state 'during the act'
+        # Example (train/001#18): 'alleen samen met het veld' = 'only together with the field'
+        # The phrase depends as predm on a modal verb. Non-projectively because it lies between modifiers of the infinitive.
+        elsif ( $deprel eq 'predm' )
+        {
+            ###!!! Is it always adverbial? Investigate the other examples!
+            $afun = 'Adv';
+        }
+
+        # punctuation
+        elsif ( $deprel eq 'punct' )
+        {
+            if ( $node->form() eq ',' )
+            {
+                $afun = 'AuxX';
+            }
+            else
+            {
+                $afun = 'AuxG';
+            }
+        }
+
+        # Only one occurrence in the whole treebank (train/017#279)
+        elsif ( $deprel eq 'sat' )
+        {
+            $afun = 'Adv';
+        }
+
+        # verplicht reflexief object
+        # obligatory reflexive object
+        # Example (test/001#122): 'ontwikkelt zich' = lit. 'develops itself' = 'develops'
+        elsif ( $deprel eq 'se' )
+        {
+            $afun = 'AuxT';
+        }
+
+        # onderwerp
+        # subject
+        elsif ( $deprel eq 'su' )
+        {
+            $afun = 'Sb';
+        }
+
+        # voorlopig subject
+        # provisional subject (???)
+        # Example (test/001#25): 'het ligt in de...' = 'it lies in the...'
+        elsif ( $deprel eq 'sup' )
+        {
+            $afun = 'Sb';
+        }
+
+        # scheidbaar deel van werkwoord
+        # separable part of verb (not just separable prefixes as in german: also parts of light verb constructions?)
+        # Example (test/001#4): 'zorg' in 'zorg dragen' = 'ensure'
+        elsif ( $deprel eq 'svp' )
+        {
+            $afun = 'AuxT';
+        }
+
+        # verbaal complement, werkwoordelijk deel van gezegde
+        # verbal complement, verbal part of the said
+        # Example (test/001#2): participle 'gekozen' in 'is gekozen' = 'is selected'
+        elsif ( $deprel eq 'vc' )
+        {
+            $afun = 'AuxV';
+        }
+
+        else
+        {
+            $afun = 'NR';
+        }
+    }
+}
 
 my %cpos2afun = (
     'Art' => 'AuxA',

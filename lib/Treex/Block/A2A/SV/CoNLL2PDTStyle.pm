@@ -43,7 +43,6 @@ sub deprel_to_afun
     my $self       = shift;
     my $root       = shift;
     my @nodes      = $root->get_descendants();
-    my $sp_counter = 0;
     foreach my $node (@nodes)
     {
 
