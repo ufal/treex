@@ -171,7 +171,14 @@ sub deprel_to_afun
         # direct object
         elsif ( $deprel eq 'obj1' )
         {
-            $afun = 'Obj';
+            if ( $ppos eq 'prep' )
+            {
+                $afun = 'PrepArg';
+            }
+            else
+            {
+                $afun = 'Obj';
+            }
         }
 
         # secundair object (meewerkend, belanghebbend, ondervindend)
@@ -330,7 +337,7 @@ sub deprel_to_afun_zz {
     my ( $self, $root ) = @_;
 
     foreach my $node (grep {not $_->is_coap_root} $root->get_descendants)  {
-        
+
         #If AuxK is set then skip this node.
         next if(defined $node->afun and $node->afun eq 'AuxK');
 
@@ -434,13 +441,13 @@ sub fix_questionAdverbs {
     foreach my $anode ($root->get_children()) {
         if ($anode->afun eq "NR" &&
             $anode->tag =~ /^P4/) {
-            
+
             push @adv_root_children, $anode;
-            
+
         }
     }
 
-    # if such adverb is followed 
+    # if such adverb is followed
     foreach my $adv (@adv_root_children) {
         if (scalar $adv->get_children() == 1 &&
               ($adv->get_children())[0]->tag =~ /^VB/) {
@@ -464,7 +471,7 @@ sub fix_InfinitivesNotBeingObjects {
 
 
     foreach my $anode ($root->get_children()) {
-        if ($anode->afun eq "Pred") { 
+        if ($anode->afun eq "Pred") {
             push @standalonePreds, $anode;
         }
         elsif ($anode->tag =~ /^Vf/) {
@@ -484,25 +491,25 @@ sub fix_InfinitivesNotBeingObjects {
 
 sub fix_SubordinatingConj {
     my ( $self, $root ) = @_;
-    
+
     # take sentences with two predicates on the root
     my @predicates = ();
     foreach my $anode ($root->get_children()) {
         if ($anode->afun eq "Pred") { push @predicates, $anode; }
     }
-    
+
     # just two clauses, it should be obvious how they should look like
     if (scalar @predicates == 2) {
-        my @subordConj = ("omdat", "doordat", "aangezien", "daar", "dan", 
-            "zodat", "opdat", "als", "zoals", "tenzij", "voordat", "nadat", 
+        my @subordConj = ("omdat", "doordat", "aangezien", "daar", "dan",
+            "zodat", "opdat", "als", "zoals", "tenzij", "voordat", "nadat",
             "terwijl", "dat", "hoezeer", "indien");
         my $mainClause;
         my $depedentClause;
         my $conj;
-        
+
         my @firstNodes = $predicates[0]->get_descendants({ordered=>1});
         my @secondNodes = $predicates[1]->get_descendants({ordered=>1});
-        
+
         if ( @firstNodes && $firstNodes[0]->lemma =~ (join '|', @subordConj) ) {
             $depedentClause = $predicates[0];
             $mainClause = $predicates[1];
@@ -514,8 +521,8 @@ sub fix_SubordinatingConj {
             $conj = $secondNodes[1];
         }
         else { return; }
-        
-       
+
+
         $conj->set_parent($mainClause);
         $depedentClause->set_parent($conj);
         $depedentClause->set_afun("NR");
