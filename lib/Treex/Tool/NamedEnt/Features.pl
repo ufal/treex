@@ -10,7 +10,7 @@ Features.pl - Feature extraction for SysNERV SVM model
 
 =head1 SYNOPSIS
 
-B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> [--model=<C<oneword>|C<twoword>|C<threeword>>]
+B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> [--model=<C<oneword>|C<oneword_container>|C<twoword>|C<threeword>>]
 
 B<./Features.pl> I<DATA_PLAIN> I<DATA_ANOT> --model=C<container> [threshold=I<THRESHOLD>]
 
@@ -68,7 +68,7 @@ my $model = "oneword";
 my $threshold = 0;
 
 GetOptions('model=s' => \$model,
-	   'threshold=i' => \$threshold);
+           'threshold=i' => \$threshold);
 
 my $data = shift;
 my $dataNer = shift;
@@ -139,13 +139,17 @@ for my $sentence (@sentences) {
     my @words = @{$sentence->{words}};
     my @lemmas = @{$sentence->{lemmas}};
     my @tags = @{$sentence->{tags}};
-    my @namedents = @{$sentence->{namedents}};
+    my @namedents = grep {$_->{type} !~ /^[PTACI]$/} @{$sentence->{namedents}};
+    my @containers = grep {$_->{type} =~ /^[PTACI]$/} @{$sentence->{namedents}};
 
     if ($model eq 'container') {
-	my @patterns = get_container_patterns($sentence, $threshold);
-	$patternCounts{$_->{pattern}}{$_->{label}}++ for @patterns;
-	next;
+        my @patterns = get_container_patterns($sentence, $threshold);
+        $patternCounts{$_->{pattern}}{$_->{label}}++ for @patterns;
+        next;
     }
+
+    my @oneword_namedents = grep { $_->{start} == $_->{end} } @namedents;
+    my @twoword_namedents = grep { $_->{start} == $_->{end} - 1 } @namedents;
 
     for my $i (0 .. $#words) {
 
@@ -167,6 +171,7 @@ for my $sentence (@sentences) {
         $args{'next_form'} = $i < $#words ? $words[$i + 1] : $FALLBACK_LEMMA;
         $args{'next_tags'} = $i < $#words ? $tags[$i + 1] : $FALLBACK_TAG;
 
+        $args{'namedents'} = grep { $_->{end} <= $i+1 } @namedents; # pouze ty zleva.
 
         # Urceni labelu pro kazdy model
         my ($onewordRef, $twowordRef, $threewordRef) = (-1,-1,-1);
@@ -200,6 +205,9 @@ for my $sentence (@sentences) {
         } elsif ($model eq 'threeword' && $i > 1) {
             @features = extract_threeword_features( %args );
             push @features, $threewordRef;
+        } elsif ($model eq 'oneword_container') {
+            @features = extract_oneword_features( %args );
+            push @features, $onewordRef == -1 ? 0 : 1;
         } else {
             next;
         }
@@ -209,11 +217,11 @@ for my $sentence (@sentences) {
     }
 }
 
-if($model eq 'container') {
+if ($model eq 'container') {
     for my $pattern (keys %patternCounts) {
-	for my $label (keys %{$patternCounts{$pattern}} ) {
-	    print "$pattern\t$label\t" . $patternCounts{$pattern}{$label} . "\n";
-	}
+        for my $label (keys %{$patternCounts{$pattern}} ) {
+            print "$pattern\t$label\t" . $patternCounts{$pattern}{$label} . "\n";
+        }
     }
 }
 

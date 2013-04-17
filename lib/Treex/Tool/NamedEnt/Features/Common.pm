@@ -3,9 +3,12 @@ package Treex::Tool::NamedEnt::Features::Common;
 use strict;
 use warnings;
 
+use Treex::Core::Common;
+use Treex::Core::Resoruce 'require_file_from_share';
+
 use Exporter qw/ import /;
 
-my $common = [qw/ tag_features is_tabu_pos is_listed_entity/];
+my $common = [qw/ tag_features is_tabu_pos is_listed_entity get_built_list_names is_year_number is_month_number is_day_number/];
 
 our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common);
 our @EXPORT_OK = qw/get_class_number get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG/;
@@ -27,11 +30,12 @@ my @classes = qw/a ah at az
                  p pb pc pd pf pm pp ps p_
                  q qc qo
                  t tc td tf th tm tn tp ts ty
-                 P T A C
 
                  lower segm upper cap s f ?
 
-                 I sf ti m_ qu gy/; # todo tenhle posledni radek jsou veci, ktery nejsou v techreportu. 
+                 sf ti m_ qu gy/; # todo tenhle posledni radek jsou veci, ktery nejsou v techreportu. 
+
+my @containers = qw/P T A C I/;
 
 #I jako slozena instituce je vicemene legalni, ale je tam jen jednou
 # sf na radce 4155 je spatne taglý (má tam bejt jen s)
@@ -50,7 +54,7 @@ my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen čer
               cities => {},
               city_parts => {},
               streets => {},
-              names => {},
+              first_names => {},
               surnames => {},
               countries => {},
               objects => {map {$_ => 1} qw/Kč Sk USD zpráva mm ISDN/},
@@ -59,6 +63,22 @@ my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen čer
 					   unie klub ministerstvo fakulta spolek sdružení orchestr organizace
 					   union organization/}
 	  );
+
+log_info('Retrieving NE lists');
+
+for my $share_list (qw /cities city_parts first_names surnames countries/) {
+    my $filename = $share_list . ".txt";
+
+    my $file = require_file_from_share($filename, 'Treex::Tool::NamedEnt::Features::Common');
+
+    open LISTFILE, $file or log_error('Cannot retrieve list file $filename') and next;
+
+    chomp(my @list = <LISTFILE>);
+
+    close LISTFILE;
+
+    $lists{$share_list} = {map {$_ => 1} @list};
+}
 
 
 my %tabu = map {$_ => 1} qw/D I J P V R T Z/;
@@ -124,5 +144,25 @@ sub get_class_from_number {
     return $classes[$n];
 }
 
+
+sub get_built_list_names {
+    return keys %lists;
+}
+
+sub is_year_number {
+    my $token = shift;
+    return ($token =~ /^[12][[:digit:]][[:digit:]][[:digit:]]$/ ) ? 1 : 0;
+}
+
+
+sub is_month_number {
+    my $token = shift;
+    return ($token =~ /^[1-9]$/ || $token =~ /^1[12]$/) ? 1 : 0;
+}
+
+sub is_day_number {
+    my $token = shift;
+    return ($token =~ /^[1-9]$/ || $token =~ /^[12][[:digit:]]$/ || $token =~ /^3[01]$/ ) ? 1 : 0;
+}
 
 1;

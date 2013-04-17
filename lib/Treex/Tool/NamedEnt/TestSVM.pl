@@ -264,6 +264,23 @@ printf "precision: %.4f\n", $pos_precision;
 printf "recall: %.4f\n", $pos_recall;
 printf "F-measure: %.4f\n", $pos_fmeas;
 print "\n";
+
+my $total_tp = 0;
+my $total_fp = 0;
+my $total_fn = 0;
+foreach my $type (keys %type_results) {
+    if ($type ne "0") {
+        $total_tp += $type_tp{$type};
+        $total_fp += $type_fp{$type};
+        $total_fn += $type_fn{$type};
+    }
+}
+my $total_prec =  $total_tp / ($total_tp + $total_fp);
+my $total_recall = $total_tp / ($total_tp + $total_fn);
+print "Total precision: " . $total_prec . "\n";
+print "Total recall: " . $total_recall . "\n";
+print "Total F-measure: " . 2 * $total_prec * $total_recall / ($total_prec + $total_recall) . "\n\n";
+
 print "SUPERTYPES:\n";
 print "Type\tTP\tFP\tFN\tPrec\tRecall\tF-measure\n";
 print join "\n", map { join "\t", ($_, $spt_tp{$_}, $spt_fp{$_}, $spt_fn{$_}, $spt_results{$_}{precision}, $spt_results{$_}{recall}, $spt_results{$_}{fmeas})  } keys %spt_results;

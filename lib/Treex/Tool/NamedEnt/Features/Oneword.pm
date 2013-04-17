@@ -20,6 +20,7 @@ sub extract {
     my ($plemma, $ptag)      = @args{qw/prev_lemma prev_tag/};
     my $pptag                = $args{pprev_tag};
     my $nlemma               = $args{next_lemma};
+    my @prev_namedents       = @{$args{namedents}};
 
     my $pos = substr $tag, 0, 1;
     my $bare_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma);
@@ -40,24 +41,17 @@ sub extract {
     push @features, ( $bare_lemma =~ /^[[:upper:]]+$/ )                              ? 1 : 0; # all upper-case
     push @features, ( $bare_lemma =~ /^([01]?[0-9]|2[0-3])[.:][0-5][0-9]([ap]m)?$/ ) ? 1 : 0; # time
     push @features, ( $bare_lemma =~ /ová$/ )                                        ? 1 : 0;
-    #    push @features, ( _is_year_number($bare_lemma) )                                 ? 1 : 0;
-    push @features, ( is_listed_entity('months', $bare_lemma))                       ? 1 : 0;
 
+    push @features, ( is_year_number($bare_lemma) )                                  ? 1 : 0;
+    push @features, ( is_listed_entity('months', $bare_lemma))                       ? 1 : 0;
 
     # Form
     push @features, ( $form =~ /^[[:upper:]]/ ) ? 1 : 0;
 
     # Built-in lists
-    #    push @features, ( _is_city($lemma) )                    ? 1  : 0;
-
-    push @features, ( is_listed_entity('city_parts',   $bare_lemma) ) ? 1  : 0;
-    push @features, ( is_listed_entity('streets',      $bare_lemma) ) ? 1  : 0;
-    push @features, ( is_listed_entity('names',        $bare_lemma) ) ? 1  : 0;
-    push @features, ( is_listed_entity('surnames',     $bare_lemma) ) ? 1  : 0;
-    push @features, ( is_listed_entity('objects',      $bare_lemma) ) ? 1  : 0;
-    push @features, ( is_listed_entity('institutions', $bare_lemma) ) ? 1  : 0;
-
-    #    push @features, ( _is_country($lemma) )                 ? 1  : 0;
+    for my $list ( get_built_list_names() ) {
+        push @features, ( is_listed_entity($list, $bare_lemma) ? 1 : 0 );
+    }
 
     # Previous lemma
     my $plemma_term_types = Treex::Tool::Lexicon::CS::get_term_types($plemma);
@@ -67,7 +61,7 @@ sub extract {
     push @features, ( is_listed_entity('months', $plemma))      ? 1 : 0;
     push @features, ( $pbare_lemma eq '/')                      ? 1 : 0;
     push @features, ( $pbare_lemma eq '.')                      ? 1 : 0;
-    #    push @features, ( _is_month_number($prev_lemma) )           ? 1 : 0;
+    push @features, ( is_month_number($prev_lemma) )            ? 1 : 0;
 
 
     my $nlemma_term_types = Treex::Tool::Lexicon::CS::get_term_types($nlemma);
@@ -78,8 +72,8 @@ sub extract {
     push @features, ( is_listed_entity('objects', $nbare_lemma))  ? 1 : 0;
     push @features, ( $nbare_lemma eq '/' )                       ? 1 : 0;
     push @features, ( $nbare_lemma eq '.' )                       ? 1 : 0;
+    push @features, ( is_year_number($nbare_lemma))               ? 1 : 0;
 
-    #    push @features, ( _is_year_number($nbare_lemma))              ? 1 : 0;
     return @features;
 }
 

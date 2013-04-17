@@ -9,15 +9,22 @@ use Algorithm::SVM::DataSet;
 use Getopt::Long;
 use Data::Dumper;
 
+$| = 1;
+
 my $separator = ",";
-my $classesFile;
 my $validateFolds;
 
-GetOptions('separator=s' => \$separator,
-           'classes=s' => \$classesFile,
-           'validate=i' => \$validateFolds);
+my $svm_type = 'C-SVC';
+my $svm_kernel = 'radial';
+my $svm_cost = 1;
 
-@ARGV == 2 or die "Usage: ./TrainSVM.pl FEATURE_FILE OUTPUT.model [-s SEPARATOR] [-c CLASSES_FILE] [-v CROSS_VALIDATION_FOLDS]";
+GetOptions('separator=s' => \$separator,
+           'validate=i' => \$validateFolds,
+           'svm_type=s' => \$svm_type,
+	   'svm_kernel|kernel=s' => \$svm_kernel,
+           'svm_cost|cost=i' => \$svm_cost);
+
+@ARGV == 2 or die "Usage: ./TrainSVM.pl FEATURE_FILE OUTPUT.model [-s SEPARATOR] [-v CROSS_VALIDATION_FOLDS]";
 
 my $input = shift;
 my $output = shift;
@@ -25,15 +32,6 @@ my $output = shift;
 die "Illegal arguments" if !defined $input or !defined $output;
 
 my @classes;
-my %labelMap;
-
-if (defined $classesFile) {
-    open CLASSES, "<$classesFile" or die "Cannot open classes list $classesFile";
-    chomp(@classes = <CLASSES>);
-    close CLASSES;
-
-    my %labelMap = map { $classes[$_] => $_ + 1 } 0 .. $#classes;
-}
 
 open TRAIN,"<$input" or die "Cannot open training data file $input";
 
@@ -44,21 +42,14 @@ my @dataset;
 while (<TRAIN>) {
     chomp;
 
-    my @line = split /$separator/;
-    my @features;
+    my @features = split/$separator/;
+    my $label = pop @features;
 
-    for my $i ( 0 .. $#line - 1 ) {
-        push @features, $line[$i];
-    }
+    # my @line = split /$separator/;
+    # my @features = @line[0..$line-1];
+    # my $label = $line[$#line];
 
-    my $label = $line[$#line];
-
-    if (defined $classesFile and !defined $labelMap{$label}) {
-	die "Undefined label $label (was not found in classes list $classesFile)";
-    }
-
-    my $classification = defined $classesFile ? $labelMap{$label} : $label;
-    my $data = Algorithm::SVM::DataSet->new(Label => $classification, Data => \@features);
+    my $data = Algorithm::SVM::DataSet->new(Label => $label, Data => \@features);
 
     push @dataset, $data;
 }
@@ -67,6 +58,9 @@ while (<TRAIN>) {
 print "Training SVM model...\n";
 
 my $svm = Algorithm::SVM->new();
+$svm->svm_type($svm_type);
+#svm->kernel($svm_kernel);
+
 #$svm->C(100);
 #$svm->gamma(64);
 $svm->train(@dataset);
