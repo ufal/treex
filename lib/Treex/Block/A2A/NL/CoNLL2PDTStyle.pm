@@ -24,6 +24,7 @@ sub process_zone {
     $self->fix_questionAdverbs($root);
     $self->fix_InfinitivesNotBeingObjects($root);
     $self->fix_SubordinatingConj($root);
+    $self->check_afuns($root);
 }
 
 

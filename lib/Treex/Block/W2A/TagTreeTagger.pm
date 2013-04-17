@@ -41,7 +41,7 @@ __END__
   et.par  Estonian    utf8
   sw.par  Swahili     latin1
   la.par  Latin       latin1
-  ru.par  Russian     ?
+  ru.par  Russian     utf8
 
 =cut
 
