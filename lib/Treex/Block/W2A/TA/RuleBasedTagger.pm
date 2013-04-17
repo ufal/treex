@@ -186,7 +186,8 @@ sub load_suffixes {
 		next if ( $line =~ /^$/ );
 		next if ( $line =~ /^#/ );
 		next if ( $line !~ /\t/ );
-		my @st = split( /\t/, $line );
+		my @st = split( /\t+/, $line );
+		print "Skippinf rule -> " . join(",") . "\n" and next if scalar(@st) != 2;
 		push @suffixes, $st[0];
 		push @tags,     $st[1];
 	}
@@ -215,13 +216,11 @@ sub tag_sentence {
 	my @forms     = @{$forms_ref};
 	my @lemmas    = ();
 	my @tags      = ();
-	my @is_tagged = 0 x scalar(@forms);
 	@lemmas = @{$lemmas_ref} if ( defined $lemmas_ref );
 	my %tagging_stat = (
 		'forms'  => \@forms,
 		'lemmas' => \@lemmas,
 		'tags'   => \@tags,
-		'tagged' => \@is_tagged
 	);
 	%tagging_stat = $self->first_pass( \%tagging_stat );
 	%tagging_stat = $self->second_pass( \%tagging_stat );
@@ -235,46 +234,39 @@ sub first_pass {
 	my @forms     = @{ $ts{'forms'} };
 	my @lemmas    = @{ $ts{'lemmas'} };
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-
 	foreach my $fid ( 0 .. $#forms ) {
 		my $form = $forms[$fid];
-		if ( defined $form ) {
+		if ( (defined $form) && ($form !~ /^\s*$/)) {
 			my $f = $form;
 			$f =~ s/(^\s+|\s+$)//;
-
 			# start from list with less items
-			%ts = $self->tag_if_determiner( $fid, $form, \%ts );
-			%ts = $self->tag_if_conjunction( $fid, $form, \%ts );
-			%ts = $self->tag_if_punc( $fid, $form, \%ts );
-			%ts = $self->tag_if_pp( $fid, $form, \%ts );
-			%ts = $self->tag_if_adj( $fid, $form, \%ts );
-			%ts = $self->tag_if_adv( $fid, $form, \%ts );
-			%ts = $self->tag_if_quantifier( $fid, $form, \%ts );
-			%ts = $self->tag_if_pronoun( $fid, $form, \%ts );
-			%ts = $self->tag_if_noun( $fid, $form, \%ts );
-			%ts = $self->tag_if_numeral($fid, $form, \%ts );
-			%ts = $self->tag_if_verb( $fid, $form, \%ts );
+			%ts = $self->tag_if_determiner( $fid, $f, \%ts );
+			%ts = $self->tag_if_conjunction( $fid, $f, \%ts );
+			%ts = $self->tag_if_punc( $fid, $f, \%ts );
+			%ts = $self->tag_if_pp( $fid, $f, \%ts );
+			%ts = $self->tag_if_adj( $fid, $f, \%ts );
+			%ts = $self->tag_if_adv( $fid, $f, \%ts );
+			%ts = $self->tag_if_quantifier( $fid, $f, \%ts );
+			%ts = $self->tag_if_noun( $fid, $f, \%ts );
+			%ts = $self->tag_if_pronoun( $fid, $f, \%ts );
+			%ts = $self->tag_if_numeral( $fid, $f, \%ts );
+			%ts = $self->tag_if_verb( $fid, $f, \%ts );
 		}
 	}
 
-	# assign default tags
 	@tags      = @{ $ts{'tags'} };
-	@is_tagged = @{ $ts{'tagged'} };
 
 	# SUBPOS [: -> #] at sentence boundaries
 	if ( $forms[$#forms] =~ /\.|\?|\!|\:|\;/ ) {
-		$tags[$#tags]      = 'Z#-------------';
-		$is_tagged[$#tags] = 1;
+		$tags[$#forms]      = 'Z#-------------';
 	}
 
+	# assign default tags
 	foreach my $fid ( 0 .. $#forms ) {
 		$tags[$fid] = 'NNNSN----------' if ( !defined $tags[$fid] );
-		$is_tagged[$fid] = 1;
 	}
 
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -283,20 +275,16 @@ sub second_pass {
 	my %ts        = %{$ts_ref};
 	my @forms     = @{ $ts{'forms'} };
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-
 	# make sure the tag length is 15 for each tag
-	foreach my $id ( 0 .. $#forms ) {
-		if ( length $tags[$id] != 15 ) {
+	foreach my $fid ( 0 .. $#forms ) {
+		if ( length $tags[$fid] != 15 ) {
 			print "tag length error at : "
-			  . $forms[$id] . "\t"
-			  . $tags[$id] . "\n";
-			$tags[$id] = 'NNNSN----------';
+			  . $forms[$fid] . "\t"
+			  . $tags[$fid] . "\n";
+			$tags[$fid] = 'NNNSN----------';
 		}
 	}
-
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -304,16 +292,13 @@ sub tag_if_verb {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-
-	if ( !$is_tagged[$fid] ) {
-
+	if ( !defined $tags[$fid] ) {
 		# a. suffix based matching
 		foreach my $i ( 0 .. $#verb_suffixes ) {
 			my $vs = $verb_suffixes[$i];
 			if ( $form =~ /$vs$/ ) {
 				$tags[$fid]      = $verb_tags[$i];
-				$is_tagged[$fid] = 1;
+				print "tag length error appeared at 'verb module' -> $tags[$fid]\n"  if (length($tags[$fid]) != 15); 
 				$verb_rule_freq{$i}++ if $self->print_rule_freq;
 				last;
 			}
@@ -325,21 +310,20 @@ sub tag_if_verb {
 		# all possible forms of auxiliary verbs)
 		foreach my $ak ( keys %{ $self->aux_verbs } ) {
 			if ( $form =~ /^$ak/ ) {
-				if ( defined $tags[$fid] ) {
+				if ( (defined $tags[$fid]) && (length($tags[$fid]) == 15) ) {
 					my $t = $tags[$fid];
 					$t =~ s/^Vr/VR/;
 					$t =~ s/^Vt/VT/;
 					$t =~ s/^Vu/VU/;
 					$t =~ s/^Vw/VW/;
 					$tags[$fid]      = $t;
-					$is_tagged[$fid] = 1;
+					print "tag length error appeared at 'verb module' -> $tags[$fid]\n"  if (length($tags[$fid]) != 15);					
 					last;
 				}
 			}
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -347,20 +331,18 @@ sub tag_if_noun {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		foreach my $i ( 0 .. $#noun_suffixes ) {
 			my $ns = $noun_suffixes[$i];
 			if ( $form =~ /$ns$/ ) {
 				$tags[$fid]      = $noun_tags[$i];
-				$is_tagged[$fid] = 1;
+				print "tag length error appeared at 'noun module' -> $tags[$fid]\n"  if (length($tags[$fid]) != 15); 
 				$noun_rule_freq{$i}++ if $self->print_rule_freq;
 				last;
 			}
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -368,63 +350,62 @@ sub tag_if_pronoun {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
 	if ( $form =~ /^(அ|இ|எ|ய|த|ந)/ ) {
-		if ( !$is_tagged[$fid] ) {
-			if ( exists $self->pronouns_list->{$form} ) {
+		if ( exists $self->pronouns_list->{$form} ) {			
+			if ( !defined $tags[$fid] ) {
 				$tags[$fid]      = 'R--------------';
-				$is_tagged[$fid] = 1;
-
-				# determine SUBPOS
-				my $subpos_found = 0;
-
-				# SUBPOS: 'B' [general referential pronouns]
-				# ends with உம்/um
-				if ( $form =~
+			}
+			elsif((defined $tags[$fid]) && (length($tags[$fid]) == 15)) {
+				$tags[$fid]      = $self->set_position( $tags[$fid], 'R', 1 );
+			}
+			else {
+				print "tag length error appeared at 'pronoun module' -> $tags[$fid]\n"  if (length($tags[$fid]) != 15);				
+			}						
+			
+			# determine SUBPOS
+			my $subpos_found = 0;
+			# SUBPOS: 'B' [general referential pronouns]
+			# ends with உம்/um
+			if ( $form =~
 /\N{TAMIL VOWEL SIGN U}\N{TAMIL LETTER MA}\N{TAMIL SIGN VIRAMA}$/
-				  )
-				{
-					$tags[$fid] = $self->set_position( $tags[$fid], 'B', 2 );
-					$subpos_found = 1;
-				}
+			  )
+			{
+				$tags[$fid] = $self->set_position( $tags[$fid], 'B', 2 );
+				$subpos_found = 1;
+			}
 
-				# SUBPOS: 'F' [Specific indefinite referential pronouns]
-				# ends with ஓ/oo
-				if ( $form =~ /\N{TAMIL VOWEL SIGN OO}$/ ) {
-					$tags[$fid] = $self->set_position( $tags[$fid], 'F', 2 );
-					$subpos_found = 1;
-				}
+			# SUBPOS: 'F' [Specific indefinite referential pronouns]
+			# ends with ஓ/oo
+			if ( $form =~ /\N{TAMIL VOWEL SIGN OO}$/ ) {
+				$tags[$fid] = $self->set_position( $tags[$fid], 'F', 2 );
+				$subpos_found = 1;
+			}
 
-				# SUBPOS: 'G' [Non specific indefinite pronouns]
-				# ends with ஆவது/aavathu
-				if ( $form =~
+			# SUBPOS: 'G' [Non specific indefinite pronouns]
+			# ends with ஆவது/aavathu
+			if ( $form =~
 /\N{TAMIL VOWEL SIGN AA}\N{TAMIL LETTER VA}\N{TAMIL LETTER TA}\N{TAMIL VOWEL SIGN U}$/
-				  )
-				{
-					$tags[$fid] = $self->set_position( $tags[$fid], 'G', 2 );
-					$subpos_found = 1;
+			  )
+			{
+				$tags[$fid] = $self->set_position( $tags[$fid], 'G', 2 );
+				$subpos_found = 1;
+			}
+
+			if ( !$subpos_found ) {
+
+				# SUBPOS: 'i' [interrogative pronouns]
+				if ( $form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ ) {
+					$tags[$fid] = $self->set_position( $tags[$fid], 'i', 2 );
 				}
 
-				if ( !$subpos_found ) {
-
-					# SUBPOS: 'i' [interrogative pronouns]
-					if ( $form =~ /^(\N{TAMIL LETTER YA}|\N{TAMIL LETTER E})/ )
-					{
-						$tags[$fid] =
-						  $self->set_position( $tags[$fid], 'i', 2 );
-					}
-
-					# SUBPOS: 'p' [personal pronouns]
-					else {
-						$tags[$fid] =
-						  $self->set_position( $tags[$fid], 'p', 2 );
-					}
+				# SUBPOS: 'p' [personal pronouns]
+				else {
+					$tags[$fid] = $self->set_position( $tags[$fid], 'p', 2 );
 				}
 			}
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -432,15 +413,12 @@ sub tag_if_pp {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( exists $self->pp_list->{$form} ) {
 			$tags[$fid]      = 'PP-------------';
-			$is_tagged[$fid] = 1;
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -448,24 +426,19 @@ sub tag_if_adj {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( exists $self->adj_list->{$form} ) {
 			$tags[$fid]      = 'JJ-------------';
-			$is_tagged[$fid] = 1;
 		}
 		else {
-
 			# test if the form ends with derived
 			# adjectival suffix ான/Ana
 			if ( $form =~ /ான$/ ) {
 				$tags[$fid]      = 'JJ-------------';
-				$is_tagged[$fid] = 1;
 			}
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -473,24 +446,19 @@ sub tag_if_adv {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( exists $self->adv_list->{$form} ) {
 			$tags[$fid]      = 'AA-------------';
-			$is_tagged[$fid] = 1;
 		}
 		else {
-
 			# test if the form ends with derived
 			# adverbial suffix "Aka" - ாக
 			if ( $form =~ /ாக(வும்|வே|வா|வோ)$/ ) {
 				$tags[$fid]      = 'AA-------------';
-				$is_tagged[$fid] = 1;
 			}
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -498,15 +466,12 @@ sub tag_if_quantifier {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( exists $self->quantifiers_list->{$form} ) {
 			$tags[$fid]      = 'QQ-------------';
-			$is_tagged[$fid] = 1;
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -514,15 +479,12 @@ sub tag_if_conjunction {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( $form =~ /^(அல்லது|மற்றும்)$/ ) {
 			$tags[$fid]      = 'CC-------------';
-			$is_tagged[$fid] = 1;
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -530,35 +492,35 @@ sub tag_if_numeral {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
 
 	# digits
 	if ( $form =~ /^(\d+(\.|\,)?\d+)$/ ) {
 		$tags[$fid]      = 'U=-------------';
-		$is_tagged[$fid] = 1;
 	}
 
 	# cardinal
-	if ( $form =~ /((ஒ|ியொ|ினொ)ன்ற|(இ|ியி)ரண்ட|மூன்ற|நான்க|(ஐ|ியை)ந்த|(ஆ|ியா)ற|(ஏ|ியே)ழ|(எ|ியெ)ட்ட|(ஒ|ியொ)ன்பத|பத்த|((இ|ியி)ரு|முப்|நாற்|(ஐ|ியை)ம்|(அ|ிய)று|(எ||ியெ)ழு|(எ||ியெ)ன்)பத|(ன்னூ|நூ)று|(ஆ|ா)யிர|லட்ச|மில்லியன|கோடி|பில்லியன)/)
+	if ( $form =~
+/((ஒ|ியொ|ினொ)ன்ற|(இ|ியி)ரண்ட|மூன்ற|நான்க|(ஐ|ியை)ந்த|(ஆ|ியா)ற|(ஏ|ியே)ழ|(எ|ியெ)ட்ட|(ஒ|ியொ)ன்பத|பத்த|((இ|ியி)ரு|முப்|நாற்|(ஐ|ியை)ம்|(அ|ிய)று|(எ||ியெ)ழு|(எ||ியெ)ன்)பத|(ன்னூ|நூ)று|(ஆ|ா)யிர|லட்ச|மில்லியன|கோடி|பில்லியன)/
+	  )
 	{
-		if ( defined $tags[$fid] ) {
+		if ( defined $tags[$fid] && (length($tags[$fid]) == 15) ) {
 			$tags[$fid] = $self->set_position( $tags[$fid], 'U', 1 );
 			$tags[$fid] = $self->set_position( $tags[$fid], 'c', 2 );
 		}
-		else {
-			$tags[$fid] = 'Uc-------------';
-			$is_tagged[$fid] = 1;			
+		elsif(!defined $tags[$fid]) {
+			$tags[$fid]      = 'Uc-------------';
 		}
 	}
 
 	# ordinal
-	if ( defined $tags[$fid] && $tags[$fid] =~ /^Uc/ ) {
-		if ( $form =~ /(ஆ|ா)(ம்|வது)$/ ) {
+	if ( (defined $tags[$fid]) && (length($tags[$fid]) == 15) && ($tags[$fid] =~ /^Uc/) ) {
+		if (   ( $form =~ /(ஆ|ா)(ம்|வது)$/ )
+			|| ( $form =~ /ாவத/ ) )
+		{
 			$tags[$fid] = $self->set_position( $tags[$fid], 'o', 2 );
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -566,16 +528,13 @@ sub tag_if_determiner {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( $form =~ /^(அ|இ|எ)ந்த(க்|ச்|த்|ப்)?$/ )
 		{
 			$tags[$fid]      = 'DD-------------';
-			$is_tagged[$fid] = 1;
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
@@ -583,18 +542,15 @@ sub tag_if_punc {
 	my ( $self, $fid, $form, $ts_ref ) = @_;
 	my %ts        = %{$ts_ref};
 	my @tags      = @{ $ts{'tags'} };
-	my @is_tagged = @{ $ts{'tagged'} };
-	if ( !$is_tagged[$fid] ) {
+	if ( !defined $tags[$fid] ) {
 		if ( $form =~
 /^(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|–|—|„|\,|‘|\*|\^|\||\`|\.|\:|\')$/
 		  )
 		{
 			$tags[$fid]      = 'Z:-------------';
-			$is_tagged[$fid] = 1;
 		}
 	}
 	$ts{'tags'}   = \@tags;
-	$ts{'tagged'} = \@is_tagged;
 	return %ts;
 }
 
