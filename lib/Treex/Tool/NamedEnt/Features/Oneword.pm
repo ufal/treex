@@ -20,6 +20,7 @@ sub extract {
     my ($plemma, $ptag)      = @args{qw/prev_lemma prev_tag/};
     my $pptag                = $args{pprev_tag};
     my $nlemma               = $args{next_lemma};
+
     my @prev_namedents       = @{$args{namedents}};
 
     my $pos = substr $tag, 0, 1;
@@ -61,7 +62,7 @@ sub extract {
     push @features, ( is_listed_entity('months', $plemma))      ? 1 : 0;
     push @features, ( $pbare_lemma eq '/')                      ? 1 : 0;
     push @features, ( $pbare_lemma eq '.')                      ? 1 : 0;
-    push @features, ( is_month_number($prev_lemma) )            ? 1 : 0;
+    push @features, ( is_month_number($plemma) )                ? 1 : 0;
 
 
     my $nlemma_term_types = Treex::Tool::Lexicon::CS::get_term_types($nlemma);

@@ -171,7 +171,7 @@ for my $sentence (@sentences) {
         $args{'next_form'} = $i < $#words ? $words[$i + 1] : $FALLBACK_LEMMA;
         $args{'next_tags'} = $i < $#words ? $tags[$i + 1] : $FALLBACK_TAG;
 
-        $args{'namedents'} = grep { $_->{end} <= $i+1 } @namedents; # pouze ty zleva.
+        $args{'namedents'} = [grep { $_->{end} <= $i+1 } @namedents]; # pouze ty zleva.
 
         # Urceni labelu pro kazdy model
         my ($onewordRef, $twowordRef, $threewordRef) = (-1,-1,-1);

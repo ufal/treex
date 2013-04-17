@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Treex::Core::Common;
-use Treex::Core::Resoruce 'require_file_from_share';
+use Treex::Core::Resource 'require_file_from_share';
 
 use Exporter qw/ import /;
 
@@ -67,7 +67,7 @@ my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen čer
 log_info('Retrieving NE lists');
 
 for my $share_list (qw /cities city_parts first_names surnames countries/) {
-    my $filename = $share_list . ".txt";
+    my $filename = "data/models/sysnerv/cs/" . $share_list . ".txt";
 
     my $file = require_file_from_share($filename, 'Treex::Tool::NamedEnt::Features::Common');
 
