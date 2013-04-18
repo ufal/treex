@@ -726,6 +726,11 @@ sub shape_coordination_recursively_object
         # Call recursively on all modifier subtrees.
         # Also call on orphan conjuncts, if any.
         # Unlike normal conjuncts, these can head nested coordination.
+        ###!!! This may be true with Moscow/Stanford but it is not true with Prague!
+        ###!!! In particular, it prevented us from detecting nested coordination in the Alpino treebank (nl).
+        ###!!! The detect_coordination() method above should return the list of nodes where to proceed with recursion.
+        ###!!! Also, with Alpino we'll be fine with finding afuns of the whole structure (as it is in the head label).
+        ###!!! But we will have hard time with true Prague style where they may be hidden several levels down!
         my @recursion = ($coordination->get_orphans(), $coordination->get_children());
         foreach my $node (@recursion)
         {

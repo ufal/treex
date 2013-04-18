@@ -75,9 +75,20 @@ sub deprel_to_afun
             ###!!! But then we may want to reattach the pronoun instead of labeling it AuxC!
             # It may also be an infinitive under a preposition (train/001#9: 'te raden' = 'to recommend').
             # Sometimes the infinitival 'te' is not tagged as preposition but as adverb.
+            # Sometimes there is 'van', tagged as preposition or adverb.
+            ###!!! Since the annotators put the relative element always above the verb and since it can also be an attribute of a noun, the parent can be a noun.
+            ###!!! Example (train/001#303):
+            ###!!! welke boeken jij leest laat   me koud
+            ###!!! what  books  you read  leaves me cold
+            ###!!! boeken/su ( welke/det , leest/body )
+            ###!!! Similarly, the parent can be adjective ('hoe snel' = 'how fast'; 'snel' is the adjectival parent) or adverb ('hoe vaak' = 'how often').
+            ###!!! Occasionally it can be a participle functioning as a noun ('hoeveel politieke gevangenen' = 'how many political prisoners').
+            ###!!! It can also be a numeral ('hoeveel' = 'how many'; 'miljoen' in 'hoeveel miljoen Joden' = 'how many million Jews').
+            ###!!! It can be a coordinating conjunction if the parent is coordination ('welke architect en meubelmaker' = 'which architect and furniture maker').
             if ( $parent->match_iset('pos' => 'conj', 'subpos' => 'sub') ||
-                 $parent->get_iset('prontype') =~ m/^(rel|int)$/ ||
-                 $parent->form() =~ m/^te$/i )
+                 $parent->get_iset('prontype') =~ m/^(rel|int|dem)$/ ||
+                 $parent->form() =~ m/^(aan|aan_het|bij|hoeveel|in|of|of_dat|op|over|te|tot|uit|van|voor|voor_het_geval)$/i ||
+                 $ppos eq 'noun' || $ppos eq 'adj' || $ppos eq 'verb' || $ppos eq 'num' || $ppos eq 'adv' || $ppos eq 'prep' || $ppos eq 'conj' )
             {
                 $afun = 'SubArg';
             }
