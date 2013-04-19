@@ -14,6 +14,8 @@ has maxlimit => (
     documentation => q(maximum number of lexemes to create),
 );
 
+use Treex::Tool::Lexicon::CS;
+
 sub process_dictionary {
     my ($self,$dict) = @_;
 
@@ -23,6 +25,7 @@ sub process_dictionary {
     while (<$LIST>) {
         $line++;
         last if defined $self->maxlimit and $line > $self->maxlimit;
+        next if /&amp;/;
 
         my ($long_lemma, $pos) = split;
         my $short_lemma = Treex::Tool::Lexicon::CS::truncate_lemma($long_lemma, 1); # homonym number deleted too

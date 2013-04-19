@@ -155,26 +155,50 @@ sub BUILD {
                 # If the file contains invalid PML (e.g. unknown afun value)
                 # Treex::PML fails with die.
                 # TODO: we should rather catch the die message and report it via log_fatal
+
+                my @warnings;
+    local $SIG{__WARN__} = sub {
+        my $msg = shift;
+        chomp $msg;
+        print STDERR $msg . "\n";
+        push @warnings, $msg;
+    };
+
+
+
                 $pmldoc = eval {
-                    $factory->createDocumentFromFile( $params_rf->{filename} );
+                    $factory->createDocumentFromFile( $params_rf->{filename}, { recover => 1 });
                 };
+                log_warn $Treex::PML::FSError;
                 log_fatal "Error while loading " . $params_rf->{filename} . ( $@ ? "\n$@" : '' )
                     if !defined $pmldoc;
             }
         }
     }
 
+
+#  print "QQQQ000meta >".$self->metaData('pml_root')."<\n";
+#  print "QQQQ111meta >".$self->metaData('pml_root')."<\n";
+
     # constructing treex document from an existing file
     if ($pmldoc) {
+#        print "QQQQ333meta >".$self->metaData('pml_root')."<\n";
+
+        print "LOADED PMLDOC".$pmldoc."\n";
         $self->_set_pmldoc($pmldoc);
+#        $self->{_pmldoc} = $pmldoc;
+#        $self->{_pmldoc} = $pmldoc;
+#        print "QQQQ444meta >".$self->metaData('pml_root')."<\n";
 
         # ensuring Treex::Core types (partially copied from the factory)
-        my $meta = $self->metaData('pml_root')->{meta};
-        if ( defined $meta->{zones} ) {
-            foreach my $doczone ( map { $_->value() } $meta->{zones}->elements ) {
+        if ($self->metaData) {
+            my $meta = $self->metaData('pml_root')->{meta};
+            if ( $meta and defined $meta->{zones} ) {
+                foreach my $doczone ( map { $_->value() } $meta->{zones}->elements ) {
 
                 # $doczone hashref will be reused as the blessed instance variable
-                Treex::Core::DocZone->new($doczone);
+                    Treex::Core::DocZone->new($doczone);
+                }
             }
         }
         $self->_rebless_and_index();
