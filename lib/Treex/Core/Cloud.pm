@@ -385,6 +385,36 @@ sub get_participants_and_modifiers
 
 
 
+#------------------------------------------------------------------------------
+# Selects a node inside the cloud as the representative of the cloud and
+# returns its address.
+#------------------------------------------------------------------------------
+sub get_address
+{
+    my $self = shift;
+    if($self->type() eq 'node')
+    {
+        return $self->_get_node()->get_address();
+    }
+    # It is not clear which node should represent a non-trivial cloud.
+    # Remember, we want a cloud to be independent of the current dependency representation of intra-cloud relations.
+    # We pick the first participant at the moment.
+    else
+    {
+        my @participants = $self->get_participants();
+        if(scalar(@participants)>0)
+        {
+            return $participants[0]->get_address();
+        }
+        else
+        {
+            log_fatal("Cannot identify a node in the cloud to get address of");
+        }
+    }
+}
+
+
+
 1;
 
 
