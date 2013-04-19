@@ -27,26 +27,30 @@ sub process_atree
     my $tree = shift;
     my @nodes = $tree->get_descendants({'ordered' => 1});
     
-	# 'flt' - form \t lemma \t tag
+    # 'flt' - form \t lemma \t tag
     if ($self->format eq 'flt') {
 	    print(join('', map
 	    {
 	    	my $n = $_;
     		my $complex_tag = q();
     		map{$complex_tag .= $n->get_attr($_)}split /\+/, $self->pos_attribute;
-	        $n->form() . "\t" . $n->lemma() ."\t". $complex_tag . "\n";
+    		my $form = $n->form(); $form = '' unless(defined($form));
+    		my $lemma = $n->lemma(); $lemma = '' unless(defined($lemma));
+	        "$form\t$lemma\t". $complex_tag . "\n";
 	    }
 	    (@nodes)), "\n");
 	        	
     }
-	# 'ftl' - form \t tag \t lemma    
+    # 'ftl' - form \t tag \t lemma    
     elsif ($self->format eq 'ftl') {
 	    print(join('', map
 	    {
 	    	my $n = $_;
     		my $complex_tag = q();
     		map{$complex_tag .= $n->get_attr($_)}split /\+/, $self->pos_attribute;	
-	        $n->form() . "\t" . $complex_tag . "\t" . $n->lemma() . "\n";
+    		my $form = $n->form(); $form = '' unless(defined($form));
+    		my $lemma = $n->lemma(); $lemma = '' unless(defined($lemma));
+	        "$form\t" . $complex_tag . "\t$lemma\n";
 	    }
 	    (@nodes)), "\n");       	
     }
