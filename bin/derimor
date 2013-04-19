@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Treex::Tool::DerivMorpho::Scenario;
+my $scenario_string = join ' ',@ARGV;
+print "scenario: $scenario_string\n";
+my $scenario = Treex::Tool::DerivMorpho::Scenario->new({from_string => $scenario_string});
+$scenario->apply_to_dictionary(undef);
