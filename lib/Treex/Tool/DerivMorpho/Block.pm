@@ -1,4 +1,4 @@
-package Treex::Tool::DerivMorpho::Lexeme;
+package Treex::Tool::DerivMorpho::Block;
 
 use Moose;
 use MooseX::SemiAffordanceAccessor;
