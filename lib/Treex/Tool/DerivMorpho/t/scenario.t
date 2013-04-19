@@ -12,9 +12,14 @@ BEGIN {
 
 use_ok 'Treex::Tool::DerivMorpho::Scenario';
 
-my $scenario = Treex::Tool::DerivMorpho::Scenario->new(from_string=>'Dummy param1=abc param2=bcd Dummy');
+my $scenario = Treex::Tool::DerivMorpho::Scenario->new(from_string=>'CreateEmpty Dummy param1=abc param2=bcd Dummy Save filename=test.tsv');
+$scenario->apply_to_dictionary();
 
-is(@{$scenario->block_items},2, "simple scenario correctly parsed");
+is(@{$scenario->block_items},4, "simple scenario correctly parsed");
+
+my $scenario2 = Treex::Tool::DerivMorpho::Scenario->new(from_string=>'Load filename=test.tsv');
 
 done_testing();
+
+unlink 'test.tsv';
 

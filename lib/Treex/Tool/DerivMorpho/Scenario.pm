@@ -36,6 +36,7 @@ sub apply_to_dictionary {
     my ($self, $dictionary) = @_;
 
     foreach my $block (@{$self->block_items}) {
+        log_info "Applying ".ref($block);
         $dictionary = $block->process_dictionary($dictionary);
     }
 }
