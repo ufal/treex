@@ -2,6 +2,7 @@ package Treex::Block::Print::SharedObjects;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Cloud;
+extends 'Treex::Core::Block';
 
 sub process_zone
 {
