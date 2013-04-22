@@ -46,21 +46,24 @@ for my $gamma (@gammas) {
 
             my $reader;
 
-            my $pid = open($reader, "|-", "./tuneWrapper.sh --gamma=$gamma --c=$c"); # Pustime ulohu na gridu
-#            my $pid = open($reader, "-|", "echo \"$gamma\"") or die 'Cannot open pipe';
+            my $pid = open($reader, "-|", "./tuneWrapper.sh --gamma=$gamma --c=$c"); # Pustime ulohu na gridu
+            #            my $pid = open($reader, "-|", "echo \"$gamma\"") or die 'Cannot open pipe';
+            my $acc;
 
             for (<$reader>) {   # Posbirame vysledky
                 chomp;
-                {
-                    lock %accuracy;
+                $acc = $_;
+            }
 
-		    if (!exists $accuracy{$gamma}) {
-			$accuracy{$gamma} = &share({});
-		    }
+            {
+                lock %accuracy;
 
-                    unless (exists $accuracy{$gamma}{$c}) {
-                        $accuracy{$gamma}{$c} = $_;
-                    }
+                if (!exists $accuracy{$gamma}) {
+                    $accuracy{$gamma} = &share({});
+                }
+
+                unless (exists $accuracy{$gamma}{$c}) {
+                    $accuracy{$gamma}{$c} = $acc;
                 }
             }
 
@@ -87,6 +90,11 @@ for my $c (@cs) {
 
     for my $gamma (@gammas) {
         my $acc = $accuracy{$gamma}{$c};
+
+	if(!defined $acc) {
+	    push @row, 'N/A';
+	    next;
+	}
 
         if ($acc > $best_acc) {
             $best_acc = $acc;
