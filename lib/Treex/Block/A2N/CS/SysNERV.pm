@@ -24,9 +24,9 @@ BEGIN {
 
     log_info("Loading NER models");
 
-    %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model' );
-    #                   twoword => 'data/models/sysnerv/cs/twoword.model',
-    #                   threeword  => 'data/models/sysnerv/cs/threeword.model');
+    %modelFiles = ( oneword => 'data/models/sysnerv/cs/oneword.model',
+                    twoword => 'data/models/sysnerv/cs/twoword.model',
+                    threeword  => 'data/models/sysnerv/cs/threeword.model');
 
 
     for my $model ( keys %modelFiles ) {
@@ -98,6 +98,11 @@ my %entityRefMap;
         $args{'nnext_lemma'} = defined $nnext_anode ? $nnext_anode->lemma : $FALLBACK_LEMMA;
         $args{'nnext_tag'} = defined $nnext_anode ? $nnext_anode->tag : $FALLBACK_TAG;
 
+	$args{'namedents'} = \@entities; # wow, tohle by dokonce mělo
+                                         # zajistit, že bude jiná
+                                         # hodnota v extract_twoword
+                                         # než v oneword, pokud tam
+                                         # bylo pushnuto
 
         my (@features, $data, $classification, $label, $n_node);
 
@@ -208,6 +213,9 @@ sub create_entity_node {
     return $n_node;
 }
 
+1;
+
+__END__
 
 sub create_entity_container_node {
     my ( $n_root, $classification, $anodesRef ) = @_;
