@@ -637,6 +637,11 @@ sub detect_alpino
             $self->add_shared_modifier($child);
         }
     }
+    # We now know all we can.
+    # It's time for a few more heuristics.
+    # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
+    # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
+    $self->reconsider_distant_private_modifiers();
 }
 
 

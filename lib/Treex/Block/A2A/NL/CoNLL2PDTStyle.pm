@@ -85,17 +85,14 @@ sub deprel_to_afun
             ###!!! Occasionally it can be a participle functioning as a noun ('hoeveel politieke gevangenen' = 'how many political prisoners').
             ###!!! It can also be a numeral ('hoeveel' = 'how many'; 'miljoen' in 'hoeveel miljoen Joden' = 'how many million Jews').
             ###!!! It can be a coordinating conjunction if the parent is coordination ('welke architect en meubelmaker' = 'which architect and furniture maker').
-            if ( $parent->match_iset('pos' => 'conj', 'subpos' => 'sub') ||
-                 $parent->get_iset('prontype') =~ m/^(rel|int|dem)$/ ||
-                 $parent->form() =~ m/^(aan|aan_het|bij|hoeveel|in|of|of_dat|op|over|te|tot|uit|van|voor|voor_het_geval)$/i ||
-                 $ppos eq 'noun' || $ppos eq 'adj' || $ppos eq 'verb' || $ppos eq 'num' || $ppos eq 'adv' || $ppos eq 'prep' || $ppos eq 'conj' )
+            if ( !$parent->is_root() )
             {
                 $afun = 'SubArg';
             }
             else
             {
                 $self->log_sentence($node);
-                log_warn('I do not know what to do with the label "body" when parent is neither subordinating conjunction nor relative pronoun.');
+                log_warn('I do not know what to do with the label "body" when its parent is the root.');
                 $afun = 'NR';
             }
         }
@@ -315,6 +312,12 @@ sub detect_coordination
     my $coordination = shift;
     my $debug = shift;
     $coordination->detect_alpino($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
 }
 
 

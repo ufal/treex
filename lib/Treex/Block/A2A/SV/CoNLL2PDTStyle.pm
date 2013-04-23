@@ -602,6 +602,12 @@ sub detect_coordination
     my $coordination = shift;
     my $debug = shift;
     $coordination->detect_moscow($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_orphans();
+    push(@recurse, $coordination->get_children());
+    return @recurse;
 }
 
 1;
