@@ -122,6 +122,12 @@ qr/;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--
 		}
 		$lemmas[$idx] = $form if !$lemma_found;
 	}
+
+	# lemma length should be at least 1 
+	foreach my $i (0..$#lemmas) {
+		$lemmas[$i] = $forms[$i] if (length($lemmas[$i]) <= 0); 
+	} 
+	
 	return @lemmas;
 }
 

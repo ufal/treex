@@ -25,8 +25,16 @@ sub process_document {
 			else {
 				$nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
 			}
-		}
+		}		
+		my @afuns = $self->get_relations(\@forms, \@lemmas, \@tags, \@parents);
+		map{$nodes[$_]->set_attr('afun', $afuns[$_])}0..$#nodes;
 	}
+}
+
+sub get_relations {
+	my ( $self, $forms_ref, $lemma_ref, $tags_ref, $parents_ref ) = @_;
+	my @afuns = ('Atr') x scalar(@{$forms_ref});
+	return @afuns;
 }
 
 sub parse_sentence {
