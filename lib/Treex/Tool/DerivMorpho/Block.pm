@@ -6,12 +6,13 @@ use MooseX::SemiAffordanceAccessor;
 sub process_dictionary {
     my ( $self, $dictionary ) = @_;
     foreach my $lexeme ($dictionary->get_lexemes) {
-        $self->process_lexeme($lexeme);
+        $self->process_lexeme($lexeme, $dictionary);
     }
+    return $dictionary;
 }
 
 sub process_lexeme {
-    my ( $self, $lexeme ) = @_;
+    my ( $self, $lexeme, $dictionary ) = @_;
     die "either process_lexeme or process_dictionary must be specified";
 }
 
