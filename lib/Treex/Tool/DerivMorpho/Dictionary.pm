@@ -84,11 +84,11 @@ sub save {
         $lexeme_number = 0;
         foreach my $lexeme ($self->get_lexemes) {
             my $source_lexeme_number = $lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : '';
-            print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
+            print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma || '', $lexeme->pos || '',
                                 ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : ''),
-                                $lexeme->deriv_type || '',
-                                $lexeme->lexeme_creator || '',
-                                $lexeme->derivation_creator || '',
+                                ( $lexeme->deriv_type || '' ),
+                                ( $lexeme->lexeme_creator || '' ),
+                                ( $lexeme->derivation_creator || '' ),
                             );
             print $F "\n";
             $lexeme_number++;
@@ -140,16 +140,20 @@ sub load {
         open my $F,'<:utf8',$filename or die $!;
         while (<$F>) {
             chomp;
-            my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type, $lexeme_creator, $derivation_creator) = split;
+            my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type, $lexeme_creator, $derivation_creator) = split /\t/;
             my $new_lexeme = $self->create_lexeme({lemma => $lemma,
                                                    mlemma => $mlemma,
                                                    pos => $pos,
-                                                   lexeme_creator => $lexeme_creator,
-                                                   derivation_creator => $derivation_creator,
                                                });
             if ($source_lexeme_number ne "") {
                 if ($deriv_type) {
                     $new_lexeme->set_deriv_type($deriv_type);
+                }
+                if ($derivation_creator) {
+                    $new_lexeme->set_derivation_creator($derivation_creator);
+                }
+                if ($lexeme_creator) {
+                    $new_lexeme->set_lexeme_creator($lexeme_creator);
                 }
                 $derived_number_to_source_number{$number} = $source_lexeme_number;
             }
@@ -173,7 +177,7 @@ sub load {
 
 sub add_derivation {
     my ( $self, $arg_ref ) = @_;
-    my ( $source_lexeme, $derived_lexeme, $deriv_type ) =
+    my ( $source_lexeme, $derived_lexeme, $deriv_type, $derivation_creator ) =
         map { $arg_ref->{$_} } qw(source_lexeme derived_lexeme deriv_type derivation_creator);
 
     log_fatal("Undefined source lexeme") if not defined $source_lexeme;
@@ -195,6 +199,7 @@ sub add_derivation {
 
     $derived_lexeme->set_source_lexeme($source_lexeme);
     $derived_lexeme->set_deriv_type($deriv_type);
+    $derived_lexeme->set_derivation_creator($derivation_creator) if $derivation_creator;
 
     return $source_lexeme;
 }
