@@ -12,7 +12,15 @@ sub process_anode
     $afun = '' if(!defined($afun));
     if($pos eq 'prep' && $afun ne 'AuxP')
     {
-        $self->complain($node, $node->form());
+        # Germanic languages use specific prepositions to mark infinitives (en:to, de:zu, nl:te, da:at, sv:att).
+        # Such preposition governs the infinitive instead of a noun and should be labeled AuxC instead of AuxP.
+        my @children = $node->children();
+        my $nc = scalar(@children);
+        my $ok = $afun eq 'AuxC' && $nc==1 && $children[0]->match_iset('pos' => 'verb', 'verbform' => 'inf');
+        unless($ok)
+        {
+            $self->complain($node, $node->form());
+        }
     }
 }
 
