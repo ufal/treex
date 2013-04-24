@@ -16,12 +16,10 @@ sub process_zone {
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
 #    $self->resolve_coordinations($root);
-#    $self->deprel_to_afun($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
-    #$self->fix_AuxK($root);
-    #$self->fix_questionAdverbs($root);
+    $self->fix_questionAdverbs($root);
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
@@ -322,96 +320,7 @@ sub detect_coordination
 
 
 
-my %cpos2afun = (
-    'Art' => 'AuxA',
-    'Prep' => 'AuxP',
-    'Adv' => 'Adv',
-    'Punc' => 'AuxX',
-    'Conj' => 'AuxC', # also Coord, but it is already filled when filling is_member of its children
-);
-
-
-my %parentcpos2afun = (
-    'Prep' => 'Adv',
-    'N' => 'Atr',
-);
-
-
-my %deprel2afun = (
-    'su' => 'Sb',
-    'obj1' => 'Obj',
-    # "vc" = verbal complement
-    'vc' => 'Obj',
-    # "se" = obligatory reflexive object
-    'se' => 'Obj',
-#    'ROOT' => 'Pred',
-);
-
-sub deprel_to_afun_zz {
-    my ( $self, $root ) = @_;
-
-    foreach my $node (grep {not $_->is_coap_root} $root->get_descendants)  {
-
-        #If AuxK is set then skip this node.
-        next if(defined $node->afun and $node->afun eq 'AuxK');
-
-
-        my ($parent) = $node->get_eparents();
-
-        my $deprel = ( $node->is_member ? $node->get_parent->conll_deprel : $node->conll_deprel() );
-
-#        if (not defined $deprel) {
-#            print $node->get_address."\n";
-#
-#            exit;
-#        }
-
-        my $cpos    = $node->get_attr('conll/pos');
-        my $parent_cpos   = ($parent and not $parent->is_root) ? $parent->get_attr('conll/cpos') : '';
-
-        my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
-                $cpos2afun{$cpos} ||
-                    $parentcpos2afun{$parent_cpos} ||
-                        'NR'; # !!!!!!!!!!!!!!! temporary filler
-
-        if ($deprel eq 'obj1' and $parent_cpos eq 'Prep') {
-            $afun = 'Adv';
-        }
-
-        if ($parent->is_root and $cpos eq 'V') {
-            $afun = 'Pred';
-        }
-
-        if ($deprel eq 'body') {
-            # Main predicate.
-            if (defined $parent->get_parent and $parent->get_parent->is_root and $parent->afun ne 'Pred' and not $parent->tag =~ /J,.*/) {
-                $afun = 'Pred';
-                ###!!! DZ: I would prefer to only translate labels in this function and move any structural changes to later steps.
-                $node->set_parent($root);
-                $parent->set_parent($node);
-            }
-            # Predicate of a subordinated clause.
-            elsif ($parent->match_iset('pos' => 'conj', 'subpos' => 'sub')) {
-                # This is a pseudo-afun that will not be saved. Its correct afun will be determined during later steps.
-                $afun = 'SubArg';
-            }
-        }
-
-        if ($node->get_parent->afun eq 'Coord' and not $node->is_member
-                and ($node->get_iset('pos')||'') eq 'conj') {
-            $afun = 'AuxY';
-        }
-
-        # AuxX should be used for commas, AuxG for other graphic symbols
-        if($afun eq q(AuxX) && $node->form ne q(,)) {
-            $afun = q(AuxG);
-        }
-
-        $node->set_afun($afun);
-    }
-}
-
-
+###!!! DZ: This method is obsolete. Check that David's additions are reflected in the new implementation, then remove.
 sub resolve_coordinations {
     my ( $self, $root ) = @_;
 
@@ -433,49 +342,55 @@ sub resolve_coordinations {
     }
 }
 
-sub fix_AuxK {
+
+
+#------------------------------------------------------------------------------
+# Reattaches interrogative pronouns and adverbs attached directly under the
+# root. ###!!! We have the same problem with relative pronouns in relative clauses
+# and we should reattach those as well (i.e. to the predicate of the clause).
+# It is not easy to tell what is the relation of the interrogative word towards
+# the predicate: Sb, Obj, or Adv?
+#------------------------------------------------------------------------------
+sub fix_questionAdverbs
+{
     my ( $self, $root ) = @_;
-    my $lastSubtree = ($root->get_descendants({ordered=>1}))[-1];
-
-    # change to final punctuation
-    if ($lastSubtree->afun eq "AuxX") {
-        $lastSubtree->set_afun("AuxK");
-
-        if ($lastSubtree->get_parent() != $root) {
-            $lastSubtree->set_parent($root);
+    # Find interrogative words (pronouns, adverbs) attached directly to the root.
+    my @int = ();
+    foreach my $node ($root->get_children())
+    {
+        if($node->get_iset('prontype') eq 'int')
+        {
+            push(@int, $node);
         }
     }
-}
-
-sub fix_questionAdverbs {
-    my ( $self, $root ) = @_;
-
-    # first find all question adverbs depending directly on the root
-    my @adv_root_children = ();
-    foreach my $anode ($root->get_children()) {
-        if ($anode->afun eq "NR" &&
-            $anode->tag =~ /^P4/) {
-
-            push @adv_root_children, $anode;
-
-        }
-    }
-
-    # if such adverb is followed
-    foreach my $adv (@adv_root_children) {
-        if (scalar $adv->get_children() == 1 &&
-              ($adv->get_children())[0]->tag =~ /^VB/) {
-            my $verb = ($adv->get_children())[0];
-
-            $verb->set_afun("Pred");
+    # Reattach them if they have just one child, which is a verb.
+    foreach my $int (@int)
+    {
+        if(scalar($int->get_children())==1 && ($int->get_children())[0]->get_iset('pos') eq 'verb')
+        {
+            my $verb = ($int->get_children())[0];
+            # The structure is directly under the root, thus the verb now becomes the main predicate.
             $verb->set_parent($root);
-
-            $adv->set_afun("Adv");
-            $adv->set_parent($verb);
-
+            $verb->set_afun('Pred');
+            # What is the relation of the interrogative to the verb?
+            # If it is an adverb then the relation is probably adverbial.
+            # Otherwise it can be the subject or an object. It is difficult to tell and we currently don't attempt it. ###!!!
+            # Possible heuristics: It is subject unless there is another node labeled as subject.
+            # (Problem: Group of nodes representing a compound verb form ('Wie heeft de Beatles opgericht?'): Where shall we look for the subject?)
+            # It is subject if there is a Pnom sibling.
+            # It is object if we do not have a reason to think that it is subject.
+            my $afun = 'NR';
+            if($int->get_iset('pos') eq 'adv')
+            {
+                $afun = 'Adv';
+            }
+            $int->set_parent($verb);
+            $int->set_afun($afun);
         }
     }
 }
+
+
 
 sub fix_InfinitivesNotBeingObjects {
     my ( $self, $root ) = @_;
