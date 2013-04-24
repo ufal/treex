@@ -1,0 +1,35 @@
+N2N - tzn. pouze odtrhnout předponu; pokud základové N v databázi není, nedogenerovávat, nechat bez derivace							
+N2A - tzn. postupovat jako u běžných adjektiv podle přípony; pokud základové N s danou předponou v databázi není, pak A2A (tzn. pouze odtrhnout předponu); pokud není v databázi ani takové adjektivum, nedogenerovávat, nechat bez derivace							
+							
+pseudo+N		ODTRHNOUT PŘEDPONU		N2N			pseudonym
+pseudo+A				N2A			
+		ODTRHNOUT PŘEDPONU		A2A			pseudo, pseudonymní
+							
+mikro+N		ODTRHNOUT PŘEDPONU		N2N			mikro, mikrob, mikrocie, mikrofon, mikrofonek, mikrofág, mikroglie, mikron, mikroskop
+mikro+A				N2A			
+		ODTRHNOUT PŘEDPONU		A2A			mikrobicidní, mikrobiální, mikrobní, mikrobův
+mikro+D				A2D			
+							
+anti+N				N2N			anticipace, anticipování, antika, antikva, antikvariát, antikvář, antilopa, antimon, antinomie, antinomizmus, antipod
+anti+A				N2A			
+				A2A			anticipační, anticipativní, anticipovaný, anticipující, antický, antikvární, antikvářský, antilopí, antilský
+anti+D				A2D			
+							
+dys+N				N2N			
+dys+A				N2A			
+				A2A			
+							
+meta+N	: metaznak, metatřída, metasoubor, metapsychologie, metamodel, metacentrum, metakomunikace, metajazyk, metainformace, metafáze, metafyzika, metafyzik, metafont						
+meta+A	: metastatický, metastabilní, metahistorický, metafyzikální, metafyzikův, metafyzický, metacentrický						
+meta+D	: metajazykově, metafyzicky, metafysicky						
+							
+super+N				N2N			superior, superiorita, superlativ
+super+A				N2A			
+				A2A			superficiální, superponovaný
+super+D				A2D			
+super+V				V2V			superponovat
+							
+							
+pra+N							praskot, ....
+pra+A							
+pra+D							
