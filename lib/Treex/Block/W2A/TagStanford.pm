@@ -40,6 +40,9 @@ sub _build_tagger{
     elsif ($self->has_using_lang_model) {
     	$self->_args->{model} = $self->known_models()->{$self->using_lang_model};
     }
+    else {
+        log_fatal('Model path (model=path/to/model) or language (using_lang_model=XX) must be set!');
+    }   
     return Treex::Tool::Tagger::Stanford->new($self->_args);
 }
 
@@ -72,7 +75,7 @@ is not supplied.
 
 =item C<using_lang_model>
 
-The 2-letter code of the POS model to be loaded. The C<model> parameter can be omitted if this 
+The 2-letter language code of the POS model to be loaded. The C<model> parameter can be omitted if this 
 parameter is supplied. Currently, the models are available for the following 
 languages,
 
