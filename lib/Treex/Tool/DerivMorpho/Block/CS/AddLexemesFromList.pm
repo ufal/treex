@@ -34,7 +34,7 @@ sub process_dictionary {
                 lemma  => $short_lemma,
                 mlemma => $long_lemma,
                 pos => $pos,
-                lexeme_origin => 'czeng',
+                lexeme_creator => $self->signature.'-czeng',
             });
         }
     }

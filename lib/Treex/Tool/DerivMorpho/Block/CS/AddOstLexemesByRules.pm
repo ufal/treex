@@ -124,7 +124,7 @@ sub process_dictionary {
                                     lemma  => $source_lemma,
                                     mlemma => $long_lemmas[0] || $source_lemma,
                                     pos => 'A',
-                                    lexeme_origin => 'rules-for-ost',
+                                    lexeme_creator => $self->signature,
                                 });
                                 print "NEW LEXEME CREATED: $source_lemma\n";
                             }
@@ -136,7 +136,7 @@ sub process_dictionary {
                                 source_lexeme => $new_source_lexeme,
                                 derived_lexeme => $lexeme,
                                 deriv_type => 'A2N',
-                                derivation_origin => 'rules-for-ost',
+                                derivation_creator => $self->signature,
                             });
                         }
                     }

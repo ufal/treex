@@ -87,6 +87,8 @@ sub save {
             print $F join "\t",($lexeme->{_lexeme_number}, $lexeme->lemma, $lexeme->mlemma, $lexeme->pos,
                                 ($lexeme->source_lexeme ? $lexeme->source_lexeme->{_lexeme_number} : ''),
                                 $lexeme->deriv_type || '',
+                                $lexeme->lexeme_creator || '',
+                                $lexeme->derivation_creator || '',
                             );
             print $F "\n";
             $lexeme_number++;
@@ -138,8 +140,13 @@ sub load {
         open my $F,'<:utf8',$filename or die $!;
         while (<$F>) {
             chomp;
-            my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type) = split;
-            my $new_lexeme = $self->create_lexeme({lemma => $lemma, mlemma=>$mlemma, pos=>$pos});
+            my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type, $lexeme_creator, $derivation_creator) = split;
+            my $new_lexeme = $self->create_lexeme({lemma => $lemma,
+                                                   mlemma => $mlemma,
+                                                   pos => $pos,
+                                                   lexeme_creator => $lexeme_creator,
+                                                   derivation_creator => $derivation_creator,
+                                               });
             if ($source_lexeme_number ne "") {
                 if ($deriv_type) {
                     $new_lexeme->set_deriv_type($deriv_type);
@@ -167,7 +174,7 @@ sub load {
 sub add_derivation {
     my ( $self, $arg_ref ) = @_;
     my ( $source_lexeme, $derived_lexeme, $deriv_type ) =
-        map { $arg_ref->{$_} } qw(source_lexeme derived_lexeme deriv_type derivation_origin);
+        map { $arg_ref->{$_} } qw(source_lexeme derived_lexeme deriv_type derivation_creator);
 
     log_fatal("Undefined source lexeme") if not defined $source_lexeme;
     log_fatal("Undefined derived lexeme") if not defined $derived_lexeme;

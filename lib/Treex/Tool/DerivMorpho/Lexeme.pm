@@ -36,13 +36,13 @@ has 'deriv_type' => (
     documentation => 'type of word-formative derivation',
 );
 
-has 'lexeme_origin' => (
+has 'lexeme_creator' => (
     is      => 'rw',
     isa     => 'Str',
     documentation => 'who generated this lexeme',
 );
 
-has 'derivation_origin' => (
+has 'derivation_creator' => (
     is      => 'rw',
     isa     => 'Str',
     documentation => 'who generated the link between this lexeme and its source lexeme',

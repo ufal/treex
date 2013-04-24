@@ -30,7 +30,7 @@ sub process_dictionary {
                     lemma  => $short_new_lemma,
                     mlemma => $long_lemmas[0],
                     pos => 'N',
-                    lexeme_origin => 'ost-from-cnk',
+                    lexeme_creator => $self->signature,
                 });
             }
         }
