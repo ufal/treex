@@ -15,7 +15,7 @@ my $analyzer = CzechMorpho::Analyzer->new();
 sub process_lexeme {
 
     my ($self, $adv_lexeme, $dict) = @_;
-    return if $adv_lexeme ne 'D' or $adv_lexeme->lemma !~ /ě$/;
+    return if $adv_lexeme->pos ne 'D' or $adv_lexeme->lemma !~ /ě$/;
 
     my $adv_lemma = $adv_lexeme->lemma;
     my @candidates = map {my $lemma = $adv_lemma; $lemma =~ s/ě$/$_/;$lemma} qw(í ý);
@@ -25,7 +25,7 @@ sub process_lexeme {
         push @long_lemmas,  map { $_->{lemma} } grep {  $_->{tag} =~ /^AAMS1/ } $analyzer->analyze($candidate);
     }
 
-    print scalar(@long_lemmas)."\t".$adv_lemma."\t".(join ' ',@long_lemmas)."\n";
+#    print scalar(@long_lemmas)."\t".$adv_lemma."\t".(join ' ',@long_lemmas)."\n";
 
     if (@long_lemmas) {
 
