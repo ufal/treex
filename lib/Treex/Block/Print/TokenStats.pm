@@ -36,7 +36,7 @@ sub process_end
     {
         my $n = $stat->{forms}{$form}{n};
         my $example = $stat->{forms}{$form}{example};
-        print {$fh} ("$token\t$n\t$example\n");
+        print {$fh} ("$form\t$n\t$example\n");
     }
 }
 
