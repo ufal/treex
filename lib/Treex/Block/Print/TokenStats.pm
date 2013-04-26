@@ -21,7 +21,7 @@ sub process_anode
         $stat->{forms}{$form}{n}++;
         if($stat->{forms}{$form}{n}==1)
         {
-            $stat->{forms}{$form}{example} = $node->get_position();
+            $stat->{forms}{$form}{example} = $node->get_address();
         }
     }
 }
