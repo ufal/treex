@@ -173,7 +173,14 @@ sub print_tsubtree {
     if ($lex || @aux){
         print {$t_fh} "<a>";
         printf {$t_fh} "<lex.rf>a#a-%s</lex.rf>", $lex->id if $lex;
-        printf {$t_fh} "<aux.rf>a#a-%s</aux.rf>", $_->id for @aux;
+        if (@aux==1){
+            printf {$t_fh} "<aux.rf>a#a-%s</aux.rf>", $aux[0]->id;
+        }
+        if (@aux>1){
+            print {$t_fh} "<aux.rf>";
+            printf {$t_fh} "<LM>a#a-%s</LM>", $_->id for @aux;
+            print {$t_fh} "</aux.rf>";
+        }
         print {$t_fh} "</a>\n";
     }
     
