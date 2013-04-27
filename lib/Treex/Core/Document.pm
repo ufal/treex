@@ -169,7 +169,7 @@ sub BUILD {
                 $pmldoc = eval {
                     $factory->createDocumentFromFile( $params_rf->{filename}, { recover => 1 });
                 };
-                log_warn $Treex::PML::FSError;
+#                log_warn $Treex::PML::FSError;
                 log_fatal "Error while loading " . $params_rf->{filename} . ( $@ ? "\n$@" : '' )
                     if !defined $pmldoc;
             }
