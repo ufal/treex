@@ -176,19 +176,9 @@ sub BUILD {
         }
     }
 
-
-#  print "QQQQ000meta >".$self->metaData('pml_root')."<\n";
-#  print "QQQQ111meta >".$self->metaData('pml_root')."<\n";
-
     # constructing treex document from an existing file
     if ($pmldoc) {
-#        print "QQQQ333meta >".$self->metaData('pml_root')."<\n";
-
-        print "LOADED PMLDOC".$pmldoc."\n";
         $self->_set_pmldoc($pmldoc);
-#        $self->{_pmldoc} = $pmldoc;
-#        $self->{_pmldoc} = $pmldoc;
-#        print "QQQQ444meta >".$self->metaData('pml_root')."<\n";
 
         # ensuring Treex::Core types (partially copied from the factory)
         if ($self->metaData) {
