@@ -57,13 +57,21 @@ sub process_end
     my @forms = keys(%{$stat->{forms}});
     my $ntypes = scalar(@forms);
     # Classify the special tokens in more detail.
-    my ($nmne, $nmwe, $nhyp, $nabr, $noth);
+    my ($nmne, $nmwe, $nhyp, $nabr, $nzwn, $noth);
     foreach my $form (@forms)
     {
+        # The Persian treebank contains the ZERO WIDTH NON-JOINER.
+        ###!!! DZ: I do not know what purpose it serves.
+        if($form =~ m/\x{200C}/)
+        {
+            $stat->{forms}{$form}{type} = 'ZWN';
+            $nzwn++;
+        }
         # A multiword personal name? Contains an uppercase letter and an underscore.
+        # Some treebanks (fa) use space inside of token instead of underscore.
         # May contain a period ("prof.", name initial).
         # Does not contain other punctuation and digits.
-        if($form =~ m/\p{Lu}/ && $form =~ m/^(\pL|\pM|\.)+(_(\pL|\pM|\.)+)+$/)
+        elsif($form =~ m/\p{Lu}/ && $form =~ m/^(\pL|\pM|\.)+([_ ](\pL|\pM|\.)+)+$/)
         {
             $stat->{forms}{$form}{type} = 'MNE';
             $nmne++;
@@ -113,7 +121,7 @@ sub process_end
     printf {$fh} ("TOTAL NULL TOKENS                 \t%6d (%.1f %%)\n", $stat->{nnull}, $stat->{nnull}/$n*100+0.01);
     printf {$fh} ("TOTAL OTHER TOKENS                \t%6d (%.1f %%)\n", $notokens, $notokens/$n*100+0.01);
     printf {$fh} ("TOTAL OTHER TYPES (NUMBERS ZEROED)\t%6d\n", $ntypes);
-    printf {$fh} ("  out of that: $nmne (%.1f %%) MNE, $nmwe (%.1f %%) MWE, $nhyp (%.1f %%) HYP, $nabr (%.1f %%) ABR and $noth (%.1f %%) OTH\n", $nmne/$ntypes*100+0.01, $nmwe/$ntypes*100+0.01, $nhyp/$ntypes*100+0.01, $nabr/$ntypes*100+0.01, $noth/$ntypes*100+0.01);
+    printf {$fh} ("  out of that: $nmne (%.1f %%) MNE, $nmwe (%.1f %%) MWE, $nhyp (%.1f %%) HYP, $nabr (%.1f %%) ABR, $nzwn (%.1f %%) ZWN and $noth (%.1f %%) OTH\n", $nmne/$ntypes*100+0.01, $nmwe/$ntypes*100+0.01, $nhyp/$ntypes*100+0.01, $nabr/$ntypes*100+0.01, $nzwn/$ntypes*100+0.01, $noth/$ntypes*100+0.01);
 }
 
 1;
