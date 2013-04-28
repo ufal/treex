@@ -18,7 +18,13 @@ sub process_anode
     my $form = $node->form();
     if(defined($form))
     {
-        if($form =~ m/^\pL+$/)
+        if($form eq 'NULL')
+        {
+            $stat->{nnull}++;
+        }
+        # Count marks as equal to letters.
+        # Mark characters include Arabic diacritical vowels.
+        elsif($form =~ m/^(\pL|\pM)+$/)
         {
             $stat->{nletters}++;
         }
@@ -57,26 +63,26 @@ sub process_end
         # A multiword personal name? Contains an uppercase letter and an underscore.
         # May contain a period ("prof.", name initial).
         # Does not contain other punctuation and digits.
-        if($form =~ m/\p{Lu}/ && $form =~ m/^(\pL|\.)+(_(\pL|\.)+)+$/)
+        if($form =~ m/\p{Lu}/ && $form =~ m/^(\pL|\pM|\.)+(_(\pL|\pM|\.)+)+$/)
         {
             $stat->{forms}{$form}{type} = 'MNE';
             $nmne++;
         }
         # Other multiword expression, no abbreviations (i.e. no period).
         # A typical example is a multiword preposition or conjunction (nl: zo_goed_als = "as good as").
-        elsif($form =~ m/^\pL+(_\pL+)+$/)
+        elsif($form =~ m/^(\pL|\pM)+(_(\pL|\pM)+)+$/)
         {
             $stat->{forms}{$form}{type} = 'MWE';
             $nmwe++;
         }
         # Compounds using hyphen(s).
-        elsif($form =~ m/^\pL+(-\pL+)+$/)
+        elsif($form =~ m/^(\pL|\pM)+(-(\pL|\pM)+)+$/)
         {
             $stat->{forms}{$form}{type} = 'HYP';
             $nhyp++;
         }
         # Abbreviations.
-        elsif($form =~ m/^\pL(\pL|\.)*\.$/)
+        elsif($form =~ m/^(\pL|\pM)(\pL|\pM|\.)*\.$/)
         {
             $stat->{forms}{$form}{type} = 'ABR';
             $nabr++;
@@ -99,11 +105,12 @@ sub process_end
         print {$fh} ("$type\t$form\t$n\t$example\n");
         $notokens += $n;
     }
-    my $n = $stat->{nletters}+$stat->{ndigits}+$stat->{ncommonpunc}+$notokens;
+    my $n = $stat->{nletters}+$stat->{ndigits}+$stat->{ncommonpunc}+$stat->{nnull}+$notokens;
     printf {$fh} ("TOTAL TOKENS                      \t%6d\n", $n);
     printf {$fh} ("TOTAL LETTER TOKENS               \t%6d (%.1f %%)\n", $stat->{nletters}, $stat->{nletters}/$n*100+0.01);
     printf {$fh} ("TOTAL DIGIT TOKENS                \t%6d (%.1f %%)\n", $stat->{ndigits}, $stat->{ndigits}/$n*100+0.01);
     printf {$fh} ("TOTAL COMMON PUNCTUATION          \t%6d (%.1f %%)\n", $stat->{ncommonpunc}, $stat->{ncommonpunc}/$n*100+0.01);
+    printf {$fh} ("TOTAL NULL TOKENS                 \t%6d (%.1f %%)\n", $stat->{nnull}, $stat->{nnull}/$n*100+0.01);
     printf {$fh} ("TOTAL OTHER TOKENS                \t%6d (%.1f %%)\n", $notokens, $notokens/$n*100+0.01);
     printf {$fh} ("TOTAL OTHER TYPES (NUMBERS ZEROED)\t%6d\n", $ntypes);
     printf {$fh} ("  out of that: $nmne (%.1f %%) MNE, $nmwe (%.1f %%) MWE, $nhyp (%.1f %%) HYP, $nabr (%.1f %%) ABR and $noth (%.1f %%) OTH\n", $nmne/$ntypes*100+0.01, $nmwe/$ntypes*100+0.01, $nhyp/$ntypes*100+0.01, $nabr/$ntypes*100+0.01, $noth/$ntypes*100+0.01);
