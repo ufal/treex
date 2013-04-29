@@ -50,11 +50,11 @@ my $trainFile = shift;
 
 pod2usage("Invalid parameters.") if !defined $trainFile;
 
-print "Script started with these parameters:\n";
+print "\nScript started with these parameters:\n";
 print "GAMMA $gamma\n";
 print "C $c\n";
 print "Folds $validateFolds\n";
-print "SVM_TYPE $svm_type";
+print "SVM_TYPE $svm_type\n";
 print "SVM_KERNEL $svm_kernel";
 print "\n";
 
@@ -73,13 +73,63 @@ while(<DATA>) {
 
 close DATA;
 
-my $svm = Algorithm::SVM->new(Type => $svm_type,
-                              Kernel => $svm_kernel);
 
-$svm->gamma($gamma);
-$svm->C($c);
-$svm->train(@dataset);
 
-my $accuracy = $svm->validate($validateFolds);
+my $dataSize = scalar @dataSet;
+my $foldSize = $dataSize / $validateFolds;
+
+my ($precSum, $recSum, $fmeasSum) = (0,0,0);
+
+for my $fold (1..$validateFolds) {
+
+    my $startIdx = int( ($fold - 1) * $foldSize );
+    my $endIdx   = int(  $fold      * $foldSize - 1);
+
+    my @train = @dataSet[0..$startIdx-1, $endIdx+1..$dataSize-1];
+    my @test  = @dataSet[$startIdx..$endIdx];
+
+
+    my $svm = Algorithm::SVM->new(Type => $svm_type,
+				  Kernel => $svm_kernel);
+
+    $svm->gamma($gamma);
+    $svm->C($c);
+
+    $svm->train(@train);
+
+    my ($tp, $fp, $fn) = (0,0,0);
+
+    for my $ds (@test) {
+
+	my $reference = $ds->label();
+	my $result = $svm->predict($ds);
+
+	if($reference == $result && $reference != -1) {
+	    $tp++;
+	}
+
+	if($reference != $result && $result == -1) {
+	    $fn++;
+	}
+
+	if($reference != $result && $reference == -1) {
+	    $fp++;
+	}
+    }
+
+    my $prec = $tp / ($tp + $fp);
+    my $rec = $tp / ($tp + $fn);
+
+    my $fmeas = 2 * $prec * $rec / ($prec + $rec);
+
+    $precSum += $prec;
+    $recSum += $rec;
+    $fmeasSum += $fmeas;
+}
+
+print "\nAverage_Precision: " . $precSum / $validateFolds . "\n";
+print "Average_Recall: " . $recSum / $validateFolds . "\n";
+print "Average_Fmeasure: " . $fmeasSum / $validateFolds . "\n";
+
 
 print "\nAccuracy: " . $accuracy . "\n";
