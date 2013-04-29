@@ -26,7 +26,8 @@ sub process_start {
 
 sub _get_err_distr {
     my ($self) = @_;
-    open (my $ERR_DISTR, "<:encoding(utf8)", $self->err_distr_from) or log_fatal $!;
+#    open (my $ERR_DISTR, "<:encoding(utf8)", $self->err_distr_from) or log_fatal $!;
+    open (my $ERR_DISTR, "<:encoding(utf8)", '/a/LRC_TMP/rosa/tagchanges.tsv') or log_fatal $!;
     my %err_distr;
     while (<$ERR_DISTR>) {
         chomp;

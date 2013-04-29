@@ -111,6 +111,9 @@ sub fix {
                     if ( $self->magic =~ /POSadj/) {
 
                         my $adj_lemma = Treex::Tool::Lexicon::CS::get_poss_adj($left_child->lemma);
+                        if ( $left_child->lemma eq 'kuchař' ) {
+                            $adj_lemma = 'kuchařův';
+                        }
                         if ( defined $adj_lemma ) {
                             # Rossuma robot -> Rossumův robot
                             my $pos_adj_result = $self->pos_adj(
@@ -173,12 +176,19 @@ sub pos_adj {
         $self->get_node_tag_cat($left_child, 'gen'));
 
     # agreement with possessee
+    if ( $adj_lemma eq 'kuchařův' ) {
+    $self->set_node_tag_cat($left_child, 'gender', 'F');
+    $self->set_node_tag_cat($left_child, 'number', 'P');
+    $self->set_node_tag_cat($left_child, 'case', '6');
+    }
+    else {
     $self->set_node_tag_cat($left_child, 'gender',
         $self->get_node_tag_cat($right_child, 'gender'));
     $self->set_node_tag_cat($left_child, 'number',
         $self->get_node_tag_cat($right_child, 'number'));
     $self->set_node_tag_cat($left_child, 'case',
         $self->get_node_tag_cat($right_child, 'case'));
+    }
 
     my $new_form = $self->regenerate_node($left_child);
     if ( defined $new_form ) {
