@@ -31,6 +31,12 @@ use Pod::Usage;
 my %accuracy;
 share(%accuracy);
 
+
+my $inputFile = shift;
+
+die("You must supply input file") if !defined $inputFile;
+die "Input file $inputFile does not exist" if !-e $inputFile;
+
 my @threads;
 
 my @gamma_exps =  (-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5);
@@ -46,13 +52,16 @@ for my $gamma (@gammas) {
 
             my $reader;
 
-            my $pid = open($reader, "-|", "./tuneWrapper.sh --gamma=$gamma --c=$c"); # Pustime ulohu na gridu
+            my $pid = open($reader, "-|", "./tuneWrapper.sh $inputFile --gamma=$gamma --c=$c"); # Pustime ulohu na gridu
             #            my $pid = open($reader, "-|", "echo \"$gamma\"") or die 'Cannot open pipe';
             my $acc;
 
             for (<$reader>) {   # Posbirame vysledky
                 chomp;
-                $acc = $_;
+		next unless /\s/;
+
+		my ($str, $acc2) = split /\s+/;
+                $acc = $acc2 if $str eq q/Accuracy:/;
             }
 
             {

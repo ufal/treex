@@ -41,14 +41,22 @@ GetOptions('separator=s' => \$separator,
            'svm_type=s' => \$svm_type,
 	   'svm_kernel|kernel=s' => \$svm_kernel,
 	   'c=f' => \$c,
-	   'gamma=f' => \$gamma
+	   'gamma=f' => \$gamma,
+	   'gamma-exp=f' => sub{$gamma = 2**$_[1]},
+	   'c-exp=f' => sub{$c = 2**$_[1]}
        );
 
 my $trainFile = shift;
 
 pod2usage("Invalid parameters.") if !defined $trainFile;
 
-print "Reading data into memory...\n";
+print "Script started with these parameters:\n";
+print "GAMMA $gamma\n";
+print "C $c\n";
+print "Folds $validateFolds\n";
+print "SVM_TYPE $svm_type";
+print "SVM_KERNEL $svm_kernel";
+print "\n";
 
 my @dataset;
 open DATA, $trainFile or die "Cannot open input file $trainFile";
@@ -74,4 +82,4 @@ $svm->train(@dataset);
 
 my $accuracy = $svm->validate($validateFolds);
 
-print $accuracy . "\n";
+print "\nAccuracy: " . $accuracy . "\n";
