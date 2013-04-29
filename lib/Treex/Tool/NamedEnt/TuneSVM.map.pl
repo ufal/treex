@@ -22,7 +22,7 @@ use warnings;
 use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
-use Text::Table;
+use Data::Dumper;
 
 use Getopt::Long;
 use Pod::Usage;
@@ -39,11 +39,11 @@ my $gamma;
 GetOptions('separator=s' => \$separator,
            'validate=i' => \$validateFolds,
            'svm_type=s' => \$svm_type,
-	   'svm_kernel|kernel=s' => \$svm_kernel,
-	   'c=f' => \$c,
-	   'gamma=f' => \$gamma,
-	   'gamma-exp=f' => sub{$gamma = 2**$_[1]},
-	   'c-exp=f' => sub{$c = 2**$_[1]}
+           'svm_kernel|kernel=s' => \$svm_kernel,
+           'c=f' => \$c,
+           'gamma=f' => \$gamma,
+           'gamma-exp=f' => sub{$gamma = 2**$_[1]},
+           'c-exp=f' => sub{$c = 2**$_[1]}
        );
 
 my $trainFile = shift;
@@ -58,17 +58,17 @@ print "SVM_TYPE $svm_type\n";
 print "SVM_KERNEL $svm_kernel";
 print "\n";
 
-my @dataset;
+my @dataSet;
 open DATA, $trainFile or die "Cannot open input file $trainFile";
 
-while(<DATA>) {
+while (<DATA>) {
     chomp;
 
     my @features = split/$separator/;
     my $label = pop @features;
     my $data = Algorithm::SVM::DataSet->new(Label => $label, Data => \@features);
 
-    push @dataset, $data;
+    push @dataSet, $data;
 }
 
 close DATA;
@@ -88,9 +88,8 @@ for my $fold (1..$validateFolds) {
     my @train = @dataSet[0..$startIdx-1, $endIdx+1..$dataSize-1];
     my @test  = @dataSet[$startIdx..$endIdx];
 
-
     my $svm = Algorithm::SVM->new(Type => $svm_type,
-				  Kernel => $svm_kernel);
+                                  Kernel => $svm_kernel);
 
     $svm->gamma($gamma);
     $svm->C($c);
@@ -101,26 +100,28 @@ for my $fold (1..$validateFolds) {
 
     for my $ds (@test) {
 
-	my $reference = $ds->label();
-	my $result = $svm->predict($ds);
+        my $reference = $ds->label();
+        my $result = $svm->predict($ds);
 
-	if($reference == $result && $reference != -1) {
-	    $tp++;
-	}
+        if ($reference == $result && $reference != -1) {
+            $tp++;
+        }
 
-	if($reference != $result && $result == -1) {
-	    $fn++;
-	}
+        if ($reference != $result && $result == -1) {
+            $fn++;
+        }
 
-	if($reference != $result && $reference == -1) {
-	    $fp++;
-	}
+        if ($reference != $result && $reference == -1) {
+            $fp++;
+        }
     }
 
     my $prec = $tp / ($tp + $fp);
     my $rec = $tp / ($tp + $fn);
 
     my $fmeas = 2 * $prec * $rec / ($prec + $rec);
+
+
 
     $precSum += $prec;
     $recSum += $rec;
@@ -130,6 +131,3 @@ for my $fold (1..$validateFolds) {
 print "\nAverage_Precision: " . $precSum / $validateFolds . "\n";
 print "Average_Recall: " . $recSum / $validateFolds . "\n";
 print "Average_Fmeasure: " . $fmeasSum / $validateFolds . "\n";
-
-
-print "\nAccuracy: " . $accuracy . "\n";
