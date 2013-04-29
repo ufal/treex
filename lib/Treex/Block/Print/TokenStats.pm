@@ -62,6 +62,10 @@ sub process_end
     {
         # The Persian treebank contains the ZERO WIDTH NON-JOINER.
         ###!!! DZ: I do not know what purpose it serves.
+        ###!!! Update: Its usage is required by typographical and morphological rules.
+        ###!!! It blocks usage of ligatures at certain places, e.g. between stem and plural suffix.
+        ###!!! Instead of ligature, the preceding character will be in final and the following character in initial form.
+        ###!!! So we probably want to count the ZWNJ among letters, although its category is "\pC"?
         if($form =~ m/\x{200C}/)
         {
             $stat->{forms}{$form}{type} = 'ZWN';
