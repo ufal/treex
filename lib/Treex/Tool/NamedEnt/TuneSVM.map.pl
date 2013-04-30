@@ -23,6 +23,7 @@ use Algorithm::SVM;
 use Algorithm::SVM::DataSet;
 
 use Data::Dumper;
+use Treex::Tool::NamedEnt::SVMTools qw/load_data evaluate/;
 
 use Getopt::Long;
 use Pod::Usage;
@@ -33,8 +34,8 @@ my $svm_type = 'C-SVC';
 my $svm_kernel = 'radial';
 
 my $validateFolds = 5;
-my $c;
-my $gamma;
+my $c = 1;
+my $gamma = 1;
 
 GetOptions('separator=s' => \$separator,
            'validate=i' => \$validateFolds,
@@ -49,6 +50,7 @@ GetOptions('separator=s' => \$separator,
 my $trainFile = shift;
 
 pod2usage("Invalid parameters.") if !defined $trainFile;
+pod2usage("Invalid parameters. --validate option must be greater than 1") if $validateFolds < 2;
 
 print "\nScript started with these parameters:\n";
 print "GAMMA $gamma\n";
@@ -58,23 +60,7 @@ print "SVM_TYPE $svm_type\n";
 print "SVM_KERNEL $svm_kernel";
 print "\n";
 
-my @dataSet;
-open DATA, $trainFile or die "Cannot open input file $trainFile";
-
-while (<DATA>) {
-    chomp;
-
-    my @features = split/$separator/;
-    my $label = pop @features;
-    my $data = Algorithm::SVM::DataSet->new(Label => $label, Data => \@features);
-
-    push @dataSet, $data;
-}
-
-close DATA;
-
-
-
+my @dataSet = @{load_data($trainFile)};
 my $dataSize = scalar @dataSet;
 my $foldSize = $dataSize / $validateFolds;
 
@@ -96,38 +82,5 @@ for my $fold (1..$validateFolds) {
 
     $svm->train(@train);
 
-    my ($tp, $fp, $fn) = (0,0,0);
-
-    for my $ds (@test) {
-
-        my $reference = $ds->label();
-        my $result = $svm->predict($ds);
-
-        if ($reference == $result && $reference != -1) {
-            $tp++;
-        }
-
-        if ($reference != $result && $result == -1) {
-            $fn++;
-        }
-
-        if ($reference != $result && $reference == -1) {
-            $fp++;
-        }
-    }
-
-    my $prec = $tp / ($tp + $fp);
-    my $rec = $tp / ($tp + $fn);
-
-    my $fmeas = 2 * $prec * $rec / ($prec + $rec);
-
-
-
-    $precSum += $prec;
-    $recSum += $rec;
-    $fmeasSum += $fmeas;
+    evaluate($svm, \@test);
 }
-
-print "\nAverage_Precision: " . $precSum / $validateFolds . "\n";
-print "Average_Recall: " . $recSum / $validateFolds . "\n";
-print "Average_Fmeasure: " . $fmeasSum / $validateFolds . "\n";
