@@ -61,6 +61,16 @@ sub get_form {
         return $self->get_form( $lemma, $tag );
     }
 
+    # numerals have deterministic number
+    if ( !$form && $tag =~ /^C/ ) {
+        if ( $tag =~ /^(...)S(.+)$/ ) {
+            $tag = $1 . 'P' . $2;
+        } else {
+            $tag = $1 . 'S' . $2;
+        }
+        return $self->get_form( $lemma, $tag );
+    }
+
     # reasonable but does not bring any improvement:
     # if the tag is corrupt, it is usually a good idea not to try to
     # generate any form and to keep the current form unchanged
