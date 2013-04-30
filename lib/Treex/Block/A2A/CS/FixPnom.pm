@@ -10,9 +10,13 @@ sub fix {
     #my $endep = $self->en($dep);
 
     if ($d->{afun} eq 'Pnom' && $d->{'pos'} eq 'A' && $g->{'pos'} eq 'V') {
-        my @subjects = grep { $_->afun eq 'Sb' } $gov->get_echildren();
+        my @subjects = grep {
+            $_->afun eq 'Sb' &&
+            $self->en($_) && $self->en($_)->afun && $self->en($_)->afun eq 'Sb'
+        } $gov->get_echildren();
         if ( @subjects ) {
-            my $subject = $subjects[@subjects-1];
+            # my $subject = $subjects[@subjects-1];
+            my ($subject) = @subjects;
             $self->logfix1( $dep, "Pnom" );
             $self->set_node_tag_cat( $dep, 'number',
                 $self->get_node_tag_cat( $subject, 'number'));
