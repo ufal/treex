@@ -9,7 +9,9 @@ sub fix {
 
     #my $endep = $self->en($dep);
 
-    if ($d->{afun} eq 'Pnom' && $d->{'pos'} eq 'A' && $g->{'pos'} eq 'V') {
+    if (#$d->{afun} eq 'Pnom' && 
+        $d->{'pos'} eq 'A'
+        && $g->{'pos'} eq 'V') {
         my @subjects = grep {
             $_->afun eq 'Sb' &&
             $self->en($_) && $self->en($_)->afun && $self->en($_)->afun eq 'Sb'
@@ -22,6 +24,7 @@ sub fix {
                 $self->get_node_tag_cat( $subject, 'number'));
             $self->set_node_tag_cat( $dep, 'gender',
                 $self->get_node_tag_cat( $subject, 'gender'));
+            $self->set_node_tag_cat( $dep, 'case', 1);
             $self->regenerate_node($dep);
             $self->logfix2($dep);
         }
