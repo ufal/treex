@@ -32,7 +32,7 @@ has 'backward_weight' => (
 has lm_dir => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'cs',
+    default => 'cs.wmt2007-2012',
 );
 
 use Treex::Tool::Algorithm::TreeViterbi;
