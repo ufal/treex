@@ -10,11 +10,11 @@ my $possadj_filename = require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
 
 my @DICENDI_VERBS =
     qw(dodat dodávat doplnit hlásit hodnotit informovat komentovat konstatovat líčit
-    litovat mínit napsat ohlásit ohlašovat podotknout popisovat popsat potvrdit povědět
+    litovat mínit napsat ohlásit ohlašovat oznámit oznamovat podotknout popisovat popsat potvrdit povědět
     poznamenat připomenout přiznat přiznávat prohlásit prohlašovat psát reagovat
-    říci říkat sdělit soudit svěřit tvrdit upozornit upřesnit upřesňovat usoudit
-    uvádět uvést uzavřít vylíčit vypravovat vyprávět vysvětlit vysvětlovat
-    vzpomínat zdůraznit);
+    říci říkat sdělit soudit svěřit_se tvrdit upozornit upozorňovat upřesnit upřesňovat usoudit
+    uvádět uvést uzavřít uznat uznávat vylíčit vypravovat vyprávět vysvětlit vysvětlovat
+    vyzvat vyzývat vzpomínat zdůraznit);
 my %IS_DICENDI_VERB;
 
 foreach my $lemma (@DICENDI_VERBS) {
