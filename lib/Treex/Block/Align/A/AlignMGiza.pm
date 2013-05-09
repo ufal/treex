@@ -15,7 +15,7 @@ has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' )
 has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 has model => ( isa => 'Str', is => 'rw', default => "$ENV{TMT_ROOT}/share/data/models/mgiza/en-cs" );
-has model_from_share => ( isa => 'Str', is => 'ro', default => undef );
+has model_from_share => ( isa => 'Str', is => 'ro' );
 
 my $mgizadir = "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install";
 
