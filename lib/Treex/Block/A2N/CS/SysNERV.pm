@@ -72,9 +72,10 @@ my %entityRefMap;
         $n_root = $zone->create_ntree();
     }
 
+    my @validAnodes = grep { $_->form ne '' } @anodes;
 
-    for my $i ( 0 .. $#anodes ) {
-        my ( $pprev_anode, $prev_anode, $anode, $next_anode, $nnext_anode ) = @anodes[$i-2..$i+2];
+    for my $i ( 0 .. $#validAnodes ) {
+        my ( $pprev_anode, $prev_anode, $anode, $next_anode, $nnext_anode ) = @validAnodes[$i-2..$i+2];
 
         my %args;
 
