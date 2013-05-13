@@ -23,7 +23,8 @@ my $svm_gamma;
 GetOptions('separator=s' => \$separator,
            'svm_type=s' => \$svm_type,
 	   'svm_kernel|kernel=s' => \$svm_kernel,
-           'svm_c|c=i' => \$svm_c);
+           'svm_c|c=i' => \$svm_c,
+	   'svm_gamma|gamma=s' => \$svm_gamma);
 
 @ARGV == 2 or die "Usage: ./TrainSVM.pl FEATURE_FILE OUTPUT.model [-s SEPARATOR]";
 
