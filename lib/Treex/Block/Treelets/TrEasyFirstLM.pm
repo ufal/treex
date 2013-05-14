@@ -26,9 +26,7 @@ has [qw(wL wF wLF wxFL wLFL wxFLF wLFLF)] => (is=>'rw', default=>1);
 
 my $MAX_RULE_SIZE = 3;     # max number of nodes in src treelet
 
-my (@WMASKS, $WEIGHTS);
-
-my @STARS = ('*') x 4;
+my $WEIGHTS;
 
 my (@s_label, @s_parent, @s_children, @t_label, @t_origin, @translated, @covered_by);
 
@@ -94,8 +92,23 @@ sub escape {
 sub translate_sentence_subnodes {
     my ($self) = @_;
     $self->retrieve_matching_rules();
-    my @queue = (0); # 0=root - it governs the whole src tree as there are no translated nodes yet
+
+    # @queue holds all roots of untranslated components
+    # 0=root - it governs the whole src tree as there are no translated nodes yet
+    my @queue = (0); 
     while (@queue){
+
+        # If the first item in @queue was already translated, just skip it.
+        # We can be sure that its children were included in the queue unless they were translated as well.
+        # Note that when searching the best rule for a give component,
+        # the rule may translate also nodes from other components (if MAX_RULE_SIZE > 2),
+        # which might be included in the queue but we don't bother to detect it
+        # and we leave the translated nodes in the queue and remove them now.
+        if ($translated[$queue[0]]){
+            shift @queue;
+            next;
+        }
+
         my $treelet = $self->find_best_in_subtree($queue[0]);
         if (!$treelet){
             my @segment_nodes = shift @queue;
@@ -103,23 +116,21 @@ sub translate_sentence_subnodes {
                 my $n = shift @segment_nodes;
                 $translated[$n] = 1;
                 $t_label[$n] = $s_label[$n];
-                $t_origin[$n] = 'clone';
+                $t_origin[$n] = 'cloneX';
                 push @segment_nodes, grep {!$translated[$_]} @{$s_children[$n]};
             }
         } else {
             my $rule = $treelet->{rules}[0];
             my @subnodes = @{$treelet->{s_nodes}};
             my @labels   = @{$rule->{t_labels}};
+            my $origin = $treelet->{src} .' -> '. $rule->{trg} .' = '. $treelet->{score};
             foreach my $i (0..$#subnodes){
                 my $subnode = $subnodes[$i];
-                #next if $translated[$subnode]; we want concatenated origins
                 $t_label[$subnode] = $labels[$i];
-                my $origin = $treelet->{src} .' -> '. $rule->{trg} .' = '. $treelet->{score};
                 $t_origin[$subnode] = $t_origin[$subnode] ? $t_origin[$subnode]."\n$origin" : $origin;
                 push @queue, grep {!$translated[$_]} @{$s_children[$subnode]} if !$translated[$subnode];
                 $translated[$subnode] = 1;
             }
-            shift @queue if $translated[$queue[0]];
         }
     }
     return;
@@ -128,7 +139,7 @@ sub translate_sentence_subnodes {
 sub find_best_in_subtree {
     my ($self, $s_root_i) = @_;
     my $best = 0;
-    my %seen_treelet;
+    my %seen_treelet = ();
     my @queue = ($s_root_i);
     while (@queue){
         my $s_i = shift @queue;
@@ -142,14 +153,14 @@ sub find_best_in_subtree {
             next if !@new_rules;
             $self->update_features($treelet);
             my $score = $self->compute_score($treelet);
-            $best = $treelet if !$best || $best->{score} < $score;
+            $best = $treelet if !$best || ($best->{score} < $score);
         }
     }
     return $best;
 }
 
-# a rule is "valid" if it is compatible with the already translated nodes
-# and if it covers some untranslated nodes
+# A rule is "valid" if it is compatible with the already translated nodes
+# and if it covers some untranslated nodes.
 sub is_valid {
     my ($rule, $treelet) = @_;
     my @subnodes = @{$treelet->{s_nodes}};
@@ -280,86 +291,3 @@ Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles Univer
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
-
-sub OLDprocess_ttree {
-    my ( $self, $tree ) = @_;
-    my @rules;
-    my @nodes = $tree->get_descendants();
-    %covered_by = ();
-    foreach my $node (@nodes){
-        $covered_by{$node.'L'} = [];
-        $covered_by{$node.'F'} = [];
-    }
-    foreach my $node (@nodes){
-        push @rules, $self->get_rules($node);
-    }
-
-    my @queue = ($tree);
-    while (@queue){
-        my $node = shift @queue;
-        my $rule = $self->find_best_rule_in_component($node);
-        $rule->apply();
-    }
-    
-    # So far, only rule-features, no segment-features.
-    @rules = sort {$b->score <=> $a->score} @rules;
-    
-    while (@rules){
-        my $rule = shift @rules;
-        #$self->apply_rule($rule);
-        $rule->apply();
-    }
-    
-    return;
-}
-
-sub get_rules {
-    my ($self, $node) = @_;
-
-    # Skip nodes that were already translated by rules
-    return if $node->t_lemma_origin ne 'clone';
-    my $src_node = $node->src_tnode;
-    return if !$src_node;
-    
-    my $src_lemma      = $src_node->t_lemma;
-    my $src_formeme    = $src_node->formeme;
-    my $src_parent     = $src_node->get_parent();
-    my $parent_lemma   = $src_parent->t_lemma // '_ROOT'; #/
-    my $parent_formeme = $src_parent->formeme // '_ROOT'; #/
-    my @src = ($src_lemma, $src_formeme, $parent_lemma, $parent_formeme);
-    my @rules;
-    
-    mapp {
-        my ($mask, $weight) = ($a, $b);
-        if ($weight){
-            my $src_key = join ' ', @src[@$mask];
-            my $size = scalar(@$mask);
-            my $starts_with = $mask->[0] ? 'F' : 'L';
-            my $segment = Treex::Tool::TranslationModel::Segment->new(
-                mask => $mask,
-                src_str => $src_key,
-                src_nodes => [$src_node, $src_parent],
-                # TODO features => {},
-            );
-            push @{$covered_by{$src_node}}, $segment;
-            push @{$covered_by{$src_parent}}, $segment;
-            my $trans = $self->model->model->{$src_key};
-            if ($trans){
-                mapp {
-                    # $a = trg_treelet, $b = P(trg|src)
-                    #push @rules, [log($b)*$weight, $node, $a, $src_key, $mask];
-                    my $rule = Treex::Tool::TranslationModel::Rule->new(
-                        trg_nodes => [$node, $node->get_parent()],
-                        trg_str => $a,
-                        src_segment => $segment,
-                        features => {'tm'.$starts_with.$size => log($b),},
-                    );
-                    # TODO tohle tu pak nebude
-                    $rule->compute_score($WEIGHTS);
-                    push @rules, $rule;
-                } @$trans;
-            }
-        }
-    } @WMASKS;
-    return @rules;
-}
