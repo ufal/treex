@@ -54,7 +54,7 @@ sub process_ttree {
     my @trg_nodes = $ttree->get_descendants({ordered=>1});
     my @src_nodes = map {$_->src_tnode} @trg_nodes;
     @s_label = ('_ROOT', map {escape($_)} map {($_->formeme, $_->t_lemma)} @src_nodes);
-    @s_parent = (0, map {($_->get_parent->ord*2, $_->ord*2 - 1)} @src_nodes);
+    @s_parent = (-1, map {($_->get_parent->ord*2, $_->ord*2 - 1)} @src_nodes);
     @s_children = map {[]} (0..$#s_parent);
     for my $i (1 .. $#s_parent){ push @{$s_children[$s_parent[$i]]}, $i;}
 
@@ -116,7 +116,7 @@ sub translate_sentence_subnodes {
                 my $n = shift @segment_nodes;
                 $translated[$n] = 1;
                 $t_label[$n] = $s_label[$n];
-                $t_origin[$n] = 'cloneX';
+                $t_origin[$n] = 'clone';
                 push @segment_nodes, grep {!$translated[$_]} @{$s_children[$n]};
             }
         } else {
@@ -208,7 +208,7 @@ sub retrieve_matching_rules {
                 }
             }
             my $s_next_i = $s_parent[$s_side[-1]];
-            last if $s_next_i == 0; # reached the root
+            last if $s_next_i == -1; # reached the root
             push @s_side, $s_next_i;
         }
     }

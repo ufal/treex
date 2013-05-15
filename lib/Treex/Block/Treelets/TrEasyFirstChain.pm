@@ -84,6 +84,16 @@ sub apply_rule {
     my ($nLo, $nFo) = map {defined($_) ? $_ : ''} ($node->t_lemma_origin, $node->formeme_origin);
     my ($pLo, $pFo) = map {defined($_) ? $_ : ''} ($parent->t_lemma_origin, $parent->formeme_origin);
     my $origin = "$src_string -> $trg_string = $score";
+
+    # skip rules covering formeme of root (perhaps I should not extract such rules at all)
+    return 0 if $tpF eq '_ROOT';
+    #return 0 if $tpL eq '_ROOT'; this helps a bit, but one _ROOT subnode seems like a good idea
+
+    # skip useless rules that bring no new (not translated so far) nodes
+    return 0 if ($nLo ne 'clone' || $tnL eq '*') && ($nFo ne 'clone' || $tnF eq '*')
+            && ($pLo ne 'clone' || $tpL eq '*') && ($pFo ne 'clone' || $tpF eq '*');
+
+    # skip rules not compatible with the already translated nodes
     return 0 if $tnL ne '*' && $nLo ne 'clone' && $node->t_lemma ne $tnL;
     return 0 if $tnF ne '*' && $nFo ne 'clone' && $node->formeme ne $tnF;
     if ($parent->is_root){
@@ -132,7 +142,7 @@ sub get_rules {
     
     mapp {
         my ($mask, $weight) = ($a, $b);
-        my $src_key = join ' ', @src[@$mask];
+        my $src_key = join ' ', map {escape($_)} @src[@$mask];
         my $trans = $self->model->model->{$src_key};
         if ($trans && $weight){
             mapp {
@@ -142,6 +152,16 @@ sub get_rules {
         }
     } @WMASKS;
     return @rules;
+}
+
+sub escape {
+    my ($string) = $_;
+    return '_' if !defined $string;
+    $string =~ s/ /&#32;/g;
+    $string =~ s/\(/&#40;/g;
+    $string =~ s/\(/&#41;/g;
+    $string =~ s/=/&#61;/g;
+    return $string;
 }
 
 1;
