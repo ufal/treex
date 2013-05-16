@@ -23,6 +23,12 @@ has 'noun_rules' => (
 	builder => '_build_noun_rules'
 );
 
+has 'noun_rules_file' =>
+  ( isa => 'Str', is => 'ro', default => 'noun_suffixes.dat' );
+has 'verb_rules_file' =>
+  ( isa => 'Str', is => 'ro', default => 'verb_suffixes.dat' );
+  
+
 # forms length < 'min_length' will not be lemmatized
 has 'min_len' => ( isa => 'Int', is => 'ro', default => 4 );
 
@@ -97,15 +103,15 @@ qr/;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--
 				last;
 			}
 		}
-		
+
 		if ( !$lemma_found ) {
-			if ($form =~ /ாகவ(ும்|ா|ே|ோ|ாவது)?$/) {
+			if ( $form =~ /ாகவ(ும்|ா|ே|ோ|ாவது)?$/ ) {
 				my $tmpform = $form;
 				$tmpform =~ s/ாகவ(ும்|ா|ே|ோ|ாவது)?$//;
 				$lemmas[$idx] = $tmpform;
-				$lemma_found = 1;			
+				$lemma_found = 1;
 			}
-		}		
+		}
 
 		if ( !$lemma_found ) {
 			foreach my $i ( 0 .. $#nrules ) {
@@ -123,11 +129,11 @@ qr/;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--
 		$lemmas[$idx] = $form if !$lemma_found;
 	}
 
-	# lemma length should be at least 1 
-	foreach my $i (0..$#lemmas) {
-		$lemmas[$i] = $forms[$i] if (length($lemmas[$i]) <= 0); 
-	} 
-	
+	# lemma length should be at least 1
+	foreach my $i ( 0 .. $#lemmas ) {
+		$lemmas[$i] = $forms[$i] if ( length( $lemmas[$i] ) <= 0 );
+	}
+
 	return @lemmas;
 }
 
