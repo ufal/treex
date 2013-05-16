@@ -22,7 +22,7 @@ has model_name => (
 
 has tm_model => (is => 'rw');
 
-has [qw(wL wF wLF wxFL wLFL wxFLF wLFLF)] => (is=>'rw', default=>1);
+has [qw(wL1 wF1 wL2 wF2 wL3 wF3 wL4 wTM wH wLogTM)] => (is=>'rw', default=>1);
 
 my $MAX_RULE_SIZE = 3;     # max number of nodes in src treelet
 
@@ -36,13 +36,16 @@ sub process_start {
     $model->load($self->model_dir.'/'.$self->model_name);
     $self->set_tm_model($model->model);
     $WEIGHTS = {
-        tmL1 => $self->wL,
-        tmF1 => $self->wF,
-        tmL2 => $self->wLF,
-        tmF2 => $self->wxFL,
-        tmL3 => $self->wLFL,
-        tmF3 => $self->wxFLF,
-        tmL4 => $self->wLFLF,
+        TM => $self->wTM,
+        LogTM => $self->wLogTM,
+        L1 => $self->wL1,
+        F1 => $self->wF1,
+        L2 => $self->wL2,
+        F2 => $self->wF2,
+        L3 => $self->wL3,
+        F3 => $self->wF3,
+        #L4 => $self->wL4,
+        #H  => $self->wH,
     };
     return;
 }
@@ -231,8 +234,8 @@ sub precompute_features {
     my $is_formeme = $subnodes[0] =~ /(.:.|^adv$|^x$)/ ? 'F' : 'L';
     my $size = @subnodes;
     my %features = (
-        #$is_formeme.$size => 1,
-        #entropy => $self->precompute_entropy($treelet),
+        $is_formeme.$size => 1,
+        #H => $self->precompute_entropy($treelet),
         #'src:'.$treelet->{src} => 1,
         # TODO add other features, e.g.
         # log_count(src)
@@ -255,15 +258,14 @@ sub precompute_entropy {
 sub update_features {
     my ($self, $treelet) = @_;
     my $TM = $treelet->{rules}[0]{TM};
-    
     my $logTM = log($TM);
-    #$treelet->{features}{logTM} = $logTM;
-    #$treelet->{features}{TM} = $TM;
+    $treelet->{features}{LogTM} = $logTM;
+    $treelet->{features}{TM} = $TM;
     
-    my @subnodes = map {$s_label[$_]} @{$treelet->{s_nodes}};
-    my $is_formeme = $subnodes[0] =~ /(.:.|^adv$|^x$)/ ? 'F' : 'L';
-    my $size = @subnodes;
-    $treelet->{features}{'tm'.$is_formeme.$size} = $logTM;
+    #my @subnodes = map {$s_label[$_]} @{$treelet->{s_nodes}};
+    #my $is_formeme = $subnodes[0] =~ /(.:.|^adv$|^x$)/ ? 'F' : 'L';
+    #my $size = @subnodes;
+    #$treelet->{features}{'tm'.$is_formeme.$size} = $TM;
     
     return;
 }
