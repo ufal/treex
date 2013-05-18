@@ -7,27 +7,35 @@ use Treex::Tool::TranslationModel::Segment;
 use Storable;
 use List::Pairwise qw(mapp);
 use List::Util qw(sum);
-use List::MoreUtils qw(all any none first_index);
+use List::MoreUtils qw(all any none first_index uniq);
 extends 'Treex::Core::Block';
 
-has model_dir => (
+has tm_dir => (
     is            => 'ro',
     isa           => 'Str',
     default       => 'data/models/translation/en2cs',
     documentation => 'Base directory for all models'
 );
 
-has model_name => (
+has tm_name => (
     is      => 'ro',
     isa     => 'Str',
     default => 'chain35k.gz',
 );
 
+has lm_dir => (
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'data/models/language/cs.wmt2007-2008/',
+    documentation => 'Base directory for Language Model'
+);
+
+
 has tm_model => (is => 'rw');
 
 has [qw(wL1 wF1 wL2 wF2 wL3 wF3 wL4 wTM wLogTM)] => (is=>'rw', default=>0);
 has [qw(bin0 bin1 bin2 bin3 bin4 bin5)] => (is=>'rw', default=>0);
-has [qw(Lg_Fd)] => (is=>'rw', default=>0);
+has [qw(Lg_Fd Ld_Fd Ld_FdLg Fd_Lg)] => (is=>'rw', default=>0);
 
 my $MAX_RULE_SIZE = 3;     # max number of nodes in src treelet
 
@@ -40,20 +48,10 @@ use LanguageModel::Lemma;
 my $ALL = '<ALL>';
 my ($cLgFdLd, $cPgFdLd);
 
-sub _load_plsgz {
-    my ($filename) = @_;
-    open my $PLSGZ, '<:gzip', $filename;
-    my $model = Storable::fd_retrieve($PLSGZ);
-    log_fatal("Could not parse perl storable model: '$filename'.") if ( !defined $model );
-    close $PLSGZ;
-    return $model;
-}
-
-
 sub process_start {
     my ($self) = @_;
     my $model = Treex::Tool::TranslationModel::Chain->new();
-    $model->load($self->model_dir.'/'.$self->model_name);
+    $model->load($self->tm_dir.'/'.$self->tm_name);
     $self->set_tm_model($model->model);
     $WEIGHTS = {
         TM => $self->wTM,
@@ -71,14 +69,27 @@ sub process_start {
         bin4 => $self->bin4,
         bin5 => $self->bin5,
         Lg_Fd => $self->Lg_Fd,
+        Ld_Fd => $self->Ld_Fd,
+        Ld_FdLg => $self->Ld_FdLg,
+        Fd_Lg => $self->Fd_Lg,
     };
     
-    my $dir = $ENV{TMT_ROOT}.'/share/data/models/language/cs/';
+    my $dir = $ENV{TMT_ROOT}.'/share/'. $self->lm_dir;
     $cLgFdLd = _load_plsgz( $dir . 'c_LgFdLd.pls.gz' );
     $cPgFdLd = _load_plsgz( $dir . 'c_PgFdLd.pls.gz' );
     LanguageModel::Lemma::init("$dir/lemma_id.pls.gz");
     return;
 }
+
+sub _load_plsgz {
+    my ($filename) = @_;
+    open my $PLSGZ, '<:gzip', $filename;
+    my $model = Storable::fd_retrieve($PLSGZ);
+    log_fatal("Could not parse perl storable model: '$filename'.") if ( !defined $model );
+    close $PLSGZ;
+    return $model;
+}
+
 
 sub process_ttree {
     my ($self, $ttree) = @_;
@@ -130,6 +141,7 @@ sub translate_sentence_subnodes {
     while (@rules){
         my $rule = shift @rules;
         $self->apply_rule($rule);
+        # TODO: we don't need the full sort, we just need to find the best scoring rule
         @rules = sort {$b->{score} <=> $a->{score}} grep {is_valid($_)} @rules;
     }
     return;
@@ -139,7 +151,7 @@ sub apply_rule {
     my ($self, $rule) = @_;
     my @subnodes = @{$rule->{s_nodes}};
     my @labels   = @{$rule->{t_labels}};
-    my $origin = $rule->{src} .' -> '. $rule->{trg} .' = '. $rule->{score};
+    my $origin = $rule->{src} .' -> '. $rule->{trg} . "\n" . $rule->{score} . ' (TM=' . $rule->{TM} . ')';
     my @newly_translated;
     foreach my $i (0..$#subnodes){
         my $subnode = $subnodes[$i];
@@ -156,55 +168,69 @@ sub apply_rule {
             push @newly_translated, $subnode;
         }
     }
-    #foreach my $subnode (@newly_translated){
-    #    $self->update_lm($subnode);
-    #}
-    $self->update_lm_scores(@newly_translated);
+
+    foreach my $rule (uniq map {@{$covered_by[$_]}} map {lm_context($_)} @newly_translated){
+        $self->update_lm_scores($rule);
+    }
     return;
 }
 
 sub update_lm_scores {
-    my ($self, @subnodes) = @_;
-    my %affected_rules = map {@{$covered_by[$_]}} @subnodes;
+    my ($self, $rule) = @_;
+    my @subnodes   = @{$rule->{s_nodes}};
+    my @labels     = @{$rule->{t_labels}};
+    my $topnode    = $subnodes[-1];
+    my $toplabel   = $labels[-1];
+    my $topformeme = $topnode % 2;
+    my $parent     = $s_parent[$topnode];
+    if ($parent != -1 && $t_origin[$parent]){
+        if ($topformeme){
+            my $Fd = $toplabel;
+            my $Lg = lemma_id($t_label[$parent]);
+            my $nLgFd = $cLgFdLd->[$$Lg]{$Fd}{$ALL} || 0;
+            my $nLg   = $cLgFdLd->[$$Lg]{$ALL};
+            my $pFd_Lg = $nLgFd / ($nLg || 1);
+            $rule->{features}{Fd_Lg} = $pFd_Lg;
+        } else {
+            my $Ld = lemma_id($toplabel);
+            my $Fd = $t_label[$parent];
+            my $nFdLd = $cPgFdLd->{$ALL}{$Fd}{$$Ld} || 0;
+            my $nFd   = $cPgFdLd->{$ALL}{$Fd}{$ALL};
+            my $pLd_Fd = $nFdLd / ($nFd || 1);
+            $rule->{features}{Ld_Fd} = $pLd_Fd;
+            my $grandpa = $s_parent[$parent];
+            if ($grandpa!=-1 && $t_origin[$grandpa]){
+                my $Lg = lemma_id($t_label[$grandpa]);
+                my $nLgFdLd = $cLgFdLd->[$$Lg]{$Fd}{$$Ld} || 0;
+                my $nLgFd   = $cLgFdLd->[$$Lg]{$Fd}{$ALL};
+                my $pLd_FdLg = $nLgFdLd / ($nLgFd || 1);
+                $rule->{features}{Ld_FdLg} = $pLd_FdLg;
+            }
+        }
+    }
+    
+    $self->compute_score($rule);
+    
+    return;
+}
+
+sub lemma_id {
+    my $lemma = shift;
+    $lemma =~ s/#(.)$/ $1/;
+    return LanguageModel::Lemma->new($lemma);
 }
 
 sub lm_context {
     my ($subnode) = @_;
     my $parent = $s_parent[$subnode];
-}
-
-sub update_lm {
-    my ($self, $subnode) = @_;
-    my $is_formeme = $subnode % 2;
-    my $parent = $s_parent[$subnode];
-    if (!$t_origin[$parent]){
-        my @rules = grep {is_valid($_)} @{$covered_by[$parent]};
-        $covered_by[$parent] = \@rules;
-        if (@rules){
-            #my @children = grep {$t_origin[$_]} @{$s_children[$subnode]}
-            #my @ch_labels = map {$t_label[$_]} @children;
-            if ($is_formeme){
-                my $Fd  = $t_label[$subnode];
-                my $nFd = sum map {$cPgFdLd->{$_}{$Fd}{$ALL}||0} qw(N A P C V D I T);
-                
-                foreach my $rule (@rules){
-                    my $i = first_index {$_==$parent} @{$rule->{s_nodes}};
-                    my $uLg = $rule->{t_labels}[$i];
-                    $uLg =~ s/#(.)$/ $1/;
-                    my $Lg = LanguageModel::Lemma->new($uLg);
-                    #my $nLg = $c_LgFdLd->[$$Lg]{$ALL};
-                    my $nLgFd = $cLgFdLd->[$$Lg]{$Fd}{$ALL} || 0;
-                    my $pLg_Fd = $nLgFd / ($nFd || 1);
-#say $Lg, "\tFd=$Fd\tnLgFd=$nLgFd\tnFd=$nFd\tp(Lg|Fd)=$pLg_Fd";
-                    $rule->{features}{Lg_Fd} = $pLg_Fd;
-                    $self->compute_score($rule);
-                }
-            }
-            else {
-            }
-        }
+    my @ancestors = ();
+    if ($parent != -1){
+        push @ancestors, $parent;
+        push @ancestors, $s_parent[$parent] if $parent;
     }
-    return;
+    my @children = @{$s_children[$subnode]};
+    my @grandchildren = map {@{$s_children[$_]}} @children;
+    return (@ancestors, @children, @grandchildren);
 }
 
 # A rule is "valid" if it is compatible with the already translated nodes
@@ -280,7 +306,7 @@ sub precompute_features {
     my $binTM = int(-$logTM);
     
     my %features = (
-        $is_formeme => 1,
+        #$is_formeme => 1,
         $is_formeme.$size => 1,
         TM => $TM,
         LogTM => $logTM,
