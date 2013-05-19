@@ -26,7 +26,7 @@ has tm_name => (
 has lm_dir => (
     is            => 'ro',
     isa           => 'Str',
-    default       => 'data/models/language/cs.wmt2007-2008/',
+    default       => 'cs.wmt2007-2012',
     documentation => 'Base directory for Language Model'
 );
 
@@ -35,7 +35,9 @@ has tm_model => (is => 'rw');
 
 has [qw(wL1 wF1 wL2 wF2 wL3 wF3 wL4 wTM wLogTM)] => (is=>'rw', default=>0);
 has [qw(bin0 bin1 bin2 bin3 bin4 bin5)] => (is=>'rw', default=>0);
-has [qw(Lg_Fd Ld_Fd Ld_FdLg Fd_Lg)] => (is=>'rw', default=>0);
+has [qw(Ld_Fd Fd_Lg Ld_FdLg LdFd_Lg)] => (is=>'rw', default=>0); # topLM
+has [qw(Fd_Ld Lg_Fd Lg_FdLd LgFd_Ld)] => (is=>'rw', default=>0); # bottomLM
+
 
 my $MAX_RULE_SIZE = 3;     # max number of nodes in src treelet
 
@@ -68,15 +70,21 @@ sub process_start {
         bin3 => $self->bin3,
         bin4 => $self->bin4,
         bin5 => $self->bin5,
-        Lg_Fd => $self->Lg_Fd,
-        Ld_Fd => $self->Ld_Fd,
-        Ld_FdLg => $self->Ld_FdLg,
-        Fd_Lg => $self->Fd_Lg,
+        # topLM
+        Ld_Fd   => $self->Ld_Fd,    # ne (-0.1)
+        Fd_Lg   => $self->Fd_Lg,    # 0.1
+        Ld_FdLg => $self->Ld_FdLg,  # ne (2.0)
+        LdFd_Lg => $self->LdFd_Lg,  # 2.5
+        # bottomLM
+        Fd_Ld   => $self->Fd_Ld,    # ne (0)
+        Lg_Fd   => $self->Lg_Fd,    # ne (-0.1...20 nema vliv)
+        Lg_FdLd => $self->Lg_FdLd,  # ne (-0.1...20 nema vliv)
+        LgFd_Ld => $self->LgFd_Ld,  # ne (-50)
     };
     
-    my $dir = $ENV{TMT_ROOT}.'/share/'. $self->lm_dir;
-    $cLgFdLd = _load_plsgz( $dir . 'c_LgFdLd.pls.gz' );
-    $cPgFdLd = _load_plsgz( $dir . 'c_PgFdLd.pls.gz' );
+    my $dir = $ENV{TMT_ROOT}.'/share/data/models/language/'. $self->lm_dir;
+    $cLgFdLd = _load_plsgz( $dir . '/c_LgFdLd.pls.gz' );
+    $cPgFdLd = _load_plsgz( $dir . '/c_PgFdLd.pls.gz' );
     LanguageModel::Lemma::init("$dir/lemma_id.pls.gz");
     return;
 }
@@ -96,9 +104,12 @@ sub process_ttree {
 
     # Build subnode tree representation
     my @trg_nodes = $ttree->get_descendants({ordered=>1});
-    my @src_nodes = map {$_->src_tnode} @trg_nodes;
-    @s_label = ('_ROOT', map {escape($_)} map {($_->formeme, $_->t_lemma)} @src_nodes);
-    @s_parent = (-1, map {($_->get_parent->ord*2, $_->ord*2 - 1)} @src_nodes);
+    #my @src_nodes = map {$_->src_tnode} @trg_nodes;
+    #@s_label = ('_ROOT', map {escape($_)} map {($_->formeme, $_->t_lemma)} @src_nodes);
+    #@s_parent = (-1, map {($_->get_parent->ord*2, $_->ord*2 - 1)} @src_nodes);
+    @s_label = ('_ROOT', map {escape($_)} map {($_->formeme, $_->t_lemma)} @trg_nodes);
+    @s_parent = (-1, map {($_->get_parent->ord*2, $_->ord*2 - 1)} @trg_nodes);
+    
     @s_children = map {[]} (0..$#s_parent);
     for my $i (1 .. $#s_parent){ push @{$s_children[$s_parent[$i]]}, $i;}
 
@@ -151,7 +162,8 @@ sub apply_rule {
     my ($self, $rule) = @_;
     my @subnodes = @{$rule->{s_nodes}};
     my @labels   = @{$rule->{t_labels}};
-    my $origin = $rule->{src} .' -> '. $rule->{trg} . "\n" . $rule->{score} . ' (TM=' . $rule->{TM} . ')';
+    my $origin = $rule->{src} .' -> '. $rule->{trg} . "\nscore=" . $rule->{score}
+       . "\nTM=" . $rule->{TM} . ' P(Ld|FdLg)='. ($rule->{features}{Ld_FdLg}//'x') ;
     my @newly_translated;
     foreach my $i (0..$#subnodes){
         my $subnode = $subnodes[$i];
@@ -177,22 +189,28 @@ sub apply_rule {
 
 sub update_lm_scores {
     my ($self, $rule) = @_;
-    my @subnodes   = @{$rule->{s_nodes}};
-    my @labels     = @{$rule->{t_labels}};
-    my $topnode    = $subnodes[-1];
-    my $toplabel   = $labels[-1];
-    my $topformeme = $topnode % 2;
-    my $parent     = $s_parent[$topnode];
+    my @subnodes    = @{$rule->{s_nodes}};
+    my @labels      = @{$rule->{t_labels}};
+    my $top_node    = $subnodes[-1];
+    my $top_label   = $labels[-1];
+    my $top_formeme = $top_node % 2;
+    my $parent      = $s_parent[$top_node];
     if ($parent != -1 && $t_origin[$parent]){
-        if ($topformeme){
-            my $Fd = $toplabel;
+        if ($top_formeme){
+            my $Fd = $top_label;
             my $Lg = lemma_id($t_label[$parent]);
             my $nLgFd = $cLgFdLd->[$$Lg]{$Fd}{$ALL} || 0;
             my $nLg   = $cLgFdLd->[$$Lg]{$ALL};
             my $pFd_Lg = $nLgFd / ($nLg || 1);
             $rule->{features}{Fd_Lg} = $pFd_Lg;
+            if (@subnodes > 1){
+                my $Ld = lemma_id($labels[-2]);
+                my $nLgFdLd = $cLgFdLd->[$$Lg]{$Fd}{$$Ld} || 0;
+                my $pLdFd_Lg = $nLgFdLd / ($nLg || 1);
+                $rule->{features}{LdFd_Lg} = $pLdFd_Lg;
+            }
         } else {
-            my $Ld = lemma_id($toplabel);
+            my $Ld = lemma_id($top_label);
             my $Fd = $t_label[$parent];
             my $nFdLd = $cPgFdLd->{$ALL}{$Fd}{$$Ld} || 0;
             my $nFd   = $cPgFdLd->{$ALL}{$Fd}{$ALL};
@@ -209,9 +227,63 @@ sub update_lm_scores {
         }
     }
     
+    my $bottom_node    = $subnodes[0];
+    my $bottom_label   = $labels[0];
+    my $bottom_formeme = $bottom_node % 2;
+    my @children       = grep {$t_origin[$_]} @{$s_children[$bottom_node]};
+    my $grandchildren  = 0; # number of translated grandchildren
+    my ($pFd_Ld, $pLgFd_Ld, $pLg_Fd, $pLg_FdLd) = (0,0,0,0);
+    foreach my $child (@children){
+        my $parent_label = @subnodes>1 ? $labels[1] : undef;
+        my ($iFd_Ld, $iLgFd_Ld, $iLg_Fd, $iLg_FdLd) = $self->bottom_lm($bottom_node, $child, $bottom_label, $parent_label);
+        $pFd_Ld   += $iFd_Ld || 0;
+        $pLgFd_Ld += $iLgFd_Ld || 0;
+        $pLg_Fd   += $iLg_Fd || 0;
+        $pLg_FdLd += $iLg_FdLd || 0;
+        $grandchildren++ if defined $iLg_FdLd;
+    }
+    if (@children){
+        $rule->{features}{Fd_Ld}   = $pFd_Ld; # just one child
+        $rule->{features}{LgFd_Ld} = $pLgFd_Ld; # just one child
+        $rule->{features}{Lg_Fd}   = $pLg_Fd / @children;
+        $rule->{features}{Lg_FdLd} = $pLg_Fd / $grandchildren if $grandchildren;
+    }
+    
     $self->compute_score($rule);
     
     return;
+}
+
+sub bottom_lm {
+    my ($self, $subnode, $child, $label, $parent_label) = @_;
+    my ($pFd_Ld, $pLgFd_Ld, $pLg_Fd, $pLg_FdLd);# = (0,0,0,0);
+    my $is_formeme = $subnode % 2;
+    if ($is_formeme){
+        my $Fd = $label;
+        my $Ld = lemma_id($t_label[$child]);
+        my $nFdLd = $cPgFdLd->{$ALL}{$Fd}{$$Ld} || 0;
+        my $nLd   = $cPgFdLd->{$ALL}{$ALL}{$$Ld};
+        $pFd_Ld   = $nFdLd / ($nLd || 1);
+        if (defined $parent_label){
+            my $Lg = lemma_id($parent_label);
+            my $nLgFdLd = $cLgFdLd->[$$Lg]{$Fd}{$$Ld} || 0;
+            $pLgFd_Ld   = $nLgFdLd / ($nLd || 1);
+        }
+    } else {
+        my $Lg = lemma_id($label);
+        my $Fd = $t_label[$child];
+        my $nLgFd = $cLgFdLd->[$$Lg]{$Fd}{$ALL} || 0;
+        my $nFd   = $cPgFdLd->{$ALL}{$Fd}{$ALL};
+        $pLg_Fd   = $nLgFd / ($nFd || 1);
+        my ($grandchild) = @{$s_children[$child]}; # each formeme must have exactly one child
+        if ($t_origin[$grandchild]){
+            my $Ld = lemma_id($t_label[$grandchild]);
+            my $nLgFdLd = $cLgFdLd->[$$Lg]{$Fd}{$$Ld} || 0;
+            my $nFdLd   = $cPgFdLd->{$ALL}{$Fd}{$$Ld};
+            $pLg_FdLd   = $nLgFdLd / ($nFdLd || 1);
+        }
+    }
+    return ($pFd_Ld, $pLgFd_Ld, $pLg_Fd, $pLg_FdLd);
 }
 
 sub lemma_id {
