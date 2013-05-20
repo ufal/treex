@@ -963,6 +963,62 @@ sub reconsider_distant_private_modifiers
 
 
 
+#------------------------------------------------------------------------------
+# If there is a comma that transitively depends on a conjunct and lies word-
+# order-wise between two conjuncts (or between a conjunct and a conjunction),
+# it should be considered a coordination delimiter and raised accordingly.
+# This is a heuristic that applies e.g. to the Dutch Alpino treebank where
+# punctuation symbols are attached to neighboring tokens.
+#------------------------------------------------------------------------------
+sub capture_commas
+{
+    my $self = shift;
+    my $participants = $self->_get_participants();
+    # Get the limits of every subtree.
+    my @descendants;
+    foreach my $participant (@{$participants})
+    {
+        # Get descendants of the current conjunct. Examine the span of the subtree.
+        # To not depend on the current way of annotation of coordination in the dependency tree,
+        # do not call $conjunct->get_descendants(). Look at the private conjunct modifiers
+        # known to the Coordination object instead.
+        my @current_descendants = ($participant->{node});
+        foreach my $pm (@{$participant->{pmod}})
+        {
+            push(@current_descendants, $pm->get_descendants({'add_self' => 1}));
+        }
+        @current_descendants = sort {$a->{ord} <=> $b->{ord}} (@current_descendants);
+        push(@descendants, \@current_descendants);
+    }
+    # Search for commas between conjuncts.
+    for(my $i = 1; $i<=$#descendants; $i++)
+    {
+        # Search for comma between this and the previous conjunct.
+        # Skip this position if the two subtrees overlap.
+        next if($descendants[$i][0]->ord()<$descendants[$i-1][-1]->ord());
+        # Is the last node in the left subtree a comma?
+        if($participants->[$i-1]{type} eq 'conjunct' && $descendants[$i-1][-1]->form() eq ',')
+        {
+            # Make the comma a delimiter in the coordination.
+            # Re-attachment will be taken care of later during re-shaping of the coordination.
+            # If the comma is currently known as private modifier, remove it from the list of private modifiers.
+            @{$participants->[$i-1]{pmod}} = grep {$_!=$descendants[$i-1][-1]} (@{$participants->[$i-1]{pmod}});
+            $self->add_delimiter($descendants[$i-1][-1], 1);
+        }
+        # Is the first node in the right subtree a comma?
+        if($participants->[$i]{type} eq 'conjunct' && $descendants[$i][0]->form() eq ',')
+        {
+            # Make the comma a delimiter in the coordination.
+            # Re-attachment will be taken care of later during re-shaping of the coordination.
+            # If the comma is currently known as private modifier, remove it from the list of private modifiers.
+            @{$participants->[$i]{pmod}} = grep {$_!=$descendants[$i][0]} (@{$participants->[$i]{pmod}});
+            $self->add_delimiter($descendants[$i][0], 1);
+        }
+    }
+}
+
+
+
 1;
 
 
