@@ -16,6 +16,9 @@ use Treex::Core::Node;
 # node ... reference to the corresponding Node object
 # type ... conjunct|delimiter
 # subtype ... conjunct|orphan||conjunction|symbol
+#     Technically: orphan => 0|1
+#                  symbol => 0|1
+# pmod ... reference to the list of private modifiers of the participant
 # list of root nodes of dependents of the participant
 #     It is not necessarily identical to the list of current children of the node in the tree!
 #     Depending on the currently used annotation scheme, other participants may be among the children
