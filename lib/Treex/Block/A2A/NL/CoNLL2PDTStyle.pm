@@ -15,10 +15,11 @@ sub process_zone {
     my $root = $self->SUPER::process_zone( $zone, 'conll' );
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
+    $self->fix_int_rel_words($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
-    $self->fix_questionAdverbs($root);
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
@@ -327,43 +328,81 @@ sub detect_coordination
 # It is not easy to tell what is the relation of the interrogative word towards
 # the predicate: Sb, Obj, or Adv?
 #------------------------------------------------------------------------------
-sub fix_questionAdverbs
+sub fix_int_rel_words
 {
-    my ( $self, $root ) = @_;
-    # Find interrogative words (pronouns, adverbs) attached directly to the root.
-    my @int = ();
-    foreach my $node ($root->get_children())
+    my $self = shift;
+    my $root = shift;
+    ###!!! First approach: Only selected occurrences (those I see frequently in test reports).
+    # The node is attached to the root and its CoNLL deprel is "ROOT".
+    # The node is an interrogative pronoun. Its form is "wie" ("who") or "wat" ("what").
+    # The node has just one child. The child is a verb and its deprel is "body" (afun "SubArg").
+    my @children = $root->children();
+    foreach my $child (@children)
     {
-        if($node->get_iset('prontype') eq 'int')
+        my @grandchildren = $child->children();
+        if($child->get_iset('prontype') eq 'int' && $child->form() =~ m/^(wie|wat)$/i &&
+           scalar(@grandchildren)==1)
         {
-            push(@int, $node);
-        }
-    }
-    # Reattach them if they have just one child, which is a verb.
-    foreach my $int (@int)
-    {
-        if(scalar($int->get_children())==1 && ($int->get_children())[0]->get_iset('pos') eq 'verb')
-        {
-            my $verb = ($int->get_children())[0];
-            # The structure is directly under the root, thus the verb now becomes the main predicate.
-            $verb->set_parent($root);
-            $verb->set_afun('Pred');
-            # What is the relation of the interrogative to the verb?
-            # If it is an adverb then the relation is probably adverbial.
-            # Otherwise it can be the subject or an object. It is difficult to tell and we currently don't attempt it. ###!!!
-            # Possible heuristics: It is subject unless there is another node labeled as subject.
-            # (Problem: Group of nodes representing a compound verb form ('Wie heeft de Beatles opgericht?'): Where shall we look for the subject?)
-            # It is subject if there is a Pnom sibling.
-            # It is object if we do not have a reason to think that it is subject.
-            my $afun = 'NR';
-            if($int->get_iset('pos') eq 'adv')
+            my $gc = $grandchildren[0];
+            if($gc->get_iset('pos') eq 'verb' && $gc->afun() eq 'SubArg')
             {
-                $afun = 'Adv';
+                my $pronoun = $child;
+                my $verb = $gc;
+                # Attach the verb to the root.
+                # Attach the pronoun to the verb.
+                # Use heuristics to estimate the function of the pronoun.
+                $verb->set_parent($root);
+                $verb->set_afun('Pred');
+                $pronoun->set_parent($verb);
+                # If there is no subject, this could be a subject.
+                # If there is a subject and the verb is a form of "to be", this could be a nominal predicate.
+                # Otherwise this is an object.
+                if(!defined($self->get_subject($verb)))
+                {
+                    $pronoun->set_afun('Sb');
+                }
+                elsif($verb->lemma() =~ m/^(ben|word)$/) # to be | to become
+                {
+                    $pronoun->set_afun('Pnom');
+                }
+                else
+                {
+                    $pronoun->set_afun('Obj');
+                }
             }
-            $int->set_parent($verb);
-            $int->set_afun($afun);
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns reference to the node acting as the subject of a given verb. Returns
+# undef if there is no subject. Searches verbal children in case of compound
+# verb forms. For instance, in "wat wil jij worden" ("what will you become"),
+# "jij" is the subject of "wil worden" but it is attached to "worden" and thus
+# it is not directly visible among the children of "wil".
+#------------------------------------------------------------------------------
+sub get_subject
+{
+    my $self = shift;
+    my $verb = shift;
+    my @subjects = grep {$_->afun() eq 'Sb'} ($verb->children());
+    my $subject;
+    if(@subjects)
+    {
+        $subject = $subjects[0];
+    }
+    else
+    {
+        my @auxv = grep {$_->afun() eq 'AuxV'} ($verb->children());
+        foreach my $auxv (@auxv)
+        {
+            $subject = $self->get_subject($auxv);
+            last if(defined($subject));
+        }
+    }
+    return $subject;
 }
 
 
