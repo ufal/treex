@@ -167,9 +167,6 @@ my %entityRefMap;
 	}
 
     }
-
-
-
 }
 
 sub create_entity_node {
