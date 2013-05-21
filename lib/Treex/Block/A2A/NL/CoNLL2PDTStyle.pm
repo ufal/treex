@@ -20,6 +20,7 @@ sub process_zone {
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
+    $self->lift_commas($root);
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
@@ -403,6 +404,36 @@ sub get_subject
         }
     }
     return $subject;
+}
+
+
+
+#------------------------------------------------------------------------------
+# In the original annotation, every punctuation node is attached to the
+# previous non-punctuation node. This function lifts commas as high as possible
+# projectively.
+#------------------------------------------------------------------------------
+sub lift_commas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        if($nodes[$i]->form() eq ',')
+        {
+            # All commas were originally attached to the left.
+            # If it is attached to the right, someone has already been tweaking it: do not touch it.
+            if($nodes[$i]->parent()->ord()<$nodes[$i]->ord())
+            {
+                # Look at the right neighbor of the comma. Is it dominated by the comma's parent?
+                while(!$nodes[$i]->parent()->is_root() && !$nodes[$i+1]->is_descendant_of($nodes[$i]->parent()) && $nodes[$i]->parent()!=$nodes[$i+1])
+                {
+                    $nodes[$i]->set_parent($nodes[$i]->parent()->parent());
+                }
+            }
+        }
+    }
 }
 
 

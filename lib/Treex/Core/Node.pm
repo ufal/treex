@@ -618,6 +618,11 @@ sub is_descendant_of {
     }
     return 0;
 }
+sub dominates {
+    my $self = shift;
+    my $another_node = shift;
+    return $another_node->is_descendant_of($self);
+}
 
 #----------- alignment -------------
 
