@@ -17,6 +17,8 @@ sub process_anode
         my @children = $node->children();
         my $nc = scalar(@children);
         my $ok = $afun eq 'AuxC' && $nc==1 && $children[0]->match_iset('pos' => 'verb', 'verbform' => 'inf');
+        # Some prepositions in Germanic languages (English, Dutch) may act as verbal particles.
+        $ok = $ok || $afun eq 'AuxT';
         unless($ok)
         {
             $self->complain($node, $node->form());

@@ -322,9 +322,11 @@ sub detect_coordination
 
 
 #------------------------------------------------------------------------------
-# Reattaches interrogative pronouns and adverbs attached directly under the
-# root. ###!!! We have the same problem with relative pronouns in relative clauses
-# and we should reattach those as well (i.e. to the predicate of the clause).
+# Reattaches interrogative and relative pronouns and adverbs. The predicate of
+# the clause they introduce is originally attached to the pronoun, as if it was
+# a subordinating conjunction. However, in contrast to conjunctions, pronouns
+# and adverbs typically also complement or modify the verb, so we want them to
+# be attached there.
 # It is not easy to tell what is the relation of the interrogative word towards
 # the predicate: Sb, Obj, or Adv?
 #------------------------------------------------------------------------------
@@ -332,32 +334,40 @@ sub fix_int_rel_words
 {
     my $self = shift;
     my $root = shift;
-    ###!!! First approach: Only selected occurrences (those I see frequently in test reports).
-    # The node is attached to the root and its CoNLL deprel is "ROOT".
-    # The node is an interrogative pronoun. Its form is "wie" ("who") or "wat" ("what").
-    # The node has just one child. The child is a verb and its deprel is "body" (afun "SubArg").
-    my @children = $root->children();
-    foreach my $child (@children)
+    # The construction can appear directly under root (interrogative sentences)
+    # or elswhere in the sentence (usually relative clauses).
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
     {
-        my @grandchildren = $child->children();
-        if($child->get_iset('prontype') eq 'int' && $child->form() =~ m/^(wie|wat)$/i &&
-           scalar(@grandchildren)==1)
+        # We are looking for a node that
+        # - is an interrogative or relative pronoun (e.g. "wie" = "who", "wat" = "what") or adverb ("waar" = "where");
+        # - has just one child, which is a verb, its deprel is "body" and afun is "SubArg";
+        my @children = $node->children();
+        if($node->get_iset('prontype') =~ m/^(int|rel)$/ && $node->form() =~ m/^(wie|wat|waar)$/i &&
+           scalar(@children)==1)
         {
-            my $gc = $grandchildren[0];
+            my $gc = $children[0];
             if($gc->get_iset('pos') eq 'verb' && $gc->afun() eq 'SubArg')
             {
-                my $pronoun = $child;
+                my $pronoun = $node;
                 my $verb = $gc;
-                # Attach the verb to the root.
+                # Attach the verb to the parent of the pronoun.
                 # Attach the pronoun to the verb.
                 # Use heuristics to estimate the function of the pronoun.
-                $verb->set_parent($root);
-                $verb->set_afun('Pred');
+                $verb->set_parent($pronoun->parent());
+                $verb->set_afun($pronoun->afun());
+                $verb->set_is_member($pronoun->is_member());
                 $pronoun->set_parent($verb);
+                $pronoun->set_is_member(0);
+                # If there is an adverb instead of a pronoun, it is adverbial modifier.
                 # If there is no subject, this could be a subject.
                 # If there is a subject and the verb is a form of "to be", this could be a nominal predicate.
                 # Otherwise this is an object.
-                if(!defined($self->get_subject($verb)))
+                if($pronoun->get_iset('pos') eq 'adv')
+                {
+                    $pronoun->set_afun('Adv');
+                }
+                elsif(!defined($self->get_subject($verb)))
                 {
                     $pronoun->set_afun('Sb');
                 }
@@ -368,6 +378,12 @@ sub fix_int_rel_words
                 else
                 {
                     $pronoun->set_afun('Obj');
+                }
+                # If the pronoun was attached directly to the root, it had the 'ExD' afun.
+                # However, if there is now a verb instead, it can be a 'Pred'.
+                if($verb->parent()->is_root() && $verb->afun() eq 'ExD')
+                {
+                    $verb->set_afun('Pred');
                 }
             }
         }
@@ -406,11 +422,13 @@ sub fix_int_rel_prepositional_phrases
                 my $verb = $children[1];
                 $verb->set_parent($preposition->parent());
                 $verb->set_afun($preposition->afun());
+                $verb->set_is_member($preposition->is_member());
                 $preposition->set_parent($verb);
                 # Use heuristics to estimate the function of the prepositional phrase.
                 # Subject or nominal predicate are not likely. Object or adverbial modifier are much more probable.
                 # It is difficult to distinguish between the two. Let's pick the object.
                 $preposition->set_afun('Obj');
+                $preposition->set_is_member(0);
                 # If the preposition was attached directly to the root, it had the 'ExD' afun.
                 # However, if there is now a verb instead, it can be a 'Pred'.
                 # Let's first check that it really is a verb.
