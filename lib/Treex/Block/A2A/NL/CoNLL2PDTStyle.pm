@@ -17,6 +17,7 @@ sub process_zone {
     $self->restructure_coordination($root);
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
+    $self->fix_int_rel_prepositional_phrases($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
@@ -174,9 +175,14 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
 
+        # obj1:
         # lijdend voorwerp
         # direct object
-        elsif ( $deprel eq 'obj1' )
+        # pobj1:
+        # voorlopig direct object
+        # provisional direct object (???)
+        # Both may appear attached to a preposition, which requires special treatment.
+        elsif ( $deprel =~ m/^p?obj1$/ )
         {
             if ( $ppos eq 'prep' )
             {
@@ -200,13 +206,6 @@ sub deprel_to_afun
         # This is the relation of the prepositional phrase to its parent.
         # The relation of the inner noun phrase to the preposition is obj1.
         elsif ( $deprel eq 'pc' )
-        {
-            $afun = 'Obj';
-        }
-
-        # voorlopig direct object
-        # provisional direct object (???)
-        elsif ( $deprel eq 'pobj1' )
         {
             $afun = 'Obj';
         }
@@ -369,6 +368,55 @@ sub fix_int_rel_words
                 else
                 {
                     $pronoun->set_afun('Obj');
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies and reattaches interrogative or relative prepositional phrases.
+# This is a more complicated instance of the problem solved by the previous
+# method. Example: "Over welk gas gaat het?" = "About which gas is it?"
+# This method must be called before PrepArgs and SubArgs are transformed to
+# AuxP and AuxC respectively, because it relies on the values of Prep/SubArg.
+#------------------------------------------------------------------------------
+sub fix_int_rel_prepositional_phrases
+{
+    my $self = shift;
+    my $root = shift;
+    # The construction can appear directly under root (interrogative sentences)
+    # or elswhere in the sentence (usually relative clauses).
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # We are looking for a node that
+        # - is a preposition;
+        # - has two children;
+        # - the first child is PrepArg and its subtree contains an interrogative or relative word;
+        # - the second child is SubArg and verb;
+        if($node->get_iset('pos') eq 'prep')
+        {
+            my @children = $node->children();
+            if(scalar(@children)==2 && $children[0]->afun() eq 'PrepArg' && $children[1]->afun() eq 'SubArg')
+            {
+                my $preposition = $node;
+                my $verb = $children[1];
+                $verb->set_parent($preposition->parent());
+                $verb->set_afun($preposition->afun());
+                $preposition->set_parent($verb);
+                # Use heuristics to estimate the function of the prepositional phrase.
+                # Subject or nominal predicate are not likely. Object or adverbial modifier are much more probable.
+                # It is difficult to distinguish between the two. Let's pick the object.
+                $preposition->set_afun('Obj');
+                # If the preposition was attached directly to the root, it had the 'ExD' afun.
+                # However, if there is now a verb instead, it can be a 'Pred'.
+                # Let's first check that it really is a verb.
+                if($verb->get_iset('pos') eq 'verb' && $verb->parent()->is_root() && $verb->afun() eq 'ExD')
+                {
+                    $verb->set_afun('Pred');
                 }
             }
         }
