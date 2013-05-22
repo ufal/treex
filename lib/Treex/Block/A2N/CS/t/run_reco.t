@@ -44,5 +44,37 @@ ok( !$@, 'SysNERV scen end' ) or diag($@);
 # save
 
 
+# Featurama testing:
+use_ok('Treex::Tool::Tagger::Featurama::CS');
+
+my $tagger = Treex::Tool::Tagger::Featurama::CS->new();
+my ($tags, $lemmas) = $tagger->tag_sentence( [qw/Pepa pase kozu ./] );
+
+#Fixing utf-8 bug in Test::Builder (http://www.effectiveperlprogramming.com/blog/1226):
+foreach my $method ( qw/output failure_output/ ) {
+    binmode Test::More->builder->$method(), ':encoding(UTF-8)';
+}
+
+cmp_ok( scalar @$tags, '==', 4, q{Correct number of tags in testing sentence "Pepa pase kozu ."});
+cmp_ok( scalar @$lemmas, '==', 4, q{Correct number of lemmas in testing sentence "Pepa pase kozu ."});
+note( join ' ', @$tags );
+note( join ' ', @$lemmas );
+
+# large input testing:
+#my $file = "large.file";
+#open (my $INPUT, $file) or die "Cannot open file \"large.file\" for testing...";
+#binmode $INPUT, 'encoding(UTF-8)';
+#while (<$INPUT>) {
+#    my ($t, $l) = $tagger->tag_sentence( [split /[\s+\.,!\?]/, $_] );
+#    note (join ' ', @$t );
+#    note (join ' ', @$l );
+#    exit if $. > 5;
+#    print "\n";
+#    my @a = split /[\s+\.,!\?]/, $_;
+#    print Dumper(@a);
+#}
+#
+#print "OK! Tagging complete.\n";
+
 
 done_testing();
