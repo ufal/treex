@@ -24,9 +24,9 @@ sub process_zone {
     $self->process_prep_sub_arg_cloud($root);
     $self->fix_naar_toe($root);
     $self->lift_commas($root);
-    ###!!! Tyhle dvÄ› funkce se sice chvÃ¡lyhodnÄ› snaÅ¾Ã­ omezit rozpadlÃ© stromy, kde na koÅ™eni visÃ­ nÄ›kolik podstromÅ¯,
-    ###!!! ale dÄ›lajÃ­ to zÅ™ejmÄ› blbÄ›, coÅ¾ se mimo jinÃ© projevuje i na zhorÅ¡enÃ½ch vÃ½sledcÃ­ch testÅ¯, ale zahlÃ©dl jsem
-    ###!!! tam i chybu, kterou souÄasnÃ© testy pÅ™Ã­mo neodhalÃ­.
+    ###!!! Tyhle dvì funkce se sice chvályhodnì snaží omezit rozpadlé stromy, kde na koøeni visí nìkolik podstromù,
+    ###!!! ale dìlají to zøejmì blbì, což se mimo jiné projevuje i na zhoršených výsledcích testù, ale zahlédl jsem
+    ###!!! tam i chybu, kterou souèasné testy pøímo neodhalí.
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
@@ -572,7 +572,7 @@ sub fix_naar_toe
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # DalÅ¡Ã­ podobnÃ© pÅ™Ã­pady:
+        # Další podobné pøípady:
         # voor/Db in_de_plaats/AuxP/X@ = in its place
         # over/Db heen/RR = lit. about away = over it
         # om/Prep/cnj en/Conj/mod langs/Prep/cnj hen/Pron/obj1 heen/Prep/hdf = to and past them (lit. about and along them away) ###!!! The coordination makes this example more complex than the others!
