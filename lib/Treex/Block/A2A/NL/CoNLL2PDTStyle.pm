@@ -18,10 +18,15 @@ sub process_zone {
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
     $self->fix_int_rel_prepositional_phrases($root);
+    $self->fix_int_rel_phrases($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
+    $self->fix_naar_toe($root);
     $self->lift_commas($root);
+    ###!!! Tyhle dvě funkce se sice chvályhodně snaží omezit rozpadlé stromy, kde na kořeni visí několik podstromů,
+    ###!!! ale dělají to zřejmě blbě, což se mimo jiné projevuje i na zhoršených výsledcích testů, ale zahlédl jsem
+    ###!!! tam i chybu, kterou současné testy přímo neodhalí.
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
     $self->check_afuns($root);
@@ -138,7 +143,11 @@ sub deprel_to_afun
         }
 
         # Non-head part of compound preposition? Example test/001#19: 'tot nu toe' = 'up to now' (lit. 'to now up')
-        ###!!! Look at the other examples, too!
+        # 'toe' in 'naar toe': 'naar' means 'to', 'towards', and is tagged as adverb.
+        # 'toe' [tu] is a postposition, cf. English 'to' and German 'zu'.
+        # 'naar toe' and 'naartoe' together also means 'to', 'towards'. The whole thing also seems to behave as postposition.
+        # Example: ", waar men de patienten naar toe schuift" = "where one pushes the patients to"
+        ###!!! At least we could make 'naar' depend on 'toe', 'toe' being AuxP and 'naar' being Adv.
         elsif ( $deprel eq 'hdf' )
         {
             $afun = 'AuxP';
@@ -340,10 +349,10 @@ sub fix_int_rel_words
     foreach my $node (@nodes)
     {
         # We are looking for a node that
-        # - is an interrogative or relative pronoun (e.g. "wie" = "who", "wat" = "what") or adverb ("waar" = "where");
+        # - is an interrogative or relative pronoun (e.g. "wie" = "who", "wat" = "what") or adverb ("waar" = "where", "hoe" = "how");
         # - has just one child, which is a verb, its deprel is "body" and afun is "SubArg";
         my @children = $node->children();
-        if($node->get_iset('prontype') =~ m/^(int|rel)$/ && $node->form() =~ m/^(wie|wat|waar)$/i &&
+        if($node->get_iset('prontype') =~ m/^(int|rel)$/ && $node->form() =~ m/^(wie|wat|waar|hoe)$/i &&
            scalar(@children)==1)
         {
             my $gc = $children[0];
@@ -444,6 +453,75 @@ sub fix_int_rel_prepositional_phrases
 
 
 #------------------------------------------------------------------------------
+# Another instance of the interrogative and relative phrases: no preposition,
+# still the interrogative word is hidden deep in the subtree, and even a
+# coordination is involved:
+# Welke Nederlandse architect en meubelmaker was .../Pnom
+# Which Dutch architect and furniture designer was .../Pnom
+# Symptoms: The verb ("was") is a SubArg and it has left siblings. (The fact
+# that the siblings may be conjuncts rather than dependents poses no problem
+# here.) The first word of the sibling subtree(s) is interrogative or relative.
+# (Here, "welke" has the feature prontype=int.) We are not going to check this
+# but it really ought to be the first word. It would not be the first word if
+# there was a preposition but we have addressed prepositional phrases
+# separately.
+# Solution: Make the current parent of the verb with all the siblings depend on
+# the verb. Use heuristics to estimate its function.
+#------------------------------------------------------------------------------
+sub fix_int_rel_phrases
+{
+    my $self = shift;
+    my $root = shift;
+    # The construction can appear directly under root (interrogative sentences)
+    # or elswhere in the sentence (usually relative clauses).
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # We are looking for a node that
+        # - has two or more children;
+        # - the last child is not a conjunct and is SubArg;
+        my @children = $node->children();
+        if(scalar(@children)>=2 && $children[-1]->get_real_afun() eq 'SubArg' && !$children[-1]->is_member())
+        {
+            my $verb = $children[-1];
+            $verb->set_parent($node->parent());
+            # If the node was attached directly to the root, it had the 'ExD' afun.
+            # If it was head of coordination, it had 'Coord' instead.
+            # However, if there is now a verb instead, it can be a 'Pred'.
+            if($verb->parent()->is_root())
+            {
+                $verb->set_real_afun('Pred');
+            }
+            else
+            {
+                $verb->set_real_afun($node->get_real_afun());
+            }
+            $verb->set_is_member($node->is_member());
+            $node->set_parent($verb);
+            $node->set_is_member(0);
+            # Use heuristics to estimate the function of the prepositional phrase.
+            # If there is no subject, this could be a subject.
+            # If there is a subject and the verb is a form of "to be", this could be a nominal predicate.
+            # Otherwise this is an object.
+            if(!defined($self->get_subject($verb)))
+            {
+                $node->set_real_afun('Sb');
+            }
+            elsif($verb->lemma() =~ m/^(ben|word)$/) # to be | to become
+            {
+                $node->set_real_afun('Pnom');
+            }
+            else
+            {
+                $node->set_real_afun('Obj');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns reference to the node acting as the subject of a given verb. Returns
 # undef if there is no subject. Searches verbal children in case of compound
 # verb forms. For instance, in "wat wil jij worden" ("what will you become"),
@@ -475,6 +553,52 @@ sub get_subject
 
 
 #------------------------------------------------------------------------------
+# Reverses dependency direction in the phrase "naar toe". The word "naar" is
+# tagged as adverb and it means "to", "towards", "in the direction". The
+# meaning of the whole phrase "naar toe" (sometimes written as one word
+# "naartoe") seems to be more or less the same. Nevertheless, "toe" [tu] is a
+# postposition, cf. English "to" and German "zu". We prefer prepositions and
+# postpositions to govern their noun phrases instead of depending on them. In
+# a similar fashion, we shall make "naar" depend on "toe", while the original
+# annotation does the opposite. We avoid having "AuxP" nodes as leaves.
+#
+# Example: ", waar men de patienten naar toe schuift"
+# English: "where one pushes the patients to"
+#------------------------------------------------------------------------------
+sub fix_naar_toe
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Další podobné případy:
+        # voor/Db in_de_plaats/AuxP/X@ = in its place
+        # over/Db heen/RR = lit. about away = over it
+        # om/Prep/cnj en/Conj/mod langs/Prep/cnj hen/Pron/obj1 heen/Prep/hdf = to and past them (lit. about and along them away) ###!!! The coordination makes this example more complex than the others!
+        # daarvoor/Adv/Db in_de_plaats/AuxP/X@ = in its place
+        # om/Adv/J, zich/AuxT/P6 heen/AuxP/RR = around = lit. about themselves away
+        # om/Adv/J, Venetie heen/AuxP/RR = to Venice
+        # -op/Adv/AO het gevaar af/AuxP/Db = at the risk
+        if($node->afun() eq 'AuxP' && scalar($node->children())==0)
+        {
+            my $naar = $node->parent();
+            # Block the example with coordination, allow all the others.
+            if($naar->afun() eq 'Adv')
+            {
+                $node->set_parent($naar->parent());
+                $naar->set_parent($node);
+                # Naar will keep its current afun. Is_member should be shifted but we do not expect it to be set here.
+                $node->set_is_member($naar->is_member());
+                $naar->set_is_member(0);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # In the original annotation, every punctuation node is attached to the
 # previous non-punctuation node. This function lifts commas as high as possible
 # projectively.
@@ -484,9 +608,12 @@ sub lift_commas
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
-    for(my $i = 0; $i<=$#nodes; $i++)
+    for(my $i = $#nodes-1; $i>=0; $i--)
     {
-        if($nodes[$i]->form() eq ',')
+        ###!!! We currently extend the transformation to all punctuation, not just commas.
+        ###!!! In future however, we want to capture pairwise punctuation (brackets, quotes) differently.
+        if($nodes[$i]->form() =~ m/^\pP+$/)
+        #if($nodes[$i]->form() eq ',')
         {
             # All commas were originally attached to the left.
             # If it is attached to the right, someone has already been tweaking it: do not touch it.

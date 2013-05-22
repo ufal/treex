@@ -18,14 +18,16 @@ sub process_anode
     if(defined($parent))
     {
         my $pos = $node->get_iset('pos');
+        $pos = 'art' if($node->get_iset('subpos') eq 'art');
         my $prn = $node->get_iset('prontype');
         # Two pronouns, one modifying the other, are not error (da: "det andet").
         # Thus we want to catch only real nouns/adjectives below.
         $pos = 'pronoun' if($prn ne '');
         my $ppos = $parent->get_iset('pos');
+        $ppos = 'art' if($parent->get_iset('subpos') eq 'art');
         my $pprn = $parent->get_iset('prontype');
         $ppos = 'pronoun' if($pprn ne '');
-        if($pos =~ m/^(noun|adj)$/ && $ppos =~ m/^(pronoun|num)$/)
+        if($pos =~ m/^(noun|adj)$/ && $ppos =~ m/^(pronoun|num|art)$/)
         {
             $self->complain($node, $parent->form().'->'.$node->form());
         }
