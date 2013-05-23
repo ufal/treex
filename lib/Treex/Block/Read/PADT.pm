@@ -81,7 +81,8 @@ __END__
 
 =head1 Treex::Block::Read::PADT
 
-Import trees from the Prague Arabic Dependency Treebank 2.0 (not released, converted to PML by Otakar Smrž and stored in an svn repository at ÚFAL).
+Import trees from the Prague Arabic Dependency Treebank 2.0 (not released, converted to PML by Otakar Smrž and stored in an svn repository at ÚFAL;
+a working copy might be in C</net/projects/padt>).
 
 =head2 Parameters
 
