@@ -19,6 +19,8 @@ my %models;
 
 my %containers;
 my @entities;
+my %entities;
+
 
 BEGIN {
 
@@ -59,7 +61,7 @@ BEGIN {
 
 sub process_zone {
     my ($self, $zone) = @_;
-my %entityRefMap;
+    my %entityRefMap;
 
     my $aroot = $zone->get_atree();
     my @anodes = $aroot->get_descendants({ordered => 1});
@@ -99,7 +101,7 @@ my %entityRefMap;
         $args{'nnext_lemma'} = defined $nnext_anode ? $nnext_anode->lemma : $FALLBACK_LEMMA;
         $args{'nnext_tag'} = defined $nnext_anode ? $nnext_anode->tag : $FALLBACK_TAG;
 
-	$args{'namedents'} = \@entities; # wow, tohle by dokonce mělo
+        $args{'namedents'} = \@entities; # wow, tohle by dokonce mělo
                                          # zajistit, že bude jiná
                                          # hodnota v extract_twoword
                                          # než v oneword, pokud tam
@@ -115,7 +117,8 @@ my %entityRefMap;
         $classification =  $models{oneword}->predict($data);
 
         $label = $classification == -1 ? 0 : get_class_from_number($classification);
-        create_entity_node( $n_root, $label, $anode ) unless $classification == -1;
+        $n_node = create_entity_node( $n_root, $label, $anode ) unless $classification == -1;
+	$entities{$anode->id} = $n_node;
 
         $entities[$i] = $label;
 
@@ -129,7 +132,8 @@ my %entityRefMap;
 
             unless ($classification == -1) {
                 $label = get_class_from_number($classification);
-                create_entity_node( $n_root, $label, $prev_anode, $anode );
+                $n_node = create_entity_node( $n_root, $label, $prev_anode, $anode );
+		$entities{$_->id} = $n_node for ($prev_anode, $anode);
 
                 $entities[$i-1] = $label;
                 $entities[$i] = $label;
@@ -146,7 +150,8 @@ my %entityRefMap;
 
             unless ($classification == -1) {
                 $label = get_class_from_number($classification);
-                create_entity_node( $n_root, $label, $pprev_anode, $prev_anode, $anode );
+                $n_node = create_entity_node( $n_root, $label, $pprev_anode, $prev_anode, $anode );
+		$entities{$_->id} = $n_node for ($pprev_anode, $prev_anode, $anode);
 
                 $entities[$i-2] = $label;
                 $entities[$i-1] = $label;
@@ -154,17 +159,22 @@ my %entityRefMap;
             }
         }
 
-	for my $j ( 0 .. $i-1) {
-	    my $pattern = @entities[$j..$i];
-	    my $container = $containers{$pattern};
+        for my $j ( 0 .. $i-1) {
+            my $pattern = join " ", @entities[$j..$i];
+            my $container = $containers{$pattern};
 
-	    if (defined $container and $container ne '0') {
+	    print Dumper $pattern;
+	    print Dumper $container;
 
-		#TODO zed jsme skoncili
-	#	create_entity_container_node($n_root, $container, \@anodes[$j..$i]);
-	    }
+            if (defined $container and $container ne '0') {
+                create_entity_container_node($n_root, $container, @anodes[$j..$i]);
+		last; # (we dont want nested containers)
+            }
 
-	}
+        }
+
+	print Dumper @entities;
+	print Dumper "Konec";
 
     }
 }
@@ -172,16 +182,12 @@ my %entityRefMap;
 sub create_entity_node {
     my ( $n_root, $classification, @a_nodes ) = @_;
 
-    #    return if @a_nodes == 0;    # empty entity
-
     # Check if this entity already exists
     #    my @a_ids = sort map{ $_->id } @a_nodes;
     #    my $a_ids_label = join $MRF_DELIM, @a_ids;
     #    return if exists $entities{$a_ids_label} && $entities{$a_ids_label}->get_attr('ne_type') eq $classification;
 
-
-
-    # Create new SCzechN node
+    # Create new N-node
     my $n_node = $n_root->create_child;
 
     # Set classification
@@ -202,33 +208,24 @@ sub create_entity_node {
     $normalized_name =~ s/^ //;
     $n_node->set_attr( 'normalized_name', $normalized_name );
 
-    # Remember this named entity
-    #    $entities{$a_ids_label} = $n_node;
+    # Remember this named entity for container
 
     # print STDERR ( "Named entity \"$classification\" found: " . $n_node->get_attr('normalized_name') . "\n" );
-
 
     return $n_node;
 }
 
-1;
-
-__END__
 
 sub create_entity_container_node {
-    my ( $n_root, $classification, $anodesRef ) = @_;
-
-    my @anodes = @$anodesRef;
-
-    die "Not implemented yet";
+    my ( $n_root, $classification, @anodes ) = @_;
 
     # Check if this container already exists
-#    my $m_ids_label = join $MRF_DELIM, sort @{$m_ids_ref};
-#    return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
+    #    my $m_ids_label = join $MRF_DELIM, sort @{$m_ids_ref};
+    #    return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
 
 
     # Get corresponding n-nodes
-    my @n_nodes = map $entities{$_}, @{$m_ids_ref};
+    my @n_nodes = map {$entities{$_->id}} @anodes;
 
     # Create new SCzechN node
     my $n_node = $n_root->create_child;
@@ -236,8 +233,8 @@ sub create_entity_container_node {
     # Set classification
     $n_node->set_attr('ne_type', $classification);
 
-    # Set m.rf's
-    $n_node->set_deref_attr('m.rf', $m_nodes_ref );
+    # Set a.rf's
+    $n_node->set_deref_attr('a.rf', \@anodes );
 
     # Set normalized name
     my $normalized_name;
@@ -245,9 +242,6 @@ sub create_entity_container_node {
         $normalized_name .= " ". $n->get_attr('normalized_name') if $n->get_attr('normalized_name');
     }
     $n_node->set_attr('normalized_name', $normalized_name);
-
-    # Remember this container
-    $entities{$m_ids_label} = $n_node;
 
     #    print STDERR ( "Named entity container \"$classification\" found: ". $n_node->get_attr('normalized_name')."\n");
     return $n_node;
