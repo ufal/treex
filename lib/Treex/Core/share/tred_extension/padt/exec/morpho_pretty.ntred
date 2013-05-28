@@ -1,0 +1,195 @@
+#!/usr/bin/ntred
+
+package TredMacro;
+
+use Encode;
+
+use strict;
+
+
+our ($root, $this);
+
+our $type = { 'paragraph'   =>  'Paragraph',
+              'word_node'   =>  'Word',
+              'entity'      =>  'Element',
+              'partition'   =>  'Partition',
+              'token_form'  =>  'Component',
+              'lemma_id'    =>  'Lexeme',
+              'token_node'  =>  'Token'     };
+
+our $name = { 'apply_m' => 'apply',
+              'apply_t' => 'score',
+              'id'      => 'idx'   };
+
+our $indent = '';
+
+
+sub escape ($) {
+
+    my $text = $_[0];
+
+    $text =~ s/\&/\&amp;/g;
+    $text =~ s/\</\&lt;/g;
+    $text =~ s/\>/\&gt;/g;
+
+    return $text;
+}
+
+
+sub render ($) {
+
+    return encode "utf8", escape $_[0];
+}
+
+
+sub autostart {
+
+    my $file = FileName();
+
+    open F, '>', $file . ".xml";
+
+    select F;
+
+    local $\ = "\n";
+
+    print '<?xml version="1.0" encoding="utf-8"?>';
+    print '';
+    print '<MorphoTrees xmlns="http://ufal.mff.cuni.cz/pdt/pml/">';
+    print ' <head>';
+    print '  <schema href="morpho.schema.xml" />';
+    print ' </head>';
+    print ' <meta>';
+    print '  <revision>$' . 'Revision: ' . '$</revision>';
+    print '  <date>$' . 'Date: ' . '$</date>';
+    print ' </meta>';
+    print ' <data>';
+
+    {
+        local $indent = $indent . '  ';
+
+        my $id = [];
+
+        do {
+
+            if ($root->{'type'} eq 'paragraph') {
+
+                pretty_para($root, $id);
+
+                @{$id} = ($id->[0]);
+            }
+            else {
+
+                pretty_tree($root, $id);
+            }
+        }
+        while NextTree();
+    }
+
+    print ' </data>';
+    print '</MorphoTrees>';
+
+    close F;
+}
+
+
+sub pretty_para {
+
+    my ($root, $id) = @_;
+
+    my $level = $root->level();
+
+    @{$id} = @{$id}[0 .. $level];
+
+    $id->[$level]++;
+
+    if ($level == 0) {
+
+        $root->{'id'} =~ /^\#([0-9]*)$/;
+
+        warn "Mismatch in 'id'\t" . ThisAddress($root) . "\n" if $id->[0] ne $1;
+    }
+
+    if ($level > 1) {
+
+        $id->[$level] = $root->{'ref'};
+    }
+
+    print $indent . '<' . $type->{$root->{'type'}} .' id="m-' .
+        ( join "", map { defined $id->[$_] ? (qw "p w l f")[$_] . $id->[$_] : '' } 0 .. 3 ) . '">';
+
+    {
+        local $indent = $indent . ' ';
+
+        foreach my $attr (grep { $_ ne 'type' } $root->attribute_paths()) {
+
+            print $indent . '<' . (exists $name->{$attr} ? $name->{$attr} : $attr) .'>' . (render $root->{$attr}) .
+                           '</' . (exists $name->{$attr} ? $name->{$attr} : $attr) .'>'
+
+                if exists $root->{$attr} and $root->{$attr} ne "";
+        }
+
+        print $indent . '<with>' if $root->children();
+
+        {
+            local $indent = $indent . ' ';
+
+            foreach my $node ($root->children()) {
+
+                pretty_para($node, $id);
+            }
+        }
+
+        print $indent . '</with>' if $root->children();
+    }
+
+    print $indent . '</' . $type->{$root->{'type'}} . '>';
+}
+
+
+sub pretty_tree {
+
+    my ($root, $id) = @_;
+
+    my $level = $root->level();
+
+    @{$id} = @{$id}[0 .. $level + 1];
+
+    $id->[$level + 1]++;
+
+    if ($root->level() == 0) {
+
+        $root->{'id'} =~ /^\#([0-9]*)\/([0-9]*)$/;
+
+        warn "Mismatch in 'id'\t" . ThisAddress($root) . "\n" if $id->[0] ne $1 or $id->[1] ne $2;
+    }
+
+    print $indent . '<' . $type->{$root->{'type'}} .' id="m-' .
+        ( join "", map { defined $id->[$_] ? (qw "p e q t l f")[$_] . $id->[$_] : '' } 0 .. 5 ) . '">';
+
+    {
+        local $indent = $indent . ' ';
+
+        foreach my $attr (grep { $_ ne 'type' } $root->attribute_paths()) {
+
+            print $indent . '<' . (exists $name->{$attr} ? $name->{$attr} : $attr) .'>' . (render $root->{$attr}) .
+                           '</' . (exists $name->{$attr} ? $name->{$attr} : $attr) .'>'
+
+                if exists $root->{$attr} and $root->{$attr} ne "";
+        }
+
+        print $indent . '<with>' if $root->children();
+
+        {
+            local $indent = $indent . ' ';
+
+            foreach my $node ($root->children()) {
+
+                pretty_tree($node, $id);
+            }
+        }
+
+        print $indent . '</with>' if $root->children();
+    }
+
+    print $indent . '</' . $type->{$root->{'type'}} . '>';
+}

@@ -1,0 +1,114 @@
+#!/usr/bin/ntred
+
+package TredMacro;
+
+use Treex::PML::Instance;
+
+use Encode;
+
+use File::Basename;
+
+use strict;
+
+
+our ($root, $this);
+
+our ($deeper, $schema);
+
+
+sub autostart {
+
+    my ($name, $path, undef) = File::Basename::fileparse(FileName(), '.syntax.pml');
+
+    my $data = '<?xml version="1.0" encoding="utf-8"?>
+                <DeepLevels xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
+                  <head>
+                    <schema href="deeper.schema.xml" />
+                  </head>
+                  <meta>
+                    <revision>$' . 'Revision: ' . '$</revision>
+                    <date>$' . 'Date: ' . '$</date>
+                  </meta>
+                  <data />
+                </DeepLevels>';
+
+    $deeper = Treex::PML::Instance->load({ 'string' => $data, 'filename' => $path . '/' . $name . '.deeper.pml' })->convert_to_fsfile();
+
+    $schema = $deeper->metaData('schema');
+
+    my $index;
+
+    do {
+
+        pretty_tree($root, $deeper->new_tree($index++));
+    }
+    while NextTree();
+
+    $deeper->writeFile();
+}
+
+
+sub pretty_tree {
+
+    my ($root, $tree) = @_;
+
+    my @id = $root->{'id'} =~ /^s-p([0-9]+)$/;
+
+    $tree->set_type_by_name($schema, 'Tree');
+
+    $tree->{'#name'} = 'Tree';
+
+    $tree->{'ord'} = $root->{'ord'} if exists $root->{'ord'};
+
+    $tree->{'id'} = sprintf 'd-p%d', @id;
+
+    $tree->{'func'} = 'SENT';
+
+    $tree->{'form'} = $root->{'form'} if exists $root->{'form'};
+
+    pretty_node($_, $tree) foreach $root->children();
+}
+
+
+sub pretty_node {
+
+    my ($word, $tree) = @_;
+
+    my $node = Treex::PML::Factory->createTypedNode('Node', $schema);
+
+    $node->{'#name'} = 'Node';
+
+    $node->{'id'} = join 'd', split 's', $word->{'id'};
+
+    $node->{'func'} = '???';
+
+    $node->{'syntax'} = Treex::PML::Factory->createStructure();
+
+    foreach (qw 'ord afun score note parallel paren arabfa coref clause') {
+
+        $node->{'syntax'}{$_} = $word->{$_} if exists $word->{$_};
+    }
+
+    $node->{'ord'} = $word->{'ord'};
+
+    $node->{'morpho'} = $word->{'morpho'};
+
+    $node->{'syntax'}{'parent'} = $word->parent()->{'id'};
+
+    pretty_node($_, $node) foreach $word->children();
+
+    my @child = grep { $node->{'syntax'}{'afun'} !~ /^Aux/ } $node->children();
+
+    if (@child and $node->{'syntax'}{'afun'} =~ /^Aux/) {
+
+        PasteNode($_, $tree, $deeper->FS) foreach @child;
+
+        PasteNode($node, $child[0], $deeper->FS);
+
+        $node->{'hide'} = 'hide';
+    }
+    else {
+
+        PasteNode($node, $tree, $deeper->FS);
+    }
+}

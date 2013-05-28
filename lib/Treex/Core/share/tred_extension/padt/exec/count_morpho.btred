@@ -1,0 +1,255 @@
+# -*- perl -*- ############################################################# Otakar Smrz, 2004/05/30
+#
+# count_morpho.btred #################################################################### 2004/08/25
+
+# $Id: count_morpho.btred 3665 2008-10-12 17:13:16Z pajas $
+
+our $VERSION = do { q $Revision: 3665 $ =~ /(\d+)/; sprintf "%4.2f", $1 / 100 };
+
+
+sub ThisType (;$) {
+
+    my $this = defined $_[0] ? $_[0] : $this;
+
+    if ($this->root()->{'#name'} eq 'Paragraph') {
+
+        return 'P' . $this->level();
+    }
+    else {
+
+        return 'E' . $this->level();
+    }
+}
+
+sub report ($$@) {
+
+    warn "" . ( join "\t", $_[0], ThisAddress(), ThisType(), map { sprintf "%-12s", $_ } @_[1 .. @_ - 1] ) . "\n";
+}
+
+sub autostart {
+
+    $file++;
+
+    do {
+
+        if ($this->{'#name'} eq 'Paragraph') {
+
+            $paragraph++;
+
+            while ($this = $this->following()) {
+
+                if ($this->{'#name'} eq 'Word') {
+
+                    $word++;
+
+                    @children = defined $this->children() ? $this->children() : ();
+
+                    push @token_queue, [ $grp->{'FSFile'}->tree($this->{'ref'} - 1)->{'idx'},
+                                         scalar @children ];
+
+                    if ($this->{'apply'} > 0) {
+
+                        $done++;
+
+                        report "-+ ", $root->{'idx'} . "." . $this->{'ord'} unless @children;
+                    }
+                    else {
+
+                        $none++;
+
+                        report "+- ", $root->{'idx'} . "." . $this->{'ord'} if @children;
+                    }
+                }
+                elsif ($this->{'#name'} eq 'Lexeme') {
+
+                    report "+- ", $root->{'idx'} . "." . $this->{'ord'} if $this->children() > 1;
+
+                    push @{$token_queue[-1]}, (defined $this->{'comment'} ? $this->{'comment'} : ''),
+                                              $this->{'ref'};
+                }
+                elsif ($this->{'#name'} eq 'Form') {
+
+                    push @{$token_queue[-1]}, (defined $this->{'comment'} ? $this->{'comment'} : ''),
+                                              $this->{'ref'};
+                }
+            }
+        }
+        elsif ($this->{'#name'} eq 'Entity') {
+
+            $entity++;
+
+            if ($this->{'apply'} > 0) {
+
+                report "!? ", $this->{'idx'}, $this->{'lookup'}
+                    unless $token_queue[0]->[0] eq $this->{'idx'} and $token_queue[0]->[1] != 0;
+            }
+            else {
+
+                report "-- ", $this->{'idx'}, $this->{'lookup'};
+
+                report "?! ", $this->{'idx'}, $this->{'lookup'}
+                    unless $token_queue[0]->[0] eq $this->{'idx'} and $token_queue[0]->[1] == 0;
+            }
+
+            (undef, $token_score) = splice @{$token_queue[0]}, 0, 2;
+
+            $score_unique = $score_complete = $score_children = 0;
+
+            $this = $this->rightmost_descendant();
+
+            do {
+
+                if (defined $this->{'comment'} and $this->{'comment'} ne '') {
+
+                    if ($this->{'apply'} > 0) {
+
+                        report "++ ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}, $this->{'comment'};
+                    }
+                    else {
+
+                        report "!! ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}, $this->{'comment'};
+                    }
+                }
+
+                if ($this->{'#name'} eq 'Partition') {
+
+                    $partition++;
+
+                    if ($score_complete > 0) {
+
+                        report "+- ", $root->{'idx'} . "." . $this->{'ord'}
+                            unless $score_complete eq $score_children;
+
+                        $score_unique++;
+
+                        $token_score -= $score_complete;
+                    }
+
+                    $score_complete = $score_children = 0;
+                }
+                elsif ($this->{'#name'} eq 'Token') {
+
+                    $token_form++;
+
+                    $score_children++;
+
+                    if ($this->{'apply'} > 0) {
+
+                        $score_complete++;
+
+                        report "-+ ", $root->{'idx'} . "." . $this->{'ord'}
+                            if $this->{'apply'} > 1;
+                    }
+                }
+                elsif ($this->{'#name'} eq 'Lexeme') {
+
+                    $lemma_id++;
+
+                    if ($this->{'apply'} > 0) {
+
+                        report "?? ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}
+                            unless defined $this->{'form'} and $this->{'form'} ne '';
+
+                        report ">< ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}
+                            unless @{$token_queue[0]} > 1 and $this->{'ord'} == $token_queue[0]->[-1] and
+                                   $token_queue[0]->[-2] eq (defined $this->{'comment'} ? $this->{'comment'} : '');
+
+                        splice @{$token_queue[0]}, -2, 2;
+                    }
+                }
+                elsif ($this->{'#name'} eq 'Form') {
+
+                    $token_node++;
+
+                    if ($this->{'apply'} > 0) {
+
+                        $token++;
+
+                        report "?? ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}
+                            if $this->{'tag'} eq '-' x 10;
+
+                        report "!! ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}
+                            if $this->{'tag'} !~ /^[A-Z1-4-]{4}-[A-Z1-4-]{5}$/;
+
+                        report "!! ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}, $this->{'comment'}
+                            if defined $this->{'comment'} and $this->{'comment'} ne '' and
+                               ( $this->{'comment'} eq '-' x 10 or
+                                 $this->{'comment'} !~ /^[A-Z1-4-]{4}-[A-Z1-4-]{5}$/ );
+
+                        report ">< ", $root->{'idx'} . "." . $this->{'ord'}, $root->{'lookup'}
+                            unless @{$token_queue[0]} > 1 and $this->{'ord'} == $token_queue[0]->[-1] and
+                                   $token_queue[0]->[-2] eq (defined $this->{'comment'} ? $this->{'comment'} : '');
+
+                        splice @{$token_queue[0]}, -2, 2;
+                    }
+                }
+            }
+            while $this = $this->previous();
+
+            $this = $root;
+
+            report "<> ", $root->{'idx'} if $score_unique > 1 or $this->{'apply'} != $score_unique;
+
+            report "<> ", $root->{'idx'} if @{$token_queue[0]} > 0 or $token_score != 0;
+
+            shift @token_queue;
+        }
+        else {
+
+            warn "Improper type of MorphoTrees root!\n";
+        }
+    }
+    while TredMacro::NextTree();
+
+    warn "<< \t" . $grp->{'FSFile'}->filename() . "\t\@token_queue =" . ( map { " " . $_->[0] } @token_queue ) . "\n" if @token_queue;
+
+    warn ">> \t" . $grp->{'FSFile'}->filename() . "\t\$entity = $entity != \$word = $word\n" unless $entity == $word;
+}
+
+END {
+
+    printf "%6d tokens = syntactic units\n", $token + $entity - $done;
+    printf "%6d entities = input words\n", $entity;
+    printf "%6d paragraphs\n", $paragraph;
+    printf "%6d files\n", $file;
+
+    print "\n";
+
+    printf "%10.4f tokens per paragraph\n", ($token + $entity - $done) / $paragraph;
+    printf "%10.4f entities per paragraph\n", $entity / $paragraph;
+    printf "%10.4f tokens per file\n", ($token + $entity - $done) / $file;
+    printf "%10.4f entities per file\n", $entity / $file;
+    printf "%10.4f paragraphs per file\n", $paragraph / $file;
+
+    print "\n";
+
+    printf "%6d tokens explicitly annotated\n", $token;
+    printf "%6d entities completely annotated\n", $done;
+    printf "%6d entities with no annotation\n", $none;
+    printf "%6d tokens in incomplete entities\n", $entity - $done - $none;
+
+    print "\n";
+
+    printf "%8.4f tokens per entity\n", ($token + $entity - $done) / $entity;
+    printf "%8.4f done tokens per done entity\n", $token / $done;
+
+    print "\n";
+
+    printf "%7.3f%% done entities of entities\n", 100 * $done / $entity;
+    printf "%7.3f%% done tokens of tokens\n", 100 * $token / ($token + $entity - $done);
+
+    print "\n";
+
+    printf "%6d partitions = options for tokenization\n", $partition;
+    printf "%6d token forms = elements in such options\n", $token_form;
+    printf "%6d lemmas in analyses\n", $lemma_id;
+    printf "%6d tokens in analyses\n", $token_node;
+
+    print "\n";
+
+    printf "%8.4f partitions per entity\n", $partition / $entity;
+    printf "%8.4f elements per partition\n", $token_form / $partition;
+    printf "%8.4f lemmas per element\n", $lemma_id / $token_form;
+    printf "%8.4f token analyses per lemma\n", $token_node / $lemma_id;
+    printf "%8.4f token analyses per entity\n", $token_node / $entity;
+}

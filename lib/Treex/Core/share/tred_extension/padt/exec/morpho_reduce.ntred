@@ -1,0 +1,121 @@
+#!/usr/bin/ntred
+
+package TredMacro;
+
+use Treex::PML::Instance;
+
+use Encode;
+
+use File::Basename;
+
+use strict;
+
+
+our ($root, $this, $reduce, $schema);
+
+
+sub autostart {
+
+    my ($name, $path, undef) = File::Basename::fileparse(FileName(), '.morpho.xml');
+
+    my $data = '<?xml version="1.0" encoding="utf-8"?>
+                <MorphoTrees xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
+                  <head>
+                    <schema href="morpho.schema.xml" />
+                  </head>
+                  <meta>
+                    <revision>$' . 'Revision: ' . '$</revision>
+                    <date>$' . 'Date: ' . '$</date>
+                  </meta>
+                  <data />
+                </MorphoTrees>';                                   # "
+
+    $reduce = Treex::PML::Instance->load({ 'string' => $data, 'filename' => $path . '/' . $name . '.reduce.xml' })->convert_to_fsfile();
+
+    $schema = $reduce->metaData('schema');
+
+    my ($index, $unit);
+
+    do {
+
+        if ($root->{'#name'} eq 'Paragraph') {
+
+            $unit = $reduce->new_tree($index++);
+
+            reduce_para($root, $unit);
+        }
+        else {
+
+            reduce_elem($root, $unit);
+        }
+    }
+    while NextTree();
+
+    $reduce->writeFile();
+}
+
+
+sub reduce_para {
+
+    my ($para, $unit) = @_;
+
+    $unit->set_type_by_name($schema, 'Unit');
+
+    $unit->{'#name'} = 'Unit';
+
+    foreach (qw 'id form') {
+
+        $unit->{$_} = $para->{$_} if exists $para->{$_};
+    }
+
+    reduce_node($_, $unit) foreach reverse $para->children();
+}
+
+
+sub reduce_elem {
+
+    my ($elem, $unit) = @_;
+
+    my $note = join "  ", map { $_->{'note'} } grep { exists $_->{'note'} and $_->{'note'} ne '' } $elem, map { $_, $_->children() } $elem->children();
+
+    unless ($note eq '') {
+
+        my @id = $elem->{'id'} =~ /^m-p([0-9]+)e([0-9]+)$/;
+
+        my $id = sprintf 'm-p%dw%d', @id;
+
+        my ($node) = grep { $_->{'id'} eq $id } $unit->children();
+
+        if (defined $node) {
+
+            if (exists $node->{'note'} and $node->{'note'} ne '') {
+
+                warn join "\t", ThisAddress(), $node->{'note'} . "\n";
+
+                $node->{'note'} .= "   " . $note;
+            }
+            else {
+
+                $node->{'note'} = $note;
+            }
+        }
+        else {
+
+            warn join "\t", ThisAddress(), '!!!', $id . "\n";
+        }
+    }
+}
+
+
+sub reduce_node {
+
+    my ($node, $done) = @_;
+
+    my $copy = CopyNode($node);
+
+    delete $copy->{$_} foreach qw 'ref apply score';
+
+    PasteNode($copy, $done);
+
+    reduce_node($_, $copy) foreach reverse $node->children();
+}

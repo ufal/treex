@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema version="1.1" xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/">
+    <revision>1.0.1</revision>
+    <description>PADT Deep Syntax</description>
+
+    <reference name="syntax" readas="pml"/>
+
+    <root name="PADT-Deeper" type="Trees"/>
+
+    <type name="Trees">
+        <structure>
+            <member name="meta">
+                <structure>
+                    <member name="revision">
+                        <cdata format="any"/>
+                    </member>
+                    <member name="date">
+                        <cdata format="any"/>
+                    </member>
+                </structure>
+            </member>
+            <member name="data" required="1">
+                <sequence role="#TREES">
+                    <element name="Tree" type="Tree"/>
+                </sequence>
+            </member>
+        </structure>
+    </type>
+
+    <type name="Tree">
+        <structure role="#NODE">
+            <member name="id" as_attribute="1" required="1" role="#ID" type="ID"/>
+            <member name="ord" required="1" role="#ORDER" type="ORDER"/>
+            <member name="func" required="1">
+                <constant>SENT</constant>
+            </member>
+            <member name="score" type="Score"/>
+            <member name="note" type="String"/>
+            <member name="form" type="String"/>
+            <member name="hide" type="String" role="#HIDE"/>
+            <member name="with" role="#CHILDNODES">
+                <sequence>
+                    <element name="Node" type="Node"/>
+                </sequence>
+            </member>
+        </structure>
+    </type>
+
+    <type name="Node">
+        <structure role="#NODE">
+            <member name="id" as_attribute="1" required="1" role="#ID" type="ID"/>
+            <member name="ord" required="1" role="#ORDER" type="ORDER"/>
+            <member name="func" type="Functor" required="1"/>
+            <member name="score" type="Score"/>
+            <member name="note" type="String"/>
+            <member name="context" type="Context"/>
+            <member name="parallel" type="Parallel"/>
+            <member name="paren" type="Paren"/>
+            <member name="coref" type="String"/>
+            <member name="clause" type="Clause"/>
+            <member name="morpho" type="Morpho"/>
+            <member name="syntax" type="Syntax"/>
+            <member name="hide" type="String" role="#HIDE"/>
+            <member name="with" role="#CHILDNODES">
+                <sequence>
+                    <element name="Node" type="Node"/>
+                </sequence>
+            </member>
+        </structure>
+    </type>
+
+    <type name="Context">
+        <choice>
+            <value>B</value>
+            <value>C</value>
+            <value>N</value>
+        </choice>
+    </type>
+
+    <type name="Syntax">
+        <structure>
+            <!--<member name="id" as_attribute="1" required="1" role="#ID" type="ID"/>-->
+            <member name="ord" type="ORDER"/>
+            <member name="afun" type="Afun"/>
+            <member name="note" type="String"/>
+            <member name="parallel" type="Parallel"/>
+            <member name="paren" type="Paren"/>
+            <member name="arabfa" type="String"/>
+            <member name="coref" type="Coref"/>
+            <member name="clause" type="Clause"/>
+            <member name="parent" type="String"/>
+        </structure>
+    </type>
+
+    <import schema="syntax.schema.xml" type="Morpho"/>
+
+    <import schema="syntax.schema.xml" type="Score"/>
+
+    <import schema="syntax.schema.xml" type="String"/>
+
+    <import schema="syntax.schema.xml" type="ID"/>
+
+    <import schema="syntax.schema.xml" type="ORDER"/>
+
+    <import schema="syntax.schema.xml" type="Afun"/>
+
+    <import schema="syntax.schema.xml" type="Parallel"/>
+
+    <import schema="syntax.schema.xml" type="Paren"/>
+
+    <import schema="syntax.schema.xml" type="Coref"/>
+
+    <import schema="syntax.schema.xml" type="Clause"/>
+
+    <type name="Functor">
+        <choice>
+            <value>ACT</value>
+            <value>PAT</value>
+            <value>ADDR</value>
+            <value>EFF</value>
+            <value>ORIG</value>
+            <value>ACMP</value>
+            <value>ADVS</value>
+            <value>AIM</value>
+            <value>APP</value>
+            <value>APPS</value>
+            <value>ATT</value>
+            <value>BEN</value>
+            <value>CAUS</value>
+            <value>CNCS</value>
+            <value>COMPL</value>
+            <value>COND</value>
+            <value>CONJ</value>
+            <value>CONFR</value>
+            <value>CPR</value>
+            <value>CRIT</value>
+            <value>CSQ</value>
+            <value>CTERF</value>
+            <value>DENOM</value>
+            <value>DES</value>
+            <value>DIFF</value>
+            <value>DIR1</value>
+            <value>DIR2</value>
+            <value>DIR3</value>
+            <value>DISJ</value>
+            <value>DPHR</value>
+            <value>ETHD</value>
+            <value>EXT</value>
+            <value>EV</value>
+            <value>FPHR</value>
+            <value>GRAD</value>
+            <value>HER</value>
+            <value>ID</value>
+            <value>INTF</value>
+            <value>INTT</value>
+            <value>LOC</value>
+            <value>MANN</value>
+            <value>MAT</value>
+            <value>MEANS</value>
+            <value>MOD</value>
+            <value>NA</value>
+            <value>NORM</value>
+            <value>OPER</value>
+            <value>PAR</value>
+            <value>PARTL</value>
+            <value>PN</value>
+            <value>PREC</value>
+            <value>PRED</value>
+            <value>REAS</value>
+            <value>REG</value>
+            <value>RESL</value>
+            <value>RESTR</value>
+            <value>RHEM</value>
+            <value>RSTR</value>
+            <value>SUBS</value>
+            <value>TFHL</value>
+            <value>TFRWH</value>
+            <value>THL</value>
+            <value>THO</value>
+            <value>TOWH</value>
+            <value>TPAR</value>
+            <value>TSIN</value>
+            <value>TTILL</value>
+            <value>TWHEN</value>
+            <value>VOC</value>
+            <value>VOCAT</value>
+            <value>SENT</value>
+            <value>???</value>
+        </choice>
+    </type>
+
+</pml_schema>
