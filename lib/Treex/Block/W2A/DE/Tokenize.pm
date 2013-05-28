@@ -42,8 +42,6 @@ override 'tokenize_sentence' => sub {
     $sent2 =~ s/(\p{Alpha})-(\s)/$1‑$2/;
     $sent2 =~ s/(\s)-(\p{Alpha})/$1‑$2/;
 
-    log_info($sent2);
-
     $sentence = $self->SUPER::tokenize_sentence($sent2);
 
     # get back the dots and hyphens
