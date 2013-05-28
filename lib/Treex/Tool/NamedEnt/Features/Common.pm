@@ -87,11 +87,11 @@ for my $share_list (qw /cities city_parts first_names surnames countries streets
 
 my %tabu = map {$_ => 1} qw/D I J P V R T Z/;
 
-my %tag_values = (pos => {map {$_ => 1} qw/A J T X N P V Z C D I R/},
+my %tag_values = (pos => {map {$_ => 1} qw/A C D I J N P R T X V Z/},
                   subpos => {},
-                  gender => {map {$_ => 1} qw/F T X N Y H - Z Q M I/},
-                  number => {map {$_ => 1} qw/- S W D X P/},
-                  case   => {map {$_ => 1} qw/6 X 3 7 2 - 1 4 5/}
+                  gender => {map {$_ => 1} qw/- F H I M N Q T X Y Z/},
+                  number => {map {$_ => 1} qw/- D P S W Z/},
+                  case   => {map {$_ => 1} qw/- 1 2 3 4 5 6 7 X/}
               );
 
 
