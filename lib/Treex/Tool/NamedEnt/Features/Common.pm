@@ -149,7 +149,7 @@ sub get_class_from_number {
 
 
 sub get_built_list_names {
-    return keys %lists;
+    return sort keys %lists;
 }
 
 sub is_year_number {
