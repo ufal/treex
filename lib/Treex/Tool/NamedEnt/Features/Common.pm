@@ -10,7 +10,9 @@ use Exporter qw/ import /;
 
 my $common = [qw/ tag_features is_tabu_pos is_listed_entity get_built_list_names is_year_number is_month_number is_day_number/];
 
-our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common);
+my $tests = [qw/ tag_value_bitmap tag_features is_tabu_pos is_listed_entity get_class_number get_class_from_number get_built_list_names is_year_number is_month_number is_day_number/];
+
+our %EXPORT_TAGS = (oneword => $common, twoword => $common, threeword => $common, tests => $tests);
 our @EXPORT_OK = qw/get_class_number get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG/;
 
 our $FALLBACK_LEMMA = ".";
@@ -19,6 +21,7 @@ our $FALLBACK_TAG   = "Z:-------------";
 Exporter::export_ok_tags('oneword');
 Exporter::export_ok_tags('twoword');
 Exporter::export_ok_tags('threeword');
+Exporter::export_ok_tags('tests');
 
 my @classes = qw/a ah at az
                  c cb cn cp cr cs
@@ -115,7 +118,6 @@ sub tag_features {
         push @tag_features, tag_value_bitmap($catName, $value);
     }
 
-
     return @tag_features;
 }
 
@@ -157,7 +159,7 @@ sub is_year_number {
 
 sub is_month_number {
     my $token = shift;
-    return ($token =~ /^[1-9]$/ || $token =~ /^1[12]$/) ? 1 : 0;
+    return ($token =~ /^[1-9]$/ || $token =~ /^1[012]$/) ? 1 : 0;
 }
 
 sub is_day_number {
