@@ -281,7 +281,7 @@ sub reset_morphcat {
 # Used only for reading from PCEDT/PDT trees, so far.
 sub get_subtree_string {
     my ($self) = @_;
-    return join '', map { $_->form . ( $_->no_space_after ? '' : ' ' ) } $self->get_descendants( { ordered => 1 } );
+    return join '', map { defined($_->form) ? ($_->form . ( $_->no_space_after ? '' : ' ' )) : '' } $self->get_descendants( { ordered => 1 } );
 }
 
 #----------- CoNLL attributes -------------

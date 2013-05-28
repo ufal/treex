@@ -111,7 +111,7 @@
       
 
 
-  <type name="a_coreference.type"> <!-- analyticka koreference pro Jirku Mirovskeho -->
+  <type name="a_coreference.type"> <!-- analytická koreference pro Jirku Mírovského -->
     <structure>
        <member name="markable" type="bool.type"/> <!-- a token to be considered as anaphor/antecedent -->
        <member name="introduction" type="bool.type"/> <!-- first introduction of the entity to the discourse -->

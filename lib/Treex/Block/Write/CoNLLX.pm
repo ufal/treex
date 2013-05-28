@@ -51,7 +51,7 @@ sub process_atree {
             $feat = '_';
         }
         my $p_ord = $anode->get_parent->ord;
-        print { $self->_file_handle } join( "\t", $anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel ) . "\n";
+        print { $self->_file_handle } join( "\t", map {$_ // '_'} ($anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel) ) . "\n";
     }
     print { $self->_file_handle } "\n" if $atree->get_descendants;
     return;
