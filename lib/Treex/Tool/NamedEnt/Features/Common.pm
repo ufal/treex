@@ -75,6 +75,7 @@ for my $share_list (qw /cities city_parts first_names surnames countries streets
     my $file = require_file_from_share($filename, 'Treex::Tool::NamedEnt::Features::Common');
 
     open LISTFILE, $file or log_error('Cannot retrieve list file $filename') and next;
+    binmode LISTFILE, ':utf8';
 
     chomp(my @list = <LISTFILE>);
 
