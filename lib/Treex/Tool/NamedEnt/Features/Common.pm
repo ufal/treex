@@ -100,7 +100,7 @@ my @tag_categories = qw /pos subpos gender number case/;
 sub tag_value_bitmap {
     my ($category, $value) = @_;
 
-    my @bitmap = map {$value eq $_ ? 1 : 0} keys %{$tag_values{$category}};
+    my @bitmap = map {$value eq $_ ? 1 : 0} sort keys %{$tag_values{$category}};
     return @bitmap;
 }
 
