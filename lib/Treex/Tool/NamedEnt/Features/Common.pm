@@ -69,7 +69,7 @@ my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen čer
 
 log_info('Retrieving NE lists');
 
-for my $share_list (qw /cities city_parts first_names surnames countries/) {
+for my $share_list (qw /cities city_parts first_names surnames countries streets/) {
     my $filename = "data/models/sysnerv/cs/" . $share_list . ".txt";
 
     my $file = require_file_from_share($filename, 'Treex::Tool::NamedEnt::Features::Common');
