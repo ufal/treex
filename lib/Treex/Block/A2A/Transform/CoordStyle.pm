@@ -257,7 +257,8 @@ sub detect_prague {
     
     # If $node is not a head of coordination,
     # just skip it and recursively process its children.
-    if ( ( $node->afun || '' ) ne 'Coord' ) {
+    if (!grep {$_->is_member} $node->get_children() ) {
+#    if ( ( $node->afun || '' ) ne 'Coord' ) {
         foreach my $child (@children) {
             $self->detect_prague($child);
         }
@@ -445,10 +446,22 @@ sub detect_moscow {
     while (@queue) {
         my $iter_node = shift @queue;
         my @children = $iter_node->get_children();
-        my @new_andmembers = pick { $in_chain->($_) } @children;
-        log_warn "TODO: solve nested CS under " . $iter_node->get_address() if @new_andmembers > 1;
-        push @commas, pick {$self->is_comma($_)} @children;
-        push @todo, @children;
+        #my @new_andmembers = pick { $in_chain->($_) } @children;
+        #log_warn "TODO: solve nested CS under " . $iter_node->get_address() if @new_andmembers > 1;
+        #push @commas, pick {$self->is_comma($_)} @children;
+        my @new_andmembers;
+        for my $i (0 .. $#children) {
+            if ($in_chain->($children[$i])) {
+                push @new_andmembers, $children[$i];
+            }
+            elsif ($self->is_comma($children[$i]) && ($i == $#children || $in_chain->($children[$i+1]))) {
+                push @commas, $children[$i];
+            }
+            else {
+                push @todo, $children[$i];
+            }
+        }
+        #push @todo, @children;
         push @andmembers, @new_andmembers;
         push @queue,      @new_andmembers;
     }
@@ -502,24 +515,25 @@ sub detect_moscow {
         # but there are counter-examples like C1 and C2(afun=ExD) C3(afun=ExD).
 
         # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
-        if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
-            ## Suppose the first two members are in the nested coordination
-            #  TODO: it might be three or more (but that's very rare)
-            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
-            my @nested_members = splice @members, ( $head_right ? -2 : 0 ), 2;
-            my $border = $nested_members[ $head_right ? 0 : -1 ];
 
+        if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
+            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
+            my $both_in_one_chain = (($head_right && grep{$_ eq $ands[0]} $ands[1]->get_descendants) || grep{$_ eq $ands[1]} $ands[0]->get_descendants ) ? 1 : 0;
+            # Suppose the first (or last) two members are in the nested coordination
+            #  TODO: it might be three or more (but that's very rare)
+            my @nested_members = splice @members, ( $head_right != $both_in_one_chain ? -2 : 0 ), 2;
+            my $border = $nested_members[ $head_right != $both_in_one_chain ? 0 : -1 ];
             # Suppose $border is the borderline between the nested and the outer coordination
             my ( @nested_shared, @nested_ands, @nested_commas );
-            if ($head_right) {
-                @nested_shared = pick { $border->precedes($_) } @shared;
-                @nested_ands   = pick { $border->precedes($_) } @ands;
-                @nested_commas = pick { $border->precedes($_) } @commas;
-            }
-            else {
+            if ($head_right == $both_in_one_chain) {
                 @nested_shared = pick { $_->precedes($border) } @shared;
                 @nested_ands   = pick { $_->precedes($border) } @ands;
                 @nested_commas = pick { $_->precedes($border) } @commas;
+            }
+            else {
+                @nested_shared = pick { $border->precedes($_) } @shared;
+                @nested_ands   = pick { $border->precedes($_) } @ands;
+                @nested_commas = pick { $border->precedes($_) } @commas;
             }
 
             # Process the nested coord. in the same way as the outer coord.
