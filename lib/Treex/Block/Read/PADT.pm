@@ -32,8 +32,10 @@ sub _build_schema_dir
 sub _build_layers
 {
     my ($self) = @_;
-    ###!!!return ['a'];
-    #return ['words', 'morpho', 'syntax'];
+    # There are three layers in PADT: ['words', 'morpho', 'syntax'];
+    # We will directly access only files from the 'syntax' layer.
+    # The two lower layers are referenced from syntax and will be read as well.
+    # It will happen automatically via references, so we are not supposed to list those lower layers here.
     return ['syntax'];
 }
 
@@ -284,7 +286,7 @@ a working copy might be in C</net/projects/padt>).
 Example:
 
 PADT=/net/projects/padt/data/Prague
-treex Read::PADT 'from=$PADT/AEP/UMH_ARB_20040407.0001.syntax.pml' schema_dir=$PADT/syntax.schema.xml Write::CoNLLX deprel_attribute=conll/deprel > pokus.ar.conll
+treex Read::PADT 'from=$PADT/AEP/UMH_ARB_20040407.0001.syntax.pml' Write::CoNLLX deprel_attribute=conll/deprel > pokus.ar.conll
 
 =head2 Parameters
 
