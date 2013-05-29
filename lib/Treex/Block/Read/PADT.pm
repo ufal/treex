@@ -155,9 +155,12 @@ override '_convert_atree' => sub
             $treex_node->set_attr('translit', $rform);
             $treex_node->set_lemma($aform);
             $treex_node->set_tag('U---------');
-            $rform =~ s/\s+/_/g;
-            $rform =~ s/\|/:/g;
-            push(@features, 'rform='.$rform);
+            if(defined($rform))
+            {
+                $rform =~ s/\s+/_/g;
+                $rform =~ s/\|/:/g;
+                push(@features, 'rform='.$rform);
+            }
             push(@features, 'root=OOV');
         }
         else
