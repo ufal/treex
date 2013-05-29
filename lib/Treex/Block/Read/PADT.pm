@@ -9,21 +9,38 @@ use Treex::PML::Instance;
 require 'Treex/Core/share/tred_extension/elixir/libs/ElixirFM.pm';
 require 'Treex/Core/share/tred_extension/elixir/libs/Encode/Arabic/Buckwalter.pm';
 
+has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.syntax\.pml(\.gz)?$' );
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1, default => 'ar' );
+
+sub _build_schema_dir
+{
+    # Compute the path to the PML schemas relative to this block.
+    my $rootpath = $INC{'Treex/Block/Read/PADT.pm'};
+    $rootpath =~ s-/PADT\.pm$--;
+    my $relpath = '../../Core/share/tred_extension/padt/resources';
+    my $fullpath = "$rootpath/$relpath";
+    if(-d $fullpath)
+    {
+        log_info("Adding $fullpath to Treex::PML resource paths.");
+        Treex::PML::AddResourcePath($fullpath);
+        return $fullpath;
+    }
+}
 
 sub _build_layers
 {
     my ($self) = @_;
     ###!!!return ['a'];
-    return ['words', 'morpho', 'syntax'];
+    #return ['words', 'morpho', 'syntax'];
+    return ['syntax'];
 }
 
 
 
 #------------------------------------------------------------------------------
-# For each document, reads all necessary files for all layers to memory.
+# For each document, reads all necessary files for all layers into memory.
 #------------------------------------------------------------------------------
 override '_load_all_files' => sub
 {
@@ -210,6 +227,10 @@ override '_convert_atree' => sub
         {
             $treex_node->set_is_member(1);
         }
+        if($pml_node->attr('paren'))
+        {
+            $treex_node->set_is_parenthesis_root(1);
+        }
         if(defined($treex_node->afun()))
         {
             my $deprel = $treex_node->afun();
@@ -217,7 +238,15 @@ override '_convert_atree' => sub
             {
                 $deprel .= '_'.$pml_node->attr('parallel');
             }
+            if($pml_node->attr('paren'))
+            {
+                $deprel .= '_'.$pml_node->attr('paren');
+            }
             $treex_node->set_conll_deprel($deprel);
+        }
+        if($pml_node->attr('coref'))
+        {
+            $treex_node->{wild}{coref} = $pml_node->attr('coref');
         }
     }
     # Recursively copy descendant nodes.
@@ -263,8 +292,7 @@ treex Read::PADT 'from=$PADT/AEP/UMH_ARB_20040407.0001.syntax.pml' schema_dir=$P
 =item schema_dir
 
 Must be set to the directory with corresponding PML schemas.
-
-###!!! We will make this fixed or at least provide a default in future!
+By default, the directory is expected in a path relative to the location of this block.
 
 =back
 
