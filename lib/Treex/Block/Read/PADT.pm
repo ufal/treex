@@ -5,9 +5,8 @@ extends 'Treex::Block::Read::BasePMLReader';
 
 use Treex::PML::Factory;
 use Treex::PML::Instance;
+use Treex::Tool::ElixirFM;
 use Encode::Arabic::Buckwalter;
-###!!! DZ: How to do this properly? Should we add this to the list of Treex libraries? Or should we move the Perl modules?
-require 'Treex/Core/share/tred_extension/elixir/libs/ElixirFM.pm';
 
 has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
