@@ -250,7 +250,17 @@ override '_convert_atree' => sub
         }
         if(defined($treex_node->afun()))
         {
-            my $deprel = $treex_node->afun();
+            my $deprel;
+            # Convert the old way of marking unknown afun to the ways used in Treex and in CoNLL.
+            if($treex_node->afun() eq '???')
+            {
+                $treex_node->set_afun('NR');
+                $deprel = '_';
+            }
+            else
+            {
+                $deprel = $treex_node->afun();
+            }
             if($pml_node->attr('parallel'))
             {
                 $deprel .= '_'.$pml_node->attr('parallel');
@@ -276,10 +286,11 @@ override '_convert_atree' => sub
         # If token = word, score seems to contain both the vocalized and unvocalized version of the word.
         # First token of a word: vocalized token and unvocalized word.
         # Non-first token of a word: vocalized token and nothing more.
-        if($pml_node->attr('score'))
-        {
-            $treex_node->{wild}{score} = $pml_node->attr('score');
-        }
+        # 29.5.2013: Ota confirmed that <score> was a temporary auxiliary storage. We should not need it and it should probably be removed before releasing the data.
+        #if($pml_node->attr('score'))
+        #{
+        #    $treex_node->{wild}{score} = $pml_node->attr('score');
+        #}
         if($pml_node->attr('note'))
         {
             $treex_node->{wild}{note} = $pml_node->attr('note');
