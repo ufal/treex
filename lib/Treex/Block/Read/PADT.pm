@@ -99,7 +99,8 @@ my %cpos =
     'G' => 'punc',
     'X' => 'foreign',
     'Y' => 'acronym',
-    'Z' => 'zeroinfl'
+    'Z' => 'zeroinfl',
+    'U' => 'unk' # unknown (OOV) word; this tag added by this block, not present in the original data
 );
 sub tag2cpos
 {
@@ -140,7 +141,7 @@ override '_convert_atree' => sub
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
             $treex_node->set_lemma($aform);
-            $treex_node->set_tag('X---------');
+            $treex_node->set_tag('U---------');
             $rform =~ s/\s+/_/g;
             $rform =~ s/\|/:/g;
             push(@features, 'rform='.$rform);
