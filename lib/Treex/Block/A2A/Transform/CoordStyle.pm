@@ -257,8 +257,9 @@ sub detect_prague {
     
     # If $node is not a head of coordination,
     # just skip it and recursively process its children.
-    if (!grep {$_->is_member} $node->get_children() ) {
-#    if ( ( $node->afun || '' ) ne 'Coord' ) {
+    # In Prague, a node is a head of coordination iff there is at least one is_member child.
+    # This is equivalent to checking afun=Coord, but we don't want to rely on afuns.
+    if (!any {$_->is_member} $node->get_children() ) {
         foreach my $child (@children) {
             $self->detect_prague($child);
         }
@@ -374,6 +375,8 @@ sub detect_stanford {
 
         # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
         if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
+            # TODO: David added a better detection of nested CS to detect_moscow,
+            # so duplicate the code here or even better refactor the code into a subroutine.
             ## Suppose the first two members are in the nested coordination
             #  TODO: it might be three or more (but that's very rare)
             my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
@@ -449,11 +452,14 @@ sub detect_moscow {
         #my @new_andmembers = pick { $in_chain->($_) } @children;
         #log_warn "TODO: solve nested CS under " . $iter_node->get_address() if @new_andmembers > 1;
         #push @commas, pick {$self->is_comma($_)} @children;
+        # Only the token immediately preceding a conjunct (or conjunction) can be a coordination comma.
+        # Relying just on $self->is_comma() leads to false positives with commas for subordinate clauses.
         my @new_andmembers;
         for my $i (0 .. $#children) {
             if ($in_chain->($children[$i])) {
                 push @new_andmembers, $children[$i];
             }
+            # TODO: comma can precede also a coordinationg conjunction (@ands) which is not in the chain (unless cB).
             elsif ($self->is_comma($children[$i]) && ($i == $#children || $in_chain->($children[$i+1]))) {
                 push @commas, $children[$i];
             }
@@ -518,7 +524,7 @@ sub detect_moscow {
 
         if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
             my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
-            my $both_in_one_chain = (($head_right && grep{$_ eq $ands[0]} $ands[1]->get_descendants) || grep{$_ eq $ands[1]} $ands[0]->get_descendants ) ? 1 : 0;
+            my $both_in_one_chain = (($head_right && any{$_ eq $ands[0]} $ands[1]->get_descendants) || any{$_ == $ands[1]} $ands[0]->get_descendants ) ? 1 : 0;
             # Suppose the first (or last) two members are in the nested coordination
             #  TODO: it might be three or more (but that's very rare)
             my @nested_members = splice @members, ( $head_right != $both_in_one_chain ? -2 : 0 ), 2;
