@@ -131,6 +131,18 @@ override '_convert_atree' => sub
     if(not $treex_node->is_root())
     {
         my @features;
+        # Reference to the word layer can tell what Unit (of paragraph) this word belongs to.
+        # It can also show us tokens that came from the same word and it can help with detokenization.
+        # $pml_node->attr('m') typically refers to a <Token>. Its parent is a <Word>.
+        # The id of the Word is like this: 'm-p1w1'.
+        # The Word refers to the corresponding element of the word layer.
+        # The id there is like: 'w-p1u1w1'. So here it also gives the index of Unit.
+        # @available_attributes = $pml_node->attribute_paths();
+        my $wrf = $pml_node->attr('w/w.rf');
+        if(defined($wrf))
+        {
+            $treex_node->{wild}{wrf} = $wrf;
+        }
         # Attributes from the morphological layer.
         # Tokens recognized by the morphological analyzer have their form transliterated to the Latin script.
         # Out-of-vocabulary words have the original form, i.e. unvocalized Arabic script.
