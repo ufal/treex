@@ -258,9 +258,28 @@ override '_convert_atree' => sub
             }
             $treex_node->set_conll_deprel($deprel);
         }
+        # The PADT attribute coref is not compatible with the Treex attribute coref.
         if($pml_node->attr('coref'))
         {
             $treex_node->{wild}{coref} = $pml_node->attr('coref');
+        }
+        # Clause is the predicative function of the clausal predicate: Pred, Pnom, PredE, PredP...
+        # The afun of subordinated clauses reflects their relation to the parent (Adv, Obj...) so the predicate must be labeled elsewhere.
+        ###!!! Should we also set the Treex attributes is_clause_head and clause_number?
+        if($pml_node->attr('clause'))
+        {
+            $treex_node->{wild}{clause} = $pml_node->attr('clause');
+        }
+        # If token = word, score seems to contain both the vocalized and unvocalized version of the word.
+        # First token of a word: vocalized token and unvocalized word.
+        # Non-first token of a word: vocalized token and nothing more.
+        if($pml_node->attr('score'))
+        {
+            $treex_node->{wild}{score} = $pml_node->attr('score');
+        }
+        if($pml_node->attr('note'))
+        {
+            $treex_node->{wild}{note} = $pml_node->attr('note');
         }
     }
     # Recursively copy descendant nodes.
