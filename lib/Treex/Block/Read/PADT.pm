@@ -5,9 +5,9 @@ extends 'Treex::Block::Read::BasePMLReader';
 
 use Treex::PML::Factory;
 use Treex::PML::Instance;
+use Encode::Arabic::Buckwalter;
 ###!!! DZ: How to do this properly? Should we add this to the list of Treex libraries? Or should we move the Perl modules?
 require 'Treex/Core/share/tred_extension/elixir/libs/ElixirFM.pm';
-require 'Treex/Core/share/tred_extension/elixir/libs/Encode/Arabic/Buckwalter.pm';
 
 has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
@@ -19,7 +19,7 @@ sub _build_schema_dir
     # Compute the path to the PML schemas relative to this block.
     my $rootpath = $INC{'Treex/Block/Read/PADT.pm'};
     $rootpath =~ s-/PADT\.pm$--;
-    my $relpath = '../../Core/share/tred_extension/padt/resources';
+    my $relpath = 'PADT_schema';
     my $fullpath = "$rootpath/$relpath";
     if(-d $fullpath)
     {
