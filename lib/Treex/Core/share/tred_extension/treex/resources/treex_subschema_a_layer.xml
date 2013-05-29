@@ -162,6 +162,10 @@
       <value>AuxM</value>
       <value>AuxE</value>
       <value>Ante</value>
+      <value>PredE</value>
+      <value>PredC</value>
+      <value>PredM</value>
+      <value>PredP</value>
       <!-- values added because of Tamil Dependency Treebank (TamilTB.v0.1) by Loganathan Ramasamy -->
       <value>AAdjn</value>
       <value>AComp</value>
