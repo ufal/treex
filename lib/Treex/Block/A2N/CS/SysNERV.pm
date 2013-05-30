@@ -163,19 +163,12 @@ sub process_zone {
             my $pattern = join " ", @entities[$j..$i];
             my $container = $containers{$pattern};
 
-	    print Dumper $pattern;
-	    print Dumper $container;
-
             if (defined $container and $container ne '0') {
                 create_entity_container_node($n_root, $container, @anodes[$j..$i]);
 		last; # (we dont want nested containers)
             }
 
         }
-
-	print Dumper @entities;
-	print Dumper "Konec";
-
     }
 }
 
