@@ -20,12 +20,12 @@ our $cachedFsfile = 0;
 # Initialization: @INC, needed libraries, Treex resource path
 #####################
 
-# Use the same TrEd library directories as Treex 
+# Use the same TrEd library directories as Treex
 use Treex::Core::Config;
 
 my $tred_dir = Treex::Core::Config->tred_dir();
 log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
-push @INC, $tred_dir . '/tredlib'; 
+push @INC, $tred_dir . '/tredlib';
 
 use Treex::PML;
 
@@ -40,12 +40,12 @@ Readonly my $LIB => 'lib/';
 # Determine the current path
 my $path = $INC{'Treex/Tool/PMLTQ/Query.pm'};
 $path =~ s/Query.pm$//;
-   
+
 # Add resource path to PML-TQ schemas (download them from SVN if needed)
 if ( !-e $path . $RES . 'tree_query_schema.xml' ) {
     print STDERR "\nPML-TQ init: Exporting needed resources from SVN to $path$RES\n\n";
     system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/resources/ ' . $path . $RES );
-} 
+}
 Treex::PML::AddResourcePath( $path . 'resources/' );
 
 # Add needed libraries to INC (download them from SVN if needed)
@@ -54,7 +54,7 @@ if ( !-e $path . $LIB . 'Tree_Query' || !-e $path . $LIB . 'PMLTQ' ){
     mkdir( $path . $LIB );
     system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/Tree_Query ' . $path . $LIB . '/Tree_Query' );
     system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/PMLTQ ' . $path . $LIB . '/PMLTQ' );
-    system( $SVN_CO . ' ' . $SVN_SERVER . 'TrEd/extensions/pdt20/libs/PMLTQ/Relation ' . $path . $LIB . '/PMLTQ/Relation' );        
+    system( $SVN_CO . ' ' . $SVN_SERVER . 'TrEd/extensions/pdt20/libs/PMLTQ/Relation ' . $path . $LIB . '/PMLTQ/Relation' );
 }
 push @INC, $path . $LIB;
 
@@ -67,7 +67,7 @@ push @INC, $path . $LIB;
 
 	package TredMacro;
 	require TrEd::Basics;
-	# require 'tred-no_fslib.def'; 
+	# require 'tred-no_fslib.def';
 	no warnings qw(redefine);
 
 	sub DetermineNodeType {
@@ -83,8 +83,8 @@ push @INC, $path . $LIB;
 	package PML;
 
 	sub Schema {
-		my ($pmldoc) = @_;  	 	 
-        return $pmldoc->schema(); 
+		my ($pmldoc) = @_;
+        return $pmldoc->schema();
 	}
 
 	sub GetNodeByID {
@@ -93,11 +93,11 @@ push @INC, $path . $LIB;
 		# a) not used, appData are not populated
 		#my $h = $fsfile->appData('id-hash');
 		#return $h && $id && $h->{$id};
-		
+
 		# b) pure fsfile implementation - recompute the id-hash
 		#my $h = GetNodeHash($fsfile);
 		#return $h && $id && $h->{$id};
-		
+
 		# c) tectomt specific implementation
 		# reuses TectoMT::Document, so could be faster
 		return undef unless $id && $fsfile;
@@ -146,7 +146,7 @@ require PMLTQ::Relation::PDT20;
 
 #################################################
 #
-# Compile query and initialize the query enginge
+# Compile query and initialize the query engine
 
 #my $evaluator = Tree_Query::BtredEvaluator->new($query, {
 #  fsfile => $fsfile,
@@ -191,8 +191,8 @@ Treex::Tool::PMLTQ::Query
 =head1 SYNOPSIS
 
     use Treex::Tool::PMLTQ::Query;
- 
-    my $query = Treex::Tool::PMLTQ::Query->new( 
+
+    my $query = Treex::Tool::PMLTQ::Query->new(
         't-node [ t_lemma = "být" ];',      # Any PML-TQ query string
         { treex_document => $document }     # Treex document
     );
@@ -208,15 +208,15 @@ This is a tiny wrapper around the L<Tree_Query::BtredEvaluator> PML-TQ module,
 which exists just to set up what is needed for the BtredEvaluator to feel like at home,
 i.e. running inside C<btred>.
 
-Stuff needed for C<Treex::PML::Document> loading is commented out: we expect that the 
+Stuff needed for C<Treex::PML::Document> loading is commented out: we expect that the
 end user of this module provides an already created document/tree.
 
 This module requires TrEd 2.0 and higher; the required C<Tree_Query> and C<PMLTQ>
-libraries are downloaded automatically from their SVN directories. 
+libraries are downloaded automatically from their SVN directories.
 
 =head1 AUTHORS
 
-Petr Pajas 
+Petr Pajas
 
 Jan Ptáček
 
