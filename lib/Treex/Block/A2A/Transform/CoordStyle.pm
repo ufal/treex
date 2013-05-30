@@ -523,8 +523,8 @@ sub detect_moscow {
         # b) if there are two different conjunctions, e.g. (C1 and C2) or (C3).
 
         if ( @ands > 1 && lc( $ands[0]->form ) ne lc( $ands[1]->form ) ) {
-            my $head_right = ( $self->from_head eq 'right' ) || ( $members[-1] == $node );
-            my $both_in_one_chain = (($head_right && any{$_ eq $ands[0]} $ands[1]->get_descendants) || any{$_ == $ands[1]} $ands[0]->get_descendants ) ? 1 : 0;
+            my $head_right = (( $self->from_head eq 'right' ) || ( $members[-1] == $node )) ? 1 : 0;
+            my $both_in_one_chain = (($head_right && any{$_ eq $ands[0]} $ands[1]->get_descendants) || any{$_ eq $ands[1]} $ands[0]->get_descendants ) ? 1 : 0;
             # Suppose the first (or last) two members are in the nested coordination
             #  TODO: it might be three or more (but that's very rare)
             my @nested_members = splice @members, ( $head_right != $both_in_one_chain ? -2 : 0 ), 2;
