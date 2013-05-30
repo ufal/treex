@@ -74,7 +74,7 @@ sub process_zone {
         $n_root = $zone->create_ntree();
     }
 
-    my @validAnodes = grep { $_->form ne '' } @anodes;
+    my @validAnodes = grep { $_->form !~m/^\s*$/ } @anodes;
 
     for my $i ( 0 .. $#validAnodes ) {
         my ( $pprev_anode, $prev_anode, $anode, $next_anode, $nnext_anode ) = @validAnodes[$i-2..$i+2];
@@ -234,6 +234,7 @@ sub create_entity_container_node {
 
     for my $i (0..$#anodes) {
         if (defined $n_nodes[$i]) {
+	    my $n = $n_nodes[$i];
             push @normalized_chunks, $n->get_attr('normalized_name');
         }
         else {
