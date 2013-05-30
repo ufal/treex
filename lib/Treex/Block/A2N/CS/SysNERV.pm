@@ -230,10 +230,20 @@ sub create_entity_container_node {
     $n_node->set_deref_attr('a.rf', \@anodes );
 
     # Set normalized name
-    my $normalized_name;
-    foreach my $n (@n_nodes) {
-        $normalized_name .= " ". $n->get_attr('normalized_name') if $n->get_attr('normalized_name');
+    my @normalized_chunks;
+
+    for my $i (0..$#anodes) {
+        if (defined $n_nodes[$i]) {
+            push @normalized_chunks, $n->get_attr('normalized_name');
+        }
+        else {
+            my $lemma = $anodes[$i]->lemma;
+            $lemma =~ s/[-_].*//;
+            push @normalized_chunks, $lemma;
+        }
     }
+
+    my $normalized_name = join " ", @normalized_chunks;
     $n_node->set_attr('normalized_name', $normalized_name);
 
     #    print STDERR ( "Named entity container \"$classification\" found: ". $n_node->get_attr('normalized_name')."\n");
