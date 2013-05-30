@@ -22,61 +22,80 @@ our $cachedFsfile = 0;
 
 # Use the same TrEd library directories as Treex
 use Treex::Core::Config;
+use File::Spec;
 
-my $tred_dir = Treex::Core::Config->tred_dir();
-log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
-push @INC, $tred_dir . '/tredlib';
+my $libDir;
 
+BEGIN {
+    my $tred_dir = Treex::Core::Config->tred_dir();
+    log_fatal('TrEd not installed or tred_dir not set') if !defined $tred_dir;
+    $libDir = File::Spec->catdir($tred_dir, 'tredlib');
+    push @INC, $libDir;
+    push @INC, File::Spec->catdir( Treex::Core::Config->lib_core_dir(), 'share', 'tred_extension', 'treex', 'libs' );
+}
+
+{ # Fake the package to suppress warnings
+    package main;
+
+    our $VERSION = '0.1';
+}
+
+use TrEd::Config qw(&read_config &set_default_config_file_search_list);
+$TrEd::Config::libDir = $libDir;
+$TrEd::Config::quiet = 0;
+
+use TrEd::Utils qw(uniq);
+use TrEd::Extensions;
+use TrEd::Macros;
+use TrEd::Error::Message;
 use Treex::PML;
 
-# Settings for downloading from the UFAL SVN server
-Readonly my $SVN_CO => 'svn --username public --password public export';
-Readonly my $SVN_SERVER => 'https://svn.ms.mff.cuni.cz/svn/';
-
-# Subdirectory settings
-Readonly my $RES => 'resources/';
-Readonly my $LIB => 'lib/';
-
-# Determine the current path
-my $path = $INC{'Treex/Tool/PMLTQ/Query.pm'};
-$path =~ s/Query.pm$//;
-
-# Add resource path to PML-TQ schemas (download them from SVN if needed)
-if ( !-e $path . $RES . 'tree_query_schema.xml' ) {
-    print STDERR "\nPML-TQ init: Exporting needed resources from SVN to $path$RES\n\n";
-    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/resources/ ' . $path . $RES );
+BEGIN {
+    $TrEd::Macros::on_error = sub { confess $_[1]; };
+    $TrEd::Error::Message::on_error = sub { confess $_[1]; };
 }
-Treex::PML::AddResourcePath( $path . 'resources/' );
 
-# Add needed libraries to INC (download them from SVN if needed)
-if ( !-e $path . $LIB . 'Tree_Query' || !-e $path . $LIB . 'PMLTQ' ){
-    print STDERR "\nPML-TQ init: Exporting needed libraries from SVN to $path$LIB\n\n";
-    mkdir( $path . $LIB );
-    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/Tree_Query ' . $path . $LIB . '/Tree_Query' );
-    system( $SVN_CO . ' ' . $SVN_SERVER . 'pmltq/trunk/libs/pmltq/PMLTQ ' . $path . $LIB . '/PMLTQ' );
-    system( $SVN_CO . ' ' . $SVN_SERVER . 'TrEd/extensions/pdt20/libs/PMLTQ/Relation ' . $path . $LIB . '/PMLTQ/Relation' );
+# Load extensions
+set_default_config_file_search_list();
+read_config();
+load_extensions();
+
+my $grp = {
+    treeNo       => 0,
+    FSFile       => undef,
+    macroContext => 'TredMacro',
+    currentNode => undef,
+    root        => undef
+};
+
+$TrEd::Macros::macrosEvaluated = 0;
+TrEd::Macros::initialize_macros($grp);
+
+sub load_extensions {
+    require TrEd::MacroAPI::Default; # this loads TredMacro API
+
+    $TredMacro::libDir = $libDir;
+    my $ext_directory = TrEd::Extensions::get_extensions_dir();
+
+    # update paths
+    Treex::PML::AddResourcePath(File::Spec->catdir($ext_directory, 'pmltq', 'resources'));
+    unshift @INC, File::Spec->catdir($ext_directory, 'pmltq', 'contrib', 'pmltq');
+
+    my @extension_list = grep { $_ ne 'pmltq' } uniq (@{TrEd::Extensions::get_preinstalled_extension_list()}, qw(pdt_vallex pdt20 treex));
+    TrEd::Extensions::init_extensions(\@extension_list, $ext_directory);
+
+    for my $ext_contrib ( TrEd::Extensions::get_extension_macro_paths(\@extension_list, $ext_directory) ) {
+        push @TrEd::Macros::macros,
+            qq(\n#line 0 "$ext_contrib"\n{\npackage TredMacro;\n);
+        read_macros( $ext_contrib, $libDir, 1 );
+        push @TrEd::Macros::macros,
+            qq(\n\n=pod\n\n=cut\n\n} # end of "$ext_contrib"\n);
+    }
 }
-push @INC, $path . $LIB;
-
 
 #####################
 # Code to provide stuff required from btred
 #####################
-
-{
-
-	package TredMacro;
-	require TrEd::Basics;
-	# require 'tred-no_fslib.def';
-	no warnings qw(redefine);
-
-	sub DetermineNodeType {
-		my ($node) = @_;
-		#chooseNodeType(undef, $node);
-		#Fsfile->determine_node_type(undef, $node);
-		Treex::PML::Document->determine_node_type(undef, $node);
-	}
-}
 
 {
 
@@ -135,6 +154,7 @@ push @INC, $path . $LIB;
 	sub GetEChildren {
 		return PML_T2::GetEChildren(@_);
 	}
+
 }
 
 # do not use 'use' or import will be triggered multiple times and new method from TypeMapper will be imported to this block
@@ -143,6 +163,7 @@ require Tree_Query::TypeMapper;
 require Tree_Query::BtredEvaluator;
 require PMLTQ::Relation;
 require PMLTQ::Relation::PDT20;
+require PMLTQ::Relation::Treex;
 
 #################################################
 #
@@ -177,7 +198,7 @@ sub new {
 	# remember the tmt-document, so overidden PML::GetNodeByID can use it
 	# beware: this may cause leaks, consult with ZZ!
 	$opts->{fsfile}->changeAppData('tmt-document', $opts->{treex_document});
-	return Tree_Query::BtredEvaluator->new($query, $opts);
+        return Tree_Query::BtredEvaluator->new($query, $opts);
 }
 
 1;
