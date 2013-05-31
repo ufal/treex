@@ -9,6 +9,8 @@ use File::Temp;
 use Treex::Core::Resource qw(require_file_from_share);
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
+has from_selector => (isa => 'Str', is => 'rw', default => '' );
+has to_selector => (isa => 'Str', is => 'rw', default => '' );
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has align_attr => ( isa => 'Str', is => 'ro', default => 'lemma' );
 has dir_or_sym => ( isa => 'Str', is => 'rw', default => 'grow-diag-final-and' );
@@ -47,8 +49,8 @@ sub process_document {
     log_info "Writing document as plain text";
 
     # output sentences into plain text
-    _write_plain( $document, $self->from_language, $self->align_attr, "$mytmpdir/txt-a" );
-    _write_plain( $document, $self->to_language, $self->align_attr, "$mytmpdir/txt-b" );
+    _write_plain( $document, $self->from_language, $self->from_selector, $self->align_attr, "$mytmpdir/txt-a" );
+    _write_plain( $document, $self->to_language,   $self->to_selector, $self->align_attr, "$mytmpdir/txt-b" );
 
     # acquire model from share if required
     if ( defined $self->model_from_share ) {
@@ -124,10 +126,10 @@ sub process_document {
 }
 
 sub _write_plain {
-    my ( $document, $language, $attr, $file ) = @_;
+    my ( $document, $language, $selector, $attr, $file ) = @_;
     my $hdl = _my_save( $file );
     for my $bundle( $document->get_bundles ) {
-        my @nodes = $bundle->get_zone( $language )->get_atree->get_descendants( { ordered => 1 } );
+        my @nodes = $bundle->get_zone( $language , $selector)->get_atree->get_descendants( { ordered => 1 } );
         print $hdl join( " ", map { s/ /_/g; $_ } map { $_->get_attr( $attr ) } @nodes ), "\n";    
     }
     close $hdl;
@@ -294,8 +296,8 @@ sub _store_uni_align {
     while ( ! eof $ali_hdl ) {
         $sent_number++;
         my $bundle = shift @bundles;
-        my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
-        my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+        my $src_root = $bundle->get_zone( $self->from_language, $self->from_selector )->get_atree;
+        my $tgt_root = $bundle->get_zone( $self->to_language, $self->to_selector )->get_atree;
         my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
         my @tgt_nodes = $tgt_root->get_descendants( { ordered => 1 } );
 
@@ -361,8 +363,8 @@ sub _store_bi_align {
                 join(" ", @points_there[1..$#points_there]), "\n";
 
             # store alignment scores in the atree
-            my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
-            my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+            my $src_root = $bundle->get_zone( $self->from_language, $self->from_selector )->get_atree;
+            my $tgt_root = $bundle->get_zone( $self->to_language, $self->to_selector )->get_atree;
             $src_root->set_attr( "giza_scores/counterpart.rf", $tgt_root->id );
             $src_root->set_attr( "giza_scores/therevalue", $therescore );
             $src_root->set_attr( "giza_scores/backvalue", $backscore );
@@ -411,8 +413,8 @@ sub _run_symal {
             $sent_number++;
             $bundle = shift @bundles;
         }
-        my $src_root = $bundle->get_zone( $self->from_language )->get_atree;
-        my $tgt_root = $bundle->get_zone( $self->to_language )->get_atree;
+        my $src_root = $bundle->get_zone( $self->from_language, $self->from_selector )->get_atree;
+        my $tgt_root = $bundle->get_zone( $self->to_language, $self->to_selector )->get_atree;
         my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
         my @tgt_nodes = $tgt_root->get_descendants( { ordered => 1 } );
 
