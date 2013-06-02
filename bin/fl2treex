@@ -84,7 +84,10 @@ foreach my $fl_filename (@fl_files) {
                     print $output_file_handle $TREEX_DOC_HEADER;
                 }
 
-                $bundle_roots[$bundle_number-1]->print($output_file_handle);
+#                $bundle_roots[$bundle_number-1]->print($output_file_handle);
+                my $bundle_xml = $bundle_roots[$bundle_number-1]->sprint;
+                print $output_file_handle add_prefix_to_ids($bundle_xml, $processed_bundles);
+
                 print $output_file_handle "\n<!-- end of inserted bundle -->\n";
                 $bundle_roots[$bundle_number-1] = undef; # avoid extracting the same bundle twice (TODO: a switch for this might be added later)
                 $processed_bundles++;
@@ -102,6 +105,20 @@ foreach my $fl_filename (@fl_files) {
         print $output_file_handle $TREEX_DOC_FOOTER;
         close $output_file_handle;
     }
+}
+
+sub add_prefix_to_ids {
+    my ($bundle_xml, $bundle_number) = @_;
+
+    while ( $bundle_xml =~ /id="([^!].+?)"/ ) {
+        my $old_id = $1;
+        my $new_id = "!bundlenumber$bundle_number-$old_id";
+        $bundle_xml =~ s/([">])$old_id(["<])/$1$new_id$2/g; # both id and ref
+    }
+
+    $bundle_xml =~ s/!bundlenumber/b/g;
+
+    return $bundle_xml;
 }
 
 
