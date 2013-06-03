@@ -76,15 +76,18 @@ sub load_extensions {
 
     $TredMacro::libDir = $libDir;
     my $ext_directory = TrEd::Extensions::get_extensions_dir();
+    my $treex_ext = File::Spec->catdir(Treex::Core::Config->lib_core_dir(), 'share', 'tred_extension');
 
     # update paths
     Treex::PML::AddResourcePath(File::Spec->catdir($ext_directory, 'pmltq', 'resources'));
     unshift @INC, File::Spec->catdir($ext_directory, 'pmltq', 'contrib', 'pmltq');
 
-    my @extension_list = grep { $_ ne 'pmltq' } uniq (@{TrEd::Extensions::get_preinstalled_extension_list()}, qw(pdt_vallex pdt20 treex));
+    my @extension_list = grep { $_ ne 'pmltq' && $_ ne 'treex' } uniq (@{TrEd::Extensions::get_preinstalled_extension_list()}, qw(pdt_vallex pdt20));
+    TrEd::Extensions::init_extensions(['treex'], $treex_ext);
     TrEd::Extensions::init_extensions(\@extension_list, $ext_directory);
 
-    for my $ext_contrib ( TrEd::Extensions::get_extension_macro_paths(\@extension_list, $ext_directory) ) {
+    for my $ext_contrib ( TrEd::Extensions::get_extension_macro_paths(\@extension_list, $ext_directory),
+                          TrEd::Extensions::get_extension_macro_paths(['treex'], $treex_ext) ) {
         push @TrEd::Macros::macros,
             qq(\n#line 0 "$ext_contrib"\n{\npackage TredMacro;\n);
         read_macros( $ext_contrib, $libDir, 1 );
