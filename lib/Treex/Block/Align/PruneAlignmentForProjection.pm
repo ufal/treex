@@ -14,9 +14,9 @@ sub process_zone {
 	# prune one-to-many
 	$self->prune_one_to_many($source_atree, $target_atree);	
 	# prune many-to-one	
-	$self->prune_one_to_many($source_atree, $target_atree);
+	$self->prune_many_to_one($source_atree, $target_atree);
 	# prune one-to-one	
-	$self->prune_one_to_many($source_atree, $target_atree);	
+	$self->prune_one_to_one($source_atree, $target_atree);	
 }
 
 sub prune_one_to_many {
@@ -38,10 +38,21 @@ sub prune_one_to_many {
 	    	}
 	    }
 	}
+	return;
 }
 
 sub prune_many_to_one {
-	my ($self, $source_tree, $target_tree) = @_;	
+	my ($self, $source_tree, $target_tree) = @_;
+	my @nodes = $target_tree->get_descendants( { ordered => 1 } );
+	foreach my $node (@nodes) {
+		my @referring_nodes = grep{ $_->is_aligned_to($node, '^' . $self->alignment_type . '$')}$node->get_referencing_nodes('alignment');
+		if (scalar(@referring_nodes) > 1) {
+			my @referring_nodes_sorted = sort {$a->ord <=> $b->ord}@referring_nodes;	
+			foreach my $i (0..($#referring_nodes_sorted-1)) {
+				$referring_nodes_sorted[$i]->delete_aligned_node($node, $self->alignment_type);
+			}		
+		}
+	}
 	return;
 }
 
@@ -80,6 +91,10 @@ to one-to-one alignment. The alignment link is established to the last node (acc
 to the order in which the node appears in the sentence) of the alignment links. 
 
 =item C<prune_one_to_many>
+
+prunes multiple source nodes aligned to a single target node. This method reduces many-to-one 
+alignment into one-to-one alignment by keeping only the last aligned node and deleting alignments
+from remaining source nodes to the target node.
 
 =item C<prune_one_to_one>
 
