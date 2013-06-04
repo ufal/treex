@@ -54,9 +54,9 @@ ok(!is_listed_entity(qw/ květňák months/), 'květňák is not a month');
 ok(is_listed_entity(qw/ Praha cities/), 'Praha is a city');
 ok(is_listed_entity(qw/ Loučovice cities/), 'Loučovice is a city');
 my @list = ('Malá strana', 'city_parts');
-ok(is_listed_entity(@list), 'Malá strana is a city part'); 
+ok(is_listed_entity(@list), 'Malá strana is a city part');
 ok(is_listed_entity(qw/ Dejvice city_parts/), 'Dejvice is a city part');
-ok(is_listed_entity(qw/ Dejvická streets/), 'Dejvická is a street'); 
+ok(is_listed_entity(qw/ Dejvická streets/), 'Dejvická is a street');
 ok(is_listed_entity(qw/ Legerova streets/), 'Legerova is a street');
 ok(is_listed_entity(qw/ Petra first_names/), 'Petra is a first name');
 ok(is_listed_entity(qw/ Petr first_names/), 'Petr is a first name');
@@ -70,7 +70,7 @@ ok(is_listed_entity(qw/ Štěpánková surnames/), 'Štěpánková is a surname'
 ok(is_listed_entity(qw/ Holub surnames/), 'Holub is a surname'); # why not OK?
 ok(is_listed_entity(qw/ Dánsko countries/), 'Dánsko is a country');
 ok(is_listed_entity(qw/ Egypt countries/), 'Egypt is a country');
-ok(is_listed_entity(qw/ Švýcarsko countries/), 'Švýcarsko is a country'); 
+ok(is_listed_entity(qw/ Švýcarsko countries/), 'Švýcarsko is a country');
 ok(is_listed_entity(qw/ USD objects/), 'USD is an object'); # no list with objects?
 ok(is_listed_entity(qw/ NATO institutions/), 'NATO is an institution'); # no list with institutions?
 
@@ -293,24 +293,29 @@ ok(!is_day_number('122'), '122 is not a day number...');
 
 
 
+SKIP: {
 
-my $filename = 'large.treex.gz';
-my $large_document = Treex::Core::Document->new( { filename => $filename } );
+    my $filename = 'large.treex.gz';
+    skip "Only for release candidate testing", 4 if !-e $filename;
 
-my $large_scenario;
+    my $large_document = Treex::Core::Document->new( { filename => $filename } );
 
-eval { $large_scenario = Treex::Core::Scenario->new(from_string => 'A2N::CS::SysNERV') };
-ok( !$@, 'SysNERV large scen build' ) or diag($@);
+    my $large_scenario;
 
-eval { $large_scenario->start() };
-ok( !$@, 'SysNERV large scen start' ) or diag($@);
+    eval { $large_scenario = Treex::Core::Scenario->new(from_string => 'A2N::CS::SysNERV') };
+    ok( !$@, 'SysNERV large scen build' ) or diag($@);
 
-eval {$large_scenario->apply_to_documents($document)};
-ok( !$@, 'Run SysNERV large recognition' ) or diag($@);
+    eval { $large_scenario->start() };
+    ok( !$@, 'SysNERV large scen start' ) or diag($@);
 
-eval { $large_scenario->end() };
-ok( !$@, 'SysNERV large scen end' ) or diag($@);
+    eval {$large_scenario->apply_to_documents($document)};
+    ok( !$@, 'Run SysNERV large recognition' ) or diag($@);
 
+    eval { $large_scenario->end() };
+    ok( !$@, 'SysNERV large scen end' ) or diag($@);
+
+
+}
 
 # save
 
