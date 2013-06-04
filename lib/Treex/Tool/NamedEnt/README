@@ -1,0 +1,15 @@
+
+NamedEnt: Tools for SVM-based named-entity recognition
+
+Files in this directory:
+
+Features.pl - script for extracting feature vectors from data (uses modules mentioned below)
+Features/*  - modules for extracting one/two/three-word entity features
+
+README - this file
+
+TestSVM.pl - script that evaluates an SVM model on given data
+TrainSVM.pl - script that trains an SVM model on given data
+TuneSVM*.pl - scripts for SVM tuning
+
+
