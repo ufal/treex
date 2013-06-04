@@ -19,7 +19,7 @@ sub process_zone {
 sub project {
 	my ($self, $source_root, $target_root) = @_;
 	my @target_nodes = $target_root->get_descendants( { ordered => 1 } );
-	my @source_nodes = $source_root->get_descendants( { ordered => 1 } );	
+	my @source_nodes = $source_root->get_descendants( { ordered => 1 } );
 
 	# default target tree initialization 
 	if ( $self->mod_dir eq 'mod_prev' ) {
@@ -40,14 +40,25 @@ sub project {
 		my @aligned_nodes = $src_node->get_aligned_nodes_of_type( '^' . $self->alignment_type . '$');
 		if (scalar(@aligned_nodes) == 1) {
 			my $src_parent = $src_node->get_parent();
-			if (defined($src_parent) && ($src_parent != $src_node)) {
+			if (defined($src_parent) && ($src_parent != $src_node) && ($src_parent != $source_root)) {
 				my @aligned_nodes_for_src_parent = $src_parent->get_aligned_nodes_of_type( '^' . $self->alignment_type . '$');
 				if (scalar(@aligned_nodes_for_src_parent) == 1) {
+					# cycle workaround (instead of skipping cycles):
+					# if 'b' is a descendant of 'a' and if we are trying to hang 'a'
+					# under 'b', then make the parent of 'b' pointing to the parent of 'a' and 
+					# rehang the 'a' under 'b'.  
 					if (!$aligned_nodes_for_src_parent[0]->is_descendant_of($aligned_nodes[0])) {
 						$aligned_nodes[0]->set_parent($aligned_nodes_for_src_parent[0]);
 					}
+					else {
+						$aligned_nodes_for_src_parent[0]->set_parent($aligned_nodes[0]->get_parent());
+						$aligned_nodes[0]->set_parent($aligned_nodes_for_src_parent[0]);						
+					}
 				}				
 			} 
+			elsif (defined($src_parent) && ($src_parent != $src_node) && ($src_parent == $source_root)) {
+				$aligned_nodes[0]->set_parent($target_root);
+			}				
 		}
 	}
 }
