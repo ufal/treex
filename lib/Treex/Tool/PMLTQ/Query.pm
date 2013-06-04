@@ -7,6 +7,7 @@ use warnings;
 use autodie;
 use Carp;
 use Readonly;
+use Treex::Core::Log qw(log_fatal);
 
 require Exporter;
 
@@ -77,6 +78,16 @@ sub load_extensions {
     $TredMacro::libDir = $libDir;
     my $ext_directory = TrEd::Extensions::get_extensions_dir();
     my $treex_ext = File::Spec->catdir(Treex::Core::Config->lib_core_dir(), 'share', 'tred_extension');
+
+    # check for existence of all needed extensions
+    for my $dir (File::Spec->catdir($ext_directory, 'pmltq'), 
+            File::Spec->catdir($ext_directory, 'pdt_vallex'), 
+            File::Spec->catdir($ext_directory, 'pdt20'),
+            $treex_ext){
+        if (!-d $dir){
+            log_fatal('TrEd extension does not exist: ' . $dir);
+        }              
+    }
 
     # update paths
     Treex::PML::AddResourcePath(File::Spec->catdir($ext_directory, 'pmltq', 'resources'));
@@ -155,7 +166,8 @@ sub load_extensions {
 	no warnings qw(redefine);
 
 	sub GetEChildren {
-		return PML_T2::GetEChildren(@_);
+		my $node = shift;
+		return $node->get_echildren();
 	}
 
 }

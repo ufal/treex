@@ -364,7 +364,7 @@ sub save_arff {
     if ( $buffer->{attributes} ) {
 
         if ($print_headers) {
-            foreach my $attribute ( @{ $buffer->{"attributes"} } ) {
+            foreach my $attribute ( @{ $buffer->{attributes} } ) {                
                 print {$io} q/@ATTRIBUTE / . $attribute->{attribute_name} . q/ / . $attribute->{attribute_type} . "\n";
             }
             print {$io} "\n\n";
@@ -466,6 +466,7 @@ sub prepare_headers {
     if ($ensure_attribs) {
         $self->_ensure_attributes($buffer);
     }
+
     $self->_set_attribute_types( $buffer, $string_default );
 }
 
