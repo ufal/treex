@@ -18,7 +18,12 @@ my %modelFiles;
 my %models;
 
 my %containers;
-my @entities;
+
+# This array serves as entity pattern of a sentence. This is used when
+# recognizing containers
+my @entityPattern;
+
+# co se ukládá sem?
 my %entities;
 
 
@@ -58,6 +63,49 @@ BEGIN {
 
 }
 
+sub read_named_entities {
+    my ($n_node) = @_;
+    return if not $n_node;
+
+    my @a_ids;
+
+    if (! $n_node->get_children) {
+        # leaf node
+
+        my $a_nodes_ref = $n_node->get_deref_attr('a.rf');
+
+        if ($a_nodes_ref) {
+
+            @a_ids = sort map { $_->id } @{$a_nodes_ref};
+            my $aIDString = join " ", @a_ids;
+
+            if (!defined $entities{$aIDString}) {
+                $entities{$aIDString} = [];
+            }
+
+            push @{$entities{$aIDString}}, $n_node if $n_node->get_attr("ne_type");
+        }
+
+    } else {
+        # internal node
+
+        my @children = $n_node->get_children;
+
+        @a_ids = sort map { read_named_entities($_) } @children;
+
+        my $aIDString = join " ", @a_ids;
+
+        if (!defined $entities{$aIDString}) {
+            $entities{$aIDString} = [];
+        }
+
+        push @{$entities{$aIDString}}, $n_node if $n_node->get_attr('ne_type');
+    }
+
+    return @a_ids;
+}
+
+
 
 sub process_zone {
     my ($self, $zone) = @_;
@@ -69,7 +117,8 @@ sub process_zone {
     my $n_root;
 
     if ($zone->has_ntree) {
-        die "Not implemented yet";
+        $n_root = $zone->get_ntree;
+        read_named_entities($n_root);
     } else {
         $n_root = $zone->create_ntree();
     }
@@ -101,11 +150,11 @@ sub process_zone {
         $args{'nnext_lemma'} = defined $nnext_anode ? $nnext_anode->lemma : $FALLBACK_LEMMA;
         $args{'nnext_tag'} = defined $nnext_anode ? $nnext_anode->tag : $FALLBACK_TAG;
 
-        $args{'namedents'} = \@entities; # wow, tohle by dokonce mělo
-                                         # zajistit, že bude jiná
-                                         # hodnota v extract_twoword
-                                         # než v oneword, pokud tam
-                                         # bylo pushnuto
+        $args{'namedents'} = \@entityPattern; # wow, tohle by dokonce mělo
+                                              # zajistit, že bude jiná
+                                              # hodnota v extract_twoword
+                                              # než v oneword, pokud tam
+                                              # bylo pushnuto
 
         my (@features, $data, $classification, $label, $n_node);
 
@@ -117,10 +166,25 @@ sub process_zone {
         $classification =  $models{oneword}->predict($data);
 
         $label = $classification == -1 ? 0 : get_class_from_number($classification);
-        $n_node = create_entity_node( $n_root, $label, $anode ) unless $classification == -1;
-	$entities{$anode->id} = $n_node;
 
-        $entities[$i] = $label;
+        if ($classification != -1) {
+            #create n-node and store it in anode's entity list
+            my $anodeIDString = $anode->id;
+
+            unless (defined $entities{ $anodeIDString } and grep { $_->get_attr('ne_type') eq $label } @{$entities{ $anodeIDString }}) {
+                $n_node = create_entity_node( $n_root, $label, $anode )
+            }
+
+
+            if (!defined $entities{ $anodeIDString } ) {
+                $entities{ $anodeIDString } = [];
+            }
+
+            push @{$entities{$anodeIDString}}, $n_node;
+
+        }
+
+        $entityPattern[$i] = $label;
 
         #### TWOWORD ####
         if ($i > 1) {
@@ -132,11 +196,20 @@ sub process_zone {
 
             unless ($classification == -1) {
                 $label = get_class_from_number($classification);
-                $n_node = create_entity_node( $n_root, $label, $prev_anode, $anode );
-		$entities{$_->id} = $n_node for ($prev_anode, $anode);
 
-                $entities[$i-1] = $label;
-                $entities[$i] = $label;
+                my $anodeIDString = join " ", map { $_->id } ($prev_anode, $anode);
+
+                $n_node = create_entity_node( $n_root, $label, $prev_anode, $anode )
+                    unless defined $entities{ $anodeIDString } and grep { $_->get_attr('ne_type') eq $label } @{$entities{ $anodeIDString } };
+
+                if (!defined $entities{ $anodeIDString } ) {
+                    $entities{ $anodeIDString } = [];
+                }
+
+                push @{$entities{ $anodeIDString }}, $n_node;
+
+                $entityPattern[$i-1] = $label;
+                $entityPattern[$i] = $label;
             }
         }
 
@@ -150,21 +223,43 @@ sub process_zone {
 
             unless ($classification == -1) {
                 $label = get_class_from_number($classification);
-                $n_node = create_entity_node( $n_root, $label, $pprev_anode, $prev_anode, $anode );
-		$entities{$_->id} = $n_node for ($pprev_anode, $prev_anode, $anode);
 
-                $entities[$i-2] = $label;
-                $entities[$i-1] = $label;
-                $entities[$i] = $label;
+                my $anodeIDString = join " ", map {$_->id}  ($pprev_anode, $prev_anode, $anode);
+
+                $n_node = create_entity_node( $n_root, $label, $pprev_anode, $prev_anode, $anode )
+                    unless defined $entities{ $anodeIDString } and grep { $_->get_attr('ne_type') eq $label } @{$entities{ $anodeIDString } };
+
+                if (!defined $entities{ $anodeIDString } ) {
+                    $entities{ $anodeIDString } = [];
+                }
+
+                push @{$entities{$anodeIDString}}, $n_node;
+
+                $entityPattern[$i-2] = $label;
+                $entityPattern[$i-1] = $label;
+                $entityPattern[$i] = $label;
             }
         }
 
+
+        #### CONTAINERS ####
         for my $j ( 0 .. $i-1) {
-            my $pattern = join " ", @entities[$j..$i];
+            my $pattern = join " ", @entityPattern[$j..$i];
             my $container = $containers{$pattern};
 
             if (defined $container and $container ne '0') {
-                create_entity_container_node($n_root, $container, @anodes[$j..$i]);
+
+                my $anodeIDString = join " ", map {$_->id} @anodes[$j..$i];
+
+                my $n_cont = create_entity_container_node($n_root, $container, @anodes[$j..$i])
+                    unless defined $entities{ $anodeIDString } and grep {$_->get_attr('ne_type') eq $label } @{$entities{$anodeIDString}};
+
+                if (!defined $entities{$anodeIDString} ) {
+                    $entities{$anodeIDString} = [];
+                }
+
+                push @{$entities{$anodeIDString}}, $n_cont;
+
 		last; # (we dont want nested containers)
             }
 
@@ -174,11 +269,6 @@ sub process_zone {
 
 sub create_entity_node {
     my ( $n_root, $classification, @a_nodes ) = @_;
-
-    # Check if this entity already exists
-    #    my @a_ids = sort map{ $_->id } @a_nodes;
-    #    my $a_ids_label = join $MRF_DELIM, @a_ids;
-    #    return if exists $entities{$a_ids_label} && $entities{$a_ids_label}->get_attr('ne_type') eq $classification;
 
     # Create new N-node
     my $n_node = $n_root->create_child;
@@ -201,24 +291,12 @@ sub create_entity_node {
     $normalized_name =~ s/^ //;
     $n_node->set_attr( 'normalized_name', $normalized_name );
 
-    # Remember this named entity for container
-
-    # print STDERR ( "Named entity \"$classification\" found: " . $n_node->get_attr('normalized_name') . "\n" );
-
     return $n_node;
 }
 
 
 sub create_entity_container_node {
     my ( $n_root, $classification, @anodes ) = @_;
-
-    # Check if this container already exists
-    #    my $m_ids_label = join $MRF_DELIM, sort @{$m_ids_ref};
-    #    return if exists $entities{$m_ids_label} && $entities{$m_ids_label}->get_attr('ne_type') eq $classification;
-
-
-    # Get corresponding n-nodes
-    my @n_nodes = map {$entities{$_->id}} @anodes;
 
     # Create new SCzechN node
     my $n_node = $n_root->create_child;
@@ -233,21 +311,16 @@ sub create_entity_container_node {
     my @normalized_chunks;
 
     for my $i (0..$#anodes) {
-        if (defined $n_nodes[$i]) {
-	    my $n = $n_nodes[$i];
-            push @normalized_chunks, $n->get_attr('normalized_name');
-        }
-        else {
-            my $lemma = $anodes[$i]->lemma;
-            $lemma =~ s/[-_].*//;
-            push @normalized_chunks, $lemma;
-        }
+
+        my $lemma = $anodes[$i]->lemma;
+
+        $lemma =~ s/[-_].*//;
+        push @normalized_chunks, $lemma;
     }
 
     my $normalized_name = join " ", @normalized_chunks;
     $n_node->set_attr('normalized_name', $normalized_name);
 
-    #    print STDERR ( "Named entity container \"$classification\" found: ". $n_node->get_attr('normalized_name')."\n");
     return $n_node;
 }
 
