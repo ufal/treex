@@ -2,16 +2,12 @@ package Treex::Block::Write::NERHighlightWriter;
 
 =pod
 
-=head NAME
+=head1 NAME
 Treex::Block::Write::NERHighlightWriter - Writes the analyzed text with marked types of named entities.
 
-=head SYNOPSIS
+=head1 DESCRIPTION
 
-  
-
-=head DESCRIPTION
-
-
+Writer for Treex files with recognized named entities. Writes the plain text with marked named entities.
 
 =cut
 
@@ -29,57 +25,9 @@ use Data::Dumper;
 
 =item I<process_zone>
 
-  $dsaf = pre;
-
-popis
+Prints out the sentence with highlighted named entities.
 
 =cut
-
-my %entities;
-
-sub read_named_entities {
-    my ($n_node) = @_;
-    return if not $n_node;
-
-    my @a_ids;
-
-    if (! $n_node->get_children) {
-        # leaf node
-
-        my $a_nodes_ref = $n_node->get_deref_attr('a.rf');
-
-        if ($a_nodes_ref) {
-
-            @a_ids = sort map { $_->id } @{$a_nodes_ref};
-            my $aIDString = join " ", @a_ids;
-
-            if (!defined $entities{$aIDString}) {
-                $entities{$aIDString} = [];
-            }
-
-            push @{$entities{$aIDString}}, $n_node if $n_node->get_attr("ne_type");
-        }
-
-    } else {
-        # internal node
-
-        my @children = $n_node->get_children;
-
-        @a_ids = sort map { read_named_entities($_) } @children;
-
-        my $aIDString = join " ", @a_ids;
-
-        if (!defined $entities{$aIDString}) {
-            $entities{$aIDString} = [];
-        }
-
-        push @{$entities{$aIDString}}, $n_node if $n_node->get_attr('ne_type');
-    }
-
-    return @a_ids;
-}
-
-
 
 
 sub process_zone {
@@ -91,37 +39,37 @@ sub process_zone {
     my $a_root = $zone->get_atree();
     my @anodes = $a_root->get_descendants({ordered => 1});
 
-    %entities = ();
-    my @entity_ids = read_named_entities($n_root);
-    print Dumper @entity_ids;
-    print Dumper keys %entities;
+    my @nnodes = $n_root->get_descendants();
 
-    
+    my %sentence;
 
     for my $anode (@anodes) {
+        my $aid = $anode->id;
+        my $aform = $anode->get_attr("form");
+        $sentence{$aid} = $aform;
+    }
 
-	
+    for my $nnode (@nnodes) {
+        my $a_refs = $nnode->get_deref_attr("a.rf");
+        my @a_ents = @$a_refs;
 
-	print $anode->get_attr("form");
-	print " " unless $anode->get_attr("no_space_after");
 
+        my $ent_beg = $a_ents[0]->id;
+        my $ent_end = $a_ents[$#a_ents]->id;
+        
+        my $ent_type = $nnode->get_attr("ne_type");
+
+        $sentence{$ent_beg} = "<" . $ent_type . " " . $sentence{$ent_beg};
+        $sentence{$ent_end} .= ">";
+    }
+
+    for my $anode (@anodes) {
+        my $aid = $anode->id;
+        print $sentence{$aid};
+        print " " unless $anode->get_attr("no_space_after");
     }
 
     print "\n";
-
-
-
-    # my @anodes_with_entity = read_named_entities($n_root);
-
-
-    
-
-    # foreach (@anodes_with_entity) {
-
-    #     foreach(@{$entities{$_}}) {
-    #         print $_->get_attr("ne_type") . "\n";
-    #     }
-    # }
 
 }
 
@@ -129,6 +77,20 @@ sub process_zone {
 =pod
 
 =back
+
+=head1 AUTHORS
+
+Petr Jankovsky <jankovskyp@gmail.com>
+
+Jindra Helcl <jindra.helcl@gmail.com>
+
+Jan Masek <honza.masek@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
 
