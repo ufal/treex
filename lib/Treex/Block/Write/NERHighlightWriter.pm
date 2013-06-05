@@ -11,7 +11,7 @@ Treex::Block::Write::NERHighlightWriter - Writes the analyzed text with marked t
 
 =head DESCRIPTION
 
-bla
+
 
 =cut
 
@@ -34,7 +34,6 @@ use Data::Dumper;
 popis
 
 =cut
-
 
 my %entities;
 
@@ -87,18 +86,42 @@ sub process_zone {
     my ($self, $zone) = @_;
 
     log_fatal "ERROR: There is a zone without n_root" and die if !$zone->has_ntree;
-    
+
     my $n_root = $zone->get_ntree();
     my $a_root = $zone->get_atree();
     my @anodes = $a_root->get_descendants({ordered => 1});
+
+    %entities = ();
+    my @entity_ids = read_named_entities($n_root);
+    print Dumper @entity_ids;
+    print Dumper keys %entities;
+
     
-    my @anodes_with_entity = read_named_entities($n_root);
-    print Dumper(@anodes_with_entity);
-    foreach (@anodes_with_entity) {
-        foreach(@{$entities{$_}}) {
-            print $_->get_attr("ne_type") . "\n";
-        }
+
+    for my $anode (@anodes) {
+
+	
+
+	print $anode->get_attr("form");
+	print " " unless $anode->get_attr("no_space_after");
+
     }
+
+    print "\n";
+
+
+
+    # my @anodes_with_entity = read_named_entities($n_root);
+
+
+    
+
+    # foreach (@anodes_with_entity) {
+
+    #     foreach(@{$entities{$_}}) {
+    #         print $_->get_attr("ne_type") . "\n";
+    #     }
+    # }
 
 }
 
