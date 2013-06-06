@@ -1,5 +1,24 @@
 package Treex::Tool::NamedEnt::Features::Common;
 
+=pod
+
+=head1 NAME
+
+Treex::Tool::NamedEnt::Features::Common - Common functions for extracting feature vectors
+
+=head1 SYNOPSIS
+
+  use Treex::Tool::NamedEnt::Features::Common qw/ :oneword :twoword :threeword /;
+
+  
+
+=head1 DESCRIPTION
+
+This module contains common functions for extraction of named entity recognition features from data.
+
+=cut
+
+
 use strict;
 use warnings;
 
@@ -120,12 +139,40 @@ my %tag_values = (pos => {map {$_ => 1} qw/A C D I J N P R T V X Z/},
 
 my @tag_categories = qw /pos subpos gender number case/;
 
+
+=pod
+
+=over 4
+
+=item I<tag_value_bitmap>
+
+  @bitmap = tag_value_bitmap($category, $value);
+
+Returns array of tag features for given category (e.g. POS). It has
+fixed length and contains one "1" (where the value of the $category is
+equal to $value) and the rest is filled with zeros.
+
+=cut
+
 sub tag_value_bitmap {
     my ($category, $value) = @_;
 
     my @bitmap = map {$value eq $_ ? 1 : 0} sort keys %{$tag_values{$category}};
     return @bitmap;
 }
+
+
+=pod
+
+=item I<tag_value_bitmap>
+
+  @bitmap = tag_value_bitmap($category, $value);
+
+Returns array of tag features for given category (e.g. POS). It has
+fixed length and contains one "1" (where the value of the $category is
+equal to $value) and the rest is filled with zeros.
+
+=cut
 
 
 sub tag_features {
@@ -216,3 +263,21 @@ sub is_day_number {
 }
 
 1;
+
+
+=pod
+
+=back
+
+=head1 AUTHOR
+
+Jindra Helcl <jindra.helcl@gmail.com>, Petr Jankovský <jankovskyp@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+
+=cut
