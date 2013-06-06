@@ -44,7 +44,6 @@ sub extract {
     push @features, ( $bare_lemma =~ /ová$/ )                                        ? 1 : 0;
 
     push @features, ( is_year_number($bare_lemma) )                                  ? 1 : 0;
-    push @features, ( is_listed_entity('months', $bare_lemma))                       ? 1 : 0;
 
     # Form
     push @features, ( $form =~ /^[[:upper:]]/ ) ? 1 : 0;
@@ -53,6 +52,12 @@ sub extract {
     for my $list ( get_built_list_names() ) {
         push @features, ( is_listed_entity($list, $bare_lemma) ? 1 : 0 );
     }
+
+    for my $list ( get_built_list_names() ) {
+        push @features, ( is_listed_entity($list, $form) ? 1 : 0 );
+    }
+
+
 
     # Previous lemma
     my $plemma_term_types = Treex::Tool::Lexicon::CS::get_term_types($plemma);
@@ -74,6 +79,8 @@ sub extract {
     push @features, ( $nbare_lemma eq '/' )                       ? 1 : 0;
     push @features, ( $nbare_lemma eq '.' )                       ? 1 : 0;
     push @features, ( is_year_number($nbare_lemma))               ? 1 : 0;
+
+    push @features, context_features($plemma, $nlemma);
 
     return @features;
 }

@@ -59,6 +59,7 @@ use Treex::Tool::NamedEnt::Features::Oneword;
 use Treex::Tool::NamedEnt::Features::Twoword;
 use Treex::Tool::NamedEnt::Features::Threeword;
 use Treex::Tool::NamedEnt::Features::Containers;
+use Treex::Tool::NamedEnt::Features::Context;
 use Treex::Tool::NamedEnt::Features::Common qw/get_class_number $FALLBACK_TAG $FALLBACK_LEMMA/;
 
 use Getopt::Long;
@@ -83,6 +84,9 @@ my @sentences;
 open DATA, $data or die "Cannot open DATA file $data";
 open DATANER, $dataNer or die "Cannot open DATA_NER file $dataNer";
 
+binmode DATA, ":encoding(UTF-8)";
+binmode DATANER, ":encoding(UTF-8)";
+
 my $noanot;
 
 while (<DATA>) {
@@ -90,11 +94,12 @@ while (<DATA>) {
 
     my $anotated;
     my @namedents;
+    my $count;
 
     if (!defined $noanot && !eof DATANER) {
         $anotated = <DATANER>;
         chomp $anotated;
-        @namedents = parse_anot($anotated);
+        ($count, @namedents) = parse_anot($anotated);
 
     } elsif (!defined $noanot) {
         #        print "No NER data after $.th line in the input\n";
@@ -118,6 +123,8 @@ while (<DATA>) {
 
     }
 
+#    warn $#words . " " . $count if scalar(@words) != $count-1;
+
     $sentence{words} = \@words;
     $sentence{lemmas} = \@lemmas;
     $sentence{tags} = \@tags;
@@ -131,6 +138,39 @@ while (<DATA>) {
 
 close DATA;
 close DATANER;
+
+if ($model eq 'context_prev') {
+    my $hintwordsPMI_ref = get_hintwords(-1, \@sentences);
+    my %hintwordsPMI = %$hintwordsPMI_ref; 
+#    print Dumper(%hintwordsPMI);
+    open FILE, ">prev_lemmas.model" or die $!;
+    for my $type (keys %hintwordsPMI) {
+        binmode FILE, ":encoding(UTF-8)";
+        for my $pmi (sort {$b <=> $a} keys %{$hintwordsPMI{$type}}) {
+            print "ET " . $type . ", lemma: " . $hintwordsPMI{$type}{$pmi} . ", PMI: " . $pmi . "\n" if $pmi > 5;
+            print FILE $type . " " . $hintwordsPMI{$type}{$pmi} . "\n" if $pmi > 5;
+            last if $pmi < 5;
+        }
+    }
+    close FILE;
+
+}
+
+if ($model eq 'context_next') {
+    my $hintwordsPMI_ref = get_hintwords(1, \@sentences);
+    my %hintwordsPMI = %$hintwordsPMI_ref; 
+#    print Dumper(%hintwordsPMI);
+    open FILE, ">next_lemmas.model" or die $!;
+    for my $type (keys %hintwordsPMI) {
+        binmode FILE, ":encoding(UTF-8)";
+        for my $pmi (sort {$b <=> $a} keys %{$hintwordsPMI{$type}}) {
+            print "ET " . $type . ", lemma: " . $hintwordsPMI{$type}{$pmi} . ", PMI: " . $pmi . "\n" if $pmi > 5;
+            print FILE $type . " " . $hintwordsPMI{$type}{$pmi} . "\n" if $pmi > 5;
+            last if $pmi < 5;
+        }
+    }
+    close FILE;
+}
 
 my %patternCounts;
 
@@ -147,6 +187,7 @@ for my $sentence (@sentences) {
         $patternCounts{$_->{pattern}}{$_->{label}}++ for @patterns;
         next;
     }
+
 
     my @oneword_namedents = grep { $_->{start} == $_->{end} } @namedents;
     my @twoword_namedents = grep { $_->{start} == $_->{end} - 1 } @namedents;
@@ -278,5 +319,5 @@ sub parse_anot {
     }
 
     die "Did not end at level 0" if $level != 0;
-    return @entities;
+    return ($effective_pos, @entities);
 }

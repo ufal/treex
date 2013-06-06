@@ -8,7 +8,7 @@ use Treex::Core::Resource 'require_file_from_share';
 
 use Exporter qw/ import /;
 
-my $common = [qw/ tag_features is_tabu_pos is_listed_entity get_built_list_names is_year_number is_month_number is_day_number/];
+my $common = [qw/ tag_features is_tabu_pos is_listed_entity get_built_list_names is_year_number is_month_number is_day_number context_features/];
 
 my $tests = [qw/ tag_value_bitmap tag_features is_tabu_pos is_listed_entity get_class_number get_class_from_number get_built_list_names is_year_number is_month_number is_day_number/];
 
@@ -67,6 +67,7 @@ my %lists = ( months => {map {$_ => 1} qw/leden únor březen duben květen čer
 					   union organization/}
 	  );
 
+
 log_info('Retrieving NE lists');
 
 for my $share_list (qw /cities city_parts first_names surnames countries streets/) {
@@ -85,9 +86,31 @@ for my $share_list (qw /cities city_parts first_names surnames countries streets
 }
 
 
+log_info('Retrieving context hint lists');
+
+my %hint_lists;
+
+for my $share_list (qw /prev_lemmas next_lemmas/) {
+    my $filename = "data/models/sysnerv/cs/" . $share_list . ".txt";
+
+    my $file = require_file_from_share($filename, 'Treex::Tool::NamedEnt::Features::Common');
+
+    open LISTFILE, $file or log_error('Cannot retrieve list file $filename') and next;
+    binmode LISTFILE, ':utf8';
+
+    while(<LISTFILE>) {
+        chomp;
+        my ($etype, $hintlemma) = split;
+
+        $hint_lists{$share_list}{$etype}{$hintlemma} = 1;
+    }
+    close LISTFILE;
+}
+
+
 my %tabu = map {$_ => 1} qw/D I J P V R T Z/;
 
-my %tag_values = (pos => {map {$_ => 1} qw/A C D I J N P R T X V Z/},
+my %tag_values = (pos => {map {$_ => 1} qw/A C D I J N P R T V X Z/},
                   subpos => {},
                   gender => {map {$_ => 1} qw/- F H I M N Q T X Y Z/},
                   number => {map {$_ => 1} qw/- D P S W Z/},
@@ -120,6 +143,30 @@ sub tag_features {
     }
 
     return @tag_features;
+}
+
+sub is_in_hint_list {
+    my ($type, $lemma, $list) = @_;
+
+    return undef if !defined $hint_lists{$list};
+    return undef if !defined $hint_lists{$list}{$type};
+    return defined $hint_lists{$list}{$type}{$lemma}; 
+}
+
+sub context_features {
+    my ($prev_lemma, $next_lemma) = @_;
+
+    my @feat_prev;
+    my @feat_next;
+
+    for my $type (@classes) {
+        my $val = is_in_hint_list($type, $prev_lemma, 'prev_lemmas') ? 1 : 0;
+        push(@feat_prev, $val);
+        my $val2 = is_in_hint_list($type, $next_lemma, 'next_lemmas') ? 1 : 0;
+        push(@feat_next, $val2);
+    }
+
+    return (@feat_prev, @feat_next);
 }
 
 
