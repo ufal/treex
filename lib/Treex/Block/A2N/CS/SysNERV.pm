@@ -29,7 +29,7 @@ my %entities;
 # other entities
 my %forbidden;
 
-for my $label (qw /upper lower segm ? ! cap f s/) {
+for my $label (qw /upper lower segm ? cap f s/) {
     $forbidden{ get_class_number($label) } = 1;
 }
 
