@@ -65,11 +65,11 @@ sub process_zone {
 
     for my $anode (@anodes) {
         my $aid = $anode->id;
-        print $sentence{$aid};
-        print " " unless $anode->get_attr("no_space_after");
+        print {self->_file_handle} "$sentence{$aid}";
+        print {self->_file_handle} " " unless $anode->get_attr("no_space_after");
     }
 
-    print "\n";
+    print {self->_file_handle} "\n";
 
 }
 
