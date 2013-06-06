@@ -291,6 +291,21 @@ ok(is_day_number('31'), '31 is a day number...');
 ok(!is_day_number('32'), '32 is not a day number...');
 ok(!is_day_number('122'), '122 is not a day number...');
 
+ok(is_in_hint_list('gl', 'konec', 'next_lemmas'), 'The lemma "konec" was found in next_lemmas hint list and is considered as good hint for gl ET');
+ok(is_in_hint_list('gl', 'směr', 'next_lemmas'), 'The lemma "směr" was found in next_lemmas hint list and is considered as good hint for gl ET');
+ok(is_in_hint_list('na', 'rok', 'next_lemmas'), 'The lemma "rok" was found in next_lemmas hint list and is considered as good hint for na ET');
+ok(is_in_hint_list('T', 'letošní', 'next_lemmas'), 'The lemma "letošní" was found in next_lemmas hint list and is considered as good hint for T container');
+ok(is_in_hint_list('if', 'firma', 'prev_lemmas'), 'The lemma "firma" was found in prev_lemmas hint list and is considered as good hint for if ET');
+ok(is_in_hint_list('gr', 'sever', 'prev_lemmas'), 'The lemma "sever" was found in prev_lemmas hint list and is considered as good hint for gr ET');
+ok(is_in_hint_list('tc', 'přelom', 'prev_lemmas'), 'The lemma "přelom" was found in prev_lemmas hint list and is considered as good hint for tc ET');
+ok(is_in_hint_list('C', 'novela', 'prev_lemmas'), 'The lemma "novela" was found in prev_lemmas hint list and is considered as good hint for C container');
+
+
+@checklist = qw/0 0 0 0 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0/;
+@reslist = context_features('článek', 'zabít');
+$wrongcount = scalar(grep {$checklist[$_] != $reslist[$_]} 0..167);
+is($wrongcount, 0, 'feature vector for hint lemmas "článek" and "zabít" look good ') or diag Dumper (\@checklist, \@reslist);
+
 
 
 SKIP: {
