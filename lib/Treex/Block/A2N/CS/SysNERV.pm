@@ -23,9 +23,15 @@ my %containers;
 # recognizing containers
 my @entityPattern;
 
-# co se ukládá sem?
+
 my %entities;
 
+# other entities
+my %forbidden;
+
+for $label (qw /upper lower segm ? ! cap f s/) {
+    $forbidden{ get_class_number($label) } = 1;
+}
 
 BEGIN {
 
@@ -167,7 +173,7 @@ sub process_zone {
 
         $label = $classification == -1 ? 0 : get_class_from_number($classification);
 
-        if ($classification != -1) {
+        if ($classification != -1 or $forbidden{$classification}) {
             #create n-node and store it in anode's entity list
             my $anodeIDString = $anode->id;
 
@@ -194,7 +200,7 @@ sub process_zone {
             $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
             $classification = $models{twoword}->predict($data);
 
-            unless ($classification == -1) {
+            unless ($classification == -1 or $forbidden{$classification}) {
                 $label = get_class_from_number($classification);
 
                 my $anodeIDString = join " ", map { $_->id } ($prev_anode, $anode);
@@ -210,6 +216,7 @@ sub process_zone {
 
                 $entityPattern[$i-1] = $label;
                 $entityPattern[$i] = $label;
+
             }
         }
 
@@ -221,7 +228,7 @@ sub process_zone {
             $data = Algorithm::SVM::DataSet->new( Label => 0, Data => \@features);
             $classification = $models{threeword}->predict($data);
 
-            unless ($classification == -1) {
+            unless ($classification == -1 or $forbidden{$classification}) {
                 $label = get_class_from_number($classification);
 
                 my $anodeIDString = join " ", map {$_->id}  ($pprev_anode, $prev_anode, $anode);
