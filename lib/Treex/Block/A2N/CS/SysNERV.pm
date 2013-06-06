@@ -6,7 +6,7 @@ use Treex::Core::Resource qw(require_file_from_share);
 
 extends 'Treex::Core::Block';
 
-use Treex::Tool::NamedEnt::Features::Common qw /get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG/;
+use Treex::Tool::NamedEnt::Features::Common qw /get_class_from_number $FALLBACK_LEMMA $FALLBACK_TAG get_class_number/;
 use Treex::Tool::NamedEnt::Features::Oneword;
 use Treex::Tool::NamedEnt::Features::Twoword;
 use Treex::Tool::NamedEnt::Features::Threeword;
