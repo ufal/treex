@@ -173,7 +173,7 @@ sub process_zone {
 
         $label = $classification == -1 ? 0 : get_class_from_number($classification);
 
-        if ($classification != -1 or $forbidden{$classification}) {
+        if ($classification != -1 or !$forbidden{$classification}) {
             #create n-node and store it in anode's entity list
             my $anodeIDString = $anode->id;
 
