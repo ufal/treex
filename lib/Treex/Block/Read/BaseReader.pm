@@ -42,10 +42,10 @@ has _file_numbers => ( is => 'rw', default => sub { {} } );
 
 sub next_filename {
     my ($self) = @_;
-    
-    # return undef, but do not move further if we are at the end of document list (we might need the current file name) 
+
+    # return undef, but do not move further if we are at the end of document list (we might need the current file name)
     return if ( $self->file_number >= $self->from->number_of_files );
-    
+
     $self->_set_file_number( $self->file_number + 1 );
     return $self->current_filename();
 }
@@ -57,7 +57,7 @@ sub new_document {
     my $path = $self->current_filename();
     log_fatal "next_filename() must be called before new_document()" if !defined $path;
     my ( $volume, $dirs, $file ) = File::Spec->splitpath($path);
-    
+
     # Delete file extension, e.g.
     # file.01.conll -> file.01
     # cs42.treex.gz -> cs42
@@ -127,8 +127,8 @@ Treex::Block::Read::BaseReader - abstract ancestor for document readers
 
 =head1 DESCRIPTION
 
-This class serves as an common ancestor for document readers,
-that have a parameter C<from> with a space or comma separated list of filenames
+This class serves as a common ancestor for document readers
+that have the parameter C<from> with a space or comma separated list of filenames
 to be loaded.
 It is designed to implement the L<Treex::Core::DocumentReader> interface.
 
@@ -145,7 +145,7 @@ space or comma separated list of filenames, or C<-> for STDIN
 
 An '@' directly in front of a file name causes this file to be interpreted as a file
 list, with one file name per line, e.g. '@filelist.txt' causes the reader to open
-'filelist.txt' and read a list of files from it. File lists may be arbitrarily 
+'filelist.txt' and read a list of files from it. File lists may be arbitrarily
 mixed with regular files in the parameter.
 
 Similarly, you can use I<!> for wildcard expansion, e.g.
@@ -190,7 +190,7 @@ which are guessed based on C<current_filename>.
 
 =item current_filename
 
-returns the last filename returned by C<next_filename> 
+returns the last filename returned by C<next_filename>
 
 =item is_next_document_for_this_job
 
