@@ -1,7 +1,6 @@
 package Treex::Block::Read::WikiDump;
 use Moose;
 use XML::LibXML::Reader;
-use XML::Twig; ###!!!
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader'; # možná raději jenom BaseReader?
 
@@ -22,7 +21,7 @@ has n => (is => 'rw', default => 0);
 
 
 #------------------------------------------------------------------------------
-# Creates the XML::Twig parser.
+# Initializes the module.
 #------------------------------------------------------------------------------
 sub BUILD
 {
