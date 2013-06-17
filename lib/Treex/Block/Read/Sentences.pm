@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
-has 'skip_empty' => (is => 'ro', isa => 'Bool');
+has 'skip_empty' => (is => 'ro', isa => 'Bool', default => 0);
 
 sub next_document {
     my ($self) = @_;
@@ -29,6 +29,10 @@ __END__
 
 Treex::Block::Read::Sentences
 
+=head1 SYNOPSIS
+
+ Read::Sentences from='!dir*/file*.txt' skip_empty=1
+
 =head1 DESCRIPTION
 
 Document reader for plain text format, one sentence per line.
@@ -42,6 +46,7 @@ L<document|Treex::Core::Document>.
 =item from
 
 space or comma separated list of filenames
+See L<Treex::Core::Files> for full syntax.
 
 =item skip_empty
 
@@ -65,7 +70,7 @@ L<Treex::Block::Read::BaseTextReader>
 L<Treex::Core::Document>
 L<Treex::Core::Bundle>
 L<Treex::Block::Read::AlignedSentences>
-
+L<Treex::Block::Read::SentencesTSV>
 
 =head1 AUTHOR
 
