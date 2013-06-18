@@ -14,7 +14,7 @@ my @DICENDI_VERBS =
     prophesy protest purr realize recall recognize regret reject remark repeat
     reply report retort rumble say seem shout snap sneer sob specify state
     stress submit suggest suppose swear tell testify think urge utter vow warn
-    whisper wonder write yell);
+    whisper wonder write yell indicate signal);
 my %IS_DICENDI_VERB;
 
 foreach my $lemma (@DICENDI_VERBS) {
