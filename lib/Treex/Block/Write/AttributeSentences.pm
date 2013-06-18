@@ -87,10 +87,16 @@ Treex::Block::Write::AttributeSentences
 
 =head1 SYNOPSIS
 
+  # print "Moses factored" formar: one sentence per line, each a-node as form|lemma|tag
+  treex layer=a attributes=form,lemma,tag -- data.treex.gz
+
   # print form, lemma, tag and parent lemma; tab-separated values, one word per line
   treex Read::Treex from=data.treex.gz Write::AttributeSentences to=- \
     language=cs layer=a attributes='form lemma tag parent->lemma' separator='\n' attr_sep='\t' 
 
+  # print wild attributes
+  treex layer=a attributes=wild_MyAttribute -- data.treex.gz
+  
 =head1 DESCRIPTION
 
 This prints the values of the selected attributes for all nodes in a tree, one sentence per line. 

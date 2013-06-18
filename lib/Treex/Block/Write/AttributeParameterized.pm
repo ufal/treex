@@ -263,6 +263,11 @@ sub _get_data {
 
     # plain attributes
     else {
+    
+        # wild attributes are prefixed with "wild_"
+        if ( $attrib =~ s/^wild_//){
+            return $node->wild->{$attrib};
+        }
 
         # special attribute -- address (calling get_address() )
         if ( $attrib eq 'address' ) {
@@ -508,6 +513,7 @@ The annotation layer to be processed (i.e. C<a>, C<t>, C<n>, or C<p>). This para
 
 A space-or-comma-separated list of attributes (relating to the tree nodes on the specified layer) to be 
 processed, including references and text modifications (see the general description for more information).
+Wild attributes are prefixed with "wild_".
  
 This parameter is required.
 
