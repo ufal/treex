@@ -98,6 +98,8 @@ sub get_formeme_score {
     my $formeme_count = $self->get_formeme_count( $node, $formeme );
     my $all_count = $self->get_all_count($node);
 
+    # TODO: this is smoothing, but presumably even worse than "add 1"
+    # a linear interpolation smoothing might do a good job?
     my $score = ( $formeme_count + 1 ) / ( $all_count + 2 );
 
     # ignore low counts

@@ -15,7 +15,7 @@ sub fix {
         if ($d->{num} eq 'S'
             && $self->en($dep)
             && $self->en($dep)->tag
-            && $self->en($dep)->tag eq 'NNS'
+            && $self->en($dep)->tag eq 'NNS' # TODO NNPS, verbs
             )
         {    #cs singular, en plural
             my $setnum = 'P';
