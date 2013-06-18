@@ -76,22 +76,42 @@ sub process_zone {
         return;
     }
 
-    my $sentence    = $zone->sentence;
-    my $translation = $self->_translator->translate_simple($sentence);
+    my $translation = $self->_get_translation( $zone->sentence );
+    $self->_set_translation( $translation, $zone );
+
+    return;
+}
+
+sub _get_translation {
+    my ( $self, $sentence ) = @_;
+
+    return $self->_translator->translate_simple($sentence);
+}
+
+sub _set_translation {
+    my ( $self, $translation, $zone ) = @_;
+
+    my $sid = $zone->get_bundle->id;
 
     if ( $translation ne '' ) {
+
+        # success
         $zone->get_bundle->get_or_create_zone(
             $self->target_language,
             $self->target_selector
         )->set_sentence($translation);
 
-        log_info "Translated $sid " . $self->language . ":'$sentence'" .
+        log_info "Translated $sid " .
+            $self->language . ":'" . $zone->sentence . "'" .
             " to " . $self->target_language . ":'$translation'";
+        return 1;
     }
     else {
+
+        # failure
         log_warn "$sid: No translation generated - no translation saved!";
+        return 0;
     }
-    return;
 }
 
 1;
