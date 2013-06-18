@@ -14,7 +14,9 @@ has tgt_lang           => ( is => 'rw', isa => 'Str',        default => 'en' );
 has align              => ( is => 'rw', isa => 'Bool',       default => 0 );
 has nbest              => ( is => 'rw', isa => 'Num',        default => 0 );
 
-has ua => ( is => 'rw', isa => 'LWP::UserAgent' );
+# as private as possible
+has _ua => ( is => 'ro', isa => 'LWP::UserAgent',
+    init_arg => undef, builder => '_build_ua', lazy => 1, );
 
 my $URL   = 'http://translate.google.com/researchapi/translate';
 my $ALIGN = 'align';                                               # output alignment param
@@ -23,10 +25,10 @@ my $SL    = 'sl';                                                  # src lang pa
 my $TL    = 'tl';                                                  # tgt lang param
 my $Q     = 'q';                                                   # src text param
 
-sub BUILD {
+sub _build_ua {
     my ($self) = @_;
 
-    $self->set_ua( LWP::UserAgent->new() );
+    my $ua = LWP::UserAgent->new();
 
     # auth_token
     if ( !defined $self->auth_token ) {
@@ -45,9 +47,9 @@ sub BUILD {
         chomp $auth_token;
         $self->set_auth_token($auth_token);
     }
-    $self->ua->default_header( 'Authorization' => 'GoogleLogin auth=' . $self->auth_token );
+    $ua->default_header( 'Authorization' => 'GoogleLogin auth=' . $self->auth_token );
 
-    return;
+    return $ua;
 }
 
 sub translate {
@@ -81,7 +83,7 @@ sub translate {
     }
 
     # make the request
-    my $response = $self->ua->get($query);
+    my $response = $self->_ua->get($query);
 
     # process the response
     if ( $response->is_success ) {
@@ -95,7 +97,7 @@ sub translate {
             # single-best
 
             # translation
-            my $translation = $entry->{'gt:translation'}->{'content'};
+            my $translation = $entry->{'gt:translation'}->{'content'} // '';
             my $score = $entry->{'gt:feature'}->{'score'} // 0;
             $result->{translation} = $translation;
             push @{ $result->{translations} }, {
@@ -123,7 +125,8 @@ sub translate {
             foreach my $subentry (@$entry) {
 
                 # translation
-                my $translation = $subentry->{'gt:translation'}->{'content'};
+                my $translation =
+                    $subentry->{'gt:translation'}->{'content'} // '';
                 my $score = $subentry->{'gt:feature'}->{'score'} // 0;
                 push @{ $result->{translations} }, {
                     translation => $translation,
@@ -320,7 +323,8 @@ Returns a hash ref with the following structure:
 
 =item translation
 
-A string with the translation.
+A string with the translation, or empty string if translation is not available
+for any reason (i.e. the value is never C<undef>).
 
 =item translations
 
