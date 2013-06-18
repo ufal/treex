@@ -202,6 +202,8 @@ The API has been deprecated and will be shut down September 1st, 2013.
 There are some limits, probably 1000 requests per day and 1000 characters per
 request (I have to test that to know it exactly).
 
+B<Currently, requesting n best translations does not work! (For unknown reason.)>
+
 =head1 SYNOPSIS
 
  use Treex::Tool::GoogleTranslate::APIv1;
@@ -284,6 +286,8 @@ Number of n-best translations to return. Defaults to 0, which effectively means
 1-best, but the request to Google API is different if nbest is set to 1.
 The Google Translate API has a maximum of 25 n-best translations.
 
+B<Currently, requesting n best translations does not work! (For unknown reason.)>
+
 =back
 
 Please note that C<align> and C<nbest> are mutually exclusive. C<align> has higher priority, so
@@ -307,6 +311,8 @@ C<auth_token_in_file>) and cannot be changed later.
 Translate C<src_text> from C<src_lang> to C<tgt_lang>, returning C<nbest>
 translations or C<align> information if requested.
 The parameters can be overriden by setting them in the C<params> hash ref.
+
+B<Currently, requesting n best translations does not work! (For unknown reason.)>
 
 Returns a hash ref with the following structure:
 
@@ -370,6 +376,8 @@ Returns a hash ref with C<translation> and C<align> (see C<translate>).
 
 Returns an array ref of at most C<nbest> hash refs of translations, each containing
 C<translation> and C<score> (see C<translate>).
+
+B<Currently, requesting n best translations does not work! (For unknown reason.)>
 
 =back
 
