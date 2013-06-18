@@ -40,10 +40,13 @@ sub process_zone {
     return if !@anodes;
 
     # Create new n-tree
-    my $n_root = $zone->create_ntree();
+    my $n_root = $zone->has_ntree() ? $zone->get_ntree() : $zone->create_ntree();
 
     # Add all named entities found to the n-tree
     foreach my $i ( 0 .. $#anodes ) {
+    
+        # Skip words recognized by a potential previous NER classifier
+        next if $anodes[$i]->n_node;
 
         my $form  = $anodes[$i]->form;
         my $lemma = $anodes[$i]->lemma;
