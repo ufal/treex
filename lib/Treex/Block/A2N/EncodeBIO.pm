@@ -15,8 +15,10 @@ sub process_zone {
     my $n_root = $zone->get_ntree();
     return if !$n_root;
     
-    # TODO: in case of nested entities, only the outermost are printed, there should be a parameter
-    my @n_nodes = $n_root->get_children();
+    # TODO: in case of nested entities, only the innermost are printed, there should be a parameter
+    # Note that containers (outermost n-nodes) do not have links to a-nodes
+    # (these can be induced as a union of their descendants' a-node links).
+    my @n_nodes = grep{!$_->get_children()} $n_root->get_descendants();
     
     foreach my $n_node (@n_nodes){
         my ($first_a_node, @other_a_nodes) = sort {$a->ord <=> $b->ord} $n_node->get_anodes();
