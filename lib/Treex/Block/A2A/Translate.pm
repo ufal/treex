@@ -109,8 +109,9 @@ Translate.
 
 The translations are stored into wild attributes of the nodes - by default into
 C<node-&gt;wild-&gt;{translation}-&gt;{language_selector}>,
-e.g. C<node-&gt;wild-&gt;{translation}-&gt;{en_GT}> if default target language
-and selector are used.
+e.g. C<node-&gt;wild-&gt;{translation}-&gt;{en_GT}> if default C<wild_name>,
+C<target_language>
+and C<target_selector> are used.
 
 Otherwise is similar to L<Treex::Block::W2W::Translate>.
 
@@ -138,7 +139,7 @@ Uses L<Treex::Tool::GoogleTranslate::APIv1>.
 The name of the wild attribute to store the translations in on a-nodes.
 The default is C<translation>.
 
-The only added attribute wrt L<Treex::Block::W2W::Translate>.
+(This is the only added attribute wrt L<Treex::Block::W2W::Translate>.)
 
 =item language
 
@@ -160,11 +161,32 @@ Defaults to C<undef> - all sentences are translated by default.
 
 =item auth_token
 
-See L<Treex::Block::W2W::GoogleTranslate::APIv1/auth_token>.
+Your AUTH_TOKEN from Google.
+If not set, it will be attempted to read it from
+C<auth_token_in_file>.
+If this is not successful, a C<log_fatal> will be issued.
+
+If you have registered for the University Research
+Program for Google Translate, you can get one using your email,
+password and the
+following procedure (copied from official manual):
+
+Here is an example using curl to get an authentication token:
+
+  curl -d "Email=username@domain&Passwd=password&service=rs2"
+  https://www.google.com/accounts/ClientLogin
+
+Make sure you remember to substitute in your username@domain and
+password. Also, be warned that your username and password may be
+stored in your history file (e.g., .bash_history) and you should
+take precautions to remove it when finished. 
 
 =item auth_token_in_file
 
-See L<Treex::Block::W2W::GoogleTranslate::APIv1/auth_token_in_file>.
+File containing the C<auth_token>.
+Defaults to C<~/.gta> (cross-platform solution is used, i.e. C<~> is
+the user
+home directory as returned by L<File::HomeDir>).
 
 =back
 
