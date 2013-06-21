@@ -15,7 +15,7 @@ use translit::mkhedruli; # Dan's transliteration table for Georgian script
 use translit::ethiopic; # Dan's transliteration table for Ethiopic (Amharic) script
 use translit::khmer; # Dan's transliteration table for Khmer script
 
-has 'table' => (isa => 'Hash', is => 'ro', default => {});
+has 'table' => (isa => 'HashRef', is => 'ro', default => sub {{}});
 has 'maxl' => (isa => 'Int', is => 'rw', default => 1, writer => '_set_maxl');
 has 'language' => (isa => 'Str', is => 'ro'); # source language code (optional)
 has 'scientific' => (isa => 'Bool', is => 'rw', default => 1); # romanization type
