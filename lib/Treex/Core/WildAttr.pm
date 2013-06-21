@@ -26,7 +26,9 @@ sub wild {
 sub _wild_dump {
     my ($self) = @_;
     if ( $self->isa('Treex::Core::Document') ) {
-        return $self->metaData('pml_root')->{meta}->{wild_dump},
+        my $metadata = $self->metaData('pml_root');
+        my $meta = $metadata->{meta};
+        return $meta->{wild_dump};
     }
     else {
         return $self->{wild_dump};
