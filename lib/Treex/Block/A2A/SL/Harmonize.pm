@@ -1,8 +1,8 @@
-package Treex::Block::A2A::SL::CoNLL2PDTStyle;
+package Treex::Block::A2A::SL::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Slovene tree, converts morphosyntactic tags to the PDT tagset,
@@ -196,7 +196,7 @@ sub change_quotation_predicate_into_obj {
 
 =over
 
-=item Treex::Block::A2A::SL::CoNLL2PDTStyle
+=item Treex::Block::A2A::SL::Harmonize
 
 Converts SDT (Slovene Dependency Treebank) trees from CoNLL to the style of
 the Prague Dependency Treebank. The structure of the trees should already

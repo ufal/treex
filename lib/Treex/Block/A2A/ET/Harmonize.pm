@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ET::TigerDep2PDT;
+package Treex::Block::A2A::ET::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -319,7 +319,7 @@ sub set_afun {
 
 =over
 
-=item Treex::Block::A2A::ET::TigerDep2PDT
+=item Treex::Block::A2A::ET::Harmonize
 
 Converts Estonian Tiger-like Treebank converted to dependency style to
 the style of the Prague Dependency Treebank.

@@ -1,9 +1,9 @@
-package Treex::Block::A2A::SV::CoNLL2PDTStyle;
+package Treex::Block::A2A::SV::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Cloud;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Swedish tree, converts morphosyntactic tags to the PDT tagset,
@@ -614,7 +614,7 @@ sub detect_coordination
 
 =over
 
-=item Treex::Block::A2A::SV::CoNLL2PDTStyle
+=item Treex::Block::A2A::SV::Harmonize
 
 Converts trees coming from the Swedish Mamba Treebank via the CoNLL-X format to the style of
 the Prague Dependency Treebank. Converts tags and restructures the tree.

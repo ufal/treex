@@ -1,9 +1,9 @@
-package Treex::Block::A2A::NL::CoNLL2PDTStyle;
+package Treex::Block::A2A::NL::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Cloud;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Dutch tree, converts morphosyntactic tags to Interset, converts
@@ -703,7 +703,7 @@ sub fix_SubordinatingConj {
 
 =over
 
-=item Treex::Block::A2A::NL::CoNLL2PDTStyle
+=item Treex::Block::A2A::NL::Harmonize
 
 Converts Dutch trees from CoNLL 2006 to the style of
 the Prague Dependency Treebank.

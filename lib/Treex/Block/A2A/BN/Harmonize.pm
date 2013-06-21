@@ -1,11 +1,11 @@
-package Treex::Block::A2A::TE::CoNLL2PDTStyle;
+package Treex::Block::A2A::BN::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
-# Reads the Telugu CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Bengali CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
@@ -13,13 +13,13 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
-    $self->attach_final_punctuation_to_root($a_root);
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ltrc.iiit.ac.in/nlptools2010/files/documents/dep-tagset.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+# http://dsal.uchicago.edu/dictionaries/biswas-bengali/
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -44,31 +44,50 @@ sub deprel_to_afun
         }
 
         # Subject
-        if ( $deprel =~ /^(k1|pk1|k4a|r6-k1)$/ )
-        {
-            $afun = 'Sb';
-        }
-        # ras-k1 ... associative karta. Not a subject. Someone secondary who assists the subject (asymmetric coordination).
-        # (It does not occur in the first training file and it might not occur in Telugu at all.)
-        elsif($deprel eq 'ras-k1')
-        {
-            $afun = 'Adv';
+        # Note DZ: k1 is karta = agent = usually subject
+        if ( $deprel =~ /^(k1|pk1|k4a|r6-k1|ras-k1)$/ ) {
+            $afun = "Sb";
         }
         # k1s ... vidheya karta (karta samanadhikarana) = noun complement of karta (according to documentation)
-        # Training sentence 6:
-        # మగవాళ్లకంటే ఆడవాళ్లు ఎక్కువ చనిపొతున్నారు
-        # magavāḷlakaṁṭe      āḍavāḷlu  èkkuva canipòtunnāru
-        # NNplu+vAIYlu_kaMteV NNsingDat NN-adj Vplu3
-        # k1u                 k1        k1s    main
-        # males-than          women     more   die
-        # Women die more than males.
-        # (Google: :-)) Magavallakante women more canipotunnaru
-        elsif ( $deprel =~ m/^(k1s)$/ )
-        {
+        # আপনি যার কথা বলছেন তার নাম NULL নাগ (training sentence 279)
+        # āpani yāra kathā balachena tāra nāma NULL nāga
+        # you/dative that word said  his  name (is) snake
+        # k1(nāma, NULL)
+        # k1s(nāga, NULL)
+        # আপনি আমার পূজনীয় NULL
+        # āpani  āmāra  pūjanīŷa  NULL
+        # you    my     honorable are
+        # k1/PRP r6/PRP k1s/JJ    main/NULL
+        # => k1s ~ Pnom?
+        # আচ্ছা তুমিই বছর আগেকার চিত্রকর নাগ NULL
+        # ācchā tumii bachara āgekāra citrakara nāga  NULL
+        # but   you   years   earlier painter's snake are
+        # ??? - snake of (painter of (earlier by (years)))
+        # sent_adv/INJ k1/PRP jjmod/NN nmod/JJ nmod/NN k1s/NNP main/NULL
+        elsif ( $deprel =~ m/^(k1s)$/ ) {
             $afun = 'Pnom';
         }
-        elsif ( $deprel =~ m/^(k1u)$/ )
-        {
+        # k1u is not subject! One verb can have both k1 and k1u but it cannot have two subjects.
+        # k1u is missing from the documentation so I do not know what exactly it means.
+        # আপনার জামাই আমার দাদার NULL (train sentence 256)
+        # āpanāra jāmāi āmāra dādāra NULL
+        # your    son   my    grandfather is
+        # r6/PRP  k1/NN r6/PRP k1u/NN main/NULL
+        # কিন্তু সামন্তের তদ্বিরকারক থাকলে হজমের কাজটা শক্ত হয়ে
+        # kintu sāmantera tadbirakāraka thākale hajamera kājatā śakta haŷe
+        # main/CC k1u/NNP k1/NN         vmod/VM r6/NN    k1/NN pof/JJ ccof/VM
+        # but   suzerain (tadbirakaraka?) if-act/contact/??? metabolic system strong is?
+        # মদনা এবার দার্শনিকের প্রশ্ন তুলেছিল
+        # madanā ebāra dārśanikera praśna tulechila
+        # parrot now   philosopher question tulechila
+        # k1/NNP k7t/NN k1u/NN     k2/NN  main/VM
+        # সে মানুষের বাঁচতে চায়
+        # se mānusera bāmcate cāŷa
+        # k1/PRP(se,cāŷa) k1u/NN(mānusera,bāmcate) vmod/VM ?/VAUX
+        # he people-of living wants
+        # He wants people to live.
+        # But here k1 depends on different verb than k1u.
+        elsif ( $deprel =~ m/^(k1u)$/ ) {
             $afun = 'Atv'; # or Pnom?
         }
         elsif ( $deprel =~ /^(jk1|mk1)$/ ) {
@@ -121,17 +140,16 @@ sub deprel_to_afun
         }
         # "pof" means "part of relation" (according to documentation).
         # It is often found at the content part of "compound verbs" (light verb plus noun or adjective, the noun/adjective is pof).
-        # Training sentence 46:
-        # ఆడవాళ్లకు ఆపరేషన్లు చేయించాలి
-        # āḍavāḷlaku āpareṣanlu ceyiṁcāli
-        # k4         pof        main
-        # NN         NN         VM
-        # women-to   operations should-be-performed
-        # Ada      pn pl vib-vAIYlu_ki
-        # ApareRan n  pl case-d vib-0 (case-d je asi direct, ne dativ!)
-        # ceyiMcu  v  vib/tam-Ali
-        elsif ( $deprel eq 'pof' )
-        {
+        # Training sentence 5:
+        # ছোটাছুটি করতে
+        # choṭāchuṭi karate = to run about
+        # choṭāchuṭi = the act/spell of running about (cs:pobíhání)
+        # karate = light verb (to do), person 5 (???), tam "A", vibhakti "A_ha+ne"
+        # চুমুক দিলেন
+        # cumuka dilena = "you sipped"
+        # cumuka = noun = "a draught", "a sip"
+        # dilena = verb, person = 2, tam = vibhakti = "la" (Wikipedia Bengali grammar: simple past tense, 2/3rd person polite (apni), of দেওয়া deoŷā =? to give
+        elsif ( $deprel eq "pof" ) {
             # It would be useful to have a special tag for nominal parts of compound verbs.
             # We do not have it now.
             $afun = 'Obj';
@@ -207,9 +225,9 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::TE::CoNLL2PDTStyle
+=item Treex::Block::A2A::BN::Harmonize
 
-Converts Telugu treebank into PDT style treebank.
+Converts Bengali treebank into PDT style treebank.
 
 1. Morphological conversion             -> Yes
 

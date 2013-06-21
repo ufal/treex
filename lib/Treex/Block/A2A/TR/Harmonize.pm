@@ -1,8 +1,8 @@
-package Treex::Block::A2A::TR::CoNLL2PDTStyle;
+package Treex::Block::A2A::TR::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Turkish CoNLL trees, converts morphosyntactic tags to the universal
@@ -234,7 +234,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::TR::CoNLL2PDTStyle
+=item Treex::Block::A2A::TR::Harmonize
 
 
 =back

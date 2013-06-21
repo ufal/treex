@@ -1,9 +1,9 @@
-package Treex::Block::A2A::DA::CoNLL2PDTStyle;
+package Treex::Block::A2A::DA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Cloud;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Danish tree, converts morphosyntactic tags to the PDT tagset,
@@ -609,7 +609,7 @@ sub reattach_modifier_from_auxt_to_verb
 
 =over
 
-=item Treex::Block::A2A::DA::CoNLL2PDTStyle
+=item Treex::Block::A2A::DA::Harmonize
 
 Converts trees coming from Danish Dependency Treebank via the CoNLL-X format to the style of
 the Prague Dependency Treebank. Converts tags and restructures the tree.

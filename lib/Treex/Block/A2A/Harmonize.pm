@@ -1,4 +1,4 @@
-package Treex::Block::A2A::CoNLL2PDTStyle;
+package Treex::Block::A2A::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Coordination;
@@ -1282,7 +1282,7 @@ sub process_end
 
 =over
 
-=item Treex::Block::A2A::CoNLL2PDTStyle
+=item Treex::Block::A2A::Harmonize
 
 Common methods for language-dependent blocks that transform trees from the
 various styles of the CoNLL treebanks to the style of the Prague Dependency

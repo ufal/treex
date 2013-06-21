@@ -1,8 +1,8 @@
-package Treex::Block::A2A::HU::CoNLL2PDTStyle;
+package Treex::Block::A2A::HU::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 # /net/data/conll/2007/hu/doc/README
 
@@ -234,7 +234,7 @@ sub skip_commas {
 
 =over
 
-=item Treex::Block::A2A::HU::CoNLL2PDTStyle
+=item Treex::Block::A2A::HU::Harmonize
 
 Converts Hungarian trees from CoNLL 2007 to the style of
 the Prague Dependency Treebank.

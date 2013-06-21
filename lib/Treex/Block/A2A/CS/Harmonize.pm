@@ -1,18 +1,18 @@
-package Treex::Block::A2A::TA::CoNLL2PDTStyle;
+package Treex::Block::A2A::CS::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
-# Reads the TamilTB CoNLL trees, converts morphosyntactic tags to the positional
-# tagset and transforms the tree to adhere to PDT guidelines.
+# Reads the Czech tree, converts morphosyntactic tags to the PDT tagset,
+# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'tamiltb');
+    my $a_root = $self->SUPER::process_zone($zone);
 }
 
 #------------------------------------------------------------------------------
@@ -40,15 +40,20 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::TA::CoNLL2PDTStyle
+=item Treex::Block::A2A::CS::Harmonize
 
-Converts TamilTB.v0.1 (Tamil Dependency Treebank) from CoNLL to the style of
-the Prague Dependency Treebank. Morphological tags are of length 9. At present
-no structural transformations have been done.
+Converts PDT (Prague Dependency Treebank) trees from CoNLL to the style of
+the Prague Dependency Treebank. The structure of the trees should already
+adhere to the PDT guidelines because the CoNLL trees come from PDT. Some
+minor adjustments to the analytical functions may be needed while porting
+them from the conll/deprel attribute to afun. Morphological tags will be
+decoded into Interset and converted back to the 15-character positional tags
+of PDT.
 
 =back
 
 =cut
 
-# Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

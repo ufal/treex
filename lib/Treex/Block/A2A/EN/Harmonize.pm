@@ -1,8 +1,8 @@
-package Treex::Block::A2A::EN::CoNLL2PDTStyle;
+package Treex::Block::A2A::EN::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 sub process_zone {
     my $self   = shift;
@@ -45,7 +45,7 @@ sub fix_coordination{
 
 =over
 
-=item Treex::Block::A2A::EN::CoNLL2PDTStyle
+=item Treex::Block::A2A::EN::Harmonize
 
 Backuping original trees and adding iset.
 The rest of conll->pdt conversion is implemented

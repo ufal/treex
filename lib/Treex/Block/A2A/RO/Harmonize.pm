@@ -1,4 +1,4 @@
-package Treex::Block::A2A::RO::RDT2PDTStyle;
+package Treex::Block::A2A::RO::Harmonize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -196,7 +196,7 @@ sub handle_apposition {
 
 =over
 
-=item Treex::Block::A2A::RO::RDT2PDTStyle
+=item Treex::Block::A2A::RO::Harmonize
 
 Converts RDT (Romanian Dependency Treebank) trees to the style of
 the Prague Dependency Treebank.

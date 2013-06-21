@@ -1,8 +1,8 @@
-package Treex::Block::A2A::DE::CoNLL2PDTStyle;
+package Treex::Block::A2A::DE::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the German tree, converts morphosyntactic tags to the PDT tagset,
@@ -560,7 +560,7 @@ sub collect_coordination_modifiers
 
 =over
 
-=item Treex::Block::A2A::DE::CoNLL2PDTStyle
+=item Treex::Block::A2A::DE::Harmonize
 
 Converts Tiger trees from CoNLL to the style of
 the Prague Dependency Treebank.

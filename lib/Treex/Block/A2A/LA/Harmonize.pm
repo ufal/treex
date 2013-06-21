@@ -1,8 +1,8 @@
-package Treex::Block::A2A::LA::CoNLL2PDTStyle;
+package Treex::Block::A2A::LA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 use Treex::Block::A2A::Pdt2TreexIsMemberConversion;
 

@@ -1,8 +1,8 @@
-package Treex::Block::A2A::ES::CoNLL2PDTStyle;
+package Treex::Block::A2A::ES::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 sub process_zone {
     my $self   = shift;
@@ -171,7 +171,7 @@ sub rehang_coordconj {
 
 =over
 
-=item Treex::Block::A2A::ES::CoNLL2PDTStyle
+=item Treex::Block::A2A::ES::Harmonize
 
 Converts Spanish trees from CoNLL to the style of
 the Prague Dependency Treebank.

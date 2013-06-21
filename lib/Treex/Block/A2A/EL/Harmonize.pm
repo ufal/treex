@@ -1,8 +1,8 @@
-package Treex::Block::A2A::EL::CoNLL2PDTStyle;
+package Treex::Block::A2A::EL::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
@@ -119,7 +119,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::EL::CoNLL2PDTStyle
+=item Treex::Block::A2A::EL::Harmonize
 
 Converts Modern Greek dependency treebank into PDT style treebank.
 

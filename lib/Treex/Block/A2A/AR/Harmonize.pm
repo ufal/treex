@@ -1,8 +1,8 @@
-package Treex::Block::A2A::AR::CoNLL2PDTStyle;
+package Treex::Block::A2A::AR::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::CoNLL2PDTStyle';
+extends 'Treex::Block::A2A::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
@@ -79,7 +79,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::AR::CoNLL2PDTStyle
+=item Treex::Block::A2A::AR::Harmonize
 
 Converts PADT (Prague Arabic Dependency Treebank) trees from CoNLL to the style of
 the Prague Dependency Treebank. The structure of the trees should already
