@@ -67,7 +67,7 @@ sub BUILD
     # 0x1780: Khmer script.
     translit::khmer::inicializovat($table);
     # Figure out and return the maximum length of an input sequence.
-    my $maxl = 1; map {$maxl = max($maxl, length($_))} (keys(%{$table}));
+    my $maxl = 1; map {$maxl = max2($maxl, length($_))} (keys(%{$table}));
     $self->_set_maxl($maxl);
 }
 
@@ -96,7 +96,7 @@ sub process_anode
 #------------------------------------------------------------------------------
 # Returns maximum of two values.
 #------------------------------------------------------------------------------
-sub max
+sub max2
 {
     my $a = shift;
     my $b = shift;
