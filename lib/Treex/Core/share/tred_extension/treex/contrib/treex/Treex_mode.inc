@@ -25,8 +25,11 @@ sub is_treex_doc {
 }
 
 push @TredMacro::AUTO_CONTEXT_GUESSING, sub {
+    my ($hook)=@_;
+    my $resuming = ($hook eq 'file_resumed_hook');
+
     if (is_treex_doc()) {
-        SetCurrentStylesheet(STYLESHEET_FROM_FILE());
+        SetCurrentStylesheet(STYLESHEET_FROM_FILE()) if $resuming;
         return 'Treex_mode';
     }
     return;
@@ -37,9 +40,12 @@ sub allow_switch_context_hook {
 }
 
 sub switch_context_hook {
-    $tredview->tree_layout->load_layouts();
-    SetCurrentStylesheet('Treex_stylesheet');
-    # Redraw() if GUI();
+    my $cur_stylesheet = GetCurrentStylesheet();
+    if ($cur_stylesheet ne 'Treex_stylesheet') {
+        $tredview->tree_layout->load_layouts();
+        SetCurrentStylesheet('Treex_stylesheet');
+        Redraw() if GUI();
+    }
 }
 
 sub pre_switch_context_hook {
