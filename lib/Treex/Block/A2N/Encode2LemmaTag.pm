@@ -27,6 +27,7 @@ sub process_zone {
         
         # Delete @other_a_nodes
         foreach my $a_node (@other_a_nodes){
+            next if ref $a_node eq 'Treex::Core::Node::Deleted'; # TODO: why is this needed?
             next if $solved{$a_node->id};
             $solved{$a_node->id} = 1;
             foreach my $a_child ($a_node->get_children()){

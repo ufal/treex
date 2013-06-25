@@ -1,3 +1,9 @@
+####################################
+# This block is not ready to use!  #
+####################################
+# TODO: It does not fill links from n-nodes to a-nodes.
+# TODO: It seems to have lower accuracy than the original 2008 version
+# SCzechM_to_SCzechN::SVM_ne_recognizer ($TMT_ROOT/libs/blocks/SCzechM_to_SCzechN/SVM_ne_recognizer.pm)
 package Treex::Block::A2N::CS::SvmNer;
 use utf8;
 use Moose;
