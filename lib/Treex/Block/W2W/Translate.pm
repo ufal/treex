@@ -76,16 +76,16 @@ sub process_zone {
         return;
     }
 
-    my $translation = $self->_get_translation( $zone->sentence );
+    my $translation = $self->_get_translation( $zone );
     $self->_set_translation( $translation, $zone );
 
     return;
 }
 
 sub _get_translation {
-    my ( $self, $sentence ) = @_;
+    my ( $self, $zone ) = @_;
 
-    return $self->_translator->translate_simple($sentence);
+    return $self->_translator->translate_simple($zone->sentence);
 }
 
 sub _set_translation {

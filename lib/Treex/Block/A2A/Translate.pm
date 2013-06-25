@@ -6,6 +6,8 @@ extends 'Treex::Block::W2W::Translate';
 
 has wild_name => ( is => 'rw', isa => 'Str', default => 'translation' );
 
+has position2node => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+
 override '_build_translator' => sub {
     my $self = shift;
 
@@ -16,10 +18,36 @@ override '_build_translator' => sub {
 };
 
 override '_get_translation' => sub {
-    my ( $self, $sentence ) = @_;
+    my ( $self, $zone ) = @_;
+
+    my $sentence = $self->_get_sentence_and_node_positions($zone);
 
     return $self->_translator->translate_align($sentence);
 };
+
+sub _get_sentence_and_node_positions {
+    my ($self, $zone) = @_;
+
+    # precompute node positions
+    my @nodes = $zone->get_atree()->get_root()->get_descendants(
+        { ordered => 1 }
+    );
+    my $length        = 0;
+    my $max           = 0;
+    foreach my $node (@nodes) {
+
+        # store position
+        $self->position2node->{$length} = $node;
+
+        # move on
+        $length += length $node->form;
+        if ( !$node->no_space_after ) {
+            $length++;
+        }
+    }
+
+    return $zone->sentence;
+}
 
 override '_set_translation' => sub {
     my ( $self, $translation_result, $zone ) = @_;
@@ -30,26 +58,6 @@ override '_set_translation' => sub {
         # success
         # sentence has already been set in SUPER
 
-        # precompute node positions
-        my @nodes = $zone->get_atree()->get_root()->get_descendants(
-            { ordered => 1 }
-        );
-        my %position2node = ();
-        my $length        = 0;
-        my $max           = 0;
-        foreach my $node (@nodes) {
-
-            # store position
-            $position2node{$length} = $node;
-            $max = $length;
-
-            # move on
-            $length += length $node->form;
-            if ( !$node->no_space_after ) {
-                $length++;
-            }
-        }
-
         # store the translations
         my $id = $self->target_language . '_' . $self->target_selector;
         foreach my $aligninfo ( @{ $translation_result->{align} } ) {
@@ -59,19 +67,13 @@ override '_set_translation' => sub {
 
             # normalize position;
             # should not be needed, but should not die on this either...
-            if ( $position > $max ) {
+            while ( !defined $self->position2node->{$position} ) {
                 log_warn "Position $position for '$word' not matched, have to adjust...";
-                $position = $max;
-            }
-            else {
-                while ( !defined $position2node{$position} ) {
-                    log_warn "Position $position for '$word' not matched, have to adjust...";
-                    $position++;
-                }
+                $position--;
             }
 
             # set the wild attribute
-            my $node = $position2node{$position};
+            my $node = $self->position2node->{$position};
             if ( defined $node->wild->{ $self->wild_name }->{$id} ) {
                 $node->wild->{ $self->wild_name }->{$id} .= " $word";
             }

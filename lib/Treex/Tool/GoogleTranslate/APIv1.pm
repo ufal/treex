@@ -83,6 +83,7 @@ sub translate {
     }
 
     # make the request
+    # log_info $query;
     my $response = $self->_ua->get($query);
 
     # process the response
@@ -118,6 +119,9 @@ sub translate {
                     log_warn "Unexpected value of align: $align";
                 }
             }
+
+            # log_info "Translated $src_lang:'$src_text'" .
+            #     " to $tgt_lang:'$translation'";
         }
         elsif ( ref($entry) eq 'ARRAY' ) {
 
