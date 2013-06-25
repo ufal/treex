@@ -33,7 +33,6 @@ sub _get_sentence_and_node_positions {
         { ordered => 1 }
     );
     my $length        = 0;
-    my $max           = 0;
     foreach my $node (@nodes) {
 
         # store position
