@@ -71,8 +71,8 @@ C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev pat
 
 =item 6. Install Featurama tagger (optional)
 
- wget http://www.ms.mff.cuni.cz/~kraut6am/featurama/featurama-1.0.tar.gz
- tar -zxf featurama-1.0.tar.gz
+ wget http://ufal.mff.cuni.cz/treex/featurama-1.0modified.tar.gz
+ tar -zxf featurama-1.0modified.tar.gz
  pushd featurama-1.0
  ./configure --prefix=$HOME/perl5 --enable-perl && make && make install
  popd
@@ -341,8 +341,8 @@ When not installed install it. On Ubuntu/Debian etc. use this command:
 
 Use modified Featurama which can handle new version of SWIG. (If you have older version of SWIG, but newer than 1.3.17 download it from L<Sourceforge|http://sourceforge.net/projects/featurama/files/latest/download>.)
 
- wget http://www.ms.mff.cuni.cz/~kraut6am/featurama/featurama-1.0.tar.gz
- tar -zxf featurama-1.0.tar.gz
+ wget http://ufal.mff.cuni.cz/treex/featurama-1.0modified.tar.gz
+ tar -zxf featurama-1.0modified.tar.gz
 
 After you downloaded and unpacked the package, compile it and install.
 
