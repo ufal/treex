@@ -23,7 +23,8 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $tagset = shift;    # optional argument from the subclass->process_zone()
-                           # Copy the original dependency structure before adjusting it.
+
+    # Copy the original dependency structure before adjusting it.
     $self->backup_zone($zone);
     my $a_root = $zone->get_atree();
 
@@ -90,7 +91,7 @@ sub convert_tag
     # Instead, every subclass of this block must know whether to call convert_tag() or not.
     # List of tagsets covered so far:
     my @known_drivers = qw(
-        ar::conll ar::conll2007
+        ar::conll ar::conll2007 ar::padt
         bg::conll
         bn::conll
         ca::conll2009
@@ -125,7 +126,7 @@ sub convert_tag
     {
         log_warn("Interset driver $driver not found");
         return;
-	}
+    }
     # Current tag is probably just a copy of conll_pos.
     # We are about to replace it by a 15-character string fitting the PDT tagset.
     my $tag        = $node->tag();
@@ -137,6 +138,35 @@ sub convert_tag
     my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_iset($f);
     $node->set_tag($pdt_tag);
+}
+
+#------------------------------------------------------------------------------
+# Certain nodes in some treebanks have empty lemmas, although there are lemmas
+# in the particular treebank in general. For instance, numbers and punctuation
+# symbols in PADT 2.0 lack lemmas. This function makes sure that the lemma
+# attribute does not stay empty.
+#------------------------------------------------------------------------------
+sub fill_in_lemmas
+{
+    my $self   = shift;
+    my $root   = shift;
+    foreach my $node ( $root->get_descendants() )
+    {
+        if(!defined($node->lemma()) || $node->lemma() eq '')
+        {
+            # Sometimes even the word form is empty. Either it's a bug or these are NULL nodes that also occur in other treebanks.
+            if(!defined($node->form()) || $node->form() eq '')
+            {
+                $node->set_form('<NULL>');
+                $node->set_lemma('<NULL>');
+            }
+            # If there are other instances than numbers and punctuation, we want to know about them.
+            elsif($node->get_iset('pos') =~ m/^(num|punc)$/)
+            {
+                $node->set_lemma($node->form());
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -173,6 +203,46 @@ sub deprel_to_afun
 }
 
 #------------------------------------------------------------------------------
+# Assigns default afuns. To be used if a node does not have a valid afun value
+# and we cannot tell anything more precise about the node.
+#------------------------------------------------------------------------------
+sub set_default_afun
+{
+    my $self = shift;
+    my $node = shift;
+    my $afun;
+    my $parent = $node->parent();
+    if($parent->is_root())
+    {
+        # A verb attached directly to root is predicate.
+        # There could also be coordination of verbal predicates (possibly nested coordination) but we do not check it at the moment. ###!!!
+        if($node->get_iset('pos') eq 'verb')
+        {
+            $afun = 'Pred';
+        }
+        else
+        {
+            $afun = 'ExD';
+        }
+    }
+    else
+    {
+        # Nominal nodes are modified by attributes, verbal nodes by objects or adverbials.
+        # (Adverbials are default because there are typically fewer constraints on them.)
+        # Again, we do not check whether the parent is a coordination of verbs. ###!!!
+        if($parent->get_iset('pos') eq 'verb')
+        {
+            $afun = 'Adv';
+        }
+        else
+        {
+            $afun = 'Atr';
+        }
+    }
+    $node->set_afun($afun);
+}
+
+#------------------------------------------------------------------------------
 # After all transformations all nodes must have valid afuns (not our pseudo-
 # afuns). Report cases breaching this rule so that we can easily find them in
 # Ttred.
@@ -185,7 +255,10 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ )
+        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ &&
+             # Special tags from the Prague Arabic Dependency Treebank:
+             $afun !~ m/^(Pred[ECP]|Ante|Aux[EM])$/
+           )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
