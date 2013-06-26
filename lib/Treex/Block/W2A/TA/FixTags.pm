@@ -13,6 +13,5 @@ sub process_anode {
 
 sub get_correct_tag {
 	my ($self, $f, $l, $t) = @_;	
-	return 'Vt---E--T-A----' if $f eq 'என்று';
 	return $t;
 }

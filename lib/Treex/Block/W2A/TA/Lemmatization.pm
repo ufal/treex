@@ -49,7 +49,7 @@ sub BUILD {
 sub _build_verb_rules {
 	my ($self) = @_;
 	my $vr_file =
-	  require_file_from_share( $self->data_dir . "/" . "verb_suffixes.dat" );
+	  require_file_from_share( $self->data_dir . "/" . "verb_suffixes_projection.dat" );
 	my %verb_rules = load_rules($vr_file);
 	return \%verb_rules;
 }
@@ -57,7 +57,7 @@ sub _build_verb_rules {
 sub _build_noun_rules {
 	my ($self) = @_;
 	my $nr_file =
-	  require_file_from_share( $self->data_dir . "/" . "noun_suffixes.dat" );
+	  require_file_from_share( $self->data_dir . "/" . "noun_suffixes_projection.dat" );
 	my %noun_rules = load_rules($nr_file);
 	return \%noun_rules;
 }
