@@ -108,8 +108,10 @@ sub process_tnode {
     return if !$src_node;
     
     my $trans;
-    my $src_lemma   = $src_node->t_lemma;
-    my $src_formeme = $src_node->formeme;
+    #my $src_lemma   = $src_node->t_lemma;
+    #my $src_formeme = $src_node->formeme;
+    my $src_lemma   = $node->t_lemma;
+    my $src_formeme = $node->formeme;
     
     # L
     $trans = $self->model->model->{$src_lemma.' *'}{'* *'};
@@ -151,8 +153,10 @@ sub process_tnode {
 
     my $parent         = $node->get_parent();
     my $src_parent     = $src_node->get_parent();
-    my $parent_lemma   = $src_parent->t_lemma // '_ROOT'; #/
-    my $parent_formeme = $src_parent->formeme // '_ROOT'; #/
+    #my $parent_lemma   = $src_parent->t_lemma // '_ROOT'; #/
+    #my $parent_formeme = $src_parent->formeme // '_ROOT'; #/
+    my $parent_lemma   = $parent->t_lemma // '_ROOT'; #/
+    my $parent_formeme = $parent->formeme // '_ROOT'; #/
 
     # *FL
     $trans = $self->model->model->{'* '.$src_formeme}{$parent_lemma.' *'};
