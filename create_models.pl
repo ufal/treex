@@ -16,7 +16,7 @@ my $EXPECTED_FORMEMES        = 1_500;
 # However, we want to use lemma ids from the current dir.
 # This way it is not necessary to overwrite old lemma ids in share.
 # TODO: uncomment next line
-#LanguageModel::Lemma::_load_from_plsgz('lemma_id.pls.gz');
+LanguageModel::Lemma::_load_from_plsgz('lemma_id.pls.gz');
 
 # Allocate enough memory for models, so no rehashing or array re-allocation is needed
 my ( $total, $cLgFdLd, $cPgFdLd );
@@ -30,16 +30,19 @@ while (<STDIN>) {
     my ( $count, $Lg, $Pg, $Ld, $Pd, $Fd ) = split /\t/, $_;
     my $LdPd = LanguageModel::Lemma::get_indexed( $Ld, $Pd ) or die "'$Ld $Pd' not indexed.";
     my $LgPg = LanguageModel::Lemma::get_indexed( $Lg, $Pg ) or die "'$Lg $Pg' not indexed.";
-    $total                       += $count;
-    $cPgFdLd->{$Pg}{$ALL}        += $count;
-    $cPgFdLd->{$Pg}{$Fd}{$ALL}   += $count;
-    $cPgFdLd->{$Pg}{$Fd}{$$LdPd} += $count;
+    $total                         += $count;
+    $cPgFdLd->{$Pg}{$ALL}          += $count;
+    $cPgFdLd->{$Pg}{$Fd}{$ALL}     += $count;
+    $cPgFdLd->{$Pg}{$Fd}{$$LdPd}   += $count;
+    $cPgFdLd->{$ALL}{$ALL}{$$LdPd} += $count;
+    $cPgFdLd->{$ALL}{$Fd}{$ALL}    += $count;
+    $cPgFdLd->{$ALL}{$Fd}{$$LdPd}  += $count;
 
-    $cLgFdLd->[$$LgPg]{$ALL} += $count;
-    $cLgFdLd->[$$LgPg]{$Fd}{$ALL} += $count;
-    $cLgFdLd->[$$LgPg]{$Fd}{$$LdPd} = $count if $count >= $MIN_COUNT_FOR_MAIN_MODEL;
+    $cLgFdLd->[$$LgPg]{$ALL}        += $count;
+    $cLgFdLd->[$$LgPg]{$Fd}{$ALL}   += $count;
+    $cLgFdLd->[$$LgPg]{$Fd}{$$LdPd} += $count if $count >= $MIN_COUNT_FOR_MAIN_MODEL;
 }
-$cPgFdLd->{$ALL} = $total;
+$cPgFdLd->{$ALL}{$ALL}{$ALL} = $total;
 
 print STDERR "Total = $total edges\n";
 print STDERR "Saving...\n";
