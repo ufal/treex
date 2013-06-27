@@ -176,7 +176,11 @@ sub fix_auxp
         {
             # There is no reason for prepositions to receive AuxY.
             # AuxY is meant for "other adverbs and particles, i.e. those that cannot be included elsewhere".
-            if($node->afun() eq 'AuxY')
+            # AuxM is meant for particles that modify the meaning of verbs.
+            # Some of them are tagged and behave like prepositions and I don't see why we couldn't give them AuxP.
+            # Example: nahwa išrína áman (about twenty years)
+            # Example 2: siwá li 13600 sarínin (except for 13600 beds)
+            if($node->afun() =~ m/^(AuxY|AuxM)$/)
             {
                 $node->set_afun('AuxP');
             }
