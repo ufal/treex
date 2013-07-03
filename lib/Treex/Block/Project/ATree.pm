@@ -23,6 +23,11 @@ sub project {
 	my @target_nodes = $target_root->get_descendants( { ordered => 1 } );
 	my @source_nodes = $source_root->get_descendants( { ordered => 1 } );
 
+        # flatten the target tree first, to avoid possibly cycles when this projection is applied repeatedly
+        foreach my $target_node (@target_nodes) {
+            $target_node->set_parent($target_root);
+        }
+
 	# initialization of the projected tree
 	if ( $self->modifier_dir eq 'mod_prev' ) {
 		if ( scalar(@target_nodes) >= 2 ) {
