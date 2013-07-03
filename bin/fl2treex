@@ -44,8 +44,10 @@ foreach my $fl_filename (@fl_files) {
         $output_file_stem = $output_dir."/".$output_file_stem;
     }
 
-    $fl_filename =~ /(.+\/)(.+?)$/;
-    my $fl_directory = $1 || './';
+    my $fl_directory = './';
+    if ($fl_filename =~ /(.+\/)/) {
+        $fl_directory = $1;
+    }
 
     my $prev_treex_filename = '';
     my $processed_bundles = 0;
