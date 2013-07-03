@@ -53,13 +53,21 @@ foreach my $fl_filename (@fl_files) {
 
     my @bundle_roots;
 
+    my ($previous_treex_filename, $previous_bundle_number) = (0,0);
+
     while (<$LIST>) {
         if ( !/(.+)##(\d+)/ ) {
-            die("Unparsable node address in $fl_filename: $_ ");
+            log_warn("Unparsable node address in $fl_filename: $_ ");
+            next;
         }
 
         else {
             my ($treex_filename, $bundle_number) = ($1,$2);
+
+            next if $treex_filename eq $previous_treex_filename and $bundle_number == $previous_bundle_number;
+
+            ($previous_treex_filename, $previous_bundle_number) = ($treex_filename, $bundle_number);
+
             if ($fl_directory and $treex_filename !~ /^\//) {
                 $treex_filename =  $fl_directory.$treex_filename;
             }
@@ -71,7 +79,8 @@ foreach my $fl_filename (@fl_files) {
             }
 
             if ($bundle_number > @bundle_roots) {
-                log_fatal("Reference to a node exceeds the number of bundles in the file: $bundle_number > ".scalar(@bundle_roots) );
+                log_fatal("Reference to a node exceeds the number of bundles in the file: $bundle_number > "
+                              .scalar(@bundle_roots) );
             }
 
             if ($bundle_roots[$bundle_number-1]) {
