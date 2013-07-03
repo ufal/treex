@@ -185,6 +185,31 @@ sub fix_auxp
                 $node->set_afun('AuxP');
             }
         }
+        # Compound prepositions. Example:
+        # "bihasabi" (according to) is split during second tokenization into
+        # "bi" (by, with) and "hasabi" (according to; "hasb" is a noun meaning "reckoning", "calculation")
+        # Original annotation: Both "hasabi" and the noun are attached to "bi". "hasabi" gets "AuxY".
+        # In PDT, compound prepositions ("na rozdíl od") are annotated similarly but "hasabi" would get "AuxP" (despite being a leave).
+        # In HamleDT, we prefer to put the tokens of the compound preposition in a chain ("hasabi" on "bi", noun on "hasabi").
+        if($node->get_iset('pos') eq 'prep' && $node->afun() eq 'AuxY' && scalar($node->children())==0)
+        {
+            my $parent = $node->parent();
+            if($parent)
+            {
+                my @children = $parent->children();
+                if($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2)
+                {
+                    foreach my $child (@children)
+                    {
+                        if($child!=$node)
+                        {
+                            $child->set_parent($node);
+                        }
+                    }
+                    $node->set_afun('AuxP');
+                }
+            }
+        }
     }
 }
 
