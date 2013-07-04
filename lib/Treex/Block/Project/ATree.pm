@@ -108,7 +108,7 @@ sub attach_within_chunk {
 				$ns[1]->set_parent($root);
 			}
 		}
-	}	
+	}
 	# other options
 	# a) attach all nodes within the chunk to root node
 	# b) probabilistic attachment within the chunk
