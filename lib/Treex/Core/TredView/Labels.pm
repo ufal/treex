@@ -223,6 +223,9 @@ sub _anode_labels {
             $line2 .= '_' . $self->_colors->get( 'member', 1 ) . ( $1 ? $1 : $2 );
         }
     }
+    if ( $node->gloss ) {
+        $line2 .= ' ' . $self->_colors->get( 'gloss', 1 ) . $node->gloss;
+    }
 
     my $line3_1 = $node->tag ? $node->tag : '';
     my $line3_2 = $node->lemma ? $node->lemma : '';

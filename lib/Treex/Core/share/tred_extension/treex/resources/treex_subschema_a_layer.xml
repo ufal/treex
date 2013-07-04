@@ -53,6 +53,7 @@
       <member name="iset" type="iset.type"/>
       <member name="no_space_after" type="bool.type"/>
       <member name="translit"><cdata format="any"/></member>
+      <member name="gloss"><cdata format="any"/></member>
 
       <!-- former a-layer attributes -->
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>

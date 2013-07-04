@@ -4,7 +4,7 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::A2A::Translate';
 
-override '_get_sentence_and_node_positions' => sub {
+override 'get_sentence_and_node_positions' => sub {
     my ( $self, $zone ) = @_;
 
     my $sentence = $zone->sentence;
@@ -18,7 +18,7 @@ override '_get_sentence_and_node_positions' => sub {
 
         my $form = $node->no_space_after ? $node->form : $node->form . ' ';
         my $formlen = length $form;
-        if ( $form =~ /^_/ ) {
+        if ( $form =~ /^(_|NULL)/ ) {
 
             # cut out from $sentence
             my $pre = substr $sentence, 0, $position;

@@ -4,7 +4,11 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::W2W::Translate';
 
-has wild_name => ( is => 'rw', isa => 'Str', default => 'translation' );
+has save_to_gloss => ( is => 'rw', isa => 'Bool', default => 1 );
+
+has save_to_wild => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has wild_name => ( is => 'rw', isa => 'Str', default => 'gloss' );
 
 has position2node => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
@@ -17,15 +21,33 @@ override '_build_translator' => sub {
     return $translator;
 };
 
-override '_get_translation' => sub {
+override 'has_translation' => sub {
     my ( $self, $zone ) = @_;
 
-    my $sentence = $self->_get_sentence_and_node_positions($zone);
+    my $result1 = $self->old_translation($zone) ne '';   
+    my $result2 = $result1
+    || ($self->save_to_gloss && any {
+            defined $_->gloss && $_->gloss ne ''
+        } $zone->get_atree()->get_root()->get_descendants());
+    my $id = $self->target_language . '_' . $self->target_selector;
+    my $result = $result2
+    || ($self->save_to_wild && any {
+            defined $_->wild->{ $self->wild_name }->{$id}
+            && $_->wild->{ $self->wild_name }->{$id} ne ''
+        } $zone->get_atree()->get_root()->get_descendants());
+
+    return $result;
+};
+
+override 'get_translation' => sub {
+    my ( $self, $zone ) = @_;
+
+    my $sentence = $self->get_sentence_and_node_positions($zone);
 
     return $self->_translator->translate_align($sentence);
 };
 
-sub _get_sentence_and_node_positions {
+sub get_sentence_and_node_positions {
     my ($self, $zone) = @_;
 
     # precompute node positions
@@ -48,17 +70,35 @@ sub _get_sentence_and_node_positions {
     return $zone->sentence;
 }
 
-override '_set_translation' => sub {
+override 'delete_translation' => sub {
+    my ( $self, $zone ) = @_;
+
+    super();
+    
+    my @nodes = $zone->get_atree()->get_root()->get_descendants();
+    foreach my $node (@nodes) {
+        if ( $self->save_to_gloss ) {
+            $node->set_gloss( '' );
+        }
+        if ( $self->save_to_wild ) {
+            my $id = $self->target_language . '_' . $self->target_selector;
+            $node->wild->{ $self->wild_name }->{$id} = '';
+        }
+    }
+
+    return;
+};
+
+override 'set_translation' => sub {
     my ( $self, $translation_result, $zone ) = @_;
 
     my $translation = $translation_result->{translation};
-    if ( $self->SUPER::_set_translation( $translation, $zone ) ) {
+    if ( $self->SUPER::set_translation( $translation, $zone ) ) {
 
         # success
         # sentence has already been set in SUPER
 
         # store the translations
-        my $id = $self->target_language . '_' . $self->target_selector;
         foreach my $aligninfo ( @{ $translation_result->{align} } ) {
 
             my $word     = $aligninfo->{word};
@@ -66,21 +106,15 @@ override '_set_translation' => sub {
 
             # normalize position;
             # should not be needed, but should not die on this either...
-            while ( !defined $self->position2node->{$position} ) {
+            my $node = $self->position2node->{$position};
+            while ( !defined $node ) {
                 log_warn "Position $position for '$word' not matched, have to adjust...";
                 $position--;
+                $node = $self->position2node->{$position};
             }
 
-            # set the wild attribute
-            my $node = $self->position2node->{$position};
-            if ( defined $node->wild->{ $self->wild_name }->{$id} ) {
-                $node->wild->{ $self->wild_name }->{$id} .= " $word";
-            }
-            else {
-                $node->wild->{ $self->wild_name }->{$id} = $word;
-            }
-
-            # log_info $node->form . ': ' . $word;
+            # set the translation
+            $self->set_node_translation($node, $word);
         }
 
         return 1;
@@ -93,6 +127,22 @@ override '_set_translation' => sub {
     }
 
 };
+
+sub set_node_translation {
+    my ($self, $node, $translation) = @_;
+
+    if ( $self->save_to_gloss ) {
+        $node->set_gloss( $self->concatenate($node->gloss, $translation) );
+    }
+
+    if ( $self->save_to_wild ) {
+        my $id = $self->target_language . '_' . $self->target_selector;
+        $node->wild->{ $self->wild_name }->{$id} = $self->concatenate(
+            $node->wild->{ $self->wild_name }->{$id}, $translation );
+    }
+
+    return;
+}
 
 1;
 
@@ -108,11 +158,14 @@ Not only sets the full sentence as L<Treex::Block::W2W::Translate>, but also
 sets translations of individual a-nodes, using the alignment provided by Google
 Translate.
 
-The translations are stored into wild attributes of the nodes - by default into
-C<node-&gt;wild-&gt;{translation}-&gt;{language_selector}>,
-e.g. C<node-&gt;wild-&gt;{translation}-&gt;{en_GT}> if default C<wild_name>,
+The translations are stored into the C<gloss> attributes of the nodes.
+They also can be stored into wild attributes of the nodes - by default into
+C<node-&gt;wild-&gt;{gloss}-&gt;{language_selector}>,
+e.g. C<node-&gt;wild-&gt;{gloss}-&gt;{en_GT}> if default C<wild_name>,
 C<target_language>
 and C<target_selector> are used.
+This is useful if translating into several target languages, as the C<gloss>
+attribute can easily hold one translation only.
 
 Otherwise is similar to L<Treex::Block::W2W::Translate>.
 
@@ -121,12 +174,11 @@ Uses L<Treex::Tool::GoogleTranslate::APIv1>.
 =head1 SYNOPSIS
  
  # translate all Bulgarian sentences in the file to English, into en_GT zone,
- # storing the translation of each individual node into
- # $node->wild{translation}->{en_GT}
+ # storing the translation of each individual node into $node->gloss
  treex -s A2A::Translate language=bg -- bg_file.treex.gz
 
- # translate to Czech, to cs_GOOGLE selector
- treex -s A2A::Translate language=bg target_language=cs target_selector=GOOGLE -- bg_file.treex.gz
+ # translate to Czech, store also to $node->wild->{gloss}->{cs_GOOGLE}
+ treex -s A2A::Translate language=bg save_to_wild=1 target_language=cs target_selector=GOOGLE -- bg_file.treex.gz
 
  # translate only first 5 sentences
  treex -s A2A::Translate language=bg sid='s1 s2 s3 s4 s5' -- bg_file.treex.gz
@@ -135,12 +187,18 @@ Uses L<Treex::Tool::GoogleTranslate::APIv1>.
 
 =over
 
+=item save_to_gloss
+
+C<1> to store the translation into the C<gloss> attributes of a-nodes. Default is C<1>.
+
+=item save_to_wild
+
+C<1> to store the translation into wild attributes of a-nodes. Default is C<0>.
+
 =item wild_name
 
 The name of the wild attribute to store the translations in on a-nodes.
-The default is C<translation>.
-
-(This is the only added attribute wrt L<Treex::Block::W2W::Translate>.)
+The default is C<gloss>.
 
 =item language
 

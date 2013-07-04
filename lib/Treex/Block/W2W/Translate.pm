@@ -6,7 +6,10 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::GoogleTranslate::APIv1;
 
+#use Moose::Util::TypeConstraints;
+
 has '+language' => ( required => 1 );
+has 'language_for_google' => ( is => 'rw', isa => 'Str', default => '' );
 
 has 'target_language' => ( is => 'rw', isa => 'Str', default => 'en' );
 has 'target_selector' => ( is => 'rw', isa => 'Str', default => 'GT' );
@@ -15,6 +18,14 @@ has auth_token         => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has auth_token_in_file => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 
 has sid => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
+
+has overwrite => (
+    is => 'rw',
+    isa => enum(['skip', 'replace', 'concatenate']),
+    default => 'skip',
+);
+
+# TODO: retries
 
 # translator API
 has _translator => (
@@ -41,7 +52,10 @@ sub _build_translator {
         {
             auth_token         => $self->auth_token,
             auth_token_in_file => $self->auth_token_in_file,
-            src_lang           => $self->language,
+            src_lang           =>
+                ($self->language_for_google
+                    ||
+                $self->language),
             tgt_lang           => $self->target_language,
             align              => 0,
             nbest              => 0,
@@ -76,19 +90,67 @@ sub process_zone {
         return;
     }
 
-    my $translation = $self->_get_translation( $zone );
-    $self->_set_translation( $translation, $zone );
+    if ( $self->has_translation( $zone ) ) {
+        if ( $self->overwrite eq 'skip' ) {
+            log_info "$sid: there already is a translation, skipping...";
+            return;
+        }
+        elsif ( $self->overwrite eq 'replace' ) {
+            $self->delete_translation( $zone );
+            log_info "$sid: there already is a translation, deleting...";
+            # and continue translating
+        }
+        else {
+            # concatenate
+            log_info "$sid: there already is a translation, concatenating...";
+            # and continue translating
+        }
+    }
+    my $translation = $self->get_translation( $zone );
+    $self->set_translation( $translation, $zone );
 
     return;
 }
 
-sub _get_translation {
+sub has_translation {
+    my ($self, $zone) = @_;
+
+    return ($self->old_translation($zone) ne '');
+}
+
+sub old_translation {
+    my ($self, $zone) = @_;
+
+    my $translation = '';
+    my $translation_zone = $zone->get_bundle->get_zone(
+            $self->target_language,
+            $self->target_selector
+        );
+    if ( defined $translation_zone && defined $translation_zone->sentence()) {
+        $translation = $translation_zone->sentence();
+    }
+
+    return $translation;
+}
+
+sub delete_translation {
+    my ( $self, $zone ) = @_;
+
+    $zone->get_bundle->get_or_create_zone(
+        $self->target_language,
+        $self->target_selector
+    )->set_sentence('');
+
+    return;
+}
+
+sub get_translation {
     my ( $self, $zone ) = @_;
 
     return $self->_translator->translate_simple($zone->sentence);
 }
 
-sub _set_translation {
+sub set_translation {
     my ( $self, $translation, $zone ) = @_;
 
     my $sid = $zone->get_bundle->id;
@@ -99,7 +161,12 @@ sub _set_translation {
         $zone->get_bundle->get_or_create_zone(
             $self->target_language,
             $self->target_selector
-        )->set_sentence($translation);
+        )->set_sentence(
+            $self->concatenate(
+                $self->old_translation($zone),
+                $translation
+            )
+        );
 
         log_info "Translated $sid " .
             $self->language . ":'" . $zone->sentence . "'" .
@@ -111,6 +178,17 @@ sub _set_translation {
         # failure
         log_warn "$sid: No translation generated - no translation saved!";
         return 0;
+    }
+}
+
+sub concatenate {
+    my ($self, $old, $new) = @_;
+    
+    if ( defined $old && $old ne '' ) {
+        return "$old $new";
+    }
+    else {
+        return $new;
     }
 }
 
@@ -148,6 +226,15 @@ block already exists and I am not touching it not to break anything.)
 =item language
 
 Source language. Required.
+
+=item language_for_google
+
+Set if the language identifier used by Google Translate is different from
+your language identifier.
+See L<https://developers.google.com/translate/v2/using_rest#language-params>
+for a list of languages supported by Google Translate and their codes.
+
+Defaults to empty string, i.e. use C<language> for Google as well.
 
 =item target_language
 
@@ -188,6 +275,30 @@ it when finished.
 File containing the C<auth_token>.
 Defaults to C<~/.gta> (cross-platform solution is used, i.e. C<~> is the user
 home directory as returned by L<File::HomeDir>).
+
+=item overwrite
+
+What happens if the translation (with the given target language and selector) is
+already set. Supported values are:
+
+=over
+
+=item skip
+
+Do not perform the translation at all. (Useful e.g. if you have partially translated
+files.)
+This is the default.
+
+=item replace
+
+Delete the old translation. Is deleted even if translation fails (to ensure
+consistency).
+
+=item concatenate
+
+Concatenate the old translation with the new one.
+
+=back
 
 =back
 
