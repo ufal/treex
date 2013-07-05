@@ -10,6 +10,10 @@ has save_to_wild => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has wild_name => ( is => 'rw', isa => 'Str', default => 'gloss' );
 
+has save_to_tree => ( is => 'rw', isa => 'Bool', default => 1 );
+
+has alignment_type => ( is => 'rw', isa => 'Str', default => 'gloss' );
+
 has position2node => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 override '_build_translator' => sub {
@@ -24,20 +28,45 @@ override '_build_translator' => sub {
 override 'has_translation' => sub {
     my ( $self, $zone ) = @_;
 
-    my $result1 = $self->old_translation($zone) ne '';   
+    # sentence
+    my $result1 = $self->old_translation($zone) ne '';
+    # or gloss attributes
     my $result2 = $result1
     || ($self->save_to_gloss && any {
             defined $_->gloss && $_->gloss ne ''
         } $zone->get_atree()->get_root()->get_descendants());
+    # or wild attributes
     my $id = $self->target_language . '_' . $self->target_selector;
-    my $result = $result2
+    my $result3 = $result2
     || ($self->save_to_wild && any {
             defined $_->wild->{ $self->wild_name }->{$id}
             && $_->wild->{ $self->wild_name }->{$id} ne ''
         } $zone->get_atree()->get_root()->get_descendants());
+    # or tree
+    my $result = $result3
+    || ($self->save_to_tree && defined $self->get_translation_tree($zone));
 
     return $result;
 };
+
+sub get_translation_tree {
+    my ($self, $zone, $createIfNotExists) = @_;
+
+    my $root = undef;
+    my $bundle = $zone->get_bundle();
+    if ( $bundle->has_tree(
+            $self->target_language, 'a', $self->target_selector)
+    ) {
+        $root = $bundle->get_tree(
+            $self->target_language, 'a', $self->target_selector);
+    }
+    elsif ( $createIfNotExists ) {
+        $root = $bundle->create_tree(
+            $self->target_language, 'a', $self->target_selector);
+    }
+
+    return $root;
+}
 
 override 'get_translation' => sub {
     my ( $self, $zone ) = @_;
@@ -85,6 +114,13 @@ override 'delete_translation' => sub {
             $node->wild->{ $self->wild_name }->{$id} = '';
         }
     }
+    if ( $self->save_to_tree ) {
+        if ( defined $self->get_translation_tree($zone) ) {
+            $zone->get_bundle->get_zone(
+                $self->target_language, $self->target_selector
+            )->remove_tree('a');
+        }
+    }
 
     return;
 };
@@ -99,6 +135,13 @@ override 'set_translation' => sub {
         # sentence has already been set in SUPER
 
         # store the translations
+        my $last = '';
+        my $trnode;
+        my $trroot;
+        if ( $self->save_to_tree ) {
+            $trroot = $self->get_translation_tree($zone, 1);
+            $trnode = $trroot;
+        }
         foreach my $aligninfo ( @{ $translation_result->{align} } ) {
 
             my $word     = $aligninfo->{word};
@@ -115,6 +158,18 @@ override 'set_translation' => sub {
 
             # set the translation
             $self->set_node_translation($node, $word);
+            if ( $self->save_to_tree ) {
+                if ( $word ne $last ) {
+                    # add node
+                    my $lastnode = $trnode;
+                    $trnode = $trroot->create_child({form => $word});
+                    $trnode->shift_after_node($lastnode);
+                }
+                # add alignment
+                $node->add_aligned_node($trnode, $self->alignment_type);
+            }
+
+            $last = $word;
         }
 
         return 1;
@@ -199,6 +254,19 @@ C<1> to store the translation into wild attributes of a-nodes. Default is C<0>.
 
 The name of the wild attribute to store the translations in on a-nodes.
 The default is C<gloss>.
+
+=item save_to_tree
+
+C<1> to store the translation into a flat tree. The nodes of the source tree will be
+aligned to nodes of the translation tree, with the alignment type equal to
+C<alignment_type>.
+
+Default is C<1>.
+
+=item alignment_type
+
+The type to set for alignment links to translation tree if C<save_to_tree>.
+Default is C<gloss>.
 
 =item language
 
