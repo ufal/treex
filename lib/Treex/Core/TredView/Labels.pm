@@ -223,6 +223,9 @@ sub _anode_labels {
             $line2 .= '_' . $self->_colors->get( 'member', 1 ) . ( $1 ? $1 : $2 );
         }
     }
+    if ( $node->translit ) {
+        $line2 .= ' ' . $self->_colors->get( 'translit', 1 ) . $node->translit;
+    }
     if ( $node->gloss ) {
         $line2 .= ' ' . $self->_colors->get( 'gloss', 1 ) . $node->gloss;
     }

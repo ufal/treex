@@ -15,7 +15,7 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
 has [
-    qw(afun is_parenthesis_root edge_to_collapse is_auxiliary gloss)
+    qw(afun is_parenthesis_root edge_to_collapse is_auxiliary translit gloss)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {

@@ -57,6 +57,7 @@ sub _build_colors {
         'formeme'     => '#b000b0',
         'tag'         => '#004048',
         'tag_feat'    => '#7098A0',
+        'translit'    => '#444400',
         'gloss'       => '#888800',
 
         'clause0' => '#ff00ff',    #magenta
