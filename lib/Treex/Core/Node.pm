@@ -638,10 +638,36 @@ sub get_aligned_nodes {
     return ( undef, undef );
 }
 
+sub get_aligned_nodes_by_tree {
+    my ($self, $lang, $selector) = @_;
+    my @nodes = ();
+    my @types = ();
+    my $links_rf = $self->get_attr('alignment');
+    if ($links_rf) {
+        my $document = $self->get_document;
+        foreach my $l_rf (@{$links_rf}) {
+        	if ($l_rf->{'counterpart.rf'} =~ /^(a|t)_tree-$lang(_$selector)?-.+$/) {
+        		my $n = $document->get_node_by_id( $l_rf->{'counterpart.rf'} );
+        		my $t = $l_rf->{'type'};
+        		push @nodes, $n;
+        		push @types, $t;
+        	}
+        }
+        return ( \@nodes, \@types ) if 	scalar(@nodes) > 0 ;	
+    }
+    return ( undef, undef );
+}
+
 sub get_aligned_nodes_of_type {
-    my ( $self, $type_regex ) = @_;
+    my ( $self, $type_regex, $lang, $selector ) = @_;
     my @nodes;
-    my ( $n_rf, $t_rf ) = $self->get_aligned_nodes();
+    my ( $n_rf, $t_rf );
+    if ((defined $lang) && (defined $selector)) {
+    	( $n_rf, $t_rf ) = $self->get_aligned_nodes_by_tree($lang, $selector);
+    }
+    else {
+    	( $n_rf, $t_rf ) = $self->get_aligned_nodes();	
+    }    
     return if !$n_rf;
     my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
     while ( my ( $node, $type ) = $iterator->() ) {
