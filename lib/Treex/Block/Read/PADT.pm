@@ -223,9 +223,10 @@ override '_convert_atree' => sub
             # Decompose morphological tag to CoNLL features, except for part of speech.
             # It will facilitate training of the Malt Parser.
             my @tagchars = split(//, $treex_node->tag());
-            for(my $i = 1; $i<=$#tagchars; $i++)
+            my @feanames = ('POS', 'SubPOS', 'Mood', 'Voice', 'f5', 'Person', 'Gender', 'Number', 'Case', 'Defin');
+            for(my $i = 1; $i<=9; $i++)
             {
-                push(@features, "f$i=$tagchars[$i]") unless($tagchars[$i] eq '-');
+                push(@features, "$feanames[$i]=$tagchars[$i]") unless(!defined($tagchars[$i]) || $tagchars[$i] eq '-');
             }
         }
         else
