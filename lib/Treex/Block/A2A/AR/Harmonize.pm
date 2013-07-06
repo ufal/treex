@@ -143,6 +143,15 @@ sub fix_coap_ismember
                 $children[0]->set_is_member(1);
                 $children[1]->set_is_member(1);
             }
+            # There was one occurrence of the following error.
+            elsif($afun eq 'Apos' && $node->get_iset('pos') eq 'conj' && scalar(@children)>2)
+            {
+                $node->set_afun('Coord');
+                foreach my $child (@children)
+                {
+                    $child->set_is_member(1);
+                }
+            }
             # Apposition with one child? I do not understand the examples but I assume that these are actually members of appositions that lack the joining node.
             # ###!!! This may be quite wrong! Get translations of the examples!
             elsif($afun eq 'Apos' && scalar(@children)==1)
@@ -180,7 +189,10 @@ sub fix_auxp
             # Some of them are tagged and behave like prepositions and I don't see why we couldn't give them AuxP.
             # Example: nahwa išrína áman (about twenty years)
             # Example 2: siwá li 13600 sarínin (except for 13600 beds)
-            if($node->afun() =~ m/^(AuxY|AuxM)$/)
+            # AuxE marks "emphatic particles". It is occasionally observed at prepositions. It is probably an annotation error.
+            # Occasionally we see prepositions tagged by other afuns (Atr, Obj, Adv). I asked Ota Smrž to look at the examples
+            # but my current hypothesis is that these are annotation errors.
+            if($node->afun() =~ m/^(AuxY|AuxM|AuxE|Atr|Obj|Adv)$/)
             {
                 $node->set_afun('AuxP');
             }
@@ -191,13 +203,17 @@ sub fix_auxp
         # Original annotation: Both "hasabi" and the noun are attached to "bi". "hasabi" gets "AuxY".
         # In PDT, compound prepositions ("na rozdíl od") are annotated similarly but "hasabi" would get "AuxP" (despite being a leave).
         # In HamleDT, we prefer to put the tokens of the compound preposition in a chain ("hasabi" on "bi", noun on "hasabi").
+        # Example 2:
+        # "bi-al-qurbi" (with nearness) "min" (from) "qaryati" (village) = near the village
+        # Original annotation: "min" is the head. "bi", "al-qurbi" and "qaryati" are attached to it (AuxY/RR, AuxY/NN, AtrAdv/NN).
         if($node->get_iset('pos') eq 'prep' && $node->afun() eq 'AuxY' && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent)
             {
                 my @children = $parent->children();
-                if($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2)
+                # bihasabi
+                if($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
                 {
                     foreach my $child (@children)
                     {
@@ -207,6 +223,32 @@ sub fix_auxp
                         }
                     }
                     $node->set_afun('AuxP');
+                }
+                # min chilála (during)
+                elsif($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
+                {
+                    $node->set_parent($parent->parent());
+                    $node->set_afun('AuxP');
+                    $parent->set_parent($node);
+                    if($parent->is_member())
+                    {
+                        $node->set_is_member(1);
+                        $parent->set_is_member(0);
+                    }
+                }
+                # bilqurbi min
+                elsif($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==3 && $children[1]->afun() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
+                {
+                    $children[1]->set_parent($node);
+                    $children[1]->set_afun('AuxP');
+                    $node->set_parent($parent->parent());
+                    $node->set_afun('AuxP');
+                    $parent->set_parent($node);
+                    if($parent->is_member())
+                    {
+                        $node->set_is_member(1);
+                        $parent->set_is_member(0);
+                    }
                 }
             }
         }
