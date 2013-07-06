@@ -16,6 +16,7 @@ sub process_zone
     $self->attach_final_punctuation_to_root($root);
     $self->fill_in_lemmas($root);
     $self->fix_coap_ismember($root);
+    $self->restructure_coordination($root);
     $self->fix_auxp($root);
 }
 
@@ -168,6 +169,30 @@ sub fix_coap_ismember
             ###!!! Další případy: uzel se spojkou wa má Apos (ne Coord!), má tři děti - předměty slovesa, které je jeho rodičem.
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in PADT. Even though
+# the harmonized shape will be almost identical (both are Prague styles), there
+# are slight deviations that we want to polish by decoding and re-encoding the
+# coordinations. For example, in PADT the first conjunction serves as the head
+# of multi-conjunct coordination, while HamleDT uses the last conjunction.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_prague($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
 }
 
 #------------------------------------------------------------------------------
