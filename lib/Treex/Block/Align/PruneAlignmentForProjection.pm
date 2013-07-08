@@ -11,32 +11,25 @@ sub process_zone {
 	my ($self, $zone) = @_;
 	my $source_atree = $zone->get_atree();
 	my $target_atree = $zone->get_bundle()->get_zone($self->target_language, $self->target_selector)->get_atree();
+
 	# prune one-to-many
 	$self->prune_one_to_many($source_atree, $target_atree);	
 	# prune many-to-one	
 	$self->prune_many_to_one($source_atree, $target_atree);
-	# prune one-to-one	
-	$self->prune_one_to_one($source_atree, $target_atree);	
+
 }
 
 sub prune_one_to_many {
 	my ($self, $source_tree, $target_tree) = @_;
 	my @nodes = $source_tree->get_descendants( { ordered => 1 } );
 	foreach my $node (@nodes) {
-	    my ($alinks, $types) = $node->get_aligned_nodes();
-	    if ($alinks) {
-			my @aligned_nodes = @{$alinks};
-		    my @a_types = @{$types};
-		    my $tmpval = $self->alignment_type; 	
-			my @atype_ind = grep {$a_types[$_] =~ /^($tmpval)$/}0..$#aligned_nodes;
-			my @align_nodes_of_type = @aligned_nodes[@atype_ind];
-	    	if (scalar(@align_nodes_of_type) > 1) {
-	    		my @aligned_nodes_sorted = sort {$a->ord <=> $b->ord}@align_nodes_of_type;
+	    my @align_nodes = $node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->target_language, $self->target_selector);
+	    	if (scalar(@align_nodes) > 1) {
+	    		my @aligned_nodes_sorted = sort {$a->ord <=> $b->ord}@align_nodes;
 	    		foreach my $i (0..($#aligned_nodes_sorted-1)){
 	    			$node->delete_aligned_node($aligned_nodes_sorted[$i], $self->alignment_type);	
 	    		}	    		
 	    	}
-	    }
 	}
 	return;
 }
@@ -54,11 +47,6 @@ sub prune_many_to_one {
 		}
 	}
 	return;
-}
-
-sub prune_one_to_one {
-	my ($self, $source_tree, $target_tree) = @_;	
-	return;	
 }
 
 1;
@@ -95,8 +83,6 @@ to the order in which the node appears in the sentence) of the alignment links.
 prunes multiple source nodes aligned to a single target node. This method reduces many-to-one 
 alignment into one-to-one alignment by keeping only the last aligned node and deleting alignments
 from remaining source nodes to the target node.
-
-=item C<prune_one_to_one>
 
 =back
 
