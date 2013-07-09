@@ -88,7 +88,7 @@ Treex::Block::Write::AttributeSentences
 =head1 SYNOPSIS
 
   # print "Moses factored" formar: one sentence per line, each a-node as form|lemma|tag
-  treex layer=a attributes=form,lemma,tag -- data.treex.gz
+  treex Write::AttributeSentences layer=a attributes=form,lemma,tag -- data.treex.gz
 
   # print form, lemma, tag and parent lemma; tab-separated values, one word per line
   treex Read::Treex from=data.treex.gz Write::AttributeSentences to=- \
