@@ -3,8 +3,15 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+# source language
+has '+language' => ( required => 1 );
+has '+selector' => ( required => 1 );
+
+# alignment (gold) in target language 
 has 'gold_alignment_type' => (isa => 'Str', is => 'ro', default => 'alignment');
 has 'gold_selector' => (isa => 'Str', is => 'ro', required => 1);
+
+# alignment (hypothesis) in target language
 has 'target_language' => (isa => 'Str', is => 'ro', required => 1);
 has 'target_selector' => (isa => 'Str', is => 'ro', required => 1);
 has 'target_alignment_type' => (isa => 'Str', is => 'ro', default => 'berkeley');
@@ -53,6 +60,8 @@ sub process_end {
 	# --------------------------------
 	my $AER = 100;
 	my $den = $proposed_edges + $sure_edges;
+	# 'possible_intersection' is at least 'sure_intersection'
+	# TODO: should replace with the correct estimate
 	my $num = $sure_intersection * 2;
 	if ($den > 0) {
 		$AER = (1 - ($num / $den)) * 100;
@@ -70,10 +79,22 @@ __END__
 
 Treex::Block::Eval::AER - Calculates Alignment Error Rate (AER) between manual and hypothesis alignments.
 
+=head1 SYNOPSIS
+
+ # To calculate AER between two different alignments between source and target languages 
+ # source language: language='en' selector=''
+ # target language: target_language='ta' 
+ # 1st alignment (gold) in target language: gold_selector='' gold_alignment_type='human' 
+ # 2nd alignment (hypothesis) in target language: target_selector='berk' target_alignment_type='berkeley'
+ treex -Len Util::SetGlobal selector='' Eval::AER gold_selector='' gold_alignment_type='human' target_language='ta' target_selector='berk' target_alignment_type='berkeley'
+
+=head1 DESCRIPTION
+
+This block calculates Alignment Error Rate (AER) between two alignments. 
+
 =head1 TODO
 
 1. handle 'possible' alignments
-
 
 =head1 AUTHOR
 
