@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 has 'eval_is_member' => ( is => 'ro', isa => 'Bool', default => 0 );
 has 'eval_is_shared_modifier' => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'eval_punc' => (isa => 'Bool', is => 'ro', default => 1);
 has sample_size => (
     is => 'ro',
     isa => 'Int',
@@ -19,11 +20,28 @@ has _sentences_in_current_sample => (is => 'rw', isa => 'Int', default => 0);
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my $ref_zone = $bundle->get_zone( $self->language, $self->selector );
-    my @ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
-    my @ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
-    my @ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
-    my @compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();
+	my $ref_zone;
+	my @ref_parents;
+	my @ref_is_member;
+	my @ref_is_shared_modifier;
+	
+	my @compared_zones;
+	
+	if ($self->eval_punc) {
+    	$ref_zone = $bundle->get_zone( $self->language, $self->selector );
+		@compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();    	
+	}	
+	else {
+		my $ref_zone_orig = $bundle->get_zone( $self->language, $self->selector ); 
+		$ref_zone = $self->clone_atree_with_no_punc($ref_zone_orig);
+				
+		my @compared_zones_orig = grep { ($_ ne $ref_zone_orig) && ($_ ne $ref_zone)  && $_->language eq $self->language } $bundle->get_all_zones();
+		@compared_zones = map{$self->clone_atree_with_no_punc($_)}@compared_zones_orig;
+	}
+	
+   	@ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+   	@ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+   	@ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
 
     $self->_set_number_of_nodes($self->_number_of_nodes + @ref_parents);
 
@@ -60,6 +78,13 @@ sub process_bundle {
     if ($self->sample_size && $self->_sentences_in_current_sample >= $self->sample_size){
         $self->print_stats();
     }
+    
+    # remove cloned 'no punc' zones
+    if (!$self->eval_punc) {
+    	$bundle->remove_zone($ref_zone->language, $ref_zone->selector);
+    	map{$bundle->remove_zone($_->language, $_->selector)}@compared_zones;
+    }
+    
     return;
 }
 
@@ -72,6 +97,30 @@ sub print_stats {
     $self->_set_sentences_in_current_sample(0);
     $self->_set_number_of_nodes(0);
     return;
+}
+
+sub clone_atree_with_no_punc {
+	my ($self, $z) = @_;
+	my $bundle = $z->get_bundle();
+	my $new_selector = $z->selector . 'nopunc';
+	my $no_punc_zone = $bundle->get_or_create_zone( $z->language, $new_selector);
+	my $atree_orig = $bundle->get_zone( $z->language, $z->selector )->get_atree();
+	my $atree_clone = $no_punc_zone->create_atree();
+	$atree_orig->copy_atree($atree_clone);
+	my @desc = 	$no_punc_zone->get_atree->get_descendants( { ordered => 1 } );
+	foreach my $n (@desc) {
+		if ($n->form =~ /[,\.]/ ) {
+			my $p = $n->parent;
+			if (!$n->is_leaf()) {
+				my @children = $n->get_children();
+				foreach my $c (@children) {
+					$c->set_parent($p);
+				}
+			} 
+			$n->remove();
+		}
+	}
+	return $no_punc_zone;	
 }
 
 sub process_end {
