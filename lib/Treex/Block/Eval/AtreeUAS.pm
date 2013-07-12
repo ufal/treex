@@ -109,7 +109,7 @@ sub clone_atree_with_no_punc {
 	$atree_orig->copy_atree($atree_clone);
 	my @desc = 	$no_punc_zone->get_atree->get_descendants( { ordered => 1 } );
 	foreach my $n (@desc) {
-		if ($n->form =~ /[,\.]/ ) {
+		if ($n->form =~ /^\p{IsP}$/ ) {
 			my $p = $n->parent;
 			if (!$n->is_leaf()) {
 				my @children = $n->get_children();
