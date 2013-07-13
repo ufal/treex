@@ -9,6 +9,8 @@ has gold_selector => ( isa => 'Treex::Type::Selector', is => 'ro', default => q{
 
 my %POS_count;
 my %POS_errors;
+my %form_count;
+my %form_errors;
 
 
 sub process_atree {
@@ -25,16 +27,21 @@ sub process_atree {
     }
 
     foreach my $i (0..$#anodes) {
+        my $form = $anodes[$i]->form;
+        $form_count{$form}++;
         my $POS = substr($anodes[$i]->tag,0,2);
         $POS_count{$POS}++;
         if ($anodes[$i]->get_parent->ord != $gold_anodes[$i]->get_parent->ord) {
             $POS_errors{$POS}++;
+            $form_errors{$form}++;
         }
     }
     return 1;
 }
 
 END {
+
+    print "Number of occurrences and absolute and relative error per 2letter POS prefix\n";
 
     foreach my $POS (sort {$POS_count{$b}<=>$POS_count{$a}} keys %POS_count) {
         print join "\t",(
@@ -46,6 +53,28 @@ END {
         print "\n";
 
     }
+
+
+    my $count;
+
+
+    print "Number of occurrences and absolute and relative error of most frequent words\n";
+    foreach my $form (sort {$form_count{$b}<=>$form_count{$a}} keys %form_count) {
+        $count++;
+        last if ($count>40);
+        print join "\t",(
+            $form,
+            $form_count{$form},
+            $form_errors{$form}||0,
+            sprintf("%.2f",($form_errors{$form}||0) / $form_count{$form})
+        );
+        print "\n";
+
+    }
+
+
+
+
 }
 
 
