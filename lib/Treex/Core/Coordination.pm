@@ -939,6 +939,108 @@ sub detect_moscow
 
 
 #------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects left-to-right
+# Stanford style.
+# This style allows limited representation of nested coordination. It cannot
+# distinguish ((A,B),C) from (A,B,C). Having nested coordination as the first
+# conjunct is a problem. Example treebank is Bulgarian.
+# - the root of the coordination is not marked
+# - conjuncts have wild->{conjunct}
+#   (the afun 'CoordArg' may have not survived normalization)
+# - conjunctions have wild->{coordinator}
+#   (the afun 'Coord' may have not survived normalization)
+# - punctuation lying to the left of a conjunct and attached to the first
+#   conjunct is considered delimiter
+# - the second and any consequent conjuncts, as well as all conjunctions and
+#   conjunct-delimiting punctuation are attached to the first conjunct.
+#   There is no recursion. If a non-first conjunct has a child that is also
+#   conjunct, then there is nested coordination.
+# - all other children of the first conjunct are its private modifiers
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
+#------------------------------------------------------------------------------
+sub detect_stanford
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    my $nontop = shift; # other than top level of recursion?
+    log_fatal("Missing node") unless(defined($node));
+    my $top = !$nontop;
+    ###!!!DEBUG
+    my $debug = 0;
+    if($debug)
+    {
+        my $form = $node->form();
+        $form = '' if(!defined($form));
+        if($top)
+        {
+            $node->set_form("T:$form");
+        }
+        else
+        {
+            $node->set_form("X:$form");
+        }
+    }
+    ###!!!END
+    my @children = $node->children();
+    my @conjuncts = grep {$_->wild()->{conjunct}} @children;
+    my $bottom = scalar(@conjuncts)==0;
+    if($bottom)
+    {
+        # No conjuncts found, so we do not look for delimiters.
+        return;
+    }
+    # Delimiting conjunctions are attached at the same level as conjuncts.
+    my @delimiters = grep {! $_->wild()->{conjunct} && $_->wild()->{coordinator}} @children;
+    my @modifiers = grep {! $_->wild()->{conjunct} && !$_->wild()->{coordinator}} @children;
+    # If we are here we have conjuncts.
+    if($top)
+    {
+        # Add the root conjunct.
+        # Note: root of the tree is never a conjunct! If this is the tree root, we are dealing with a deficient (probably clausal) coordination.
+        unless($node->is_root())
+        {
+            my $orphan = 0;
+            $self->add_conjunct($node, $orphan, @modifiers);
+            # Save the relation of the coordination to its parent.
+            $self->set_parent($node->parent());
+            $self->set_afun($node->afun());
+            $self->set_is_member($node->is_member());
+        }
+    }
+    # Add all non-root conjuncts.
+    foreach my $conjunct (@conjuncts)
+    {
+        my $orphan = 0;
+        my $nontop = 1;
+        my @partmodifiers = $conjunct->children();
+        $self->add_conjunct($conjunct, $orphan, @partmodifiers);
+    }
+    foreach my $delimiter (@delimiters)
+    {
+        my $symbol = $delimiter->afun() =~ m/^Aux[GX]$/;
+        my @partmodifiers = $delimiter->children();
+        $self->add_delimiter($delimiter, $symbol, @partmodifiers);
+    }
+    # If this is the top level, we now know all we can.
+    # It's time for a few more heuristics.
+    if($top)
+    {
+        $self->reconsider_distant_private_modifiers();
+    }
+    # Return the list of modifiers to the upper level.
+    # They will need it when they add me as a participant.
+    unless($top)
+    {
+        return @modifiers;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Examines private modifiers of the first (word-order-wise) conjunct. If they
 # lie after the last conjunct, the function reclassifies them as shared
 # modifiers. This is a heuristic that should work well with coordinations that

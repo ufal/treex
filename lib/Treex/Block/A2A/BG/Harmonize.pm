@@ -168,6 +168,7 @@ sub deprel_to_afun
         elsif ( $deprel eq 'conj' && $node->form() eq 'и' )
         {
             $node->set_afun('AuxZ');
+            $node->wild()->{coordinator} = 1;
         }
         elsif ( $deprel eq 'punct' )
         {
@@ -189,10 +190,12 @@ sub deprel_to_afun
         elsif ( $deprel eq 'conjarg' )
         {
             $node->set_afun('CoordArg');
+            $node->wild()->{conjunct} = 1;
         }
         elsif ( $deprel eq 'conj' )
         {
             $node->set_afun('AuxY');
+            $node->wild()->{coordinator} = 1;
         }
         elsif ( $deprel =~ m/^x?prepcomp$/ )
         {
@@ -336,6 +339,29 @@ sub process_auxiliary_verbs
         $self->lift_node( $node, 'AuxV' );
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Bulgarian
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_stanford($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_orphans();
+    push(@recurse, $coordination->get_children());
+    return @recurse;
+}
+
+
 
 #------------------------------------------------------------------------------
 # Collects members and delimiters of coordination. The BulTreeBank uses two
