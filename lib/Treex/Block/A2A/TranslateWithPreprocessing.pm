@@ -10,6 +10,7 @@ override 'get_sentence_and_node_positions' => sub {
     my $sentence = $zone->sentence;
 
     # precompute node positions
+    $self->set_position2node({});
     my @nodes = $zone->get_atree()->get_root()->get_descendants(
         { ordered => 1 }
     );

@@ -80,6 +80,7 @@ sub get_sentence_and_node_positions {
     my ($self, $zone) = @_;
 
     # precompute node positions
+    $self->set_position2node({});
     my @nodes = $zone->get_atree()->get_root()->get_descendants(
         { ordered => 1 }
     );
@@ -135,12 +136,11 @@ override 'set_translation' => sub {
         # sentence has already been set in SUPER
 
         # store the translations
-        my $last = '';
-        my $trnode;
+        my $last = undef;
+        my $trnode = undef;
         my $trroot;
         if ( $self->save_to_tree ) {
             $trroot = $self->get_translation_tree($zone, 1);
-            $trnode = $trroot;
         }
         foreach my $aligninfo ( @{ $translation_result->{align} } ) {
 
@@ -159,8 +159,13 @@ override 'set_translation' => sub {
             # set the translation
             $self->set_node_translation($node, $word);
             if ( $self->save_to_tree ) {
-                if ( $word ne $last ) {
-                    # add node
+                if ( !defined $trnode ) {
+                    # add the first trnode
+                    $trnode = $trroot->create_child({form => $word});
+                    $trnode->shift_after_node($trroot);
+                }
+                elsif ( $word ne $last ) {
+                    # add next node
                     my $lastnode = $trnode;
                     $trnode = $trroot->create_child({form => $word});
                     $trnode->shift_after_node($lastnode);
