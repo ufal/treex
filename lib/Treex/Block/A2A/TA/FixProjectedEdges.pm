@@ -13,6 +13,10 @@ sub process_atree {
 sub fix_en_projected_edges {
 	my ($self, $root) = @_;
 	my @desc =  $root->get_descendants( { ordered => 1 } );
+	
+	# ------------------------------
+	# Rules for improving projection
+	#-------------------------------
 
 	# (i) Attach PP to nearest verbs
 	# ------------------------------
@@ -36,6 +40,60 @@ sub fix_en_projected_edges {
 			}			
 		} 
 	}
+	
+	# (ii) In Tamil verbs of the form 'Nominal + Auxiliary', 'Auxiliary' should be the head and 
+	# 'nominal' should be the child.
+	@desc =  $root->get_descendants( { ordered => 1 } );
+	foreach my $n (@desc) {
+		my $p = $n->get_parent();
+		if (($n->tag =~ /^V[rtuwRTUW]/) && ($p != $root) && ($p->tag =~ /^NNN/)) {
+			my @children = grep { $_ != $n }$p->get_children();
+			$n->set_parent($p->get_parent());
+			map{ $_->set_parent($n) }@children;
+			$p->set_parent($n); 
+		}
+	}
+	
+	# ------------------------------
+	# Rules in general
+	#-------------------------------	
+	
+	# (i) Oblique nouns are most likely to be attached to the first non oblique noun following them.
+	@desc =  $root->get_descendants( { ordered => 1 } );
+	for my $i (0..($#desc-1)) {
+		if ($desc[$i]->tag =~ /^NO/) {
+			for my $j ($i+1..$#desc) {
+				if ($desc[$j]->tag =~ /^NN/) {
+					if (!$desc[$j]->is_descendant_of($desc[$i])) {
+						$desc[$i]->set_parent($desc[$j]);
+						last;						
+					}
+				}
+			}
+		}
+	}
+	
+	# (ii) verbal participles are most likely to be attached to the head of the verb phrases following them.
+	# The attachment need not be with the first verb phrase, it could be with any verb phrases provided they
+	# are preceded by verbal participles. 
+	@desc =  $root->get_descendants( { ordered => 1 } );
+	for my $i (0..($#desc-1)) {
+		if ($desc[$i]->tag =~ /^Vt/) {
+			my $p_vt = $desc[$i]->get_parent();
+			if (($p_vt != $root) && ($p_vt->tag !~ /^V/)) {
+				for my $j ($i+1..$#desc) {
+					if ($desc[$j]->tag =~ /^V/) {
+						if (!$desc[$j]->is_descendant_of($desc[$i])) {
+							$desc[$i]->set_parent($desc[$j]);
+							last;						
+						}
+					}					
+				}
+			}  
+		}
+	}
+
+	 
 }
 
 1;
