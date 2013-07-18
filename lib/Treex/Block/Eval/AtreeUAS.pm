@@ -3,10 +3,16 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has '+language' => ( required => 1 );
-has 'eval_is_member' => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'eval_is_shared_modifier' => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'eval_punc' => (isa => 'Bool', is => 'ro', default => 1);
+has '+language' 				=> ( required => 1 );
+
+has 'eval_is_member' 			=> ( is => 'ro', isa => 'Bool', default => 0 );
+has 'eval_is_shared_modifier' 	=> ( is => 'ro', isa => 'Bool', default => 0 );
+
+# evaluate punctuations 
+has 'eval_punc' 				=> ( is => 'ro', isa => 'Bool', default => 1 );
+# sentences with size 'sen_len' will not be evaluated
+has 'sen_len' 					=> ( is => 'ro', isa => 'Int', default => -1 ); 
+
 has sample_size => (
     is => 'ro',
     isa => 'Int',
@@ -43,42 +49,48 @@ sub process_bundle {
    	@ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
    	@ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
 
-    $self->_set_number_of_nodes($self->_number_of_nodes + @ref_parents);
+	if (($self->sen_len == -1) || (scalar(@ref_parents) <= $self->sen_len) ) {
+	    $self->_set_number_of_nodes($self->_number_of_nodes + @ref_parents);	
+	    foreach my $compared_zone (@compared_zones) {
+	        my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+	        my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+	        my @is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+	
+	        if ( @parents != @ref_parents ) {
+	            log_fatal 'There must be the same number of nodes in compared trees';
+	        }
+	        my $label = $compared_zone->get_label;
+	        my $ref_label = $ref_zone->get_label;
+	
+	        if (!$self->eval_punc) {
+	        	$label =~ s/nopunc$//;
+	        	$ref_label =~  s/nopunc$//;
+	        }
 
-    foreach my $compared_zone (@compared_zones) {
-        my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
-        my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
-        my @is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
-
-        if ( @parents != @ref_parents ) {
-            log_fatal 'There must be the same number of nodes in compared trees';
-        }
-        my $label = $compared_zone->get_label;
-        my $ref_label = $ref_zone->get_label;
-        foreach my $i ( 0 .. $#parents ) {
-            my $eqp = $parents[$i] == $ref_parents[$i];
-            my $eqm = $is_member[$i] == $ref_is_member[$i];
-            my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
-            $self->_same_as_ref->{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
-            $self->_same_as_ref->{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
-            $self->_same_as_ref->{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
-            $self->_same_as_ref->{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
-            # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
-            # For the sake of compatibility, we will output it only with the label, without extras.
-            if ( $eqp &&
-                 ( !$self->eval_is_member || $eqm ) &&
-                 ( !$self->eval_is_shared_modifier || $eqs )
-               ) {
-                $self->_same_as_ref->{$label}++;
-            }
-        }
-    }
-
-    $self->_set_sentences_in_current_sample($self->_sentences_in_current_sample + 1);
-    if ($self->sample_size && $self->_sentences_in_current_sample >= $self->sample_size){
-        $self->print_stats();
-    }
-    
+	        foreach my $i ( 0 .. $#parents ) {
+	            my $eqp = $parents[$i] == $ref_parents[$i];
+	            my $eqm = $is_member[$i] == $ref_is_member[$i];
+	            my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
+	            $self->_same_as_ref->{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
+	            $self->_same_as_ref->{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
+	            $self->_same_as_ref->{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
+	            $self->_same_as_ref->{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
+	            # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
+	            # For the sake of compatibility, we will output it only with the label, without extras.
+	            if ( $eqp &&
+	                 ( !$self->eval_is_member || $eqm ) &&
+	                 ( !$self->eval_is_shared_modifier || $eqs )
+	               ) {
+	                $self->_same_as_ref->{$label}++;
+	            }
+	        }
+	    }	
+	    $self->_set_sentences_in_current_sample($self->_sentences_in_current_sample + 1);
+	    if ($self->sample_size && $self->_sentences_in_current_sample >= $self->sample_size){
+	        $self->print_stats();
+	    }		
+	}
+	    
     # remove cloned 'no punc' zones
     if (!$self->eval_punc) {
     	$bundle->remove_zone($ref_zone->language, $ref_zone->selector);
@@ -143,6 +155,6 @@ Measure similarity (in terms of unlabeled attachment score) of a-trees in all zo
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky, David Marecek, Martin Popel
+# Copyright 2011-2013 Zdenek Zabokrtsky, David Marecek, Martin Popel, Loganathan Ramasamy
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
