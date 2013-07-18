@@ -355,9 +355,12 @@ sub detect_coordination
     $coordination->detect_stanford($node);
     # The caller does not know where to apply recursion because it depends on annotation style.
     # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
     # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_orphans();
-    push(@recurse, $coordination->get_children());
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    push(@recurse, $coordination->get_shared_modifiers());
+    push(@recurse, $coordination->get_private_modifiers($node));
     return @recurse;
 }
 

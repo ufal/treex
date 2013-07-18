@@ -993,12 +993,36 @@ sub detect_stanford
         return;
     }
     # Delimiting conjunctions are attached at the same level as conjuncts.
-    my @delimiters = grep {! $_->wild()->{conjunct} && $_->wild()->{coordinator}} @children;
-    my @modifiers = grep {! $_->wild()->{conjunct} && !$_->wild()->{coordinator}} @children;
+    # Distinguish delimiting form non-delimiting punctuation.
+    foreach my $child (@children)
+    {
+        if($child->get_iset('pos') eq 'punc')
+        {
+            my $rsibling = $child->get_right_neighbor();
+            ###!!! What if there is comma first, then quotation mark, then the conjunct?
+            ###!!! In the end the quotation mark should be attached to the conjunct but now we are in the middle of the normalization process.
+            if(defined($rsibling) && $rsibling->wild()->{conjunct})
+            {
+                $child->wild()->{coordinator} = 1;
+            }
+        }
+    }
+    my @delimiters = grep
+    {
+        ! $_->wild()->{conjunct} &&
+        $_->wild()->{coordinator}
+    }
+    @children;
+    my @modifiers = grep
+    {
+        ! $_->wild()->{conjunct} &&
+        ! $_->wild()->{coordinator}
+    }
+    @children;
     # If we are here we have conjuncts.
     if($top)
     {
-        # Add the root conjunct.
+        # Add the head conjunct.
         # Note: root of the tree is never a conjunct! If this is the tree root, we are dealing with a deficient (probably clausal) coordination.
         unless($node->is_root())
         {
@@ -1010,7 +1034,7 @@ sub detect_stanford
             $self->set_is_member($node->is_member());
         }
     }
-    # Add all non-root conjuncts.
+    # Add all non-head conjuncts.
     foreach my $conjunct (@conjuncts)
     {
         my $orphan = 0;

@@ -235,7 +235,7 @@ sub _shift_to_node {
 }
 
 ###!!! DZ: reverting to 7183, 2011-11-03.
-# This function by Martin is faster than the my own below but it does not always return correct results.
+# This function by Martin is faster than my own below but it does not always return correct results.
 # The key problem could be that it relies on ord values forming a contiguous sequence which might not always be true.
 # Go to devel/hamledt/nonprojectivity and test that make yields the same numbers for the old and the new method.
 sub is_nonprojective_does_not_work {
