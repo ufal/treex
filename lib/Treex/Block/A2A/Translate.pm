@@ -171,7 +171,7 @@ override 'set_translation' => sub {
                     $trnode->shift_after_node($lastnode);
                 }
                 # add alignment
-                $node->add_aligned_node($trnode, $self->alignment_type);
+                $trnode->add_aligned_node($node, $self->alignment_type);
             }
 
             $last = $word;
