@@ -3,97 +3,66 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'projected_from' => (isa => 'Str', is => 'ro', default => 'en');
+has 'tb_style' => (isa => 'Str', is => 'ro', default => 'tamiltb1.0');
+
+has 'source_language' => (isa => 'Str', is => 'ro', default => 'en');
+has 'source_selector' => (isa => 'Str', is => 'ro', default => '');
+has 'source_tb_style' => (isa => 'Str', is => 'ro', default => 'penn');
+has 'alignment_type'  => (isa => 'Str', is => 'ro', default => 'alignment');
+ 
 
 sub process_atree {
 	my ($self, $root) = @_;	
-	$self->fix_en_projected_edges($root) if $self->projected_from eq 'en';
+	$self->fix_projected_edges($root);
 }
 
-sub fix_en_projected_edges {
+sub fix_projected_edges {
 	my ($self, $root) = @_;
-	my @desc =  $root->get_descendants( { ordered => 1 } );
 	
-	# ------------------------------
-	# Rules for improving projection
-	#-------------------------------
+	if (($self->source_tb_style eq 'penn') && ($self->tb_style eq 'tamiltb1.0')) {
+		
+		# source descendants
+		my $source_root = $root->get_bundle->get_zone( $self->source_language, $self->source_selector )->get_atree();
+		my @source_desc = $source_root->get_descendants( { ordered => 1 } );
 
-	# (i) Attach PP to nearest verbs
-	# ------------------------------
-	# In Tamil, postpositional phrases (PP) tend to be attached 
-	# to nearest clausal heads or verb phrases. 
-	# -------------------------------
-	foreach my $n (@desc) {
-		my $p = $n->get_parent();
-		if (($n->tag =~ /^P/) && ($p != $n) && ($p != $root) && ($p->tag !~ /^V/)) {
-			my $prev = $p;
-			my $prev_par = $prev->get_parent();			
-			while (($prev_par != $prev) && ($prev_par != $root)) {
-				if ($prev_par->tag !~ /^V/) {
-					$prev = $prev_par;
-					$prev_par = $prev_par->get_parent();					
-				}
-				else {
-					$n->set_parent($prev_par);
-					last;
-				}
-			}			
-		} 
-	}
-	
-	# (ii) In Tamil verbs of the form 'Nominal + Auxiliary', 'Auxiliary' should be the head and 
-	# 'nominal' should be the child.
-	@desc =  $root->get_descendants( { ordered => 1 } );
-	foreach my $n (@desc) {
-		my $p = $n->get_parent();
-		if (($n->tag =~ /^V[rtuwRTUW]/) && ($p != $root) && ($p->tag =~ /^NNN/)) {
-			my @children = grep { $_ != $n }$p->get_children();
-			$n->set_parent($p->get_parent());
-			map{ $_->set_parent($n) }@children;
-			$p->set_parent($n); 
-		}
-	}
-	
-	# ------------------------------
-	# Rules in general
-	#-------------------------------	
-	
-	# (i) Oblique nouns are most likely to be attached to the first non oblique noun following them.
-	@desc =  $root->get_descendants( { ordered => 1 } );
-	for my $i (0..($#desc-1)) {
-		if ($desc[$i]->tag =~ /^NO/) {
-			for my $j ($i+1..$#desc) {
-				if ($desc[$j]->tag =~ /^NN/) {
-					if (!$desc[$j]->is_descendant_of($desc[$i])) {
-						$desc[$i]->set_parent($desc[$j]);
-						last;						
-					}
-				}
+		# (i) Sometimes a verb in English is expressed as a 'nominal verb' combination
+		# in Tamil. In Tamil annotation, 'verb' is the head and the 'nominal' is 
+		# the child. 
+		my @desc =  $root->get_descendants( { ordered => 1 } );
+		foreach my $n (@desc) {
+			my $p = $n->get_parent();
+			if (($n->tag =~ /^V[rRzZ]/) && ($p != $root) && ($p->tag =~ /^NNN/)) {
+				my @children = grep { $_ != $n }$p->get_children();
+				#if (!$p->get_parent()->is_descendant_of($n)) {
+					$n->set_parent($p->get_parent());
+					$p->set_parent($n);
+					map { $_->set_parent($n)}@children;	
+				#}
 			}
 		}
-	}
 	
-	# (ii) verbal participles are most likely to be attached to the head of the verb phrases following them.
-	# The attachment need not be with the first verb phrase, it could be with any verb phrases provided they
-	# are preceded by verbal participles. 
-	@desc =  $root->get_descendants( { ordered => 1 } );
-	for my $i (0..($#desc-1)) {
-		if ($desc[$i]->tag =~ /^Vt/) {
-			my $p_vt = $desc[$i]->get_parent();
-			if (($p_vt != $root) && ($p_vt->tag !~ /^V/)) {
-				for my $j ($i+1..$#desc) {
-					if ($desc[$j]->tag =~ /^V/) {
-						if (!$desc[$j]->is_descendant_of($desc[$i])) {
-							$desc[$i]->set_parent($desc[$j]);
-							last;						
+		# (ii) Fix coordination to target style
+		foreach my $sc (@source_desc) {
+			# locate coordinations in the source and get the corresponding coordination head in the target
+			if (($sc->form =~ /^(,|and)$/) && ($sc->afun eq 'Coord')) {
+				my @aligned_nodes = $sc->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
+				if (scalar(@aligned_nodes) == 1) {
+					if ( ($aligned_nodes[0]->form =~ /^(,|மற்றும்)$/) && (!$aligned_nodes[0]->is_leaf())){
+						my @members = $aligned_nodes[0]->get_children({ordered=>1});
+						my $par_of_coord = $aligned_nodes[0]->get_parent();
+						# choose Tamil coordination head
+						my $new_coord_head = $members[$#members]; 
+						$new_coord_head->set_parent($par_of_coord);
+						# attach other members
+						for my $i (0..($#members-1)) {
+							$members[$i]->set_parent($new_coord_head);
 						}
-					}					
-				}
-			}  
-		}
-	}
-
-	 
+						$aligned_nodes[0]->set_parent($new_coord_head);
+					}
+				}			
+			}				
+		}		
+	}	
 }
 
 1;
