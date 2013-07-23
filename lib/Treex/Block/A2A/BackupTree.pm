@@ -20,6 +20,8 @@ has 'to_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
 has 'flatten' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'align'   => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'keep_alignment_links' => (is => 'rw', isa => 'Bool', default => 0);
+
 
 sub process_atree {
     my ( $self, $src_root ) = @_;
@@ -51,6 +53,35 @@ sub process_atree {
             $node->set_parent($to_root);
             $node->set_is_member();
         }
+    }
+    
+    if ( $self->keep_alignment_links) {
+    	my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
+    	my @to_nodes  = $to_root->get_descendants( { ordered => 1 } );
+    	# replicate incoming alignments (if any) in 'source_selector' to 'to_selector'
+    	foreach my $sn (@src_nodes) {
+    		my @referring_nodes = $sn->get_referencing_nodes('alignment');
+    		if (@referring_nodes) {
+    			foreach my $rn (@referring_nodes) {
+    				my ($nodes_ref, $types_ref) = $rn->get_aligned_nodes_by_tree($src_language, $src_selector);
+    				if ($nodes_ref) {
+						my @aligning_nodes = @{$nodes_ref};
+						my @types = @{$types_ref};
+    					map{$rn->add_aligned_node($to_nodes[($aligning_nodes[$_]->ord)-1], $types[$_])}0..$#aligning_nodes;	
+    				}
+    				
+    			}
+    		}    		    		
+    	}    	
+    	# replicate outgoing alignments (if any) in 'source_selector' to 'to_selector'
+    	foreach my $i (0..$#src_nodes) {
+    		my ($nodes_ref, $types_ref) = $src_nodes[$i]->get_aligned_nodes();
+    		if ($nodes_ref) {
+				my @aligned_nodes = @{$nodes_ref};
+				my @types = @{$types_ref};
+    			map{$to_nodes[$i]->add_aligned_node($aligned_nodes[$_], $types[$_])}0..$#aligned_nodes;	
+    		}
+		}    	
     }
     
     return;
@@ -103,9 +134,15 @@ and all attributes is_member are deleted.
 
 If this parameter is set, the target trees are aligned to the source ones.
 
+=item C<keep_alignment_links>
+
+If this parameter is set, both incoming and outgoing alignments are preserved in the 
+new a-tree (to_selector). 
+
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
