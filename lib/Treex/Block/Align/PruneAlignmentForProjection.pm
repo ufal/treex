@@ -7,15 +7,30 @@ has 'target_language' => (isa => 'Str', is => 'ro', required => 1);
 has 'target_selector' => (isa => 'Str', is => 'ro', default => '');
 has 'alignment_type' => (isa => 'Str', is => 'ro', required => 1);
 
+has 'prune_one_to_many' => (isa => 'Bool', is => 'ro', default => 0);
+has 'prune_many_to_one' => (isa => 'Bool', is => 'ro', default => 0);
+has 'delete_erroneous_links' => (isa => 'Bool', is => 'ro', default=> 1);
+
+
 sub process_zone {
 	my ($self, $zone) = @_;
 	my $source_atree = $zone->get_atree();
 	my $target_atree = $zone->get_bundle()->get_zone($self->target_language, $self->target_selector)->get_atree();
 
 	# prune one-to-many
-	$self->prune_one_to_many($source_atree, $target_atree);	
-	# prune many-to-one	
-	$self->prune_many_to_one($source_atree, $target_atree);
+	if ($self->prune_one_to_many) {
+		$self->prune_one_to_many($source_atree, $target_atree);	
+	}
+		
+	# prune many-to-one
+	if ($self->prune_many_to_one) {
+		$self->prune_many_to_one($source_atree, $target_atree);	
+	}	
+	
+	# delete erroneous alignments
+	if ($self->delete_erroneous_links) {
+		$self->delete_erroneous_alignments($source_atree, $target_atree);	
+	}
 
 }
 
@@ -23,9 +38,9 @@ sub prune_one_to_many {
 	my ($self, $source_tree, $target_tree) = @_;
 	my @nodes = $source_tree->get_descendants( { ordered => 1 } );
 	foreach my $node (@nodes) {
-	    my @align_nodes = $node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->target_language, $self->target_selector);
-	    	if (scalar(@align_nodes) > 1) {
-	    		my @aligned_nodes_sorted = sort {$a->ord <=> $b->ord}@align_nodes;
+	    my @aligned_nodes = $node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->target_language, $self->target_selector);
+	    	if (scalar(@aligned_nodes) > 1) {
+	    		my @aligned_nodes_sorted = sort {$a->ord <=> $b->ord}@aligned_nodes;
 	    		foreach my $i (0..($#aligned_nodes_sorted-1)){
 	    			$node->delete_aligned_node($aligned_nodes_sorted[$i], $self->alignment_type);	
 	    		}	    		
@@ -47,6 +62,23 @@ sub prune_many_to_one {
 		}
 	}
 	return;
+}
+
+sub delete_erroneous_alignments {
+	my ($self, $source_tree, $target_tree) = @_;
+	my @nodes = $source_tree->get_descendants( { ordered => 1 } );
+	
+	# (i) remove alignment if a punctuation is aligned to a form on the other side
+	foreach my $node (@nodes) {
+		my @aligned_nodes = $node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->target_language, $self->target_selector);
+		if (@aligned_nodes) {
+			foreach my $an (@aligned_nodes) {
+				if ((($node->form =~ /^\p{IsP}$/) && ($an->form !~ /^\p{IsP}$/)) || (($node->form !~ /^\p{IsP}$/) && ($an->form =~ /^\p{IsP}$/))) {
+					$node->delete_aligned_node($an, $self->alignment_type);
+				}
+			}
+		}
+	}		
 }
 
 1;
@@ -71,6 +103,12 @@ Performs a sort of post-processing on the alignment links between two a-trees.
 =head1 METHODS
 
 =over 10
+
+=item C<delete_erroneous_links>
+
+enabling this option makes sure that some language independent erroneous alignment links are deleted. 
+For example, the alignment is most likely to be erroneous if a "punctuation" on the source side is aligned
+to a "form" on the target side or vice versa. 
 
 =item C<prune_one_to_many>
 
