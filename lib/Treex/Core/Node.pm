@@ -271,12 +271,20 @@ sub remove {
 
 # Return all nodes that have a reference of the given type (e.g. 'alignment', 'a/lex.rf') to this node
 sub get_referencing_nodes {
-
-    my ( $self, $type ) = @_;
+	my ( $self, $type, $lang, $sel ) = @_;
     my $doc  = $self->get_document;
     my $refs = $doc->get_references_to_id( $self->id );
-
     return if ( !$refs || !$refs->{$type} );
+    if ((defined $lang) && (defined $sel)) {
+    	my @ref_filtered_by_tree;
+    	if ($sel eq q() ) {
+    		@ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\-.+/; }@{ $refs->{$type} };    		
+    	}
+    	else {
+    		@ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\_$sel\-.+/; }@{ $refs->{$type} };
+    	}
+		return map { $doc->get_node_by_id($_) } @ref_filtered_by_tree;
+    }
     return map { $doc->get_node_by_id($_) } @{ $refs->{$type} };
 }
 
