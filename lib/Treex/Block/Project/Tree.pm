@@ -57,21 +57,28 @@ sub project_subtree {
     foreach my $src_node ( $src_root->get_children( { ordered => 1 } ) ) {
         my @trg_nodes;
         if ($self->alignment_direction eq 'trg2src'){
-            @trg_nodes = grep {$_->is_aligned_to($src_node, '^' . $self->alignment_type . '$')}
-                        $src_node->get_referencing_nodes('alignment', $self->language, $self->selector);
+            @trg_nodes = grep {$_->is_aligned_to($src_node, '^' . $self->alignment_type . '$')} $src_node->get_referencing_nodes('alignment', $self->language, $self->selector);
         } else {
-            @trg_nodes = $src_node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->source_language, $self->source_selector);
+            @trg_nodes = $src_node->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
         }
         @trg_nodes = grep {!$done{$_}} @trg_nodes;
         if (@trg_nodes){
             my $head_trg_node = @trg_nodes==1 ? $trg_nodes[0] : $self->choose_head(\@trg_nodes);
-           	$head_trg_node->set_parent($trg_root);	
-           	$done{$head_trg_node} = 1;
-           	foreach my $another_trg_node (grep {$_ != $head_trg_node} @trg_nodes){				
-               	$another_trg_node->set_parent($head_trg_node);
-               	$done{$another_trg_node} = 1;
-           	}
-           	$self->project_subtree( $src_node, $head_trg_node );            	
+            if (!$trg_root->is_descendant_of($head_trg_node) && ($head_trg_node != $trg_root)) {
+           		$head_trg_node->set_parent($trg_root);	
+           		$done{$head_trg_node} = 1;				
+	           	foreach my $another_trg_node (grep {$_ != $head_trg_node} @trg_nodes){				
+    	           	if (!$head_trg_node->is_descendant_of($another_trg_node) && ($another_trg_node != $head_trg_node)) {
+		   	           	$another_trg_node->set_parent($head_trg_node);
+        		       	$done{$another_trg_node} = 1;    	           	
+    	           	}
+           		}
+           		$self->project_subtree( $src_node, $head_trg_node );
+            }
+            else {
+            	log_warn 'The proposed attachment leads to cycle, thus ignoring it.';
+            	$self->project_subtree( $src_node, $trg_root );
+            }
         } else {
             $self->project_subtree( $src_node, $trg_root );
         }
