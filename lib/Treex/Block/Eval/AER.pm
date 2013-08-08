@@ -10,11 +10,13 @@ has '+selector' => ( required => 1 );
 # alignment (gold) in target language 
 has 'gold_alignment_type' => (isa => 'Str', is => 'ro', default => 'alignment');
 has 'gold_selector' => (isa => 'Str', is => 'ro', required => 1);
+has 'gold_alignment_direction' => (isa => 'Str', is => 'ro', default => 'src2trg');
 
 # alignment (hypothesis) in target language
 has 'target_language' => (isa => 'Str', is => 'ro', required => 1);
 has 'target_selector' => (isa => 'Str', is => 'ro', required => 1);
 has 'target_alignment_type' => (isa => 'Str', is => 'ro', default => 'berkeley');
+has 'target_alignment_direction' => (isa => 'Str', is => 'ro', default => 'src2trg');
 
 # |A ^ S| - number of proposed edges matching 'sure' gold edges
 my $sure_intersection = 0.0;
@@ -32,8 +34,21 @@ sub process_atree {
 	my ($self, $root) = @_;
 	my @nodes = $root->get_descendants( { ordered => 1 } );	
 	foreach my $node (@nodes) {
-		my @target_nodes = $node->get_aligned_nodes_of_type('^' . $self->target_alignment_type . '$', $self->target_language, $self->target_selector);
-		my @gold_nodes = $node->get_aligned_nodes_of_type('^' . $self->gold_alignment_type . '$', $self->target_language, $self->gold_selector);
+		my @target_nodes;
+		my @gold_nodes;
+		if ($self->target_alignment_direction eq 'trg2src') {
+			@target_nodes = grep {$_->is_aligned_to($node, '^' . $self->target_alignment_type . '$')} $node->get_referencing_nodes('alignment', $self->target_language, $self->target_selector);
+		}
+		else {
+			@target_nodes = $node->get_aligned_nodes_of_type('^' . $self->target_alignment_type . '$', $self->target_language, $self->target_selector);			
+		}
+		
+		if ($self->gold_alignment_direction eq 'trg2src') {
+			@gold_nodes = grep {$_->is_aligned_to($node, '^' . $self->gold_alignment_type . '$')} $node->get_referencing_nodes('alignment', $self->target_language, $self->gold_selector);
+		}
+		else {
+			@gold_nodes = $node->get_aligned_nodes_of_type('^' . $self->gold_alignment_type . '$', $self->target_language, $self->gold_selector);
+		}		
 		$proposed_edges += scalar(@target_nodes) if @target_nodes;
 		$sure_edges += scalar(@gold_nodes) if @gold_nodes;
 		if ((scalar(@target_nodes) > 0) && (scalar(@gold_nodes) > 0)) {
