@@ -26,7 +26,6 @@ sub print_alignment_info {
 	my $src_id;
 	my $src_unaligned = 0;
 	my $one_to_many = 0;
-	my $many_to_one = 0;
 	my $one_to_one = 0;
 	my $src_len;
 	my $tgt_id;
@@ -46,9 +45,6 @@ sub print_alignment_info {
 					if (scalar(@referring_nodes) == 1) {
 						$one_to_one++;						
 					}
-					elsif (scalar(@referring_nodes) > 1) {
-						$many_to_one++;
-					}
 				}
 			}	
 			else {
@@ -62,7 +58,33 @@ sub print_alignment_info {
 			}
 		}
 	}
-	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $src_unaligned, $tgt_unaligned, $one_to_many, $many_to_one, $one_to_one);
+	else {
+		foreach my $i (0..$#src_nodes) {
+			my @referring_nodes = grep {$_->is_aligned_to($src_nodes[$i], '^' . $self->alignment_type . '$')} $src_nodes[$i]->get_referencing_nodes('alignment', $self->language, $self->selector);
+			if (@referring_nodes) {
+				if (scalar(@referring_nodes) > 1) {
+					$one_to_many++;
+				}	
+				elsif (scalar(@referring_nodes) == 1) {
+					my @aligned_nodes = $referring_nodes[0]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->source_language, $self->source_selector);
+					if (scalar(@aligned_nodes) == 1) {
+						$one_to_one++;
+					}
+				}			
+			}
+			else {
+				$src_unaligned++;
+			}
+		}
+		foreach my $j (0..$#tgt_nodes) {
+			my @aligned_nodes = $tgt_nodes[$j]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->source_language, $self->source_selector);
+			if (!@aligned_nodes) {
+				$tgt_unaligned++;
+			}
+		}		
+	}
+	
+	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $src_unaligned, $tgt_unaligned, $one_to_one, $one_to_many);
 	print { $self->_file_handle } $out_string . "\n";
 }
 
