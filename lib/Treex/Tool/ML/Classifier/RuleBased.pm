@@ -17,6 +17,10 @@ sub all_classes {
     return (0, 1);
 }
 
+# TODO this shouldn't be here
+sub log_feat_weights {
+}
+
 1;
 __END__
 
