@@ -44,6 +44,13 @@ sub process_finite_verb {
             $a_vfin->set_attr( 'morphcat/number', 'S' );
             $a_vfin->set_attr( 'morphcat/person', '3' );
         }
+
+        if ( $t_vfin->wild->{no_subj} ) { 
+            $a_vfin->set_attr( 'morphcat/gender', 'N' );
+            $a_vfin->set_attr( 'morphcat/number', 'S' );
+            $a_vfin->set_attr( 'morphcat/person', '3' );
+        }
+
         return;
     }
 
