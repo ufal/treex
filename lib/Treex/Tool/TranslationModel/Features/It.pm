@@ -130,6 +130,15 @@ sub _be_adjcompl_to_inlist {
     return $count > $ADJCOMPL_TO_THRESHOLD ? 1 : 0;
 }
 
+sub _be_adjcompl_none {
+    my ($tnode) = @_;
+    my $adjcompl = _be_adjcompl($tnode);
+
+    my ($vthat) = grep {$_->formeme =~ /v:that/} $tnode->get_siblings;
+    my ($vto) = grep {$_->formeme =~ /v:to\+inf/} $tnode->get_siblings;
+    return ($adjcompl && !$vthat && !$vto) ? 1 : 0;
+}
+
 sub get_features {
     my ($self, $tnode) = @_;
 
@@ -162,6 +171,7 @@ sub get_features {
     $feats{be_adjcompl_to} = _be_adjcompl_to($tnode);
     $feats{be_adjcompl_that_inlist} = $self->_be_adjcompl_that_inlist($tnode);
     $feats{be_adjcompl_to_inlist} = $self->_be_adjcompl_to_inlist($tnode);
+    $feats{be_adjcompl_none} = _be_adjcompl_none($tnode);
 
     # TODO:many more features
 
