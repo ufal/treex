@@ -78,6 +78,31 @@ sub get_class {
     #return $class;
 }
 
+# for a given "it" in src, returns the t-lemma of a node from cs_ref,
+# which has the same functor and both are governed by mutually aligned nodes (verbs)
+# can be used only on analysed PCEDT
+sub _get_gold_counterpart_tlemma {
+    my ($self, $ensrc_it) = @_;
+    
+    my $a_ensrc_it = $ensrc_it->get_lex_anode;
+    my ($a_enref_it) = grep {$_->is_aligned_to($a_ensrc_it, 'monolingual')} $a_ensrc_it->get_referencing_nodes('alignment');
+    return "__NO_A_ENREF__" if !$a_enref_it;
+    my ($enref_it) = $a_enref_it->get_referencing_nodes('a/lex.rf');
+    return "__NO_T_ENREF__" if !$enref_it;
+
+    my ($enref_par) = $enref_it->get_eparents;
+    return "__NO_V_ENREF_PAR__" if (!$enref_par->formeme || ($enref_par->formeme !~ /^v/));
+    my ($aligns, $type) = $enref_par->get_aligned_nodes;
+    return "__NO_CSREF_PAR__" if (!$aligns || !$type);
+        
+    my ($csref_par) = grep {$_->formeme =~ /^v/} map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
+    return "__NO_V_CSREF_PAR__" if !$csref_par;
+
+    my ($csref_it) = grep {$_->functor eq $enref_it->functor} $csref_par->get_echildren;
+    return "__NO_CSREF__" if !$csref_it;
+    return $csref_it->t_lemma;
+}
+
 sub _get_nada_refer {
     my ($self, $tnode) = @_;
     my $refer = $tnode->wild->{'referential'};
@@ -103,11 +128,13 @@ sub get_features {
 
     $feats{nada_refer} = $self->_get_nada_refer($tnode);
     $feats{par_lemma} = $self->_get_parent_lemma($tnode);
+    $feats{address} = $tnode->get_address;
+    $feats{gcp} = $self->_get_gold_counterpart_tlemma($tnode);
     # TODO:many more features
 
     ###############################
 
-    return map {$_ . "=" . $feats{$_}} keys %feats;
+    return map {$_ . "=" . $feats{$_}} sort keys %feats;
 }
 
 sub process_tnode {
