@@ -90,7 +90,7 @@ sub create_instance {
     $instance->{rules_not_disj} =
         !(any {$instance->{$_}} qw/has_v_to_inf is_be_adj_err is_cog_verb is_cog_ed_verb_err/) ? 1 : 0;
 
-    $instance->{nada_prob} = $self->_nada_probs->{$alex->id} || "__UNDEF__";
+    $instance->{nada_prob} = $self->_nada_probs->{$alex->id};
     
     $instance->{nada_prob_quant} = _quantize( $instance->{nada_prob}, 0.04 );
 
@@ -117,7 +117,7 @@ sub filter_feats {
 sub _quantize {
     my ($value, $buck_size) = @_;
 
-    return $value if ($value eq "__UNDEF__");
+    return undef if (!defined $value);
     
     # this strange thing with sprintf is a simulation of round() in Perl
     return $buck_size * (sprintf "%.0f", $value / $buck_size);

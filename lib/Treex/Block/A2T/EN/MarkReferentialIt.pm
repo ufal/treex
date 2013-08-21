@@ -109,7 +109,8 @@ sub process_tnode {
     if (Treex::Tool::ReferentialIt::Utils::is_it($t_node)) {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
-        $t_node->wild->{'referential'} = !$self->_is_non_refer($t_node) ? 1 : 0;
+        my $is_non_refer = $self->_is_non_refer($t_node);
+        $t_node->wild->{'referential'} = !defined $is_non_refer ? undef : (!$is_non_refer ? 1 : 0);
         
         #print STDERR "IT_REF=" . $t_node->wild->{'referential'} . ": " . $t_node->get_address . "\n";
     }
@@ -123,7 +124,7 @@ sub _is_non_refer {
     # TODO temporary solution
     if ($self->resolver_type eq 'nada') {
         $tnode->wild->{'referential_prob'} = $instance->{nada_prob};
-        return $instance->{nada_prob} if ($instance->{nada_prob} eq "__UNDEF__");
+        return undef if (!defined $instance->{nada_prob});
         return $instance->{nada_prob} <= $self->threshold;
     }
     elsif ($self->resolver_type eq 'rules') {
