@@ -85,7 +85,7 @@ sub _get_aligned_nodes_czeng {
     return (\@t_cssrc, \@a_cssrc);
 }
 
-sub aligned_lemmas {
+sub aligned_nodes {
     my ($self, $tnode) = @_;
 
     my ($aligned_t, $aligned_a);
@@ -94,6 +94,11 @@ sub aligned_lemmas {
     } else {
         ($aligned_t, $aligned_a) = $self->_get_aligned_nodes_czeng($tnode);
     }
+    return ($aligned_t, $aligned_a);
+}
+
+sub aligned_lemmas {
+    my ($aligned_t, $aligned_a) = @_;
     return ([map {$_->t_lemma} @$aligned_t], [map {$_->lemma} @$aligned_a]);
 }
 
@@ -157,12 +162,14 @@ sub process_it {
     # TRANSLATION OF "IT" - can be possibly left out => translation of "#PersPron"
     my $anode = $tnode->get_lex_anode;
     return if (!$anode || ($anode->lemma ne "it"));
+    
+    my ($tnodes, $anodes) = $self->aligned_nodes($tnode);
+    my ($tlemmas, $alemmas) = aligned_lemmas($tnodes, $anodes);
+    my $class = _extract_it_class($tlemmas, $alemmas);
+    
     my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
     push @features, "gcp=" . $self->_get_gold_counterpart_tlemma($tnode);
     return @features;
-    
-    my ($tlemmas, $alemmas) = $self->aligned_lemmas($tnode);
-    my $class = _extract_it_class($tlemmas, $alemmas)
 }
 
 sub _extract_refl_class {
@@ -187,10 +194,12 @@ sub process_refl {
     return if !$anode;
     my $alemma = $anode->lemma;
     return if $alemma !~ /(myself)|(yourself)|(himself)|(herself)|(itself)|(ourselves)|(themselves)/;
-    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
-
-    my ($tlemmas, $alemmas) = $self->aligned_lemmas($tnode);
+    
+    my ($tnodes, $anodes) = $self->aligned_nodes($tnode);
+    my ($tlemmas, $alemmas) = aligned_lemmas($tnodes, $anodes);
     my $class = _extract_refl_class($alemmas);
+
+    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode, $tnodes, $anodes);
 
     return ($class, @features);
 }

@@ -344,8 +344,22 @@ sub _is_in_itself {
     return (scalar @auxs > 0) ? 0 : 1;
 }
 
+sub _cs_par_formeme {
+    my ($cs_tnodes) = @_;
+    return "__undef__" if !@$cs_tnodes;
+    my $cs_par = $cs_tnodes->[0]->get_parent;
+    return "__undef__" if !$cs_par;
+    return $cs_par->formeme;
+}
+
+sub _prec_n_agree_cs_n1 {
+    my ($feats) = @_;
+    return (($feats->{prec_n_agree} eq "1") 
+        && ($feats->{cs_par_formeme} eq "n:1")) ? 1 : 0;
+}
+
 sub get_refl_features {
-    my ($self, $tnode) = @_;
+    my ($self, $tnode, $cs_tnodes) = @_;
 
     my %feats = ();
 
@@ -359,18 +373,21 @@ sub get_refl_features {
     $feats{prec_n_agree} = _preceding_noun_agrees($tnode);
     $feats{in_coord} = _in_coord($tnode);
     $feats{is_in_itself} = _is_in_itself($tnode);
+    $feats{cs_par_formeme} = _cs_par_formeme($cs_tnodes);
+    $feats{cs_par_n1} = $feats{cs_par_formeme} eq "n:1" ? 1 : 0;
+    $feats{prec_n_agree_cs_par_n1} = $feats{prec_n_agree} . "_" . $feats{cs_par_n1};
     return %feats;
 }
 
 sub get_features {
-    my ($self, $pron_type, $tnode) = @_;
+    my ($self, $pron_type, $tnode, $cs_tnodes, $cs_anodes) = @_;
     
     my %feats = ();
     if ($pron_type eq "it") {
         %feats = $self->get_it_features($tnode);
     }
     elsif ($pron_type eq "refl") {
-        %feats = $self->get_refl_features($tnode);
+        %feats = $self->get_refl_features($tnode, $cs_tnodes);
     }
     my @feat_list = map {$_ . "=" . $feats{$_}} sort keys %feats;
 
