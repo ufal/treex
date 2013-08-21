@@ -46,20 +46,20 @@ sub get_lemma_and_pos {
     my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
 
     # PersProns like "that" should be translated as "ten"
-    if ($en_tlemma eq '#PersPron'
-        && $en_formeme !~ /poss/    #"its" is excluded
-        && ( $cs_tnode->gram_number || '' ) eq 'sg'
-        && ( $cs_tnode->gram_gender || '' ) eq 'neut'
-        && $en_tnode->get_lex_anode()->lemma ne 'itself'
-        )
-    {
-        $cs_tnode->set_gram_person(undef);
-        $cs_tnode->set_gram_sempos('n.pron.indef');
+    #if ($en_tlemma eq '#PersPron'
+    #    && $en_formeme !~ /poss/    #"its" is excluded
+    #    && ( $cs_tnode->gram_number || '' ) eq 'sg'
+    #    && ( $cs_tnode->gram_gender || '' ) eq 'neut'
+    #    && $en_tnode->get_lex_anode()->lemma ne 'itself'
+    #    )
+    #{
+    #    $cs_tnode->set_gram_person(undef);
+    #    $cs_tnode->set_gram_sempos('n.pron.indef');
 
         #print STDERR "IT_IS: " . $cs_tnode->get_address() . "\t" . $en_tnode->get_zone->sentence . "\n";
         
-        return 'ten|P';
-    }
+    #    return 'ten|P';
+    #}
 
     # Don't translate other t-lemma substitutes (like #PersPron, #Cor, #QCor, #Rcp)
     return $en_tlemma if $en_tlemma =~ /^#/;
