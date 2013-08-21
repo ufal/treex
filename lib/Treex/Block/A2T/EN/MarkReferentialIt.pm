@@ -123,6 +123,7 @@ sub _is_non_refer {
     # TODO temporary solution
     if ($self->resolver_type eq 'nada') {
         $tnode->wild->{'referential_prob'} = $instance->{nada_prob};
+        return $instance->{nada_prob} if ($instance->{nada_prob} eq "__UNDEF__");
         return $instance->{nada_prob} <= $self->threshold;
     }
     elsif ($self->resolver_type eq 'rules') {
