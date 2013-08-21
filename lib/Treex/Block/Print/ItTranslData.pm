@@ -146,13 +146,14 @@ sub get_features {
 
     $feats{nada_refer} = $self->_get_nada_refer($tnode);
     $feats{par_lemma} = $self->_get_parent_lemma($tnode);
-    $feats{address} = $tnode->get_address;
     $feats{gcp} = $self->_get_gold_counterpart_tlemma($tnode);
     # TODO:many more features
 
     ###############################
+    my @feat_list = map {$_ . "=" . $feats{$_}} sort keys %feats;
 
-    return map {$_ . "=" . $feats{$_}} sort keys %feats;
+    my $address = $tnode->get_address;
+    return ("address=$address", @feat_list);
 }
 
 sub process_tnode {
