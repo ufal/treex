@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::NADA;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
-use NADA;
+use Treex::External::NADA;
 
 has 'weights_path' => (
     is => 'ro',
@@ -26,7 +26,7 @@ has '_weights' => (
 );
 has '_ngrams' => (
     is => 'ro', 
-    isa => 'NADA::NgramCompressedCntMap',
+    isa => 'Treex::External::NADA::NgramCompressedCntMap',
     builder => '_build_ngrams',
     lazy => 1,
 );
@@ -44,7 +44,7 @@ sub _build_weights {
         ' with a NADA model used for'.
         ' anaphoricity determination does not exist.' 
         if !-f $weights_file;
-    return NADA::initializeFeatureWeights($weights_file);
+    return Treex::External::NADA::initializeFeatureWeights($weights_file);
 }
 sub _build_ngrams {
     my ($self) = @_;
@@ -53,7 +53,7 @@ sub _build_ngrams {
         ' with ngram counts used by NADA for'.
         'anaphoricity determination  does not exist.' 
         if !-f $ngrams_file;
-    my $ngrams = NADA::NgramCompressedCntMap->new(); 
+    my $ngrams = Treex::External::NADA::NgramCompressedCntMap->new(); 
     $ngrams->initialize($ngrams_file);
     return $ngrams;
 }
@@ -63,7 +63,7 @@ sub process_sentence {
     
     my @positions = grep {$sentence[$_] =~ /^[Ii]t$/} (0 .. $#sentence);
     
-    my $result = NADA::processSentence(\@sentence, $self->_weights, $self->_ngrams, \@positions);
+    my $result = Treex::External::NADA::processSentence(\@sentence, $self->_weights, $self->_ngrams, \@positions);
     my %result_hash = map {$positions[$_] => $result->[$_]} (0 .. $#positions);
     return \%result_hash;
 }
