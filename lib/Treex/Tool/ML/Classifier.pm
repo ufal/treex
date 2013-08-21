@@ -11,7 +11,7 @@ sub predict {
     my ($self, $instance) = @_;
 
     my %probs_for_y = map {$_ => $self->score($instance, $_)} $self->all_classes;
-    my ($best_class) = sort {$probs_for_y{$b} <=> $probs_for_y{$a}} keys %probs_for_y;
+    my ($best_class) = sort {$probs_for_y{$b} <=> $probs_for_y{$a} || $a cmp $b} keys %probs_for_y;
     return $best_class;
 }
 
