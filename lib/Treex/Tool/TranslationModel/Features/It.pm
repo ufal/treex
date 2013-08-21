@@ -317,6 +317,22 @@ sub _preceding_noun_agrees {
     return $agree ? 1 : 0;
 }
 
+sub _in_coord {
+    my ($tnode) = @_;
+    my $par = $tnode->get_parent;
+    return 0 if $par->is_root;
+    return $par->is_coap_root ? 1 : 0;
+}
+
+sub _is_in_itself {
+    my ($tnode) = @_;
+    return 0 if $tnode->get_lex_anode->lemma ne "itself";
+    my @auxs = $tnode->get_aux_anodes;
+    return 0 if !@auxs;
+    @auxs = grep {$_->lemma ne "in"} @auxs;
+    return (scalar @auxs > 0) ? 0 : 1;
+}
+
 sub get_refl_features {
     my ($self, $tnode) = @_;
 
@@ -329,6 +345,8 @@ sub get_refl_features {
     $feats{formeme_by} = $tnode->formeme eq "n:by+X" ? 1 : 0;
     $feats{prec_sempos} = _preceding_sempos($tnode);
     $feats{prec_n_agree} = _preceding_noun_agrees($tnode);
+    $feats{in_coord} = _in_coord($tnode);
+    $feats{is_in_itself} = _is_in_itself($tnode);
     return %feats;
 }
 
