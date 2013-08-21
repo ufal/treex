@@ -7,8 +7,8 @@ use Treex::Tool::Storage::Storable;
 
 extends 'Treex::Core::Block';
 
-has 'adj_compl_path' => (is => 'ro', isa => 'Str', required => 1);
-has 'verb_func_path' => (is => 'ro', isa => 'Str', required => 1);
+has 'adj_compl_path' => (is => 'ro', isa => 'Str');
+has 'verb_func_path' => (is => 'ro', isa => 'Str');
 
 has '_adj_compl_list' => (
     is => 'ro',
@@ -26,7 +26,9 @@ has '_verb_func_counts' => (
 
 sub BUILD {
     my ($self) = @_;
-    $self->_adj_compl_list;
+    if ($self->adj_compl_path) {
+        $self->_adj_compl_list;
+    }
 }
 
 sub _build_adj_compl_list {
@@ -218,7 +220,7 @@ sub _verb_func_en {
     return sprintf "%.5f", $value;
 }
 
-sub get_features {
+sub get_it_features {
     my ($self, $tnode) = @_;
 
     my %feats = ();
@@ -275,6 +277,39 @@ sub get_features {
     # TODO:many more features
 
     ###############################
+    return %feats;
+}
+
+sub _get_parent_sempos {
+    my ($tnode) = @_;
+    my $par = $tnode->get_parent;
+    if ($par->is_root) {
+        return "__ROOT__";
+    }
+    return substr($par->gram_sempos, 0, 1);
+}
+
+sub get_refl_features {
+    my ($self, $tnode) = @_;
+
+    my %feats = ();
+
+    ######### FEATS ###########
+
+    $feats{par_sempos} = _get_parent_sempos($tnode);
+    return %feats;
+}
+
+sub get_features {
+    my ($self, $pron_type, $tnode) = @_;
+    
+    my %feats = ();
+    if ($pron_type eq "it") {
+        %feats = $self->get_it_features($tnode);
+    }
+    elsif ($pron_type eq "refl") {
+        %feats = $self->get_refl_features($tnode);
+    }
     my @feat_list = map {$_ . "=" . $feats{$_}} sort keys %feats;
 
     my $address = $tnode->get_address;

@@ -8,20 +8,31 @@ use Treex::Tool::TranslationModel::Features::It;
 
 extends 'Treex::Core::Block';
 
+has 'pron_type' => ( isa => enum([qw/it refl/]), is => 'ro', required => 1, default => 'it' );
 has 'data_type' => ( isa => enum([qw/pcedt czeng/]), is => 'ro', required => 1, default => 'pcedt' );
 
 has '_feat_extractor' => (
     is => 'ro',
     isa => 'Treex::Tool::TranslationModel::Features::It',
+    lazy => 1,
     builder => '_build_feat_extractor',
 );
 
+sub BUILD {
+    my ($self) = @_;
+    $self->_feat_extractor;
+}
+
 sub _build_feat_extractor {
     my ($self) = @_;
-    return Treex::Tool::TranslationModel::Features::It->new({
-        adj_compl_path => '/home/mnovak/projects/mt_coref/model/adj.compl',
-        verb_func_path => '/home/mnovak/projects/mt_coref/model/czeng0.verb.func',
-    });
+    my $params = {};
+    if ($self->pron_type eq "it") {
+        $params = {
+            adj_compl_path => '/home/mnovak/projects/mt_coref/model/adj.compl',
+            verb_func_path => '/home/mnovak/projects/mt_coref/model/czeng0.verb.func',
+        };
+    }
+    return Treex::Tool::TranslationModel::Features::It->new($params);
 }
 
 sub _get_aligned_nodes_pcedt {
@@ -137,20 +148,43 @@ sub _gold_counterpart_tlemma_via_alayer {
     return "A:".$csref_it->t_lemma;
 }
 
-sub process_tnode {
+sub process_it {
     my ($self, $tnode) = @_;
-    
     return if ($tnode->t_lemma ne "#PersPron");
 
     # TRANSLATION OF "IT" - can be possibly left out => translation of "#PersPron"
     my $anode = $tnode->get_lex_anode;
     return if (!$anode || ($anode->lemma ne "it"));
-
-    my $class = $self->get_class($tnode);
-    my @features = $self->_feat_extractor->get_features($tnode);
+    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
     push @features, "gcp=" . $self->_get_gold_counterpart_tlemma($tnode);
+    return @features;
+}
 
-    print $class . "\t" . (join " ", @features) . "\n";
+sub process_refl {
+    my ($self, $tnode) = @_;
+
+    my $anode = $tnode->get_lex_anode;
+    return if !$anode;
+    my $alemma = $anode->lemma;
+    return if $alemma !~ /(myself)|(yourself)|(himself)|(herself)|(itself)|(ourselves)|(themselves)/;
+    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
+    return @features;
+}
+
+sub process_tnode {
+    my ($self, $tnode) = @_;
+    
+    my @feats;
+    if ($self->pron_type eq 'it') {
+        @feats = $self->process_it($tnode);
+    }
+    elsif ($self->pron_type eq 'refl') {
+        @feats = $self->process_refl($tnode);
+    }
+    return if !@feats;
+    
+    my $class = $self->get_class($tnode);
+    print $class . "\t" . (join " ", @feats) . "\n";
 }
 
 1;
