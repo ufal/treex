@@ -30,9 +30,8 @@ sub load {
 
 sub load_specified {
     my ($self, $filename) = @_;
-
-    my $buffer = Compress::Zlib::memGunzip(read_file( $filename )) ;
-    $buffer = Storable::thaw($buffer) or log_fatal $!;
+    
+    my $buffer = load_obj($filename);
     $self->thaw($buffer);
 }
 
@@ -40,9 +39,24 @@ sub save {
     my ($self, $filename) = @_;
     
     my $buffer = $self->freeze();
-    $buffer = Storable::nfreeze($buffer) or log_fatal $!;
+    save_obj($buffer, $filename);
+}
+
+################ STATIC METHODS ######################
+
+sub load_obj {
+    my ($filename) = @_;
+    my $obj = Compress::Zlib::memGunzip(read_file( $filename )) ;
+    $obj = Storable::thaw($obj) or log_fatal $!;
+    return $obj;
+}
+
+sub save_obj {
+    my ($obj, $filename) = @_;
+    
+    $obj = Storable::nfreeze($obj) or log_fatal $!;
     write_file( $filename, {binmode => ':raw'},
-        Compress::Zlib::memGzip($buffer) )
+        Compress::Zlib::memGzip($obj) )
     or log_fatal $!;
 }
 
