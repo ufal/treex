@@ -79,33 +79,22 @@ sub _csrefs_from_ensrc {
 sub _get_aligned_nodes_czeng {
     my ($self, $tnode) = @_;
 
-    my @cs_src = grep {!$_->is_aligned_to($tnode, 'monolingual')} $tnode->get_referencing_nodes('alignment');
-    return @cs_src;
-}
-
-sub aligned_lemmas_pcedt {
-    my ($self, $tnode) = @_;
-
-    my ($aligned_t, $aligned_a) = $self->_get_aligned_nodes_pcedt($tnode);
-    return ([map {$_->t_lemma} @$aligned_t], [map {$_->lemma} @$aligned_a]);
-}
-
-sub aligned_lemmas_czeng {
-    my ($self, $tnode) = @_;
-    my @aligned = $self->_get_aligned_nodes_czeng($tnode);
-    return ([map {$_->t_lemma} @aligned], undef);
+    my @t_cssrc = grep {!$_->is_aligned_to($tnode, 'monolingual')} $tnode->get_referencing_nodes('alignment');
+    my $anode = $tnode->get_lex_anode;
+    my @a_cssrc = grep {!$_->is_aligned_to($anode, 'monolingual')} $anode->get_referencing_nodes('alignment');
+    return (\@t_cssrc, \@a_cssrc);
 }
 
 sub aligned_lemmas {
     my ($self, $tnode) = @_;
-    
+
+    my ($aligned_t, $aligned_a);
     if ($self->data_type eq 'pcedt') {
-        return $self->aligned_lemmas_pcedt($tnode);
+        ($aligned_t, $aligned_a) = $self->_get_aligned_nodes_pcedt($tnode);
     } else {
-        return $self->aligned_lemmas_czeng($tnode);
+        ($aligned_t, $aligned_a) = $self->_get_aligned_nodes_czeng($tnode);
     }
-    #print STDERR "CLASS: $class; " . $tnode->get_address . "\n";
-    #return $class;
+    return ([map {$_->t_lemma} @$aligned_t], [map {$_->lemma} @$aligned_a]);
 }
 
 # for a given "it" in src, returns the t-lemma of a node from cs_ref,
