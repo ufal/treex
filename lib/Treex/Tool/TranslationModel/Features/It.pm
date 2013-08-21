@@ -280,13 +280,37 @@ sub get_it_features {
     return %feats;
 }
 
-sub _get_parent_sempos {
+sub _parent_sempos {
     my ($tnode) = @_;
-    my $par = $tnode->get_parent;
-    if ($par->is_root) {
+    my @pars = $tnode->get_eparents;
+    if ($pars[0]->is_root) {
         return "__ROOT__";
     }
-    return substr($par->gram_sempos, 0, 1);
+    return substr($pars[0]->gram_sempos, 0, 1);
+}
+
+sub _preceding_sempos {
+    my ($tnode) = @_;
+    my $prev = $tnode->get_prev_node();
+    return "__undef__" if (!$prev);
+    return "__undef__" if (!$prev->gram_sempos);
+    return substr($prev->gram_sempos, 0, 1);
+}
+
+sub _preceding_noun_agrees {
+    my ($tnode) = @_;
+    my $prev = $tnode->get_prev_node();
+    return "__undef__" if (!$prev);
+    return "__undef__" if (!$prev->gram_sempos || ($prev->gram_sempos !~ /^n/));
+
+    my $agree = 1;
+    if (defined $tnode->gram_number && defined $prev->gram_number) {
+        $agree = $agree && ($tnode->gram_number eq $prev->gram_number);
+    }
+    if (defined $tnode->gram_gender && defined $prev->gram_gender) {
+        $agree = $agree && ($tnode->gram_gender eq $prev->gram_gender);
+    }
+    return $agree ? 1 : 0;
 }
 
 sub get_refl_features {
@@ -296,7 +320,11 @@ sub get_refl_features {
 
     ######### FEATS ###########
 
-    $feats{par_sempos} = _get_parent_sempos($tnode);
+    $feats{par_sempos} = _parent_sempos($tnode);
+    $feats{formeme} = $tnode->formeme;
+    $feats{formeme_by} = $tnode->formeme eq "n:by+X" ? 1 : 0;
+    $feats{prec_sempos} = _preceding_sempos($tnode);
+    $feats{prec_n_agree} = _preceding_noun_agrees($tnode);
     return %feats;
 }
 
