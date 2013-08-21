@@ -4,7 +4,7 @@ use Moose;
 
 use Treex::Core::Common;
 use Treex::Tool::ML::MaxEnt::Model;
-#use Treex::Tool::ML::VowpalWabbit::Model;
+use Treex::Tool::ML::VowpalWabbit::Model;
 use Treex::Tool::ML::ScikitLearn::Model;
 use Treex::Tool::ML::Classifier::Linear;
 use Treex::Tool::ML::MaxEnt::Learner;
@@ -17,10 +17,10 @@ sub create_classifier_model {
     if ($model_type eq 'maxent') {
         $model = Treex::Tool::ML::MaxEnt::Model->new();
     }
-#    elsif ($model_type eq 'vw') {
-#        #$model = Treex::Tool::ML::VowpalWabbit::Model->new();
-#        $model = Treex::Tool::ML::Classifier::Linear->new();
-#    }
+    elsif ($model_type eq 'vw') {
+        $model = Treex::Tool::ML::VowpalWabbit::Model->new({classes => ['1','2','3','4']});
+        #$model = Treex::Tool::ML::Classifier::Linear->new();
+    }
     # TODO dirty hack, class labels must be encapsulated within the model
     elsif ($model_type eq 'sklearn') {
         $model = Treex::Tool::ML::ScikitLearn::Model->new({classes => ['1','2','3','4']});

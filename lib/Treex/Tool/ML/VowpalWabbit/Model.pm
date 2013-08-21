@@ -8,7 +8,13 @@ use VowpalWabbit;
 use Treex::Tool::ML::VowpalWabbit::Util;
 use Treex::Tool::Compress::Index;
 
-with 'Treex::Tool::ML::Classifier', 'Treex::Tool::Storage::Storable';
+#with 'Treex::Tool::ML::Classifier', 'Treex::Tool::Storage::Storable';
+with 'Treex::Tool::ML::Classifier', 
+     'Treex::Tool::Storage::Storable' => {
+        -alias => { load  => '_load', save => '_save' },
+        -excludes => [ 'load', 'save' ],
+     };
+
 
 has 'model' => (
     is          => 'ro',
@@ -43,24 +49,37 @@ has '_last_feat_weights' => (
     isa => 'HashRef[HashRef[Num]]',
 );
 
+has '_filename' => (
+    is => 'rw',
+    isa => 'Str',
+);
+
+has 'classes' => (
+    is => 'ro',
+    isa => 'ArrayRef[Str]',
+    required => 1,
+);
+
+
 sub _vw_predict {
     my ($self, $example_str) = @_;
     
     my $vw = VowpalWabbit::create_vw();
-    VowpalWabbit::add_buffered_regressor($vw, $self->model);
-    VowpalWabbit::initialize_empty_vw($vw, "-t /dev/null --quiet");
+    #VowpalWabbit::add_buffered_regressor($vw, $self->model);
+    VowpalWabbit::initialize_empty_vw($vw, sprintf("-t -i %s --quiet", $self->_filename));
     
     #my $vw = $self->_vw;
     my $example = VowpalWabbit::read_example($vw, $example_str);
     $vw->learn($vw, $example);
     my $feats_idx = $vw->get_feats_idx($vw, $example);
     my $weights = $vw->get_weights($vw, $example);
-    my $feat_weights = $self->_create_feat_weights($feats_idx, $weights);
+    #my $feat_weights = $self->_create_feat_weights($feats_idx, $weights);
     my $results = VowpalWabbit::get_predictions($example);
     VowpalWabbit::finish_example($vw, $example);
 
     VowpalWabbit::finish($vw);
 
+    my $feat_weights;
     return ($results, $feat_weights);
 }
 
@@ -78,10 +97,11 @@ sub score {
 
         $self->_set_last_instance( $x );
         $self->_set_last_prediction( $pred );
-        $self->_set_last_feat_weights( $feat_weigths );
+        #$self->_set_last_feat_weights( $feat_weigths );
     }
-    my $y_idx = $self->index->get_index( $y );
-    return $pred->[ $y_idx - 1 ];
+    #my $y_idx = $self->index->get_index( $y );
+    #return $pred->[ $y_idx - 1 ];
+    return $pred->[ $y - 1 ];
 }
 
 sub log_feat_weights {
@@ -97,13 +117,15 @@ sub log_feat_weights {
 
 sub all_classes {
     my ($self) = @_;
-    return $self->index->all_labels;
+    #return $self->index->all_labels;
+    return @{$self->classes};
 }
 
 sub _create_feat_weights {
     my ($self, $feats_idx, $weights) = @_;
     
-    my $k = $self->index->last_idx;
+    #my $k = $self->index->last_idx;
+    my $k = $self->classes->[-1];
     my $classed_feats_idx = Treex::Tool::ML::VowpalWabbit::Util::split_to_classes($feats_idx, $k);
     my $classed_weights = Treex::Tool::ML::VowpalWabbit::Util::split_to_classes($weights, $k);
 
@@ -123,15 +145,22 @@ sub _create_feat_weights {
 
 ############# implementing Treex::Tool::Storage::Storable role #################
 
-before 'save' => sub {
-    my ($self, $filename) = @_;
-    log_info "Storing VowpalWabbit model into $filename...";
-};
+#before 'save' => sub {
+#    my ($self, $filename) = @_;
+#    log_info "Storing VowpalWabbit model into $filename...";
+#};
 
-before 'load' => sub {
+#before 'load' => sub {
+#    my ($self, $filename) = @_;
+#    log_info "Loading VowpalWabbit model from $filename...";
+#};
+
+sub load {
     my ($self, $filename) = @_;
-    log_info "Loading VowpalWabbit model from $filename...";
-};
+    $filename = $self->_locate_model_file($filename);
+    log_info "Loading vw model from $filename...";
+    $self->_set_filename($filename);
+}
 
 sub freeze {
     my ($self) = @_;
