@@ -38,31 +38,42 @@ sub _build_feat_extractor {
 sub _get_aligned_nodes_pcedt {
     my ($self, $tnode) = @_;
 
-    my ($t_csrefs, $t_has_enref) = $self->_csrefs_from_ensrc($tnode);
+    my $t_csrefs = $self->_csrefs_from_ensrc($tnode);
+
+    #if ($tnode->get_address eq "data/train.pcedt/wsj_0258.streex##8.t_tree-en_src-s8-n832") {
+    #    use Data::Dumper;
+    #    print STDERR "STRANGE_CASE:\n";
+    #    print STDERR Dumper([$t_csrefs, $t_has_enref]);
+    #}
     
-    return ($t_csrefs, undef) if (!defined $t_has_enref);
-    return ([], undef) if ($t_has_enref);
+    # "en-src" -> "en-ref" -> "cs-ref" existed
+    #return ($t_csrefs, undef) if (@$t_csrefs);
+    # should never occur
+    #return ([], undef) if ($t_has_enref);
         
     my $anode = $tnode->get_lex_anode;
-    my ($a_csrefs, $a_has_enref) = $self->_csrefs_from_ensrc($anode);
+    my $a_csrefs = $self->_csrefs_from_ensrc($anode);
     
-    log_warn "NO_A_MONOALIGN: this should not happen (" . $tnode->get_address . ")\n" if (defined $a_has_enref && ($a_has_enref == 0));
+    #log_warn "NO_A_MONOALIGN: this should not happen (" . $tnode->get_address . ")\n" if (defined $a_has_enref && ($a_has_enref == 0));
 
-    return (undef, $a_csrefs);
+    return ($t_csrefs, $a_csrefs);
 
 }
 
 sub _csrefs_from_ensrc {
     my ($self, $ensrc) = @_;
     
+    # moving to "en-ref" nodes via monolingual alignment
     my @enrefs = grep {$_->is_aligned_to($ensrc, 'monolingual')} $ensrc->get_referencing_nodes('alignment');
-    return ([], 0) if ( @enrefs == 0 );
+    return [] if ( @enrefs == 0 );
     
+    # getting all nodes aligned with the first "en-ref"
     my ($aligns, $type) = $enrefs[0]->get_aligned_nodes;
-    return ([], 1) if (!$aligns || !$type);
-        
+    return [] if (!$aligns || !$type);
+    
+    # collecting all aligned nodes except for those monolingually aligned - supposed to be "cs-ref"
     my @csrefs = map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
-    return (\@csrefs);
+    return \@csrefs;
 }
 
 sub _get_aligned_nodes_czeng {
@@ -72,34 +83,26 @@ sub _get_aligned_nodes_czeng {
     return @cs_src;
 }
 
-sub get_class_pcedt {
+sub aligned_lemmas_pcedt {
     my ($self, $tnode) = @_;
-
-    my $class;
 
     my ($aligned_t, $aligned_a) = $self->_get_aligned_nodes_pcedt($tnode);
-    if ($aligned_t) {
-        $class = "<" . (join ":", map {$_->t_lemma} @$aligned_t) . ">";
-    } elsif ($aligned_a) {
-        $class = "<alemmas=<" . (join ":", map {$_->lemma} @$aligned_a) . ">>";
-    }
-    return $class;
+    return ([map {$_->t_lemma} @$aligned_t], [map {$_->lemma} @$aligned_a]);
 }
 
-sub get_class_czeng {
+sub aligned_lemmas_czeng {
     my ($self, $tnode) = @_;
     my @aligned = $self->_get_aligned_nodes_czeng($tnode);
-    my $class = "<" . (join ":", map {$_->t_lemma} @aligned) . ">";
-    return $class;
+    return ([map {$_->t_lemma} @aligned], undef);
 }
 
-sub get_class {
+sub aligned_lemmas {
     my ($self, $tnode) = @_;
     
     if ($self->data_type eq 'pcedt') {
-        return $self->get_class_pcedt($tnode);
+        return $self->aligned_lemmas_pcedt($tnode);
     } else {
-        return $self->get_class_czeng($tnode);
+        return $self->aligned_lemmas_czeng($tnode);
     }
     #print STDERR "CLASS: $class; " . $tnode->get_address . "\n";
     #return $class;
@@ -148,6 +151,16 @@ sub _gold_counterpart_tlemma_via_alayer {
     return "A:".$csref_it->t_lemma;
 }
 
+sub _extract_it_class {
+    my ($tlemmas, $alemmas) = @_;
+
+    if (@$tlemmas) {
+        return "<" . (join ":", @$tlemmas) . ">";
+    } else {
+        return "<alemmas=<" . (join ":", @$alemmas) . ">>";
+    }
+}
+
 sub process_it {
     my ($self, $tnode) = @_;
     return if ($tnode->t_lemma ne "#PersPron");
@@ -158,6 +171,23 @@ sub process_it {
     my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
     push @features, "gcp=" . $self->_get_gold_counterpart_tlemma($tnode);
     return @features;
+    
+    my ($tlemmas, $alemmas) = $self->aligned_lemmas($tnode);
+    my $class = _extract_it_class($tlemmas, $alemmas)
+}
+
+sub _extract_refl_class {
+    my ($alemmas) = @_;
+    
+    my @contains_se = grep {$_ =~ /^se_/} @$alemmas;
+    my @contains_sam = grep {$_ =~ /^sám_/} @$alemmas;
+    my @contains_samotny = grep {$_ =~ /^samotný$/} @$alemmas;
+
+    return "<SAM_SE>" if (@contains_se && @contains_sam);
+    return "<SAM>" if (@contains_sam);
+    return "<SE>" if (@contains_se);
+    return "<SAMOTNY>" if (@contains_samotny);
+    return "<alemmas=<" . (join ":", @$alemmas) . ">>";
 }
 
 sub process_refl {
@@ -168,22 +198,26 @@ sub process_refl {
     my $alemma = $anode->lemma;
     return if $alemma !~ /(myself)|(yourself)|(himself)|(herself)|(itself)|(ourselves)|(themselves)/;
     my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode);
-    return @features;
+
+    my ($tlemmas, $alemmas) = $self->aligned_lemmas($tnode);
+    my $class = _extract_refl_class($alemmas);
+
+    return ($class, @features);
 }
 
 sub process_tnode {
     my ($self, $tnode) = @_;
     
     my @feats;
+    my $class;
     if ($self->pron_type eq 'it') {
         @feats = $self->process_it($tnode);
     }
     elsif ($self->pron_type eq 'refl') {
-        @feats = $self->process_refl($tnode);
+        ($class, @feats) = $self->process_refl($tnode);
     }
-    return if !@feats;
+    return if (!$class || !@feats);
     
-    my $class = $self->get_class($tnode);
     print $class . "\t" . (join " ", @feats) . "\n";
 }
 
