@@ -34,7 +34,7 @@ has '_filename' => (
 
 my $INIT = <<INIT;
 import os, sys
-lib_path = os.path.abspath('/home/mnovak/projects/mt_coref/lib')
+lib_path = os.path.abspath('/home/mnovak/projects/ml_framework/lib/')
 sys.path.append(lib_path)
 import model
 model = model.Model()
