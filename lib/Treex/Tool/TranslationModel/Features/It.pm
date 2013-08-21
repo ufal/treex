@@ -349,7 +349,7 @@ sub _cs_par_formeme {
     return "__undef__" if !@$cs_tnodes;
     my $cs_par = $cs_tnodes->[0]->get_parent;
     return "__undef__" if !$cs_par;
-    return $cs_par->formeme;
+    return $cs_par->formeme || "__undef__";
 }
 
 sub _prec_n_agree_cs_n1 {
