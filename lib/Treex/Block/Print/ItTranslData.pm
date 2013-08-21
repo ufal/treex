@@ -90,17 +90,35 @@ sub _get_gold_counterpart_tlemma {
     my ($enref_it) = $a_enref_it->get_referencing_nodes('a/lex.rf');
     return "__NO_T_ENREF__" if !$enref_it;
 
-    my ($enref_par) = $enref_it->get_eparents;
-    return "__NO_V_ENREF_PAR__" if (!$enref_par->formeme || ($enref_par->formeme !~ /^v/));
+    my ($enref_par) = grep {$_->formeme && ($_->formeme =~ /^v/)} $enref_it->get_eparents;
+    return "__NO_V_ENREF_PAR__" if !$enref_par;
     my ($aligns, $type) = $enref_par->get_aligned_nodes;
     return "__NO_CSREF_PAR__" if (!$aligns || !$type);
         
     my ($csref_par) = grep {$_->formeme =~ /^v/} map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
-    return "__NO_V_CSREF_PAR__" if !$csref_par;
+    return $self->_gold_counterpart_tlemma_via_alayer($a_enref_it, $enref_it) if !$csref_par;
 
     my ($csref_it) = grep {$_->functor eq $enref_it->functor} $csref_par->get_echildren;
     return "__NO_CSREF__" if !$csref_it;
     return $csref_it->t_lemma;
+}
+
+sub _gold_counterpart_tlemma_via_alayer {
+    my ($self, $a_enref_it, $enref_it) = @_;
+
+    my ($a_enref_par) = grep {defined $_->tag && ($_->tag =~ /^V/)} $a_enref_it->get_eparents;
+    return "__A:NO_A_V_ENREF_PAR__" if !$a_enref_par;
+
+    my ($aligns, $type) = $a_enref_par->get_aligned_nodes;
+    return "__A:NO_A_CSREF_PAR1__" if (!$aligns || !$type);
+    my ($a_csref_par) = map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
+    return "__A:NO_A_CSREF_PAR2__" if !$a_csref_par;
+    my ($csref_par) = $a_csref_par->get_referencing_nodes('a/lex.rf');
+    return "__A:NO_CSREF_PAR__" if !$csref_par;
+
+    my ($csref_it) = grep {$_->functor eq $enref_it->functor} $csref_par->get_echildren({or_topological => 1});
+    return "__A:NO_CSREF__" if !$csref_it;
+    return "A:".$csref_it->t_lemma;
 }
 
 sub _get_nada_refer {
