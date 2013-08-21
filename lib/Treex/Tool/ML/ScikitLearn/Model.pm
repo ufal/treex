@@ -67,7 +67,8 @@ SCORE
 
 sub score {
     my ($self, $x, $y) = @_;
-    my $arr_str = "['" . (join "','", @$x) . "']";
+    my @x_esc = map {$_ =~ s/'/_/g; $_} @$x;
+    my $arr_str = "['" . (join "','", @x_esc) . "']";
     my $classes_str = "['" . (join "','", @{$self->classes}) . "']";
 
     my $command = $INIT . "\n" . sprintf("model.load('%s')", $self->_filename) . "\n" . sprintf($SCORE, $arr_str, $y, $classes_str) . "\n";
