@@ -107,6 +107,8 @@ sub process_tnode {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
         $t_node->wild->{'referential'} = !$self->_is_non_refer($t_node) ? 1 : 0;
+        
+        print STDERR "IT_REF=" . $t_node->wild->{'referential'} . ": " . $t_node->get_address . "\n";
     }
 }
 
