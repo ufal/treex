@@ -50,8 +50,8 @@ sub _bucketing {
 }
 
 sub _get_nada_refer {
-    my ($tnode) = @_;
-    my $refer = $tnode->wild->{'referential'};
+    my ($tnode, $suffix) = @_;
+    my $refer = $tnode->wild->{'referential.' . $suffix};
     return '__UNDEF__' if (!defined $refer);
     return $refer;
 }
@@ -226,7 +226,9 @@ sub get_features {
     ######### FEATURES #############
     
 
-    $feats{nada_refer} = _get_nada_refer($tnode);
+    foreach my $label (qw/nada_rules nada_0.3 nada_0.5 nada_0.7/) {
+        $feats{$label . '_refer'} = _get_nada_refer($tnode, $label);
+    }
     
     $feats{par_lemma} = _get_parent_lemma($tnode);
     $feats{functor} = $tnode->functor;

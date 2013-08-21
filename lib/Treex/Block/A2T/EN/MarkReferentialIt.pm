@@ -41,6 +41,8 @@ has 'threshold' => (
     default => 0.5,
 );
 
+has 'suffix' => (is => 'ro', isa => 'Str', default => '');
+
 # features not supported for the time being
 #has 'features' => (
 #    is => 'ro',
@@ -110,7 +112,11 @@ sub process_tnode {
 #            print STDERR "IT_ID: $it_id " . $it_ref_probs{$it_id} . "\n";
 #            print STDERR (join " ", @words) . "\n";
         my $is_non_refer = $self->_is_non_refer($t_node);
-        $t_node->wild->{'referential'} = !defined $is_non_refer ? undef : (!$is_non_refer ? 1 : 0);
+        my $label = 'referential';
+        if ($self->suffix ne '') {
+            $label .= '.' . $self->suffix;
+        }
+        $t_node->wild->{$label} = !defined $is_non_refer ? undef : (!$is_non_refer ? 1 : 0);
         
         #print STDERR "IT_REF=" . $t_node->wild->{'referential'} . ": " . $t_node->get_address . "\n";
     }
