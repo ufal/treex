@@ -139,6 +139,36 @@ sub _be_adjcompl_none {
     return ($adjcompl && !$vthat && !$vto) ? 1 : 0;
 }
 
+sub _be_adjcompl_smt {
+    my ($tnode) = @_;
+    my $adjcompl = _be_adjcompl($tnode);
+    return "undef" if !$adjcompl;
+
+    my ($vthat) = grep {$_->formeme =~ /v:that/} $tnode->get_siblings;
+    return "that" if $vthat;
+    my ($vto) = grep {$_->formeme =~ /v:to\+inf/} $tnode->get_siblings;
+    return "to" if $vthat;
+    return "none";
+}
+
+sub _is_coref {
+    my ($tnode) = @_;
+
+    my ($ante) = $tnode->get_coref_text_nodes;
+    return $ante ? 1 : 0;
+}
+
+sub _has_vp_ante {
+    my ($tnode) = @_;
+
+    my @antes = $tnode->get_coref_chain;
+    return "undef" if (@antes == 0);
+
+    print STDERR "COREF_CHAIN: " . (join ",", map {$_->t_lemma} @antes) . "\n";
+    my ($vp_ante) = grep {$_->formeme && $_->formeme =~ /^v/} @antes;
+    return $vp_ante ? 1 : 0;
+}
+
 sub get_features {
     my ($self, $tnode) = @_;
 
@@ -172,6 +202,11 @@ sub get_features {
     $feats{be_adjcompl_that_inlist} = $self->_be_adjcompl_that_inlist($tnode);
     $feats{be_adjcompl_to_inlist} = $self->_be_adjcompl_to_inlist($tnode);
     $feats{be_adjcompl_none} = _be_adjcompl_none($tnode);
+    $feats{be_adjcompl_smt} = _be_adjcompl_smt($tnode);
+
+    # exploiting coreference
+    $feats{is_coref} = _is_coref($tnode);
+    $feats{has_vp_ante} = _has_vp_ante($tnode);
 
     # TODO:many more features
 
