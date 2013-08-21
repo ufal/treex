@@ -11,7 +11,7 @@ sub process_ttree {
     my @nouns = reverse grep { ( $_->gram_sempos || '' ) =~ /^n/ } @all_nodes;
 
     VFIN:
-    foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ } @all_nodes ) {
+    foreach my $vfin_tnode ( grep { $_->formeme =~ /fin|rc/ && !$_->wild->{no_subj} } @all_nodes ) {
 
         # Skip verbs with subject (i.e. child in nominative)
         next VFIN if any { $_->formeme =~ /1/ } $vfin_tnode->get_echildren();
