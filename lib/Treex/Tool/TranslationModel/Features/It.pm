@@ -380,7 +380,7 @@ sub get_refl_features {
 }
 
 sub get_features {
-    my ($self, $pron_type, $tnode, $cs_tnodes, $cs_anodes) = @_;
+    my ($self, $pron_type, $tnode, $cs_tnodes) = @_;
     
     my %feats = ();
     if ($pron_type eq "it") {

@@ -199,7 +199,7 @@ sub process_refl {
     my ($tlemmas, $alemmas) = aligned_lemmas($tnodes, $anodes);
     my $class = _extract_refl_class($alemmas);
 
-    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode, $tnodes, $anodes);
+    my @features = $self->_feat_extractor->get_features($self->pron_type, $tnode, $tnodes);
 
     return ($class, @features);
 }
