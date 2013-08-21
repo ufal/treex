@@ -77,7 +77,9 @@ sub create_instance {
     $instance->{is_cog_verb} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_cog_verb($verb);
     $instance->{is_be_adj_err} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_be_adj_err($verb);
     $instance->{is_cog_ed_verb_err} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::is_cog_ed_verb_err($verb);
-    $instance->{has_cs_to} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $self->_en2cs_links->{$tnode});
+    if (defined $self->_en2cs_links) {
+        $instance->{has_cs_to} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::has_cs_to($verb, $self->_en2cs_links->{$tnode});
+    }
 
     my ($it) = grep { $_->lemma eq "it" } $tnode->get_anodes;
     $instance->{en_has_ACT} = (defined $verb) && Treex::Block::Eval::AddPersPronIt::en_has_ACT($verb, $tnode, $it);
@@ -126,10 +128,12 @@ sub init_zone_features {
     my $nada_probs = $self->_process_sentence_with_NADA( $atree );
     $self->_set_nada_probs( $nada_probs );
         
-    # TODO #################  HACK ##########
-    my $cs_src_tree = $zone->get_bundle->get_tree('cs','t','src');
-    my %en2cs_node = Treex::Block::Eval::AddPersPronIt::get_en2cs_links($cs_src_tree);
-    $self->_set_en2cs_links( \%en2cs_node );
+    ################# USED ONLY IF PARALEL DATA IS AVAILABLE ##########
+    if ($zone->get_bundle->has_tree('cs','t','src')) {
+        my $cs_src_tree = $zone->get_bundle->get_tree('cs','t','src');
+        my %en2cs_node = Treex::Block::Eval::AddPersPronIt::get_en2cs_links($cs_src_tree);
+        $self->_set_en2cs_links( \%en2cs_node );
+    }
 }
 
 sub _process_sentence_with_NADA {
