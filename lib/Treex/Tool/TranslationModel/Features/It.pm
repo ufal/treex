@@ -262,9 +262,11 @@ sub get_features {
 
     # verb-func-it from CzEng
     $feats{verb_func_en_pp} = $self->_verb_func_en($tnode, '#PersPron');
+    $feats{verb_func_en_pp_buck} = _bucketing($feats{verb_func_en_pp}, ["undef"], [0.0035, 0.005]);
     #$feats{verb_func_en_pp_buck} = _bucketing($feats{verb_func_en_pp}, ["-Inf","undef"], [-14, -13.5, -13, -12.5, -12, -11.5,  -11, -10.5, -10]);
     #$feats{verb_func_en_pp_buck} = _bucketing($feats{verb_func_en_pp}, ["-Inf","undef"], [-14, -12, -11, -10.5, -10]);
     $feats{verb_func_en_ten} = $self->_verb_func_en($tnode, 'ten');
+    $feats{verb_func_en_ten_buck} = _bucketing($feats{verb_func_en_ten}, ["undef"], [0.00001, 0.002, 0.004]);
     #$feats{verb_func_en_ten_buck} = _bucketing($feats{verb_func_en_ten}, ["-Inf","undef"], [-14, -12.5, -12, -11.5, -11, -10.5, -10]);
     #$feats{verb_func_en_ten_buck} = _bucketing($feats{verb_func_en_ten}, ["-Inf","undef"], [-14, -12.5, -11.5, -10.5, -10]);
 
