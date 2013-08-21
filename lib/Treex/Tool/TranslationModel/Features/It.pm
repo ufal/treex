@@ -298,11 +298,22 @@ sub _preceding_sempos {
     return substr($prev->gram_sempos, 0, 1);
 }
 
+sub _preceding_pos {
+    my ($tnode) = @_;
+    my $prev = $tnode->get_lex_anode->get_prev_node();
+    return "__undef__" if (!$prev);
+    return substr($prev->tag, 0, 1);
+}
+
 sub _preceding_noun_agrees {
     my ($tnode) = @_;
-    my $prev = $tnode->get_prev_node();
-    return "__undef__" if (!$prev);
-    return "__undef__" if (!$prev->gram_sempos || ($prev->gram_sempos !~ /^n/));
+
+    return "__undef__" if (!defined $tnode->gram_person || ($tnode->gram_person ne "3"));
+
+    my $prev_a = $tnode->get_lex_anode->get_prev_node();
+    return "__undef__" if (!$prev_a);
+    return "__undef__" if ($prev_a->tag !~ /^N/);
+    my ($prev) = $prev_a->get_referencing_nodes("a/lex.rf");
 
     my $agree = 1;
     if (defined $tnode->gram_number && defined $prev->gram_number) {
@@ -344,6 +355,7 @@ sub get_refl_features {
     $feats{formeme} = $tnode->formeme;
     $feats{formeme_by} = $tnode->formeme eq "n:by+X" ? 1 : 0;
     $feats{prec_sempos} = _preceding_sempos($tnode);
+    $feats{prec_pos} = _preceding_pos($tnode);
     $feats{prec_n_agree} = _preceding_noun_agrees($tnode);
     $feats{in_coord} = _in_coord($tnode);
     $feats{is_in_itself} = _is_in_itself($tnode);
