@@ -187,7 +187,8 @@ sub _extract_refl_class {
     return "<SAM>" if (@contains_sam);
     return "<SE>" if (@contains_se);
     return "<SAMOTNY>" if (@contains_samotny);
-    return "<alemmas=<" . (join ":", @$alemmas) . ">>";
+    return undef;
+    #return "<alemmas=<" . (join ":", @$alemmas) . ">>";
 }
 
 sub process_refl {
