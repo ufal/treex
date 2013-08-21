@@ -71,7 +71,7 @@ sub score {
     my $classes_str = "['" . (join "','", @{$self->classes}) . "']";
 
     my $command = $INIT . "\n" . sprintf("model.load('%s')", $self->_filename) . "\n" . sprintf($SCORE, $arr_str, $y, $classes_str) . "\n";
-    print STDERR $command;
+#    print STDERR $command;
     #my $score = $self->_python->command(sprintf($SCORE, $arr_str, $y, $classes_str));
     my $python = Treex::Tool::Python::RunFunc->new();
     my $score = $python->command($command);
