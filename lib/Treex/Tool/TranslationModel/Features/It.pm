@@ -39,6 +39,16 @@ sub _build_verb_func_counts {
     return Treex::Tool::Storage::Storable::load_obj($self->verb_func_path);
 }
 
+sub _bucketing {
+    my ($value, $categs, $buckets) = @_;
+
+    # return value if it's categorial
+    my %categ_hash = map {$_ => 1} @$categs;
+    return $value if $categ_hash{$value};
+
+    return scalar (grep {$value < $_} @$buckets);
+}
+
 sub _get_nada_refer {
     my ($tnode) = @_;
     my $refer = $tnode->wild->{'referential'};
@@ -247,7 +257,9 @@ sub get_features {
 
     # verb-func-it from CzEng
     $feats{verb_func_en_pp} = $self->_verb_func_en($tnode, '#PersPron');
+    $feats{verb_func_en_pp_buck} = _bucketing($feats{verb_func_en_pp}, ["-Inf","undef"], [-14, -12, -11, -10.5, -10]);
     $feats{verb_func_en_ten} = $self->_verb_func_en($tnode, 'ten');
+    $feats{verb_func_en_ten_buck} = _bucketing($feats{verb_func_en_ten}, ["-Inf","undef"], [-14, -12.5, -11.5, -10.5, -10]);
 
     # TODO:many more features
 
