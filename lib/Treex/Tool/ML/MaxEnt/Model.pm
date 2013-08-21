@@ -24,6 +24,29 @@ sub _build_y_num {
     return scalar (keys %{$self->model});
 }
 
+sub import_model {
+    my ($model_to_import) = @_;
+
+    log_fatal "Only AI::MaxEntropy::Model can be imported." 
+        if (!$model_to_import->isa('AI::MaxEntropy::Model'));
+
+    my $probs = {};
+    for my $y (0 .. @{$model_to_import->{y_list}}-1) {
+        for my $x (0 .. @{$model_to_import->{x_list}}-1) {
+            my $idx = $model_to_import->{f_map}->[$y]->[$x];
+            if ($idx > -1) {
+                $probs->{$model_to_import->{y_list}->[$y]}->{$model_to_import->{x_list}->[$x]} = $model_to_import->{lambda}->[$idx];
+            }
+        }
+    }
+
+    my $model = Treex::Tool::ML::MaxEnt::Model->new({ 
+        model => $probs, 
+        y_num => $model_to_import->{y_num} 
+    });
+    return $model;
+}
+
 ############# implementing Treex::Tool::Storage::Storable role #################
 
 override 'freeze' => sub {
