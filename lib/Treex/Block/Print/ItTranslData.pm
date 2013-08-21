@@ -10,6 +10,19 @@ extends 'Treex::Core::Block';
 
 has 'data_type' => ( isa => enum([qw/pcedt czeng/]), is => 'ro', required => 1, default => 'pcedt' );
 
+has '_feat_extractor' => (
+    is => 'ro',
+    isa => 'Treex::Tool::TranslationModel::Features::It',
+    builder => '_build_feat_extractor',
+);
+
+sub _build_feat_extractor {
+    my ($self) = @_;
+    return Treex::Tool::TranslationModel::Features::It->new({
+        adj_compl_path => '/home/mnovak/projects/mt_coref/model/adj.compl',
+    });
+}
+
 sub _get_aligned_nodes_pcedt {
     my ($self, $tnode) = @_;
 
@@ -133,7 +146,7 @@ sub process_tnode {
     return if (!$anode || ($anode->lemma ne "it"));
 
     my $class = $self->get_class($tnode);
-    my @features = Treex::Tool::TranslationModel::Features::It::get_features($tnode);
+    my @features = $self->_feat_extractor->get_features($tnode);
     push @features, "gcp=" . $self->_get_gold_counterpart_tlemma($tnode);
 
     print $class . "\t" . (join " ", @features) . "\n";

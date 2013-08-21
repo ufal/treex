@@ -3,8 +3,36 @@ package Treex::Tool::TranslationModel::Features::It;
 use Moose;
 
 use Treex::Core::Common;
+use File::Slurp;
+use Compress::Zlib;
 
 extends 'Treex::Core::Block';
+
+has 'adj_compl_path' => (is => 'ro', isa => 'Str', required => 1);
+
+has '_adj_compl_list' => (
+    is => 'ro',
+    isa => 'HashRef',
+    lazy => 1,
+    builder => '_build_adj_compl_list',
+);
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_adj_compl_list;
+}
+
+sub _build_adj_compl_list {
+    my ($self) = @_;
+    return _load($self->adj_compl_path);
+}
+
+sub _load {
+    my ($filename) = @_; 
+    my $buffer = Compress::Zlib::memGunzip(read_file( $filename )) ;
+    $buffer = Storable::thaw($buffer) or log_fatal $!;
+    return $buffer;
+}
 
 sub _get_nada_refer {
     my ($tnode) = @_;
@@ -67,9 +95,43 @@ sub _be_adjcompl_that {
     my ($vthat) = grep {$_->formeme =~ /v:that/} $tnode->get_siblings;
     return ($adjcompl && $vthat) ? 1 : 0;
 }
+sub _be_adjcompl_to {
+    my ($tnode) = @_;
+    my $adjcompl = _be_adjcompl($tnode);
+
+    my ($vto) = grep {$_->formeme =~ /v:to\+inf/} $tnode->get_siblings;
+    return ($adjcompl && $vto) ? 1 : 0;
+}
+
+my $ADJCOMPL_THAT_THRESHOLD = 1;
+my $ADJCOMPL_TO_THRESHOLD = 1;
+sub _be_adjcompl_that_inlist {
+    my ($self, $tnode) = @_;
+    my $it_subj_be = _it_subj($tnode) && (_get_parent_lemma($tnode) eq "be");
+    return 0 if !$it_subj_be;
+    
+    my ($adjcompl) = grep {$_->formeme =~ /adj:compl/} $tnode->get_siblings;
+    return 0 if !$adjcompl;
+    my ($vthat) = grep {$_->formeme =~ /v:that/} $tnode->get_siblings;
+    return 0 if !$vthat;
+    my $count = $self->_adj_compl_list->{"v:that+fin"}{$adjcompl->t_lemma} || 0;
+    return $count > $ADJCOMPL_THAT_THRESHOLD ? 1 : 0;
+}
+sub _be_adjcompl_to_inlist {
+    my ($self, $tnode) = @_;
+    my $it_subj_be = _it_subj($tnode) && (_get_parent_lemma($tnode) eq "be");
+    return 0 if !$it_subj_be;
+    
+    my ($adjcompl) = grep {$_->formeme =~ /adj:compl/} $tnode->get_siblings;
+    return 0 if !$adjcompl;
+    my ($vto) = grep {$_->formeme =~ /v:to\+inf/} $tnode->get_siblings;
+    return 0 if !$vto;
+    my $count = $self->_adj_compl_list->{"v:to+inf"}{$adjcompl->t_lemma} || 0;
+    return $count > $ADJCOMPL_TO_THRESHOLD ? 1 : 0;
+}
 
 sub get_features {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
 
     my %feats = ();
 
@@ -97,6 +159,9 @@ sub get_features {
     # If the banks exhaust all avenues of appeal, it is possible that they would seek to have the illegality ruling work both ways, some market sources said .
     $feats{be_adjcompl} = _be_adjcompl($tnode);
     $feats{be_adjcompl_that} = _be_adjcompl_that($tnode);
+    $feats{be_adjcompl_to} = _be_adjcompl_to($tnode);
+    $feats{be_adjcompl_that_inlist} = $self->_be_adjcompl_that_inlist($tnode);
+    $feats{be_adjcompl_to_inlist} = $self->_be_adjcompl_to_inlist($tnode);
 
     # TODO:many more features
 
