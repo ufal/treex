@@ -3,6 +3,8 @@ package Treex::Block::A2T::EN::MarkReferentialIt;
 use Moose;
 use Moose::Util::TypeConstraints;
 
+use Treex::Core::Common;
+
 use Treex::Tool::ReferentialIt::Utils;
 use Treex::Tool::ReferentialIt::Features;
 use Treex::Tool::ML::MaxEnt::Model;
@@ -81,7 +83,8 @@ sub _build_feat_extractor {
 #        }
 #    }
 #    return Treex::Tool::ReferentialIt::Features->new($params);
-    return Treex::Tool::ReferentialIt::Features->new({all_features => 0});
+    my $all_features = $self->resolver_type eq "nada" ? 1 : 0;
+    return Treex::Tool::ReferentialIt::Features->new({all_features => $all_features});
 }
 
 sub _build_classifier {
