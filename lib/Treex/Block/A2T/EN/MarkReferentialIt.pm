@@ -5,7 +5,7 @@ use Moose::Util::TypeConstraints;
 
 use Treex::Tool::ReferentialIt::Utils;
 use Treex::Tool::ReferentialIt::Features;
-use Treex::Tool::ML::Classifier::MaxEnt;
+use Treex::Tool::ML::MaxEnt::Model;
 use Treex::Tool::ML::Classifier::RuleBased;
 
 extends 'Treex::Core::Block';
@@ -28,7 +28,7 @@ has 'model_path' => (
     is       => 'ro',
     required => 1,
     isa      => 'Str',
-    default  => 'data/models/refer_it/pcedt.sec00-10.nada+rules.model',
+    default  => 'data/models/refer_it/pcedt.sec00-10.nada+rules.compact.model',
     documentation => 'path to a trained model',
 );
 
@@ -87,7 +87,9 @@ sub _build_feat_extractor {
 sub _build_classifier {
     my ($self) = @_;
     if ($self->resolver_type eq 'nada+rules') {
-        return Treex::Tool::ML::Classifier::MaxEnt->new({ model_path => $self->model_path });
+        my $model = Treex::Tool::ML::MaxEnt::Model->new();
+        $model->load($self->model_path);
+        return $model;
     }
     return Treex::Tool::ML::Classifier::RuleBased->new();
 }
