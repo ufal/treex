@@ -282,10 +282,11 @@ sub get_it_features {
 
 sub _parent_sempos {
     my ($tnode) = @_;
-    my @pars = $tnode->get_eparents;
+    my @pars = $tnode->get_eparents({or_topological => 1});
     if ($pars[0]->is_root) {
-        return "__ROOT__";
+        return "__undef__";
     }
+    return "__undef__" if !$pars[0]->gram_sempos;
     return substr($pars[0]->gram_sempos, 0, 1);
 }
 
@@ -308,7 +309,10 @@ sub _preceding_noun_agrees {
         $agree = $agree && ($tnode->gram_number eq $prev->gram_number);
     }
     if (defined $tnode->gram_gender && defined $prev->gram_gender) {
-        $agree = $agree && ($tnode->gram_gender eq $prev->gram_gender);
+        # himself's gender is in my view incorrectly annotated as inanimate in CzEng
+        my $lemma = $tnode->get_lex_anode->lemma;
+        my $self_gender = $lemma eq "himself" ? "anim" : $tnode->gram_gender;
+        $agree = $agree && ($self_gender eq $prev->gram_gender);
     }
     return $agree ? 1 : 0;
 }
