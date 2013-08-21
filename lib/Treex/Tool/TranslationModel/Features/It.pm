@@ -225,7 +225,10 @@ sub get_features {
     
 
     $feats{nada_refer} = _get_nada_refer($tnode);
+    
     $feats{par_lemma} = _get_parent_lemma($tnode);
+    $feats{functor} = $tnode->functor;
+    $feats{par_lemma_functor} = $feats{par_lemma} . ":" . $feats{functor};
     
     $feats{par_be} = $feats{par_lemma} eq "be" ? 1 : 0;
     $feats{it_subj} = _it_subj($tnode);
