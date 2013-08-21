@@ -55,6 +55,9 @@ sub get_lemma_and_pos {
     {
         $cs_tnode->set_gram_person(undef);
         $cs_tnode->set_gram_sempos('n.pron.indef');
+
+        #print STDERR "IT_IS: " . $cs_tnode->get_address() . "\t" . $en_tnode->get_zone->sentence . "\n";
+        
         return 'ten|P';
     }
 
