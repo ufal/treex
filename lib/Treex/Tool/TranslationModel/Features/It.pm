@@ -3,18 +3,25 @@ package Treex::Tool::TranslationModel::Features::It;
 use Moose;
 
 use Treex::Core::Common;
-use File::Slurp;
-use Compress::Zlib;
+use Treex::Tool::Storage::Storable;
 
 extends 'Treex::Core::Block';
 
 has 'adj_compl_path' => (is => 'ro', isa => 'Str', required => 1);
+has 'verb_func_path' => (is => 'ro', isa => 'Str', required => 1);
 
 has '_adj_compl_list' => (
     is => 'ro',
     isa => 'HashRef',
     lazy => 1,
     builder => '_build_adj_compl_list',
+);
+
+has '_verb_func_counts' => (
+    is => 'ro',
+    isa => 'HashRef',
+    lazy => 1,
+    builder => '_build_verb_func_counts',
 );
 
 sub BUILD {
@@ -24,14 +31,12 @@ sub BUILD {
 
 sub _build_adj_compl_list {
     my ($self) = @_;
-    return _load($self->adj_compl_path);
+    return Treex::Tool::Storage::Storable::load_obj($self->adj_compl_path);
 }
 
-sub _load {
-    my ($filename) = @_; 
-    my $buffer = Compress::Zlib::memGunzip(read_file( $filename )) ;
-    $buffer = Storable::thaw($buffer) or log_fatal $!;
-    return $buffer;
+sub _build_verb_func_counts {
+    my ($self) = @_;
+    return Treex::Tool::Storage::Storable::load_obj($self->verb_func_path);
 }
 
 sub _get_nada_refer {
@@ -164,9 +169,41 @@ sub _has_vp_ante {
     my @antes = $tnode->get_coref_chain;
     return "undef" if (@antes == 0);
 
-    print STDERR "COREF_CHAIN: " . (join ",", map {$_->t_lemma} @antes) . "\n";
+    #print STDERR "COREF_CHAIN: " . (join ",", map {$_->t_lemma} @antes) . "\n";
     my ($vp_ante) = grep {$_->formeme && $_->formeme =~ /^v/} @antes;
     return $vp_ante ? 1 : 0;
+}
+
+sub _get_par_lemma_adj {
+    my ($tnode) = @_;
+    my $par = $tnode->get_parent;
+    return "__ROOT__" if $par->is_root;
+    
+    my $par_lemma = $par->t_lemma;
+    if ($par_lemma eq "be") {
+        my ($adj) = grep {$_->formeme && $_->formeme =~ /adj/} $par->get_children;
+        $par_lemma .= "_" . $adj->t_lemma if $adj;
+    }
+    return $par_lemma;
+}
+
+sub _verb_func_en {
+    my ($self, $tnode, $it) = @_;
+
+    my $par_lemma = _get_par_lemma_adj($tnode);
+    my $func = $tnode->functor;
+    my $en_verb_func = $par_lemma . ":" . $func;
+
+    my $en_verb_func_c = $self->_verb_func_counts->{en_verb_func}{$en_verb_func};
+    my $it_c = $self->_verb_func_counts->{it}{$it};
+    my $en_verb_func_it_c = $self->_verb_func_counts->{en_verb_func_it}{$en_verb_func}{$it} || 0;
+
+    return "undef" if (!$it_c || !$en_verb_func_c);
+    return "-Inf" if !$en_verb_func_it_c;
+
+    my $value = log ($en_verb_func_it_c / ($en_verb_func_c * $it_c));
+
+    return sprintf "%.5f", $value;
 }
 
 sub get_features {
@@ -207,6 +244,10 @@ sub get_features {
     # exploiting coreference
     $feats{is_coref} = _is_coref($tnode);
     $feats{has_vp_ante} = _has_vp_ante($tnode);
+
+    # verb-func-it from CzEng
+    $feats{verb_func_en_pp} = $self->_verb_func_en($tnode, '#PersPron');
+    $feats{verb_func_en_ten} = $self->_verb_func_en($tnode, 'ten');
 
     # TODO:many more features
 
