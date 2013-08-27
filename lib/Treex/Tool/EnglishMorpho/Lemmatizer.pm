@@ -300,8 +300,12 @@ Treex::Tool::EnglishMorpho::Lemmatizer - rule based lemmatizer for English
 =head1 SYNOPSIS
 
  use Treex::Tool::EnglishMorpho::Lemmatizer;
+ my $lemmatizer    = Treex::Tool::EnglishMorpho::Lemmatizer->new();
  my ($word,  $tag) = qw( goes VBZ );
- my ($lemma, $neg) = Treex::Tool::EnglishMorpho::Lemmatizer::lemmatize($word, $tag);
+ my ($lemma, $neg) = $lemmatizer->lemmatize($word, $tag);
+ # $lemma = 'go', $neg = 0
+ ($lemma, $neg) = $lemmatizer->lemmatize('unhappy', 'JJ');
+ # $lemma = 'happy', $neg = 1
 
 =head1 METHODS
 
