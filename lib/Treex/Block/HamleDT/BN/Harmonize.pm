@@ -1,8 +1,8 @@
-package Treex::Block::A2A::BN::Harmonize;
+package Treex::Block::HamleDT::BN::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Bengali CoNLL trees, converts morphosyntactic tags to the positional
@@ -225,7 +225,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::BN::Harmonize
+=item Treex::Block::HamleDT::BN::Harmonize
 
 Converts Bengali treebank into PDT style treebank.
 

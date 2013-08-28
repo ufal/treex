@@ -1,12 +1,12 @@
-package Treex::Block::A2A::BackupTree;
+package Treex::Block::HamleDT::BackupTree;
 use Moose;
 use Treex::Core::Common;
 
-# This is an alternative to A2A::CopyAtree and should supersede it.
+# This is an alternative to HamleDT::CopyAtree and should supersede it.
 # This block
 # - interprets language as "source language" and needs specified to_language (similarly for selectors)
 # - when no language si specified, it copies all languages found (to the new selector)
-# - supports the new feature of multiple languages, e.g. A2A::BackupTree language=en,cs
+# - supports the new feature of multiple languages, e.g. HamleDT::BackupTree language=en,cs
 
 extends 'Treex::Core::Block';
 
@@ -95,15 +95,15 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::BackupTree - copy a-tree to another zone
+Treex::Block::HamleDT::BackupTree - copy a-tree to another zone
 
 =head1 SYNOPSIS
 
   # Copy the "current" zone to another selector (language is the same)
-  A2A::BackupTree to_selector=my_backup
+  HamleDT::BackupTree to_selector=my_backup
   
   # Copy English a-trees to Czech (target selector is empty if not specified)
-  A2A::BackupTree language=en to_language=cs  
+  HamleDT::BackupTree language=en to_language=cs  
 
 =head1 DESCRIPTION
 

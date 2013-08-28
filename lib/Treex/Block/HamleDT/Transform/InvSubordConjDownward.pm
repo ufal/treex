@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::InvSubordConjDownward;
+package Treex::Block::HamleDT::Transform::InvSubordConjDownward;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 
@@ -27,7 +27,7 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::InvSubordConjDownward
+=item Treex::Block::HamleDT::Transform::InvSubordConjDownward
 
 Inverse transformation for SubordConjDownward.
 

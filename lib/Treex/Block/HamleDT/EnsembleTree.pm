@@ -1,4 +1,4 @@
-package Treex::Block::A2A::EnsembleTree;
+package Treex::Block::HamleDT::EnsembleTree;
 
 use Treex::Tool::Parser::Ensemble::Ensemble;
 use Moose;
@@ -284,7 +284,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::EnsembleTree
+Treex::Block::HamleDT::EnsembleTree
 
 
 

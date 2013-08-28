@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ReorderHeadFinal;
+package Treex::Block::HamleDT::ReorderHeadFinal;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -80,7 +80,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::ReorderHeadFinal - move dependency parents after their children
+Treex::Block::HamleDT::ReorderHeadFinal - move dependency parents after their children
 
 =head1 DESCRIPTION
 

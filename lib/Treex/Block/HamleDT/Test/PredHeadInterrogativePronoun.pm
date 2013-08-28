@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PredHeadInterrogativePronoun;
+package Treex::Block::HamleDT::Test::PredHeadInterrogativePronoun;
 use utf8;
 use Moose;
 use Treex::Core::Common;

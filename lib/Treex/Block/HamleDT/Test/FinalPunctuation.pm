@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::FinalPunctuation;
+package Treex::Block::HamleDT::Test::FinalPunctuation;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -10,7 +10,7 @@ sub process_zone
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants({'ordered' => 1});
     return if(!@nodes);
-    # Mimic the function A2A::CoNLL2PDTStyle::attach_final_punctuation_to_root().
+    # Mimic the function HamleDT::CoNLL2PDTStyle::attach_final_punctuation_to_root().
     # Just check attachment instead of attaching.
     my $rule1chars = '[-\.\x{2026}\x{964}\x{965}?!\x{61F};:,\x{61B}\x{60C}\x{2010}-\x{2015}]';
     my $rule2chars = '["`'."'".'\x{2018}-\x{201F}]';
@@ -154,7 +154,7 @@ sub attach_final_punctuation_to_root
 
 =over
 
-=item Treex::Block::Test::A::FinalPunctuation
+=item Treex::Block::HamleDT::Test::FinalPunctuation
 
 Sentence-final punctuation should be attached directly to root, with the AuxK afun.
 

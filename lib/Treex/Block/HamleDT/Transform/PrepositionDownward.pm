@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::PrepositionDownward;
+package Treex::Block::HamleDT::Transform::PrepositionDownward;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 
@@ -30,7 +30,7 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::PrepositionDownward
+=item Treex::Block::HamleDT::Transform::PrepositionDownward
 
 Move a preposition below the node (usually a noun or a pronoun) which
 it has governed. In the case of complex prepositions, the additional

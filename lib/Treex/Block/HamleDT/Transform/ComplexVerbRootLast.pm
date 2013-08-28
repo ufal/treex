@@ -1,6 +1,6 @@
-package Treex::Block::A2A::Transform::ComplexVerbRootLast;
+package Treex::Block::HamleDT::Transform::ComplexVerbRootLast;
 use Moose;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 use Treex::Tool::ATreeTransformer::ComplexVerb;
 
 sub BUILD {

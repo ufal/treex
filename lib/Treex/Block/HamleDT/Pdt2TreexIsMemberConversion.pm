@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Pdt2TreexIsMemberConversion;
+package Treex::Block::HamleDT::Pdt2TreexIsMemberConversion;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -37,7 +37,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::Pdt2TreexIsMemberConversion
+Treex::Block::HamleDT::Pdt2TreexIsMemberConversion
 
 =head1 DESCRIPTION
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ReorderPrepositions;
+package Treex::Block::HamleDT::ReorderPrepositions;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::ReorderPrepositions - move prepositions to postpositions
+Treex::Block::HamleDT::ReorderPrepositions - move prepositions to postpositions
 
 =head1 DESCRIPTION
 

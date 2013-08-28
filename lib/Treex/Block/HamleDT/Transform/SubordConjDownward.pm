@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::SubordConjDownward;
+package Treex::Block::HamleDT::Transform::SubordConjDownward;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 
@@ -30,7 +30,7 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::SubordConjDownward
+=item Treex::Block::HamleDT::Transform::SubordConjDownward
 
 Move a subordinating conjunction below the node (usually a verb) which
 it has governed. In the case of complex conjunctions, the additional

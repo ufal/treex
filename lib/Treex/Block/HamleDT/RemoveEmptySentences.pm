@@ -1,4 +1,4 @@
-package Treex::Block::A2A::RemoveEmptySentences;
+package Treex::Block::HamleDT::RemoveEmptySentences;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';

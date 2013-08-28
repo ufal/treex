@@ -1,4 +1,4 @@
-package Treex::Block::A2A::FillCoNLLAttributes;
+package Treex::Block::HamleDT::FillCoNLLAttributes;
 
 use Moose;
 use Treex::Core::Common;
@@ -79,7 +79,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block:::A2A::FillCoNLLAttributes - Fills CoNLL features in a-nodes based on morphological tag and afun values.  
+Treex::Block:::HamleDT::FillCoNLLAttributes - Fills CoNLL features in a-nodes based on morphological tag and afun values.  
 
 
 =head1 DESCRIPTION

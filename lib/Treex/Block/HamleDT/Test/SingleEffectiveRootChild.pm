@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::SingleEffectiveRootChild;
+package Treex::Block::HamleDT::Test::SingleEffectiveRootChild;
 use utf8;
 use Moose;
 use Treex::Core::Common;

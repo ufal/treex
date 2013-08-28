@@ -1,4 +1,4 @@
-package Treex::Block::A2A::GRC::AgdtFixAfun;
+package Treex::Block::HamleDT::GRC::AgdtFixAfun;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -32,7 +32,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::GRC::AgdtFixAfun - 
+Treex::Block::HamleDT::GRC::AgdtFixAfun - 
 
 =head1 DESCRIPTION
 

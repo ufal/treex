@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PrepIsAuxP;
+package Treex::Block::HamleDT::Test::PrepIsAuxP;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -30,7 +30,7 @@ sub process_anode
 
 =over
 
-=item Treex::Block::Test::A::PrepIsAuxP
+=item Treex::Block::HamleDT::Test::PrepIsAuxP
 
 Every preposition and postposition in normalized treebanks should have the afun AuxP.
 The real function of the prepositional phrase w.r.t. the parent should be specified at the child of the preposition.

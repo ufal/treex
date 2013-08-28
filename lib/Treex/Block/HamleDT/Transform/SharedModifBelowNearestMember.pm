@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::SharedModifBelowNearestMember;
+package Treex::Block::HamleDT::Transform::SharedModifBelowNearestMember;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 # warning: this module does not use the 'transformer' attribute,
 # since the simple functionality is implemented directly in this module
@@ -39,7 +39,7 @@ sub process_atree {
 
 =over
 
-=item Treex::Block::A2A::Transform::SharedModifBelowMember
+=item Treex::Block::HamleDT::Transform::SharedModifBelowMember
 
 Move shared modifiers below the nearest right member of coordinaton
 (or below the last member of coordination, if no member follows after

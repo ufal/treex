@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::LeafAux;
+package Treex::Block::HamleDT::Test::LeafAux;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -15,7 +15,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::LeafAux
+=item Treex::Block::HamleDT::Test::LeafAux
 
 Afun values AuxT, AuxR, AuxX... (?) imply
 that the node should be a leave.

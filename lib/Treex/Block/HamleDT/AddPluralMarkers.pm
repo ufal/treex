@@ -1,4 +1,4 @@
-package Treex::Block::A2A::AddPluralMarkers;
+package Treex::Block::HamleDT::AddPluralMarkers;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -29,7 +29,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::AddPluralMarkers - add artificial tokens after plurals
+Treex::Block::HamleDT::AddPluralMarkers - add artificial tokens after plurals
 
 =head1 DESCRIPTION
 

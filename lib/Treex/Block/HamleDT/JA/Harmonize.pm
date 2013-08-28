@@ -1,8 +1,8 @@
-package Treex::Block::A2A::JA::Harmonize;
+package Treex::Block::HamleDT::JA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Japanese CoNLL trees, converts morphosyntactic tags to the positional
@@ -215,7 +215,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::JA::Harmonize
+=item Treex::Block::HamleDT::JA::Harmonize
 
 Converts Japanese CoNLL treebank into PDT style treebank.
 

@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AuxAUnderNoun;
+package Treex::Block::HamleDT::Test::AuxAUnderNoun;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -18,7 +18,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AuxAUnderNoun
+=item Treex::Block::HamleDT::Test::AuxAUnderNoun
 
 if exists det in lang must be under noun
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::SetCoordConjunction;
+package Treex::Block::HamleDT::SetCoordConjunction;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -38,7 +38,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::SetCoordConjunction - fill C<is_coord_conjunction> wild attribute in PDT-style annotation
+Treex::Block::HamleDT::SetCoordConjunction - fill C<is_coord_conjunction> wild attribute in PDT-style annotation
 
 =head1 DESCRIPTION
 

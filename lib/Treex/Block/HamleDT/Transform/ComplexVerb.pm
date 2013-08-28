@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::ComplexVerb;
+package Treex::Block::HamleDT::Transform::ComplexVerb;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 #TODO orig first last first_aux last_aux main
 #has head => (
@@ -89,7 +89,7 @@ sub has_morp {
 
 =over
 
-=item Treex::Block::A2A::Transform::ComplexVerb
+=item Treex::Block::HamleDT::Transform::ComplexVerb
 
 AuxV-as-head, try to not introduce non-projectivities
 

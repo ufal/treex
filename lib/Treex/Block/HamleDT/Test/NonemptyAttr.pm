@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::NonemptyAttr;
+package Treex::Block::HamleDT::Test::NonemptyAttr;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -17,7 +17,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::NonemptyAttr
+=item Treex::Block::HamleDT::Test::NonemptyAttr
 
 Report attributes form, lemma, or tag with empty string or undefined value.
 

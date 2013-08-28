@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::NoNewNonProj;
+package Treex::Block::HamleDT::Test::NoNewNonProj;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -52,7 +52,7 @@ sub process_bundle
 
 =over
 
-=item Treex::Block::Test::A::NoNewNonProj
+=item Treex::Block::HamleDT::Test::NoNewNonProj
 
 Harmonization of treebank annotation towards the HamleDT annotation scheme should not introduce new non-projectivities.
 This block compares two zones of one language, "orig" and "".

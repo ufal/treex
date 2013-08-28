@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::NumberHavePosC;
+package Treex::Block::HamleDT::Test::NumberHavePosC;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -15,7 +15,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::NumberHavePosC
+=item Treex::Block::HamleDT::Test::NumberHavePosC
 
 Nodes with conll deprel "NUMBER" should have pos set to C (numeral)
 

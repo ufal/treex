@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Transform::BaseTransformer;
+package Treex::Block::HamleDT::Transform::BaseTransformer;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -45,7 +45,7 @@ sub rehang {
 
 =over
 
-=item Treex::Block::A2A::Transform::BaseTransformer
+=item Treex::Block::HamleDT::Transform::BaseTransformer
 
 Abstract class predecessor for blocks transforming a-trees from one convention
 to another. Attribute transformer is supposed to be filled by a block's constructor.

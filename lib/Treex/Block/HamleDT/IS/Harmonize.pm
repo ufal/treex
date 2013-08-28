@@ -1,8 +1,8 @@
-package Treex::Block::A2A::IS::Harmonize;
+package Treex::Block::HamleDT::IS::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Icelandic tree, converts morphosyntactic tags to the PDT tagset,
@@ -21,7 +21,7 @@ sub process_zone
 
 =over
 
-=item Treex::Block::A2A::EN::Harmonize
+=item Treex::Block::HamleDT::EN::Harmonize
 
 Converts trees coming from the Penn Treebank via the CoNLL 2007 format to the style of
 the Prague Dependency Treebank. Converts tags and restructures the tree.

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::OracleTree;
+package Treex::Block::HamleDT::OracleTree;
 
 use Moose;
 use Treex::Core::Common;
@@ -76,7 +76,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::EnsembleTree
+Treex::Block::HamleDT::EnsembleTree
 
 
 

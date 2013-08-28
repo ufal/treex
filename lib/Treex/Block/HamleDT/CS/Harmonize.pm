@@ -1,8 +1,8 @@
-package Treex::Block::A2A::CS::Harmonize;
+package Treex::Block::HamleDT::CS::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Czech tree, converts morphosyntactic tags to the PDT tagset,
@@ -40,7 +40,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::CS::Harmonize
+=item Treex::Block::HamleDT::CS::Harmonize
 
 Converts PDT (Prague Dependency Treebank) trees from CoNLL to the style of
 the Prague Dependency Treebank. The structure of the trees should already

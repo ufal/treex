@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AuxZchilds;
+package Treex::Block::HamleDT::Test::AuxZchilds;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -22,7 +22,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AuxZchilds
+=item Treex::Block::HamleDT::Test::AuxZchilds
 
 Only AuxZ or AuxY can be child AuxZ
 

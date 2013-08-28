@@ -1,8 +1,8 @@
-package Treex::Block::A2A::FA::Harmonize;
+package Treex::Block::HamleDT::FA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 
 
@@ -479,7 +479,7 @@ sub collect_coordination_modifiers
 
 =over
 
-=item Treex::Block::A2A::FA::Harmonize
+=item Treex::Block::HamleDT::FA::Harmonize
 
 Converts Persian dependency trees from CoNLL to the style of
 the Prague Dependency Treebank.

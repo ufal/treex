@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::NonParentAuxS;
+package Treex::Block::HamleDT::Test::NonParentAuxS;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -16,7 +16,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::NonParentAuxS
+=item Treex::Block::HamleDT::Test::NonParentAuxS
 
 AuxC must not be a leaf node.
 

@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AfunDefined;
+package Treex::Block::HamleDT::Test::AfunDefined;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -16,7 +16,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AfunDefined
+=item Treex::Block::HamleDT::Test::AfunDefined
 
 Each node should have its afun defined.
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ProjectTreeThroughAlignment;
+package Treex::Block::HamleDT::ProjectTreeThroughAlignment;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -85,7 +85,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::ProjectTreeThroughAlignment
+Treex::Block::HamleDT::ProjectTreeThroughAlignment
 
 =head1 DESCRIPTION
 

@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AuxPNotMember;
+package Treex::Block::HamleDT::Test::AuxPNotMember;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -15,7 +15,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AuxP
+=item Treex::Block::HamleDT::Test::AuxP
 
 AuxP is neither  member  of coordination nor aposition and is not root of parenthesis
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::FixCoordinatedAuxCP;
+package Treex::Block::HamleDT::FixCoordinatedAuxCP;
 
 use Moose;
 use Treex::Core::Common;
@@ -70,7 +70,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2A::FixCoordinatedAuxCP
+Treex::Block::HamleDT::FixCoordinatedAuxCP
 
 =head1 DESCRIPTION
 

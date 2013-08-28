@@ -1,4 +1,4 @@
-package Treex::Block::A2A::SetClauseDepth;
+package Treex::Block::HamleDT::SetClauseDepth;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::SetClauseDepth
+Treex::Block::HamleDT::SetClauseDepth
 
 =head1 DESCRIPTION
 

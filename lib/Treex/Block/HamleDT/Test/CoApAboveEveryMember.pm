@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::CoApAboveEveryMember;
+package Treex::Block::HamleDT::Test::CoApAboveEveryMember;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -14,7 +14,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::CoApAboveEveryMember
+=item Treex::Block::HamleDT::Test::CoApAboveEveryMember
 
 Nodes with is_member=1 are allowed only below co/ap roots.
 

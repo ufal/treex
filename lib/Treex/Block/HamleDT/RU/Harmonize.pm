@@ -1,8 +1,8 @@
-package Treex::Block::A2A::RU::Harmonize;
+package Treex::Block::HamleDT::RU::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Russian tree, converts morphosyntactic tags to the PDT tagset,
@@ -175,7 +175,7 @@ sub deprel_to_afun {
 
 =over
 
-=item Treex::Block::A2A::RU::Harmonize
+=item Treex::Block::HamleDT::RU::Harmonize
 
 Converts Syntagrus (Russian Dependency Treebank) trees to the style of
 the Prague Dependency Treebank.

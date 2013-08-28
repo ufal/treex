@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AuxVNotOnTop;
+package Treex::Block::HamleDT::Test::AuxVNotOnTop;
 use utf8;
 use Moose;
 use Treex::Core::Common;

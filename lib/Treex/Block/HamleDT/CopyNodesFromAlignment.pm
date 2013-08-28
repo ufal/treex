@@ -1,8 +1,8 @@
-package Treex::Block::A2A::CopyNodesFromAlignment;
+package Treex::Block::HamleDT::CopyNodesFromAlignment;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Block::A2A::CopySurfaceFromAlignment;
+use Treex::Block::HamleDT::CopySurfaceFromAlignment;
 
 extends 'Treex::Core::Block';
 
@@ -30,7 +30,7 @@ sub process_atree {
     $self->_back_align->{$align_root} = $aroot;
 
     foreach my $anode (@anodes) {
-        my $aligned = Treex::Block::A2A::CopySurfaceFromAlignment::_get_aligned_node($anode);
+        my $aligned = Treex::Block::HamleDT::CopySurfaceFromAlignment::_get_aligned_node($anode);
         if ($aligned) {
             $self->_back_align->{$aligned} = $anode if ( !$self->_back_align->{$aligned} );
         }
@@ -47,7 +47,7 @@ sub process_atree {
 sub _delete_if_no_aligned {
 
     my ( $self, $anode ) = @_;
-    my $aligned = Treex::Block::A2A::CopySurfaceFromAlignment::_get_aligned_node($anode);
+    my $aligned = Treex::Block::HamleDT::CopySurfaceFromAlignment::_get_aligned_node($anode);
 
     # delete a-nodes that are not in the aligned tree (including superfluous ones if multiple nodes are aligned to one node)
     if ( !$aligned || ( $self->_back_align->{$aligned} != $anode ) ) {
@@ -115,7 +115,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2A::CopyNodesFromAlignment
+Treex::Block::HamleDT::CopyNodesFromAlignment
 
 =head1 DESCRIPTION
 

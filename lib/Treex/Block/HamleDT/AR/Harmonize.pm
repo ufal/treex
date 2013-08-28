@@ -1,8 +1,8 @@
-package Treex::Block::A2A::AR::Harmonize;
+package Treex::Block::HamleDT::AR::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
@@ -284,7 +284,7 @@ sub fix_auxp
 
 =over
 
-=item Treex::Block::A2A::AR::Harmonize
+=item Treex::Block::HamleDT::AR::Harmonize
 
 Converts PADT (Prague Arabic Dependency Treebank) trees to the style of HamleDT.
 The structure of the trees should already adhere to the guidelines because the

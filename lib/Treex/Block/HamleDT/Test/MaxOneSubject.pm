@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::MaxOneSubject;
+package Treex::Block::HamleDT::Test::MaxOneSubject;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -33,7 +33,7 @@ sub process_anode
 
 =over
 
-=item Treex::Block::Test::A::MaxOneSubject
+=item Treex::Block::HamleDT::Test::MaxOneSubject
 
 One verb should have maximally one subject (afun=Sb).
 Note that coordination of subjects does not violate this condition because it is represented by the root of the subtree.

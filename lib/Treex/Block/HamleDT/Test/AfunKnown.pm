@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AfunKnown;
+package Treex::Block::HamleDT::Test::AfunKnown;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -22,7 +22,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AfunKnown
+=item Treex::Block::HamleDT::Test::AfunKnown
 
 Each node should have only these afun values:
 Pred Sb Obj Adv Atv AtvV Atr Pnom AuxV Coord Apos AuxT AuxR
@@ -33,8 +33,8 @@ also the special afun value "NR" (intentionally marked as not recognized).
 
 See also
 
-L<Treex::Block::Test::A::AfunDefined>
-L<Treex::Block::Test::A::AfunNotNR>
+L<Treex::Block::HamleDT::Test::AfunDefined>
+L<Treex::Block::HamleDT::Test::AfunNotNR>
 
 =back
 

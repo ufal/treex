@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ReorderSVO2SOV;
+package Treex::Block::HamleDT::ReorderSVO2SOV;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -32,7 +32,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::ReorderSVO2SOV - change word order from SVO to SOV
+Treex::Block::HamleDT::ReorderSVO2SOV - change word order from SVO to SOV
 
 =head1 DESCRIPTION
 

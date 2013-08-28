@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PunctUnderCoord;
+package Treex::Block::HamleDT::Test::PunctUnderCoord;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -24,7 +24,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::PunctUnderCoord
+=item Treex::Block::HamleDT::Test::PunctUnderCoord
 
 Punctuation should not appear as a sibling of a coordination if it is between the leftmost and the rightmost children of that coordination.
 

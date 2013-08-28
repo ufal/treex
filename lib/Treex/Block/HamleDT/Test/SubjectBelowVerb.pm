@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::SubjectBelowVerb;
+package Treex::Block::HamleDT::Test::SubjectBelowVerb;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -23,7 +23,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::SubjectBelowVerb
+=item Treex::Block::HamleDT::Test::SubjectBelowVerb
 
 Subjects (afun=Sb) are expected only below verbs.
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Tag2Interset;
+package Treex::Block::HamleDT::Tag2Interset;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -97,7 +97,7 @@ sub convert_tag
 
 =over
 
-=item Treex::Block::A2A::Tag2Interset
+=item Treex::Block::HamleDT::Tag2Interset
 
 Convert C<tag> into Interset structure stored in C<iset>.
 Replace the content of C<tag> with a newly serialized positional value.

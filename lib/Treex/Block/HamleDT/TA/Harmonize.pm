@@ -1,8 +1,8 @@
-package Treex::Block::A2A::TA::Harmonize;
+package Treex::Block::HamleDT::TA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the TamilTB CoNLL trees, converts morphosyntactic tags to the positional
@@ -40,7 +40,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::TA::Harmonize
+=item Treex::Block::HamleDT::TA::Harmonize
 
 Converts TamilTB.v0.1 (Tamil Dependency Treebank) from CoNLL to the style of
 the Prague Dependency Treebank. Morphological tags are of length 9. At present

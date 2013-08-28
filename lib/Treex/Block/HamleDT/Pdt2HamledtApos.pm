@@ -1,4 +1,4 @@
-package Treex::Block::A2A::Pdt2HamledtApos;
+package Treex::Block::HamleDT::Pdt2HamledtApos;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -67,7 +67,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::Pdt2HamledtApos - convert appositions
+Treex::Block::HamleDT::Pdt2HamledtApos - convert appositions
 
 =head1 DESCRIPTION
 

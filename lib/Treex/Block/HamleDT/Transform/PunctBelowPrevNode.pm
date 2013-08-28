@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::PunctBelowPrevNode;
+package Treex::Block::HamleDT::Transform::PunctBelowPrevNode;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -24,7 +24,7 @@ sub process_atree {
 
 =over
 
-=item Treex::Block::A2A::Transform::PunctBelowPrevNode
+=item Treex::Block::HamleDT::Transform::PunctBelowPrevNode
 
 Nodes whose forms are composed only of punctuation symbols are moved
 below the previous node. If a punctuation node has children, they are moved

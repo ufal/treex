@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::NounGovernsDet;
+package Treex::Block::HamleDT::Test::NounGovernsDet;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -38,7 +38,7 @@ sub process_anode
 
 =over
 
-=item Treex::Block::Test::A::NounGovernsDet
+=item Treex::Block::HamleDT::Test::NounGovernsDet
 
 Determiners and numerals depend on nouns, not vice versa (as in Danish Dependency Treebank).
 Similarly, adjectives should not depend on determiners or numerals.

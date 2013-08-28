@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AfunNotNR;
+package Treex::Block::HamleDT::Test::AfunNotNR;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -15,7 +15,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AfunNotNR
+=item Treex::Block::HamleDT::Test::AfunNotNR
 
 This test reports nodes with afun=NR.
 Afun value NR marks nodes whose dependency label was "not recognized" (i.e. equivalent of general label "DEP" in Stanford hierarchy).
@@ -23,8 +23,8 @@ We should try to have a low number of NR afuns, but it is better to assign this 
 
 See also
 
-L<Treex::Block::Test::A::AfunDefined>
-L<Treex::Block::Test::A::AfunKnown>
+L<Treex::Block::HamleDT::Test::AfunDefined>
+L<Treex::Block::HamleDT::Test::AfunKnown>
 
 =back
 

@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::AllPunctBelowTechRoot;
+package Treex::Block::HamleDT::Transform::AllPunctBelowTechRoot;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
@@ -24,7 +24,7 @@ sub process_atree {
 
 =over
 
-=item Treex::Block::A2A::Transform::PunctBelowTechRoot
+=item Treex::Block::HamleDT::Transform::PunctBelowTechRoot
 
 Nodes whose forms are composed only of punctuation symbols are moved
 below the technical root. If a punctuation node has children, they are moved

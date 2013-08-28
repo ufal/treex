@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::AtvVBelowVerb;
+package Treex::Block::HamleDT::Test::AtvVBelowVerb;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -22,7 +22,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::AtvVBelow;
+=item Treex::Block::HamleDT::Test::AtvVBelow;
 
 AtrV must be below verb
 =back

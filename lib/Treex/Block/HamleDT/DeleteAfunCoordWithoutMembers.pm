@@ -1,4 +1,4 @@
-package Treex::Block::A2A::DeleteAfunCoordWithoutMembers;
+package Treex::Block::HamleDT::DeleteAfunCoordWithoutMembers;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -18,7 +18,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::DeleteAfunCoordWithoutMembers - fix inconsistent coordinations
+Treex::Block::HamleDT::DeleteAfunCoordWithoutMembers - fix inconsistent coordinations
 
 =head1 DESCRIPTION
 
@@ -29,7 +29,7 @@ the is_member attribute is more reliable than afun.
 
 =head1 SEE ALSO
 
-L<Treex::Block::A2A::SetAfunCoordAboveMembers>
+L<Treex::Block::HamleDT::SetAfunCoordAboveMembers>
 
 =head1 AUTHOR
 

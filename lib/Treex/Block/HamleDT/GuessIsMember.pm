@@ -1,4 +1,4 @@
-package Treex::Block::A2A::GuessIsMember;
+package Treex::Block::HamleDT::GuessIsMember;
 
 use Moose;
 use Treex::Core::Common;
@@ -110,12 +110,12 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::GuessIsMember
+Treex::Block::HamleDT::GuessIsMember
 
 =head1 DESCRIPTION
 
 This module tries to set correctly the is_member attribute.
-It is based on Treex::Block::A2A::CoNLL2PDTStyle/identify_coap_members()
+It is based on Treex::Block::HamleDT::CoNLL2PDTStyle/identify_coap_members()
 
 =head1 AUTHORS
 

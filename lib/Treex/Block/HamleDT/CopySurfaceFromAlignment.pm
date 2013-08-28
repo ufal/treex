@@ -1,4 +1,4 @@
-package Treex::Block::A2A::CopySurfaceFromAlignment;
+package Treex::Block::HamleDT::CopySurfaceFromAlignment;
 
 use Moose;
 use Treex::Core::Common;
@@ -38,7 +38,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2A::CopySurfaceFromAlignment
+Treex::Block::HamleDT::CopySurfaceFromAlignment
 
 =head1 DESCRIPTION
 

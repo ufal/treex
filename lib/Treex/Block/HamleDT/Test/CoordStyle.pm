@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::CoordStyle;
+package Treex::Block::HamleDT::Test::CoordStyle;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -172,7 +172,7 @@ sub _my_complain {
 
 =over
 
-=item Treex::Block::Test::A::CoordStyle
+=item Treex::Block::HamleDT::Test::CoordStyle
 
 Checks whether basic assumptions about the given coordination style
 hold in a-trees. In other word, the block searches for such combinations of

@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::MemberInEveryCoAp;
+package Treex::Block::HamleDT::Test::MemberInEveryCoAp;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -14,7 +14,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::MemberInEveryCoAp
+=item Treex::Block::HamleDT::Test::MemberInEveryCoAp
 
 Every coordination/apposition structure should have at least one
 member node among its children.

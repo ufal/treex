@@ -1,4 +1,4 @@
-package Treex::Block::A2A::SetSharedModifier;
+package Treex::Block::HamleDT::SetSharedModifier;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::SetSharedModifier - fill C<is_shared_modifier> attribute in PDT-style annotation
+Treex::Block::HamleDT::SetSharedModifier - fill C<is_shared_modifier> attribute in PDT-style annotation
 
 =head1 DESCRIPTION
 

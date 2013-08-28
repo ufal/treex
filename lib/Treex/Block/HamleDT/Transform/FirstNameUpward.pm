@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::FirstNameUpward;
+package Treex::Block::HamleDT::Transform::FirstNameUpward;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 
@@ -36,7 +36,7 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::FirstNameUpward
+=item Treex::Block::HamleDT::Transform::FirstNameUpward
 
 In PDT, first names are attached below surnames. This transformation
 moves first names above surnames.

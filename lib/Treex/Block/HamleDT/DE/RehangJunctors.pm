@@ -1,4 +1,4 @@
-package Treex::Block::A2A::DE::RehangJunctors;
+package Treex::Block::HamleDT::DE::RehangJunctors;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -25,7 +25,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::DE::RehangJunctors - junctors should govern the sentence
+Treex::Block::HamleDT::DE::RehangJunctors - junctors should govern the sentence
 
 =head1 DESCRIPTION
 

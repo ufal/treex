@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::CoordStyle;
+package Treex::Block::HamleDT::Transform::CoordStyle;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 # Shortcuts
 has style => (
@@ -795,12 +795,12 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
+Treex::Block::HamleDT::Transform::CoordStyle - change the style of coordinations
 
 =head1 SYNOPSIS
 
   # in scenario:
-  A2A::Transform::CoordStyle
+  HamleDT::Transform::CoordStyle
          from_family=Stanford
            from_head=right
          from_shared=head
@@ -813,7 +813,7 @@ Treex::Block::A2A::Transform::CoordStyle - change the style of coordinations
     punctuation=previous
 
   #TODO the same using a shortcut
-  #A2A::Transform::CoordStyle from_style=fShRsHcFpF style=fMhLsNcBpP
+  #HamleDT::Transform::CoordStyle from_style=fShRsHcFpF style=fMhLsNcBpP
   
 =head1 DESCRIPTION
 
@@ -827,8 +827,8 @@ TODO
 
 =head1 SEE ALSO
 
-L<Treex::Block::A2A::SetSharedModifier>,
-L<Treex::Block::A2A::SetCoordConjunction>
+L<Treex::Block::HamleDT::SetSharedModifier>,
+L<Treex::Block::HamleDT::SetCoordConjunction>
 
 
 # Copyright 2011 Martin Popel

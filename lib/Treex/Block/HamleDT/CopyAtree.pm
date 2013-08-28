@@ -1,4 +1,4 @@
-package Treex::Block::A2A::CopyAtree;
+package Treex::Block::HamleDT::CopyAtree;
 
 use Moose;
 use Treex::Core::Common;
@@ -82,7 +82,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::CopyAtree
+Treex::Block::HamleDT::CopyAtree
 
 =head1 DESCRIPTION
 

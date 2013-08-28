@@ -1,8 +1,8 @@
-package Treex::Block::A2A::BG::Harmonize;
+package Treex::Block::HamleDT::BG::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Bulgarian tree, converts morphosyntactic tags to the PDT tagset,
@@ -454,7 +454,7 @@ sub mark_deficient_clausal_coordination
 
 =over
 
-=item Treex::Block::A2A::BG::Harmonize
+=item Treex::Block::HamleDT::BG::Harmonize
 
 Converts trees coming from BulTreeBank via the CoNLL-X format to the style of
 the Prague Dependency Treebank. Converts tags and restructures the tree.

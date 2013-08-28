@@ -1,8 +1,8 @@
-package Treex::Block::A2A::PT::Harmonize;
+package Treex::Block::HamleDT::PT::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -140,7 +140,7 @@ sub rehang_coordconj {
 
 =over
 
-=item Treex::Block::A2A::PT::Harmonize
+=item Treex::Block::HamleDT::PT::Harmonize
 
 Converts Portuguese trees from CoNLL-X to the style of
 the Prague Dependency Treebank.

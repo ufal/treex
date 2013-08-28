@@ -1,4 +1,4 @@
-package Treex::Block::A2A::RO::Harmonize;
+package Treex::Block::HamleDT::RO::Harmonize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -7,7 +7,7 @@ use tagset::cs::pdt;
 extends 'Treex::Core::Block';
 
 # This block is inspired by
-# 'Treex::Block::A2A::CoNLL2PDTStyle';
+# 'Treex::Block::HamleDT::CoNLL2PDTStyle';
 # but it actually does not extend it.
 
 # The following table serves
@@ -196,7 +196,7 @@ sub handle_apposition {
 
 =over
 
-=item Treex::Block::A2A::RO::Harmonize
+=item Treex::Block::HamleDT::RO::Harmonize
 
 Converts RDT (Romanian Dependency Treebank) trees to the style of
 the Prague Dependency Treebank.

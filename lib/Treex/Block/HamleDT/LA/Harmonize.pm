@@ -1,10 +1,10 @@
-package Treex::Block::A2A::LA::Harmonize;
+package Treex::Block::HamleDT::LA::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
-use Treex::Block::A2A::Pdt2TreexIsMemberConversion;
+use Treex::Block::HamleDT::Pdt2TreexIsMemberConversion;
 
 #------------------------------------------------------------------------------
 # Reads the Latin CoNLL trees, converts morphosyntactic tags to the positional

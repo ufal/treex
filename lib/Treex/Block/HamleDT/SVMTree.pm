@@ -1,4 +1,4 @@
-package Treex::Block::A2A::SVMTree;
+package Treex::Block::HamleDT::SVMTree;
 use Treex::Tool::Parser::Ensemble::Ensemble;
 use Treex::Tool::ML::SVM::SVM;
 use Algorithm::SVM::DataSet;
@@ -244,7 +244,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::EnsembleTree
+Treex::Block::HamleDT::EnsembleTree
 
 
 

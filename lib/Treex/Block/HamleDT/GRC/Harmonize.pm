@@ -1,8 +1,8 @@
-package Treex::Block::A2A::GRC::Harmonize;
+package Treex::Block::HamleDT::GRC::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Ancient Greek CoNLL trees, converts morphosyntactic tags to the positional
@@ -125,7 +125,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::GRC::Harmonize
+=item Treex::Block::HamleDT::GRC::Harmonize
 
 Converts Ancient Greek dependency treebank into PDT style treebank. Most of the
 deprel tags follows PDT convention, but they are very elaborated, and has been

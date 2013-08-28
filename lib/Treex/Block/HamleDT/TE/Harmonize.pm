@@ -1,8 +1,8 @@
-package Treex::Block::A2A::TE::Harmonize;
+package Treex::Block::HamleDT::TE::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Telugu CoNLL trees, converts morphosyntactic tags to the positional
@@ -207,7 +207,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::TE::Harmonize
+=item Treex::Block::HamleDT::TE::Harmonize
 
 Converts Telugu treebank into PDT style treebank.
 

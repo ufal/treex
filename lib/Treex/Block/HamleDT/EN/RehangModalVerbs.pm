@@ -1,4 +1,4 @@
-package Treex::Block::A2A::EN::RehangModalVerbs;
+package Treex::Block::HamleDT::EN::RehangModalVerbs;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -39,7 +39,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::EN::RehangModalVerbs - modal verbs should govern main verbs
+Treex::Block::HamleDT::EN::RehangModalVerbs - modal verbs should govern main verbs
 
 =head1 DESCRIPTION
 

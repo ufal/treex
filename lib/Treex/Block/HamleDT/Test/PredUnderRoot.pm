@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PredUnderRoot;
+package Treex::Block::HamleDT::Test::PredUnderRoot;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -20,7 +20,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::PredUnderRoot
+=item Treex::Block::HamleDT::Test::PredUnderRoot
 
 Each predicate must be directly (effectively) dependant on the root node.
 

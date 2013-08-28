@@ -1,7 +1,7 @@
-package Treex::Block::A2A::Transform::InvPrepositionDownward;
+package Treex::Block::HamleDT::Transform::InvPrepositionDownward;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2A::Transform::BaseTransformer';
+extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 
@@ -29,9 +29,9 @@ sub BUILD {
 
 =over
 
-=item Treex::Block::A2A::Transform::InvPrepositionDownward
+=item Treex::Block::HamleDT::Transform::InvPrepositionDownward
 
-Approximately inverse transformation for A2A::Transform::PrepositionDownward
+Approximately inverse transformation for HamleDT::Transform::PrepositionDownward
 
 =back
 

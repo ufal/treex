@@ -1,4 +1,4 @@
-package Treex::Block::Test::A::PunctUnderRoot;
+package Treex::Block::HamleDT::Test::PunctUnderRoot;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -27,7 +27,7 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::Test::A::PunctUnderRoot
+=item Treex::Block::HamleDT::Test::PunctUnderRoot
 
 AuxK should be direct under root one exception is direct speak
 

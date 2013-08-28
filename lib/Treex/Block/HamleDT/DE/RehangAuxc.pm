@@ -1,4 +1,4 @@
-package Treex::Block::A2A::DE::RehangAuxc;
+package Treex::Block::HamleDT::DE::RehangAuxc;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -36,7 +36,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::DE::RehangAuxc -  Subordinating conjunctions should govern subordinate clauses
+Treex::Block::HamleDT::DE::RehangAuxc -  Subordinating conjunctions should govern subordinate clauses
 
 =head1 DESCRIPTION	
 

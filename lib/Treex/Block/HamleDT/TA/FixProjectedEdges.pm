@@ -1,4 +1,4 @@
-package Treex::Block::A2A::TA::FixProjectedEdges;
+package Treex::Block::HamleDT::TA::FixProjectedEdges;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -74,11 +74,11 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::TA::FixProjectedEdges - Implements language specific rules to fix projection errors
+Treex::Block::HamleDT::TA::FixProjectedEdges - Implements language specific rules to fix projection errors
 
 =head1 SYNOPSIS
 
-A2A::TA::FixProjectedEdges projected_from='en'
+HamleDT::TA::FixProjectedEdges projected_from='en'
 
 =head1 DESCRIPTION
 

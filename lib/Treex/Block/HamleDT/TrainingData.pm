@@ -1,4 +1,4 @@
-package Treex::Block::A2A::TrainingData;
+package Treex::Block::HamleDT::TrainingData;
 
 use Moose;
 use Treex::Core::Common;
@@ -136,7 +136,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::TrainingData
+Treex::Block::HamleDT::TrainingData
 
 =head1 DESCRIPTION
 

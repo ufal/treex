@@ -1,4 +1,4 @@
-package Treex::Block::A2A::AddDirectObjectMarkers;
+package Treex::Block::HamleDT::AddDirectObjectMarkers;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -34,7 +34,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::AddDirectObjectMarkers - add artificial tokens after direct objects
+Treex::Block::HamleDT::AddDirectObjectMarkers - add artificial tokens after direct objects
 
 =head1 DESCRIPTION
 

@@ -1,8 +1,8 @@
-package Treex::Block::A2A::HI::Harmonize;
+package Treex::Block::HamleDT::HI::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Hindi CoNLL trees, converts morphosyntactic tags to the positional
@@ -355,7 +355,7 @@ sub raise_children_of_commas
 
 =over
 
-=item Treex::Block::A2A::HI::Harmonize
+=item Treex::Block::HamleDT::HI::Harmonize
 
 Converts Hindi treebank into PDT style treebank.
 

@@ -1,4 +1,4 @@
-package Treex::Block::A2A::SetAfunCoordAboveMembers;
+package Treex::Block::HamleDT::SetAfunCoordAboveMembers;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -18,7 +18,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::SetAfunCoordAboveMembers
+Treex::Block::HamleDT::SetAfunCoordAboveMembers
 
 =head1 DESCRIPTION
 
