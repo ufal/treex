@@ -6,6 +6,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has summary_only => ( is => 'rw', default => 0 );
 has _stats => ( is => 'ro', default => sub { {} } );
 
+
 sub process_bundle {
 
     my ( $self, $bundle ) = @_;

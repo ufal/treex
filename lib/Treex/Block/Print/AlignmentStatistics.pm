@@ -114,12 +114,84 @@ sub print_alignment_info {
 			}
 		}		
 	}	
-	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $src_unaligned, $tgt_unaligned, $one_to_one, $one_to_many, $many_to_one);
+	if (! exists $self->_stats->{'src_id'}) {
+		my @tmp = ($src_tree->id);
+		$self->_stats->{'src_id'} = \@tmp;
+	}
+	else {
+		my @tmp = @{$self->_stats->{'src_id'}};
+		push @tmp, $src_tree->id;
+		$self->_stats->{'src_id'} = \@tmp;		
+	}
+	
+	if (! exists $self->_stats->{'tgt_id'}) {
+		my @tmp = ($tgt_tree->id);
+		$self->_stats->{'tgt_id'} = \@tmp;
+	}
+	else {
+		my @tmp = @{$self->_stats->{'tgt_id'}};
+		push @tmp, $tgt_tree->id;
+		$self->_stats->{'tgt_id'} = \@tmp;		
+	}
+	
+	if (exists $self->_stats->{'src_unaligned'}) {
+		$self->_stats->{'src_unaligned'} += $local_stat{'src_unaligned'};
+	}
+	else {
+		$self->_stats->{'src_unaligned'} = $local_stat{'src_unaligned'};
+	}
+	if (exists $self->_stats->{'tgt_unaligned'}) {
+		$self->_stats->{'tgt_unaligned'} += $local_stat{'tgt_unaligned'};
+	}
+	else {
+		$self->_stats->{'tgt_unaligned'} = $local_stat{'tgt_unaligned'};
+	}
+	if (exists $self->_stats->{'src_len'}) {
+		$self->_stats->{'src_len'} += scalar(@src_nodes);
+	}
+	else {
+		$self->_stats->{'src_len'} = scalar(@src_nodes);
+	}
+	if (exists $self->_stats->{'tgt_len'}) {
+		$self->_stats->{'tgt_len'} += scalar(@tgt_nodes);
+	}
+	else {
+		$self->_stats->{'tgt_len'} = scalar(@tgt_nodes);
+	}
+	if (exists $self->_stats->{'one_to_one'}) {
+		$self->_stats->{'one_to_one'} += $local_stat{'one_to_one'};
+	}
+	else {
+		$self->_stats->{'one_to_one'} = $local_stat{'one_to_one'};
+	}
+	if (exists $self->_stats->{'one_to_many'}) {
+		$self->_stats->{'one_to_many'} += $local_stat{'one_to_many'};
+	}
+	else {
+		$self->_stats->{'one_to_many'} = $local_stat{'one_to_many'};
+	}	
+	if (exists $self->_stats->{'many_to_one'}) {
+		$self->_stats->{'many_to_one'} += $local_stat{'many_to_one'};
+	}
+	else {
+		$self->_stats->{'many_to_one'} = $local_stat{'many_to_one'};
+	}
+	
+	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $local_stat{'src_unaligned'}, $local_stat{'tgt_unaligned'}, $local_stat{'one_to_one'}, $local_stat{'one_to_many'}, $local_stat{'many_to_one'});
 	print { $self->_file_handle } $out_string . "\n";
 }
 
 sub process_end {
-	
+	my $self = shift;
+	my $num_trees = 0;
+	if (exists $self->_stats->{'src_id'}) {
+		my @tmp = @{$self->_stats->{'src_id'}};
+		$num_trees = scalar(@tmp);
+	}
+	my $out1_string = sprintf("%10s %10s %10s %10s %14s %14s %4s %4s %4s", "#src_trees", "#tgt_trees", "#src_nodes", "#tgt_nodes", '#src_unaligned', '#tgt_unaligned', '#1-1', '#1-M', '#M-1');
+	print { $self->_file_handle } $out1_string . "\n";
+	my $out_string = sprintf("%10d %10d %10d %10d %14d %14d %4d %4d %4d", $num_trees, $num_trees, $self->_stats->{'src_len'}, $self->_stats->{'tgt_len'}, $self->_stats->{'src_unaligned'}, $self->_stats->{'tgt_unaligned'}, $self->_stats->{'one_to_one'}, $self->_stats->{'one_to_many'}, $self->_stats->{'many_to_one'});
+	print { $self->_file_handle } $out_string . "\n";
 }
 
 1;
