@@ -24,15 +24,14 @@ sub process_zone {
 
 sub print_alignment_info {
 	my ($self, $src_tree, $tgt_tree) = @_;
-	my $src_id;
-	my $src_unaligned = 0;
-	my $one_to_many = 0;
-	my $many_to_one = 0;
-	my $one_to_one = 0;
-	my $src_len;
-	my $tgt_id;
-	my $tgt_unaligned = 0;
-	my $tgt_len;
+	my %local_stat = ();
+	$local_stat{'src_unaligned'} = 0;
+	$local_stat{'tgt_unaligned'} = 0;
+	$local_stat{'one_to_one'} = 0;
+	$local_stat{'one_to_many'} = 0;
+	$local_stat{'many_to_one'} = 0;	
+	$local_stat{'src_len'} = 0;
+	$local_stat{'tgt_len'} = 0;	
 	my @src_nodes = $src_tree->get_descendants({ordered=>1});
 	my @tgt_nodes = $tgt_tree->get_descendants({ordered=>1});
 	if ($self->alignment_direction eq 'src2trg') {
@@ -40,23 +39,23 @@ sub print_alignment_info {
 			my @aligned_nodes = $src_nodes[$i]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
 			if (@aligned_nodes) {
 				if (scalar(@aligned_nodes) > 1) {
-					$one_to_many++;	
+					$local_stat{'one_to_many'}++;	
 				}
 				elsif (scalar(@aligned_nodes) == 1) {
 					my @referring_nodes = grep {$_->is_aligned_to($aligned_nodes[0], '^' . $self->alignment_type . '$')} $aligned_nodes[0]->get_referencing_nodes('alignment', $self->source_language, $self->source_selector);
 					if (scalar(@referring_nodes) == 1) {
-						$one_to_one++;						
+						$local_stat{'one_to_one'}++;
 					}
 				}
 			}	
 			else {
-				$src_unaligned++;
+				$local_stat{'src_unaligned'}++;
 			}
 		}		
 		foreach my $j (0..$#tgt_nodes) {
 			my @referring_nodes = grep {$_->is_aligned_to($tgt_nodes[$j], '^' . $self->alignment_type . '$')} $tgt_nodes[$j]->get_referencing_nodes('alignment', $self->source_language, $self->source_selector);
 			if (!@referring_nodes) {
-				$tgt_unaligned++;
+				$local_stat{'tgt_unaligned'}++;
 			}
 			if (@referring_nodes) {
 				if ($#referring_nodes > 0) {
@@ -69,7 +68,7 @@ sub print_alignment_info {
 						}
 					}
 					if ($is_m_to_1) {
-						$many_to_one++;
+						$local_stat{'many_to_one'}++;
 					}
 				}
 			}
@@ -80,23 +79,23 @@ sub print_alignment_info {
 			my @referring_nodes = grep {$_->is_aligned_to($src_nodes[$i], '^' . $self->alignment_type . '$')} $src_nodes[$i]->get_referencing_nodes('alignment', $self->language, $self->selector);
 			if (@referring_nodes) {
 				if (scalar(@referring_nodes) > 1) {
-					$one_to_many++;
+					$local_stat{'one_to_many'}++;
 				}	
 				elsif (scalar(@referring_nodes) == 1) {
 					my @aligned_nodes = $referring_nodes[0]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->source_language, $self->source_selector);
 					if (scalar(@aligned_nodes) == 1) {
-						$one_to_one++;
+						$local_stat{'one_to_one'}++;
 					}
 				}			
 			}
 			else {
-				$src_unaligned++;
+				$local_stat{'src_unaligned'}++;
 			}
 		}
 		foreach my $j (0..$#tgt_nodes) {
 			my @aligned_nodes = $tgt_nodes[$j]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->source_language, $self->source_selector);
 			if (!@aligned_nodes) {
-				$tgt_unaligned++;
+				$local_stat{'tgt_unaligned'}++;
 			}
 			if (@aligned_nodes) {
 				if ($#aligned_nodes > 0) {
@@ -109,7 +108,7 @@ sub print_alignment_info {
 						}						
 					}
 					if ($is_m_to_1) {
-						$many_to_one++;
+						$local_stat{'many_to_one'}++;
 					}					
 				}
 			}
