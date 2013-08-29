@@ -1,4 +1,4 @@
-package Treex::Block::Print::AlignmentSummary;
+package Treex::Block::Print::AlignmentStatistics;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -13,6 +13,7 @@ has alignment_direction => (
     default=>'trg2src',
     documentation=>'Default trg2src means alignment from <language,selector> to <source_language,source_selector> tree. src2trg means the opposite direction.',
 );
+has _stats => ( is => 'ro', default => sub { {} } );
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -26,6 +27,7 @@ sub print_alignment_info {
 	my $src_id;
 	my $src_unaligned = 0;
 	my $one_to_many = 0;
+	my $many_to_one = 0;
 	my $one_to_one = 0;
 	my $src_len;
 	my $tgt_id;
@@ -56,6 +58,21 @@ sub print_alignment_info {
 			if (!@referring_nodes) {
 				$tgt_unaligned++;
 			}
+			if (@referring_nodes) {
+				if ($#referring_nodes > 0) {
+					my $is_m_to_1 = 1;
+					foreach my $rn (@referring_nodes) {
+						my @aligned_nodes = $rn->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
+						if (scalar(@aligned_nodes) != 1) {
+							$is_m_to_1 = 0;
+							last;
+						}
+					}
+					if ($is_m_to_1) {
+						$many_to_one++;
+					}
+				}
+			}
 		}
 	}
 	else {
@@ -81,11 +98,29 @@ sub print_alignment_info {
 			if (!@aligned_nodes) {
 				$tgt_unaligned++;
 			}
+			if (@aligned_nodes) {
+				if ($#aligned_nodes > 0) {
+					my $is_m_to_1 = 1;
+					foreach my $an (@aligned_nodes) {
+						my @referring_nodes = grep {$_->is_aligned_to($an, '^' . $self->alignment_type . '$')} $an->get_referencing_nodes('alignment', $self->language, $self->selector);
+						if (scalar(@referring_nodes != 1)) {
+							$is_m_to_1 = 0;
+							last;							
+						}						
+					}
+					if ($is_m_to_1) {
+						$many_to_one++;
+					}					
+				}
+			}
 		}		
-	}
-	
-	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $src_unaligned, $tgt_unaligned, $one_to_one, $one_to_many);
+	}	
+	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $src_unaligned, $tgt_unaligned, $one_to_one, $one_to_many, $many_to_one);
 	print { $self->_file_handle } $out_string . "\n";
+}
+
+sub process_end {
+	
 }
 
 1;
@@ -97,7 +132,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Print::AlignmentSummary - prints useful information about the alignment between two trees
+Treex::Block::Print::AlignmentStatistics - prints useful information about the word alignment between two language data
 
 =head TODO
 
