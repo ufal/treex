@@ -234,8 +234,16 @@ sub split_translation {
     my @splitterOrds =
         map { $_->ord }
             (grep { $_->conll_deprel =~ $self->split_on_deprel } @allNodes);
+    if ( @splitterOrds == 0) {
+        log_warn "No splitters found!";
+        return 0;
+    }
     if ( $splitterOrds[-1] == @allNodes ) {
         pop @splitterOrds;
+    }
+    if ( @splitterOrds == 0) {
+        log_warn "No splitters found!";
+        return 0;
     }
     log_info "Split [1, " . scalar(@allNodes) . "] " .
         "on {" . (join ', ', @splitterOrds) . "}";
