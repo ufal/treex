@@ -16,6 +16,13 @@ has alignment_type => ( is => 'rw', isa => 'Str', default => 'gloss' );
 
 has position2node => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
+has try_to_split => ( is => 'rw', isa => 'Bool', default => 1 );
+
+has split_on_deprel => ( is => 'rw', isa => 'Str', default => 'AuxK' );
+# AuxK|AuxC|Coord
+
+has add_splitter_to_following => ( is => 'rw', isa => 'Bool', default => 0 );
+
 override '_build_translator' => sub {
     my $self = shift;
 
@@ -69,35 +76,41 @@ sub get_translation_tree {
 }
 
 override 'get_translation' => sub {
-    my ( $self, $zone ) = @_;
+    my ( $self, $zone, $nodes ) = @_;
 
-    my $sentence = $self->get_sentence_and_node_positions($zone);
+    if ( !defined $nodes ) {
+        my @all_nodes = $zone->get_atree()->get_root()->get_descendants(
+            { ordered => 1 }
+        );
+        $nodes = \@all_nodes;
+    }
+    my $sentence = $self->get_sentence_and_node_positions($nodes);
 
     return $self->_translator->translate_align($sentence);
 };
 
 sub get_sentence_and_node_positions {
-    my ($self, $zone) = @_;
+    my ($self, $nodes) = @_;
 
     # precompute node positions
     $self->set_position2node({});
-    my @nodes = $zone->get_atree()->get_root()->get_descendants(
-        { ordered => 1 }
-    );
-    my $length        = 0;
-    foreach my $node (@nodes) {
+    my $sentence = '';
+    my $position = 0;
+    foreach my $node (@$nodes) {
+
+        # form and its length
+        my $form = $node->no_space_after ? $node->form : $node->form . ' ';
+        my $formlen = length $form;
 
         # store position
-        $self->position2node->{$length} = $node;
+        $self->position2node->{$position} = $node;
 
         # move on
-        $length += length $node->form;
-        if ( !$node->no_space_after ) {
-            $length++;
-        }
+        $sentence .= $form;
+        $position += $formlen;
     }
 
-    return $zone->sentence;
+    return $sentence;
 }
 
 override 'delete_translation' => sub {
@@ -127,10 +140,10 @@ override 'delete_translation' => sub {
 };
 
 override 'set_translation' => sub {
-    my ( $self, $translation_result, $zone ) = @_;
+    my ( $self, $translation_result, $zone, $nolog ) = @_;
 
     my $translation = $translation_result->{translation};
-    if ( $self->SUPER::set_translation( $translation, $zone ) ) {
+    if ( $self->SUPER::set_translation( $translation, $zone, $nolog ) ) {
 
         # success
         # sentence has already been set in SUPER
@@ -183,7 +196,14 @@ override 'set_translation' => sub {
 
         # failure
         # log_warn has already been called in SUPER
-        return 0;
+        if ( $self->try_to_split ) {
+            log_info 'Will try to split the sentence on '
+                . $self->split_on_deprel;
+            return $self->split_translation($zone);
+        }
+        else {
+            return 0;
+        }
     }
 
 };
@@ -203,6 +223,50 @@ sub set_node_translation {
 
     return;
 }
+
+sub split_translation {
+    my ($self, $zone) = @_;
+
+    my $result = 1;
+    my @allNodes = $zone->get_atree()->get_root()->get_descendants(
+        { ordered => 1 }
+    );
+    my @splitterOrds =
+        map { $_->ord }
+            (grep { $_->conll_deprel =~ $self->split_on_deprel } @allNodes);
+    if ( $splitterOrds[-1] == @allNodes ) {
+        pop @splitterOrds;
+    }
+    log_info "Split [1, " . scalar(@allNodes) . "] " .
+        "on {" . (join ', ', @splitterOrds) . "}";
+    # add exclusive upper bound
+    push @splitterOrds, (scalar(@allNodes)+1); # == $allNodes[-1]->ord + 1
+    my $from = 0;
+    foreach my $to (@splitterOrds) {
+        if ( $self->add_splitter_to_following ) {
+            $to--;
+        }
+        my @nodesSlice =
+            grep { $_->ord > $from && $_->ord <= $to } @allNodes;
+        my $translation = $self->get_translation( $zone, \@nodesSlice );        
+        if ( $translation->{translation} ne '' ) {
+            log_info "Translated ($from,$to] " .
+                $self->language . ":'" .
+                ( join ' ', (map { $_->form } @nodesSlice) ) .  "'" .
+                " to " . $self->target_language . ":'" .
+                $translation->{translation} . "'";
+            $self->set_translation( $translation, $zone, 'nolog' );
+        }
+        else {
+            log_warn "($from,$to]: No translation generated - no translation saved!";
+            $result = 0;
+        }
+        $from = $to;
+    }
+
+    return $result;
+}
+
 
 1;
 
@@ -226,6 +290,15 @@ C<target_language>
 and C<target_selector> are used.
 This is useful if translating into several target languages, as the C<gloss>
 attribute can easily hold one translation only.
+
+If the sentence is too long and if C<try_to_split> is true (which is the default),
+will try to split the sentence on C<split_on_deprel> conll deprels (the default
+is C<AuxK>, i.e. end-of-sentence punctuation, but any regex can be used),
+translate each of the resulting chunks separately, and concatenate the resulting
+translations into one sentence translation (the alignment is also handled
+correctly).
+The splitter will be added to the preceding chunk by default, or to the
+following chunk if C<add_splitter_to_following> is set to C<1>.
 
 Otherwise is similar to L<Treex::Block::W2W::Translate>.
 

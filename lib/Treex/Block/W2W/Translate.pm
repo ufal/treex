@@ -151,7 +151,7 @@ sub get_translation {
 }
 
 sub set_translation {
-    my ( $self, $translation, $zone ) = @_;
+    my ( $self, $translation, $zone, $nolog ) = @_;
 
     my $sid = $zone->get_bundle->id;
 
@@ -168,9 +168,11 @@ sub set_translation {
             )
         );
 
-        log_info "Translated $sid " .
-            $self->language . ":'" . $zone->sentence . "'" .
-            " to " . $self->target_language . ":'$translation'";
+        if ( !defined $nolog ) {
+            log_info "Translated $sid " .
+                $self->language . ":'" . $zone->sentence . "'" .
+                " to " . $self->target_language . ":'$translation'";
+        }
         return 1;
     }
     else {

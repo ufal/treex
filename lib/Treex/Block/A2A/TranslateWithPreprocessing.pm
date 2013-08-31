@@ -5,34 +5,24 @@ use utf8;
 extends 'Treex::Block::A2A::Translate';
 
 override 'get_sentence_and_node_positions' => sub {
-    my ( $self, $zone ) = @_;
-
-    my $sentence = $zone->sentence;
+    my ( $self, $nodes ) = @_;
 
     # precompute node positions
     $self->set_position2node({});
-    my @nodes = $zone->get_atree()->get_root()->get_descendants(
-        { ordered => 1 }
-    );
+    my $sentence = '';
     my $position = 0;
-    foreach my $node (@nodes) {
+    foreach my $node (@$nodes) {
 
+        # form and its length
         my $form = $node->no_space_after ? $node->form : $node->form . ' ';
         my $formlen = length $form;
-        if ( $form =~ /^(_|NULL)/ ) {
 
-            # cut out from $sentence
-            my $pre = substr $sentence, 0, $position;
-            # my $cutout = substr $sentence, $position. $formlen;
-            my $suf = substr $sentence, ( $position + $formlen );
-            $sentence = $pre . $suf;
-        }
-        else {
-
+        if ( $form !~ /^(_|NULL)/ ) {
             # store position
             $self->position2node->{$position} = $node;
 
             # move on
+            $sentence .= $form;
             $position += $formlen;
         }
     }
