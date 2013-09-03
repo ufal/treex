@@ -13,7 +13,11 @@ has alignment_direction => (
     default=>'trg2src',
     documentation=>'Default trg2src means alignment from <language,selector> to <source_language,source_selector> tree. src2trg means the opposite direction.',
 );
-has _stats => ( is => 'ro', default => sub { {} } );
+has _stats 				=> ( is => 'ro', default => sub { {} } );
+has one_to_one 			=> ( is => 'Bool', is => 'rw', default => 0);
+has one_to_M 			=> ( is => 'Bool', is => 'rw', default => 0);
+has M_to_1 				=> ( is => 'Bool', is => 'rw', default => 0);
+has statistics 			=> ( is => 'Bool', is => 'rw', default => 0);
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -25,6 +29,15 @@ sub process_zone {
 sub print_alignment_info {
 	my ($self, $src_tree, $tgt_tree) = @_;
 	my %local_stat = ();
+	my %alignments = ();
+
+	my $one_to_one_s = [];
+	my $one_to_one_t = [];
+	my $one_to_many_s = [];
+	my $one_to_many_t = [];
+	my $many_to_one_s = [];	
+	my $many_to_one_t = [];	
+	
 	$local_stat{'src_unaligned'} = 0;
 	$local_stat{'tgt_unaligned'} = 0;
 	$local_stat{'one_to_one'} = 0;
@@ -39,12 +52,24 @@ sub print_alignment_info {
 			my @aligned_nodes = $src_nodes[$i]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
 			if (@aligned_nodes) {
 				if (scalar(@aligned_nodes) > 1) {
-					$local_stat{'one_to_many'}++;	
+					$local_stat{'one_to_many'}++;
+					my @s_tmp = @{$one_to_many_s};
+					my @t_tmp = @{$one_to_many_t};
+					push @s_tmp, $src_nodes[$i];
+					push @t_tmp, \@aligned_nodes;
+					$one_to_many_s = \@s_tmp;
+					$one_to_many_t = \@t_tmp;
 				}
 				elsif (scalar(@aligned_nodes) == 1) {
 					my @referring_nodes = grep {$_->is_aligned_to($aligned_nodes[0], '^' . $self->alignment_type . '$')} $aligned_nodes[0]->get_referencing_nodes('alignment', $self->source_language, $self->source_selector);
 					if (scalar(@referring_nodes) == 1) {
 						$local_stat{'one_to_one'}++;
+						my @s_tmp = @{$one_to_one_s};
+						my @t_tmp = @{$one_to_one_t};
+						push @s_tmp, $src_nodes[$i];
+						push @t_tmp, $aligned_nodes[0];
+						$one_to_one_s = \@s_tmp;
+						$one_to_one_t = \@t_tmp;
 					}
 				}
 			}	
@@ -69,6 +94,12 @@ sub print_alignment_info {
 					}
 					if ($is_m_to_1) {
 						$local_stat{'many_to_one'}++;
+						my @s_tmp = @{$many_to_one_s};
+						my @t_tmp = @{$many_to_one_t};
+						push @s_tmp, \@referring_nodes;
+						push @t_tmp, $tgt_nodes[$j];
+						$many_to_one_s = \@s_tmp;
+						$many_to_one_t = \@t_tmp;						
 					}
 				}
 			}
@@ -176,22 +207,39 @@ sub print_alignment_info {
 	else {
 		$self->_stats->{'many_to_one'} = $local_stat{'many_to_one'};
 	}
-	
-	my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $local_stat{'src_unaligned'}, $local_stat{'tgt_unaligned'}, $local_stat{'one_to_one'}, $local_stat{'one_to_many'}, $local_stat{'many_to_one'});
-	print { $self->_file_handle } $out_string . "\n";
+	if ($self->one_to_one) {
+		my @tmp_s_one_one = @{$one_to_one_s};
+		my @tmp_t_one_one = @{$one_to_one_t};
+		my $sid = $src_tree->id;
+		my $tid = $tgt_tree->id;
+		foreach my $i (0..$#tmp_s_one_one) {
+			if ($i != 0) {
+				$sid = '';
+				$tid = '';
+			}
+			my $out_string = sprintf("%20s %20s %20s %20s %4d %4d", $sid, $tid, $tmp_s_one_one[$i]->form, $tmp_t_one_one[$i]->form, $tmp_s_one_one[$i]->ord, $tmp_t_one_one[$i]->ord);
+			print $out_string . "\n";
+		}		
+	}
+	if ($self->statistics) {
+		my $out_string = sprintf("%20s %20s %4d %4d %4d %4d %4d %4d %4d", (substr $src_tree->id, 0, 20), (substr $tgt_tree->id, 0, 20), scalar(@src_nodes), scalar(@tgt_nodes), $local_stat{'src_unaligned'}, $local_stat{'tgt_unaligned'}, $local_stat{'one_to_one'}, $local_stat{'one_to_many'}, $local_stat{'many_to_one'});
+		print { $self->_file_handle } $out_string . "\n";		
+	}
 }
 
 sub process_end {
 	my $self = shift;
-	my $num_trees = 0;
-	if (exists $self->_stats->{'src_id'}) {
-		my @tmp = @{$self->_stats->{'src_id'}};
-		$num_trees = scalar(@tmp);
+	if ($self->statistics) {
+		my $num_trees = 0;
+		if (exists $self->_stats->{'src_id'}) {
+			my @tmp = @{$self->_stats->{'src_id'}};
+			$num_trees = scalar(@tmp);
+		}
+		my $out1_string = sprintf("%10s %10s %10s %10s %14s %14s %4s %4s %4s", "#src_trees", "#tgt_trees", "#src_nodes", "#tgt_nodes", '#src_unaligned', '#tgt_unaligned', '#1-1', '#1-M', '#M-1');
+		print { $self->_file_handle } $out1_string . "\n";
+		my $out_string = sprintf("%10d %10d %10d %10d %14d %14d %4d %4d %4d", $num_trees, $num_trees, $self->_stats->{'src_len'}, $self->_stats->{'tgt_len'}, $self->_stats->{'src_unaligned'}, $self->_stats->{'tgt_unaligned'}, $self->_stats->{'one_to_one'}, $self->_stats->{'one_to_many'}, $self->_stats->{'many_to_one'});
+		print { $self->_file_handle } $out_string . "\n";		
 	}
-	my $out1_string = sprintf("%10s %10s %10s %10s %14s %14s %4s %4s %4s", "#src_trees", "#tgt_trees", "#src_nodes", "#tgt_nodes", '#src_unaligned', '#tgt_unaligned', '#1-1', '#1-M', '#M-1');
-	print { $self->_file_handle } $out1_string . "\n";
-	my $out_string = sprintf("%10d %10d %10d %10d %14d %14d %4d %4d %4d", $num_trees, $num_trees, $self->_stats->{'src_len'}, $self->_stats->{'tgt_len'}, $self->_stats->{'src_unaligned'}, $self->_stats->{'tgt_unaligned'}, $self->_stats->{'one_to_one'}, $self->_stats->{'one_to_many'}, $self->_stats->{'many_to_one'});
-	print { $self->_file_handle } $out_string . "\n";
 }
 
 1;
