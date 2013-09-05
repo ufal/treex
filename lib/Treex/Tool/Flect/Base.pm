@@ -25,7 +25,6 @@ sub BUILD {
     $self->_set_python(Treex::Tool::Python::RunFunc->new());
     # initialize (add Flect to libraries)
     $self->_python->command("import sys\nsys.path.append(b'$file/flect')");
-    print $self->_python->command("print sys.path");
     $self->_python->command("from lib.flect import SentenceInflector");
     # load model
     my $model = $self->model_file;
