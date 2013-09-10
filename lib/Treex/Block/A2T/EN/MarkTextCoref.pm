@@ -35,6 +35,13 @@ sub _is_prefix {
     return $is_prefix;
 }
 
+sub _is_superfluous {
+    my ($str) = @_;
+    
+    # TODO can be changed to check whether it's a suffix of a previous word
+    return $str eq '.';
+}
+
 sub align_arrays {
     my ($a1, $a2) = @_;
 
@@ -47,21 +54,38 @@ sub align_arrays {
     #my $l_offset = length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
     my $l_offset = 0;
     #my $l1 = 0; my $l2 = 0;
-    print STDERR scalar @$a1 . "\n";
-    print STDERR scalar @$a2 . "\n";
+    #print STDERR scalar @$a1 . "\n";
+    #print STDERR scalar @$a2 . "\n";
     while (($i1 < scalar @$a1) && ($i2 < scalar @$a2)) {
-        print STDERR Dumper($a1->[$i1], $a2->[$i2]);
+        #print STDERR Dumper($a1->[$i1], $a2->[$i2]);
         while (($j1 < @{$a1->[$i1]}) && ($j2 < @{$a2->[$i2]})) {
-            $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
-            print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\n";
+
+            my $s1 = $a1->[$i1][$j1];
+            my $s2 = $a2->[$i2][$j2];
+            if ($l_offset == 0 && !_is_prefix($s1, $s2)) {
+                if (_is_superfluous($s1)) {
+                    $j1++;
+                    next;
+                }
+                elsif (_is_superfluous($s2)) {
+                    $j2++;
+                    next;
+                }
+                else {
+                    log_fatal "Neither '$s1' nor '$s2' are superflous.";
+                }
+            }
+
+            $l_offset += length($s1) - length($s2);
+            #print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\n";
             $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
             
             if ($l_offset < 0) {
-                $l_offset += length($a2->[$i2][$j2]);
+                $l_offset += length($s2);
                 $j1++;
             }
             elsif ($l_offset > 0) {
-                $l_offset -= length($a1->[$i1][$j1]);
+                $l_offset -= length($s1);
                 $j2++;
             }
             else {
@@ -81,27 +105,27 @@ sub align_arrays {
         }
         elsif ($j1 >= @{$a1->[$i1]}) {
             $i1++; $j1 = 0;
-            my $s1 = $a1->[$i1][$j1];
-            my $s2 = $a2->[$i2][$j2];
+            #my $s1 = $a1->[$i1][$j1];
+            #my $s2 = $a2->[$i2][$j2];
             # align the rest of the $a2->[$i2]
-            if (!_is_prefix($s1, $s2)) {
+            #if (!_is_prefix($s1, $s2)) {
                 #print STDERR "NO PREFIX\n";
-                $i2++; $j2 = 0;
-                $l_offset = 0;
-            }
+            #    $i2++; $j2 = 0;
+            #    $l_offset = 0;
+            #}
         }
         elsif ($j2 >= @{$a2->[$i2]}) {
             $i2++; $j2 = 0;
-            my $s1 = $a1->[$i1][$j1];
-            my $s2 = $a2->[$i2][$j2];
+            #my $s1 = $a1->[$i1][$j1];
+            #my $s2 = $a2->[$i2][$j2];
             # align the rest of the $a2->[$i2]
-            if (!_is_prefix($s1, $s2)) {
+            #if (!_is_prefix($s1, $s2)) {
                 #print STDERR "NO PREFIX\n";
-                $i1++; $j1 = 0;
-                $l_offset = 0;
-            }
+            #    $i1++; $j1 = 0;
+            #    $l_offset = 0;
+            #}
         }
-        my $line = <STDIN>;
+        #my $line = <STDIN>;
     }
 
     return \%align;
