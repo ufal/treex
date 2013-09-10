@@ -175,7 +175,10 @@ sub process_document {
     foreach my $coref_info (@coref_links) {
         my $ante_tnode = $t_mentions{$coref_info->{src_sent}}{$coref_info->{src_idx}};
         my $anaph_tnode = $t_mentions{$coref_info->{tgt_sent}}{$coref_info->{tgt_idx}};
-        $anaph_tnode->add_coref_text_nodes($ante_tnode);
+        #print "ADDING COREF: " . $anaph_tnode->id . " -> " . $ante_tnode->id . "\n";
+        if ($anaph_tnode != $ante_tnode) {
+            $anaph_tnode->add_coref_text_nodes($ante_tnode);
+        }
     }
 }
 
