@@ -6,7 +6,7 @@ use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Core::Block';
 
-has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', builder => sub {{}} );
+has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
 # project only nodes that are not anaphors of grammatical coreference
 sub _is_coref_text_mention {
@@ -24,7 +24,7 @@ sub _get_mention_anodes {
     my $alex = $tnode->get_lex_anode();
     return () if (!defined $alex);
 
-    my @mention_anodes = $alex->get_descendants({ordered => 1});
+    my @mention_anodes = $alex->get_descendants({ordered => 1, add_self => 1});
     return @mention_anodes;
 }
 
@@ -54,7 +54,7 @@ sub process_tnode {
     # the beginning of the mention
     push @{$mention_anodes[0]->wild->{coref_mention_start}}, $entity_idx;
     # the end of the mention
-    push @{$mention_anodes[-1]->wild->{coref_mention_start}}, $entity_idx;
+    push @{$mention_anodes[-1]->wild->{coref_mention_end}}, $entity_idx;
 }
 
 1;
