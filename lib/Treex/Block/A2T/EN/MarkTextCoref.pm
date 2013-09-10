@@ -16,7 +16,12 @@ sub _build_pipeline {
     my $pipeline = new Lingua::StanfordCoreNLP::Pipeline(0);
     my $props = $pipeline->getProperties();
     $props->put('annotators', 'tokenize, ssplit, pos, lemma, ner, parse, dcoref');
+    $props->put('tokenize.whitespace', 'true');
+    #$props->put('tokenize.options', 'americanize=false');
+    $props->put('tokenize.options', 'ptb3Escaping=false');
+    #$props->put('hsakjdhsadijqwjdlkan', 'sandsahiudha,a');
     $pipeline->setProperties($props);
+    print STDERR "BUILDING CORENLP PIPELINE\n";
     
     return $pipeline;
 }
@@ -37,10 +42,20 @@ sub _is_prefix {
 }
 
 sub _is_superfluous {
-    my ($str) = @_;
+    my ($str1, $str2) = @_;
     
     # TODO can be changed to check whether it's a suffix of a previous word
-    return $str eq '.';
+    return 1 if ($str1 eq '.');
+    return -1 if ($str2 eq '.');
+    return 0 if ($str1 eq "labor" && $str2 eq "labour");
+    return 0 if ($str1 eq "-LRB-" && $str2 eq "(");
+    return 0 if ($str1 eq "-RRB-" && $str2 eq ")");
+    return 0 if ($str1 eq "theater" && $str2 eq "theatre");
+    return 0 if ($str1 eq "labeled" && $str2 eq "labelled");
+    return 0 if ($str1 eq "meager" && $str2 eq "meagre");
+    log_warn "Neither '$str1' nor '$str2' are superflous.";
+    #log_fatal "Luxembourg-based" if ($str1 eq "Luxembourg-based" || $str2 eq "Luxembourg-based");
+    return 0;
 }
 
 sub align_arrays {
@@ -64,21 +79,25 @@ sub align_arrays {
             my $s1 = $a1->[$i1][$j1];
             my $s2 = $a2->[$i2][$j2];
             if ($l_offset == 0 && !_is_prefix($s1, $s2)) {
-                if (_is_superfluous($s1)) {
+                my $superfl = _is_superfluous($s1, $s2);
+                if ($superfl > 0) {
                     $j1++;
                     next;
                 }
-                elsif (_is_superfluous($s2)) {
+                elsif ($superfl < 0) {
                     $j2++;
                     next;
                 }
                 else {
-                    log_fatal "Neither '$s1' nor '$s2' are superflous.";
+                    # TODO: HACK
+                    $l_offset -= length($s1) - length($s2);
                 }
             }
 
             $l_offset += length($s1) - length($s2);
-            #print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\n";
+            if ($l_offset) {
+                print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\t$s1 $s2\n";
+            }
             $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
             
             if ($l_offset < 0) {
@@ -114,6 +133,7 @@ sub align_arrays {
 sub _remove_ws {
     my ($w) = @_;
     $w =~ s/\pZ+//g;
+    $w =~ s/\\//g;
     return $w;
 }
 
