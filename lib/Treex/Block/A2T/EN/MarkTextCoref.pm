@@ -44,26 +44,28 @@ sub align_arrays {
 
     my $i1 = 0; my $i2 = 0;
     my $j1 = 0; my $j2 = 0;
-    my $l_offset = length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
+    #my $l_offset = length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
+    my $l_offset = 0;
     #my $l1 = 0; my $l2 = 0;
     print STDERR scalar @$a1 . "\n";
     print STDERR scalar @$a2 . "\n";
     while (($i1 < scalar @$a1) && ($i2 < scalar @$a2)) {
         print STDERR Dumper($a1->[$i1], $a2->[$i2]);
         while (($j1 < @{$a1->[$i1]}) && ($j2 < @{$a2->[$i2]})) {
+            $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
             print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\n";
             $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
+            
             if ($l_offset < 0) {
+                $l_offset += length($a2->[$i2][$j2]);
                 $j1++;
-                $l_offset += length($a1->[$i1][$j1]);
             }
             elsif ($l_offset > 0) {
+                $l_offset -= length($a1->[$i1][$j1]);
                 $j2++;
-                $l_offset -= length($a2->[$i2][$j2]);
             }
             else {
                 $j1++; $j2++;
-                $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
             }
             #print STDERR Dumper(\%align);
             #print STDERR ($j1 < @{$a1->[$i1]}) ? 1 : 0;
@@ -75,12 +77,10 @@ sub align_arrays {
         if ($j1 >= @{$a1->[$i1]} && $j2 >= @{$a2->[$i2]}) {
             $i1++; $j1 = 0;
             $i2++; $j2 = 0;
-            $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
-            print STDERR "SOM TU: $i1 $i2\n";
+            #print STDERR "SOM TU: $i1 $i2\n";
         }
         elsif ($j1 >= @{$a1->[$i1]}) {
             $i1++; $j1 = 0;
-            $l_offset += length($a1->[$i1][$j1]);
             my $s1 = $a1->[$i1][$j1];
             my $s2 = $a2->[$i2][$j2];
             # align the rest of the $a2->[$i2]
@@ -92,7 +92,6 @@ sub align_arrays {
         }
         elsif ($j2 >= @{$a2->[$i2]}) {
             $i2++; $j2 = 0;
-            $l_offset -= length($a2->[$i2][$j2]);
             my $s1 = $a1->[$i1][$j1];
             my $s2 = $a2->[$i2][$j2];
             # align the rest of the $a2->[$i2]
