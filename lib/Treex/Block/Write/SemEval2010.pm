@@ -33,23 +33,37 @@ sub process_atree {
 sub _create_coref_str {
     my ($anode) = @_;
 
-    my %start = map {$_ => 1} @{$anode->wild->{coref_mention_start}};
-    my %end = map {$_ => 1} @{$anode->wild->{coref_mention_end}};
-    my %both = map {$_ => 1} (keys %start, keys %end);
-
+    my @start = defined $anode->wild->{coref_mention_start} ? sort {$a <=> $b} @{$anode->wild->{coref_mention_start}} : ();
+    my @end = defined $anode->wild->{coref_mention_end} ? sort {$a <=> $b} @{$anode->wild->{coref_mention_end}} : ();
+    
     my @strs = ();
 
-    foreach my $entity_id (sort {$a <=> $b} keys %both) {
-        if ($start{$entity_id} && $end{$entity_id}) {
-            push @strs, "($entity_id)";
+    my $s_eid = shift @start;
+    my $e_eid = shift @end;
+    while (defined $s_eid && defined $e_eid) {
+        if ($s_eid == $e_eid) {
+            push @strs, "(". $s_eid .")";
+            $s_eid = shift @start;
+            $e_eid = shift @end;
         }
-        elsif ($start{$entity_id}) {
-            push @strs, "($entity_id";
+        elsif ($s_eid < $e_eid) {
+            push @strs, "(" . $s_eid;
+            $s_eid = shift @start;
         }
-        else {
-            push @strs, "$entity_id)";
+        elsif ($s_eid > $e_eid) {
+            push @strs, $e_eid . ")";
+            $e_eid = shift @end;
         }
     }
+    while (defined $s_eid) {
+        push @strs, "(" . $s_eid;
+        $s_eid = shift @start;
+    }
+    while (defined $e_eid) {
+        push @strs, $e_eid . ")";
+        $e_eid = shift @end;
+    }
+
     my $str = join "|", @strs;
     return $str;
 }
@@ -58,7 +72,7 @@ sub _extract_data {
     my ($anode) = @_;
 
     my $parent_ord = !$anode->is_root ? $anode->get_parent->ord : 0;
-    my $coref = _create_coref_str($anode);
+    my $coref = _create_coref_str($anode) || $NOT_SET;
 
     my @cols = (
         $anode->ord,        # Col 1     ID: word identifiers in the sentence
