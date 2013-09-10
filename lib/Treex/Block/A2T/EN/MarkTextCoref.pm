@@ -28,13 +28,6 @@ sub mention_descr_2_tnode {
     return $tnode;
 }
 
-sub add_link {
-    my ($self, $zones, $coref_link) = @_;
-    @$zones
-    my $aroot = $zone->get_atree;
-    my @all_anodes = $aroot->get_descendants({ordered=>1});
-}
-
 before 'process_document' => sub {
     my ($self, $doc) = @_;
 
@@ -44,19 +37,39 @@ before 'process_document' => sub {
 
     my $result = $self->_pipeline->process(join " ", @sentences);
 
+    # collect coreference links and create a grid of mentions indexed by (sent_idx X word_idx) in order to process it sequentially
     my @coref_links = ();
+    my %word_grid = ();
     for my $sentence (@{$result->toArray}) {
         for my $coref (@{$sentence->getCoreferences->toArray}) {
             my $coref_info = {
                 src_sent => $coref->getSourceSentence,
                 src_idx => $coref->getSourceHead,
-                src_word => $coref->getSourceToken->getWord,
                 tgt_sent => $coref->getTargetSentence,
                 tgt_idx => $coref->getTargetHead,
-                tgt_word => $coref->getTargetToken->getWord,
             };
             push @coref_links, $coref_info;
+            $word_grid{$coref_info->{src_sent}}{$coref_info->{src_idx}} = $coref->getSourceToken->getWord;
+            $word_grid{$coref_info->{tgt_sent}}{$coref_info->{tgt_idx}} = $coref->getTargetToken->getWord;
         }
+    }
+
+    # collect a tnode for every mention in the mention grid
+    my %t_mentions = ();
+    foreach my $sent_idx (keys %word_grid) {
+        my $zone = $zones[$sent_idx];
+        my $aroot = $zone->get_atree;
+        my @all_anodes = $aroot->get_descendants({ordered=>1});
+        foreach my $word_idx (keys %{$word_grid{$sent_idx}}) {
+            $t_mentions{$sent_idx}{$word_idx} = mention_descr_2_tnode(\@all_anodes, $word_idx, $word_grid{$sent_idx}{$word_idx});
+        }
+    }
+
+    # add links between tnodes
+    foreach my $coref_info (@coref_links) {
+        my $ante_tnode = $t_mentions{$coref_info->{src_sent}}{$coref_info->{src_idx}};
+        my $anaph_tnode = $t_mentions{$coref_info->{tgt_sent}}{$coref_info->{tgt_idx}};
+        $anaph_tnode->add_coref_text_node($ante_tnode);
     }
 };
 
