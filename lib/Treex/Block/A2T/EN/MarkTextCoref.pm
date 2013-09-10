@@ -20,55 +20,98 @@ sub _build_pipeline {
     return $pipeline;
 }
 
-sub mention_descr_2_tnode {
-    my ($all_anodes, $word_idx, $word) = @_;
+sub _is_prefix {
+    my ($s1, $s2) = @_;
 
-    my $anode = $all_anodes->[$word_idx]; 
-    #if (!defined $anode || $anode->form ne $word) {
-        # TODO debug print
-    #    my @forms = map {$_->form} @$all_anodes;
-    #    print STDERR Dumper(\@forms, $word_idx, $word);
-    #}
-    my ($tnode) = ($anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf'));
-    return $tnode;
+    return undef if (!defined $s1 || !defined $s2);
+    #print STDERR "$s1 $s2\n";
+    my $is_prefix;
+    if (length($s1) > length($s2)) {
+        $is_prefix = ($s1 =~ /^\Q$s2/);
+    }
+    else {
+        $is_prefix = ($s2 =~ /^\Q$s1/);
+    }
+    return $is_prefix;
 }
 
 sub align_arrays {
     my ($a1, $a2) = @_;
 
+    #print STDERR Dumper($a1, $a2);
+
     my %align = ();
 
     my $i1 = 0; my $i2 = 0;
     my $j1 = 0; my $j2 = 0;
-    my $l1 = length($a1->[$i1][$j1]);
-    my $l2 = length($a2->[$i2][$j2]);
-    $align{"$i1,$j1"} = "$i2,$j2";
-    while ($i1 < @$a1 || $i2 < @$a2) {
-        while ($j1 < @{$a1->[$i1]} && $j2 < @{$a2->[$i2]}) {
-            if ($l1 < $l2) {
-                $i1++;
-                $l1 += length($a1->[$i1]);
+    my $l_offset = length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
+    #my $l1 = 0; my $l2 = 0;
+    print STDERR scalar @$a1 . "\n";
+    print STDERR scalar @$a2 . "\n";
+    while (($i1 < scalar @$a1) && ($i2 < scalar @$a2)) {
+        print STDERR Dumper($a1->[$i1], $a2->[$i2]);
+        while (($j1 < @{$a1->[$i1]}) && ($j2 < @{$a2->[$i2]})) {
+            print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\n";
+            $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
+            if ($l_offset < 0) {
+                $j1++;
+                $l_offset += length($a1->[$i1][$j1]);
             }
-            elsif ($l2 < $l1) {
-                $i2++;
-                $l2 += length($a2->[$i2]);
+            elsif ($l_offset > 0) {
+                $j2++;
+                $l_offset -= length($a2->[$i2][$j2]);
             }
             else {
-                $i1++; $i2++;
-                $l1 += length($a1->[$i1]);
-                $l2 += length($a2->[$i2]);
+                $j1++; $j2++;
+                $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
             }
-            $align{"$i1,$j1"} = "$i2,$j2" if (!defined $align{"$i1,$j1"});
+            #print STDERR Dumper(\%align);
+            #print STDERR ($j1 < @{$a1->[$i1]}) ? 1 : 0;
+            #print STDERR ($j2 < @{$a2->[$i2]}) ? 1 : 0;
+            #print STDERR ($l_offset != 0) ? 1 : 0;
+            #print STDERR "\n";
+            #exit if ($j1 > 50 || $j2 > 50);
         }
-        if ($j1 < @{$a1->[$i1]}) {
-            $i2++; $j2 = 0;
-        }
-        if ($j2 < @{$a2->[$i2]}) {
+        if ($j1 >= @{$a1->[$i1]} && $j2 >= @{$a2->[$i2]}) {
             $i1++; $j1 = 0;
+            $i2++; $j2 = 0;
+            $l_offset += length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
+            print STDERR "SOM TU: $i1 $i2\n";
         }
+        elsif ($j1 >= @{$a1->[$i1]}) {
+            $i1++; $j1 = 0;
+            $l_offset += length($a1->[$i1][$j1]);
+            my $s1 = $a1->[$i1][$j1];
+            my $s2 = $a2->[$i2][$j2];
+            # align the rest of the $a2->[$i2]
+            if (!_is_prefix($s1, $s2)) {
+                #print STDERR "NO PREFIX\n";
+                $i2++; $j2 = 0;
+                $l_offset = 0;
+            }
+        }
+        elsif ($j2 >= @{$a2->[$i2]}) {
+            $i2++; $j2 = 0;
+            $l_offset -= length($a2->[$i2][$j2]);
+            my $s1 = $a1->[$i1][$j1];
+            my $s2 = $a2->[$i2][$j2];
+            # align the rest of the $a2->[$i2]
+            if (!_is_prefix($s1, $s2)) {
+                #print STDERR "NO PREFIX\n";
+                $i1++; $j1 = 0;
+                $l_offset = 0;
+            }
+        }
+        my $line = <STDIN>;
     }
 
     return \%align;
+}
+
+sub _remove_ws {
+    my ($w) = @_;
+    $w =~ s/ //g;
+    return $w;
 }
 
 sub process_document {
@@ -83,9 +126,9 @@ sub process_document {
     my @coref_links = ();
     my %word_grid = ();
     for my $sentence (@{$result->toArray}) {
-        if ($doc->full_filename eq "data/dev.pcedt/wsj_2008") {
-            print STDERR $sentence->getIDString . ": ". $sentence->getSentence . "\n";
-        }
+        #if ($doc->full_filename eq "data/dev.pcedt/wsj_2008") {
+        #    print STDERR $sentence->getIDString . ": ". $sentence->getSentence . "\n";
+        #}
         for my $coref (@{$sentence->getCoreferences->toArray}) {
             my $coref_info = {
                 src_sent => $coref->getSourceSentence,
@@ -99,32 +142,30 @@ sub process_document {
         }
     }
 
-    my @our_tokens = map {[map {$_->form} $_->get_atree->get_descendants({ordered=>1})]} @zones;
-    my @stanford_tokens = map {[map {$_->getWord} @{$_->getTokens->toArray}]} @{$result->toArray};
+    my @our_anodes = map {[$_->get_atree->get_descendants({ordered=>1})]} @zones;
+    my @our_tokens = map {[map {_remove_ws($_->form)} @$_]} @our_anodes;
+    my @stanford_tokens = map {[map {_remove_ws($_->getWord)} @{$_->getTokens->toArray}]} @{$result->toArray};
     my $token_align = align_arrays(\@stanford_tokens, \@our_tokens);
+    #print STDERR Dumper($token_align);
 
 
     # collect a tnode for every mention in the mention grid
     my %t_mentions = ();
     foreach my $sent_idx (keys %word_grid) {
-        my $zone = $zones[$sent_idx];
-        if (!defined $zone) {
-            print STDERR "UNDEF_ZONE\n";
-            print STDERR "$sent_idx/" . (scalar @zones) . "\n";
-            print STDERR $doc->full_filename . "\n";
-            foreach my $word_idx (keys %{$word_grid{$sent_idx}}) {
-                print STDERR $word_grid{$sent_idx}{$word_idx} . "\n";
-            }
-        }
-        my $aroot = $zone->get_atree;
-        my @all_anodes = $aroot->get_descendants({ordered=>1});
-        
-        my @our_tokens = map {$_->form} @all_anodes;
-        my @stanford_tokens = map {$_->getWord} @{$result->toArray->[$sent_idx]->getTokens->toArray};
-
         foreach my $word_idx (keys %{$word_grid{$sent_idx}}) {
-            $t_mentions{$sent_idx}{$word_idx} = mention_descr_2_tnode(\@all_anodes, $token_align->{$word_idx}, $word_grid{$sent_idx}{$word_idx});
+            my ($stanford_sent_idx, $stanford_word_idx) = split /,/, $token_align->{"$sent_idx,$word_idx"};
+            my $anode = $our_anodes[$stanford_sent_idx][$stanford_word_idx]; 
+            my ($tnode) = ($anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf'));
+            $t_mentions{$sent_idx}{$word_idx} = $tnode;
         }
+        #if (!defined $zone) {
+        #    print STDERR "UNDEF_ZONE\n";
+        #    print STDERR "$sent_idx/" . (scalar @zones) . "\n";
+        #    print STDERR $doc->full_filename . "\n";
+        #    foreach my $word_idx (keys %{$word_grid{$sent_idx}}) {
+        #        print STDERR $word_grid{$sent_idx}{$word_idx} . "\n";
+        #    }
+        #}
     }
 
     # add links between tnodes
