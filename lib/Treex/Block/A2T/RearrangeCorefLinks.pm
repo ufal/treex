@@ -1,9 +1,10 @@
 package Treex::Block::A2T::RearrangeCorefLinks;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
 
-use Graph;
+use Treex::Tool::Coreference::Utils;
+
+extends 'Treex::Core::Block';
 
 has 'retain_cataphora' => (
     isa => 'Bool',
@@ -11,26 +12,6 @@ has 'retain_cataphora' => (
     default => 0,
     required => 1,
 );
-
-sub _create_coref_graph {
-    my ($self, $doc) = @_;
-
-    my $graph = Graph->new;
-
-    foreach my $bundle ($doc->get_bundles) {
-        my $tree = $bundle->get_tree( $self->language, 't', $self->selector );
-
-        foreach my $anaph ($tree->get_descendants({ ordered => 1 })) {
-            
-            my @antes = $anaph->get_coref_nodes;
-            foreach my $ante (@antes) {
-                $graph->add_edge( $anaph, $ante );
-            }
-        }
-    }
-
-    return $graph;
-}
 
 sub _sort_chain {
     my ($self, $chain) = @_;
@@ -73,13 +54,8 @@ sub _sort_chain {
 sub process_document {
     my ($self, $doc) = @_;
 
-    # a coreference graph represents the nodes interlinked with
-    # coreference links
-    my $coref_graph = $self->_create_coref_graph( $doc );
-    
-    # individual coreference chains correspond to weakly connected
-    # components in the coreference graph 
-    my @chains = $coref_graph->weakly_connected_components;
+    my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@ttrees);
 
     foreach my $chain (@chains) {
         $self->_sort_chain( $chain );
