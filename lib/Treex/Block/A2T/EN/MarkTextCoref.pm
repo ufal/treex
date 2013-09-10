@@ -1,5 +1,6 @@
 package Treex::Block::A2T::EN::MarkTextCoref;
 use Moose;
+use utf8;
 use Treex::Core::Common;
 use Lingua::StanfordCoreNLP;
 
@@ -98,32 +99,11 @@ sub align_arrays {
             #print STDERR "\n";
             #exit if ($j1 > 50 || $j2 > 50);
         }
-        if ($j1 >= @{$a1->[$i1]} && $j2 >= @{$a2->[$i2]}) {
+        if ($j1 >= @{$a1->[$i1]}) {
             $i1++; $j1 = 0;
-            $i2++; $j2 = 0;
-            #print STDERR "SOM TU: $i1 $i2\n";
         }
-        elsif ($j1 >= @{$a1->[$i1]}) {
-            $i1++; $j1 = 0;
-            #my $s1 = $a1->[$i1][$j1];
-            #my $s2 = $a2->[$i2][$j2];
-            # align the rest of the $a2->[$i2]
-            #if (!_is_prefix($s1, $s2)) {
-                #print STDERR "NO PREFIX\n";
-            #    $i2++; $j2 = 0;
-            #    $l_offset = 0;
-            #}
-        }
-        elsif ($j2 >= @{$a2->[$i2]}) {
+        if ($j2 >= @{$a2->[$i2]}) {
             $i2++; $j2 = 0;
-            #my $s1 = $a1->[$i1][$j1];
-            #my $s2 = $a2->[$i2][$j2];
-            # align the rest of the $a2->[$i2]
-            #if (!_is_prefix($s1, $s2)) {
-                #print STDERR "NO PREFIX\n";
-            #    $i1++; $j1 = 0;
-            #    $l_offset = 0;
-            #}
         }
         #my $line = <STDIN>;
     }
@@ -133,7 +113,7 @@ sub align_arrays {
 
 sub _remove_ws {
     my ($w) = @_;
-    $w =~ s/ //g;
+    $w =~ s/\pZ+//g;
     return $w;
 }
 
