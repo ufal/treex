@@ -111,6 +111,7 @@ sub convert_tag
         ja::conll
         la::conll
         nl::conll
+        pl::conll2009 pl::ipipan
         pt::conll
         ro::rdt
         ru::syntagrus
