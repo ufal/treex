@@ -11,12 +11,12 @@ has '+language' => ( required => 1 );
 
 has '+extension' => ( default => '.conll' );
 
-has '_entity_ids' => ( is => 'rw', isa => 'HashRef', builder => sub {{}} );
-
-around 'process_document' => sub {
-    my ($orig, $self, $doc) = @_;
+override 'print_header' => sub {
+    my ($self, $doc) = @_;
     print {$self->_file_handle} "#begin document " . $doc->full_filename . "\n";
-    $self->$orig($doc);
+};
+override 'print_footer' => sub {
+    my ($self, $doc) = @_;
     print {$self->_file_handle} "#end document " . $doc->full_filename . "\n";
 };
 
@@ -27,7 +27,7 @@ sub process_atree {
     my @data = map {_extract_data($_)} @nodes;
    
     my $str = join "\n", (map {join "\t", @$_} @data);
-    print { $self->_file_handle } "$str\n";
+    print { $self->_file_handle } "$str\n\n";
 }
 
 sub _create_coref_str {
