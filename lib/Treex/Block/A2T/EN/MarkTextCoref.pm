@@ -3,6 +3,7 @@ use Moose;
 use utf8;
 use Treex::Core::Common;
 use Lingua::StanfordCoreNLP;
+use Text::Unidecode;
 
 extends 'Treex::Core::Block';
 
@@ -16,12 +17,11 @@ sub _build_pipeline {
     my $pipeline = new Lingua::StanfordCoreNLP::Pipeline(0);
     my $props = $pipeline->getProperties();
     $props->put('annotators', 'tokenize, ssplit, pos, lemma, ner, parse, dcoref');
-    $props->put('tokenize.whitespace', 'true');
+    #$props->put('tokenize.whitespace', 'true');
     #$props->put('tokenize.options', 'americanize=false');
     $props->put('tokenize.options', 'ptb3Escaping=false');
-    #$props->put('hsakjdhsadijqwjdlkan', 'sandsahiudha,a');
     $pipeline->setProperties($props);
-    print STDERR "BUILDING CORENLP PIPELINE\n";
+    #print STDERR "BUILDING CORENLP PIPELINE\n";
     
     return $pipeline;
 }
@@ -53,7 +53,7 @@ sub _is_superfluous {
     return 0 if ($str1 eq "theater" && $str2 eq "theatre");
     return 0 if ($str1 eq "labeled" && $str2 eq "labelled");
     return 0 if ($str1 eq "meager" && $str2 eq "meagre");
-    log_warn "Neither '$str1' nor '$str2' are superflous.";
+    #log_warn "Neither '$str1' nor '$str2' are superflous.";
     #log_fatal "Luxembourg-based" if ($str1 eq "Luxembourg-based" || $str2 eq "Luxembourg-based");
     return 0;
 }
@@ -96,7 +96,7 @@ sub align_arrays {
 
             $l_offset += length($s1) - length($s2);
             if ($l_offset) {
-                print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\t$s1 $s2\n";
+                #print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\t$s1 $s2\n";
             }
             $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
             
@@ -130,11 +130,12 @@ sub align_arrays {
     return \%align;
 }
 
-sub _remove_ws {
+sub _normalize_token {
     my ($w) = @_;
     $w =~ s/\pZ+//g;
     $w =~ s/\\//g;
-    return $w;
+    my $w2 = unidecode($w);
+    return $w2;
 }
 
 sub process_document {
@@ -166,8 +167,8 @@ sub process_document {
     }
 
     my @our_anodes = map {[$_->get_atree->get_descendants({ordered=>1})]} @zones;
-    my @our_tokens = map {[map {_remove_ws($_->form)} @$_]} @our_anodes;
-    my @stanford_tokens = map {[map {_remove_ws($_->getWord)} @{$_->getTokens->toArray}]} @{$result->toArray};
+    my @our_tokens = map {[map {_normalize_token($_->form)} @$_]} @our_anodes;
+    my @stanford_tokens = map {[map {_normalize_token($_->getWord)} @{$_->getTokens->toArray}]} @{$result->toArray};
     my $token_align = align_arrays(\@stanford_tokens, \@our_tokens);
     #print STDERR Dumper($token_align);
 
