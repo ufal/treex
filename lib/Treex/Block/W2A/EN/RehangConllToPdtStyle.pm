@@ -85,7 +85,7 @@ sub should_switch_with_parent {
 
 sub switch_with_parent {
     my ($a_node) = @_;
-    if ( $a_node->is_member == 1 ) {
+    if ( $a_node->is_member ) {
         my $coord_head = $a_node->get_parent();
         my $eff_parent = $coord_head->get_parent();
         my $ggg        = $eff_parent->get_parent();
@@ -103,7 +103,7 @@ sub switch_with_parent {
     else {
         my $parent  = $a_node->get_parent();
         my $grandpa = $parent->get_parent();
-        if ( $parent->is_member == 1 ) {
+        if ( $parent->is_member ) {
             $parent->set_is_member(0);
             $a_node->set_is_member(1);
         }
