@@ -51,12 +51,35 @@ sub _node_and_parent {
     return %f;
 }
 
+sub _replace_lemma_for_perspron {
+    my ($feats, $tnode) = @_;
+    if ($feats->{lemma} eq "#PersPron") {
+        my @chain = $tnode->get_coref_chain({ordered => 1});
+        @chain = grep {$_->t_lemma ne "#PersPron" && $_->t_lemma ne "#Cor"} @chain;
+        my @antes = grep {!scalar $_->get_coref_gram_nodes} @chain;
+
+        if (@antes) {
+            my $new_lemma = $antes[0]->t_lemma;
+            my $anode = $tnode->get_lex_anode;
+            my $lemma = $tnode->t_lemma;
+            if (defined $anode) {
+                $lemma = $anode->lemma;
+            }
+            print STDERR $lemma . " -> " . $new_lemma . "\n";
+            $feats->{lemma} = $antes[0]->t_lemma;
+        }
+    }
+}
+
 sub _child {
     my ( $tnode, $prefix ) = @_;
     my %feats = (
         lemma   => $tnode->t_lemma,
         formeme => $tnode->formeme,
     );
+
+    _replace_lemma_for_perspron(\%feats, $tnode);
+
     if ( my $n_node = $tnode->get_n_node() ) {
         $feats{ne_type} = $n_node->ne_type;
     }
