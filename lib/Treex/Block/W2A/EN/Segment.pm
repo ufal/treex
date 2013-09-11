@@ -24,21 +24,30 @@ sub _build_segmenter {
 
 __END__
 
-=over
+=encoding utf8
 
-=item Treex::Block::W2A::EN::Segment
+=head1 NAME
+
+Treex::Block::W2A::EN::Segment
+
+=head1 DESCRIPTION
 
 Sentence boundaries are detected based on a regex rules
 that detect end-sentence punctuation ([.?!]) followed by a uppercase letter.
-This class adds a English specific list of "unbreakers",
+This class adds an English specific list of "unbreakers",
 i.e. tokens that usually do not end a sentence
 even if they are followed by a period and a capital letter.
 
-See L<Treex::Block::W2A::Segment>
+=head1 SEE ALSO
 
-=back
+L<Treex::Block::W2A::Segment>
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2011 Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
