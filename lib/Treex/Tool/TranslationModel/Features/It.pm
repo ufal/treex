@@ -33,12 +33,12 @@ sub BUILD {
 
 sub _build_adj_compl_list {
     my ($self) = @_;
-    return Treex::Tool::Storage::Storable::load_obj($self->adj_compl_path);
+    return Treex::Tool::Storage::Storable::load_obj($self->adj_compl_path, $self);
 }
 
 sub _build_verb_func_counts {
     my ($self) = @_;
-    return Treex::Tool::Storage::Storable::load_obj($self->verb_func_path);
+    return Treex::Tool::Storage::Storable::load_obj($self->verb_func_path, $self);
 }
 
 sub _bucketing {

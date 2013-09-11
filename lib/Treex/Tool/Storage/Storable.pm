@@ -45,7 +45,8 @@ sub save {
 ################ STATIC METHODS ######################
 
 sub load_obj {
-    my ($filename) = @_;
+    my ($filename, $class) = @_;
+    $filename = _locate_model_file($class, $filename);
     my $obj = Compress::Zlib::memGunzip(read_file( $filename )) ;
     $obj = Storable::thaw($obj) or log_fatal $!;
     return $obj;

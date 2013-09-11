@@ -61,8 +61,10 @@ sub _build_index {
 sub _build_feat_extractor {
     my ($self) = @_;
     return Treex::Tool::TranslationModel::Features::It->new({
-        adj_compl_path => '/home/mnovak/projects/mt_coref/model/adj.compl',
-        verb_func_path => '/home/mnovak/projects/mt_coref/model/czeng0.verb.func',
+        #adj_compl_path => '/home/mnovak/projects/mt_coref/model/adj.compl',
+        #verb_func_path => '/home/mnovak/projects/mt_coref/model/czeng0.verb.func',
+        adj_compl_path => 'data/models/translation/en2cs/specialized/perspron_it.czeng0.adj.compl',
+        verb_func_path => 'data/models/translation/en2cs/specialized/perspron_it.czeng0.verb.func',
     });
 }
 
