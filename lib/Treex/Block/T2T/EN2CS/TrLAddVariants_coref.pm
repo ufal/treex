@@ -107,6 +107,12 @@ has '_model_factory' => (
     default => sub { return TranslationModel::Factory->new(); },
 );
 
+has 'coref_style' => (
+    is => 'ro',
+    isa => enum(['none','child','child_parent']),
+    default => 'none',
+);
+
 #has '_trigger_feature_extractor' => (
 #    is => 'ro',
 #    isa => 'Treex::Tool::Triggers::Features',
@@ -275,7 +281,7 @@ sub process_tnode {
 
         my $features_hash_rf = {};
         if ( defined $en_anode ) {
-            $features_hash_rf = Treex::Tool::TranslationModel::Features::EN_coref::features_from_src_tnode($en_tnode);
+            $features_hash_rf = Treex::Tool::TranslationModel::Features::EN_coref::features_from_src_tnode($en_tnode, $self->coref_style);
         }
  
         #my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_features_version );
