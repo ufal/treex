@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 sub _node_and_parent {
-    my ( $tnode, $prefix ) = @_;
+    my ( $tnode, $prefix, $coref_style ) = @_;
     return if $tnode->is_root();
 
     # features from the given tnode
@@ -31,6 +31,10 @@ sub _node_and_parent {
         $feats{precedes_parent} = $tnode->precedes($tparent);
     }
 
+    if ( ($coref_style eq 'replace_child_parent' && $prefix eq 'parent_') || $coref_style =~ /^add_/ )  {
+	_replace_add_lemma_for_perspron(\%feats, $tnode, $coref_style);
+    }
+
     # features from a-layer
     if (my $anode = $tnode->get_lex_anode) {
         $feats{tag} = $anode->tag;
@@ -45,14 +49,23 @@ sub _node_and_parent {
     my %f;
     while ( my ( $key, $value ) = each %feats ) {
         if ( defined $value ) {
-            $f{ $prefix . $key } = $value;
-        }
+	    if ( $key eq 'lemma' &&  ref($value) eq 'ARRAY' ) {
+		my @values = map{$prefix.$key.'_'.$_}@$value;
+		foreach my $v ( @values ) {
+		    $f{ $v } = 1;	     
+		}
+	    }	
+	    else {
+                $f{ $prefix . $key } = $value;
+	    }
+	}
     }
     return %f;
 }
 
-sub _replace_lemma_for_perspron {
-    my ($feats, $tnode) = @_;
+sub _replace_add_lemma_for_perspron {
+    my ($feats, $tnode, $coref_style) = @_;
+
     if ($feats->{lemma} eq "#PersPron") {
         my @chain = $tnode->get_coref_chain({ordered => 1});
         @chain = grep {$_->t_lemma ne "#PersPron" && $_->t_lemma ne "#Cor"} @chain;
@@ -64,21 +77,36 @@ sub _replace_lemma_for_perspron {
             my $lemma = $tnode->t_lemma;
             if (defined $anode) {
                 $lemma = $anode->lemma;
-            }
-            print STDERR $lemma . " -> " . $new_lemma . "\n";
-            $feats->{lemma} = $antes[0]->t_lemma;
-        }
+            } 
+            if ( $coref_style =~ /^replace/ ) {
+                print STDERR $lemma . " -> " . $new_lemma . "\n";
+                $feats->{lemma} = $antes[0]->t_lemma;
+	    }
+	    elsif ( $coref_style =~ /^add/ ) {
+		$feats->{lemma} = $tnode->t_lemma;
+		if ( $coref_style eq 'add_closest_ant' ) {
+		    push @{$feats->{lemma}}, $antes[0]->t_lemma;
+		}
+		else {
+		    foreach my $ante ( @antes ) {
+			push @{$feats->{lemma}},$ante->t_lemma;
+		    }
+		}
+	    }
+        }  
     }
 }
 
 sub _child {
-    my ( $tnode, $prefix ) = @_;
+    my ( $tnode, $prefix, $coref_style ) = @_;
     my %feats = (
         lemma   => $tnode->t_lemma,
         formeme => $tnode->formeme,
     );
 
-    _replace_lemma_for_perspron(\%feats, $tnode);
+    if ( $coref_style =~ /^replace/ || $coref_style =~ /^add/ ) {
+	_replace_add_lemma_for_perspron(\%feats, $tnode, $coref_style);
+    }
 
     if ( my $n_node = $tnode->get_n_node() ) {
         $feats{ne_type} = $n_node->ne_type;
@@ -87,10 +115,20 @@ sub _child {
         $feats{tag} = $anode->tag;
         $feats{capitalized} = 1 if $anode->form =~ /^\p{IsUpper}/;
     }
+
+
     my %f;
     while ( my ( $key, $value ) = each %feats ) {
         if ( defined $value ) {
-            $f{ $prefix . $key . '_' . $value } = 1;
+            if ( $key eq 'lemma' &&  ref($value) eq 'ARRAY' ) {
+                my @values = map{$prefix.$key.'_'.$_}@$value;
+                foreach my $v ( @values ) {
+                    $f{ $v } = 1;                   
+                }
+            }
+            else {
+                $f{ $prefix . $key . '_' . $value } = 1;
+            }
         }
     }
     return %f;
@@ -106,15 +144,15 @@ sub _prev_and_next {
 }
 
 sub features_from_src_tnode {
-    my ( $node, $arg_ref ) = @_;
+    my ( $node, $arg_ref, $coref_style ) = @_;
     my ($parent) = $node->get_eparents( { or_topological => 1 } );
 
     my %features = (
-        _node_and_parent( $node,   '' ),
-        _node_and_parent( $parent, 'parent_' ),
+        _node_and_parent( $node,   '' , $coref_style ),
+        _node_and_parent( $parent, 'parent_' , $coref_style ),
         _prev_and_next( $node->get_prev_node, 'prev_' ),
         _prev_and_next( $node->get_next_node, 'next_' ),
-        ( map { _child( $_, 'child_' ) } $node->get_echildren( { or_topological => 1 } ) ),
+        ( map { _child( $_, 'child_' , $coref_style ) } $node->get_echildren( { or_topological => 1 } ) ),
     );
 
     if ( $node->get_children( { preceding_only => 1 } ) ) {

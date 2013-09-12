@@ -109,7 +109,7 @@ has '_model_factory' => (
 
 has 'coref_style' => (
     is => 'ro',
-    isa => enum(['none','child','child_parent']),
+    isa => enum(['none','replace_child','replace_child_parent','add_closest_ant','add_all_ants']),
     default => 'none',
 );
 
@@ -281,7 +281,7 @@ sub process_tnode {
 
         my $features_hash_rf = {};
         if ( defined $en_anode ) {
-            $features_hash_rf = Treex::Tool::TranslationModel::Features::EN_coref::features_from_src_tnode($en_tnode, $self->coref_style);
+            $features_hash_rf = Treex::Tool::TranslationModel::Features::EN_coref::features_from_src_tnode($en_tnode, undef, $self->coref_style);
         }
  
         #my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->maxent_features_version );
