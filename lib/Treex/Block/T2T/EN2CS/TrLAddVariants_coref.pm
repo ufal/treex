@@ -109,7 +109,7 @@ has '_model_factory' => (
 
 has 'coref_style' => (
     is => 'ro',
-    isa => enum(['none','replace_child','replace_child_parent','add_closest_ant','add_all_ants']),
+    isa => enum(['none','replace_child','replace_child_parent','add_ant_closest','add_ants_all']),
     default => 'none',
 );
 
