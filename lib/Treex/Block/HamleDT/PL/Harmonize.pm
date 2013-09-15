@@ -27,7 +27,7 @@ sub process_zone {
     my $zone   = shift;
 
     my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
-    $self->process_args($a_root);
+#    $self->process_args($a_root);
     $self->attach_final_punctuation_to_root($a_root);
 #    $self->restructure_coordination($a_root, $debug);
 #    $self->process_prep_sub_arg_cloud($a_root);
@@ -262,7 +262,7 @@ sub deprel_to_afun {
 #         my $parent = $coord_arg->get_parent();
 #         $coord_arg->set_afun($parent->afun());
 #     }
-}
+# }
 
 
 #------------------------------------------------------------------------------
