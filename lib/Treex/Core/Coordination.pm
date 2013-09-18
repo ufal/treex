@@ -1063,41 +1063,6 @@ sub detect_stanford
     }
 }
 
-#------------------------------------------------------------------------------
-# Detects coordination structure according to current annotation (dependency
-# links between nodes and labels of the relations). Expects the Polish style
-# of the Prague family(?) - the head of the coordination bears the label of the
-# relation between the coordination and its parent. The afuns of conjuncts just
-# mark them as conjuncts; the shared modifiers are distinguished by having
-# a different afun. The method assumes that nothing has been normalized yet.
-# Expects the coordinators and conjuncts to have the respective attribute in
-# wild()
-# ### TODO ### - check/correct; might be better to move into the PL::Harmonize?
-#------------------------------------------------------------------------------
-sub detect_polish {
-    my $self = shift;
-    my $node = shift; # suspected root node of coordination
-    log_fatal("Missing node") unless (defined($node));
-    my @children = $node->children();
-    my @conjuncts = grep {$_->wild()->{'conjunct'}} (@children);
-    return unless (@conjuncts);
-    $self->set_parent($node->parent());
-    $self->add_delimiter($node, $node->get_iset('pos') eq 'punc');
-    for my $child (@children) {
-        if ($child->wild()->{'conjunct'}) {
-            my $orphan = 0;
-            $self->add_conjunct($child, $orphan);
-        }
-        elsif ($child->wild()->{'coordinator'}) {
-            my $symbol = 1;
-            $self->add_delimiter($child, $symbol);
-        }
-        else {
-            $self->add_shared_modifier($child);
-        }
-    }
-}
-
 
 #------------------------------------------------------------------------------
 # Examines private modifiers of the first (word-order-wise) conjunct. If they

@@ -29,9 +29,9 @@ sub process_zone {
     my $a_root = $self->SUPER::process_zone($zone, 'conll2009');
 #    $self->process_args($a_root);
     $self->attach_final_punctuation_to_root($a_root);
-#    $self->restructure_coordination($a_root, $debug);
-#    $self->process_prep_sub_arg_cloud($a_root);
-    $self->check_afuns($a_root);
+    $self->restructure_coordination($a_root, $debug);
+    $self->process_prep_sub_arg_cloud($a_root);
+#    $self->check_afuns($a_root);
 
 }
 
@@ -118,8 +118,8 @@ sub deprel_to_afun {
         elsif ($deprel eq 'comp') {
             # parent is a preposition -> PrepArg - solved by a separate subroutine
             if ($parent->conll_pos eq 'prep') {
-#                $node->set_afun('PrepArg');
-                $node->set_afun('NR');
+                $node->set_afun('PrepArg');
+#                $node->set_afun('NR');
             }
             # parent is a numeral -> NumArg - solved by a separate subroutine
             elsif ($parent->conll_pos eq 'num') {
@@ -230,6 +230,7 @@ sub deprel_to_afun {
         # ne ... named entity
         elsif ($deprel eq 'ne') {
             $node->set_afun('Atr');
+            # ### TODO ### interpunkce by mela dostat AuxG; struktura! - hlava by mela byt nejpravejsi uzel
         }
         # complm ... complementizer
         elsif ($deprel eq 'complm') {
@@ -316,23 +317,66 @@ sub deprel_to_afun {
 # }
 
 
+
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects the Polish style
+# of the Prague family(?) - the head of the coordination bears the label of the
+# relation between the coordination and its parent. The afuns of conjuncts just
+# mark them as conjuncts; the shared modifiers are distinguished by having
+# a different afun. The method assumes that nothing has been normalized yet.
+# Expects the coordinators and conjuncts to have the respective attribute in
+# wild()
+# ### TODO ### - check/correct; might be better to move into the PL::Harmonize?
+#------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 # Detects coordination in the shape we expect to find it in the Polish
 # treebank.
 #------------------------------------------------------------------------------
+# sub detect_coordination {
+#     my $self = shift;
+#     my $node = shift;
+#     my $coordination = shift;
+#     my $debug = shift;
+#     $self->detect_polish($coordination, $node);
+#     # The caller does not know where to apply recursion because it depends on annotation style.
+#     # Return all conjuncts and shared modifiers for the Prague family of styles.
+#     # Return orphan conjuncts and all shared and private modifiers for the other styles.
+#     my @recurse = $coordination->get_conjuncts();
+#     push(@recurse, $coordination->get_shared_modifiers());
+#     return @recurse;
+# }
+
 sub detect_coordination {
     my $self = shift;
-    my $node = shift;
+    my $node = shift;  # suspected root node of coordination
     my $coordination = shift;
     my $debug = shift;
-    $coordination->detect_polish($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    log_fatal("Missing node") unless (defined($node));
+    my @children = $node->children();
+    my @conjuncts = grep {$_->wild()->{'conjunct'}} (@children);
+    return unless (@conjuncts);
+    $coordination->set_parent($node->parent());
+    $coordination->add_delimiter($node, $node->get_iset('pos') eq 'punc');
+    $coordination->set_afun($node->afun());
+    for my $child (@children) {
+        if ($child->wild()->{'conjunct'}) {
+            my $orphan = 0;
+            $coordination->add_conjunct($child, $orphan);
+        }
+        elsif ($child->wild()->{'coordinator'}) {
+            my $symbol = 1;
+            $coordination->add_delimiter($child, $symbol);
+        }
+        else {
+            $coordination->add_shared_modifier($child);
+        }
+    }
     my @recurse = $coordination->get_conjuncts();
     push(@recurse, $coordination->get_shared_modifiers());
     return @recurse;
 }
+
 
 ### NOT FINISHED - WORK IN PROGRESS ###
 
