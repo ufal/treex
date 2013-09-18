@@ -105,6 +105,7 @@ sub convert_tag
         fa::conll
         fi::conll
         grc::conll
+        he::conll
         hi::conll
         hu::conll
         it::conll
