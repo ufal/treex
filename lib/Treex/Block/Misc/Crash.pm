@@ -114,6 +114,8 @@ Probability of crash inside process_document function caused by calling die.
 
 Probability of crash inside process_document function caused by calling log_fatal.
 
+=back
+
 =head1 AUTHOR
 
 Martin Majlis <majlis@ufal.mff.cuni.cz>
