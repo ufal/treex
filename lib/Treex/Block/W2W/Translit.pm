@@ -14,6 +14,7 @@ use translit::tibetan; # Dan's transliteration table for Tibetan script
 use translit::mkhedruli; # Dan's transliteration table for Georgian script
 use translit::ethiopic; # Dan's transliteration table for Ethiopic (Amharic) script
 use translit::khmer; # Dan's transliteration table for Khmer script
+use translit::hebrew; # Rudolf's transliteration table for Hebrew script
 
 has 'table' => (isa => 'HashRef', is => 'ro', default => sub {{}});
 has 'maxl' => (isa => 'Int', is => 'rw', default => 1, writer => '_set_maxl');
@@ -66,6 +67,8 @@ sub BUILD
     translit::ethiopic::inicializovat($table);
     # 0x1780: Khmer script.
     translit::khmer::inicializovat($table);
+    # Hebrew script
+    translit::hebrew::inicializovat($table);
     # Figure out and return the maximum length of an input sequence.
     my $maxl = 1; map {$maxl = max2($maxl, length($_))} (keys(%{$table}));
     $self->_set_maxl($maxl);
