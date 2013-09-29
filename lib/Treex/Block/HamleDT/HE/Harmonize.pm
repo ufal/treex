@@ -17,22 +17,75 @@ sub process_zone {
     return $a_root;
 }
 
+# Some of the dependencies in the Treebank are labeled. Specifically, dependency
+# labels are used to mark Subjects (SUBJ), Objects (OBJ), and Complements (COM).
+# Most other relations are marked with the generic “dep” label.
 # TODO
 my %deprel2afun = (
-    # dep => 'Atr',
-    CONJ => 'Coord',
+
+    # COMMON LABELS
+    # =============
+    
+    # Subject
     SBJ => 'Sb',
-    ADJ => 'Atr',
-    ADV => 'Adv',
-    # ROOT => 'Pred',
+    # Complement
     COM => 'Atv',
+    # Object
     OBJ => 'Obj',
-    MOD => 'Atr', # MOD is used for general modifiers of nouns, adjectives, adverbs, prepositional phrases
-    MW => 'Apos',
+    # no info, but probably an adjective
+    ADJ => 'Atr',
+    # no info, but probably an adverb
+    ADV => 'Adv',
+    
+    # HARDER LABELS
+    # ===============
+
+    # coordinated elements
+    # (is_member=1)
+    # Distinguish coordinated elements (CONJ) from the modifiers and arguments
+    # of the coordinated structure (i.e. other children of the coordination
+    # head).
+    # TODO
+    CONJ => 'Coord',
+    
+    # parts of multi-word expressions
+    # first word is the head, following words form a chain
+    # ???
+    # use set_default_afun()
+    # MW => 'Apos',
+    
+    # WEIRD LABELS
+    # ============
+
+    # generic label
+    # Atr/Adv/???
+    # use set_default_afun()
+    # dep => 'Atr', 
+    
+    # MOD is used for general modifiers of nouns, adjectives, adverbs,
+    # prepositional phrase (this info is NOT from Yoav, but from Mila)
+    # ?? is there a difference from 'dep' ??
+    # use set_default_afun()
+    # MOD => 'Atr',
+
+    # root of the tree (child of the technical root)
+    # Pred/ExD
+    # use set_default_afun()
+    # ROOT => 'Pred',
+    
+    # pronominal suffixes
+    # inflected preposition (וב⇒suffאוה ב “in-him” )
     prep_infl => 'AuxP',
-    at_infl => 'Atr',
-    pos_infl => 'Atr',
-    rb_infl => 'Atr',
+    # inflected AT (direct object) marker (ונתוא⇒suffונחנא תא “AT-us”)
+    # AT תא is the parent of the object it is marking (!)
+    at_infl => 'AuxY',
+    # inflected possessive (ילש⇒suffינא לש “of-I”/mine)
+    pos_infl => 'AuxY',
+    # inflected adverbs (ודוע⇒suffאוה דוע “while-he”) pos
+    rb_infl => 'Adv',
+
+    # mentioned but unseen in data:
+    # PRN (Mark the beginnings of parentheticals and quotes)
 );
 
 
@@ -58,6 +111,15 @@ sub deprel_to_afun {
     }
 }
 
+# TODO:
+# Coordination
+# The coordinating element is the head of the conjunction. In the event that
+# there are several coordinating elements, the last one is chosen as the head
+# of the others.
+#
+# The members of the coordination are marked by the CONJ label.
+#
+# TODO: run this before changing the afuns etc.
 sub detect_coordination
 {
     my $self = shift;
