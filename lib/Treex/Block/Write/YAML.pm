@@ -131,7 +131,9 @@ usual attributes for nodes on the individual layers; the topological children of
 contained in the attribute C<children> (which is an array of nodes).
 
 Any attributes whose value was not defined are not mentioned in the output YAML. 
-   
+
+=over
+
 =item C<to>
 
 Optional: the name of the output file, STDOUT by default.

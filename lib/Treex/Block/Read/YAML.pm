@@ -125,8 +125,6 @@ can be C<a>, C<t>, C<n> or C<p>. The tree entries then contain the entire tree s
 usual attributes for nodes on the individual layers; the topological children of a node are
 contained in the attribute C<children> (which is an array of nodes).
    
-=back
-
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
