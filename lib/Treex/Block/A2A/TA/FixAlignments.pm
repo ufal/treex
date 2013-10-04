@@ -52,16 +52,30 @@ sub delete_alignment_links {
 							$rn->delete_aligned_node($src_nodes[$i], $self->alignment_type);
 						}
 					}
+					# (ii) remove alignment if a punctuation is aligned to a form on the other side
+					foreach my $rn (@referring_nodes) {
+						if ((($src_nodes[$i] =~ /^\p{IsP}$/) && ($rn->form !~ /^\p{IsP}$/)) || (($src_nodes[$i] !~ /^\p{IsP}$/) && ($rn->form =~ /^\p{IsP}$/))) {
+							$src_nodes[$i]->delete_aligned_node($rn, $self->alignment_type);
+						}
+					}					
 				}				
 			}
 			else {
 				my @aligned_nodes = $src_nodes[$i]->get_aligned_nodes_of_type('^' . $self->alignment_type . '$', $self->language, $self->selector);
-				if (@aligned_nodes) {
+				if (@aligned_nodes) {					
+					# (i) delete alignments for some English function words that do not have 
+					# translation equivalents					
 					if ($src_nodes[$i]->form =~ /^(a|an|the|at|for|in|of|on|to)$/i) {					
 						foreach my $an (@aligned_nodes) {
 							$src_nodes[$i]->delete_aligned_node($an, $self->alignment_type);
 						}
-					}	
+					}
+					# (ii) remove alignment if a punctuation is aligned to a form on the other side
+					foreach my $an (@aligned_nodes) {
+						if ((($src_nodes[$i] =~ /^\p{IsP}$/) && ($an->form !~ /^\p{IsP}$/)) || (($src_nodes[$i] !~ /^\p{IsP}$/) && ($an->form =~ /^\p{IsP}$/))) {
+							$src_nodes[$i]->delete_aligned_node($an, $self->alignment_type);
+						}
+					}						
 				}		
 			}		
 		}

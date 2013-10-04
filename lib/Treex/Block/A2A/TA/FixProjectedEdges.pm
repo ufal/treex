@@ -31,7 +31,7 @@ sub fix_projected_edges {
 		my @desc =  $root->get_descendants( { ordered => 1 } );
 		foreach my $n (@desc) {
 			my $p = $n->get_parent();
-			if (($n->tag =~ /^V[rRzZ]/) && ($p != $root) && ($p->tag =~ /^NNN/)) {
+			if (($n->tag =~ /^V[rRzZ]/) && ($p != $root) && ($p->tag =~ /^NN/)) {
 				my @children = grep { $_ != $n }$p->get_children();
 				#if (!$p->get_parent()->is_descendant_of($n)) {
 					$n->set_parent($p->get_parent());
