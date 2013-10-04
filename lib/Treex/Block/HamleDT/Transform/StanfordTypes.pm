@@ -95,9 +95,7 @@ sub process_anode {
         # log_warn "Attempted to use type '$type' for a punctuation ($form)!";
         $type = 'punct';
     }
-    elsif ( $anode->form !~ /^\p{IsP}+$/
-        # && $type eq 'punct'
-    ) {
+    elsif ( $anode->form !~ /^\p{IsP}+$/ && $type eq 'punct' ) {
         # log_warn "Attempted to use type 'punct' for a non-punctuation ($form)!";
         $type = 'dep';
     }
