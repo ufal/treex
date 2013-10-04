@@ -9,6 +9,9 @@ extends 'Treex::Core::Block';
 # usually it should eventually become something more specific!
 my %afun2type = (
 
+    # TODO: solve coordinations somehow
+    Coord => 'cc',
+
     # ordinary afuns
     Sb   => \&{Sb},
     Obj  => \&{Obj},
@@ -57,7 +60,7 @@ sub process_anode {
     # get the type;
     # either already the type string
     # or a reference to a subroutine that will return the type string
-    my $type = $afun2type{$anode->get_afun()};
+    my $type = $afun2type{$anode->afun};
     if ( defined $type ) {
         if ( ref($type) ) {
             # asserf ref($type) == 'CODE'
@@ -66,7 +69,7 @@ sub process_anode {
         # else $type is already the type string
     }
     else {
-        log_warn "Unknown type for afun " . $anode->get_afun() . "!";
+        log_warn "Unknown type for afun " . $anode->afun . "!";
         $type = 'dep';
     }
 
