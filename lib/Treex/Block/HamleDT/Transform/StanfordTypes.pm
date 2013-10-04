@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::ToStanfordTypes;
+package Treex::Block::HamleDT::Transform::StanfordTypes;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -25,7 +25,7 @@ my %afun2type = (
     # less ordinary afuns
     AuxA       => 'det',      # not always used in the harmonization!
     Neg        => 'neg',      # not always used in the harmonization!
-    ExD        => 'dep',
+    ExD        => \&{ExD},
     Apos       => 'appos',    # ?
     Apposition => 'appos',    # ???
     Atv        => \&{Atv},
@@ -57,6 +57,11 @@ my %afun2type = (
 sub process_anode {
     my ( $self, $anode ) = @_;
 
+    my $form = $anode->form;
+
+    
+    # CONVERSION ACCORDING TO %afun2type
+
     # get the type;
     # either already the type string
     # or a reference to a subroutine that will return the type string
@@ -69,8 +74,38 @@ sub process_anode {
         # else $type is already the type string
     }
     else {
-        log_warn "Unknown type for afun " . $anode->afun . "!";
+        log_warn "Unknown type for afun " . $anode->afun . " ($form)!";
         $type = 'dep';
+    }
+
+    
+    # SOME POST-CHECKS
+
+    # root
+    if ( $anode->get_parent()->is_root() && $type ne 'root' ) {
+        # log_warn "Attempted to use type '$type' for the root ($form)!";
+        $type = 'root';
+    }
+    # punctuation
+    elsif ( $anode->form =~ /^\p{IsP}+$/ && $type ne 'punct' ) {
+        # log_warn "Attempted to use type '$type' for a punctuation ($form)!";
+        $type = 'punct';
+    }
+    elsif ( $anode->form !~ /^\p{IsP}+$/ && $type eq 'punct' ) {
+        # log_warn "Attempted to use type 'punct' for a non-punctuation ($form)!";
+        $type = 'dep';
+    }
+    # prepositions
+    elsif ( $anode->match_iset( 'pos' => 'prep' ) && $type ne 'prep' ) {
+        # log_warn "Attempted to use type '$type' for a preposition ($form)!";
+        $type = 'prep';
+    }
+    # prepositional objects
+    elsif ( $anode->match_iset( 'pos' => 'noun' ) &&
+        $self->parent_is_preposition($anode) && $type ne 'pobj'
+    ) {
+        # log_warn "Attempted to use type '$type' for a pobj ($form)!";
+        $type = 'pobj';
     }
 
     $anode->set_conll_deprel($type);
@@ -228,6 +263,19 @@ sub Adv {
     return $type;
 }
 
+# TODO
+sub ExD {
+    my ($self, $anode) = @_;
+
+    my $type = 'dep';
+
+    if ( $anode->get_parent()->is_root() ) {
+        $type = 'root';
+    }
+
+    return $type;
+}
+
 # HELPER SUBS
 
 sub parent_is_verb {
@@ -304,7 +352,7 @@ sub parent_is_numeral {
 
 =head1 NAME 
 
-Treex::Block::HamleDT::ToStanfordTypes -- convert from HamleDT afuns to Stanford
+Treex::Block::HamleDT::Transform::StanfordTypes -- convert from HamleDT afuns to Stanford
 dependencies types
 
 =head1 DESCRIPTION
@@ -329,6 +377,10 @@ after...)
 
 (We are trying to avoid explicit handling of coordinations in the afuns
 conversion -- the coordinations should be transparent for this block.)
+
+There are many log_warn messages that are commented out at the moment, which
+might suggest an error in the preceding conversion steps. Comment them back in
+if you are interested in that.
 
 =head1 PARAMETERS
 
