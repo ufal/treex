@@ -14,19 +14,19 @@ sub process_atree {
         }
     }
 
+    # rehang root punctuation children
     # find the non-punctuation non-technical root
     my ($stanford_root) = grep { !is_punct($_) } $aroot->get_children({ordered => 1});
-    if ( !defined $stanford_root ) {
-        log_fatal "All children of the technical root node are punctuations" .
-            " -- the Stanford style cannot handle that!";
+    if ( defined $stanford_root ) {
+        foreach my $anode ( grep { is_punct($_) } $aroot->get_children() ) {
+            $anode->set_parent($stanford_root);
+            $self->subscribe($anode);
+        }
     }
-
-    # rehang root punctuation children
-    foreach my $anode ( grep { is_punct($_) } $aroot->get_children() ) {
-        $anode->set_parent($stanford_root);
-        $self->subscribe($anode);
+    else {
+        log_warn "All children of the technical root node are punctuations" .
+        " -- the Stanford style cannot handle that correctly! " . $aroot->id;
     }
-    
 }
 
 sub is_punct {
@@ -55,9 +55,6 @@ predicate, which is the Stanford-style root of the tree).
 
 To be called after the coordinations are transformed!!!
 (It would behave weirdly for punctuations that are heads of coordinations...)
-
-Cannot handle sentences composed only of punctuation, since these are not valid
-sentences in Stanford style. To be approached by anyone who dares...
 
 =head1 AUTHOR
 
