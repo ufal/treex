@@ -82,27 +82,35 @@ sub process_anode {
     # SOME POST-CHECKS
 
     # root
-    if ( $anode->get_parent()->is_root() && $type ne 'root' ) {
+    if ( $anode->get_parent()->is_root()
+        # && $type ne 'root'
+    ) {
         # log_warn "Attempted to use type '$type' for the root ($form)!";
         $type = 'root';
     }
     # punctuation
-    elsif ( $anode->form =~ /^\p{IsP}+$/ && $type ne 'punct' ) {
+    elsif ( $anode->form =~ /^\p{IsP}+$/
+        # && $type ne 'punct'
+    ) {
         # log_warn "Attempted to use type '$type' for a punctuation ($form)!";
         $type = 'punct';
     }
-    elsif ( $anode->form !~ /^\p{IsP}+$/ && $type eq 'punct' ) {
+    elsif ( $anode->form !~ /^\p{IsP}+$/
+        # && $type eq 'punct'
+    ) {
         # log_warn "Attempted to use type 'punct' for a non-punctuation ($form)!";
         $type = 'dep';
     }
     # prepositions
-    elsif ( $anode->match_iset( 'pos' => 'prep' ) && $type ne 'prep' ) {
+    elsif ( $anode->match_iset( 'pos' => 'prep' )
+        # && $type ne 'prep'
+    ) {
         # log_warn "Attempted to use type '$type' for a preposition ($form)!";
         $type = 'prep';
     }
     # prepositional objects
-    elsif ( $anode->match_iset( 'pos' => 'noun' ) &&
-        $self->parent_is_preposition($anode) && $type ne 'pobj'
+    elsif ( $anode->match_iset( 'pos' => 'noun' ) && $self->parent_is_preposition($anode)
+        # && $type ne 'pobj'
     ) {
         # log_warn "Attempted to use type '$type' for a pobj ($form)!";
         $type = 'pobj';

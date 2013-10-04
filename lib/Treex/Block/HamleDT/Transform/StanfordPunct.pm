@@ -56,6 +56,11 @@ predicate, which is the Stanford-style root of the tree).
 To be called after the coordinations are transformed!!!
 (It would behave weirdly for punctuations that are heads of coordinations...)
 
+If the tree contains only punctuation, it cannot be handled correctly according
+to SD definition -- the punctuation will be a child of the technical root, will
+get the C<root> type in L<HamleDT::Transform::StanfordTypes>, and will appear
+in the SD output even if C<Write::Stanford/retain_punct> is set to C<0>.
+
 =head1 AUTHOR
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
