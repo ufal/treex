@@ -269,6 +269,7 @@ Attributes corresponding to Interset features.
 Do the feature values of this node match the specification?
 (Values of other features do not matter.)
 A value preceded by exclamation mark is tested on string inequality.
+A value preceded by a tilde is tested on regex match.
 Other values are tested on string equality.
 
 =back
