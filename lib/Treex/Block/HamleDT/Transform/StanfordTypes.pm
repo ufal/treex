@@ -41,7 +41,7 @@ my %afun2type = (
     Ante       => 'dep',
 
     # some crazy Aux*
-    AuxC => 'complm',    # always?
+    AuxC => 'mark',    # or complm? or ... ???
     AuxG => 'punct',
     AuxK => 'punct',
     AuxX => 'punct',
@@ -51,7 +51,7 @@ my %afun2type = (
     AuxE => 'dep',
     AuxM => 'dep',
     AuxY => 'dep',
-    AuxZ => 'dep',
+    AuxZ => 'dep',  # TODO something like predet or preconj (or non-existent "preprep")
 );
 
 sub process_anode {
@@ -77,7 +77,7 @@ sub process_anode {
         log_warn "Unknown type for afun " . $anode->afun . " ($form)!";
         $type = 'dep';
     }
-
+    
     
     # SOME POST-CHECKS
 
@@ -99,6 +99,10 @@ sub process_anode {
         # log_warn "Attempted to use type 'punct' for a non-punctuation ($form)!";
         $type = 'dep';
     }
+    # determiners
+    elsif ( $anode->match_iset( 'subpos' => '~art|det' ) ) {
+        $type = 'det';
+    }
     # prepositions
     elsif ( $anode->match_iset( 'pos' => 'prep' )
         # && $type ne 'prep'
@@ -114,6 +118,16 @@ sub process_anode {
         $type = 'pobj';
     }
 
+
+    # MARK CONJUNCTS
+    # the first conjunct (which is the head of the coordination) is NOT marked
+    # by is_member, so only its children get the 'conj' type, which is correct
+    # (relies on the current behaviour of Transform::CoordStyle
+    if ( $anode->is_member ) {
+        $type = 'conj';
+    }
+
+    # SET THE RESULTING SD TYPE
     $anode->set_conll_deprel($type);
 
     return;
@@ -181,6 +195,7 @@ sub AuxV {
 
     my $type = 'aux';
 
+    # TODO maj kopule AuxV nebo Pred?
     if ( grep { $_->afun eq 'Pnom' } $anode->get_children() ) {
         $type = 'cop';
     }
@@ -264,6 +279,9 @@ sub Adv {
     ) {
         # TODO or rather: verbform ~! 'inf' ?
         $type = 'advcl';
+    }
+    elsif ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
+        $type = 'amod';
     }
 
     return $type;
@@ -368,21 +386,10 @@ This is for this block to be able to look at the C<afun>s at any time;
 however, this block should B<not> look at original deprels, as it should be
 language-independent (and especially treebank-independent).
 
-TODO: now only preliminary
+TODO: not yet ready, still many things to solve
 
-TODO: decide how to solve coordinations:
-
-- substitute the nodes with Core::Coordinations?
-
-- use an intermediate structure that will ensure the types to be set correctly?
-(e.g. conjuncts as independent heads, with everything else under the first
-conjunct, with the Core::Coordination object in the wild attribute of the
-first conjunct; this would hopefully mean that the existence of the
-coordination would be hidden while processing the tree but fully recoverable
-after...)
-
-(We are trying to avoid explicit handling of coordinations in the afuns
-conversion -- the coordinations should be transparent for this block.)
+Coordination structures should get marked correctly -- the block relies on
+the data previously having been processed by L<HamleDT::Transform::CoordStyle>.
 
 There are many log_warn messages that are commented out at the moment, which
 might suggest an error in the preceding conversion steps. Comment them back in
