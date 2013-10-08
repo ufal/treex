@@ -9,23 +9,22 @@ extends 'Treex::Core::Block';
 # usually it should eventually become something more specific!
 my %afun2type = (
 
-    # TODO: solve coordinations somehow
-    Coord => 'cc',
-
     # ordinary afuns
     Sb   => \&{Sb},
     Obj  => \&{Obj},
-    Pnom => 'dep',
+    Pnom => \&{Pnom},
     AuxV => \&{AuxV},
-    Pred => 'root',     # be careful with coordinations here!
+    Pred => 'root',
     AuxP => 'prep',
     Atr  => \&{Atr},
     Adv  => \&{Adv},
+    Coord => 'cc',
 
     # less ordinary afuns
+    NR         => 'det',
     AuxA       => 'det',      # not always used in the harmonization!
     Neg        => 'neg',      # not always used in the harmonization!
-    ExD        => \&{ExD},
+    ExD        => 'dep',      # TODO? \&{ExD},
     Apos       => 'appos',    # ?
     Apposition => 'appos',    # ???
     Atv        => \&{Atv},
@@ -50,8 +49,8 @@ my %afun2type = (
     AuxO => \&{Adv},
     AuxE => 'dep',
     AuxM => 'dep',
-    AuxY => 'dep',
-    AuxZ => 'dep',  # TODO something like predet or preconj (or non-existent "preprep")
+    AuxY => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
+    AuxZ => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
 );
 
 sub process_anode {
@@ -89,7 +88,7 @@ sub process_anode {
         $type = 'root';
     }
     # punctuation
-    elsif ( $anode->form =~ /^\p{IsP}+$/
+    elsif ( $anode->match_iset( 'pos' => 'punc' ) || $anode->form =~ /^\p{IsP}+$/
         # && $type ne 'punct'
     ) {
         # log_warn "Attempted to use type '$type' for a punctuation ($form)!";
@@ -116,6 +115,12 @@ sub process_anode {
     ) {
         # log_warn "Attempted to use type '$type' for a pobj ($form)!";
         $type = 'pobj';
+    }
+    # copulas
+    elsif ( $anode->match_iset( 'pos' => 'verb' ) &&
+        grep { $_->afun eq 'Pnom' } $anode->get_children()
+    ) {
+        $type = 'cop';
     }
 
 
@@ -189,17 +194,32 @@ sub Obj {
     return $type;
 }
 
+# probably TODO
+sub Pnom {
+    my ( $self, $anode ) = @_;
+
+    my $type = 'comp';
+
+    if ( $anode->match_iset( 'pos' => '~adj' ) ) {
+        $type = 'acomp';
+    }
+    elsif ( $anode->match_iset( 'pos' => '~noun') ) {
+        $type = 'obj';
+        if ( $self->parent_is_preposition($anode)) {
+            $type = 'pobj';
+        }
+    }
+
+    return $type;
+}
+
 # hopefully OK
 sub AuxV {
     my ( $self, $anode ) = @_;
 
     my $type = 'aux';
 
-    # TODO maj kopule AuxV nebo Pred?
-    if ( grep { $_->afun eq 'Pnom' } $anode->get_children() ) {
-        $type = 'cop';
-    }
-    elsif ( $self->parent_is_passive_verb($anode) ) {
+    if ( $self->parent_is_passive_verb($anode) ) {
         $type = 'auxpass';
     }
 
@@ -301,6 +321,9 @@ sub ExD {
 }
 
 # HELPER SUBS
+# I use get_parent() and thanks to the properties of Stanford Dependencies, this
+# is the same as using get_eparent() for the first conjunct, and irrelevant for
+# other conjuncts since they all should get the 'conj' type
 
 sub parent_is_verb {
     my ($self, $anode) = @_;
