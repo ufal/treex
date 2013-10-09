@@ -1,4 +1,4 @@
-package Treex::Block::Align::FilterTreesByAlignment;
+package Treex::Block::A2A::FilterTreesByAlignment;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -14,24 +14,50 @@ has alignment_direction => (
     documentation=>'Default trg2src means alignment from <language,selector> to <source_language,source_selector> tree. src2trg means the opposite direction.',
 );
 
+# other options: '1-1', '1-1-perfect'
 has filtering_options	=> (
 	is => 'ro',
 	isa => 'Str',
-	default => '1-1-perfect'
+	default => 'none'
 );
+
+has max_src_unalign_rate 	=> ( is => 'ro', isa => 'Num', default => 0.5 );
+has max_tgt_unalign_rate 	=> ( is => 'ro', isa => 'Num', default => 0.5 );
 
 
 sub process_bundle {
 	
 	my ($self, $bundle) = @_;
+	
+	my @all_zones = $bundle->get_all_zones();		
 
 	my $src_zone = $bundle->get_zone($self->source_language, $self->source_selector);
 	my $tgt_zone = $bundle->get_zone($self->language, $self->selector);
 	my $src_tree = $src_zone->get_tree($self->layer);
 	my $tgt_tree = $tgt_zone->get_tree($self->layer);
 	
-	$self->get_alignment_status($src_tree, $tgt_tree); 
-
+	my %status = $self->get_alignment_status($src_tree, $tgt_tree);
+	
+	if (!($self->filtering_options eq 'none')) {
+		my $f_str = $self->filtering_options; 
+		if ($f_str eq '1-1') {
+			if (!$status{'1-1'}) {
+				$bundle->remove();
+			} 
+			else {
+				my $src_una_rate = $status{'src-unalignment-rate'};
+				my $tgt_una_rate = $status{'tgt-unalignment-rate'};
+				if (($src_una_rate > $self->max_src_unalign_rate) && ($tgt_una_rate > $self->max_tgt_unalign_rate)) {
+					$bundle->remove();
+				}				
+			}			
+		}
+		elsif ($f_str eq '1-1-perfect') {
+			if (!$status{'1-1-perfect'}) {
+				$bundle->remove();
+			}
+		}
+	}
 }
 
 
@@ -42,8 +68,8 @@ sub get_alignment_status {
 	my %status = (	
 		'1-1' => 0, 
 		'1-1-perfect' => 0,
-		'src-unalignment-rate' => -1,
-		'tgt-unalignment-rate' => -1,
+		'src-unalignment-rate' => 1,
+		'tgt-unalignment-rate' => 1,
 	);	
 
 	my %local_stat = ();
@@ -173,7 +199,9 @@ sub get_alignment_status {
 	}
 	
 	#my $out_string = sprintf("%1d\t%1d\t%.2f\t%.2f", $status{'1-1'}, $status{'1-1-perfect'}, $status{'src-unalignment-rate'}, $status{'tgt-unalignment-rate'});
-	#print $out_string . "\n";				
+	#print $out_string . "\n";
+	
+	return %status;
 }
 
 1;
