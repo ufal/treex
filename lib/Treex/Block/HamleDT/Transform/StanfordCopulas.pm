@@ -9,7 +9,7 @@ sub process_anode {
 
     my ($pnom) = grep { $_->afun eq 'Pnom' }
         $cop->get_children({ordered => 1});
-    if ( defined $pnom ) {
+    if ( defined $pnom && $cop->match_iset( 'pos' => '~verb' ) ) {
         # types
         $pnom->set_conll_deprel($cop->conll_deprel);
         $cop->set_conll_deprel('cop');
