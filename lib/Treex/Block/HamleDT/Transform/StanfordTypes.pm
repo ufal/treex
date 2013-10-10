@@ -21,7 +21,7 @@ my %afun2type = (
     Coord => 'cc',
 
     # less ordinary afuns
-    NR         => 'det',
+    NR         => 'dep',
     AuxA       => 'det',      # not always used in the harmonization!
     Neg        => 'neg',      # not always used in the harmonization!
     ExD        => 'dep',      # TODO? \&{ExD},
@@ -249,7 +249,7 @@ sub Atr {
     # therefore I use "if" instead of "elsif"
     # and I do not nest the ifs
     if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_noun($anode) ) {
-        $type = 'nn';
+        $type = 'nmod';
     }
     if ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
         $type = 'amod';
@@ -271,13 +271,13 @@ sub Atr {
     # numerals
     if ( $anode->match_iset( 'pos' => '~num' ) ) {
         $type = 'num';
-        if ( $self->parent_is_numeral($anode) ) {
-            $type = 'number';
-        }
+        #if ( $self->parent_is_numeral($anode) ) {
+        #    $type = 'number';
+        #}
     }
-    elsif ( $self->parent_is_numeral($anode) ) {
-        $type = 'quantmod';
-    }
+    #elsif ( $self->parent_is_numeral($anode) ) {
+    #    $type = 'quantmod';
+    #}
 
     return $type;
 }
