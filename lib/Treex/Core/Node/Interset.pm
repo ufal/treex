@@ -135,7 +135,7 @@ sub get_iset_pairs_list
 # function is an abbreviation for a series of get_iset() calls in an if
 # statement:
 #
-# if(match_iset($node, 'pos' => 'noun', 'gender' => 'masc')) { ... }
+# if($node->match_iset('pos' => 'noun', 'gender' => 'masc')) { ... }
 #------------------------------------------------------------------------------
 sub match_iset
 {
@@ -146,12 +146,16 @@ sub match_iset
         my $feature = $req[$i];
         confess("Undefined feature") unless ($feature);
         my $value = $self->get_iset($feature);
-        my $comp = $req[ $i + 1 ] =~ s/^\!// ? 'ne' : $req[ $i + 1 ] =~ s/^\~// ? 're' : 'eq';
-        if ($comp eq 'eq' && $value ne $req[ $i + 1 ]
-            ||
+        my $comp =
+            $req[ $i + 1 ] =~ s/^\!\~// ? 'nr' :
+            $req[ $i + 1 ] =~ s/^\!//   ? 'ne' :
+            $req[ $i + 1 ] =~ s/^\~//   ? 're' : 'eq';
+        if (
+            $comp eq 'eq' && $value ne $req[ $i + 1 ] ||
             $comp eq 'ne' && $value eq $req[ $i + 1 ] ||
-            $comp eq 're' && $value !~ m/$req[$i+1]/
-            )
+            $comp eq 're' && $value !~ m/$req[$i+1]/  ||
+            $comp eq 'nr' && $value =~ m/$req[$i+1]/
+           )
         {
             return 0;
         }
@@ -270,6 +274,7 @@ Do the feature values of this node match the specification?
 (Values of other features do not matter.)
 A value preceded by exclamation mark is tested on string inequality.
 A value preceded by a tilde is tested on regex match.
+A value preceded by exclamation mark and tilde is tested on regex mismatch.
 Other values are tested on string equality.
 
 =back
@@ -281,6 +286,6 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
