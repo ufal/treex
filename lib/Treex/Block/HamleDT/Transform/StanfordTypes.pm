@@ -4,6 +4,10 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
+# regex for verbform of a finite verb
+# my $FINITE = '~fin';
+my $FINITE = '!~inf';
+
 # Prague afun to Stanford type
 # TODO 'dep' means I don't know what to use,
 # usually it should eventually become something more specific!
@@ -146,8 +150,7 @@ sub Sb {
             $type = 'nsubjpass';
         }
     }
-    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => '~fin' ) ) {
-        # TODO or rather: verbform !~ 'inf' ?
+    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) ) {
         $type = 'csubj';
         if ( $self->parent_is_passive_verb($anode)) {
             $type = 'csubjpass';
@@ -176,8 +179,7 @@ sub Obj {
         # }
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        # TODO what if verbform == ''? ccomp or xcomp?
-        if ( $anode->match_iset( verbform => '~fin' ) ) {
+        if ( $anode->match_iset( verbform => $FINITE ) ) {
             $type = 'ccomp';
         }
         else {
@@ -248,8 +250,7 @@ sub Atr {
     if ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
         $type = 'amod';
     }
-    if ( $anode->match_iset( 'pos' => '~verb', verbform => '~fin' ) && $self->parent_is_noun($anode) ) {
-        # TODO or rather: verbform !~ 'inf' ?
+    if ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) && $self->parent_is_noun($anode) ) {
         $type = 'rcmod';
     }
     if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode) ) {
@@ -288,10 +289,9 @@ sub Adv {
     elsif ( $anode->match_iset( 'pos' => '~noun' ) ) {
         $type = 'npadvmod';
     }
-    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => '~fin' ) &&
+    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) &&
         $self->parent_is_verb($anode)
     ) {
-        # TODO or rather: verbform ~! 'inf' ?
         $type = 'advcl';
     }
     elsif ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
