@@ -1,23 +1,24 @@
-package Treex::Block::StanfordCopulas;
+package Treex::Block::HamleDT::Transform::StanfordCopulas;
 use Moose;
 use Treex::Core::Common;
 use utf8;
+extends 'Treex::Core::Block';
 
 sub process_anode {
     my ($self, $cop) = @_;
 
     my ($pnom) = grep { $_->afun eq 'Pnom' }
-        $anode->get_children({ordered => 1});
+        $cop->get_children({ordered => 1});
     if ( defined $pnom ) {
         # types
-        $pnom->set_conll_deprel($cop->get_conll_deprel);
+        $pnom->set_conll_deprel($cop->conll_deprel);
         $cop->set_conll_deprel('cop');
         # rehanging
         $pnom->set_parent($cop->get_parent);
         $cop->set_parent($pnom);
         foreach my $child (
-            grep { $_->get_conll_deprel ne 'cc' &&
-                $_->get_conll_deprel ne 'conj' } $cop->get_children
+            grep { $_->conll_deprel ne 'cc' && $_->conll_deprel ne 'conj' }
+                $cop->get_children
         ) {
             $child->set_parent($pnom);
         }
@@ -31,7 +32,7 @@ sub process_anode {
 
 =head1 NAME 
 
-Treex::Block::StanfordCopulas -- rehang and relabel copulas according to
+Treex::Block::HamleDT::Transform::StanfordCopulas -- rehang and relabel copulas according to
 Standford Dependencies style.
 
 =head1 DESCRIPTION

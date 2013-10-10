@@ -116,12 +116,6 @@ sub process_anode {
         # log_warn "Attempted to use type '$type' for a pobj ($form)!";
         $type = 'pobj';
     }
-    # copulas
-    elsif ( $anode->match_iset( 'pos' => 'verb' ) &&
-        grep { $_->afun eq 'Pnom' } $anode->get_children()
-    ) {
-        $type = 'cop';
-    }
 
 
     # MARK CONJUNCTS
