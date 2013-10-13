@@ -45,9 +45,9 @@ my %afun2type = (
 
     # some crazy Aux*
     AuxC => 'mark',    # or complm? or ... ???
-    AuxG => 'punct',
-    AuxK => 'punct',
-    AuxX => 'punct',
+    AuxG => 'dep', # usually already marked as 'punct' from MarkPunct
+    AuxK => 'dep', # usually already marked as 'punct' from MarkPunct
+    AuxX => 'dep', # usually already marked as 'punct' from MarkPunct
     AuxT => \&{Adv},
     AuxR => \&{Adv},
     AuxO => \&{Adv},
@@ -59,6 +59,11 @@ my %afun2type = (
 
 sub process_anode {
     my ( $self, $anode ) = @_;
+
+    if ( defined $anode->conll_deprel && $anode->conll_deprel ne '' ) {
+        # type already set by preceding blocks -> skip
+        return;
+    }
 
     my $form = $anode->form;
 
@@ -90,17 +95,6 @@ sub process_anode {
     ) {
         # log_warn "Attempted to use type '$type' for the root ($form)!";
         $type = 'root';
-    }
-    # punctuation
-    elsif ( $anode->match_iset( 'pos' => 'punc' ) || $anode->form =~ /^\p{IsP}+$/
-        # && $type ne 'punct'
-    ) {
-        # log_warn "Attempted to use type '$type' for a punctuation ($form)!";
-        $type = 'punct';
-    }
-    elsif ( $anode->form !~ /^\p{IsP}+$/ && $type eq 'punct' ) {
-        # log_warn "Attempted to use type 'punct' for a non-punctuation ($form)!";
-        $type = 'dep';
     }
     # determiners
     elsif ( $anode->match_iset( 'subpos' => '~art|det' ) ) {
@@ -407,6 +401,13 @@ TODO: not yet ready, still many things to solve
 
 Coordination structures should get marked correctly -- the block relies on
 the data previously having been processed by L<HamleDT::Transform::CoordStyle>.
+
+Punctuation is to have been marked by L<HamleDT::Transform::MarkPunct>.
+
+If C<conll/deprel> already contains a value, this value is kept. Delete the
+values first to avoid that. (But do that before calling
+L<HamleDT::Transform::MarkPunct> since this block stores the C<punct> types into
+C<conll/deprel>.)
 
 There are many log_warn messages that are commented out at the moment, which
 might suggest an error in the preceding conversion steps. Comment them back in

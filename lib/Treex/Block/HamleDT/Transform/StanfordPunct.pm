@@ -3,11 +3,14 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::HamleDT::Transform::BaseTransformer';
 
+has attribute => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
+has value => ( is => 'rw', isa => 'Str', default => 'punct' );
+
 sub process_atree {
     my ( $self, $aroot ) = @_;
 
     # rehang punctuation children
-    foreach my $anode ( grep { is_punct($_) } $aroot->get_descendants() ) {
+    foreach my $anode ( grep { $self->is_punct($_) } $aroot->get_descendants() ) {
         foreach my $child ( $anode->get_children() ) {
             $child->set_parent( $anode->get_parent() );
             $self->subscribe($child);
@@ -16,9 +19,9 @@ sub process_atree {
 
     # rehang root punctuation children
     # find the non-punctuation non-technical root
-    my ($stanford_root) = grep { !is_punct($_) } $aroot->get_children({ordered => 1});
+    my ($stanford_root) = grep { !$self->is_punct($_) } $aroot->get_children({ordered => 1});
     if ( defined $stanford_root ) {
-        foreach my $anode ( grep { is_punct($_) } $aroot->get_children() ) {
+        foreach my $anode ( grep { $self->is_punct($_) } $aroot->get_children() ) {
             $anode->set_parent($stanford_root);
             $self->subscribe($anode);
         }
@@ -30,8 +33,9 @@ sub process_atree {
 }
 
 sub is_punct {
-    my ($node) = @_;
-    return ($node->form =~ /^\p{IsP}+$/);
+    my ($self, $node) = @_;
+    return ( defined $node->get_attr($self->attribute) &&
+        $node->get_attr($self->attribute) eq $self->value );
 }
 
 1;
@@ -43,7 +47,10 @@ to Stanford Dependencies
 
 =head1 DESCRIPTION
 
-A punctuation node is a node whose form is composed only of punctuation symbols.
+A punctuation node is a node
+marked as C<value> by its C<attribute>, presumably using
+L<HamleDT::Transform::MarkPunct> (the default C<value> and C<attribute> are the
+same for these two blocks).
 
 If a punctuation node has children, they are moved below the original parent of
 the punctuation node.
@@ -60,6 +67,21 @@ If the tree contains only punctuation, it cannot be handled correctly according
 to SD definition -- the punctuation will be a child of the technical root, will
 get the C<root> type in L<HamleDT::Transform::StanfordTypes>, and will appear
 in the SD output even if C<Write::Stanford/retain_punct> is set to C<0>.
+
+=head1 PARAMETERS
+
+=over
+
+=item attribute
+
+The attribute to be set. C<conll/deprel> by default.
+
+=item value
+
+The value to be used for the C<attribute>. C<punct> by default (used e.g. in
+Stanford Dependencies).
+
+=back
 
 =head1 AUTHOR
 
