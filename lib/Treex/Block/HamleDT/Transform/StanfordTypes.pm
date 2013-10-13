@@ -19,7 +19,7 @@ my %afun2type = (
     Pnom => \&{Pnom},
     AuxV => \&{AuxV},
     Pred => 'root',
-    AuxP => 'prep',
+    AuxP => 'adpmod',
     Atr  => \&{Atr},
     Adv  => \&{Adv},
     Coord => 'cc',
@@ -38,10 +38,10 @@ my %afun2type = (
     AdvAtr     => \&{Atr},
     AtrObj     => \&{Atr},
     ObjAtr     => \&{Atr},
-    PredC      => 'dep',
-    PredE      => 'dep',
-    PredP      => 'dep',
-    Ante       => 'dep',
+    PredC      => 'dep',      # only in ar; "conjunction as the clause's head"
+    PredE      => 'dep',      # only in ar; "existential predicate"
+    PredP      => 'dep',      # only in ar; "preposition as the clause's head"
+    Ante       => 'dep',      # only in ar;
 
     # some crazy Aux*
     AuxC => 'mark',    # or complm? or ... ???
@@ -51,8 +51,8 @@ my %afun2type = (
     AuxT => \&{Adv},
     AuxR => \&{Adv},
     AuxO => \&{Adv},
-    AuxE => 'dep',
-    AuxM => 'dep',
+    AuxE => 'dep',   # only in ar(?)
+    AuxM => 'dep',   # only in ar(?)
     AuxY => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
     AuxZ => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
 );
@@ -100,19 +100,26 @@ sub process_anode {
     elsif ( $anode->match_iset( 'subpos' => '~art|det' ) ) {
         $type = 'det';
     }
-    # prepositions
+    # adpositions
     elsif ( $anode->match_iset( 'pos' => 'prep' )
         # && $type ne 'prep'
     ) {
-        # log_warn "Attempted to use type '$type' for a preposition ($form)!";
-        $type = 'prep';
+        # log_warn "Attempted to use type '$type' for an adposition ($form)!";
+        $type = 'adp';
     }
-    # prepositional objects
+    # adpositional objects
     elsif ( $anode->match_iset( 'pos' => 'noun' ) && $self->parent_is_preposition($anode)
-        # && $type ne 'pobj'
+        # && $type ne 'adpobj'
     ) {
-        # log_warn "Attempted to use type '$type' for a pobj ($form)!";
-        $type = 'pobj';
+        # log_warn "Attempted to use type '$type' for a adpobj ($form)!";
+        $type = 'adpobj';
+    }
+    # adpositional complements
+    elsif ( $anode->match_iset( 'pos' => 'verb' ) && $self->parent_is_preposition($anode)
+        # && $type ne 'adpcomp'
+    ) {
+        # log_warn "Attempted to use type '$type' for a adpcomp ($form)!"
+        $type = 'adpcomp';
     }
 
 
@@ -163,7 +170,7 @@ sub Obj {
     if ( $anode->match_iset( 'pos' => '~noun' ) ) {
         $type = 'obj';
         if ( $self->parent_is_preposition($anode)) {
-            $type = 'pobj';
+            $type = 'adpobj';
         }
         # elsif ( $anode->match_iset( case => '~acc' ) ) {
         #   $type = 'dobj';
