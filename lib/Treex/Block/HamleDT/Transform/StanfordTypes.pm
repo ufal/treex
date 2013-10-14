@@ -101,21 +101,21 @@ sub process_anode {
         $type = 'det';
     }
     # adpositions
-    elsif ( $anode->match_iset( 'pos' => 'prep' )
+    elsif ( $anode->match_iset( 'pos' => '~prep' )
         # && $type ne 'prep'
     ) {
         # log_warn "Attempted to use type '$type' for an adposition ($form)!";
         $type = 'adp';
     }
     # adpositional objects
-    elsif ( $anode->match_iset( 'pos' => 'noun' ) && $self->parent_is_preposition($anode)
+    elsif ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode)
         # && $type ne 'adpobj'
     ) {
         # log_warn "Attempted to use type '$type' for a adpobj ($form)!";
         $type = 'adpobj';
     }
     # adpositional complements
-    elsif ( $anode->match_iset( 'pos' => 'verb' ) && $self->parent_is_preposition($anode)
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) && $self->parent_is_preposition($anode)
         # && $type ne 'adpcomp'
     ) {
         # log_warn "Attempted to use type '$type' for a adpcomp ($form)!"
